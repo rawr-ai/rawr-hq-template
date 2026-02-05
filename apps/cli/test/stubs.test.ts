@@ -43,7 +43,9 @@ describe("rawr command stubs", () => {
 
   it("security report is a thin wrapper (not yet implemented)", () => {
     const proc = runRawr(["security", "report"]);
-    expect(proc.status).toBe(2);
+    // `security report` has a disk fallback even before @rawr/security
+    // implements a dedicated report reader.
+    expect(proc.status).toBe(0);
     expect(proc.stdout).toContain("@rawr/security is missing export");
   });
 });
