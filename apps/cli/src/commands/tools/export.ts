@@ -25,6 +25,8 @@ const TOOLS: ToolExport[] = [
   { command: "journal show <id>", description: "Show a specific snippet" },
   { command: "reflect", description: "Suggest commands/workflows based on journal" },
   { command: "workflow harden", description: "Run snapshot + security + posture workflow" },
+  { command: "workflow forge-command", description: "Forge a new durable command via the factory" },
+  { command: "workflow demo-mfe", description: "Enable + build + verify micro-frontend demo plugin" },
   { command: "factory command new <topic> <name>", description: "Generate a new CLI command + test" },
   { command: "factory workflow new <name>", description: "Generate a new workflow command + test" },
   { command: "factory plugin new <dirName>", description: "Generate a new plugin package skeleton" },
