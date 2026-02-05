@@ -1,11 +1,13 @@
-import { Elysia } from "elysia";
+import { createServerApp } from "./app";
+import { getServerConfig } from "./config";
+import { loadWorkspaceServerPlugins, mountServerPlugins } from "./plugins";
 
-const port = Number(process.env.PORT ?? 3000);
+const config = getServerConfig();
 
-new Elysia()
-  .get("/health", () => ({ ok: true }))
-  .listen(port);
+let app = createServerApp();
+const plugins = await loadWorkspaceServerPlugins();
+app = await mountServerPlugins(app, plugins, { baseUrl: config.baseUrl });
+app.listen(config.port);
 
 // eslint-disable-next-line no-console
-console.log(`@rawr/server listening on :${port}`);
-
+console.log(`@rawr/server listening on ${config.baseUrl}`);
