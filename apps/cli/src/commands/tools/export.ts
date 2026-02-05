@@ -19,6 +19,7 @@ const TOOLS: ToolExport[] = [
   { command: "plugins status", description: "Show whether workspace plugins are enabled" },
   { command: "security check", description: "Run security checks" },
   { command: "security report", description: "Show the last security report" },
+  { command: "security posture", description: "Write a security posture summary packet" },
   { command: "journal tail", description: "Show recent journal snippets" },
   { command: "journal search --query <q>", description: "Search journal snippets" },
   { command: "journal show <id>", description: "Show a specific snippet" },
