@@ -18,6 +18,8 @@
         "@oclif/core": "^4.2.10",
         "@oclif/plugin-help": "^6.2.27",
         "@oclif/plugin-plugins": "^5.4.36",
+        "@rawr/core": "workspace:*",
+        "@rawr/security": "workspace:*",
         "zod": "^3.24.3",
       },
       "devDependencies": {
@@ -53,6 +55,9 @@
     },
     "packages/core": {
       "name": "@rawr/core",
+      "dependencies": {
+        "@oclif/core": "^4.2.10",
+      },
       "devDependencies": {
         "typescript": "^5.9.3",
       },

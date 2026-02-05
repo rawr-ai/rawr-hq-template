@@ -1,21 +1,17 @@
-import { Command, Flags } from "@oclif/core";
+import { RawrCommand } from "@rawr/core";
 
-export default class Doctor extends Command {
+export default class Doctor extends RawrCommand {
   static description = "Sanity-check the RAWR HQ repo wiring";
 
   static flags = {
-    json: Flags.boolean({ description: "Output machine-readable JSON" }),
+    ...RawrCommand.baseFlags,
   } as const;
 
   async run() {
-    const { flags } = await this.parse(Doctor);
-    const result = {
-      ok: true,
-      cwd: process.cwd(),
-    };
-
-    if (flags.json) this.log(JSON.stringify(result, null, 2));
-    else this.log("ok");
+    const { flags } = await this.parseRawr(Doctor);
+    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const result = this.ok({ cwd: process.cwd() });
+    this.outputResult(result, { flags: baseFlags });
   }
 }
 
