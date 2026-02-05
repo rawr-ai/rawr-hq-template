@@ -25,7 +25,7 @@
   },
   "scripts": {
     "rawr": "bun src/index.ts",
-    "dev": "bun src/index.ts",
+    "dev:cli": "bun src/index.ts",
     "build": "bunx tsc -p tsconfig.json",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
