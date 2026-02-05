@@ -21,3 +21,6 @@
 ## Consumers
 - `apps/cli` (`@rawr/cli`).
 
+## Reflection skill
+- Canonical agent reflection guidance lives at `packages/journal/skills/reflect/SKILL.md`.
+- Journaling is the storage/retrieval substrate; reflection is the agent-facing usage practice.
