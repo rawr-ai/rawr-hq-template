@@ -15,11 +15,27 @@ const RiskToleranceSchema = z.union([
   z.literal("off"),
 ]);
 
+const PluginChannelsSchema = z
+  .object({
+    workspace: z
+      .object({
+        enabled: z.boolean().optional(),
+      })
+      .optional(),
+    external: z
+      .object({
+        enabled: z.boolean().optional(),
+      })
+      .optional(),
+  })
+  .optional();
+
 const RawrConfigV1Schema = z.object({
   version: z.literal(1),
   plugins: z
     .object({
       defaultRiskTolerance: RiskToleranceSchema.optional(),
+      channels: PluginChannelsSchema,
     })
     .optional(),
   journal: z
@@ -74,6 +90,17 @@ export function validateRawrConfig(
     const cfg = parsed.data;
     const normalized: RawrConfig = {
       ...cfg,
+      plugins: {
+        ...cfg.plugins,
+        channels: {
+          workspace: {
+            enabled: cfg.plugins?.channels?.workspace?.enabled ?? true,
+          },
+          external: {
+            enabled: cfg.plugins?.channels?.external?.enabled ?? false,
+          },
+        },
+      },
       journal: cfg.journal?.semantic
         ? {
             ...cfg.journal,

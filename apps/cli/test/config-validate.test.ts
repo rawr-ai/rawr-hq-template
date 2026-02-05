@@ -40,7 +40,16 @@ describe("rawr config validate", () => {
     const ws = await makeWorkspace();
     await fs.writeFile(
       path.join(ws, "rawr.config.ts"),
-      `export default { version: 1, plugins: { defaultRiskTolerance: "off" } };`,
+      `export default {
+  version: 1,
+  plugins: {
+    defaultRiskTolerance: "off",
+    channels: {
+      workspace: { enabled: true },
+      external: { enabled: false },
+    },
+  },
+};`,
       "utf8",
     );
     const proc = runRawrInWorkspace(ws, ["config", "validate", "--json"]);

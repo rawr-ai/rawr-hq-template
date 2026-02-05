@@ -7,11 +7,34 @@ describe("@rawr/control-plane validateRawrConfig", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.config.version).toBe(1);
+    expect(r.config.plugins?.channels?.workspace?.enabled).toBe(true);
+    expect(r.config.plugins?.channels?.external?.enabled).toBe(false);
   });
 
   it("allows missing optional fields", () => {
     const r = validateRawrConfig({ version: 1, plugins: {} });
     expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.config.plugins?.channels?.workspace?.enabled).toBe(true);
+      expect(r.config.plugins?.channels?.external?.enabled).toBe(false);
+    }
+  });
+
+  it("accepts plugin channel policy controls", () => {
+    const r = validateRawrConfig({
+      version: 1,
+      plugins: {
+        channels: {
+          workspace: { enabled: true },
+          external: { enabled: true },
+        },
+      },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.config.plugins?.channels?.workspace?.enabled).toBe(true);
+      expect(r.config.plugins?.channels?.external?.enabled).toBe(true);
+    }
   });
 
   it("rejects unknown versions", () => {
@@ -35,4 +58,3 @@ describe("@rawr/control-plane validateRawrConfig", () => {
     if (r3.ok) expect(r3.config.journal?.semantic?.candidateLimit).toBe(1);
   });
 });
-
