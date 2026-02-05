@@ -89,6 +89,8 @@ Match `civ7-modding-tools`:
 - root `bunfig.toml`: `env=false`, `install.linker=isolated`, explicit `trustedDependencies`
 - root `vitest.config.ts`: multi-project setup
 - turbo tasks: `dev` persistent no-cache; `build` and `test` depend on `^build`
+- TypeScript: `build` emits `dist/**` (base config allows emit); `typecheck` uses `--noEmit` (web `build` also passes `--noEmit` before Vite)
+- `turbo run dev` targets long-running apps only (server + web); CLI uses `dev:cli` if needed
 
 ### Parallel agent slicing
 
@@ -118,4 +120,3 @@ Slices:
 5) E
 
 After each merge: run `bun run test` and `bun run build`.
-

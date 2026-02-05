@@ -18,6 +18,8 @@
         "@oclif/core": "^4.2.10",
         "@oclif/plugin-help": "^6.2.27",
         "@oclif/plugin-plugins": "^5.4.36",
+        "@rawr/core": "workspace:*",
+        "@rawr/security": "workspace:*",
         "zod": "^3.24.3",
       },
       "devDependencies": {
@@ -53,6 +55,9 @@
     },
     "packages/core": {
       "name": "@rawr/core",
+      "dependencies": {
+        "@oclif/core": "^4.2.10",
+      },
       "devDependencies": {
         "typescript": "^5.9.3",
       },
@@ -62,6 +67,9 @@
       "devDependencies": {
         "typescript": "^5.9.3",
       },
+    },
+    "packages/test-utils": {
+      "name": "@rawr/test-utils",
     },
     "plugins/hello": {
       "name": "@rawr/plugin-hello",
@@ -206,6 +214,8 @@
     "@rawr/security": ["@rawr/security@workspace:packages/security"],
 
     "@rawr/server": ["@rawr/server@workspace:apps/server"],
+
+    "@rawr/test-utils": ["@rawr/test-utils@workspace:packages/test-utils"],
 
     "@rawr/web": ["@rawr/web@workspace:apps/web"],
 
