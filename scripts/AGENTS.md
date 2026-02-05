@@ -1,10 +1,22 @@
 # Scripts
 
-- Repo automation (including opt-in git hooks).
-- Keep scripts deterministic and fast (they run in developer loops like hooks).
-- Prefer `bun run …` entrypoints over hardcoded paths when possible.
+## TOC
+- [Scope](#scope)
+- [Git Hooks](#git-hooks)
+- [Conventions](#conventions)
 
-## Next
-- `githooks/AGENTS.md` — shipped hooks + enabling instructions
-- `githooks/pre-commit` — runs staged-only security checks
-- `../docs/SECURITY_MODEL.md` — what the hooks are enforcing
+## Scope
+- Applies to `scripts/**`.
+- Keep scripts deterministic and fast (they often run in developer loops like hooks).
+
+## Git Hooks
+- Shipped hooks live in `scripts/githooks/**`.
+- `scripts/githooks/pre-commit` runs staged-only security checks:
+  - primary: `rawr security check --staged`
+  - fallback: `packages/security` bin if `rawr` isn’t available
+- To enable repo-local hooks:
+  - `git config core.hooksPath scripts/githooks`
+
+## Conventions
+- Hook output should be short and actionable (avoid noisy logs).
+- Security model reference: `docs/SECURITY_MODEL.md`.

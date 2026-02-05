@@ -1,11 +1,35 @@
-# `@rawr/plugin-hello`
+# @rawr/plugin-hello
 
-- Minimal oclif plugin example (one command: `hello`).
-- Source command: `src/commands/hello.ts` (default export extends `@oclif/core` `Command`).
-- Build output is path-preserving; ensure `package.json#oclif.commands` matches emitted `dist/**` layout if/when loaded by an oclif plugin loader.
+## TOC
+- [Scope](#scope)
+- [What This Plugin Is](#what-this-plugin-is)
+- [Manifest](#manifest)
+- [Build And Test](#build-and-test)
+- [Layout](#layout)
 
-## Next
-- `src/commands/hello.ts` — the command implementation
-- `package.json` — oclif manifest (`oclif.typescript.commands`, `oclif.commands`)
-- `test/` — plugin tests (`vitest --project plugin-hello`)
-- `../AGENTS.md` — workspace plugin conventions + enablement boundary
+## Scope
+- Applies to `plugins/hello/**`.
+
+## What This Plugin Is
+- Minimal **oclif plugin** example.
+- Provides an oclif command at `src/commands/hello.ts`.
+
+## Manifest
+- Declared via `package.json#oclif`:
+  - Source commands: `./src/commands`
+- Note: `tsc` currently emits commands to `dist/src/commands/**` (path-preserving).
+  - If/when this plugin is loaded via oclif’s plugin loader, align `package.json#oclif.commands` with the emitted directory.
+- Keep command files as default exports extending `@oclif/core` `Command`.
+
+## Build And Test
+- From repo root:
+  - `turbo run build --filter=@rawr/plugin-hello`
+  - `vitest run --project plugin-hello`
+- From this package:
+  - `bun run build`
+  - `bun run test`
+
+## Layout
+- `src/commands/**`: oclif commands (TypeScript source)
+- `test/**`: Vitest tests
+- `dist/**`: compiled output (checked by Turbo + ignored by tests)
