@@ -12,7 +12,7 @@ const includes = [
 
 export default defineConfig({
   test: {
-    exclude: ["**/dist/**", "**/node_modules/**"],
+    exclude: ["**/dist/**", "**/node_modules/**", "**/.turbo/**"],
     projects: [
       {
         extends: true,
@@ -43,6 +43,11 @@ export default defineConfig({
         extends: true,
         root: r("packages/test-utils"),
         test: { name: "integration", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/ui-sdk"),
+        test: { name: "ui-sdk", environment: "node", include: [...includes] },
       },
       {
         extends: true,
