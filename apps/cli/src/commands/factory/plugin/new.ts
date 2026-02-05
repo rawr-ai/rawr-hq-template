@@ -1,0 +1,161 @@
+import { Args, Flags } from "@oclif/core";
+import { RawrCommand } from "@rawr/core";
+import path from "node:path";
+import { recordArtifact } from "../../../lib/journal-context";
+import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+import {
+  assertSafeSegment,
+  planWriteFile,
+  type FactoryPlannedWrite,
+  type FactoryWriteMode,
+} from "../../../lib/factory";
+
+type PluginKind = "server" | "web" | "both";
+
+export default class FactoryPluginNew extends RawrCommand {
+  static description = "Create a new RAWR plugin package under ./plugins/";
+
+  static args = {
+    dirName: Args.string({ required: true, description: "Plugin directory name (kebab-case)" }),
+  } as const;
+
+  static flags = {
+    ...RawrCommand.baseFlags,
+    kind: Flags.string({
+      description: "Plugin kind",
+      options: ["server", "web", "both"],
+      default: "both",
+    }),
+  } as const;
+
+  async run() {
+    const { args, flags } = await this.parseRawr(FactoryPluginNew);
+    const baseFlags = RawrCommand.extractBaseFlags(flags);
+
+    const workspaceRoot = await findWorkspaceRoot(process.cwd());
+    if (!workspaceRoot) {
+      const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)");
+      this.outputResult(result, { flags: baseFlags });
+      this.exit(2);
+      return;
+    }
+
+    const dirName = assertSafeSegment(String(args.dirName), "dirName");
+    const kind = String(flags.kind) as PluginKind;
+
+    const mode: FactoryWriteMode = baseFlags.dryRun ? "dry-run" : "write";
+    const pluginRoot = path.join(workspaceRoot, "plugins", dirName);
+    const packageName = `@rawr/plugin-${dirName}`;
+
+    const planned: FactoryPlannedWrite[] = [];
+
+    planned.push(
+      await planWriteFile(
+        path.join(pluginRoot, "package.json"),
+        mode,
+        JSON.stringify(
+          {
+            name: packageName,
+            private: true,
+            type: "module",
+            packageManager: "bun@1.3.7",
+            devDependencies: {
+              "@types/node": "^22.14.0",
+              typescript: "^5.9.3",
+            },
+            scripts: {
+              build: "bunx tsc -p tsconfig.json",
+              typecheck: "bunx tsc -p tsconfig.json --noEmit",
+              test: "vitest run",
+            },
+          },
+          null,
+          2,
+        ) + "\n",
+      ),
+    );
+
+    const lib = kind === "web" || kind === "both" ? ["ES2022", "DOM"] : ["ES2022"];
+    planned.push(
+      await planWriteFile(
+        path.join(pluginRoot, "tsconfig.json"),
+        mode,
+        JSON.stringify(
+          {
+            extends: "../../tsconfig.base.json",
+            compilerOptions: {
+              outDir: "dist",
+              lib,
+              types: ["node"],
+            },
+            include: ["src", "test"],
+          },
+          null,
+          2,
+        ) + "\n",
+      ),
+    );
+
+    if (kind === "server" || kind === "both") {
+      planned.push(
+        await planWriteFile(
+          path.join(pluginRoot, "src", "server.ts"),
+          mode,
+          `export function registerServer(app: any, ctx: { baseUrl: string }) {
+  app.get(\`/plugins/${dirName}/health\`, () => ({ ok: true, plugin: ${JSON.stringify(packageName)} }));
+}
+`,
+        ),
+      );
+    }
+
+    if (kind === "web" || kind === "both") {
+      planned.push(
+        await planWriteFile(
+          path.join(pluginRoot, "src", "web.ts"),
+          mode,
+          `export function mount(el: any, ctx: { baseUrl: string }) {
+  const root = document.createElement("div");
+  root.style.padding = "12px";
+  root.style.border = "1px solid #ddd";
+  root.style.borderRadius = "8px";
+  root.textContent = ${JSON.stringify(`Hello from ${packageName}`)};
+  el.appendChild(root);
+}
+`,
+        ),
+      );
+    }
+
+    planned.push(
+      await planWriteFile(
+        path.join(pluginRoot, "test", "plugin.test.ts"),
+        mode,
+        `import { describe, expect, it } from "vitest";
+
+describe(${JSON.stringify(packageName)}, () => {
+  it("has a package.json", () => {
+    expect(${JSON.stringify(packageName)}).toContain("@rawr/plugin-");
+  });
+});
+`,
+      ),
+    );
+
+    for (const p of planned) {
+      if (p.action === "create") recordArtifact(p.path);
+    }
+
+    const result = this.ok({ dirName, packageName, kind, planned });
+    this.outputResult(result, {
+      flags: baseFlags,
+      human: () => {
+        for (const p of planned) {
+          const reason = p.reason ? ` (${p.reason})` : "";
+          this.log(`${p.action}: ${p.path}${reason}`);
+        }
+      },
+    });
+  }
+}
+

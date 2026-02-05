@@ -25,6 +25,9 @@ const TOOLS: ToolExport[] = [
   { command: "journal show <id>", description: "Show a specific snippet" },
   { command: "reflect", description: "Suggest commands/workflows based on journal" },
   { command: "workflow harden", description: "Run snapshot + security + posture workflow" },
+  { command: "factory command new <topic> <name>", description: "Generate a new CLI command + test" },
+  { command: "factory workflow new <name>", description: "Generate a new workflow command + test" },
+  { command: "factory plugin new <dirName>", description: "Generate a new plugin package skeleton" },
 ];
 
 export default class ToolsExport extends RawrCommand {
