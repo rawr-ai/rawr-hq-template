@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run staged-only security checks. Keep output short and actionable.
+# If `rawr` isn't available for some reason, fall back to the package bin.
+
+if bun run --silent rawr -- security check --staged >/dev/null 2>&1; then
+  bun run rawr -- security check --staged
+  exit $?
+fi
+
+bun run --cwd packages/security security:check --quiet
+
