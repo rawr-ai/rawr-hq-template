@@ -1,0 +1,8 @@
+env = false
+
+[install]
+linker = "isolated"
+# Keep this list small and explicit. Add entries only when needed (e.g. packages
+# with install/postinstall scripts that we intentionally allow).
+trustedDependencies = ["esbuild"]
+
