@@ -8,7 +8,7 @@ export default class JournalTail extends RawrCommand {
 
   static flags = {
     ...RawrCommand.baseFlags,
-    limit: Flags.integer({ description: "Max snippets to return", default: 20, min: 1, max: 200 }),
+    limit: Flags.integer({ description: "Max snippets to return", default: 10, min: 1, max: 15 }),
   } as const;
 
   async run() {

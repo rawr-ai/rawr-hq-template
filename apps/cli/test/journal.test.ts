@@ -42,7 +42,7 @@ describe("journal + reflect", () => {
   });
 
   it("reflect returns a stable structure", () => {
-    const proc = runRawr(["reflect", "--limit", "50", "--json"]);
+    const proc = runRawr(["reflect", "--limit", "15", "--json"]);
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
@@ -51,4 +51,3 @@ describe("journal + reflect", () => {
     expect(Array.isArray(parsed.data.suggestions)).toBe(true);
   });
 });
-
