@@ -1,8 +1,10 @@
-# FUTURE: RAWR marketplace / library
+# FUTURE: Marketplace / Library (Parked)
 
-This is a parked concept. **Not in scope for v1.**
+This concept is parked and out of current template scope.
 
-High-level idea (later): a library of reusable RAWR plugins and script bundles that can be composed into a local RAWR HQ.
+If enabled later, marketplace workflows should build on the current architecture split:
+- `RAWR HQ-Template` as canonical core upstream
+- `RAWR HQ` repos as customized downstreams
 
-For v1, RAWR is explicitly **local-first** and optimized for agents building their own commands/plugins in-repo.
+Current baseline remains local-first, with connected workflows as opt-in.
 

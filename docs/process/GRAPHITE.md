@@ -1,6 +1,6 @@
-# Graphite workflow (RAWR v1)
+# Graphite workflow (RAWR HQ-Template)
 
-This repo uses **Graphite** (`gt`) for stacked-PR workflows.
+This repo uses **Graphite** (`gt`) for stacked-PR workflows in `RAWR HQ-Template`.
 
 ## Core invariants
 

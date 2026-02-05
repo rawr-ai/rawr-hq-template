@@ -1,6 +1,6 @@
 # Agent Hardened Loops (v1)
 
-This document defines repeatable, low-drift loops an AI agent can follow to ship end-to-end work in RAWR HQ.
+This document defines repeatable, low-drift loops an AI agent can follow to ship end-to-end work in `RAWR HQ-Template` and downstream `RAWR HQ` repos.
 
 ## Purpose
 
@@ -50,8 +50,10 @@ This document defines repeatable, low-drift loops an AI agent can follow to ship
 ### Plugin terminology (important)
 
 - **CLI-extension plugin**: oclif plugin system (`rawr plugins link|install|inspect ...`).
-- **RAWR workspace plugin**: package under `plugins/*` with RAWR enablement gate (`rawr plugins enable|disable|status|list`), plus optional server/web surfaces.
-- Because both surfaces live under `rawr plugins ...`, always confirm which plugin system your loop targets before starting.
+- **RAWR workspace plugin**: package under `plugins/*` with RAWR enablement gate (`rawr hq plugins enable|disable|status|list`), plus optional server/web surfaces.
+- Keep command channels explicit:
+  - `rawr plugins ...` is Channel A (oclif plugin manager).
+  - `rawr hq plugins ...` is Channel B (workspace runtime plugins).
 
 ## Loop Template
 
@@ -172,9 +174,9 @@ Create a gated plugin in `plugins/*` that integrates with RAWR state enablement 
 2. Implement `src/server.ts` and/or `src/web.ts` exports.
 3. Build plugin package.
 4. Enable via RAWR gate:
-   - `bun run rawr -- plugins enable <id>`
+   - `bun run rawr -- hq plugins enable <id>`
 5. Confirm state + mount behavior:
-   - `bun run rawr -- plugins status --json`
+   - `bun run rawr -- hq plugins status --json`
    - start stack and verify server/web behavior.
 
 ### Artifacts
@@ -186,7 +188,7 @@ Create a gated plugin in `plugins/*` that integrates with RAWR state enablement 
 ### Checks
 
 - `turbo run build --filter=<plugin-package-name>`
-- `bun run rawr -- plugins status --json`
+- `bun run rawr -- hq plugins status --json`
 - `bun run dev` then endpoint/UI verification
 
 ### Failure modes
@@ -223,7 +225,7 @@ Ship a plugin UI mounted by host web app using the `@rawr/ui-sdk` contract.
 ### Checks
 
 - `turbo run build --filter=<plugin-package-name>`
-- `bun run rawr -- plugins enable <id>`
+- `bun run rawr -- hq plugins enable <id>`
 - `bun run dev` and validate mount behavior visually
 
 ### Failure modes
@@ -306,4 +308,3 @@ Add an orchestrator command that chains lower-level commands safely.
 
 - Hidden side effects in dry-run: isolate write paths behind execution branch.
 - Orchestrator swallows child failures: preserve exit codes and step status reporting.
-

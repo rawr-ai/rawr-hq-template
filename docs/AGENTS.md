@@ -1,29 +1,43 @@
-# Docs
-
-## TOC
-- [Scope](#scope)
-- [Canonical Docs](#canonical-docs)
-- [Directory Map](#directory-map)
-- [Conventions](#conventions)
+# Docs Navigation For Agents
 
 ## Scope
-- Applies to `docs/**`.
-- Prefer linking to canonical docs over duplicating them in new files.
 
-## Canonical Docs
-- `docs/PLAN.md`: single source of truth for RAWR v1 architecture + runbook.
-- `docs/SECURITY_MODEL.md`: security posture + gating boundary + reports.
-- `docs/process/GRAPHITE.md`: Graphite workflow invariants and quick commands.
-- `docs/process/AGENT_LOOPS.md`: canonical hardened loops for end-to-end agent delivery.
-- `docs/FUTURE_RENAME.md` and `docs/FUTURE_MARKETPLACE.md`: explicitly parked future topics.
+Applies to `docs/**`.
+
+## Canonical Entry Points
+
+- `docs/DOCS.md`
+- `docs/PRODUCT.md`
+- `docs/SYSTEM.md`
+- `docs/PROCESS.md`
+- `docs/ROADMAP.md`
+
+## Core Supporting Docs
+
+- `docs/system/PLUGINS.md`
+- `docs/SECURITY_MODEL.md`
+- `docs/process/AGENT_LOOPS.md`
+- `docs/process/GRAPHITE.md`
+- `docs/process/HQ_USAGE.md`
+- `docs/process/HQ_OPERATIONS.md`
+
+## Naming Invariant
+
+Use these names consistently:
+- Template repo: `RAWR HQ-Template`
+- Personal repo: `RAWR HQ`
 
 ## Directory Map
-- `docs/process/`: workflows and contribution process (Graphite, etc.).
-- `docs/plans/`: deeper execution plans (phase work, hardening plans).
-- `docs/spikes/`: investigations/spikes (may be parked or exploratory).
-- `docs/scratchpads/`: ephemeral working notes per agent/initiative (non-canonical).
+
+- `docs/product/`: product semantics and value framing.
+- `docs/system/`: architecture and technical contracts.
+- `docs/process/`: operating workflows and playbooks.
+- `docs/projects/`: time-bound initiatives.
+- `docs/_archive/`: historical docs not part of active guidance.
 
 ## Conventions
-- If implementation choices diverge, update `docs/PLAN.md` to prevent drift.
-- Treat “parked” items as doc-only until explicitly un-parked (e.g., LLM judge / marketplace).
-- Keep scratchpads lightweight and disposable; don’t route long-term truth through them.
+
+- Keep canonical truth in gateway docs and linked system/process docs.
+- Do not route active guidance through archived documents.
+- Treat parked concepts as doc-only until explicitly un-parked.
+

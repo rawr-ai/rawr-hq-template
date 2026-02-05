@@ -1,12 +1,12 @@
-# RAWR HQ — Security Hardening Plan (v0, local-first)
+# RAWR HQ-Template — Security Hardening Plan (v0, local-first)
 
-This document is a **plan** (not a milestone). It captures principles + a phased roadmap to harden RAWR HQ’s:
+This document is a **plan** (not a milestone). It captures principles + a phased roadmap to harden `RAWR HQ-Template` and downstream `RAWR HQ` repos:
 - plugin enablement + execution harness
 - server/web exposure surfaces
 - journaling/logging and state persistence
 - dependency/install provenance
 
-**Scope:** local-first RAWR HQ (no marketplace, no LLM judge wiring).
+**Scope:** local-first `RAWR HQ-Template` baseline (no marketplace, no LLM judge wiring).
 **Non-goals (v0):** remote plugin marketplace, signed distribution, hosted execution, LLM-driven policy enforcement.
 
 ---
@@ -28,7 +28,7 @@ This document is a **plan** (not a milestone). It captures principles + a phased
 - Execution entrypoints call evaluators and then proceed; evaluators never mutate.
 
 4) **Small, composable, inspectable commands**
-- “Atomic retrieval” APIs (journal search/show) and “atomic mutation” APIs (plugins enable/disable).
+- “Atomic retrieval” APIs (journal search/show) and “atomic mutation” APIs (`rawr hq plugins enable|disable`).
 - Favor many small commands + workflow wrappers instead of monolith commands.
 
 5) **Provenance + intent must be recorded**
@@ -57,7 +57,7 @@ This document is a **plan** (not a milestone). It captures principles + a phased
 
 ### Already in place
 - Repo-local state: `.rawr/state/state.json` (gitignored) for enabled plugins.
-- Security checks: `rawr security check` + `rawr plugins enable` gate.
+- Security checks: `rawr security check` + `rawr hq plugins enable` gate.
 - Security posture packet: `rawr security posture` summarizing latest report deterministically.
 - Journal primitives: `.rawr/journal/{events,snippets,index.sqlite}` with FTS search; small-result retrieval.
 - Server gating: enabled-only server plugin mounts; enabled-only web module serving (`/rawr/plugins/web/:dirName`).
@@ -148,4 +148,3 @@ Acceptance:
 - Signed plugin artifacts + provenance verification
 - OS-level sandboxing for plugin execution
 - CI hardening / GitHub Actions gates (later; local-first v0 avoids forcing CI)
-
