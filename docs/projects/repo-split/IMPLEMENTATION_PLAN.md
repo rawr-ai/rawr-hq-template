@@ -1,6 +1,6 @@
 # Repo Split Implementation Plan
 
-Status: In Progress  
+Status: Completed  
 Owner: Orchestrator  
 Canonical baseline policy: merge full open stack (#20 -> current top) before split
 
