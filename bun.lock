@@ -40,6 +40,7 @@
     "apps/web": {
       "name": "@rawr/web",
       "dependencies": {
+        "@rawr/ui-sdk": "workspace:*",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
       },
@@ -70,6 +71,12 @@
     },
     "packages/test-utils": {
       "name": "@rawr/test-utils",
+    },
+    "packages/ui-sdk": {
+      "name": "@rawr/ui-sdk",
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
     },
     "plugins/hello": {
       "name": "@rawr/plugin-hello",
@@ -216,6 +223,7 @@
     "@rawr/server": ["@rawr/server@workspace:apps/server"],
 
     "@rawr/test-utils": ["@rawr/test-utils@workspace:packages/test-utils"],
+    "@rawr/ui-sdk": ["@rawr/ui-sdk@workspace:packages/ui-sdk"],
 
     "@rawr/web": ["@rawr/web@workspace:apps/web"],
 
