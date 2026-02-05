@@ -63,6 +63,9 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/test-utils": {
+      "name": "@rawr/test-utils",
+    },
     "plugins/hello": {
       "name": "@rawr/plugin-hello",
       "dependencies": {
@@ -206,6 +209,8 @@
     "@rawr/security": ["@rawr/security@workspace:packages/security"],
 
     "@rawr/server": ["@rawr/server@workspace:apps/server"],
+
+    "@rawr/test-utils": ["@rawr/test-utils@workspace:packages/test-utils"],
 
     "@rawr/web": ["@rawr/web@workspace:apps/web"],
 

@@ -1,0 +1,10 @@
+{
+  "name": "@rawr/test-utils",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
+
