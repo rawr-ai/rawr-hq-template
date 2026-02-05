@@ -1,7 +1,7 @@
 import { RawrCommand } from "@rawr/core";
 
 export default class Doctor extends RawrCommand {
-  static description = "Sanity-check the RAWR HQ repo wiring";
+  static description = "Sanity-check the RAWR HQ-Template repo wiring";
 
   static flags = {
     ...RawrCommand.baseFlags,
@@ -14,4 +14,3 @@ export default class Doctor extends RawrCommand {
     this.outputResult(result, { flags: baseFlags });
   }
 }
-

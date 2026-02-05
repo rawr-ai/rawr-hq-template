@@ -3,7 +3,7 @@ import { publicEnv } from "../config/publicEnv";
 export function HomePage() {
   return (
     <section style={{ maxWidth: 920 }}>
-      <h1 style={{ margin: 0, fontSize: 28 }}>RAWR HQ</h1>
+      <h1 style={{ margin: 0, fontSize: 28 }}>RAWR HQ-Template</h1>
       <p style={{ marginTop: 10, opacity: 0.86, lineHeight: 1.5 }}>
         Minimal host shell: client-side routing, sidebar navigation, and a typed
         micro-frontend mount contract.

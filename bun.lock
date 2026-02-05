@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "rawr-hq",
+      "name": "rawr-hq-template",
       "devDependencies": {
         "@types/node": "^22.14.0",
         "@vitest/ui": "^4.0.18",

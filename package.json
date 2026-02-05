@@ -1,5 +1,5 @@
 {
-  "name": "rawr-hq",
+  "name": "rawr-hq-template",
   "private": true,
   "type": "module",
   "packageManager": "bun@1.3.7",
