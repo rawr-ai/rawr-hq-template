@@ -13,8 +13,7 @@ Enabling a plugin is treated as an explicit “activation” boundary.
 
 - `rawr plugins enable <id>` runs the security checks and calls the gate.
 - If blocked, the command exits non-zero unless `--force` is provided.
-- Successful enablement updates persisted repo-local state in `.rawr/state/state.json`.
-- Runtime boundary: enabled plugin state is consumed by server/web plugin loading paths.
+- v1 does not persist enablement state yet; it only produces reports.
 
 ## Deterministic checks (v1)
 
@@ -41,3 +40,4 @@ This prevents accidental secret leakage from being committed.
 
 - This is not a sandbox. Plugins can still execute arbitrary code locally.
 - The goal is early detection + explicit enablement + auditability, not perfect containment.
+

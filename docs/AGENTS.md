@@ -14,7 +14,6 @@
 - `docs/PLAN.md`: single source of truth for RAWR v1 architecture + runbook.
 - `docs/SECURITY_MODEL.md`: security posture + gating boundary + reports.
 - `docs/process/GRAPHITE.md`: Graphite workflow invariants and quick commands.
-- `docs/process/AGENT_LOOPS.md`: canonical hardened loops for end-to-end agent delivery.
 - `docs/FUTURE_RENAME.md` and `docs/FUTURE_MARKETPLACE.md`: explicitly parked future topics.
 
 ## Directory Map
