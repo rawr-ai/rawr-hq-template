@@ -81,7 +81,9 @@ export default class RoutineSnapshot extends RawrCommand {
     const rawrVersion = runCapture("bun", [entrypoint, "--version"], workspaceRoot).stdout.trim();
     const bunVersion = runCapture("bun", ["--version"], workspaceRoot).stdout.trim();
     const toolsExport = safeJson(runCapture("bun", [entrypoint, "tools", "export", "--json"], workspaceRoot).stdout);
-    const pluginsList = safeJson(runCapture("bun", [entrypoint, "plugins", "list", "--json"], workspaceRoot).stdout);
+    const pluginsList = safeJson(
+      runCapture("bun", [entrypoint, "hq", "plugins", "list", "--json"], workspaceRoot).stdout,
+    );
     const securityReport = safeJson(
       runCapture("bun", [entrypoint, "security", "report", "--json"], workspaceRoot).stdout,
     );

@@ -1,10 +1,10 @@
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { disablePlugin as persistDisablePlugin } from "@rawr/state";
-import { findWorkspaceRoot, listWorkspacePlugins, resolvePluginId } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot, listWorkspacePlugins, resolvePluginId } from "../../../lib/workspace-plugins";
 
-export default class PluginsDisable extends RawrCommand {
-  static description = "Disable a workspace plugin (persisted)";
+export default class HqPluginsDisable extends RawrCommand {
+  static description = "Disable a RAWR HQ workspace runtime plugin (persisted)";
 
   static args = {
     id: Args.string({ required: true, description: "Plugin id (directory name or package name)" }),
@@ -15,7 +15,7 @@ export default class PluginsDisable extends RawrCommand {
   } as const;
 
   async run() {
-    const { args, flags } = await this.parseRawr(PluginsDisable);
+    const { args, flags } = await this.parseRawr(HqPluginsDisable);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     const inputId = String(args.id);
 

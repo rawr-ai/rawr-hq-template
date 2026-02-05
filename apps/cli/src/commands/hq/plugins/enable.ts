@@ -1,17 +1,12 @@
-import { Args } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { enablePlugin as persistEnablePlugin } from "@rawr/state";
-import { loadSecurityModule, missingSecurityFn } from "../../lib/security";
+import { loadSecurityModule, missingSecurityFn } from "../../../lib/security";
 import { loadRawrConfig } from "@rawr/control-plane";
-import {
-  findWorkspaceRoot,
-  listWorkspacePlugins,
-  resolvePluginId,
-} from "../../lib/workspace-plugins";
-import { Flags } from "@oclif/core";
+import { findWorkspaceRoot, listWorkspacePlugins, resolvePluginId } from "../../../lib/workspace-plugins";
 
-export default class PluginsEnable extends RawrCommand {
-  static description = "Enable a workspace plugin (gated)";
+export default class HqPluginsEnable extends RawrCommand {
+  static description = "Enable a RAWR HQ workspace runtime plugin (gated)";
 
   static args = {
     id: Args.string({ required: true, description: "Plugin id (directory name or package name)" }),
@@ -33,7 +28,7 @@ export default class PluginsEnable extends RawrCommand {
   }
 
   async run() {
-    const { args, flags } = await this.parseRawr(PluginsEnable);
+    const { args, flags } = await this.parseRawr(HqPluginsEnable);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     const inputId = String(args.id);
     const mode: "staged" | "repo" = flags.staged ? "staged" : "repo";
@@ -109,3 +104,4 @@ export default class PluginsEnable extends RawrCommand {
     });
   }
 }
+

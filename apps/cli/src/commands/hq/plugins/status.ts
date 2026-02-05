@@ -1,16 +1,16 @@
 import { RawrCommand } from "@rawr/core";
 import { getRepoState } from "@rawr/state";
-import { findWorkspaceRoot, listWorkspacePlugins } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
 
-export default class PluginsStatus extends RawrCommand {
-  static description = "Show workspace plugins and whether they are enabled";
+export default class HqPluginsStatus extends RawrCommand {
+  static description = "Show RAWR HQ workspace runtime plugins and whether they are enabled";
 
   static flags = {
     ...RawrCommand.baseFlags,
   } as const;
 
   async run() {
-    const { flags } = await this.parseRawr(PluginsStatus);
+    const { flags } = await this.parseRawr(HqPluginsStatus);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
 
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
@@ -42,3 +42,4 @@ export default class PluginsStatus extends RawrCommand {
     });
   }
 }
+
