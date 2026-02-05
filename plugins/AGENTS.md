@@ -20,7 +20,7 @@
 ## Manifest Conventions
 - Always include a `package.json` at the plugin root.
 - If the plugin provides **oclif commands**, declare the oclif manifest in `package.json#oclif`:
-  - `commands`: built output (typically `./dist/commands` or `./dist/src/commands`)
+  - `commands`: built output (match whatever `tsc` emits; commonly `./dist/src/commands`)
   - `typescript.commands`: source commands (typically `./src/commands`)
 - TypeScript convention: compile to `dist/**` (Turbo expects `dist/**` outputs).
 

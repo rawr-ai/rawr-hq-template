@@ -17,7 +17,8 @@
 ## Manifest
 - Declared via `package.json#oclif`:
   - Source commands: `./src/commands`
-  - Built commands: `./dist/commands`
+- Note: `tsc` currently emits commands to `dist/src/commands/**` (path-preserving).
+  - If/when this plugin is loaded via oclif’s plugin loader, align `package.json#oclif.commands` with the emitted directory.
 - Keep command files as default exports extending `@oclif/core` `Command`.
 
 ## Build And Test
