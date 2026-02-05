@@ -109,7 +109,7 @@ export default class RoutineCheck extends RawrCommand {
       }
     }
 
-    const result = overallOk ? this.ok({ steps }) : this.fail("Routine check failed", { details: { steps } });
+    const result = this.ok({ ok: overallOk, steps });
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {
