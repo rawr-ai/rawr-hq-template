@@ -6,6 +6,7 @@ const r = (p: string) => join(dirname(fileURLToPath(import.meta.url)), p);
 
 export default defineConfig({
   test: {
+    exclude: ["**/dist/**", "**/node_modules/**"],
     projects: [
       {
         extends: true,
@@ -40,4 +41,3 @@ export default defineConfig({
     ],
   },
 });
-
