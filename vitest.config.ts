@@ -64,6 +64,11 @@ export default defineConfig({
         root: r("plugins/hello"),
         test: { name: "plugin-hello", environment: "node", include: [...includes] },
       },
+      {
+        extends: true,
+        root: r("plugins/mfe-demo"),
+        test: { name: "plugin-mfe-demo", environment: "jsdom", include: [...includes] },
+      },
     ],
   },
 });

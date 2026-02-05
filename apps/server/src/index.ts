@@ -1,6 +1,7 @@
 import { createServerApp } from "./app";
 import { getServerConfig } from "./config";
 import { loadWorkspaceServerPlugins, mountServerPlugins } from "./plugins";
+import { registerRawrRoutes } from "./rawr";
 import { getRepoState } from "@rawr/state";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,7 +13,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const [plugins, state] = await Promise.all([loadWorkspaceServerPlugins({ repoRoot }), getRepoState(repoRoot)]);
 const enabled = new Set(state.plugins.enabled);
 
-app.get("/rawr/state", () => ({ ok: true, plugins: { enabled: Array.from(enabled).sort() } }));
+app = registerRawrRoutes(app, { repoRoot, enabledPluginIds: enabled });
 
 const enabledPlugins = plugins.filter((p) => enabled.has(p.name));
 app = await mountServerPlugins(app, enabledPlugins, { baseUrl: config.baseUrl });
