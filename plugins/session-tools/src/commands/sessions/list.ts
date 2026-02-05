@@ -15,7 +15,7 @@ export default class SessionsList extends RawrCommand {
     }),
     limit: Flags.integer({
       description: "Max sessions to return (0 = unlimited)",
-      default: 20,
+      default: 5,
       min: 0,
       max: 50_000,
     }),

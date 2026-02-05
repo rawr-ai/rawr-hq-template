@@ -44,10 +44,12 @@ async function* walkFiles(rootDir: string): AsyncGenerator<string> {
   }
 }
 
-export async function listCodexSessionFiles(): Promise<CodexSessionFile[]> {
+export async function listCodexSessionFiles(limit?: number): Promise<CodexSessionFile[]> {
+  const max = typeof limit === "number" && limit > 0 ? limit : 0;
   const out: CodexSessionFile[] = [];
   const seen = new Set<string>();
   for (const home of getCodexHomeDirs()) {
+    if (max && out.length >= max) break;
     const live = path.join(home, "sessions");
     const archived = path.join(home, "archived_sessions");
     const sources: Array<{ dir: string; status: "live" | "archived" }> = [
@@ -55,8 +57,10 @@ export async function listCodexSessionFiles(): Promise<CodexSessionFile[]> {
       { dir: archived, status: "archived" },
     ];
     for (const src of sources) {
+      if (max && out.length >= max) break;
       if (!(await pathExists(src.dir))) continue;
       for await (const f of walkFiles(src.dir)) {
+        if (max && out.length >= max) break;
         if (!f.endsWith(".jsonl") && !f.endsWith(".json")) continue;
         if (seen.has(f)) continue;
         seen.add(f);

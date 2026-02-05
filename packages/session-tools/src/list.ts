@@ -56,18 +56,21 @@ export async function listSessions(input: {
   filters?: SessionFilters;
 }): Promise<SessionListItem[]> {
   const limit = input.limit > 0 ? input.limit : 0;
+  const sourceLimit = limit > 0 ? limit : 0;
   const filters = input.filters ?? {};
 
   const sessions: SessionListItem[] = [];
 
   if (input.source === "claude" || input.source === "all") {
+    let claudeCollected = 0;
     const projectsDir = getClaudeProjectsDir();
     if (await pathExists(projectsDir)) {
       const projectFilter = filters.project ? String(filters.project).trim() : "";
       const absoluteProjectDir =
         projectFilter && looksLikePath(projectFilter) ? path.resolve(projectFilter.replace(/^~\//, `${process.env.HOME ?? ""}/`)) : null;
       const dirs = await fs.readdir(projectsDir, { withFileTypes: true });
-      for (const d of dirs) {
+      claudeDirs: for (const d of dirs) {
+        if (sourceLimit && claudeCollected >= sourceLimit) break;
         if (!d.isDirectory()) continue;
         if (d.name.startsWith(".")) continue;
         const projectDir = absoluteProjectDir ?? path.join(projectsDir, d.name);
@@ -83,6 +86,7 @@ export async function listSessions(input: {
           continue;
         }
         for (const f of files) {
+          if (sourceLimit && claudeCollected >= sourceLimit) break claudeDirs;
           const abs = path.join(projectDir, f);
           let stat: Awaited<ReturnType<typeof fs.stat>>;
           try {
@@ -107,6 +111,7 @@ export async function listSessions(input: {
             started: meta.timestamp,
             sizeKb: Math.floor(stat.size / 1024),
           });
+          claudeCollected += 1;
         }
         if (absoluteProjectDir) break;
       }
@@ -114,8 +119,10 @@ export async function listSessions(input: {
   }
 
   if (input.source === "codex" || input.source === "all") {
-    const files = await listCodexSessionFiles();
+    let codexCollected = 0;
+    const files = await listCodexSessionFiles(sourceLimit || undefined);
     for (const f of files) {
+      if (sourceLimit && codexCollected >= sourceLimit) break;
       let stat: Awaited<ReturnType<typeof fs.stat>>;
       try {
         stat = await fs.stat(f.filePath);
@@ -140,6 +147,7 @@ export async function listSessions(input: {
         started: meta.timestamp,
         sizeKb: Math.floor(stat.size / 1024),
       });
+      codexCollected += 1;
     }
   }
 
