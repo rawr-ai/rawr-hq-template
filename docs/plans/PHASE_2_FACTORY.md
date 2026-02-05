@@ -95,6 +95,11 @@ Add decisions here as they occur.
 - Optional semantic search:
   - enabled only if `VOYAGE_API_KEY` or `OPENAI_API_KEY` present (env only)
   - otherwise falls back to FTS with warning
+  - implementation notes:
+    - stores embeddings in sqlite table `snippet_embeddings` (repo-local, under `.rawr/journal/index.sqlite`)
+    - provider auto-select: `OPENAI_API_KEY` preferred, else `VOYAGE_API_KEY`
+    - model override: `RAWR_EMBEDDINGS_MODEL` (defaults: OpenAI `text-embedding-3-small`, Voyage `voyage-3-lite`)
+    - bounded candidate window (defaults to 200 most recent snippets) to keep calls small
 
 ### Command factory
 - `factory command new <topic> <name> --description ...`
