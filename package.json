@@ -15,7 +15,7 @@
     "typecheck": "turbo run typecheck",
     "pretest:vitest": "turbo run build",
     "test:vitest": "vitest run",
-    "test": "bun run pretest:vitest && bun run test:vitest",
+    "test": "bun run test:vitest",
     "rawr": "bun run --cwd apps/cli rawr"
   },
   "devDependencies": {
@@ -26,4 +26,3 @@
     "vitest": "^4.0.18"
   }
 }
-
