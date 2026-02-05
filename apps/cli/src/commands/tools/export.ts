@@ -8,6 +8,7 @@ type ToolExport = {
 
 const TOOLS: ToolExport[] = [
   { command: "doctor", description: "Sanity-check the RAWR HQ repo wiring" },
+  { command: "dev up", description: "Start server + web dev stack" },
   { command: "tools export", description: "Export a list of known CLI commands" },
   { command: "plugins list", description: "List workspace plugins" },
   { command: "plugins enable <id>", description: "Enable a workspace plugin (gated)" },
@@ -35,4 +36,3 @@ export default class ToolsExport extends RawrCommand {
     });
   }
 }
-
