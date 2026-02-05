@@ -32,7 +32,8 @@ This is the **source of truth** for Phase 2. If implementation diverges, update 
 ### Graphite invariants
 - `gt sync --no-restack` only
 - `gt restack --upstack` only on your stack
-- Submit/merge via `gt submit --stack` + `gt merge` once checks pass
+- Submit via `gt submit --stack` as a long-lived stack
+- **Do not merge by default** — merge only at explicit checkpoints / when requested
 
 ### Required docs
 - Orchestrator scratch: `docs/scratchpads/phase-2/orchestrator.md`
@@ -42,6 +43,20 @@ This is the **source of truth** for Phase 2. If implementation diverges, update 
 Add decisions here as they occur.
 
 ## Implementation Decisions
+
+### Journal snippet retrieval caps (2026-02-05)
+- **Context:** `journal tail/search` and `reflect` are designed for atomic retrieval in 3–5 calls.
+- **Options:** (a) allow large limits (50–500), (b) cap limits to keep output small.
+- **Choice:** cap to `15` and default to `10`.
+- **Rationale:** prevents “blob retrieval” drift and keeps commands usable in agent tool calls.
+- **Risk:** users who want deep history must run multiple targeted searches; acceptable for v0.
+
+### Graphite stack merging policy (2026-02-05)
+- **Context:** Phase 2 is iterative; merging every PR immediately reduces review/iteration flexibility.
+- **Options:** (a) merge as soon as checks pass, (b) keep a long-lived stack and merge at checkpoints.
+- **Choice:** keep a long-lived stack; merge only when explicitly requested.
+- **Rationale:** aligns with “warehouse → factory” experimentation loop and reduces churn on `main`.
+- **Risk:** longer-lived stacks can drift from `main`; mitigated by `gt sync --no-restack` and small PRs.
 
 ### [Decision template]
 - **Context:**
@@ -76,6 +91,7 @@ Add decisions here as they occur.
   - `journal search`
   - `journal show`
   - `reflect`
+  - Retrieval defaults: `--limit 10` with a hard cap of `15` (atomic, small calls)
 - Optional semantic search:
   - enabled only if `VOYAGE_API_KEY` or `OPENAI_API_KEY` present (env only)
   - otherwise falls back to FTS with warning
@@ -90,7 +106,7 @@ Add decisions here as they occur.
   - `src/server.ts` exporting `registerServer(app, ctx)`
   - `src/web.ts` exporting `mount(el, ctx)` (vanilla DOM)
 - Server serves enabled plugin web bundles:
-  - `GET /rawr/plugins/web/:dirName` → `dist/web.js` (enabled only)
+  - `GET /rawr/plugins/web/:dirName` → `dist/web.js` or `dist/src/web.js` (enabled only)
 - Web mounts enabled microfrontends on Mounts page via dynamic import + `@rawr/ui-sdk` contract.
 
 ### Security posture tool
@@ -142,4 +158,3 @@ Hardening-plan (docs-only) agents:
 - `security posture` writes JSON+MD
 - Demo micro-frontend mounts when enabled
 - All three workflows run with `--dry-run` and at least one end-to-end test (where feasible)
-
