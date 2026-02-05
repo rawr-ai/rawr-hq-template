@@ -1,9 +1,30 @@
+import { AppShell } from "./layout/AppShell";
+import { SidebarNav } from "./layout/SidebarNav";
+import { Router } from "./routing/router";
+import { HomePage } from "./pages/HomePage";
+import { MountsPage } from "./pages/MountsPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
+
 export function App() {
   return (
-    <main style={{ fontFamily: "ui-sans-serif, system-ui", padding: 24 }}>
-      <h1>RAWR HQ</h1>
-      <p>Minimal host shell (v1 scaffold).</p>
-    </main>
+    <AppShell
+      sidebar={
+        <SidebarNav
+          title="RAWR HQ"
+          items={[
+            { label: "Home", to: "/" },
+            { label: "Mounts", to: "/mounts" },
+          ]}
+        />
+      }
+    >
+      <Router
+        routes={[
+          { path: "/", element: <HomePage /> },
+          { path: "/mounts", element: <MountsPage /> },
+        ]}
+        fallback={<NotFoundPage />}
+      />
+    </AppShell>
   );
 }
-
