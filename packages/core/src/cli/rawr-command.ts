@@ -49,8 +49,12 @@ export abstract class RawrCommand extends Command {
     return parsed;
   }
 
-  protected ok<TData>(data?: TData, meta?: Record<string, unknown>): RawrResult<TData> {
-    return { ok: true, data, meta };
+  protected ok<TData>(
+    data?: TData,
+    meta?: Record<string, unknown>,
+    warnings?: string[],
+  ): RawrResult<TData> {
+    return { ok: true, data, meta, warnings };
   }
 
   protected fail(
