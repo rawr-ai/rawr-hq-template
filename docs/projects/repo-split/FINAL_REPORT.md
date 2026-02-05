@@ -61,7 +61,8 @@ To satisfy ongoing merge-based sync, a one-time bridge merge was performed in pe
 
 - Bridge merge commit: `1e07a7bedb5a3c0d3b0e23ffee6bb1cefa8d7b8a`
 - Merge parents include personal line and `upstream/main` at `334ade3...`
-- Post-bridge sync smoke (`merge upstream/main`) is clean (`Already up to date`).
+- Post-bridge sync smoke was rerun after final template docs landed. It succeeded with expected personal-vs-template conflicts in personal-owned files (`AGENTS_SPLIT.md`, personal `FINAL_REPORT.md`) resolved by policy (keep personal-owned versions).
+- Latest sync validation merge commit in personal repo: `ee82735`.
 
 ## Agent Routing Docs
 
