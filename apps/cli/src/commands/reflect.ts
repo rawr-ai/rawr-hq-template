@@ -16,7 +16,7 @@ export default class Reflect extends RawrCommand {
 
   static flags = {
     ...RawrCommand.baseFlags,
-    limit: Flags.integer({ description: "Snippets to consider", default: 50, min: 5, max: 500 }),
+    limit: Flags.integer({ description: "Snippets to consider", default: 10, min: 3, max: 15 }),
   } as const;
 
   async run() {

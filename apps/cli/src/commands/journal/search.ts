@@ -9,7 +9,7 @@ export default class JournalSearch extends RawrCommand {
   static flags = {
     ...RawrCommand.baseFlags,
     query: Flags.string({ description: "FTS query", required: true }),
-    limit: Flags.integer({ description: "Max snippets to return", default: 10, min: 1, max: 200 }),
+    limit: Flags.integer({ description: "Max snippets to return", default: 10, min: 1, max: 15 }),
     semantic: Flags.boolean({
       description: "Semantic search (optional; falls back to keyword search if unavailable)",
       default: false,
