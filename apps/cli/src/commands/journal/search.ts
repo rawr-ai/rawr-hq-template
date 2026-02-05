@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { openJournalDb, searchSnippetsFts } from "@rawr/journal";
+import { isSemanticConfigured, openJournalDb, searchSnippetsFts, searchSnippetsSemantic } from "@rawr/journal";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class JournalSearch extends RawrCommand {
@@ -32,17 +32,24 @@ export default class JournalSearch extends RawrCommand {
     }
 
     const warnings: string[] = [];
-    if (semantic) warnings.push("semantic search not configured; falling back to keyword search");
+    const semanticConfigured = semantic && isSemanticConfigured();
+    if (semantic && !semanticConfigured)
+      warnings.push("semantic search not configured; falling back to keyword search");
 
     const db = openJournalDb(workspaceRoot);
     try {
-      const snippets = searchSnippetsFts(db, query, Number.isFinite(limit) ? limit : 10);
+      const snippets = semanticConfigured
+        ? await searchSnippetsSemantic(db, query, Number.isFinite(limit) ? limit : 10)
+        : searchSnippetsFts(db, query, Number.isFinite(limit) ? limit : 10);
       const result = this.ok({ query, snippets }, undefined, warnings.length ? warnings : undefined);
       this.outputResult(result, {
         flags: baseFlags,
         human: () => {
           if (warnings.length) for (const w of warnings) this.warn(w);
-          for (const s of snippets) this.log(`${s.id}  ${s.title}  (${s.preview})`);
+          for (const s of snippets) {
+            const score = typeof (s as any).score === "number" ? ` score=${(s as any).score.toFixed(3)}` : "";
+            this.log(`${s.id}  ${s.title}  (${s.preview})${score}`);
+          }
         },
       });
     } finally {

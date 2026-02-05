@@ -6,6 +6,8 @@ export type JournalSearchRow = Pick<JournalSnippet, "id" | "ts" | "kind" | "titl
   sourceEventId?: string;
 };
 
+export type JournalSnippetRowFull = JournalSearchRow & Pick<JournalSnippet, "body">;
+
 function parseTags(value: unknown): string[] {
   if (Array.isArray(value) && value.every((v) => typeof v === "string")) return value;
   if (typeof value !== "string") return [];
@@ -30,6 +32,10 @@ function normalizeRow(row: any): JournalSearchRow {
   };
 }
 
+function normalizeRowFull(row: any): JournalSnippetRowFull {
+  return { ...normalizeRow(row), body: String(row.body) };
+}
+
 export function openJournalDb(repoRoot: string): Database {
   const db = new Database(indexDbPath(repoRoot));
 
@@ -52,6 +58,16 @@ export function openJournalDb(repoRoot: string): Database {
       preview,
       body,
       tags
+    );
+
+    CREATE TABLE IF NOT EXISTS snippet_embeddings (
+      id TEXT PRIMARY KEY,
+      provider TEXT NOT NULL,
+      model TEXT NOT NULL,
+      dims INTEGER NOT NULL,
+      contentHash TEXT NOT NULL,
+      vector BLOB NOT NULL,
+      updatedAt TEXT NOT NULL
     );
   `);
 
@@ -119,4 +135,16 @@ export function searchSnippetsFts(db: Database, query: string, limit: number): J
     )
     .all(...ids.map((r) => r.id)) as any[];
   return rows.map(normalizeRow);
+}
+
+export function listRecentSnippetsFull(db: Database, limit: number): JournalSnippetRowFull[] {
+  const rows = db
+    .prepare(
+      `SELECT id, ts, kind, title, preview, body, tags, sourceEventId
+       FROM snippets
+       ORDER BY ts DESC
+       LIMIT $limit`,
+    )
+    .all({ $limit: limit }) as any[];
+  return rows.map(normalizeRowFull);
 }
