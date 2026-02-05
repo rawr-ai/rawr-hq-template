@@ -41,7 +41,9 @@ const resolveRepoRootFrom = (metaUrl: string) =>
 const resolvePluginEntrypoint = (pluginRoot: string) => {
   const candidates = [
     path.join(pluginRoot, "dist", "server.js"),
+    path.join(pluginRoot, "dist", "src", "server.js"),
     path.join(pluginRoot, "dist", "server", "index.js"),
+    path.join(pluginRoot, "dist", "src", "server", "index.js"),
     path.join(pluginRoot, "src", "server.ts"),
     path.join(pluginRoot, "src", "server", "index.ts"),
   ];
