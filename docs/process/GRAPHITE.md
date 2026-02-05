@@ -1,6 +1,6 @@
-# Graphite workflow (RAWR v1)
+# Graphite workflow (RAWR HQ-Template)
 
-This repo uses **Graphite** (`gt`) for stacked-PR workflows.
+This repo uses **Graphite** (`gt`) for stacked-PR workflows in `RAWR HQ-Template`.
 
 ## Core invariants
 
@@ -20,3 +20,6 @@ gt create -am "type(scope): summary" agent-A-rawr-slice
 gt restack --upstack
 ```
 
+## Related workflow docs
+
+- End-to-end agent loops: `docs/process/AGENT_LOOPS.md`

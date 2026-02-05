@@ -1,8 +1,10 @@
-# RAWR — Local-first AI HQ (Template)
+# RAWR HQ-Template
 
-This repo is the **RAWR v1 template**: a local-first, Bun + TypeScript monorepo where the primary interface is an **oclif CLI** (`rawr`).
+`RAWR HQ-Template` is the canonical upstream template for building local-first AI headquarters with a single CLI entrypoint (`rawr`).
 
-**Why `rawr-hq`?** The GitHub org already has `RAWR-AI/rawr`. This repo is intended to **take over as `rawr`** once we’re ready to cut over. See `docs/FUTURE_RENAME.md`.
+This template is designed to be used in two roles:
+- `RAWR HQ-Template`: shared baseline and upstream for core CLI + architecture.
+- `RAWR HQ`: your personal repo created from this template, where you customize and diverge.
 
 ## Quickstart
 
@@ -11,7 +13,32 @@ bun install
 bun run test
 ```
 
-## Plan
+## Core vs Extensions
 
-See `docs/PLAN.md` (single source of truth).
+- Core lives in this template (`apps/cli`, `packages/core`, `packages/control-plane`, `packages/state`, `packages/security`, `packages/journal`).
+- Extensions should usually be plugins.
 
+Two plugin channels are intentionally separate:
+- Channel A: external oclif plugins (`rawr plugins install|link|update|...`).
+- Channel B: RAWR HQ workspace runtime plugins (`rawr hq plugins list|enable|disable|status`).
+
+## Local-Only vs Connected
+
+- Local-only (default): build and run everything from your repo without a registry dependency.
+- Connected (opt-in): install external CLI plugins from npm/GitHub and sync from upstream template.
+
+## Contribution Boundaries
+
+- Core changes intended for all users should go upstream to `RAWR HQ-Template`.
+- Personal/project-specific behavior should stay in `RAWR HQ` plugins unless intentionally promoted.
+
+## Canonical Docs
+
+- [`docs/SYSTEM.md`](docs/SYSTEM.md)
+- [`docs/PROCESS.md`](docs/PROCESS.md)
+- [`docs/PRODUCT.md`](docs/PRODUCT.md)
+- [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- [`docs/DOCS.md`](docs/DOCS.md)
+- [`docs/system/PLUGINS.md`](docs/system/PLUGINS.md)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- [`UPDATING.md`](UPDATING.md)

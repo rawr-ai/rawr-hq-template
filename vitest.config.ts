@@ -36,6 +36,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/control-plane"),
+        test: { name: "control-plane", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/journal"),
         test: { name: "journal", environment: "node", include: [...includes] },
       },
@@ -48,6 +53,11 @@ export default defineConfig({
         extends: true,
         root: r("packages/state"),
         test: { name: "state", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/session-tools"),
+        test: { name: "session-tools", environment: "node", include: [...includes] },
       },
       {
         extends: true,
@@ -68,6 +78,11 @@ export default defineConfig({
         extends: true,
         root: r("plugins/mfe-demo"),
         test: { name: "plugin-mfe-demo", environment: "jsdom", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("plugins/session-tools"),
+        test: { name: "plugin-session-tools", environment: "node", include: [...includes] },
       },
     ],
   },

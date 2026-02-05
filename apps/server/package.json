@@ -5,6 +5,7 @@
   "packageManager": "bun@1.3.7",
   "dependencies": {
     "elysia": "^1.3.12",
+    "@rawr/control-plane": "workspace:*",
     "@rawr/state": "workspace:*"
   },
   "devDependencies": {

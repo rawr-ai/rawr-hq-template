@@ -10,7 +10,7 @@ export function App() {
     <AppShell
       sidebar={
         <SidebarNav
-          title="RAWR HQ"
+          title="RAWR HQ-Template"
           items={[
             { label: "Home", to: "/" },
             { label: "Mounts", to: "/mounts" },

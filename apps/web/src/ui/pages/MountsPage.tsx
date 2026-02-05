@@ -33,7 +33,7 @@ export function MountsPage() {
 
   const ctx = useMemo<MountContext>(
     () => ({
-      hostAppId: "rawr-hq",
+      hostAppId: "rawr-hq-template",
       basePath: "/",
       getLocation: () => ({
         pathname: window.location.pathname,
@@ -132,7 +132,7 @@ export function MountsPage() {
           <div style={{ opacity: 0.8 }}>Loading…</div>
         ) : enabled.length === 0 ? (
           <div style={{ opacity: 0.8 }}>
-            No enabled plugins. Try <code>rawr plugins enable mfe-demo --risk off</code>.
+            No enabled plugins. Try <code>rawr hq plugins enable mfe-demo --risk off</code>.
           </div>
         ) : (
           <ul style={{ margin: "10px 0 0 18px", opacity: 0.95, lineHeight: 1.6 }}>

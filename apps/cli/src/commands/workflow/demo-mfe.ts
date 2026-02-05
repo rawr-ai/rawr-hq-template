@@ -14,7 +14,7 @@ export default class WorkflowDemoMfe extends RawrCommand {
   static flags = {
     ...RawrCommand.baseFlags,
     risk: Flags.string({
-      description: "Risk tolerance passed to `plugins enable`",
+      description: "Risk tolerance passed to `hq plugins enable`",
       default: "off",
       options: ["strict", "balanced", "permissive", "off"],
     }),
@@ -57,7 +57,7 @@ export default class WorkflowDemoMfe extends RawrCommand {
       {
         name: "enable",
         cmd: "bun",
-        args: ["run", "rawr", "--", "plugins", "enable", pluginDir, "--json", "--risk", risk],
+        args: ["run", "rawr", "--", "hq", "plugins", "enable", pluginDir, "--json", "--risk", risk],
         cwd: workspaceRoot,
         status: "planned",
       },
@@ -175,4 +175,3 @@ async function tryWriteDemoSnippet(input: { repoRoot: string; ok: boolean; plugi
     // best-effort
   }
 }
-

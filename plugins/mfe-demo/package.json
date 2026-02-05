@@ -1,8 +1,32 @@
 {
   "name": "@rawr/plugin-mfe-demo",
+  "version": "0.1.0",
   "private": true,
+  "description": "RAWR HQ-Template sample runtime micro-frontend plugin",
+  "license": "MIT",
   "type": "module",
   "packageManager": "bun@1.3.7",
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "exports": {
+    "./server": {
+      "types": "./src/server.ts",
+      "default": "./dist/src/server.js"
+    },
+    "./web": {
+      "types": "./src/web.ts",
+      "default": "./dist/src/web.js"
+    }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "typescript": "^5.9.3"
@@ -13,4 +37,3 @@
     "test": "vitest run"
   }
 }
-
