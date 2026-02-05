@@ -7,6 +7,8 @@ type ToolExport = {
 };
 
 const TOOLS: ToolExport[] = [
+  { command: "config show", description: "Show rawr.config.ts (if present)" },
+  { command: "config validate", description: "Validate rawr.config.ts (if present)" },
   { command: "doctor", description: "Sanity-check the RAWR HQ repo wiring" },
   { command: "dev up", description: "Start server + web dev stack" },
   { command: "routine check", description: "Run doctor + security + tests" },

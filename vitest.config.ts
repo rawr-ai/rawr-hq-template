@@ -36,6 +36,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/control-plane"),
+        test: { name: "control-plane", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/journal"),
         test: { name: "journal", environment: "node", include: [...includes] },
       },

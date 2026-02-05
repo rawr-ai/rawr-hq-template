@@ -1,6 +1,7 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
 import { isSemanticConfigured, openJournalDb, searchSnippetsFts, searchSnippetsSemantic } from "@rawr/journal";
+import { loadRawrConfig } from "@rawr/control-plane";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class JournalSearch extends RawrCommand {
@@ -36,10 +37,22 @@ export default class JournalSearch extends RawrCommand {
     if (semantic && !semanticConfigured)
       warnings.push("semantic search not configured; falling back to keyword search");
 
+    let semanticCandidateLimit: number | undefined;
+    let semanticEnv: NodeJS.ProcessEnv | undefined;
+    if (semanticConfigured) {
+      const loaded = await loadRawrConfig(workspaceRoot);
+      semanticCandidateLimit = loaded.config?.journal?.semantic?.candidateLimit ?? 200;
+      const model = loaded.config?.journal?.semantic?.model;
+      if (model) semanticEnv = { ...process.env, RAWR_EMBEDDINGS_MODEL: model };
+    }
+
     const db = openJournalDb(workspaceRoot);
     try {
       const snippets = semanticConfigured
-        ? await searchSnippetsSemantic(db, query, Number.isFinite(limit) ? limit : 10)
+        ? await searchSnippetsSemantic(db, query, Number.isFinite(limit) ? limit : 10, {
+            candidateLimit: semanticCandidateLimit,
+            env: semanticEnv,
+          })
         : searchSnippetsFts(db, query, Number.isFinite(limit) ? limit : 10);
       const result = this.ok({ query, snippets }, undefined, warnings.length ? warnings : undefined);
       this.outputResult(result, {

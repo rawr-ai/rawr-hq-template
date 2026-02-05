@@ -27,7 +27,8 @@ RAWR is a **GitHub repo template**: a Bun+TypeScript **Turborepo monorepo** whos
 
 **Control plane**
 - `rawr.config.ts` (declared intent)
-- `rawr.lock` (resolved pins + provenance)
+- `rawr.lock` (resolved pins + provenance) — planned, not implemented yet
+  - Trigger to introduce `rawr.lock`: once plugins (or workflows/tools) can be sourced outside the workspace (git URLs/registries/bundles) *or* we need a stable, auditable, repeatable “resolved plugin set” across machines/runs (pin exact artifact + provenance + hashes).
 
 **State**
 - Repo-local `.rawr/` (gitignored)

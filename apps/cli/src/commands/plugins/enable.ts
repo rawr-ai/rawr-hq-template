@@ -2,6 +2,7 @@ import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { enablePlugin as persistEnablePlugin } from "@rawr/state";
 import { loadSecurityModule, missingSecurityFn } from "../../lib/security";
+import { loadRawrConfig } from "@rawr/control-plane";
 import {
   findWorkspaceRoot,
   listWorkspacePlugins,
@@ -27,12 +28,16 @@ export default class PluginsEnable extends RawrCommand {
     force: Flags.boolean({ description: "Override gating failure (recorded later)", default: false }),
   } as const;
 
+  private hasExplicitRiskFlag(argv: string[]): boolean {
+    return argv.some((a) => a === "--risk" || a.startsWith("--risk="));
+  }
+
   async run() {
     const { args, flags } = await this.parseRawr(PluginsEnable);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     const inputId = String(args.id);
     const mode: "staged" | "repo" = flags.staged ? "staged" : "repo";
-    const riskTolerance = String(flags.risk);
+    let riskTolerance = String(flags.risk);
     const force = Boolean(flags.force);
 
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
@@ -41,6 +46,13 @@ export default class PluginsEnable extends RawrCommand {
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
+    }
+
+    // If user didn't explicitly choose --risk, prefer config default (if present).
+    if (!this.hasExplicitRiskFlag(process.argv.slice(2))) {
+      const loaded = await loadRawrConfig(workspaceRoot);
+      const configured = loaded.config?.plugins?.defaultRiskTolerance;
+      if (configured) riskTolerance = configured;
     }
 
     const plugins = await listWorkspacePlugins(workspaceRoot);

@@ -7,6 +7,7 @@
     "@oclif/core": "^4.2.10",
     "@oclif/plugin-help": "^6.2.27",
     "@oclif/plugin-plugins": "^5.4.36",
+    "@rawr/control-plane": "workspace:*",
     "@rawr/core": "workspace:*",
     "@rawr/journal": "workspace:*",
     "@rawr/state": "workspace:*",
