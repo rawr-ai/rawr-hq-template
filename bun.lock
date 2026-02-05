@@ -14,12 +14,16 @@
     },
     "apps/cli": {
       "name": "@rawr/cli",
+      "bin": {
+        "rawr": "./bin/run.js",
+      },
       "dependencies": {
         "@oclif/core": "^4.2.10",
         "@oclif/plugin-help": "^6.2.27",
         "@oclif/plugin-plugins": "^5.4.36",
         "@rawr/core": "workspace:*",
         "@rawr/security": "workspace:*",
+        "@rawr/state": "workspace:*",
         "zod": "^3.24.3",
       },
       "devDependencies": {
@@ -30,6 +34,7 @@
     "apps/server": {
       "name": "@rawr/server",
       "dependencies": {
+        "@rawr/state": "workspace:*",
         "elysia": "^1.3.12",
       },
       "devDependencies": {
@@ -65,6 +70,12 @@
     },
     "packages/security": {
       "name": "@rawr/security",
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/state": {
+      "name": "@rawr/state",
       "devDependencies": {
         "typescript": "^5.9.3",
       },
@@ -222,7 +233,10 @@
 
     "@rawr/server": ["@rawr/server@workspace:apps/server"],
 
+    "@rawr/state": ["@rawr/state@workspace:packages/state"],
+
     "@rawr/test-utils": ["@rawr/test-utils@workspace:packages/test-utils"],
+
     "@rawr/ui-sdk": ["@rawr/ui-sdk@workspace:packages/ui-sdk"],
 
     "@rawr/web": ["@rawr/web@workspace:apps/web"],

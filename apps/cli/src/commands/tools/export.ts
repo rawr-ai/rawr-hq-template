@@ -15,6 +15,8 @@ const TOOLS: ToolExport[] = [
   { command: "tools export", description: "Export a list of known CLI commands" },
   { command: "plugins list", description: "List workspace plugins" },
   { command: "plugins enable <id>", description: "Enable a workspace plugin (gated)" },
+  { command: "plugins disable <id>", description: "Disable a workspace plugin (persisted)" },
+  { command: "plugins status", description: "Show whether workspace plugins are enabled" },
   { command: "security check", description: "Run security checks" },
   { command: "security report", description: "Show the last security report" },
 ];

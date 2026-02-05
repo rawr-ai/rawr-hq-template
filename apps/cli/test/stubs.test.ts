@@ -46,7 +46,29 @@ describe("rawr command surfaces", () => {
     expect(parsed.ok).toBe(true);
     expect(parsed.data.pluginId).toBe("@rawr/plugin-hello");
     expect(parsed.data.evaluation.allowed).toBe(true);
-    expect(parsed.data.note).toContain("not persisted");
+    expect(parsed.data.state).toBeTruthy();
+    expect(parsed.data.state.plugins.enabled).toContain("@rawr/plugin-hello");
+  });
+
+  it("plugins status reflects persisted enable/disable state", () => {
+    runRawr(["plugins", "enable", "hello", "--json", "--risk", "off"]);
+    const enabledProc = runRawr(["plugins", "status", "--json"]);
+    expect(enabledProc.status).toBe(0);
+    const enabled = parseJson(enabledProc);
+    expect(enabled.ok).toBe(true);
+    const hello = enabled.data.plugins.find((p: any) => p.id === "@rawr/plugin-hello");
+    expect(hello).toBeTruthy();
+    expect(hello.enabled).toBe(true);
+
+    const disableProc = runRawr(["plugins", "disable", "hello", "--json"]);
+    expect(disableProc.status).toBe(0);
+
+    const disabledProc = runRawr(["plugins", "status", "--json"]);
+    expect(disabledProc.status).toBe(0);
+    const disabled = parseJson(disabledProc);
+    const hello2 = disabled.data.plugins.find((p: any) => p.id === "@rawr/plugin-hello");
+    expect(hello2).toBeTruthy();
+    expect(hello2.enabled).toBe(false);
   });
 
   it("security check returns a machine-readable report", () => {

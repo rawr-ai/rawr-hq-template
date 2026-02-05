@@ -8,6 +8,7 @@
     "@oclif/plugin-help": "^6.2.27",
     "@oclif/plugin-plugins": "^5.4.36",
     "@rawr/core": "workspace:*",
+    "@rawr/state": "workspace:*",
     "@rawr/security": "workspace:*",
     "zod": "^3.24.3"
   },

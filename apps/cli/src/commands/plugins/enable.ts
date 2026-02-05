@@ -1,5 +1,6 @@
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
+import { enablePlugin as persistEnablePlugin } from "@rawr/state";
 import { loadSecurityModule, missingSecurityFn } from "../../lib/security";
 import {
   findWorkspaceRoot,
@@ -79,17 +80,19 @@ export default class PluginsEnable extends RawrCommand {
       return;
     }
 
+    const nextState = await persistEnablePlugin(workspaceRoot, plugin.id);
+
     const result = this.ok({
       pluginId: plugin.id,
       evaluation,
-      note: "Enablement is not persisted yet (MVP)",
+      state: nextState,
     });
 
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {
         this.log(`${(evaluation as any)?.allowed === false ? "forced enable" : "enabled"}: ${plugin.id}`);
-        this.log("note: enablement is not persisted yet (MVP)");
+        this.log("persisted: .rawr/state/state.json");
       },
     });
   }
