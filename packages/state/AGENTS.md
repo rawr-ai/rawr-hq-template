@@ -1,23 +1,13 @@
-# @rawr/state
+# `@rawr/state`
 
-## TOC
-- [Purpose](#purpose)
-- [Entry points](#entry-points)
-- [Tests](#tests)
-- [Consumers](#consumers)
-
-## Purpose
 - Repo-local state persistence under `.rawr/state/state.json` (currently: enabled plugins + timestamps).
+- Treat `.rawr/` as disposable local state; code must handle missing/corrupt state defensively.
+- Consumed by both CLI and server to agree on “enabled plugins”.
 
-## Entry points
-- `src/index.ts`: re-exports repo state APIs + `RepoState` type.
-- `src/repo-state.ts`: `getRepoState`, `setRepoState`, `enablePlugin`, `disablePlugin`, `defaultRepoState`, `statePath`.
-- `src/types.ts`: `RepoState` schema/types.
-
-## Tests
-- No package-local tests currently (script uses `vitest run` if/when tests exist).
-
-## Consumers
-- `apps/cli` (`@rawr/cli`).
-- `apps/server` (`@rawr/server`).
+## Next
+- `src/index.ts` — public exports
+- `src/repo-state.ts` — load/save + enable/disable helpers
+- `src/types.ts` — state types
+- `../../apps/cli/src/commands/plugins/AGENTS.md` — enable/disable UX
+- `../../apps/server/AGENTS.md` — server consumes enabled-plugin ids
 

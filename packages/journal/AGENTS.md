@@ -1,23 +1,13 @@
-# @rawr/journal
+# `@rawr/journal`
 
-## TOC
-- [Purpose](#purpose)
-- [Entry points](#entry-points)
-- [Tests](#tests)
-- [Consumers](#consumers)
+- Repo-local journal storage under `.rawr/journal/` (event/snippet JSON) with an optional sqlite index for search.
+- Write path is “best effort”: JSON is the source of truth; sqlite is an index (can be rebuilt).
+- Primary consumers are CLI instrumentation + `rawr journal …` commands.
 
-## Purpose
-- Repo-local journal storage under `.rawr/journal/` (event/snippet JSON) with an optional SQLite index for search.
-
-## Entry points
-- `src/index.ts`: exports journal types + helpers.
-- `src/writer.ts`: `writeEvent`, `writeSnippet` (writes JSON; best-effort updates sqlite index).
-- `src/index-db.ts`: `openJournalDb`, `upsertSnippet`, `tailSnippets`, `searchSnippetsFts` (Bun `bun:sqlite`).
-- `src/paths.ts`: `.rawr/journal` path helpers.
-
-## Tests
-- No package-local tests currently (script uses `vitest run` if/when tests exist).
-
-## Consumers
-- `apps/cli` (`@rawr/cli`).
+## Next
+- `src/index.ts` — public exports
+- `src/writer.ts` — `writeEvent()`, `writeSnippet()` (writes JSON; updates sqlite best-effort)
+- `src/index-db.ts` — `openJournalDb()`, `tailSnippets()`, `searchSnippetsFts()`
+- `src/paths.ts` — `.rawr/journal` path helpers
+- `../../apps/cli/src/commands/journal/AGENTS.md` — query UX
 

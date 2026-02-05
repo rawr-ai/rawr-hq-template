@@ -1,26 +1,13 @@
-# @rawr/security
+# `@rawr/security`
 
-## TOC
-- [Purpose](#purpose)
-- [Entry points](#entry-points)
-- [Tests](#tests)
-- [Consumers](#consumers)
+- Deterministic, local-first security checks + gating (v1): `bun audit`, `bun pm untrusted`, and lightweight secret scanning.
+- Reports are written under `.rawr/security/` (`latest.json` + timestamped reports).
+- `gateEnable()` is the activation boundary used by `rawr plugins enable …`.
 
-## Purpose
-- Security gating for repos: dependency audit (Bun), untrusted dependency scripts (Bun), and lightweight secret scanning.
-- Writes reports to `.rawr/security/` (`latest.json` + timestamped reports).
-
-## Entry points
-- `src/index.ts`: `securityCheck`, `gateEnable`, `getSecurityReport` + exported `types` from `src/types.ts`.
-- `src/audit.ts`: Bun audit wrapper (`runBunAudit`).
-- `src/untrusted.ts`: Bun `pm untrusted` wrapper (`runBunPmUntrusted`).
-- `src/secrets.ts`: `scanSecretsRepo`, `scanSecretsStaged`, `DEFAULT_SECRET_PATTERNS`.
-- `src/report.ts`: `writeSecurityReport` (caps/truncates large reports).
-- `src/bin/security-check.ts`: tiny CLI wrapper around `securityCheck` (pre-commit style output).
-
-## Tests
-- `test/security.test.ts` (Vitest).
-
-## Consumers
-- `apps/cli` (`@rawr/cli`).
+## Next
+- `src/index.ts` — `securityCheck()`, `gateEnable()`, report helpers + types
+- `src/bin/security-check.ts` — tiny CLI wrapper (pre-commit UX)
+- `test/` — Vitest suite
+- `../../apps/cli/src/commands/security/AGENTS.md` — CLI UX
+- `../../docs/SECURITY_MODEL.md` — policy + gate boundary
 

@@ -1,20 +1,11 @@
-# @rawr/ui-sdk
+# `@rawr/ui-sdk`
 
-## TOC
-- [Purpose](#purpose)
-- [Entry points](#entry-points)
-- [Tests](#tests)
-- [Consumers](#consumers)
+- Minimal micro-frontend mounting contract: plugins export `mount(el, ctx)`; host shell owns lifecycle.
+- Keep this package tree-shakeable and side-effect free (it’s imported by web host + plugins).
 
-## Purpose
-- Minimal micro-frontend mounting contract (types + `defineMicroFrontend`) for host/app integration.
-
-## Entry points
-- `src/index.ts`: `defineMicroFrontend` and all public types (`MountContext`, `MountFn`, `MicroFrontendModule`, etc).
-
-## Tests
-- `test/ui-sdk.test.ts` (Vitest).
-
-## Consumers
-- `apps/web` (`@rawr/web`).
+## Next
+- `src/index.ts` — contract types + `defineMicroFrontend()`
+- `test/` — Vitest suite
+- `../../apps/web/AGENTS.md` — primary consumer
+- `../../plugins/mfe-demo/AGENTS.md` — example producer
 
