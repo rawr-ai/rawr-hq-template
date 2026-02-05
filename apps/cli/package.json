@@ -8,11 +8,13 @@
     "@oclif/plugin-help": "^6.2.27",
     "@oclif/plugin-plugins": "^5.4.36",
     "@rawr/core": "workspace:*",
+    "@rawr/journal": "workspace:*",
     "@rawr/state": "workspace:*",
     "@rawr/security": "workspace:*",
     "zod": "^3.24.3"
   },
   "devDependencies": {
+    "@types/bun": "^1.2.10",
     "@types/node": "^22.14.0",
     "typescript": "^5.9.3"
   },

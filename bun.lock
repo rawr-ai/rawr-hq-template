@@ -22,11 +22,13 @@
         "@oclif/plugin-help": "^6.2.27",
         "@oclif/plugin-plugins": "^5.4.36",
         "@rawr/core": "workspace:*",
+        "@rawr/journal": "workspace:*",
         "@rawr/security": "workspace:*",
         "@rawr/state": "workspace:*",
         "zod": "^3.24.3",
       },
       "devDependencies": {
+        "@types/bun": "^1.2.10",
         "@types/node": "^22.14.0",
         "typescript": "^5.9.3",
       },
@@ -65,6 +67,13 @@
         "@oclif/core": "^4.2.10",
       },
       "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/journal": {
+      "name": "@rawr/journal",
+      "devDependencies": {
+        "@types/bun": "^1.2.10",
         "typescript": "^5.9.3",
       },
     },
@@ -227,6 +236,8 @@
 
     "@rawr/core": ["@rawr/core@workspace:packages/core"],
 
+    "@rawr/journal": ["@rawr/journal@workspace:packages/journal"],
+
     "@rawr/plugin-hello": ["@rawr/plugin-hello@workspace:plugins/hello"],
 
     "@rawr/security": ["@rawr/security@workspace:packages/security"],
@@ -309,6 +320,8 @@
 
     "@types/babel__traverse": ["@types/babel__traverse@7.28.0", "", { "dependencies": { "@babel/types": "^7.28.2" } }, "sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q=="],
 
+    "@types/bun": ["@types/bun@1.3.8", "", { "dependencies": { "bun-types": "1.3.8" } }, "sha512-3LvWJ2q5GerAXYxO2mffLTqOzEu5qnhEAlh48Vnu8WQfnmSwbgagjGZV6BoHKJztENYEDn6QmVd949W4uESRJA=="],
+
     "@types/chai": ["@types/chai@5.2.3", "", { "dependencies": { "@types/deep-eql": "*", "assertion-error": "^2.0.1" } }, "sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA=="],
 
     "@types/deep-eql": ["@types/deep-eql@4.0.2", "", {}, "sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw=="],
@@ -360,6 +373,8 @@
     "brace-expansion": ["brace-expansion@2.0.2", "", { "dependencies": { "balanced-match": "^1.0.0" } }, "sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ=="],
 
     "browserslist": ["browserslist@4.28.1", "", { "dependencies": { "baseline-browser-mapping": "^2.9.0", "caniuse-lite": "^1.0.30001759", "electron-to-chromium": "^1.5.263", "node-releases": "^2.0.27", "update-browserslist-db": "^1.2.0" }, "bin": { "browserslist": "cli.js" } }, "sha512-ZC5Bd0LgJXgwGqUknZY/vkUQ04r8NXnJZ3yYi4vDmSiZmC/pdSN0NbNRPxZpbtO4uAfDUAFffO8IZoM3Gj8IkA=="],
+
+    "bun-types": ["bun-types@1.3.8", "", { "dependencies": { "@types/node": "*" } }, "sha512-fL99nxdOWvV4LqjmC+8Q9kW3M4QTtTR1eePs94v5ctGqU8OeceWrSUaRw3JYb7tU3FkMIAjkueehrHPPPGKi5Q=="],
 
     "caniuse-lite": ["caniuse-lite@1.0.30001767", "", {}, "sha512-34+zUAMhSH+r+9eKmYG+k2Rpt8XttfE4yXAjoZvkAPs15xcYQhyBYdalJ65BzivAvGRMViEjy6oKr/S91loekQ=="],
 
