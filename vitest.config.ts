@@ -56,6 +56,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/session-tools"),
+        test: { name: "session-tools", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/test-utils"),
         test: { name: "integration", environment: "node", include: [...includes] },
       },
@@ -73,6 +78,11 @@ export default defineConfig({
         extends: true,
         root: r("plugins/mfe-demo"),
         test: { name: "plugin-mfe-demo", environment: "jsdom", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("plugins/session-tools"),
+        test: { name: "plugin-session-tools", environment: "node", include: [...includes] },
       },
     ],
   },

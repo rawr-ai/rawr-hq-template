@@ -1,0 +1,4 @@
+{"type":"summary","summary":"Summarize the session so far"}
+{"type":"user","cwd":"/tmp/rawr-fixture-claude","gitBranch":"main","sessionId":"fixture-claude-001","timestamp":"2026-02-05T00:00:00.000Z","message":{"model":"claude-3-5-sonnet","content":[{"type":"input_text","text":"Hello from the fixture"}]}}
+{"type":"assistant","timestamp":"2026-02-05T00:00:01.000Z","message":{"model":"claude-3-5-sonnet","content":[{"type":"text","text":"Hi! This is a fixture response."}]}}
+
