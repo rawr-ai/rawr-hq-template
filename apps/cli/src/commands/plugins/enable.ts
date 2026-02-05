@@ -6,6 +6,7 @@ import {
   listWorkspacePlugins,
   resolvePluginId,
 } from "../../lib/workspace-plugins";
+import { Flags } from "@oclif/core";
 
 export default class PluginsEnable extends RawrCommand {
   static description = "Enable a workspace plugin (gated)";
@@ -16,12 +17,22 @@ export default class PluginsEnable extends RawrCommand {
 
   static flags = {
     ...RawrCommand.baseFlags,
+    risk: Flags.string({
+      description: "Risk tolerance: strict | balanced | permissive | off",
+      default: "balanced",
+      options: ["strict", "balanced", "permissive", "off"],
+    }),
+    staged: Flags.boolean({ description: "Gate enablement based on staged scan", default: false }),
+    force: Flags.boolean({ description: "Override gating failure (recorded later)", default: false }),
   } as const;
 
   async run() {
     const { args, flags } = await this.parseRawr(PluginsEnable);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     const inputId = String(args.id);
+    const mode: "staged" | "repo" = flags.staged ? "staged" : "repo";
+    const riskTolerance = String(flags.risk);
+    const force = Boolean(flags.force);
 
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     if (!workspaceRoot) {
@@ -44,19 +55,29 @@ export default class PluginsEnable extends RawrCommand {
     }
 
     const security = await loadSecurityModule();
-    const evaluateEnablement = security.evaluateEnablement;
-    if (typeof evaluateEnablement !== "function") {
-      const result = this.fail(missingSecurityFn("evaluateEnablement"), { code: "NOT_IMPLEMENTED" });
+    const gateEnable = security.gateEnable;
+    if (typeof gateEnable !== "function") {
+      const result = this.fail(missingSecurityFn("gateEnable"), { code: "NOT_IMPLEMENTED" });
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
 
-    const evaluation = await evaluateEnablement(plugin.id, {
-      cwd: process.cwd(),
-      dryRun: baseFlags.dryRun,
-      yes: baseFlags.yes,
+    const evaluation = await gateEnable({
+      pluginId: plugin.id,
+      riskTolerance,
+      mode,
     });
+
+    if ((evaluation as any)?.allowed === false && !force) {
+      const result = this.fail("Plugin enablement blocked by security gate", {
+        code: "SECURITY_GATE_BLOCKED",
+        details: evaluation,
+      });
+      this.outputResult(result, { flags: baseFlags });
+      this.exit(1);
+      return;
+    }
 
     const result = this.ok({
       pluginId: plugin.id,
@@ -67,7 +88,7 @@ export default class PluginsEnable extends RawrCommand {
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {
-        this.log(`enabled: ${plugin.id}`);
+        this.log(`${(evaluation as any)?.allowed === false ? "forced enable" : "enabled"}: ${plugin.id}`);
         this.log("note: enablement is not persisted yet (MVP)");
       },
     });
