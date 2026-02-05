@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { listRepoFiles, listStagedPaths, readStagedBlob } from "./git.js";
 import type { SecurityFinding } from "./types.js";
 
-export type SecretPattern = { id: string; re: RegExp; severity?: SecurityFinding["severity"] };
+export type SecretPattern = { id: string; re: RegExp; severity?: "high" | "critical" };
 
 // MVP: small, obvious patterns only (favor low false-positive rate).
 export const DEFAULT_SECRET_PATTERNS: SecretPattern[] = [
@@ -111,4 +111,3 @@ export async function scanSecretsRepo(opts: {
 
   return findings;
 }
-

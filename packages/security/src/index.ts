@@ -50,6 +50,7 @@ function sortFindings(findings: SecurityFinding[]): SecurityFinding[] {
     secret: 0,
     untrustedDependencyScripts: 1,
     vulnerability: 2,
+    toolError: 3,
   };
 
   return findings.slice().sort((a, b) => {
