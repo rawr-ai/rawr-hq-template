@@ -20,3 +20,6 @@ gt create -am "type(scope): summary" agent-A-rawr-slice
 gt restack --upstack
 ```
 
+## Related workflow docs
+
+- End-to-end agent loops: `docs/process/AGENT_LOOPS.md`

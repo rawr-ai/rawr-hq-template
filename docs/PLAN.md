@@ -93,6 +93,11 @@ Match `civ7-modding-tools`:
 - TypeScript: `build` emits `dist/**` (base config allows emit); `typecheck` uses `--noEmit` (web `build` also passes `--noEmit` before Vite)
 - `turbo run dev` targets long-running apps only (server + web); CLI uses `dev:cli` if needed
 
+### Agent workflow loops
+
+- Canonical end-to-end agent loops live in `docs/process/AGENT_LOOPS.md`.
+- Use those loops to choose axis-specific delivery flow (core CLI command, CLI plugin, workspace plugin, micro-frontend, API route, workflow command).
+
 ### Parallel agent slicing
 
 Worktrees root:
