@@ -24,6 +24,7 @@ const TOOLS: ToolExport[] = [
   { command: "journal search --query <q>", description: "Search journal snippets" },
   { command: "journal show <id>", description: "Show a specific snippet" },
   { command: "reflect", description: "Suggest commands/workflows based on journal" },
+  { command: "workflow harden", description: "Run snapshot + security + posture workflow" },
 ];
 
 export default class ToolsExport extends RawrCommand {
