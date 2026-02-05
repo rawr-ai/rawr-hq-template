@@ -1,0 +1,60 @@
+import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { spawn } from "node:child_process";
+
+export default class RoutineStart extends RawrCommand {
+  static description = "Start the dev stack (alias for dev up)";
+
+  static flags = {
+    ...RawrCommand.baseFlags,
+  } as const;
+
+  async run() {
+    const { flags } = await this.parseRawr(RoutineStart);
+    const baseFlags = RawrCommand.extractBaseFlags(flags);
+
+    const workspaceRoot = await findWorkspaceRoot(process.cwd());
+    if (!workspaceRoot) {
+      const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)");
+      this.outputResult(result, { flags: baseFlags });
+      this.exit(2);
+      return;
+    }
+
+    const cmd = "bun";
+    const args = ["run", "dev"];
+
+    if (baseFlags.json || baseFlags.dryRun) {
+      const result = this.ok({ cmd, args, cwd: workspaceRoot });
+      this.outputResult(result, {
+        flags: baseFlags,
+        human: () => {
+          this.log(`cwd: ${workspaceRoot}`);
+          this.log(`$ ${cmd} ${args.join(" ")}`);
+        },
+      });
+      return;
+    }
+
+    const child = spawn(cmd, args, {
+      cwd: workspaceRoot,
+      stdio: "inherit",
+      env: { ...process.env },
+    });
+
+    const forwardSignal = (signal: NodeJS.Signals) => {
+      if (child.killed) return;
+      try {
+        child.kill(signal);
+      } catch {
+        // ignore
+      }
+    };
+
+    process.on("SIGINT", () => forwardSignal("SIGINT"));
+    process.on("SIGTERM", () => forwardSignal("SIGTERM"));
+
+    await new Promise<void>((resolve) => child.on("exit", () => resolve()));
+  }
+}
+

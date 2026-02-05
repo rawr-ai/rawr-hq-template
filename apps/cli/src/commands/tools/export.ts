@@ -9,6 +9,9 @@ type ToolExport = {
 const TOOLS: ToolExport[] = [
   { command: "doctor", description: "Sanity-check the RAWR HQ repo wiring" },
   { command: "dev up", description: "Start server + web dev stack" },
+  { command: "routine check", description: "Run doctor + security + tests" },
+  { command: "routine start", description: "Start dev stack (alias)" },
+  { command: "routine snapshot", description: "Write a routine snapshot packet" },
   { command: "tools export", description: "Export a list of known CLI commands" },
   { command: "plugins list", description: "List workspace plugins" },
   { command: "plugins enable <id>", description: "Enable a workspace plugin (gated)" },
