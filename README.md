@@ -32,6 +32,12 @@ Two plugin channels are intentionally separate:
 - Core changes intended for all users should go upstream to `RAWR HQ-Template`.
 - Personal/project-specific behavior should stay in `RAWR HQ` plugins unless intentionally promoted.
 
+## Agent Routing
+
+- If you are deciding where to implement a change, use [`AGENTS_SPLIT.md`](AGENTS_SPLIT.md).
+- Template-side contribution rules are defined in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- Personal-repo sync expectations are defined in [`UPDATING.md`](UPDATING.md).
+
 ## Canonical Docs
 
 - [`docs/SYSTEM.md`](docs/SYSTEM.md)
