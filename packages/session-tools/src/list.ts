@@ -50,27 +50,48 @@ function guessClaudeProjectName(dirName: string): string {
   return dirName;
 }
 
+function hasMetadataFilters(filters: SessionFilters): boolean {
+  return Boolean(filters.project || filters.cwdContains || filters.branch || filters.model || filters.since || filters.until);
+}
+
+type NewestFileCandidate = {
+  filePath: string;
+  projectName: string;
+  modifiedMs: number;
+  sizeBytes: number;
+};
+
+function pushNewestBounded(files: NewestFileCandidate[], next: NewestFileCandidate, max: number): void {
+  if (files.length < max) {
+    files.push(next);
+    if (files.length === max) files.sort((a, b) => a.modifiedMs - b.modifiedMs);
+    return;
+  }
+  if (!files.length || next.modifiedMs <= files[0]!.modifiedMs) return;
+  files[0] = next;
+  files.sort((a, b) => a.modifiedMs - b.modifiedMs);
+}
+
 export async function listSessions(input: {
   source: SessionSourceFilter;
   limit: number;
   filters?: SessionFilters;
 }): Promise<SessionListItem[]> {
   const limit = input.limit > 0 ? input.limit : 0;
-  const sourceLimit = limit > 0 ? limit : 0;
   const filters = input.filters ?? {};
+  const sourceLimit = limit > 0 && !hasMetadataFilters(filters) ? limit : 0;
 
   const sessions: SessionListItem[] = [];
 
   if (input.source === "claude" || input.source === "all") {
-    let claudeCollected = 0;
+    const claudeCandidates: NewestFileCandidate[] = [];
     const projectsDir = getClaudeProjectsDir();
     if (await pathExists(projectsDir)) {
       const projectFilter = filters.project ? String(filters.project).trim() : "";
       const absoluteProjectDir =
         projectFilter && looksLikePath(projectFilter) ? path.resolve(projectFilter.replace(/^~\//, `${process.env.HOME ?? ""}/`)) : null;
       const dirs = await fs.readdir(projectsDir, { withFileTypes: true });
-      claudeDirs: for (const d of dirs) {
-        if (sourceLimit && claudeCollected >= sourceLimit) break;
+      for (const d of dirs) {
         if (!d.isDirectory()) continue;
         if (d.name.startsWith(".")) continue;
         const projectDir = absoluteProjectDir ?? path.join(projectsDir, d.name);
@@ -86,7 +107,6 @@ export async function listSessions(input: {
           continue;
         }
         for (const f of files) {
-          if (sourceLimit && claudeCollected >= sourceLimit) break claudeDirs;
           const abs = path.join(projectDir, f);
           let stat: Awaited<ReturnType<typeof fs.stat>>;
           try {
@@ -94,42 +114,44 @@ export async function listSessions(input: {
           } catch {
             continue;
           }
-          const modified = new Date(stat.mtimeMs).toISOString();
-          const meta = await getClaudeSessionMetadata(abs);
-          const title = meta.summaries && meta.summaries.length ? meta.summaries.at(-1) : meta.firstUserMessage;
-          sessions.push({
-            path: abs,
-            sessionId: meta.sessionId,
-            source: "claude",
-            title: title ?? undefined,
-            project: guessClaudeProjectName(d.name),
-            cwd: meta.cwd,
-            gitBranch: meta.gitBranch,
-            model: meta.model,
-            modelProvider: meta.modelProvider,
-            modified,
-            started: meta.timestamp,
-            sizeKb: Math.floor(stat.size / 1024),
-          });
-          claudeCollected += 1;
+          const next: NewestFileCandidate = {
+            filePath: abs,
+            projectName: guessClaudeProjectName(d.name),
+            modifiedMs: stat.mtimeMs,
+            sizeBytes: stat.size,
+          };
+          if (sourceLimit) pushNewestBounded(claudeCandidates, next, sourceLimit);
+          else claudeCandidates.push(next);
         }
         if (absoluteProjectDir) break;
+      }
+      claudeCandidates.sort((a, b) => b.modifiedMs - a.modifiedMs);
+      for (const candidate of claudeCandidates) {
+        const modified = new Date(candidate.modifiedMs).toISOString();
+        const meta = await getClaudeSessionMetadata(candidate.filePath);
+        const title = meta.summaries && meta.summaries.length ? meta.summaries.at(-1) : meta.firstUserMessage;
+        sessions.push({
+          path: candidate.filePath,
+          sessionId: meta.sessionId,
+          source: "claude",
+          title: title ?? undefined,
+          project: candidate.projectName,
+          cwd: meta.cwd,
+          gitBranch: meta.gitBranch,
+          model: meta.model,
+          modelProvider: meta.modelProvider,
+          modified,
+          started: meta.timestamp,
+          sizeKb: Math.floor(candidate.sizeBytes / 1024),
+        });
       }
     }
   }
 
   if (input.source === "codex" || input.source === "all") {
-    let codexCollected = 0;
     const files = await listCodexSessionFiles(sourceLimit || undefined);
     for (const f of files) {
-      if (sourceLimit && codexCollected >= sourceLimit) break;
-      let stat: Awaited<ReturnType<typeof fs.stat>>;
-      try {
-        stat = await fs.stat(f.filePath);
-      } catch {
-        continue;
-      }
-      const modified = new Date(stat.mtimeMs).toISOString();
+      const modified = new Date(f.modifiedMs).toISOString();
       const meta = await getCodexSessionMetadata(f.filePath);
       sessions.push({
         path: f.filePath,
@@ -145,9 +167,8 @@ export async function listSessions(input: {
         modelContextWindow: meta.modelContextWindow,
         modified,
         started: meta.timestamp,
-        sizeKb: Math.floor(stat.size / 1024),
+        sizeKb: Math.floor(f.sizeBytes / 1024),
       });
-      codexCollected += 1;
     }
   }
 

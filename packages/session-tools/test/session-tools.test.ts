@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import path from "node:path";
+import os from "node:os";
+import fs from "node:fs/promises";
 import {
   chunkMessages,
   detectSessionFormat,
   extractSession,
+  listSessions,
   resolveSession,
   searchSessionsByContent,
   searchSessionsByMetadata,
@@ -127,5 +130,47 @@ describe("@rawr/session-tools", () => {
     expect(hits.length).toBe(1);
     expect(hits[0]?.matchCount).toBeGreaterThan(0);
   });
-});
 
+  it("returns newest codex sessions when limit is set", async () => {
+    const previousHome = process.env.HOME;
+    const previousCodexHome = process.env.CODEX_HOME;
+    const tmpHome = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-session-tools-home-"));
+    try {
+      process.env.HOME = tmpHome;
+      delete process.env.CODEX_HOME;
+
+      const sessionsDir = path.join(tmpHome, ".codex", "sessions", "2026", "02", "05");
+      await fs.mkdir(sessionsDir, { recursive: true });
+
+      const oldFile = path.join(sessionsDir, "rollout-old.jsonl");
+      const midFile = path.join(sessionsDir, "rollout-mid.jsonl");
+      const newFile = path.join(sessionsDir, "rollout-new.jsonl");
+      const payload = (id: string) =>
+        `{"type":"session_meta","timestamp":"2026-02-05T00:00:00.000Z","payload":{"id":"${id}","cwd":"/tmp/rawr-fixture-codex","timestamp":"2026-02-05T00:00:00.000Z","git":{"branch":"codex/rawr-s5-session-tools"},"model":"gpt-5.2","model_provider":"openai","info":{"model_context_window":128000}}}\n`;
+
+      await fs.writeFile(oldFile, payload("old"), "utf8");
+      await fs.writeFile(midFile, payload("mid"), "utf8");
+      await fs.writeFile(newFile, payload("new"), "utf8");
+
+      await fs.utimes(oldFile, new Date("2026-02-01T00:00:00.000Z"), new Date("2026-02-01T00:00:00.000Z"));
+      await fs.utimes(midFile, new Date("2026-02-02T00:00:00.000Z"), new Date("2026-02-02T00:00:00.000Z"));
+      await fs.utimes(newFile, new Date("2026-02-03T00:00:00.000Z"), new Date("2026-02-03T00:00:00.000Z"));
+
+      const sessions = await listSessions({
+        source: "codex",
+        limit: 2,
+        filters: {},
+      });
+
+      expect(sessions).toHaveLength(2);
+      expect(path.basename(sessions[0]!.path)).toBe("rollout-new.jsonl");
+      expect(path.basename(sessions[1]!.path)).toBe("rollout-mid.jsonl");
+    } finally {
+      if (previousHome == null) delete process.env.HOME;
+      else process.env.HOME = previousHome;
+      if (previousCodexHome == null) delete process.env.CODEX_HOME;
+      else process.env.CODEX_HOME = previousCodexHome;
+      await fs.rm(tmpHome, { recursive: true, force: true });
+    }
+  });
+});

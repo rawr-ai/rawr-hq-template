@@ -24,7 +24,12 @@ export function getCodexHomeDirs(): string[] {
   return [...new Set(homes)];
 }
 
-export type CodexSessionFile = { filePath: string; status: "live" | "archived" };
+export type CodexSessionFile = {
+  filePath: string;
+  status: "live" | "archived";
+  modifiedMs: number;
+  sizeBytes: number;
+};
 
 async function* walkFiles(rootDir: string): AsyncGenerator<string> {
   const stack: string[] = [rootDir];
@@ -44,12 +49,22 @@ async function* walkFiles(rootDir: string): AsyncGenerator<string> {
   }
 }
 
+function pushNewestBounded(files: CodexSessionFile[], next: CodexSessionFile, max: number): void {
+  if (files.length < max) {
+    files.push(next);
+    if (files.length === max) files.sort((a, b) => a.modifiedMs - b.modifiedMs);
+    return;
+  }
+  if (!files.length || next.modifiedMs <= files[0]!.modifiedMs) return;
+  files[0] = next;
+  files.sort((a, b) => a.modifiedMs - b.modifiedMs);
+}
+
 export async function listCodexSessionFiles(limit?: number): Promise<CodexSessionFile[]> {
   const max = typeof limit === "number" && limit > 0 ? limit : 0;
   const out: CodexSessionFile[] = [];
   const seen = new Set<string>();
   for (const home of getCodexHomeDirs()) {
-    if (max && out.length >= max) break;
     const live = path.join(home, "sessions");
     const archived = path.join(home, "archived_sessions");
     const sources: Array<{ dir: string; status: "live" | "archived" }> = [
@@ -57,16 +72,28 @@ export async function listCodexSessionFiles(limit?: number): Promise<CodexSessio
       { dir: archived, status: "archived" },
     ];
     for (const src of sources) {
-      if (max && out.length >= max) break;
       if (!(await pathExists(src.dir))) continue;
       for await (const f of walkFiles(src.dir)) {
-        if (max && out.length >= max) break;
         if (!f.endsWith(".jsonl") && !f.endsWith(".json")) continue;
         if (seen.has(f)) continue;
         seen.add(f);
-        out.push({ filePath: f, status: src.status });
+        let stat: Awaited<ReturnType<typeof fs.stat>>;
+        try {
+          stat = await fs.stat(f);
+        } catch {
+          continue;
+        }
+        const next: CodexSessionFile = {
+          filePath: f,
+          status: src.status,
+          modifiedMs: stat.mtimeMs,
+          sizeBytes: stat.size,
+        };
+        if (max) pushNewestBounded(out, next, max);
+        else out.push(next);
       }
     }
   }
+  out.sort((a, b) => b.modifiedMs - a.modifiedMs);
   return out;
 }
