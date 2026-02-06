@@ -1,0 +1,18 @@
+{
+  "name": "rawr-hq",
+  "version": "0.1.0",
+  "description": "Canonical RAWR HQ agent plugin for orientation and end-to-end plugin creation workflows across template and personal HQ repos.",
+  "author": {
+    "name": "RAWR AI"
+  },
+  "keywords": [
+    "rawr",
+    "rawr-hq",
+    "template",
+    "plugins",
+    "oclif",
+    "micro-frontends",
+    "agent-skill",
+    "workflow"
+  ]
+}
