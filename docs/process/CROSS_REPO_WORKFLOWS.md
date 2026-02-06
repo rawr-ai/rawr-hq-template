@@ -27,7 +27,8 @@ Do not create operational plugins in template.
 ## Journey 3: Sync Template into Personal
 
 Use `docs/process/UPSTREAM_SYNC_RUNBOOK.md` in personal repo.
-Default method is merge-based sync branch.
+Use merge-first as the only normal flow.
+Rebase is escape-hatch only when merge is blocked by a concrete constraint.
 
 ## Journey 4: Global CLI Ownership Switching
 

@@ -78,7 +78,12 @@ git push -u origin "$SYNC_BRANCH"
 
 Then integrate via PR into `main` (preferred for protected branches).
 
-## 4) Variant: Rebase Sync (`RAWR HQ`, Low Divergence Only)
+## 4) Escape Hatch Only: Rebase Sync (`RAWR HQ`)
+
+Rebase is not a normal sync path in this repo.
+Use it only as an escape hatch when the merge-based sync path is concretely blocked
+(for example, a branch-policy or tooling constraint that cannot be resolved in the merge flow).
+When used, document why merge was blocked and keep follow-up changes merge-first.
 
 ```bash
 STAMP="$(date +%Y%m%d-%H%M%S)"
@@ -105,7 +110,8 @@ bun run test
 git push --force-with-lease -u origin "$SYNC_BRANCH"
 ```
 
-Use merge path by default; use rebase only when divergence is small and branch protections allow the resulting workflow.
+Use merge path as the only normal workflow.
+Use rebase only as an explicit escape hatch.
 
 ## 5) Conflict Handling
 
