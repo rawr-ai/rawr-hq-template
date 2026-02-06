@@ -38,3 +38,9 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 
 - "Will every template user benefit from this by default?" -> template.
 - "Is this only for this HQ or plugin set?" -> personal repo.
+
+## Graphite Policy
+
+- Graphite is enabled in this template repo.
+- Trunk must remain `main`.
+- Use stacked branches for template/core work; keep stacks clean and close superseded PR branches after landing.

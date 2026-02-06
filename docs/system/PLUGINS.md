@@ -50,3 +50,7 @@ Scaffolded plugin package templates should include these fields by default.
 - Local-only default: author/build/enable runtime plugins in workspace.
 - Connected opt-in: publish plugins, install external oclif plugins, sync from upstream template.
 
+## Current Publish Posture
+
+- Current default posture is local-only.
+- Template sample plugin packages are marked `private: true`; npm publishing is intentionally blocked until publish rails are explicitly enabled.

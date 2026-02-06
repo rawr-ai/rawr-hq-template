@@ -15,7 +15,7 @@
 - A plugin’s id is either:
   - `package.json#name` (preferred), or
   - the directory name under `plugins/` (fallback).
-- CLI accepts either form: `rawr plugins enable <id>` (“directory name or package name”).
+- Use workspace runtime commands via `rawr hq plugins enable <id>` (“directory name or package name”).
 
 ## Manifest Conventions
 - Always include a `package.json` at the plugin root.
@@ -35,5 +35,5 @@
 
 ## Security And Enablement
 - Enablement is an explicit activation boundary:
-  - `rawr plugins enable <id>` runs security gating and persists state.
+  - `rawr hq plugins enable <id>` runs security gating and persists state.
 - Security model reference: `docs/SECURITY_MODEL.md`.
