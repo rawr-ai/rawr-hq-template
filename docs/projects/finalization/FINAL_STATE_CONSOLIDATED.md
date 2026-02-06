@@ -1,8 +1,8 @@
 # Final State Consolidated
 
 ## Repositories
-- Template: `rawr-ai/rawr-hq-template` at `a2d1d15`
-- Personal: `rawr-ai/rawr-hq` at `caa9dd3`
+- Template: `rawr-ai/rawr-hq-template` at `e6acfa3`
+- Personal: `rawr-ai/rawr-hq` at `751f2b2`
 
 ## Acceptance Criteria Check
 - [x] Both repos on `main`.

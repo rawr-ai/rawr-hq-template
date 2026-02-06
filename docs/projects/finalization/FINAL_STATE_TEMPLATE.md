@@ -9,23 +9,24 @@
 ## Branch State
 ```bash
 ## main...origin/main
-?? docs/projects/finalization/FINAL_STATE_CONSOLIDATED.md
-?? docs/projects/finalization/FINAL_STATE_TEMPLATE.md
+ M docs/projects/finalization/FINAL_STATE_TEMPLATE.md
 ---
-* main                a2d1d15 [origin/main] test(cli): harden routine and reflect test reliability (#37)
-  remotes/origin/HEAD -> origin/main
-  remotes/origin/main a2d1d15 test(cli): harden routine and reflect test reliability (#37)
+* main                                      e6acfa3 [origin/main] docs(finalization): add template and consolidated end-state reports (#38)
+  remotes/origin/HEAD                       -> origin/main
+  remotes/origin/codex/finalization-reports 519d0b7 docs(finalization): add template and consolidated end-state reports
+  remotes/origin/main                       e6acfa3 docs(finalization): add template and consolidated end-state reports (#38)
 ```
 
 ## Worktree State
 ```bash
-/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template  a2d1d15 [main]
+/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template  e6acfa3 [main]
 ```
 
 ## Remote Branch Inventory
 ```bash
-origin a2d1d15
-origin/main a2d1d15
+origin e6acfa3
+origin/codex/finalization-reports 519d0b7
+origin/main e6acfa3
 ```
 
 ## Graphite State
