@@ -35,6 +35,7 @@ Candidates were selected from `origin/*` where:
 All listed candidate branches were deleted successfully via GitHub API.
 
 ## Remaining Remote Branches (Non-Merged)
+- `02-05-fix_server_load_dist_src_server_entrypoints`
 - `02-05-feat_factory_add_command_workflow_plugin_generators`
 - `02-05-feat_mfe_add_demo_plugin_web_mounting`
 - `02-05-feat_security_add_posture_packet`
@@ -56,6 +57,8 @@ All listed candidate branches were deleted successfully via GitHub API.
 - Remote branch heads before cleanup: 33
 - Remote branch heads after cleanup: 17
 - Deleted: 16
+- Remaining non-merged non-main branches: 16
+- As-of template `main`: `87fc60c`
 
 ## Graphite Tracking Cleanup
 
