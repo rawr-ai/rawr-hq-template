@@ -32,6 +32,18 @@ Channel B is local-first and integrates with runtime state and security gating.
 - Enabled set is persisted to `.rawr/state/state.json`.
 - Server/web paths consume enabled state.
 
+## Template Plugin Role Contract
+
+Template plugins must declare role metadata in `package.json#rawr`:
+- `templateRole`: `fixture | example | operational`
+- `channel`: `A | B | both`
+- `publishTier`: `blocked | candidate`
+
+Template default policy:
+- `fixture` and `example` are baseline-allowed.
+- `operational` is not a template default and should live in personal HQ unless explicitly promoted.
+- Template plugin packages remain `private: true` unless release policy explicitly changes.
+
 ## Publishing Rails
 
 For publishable plugin packages, include:
@@ -54,3 +66,8 @@ Scaffolded plugin package templates should include these fields by default.
 
 - Current default posture is local-only.
 - Template sample plugin packages are marked `private: true`; npm publishing is intentionally blocked until publish rails are explicitly enabled.
+
+## Ownership Summary
+
+- Core CLI contracts and publish ownership are template-owned.
+- Operational plugin authoring is personal-HQ-owned by default.

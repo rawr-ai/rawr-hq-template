@@ -14,18 +14,21 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
   - `packages/security`
   - `packages/journal`
 - You are changing template-wide scaffolding, governance docs, or baseline workflows.
+- You are changing fixture/example plugin contracts used to validate template behavior.
 
 ## Do NOT put in template:
 
 - Personal experiments.
 - Machine-specific settings and local-only workflows.
 - Project-specific plugins that are not intended for broad reuse.
+- Operational plugins owned by a personal HQ instance.
 
 ## Modify personal `RAWR HQ` (`rawr-ai/rawr-hq`) when:
 
 - The behavior is specific to one user's local HQ.
 - The change is plugin-only and does not alter shared core contracts.
 - The change is project/product customization not meant for all template consumers.
+- You are authoring or evolving operational plugins.
 
 ## Promotion Path (Personal -> Template)
 
@@ -37,11 +40,18 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 ## Quick Decision Rule
 
 - "Will every template user benefit from this by default?" -> template.
-- "Is this only for this HQ or plugin set?" -> personal repo.
+- "Is this only for this HQ or operational plugin set?" -> personal repo.
+
+## Plugin Ownership Rule (Hard)
+
+- Template `plugins/*` are fixture/example packages only.
+- Operational plugin development starts in personal `RAWR HQ`.
+- Promote to template only when the artifact is truly baseline fixture/example material.
 
 ## Global CLI Wiring Ownership
 
 - Shared CLI contracts (including `rawr doctor global`) are template-owned.
+- CLI publishing ownership is template-only.
 - Baseline global wiring scripts (`scripts/dev/install-global-rawr.sh`, `scripts/dev/auto-refresh-main.sh`, `scripts/githooks/*`) are template baseline and should land here first.
 - Downstream personal repos may keep machine-only overrides, but those are not template defaults.
 

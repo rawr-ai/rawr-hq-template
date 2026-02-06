@@ -20,6 +20,9 @@
 - `packages/ui-sdk`
 - `plugins/mfe-demo`
 
+Template `plugins/*` are fixture/example artifacts used to validate baseline behavior.
+Operational plugin development belongs in downstream personal HQ repos.
+
 ## Plugin Channels
 
 - Channel A: external oclif plugin manager (`rawr plugins install|link|...`).
@@ -30,6 +33,7 @@ Channel B is local-first by default and uses security gating + repo-local enable
 ## Core Ownership
 
 Core UX/contracts are governed by `RAWR HQ-Template` and should be contributed upstream when intended for all users.
+`@rawr/cli` publishing ownership is template-only.
 
 ## State and Security Boundaries
 
@@ -44,4 +48,3 @@ Core UX/contracts are governed by `RAWR HQ-Template` and should be contributed u
 - `plugins.channels.external.enabled`
 
 These controls are currently policy metadata and may be enforced more strictly in future iterations.
-

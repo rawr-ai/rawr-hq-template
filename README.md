@@ -16,7 +16,8 @@ bun run test
 ## Core vs Extensions
 
 - Core lives in this template (`apps/cli`, `packages/core`, `packages/control-plane`, `packages/state`, `packages/security`, `packages/journal`).
-- Extensions should usually be plugins.
+- Template plugins are fixture/example baseline artifacts.
+- Operational plugin authoring should usually happen in personal `RAWR HQ`.
 
 Two plugin channels are intentionally separate:
 - Channel A: external oclif plugins (`rawr plugins install|link|update|...`).
@@ -31,6 +32,7 @@ Two plugin channels are intentionally separate:
 
 - Core changes intended for all users should go upstream to `RAWR HQ-Template`.
 - Personal/project-specific behavior should stay in `RAWR HQ` plugins unless intentionally promoted.
+- CLI publishing ownership remains template-only.
 
 ## Agent Routing
 
@@ -41,6 +43,7 @@ Two plugin channels are intentionally separate:
 ## Operational Runbooks
 
 - Upstream sync workflow: [`docs/process/UPSTREAM_SYNC_RUNBOOK.md`](docs/process/UPSTREAM_SYNC_RUNBOOK.md)
+- Cross-repo workflows: [`docs/process/CROSS_REPO_WORKFLOWS.md`](docs/process/CROSS_REPO_WORKFLOWS.md)
 - Plugin E2E workflow: [`docs/process/PLUGIN_E2E_WORKFLOW.md`](docs/process/PLUGIN_E2E_WORKFLOW.md)
 - Graphite workflow: [`docs/process/GRAPHITE.md`](docs/process/GRAPHITE.md)
 

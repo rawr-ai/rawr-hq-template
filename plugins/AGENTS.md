@@ -10,6 +10,7 @@
 ## Scope
 - Applies to everything under `plugins/**`.
 - Each `plugins/<dir>` is a workspace package (see root `package.json#workspaces`).
+- In template, plugin packages are fixture/example baseline artifacts by default.
 
 ## Plugin Ids
 - A plugin’s id is either:
@@ -23,6 +24,10 @@
   - `commands`: built output (match whatever `tsc` emits; commonly `./dist/src/commands`)
   - `typescript.commands`: source commands (typically `./src/commands`)
 - TypeScript convention: compile to `dist/**` (Turbo expects `dist/**` outputs).
+- Template packages must set role metadata in `package.json#rawr`:
+  - `templateRole`: `fixture | example | operational`
+  - `channel`: `A | B | both`
+  - `publishTier`: `blocked | candidate`
 
 ## Build And Test
 - Workspace-wide:
@@ -36,4 +41,5 @@
 ## Security And Enablement
 - Enablement is an explicit activation boundary:
   - `rawr hq plugins enable <id>` runs security gating and persists state.
+  - non-operational template plugins require explicit `--allow-non-operational`.
 - Security model reference: `docs/SECURITY_MODEL.md`.

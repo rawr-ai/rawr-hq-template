@@ -8,7 +8,7 @@ Contributions here should improve the shared baseline for all downstream `RAWR H
 ## Contribution Types
 
 - Core contribution (upstream): shared CLI contracts, control-plane behavior, security/state/journal architecture, template docs.
-- Plugin contribution (downstream by default): personal/project-specific commands and runtime behavior.
+- Template fixture/example plugin contribution: baseline demo/validation artifacts only.
 
 ## What Belongs Upstream
 
@@ -29,12 +29,14 @@ A plugin can be promoted into `RAWR HQ-Template` only when:
 - It has stable command/runtime contracts.
 - It includes tests and documentation.
 - It does not encode personal/machine-specific assumptions.
+- It is explicitly marked as `fixture` or `example` in `package.json#rawr.templateRole`.
 
 ## API Surface Policy
 
 - Canonical workspace runtime plugin commands are `rawr hq plugins ...`.
 - `rawr plugins ...` is reserved for Channel A (oclif plugin manager commands).
 - Command-surface changes require migration notes in `UPDATING.md`.
+- CLI publish ownership for `@rawr/cli` is template-only.
 
 ## Quality Gates
 
