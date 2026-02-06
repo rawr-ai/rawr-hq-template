@@ -50,8 +50,6 @@ function pathIndex(pathEntries: string[], needle: string): number {
 export default class DoctorGlobal extends RawrCommand {
   static description = "Validate Bun-global rawr wiring for this checkout";
 
-  static aliases = ["dr.global"];
-
   static flags = {
     ...RawrCommand.baseFlags,
   } as const;
