@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+OLD_REF="${1:-}"
+NEW_REF="${2:-}"
+IS_BRANCH_SWITCH="${3:-0}"
+
+if [ "${IS_BRANCH_SWITCH}" != "1" ]; then
+  exit 0
+fi
+
+if ! "${ROOT_DIR}/scripts/dev/auto-refresh-main.sh" "${OLD_REF}" "${NEW_REF}" "post-checkout"; then
+  echo "[rawr-auto-refresh] warning: post-checkout refresh failed; run scripts/dev/install-global-rawr.sh manually" >&2
+fi

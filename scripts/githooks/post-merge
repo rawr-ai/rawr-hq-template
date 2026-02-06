@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+if ! "${ROOT_DIR}/scripts/dev/auto-refresh-main.sh" "${ORIG_HEAD:-}" "HEAD" "post-merge"; then
+  echo "[rawr-auto-refresh] warning: post-merge refresh failed; run scripts/dev/install-global-rawr.sh manually" >&2
+fi
