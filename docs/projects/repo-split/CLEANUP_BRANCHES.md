@@ -1,5 +1,7 @@
 # Template Branch Cleanup Log
 
+> Status (2026-02-06): Historical cleanup ledger. Current branch-state truth is tracked in `docs/projects/repo-split/CLEANUP_CURRENT_STATE.md`.
+
 ## Scope
 
 Repository: `rawr-ai/rawr-hq-template`  

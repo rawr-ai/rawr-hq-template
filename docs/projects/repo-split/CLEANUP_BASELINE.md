@@ -1,5 +1,7 @@
 # Cleanup Baseline Snapshot
 
+> Status (2026-02-06): Historical snapshot. Branch inventory in this file is superseded by `docs/projects/repo-split/CLEANUP_CURRENT_STATE.md`.
+
 Timestamp (UTC): 2026-02-06T00:01:42Z
 
 ## Repo Identity

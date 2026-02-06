@@ -11,6 +11,12 @@ Date: 2026-02-06
 
 Cleanup is complete with all actionable audit findings resolved.
 
+## Current-State Addendum
+
+- As of 2026-02-06, template remote branch inventory is `main` only.
+- Current branch-state evidence is maintained in `docs/projects/repo-split/CLEANUP_CURRENT_STATE.md`.
+- Earlier branch-inventory counts in historical cleanup snapshots remain preserved for traceability.
+
 ## Findings and Dispositions
 
 1. Personal README duplicated `Agent Routing` section.
@@ -51,6 +57,7 @@ Cleanup is complete with all actionable audit findings resolved.
 - Sync health:
   - Personal repo synced from template with conflict policy for personal-owned docs.
 
-## Residual Risk (Accepted)
+## Residual Risk (Updated)
 
-- Template remote still contains non-merged historical branches unrelated to the merged stack. They were intentionally retained because they are not merged/superseded by current `main`.
+- Prior residual risk about retained non-merged template branches is closed by current-state verification (`main` only on template remote).
+- Remaining risk is documentation drift only if future branch-state changes are not reflected in the cleanup addendum.

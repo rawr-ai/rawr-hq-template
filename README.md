@@ -38,6 +38,12 @@ Two plugin channels are intentionally separate:
 - Template-side contribution rules are defined in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - Personal-repo sync expectations are defined in [`UPDATING.md`](UPDATING.md).
 
+## Operational Runbooks
+
+- Upstream sync workflow: [`docs/process/UPSTREAM_SYNC_RUNBOOK.md`](docs/process/UPSTREAM_SYNC_RUNBOOK.md)
+- Plugin E2E workflow: [`docs/process/PLUGIN_E2E_WORKFLOW.md`](docs/process/PLUGIN_E2E_WORKFLOW.md)
+- Graphite workflow: [`docs/process/GRAPHITE.md`](docs/process/GRAPHITE.md)
+
 ## Canonical Docs
 
 - [`docs/SYSTEM.md`](docs/SYSTEM.md)

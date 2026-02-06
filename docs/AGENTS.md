@@ -18,6 +18,8 @@ Applies to `docs/**`.
 - `docs/SECURITY_MODEL.md`
 - `docs/process/AGENT_LOOPS.md`
 - `docs/process/GRAPHITE.md`
+- `docs/process/UPSTREAM_SYNC_RUNBOOK.md`
+- `docs/process/PLUGIN_E2E_WORKFLOW.md`
 - `docs/process/HQ_USAGE.md`
 - `docs/process/HQ_OPERATIONS.md`
 
@@ -40,4 +42,3 @@ Use these names consistently:
 - Keep canonical truth in gateway docs and linked system/process docs.
 - Do not route active guidance through archived documents.
 - Treat parked concepts as doc-only until explicitly un-parked.
-

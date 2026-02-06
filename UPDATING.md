@@ -2,6 +2,8 @@
 
 This document describes the recommended upstream sync workflow.
 
+For executable, step-by-step sync procedures (including rollback/recovery and Graphite safety gates), use `docs/process/UPSTREAM_SYNC_RUNBOOK.md`.
+
 ## Model
 
 - Upstream template: `RAWR HQ-Template`

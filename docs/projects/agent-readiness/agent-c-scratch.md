@@ -1,0 +1,47 @@
+# Agent C Scratch Log
+
+## 2026-02-06
+
+- Read required dependency inputs:
+  - `docs/projects/agent-readiness/AGENTS_COVERAGE_MATRIX.md`
+  - `docs/process/UPSTREAM_SYNC_RUNBOOK.md`
+  - `docs/process/PLUGIN_E2E_WORKFLOW.md`
+  - `docs/projects/agent-readiness/agent-a-plan.md`
+  - `docs/projects/agent-readiness/agent-b-plan.md`
+- Loaded required skills:
+  - `docs-architecture`, `graphite`, `workflow-extractor`, `mental-map`, `skill-creator`.
+- Verified live branch/trunk state:
+  - Template repo (`rawr-hq-template`):
+    - `git ls-remote --heads origin` => only `refs/heads/main`.
+    - `gt trunk` => `main`.
+    - `gt ls` => `main` only.
+  - Personal repo (`rawr-hq`):
+    - `git ls-remote --heads origin` => `main` + `codex/agent-codex-unified-journal-domain`.
+    - `gt trunk` => `main`.
+- Identified stale cleanup claims (template repo-split docs):
+  - `CLEANUP_BASELINE.md`: reports template remote branch head count `33`.
+  - `CLEANUP_BRANCHES.md`: reports non-merged branch inventory and counts from older snapshot.
+  - `CLEANUP_FINAL.md`: residual risk still claims template remote contains non-merged historical branches.
+- Planned hygiene action:
+  - Keep historical cleanup records for traceability.
+  - Mark stale cleanup snapshots as superseded.
+  - Add current-state addendum anchored to fresh command evidence.
+- Applied root router finalization:
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/AGENTS.md`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/AGENTS.md`
+  - Added explicit repo role boundary, `AGENTS_SPLIT.md` routing pointer, Graphite required (`gt trunk`=`main`), and runbook pointers.
+- Added runbook discoverability to gateway docs in both repos:
+  - `README.md`
+  - `docs/PROCESS.md`
+  - `docs/AGENTS.md`
+- Repo-split cleanup hygiene pass (template repo):
+  - Added `docs/projects/repo-split/CLEANUP_CURRENT_STATE.md` (current truth addendum).
+  - Marked stale snapshot docs as superseded (not deleted):
+    - `docs/projects/repo-split/CLEANUP_BASELINE.md`
+    - `docs/projects/repo-split/CLEANUP_BRANCHES.md`
+  - Updated `docs/projects/repo-split/CLEANUP_FINAL.md` residual-risk wording to current state.
+- Hygiene decision:
+  - Preserve historical docs in-place for traceability.
+  - Promote a single current-state addendum for live branch truth.
+- Added gateway linkage in both repos' `UPDATING.md` to the canonical sync playbook:
+  - `docs/process/UPSTREAM_SYNC_RUNBOOK.md`.

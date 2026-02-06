@@ -14,6 +14,8 @@ See:
 - `docs/process/HQ_USAGE.md`
 - `docs/process/HQ_OPERATIONS.md`
 - `docs/process/GRAPHITE.md`
+- `docs/process/UPSTREAM_SYNC_RUNBOOK.md`
+- `docs/process/PLUGIN_E2E_WORKFLOW.md`
 
 ## Command Channel Model
 
