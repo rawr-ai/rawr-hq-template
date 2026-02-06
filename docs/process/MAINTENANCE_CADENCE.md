@@ -30,9 +30,11 @@ Run in `RAWR HQ` using:
 
 Required rehearsal:
 1. One merge-based sync simulation branch.
-2. One rebase-variant simulation branch (low-divergence only).
-3. Build + test verification for both.
-4. Cleanup of temporary rehearsal branches.
+2. Build + test verification for the merge simulation.
+3. Cleanup of temporary rehearsal branches.
+
+Rebase rehearsal is not part of routine cadence.
+Only run rebase drills as an explicit incident/escape-hatch exercise.
 
 ## Routing Change Contract
 
