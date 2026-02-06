@@ -9,24 +9,21 @@
 ## Branch State
 ```bash
 ## main...origin/main
- M docs/projects/finalization/FINAL_STATE_TEMPLATE.md
 ---
-* main                                      e6acfa3 [origin/main] docs(finalization): add template and consolidated end-state reports (#38)
-  remotes/origin/HEAD                       -> origin/main
-  remotes/origin/codex/finalization-reports 519d0b7 docs(finalization): add template and consolidated end-state reports
-  remotes/origin/main                       e6acfa3 docs(finalization): add template and consolidated end-state reports (#38)
+* main                790479c [origin/main] docs(finalization): refresh report snapshots after cleanup (#39)
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/main 790479c docs(finalization): refresh report snapshots after cleanup (#39)
 ```
 
 ## Worktree State
 ```bash
-/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template  e6acfa3 [main]
+/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template  790479c [main]
 ```
 
 ## Remote Branch Inventory
 ```bash
-origin e6acfa3
-origin/codex/finalization-reports 519d0b7
-origin/main e6acfa3
+origin 790479c
+origin/main 790479c
 ```
 
 ## Graphite State
