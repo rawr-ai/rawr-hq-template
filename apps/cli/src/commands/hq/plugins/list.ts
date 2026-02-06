@@ -1,11 +1,16 @@
 import { RawrCommand } from "@rawr/core";
-import { findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
+import { Flags } from "@oclif/core";
+import { filterOperationalPlugins, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
 
 export default class HqPluginsList extends RawrCommand {
   static description = "List RAWR HQ workspace runtime plugins";
 
   static flags = {
     ...RawrCommand.baseFlags,
+    all: Flags.boolean({
+      description: "Include fixture/example plugins (default shows operational only)",
+      default: false,
+    }),
   } as const;
 
   async run() {
@@ -21,17 +26,17 @@ export default class HqPluginsList extends RawrCommand {
     }
 
     const plugins = await listWorkspacePlugins(workspaceRoot);
-    const result = this.ok({ workspaceRoot, plugins });
+    const visiblePlugins = filterOperationalPlugins(plugins, Boolean(flags.all));
+    const result = this.ok({ workspaceRoot, plugins: visiblePlugins, excludedCount: plugins.length - visiblePlugins.length });
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {
-        if (plugins.length === 0) {
+        if (visiblePlugins.length === 0) {
           this.log("no plugins found");
           return;
         }
-        for (const plugin of plugins) this.log(plugin.id);
+        for (const plugin of visiblePlugins) this.log(plugin.id);
       },
     });
   }
 }
-

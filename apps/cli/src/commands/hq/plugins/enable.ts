@@ -21,6 +21,10 @@ export default class HqPluginsEnable extends RawrCommand {
     }),
     staged: Flags.boolean({ description: "Gate enablement based on staged scan", default: false }),
     force: Flags.boolean({ description: "Override gating failure (recorded later)", default: false }),
+    "allow-non-operational": Flags.boolean({
+      description: "Allow enabling fixture/example plugins",
+      default: false,
+    }),
   } as const;
 
   private hasExplicitRiskFlag(argv: string[]): boolean {
@@ -34,6 +38,7 @@ export default class HqPluginsEnable extends RawrCommand {
     const mode: "staged" | "repo" = flags.staged ? "staged" : "repo";
     let riskTolerance = String(flags.risk);
     const force = Boolean(flags.force);
+    const allowNonOperational = Boolean((flags as any)["allow-non-operational"]);
 
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     if (!workspaceRoot) {
@@ -57,6 +62,22 @@ export default class HqPluginsEnable extends RawrCommand {
         code: "PLUGIN_NOT_FOUND",
         meta: { knownPluginIds: plugins.map((p) => p.id) },
       });
+      this.outputResult(result, { flags: baseFlags });
+      this.exit(2);
+      return;
+    }
+
+    if (plugin.templateRole !== "operational" && !allowNonOperational) {
+      const result = this.fail(
+        `Plugin ${plugin.id} is marked ${plugin.templateRole}. Re-run with --allow-non-operational to enable explicitly.`,
+        {
+          code: "PLUGIN_ROLE_BLOCKED",
+          details: {
+            pluginId: plugin.id,
+            templateRole: plugin.templateRole,
+          },
+        },
+      );
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
@@ -104,4 +125,3 @@ export default class HqPluginsEnable extends RawrCommand {
     });
   }
 }
-

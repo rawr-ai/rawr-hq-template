@@ -35,5 +35,10 @@
     "build": "bunx tsc -p tsconfig.json",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
+  },
+  "rawr": {
+    "templateRole": "fixture",
+    "channel": "A",
+    "publishTier": "blocked"
   }
 }

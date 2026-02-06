@@ -36,11 +36,23 @@ describe("rawr command surfaces", () => {
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
-    expect(parsed.data.plugins.map((p: any) => p.id)).toContain("@rawr/plugin-hello");
+    expect(parsed.data.plugins).toEqual([]);
+    expect(parsed.data.excludedCount).toBeGreaterThanOrEqual(1);
+
+    const allProc = runRawr(["hq", "plugins", "list", "--all", "--json"]);
+    expect(allProc.status).toBe(0);
+    const allParsed = parseJson(allProc);
+    expect(allParsed.data.plugins.map((p: any) => p.id)).toContain("@rawr/plugin-hello");
   });
 
   it("hq plugins enable is gated by @rawr/security", () => {
-    const proc = runRawr(["hq", "plugins", "enable", "hello", "--json", "--risk", "off"]);
+    const blocked = runRawr(["hq", "plugins", "enable", "hello", "--json", "--risk", "off"]);
+    expect([1, 2]).toContain(blocked.status as number);
+    const blockedParsed = parseJson(blocked);
+    expect(blockedParsed.ok).toBe(false);
+    expect(blockedParsed.error.code).toBe("PLUGIN_ROLE_BLOCKED");
+
+    const proc = runRawr(["hq", "plugins", "enable", "hello", "--allow-non-operational", "--json", "--risk", "off"]);
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
@@ -51,8 +63,8 @@ describe("rawr command surfaces", () => {
   });
 
   it("hq plugins status reflects persisted enable/disable state", () => {
-    runRawr(["hq", "plugins", "enable", "hello", "--json", "--risk", "off"]);
-    const enabledProc = runRawr(["hq", "plugins", "status", "--json"]);
+    runRawr(["hq", "plugins", "enable", "hello", "--allow-non-operational", "--json", "--risk", "off"]);
+    const enabledProc = runRawr(["hq", "plugins", "status", "--all", "--json"]);
     expect(enabledProc.status).toBe(0);
     const enabled = parseJson(enabledProc);
     expect(enabled.ok).toBe(true);
@@ -63,7 +75,7 @@ describe("rawr command surfaces", () => {
     const disableProc = runRawr(["hq", "plugins", "disable", "hello", "--json"]);
     expect(disableProc.status).toBe(0);
 
-    const disabledProc = runRawr(["hq", "plugins", "status", "--json"]);
+    const disabledProc = runRawr(["hq", "plugins", "status", "--all", "--json"]);
     expect(disabledProc.status).toBe(0);
     const disabled = parseJson(disabledProc);
     const hello2 = disabled.data.plugins.find((p: any) => p.id === "@rawr/plugin-hello");
