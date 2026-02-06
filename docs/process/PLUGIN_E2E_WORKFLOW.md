@@ -5,6 +5,10 @@ Use this runbook to take a plugin from package creation to local consumption, fr
 In `RAWR HQ-Template`, plugin generation is for fixture/example validation.
 Operational plugin authoring belongs in personal `RAWR HQ`.
 
+Detailed end-to-end path runbooks now live under:
+- `docs/process/RUNBOOKS.md`
+- `docs/process/runbooks/*`
+
 ## Command Surface Contract (Hard Invariant)
 
 - Channel A (external oclif plugin manager): `rawr plugins ...`
