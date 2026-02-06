@@ -20,6 +20,7 @@ Applies to `docs/**`.
 - `docs/process/GRAPHITE.md`
 - `docs/process/UPSTREAM_SYNC_RUNBOOK.md`
 - `docs/process/PLUGIN_E2E_WORKFLOW.md`
+- `docs/process/RUNBOOKS.md`
 - `docs/process/MAINTENANCE_CADENCE.md`
 - `docs/process/HQ_USAGE.md`
 - `docs/process/HQ_OPERATIONS.md`
