@@ -11,8 +11,8 @@ type DoctorGlobalData = {
   bunGlobalBinDir: string;
   bunGlobalRawrPath: string;
   bunGlobalRawrReal: string | null;
-  templateCliBinPath: string;
-  templateCliBinReal: string | null;
+  cliBinPath: string;
+  cliBinReal: string | null;
   pnpmRawrShimPath: string;
   pnpmRawrShimExists: boolean;
   pnpmBeforeBunInPath: boolean;
@@ -94,8 +94,8 @@ export default class DoctorGlobal extends RawrCommand {
       bunGlobalBinDir,
       bunGlobalRawrPath,
       bunGlobalRawrReal,
-      templateCliBinPath: cliBinPath,
-      templateCliBinReal: cliBinReal,
+      cliBinPath: cliBinPath,
+      cliBinReal: cliBinReal,
       pnpmRawrShimPath,
       pnpmRawrShimExists: fs.existsSync(pnpmRawrShimPath),
       pnpmBeforeBunInPath,
@@ -148,7 +148,7 @@ export default class DoctorGlobal extends RawrCommand {
       human: () => {
         this.log("Global rawr is configured for Bun-global execution.");
         this.log(`- command -v rawr: ${data.commandPath}`);
-        this.log(`- target: ${data.templateCliBinPath}`);
+        this.log(`- target: ${data.cliBinPath}`);
         if (warnings.length > 0) {
           this.log("");
           this.log("Warnings:");
