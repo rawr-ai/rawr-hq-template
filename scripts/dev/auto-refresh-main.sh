@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OLD_REF="${1:-}"
 NEW_REF="${2:-HEAD}"
 SOURCE="${3:-hook}"
+OWNER_FILE="${HOME}/.rawr/global-rawr-owner-path"
 
 cd "${ROOT_DIR}"
 
@@ -27,6 +28,17 @@ if [ -n "${changed_files}" ]; then
 fi
 
 echo "[rawr-auto-refresh] source=${SOURCE} branch=main"
+
+if [ ! -f "${OWNER_FILE}" ]; then
+  echo "[rawr-auto-refresh] skip: no active global rawr owner (run scripts/dev/activate-global-rawr.sh)" >&2
+  exit 0
+fi
+
+active_owner="$(cat "${OWNER_FILE}")"
+if [ "${active_owner}" != "${ROOT_DIR}" ]; then
+  echo "[rawr-auto-refresh] skip: global rawr owner is ${active_owner}" >&2
+  exit 0
+fi
 
 if ! bun install --frozen-lockfile >/dev/null 2>&1; then
   bun install >/dev/null
