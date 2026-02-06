@@ -80,8 +80,9 @@ Use this map when historical references resolve to missing routers:
 - historical `docs/scratchpads/AGENTS.md` -> `docs/_archive/scratchpads/`
 - `scripts/githooks/AGENTS.md` -> `scripts/AGENTS.md`
 
-## Unresolved Risks
+## Governance Resolutions (2026-02-06 Addendum)
 
-1. `docs/plans/` and `docs/spikes/` still exist outside the canonical `docs/DOCS.md` directory-role list; future cleanup may change pointer targets.
-2. Historical references to `rawr plugins ...` vs `rawr hq plugins ...` can reappear from archived docs if not normalized during Agent C final pass.
-3. New package directories (`packages/control-plane`, `packages/session-tools`) currently depend on restored `packages/AGENTS.md` for first-hop routing; package-local routers may still be warranted later.
+1. `docs/plans/` and `docs/spikes/` are now explicitly documented in `docs/DOCS.md` and `docs/AGENTS.md` as retained workstreams.
+2. Archived-doc command drift is explicitly fenced in `docs/_archive/README.md` with canonical Channel A/Channel B pointers.
+3. `packages/control-plane` and `packages/session-tools` remain routed by `packages/AGENTS.md` by default.
+   - Create package-local `AGENTS.md` only when package-specific policy/routing exceeds parent-router scope.

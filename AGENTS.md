@@ -36,5 +36,6 @@
 - Upstream sync workflow: `docs/process/UPSTREAM_SYNC_RUNBOOK.md`.
 - Plugin end-to-end workflow: `docs/process/PLUGIN_E2E_WORKFLOW.md`.
 - Graphite-first branch/stack operations: `docs/process/GRAPHITE.md`.
+- Ongoing doc/process health cadence: `docs/process/MAINTENANCE_CADENCE.md`.
 - Operational usage conventions: `docs/process/HQ_USAGE.md`, `docs/process/HQ_OPERATIONS.md`.
 - Documentation architecture contract: `docs/DOCS.md`.

@@ -20,6 +20,7 @@ Applies to `docs/**`.
 - `docs/process/GRAPHITE.md`
 - `docs/process/UPSTREAM_SYNC_RUNBOOK.md`
 - `docs/process/PLUGIN_E2E_WORKFLOW.md`
+- `docs/process/MAINTENANCE_CADENCE.md`
 - `docs/process/HQ_USAGE.md`
 - `docs/process/HQ_OPERATIONS.md`
 
@@ -35,6 +36,8 @@ Use these names consistently:
 - `docs/system/`: architecture and technical contracts.
 - `docs/process/`: operating workflows and playbooks.
 - `docs/projects/`: time-bound initiatives.
+- `docs/plans/`: retained planning workstream docs (prefer `docs/projects/` for new execution plans).
+- `docs/spikes/`: retained spike investigations (promote stable guidance to `docs/system/` or `docs/process/`).
 - `docs/_archive/`: historical docs not part of active guidance.
 
 ## Conventions

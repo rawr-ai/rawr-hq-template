@@ -16,6 +16,7 @@ See:
 - `docs/process/GRAPHITE.md`
 - `docs/process/UPSTREAM_SYNC_RUNBOOK.md`
 - `docs/process/PLUGIN_E2E_WORKFLOW.md`
+- `docs/process/MAINTENANCE_CADENCE.md`
 
 ## Command Channel Model
 

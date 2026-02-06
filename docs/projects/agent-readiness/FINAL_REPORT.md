@@ -100,3 +100,19 @@ Status: Complete
 
 - No runtime/API code was changed in this initiative.
 - All changes are docs/process/router hardening for safe autonomous agent operation.
+
+## Addendum (2026-02-06: Next Actions Operationalization)
+
+1. Added `docs/projects/agent-readiness/RUNBOOK_VALIDATION_LOG.md` with proof-run evidence for:
+   - upstream sync drills (merge + rebase variants),
+   - plugin lifecycle drills (Channel A + Channel B).
+2. Closed docs-governance ambiguity by explicitly documenting `docs/plans/` and `docs/spikes/` in:
+   - `docs/DOCS.md`
+   - `docs/AGENTS.md`
+3. Added archived-doc warning guardrails:
+   - `docs/_archive/README.md` now flags legacy command references as non-canonical.
+4. Added ongoing maintenance contract:
+   - `docs/process/MAINTENANCE_CADENCE.md`
+   - linked from `docs/PROCESS.md` and root `AGENTS.md`.
+5. Coverage matrix governance decisions updated:
+   - default parent-router policy retained for `packages/control-plane` and `packages/session-tools`.

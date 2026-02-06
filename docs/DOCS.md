@@ -17,6 +17,8 @@ Canonical gateway docs at `docs/` root:
 - `docs/system/`: architecture and technical contracts.
 - `docs/process/`: workflows, contribution, and operating playbooks.
 - `docs/projects/`: time-bound initiative docs.
+- `docs/plans/`: retained planning workstream docs. New execution docs should default to `docs/projects/`.
+- `docs/spikes/`: retained spike investigations and feasibility notes. Promote lasting decisions into `docs/system/` or `docs/process/`.
 - `docs/_templates/`: document scaffolds.
 - `docs/_archive/`: archived historical docs not part of active template guidance.
 
@@ -31,4 +33,3 @@ Canonical gateway docs at `docs/` root:
 Use these names consistently:
 - Template repo: `RAWR HQ-Template`
 - Personal repo: `RAWR HQ`
-
