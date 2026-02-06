@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REMOTE_NAME="${1:-}"
+
+"${ROOT_DIR}/scripts/dev/check-remotes.sh"
+
+if [ "${REMOTE_NAME}" != "origin" ]; then
+  echo "[rawr-pre-push] blocked: template repo pushes must target origin only (got ${REMOTE_NAME})" >&2
+  exit 1
+fi

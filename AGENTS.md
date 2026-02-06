@@ -9,6 +9,7 @@
 - `RAWR HQ-Template` is the upstream baseline for shared core behavior and docs.
 - Personal/local customization belongs in downstream `RAWR HQ` unless intentionally promoted upstream.
 - Use `AGENTS_SPLIT.md` first for template-vs-personal destination decisions.
+- Template plugins are fixture/example-only by default; operational plugin authoring belongs downstream.
 
 ## Command Surface Policy
 
@@ -34,6 +35,7 @@
 ## Process Runbooks
 
 - Upstream sync workflow: `docs/process/UPSTREAM_SYNC_RUNBOOK.md`.
+- Cross-repo workflow model: `docs/process/CROSS_REPO_WORKFLOWS.md`.
 - Plugin end-to-end workflow: `docs/process/PLUGIN_E2E_WORKFLOW.md`.
 - Graphite-first branch/stack operations: `docs/process/GRAPHITE.md`.
 - Ongoing doc/process health cadence: `docs/process/MAINTENANCE_CADENCE.md`.

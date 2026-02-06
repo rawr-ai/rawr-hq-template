@@ -6,6 +6,9 @@ export type WorkspacePlugin = {
   name?: string;
   dirName: string;
   absPath: string;
+  templateRole: "fixture" | "example" | "operational";
+  channel: "A" | "B" | "both";
+  publishTier: "blocked" | "candidate";
 };
 
 async function pathExists(p: string): Promise<boolean> {
@@ -43,10 +46,29 @@ export async function listWorkspacePlugins(workspaceRoot: string): Promise<Works
     const pkgJsonPath = path.join(absPath, "package.json");
 
     let name: string | undefined;
+    let templateRole: WorkspacePlugin["templateRole"] = "operational";
+    let channel: WorkspacePlugin["channel"] = "both";
+    let publishTier: WorkspacePlugin["publishTier"] = "blocked";
     if (await pathExists(pkgJsonPath)) {
       try {
-        const parsed = JSON.parse(await fs.readFile(pkgJsonPath, "utf8")) as { name?: unknown };
+        const parsed = JSON.parse(await fs.readFile(pkgJsonPath, "utf8")) as {
+          name?: unknown;
+          rawr?: {
+            templateRole?: unknown;
+            channel?: unknown;
+            publishTier?: unknown;
+          };
+        };
         if (typeof parsed.name === "string") name = parsed.name;
+        if (parsed.rawr?.templateRole === "fixture" || parsed.rawr?.templateRole === "example" || parsed.rawr?.templateRole === "operational") {
+          templateRole = parsed.rawr.templateRole;
+        }
+        if (parsed.rawr?.channel === "A" || parsed.rawr?.channel === "B" || parsed.rawr?.channel === "both") {
+          channel = parsed.rawr.channel;
+        }
+        if (parsed.rawr?.publishTier === "blocked" || parsed.rawr?.publishTier === "candidate") {
+          publishTier = parsed.rawr.publishTier;
+        }
       } catch {
         // ignore
       }
@@ -57,11 +79,19 @@ export async function listWorkspacePlugins(workspaceRoot: string): Promise<Works
       name,
       dirName: dirent.name,
       absPath,
+      templateRole,
+      channel,
+      publishTier,
     });
   }
 
   plugins.sort((a, b) => a.id.localeCompare(b.id));
   return plugins;
+}
+
+export function filterOperationalPlugins(plugins: WorkspacePlugin[], includeNonOperational: boolean): WorkspacePlugin[] {
+  if (includeNonOperational) return plugins;
+  return plugins.filter((plugin) => plugin.templateRole === "operational");
 }
 
 export function resolvePluginId(
@@ -72,4 +102,3 @@ export function resolvePluginId(
   if (direct) return direct;
   return plugins.find((p) => p.dirName === inputId);
 }
-

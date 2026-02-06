@@ -35,6 +35,7 @@ git remote -v
 
 ```bash
 git status --short
+./scripts/dev/check-remotes.sh
 git remote -v
 git fetch --all --prune
 git switch main
@@ -184,6 +185,7 @@ Run before requesting review or merge:
 
 ```bash
 git remote -v
+./scripts/dev/check-remotes.sh
 git branch --show-current
 gt trunk
 gt ls
@@ -206,3 +208,4 @@ All gates must pass.
 - Personal vs template divergence: keep personal-only behavior isolated so upstream merges stay mechanical.
 - Protected branches: `main` may block force-push; use sync/recovery branches + PR instead.
 - Command-channel drift: never swap `rawr plugins ...` and `rawr hq plugins ...` in docs or scripts.
+- Global ownership drift: if `rawr doctor global --json` reports another checkout as owner, run `./scripts/dev/activate-global-rawr.sh`.

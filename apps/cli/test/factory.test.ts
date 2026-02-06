@@ -73,7 +73,7 @@ describe("factory", () => {
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
-    expect(parsed.data.planned.some((p: any) => String(p.path).includes("plugins/factory-plugin-test/package.json"))).toBe(true);
+    const pkgWrite = parsed.data.planned.find((p: any) => String(p.path).includes("plugins/factory-plugin-test/package.json"));
+    expect(pkgWrite).toBeTruthy();
   });
 });
-

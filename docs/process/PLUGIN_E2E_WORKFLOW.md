@@ -2,6 +2,9 @@
 
 Use this runbook to take a plugin from package creation to local consumption, from repo root, without mixing plugin command surfaces.
 
+In `RAWR HQ-Template`, plugin generation is for fixture/example validation.
+Operational plugin authoring belongs in personal `RAWR HQ`.
+
 ## Command Surface Contract (Hard Invariant)
 
 - Channel A (external oclif plugin manager): `rawr plugins ...`
@@ -63,10 +66,10 @@ bunx turbo run test --filter="$RUNTIME_ID"
 
 ```bash
 # Discover plugin ids
-bun run rawr -- hq plugins list --json
+bun run rawr -- hq plugins list --all --json
 
 # Enable (use risk policy that matches your environment)
-bun run rawr -- hq plugins enable "$RUNTIME_DIR" --json --risk off
+bun run rawr -- hq plugins enable "$RUNTIME_DIR" --allow-non-operational --json --risk off
 
 # Verify persisted enabled state
 bun run rawr -- hq plugins status --json
@@ -228,7 +231,7 @@ bun run rawr -- plugins inspect "$OCLIF_ID" --json
    - Fix: `cd` to repo root and rerun.
 2. Symptom: `Unknown plugin: <id>` on Channel B enable/disable.
    - Cause: wrong id; command accepts package name or directory name.
-   - Fix: run `rawr hq plugins list --json` and reuse returned id/dir.
+   - Fix: run `rawr hq plugins list --all --json` and reuse returned id/dir.
 3. Symptom: enable blocked by security gate.
    - Cause: risk tolerance disallows current findings.
    - Fix: review security report, reduce findings, or use explicit risk policy/force according to local policy.

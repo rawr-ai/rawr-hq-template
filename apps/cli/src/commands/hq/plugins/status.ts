@@ -1,12 +1,17 @@
 import { RawrCommand } from "@rawr/core";
+import { Flags } from "@oclif/core";
 import { getRepoState } from "@rawr/state";
-import { findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
+import { filterOperationalPlugins, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
 
 export default class HqPluginsStatus extends RawrCommand {
   static description = "Show RAWR HQ workspace runtime plugins and whether they are enabled";
 
   static flags = {
     ...RawrCommand.baseFlags,
+    all: Flags.boolean({
+      description: "Include fixture/example plugins (default shows operational only)",
+      default: false,
+    }),
   } as const;
 
   async run() {
@@ -22,14 +27,20 @@ export default class HqPluginsStatus extends RawrCommand {
     }
 
     const [plugins, state] = await Promise.all([listWorkspacePlugins(workspaceRoot), getRepoState(workspaceRoot)]);
+    const visiblePlugins = filterOperationalPlugins(plugins, Boolean(flags.all));
     const enabled = new Set(state.plugins.enabled);
 
-    const enriched = plugins.map((p) => ({
+    const enriched = visiblePlugins.map((p) => ({
       ...p,
       enabled: enabled.has(p.id),
     }));
 
-    const result = this.ok({ workspaceRoot, state, plugins: enriched });
+    const result = this.ok({
+      workspaceRoot,
+      state,
+      plugins: enriched,
+      excludedCount: plugins.length - visiblePlugins.length,
+    });
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {
@@ -42,4 +53,3 @@ export default class HqPluginsStatus extends RawrCommand {
     });
   }
 }
-
