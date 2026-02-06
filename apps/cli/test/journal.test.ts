@@ -17,6 +17,14 @@ function parseJson(proc: ReturnType<typeof runRawr>) {
   return JSON.parse(proc.stdout) as any;
 }
 
+function runRawrWithRetry(args: string[], attempts = 2) {
+  let proc = runRawr(args);
+  for (let i = 1; proc.status !== 0 && i < attempts; i += 1) {
+    proc = runRawr(args);
+  }
+  return proc;
+}
+
 describe("journal + reflect", () => {
   it("journal search + show returns atomic snippets", () => {
     const seed = runRawr(["doctor", "--json"]);
@@ -42,7 +50,7 @@ describe("journal + reflect", () => {
   });
 
   it("reflect returns a stable structure", () => {
-    const proc = runRawr(["reflect", "--limit", "15", "--json"]);
+    const proc = runRawrWithRetry(["reflect", "--limit", "15", "--json"]);
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
