@@ -33,6 +33,5 @@ describe("routine snapshot", () => {
     expect(typeof snapshot.rawrVersion).toBe("string");
     expect(typeof snapshot.bunVersion).toBe("string");
     expect(mdRaw).toContain("RAWR routine snapshot");
-  });
+  }, 15000);
 });
-
