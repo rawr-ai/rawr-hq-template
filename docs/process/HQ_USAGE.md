@@ -20,6 +20,11 @@ rawr --version
 rawr doctor global --json
 ```
 
+Mode contract:
+- Canonical local-global mode is Bun-bin symlink install via `scripts/dev/install-global-rawr.sh`.
+- Do not depend on `bun link --global @rawr/cli` for this monorepo shape; workspace dependencies are not a reliable Bun-global package install target.
+- Re-run the installer in the checkout you want global `rawr` to target.
+
 ## Plugin Authoring
 
 - Runtime workspace plugins: use `rawr hq plugins ...` commands.

@@ -39,6 +39,12 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - "Will every template user benefit from this by default?" -> template.
 - "Is this only for this HQ or plugin set?" -> personal repo.
 
+## Global CLI Wiring Ownership
+
+- Shared CLI contracts (including `rawr doctor global`) are template-owned.
+- Baseline global wiring scripts (`scripts/dev/install-global-rawr.sh`, `scripts/dev/auto-refresh-main.sh`, `scripts/githooks/*`) are template baseline and should land here first.
+- Downstream personal repos may keep machine-only overrides, but those are not template defaults.
+
 ## Graphite Policy
 
 - Graphite is enabled in this template repo.
