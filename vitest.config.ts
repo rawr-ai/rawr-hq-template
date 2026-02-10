@@ -41,6 +41,21 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/coordination"),
+        test: { name: "coordination", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/coordination-inngest"),
+        test: { name: "coordination-inngest", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/coordination-observability"),
+        test: { name: "coordination-observability", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/journal"),
         test: { name: "journal", environment: "node", include: [...includes] },
       },
