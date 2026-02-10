@@ -33,7 +33,7 @@ const config = { port, baseUrl };
 const [plugins, state] = await Promise.all([loadWorkspaceServerPlugins({ repoRoot }), getRepoState(repoRoot)]);
 const enabled = new Set(state.plugins.enabled);
 
-app = registerRawrRoutes(app, { repoRoot, enabledPluginIds: enabled });
+app = registerRawrRoutes(app, { repoRoot, enabledPluginIds: enabled, baseUrl: config.baseUrl });
 
 const enabledPlugins = plugins.filter((p) => enabled.has(p.name));
 app = await mountServerPlugins(app, enabledPlugins, { baseUrl: config.baseUrl });
