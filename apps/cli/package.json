@@ -8,6 +8,7 @@
     "@oclif/plugin-help": "^6.2.27",
     "@oclif/plugin-plugins": "^5.4.36",
     "@rawr/agent-sync": "workspace:*",
+    "@rawr/coordination": "workspace:*",
     "@rawr/control-plane": "workspace:*",
     "@rawr/core": "workspace:*",
     "@rawr/hq": "workspace:*",
