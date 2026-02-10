@@ -19,3 +19,4 @@
 - 2026-02-12T03:14:09Z [orchestrator] Graphite reported expected restack break at codex/coordination-canvas-v1-packages.
 - 2026-02-12T03:14:09Z [orchestrator] Running additional sync checkpoint before restack due understack-change risk.
 - 2026-02-12T03:14:21Z [orchestrator] Branch-switch blocked by uncommitted scratchpad updates; committing scratchpad to keep worktree clean before restack.
+- 2026-02-12T03:14:36Z [orchestrator] Restack from packages upstack produced conflicts; beginning contextual resolution.
