@@ -2,11 +2,33 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import type { AnyElysia } from "./plugins";
+import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
+import { createCoordinationRuntimeAdapter, registerCoordinationRoutes } from "./coordination";
 
 export type RawrRoutesOptions = {
   repoRoot: string;
   enabledPluginIds: ReadonlySet<string>;
+  baseUrl?: string;
 };
+
+function asUrl(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed = new URL(value);
+    return parsed.href;
+  } catch {
+    return undefined;
+  }
+}
+
+function resolveInngestBaseUrl(): string {
+  return (
+    asUrl(process.env.INNGEST_BASE_URL) ??
+    asUrl(process.env.INNGEST_EVENT_API_BASE_URL) ??
+    asUrl(process.env.INNGEST_DEV) ??
+    "http://localhost:8288"
+  );
+}
 
 function isSafeDirName(input: string): boolean {
   return /^[a-z0-9][a-z0-9-]*$/.test(input);
@@ -75,6 +97,25 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     } catch {
       return new Response("not found", { status: 404 });
     }
+  });
+
+  const runtime = createCoordinationRuntimeAdapter({
+    repoRoot: opts.repoRoot,
+    inngestBaseUrl: resolveInngestBaseUrl(),
+  });
+  const inngestBundle = createCoordinationInngestFunction({ runtime });
+  const inngestHandler = createInngestServeHandler({
+    client: inngestBundle.client,
+    functions: inngestBundle.functions,
+  });
+
+  app.all("/api/inngest", async ({ request }) => inngestHandler(request));
+
+  registerCoordinationRoutes(app, {
+    repoRoot: opts.repoRoot,
+    baseUrl: opts.baseUrl ?? "http://localhost:3000",
+    inngestClient: inngestBundle.client,
+    runtime,
   });
 
   return app;
