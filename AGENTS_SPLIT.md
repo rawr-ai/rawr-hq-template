@@ -44,7 +44,7 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 
 ## Plugin Ownership Rule (Hard)
 
-- Template `plugins/*` are fixture/example packages only.
+- Template plugin roots (`plugins/cli/*`, `plugins/web/*`, `plugins/agents/*`) are fixture/example baseline only.
 - Operational plugin development starts in personal `RAWR HQ`.
 - Promote to template only when the artifact is truly baseline fixture/example material.
 

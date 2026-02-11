@@ -8,7 +8,7 @@
 - [Layout](#layout)
 
 ## Scope
-- Applies to `plugins/hello/**`.
+- Applies to `plugins/cli/hello/**`.
 
 ## What This Plugin Is
 - Minimal **oclif plugin** example.

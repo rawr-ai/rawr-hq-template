@@ -8,7 +8,7 @@
 - [Layout](#layout)
 
 ## Scope
-- Applies to `plugins/mfe-demo/**`.
+- Applies to `plugins/web/mfe-demo/**`.
 
 ## What This Plugin Is
 - Demo “micro-frontend” style plugin package.

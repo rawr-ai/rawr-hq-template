@@ -7,16 +7,16 @@ Use this when you want a local personal plugin usable immediately in your worksp
 ## End-to-end Commands
 
 ```bash
-cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
+cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 rawr factory plugin new demo-runtime --kind both
 bunx turbo run build --filter=@rawr/plugin-demo-runtime
-rawr hq plugins enable demo-runtime --risk off
+rawr hq plugins enable demo-runtime --allow-non-operational --risk off
 rawr hq plugins status --json
 ```
 
 ## How discovery works
 
-- CLI scans `plugins/*` in the workspace.
+- CLI scans `plugins/web/*` in the workspace.
 - Enablement is persisted in `.rawr/state/state.json`.
 
 ## Caveats

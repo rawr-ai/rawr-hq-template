@@ -71,17 +71,17 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("plugins/hello"),
+        root: r("plugins/cli/hello"),
         test: { name: "plugin-hello", environment: "node", include: [...includes] },
       },
       {
         extends: true,
-        root: r("plugins/mfe-demo"),
+        root: r("plugins/web/mfe-demo"),
         test: { name: "plugin-mfe-demo", environment: "jsdom", include: [...includes] },
       },
       {
         extends: true,
-        root: r("plugins/session-tools"),
+        root: r("plugins/cli/session-tools"),
         test: { name: "plugin-session-tools", environment: "node", include: [...includes] },
       },
     ],

@@ -16,7 +16,7 @@ Do not mix command families.
 ### 1) Local runtime plugin scaffold (Channel B-first)
 
 ```bash
-cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
+cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 rawr factory plugin new my-plugin --kind both
 bunx turbo run build --filter=@rawr/plugin-my-plugin
 bunx turbo run test --filter=@rawr/plugin-my-plugin
@@ -49,14 +49,14 @@ Same as local oclif plugin, plus package ownership/versioning/release to npm or 
 ### Channel B (workspace runtime, no install)
 
 Discovery:
-- scans `plugins/*` in workspace root
+- scans `plugins/web/*` in workspace root
 - reads `package.json.rawr.{templateRole,channel,publishTier}`
 - persisted enablement state in `.rawr/state/state.json`
 
 Commands:
 ```bash
-rawr hq plugins list --json
-rawr hq plugins enable my-plugin --risk balanced
+rawr hq plugins list --all --json
+rawr hq plugins enable my-plugin --allow-non-operational --risk balanced
 rawr hq plugins status --json
 ```
 

@@ -18,9 +18,9 @@
 - `apps/server`
 - `apps/web`
 - `packages/ui-sdk`
-- `plugins/mfe-demo`
+- `plugins/web/mfe-demo`
 
-Template `plugins/*` are fixture/example artifacts used to validate baseline behavior.
+Template plugin packages are fixture/example artifacts used to validate baseline behavior.
 Operational plugin development belongs in downstream personal HQ repos.
 
 ## Plugin Channels
@@ -29,6 +29,12 @@ Operational plugin development belongs in downstream personal HQ repos.
 - Channel B: RAWR HQ workspace runtime plugins (`rawr hq plugins list|enable|disable|status`).
 
 Channel B is local-first by default and uses security gating + repo-local enabled state.
+
+## Plugin Roots
+
+- `plugins/cli/*` for Channel A plugin packages.
+- `plugins/web/*` for Channel B runtime plugin packages.
+- `plugins/agents/*` for agent-office content packages.
 
 ## Core Ownership
 

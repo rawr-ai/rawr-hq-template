@@ -50,7 +50,7 @@ bun run rawr -- factory plugin new "$RUNTIME_DIR" --kind both --json
 
 ### 2) Implement
 
-Edit generated files under `plugins/$RUNTIME_DIR`:
+Edit generated files under `plugins/web/$RUNTIME_DIR`:
 - `src/server.ts`
 - `src/web.ts`
 - `test/plugin.test.ts`
@@ -100,10 +100,10 @@ OCLIF_DIR="demo-oclif-e2e"
 OCLIF_ID="@rawr/plugin-${OCLIF_DIR}"
 OCLIF_CMD="demo-hello"
 
-mkdir -p "plugins/$OCLIF_DIR/src/commands" "plugins/$OCLIF_DIR/test"
+mkdir -p "plugins/cli/$OCLIF_DIR/src/commands" "plugins/cli/$OCLIF_DIR/test"
 ```
 
-Create `plugins/$OCLIF_DIR/package.json`:
+Create `plugins/cli/$OCLIF_DIR/package.json`:
 
 ```json
 {
@@ -137,11 +137,11 @@ Create `plugins/$OCLIF_DIR/package.json`:
 }
 ```
 
-Create `plugins/$OCLIF_DIR/tsconfig.json`:
+Create `plugins/cli/$OCLIF_DIR/tsconfig.json`:
 
 ```json
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
     "types": ["node"]
@@ -150,7 +150,7 @@ Create `plugins/$OCLIF_DIR/tsconfig.json`:
 }
 ```
 
-Create `plugins/$OCLIF_DIR/src/commands/$OCLIF_CMD.ts`:
+Create `plugins/cli/$OCLIF_DIR/src/commands/$OCLIF_CMD.ts`:
 
 ```ts
 import { Command } from "@oclif/core";
@@ -164,7 +164,7 @@ export default class DemoHello extends Command {
 }
 ```
 
-Create `plugins/$OCLIF_DIR/test/plugin.test.ts`:
+Create `plugins/cli/$OCLIF_DIR/test/plugin.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -176,7 +176,7 @@ describe("@rawr/plugin-demo-oclif-e2e", () => {
 });
 ```
 
-Create `plugins/$OCLIF_DIR/README.md`:
+Create `plugins/cli/$OCLIF_DIR/README.md`:
 
 ```md
 # @rawr/plugin-demo-oclif-e2e
@@ -195,7 +195,7 @@ bunx turbo run test --filter="$OCLIF_ID"
 
 ```bash
 # Link for local development (use absolute path)
-bun run rawr -- plugins link "$(pwd)/plugins/$OCLIF_DIR" --install
+bun run rawr -- plugins link "$(pwd)/plugins/cli/$OCLIF_DIR" --install
 
 # Inspect resolved plugin metadata and discovered commands
 bun run rawr -- plugins inspect "$OCLIF_ID" --json
@@ -204,11 +204,18 @@ bun run rawr -- plugins inspect "$OCLIF_ID" --json
 bun run rawr -- "$OCLIF_CMD"
 ```
 
+> **Heads-up: the “disposable worktree” trap**
+> - `rawr plugins link` stores an **absolute path** to the plugin directory.
+> - If you link from a **disposable git worktree** and later delete it, `rawr` can fail at startup (missing `package.json`).
+> - Prefer linking from a **stable checkout path** (your primary worktree), using an absolute path.
+> - Recovery: `rawr plugins uninstall <plugin>` (or `rawr plugins reset` to wipe all user-linked plugins).
+> - If available, prefer the repo-root helper: `rawr plugins install all`.
+
 ### 4) Install Rehearsal (Channel A Install Path)
 
 ```bash
 # Use file:// for local install rehearsal
-bun run rawr -- plugins install "file://$(pwd)/plugins/$OCLIF_DIR"
+bun run rawr -- plugins install "file://$(pwd)/plugins/cli/$OCLIF_DIR"
 
 # Re-inspect to confirm command remains discoverable
 bun run rawr -- plugins inspect "$OCLIF_ID" --json
@@ -231,11 +238,14 @@ bun run rawr -- plugins inspect "$OCLIF_ID" --json
 ## Common Failure Modes
 
 1. Symptom: `Unable to locate workspace root (expected a ./plugins directory)`.
-   - Cause: command run outside repo root/subtree.
-   - Fix: `cd` to repo root and rerun.
+   - Cause: command run outside repo root/subtree and workspace root can't be inferred.
+   - Fix: any of:
+     - `cd` to the repo root and rerun
+     - set `RAWR_HQ_ROOT=/absolute/path/to/rawr-hq` (or `RAWR_WORKSPACE_ROOT=...`)
+     - ensure you're running the repo-first `rawr` wired to your `rawr-hq` checkout (so it can fall back to its install location)
 2. Symptom: `Unknown plugin: <id>` on Channel B enable/disable.
    - Cause: wrong id; command accepts package name or directory name.
-   - Fix: run `rawr hq plugins list --all --json` and reuse returned id/dir.
+   - Fix: run `rawr hq plugins list --json` and reuse returned id/dir.
 3. Symptom: enable blocked by security gate.
    - Cause: risk tolerance disallows current findings.
    - Fix: review security report, reduce findings, or use explicit risk policy/force according to local policy.
@@ -253,6 +263,21 @@ Current default posture is local-only:
 - Local consume should use:
   - Channel A: `plugins link` (and optional `plugins install file://...` rehearsal)
   - Channel B: `hq plugins enable|disable|status|list`
+
+## Recommended Operator Loop (Repo Root)
+
+When you want “one command does all of them” workflows, prefer these repo-root entrypoints:
+
+```bash
+rawr plugins install all
+rawr plugins enable all
+rawr plugins sync all --dry-run
+rawr plugins sync all
+```
+
+Notes:
+- `rawr plugins sync ...` also generates Cowork drag-and-drop `.plugin` ZIPs (default: `dist/cowork/plugins/*.plugin`).
+- When syncing to Claude targets, it also refreshes plugins via Claude Code (`claude plugin install` + `claude plugin enable`) unless disabled by flags.
 
 To allow npm publish, all of the following must be true:
 1. `package.json` sets `"private": false`.

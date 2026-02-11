@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { describe, expect, it } from "vitest";
 
 function runRawr(args: string[]) {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -73,7 +74,7 @@ describe("factory", () => {
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
-    const pkgWrite = parsed.data.planned.find((p: any) => String(p.path).includes("plugins/factory-plugin-test/package.json"));
+    const pkgWrite = parsed.data.planned.find((p: any) => String(p.path).includes("plugins/web/factory-plugin-test/package.json"));
     expect(pkgWrite).toBeTruthy();
   });
 });

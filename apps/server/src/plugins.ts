@@ -116,7 +116,8 @@ export async function loadWorkspaceServerPlugins(
   options: LoadWorkspaceServerPluginsOptions = {},
 ): Promise<ServerPlugin[]> {
   const repoRoot = options.repoRoot ?? resolveRepoRootFrom(import.meta.url);
-  const pluginsDir = options.pluginsDir ?? path.join(repoRoot, "plugins");
+  const splitPluginsDir = path.join(repoRoot, "plugins", "web");
+  const pluginsDir = options.pluginsDir ?? splitPluginsDir;
 
   let entries: Array<{ name: string; isDirectory: () => boolean }>;
   try {
