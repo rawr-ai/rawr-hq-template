@@ -116,8 +116,9 @@
         "typescript": "^5.9.3",
       },
     },
-    "plugins/hello": {
+    "plugins/cli/hello": {
       "name": "@rawr/plugin-hello",
+      "version": "0.1.0",
       "dependencies": {
         "@oclif/core": "^4.2.10",
       },
@@ -126,20 +127,21 @@
         "typescript": "^5.9.3",
       },
     },
-    "plugins/mfe-demo": {
-      "name": "@rawr/plugin-mfe-demo",
-      "devDependencies": {
-        "@types/node": "^22.14.0",
-        "typescript": "^5.9.3",
-      },
-    },
-    "plugins/session-tools": {
+    "plugins/cli/session-tools": {
       "name": "@rawr/plugin-session-tools",
       "dependencies": {
         "@oclif/core": "^4.2.10",
         "@rawr/core": "workspace:*",
         "@rawr/session-tools": "workspace:*",
       },
+      "devDependencies": {
+        "@types/node": "^22.14.0",
+        "typescript": "^5.9.3",
+      },
+    },
+    "plugins/web/mfe-demo": {
+      "name": "@rawr/plugin-mfe-demo",
+      "version": "0.1.0",
       "devDependencies": {
         "@types/node": "^22.14.0",
         "typescript": "^5.9.3",
@@ -277,11 +279,11 @@
 
     "@rawr/journal": ["@rawr/journal@workspace:packages/journal"],
 
-    "@rawr/plugin-hello": ["@rawr/plugin-hello@workspace:plugins/hello"],
+    "@rawr/plugin-hello": ["@rawr/plugin-hello@workspace:plugins/cli/hello"],
 
-    "@rawr/plugin-mfe-demo": ["@rawr/plugin-mfe-demo@workspace:plugins/mfe-demo"],
+    "@rawr/plugin-mfe-demo": ["@rawr/plugin-mfe-demo@workspace:plugins/web/mfe-demo"],
 
-    "@rawr/plugin-session-tools": ["@rawr/plugin-session-tools@workspace:plugins/session-tools"],
+    "@rawr/plugin-session-tools": ["@rawr/plugin-session-tools@workspace:plugins/cli/session-tools"],
 
     "@rawr/security": ["@rawr/security@workspace:packages/security"],
 

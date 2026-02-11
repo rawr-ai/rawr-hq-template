@@ -14,7 +14,7 @@ This document defines repeatable, low-drift loops an AI agent can follow to ship
 | --- | --- |
 | New command in core CLI | [Loop A: Add core CLI command](#loop-a-add-core-cli-command-factory-based) |
 | CLI extension plugin with command set + docs | [Loop B: Create CLI plugin + commands](#loop-b-create-cli-plugin--commands-priority-1) |
-| Server and/or web plugin under `plugins/*` | [Loop C: Create RAWR workspace plugin](#loop-c-create-rawr-workspace-plugin-serverwebboth) |
+| Server and/or web plugin under `plugins/web/*` | [Loop C: Create RAWR workspace plugin](#loop-c-create-rawr-workspace-plugin-serverwebboth) |
 | Micro-frontend mounted in host UI | [Loop D: Create micro-frontend plugin](#loop-d-create-micro-frontend-plugin) |
 | New API route in server or plugin server surface | [Loop E: Add server API route](#loop-e-add-server-api-route-core-or-plugin) |
 | End-to-end orchestrator command | [Loop F: Add workflow command](#loop-f-add-workflow-command) |
@@ -50,7 +50,7 @@ This document defines repeatable, low-drift loops an AI agent can follow to ship
 ### Plugin terminology (important)
 
 - **CLI-extension plugin**: oclif plugin system (`rawr plugins link|install|inspect ...`).
-- **RAWR workspace plugin**: package under `plugins/*` with RAWR enablement gate (`rawr hq plugins enable|disable|status|list`), plus optional server/web surfaces.
+- **RAWR workspace plugin**: package under `plugins/web/*` with RAWR enablement gate (`rawr hq plugins enable|disable|status|list`), plus optional server/web surfaces.
 - Keep command channels explicit:
   - `rawr plugins ...` is Channel A (oclif plugin manager).
   - `rawr hq plugins ...` is Channel B (workspace runtime plugins).
@@ -114,13 +114,13 @@ Create an oclif plugin package with one or more CLI commands and plugin-local us
 
 ### Inputs
 
-- plugin package name and directory (e.g., `plugins/<dir>`)
+- plugin package name and directory (e.g., `plugins/cli/<dir>`)
 - command ids and descriptions
 - plugin-local docs scope (usage, examples, limitations)
 
 ### Steps
 
-1. Create plugin package under `plugins/<dir>` (manual or using existing scaffolds).
+1. Create plugin package under `plugins/cli/<dir>` (manual or using existing scaffolds).
 2. Add/verify `package.json#oclif` manifest:
    - source command path (`oclif.typescript.commands`)
    - built command path (`oclif.commands`) aligned with emitted `dist/**`.
@@ -130,17 +130,24 @@ Create an oclif plugin package with one or more CLI commands and plugin-local us
    - `turbo run build --filter=<plugin-package-name>`
    - `vitest run --project <plugin-vitest-project>`
 6. Link plugin into CLI for local dev:
-   - `bun run rawr -- plugins link plugins/<dir> --install`
+   - `bun run rawr -- plugins link plugins/cli/<dir> --install`
+
+> **Heads-up: the “disposable worktree” trap**
+> - `rawr plugins link` stores an **absolute path** to the plugin directory.
+> - If you link from a **disposable git worktree** and later delete it, `rawr` can fail at startup (missing `package.json`).
+> - Prefer linking from a **stable checkout path** (your primary worktree), using an absolute path.
+> - Recovery: `rawr plugins uninstall <plugin>` (or `rawr plugins reset` to wipe all user-linked plugins).
+> - If available, prefer the repo-root helper: `rawr plugins install all`.
 7. Verify command discovery and execution:
    - `bun run rawr -- --help`
    - `bun run rawr -- <plugin-command> --json` (if command supports JSON output pattern).
 
 ### Artifacts
 
-- `plugins/<dir>/package.json`
-- `plugins/<dir>/src/commands/*.ts`
-- `plugins/<dir>/test/*.test.ts`
-- `plugins/<dir>/*.md` (plugin-local usage docs)
+- `plugins/cli/<dir>/package.json`
+- `plugins/cli/<dir>/src/commands/*.ts`
+- `plugins/cli/<dir>/test/*.test.ts`
+- `plugins/cli/<dir>/*.md` (plugin-local usage docs)
 
 ### Checks
 
@@ -158,7 +165,7 @@ Create an oclif plugin package with one or more CLI commands and plugin-local us
 
 ### Goal
 
-Create a gated plugin in `plugins/*` that integrates with RAWR state enablement and optional server/web surfaces.
+Create a gated plugin in `plugins/web/*` that integrates with RAWR state enablement and optional server/web surfaces.
 
 ### Inputs
 
@@ -181,8 +188,8 @@ Create a gated plugin in `plugins/*` that integrates with RAWR state enablement 
 
 ### Artifacts
 
-- `plugins/<dir>/src/server.ts` and/or `plugins/<dir>/src/web.ts`
-- `plugins/<dir>/test/*.test.ts`
+- `plugins/web/<dir>/src/server.ts` and/or `plugins/web/<dir>/src/web.ts`
+- `plugins/web/<dir>/test/*.test.ts`
 - `.rawr/state/state.json` (runtime state, gitignored)
 
 ### Checks
@@ -218,9 +225,9 @@ Ship a plugin UI mounted by host web app using the `@rawr/ui-sdk` contract.
 
 ### Artifacts
 
-- `plugins/<dir>/src/web.ts`
-- optional: `plugins/<dir>/src/server.ts`
-- `plugins/<dir>/test/*.test.ts`
+- `plugins/web/<dir>/src/web.ts`
+- optional: `plugins/web/<dir>/src/server.ts`
+- `plugins/web/<dir>/test/*.test.ts`
 
 ### Checks
 
@@ -249,7 +256,7 @@ Add a small API route with explicit contract and tests.
 
 1. Decide location:
    - core route in `apps/server/src/rawr.ts` (or server app setup),
-   - or plugin route in `plugins/<dir>/src/server.ts`.
+   - or plugin route in `plugins/web/<dir>/src/server.ts`.
 2. Define contract first (status codes, response schema, error shape).
 3. Implement route logic and minimal guardrails.
 4. Add/extend tests in `apps/server/test/*` or plugin tests.
@@ -257,7 +264,7 @@ Add a small API route with explicit contract and tests.
 
 ### Artifacts
 
-- `apps/server/src/rawr.ts` or `plugins/<dir>/src/server.ts`
+- `apps/server/src/rawr.ts` or `plugins/web/<dir>/src/server.ts`
 - `apps/server/test/*.test.ts` and/or plugin tests
 
 ### Checks

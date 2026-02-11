@@ -7,17 +7,17 @@ Use this when you want plain `rawr` globally and also want to author/use workspa
 ## End-to-end Commands
 
 ```bash
-cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
+cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 ./scripts/dev/activate-global-rawr.sh
 rawr factory plugin new demo-global --kind both
 bunx turbo run build --filter=@rawr/plugin-demo-global
-rawr hq plugins enable demo-global --risk off
+rawr hq plugins enable demo-global --allow-non-operational --risk off
 ```
 
 ## How discovery works
 
 - Global `rawr` binary points to the activated checkout (`~/.bun/bin/rawr` symlink).
-- Channel B still discovers plugins from workspace `plugins/*` and persisted state.
+- Channel B still discovers plugins from workspace `plugins/web/*` and persisted state.
 
 ## Caveats
 

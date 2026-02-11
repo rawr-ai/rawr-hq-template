@@ -27,7 +27,11 @@ Mode contract:
 
 ## Plugin Authoring
 
-- Template `plugins/*` are fixture/example packages for baseline validation and demos.
+- Template plugin packages live under channelized roots:
+  - `plugins/cli/*`
+  - `plugins/web/*`
+  - `plugins/agents/*`
+- These are fixture/example packages for baseline validation and demos.
 - Operational plugin authoring belongs in downstream personal `RAWR HQ` repos.
 - Runtime workspace commands: `rawr hq plugins ...`
 - External oclif plugin manager: `rawr plugins ...`

@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 export type WorkspacePlugin = {
   id: string;
@@ -20,12 +21,16 @@ async function pathExists(p: string): Promise<boolean> {
   }
 }
 
-export async function findWorkspaceRoot(startDir = process.cwd()): Promise<string | null> {
-  let current = startDir;
+async function isWorkspaceRoot(candidateDir: string): Promise<boolean> {
+  const pkgPath = path.join(candidateDir, "package.json");
+  const pluginsDir = path.join(candidateDir, "plugins");
+  return (await pathExists(pkgPath)) && (await pathExists(pluginsDir));
+}
+
+async function findWorkspaceRootUpwards(startDir: string): Promise<string | null> {
+  let current = path.resolve(startDir);
   for (let i = 0; i < 20; i++) {
-    const pkgPath = path.join(current, "package.json");
-    const pluginsDir = path.join(current, "plugins");
-    if ((await pathExists(pkgPath)) && (await pathExists(pluginsDir))) return current;
+    if (await isWorkspaceRoot(current)) return current;
 
     const parent = path.dirname(current);
     if (parent === current) return null;
@@ -35,14 +40,63 @@ export async function findWorkspaceRoot(startDir = process.cwd()): Promise<strin
   return null;
 }
 
-export async function listWorkspacePlugins(workspaceRoot: string): Promise<WorkspacePlugin[]> {
-  const pluginsDir = path.join(workspaceRoot, "plugins");
-  const dirents = await fs.readdir(pluginsDir, { withFileTypes: true });
-  const plugins: WorkspacePlugin[] = [];
+export async function findWorkspaceRoot(startDir = process.cwd()): Promise<string | null> {
+  // Explicit override for cases where the CLI is invoked from outside the workspace.
+  // (e.g. you want to run `rawr journal tail` from another repo).
+  const envRoot = process.env.RAWR_WORKSPACE_ROOT ?? process.env.RAWR_HQ_ROOT;
+  if (typeof envRoot === "string" && envRoot.trim().length > 0) {
+    const resolved = path.resolve(envRoot.trim());
+    if (await isWorkspaceRoot(resolved)) return resolved;
+  }
 
+  // Primary: search from the working directory.
+  const fromCwd = await findWorkspaceRootUpwards(startDir);
+  if (fromCwd) return fromCwd;
+
+  // Fallback: search from the installed CLI’s location (useful when invoked elsewhere).
+  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  return findWorkspaceRootUpwards(moduleDir);
+}
+
+async function listLeafPluginDirsUnder(root: string): Promise<string[]> {
+  let dirents: Array<{ name: string; isDirectory: () => boolean }>;
+  try {
+    dirents = await fs.readdir(root, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const out: string[] = [];
   for (const dirent of dirents) {
     if (!dirent.isDirectory()) continue;
-    const absPath = path.join(pluginsDir, dirent.name);
+    if (dirent.name.startsWith(".")) continue;
+    out.push(path.join(root, dirent.name));
+  }
+  return out;
+}
+
+async function listWorkspacePluginPackageDirs(workspaceRoot: string): Promise<string[]> {
+  const pluginsDir = path.join(workspaceRoot, "plugins");
+
+  const splitRoots = [
+    path.join(pluginsDir, "cli"),
+    path.join(pluginsDir, "agents"),
+    path.join(pluginsDir, "web"),
+  ];
+
+  const out: string[] = [];
+  for (const r of splitRoots) out.push(...(await listLeafPluginDirsUnder(r)));
+
+  out.sort((a, b) => a.localeCompare(b));
+  return out;
+}
+
+export async function listWorkspacePlugins(workspaceRoot: string): Promise<WorkspacePlugin[]> {
+  const pluginDirs = await listWorkspacePluginPackageDirs(workspaceRoot);
+  const plugins: WorkspacePlugin[] = [];
+
+  for (const absPath of pluginDirs) {
+    const dirName = path.basename(absPath);
     const pkgJsonPath = path.join(absPath, "package.json");
 
     let name: string | undefined;
@@ -60,7 +114,11 @@ export async function listWorkspacePlugins(workspaceRoot: string): Promise<Works
           };
         };
         if (typeof parsed.name === "string") name = parsed.name;
-        if (parsed.rawr?.templateRole === "fixture" || parsed.rawr?.templateRole === "example" || parsed.rawr?.templateRole === "operational") {
+        if (
+          parsed.rawr?.templateRole === "fixture" ||
+          parsed.rawr?.templateRole === "example" ||
+          parsed.rawr?.templateRole === "operational"
+        ) {
           templateRole = parsed.rawr.templateRole;
         }
         if (parsed.rawr?.channel === "A" || parsed.rawr?.channel === "B" || parsed.rawr?.channel === "both") {
@@ -75,9 +133,9 @@ export async function listWorkspacePlugins(workspaceRoot: string): Promise<Works
     }
 
     plugins.push({
-      id: name ?? dirent.name,
+      id: name ?? dirName,
       name,
-      dirName: dirent.name,
+      dirName,
       absPath,
       templateRole,
       channel,
@@ -94,10 +152,7 @@ export function filterOperationalPlugins(plugins: WorkspacePlugin[], includeNonO
   return plugins.filter((plugin) => plugin.templateRole === "operational");
 }
 
-export function resolvePluginId(
-  plugins: WorkspacePlugin[],
-  inputId: string,
-): WorkspacePlugin | undefined {
+export function resolvePluginId(plugins: WorkspacePlugin[], inputId: string): WorkspacePlugin | undefined {
   const direct = plugins.find((p) => p.id === inputId);
   if (direct) return direct;
   return plugins.find((p) => p.dirName === inputId);

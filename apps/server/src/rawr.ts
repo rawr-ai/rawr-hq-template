@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+
 import type { AnyElysia } from "./plugins";
 
 export type RawrRoutesOptions = {
@@ -47,7 +48,13 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     const dirName = String((params as any).dirName ?? "");
     if (!isSafeDirName(dirName)) return new Response("not found", { status: 404 });
 
-    const pluginRoot = path.join(opts.repoRoot, "plugins", dirName);
+    const pluginRoot = path.join(opts.repoRoot, "plugins", "web", dirName);
+    try {
+      const st = await fs.stat(pluginRoot);
+      if (!st.isDirectory()) return new Response("not found", { status: 404 });
+    } catch {
+      return new Response("not found", { status: 404 });
+    }
     const pluginId = await readPluginId(pluginRoot, dirName);
     if (!opts.enabledPluginIds.has(pluginId) && !opts.enabledPluginIds.has(dirName)) {
       return new Response("not found", { status: 404 });

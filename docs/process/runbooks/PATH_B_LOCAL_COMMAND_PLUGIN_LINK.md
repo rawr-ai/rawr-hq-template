@@ -7,10 +7,10 @@ Use this when you want a plugin-provided CLI command available through your loca
 ## End-to-end Commands
 
 ```bash
-cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
+cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 # scaffold command plugin package per runbook
 bunx turbo run build --filter=@rawr/plugin-demo-oclif
-rawr plugins link "$(pwd)/plugins/demo-oclif" --install
+rawr plugins link "$(pwd)/plugins/cli/demo-oclif" --install
 rawr plugins inspect @rawr/plugin-demo-oclif --json
 rawr demo-hello
 ```

@@ -26,16 +26,23 @@ Channel B is local-first and integrates with runtime state and security gating.
 
 ## Runtime Contract (Channel B)
 
-- Plugin packages live under `plugins/*`.
+- Workspace runtime plugin packages live under `plugins/web/*`.
 - Plugin id is package name (preferred) or directory name fallback.
 - Enabling is gated by security checks.
 - Enabled set is persisted to `.rawr/state/state.json`.
 - Server/web paths consume enabled state.
 
+## Repo Plugin Roots (Internal Layout)
+
+- `plugins/cli/*`: CLI toolkits (oclif plugins; `rawr.kind=toolkit`)
+- `plugins/web/*`: workspace runtime plugins (server/web exports; `rawr.kind=web`)
+- `plugins/agents/*`: agent offices (skills/workflows/agents/scripts; `rawr.kind=agent`)
+
 ## Template Plugin Role Contract
 
 Template plugins must declare role metadata in `package.json#rawr`:
 - `templateRole`: `fixture | example | operational`
+- `kind`: `toolkit | web | agent`
 - `channel`: `A | B | both`
 - `publishTier`: `blocked | candidate`
 

@@ -8,7 +8,7 @@ Treat these as upstream-governed (fixed by default):
 - canonical docs and governance files
 
 Treat these as customization zones:
-- `plugins/*` (unless promoted to template scaffold)
+- `plugins/cli/*`, `plugins/web/*`, `plugins/agents/*` (unless promoted to template scaffold)
 - personal workflow docs in downstream repos
 
 ## Pre-Change Impact Checklist
@@ -29,4 +29,3 @@ Treat these as customization zones:
 After significant merges or updates:
 - `bun run build`
 - `bun run test`
-

@@ -6,7 +6,9 @@
   "workspaces": [
     "apps/*",
     "packages/*",
-    "plugins/*"
+    "plugins/cli/*",
+    "plugins/agents/*",
+    "plugins/web/*"
   ],
   "scripts": {
     "dev": "turbo run dev",

@@ -19,20 +19,20 @@ Use this when converting an existing script (from anywhere on disk) into a prope
 ### Channel A migration skeleton
 
 ```bash
-cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
+cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 # scaffold command plugin package per runbook
 bunx turbo run build --filter=@rawr/plugin-demo-oclif
-rawr plugins link "$(pwd)/plugins/demo-oclif" --install
+rawr plugins link "$(pwd)/plugins/cli/demo-oclif" --install
 rawr plugins inspect @rawr/plugin-demo-oclif --json
 ```
 
 ### Channel B migration skeleton
 
 ```bash
-cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
+cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 rawr factory plugin new demo-runtime --kind both
 bunx turbo run build --filter=@rawr/plugin-demo-runtime
-rawr hq plugins enable demo-runtime --risk off
+rawr hq plugins enable demo-runtime --allow-non-operational --risk off
 rawr hq plugins status --json
 ```
 
