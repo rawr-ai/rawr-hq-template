@@ -2,11 +2,13 @@
 
 import { execFileSync } from "node:child_process";
 import path from "node:path";
-
-type GuardMode = "off" | "warn" | "block";
-type RepoRole = "template" | "personal" | "unknown";
-
-const VALID_MODES = new Set<GuardMode>(["off", "warn", "block"]);
+import {
+  type GuardMode,
+  type RepoRole,
+  matchTemplateManagedFiles,
+  normalizeMode,
+  resolveGuardModeFromInputs,
+} from "./template-managed-guard-lib";
 
 function runGit(args: string[]): string {
   try {
@@ -14,13 +16,6 @@ function runGit(args: string[]): string {
   } catch {
     return "";
   }
-}
-
-function normalizeMode(value: string | undefined | null): GuardMode | null {
-  if (!value) return null;
-  const lowered = value.trim().toLowerCase();
-  if (VALID_MODES.has(lowered as GuardMode)) return lowered as GuardMode;
-  return null;
 }
 
 function getGitConfig(key: string): string | null {
@@ -45,32 +40,18 @@ function detectRepoRole(): RepoRole {
 }
 
 function resolveGuardMode(role: RepoRole): GuardMode {
-  const envMode = normalizeMode(process.env.RAWR_TEMPLATE_GUARD_MODE);
-  if (envMode) return envMode;
-
-  const configMode = normalizeMode(getGitConfig("rawr.templateGuardMode"));
-  if (configMode) return configMode;
-
-  const ownerEmail =
-    (process.env.RAWR_TEMPLATE_GUARD_OWNER_EMAIL ?? "").trim() ||
-    (getGitConfig("rawr.templateGuardOwnerEmail") ?? "");
-  const ownerMode =
-    normalizeMode(process.env.RAWR_TEMPLATE_GUARD_OWNER_MODE) ??
-    normalizeMode(getGitConfig("rawr.templateGuardOwnerMode")) ??
-    "block";
-  const currentEmail =
-    (process.env.GIT_AUTHOR_EMAIL ?? "").trim() ||
-    (process.env.GIT_COMMITTER_EMAIL ?? "").trim() ||
-    (getGitConfig("user.email") ?? "");
-
-  if (ownerEmail && currentEmail && ownerEmail.toLowerCase() === currentEmail.toLowerCase()) {
-    return ownerMode;
-  }
-
-  // Downstream default is warn so users aren't blocked by surprise.
-  // Template repo itself is excluded by role check before this runs.
-  if (role === "personal" || role === "unknown") return "warn";
-  return "off";
+  return resolveGuardModeFromInputs({
+    role,
+    envMode: process.env.RAWR_TEMPLATE_GUARD_MODE,
+    configMode: getGitConfig("rawr.templateGuardMode"),
+    ownerEmail: (process.env.RAWR_TEMPLATE_GUARD_OWNER_EMAIL ?? "").trim() || getGitConfig("rawr.templateGuardOwnerEmail"),
+    ownerMode:
+      process.env.RAWR_TEMPLATE_GUARD_OWNER_MODE ?? getGitConfig("rawr.templateGuardOwnerMode") ?? "block",
+    currentEmail:
+      (process.env.GIT_AUTHOR_EMAIL ?? "").trim() ||
+      (process.env.GIT_COMMITTER_EMAIL ?? "").trim() ||
+      (getGitConfig("user.email") ?? ""),
+  });
 }
 
 async function parsePatternManifest(repoRoot: string): Promise<string[]> {
@@ -93,15 +74,6 @@ function listStagedFiles(): string[] {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((p) => p.replace(/\\/g, "/"));
-}
-
-function matchesPattern(filePath: string, pattern: string): boolean {
-  const normalizedPattern = pattern.replace(/\\/g, "/");
-  if (normalizedPattern.endsWith("/**")) {
-    const prefix = normalizedPattern.slice(0, -3).replace(/\/+$/, "");
-    return filePath === prefix || filePath.startsWith(`${prefix}/`);
-  }
-  return filePath === normalizedPattern;
 }
 
 async function main() {
@@ -134,7 +106,7 @@ async function main() {
     process.exit(0);
   }
 
-  const matched = staged.filter((filePath) => patterns.some((pattern) => matchesPattern(filePath, pattern)));
+  const matched = matchTemplateManagedFiles(staged, patterns);
   if (matched.length === 0) {
     process.exit(0);
   }

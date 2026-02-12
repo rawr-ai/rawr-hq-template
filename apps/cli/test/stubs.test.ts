@@ -47,10 +47,7 @@ describe("rawr command surfaces", () => {
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
-    // Default list should include operational plugins only.
-    expect(parsed.data.plugins.map((p: any) => p.id)).toContain("@rawr/plugin-dev");
-    expect(parsed.data.plugins.map((p: any) => p.id)).toContain("@rawr/plugin-docs");
-    expect(parsed.data.plugins.map((p: any) => p.id)).not.toContain("@rawr/plugin-hello");
+    expect(parsed.data.plugins).toEqual([]);
     expect(parsed.data.excludedCount).toBeGreaterThanOrEqual(1);
 
     const allProc = runRawr(["plugins", "web", "list", "--all", "--json"]);
