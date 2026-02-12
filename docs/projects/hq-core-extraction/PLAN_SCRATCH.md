@@ -8,7 +8,13 @@
 - [ ] Track implementation slices and status in this doc
 
 ## Implementation Decisions
-- _No implementation decisions recorded yet._
+- Decision: Keep command file paths stable for now and replace duplicated local libs with thin `@rawr/hq` re-export shims.
+  - Context: `apps/cli` and `plugins/cli/plugins` both import many `../../lib/*` modules; changing all call sites at once creates broad churn.
+  - Rationale: We still centralize domain logic in `@rawr/hq` while minimizing risk and diff size.
+  - Risk: Temporary shim files remain as compatibility surface; follow-up can remove shims when import graph is calmer.
+- Decision: Introduce `@rawr/hq` with subpath exports (`workspace`, `install`, `lifecycle`, `scaffold`, `journal`, `security`) plus root export.
+  - Context: Multiple command modules need narrow slices, not one giant import barrel.
+  - Rationale: Keeps package boundaries explicit and future-proof for optional consumers.
 
 # Plan: HQ/Core Extraction + DevOps Command Family (Template-Owned Core, Personal-Owned Dev Surface)
 

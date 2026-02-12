@@ -36,6 +36,19 @@ Use this when you need exact commands for:
 
 Do not mix command families.
 
+## Convergence Shortcuts
+
+- Health/drift view: `rawr plugins status --checks all`
+- Link/install diagnosis: `rawr plugins doctor links --json`
+- End-to-end converge loop: `rawr plugins converge --json`
+
+Scratch-first policy for mutating multi-phase commands:
+- Required docs: `docs/projects/*/PLAN_SCRATCH.md` and `docs/projects/*/WORKING_PAD.md`
+- Mode controls:
+  - `RAWR_SCRATCH_POLICY_MODE=off|warn|block`
+  - `git config rawr.scratchPolicyMode <off|warn|block>`
+  - `RAWR_SKIP_SCRATCH_POLICY=1` (one-off bypass)
+
 ## Related Process Docs
 
 - `docs/process/PLUGIN_E2E_WORKFLOW.md` (umbrella E2E)

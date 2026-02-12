@@ -42,10 +42,10 @@ RUNTIME_DIR="demo-runtime-e2e"
 RUNTIME_ID="@rawr/plugin-${RUNTIME_DIR}"
 
 # Plan first (no writes)
-bun run rawr -- factory plugin new "$RUNTIME_DIR" --kind both --dry-run --json
+bun run rawr -- plugins scaffold web-plugin "$RUNTIME_DIR" --kind both --dry-run --json
 
 # Create files
-bun run rawr -- factory plugin new "$RUNTIME_DIR" --kind both --json
+bun run rawr -- plugins scaffold web-plugin "$RUNTIME_DIR" --kind both --json
 ```
 
 ### 2) Implement
@@ -209,7 +209,7 @@ bun run rawr -- "$OCLIF_CMD"
 > - If you link from a **disposable git worktree** and later delete it, `rawr` can fail at startup (missing `package.json`).
 > - Prefer linking from a **stable checkout path** (your primary worktree), using an absolute path.
 > - Recovery: `rawr plugins uninstall <plugin>` (or `rawr plugins reset` to wipe all user-linked plugins).
-> - If available, prefer the repo-root helper: `rawr plugins install all`.
+> - If available, prefer the repo-root helper: `rawr plugins cli install all`.
 
 ### 4) Install Rehearsal (Channel A Install Path)
 
@@ -224,7 +224,7 @@ bun run rawr -- plugins inspect "$OCLIF_ID" --json
 ## Verification Checkpoints
 
 1. Scaffold plan is deterministic:
-   - `factory plugin new ... --dry-run --json` returns `ok: true` and planned paths.
+   - `plugins scaffold web-plugin ... --dry-run --json` returns `ok: true` and planned paths.
 2. Build/test gate passes:
    - `turbo run build/test --filter=<plugin-id>` exits `0`.
 3. Channel B state gate passes:
@@ -269,10 +269,11 @@ Current default posture is local-only:
 When you want “one command does all of them” workflows, prefer these repo-root entrypoints:
 
 ```bash
-rawr plugins install all
-rawr plugins enable all
+rawr plugins cli install all
+rawr plugins web enable all
 rawr plugins sync all --dry-run
 rawr plugins sync all
+rawr plugins converge
 ```
 
 Notes:
