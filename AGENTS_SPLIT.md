@@ -8,12 +8,16 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - You are changing shared CLI contracts or command UX.
 - You are changing shared packages:
   - `apps/cli`
-  - `packages/hq`
-  - `packages/core`
+  - `packages/agent-sync`
   - `packages/control-plane`
-  - `packages/state`
-  - `packages/security`
+  - `packages/core`
+  - `packages/hq`
   - `packages/journal`
+  - `packages/security`
+  - `packages/session-tools`
+  - `packages/state`
+  - `packages/test-utils`
+  - `packages/ui-sdk`
 - You are changing template-wide scaffolding, governance docs, or baseline workflows.
 - You are changing fixture/example plugin contracts used to validate template behavior.
 
@@ -46,13 +50,11 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 
 ## Plugin Ownership Rule (Hard)
 
-- Template plugin roots (`plugins/cli/*`, `plugins/web/*`, `plugins/agents/*`) are fixture/example baseline only.
-- Operational plugin development starts in personal `RAWR HQ`.
-- Promote to template only when the artifact is truly baseline fixture/example material.
-- Lifecycle system-management policy content is template-managed by default, including:
-  - `plugins/agents/hq/skills/agent-plugin-management/**`
-  - `plugins/agents/hq/workflows/lifecycle-*.md`
-  - `plugins/agents/hq/workflows/merge-no-policy-stack.md`
+- Template-managed HQ/plugin-management domain includes:
+  - `plugins/agents/hq/**` (full ownership)
+  - `plugins/cli/plugins/**` (shared lifecycle/runtime command surface)
+- Operational plugin development in other plugin roots starts in personal `RAWR HQ`.
+- Promote non-HQ personal plugin artifacts to template only when they are truly baseline fixture/example material.
 
 ## Global CLI Wiring Ownership
 
@@ -68,6 +70,7 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - Intended behavior:
   - In template repo: guard is inactive.
   - In downstream personal repo: guard warns or blocks when staged files match template-managed paths.
+- Shared package guard scope is explicitly narrowed; `packages/dev/**` stays personal-owned.
 - Mode controls (downstream):
   - `RAWR_TEMPLATE_GUARD_MODE=off|warn|block`
   - `git config rawr.templateGuardMode <off|warn|block>`
