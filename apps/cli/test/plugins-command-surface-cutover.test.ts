@@ -64,7 +64,7 @@ describe("plugin command surface cutover", () => {
   });
 
   it("supports plugins sync dry-run variants", () => {
-    const single = runRawr(["plugins", "sync", "tools", "--dry-run", "--json"]);
+    const single = runRawr(["plugins", "sync", "plugins", "--dry-run", "--json"]);
     expect(single.status).toBe(0);
     const singleJson = parseJson(single);
     expect(singleJson.ok).toBe(true);
