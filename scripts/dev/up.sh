@@ -11,20 +11,42 @@ INNGEST_RUNS_URL="${INNGEST_RUNS_URL:-http://localhost:8288/runs}"
 app_pid=""
 web_pid=""
 inngest_pid=""
+shutting_down=0
+
+signal_children() {
+  local signal_name="$1"
+  for pid in "${app_pid}" "${web_pid}" "${inngest_pid}"; do
+    if [[ -n "${pid}" ]] && kill -0 "${pid}" >/dev/null 2>&1; then
+      kill "-${signal_name}" "${pid}" >/dev/null 2>&1 || true
+    fi
+  done
+}
+
+wait_for_children() {
+  for pid in "${app_pid}" "${web_pid}" "${inngest_pid}"; do
+    if [[ -n "${pid}" ]]; then
+      wait "${pid}" 2>/dev/null || true
+    fi
+  done
+}
+
+graceful_shutdown() {
+  shutting_down=1
+  signal_children INT
+  sleep 0.2
+  signal_children TERM
+  wait_for_children
+}
 
 cleanup() {
-  if [[ -n "${app_pid}" ]]; then
-    kill "${app_pid}" >/dev/null 2>&1 || true
-  fi
-  if [[ -n "${web_pid}" ]]; then
-    kill "${web_pid}" >/dev/null 2>&1 || true
-  fi
-  if [[ -n "${inngest_pid}" ]]; then
-    kill "${inngest_pid}" >/dev/null 2>&1 || true
+  if [[ "${shutting_down}" -eq 0 ]]; then
+    signal_children TERM
+    wait_for_children
   fi
 }
 
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'graceful_shutdown; exit 0' INT TERM
 
 wait_for_http() {
   local url="$1"
@@ -81,10 +103,10 @@ open_ui_surfaces() {
   fi
 }
 
-bun run dev:server &
+(cd apps/server && exec bun --hot src/index.ts) &
 app_pid="$!"
 
-bun run dev:web &
+(cd apps/web && exec bunx vite) &
 web_pid="$!"
 
 bun run dev:workflows &
@@ -98,12 +120,25 @@ wait_for_any_exit() {
   while true; do
     for pid in "${app_pid}" "${web_pid}" "${inngest_pid}"; do
       if ! kill -0 "${pid}" >/dev/null 2>&1; then
-        wait "${pid}" 2>/dev/null || true
-        return
+        set +e
+        wait "${pid}" 2>/dev/null
+        local status=$?
+        set -e
+
+        if [[ "${shutting_down}" -eq 1 ]]; then
+          return 0
+        fi
+        if [[ "${status}" -eq 130 || "${status}" -eq 143 ]]; then
+          return 0
+        fi
+
+        return "${status}"
       fi
     done
     sleep 1
   done
 }
 
-wait_for_any_exit
+if ! wait_for_any_exit; then
+  exit $?
+fi
