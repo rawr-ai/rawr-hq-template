@@ -46,6 +46,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/hq"),
+        test: { name: "hq", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/security"),
         test: { name: "security", environment: "node", include: [...includes] },
       },

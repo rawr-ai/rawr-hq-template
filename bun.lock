@@ -24,6 +24,7 @@
         "@rawr/agent-sync": "workspace:*",
         "@rawr/control-plane": "workspace:*",
         "@rawr/core": "workspace:*",
+        "@rawr/hq": "workspace:*",
         "@rawr/journal": "workspace:*",
         "@rawr/plugin-plugins": "workspace:*",
         "@rawr/security": "workspace:*",
@@ -98,6 +99,17 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/hq": {
+      "name": "@rawr/hq",
+      "dependencies": {
+        "@rawr/agent-sync": "workspace:*",
+        "@rawr/security": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.2.10",
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/journal": {
       "name": "@rawr/journal",
       "devDependencies": {
@@ -152,6 +164,7 @@
         "@rawr/agent-sync": "workspace:*",
         "@rawr/control-plane": "workspace:*",
         "@rawr/core": "workspace:*",
+        "@rawr/hq": "workspace:*",
         "@rawr/security": "workspace:*",
         "@rawr/state": "workspace:*",
       },
@@ -311,6 +324,8 @@
     "@rawr/control-plane": ["@rawr/control-plane@workspace:packages/control-plane"],
 
     "@rawr/core": ["@rawr/core@workspace:packages/core"],
+
+    "@rawr/hq": ["@rawr/hq@workspace:packages/hq"],
 
     "@rawr/journal": ["@rawr/journal@workspace:packages/journal"],
 

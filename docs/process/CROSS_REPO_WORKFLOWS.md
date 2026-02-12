@@ -6,6 +6,8 @@ This is the canonical workflow model for operating both repos on one machine.
 
 - `RAWR HQ-Template` owns shared CLI/core contracts and template baseline.
 - `RAWR HQ` owns operational plugin authoring, local customization, and personal workflows.
+- Shared HQ/plugin-management domain modules are template-owned in `packages/hq/**`.
+- Personal mechanical dev workflows (stack/worktree orchestration) are personal-owned in `packages/dev/**` and `plugins/cli/devops/**`.
 
 ## Journey 1: Create an Operational Plugin
 
@@ -73,3 +75,10 @@ Hooks refresh global wiring only when the current checkout is the active owner.
 - Channel B: `rawr plugins web ...`
 
 Never mix command families in docs or scripts.
+
+## Shared Convergence Baseline
+
+Across both repos, use these plugin-management checks before/after cross-repo sync:
+- `rawr plugins doctor links --json`
+- `rawr plugins status --checks all --json`
+- `rawr plugins converge --json`

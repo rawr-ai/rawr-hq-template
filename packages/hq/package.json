@@ -1,0 +1,51 @@
+{
+  "name": "@rawr/hq",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./workspace": {
+      "types": "./src/workspace/index.ts",
+      "default": "./src/workspace/index.ts"
+    },
+    "./install": {
+      "types": "./src/install/index.ts",
+      "default": "./src/install/index.ts"
+    },
+    "./lifecycle": {
+      "types": "./src/lifecycle/index.ts",
+      "default": "./src/lifecycle/index.ts"
+    },
+    "./scaffold": {
+      "types": "./src/scaffold/index.ts",
+      "default": "./src/scaffold/index.ts"
+    },
+    "./journal": {
+      "types": "./src/journal/index.ts",
+      "default": "./src/journal/index.ts"
+    },
+    "./security": {
+      "types": "./src/security/index.ts",
+      "default": "./src/security/index.ts"
+    }
+  },
+  "dependencies": {
+    "@rawr/agent-sync": "workspace:*",
+    "@rawr/security": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.10",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "bunx tsc -p tsconfig.json",
+    "typecheck": "bunx tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  }
+}

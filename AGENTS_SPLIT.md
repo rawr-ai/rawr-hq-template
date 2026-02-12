@@ -8,6 +8,7 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - You are changing shared CLI contracts or command UX.
 - You are changing shared packages:
   - `apps/cli`
+  - `packages/hq`
   - `packages/core`
   - `packages/control-plane`
   - `packages/state`
@@ -29,6 +30,7 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - The change is plugin-only and does not alter shared core contracts.
 - The change is project/product customization not meant for all template consumers.
 - You are authoring or evolving operational plugins.
+- You are implementing operator-specific dev workflow mechanics (`packages/dev/**`, `plugins/cli/devops/**`).
 
 ## Promotion Path (Personal -> Template)
 

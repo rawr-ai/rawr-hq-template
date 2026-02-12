@@ -1,5 +1,6 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
+import { checkScratchPolicy } from "@rawr/hq/lifecycle";
 
 import { buildFixSliceBranchName } from "../../lib/plugins-lifecycle/fix-slice";
 import {
@@ -126,8 +127,29 @@ export default class PluginsImprove extends RawrCommand {
     });
 
     const actions: ImprovementResult["actions"] = [];
+    const warnings: string[] = [];
 
     const publish = Boolean(flags.publish);
+    if (publish && !baseFlags.dryRun) {
+      const scratch = await checkScratchPolicy(workspaceRoot);
+      if (scratch.mode === "block" && scratch.missing.length > 0) {
+        const result = this.fail("Scratch policy blocked improve --publish; required scratch docs are missing", {
+          code: "SCRATCH_POLICY_BLOCKED",
+          details: {
+            mode: scratch.mode,
+            missing: scratch.missing,
+            hint: "Create docs/projects/*/PLAN_SCRATCH.md and WORKING_PAD.md or set RAWR_SCRATCH_POLICY_MODE=warn/off for this run.",
+          },
+        });
+        this.outputResult(result, { flags: baseFlags });
+        this.exit(2);
+        return;
+      }
+      if (scratch.mode === "warn" && scratch.missing.length > 0) {
+        warnings.push(`scratch policy warning: missing ${scratch.missing.join(", ")}`);
+      }
+    }
+
     if (publish) {
       if (baseFlags.dryRun) {
         actions.push({ action: "gt submit --stack --ai", status: "planned" });
@@ -273,12 +295,13 @@ export default class PluginsImprove extends RawrCommand {
       return;
     }
 
-    const result = this.ok(payload);
+    const result = this.ok(payload, undefined, warnings.length > 0 ? warnings : undefined);
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {
         this.log(`target: ${lifecycle.target.relPath}`);
         this.log(`decision: ${payload.decision}`);
+        for (const warning of warnings) this.log(`warning: ${warning}`);
         this.log(`judgeA: ${payload.policyAssessment.judge1.outcome} (${payload.policyAssessment.judge1.confidence.toFixed(2)})`);
         this.log(`judgeB: ${payload.policyAssessment.judge2.outcome} (${payload.policyAssessment.judge2.confidence.toFixed(2)})`);
         this.log(`comments: ${payload.prContext.commentsCount}`);

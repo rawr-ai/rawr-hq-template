@@ -11,6 +11,7 @@ Use oclif plugin manager commands:
 - `rawr plugins link <path>`
 - `rawr plugins inspect <plugin>`
 - `rawr plugins update`
+- `rawr plugins cli install all`
 
 Channel A is for CLI command extensions that can be installed from npm/GitHub or linked locally.
 
@@ -23,6 +24,19 @@ Use RAWR HQ runtime plugin commands:
 - `rawr plugins web status`
 
 Channel B is local-first and integrates with runtime state and security gating.
+
+## HQ Plugin-Management Surfaces
+
+System-management plugin workflows run through:
+- `rawr plugins status`
+- `rawr plugins doctor links`
+- `rawr plugins sync ...`
+- `rawr plugins converge`
+
+`rawr plugins converge` is the canonical deterministic loop:
+1. repair install/link drift,
+2. run sync-all convergence,
+3. verify final healthy status.
 
 ## Runtime Contract (Channel B)
 
@@ -77,8 +91,10 @@ Scaffolded plugin package templates should include these fields by default.
 ## Ownership Summary
 
 - Core CLI contracts and publish ownership are template-owned.
+- Core HQ/plugin-management domain logic is template-owned in `packages/hq/**`.
 - Lifecycle management surfaces are template-owned, including:
-  - `plugins/cli/plugins/**` lifecycle command/runtime code
+  - `plugins/cli/plugins/**` command wrappers and UX
+  - `packages/hq/**` lifecycle/install/workspace/scaffold/security/journal domain modules
   - `plugins/agents/hq/skills/agent-plugin-management/**`
   - `plugins/agents/hq/workflows/lifecycle-*.md` and `merge-no-policy-stack.md`
 - Operational plugin authoring is personal-HQ-owned by default.
