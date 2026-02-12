@@ -1,0 +1,15 @@
+{
+  "name": "@rawr/plugin-hq",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RAWR HQ-Template baseline agent-office skills for HQ orientation and plugin creation workflows",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "rawr": {
+    "templateRole": "example",
+    "kind": "agent",
+    "channel": "both",
+    "publishTier": "blocked"
+  }
+}
