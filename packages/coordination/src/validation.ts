@@ -6,6 +6,7 @@ import {
   type ValidationResultV1,
 } from "./types";
 import { deskMap, hasCycle, incomingAdjacency, reachableFromEntry } from "./graph";
+import { isSafeCoordinationId } from "./ids";
 
 function isSchemaAssignable(outputSchema: JsonSchemaV1, inputSchema: JsonSchemaV1): boolean {
   if (!inputSchema.type) return true;
@@ -51,6 +52,11 @@ export function validateWorkflow(workflow: CoordinationWorkflowV1): ValidationRe
       code: "MISSING_WORKFLOW_ID",
       message: "Workflow must include a non-empty workflowId",
     });
+  } else if (!isSafeCoordinationId(workflow.workflowId)) {
+    add(errors, {
+      code: "INVALID_WORKFLOW_ID_FORMAT",
+      message: `Workflow workflowId contains unsupported characters: ${workflow.workflowId}`,
+    });
   }
 
   const desks = deskMap(workflow);
@@ -73,6 +79,31 @@ export function validateWorkflow(workflow: CoordinationWorkflowV1): ValidationRe
     }
     seenDeskIds.add(desk.deskId);
 
+    if (!isSafeCoordinationId(desk.deskId)) {
+      add(errors, {
+        code: "INVALID_DESK_ID_FORMAT",
+        message: `Desk id contains unsupported characters: ${desk.deskId}`,
+        deskId: desk.deskId,
+      });
+    }
+
+    if (!desk.memoryScope || typeof desk.memoryScope.persist !== "boolean") {
+      add(errors, {
+        code: "INVALID_MEMORY_SCOPE",
+        message: `Desk ${desk.deskId} has an invalid memoryScope (persist must be boolean)`,
+        deskId: desk.deskId,
+      });
+    } else if (
+      desk.memoryScope.ttlSeconds !== undefined
+      && (!Number.isInteger(desk.memoryScope.ttlSeconds) || desk.memoryScope.ttlSeconds <= 0)
+    ) {
+      add(errors, {
+        code: "INVALID_MEMORY_SCOPE",
+        message: `Desk ${desk.deskId} has invalid ttlSeconds; expected positive integer`,
+        deskId: desk.deskId,
+      });
+    }
+
     if (!DESK_KINDS_V1.includes(desk.kind as any)) {
       add(errors, {
         code: "UNKNOWN_DESK_KIND",
@@ -83,6 +114,14 @@ export function validateWorkflow(workflow: CoordinationWorkflowV1): ValidationRe
   }
 
   for (const handoff of workflow.handoffs) {
+    if (!isSafeCoordinationId(handoff.handoffId)) {
+      add(errors, {
+        code: "INVALID_HANDOFF_ID_FORMAT",
+        message: `Handoff id contains unsupported characters: ${handoff.handoffId}`,
+        handoffId: handoff.handoffId,
+      });
+    }
+
     if (!desks.has(handoff.fromDeskId)) {
       add(errors, {
         code: "EDGE_UNKNOWN_SOURCE",

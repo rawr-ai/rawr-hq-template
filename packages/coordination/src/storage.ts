@@ -6,6 +6,7 @@ import type {
   DeskRunEventV1,
   RunStatusV1,
 } from "./types";
+import { assertSafeCoordinationId } from "./ids";
 
 const RAWR_COORD_ROOT = [".rawr", "coordination"] as const;
 
@@ -29,6 +30,8 @@ function memoryDir(repoRoot: string): string {
   return path.join(baseDir(repoRoot), "memory");
 }
 
+const runTimelineLocks = new Map<string, Promise<void>>();
+
 async function ensureDir(p: string): Promise<void> {
   await fs.mkdir(p, { recursive: true });
 }
@@ -45,6 +48,47 @@ async function readJsonFile<T>(p: string): Promise<T | null> {
   } catch {
     return null;
   }
+}
+
+async function withRunTimelineLock<T>(runId: string, task: () => Promise<T>): Promise<T> {
+  const previous = runTimelineLocks.get(runId) ?? Promise.resolve();
+  let releaseCurrent: () => void = () => {};
+  const current = new Promise<void>((resolve) => {
+    releaseCurrent = resolve;
+  });
+  const nextTail = previous.then(() => current);
+  runTimelineLocks.set(runId, nextTail);
+
+  await previous;
+  try {
+    return await task();
+  } finally {
+    releaseCurrent();
+    if (runTimelineLocks.get(runId) === nextTail) {
+      runTimelineLocks.delete(runId);
+    }
+  }
+}
+
+function workflowFilePath(repoRoot: string, workflowId: string): string {
+  const safeWorkflowId = assertSafeCoordinationId(workflowId, "workflowId");
+  return path.join(workflowsDir(repoRoot), `${safeWorkflowId}.json`);
+}
+
+function runFilePath(repoRoot: string, runId: string): string {
+  const safeRunId = assertSafeCoordinationId(runId, "runId");
+  return path.join(runsDir(repoRoot), `${safeRunId}.json`);
+}
+
+function timelineFilePath(repoRoot: string, runId: string): string {
+  const safeRunId = assertSafeCoordinationId(runId, "runId");
+  return path.join(timelinesDir(repoRoot), `${safeRunId}.json`);
+}
+
+function deskMemoryPath(repoRoot: string, workflowId: string, deskId: string): string {
+  const safeWorkflowId = assertSafeCoordinationId(workflowId, "workflowId");
+  const safeDeskId = assertSafeCoordinationId(deskId, "deskId");
+  return path.join(memoryDir(repoRoot), safeWorkflowId, `${safeDeskId}.json`);
 }
 
 export async function listWorkflows(repoRoot: string): Promise<CoordinationWorkflowV1[]> {
@@ -65,7 +109,7 @@ export async function listWorkflows(repoRoot: string): Promise<CoordinationWorkf
 }
 
 export async function getWorkflow(repoRoot: string, workflowId: string): Promise<CoordinationWorkflowV1 | null> {
-  return readJsonFile<CoordinationWorkflowV1>(path.join(workflowsDir(repoRoot), `${workflowId}.json`));
+  return readJsonFile<CoordinationWorkflowV1>(workflowFilePath(repoRoot, workflowId));
 }
 
 export async function saveWorkflow(repoRoot: string, workflow: CoordinationWorkflowV1): Promise<void> {
@@ -73,27 +117,30 @@ export async function saveWorkflow(repoRoot: string, workflow: CoordinationWorkf
     ...workflow,
     updatedAt: new Date().toISOString(),
   };
-  await writeJsonFile(path.join(workflowsDir(repoRoot), `${workflow.workflowId}.json`), enriched);
+  await writeJsonFile(workflowFilePath(repoRoot, workflow.workflowId), enriched);
 }
 
 export async function getRunStatus(repoRoot: string, runId: string): Promise<RunStatusV1 | null> {
-  return readJsonFile<RunStatusV1>(path.join(runsDir(repoRoot), `${runId}.json`));
+  return readJsonFile<RunStatusV1>(runFilePath(repoRoot, runId));
 }
 
 export async function saveRunStatus(repoRoot: string, run: RunStatusV1): Promise<void> {
-  await writeJsonFile(path.join(runsDir(repoRoot), `${run.runId}.json`), run);
+  await writeJsonFile(runFilePath(repoRoot, run.runId), run);
 }
 
 export async function getRunTimeline(repoRoot: string, runId: string): Promise<DeskRunEventV1[]> {
-  const timeline = await readJsonFile<DeskRunEventV1[]>(path.join(timelinesDir(repoRoot), `${runId}.json`));
+  const timeline = await readJsonFile<DeskRunEventV1[]>(timelineFilePath(repoRoot, runId));
   return timeline ?? [];
 }
 
 export async function appendRunTimelineEvent(repoRoot: string, runId: string, event: DeskRunEventV1): Promise<void> {
-  const current = await getRunTimeline(repoRoot, runId);
-  current.push(event);
-  current.sort((a, b) => a.ts.localeCompare(b.ts));
-  await writeJsonFile(path.join(timelinesDir(repoRoot), `${runId}.json`), current);
+  const safeRunId = assertSafeCoordinationId(runId, "runId");
+  await withRunTimelineLock(safeRunId, async () => {
+    const current = await getRunTimeline(repoRoot, safeRunId);
+    current.push(event);
+    current.sort((a, b) => a.ts.localeCompare(b.ts));
+    await writeJsonFile(timelineFilePath(repoRoot, safeRunId), current);
+  });
 }
 
 export async function readDeskMemory(
@@ -102,7 +149,7 @@ export async function readDeskMemory(
   workflowVersion: number,
   deskId: string,
 ): Promise<DeskMemoryRecordV1 | null> {
-  const p = path.join(memoryDir(repoRoot), workflowId, `${deskId}.json`);
+  const p = deskMemoryPath(repoRoot, workflowId, deskId);
   const record = await readJsonFile<DeskMemoryRecordV1>(p);
   if (!record) return null;
 
@@ -142,7 +189,7 @@ export async function writeDeskMemory(
     expiresAt,
   };
 
-  await writeJsonFile(path.join(memoryDir(repoRoot), workflowId, `${deskId}.json`), record);
+  await writeJsonFile(deskMemoryPath(repoRoot, workflowId, deskId), record);
   return record;
 }
 
