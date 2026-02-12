@@ -72,3 +72,33 @@ Use this notebook as the living scratch document for decisions, discoveries, blo
   - `bun run test` (pass, 33 files / 70 tests)
 - Observed runtime warning: Vite externalizes `node:async_hooks` via `inngest` browser bundle import path; non-fatal in current build/tests.
 - Cleaned leftover background dev processes started during implementation review.
+
+## Restack Closeout (2026-02-12)
+
+### Final Decisions Applied
+1. Added strict safe-ID validation (`workflowId`, `deskId`, `handoffId`, `runId`) in domain and server route boundaries.
+2. Added timeline append serialization guard for file-backed run timelines.
+3. Split browser-safe workflow-kit helpers to `@rawr/coordination-inngest/browser` and rewired web canvas imports.
+4. Added operations runbook: `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` and indexed in `docs/process/RUNBOOKS.md`.
+
+### Verification Results
+1. Package focused checks:
+   - `packages/coordination`: typecheck + tests pass
+   - `packages/coordination-inngest`: typecheck + tests pass
+2. Server focused checks:
+   - `apps/server`: typecheck pass
+   - `apps/server/test/health.test.ts` + `apps/server/test/rawr.test.ts` pass
+3. Web focused checks:
+   - `apps/web`: typecheck pass, build pass, tests pass
+4. Live runtime smoke:
+   - Started server + Inngest dev locally.
+   - Ran CLI end-to-end: `workflow coord create/validate/run/status/trace` (all pass).
+   - Queried timeline endpoint successfully with ordered desk/run events.
+5. Full workspace gates:
+   - `bun run typecheck` pass.
+   - `bun run test` fails on known non-coordination CLI baseline tests (9 failures), while coordination/server/web suites remain green.
+
+### Residual Risks
+1. Coordination persistence is file-backed under `.rawr/coordination`; hosted ephemeral filesystems can lose workflow/run state without persistent volume or durable backend.
+2. Web build has a non-blocking chunk-size warning (~552 kB) for current bundle shape.
+3. Upstream CLI baseline instability remains outside this scope (`factory`, `journal`, `plugins-*`, `security-posture`, `workflow-forge-command` tests).
