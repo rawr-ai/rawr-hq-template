@@ -22,7 +22,7 @@ export default class DevUp extends RawrCommand {
     }
 
     const cmd = "bun";
-    const args = ["run", "dev"];
+    const args = ["run", "dev:up"];
 
     if (baseFlags.json || baseFlags.dryRun) {
       const result = this.ok({ cmd, args, cwd: workspaceRoot });

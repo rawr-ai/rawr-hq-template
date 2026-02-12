@@ -44,3 +44,4 @@
 - 2026-02-12T04:11:33Z [orchestrator] Post-submit trunk advanced; re-ran docs->web restack. Resolved RUNBOOKS.md conflict by preserving both lifecycle rows and coordination operations row.
 - 2026-02-12T04:11:33Z [orchestrator] Web branch now restack-clean on updated parent chain; review-only child branch (`codex/agent-r1-coordination-runtime-review`) still shows needs restack because it is checked out in its own worktree and intentionally not mutated here.
 - 2026-02-12T09:29:56Z [orchestrator] Added root dev:up entrypoint (server + web + Inngest) and updated coordination operations runbook local-start instructions.
+- 2026-02-12T09:32:12Z [orchestrator] Standardized dev scripts: added dev:server, dev:web, dev:workflows; changed dev up orchestration to use these, kept dev:inngest as compatibility alias.
