@@ -31,3 +31,23 @@
 - 2026-02-12T04:00:50Z [orchestrator] Applied server route hardening in apps/server/src/coordination.ts: added explicit safe-ID checks and 400 responses for invalid workflowId/runId/custom runId inputs.
 - 2026-02-12T04:01:20Z [orchestrator] Server validation gate: apps/server typecheck and health/rawr tests passed after ID hardening.
 - 2026-02-12T04:01:20Z [orchestrator] Ran additional pre-commit checkpoint sync (gt sync --no-restack) before server branch mutation.
+- 2026-02-12T04:02:18Z [orchestrator] Web boundary fix: switched coordination canvas imports to @rawr/coordination-inngest/browser to avoid server-oriented runtime dependency pull-in.
+- 2026-02-12T04:02:18Z [orchestrator] Web validation gate passed (typecheck, build, tests); note: Vite chunk-size warning remains informational and non-blocking.
+- 2026-02-12T04:03:00Z [orchestrator] Added ops runbook docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md and linked it from docs/process/RUNBOOKS.md to close hosted/runtime handoff gap.
+- 2026-02-12T04:04:46Z [orchestrator] Ran live smoke with server + Inngest dev: workflow coord create/validate/run/status/trace succeeded for wf-smoke; timeline endpoint returned ordered desk/run events with Inngest trace link.
+- 2026-02-12T04:04:46Z [orchestrator] Stopped temporary local server and Inngest dev processes after smoke verification.
+- 2026-02-12T04:06:47Z [orchestrator] Final gate: full workspace typecheck passed on top branch.
+- 2026-02-12T04:06:47Z [orchestrator] Final gate: full workspace tests failed with known CLI baseline failures (9 failing tests; coordination/server/web suites remained green).
+- 2026-02-12T04:08:04Z [orchestrator] Updated ORCHESTRATOR_NOTEBOOK.md with restack closeout decisions, verification results, and residual risks.
+- 2026-02-12T04:11:25Z [orchestrator] Post-submit trunk advanced; re-ran docs->web restack. Resolved RUNBOOKS.md conflict by preserving both lifecycle rows and coordination operations row.
+- 2026-02-12T04:11:25Z [orchestrator] Web branch now restack-clean on updated parent chain; review-only child branch () still shows needs restack because it is checked out in its own worktree and intentionally not mutated here.
+- 2026-02-12T04:11:33Z [orchestrator] Post-submit trunk advanced; re-ran docs->web restack. Resolved RUNBOOKS.md conflict by preserving both lifecycle rows and coordination operations row.
+- 2026-02-12T04:11:33Z [orchestrator] Web branch now restack-clean on updated parent chain; review-only child branch (`codex/agent-r1-coordination-runtime-review`) still shows needs restack because it is checked out in its own worktree and intentionally not mutated here.
+- 2026-02-12T09:29:56Z [orchestrator] Added root dev:up entrypoint (server + web + Inngest) and updated coordination operations runbook local-start instructions.
+- 2026-02-12T09:32:12Z [orchestrator] Standardized dev scripts: added dev:server, dev:web, dev:workflows; changed dev up orchestration to use these, kept dev:inngest as compatibility alias.
+- 2026-02-12T09:42:19Z [orchestrator] Investigated user report: page spin/refresh then crash under dev:up.
+- 2026-02-12T09:42:19Z [orchestrator] Applied fixes: (1) ignore  in Vite watch to prevent runtime file-triggered reload loops; (2) guard no-op canvas onChange state updates to avoid render churn; (3) replace bash-4-only  in scripts/dev/up.sh with portable wait loop; (4) switch dev:inngest to npm-exec launch path to avoid bunx skipped-install-script binary failure.
+- 2026-02-12T09:42:19Z [orchestrator] Reproduced clean startup for dev:up (server/web/workflows all come up) after fixes.
+- 2026-02-12T09:42:28Z [orchestrator] Investigated user report: page spin/refresh then crash under dev:up.
+- 2026-02-12T09:42:28Z [orchestrator] Applied fixes: (1) ignore `.rawr/**` in Vite watch to prevent runtime file-triggered reload loops; (2) guard no-op canvas onChange state updates to avoid render churn; (3) replace bash-4-only `wait -n` in scripts/dev/up.sh with portable wait loop; (4) switch dev:inngest to npm-exec launch path to avoid bunx skipped-install-script binary failure.
+- 2026-02-12T09:42:28Z [orchestrator] Reproduced clean startup for dev:up (server/web/workflows all come up) after fixes.

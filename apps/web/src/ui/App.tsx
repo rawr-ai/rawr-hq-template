@@ -4,6 +4,7 @@ import { Router } from "./routing/router";
 import { HomePage } from "./pages/HomePage";
 import { MountsPage } from "./pages/MountsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { CoordinationPage } from "./pages/CoordinationPage";
 
 export function App() {
   return (
@@ -14,6 +15,7 @@ export function App() {
           items={[
             { label: "Home", to: "/" },
             { label: "Mounts", to: "/mounts" },
+            { label: "Coordination", to: "/coordination" },
           ]}
         />
       }
@@ -22,6 +24,7 @@ export function App() {
         routes={[
           { path: "/", element: <HomePage /> },
           { path: "/mounts", element: <MountsPage /> },
+          { path: "/coordination", element: <CoordinationPage /> },
         ]}
         fallback={<NotFoundPage />}
       />

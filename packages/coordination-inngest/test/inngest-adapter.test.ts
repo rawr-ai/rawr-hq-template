@@ -148,4 +148,39 @@ describe("coordination inngest adapter", () => {
 
     expect(memoryWrites.has("desk-a")).toBe(true);
   });
+
+  it("serializes concurrent queue requests for the same runId", async () => {
+    const { runtime } = createRuntimeMock();
+    let sendCalls = 0;
+    const client = {
+      send: async () => {
+        sendCalls += 1;
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        return { ids: [`evt-${sendCalls}`] };
+      },
+    } as unknown as Inngest;
+
+    const [first, second] = await Promise.all([
+      queueCoordinationRunWithInngest({
+        client,
+        runtime,
+        workflow,
+        runId: "run-concurrent",
+        input: { ticket: "T-200" },
+        baseUrl: "http://localhost:3000",
+      }),
+      queueCoordinationRunWithInngest({
+        client,
+        runtime,
+        workflow,
+        runId: "run-concurrent",
+        input: { ticket: "T-200" },
+        baseUrl: "http://localhost:3000",
+      }),
+    ]);
+
+    expect(sendCalls).toBe(1);
+    expect(first.eventIds.length).toBe(1);
+    expect(second.eventIds).toEqual([]);
+  });
 });

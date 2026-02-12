@@ -22,6 +22,27 @@ import {
 } from "./browser";
 
 const COORDINATION_FUNCTION_ID = "coordination-workflow-runner";
+const runQueueLocks = new Map<string, Promise<void>>();
+
+async function withRunQueueLock<T>(runId: string, task: () => Promise<T>): Promise<T> {
+  const previous = runQueueLocks.get(runId) ?? Promise.resolve();
+  let releaseCurrent: () => void = () => {};
+  const current = new Promise<void>((resolve) => {
+    releaseCurrent = resolve;
+  });
+  const nextTail = previous.then(() => current);
+  runQueueLocks.set(runId, nextTail);
+
+  await previous;
+  try {
+    return await task();
+  } finally {
+    releaseCurrent();
+    if (runQueueLocks.get(runId) === nextTail) {
+      runQueueLocks.delete(runId);
+    }
+  }
+}
 
 export type InngestCompileResult = Readonly<{
   actions: Array<{ id: string; kind: string }>;
@@ -112,73 +133,75 @@ export async function queueCoordinationRunWithInngest(
     throw new Error(`Workflow validation failed: ${details}`);
   }
 
-  const existing = await options.runtime.getRunStatus(options.runId);
-  if (existing) {
-    if (existing.workflowId !== options.workflow.workflowId) {
-      throw new Error(`runId ${options.runId} is already used by workflow ${existing.workflowId}`);
+  return withRunQueueLock(options.runId, async () => {
+    const existing = await options.runtime.getRunStatus(options.runId);
+    if (existing) {
+      if (existing.workflowId !== options.workflow.workflowId) {
+        throw new Error(`runId ${options.runId} is already used by workflow ${existing.workflowId}`);
+      }
+
+      return {
+        run: existing,
+        eventIds: [],
+      };
     }
 
-    return {
-      run: existing,
-      eventIds: [],
-    };
-  }
-
-  const startedAt = new Date().toISOString();
-  const queuedRun: RunStatusV1 = {
-    runId: options.runId,
-    workflowId: options.workflow.workflowId,
-    workflowVersion: options.workflow.version,
-    status: "queued",
-    startedAt,
-    input: toJsonValue(options.input ?? {}),
-    traceLinks: defaultTraceLinks(options.baseUrl, options.runId, {
-      inngestBaseUrl: options.runtime.inngestBaseUrl,
-    }),
-  };
-
-  await options.runtime.saveRunStatus(queuedRun);
-  await options.runtime.appendTimeline(
-    queuedRun.runId,
-    createDeskEvent({
-      runId: queuedRun.runId,
-      workflowId: queuedRun.workflowId,
-      type: "run.started",
-      status: "queued",
-      detail: "Coordination run queued for Inngest execution",
-      payload: queuedRun.input,
-    }),
-  );
-
-  const sendResult = await options.client.send({
-    name: COORDINATION_RUN_EVENT,
-    data: {
+    const startedAt = new Date().toISOString();
+    const queuedRun: RunStatusV1 = {
       runId: options.runId,
-      workflow: options.workflow,
+      workflowId: options.workflow.workflowId,
+      workflowVersion: options.workflow.version,
+      status: "queued",
+      startedAt,
       input: toJsonValue(options.input ?? {}),
-      baseUrl: options.baseUrl,
-    },
+      traceLinks: defaultTraceLinks(options.baseUrl, options.runId, {
+        inngestBaseUrl: options.runtime.inngestBaseUrl,
+      }),
+    };
+
+    await options.runtime.saveRunStatus(queuedRun);
+    await options.runtime.appendTimeline(
+      queuedRun.runId,
+      createDeskEvent({
+        runId: queuedRun.runId,
+        workflowId: queuedRun.workflowId,
+        type: "run.started",
+        status: "queued",
+        detail: "Coordination run queued for Inngest execution",
+        payload: queuedRun.input,
+      }),
+    );
+
+    const sendResult = await options.client.send({
+      name: COORDINATION_RUN_EVENT,
+      data: {
+        runId: options.runId,
+        workflow: options.workflow,
+        input: toJsonValue(options.input ?? {}),
+        baseUrl: options.baseUrl,
+      },
+    });
+
+    const firstEventId = sendResult.ids[0];
+    const latestRun = await options.runtime.getRunStatus(options.runId);
+    const baseRun = latestRun ?? queuedRun;
+    const updatedRun: RunStatusV1 = {
+      ...baseRun,
+      traceLinks: defaultTraceLinks(options.baseUrl, options.runId, {
+        inngestBaseUrl: options.runtime.inngestBaseUrl,
+        inngestRunId: baseRun.status === "running" || baseRun.status === "completed" || baseRun.status === "failed"
+          ? extractInngestRunId(baseRun.traceLinks)
+          : undefined,
+        inngestEventId: firstEventId,
+      }),
+    };
+    await options.runtime.saveRunStatus(updatedRun);
+
+    return {
+      run: updatedRun,
+      eventIds: sendResult.ids,
+    };
   });
-
-  const firstEventId = sendResult.ids[0];
-  const latestRun = await options.runtime.getRunStatus(options.runId);
-  const baseRun = latestRun ?? queuedRun;
-  const updatedRun: RunStatusV1 = {
-    ...baseRun,
-    traceLinks: defaultTraceLinks(options.baseUrl, options.runId, {
-      inngestBaseUrl: options.runtime.inngestBaseUrl,
-      inngestRunId: baseRun.status === "running" || baseRun.status === "completed" || baseRun.status === "failed"
-        ? extractInngestRunId(baseRun.traceLinks)
-        : undefined,
-      inngestEventId: firstEventId,
-    }),
-  };
-  await options.runtime.saveRunStatus(updatedRun);
-
-  return {
-    run: updatedRun,
-    eventIds: sendResult.ids,
-  };
 }
 
 export function createCoordinationInngestFunction(input: {

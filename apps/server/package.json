@@ -20,7 +20,7 @@
   },
   "scripts": {
     "dev": "bun --hot src/index.ts",
-    "dev:inngest": "bunx inngest-cli dev -u http://localhost:3000/api/inngest",
+    "dev:inngest": "env npm_config_ignore_scripts=false npm exec --yes --package=inngest-cli@latest -- inngest dev -u http://localhost:3000/api/inngest",
     "build": "bunx tsc -p tsconfig.json",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
     "test": "vitest run"

@@ -72,3 +72,96 @@ Use this notebook as the living scratch document for decisions, discoveries, blo
   - `bun run test` (pass, 33 files / 70 tests)
 - Observed runtime warning: Vite externalizes `node:async_hooks` via `inngest` browser bundle import path; non-fatal in current build/tests.
 - Cleaned leftover background dev processes started during implementation review.
+
+## Restack Closeout (2026-02-12)
+
+### Final Decisions Applied
+1. Added strict safe-ID validation (`workflowId`, `deskId`, `handoffId`, `runId`) in domain and server route boundaries.
+2. Added timeline append serialization guard for file-backed run timelines.
+3. Split browser-safe workflow-kit helpers to `@rawr/coordination-inngest/browser` and rewired web canvas imports.
+4. Added operations runbook: `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` and indexed in `docs/process/RUNBOOKS.md`.
+
+### Verification Results
+1. Package focused checks:
+   - `packages/coordination`: typecheck + tests pass
+   - `packages/coordination-inngest`: typecheck + tests pass
+2. Server focused checks:
+   - `apps/server`: typecheck pass
+   - `apps/server/test/health.test.ts` + `apps/server/test/rawr.test.ts` pass
+3. Web focused checks:
+   - `apps/web`: typecheck pass, build pass, tests pass
+4. Live runtime smoke:
+   - Started server + Inngest dev locally.
+   - Ran CLI end-to-end: `workflow coord create/validate/run/status/trace` (all pass).
+   - Queried timeline endpoint successfully with ordered desk/run events.
+5. Full workspace gates:
+   - `bun run typecheck` pass.
+   - `bun run test` fails on known non-coordination CLI baseline tests (9 failures), while coordination/server/web suites remain green.
+
+### Residual Risks
+1. Coordination persistence is file-backed under `.rawr/coordination`; hosted ephemeral filesystems can lose workflow/run state without persistent volume or durable backend.
+2. Web build has a non-blocking chunk-size warning (~552 kB) for current bundle shape.
+3. Upstream CLI baseline instability remains outside this scope (`factory`, `journal`, `plugins-*`, `security-posture`, `workflow-forge-command` tests).
+
+## 2026-02-12 12:37:24 EST
+- Initialized worker worktree `wt-agent-ui-coordination-canvas-slice-pass` on branch `codex/coordination-canvas-v1-ui-slice-pass`.
+- Wrote `UI_SLICE_PASS_PLAN.md` verbatim and created worker scratchpad before code edits.
+- Next step: spawn UI worker with required skill packet and file ownership boundaries.
+
+## 2026-02-12 12:49:07 EST
+- User refinement applied: canvas-first priority reaffirmed (overlay/supporting UI, not dashboard-first framing).
+- Sent directed nudge to worker to encode ground-up orchestration intent + explicit design principles in worker scratchpad.
+- Integrated worker commit `0984e58` onto stack-top branch as `3292afa`.
+- Verification rerun in implementation worktree:
+  - `bun run --cwd apps/web test` pass (2 files, 3 tests)
+  - `bun run --cwd apps/web build` pass
+  - `bun run --cwd apps/web dev -- --port 5174 --strictPort` startup smoke pass
+- Residual known item: Vite chunk-size warning persists (>500 kB JS chunk), non-blocking for this UI slice.
+
+## 2026-02-12 12:56:37 EST
+- Spawned dedicated UI shell modernization worker in worktree `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-ui-shell-modernization`.
+- Branch: `codex/coordination-canvas-v1-ui-shell-modernization` (based on current stack top).
+- Gave strict instructions: write plan first, keep scratchpad, apply Tailwind+shadcn (or justify alternative), implement cohesive light/dark system, include MFE-facing surfaces, and verify React Flow/canvas theming compatibility.
+
+## 2026-02-12 13:11:43 EST
+- Dedicated UI shell modernization worker completed implementation on `codex/coordination-canvas-v1-ui-shell-modernization`.
+- Integrated worker commit `f377942` into stack branch as `12c85a4`.
+- Scope delivered: Tailwind + shadcn-style primitives, global light/dark theme system + switcher, shell/pages modernization, coordination theme alignment (including React Flow variables), and MFE demo theme coupling.
+- Verification rerun in implementation worktree:
+  - `bun install` pass
+  - `bun run --cwd apps/web test` pass
+  - `bun run --cwd apps/web build` pass
+  - `bun run --cwd apps/web dev -- --host 127.0.0.1 --port 4173` startup smoke pass
+- Residual known item: Vite chunk-size warning persists (~590 kB JS chunk), non-blocking and suitable for a follow-up split/chunking pass.
+
+## 2026-02-12 13:45:15 EST
+- Spawned dedicated lifecycle-hardening worker for `dev:up` orchestration.
+- Worker worktree: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-dev-up-lifecycle`
+- Worker branch: `codex/coordination-canvas-v1-dev-up-lifecycle`
+- Mandate: prevent duplicate-stack startup, implement explicit attach/stop/restart behavior, tighten browser-open policy, and codify canonical canvas serving surface.
+
+## 2026-02-12 14:03:18 EST
+- Worker branch delivered commit `de925fc` and was integrated to stack top via cherry-pick as `b144ec0`.
+- Lifecycle hardening added lock/state orchestration in `scripts/dev/up.sh` with actions: `auto|start|status|attach|stop|restart`.
+- Added non-interactive-safe behavior (status by default when already running) and strict lifecycle port conflict handling to prevent duplicate fallback-port stacks.
+- Canonicalized startup posture around host-shell canvas route `/coordination`; open policy is explicit and configurable.
+- Post-integration verification in stack-top worktree:
+  - `bash -n scripts/dev/up.sh` pass
+  - `RAWR_DEV_UP_NON_INTERACTIVE=1 RAWR_DEV_UP_OPEN=none bash scripts/dev/up.sh --action status --non-interactive` pass
+  - `bun run --cwd apps/cli test test/dev-up.test.ts` pass
+
+## 2026-02-12 14:18:42 EST
+- Addressed dev lifecycle UX gap where `dev:up` hard-failed when canonical ports were already occupied by another worktree stack.
+- Updated `scripts/dev/up.sh` behavior:
+  - `auto` mode now treats full lifecycle-port occupancy as an attachable existing stack and exits cleanly with status.
+  - interactive mode now offers conflict remediation (reuse existing stack vs stop conflicting listeners and start here).
+  - explicit `--action start` remains fail-fast but now prints concrete remediation commands.
+- Closed remaining runtime-review durability gap for duplicate enqueue race:
+  - Added per-`runId` queue lock in `packages/coordination-inngest/src/adapter.ts` so concurrent same-`runId` submissions do not emit duplicate Inngest events.
+  - Added regression test `serializes concurrent queue requests for the same runId` in `packages/coordination-inngest/test/inngest-adapter.test.ts`.
+- Validation evidence:
+  - `bash -n scripts/dev/up.sh` pass
+  - `bash ./scripts/dev/up.sh` (with existing listeners) exits 0 in auto mode and reports attachable existing stack
+  - `RAWR_DEV_UP_NON_INTERACTIVE=1 bash ./scripts/dev/up.sh --action start` fails with remediation guidance as expected
+  - `bunx vitest run packages/coordination-inngest/test/inngest-adapter.test.ts` pass
+  - `bun run --cwd apps/cli test test/dev-up.test.ts` pass
