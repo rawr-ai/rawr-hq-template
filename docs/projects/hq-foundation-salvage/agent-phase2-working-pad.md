@@ -7,11 +7,12 @@
   - `docs/projects/hq-foundation-salvage/WORKING_PAD.md`
 - Slice A decision: template guard manifest now uses explicit shared package paths to keep `packages/dev/**` personal-owned.
 - Slice A decision: ownership docs now treat `plugins/agents/hq/**` as full template-managed HQ domain.
+- Slice B decision: full `plugins/agents/hq/**` domain copied from personal -> template with exact parity (`diff -rq` clean).
 
 ## Checkpoints
 - [x] Created required scratch docs
 - [x] Baseline inventory complete
-- [ ] Slice A committed
+- [x] Slice A committed
 - [ ] Slice B committed
 - [ ] Slice C committed
 - [ ] Verification commands complete
@@ -23,4 +24,9 @@
 - Updated `AGENTS_SPLIT.md`.
 - Updated `docs/process/CROSS_REPO_WORKFLOWS.md`.
 - Updated `docs/system/PLUGINS.md`.
+- Committed with Graphite.
+
+### Slice B
+- Synced `plugins/agents/hq/**` from personal repo using `rsync -a --delete`.
+- Verified target/source parity with `diff -rq`.
 - Pending: Graphite commit.
