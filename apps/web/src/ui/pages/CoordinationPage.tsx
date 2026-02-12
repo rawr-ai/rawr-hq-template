@@ -16,6 +16,7 @@ import {
 import { Editor, Provider, Sidebar } from "@inngest/workflow-kit/ui";
 import type { Workflow as WorkflowKitWorkflow } from "@inngest/workflow-kit";
 import "@inngest/workflow-kit/ui/ui.css";
+import "../styles/coordination-page.css";
 
 function nowWorkflowId(): string {
   return `workflow-${Date.now()}`;
@@ -98,6 +99,13 @@ const RUN_TERMINAL_STATES = new Set<RunStatusV1["status"]>(["completed", "failed
 
 function workflowsEqual(a: CoordinationWorkflowV1, b: CoordinationWorkflowV1): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function toneForStatus(status: string): "is-success" | "is-warning" | "is-error" | "" {
+  if (status === "completed" || status === "ok") return "is-success";
+  if (status === "running" || status === "queued" || status === "pending") return "is-warning";
+  if (status === "failed" || status === "error") return "is-error";
+  return "";
 }
 
 export function CoordinationPage() {
@@ -252,6 +260,25 @@ export function CoordinationPage() {
     [activeWorkflow, lastRun],
   );
 
+  const workflowOptions = useMemo(
+    () => [activeWorkflow, ...workflows.filter((item) => item.workflowId !== activeWorkflow.workflowId)],
+    [activeWorkflow, workflows],
+  );
+
+  const liveMessage = useMemo(() => {
+    if (error) return `Error: ${error}`;
+    if (polling) return "Run in progress. Timeline updates will appear automatically.";
+    if (busy) return "Request in progress.";
+    if (validation.ok) return "Workflow validation passed.";
+    return `Workflow invalid: ${validation.errors.length} issue${validation.errors.length === 1 ? "" : "s"}.`;
+  }, [busy, error, polling, validation.errors.length, validation.ok]);
+
+  useEffect(() => {
+    if (paletteOpen) {
+      setPaletteIndex(0);
+    }
+  }, [paletteOpen]);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -260,7 +287,7 @@ export function CoordinationPage() {
         return;
       }
 
-      if (!paletteOpen) return;
+      if (!paletteOpen || commands.length === 0) return;
 
       if (event.key === "Escape") {
         setPaletteOpen(false);
@@ -280,6 +307,7 @@ export function CoordinationPage() {
       if (event.key === "Enter") {
         event.preventDefault();
         const command = commands[paletteIndex];
+        if (!command) return;
         Promise.resolve(command.run()).catch((err) => setError(String(err)));
         setPaletteOpen(false);
       }
@@ -290,164 +318,245 @@ export function CoordinationPage() {
   }, [commands, paletteIndex, paletteOpen]);
 
   return (
-    <section style={{ maxWidth: 1200 }}>
-      <h1 style={{ margin: 0, fontSize: 24 }}>Agent Coordination Canvas</h1>
-      <p style={{ marginTop: 10, opacity: 0.86, lineHeight: 1.5 }}>
-        Build and edit workflow graphs in the Inngest Workflow Kit canvas, then run through the real Inngest
-        execution path. Use <code>Cmd/Ctrl+K</code> for command-driven operations.
-      </p>
-
-      <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap", alignItems: "center" }}>
-        <label style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-          <span style={{ opacity: 0.8 }}>Workflow</span>
-          <select
-            value={activeWorkflow.workflowId}
-            onChange={(event) => {
-              const next = workflows.find((item) => item.workflowId === event.target.value);
-              if (next) setActiveAndValidate(next);
-            }}
-            disabled={busy}
-          >
-            {[activeWorkflow, ...workflows.filter((item) => item.workflowId !== activeWorkflow.workflowId)].map((w) => (
-              <option key={w.workflowId} value={w.workflowId}>
-                {w.name} ({w.workflowId})
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <button type="button" onClick={saveWorkflow} disabled={busy}>
-          Save
-        </button>
-        <button type="button" onClick={() => refreshValidation(activeWorkflow)} disabled={busy}>
-          Validate
-        </button>
-        <button type="button" onClick={runWorkflow} disabled={busy || !validation.ok || polling}>
-          {polling ? "Running..." : "Run"}
-        </button>
-      </div>
-
-      <div style={{ marginTop: 10, opacity: 0.8 }}>
-        Active workflow: <code>{activeWorkflow.workflowId}</code> · version {activeWorkflow.version}
-      </div>
-
-      <div style={{ marginTop: 16, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 12 }}>
-        <Provider
-          workflow={workflowKitWorkflow}
-          trigger={trigger}
-          availableActions={availableActions}
-          onChange={handleEditorChange}
-        >
-          <Editor direction="down">
-            <Sidebar position="right" />
-          </Editor>
-        </Provider>
-      </div>
-
-      <div style={{ marginTop: 16, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 14 }}>
-        <div style={{ fontWeight: 650 }}>Validation</div>
-        <div style={{ marginTop: 8 }}>
-          {validation.ok ? (
-            <span style={{ color: "#6ee7b7" }}>Valid workflow</span>
+    <section className="coordination" aria-labelledby="coordination-title">
+      <header className="coordination__header">
+        <h1 id="coordination-title" className="coordination__title">
+          Agent Coordination Canvas
+        </h1>
+        <p className="coordination__description">
+          Build and edit workflow graphs in the Inngest Workflow Kit canvas, then run through the real Inngest
+          execution path. Use <kbd>Cmd/Ctrl+K</kbd> to open command operations.
+        </p>
+        <div className="coordination__status-line">
+          <span className={`coordination__chip ${validation.ok ? "is-success" : "is-error"}`}>
+            {validation.ok ? "Valid workflow" : `Invalid (${validation.errors.length})`}
+          </span>
+          {lastRun ? (
+            <span className={`coordination__chip ${toneForStatus(lastRun.status)}`}>Run status: {lastRun.status}</span>
           ) : (
-            <span style={{ color: "#fca5a5" }}>Invalid workflow ({validation.errors.length} issues)</span>
+            <span className="coordination__chip">No run started</span>
           )}
         </div>
+        <p className="coordination__keyboard-hint">
+          Keyboard: <kbd>Cmd/Ctrl+K</kbd> opens command palette, <kbd>↑</kbd>/<kbd>↓</kbd> to move, <kbd>Enter</kbd> to
+          run.
+        </p>
+      </header>
 
-        {!validation.ok ? (
-          <ul style={{ marginTop: 10, paddingLeft: 18 }}>
-            {validation.errors.map((entry, idx) => (
-              <li key={`${entry.code}-${idx}`}>
-                <code>{entry.code}</code>: {entry.message}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-
-      <div style={{ marginTop: 16, border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 14 }}>
-        <div style={{ fontWeight: 650 }}>Run Timeline</div>
-        {lastRun ? (
-          <div style={{ marginTop: 8, opacity: 0.9 }}>
-            Run <code>{lastRun.runId}</code> · status <code>{lastRun.status}</code>
+      <div className="coordination__workspace">
+        <section className="coordination__panel coordination__panel--canvas" aria-label="Canvas workspace">
+          <div className="coordination__panel-header">
+            <div>
+              <h2 className="coordination__panel-title">Canvas Workspace</h2>
+              <p className="coordination__panel-subtitle">Primary handoff design surface</p>
+            </div>
           </div>
-        ) : (
-          <div style={{ marginTop: 8, opacity: 0.7 }}>No runs yet.</div>
-        )}
 
-        {lastRun?.traceLinks?.length ? (
-          <ul style={{ marginTop: 8, paddingLeft: 18 }}>
-            {lastRun.traceLinks.map((link) => (
-              <li key={link.url}>
-                <a href={link.url} target="_blank" rel="noreferrer">
-                  {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        ) : null}
+          <div className="coordination__canvas-stage">
+            <section className="coordination__controls" aria-label="Workflow controls">
+              <div className="coordination__controls-grid">
+                <div className="coordination__field">
+                  <label htmlFor="coordination-workflow" className="coordination__label">
+                    Workflow
+                  </label>
+                  <select
+                    id="coordination-workflow"
+                    className="coordination__select"
+                    value={activeWorkflow.workflowId}
+                    onChange={(event) => {
+                      const next = workflows.find((item) => item.workflowId === event.target.value);
+                      if (next) setActiveAndValidate(next);
+                    }}
+                    disabled={busy}
+                    aria-describedby="coordination-workflow-meta"
+                  >
+                    {workflowOptions.map((workflow) => (
+                      <option key={workflow.workflowId} value={workflow.workflowId}>
+                        {workflow.name} ({workflow.workflowId})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-        {timeline.length > 0 ? (
-          <ul style={{ marginTop: 10, paddingLeft: 18 }}>
-            {timeline.map((event) => (
-              <li key={event.eventId}>
-                <code>{event.type}</code>
-                {event.deskId ? ` (${event.deskId})` : ""} · {event.status}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+                <div className="coordination__button-group" aria-label="Primary coordination actions">
+                  <button type="button" className="coordination__button" onClick={saveWorkflow} disabled={busy}>
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    className="coordination__button"
+                    onClick={() => refreshValidation(activeWorkflow)}
+                    disabled={busy}
+                  >
+                    Validate
+                  </button>
+                  <button
+                    type="button"
+                    className="coordination__button is-primary"
+                    onClick={runWorkflow}
+                    disabled={busy || !validation.ok || polling}
+                  >
+                    {polling ? "Running…" : "Run"}
+                  </button>
+                </div>
+              </div>
+
+              <p id="coordination-workflow-meta" className="coordination__meta">
+                Active workflow: <code>{activeWorkflow.workflowId}</code> · version {activeWorkflow.version} · loaded{" "}
+                {workflows.length} workflows · event <code>{COORDINATION_RUN_EVENT}</code>
+              </p>
+            </section>
+
+            <div className="coordination__canvas-body">
+              <Provider
+                workflow={workflowKitWorkflow}
+                trigger={trigger}
+                availableActions={availableActions}
+                onChange={handleEditorChange}
+              >
+                <Editor direction="down">
+                  <Sidebar position="right" />
+                </Editor>
+              </Provider>
+            </div>
+          </div>
+        </section>
+
+        <aside className="coordination__side" aria-label="Workflow outcomes and trace panels">
+          <section className="coordination__panel" aria-labelledby="coordination-validation-title">
+            <div className="coordination__panel-header">
+              <h2 id="coordination-validation-title" className="coordination__panel-title">
+                Validation
+              </h2>
+              <span className={`coordination__chip ${validation.ok ? "is-success" : "is-error"}`}>
+                {validation.ok ? "Pass" : `${validation.errors.length} issues`}
+              </span>
+            </div>
+
+            {validation.ok ? (
+              <p className="coordination__message">Workflow satisfies validation checks.</p>
+            ) : (
+              <ul className="coordination__list" aria-label="Validation issues">
+                {validation.errors.map((entry, idx) => (
+                  <li key={`${entry.code}-${idx}`} className="coordination__list-item">
+                    <code>{entry.code}</code>: {entry.message}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="coordination__panel" aria-labelledby="coordination-timeline-title">
+            <div className="coordination__panel-header">
+              <h2 id="coordination-timeline-title" className="coordination__panel-title">
+                Run Timeline
+              </h2>
+              {lastRun ? (
+                <span className={`coordination__chip ${toneForStatus(lastRun.status)}`}>{lastRun.status}</span>
+              ) : null}
+            </div>
+
+            {lastRun ? (
+              <p className="coordination__message">
+                Run <code>{lastRun.runId}</code>
+              </p>
+            ) : (
+              <p className="coordination__message is-muted">No runs yet.</p>
+            )}
+
+            {lastRun?.traceLinks?.length ? (
+              <ul className="coordination__list" aria-label="Trace links">
+                {lastRun.traceLinks.map((link) => (
+                  <li key={link.url} className="coordination__list-item">
+                    <a className="coordination__trace-link" href={link.url} target="_blank" rel="noreferrer">
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            {timeline.length > 0 ? (
+              <ul className="coordination__list" aria-label="Timeline events">
+                {timeline.map((event) => (
+                  <li key={event.eventId} className="coordination__list-item coordination__timeline-item">
+                    <span className="coordination__timeline-type">
+                      <code>{event.type}</code>
+                      {event.deskId ? <span>({event.deskId})</span> : null}
+                    </span>
+                    <span className={`coordination__chip ${toneForStatus(event.status)}`}>{event.status}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+        </aside>
       </div>
 
-      {error ? <div style={{ marginTop: 16, color: "tomato" }}>{error}</div> : null}
+      <div className={`coordination__live ${error ? "is-error" : ""}`} aria-live="polite" aria-atomic="true">
+        {liveMessage}
+      </div>
 
       {paletteOpen ? (
-        <div
-          style={{
-            position: "fixed",
-            top: 90,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: 520,
-            maxWidth: "90vw",
-            background: "#111319",
-            border: "1px solid rgba(255,255,255,0.18)",
-            borderRadius: 12,
-            padding: 10,
-            zIndex: 999,
-            boxShadow: "0 8px 34px rgba(0,0,0,0.35)",
-          }}
-        >
-          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8 }}>Command Palette</div>
-          {commands.map((command, index) => (
-            <button
-              key={command.id}
-              type="button"
-              onClick={() => {
-                Promise.resolve(command.run()).catch((err) => setError(String(err)));
-                setPaletteOpen(false);
-              }}
-              style={{
-                display: "block",
-                width: "100%",
-                textAlign: "left",
-                padding: "8px 10px",
-                borderRadius: 8,
-                marginBottom: 6,
-                border: "1px solid rgba(255,255,255,0.08)",
-                background: index === paletteIndex ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.02)",
-                color: "inherit",
-              }}
-            >
-              {command.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
+        <>
+          <button
+            type="button"
+            className="coordination__palette-backdrop"
+            aria-label="Close command palette"
+            onClick={() => setPaletteOpen(false)}
+          />
 
-      <div style={{ marginTop: 12, opacity: 0.7, fontSize: 13 }}>
-        Loaded workflows: {workflows.length} · Inngest event: <code>{COORDINATION_RUN_EVENT}</code>
-      </div>
+          <section
+            className="coordination__palette"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="coordination-palette-title"
+            aria-describedby="coordination-palette-hint"
+          >
+            <header className="coordination__palette-header">
+              <h2 id="coordination-palette-title" className="coordination__palette-title">
+                Command Palette
+              </h2>
+              <p id="coordination-palette-hint" className="coordination__palette-hint">
+                Navigate with arrow keys. Press Enter to run.
+              </p>
+            </header>
+
+            {commands.length === 0 ? (
+              <p className="coordination__message is-muted">No commands available right now.</p>
+            ) : (
+              <ul
+                className="coordination__palette-list"
+                role="listbox"
+                aria-label="Coordination commands"
+                aria-activedescendant={
+                  commands[paletteIndex] ? `coordination-command-${commands[paletteIndex].id}` : undefined
+                }
+              >
+                {commands.map((command, index) => (
+                  <li key={command.id}>
+                    <button
+                      id={`coordination-command-${command.id}`}
+                      type="button"
+                      role="option"
+                      aria-selected={index === paletteIndex}
+                      className={`coordination__palette-item${index === paletteIndex ? " is-active" : ""}`}
+                      onMouseEnter={() => setPaletteIndex(index)}
+                      onClick={() => {
+                        Promise.resolve(command.run()).catch((err) => setError(String(err)));
+                        setPaletteOpen(false);
+                      }}
+                    >
+                      <span>{command.label}</span>
+                      <span className="coordination__palette-shortcut">{index === paletteIndex ? "Enter" : ""}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
+      ) : null}
     </section>
   );
 }
