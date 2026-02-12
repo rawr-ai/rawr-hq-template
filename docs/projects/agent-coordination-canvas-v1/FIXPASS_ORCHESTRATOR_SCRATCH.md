@@ -53,3 +53,10 @@
   - Side panel/status composition lacks design-density structure (panel stack + tokenized chips).
   - Coordination view still over-relies on bespoke `.coordination__*` classes instead of Tailwind/tokenized primitives.
   - Route-level composition should use design shell boundaries directly and keep WorkflowKit inside that structure.
+- 2026-02-12T23:18:00Z: BR findings integrated.
+  - Confirmed final bridge contract priorities:
+    1) dedicated coordination shell route composition
+    2) side-panel state + render path through workspace/toolbar
+    3) save-before-run in hook layer
+    4) runtime-derived monitor link behavior
+  - BR implementation can start after D1/DF findings lock (now locked).
