@@ -20,6 +20,18 @@ bun install
 bun run dev:up
 ```
 
+3. Optional individual processes:
+```bash
+bun run dev:server
+bun run dev:web
+bun run dev:workflows
+```
+
+4. Backward-compatible alias:
+```bash
+bun run dev:inngest
+```
+
 ## Local Smoke Checks
 
 1. Server health:

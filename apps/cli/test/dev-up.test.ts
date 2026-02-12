@@ -19,7 +19,7 @@ describe("dev up", () => {
     const parsed = JSON.parse(proc.stdout) as any;
     expect(parsed.ok).toBe(true);
     expect(parsed.data.cmd).toBe("bun");
-    expect(parsed.data.args).toEqual(["run", "dev"]);
+    expect(parsed.data.args).toEqual(["run", "dev:up"]);
 
     const expectedCwd = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
     expect(parsed.data.cwd).toBe(expectedCwd);

@@ -5,11 +5,15 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 app_pid=""
+web_pid=""
 inngest_pid=""
 
 cleanup() {
   if [[ -n "${app_pid}" ]]; then
     kill "${app_pid}" >/dev/null 2>&1 || true
+  fi
+  if [[ -n "${web_pid}" ]]; then
+    kill "${web_pid}" >/dev/null 2>&1 || true
   fi
   if [[ -n "${inngest_pid}" ]]; then
     kill "${inngest_pid}" >/dev/null 2>&1 || true
@@ -18,10 +22,13 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-bun run dev --filter=@rawr/server --filter=@rawr/web &
+bun run dev:server &
 app_pid="$!"
 
-bun run dev:inngest &
+bun run dev:web &
+web_pid="$!"
+
+bun run dev:workflows &
 inngest_pid="$!"
 
-wait -n "${app_pid}" "${inngest_pid}"
+wait -n "${app_pid}" "${web_pid}" "${inngest_pid}"
