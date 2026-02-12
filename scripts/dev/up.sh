@@ -526,6 +526,150 @@ has_unmanaged_port_conflicts() {
   return 1
 }
 
+all_lifecycle_ports_are_listening() {
+  local port
+  for port in \
+    "$SERVER_PORT" \
+    "$WEB_PORT" \
+    "$INNGEST_PORT" \
+    "$INNGEST_CONNECT_GATEWAY_PORT" \
+    "$INNGEST_CONNECT_GATEWAY_GRPC_PORT" \
+    "$INNGEST_CONNECT_EXECUTOR_GRPC_PORT"; do
+    if ! listener_pids_for_port "$port" | awk 'NF{found=1} END{exit found?0:1}'; then
+      return 1
+    fi
+  done
+  return 0
+}
+
+print_conflict_remediation() {
+  log "remediation:"
+  log "  - inspect listeners: lsof -nP -iTCP:3000 -sTCP:LISTEN; lsof -nP -iTCP:5173 -sTCP:LISTEN; lsof -nP -iTCP:8288 -sTCP:LISTEN"
+  log "  - if this worktree owns the stack: bun run dev:up -- --action stop"
+  log "  - then retry: bun run dev:up"
+}
+
+stop_unmanaged_listeners_on_lifecycle_ports() {
+  local unmanaged_pids
+  unmanaged_pids="$(
+    for port in \
+      "$SERVER_PORT" \
+      "$WEB_PORT" \
+      "$INNGEST_PORT" \
+      "$INNGEST_CONNECT_GATEWAY_PORT" \
+      "$INNGEST_CONNECT_GATEWAY_GRPC_PORT" \
+      "$INNGEST_CONNECT_EXECUTOR_GRPC_PORT"; do
+      while IFS= read -r pid; do
+        [[ -n "$pid" ]] || continue
+        if [[ "$pid" == "unknown" ]]; then
+          continue
+        fi
+        if ! is_managed_pid "$pid"; then
+          printf '%s\n' "$pid"
+        fi
+      done < <(listener_pids_for_port "$port")
+    done | awk '/^[0-9]+$/' | sort -u
+  )"
+
+  if [[ -z "$unmanaged_pids" ]]; then
+    err "unable to identify conflicting listener pids automatically"
+    return 1
+  fi
+
+  log "stopping conflicting listeners: $(echo "$unmanaged_pids" | tr '\n' ' ' | xargs)"
+
+  local pid
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] || continue
+    signal_pid_tree "$pid" INT
+  done <<<"$unmanaged_pids"
+
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] || continue
+    wait_for_pid_exit "$pid" 5 || true
+  done <<<"$unmanaged_pids"
+
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] || continue
+    signal_pid_tree "$pid" TERM
+  done <<<"$unmanaged_pids"
+
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] || continue
+    wait_for_pid_exit "$pid" 5 || true
+  done <<<"$unmanaged_pids"
+
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] || continue
+    if is_pid_running "$pid"; then
+      signal_pid_tree "$pid" KILL
+    fi
+  done <<<"$unmanaged_pids"
+
+  return 0
+}
+
+resolve_unmanaged_conflicts_for_start() {
+  if ! has_unmanaged_port_conflicts; then
+    return 0
+  fi
+
+  if all_lifecycle_ports_are_listening; then
+    log "info: lifecycle ports are already in use by another running stack."
+    print_stack_status
+    if is_non_interactive; then
+      if [[ "$requested_action" == "auto" ]]; then
+        log "info: auto mode is treating this as an attachable existing stack."
+        log "info: using existing stack at ${COORDINATION_URL}"
+        exit 0
+      fi
+      err "explicit action '${requested_action}' cannot continue while another stack is already running"
+      print_conflict_remediation
+      exit 1
+    fi
+
+    log "choose action:"
+    log "  1) use existing running stack (default)"
+    log "  2) stop conflicting listeners and start in this worktree"
+    log "  3) abort"
+    local conflict_choice=""
+    if [[ -t 0 ]]; then
+      read -r -p "Choose action [1-3]: " conflict_choice || true
+    fi
+
+    case "$conflict_choice" in
+      2)
+        if ! stop_unmanaged_listeners_on_lifecycle_ports; then
+          print_conflict_remediation
+          exit 1
+        fi
+        if has_unmanaged_port_conflicts; then
+          err "listeners are still present after stop attempt"
+          print_stack_status
+          print_conflict_remediation
+          exit 1
+        fi
+        return 0
+        ;;
+      3)
+        log "aborted"
+        exit 1
+        ;;
+      *)
+        log "using existing running stack"
+        print_stack_status
+        open_ui_surfaces "$open_policy"
+        exit 0
+        ;;
+    esac
+  fi
+
+  err "lifecycle ports are partially occupied by unmanaged processes"
+  print_stack_status
+  print_conflict_remediation
+  exit 1
+}
+
 wait_for_any_exit() {
   while true; do
     local pid
@@ -772,12 +916,7 @@ case "$resolved_action" in
     ;;
 esac
 
-if has_unmanaged_port_conflicts; then
-  err "refusing to spawn duplicate or conflicting services"
-  err "resolve occupied lifecycle ports or stop the existing stack first"
-  print_stack_status
-  exit 1
-fi
+resolve_unmanaged_conflicts_for_start
 
 log "starting dev stack (server + web + inngest)"
 log "  server port: ${SERVER_PORT}"

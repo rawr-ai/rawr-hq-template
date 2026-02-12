@@ -25,7 +25,10 @@ Lifecycle behavior:
 - If managed stack is already running:
   - interactive terminal: prompts for `status` (default), `attach`, `stop`, or `restart`
   - non-interactive/CI: defaults to `status` and exits (no duplicate process spawn)
-- If expected lifecycle ports are already occupied by unmanaged processes, startup is refused to avoid duplicate/fallback-port behavior.
+- If lifecycle ports are already occupied by another stack outside this worktree:
+  - `auto` mode treats that as an existing stack and exits cleanly with status/remediation guidance
+  - interactive mode offers to stop conflicting listeners and start in this worktree
+  - explicit `--action start` fails fast with remediation guidance
 
 Canonical canvas surface:
 - Primary canvas URL: `http://localhost:5173/coordination`

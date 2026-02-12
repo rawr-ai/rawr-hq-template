@@ -149,3 +149,19 @@ Use this notebook as the living scratch document for decisions, discoveries, blo
   - `bash -n scripts/dev/up.sh` pass
   - `RAWR_DEV_UP_NON_INTERACTIVE=1 RAWR_DEV_UP_OPEN=none bash scripts/dev/up.sh --action status --non-interactive` pass
   - `bun run --cwd apps/cli test test/dev-up.test.ts` pass
+
+## 2026-02-12 14:18:42 EST
+- Addressed dev lifecycle UX gap where `dev:up` hard-failed when canonical ports were already occupied by another worktree stack.
+- Updated `scripts/dev/up.sh` behavior:
+  - `auto` mode now treats full lifecycle-port occupancy as an attachable existing stack and exits cleanly with status.
+  - interactive mode now offers conflict remediation (reuse existing stack vs stop conflicting listeners and start here).
+  - explicit `--action start` remains fail-fast but now prints concrete remediation commands.
+- Closed remaining runtime-review durability gap for duplicate enqueue race:
+  - Added per-`runId` queue lock in `packages/coordination-inngest/src/adapter.ts` so concurrent same-`runId` submissions do not emit duplicate Inngest events.
+  - Added regression test `serializes concurrent queue requests for the same runId` in `packages/coordination-inngest/test/inngest-adapter.test.ts`.
+- Validation evidence:
+  - `bash -n scripts/dev/up.sh` pass
+  - `bash ./scripts/dev/up.sh` (with existing listeners) exits 0 in auto mode and reports attachable existing stack
+  - `RAWR_DEV_UP_NON_INTERACTIVE=1 bash ./scripts/dev/up.sh --action start` fails with remediation guidance as expected
+  - `bunx vitest run packages/coordination-inngest/test/inngest-adapter.test.ts` pass
+  - `bun run --cwd apps/cli test test/dev-up.test.ts` pass
