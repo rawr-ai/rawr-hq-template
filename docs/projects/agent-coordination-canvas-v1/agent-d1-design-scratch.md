@@ -54,3 +54,8 @@
     3) visible focus states and reduced-motion behavior
   - Visual gate requirement:
     1) add Chromium screenshot tests for default canvas, palette-open, validation-error, and run-timeline states.
+- 2026-02-12T23:50:00Z: Design architecture import complete.
+  - Confirmed MCP source structure and mirrored it in repo under `apps/web/src/ui/coordination/components/{CoordinationPage,canvas,status,shell}`.
+  - Extracted page-level logic from legacy monolith into the design-mirrored coordination component tree.
+  - Added local coordination style/type modules and wired `apps/web/src/ui/pages/CoordinationPage.tsx` to the new tree.
+  - Preserved host shell behavior and keyboard/live-region semantics pending bridge phase hookup.

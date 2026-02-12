@@ -79,7 +79,7 @@
 
 ## Verification Checklist (to update during execution)
 - [x] Runtime hardening branch complete with tests.
-- [ ] Design architecture import branch complete with tests.
+- [x] Design architecture import branch complete with tests.
 - [ ] Bridge branch complete with tests.
 - [ ] Shadow route visual gate added and passing.
 - [ ] Full cutover and legacy purge complete.
@@ -97,3 +97,14 @@
     - `bun run --cwd apps/cli typecheck`
     - `bun test apps/server/test/rawr.test.ts --test-name-pattern coordination`
     - `bun test packages/coordination/test/coordination.test.ts packages/coordination-inngest/test/inngest-adapter.test.ts`
+- 2026-02-12T23:50:00Z: Design architecture import implemented on `codex/coordination-design-data-v1-design`.
+  - Pulled live Magic Patterns source map from MCP URL `https://www.magicpatterns.com/c/al2dvbu3fg4deehobyd5kg/preview`.
+  - Mirrored design component structure into `apps/web/src/ui/coordination/components/{CoordinationPage,canvas,status,shell}`.
+  - Added coordination-local type and style modules:
+    - `apps/web/src/ui/coordination/types/workflow.ts`
+    - `apps/web/src/ui/coordination/styles/index.css`
+  - Routed existing page entrypoint to new architecture via `apps/web/src/ui/pages/CoordinationPage.tsx`.
+  - Preserved WorkflowKit provider/editor canvas behavior and keyboard palette behavior inside design-mirrored composition.
+  - Verification run:
+    - `bun run --cwd apps/web typecheck`
+    - `bun run --cwd apps/web test`
