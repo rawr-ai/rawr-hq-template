@@ -62,7 +62,7 @@ Recommended fix:
   - Policy/docs: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/system/PLUGINS.md:7`, `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/system/PLUGINS.md:17`
   - Config channels: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/rawr.config.ts:5`
   - Config normalization defaults: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/control-plane/src/index.ts:95`
-  - Runtime commands under `hq/plugins`: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/cli/src/commands/hq/plugins/enable.ts:8`
+  - Runtime commands under `hq/plugins`: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable.ts:8`
 
 - No-legacy command surface:
   - Legacy shim path absent in both repos: `apps/cli/src/commands/plugins/{enable,disable,list,status}.ts`

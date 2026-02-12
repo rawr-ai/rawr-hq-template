@@ -17,10 +17,10 @@ Channel A is for CLI command extensions that can be installed from npm/GitHub or
 ## Channel B: Workspace runtime plugins
 
 Use RAWR HQ runtime plugin commands:
-- `rawr hq plugins list`
-- `rawr hq plugins enable <id>`
-- `rawr hq plugins disable <id>`
-- `rawr hq plugins status`
+- `rawr plugins web list`
+- `rawr plugins web enable <id>`
+- `rawr plugins web disable <id>`
+- `rawr plugins web status`
 
 Channel B is local-first and integrates with runtime state and security gating.
 

@@ -48,7 +48,7 @@ Cleanup is complete with all actionable audit findings resolved.
   - `rawr-ai/rawr-hq`: private, personal repo.
 - Command-surface policy remains intact:
   - Channel A: `rawr plugins ...`
-  - Channel B: `rawr hq plugins ...`
+  - Channel B: `rawr plugins web ...`
 - Graphite state:
   - `gt trunk` is `main` in both repos.
   - `gt ls` shows `main` only in both repos.

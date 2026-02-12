@@ -12,7 +12,7 @@ Audited repos:
 | Branch cleanup completeness | PASS (with doc drift) | No `origin/*` branch (excluding `main`) is merged into `origin/main`; deleted-branch set remains absent. Cleanup ledger is stale vs current branch inventory. |
 | Graphite cleanliness | FAIL | Graphite stack metadata is clean (`gt ls` => `main` only), but template worktree is not clean due to untracked artifact. |
 | Sync health (template <-> personal) | PASS | Personal `upstream/main` matches template `origin/main` (`87fc60c...`), and personal is not behind upstream (`upstream/main...main = 0 8`). |
-| Command-surface consistency (`rawr plugins` vs `rawr hq plugins`) | PASS | Runtime and docs consistently separate Channel A (oclif) and Channel B (workspace runtime). No active legacy `rawr plugins enable|disable|status|list` usage found. |
+| Command-surface consistency (`rawr plugins` vs `rawr plugins web`) | PASS | Runtime and docs consistently separate Channel A (oclif) and Channel B (workspace runtime). No active legacy `rawr plugins enable|disable|status|list` usage found. |
 | Publish posture docs alignment | PASS | Docs state local-only default + `private: true` sample plugins; package manifests match current blocked-publish posture. |
 
 ## Findings
@@ -38,7 +38,7 @@ Audited repos:
   - Personal: `HEAD == origin/main == 7ec4d70a684a50e754389a357c8ea2cade78b7a1`.
   - Personal upstream pointer: `upstream/main == 87fc60cc3c79512bfef317597782853b590ac75b`.
 - Command surface:
-  - Runtime command files exist at `apps/cli/src/commands/hq/plugins/{list,enable,disable,status}.ts`.
+  - Runtime command files exist at `plugins/cli/plugins/src/commands/plugins/web/{list,enable,disable,status}.ts`.
   - No legacy runtime files under `apps/cli/src/commands/plugins/{enable,disable,list,status}.ts`.
   - Channel separation documented in `docs/system/PLUGINS.md:7`, `docs/system/PLUGINS.md:17`, `docs/process/AGENT_LOOPS.md:52`, `README.md:21`.
 - Publish posture:

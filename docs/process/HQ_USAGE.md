@@ -33,7 +33,7 @@ Mode contract:
   - `plugins/agents/*`
 - These are fixture/example packages for baseline validation and demos.
 - Operational plugin authoring belongs in downstream personal `RAWR HQ` repos.
-- Runtime workspace commands: `rawr hq plugins ...`
+- Runtime workspace commands: `rawr plugins web ...`
 - External oclif plugin manager: `rawr plugins ...`
 
 ## Publishing

@@ -7,11 +7,11 @@
 
 LLM “judge” assessment is **parked** (doc only) until explicitly un-parked.
 
-## Gate point: `hq plugins enable` (gateEnable)
+## Gate point: `plugins web enable` (gateEnable)
 
 Enabling a plugin is treated as an explicit “activation” boundary.
 
-- `rawr hq plugins enable <id>` runs the security checks and calls the gate.
+- `rawr plugins web enable <id>` runs the security checks and calls the gate.
 - If blocked, the command exits non-zero unless `--force` is provided.
 - Successful enablement updates persisted repo-local state in `.rawr/state/state.json`.
 - Runtime boundary: enabled plugin state is consumed by server/web plugin loading paths.

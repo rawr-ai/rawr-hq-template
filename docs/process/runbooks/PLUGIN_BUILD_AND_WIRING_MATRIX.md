@@ -7,7 +7,7 @@ Show every supported plugin build + wiring path, and exactly how discovery works
 ## Command Surface Invariant
 
 - Channel A: `rawr plugins ...` (oclif plugin manager)
-- Channel B: `rawr hq plugins ...` (workspace runtime plugins)
+- Channel B: `rawr plugins web ...` (workspace runtime plugins)
 
 Do not mix command families.
 
@@ -55,9 +55,9 @@ Discovery:
 
 Commands:
 ```bash
-rawr hq plugins list --all --json
-rawr hq plugins enable my-plugin --allow-non-operational --risk balanced
-rawr hq plugins status --json
+rawr plugins web list --all --json
+rawr plugins web enable my-plugin --allow-non-operational --risk balanced
+rawr plugins web status --json
 ```
 
 ### Channel A local dev (install/link required, publish not required)
@@ -88,7 +88,7 @@ Meaning:
 ## Minimal Correct Sequences
 
 1. Fast local runtime path (Channel B):
-- `create plugin -> build -> rawr hq plugins enable`
+- `create plugin -> build -> rawr plugins web enable`
 
 2. Global command plugin path (Channel A):
 - `create command plugin -> build -> rawr plugins link <abs-path>`

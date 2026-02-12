@@ -10,8 +10,8 @@ Use this when you want a local personal plugin usable immediately in your worksp
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 rawr factory plugin new demo-runtime --kind both
 bunx turbo run build --filter=@rawr/plugin-demo-runtime
-rawr hq plugins enable demo-runtime --allow-non-operational --risk off
-rawr hq plugins status --json
+rawr plugins web enable demo-runtime --allow-non-operational --risk off
+rawr plugins web status --json
 ```
 
 ## How discovery works
@@ -22,4 +22,4 @@ rawr hq plugins status --json
 ## Caveats
 
 - Run from inside the workspace; outside repo, workspace root discovery fails.
-- Keep Channel B commands (`rawr hq plugins ...`) separate from Channel A commands.
+- Keep Channel B commands (`rawr plugins web ...`) separate from Channel A commands.

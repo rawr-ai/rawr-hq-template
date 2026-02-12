@@ -52,6 +52,9 @@ describe("plugin command surface cutover", () => {
   });
 
   it("removes legacy command surfaces", () => {
+    const hq = runRawr(["hq", "plugins", "list", "--json"]);
+    expect((hq.status ?? 1) !== 0).toBe(true);
+
     const factory = runRawr(["factory", "plugin", "new", "legacy-check", "--dry-run", "--json"]);
     expect((factory.status ?? 1) !== 0).toBe(true);
 

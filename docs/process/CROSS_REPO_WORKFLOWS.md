@@ -12,7 +12,7 @@ This is the canonical workflow model for operating both repos on one machine.
 1. Work in personal repo: `rawr-hq`.
 2. Scaffold plugin with `rawr plugins scaffold ...`.
 3. Build/test locally.
-4. Enable via `rawr hq plugins ...`.
+4. Enable via `rawr plugins web ...`.
 5. Publish from personal repo only if needed.
 
 Do not create operational plugins in template.
@@ -66,6 +66,6 @@ Hooks refresh global wiring only when the current checkout is the active owner.
 ## Command Surface Invariant
 
 - Channel A: `rawr plugins ...`
-- Channel B: `rawr hq plugins ...`
+- Channel B: `rawr plugins web ...`
 
 Never mix command families in docs or scripts.

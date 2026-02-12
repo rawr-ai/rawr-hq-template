@@ -52,5 +52,5 @@ git fetch upstream
 
 ## Command Channel Notes
 
-- `rawr hq plugins ...` is canonical for workspace runtime plugins (Channel B).
+- `rawr plugins web ...` is canonical for workspace runtime plugins (Channel B).
 - `rawr plugins ...` is reserved for oclif plugin manager commands (Channel A).

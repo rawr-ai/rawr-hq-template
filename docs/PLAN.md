@@ -18,7 +18,7 @@ This file tracks the transition from historical `rawr-hq` documentation toward t
 3. CLI core lives in template upstream.
 4. Plugin channels are separated:
    - Channel A: `rawr plugins ...` (oclif manager)
-   - Channel B: `rawr hq plugins ...` (workspace runtime)
+   - Channel B: `rawr plugins web ...` (workspace runtime)
 
 ## Deferred Items
 

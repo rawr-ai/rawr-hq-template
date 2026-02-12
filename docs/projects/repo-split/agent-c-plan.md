@@ -83,7 +83,7 @@ for repo in "$TEMPLATE_REPO" "$PERSONAL_REPO"; do
   (
     cd "$repo"
 
-    bun run rawr -- hq plugins list --json | node -e '
+    bun run rawr -- plugins web list --json | node -e '
       const fs=require("node:fs");
       const j=JSON.parse(fs.readFileSync(0,"utf8"));
       if(!j.ok) process.exit(1);
@@ -91,7 +91,7 @@ for repo in "$TEMPLATE_REPO" "$PERSONAL_REPO"; do
       if(!ids.includes("@rawr/plugin-hello")) process.exit(2);
     '
 
-    bun run rawr -- hq plugins enable hello --json --risk off | node -e '
+    bun run rawr -- plugins web enable hello --json --risk off | node -e '
       const fs=require("node:fs");
       const j=JSON.parse(fs.readFileSync(0,"utf8"));
       if(!j.ok) process.exit(1);
@@ -99,7 +99,7 @@ for repo in "$TEMPLATE_REPO" "$PERSONAL_REPO"; do
       if(!enabled.includes("@rawr/plugin-hello")) process.exit(2);
     '
 
-    bun run rawr -- hq plugins status --json | node -e '
+    bun run rawr -- plugins web status --json | node -e '
       const fs=require("node:fs");
       const j=JSON.parse(fs.readFileSync(0,"utf8"));
       if(!j.ok) process.exit(1);
@@ -107,13 +107,13 @@ for repo in "$TEMPLATE_REPO" "$PERSONAL_REPO"; do
       if(!row || row.enabled!==true) process.exit(2);
     '
 
-    bun run rawr -- hq plugins disable hello --json | node -e '
+    bun run rawr -- plugins web disable hello --json | node -e '
       const fs=require("node:fs");
       const j=JSON.parse(fs.readFileSync(0,"utf8"));
       if(!j.ok) process.exit(1);
     '
 
-    bun run rawr -- hq plugins status --json | node -e '
+    bun run rawr -- plugins web status --json | node -e '
       const fs=require("node:fs");
       const j=JSON.parse(fs.readFileSync(0,"utf8"));
       if(!j.ok) process.exit(1);

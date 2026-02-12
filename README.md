@@ -21,7 +21,7 @@ bun run test
 
 Two plugin channels are intentionally separate:
 - Channel A: external oclif plugins (`rawr plugins install|link|update|...`).
-- Channel B: RAWR HQ workspace runtime plugins (`rawr hq plugins list|enable|disable|status`).
+- Channel B: RAWR HQ workspace runtime plugins (`rawr plugins web list|enable|disable|status`).
 
 ## Local-Only vs Connected
 

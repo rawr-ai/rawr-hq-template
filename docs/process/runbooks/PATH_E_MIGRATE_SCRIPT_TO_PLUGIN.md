@@ -12,7 +12,7 @@ Use this when converting an existing script (from anywhere on disk) into a prope
 
 2. If the script should become runtime capability for HQ stack:
 - migrate to a Channel B workspace plugin with `exports ./server` and/or `./web`.
-- enable using `rawr hq plugins enable ...`.
+- enable using `rawr plugins web enable ...`.
 
 ## End-to-end Command Skeletons
 
@@ -32,8 +32,8 @@ rawr plugins inspect @rawr/plugin-demo-oclif --json
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 rawr factory plugin new demo-runtime --kind both
 bunx turbo run build --filter=@rawr/plugin-demo-runtime
-rawr hq plugins enable demo-runtime --allow-non-operational --risk off
-rawr hq plugins status --json
+rawr plugins web enable demo-runtime --allow-non-operational --risk off
+rawr plugins web status --json
 ```
 
 ## Caveats

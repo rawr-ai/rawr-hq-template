@@ -18,7 +18,7 @@ Observe agent progress; intervene only for drift, factual errors, or contract vi
 - Enforce signpost model for `AGENTS.md`: routing + critical rules + pointers, no raw context dump.
 - Preserve command channel separation:
   - Channel A: `rawr plugins ...`
-  - Channel B: `rawr hq plugins ...`
+  - Channel B: `rawr plugins web ...`
 - Keep Graphite requirement explicit in both repos.
 - Avoid runtime/API changes; docs/process hardening only.
 

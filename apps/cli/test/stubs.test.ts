@@ -31,28 +31,28 @@ describe("rawr command surfaces", () => {
     expect(parsed.data.tools.map((t: any) => t.command)).toContain("doctor");
   });
 
-  it("hq plugins list finds workspace plugins", () => {
-    const proc = runRawr(["hq", "plugins", "list", "--json"]);
+  it("plugins web list finds workspace plugins", () => {
+    const proc = runRawr(["plugins", "web", "list", "--json"]);
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
     expect(parsed.data.plugins).toEqual([]);
     expect(parsed.data.excludedCount).toBeGreaterThanOrEqual(1);
 
-    const allProc = runRawr(["hq", "plugins", "list", "--all", "--json"]);
+    const allProc = runRawr(["plugins", "web", "list", "--all", "--json"]);
     expect(allProc.status).toBe(0);
     const allParsed = parseJson(allProc);
     expect(allParsed.data.plugins.map((p: any) => p.id)).toContain("@rawr/plugin-hello");
   });
 
-  it("hq plugins enable is gated by @rawr/security", () => {
-    const blocked = runRawr(["hq", "plugins", "enable", "hello", "--json", "--risk", "off"]);
+  it("plugins web enable is gated by @rawr/security", () => {
+    const blocked = runRawr(["plugins", "web", "enable", "hello", "--json", "--risk", "off"]);
     expect([1, 2]).toContain(blocked.status as number);
     const blockedParsed = parseJson(blocked);
     expect(blockedParsed.ok).toBe(false);
     expect(blockedParsed.error.code).toBe("PLUGIN_ROLE_BLOCKED");
 
-    const proc = runRawr(["hq", "plugins", "enable", "hello", "--allow-non-operational", "--json", "--risk", "off"]);
+    const proc = runRawr(["plugins", "web", "enable", "hello", "--allow-non-operational", "--json", "--risk", "off"]);
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
@@ -62,9 +62,9 @@ describe("rawr command surfaces", () => {
     expect(parsed.data.state.plugins.enabled).toContain("@rawr/plugin-hello");
   });
 
-  it("hq plugins status reflects persisted enable/disable state", () => {
-    runRawr(["hq", "plugins", "enable", "hello", "--allow-non-operational", "--json", "--risk", "off"]);
-    const enabledProc = runRawr(["hq", "plugins", "status", "--all", "--json"]);
+  it("plugins web status reflects persisted enable/disable state", () => {
+    runRawr(["plugins", "web", "enable", "hello", "--allow-non-operational", "--json", "--risk", "off"]);
+    const enabledProc = runRawr(["plugins", "web", "status", "--all", "--json"]);
     expect(enabledProc.status).toBe(0);
     const enabled = parseJson(enabledProc);
     expect(enabled.ok).toBe(true);
@@ -72,10 +72,10 @@ describe("rawr command surfaces", () => {
     expect(hello).toBeTruthy();
     expect(hello.enabled).toBe(true);
 
-    const disableProc = runRawr(["hq", "plugins", "disable", "hello", "--json"]);
+    const disableProc = runRawr(["plugins", "web", "disable", "hello", "--json"]);
     expect(disableProc.status).toBe(0);
 
-    const disabledProc = runRawr(["hq", "plugins", "status", "--all", "--json"]);
+    const disabledProc = runRawr(["plugins", "web", "status", "--all", "--json"]);
     expect(disabledProc.status).toBe(0);
     const disabled = parseJson(disabledProc);
     const hello2 = disabled.data.plugins.find((p: any) => p.id === "@rawr/plugin-hello");
