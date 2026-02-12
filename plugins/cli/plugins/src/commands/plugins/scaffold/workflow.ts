@@ -1,20 +1,22 @@
+import path from "node:path";
+
 import { Args, Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import path from "node:path";
-import { recordArtifact } from "../../../lib/journal-context";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+
 import {
   appendToolExport,
   assertSafeSegment,
+  type FactoryPlannedWrite,
+  type FactoryWriteMode,
   planWriteFile,
   renderWorkflowSource,
   renderWorkflowTestSource,
-  type FactoryPlannedWrite,
-  type FactoryWriteMode,
 } from "../../../lib/factory";
+import { recordArtifact } from "../../../lib/journal-context";
+import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
 
-export default class FactoryWorkflowNew extends RawrCommand {
-  static description = "Create a new workflow command (`rawr workflow <name>`) with a matching Vitest test";
+export default class PluginsScaffoldWorkflow extends RawrCommand {
+  static description = "Scaffold a new workflow command (`rawr workflow <name>`) with a matching Vitest test";
 
   static args = {
     name: Args.string({ required: true, description: "Workflow name (kebab-case)" }),
@@ -31,7 +33,7 @@ export default class FactoryWorkflowNew extends RawrCommand {
   } as const;
 
   async run() {
-    const { args, flags } = await this.parseRawr(FactoryWorkflowNew);
+    const { args, flags } = await this.parseRawr(PluginsScaffoldWorkflow);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
 
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
@@ -84,4 +86,3 @@ export default class FactoryWorkflowNew extends RawrCommand {
     });
   }
 }
-

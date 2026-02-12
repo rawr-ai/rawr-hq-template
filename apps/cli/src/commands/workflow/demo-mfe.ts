@@ -1,7 +1,9 @@
-import { RawrCommand } from "@rawr/core";
-import { Flags } from "@oclif/core";
 import path from "node:path";
-import { journalId, safePreview, writeSnippet, type JournalSnippet } from "@rawr/journal";
+
+import { Flags } from "@oclif/core";
+import { RawrCommand } from "@rawr/core";
+import { journalId, type JournalSnippet, safePreview, writeSnippet } from "@rawr/journal";
+
 import { recordArtifact, recordStep } from "../../lib/journal-context";
 import { runStep, type StepResult } from "../../lib/subprocess";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
@@ -14,7 +16,7 @@ export default class WorkflowDemoMfe extends RawrCommand {
   static flags = {
     ...RawrCommand.baseFlags,
     risk: Flags.string({
-      description: "Risk tolerance passed to `hq plugins enable`",
+      description: "Risk tolerance passed to `plugins web enable`",
       default: "off",
       options: ["strict", "balanced", "permissive", "off"],
     }),
@@ -26,7 +28,7 @@ export default class WorkflowDemoMfe extends RawrCommand {
 
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     if (!workspaceRoot) {
-      const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)");
+      const result = this.fail("Unable to locate workspace root (expected a ./plugins/{cli,agents,web} directory)");
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
@@ -57,7 +59,7 @@ export default class WorkflowDemoMfe extends RawrCommand {
       {
         name: "enable",
         cmd: "bun",
-        args: ["run", "rawr", "--", "hq", "plugins", "enable", pluginDir, "--json", "--risk", risk],
+        args: ["run", "rawr", "--", "plugins", "web", "enable", pluginDir, "--json", "--risk", risk],
         cwd: workspaceRoot,
         status: "planned",
       },
@@ -114,7 +116,7 @@ export default class WorkflowDemoMfe extends RawrCommand {
       if (publicStep.exitCode !== 0) ok = false;
     }
 
-    recordArtifact(path.join(workspaceRoot, "plugins", pluginDir));
+    recordArtifact(path.join(workspaceRoot, "plugins", "web", pluginDir));
 
     await tryWriteDemoSnippet({ repoRoot: workspaceRoot, ok, pluginId });
 

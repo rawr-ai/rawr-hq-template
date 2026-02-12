@@ -61,6 +61,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/agent-sync"),
+        test: { name: "agent-sync", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/test-utils"),
         test: { name: "integration", environment: "node", include: [...includes] },
       },
@@ -83,6 +88,11 @@ export default defineConfig({
         extends: true,
         root: r("plugins/cli/session-tools"),
         test: { name: "plugin-session-tools", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("plugins/cli/plugins"),
+        test: { name: "plugin-plugins", environment: "node", include: [...includes] },
       },
     ],
   },

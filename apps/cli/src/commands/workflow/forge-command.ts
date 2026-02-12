@@ -1,7 +1,9 @@
-import { RawrCommand } from "@rawr/core";
-import { Flags } from "@oclif/core";
 import path from "node:path";
-import { journalId, safePreview, writeSnippet, type JournalSnippet } from "@rawr/journal";
+
+import { Flags } from "@oclif/core";
+import { RawrCommand } from "@rawr/core";
+import { journalId, type JournalSnippet,safePreview, writeSnippet } from "@rawr/journal";
+
 import { recordArtifact, recordStep } from "../../lib/journal-context";
 import { resolveCliEntrypoint, runStep, type StepResult } from "../../lib/subprocess";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
@@ -9,7 +11,7 @@ import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 type ForgeStep = StepResult & { stdoutJson?: any };
 
 export default class WorkflowForgeCommand extends RawrCommand {
-  static description = "Forge a new durable command via the factory (demo: workload/note) and run tests";
+  static description = "Forge a new durable command via plugin scaffolding (demo: workload/note) and run tests";
 
   static flags = {
     ...RawrCommand.baseFlags,
@@ -52,13 +54,13 @@ export default class WorkflowForgeCommand extends RawrCommand {
 
     const planned: ForgeStep[] = [
       {
-        name: "factory",
+        name: "scaffold",
         cmd: "bun",
         args: [
           entrypoint,
-          "factory",
+          "plugins",
+          "scaffold",
           "command",
-          "new",
           topic,
           name,
           "--description",
@@ -194,4 +196,3 @@ async function tryWriteForgeSnippet(input: {
     // best-effort
   }
 }
-
