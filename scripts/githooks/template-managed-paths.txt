@@ -1,0 +1,19 @@
+# Template-managed paths (source of truth: RAWR HQ-Template).
+# In downstream personal HQ repos, commits touching these paths should be made upstream first.
+#
+# Pattern semantics:
+# - `foo/**` matches `foo/...` recursively
+# - exact file paths are also supported
+
+AGENTS_SPLIT.md
+rawr.config.ts
+apps/cli/**
+packages/**
+plugins/cli/plugins/**
+scripts/githooks/**
+scripts/dev/activate-global-rawr.sh
+scripts/dev/auto-refresh-main.sh
+scripts/dev/install-global-rawr.sh
+docs/process/**
+docs/system/**
+docs/SYSTEM.md
