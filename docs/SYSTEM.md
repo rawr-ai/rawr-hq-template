@@ -26,7 +26,7 @@ Operational plugin development belongs in downstream personal HQ repos.
 ## Plugin Channels
 
 - Channel A: external oclif plugin manager (`rawr plugins install|link|...`).
-- Channel B: RAWR HQ workspace runtime plugins (`rawr hq plugins list|enable|disable|status`).
+- Channel B: RAWR HQ workspace runtime plugins (`rawr plugins web list|enable|disable|status`).
 
 Channel B is local-first by default and uses security gating + repo-local enabled state.
 

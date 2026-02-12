@@ -14,7 +14,7 @@
 ## Command Surface Policy
 
 - External CLI plugin channel: `rawr plugins ...`
-- Workspace runtime plugin channel: `rawr hq plugins ...`
+- Workspace runtime plugin channel: `rawr plugins web ...`
 - Do not mix the two command surfaces in guidance or examples.
 
 ## Graphite Requirement

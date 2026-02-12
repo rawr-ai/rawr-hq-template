@@ -8,7 +8,7 @@
 
 ## Near-Term Milestones
 
-1. Complete command-surface migration to `rawr hq plugins ...`.
+1. Complete command-surface migration to `rawr plugins web ...`.
 2. Expand template docs and publishing rails.
 3. Finalize upstream sync operating model.
 

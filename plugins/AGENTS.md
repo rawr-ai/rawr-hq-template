@@ -26,7 +26,7 @@
   - `package.json#name` (preferred), or
   - the leaf directory name (fallback).
 - Workspace runtime enablement uses:
-  - `rawr hq plugins enable <id>`
+  - `rawr plugins web enable <id>`
 
 ## Manifest Conventions
 - Always include a `package.json` at the plugin root.
@@ -47,5 +47,5 @@
 
 ## Security And Enablement
 - Enablement is an explicit activation boundary:
-  - `rawr hq plugins enable <id>` runs security gating and persists state.
+  - `rawr plugins web enable <id>` runs security gating and persists state.
 - Security model reference: `docs/SECURITY_MODEL.md`.

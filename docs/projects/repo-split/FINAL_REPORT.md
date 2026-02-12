@@ -40,7 +40,7 @@ Status: Complete
 - CLI smoke: PASS
   - `rawr --help`
   - `rawr plugins --help`
-  - `rawr hq plugins list --json`
+  - `rawr plugins web list --json`
 - Workspace plugin flow: PASS (`enable/status/disable`)
 - oclif plugin link flow: PASS (`plugins link`, `plugins inspect`)
 - Publish dry-run: PASS (`npm pack --dry-run` for `plugins/hello` and `plugins/mfe-demo`)

@@ -1,5 +1,15 @@
 # Plan: True Single-Surface Cutover + Template->Personal Integration to "Perfect"
 
+## Plan Location Registry
+1. Template plan (this file):
+   `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-codex/template-owned-core-transition-phase1-matrix/docs/projects/template-core-transition/SINGLE_SURFACE_CUTOVER_AND_INTEGRATION_SCRATCH.md`
+2. Template working pad:
+   `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-codex/template-owned-core-transition-phase1-matrix/docs/projects/template-core-transition/WORKING_PAD.md`
+3. Personal mirrored plan:
+   `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-dev-codex-dev-plugin-lifecycle-quality-phase1-scratch-docs/docs/projects/plugin-lifecycle-quality/TEMPLATE_OWNED_CORE_PERSONAL_INSTALL_TRANSITION_SCRATCH.md`
+4. Personal implementation scratchpad:
+   `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-dev-codex-dev-plugin-lifecycle-quality-phase1-scratch-docs/docs/projects/plugin-lifecycle-quality/IMPLEMENTATION_SCRATCHPAD.md`
+
 ## Summary
 1. No functional runtime capability is lost by removing `rawr hq plugins ...` and keeping `rawr plugins web ...` as canonical. The implementations are equivalent for `list|enable|disable|status`, and `plugins web enable all` is already a superset.
 2. The only intentional break is command-path compatibility: old `rawr hq plugins ...` calls will fail after cutover.

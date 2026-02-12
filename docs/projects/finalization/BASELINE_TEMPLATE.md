@@ -5,9 +5,9 @@
  M CONTRIBUTING.md
  M README.md
  M apps/cli/src/commands/factory/plugin/new.ts
- M apps/cli/src/commands/hq/plugins/enable.ts
- M apps/cli/src/commands/hq/plugins/list.ts
- M apps/cli/src/commands/hq/plugins/status.ts
+ M plugins/cli/plugins/src/commands/plugins/web/enable.ts
+ M plugins/cli/plugins/src/commands/plugins/web/list.ts
+ M plugins/cli/plugins/src/commands/plugins/web/status.ts
  M apps/cli/src/commands/tools/export.ts
  M apps/cli/src/lib/workspace-plugins.ts
  M apps/cli/test/factory.test.ts

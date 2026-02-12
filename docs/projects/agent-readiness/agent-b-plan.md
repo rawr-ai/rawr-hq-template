@@ -17,7 +17,7 @@ Last Updated: 2026-02-06
 
 - Keep command surfaces strictly separated:
   - Channel A: `rawr plugins ...` (oclif plugin manager)
-  - Channel B: `rawr hq plugins ...` (workspace runtime plugins)
+  - Channel B: `rawr plugins web ...` (workspace runtime plugins)
 - Deliver deterministic repo-root command sequences.
 - Include verification checkpoints and common failure modes.
 - Include publish posture: local-only default (`private: true`) plus publish-ready requirements.
@@ -43,6 +43,6 @@ Last Updated: 2026-02-06
 
 - Runbook will use `bun run rawr -- ...` command form to keep execution deterministic from repo root.
 - Channel A local consume will prefer absolute link paths to avoid cwd ambiguity.
-- Channel B workflow will use `factory plugin new` for package creation and `hq plugins` commands for runtime consume.
+- Channel B workflow will use `factory plugin new` for package creation and `plugins web` commands for runtime consume.
 - Channel A install rehearsal documents `file://` usage explicitly; plain filesystem path install is captured as a failure mode.
 - Publish posture is explicit: local-only default keeps `private: true`; publish requires deliberate metadata and contract gates.

@@ -71,7 +71,7 @@ Scope boundary: non-mutating readiness work only (unless explicitly requested ot
 
 ## Actionable findings
 1. All PRs in chain `#20..#34` are still draft; landing requires undraft/approval policy execution.
-2. `plugins/AGENTS.md` still documents legacy workspace activation command (`rawr plugins enable <id>`) instead of `rawr hq plugins enable <id>`.
+2. `plugins/AGENTS.md` still documents legacy workspace activation command (`rawr plugins enable <id>`) instead of `rawr plugins web enable <id>`.
 
 ## Landing validation command set (non-mutating)
 ```bash
@@ -94,7 +94,7 @@ git rev-list --reverse --oneline main..codex/feat-reflect-skill-packet
 # 5) Verify no legacy workspace command shim files are present.
 find apps/cli/src/commands -maxdepth 3 -type f | sort
 rg --files apps/cli/src/commands | rg '^apps/cli/src/commands/plugins/' || true
-rg -n "rawr plugins enable|rawr plugins disable|rawr plugins status|rawr hq plugins" apps/cli plugins docs -g'*.ts' -g'*.md'
+rg -n "rawr plugins enable|rawr plugins disable|rawr plugins status|rawr plugins web" apps/cli plugins docs -g'*.ts' -g'*.md'
 
 # 6) Run stack-landing confidence checks before merge.
 bun run test

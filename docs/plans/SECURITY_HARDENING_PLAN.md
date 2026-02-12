@@ -28,7 +28,7 @@ This document is a **plan** (not a milestone). It captures principles + a phased
 - Execution entrypoints call evaluators and then proceed; evaluators never mutate.
 
 4) **Small, composable, inspectable commands**
-- “Atomic retrieval” APIs (journal search/show) and “atomic mutation” APIs (`rawr hq plugins enable|disable`).
+- “Atomic retrieval” APIs (journal search/show) and “atomic mutation” APIs (`rawr plugins web enable|disable`).
 - Favor many small commands + workflow wrappers instead of monolith commands.
 
 5) **Provenance + intent must be recorded**
@@ -57,7 +57,7 @@ This document is a **plan** (not a milestone). It captures principles + a phased
 
 ### Already in place
 - Repo-local state: `.rawr/state/state.json` (gitignored) for enabled plugins.
-- Security checks: `rawr security check` + `rawr hq plugins enable` gate.
+- Security checks: `rawr security check` + `rawr plugins web enable` gate.
 - Security posture packet: `rawr security posture` summarizing latest report deterministically.
 - Journal primitives: `.rawr/journal/{events,snippets,index.sqlite}` with FTS search; small-result retrieval.
 - Server gating: enabled-only server plugin mounts; enabled-only web module serving (`/rawr/plugins/web/:dirName`).

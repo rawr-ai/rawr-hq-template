@@ -13,7 +13,7 @@ Detailed end-to-end path runbooks now live under:
 
 - Channel A (external oclif plugin manager): `rawr plugins ...`
   - Use for `link`, `install`, `inspect`.
-- Channel B (workspace runtime plugins): `rawr hq plugins ...`
+- Channel B (workspace runtime plugins): `rawr plugins web ...`
   - Use for `list`, `enable`, `disable`, `status`.
 - Do not swap command families between channels.
 
@@ -70,17 +70,17 @@ bunx turbo run test --filter="$RUNTIME_ID"
 
 ```bash
 # Discover plugin ids
-bun run rawr -- hq plugins list --all --json
+bun run rawr -- plugins web list --all --json
 
 # Enable (use risk policy that matches your environment)
-bun run rawr -- hq plugins enable "$RUNTIME_DIR" --allow-non-operational --json --risk off
+bun run rawr -- plugins web enable "$RUNTIME_DIR" --allow-non-operational --json --risk off
 
 # Verify persisted enabled state
-bun run rawr -- hq plugins status --json
+bun run rawr -- plugins web status --json
 
 # Disable and re-check
-bun run rawr -- hq plugins disable "$RUNTIME_DIR" --json
-bun run rawr -- hq plugins status --json
+bun run rawr -- plugins web disable "$RUNTIME_DIR" --json
+bun run rawr -- plugins web status --json
 ```
 
 Optional runtime mount check:
@@ -228,12 +228,12 @@ bun run rawr -- plugins inspect "$OCLIF_ID" --json
 2. Build/test gate passes:
    - `turbo run build/test --filter=<plugin-id>` exits `0`.
 3. Channel B state gate passes:
-   - `hq plugins status --json` shows expected `enabled` transition after enable/disable.
+   - `plugins web status --json` shows expected `enabled` transition after enable/disable.
 4. Channel A discovery gate passes:
    - `plugins inspect <plugin> --json` includes expected `commandIDs`.
 5. Command surface gate passes:
    - Channel A steps use only `rawr plugins ...`.
-   - Channel B steps use only `rawr hq plugins ...`.
+   - Channel B steps use only `rawr plugins web ...`.
 
 ## Common Failure Modes
 
@@ -245,7 +245,7 @@ bun run rawr -- plugins inspect "$OCLIF_ID" --json
      - ensure you're running the repo-first `rawr` wired to your `rawr-hq` checkout (so it can fall back to its install location)
 2. Symptom: `Unknown plugin: <id>` on Channel B enable/disable.
    - Cause: wrong id; command accepts package name or directory name.
-   - Fix: run `rawr hq plugins list --json` and reuse returned id/dir.
+   - Fix: run `rawr plugins web list --json` and reuse returned id/dir.
 3. Symptom: enable blocked by security gate.
    - Cause: risk tolerance disallows current findings.
    - Fix: review security report, reduce findings, or use explicit risk policy/force according to local policy.
@@ -262,7 +262,7 @@ Current default posture is local-only:
 - Plugin packages should stay `private: true` until release intent is explicit.
 - Local consume should use:
   - Channel A: `plugins link` (and optional `plugins install file://...` rehearsal)
-  - Channel B: `hq plugins enable|disable|status|list`
+  - Channel B: `plugins web enable|disable|status|list`
 
 ## Recommended Operator Loop (Repo Root)
 
@@ -294,4 +294,4 @@ To allow npm publish, all of the following must be true:
    - `rawr plugins install <pkg-or-url>` (Channel A)
    - `rawr plugins inspect <plugin>` confirms command discovery (Channel A)
 6. Runtime activation checks still pass for workspace runtime packages:
-   - `rawr hq plugins enable|status|disable` (Channel B)
+   - `rawr plugins web enable|status|disable` (Channel B)

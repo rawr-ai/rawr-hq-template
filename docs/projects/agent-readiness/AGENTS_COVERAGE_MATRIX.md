@@ -31,7 +31,7 @@ Repos:
 | 5 | `apps/cli/src/commands/dev/AGENTS.md` | missing | missing | `replace_with_pointer` | Topic-level detail is implementation-local; parent CLI router is sufficient. | `apps/cli/AGENTS.md` |
 | 6 | `apps/cli/src/commands/factory/AGENTS.md` | missing | missing | `replace_with_pointer` | Factory command pointers belong in CLI router + docs/process. | `apps/cli/AGENTS.md` |
 | 7 | `apps/cli/src/commands/journal/AGENTS.md` | missing | missing | `replace_with_pointer` | Journal command details are covered by CLI router and package router. | `apps/cli/AGENTS.md` |
-| 8 | `apps/cli/src/commands/plugins/AGENTS.md` | missing | missing | `archive_only` | Historical path removed; command surface moved under `hq/plugins`. | `apps/cli/src/commands/hq/plugins` |
+| 8 | `apps/cli/src/commands/plugins/AGENTS.md` | missing | missing | `archive_only` | Historical path removed; command surface moved under `hq/plugins`. | `plugins/cli/plugins/src/commands/plugins/web` |
 | 9 | `apps/cli/src/commands/routine/AGENTS.md` | missing | missing | `replace_with_pointer` | Routine topic does not need a standalone local router. | `apps/cli/AGENTS.md` |
 | 10 | `apps/cli/src/commands/security/AGENTS.md` | missing | missing | `replace_with_pointer` | Security routing can be handled by CLI + package security routers. | `apps/cli/AGENTS.md` |
 | 11 | `apps/cli/src/commands/tools/AGENTS.md` | missing | missing | `replace_with_pointer` | Tools topic has narrow scope; parent CLI router is enough. | `apps/cli/AGENTS.md` |
@@ -74,7 +74,7 @@ These are the only restore targets needed to recover clear navigation without re
 Use this map when historical references resolve to missing routers:
 
 - `apps/cli/src/commands/**/AGENTS.md` (except historical `plugins`) -> `apps/cli/AGENTS.md`
-- historical `apps/cli/src/commands/plugins/AGENTS.md` -> `apps/cli/src/commands/hq/plugins`
+- historical `apps/cli/src/commands/plugins/AGENTS.md` -> `plugins/cli/plugins/src/commands/plugins/web`
 - `apps/server/AGENTS.md`, `apps/web/AGENTS.md` -> `apps/AGENTS.md`
 - `docs/plans/AGENTS.md`, `docs/process/AGENTS.md`, `docs/spikes/AGENTS.md` -> `docs/AGENTS.md`
 - historical `docs/scratchpads/AGENTS.md` -> `docs/_archive/scratchpads/`

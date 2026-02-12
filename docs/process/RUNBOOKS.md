@@ -25,7 +25,7 @@ Use this when you need exact commands for:
 ## Command Surface Invariant
 
 - Channel A: `rawr plugins ...` (oclif plugin manager)
-- Channel B: `rawr hq plugins ...` (workspace runtime plugins)
+- Channel B: `rawr plugins web ...` (workspace runtime plugins)
 
 Do not mix command families.
 

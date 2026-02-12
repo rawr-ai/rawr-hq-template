@@ -18,7 +18,7 @@
 - `docs/projects/agent-readiness/ORCHESTRATOR_NOTEBOOK.md`: signpost-model and command-surface invariants are mandatory.
 - Current AGENTS footprint exists primarily at `docs/`, `packages/*`, `plugins/*`, and `scripts/`.
 - `2d3ed3b25bbcfbfbbbe193c31a7e887f747340eb`: last commit containing most removed routers; useful baseline for minimal router restoration language.
-- `apps/cli/src/commands/plugins`: removed; command surface is now `apps/cli/src/commands/hq/plugins`.
+- `apps/cli/src/commands/plugins`: removed; command surface is now `plugins/cli/plugins/src/commands/plugins/web`.
 - Restored parent routers are sufficient to avoid reintroducing deep AGENTS sprawl while preserving navigation quality.
 
 ## Open Questions

@@ -14,11 +14,11 @@
 
 - General commands: `src/commands/{doctor,reflect,...}.ts`
 - Topic commands: `src/commands/<topic>/*.ts`
-- Workspace plugin management: `src/commands/hq/plugins/*.ts`
+- Workspace plugin management: `plugins/cli/plugins/src/commands/plugins/web/*.ts`
 
 ## Command Surface Invariant
 
-- Use `rawr hq plugins ...` for workspace runtime plugins.
+- Use `rawr plugins web ...` for workspace runtime plugins.
 - Reserve `rawr plugins ...` for external CLI plugin channel guidance.
 
 ## Routing

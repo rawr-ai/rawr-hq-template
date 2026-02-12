@@ -9,7 +9,7 @@ Validated against the live CLI in `/Users/mateicanavra/Documents/.nosync/DEV/raw
 1. CLI is Bun-first monorepo (`/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq`).
 2. Two plugin channels exist and are intentionally separate:
    - Channel A: `rawr plugins ...` (oclif plugin manager: install/link/inspect).
-   - Channel B: `rawr hq plugins ...` (workspace runtime plugins: list/enable/disable/status).
+   - Channel B: `rawr plugins web ...` (workspace runtime plugins: list/enable/disable/status).
 3. Global `rawr` currently resolves to Bun symlink:
    - `/Users/mateicanavra/.bun/bin/rawr -> /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/apps/cli/bin/run.js`.
 
@@ -91,9 +91,9 @@ Same as (3), plus proper package ownership/versioning and publish process.
 - Enablement state persisted in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/.rawr/state/state.json`.
 Commands:
 ```bash
-rawr hq plugins list --json
-rawr hq plugins enable my-plugin --risk balanced
-rawr hq plugins status --json
+rawr plugins web list --json
+rawr plugins web enable my-plugin --risk balanced
+rawr plugins web status --json
 ```
 Key point: this is local-workspace discovery; no npm publish required.
 
@@ -121,8 +121,8 @@ Key point: here “publish” means package available from npm/GitHub source; in
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
 rawr factory plugin new demo-runtime --kind both
 bunx turbo run build --filter=@rawr/plugin-demo-runtime
-rawr hq plugins enable demo-runtime --risk off
-rawr hq plugins status --json
+rawr plugins web enable demo-runtime --risk off
+rawr plugins web status --json
 ```
 How CLI knows: scans `plugins/*` in workspace, then reads `.rawr/state/state.json`.  
 Caveat: run from inside workspace; outside repo it won’t find workspace root.
@@ -154,14 +154,14 @@ cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
 ./scripts/dev/activate-global-rawr.sh
 rawr factory plugin new demo-global --kind both
 bunx turbo run build --filter=@rawr/plugin-demo-global
-rawr hq plugins enable demo-global --risk off
+rawr plugins web enable demo-global --risk off
 ```
 How CLI knows: global `rawr` points to this checkout, then Channel B workspace scan applies.  
 Caveat: if you `cd` outside workspace, Channel B commands fail to locate workspace root.
 
 ### Path E: Migrate an ad-hoc local script into plugin form
 1. If script should become a CLI command: wrap as Channel A oclif plugin command, then `rawr plugins link ...`.
-2. If script should become runtime capability in HQ stack: wrap as Channel B plugin (`exports ./server` and/or `./web`), then `rawr hq plugins enable ...`.
+2. If script should become runtime capability in HQ stack: wrap as Channel B plugin (`exports ./server` and/or `./web`), then `rawr plugins web enable ...`.
 
 ## 5) What “publish” means here
 
@@ -172,7 +172,7 @@ Caveat: if you `cd` outside workspace, Channel B commands fail to locate workspa
 ## 6) Direct answer to your core question (minimal correct sequence)
 
 1. If you want local-only plugin usage fastest:  
-`create plugin -> build -> rawr hq plugins enable` (no publish/install).
+`create plugin -> build -> rawr plugins web enable` (no publish/install).
 2. If you want new CLI commands available globally via plugin manager:  
 `create command plugin -> build -> rawr plugins link <abs-path>` (publish optional).
 3. So yes: the “extra install/link step” is inherently required for Channel A.  

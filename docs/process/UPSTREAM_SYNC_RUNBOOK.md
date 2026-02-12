@@ -153,7 +153,7 @@ Conflict policy:
 - Preserve personal intent in local/plugin customizations.
 - Keep command-channel policy intact:
   - Channel A (external CLI plugins): `rawr plugins ...`
-  - Channel B (workspace runtime plugins): `rawr hq plugins ...`
+  - Channel B (workspace runtime plugins): `rawr plugins web ...`
 
 ## 6) Rollback And Recovery
 
@@ -213,5 +213,5 @@ All gates must pass.
 
 - Personal vs template divergence: keep personal-only behavior isolated so upstream merges stay mechanical.
 - Protected branches: `main` may block force-push; use sync/recovery branches + PR instead.
-- Command-channel drift: never swap `rawr plugins ...` and `rawr hq plugins ...` in docs or scripts.
+- Command-channel drift: never swap `rawr plugins ...` and `rawr plugins web ...` in docs or scripts.
 - Global ownership drift: if `rawr doctor global --json` reports another checkout as owner, run `./scripts/dev/activate-global-rawr.sh`.

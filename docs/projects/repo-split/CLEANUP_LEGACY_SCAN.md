@@ -13,7 +13,7 @@ Check performed:
 
 Result:
 - No legacy runtime command files found.
-- Canonical runtime workspace commands remain under `rawr hq plugins ...`.
+- Canonical runtime workspace commands remain under `rawr plugins web ...`.
 
 ## Docs Command Reference Check
 
@@ -32,6 +32,6 @@ Interpretation:
 ## Channel Consistency
 
 - Channel A (oclif): `rawr plugins ...` (kept)
-- Channel B (workspace runtime): `rawr hq plugins ...` (kept)
+- Channel B (workspace runtime): `rawr plugins web ...` (kept)
 
 Status: PASS

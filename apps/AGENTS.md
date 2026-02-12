@@ -22,4 +22,4 @@
 - Reuse `@rawr/*` packages; avoid cross-app internal coupling.
 - Keep command examples aligned with channel split:
   - `rawr plugins ...` (external CLI plugins)
-  - `rawr hq plugins ...` (workspace runtime plugins)
+  - `rawr plugins web ...` (workspace runtime plugins)

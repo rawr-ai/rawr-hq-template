@@ -21,5 +21,5 @@ See:
 
 ## Command Channel Model
 
-- Canonical workspace runtime plugin commands are `rawr hq plugins ...`.
+- Canonical workspace runtime plugin commands are `rawr plugins web ...`.
 - `rawr plugins ...` is reserved for oclif plugin manager commands.

@@ -33,7 +33,7 @@ A plugin can be promoted into `RAWR HQ-Template` only when:
 
 ## API Surface Policy
 
-- Canonical workspace runtime plugin commands are `rawr hq plugins ...`.
+- Canonical workspace runtime plugin commands are `rawr plugins web ...`.
 - `rawr plugins ...` is reserved for Channel A (oclif plugin manager commands).
 - Command-surface changes require migration notes in `UPDATING.md`.
 - CLI publish ownership for `@rawr/cli` is template-only.
