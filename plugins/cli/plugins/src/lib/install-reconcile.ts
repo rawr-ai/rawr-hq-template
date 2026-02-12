@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
-import { assessInstallState, LEGACY_SYNC_PLUGIN_NAMES, type InstallStateStatus, type RuntimePluginSnapshot } from "./install-state";
+import { assessInstallState, type InstallStateStatus, LEGACY_SYNC_PLUGIN_NAMES, type RuntimePluginSnapshot } from "./install-state";
 
 export type ReconcileCommand = {
   args: string[];

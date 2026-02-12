@@ -1,17 +1,18 @@
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
-import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
 const tempDirs: string[] = [];
+const DEFAULT_TEST_HOME = mkdtempSync(path.join(os.tmpdir(), "rawr-test-cutover-home-"));
+tempDirs.push(DEFAULT_TEST_HOME);
 
 function runRawr(args: string[], envOverrides?: Record<string, string>) {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  const baseHome = envOverrides?.HOME ?? mkdtempSync(path.join(os.tmpdir(), "rawr-test-cutover-home-"));
-  if (!envOverrides?.HOME) tempDirs.push(baseHome);
+  const baseHome = envOverrides?.HOME ?? DEFAULT_TEST_HOME;
   return spawnSync("bun", ["src/index.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
@@ -63,7 +64,7 @@ describe("plugin command surface cutover", () => {
   });
 
   it("supports plugins sync dry-run variants", () => {
-    const single = runRawr(["plugins", "sync", "plugins", "--dry-run", "--json"]);
+    const single = runRawr(["plugins", "sync", "tools", "--dry-run", "--json"]);
     expect(single.status).toBe(0);
     const singleJson = parseJson(single);
     expect(singleJson.ok).toBe(true);

@@ -1,14 +1,25 @@
-import { describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { describe, expect, it } from "vitest";
+
+const TEST_HOME = mkdtempSync(path.join(os.tmpdir(), "rawr-test-stubs-"));
 
 function runRawr(args: string[]) {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   return spawnSync("bun", ["src/index.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
-    env: { ...process.env },
+    env: {
+      ...process.env,
+      HOME: TEST_HOME,
+      XDG_CONFIG_HOME: path.join(TEST_HOME, ".config"),
+      XDG_DATA_HOME: path.join(TEST_HOME, ".local", "share"),
+      XDG_STATE_HOME: path.join(TEST_HOME, ".local", "state"),
+    },
   });
 }
 
@@ -36,7 +47,10 @@ describe("rawr command surfaces", () => {
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
-    expect(parsed.data.plugins).toEqual([]);
+    // Default list should include operational plugins only.
+    expect(parsed.data.plugins.map((p: any) => p.id)).toContain("@rawr/plugin-dev");
+    expect(parsed.data.plugins.map((p: any) => p.id)).toContain("@rawr/plugin-docs");
+    expect(parsed.data.plugins.map((p: any) => p.id)).not.toContain("@rawr/plugin-hello");
     expect(parsed.data.excludedCount).toBeGreaterThanOrEqual(1);
 
     const allProc = runRawr(["plugins", "web", "list", "--all", "--json"]);
