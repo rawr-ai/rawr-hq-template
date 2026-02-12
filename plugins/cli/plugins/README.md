@@ -7,6 +7,9 @@ Sync canonical plugin content from RAWR HQ into Codex and Claude agent plugin di
 ```bash
 rawr plugins sync <plugin-ref> [--agent codex|claude|all] [--codex-home <path>] [--claude-home <path>] [--dry-run] [--force] [--gc] [--json]
 rawr plugins sync all [--scope all|agents|cli|web] [--agent codex|claude|all] [--codex-home <path>] [--claude-home <path>] [--dry-run] [--json]
+rawr plugins lifecycle check --target <path|id> --type <cli|web|agent|skill|workflow|composed> [--base <ref>] [--json]
+rawr plugins improve --target <path|id> --type <cli|web|agent|skill|workflow|composed> [--publish] [--wait-minutes 20] [--json]
+rawr plugins sweep --scope plugin-system --scheduled|--manual [--publish] [--limit <n>] [--json]
 ```
 
 Canonical daily command:
@@ -126,3 +129,44 @@ Or by environment variables:
 
 Back-compat:
 - `CODEX_HOME` and `CODEX_MIRROR_HOME` are used when `RAWR_AGENT_SYNC_CODEX_HOMES` is not set.
+
+## Lifecycle Quality Commands
+
+These commands enforce and automate plugin lifecycle quality checks and strict no-policy merge flow.
+
+### Lifecycle check
+
+```bash
+rawr plugins lifecycle check --target plugins/cli/plugins --type cli --json
+```
+
+Checks:
+- tests/docs/dependents completeness for the change unit
+- sync dry-run verification
+- drift check verification
+
+### Improve (two-pass policy judgment)
+
+```bash
+rawr plugins improve --target plugins/cli/plugins --type cli --publish --wait-minutes 20 --json
+```
+
+Flow:
+- runs lifecycle check
+- optionally publishes stack (`gt submit --stack --ai`)
+- waits for comment window (default 20m)
+- runs two independent policy judges
+- auto-merges only on strict dual `auto_merge` consensus with no comment blockers
+
+Judge command wiring (env):
+- `RAWR_POLICY_JUDGE1_CMD`
+- `RAWR_POLICY_JUDGE2_CMD`
+
+### Sweep (scheduled/manual)
+
+```bash
+rawr plugins sweep --scope plugin-system --scheduled --json
+rawr plugins sweep --scope plugin-system --manual --publish --json
+```
+
+Default scope is plugin-system only.

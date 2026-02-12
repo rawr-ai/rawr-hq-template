@@ -2,13 +2,13 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 import {
-  PLUGINS_SYNC_UNDO_PROVIDER,
   beginPluginsSyncUndoCapture,
   effectiveContentForProvider,
   installAndEnableClaudePlugin,
   loadLayeredRawrConfigForCwd,
   packageCoworkPlugin,
   planSyncAll,
+  PLUGINS_SYNC_UNDO_PROVIDER,
   resolveDefaultCoworkOutDir,
   resolveSourcePlugin,
   resolveSourceScopeForPath,
@@ -21,6 +21,7 @@ import {
   type SyncScope,
 } from "@rawr/agent-sync";
 import { RawrCommand } from "@rawr/core";
+
 import { reconcileWorkspaceInstallLinks } from "../../../lib/install-reconcile";
 
 export default class PluginsSyncAll extends RawrCommand {

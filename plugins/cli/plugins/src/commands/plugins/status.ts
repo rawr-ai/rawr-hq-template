@@ -258,7 +258,7 @@ export default class PluginsStatus extends RawrCommand {
     const checks = String(flags.checks) as "sync" | "install" | "all";
     const includeSync = checks === "sync" || checks === "all";
     const includeInstall = checks === "install" || checks === "all";
-    const includeMetadata = !Boolean((flags as any)["material-only"]);
+    const includeMetadata = !(flags as any)["material-only"];
     const repair = Boolean(flags.repair);
     const noFail = Boolean((flags as any)["no-fail"]);
     const runtimePluginValues = this.config.plugins instanceof Map

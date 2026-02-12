@@ -1,15 +1,25 @@
 import { spawnSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
+
+const TEST_HOME = mkdtempSync(path.join(os.tmpdir(), "rawr-test-factory-"));
 
 function runRawr(args: string[]) {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   return spawnSync("bun", ["src/index.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
-    env: { ...process.env },
+    env: {
+      ...process.env,
+      HOME: TEST_HOME,
+      XDG_CONFIG_HOME: path.join(TEST_HOME, ".config"),
+      XDG_DATA_HOME: path.join(TEST_HOME, ".local", "share"),
+      XDG_STATE_HOME: path.join(TEST_HOME, ".local", "state"),
+    },
   });
 }
 
@@ -18,12 +28,12 @@ function parseJson(proc: ReturnType<typeof runRawr>) {
   return JSON.parse(proc.stdout) as any;
 }
 
-describe("factory", () => {
-  it("factory command new supports --json --dry-run", () => {
+describe("plugins scaffold", () => {
+  it("plugins scaffold command supports --json --dry-run", () => {
     const proc = runRawr([
-      "factory",
+      "plugins",
+      "scaffold",
       "command",
-      "new",
       "factory-test",
       "sample",
       "--description",
@@ -40,11 +50,11 @@ describe("factory", () => {
     );
   });
 
-  it("factory workflow new supports --json --dry-run", () => {
+  it("plugins scaffold workflow supports --json --dry-run", () => {
     const proc = runRawr([
-      "factory",
+      "plugins",
+      "scaffold",
       "workflow",
-      "new",
       "factory-wf-test",
       "--description",
       "Factory workflow test",
@@ -60,11 +70,11 @@ describe("factory", () => {
     );
   });
 
-  it("factory plugin new supports --json --dry-run", () => {
+  it("plugins scaffold web-plugin supports --json --dry-run", () => {
     const proc = runRawr([
-      "factory",
-      "plugin",
-      "new",
+      "plugins",
+      "scaffold",
+      "web-plugin",
       "factory-plugin-test",
       "--kind",
       "server",
