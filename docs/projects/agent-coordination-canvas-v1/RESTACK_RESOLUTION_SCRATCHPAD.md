@@ -45,3 +45,9 @@
 - 2026-02-12T04:11:33Z [orchestrator] Web branch now restack-clean on updated parent chain; review-only child branch (`codex/agent-r1-coordination-runtime-review`) still shows needs restack because it is checked out in its own worktree and intentionally not mutated here.
 - 2026-02-12T09:29:56Z [orchestrator] Added root dev:up entrypoint (server + web + Inngest) and updated coordination operations runbook local-start instructions.
 - 2026-02-12T09:32:12Z [orchestrator] Standardized dev scripts: added dev:server, dev:web, dev:workflows; changed dev up orchestration to use these, kept dev:inngest as compatibility alias.
+- 2026-02-12T09:42:19Z [orchestrator] Investigated user report: page spin/refresh then crash under dev:up.
+- 2026-02-12T09:42:19Z [orchestrator] Applied fixes: (1) ignore  in Vite watch to prevent runtime file-triggered reload loops; (2) guard no-op canvas onChange state updates to avoid render churn; (3) replace bash-4-only  in scripts/dev/up.sh with portable wait loop; (4) switch dev:inngest to npm-exec launch path to avoid bunx skipped-install-script binary failure.
+- 2026-02-12T09:42:19Z [orchestrator] Reproduced clean startup for dev:up (server/web/workflows all come up) after fixes.
+- 2026-02-12T09:42:28Z [orchestrator] Investigated user report: page spin/refresh then crash under dev:up.
+- 2026-02-12T09:42:28Z [orchestrator] Applied fixes: (1) ignore `.rawr/**` in Vite watch to prevent runtime file-triggered reload loops; (2) guard no-op canvas onChange state updates to avoid render churn; (3) replace bash-4-only `wait -n` in scripts/dev/up.sh with portable wait loop; (4) switch dev:inngest to npm-exec launch path to avoid bunx skipped-install-script binary failure.
+- 2026-02-12T09:42:28Z [orchestrator] Reproduced clean startup for dev:up (server/web/workflows all come up) after fixes.

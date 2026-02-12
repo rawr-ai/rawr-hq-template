@@ -31,4 +31,16 @@ web_pid="$!"
 bun run dev:workflows &
 inngest_pid="$!"
 
-wait -n "${app_pid}" "${web_pid}" "${inngest_pid}"
+wait_for_any_exit() {
+  while true; do
+    for pid in "${app_pid}" "${web_pid}" "${inngest_pid}"; do
+      if ! kill -0 "${pid}" >/dev/null 2>&1; then
+        wait "${pid}" 2>/dev/null || true
+        return
+      fi
+    done
+    sleep 1
+  done
+}
+
+wait_for_any_exit
