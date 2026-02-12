@@ -13,9 +13,9 @@
 | `AGENTS_SPLIT.md` | Update ownership policy contract | A | Done | Full template ownership for `plugins/agents/hq/**`; explicit template package list; `packages/dev/**` remains personal-owned |
 | `docs/process/CROSS_REPO_WORKFLOWS.md` | Align cross-repo workflow ownership and command surface | A | Done | HQ/plugin-management ownership now references full `plugins/agents/hq/**` + `plugins/cli/plugins/**` + explicit package list |
 | `docs/system/PLUGINS.md` | Align plugin architecture/ownership and command surface | A | Done | Ownership summary now matches full HQ domain promotion and `packages/dev/**` personal ownership |
-| `docs/process/*` (related consistency docs) | Patch only if directly needed | A/C | In progress | No additional direct edits required yet |
+| `docs/process/*` (related consistency docs) | Patch only if directly needed | A/C | Done | No additional direct edits required after contract updates |
 | `plugins/agents/hq/**` | Full promotion + reconcile with template conventions | B | Done | Full tree synced from personal repo via `rsync -a --delete`; target now exactly matches source domain |
-| `plugins/cli/plugins/**` | Additive, non-regressive template-owned deltas | C | In progress | Port personal deltas while preserving target-only non-regressive command surfaces |
+| `plugins/cli/plugins/**` | Additive, non-regressive template-owned deltas | C | In progress | Promoted local lib implementations from personal; preserved template-only/regression-sensitive command surfaces (`converge`, `doctor links`, scratch-policy checks) |
 | `packages/dev/**` | Preserve personal ownership | A | Locked | Enforced through explicit manifest narrowing and docs contract |
 
 ## Execution Plan
@@ -28,5 +28,5 @@
 
 ## Constraints
 - Ignore unrelated edits from others; do not modify/revert them.
-- Never introduce legacy `rawr hq plugins ...` text.
+- Never introduce legacy HQ-prefixed plugin command text.
 - Use Graphite commit flow for each slice.
