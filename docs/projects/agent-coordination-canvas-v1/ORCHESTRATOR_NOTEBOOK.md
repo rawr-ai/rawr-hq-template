@@ -102,3 +102,18 @@ Use this notebook as the living scratch document for decisions, discoveries, blo
 1. Coordination persistence is file-backed under `.rawr/coordination`; hosted ephemeral filesystems can lose workflow/run state without persistent volume or durable backend.
 2. Web build has a non-blocking chunk-size warning (~552 kB) for current bundle shape.
 3. Upstream CLI baseline instability remains outside this scope (`factory`, `journal`, `plugins-*`, `security-posture`, `workflow-forge-command` tests).
+
+## 2026-02-12 12:37:24 EST
+- Initialized worker worktree `wt-agent-ui-coordination-canvas-slice-pass` on branch `codex/coordination-canvas-v1-ui-slice-pass`.
+- Wrote `UI_SLICE_PASS_PLAN.md` verbatim and created worker scratchpad before code edits.
+- Next step: spawn UI worker with required skill packet and file ownership boundaries.
+
+## 2026-02-12 12:49:07 EST
+- User refinement applied: canvas-first priority reaffirmed (overlay/supporting UI, not dashboard-first framing).
+- Sent directed nudge to worker to encode ground-up orchestration intent + explicit design principles in worker scratchpad.
+- Integrated worker commit `0984e58` onto stack-top branch as `3292afa`.
+- Verification rerun in implementation worktree:
+  - `bun run --cwd apps/web test` pass (2 files, 3 tests)
+  - `bun run --cwd apps/web build` pass
+  - `bun run --cwd apps/web dev -- --port 5174 --strictPort` startup smoke pass
+- Residual known item: Vite chunk-size warning persists (>500 kB JS chunk), non-blocking for this UI slice.
