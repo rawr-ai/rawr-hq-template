@@ -4,6 +4,7 @@ import {
   getRunStatus,
   getRunTimeline,
   getWorkflow,
+  isSafeCoordinationId,
   listWorkflows,
   readDeskMemory,
   saveRunStatus,
@@ -59,10 +60,29 @@ function generateRunId(): string {
   return `run-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function parseRunId(value: unknown): string {
-  if (typeof value !== "string") return generateRunId();
+function badRequest(error: string): Response {
+  return new Response(JSON.stringify({ ok: false, error }), {
+    status: 400,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function parseWorkflowId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
   const trimmed = value.trim();
-  return trimmed === "" ? generateRunId() : trimmed;
+  if (trimmed === "") return null;
+  return isSafeCoordinationId(trimmed) ? trimmed : null;
+}
+
+function parseRunId(value: unknown): { runId?: string; error?: string } {
+  if (value === undefined || value === null) return { runId: generateRunId() };
+  if (typeof value !== "string") return { error: "runId must be a string when provided" };
+  const trimmed = value.trim();
+  if (trimmed === "") return { runId: generateRunId() };
+  if (!isSafeCoordinationId(trimmed)) {
+    return { error: `Invalid runId format: ${trimmed}` };
+  }
+  return { runId: trimmed };
 }
 
 export function createCoordinationRuntimeAdapter(input: {
@@ -129,7 +149,10 @@ export function registerCoordinationRoutes<TApp extends AnyElysia>(app: TApp, op
 
   app.get("/rawr/coordination/workflows/:id", async ({ params }) => {
     await ensureCoordinationStorage(opts.repoRoot);
-    const workflowId = String((params as any).id ?? "");
+    const workflowId = parseWorkflowId((params as any).id);
+    if (!workflowId) {
+      return badRequest("Invalid workflowId format");
+    }
     const workflow = await getWorkflow(opts.repoRoot, workflowId);
 
     if (!workflow) {
@@ -144,7 +167,10 @@ export function registerCoordinationRoutes<TApp extends AnyElysia>(app: TApp, op
 
   app.post("/rawr/coordination/workflows/:id/validate", async ({ params }) => {
     await ensureCoordinationStorage(opts.repoRoot);
-    const workflowId = String((params as any).id ?? "");
+    const workflowId = parseWorkflowId((params as any).id);
+    if (!workflowId) {
+      return badRequest("Invalid workflowId format");
+    }
     const workflow = await getWorkflow(opts.repoRoot, workflowId);
 
     if (!workflow) {
@@ -163,7 +189,10 @@ export function registerCoordinationRoutes<TApp extends AnyElysia>(app: TApp, op
 
   app.post("/rawr/coordination/workflows/:id/run", async ({ params, request }) => {
     await ensureCoordinationStorage(opts.repoRoot);
-    const workflowId = String((params as any).id ?? "");
+    const workflowId = parseWorkflowId((params as any).id);
+    if (!workflowId) {
+      return badRequest("Invalid workflowId format");
+    }
     const payload = (await tryReadJson(request)) as RequestWithWorkflow;
 
     const workflow = await getWorkflow(opts.repoRoot, workflowId);
@@ -174,7 +203,11 @@ export function registerCoordinationRoutes<TApp extends AnyElysia>(app: TApp, op
       });
     }
 
-    const runId = parseRunId(payload.runId);
+    const parsedRunId = parseRunId(payload.runId);
+    if (!parsedRunId.runId) {
+      return badRequest(parsedRunId.error ?? "Invalid runId");
+    }
+    const runId = parsedRunId.runId;
 
     try {
       const result = await queueCoordinationRunWithInngest({
@@ -229,7 +262,10 @@ export function registerCoordinationRoutes<TApp extends AnyElysia>(app: TApp, op
 
   app.get("/rawr/coordination/runs/:runId", async ({ params }) => {
     await ensureCoordinationStorage(opts.repoRoot);
-    const runId = String((params as any).runId ?? "");
+    const runId = parseWorkflowId((params as any).runId);
+    if (!runId) {
+      return badRequest("Invalid runId format");
+    }
     const run = await getRunStatus(opts.repoRoot, runId);
 
     if (!run) {
@@ -244,7 +280,10 @@ export function registerCoordinationRoutes<TApp extends AnyElysia>(app: TApp, op
 
   app.get("/rawr/coordination/runs/:runId/timeline", async ({ params }) => {
     await ensureCoordinationStorage(opts.repoRoot);
-    const runId = String((params as any).runId ?? "");
+    const runId = parseWorkflowId((params as any).runId);
+    if (!runId) {
+      return badRequest("Invalid runId format");
+    }
     const run = await getRunStatus(opts.repoRoot, runId);
     if (!run) {
       return new Response(JSON.stringify({ ok: false, error: "run not found" }), {
