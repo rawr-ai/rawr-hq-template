@@ -81,9 +81,9 @@
 - [x] Runtime hardening branch complete with tests.
 - [x] Design architecture import branch complete with tests.
 - [x] Bridge branch complete with tests.
-- [ ] Shadow route visual gate added and passing.
-- [ ] Full cutover and legacy purge complete.
-- [ ] Final `typecheck` + targeted test suite green.
+- [x] Visual gate added and passing on cutover route.
+- [x] Full cutover and legacy purge complete.
+- [x] Final `typecheck` + targeted test suite green.
 
 ## Execution Log
 - 2026-02-12T23:20:00Z: Runtime hardening implemented on `codex/coordination-design-data-v1-runtime`.
@@ -121,3 +121,26 @@
   - Verification run:
     - `bun run --cwd apps/web typecheck`
     - `bun run --cwd apps/web test`
+- 2026-02-13T00:10:00Z: Cutover + visual gate + legacy purge implemented on `codex/coordination-design-data-v1-cutover`.
+  - Cutover completed:
+    - `/coordination` now imports directly from `apps/web/src/ui/coordination/components/CoordinationPage.tsx`.
+    - Shadow route was skipped in final implementation; parity gate runs directly against cutover route.
+    - Removed legacy wrapper `apps/web/src/ui/pages/CoordinationPage.tsx`.
+    - Removed legacy stylesheet `apps/web/src/ui/styles/coordination-page.css`.
+  - Added Chromium visual regression gate:
+    - `apps/web/playwright.config.ts`
+    - `apps/web/test/coordination.visual.test.ts`
+    - Snapshot baselines under `apps/web/test/coordination.visual.test.ts-snapshots/*`.
+  - Added test runner partitioning so visual tests are excluded from vitest unit runs:
+    - `apps/web/vitest.config.ts`
+  - Legacy purge checks:
+    - `rg -n \"ui/pages/CoordinationPage|coordination-page.css|coordination-shadow\" apps/web` => zero matches.
+  - Verification run:
+    - `bun run --cwd apps/web typecheck`
+    - `bun run --cwd apps/web test`
+    - `bun run --cwd apps/web test:visual`
+    - `bun run --cwd packages/coordination typecheck`
+    - `bun run --cwd apps/server typecheck`
+    - `bun run --cwd apps/cli typecheck`
+    - `bun test apps/server/test/rawr.test.ts --test-name-pattern coordination`
+    - `bun test packages/coordination/test/coordination.test.ts packages/coordination-inngest/test/inngest-adapter.test.ts`

@@ -63,3 +63,5 @@
     2) `useRunStatus` for run polling/timeline lifecycle
     3) `useTheme` wrapper over host theme provider
   - Updated design `CoordinationPage` to consume hook+adapter seam with no mocked state path.
+- 2026-02-13T00:10:00Z: Cutover consumed bridge outputs.
+  - `/coordination` now runs entirely through bridge seam (`hooks/*` + `adapters/*`), with legacy page path removed.
