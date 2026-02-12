@@ -1,7 +1,8 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import "../styles/tokens.css";
-import "../styles/app-shell.css";
+import { ThemeSwitcher } from "../theme/theme-switcher";
+import { Button } from "../components/ui";
+import { cn } from "../lib/cn";
 
 const SIDEBAR_ID = "app-shell-sidebar";
 const MOBILE_MEDIA_QUERY = "(max-width: 960px)";
@@ -50,43 +51,69 @@ export function AppShell({
     return () => window.removeEventListener("keydown", onEscape);
   }, [isMobile, sidebarOpen]);
 
-  const sidebarClasses = `app-shell__sidebar${isMobile && sidebarOpen ? " is-open" : ""}`;
-  const backdropClasses = `app-shell__backdrop${isMobile && sidebarOpen ? " is-open" : ""}`;
-
   return (
-    <div className="app-shell">
-      <a href="#app-shell-main" className="app-shell__skip-link">
+    <div className="min-h-screen text-foreground">
+      <a
+        href="#app-shell-main"
+        className="fixed left-2 top-2 z-50 -translate-y-40 rounded-sm border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition-transform focus-visible:translate-y-0"
+      >
         Skip to main content
       </a>
 
-      <button
-        type="button"
-        className={backdropClasses}
-        aria-hidden={!isMobile || !sidebarOpen}
-        tabIndex={isMobile && sidebarOpen ? 0 : -1}
-        onClick={() => setSidebarOpen(false)}
-      />
+      {isMobile ? (
+        <button
+          type="button"
+          className={cn(
+            "fixed inset-0 z-30 border-0 bg-black/45 p-0 transition-opacity",
+            sidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+          )}
+          aria-hidden={!sidebarOpen}
+          tabIndex={sidebarOpen ? 0 : -1}
+          onClick={() => setSidebarOpen(false)}
+        />
+      ) : null}
 
-      <aside id={SIDEBAR_ID} className={sidebarClasses}>
-        {sidebar}
-      </aside>
+      <div className="mx-auto grid min-h-screen w-full max-w-[1700px] grid-cols-1 gap-0 px-2 py-2 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <aside
+          id={SIDEBAR_ID}
+          className={cn(
+            "surface-card z-40 flex h-[calc(100vh-1rem)] min-h-[600px] flex-col gap-4 p-4 lg:sticky lg:top-2",
+            isMobile
+              ? "fixed left-2 top-2 h-[calc(100vh-1rem)] w-[min(84vw,280px)] transition-transform duration-200"
+              : "translate-x-0",
+            isMobile && !sidebarOpen ? "-translate-x-[106%]" : "translate-x-0",
+          )}
+        >
+          {sidebar}
+        </aside>
 
-      <main className="app-shell__main">
-        <div className="app-shell__mobile-bar">
-          <button
-            type="button"
-            className="app-shell__menu-button"
-            aria-expanded={isMobile ? sidebarOpen : true}
-            aria-controls={SIDEBAR_ID}
-            onClick={() => setSidebarOpen((prev) => !prev)}
-          >
-            Navigation
-          </button>
-        </div>
-        <div id="app-shell-main" className="app-shell__content">
-          {children}
-        </div>
-      </main>
+        <main className="min-w-0 lg:pl-2">
+          <header className="surface-card sticky top-2 z-20 mb-2 flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <div>
+              <p className="kicker m-0">Coordination Host</p>
+              <p className="m-0 text-sm text-muted-foreground">Canvas-first shell with unified theming</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                className="lg:hidden"
+                variant="secondary"
+                size="sm"
+                aria-expanded={isMobile ? sidebarOpen : true}
+                aria-controls={SIDEBAR_ID}
+                onClick={() => setSidebarOpen((prev) => !prev)}
+              >
+                Navigation
+              </Button>
+              <ThemeSwitcher />
+            </div>
+          </header>
+
+          <div id="app-shell-main" className="surface-card min-h-[calc(100vh-6.4rem)] p-4 md:p-5">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

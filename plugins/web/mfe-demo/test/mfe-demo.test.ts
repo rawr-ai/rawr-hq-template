@@ -9,10 +9,14 @@ describe("@rawr/plugin-mfe-demo", () => {
 
   it("mounts and unmounts in the DOM", () => {
     const el = document.createElement("div");
-    const handle = mount(el, { baseUrl: "http://localhost:3000" });
+    const handle = mount(el, {
+      hostAppId: "test-host",
+      basePath: "/",
+      getLocation: () => ({ pathname: "/", search: "", hash: "" }),
+      navigate: () => undefined,
+    });
     expect(el.textContent).toContain("Micro-frontend demo plugin");
     handle?.unmount?.();
     expect(el.textContent).toBe("");
   });
 });
-

@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RAWR HQ-Template</title>
+    <script>
+      (() => {
+        const key = "rawr.web.theme";
+        const stored = window.localStorage.getItem(key);
+        const wantsDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const resolved = stored === "light" || stored === "dark" ? stored : wantsDark ? "dark" : "light";
+        document.documentElement.classList.toggle("dark", resolved === "dark");
+        document.documentElement.dataset.theme = resolved;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
