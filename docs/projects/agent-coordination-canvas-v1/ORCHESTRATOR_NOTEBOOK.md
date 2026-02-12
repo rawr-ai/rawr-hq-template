@@ -117,3 +117,19 @@ Use this notebook as the living scratch document for decisions, discoveries, blo
   - `bun run --cwd apps/web build` pass
   - `bun run --cwd apps/web dev -- --port 5174 --strictPort` startup smoke pass
 - Residual known item: Vite chunk-size warning persists (>500 kB JS chunk), non-blocking for this UI slice.
+
+## 2026-02-12 12:56:37 EST
+- Spawned dedicated UI shell modernization worker in worktree `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-ui-shell-modernization`.
+- Branch: `codex/coordination-canvas-v1-ui-shell-modernization` (based on current stack top).
+- Gave strict instructions: write plan first, keep scratchpad, apply Tailwind+shadcn (or justify alternative), implement cohesive light/dark system, include MFE-facing surfaces, and verify React Flow/canvas theming compatibility.
+
+## 2026-02-12 13:11:43 EST
+- Dedicated UI shell modernization worker completed implementation on `codex/coordination-canvas-v1-ui-shell-modernization`.
+- Integrated worker commit `f377942` into stack branch as `12c85a4`.
+- Scope delivered: Tailwind + shadcn-style primitives, global light/dark theme system + switcher, shell/pages modernization, coordination theme alignment (including React Flow variables), and MFE demo theme coupling.
+- Verification rerun in implementation worktree:
+  - `bun install` pass
+  - `bun run --cwd apps/web test` pass
+  - `bun run --cwd apps/web build` pass
+  - `bun run --cwd apps/web dev -- --host 127.0.0.1 --port 4173` startup smoke pass
+- Residual known item: Vite chunk-size warning persists (~590 kB JS chunk), non-blocking and suitable for a follow-up split/chunking pass.
