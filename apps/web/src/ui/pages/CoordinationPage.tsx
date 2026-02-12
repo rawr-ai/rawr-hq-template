@@ -12,7 +12,7 @@ import {
   coordinationAvailableActions,
   fromWorkflowKitWorkflow,
   toWorkflowKitWorkflow,
-} from "@rawr/coordination-inngest";
+} from "@rawr/coordination-inngest/browser";
 import { Editor, Provider, Sidebar } from "@inngest/workflow-kit/ui";
 import type { Workflow as WorkflowKitWorkflow } from "@inngest/workflow-kit";
 import "@inngest/workflow-kit/ui/ui.css";

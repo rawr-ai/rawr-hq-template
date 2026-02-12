@@ -28,6 +28,7 @@ Use this when you need exact commands for:
 | Lifecycle: skill quality gates | `docs/process/runbooks/LIFECYCLE_SKILL.md` |
 | Lifecycle: workflow quality gates | `docs/process/runbooks/LIFECYCLE_WORKFLOW.md` |
 | Lifecycle: composed multi-surface changes | `docs/process/runbooks/LIFECYCLE_COMPOSED_CHANGES.md` |
+| Operate coordination canvas + Inngest runtime | `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` |
 
 ## Command Surface Invariant
 

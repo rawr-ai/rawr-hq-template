@@ -31,3 +31,8 @@
 - 2026-02-12T04:00:50Z [orchestrator] Applied server route hardening in apps/server/src/coordination.ts: added explicit safe-ID checks and 400 responses for invalid workflowId/runId/custom runId inputs.
 - 2026-02-12T04:01:20Z [orchestrator] Server validation gate: apps/server typecheck and health/rawr tests passed after ID hardening.
 - 2026-02-12T04:01:20Z [orchestrator] Ran additional pre-commit checkpoint sync (gt sync --no-restack) before server branch mutation.
+- 2026-02-12T04:02:18Z [orchestrator] Web boundary fix: switched coordination canvas imports to @rawr/coordination-inngest/browser to avoid server-oriented runtime dependency pull-in.
+- 2026-02-12T04:02:18Z [orchestrator] Web validation gate passed (typecheck, build, tests); note: Vite chunk-size warning remains informational and non-blocking.
+- 2026-02-12T04:03:00Z [orchestrator] Added ops runbook docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md and linked it from docs/process/RUNBOOKS.md to close hosted/runtime handoff gap.
+- 2026-02-12T04:04:46Z [orchestrator] Ran live smoke with server + Inngest dev: workflow coord create/validate/run/status/trace succeeded for wf-smoke; timeline endpoint returned ordered desk/run events with Inngest trace link.
+- 2026-02-12T04:04:46Z [orchestrator] Stopped temporary local server and Inngest dev processes after smoke verification.
