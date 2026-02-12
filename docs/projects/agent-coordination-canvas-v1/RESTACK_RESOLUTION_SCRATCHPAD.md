@@ -38,3 +38,4 @@
 - 2026-02-12T04:04:46Z [orchestrator] Stopped temporary local server and Inngest dev processes after smoke verification.
 - 2026-02-12T04:06:47Z [orchestrator] Final gate: full workspace typecheck passed on top branch.
 - 2026-02-12T04:06:47Z [orchestrator] Final gate: full workspace tests failed with known CLI baseline failures (9 failing tests; coordination/server/web suites remained green).
+- 2026-02-12T04:08:04Z [orchestrator] Updated ORCHESTRATOR_NOTEBOOK.md with restack closeout decisions, verification results, and residual risks.
