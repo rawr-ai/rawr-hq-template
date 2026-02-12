@@ -185,6 +185,9 @@
 }
 
 .coordination__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--ui-border-default);
   border-radius: var(--ui-radius-sm);
   background: var(--ui-surface-2);
@@ -194,6 +197,7 @@
   letter-spacing: 0.01em;
   padding: 0.56rem 0.82rem;
   cursor: pointer;
+  text-decoration: none;
   transition: background-color var(--ui-transition-fast), border-color var(--ui-transition-fast), transform var(--ui-transition-fast);
 }
 
@@ -215,6 +219,10 @@
     color-mix(in oklab, var(--ui-accent) 26%, var(--ui-surface-2)),
     color-mix(in oklab, var(--ui-accent-strong) 24%, var(--ui-surface-2))
   );
+}
+
+.coordination__monitor-link {
+  white-space: nowrap;
 }
 
 .coordination__meta {
