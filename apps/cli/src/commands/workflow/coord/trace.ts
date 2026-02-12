@@ -1,5 +1,6 @@
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
+import { coordinationErrorMessage, type RunTraceLinkV1, type RunStatusV1 } from "@rawr/coordination";
 import { coordinationFetch, resolveServerBaseUrl } from "../../../lib/coordination-api";
 
 export default class WorkflowCoordTrace extends RawrCommand {
@@ -19,13 +20,13 @@ export default class WorkflowCoordTrace extends RawrCommand {
     const runId = String(args.runId);
 
     const baseUrl = await resolveServerBaseUrl(process.cwd());
-    const response = await coordinationFetch<any>({
+    const response = await coordinationFetch<{ run: RunStatusV1 }>({
       baseUrl,
       path: `/rawr/coordination/runs/${encodeURIComponent(runId)}`,
     });
 
-    if (!response.ok) {
-      const result = this.fail("Run not found", {
+    if (response.data.ok !== true) {
+      const result = this.fail(coordinationErrorMessage(response.data, "Run not found"), {
         code: "COORD_TRACE_NOT_FOUND",
         details: response.data,
       });
@@ -34,7 +35,7 @@ export default class WorkflowCoordTrace extends RawrCommand {
       return;
     }
 
-    const traceLinks = response.data?.run?.traceLinks ?? [];
+    const traceLinks: RunTraceLinkV1[] = response.data.run.traceLinks ?? [];
     const result = this.ok({ runId, traceLinks });
     this.outputResult(result, {
       flags: baseFlags,

@@ -1,5 +1,6 @@
 import { Args, Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
+import { coordinationErrorMessage, type RunStatusV1 } from "@rawr/coordination";
 import { coordinationFetch, resolveServerBaseUrl } from "../../../lib/coordination-api";
 
 function parseInput(raw: string): Record<string, unknown> {
@@ -54,15 +55,15 @@ export default class WorkflowCoordRun extends RawrCommand {
     }
 
     const baseUrl = await resolveServerBaseUrl(process.cwd());
-    const response = await coordinationFetch<any>({
+    const response = await coordinationFetch<{ run: RunStatusV1; eventIds: string[] }>({
       baseUrl,
       path: `/rawr/coordination/workflows/${encodeURIComponent(workflowId)}/run`,
       method: "POST",
       body: { input },
     });
 
-    if (!response.ok) {
-      const result = this.fail("Workflow run failed", {
+    if (response.data.ok !== true) {
+      const result = this.fail(coordinationErrorMessage(response.data, "Workflow run failed"), {
         code: "COORD_RUN_FAILED",
         details: response.data,
       });
@@ -71,12 +72,18 @@ export default class WorkflowCoordRun extends RawrCommand {
       return;
     }
 
-    const result = this.ok({ baseUrl, workflowId, run: response.data.run });
+    const data = response.data;
+    const result = this.ok({
+      baseUrl,
+      workflowId,
+      run: data.run,
+      eventIds: data.eventIds,
+    });
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {
-        this.log(`run started: ${response.data.run?.runId}`);
-        this.log(`status: ${response.data.run?.status}`);
+        this.log(`run started: ${data.run.runId}`);
+        this.log(`status: ${data.run.status}`);
       },
     });
   }

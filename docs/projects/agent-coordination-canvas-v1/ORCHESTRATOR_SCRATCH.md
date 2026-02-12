@@ -78,9 +78,22 @@
     5) full cutover + purge
 
 ## Verification Checklist (to update during execution)
-- [ ] Runtime hardening branch complete with tests.
+- [x] Runtime hardening branch complete with tests.
 - [ ] Design architecture import branch complete with tests.
 - [ ] Bridge branch complete with tests.
 - [ ] Shadow route visual gate added and passing.
 - [ ] Full cutover and legacy purge complete.
 - [ ] Final `typecheck` + targeted test suite green.
+
+## Execution Log
+- 2026-02-12T23:20:00Z: Runtime hardening implemented on `codex/coordination-design-data-v1-runtime`.
+  - Added shared HTTP envelope types and helpers in `packages/coordination/src/http.ts` and exported via package entrypoints.
+  - Standardized server responses in `apps/server/src/coordination.ts` to structured failures (`code/message/retriable/details`) while preserving all route paths.
+  - Updated CLI coordination client/commands to consume envelope responses with typed success payloads and structured failures.
+  - Added runtime envelope assertions in `apps/server/test/rawr.test.ts` and `packages/coordination/test/coordination.test.ts`.
+  - Verification run:
+    - `bun run --cwd packages/coordination typecheck`
+    - `bun run --cwd apps/server typecheck`
+    - `bun run --cwd apps/cli typecheck`
+    - `bun test apps/server/test/rawr.test.ts --test-name-pattern coordination`
+    - `bun test packages/coordination/test/coordination.test.ts packages/coordination-inngest/test/inngest-adapter.test.ts`
