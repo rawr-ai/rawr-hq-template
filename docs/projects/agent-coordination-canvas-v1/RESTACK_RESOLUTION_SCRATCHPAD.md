@@ -28,3 +28,6 @@
 - 2026-02-12T03:58:03Z [orchestrator] Shell note: previous scratch append accidentally triggered test due unescaped backticks; corrected by switching to single-quoted heredoc for future scratch entries.
 - 2026-02-12T03:58:30Z [orchestrator] Cleaned accidental raw test-output dump from scratchpad and retained only timestamped decision logs.
 - 2026-02-12T03:59:28Z [orchestrator] Ran pre-mutation checkpoint: gt sync --no-restack completed successfully before next restack-sensitive commit/update.
+- 2026-02-12T04:00:50Z [orchestrator] Applied server route hardening in apps/server/src/coordination.ts: added explicit safe-ID checks and 400 responses for invalid workflowId/runId/custom runId inputs.
+- 2026-02-12T04:01:20Z [orchestrator] Server validation gate: apps/server typecheck and health/rawr tests passed after ID hardening.
+- 2026-02-12T04:01:20Z [orchestrator] Ran additional pre-commit checkpoint sync (gt sync --no-restack) before server branch mutation.
