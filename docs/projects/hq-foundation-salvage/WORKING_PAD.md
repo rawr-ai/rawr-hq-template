@@ -1,17 +1,22 @@
 # Working Pad
 
-- Created from template main on branch `codex/hq-foundation-salvage-template`.
-- Source branch for salvage: `codex/agent-codex-rawr-hq-plugin-foundation` (`dd78e32`).
-- Salvage destination package: `plugins/agents/hq`.
-- Salvaged content:
-  - `skills/rawr-hq-orientation/**`
-  - `skills/rawr-hq-plugin-creation/**`
-- Added package scaffold:
-  - `plugins/agents/hq/package.json`
-  - `plugins/agents/hq/README.md`
-- Discarded during salvage:
-  - `agent-plugins/rawr-hq/.claude-plugin/plugin.json`
-  - `docs/projects/rawr-hq-agent-plugin/*` scratch/project artifacts
-- Normalization applied:
-  - Replaced legacy runtime command wording with `rawr plugins web ...`.
-  - Updated channel-specific package paths to `plugins/cli/<dir>` and `plugins/web/<dir>`.
+## Current Branch Context
+- Branch: `codex/hq-template-promotion-phase2-full-hq-port`
+- Parent branch: `codex/hq-foundation-salvage-template`
+- Scope lock: plugin/HQ domain only for this run.
+
+## Ownership Locks Applied
+- Full template-managed: `plugins/agents/hq/**`
+- Template-managed plugin core: `plugins/cli/plugins/**`
+- Personal-owned carve-out: `packages/dev/**` remains personal-only.
+- Guard manifest must be narrowed from broad `packages/**` to explicit package roots.
+
+## Immediate Notes
+- Plan scratch updated first before further execution.
+- Worker agent must maintain its own dedicated scratch artifacts while implementing.
+- Coordination canvas stack must remain untouched and not restacked during this run.
+
+## Worker Scratch Requirement
+- Worker will maintain:
+  - `docs/projects/hq-foundation-salvage/agent-phase2-plan.md`
+  - `docs/projects/hq-foundation-salvage/agent-phase2-working-pad.md`
