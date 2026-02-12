@@ -361,6 +361,7 @@ export function CoordinationPage() {
                   </label>
                   <select
                     id="coordination-workflow"
+                    name="workflow"
                     className="coordination__select"
                     value={activeWorkflow.workflowId}
                     onChange={(event) => {
