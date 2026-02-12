@@ -55,6 +55,20 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - Baseline global wiring scripts (`scripts/dev/install-global-rawr.sh`, `scripts/dev/auto-refresh-main.sh`, `scripts/githooks/*`) are template baseline and should land here first.
 - Downstream personal repos may keep machine-only overrides, but those are not template defaults.
 
+## Template-Managed Commit Guard
+
+- Template-managed path manifest: `scripts/githooks/template-managed-paths.txt`.
+- Pre-commit guard implementation: `scripts/githooks/check-template-managed.ts`.
+- Intended behavior:
+  - In template repo: guard is inactive.
+  - In downstream personal repo: guard warns or blocks when staged files match template-managed paths.
+- Mode controls (downstream):
+  - `RAWR_TEMPLATE_GUARD_MODE=off|warn|block`
+  - `git config rawr.templateGuardMode <off|warn|block>`
+  - Optional owner default block:
+    - `git config rawr.templateGuardOwnerEmail <you@example.com>`
+    - `git config rawr.templateGuardOwnerMode block`
+
 ## Graphite Policy
 
 - Graphite is enabled in this template repo.

@@ -43,6 +43,11 @@ Scope rule:
 - Selective port from `5251829`, `2d901aa`, `0f3f6ec`, `8d571b2`.
 - Include canonical docs/runbooks and `scripts/githooks/pre-commit` baseline.
 
+4. `phase4-template-managed-commit-guard`
+- Add explicit template-managed path manifest + pre-commit guard for downstream personal repos.
+- Default downstream mode: `warn`; opt-in `block`; optional owner-default block via git config.
+- Keep template repo behavior non-blocking (guard auto-skips in template checkout role).
+
 ## Exclusions (Do Not Promote)
 
 - `plugins/agents/hq/**`
@@ -56,3 +61,14 @@ Scope rule:
 - targeted tests for plugin status/sync drift/install reconcile command flows
 - `bun run test` (or equivalent full suite required by repo policy before submit)
 
+## Implementation Decisions
+
+1. Guard scope is explicit path-manifest based (`scripts/githooks/template-managed-paths.txt`) instead of implicit package heuristics.
+- Context: we need deterministic enforcement that is easy to review and tune without code changes.
+- Choice: path manifest + hook script.
+- Risk: manifest drift if new template-owned paths are introduced and not added.
+
+2. Downstream default mode is `warn`, with `block` opt-in and owner override support.
+- Context: avoid breaking normal personal workflows for users who intentionally customize downstream.
+- Choice: `warn` default plus `RAWR_TEMPLATE_GUARD_MODE` / `rawr.templateGuardMode`, and owner-specific default block knobs.
+- Risk: warnings can be ignored; mitigated by allowing CI/local policy to set `block`.

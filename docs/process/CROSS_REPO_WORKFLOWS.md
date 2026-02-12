@@ -10,7 +10,7 @@ This is the canonical workflow model for operating both repos on one machine.
 ## Journey 1: Create an Operational Plugin
 
 1. Work in personal repo: `rawr-hq`.
-2. Scaffold plugin with factory.
+2. Scaffold plugin with `rawr plugins scaffold ...`.
 3. Build/test locally.
 4. Enable via `rawr hq plugins ...`.
 5. Publish from personal repo only if needed.
@@ -46,6 +46,22 @@ Hooks refresh global wiring only when the current checkout is the active owner.
 
 - `scripts/githooks/pre-push` blocks wrong-remote pushes.
 - `scripts/dev/check-remotes.sh` validates expected remote topology.
+
+## Template-Managed Path Guard (Downstream Personal Repo)
+
+- Manifest: `scripts/githooks/template-managed-paths.txt`.
+- Hook implementation: `scripts/githooks/check-template-managed.ts` (invoked from `pre-commit`).
+- Purpose: prevent accidental personal-repo commits to template-owned core surfaces.
+- Modes:
+  - `off`: disabled
+  - `warn` (default): warn and continue
+  - `block`: fail commit
+- Controls:
+  - `RAWR_TEMPLATE_GUARD_MODE=off|warn|block`
+  - `git config rawr.templateGuardMode <off|warn|block>`
+  - Optional owner-default block:
+    - `git config rawr.templateGuardOwnerEmail <you@example.com>`
+    - `git config rawr.templateGuardOwnerMode block`
 
 ## Command Surface Invariant
 
