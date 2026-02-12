@@ -55,3 +55,11 @@
     1) keep endpoint paths and payload semantics unchanged
     2) keep WorkflowKit provider/editor under design shell
     3) verify CLI and UI consume aligned `ok` envelopes
+- 2026-02-13T00:00:00Z: Bridge implementation complete.
+  - Implemented typed API seam in `adapters/api-client.ts` for workflows/run/timeline endpoints with structured envelope parsing.
+  - Implemented mapper seam in `adapters/workflow-mappers.ts` for WorkflowKit conversions and status tone/polling utilities.
+  - Moved UI behavior into runtime-backed hooks:
+    1) `useWorkflow` for workflow CRUD/validation/run queue
+    2) `useRunStatus` for run polling/timeline lifecycle
+    3) `useTheme` wrapper over host theme provider
+  - Updated design `CoordinationPage` to consume hook+adapter seam with no mocked state path.

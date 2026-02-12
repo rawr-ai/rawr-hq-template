@@ -1,68 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  validateWorkflow,
-  type CoordinationWorkflowV1,
-  type DeskDefinitionV1,
-} from "@rawr/coordination";
-import {
-  COORDINATION_RUN_EVENT,
-  coordinationAvailableActions,
-  fromWorkflowKitWorkflow,
-  toWorkflowKitWorkflow,
-} from "@rawr/coordination-inngest/browser";
 import { Editor, Provider, Sidebar } from "@inngest/workflow-kit/ui";
-import type { Workflow as WorkflowKitWorkflow } from "@inngest/workflow-kit";
 import "@inngest/workflow-kit/ui/ui.css";
 import "../styles/index.css";
 import { CanvasWorkspace } from "./canvas";
 import { RunStatusPanel, StatusBadge } from "./status";
-import type {
-  CreateWorkflowResponse,
-  PaletteCommand,
-  RunModel,
-  RunResponse,
-  RunStatusResponse,
-  StatusTone,
-  TimelineEventModel,
-  TimelineResponse,
-  ValidationModel,
-  WorkflowsResponse,
-  WorkflowModel,
-} from "../types/workflow";
-
-function nowWorkflowId(): string {
-  return `workflow-${Date.now()}`;
-}
-
-function starterDesk(id: string, kind: DeskDefinitionV1["kind"], name: string): DeskDefinitionV1 {
-  return {
-    deskId: id,
-    kind,
-    name,
-    responsibility: `Own ${name}`,
-    domain: "coordination",
-    inputSchema: { type: "object", properties: { payload: { type: "string" } }, required: ["payload"] },
-    outputSchema: { type: "object", properties: { payload: { type: "string" } }, required: ["payload"] },
-    memoryScope: { persist: true, namespace: id },
-  };
-}
-
-function starterWorkflow(): WorkflowModel {
-  const workflowId = nowWorkflowId();
-  const a = starterDesk("desk-a", "desk:analysis", "Intake Desk");
-  const b = starterDesk("desk-b", "desk:execution", "Execution Desk");
-
-  return {
-    workflowId,
-    version: 1,
-    name: "Agent Coordination Workflow",
-    description: "Keyboard-first coordination and handoff design",
-    entryDeskId: a.deskId,
-    desks: [a, b],
-    handoffs: [{ handoffId: "handoff-a-b", fromDeskId: a.deskId, toDeskId: b.deskId }],
-    observabilityProfile: "full",
-  };
-}
+import { toneForStatus } from "../adapters/workflow-mappers";
+import { useRunStatus } from "../hooks/useRunStatus";
+import { useWorkflow } from "../hooks/useWorkflow";
+import type { PaletteCommand } from "../types/workflow";
 
 function inngestRunsUrl(): string {
   if (typeof window === "undefined") return "http://localhost:8288/runs";
@@ -74,234 +19,40 @@ function inngestRunsUrl(): string {
   return next.toString();
 }
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, init);
-  const raw = await response.text();
-  const contentType = response.headers.get("content-type") ?? "";
-
-  let parsed: unknown = null;
-  if (raw.trim() !== "") {
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      parsed = null;
-    }
-  }
-
-  if (!response.ok) {
-    const payloadError =
-      parsed &&
-      typeof parsed === "object" &&
-      "error" in parsed &&
-      typeof (parsed as { error?: unknown }).error === "object" &&
-      typeof ((parsed as { error?: { message?: unknown } }).error?.message) === "string"
-        ? (parsed as { error: { message: string } }).error.message
-        : "";
-    const rawSnippet = raw.trim().slice(0, 200);
-    const hint =
-      url.startsWith("/rawr/")
-        ? " Ensure the API server is running on http://localhost:3000 (or start all services with `bun run dev:up`)."
-        : "";
-
-    throw new Error(
-      payloadError ||
-        `Request failed (${response.status} ${response.statusText})${
-          rawSnippet ? `: ${rawSnippet}` : contentType ? ` (${contentType})` : ""
-        }.${hint}`,
-    );
-  }
-
-  if (parsed === null) {
-    throw new Error(
-      `Expected JSON response but received an empty or invalid payload from ${url}. Ensure backend services are running.`,
-    );
-  }
-
-  return parsed as T;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-const RUN_TERMINAL_STATES = new Set<RunModel["status"]>(["completed", "failed"]);
-
-function workflowsEqual(a: CoordinationWorkflowV1, b: CoordinationWorkflowV1): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-
-function toneForStatus(status: string): StatusTone {
-  if (status === "completed" || status === "ok") return "is-success";
-  if (status === "running" || status === "queued" || status === "pending") return "is-warning";
-  if (status === "failed" || status === "error") return "is-error";
-  return "";
-}
-
 export function CoordinationPage() {
-  const [activeWorkflow, setActiveWorkflow] = useState<WorkflowModel>(starterWorkflow());
-  const [workflows, setWorkflows] = useState<WorkflowModel[]>([]);
-  const [validation, setValidation] = useState<ValidationModel>(() => validateWorkflow(starterWorkflow()));
-  const [lastRun, setLastRun] = useState<RunModel | null>(null);
-  const [timeline, setTimeline] = useState<TimelineEventModel[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [polling, setPolling] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const workflow = useWorkflow();
+  const runStatus = useRunStatus();
+
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteIndex, setPaletteIndex] = useState(0);
 
-  const refreshValidation = (workflow: WorkflowModel) => {
-    setValidation(validateWorkflow(workflow));
-  };
-
-  const setActiveAndValidate = (workflow: WorkflowModel) => {
-    setActiveWorkflow((previous) => (workflowsEqual(previous, workflow) ? previous : workflow));
-    refreshValidation(workflow);
-  };
-
-  const refreshWorkflows = async () => {
-    const data = await fetchJson<WorkflowsResponse>("/rawr/coordination/workflows");
-    const next = Array.isArray(data.workflows) ? data.workflows : [];
-    setWorkflows(next);
-
-    if (next.length === 0) return;
-
-    const preferred = next.find((item) => item.workflowId === activeWorkflow.workflowId) ?? next[0];
-    setActiveAndValidate(preferred);
-  };
-
-  const refreshRunState = async (runId: string) => {
-    const [runResult, timelineResult] = await Promise.all([
-      fetchJson<RunStatusResponse>(`/rawr/coordination/runs/${encodeURIComponent(runId)}`),
-      fetchJson<TimelineResponse>(`/rawr/coordination/runs/${encodeURIComponent(runId)}/timeline`),
-    ]);
-
-    if (runResult.ok && runResult.run) {
-      setLastRun(runResult.run);
-    }
-
-    setTimeline(Array.isArray(timelineResult.timeline) ? timelineResult.timeline : []);
-    return runResult.run ?? null;
-  };
-
-  const pollRunUntilTerminal = async (runId: string) => {
-    setPolling(true);
-    try {
-      for (let i = 0; i < 30; i += 1) {
-        const run = await refreshRunState(runId);
-        if (run && RUN_TERMINAL_STATES.has(run.status)) {
-          break;
-        }
-        await sleep(1000);
-      }
-    } finally {
-      setPolling(false);
-    }
-  };
-
-  useEffect(() => {
-    refreshWorkflows().catch((err) => setError(String(err)));
-  }, []);
-
-  const saveWorkflow = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      const response = await fetchJson<CreateWorkflowResponse>("/rawr/coordination/workflows", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ workflow: activeWorkflow }),
-      });
-
-      if (!response.ok) {
-        setError("Failed to save workflow");
-        return;
-      }
-
-      if (response.workflow) {
-        setActiveAndValidate(response.workflow);
-      }
-
-      await refreshWorkflows();
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const runWorkflow = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      const runResult = await fetchJson<RunResponse>(
-        `/rawr/coordination/workflows/${encodeURIComponent(activeWorkflow.workflowId)}/run`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ input: { payload: "manual-run" } }),
-        },
-      );
-
-      if (!runResult.ok || !runResult.run) {
-        setError("Run failed");
-        return;
-      }
-
-      setLastRun(runResult.run);
-      await refreshRunState(runResult.run.runId);
-      await pollRunUntilTerminal(runResult.run.runId);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setBusy(false);
-    }
+    const run = await workflow.queueRun({ payload: "manual-run" });
+    if (!run) return;
+    await runStatus.trackRun(run);
   };
-
-  const handleEditorChange = (workflowKit: WorkflowKitWorkflow) => {
-    const next = fromWorkflowKitWorkflow({
-      workflow: workflowKit,
-      baseWorkflow: activeWorkflow,
-    });
-
-    if (workflowsEqual(activeWorkflow, next)) {
-      return;
-    }
-
-    setActiveAndValidate(next);
-  };
-
-  const workflowKitWorkflow = useMemo(() => toWorkflowKitWorkflow(activeWorkflow), [activeWorkflow]);
-  const availableActions = useMemo(() => coordinationAvailableActions(), []);
-  const trigger = useMemo(() => ({ event: { name: COORDINATION_RUN_EVENT } }), []);
-  const monitorHref = useMemo(() => inngestRunsUrl(), []);
 
   const commands = useMemo<PaletteCommand[]>(
     () => [
-      { id: "save", label: "Save workflow", run: () => saveWorkflow() },
-      { id: "validate", label: "Validate workflow", run: () => refreshValidation(activeWorkflow) },
+      { id: "save", label: "Save workflow", run: () => workflow.saveActiveWorkflow() },
+      { id: "validate", label: "Validate workflow", run: () => workflow.validateActiveWorkflow() },
       { id: "run", label: "Run workflow", run: () => runWorkflow() },
-      { id: "refresh-workflows", label: "Reload workflows", run: () => refreshWorkflows() },
-      {
-        id: "refresh-run",
-        label: "Refresh run status",
-        run: () => (lastRun ? refreshRunState(lastRun.runId).then(() => undefined) : undefined),
-      },
+      { id: "refresh-workflows", label: "Reload workflows", run: () => workflow.refreshWorkflows() },
+      { id: "refresh-run", label: "Refresh run status", run: () => runStatus.refreshCurrentRun() },
     ],
-    [activeWorkflow, lastRun],
+    [runStatus, workflow],
   );
 
-  const workflowOptions = useMemo(
-    () => [activeWorkflow, ...workflows.filter((item) => item.workflowId !== activeWorkflow.workflowId)],
-    [activeWorkflow, workflows],
-  );
+  const monitorHref = useMemo(() => inngestRunsUrl(), []);
 
   const liveMessage = useMemo(() => {
+    const error = workflow.error ?? runStatus.error;
     if (error) return `Error: ${error}`;
-    if (polling) return "Run in progress. Timeline updates will appear automatically.";
-    if (busy) return "Request in progress.";
-    if (validation.ok) return "Workflow validation passed.";
-    return `Workflow invalid: ${validation.errors.length} issue${validation.errors.length === 1 ? "" : "s"}.`;
-  }, [busy, error, polling, validation.errors.length, validation.ok]);
+    if (runStatus.polling) return "Run in progress. Timeline updates will appear automatically.";
+    if (workflow.busy) return "Request in progress.";
+    if (workflow.validation.ok) return "Workflow validation passed.";
+    return `Workflow invalid: ${workflow.validation.errors.length} issue${workflow.validation.errors.length === 1 ? "" : "s"}.`;
+  }, [runStatus.error, runStatus.polling, workflow.busy, workflow.error, workflow.validation.errors.length, workflow.validation.ok]);
 
   useEffect(() => {
     if (paletteOpen) {
@@ -338,14 +89,14 @@ export function CoordinationPage() {
         event.preventDefault();
         const command = commands[paletteIndex];
         if (!command) return;
-        Promise.resolve(command.run()).catch((err) => setError(String(err)));
+        Promise.resolve(command.run()).catch((err) => workflow.setError(String(err)));
         setPaletteOpen(false);
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [commands, paletteIndex, paletteOpen]);
+  }, [commands, paletteIndex, paletteOpen, workflow]);
 
   return (
     <section className="coordination" aria-labelledby="coordination-title">
@@ -358,11 +109,11 @@ export function CoordinationPage() {
           execution path. Use <kbd>Cmd/Ctrl+K</kbd> to open command operations.
         </p>
         <div className="coordination__status-line">
-          <StatusBadge tone={validation.ok ? "is-success" : "is-error"}>
-            {validation.ok ? "Valid workflow" : `Invalid (${validation.errors.length})`}
+          <StatusBadge tone={workflow.validation.ok ? "is-success" : "is-error"}>
+            {workflow.validation.ok ? "Valid workflow" : `Invalid (${workflow.validation.errors.length})`}
           </StatusBadge>
-          {lastRun ? (
-            <StatusBadge tone={toneForStatus(lastRun.status)}>Run status: {lastRun.status}</StatusBadge>
+          {runStatus.lastRun ? (
+            <StatusBadge tone={toneForStatus(runStatus.lastRun.status)}>Run status: {runStatus.lastRun.status}</StatusBadge>
           ) : (
             <StatusBadge>No run started</StatusBadge>
           )}
@@ -375,27 +126,22 @@ export function CoordinationPage() {
 
       <div className="coordination__workspace">
         <CanvasWorkspace
-          activeWorkflow={activeWorkflow}
-          workflowOptions={workflowOptions}
-          busy={busy}
-          polling={polling}
-          validationOk={validation.ok}
+          activeWorkflow={workflow.activeWorkflow}
+          workflowOptions={workflow.workflowOptions}
+          busy={workflow.busy}
+          polling={runStatus.polling}
+          validationOk={workflow.validation.ok}
           monitorHref={monitorHref}
-          onSelectWorkflow={(workflowId) => {
-            const next = workflows.find((item) => item.workflowId === workflowId);
-            if (next) {
-              setActiveAndValidate(next);
-            }
-          }}
-          onSave={saveWorkflow}
-          onValidate={() => refreshValidation(activeWorkflow)}
+          onSelectWorkflow={workflow.selectWorkflow}
+          onSave={workflow.saveActiveWorkflow}
+          onValidate={workflow.validateActiveWorkflow}
           onRun={runWorkflow}
         >
           <Provider
-            workflow={workflowKitWorkflow}
-            trigger={trigger}
-            availableActions={availableActions}
-            onChange={handleEditorChange}
+            workflow={workflow.workflowKitWorkflow}
+            trigger={workflow.trigger}
+            availableActions={workflow.availableActions}
+            onChange={workflow.handleEditorChange}
           >
             <Editor direction="down">
               <Sidebar position="right" />
@@ -404,14 +150,18 @@ export function CoordinationPage() {
         </CanvasWorkspace>
 
         <RunStatusPanel
-          validation={validation}
-          lastRun={lastRun}
-          timeline={timeline}
+          validation={workflow.validation}
+          lastRun={runStatus.lastRun}
+          timeline={runStatus.timeline}
           toneForStatus={toneForStatus}
         />
       </div>
 
-      <div className={`coordination__live ${error ? "is-error" : ""}`} aria-live="polite" aria-atomic="true">
+      <div
+        className={`coordination__live ${workflow.error || runStatus.error ? "is-error" : ""}`}
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {liveMessage}
       </div>
 
@@ -461,7 +211,7 @@ export function CoordinationPage() {
                       className={`coordination__palette-item${index === paletteIndex ? " is-active" : ""}`}
                       onMouseEnter={() => setPaletteIndex(index)}
                       onClick={() => {
-                        Promise.resolve(command.run()).catch((err) => setError(String(err)));
+                        Promise.resolve(command.run()).catch((err) => workflow.setError(String(err)));
                         setPaletteOpen(false);
                       }}
                     >
