@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
+import { checkScratchPolicy } from "@rawr/hq/lifecycle";
 
 import { runCommand } from "../../lib/plugins-lifecycle/process";
 import type { LifecycleType } from "../../lib/plugins-lifecycle/types";
@@ -148,8 +149,29 @@ export default class PluginsSweep extends RawrCommand {
 
     const limited = candidates.slice(0, Number(flags.limit));
     const actions: Array<{ action: string; status: "planned" | "done" | "failed"; notes?: string }> = [];
+    const warnings: string[] = [];
 
     if (flags.publish) {
+      if (!baseFlags.dryRun) {
+        const scratch = await checkScratchPolicy(workspaceRoot);
+        if (scratch.mode === "block" && scratch.missing.length > 0) {
+          const result = this.fail("Scratch policy blocked sweep --publish; required scratch docs are missing", {
+            code: "SCRATCH_POLICY_BLOCKED",
+            details: {
+              mode: scratch.mode,
+              missing: scratch.missing,
+              hint: "Create docs/projects/*/PLAN_SCRATCH.md and WORKING_PAD.md or set RAWR_SCRATCH_POLICY_MODE=warn/off for this run.",
+            },
+          });
+          this.outputResult(result, { flags: baseFlags });
+          this.exit(2);
+          return;
+        }
+        if (scratch.mode === "warn" && scratch.missing.length > 0) {
+          warnings.push(`scratch policy warning: missing ${scratch.missing.join(", ")}`);
+        }
+      }
+
       for (const item of limited) {
         const cmd = [
           "run",
@@ -194,13 +216,14 @@ export default class PluginsSweep extends RawrCommand {
       mode: scheduled ? "scheduled" : "manual",
       queued: limited.map((c) => ({ target: c.target, type: c.type, issues: c.issues })),
       actions,
-    });
+    }, undefined, warnings.length > 0 ? warnings : undefined);
 
     this.outputResult(payload, {
       flags: baseFlags,
       human: () => {
         this.log(`mode: ${scheduled ? "scheduled" : "manual"}`);
         this.log(`scope: plugin-system`);
+        for (const warning of warnings) this.log(`warning: ${warning}`);
         this.log(`queued: ${limited.length}`);
         for (const c of limited) this.log(`- ${c.type} ${c.target} (${c.issues.join("; ")})`);
       },

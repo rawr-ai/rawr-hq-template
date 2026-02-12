@@ -50,6 +50,8 @@ describe("plugin command surface cutover", () => {
     expect(out).toContain("plugins cli");
     expect(out).toContain("plugins scaffold");
     expect(out).toContain("plugins sync");
+    expect(out).toContain("plugins doctor");
+    expect(out).toContain("plugins converge");
   });
 
   it("removes legacy command surfaces", () => {
