@@ -6,7 +6,10 @@ This is the canonical workflow model for operating both repos on one machine.
 
 - `RAWR HQ-Template` owns shared CLI/core contracts and template baseline.
 - `RAWR HQ` owns operational plugin authoring, local customization, and personal workflows.
-- Shared HQ/plugin-management domain modules are template-owned in `packages/hq/**`.
+- Shared HQ/plugin-management baseline is template-owned in:
+  - `plugins/agents/hq/**`
+  - `plugins/cli/plugins/**`
+  - shared package surfaces (explicitly listed in `scripts/githooks/template-managed-paths.txt`)
 - Personal mechanical dev workflows (stack/worktree orchestration) are personal-owned in `packages/dev/**` and `plugins/cli/devops/**`.
 
 ## Journey 1: Create an Operational Plugin
@@ -54,10 +57,10 @@ Hooks refresh global wiring only when the current checkout is the active owner.
 - Manifest: `scripts/githooks/template-managed-paths.txt`.
 - Hook implementation: `scripts/githooks/check-template-managed.ts` (invoked from `pre-commit`).
 - Purpose: prevent accidental personal-repo commits to template-owned core surfaces.
-- Lifecycle ownership split is path-based and explicit:
-  - template-managed lifecycle policy content under `plugins/agents/hq/skills/agent-plugin-management/**`
-  - template-managed lifecycle workflows under `plugins/agents/hq/workflows/lifecycle-*.md`
-  - personal HQ keeps non-lifecycle operational overlays unless explicitly promoted
+- HQ/plugin-management ownership split is path-based and explicit:
+  - template-managed full HQ agent office under `plugins/agents/hq/**`
+  - template-managed plugin lifecycle/runtime toolkit under `plugins/cli/plugins/**`
+  - template-managed shared packages are explicit and intentionally exclude `packages/dev/**`
 - Modes:
   - `off`: disabled
   - `warn` (default): warn and continue
