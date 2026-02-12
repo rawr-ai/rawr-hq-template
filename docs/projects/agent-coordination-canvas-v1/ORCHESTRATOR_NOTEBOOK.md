@@ -133,3 +133,19 @@ Use this notebook as the living scratch document for decisions, discoveries, blo
   - `bun run --cwd apps/web build` pass
   - `bun run --cwd apps/web dev -- --host 127.0.0.1 --port 4173` startup smoke pass
 - Residual known item: Vite chunk-size warning persists (~590 kB JS chunk), non-blocking and suitable for a follow-up split/chunking pass.
+
+## 2026-02-12 13:45:15 EST
+- Spawned dedicated lifecycle-hardening worker for `dev:up` orchestration.
+- Worker worktree: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-dev-up-lifecycle`
+- Worker branch: `codex/coordination-canvas-v1-dev-up-lifecycle`
+- Mandate: prevent duplicate-stack startup, implement explicit attach/stop/restart behavior, tighten browser-open policy, and codify canonical canvas serving surface.
+
+## 2026-02-12 14:03:18 EST
+- Worker branch delivered commit `de925fc` and was integrated to stack top via cherry-pick as `b144ec0`.
+- Lifecycle hardening added lock/state orchestration in `scripts/dev/up.sh` with actions: `auto|start|status|attach|stop|restart`.
+- Added non-interactive-safe behavior (status by default when already running) and strict lifecycle port conflict handling to prevent duplicate fallback-port stacks.
+- Canonicalized startup posture around host-shell canvas route `/coordination`; open policy is explicit and configurable.
+- Post-integration verification in stack-top worktree:
+  - `bash -n scripts/dev/up.sh` pass
+  - `RAWR_DEV_UP_NON_INTERACTIVE=1 RAWR_DEV_UP_OPEN=none bash scripts/dev/up.sh --action status --non-interactive` pass
+  - `bun run --cwd apps/cli test test/dev-up.test.ts` pass
