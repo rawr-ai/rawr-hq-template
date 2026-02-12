@@ -47,6 +47,10 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - Template plugin roots (`plugins/cli/*`, `plugins/web/*`, `plugins/agents/*`) are fixture/example baseline only.
 - Operational plugin development starts in personal `RAWR HQ`.
 - Promote to template only when the artifact is truly baseline fixture/example material.
+- Lifecycle system-management policy content is template-managed by default, including:
+  - `plugins/agents/hq/skills/agent-plugin-management/**`
+  - `plugins/agents/hq/workflows/lifecycle-*.md`
+  - `plugins/agents/hq/workflows/merge-no-policy-stack.md`
 
 ## Global CLI Wiring Ownership
 

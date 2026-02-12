@@ -52,6 +52,10 @@ Hooks refresh global wiring only when the current checkout is the active owner.
 - Manifest: `scripts/githooks/template-managed-paths.txt`.
 - Hook implementation: `scripts/githooks/check-template-managed.ts` (invoked from `pre-commit`).
 - Purpose: prevent accidental personal-repo commits to template-owned core surfaces.
+- Lifecycle ownership split is path-based and explicit:
+  - template-managed lifecycle policy content under `plugins/agents/hq/skills/agent-plugin-management/**`
+  - template-managed lifecycle workflows under `plugins/agents/hq/workflows/lifecycle-*.md`
+  - personal HQ keeps non-lifecycle operational overlays unless explicitly promoted
 - Modes:
   - `off`: disabled
   - `warn` (default): warn and continue
