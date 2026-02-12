@@ -36,3 +36,5 @@
 - 2026-02-12T04:03:00Z [orchestrator] Added ops runbook docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md and linked it from docs/process/RUNBOOKS.md to close hosted/runtime handoff gap.
 - 2026-02-12T04:04:46Z [orchestrator] Ran live smoke with server + Inngest dev: workflow coord create/validate/run/status/trace succeeded for wf-smoke; timeline endpoint returned ordered desk/run events with Inngest trace link.
 - 2026-02-12T04:04:46Z [orchestrator] Stopped temporary local server and Inngest dev processes after smoke verification.
+- 2026-02-12T04:06:47Z [orchestrator] Final gate: full workspace typecheck passed on top branch.
+- 2026-02-12T04:06:47Z [orchestrator] Final gate: full workspace tests failed with known CLI baseline failures (9 failing tests; coordination/server/web suites remained green).
