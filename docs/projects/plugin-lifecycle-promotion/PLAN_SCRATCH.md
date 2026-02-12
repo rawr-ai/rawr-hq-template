@@ -100,3 +100,7 @@
   - Rationale: avoids broad over-blocking while removing known blind spots for lifecycle policy/workflow content.
 - Decision: do not copy personal `docs/projects/plugin-lifecycle-quality/scratch/**` into template.
   - Rationale: these are process artifacts, not template baseline behavior.
+- Decision: extract guard mode/path matching into a pure helper module and test it directly.
+  - Rationale: preserves existing hook behavior while making `off|warn|block` and path-split coverage deterministic under tests.
+- Decision: keep template fixture expectations in CLI tests (no default operational plugins, `plugins` sync ref).
+  - Rationale: personal-HQ defaults (`@rawr/plugin-dev`, `tools` alias) are instance-specific and would regress template baseline tests.
