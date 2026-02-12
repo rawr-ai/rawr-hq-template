@@ -39,3 +39,7 @@
 - 2026-02-12T04:06:47Z [orchestrator] Final gate: full workspace typecheck passed on top branch.
 - 2026-02-12T04:06:47Z [orchestrator] Final gate: full workspace tests failed with known CLI baseline failures (9 failing tests; coordination/server/web suites remained green).
 - 2026-02-12T04:08:04Z [orchestrator] Updated ORCHESTRATOR_NOTEBOOK.md with restack closeout decisions, verification results, and residual risks.
+- 2026-02-12T04:11:25Z [orchestrator] Post-submit trunk advanced; re-ran docs->web restack. Resolved RUNBOOKS.md conflict by preserving both lifecycle rows and coordination operations row.
+- 2026-02-12T04:11:25Z [orchestrator] Web branch now restack-clean on updated parent chain; review-only child branch () still shows needs restack because it is checked out in its own worktree and intentionally not mutated here.
+- 2026-02-12T04:11:33Z [orchestrator] Post-submit trunk advanced; re-ran docs->web restack. Resolved RUNBOOKS.md conflict by preserving both lifecycle rows and coordination operations row.
+- 2026-02-12T04:11:33Z [orchestrator] Web branch now restack-clean on updated parent chain; review-only child branch (`codex/agent-r1-coordination-runtime-review`) still shows needs restack because it is checked out in its own worktree and intentionally not mutated here.
