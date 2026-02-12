@@ -15,3 +15,7 @@
 - 2026-02-12T03:13:23Z [orchestrator] Parent check: codex/coordination-canvas-v1-cli -> codex/coordination-canvas-v1-server
 - 2026-02-12T03:13:25Z [orchestrator] Parent check: codex/coordination-canvas-v1-web -> codex/coordination-canvas-v1-cli
 - 2026-02-12T03:13:53Z [orchestrator] User note: another agent may land understack changes; add extra sync checkpoints before restack and before final verification.
+- 2026-02-12T03:14:09Z [orchestrator] Committed docs bootstrap files on codex/coordination-canvas-v1-docs (commit c4b315f).
+- 2026-02-12T03:14:09Z [orchestrator] Graphite reported expected restack break at codex/coordination-canvas-v1-packages.
+- 2026-02-12T03:14:09Z [orchestrator] Running additional sync checkpoint before restack due understack-change risk.
+- 2026-02-12T03:14:21Z [orchestrator] Branch-switch blocked by uncommitted scratchpad updates; committing scratchpad to keep worktree clean before restack.
