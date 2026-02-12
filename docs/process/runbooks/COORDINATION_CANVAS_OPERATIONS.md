@@ -15,17 +15,9 @@ This runbook covers local and hosted operations for the coordination canvas + In
 ```bash
 bun install
 ```
-2. Start the server:
+2. Start coordination stack (server + web + Inngest dev):
 ```bash
-bun --cwd apps/server run dev
-```
-3. Start Inngest dev server:
-```bash
-bun --cwd apps/server run dev:inngest
-```
-4. Start the web app:
-```bash
-bun --cwd apps/web run dev
+bun run dev:up
 ```
 
 ## Local Smoke Checks
