@@ -1,20 +1,22 @@
+import path from "node:path";
+
 import { Args, Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import path from "node:path";
-import { recordArtifact } from "../../../lib/journal-context";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+
 import {
   appendToolExport,
   assertSafeSegment,
+  type FactoryPlannedWrite,
+  type FactoryWriteMode,
   planWriteFile,
   renderCommandSource,
   renderCommandTestSource,
-  type FactoryPlannedWrite,
-  type FactoryWriteMode,
 } from "../../../lib/factory";
+import { recordArtifact } from "../../../lib/journal-context";
+import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
 
-export default class FactoryCommandNew extends RawrCommand {
-  static description = "Create a new CLI command (topic + name) with a matching Vitest test";
+export default class PluginsScaffoldCommand extends RawrCommand {
+  static description = "Scaffold a new CLI command (topic + name) with a matching Vitest test";
 
   static args = {
     topic: Args.string({ required: true, description: "Command topic (kebab-case)" }),
@@ -32,7 +34,7 @@ export default class FactoryCommandNew extends RawrCommand {
   } as const;
 
   async run() {
-    const { args, flags } = await this.parseRawr(FactoryCommandNew);
+    const { args, flags } = await this.parseRawr(PluginsScaffoldCommand);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
 
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
@@ -92,4 +94,3 @@ export default class FactoryCommandNew extends RawrCommand {
     });
   }
 }
-

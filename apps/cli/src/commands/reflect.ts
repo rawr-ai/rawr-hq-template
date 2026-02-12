@@ -1,6 +1,7 @@
-import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
+import { RawrCommand } from "@rawr/core";
 import { openJournalDb, tailSnippets } from "@rawr/journal";
+
 import { findWorkspaceRoot } from "../lib/workspace-plugins";
 
 type ReflectSuggestion = {
@@ -79,7 +80,7 @@ function suggest(snippets: Array<{ id: string; kind: string; tags: string[]; tit
       rationale:
         "If this is a repeatable routine, consider wrapping it as a workflow command so it becomes a single, reliable entrypoint.",
       evidenceSnippetIds: info.ids,
-      exampleCommand: `rawr factory workflow new ${commandId}-loop --description \"Automate my ${commandId} loop\" --yes`,
+      exampleCommand: `rawr plugins scaffold workflow ${commandId}-loop --description "Automate my ${commandId} loop" --yes`,
     });
   }
 
