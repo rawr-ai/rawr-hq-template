@@ -19,6 +19,15 @@ bun install
 ```bash
 bun run dev:up
 ```
+This now auto-opens:
+- App home: `http://localhost:5173/`
+- Coordination canvas: `http://localhost:5173/coordination`
+- Inngest runs: `http://localhost:8288/runs`
+
+Disable browser auto-open when needed:
+```bash
+RAWR_OPEN_UI=0 bun run dev:up
+```
 
 3. Optional individual processes:
 ```bash

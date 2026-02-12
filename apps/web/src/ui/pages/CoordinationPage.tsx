@@ -80,9 +80,59 @@ type RunStatusResponse = {
   error?: string;
 };
 
+function inngestRunsUrl(): string {
+  if (typeof window === "undefined") return "http://localhost:8288/runs";
+  const next = new URL(window.location.href);
+  next.port = "8288";
+  next.pathname = "/runs";
+  next.search = "";
+  next.hash = "";
+  return next.toString();
+}
+
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
-  return (await response.json()) as T;
+  const raw = await response.text();
+  const contentType = response.headers.get("content-type") ?? "";
+
+  let parsed: unknown = null;
+  if (raw.trim() !== "") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null;
+    }
+  }
+
+  if (!response.ok) {
+    const payloadError =
+      parsed &&
+      typeof parsed === "object" &&
+      "error" in parsed &&
+      typeof (parsed as Record<string, unknown>).error === "string"
+        ? ((parsed as Record<string, unknown>).error as string)
+        : "";
+    const rawSnippet = raw.trim().slice(0, 200);
+    const hint =
+      url.startsWith("/rawr/")
+        ? " Ensure the API server is running on http://localhost:3000 (or start all services with `bun run dev:up`)."
+        : "";
+
+    throw new Error(
+      payloadError ||
+        `Request failed (${response.status} ${response.statusText})${
+          rawSnippet ? `: ${rawSnippet}` : contentType ? ` (${contentType})` : ""
+        }.${hint}`,
+    );
+  }
+
+  if (parsed === null) {
+    throw new Error(
+      `Expected JSON response but received an empty or invalid payload from ${url}. Ensure backend services are running.`,
+    );
+  }
+
+  return parsed as T;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -244,6 +294,7 @@ export function CoordinationPage() {
   const workflowKitWorkflow = useMemo(() => toWorkflowKitWorkflow(activeWorkflow), [activeWorkflow]);
   const availableActions = useMemo(() => coordinationAvailableActions(), []);
   const trigger = useMemo(() => ({ event: { name: COORDINATION_RUN_EVENT } }), []);
+  const monitorHref = useMemo(() => inngestRunsUrl(), []);
 
   const commands = useMemo<PaletteCommand[]>(
     () => [
@@ -399,6 +450,14 @@ export function CoordinationPage() {
                   >
                     {polling ? "Running…" : "Run"}
                   </button>
+                  <a
+                    className="coordination__button coordination__monitor-link"
+                    href={monitorHref}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Inngest Runs
+                  </a>
                 </div>
               </div>
 
