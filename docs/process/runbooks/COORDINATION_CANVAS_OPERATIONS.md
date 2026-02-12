@@ -19,14 +19,38 @@ bun install
 ```bash
 bun run dev:up
 ```
-This now auto-opens:
-- App home: `http://localhost:5173/`
-- Coordination canvas: `http://localhost:5173/coordination`
-- Inngest runs: `http://localhost:8288/runs`
 
-Disable browser auto-open when needed:
+Lifecycle behavior:
+- If no managed stack is running, `dev:up` starts server/web/inngest.
+- If managed stack is already running:
+  - interactive terminal: prompts for `status` (default), `attach`, `stop`, or `restart`
+  - non-interactive/CI: defaults to `status` and exits (no duplicate process spawn)
+- If expected lifecycle ports are already occupied by unmanaged processes, startup is refused to avoid duplicate/fallback-port behavior.
+
+Canonical canvas surface:
+- Primary canvas URL: `http://localhost:5173/coordination`
+- This is a host-shell route; standalone canvas serving is not enabled by default.
+
+Browser open policy defaults to one surface:
+- default: `coordination` (opens only `http://localhost:5173/coordination` once)
+- policy options: `none | coordination | app | app+inngest | all`
+
+Open-policy controls:
 ```bash
-RAWR_OPEN_UI=0 bun run dev:up
+RAWR_DEV_UP_OPEN=none bun run dev:up
+```
+
+Backward-compatibility aliases:
+- `RAWR_OPEN_POLICY=<policy>` (alias of `RAWR_DEV_UP_OPEN`)
+- `RAWR_OPEN_UI=0` -> `none`
+- `RAWR_OPEN_UI=1` -> `all`
+
+Lifecycle actions can be set explicitly:
+```bash
+bun run dev:up -- --action status
+bun run dev:up -- --action attach
+bun run dev:up -- --action stop
+bun run dev:up -- --action restart
 ```
 
 3. Optional individual processes:
@@ -65,6 +89,14 @@ bun run rawr workflow coord run wf-smoke --json
 4. Canvas route:
 - Open `http://localhost:5173/coordination`
 - Confirm canvas loads, `Cmd/Ctrl+K` opens command palette, and run timeline updates after a run.
+
+5. Repeated-start safety checks:
+```bash
+bun run dev:up -- --action status
+```
+Expected:
+- No new duplicate listeners are created when stack is already running.
+- Status output reports managed process pids and listener ownership for lifecycle ports.
 
 ## Hosted Runtime Notes (Railway / Similar)
 
