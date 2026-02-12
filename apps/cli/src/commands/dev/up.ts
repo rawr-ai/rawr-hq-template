@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class DevUp extends RawrCommand {
-  static description = "Start the RAWR HQ-Template dev stack (server + web)";
+  static description = "Start/manage the RAWR HQ-Template dev stack (server + web + inngest)";
 
   static flags = {
     ...RawrCommand.baseFlags,
