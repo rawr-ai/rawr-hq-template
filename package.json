@@ -25,6 +25,10 @@
     "test": "bun run test:vitest",
     "rawr": "bun run --cwd apps/cli rawr"
   },
+  "overrides": {
+    "npm": "11.9.0",
+    "tar": "7.5.7"
+  },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@vitest/ui": "^4.0.18",
