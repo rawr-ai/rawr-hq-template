@@ -10,6 +10,15 @@ rawr.config.ts
 apps/cli/**
 packages/**
 plugins/cli/plugins/**
+# Lifecycle system-management coverage (split from broader personal hq operations).
+plugins/agents/hq/skills/agent-plugin-management/**
+plugins/agents/hq/workflows/lifecycle-agent-plugin.md
+plugins/agents/hq/workflows/lifecycle-cli-plugin.md
+plugins/agents/hq/workflows/lifecycle-composed.md
+plugins/agents/hq/workflows/lifecycle-skill.md
+plugins/agents/hq/workflows/lifecycle-web-plugin.md
+plugins/agents/hq/workflows/lifecycle-workflow.md
+plugins/agents/hq/workflows/merge-no-policy-stack.md
 scripts/githooks/**
 scripts/dev/activate-global-rawr.sh
 scripts/dev/auto-refresh-main.sh

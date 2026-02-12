@@ -18,3 +18,4 @@
 ## Promotion Matrix
 - Added `PROMOTION_MATRIX.md` with promote/keep/split classification from personal lifecycle commits.
 - Slice B staged: promoted lifecycle runbooks and RUNBOOKS index updates.
+- Slice C staged: expanded template-managed manifest + ownership docs for lifecycle split coverage.

@@ -96,4 +96,7 @@
 5. Any `SPLIT_REQUIRED` file is resolved in this same stack before merge (no silent deferral).
 
 ## Implementation Decisions
-- Pending as execution progresses.
+- Decision: keep guard matcher simple (exact paths + `/**` prefixes) and encode lifecycle split with explicit manifest paths.
+  - Rationale: avoids broad over-blocking while removing known blind spots for lifecycle policy/workflow content.
+- Decision: do not copy personal `docs/projects/plugin-lifecycle-quality/scratch/**` into template.
+  - Rationale: these are process artifacts, not template baseline behavior.
