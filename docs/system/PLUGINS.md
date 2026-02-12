@@ -77,4 +77,8 @@ Scaffolded plugin package templates should include these fields by default.
 ## Ownership Summary
 
 - Core CLI contracts and publish ownership are template-owned.
+- Lifecycle management surfaces are template-owned, including:
+  - `plugins/cli/plugins/**` lifecycle command/runtime code
+  - `plugins/agents/hq/skills/agent-plugin-management/**`
+  - `plugins/agents/hq/workflows/lifecycle-*.md` and `merge-no-policy-stack.md`
 - Operational plugin authoring is personal-HQ-owned by default.
