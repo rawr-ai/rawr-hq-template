@@ -115,4 +115,42 @@ describe("coordination storage", () => {
     const memory = await readDeskMemory(repoRoot, "wf-a", 1, "desk-a");
     expect(memory?.memoryKey).toBe("default");
   });
+
+  it("serializes timeline appends under concurrent writes", async () => {
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-coord-concurrency-"));
+    await ensureCoordinationStorage(repoRoot);
+
+    const events = Array.from({ length: 40 }, (_, idx) => ({
+      eventId: `e-${idx}`,
+      runId: "run-concurrent",
+      workflowId: "wf-a",
+      type: "desk.completed" as const,
+      ts: new Date(Date.now() + idx).toISOString(),
+      status: "running" as const,
+    }));
+
+    await Promise.all(events.map((event) => appendRunTimelineEvent(repoRoot, "run-concurrent", event)));
+    const timeline = await getRunTimeline(repoRoot, "run-concurrent");
+    expect(timeline).toHaveLength(40);
+  });
+
+  it("rejects unsafe identifiers for file-backed storage keys", async () => {
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-coord-safe-ids-"));
+    await ensureCoordinationStorage(repoRoot);
+
+    await expect(saveWorkflow(repoRoot, { ...baseWorkflow, workflowId: "../../escape" })).rejects.toThrow(
+      /Invalid workflowId/,
+    );
+
+    await expect(
+      appendRunTimelineEvent(repoRoot, "../../escape-run", {
+        eventId: "e1",
+        runId: "../../escape-run",
+        workflowId: "wf-a",
+        type: "run.started",
+        ts: new Date().toISOString(),
+        status: "running",
+      }),
+    ).rejects.toThrow(/Invalid runId/);
+  });
 });
