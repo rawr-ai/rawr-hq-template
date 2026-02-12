@@ -22,6 +22,7 @@
     "@rawr/core": "workspace:*",
     "@rawr/agent-sync": "workspace:*",
     "@rawr/control-plane": "workspace:*",
+    "@rawr/hq": "workspace:*",
     "@rawr/security": "workspace:*",
     "@rawr/state": "workspace:*"
   },
