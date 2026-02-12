@@ -96,6 +96,10 @@ type PaletteCommand = {
 
 const RUN_TERMINAL_STATES = new Set<RunStatusV1["status"]>(["completed", "failed"]);
 
+function workflowsEqual(a: CoordinationWorkflowV1, b: CoordinationWorkflowV1): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 export function CoordinationPage() {
   const [activeWorkflow, setActiveWorkflow] = useState<CoordinationWorkflowV1>(starterWorkflow());
   const [workflows, setWorkflows] = useState<CoordinationWorkflowV1[]>([]);
@@ -113,7 +117,7 @@ export function CoordinationPage() {
   };
 
   const setActiveAndValidate = (workflow: CoordinationWorkflowV1) => {
-    setActiveWorkflow(workflow);
+    setActiveWorkflow((previous) => (workflowsEqual(previous, workflow) ? previous : workflow));
     refreshValidation(workflow);
   };
 
@@ -221,6 +225,10 @@ export function CoordinationPage() {
       workflow: workflowKit,
       baseWorkflow: activeWorkflow,
     });
+
+    if (workflowsEqual(activeWorkflow, next)) {
+      return;
+    }
 
     setActiveAndValidate(next);
   };
