@@ -7,7 +7,9 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
 1. Pull latest local branch.
 2. Run targeted dev tasks.
 3. Maintain shared core/template contracts.
-4. Run tests for touched areas.
+4. Run tests for touched areas:
+   - `bun run test` for the fast default gate.
+   - `bun run test:heavy` when touching heavy CLI flows or web visual surfaces.
 5. Commit scoped changes.
 
 ## Global CLI Setup (Bun)
@@ -41,6 +43,7 @@ Mode contract:
 Before publishing a plugin:
 - Run `bun run build`
 - Run `bun run test`
+- Run `bun run test:heavy`
 - Verify package metadata and docs.
 
 ## Upstream Sync

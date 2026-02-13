@@ -1,16 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+
+const TEST_HOME = mkdtempSync(path.join(tmpdir(), "rawr-test-security-posture-"));
 
 function runRawr(args: string[]) {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   return spawnSync("bun", ["src/index.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
-    env: { ...process.env },
+    maxBuffer: 10 * 1024 * 1024,
+    env: {
+      ...process.env,
+      HOME: TEST_HOME,
+      XDG_CONFIG_HOME: path.join(TEST_HOME, ".config"),
+      XDG_DATA_HOME: path.join(TEST_HOME, ".local", "share"),
+      XDG_STATE_HOME: path.join(TEST_HOME, ".local", "state"),
+    },
   });
 }
 
@@ -37,4 +47,3 @@ describe("security posture", () => {
     expect(mdRaw).toContain("RAWR security posture");
   });
 });
-

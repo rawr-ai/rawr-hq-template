@@ -33,7 +33,8 @@ This document defines repeatable, low-drift loops an AI agent can follow to ship
 
 ### Testing gate
 
-- Definition of done includes `bun run test`.
+- Definition of done includes `bun run test` (fast gate).
+- For heavy CLI orchestration and visual workflows, also run `bun run test:heavy`.
 - Include `bun run typecheck` when changing interfaces, command contracts, or shared packages.
 
 ### Repo workflow
@@ -98,6 +99,7 @@ Add a durable command to core CLI (`apps/cli`) with stable UX and test coverage.
 
 - `bun run rawr -- <topic> <name> --json`
 - `bun run test`
+- optional when changing heavy/visual surfaces: `bun run test:heavy`
 - optional: `bun run typecheck`
 
 ### Failure modes
@@ -310,6 +312,7 @@ Add an orchestrator command that chains lower-level commands safely.
 
 - `bun run rawr -- workflow <name> --dry-run --json`
 - `bun run test`
+- optional when workflow touches heavy command orchestration or visual surfaces: `bun run test:heavy`
 
 ### Failure modes
 

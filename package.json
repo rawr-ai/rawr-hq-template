@@ -21,7 +21,11 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "pretest:vitest": "turbo run build",
-    "test:vitest": "vitest run",
+    "test:vitest": "vitest run --config vitest.fast.config.ts",
+    "test:heavy:cli": "vitest run --config vitest.heavy.cli.config.ts",
+    "test:heavy:visual": "bun run --cwd apps/web test:visual",
+    "test:heavy": "bun run test:heavy:cli && bun run test:heavy:visual",
+    "test:all": "bun run test:vitest && bun run test:heavy",
     "test": "bun run test:vitest",
     "rawr": "bun run --cwd apps/cli rawr"
   },
