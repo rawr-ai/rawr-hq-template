@@ -12,7 +12,12 @@ const includes = [
 
 export default defineConfig({
   test: {
-    exclude: ["**/dist/**", "**/node_modules/**", "**/.turbo/**"],
+    exclude: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/.turbo/**",
+      "**/apps/web/test/coordination.visual.test.ts",
+    ],
     projects: [
       {
         extends: true,
@@ -27,7 +32,12 @@ export default defineConfig({
       {
         extends: true,
         root: r("apps/web"),
-        test: { name: "web", environment: "jsdom", include: [...includes] },
+        test: {
+          name: "web",
+          environment: "jsdom",
+          include: [...includes],
+          exclude: ["test/coordination.visual.test.ts"],
+        },
       },
       {
         extends: true,

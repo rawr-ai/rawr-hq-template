@@ -29,3 +29,4 @@ Treat these as customization zones:
 After significant merges or updates:
 - `bun run build`
 - `bun run test`
+- `bun run test:heavy` (CLI-heavy + Playwright visual)

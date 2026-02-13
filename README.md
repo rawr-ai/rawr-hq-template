@@ -11,6 +11,8 @@ This template is designed to be used in two roles:
 ```bash
 bun install
 bun run test
+# Optional deeper coverage (CLI-heavy + Playwright visual)
+bun run test:heavy
 ```
 
 ## Core vs Extensions

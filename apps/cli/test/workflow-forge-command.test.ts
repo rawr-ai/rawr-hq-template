@@ -19,7 +19,6 @@ describe("workflow forge-command", () => {
     const parsed = JSON.parse(proc.stdout) as any;
     expect(parsed.ok).toBe(true);
     expect(Array.isArray(parsed.data.steps)).toBe(true);
-    expect(parsed.data.steps.map((s: any) => s.name)).toEqual(["factory", "tests"]);
+    expect(parsed.data.steps.map((s: any) => s.name)).toEqual(["scaffold", "tests"]);
   });
 });
-

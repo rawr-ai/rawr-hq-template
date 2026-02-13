@@ -13,6 +13,7 @@ function runRawr(args: string[]) {
   return spawnSync("bun", ["src/index.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
+    maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
       HOME: TEST_HOME,
@@ -47,7 +48,10 @@ describe("rawr command surfaces", () => {
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
-    expect(parsed.data.plugins).toEqual([]);
+    expect(Array.isArray(parsed.data.plugins)).toBe(true);
+    expect(parsed.data.plugins.length).toBeGreaterThan(0);
+    expect(parsed.data.plugins.every((plugin: any) => plugin.templateRole === "operational")).toBe(true);
+    expect(parsed.data.plugins.map((plugin: any) => plugin.id)).not.toContain("@rawr/plugin-hello");
     expect(parsed.data.excludedCount).toBeGreaterThanOrEqual(1);
 
     const allProc = runRawr(["plugins", "web", "list", "--all", "--json"]);
