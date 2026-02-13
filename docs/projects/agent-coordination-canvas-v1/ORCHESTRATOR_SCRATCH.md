@@ -80,7 +80,7 @@
 ## Verification Checklist (to update during execution)
 - [x] Runtime hardening branch complete with tests.
 - [x] Design architecture import branch complete with tests.
-- [ ] Bridge branch complete with tests.
+- [x] Bridge branch complete with tests.
 - [ ] Shadow route visual gate added and passing.
 - [ ] Full cutover and legacy purge complete.
 - [ ] Final `typecheck` + targeted test suite green.
@@ -105,6 +105,19 @@
     - `apps/web/src/ui/coordination/styles/index.css`
   - Routed existing page entrypoint to new architecture via `apps/web/src/ui/pages/CoordinationPage.tsx`.
   - Preserved WorkflowKit provider/editor canvas behavior and keyboard palette behavior inside design-mirrored composition.
+  - Verification run:
+    - `bun run --cwd apps/web typecheck`
+    - `bun run --cwd apps/web test`
+- 2026-02-13T00:00:00Z: Bridge layer implemented on `codex/coordination-design-data-v1-bridge`.
+  - Added typed data adapters:
+    - `apps/web/src/ui/coordination/adapters/api-client.ts`
+    - `apps/web/src/ui/coordination/adapters/workflow-mappers.ts`
+  - Added real runtime hooks:
+    - `apps/web/src/ui/coordination/hooks/useWorkflow.ts`
+    - `apps/web/src/ui/coordination/hooks/useRunStatus.ts`
+    - `apps/web/src/ui/coordination/hooks/useTheme.ts`
+  - Refactored `apps/web/src/ui/coordination/components/CoordinationPage.tsx` to consume hooks/adapters instead of inline mocked fetch/state logic.
+  - Polling now uses bounded backoff+jitter with token-based stale-update guards and terminal-state stop behavior.
   - Verification run:
     - `bun run --cwd apps/web typecheck`
     - `bun run --cwd apps/web test`
