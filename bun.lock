@@ -255,6 +255,9 @@
     "plugins/web/mfe-demo": {
       "name": "@rawr/plugin-mfe-demo",
       "version": "0.1.0",
+      "dependencies": {
+        "@rawr/ui-sdk": "workspace:*",
+      },
       "devDependencies": {
         "@types/node": "^22.14.0",
         "typescript": "^5.9.3",

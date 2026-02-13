@@ -27,6 +27,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "dependencies": {
+    "@rawr/ui-sdk": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "typescript": "^5.9.3"
