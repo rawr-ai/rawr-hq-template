@@ -4,8 +4,8 @@
 
 - Date: 2026-02-13
 - Worktree: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-orpc-v1-impl`
-- Branch: `codex/orpc-v1-s01-contract-spine`
-- Base branch: `codex/coordination-fixpass-v1-cutover-purge`
+- Branch: `codex/orpc-v1-s09-docs-skills-runbooks-finalize`
+- Base branch: `codex/coordination-design-data-v1-cutover`
 
 ## Checkpoints
 
@@ -13,12 +13,12 @@
 - [x] Canonical stacked implementation plan written
 - [x] Agent plan + scratch docs created
 - [x] S00 committed
-- [ ] S01 committed
-- [ ] S02 committed
-- [ ] S03-S06 integrated
-- [ ] S07 convergence complete
-- [ ] S08 cleanup complete
-- [ ] S09 final docs complete
+- [x] S01 committed
+- [x] S02 committed
+- [x] S03-S06 integrated
+- [x] S07 convergence complete
+- [x] S08 cleanup complete
+- [x] S09 final docs complete
 
 ## Integration notes
 
@@ -40,6 +40,12 @@
 
 ## Open risks
 
-1. Branch drift from fixpass stack may change exact file touchpoints.
-2. ORPC transport wiring in Elysia may require parse/handler adjustments.
-3. Full cleanup slice must verify no manual procedure endpoints remain.
+1. Full-repo `bun run typecheck`/`bun run test` currently fail on preexisting `@rawr/plugin-mfe-demo` workspace build/typecheck resolution (`Cannot find module '@rawr/ui-sdk'`) before full suite convergence.
+2. Several unrelated CLI tests still timeout in this environment under monorepo-wide `apps/server` test execution.
+
+## Final cleanup verification notes
+
+1. Manual `/rawr/coordination/*` handlers deleted.
+2. Legacy `/rawr/state` bridge route deleted.
+3. First-party web/CLI consumers now use ORPC procedures.
+4. Explicit non-procedure routes retained by design: `/api/inngest`, `/rawr/plugins/web/:dirName`, `/health`.
