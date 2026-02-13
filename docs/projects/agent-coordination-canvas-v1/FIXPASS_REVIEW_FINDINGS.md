@@ -104,3 +104,8 @@ Design source (pinned): `https://www.magicpatterns.com/c/al2dvbu3fg4deehobyd5kg/
 ## Residual Notes
 1. `bun run typecheck` still fails due pre-existing unrelated issue in `@rawr/plugin-mfe-demo` resolving `@rawr/ui-sdk`.
 2. `bun test apps/server/test/rawr.test.ts` still has one unrelated pre-existing plugin web module failure (`serves plugin web modules when enabled`); coordination route tests pass.
+
+## Addendum: Interactive Canvas Root Cause (2026-02-13)
+1. Visible canvas behavior is static render-only (`FlowCanvas`/`FlowEdges`) while WorkflowKit editor subtree is mounted hidden with `pointer-events-none`.
+2. WorkflowKit runtime and adapters remain active under the hood; issue is UI surface mounting, not runtime removal.
+3. MCP design source itself is static/demo (FlowCanvas + mock hooks), so parity import must be treated as visual/composition baseline, not functional editor baseline.

@@ -126,3 +126,14 @@
 - `bun test packages/coordination/test/coordination.test.ts packages/coordination-inngest/test/inngest-adapter.test.ts` ✅
 - `bun test apps/server/test/rawr.test.ts` ⚠️ unrelated pre-existing plugin web-module failure persists
 - `bun run typecheck` ⚠️ unrelated pre-existing `@rawr/plugin-mfe-demo` type resolution failure persists
+
+## 2026-02-13 WorkflowKit Interactive Investigation Addendum
+- Spawned dedicated two-agent investigation pass for interactive-canvas migration + design parity:
+  - WK-Runtime agent: `019c549b-e12b-7dd3-b85c-edcf7a392627`
+  - WK-Design agent: `019c549b-e1b4-7f53-9841-109ddb66c3c0`
+- Confirmed root cause: visible coordination canvas is static renderer while WorkflowKit editor is hidden.
+- Confirmed via direct MCP design pull that source design package includes static demo FlowCanvas + mock hooks.
+- New canonical docs created for this pass:
+  - `WK_INTERACTIVE_REMEDIATION_FINDINGS.md`
+  - `WK_INTERACTIVE_REMEDIATION_PLAN.md`
+  - `WK_INTERACTIVE_ORCHESTRATOR_SCRATCH.md`
