@@ -51,7 +51,7 @@ function jsonResponse(route: Route, payload: unknown, status = 200) {
 }
 
 function runActionButton(page: Page) {
-  return page.locator("button").filter({ hasText: /^(Run|Save \+ Run|Running…)$/ }).first();
+  return page.getByRole("button", { name: /^(Run|Save \+ Run|Running…|Running\.\.\.)$/ }).first();
 }
 
 async function installMockCoordinationApi(
@@ -233,7 +233,7 @@ test("run action saves dirty workflow before enqueue", async ({ page }, testInfo
   });
 
   await page.goto("/coordination");
-  await page.getByLabel("Name").fill("Visual Workflow Updated");
+  await page.locator("#coordination-workflow-name").fill("Visual Workflow Updated");
   await runActionButton(page).click();
   await expect(page.getByText("run.completed")).toBeVisible();
 
@@ -277,4 +277,43 @@ test("accessibility contract: keyboard, live region, and reduced-motion hook", a
   });
 
   expect(hasReducedMotionRule).toBe(true);
+});
+
+test("canvas interaction: nodes are selectable", async ({ page }, testInfo) => {
+  test.skip(/mobile/i.test(testInfo.project.name), "Drag interaction checks run on desktop only.");
+
+  await installMockCoordinationApi(page);
+  await page.goto("/coordination");
+
+  const firstActionNode = page.locator(".react-flow__node-action").first();
+  await expect(firstActionNode).toBeVisible();
+  await firstActionNode.click();
+
+  const selectedNode = firstActionNode.locator(".wf-node.wf-node-selected");
+  await expect(selectedNode).toBeVisible();
+});
+
+test("canvas interaction: add-node handle appends an action node", async ({ page }, testInfo) => {
+  test.skip(/mobile/i.test(testInfo.project.name), "Add-node interaction checks run on desktop only.");
+
+  await installMockCoordinationApi(page);
+  await page.goto("/coordination");
+
+  const nodes = page.locator(".react-flow__node-action");
+  const beforeActionCount = await nodes.count();
+
+  const sourceNode = page.locator(".react-flow__node-action").first();
+  await sourceNode.hover();
+
+  const addHandle = sourceNode.locator(".wf-add-handle").first();
+  await addHandle.click({ force: true });
+
+  await expect(page.locator(".wf-sidebar")).toBeVisible();
+  await expect(page.getByText("Select an action")).toBeVisible();
+
+  const actionPicker = page.locator(".wf-sidebar .wf-sidebar-action-list-item").first();
+  await expect(actionPicker).toBeVisible();
+  await actionPicker.click();
+
+  await expect.poll(async () => page.locator(".react-flow__node-action").count()).toBe(beforeActionCount + 1);
 });

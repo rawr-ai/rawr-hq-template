@@ -39,3 +39,38 @@
   1) commit docs-only branch,
   2) create stacked implementation branches,
   3) execute editor-surface migration before parity/wiring/test gates.
+
+## 2026-02-13 Implementation Execution
+- Branch stack created:
+  - `codex/coordination-wk-interactive-v1-docs`
+  - `codex/coordination-wk-interactive-v1-editor-surface`
+  - `codex/coordination-wk-interactive-v1-design-parity`
+  - `codex/coordination-wk-interactive-v1-behavior-gates`
+  - `codex/coordination-wk-interactive-v1-cutover-purge`
+- Phase 1 complete:
+  - static FlowCanvas renderer removed from live route.
+  - WorkflowKit editor surfaced directly in `FlowCanvas`.
+- Phase 2 complete:
+  - coordination-scoped WorkflowKit class skinning applied via `styles/index.css`.
+- Phase 3 complete:
+  - removed obsolete static graph bridge types/mappers (`workflowGraph`, node/edge view models).
+  - preserved save-before-run and structured error contracts.
+- Phase 4 complete:
+  - visual + interaction gate updated with node-selection and add-node coverage.
+  - side-panel fields made label-associated for stable accessibility selectors.
+  - visual snapshots updated for changed interactive surface output.
+
+## 2026-02-13 Final Review Agents
+- WK-Runtime review agent: `019c54c5-8870-7150-af22-909198538bbd`
+  - Confirmed no static live renderer path; WorkflowKit is visible interactive surface.
+  - Confirmed save-before-run and runtime-derived monitor links remain intact.
+- WK-Design review agent: `019c54c5-8939-7a30-937a-14962020dedf`
+  - Confirmed shell cohesion and MCP composition boundaries remain recognizable.
+  - Confirmed WorkflowKit class skinning is coordination-scoped.
+
+## Gate Results (current branch)
+- `bun run --cwd apps/web typecheck` ✅
+- `bun run --cwd apps/web test` ✅
+- `bun run --cwd apps/web test:visual` ✅
+- `bun test packages/coordination/test/coordination.test.ts packages/coordination-inngest/test/inngest-adapter.test.ts` ✅
+- `bun test apps/server/test/rawr.test.ts` ⚠️ pre-existing unrelated failure in plugin web module test persists.
