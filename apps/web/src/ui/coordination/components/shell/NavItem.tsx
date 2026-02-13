@@ -1,10 +1,25 @@
 import { Link, usePathname } from "../../../routing/router";
 import { cn } from "../../../lib/cn";
+import {
+  HomeIcon,
+  LayersIcon,
+  NetworkIcon,
+} from "../../../components/icons";
+import type { SVGProps } from "react";
 
 export type CoordinationNavItem = Readonly<{
   label: string;
   to: string;
+  icon: string;
 }>;
+
+type IconComponent = (props: SVGProps<SVGSVGElement>) => ReturnType<typeof HomeIcon>;
+
+const ICON_MAP: Record<string, IconComponent> = {
+  home: HomeIcon,
+  layers: LayersIcon,
+  network: NetworkIcon,
+};
 
 export function NavItem({ item }: { item: CoordinationNavItem }) {
   const pathname = usePathname();
@@ -15,13 +30,18 @@ export function NavItem({ item }: { item: CoordinationNavItem }) {
       to={item.to}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "block rounded-sm border px-3 py-2 text-sm font-medium transition",
+        "flex items-center gap-2.5 px-2.5 py-[7px] text-[13px] font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
         isActive
-          ? "border-primary/40 bg-primary/15 text-primary"
-          : "border-transparent text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground",
+          ? "text-accent bg-accent-bg"
+          : "text-text-secondary hover:bg-raised hover:text-text-primary",
       )}
     >
-      {item.label}
+      {(() => {
+        const Icon = ICON_MAP[item.icon];
+        if (!Icon) return null;
+        return <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "opacity-100" : "opacity-60")} />;
+      })()}
+      <span>{item.label}</span>
     </Link>
   );
 }

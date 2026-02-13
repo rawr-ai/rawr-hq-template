@@ -6,6 +6,19 @@ import { MountsPage } from "./pages/MountsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { CoordinationPage } from "./coordination/components/CoordinationPage";
 
+function HostRoutes() {
+  return (
+    <Router
+      routes={[
+        { path: "/", element: <HomePage /> },
+        { path: "/mounts", element: <MountsPage /> },
+        { path: "/coordination", element: <CoordinationPage /> },
+      ]}
+      fallback={<NotFoundPage />}
+    />
+  );
+}
+
 export function App() {
   return (
     <AppShell
@@ -20,14 +33,7 @@ export function App() {
         />
       }
     >
-      <Router
-        routes={[
-          { path: "/", element: <HomePage /> },
-          { path: "/mounts", element: <MountsPage /> },
-          { path: "/coordination", element: <CoordinationPage /> },
-        ]}
-        fallback={<NotFoundPage />}
-      />
+      <HostRoutes />
     </AppShell>
   );
 }
