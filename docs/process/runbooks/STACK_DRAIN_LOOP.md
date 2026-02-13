@@ -13,12 +13,17 @@ Use this runbook when a Graphite stack has multiple branches/PRs that must be pu
 1. Start on the stack you intend to drain:
 ```bash
 git status --short
+git branch --show-current
 gt ls
+gt log --all
 ```
 2. Sync safely for parallel worktrees:
 ```bash
 gt sync --no-restack
 ```
+3. Apply repo boundary guard from `docs/process/HQ_OPERATIONS.md`:
+- Run `rawr plugins sync all` only in personal `RAWR HQ`, never in template.
+- Keep stack mutation Graphite-first (`gt`), not ad-hoc `git rebase`.
 
 ## Canonical drain loop
 
@@ -36,7 +41,13 @@ gt ls
 1. Merge blocked (checks/review/conflict):
 - Fix the blocking condition, then rerun the canonical loop.
 
-2. Branches merged but not pruned:
+2. Transient test failure while validating drain:
+- Re-run only the failing test once in isolation.
+- Re-run the full suite once.
+- Patch code/tests only if failure reproduces.
+- If failure remains non-deterministic after these retries, log it as a blocker before merge.
+
+3. Branches merged but not pruned:
 ```bash
 git worktree list
 ```
@@ -45,7 +56,7 @@ git worktree list
 gt sync --no-restack --force --no-interactive
 ```
 
-3. Stack ordering/drift looks wrong:
+4. Stack ordering/drift looks wrong:
 ```bash
 gt restack --upstack
 gt sync --no-restack
@@ -66,3 +77,4 @@ Use Graphite publish/merge/sync/prune behavior as canonical.
 - Merged branches are pruned by Graphite.
 - `gt ls` reflects the expected stable stack state.
 - `git status --short` is clean.
+- Cross-repo drains satisfy `docs/process/HQ_OPERATIONS.md` final acceptance checklist.
