@@ -47,3 +47,10 @@ We preserved static design internals from MCP composition instead of replacing o
 3. No static graph renderer remains in active composition.
 4. Save-before-run and structured error behavior are regression-sensitive and must be preserved.
 5. Add-node behavior must be validated via WorkflowKit add handles.
+
+## Post-Implementation Verification
+1. Static canvas artifacts were removed from active coordination route composition.
+2. Interactive WorkflowKit editor surface is now primary in `FlowCanvas`.
+3. Add-node flow is supported through WorkflowKit handle + sidebar action picker path.
+4. Save-before-run and monitor-link invariants remain preserved.
+5. Visual and interaction tests were updated and passing for interactive mode.

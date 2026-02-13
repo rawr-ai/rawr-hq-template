@@ -64,6 +64,10 @@
   background: transparent;
 }
 
+.coordination-flowkit .wf-editor {
+  position: relative;
+}
+
 .coordination-flowkit .react-flow__pane {
   cursor: grab;
 }
@@ -130,8 +134,20 @@
 }
 
 .coordination-flowkit .wf-sidebar {
+  display: none;
+  width: 280px;
+  height: 100%;
+  border-left-width: 1px;
+  border-right-width: 0;
+  border-top-width: 0;
+  border-bottom-width: 0;
+  backdrop-filter: blur(8px);
   border-color: var(--color-border);
-  background: var(--color-bg-surface);
+  background: var(--color-glass);
+}
+
+.coordination-flowkit .wf-sidebar:has(.wf-sidebar-action-list-item) {
+  display: flex;
 }
 
 .coordination-flow-canvas ::-webkit-scrollbar {

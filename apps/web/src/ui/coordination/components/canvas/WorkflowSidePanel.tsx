@@ -11,12 +11,18 @@ export function WorkflowSidePanel({
   onNameChange,
   onDescriptionChange,
 }: WorkflowSidePanelProps) {
+  const nameId = "coordination-workflow-name";
+  const descriptionId = "coordination-workflow-description";
+
   return (
     <div className="w-full bg-surface border-l border-border flex flex-col transition-colors duration-200">
       <div className="p-4 flex flex-col gap-4">
         <div>
-          <label className="block text-[11px] font-medium text-text-muted uppercase tracking-[0.5px] mb-1">Name</label>
+          <label htmlFor={nameId} className="block text-[11px] font-medium text-text-muted uppercase tracking-[0.5px] mb-1">
+            Name
+          </label>
           <input
+            id={nameId}
             type="text"
             value={name}
             onChange={(event) => onNameChange(event.target.value)}
@@ -25,8 +31,14 @@ export function WorkflowSidePanel({
         </div>
 
         <div>
-          <label className="block text-[11px] font-medium text-text-muted uppercase tracking-[0.5px] mb-1">Description</label>
+          <label
+            htmlFor={descriptionId}
+            className="block text-[11px] font-medium text-text-muted uppercase tracking-[0.5px] mb-1"
+          >
+            Description
+          </label>
           <textarea
+            id={descriptionId}
             rows={3}
             value={description}
             onChange={(event) => onDescriptionChange(event.target.value)}

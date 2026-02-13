@@ -1,5 +1,5 @@
 import type { PublicEngineAction, Workflow as WorkflowKitWorkflow } from "@inngest/workflow-kit";
-import { Editor, Provider } from "@inngest/workflow-kit/ui";
+import { Editor, Provider, Sidebar } from "@inngest/workflow-kit/ui";
 
 type FlowCanvasProps = {
   workflow: WorkflowKitWorkflow;
@@ -24,7 +24,9 @@ export function FlowCanvas({ workflow, trigger, availableActions, onChange }: Fl
 
       <div className="coordination-flowkit-editor relative z-[1] h-full min-h-[500px]">
         <Provider workflow={workflow} trigger={trigger} availableActions={availableActions} onChange={onChange}>
-          <Editor direction="down" />
+          <Editor direction="down">
+            <Sidebar position="right" />
+          </Editor>
         </Provider>
       </div>
     </div>
