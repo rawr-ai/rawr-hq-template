@@ -1,9 +1,10 @@
 import type {
   RunModel,
-  StatusTone,
+  StatusKind,
   TimelineEventModel,
   ValidationModel,
 } from "../../types/workflow";
+import { validationSummary } from "../../adapters/workflow-mappers";
 import { StatusBadge } from "./StatusBadge";
 import { TimelineEventRow } from "./TimelineEventRow";
 
@@ -11,7 +12,7 @@ type RunStatusPanelProps = {
   validation: ValidationModel;
   lastRun: RunModel | null;
   timeline: TimelineEventModel[];
-  toneForStatus: (status: string) => StatusTone;
+  statusForRun: (status: string) => StatusKind;
   isLive?: boolean;
 };
 
@@ -19,19 +20,19 @@ export function RunStatusPanel({
   validation,
   lastRun,
   timeline,
-  toneForStatus,
+  statusForRun,
   isLive = false,
 }: RunStatusPanelProps) {
+  const validationState = validationSummary(validation);
+
   return (
     <aside className="grid gap-3 content-start" aria-label="Run status">
       <div className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3 py-2.5 transition-colors duration-200">
-        <span className={validation.ok ? "text-emerald-600" : "text-amber-600"} aria-hidden>
-          {validation.ok ? "●" : "◐"}
+        <span className={validationState.status === "success" ? "text-emerald-600" : "text-amber-600"} aria-hidden>
+          {validationState.status === "success" ? "●" : "◐"}
         </span>
-        <span className="text-[13px] text-text-body flex-1">
-          {validation.ok ? "Workflow satisfies validation checks." : `Validation issues: ${validation.errors.length}`}
-        </span>
-        <StatusBadge tone={validation.ok ? "is-success" : "is-warning"}>{validation.ok ? "Pass" : "Fail"}</StatusBadge>
+        <span className="text-[13px] text-text-body flex-1">{validationState.message}</span>
+        <StatusBadge status={validationState.status}>{validationState.label}</StatusBadge>
       </div>
 
       {lastRun ? (
@@ -41,7 +42,7 @@ export function RunStatusPanel({
               {isLive ? <span className="text-amber-600 animate-pulse">●</span> : null}
               <h2 className="text-[14px] font-medium text-text-primary m-0">Run Timeline</h2>
             </div>
-            <StatusBadge tone={toneForStatus(lastRun.status)}>{lastRun.status}</StatusBadge>
+            <StatusBadge status={statusForRun(lastRun.status)}>{lastRun.status}</StatusBadge>
           </div>
 
           <div className="bg-canvas border border-border-subtle rounded-md px-2.5 py-2 mb-3 transition-colors duration-200">
@@ -69,7 +70,7 @@ export function RunStatusPanel({
           {timeline.length > 0 ? (
             <ul className="m-0 p-0 list-none border-t border-border-subtle pt-2.5">
               {timeline.map((event) => (
-                <TimelineEventRow key={event.eventId} event={event} tone={toneForStatus(event.status)} />
+                <TimelineEventRow key={event.eventId} event={event} status={statusForRun(event.status)} />
               ))}
             </ul>
           ) : null}

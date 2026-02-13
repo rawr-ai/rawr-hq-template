@@ -1,5 +1,5 @@
 import { COORDINATION_RUN_EVENT } from "@rawr/coordination-inngest/browser";
-import type { WorkflowModel } from "../../types/workflow";
+import type { RunActionState, WorkflowModel } from "../../types/workflow";
 import {
   ExternalLinkIcon,
   PanelRightCloseIcon,
@@ -10,9 +10,7 @@ type WorkflowToolbarProps = {
   activeWorkflow: WorkflowModel;
   workflows: WorkflowModel[];
   busy: boolean;
-  polling: boolean;
-  needsSave: boolean;
-  validationOk: boolean;
+  runAction: RunActionState;
   workflowEvent: string;
   monitorHref: string | null;
   sidePanelOpen: boolean;
@@ -24,23 +22,21 @@ type WorkflowToolbarProps = {
 };
 
 function toolbarBtnClass(enabled: boolean, accent = false): string {
-  const base = "px-2.5 py-1.5 rounded-md text-[12px] font-medium border transition-colors";
+  const base = "rounded-md border px-2.5 py-1.5 text-[12px] font-medium transition-colors";
   if (!enabled) {
-    return `${base} text-text-secondary bg-raised border-border opacity-40 cursor-not-allowed`;
+    return `${base} cursor-not-allowed border-border bg-raised text-text-secondary opacity-40`;
   }
   if (accent) {
-    return `${base} text-accent bg-accent-bg border-accent-border hover:bg-accent-bg cursor-pointer`;
+    return `${base} cursor-pointer border-accent-border bg-accent-bg text-accent hover:bg-accent-bg`;
   }
-  return `${base} text-text-primary bg-raised border-border hover:bg-border-subtle cursor-pointer`;
+  return `${base} cursor-pointer border-border bg-raised text-text-primary hover:bg-border-subtle`;
 }
 
 export function WorkflowToolbar({
   activeWorkflow,
   workflows,
   busy,
-  polling,
-  needsSave,
-  validationOk,
+  runAction,
   workflowEvent,
   monitorHref,
   sidePanelOpen,
@@ -50,18 +46,17 @@ export function WorkflowToolbar({
   onValidate,
   onRun,
 }: WorkflowToolbarProps) {
-  const canRun = !busy && !polling && validationOk;
   const effectiveEvent = workflowEvent || COORDINATION_RUN_EVENT;
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-[5] pointer-events-none p-2">
-      <div className="pointer-events-auto flex items-center gap-2 bg-glass backdrop-blur-sm border border-border rounded-lg px-2.5 py-1.5 transition-colors duration-200">
+    <div className="pointer-events-none absolute left-0 right-0 top-0 z-[5] p-2">
+      <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-border bg-glass px-2.5 py-1.5 backdrop-blur-sm transition-colors duration-200">
         <select
           value={activeWorkflow.workflowId}
           onChange={(event) => onSelectWorkflow(event.target.value)}
           disabled={workflows.length <= 1 || busy}
           aria-label="Select workflow"
-          className="flex-1 min-w-0 bg-raised text-text-primary text-[13px] border border-border rounded-md px-2 py-1.5 cursor-default truncate transition-colors duration-200"
+          className="min-w-0 flex-1 truncate rounded-md border border-border bg-raised px-2 py-1.5 text-[13px] text-text-primary transition-colors duration-200"
         >
           {workflows.map((workflow) => (
             <option key={workflow.workflowId} value={workflow.workflowId}>
@@ -70,7 +65,7 @@ export function WorkflowToolbar({
           ))}
         </select>
 
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center gap-1">
           <button disabled={busy} onClick={onSave} className={toolbarBtnClass(!busy)}>
             Save
           </button>
@@ -78,11 +73,15 @@ export function WorkflowToolbar({
             Validate
           </button>
           <button
-            disabled={!canRun}
+            disabled={runAction.disabled}
             onClick={onRun}
-            className={polling ? `${toolbarBtnClass(false)} text-accent bg-accent-bg border-accent-border opacity-60` : toolbarBtnClass(canRun, true)}
+            className={
+              runAction.disabled
+                ? `${toolbarBtnClass(false)} border-accent-border bg-accent-bg text-accent opacity-60`
+                : toolbarBtnClass(true, true)
+            }
           >
-            {polling ? "Running…" : needsSave ? "Save + Run" : "Run"}
+            {runAction.label}
           </button>
 
           {monitorHref ? (
@@ -90,7 +89,7 @@ export function WorkflowToolbar({
               href={monitorHref}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[12px] font-medium text-text-secondary hover:text-text-primary bg-raised border border-border hover:bg-border-subtle transition-colors"
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-raised px-2.5 py-1.5 text-[12px] font-medium text-text-secondary transition-colors hover:bg-border-subtle hover:text-text-primary"
             >
               Runs <ExternalLinkIcon className="h-3 w-3 opacity-40" />
             </a>
@@ -99,18 +98,18 @@ export function WorkflowToolbar({
               type="button"
               aria-disabled="true"
               disabled
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[12px] font-medium text-text-muted bg-raised border border-border opacity-60"
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-raised px-2.5 py-1.5 text-[12px] font-medium text-text-muted opacity-60"
             >
               Runs
             </button>
           )}
 
-          <div className="w-px h-5 bg-border mx-0.5 hidden md:block" />
+          <div className="mx-0.5 hidden h-5 w-px bg-border md:block" />
 
           <button
             type="button"
             onClick={onToggleSidePanel}
-            className="hidden md:flex items-center justify-center w-7 h-7 rounded-md text-text-secondary hover:text-text-primary hover:bg-raised transition-colors"
+            className="hidden h-7 w-7 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-raised hover:text-text-primary md:flex"
             aria-label={sidePanelOpen ? "Hide details" : "Show details"}
           >
             {sidePanelOpen ? <PanelRightCloseIcon className="h-3.5 w-3.5" /> : <PanelRightOpenIcon className="h-3.5 w-3.5" />}
@@ -118,11 +117,11 @@ export function WorkflowToolbar({
         </div>
       </div>
 
-      <div className="pointer-events-auto mt-1.5 inline-block bg-glass-subtle border border-border-subtle rounded-md px-2 py-1 text-[11px] text-text-muted transition-colors duration-200">
-        <code className="text-text-secondary font-mono">{activeWorkflow.workflowId}</code>
+      <div className="pointer-events-auto mt-1.5 inline-block rounded-md border border-border-subtle bg-glass-subtle px-2 py-1 text-[11px] text-text-muted transition-colors duration-200">
+        <code className="font-mono text-text-secondary">{activeWorkflow.workflowId}</code>
         <span className="mx-1">·</span>v{activeWorkflow.version}
         <span className="mx-1">·</span>
-        <code className="text-text-secondary font-mono">{effectiveEvent}</code>
+        <code className="font-mono text-text-secondary">{effectiveEvent}</code>
       </div>
     </div>
   );

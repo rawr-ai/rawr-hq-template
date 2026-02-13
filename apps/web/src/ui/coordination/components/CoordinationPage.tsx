@@ -4,7 +4,13 @@ import "@inngest/workflow-kit/ui/ui.css";
 import "../styles/index.css";
 import { CanvasWorkspace } from "./canvas";
 import { RunStatusPanel, StatusBadge } from "./status";
-import { toneForStatus, workflowGraph } from "../adapters/workflow-mappers";
+import {
+  monitorLinkForRun,
+  runActionState,
+  statusForRunState,
+  validationSummary,
+  workflowGraph,
+} from "../adapters/workflow-mappers";
 import { useRunStatus } from "../hooks/useRunStatus";
 import { useWorkflow } from "../hooks/useWorkflow";
 import type { PaletteCommand } from "../types/workflow";
@@ -38,11 +44,19 @@ export function CoordinationPage() {
     [runStatus, workflow],
   );
 
-  const monitorHref = useMemo(() => {
-    if (!runStatus.lastRun?.traceLinks?.length) return null;
-    return runStatus.lastRun.traceLinks.find((link) => link.provider === "inngest")?.url ?? runStatus.lastRun.traceLinks[0]?.url ?? null;
-  }, [runStatus.lastRun]);
   const graph = useMemo(() => workflowGraph(workflow.activeWorkflow), [workflow.activeWorkflow]);
+  const monitorHref = useMemo(() => monitorLinkForRun(runStatus.lastRun), [runStatus.lastRun]);
+  const runAction = useMemo(
+    () =>
+      runActionState({
+        busy: workflow.busy,
+        polling: runStatus.polling,
+        validationOk: workflow.validation.ok,
+        needsSave: workflow.needsSave,
+      }),
+    [runStatus.polling, workflow.busy, workflow.needsSave, workflow.validation.ok],
+  );
+  const validationState = useMemo(() => validationSummary(workflow.validation), [workflow.validation]);
 
   const liveMessage = useMemo(() => {
     const error = workflow.error ?? runStatus.error;
@@ -114,16 +128,16 @@ export function CoordinationPage() {
         </div>
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          <StatusBadge tone={workflow.validation.ok ? "is-success" : "is-warning"}>
+          <StatusBadge status={validationState.status}>
             {workflow.validation.ok ? "Valid" : "Invalid"}
           </StatusBadge>
 
           {runStatus.lastRun ? (
-            <StatusBadge tone={toneForStatus(runStatus.lastRun.status)}>
+            <StatusBadge status={statusForRunState(runStatus.lastRun.status)}>
               {runStatus.lastRun.status.charAt(0).toUpperCase() + runStatus.lastRun.status.slice(1)}
             </StatusBadge>
           ) : (
-            <StatusBadge tone="">Idle</StatusBadge>
+            <StatusBadge status="neutral">Idle</StatusBadge>
           )}
         </div>
       </header>
@@ -133,9 +147,7 @@ export function CoordinationPage() {
           activeWorkflow={workflow.activeWorkflow}
           workflowOptions={workflow.workflowOptions}
           busy={workflow.busy}
-          polling={runStatus.polling}
-          needsSave={workflow.needsSave}
-          validationOk={workflow.validation.ok}
+          runAction={runAction}
           monitorHref={monitorHref}
           workflowEvent={graph.event}
           nodes={graph.nodes}
@@ -163,7 +175,7 @@ export function CoordinationPage() {
           validation={workflow.validation}
           lastRun={runStatus.lastRun}
           timeline={runStatus.timeline}
-          toneForStatus={toneForStatus}
+          statusForRun={statusForRunState}
           isLive={runStatus.polling}
         />
       </div>
