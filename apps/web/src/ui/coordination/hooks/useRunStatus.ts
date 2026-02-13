@@ -1,10 +1,9 @@
 import { useCallback, useRef, useState } from "react";
 import {
-  coordinationErrorMessage,
   type RunStatusV1,
   type DeskRunEventV1,
 } from "@rawr/coordination";
-import { getRunStatus, getRunTimeline } from "../adapters/api-client";
+import { coordinationClientErrorMessage, getRunStatus, getRunTimeline } from "../adapters/api-client";
 import { nextBackoffMs, RUN_TERMINAL_STATES } from "../adapters/workflow-mappers";
 
 function sleep(ms: number): Promise<void> {
@@ -30,13 +29,13 @@ export function useRunStatus() {
   const isCurrentToken = (token: number) => token === tokenRef.current;
 
   const refreshRunState = useCallback(async (runId: string, token = tokenRef.current): Promise<RunStatusV1 | null> => {
-    let runResult;
+    let statusResult;
     let timelineResult;
     try {
-      [runResult, timelineResult] = await Promise.all([getRunStatus(runId), getRunTimeline(runId)]);
+      [statusResult, timelineResult] = await Promise.all([getRunStatus(runId), getRunTimeline(runId)]);
     } catch (err) {
       if (isCurrentToken(token)) {
-        setError(`Failed to refresh run state: ${String(err)}`);
+        setError(coordinationClientErrorMessage(err, "Failed to refresh run state"));
       }
       return null;
     }
@@ -45,19 +44,19 @@ export function useRunStatus() {
       return null;
     }
 
-    if (runResult.ok !== true) {
-      setError(coordinationErrorMessage(runResult, "Failed to load run status"));
+    if (!statusResult.run) {
+      setError("Failed to load run status");
       return null;
     }
 
-    if (timelineResult.ok !== true) {
-      setError(coordinationErrorMessage(timelineResult, "Failed to load run timeline"));
+    if (!timelineResult.timeline) {
+      setError("Failed to load run timeline");
       return null;
     }
 
-    setLastRun(runResult.run);
+    setLastRun(statusResult.run);
     setTimeline(Array.isArray(timelineResult.timeline) ? timelineResult.timeline : []);
-    return runResult.run;
+    return statusResult.run;
   }, []);
 
   const pollRunUntilTerminal = useCallback(
