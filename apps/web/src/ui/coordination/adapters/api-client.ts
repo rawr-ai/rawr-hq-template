@@ -1,29 +1,9 @@
-import { ORPCError, createORPCClient } from "@orpc/client";
-import { RPCLink } from "@orpc/client/fetch";
-import type { ContractRouterClient } from "@orpc/contract";
-import { hqContract } from "@rawr/core/orpc";
+import { ORPCError } from "@orpc/client";
 import type {
   CoordinationWorkflowV1,
   JsonValue,
 } from "@rawr/coordination";
-import { publicEnv } from "../../config/publicEnv";
-
-function resolveRpcUrl(): string {
-  const envUrl = publicEnv.rpcUrl;
-  if (typeof envUrl === "string" && envUrl.trim() !== "") {
-    return envUrl.trim();
-  }
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}/rpc`;
-  }
-  return "http://localhost:3000/rpc";
-}
-
-const hqClient = createORPCClient<ContractRouterClient<typeof hqContract>>(
-  new RPCLink({
-    url: resolveRpcUrl(),
-  }),
-);
+import { hqClient } from "../../lib/orpc-client";
 
 export function coordinationClientErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ORPCError) {

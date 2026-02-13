@@ -1,11 +1,7 @@
 import type { MicroFrontendModule, MountContext, MountHandle } from "@rawr/ui-sdk";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle, Separator } from "../components/ui";
-
-type RawrState = {
-  ok: boolean;
-  plugins: { enabled: string[] };
-};
+import { hqClient } from "../lib/orpc-client";
 
 type MountStatus =
   | { status: "loading" }
@@ -52,10 +48,10 @@ export function MountsPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch("/rawr/state");
-      const json = (await res.json()) as RawrState;
+      const response = await hqClient.state.getRuntimeState({});
       if (cancelled) return;
-      setEnabled(Array.isArray(json?.plugins?.enabled) ? json.plugins.enabled : []);
+      const plugins = response.state?.plugins;
+      setEnabled(Array.isArray(plugins?.enabled) ? plugins.enabled : []);
     })().catch((err) => {
       if (cancelled) return;
       setEnabled([]);
@@ -132,8 +128,8 @@ export function MountsPage() {
             <Badge variant="accent">{enabled?.length ?? 0}</Badge>
           </CardTitle>
           <CardDescription>
-            Loads plugin ids from <code>/rawr/state</code>, then mounts from <code>/rawr/plugins/web/&lt;dirName&gt;</code>{" "}
-            via dynamic <code>import()</code>.
+            Loads plugin ids from <code>state.getRuntimeState</code> via ORPC, then mounts from{" "}
+            <code>/rawr/plugins/web/&lt;dirName&gt;</code> via dynamic <code>import()</code>.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
