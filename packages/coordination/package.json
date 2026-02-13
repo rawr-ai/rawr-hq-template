@@ -10,6 +10,10 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./orpc": {
+      "types": "./src/orpc/index.ts",
+      "default": "./src/orpc/index.ts"
+    },
     "./node": {
       "types": "./src/node.ts",
       "default": "./src/node.ts"
@@ -22,5 +26,9 @@
     "build": "bunx tsc -p tsconfig.json",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@orpc/contract": "^1.13.5",
+    "typebox": "^1.0.81"
   }
 }
