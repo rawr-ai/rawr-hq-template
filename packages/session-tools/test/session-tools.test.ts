@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
@@ -6,6 +6,7 @@ import {
   chunkMessages,
   detectSessionFormat,
   extractSession,
+  listCodexSessionFiles,
   listSessions,
   resolveSession,
   searchSessionsByContent,
@@ -134,10 +135,14 @@ describe("@rawr/session-tools", () => {
   it("returns newest codex sessions when limit is set", async () => {
     const previousHome = process.env.HOME;
     const previousCodexHome = process.env.CODEX_HOME;
+    const previousIndexPath = process.env.RAWR_SESSION_INDEX_PATH;
+    const previousDiscoveryLiveMaxAge = process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS;
     const tmpHome = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-session-tools-home-"));
     try {
       process.env.HOME = tmpHome;
       delete process.env.CODEX_HOME;
+      process.env.RAWR_SESSION_INDEX_PATH = path.join(tmpHome, ".cache", "sessions-index.sqlite");
+      process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = "600000";
 
       const sessionsDir = path.join(tmpHome, ".codex", "sessions", "2026", "02", "05");
       await fs.mkdir(sessionsDir, { recursive: true });
@@ -170,6 +175,100 @@ describe("@rawr/session-tools", () => {
       else process.env.HOME = previousHome;
       if (previousCodexHome == null) delete process.env.CODEX_HOME;
       else process.env.CODEX_HOME = previousCodexHome;
+      if (previousIndexPath == null) delete process.env.RAWR_SESSION_INDEX_PATH;
+      else process.env.RAWR_SESSION_INDEX_PATH = previousIndexPath;
+      if (previousDiscoveryLiveMaxAge == null) delete process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS;
+      else process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = previousDiscoveryLiveMaxAge;
+      await fs.rm(tmpHome, { recursive: true, force: true });
+    }
+  });
+
+  it("uses cached codex discovery index for repeated bounded listings", async () => {
+    const previousHome = process.env.HOME;
+    const previousCodexHome = process.env.CODEX_HOME;
+    const previousIndexPath = process.env.RAWR_SESSION_INDEX_PATH;
+    const previousDiscoveryLiveMaxAge = process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS;
+    const tmpHome = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-session-tools-cache-home-"));
+
+    try {
+      process.env.HOME = tmpHome;
+      delete process.env.CODEX_HOME;
+      process.env.RAWR_SESSION_INDEX_PATH = path.join(tmpHome, ".cache", "sessions-index.sqlite");
+      process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = "600000";
+
+      const sessionsDir = path.join(tmpHome, ".codex", "sessions", "2026", "02", "05");
+      await fs.mkdir(sessionsDir, { recursive: true });
+      const sessionFile = path.join(sessionsDir, "rollout-cache-test.jsonl");
+      await fs.writeFile(sessionFile, `{"type":"session_meta","payload":{"id":"cache-test"}}\n`, "utf8");
+      await fs.utimes(sessionFile, new Date("2026-02-05T00:00:00.000Z"), new Date("2026-02-05T00:00:00.000Z"));
+
+      const first = await listCodexSessionFiles(1);
+      expect(first).toHaveLength(1);
+      expect(first[0]?.filePath).toBe(sessionFile);
+
+      const readdirSpy = vi.spyOn(fs, "readdir").mockImplementation(async () => {
+        throw new Error("unexpected filesystem readdir during cached listing");
+      });
+      try {
+        const second = await listCodexSessionFiles(1);
+        expect(second).toHaveLength(1);
+        expect(second[0]?.filePath).toBe(sessionFile);
+      } finally {
+        readdirSpy.mockRestore();
+      }
+    } finally {
+      if (previousHome == null) delete process.env.HOME;
+      else process.env.HOME = previousHome;
+      if (previousCodexHome == null) delete process.env.CODEX_HOME;
+      else process.env.CODEX_HOME = previousCodexHome;
+      if (previousIndexPath == null) delete process.env.RAWR_SESSION_INDEX_PATH;
+      else process.env.RAWR_SESSION_INDEX_PATH = previousIndexPath;
+      if (previousDiscoveryLiveMaxAge == null) delete process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS;
+      else process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = previousDiscoveryLiveMaxAge;
+      await fs.rm(tmpHome, { recursive: true, force: true });
+    }
+  });
+
+  it("invalidates codex discovery cache when the root scan age expires", async () => {
+    const previousHome = process.env.HOME;
+    const previousCodexHome = process.env.CODEX_HOME;
+    const previousIndexPath = process.env.RAWR_SESSION_INDEX_PATH;
+    const previousDiscoveryLiveMaxAge = process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS;
+    const tmpHome = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-session-tools-refresh-home-"));
+
+    try {
+      process.env.HOME = tmpHome;
+      delete process.env.CODEX_HOME;
+      process.env.RAWR_SESSION_INDEX_PATH = path.join(tmpHome, ".cache", "sessions-index.sqlite");
+      process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = "0";
+
+      const sessionsDir = path.join(tmpHome, ".codex", "sessions", "2026", "02", "05");
+      await fs.mkdir(sessionsDir, { recursive: true });
+
+      const oldFile = path.join(sessionsDir, "rollout-old.jsonl");
+      await fs.writeFile(oldFile, `{"type":"session_meta","payload":{"id":"old"}}\n`, "utf8");
+      await fs.utimes(oldFile, new Date("2026-02-01T00:00:00.000Z"), new Date("2026-02-01T00:00:00.000Z"));
+
+      const first = await listCodexSessionFiles(1);
+      expect(first).toHaveLength(1);
+      expect(first[0]?.filePath).toBe(oldFile);
+
+      const newFile = path.join(sessionsDir, "rollout-new.jsonl");
+      await fs.writeFile(newFile, `{"type":"session_meta","payload":{"id":"new"}}\n`, "utf8");
+      await fs.utimes(newFile, new Date("2026-02-03T00:00:00.000Z"), new Date("2026-02-03T00:00:00.000Z"));
+
+      const second = await listCodexSessionFiles(1);
+      expect(second).toHaveLength(1);
+      expect(second[0]?.filePath).toBe(newFile);
+    } finally {
+      if (previousHome == null) delete process.env.HOME;
+      else process.env.HOME = previousHome;
+      if (previousCodexHome == null) delete process.env.CODEX_HOME;
+      else process.env.CODEX_HOME = previousCodexHome;
+      if (previousIndexPath == null) delete process.env.RAWR_SESSION_INDEX_PATH;
+      else process.env.RAWR_SESSION_INDEX_PATH = previousIndexPath;
+      if (previousDiscoveryLiveMaxAge == null) delete process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS;
+      else process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = previousDiscoveryLiveMaxAge;
       await fs.rm(tmpHome, { recursive: true, force: true });
     }
   });

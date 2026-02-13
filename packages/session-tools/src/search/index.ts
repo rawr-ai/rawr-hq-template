@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
+import { defaultSessionIndexPath } from "../paths";
 import type { RoleFilter, SessionSource } from "../types";
 import { detectSessionFormat } from "../detect";
 import { extractClaudeMessages } from "../claude/parse";
@@ -12,10 +12,31 @@ type SqliteDb = {
 };
 
 async function openDb(indexPath: string): Promise<SqliteDb> {
-  const mod = await import("bun:sqlite");
-  const Database = (mod as any).Database as any;
-  await fs.mkdir(path.dirname(indexPath), { recursive: true }).catch(() => undefined);
-  const db = new Database(indexPath);
+  let db: SqliteDb | null = null;
+
+  try {
+    const mod = await import("bun:sqlite");
+    const Database = (mod as any).Database as any;
+    await fs.mkdir(path.dirname(indexPath), { recursive: true }).catch(() => undefined);
+    db = new Database(indexPath) as SqliteDb;
+  } catch {
+    const mod = await import("node:sqlite");
+    const DatabaseSync = (mod as any).DatabaseSync;
+    await fs.mkdir(path.dirname(indexPath), { recursive: true }).catch(() => undefined);
+    const nodeDb = new DatabaseSync(indexPath);
+    db = {
+      query: (sql: string) => {
+        const stmt = nodeDb.prepare(sql);
+        return {
+          get: (params?: any[]) => (Array.isArray(params) ? stmt.get(...params) : stmt.get()),
+          run: (params?: any[]) => (Array.isArray(params) ? stmt.run(...params) : stmt.run()),
+        };
+      },
+      close: () => nodeDb.close(),
+    };
+  }
+
+  if (!db) throw new Error("Failed to initialize session sqlite index");
   db.query(`
     CREATE TABLE IF NOT EXISTS session_cache (
       path TEXT NOT NULL,
@@ -28,13 +49,11 @@ async function openDb(indexPath: string): Promise<SqliteDb> {
     )
   `).run();
   db.query(`CREATE INDEX IF NOT EXISTS idx_session_cache_path ON session_cache(path)`).run();
-  return db as SqliteDb;
+  return db;
 }
 
 export function defaultIndexPath(): string {
-  const override = process.env.RAWR_SESSION_INDEX_PATH;
-  if (override && override.trim()) return override.trim();
-  return path.join(os.homedir(), ".cache", "rawr-session-index.sqlite");
+  return defaultSessionIndexPath();
 }
 
 function buildSearchText(messages: Array<{ role: string; content: string }>): string {
