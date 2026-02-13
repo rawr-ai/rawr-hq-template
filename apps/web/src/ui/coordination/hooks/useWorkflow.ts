@@ -124,6 +124,22 @@ export function useWorkflow() {
     refreshValidation(activeWorkflow);
   }, [activeWorkflow, refreshValidation]);
 
+  const updateActiveName = useCallback(
+    (name: string) => {
+      const next = { ...activeWorkflow, name };
+      setActiveAndValidate(next);
+    },
+    [activeWorkflow, setActiveAndValidate],
+  );
+
+  const updateActiveDescription = useCallback(
+    (description: string) => {
+      const next = { ...activeWorkflow, description };
+      setActiveAndValidate(next);
+    },
+    [activeWorkflow, setActiveAndValidate],
+  );
+
   const queueRun = useCallback(
     async (input: JsonValue): Promise<RunStatusV1 | null> => {
       setBusy(true);
@@ -189,6 +205,8 @@ export function useWorkflow() {
     refreshWorkflows,
     saveActiveWorkflow,
     validateActiveWorkflow,
+    updateActiveName,
+    updateActiveDescription,
     queueRun,
     selectWorkflow,
     handleEditorChange,

@@ -4,20 +4,11 @@ import "@inngest/workflow-kit/ui/ui.css";
 import "../styles/index.css";
 import { CanvasWorkspace } from "./canvas";
 import { RunStatusPanel, StatusBadge } from "./status";
-import { toneForStatus } from "../adapters/workflow-mappers";
+import { toneForStatus, workflowGraph } from "../adapters/workflow-mappers";
 import { useRunStatus } from "../hooks/useRunStatus";
 import { useWorkflow } from "../hooks/useWorkflow";
 import type { PaletteCommand } from "../types/workflow";
-
-function inngestRunsUrl(): string {
-  if (typeof window === "undefined") return "http://localhost:8288/runs";
-  const next = new URL(window.location.href);
-  next.port = "8288";
-  next.pathname = "/runs";
-  next.search = "";
-  next.hash = "";
-  return next.toString();
-}
+import { cn } from "../../lib/cn";
 
 export function CoordinationPage() {
   const workflow = useWorkflow();
@@ -43,7 +34,11 @@ export function CoordinationPage() {
     [runStatus, workflow],
   );
 
-  const monitorHref = useMemo(() => inngestRunsUrl(), []);
+  const monitorHref = useMemo(() => {
+    if (!runStatus.lastRun?.traceLinks?.length) return null;
+    return runStatus.lastRun.traceLinks.find((link) => link.provider === "inngest")?.url ?? runStatus.lastRun.traceLinks[0]?.url ?? null;
+  }, [runStatus.lastRun]);
+  const graph = useMemo(() => workflowGraph(workflow.activeWorkflow), [workflow.activeWorkflow]);
 
   const liveMessage = useMemo(() => {
     const error = workflow.error ?? runStatus.error;
@@ -99,32 +94,37 @@ export function CoordinationPage() {
   }, [commands, paletteIndex, paletteOpen, workflow]);
 
   return (
-    <section className="coordination" aria-labelledby="coordination-title">
-      <header className="coordination__header">
-        <h1 id="coordination-title" className="coordination__title">
-          Agent Coordination Canvas
-        </h1>
-        <p className="coordination__description">
-          Build and edit workflow graphs in the Inngest Workflow Kit canvas, then run through the real Inngest
-          execution path. Use <kbd>Cmd/Ctrl+K</kbd> to open command operations.
-        </p>
-        <div className="coordination__status-line">
-          <StatusBadge tone={workflow.validation.ok ? "is-success" : "is-error"}>
-            {workflow.validation.ok ? "Valid workflow" : `Invalid (${workflow.validation.errors.length})`}
+    <section aria-labelledby="coordination-title" className="max-w-[1360px] min-w-0 grid gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="min-w-0">
+          <h1 id="coordination-title" className="text-[24px] leading-tight font-semibold tracking-[-0.4px] text-text-primary">
+            Agent Coordination Canvas
+          </h1>
+          <p className="text-[13px] text-text-secondary mt-0.5">
+            Build and run workflow graphs ·{" "}
+            <kbd className="bg-raised text-text-body text-[11px] font-mono border border-border rounded px-1 py-px transition-colors duration-200">
+              ⌘K
+            </kbd>{" "}
+            command palette
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <StatusBadge tone={workflow.validation.ok ? "is-success" : "is-warning"}>
+            {workflow.validation.ok ? "Valid" : "Invalid"}
           </StatusBadge>
+
           {runStatus.lastRun ? (
-            <StatusBadge tone={toneForStatus(runStatus.lastRun.status)}>Run status: {runStatus.lastRun.status}</StatusBadge>
+            <StatusBadge tone={toneForStatus(runStatus.lastRun.status)}>
+              {runStatus.lastRun.status.charAt(0).toUpperCase() + runStatus.lastRun.status.slice(1)}
+            </StatusBadge>
           ) : (
-            <StatusBadge>No run started</StatusBadge>
+            <StatusBadge tone="">Idle</StatusBadge>
           )}
         </div>
-        <p className="coordination__keyboard-hint">
-          Keyboard: <kbd>Cmd/Ctrl+K</kbd> opens command palette, <kbd>↑</kbd>/<kbd>↓</kbd> to move, <kbd>Enter</kbd> to
-          run.
-        </p>
       </header>
 
-      <div className="coordination__workspace">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-3 min-w-0">
         <CanvasWorkspace
           activeWorkflow={workflow.activeWorkflow}
           workflowOptions={workflow.workflowOptions}
@@ -132,10 +132,15 @@ export function CoordinationPage() {
           polling={runStatus.polling}
           validationOk={workflow.validation.ok}
           monitorHref={monitorHref}
+          workflowEvent={graph.event}
+          nodes={graph.nodes}
+          edges={graph.edges}
           onSelectWorkflow={workflow.selectWorkflow}
           onSave={workflow.saveActiveWorkflow}
           onValidate={workflow.validateActiveWorkflow}
           onRun={runWorkflow}
+          onNameChange={workflow.updateActiveName}
+          onDescriptionChange={workflow.updateActiveDescription}
         >
           <Provider
             workflow={workflow.workflowKitWorkflow}
@@ -154,11 +159,17 @@ export function CoordinationPage() {
           lastRun={runStatus.lastRun}
           timeline={runStatus.timeline}
           toneForStatus={toneForStatus}
+          isLive={runStatus.polling}
         />
       </div>
 
       <div
-        className={`coordination__live ${workflow.error || runStatus.error ? "is-error" : ""}`}
+        className={cn(
+          "rounded-md border px-3 py-2 text-[0.85rem]",
+          workflow.error || runStatus.error
+            ? "border-destructive/40 bg-destructive/10 text-destructive"
+            : "border-border/70 bg-muted/60 text-muted-foreground",
+        )}
         aria-live="polite"
         aria-atomic="true"
       >
@@ -169,37 +180,35 @@ export function CoordinationPage() {
         <>
           <button
             type="button"
-            className="coordination__palette-backdrop"
+            className="fixed inset-0 z-[39] border-0 p-0 bg-black/40"
             aria-label="Close command palette"
             onClick={() => setPaletteOpen(false)}
           />
 
           <section
-            className="coordination__palette"
             role="dialog"
             aria-modal="true"
             aria-labelledby="coordination-palette-title"
             aria-describedby="coordination-palette-hint"
+            className="fixed top-4 sm:top-[max(1.2rem,8vh)] left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100vw-1rem))] rounded-xl border border-border bg-surface shadow-shell p-3"
           >
-            <header className="coordination__palette-header">
-              <h2 id="coordination-palette-title" className="coordination__palette-title">
+            <header className="flex items-baseline justify-between gap-3 mb-2">
+              <h2 id="coordination-palette-title" className="m-0 text-[0.9rem] tracking-[0.09em] uppercase text-text-muted">
                 Command Palette
               </h2>
-              <p id="coordination-palette-hint" className="coordination__palette-hint">
-                Navigate with arrow keys. Press Enter to run.
+              <p id="coordination-palette-hint" className="m-0 text-[0.75rem] text-text-muted">
+                Navigate with arrows · Enter to run · Esc to close
               </p>
             </header>
 
             {commands.length === 0 ? (
-              <p className="coordination__message is-muted">No commands available right now.</p>
+              <p className="m-0 text-sm text-text-muted">No commands available right now.</p>
             ) : (
               <ul
-                className="coordination__palette-list"
+                className="m-0 p-0 list-none grid gap-2"
                 role="listbox"
                 aria-label="Coordination commands"
-                aria-activedescendant={
-                  commands[paletteIndex] ? `coordination-command-${commands[paletteIndex].id}` : undefined
-                }
+                aria-activedescendant={commands[paletteIndex] ? `coordination-command-${commands[paletteIndex].id}` : undefined}
               >
                 {commands.map((command, index) => (
                   <li key={command.id}>
@@ -208,7 +217,12 @@ export function CoordinationPage() {
                       type="button"
                       role="option"
                       aria-selected={index === paletteIndex}
-                      className={`coordination__palette-item${index === paletteIndex ? " is-active" : ""}`}
+                      className={cn(
+                        "w-full text-left rounded-md border px-3 py-2 flex items-center justify-between gap-2 transition-colors",
+                        index === paletteIndex
+                          ? "border-accent/60 bg-accent-bg text-text-primary"
+                          : "border-border bg-raised text-text-primary hover:border-border-subtle",
+                      )}
                       onMouseEnter={() => setPaletteIndex(index)}
                       onClick={() => {
                         Promise.resolve(command.run()).catch((err) => workflow.setError(String(err)));
@@ -216,7 +230,7 @@ export function CoordinationPage() {
                       }}
                     >
                       <span>{command.label}</span>
-                      <span className="coordination__palette-shortcut">{index === paletteIndex ? "Enter" : ""}</span>
+                      <span className="text-xs text-text-muted">{index === paletteIndex ? "Enter" : ""}</span>
                     </button>
                   </li>
                 ))}
