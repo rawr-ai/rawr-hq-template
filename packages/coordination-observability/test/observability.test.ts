@@ -21,7 +21,7 @@ describe("coordination observability", () => {
   it("builds default trace links", () => {
     const links = defaultTraceLinks("http://localhost:3000", "run-42");
     expect(links).toHaveLength(2);
-    expect(links[0].url).toContain("/rawr/coordination/runs/run-42/timeline");
+    expect(links[0].url).toContain("/api/orpc/coordination/runs/run-42/timeline");
     expect(links[1].url).toContain("http://localhost:8288/runs/run-42");
   });
 

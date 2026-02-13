@@ -57,7 +57,7 @@ export function defaultTraceLinks(baseUrl: string, runId: string, options?: Trac
     {
       provider: "rawr",
       label: "RAWR Run Timeline",
-      url: `${trimmed}/rawr/coordination/runs/${runId}/timeline`,
+      url: `${trimmed}/api/orpc/coordination/runs/${runId}/timeline`,
     },
     {
       provider: "inngest",
