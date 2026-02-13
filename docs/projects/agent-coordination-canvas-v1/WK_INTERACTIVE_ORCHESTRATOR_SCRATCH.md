@@ -31,3 +31,11 @@
 2. The immediate correction is architectural: visible interactive WorkflowKit editor, no hidden-engine static proxy.
 3. Design parity remains required and achievable by skinning editor surface to MCP token/composition language.
 4. Implementation should proceed in branch-sliced phases to isolate rendering swap, styling parity, behavior safety, and purge.
+
+## 2026-02-13 Implementation Kickoff
+- Branch created: `codex/coordination-wk-interactive-v1-docs`.
+- Doc-first execution confirmed: remediation plan refreshed from user-supplied decision-complete spec.
+- Next steps:
+  1) commit docs-only branch,
+  2) create stacked implementation branches,
+  3) execute editor-surface migration before parity/wiring/test gates.

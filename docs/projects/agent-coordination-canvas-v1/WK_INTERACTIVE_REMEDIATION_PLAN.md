@@ -1,115 +1,180 @@
-# WorkflowKit Interactive Canvas Remediation Plan
+# WorkflowKit Interactive Canvas Remediation Stack (Decision-Complete)
 
-Status: Implementation-ready
-Date: 2026-02-13
-Owner: Orchestrator
+## Summary
+Replace the current static coordination canvas renderer with the real interactive WorkflowKit editor surface, while keeping the MCP design composition/styling 1:1 and preserving all runtime/data contracts (save-before-run, structured errors, polling safety, trace links).  
+This is an implementation-ready Graphite stack plan with two-agent orchestration (max 2), no legacy/shims left behind.
 
-## Goal
-Deliver an interactive coordination builder by making WorkflowKit editor the visible canvas surface, while preserving 1:1 MCP design parity for shell/layout/styles and keeping existing runtime contracts.
+## Implementation Workflow (2 Agents Max)
+1. Orchestrator (this session) owns branch choreography, integration, and final gate decisions.
+2. Agent A (`WK-Runtime`) owns interactive WorkflowKit surface migration and runtime behavior invariants.
+3. Agent B (`WK-Design`) owns MCP parity pass over the interactive WorkflowKit surface.
+4. Agents run in parallel for investigation deltas, then sequentially for implementation handoff.
+5. Canonical docs stay current throughout:
+`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/docs/projects/agent-coordination-canvas-v1/WK_INTERACTIVE_REMEDIATION_PLAN.md`  
+`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/docs/projects/agent-coordination-canvas-v1/WK_INTERACTIVE_REMEDIATION_FINDINGS.md`  
+`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/docs/projects/agent-coordination-canvas-v1/WK_INTERACTIVE_ORCHESTRATOR_SCRATCH.md`  
+`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/docs/projects/agent-coordination-canvas-v1/agent-wk-runtime-plan.md`  
+`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/docs/projects/agent-coordination-canvas-v1/agent-wk-runtime-scratch.md`  
+`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/docs/projects/agent-coordination-canvas-v1/agent-wk-design-plan.md`  
+`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/docs/projects/agent-coordination-canvas-v1/agent-wk-design-scratch.md`
 
-## First Action (Doc-First Rule)
-1. Keep this plan, findings, and orchestrator scratch up to date before code edits.
-
-## Branch Stack (proposed)
+## Graphite Stack
 1. `codex/coordination-wk-interactive-v1-docs`
 2. `codex/coordination-wk-interactive-v1-editor-surface`
 3. `codex/coordination-wk-interactive-v1-design-parity`
 4. `codex/coordination-wk-interactive-v1-behavior-gates`
 5. `codex/coordination-wk-interactive-v1-cutover-purge`
 
-If we stay on current stack, mirror these phases as sequential commits with same boundaries.
+Default base:
+1. If current remediation stack is still active, branch from `codex/coordination-fixpass-v1-cutover-purge`.
+2. If merged before implementation starts, recreate the same branch names from `main`.
 
-## Phase 1: Editor Surface Migration
-Primary objective: remove static live renderer and show interactive WorkflowKit surface.
+## Phase 0 (First Action): Doc-First Commit
+1. Refresh the seven WK interactive docs listed above before any code edits.
+2. Record MCP source pin in plan/findings:
+[https://www.magicpatterns.com/c/al2dvbu3fg4deehobyd5kg/preview](https://www.magicpatterns.com/c/al2dvbu3fg4deehobyd5kg/preview)
+3. Record root-cause evidence explicitly:
+`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/canvas/FlowCanvas.tsx` static layout + hidden editor layer.
+4. Commit docs-only branch first.
 
-Files:
-- `apps/web/src/ui/coordination/components/CoordinationPage.tsx`
-- `apps/web/src/ui/coordination/components/canvas/CanvasWorkspace.tsx`
-- `apps/web/src/ui/coordination/components/canvas/FlowCanvas.tsx`
-- `apps/web/src/ui/coordination/components/canvas/FlowEdges.tsx`
-- `apps/web/src/ui/coordination/components/canvas/FlowNode.tsx`
+## Phase 1: Interactive Editor Surface (No Static Proxy)
+Branch: `codex/coordination-wk-interactive-v1-editor-surface`
 
-Changes:
-1. Render `Provider` + `Editor` as visible primary canvas inside workspace.
-2. Remove hidden editor mounting (`hiddenEngine`) path.
-3. Remove static node/edge renderer from live route.
-4. Keep toolbar + side panel composition unchanged structurally.
+Primary files:
+1. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/CoordinationPage.tsx`
+2. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/canvas/CanvasWorkspace.tsx`
+3. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/canvas/FlowCanvas.tsx`
+4. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/canvas/FlowEdges.tsx`
+5. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/canvas/FlowNode.tsx`
+6. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/canvas/index.ts`
 
-Acceptance:
-- Canvas is draggable/interactive.
-- Node interactions happen on live editor surface.
+Required implementation decisions:
+1. `FlowCanvas` becomes the visible WorkflowKit surface (not static nodes/edges).
+2. Remove `hiddenEngine` architecture entirely.
+3. Render `Provider` + `Editor` directly inside visible canvas container.
+4. Do not render WorkflowKit `Sidebar` by default to avoid dual-right-panel UI and preserve design composition.
+5. Rely on WorkflowKit add handles (`wf-add-handle` menu) for add-node interaction.
+6. Delete `FlowEdges.tsx` and `FlowNode.tsx` if no longer referenced in live route.
+7. Keep current toolbar and design side panel composition intact around the interactive editor.
+8. Keep `/coordination` under shared host shell (no separate app shell route).
 
-## Phase 2: 1:1 Design Parity Over Interactive Surface
-Primary objective: preserve MCP shell/panel/toolbar visual parity while editor is interactive.
+Acceptance criteria:
+1. Canvas is pointer-interactive.
+2. Nodes can be selected and moved.
+3. New nodes can be added from WorkflowKit add handles.
+4. No static node/edge renderer remains in active route path.
 
-Files:
-- `apps/web/src/ui/coordination/components/**/*`
-- `apps/web/src/ui/coordination/styles/index.css`
-- `apps/web/tailwind.config.cjs`
+## Phase 2: 1:1 Design Parity on Interactive WorkflowKit
+Branch: `codex/coordination-wk-interactive-v1-design-parity`
 
-Changes:
-1. Keep MCP composition boundaries for header/workspace/side panel/status panel.
-2. Introduce scoped WorkflowKit skin classes/tokens under coordination container.
-3. Align spacing, typography, iconography, borders, and glass treatments to MCP tokens.
-4. Keep host shell cohesion (`/coordination` remains in shared AppShell).
+Primary files:
+1. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/styles/index.css`
+2. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/tailwind.config.cjs`
+3. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/CoordinationPage.tsx`
+4. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/canvas/CanvasWorkspace.tsx`
+5. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/canvas/WorkflowToolbar.tsx`
+6. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/status/RunStatusPanel.tsx`
 
-Acceptance:
-- Visual parity with MCP composition is maintained.
-- No secondary/duplicated canvas abstraction remains.
+Required implementation decisions:
+1. Keep MCP structure (header, workspace, toolbar, side panel, status panel) 1:1.
+2. Skin WorkflowKit classes under coordination scope:
+`.wf-editor`, `.wf-editor-parent`, `.wf-node`, `.wf-node-title`, `.wf-node-description`, `.wf-add-handle`, `.wf-add-handle-menu`, `.wf-sidebar` (if ever enabled).
+3. Override WorkflowKit CSS variables with coordination token values so WorkflowKit visuals match MCP flow-canvas language.
+4. Preserve MCP spacing, typography, iconography, and button treatments while retaining interactivity.
+5. Keep app-shell cohesion with existing host layout.
 
-## Phase 3: Wiring and Behavior Integrity
-Primary objective: ensure runtime behavior remains correct after editor surface swap.
+Acceptance criteria:
+1. Interactive editor surface visually matches MCP composition/token system.
+2. No “two different products” feel between coordination and the rest of app shell.
 
-Files:
-- `apps/web/src/ui/coordination/hooks/useWorkflow.ts`
-- `apps/web/src/ui/coordination/hooks/useRunStatus.ts`
-- `apps/web/src/ui/coordination/adapters/workflow-mappers.ts`
-- `apps/web/src/ui/coordination/components/canvas/WorkflowToolbar.tsx`
+## Phase 3: Wiring + Behavior Hardening
+Branch: `codex/coordination-wk-interactive-v1-behavior-gates`
 
-Changes:
-1. Preserve save-before-run invariant.
-2. Preserve strict structured error surfacing for run/save/validate actions.
-3. Preserve polling cancellation/backoff safety.
-4. Keep monitor/trace links runtime-derived.
+Primary files:
+1. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/hooks/useWorkflow.ts`
+2. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/hooks/useRunStatus.ts`
+3. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/adapters/workflow-mappers.ts`
+4. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/types/workflow.ts`
+5. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/src/ui/coordination/components/canvas/WorkflowToolbar.tsx`
 
-Acceptance:
-- `Run` on dirty workflow still saves first.
-- Error/live status surfaces remain correct.
+Required implementation decisions:
+1. Keep save-before-run invariant exactly as-is.
+2. Keep strict structured error envelope display in UI.
+3. Keep polling backoff/cancellation/stale-token protections unchanged.
+4. Remove now-obsolete static-graph mapping model fields/types from live UI contracts.
+5. Keep monitor links runtime-derived only.
 
-## Phase 4: Interaction + Visual + A11y Gates
-Primary objective: lock interactive behavior and parity with tests.
+Acceptance criteria:
+1. `Run` on unsaved/dirty workflows still persists first.
+2. No `WORKFLOW_NOT_FOUND` from unsaved run path.
+3. Error/live status behavior unchanged from current fixed runtime behavior.
 
-Files:
-- `apps/web/test/coordination.visual.test.ts`
-- Add interaction-focused tests (new file if needed)
+## Phase 4: Cutover + Purge + Gates
+Branch: `codex/coordination-wk-interactive-v1-cutover-purge`
 
-Required tests:
-1. Canvas pan/drag interactions function.
-2. Add-node interaction path works (or is intentionally disabled with explicit UX copy and test).
-3. Save-before-run flow still enforced.
-4. Visual snapshots for desktop/mobile remain within threshold for key states.
-5. A11y checks for focus, labels, live regions, reduced motion.
+Primary files:
+1. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/test/coordination.visual.test.ts`
+2. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web/test/*` (add interaction test file if needed)
+3. `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/docs/projects/agent-coordination-canvas-v1/*`
 
-## Phase 5: Cutover and Purge
-Primary objective: zero legacy static canvas artifacts.
+Required implementation decisions:
+1. Add interaction tests for draggable and add-node on WorkflowKit surface.
+2. Keep and extend save-before-run test.
+3. Keep and extend error live-region visual/a11y state snapshots.
+4. Remove dead static canvas artifacts and references.
+5. Update docs to final architecture only (interactive WorkflowKit canvas).
 
-Changes:
-1. Remove live references to static graph renderer components.
-2. Delete obsolete static renderer files if no longer used.
-3. Update docs to reference interactive WorkflowKit surface only.
-4. Enforce grep gate for removed symbols/paths.
+Legacy purge gate:
+1. Zero references to hidden editor injection path.
+2. Zero references to static flow node/edge renderer in live route.
+3. Zero docs describing static canvas as source of truth.
 
-## Risks and Mitigations
-1. Styling drift from WorkflowKit internals.
-- Mitigation: scope CSS overrides to coordination container and pin parity snapshots.
-2. Runtime regression after editor swap.
-- Mitigation: keep adapters/hooks unchanged first, migrate rendering only, then harden tests.
-3. Interaction mismatch vs design static mock.
-- Mitigation: treat MCP as visual/composition source; WorkflowKit as functional source.
+## Important Public APIs / Interfaces / Types
+1. Backend coordination endpoint paths remain unchanged:
+`/rawr/coordination/workflows`  
+`/rawr/coordination/workflows/:id`  
+`/rawr/coordination/workflows/:id/validate`  
+`/rawr/coordination/workflows/:id/run`  
+`/rawr/coordination/runs/:runId`  
+`/rawr/coordination/runs/:runId/timeline`
+2. Frontend internal interface updates:
+`CanvasWorkspace` no longer accepts static `nodes`/`edges` for primary rendering.
+3. `FlowCanvas` contract changes to accept WorkflowKit editor inputs (workflow/trigger/actions/onChange) and render interactive editor directly.
+4. Remove static graph-specific UI types if unused after migration (`WorkflowNodeModel`, `WorkflowEdgeModel`, related mapper outputs).
+5. No change to `CoordinationWorkflowV1` schema in this pass.
+
+## Test Cases and Scenarios
+1. Canvas interactivity:
+Drag a node in the visible canvas and verify pointer interactions are active.
+2. Add-node behavior:
+Use WorkflowKit add handle (`+`) and menu to add an action node; assert node count increases.
+3. Save-before-run:
+On dirty workflow, `save` happens before `run`.
+4. Run error path:
+Simulate run failure and assert live error region message and disabled/enabled button states.
+5. Polling safety:
+Switch runs/workflows and verify stale polling does not overwrite latest state.
+6. Visual parity snapshots:
+Desktop + mobile states for default, palette open, validation error, run active, run terminal timeline, run error.
+7. Accessibility:
+Focus visibility/order, labels, live region announcements, reduced-motion behavior.
+8. No legacy static renderer:
+grep gate confirms no active references to removed static renderer path.
 
 ## Completion Gates
-1. `bun run --cwd apps/web typecheck` passes.
-2. `bun run --cwd apps/web test` passes.
-3. `bun run --cwd apps/web test:visual` passes.
-4. Coordination package tests pass.
-5. No static canvas live-path references remain.
+1. `git status --short` clean at each branch boundary.
+2. `gt log short --stack` coherent and restack-clean.
+3. `bun run --cwd /Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web typecheck` passes.
+4. `bun run --cwd /Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web test` passes.
+5. `bun run --cwd /Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-a-coordination-design-data-v1/apps/web test:visual` passes.
+6. Targeted coordination package tests pass.
+7. Docs and scratchpads are updated to final interactive architecture.
+8. Stack submission uses `gt submit --stack --ai`.
+
+## Assumptions and Defaults
+1. WorkflowKit version remains `@inngest/workflow-kit@0.1.3`.
+2. MCP design is the visual/composition source; WorkflowKit is the functional editor source.
+3. Built-in WorkflowKit `Sidebar` is not shown by default to preserve MCP side-panel parity and avoid dual panel UI.
+4. Add-node interaction uses WorkflowKit add handles and action menu.
+5. Node positional persistence beyond current workflow schema is out of scope for this remediation pass.
+6. No compatibility shims or static-canvas fallback survives final cutover.

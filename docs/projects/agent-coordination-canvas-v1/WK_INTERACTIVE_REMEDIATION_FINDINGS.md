@@ -40,3 +40,10 @@ We preserved static design internals from MCP composition instead of replacing o
 2. Save-before-run behavior remains enforced.
 3. Endpoint paths remain unchanged.
 4. No duplicate static canvas renderer in final live route.
+
+## Implementation Guardrails (Locked)
+1. WorkflowKit editor must be visible and primary in live route.
+2. No hidden engine overlay patterns remain.
+3. No static graph renderer remains in active composition.
+4. Save-before-run and structured error behavior are regression-sensitive and must be preserved.
+5. Add-node behavior must be validated via WorkflowKit add handles.
