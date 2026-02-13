@@ -4,7 +4,7 @@ import { Router } from "./routing/router";
 import { HomePage } from "./pages/HomePage";
 import { MountsPage } from "./pages/MountsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { CoordinationPage } from "./pages/CoordinationPage";
+import { CoordinationPage } from "./coordination/components/CoordinationPage";
 
 export function App() {
   return (

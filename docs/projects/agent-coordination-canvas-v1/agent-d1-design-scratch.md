@@ -59,3 +59,7 @@
   - Extracted page-level logic from legacy monolith into the design-mirrored coordination component tree.
   - Added local coordination style/type modules and wired `apps/web/src/ui/pages/CoordinationPage.tsx` to the new tree.
   - Preserved host shell behavior and keyboard/live-region semantics pending bridge phase hookup.
+- 2026-02-13T00:10:00Z: Legacy cleanup complete after cutover.
+  - Removed legacy wrapper `apps/web/src/ui/pages/CoordinationPage.tsx`.
+  - Removed legacy stylesheet `apps/web/src/ui/styles/coordination-page.css`.
+  - `/coordination` now points directly to `apps/web/src/ui/coordination/components/CoordinationPage.tsx`.

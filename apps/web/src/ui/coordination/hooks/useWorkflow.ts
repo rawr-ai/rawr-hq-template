@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   coordinationErrorMessage,
   validateWorkflow,
@@ -65,6 +65,7 @@ export function useWorkflow() {
   const [validation, setValidation] = useState<ValidationResultV1>(() => validateWorkflow(starterWorkflow()));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const activeWorkflowIdRef = useRef(activeWorkflow.workflowId);
 
   const refreshValidation = useCallback((workflow: WorkflowModel) => {
     setValidation(validateWorkflow(workflow));
@@ -78,6 +79,10 @@ export function useWorkflow() {
     [refreshValidation],
   );
 
+  useEffect(() => {
+    activeWorkflowIdRef.current = activeWorkflow.workflowId;
+  }, [activeWorkflow.workflowId]);
+
   const refreshWorkflows = useCallback(async () => {
     const response = await listWorkflows();
     if (response.ok !== true) {
@@ -90,9 +95,9 @@ export function useWorkflow() {
 
     if (next.length === 0) return;
 
-    const preferred = next.find((item) => item.workflowId === activeWorkflow.workflowId) ?? next[0];
+    const preferred = next.find((item) => item.workflowId === activeWorkflowIdRef.current) ?? next[0];
     setActiveAndValidate(preferred);
-  }, [activeWorkflow.workflowId, setActiveAndValidate]);
+  }, [setActiveAndValidate]);
 
   useEffect(() => {
     refreshWorkflows().catch((err) => setError(String(err)));
