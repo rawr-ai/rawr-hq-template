@@ -3,7 +3,7 @@ import path from "node:path";
 
 import type { AnyElysia } from "./plugins";
 import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
-import { createCoordinationRuntimeAdapter, registerCoordinationRoutes } from "./coordination";
+import { createCoordinationRuntimeAdapter } from "./coordination";
 import { registerOrpcRoutes } from "./orpc";
 
 export type RawrRoutesOptions = {
@@ -65,8 +65,6 @@ async function resolveWebModulePath(pluginRoot: string): Promise<string | null> 
 }
 
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
-  app.get("/rawr/state", () => ({ ok: true, plugins: { enabled: Array.from(opts.enabledPluginIds).sort() } }));
-
   app.get("/rawr/plugins/web/:dirName", async ({ params }) => {
     const dirName = String((params as any).dirName ?? "");
     if (!isSafeDirName(dirName)) return new Response("not found", { status: 404 });
@@ -117,13 +115,6 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     baseUrl: opts.baseUrl ?? "http://localhost:3000",
     runtime,
     inngestClient: inngestBundle.client,
-  });
-
-  registerCoordinationRoutes(app, {
-    repoRoot: opts.repoRoot,
-    baseUrl: opts.baseUrl ?? "http://localhost:3000",
-    inngestClient: inngestBundle.client,
-    runtime,
   });
 
   return app;
