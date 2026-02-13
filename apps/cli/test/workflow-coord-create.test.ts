@@ -18,7 +18,8 @@ describe("workflow coord create", () => {
     expect(proc.status).toBe(0);
     const parsed = JSON.parse(proc.stdout) as any;
     expect(parsed.ok).toBe(true);
-    expect(parsed.data.planned.path).toBe("/rawr/coordination/workflows");
+    expect(parsed.data.planned.procedure).toBe("coordination.saveWorkflow");
+    expect(parsed.data.planned.rpcPath).toBe("/rpc/coordination/saveWorkflow");
     expect(parsed.data.workflow.workflowId).toBe("wf-cli");
   });
 });

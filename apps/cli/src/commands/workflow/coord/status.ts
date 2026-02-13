@@ -1,7 +1,7 @@
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { coordinationErrorMessage, type RunStatusV1 } from "@rawr/coordination";
-import { coordinationFetch, resolveServerBaseUrl } from "../../../lib/coordination-api";
+import { coordinationErrorMessage } from "@rawr/coordination";
+import { coordinationGetRunStatus, resolveServerBaseUrl } from "../../../lib/coordination-api";
 
 export default class WorkflowCoordStatus extends RawrCommand {
   static description = "Show status for a coordination run";
@@ -20,15 +20,15 @@ export default class WorkflowCoordStatus extends RawrCommand {
     const runId = String(args.runId);
 
     const baseUrl = await resolveServerBaseUrl(process.cwd());
-    const response = await coordinationFetch<{ run: RunStatusV1 }>({
+    const response = await coordinationGetRunStatus({
       baseUrl,
-      path: `/rawr/coordination/runs/${encodeURIComponent(runId)}`,
+      runId,
     });
 
-    if (response.data.ok !== true) {
-      const result = this.fail(coordinationErrorMessage(response.data, "Run not found"), {
+    if (!response.ok) {
+      const result = this.fail(coordinationErrorMessage(response.error, "Run not found"), {
         code: "COORD_RUN_NOT_FOUND",
-        details: response.data,
+        details: response.error,
       });
       this.outputResult(result, { flags: baseFlags });
       this.exit(1);
