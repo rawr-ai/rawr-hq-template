@@ -9,10 +9,17 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./orpc": {
+      "types": "./src/orpc/index.ts",
+      "default": "./src/orpc/index.ts"
     }
   },
   "dependencies": {
-    "@oclif/core": "^4.2.10"
+    "@oclif/core": "^4.2.10",
+    "@orpc/contract": "^1.13.5",
+    "@rawr/coordination": "workspace:*",
+    "@rawr/state": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

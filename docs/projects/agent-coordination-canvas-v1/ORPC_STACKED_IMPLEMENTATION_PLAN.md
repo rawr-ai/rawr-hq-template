@@ -19,6 +19,8 @@ The execution model is one fine-grained Graphite stack with orchestrator-led int
 4. One HQ root router composing domain subrouters.
 5. Day-1 OpenAPI exposure.
 6. Full-cutover end state with no transitional legacy paths.
+7. TypeBox-first schema policy: domain and contract schema source-of-truth remains TypeBox.
+8. ORPC boundary schema strategy: use Standard Schema adapters from TypeBox (TypeMap bridge), not direct Zod authoring in repo modules.
 
 ## Slice map
 
@@ -64,3 +66,10 @@ These are framework-native by design and not considered legacy bypasses.
 ## Notes on top-of-stack advancement
 
 This stack is based on a newer top branch than the original ORPC scope research base. Agents must reconcile differences against current branch state before applying each slice and update their plan/scratch docs as needed.
+
+## TypeBox integration policy for this stack
+
+1. Keep TypeBox as canonical schema authoring across domain packages.
+2. Where ORPC requires Standard Schema at procedure boundaries, adapt TypeBox schemas via a Standard Schema bridge.
+3. Do not introduce new Zod-authored contract modules for this cutover.
+4. If OpenAPI/JSON-schema conversion needs explicit converters, wire them through ORPC plugin converter hooks in server exposure slices.
