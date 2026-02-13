@@ -1,10 +1,8 @@
 import { useState } from "react";
-import type React from "react";
+import type { PublicEngineAction, Workflow as WorkflowKitWorkflow } from "@inngest/workflow-kit";
 import type {
   RunActionState,
-  WorkflowEdgeModel,
   WorkflowModel,
-  WorkflowNodeModel,
 } from "../../types/workflow";
 import { FlowCanvas } from "./FlowCanvas";
 import { WorkflowToolbar } from "./WorkflowToolbar";
@@ -17,15 +15,16 @@ type CanvasWorkspaceProps = {
   runAction: RunActionState;
   monitorHref: string | null;
   workflowEvent: string;
-  nodes: WorkflowNodeModel[];
-  edges: WorkflowEdgeModel[];
+  workflowKitWorkflow: WorkflowKitWorkflow;
+  trigger: unknown;
+  availableActions: PublicEngineAction[];
+  onEditorChange: (workflow: WorkflowKitWorkflow) => void;
   onSelectWorkflow: (workflowId: string) => void;
   onSave: () => Promise<void> | void;
   onValidate: () => Promise<void> | void;
   onRun: () => Promise<void> | void;
   onNameChange: (name: string) => void;
   onDescriptionChange: (description: string) => void;
-  children?: React.ReactNode;
 };
 
 export function CanvasWorkspace({
@@ -35,15 +34,16 @@ export function CanvasWorkspace({
   runAction,
   monitorHref,
   workflowEvent,
-  nodes,
-  edges,
+  workflowKitWorkflow,
+  trigger,
+  availableActions,
+  onEditorChange,
   onSelectWorkflow,
   onSave,
   onValidate,
   onRun,
   onNameChange,
   onDescriptionChange,
-  children,
 }: CanvasWorkspaceProps) {
   const [sidePanelOpen, setSidePanelOpen] = useState(true);
 
@@ -68,7 +68,12 @@ export function CanvasWorkspace({
             sidePanelOpen={sidePanelOpen}
             onToggleSidePanel={() => setSidePanelOpen((prev) => !prev)}
           />
-          <FlowCanvas nodes={nodes} edges={edges} hiddenEngine={children} />
+          <FlowCanvas
+            workflow={workflowKitWorkflow}
+            trigger={trigger}
+            availableActions={availableActions}
+            onChange={onEditorChange}
+          />
         </div>
 
         <div

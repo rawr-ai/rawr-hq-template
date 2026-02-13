@@ -1,45 +1,16 @@
-import { useMemo, useState, type ReactNode } from "react";
-import type { WorkflowEdgeModel, WorkflowNodeModel } from "../../types/workflow";
-import { FlowEdges } from "./FlowEdges";
-import { FLOW_NODE_ICONS, FlowNode } from "./FlowNode";
+import type { PublicEngineAction, Workflow as WorkflowKitWorkflow } from "@inngest/workflow-kit";
+import { Editor, Provider } from "@inngest/workflow-kit/ui";
 
 type FlowCanvasProps = {
-  nodes: WorkflowNodeModel[];
-  edges: WorkflowEdgeModel[];
-  hiddenEngine?: ReactNode;
+  workflow: WorkflowKitWorkflow;
+  trigger: unknown;
+  availableActions: PublicEngineAction[];
+  onChange: (workflow: WorkflowKitWorkflow) => void;
 };
 
-const TOOLBAR_OFFSET = 100;
-const NODE_GAP = 40;
-const NODE_HEIGHT = 72;
-const NODE_LEFT = 32;
-const NODE_WIDTH = 240;
-
-export function FlowCanvas({ nodes, edges, hiddenEngine }: FlowCanvasProps) {
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-
-  const layout = useMemo(
-    () =>
-      nodes.map((node, index) => ({
-        ...node,
-        px: NODE_LEFT,
-        py: TOOLBAR_OFFSET + index * (NODE_HEIGHT + NODE_GAP),
-      })),
-    [nodes],
-  );
-
-  const nodePositions = useMemo(() => {
-    const map = new Map<string, { px: number; py: number }>();
-    for (const node of layout) {
-      map.set(node.id, { px: node.px, py: node.py });
-    }
-    return map;
-  }, [layout]);
-
-  const edgeCenterX = NODE_LEFT + NODE_WIDTH / 2;
-
+export function FlowCanvas({ workflow, trigger, availableActions, onChange }: FlowCanvasProps) {
   return (
-    <div className="relative h-full min-h-[500px] w-full overflow-auto bg-canvas transition-colors duration-200">
+    <div className="coordination-flow-canvas relative h-full min-h-[500px] w-full overflow-hidden bg-canvas transition-colors duration-200">
       <div
         className="pointer-events-none absolute inset-0 opacity-20 transition-colors duration-200"
         style={{
@@ -48,31 +19,11 @@ export function FlowCanvas({ nodes, edges, hiddenEngine }: FlowCanvasProps) {
         }}
       />
 
-      <FlowEdges edges={edges} nodePositions={nodePositions} edgeCenterX={edgeCenterX} nodeHeight={NODE_HEIGHT} />
-
-      <div className="relative" style={{ zIndex: 1 }}>
-        {layout.map((node) => (
-          <div
-            key={node.id}
-            className="absolute"
-            style={{
-              top: node.py,
-              left: node.px,
-            }}
-          >
-            <FlowNode
-              type={node.type}
-              title={node.title}
-              subtitle={node.subtitle}
-              icon={node.icon ? FLOW_NODE_ICONS[node.icon] : undefined}
-              selected={selectedNodeId === node.id}
-              onClick={() => setSelectedNodeId(node.id)}
-            />
-          </div>
-        ))}
+      <div className="relative z-[1] h-full min-h-[500px]">
+        <Provider workflow={workflow} trigger={trigger} availableActions={availableActions} onChange={onChange}>
+          <Editor direction="down" />
+        </Provider>
       </div>
-
-      {hiddenEngine ? <div className="pointer-events-none absolute inset-0 opacity-0">{hiddenEngine}</div> : null}
     </div>
   );
 }

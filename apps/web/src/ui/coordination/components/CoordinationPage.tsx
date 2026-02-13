@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Editor, Provider, Sidebar } from "@inngest/workflow-kit/ui";
 import "@inngest/workflow-kit/ui/ui.css";
 import "../styles/index.css";
 import { CanvasWorkspace } from "./canvas";
@@ -9,7 +8,6 @@ import {
   runActionState,
   statusForRunState,
   validationSummary,
-  workflowGraph,
 } from "../adapters/workflow-mappers";
 import { useRunStatus } from "../hooks/useRunStatus";
 import { useWorkflow } from "../hooks/useWorkflow";
@@ -44,7 +42,6 @@ export function CoordinationPage() {
     [runStatus, workflow],
   );
 
-  const graph = useMemo(() => workflowGraph(workflow.activeWorkflow), [workflow.activeWorkflow]);
   const monitorHref = useMemo(() => monitorLinkForRun(runStatus.lastRun), [runStatus.lastRun]);
   const runAction = useMemo(
     () =>
@@ -149,27 +146,18 @@ export function CoordinationPage() {
           busy={workflow.busy}
           runAction={runAction}
           monitorHref={monitorHref}
-          workflowEvent={graph.event}
-          nodes={graph.nodes}
-          edges={graph.edges}
+          workflowEvent={workflow.trigger.event.name}
+          workflowKitWorkflow={workflow.workflowKitWorkflow}
+          trigger={workflow.trigger}
+          availableActions={workflow.availableActions}
+          onEditorChange={workflow.handleEditorChange}
           onSelectWorkflow={workflow.selectWorkflow}
           onSave={workflow.saveActiveWorkflow}
           onValidate={workflow.validateActiveWorkflow}
           onRun={runWorkflow}
           onNameChange={workflow.updateActiveName}
           onDescriptionChange={workflow.updateActiveDescription}
-        >
-          <Provider
-            workflow={workflow.workflowKitWorkflow}
-            trigger={workflow.trigger}
-            availableActions={workflow.availableActions}
-            onChange={workflow.handleEditorChange}
-          >
-            <Editor direction="down">
-              <Sidebar position="right" />
-            </Editor>
-          </Provider>
-        </CanvasWorkspace>
+        />
 
         <RunStatusPanel
           validation={workflow.validation}
