@@ -21,6 +21,8 @@ Applies to `docs/**`.
 - `docs/process/UPSTREAM_SYNC_RUNBOOK.md`
 - `docs/process/PLUGIN_E2E_WORKFLOW.md`
 - `docs/process/RUNBOOKS.md`
+- `docs/process/runbooks/STACK_DRAIN_LOOP.md`
+- `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md`
 - `docs/process/MAINTENANCE_CADENCE.md`
 - `docs/process/HQ_USAGE.md`
 - `docs/process/HQ_OPERATIONS.md`
