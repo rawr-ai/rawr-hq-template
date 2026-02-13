@@ -1,7 +1,7 @@
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { coordinationErrorMessage, type ValidationResultV1 } from "@rawr/coordination";
-import { coordinationFetch, resolveServerBaseUrl } from "../../../lib/coordination-api";
+import { coordinationErrorMessage } from "@rawr/coordination";
+import { coordinationValidateWorkflow, resolveServerBaseUrl } from "../../../lib/coordination-api";
 
 export default class WorkflowCoordValidate extends RawrCommand {
   static description = "Validate a coordination workflow by id";
@@ -20,21 +20,17 @@ export default class WorkflowCoordValidate extends RawrCommand {
     const workflowId = String(args.workflowId);
 
     const baseUrl = await resolveServerBaseUrl(process.cwd());
-    const response = await coordinationFetch<{
-      workflowId: string;
-      validation: ValidationResultV1;
-    }>({
+    const response = await coordinationValidateWorkflow({
       baseUrl,
-      path: `/rawr/coordination/workflows/${encodeURIComponent(workflowId)}/validate`,
-      method: "POST",
+      workflowId,
     });
 
-    if (response.data.ok !== true) {
+    if (!response.ok) {
       const result = this.fail(
-        coordinationErrorMessage(response.data, "Failed to validate workflow"),
+        coordinationErrorMessage(response.error, "Failed to validate workflow"),
         {
-        code: "COORD_VALIDATE_FAILED",
-        details: response.data,
+          code: "COORD_VALIDATE_FAILED",
+          details: response.error,
         },
       );
       this.outputResult(result, { flags: baseFlags });

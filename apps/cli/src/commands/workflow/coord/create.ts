@@ -1,7 +1,11 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
 import { coordinationErrorMessage, type CoordinationWorkflowV1 } from "@rawr/coordination";
-import { coordinationFetch, resolveServerBaseUrl } from "../../../lib/coordination-api";
+import {
+  coordinationProcedurePath,
+  coordinationSaveWorkflow,
+  resolveServerBaseUrl,
+} from "../../../lib/coordination-api";
 
 function starterWorkflow(input: { workflowId: string; name: string; description: string }): CoordinationWorkflowV1 {
   return {
@@ -58,7 +62,14 @@ export default class WorkflowCoordCreate extends RawrCommand {
     });
 
     if (baseFlags.dryRun) {
-      const result = this.ok({ planned: { method: "POST", path: "/rawr/coordination/workflows" }, workflow });
+      const result = this.ok({
+        planned: {
+          procedure: "coordination.saveWorkflow",
+          method: "POST",
+          rpcPath: coordinationProcedurePath("coordination.saveWorkflow"),
+        },
+        workflow,
+      });
       this.outputResult(result, {
         flags: baseFlags,
         human: () => {
@@ -70,19 +81,17 @@ export default class WorkflowCoordCreate extends RawrCommand {
     }
 
     const baseUrl = await resolveServerBaseUrl(process.cwd());
-    const response = await coordinationFetch<{ workflow: CoordinationWorkflowV1 }>({
+    const response = await coordinationSaveWorkflow({
       baseUrl,
-      path: "/rawr/coordination/workflows",
-      method: "POST",
-      body: { workflow },
+      workflow,
     });
 
-    if (response.data.ok !== true) {
+    if (!response.ok) {
       const result = this.fail(
-        coordinationErrorMessage(response.data, "Failed to create coordination workflow"),
+        coordinationErrorMessage(response.error, "Failed to create coordination workflow"),
         {
-        code: "COORD_CREATE_FAILED",
-        details: response.data,
+          code: "COORD_CREATE_FAILED",
+          details: response.error,
         },
       );
       this.outputResult(result, { flags: baseFlags });

@@ -1,12 +1,18 @@
 import { Args, Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { coordinationErrorMessage, type RunStatusV1 } from "@rawr/coordination";
-import { coordinationFetch, resolveServerBaseUrl } from "../../../lib/coordination-api";
+import { coordinationErrorMessage, type JsonValue } from "@rawr/coordination";
+import {
+  coordinationProcedurePath,
+  coordinationQueueRun,
+  resolveServerBaseUrl,
+} from "../../../lib/coordination-api";
 
-function parseInput(raw: string): Record<string, unknown> {
+function parseInput(raw: string): JsonValue {
   try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    if (!parsed || typeof parsed !== "object") return {};
+    const parsed = JSON.parse(raw) as JsonValue;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
     return parsed;
   } catch {
     throw new Error("--input must be valid JSON object text");
@@ -30,7 +36,7 @@ export default class WorkflowCoordRun extends RawrCommand {
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     const workflowId = String(args.workflowId);
 
-    let input: Record<string, unknown>;
+    let input: JsonValue;
     try {
       input = parseInput(String(flags.input));
     } catch (err) {
@@ -45,8 +51,9 @@ export default class WorkflowCoordRun extends RawrCommand {
     if (baseFlags.dryRun) {
       const result = this.ok({
         planned: {
+          procedure: "coordination.queueRun",
           method: "POST",
-          path: `/rawr/coordination/workflows/${workflowId}/run`,
+          rpcPath: coordinationProcedurePath("coordination.queueRun"),
           body: { input },
         },
       });
@@ -55,17 +62,16 @@ export default class WorkflowCoordRun extends RawrCommand {
     }
 
     const baseUrl = await resolveServerBaseUrl(process.cwd());
-    const response = await coordinationFetch<{ run: RunStatusV1; eventIds: string[] }>({
+    const response = await coordinationQueueRun({
       baseUrl,
-      path: `/rawr/coordination/workflows/${encodeURIComponent(workflowId)}/run`,
-      method: "POST",
-      body: { input },
+      workflowId,
+      runInput: input,
     });
 
-    if (response.data.ok !== true) {
-      const result = this.fail(coordinationErrorMessage(response.data, "Workflow run failed"), {
+    if (!response.ok) {
+      const result = this.fail(coordinationErrorMessage(response.error, "Workflow run failed"), {
         code: "COORD_RUN_FAILED",
-        details: response.data,
+        details: response.error,
       });
       this.outputResult(result, { flags: baseFlags });
       this.exit(1);

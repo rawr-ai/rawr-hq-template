@@ -1,17 +1,47 @@
-import { loadRawrConfig } from "@rawr/control-plane";
+import { createORPCClient, ORPCError } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import type { ContractRouterClient } from "@orpc/contract";
 import {
   coordinationFailure,
-  isCoordinationFailure,
-  type CoordinationEnvelope,
+  type CoordinationFailure,
+  type CoordinationWorkflowV1,
   type JsonValue,
+  type RunStatusV1,
+  type ValidationResultV1,
 } from "@rawr/coordination";
+import { loadRawrConfig } from "@rawr/control-plane";
+import { hqContract } from "@rawr/core/orpc";
 import { findWorkspaceRoot } from "./workspace-plugins";
 
-export type CoordinationApiResponse<TPayload extends Record<string, unknown>> = {
-  status: number;
-  ok: boolean;
-  data: CoordinationEnvelope<TPayload>;
-};
+type HqClient = ContractRouterClient<typeof hqContract>;
+type CoordinationClient = HqClient["coordination"];
+
+export type CoordinationProcedureResult<TPayload extends Record<string, unknown>> =
+  | { ok: true; data: TPayload }
+  | { ok: false; error: CoordinationFailure };
+
+function resolveRpcUrl(baseUrl: string): string {
+  return `${baseUrl.replace(/\/$/, "")}/rpc`;
+}
+
+const clientCache = new Map<string, CoordinationClient>();
+
+function getCoordinationClient(baseUrl: string): CoordinationClient {
+  const rpcUrl = resolveRpcUrl(baseUrl);
+  const cached = clientCache.get(rpcUrl);
+  if (cached) {
+    return cached;
+  }
+
+  const client = createORPCClient<HqClient>(
+    new RPCLink({
+      url: rpcUrl,
+    }),
+  );
+
+  clientCache.set(rpcUrl, client.coordination);
+  return client.coordination;
+}
 
 function toJsonValue(value: unknown): JsonValue {
   try {
@@ -21,35 +51,48 @@ function toJsonValue(value: unknown): JsonValue {
   }
 }
 
-function asEnvelope<TPayload extends Record<string, unknown>>(input: {
-  value: unknown;
-  status: number;
-  statusText: string;
-  url: string;
-  raw: string;
-}): CoordinationEnvelope<TPayload> {
-  const value = input.value;
-  if (value && typeof value === "object" && "ok" in value) {
-    const maybeEnvelope = value as { ok?: unknown };
-    if (maybeEnvelope.ok === true) {
-      return value as CoordinationEnvelope<TPayload>;
-    }
-    if (maybeEnvelope.ok === false && isCoordinationFailure(value)) {
-      return value;
-    }
+export function coordinationFailureFromError(error: unknown, fallback: string): CoordinationFailure {
+  if (error instanceof ORPCError) {
+    return coordinationFailure({
+      code: error.code ?? "INTERNAL_ERROR",
+      message: error.message || fallback,
+      retriable: error.status >= 500,
+      details: toJsonValue(error.data),
+    });
+  }
+
+  if (error instanceof Error) {
+    return coordinationFailure({
+      code: "INTERNAL_ERROR",
+      message: error.message || fallback,
+      retriable: false,
+    });
   }
 
   return coordinationFailure({
     code: "INTERNAL_ERROR",
-    message: `Unexpected response from coordination API (${input.status} ${input.statusText})`,
-    retriable: input.status >= 500,
-    details: toJsonValue({
-      url: input.url,
-      status: input.status,
-      statusText: input.statusText,
-      raw: input.raw.slice(0, 500),
-    }),
+    message: fallback,
+    retriable: false,
+    details: toJsonValue(error),
   });
+}
+
+async function coordinationCall<TPayload extends Record<string, unknown>>(input: {
+  baseUrl: string;
+  fallback: string;
+  invoke: (client: CoordinationClient) => Promise<TPayload>;
+}): Promise<CoordinationProcedureResult<TPayload>> {
+  const client = getCoordinationClient(input.baseUrl);
+
+  try {
+    const data = await input.invoke(client);
+    return { ok: true, data };
+  } catch (error) {
+    return {
+      ok: false,
+      error: coordinationFailureFromError(error, input.fallback),
+    };
+  }
 }
 
 export async function resolveServerBaseUrl(cwd = process.cwd()): Promise<string> {
@@ -67,40 +110,52 @@ export async function resolveServerBaseUrl(cwd = process.cwd()): Promise<string>
   return `http://localhost:${port}`;
 }
 
-export async function coordinationFetch<TPayload extends Record<string, unknown>>(input: {
+export function coordinationProcedurePath(procedure: string): string {
+  return `/rpc/${procedure.replace(/\./g, "/")}`;
+}
+
+export function coordinationSaveWorkflow(input: {
   baseUrl: string;
-  path: string;
-  method?: "GET" | "POST";
-  body?: unknown;
-}): Promise<CoordinationApiResponse<TPayload>> {
-  const url = `${input.baseUrl.replace(/\/$/, "")}${input.path}`;
-  const response = await fetch(url, {
-    method: input.method ?? "GET",
-    headers: input.body ? { "content-type": "application/json" } : undefined,
-    body: input.body ? JSON.stringify(input.body) : undefined,
+  workflow: CoordinationWorkflowV1;
+}) {
+  return coordinationCall<{ workflow: CoordinationWorkflowV1 }>({
+    baseUrl: input.baseUrl,
+    fallback: "Failed to create coordination workflow",
+    invoke: (client) => client.saveWorkflow({ workflow: input.workflow }),
   });
+}
 
-  const raw = await response.text();
-  let parsed: unknown = null;
-  if (raw.trim() !== "") {
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      parsed = null;
-    }
-  }
-
-  const envelope = asEnvelope<TPayload>({
-    value: parsed,
-    status: response.status,
-    statusText: response.statusText,
-    url,
-    raw,
+export function coordinationValidateWorkflow(input: { baseUrl: string; workflowId: string }) {
+  return coordinationCall<{ workflowId: string; validation: ValidationResultV1 }>({
+    baseUrl: input.baseUrl,
+    fallback: "Failed to validate workflow",
+    invoke: (client) => client.validateWorkflow({ workflowId: input.workflowId }),
   });
+}
 
-  return {
-    status: response.status,
-    ok: response.ok && envelope.ok === true,
-    data: envelope,
-  };
+export function coordinationQueueRun(input: {
+  baseUrl: string;
+  workflowId: string;
+  runInput: JsonValue;
+}) {
+  return coordinationCall<{ run: RunStatusV1; eventIds: string[] }>({
+    baseUrl: input.baseUrl,
+    fallback: "Workflow run failed",
+    invoke: (client) =>
+      client.queueRun({
+        workflowId: input.workflowId,
+        input: input.runInput,
+      }),
+  });
+}
+
+export function coordinationGetRunStatus(input: { baseUrl: string; runId: string }) {
+  return coordinationCall<{ run: RunStatusV1 }>({
+    baseUrl: input.baseUrl,
+    fallback: "Run not found",
+    invoke: (client) =>
+      client.getRunStatus({
+        runId: input.runId,
+      }),
+  });
 }
