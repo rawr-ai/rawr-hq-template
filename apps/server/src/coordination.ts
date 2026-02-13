@@ -1,5 +1,7 @@
 import {
   appendRunTimelineEvent,
+  coordinationFailure,
+  coordinationSuccess,
   ensureCoordinationStorage,
   getRunStatus,
   getRunTimeline,
@@ -10,6 +12,7 @@ import {
   saveRunStatus,
   saveWorkflow,
   validateWorkflow,
+  validationFailure,
   writeDeskMemory,
   type CoordinationWorkflowV1,
   type JsonValue,
@@ -36,6 +39,17 @@ type RequestWithWorkflow = {
   runId?: string;
 };
 
+type ParsedRunId =
+  | {
+      ok: true;
+      runId: string;
+    }
+  | {
+      ok: false;
+      message: string;
+      value: unknown;
+    };
+
 async function tryReadJson(request: Request): Promise<Record<string, unknown>> {
   try {
     const parsed = (await request.json()) as Record<string, unknown>;
@@ -60,11 +74,46 @@ function generateRunId(): string {
   return `run-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function badRequest(error: string): Response {
-  return new Response(JSON.stringify({ ok: false, error }), {
-    status: 400,
-    headers: { "content-type": "application/json" },
-  });
+function failureResponse(
+  status: number,
+  input: {
+    code: string;
+    message: string;
+    retriable?: boolean;
+    details?: JsonValue;
+  },
+): Response {
+  return new Response(
+    JSON.stringify(
+      coordinationFailure({
+        code: input.code,
+        message: input.message,
+        retriable: input.retriable ?? false,
+        details: input.details,
+      }),
+    ),
+    {
+      status,
+      headers: { "content-type": "application/json" },
+    },
+  );
+}
+
+function badRequest(input: { code: string; message: string; details?: JsonValue }): Response {
+  return failureResponse(400, { ...input, retriable: false });
+}
+
+function notFound(input: { code: string; message: string; details?: JsonValue }): Response {
+  return failureResponse(404, { ...input, retriable: false });
+}
+
+function internalError(input: {
+  code: string;
+  message: string;
+  details?: JsonValue;
+  retriable?: boolean;
+}): Response {
+  return failureResponse(500, { ...input, retriable: input.retriable ?? true });
 }
 
 function parseWorkflowId(value: unknown): string | null {
@@ -74,15 +123,17 @@ function parseWorkflowId(value: unknown): string | null {
   return isSafeCoordinationId(trimmed) ? trimmed : null;
 }
 
-function parseRunId(value: unknown): { runId?: string; error?: string } {
-  if (value === undefined || value === null) return { runId: generateRunId() };
-  if (typeof value !== "string") return { error: "runId must be a string when provided" };
-  const trimmed = value.trim();
-  if (trimmed === "") return { runId: generateRunId() };
-  if (!isSafeCoordinationId(trimmed)) {
-    return { error: `Invalid runId format: ${trimmed}` };
+function parseRunId(value: unknown): ParsedRunId {
+  if (value === undefined || value === null) return { ok: true, runId: generateRunId() };
+  if (typeof value !== "string") {
+    return { ok: false, message: "runId must be a string when provided", value };
   }
-  return { runId: trimmed };
+  const trimmed = value.trim();
+  if (trimmed === "") return { ok: true, runId: generateRunId() };
+  if (!isSafeCoordinationId(trimmed)) {
+    return { ok: false, message: `Invalid runId format: ${trimmed}`, value: trimmed };
+  }
+  return { ok: true, runId: trimmed };
 }
 
 export function createCoordinationRuntimeAdapter(input: {
@@ -120,7 +171,7 @@ export function registerCoordinationRoutes<TApp extends AnyElysia>(app: TApp, op
   app.get("/rawr/coordination/workflows", async () => {
     await ensureCoordinationStorage(opts.repoRoot);
     const workflows = await listWorkflows(opts.repoRoot);
-    return { ok: true, workflows };
+    return coordinationSuccess({ workflows });
   });
 
   app.post("/rawr/coordination/workflows", async ({ request }) => {
@@ -129,83 +180,104 @@ export function registerCoordinationRoutes<TApp extends AnyElysia>(app: TApp, op
     const workflow = asWorkflow(payload);
 
     if (!workflow) {
-      return new Response(JSON.stringify({ ok: false, error: "Missing workflow payload" }), {
-        status: 400,
-        headers: { "content-type": "application/json" },
+      return badRequest({
+        code: "MISSING_WORKFLOW_PAYLOAD",
+        message: "Missing workflow payload",
       });
     }
 
     const validation = validateWorkflow(workflow);
     if (!validation.ok) {
-      return new Response(JSON.stringify({ ok: false, validation }), {
+      return new Response(JSON.stringify(validationFailure(validation)), {
         status: 400,
         headers: { "content-type": "application/json" },
       });
     }
 
     await saveWorkflow(opts.repoRoot, workflow);
-    return { ok: true, workflow };
+    return coordinationSuccess({ workflow });
   });
 
   app.get("/rawr/coordination/workflows/:id", async ({ params }) => {
     await ensureCoordinationStorage(opts.repoRoot);
-    const workflowId = parseWorkflowId((params as any).id);
+    const rawWorkflowId = (params as { id?: unknown }).id;
+    const workflowId = parseWorkflowId(rawWorkflowId);
     if (!workflowId) {
-      return badRequest("Invalid workflowId format");
-    }
-    const workflow = await getWorkflow(opts.repoRoot, workflowId);
-
-    if (!workflow) {
-      return new Response(JSON.stringify({ ok: false, error: "workflow not found" }), {
-        status: 404,
-        headers: { "content-type": "application/json" },
+      return badRequest({
+        code: "INVALID_WORKFLOW_ID",
+        message: "Invalid workflowId format",
+        details: { workflowId: typeof rawWorkflowId === "string" ? rawWorkflowId : null },
       });
     }
 
-    return { ok: true, workflow };
+    const workflow = await getWorkflow(opts.repoRoot, workflowId);
+    if (!workflow) {
+      return notFound({
+        code: "WORKFLOW_NOT_FOUND",
+        message: "workflow not found",
+        details: { workflowId },
+      });
+    }
+
+    return coordinationSuccess({ workflow });
   });
 
   app.post("/rawr/coordination/workflows/:id/validate", async ({ params }) => {
     await ensureCoordinationStorage(opts.repoRoot);
-    const workflowId = parseWorkflowId((params as any).id);
+    const rawWorkflowId = (params as { id?: unknown }).id;
+    const workflowId = parseWorkflowId(rawWorkflowId);
     if (!workflowId) {
-      return badRequest("Invalid workflowId format");
-    }
-    const workflow = await getWorkflow(opts.repoRoot, workflowId);
-
-    if (!workflow) {
-      return new Response(JSON.stringify({ ok: false, error: "workflow not found" }), {
-        status: 404,
-        headers: { "content-type": "application/json" },
+      return badRequest({
+        code: "INVALID_WORKFLOW_ID",
+        message: "Invalid workflowId format",
+        details: { workflowId: typeof rawWorkflowId === "string" ? rawWorkflowId : null },
       });
     }
 
-    return {
-      ok: true,
-      validation: validateWorkflow(workflow),
+    const workflow = await getWorkflow(opts.repoRoot, workflowId);
+    if (!workflow) {
+      return notFound({
+        code: "WORKFLOW_NOT_FOUND",
+        message: "workflow not found",
+        details: { workflowId },
+      });
+    }
+
+    return coordinationSuccess({
       workflowId,
-    };
+      validation: validateWorkflow(workflow),
+    });
   });
 
   app.post("/rawr/coordination/workflows/:id/run", async ({ params, request }) => {
     await ensureCoordinationStorage(opts.repoRoot);
-    const workflowId = parseWorkflowId((params as any).id);
+    const rawWorkflowId = (params as { id?: unknown }).id;
+    const workflowId = parseWorkflowId(rawWorkflowId);
     if (!workflowId) {
-      return badRequest("Invalid workflowId format");
+      return badRequest({
+        code: "INVALID_WORKFLOW_ID",
+        message: "Invalid workflowId format",
+        details: { workflowId: typeof rawWorkflowId === "string" ? rawWorkflowId : null },
+      });
     }
-    const payload = (await tryReadJson(request)) as RequestWithWorkflow;
 
+    const payload = (await tryReadJson(request)) as RequestWithWorkflow;
     const workflow = await getWorkflow(opts.repoRoot, workflowId);
     if (!workflow) {
-      return new Response(JSON.stringify({ ok: false, error: "workflow not found" }), {
-        status: 404,
-        headers: { "content-type": "application/json" },
+      return notFound({
+        code: "WORKFLOW_NOT_FOUND",
+        message: "workflow not found",
+        details: { workflowId },
       });
     }
 
     const parsedRunId = parseRunId(payload.runId);
-    if (!parsedRunId.runId) {
-      return badRequest(parsedRunId.error ?? "Invalid runId");
+    if (!parsedRunId.ok) {
+      return badRequest({
+        code: "INVALID_RUN_ID",
+        message: parsedRunId.message,
+        details: { runId: typeof parsedRunId.value === "string" ? parsedRunId.value : null },
+      });
     }
     const runId = parsedRunId.runId;
 
@@ -219,11 +291,10 @@ export function registerCoordinationRoutes<TApp extends AnyElysia>(app: TApp, op
         baseUrl: opts.baseUrl,
       });
 
-      return {
-        ok: true,
+      return coordinationSuccess({
         run: result.run,
         eventIds: result.eventIds,
-      };
+      });
     } catch (err) {
       const failedAt = new Date().toISOString();
       const failedRun: RunStatusV1 = {
@@ -240,60 +311,79 @@ export function registerCoordinationRoutes<TApp extends AnyElysia>(app: TApp, op
         }),
       };
 
-      await opts.runtime.saveRunStatus(failedRun);
-      await opts.runtime.appendTimeline(
-        runId,
-        createDeskEvent({
+      try {
+        await opts.runtime.saveRunStatus(failedRun);
+        await opts.runtime.appendTimeline(
           runId,
-          workflowId,
-          type: "run.failed",
-          status: "failed",
-          detail: failedRun.error,
-          payload: failedRun.input,
-        }),
-      );
+          createDeskEvent({
+            runId,
+            workflowId,
+            type: "run.failed",
+            status: "failed",
+            detail: failedRun.error,
+            payload: failedRun.input,
+          }),
+        );
+      } catch {
+        // Preserve original queue failure response even if failure persistence fails.
+      }
 
-      return new Response(JSON.stringify({ ok: false, error: failedRun.error, run: failedRun }), {
-        status: 500,
-        headers: { "content-type": "application/json" },
+      return internalError({
+        code: "RUN_QUEUE_FAILED",
+        message: failedRun.error ?? "Workflow run failed",
+        retriable: true,
+        details: toJsonValue({ run: failedRun }),
       });
     }
   });
 
   app.get("/rawr/coordination/runs/:runId", async ({ params }) => {
     await ensureCoordinationStorage(opts.repoRoot);
-    const runId = parseWorkflowId((params as any).runId);
+    const rawRunId = (params as { runId?: unknown }).runId;
+    const runId = parseWorkflowId(rawRunId);
     if (!runId) {
-      return badRequest("Invalid runId format");
-    }
-    const run = await getRunStatus(opts.repoRoot, runId);
-
-    if (!run) {
-      return new Response(JSON.stringify({ ok: false, error: "run not found" }), {
-        status: 404,
-        headers: { "content-type": "application/json" },
+      return badRequest({
+        code: "INVALID_RUN_ID",
+        message: "Invalid runId format",
+        details: { runId: typeof rawRunId === "string" ? rawRunId : null },
       });
     }
 
-    return { ok: true, run };
+    const run = await getRunStatus(opts.repoRoot, runId);
+    if (!run) {
+      return notFound({
+        code: "RUN_NOT_FOUND",
+        message: "run not found",
+        details: { runId },
+      });
+    }
+
+    return coordinationSuccess({ run });
   });
 
   app.get("/rawr/coordination/runs/:runId/timeline", async ({ params }) => {
     await ensureCoordinationStorage(opts.repoRoot);
-    const runId = parseWorkflowId((params as any).runId);
+    const rawRunId = (params as { runId?: unknown }).runId;
+    const runId = parseWorkflowId(rawRunId);
     if (!runId) {
-      return badRequest("Invalid runId format");
+      return badRequest({
+        code: "INVALID_RUN_ID",
+        message: "Invalid runId format",
+        details: { runId: typeof rawRunId === "string" ? rawRunId : null },
+      });
     }
+
     const run = await getRunStatus(opts.repoRoot, runId);
     if (!run) {
-      return new Response(JSON.stringify({ ok: false, error: "run not found" }), {
-        status: 404,
-        headers: { "content-type": "application/json" },
+      return notFound({
+        code: "RUN_NOT_FOUND",
+        message: "run not found",
+        details: { runId },
       });
     }
 
     const timeline = await getRunTimeline(opts.repoRoot, runId);
-    return { ok: true, runId, timeline };
+    return coordinationSuccess({ runId, timeline });
   });
 
   return app;

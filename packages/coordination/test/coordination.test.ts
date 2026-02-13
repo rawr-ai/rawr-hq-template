@@ -3,11 +3,16 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
+  coordinationErrorMessage,
+  coordinationFailure,
+  coordinationSuccess,
   ensureCoordinationStorage,
   getRunTimeline,
+  isCoordinationFailure,
   listWorkflows,
   saveWorkflow,
   validateWorkflow,
+  validationFailure,
   appendRunTimelineEvent,
   writeDeskMemory,
   readDeskMemory,
@@ -152,5 +157,38 @@ describe("coordination storage", () => {
         status: "running",
       }),
     ).rejects.toThrow(/Invalid runId/);
+  });
+});
+
+describe("coordination http envelopes", () => {
+  it("creates typed success and failure envelopes", () => {
+    const success = coordinationSuccess({ workflowId: "wf-a" });
+    expect(success.ok).toBe(true);
+    expect(success.workflowId).toBe("wf-a");
+
+    const failure = coordinationFailure({
+      code: "WORKFLOW_NOT_FOUND",
+      message: "workflow not found",
+      retriable: false,
+      details: { workflowId: "wf-missing" },
+    });
+    expect(failure.ok).toBe(false);
+    expect(failure.error.code).toBe("WORKFLOW_NOT_FOUND");
+    expect(isCoordinationFailure(failure)).toBe(true);
+    expect(coordinationErrorMessage(failure, "fallback")).toBe("workflow not found");
+  });
+
+  it("wraps validation failures in a structured coordination envelope", () => {
+    const validation = validateWorkflow({
+      ...baseWorkflow,
+      desks: [],
+      handoffs: [],
+    });
+    expect(validation.ok).toBe(false);
+
+    const failure = validationFailure(validation);
+    expect(failure.ok).toBe(false);
+    expect(failure.error.code).toBe("WORKFLOW_VALIDATION_FAILED");
+    expect((failure.error.details as any).ok).toBe(false);
   });
 });

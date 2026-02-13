@@ -153,4 +153,80 @@ describe("rawr server routes", () => {
     expect(timelineJson.timeline.some((evt: any) => evt.type === "run.started")).toBe(true);
     expect(timelineJson.timeline.some((evt: any) => evt.type === "run.completed")).toBe(true);
   });
+
+  it("returns structured error envelopes for invalid coordination requests", async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-coord-errors-"));
+    const runtime = createCoordinationRuntimeAdapter({
+      repoRoot: tempRoot,
+      inngestBaseUrl: "http://localhost:8288",
+    });
+
+    const fakeInngest = {
+      send: async () => ({ ids: ["evt-test-1"] }),
+    } as unknown as Inngest;
+
+    const app = registerCoordinationRoutes(createServerApp(), {
+      repoRoot: tempRoot,
+      baseUrl: "http://localhost:3000",
+      inngestClient: fakeInngest,
+      runtime,
+    });
+
+    const missingPayloadRes = await app.handle(
+      new Request("http://localhost/rawr/coordination/workflows", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({}),
+      }),
+    );
+    expect(missingPayloadRes.status).toBe(400);
+    const missingPayloadJson = (await missingPayloadRes.json()) as any;
+    expect(missingPayloadJson).toMatchObject({
+      ok: false,
+      error: {
+        code: "MISSING_WORKFLOW_PAYLOAD",
+        message: "Missing workflow payload",
+        retriable: false,
+      },
+    });
+
+    const invalidWorkflow: CoordinationWorkflowV1 = {
+      workflowId: "wf-invalid",
+      version: 1,
+      name: "Invalid workflow",
+      entryDeskId: "desk-a",
+      desks: [],
+      handoffs: [],
+    };
+
+    const validationRes = await app.handle(
+      new Request("http://localhost/rawr/coordination/workflows", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ workflow: invalidWorkflow }),
+      }),
+    );
+    expect(validationRes.status).toBe(400);
+    const validationJson = (await validationRes.json()) as any;
+    expect(validationJson.ok).toBe(false);
+    expect(validationJson.error.code).toBe("WORKFLOW_VALIDATION_FAILED");
+    expect(validationJson.error.retriable).toBe(false);
+    expect(validationJson.error.details.ok).toBe(false);
+    expect(Array.isArray(validationJson.error.details.errors)).toBe(true);
+
+    const invalidWorkflowIdRes = await app.handle(
+      new Request("http://localhost/rawr/coordination/workflows/invalid%20id"),
+    );
+    expect(invalidWorkflowIdRes.status).toBe(400);
+    const invalidWorkflowIdJson = (await invalidWorkflowIdRes.json()) as any;
+    expect(invalidWorkflowIdJson.ok).toBe(false);
+    expect(invalidWorkflowIdJson.error.code).toBe("INVALID_WORKFLOW_ID");
+
+    const missingRunRes = await app.handle(new Request("http://localhost/rawr/coordination/runs/run-missing"));
+    expect(missingRunRes.status).toBe(404);
+    const missingRunJson = (await missingRunRes.json()) as any;
+    expect(missingRunJson.ok).toBe(false);
+    expect(missingRunJson.error.code).toBe("RUN_NOT_FOUND");
+    expect(missingRunJson.error.retriable).toBe(false);
+  });
 });

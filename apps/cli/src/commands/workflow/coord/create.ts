@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import type { CoordinationWorkflowV1 } from "@rawr/coordination";
+import { coordinationErrorMessage, type CoordinationWorkflowV1 } from "@rawr/coordination";
 import { coordinationFetch, resolveServerBaseUrl } from "../../../lib/coordination-api";
 
 function starterWorkflow(input: { workflowId: string; name: string; description: string }): CoordinationWorkflowV1 {
@@ -70,24 +70,32 @@ export default class WorkflowCoordCreate extends RawrCommand {
     }
 
     const baseUrl = await resolveServerBaseUrl(process.cwd());
-    const response = await coordinationFetch<any>({
+    const response = await coordinationFetch<{ workflow: CoordinationWorkflowV1 }>({
       baseUrl,
       path: "/rawr/coordination/workflows",
       method: "POST",
       body: { workflow },
     });
 
-    if (!response.ok) {
-      const result = this.fail("Failed to create coordination workflow", {
+    if (response.data.ok !== true) {
+      const result = this.fail(
+        coordinationErrorMessage(response.data, "Failed to create coordination workflow"),
+        {
         code: "COORD_CREATE_FAILED",
         details: response.data,
-      });
+        },
+      );
       this.outputResult(result, { flags: baseFlags });
       this.exit(1);
       return;
     }
 
-    const result = this.ok({ baseUrl, workflowId: workflow.workflowId, response: response.data });
+    const result = this.ok({
+      baseUrl,
+      workflowId: workflow.workflowId,
+      workflow: response.data.workflow,
+      response: response.data,
+    });
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {

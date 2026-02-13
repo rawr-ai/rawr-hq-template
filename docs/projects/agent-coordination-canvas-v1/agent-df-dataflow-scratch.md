@@ -47,3 +47,8 @@
     1) Add `packages/coordination/src/http.ts` with shared response/error types.
     2) Update `apps/server/src/coordination.ts` to use typed success/failure envelopes consistently.
     3) Update `apps/cli/src/lib/coordination-api.ts` and `workflow/coord/*` commands to parse structured errors.
+- 2026-02-12T23:22:00Z: Runtime branch implementation complete.
+  - Added and exported `packages/coordination/src/http.ts`.
+  - Server coordination endpoints now emit structured failures with `code/message/retriable/details`.
+  - CLI coordination commands consume envelope failures and typed success payloads.
+  - Added server + package tests for envelope behavior.
