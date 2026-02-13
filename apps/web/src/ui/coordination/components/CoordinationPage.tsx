@@ -18,9 +18,13 @@ export function CoordinationPage() {
   const [paletteIndex, setPaletteIndex] = useState(0);
 
   const runWorkflow = async () => {
-    const run = await workflow.queueRun({ payload: "manual-run" });
-    if (!run) return;
-    await runStatus.trackRun(run);
+    try {
+      const run = await workflow.queueRun({ payload: "manual-run" });
+      if (!run) return;
+      await runStatus.trackRun(run);
+    } catch (err) {
+      workflow.setError(String(err));
+    }
   };
 
   const commands = useMemo<PaletteCommand[]>(
@@ -130,6 +134,7 @@ export function CoordinationPage() {
           workflowOptions={workflow.workflowOptions}
           busy={workflow.busy}
           polling={runStatus.polling}
+          needsSave={workflow.needsSave}
           validationOk={workflow.validation.ok}
           monitorHref={monitorHref}
           workflowEvent={graph.event}
