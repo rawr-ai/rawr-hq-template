@@ -4,6 +4,15 @@
 
 `RAWR HQ-Template` is a Bun + TypeScript monorepo where `rawr` is the single command entrypoint.
 
+Target-state runtime composition is manifest-first:
+- shared capability logic/contracts in `packages/*`,
+- runtime adapters by surface in `plugins/*`,
+- final multi-surface assembly in `rawr.hq.ts`,
+- host mounting in `apps/*`.
+
+Canonical target packet:
+- `docs/system/spec-packet/FLAT_RUNTIME_SPEC_PACKET.md`
+
 ## Procedure API Spine (ORPC)
 
 Procedure-style APIs are contract-defined and exposed through the HQ ORPC root router.
@@ -20,6 +29,20 @@ Explicit non-procedure infrastructure routes that remain framework-native:
 - `/api/inngest` (Inngest ingress/webhook transport)
 - `/rawr/plugins/web/:dirName` (runtime module serving)
 - `/health` (liveness)
+
+## Manifest Composition Contract
+
+`rawr.hq.ts` is the single composition authority for runtime surfaces.
+
+It exports:
+- ORPC contract/router/context bundle,
+- Inngest client/functions bundle,
+- web mount registry,
+- CLI command registry,
+- agent capability registry,
+- optional MCP action registry.
+
+`apps/server`, `apps/web`, and `apps/cli` mount these exports and do not author per-capability composition logic.
 
 ## Core Components (Required)
 
@@ -49,9 +72,30 @@ Channel B is local-first by default and uses security gating + repo-local enable
 
 ## Plugin Roots
 
-- `plugins/cli/*` for Channel A plugin packages.
-- `plugins/web/*` for Channel B runtime plugin packages.
-- `plugins/agents/*` for agent-office content packages.
+- `plugins/cli/*` for CLI runtime adapters.
+- `plugins/web/*` for web runtime adapters.
+- `plugins/agents/*` for agent runtime adapters/content.
+- `plugins/api/*` for API runtime adapters.
+- `plugins/workflows/*` for workflow runtime adapters.
+- `plugins/mcp/*` for MCP runtime adapters (optional).
+
+### Metadata Contract (Target)
+- Required:
+  - `rawr.kind`
+  - `rawr.capability`
+- Derived:
+  - channel classification from surface root/command family.
+- Removed from runtime semantics:
+  - `templateRole`
+  - `channel`
+- Deprecated for later removal:
+  - `publishTier` / `published`
+
+### Import Boundary Contract (Target)
+- Allowed:
+  - `plugins/**` importing `packages/**` and approved host interfaces/types.
+- Not allowed:
+  - `plugins/**` importing other `plugins/**` runtime code.
 
 ## Core Ownership
 

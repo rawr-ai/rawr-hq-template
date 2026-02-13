@@ -24,8 +24,13 @@ Treat these as upstream-governed (fixed by default):
 - canonical docs and governance files
 
 Treat these as customization zones:
-- `plugins/cli/*`, `plugins/web/*`, `plugins/agents/*` (unless promoted to template scaffold)
+- `plugins/api/*`, `plugins/workflows/*`, `plugins/web/*`, `plugins/cli/*`, `plugins/agents/*`, `plugins/mcp/*` (unless promoted to template scaffold)
 - personal workflow docs in downstream repos
+
+Manifest-first runtime composition contract:
+- cross-surface composition is authored in `rawr.hq.ts`,
+- `apps/*` host fixtures mount manifest outputs and do not author per-capability composition logic,
+- see `docs/process/runbooks/RAWR_HQ_MANIFEST_COMPOSITION.md`.
 
 ## Pre-Change Impact Checklist
 
