@@ -4,6 +4,7 @@ import path from "node:path";
 import type { AnyElysia } from "./plugins";
 import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
 import { createCoordinationRuntimeAdapter, registerCoordinationRoutes } from "./coordination";
+import { registerOrpcRoutes } from "./orpc";
 
 export type RawrRoutesOptions = {
   repoRoot: string;
@@ -110,6 +111,13 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
   });
 
   app.all("/api/inngest", async ({ request }) => inngestHandler(request));
+
+  registerOrpcRoutes(app, {
+    repoRoot: opts.repoRoot,
+    baseUrl: opts.baseUrl ?? "http://localhost:3000",
+    runtime,
+    inngestClient: inngestBundle.client,
+  });
 
   registerCoordinationRoutes(app, {
     repoRoot: opts.repoRoot,

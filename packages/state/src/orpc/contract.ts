@@ -58,6 +58,7 @@ function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Static<T>, 
         };
       },
     },
+    __typebox: schema,
   } as Schema<Static<T>, Static<T>>;
 }
 
