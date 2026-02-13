@@ -11,6 +11,10 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
    - `bun run test` for the fast default gate.
    - `bun run test:heavy` when touching heavy CLI flows or web visual surfaces.
 5. Commit scoped changes.
+6. For stack drains or cross-repo integrations, follow canonical policy in `docs/process/HQ_OPERATIONS.md`:
+   - repo boundary guard,
+   - transient test-failure policy,
+   - final acceptance checklist.
 
 ## Global CLI Setup (Bun)
 
@@ -45,6 +49,8 @@ Before publishing a plugin:
 - Run `bun run test`
 - Run `bun run test:heavy`
 - Verify package metadata and docs.
+
+Note: full plugin sync commands (`rawr plugins sync all`) are personal-repo runtime actions, not template publishing actions.
 
 ## Upstream Sync
 

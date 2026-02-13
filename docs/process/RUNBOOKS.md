@@ -31,6 +31,7 @@ Use this when you need exact commands for:
 | Operate coordination canvas + Inngest runtime | `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` |
 | Drain Graphite stacks safely (publish/merge/prune loop) | `docs/process/runbooks/STACK_DRAIN_LOOP.md` |
 | Integrate template -> personal with sync-first sequencing | `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md` |
+| Canonical repo-boundary + transient retry + final acceptance policy | `docs/process/HQ_OPERATIONS.md` |
 | Generate ORPC OpenAPI compatibility artifacts | `docs/process/runbooks/ORPC_OPENAPI_COMPATIBILITY.md` |
 
 ## Command Surface Invariant
