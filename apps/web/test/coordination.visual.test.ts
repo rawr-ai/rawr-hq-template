@@ -50,6 +50,26 @@ function jsonResponse(route: Route, payload: unknown, status = 200) {
   });
 }
 
+function rpcSuccess(route: Route, payload: unknown, status = 200) {
+  return jsonResponse(route, { json: payload }, status);
+}
+
+function rpcError(route: Route, input: { code: string; message: string; status: number; data?: unknown }) {
+  return jsonResponse(
+    route,
+    {
+      json: {
+        defined: false,
+        code: input.code,
+        status: input.status,
+        message: input.message,
+        data: input.data ?? null,
+      },
+    },
+    input.status,
+  );
+}
+
 function runActionButton(page: Page) {
   return page.getByRole("button", { name: /^(Run|Save \+ Run|Running…|Running\.\.\.)$/ }).first();
 }
@@ -66,30 +86,30 @@ async function installMockCoordinationApi(
   let mutableWorkflow: CoordinationWorkflowV1 = JSON.parse(JSON.stringify(workflow)) as CoordinationWorkflowV1;
   let runStatusChecks = 0;
 
-  await page.route("**/rawr/coordination/**", async (route) => {
+  await page.route("**/rpc/**", async (route) => {
     const request = route.request();
-    const method = request.method();
     const url = new URL(request.url());
-    const path = url.pathname;
+    const procedure = url.pathname.startsWith("/rpc/") ? url.pathname.slice("/rpc/".length) : "";
+    const body = (request.postDataJSON() ?? {}) as { json?: Record<string, unknown> };
+    const payload = body.json ?? {};
 
-    if (method === "GET" && path === "/rawr/coordination/workflows") {
+    if (procedure === "coordination/listWorkflows") {
       input?.onRequest?.("list");
-      return jsonResponse(route, { ok: true, workflows: [mutableWorkflow] });
+      return rpcSuccess(route, { workflows: [mutableWorkflow] });
     }
 
-    if (method === "POST" && path === "/rawr/coordination/workflows") {
+    if (procedure === "coordination/saveWorkflow") {
       input?.onRequest?.("save");
-      const body = request.postDataJSON() as { workflow?: CoordinationWorkflowV1 } | null;
-      if (body?.workflow) {
-        mutableWorkflow = body.workflow;
+      const workflowFromPayload = payload.workflow as CoordinationWorkflowV1 | undefined;
+      if (workflowFromPayload) {
+        mutableWorkflow = workflowFromPayload;
       }
-      return jsonResponse(route, { ok: true, workflow: mutableWorkflow });
+      return rpcSuccess(route, { workflow: mutableWorkflow });
     }
 
-    if (method === "POST" && path.endsWith("/validate")) {
+    if (procedure === "coordination/validateWorkflow") {
       input?.onRequest?.("validate");
-      return jsonResponse(route, {
-        ok: true,
+      return rpcSuccess(route, {
         workflowId: mutableWorkflow.workflowId,
         validation: input?.invalid
           ? { ok: false, errors: [{ code: "MISSING_ENTRY_DESK", message: "Entry desk not found" }] }
@@ -97,21 +117,14 @@ async function installMockCoordinationApi(
       });
     }
 
-    if (method === "POST" && path.endsWith("/run")) {
+    if (procedure === "coordination/queueRun") {
       input?.onRequest?.("run");
       if (input?.runFailure) {
-        return jsonResponse(
-          route,
-          {
-            ok: false,
-            error: {
-              code: "RUN_QUEUE_FAILED",
-              message: "Run queue failed for visual test",
-              retriable: true,
-            },
-          },
-          500,
-        );
+        return rpcError(route, {
+          code: "RUN_QUEUE_FAILED",
+          status: 500,
+          message: "Run queue failed for visual test",
+        });
       }
       const run: RunStatusV1 = {
         runId: "run-visual-1",
@@ -125,12 +138,11 @@ async function installMockCoordinationApi(
           { provider: "inngest", label: "Inngest Trace", url: "https://example.com/inngest" },
         ],
       };
-      return jsonResponse(route, { ok: true, run, eventIds: ["evt-visual-1"] });
+      return rpcSuccess(route, { run, eventIds: ["evt-visual-1"] });
     }
 
-    if (method === "GET" && path.endsWith("/timeline")) {
-      return jsonResponse(route, {
-        ok: true,
+    if (procedure === "coordination/getRunTimeline") {
+      return rpcSuccess(route, {
         runId: "run-visual-1",
         timeline: [
           {
@@ -153,11 +165,10 @@ async function installMockCoordinationApi(
       });
     }
 
-    if (method === "GET" && path.includes("/rawr/coordination/runs/")) {
+    if (procedure === "coordination/getRunStatus") {
       runStatusChecks += 1;
       const status: RunStatusV1["status"] = runStatusChecks >= 2 ? "completed" : "running";
-      return jsonResponse(route, {
-        ok: true,
+      return rpcSuccess(route, {
         run: {
           runId: "run-visual-1",
           workflowId: mutableWorkflow.workflowId,

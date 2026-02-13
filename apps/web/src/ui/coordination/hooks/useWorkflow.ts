@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  coordinationErrorMessage,
   validateWorkflow,
   type CoordinationWorkflowV1,
   type DeskDefinitionV1,
@@ -14,6 +13,7 @@ import {
 } from "@rawr/coordination-inngest/browser";
 import type { Workflow as WorkflowKitWorkflow } from "@inngest/workflow-kit";
 import {
+  coordinationClientErrorMessage,
   listWorkflows,
   runWorkflowById,
   saveWorkflow,
@@ -84,9 +84,11 @@ export function useWorkflow() {
   }, [activeWorkflow.workflowId]);
 
   const refreshWorkflows = useCallback(async () => {
-    const response = await listWorkflows();
-    if (response.ok !== true) {
-      setError(coordinationErrorMessage(response, "Failed to load workflows"));
+    let response;
+    try {
+      response = await listWorkflows();
+    } catch (err) {
+      setError(coordinationClientErrorMessage(err, "Failed to load workflows"));
       return;
     }
 
@@ -114,9 +116,11 @@ export function useWorkflow() {
   }, [activeWorkflow, persistedActiveWorkflow]);
 
   const persistActiveWorkflow = useCallback(async (): Promise<WorkflowModel | null> => {
-    const response = await saveWorkflow(activeWorkflow);
-    if (response.ok !== true) {
-      setError(coordinationErrorMessage(response, "Failed to save workflow"));
+    let response;
+    try {
+      response = await saveWorkflow(activeWorkflow);
+    } catch (err) {
+      setError(coordinationClientErrorMessage(err, "Failed to save workflow"));
       return null;
     }
 
@@ -163,9 +167,11 @@ export function useWorkflow() {
         const workflowToRun = needsSave ? await persistActiveWorkflow() : activeWorkflow;
         if (!workflowToRun) return null;
 
-        const response = await runWorkflowById(workflowToRun.workflowId, input);
-        if (response.ok !== true) {
-          setError(coordinationErrorMessage(response, "Run failed"));
+        let response;
+        try {
+          response = await runWorkflowById(workflowToRun.workflowId, input);
+        } catch (err) {
+          setError(coordinationClientErrorMessage(err, "Run failed"));
           return null;
         }
 

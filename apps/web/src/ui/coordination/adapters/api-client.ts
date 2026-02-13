@@ -1,122 +1,60 @@
-import {
-  coordinationFailure,
-  isCoordinationFailure,
-  type CoordinationEnvelope,
-  type CoordinationFailure,
-  type CoordinationWorkflowV1,
-  type JsonValue,
-  type RunStatusV1,
-  type ValidationResultV1,
-  type DeskRunEventV1,
+import { ORPCError, createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import type { ContractRouterClient } from "@orpc/contract";
+import { hqContract } from "@rawr/core/orpc";
+import type {
+  CoordinationWorkflowV1,
+  JsonValue,
 } from "@rawr/coordination";
+import { publicEnv } from "../../config/publicEnv";
 
-function toJsonValue(value: unknown): JsonValue {
-  try {
-    return JSON.parse(JSON.stringify(value ?? null)) as JsonValue;
-  } catch {
-    return null;
+function resolveRpcUrl(): string {
+  const envUrl = publicEnv.rpcUrl;
+  if (typeof envUrl === "string" && envUrl.trim() !== "") {
+    return envUrl.trim();
   }
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/rpc`;
+  }
+  return "http://localhost:3000/rpc";
 }
 
-function unexpectedFailure(input: {
-  code: string;
-  message: string;
-  status: number;
-  statusText: string;
-  path: string;
-  raw: string;
-}): CoordinationFailure {
-  return coordinationFailure({
-    code: input.code,
-    message: input.message,
-    retriable: input.status >= 500,
-    details: toJsonValue({
-      path: input.path,
-      status: input.status,
-      statusText: input.statusText,
-      raw: input.raw.slice(0, 500),
-    }),
-  });
-}
+const hqClient = createORPCClient<ContractRouterClient<typeof hqContract>>(
+  new RPCLink({
+    url: resolveRpcUrl(),
+  }),
+);
 
-async function coordinationRequest<TPayload extends Record<string, unknown>>(input: {
-  path: string;
-  method?: "GET" | "POST";
-  body?: unknown;
-}): Promise<CoordinationEnvelope<TPayload>> {
-  const response = await fetch(input.path, {
-    method: input.method ?? "GET",
-    headers: input.body ? { "content-type": "application/json" } : undefined,
-    body: input.body ? JSON.stringify(input.body) : undefined,
-  });
-
-  const raw = await response.text();
-  let parsed: unknown = null;
-  if (raw.trim() !== "") {
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      parsed = null;
-    }
+export function coordinationClientErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ORPCError) {
+    return error.message;
   }
-
-  if (parsed && typeof parsed === "object" && "ok" in parsed) {
-    const envelope = parsed as { ok?: unknown };
-    if (envelope.ok === true) {
-      return parsed as CoordinationEnvelope<TPayload>;
-    }
-    if (envelope.ok === false && isCoordinationFailure(parsed)) {
-      return parsed;
-    }
+  if (error instanceof Error) {
+    return error.message;
   }
-
-  return unexpectedFailure({
-    code: "INTERNAL_ERROR",
-    message: `Unexpected coordination API response (${response.status} ${response.statusText})`,
-    status: response.status,
-    statusText: response.statusText,
-    path: input.path,
-    raw,
-  });
+  return fallback;
 }
 
 export function listWorkflows() {
-  return coordinationRequest<{ workflows: CoordinationWorkflowV1[] }>({
-    path: "/rawr/coordination/workflows",
-  });
+  return hqClient.coordination.listWorkflows({});
 }
 
 export function saveWorkflow(workflow: CoordinationWorkflowV1) {
-  return coordinationRequest<{ workflow: CoordinationWorkflowV1 }>({
-    path: "/rawr/coordination/workflows",
-    method: "POST",
-    body: { workflow },
-  });
+  return hqClient.coordination.saveWorkflow({ workflow });
 }
 
 export function validateWorkflowById(workflowId: string) {
-  return coordinationRequest<{ workflowId: string; validation: ValidationResultV1 }>({
-    path: `/rawr/coordination/workflows/${encodeURIComponent(workflowId)}/validate`,
-    method: "POST",
-  });
+  return hqClient.coordination.validateWorkflow({ workflowId });
 }
 
 export function runWorkflowById(workflowId: string, input: JsonValue) {
-  return coordinationRequest<{ run: RunStatusV1; eventIds: string[] }>({
-    path: `/rawr/coordination/workflows/${encodeURIComponent(workflowId)}/run`,
-    method: "POST",
-    body: { input },
-  });
+  return hqClient.coordination.queueRun({ workflowId, input });
 }
 
 export function getRunStatus(runId: string) {
-  return coordinationRequest<{ run: RunStatusV1 }>({
-    path: `/rawr/coordination/runs/${encodeURIComponent(runId)}`,
-  });
+  return hqClient.coordination.getRunStatus({ runId });
 }
 
 export function getRunTimeline(runId: string) {
-  return coordinationRequest<{ runId: string; timeline: DeskRunEventV1[] }>({
-    path: `/rawr/coordination/runs/${encodeURIComponent(runId)}/timeline`,
-  });
+  return hqClient.coordination.getRunTimeline({ runId });
 }

@@ -10,6 +10,8 @@ export default defineConfig({
     },
     proxy: {
       "/rawr": { target: "http://localhost:3000", changeOrigin: true },
+      "/rpc": { target: "http://localhost:3000", changeOrigin: true },
+      "/api/orpc": { target: "http://localhost:3000", changeOrigin: true },
     },
   },
 });
