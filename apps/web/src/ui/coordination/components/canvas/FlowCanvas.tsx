@@ -10,7 +10,10 @@ type FlowCanvasProps = {
 
 export function FlowCanvas({ workflow, trigger, availableActions, onChange }: FlowCanvasProps) {
   return (
-    <div className="coordination-flow-canvas relative h-full min-h-[500px] w-full overflow-hidden bg-canvas transition-colors duration-200">
+    <div
+      className="coordination-flow-canvas coordination-flowkit relative h-full min-h-[500px] w-full overflow-hidden bg-canvas transition-colors duration-200"
+      aria-label="Workflow canvas"
+    >
       <div
         className="pointer-events-none absolute inset-0 opacity-20 transition-colors duration-200"
         style={{
@@ -19,7 +22,7 @@ export function FlowCanvas({ workflow, trigger, availableActions, onChange }: Fl
         }}
       />
 
-      <div className="relative z-[1] h-full min-h-[500px]">
+      <div className="coordination-flowkit-editor relative z-[1] h-full min-h-[500px]">
         <Provider workflow={workflow} trigger={trigger} availableActions={availableActions} onChange={onChange}>
           <Editor direction="down" />
         </Provider>
