@@ -20,6 +20,10 @@ gt create -am "type(scope): summary" agent-A-rawr-slice
 gt restack --upstack
 ```
 
+For canonical merge/prune and cross-repo integration loops, use:
+- `docs/process/runbooks/STACK_DRAIN_LOOP.md`
+- `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md`
+
 ## Related workflow docs
 
 - End-to-end agent loops: `docs/process/AGENT_LOOPS.md`

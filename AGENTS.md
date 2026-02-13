@@ -35,6 +35,8 @@
 ## Process Runbooks
 
 - CLI/plugin path index (start here): `docs/process/RUNBOOKS.md`.
+- Graphite stack drain loop: `docs/process/runbooks/STACK_DRAIN_LOOP.md`.
+- Template->personal integration loop: `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md`.
 - Upstream sync workflow: `docs/process/UPSTREAM_SYNC_RUNBOOK.md`.
 - Cross-repo workflow model: `docs/process/CROSS_REPO_WORKFLOWS.md`.
 - Plugin end-to-end workflow: `docs/process/PLUGIN_E2E_WORKFLOW.md`.

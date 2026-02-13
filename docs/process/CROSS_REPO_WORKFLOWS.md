@@ -34,6 +34,9 @@ Do not create operational plugins in template.
 Use `docs/process/UPSTREAM_SYNC_RUNBOOK.md` in personal repo.
 Use merge-first as the only normal flow.
 Rebase is escape-hatch only when merge is blocked by a concrete constraint.
+For end-to-end sequencing and recovery handling, use:
+- `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md`
+- `docs/process/runbooks/STACK_DRAIN_LOOP.md`
 
 ## Journey 4: Global CLI Ownership Switching
 
