@@ -303,6 +303,10 @@ async function createOpenApiSpec(router: ReturnType<typeof createOrpcRouter>, ba
   });
 }
 
+export async function generateOrpcOpenApiSpec(baseUrl: string) {
+  return createOpenApiSpec(createOrpcRouter(), baseUrl);
+}
+
 export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: RegisterOrpcRoutesOptions): TApp {
   const router = createOrpcRouter();
   const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
