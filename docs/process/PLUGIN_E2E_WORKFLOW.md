@@ -89,6 +89,20 @@ Optional runtime mount check:
 bun run rawr -- dev up
 ```
 
+### 5) ORPC Wiring (Procedure APIs)
+
+When runtime plugins need procedure data (coordination/state), use ORPC client wiring instead of ad-hoc fetch routes.
+
+Defaults:
+- RPC base path: `/rpc`
+- OpenAPI compatibility path: `/api/orpc`
+- Shared contract: `@rawr/core/orpc`
+
+Expected workflow:
+1. Create an ORPC client in plugin/web host code using `@orpc/client` + `RPCLink`.
+2. Consume procedures (`coordination.*`, `state.getRuntimeState`) via typed contract methods.
+3. Keep module loading on `/rawr/plugins/web/:dirName` (this route remains framework-native by design).
+
 ## Channel A E2E (External oclif Plugin)
 
 ### 1) Create Package
@@ -296,3 +310,8 @@ To allow npm publish, all of the following must be true:
    - `rawr plugins inspect <plugin>` confirms command discovery (Channel A)
 6. Runtime activation checks still pass for workspace runtime packages:
    - `rawr plugins web enable|status|disable` (Channel B)
+
+## ORPC Compatibility For Non-RPC Consumers
+
+If a consumer cannot use the RPC client directly, use the OpenAPI compatibility workflow:
+- `docs/process/runbooks/ORPC_OPENAPI_COMPATIBILITY.md`

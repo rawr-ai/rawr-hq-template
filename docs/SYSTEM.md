@@ -4,6 +4,23 @@
 
 `RAWR HQ-Template` is a Bun + TypeScript monorepo where `rawr` is the single command entrypoint.
 
+## Procedure API Spine (ORPC)
+
+Procedure-style APIs are contract-defined and exposed through the HQ ORPC root router.
+
+- RPC transport: `/rpc`
+- OpenAPI transport: `/api/orpc`
+- OpenAPI spec: `/api/orpc/openapi.json`
+
+Current canonical procedure namespaces:
+- `coordination.*` (workflow CRUD, validation, queueing, run status, timeline)
+- `state.getRuntimeState`
+
+Explicit non-procedure infrastructure routes that remain framework-native:
+- `/api/inngest` (Inngest ingress/webhook transport)
+- `/rawr/plugins/web/:dirName` (runtime module serving)
+- `/health` (liveness)
+
 ## Core Components (Required)
 
 - `apps/cli`

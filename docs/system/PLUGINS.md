@@ -46,6 +46,23 @@ System-management plugin workflows run through:
 - Enabled set is persisted to `.rawr/state/state.json`.
 - Server/web paths consume enabled state.
 
+## Procedure API Contract (ORPC-First)
+
+Web/CLI/plugin consumers should use the HQ ORPC contract for procedure APIs.
+
+- RPC base path: `/rpc`
+- OpenAPI base path: `/api/orpc`
+- OpenAPI spec: `/api/orpc/openapi.json`
+
+Current procedure namespaces:
+- `coordination.*`
+- `state.getRuntimeState`
+
+Plugin authoring guidance:
+- Runtime plugins that need coordination/state data should use ORPC clients bound to `@rawr/core/orpc`.
+- Avoid direct first-party fetches to legacy ad-hoc procedure routes.
+- Keep `/rawr/plugins/web/:dirName` usage for module loading; it is a non-procedure serving route by design.
+
 ## Repo Plugin Roots (Internal Layout)
 
 - `plugins/cli/*`: CLI toolkits (oclif plugins; `rawr.kind=toolkit`)

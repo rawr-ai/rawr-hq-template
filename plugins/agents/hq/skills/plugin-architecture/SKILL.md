@@ -38,8 +38,18 @@ This skill is the "where does it go?" and "what owns what?" guide for the RAWR p
 <invariant name="capabilities-follow-deploy-target">Claude runtime artifacts live in agent plugins; oclif reporters live in toolkits.</invariant>
 <invariant name="logic-in-packages">Keep engines in `packages/`; keep plugin entry points thin.</invariant>
 <invariant name="do-not-mix-surfaces">Do not mix command surfaces in examples: `rawr plugins ...` vs `rawr plugins web ...`.</invariant>
+<invariant name="orpc-procedure-default">Procedure-style API calls in plugin/web/cli code should default to the HQ ORPC contract (`@rawr/core/orpc`) over ad-hoc fetch routes.</invariant>
 </invariants>
+
+## ORPC-first plugin notes
+
+- Procedure transports:
+  - RPC: `/rpc`
+  - OpenAPI compatibility: `/api/orpc` and `/api/orpc/openapi.json`
+- Keep these framework-native routes outside ORPC procedure modeling:
+  - `/api/inngest`
+  - `/rawr/plugins/web/:dirName`
+  - `/health`
 
 </skill-usage-tracking>
 <!-- Skill usage disclosure: On completion, state "Skills used: plugin-architecture" with optional rationale. Omit if no skills invoked. -->
-
