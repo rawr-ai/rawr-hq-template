@@ -10,23 +10,6 @@ export type RunModel = RunStatusV1;
 export type TimelineEventModel = DeskRunEventV1;
 export type ValidationModel = ValidationResultV1;
 
-export type NodeType = "trigger" | "action";
-
-export type WorkflowNodeModel = Readonly<{
-  id: string;
-  type: NodeType;
-  title: string;
-  subtitle: string;
-  icon?: string;
-  position: { x: number; y: number };
-}>;
-
-export type WorkflowEdgeModel = Readonly<{
-  id: string;
-  source: string;
-  target: string;
-}>;
-
 export type WorkflowsResponse = {
   ok: boolean;
   workflows?: WorkflowModel[];
