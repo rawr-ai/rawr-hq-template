@@ -1,28 +1,29 @@
 import type React from "react";
-import type { StatusTone } from "../../types/workflow";
+import type { StatusKind } from "../../types/workflow";
 import { cn } from "../../../lib/cn";
 
-function toneClass(tone?: StatusTone): string {
-  if (tone === "is-success") return "text-emerald-700 bg-emerald-500/10 border-emerald-500/30 dark:text-emerald-300";
-  if (tone === "is-warning") return "text-amber-700 bg-amber-500/10 border-amber-500/30 dark:text-amber-300";
-  if (tone === "is-error") return "text-red-700 bg-red-500/10 border-red-500/30 dark:text-red-300";
+function statusClass(status?: StatusKind): string {
+  if (status === "success") return "text-emerald-700 bg-emerald-500/10 border-emerald-500/30 dark:text-emerald-300";
+  if (status === "warning") return "text-amber-700 bg-amber-500/10 border-amber-500/30 dark:text-amber-300";
+  if (status === "error") return "text-red-700 bg-red-500/10 border-red-500/30 dark:text-red-300";
+  if (status === "info") return "text-sky-700 bg-sky-500/10 border-sky-500/30 dark:text-sky-300";
   return "text-text-secondary bg-raised border-border";
 }
 
 export function StatusBadge({
   children,
-  tone = "",
+  status = "neutral",
   className,
 }: {
   children: React.ReactNode;
-  tone?: StatusTone;
+  status?: StatusKind;
   className?: string;
 }) {
   return (
     <span
       className={cn(
         "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-wide border transition-colors duration-200",
-        toneClass(tone),
+        statusClass(status),
         className,
       )}
     >

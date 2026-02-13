@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type React from "react";
 import type {
+  RunActionState,
   WorkflowEdgeModel,
   WorkflowModel,
   WorkflowNodeModel,
@@ -13,9 +14,7 @@ type CanvasWorkspaceProps = {
   activeWorkflow: WorkflowModel;
   workflowOptions: WorkflowModel[];
   busy: boolean;
-  polling: boolean;
-  needsSave: boolean;
-  validationOk: boolean;
+  runAction: RunActionState;
   monitorHref: string | null;
   workflowEvent: string;
   nodes: WorkflowNodeModel[];
@@ -33,9 +32,7 @@ export function CanvasWorkspace({
   activeWorkflow,
   workflowOptions,
   busy,
-  polling,
-  needsSave,
-  validationOk,
+  runAction,
   monitorHref,
   workflowEvent,
   nodes,
@@ -61,9 +58,7 @@ export function CanvasWorkspace({
             activeWorkflow={activeWorkflow}
             workflows={workflowOptions}
             busy={busy}
-            polling={polling}
-            needsSave={needsSave}
-            validationOk={validationOk}
+            runAction={runAction}
             workflowEvent={workflowEvent}
             monitorHref={monitorHref}
             onSelectWorkflow={onSelectWorkflow}
@@ -77,10 +72,10 @@ export function CanvasWorkspace({
         </div>
 
         <div
-          className={`
-            hidden md:flex flex-shrink-0 transition-all duration-200 ease-out overflow-hidden
-            ${sidePanelOpen ? "w-[280px] lg:w-[320px]" : "w-0"}
-          `}
+          className={[
+            "hidden flex-shrink-0 overflow-hidden transition-all duration-200 ease-out md:flex",
+            sidePanelOpen ? "w-[280px] lg:w-[320px]" : "w-0",
+          ].join(" ")}
         >
           {sidePanelOpen ? (
             <WorkflowSidePanel

@@ -1,4 +1,8 @@
-import type { CoordinationWorkflowV1, RunStatusV1 } from "@rawr/coordination";
+import type {
+  CoordinationWorkflowV1,
+  RunStatusV1,
+  ValidationResultV1,
+} from "@rawr/coordination";
 import {
   COORDINATION_RUN_EVENT,
   fromWorkflowKitWorkflow,
@@ -6,7 +10,8 @@ import {
 } from "@rawr/coordination-inngest/browser";
 import type { Workflow as WorkflowKitWorkflow } from "@inngest/workflow-kit";
 import type {
-  StatusTone,
+  RunActionState,
+  StatusKind,
   WorkflowEdgeModel,
   WorkflowNodeModel,
 } from "../types/workflow";
@@ -28,11 +33,11 @@ export function fromCanvasWorkflow(input: {
   return fromWorkflowKitWorkflow(input);
 }
 
-export function toneForStatus(status: string): StatusTone {
-  if (status === "completed" || status === "ok") return "is-success";
-  if (status === "running" || status === "queued" || status === "pending") return "is-warning";
-  if (status === "failed" || status === "error") return "is-error";
-  return "";
+export function statusForRunState(status: string): StatusKind {
+  if (status === "completed" || status === "ok") return "success";
+  if (status === "running" || status === "queued" || status === "pending") return "warning";
+  if (status === "failed" || status === "error") return "error";
+  return "neutral";
 }
 
 function iconForDeskKind(kind: string): string {
@@ -94,6 +99,52 @@ export function workflowGraph(workflow: CoordinationWorkflowV1): {
     edges,
     event: COORDINATION_RUN_EVENT,
   };
+}
+
+export function validationSummary(validation: ValidationResultV1): {
+  status: StatusKind;
+  label: string;
+  message: string;
+} {
+  if (validation.ok) {
+    return {
+      status: "success",
+      label: "Pass",
+      message: "Workflow satisfies validation checks.",
+    };
+  }
+
+  return {
+    status: "warning",
+    label: "Fail",
+    message: `Validation issues: ${validation.errors.length}`,
+  };
+}
+
+export function runActionState(input: {
+  busy: boolean;
+  polling: boolean;
+  validationOk: boolean;
+  needsSave: boolean;
+}): RunActionState {
+  if (input.polling) {
+    return { disabled: true, label: "Running…" };
+  }
+
+  if (input.busy || !input.validationOk) {
+    return { disabled: true, label: "Run" };
+  }
+
+  if (input.needsSave) {
+    return { disabled: false, label: "Save + Run" };
+  }
+
+  return { disabled: false, label: "Run" };
+}
+
+export function monitorLinkForRun(run: RunStatusV1 | null): string | null {
+  if (!run?.traceLinks?.length) return null;
+  return run.traceLinks.find((link) => link.provider === "inngest")?.url ?? run.traceLinks[0]?.url ?? null;
 }
 
 export function nextBackoffMs(attempt: number): number {

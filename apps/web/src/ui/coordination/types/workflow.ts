@@ -58,4 +58,9 @@ export type PaletteCommand = {
   run: () => Promise<void> | void;
 };
 
-export type StatusTone = "is-success" | "is-warning" | "is-error" | "";
+export type StatusKind = "success" | "warning" | "error" | "info" | "neutral";
+
+export type RunActionState = Readonly<{
+  disabled: boolean;
+  label: string;
+}>;
