@@ -11,6 +11,7 @@ type WorkflowToolbarProps = {
   workflows: WorkflowModel[];
   busy: boolean;
   polling: boolean;
+  needsSave: boolean;
   validationOk: boolean;
   workflowEvent: string;
   monitorHref: string | null;
@@ -38,6 +39,7 @@ export function WorkflowToolbar({
   workflows,
   busy,
   polling,
+  needsSave,
   validationOk,
   workflowEvent,
   monitorHref,
@@ -80,7 +82,7 @@ export function WorkflowToolbar({
             onClick={onRun}
             className={polling ? `${toolbarBtnClass(false)} text-accent bg-accent-bg border-accent-border opacity-60` : toolbarBtnClass(canRun, true)}
           >
-            {polling ? "Running…" : "Run"}
+            {polling ? "Running…" : needsSave ? "Save + Run" : "Run"}
           </button>
 
           {monitorHref ? (

@@ -11,6 +11,8 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const MAX_POLL_ATTEMPTS = 24;
+
 export function useRunStatus() {
   const [lastRun, setLastRun] = useState<RunStatusV1 | null>(null);
   const [timeline, setTimeline] = useState<DeskRunEventV1[]>([]);
@@ -28,7 +30,16 @@ export function useRunStatus() {
   const isCurrentToken = (token: number) => token === tokenRef.current;
 
   const refreshRunState = useCallback(async (runId: string, token = tokenRef.current): Promise<RunStatusV1 | null> => {
-    const [runResult, timelineResult] = await Promise.all([getRunStatus(runId), getRunTimeline(runId)]);
+    let runResult;
+    let timelineResult;
+    try {
+      [runResult, timelineResult] = await Promise.all([getRunStatus(runId), getRunTimeline(runId)]);
+    } catch (err) {
+      if (isCurrentToken(token)) {
+        setError(`Failed to refresh run state: ${String(err)}`);
+      }
+      return null;
+    }
 
     if (!isCurrentToken(token)) {
       return null;
@@ -55,7 +66,7 @@ export function useRunStatus() {
       setPolling(true);
 
       try {
-        for (let attempt = 0; attempt < 12; attempt += 1) {
+        for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
           const run = await refreshRunState(runId, token);
           if (!isCurrentToken(token)) return;
 
@@ -63,7 +74,12 @@ export function useRunStatus() {
             return;
           }
 
+          if (!isCurrentToken(token)) return;
           await sleep(nextBackoffMs(attempt));
+        }
+
+        if (isCurrentToken(token)) {
+          setError("Run is still in progress. Use Refresh run status to keep tracking.");
         }
       } finally {
         if (pollingTokenRef.current === token) {

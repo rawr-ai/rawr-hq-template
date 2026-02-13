@@ -14,6 +14,7 @@ type CanvasWorkspaceProps = {
   workflowOptions: WorkflowModel[];
   busy: boolean;
   polling: boolean;
+  needsSave: boolean;
   validationOk: boolean;
   monitorHref: string | null;
   workflowEvent: string;
@@ -33,6 +34,7 @@ export function CanvasWorkspace({
   workflowOptions,
   busy,
   polling,
+  needsSave,
   validationOk,
   monitorHref,
   workflowEvent,
@@ -60,6 +62,7 @@ export function CanvasWorkspace({
             workflows={workflowOptions}
             busy={busy}
             polling={polling}
+            needsSave={needsSave}
             validationOk={validationOk}
             workflowEvent={workflowEvent}
             monitorHref={monitorHref}

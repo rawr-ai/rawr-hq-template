@@ -103,22 +103,37 @@ export function useWorkflow() {
     refreshWorkflows().catch((err) => setError(String(err)));
   }, [refreshWorkflows]);
 
+  const persistedActiveWorkflow = useMemo(
+    () => workflows.find((workflow) => workflow.workflowId === activeWorkflow.workflowId) ?? null,
+    [activeWorkflow.workflowId, workflows],
+  );
+
+  const needsSave = useMemo(() => {
+    if (!persistedActiveWorkflow) return true;
+    return !workflowsEqual(persistedActiveWorkflow, activeWorkflow);
+  }, [activeWorkflow, persistedActiveWorkflow]);
+
+  const persistActiveWorkflow = useCallback(async (): Promise<WorkflowModel | null> => {
+    const response = await saveWorkflow(activeWorkflow);
+    if (response.ok !== true) {
+      setError(coordinationErrorMessage(response, "Failed to save workflow"));
+      return null;
+    }
+
+    setActiveAndValidate(response.workflow);
+    await refreshWorkflows();
+    return response.workflow;
+  }, [activeWorkflow, refreshWorkflows, setActiveAndValidate]);
+
   const saveActiveWorkflow = useCallback(async () => {
     setBusy(true);
     setError(null);
     try {
-      const response = await saveWorkflow(activeWorkflow);
-      if (response.ok !== true) {
-        setError(coordinationErrorMessage(response, "Failed to save workflow"));
-        return;
-      }
-
-      setActiveAndValidate(response.workflow);
-      await refreshWorkflows();
+      await persistActiveWorkflow();
     } finally {
       setBusy(false);
     }
-  }, [activeWorkflow, refreshWorkflows, setActiveAndValidate]);
+  }, [persistActiveWorkflow]);
 
   const validateActiveWorkflow = useCallback(() => {
     refreshValidation(activeWorkflow);
@@ -145,7 +160,10 @@ export function useWorkflow() {
       setBusy(true);
       setError(null);
       try {
-        const response = await runWorkflowById(activeWorkflow.workflowId, input);
+        const workflowToRun = needsSave ? await persistActiveWorkflow() : activeWorkflow;
+        if (!workflowToRun) return null;
+
+        const response = await runWorkflowById(workflowToRun.workflowId, input);
         if (response.ok !== true) {
           setError(coordinationErrorMessage(response, "Run failed"));
           return null;
@@ -156,7 +174,7 @@ export function useWorkflow() {
         setBusy(false);
       }
     },
-    [activeWorkflow.workflowId],
+    [activeWorkflow, needsSave, persistActiveWorkflow],
   );
 
   const selectWorkflow = useCallback(
@@ -199,6 +217,7 @@ export function useWorkflow() {
     workflowOptions,
     validation,
     busy,
+    needsSave,
     error,
     setError,
     clearError: () => setError(null),
