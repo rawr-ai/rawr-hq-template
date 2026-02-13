@@ -36,6 +36,104 @@
   min-height: 500px;
 }
 
+.coordination-flowkit {
+  --font-family: var(--font-sans);
+  --font-size: 13px;
+  --editor-background-color: transparent;
+
+  --node-width: 240px;
+  --node-height: 72px;
+  --node-padding: 12px 14px;
+  --node-border-radius: 0.5rem;
+  --node-background-color: var(--color-bg-surface);
+  --node-border-color: var(--color-border);
+  --node-border-width: 1px;
+  --node-box-shadow: none;
+  --node-selected-outline-color: var(--color-accent-border);
+
+  --sidebar-width: 320px;
+  --sidebar-margin: 0;
+  --sidebar-padding: 0;
+  --sidebar-background-color: var(--color-bg-surface);
+  --sidebar-border-color: var(--color-border);
+}
+
+.coordination-flowkit .wf-editor,
+.coordination-flowkit .wf-editor-parent {
+  min-height: 500px;
+  background: transparent;
+}
+
+.coordination-flowkit .react-flow__pane {
+  cursor: grab;
+}
+
+.coordination-flowkit .react-flow__pane:active {
+  cursor: grabbing;
+}
+
+.coordination-flowkit .react-flow__edge-path {
+  stroke: var(--color-edge);
+  stroke-width: 1.5;
+}
+
+.coordination-flowkit .wf-node {
+  transition: border-color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.coordination-flowkit .wf-node:hover {
+  border-color: var(--color-text-muted);
+}
+
+.coordination-flowkit .wf-node-title {
+  margin-bottom: 2px;
+  gap: 8px;
+  color: var(--color-text-primary);
+}
+
+.coordination-flowkit .wf-node-description {
+  font-size: 11px;
+  opacity: 1;
+  color: var(--color-text-muted);
+}
+
+.coordination-flowkit .wf-node-icon {
+  color: var(--color-text-muted);
+}
+
+.coordination-flowkit .wf-add-handle,
+.coordination-flowkit .wf-target-handle {
+  background-color: var(--color-node-handle);
+  border: 1px solid var(--color-bg-canvas);
+}
+
+.coordination-flowkit .wf-add-handle > div {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+}
+
+.coordination-flowkit .wf-node-selected {
+  outline: 2px solid var(--color-accent-border);
+  box-shadow: none;
+}
+
+.coordination-flowkit .wf-add-handle-menu {
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-panel);
+  background: var(--color-bg-surface);
+}
+
+.coordination-flowkit .wf-add-handle-menu-item:hover {
+  background: var(--color-bg-raised);
+}
+
+.coordination-flowkit .wf-sidebar {
+  border-color: var(--color-border);
+  background: var(--color-bg-surface);
+}
+
 .coordination-flow-canvas ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -56,7 +154,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .coordination-flow-canvas,
-  .coordination-flow-canvas * {
+  .coordination-flow-canvas *,
+  .coordination-flowkit,
+  .coordination-flowkit * {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
