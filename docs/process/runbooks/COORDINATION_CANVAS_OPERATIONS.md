@@ -5,7 +5,8 @@ This runbook covers local and hosted operations for the coordination canvas + In
 ## Scope
 
 - Web coordination canvas route: `/coordination`
-- Server APIs: `/rawr/coordination/*`
+- ORPC RPC transport: `/rpc/*`
+- ORPC OpenAPI transport: `/api/orpc/*`
 - Inngest serve endpoint: `/api/inngest`
 - CLI surface: `rawr workflow coord ...`
 
@@ -82,18 +83,27 @@ curl -sS http://localhost:3000/api/inngest
 ```
 Expected: `200` response from Inngest serve handler.
 
-3. Coordination workflow round-trip via CLI:
+3. ORPC RPC workflow list:
+```bash
+curl -sS http://localhost:3000/rpc/coordination/listWorkflows \
+  -X POST \
+  -H "content-type: application/json" \
+  -d '{"json":{}}'
+```
+Expected: `200` response with JSON body containing `json.workflows`.
+
+4. Coordination workflow round-trip via CLI:
 ```bash
 bun run rawr workflow coord create --id wf-smoke --json
 bun run rawr workflow coord validate wf-smoke --json
 bun run rawr workflow coord run wf-smoke --json
 ```
 
-4. Canvas route:
+5. Canvas route:
 - Open `http://localhost:5173/coordination`
 - Confirm canvas loads, `Cmd/Ctrl+K` opens command palette, and run timeline updates after a run.
 
-5. Repeated-start safety checks:
+6. Repeated-start safety checks:
 ```bash
 bun run dev:up -- --action status
 ```
@@ -114,13 +124,15 @@ Expected:
 3. Operational health checks:
 - `GET /health` for service liveness
 - `GET /api/inngest` reachability
-- `GET /rawr/coordination/workflows` basic data-path validation
+- `POST /rpc/coordination/listWorkflows` basic data-path validation
+- `GET /api/orpc/openapi.json` OpenAPI contract availability
 
 ## Incident Triage Checklist
 
 1. Confirm server is healthy (`/health`).
 2. Confirm Inngest handler is reachable (`/api/inngest`).
-3. Validate workflow by id (`POST /rawr/coordination/workflows/:id/validate`).
-4. Check run status (`GET /rawr/coordination/runs/:runId`).
-5. Check timeline diagnostics (`GET /rawr/coordination/runs/:runId/timeline`).
-6. Verify trace links in run payload point to expected Inngest environment.
+3. Confirm ORPC contract exposure (`/api/orpc/openapi.json`).
+4. Validate workflow by id (`POST /rpc/coordination/validateWorkflow` with `{"json":{"workflowId":"..."}}`).
+5. Check run status (`POST /rpc/coordination/getRunStatus`).
+6. Check timeline diagnostics (`POST /rpc/coordination/getRunTimeline` or `GET /api/orpc/coordination/runs/{runId}/timeline`).
+7. Verify trace links in run payload point to expected Inngest environment.
