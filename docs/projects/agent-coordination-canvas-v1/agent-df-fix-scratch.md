@@ -11,3 +11,11 @@
 1. Run never executes against unsaved workflow id.
 2. `WORKFLOW_NOT_FOUND` only appears for actual missing persisted ids.
 3. Busy/running states are concurrency-safe.
+
+## 2026-02-13 Update
+- DF follow-up audit confirmed save-before-run invariant is enforced in `useWorkflow.queueRun`.
+- Remaining runtime gap identified and fixed:
+  - Toolbar run handler now catches run failures and writes to workflow error channel.
+- Runtime checks:
+  - No hardcoded monitor port behavior in run link path.
+  - Polling cancellation/token guards remain intact in `useRunStatus`.

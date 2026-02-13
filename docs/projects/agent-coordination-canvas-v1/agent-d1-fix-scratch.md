@@ -15,3 +15,13 @@
 1. File-by-file parity map.
 2. List of missing UI primitives/structures.
 3. Verified parity checkpoints for desktop/mobile visuals.
+
+## 2026-02-13 Update
+- Second D1 pass used MCP `get_design` + `read_files` directly and confirmed parity deltas:
+  - Split shell composition at route boundary.
+  - Canvas visual primitives missing/placeholder.
+  - Iconography and token drift from MCP baseline.
+- Implemented parity actions:
+  - Unified `/coordination` into host-shell route composition.
+  - Implemented `FlowNode`/`FlowEdges`/`FlowCanvas` visual contract with runtime-backed graph mapping.
+  - Aligned toolbar/nav icon language and updated visual snapshots for desktop/mobile.
