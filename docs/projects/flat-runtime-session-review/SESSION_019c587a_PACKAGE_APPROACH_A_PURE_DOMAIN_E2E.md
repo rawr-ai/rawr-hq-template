@@ -1,55 +1,134 @@
-# SESSION_019c587a — Package Approach A (Pure Domain) End-to-End
+# SESSION_019c587a - Pure Package End-to-End (oRPC-First Canonical)
 
-## Position (Approach A)
-Packages are pure domain/service modules.
+## Status
+- Canonical direction for this session: pure package, end-to-end.
+- This file is the forward-only source of truth for architecture convergence.
+- Historical docs are not retrofitted.
 
-- Package domain layer owns domain schemas/types, invariants, and domain logic implementation.
-- Package also owns an internal contract for using core logic.
-- Boundary layers (API/workflows/events) own boundary contracts/shapes/semantics and orchestration glue.
-- Boundary imports are one-way: boundary -> domain package.
-- Runtime plugin-to-plugin imports are disallowed.
-- `rawr.hq.ts` is the only cross-surface composition authority.
+## Locked Defaults
+1. Every domain package must ship:
+- one internal oRPC router,
+- one in-process oRPC client wrapper,
+- pure TypeScript service modules.
+2. API boundary is boundary-owned by default.
+3. Workflow capability exposure is split: caller-triggered workflow API procedures mount under `/api/workflows/<capability>/...`, while Inngest execution ingress is `/api/inngest` only.
+4. Workflow trigger procedures default to internal visibility and require explicit per-procedure promotion to external.
+5. `rawr.hq.ts` remains central composition now; auto-discovery is deferred.
+6. Runtime plugin-to-plugin imports are disallowed.
 
-## Hard Clarification Integration (2026-02-16)
+## Surface Semantics (Hard)
 
-| Clarification | Incorporated Design | Evaluation |
-| --- | --- | --- |
-| Standalone schemas in packages should be true domain schemas/types, not boundary IO wrappers. | Package schema files contain domain entities/aggregates/status types only. | Improves domain stability and reuse; avoids IO wrapper sprawl. |
-| Input/output schemas should be embedded in contract definitions unless strong reuse reason. | Internal and boundary contracts embed their IO shapes inline at contract definition sites. | Keeps contracts self-describing; increases local duplication but reduces indirection. |
-| Domain package owns logic + domain schemas/types + internal contract. | `packages/invoice-processing/src/domain/*` + `packages/invoice-processing/src/contracts/internal.contract.ts`. | Clean core boundary; internal contract becomes explicit stable entrypoint. |
-| Internal contract is not necessarily 1:1 with API/workflow/event contracts. | Boundary contracts in plugins can project, aggregate, or split internal operations. | Enables safer public boundary evolution without destabilizing core contract. |
-| Boundary layers define their own contracts/glue, one-way import into domain. | API/workflow contracts and runtime semantics live in `plugins/*`, importing only from package. | Strong directionality improves maintainability and prevents domain contamination by runtime concerns. |
+### 1) Domain internal package surface
+- Purpose: stable capability logic + internal contract harness.
+- Lives in: `packages/<capability>/src/*`.
+- Topology lock: exactly one exported internal oRPC router and exactly one in-process internal client wrapper per domain package.
+- Transport-neutral: no host mounts, no HTTP ingress binding, no Inngest `serve()` ingress, and no host route registration semantics in package internals.
 
-## Evidence Classification
+### 2) Boundary API surface
+- Purpose: externally callable API (HTTP/RPC/OpenAPI/WS boundary semantics).
+- Lives in: `plugins/api/<capability>-api/src/*`.
+- Owns boundary contract, boundary router, boundary client artifacts by default.
+- Includes caller-triggered workflow API procedures under `/api/workflows/<capability>/...`.
 
-### Observed
-1. User intent requires package purity and single composition point.
-- `/tmp/takeover-session-full/019c587a-4dd3-7a12-829a-060e0c70cc54/transcript.md:400`
-- `/tmp/takeover-session-full/019c587a-4dd3-7a12-829a-060e0c70cc54/transcript.md:413`
+### 3) Inngest execution ingress surface
+- Purpose: machine endpoint for Inngest to execute workflow functions.
+- Route: `/api/inngest`.
+- Lives in host mounting layer (`apps/server/src/*`), not in package domain logic.
+- Not a caller-triggered API surface and never a substitute for `/api/workflows/*`.
 
-2. Locked proposal already enforces package-first authoring, no runtime plugin-to-plugin imports, and `rawr.hq.ts` composition.
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/system/FLAT_RUNTIME_SURFACES_RECOMMENDED_PROPOSAL.md:19`
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/system/FLAT_RUNTIME_SURFACES_RECOMMENDED_PROPOSAL.md:23`
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/system/FLAT_RUNTIME_SURFACES_RECOMMENDED_PROPOSAL.md:27`
+## Path Semantics (No Ambiguity)
+- `/api/inngest`: execution ingress for Inngest runtime only (signed/guarded), not a caller-triggered trigger API.
+- `/api/workflows/<capability>/...`: caller-triggered workflow API surface (boundary API semantics).
+- `/api/events/...` is not used as a trigger API alias in this canonical model.
 
-3. Spec decision D-001 confirms API/workflow split with package-owned contracts/events mediating handoff.
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/system/spec-packet/DECISIONS.md:11`
+## Hard Policy Rules
 
-4. Axis 03 defines service-in-package / adapters-in-plugins and `rawr.hq.ts` as composition point.
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/system/spec-packet/AXIS_03_END_TO_END_EXAMPLES.md:20`
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/system/spec-packet/AXIS_03_END_TO_END_EXAMPLES.md:535`
+### Domain Package Policy (Mandatory)
+Each domain package must include:
+1. `packages/<capability>/src/router.ts`
+- single exported internal oRPC router for the package.
+2. `packages/<capability>/src/client.ts`
+- in-process server-side oRPC client wrapper for internal callers.
+3. `packages/<capability>/src/services/*`
+- pure service modules (service-module-first default).
 
-5. Today-state still composes runtime in app layer and keeps static contract assembly in `packages/core`.
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts:101`
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:104`
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts:5`
+Additional constraints:
+- Topology lock (hard): exactly one exported internal router and exactly one in-process client wrapper per domain package.
+- Service-module-first is default; split to `operations/*` only when explicit thresholds are exceeded.
+- Package router remains transport-neutral with no host mounting semantics.
 
-### Inferred
-1. The clean Approach A cut is: package internal contract as core interface, boundary contracts in adapters.
-2. A1 should mount/re-export package internal contract surface.
-3. A2 should define/extend boundary contract semantics in plugin, mapping into domain core.
+### API Plugin Policy (Boundary-Owned Default)
+Canonical default (Path B: boundary-specific contract + router):
+- Boundary plugin owns `contract.boundary.ts` + `router.ts` + boundary client shape.
+- Boundary handlers call package internal client and/or package services.
 
-## End-to-End Target Architecture (Concrete File Tree)
+When to use Path B:
+- external boundary semantics need independent evolution from package internals,
+- auth/rate-limit/shape semantics diverge from package internal procedures,
+- boundary requires explicit external-facing contract ownership.
+
+When not to use Path B:
+- boundary surface is almost entirely 1:1 with package internal contract and requires no meaningful adaptation.
+
+Exception path (Path A: simple reuse of package internal contract/impl):
+- API plugin may reuse package internal contract + internal router only when overlap is high 1:1 and reuse remains simple.
+
+When to use Path A:
+- boundary surface is nearly identical to package internal surface,
+- no substantial boundary-specific policy/shape divergence.
+
+When not to use Path A:
+- public boundary needs independent evolution,
+- auth/rate-limit/shape semantics diverge,
+- adaptation would create wrapper-heavy extension layers.
+
+Anti-pattern guardrail (hard):
+- No extension hell.
+- No tangled multi-layer inheritance or contract-extension stacks.
+- No tangled multi-router abstraction for a single API plugin.
+
+### Workflows Policy
+Execution model default (Inngest-first / ingest-first):
+- Workflow execution runs through Inngest functions for durable execution.
+
+Default workflow plugin requirement:
+- Workflow plugins must generate a workflow trigger oRPC router mounted under `/api/workflows/<capability>/...`.
+- Workflow plugins must also provide Inngest functions as the execution surface.
+
+Visibility policy:
+- Per-procedure metadata: `visibility: "internal" | "external"`.
+- Default visibility: `internal`.
+- Promotion to `external` is explicit per procedure (no implicit external exposure).
+- Internal callers are trusted server/operator flows by default; external callers can invoke only explicitly promoted procedures.
+
+Boundary constraints:
+- No runtime plugin-to-plugin imports.
+- Workflow-to-workflow orchestration composes through Inngest-native patterns (`step.invoke`, `step.sendEvent`) and/or package logic, not direct plugin imports.
+- Cross-workflow calls flow via composed surfaces only (trigger routers + Inngest functions/events), not plugin runtime imports.
+
+### Composition Policy (`rawr.hq.ts`)
+- Central manual composition is active in this phase.
+- Active capability manifest fields (per capability):
+- `capabilityId`
+- `api: { contract, router }` for boundary API surface artifacts.
+- `workflows: { triggerContract, triggerRouter, functions }` for workflow trigger + Inngest execution artifacts.
+- Active merge behavior in `rawr.hq.ts`:
+- `orpc.contract` merges each capability boundary API contract + workflow trigger contract under capability namespaces.
+- `orpc.router` merges each capability boundary API router + workflow trigger router under capability namespaces.
+- `inngest.functions` merges all capability workflow function arrays into one composed execution registration list.
+- Discovery-driven auto-composition from plugin manifests is deferred.
+
+## Deferred Discovery Decision (Explicit)
+Deferred for later cutover phase only:
+- Plugin-local capability manifests + auto-discovery composition pipeline.
+
+Current phase non-goal:
+- No discovery-driven assembly replacing explicit `rawr.hq.ts` registration.
+
+Cutover trigger for re-open:
+- At least 3 capabilities show repeated manual registration boilerplate and manifest drift risk.
+
+## Canonical n=1 Structure
 
 ```text
 .
@@ -58,24 +137,20 @@ Packages are pure domain/service modules.
 │   └── server/
 │       └── src/
 │           ├── rawr.ts
-│           ├── orpc/
-│           │   └── register-routes.ts
-│           └── inngest/
-│               └── register-route.ts
+│           ├── orpc/register-routes.ts
+│           └── inngest/register-route.ts
 ├── packages/
-│   ├── core/
-│   ├── hq/
 │   └── invoice-processing/
 │       └── src/
 │           ├── domain/
 │           │   ├── types.ts
-│           │   ├── aggregates.ts
-│           │   └── service.ts
-│           ├── contracts/
-│           │   ├── typebox-standard-schema.ts
-│           │   └── internal.contract.ts
-│           ├── clients/
-│           │   └── internal-client.ts
+│           │   └── invariants.ts
+│           ├── services/
+│           │   ├── invoice-lifecycle.service.ts
+│           │   └── index.ts
+│           ├── contract.ts
+│           ├── router.ts
+│           ├── client.ts
 │           └── index.ts
 └── plugins/
     ├── api/
@@ -83,807 +158,494 @@ Packages are pure domain/service modules.
     │       └── src/
     │           ├── contract.boundary.ts
     │           ├── router.ts
-    │           ├── adapters/
-    │           │   └── invoice-internal-surface.adapter.ts
+    │           ├── surface.ts
     │           └── index.ts
     └── workflows/
         └── invoice-processing-workflows/
             └── src/
-                ├── contract.event.ts
+                ├── contract.triggers.ts
+                ├── router.triggers.ts
+                ├── visibility.ts
+                ├── functions/
+                │   ├── reconcile-invoice.fn.ts
+                │   └── index.ts
+                ├── surface.ts
                 └── index.ts
 ```
 
-Onboarding baseline above is the n=1 shape. The following is the explicit n>1 growth shape.
+## Canonical n>1 Structure (Scaled)
 
-## Scaled Variant (n>1) For Multi-Capability Growth
-
-### Multi-instance file tree (single contract + single router per API plugin)
 ```text
 .
 ├── rawr.hq.ts
 ├── packages/
-│   └── invoice-processing/
-│       └── src/
-│           ├── contracts/
-│           │   ├── internal.contract.ts
-│           │   └── typebox-standard-schema.ts
-│           ├── services/
-│           │   ├── invoice-lifecycle.service.ts
-│           │   ├── invoice-admin.service.ts
-│           │   └── index.ts
-│           ├── clients/
-│           │   ├── internal-client.ts
-│           │   ├── admin-client.ts
-│           │   └── telemetry-client.ts
-│           └── index.ts
-├── plugins/
-│   ├── api/
-│   │   └── invoice-processing-api/
-│   │       └── src/
-│   │           ├── contract.boundary.ts
-│   │           ├── router.ts
-│   │           ├── modules/
-│   │           │   ├── runs.module.ts
-│   │           │   ├── admin.module.ts
-│   │           │   └── index.ts
-│   │           └── index.ts
-│   └── workflows/
-│       └── invoice-processing-workflows/
-│           └── src/
-│               ├── contract.event.ts
-│               ├── functions/
-│               │   ├── reconcile-invoice.fn.ts
-│               │   ├── timeout-invoice.fn.ts
-│               │   ├── notify-stakeholders.fn.ts
-│               │   └── index.ts
-│               └── index.ts
-└── apps/
-    └── server/
-        └── src/
-            ├── orpc/register-routes.ts
-            ├── inngest/register-route.ts
-            └── rawr.ts
+│   ├── invoice-processing/src/{domain/*,services/*,contract.ts,router.ts,client.ts,index.ts}
+│   └── payment-ops/src/{domain/*,services/*,contract.ts,router.ts,client.ts,index.ts}
+├── plugins/api/
+│   ├── invoice-processing-api/src/{contract.boundary.ts,router.ts,surface.ts,index.ts}
+│   └── payment-ops-api/src/{contract.boundary.ts,router.ts,surface.ts,index.ts}
+└── plugins/workflows/
+    ├── invoice-processing-workflows/src/{contract.triggers.ts,router.triggers.ts,visibility.ts,functions/*,surface.ts,index.ts}
+    └── payment-ops-workflows/src/{contract.triggers.ts,router.triggers.ts,visibility.ts,functions/*,surface.ts,index.ts}
 ```
 
-### One-file-per-function organization (workflows)
-```ts
-// plugins/workflows/invoice-processing-workflows/src/functions/index.ts
-import type { Inngest } from "inngest";
-import type { InvoiceDeps } from "@rawr/invoice-processing";
-import { createReconcileInvoiceFunction } from "./reconcile-invoice.fn";
-import { createTimeoutInvoiceFunction } from "./timeout-invoice.fn";
-import { createNotifyStakeholdersFunction } from "./notify-stakeholders.fn";
+Scaled merge rule (same policy, many capabilities):
+1. Each capability contributes one `api` surface: `{ contract, router }`.
+2. Each capability contributes one `workflows` surface: `{ triggerContract, triggerRouter, functions }`.
+3. `rawr.hq.ts` merges all capability surfaces into `orpc.contract`, `orpc.router`, and `inngest.functions`.
 
-export function createInvoiceWorkflowFunctions(client: Inngest, deps: InvoiceDeps) {
-  return [
-    createReconcileInvoiceFunction(client, deps),
-    createTimeoutInvoiceFunction(client, deps),
-    createNotifyStakeholdersFunction(client, deps),
-  ] as const;
+Growth invariants:
+1. One exported internal router per domain package.
+2. One in-process internal client per domain package.
+3. One boundary router per API plugin.
+4. Workflow trigger router exists for each workflow plugin.
+5. Service modules are cohesive first; split to `operations/*` only by threshold.
+
+## End-to-End Example (Invoicing Capability)
+
+This walkthrough is one continuous path:
+1. Domain package owns pure services + internal oRPC surface.
+2. API and workflow plugins expose boundary/trigger surfaces.
+3. `rawr.hq.ts` merges capability surfaces.
+4. Host app mounts merged surfaces at `/api/workflows/*` and `/api/inngest`.
+
+### 1) Domain package: pure services + mandatory internal oRPC router + internal client
+
+```ts
+// packages/invoice-processing/src/services/invoice-lifecycle.service.ts
+export type InvoiceLifecycleDeps = {
+  newRunId: () => string;
+  saveRun: (run: { runId: string; status: "queued" | "running" | "completed" | "failed" }) => Promise<void>;
+  getRun: (runId: string) => Promise<{ runId: string; status: "queued" | "running" | "completed" | "failed" } | null>;
+};
+
+export async function startInvoiceProcessing(
+  deps: InvoiceLifecycleDeps,
+  input: { invoiceId: string; requestedBy: string },
+) {
+  const runId = deps.newRunId();
+  await deps.saveRun({ runId, status: "queued" });
+  return { runId, accepted: true as const };
+}
+
+export async function getInvoiceProcessingStatus(deps: InvoiceLifecycleDeps, runId: string) {
+  const run = await deps.getRun(runId);
+  return run ?? { runId, status: "failed" as const };
 }
 ```
 
-### Capability-module-first organization (logic default)
-```text
-plugins/api/invoice-processing-api/src/
-├── contract.boundary.ts   # single plugin contract
-├── router.ts              # single plugin router
-├── modules/
-│   ├── runs.module.ts
-│   ├── admin.module.ts
-│   └── index.ts
-└── index.ts
-```
-
 ```ts
-// plugins/api/invoice-processing-api/src/modules/index.ts
-import { runsModule } from "./runs.module";
-import { adminModule } from "./admin.module";
-
-export const invoiceApiModules = {
-  runs: runsModule,
-  admin: adminModule,
-} as const;
-```
-
-When a module grows beyond cohesion/size thresholds, split into `operations/*.operation.ts` under that module.
-
-### Service evolution: single service -> cohesive service set
-```text
-packages/invoice-processing/src/services/
-├── invoice-lifecycle.service.ts  # start/getStatus/reconcile grouped
-├── invoice-admin.service.ts      # forceReconcile/cancel/retry grouped
-└── index.ts                      # only public entrypoint for service layer
-```
-
-### Stable import/dependency patterns under growth
-
-| Producer | Allowed imports | Disallowed imports |
-| --- | --- | --- |
-| `packages/invoice-processing/src/domain/**` | local domain modules only | `services/**`, `clients/**`, `plugins/**`, transport/adapters |
-| `packages/invoice-processing/src/services/**` | `domain/**`, `ports/**`, `contracts/internal/**` | `plugins/**`, app host routes |
-| `plugins/api/**` | `@rawr/invoice-processing` public exports only | `plugins/workflows/**`, deep imports into `services/*/*.ts` |
-| `plugins/workflows/**` | `@rawr/invoice-processing` public exports only | `plugins/api/**`, app-host route modules |
-| `apps/server/**` | `rawr.hq.ts`, plugin registrars | domain internals via deep imports |
-
-Growth rule: keep one API plugin contract + one API plugin router; scale by adding cohesive capability modules, not additional plugin contracts/routers.
-Growth rule: add new workflow functions as one-file-per-function under `functions/` and aggregate through `functions/index.ts`.
-Growth rule: split a capability module into per-operation files only when complexity/churn warrants it (for example >250 LOC, >5 operations, or high concurrent edits).
-Growth rule: keep service APIs capability-cohesive first; aggregate via `services/index.ts`.
-Growth rule: never bypass public layer barrels with deep imports.
-Approach A guardrail: boundary contracts/events stay in plugin layer by default; package contracts remain internal/domain-facing.
-
-## Ownership: Contracts, Implementation, Clients
-
-| Concern | Owns It | Path | Notes |
-| --- | --- | --- | --- |
-| Domain schemas/types | Package domain | `packages/invoice-processing/src/domain/types.ts` | Domain entities/status/aggregates only. |
-| Domain logic | Package domain | `packages/invoice-processing/src/domain/service.ts` | No HTTP, no event bus, no `step.run`, no runtime lifecycle. |
-| TypeBox->oRPC schema bridge | Package contracts | `packages/invoice-processing/src/contracts/typebox-standard-schema.ts` | Explicit Standard Schema adapter; avoids hidden validation behavior. |
-| Internal core contract | Package | `packages/invoice-processing/src/contracts/internal.contract.ts` | Embedded IO shapes; stable core contract. |
-| Internal contract handlers/router | API plugin adapter layer | `plugins/api/invoice-processing-api/src/adapters/invoice-internal-surface.adapter.ts` | `implement()` + handler mapping live in adapter layer; package remains domain/contract focused. |
-| Boundary API contract | API plugin | `plugins/api/invoice-processing-api/src/contract.boundary.ts` | Embedded boundary IO shapes and boundary semantics. |
-| Boundary workflow/event contract | Workflow plugin | `plugins/workflows/invoice-processing-workflows/src/contract.event.ts` | Event payload semantics for runtime orchestration. |
-| Runtime orchestration glue | Boundary plugins | `plugins/api/*`, `plugins/workflows/*` | Policy/auth/step orchestration belongs here. |
-| Clients | Package | `packages/invoice-processing/src/clients/internal-client.ts` | Typed client for internal consumers/tests. |
-| Composition authority | Root manifest | `rawr.hq.ts` | Single assembly authority. |
-| oRPC mount wrapper | App host | `apps/server/src/orpc/register-routes.ts` | Prefix alignment + `parse: "none"` forwarding for RPC/OpenAPI handlers. |
-| Inngest mount wrapper | App host | `apps/server/src/inngest/register-route.ts` | Single ingress route wrapper for `serve()` handler + signing key wiring. |
-| Mounting composition | App host | `apps/server/src/rawr.ts` | Calls both wrappers; keeps runtime entrypoint explicit. |
-
-## Import Direction Rule (Hard)
-
-Allowed:
-- `plugins/api/**` -> `@rawr/invoice-processing`
-- `plugins/workflows/**` -> `@rawr/invoice-processing`
-- `apps/server/**` -> `../../rawr.hq`
-
-Disallowed:
-- `plugins/api/**` -> `plugins/workflows/**`
-- `plugins/workflows/**` -> `plugins/api/**`
-- `packages/invoice-processing/**` -> `plugins/**`
-
-## Domain Package Example (Domain Types + Internal Contract)
-
-### Domain types (standalone package schemas are domain-only)
-```ts
-// packages/invoice-processing/src/domain/types.ts
-import { Type, type Static } from "typebox";
-
-export const InvoiceStatusSchema = Type.Union([
-  Type.Literal("queued"),
-  Type.Literal("running"),
-  Type.Literal("completed"),
-  Type.Literal("failed"),
-]);
-
-export const InvoiceAggregateSchema = Type.Object({
-  runId: Type.String({ minLength: 1 }),
-  invoiceId: Type.String({ minLength: 1 }),
-  status: InvoiceStatusSchema,
-});
-
-export type InvoiceStatus = Static<typeof InvoiceStatusSchema>;
-export type InvoiceAggregate = Static<typeof InvoiceAggregateSchema>;
-```
-
-### TypeBox -> Standard Schema bridge (explicit plumbing, no magic)
-```ts
-// packages/invoice-processing/src/contracts/typebox-standard-schema.ts
-import type { Schema, SchemaIssue } from "@orpc/contract";
-import type { Static, TSchema } from "typebox";
-import { Value } from "typebox/value";
-
-function parseIssuePath(instancePath: unknown): PropertyKey[] | undefined {
-  if (typeof instancePath !== "string") return undefined;
-  if (instancePath === "" || instancePath === "/") return undefined;
-  const segments = instancePath
-    .split("/")
-    .slice(1)
-    .map((segment) => decodeURIComponent(segment.replace(/~1/g, "/").replace(/~0/g, "~")))
-    .map((segment) => (/^\d+$/.test(segment) ? Number(segment) : segment));
-  return segments.length > 0 ? segments : undefined;
-}
-
-export function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Static<T>, Static<T>> {
-  return {
-    "~standard": {
-      version: 1,
-      vendor: "typebox",
-      validate: (value) => {
-        if (Value.Check(schema, value)) {
-          return { value: value as Static<T> };
-        }
-        const issues = [...Value.Errors(schema, value)].map((issue) => {
-          const path = parseIssuePath((issue as { instancePath?: unknown }).instancePath);
-          return path ? ({ message: issue.message, path } satisfies SchemaIssue) : ({ message: issue.message } satisfies SchemaIssue);
-        });
-        return { issues: issues.length > 0 ? issues : [{ message: "Validation failed" }] };
-      },
-    },
-    __typebox: schema,
-  } as Schema<Static<T>, Static<T>>;
-}
-```
-
-### Internal contract (IO shapes embedded in contract)
-```ts
-// packages/invoice-processing/src/contracts/internal.contract.ts
+// packages/invoice-processing/src/contract.ts
 import { oc } from "@orpc/contract";
-import { Type } from "typebox";
-import { InvoiceStatusSchema } from "../domain/types";
-import { typeBoxStandardSchema } from "./typebox-standard-schema";
+import { z } from "zod";
 
 export const invoiceInternalContract = oc.router({
   start: oc
     .input(
-      typeBoxStandardSchema(
-        Type.Object({
-          invoiceId: Type.String({ minLength: 1 }),
-          requestedBy: Type.String({ minLength: 1 }),
-        }),
-      ),
+      z.object({
+        invoiceId: z.string().min(1),
+        requestedBy: z.string().min(1),
+      }),
     )
     .output(
-      typeBoxStandardSchema(
-        Type.Object({
-          runId: Type.String({ minLength: 1 }),
-          status: InvoiceStatusSchema,
-        }),
-      ),
+      z.object({
+        runId: z.string().min(1),
+        accepted: z.literal(true),
+      }),
     ),
 
   getStatus: oc
-    .input(
-      typeBoxStandardSchema(
-        Type.Object({
-          runId: Type.String({ minLength: 1 }),
-        }),
-      ),
-    )
+    .input(z.object({ runId: z.string().min(1) }))
     .output(
-      typeBoxStandardSchema(
-        Type.Object({
-          runId: Type.String({ minLength: 1 }),
-          status: InvoiceStatusSchema,
-        }),
-      ),
+      z.object({
+        runId: z.string().min(1),
+        status: z.enum(["queued", "running", "completed", "failed"]),
+      }),
     ),
 });
 ```
 
-### Internal surface implementation (adapter-owned handlers)
 ```ts
-// plugins/api/invoice-processing-api/src/adapters/invoice-internal-surface.adapter.ts
+// packages/invoice-processing/src/router.ts
 import { implement } from "@orpc/server";
-import { createInvoiceService, invoiceInternalContract, type InvoiceDeps } from "@rawr/invoice-processing";
+import { invoiceInternalContract } from "./contract";
+import { getInvoiceProcessingStatus, startInvoiceProcessing, type InvoiceLifecycleDeps } from "./services/invoice-lifecycle.service";
 
-export type InvoiceInternalContext = {
-  deps: InvoiceDeps;
-  requestId: string;
+export type InvoicePackageContext = {
+  deps: InvoiceLifecycleDeps;
 };
 
-export function createInvoiceInternalSurface() {
-  const os = implement<typeof invoiceInternalContract, InvoiceInternalContext>(invoiceInternalContract);
+export function createInvoiceInternalRouter() {
+  const os = implement<typeof invoiceInternalContract, InvoicePackageContext>(invoiceInternalContract);
 
-  const router = os.router({
-    start: os.start.handler(async ({ input, context }) => {
-      const domain = createInvoiceService(context.deps);
-      return domain.start(input);
+  return os.router({
+    start: os.start.handler(async ({ context, input }) => {
+      return startInvoiceProcessing(context.deps, input);
     }),
-    getStatus: os.getStatus.handler(async ({ input, context }) => {
-      const domain = createInvoiceService(context.deps);
-      return domain.getStatus(input.runId);
+    getStatus: os.getStatus.handler(async ({ context, input }) => {
+      return getInvoiceProcessingStatus(context.deps, input.runId);
     }),
   });
-
-  return {
-    contract: invoiceInternalContract,
-    router,
-  } as const;
 }
 ```
 
-## oRPC Correctness: Contract -> Implement -> Transport
-
-Contract-first here is concrete and two-stage:
-1. Package defines contract artifact (`oc.router`) and domain/service logic.
-2. Adapter layer (usually API plugin) binds handlers with `implement(contract)` and maps into package services.
-3. API plugin structure stays stable under growth: one `contract.boundary.ts`, one `router.ts`, many capability modules (optionally split to `operations/*.operation.ts` when needed).
-
-### A1 Definition
-API plugin binds package internal contract in a lightweight adapter with minimal boundary additions.
-
-### A1 Plugin Example
 ```ts
-// plugins/api/invoice-processing-api/src/index.ts
-import { implement } from "@orpc/server";
-import { createInvoiceService, invoiceInternalContract, type InvoiceDeps } from "@rawr/invoice-processing";
+// packages/invoice-processing/src/client.ts
+import { createRouterClient } from "@orpc/server";
+import { createInvoiceInternalRouter, type InvoicePackageContext } from "./router";
 
-type InvoiceApiContext = {
-  deps: InvoiceDeps;
-  requestId: string;
-};
-
-function createInvoiceInternalAdapter() {
-  const os = implement<typeof invoiceInternalContract, InvoiceApiContext>(invoiceInternalContract);
-
-  return {
-    contract: invoiceInternalContract,
-    router: os.router({
-      start: os.start.handler(async ({ input, context }) => {
-        const service = createInvoiceService(context.deps);
-        return service.start(input);
-      }),
-      getStatus: os.getStatus.handler(async ({ input, context }) => {
-        const service = createInvoiceService(context.deps);
-        return service.getStatus(input.runId);
-      }),
-    }),
-  } as const;
-}
-
-export function registerInvoiceProcessingApiPluginA1() {
-  const internal = createInvoiceInternalAdapter();
-
-  return {
-    namespace: "invoiceProcessing" as const,
-    contract: internal.contract,
-    router: internal.router,
-  } as const;
+export function createInvoiceInternalClient(context: InvoicePackageContext) {
+  return createRouterClient(createInvoiceInternalRouter(), { context });
 }
 ```
 
-A1 evaluation:
-- Simpler: fastest path, minimal duplication.
-- Tradeoff: boundary semantics track internal surface more closely.
-- Use for internal/admin-first procedures where external versioning pressure is low.
+```ts
+// packages/invoice-processing/src/index.ts
+export { invoiceInternalContract } from "./contract";
+export { createInvoiceInternalRouter, type InvoicePackageContext } from "./router";
+export { createInvoiceInternalClient } from "./client";
+export type { InvoiceLifecycleDeps } from "./services/invoice-lifecycle.service";
+```
 
-### A2 Definition
-API plugin defines boundary-specific semantics and maps handlers into domain/internal operations.
+### 2) API plugin: boundary-owned default (Path B)
 
-### A2 Boundary Contract Example
 ```ts
 // plugins/api/invoice-processing-api/src/contract.boundary.ts
 import { oc } from "@orpc/contract";
-import { Type } from "typebox";
-import { typeBoxStandardSchema } from "@rawr/invoice-processing/contracts/typebox-standard-schema";
+import { z } from "zod";
 
-export const invoiceBoundaryContract = oc.router({
-  startInvoice: oc
-    .route({ method: "POST", path: "/invoice-processing/runs" })
+export const invoiceApiContract = oc.router({
+  startInvoiceProcessing: oc
+    .route({ method: "POST", path: "/invoices/processing/start" })
     .input(
-      typeBoxStandardSchema(
-        Type.Object({
-          invoiceId: Type.String({ minLength: 1 }),
-          requestedBy: Type.String({ minLength: 1 }),
-          traceToken: Type.Optional(Type.String()),
-        }),
-      ),
+      z.object({
+        invoiceId: z.string().min(1),
+        requestedBy: z.string().min(1),
+        traceToken: z.string().optional(),
+      }),
     )
-    .output(
-      typeBoxStandardSchema(
-        Type.Object({
-          runId: Type.String({ minLength: 1 }),
-          accepted: Type.Boolean(),
-        }),
-      ),
-    ),
+    .output(z.object({ runId: z.string().min(1), accepted: z.boolean() })),
 
-  forceReconcile: oc
-    .route({ method: "POST", path: "/invoice-processing/runs/{runId}/force-reconcile" })
-    .input(typeBoxStandardSchema(Type.Object({ runId: Type.String({ minLength: 1 }) })))
-    .output(typeBoxStandardSchema(Type.Object({ accepted: Type.Boolean() }))),
+  getInvoiceProcessingStatus: oc
+    .route({ method: "GET", path: "/invoices/processing/{runId}" })
+    .input(z.object({ runId: z.string().min(1) }))
+    .output(z.object({ runId: z.string().min(1), status: z.enum(["queued", "running", "completed", "failed"]) })),
 });
 ```
 
-### A2 Plugin Mapping Example
 ```ts
-// plugins/api/invoice-processing-api/src/index.ts
-import type { Inngest } from "inngest";
+// plugins/api/invoice-processing-api/src/router.ts
 import { implement } from "@orpc/server";
-import { createInvoiceService, type InvoiceDeps } from "@rawr/invoice-processing";
-import { invoiceBoundaryContract } from "./contract.boundary";
+import { createInvoiceInternalClient, type InvoicePackageContext } from "@rawr/invoice-processing";
+import { invoiceApiContract } from "./contract.boundary";
 
-export type InvoiceApiBoundaryContext = {
-  deps: InvoiceDeps;
-  inngestClient: Inngest;
-  requestId: string;
+export type InvoiceApiContext = InvoicePackageContext;
+
+export function createInvoiceApiRouter() {
+  const os = implement<typeof invoiceApiContract, InvoiceApiContext>(invoiceApiContract);
+
+  return os.router({
+    startInvoiceProcessing: os.startInvoiceProcessing.handler(async ({ context, input }) => {
+      const internal = createInvoiceInternalClient(context);
+      return internal.start({
+        invoiceId: input.invoiceId,
+        requestedBy: input.requestedBy,
+      });
+    }),
+
+    getInvoiceProcessingStatus: os.getInvoiceProcessingStatus.handler(async ({ context, input }) => {
+      const internal = createInvoiceInternalClient(context);
+      return internal.getStatus({ runId: input.runId });
+    }),
+  });
+}
+```
+
+```ts
+// plugins/api/invoice-processing-api/src/surface.ts
+import { invoiceApiContract } from "./contract.boundary";
+import { createInvoiceApiRouter } from "./router";
+
+export const invoiceApiSurface = {
+  contract: invoiceApiContract,
+  router: createInvoiceApiRouter(),
+} as const;
+```
+
+### 3) API plugin reuse exception (Path A)
+
+```ts
+// plugins/api/invoice-processing-api/src/reuse-surface.ts
+import { invoiceInternalContract, createInvoiceInternalRouter } from "@rawr/invoice-processing";
+
+// Use only when overlap is mostly 1:1 and no complex boundary divergence is needed.
+export const invoiceApiReuseSurface = {
+  contract: invoiceInternalContract,
+  router: createInvoiceInternalRouter(),
+} as const;
+```
+
+Path A use/non-use criteria are canonical in `API Plugin Policy (Boundary-Owned Default)` above; this section demonstrates only the reuse surface shape.
+
+### 4) Workflow plugin: ingest execution + trigger router
+
+```ts
+// plugins/workflows/invoice-processing-workflows/src/visibility.ts
+export type TriggerVisibility = "internal" | "external";
+
+export const workflowTriggerVisibility = {
+  triggerInvoiceReconciliation: "internal",
+  retryInvoiceReconciliation: "internal",
+} as const satisfies Record<string, TriggerVisibility>;
+```
+
+```ts
+// plugins/workflows/invoice-processing-workflows/src/contract.triggers.ts
+import { oc } from "@orpc/contract";
+import { z } from "zod";
+
+export const invoiceWorkflowTriggerContract = oc.router({
+  triggerInvoiceReconciliation: oc
+    .route({ method: "POST", path: "/invoicing/trigger-reconciliation" })
+    .input(z.object({ runId: z.string().min(1) }))
+    .output(z.object({ accepted: z.boolean() })),
+
+  retryInvoiceReconciliation: oc
+    .route({ method: "POST", path: "/invoicing/retry" })
+    .input(z.object({ runId: z.string().min(1), reason: z.string().min(1) }))
+    .output(z.object({ accepted: z.boolean() })),
+});
+```
+
+```ts
+// plugins/workflows/invoice-processing-workflows/src/router.triggers.ts
+import { implement } from "@orpc/server";
+import type { Inngest } from "inngest";
+import { invoiceWorkflowTriggerContract } from "./contract.triggers";
+import { workflowTriggerVisibility } from "./visibility";
+
+export type WorkflowTriggerContext = {
+  inngest: Inngest;
+  canCallInternal: boolean;
 };
 
-export function registerInvoiceProcessingApiPluginA2() {
-  const os = implement<typeof invoiceBoundaryContract, InvoiceApiBoundaryContext>(invoiceBoundaryContract);
+function assertVisible(procedure: keyof typeof workflowTriggerVisibility, context: WorkflowTriggerContext) {
+  const visibility = workflowTriggerVisibility[procedure];
+  if (visibility === "internal" && !context.canCallInternal) {
+    throw new Error(`Procedure ${String(procedure)} is internal`);
+  }
+}
 
-  return {
-    namespace: "invoiceProcessing" as const,
-    contract: invoiceBoundaryContract,
-    router: os.router({
-      startInvoice: os.startInvoice.handler(async ({ input, context }) => {
-        const domain = createInvoiceService(context.deps);
-        const started = await domain.start({
-          invoiceId: input.invoiceId,
-          requestedBy: input.requestedBy,
-        });
+export function createInvoiceWorkflowTriggerRouter() {
+  const os = implement<typeof invoiceWorkflowTriggerContract, WorkflowTriggerContext>(invoiceWorkflowTriggerContract);
 
-        // Event id is explicit for ingestion-level idempotency.
-        await context.inngestClient.send({
-          id: `invoice-processing.requested:${started.runId}`,
-          name: "invoice.processing.requested",
-          data: {
-            runId: started.runId,
-            invoiceId: input.invoiceId,
-            requestedBy: input.requestedBy,
-          },
-        });
-
-        return { runId: started.runId, accepted: true };
-      }),
-
-      forceReconcile: os.forceReconcile.handler(async ({ input, context }) => {
-        const domain = createInvoiceService(context.deps);
-        await domain.forceReconcile(input.runId);
-        return { accepted: true };
-      }),
+  return os.router({
+    triggerInvoiceReconciliation: os.triggerInvoiceReconciliation.handler(async ({ context, input }) => {
+      assertVisible("triggerInvoiceReconciliation", context);
+      await context.inngest.send({
+        name: "invoice.reconciliation.requested",
+        data: { runId: input.runId },
+      });
+      return { accepted: true };
     }),
+
+    retryInvoiceReconciliation: os.retryInvoiceReconciliation.handler(async ({ context, input }) => {
+      assertVisible("retryInvoiceReconciliation", context);
+      await context.inngest.send({
+        name: "invoice.reconciliation.retry.requested",
+        data: { runId: input.runId, reason: input.reason },
+      });
+      return { accepted: true };
+    }),
+  });
+}
+```
+
+```ts
+// plugins/workflows/invoice-processing-workflows/src/functions/index.ts
+import type { Inngest } from "inngest";
+import { createInvoiceInternalClient, type InvoicePackageContext } from "@rawr/invoice-processing";
+
+export function createInvoiceWorkflowFunctions(
+  inngest: Inngest,
+  packageContext: InvoicePackageContext,
+) {
+  const reconcile = inngest.createFunction(
+    { id: "invoice.reconciliation", retries: 2 },
+    { event: "invoice.reconciliation.requested" },
+    async ({ event, step }) => {
+      await step.run("invoice/reconcile", async () => {
+        const internal = createInvoiceInternalClient(packageContext);
+        return internal.getStatus({ runId: event.data.runId });
+      });
+
+      await step.sendEvent("invoice/reconciliation/completed", {
+        name: "invoice.reconciliation.completed",
+        data: { runId: event.data.runId },
+      });
+
+      return { ok: true as const };
+    },
+  );
+
+  return [reconcile] as const;
+}
+```
+
+```ts
+// plugins/workflows/invoice-processing-workflows/src/surface.ts
+import type { Inngest } from "inngest";
+import type { InvoicePackageContext } from "@rawr/invoice-processing";
+import { invoiceWorkflowTriggerContract } from "./contract.triggers";
+import { createInvoiceWorkflowTriggerRouter } from "./router.triggers";
+import { createInvoiceWorkflowFunctions } from "./functions";
+
+export function createInvoiceWorkflowSurface(inngest: Inngest, packageContext: InvoicePackageContext) {
+  return {
+    triggerContract: invoiceWorkflowTriggerContract,
+    triggerRouter: createInvoiceWorkflowTriggerRouter(),
+    functions: createInvoiceWorkflowFunctions(inngest, packageContext),
   } as const;
 }
 ```
 
-A2 evaluation:
-- Simpler for boundary evolution: plugin can version/shape semantics independently.
-- Harder: explicit mapping layer and additional adapter tests required.
-- Use when public/admin contracts diverge from package internal contract.
+## `rawr.hq.ts` Capability Composition (Central Now)
 
-### oRPC transport mounting contract
-`RPCHandler` and `OpenAPIHandler` should be mounted from app-host wrapper files (edge-only transport concerns), not from contract packages.
-- `/rpc` + `/rpc/*` with `prefix: "/rpc"`
-- `/api/orpc` + `/api/orpc/*` with `prefix: "/api/orpc"`
-- Forwarded handlers use Elysia `parse: "none"` to avoid body stream consumption before oRPC reads the request.
+Snippet context:
+- Applies the active central composition policy already defined above (manual now, discovery deferred).
 
-## Inngest Correctness and Lifecycle Details
-
-Hard lifecycle rules for this architecture:
-1. Function handlers can re-enter; code outside `step.*` can re-run.
-2. Side effects go inside stable `step.run` boundaries.
-3. Step IDs are durability keys; renaming/reordering steps is a compatibility change.
-4. Idempotency is layered:
-   - event ingestion via stable `event.id`,
-   - function-level idempotency key expression,
-   - domain-level idempotent writes.
-5. Serve endpoint hardening belongs at the app edge (`/api/inngest`) with signing key verification.
-
-### Workflow boundary contract (embedded event shape)
-```ts
-// plugins/workflows/invoice-processing-workflows/src/contract.event.ts
-import { Type } from "typebox";
-
-export const InvoiceRequestedEventShape = Type.Object({
-  runId: Type.String({ minLength: 1 }),
-  invoiceId: Type.String({ minLength: 1 }),
-  requestedBy: Type.String({ minLength: 1 }),
-});
-```
-
-### Workflow runtime adapter (durable step discipline)
-```ts
-// plugins/workflows/invoice-processing-workflows/src/index.ts
-import type { Inngest } from "inngest";
-import { Value } from "typebox/value";
-import { createInvoiceService, type InvoiceDeps } from "@rawr/invoice-processing";
-import { InvoiceRequestedEventShape } from "./contract.event";
-
-export function registerInvoiceProcessingWorkflowPlugin(input: {
-  client: Inngest;
-  deps: InvoiceDeps;
-}) {
-  const domain = createInvoiceService(input.deps);
-
-  const reconcile = input.client.createFunction(
-    {
-      id: "invoice-processing.reconcile",
-      retries: 2,
-      idempotency: "event.data.runId",
-      concurrency: [{ key: "event.data.runId", limit: 1 }],
-    },
-    { event: "invoice.processing.requested" },
-    async ({ event, runId, step }) => {
-      if (!Value.Check(InvoiceRequestedEventShape, event.data)) {
-        throw new Error("Invalid invoice.processing.requested payload");
-      }
-
-      await step.run("invoice/mark-running", async () => {
-        await domain.markRunning(event.data.runId);
-      });
-
-      const result = await step.run("invoice/reconcile", async () => {
-        return domain.reconcile(event.data.runId);
-      });
-
-      await step.run("invoice/mark-completed", async () => {
-        await domain.markCompleted(event.data.runId);
-      });
-
-      return { ok: true as const, runId: event.data.runId, inngestRunId: runId, result };
-    },
-  );
-
-  return { functions: [reconcile] as const };
-}
-```
-
-### Inngest serve endpoint wrapper (signed ingress)
-```ts
-// apps/server/src/inngest/register-route.ts
-import type { AnyElysia } from "../plugins";
-import type { Inngest } from "inngest";
-import { serve as inngestServe } from "inngest/bun";
-
-type InngestSurface = {
-  client: Inngest;
-  functions: readonly unknown[];
-};
-
-export function registerInngestRoute<TApp extends AnyElysia>(app: TApp, surface: InngestSurface): TApp {
-  const handler = inngestServe({
-    client: surface.client,
-    functions: surface.functions as any,
-    servePath: "/api/inngest",
-    signingKey: process.env.INNGEST_SIGNING_KEY,
-  });
-
-  app.all("/api/inngest", ({ request }) => handler(request as Request), { parse: "none" });
-  return app;
-}
-```
-
-## Elysia Mounting and Adapter Caveats
-
-1. Mount both exact and wildcard paths for oRPC transports (`/rpc` and `/rpc/*`; `/api/orpc` and `/api/orpc/*`) so root and nested procedures both resolve.
-2. Use `parse: "none"` for routes forwarding raw `Request` objects to oRPC/Inngest handlers; this avoids body stream consumption before downstream handlers parse the body.
-3. Register auth/guard hooks intentionally relative to mount order; Elysia hooks are order-sensitive and plugin-scoped by default.
-4. Keep framework-native routes outside oRPC procedure modeling:
-   - `/api/inngest`
-   - `/rawr/plugins/web/:dirName`
-   - `/health`
-
-## Composition in `rawr.hq.ts` and Host Mounting Path
-
-### Composition authority
 ```ts
 // rawr.hq.ts
-import { Inngest } from "inngest";
 import { oc } from "@orpc/contract";
-import { createInvoiceDeps } from "@rawr/invoice-processing";
-import { registerInvoiceProcessingApiPluginA1 } from "./plugins/api/invoice-processing-api/src";
-import { registerInvoiceProcessingWorkflowPlugin } from "./plugins/workflows/invoice-processing-workflows/src";
+import { Inngest } from "inngest";
+import type { InvoicePackageContext } from "@rawr/invoice-processing";
+import { invoiceApiSurface } from "./plugins/api/invoice-processing-api/src/surface";
+import { createInvoiceWorkflowSurface } from "./plugins/workflows/invoice-processing-workflows/src/surface";
 
-const deps = createInvoiceDeps();
-const inngestClient = new Inngest({ id: "rawr-hq" });
+const inngest = new Inngest({ id: "rawr-hq" });
 
-const invoiceApi = registerInvoiceProcessingApiPluginA1();
-const invoiceWorkflows = registerInvoiceProcessingWorkflowPlugin({
-  client: inngestClient,
-  deps,
-});
-
-export type RawrOrpcContext = {
-  deps: ReturnType<typeof createInvoiceDeps>;
-  requestId: string;
-  inngestClient: Inngest;
+const invoicePackageContext: InvoicePackageContext = {
+  deps: {
+    newRunId: () => crypto.randomUUID(),
+    saveRun: async () => {},
+    getRun: async () => null,
+  },
 };
 
+const invoiceCapability = {
+  capabilityId: "invoicing",
+  api: invoiceApiSurface,
+  workflows: createInvoiceWorkflowSurface(inngest, invoicePackageContext),
+} as const;
+
+const capabilities = [invoiceCapability] as const;
+
 export const rawrHqManifest = {
+  capabilities,
   orpc: {
-    contract: oc.router({ invoiceProcessing: invoiceApi.contract }),
-    router: { invoiceProcessing: invoiceApi.router },
-    createContext: (request: Request): RawrOrpcContext => ({
-      deps,
-      inngestClient,
-      requestId: request.headers.get("x-request-id") ?? crypto.randomUUID(),
+    contract: oc.router({
+      invoicing: {
+        api: invoiceCapability.api.contract,
+        workflows: invoiceCapability.workflows.triggerContract,
+      },
     }),
+    router: {
+      invoicing: {
+        api: invoiceCapability.api.router,
+        workflows: invoiceCapability.workflows.triggerRouter,
+      },
+    },
   },
   inngest: {
-    client: inngestClient,
-    functions: [...invoiceWorkflows.functions],
+    client: inngest,
+    functions: capabilities.flatMap((capability) => capability.workflows.functions),
   },
-  web: { mounts: [] },
-  cli: { commands: [] },
-  agents: { capabilities: [] },
 } as const;
 ```
 
-### Host mounting path (no hidden orchestration)
-```ts
-// apps/server/src/orpc/register-routes.ts
-import { implement } from "@orpc/server";
-import { RPCHandler } from "@orpc/server/fetch";
-import { OpenAPIHandler } from "@orpc/openapi/fetch";
-import type { AnyElysia } from "../plugins";
-import { rawrHqManifest } from "../../../rawr.hq";
-
-export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp): TApp {
-  const os = implement<typeof rawrHqManifest.orpc.contract, ReturnType<typeof rawrHqManifest.orpc.createContext>>(
-    rawrHqManifest.orpc.contract,
-  );
-  const router = os.router(rawrHqManifest.orpc.router);
-  const rpc = new RPCHandler(router);
-  const openapi = new OpenAPIHandler(router);
-
-  app.all("/rpc", async ({ request }) => {
-    const result = await rpc.handle(request as Request, {
-      prefix: "/rpc",
-      context: rawrHqManifest.orpc.createContext(request as Request),
-    });
-    return result.matched ? result.response : new Response("not found", { status: 404 });
-  }, { parse: "none" });
-
-  app.all("/rpc/*", async ({ request }) => {
-    const result = await rpc.handle(request as Request, {
-      prefix: "/rpc",
-      context: rawrHqManifest.orpc.createContext(request as Request),
-    });
-    return result.matched ? result.response : new Response("not found", { status: 404 });
-  }, { parse: "none" });
-
-  app.all("/api/orpc", async ({ request }) => {
-    const result = await openapi.handle(request as Request, {
-      prefix: "/api/orpc",
-      context: rawrHqManifest.orpc.createContext(request as Request),
-    });
-    return result.matched ? result.response : new Response("not found", { status: 404 });
-  }, { parse: "none" });
-
-  app.all("/api/orpc/*", async ({ request }) => {
-    const result = await openapi.handle(request as Request, {
-      prefix: "/api/orpc",
-      context: rawrHqManifest.orpc.createContext(request as Request),
-    });
-    return result.matched ? result.response : new Response("not found", { status: 404 });
-  }, { parse: "none" });
-
-  return app;
-}
-```
+## Host Mounting Semantics
 
 ```ts
 // apps/server/src/rawr.ts
 import type { AnyElysia } from "./plugins";
 import { rawrHqManifest } from "../../rawr.hq";
-import { registerInngestRoute } from "./inngest/register-route";
 import { registerOrpcRoutes } from "./orpc/register-routes";
+import { registerInngestRoute } from "./inngest/register-route";
 
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp): TApp {
-  registerInngestRoute(app, rawrHqManifest.inngest);
-  registerOrpcRoutes(app);
+  registerOrpcRoutes(app, rawrHqManifest.orpc, {
+    workflowPrefix: "/api/workflows",
+  });
+
+  registerInngestRoute(app, rawrHqManifest.inngest, {
+    path: "/api/inngest",
+  });
+
   return app;
 }
 ```
 
-## What Gets Simpler / What Gets Harder
+Mounting guarantees:
+1. `/api/inngest` is ingress-only and signed/guarded for Inngest runtime.
+2. Trigger contracts stay capability-relative (for example `/invoicing/*`); host `workflowPrefix: "/api/workflows"` yields final `/api/workflows/<capability>/*` trigger APIs with visibility enforcement.
+3. `/rpc` and `/api/orpc` remain available for core API procedures.
 
-| Area | Gets Simpler | Gets Harder | Mitigation |
+## Internal vs External Trigger Usage Matrix
+
+| Trigger visibility | Typical callers | Auth policy | Notes |
 | --- | --- | --- | --- |
-| Domain model quality | Domain schema files stay semantically meaningful. | Boundary IO shape duplication across contracts. | Allow extraction only when reuse is proven across boundaries. |
-| Contract readability | IO shapes are visible at contract definitions. | Larger single boundary contracts as operations grow. | Keep one contract/router per API plugin; split logic by capability first, then by operation when thresholds are met. |
-| Runtime separation | Boundary semantics and orchestration are isolated in plugins. | Adapter translation code increases. | Add adapter integration tests and explicit mapping helpers. |
-| Inngest durability safety | Retry/re-entry behavior is explicit in workflow adapters. | Step IDs and flow-control options become compatibility-sensitive. | Treat step IDs and event names as versioned API; document change policy. |
-| Dependency hygiene | One-way import rule prevents runtime coupling backflow. | Requires lint/dependency enforcement. | Add CI rule: `packages/**` cannot import `plugins/**`; `plugins/**` cannot import sibling plugins. |
-| API evolution | A2 supports public/internal divergence safely. | Risk of uncontrolled divergence. | Require explicit A2 rationale and contract review gate. |
+| `internal` | trusted server operators, admin tools, orchestrator jobs | strong internal auth + role guard | default for generated workflow triggers; standard path for trusted/server/operator flows |
+| `external` | public or partner API consumers | boundary auth + contract guarantees | callable only for procedures explicitly promoted external, procedure-by-procedure |
 
-## Migration Path (Today-State -> Approach A + Clarification)
+## Import Boundary Rules (Hard)
 
-### Current state (Observed)
-- Runtime assembly still largely app-local.
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts:101`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:310`
-- Static HQ contract composition currently in `packages/core`.
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts:5`
+Allowed:
+- `plugins/**` -> `packages/**`
+- `apps/**` -> `rawr.hq.ts` + host infrastructure
 
-### Phase plan
-1. Introduce `rawr.hq.ts` manifest with no runtime behavior change.
-2. Move host mounting to manifest outputs only.
-3. Create first domain package with domain-only schemas/types (`domain/types.ts`, `domain/aggregates.ts`) and domain service.
-4. Add package internal contract with embedded IO shapes.
-5. Implement API plugin A1 by mounting internal contract mapping.
-6. Add workflow plugin with event contract embedded in plugin boundary layer.
-7. Add API plugin A2 only where boundary semantics differ (public/admin/policy).
-8. Remove app-layer capability-specific routing/orchestration and legacy contract assembly in `packages/core` once replaced.
-9. Enforce one-way import rules in CI.
+Disallowed:
+- `plugins/**` -> other `plugins/**` runtime code
+- `packages/**` -> `plugins/**`
 
-## Recommendation
-Adopt this clarified Approach A baseline:
+## Policy Matrix (Owner by Concern)
 
-- Package = stable domain core (domain types/schemas, logic, internal contract).
-- Boundary adapters define boundary contracts with embedded IO shapes.
-- Boundary -> domain imports only.
-- `rawr.hq.ts` composes once; host mounts once.
-- A1 adapter default, A2 explicit exception for boundary divergence.
+| Concern | Domain package | API plugin | Workflows plugin | Host app | Composition manifest (`rawr.hq.ts`) |
+| --- | --- | --- | --- | --- | --- |
+| Core domain logic | owner | uses | uses | no | no |
+| Internal oRPC contract/router/client | owner (mandatory) | consumes/reuses optionally | consumes optionally | no | no |
+| Boundary API contract/router/client | no | owner (default) | no | mounts boundary routes | composes capability namespace |
+| Workflow trigger contract/router | no | no | owner | mounts with workflow prefix + visibility enforcement | composes capability namespace |
+| Inngest function definitions | no | no | owner | serves via ingress endpoint | merges execution registration list |
+| Inngest ingress route (`/api/inngest`) | no | no | no | owner | no |
+| Workflow trigger path (`/api/workflows/<capability>/*`) | no | optional caller | owner of trigger semantics | owner of route prefix/auth enforcement | owner of capability route grouping |
+| Capability grouping + merge | no | no | no | no | owner |
+| Plugin-to-plugin runtime imports | forbidden | forbidden | forbidden | n/a | enforced by composed-surface contract |
 
-## Conformance Check
+## Explicit Contradiction Removals
+This revision removes or replaces prior ambiguity:
+1. Removed conflation between trigger API and Inngest ingress.
+2. Removed optional/conditional language for package internal oRPC baseline; now mandatory.
+3. Removed implicit suggestion that workflows are only event ingress artifacts; now they also produce trigger router by default.
+4. Removed alternative `/api/events/*` trigger naming; canonical trigger API naming is `/api/workflows/*`.
+5. Removed unclear reuse defaults for API boundary; now boundary-owned default with explicit simple-reuse exception.
+6. Removed stale absolute workflow trigger route examples inside workflow contracts; contract paths are capability-relative and resolved by host `workflowPrefix`.
+7. Removed duplicate Path A use/non-use policy statements from the example section; canonical criteria are now declared only in the API policy section.
+8. Replaced ambiguous API plugin example/tree artifact (`client.http.ts`) with composition-facing `surface.ts` artifacts aligned to manifest merge responsibilities.
+9. Replaced opaque matrix layer naming with explicit composition-manifest ownership semantics (`Composition manifest (rawr.hq.ts)`).
 
-1. Pure-domain axis only: package content remains domain/internal-contract focused; no boundary-package runtime layer is introduced.
-2. API plugin structure invariant: examples now show one `contract.boundary.ts` and one `router.ts` per API plugin.
-3. Capability-module-first rule: split to per-operation files (`operations/*.operation.ts`) only when complexity/churn thresholds are exceeded.
-4. Boundary contracts stay at plugin edge: API and workflow boundary contracts remain under `plugins/api/**` and `plugins/workflows/**`.
-5. Router/contract fragmentation repaired: scaled examples remove multi-contract/multi-router-per-plugin patterns and replace them with capability-module growth.
+## Acceptance Checks
+1. Domain package examples (n=1 structure, n>1 structure, and code sample) consistently show pure services + one internal router + one in-process client.
+2. API examples show boundary-owned default and simple reuse exception path.
+3. Workflow examples separate `/api/workflows/*` from `/api/inngest`.
+4. Trigger visibility metadata exists with default internal behavior.
+5. Capability composition merges API routers + workflow trigger routers + Inngest functions in `rawr.hq.ts`, and host mounting consumes that composed surface without extra indirection.
+6. n>1 structure preserves one-router-and-one-client-per-domain-package and one-router-per-API-plugin invariants.
+7. No cross-plugin runtime import pattern is introduced; cross-workflow calls flow through composed surfaces only.
+8. Discovery is explicitly deferred as cutover-only with cutover trigger and non-goal statement.
+9. No duplicate or conflicting policy statements remain between policy sections, examples, and owner matrix.
 
-## Validation Notes
-
-### Observed
-1. Existing runtime wiring in this worktree already uses dual oRPC transports with `parse: "none"` forwarding in `apps/server/src/orpc.ts`.
-2. Existing Inngest wrapper pattern (`createInngestServeHandler`) already exists in `packages/coordination-inngest/src/adapter.ts`.
-3. Existing app host route composition mounts `/api/inngest` and oRPC routes from `apps/server/src/rawr.ts`.
-
-### Inferred
-1. Approach A remains viable at scale if contracts/functions/services are split by bounded modules and exported through stable layer barrels.
-2. Step IDs, event names, and procedure keys should be treated as compatibility surfaces once n>1 workflows and routers are live.
-
-### Key refs
-- Inngest: `https://www.inngest.com/docs/learn/how-functions-are-executed`, `https://www.inngest.com/docs/learn/serving-inngest-functions`, `https://www.inngest.com/docs/reference/serve`, `https://www.inngest.com/docs/guides/handling-idempotency`, `https://www.inngest.com/docs/platform/signing-keys`
-- oRPC: `https://orpc.dev/docs/contract-first/define-contract`, `https://orpc.dev/docs/contract-first/implement-contract`, `https://orpc.dev/docs/rpc-handler`, `https://orpc.dev/docs/openapi/openapi-handler`, `https://orpc.dev/docs/openapi/routing`, `https://orpc.dev/docs/adapters/elysia`
-- Elysia: `https://elysiajs.com/essential/life-cycle`, `https://elysiajs.com/essential/plugin`, `https://elysiajs.com/patterns/openapi`, `https://elysiajs.com/plugins/swagger`
-- Skills used for local validation: `/Users/mateicanavra/.codex-rawr/skills/inngest/SKILL.md`, `/Users/mateicanavra/.codex-rawr/skills/orpc/SKILL.md`, `/Users/mateicanavra/.codex-rawr/skills/elysia/SKILL.md`, `/Users/mateicanavra/.codex-rawr/skills/typescript/SKILL.md`, `/Users/mateicanavra/.codex-rawr/skills/plugin-architecture/SKILL.md`, `/Users/mateicanavra/.codex-rawr/skills/rawr-hq-orientation/SKILL.md`
-
-## Counter-Review of Approach B
-Reviewed source:
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_PACKAGE_APPROACH_B_BOUNDARY_OR_RUNTIME_CENTRIC_E2E.md`
-
-### Strongest objections to B
-1. It weakens the repo-level mental model “packages are core domain-first” by introducing runtime-integrator packages (`*-boundary/runtime/*`) inside package space.
-- Example from B: `packages/invoice-processing-boundary/src/runtime/inngest-surface.ts` and runtime deps in boundary package.
-- Why this matters: package layer stops being an obvious “stable core” zone for contributors and agents.
-
-2. It introduces package proliferation and version coordination cost per capability.
-- B baseline creates two packages per capability (`*-domain`, `*-boundary`), plus plugins and composition.
-- In a fast-evolving template repo, this adds maintenance overhead before reuse is proven.
-
-3. It can over-centralize boundary ownership too early.
-- B assumes boundary contracts and runtime primitives should be package-owned by default.
-- In this repo, policy/auth/ops behavior often changes at plugin edge; forcing package-first boundary ownership can slow boundary experimentation.
-
-4. It partially conflicts with the hard-position framing for Agent A.
-- Agent A position is strict package-domain core with boundary-defined contracts at adapters.
-- B is coherent, but it is a different default philosophy, not just an implementation detail.
-
-### Where B is stronger than A
-1. Reuse of boundary glue across multiple surfaces.
-- B’s `packages/<capability>-boundary/src/runtime/*` can remove repeated adapter code across API/workflow plugins.
-
-2. Unified contract source for external consumers.
-- B makes it easier for web/cli/tests to import one boundary contract package without reaching through plugin paths.
-
-3. Drift controls are more centralized.
-- B’s package-level contract snapshots and event compatibility checks are a strong discipline when many adapters consume the same boundary semantics.
-
-### Concrete file/flow comparison
-
-Approach A flow (current recommendation):
-1. `plugins/api/invoice-processing-api/src/contract.boundary.ts` defines API boundary contract inline.
-2. API plugin maps to `@rawr/invoice-processing` domain service/internal contract.
-3. API plugin emits boundary event consumed by `plugins/workflows/invoice-processing-workflows/src/index.ts`.
-4. Workflow plugin validates its boundary contract and calls domain service.
-5. `rawr.hq.ts` composes API + workflow adapters once.
-
-Approach B flow (Agent B proposal):
-1. `packages/invoice-processing-boundary/src/api-contract.ts` defines boundary contract.
-2. `packages/invoice-processing-boundary/src/runtime/orpc-surface.ts` materializes runtime API surface.
-3. Plugin wrapper `plugins/api/invoice-processing-api/src/index.ts` mostly re-exports boundary runtime primitive.
-4. Same pattern for workflow via `packages/invoice-processing-boundary/src/runtime/inngest-surface.ts`.
-5. `rawr.hq.ts` composes boundary-package-produced surfaces.
-
-When B clearly wins:
-- Two or more plugins/surfaces need the same boundary contract/runtime primitive with low policy divergence.
-
-When A is safer:
-- Boundary behavior is policy-heavy and changes frequently at plugin edge.
-- Team needs strict clarity that package space is stable domain core first.
-
-### Recommendation change decision
-Recommendation does not change at baseline: keep clarified Approach A as default.
-
-Adjustment after reviewing B:
-- Adopt a conditional promotion rule inspired by B.
-- If the same boundary glue is duplicated in 2+ adapters for one capability, promote that glue into a dedicated boundary package module.
-- Until that threshold is met, keep boundary contracts/runtime glue in plugins to preserve simpler ownership and avoid premature package split.
-
-This keeps A’s clarity while borrowing B’s strongest scaling mechanism only when evidence justifies it.
+## Assumptions for This Phase
+1. Documentation convergence is the immediate deliverable; codebase implementation follows.
+2. `rawr.hq.ts` remains manual and explicit for this phase.
+3. If a capability needs different exposure semantics, promotion/demotion happens at procedure visibility policy, not by bypassing boundaries.
+4. Plugin-local discovery manifests are deferred and not part of current cut.
