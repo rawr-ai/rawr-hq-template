@@ -15,6 +15,8 @@
 4. Workflow trigger procedures default to internal visibility and require explicit per-procedure promotion to external.
 5. `rawr.hq.ts` remains central composition now; auto-discovery is deferred.
 6. Runtime plugin-to-plugin imports are disallowed.
+7. Contract schemas are TypeBox-first; oRPC I/O uses a Standard Schema adapter carrying `__typebox` for host OpenAPI conversion.
+8. Contract style default: inline procedure `input`/`output` schemas; extract standalone schema constants only for clearly reusable domain schema artifacts.
 
 ## Surface Semantics (Hard)
 
@@ -82,13 +84,17 @@ When not to use Path A:
 - auth/rate-limit/shape semantics diverge,
 - adaptation would create wrapper-heavy extension layers.
 
+Concrete Path A gate (to avoid policy ambiguity):
+- Use Path A only when procedures are mostly 1:1 pass-through and no boundary-only auth/rate-limit/request-shape concerns are introduced.
+- If boundary adds capability-specific fields/policies (for example trace/audit or partner-facing constraints), use Path B.
+
 Anti-pattern guardrail (hard):
 - No extension hell.
 - No tangled multi-layer inheritance or contract-extension stacks.
 - No tangled multi-router abstraction for a single API plugin.
 
 ### Workflows Policy
-Execution model default (Inngest-first / ingest-first):
+Execution model default (Inngest-first):
 - Workflow execution runs through Inngest functions for durable execution.
 
 Default workflow plugin requirement:
@@ -140,6 +146,10 @@ Cutover trigger for re-open:
 │           ├── orpc/register-routes.ts
 │           └── inngest/register-route.ts
 ├── packages/
+│   ├── orpc-standards/
+│   │   └── src/
+│   │       ├── typebox-standard-schema.ts
+│   │       └── index.ts
 │   └── invoice-processing/
 │       └── src/
 │           ├── domain/
@@ -179,6 +189,7 @@ Cutover trigger for re-open:
 .
 ├── rawr.hq.ts
 ├── packages/
+│   ├── orpc-standards/src/{typebox-standard-schema.ts,index.ts}
 │   ├── invoice-processing/src/{domain/*,services/*,contract.ts,router.ts,client.ts,index.ts}
 │   └── payment-ops/src/{domain/*,services/*,contract.ts,router.ts,client.ts,index.ts}
 ├── plugins/api/
@@ -200,6 +211,85 @@ Growth invariants:
 3. One boundary router per API plugin.
 4. Workflow trigger router exists for each workflow plugin.
 5. Service modules are cohesive first; split to `operations/*` only by threshold.
+
+## Schema + Conversion Plumbing (Explicit, Not Implied)
+
+This architecture is TypeBox-first end-to-end:
+1. Contract modules define schemas with TypeBox (`Type.Object`, `Type.Union`, etc.).
+2. Contract I/O uses a TypeBox -> oRPC Standard Schema adapter (`typeBoxStandardSchema(...)`) imported from one centralized helper package.
+3. Adapter stores raw schema on `__typebox` for OpenAPI conversion in host layer.
+4. Host oRPC/OpenAPI layer uses a `ConditionalSchemaConverter` to extract `__typebox` and emit JSON Schema into generated OpenAPI.
+
+```ts
+// packages/orpc-standards/src/typebox-standard-schema.ts
+import type { Schema, SchemaIssue } from "@orpc/contract";
+import { type Static, type TSchema } from "typebox";
+import { Value } from "typebox/value";
+
+function parseIssuePath(instancePath: unknown): PropertyKey[] | undefined {
+  if (typeof instancePath !== "string") return undefined;
+  if (instancePath === "" || instancePath === "/") return undefined;
+  const segments = instancePath
+    .split("/")
+    .slice(1)
+    .map((segment) => decodeURIComponent(segment.replace(/~1/g, "/").replace(/~0/g, "~")))
+    .map((segment) => (/^\d+$/.test(segment) ? Number(segment) : segment));
+  return segments.length > 0 ? segments : undefined;
+}
+
+export function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Static<T>, Static<T>> {
+  return {
+    "~standard": {
+      version: 1,
+      vendor: "typebox",
+      validate: (value) => {
+        if (Value.Check(schema, value)) {
+          return { value: value as Static<T> };
+        }
+
+        const issues = [...Value.Errors(schema, value)].map((issue) => {
+          const path = parseIssuePath((issue as { instancePath?: unknown }).instancePath);
+          return path
+            ? ({ message: issue.message, path } satisfies SchemaIssue)
+            : ({ message: issue.message } satisfies SchemaIssue);
+        });
+
+        return { issues: issues.length > 0 ? issues : [{ message: "Validation failed" }] };
+      },
+    },
+    __typebox: schema,
+  } as Schema<Static<T>, Static<T>>;
+}
+```
+
+```ts
+// packages/orpc-standards/src/index.ts
+export { typeBoxStandardSchema } from "./typebox-standard-schema";
+```
+
+Adapter usage rule (default):
+- Contract snippets import `typeBoxStandardSchema` from `@rawr/orpc-standards`.
+- Do not duplicate helper implementation per domain/API/workflow package.
+
+```ts
+// apps/server/src/orpc.ts (host conversion path)
+import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
+
+const typeBoxSchemaConverter: ConditionalSchemaConverter = {
+  condition: (schema) => Boolean(schema && typeof schema === "object" && "__typebox" in schema),
+  convert: (schema) => {
+    const rawSchema = (schema as { __typebox?: unknown }).__typebox;
+    if (!rawSchema || typeof rawSchema !== "object") {
+      return [false, {}];
+    }
+    return [true, JSON.parse(JSON.stringify(rawSchema)) as JSONSchema];
+  },
+};
+
+const generator = new OpenAPIGenerator({
+  schemaConverters: [typeBoxSchemaConverter],
+});
+```
 
 ## End-to-End Example (Invoicing Capability)
 
@@ -237,30 +327,60 @@ export async function getInvoiceProcessingStatus(deps: InvoiceLifecycleDeps, run
 ```ts
 // packages/invoice-processing/src/contract.ts
 import { oc } from "@orpc/contract";
-import { z } from "zod";
+import { Type } from "typebox";
+import { typeBoxStandardSchema } from "@rawr/orpc-standards";
 
 export const invoiceInternalContract = oc.router({
   start: oc
     .input(
-      z.object({
-        invoiceId: z.string().min(1),
-        requestedBy: z.string().min(1),
-      }),
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            invoiceId: Type.String({ minLength: 1 }),
+            requestedBy: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
     )
     .output(
-      z.object({
-        runId: z.string().min(1),
-        accepted: z.literal(true),
-      }),
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+            accepted: Type.Literal(true),
+          },
+          { additionalProperties: false },
+        ),
+      ),
     ),
 
   getStatus: oc
-    .input(z.object({ runId: z.string().min(1) }))
+    .input(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
     .output(
-      z.object({
-        runId: z.string().min(1),
-        status: z.enum(["queued", "running", "completed", "failed"]),
-      }),
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+            status: Type.Union([
+              Type.Literal("queued"),
+              Type.Literal("running"),
+              Type.Literal("completed"),
+              Type.Literal("failed"),
+            ]),
+          },
+          { additionalProperties: false },
+        ),
+      ),
     ),
 });
 ```
@@ -312,24 +432,64 @@ export type { InvoiceLifecycleDeps } from "./services/invoice-lifecycle.service"
 ```ts
 // plugins/api/invoice-processing-api/src/contract.boundary.ts
 import { oc } from "@orpc/contract";
-import { z } from "zod";
+import { Type } from "typebox";
+import { typeBoxStandardSchema } from "@rawr/orpc-standards";
 
 export const invoiceApiContract = oc.router({
   startInvoiceProcessing: oc
     .route({ method: "POST", path: "/invoices/processing/start" })
     .input(
-      z.object({
-        invoiceId: z.string().min(1),
-        requestedBy: z.string().min(1),
-        traceToken: z.string().optional(),
-      }),
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            invoiceId: Type.String({ minLength: 1 }),
+            requestedBy: Type.String({ minLength: 1 }),
+            traceToken: Type.Optional(Type.String()),
+          },
+          { additionalProperties: false },
+        ),
+      ),
     )
-    .output(z.object({ runId: z.string().min(1), accepted: z.boolean() })),
+    .output(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+            accepted: Type.Boolean(),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
 
   getInvoiceProcessingStatus: oc
     .route({ method: "GET", path: "/invoices/processing/{runId}" })
-    .input(z.object({ runId: z.string().min(1) }))
-    .output(z.object({ runId: z.string().min(1), status: z.enum(["queued", "running", "completed", "failed"]) })),
+    .input(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+            status: Type.Union([
+              Type.Literal("queued"),
+              Type.Literal("running"),
+              Type.Literal("completed"),
+              Type.Literal("failed"),
+            ]),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
 });
 ```
 
@@ -387,7 +547,7 @@ export const invoiceApiReuseSurface = {
 
 Path A use/non-use criteria are canonical in `API Plugin Policy (Boundary-Owned Default)` above; this section demonstrates only the reuse surface shape.
 
-### 4) Workflow plugin: ingest execution + trigger router
+### 4) Workflow plugin: Inngest execution + trigger router
 
 ```ts
 // plugins/workflows/invoice-processing-workflows/src/visibility.ts
@@ -402,18 +562,56 @@ export const workflowTriggerVisibility = {
 ```ts
 // plugins/workflows/invoice-processing-workflows/src/contract.triggers.ts
 import { oc } from "@orpc/contract";
-import { z } from "zod";
+import { Type } from "typebox";
+import { typeBoxStandardSchema } from "@rawr/orpc-standards";
 
 export const invoiceWorkflowTriggerContract = oc.router({
   triggerInvoiceReconciliation: oc
     .route({ method: "POST", path: "/invoicing/trigger-reconciliation" })
-    .input(z.object({ runId: z.string().min(1) }))
-    .output(z.object({ accepted: z.boolean() })),
+    .input(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            accepted: Type.Boolean(),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
 
   retryInvoiceReconciliation: oc
     .route({ method: "POST", path: "/invoicing/retry" })
-    .input(z.object({ runId: z.string().min(1), reason: z.string().min(1) }))
-    .output(z.object({ accepted: z.boolean() })),
+    .input(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+            reason: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            accepted: Type.Boolean(),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
 });
 ```
 
@@ -632,6 +830,10 @@ This revision removes or replaces prior ambiguity:
 7. Removed duplicate Path A use/non-use policy statements from the example section; canonical criteria are now declared only in the API policy section.
 8. Replaced ambiguous API plugin example/tree artifact (`client.http.ts`) with composition-facing `surface.ts` artifacts aligned to manifest merge responsibilities.
 9. Replaced opaque matrix layer naming with explicit composition-manifest ownership semantics (`Composition manifest (rawr.hq.ts)`).
+10. Removed Zod-first examples that conflicted with current stack; canonical snippets now use TypeBox-first contract schemas.
+11. Replaced implied conversion behavior with explicit TypeBox -> Standard Schema adapter and host `ConditionalSchemaConverter` OpenAPI extraction path.
+12. Removed per-capability helper placement drift; canonical examples now use one centralized adapter package (`@rawr/orpc-standards`).
+13. Removed verbose standalone per-procedure schema constants where not reusable; examples now default to inline procedure schema definitions.
 
 ## Acceptance Checks
 1. Domain package examples (n=1 structure, n>1 structure, and code sample) consistently show pure services + one internal router + one in-process client.
@@ -643,6 +845,10 @@ This revision removes or replaces prior ambiguity:
 7. No cross-plugin runtime import pattern is introduced; cross-workflow calls flow through composed surfaces only.
 8. Discovery is explicitly deferred as cutover-only with cutover trigger and non-goal statement.
 9. No duplicate or conflicting policy statements remain between policy sections, examples, and owner matrix.
+10. Contract examples use TypeBox-first schemas and `typeBoxStandardSchema(...)` for oRPC I/O definitions.
+11. Contract examples import `typeBoxStandardSchema` from one centralized helper package (`@rawr/orpc-standards`), not duplicated helper implementations.
+12. Contract examples default to inline `input`/`output` schema definitions unless reusable domain schema artifacts are warranted.
+13. OpenAPI conversion path is explicit and concrete: `__typebox` payload in adapter, consumed by host `ConditionalSchemaConverter`.
 
 ## Assumptions for This Phase
 1. Documentation convergence is the immediate deliverable; codebase implementation follows.
