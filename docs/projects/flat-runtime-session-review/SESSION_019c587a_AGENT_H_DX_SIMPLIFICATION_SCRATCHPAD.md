@@ -167,3 +167,36 @@ DX/risk note:
 - Keep explicit separation of `/api/workflows/*` vs `/api/inngest` because it preserves caller API vs execution ingress semantics.
 - Keep TypeBox `__typebox` + host `ConditionalSchemaConverter` approach because anchors show actual OpenAPI conversion dependency.
 - Keep Path B default (boundary-owned) with strict Path A gate; this avoids wrapper-layer ambiguity when external policy diverges.
+
+## Hard-Requirement Revision Notes (No Black Boxes)
+
+New requirement applied:
+- Every proposal in review doc now includes concrete helper implementation shape, exact target file path, and full wiring replacement flow.
+
+Proposal-by-proposal completeness check:
+1. Composer abstraction (`defineCapability` + `composeCapabilities`):
+- Added full helper snippet and exact path `packages/core/src/composition/capability-composer.ts`.
+- Added explicit `rawr.hq.ts` import/invocation and listed manual blocks replaced (`contract`, `router`, `functions` aggregation).
+
+2. Surface builders (`defineApiSurface`, `defineWorkflowSurface`):
+- Added full helper snippet and exact path `packages/core/src/composition/surfaces.ts`.
+- Added plugin `index.ts` import/invocation examples and explicit replacement of ad hoc surface object literals.
+
+3. Capability context factory (`createInvoiceCapabilityContext`):
+- Added full helper snippet and exact path `packages/invoice-processing/src/context.ts`.
+- Added `rawr.hq.ts` wiring example replacing inline package-context construction.
+
+4. Shared TypeBox adapter + shared OpenAPI converter:
+- Added full adapter and converter snippets with exact paths:
+  - `packages/orpc-standards/src/typebox-standard-schema.ts`
+  - `packages/orpc-standards/src/openapi-typebox-converter.ts`
+  - `packages/orpc-standards/src/index.ts`
+- Added contract and host import/invocation snippets and explicit replacement targets for duplicated in-repo implementations.
+
+5. Router-level internal-client binding (`withInternalClient`):
+- Added full helper snippet and exact path `packages/core/src/orpc/with-internal-client.ts`.
+- Added router import/invocation example plus workflow binding simplification example, and explicit old repeated callsites replaced.
+
+Additional rationale added:
+- Host usage is intentionally unchanged for proposals 1-3 and 5 (manifest shape compatibility preserved by design).
+- Proposal 4 updates host by import replacement only (local converter block removed in favor of shared package export).
