@@ -61,7 +61,8 @@ Additional constraints:
 
 ### API Plugin Policy (Boundary-Owned Default)
 Canonical default (Path B: boundary-specific contract + router):
-- Boundary plugin owns `contract.boundary.ts` + `router.ts` + boundary client shape.
+- Boundary plugin owns canonical `contract.ts` + `router.ts` (described in prose as boundary-oriented, for example `contract.ts` (boundary)).
+- If a true network client is needed, use canonical `client.ts` (or explicit `http-client.ts`) only when it is actually a client artifact.
 - Boundary handlers call package internal client and/or package services.
 
 When to use Path B:
@@ -166,20 +167,17 @@ Cutover trigger for re-open:
     ├── api/
     │   └── invoice-processing-api/
     │       └── src/
-    │           ├── contract.boundary.ts
+    │           ├── contract.ts
     │           ├── router.ts
-    │           ├── surface.ts
     │           └── index.ts
     └── workflows/
         └── invoice-processing-workflows/
             └── src/
-                ├── contract.triggers.ts
-                ├── router.triggers.ts
-                ├── visibility.ts
+                ├── contract.ts
+                ├── router.ts
                 ├── functions/
                 │   ├── reconcile-invoice.fn.ts
                 │   └── index.ts
-                ├── surface.ts
                 └── index.ts
 ```
 
@@ -193,11 +191,11 @@ Cutover trigger for re-open:
 │   ├── invoice-processing/src/{domain/*,services/*,contract.ts,router.ts,client.ts,index.ts}
 │   └── payment-ops/src/{domain/*,services/*,contract.ts,router.ts,client.ts,index.ts}
 ├── plugins/api/
-│   ├── invoice-processing-api/src/{contract.boundary.ts,router.ts,surface.ts,index.ts}
-│   └── payment-ops-api/src/{contract.boundary.ts,router.ts,surface.ts,index.ts}
+│   ├── invoice-processing-api/src/{contract.ts,router.ts,index.ts}
+│   └── payment-ops-api/src/{contract.ts,router.ts,index.ts}
 └── plugins/workflows/
-    ├── invoice-processing-workflows/src/{contract.triggers.ts,router.triggers.ts,visibility.ts,functions/*,surface.ts,index.ts}
-    └── payment-ops-workflows/src/{contract.triggers.ts,router.triggers.ts,visibility.ts,functions/*,surface.ts,index.ts}
+    ├── invoice-processing-workflows/src/{contract.ts,router.ts,functions/*,index.ts}
+    └── payment-ops-workflows/src/{contract.ts,router.ts,functions/*,index.ts}
 ```
 
 Scaled merge rule (same policy, many capabilities):
@@ -211,6 +209,18 @@ Growth invariants:
 3. One boundary router per API plugin.
 4. Workflow trigger router exists for each workflow plugin.
 5. Service modules are cohesive first; split to `operations/*` only by threshold.
+
+## Naming Standards (Canonical vs Illustrative)
+
+Canonical filename defaults:
+1. Domain package: `contract.ts`, `router.ts`, `client.ts`, `index.ts`.
+2. API plugin: `contract.ts`, `router.ts`, `index.ts`.
+3. Workflows plugin: `contract.ts`, `router.ts`, `functions/*`, `index.ts`.
+
+Naming clarifications:
+1. Put contextual role in prose/parentheses, not in filenames (for example: `contract.ts` (boundary), `router.ts` (workflow triggers)).
+2. `surface.ts` is treated as illustrative-only naming in older examples; canonical default is `index.ts` for composition exports.
+3. `visibility.ts` is not required as a standalone file by default; keep visibility semantics in `router.ts` unless reused broadly across multiple modules.
 
 ## Schema + Conversion Plumbing (Explicit, Not Implied)
 
@@ -430,7 +440,7 @@ export type { InvoiceLifecycleDeps } from "./services/invoice-lifecycle.service"
 ### 2) API plugin: boundary-owned default (Path B)
 
 ```ts
-// plugins/api/invoice-processing-api/src/contract.boundary.ts
+// plugins/api/invoice-processing-api/src/contract.ts (boundary contract)
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
 import { typeBoxStandardSchema } from "@rawr/orpc-standards";
@@ -497,7 +507,7 @@ export const invoiceApiContract = oc.router({
 // plugins/api/invoice-processing-api/src/router.ts
 import { implement } from "@orpc/server";
 import { createInvoiceInternalClient, type InvoicePackageContext } from "@rawr/invoice-processing";
-import { invoiceApiContract } from "./contract.boundary";
+import { invoiceApiContract } from "./contract";
 
 export type InvoiceApiContext = InvoicePackageContext;
 
@@ -522,8 +532,8 @@ export function createInvoiceApiRouter() {
 ```
 
 ```ts
-// plugins/api/invoice-processing-api/src/surface.ts
-import { invoiceApiContract } from "./contract.boundary";
+// plugins/api/invoice-processing-api/src/index.ts (composition export, not an HTTP client)
+import { invoiceApiContract } from "./contract";
 import { createInvoiceApiRouter } from "./router";
 
 export const invoiceApiSurface = {
@@ -535,7 +545,7 @@ export const invoiceApiSurface = {
 ### 3) API plugin reuse exception (Path A)
 
 ```ts
-// plugins/api/invoice-processing-api/src/reuse-surface.ts
+// plugins/api/invoice-processing-api/src/reuse-example.ts (illustrative-only naming)
 import { invoiceInternalContract, createInvoiceInternalRouter } from "@rawr/invoice-processing";
 
 // Use only when overlap is mostly 1:1 and no complex boundary divergence is needed.
@@ -550,17 +560,7 @@ Path A use/non-use criteria are canonical in `API Plugin Policy (Boundary-Owned 
 ### 4) Workflow plugin: Inngest execution + trigger router
 
 ```ts
-// plugins/workflows/invoice-processing-workflows/src/visibility.ts
-export type TriggerVisibility = "internal" | "external";
-
-export const workflowTriggerVisibility = {
-  triggerInvoiceReconciliation: "internal",
-  retryInvoiceReconciliation: "internal",
-} as const satisfies Record<string, TriggerVisibility>;
-```
-
-```ts
-// plugins/workflows/invoice-processing-workflows/src/contract.triggers.ts
+// plugins/workflows/invoice-processing-workflows/src/contract.ts (workflow triggers contract)
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
 import { typeBoxStandardSchema } from "@rawr/orpc-standards";
@@ -616,11 +616,15 @@ export const invoiceWorkflowTriggerContract = oc.router({
 ```
 
 ```ts
-// plugins/workflows/invoice-processing-workflows/src/router.triggers.ts
+// plugins/workflows/invoice-processing-workflows/src/router.ts (workflow triggers router)
 import { implement } from "@orpc/server";
 import type { Inngest } from "inngest";
-import { invoiceWorkflowTriggerContract } from "./contract.triggers";
-import { workflowTriggerVisibility } from "./visibility";
+import { invoiceWorkflowTriggerContract } from "./contract";
+
+const workflowTriggerVisibility = {
+  triggerInvoiceReconciliation: "internal",
+  retryInvoiceReconciliation: "internal",
+} as const;
 
 export type WorkflowTriggerContext = {
   inngest: Inngest;
@@ -691,11 +695,11 @@ export function createInvoiceWorkflowFunctions(
 ```
 
 ```ts
-// plugins/workflows/invoice-processing-workflows/src/surface.ts
+// plugins/workflows/invoice-processing-workflows/src/index.ts (composition export, not an HTTP client)
 import type { Inngest } from "inngest";
 import type { InvoicePackageContext } from "@rawr/invoice-processing";
-import { invoiceWorkflowTriggerContract } from "./contract.triggers";
-import { createInvoiceWorkflowTriggerRouter } from "./router.triggers";
+import { invoiceWorkflowTriggerContract } from "./contract";
+import { createInvoiceWorkflowTriggerRouter } from "./router";
 import { createInvoiceWorkflowFunctions } from "./functions";
 
 export function createInvoiceWorkflowSurface(inngest: Inngest, packageContext: InvoicePackageContext) {
@@ -717,8 +721,8 @@ Snippet context:
 import { oc } from "@orpc/contract";
 import { Inngest } from "inngest";
 import type { InvoicePackageContext } from "@rawr/invoice-processing";
-import { invoiceApiSurface } from "./plugins/api/invoice-processing-api/src/surface";
-import { createInvoiceWorkflowSurface } from "./plugins/workflows/invoice-processing-workflows/src/surface";
+import { invoiceApiSurface } from "./plugins/api/invoice-processing-api/src";
+import { createInvoiceWorkflowSurface } from "./plugins/workflows/invoice-processing-workflows/src";
 
 const inngest = new Inngest({ id: "rawr-hq" });
 
@@ -828,12 +832,14 @@ This revision removes or replaces prior ambiguity:
 5. Removed unclear reuse defaults for API boundary; now boundary-owned default with explicit simple-reuse exception.
 6. Removed stale absolute workflow trigger route examples inside workflow contracts; contract paths are capability-relative and resolved by host `workflowPrefix`.
 7. Removed duplicate Path A use/non-use policy statements from the example section; canonical criteria are now declared only in the API policy section.
-8. Replaced ambiguous API plugin example/tree artifact (`client.http.ts`) with composition-facing `surface.ts` artifacts aligned to manifest merge responsibilities.
+8. Replaced context-baked filenames (`contract.boundary.ts`, `contract.triggers.ts`, `router.triggers.ts`) with canonical `contract.ts` and `router.ts`, keeping role context in prose/parentheses.
 9. Replaced opaque matrix layer naming with explicit composition-manifest ownership semantics (`Composition manifest (rawr.hq.ts)`).
 10. Removed Zod-first examples that conflicted with current stack; canonical snippets now use TypeBox-first contract schemas.
 11. Replaced implied conversion behavior with explicit TypeBox -> Standard Schema adapter and host `ConditionalSchemaConverter` OpenAPI extraction path.
 12. Removed per-capability helper placement drift; canonical examples now use one centralized adapter package (`@rawr/orpc-standards`).
 13. Removed verbose standalone per-procedure schema constants where not reusable; examples now default to inline procedure schema definitions.
+14. Replaced ambiguous example file `surface.ts` with canonical `index.ts` composition exports and explicit non-client clarification.
+15. Folded standalone `visibility.ts` example into `router.ts` visibility semantics by default.
 
 ## Acceptance Checks
 1. Domain package examples (n=1 structure, n>1 structure, and code sample) consistently show pure services + one internal router + one in-process client.
@@ -849,6 +855,7 @@ This revision removes or replaces prior ambiguity:
 11. Contract examples import `typeBoxStandardSchema` from one centralized helper package (`@rawr/orpc-standards`), not duplicated helper implementations.
 12. Contract examples default to inline `input`/`output` schema definitions unless reusable domain schema artifacts are warranted.
 13. OpenAPI conversion path is explicit and concrete: `__typebox` payload in adapter, consumed by host `ConditionalSchemaConverter`.
+14. API/workflow example filenames use canonical `contract.ts`, `router.ts`, `index.ts` with context in prose instead of context-baked suffixes.
 
 ## Assumptions for This Phase
 1. Documentation convergence is the immediate deliverable; codebase implementation follows.

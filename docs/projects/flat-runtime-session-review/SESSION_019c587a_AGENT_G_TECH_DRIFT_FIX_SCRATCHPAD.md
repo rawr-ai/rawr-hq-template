@@ -209,3 +209,49 @@
 
 - No blocking uncertainty for this pass.
 - Minor nuance: upstream TypeBox docs do not present a single explicit “recommended with oRPC” statement; the adapter path inference is based on official examples + absence of native Standard Schema claims in TypeBox core docs.
+
+## Naming Normalization Pass (Current Request)
+
+### Before/After Decisions (Canonical Doc)
+
+1. `contract.boundary.ts` -> `contract.ts` (API plugin)
+- Rationale:
+  - Canonical filename is `contract.ts`.
+  - Boundary role is now clarified in prose/parentheses (`contract.ts` (boundary contract)) rather than encoded in filename suffix.
+
+2. `contract.triggers.ts` -> `contract.ts` (workflows plugin)
+- Rationale:
+  - Canonical filename is `contract.ts`.
+  - Trigger context moved to prose/section labeling (`contract.ts` (workflow triggers contract)).
+
+3. `router.triggers.ts` -> `router.ts` (workflows plugin)
+- Rationale:
+  - Canonical filename is `router.ts`.
+  - Trigger context remains explicit in prose (`router.ts` (workflow triggers router)).
+
+4. `surface.ts` (API + workflows composition export files) -> `index.ts`
+- Rationale:
+  - `surface.ts` is potentially misleading (reads like a client/network surface file).
+  - Composition export is now canonicalized to `index.ts`, with explicit clarification in prose/comments that this is a composition export and not an HTTP client.
+
+5. `visibility.ts` standalone file -> visibility semantics colocated in `router.ts`
+- Rationale:
+  - Standalone `visibility.ts` was context-baked and under-explained in canonical examples.
+  - Default pattern now folds visibility policy into router semantics; extraction is framed as optional only when broadly reused.
+
+6. `reuse-surface.ts` example file -> `reuse-example.ts` (illustrative-only)
+- Rationale:
+  - This file is one-off illustrative naming, not canonical.
+  - Labeled explicitly as illustrative-only to distinguish example naming from canonical standards.
+
+### Naming Policy Clarifications Added
+
+- Added canonical-vs-illustrative naming section to the canonical doc:
+  - canonical defaults (`contract.ts`, `router.ts`, `index.ts`, and `client.ts` only for true clients),
+  - contextual qualifiers in prose/parentheses,
+  - treatment of legacy/example `surface.ts` and standalone `visibility.ts`.
+
+### Remaining Naming Ambiguity
+
+- No blocking ambiguity remains in the canonical filename examples.
+- Minor intentional carryover: the identifier term `invoiceApiSurface` remains as a composition-domain term (not a filename), because “surface” is still used conceptually in policy language; this is now explicitly clarified as non-client composition context.
