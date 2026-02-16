@@ -45,3 +45,31 @@
 ## Open Questions (Resolved by assumptions)
 - Use Bun-first Inngest adapter (`inngest/bun`) as baseline: yes (aligned with existing repo and skills).
 - Keep A1/A2 narrative: yes, but harden with explicit wrapper plumbing and constraints.
+
+## Restart Patch (Pure-Domain Constraint Enforcement)
+
+### Why this patch was required
+The doc had drifted into scale examples that implied contract/router fragmentation in API plugins (multiple boundary contract files + multiple routers per plugin), which conflicts with the pure-domain Approach A guardrails for this session.
+
+### Exact changes made in target doc
+1. Reworked the n>1 scaled tree to keep pure-domain axis boundaries:
+   - Package side now keeps a single internal contract surface (`contracts/internal.contract.ts` + `contracts/internal.surface.ts`) and scales via `operations/*.operation.ts` + service modules.
+   - Removed plugin-level multi-contract/multi-router shape from the scaled tree.
+2. Rewrote "One-file-per-procedure organization (oRPC)" section:
+   - Now explicitly shows one `contract.boundary.ts` + one `router.boundary.ts` per API plugin.
+   - "One file per procedure" now applies to operation logic files only (`operations/*.operation.ts`).
+3. Tightened growth import/dependency table:
+   - Added explicit prohibition against extra contract/router files per API plugin.
+   - Clarified that growth happens by adding operation logic files/functions/services, not boundary contract/router proliferation.
+4. Updated oRPC correctness section with explicit structural invariant:
+   - One contract + one router per API plugin, many operation logic files.
+5. Updated tradeoff table mitigation language:
+   - Replaced prior guidance that implied splitting contracts by bounded context with "single contract/router + split operation logic".
+6. Added a dedicated `Conformance Check` section with explicit pass/fail statements for all five hard constraints.
+
+### Constraint mapping
+- Constraint 1 (pure-domain axis): satisfied by removing boundary-package-like fragmentation and keeping boundary contracts in plugins.
+- Constraint 2 (one contract/router per API plugin): satisfied in scaled tree + procedure organization + conformance section.
+- Constraint 3 (one file per procedure = logic only): satisfied by `operations/*.operation.ts` pattern.
+- Constraint 4 (boundary contracts at plugin edge): satisfied; API/workflow boundary contracts remain under `plugins/**`.
+- Constraint 5 (repair proliferation): satisfied by replacing multi-contract/multi-router scale pattern with operation-module growth pattern.

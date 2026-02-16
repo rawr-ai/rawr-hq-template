@@ -73,8 +73,7 @@ Packages are pure domain/service modules.
 │           │   └── service.ts
 │           ├── contracts/
 │           │   ├── typebox-standard-schema.ts
-│           │   ├── internal.contract.ts
-│           │   └── internal.surface.ts
+│           │   └── internal.contract.ts
 │           ├── clients/
 │           │   └── internal-client.ts
 │           └── index.ts
@@ -83,6 +82,9 @@ Packages are pure domain/service modules.
     │   └── invoice-processing-api/
     │       └── src/
     │           ├── contract.boundary.ts
+    │           ├── router.ts
+    │           ├── adapters/
+    │           │   └── invoice-internal-surface.adapter.ts
     │           └── index.ts
     └── workflows/
         └── invoice-processing-workflows/
@@ -95,7 +97,7 @@ Onboarding baseline above is the n=1 shape. The following is the explicit n>1 gr
 
 ## Scaled Variant (n>1) For Multi-Capability Growth
 
-### Multi-instance file tree (contracts, routers, clients, workflows)
+### Multi-instance file tree (single contract + single router per API plugin)
 ```text
 .
 ├── rawr.hq.ts
@@ -103,31 +105,11 @@ Onboarding baseline above is the n=1 shape. The following is the explicit n>1 gr
 │   └── invoice-processing/
 │       └── src/
 │           ├── contracts/
-│           │   ├── internal/
-│           │   │   ├── start.contract.ts
-│           │   │   ├── status.contract.ts
-│           │   │   ├── cancel.contract.ts
-│           │   │   └── index.ts
-│           │   ├── boundary/
-│           │   │   ├── api/
-│           │   │   │   ├── runs.contract.ts
-│           │   │   │   ├── reconciliation.contract.ts
-│           │   │   │   └── index.ts
-│           │   │   └── workflow/
-│           │   │       ├── requested.event.ts
-│           │   │       ├── timed-out.event.ts
-│           │   │       └── index.ts
+│           │   ├── internal.contract.ts
 │           │   └── typebox-standard-schema.ts
 │           ├── services/
-│           │   ├── start/
-│           │   │   ├── start.service.ts
-│           │   │   └── index.ts
-│           │   ├── status/
-│           │   │   ├── status.service.ts
-│           │   │   └── index.ts
-│           │   ├── reconcile/
-│           │   │   ├── reconcile.service.ts
-│           │   │   └── index.ts
+│           │   ├── invoice-lifecycle.service.ts
+│           │   ├── invoice-admin.service.ts
 │           │   └── index.ts
 │           ├── clients/
 │           │   ├── internal-client.ts
@@ -138,21 +120,22 @@ Onboarding baseline above is the n=1 shape. The following is the explicit n>1 gr
 │   ├── api/
 │   │   └── invoice-processing-api/
 │   │       └── src/
-│   │           ├── routers/
-│   │           │   ├── runs.router.ts
-│   │           │   ├── reconciliation.router.ts
-│   │           │   └── status.router.ts
 │   │           ├── contract.boundary.ts
+│   │           ├── router.ts
+│   │           ├── modules/
+│   │           │   ├── runs.module.ts
+│   │           │   ├── admin.module.ts
+│   │           │   └── index.ts
 │   │           └── index.ts
 │   └── workflows/
 │       └── invoice-processing-workflows/
 │           └── src/
+│               ├── contract.event.ts
 │               ├── functions/
 │               │   ├── reconcile-invoice.fn.ts
 │               │   ├── timeout-invoice.fn.ts
 │               │   ├── notify-stakeholders.fn.ts
 │               │   └── index.ts
-│               ├── contract.event.ts
 │               └── index.ts
 └── apps/
     └── server/
@@ -180,45 +163,37 @@ export function createInvoiceWorkflowFunctions(client: Inngest, deps: InvoiceDep
 }
 ```
 
-### One-file-per-procedure organization (oRPC)
+### Capability-module-first organization (logic default)
 ```text
-plugins/api/invoice-processing-api/src/routers/
-├── runs.router.ts
-├── reconciliation.router.ts
-├── status.router.ts
+plugins/api/invoice-processing-api/src/
+├── contract.boundary.ts   # single plugin contract
+├── router.ts              # single plugin router
+├── modules/
+│   ├── runs.module.ts
+│   ├── admin.module.ts
+│   └── index.ts
 └── index.ts
 ```
 
 ```ts
-// plugins/api/invoice-processing-api/src/routers/index.ts
-import type { InvoiceApiBoundaryContext } from "../index";
-import { buildRunsRouter } from "./runs.router";
-import { buildReconciliationRouter } from "./reconciliation.router";
-import { buildStatusRouter } from "./status.router";
+// plugins/api/invoice-processing-api/src/modules/index.ts
+import { runsModule } from "./runs.module";
+import { adminModule } from "./admin.module";
 
-export function buildInvoiceBoundaryRouters(context: InvoiceApiBoundaryContext) {
-  return {
-    runs: buildRunsRouter(context),
-    reconciliation: buildReconciliationRouter(context),
-    status: buildStatusRouter(context),
-  } as const;
-}
+export const invoiceApiModules = {
+  runs: runsModule,
+  admin: adminModule,
+} as const;
 ```
 
-### Service evolution: single service -> suite/library
-```ts
-// packages/invoice-processing/src/services/index.ts
-export { createStartService } from "./start/start.service";
-export { createStatusService } from "./status/status.service";
-export { createReconcileService } from "./reconcile/reconcile.service";
-```
+When a module grows beyond cohesion/size thresholds, split into `operations/*.operation.ts` under that module.
 
+### Service evolution: single service -> cohesive service set
 ```text
 packages/invoice-processing/src/services/
-├── start/start.service.ts         # depends on domain + write ports
-├── status/status.service.ts       # depends on domain + query ports
-├── reconcile/reconcile.service.ts # depends on domain + orchestration ports
-└── index.ts                       # only public entrypoint for service suite
+├── invoice-lifecycle.service.ts  # start/getStatus/reconcile grouped
+├── invoice-admin.service.ts      # forceReconcile/cancel/retry grouped
+└── index.ts                      # only public entrypoint for service layer
 ```
 
 ### Stable import/dependency patterns under growth
@@ -231,7 +206,12 @@ packages/invoice-processing/src/services/
 | `plugins/workflows/**` | `@rawr/invoice-processing` public exports only | `plugins/api/**`, app-host route modules |
 | `apps/server/**` | `rawr.hq.ts`, plugin registrars | domain internals via deep imports |
 
-Growth rule: add new contracts/functions/services by creating new files and exporting from each layer’s `index.ts`; never bypass public layer barrels with deep imports.
+Growth rule: keep one API plugin contract + one API plugin router; scale by adding cohesive capability modules, not additional plugin contracts/routers.
+Growth rule: add new workflow functions as one-file-per-function under `functions/` and aggregate through `functions/index.ts`.
+Growth rule: split a capability module into per-operation files only when complexity/churn warrants it (for example >250 LOC, >5 operations, or high concurrent edits).
+Growth rule: keep service APIs capability-cohesive first; aggregate via `services/index.ts`.
+Growth rule: never bypass public layer barrels with deep imports.
+Approach A guardrail: boundary contracts/events stay in plugin layer by default; package contracts remain internal/domain-facing.
 
 ## Ownership: Contracts, Implementation, Clients
 
@@ -241,7 +221,7 @@ Growth rule: add new contracts/functions/services by creating new files and expo
 | Domain logic | Package domain | `packages/invoice-processing/src/domain/service.ts` | No HTTP, no event bus, no `step.run`, no runtime lifecycle. |
 | TypeBox->oRPC schema bridge | Package contracts | `packages/invoice-processing/src/contracts/typebox-standard-schema.ts` | Explicit Standard Schema adapter; avoids hidden validation behavior. |
 | Internal core contract | Package | `packages/invoice-processing/src/contracts/internal.contract.ts` | Embedded IO shapes; stable core contract. |
-| Internal contract handlers/router | Package | `packages/invoice-processing/src/contracts/internal.surface.ts` | Explicit `implement()` + handler mapping owned by package. |
+| Internal contract handlers/router | API plugin adapter layer | `plugins/api/invoice-processing-api/src/adapters/invoice-internal-surface.adapter.ts` | `implement()` + handler mapping live in adapter layer; package remains domain/contract focused. |
 | Boundary API contract | API plugin | `plugins/api/invoice-processing-api/src/contract.boundary.ts` | Embedded boundary IO shapes and boundary semantics. |
 | Boundary workflow/event contract | Workflow plugin | `plugins/workflows/invoice-processing-workflows/src/contract.event.ts` | Event payload semantics for runtime orchestration. |
 | Runtime orchestration glue | Boundary plugins | `plugins/api/*`, `plugins/workflows/*` | Policy/auth/step orchestration belongs here. |
@@ -372,12 +352,11 @@ export const invoiceInternalContract = oc.router({
 });
 ```
 
-### Internal surface implementation (package-owned handlers)
+### Internal surface implementation (adapter-owned handlers)
 ```ts
-// packages/invoice-processing/src/contracts/internal.surface.ts
+// plugins/api/invoice-processing-api/src/adapters/invoice-internal-surface.adapter.ts
 import { implement } from "@orpc/server";
-import { createInvoiceService, type InvoiceDeps } from "../domain/service";
-import { invoiceInternalContract } from "./internal.contract";
+import { createInvoiceService, invoiceInternalContract, type InvoiceDeps } from "@rawr/invoice-processing";
 
 export type InvoiceInternalContext = {
   deps: InvoiceDeps;
@@ -408,19 +387,44 @@ export function createInvoiceInternalSurface() {
 ## oRPC Correctness: Contract -> Implement -> Transport
 
 Contract-first here is concrete and two-stage:
-1. Package defines contract + package-owned internal surface (`oc.router` + `implement`).
-2. Plugin chooses whether to mount that internal surface directly (A1) or map a boundary surface (A2).
+1. Package defines contract artifact (`oc.router`) and domain/service logic.
+2. Adapter layer (usually API plugin) binds handlers with `implement(contract)` and maps into package services.
+3. API plugin structure stays stable under growth: one `contract.boundary.ts`, one `router.ts`, many capability modules (optionally split to `operations/*.operation.ts` when needed).
 
 ### A1 Definition
-API plugin mounts/re-exports package internal surface with minimal boundary additions.
+API plugin binds package internal contract in a lightweight adapter with minimal boundary additions.
 
 ### A1 Plugin Example
 ```ts
 // plugins/api/invoice-processing-api/src/index.ts
-import { createInvoiceInternalSurface } from "@rawr/invoice-processing";
+import { implement } from "@orpc/server";
+import { createInvoiceService, invoiceInternalContract, type InvoiceDeps } from "@rawr/invoice-processing";
+
+type InvoiceApiContext = {
+  deps: InvoiceDeps;
+  requestId: string;
+};
+
+function createInvoiceInternalAdapter() {
+  const os = implement<typeof invoiceInternalContract, InvoiceApiContext>(invoiceInternalContract);
+
+  return {
+    contract: invoiceInternalContract,
+    router: os.router({
+      start: os.start.handler(async ({ input, context }) => {
+        const service = createInvoiceService(context.deps);
+        return service.start(input);
+      }),
+      getStatus: os.getStatus.handler(async ({ input, context }) => {
+        const service = createInvoiceService(context.deps);
+        return service.getStatus(input.runId);
+      }),
+    }),
+  } as const;
+}
 
 export function registerInvoiceProcessingApiPluginA1() {
-  const internal = createInvoiceInternalSurface();
+  const internal = createInvoiceInternalAdapter();
 
   return {
     namespace: "invoiceProcessing" as const,
@@ -760,7 +764,7 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp): TApp {
 | Area | Gets Simpler | Gets Harder | Mitigation |
 | --- | --- | --- | --- |
 | Domain model quality | Domain schema files stay semantically meaningful. | Boundary IO shape duplication across contracts. | Allow extraction only when reuse is proven across boundaries. |
-| Contract readability | IO shapes are visible at contract definitions. | Larger contract files. | Split contract modules by bounded context, not by schema type. |
+| Contract readability | IO shapes are visible at contract definitions. | Larger single boundary contracts as operations grow. | Keep one contract/router per API plugin; split logic by capability first, then by operation when thresholds are met. |
 | Runtime separation | Boundary semantics and orchestration are isolated in plugins. | Adapter translation code increases. | Add adapter integration tests and explicit mapping helpers. |
 | Inngest durability safety | Retry/re-entry behavior is explicit in workflow adapters. | Step IDs and flow-control options become compatibility-sensitive. | Treat step IDs and event names as versioned API; document change policy. |
 | Dependency hygiene | One-way import rule prevents runtime coupling backflow. | Requires lint/dependency enforcement. | Add CI rule: `packages/**` cannot import `plugins/**`; `plugins/**` cannot import sibling plugins. |
@@ -793,7 +797,15 @@ Adopt this clarified Approach A baseline:
 - Boundary adapters define boundary contracts with embedded IO shapes.
 - Boundary -> domain imports only.
 - `rawr.hq.ts` composes once; host mounts once.
-- A1 default, A2 explicit exception for boundary divergence.
+- A1 adapter default, A2 explicit exception for boundary divergence.
+
+## Conformance Check
+
+1. Pure-domain axis only: package content remains domain/internal-contract focused; no boundary-package runtime layer is introduced.
+2. API plugin structure invariant: examples now show one `contract.boundary.ts` and one `router.ts` per API plugin.
+3. Capability-module-first rule: split to per-operation files (`operations/*.operation.ts`) only when complexity/churn thresholds are exceeded.
+4. Boundary contracts stay at plugin edge: API and workflow boundary contracts remain under `plugins/api/**` and `plugins/workflows/**`.
+5. Router/contract fragmentation repaired: scaled examples remove multi-contract/multi-router-per-plugin patterns and replace them with capability-module growth.
 
 ## Validation Notes
 
