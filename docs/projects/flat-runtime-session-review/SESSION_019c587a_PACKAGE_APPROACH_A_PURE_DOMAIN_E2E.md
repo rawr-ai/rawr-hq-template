@@ -57,7 +57,11 @@ Packages are pure domain/service modules.
 ├── apps/
 │   └── server/
 │       └── src/
-│           └── rawr.ts
+│           ├── rawr.ts
+│           ├── orpc/
+│           │   └── register-routes.ts
+│           └── inngest/
+│               └── register-route.ts
 ├── packages/
 │   ├── core/
 │   ├── hq/
@@ -68,8 +72,9 @@ Packages are pure domain/service modules.
 │           │   ├── aggregates.ts
 │           │   └── service.ts
 │           ├── contracts/
+│           │   ├── typebox-standard-schema.ts
 │           │   ├── internal.contract.ts
-│           │   └── internal.handlers.ts
+│           │   └── internal.surface.ts
 │           ├── clients/
 │           │   └── internal-client.ts
 │           └── index.ts
@@ -86,20 +91,165 @@ Packages are pure domain/service modules.
                 └── index.ts
 ```
 
+Onboarding baseline above is the n=1 shape. The following is the explicit n>1 growth shape.
+
+## Scaled Variant (n>1) For Multi-Capability Growth
+
+### Multi-instance file tree (contracts, routers, clients, workflows)
+```text
+.
+├── rawr.hq.ts
+├── packages/
+│   └── invoice-processing/
+│       └── src/
+│           ├── contracts/
+│           │   ├── internal/
+│           │   │   ├── start.contract.ts
+│           │   │   ├── status.contract.ts
+│           │   │   ├── cancel.contract.ts
+│           │   │   └── index.ts
+│           │   ├── boundary/
+│           │   │   ├── api/
+│           │   │   │   ├── runs.contract.ts
+│           │   │   │   ├── reconciliation.contract.ts
+│           │   │   │   └── index.ts
+│           │   │   └── workflow/
+│           │   │       ├── requested.event.ts
+│           │   │       ├── timed-out.event.ts
+│           │   │       └── index.ts
+│           │   └── typebox-standard-schema.ts
+│           ├── services/
+│           │   ├── start/
+│           │   │   ├── start.service.ts
+│           │   │   └── index.ts
+│           │   ├── status/
+│           │   │   ├── status.service.ts
+│           │   │   └── index.ts
+│           │   ├── reconcile/
+│           │   │   ├── reconcile.service.ts
+│           │   │   └── index.ts
+│           │   └── index.ts
+│           ├── clients/
+│           │   ├── internal-client.ts
+│           │   ├── admin-client.ts
+│           │   └── telemetry-client.ts
+│           └── index.ts
+├── plugins/
+│   ├── api/
+│   │   └── invoice-processing-api/
+│   │       └── src/
+│   │           ├── routers/
+│   │           │   ├── runs.router.ts
+│   │           │   ├── reconciliation.router.ts
+│   │           │   └── status.router.ts
+│   │           ├── contract.boundary.ts
+│   │           └── index.ts
+│   └── workflows/
+│       └── invoice-processing-workflows/
+│           └── src/
+│               ├── functions/
+│               │   ├── reconcile-invoice.fn.ts
+│               │   ├── timeout-invoice.fn.ts
+│               │   ├── notify-stakeholders.fn.ts
+│               │   └── index.ts
+│               ├── contract.event.ts
+│               └── index.ts
+└── apps/
+    └── server/
+        └── src/
+            ├── orpc/register-routes.ts
+            ├── inngest/register-route.ts
+            └── rawr.ts
+```
+
+### One-file-per-function organization (workflows)
+```ts
+// plugins/workflows/invoice-processing-workflows/src/functions/index.ts
+import type { Inngest } from "inngest";
+import type { InvoiceDeps } from "@rawr/invoice-processing";
+import { createReconcileInvoiceFunction } from "./reconcile-invoice.fn";
+import { createTimeoutInvoiceFunction } from "./timeout-invoice.fn";
+import { createNotifyStakeholdersFunction } from "./notify-stakeholders.fn";
+
+export function createInvoiceWorkflowFunctions(client: Inngest, deps: InvoiceDeps) {
+  return [
+    createReconcileInvoiceFunction(client, deps),
+    createTimeoutInvoiceFunction(client, deps),
+    createNotifyStakeholdersFunction(client, deps),
+  ] as const;
+}
+```
+
+### One-file-per-procedure organization (oRPC)
+```text
+plugins/api/invoice-processing-api/src/routers/
+├── runs.router.ts
+├── reconciliation.router.ts
+├── status.router.ts
+└── index.ts
+```
+
+```ts
+// plugins/api/invoice-processing-api/src/routers/index.ts
+import type { InvoiceApiBoundaryContext } from "../index";
+import { buildRunsRouter } from "./runs.router";
+import { buildReconciliationRouter } from "./reconciliation.router";
+import { buildStatusRouter } from "./status.router";
+
+export function buildInvoiceBoundaryRouters(context: InvoiceApiBoundaryContext) {
+  return {
+    runs: buildRunsRouter(context),
+    reconciliation: buildReconciliationRouter(context),
+    status: buildStatusRouter(context),
+  } as const;
+}
+```
+
+### Service evolution: single service -> suite/library
+```ts
+// packages/invoice-processing/src/services/index.ts
+export { createStartService } from "./start/start.service";
+export { createStatusService } from "./status/status.service";
+export { createReconcileService } from "./reconcile/reconcile.service";
+```
+
+```text
+packages/invoice-processing/src/services/
+├── start/start.service.ts         # depends on domain + write ports
+├── status/status.service.ts       # depends on domain + query ports
+├── reconcile/reconcile.service.ts # depends on domain + orchestration ports
+└── index.ts                       # only public entrypoint for service suite
+```
+
+### Stable import/dependency patterns under growth
+
+| Producer | Allowed imports | Disallowed imports |
+| --- | --- | --- |
+| `packages/invoice-processing/src/domain/**` | local domain modules only | `services/**`, `clients/**`, `plugins/**`, transport/adapters |
+| `packages/invoice-processing/src/services/**` | `domain/**`, `ports/**`, `contracts/internal/**` | `plugins/**`, app host routes |
+| `plugins/api/**` | `@rawr/invoice-processing` public exports only | `plugins/workflows/**`, deep imports into `services/*/*.ts` |
+| `plugins/workflows/**` | `@rawr/invoice-processing` public exports only | `plugins/api/**`, app-host route modules |
+| `apps/server/**` | `rawr.hq.ts`, plugin registrars | domain internals via deep imports |
+
+Growth rule: add new contracts/functions/services by creating new files and exporting from each layer’s `index.ts`; never bypass public layer barrels with deep imports.
+
 ## Ownership: Contracts, Implementation, Clients
 
 | Concern | Owns It | Path | Notes |
 | --- | --- | --- | --- |
 | Domain schemas/types | Package domain | `packages/invoice-processing/src/domain/types.ts` | Domain entities/status/aggregates only. |
 | Domain logic | Package domain | `packages/invoice-processing/src/domain/service.ts` | No HTTP, no event bus, no `step.run`, no runtime lifecycle. |
+| TypeBox->oRPC schema bridge | Package contracts | `packages/invoice-processing/src/contracts/typebox-standard-schema.ts` | Explicit Standard Schema adapter; avoids hidden validation behavior. |
 | Internal core contract | Package | `packages/invoice-processing/src/contracts/internal.contract.ts` | Embedded IO shapes; stable core contract. |
-| Internal contract handlers | Package | `packages/invoice-processing/src/contracts/internal.handlers.ts` | Maps internal contract to domain logic. |
+| Internal contract handlers/router | Package | `packages/invoice-processing/src/contracts/internal.surface.ts` | Explicit `implement()` + handler mapping owned by package. |
 | Boundary API contract | API plugin | `plugins/api/invoice-processing-api/src/contract.boundary.ts` | Embedded boundary IO shapes and boundary semantics. |
 | Boundary workflow/event contract | Workflow plugin | `plugins/workflows/invoice-processing-workflows/src/contract.event.ts` | Event payload semantics for runtime orchestration. |
 | Runtime orchestration glue | Boundary plugins | `plugins/api/*`, `plugins/workflows/*` | Policy/auth/step orchestration belongs here. |
 | Clients | Package | `packages/invoice-processing/src/clients/internal-client.ts` | Typed client for internal consumers/tests. |
 | Composition authority | Root manifest | `rawr.hq.ts` | Single assembly authority. |
-| Mounting paths | App host | `apps/server/src/rawr.ts` | Mount manifest outputs for `/rpc`, `/api/orpc`, `/api/inngest`. |
+| oRPC mount wrapper | App host | `apps/server/src/orpc/register-routes.ts` | Prefix alignment + `parse: "none"` forwarding for RPC/OpenAPI handlers. |
+| Inngest mount wrapper | App host | `apps/server/src/inngest/register-route.ts` | Single ingress route wrapper for `serve()` handler + signing key wiring. |
+| Mounting composition | App host | `apps/server/src/rawr.ts` | Calls both wrappers; keeps runtime entrypoint explicit. |
 
 ## Import Direction Rule (Hard)
 
@@ -137,134 +287,266 @@ export type InvoiceStatus = Static<typeof InvoiceStatusSchema>;
 export type InvoiceAggregate = Static<typeof InvoiceAggregateSchema>;
 ```
 
+### TypeBox -> Standard Schema bridge (explicit plumbing, no magic)
+```ts
+// packages/invoice-processing/src/contracts/typebox-standard-schema.ts
+import type { Schema, SchemaIssue } from "@orpc/contract";
+import type { Static, TSchema } from "typebox";
+import { Value } from "typebox/value";
+
+function parseIssuePath(instancePath: unknown): PropertyKey[] | undefined {
+  if (typeof instancePath !== "string") return undefined;
+  if (instancePath === "" || instancePath === "/") return undefined;
+  const segments = instancePath
+    .split("/")
+    .slice(1)
+    .map((segment) => decodeURIComponent(segment.replace(/~1/g, "/").replace(/~0/g, "~")))
+    .map((segment) => (/^\d+$/.test(segment) ? Number(segment) : segment));
+  return segments.length > 0 ? segments : undefined;
+}
+
+export function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Static<T>, Static<T>> {
+  return {
+    "~standard": {
+      version: 1,
+      vendor: "typebox",
+      validate: (value) => {
+        if (Value.Check(schema, value)) {
+          return { value: value as Static<T> };
+        }
+        const issues = [...Value.Errors(schema, value)].map((issue) => {
+          const path = parseIssuePath((issue as { instancePath?: unknown }).instancePath);
+          return path ? ({ message: issue.message, path } satisfies SchemaIssue) : ({ message: issue.message } satisfies SchemaIssue);
+        });
+        return { issues: issues.length > 0 ? issues : [{ message: "Validation failed" }] };
+      },
+    },
+    __typebox: schema,
+  } as Schema<Static<T>, Static<T>>;
+}
+```
+
 ### Internal contract (IO shapes embedded in contract)
 ```ts
 // packages/invoice-processing/src/contracts/internal.contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
 import { InvoiceStatusSchema } from "../domain/types";
+import { typeBoxStandardSchema } from "./typebox-standard-schema";
 
 export const invoiceInternalContract = oc.router({
   start: oc
     .input(
-      Type.Object({
-        invoiceId: Type.String({ minLength: 1 }),
-        requestedBy: Type.String({ minLength: 1 }),
-      }),
+      typeBoxStandardSchema(
+        Type.Object({
+          invoiceId: Type.String({ minLength: 1 }),
+          requestedBy: Type.String({ minLength: 1 }),
+        }),
+      ),
     )
     .output(
-      Type.Object({
-        runId: Type.String({ minLength: 1 }),
-        status: InvoiceStatusSchema,
-      }),
+      typeBoxStandardSchema(
+        Type.Object({
+          runId: Type.String({ minLength: 1 }),
+          status: InvoiceStatusSchema,
+        }),
+      ),
     ),
 
   getStatus: oc
-    .input(Type.Object({ runId: Type.String({ minLength: 1 }) }))
+    .input(
+      typeBoxStandardSchema(
+        Type.Object({
+          runId: Type.String({ minLength: 1 }),
+        }),
+      ),
+    )
     .output(
-      Type.Object({
-        runId: Type.String({ minLength: 1 }),
-        status: InvoiceStatusSchema,
-      }),
+      typeBoxStandardSchema(
+        Type.Object({
+          runId: Type.String({ minLength: 1 }),
+          status: InvoiceStatusSchema,
+        }),
+      ),
     ),
 });
 ```
 
-## API Integration Variant A1
+### Internal surface implementation (package-owned handlers)
+```ts
+// packages/invoice-processing/src/contracts/internal.surface.ts
+import { implement } from "@orpc/server";
+import { createInvoiceService, type InvoiceDeps } from "../domain/service";
+import { invoiceInternalContract } from "./internal.contract";
+
+export type InvoiceInternalContext = {
+  deps: InvoiceDeps;
+  requestId: string;
+};
+
+export function createInvoiceInternalSurface() {
+  const os = implement<typeof invoiceInternalContract, InvoiceInternalContext>(invoiceInternalContract);
+
+  const router = os.router({
+    start: os.start.handler(async ({ input, context }) => {
+      const domain = createInvoiceService(context.deps);
+      return domain.start(input);
+    }),
+    getStatus: os.getStatus.handler(async ({ input, context }) => {
+      const domain = createInvoiceService(context.deps);
+      return domain.getStatus(input.runId);
+    }),
+  });
+
+  return {
+    contract: invoiceInternalContract,
+    router,
+  } as const;
+}
+```
+
+## oRPC Correctness: Contract -> Implement -> Transport
+
+Contract-first here is concrete and two-stage:
+1. Package defines contract + package-owned internal surface (`oc.router` + `implement`).
+2. Plugin chooses whether to mount that internal surface directly (A1) or map a boundary surface (A2).
 
 ### A1 Definition
-API plugin mounts/re-exports package internal contract and its implementation mapping with minimal boundary additions.
+API plugin mounts/re-exports package internal surface with minimal boundary additions.
 
 ### A1 Plugin Example
 ```ts
 // plugins/api/invoice-processing-api/src/index.ts
-import { implement } from "@orpc/server";
-import {
-  invoiceInternalContract,
-  createInvoiceInternalHandlers,
-  type InvoiceDeps,
-} from "@rawr/invoice-processing";
-
-export type ApiContext = { deps: InvoiceDeps; requestId: string };
+import { createInvoiceInternalSurface } from "@rawr/invoice-processing";
 
 export function registerInvoiceProcessingApiPluginA1() {
-  const os = implement<typeof invoiceInternalContract, ApiContext>(invoiceInternalContract);
+  const internal = createInvoiceInternalSurface();
 
   return {
     namespace: "invoiceProcessing" as const,
-    contract: invoiceInternalContract,
-    router: os.router(createInvoiceInternalHandlers(os)),
-  };
+    contract: internal.contract,
+    router: internal.router,
+  } as const;
 }
 ```
 
-### A1 Evaluation
+A1 evaluation:
 - Simpler: fastest path, minimal duplication.
-- Tradeoff: exposes internal contract semantics more directly; acceptable for internal-first surfaces.
-
-## API Integration Variant A2
+- Tradeoff: boundary semantics track internal surface more closely.
+- Use for internal/admin-first procedures where external versioning pressure is low.
 
 ### A2 Definition
-API plugin defines or extends boundary-specific contract semantics, then maps boundary handlers into domain logic/internal contract.
+API plugin defines boundary-specific semantics and maps handlers into domain/internal operations.
 
 ### A2 Boundary Contract Example
 ```ts
 // plugins/api/invoice-processing-api/src/contract.boundary.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
+import { typeBoxStandardSchema } from "@rawr/invoice-processing/contracts/typebox-standard-schema";
 
 export const invoiceBoundaryContract = oc.router({
   startInvoice: oc
     .route({ method: "POST", path: "/invoice-processing/runs" })
     .input(
-      Type.Object({
-        invoiceId: Type.String({ minLength: 1 }),
-        requestedBy: Type.String({ minLength: 1 }),
-        traceToken: Type.Optional(Type.String()),
-      }),
+      typeBoxStandardSchema(
+        Type.Object({
+          invoiceId: Type.String({ minLength: 1 }),
+          requestedBy: Type.String({ minLength: 1 }),
+          traceToken: Type.Optional(Type.String()),
+        }),
+      ),
     )
-    .output(Type.Object({ runId: Type.String({ minLength: 1 }), accepted: Type.Boolean() })),
+    .output(
+      typeBoxStandardSchema(
+        Type.Object({
+          runId: Type.String({ minLength: 1 }),
+          accepted: Type.Boolean(),
+        }),
+      ),
+    ),
 
   forceReconcile: oc
     .route({ method: "POST", path: "/invoice-processing/runs/{runId}/force-reconcile" })
-    .input(Type.Object({ runId: Type.String({ minLength: 1 }) }))
-    .output(Type.Object({ accepted: Type.Boolean() })),
+    .input(typeBoxStandardSchema(Type.Object({ runId: Type.String({ minLength: 1 }) })))
+    .output(typeBoxStandardSchema(Type.Object({ accepted: Type.Boolean() }))),
 });
 ```
 
 ### A2 Plugin Mapping Example
 ```ts
 // plugins/api/invoice-processing-api/src/index.ts
+import type { Inngest } from "inngest";
 import { implement } from "@orpc/server";
+import { createInvoiceService, type InvoiceDeps } from "@rawr/invoice-processing";
 import { invoiceBoundaryContract } from "./contract.boundary";
-import { createInvoiceService } from "@rawr/invoice-processing";
 
-export function registerInvoiceProcessingApiPluginA2(deps: { domain: ReturnType<typeof createInvoiceService> }) {
-  const os = implement(invoiceBoundaryContract);
+export type InvoiceApiBoundaryContext = {
+  deps: InvoiceDeps;
+  inngestClient: Inngest;
+  requestId: string;
+};
+
+export function registerInvoiceProcessingApiPluginA2() {
+  const os = implement<typeof invoiceBoundaryContract, InvoiceApiBoundaryContext>(invoiceBoundaryContract);
 
   return {
     namespace: "invoiceProcessing" as const,
     contract: invoiceBoundaryContract,
     router: os.router({
-      startInvoice: os.startInvoice.handler(async ({ input }) => {
-        const result = await deps.domain.start({ invoiceId: input.invoiceId, requestedBy: input.requestedBy });
-        return { runId: result.runId, accepted: true };
+      startInvoice: os.startInvoice.handler(async ({ input, context }) => {
+        const domain = createInvoiceService(context.deps);
+        const started = await domain.start({
+          invoiceId: input.invoiceId,
+          requestedBy: input.requestedBy,
+        });
+
+        // Event id is explicit for ingestion-level idempotency.
+        await context.inngestClient.send({
+          id: `invoice-processing.requested:${started.runId}`,
+          name: "invoice.processing.requested",
+          data: {
+            runId: started.runId,
+            invoiceId: input.invoiceId,
+            requestedBy: input.requestedBy,
+          },
+        });
+
+        return { runId: started.runId, accepted: true };
       }),
-      forceReconcile: os.forceReconcile.handler(async ({ input }) => {
-        await deps.domain.forceReconcile(input.runId);
+
+      forceReconcile: os.forceReconcile.handler(async ({ input, context }) => {
+        const domain = createInvoiceService(context.deps);
+        await domain.forceReconcile(input.runId);
         return { accepted: true };
       }),
     }),
-  };
+  } as const;
 }
 ```
 
-### A2 Evaluation
-- Simpler for boundary evolution: public contract can diverge safely.
-- Harder: explicit translation layer and more adapter tests.
-- Recommended when public/admin boundary semantics differ from internal contract.
+A2 evaluation:
+- Simpler for boundary evolution: plugin can version/shape semantics independently.
+- Harder: explicit mapping layer and additional adapter tests required.
+- Use when public/admin contracts diverge from package internal contract.
 
-## Workflow Integration Without Domain Runtime Leakage
+### oRPC transport mounting contract
+`RPCHandler` and `OpenAPIHandler` should be mounted from app-host wrapper files (edge-only transport concerns), not from contract packages.
+- `/rpc` + `/rpc/*` with `prefix: "/rpc"`
+- `/api/orpc` + `/api/orpc/*` with `prefix: "/api/orpc"`
+- Forwarded handlers use Elysia `parse: "none"` to avoid body stream consumption before oRPC reads the request.
+
+## Inngest Correctness and Lifecycle Details
+
+Hard lifecycle rules for this architecture:
+1. Function handlers can re-enter; code outside `step.*` can re-run.
+2. Side effects go inside stable `step.run` boundaries.
+3. Step IDs are durability keys; renaming/reordering steps is a compatibility change.
+4. Idempotency is layered:
+   - event ingestion via stable `event.id`,
+   - function-level idempotency key expression,
+   - domain-level idempotent writes.
+5. Serve endpoint hardening belongs at the app edge (`/api/inngest`) with signing key verification.
 
 ### Workflow boundary contract (embedded event shape)
 ```ts
@@ -278,45 +560,95 @@ export const InvoiceRequestedEventShape = Type.Object({
 });
 ```
 
-### Workflow runtime adapter
+### Workflow runtime adapter (durable step discipline)
 ```ts
 // plugins/workflows/invoice-processing-workflows/src/index.ts
+import type { Inngest } from "inngest";
 import { Value } from "typebox/value";
+import { createInvoiceService, type InvoiceDeps } from "@rawr/invoice-processing";
 import { InvoiceRequestedEventShape } from "./contract.event";
-import { createInvoiceService } from "@rawr/invoice-processing";
 
-export function registerInvoiceProcessingWorkflowPlugin(client: any, deps: any) {
-  const domain = createInvoiceService(deps);
+export function registerInvoiceProcessingWorkflowPlugin(input: {
+  client: Inngest;
+  deps: InvoiceDeps;
+}) {
+  const domain = createInvoiceService(input.deps);
 
-  const fn = client.createFunction(
-    { id: "invoice-processing.reconcile", retries: 2 },
+  const reconcile = input.client.createFunction(
+    {
+      id: "invoice-processing.reconcile",
+      retries: 2,
+      idempotency: "event.data.runId",
+      concurrency: [{ key: "event.data.runId", limit: 1 }],
+    },
     { event: "invoice.processing.requested" },
-    async ({ event, step }: any) => {
+    async ({ event, runId, step }) => {
       if (!Value.Check(InvoiceRequestedEventShape, event.data)) {
-        throw new Error("invalid event payload");
+        throw new Error("Invalid invoice.processing.requested payload");
       }
 
-      await step.run("mark-running", async () => domain.markRunning(event.data.runId));
-      await step.run("perform-work", async () => domain.reconcile(event.data.runId));
-      await step.run("mark-complete", async () => domain.markCompleted(event.data.runId));
+      await step.run("invoice/mark-running", async () => {
+        await domain.markRunning(event.data.runId);
+      });
+
+      const result = await step.run("invoice/reconcile", async () => {
+        return domain.reconcile(event.data.runId);
+      });
+
+      await step.run("invoice/mark-completed", async () => {
+        await domain.markCompleted(event.data.runId);
+      });
+
+      return { ok: true as const, runId: event.data.runId, inngestRunId: runId, result };
     },
   );
 
-  return { functions: [fn] as const };
+  return { functions: [reconcile] as const };
 }
 ```
 
-Evaluation:
-- Domain remains stable core.
-- Durable orchestration stays in runtime adapter where retry/time semantics belong.
+### Inngest serve endpoint wrapper (signed ingress)
+```ts
+// apps/server/src/inngest/register-route.ts
+import type { AnyElysia } from "../plugins";
+import type { Inngest } from "inngest";
+import { serve as inngestServe } from "inngest/bun";
+
+type InngestSurface = {
+  client: Inngest;
+  functions: readonly unknown[];
+};
+
+export function registerInngestRoute<TApp extends AnyElysia>(app: TApp, surface: InngestSurface): TApp {
+  const handler = inngestServe({
+    client: surface.client,
+    functions: surface.functions as any,
+    servePath: "/api/inngest",
+    signingKey: process.env.INNGEST_SIGNING_KEY,
+  });
+
+  app.all("/api/inngest", ({ request }) => handler(request as Request), { parse: "none" });
+  return app;
+}
+```
+
+## Elysia Mounting and Adapter Caveats
+
+1. Mount both exact and wildcard paths for oRPC transports (`/rpc` and `/rpc/*`; `/api/orpc` and `/api/orpc/*`) so root and nested procedures both resolve.
+2. Use `parse: "none"` for routes forwarding raw `Request` objects to oRPC/Inngest handlers; this avoids body stream consumption before downstream handlers parse the body.
+3. Register auth/guard hooks intentionally relative to mount order; Elysia hooks are order-sensitive and plugin-scoped by default.
+4. Keep framework-native routes outside oRPC procedure modeling:
+   - `/api/inngest`
+   - `/rawr/plugins/web/:dirName`
+   - `/health`
 
 ## Composition in `rawr.hq.ts` and Host Mounting Path
 
 ### Composition authority
 ```ts
 // rawr.hq.ts
-import { oc } from "@orpc/contract";
 import { Inngest } from "inngest";
+import { oc } from "@orpc/contract";
 import { createInvoiceDeps } from "@rawr/invoice-processing";
 import { registerInvoiceProcessingApiPluginA1 } from "./plugins/api/invoice-processing-api/src";
 import { registerInvoiceProcessingWorkflowPlugin } from "./plugins/workflows/invoice-processing-workflows/src";
@@ -325,13 +657,26 @@ const deps = createInvoiceDeps();
 const inngestClient = new Inngest({ id: "rawr-hq" });
 
 const invoiceApi = registerInvoiceProcessingApiPluginA1();
-const invoiceWorkflows = registerInvoiceProcessingWorkflowPlugin(inngestClient, deps);
+const invoiceWorkflows = registerInvoiceProcessingWorkflowPlugin({
+  client: inngestClient,
+  deps,
+});
+
+export type RawrOrpcContext = {
+  deps: ReturnType<typeof createInvoiceDeps>;
+  requestId: string;
+  inngestClient: Inngest;
+};
 
 export const rawrHqManifest = {
   orpc: {
     contract: oc.router({ invoiceProcessing: invoiceApi.contract }),
     router: { invoiceProcessing: invoiceApi.router },
-    context: { deps },
+    createContext: (request: Request): RawrOrpcContext => ({
+      deps,
+      inngestClient,
+      requestId: request.headers.get("x-request-id") ?? crypto.randomUUID(),
+    }),
   },
   inngest: {
     client: inngestClient,
@@ -343,39 +688,70 @@ export const rawrHqManifest = {
 } as const;
 ```
 
-### Host mounting path
+### Host mounting path (no hidden orchestration)
 ```ts
-// apps/server/src/rawr.ts
+// apps/server/src/orpc/register-routes.ts
 import { implement } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
-import { serve as inngestServe } from "inngest/bun";
-import { rawrHqManifest } from "../../rawr.hq";
+import type { AnyElysia } from "../plugins";
+import { rawrHqManifest } from "../../../rawr.hq";
 
-export function registerRawrRoutes(app: any) {
-  const os = implement<typeof rawrHqManifest.orpc.contract, typeof rawrHqManifest.orpc.context>(
+export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp): TApp {
+  const os = implement<typeof rawrHqManifest.orpc.contract, ReturnType<typeof rawrHqManifest.orpc.createContext>>(
     rawrHqManifest.orpc.contract,
   );
   const router = os.router(rawrHqManifest.orpc.router);
-
   const rpc = new RPCHandler(router);
   const openapi = new OpenAPIHandler(router);
 
-  app.all("/rpc/*", async ({ request }: any) => (await rpc.handle(request, {
-    prefix: "/rpc",
-    context: rawrHqManifest.orpc.context,
-  })).response);
+  app.all("/rpc", async ({ request }) => {
+    const result = await rpc.handle(request as Request, {
+      prefix: "/rpc",
+      context: rawrHqManifest.orpc.createContext(request as Request),
+    });
+    return result.matched ? result.response : new Response("not found", { status: 404 });
+  }, { parse: "none" });
 
-  app.all("/api/orpc/*", async ({ request }: any) => (await openapi.handle(request, {
-    prefix: "/api/orpc",
-    context: rawrHqManifest.orpc.context,
-  })).response);
+  app.all("/rpc/*", async ({ request }) => {
+    const result = await rpc.handle(request as Request, {
+      prefix: "/rpc",
+      context: rawrHqManifest.orpc.createContext(request as Request),
+    });
+    return result.matched ? result.response : new Response("not found", { status: 404 });
+  }, { parse: "none" });
 
-  const inngestHandler = inngestServe({
-    client: rawrHqManifest.inngest.client,
-    functions: rawrHqManifest.inngest.functions,
-  });
-  app.all("/api/inngest", async ({ request }: any) => inngestHandler(request));
+  app.all("/api/orpc", async ({ request }) => {
+    const result = await openapi.handle(request as Request, {
+      prefix: "/api/orpc",
+      context: rawrHqManifest.orpc.createContext(request as Request),
+    });
+    return result.matched ? result.response : new Response("not found", { status: 404 });
+  }, { parse: "none" });
+
+  app.all("/api/orpc/*", async ({ request }) => {
+    const result = await openapi.handle(request as Request, {
+      prefix: "/api/orpc",
+      context: rawrHqManifest.orpc.createContext(request as Request),
+    });
+    return result.matched ? result.response : new Response("not found", { status: 404 });
+  }, { parse: "none" });
+
+  return app;
+}
+```
+
+```ts
+// apps/server/src/rawr.ts
+import type { AnyElysia } from "./plugins";
+import { rawrHqManifest } from "../../rawr.hq";
+import { registerInngestRoute } from "./inngest/register-route";
+import { registerOrpcRoutes } from "./orpc/register-routes";
+
+export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp): TApp {
+  registerInngestRoute(app, rawrHqManifest.inngest);
+  registerOrpcRoutes(app);
+  return app;
 }
 ```
 
@@ -386,6 +762,7 @@ export function registerRawrRoutes(app: any) {
 | Domain model quality | Domain schema files stay semantically meaningful. | Boundary IO shape duplication across contracts. | Allow extraction only when reuse is proven across boundaries. |
 | Contract readability | IO shapes are visible at contract definitions. | Larger contract files. | Split contract modules by bounded context, not by schema type. |
 | Runtime separation | Boundary semantics and orchestration are isolated in plugins. | Adapter translation code increases. | Add adapter integration tests and explicit mapping helpers. |
+| Inngest durability safety | Retry/re-entry behavior is explicit in workflow adapters. | Step IDs and flow-control options become compatibility-sensitive. | Treat step IDs and event names as versioned API; document change policy. |
 | Dependency hygiene | One-way import rule prevents runtime coupling backflow. | Requires lint/dependency enforcement. | Add CI rule: `packages/**` cannot import `plugins/**`; `plugins/**` cannot import sibling plugins. |
 | API evolution | A2 supports public/internal divergence safely. | Risk of uncontrolled divergence. | Require explicit A2 rationale and contract review gate. |
 
@@ -417,6 +794,23 @@ Adopt this clarified Approach A baseline:
 - Boundary -> domain imports only.
 - `rawr.hq.ts` composes once; host mounts once.
 - A1 default, A2 explicit exception for boundary divergence.
+
+## Validation Notes
+
+### Observed
+1. Existing runtime wiring in this worktree already uses dual oRPC transports with `parse: "none"` forwarding in `apps/server/src/orpc.ts`.
+2. Existing Inngest wrapper pattern (`createInngestServeHandler`) already exists in `packages/coordination-inngest/src/adapter.ts`.
+3. Existing app host route composition mounts `/api/inngest` and oRPC routes from `apps/server/src/rawr.ts`.
+
+### Inferred
+1. Approach A remains viable at scale if contracts/functions/services are split by bounded modules and exported through stable layer barrels.
+2. Step IDs, event names, and procedure keys should be treated as compatibility surfaces once n>1 workflows and routers are live.
+
+### Key refs
+- Inngest: `https://www.inngest.com/docs/learn/how-functions-are-executed`, `https://www.inngest.com/docs/learn/serving-inngest-functions`, `https://www.inngest.com/docs/reference/serve`, `https://www.inngest.com/docs/guides/handling-idempotency`, `https://www.inngest.com/docs/platform/signing-keys`
+- oRPC: `https://orpc.dev/docs/contract-first/define-contract`, `https://orpc.dev/docs/contract-first/implement-contract`, `https://orpc.dev/docs/rpc-handler`, `https://orpc.dev/docs/openapi/openapi-handler`, `https://orpc.dev/docs/openapi/routing`, `https://orpc.dev/docs/adapters/elysia`
+- Elysia: `https://elysiajs.com/essential/life-cycle`, `https://elysiajs.com/essential/plugin`, `https://elysiajs.com/patterns/openapi`, `https://elysiajs.com/plugins/swagger`
+- Skills used for local validation: `/Users/mateicanavra/.codex-rawr/skills/inngest/SKILL.md`, `/Users/mateicanavra/.codex-rawr/skills/orpc/SKILL.md`, `/Users/mateicanavra/.codex-rawr/skills/elysia/SKILL.md`, `/Users/mateicanavra/.codex-rawr/skills/typescript/SKILL.md`, `/Users/mateicanavra/.codex-rawr/skills/plugin-architecture/SKILL.md`, `/Users/mateicanavra/.codex-rawr/skills/rawr-hq-orientation/SKILL.md`
 
 ## Counter-Review of Approach B
 Reviewed source:
