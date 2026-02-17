@@ -1,10 +1,14 @@
 # ORPC + Inngest Spec Packet Decisions
 
-## Status
-This extraction introduces no new packet-specific closed or deferred decisions.
+## Scope
+Packet-local decision tracking for documentation-architecture changes only.
 
-## Canonical Decision Source
-All active decisions for this packet are inherited from:
+## Current Status
+No new packet-local architecture decisions were introduced in this breakout pass.
+
+## Inherited Canonical Decision Sources
 - `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
+- `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md` locked decisions and global invariants
 
-If a new architecture-impacting ambiguity appears during future updates to this packet, add it here before continuing edits.
+## Rule
+If future packet edits reveal a new architecture-impacting ambiguity, add it here before continuing edits.

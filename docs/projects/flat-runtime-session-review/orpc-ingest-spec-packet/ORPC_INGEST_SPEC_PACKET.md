@@ -1,53 +1,81 @@
-# ORPC + Inngest Spec Packet
-
-## Canonical Source
-This packet is an extraction of:
-- `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
-
-If any text in this packet conflicts with the source posture spec, the source posture spec wins.
+# ORPC + Inngest Spec Packet (Self-Contained Entry)
 
 ## In Scope
-- Canonical posture for oRPC boundary APIs, workflow trigger APIs, Inngest durable execution, and optional durable endpoint adapters.
-- Packet-level routing so implementers can find the right policy file quickly.
-- Concern ownership boundaries to prevent policy duplication.
+- Canonical leaf-spec packet for ORPC boundary APIs, workflow trigger APIs, Inngest durable execution, and host composition.
+- Axis-by-axis normative policy coverage with implementation-ready snippets.
+- Cross-axis interaction guidance needed to ship changes without semantic drift.
 
 ## Out of Scope
-- Introducing new architecture choices not already present in the posture spec.
-- Migration sequencing details beyond what is already locked in posture.
-- Expanding examples into additional policy.
+- Runtime code changes.
+- Platform migration planning beyond what is already encoded in posture policy.
+- Replacing the integrative overview role of `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`.
 
-## Locked Posture (Inherited)
-1. Keep split semantics between API boundary and durable execution; reject full runtime-surface collapse.
-2. Use oRPC as the primary API harness (contracts, routers, OpenAPI, external client generation).
-3. Use Inngest functions as the primary durability harness (durable orchestration, retries, step semantics).
-4. Treat Inngest durable endpoints as additive ingress adapters only, never as a second first-party trigger authoring path.
+## Packet Role
+This packet is the canonical leaf-level spec set.
 
-## Packet Topology
-- [AXIS_01_INTERNAL_PACKAGE_LAYERING.md](./AXIS_01_INTERNAL_PACKAGE_LAYERING.md): internal package shape and internal-calling defaults.
-- [AXIS_02_BOUNDARY_CONTRACT_FIRST_PLUGINS.md](./AXIS_02_BOUNDARY_CONTRACT_FIRST_PLUGINS.md): boundary API contract-first plugin posture.
-- [AXIS_03_WORKFLOW_TRIGGERS_VS_INNGEST_INGRESS.md](./AXIS_03_WORKFLOW_TRIGGERS_VS_INNGEST_INGRESS.md): trigger surfaces vs `/api/inngest` ingress boundary.
-- [AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md](./AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md): composition spine, host mounts, and fixture glue.
-- [AXIS_05_ADOPTION_EXCEPTION_AND_SCALE_RULES.md](./AXIS_05_ADOPTION_EXCEPTION_AND_SCALE_RULES.md): explicit exception and scaling guardrails.
-- [DECISIONS.md](./DECISIONS.md): packet-local decision ledger status.
+The parent overview (`../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`) provides subsystem synthesis; this packet provides axis-owned implementation policy depth.
 
-## Concern Ownership (No Duplication)
-| Concern | Owner file | Linked files |
-| --- | --- | --- |
-| Internal package layering and internal call defaults | [AXIS_01_INTERNAL_PACKAGE_LAYERING.md](./AXIS_01_INTERNAL_PACKAGE_LAYERING.md) | [AXIS_02_BOUNDARY_CONTRACT_FIRST_PLUGINS.md](./AXIS_02_BOUNDARY_CONTRACT_FIRST_PLUGINS.md), [AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md](./AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md) |
-| Boundary API contract-first policy and external client generation path | [AXIS_02_BOUNDARY_CONTRACT_FIRST_PLUGINS.md](./AXIS_02_BOUNDARY_CONTRACT_FIRST_PLUGINS.md) | [AXIS_03_WORKFLOW_TRIGGERS_VS_INNGEST_INGRESS.md](./AXIS_03_WORKFLOW_TRIGGERS_VS_INNGEST_INGRESS.md), [AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md](./AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md) |
-| Workflow triggers vs durable ingress and durable endpoint posture | [AXIS_03_WORKFLOW_TRIGGERS_VS_INNGEST_INGRESS.md](./AXIS_03_WORKFLOW_TRIGGERS_VS_INNGEST_INGRESS.md) | [AXIS_02_BOUNDARY_CONTRACT_FIRST_PLUGINS.md](./AXIS_02_BOUNDARY_CONTRACT_FIRST_PLUGINS.md), [AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md](./AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md) |
-| Host composition and mount wiring | [AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md](./AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md) | [AXIS_01_INTERNAL_PACKAGE_LAYERING.md](./AXIS_01_INTERNAL_PACKAGE_LAYERING.md), [AXIS_03_WORKFLOW_TRIGGERS_VS_INNGEST_INGRESS.md](./AXIS_03_WORKFLOW_TRIGGERS_VS_INNGEST_INGRESS.md) |
-| Exception and scale governance | [AXIS_05_ADOPTION_EXCEPTION_AND_SCALE_RULES.md](./AXIS_05_ADOPTION_EXCEPTION_AND_SCALE_RULES.md) | All axis docs |
+## Locked Subsystem Decisions (Inherited)
+1. API boundary and durable execution remain split.
+2. oRPC is the primary boundary API harness.
+3. Inngest functions are the primary durability harness.
+4. Durable endpoints are additive ingress adapters only.
+
+## Axis Coverage (Complete)
+1. [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)
+2. [AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md](./AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md)
+3. [AXIS_03_SPLIT_VS_COLLAPSE.md](./AXIS_03_SPLIT_VS_COLLAPSE.md)
+4. [AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md](./AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md)
+5. [AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md](./AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md)
+6. [AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md](./AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md)
+7. [AXIS_07_HOST_HOOKING_COMPOSITION.md](./AXIS_07_HOST_HOOKING_COMPOSITION.md)
+8. [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
+9. [AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md](./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md)
+
+## Cross-Cutting Defaults
+1. External SDK generation uses one composed oRPC/OpenAPI boundary surface.
+2. Internal in-process cross-boundary calls default to package internal clients (`client.ts`), not local HTTP.
+3. Caller-triggered workflow routes are oRPC workflow trigger routes; runtime durable ingress is `/api/inngest`.
+4. TypeBox-first schema flow remains the baseline for contract I/O and OpenAPI conversion.
+5. One runtime-owned Inngest bundle (`client + functions`) exists per process.
+
+## Packet Interaction Model
+```text
+Caller
+  -> oRPC boundary procedure
+      -> boundary operation
+          -> package internal client/service
+              -> immediate response
+
+Caller
+  -> oRPC workflow trigger procedure
+      -> trigger operation (inngest.send)
+          -> Inngest durable function (step.run)
+              -> run/timeline lifecycle state
+```
+
+## Canonical Ownership Split
+- Package layer owns domain/service/procedures/internal router/client/errors/index.
+- API plugins own caller-facing contracts, boundary operations, and boundary routers.
+- Workflow plugins own trigger contracts/operations/routers and durable functions.
+- Host layer owns composition spine and explicit route mounting.
+
+## Packet-Wide Rules
+1. Each axis doc owns one policy slice; cross-axis docs reference owners rather than duplicating policy text.
+2. Any new architecture-impacting ambiguity must be logged in [DECISIONS.md](./DECISIONS.md) before execution continues.
+3. This packet must remain consistent with `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`.
 
 ## Navigation Map (If You Need X, Read Y)
-- If you need internal package structure and where `client.ts` fits, read [AXIS_01_INTERNAL_PACKAGE_LAYERING.md](./AXIS_01_INTERNAL_PACKAGE_LAYERING.md).
-- If you need boundary plugin contract/router rules and OpenAPI client-generation source policy, read [AXIS_02_BOUNDARY_CONTRACT_FIRST_PLUGINS.md](./AXIS_02_BOUNDARY_CONTRACT_FIRST_PLUGINS.md).
-- If you need workflow trigger route policy and `/api/inngest` ingress boundaries, read [AXIS_03_WORKFLOW_TRIGGERS_VS_INNGEST_INGRESS.md](./AXIS_03_WORKFLOW_TRIGGERS_VS_INNGEST_INGRESS.md).
-- If you need host mount order, composition spine, and required root fixtures, read [AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md](./AXIS_04_COMPOSITION_AND_HOST_FIXTURES.md).
-- If you need to decide whether direct adoption is allowed or whether to split handlers/contracts, read [AXIS_05_ADOPTION_EXCEPTION_AND_SCALE_RULES.md](./AXIS_05_ADOPTION_EXCEPTION_AND_SCALE_RULES.md).
-- If you need to check whether new packet-local decisions exist, read [DECISIONS.md](./DECISIONS.md).
+- External client generation and OpenAPI surface ownership -> [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)
+- Internal call defaults and package layering -> [AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md](./AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md)
+- Why split is locked and anti-dual-path guardrails -> [AXIS_03_SPLIT_VS_COLLAPSE.md](./AXIS_03_SPLIT_VS_COLLAPSE.md)
+- Request vs durable context envelopes and correlation propagation -> [AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md](./AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md)
+- Error and observability contract by surface -> [AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md](./AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md)
+- Middleware placement by harness -> [AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md](./AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md)
+- Host composition spine, fixtures, and mount order -> [AXIS_07_HOST_HOOKING_COMPOSITION.md](./AXIS_07_HOST_HOOKING_COMPOSITION.md)
+- Workflow trigger authoring vs durable execution authoring -> [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
+- Durable endpoint additive-only constraints -> [AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md](./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md)
+- Section-by-section redistribution map from old monolith -> [REDISTRIBUTION_TRACEABILITY.md](./REDISTRIBUTION_TRACEABILITY.md)
 
-## Integrity Rules
-1. This packet inherits policy only from the canonical posture spec.
-2. Examples in this packet are illustrative and cannot introduce new normative policy.
-3. Any new architecture-impacting choice discovered during further extraction or implementation must be recorded in [DECISIONS.md](./DECISIONS.md) before proceeding.
+## Decision Log
+- Packet-local decisions: [DECISIONS.md](./DECISIONS.md)
