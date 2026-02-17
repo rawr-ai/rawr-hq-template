@@ -13,6 +13,26 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
 - Risk if wrong: callers keep hitting `/rpc`, never benefit from workflow-specific auth/context wiring, and documentation/SDK generation remain unstable.
 - Guardrail impact: requires runbook/docs updates (AXIS_07, `rawr.hq.ts` guidance), new tests/lints ensuring `/api/workflows` exists, and informs AI authoring that workflow routes are a published surface.
 
+**Implementation illustration (Recommended)**
+1. **File structure impact**: Extend `rawr.hq.ts` to export the workflow surface (`rawrHqManifest.workflows`), add `apps/server/src/workflows/context.ts` (per `examples/E2E_03`), and in `apps/server/src/rawr.ts` register a `workflowHandler` for `/api/workflows/*` before the existing `/api/orpc` and `/api/inngest` mounts.
+2. **Code snippet**:
+   ```ts
+   // apps/server/src/rawr.ts
+   const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.router);
+   app.all("/api/workflows/*", async ({ request }) => {
+     const context = createWorkflowBoundaryContext(request, workflowDeps);
+     const result = await workflowHandler.handle(request, { prefix: "/api/workflows", context });
+     return result.matched ? result.response : new Response("not found", { status: 404 });
+   }, { parse: "none" });
+   ```
+3. **Operational picture**: Workflow calls now hit a distinct host handler with explicit context creation (principal + runtime deps), preserving the split context envelopes described in `AXIS_04` and matching the `<workflow>` router shown in `examples/E2E_03`.
+4. **Tradeoff**: Adds host wiring but delivers the public `/api/workflows` surface that SDKs/users rely on; the alternative keeps only `/rpc` mounts, forcing all consumers through coordination procedures and breaking the documented split.
+
+**Alternative illustration**
+1. **File structure**: No new workflow handler; `apps/server/src/orpc.ts` remains the only host integration point.
+2. **Code-level diff**: Callers continue to reach workflow logic through `os.coordination.queueRun` routes on `/rpc`, with no `/api/workflows` mapping.
+3. **Tradeoff**: Simpler host but misaligned with documentation and micro-frontend requirements, leaving the policy narrative aspirational rather than implementable.
+
 **D-006 — Canonical ownership of workflow contract artifacts**
 - Why it matters: Having two copies of the workflow contract (package-owned vs plugin-owned) makes `AXIS_01`, `AXIS_08`, and the micro-frontend walkthrough lose their single source of truth. A canonical location also determines how internal clients, host composites, and SDK generators import the shapes.
 - Recommended direction: Treat packages as the canonical home: e.g., `packages/<domain>/src/workflows/contract.ts` (see `E2E_03` section 4.2), and let both API/workflow plugins re-export or re-use that contract. This keeps domain/package exports transport-neutral while letting the plugin layer own only context and router wiring.
@@ -24,6 +44,24 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
 - Rationale: Without this lock, we cannot reliably promise where to find schemas for SDKs, internal clients, or context propagation.
 - Risk if wrong: inconsistent payloads, duplicated docs, and talisman for cross-package imports.
 - Guardrail impact: informs `AXIS_01/02` updates, ensures doc narratives point to the package asset, and keeps AI/SDK tooling targeting the same file.
+
+**Implementation illustration (Recommended)**
+1. **File structure impact**: Create `packages/<domain>/src/workflows/contract.ts`, export it via `@rawr/<domain>/workflows/contract`, and update `plugins/workflows/<domain>/src/contract.ts` to re-export that path so workflows, clients, and docs all reference the same source.
+2. **Code snippet**:
+   ```ts
+   // packages/invoicing/src/workflows/contract.ts
+   export const invoicingWorkflowContract = oc.router({ ... });
+
+   // plugins/workflows/invoicing/src/contract.ts
+   export { invoicingWorkflowContract } from "@rawr/invoicing/workflows/contract";
+   ```
+3. **Operational picture**: OpenAPI generation at the host now consumes the package-level router, ensuring tags, paths, and schemas stay in sync.
+4. **Tradeoff**: Adds a package-level file but eliminates schema duplication; the plugin stays focused on context/router wiring.
+
+**Alternative illustration**
+1. **File structure**: Contract stays in `plugins/workflows/<domain>/src/contract.ts`; packages import it via the plugin, undermining package transport neutrality.
+2. **Code diff**: `packages/<domain>` might `export * from "../../plugins/workflows/<domain>/src/contract.ts";`.
+3. **Tradeoff**: Keeps plugin autonomy yet fragments schema ownership and complicates SDK generation.
 
 **D-007 — First-party micro-frontend workflow client strategy**
 - Why it matters: The packet already forbids browser calls to `/api/inngest` (`AXIS_08` point 8), yet there is no canonical pattern for shipping typed clients that hit `/api/workflows`. Without that lock, front-end teams will reinvent clients, may accidentally call the runtime ingress, and documentation will remain aspirational.
@@ -37,6 +75,27 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
 - Risk if wrong: accidental runtime ingress exposure, broken auth context, and consumer confusion.
 - Guardrail impact: need lint/runbook updates banning `/api/inngest` from browser code, tests verifying clients reuse the workflow contract, and docs describing the generated client delivery path.
 
+**Implementation illustration (Recommended)**
+1. **File structure impact**: Add `plugins/web/<capability>/src/client.ts` (e.g., `plugins/web/invoicing-console/src/client.ts`) and leverage `packages/<domain>/src/workflows/contract.ts`. Browser entry points import this client and `packages/<domain>/src/browser.ts` for UI helpers.
+2. **Code snippet**:
+   ```ts
+   export function createWorkflowClient(baseUrl: string) {
+     return createORPCClient(
+       new OpenAPILink({
+         url: `${baseUrl.replace(/\\/$/, "")}/api/workflows`,
+         fetch: (request, init) => fetch(request, { ...init, credentials: "include" }),
+       }),
+     );
+   }
+   ```
+3. **Operational picture**: Micro-frontends call the workflow surface via a typed client that reuses the contract and ensures credentials travel through `/api/workflows`, not `/api/inngest`.
+4. **Tradeoff**: Adds one browser artifact but enforces security and typing; the alternative risks bypassing boundary policy.
+
+**Alternative illustration**
+1. **File structure**: Browser code contains ad-hoc `fetch("/api/inngest", ...)` calls or creates custom `OpenAPIHandler` wrappers without the canonical contract.
+2. **Code diff**: UI modules directly invoke runtime ingress or build untyped route clients.
+3. **Tradeoff**: Minimal packaging but exposes sensitive ingress, duplicates schema handling, and breaks the documented separation.
+
 **D-008 — Extended traces middleware initialization order**
 - Why it matters: `E2E_04` flagged that Inngest’s `extendedTracesMiddleware` must initialize early to capture instrumentation; without an explicit bootstrap rule, hosts may register the middleware after composition, so tracing/middle-tier dashboards lose data.
 - Recommended direction: Require the host to initialize `extendedTracesMiddleware()` at the top level (e.g., `rawr.hq.ts` or the entry module) before creating the runtime bundle. The recommendation should point to the Inngest docs and instruct teams to pass the middleware into `new Inngest({ middleware: [extendedTracesMiddleware(), ...] })` before any functions are created.
@@ -48,6 +107,29 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
 - Rationale: Locking now prevents future implementations from omitting the middleware and makes dev experience consistent.
 - Risk if wrong: telemetry gaps, missing timeline data, and harder debugging of durable runs.
 - Guardrail impact: runbooks (`AXIS_05`/`AXIS_06`) must mention the bootstrap order, tests verifying middleware array, and AI authoring can recommend the explicit snippet.
+
+**Implementation illustration (Recommended)**
+1. **File structure impact**: Modify `rawr.hq.ts` (composition manifest) to import `extendedTracesMiddleware`, include it in `new Inngest({ middleware: [extendedTracesMiddleware()] })`, and ensure `createCoordinationInngestFunction` uses this client before any functions register.
+2. **Code snippet**:
+   ```ts
+   import { extendedTracesMiddleware } from "@rawr/coordination-observability";
+
+   const inngest = new Inngest({
+     id: "rawr-hq",
+     middleware: [extendedTracesMiddleware()],
+   });
+   const inngestBundle = createCoordinationInngestFunction({
+     runtime,
+     client: inngest,
+   });
+   ```
+3. **Operational picture**: Middleware registers before any durable function, so trace pipelines capture the run trace data shown in `examples/E2E_04` open question 1.
+4. **Tradeoff**: Slightly more explicit bootstrap but consistent telemetry from day one.
+
+**Alternative illustration**
+1. **File structure**: No change; middleware is either omitted or added after creating functions.
+2. **Code diff**: `new Inngest` call lacks `middleware: [extendedTracesMiddleware()]`, so instrumentation never attaches.
+3. **Tradeoff**: Simpler bootstrap but results in missing trace links and harder observability.
 
 **D-009 — Required dedupe marker policy for heavy oRPC middleware**
 - Why it matters: `AXIS_06` already warns that built-in oRPC dedupe only works for leading-subset chains; repeated middleware (as shown in `E2E_04` `packages/invoicing/src/middleware.ts`) relies on manual context flags. A packet-level lock clarifies whether context-based markers are mandatory or optional.
@@ -61,6 +143,29 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
 - Risk if wrong: duplicate checks, inconsistent runtime state mutations, or unexpected authorization errors on nested calls.
 - Guardrail impact: updates to `AXIS_06`, runbook notes for middleware authors, and tests/lints that ensure middleware sets markers before returning.
 
+**Implementation illustration (Recommended)**
+1. **File structure impact**: Ensure middleware modules (e.g., `packages/invoicing/src/middleware.ts`) use `context.middlewareState` to store dedupe markers and document the pattern in `AXIS_06`.
+2. **Code snippet**:
+   ```ts
+   if (context.middlewareState?.roleChecked) return next();
+   // expensive role check
+   return next({
+     context: {
+       middlewareState: {
+         ...context.middlewareState,
+         roleChecked: true,
+       },
+     },
+   });
+   ```
+3. **Operational picture**: Middleware runs once per request even when internal clients trigger the same procedure later, satisfying the dedupe contract and reducing redundant work.
+4. **Tradeoff**: Minor bookkeeping but deterministic behavior; relying on router ordering alone breaks once middleware is reused internally.
+
+**Alternative illustration**
+1. **File structure**: Middleware lacks state, so each invocation (including nested internal calls) runs the role check again.
+2. **Code diff**: Simple middleware without `middlewareState` updates.
+3. **Tradeoff**: Minimal code but duplicate work and more frequent side effects; it also contradicts the caution in `AXIS_06`.
+
 **D-010 — Inngest finished-hook side-effect guardrail**
 - Why it matters: `E2E_04` notes `finished` is not guaranteed exactly once (`AXIS_06` + Inngest docs). Without a packet across the stack, teams might place non-idempotent work there, leading to double side effects.
 - Recommended direction: Explicitly document that `finished` may run multiple times and should be reserved for idempotent observation (e.g., logging) or async cleanup that can safely re-run. Encourage teams to keep critical work inside `step.run` or `createFunction` handlers.
@@ -72,6 +177,25 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
 - Rationale: Documenting the limitation now prevents incorrect assumptions as more workflows adopt Inngest middleware hooks.
 - Risk if wrong: double writes, duplicate notifications, and hard-to-debug workflow traces.
 - Guardrail impact: runbooks and docs about Inngest middleware (`AXIS_05`/`AXIS_06`), tests covering idempotence, and AI/agent guidance cautioning about `finished` usage.
+
+**Implementation illustration (Recommended)**
+1. **File structure impact**: Update `AXIS_05`/`AXIS_06` docs to cite `packages/coordination-inngest/src/adapter.ts`, highlight `step.run` usage, and call out that `finished` (per Inngest docs) may rerun; reserve it for logging/metrics only.
+2. **Code memo**:
+   ```ts
+   inngest.createFunction(..., async ({ step }) => {
+     await step.run("coordination/run-start", ...);
+     // avoid writing runtime state here; use step.run
+   }).finished?.(() => {
+     // idempotent logging only
+   });
+   ```
+3. **Operational picture**: Teams keep critical writes (status updates, database mutations) inside `step.run` or handler body, while `finished` stays for safe telemetry, aligning with Inngest sentinel guidelines.
+4. **Tradeoff**: Documentation effort but prevents duplicates; leaving no guard invites developers to mutate state in `finished`.
+
+**Alternative illustration**
+1. **File structure**: No doc update; `finished` is used for runtime state writes across functions.
+2. **Code diff**: `finished` hooks mutate `runtime` or update drawers; on retries they run again due to Inngest guarantees.
+3. **Tradeoff**: Cleaner-looking code yet makes observability/retries unreliable because side effects may happen multiple times.
 
 **Proposed Lock Order**
 ```yaml

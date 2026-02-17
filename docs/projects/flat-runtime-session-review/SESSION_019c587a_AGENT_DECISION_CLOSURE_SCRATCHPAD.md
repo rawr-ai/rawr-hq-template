@@ -15,3 +15,7 @@ Action Items
 - Form final recommendations referencing axis docs/E2E and code paths.
 - Determine lock order (likely D-006, D-005, D-007 then D-008, D-009, D-010). Provide rationale.
 - Identify necessary doc/policy updates (Axis 07 host hooking, D-004 etc) post-lock.
+Updates
+- Enriched each open decision with concrete file-structure/code illustrations for both recommended and alternative paths, ensuring refs tie to real axes/code.
+- Noted the host-level `/api/workflows` wiring detail for D-005 and the package-level contract re-export approach for D-006.
+- Documented the browser client packaging proposal (D-007), extended traces bootstrap snippet (D-008), middleware dedupe flag example (D-009), and finished-hook guardrail usage notes (D-010).
