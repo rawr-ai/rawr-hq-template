@@ -43,6 +43,9 @@ packages/core/src/
 rawr.hq.ts            # exports workflow surface used above
 ```
 
+**Why This Is Non-Obvious (or Obvious)**
+Bumping the existing route surface to include `/api/workflows` still looks like a composition detail, but the decision remains open because the docs and E2E examples already assume a dedicated host entry. The ambiguity is whether to keep workflows tucked inside `/rpc` (simpler) or to expose them explicitly for SDK generation/guardrails. That conflicts with the goal of preventing callers from accidentally hitting runtime ingress, so it needs this explicit lock rather than being treated as a routine refactor.
+
 **D-006 — Canonical ownership of workflow contract artifacts**
 1. **Goal:** Producers and consumers of workflow metadata need one agreed-upon file that defines the workflow contract so SDKs, host wiring, and docs all converge on the same TypeBox schemas.
 2. **Current situation:** Both the package (e.g., `packages/invoicing/src/workflows/contract.ts` in some docs) and the workflow plugin contain contract definitions, so different readers import from different places and the workflow router is not guaranteed to align with the package-level API.
@@ -73,6 +76,8 @@ The package now owns the contract file, and workflow plugins re-export it. CI/do
 **What Stays the Same / Out of Scope**
 Workflow plugins still manage their routers, context wiring, and operations; this change does not move operation logic or runtime glue into the package layer.
 
+**Why This Is Non-Obvious (or Obvious)**
+On the surface it would be easy to say “just move the contract wherever it lives,” but the conflict comes from balancing plugin-friendly isolation versus transport-neutral package semantics. Both the docs and earlier E2E samples still show plugin-local contracts, so without this decision we risk ongoing duplicated ownership. That makes the choice a real policy fork, not a trivial cleanup.
 **D-007 — First-party micro-frontend workflow client strategy**
 1. **What we want:** Browsers should trigger workflows and read status through a documented workflow surface (`/api/workflows`), using one shared, contract-typed client so they never have to call `/api/inngest`.
 2. **Problem today:** There is no canonical client; teams rebuild fetchers or guess router details, which often leads to calling the runtime ingress directly and breaking the policy in `AXIS_08`.
@@ -105,6 +110,9 @@ We add the shared web client module and make it the sanctioned way for browsers 
 
 **What Stays the Same / Out of Scope**
 Server-only internal clients remain server-side; browsers still cannot call `/api/inngest`. The new client simply centralizes what they should already be doing.
+
+**Why This Is Non-Obvious (or Obvious)**
+Providing a browser client might seem like a usability tweak, but it stays a decision because we're simultaneously enforcing that browsers never hit `/api/inngest`. The ambiguity is how to balance making workflow calls easy without exposing runtime ingress—without this policy we risk inconsistent ad-hoc clients. That tradeoff keeps it from being a mere implementation detail.
 
 **D-008 — Extended traces middleware initialization order**
 1. **Objective:** Ensure telemetry captures every workflow run by registering `extendedTracesMiddleware` before any durable functions or steps exist.
@@ -140,6 +148,9 @@ Server-only internal clients remain server-side; browsers still cannot call `/ap
 
 **What Stays the Same / Out of Scope**
 Existing durable functions, runtime adapters, and `createCoordinationInngestFunction` logic stay untouched; only the client instantiation gains the middleware reference.
+
+**Why This Is Non-Obvious (or Obvious)**
+Adding middleware to Inngest might read as a straightforward instrumentation tweak, but the decision remains because the docs already expect every host to produce complete traces. The conflict is whether to keep the current minimal bootstrap (simpler) or to demand the middleware early (needed for spec compliance). That tradeoff—observability vs. adding another required dependency—keeps it on the decision list.
 **D-009 — Required dedupe marker policy for heavy oRPC middleware**
 1. **What we seek:** Expensive or stateful middleware should only run once per logical request, even when internal clients trigger the same procedures again.
 2. **Existing issue:** ORPC built-in dedupe works only for middleware chains that share ordering and exist in the leading subset; once internal clients or other packages re-use middleware, it executes again, duplicating checks (see `packages/invoicing/src/middleware.ts` in `E2E_04`).
@@ -175,6 +186,9 @@ Middleware state tracking for dedupe now lives in each package middleware module
 **What Stays the Same / Out of Scope**
 ORPC router definitions, contexts, and operations do not change; we only add context caching for middleware performance. The rule doesn’t force router-level dedupe rewrites.
 
+**Why This Is Non-Obvious (or Obvious)**
+Requiring middleware state markers seems like an internal optimization, but it remains a decision because the existing policy only warns about dedupe limits without a binding rule. The ambiguity is whether to trust router ordering (simpler) or to obligate authors to set context flags for every heavy check. That tradeoff between trusting the framework and ensuring consistent behavior makes it a policy-level decision.
+
 **D-010 — Inngest finished-hook side-effect guardrail**
 1. **What we aim for:** Engineers understand that Inngest’s `finished` hook re-runs on retries, so only idempotent logging/metrics belong there while critical state changes live inside `step.run` or the handler.
 2. **The gap:** Today the packet does not crisply spell out this limitation, so developers may treat `finished` like a once-per-run finally block and accidentally duplicate writes when retries happen.
@@ -205,6 +219,9 @@ ORPC router definitions, contexts, and operations do not change; we only add con
 
 **What Stays the Same / Out of Scope**
 The Inngest lifecycle (step semantics, retries, timeline updates) remains unchanged; the policy addition simply documents existing runtime behavior and safe usage.
+
+**Why This Is Non-Obvious (or Obvious)**
+The limitation on `finished` is subtle because Inngest’s docs already mention retries, yet the packet still lists it as an open decision because teams currently treat `finished` as a finalizer and there hasn’t been a clear policy correlating retries with side-effect safety. The real conflict is between the convenience of putting finish logic there versus the need to keep state changes idempotent; that tradeoff keeps it as a policy choice.
 
 **Proposed Lock Order**
 ```yaml
