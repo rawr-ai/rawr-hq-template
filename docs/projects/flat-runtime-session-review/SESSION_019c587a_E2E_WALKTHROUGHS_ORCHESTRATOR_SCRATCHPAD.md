@@ -57,3 +57,10 @@ Produce three self-contained tutorial-style end-to-end walkthrough docs (basic, 
 - Agent C must solve underlying problem: micro-frontend access to needed logic/workflow behavior without duplicating semantics.
 - API-plugin consumption is optional, not required.
 - Agent C must evaluate shared-package-first strategy and workflow invocation model uncertainty.
+
+## New Policy Adjustment Pass (2026-02-17)
+User-requested canonical adjustments to apply across walkthroughs + spec docs:
+1) Domain file naming: inside a domain folder, avoid repeating the domain prefix in filenames (use `status.ts`, not `invoice-status.ts`).
+2) Domain modeling: TypeBox-first schema as source of truth, and export static TS types from the same file (`Static<typeof Schema>`), avoiding separate duplicate type declarations where possible.
+3) Naming brevity: avoid unnecessarily long names for directories/modules (e.g., prefer `invoicing` over `invoice-processing-workflows` where scope is already clear).
+4) Apply in parallel across all E2E docs and spec docs with dedicated ownership per agent.

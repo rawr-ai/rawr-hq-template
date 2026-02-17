@@ -79,14 +79,12 @@ packages/<domain>/src/
   errors.ts
   index.ts
 
-plugins/api/<domain>-api/src/
-  contract.ts
+plugins/api/<domain>/src/contract.ts
   operations/*
   router.ts
   index.ts
 
-plugins/workflows/<domain>-workflows/src/
-  contract.ts
+plugins/workflows/<domain>/src/contract.ts
   operations/*
   router.ts
   functions/*
@@ -158,7 +156,7 @@ state: os.state.router({
 2. Internal package layered defaults may include `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
 3. Within one `domain/` folder, filenames avoid repeating the domain token (`status.ts`, not `invoice-status.ts` inside `invoicing/domain/`).
 4. Domain schema files are TypeBox-first and co-export static types from the same file.
-5. Package/plugin directory names prefer concise domain forms when clear (`invoicing`, `invoicing-api`, `invoicing-workflows`).
+5. Package/plugin directory names prefer concise domain forms when clear (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
 6. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
 7. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
 

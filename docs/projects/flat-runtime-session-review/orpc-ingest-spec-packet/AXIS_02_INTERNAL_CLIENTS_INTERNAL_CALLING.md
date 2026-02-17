@@ -188,7 +188,7 @@ export * from "./errors";
 
 ### Example A (operation -> internal client)
 ```ts
-// plugins/api/invoicing-api/src/operations/start.ts
+// plugins/api/invoicing/src/operations/start.ts
 export async function startInvoiceOperation(
   context: InvoiceApiContext,
   input: { invoiceId: string; requestedBy: string },
@@ -202,7 +202,7 @@ export async function startInvoiceOperation(
 2. Internal layered defaults may include: `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
 3. Domain filenames omit redundant domain prefixes when already scoped by folder (`domain/status.ts`, not `domain/invoice-status.ts` for `invoicing`).
 4. Domain schema modules co-locate TypeBox schema values and static type exports.
-5. Prefer concise domain naming for package/plugin directories when unambiguous (`packages/invoicing`, `plugins/api/invoicing-api`).
+5. Prefer concise domain naming for package/plugin directories when unambiguous (`packages/invoicing`, `plugins/api/invoicing`).
 
 ## References
 - Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts:5`

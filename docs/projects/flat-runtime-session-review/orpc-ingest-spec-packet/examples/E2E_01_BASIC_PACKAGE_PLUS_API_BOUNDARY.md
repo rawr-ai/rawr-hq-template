@@ -15,8 +15,8 @@ Use-case: expose invoicing APIs to callers while keeping domain logic transport-
 | --- | --- |
 | Hosting mount paths | `/rpc`, `/api/orpc`, `/api/inngest` |
 | Internal package location | `packages/invoicing/src/*` |
-| API plugin location | `plugins/api/invoicing-api/src/*` |
-| Composition route | `rawr.hq.ts` -> `apps/server/src/rawr.ts` -> `apps/server/src/orpc.ts` -> `plugins/api/invoicing-api/src/router.ts` -> `packages/invoicing/src/client.ts` |
+| API plugin location | `plugins/api/invoicing/src/*` |
+| Composition route | `rawr.hq.ts` -> `apps/server/src/rawr.ts` -> `apps/server/src/orpc.ts` -> `plugins/api/invoicing/src/router.ts` -> `packages/invoicing/src/client.ts` |
 
 ### Endpoint divergences included in this basic example
 
@@ -41,7 +41,7 @@ flowchart LR
   OR --> EH["Elysia mount: /api/orpc* (parse none)"]
   EH --> OAH["oRPC OpenAPIHandler"]
   OAH --> HQ["Composed hq router namespace: invoicing.api"]
-  HQ --> APIR["invoicing-api router (implement(contract))"]
+  HQ --> APIR["invoicing router (implement(contract))"]
   APIR --> OPS["operations/* mapping layer"]
   OPS --> ICL["invoicing internal client (createRouterClient)"]
   ICL --> PR["invoicing internal procedures"]
@@ -80,7 +80,7 @@ flowchart LR
 │       ├── client.ts
 │       ├── errors.ts
 │       └── index.ts
-└── plugins/api/invoicing-api/src/
+└── plugins/api/invoicing/src/
     ├── contract.ts
     ├── operations/
     │   ├── start.ts
@@ -274,7 +274,7 @@ export function createInvoiceInternalClient(context: InvoiceProcedureContext) {
 ### 4.3 API boundary plugin: contract ownership + operation mapping
 
 ```ts
-// plugins/api/invoicing-api/src/contract.ts
+// plugins/api/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
 import { typeBoxStandardSchema } from "@rawr/orpc-standards";
@@ -310,7 +310,7 @@ export const invoiceApiContract = oc.router({
 ```
 
 ```ts
-// plugins/api/invoicing-api/src/operations/start.ts
+// plugins/api/invoicing/src/operations/start.ts
 import type { InvoiceApiContext } from "../router";
 
 export async function startInvoiceOperation(
@@ -326,7 +326,7 @@ export async function startInvoiceOperation(
 ```
 
 ```ts
-// plugins/api/invoicing-api/src/operations/get-status.ts
+// plugins/api/invoicing/src/operations/get-status.ts
 import type { InvoiceApiContext } from "../router";
 
 function isTerminal(status: "queued" | "running" | "completed" | "failed" | "canceled"): boolean {
@@ -346,7 +346,7 @@ export async function getStatusOperation(context: InvoiceApiContext, input: { ru
 ```
 
 ```ts
-// plugins/api/invoicing-api/src/router.ts
+// plugins/api/invoicing/src/router.ts
 import { implement } from "@orpc/server";
 import { createInvoiceInternalClient } from "@rawr/invoicing";
 import { invoiceApiContract } from "./contract";
@@ -372,7 +372,7 @@ export function createInvoiceApiRouter() {
 ```
 
 ```ts
-// plugins/api/invoicing-api/src/index.ts
+// plugins/api/invoicing/src/index.ts
 import { invoiceApiContract } from "./contract";
 import { createInvoiceApiRouter } from "./router";
 
@@ -388,7 +388,7 @@ export const invoiceApiSurface = {
 // rawr.hq.ts
 import { oc } from "@orpc/contract";
 import { Inngest } from "inngest";
-import { invoiceApiSurface } from "./plugins/api/invoicing-api/src";
+import { invoiceApiSurface } from "./plugins/api/invoicing/src";
 
 const inngest = new Inngest({ id: "rawr-hq" });
 
@@ -478,7 +478,7 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 1. Build TypeBox adapter once (`packages/orpc-standards/src/typebox-standard-schema.ts`) and reuse it across package and boundary contracts.
 2. Build internal package layers under `packages/invoicing/src/*`:
    - domain (`run.ts`, `status.ts`) -> service -> procedures -> router -> client.
-3. Build API plugin under `plugins/api/invoicing-api/src/*`:
+3. Build API plugin under `plugins/api/invoicing/src/*`:
    - boundary `contract.ts`,
    - explicit `operations/*` mapping,
    - `router.ts` via `implement(contract)`.
@@ -542,7 +542,7 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 - [x] Internal package shape follows `domain/ service/ procedures/ router.ts client.ts errors.ts index.ts`.
 - [x] Domain file names inside `domain/` avoid redundant capability prefixes (`status.ts`, `run.ts`).
 - [x] API plugin shape follows `contract.ts + operations/* + router.ts + index.ts`.
-- [x] Capability naming stays concise (`invoicing`, `invoicing-api`) while preserving boundary clarity.
+- [x] Capability naming stays concise (`packages/invoicing`, `plugins/api/invoicing`) while preserving boundary clarity.
 - [x] Glue is explicit: composition root, host route mounts, and handler forwarding are shown concretely.
 - [x] Internal default invocation path is in-process client, not local HTTP self-calls.
 - [x] Boundary API and runtime ingress remain split semantics.

@@ -44,16 +44,17 @@ Boundary meaning:
 ## 3) Canonical File Tree
 
 ```text
-packages/invoice-processing/src/
+packages/invoicing/src/
   domain/                                # shared semantic source (browser-safe + server-safe)
-    workflow-shapes.ts
-    run-status-view.ts
+    reconciliation.ts                    # TypeBox trigger schemas + static types
+    status.ts                            # TypeBox run schemas + static types
+    view.ts                              # browser-safe status projection
   service/                               # server-only orchestration/business operations
     reconciliation.ts
     status.ts
   procedures/                            # internal server procedure boundary
     reconcile.ts
-    get-status.ts
+    status.ts
   router.ts                              # internal router (server-only)
   client.ts                              # in-process internal client (server-only)
   errors.ts                              # typed capability errors
@@ -62,24 +63,27 @@ packages/invoice-processing/src/
   browser.ts                             # browser-safe exports only
   index.ts
 
-plugins/workflows/invoice-processing-workflows/src/
+plugins/workflows/invoicing/src/
   contract.ts                            # re-export shared package workflow contract
   operations/
-    trigger-reconciliation.ts
-    get-run-status.ts
-    get-run-timeline.ts
+    trigger.ts
+    status.ts
+    timeline.ts
   router.ts                              # boundary auth/visibility + trigger/status handlers
   functions/
-    reconciliation.ts                    # durable execution
+    reconcile.ts                         # durable execution
   index.ts
 
 rawr.hq.ts                               # composition authority
 apps/server/src/rawr.ts                  # mounts /api/workflows + /api/inngest
 
-plugins/web/invoice-console/src/
-  workflow-client.ts                     # browser client to workflow trigger/status surface
+plugins/web/invoicing-console/src/
+  client.ts                              # browser client to workflow trigger/status surface
   web.ts                                 # mount(el, ctx) UI runtime
 ```
+
+Naming note:
+This walkthrough normalizes names to concise `invoicing` conventions for readability, but architecture choices remain non-prescriptive (see alternatives and unresolved gaps below).
 
 ---
 
@@ -88,26 +92,36 @@ plugins/web/invoice-console/src/
 ### 4.1 Shared package semantics (TypeBox-first, browser-safe)
 
 ```ts
-// packages/invoice-processing/src/domain/workflow-shapes.ts
+// packages/invoicing/src/domain/reconciliation.ts
 import { Type, type Static } from "typebox";
 
-export const TriggerInvoiceReconciliationInputSchema = Type.Object(
+export const TriggerReconciliationInputSchema = Type.Object(
   {
     invoiceId: Type.String({ minLength: 1 }),
     requestedBy: Type.String({ minLength: 1 }),
   },
   { additionalProperties: false },
 );
+export type TriggerReconciliationInput = Static<typeof TriggerReconciliationInputSchema>;
 
-export const TriggerInvoiceReconciliationOutputSchema = Type.Object(
+export const TriggerReconciliationOutputSchema = Type.Object(
   {
     accepted: Type.Literal(true),
     runId: Type.String({ minLength: 1 }),
   },
   { additionalProperties: false },
 );
+export type TriggerReconciliationOutput = Static<typeof TriggerReconciliationOutputSchema>;
+```
 
-export const WorkflowRunStatusSchema = Type.Object(
+```ts
+// packages/invoicing/src/domain/status.ts
+import { Type, type Static } from "typebox";
+
+export const RunIdParamsSchema = Type.Object({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false });
+export type RunIdParams = Static<typeof RunIdParamsSchema>;
+
+export const RunStatusSchema = Type.Object(
   {
     runId: Type.String({ minLength: 1 }),
     status: Type.Union([
@@ -120,88 +134,93 @@ export const WorkflowRunStatusSchema = Type.Object(
   },
   { additionalProperties: false },
 );
+export type RunStatus = Static<typeof RunStatusSchema>;
 
-export type WorkflowRunStatus = Static<typeof WorkflowRunStatusSchema>;
+export const RunTimelineSchema = Type.Object(
+  { runId: Type.String({ minLength: 1 }), events: Type.Array(Type.Any()) },
+  { additionalProperties: false },
+);
+export type RunTimeline = Static<typeof RunTimelineSchema>;
 ```
 
 ```ts
-// packages/invoice-processing/src/domain/run-status-view.ts
-import type { WorkflowRunStatus } from "./workflow-shapes";
+// packages/invoicing/src/domain/view.ts
+import type { RunStatus } from "./status";
 
-export function toRunBadge(status: WorkflowRunStatus): "neutral" | "warning" | "success" | "danger" {
-  if (status.status === "completed") return "success";
-  if (status.status === "failed") return "danger";
-  if (status.status === "running") return "warning";
+export function toRunBadge(run: RunStatus): "neutral" | "warning" | "success" | "danger" {
+  if (run.status === "completed") return "success";
+  if (run.status === "failed") return "danger";
+  if (run.status === "running") return "warning";
   return "neutral";
 }
 ```
 
 ```ts
-// packages/invoice-processing/src/browser.ts
-export * from "./domain/workflow-shapes";
-export * from "./domain/run-status-view";
+// packages/invoicing/src/browser.ts
+export * from "./domain/reconciliation";
+export * from "./domain/status";
+export * from "./domain/view";
 ```
 
 ### 4.2 Shared workflow contract artifact (single source, reusable)
 
 ```ts
-// packages/invoice-processing/src/workflows/contract.ts
+// packages/invoicing/src/workflows/contract.ts
 import { oc } from "@orpc/contract";
 import { typeBoxStandardSchema } from "@rawr/orpc-standards";
 import {
-  TriggerInvoiceReconciliationInputSchema,
-  TriggerInvoiceReconciliationOutputSchema,
-  WorkflowRunStatusSchema,
-} from "../domain/workflow-shapes";
-import { Type } from "typebox";
+  TriggerReconciliationInputSchema,
+  TriggerReconciliationOutputSchema,
+} from "../domain/reconciliation";
+import { RunIdParamsSchema, RunStatusSchema, RunTimelineSchema } from "../domain/status";
 
-const tag = ["invoicing-workflows"] as const;
+const tag = ["invoicing"] as const;
 
-export const invoiceWorkflowContract = oc.router({
-  triggerInvoiceReconciliation: oc
+export const invoicingWorkflowContract = oc.router({
+  triggerReconciliation: oc
     .route({
       method: "POST",
       path: "/invoicing/reconciliation/trigger",
       tags: tag,
-      operationId: "invoicingTriggerInvoiceReconciliation",
+      operationId: "invoicingTriggerReconciliation",
     })
-    .input(typeBoxStandardSchema(TriggerInvoiceReconciliationInputSchema))
-    .output(typeBoxStandardSchema(TriggerInvoiceReconciliationOutputSchema)),
+    .input(typeBoxStandardSchema(TriggerReconciliationInputSchema))
+    .output(typeBoxStandardSchema(TriggerReconciliationOutputSchema)),
 
-  getInvoiceRunStatus: oc
+  getRunStatus: oc
     .route({
       method: "GET",
       path: "/invoicing/runs/{runId}",
       tags: tag,
       operationId: "invoicingGetRunStatus",
     })
-    .input(typeBoxStandardSchema(Type.Object({ runId: Type.String({ minLength: 1 }) })))
-    .output(typeBoxStandardSchema(WorkflowRunStatusSchema)),
+    .input(typeBoxStandardSchema(RunIdParamsSchema))
+    .output(typeBoxStandardSchema(RunStatusSchema)),
 
-  getInvoiceRunTimeline: oc
+  getRunTimeline: oc
     .route({
       method: "GET",
       path: "/invoicing/runs/{runId}/timeline",
       tags: tag,
       operationId: "invoicingGetRunTimeline",
     })
-    .input(typeBoxStandardSchema(Type.Object({ runId: Type.String({ minLength: 1 }) })))
-    .output(typeBoxStandardSchema(Type.Object({ runId: Type.String(), events: Type.Array(Type.Any()) }))),
+    .input(typeBoxStandardSchema(RunIdParamsSchema))
+    .output(typeBoxStandardSchema(RunTimelineSchema)),
 });
 ```
 
 ### 4.3 Workflow plugin router (auth + visibility + trigger semantics)
 
 ```ts
-// plugins/workflows/invoice-processing-workflows/src/contract.ts
-export { invoiceWorkflowContract } from "@rawr/invoice-processing/workflows/contract";
+// plugins/workflows/invoicing/src/contract.ts
+export { invoicingWorkflowContract } from "@rawr/invoicing/workflows/contract";
 ```
 
 ```ts
-// plugins/workflows/invoice-processing-workflows/src/router.ts
+// plugins/workflows/invoicing/src/router.ts
 import { implement, ORPCError } from "@orpc/server";
 import type { Inngest } from "inngest";
-import { invoiceWorkflowContract } from "./contract";
+import { invoicingWorkflowContract } from "./contract";
 
 type Principal = {
   subject: string;
@@ -219,9 +238,9 @@ type WorkflowContext = {
 };
 
 const visibility = {
-  triggerInvoiceReconciliation: "internal",
-  getInvoiceRunStatus: "internal",
-  getInvoiceRunTimeline: "internal",
+  triggerReconciliation: "internal",
+  getRunStatus: "internal",
+  getRunTimeline: "internal",
 } as const;
 
 function assertVisible(proc: keyof typeof visibility, principal: Principal) {
@@ -230,16 +249,16 @@ function assertVisible(proc: keyof typeof visibility, principal: Principal) {
   }
 }
 
-const os = implement<typeof invoiceWorkflowContract, WorkflowContext>(invoiceWorkflowContract);
+const os = implement<typeof invoicingWorkflowContract, WorkflowContext>(invoicingWorkflowContract);
 
-export function createInvoiceWorkflowRouter() {
+export function createInvoicingWorkflowRouter() {
   return os.router({
-    triggerInvoiceReconciliation: os.triggerInvoiceReconciliation.handler(async ({ context, input }) => {
-      assertVisible("triggerInvoiceReconciliation", context.principal);
+    triggerReconciliation: os.triggerReconciliation.handler(async ({ context, input }) => {
+      assertVisible("triggerReconciliation", context.principal);
 
       const runId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
       await context.inngest.send({
-        name: "invoice.reconciliation.requested",
+        name: "invoicing.reconciliation.requested",
         data: {
           runId,
           invoiceId: input.invoiceId,
@@ -250,8 +269,8 @@ export function createInvoiceWorkflowRouter() {
       return { accepted: true, runId };
     }),
 
-    getInvoiceRunStatus: os.getInvoiceRunStatus.handler(async ({ context, input }) => {
-      assertVisible("getInvoiceRunStatus", context.principal);
+    getRunStatus: os.getRunStatus.handler(async ({ context, input }) => {
+      assertVisible("getRunStatus", context.principal);
       const run = await context.runtime.getRunStatus(input.runId);
       if (!run) throw new ORPCError("RUN_NOT_FOUND", { status: 404, message: "Run not found" });
       return {
@@ -261,8 +280,8 @@ export function createInvoiceWorkflowRouter() {
       };
     }),
 
-    getInvoiceRunTimeline: os.getInvoiceRunTimeline.handler(async ({ context, input }) => {
-      assertVisible("getInvoiceRunTimeline", context.principal);
+    getRunTimeline: os.getRunTimeline.handler(async ({ context, input }) => {
+      assertVisible("getRunTimeline", context.principal);
       return { runId: input.runId, events: await context.runtime.getRunTimeline(input.runId) };
     }),
   });
@@ -272,19 +291,19 @@ export function createInvoiceWorkflowRouter() {
 ### 4.4 Durable execution function (server-only)
 
 ```ts
-// plugins/workflows/invoice-processing-workflows/src/functions/reconciliation.ts
+// plugins/workflows/invoicing/src/functions/reconcile.ts
 import type { Inngest } from "inngest";
-import { createInvoiceInternalClient, type InvoiceProcedureContext } from "@rawr/invoice-processing";
+import { createInvoicingInternalClient, type InvoicingProcedureContext } from "@rawr/invoicing";
 
-export function createInvoiceReconciliationFunction(inngest: Inngest, packageContext: InvoiceProcedureContext) {
+export function createInvoicingReconciliationFunction(inngest: Inngest, packageContext: InvoicingProcedureContext) {
   return inngest.createFunction(
-    { id: "invoice.reconciliation", retries: 2 },
-    { event: "invoice.reconciliation.requested" },
+    { id: "invoicing.reconciliation", retries: 2 },
+    { event: "invoicing.reconciliation.requested" },
     async ({ event, step }) => {
-      const invoice = createInvoiceInternalClient(packageContext);
+      const invoicing = createInvoicingInternalClient(packageContext);
 
-      await step.run("invoice/reconcile", async () => {
-        await invoice.reconcile({
+      await step.run("invoicing/reconcile", async () => {
+        await invoicing.reconcile({
           runId: event.data.runId,
           invoiceId: event.data.invoiceId,
           requestedBy: event.data.requestedBy,
@@ -304,14 +323,14 @@ export function createInvoiceReconciliationFunction(inngest: Inngest, packageCon
 import { oc } from "@orpc/contract";
 import { implement } from "@orpc/server";
 import { Inngest } from "inngest";
-import { createInvoiceWorkflowRouter } from "./plugins/workflows/invoice-processing-workflows/src/router";
-import { createInvoiceReconciliationFunction } from "./plugins/workflows/invoice-processing-workflows/src/functions/reconciliation";
-import { invoiceWorkflowContract } from "@rawr/invoice-processing/workflows/contract";
+import { createInvoicingWorkflowRouter } from "./plugins/workflows/invoicing/src/router";
+import { createInvoicingReconciliationFunction } from "./plugins/workflows/invoicing/src/functions/reconcile";
+import { invoicingWorkflowContract } from "@rawr/invoicing/workflows/contract";
 
 const inngest = new Inngest({ id: "rawr-hq" });
-const workflowContract = oc.router({ invoicing: invoiceWorkflowContract });
+const workflowContract = oc.router({ invoicing: invoicingWorkflowContract });
 const os = implement<typeof workflowContract, any>(workflowContract);
-const workflowRouter = os.router({ invoicing: createInvoiceWorkflowRouter() });
+const workflowRouter = os.router({ invoicing: createInvoicingWorkflowRouter() });
 
 export const rawrHqManifest = {
   workflows: {
@@ -320,7 +339,7 @@ export const rawrHqManifest = {
   },
   inngest: {
     client: inngest,
-    functions: [createInvoiceReconciliationFunction(inngest, /* packageContext */ {} as any)],
+    functions: [createInvoicingReconciliationFunction(inngest, /* packageContext */ {} as any)],
   },
 } as const;
 ```
@@ -363,16 +382,16 @@ export function registerWorkflowAndInngestRoutes(app: any, runtime: any) {
 ### 4.6 Micro-frontend client + mount (browser-safe)
 
 ```ts
-// plugins/web/invoice-console/src/workflow-client.ts
+// plugins/web/invoicing-console/src/client.ts
 import { createORPCClient } from "@orpc/client";
 import type { ContractRouterClient } from "@orpc/contract";
 import { OpenAPILink } from "@orpc/openapi-client/fetch";
-import { invoiceWorkflowContract } from "@rawr/invoice-processing/workflows/contract";
+import { invoicingWorkflowContract } from "@rawr/invoicing/workflows/contract";
 
-type InvoiceWorkflowClient = ContractRouterClient<typeof invoiceWorkflowContract>;
+type InvoicingWorkflowClient = ContractRouterClient<typeof invoicingWorkflowContract>;
 
-export function createInvoiceWorkflowClient(baseUrl: string) {
-  return createORPCClient<InvoiceWorkflowClient>(
+export function createInvoicingWorkflowClient(baseUrl: string) {
+  return createORPCClient<InvoicingWorkflowClient>(
     new OpenAPILink({
       url: `${baseUrl.replace(/\/$/, "")}/api/workflows`,
       fetch: (request, init) => fetch(request, { ...init, credentials: "include" }),
@@ -382,27 +401,27 @@ export function createInvoiceWorkflowClient(baseUrl: string) {
 ```
 
 ```ts
-// plugins/web/invoice-console/src/web.ts
+// plugins/web/invoicing-console/src/web.ts
 import type { MountContext } from "@rawr/ui-sdk";
-import { createInvoiceWorkflowClient } from "./workflow-client";
-import { toRunBadge } from "@rawr/invoice-processing/browser";
+import { createInvoicingWorkflowClient } from "./client";
+import { toRunBadge } from "@rawr/invoicing/browser";
 
 export async function mount(el: HTMLElement, _ctx: MountContext) {
-  const client = createInvoiceWorkflowClient(window.location.origin);
+  const client = createInvoicingWorkflowClient(window.location.origin);
 
   const button = document.createElement("button");
   button.textContent = "Run reconciliation";
   const status = document.createElement("div");
 
   button.onclick = async () => {
-    const trigger = await client.triggerInvoiceReconciliation({
+    const trigger = await client.triggerReconciliation({
       invoiceId: "inv-001",
       requestedBy: "ui-user",
     });
 
     const runId = trigger.runId;
     const timer = window.setInterval(async () => {
-      const run = await client.getInvoiceRunStatus({ runId });
+      const run = await client.getRunStatus({ runId });
       status.textContent = `${run.status} (${toRunBadge(run)})`;
       if (run.isTerminal) window.clearInterval(timer);
     }, 1500);
@@ -420,15 +439,15 @@ export async function mount(el: HTMLElement, _ctx: MountContext) {
 ```
 
 Browser-safe vs server-only boundary in this implementation:
-1. Browser-safe: `packages/invoice-processing/src/domain/*`, `packages/invoice-processing/src/browser.ts`, `plugins/web/**`.
+1. Browser-safe: `packages/invoicing/src/domain/*`, `packages/invoicing/src/browser.ts`, `plugins/web/**`.
 2. Server-only: workflow router context/auth, Inngest functions, package `client.ts`, runtime adapter, ingress route.
 
 ---
 
 ## 5) Wiring Steps (host -> composition -> plugin/package -> runtime)
 
-1. Define canonical workflow payload/result semantics in `packages/invoice-processing/src/domain/*` (TypeBox-first).
-2. Define shared workflow trigger/status contract in `packages/invoice-processing/src/workflows/contract.ts`.
+1. Define canonical workflow payload/result semantics in `packages/invoicing/src/domain/*` (TypeBox-first, schema + static type in the same file).
+2. Define shared workflow trigger/status contract in `packages/invoicing/src/workflows/contract.ts`.
 3. Implement workflow router in workflow plugin, reusing shared package contract and enforcing visibility/auth.
 4. Implement durable function(s) in workflow plugin, using package internal client for server-only orchestration.
 5. Compose workflows + functions in `rawr.hq.ts`.
@@ -441,10 +460,10 @@ Browser-safe vs server-only boundary in this implementation:
 ## 6) Runtime Sequence Walkthrough
 
 ### Trigger path
-1. User action in micro-frontend calls `triggerInvoiceReconciliation`.
+1. User action in micro-frontend calls `triggerReconciliation`.
 2. Request hits `/api/workflows/invoicing/reconciliation/trigger`.
 3. Workflow router resolves principal from boundary auth context and enforces visibility.
-4. Router emits `invoice.reconciliation.requested` via `inngest.send` and returns `{ accepted: true, runId }`.
+4. Router emits `invoicing.reconciliation.requested` via `inngest.send` and returns `{ accepted: true, runId }`.
 
 ### Durable path
 1. Inngest receives event at `/api/inngest`.
@@ -452,7 +471,7 @@ Browser-safe vs server-only boundary in this implementation:
 3. Runtime adapter writes run state/timeline updates.
 
 ### Status/result path
-1. Micro-frontend polls `getInvoiceRunStatus` and optionally `getInvoiceRunTimeline` on `/api/workflows/...`.
+1. Micro-frontend polls `getRunStatus` and optionally `getRunTimeline` on `/api/workflows/...`.
 2. Workflow router reads runtime state and returns typed status/timeline.
 3. UI uses shared package projection helpers for consistent status rendering.
 

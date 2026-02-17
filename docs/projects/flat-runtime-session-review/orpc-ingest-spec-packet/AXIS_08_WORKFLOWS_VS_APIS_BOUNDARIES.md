@@ -26,8 +26,7 @@
 
 ## Canonical Workflow Plugin Shape
 ```text
-plugins/workflows/<domain>-workflows/src/
-  contract.ts
+plugins/workflows/<domain>/src/contract.ts
   operations/*
   router.ts
   functions/*
@@ -36,7 +35,7 @@ plugins/workflows/<domain>-workflows/src/
 ```
 
 ## Naming Defaults (Workflow Surface)
-1. Prefer concise, unambiguous workflow plugin directory names (for example `plugins/workflows/invoicing-workflows`).
+1. Prefer concise, unambiguous workflow plugin directory names (for example `plugins/workflows/invoicing`).
 2. Keep role-oriented filenames (`contract.ts`, `router.ts`, `operations/*`, `functions/*`) and avoid context-baked suffixes.
 3. If a workflow package owns `domain/*`, avoid redundant domain-prefix filenames inside that folder.
 

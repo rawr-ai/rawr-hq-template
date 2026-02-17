@@ -49,7 +49,7 @@ Tutorial docs are normative only where they reference locked axis policies. If a
 5. One runtime-owned Inngest bundle (`client + functions`) exists per process.
 6. Domain schema modules are TypeBox-first and co-export static types from the same file.
 7. Domain filenames within one `domain/` folder avoid redundant domain-prefix tokens.
-8. Package/plugin directory naming prefers concise, unambiguous domain names (for example `invoicing`, `invoicing-api`, `invoicing-workflows`).
+8. Package/plugin directory naming prefers concise, unambiguous domain names (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
 
 ## Packet Interaction Model
 ```text

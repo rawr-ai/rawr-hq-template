@@ -25,7 +25,7 @@
 - This is desired for clarity and operational control.
 
 ## Naming Rules (Canonical)
-1. Use short descriptive names by role, not implementation trivia; prefer concise domain/plugin directory names when clear (`invoicing`, `invoicing-api`, `invoicing-workflows`).
+1. Use short descriptive names by role, not implementation trivia; prefer concise domain/plugin directory names when clear (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
 2. Canonical defaults: `contract.ts`, `router.ts`, `client.ts`, `operations/*`, `index.ts`.
 3. Internal package layered defaults MAY include `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
 4. Within one `domain/` folder, filenames avoid redundant domain prefixes (`status.ts`, not `invoice-status.ts` for `invoicing/domain/`).
@@ -65,13 +65,11 @@ packages/<domain>/src/
   client.ts
   errors.ts
   index.ts
-plugins/api/<domain>-api/src/
-  contract.ts
+plugins/api/<domain>/src/contract.ts
   operations/*
   router.ts
   index.ts
-plugins/workflows/<domain>-workflows/src/
-  contract.ts
+plugins/workflows/<domain>/src/contract.ts
   operations/*
   router.ts
   functions/*
