@@ -75,3 +75,14 @@ Working defaults for this pass:
 - Prefer `context.ts` for shared context contracts in examples.
 - Use short but readable alias for `typeBoxStandardSchema` in examples (candidate: `std`).
 - Keep architecture unchanged; docs/tutorial quality and naming consistency only.
+
+## Post-Research Integration Decision (2026-02-17)
+After Agent X research completion:
+- Keep `E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md` as canonical context+middleware deep walkthrough.
+- Run follow-on agent Y for packet/spec integration:
+  - add E2E_04 navigation links,
+  - update AXIS_04 + AXIS_06 (+ AXIS_08 touch if needed) with source-backed context/middleware policy deltas,
+  - record open questions in DECISIONS.md.
+- Run follow-on agent Z for consistency pass:
+  - ensure naming/alias/context conventions remain aligned across all E2E docs and updated specs,
+  - fix any contradictions introduced by integration.

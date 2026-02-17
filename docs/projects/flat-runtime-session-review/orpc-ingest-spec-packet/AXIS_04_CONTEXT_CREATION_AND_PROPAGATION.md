@@ -11,8 +11,11 @@
 
 ## Canonical Policy
 1. Request context MUST be created at oRPC ingress and injected per request.
-2. Durable run context MUST be derived from event payload plus runtime adapter during Inngest execution.
-3. Correlation metadata SHOULD be propagated from trigger boundary to durable run payload/timeline.
+2. Durable run context MUST be derived from Inngest runtime handler context (`event`, `step`, `runId`, `attempt`, logger/runtime middleware fields) during execution.
+3. Context envelopes MUST remain explicitly split: boundary request context and runtime function context are separate contracts, not one universal context object.
+4. Correlation metadata SHOULD be propagated from trigger boundary to durable run payload/timeline.
+5. Host route split MUST be preserved because it enforces the context model: caller-facing APIs (`/api/orpc/*`, `/api/workflows/*`) create boundary context, while `/api/inngest` is runtime ingress.
+6. Request/correlation/principal/network metadata types are context-layer contracts and SHOULD live in `context.ts` (or equivalent context modules), not in `domain/*`.
 
 ## Why
 - Request lifecycle and durable run lifecycle are distinct execution models.
@@ -22,40 +25,58 @@
 - Two context envelopes exist instead of one universal context object.
 - This is required by the execution-model split.
 
+## Two-Envelope Contract
+| Envelope | Created by | Typical fields | Lifecycle |
+| --- | --- | --- | --- |
+| oRPC boundary context | Host boundary handler per HTTP request | principal, request IDs, network policy, injected package clients/deps | request-scoped |
+| Inngest runtime context | Inngest function runtime + middleware | event payload, `step`, `runId`, `attempt`, logger, middleware-injected runtime fields | run/attempt-scoped |
+
 ## Canonical Snippets
 
 ### Request context envelope (oRPC ingress)
 ```ts
-// apps/server/src/orpc.ts
-type RawrOrpcContext = {
-  repoRoot: string;
-  baseUrl: string;
-  runtime: CoordinationRuntimeAdapter;
-  inngestClient: Inngest;
+// plugins/api/invoicing/src/context.ts
+type ApiPrincipal = {
+  subject: string;
+  tenantId: string;
+  roles: string[];
 };
 
-app.all("/api/orpc/*", async (ctx) =>
-  (await openapiHandler.handle(ctx.request as Request, {
-    prefix: "/api/orpc",
-    context: options,
-  })).response,
-{ parse: "none" });
+type ApiRequestMetadata = {
+  requestId: string;
+  correlationId: string;
+  sourceIp?: string;
+  userAgent?: string;
+};
+
+type ApiNetworkMetadata = {
+  trustedCidrs: string[];
+  egressPolicyTag: string;
+};
+
+type InvoicingApiContext = {
+  principal: ApiPrincipal;
+  request: ApiRequestMetadata;
+  network: ApiNetworkMetadata;
+};
 ```
 
-### Durable context envelope (Inngest adapter)
+### Durable context envelope (Inngest runtime)
 ```ts
-// packages/coordination-inngest/src/adapter.ts
-const queuedRun: RunStatusV1 = {
-  runId: options.runId,
-  workflowId: options.workflow.workflowId,
-  workflowVersion: options.workflow.version,
-  status: "queued",
-  startedAt: new Date().toISOString(),
-  input: options.input ?? {},
-  traceLinks: defaultTraceLinks(options.baseUrl, options.runId, {
-    inngestBaseUrl: options.runtime.inngestBaseUrl,
-  }),
-};
+// plugins/workflows/invoicing/src/functions/reconciliation.ts
+return inngest.createFunction(
+  { id: "invoicing.reconciliation", retries: 2 },
+  { event: "invoicing.reconciliation.requested" },
+  async ({ event, step, runId, attempt, logger, runTrace }) => {
+    logger.info("reconciliation start", {
+      runId,
+      attempt,
+      correlationId: runTrace.correlationId,
+    });
+    await step.run("invoicing/reconcile", async () => ({ ok: true as const, runId: event.data.runId }));
+    return { ok: true as const };
+  },
+);
 ```
 
 ## Correlation Propagation Contract
@@ -68,9 +89,17 @@ const queuedRun: RunStatusV1 = {
 - Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:314`
 - Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts:91`
 - Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts:175`
+- E2E: [E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md](./examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md)
+- oRPC: [Context](https://orpc.dev/docs/context)
+- oRPC: [Procedure](https://orpc.dev/docs/procedure)
+- oRPC: [Middleware](https://orpc.dev/docs/middleware)
+- Inngest: [Serve](https://www.inngest.com/docs/reference/serve)
+- Inngest: [Create function](https://www.inngest.com/docs/reference/functions/create)
+- Inngest: [Middleware dependency injection](https://www.inngest.com/docs/features/middleware/dependency-injection)
 - Elysia: [Lifecycle](https://elysiajs.com/essential/life-cycle)
 
 ## Cross-Axis Links
 - Error and observability shape split: [AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md](./AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md)
 - Middleware placement by harness: [AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md](./AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md)
 - Host composition and context injection mounting: [AXIS_07_HOST_HOOKING_COMPOSITION.md](./AXIS_07_HOST_HOOKING_COMPOSITION.md)
+- Trigger/runtime route split policy: [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)

@@ -45,17 +45,22 @@ This is a policy/spec artifact. It is not a migration checklist.
 3. External SDK generation comes from one composed oRPC/OpenAPI boundary surface.
 4. One runtime-owned Inngest client bundle exists per process in host composition.
 5. Domain packages stay transport-neutral.
-6. TypeBox-first schema flow is preserved for oRPC contract I/O and OpenAPI conversion.
-7. Domain schema modules are TypeBox-first and export static types from the same file.
-8. Domain filenames inside one `domain/` folder omit redundant domain-prefix tokens.
-9. Naming defaults prefer concise, unambiguous domain identifiers for package/plugin directories and namespaces (for example `invoicing`).
-10. Shared context contract defaults live in `context.ts` (or equivalent dedicated context module), and routers consume that contract rather than re-declaring it inline.
-11. Snippet alias default is `typeBoxStandardSchema as std`; terse aliases like `_`/`_$` are feasible but non-canonical due to readability.
-12. No second first-party trigger authoring path for the same workflow behavior.
-13. No local HTTP self-calls (`/rpc`, `/api/orpc`) as in-process default.
-14. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
-15. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
-16. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
+6. TypeBox-first schema flow is preserved for procedure-local/boundary-contract I/O and OpenAPI conversion.
+7. Domain modules (`domain/*`) hold transport-independent domain concepts only (entities/value objects/invariants/state shapes).
+8. Procedure input/output schemas live with the owning procedure (internal package surface) or boundary contract (`contract.ts` on API/workflow surfaces), not in domain modules.
+9. Domain filenames inside one `domain/` folder omit redundant domain-prefix tokens.
+10. Naming defaults prefer concise, unambiguous domain identifiers for package/plugin directories and namespaces (for example `invoicing`).
+11. Shared context contract defaults live in `context.ts` (or equivalent dedicated context module), and routers consume that contract rather than re-declaring it inline.
+12. Request/correlation/principal/network metadata contracts are context-layer concerns and belong in `context.ts` (or equivalent context module), not `domain/*`.
+13. Snippet alias default is `typeBoxStandardSchema as std`; terse aliases like `_`/`_$` are feasible but non-canonical due to readability.
+14. No second first-party trigger authoring path for the same workflow behavior.
+15. No local HTTP self-calls (`/rpc`, `/api/orpc`) as in-process default.
+16. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
+17. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
+18. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
+19. Context envelopes remain split by runtime model: oRPC boundary request context and Inngest function runtime context are distinct and not forced into one universal context object.
+20. Middleware control planes remain split by runtime model: boundary enforcement in oRPC/Elysia, durable lifecycle control in Inngest middleware + `step.*`.
+21. oRPC middleware dedupe assumptions stay explicit: use context-cached markers for heavy checks, and treat built-in dedupe as constrained to leading-subset/same-order chains.
 
 ## 5) Axis Map (Coverage)
 | Axis | Policy surface | Canonical leaf spec |
@@ -160,12 +165,14 @@ state: os.state.router({
 1. Canonical role names: `contract.ts`, `router.ts`, `client.ts`, `operations/*`, `index.ts`.
 2. Internal package layered defaults may include `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
 3. Within one `domain/` folder, filenames avoid repeating the domain token (`status.ts`, not `invoice-status.ts` inside `invoicing/domain/`).
-4. Domain schema files are TypeBox-first and co-export static types from the same file.
-5. Package/plugin directory names prefer concise domain forms when clear (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
-6. Shared context contracts default to `context.ts` (or equivalent dedicated context module), and router modules consume that contract.
-7. In policy snippets, use `typeBoxStandardSchema as std` as the readability-first alias; `_`/`_$` may appear in local code but are not canonical in spec docs.
-8. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
-9. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
+4. `domain/*` contains transport-independent domain concepts only; do not store procedure I/O ownership there.
+5. Procedure input/output schemas belong next to procedures (internal package surfaces) or in boundary contracts (`contract.ts`) for API/workflow surfaces.
+6. Request/correlation/principal/network metadata contracts belong in `context.ts` (or equivalent context module), not `domain/*`.
+7. Package/plugin directory names prefer concise domain forms when clear (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
+8. Shared context contracts default to `context.ts` (or equivalent dedicated context module), and router modules consume that contract.
+9. In policy snippets, use `typeBoxStandardSchema as std` as the readability-first alias; `_`/`_$` may appear in local code but are not canonical in spec docs.
+10. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
+11. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
 
 ## 10) Source Anchors
 ### Local lineage
@@ -175,10 +182,12 @@ state: os.state.router({
 4. `SESSION_019c587a_AGENT_H_DX_SIMPLIFICATION_REVIEW.md`
 5. `SESSION_019c587a_INNGEST_ORPC_DEBATE_INTEGRATED_RECOMMENDATION.md`
 6. `SESSION_019c587a_ORPC_CONTRACT_ROUTER_INTEGRATED_RECOMMENDATION.md`
+7. `SESSION_019c587a_AGENT_X_CONTEXT_MIDDLEWARE_RESEARCH_FINDINGS.md`
+8. `orpc-ingest-spec-packet/examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md`
 
 ### Upstream references
-1. oRPC: [Contract-first define](https://orpc.dev/docs/contract-first/define-contract), [Implement](https://orpc.dev/docs/contract-first/implement-contract), [RPC handler](https://orpc.dev/docs/rpc-handler), [OpenAPI handler](https://orpc.dev/docs/openapi/openapi-handler), [Server-side clients](https://orpc.dev/docs/client/server-side)
-2. Inngest: [Serve](https://www.inngest.com/docs/reference/serve), [Create function](https://www.inngest.com/docs/reference/functions/create), [Step run](https://www.inngest.com/docs/reference/functions/step-run), [Durable endpoints](https://www.inngest.com/docs/learn/durable-endpoints)
+1. oRPC: [Contract-first define](https://orpc.dev/docs/contract-first/define-contract), [Implement](https://orpc.dev/docs/contract-first/implement-contract), [Procedure](https://orpc.dev/docs/procedure), [Context](https://orpc.dev/docs/context), [Middleware](https://orpc.dev/docs/middleware), [Dedupe middleware](https://orpc.dev/docs/best-practices/dedupe-middleware), [RPC handler](https://orpc.dev/docs/rpc-handler), [OpenAPI handler](https://orpc.dev/docs/openapi/openapi-handler), [Server-side clients](https://orpc.dev/docs/client/server-side)
+2. Inngest: [Serve](https://www.inngest.com/docs/reference/serve), [Create function](https://www.inngest.com/docs/reference/functions/create), [Step run](https://www.inngest.com/docs/reference/functions/step-run), [Middleware lifecycle](https://www.inngest.com/docs/reference/middleware/lifecycle), [Durable endpoints](https://www.inngest.com/docs/learn/durable-endpoints)
 3. Elysia: [Lifecycle](https://elysiajs.com/essential/life-cycle), [Mount](https://elysiajs.com/patterns/mount)
 4. TypeBox: [Repository/docs](https://github.com/sinclairzx81/typebox)
 
@@ -188,5 +197,6 @@ state: os.state.router({
   - `orpc-ingest-spec-packet/examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md`
   - `orpc-ingest-spec-packet/examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md`
   - `orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
+  - `orpc-ingest-spec-packet/examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md`
 - If you need “what moved where” from pre-breakout monolith, use `orpc-ingest-spec-packet/REDISTRIBUTION_TRACEABILITY.md`.
 - If you identify a new architecture-impacting ambiguity, record it in `orpc-ingest-spec-packet/DECISIONS.md` before continuing.

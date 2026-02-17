@@ -156,7 +156,7 @@ export function createQueuedRun(input: {
 import { canQueueReconciliation, type InvoiceStatus } from "../domain/status";
 import { createQueuedRun, type InvoiceRun } from "../domain/run";
 
-export type InvoiceServiceDeps = {
+export type InvoicingServiceDeps = {
   newRunId: () => string;
   saveRun: (run: InvoiceRun) => Promise<void>;
   getRun: (runId: string) => Promise<InvoiceRun | null>;
@@ -164,7 +164,7 @@ export type InvoiceServiceDeps = {
 };
 
 export async function startInvoice(
-  deps: InvoiceServiceDeps,
+  deps: InvoicingServiceDeps,
   input: { invoiceId: string; requestedBy: string },
 ) {
   const runId = deps.newRunId();
@@ -179,7 +179,7 @@ export async function startInvoice(
 }
 
 export async function queueReconciliation(
-  deps: InvoiceServiceDeps,
+  deps: InvoicingServiceDeps,
   input: { runId: string; requestedBy: string },
 ) {
   const run = await deps.getRun(input.runId);
@@ -193,7 +193,7 @@ export async function queueReconciliation(
 }
 
 export async function markReconciliationResult(
-  deps: InvoiceServiceDeps,
+  deps: InvoicingServiceDeps,
   input: { runId: string; ok: boolean },
 ) {
   const status: InvoiceStatus = input.ok ? "completed" : "failed";
@@ -204,10 +204,10 @@ export async function markReconciliationResult(
 
 ```ts
 // packages/invoicing/src/context.ts
-import type { InvoiceServiceDeps } from "./service/lifecycle";
+import type { InvoicingServiceDeps } from "./service/lifecycle";
 
-export type InvoiceProcedureContext = {
-  deps: InvoiceServiceDeps;
+export type InvoicingProcedureContext = {
+  deps: InvoicingServiceDeps;
 };
 ```
 
@@ -217,9 +217,9 @@ import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
 import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import { queueReconciliation } from "../service/lifecycle";
-import type { InvoiceProcedureContext } from "../context";
+import type { InvoicingProcedureContext } from "../context";
 
-const o = os.$context<InvoiceProcedureContext>();
+const o = os.$context<InvoicingProcedureContext>();
 
 export const queueReconciliationProcedure = o
   .input(
@@ -252,13 +252,13 @@ export const queueReconciliationProcedure = o
 
 ```ts
 // packages/invoicing/src/router.ts
-import type { InvoiceProcedureContext } from "./context";
+import type { InvoicingProcedureContext } from "./context";
 import { startProcedure } from "./procedures/start";
 import { getStatusProcedure } from "./procedures/get-status";
 import { queueReconciliationProcedure } from "./procedures/queue-reconciliation";
 import { markReconciliationResultProcedure } from "./procedures/mark-reconciliation-result";
 
-export const invoiceInternalRouter = {
+export const invoicingInternalRouter = {
   start: startProcedure,
   getStatus: getStatusProcedure,
   queueReconciliation: queueReconciliationProcedure,
@@ -269,11 +269,11 @@ export const invoiceInternalRouter = {
 ```ts
 // packages/invoicing/src/client.ts
 import { createRouterClient } from "@orpc/server";
-import { invoiceInternalRouter } from "./router";
-import type { InvoiceProcedureContext } from "./context";
+import { invoicingInternalRouter } from "./router";
+import type { InvoicingProcedureContext } from "./context";
 
-export function createInvoiceInternalClient(context: InvoiceProcedureContext) {
-  return createRouterClient(invoiceInternalRouter, { context });
+export function createInvoicingInternalClient(context: InvoicingProcedureContext) {
+  return createRouterClient(invoicingInternalRouter, { context });
 }
 ```
 
@@ -294,7 +294,7 @@ import { oc } from "@orpc/contract";
 import { Type } from "typebox";
 import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 
-export const invoiceApiContract = oc.router({
+export const invoicingApiContract = oc.router({
   startInvoiceProcessing: oc
     .route({ method: "POST", path: "/invoicing/start" })
     .input(
@@ -323,37 +323,37 @@ export const invoiceApiContract = oc.router({
 
 ```ts
 // plugins/api/invoicing/src/operations/start.ts
-import type { InvoiceApiContext } from "../context";
+import type { InvoicingApiContext } from "../context";
 
 export async function startInvoiceOperation(
-  context: InvoiceApiContext,
+  context: InvoicingApiContext,
   input: { invoiceId: string; requestedBy: string },
 ) {
-  return context.invoice.start(input);
+  return context.invoicing.start(input);
 }
 ```
 
 ```ts
 // plugins/api/invoicing/src/context.ts
-import type { InvoiceProcedureContext } from "@rawr/invoicing";
-import { createInvoiceInternalClient } from "@rawr/invoicing";
+import type { InvoicingProcedureContext } from "@rawr/invoicing";
+import { createInvoicingInternalClient } from "@rawr/invoicing";
 
-export type InvoiceApiContext = InvoiceProcedureContext & {
-  invoice: ReturnType<typeof createInvoiceInternalClient>;
+export type InvoicingApiContext = InvoicingProcedureContext & {
+  invoicing: ReturnType<typeof createInvoicingInternalClient>;
 };
 ```
 
 ```ts
 // plugins/api/invoicing/src/router.ts
 import { implement } from "@orpc/server";
-import { invoiceApiContract } from "./contract";
+import { invoicingApiContract } from "./contract";
 import { startInvoiceOperation } from "./operations/start";
 import { getStatusOperation } from "./operations/get-status";
-import type { InvoiceApiContext } from "./context";
+import type { InvoicingApiContext } from "./context";
 
-const os = implement<typeof invoiceApiContract, InvoiceApiContext>(invoiceApiContract);
+const os = implement<typeof invoicingApiContract, InvoicingApiContext>(invoicingApiContract);
 
-export function createInvoiceApiRouter() {
+export function createInvoicingApiRouter() {
   return os.router({
     startInvoiceProcessing: os.startInvoiceProcessing.handler(({ context, input }) =>
       startInvoiceOperation(context, input),
@@ -383,7 +383,7 @@ import { oc } from "@orpc/contract";
 import { Type } from "typebox";
 import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 
-export const invoiceWorkflowTriggerContract = oc.router({
+export const invoicingWorkflowTriggerContract = oc.router({
   triggerReconciliation: oc
     .route({ method: "POST", path: "/invoicing/reconciliation/trigger" })
     .input(
@@ -408,16 +408,16 @@ export const invoiceWorkflowTriggerContract = oc.router({
 ```ts
 // plugins/workflows/invoicing/src/operations/trigger-reconciliation.ts
 import { ORPCError } from "@orpc/server";
-import type { InvoiceWorkflowTriggerContext } from "../context";
+import type { InvoicingWorkflowTriggerContext } from "../context";
 
 export const INVOICING_RECONCILIATION_EVENT = "invoicing.reconciliation.requested";
 
 export async function triggerReconciliationOperation(
-  context: InvoiceWorkflowTriggerContext,
+  context: InvoicingWorkflowTriggerContext,
   input: { runId: string; requestedBy: string },
 ) {
   // Internal package preflight before enqueue keeps domain ownership in package logic.
-  const preflight = await context.invoice.queueReconciliation(input);
+  const preflight = await context.invoicing.queueReconciliation(input);
   if (!preflight.accepted) {
     throw new ORPCError("FAILED_PRECONDITION", {
       status: 409,
@@ -441,26 +441,26 @@ export async function triggerReconciliationOperation(
 ```ts
 // plugins/workflows/invoicing/src/context.ts
 import type { Inngest } from "inngest";
-import { createInvoiceInternalClient, type InvoiceProcedureContext } from "@rawr/invoicing";
+import { createInvoicingInternalClient, type InvoicingProcedureContext } from "@rawr/invoicing";
 
-export type InvoiceWorkflowTriggerContext = InvoiceProcedureContext & {
+export type InvoicingWorkflowTriggerContext = InvoicingProcedureContext & {
   inngest: Inngest;
-  invoice: ReturnType<typeof createInvoiceInternalClient>;
+  invoicing: ReturnType<typeof createInvoicingInternalClient>;
 };
 ```
 
 ```ts
 // plugins/workflows/invoicing/src/router.ts
 import { implement } from "@orpc/server";
-import { invoiceWorkflowTriggerContract } from "./contract";
+import { invoicingWorkflowTriggerContract } from "./contract";
 import { triggerReconciliationOperation } from "./operations/trigger-reconciliation";
-import type { InvoiceWorkflowTriggerContext } from "./context";
+import type { InvoicingWorkflowTriggerContext } from "./context";
 
-const os = implement<typeof invoiceWorkflowTriggerContract, InvoiceWorkflowTriggerContext>(
-  invoiceWorkflowTriggerContract,
+const os = implement<typeof invoicingWorkflowTriggerContract, InvoicingWorkflowTriggerContext>(
+  invoicingWorkflowTriggerContract,
 );
 
-export function createInvoiceWorkflowTriggerRouter() {
+export function createInvoicingWorkflowTriggerRouter() {
   return os.router({
     triggerReconciliation: os.triggerReconciliation.handler(({ context, input }) =>
       triggerReconciliationOperation(context, input),
@@ -472,19 +472,19 @@ export function createInvoiceWorkflowTriggerRouter() {
 ```ts
 // plugins/workflows/invoicing/src/functions/reconciliation.ts
 import type { Inngest } from "inngest";
-import { createInvoiceInternalClient, type InvoiceServiceDeps } from "@rawr/invoicing";
+import { createInvoicingInternalClient, type InvoicingServiceDeps } from "@rawr/invoicing";
 import { INVOICING_RECONCILIATION_EVENT } from "../operations/trigger-reconciliation";
 
-export function createReconciliationFunction(inngest: Inngest, deps: InvoiceServiceDeps) {
+export function createReconciliationFunction(inngest: Inngest, deps: InvoicingServiceDeps) {
   return inngest.createFunction(
     { id: "invoicing.reconciliation", retries: 2 },
     { event: INVOICING_RECONCILIATION_EVENT },
     async ({ event, step }) => {
-      const invoice = createInvoiceInternalClient({ deps });
+      const invoicing = createInvoicingInternalClient({ deps });
 
       await step.run("invoicing/reconcile", async () => {
         // Reconciliation side effects go here.
-        await invoice.markReconciliationResult({ runId: event.data.runId, ok: true });
+        await invoicing.markReconciliationResult({ runId: event.data.runId, ok: true });
       });
 
       return { ok: true as const, runId: event.data.runId };
@@ -504,30 +504,30 @@ plugins/workflows/invoicing/src/index.ts
 // rawr.hq.ts
 import { oc } from "@orpc/contract";
 import { Inngest } from "inngest";
-import { invoiceApiSurface } from "./plugins/api/invoicing/src";
-import { createInvoiceWorkflowSurface } from "./plugins/workflows/invoicing/src";
+import { invoicingApiSurface } from "./plugins/api/invoicing/src";
+import { createInvoicingWorkflowSurface } from "./plugins/workflows/invoicing/src";
 
 const inngest = new Inngest({ id: "rawr-hq" });
-const invoiceWorkflows = createInvoiceWorkflowSurface(inngest);
+const invoicingWorkflows = createInvoicingWorkflowSurface(inngest);
 
 export const rawrHqManifest = {
   orpc: {
     contract: oc.router({
       invoicing: {
-        api: invoiceApiSurface.contract,
-        workflows: invoiceWorkflows.triggerContract,
+        api: invoicingApiSurface.contract,
+        workflows: invoicingWorkflows.triggerContract,
       },
     }),
     router: {
       invoicing: {
-        api: invoiceApiSurface.router,
-        workflows: invoiceWorkflows.triggerRouter,
+        api: invoicingApiSurface.router,
+        workflows: invoicingWorkflows.triggerRouter,
       },
     },
   },
   inngest: {
     client: inngest,
-    functions: [...invoiceWorkflows.functions],
+    functions: [...invoicingWorkflows.functions],
   },
 } as const;
 ```
@@ -596,9 +596,9 @@ export function registerOrpcRoutes(
 
 ## 5) Wiring Steps (Host -> Composition -> Plugin/Package -> Runtime)
 1. Build internal capability package (`packages/invoicing`) with concise domain files (`domain/run.ts`, `domain/status.ts`), shared context contract in `context.ts`, domain/service/procedures, one exported internal router, and one exported internal client.
-2. Build API plugin (`plugins/api/invoicing`) with TypeBox-first contract, shared context contract in `context.ts`, and explicit operations that call `context.invoice.*`.
+2. Build API plugin (`plugins/api/invoicing`) with TypeBox-first contract, shared context contract in `context.ts`, and explicit operations that call `context.invoicing.*`.
 3. Build workflow plugin (`plugins/workflows/invoicing`) with trigger contract/router/operations, shared context contract in `context.ts`, and Inngest functions.
-4. In workflow operation, call `context.invoice.queueReconciliation(...)` before `context.inngest.send(...)`.
+4. In workflow operation, call `context.invoicing.queueReconciliation(...)` before `context.inngest.send(...)`.
 5. Compose both plugin surfaces in `rawr.hq.ts` under one capability namespace (`invoicing.api`, `invoicing.workflows`) and merge workflow functions into the single Inngest bundle.
 6. In server host registration, mount:
    - `/api/orpc/*` for API boundary procedures.
@@ -613,14 +613,14 @@ export function registerOrpcRoutes(
 ### Flow A: API surface call (synchronous)
 1. Caller sends `POST /api/orpc/invoicing/start`.
 2. API plugin router resolves `startInvoiceProcessing`.
-3. API operation calls `context.invoice.start(...)` (internal package client).
+3. API operation calls `context.invoicing.start(...)` (internal package client).
 4. Package service writes run as `queued`.
 5. Caller gets immediate `{ runId, accepted: true }`.
 
 ### Flow B: Workflow trigger call (caller-triggered + durable)
 1. Caller sends `POST /api/workflows/invoicing/reconciliation/trigger`.
 2. Workflow trigger router resolves `triggerReconciliation`.
-3. Trigger operation calls `context.invoice.queueReconciliation(...)` for domain preflight/state transition.
+3. Trigger operation calls `context.invoicing.queueReconciliation(...)` for domain preflight/state transition.
 4. Trigger operation emits `invoicing.reconciliation.requested` via `context.inngest.send(...)`.
 5. Caller receives immediate accepted response.
 
@@ -642,7 +642,7 @@ export function registerOrpcRoutes(
 | Failure mode | Symptom | Guardrail |
 | --- | --- | --- |
 | Workflow trigger and runtime ingress collapse into one path | External callers hit `/api/inngest` directly | Keep `/api/workflows/*` and `/api/inngest` mounts separate with separate handlers |
-| Trigger operation bypasses internal package client | Duplicate business rules in plugin operations | Require trigger operation preflight via `context.invoice.*` |
+| Trigger operation bypasses internal package client | Duplicate business rules in plugin operations | Require trigger operation preflight via `context.invoicing.*` |
 | Plugin-to-plugin runtime coupling | API plugin imports workflow plugin (or reverse) | Import package surfaces only (`@rawr/invoicing`) in both plugins |
 | TypeBox drift to ad hoc schema styles | OpenAPI mismatch or validator mismatch | Keep `std(Type.*)` (alias for `typeBoxStandardSchema`) for all contracts/procedures |
 | Hidden glue in composition | Hard-to-debug route ownership | Keep `rawr.hq.ts` explicit with per-capability `api` and `workflows` nodes |
@@ -655,6 +655,7 @@ export function registerOrpcRoutes(
 - [x] Each 4.x subsection includes a mini file-tree snippet for local orientation.
 - [x] Domain models are TypeBox-first and export static types from the same files.
 - [x] Domain filenames are concise (`domain/run.ts`, `domain/status.ts`) with no repeated domain prefix.
+- [x] Procedure and boundary I/O schemas are authored with procedures/contracts, not owned by domain modules.
 - [x] Internal package shape includes `domain/ service/ procedures/ router.ts client.ts errors.ts index.ts`.
 - [x] API plugin shape uses `contract.ts + operations/* + router.ts + index.ts`.
 - [x] Workflow plugin keeps trigger authoring split from durable function authoring.

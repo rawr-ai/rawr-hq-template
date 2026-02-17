@@ -38,20 +38,26 @@ These are implementation-oriented walkthroughs that apply the axis policies in c
 1. [E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md](./examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md)
 2. [E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md](./examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md)
 3. [E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md](./examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md)
+4. [E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md](./examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md)
 
 Tutorial docs are normative only where they reference locked axis policies. If a walkthrough surfaces ambiguity, the ambiguity must be tracked in [DECISIONS.md](./DECISIONS.md) before further drift occurs.
 
 ## Cross-Cutting Defaults
 1. External SDK generation uses one composed oRPC/OpenAPI boundary surface.
 2. Internal in-process cross-boundary calls default to package internal clients (`client.ts`), not local HTTP.
-3. Caller-triggered workflow routes are oRPC workflow trigger routes; runtime durable ingress is `/api/inngest`.
+3. Caller-triggered workflow routes are oRPC workflow trigger routes on `/api/workflows/*`; runtime durable ingress is `/api/inngest`.
 4. TypeBox-first schema flow remains the baseline for contract I/O and OpenAPI conversion.
 5. One runtime-owned Inngest bundle (`client + functions`) exists per process.
-6. Domain schema modules are TypeBox-first and co-export static types from the same file.
-7. Domain filenames within one `domain/` folder avoid redundant domain-prefix tokens.
-8. Package/plugin directory naming prefers concise, unambiguous domain names (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
-9. Shared context contracts default to explicit `context.ts` modules (or equivalent dedicated context modules), consumed by routers instead of being re-declared inline in router snippets.
-10. Spec snippet alias default for schema wrapping is `typeBoxStandardSchema as std`; `_`/`_$` are feasible but non-canonical due to readability.
+6. Domain modules (`domain/*`) hold transport-independent domain concepts only (entities/value objects/invariants/state shapes).
+7. Procedure input/output schemas are co-located with procedures (internal package surfaces) or boundary contracts (`contract.ts`) for API/workflow surfaces.
+8. Domain filenames within one `domain/` folder avoid redundant domain-prefix tokens.
+9. Package/plugin directory naming prefers concise, unambiguous domain names (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
+10. Shared context contracts default to explicit `context.ts` modules (or equivalent dedicated context modules), consumed by routers instead of being re-declared inline in router snippets.
+11. Request/correlation/principal/network metadata contracts are context-layer concerns and belong in `context.ts` (or equivalent context module), not `domain/*`.
+12. Spec snippet alias default for schema wrapping is `typeBoxStandardSchema as std`; `_`/`_$` are feasible but non-canonical due to readability.
+13. Context modeling keeps two envelopes by design: oRPC boundary request context and Inngest runtime function context; packet policy rejects a forced universal context object.
+14. Middleware policy keeps two control planes by design: boundary controls in oRPC/Elysia and durable lifecycle controls in Inngest middleware + `step.*`.
+15. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe is constrained to leading-subset/same-order middleware chains.
 
 ## Packet Interaction Model
 ```text
@@ -81,6 +87,7 @@ Caller
 3. This packet must remain consistent with `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`.
 4. Packet examples SHOULD follow the domain naming defaults used in walkthroughs (`invoicing`-style concise capability tokens when clear).
 5. Packet snippets SHOULD keep context placement explicit (`context.ts`) and avoid convenience overloading of context contracts inside router snippets.
+6. Packet snippets MUST keep procedure input/output schemas with procedures or boundary contracts, and MUST NOT model procedure I/O ownership in `domain/*`.
 
 ## Navigation Map (If You Need X, Read Y)
 - External client generation and OpenAPI surface ownership -> [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)
@@ -89,6 +96,7 @@ Caller
 - Request vs durable context envelopes and correlation propagation -> [AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md](./AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md)
 - Error and observability contract by surface -> [AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md](./AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md)
 - Middleware placement by harness -> [AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md](./AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md)
+- Real-world context and middleware interplay (including dedupe caveats) -> [E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md](./examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md)
 - Host composition spine, fixtures, and mount order -> [AXIS_07_HOST_HOOKING_COMPOSITION.md](./AXIS_07_HOST_HOOKING_COMPOSITION.md)
 - Workflow trigger authoring vs durable execution authoring -> [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
 - Durable endpoint additive-only constraints -> [AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md](./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md)

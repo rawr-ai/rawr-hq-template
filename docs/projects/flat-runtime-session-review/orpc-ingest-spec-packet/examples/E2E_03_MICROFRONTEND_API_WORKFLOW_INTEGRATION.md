@@ -46,8 +46,8 @@ Boundary meaning:
 ```text
 packages/invoicing/src/
   domain/                                # shared semantic source (browser-safe + server-safe)
-    reconciliation.ts                    # TypeBox trigger schemas + static types
-    status.ts                            # TypeBox run schemas + static types
+    reconciliation.ts                    # domain reconciliation state + invariants
+    status.ts                            # domain run status/timeline schemas + static types
     view.ts                              # browser-safe status projection
   service/                               # server-only orchestration/business operations
     reconciliation.ts
@@ -55,6 +55,7 @@ packages/invoicing/src/
   procedures/                            # internal server procedure boundary
     reconcile.ts
     status.ts
+  context.ts                             # shared package context contract for internal client/procedures
   router.ts                              # internal router (server-only)
   client.ts                              # in-process internal client (server-only)
   errors.ts                              # typed capability errors
@@ -101,6 +102,7 @@ packages/invoicing/src/
     reconciliation.ts
     status.ts
     view.ts
+  context.ts
   browser.ts
 ```
 
@@ -108,41 +110,28 @@ packages/invoicing/src/
 // packages/invoicing/src/domain/reconciliation.ts
 import { Type, type Static } from "typebox";
 
-export const TriggerReconciliationInputSchema = Type.Object(
-  {
-    invoiceId: Type.String({ minLength: 1 }),
-    requestedBy: Type.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
-export type TriggerReconciliationInput = Static<typeof TriggerReconciliationInputSchema>;
+export const ReconciliationStateSchema = Type.Union([
+  Type.Literal("queued"),
+  Type.Literal("running"),
+  Type.Literal("completed"),
+  Type.Literal("failed"),
+]);
+export type ReconciliationState = Static<typeof ReconciliationStateSchema>;
 
-export const TriggerReconciliationOutputSchema = Type.Object(
-  {
-    accepted: Type.Literal(true),
-    runId: Type.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
-export type TriggerReconciliationOutput = Static<typeof TriggerReconciliationOutputSchema>;
+export function isTerminalReconciliationState(state: ReconciliationState): boolean {
+  return state === "completed" || state === "failed";
+}
 ```
 
 ```ts
 // packages/invoicing/src/domain/status.ts
 import { Type, type Static } from "typebox";
-
-export const RunIdParamsSchema = Type.Object({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false });
-export type RunIdParams = Static<typeof RunIdParamsSchema>;
+import { ReconciliationStateSchema } from "./reconciliation";
 
 export const RunStatusSchema = Type.Object(
   {
     runId: Type.String({ minLength: 1 }),
-    status: Type.Union([
-      Type.Literal("queued"),
-      Type.Literal("running"),
-      Type.Literal("completed"),
-      Type.Literal("failed"),
-    ]),
+    status: ReconciliationStateSchema,
     isTerminal: Type.Boolean(),
   },
   { additionalProperties: false },
@@ -175,7 +164,21 @@ export * from "./domain/status";
 export * from "./domain/view";
 ```
 
+```ts
+// packages/invoicing/src/context.ts
+export type InvoicingProcedureContext = {
+  deps: {
+    queueReconciliation: (input: { invoiceId: string; requestedBy: string }) => Promise<{ accepted: true; runId: string }>;
+    getRunStatus: (runId: string) => Promise<{ runId: string; status: string; isTerminal: boolean } | null>;
+    getRunTimeline: (runId: string) => Promise<unknown[]>;
+    reconcile: (input: { runId: string; invoiceId: string; requestedBy: string }) => Promise<void>;
+  };
+};
+```
+
 ### 4.2 Shared workflow contract artifact (single source, reusable)
+
+I/O ownership note: trigger/status route schemas are authored at the workflow contract boundary, while `domain/*` keeps domain concepts and invariants.
 
 ```text
 packages/invoicing/src/
@@ -190,13 +193,25 @@ packages/invoicing/src/
 // packages/invoicing/src/workflows/contract.ts
 import { oc } from "@orpc/contract";
 import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
-import {
-  TriggerReconciliationInputSchema,
-  TriggerReconciliationOutputSchema,
-} from "../domain/reconciliation";
-import { RunIdParamsSchema, RunStatusSchema, RunTimelineSchema } from "../domain/status";
+import { Type } from "typebox";
+import { RunStatusSchema, RunTimelineSchema } from "../domain/status";
 
 const tag = ["invoicing"] as const;
+const TriggerReconciliationInputSchema = Type.Object(
+  {
+    invoiceId: Type.String({ minLength: 1 }),
+    requestedBy: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+const TriggerReconciliationOutputSchema = Type.Object(
+  {
+    accepted: Type.Literal(true),
+    runId: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+const RunPathParamsSchema = Type.Object({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false });
 
 export const invoicingWorkflowContract = oc.router({
   triggerReconciliation: oc
@@ -216,7 +231,7 @@ export const invoicingWorkflowContract = oc.router({
       tags: tag,
       operationId: "invoicingGetRunStatus",
     })
-    .input(std(RunIdParamsSchema))
+    .input(std(RunPathParamsSchema))
     .output(std(RunStatusSchema)),
 
   getRunTimeline: oc
@@ -226,7 +241,7 @@ export const invoicingWorkflowContract = oc.router({
       tags: tag,
       operationId: "invoicingGetRunTimeline",
     })
-    .input(std(RunIdParamsSchema))
+    .input(std(RunPathParamsSchema))
     .output(std(RunTimelineSchema)),
 });
 ```
@@ -541,7 +556,7 @@ export async function mount(el: HTMLElement, _ctx: MountContext) {
 
 Browser-safe vs server-only boundary in this implementation:
 1. Browser-safe: `packages/invoicing/src/domain/*`, `packages/invoicing/src/browser.ts`, `plugins/web/**`.
-2. Server-only: host/workflow `context.ts` boundary contracts, workflow router auth checks, Inngest functions, package `client.ts`, runtime adapter, ingress route.
+2. Server-only: package/workflow/host `context.ts` boundary contracts, workflow router auth checks, Inngest functions, package `client.ts`, runtime adapter, ingress route.
 
 ---
 
@@ -549,7 +564,7 @@ Browser-safe vs server-only boundary in this implementation:
 
 1. Define canonical workflow payload/result semantics in `packages/invoicing/src/domain/*` (TypeBox-first, schema + static type in the same file).
 2. Define shared workflow trigger/status contract in `packages/invoicing/src/workflows/contract.ts`.
-3. Implement explicit workflow context contracts in `context.ts`, then implement the workflow router using those contracts plus visibility/auth enforcement.
+3. Implement explicit package/workflow/host context contracts in `context.ts`, then implement the workflow router using those contracts plus visibility/auth enforcement.
 4. Implement durable function(s) in workflow plugin, using package internal client for server-only orchestration.
 5. Compose workflows + functions in `rawr.hq.ts`.
 6. Mount caller-trigger/status surface at `/api/workflows/*` with boundary auth context created from host `context.ts`.
@@ -623,8 +638,12 @@ Browser-safe vs server-only boundary in this implementation:
 
 | Policy | Status | Notes |
 | --- | --- | --- |
-| TypeBox-first | Satisfied | Canonical input/output/status schemas are TypeBox artifacts. |
-| Split semantics (`/api/workflows` vs `/api/inngest`) | Satisfied | Trigger/status is caller-facing; ingress is runtime-only. |
+| TypeBox-first + static types in same file | Satisfied | Domain schema files co-locate `Type.*` artifacts with `Static<typeof Schema>` exports. |
+| `context.ts` contract placement | Satisfied | Package, workflow plugin, and host boundary context contracts are explicit `context.ts` modules. |
+| Procedure/boundary I/O ownership | Satisfied | Trigger/status route I/O schemas are defined in workflow contract snippets, not in `domain/*` files. |
+| `typeBoxStandardSchema as std` alias usage | Satisfied | Workflow contract snippet imports `typeBoxStandardSchema as std` and uses `std(...)` for route I/O. |
+| Concise naming + non-redundant domain filenames | Satisfied | Capability naming stays `invoicing`; domain files are concise (`reconciliation.ts`, `status.ts`, `view.ts`). |
+| Split semantics (`/api/workflows/*` vs `/api/inngest`) | Satisfied | Trigger/status is caller-facing; ingress is runtime-only. |
 | Internal server calls use package internal client | Satisfied | Durable function calls package `client.ts` path server-side. |
 | No plugin-to-plugin runtime imports | Satisfied | Shared artifacts move through `packages/*`; workflow plugin re-exports from package as needed. |
 | Boundary auth/visibility in boundary layer | Satisfied | Router context enforces principal and visibility before enqueue/read operations. |

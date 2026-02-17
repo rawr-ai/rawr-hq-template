@@ -13,7 +13,7 @@ Use-case: expose invoicing APIs to callers while keeping domain logic transport-
 
 | Concern | Canonical location / route |
 | --- | --- |
-| Hosting mount paths | `/rpc`, `/api/orpc`, `/api/inngest` |
+| Hosting mount paths | `/rpc`, `/api/orpc`, `/api/workflows`, `/api/inngest` |
 | Internal package location | `packages/invoicing/src/*` |
 | API plugin location | `plugins/api/invoicing/src/*` |
 | Composition route | `rawr.hq.ts` -> `apps/server/src/rawr.ts` -> `apps/server/src/orpc.ts` -> `plugins/api/invoicing/src/router.ts` -> `packages/invoicing/src/client.ts` |
@@ -186,14 +186,14 @@ export type Run = Static<typeof RunSchema>;
 // packages/invoicing/src/service/lifecycle.ts
 import type { Run } from "../domain/run";
 
-export type InvoiceServiceDeps = {
+export type InvoicingServiceDeps = {
   newRunId: () => string;
   saveRun: (run: Run) => Promise<void>;
   getRun: (runId: string) => Promise<Run | null>;
 };
 
 export async function startInvoice(
-  deps: InvoiceServiceDeps,
+  deps: InvoicingServiceDeps,
   input: { invoiceId: string; requestedBy: string },
 ) {
   const runId = deps.newRunId();
@@ -209,9 +209,9 @@ export async function startInvoice(
 
 ```ts
 // packages/invoicing/src/service/status.ts
-import type { InvoiceServiceDeps } from "./lifecycle";
+import type { InvoicingServiceDeps } from "./lifecycle";
 
-export async function getInvoiceStatus(deps: InvoiceServiceDeps, input: { runId: string }) {
+export async function getInvoiceStatus(deps: InvoicingServiceDeps, input: { runId: string }) {
   const run = await deps.getRun(input.runId);
   return run ? { runId: run.runId, status: run.status } : { runId: input.runId, status: "failed" as const };
 }
@@ -219,9 +219,9 @@ export async function getInvoiceStatus(deps: InvoiceServiceDeps, input: { runId:
 
 ```ts
 // packages/invoicing/src/context.ts
-import type { InvoiceServiceDeps } from "./service/lifecycle";
+import type { InvoicingServiceDeps } from "./service/lifecycle";
 
-export type InvoiceProcedureContext = { deps: InvoiceServiceDeps };
+export type InvoicingProcedureContext = { deps: InvoicingServiceDeps };
 ```
 
 ```ts
@@ -230,9 +230,9 @@ import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
 import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import { startInvoice } from "../service/lifecycle";
-import type { InvoiceProcedureContext } from "../context";
+import type { InvoicingProcedureContext } from "../context";
 
-const o = os.$context<InvoiceProcedureContext>();
+const o = os.$context<InvoicingProcedureContext>();
 
 export const startProcedure = o
   .input(std(Type.Object({
@@ -259,9 +259,9 @@ import { Type } from "typebox";
 import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import { StatusSchema } from "../domain/status";
 import { getInvoiceStatus } from "../service/status";
-import type { InvoiceProcedureContext } from "../context";
+import type { InvoicingProcedureContext } from "../context";
 
-const o = os.$context<InvoiceProcedureContext>();
+const o = os.$context<InvoicingProcedureContext>();
 
 export const getStatusProcedure = o
   .input(std(Type.Object({ runId: Type.String() })))
@@ -277,7 +277,7 @@ export const getStatusProcedure = o
 import { startProcedure } from "./procedures/start";
 import { getStatusProcedure } from "./procedures/get-status";
 
-export const invoiceInternalRouter = {
+export const invoicingInternalRouter = {
   start: startProcedure,
   getStatus: getStatusProcedure,
 } as const;
@@ -286,11 +286,11 @@ export const invoiceInternalRouter = {
 ```ts
 // packages/invoicing/src/client.ts
 import { createRouterClient } from "@orpc/server";
-import { invoiceInternalRouter } from "./router";
-import type { InvoiceProcedureContext } from "./context";
+import { invoicingInternalRouter } from "./router";
+import type { InvoicingProcedureContext } from "./context";
 
-export function createInvoiceInternalClient(context: InvoiceProcedureContext) {
-  return createRouterClient(invoiceInternalRouter, { context });
+export function createInvoicingInternalClient(context: InvoicingProcedureContext) {
+  return createRouterClient(invoicingInternalRouter, { context });
 }
 ```
 
@@ -311,7 +311,7 @@ import { oc } from "@orpc/contract";
 import { Type } from "typebox";
 import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 
-export const invoiceApiContract = oc.router({
+export const invoicingApiContract = oc.router({
   startInvoiceProcessing: oc
     .route({ method: "POST", path: "/invoices/processing/start" })
     .input(std(Type.Object({
@@ -343,23 +343,23 @@ export const invoiceApiContract = oc.router({
 
 ```ts
 // plugins/api/invoicing/src/context.ts
-import { createInvoiceInternalClient } from "@rawr/invoicing";
+import { createInvoicingInternalClient } from "@rawr/invoicing";
 
-export type InvoiceApiContext = {
-  invoice: ReturnType<typeof createInvoiceInternalClient>;
+export type InvoicingApiContext = {
+  invoicing: ReturnType<typeof createInvoicingInternalClient>;
 };
 ```
 
 ```ts
 // plugins/api/invoicing/src/operations/start.ts
-import type { InvoiceApiContext } from "../context";
+import type { InvoicingApiContext } from "../context";
 
 export async function startInvoiceOperation(
-  context: InvoiceApiContext,
+  context: InvoicingApiContext,
   input: { invoiceId: string; requestedByUserId: string; requestSource?: string },
 ) {
   // Divergence A: boundary input is adapted before package call.
-  return context.invoice.start({
+  return context.invoicing.start({
     invoiceId: input.invoiceId,
     requestedBy: input.requestedByUserId,
   });
@@ -368,14 +368,14 @@ export async function startInvoiceOperation(
 
 ```ts
 // plugins/api/invoicing/src/operations/get-status.ts
-import type { InvoiceApiContext } from "../context";
+import type { InvoicingApiContext } from "../context";
 
 function isTerminal(status: "queued" | "running" | "completed" | "failed" | "canceled"): boolean {
   return status === "completed" || status === "failed" || status === "canceled";
 }
 
-export async function getStatusOperation(context: InvoiceApiContext, input: { runId: string }) {
-  const internal = await context.invoice.getStatus({ runId: input.runId });
+export async function getStatusOperation(context: InvoicingApiContext, input: { runId: string }) {
+  const internal = await context.invoicing.getStatus({ runId: input.runId });
 
   // Divergence B: boundary output is an API-shaped projection.
   return {
@@ -389,14 +389,14 @@ export async function getStatusOperation(context: InvoiceApiContext, input: { ru
 ```ts
 // plugins/api/invoicing/src/router.ts
 import { implement } from "@orpc/server";
-import { invoiceApiContract } from "./contract";
-import type { InvoiceApiContext } from "./context";
+import { invoicingApiContract } from "./contract";
+import type { InvoicingApiContext } from "./context";
 import { getStatusOperation } from "./operations/get-status";
 import { startInvoiceOperation } from "./operations/start";
 
-const os = implement<typeof invoiceApiContract, InvoiceApiContext>(invoiceApiContract);
+const os = implement<typeof invoicingApiContract, InvoicingApiContext>(invoicingApiContract);
 
-export function createInvoiceApiRouter() {
+export function createInvoicingApiRouter() {
   return os.router({
     startInvoiceProcessing: os.startInvoiceProcessing.handler(({ context, input }) =>
       startInvoiceOperation(context, input),
@@ -410,12 +410,12 @@ export function createInvoiceApiRouter() {
 
 ```ts
 // plugins/api/invoicing/src/index.ts
-import { invoiceApiContract } from "./contract";
-import { createInvoiceApiRouter } from "./router";
+import { invoicingApiContract } from "./contract";
+import { createInvoicingApiRouter } from "./router";
 
-export const invoiceApiSurface = {
-  contract: invoiceApiContract,
-  router: createInvoiceApiRouter(),
+export const invoicingApiSurface = {
+  contract: invoicingApiContract,
+  router: createInvoicingApiRouter(),
 } as const;
 ```
 
@@ -431,7 +431,7 @@ apps/server/src/orpc.ts
 // rawr.hq.ts
 import { oc } from "@orpc/contract";
 import { Inngest } from "inngest";
-import { invoiceApiSurface } from "./plugins/api/invoicing/src";
+import { invoicingApiSurface } from "./plugins/api/invoicing/src";
 
 const inngest = new Inngest({ id: "rawr-hq" });
 
@@ -439,12 +439,12 @@ export const rawrHqManifest = {
   orpc: {
     contract: oc.router({
       invoicing: {
-        api: invoiceApiSurface.contract,
+        api: invoicingApiSurface.contract,
       },
     }),
     router: {
       invoicing: {
-        api: invoiceApiSurface.router,
+        api: invoicingApiSurface.router,
       },
     },
   },
@@ -541,7 +541,7 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 3. oRPC validates TypeBox-backed boundary input schema.
 4. `startInvoiceProcessing` handler calls `startInvoiceOperation(...)`.
 5. Operation maps boundary input to package input (`requestedByUserId -> requestedBy`).
-6. Package internal client calls `invoiceInternalRouter.start`.
+6. Package internal client calls `invoicingInternalRouter.start`.
 7. Package procedure validates internal schema and runs service logic.
 8. Service persists queued run and returns `{ runId, accepted: true }`.
 9. Response flows back through boundary handler to caller.
@@ -586,6 +586,7 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 - [x] Internal package shape follows `domain/ service/ procedures/ context.ts router.ts client.ts errors.ts index.ts`.
 - [x] Shared procedure/API context contracts are defined in explicit `context.ts` files, not convenience in-router type declarations.
 - [x] Domain file names inside `domain/` avoid redundant capability prefixes (`status.ts`, `run.ts`).
+- [x] Procedure and boundary I/O schemas are owned by procedures/contracts, while domain modules stay domain-concept-only.
 - [x] API plugin shape follows `contract.ts + context.ts + operations/* + router.ts + index.ts`.
 - [x] Capability naming stays concise (`packages/invoicing`, `plugins/api/invoicing`) while preserving boundary clarity.
 - [x] Glue is explicit: composition root, host route mounts, and handler forwarding are shown concretely.
