@@ -4,7 +4,7 @@
 Packet-local decision tracking for documentation-architecture changes only.
 
 ## Current Status
-Packet remains locked on split posture and TypeBox-first policy. Procedure I/O schema ownership and context metadata placement are now explicitly locked. New walkthrough work and post-research context/middleware findings also surfaced open and proposed items that require a future lock.
+Packet remains locked on split posture and TypeBox-first policy. Procedure I/O schema ownership, inline-I/O docs/examples posture, and context metadata placement are now explicitly locked. New walkthrough work and post-research context/middleware findings also surfaced open and proposed items that require a future lock.
 
 ## Decision Register
 
@@ -51,6 +51,22 @@ Packet remains locked on split posture and TypeBox-first policy. Procedure I/O s
   - `AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md`
   - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
   - `AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`
+
+### D-012 — Inline-I/O docs posture and extracted shape normalization
+- `status`: `locked`
+- `locked_decision`:
+  - Procedure/contract I/O schemas in packet docs/examples default to inline declarations at `.input(...)` and `.output(...)`.
+  - Extraction is exception-only, allowed for shared schemas or large readability cases.
+  - Extracted schema form uses one paired object with `.input` and `.output` properties (for example `<ProcedureName>Schema.input` / `.output`).
+- `source_anchors`:
+  - `https://orpc.dev/docs/procedure`
+  - `https://orpc.dev/docs/contract-first/define-contract`
+- `impacted_docs`:
+  - `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
+  - `ORPC_INGEST_SPEC_PACKET.md`
+  - `AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md`
+  - `AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md`
+  - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
 
 ### D-008 — Extended traces middleware initialization order standard
 - `status`: `open`

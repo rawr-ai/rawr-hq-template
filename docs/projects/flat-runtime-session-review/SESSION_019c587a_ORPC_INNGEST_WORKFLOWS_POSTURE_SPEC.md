@@ -53,14 +53,17 @@ This is a policy/spec artifact. It is not a migration checklist.
 11. Shared context contract defaults live in `context.ts` (or equivalent dedicated context module), and routers consume that contract rather than re-declaring it inline.
 12. Request/correlation/principal/network metadata contracts are context-layer concerns and belong in `context.ts` (or equivalent context module), not `domain/*`.
 13. Snippet alias default is `typeBoxStandardSchema as std`; terse aliases like `_`/`_$` are feasible but non-canonical due to readability.
-14. No second first-party trigger authoring path for the same workflow behavior.
-15. No local HTTP self-calls (`/rpc`, `/api/orpc`) as in-process default.
-16. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
-17. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
-18. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
-19. Context envelopes remain split by runtime model: oRPC boundary request context and Inngest function runtime context are distinct and not forced into one universal context object.
-20. Middleware control planes remain split by runtime model: boundary enforcement in oRPC/Elysia, durable lifecycle control in Inngest middleware + `step.*`.
-21. oRPC middleware dedupe assumptions stay explicit: use context-cached markers for heavy checks, and treat built-in dedupe as constrained to leading-subset/same-order chains.
+14. Spec docs/examples default to inline procedure/contract I/O schema declarations at `.input(...)` and `.output(...)` callsites.
+15. Schema extraction is exception-only, for shared schemas or large schemas where inline form materially harms readability.
+16. When extraction is used, canonical shape is a paired object with `.input` and `.output` properties (for example `TriggerInvoiceReconciliationSchema.input` and `.output`).
+17. No second first-party trigger authoring path for the same workflow behavior.
+18. No local HTTP self-calls (`/rpc`, `/api/orpc`) as in-process default.
+19. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
+20. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
+21. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
+22. Context envelopes remain split by runtime model: oRPC boundary request context and Inngest function runtime context are distinct and not forced into one universal context object.
+23. Middleware control planes remain split by runtime model: boundary enforcement in oRPC/Elysia, durable lifecycle control in Inngest middleware + `step.*`.
+24. oRPC middleware dedupe assumptions stay explicit: use context-cached markers for heavy checks, and treat built-in dedupe as constrained to leading-subset/same-order chains.
 
 ## 5) Axis Map (Coverage)
 | Axis | Policy surface | Canonical leaf spec |
@@ -171,8 +174,10 @@ state: os.state.router({
 7. Package/plugin directory names prefer concise domain forms when clear (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
 8. Shared context contracts default to `context.ts` (or equivalent dedicated context module), and router modules consume that contract.
 9. In policy snippets, use `typeBoxStandardSchema as std` as the readability-first alias; `_`/`_$` may appear in local code but are not canonical in spec docs.
-10. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
-11. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
+10. Docs/examples default to inline procedure/contract I/O schemas at `.input(...)` and `.output(...)`.
+11. Extraction is exception-only for shared or large readability cases, and extracted shape should be paired as `{ input, output }`.
+12. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
+13. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
 
 ## 10) Source Anchors
 ### Local lineage

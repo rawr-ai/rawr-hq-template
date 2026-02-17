@@ -88,7 +88,7 @@ plugins/workflows/invoicing/src/
 
 ### 5.1 Package layer: shared domain, context contract, and idempotent middleware
 
-I/O ownership note: domain modules keep domain concepts only; procedure and boundary route schemas are defined beside procedures/contracts.
+I/O ownership note: domain modules keep domain concepts only; procedure and boundary route schemas are defined beside procedures/contracts. Inline `.input/.output` is default for route/procedure I/O, and extracted I/O schemas are reserved for truly shared/large payloads using `{ input, output }` pairing.
 
 ```ts
 // packages/invoicing/src/domain/reconciliation.ts
@@ -228,27 +228,33 @@ import type { InvoicingProcedureContext } from "../context";
 import { hydrateDepsMiddleware, requireFinanceWriteMiddleware } from "../middleware";
 
 const base = os.$context<InvoicingProcedureContext>();
-const PreflightReconciliationInputSchema = Type.Object(
-  {
-    requestId: Type.String({ minLength: 1 }),
-    scope: ReconciliationScopeSchema,
-  },
-  { additionalProperties: false },
-);
-const PreflightReconciliationOutputSchema = Type.Object(
-  {
-    accepted: Type.Literal(true),
-    runId: Type.String({ minLength: 1 }),
-    correlationId: Type.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
 
 export const preflightReconciliationProcedure = base
   .use(requireFinanceWriteMiddleware)
   .use(hydrateDepsMiddleware)
-  .input(std(PreflightReconciliationInputSchema))
-  .output(std(PreflightReconciliationOutputSchema))
+  .input(
+    std(
+      Type.Object(
+        {
+          requestId: Type.String({ minLength: 1 }),
+          scope: ReconciliationScopeSchema,
+        },
+        { additionalProperties: false },
+      ),
+    ),
+  )
+  .output(
+    std(
+      Type.Object(
+        {
+          accepted: Type.Literal(true),
+          runId: Type.String({ minLength: 1 }),
+          correlationId: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
+      ),
+    ),
+  )
   .handler(async ({ context, input }) => {
     return context.deps.preflightReconciliation({
       tenantId: context.principal.tenantId,
@@ -301,18 +307,21 @@ import type { InvoicingProcedureContext } from "../context";
 import { hydrateDepsMiddleware, requireFinanceWriteMiddleware } from "../middleware";
 
 const base = os.$context<InvoicingProcedureContext>();
-const MarkReconciliationResultInputSchema = Type.Object(
-  {
-    runId: Type.String({ minLength: 1 }),
-    ok: Type.Boolean(),
-  },
-  { additionalProperties: false },
-);
 
 export const markReconciliationResultProcedure = base
   .use(requireFinanceWriteMiddleware)
   .use(hydrateDepsMiddleware)
-  .input(std(MarkReconciliationResultInputSchema))
+  .input(
+    std(
+      Type.Object(
+        {
+          runId: Type.String({ minLength: 1 }),
+          ok: Type.Boolean(),
+        },
+        { additionalProperties: false },
+      ),
+    ),
+  )
   .output(std(ReconciliationStatusSchema))
   .handler(async ({ context, input }) => {
     return context.deps.markResult({
@@ -395,21 +404,6 @@ import {
 } from "@rawr/invoicing/domain/reconciliation";
 
 const tag = ["invoicing-api"] as const;
-const StartReconciliationInputSchema = Type.Object(
-  {
-    requestId: Type.String({ minLength: 1 }),
-    scope: ReconciliationScopeSchema,
-  },
-  { additionalProperties: false },
-);
-const StartReconciliationOutputSchema = Type.Object(
-  {
-    accepted: Type.Literal(true),
-    runId: Type.String({ minLength: 1 }),
-    correlationId: Type.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
 
 export const invoicingApiContract = oc.router({
   startReconciliation: oc
@@ -419,8 +413,29 @@ export const invoicingApiContract = oc.router({
       tags: tag,
       operationId: "invoicingStartReconciliation",
     })
-    .input(std(StartReconciliationInputSchema))
-    .output(std(StartReconciliationOutputSchema)),
+    .input(
+      std(
+        Type.Object(
+          {
+            requestId: Type.String({ minLength: 1 }),
+            scope: ReconciliationScopeSchema,
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      std(
+        Type.Object(
+          {
+            accepted: Type.Literal(true),
+            runId: Type.String({ minLength: 1 }),
+            correlationId: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
 
   getReconciliationStatus: oc
     .route({
@@ -557,21 +572,6 @@ import {
 } from "@rawr/invoicing/domain/reconciliation";
 
 const tag = ["invoicing-workflows"] as const;
-const TriggerReconciliationInputSchema = Type.Object(
-  {
-    requestId: Type.String({ minLength: 1 }),
-    scope: ReconciliationScopeSchema,
-  },
-  { additionalProperties: false },
-);
-const TriggerReconciliationOutputSchema = Type.Object(
-  {
-    accepted: Type.Literal(true),
-    runId: Type.String({ minLength: 1 }),
-    correlationId: Type.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
 
 export const invoicingWorkflowContract = oc.router({
   triggerReconciliation: oc
@@ -581,8 +581,29 @@ export const invoicingWorkflowContract = oc.router({
       tags: tag,
       operationId: "invoicingTriggerReconciliation",
     })
-    .input(std(TriggerReconciliationInputSchema))
-    .output(std(TriggerReconciliationOutputSchema)),
+    .input(
+      std(
+        Type.Object(
+          {
+            requestId: Type.String({ minLength: 1 }),
+            scope: ReconciliationScopeSchema,
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      std(
+        Type.Object(
+          {
+            accepted: Type.Literal(true),
+            runId: Type.String({ minLength: 1 }),
+            correlationId: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
 
   getRunStatus: oc
     .route({

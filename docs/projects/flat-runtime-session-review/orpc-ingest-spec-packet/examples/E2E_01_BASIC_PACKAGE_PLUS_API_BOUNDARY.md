@@ -565,6 +565,7 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 4. TypeBox-first artifacts keep one schema strategy across validation and OpenAPI conversion, with domain files exporting both schema and `Static<typeof Schema>` types from one source of truth.
 5. Trade-off: there is intentional duplication between internal and boundary shapes.
 6. Payoff: boundary can diverge safely (policy, naming, response shape) without forcing package redesign.
+7. Snippet default keeps procedure/contract I/O schemas inline at `.input/.output`; if extraction is needed for shared or very large shapes, use paired schema objects (`const XSchema = { input, output }`) and wire with `.input(std(XSchema.input))` + `.output(std(XSchema.output))`.
 
 ## 8) What can go wrong + guardrails
 
@@ -578,11 +579,14 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 | `/api/inngest` treated as caller API | Runtime ingress semantics misunderstood | Document and enforce ingress-only policy in host and docs |
 | `/api/workflows` and `/api/inngest` semantics blurred | Split policy ignored | Keep both path roles explicit, even when one is not used in this example |
 | OpenAPI schema degradation | `__typebox` converter missing | Centralize TypeBox Standard Schema adapter and OpenAPI converter |
+| One-off extracted procedure/contract schemas | Local I/O ownership becomes harder to scan | Default to inline `.input(std(Type.*))` / `.output(std(Type.*))`; extract only when shared or very large, and pair as `const XSchema = { input, output }` |
 
 ## 9) Explicit policy consistency checklist
 
 - [x] TypeBox-first schemas are used for package and boundary I/O.
 - [x] Domain type files are TypeBox-first (`schema + Static<typeof Schema>` in the same file), minimizing hand-written TS-only shape drift.
+- [x] Snippets default to inline procedure/contract schema callsites (`.input/.output`) for local readability and ownership clarity.
+- [x] When extraction is justified (shared or very large shapes), snippets use paired schema objects (`const XSchema = { input, output }`) with `.input(std(XSchema.input))` + `.output(std(XSchema.output))`.
 - [x] Internal package shape follows `domain/ service/ procedures/ context.ts router.ts client.ts errors.ts index.ts`.
 - [x] Shared procedure/API context contracts are defined in explicit `context.ts` files, not convenience in-router type declarations.
 - [x] Domain file names inside `domain/` avoid redundant capability prefixes (`status.ts`, `run.ts`).

@@ -178,7 +178,7 @@ export type InvoicingProcedureContext = {
 
 ### 4.2 Shared workflow contract artifact (single source, reusable)
 
-I/O ownership note: trigger/status route schemas are authored at the workflow contract boundary, while `domain/*` keeps domain concepts and invariants.
+I/O ownership note: trigger/status route schemas are authored at the workflow contract boundary, while `domain/*` keeps domain concepts and invariants. Inline `.input/.output` schemas are the default; only truly shared/large route payloads should be extracted, and then as `{ input, output }` pairs.
 
 ```text
 packages/invoicing/src/
@@ -197,21 +197,6 @@ import { Type } from "typebox";
 import { RunStatusSchema, RunTimelineSchema } from "../domain/status";
 
 const tag = ["invoicing"] as const;
-const TriggerReconciliationInputSchema = Type.Object(
-  {
-    invoiceId: Type.String({ minLength: 1 }),
-    requestedBy: Type.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
-const TriggerReconciliationOutputSchema = Type.Object(
-  {
-    accepted: Type.Literal(true),
-    runId: Type.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
-const RunPathParamsSchema = Type.Object({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false });
 
 export const invoicingWorkflowContract = oc.router({
   triggerReconciliation: oc
@@ -221,8 +206,28 @@ export const invoicingWorkflowContract = oc.router({
       tags: tag,
       operationId: "invoicingTriggerReconciliation",
     })
-    .input(std(TriggerReconciliationInputSchema))
-    .output(std(TriggerReconciliationOutputSchema)),
+    .input(
+      std(
+        Type.Object(
+          {
+            invoiceId: Type.String({ minLength: 1 }),
+            requestedBy: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      std(
+        Type.Object(
+          {
+            accepted: Type.Literal(true),
+            runId: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
 
   getRunStatus: oc
     .route({
@@ -231,7 +236,7 @@ export const invoicingWorkflowContract = oc.router({
       tags: tag,
       operationId: "invoicingGetRunStatus",
     })
-    .input(std(RunPathParamsSchema))
+    .input(std(Type.Object({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false })))
     .output(std(RunStatusSchema)),
 
   getRunTimeline: oc
@@ -241,7 +246,7 @@ export const invoicingWorkflowContract = oc.router({
       tags: tag,
       operationId: "invoicingGetRunTimeline",
     })
-    .input(std(RunPathParamsSchema))
+    .input(std(Type.Object({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false })))
     .output(std(RunTimelineSchema)),
 });
 ```

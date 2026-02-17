@@ -55,9 +55,12 @@ Tutorial docs are normative only where they reference locked axis policies. If a
 10. Shared context contracts default to explicit `context.ts` modules (or equivalent dedicated context modules), consumed by routers instead of being re-declared inline in router snippets.
 11. Request/correlation/principal/network metadata contracts are context-layer concerns and belong in `context.ts` (or equivalent context module), not `domain/*`.
 12. Spec snippet alias default for schema wrapping is `typeBoxStandardSchema as std`; `_`/`_$` are feasible but non-canonical due to readability.
-13. Context modeling keeps two envelopes by design: oRPC boundary request context and Inngest runtime function context; packet policy rejects a forced universal context object.
-14. Middleware policy keeps two control planes by design: boundary controls in oRPC/Elysia and durable lifecycle controls in Inngest middleware + `step.*`.
-15. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe is constrained to leading-subset/same-order middleware chains.
+13. Packet docs/examples default to inline procedure/contract I/O schema declarations at `.input(...)` and `.output(...)`.
+14. Schema extraction is exception-only, for shared schemas or large schemas where inline form materially harms readability.
+15. When extraction is used, canonical shape is a paired object with `.input` and `.output` properties (for example `TriggerInvoiceReconciliationSchema.input` and `.output`).
+16. Context modeling keeps two envelopes by design: oRPC boundary request context and Inngest runtime function context; packet policy rejects a forced universal context object.
+17. Middleware policy keeps two control planes by design: boundary controls in oRPC/Elysia and durable lifecycle controls in Inngest middleware + `step.*`.
+18. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe is constrained to leading-subset/same-order middleware chains.
 
 ## Packet Interaction Model
 ```text
@@ -88,6 +91,8 @@ Caller
 4. Packet examples SHOULD follow the domain naming defaults used in walkthroughs (`invoicing`-style concise capability tokens when clear).
 5. Packet snippets SHOULD keep context placement explicit (`context.ts`) and avoid convenience overloading of context contracts inside router snippets.
 6. Packet snippets MUST keep procedure input/output schemas with procedures or boundary contracts, and MUST NOT model procedure I/O ownership in `domain/*`.
+7. Packet snippets MUST default to inline procedure/contract I/O schema declarations, and SHOULD extract only for shared/large readability cases.
+8. Extracted packet snippet I/O schemas SHOULD use paired-object shape `{ input, output }` instead of separate top-level `*InputSchema` / `*OutputSchema` constants.
 
 ## Navigation Map (If You Need X, Read Y)
 - External client generation and OpenAPI surface ownership -> [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)

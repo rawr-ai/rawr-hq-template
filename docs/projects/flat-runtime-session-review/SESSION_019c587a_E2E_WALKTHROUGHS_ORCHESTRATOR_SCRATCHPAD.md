@@ -86,3 +86,12 @@ After Agent X research completion:
 - Run follow-on agent Z for consistency pass:
   - ensure naming/alias/context conventions remain aligned across all E2E docs and updated specs,
   - fix any contradictions introduced by integration.
+
+## Inline I/O Schema Normalization Pass (2026-02-17)
+New lock:
+1) Inline procedure/contract `.input/.output` schemas by default.
+2) Exception: truly large/shared schemas may be extracted, preferably as paired object:
+   - `const TriggerReconciliationSchema = { input: Type.Object(...), output: Type.Object(...) }`
+   - `.input(std(TriggerReconciliationSchema.input))`
+   - `.output(std(TriggerReconciliationSchema.output))`
+3) Apply across all E2E examples and relevant packet/spec policy docs.

@@ -16,6 +16,7 @@
 4. Correlation metadata SHOULD be propagated from trigger boundary to durable run payload/timeline.
 5. Host route split MUST be preserved because it enforces the context model: caller-facing APIs (`/api/orpc/*`, `/api/workflows/*`) create boundary context, while `/api/inngest` is runtime ingress.
 6. Request/correlation/principal/network metadata types are context-layer contracts and SHOULD live in `context.ts` (or equivalent context modules), not in `domain/*`.
+7. Context-related trigger/procedure docs/examples SHOULD default to inline I/O schema declarations; extraction is exception-only for shared/large readability and should use paired `{ input, output }` shape.
 
 ## Why
 - Request lifecycle and durable run lifecycle are distinct execution models.

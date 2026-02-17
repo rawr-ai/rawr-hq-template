@@ -82,43 +82,45 @@ Capability name used everywhere in this example: `invoice-processing`.
 ```ts
 import { Type, type Static } from "typebox";
 
-export const StartInvoiceProcessingInputSchema = Type.Object(
-  {
-    invoiceId: Type.String({ minLength: 1 }),
-    requestedBy: Type.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
-export type StartInvoiceProcessingInput = Static<typeof StartInvoiceProcessingInputSchema>;
+export const StartInvoiceProcessingSchema = {
+  input: Type.Object(
+    {
+      invoiceId: Type.String({ minLength: 1 }),
+      requestedBy: Type.String({ minLength: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+  output: Type.Object(
+    {
+      runId: Type.String({ minLength: 1 }),
+      accepted: Type.Boolean(),
+    },
+    { additionalProperties: false },
+  ),
+} as const;
+export type StartInvoiceProcessingInput = Static<typeof StartInvoiceProcessingSchema.input>;
+export type StartInvoiceProcessingOutput = Static<typeof StartInvoiceProcessingSchema.output>;
 
-export const StartInvoiceProcessingOutputSchema = Type.Object(
-  {
-    runId: Type.String({ minLength: 1 }),
-    accepted: Type.Boolean(),
-  },
-  { additionalProperties: false },
-);
-export type StartInvoiceProcessingOutput = Static<typeof StartInvoiceProcessingOutputSchema>;
-
-export const GetInvoiceProcessingStatusInputSchema = Type.Object(
-  { runId: Type.String({ minLength: 1 }) },
-  { additionalProperties: false },
-);
-export type GetInvoiceProcessingStatusInput = Static<typeof GetInvoiceProcessingStatusInputSchema>;
-
-export const GetInvoiceProcessingStatusOutputSchema = Type.Object(
-  {
-    runId: Type.String({ minLength: 1 }),
-    status: Type.Union([
-      Type.Literal("queued"),
-      Type.Literal("running"),
-      Type.Literal("completed"),
-      Type.Literal("failed"),
-    ]),
-  },
-  { additionalProperties: false },
-);
-export type GetInvoiceProcessingStatusOutput = Static<typeof GetInvoiceProcessingStatusOutputSchema>;
+export const GetInvoiceProcessingStatusSchema = {
+  input: Type.Object(
+    { runId: Type.String({ minLength: 1 }) },
+    { additionalProperties: false },
+  ),
+  output: Type.Object(
+    {
+      runId: Type.String({ minLength: 1 }),
+      status: Type.Union([
+        Type.Literal("queued"),
+        Type.Literal("running"),
+        Type.Literal("completed"),
+        Type.Literal("failed"),
+      ]),
+    },
+    { additionalProperties: false },
+  ),
+} as const;
+export type GetInvoiceProcessingStatusInput = Static<typeof GetInvoiceProcessingStatusSchema.input>;
+export type GetInvoiceProcessingStatusOutput = Static<typeof GetInvoiceProcessingStatusSchema.output>;
 ```
 
 `packages/invoice-processing/src/workflow-events.ts`
@@ -180,10 +182,8 @@ export async function getInvoiceProcessingStatus(
 import { oc } from "@orpc/contract";
 import { typeBoxStandardSchema } from "@rawr/core/orpc/typebox-standard-schema";
 import {
-  GetInvoiceProcessingStatusInputSchema,
-  GetInvoiceProcessingStatusOutputSchema,
-  StartInvoiceProcessingInputSchema,
-  StartInvoiceProcessingOutputSchema,
+  GetInvoiceProcessingStatusSchema,
+  StartInvoiceProcessingSchema,
 } from "../schemas";
 
 export const invoiceProcessingContract = oc.router({
@@ -195,8 +195,8 @@ export const invoiceProcessingContract = oc.router({
       operationId: "startInvoiceProcessing",
       summary: "Queue invoice processing",
     })
-    .input(typeBoxStandardSchema(StartInvoiceProcessingInputSchema))
-    .output(typeBoxStandardSchema(StartInvoiceProcessingOutputSchema)),
+    .input(typeBoxStandardSchema(StartInvoiceProcessingSchema.input))
+    .output(typeBoxStandardSchema(StartInvoiceProcessingSchema.output)),
 
   getInvoiceProcessingStatus: oc
     .route({
@@ -206,8 +206,8 @@ export const invoiceProcessingContract = oc.router({
       operationId: "getInvoiceProcessingStatus",
       summary: "Get invoice processing status",
     })
-    .input(typeBoxStandardSchema(GetInvoiceProcessingStatusInputSchema))
-    .output(typeBoxStandardSchema(GetInvoiceProcessingStatusOutputSchema)),
+    .input(typeBoxStandardSchema(GetInvoiceProcessingStatusSchema.input))
+    .output(typeBoxStandardSchema(GetInvoiceProcessingStatusSchema.output)),
 });
 ```
 

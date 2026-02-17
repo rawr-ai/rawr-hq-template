@@ -18,6 +18,9 @@
 6. Domain modules (`domain/*`) MAY be used for transport-independent domain concepts only; they MUST NOT own procedure input/output schema semantics.
 7. Shared workflow trigger context contracts and request metadata types (principal/request/correlation/network metadata) SHOULD live in explicit `context.ts` modules (or equivalent context modules), consumed by routers.
 8. Browser and generic API callers MUST NOT invoke `/api/inngest` directly.
+9. Docs/examples for workflow trigger procedures MUST default to inline I/O schemas at `.input(...)` and `.output(...)`.
+10. I/O schema extraction SHOULD be used only for shared schemas or large readability cases.
+11. When extracted, workflow trigger I/O schemas SHOULD use paired-object shape with `.input` and `.output` (for example `TriggerInvoiceReconciliationSchema.input` / `.output`).
 
 ## Why
 - Preserves one trigger story for callers and one durability story for runtime.
@@ -45,29 +48,50 @@ plugins/workflows/<domain>/src/contract.ts
 4. Keep procedure I/O schema ownership in `contract.ts` (boundary) or procedure-local modules, not in `domain/*`.
 5. Keep request/correlation/principal/network metadata contracts in `context.ts`, not `domain/*`.
 6. In snippets, prefer `typeBoxStandardSchema as std`; `_`/`_$` aliases are feasible but non-canonical for readability.
+7. If snippet I/O is extracted instead of inline, prefer paired-object naming (`<ProcedureName>Schema.input` / `.output`) over separate `*InputSchema` and `*OutputSchema` constants.
 
 ## Canonical Snippets
 
-### Trigger contract
+### Trigger contract (default inline form)
 ```ts
+export const invoiceWorkflowTriggerContract = oc.router({
+  triggerInvoiceReconciliation: oc
+    .route({ method: "POST", path: "/invoicing/reconciliation/trigger" })
+    .input(std(Type.Object({ runId: Type.String() })))
+    .output(std(Type.Object({ accepted: Type.Literal(true) }))),
+});
+```
+
+### Trigger contract (extracted exception form for shared/large readability)
+```ts
+import { oc } from "@orpc/contract";
 import { Type, type Static } from "typebox";
 import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 
-const TriggerInvoiceReconciliationInputSchema = Type.Object({
-  runId: Type.String(),
-});
-export type TriggerInvoiceReconciliationInput = Static<typeof TriggerInvoiceReconciliationInputSchema>;
+// Exception: extracted because input/output shapes are reused by contract wiring
+// and operation-level static types.
+const TriggerInvoiceReconciliationSchema = {
+  input: Type.Object({
+    runId: Type.String(),
+  }),
+  output: Type.Object({
+    accepted: Type.Literal(true),
+  }),
+} as const;
 
-const TriggerInvoiceReconciliationOutputSchema = Type.Object({
-  accepted: Type.Literal(true),
-});
-export type TriggerInvoiceReconciliationOutput = Static<typeof TriggerInvoiceReconciliationOutputSchema>;
+export type TriggerInvoiceReconciliationInput = Static<
+  (typeof TriggerInvoiceReconciliationSchema)["input"]
+>;
+
+export type TriggerInvoiceReconciliationOutput = Static<
+  (typeof TriggerInvoiceReconciliationSchema)["output"]
+>;
 
 export const invoiceWorkflowTriggerContract = oc.router({
   triggerInvoiceReconciliation: oc
     .route({ method: "POST", path: "/invoicing/reconciliation/trigger" })
-    .input(std(TriggerInvoiceReconciliationInputSchema))
-    .output(std(TriggerInvoiceReconciliationOutputSchema)),
+    .input(std(TriggerInvoiceReconciliationSchema.input))
+    .output(std(TriggerInvoiceReconciliationSchema.output)),
 });
 ```
 

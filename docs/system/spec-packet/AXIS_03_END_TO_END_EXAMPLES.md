@@ -58,30 +58,24 @@ import { Type, type Static } from "typebox";
 export const InvoiceIdSchema = Type.String({ minLength: 8, pattern: "^INV-" });
 export type InvoiceId = Static<typeof InvoiceIdSchema>;
 
-export const StartInvoiceProcessingInputSchema = Type.Object(
-  {
-    invoiceId: InvoiceIdSchema,
-    customerId: Type.String({ minLength: 3 }),
-    amountCents: Type.Integer({ minimum: 0 }),
-    requestedBy: Type.String({ minLength: 3 }),
-  },
-  { additionalProperties: false },
-);
-
-export const StartInvoiceProcessingOutputSchema = Type.Object(
-  {
-    runId: Type.String({ minLength: 1 }),
-    accepted: Type.Boolean(),
-  },
-  { additionalProperties: false },
-);
-
-export const GetInvoiceProcessingStatusInputSchema = Type.Object(
-  {
-    runId: Type.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
+export const StartInvoiceProcessingSchema = {
+  input: Type.Object(
+    {
+      invoiceId: InvoiceIdSchema,
+      customerId: Type.String({ minLength: 3 }),
+      amountCents: Type.Integer({ minimum: 0 }),
+      requestedBy: Type.String({ minLength: 3 }),
+    },
+    { additionalProperties: false },
+  ),
+  output: Type.Object(
+    {
+      runId: Type.String({ minLength: 1 }),
+      accepted: Type.Boolean(),
+    },
+    { additionalProperties: false },
+  ),
+} as const;
 
 export const InvoiceProcessingStatusSchema = Type.Union([
   Type.Literal("queued"),
@@ -91,15 +85,23 @@ export const InvoiceProcessingStatusSchema = Type.Union([
   Type.Literal("unknown"),
 ]);
 
-export const GetInvoiceProcessingStatusOutputSchema = Type.Object(
-  {
-    runId: Type.String({ minLength: 1 }),
-    status: InvoiceProcessingStatusSchema,
-    riskScore: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
-    failureReason: Type.Optional(Type.String({ minLength: 1 })),
-  },
-  { additionalProperties: false },
-);
+export const GetInvoiceProcessingStatusSchema = {
+  input: Type.Object(
+    {
+      runId: Type.String({ minLength: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+  output: Type.Object(
+    {
+      runId: Type.String({ minLength: 1 }),
+      status: InvoiceProcessingStatusSchema,
+      riskScore: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
+      failureReason: Type.Optional(Type.String({ minLength: 1 })),
+    },
+    { additionalProperties: false },
+  ),
+} as const;
 
 export const InvoiceProcessingRequestedEventDataSchema = Type.Object(
   {
@@ -112,10 +114,10 @@ export const InvoiceProcessingRequestedEventDataSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export type StartInvoiceProcessingInput = Static<typeof StartInvoiceProcessingInputSchema>;
-export type StartInvoiceProcessingOutput = Static<typeof StartInvoiceProcessingOutputSchema>;
-export type GetInvoiceProcessingStatusInput = Static<typeof GetInvoiceProcessingStatusInputSchema>;
-export type GetInvoiceProcessingStatusOutput = Static<typeof GetInvoiceProcessingStatusOutputSchema>;
+export type StartInvoiceProcessingInput = Static<typeof StartInvoiceProcessingSchema.input>;
+export type StartInvoiceProcessingOutput = Static<typeof StartInvoiceProcessingSchema.output>;
+export type GetInvoiceProcessingStatusInput = Static<typeof GetInvoiceProcessingStatusSchema.input>;
+export type GetInvoiceProcessingStatusOutput = Static<typeof GetInvoiceProcessingStatusSchema.output>;
 export type InvoiceProcessingRequestedEventData = Static<typeof InvoiceProcessingRequestedEventDataSchema>;
 ```
 
@@ -310,10 +312,8 @@ Important: this is a **contract**, not a router implementation. It imports `@orp
 // packages/invoice-processing/src/orpc/contract.ts
 import { oc } from "@orpc/contract";
 import {
-  GetInvoiceProcessingStatusInputSchema,
-  GetInvoiceProcessingStatusOutputSchema,
-  StartInvoiceProcessingInputSchema,
-  StartInvoiceProcessingOutputSchema,
+  GetInvoiceProcessingStatusSchema,
+  StartInvoiceProcessingSchema,
 } from "../schemas";
 import { typeBoxStandardSchema } from "./typebox-standard-schema";
 
@@ -328,8 +328,8 @@ export const invoiceProcessingContract = oc.router({
       summary: "Queue invoice processing",
       operationId: "invoiceProcessingStart",
     })
-    .input(typeBoxStandardSchema(StartInvoiceProcessingInputSchema))
-    .output(typeBoxStandardSchema(StartInvoiceProcessingOutputSchema)),
+    .input(typeBoxStandardSchema(StartInvoiceProcessingSchema.input))
+    .output(typeBoxStandardSchema(StartInvoiceProcessingSchema.output)),
 
   getInvoiceProcessingStatus: oc
     .route({
@@ -339,8 +339,8 @@ export const invoiceProcessingContract = oc.router({
       summary: "Get invoice processing status",
       operationId: "invoiceProcessingGetStatus",
     })
-    .input(typeBoxStandardSchema(GetInvoiceProcessingStatusInputSchema))
-    .output(typeBoxStandardSchema(GetInvoiceProcessingStatusOutputSchema)),
+    .input(typeBoxStandardSchema(GetInvoiceProcessingStatusSchema.input))
+    .output(typeBoxStandardSchema(GetInvoiceProcessingStatusSchema.output)),
 });
 
 export type InvoiceProcessingContract = typeof invoiceProcessingContract;
@@ -656,21 +656,19 @@ Example: internal contract (RPC-only, no `.route()`)
 // packages/invoice-processing/src/orpc/contract.internal.ts
 import { oc } from "@orpc/contract";
 import {
-  GetInvoiceProcessingStatusInputSchema,
-  GetInvoiceProcessingStatusOutputSchema,
-  StartInvoiceProcessingInputSchema,
-  StartInvoiceProcessingOutputSchema,
+  GetInvoiceProcessingStatusSchema,
+  StartInvoiceProcessingSchema,
 } from "../schemas";
 import { typeBoxStandardSchema } from "./typebox-standard-schema";
 
 export const invoiceProcessingInternalContract = oc.router({
   start: oc
-    .input(typeBoxStandardSchema(StartInvoiceProcessingInputSchema))
-    .output(typeBoxStandardSchema(StartInvoiceProcessingOutputSchema)),
+    .input(typeBoxStandardSchema(StartInvoiceProcessingSchema.input))
+    .output(typeBoxStandardSchema(StartInvoiceProcessingSchema.output)),
 
   status: oc
-    .input(typeBoxStandardSchema(GetInvoiceProcessingStatusInputSchema))
-    .output(typeBoxStandardSchema(GetInvoiceProcessingStatusOutputSchema)),
+    .input(typeBoxStandardSchema(GetInvoiceProcessingStatusSchema.input))
+    .output(typeBoxStandardSchema(GetInvoiceProcessingStatusSchema.output)),
 });
 ```
 
@@ -679,10 +677,8 @@ Example: public contract (OpenAPI/HTTP view)
 // packages/invoice-processing/src/orpc/contract.public.ts
 import { oc } from "@orpc/contract";
 import {
-  GetInvoiceProcessingStatusInputSchema,
-  GetInvoiceProcessingStatusOutputSchema,
-  StartInvoiceProcessingInputSchema,
-  StartInvoiceProcessingOutputSchema,
+  GetInvoiceProcessingStatusSchema,
+  StartInvoiceProcessingSchema,
 } from "../schemas";
 import { typeBoxStandardSchema } from "./typebox-standard-schema";
 
@@ -697,8 +693,8 @@ export const invoiceProcessingPublicContract = oc.router({
       operationId: "invoiceProcessingStart",
       summary: "Queue invoice processing",
     })
-    .input(typeBoxStandardSchema(StartInvoiceProcessingInputSchema))
-    .output(typeBoxStandardSchema(StartInvoiceProcessingOutputSchema)),
+    .input(typeBoxStandardSchema(StartInvoiceProcessingSchema.input))
+    .output(typeBoxStandardSchema(StartInvoiceProcessingSchema.output)),
 
   status: oc
     .route({
@@ -708,8 +704,8 @@ export const invoiceProcessingPublicContract = oc.router({
       operationId: "invoiceProcessingGetStatus",
       summary: "Get invoice processing status",
     })
-    .input(typeBoxStandardSchema(GetInvoiceProcessingStatusInputSchema))
-    .output(typeBoxStandardSchema(GetInvoiceProcessingStatusOutputSchema)),
+    .input(typeBoxStandardSchema(GetInvoiceProcessingStatusSchema.input))
+    .output(typeBoxStandardSchema(GetInvoiceProcessingStatusSchema.output)),
 });
 ```
 

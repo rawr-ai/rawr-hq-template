@@ -16,6 +16,7 @@
 5. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe MUST be treated as constrained (leading subset in identical order), not universal.
 6. Split path enforcement is part of middleware placement: caller-facing policy executes on `/api/orpc/*` or `/api/workflows/*`, while `/api/inngest` remains runtime ingress.
 7. Middleware that depends on request/correlation/principal/network metadata MUST consume those contracts from context-layer modules (`context.ts`), not from `domain/*`.
+8. Middleware-adjacent procedure/contract docs/examples SHOULD default to inline I/O schemas; extraction is exception-only for shared/large readability and should use paired `{ input, output }` shape.
 
 ## Why
 - API boundary policy and durable execution policy are separate control planes.
