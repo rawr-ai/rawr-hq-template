@@ -7,16 +7,16 @@ This walkthrough shows the smallest policy-compliant end-to-end path for:
 2. one API boundary plugin that owns its own contract,
 3. one host composition path from mounts to package execution.
 
-Use-case: expose invoice-processing APIs to callers while keeping domain logic transport-neutral and reusable.
+Use-case: expose invoicing APIs to callers while keeping domain logic transport-neutral and reusable.
 
 ### Quick coordinates
 
 | Concern | Canonical location / route |
 | --- | --- |
 | Hosting mount paths | `/rpc`, `/api/orpc`, `/api/inngest` |
-| Internal package location | `packages/invoice-processing/src/*` |
-| API plugin location | `plugins/api/invoice-processing-api/src/*` |
-| Composition route | `rawr.hq.ts` -> `apps/server/src/rawr.ts` -> `apps/server/src/orpc.ts` -> `plugins/api/invoice-processing-api/src/router.ts` -> `packages/invoice-processing/src/client.ts` |
+| Internal package location | `packages/invoicing/src/*` |
+| API plugin location | `plugins/api/invoicing-api/src/*` |
+| Composition route | `rawr.hq.ts` -> `apps/server/src/rawr.ts` -> `apps/server/src/orpc.ts` -> `plugins/api/invoicing-api/src/router.ts` -> `packages/invoicing/src/client.ts` |
 
 ### Endpoint divergences included in this basic example
 
@@ -41,10 +41,10 @@ flowchart LR
   OR --> EH["Elysia mount: /api/orpc* (parse none)"]
   EH --> OAH["oRPC OpenAPIHandler"]
   OAH --> HQ["Composed hq router namespace: invoicing.api"]
-  HQ --> APIR["invoice-api router (implement(contract))"]
+  HQ --> APIR["invoicing-api router (implement(contract))"]
   APIR --> OPS["operations/* mapping layer"]
-  OPS --> ICL["invoice internal client (createRouterClient)"]
-  ICL --> PR["invoice internal procedures"]
+  OPS --> ICL["invoicing internal client (createRouterClient)"]
+  ICL --> PR["invoicing internal procedures"]
   PR --> SV["service layer"]
   SV --> DM["domain invariants + entities"]
 
@@ -64,10 +64,10 @@ flowchart LR
 │   ├── orpc-standards/src/
 │   │   ├── typebox-standard-schema.ts
 │   │   └── index.ts
-│   └── invoice-processing/src/
+│   └── invoicing/src/
 │       ├── domain/
-│       │   ├── invoice.ts
-│       │   └── invoice-status.ts
+│       │   ├── run.ts
+│       │   └── status.ts
 │       ├── service/
 │       │   ├── lifecycle.ts
 │       │   ├── status.ts
@@ -80,7 +80,7 @@ flowchart LR
 │       ├── client.ts
 │       ├── errors.ts
 │       └── index.ts
-└── plugins/api/invoice-processing-api/src/
+└── plugins/api/invoicing-api/src/
     ├── contract.ts
     ├── operations/
     │   ├── start.ts
@@ -131,35 +131,47 @@ export function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Stat
 ### 4.2 Internal package: domain + service + procedures + router/client
 
 ```ts
-// packages/invoice-processing/src/domain/invoice-status.ts
-export const INVOICE_STATUS = ["queued", "running", "completed", "failed", "canceled"] as const;
-export type InvoiceStatus = (typeof INVOICE_STATUS)[number];
+// packages/invoicing/src/domain/status.ts
+import { Type, type Static } from "typebox";
 
-export function isTerminalStatus(status: InvoiceStatus): boolean {
+export const StatusSchema = Type.Union([
+  Type.Literal("queued"),
+  Type.Literal("running"),
+  Type.Literal("completed"),
+  Type.Literal("failed"),
+  Type.Literal("canceled"),
+]);
+
+export type Status = Static<typeof StatusSchema>;
+
+export function isTerminalStatus(status: Status): boolean {
   return status === "completed" || status === "failed" || status === "canceled";
 }
 ```
 
 ```ts
-// packages/invoice-processing/src/domain/invoice.ts
-import type { InvoiceStatus } from "./invoice-status";
+// packages/invoicing/src/domain/run.ts
+import { Type, type Static } from "typebox";
+import { StatusSchema } from "./status";
 
-export type InvoiceRun = {
-  runId: string;
-  invoiceId: string;
-  requestedBy: string;
-  status: InvoiceStatus;
-};
+export const RunSchema = Type.Object({
+  runId: Type.String(),
+  invoiceId: Type.String(),
+  requestedBy: Type.String(),
+  status: StatusSchema,
+});
+
+export type Run = Static<typeof RunSchema>;
 ```
 
 ```ts
-// packages/invoice-processing/src/service/lifecycle.ts
-import type { InvoiceRun } from "../domain/invoice";
+// packages/invoicing/src/service/lifecycle.ts
+import type { Run } from "../domain/run";
 
 export type InvoiceServiceDeps = {
   newRunId: () => string;
-  saveRun: (run: InvoiceRun) => Promise<void>;
-  getRun: (runId: string) => Promise<InvoiceRun | null>;
+  saveRun: (run: Run) => Promise<void>;
+  getRun: (runId: string) => Promise<Run | null>;
 };
 
 export async function startInvoice(
@@ -178,7 +190,7 @@ export async function startInvoice(
 ```
 
 ```ts
-// packages/invoice-processing/src/service/status.ts
+// packages/invoicing/src/service/status.ts
 import type { InvoiceServiceDeps } from "./lifecycle";
 
 export async function getInvoiceStatus(deps: InvoiceServiceDeps, input: { runId: string }) {
@@ -188,7 +200,7 @@ export async function getInvoiceStatus(deps: InvoiceServiceDeps, input: { runId:
 ```
 
 ```ts
-// packages/invoice-processing/src/procedures/start.ts
+// packages/invoicing/src/procedures/start.ts
 import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
 import { typeBoxStandardSchema } from "@rawr/orpc-standards";
@@ -216,10 +228,11 @@ export const startProcedure = o
 ```
 
 ```ts
-// packages/invoice-processing/src/procedures/get-status.ts
+// packages/invoicing/src/procedures/get-status.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
 import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { StatusSchema } from "../domain/status";
 import { getInvoiceStatus } from "../service/status";
 import type { InvoiceProcedureContext } from "../router";
 
@@ -229,19 +242,13 @@ export const getStatusProcedure = o
   .input(typeBoxStandardSchema(Type.Object({ runId: Type.String() })))
   .output(typeBoxStandardSchema(Type.Object({
     runId: Type.String(),
-    status: Type.Union([
-      Type.Literal("queued"),
-      Type.Literal("running"),
-      Type.Literal("completed"),
-      Type.Literal("failed"),
-      Type.Literal("canceled"),
-    ]),
+    status: StatusSchema,
   })))
   .handler(({ context, input }) => getInvoiceStatus(context.deps, input));
 ```
 
 ```ts
-// packages/invoice-processing/src/router.ts
+// packages/invoicing/src/router.ts
 import { startProcedure } from "./procedures/start";
 import { getStatusProcedure } from "./procedures/get-status";
 import type { InvoiceServiceDeps } from "./service/lifecycle";
@@ -255,7 +262,7 @@ export const invoiceInternalRouter = {
 ```
 
 ```ts
-// packages/invoice-processing/src/client.ts
+// packages/invoicing/src/client.ts
 import { createRouterClient } from "@orpc/server";
 import { invoiceInternalRouter, type InvoiceProcedureContext } from "./router";
 
@@ -267,7 +274,7 @@ export function createInvoiceInternalClient(context: InvoiceProcedureContext) {
 ### 4.3 API boundary plugin: contract ownership + operation mapping
 
 ```ts
-// plugins/api/invoice-processing-api/src/contract.ts
+// plugins/api/invoicing-api/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
 import { typeBoxStandardSchema } from "@rawr/orpc-standards";
@@ -303,7 +310,7 @@ export const invoiceApiContract = oc.router({
 ```
 
 ```ts
-// plugins/api/invoice-processing-api/src/operations/start.ts
+// plugins/api/invoicing-api/src/operations/start.ts
 import type { InvoiceApiContext } from "../router";
 
 export async function startInvoiceOperation(
@@ -319,7 +326,7 @@ export async function startInvoiceOperation(
 ```
 
 ```ts
-// plugins/api/invoice-processing-api/src/operations/get-status.ts
+// plugins/api/invoicing-api/src/operations/get-status.ts
 import type { InvoiceApiContext } from "../router";
 
 function isTerminal(status: "queued" | "running" | "completed" | "failed" | "canceled"): boolean {
@@ -339,9 +346,9 @@ export async function getStatusOperation(context: InvoiceApiContext, input: { ru
 ```
 
 ```ts
-// plugins/api/invoice-processing-api/src/router.ts
+// plugins/api/invoicing-api/src/router.ts
 import { implement } from "@orpc/server";
-import { createInvoiceInternalClient } from "@rawr/invoice-processing";
+import { createInvoiceInternalClient } from "@rawr/invoicing";
 import { invoiceApiContract } from "./contract";
 import { getStatusOperation } from "./operations/get-status";
 import { startInvoiceOperation } from "./operations/start";
@@ -365,7 +372,7 @@ export function createInvoiceApiRouter() {
 ```
 
 ```ts
-// plugins/api/invoice-processing-api/src/index.ts
+// plugins/api/invoicing-api/src/index.ts
 import { invoiceApiContract } from "./contract";
 import { createInvoiceApiRouter } from "./router";
 
@@ -381,7 +388,7 @@ export const invoiceApiSurface = {
 // rawr.hq.ts
 import { oc } from "@orpc/contract";
 import { Inngest } from "inngest";
-import { invoiceApiSurface } from "./plugins/api/invoice-processing-api/src";
+import { invoiceApiSurface } from "./plugins/api/invoicing-api/src";
 
 const inngest = new Inngest({ id: "rawr-hq" });
 
@@ -469,9 +476,9 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 ## 5) Wiring steps (host -> composition -> plugin/package -> runtime)
 
 1. Build TypeBox adapter once (`packages/orpc-standards/src/typebox-standard-schema.ts`) and reuse it across package and boundary contracts.
-2. Build internal package layers under `packages/invoice-processing/src/*`:
-   - domain -> service -> procedures -> router -> client.
-3. Build API plugin under `plugins/api/invoice-processing-api/src/*`:
+2. Build internal package layers under `packages/invoicing/src/*`:
+   - domain (`run.ts`, `status.ts`) -> service -> procedures -> router -> client.
+3. Build API plugin under `plugins/api/invoicing-api/src/*`:
    - boundary `contract.ts`,
    - explicit `operations/*` mapping,
    - `router.ts` via `implement(contract)`.
@@ -511,7 +518,7 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 1. Boundary contract ownership keeps external semantics stable and independently evolvable.
 2. Internal package remains transport-neutral and reusable for non-HTTP paths.
 3. Explicit `operations/*` makes adaptation logic visible (no hidden glue).
-4. TypeBox-first artifacts keep one schema strategy across validation and OpenAPI conversion.
+4. TypeBox-first artifacts keep one schema strategy across validation and OpenAPI conversion, with domain files exporting both schema and `Static<typeof Schema>` types from one source of truth.
 5. Trade-off: there is intentional duplication between internal and boundary shapes.
 6. Payoff: boundary can diverge safely (policy, naming, response shape) without forcing package redesign.
 
@@ -531,8 +538,11 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 ## 9) Explicit policy consistency checklist
 
 - [x] TypeBox-first schemas are used for package and boundary I/O.
+- [x] Domain type files are TypeBox-first (`schema + Static<typeof Schema>` in the same file), minimizing hand-written TS-only shape drift.
 - [x] Internal package shape follows `domain/ service/ procedures/ router.ts client.ts errors.ts index.ts`.
+- [x] Domain file names inside `domain/` avoid redundant capability prefixes (`status.ts`, `run.ts`).
 - [x] API plugin shape follows `contract.ts + operations/* + router.ts + index.ts`.
+- [x] Capability naming stays concise (`invoicing`, `invoicing-api`) while preserving boundary clarity.
 - [x] Glue is explicit: composition root, host route mounts, and handler forwarding are shown concretely.
 - [x] Internal default invocation path is in-process client, not local HTTP self-calls.
 - [x] Boundary API and runtime ingress remain split semantics.
