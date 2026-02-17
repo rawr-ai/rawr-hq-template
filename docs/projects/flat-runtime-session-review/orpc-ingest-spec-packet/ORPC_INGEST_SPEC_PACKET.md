@@ -50,6 +50,8 @@ Tutorial docs are normative only where they reference locked axis policies. If a
 6. Domain schema modules are TypeBox-first and co-export static types from the same file.
 7. Domain filenames within one `domain/` folder avoid redundant domain-prefix tokens.
 8. Package/plugin directory naming prefers concise, unambiguous domain names (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
+9. Shared context contracts default to explicit `context.ts` modules (or equivalent dedicated context modules), consumed by routers instead of being re-declared inline in router snippets.
+10. Spec snippet alias default for schema wrapping is `typeBoxStandardSchema as std`; `_`/`_$` are feasible but non-canonical due to readability.
 
 ## Packet Interaction Model
 ```text
@@ -78,6 +80,7 @@ Caller
 2. Any new architecture-impacting ambiguity must be logged in [DECISIONS.md](./DECISIONS.md) before execution continues.
 3. This packet must remain consistent with `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`.
 4. Packet examples SHOULD follow the domain naming defaults used in walkthroughs (`invoicing`-style concise capability tokens when clear).
+5. Packet snippets SHOULD keep context placement explicit (`context.ts`) and avoid convenience overloading of context contracts inside router snippets.
 
 ## Navigation Map (If You Need X, Read Y)
 - External client generation and OpenAPI surface ownership -> [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)

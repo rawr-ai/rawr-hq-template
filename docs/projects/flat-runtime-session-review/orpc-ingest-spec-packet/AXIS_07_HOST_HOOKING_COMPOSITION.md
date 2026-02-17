@@ -30,9 +30,11 @@
 3. Internal package layered defaults MAY include `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
 4. Within one `domain/` folder, filenames avoid redundant domain prefixes (`status.ts`, not `invoice-status.ts` for `invoicing/domain/`).
 5. Domain schema modules are TypeBox-first and co-export static types from the same file.
-6. Keep role context in prose, not context-baked filename suffixes.
-7. Preferred helper names: `capability-composer.ts`, `surfaces.ts`, `with-internal-client.ts`.
-8. Avoid ambiguous helper names that hide ownership or execution semantics.
+6. Shared context contracts default to explicit `context.ts` modules (or equivalent dedicated context modules), consumed by router modules.
+7. Keep role context in prose, not context-baked filename suffixes.
+8. Snippet alias default is `typeBoxStandardSchema as std`; `_`/`_$` remain feasible but are non-canonical due to readability.
+9. Preferred helper names: `capability-composer.ts`, `surfaces.ts`, `with-internal-client.ts`.
+10. Avoid ambiguous helper names that hide ownership or execution semantics.
 
 ## Canonical Runtime/Host Inventory
 1. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts`
@@ -61,16 +63,19 @@ packages/<domain>/src/
   domain/*
   service/*
   procedures/*
+  context.ts
   router.ts
   client.ts
   errors.ts
   index.ts
 plugins/api/<domain>/src/contract.ts
   operations/*
+  context.ts
   router.ts
   index.ts
 plugins/workflows/<domain>/src/contract.ts
   operations/*
+  context.ts
   router.ts
   functions/*
   durable/*

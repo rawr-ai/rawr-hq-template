@@ -14,7 +14,7 @@
 
 ### Capability naming brevity
 1. Before: `packages/invoice-processing/src/*`, `plugins/api/invoice-processing-api/src/*`.
-2. After: `packages/invoicing/src/*`, `plugins/api/invoicing-api/src/*`.
+2. After: `packages/invoicing/src/*`, `plugins/api/invoicing/src/*`.
 3. Why: `invoicing` is shorter but still explicit, and keeps boundary/package split semantics intact.
 
 ### Domain filename policy
@@ -42,3 +42,48 @@
 ## Edited Files
 1. `docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md`
 2. `docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_T_BASIC_ADJUSTMENT_SCRATCHPAD.md`
+
+---
+
+## Adjustment Pass 2 (Context + std alias + 4.x mini-structure snippets)
+
+### A) Context placement to explicit `context.ts`
+1. Before:
+   - Internal package context type (`InvoiceProcedureContext`) was declared in `packages/invoicing/src/router.ts`.
+   - API boundary context type (`InvoiceApiContext`) was declared in `plugins/api/invoicing/src/router.ts`.
+   - Procedures/operations imported context types from router snippets.
+2. After:
+   - Added `packages/invoicing/src/context.ts` with shared procedure context contract.
+   - Added `plugins/api/invoicing/src/context.ts` with shared boundary context contract.
+   - Updated snippets so procedures/client and operations/router import from `context.ts`.
+   - Removed convenience-only context type declarations from both router snippets.
+3. Why:
+   - Context contracts are shared across multiple files, so explicit `context.ts` improves placement clarity and avoids router-centric type coupling.
+
+### B) Standard schema helper alias (`std`)
+1. Before:
+   - Snippets imported `typeBoxStandardSchema` directly and called `.input(typeBoxStandardSchema(...))` / `.output(typeBoxStandardSchema(...))`.
+2. After:
+   - Snippets now use canonical alias:
+     - `import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";`
+     - `.input(std(...))` / `.output(std(...))`
+   - Applied across internal procedures and boundary contract snippets.
+3. Why:
+   - Shorter callsites improve readability while preserving explicit schema intent.
+
+### C) 4.x subsection mini file-structure snippets
+1. Before:
+   - Subsections 4.1–4.4 started directly with code blocks.
+2. After:
+   - Added small file-structure snippets at the top of each subsection:
+     - 4.1: `packages/orpc-standards/src/*`
+     - 4.2: `packages/invoicing/src/*` (including `context.ts`)
+     - 4.3: `plugins/api/invoicing/src/*` (including `context.ts`)
+     - 4.4: `rawr.hq.ts` + host mounting files under `apps/server/src/*`
+3. Why:
+   - Gives immediate local orientation before code details, reducing ambiguity about where each snippet belongs in the larger tree.
+
+### Consistency updates tied to this pass
+1. Canonical file tree updated to include both new `context.ts` files.
+2. Wiring steps updated to mention `context.ts` in internal and boundary layering.
+3. Policy checklist expanded to assert explicit context-contract placement outside router convenience declarations.

@@ -49,11 +49,13 @@ This is a policy/spec artifact. It is not a migration checklist.
 7. Domain schema modules are TypeBox-first and export static types from the same file.
 8. Domain filenames inside one `domain/` folder omit redundant domain-prefix tokens.
 9. Naming defaults prefer concise, unambiguous domain identifiers for package/plugin directories and namespaces (for example `invoicing`).
-10. No second first-party trigger authoring path for the same workflow behavior.
-11. No local HTTP self-calls (`/rpc`, `/api/orpc`) as in-process default.
-12. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
-13. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
-14. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
+10. Shared context contract defaults live in `context.ts` (or equivalent dedicated context module), and routers consume that contract rather than re-declaring it inline.
+11. Snippet alias default is `typeBoxStandardSchema as std`; terse aliases like `_`/`_$` are feasible but non-canonical due to readability.
+12. No second first-party trigger authoring path for the same workflow behavior.
+13. No local HTTP self-calls (`/rpc`, `/api/orpc`) as in-process default.
+14. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
+15. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
+16. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
 
 ## 5) Axis Map (Coverage)
 | Axis | Policy surface | Canonical leaf spec |
@@ -74,6 +76,7 @@ packages/<domain>/src/
   domain/*
   service/*
   procedures/*
+  context.ts
   router.ts
   client.ts
   errors.ts
@@ -81,11 +84,13 @@ packages/<domain>/src/
 
 plugins/api/<domain>/src/contract.ts
   operations/*
+  context.ts
   router.ts
   index.ts
 
 plugins/workflows/<domain>/src/contract.ts
   operations/*
+  context.ts
   router.ts
   functions/*
   durable/*   # optional additive ingress adapters only
@@ -157,8 +162,10 @@ state: os.state.router({
 3. Within one `domain/` folder, filenames avoid repeating the domain token (`status.ts`, not `invoice-status.ts` inside `invoicing/domain/`).
 4. Domain schema files are TypeBox-first and co-export static types from the same file.
 5. Package/plugin directory names prefer concise domain forms when clear (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
-6. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
-7. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
+6. Shared context contracts default to `context.ts` (or equivalent dedicated context module), and router modules consume that contract.
+7. In policy snippets, use `typeBoxStandardSchema as std` as the readability-first alias; `_`/`_$` may appear in local code but are not canonical in spec docs.
+8. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
+9. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
 
 ## 10) Source Anchors
 ### Local lineage

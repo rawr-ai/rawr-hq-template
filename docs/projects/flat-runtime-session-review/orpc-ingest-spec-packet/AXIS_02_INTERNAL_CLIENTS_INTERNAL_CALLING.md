@@ -17,6 +17,8 @@
 5. Domain schemas MUST be authored TypeBox-first and MUST export static types from the same file.
 6. Within one `domain/` folder, filenames MUST avoid redundant domain-prefix tokens.
 7. Package and plugin directory names SHOULD prefer concise domain names when unambiguous (for example `invoicing`).
+8. Shared procedure context contracts MUST live in explicit `context.ts` (or equivalent dedicated context module), and routers/clients MUST consume that contract.
+9. Spec snippet alias default for schema wrapping SHOULD be `typeBoxStandardSchema as std`; `_`/`_$` are feasible but non-canonical due to readability.
 
 ## Why
 - Prevents “four ways to call” drift.
@@ -33,6 +35,7 @@ packages/<domain>/src/
   domain/*
   service/*
   procedures/*
+  context.ts
   router.ts
   client.ts
   errors.ts
@@ -43,7 +46,8 @@ packages/<domain>/src/
 - `domain/*`: TypeBox-first entities/value objects/invariants with co-located static type exports.
 - `service/*`: pure use-case logic with injected dependencies.
 - `procedures/*`: internal procedure boundary (schema + handlers).
-- `router.ts`: package-internal route composition.
+- `context.ts`: shared context contract consumed by procedures/router/client.
+- `router.ts`: package-internal route composition that consumes shared context contracts.
 - `client.ts`: default internal invocation path.
 - `errors.ts`: package-level typed errors.
 - `index.ts`: package export surface.
@@ -128,11 +132,17 @@ export async function cancelInvoice(deps: InvoiceServiceDeps, input: { runId: st
 ### Internal procedure boundary
 ```ts
 // packages/invoicing/src/procedures/start.ts
+import { ORPCError, os } from "@orpc/server";
+import { Type } from "typebox";
+import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { startInvoice } from "../service/lifecycle";
+import type { InvoiceProcedureContext } from "../context";
+
 const o = os.$context<InvoiceProcedureContext>();
 
 export const startProcedure = o
-  .input(typeBoxStandardSchema(Type.Object({ invoiceId: Type.String(), requestedBy: Type.String() })))
-  .output(typeBoxStandardSchema(Type.Object({ runId: Type.String(), accepted: Type.Boolean() })))
+  .input(std(Type.Object({ invoiceId: Type.String(), requestedBy: Type.String() })))
+  .output(std(Type.Object({ runId: Type.String(), accepted: Type.Boolean() })))
   .handler(async ({ context, input }) => {
     try {
       return await startInvoice(context.deps, input);
@@ -152,16 +162,25 @@ export const invoiceProcedures = {
 ```
 
 ```ts
-// packages/invoicing/src/router.ts
+// packages/invoicing/src/context.ts
+import type { InvoiceServiceDeps } from "./service/lifecycle";
+
 export type InvoiceProcedureContext = { deps: InvoiceServiceDeps };
-export const invoiceInternalRouter = invoiceProcedures;
 ```
 
 ### Internal client default
 ```ts
+// packages/invoicing/src/router.ts
+import { invoiceProcedures } from "./procedures";
+
+export const invoiceInternalRouter = invoiceProcedures;
+```
+
+```ts
 // packages/invoicing/src/client.ts
 import { createRouterClient } from "@orpc/server";
-import { invoiceInternalRouter, type InvoiceProcedureContext } from "./router";
+import { invoiceInternalRouter } from "./router";
+import type { InvoiceProcedureContext } from "./context";
 
 export function createInvoiceInternalClient(context: InvoiceProcedureContext) {
   return createRouterClient(invoiceInternalRouter, { context });
@@ -181,7 +200,8 @@ export class InvoiceNotFoundError extends Error {
 // packages/invoicing/src/index.ts
 export * from "./domain/run";
 export * from "./service";
-export { invoiceInternalRouter, type InvoiceProcedureContext } from "./router";
+export { invoiceInternalRouter } from "./router";
+export type { InvoiceProcedureContext } from "./context";
 export { createInvoiceInternalClient } from "./client";
 export * from "./errors";
 ```
@@ -203,6 +223,8 @@ export async function startInvoiceOperation(
 3. Domain filenames omit redundant domain prefixes when already scoped by folder (`domain/status.ts`, not `domain/invoice-status.ts` for `invoicing`).
 4. Domain schema modules co-locate TypeBox schema values and static type exports.
 5. Prefer concise domain naming for package/plugin directories when unambiguous (`packages/invoicing`, `plugins/api/invoicing`).
+6. Shared context contract defaults to `context.ts` (or equivalent dedicated module), consumed by routers/clients.
+7. In snippets, use `typeBoxStandardSchema as std`; `_`/`_$` aliases are feasible but non-canonical in docs.
 
 ## References
 - Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts:5`

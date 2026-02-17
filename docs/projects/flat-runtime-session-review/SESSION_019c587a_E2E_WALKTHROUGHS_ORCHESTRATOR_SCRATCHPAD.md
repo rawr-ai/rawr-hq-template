@@ -64,3 +64,14 @@ User-requested canonical adjustments to apply across walkthroughs + spec docs:
 2) Domain modeling: TypeBox-first schema as source of truth, and export static TS types from the same file (`Static<typeof Schema>`), avoiding separate duplicate type declarations where possible.
 3) Naming brevity: avoid unnecessarily long names for directories/modules (e.g., prefer `invoicing` over `invoice-processing-workflows` where scope is already clear).
 4) Apply in parallel across all E2E docs and spec docs with dedicated ownership per agent.
+
+## Follow-up Q&A Adjustment Pass (2026-02-17)
+New requested adjustments:
+1) Context placement: evaluate and normalize examples/spec guidance toward explicit `context.ts` (instead of embedding context types in `router.ts` for convenience).
+2) Standard schema helper naming: evaluate feasibility of short alias and define canonical recommendation (avoid cryptic `_` if possible).
+3) Add mini file-tree snippets at top of each 4.x file subsection in E2E docs, showing all files in that subsection in the larger tree context.
+
+Working defaults for this pass:
+- Prefer `context.ts` for shared context contracts in examples.
+- Use short but readable alias for `typeBoxStandardSchema` in examples (candidate: `std`).
+- Keep architecture unchanged; docs/tutorial quality and naming consistency only.

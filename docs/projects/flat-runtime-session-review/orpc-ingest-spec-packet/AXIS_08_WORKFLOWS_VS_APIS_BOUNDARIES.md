@@ -15,6 +15,7 @@
 3. Durable execution functions MUST remain Inngest function definitions.
 4. `/api/inngest` is runtime ingress only; caller-trigger workflow routes are separate oRPC surfaces.
 5. Workflow trigger contracts SHOULD consume TypeBox-first domain schemas that co-export static types from the same source modules.
+6. Shared workflow trigger context contracts SHOULD live in explicit `context.ts` modules (or equivalent dedicated context modules), consumed by routers.
 
 ## Why
 - Preserves one trigger story for callers and one durability story for runtime.
@@ -38,16 +39,21 @@ plugins/workflows/<domain>/src/contract.ts
 1. Prefer concise, unambiguous workflow plugin directory names (for example `plugins/workflows/invoicing`).
 2. Keep role-oriented filenames (`contract.ts`, `router.ts`, `operations/*`, `functions/*`) and avoid context-baked suffixes.
 3. If a workflow package owns `domain/*`, avoid redundant domain-prefix filenames inside that folder.
+4. Keep shared trigger context contracts in `context.ts` rather than re-declaring them inline in `router.ts` snippets.
+5. In snippets, prefer `typeBoxStandardSchema as std`; `_`/`_$` aliases are feasible but non-canonical for readability.
 
 ## Canonical Snippets
 
 ### Trigger contract
 ```ts
+import { Type } from "typebox";
+import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+
 export const invoiceWorkflowTriggerContract = oc.router({
   triggerInvoiceReconciliation: oc
     .route({ method: "POST", path: "/invoicing/reconciliation/trigger" })
-    .input(typeBoxStandardSchema(Type.Object({ runId: Type.String() })))
-    .output(typeBoxStandardSchema(Type.Object({ accepted: Type.Literal(true) }))),
+    .input(std(Type.Object({ runId: Type.String() })))
+    .output(std(Type.Object({ accepted: Type.Literal(true) }))),
 });
 ```
 
@@ -64,7 +70,18 @@ export async function triggerReconciliationOperation(inngest: Inngest, input: { 
 
 ### Trigger router
 ```ts
-type InvoiceWorkflowTriggerContext = { inngest: Inngest; canCallInternal: boolean };
+// plugins/workflows/invoicing/src/context.ts
+import type { Inngest } from "inngest";
+
+export type InvoiceWorkflowTriggerContext = { inngest: Inngest; canCallInternal: boolean };
+```
+
+```ts
+// plugins/workflows/invoicing/src/router.ts
+import { implement } from "@orpc/server";
+import { invoiceWorkflowTriggerContract } from "./contract";
+import type { InvoiceWorkflowTriggerContext } from "./context";
+
 const os = implement<typeof invoiceWorkflowTriggerContract, InvoiceWorkflowTriggerContext>(invoiceWorkflowTriggerContract);
 
 export function createInvoiceWorkflowTriggerRouter() {

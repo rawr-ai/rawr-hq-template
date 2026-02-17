@@ -5,6 +5,35 @@
 - Owned E2E doc updated: `docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`.
 - No runtime/source code changes performed.
 
+## Change Log (Pass 2: Context + Readability + Subsection Trees)
+1. Added explicit `context.ts` contracts in shared boundary snippets.
+- Added `plugins/workflows/invoicing/src/context.ts` with `Principal`, `WorkflowRuntime`, and `InvoicingWorkflowContext`.
+- Refactored router snippet to import boundary types from `context.ts` instead of inline `WorkflowContext` declarations in `router.ts`.
+- Added host boundary contract snippet at `apps/server/src/workflows/context.ts` and updated host routing snippet to use `createWorkflowBoundaryContext(...)`.
+
+2. Standard schema helper alias normalized for readability.
+- Updated contract snippet import to:
+  - `import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";`
+- Updated all `.input(...)` / `.output(...)` calls in the contract snippet from `typeBoxStandardSchema(...)` to `std(...)`.
+
+3. Added mini file-tree snippets at the top of each 4.x subsection.
+- Added contextual tree snippets for sections:
+  - `4.1` shared package semantics
+  - `4.2` workflow contract
+  - `4.3` workflow router boundary
+  - `4.4` durable function
+  - `4.5` host composition/mount
+  - `4.6` web client + mount
+- Each tree lists the full local file context for the files shown in that subsection.
+
+4. Updated top-level canonical tree to reflect explicit context contracts.
+- Added `plugins/workflows/invoicing/src/context.ts`.
+- Expanded `apps/server/src` tree with `workflows/context.ts`.
+
+5. Updated prose for consistency with context-contract placement.
+- Browser/server boundary notes now explicitly call out server-only `context.ts` boundary contracts.
+- Wiring steps updated to include context contract definition/use in router and host mount steps.
+
 ## Change Log
 1. Normalized package/plugin naming to concise `invoicing` conventions in examples.
 - `packages/invoice-processing` -> `packages/invoicing`
@@ -52,3 +81,4 @@
 1. The requested scratchpad path did not exist in this worktree; this file was created at the exact owned path.
 2. This pass is documentation-only; no claims of runtime implementation convergence are made.
 3. Existing unresolved implementation and ownership decisions remain intentionally open per source document posture.
+4. Subsection mini trees are documentation affordances; they do not imply prescriptive mandatory file layout.
