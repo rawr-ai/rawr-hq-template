@@ -64,6 +64,219 @@ Add this to canonical policy docs:
 - contract-drift risk requiring explicit artifact governance,
 - expected near-term externalization.
 
+## Illustrative Deliberate Hybrid (N=1 and N=3)
+
+### 1) Internal leaf modules (internal packages) — router/service-first
+
+N=1 shape:
+
+```text
+packages/invoice-processing/src/internal/
+  operations/
+    start.ts
+  services/
+    invoice-service.ts
+  router.ts
+```
+
+N=3 shape (scaled):
+
+```text
+packages/invoice-processing/src/internal/
+  operations/
+    start.ts
+    get-status.ts
+    cancel.ts
+    index.ts
+  services/
+    invoice-service.ts
+  router.ts
+  index.ts
+```
+
+Example operation (router/service-first, no separate contract artifact):
+
+```ts
+// packages/invoice-processing/src/internal/operations/start.ts
+import { os } from "@orpc/server";
+import { Type } from "typebox";
+import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { startInvoice } from "../services/invoice-service";
+
+export type InternalContext = {
+  deps: {
+    newRunId: () => string;
+    saveRun: (run: { runId: string; invoiceId: string }) => Promise<void>;
+  };
+};
+
+const o = os.$context<InternalContext>();
+
+export const startMeta = {
+  kind: "internal-op",
+  capability: "invoicing",
+} as const;
+
+export const start = o
+  .input(
+    typeBoxStandardSchema(
+      Type.Object(
+        {
+          invoiceId: Type.String({ minLength: 1 }),
+          requestedBy: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
+      ),
+    ),
+  )
+  .output(
+    typeBoxStandardSchema(
+      Type.Object(
+        {
+          runId: Type.String({ minLength: 1 }),
+          accepted: Type.Literal(true),
+        },
+        { additionalProperties: false },
+      ),
+    ),
+  )
+  .handler(async ({ input, context }) => {
+    return startInvoice(context.deps, input);
+  });
+```
+
+```ts
+// packages/invoice-processing/src/internal/router.ts
+import { start, startMeta } from "./operations/start";
+import { getStatus, getStatusMeta } from "./operations/get-status";
+import { cancel, cancelMeta } from "./operations/cancel";
+
+export const internalRouter = { start, getStatus, cancel } as const;
+export const internalRouterMeta = {
+  start: startMeta,
+  getStatus: getStatusMeta,
+  cancel: cancelMeta,
+} as const;
+```
+
+Where authoring primarily happens:
+1. Input/output schemas: in each `operations/*.ts`.
+2. Metadata schema/object: in each `operations/*.ts` (for example `startMeta`).
+3. Implementation logic: in service modules (`services/*`), called by operation handlers.
+
+### 2) API plugin / workflow trigger API — contract-first
+
+N=1 shape:
+
+```text
+plugins/api/invoice-api/src/
+  contract.ts
+  router.ts
+```
+
+N=3 shape (scaled):
+
+```text
+plugins/api/invoice-api/src/
+  contracts/
+    start.contract.ts
+    get-status.contract.ts
+    cancel.contract.ts
+  handlers/
+    start.handler.ts
+    get-status.handler.ts
+    cancel.handler.ts
+  contract.ts
+  router.ts
+  index.ts
+```
+
+Boundary contract (authoring source of truth for caller-facing shape):
+
+```ts
+// plugins/api/invoice-api/src/contracts/start.contract.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+
+export const startContract = oc
+  .route({ method: "POST", path: "/invoices/processing/start" })
+  .input(
+    typeBoxStandardSchema(
+      Type.Object(
+        {
+          invoiceId: Type.String({ minLength: 1 }),
+          requestedBy: Type.String({ minLength: 1 }),
+          traceToken: Type.Optional(Type.String()),
+        },
+        { additionalProperties: false },
+      ),
+    ),
+  )
+  .output(
+    typeBoxStandardSchema(
+      Type.Object(
+        {
+          runId: Type.String({ minLength: 1 }),
+          accepted: Type.Boolean(),
+        },
+        { additionalProperties: false },
+      ),
+    ),
+  );
+```
+
+```ts
+// plugins/api/invoice-api/src/contract.ts
+import { oc } from "@orpc/contract";
+import { startContract } from "./contracts/start.contract";
+import { getStatusContract } from "./contracts/get-status.contract";
+import { cancelContract } from "./contracts/cancel.contract";
+
+export const invoiceApiContract = oc.router({
+  startInvoiceProcessing: startContract,
+  getInvoiceProcessingStatus: getStatusContract,
+  cancelInvoiceProcessing: cancelContract,
+});
+```
+
+```ts
+// plugins/api/invoice-api/src/router.ts
+import { implement } from "@orpc/server";
+import { invoiceApiContract } from "./contract";
+import { startHandler } from "./handlers/start.handler";
+import { getStatusHandler } from "./handlers/get-status.handler";
+import { cancelHandler } from "./handlers/cancel.handler";
+
+export type InvoiceApiContext = {
+  internal: {
+    start: (input: { invoiceId: string; requestedBy: string }) => Promise<{ runId: string; accepted: true }>;
+    getStatus: (input: { runId: string }) => Promise<{ runId: string; status: string }>;
+    cancel: (input: { runId: string }) => Promise<{ accepted: true }>;
+  };
+};
+
+const os = implement<typeof invoiceApiContract, InvoiceApiContext>(invoiceApiContract);
+
+export function createInvoiceApiRouter() {
+  return os.router({
+    startInvoiceProcessing: os.startInvoiceProcessing.handler(startHandler),
+    getInvoiceProcessingStatus: os.getInvoiceProcessingStatus.handler(getStatusHandler),
+    cancelInvoiceProcessing: os.cancelInvoiceProcessing.handler(cancelHandler),
+  });
+}
+```
+
+Where authoring primarily happens:
+1. Input/output schemas + HTTP metadata: `contracts/*.contract.ts`.
+2. Implementation handling: `handlers/*.handler.ts` (or directly in `router.ts` for small N=1).
+3. Composition of contract vs implementation mapping: `contract.ts` + `router.ts`.
+
+What changes under deliberate hybrid:
+1. Internal leaf modules can stay router/service-first by default.
+2. Boundary APIs/workflow trigger APIs remain contract-first (unchanged default).
+3. This is the side-by-side rule that prevents accidental “three-layer confusion.”
+
 ## Not Yet Integrated Elsewhere
 Still pending back-port/integration into canonical E2E docs:
 
