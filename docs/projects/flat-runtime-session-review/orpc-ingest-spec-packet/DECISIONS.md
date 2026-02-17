@@ -4,7 +4,7 @@
 Packet-local decision tracking for documentation-architecture changes only.
 
 ## Current Status
-Packet remains locked on split posture and TypeBox-first policy. Procedure I/O schema ownership, inline-I/O docs/examples posture, and context metadata placement are now explicitly locked. New walkthrough work and post-research context/middleware findings also surfaced open and proposed items that require a future lock.
+Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, and context metadata placement are now explicitly locked. New walkthrough work and post-research context/middleware findings also surfaced open and proposed items that require a future lock.
 
 ## Decision Register
 
