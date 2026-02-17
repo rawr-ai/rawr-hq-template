@@ -237,11 +237,25 @@ This pair is allowed because intents are distinct; they are not two authoring pa
 ### Naming Rules (Canonical)
 1. Use short, descriptive file names that describe role, not implementation trivia.
 2. Canonical defaults:
-- `contract.ts`, `router.ts`, `client.ts`, `index.ts`.
-3. Keep role context in prose when needed (for example, “workflow trigger router”), not in context-baked file suffixes.
-4. Avoid ambiguous generic names in core harness modules.
+- `contract.ts`, `router.ts`, `client.ts`, `operations/*`, `index.ts`.
+3. Internal package layered defaults MAY also include role folders/files:
+- `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
+4. Keep role context in prose when needed (for example, “workflow trigger router”), not in context-baked file suffixes.
+5. Avoid ambiguous generic names in core harness modules.
 - Preferred: `capability-composer.ts`, `surfaces.ts`, `with-internal-client.ts`.
 - Avoid: unclear names that hide ownership or execution semantics.
+
+### Adoption Exception (Explicit)
+Default posture remains boundary-owned contracts + boundary operations.
+
+Allowed exception (explicit, documented):
+1. If a boundary is truly 1:1 with an internal package surface, direct adoption is acceptable.
+2. When used, document why overlap is truly 1:1.
+3. Document what would trigger returning to boundary-owned contracts.
+
+### Scale Rule (Default Progression)
+1. Split implementation handlers/operations first.
+2. Split contracts only when behavior, policy, or external audience diverges.
 
 ## 5) Implementation Inventory / Glue Code
 
@@ -261,14 +275,274 @@ Runtime/host glue (existing):
 - Inngest serve handler factory, run queue bridge, durable function definition, step/timeline lifecycle.
 
 Capability canonical ownership (policy-level, from converged debate outputs):
-1. `packages/<capability>/src/{contract.ts,router.ts,client.ts}`
-- Internal contract/router/client.
-2. `plugins/api/<capability>-api/src/{contract.ts,router.ts,index.ts}`
-- Boundary API surface.
-3. `plugins/workflows/<capability>-workflows/src/{contract.ts,router.ts,functions/*,index.ts}`
-- Workflow trigger + durable function surface.
+1. `packages/<capability>/src/{domain/*,service/*,procedures/*,router.ts,client.ts,errors.ts,index.ts}`
+- Internal pure capability default (transport-neutral domain/service with explicit internal procedure boundary).
+2. `plugins/api/<capability>-api/src/{contract.ts,operations/*,router.ts,index.ts}`
+- Boundary API surface (contract-first + explicit boundary operations).
+3. `plugins/workflows/<capability>-workflows/src/{contract.ts,operations/*,router.ts,functions/*,index.ts}`
+- Workflow trigger surface + durable function surface (split by role).
 4. Optional additive ingress only:
 - `plugins/workflows/<capability>-workflows/src/durable/*` for Durable Endpoint adapters (no first-party trigger replacement).
+5. Host split surface policy:
+- Caller-triggered workflow APIs remain on oRPC workflow trigger routes (for example `/api/workflows/<capability>/*`).
+- Inngest runtime ingress remains `/api/inngest` only.
+
+### Internal Package Default (Pure Capability)
+Use one internal package shape by default:
+
+```text
+packages/invoice-processing/src/
+  domain/
+    invoice.ts
+    invoice-status.ts
+  service/
+    lifecycle.ts
+    status.ts
+    cancellation.ts
+    index.ts
+  procedures/
+    start.ts
+    get-status.ts
+    cancel.ts
+    index.ts
+  router.ts
+  client.ts
+  errors.ts
+  index.ts
+```
+
+Role summary:
+1. `domain/*`: entities/value objects + invariants only.
+2. `service/*`: pure use-case logic with injected deps.
+3. `procedures/*`: internal RPC boundary (schema + handler composition).
+4. `router.ts`, `client.ts`, `errors.ts`, `index.ts`: package composition and public package surface.
+
+```ts
+// packages/invoice-processing/src/procedures/start.ts
+import { os, ORPCError } from "@orpc/server";
+import { Type } from "typebox";
+import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { startInvoice } from "../service";
+import type { InvoiceProcedureContext } from "../router";
+
+const o = os.$context<InvoiceProcedureContext>();
+
+export const startProcedure = o
+  .input(typeBoxStandardSchema(Type.Object({ invoiceId: Type.String(), requestedBy: Type.String() })))
+  .output(typeBoxStandardSchema(Type.Object({ runId: Type.String(), accepted: Type.Boolean() })))
+  .handler(async ({ context, input }) => {
+    try {
+      return await startInvoice(context.deps, input);
+    } catch {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "Failed to start invoice" });
+    }
+  });
+```
+
+```ts
+// packages/invoice-processing/src/client.ts
+import { createRouterClient } from "@orpc/server";
+import { invoiceInternalRouter, type InvoiceProcedureContext } from "./router";
+
+export function createInvoiceInternalClient(context: InvoiceProcedureContext) {
+  return createRouterClient(invoiceInternalRouter, { context });
+}
+```
+
+### Boundary API Plugin Default (Contract-First + Operations)
+Default boundary plugin shape keeps operation code explicit:
+
+```text
+plugins/api/invoice-api/src/
+  contract.ts
+  operations/
+    start.ts
+    get-status.ts
+    cancel.ts
+  router.ts
+  index.ts
+```
+
+```ts
+// plugins/api/invoice-api/src/operations/start.ts
+import type { InvoiceApiContext } from "../router";
+
+export async function startInvoiceOperation(
+  context: InvoiceApiContext,
+  input: { invoiceId: string; requestedBy: string },
+) {
+  return context.invoice.start(input);
+}
+```
+
+```ts
+// plugins/api/invoice-api/src/router.ts
+import { implement } from "@orpc/server";
+import { invoiceApiContract } from "./contract";
+import { startInvoiceOperation } from "./operations/start";
+
+type InvoiceApiContext = {
+  invoice: { start: (input: { invoiceId: string; requestedBy: string }) => Promise<{ runId: string; accepted: boolean }> };
+};
+
+const os = implement<typeof invoiceApiContract, InvoiceApiContext>(invoiceApiContract);
+
+export function createInvoiceApiRouter() {
+  return os.router({
+    startInvoiceProcessing: os.startInvoiceProcessing.handler(({ context, input }) =>
+      startInvoiceOperation(context, input),
+    ),
+  });
+}
+```
+
+### Workflow Trigger Plugin + Inngest Split (Recommended)
+Keep trigger API and durable execution separate by role:
+1. Trigger API: oRPC contract/router for caller-triggered workflow routes (for example `/api/workflows/<capability>/*`).
+2. Durable execution: Inngest function definitions mounted at `/api/inngest`.
+
+```text
+plugins/workflows/invoice-workflows/src/
+  contract.ts
+  operations/
+    trigger-reconciliation.ts
+  router.ts
+  functions/
+    reconciliation.ts
+  index.ts
+```
+
+```ts
+// plugins/workflows/invoice-workflows/src/operations/trigger-reconciliation.ts
+import type { Inngest } from "inngest";
+
+export async function triggerReconciliationOperation(inngest: Inngest, input: { runId: string }) {
+  await inngest.send({
+    name: "invoice.reconciliation.requested",
+    data: { runId: input.runId },
+  });
+  return { accepted: true as const };
+}
+```
+
+```ts
+// plugins/workflows/invoice-workflows/src/router.ts
+import { implement } from "@orpc/server";
+import type { Inngest } from "inngest";
+import { invoiceWorkflowTriggerContract } from "./contract";
+import { triggerReconciliationOperation } from "./operations/trigger-reconciliation";
+
+type InvoiceWorkflowTriggerContext = { inngest: Inngest; canCallInternal: boolean };
+const os = implement<typeof invoiceWorkflowTriggerContract, InvoiceWorkflowTriggerContext>(invoiceWorkflowTriggerContract);
+
+export function createInvoiceWorkflowTriggerRouter() {
+  return os.router({
+    triggerInvoiceReconciliation: os.triggerInvoiceReconciliation.handler(async ({ context, input }) => {
+      if (!context.canCallInternal) throw new Error("Procedure is internal");
+      return triggerReconciliationOperation(context.inngest, input);
+    }),
+  });
+}
+```
+
+```ts
+// plugins/workflows/invoice-workflows/src/functions/reconciliation.ts
+import type { Inngest } from "inngest";
+
+export function createReconciliationFunction(inngest: Inngest) {
+  return inngest.createFunction(
+    { id: "invoice.reconciliation", retries: 2 },
+    { event: "invoice.reconciliation.requested" },
+    async ({ event, step }) => {
+      await step.run("invoice/reconcile", async () => ({ runId: event.data.runId, ok: true }));
+      return { ok: true as const };
+    },
+  );
+}
+```
+
+### Required Root Fixtures (Brief, Concrete)
+These fixtures are required by this integrated posture. Full runtime internals remain canonical in the harness sections below.
+
+```ts
+// packages/orpc-standards/src/index.ts
+export { typeBoxStandardSchema } from "./typebox-standard-schema";
+```
+
+```ts
+// packages/orpc-standards/src/typebox-standard-schema.ts
+import type { Schema, SchemaIssue } from "@orpc/contract";
+import type { Static, TSchema } from "typebox";
+import { Value } from "typebox/value";
+
+function parseIssuePath(instancePath: unknown): PropertyKey[] | undefined {
+  if (typeof instancePath !== "string" || instancePath === "" || instancePath === "/") return undefined;
+  return instancePath
+    .split("/")
+    .slice(1)
+    .map((segment) => (/^\d+$/.test(segment) ? Number(segment) : segment));
+}
+
+export function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Static<T>, Static<T>> {
+  return {
+    "~standard": {
+      version: 1,
+      vendor: "typebox",
+      validate: (value) => {
+        if (Value.Check(schema, value)) return { value: value as Static<T> };
+        const issues = [...Value.Errors(schema, value)].map((issue) => {
+          const path = parseIssuePath((issue as { instancePath?: unknown }).instancePath);
+          return path ? ({ message: issue.message, path } satisfies SchemaIssue) : ({ message: issue.message } satisfies SchemaIssue);
+        });
+        return { issues: issues.length > 0 ? issues : [{ message: "Validation failed" }] };
+      },
+    },
+    __typebox: schema,
+  } as Schema<Static<T>, Static<T>>;
+}
+```
+
+```ts
+// rawr.hq.ts (composition root fixture)
+import { oc } from "@orpc/contract";
+import { Inngest } from "inngest";
+import { invoiceApiSurface } from "./plugins/api/invoice-api/src";
+import { createInvoiceWorkflowSurface } from "./plugins/workflows/invoice-workflows/src";
+
+const inngest = new Inngest({ id: "rawr-hq" });
+const invoiceWorkflows = createInvoiceWorkflowSurface(inngest);
+
+export const rawrHqManifest = {
+  orpc: {
+    contract: oc.router({
+      invoicing: {
+        api: invoiceApiSurface.contract,
+        workflows: invoiceWorkflows.triggerContract,
+      },
+    }),
+    router: {
+      invoicing: {
+        api: invoiceApiSurface.router,
+        workflows: invoiceWorkflows.triggerRouter,
+      },
+    },
+  },
+  inngest: { client: inngest, functions: [...invoiceWorkflows.functions] },
+} as const;
+```
+
+```ts
+// apps/server/src/rawr.ts (host fixture)
+// Caller-trigger routes stay on oRPC workflow surfaces (for example /api/workflows/<capability>/*).
+// Durable runtime ingress stays on /api/inngest.
+app.all("/api/inngest", async ({ request }) => inngestHandler(request));
+registerOrpcRoutes(app, {
+  repoRoot: opts.repoRoot,
+  baseUrl: opts.baseUrl ?? "http://localhost:3000",
+  runtime,
+  inngestClient: inngestBundle.client,
+});
+```
 
 ### Canonical Harness Files (Explicit Code)
 
@@ -585,20 +859,30 @@ How it connects:
 apps/server/src/
   rawr.ts                # host composition and mounts
   orpc.ts                # oRPC handlers, context, OpenAPI generation
+rawr.hq.ts               # composition root fixture for contract/router/function bundles
 packages/core/src/orpc/
   hq-router.ts           # aggregate oRPC contract root
+packages/orpc-standards/src/
+  index.ts               # shared TypeBox standard-schema adapter export
+  typebox-standard-schema.ts # TypeBox -> Standard Schema adapter fixture
 packages/coordination-inngest/src/
   adapter.ts             # Inngest client/serve/function/queue bridge
 packages/<capability>/src/
-  contract.ts            # internal package contract
+  domain/*               # entities/value objects + invariants
+  service/*              # pure use-case logic
+  procedures/*           # internal procedure boundary
   router.ts              # internal package router
   client.ts              # internal package client (default internal call path)
+  errors.ts              # package-level typed errors
+  index.ts               # package public surface
 plugins/api/<capability>-api/src/
   contract.ts            # boundary API contract
+  operations/*           # explicit boundary operations
   router.ts              # boundary API router
   index.ts               # composed API surface export
 plugins/workflows/<capability>-workflows/src/
   contract.ts            # workflow trigger contract
+  operations/*           # explicit workflow trigger operations
   router.ts              # workflow trigger router
   functions/*            # durable function definitions
   durable/*              # optional additive durable endpoint adapters only
@@ -723,21 +1007,35 @@ Wiring:
 Caller intent: non-durable boundary action that maps to package capability logic.
 
 ```ts
+// plugins/api/invoice-processing-api/src/operations/start.ts
+import type { InvoiceApiContext } from "../router";
+
+export async function startInvoiceOperation(
+  context: InvoiceApiContext,
+  input: { invoiceId: string; requestedBy: string },
+) {
+  return context.invoice.start(input);
+}
+```
+
+```ts
 // plugins/api/invoice-processing-api/src/router.ts
 import { implement } from "@orpc/server";
 import { createInvoiceInternalClient, type InvoicePackageContext } from "@rawr/invoice-processing";
 import { invoiceApiContract } from "./contract";
+import { startInvoiceOperation } from "./operations/start";
 
-export type InvoiceApiContext = InvoicePackageContext;
+export type InvoiceApiContext = InvoicePackageContext & {
+  invoice: ReturnType<typeof createInvoiceInternalClient>;
+};
 
 export function createInvoiceApiRouter() {
   const os = implement<typeof invoiceApiContract, InvoiceApiContext>(invoiceApiContract);
 
   return os.router({
-    startInvoiceProcessing: os.startInvoiceProcessing.handler(async ({ context, input }) => {
-      const internal = createInvoiceInternalClient(context);
-      return internal.start({ invoiceId: input.invoiceId, requestedBy: input.requestedBy });
-    }),
+    startInvoiceProcessing: os.startInvoiceProcessing.handler(({ context, input }) =>
+      startInvoiceOperation(context, input),
+    ),
   });
 }
 ```
@@ -755,6 +1053,7 @@ Caller intent: trigger durable workflow run.
 import { implement } from "@orpc/server";
 import type { Inngest } from "inngest";
 import { invoiceWorkflowTriggerContract } from "./contract";
+import { triggerReconciliationOperation } from "./operations/trigger-reconciliation";
 
 type WorkflowTriggerContext = {
   inngest: Inngest;
@@ -767,13 +1066,23 @@ export function createInvoiceWorkflowTriggerRouter() {
   return os.router({
     triggerInvoiceReconciliation: os.triggerInvoiceReconciliation.handler(async ({ context, input }) => {
       if (!context.canCallInternal) throw new Error("Procedure triggerInvoiceReconciliation is internal");
-      await context.inngest.send({
-        name: "invoice.reconciliation.requested",
-        data: { runId: input.runId },
-      });
-      return { accepted: true };
+      return triggerReconciliationOperation(context.inngest, input);
     }),
   });
+}
+```
+
+```ts
+// explicit trigger operation (boundary layer)
+// plugins/workflows/invoice-processing-workflows/src/operations/trigger-reconciliation.ts
+import type { Inngest } from "inngest";
+
+export async function triggerReconciliationOperation(inngest: Inngest, input: { runId: string }) {
+  await inngest.send({
+    name: "invoice.reconciliation.requested",
+    data: { runId: input.runId },
+  });
+  return { accepted: true as const };
 }
 ```
 
@@ -841,7 +1150,7 @@ registerOrpcRoutes(app, {
 ```
 
 Where each harness is used:
-1. `registerOrpcRoutes(...)` -> caller-facing API harness (oRPC, OpenAPI, context injection).
+1. `registerOrpcRoutes(...)` -> caller-facing API harness (oRPC, OpenAPI, context injection), including workflow trigger routes (for example `/api/workflows/<capability>/*`).
 2. `/api/inngest` handler -> durability execution ingress harness (Inngest serve/runtime).
 
 ## 7) Source Anchors
@@ -852,6 +1161,7 @@ Where each harness is used:
 3. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_K_INTERNAL_CALLING_PACKAGING_RECOMMENDATION.md`
 4. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_H_DX_SIMPLIFICATION_REVIEW.md`
 5. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_INNGEST_ORPC_DEBATE_INTEGRATED_RECOMMENDATION.md`
+6. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_CONTRACT_ROUTER_INTEGRATED_RECOMMENDATION.md`
 
 ### Upstream references
 1. oRPC: [Contract-first define](https://orpc.dev/docs/contract-first/define-contract), [Implement](https://orpc.dev/docs/contract-first/implement-contract), [RPC handler](https://orpc.dev/docs/rpc-handler), [OpenAPI handler](https://orpc.dev/docs/openapi/openapi-handler), [Server-side clients](https://orpc.dev/docs/client/server-side)
