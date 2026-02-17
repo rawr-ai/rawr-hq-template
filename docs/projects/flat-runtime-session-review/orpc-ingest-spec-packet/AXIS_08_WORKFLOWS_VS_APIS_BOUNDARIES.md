@@ -14,6 +14,7 @@
 2. API-exposed workflow triggers MUST be authored as oRPC procedures that dispatch into Inngest durable execution.
 3. Durable execution functions MUST remain Inngest function definitions.
 4. `/api/inngest` is runtime ingress only; caller-trigger workflow routes are separate oRPC surfaces.
+5. Workflow trigger contracts SHOULD consume TypeBox-first domain schemas that co-export static types from the same source modules.
 
 ## Why
 - Preserves one trigger story for callers and one durability story for runtime.
@@ -25,7 +26,7 @@
 
 ## Canonical Workflow Plugin Shape
 ```text
-plugins/workflows/<capability>-workflows/src/
+plugins/workflows/<domain>-workflows/src/
   contract.ts
   operations/*
   router.ts
@@ -33,6 +34,11 @@ plugins/workflows/<capability>-workflows/src/
   index.ts
   durable/*   # optional additive adapters only
 ```
+
+## Naming Defaults (Workflow Surface)
+1. Prefer concise, unambiguous workflow plugin directory names (for example `plugins/workflows/invoicing-workflows`).
+2. Keep role-oriented filenames (`contract.ts`, `router.ts`, `operations/*`, `functions/*`) and avoid context-baked suffixes.
+3. If a workflow package owns `domain/*`, avoid redundant domain-prefix filenames inside that folder.
 
 ## Canonical Snippets
 

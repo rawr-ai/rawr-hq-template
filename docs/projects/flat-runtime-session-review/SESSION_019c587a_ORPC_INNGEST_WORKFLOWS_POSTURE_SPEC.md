@@ -41,16 +41,19 @@ This is a policy/spec artifact. It is not a migration checklist.
 
 ## 4) Global Invariants (Subsystem-Wide)
 1. `/api/inngest` is runtime ingress only.
-2. Caller-triggered workflow APIs stay on oRPC workflow trigger surfaces (for example `/api/workflows/<capability>/*`).
+2. Caller-triggered workflow APIs stay on oRPC workflow trigger surfaces (for example `/api/workflows/<domain>/*`).
 3. External SDK generation comes from one composed oRPC/OpenAPI boundary surface.
 4. One runtime-owned Inngest client bundle exists per process in host composition.
 5. Domain packages stay transport-neutral.
 6. TypeBox-first schema flow is preserved for oRPC contract I/O and OpenAPI conversion.
-7. No second first-party trigger authoring path for the same workflow behavior.
-8. No local HTTP self-calls (`/rpc`, `/api/orpc`) as in-process default.
-9. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
-10. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
-11. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
+7. Domain schema modules are TypeBox-first and export static types from the same file.
+8. Domain filenames inside one `domain/` folder omit redundant domain-prefix tokens.
+9. Naming defaults prefer concise, unambiguous domain identifiers for package/plugin directories and namespaces (for example `invoicing`).
+10. No second first-party trigger authoring path for the same workflow behavior.
+11. No local HTTP self-calls (`/rpc`, `/api/orpc`) as in-process default.
+12. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
+13. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
+14. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
 
 ## 5) Axis Map (Coverage)
 | Axis | Policy surface | Canonical leaf spec |
@@ -67,7 +70,7 @@ This is a policy/spec artifact. It is not a migration checklist.
 
 ## 6) Integrative Topology (Cross-Axis)
 ```text
-packages/<capability>/src/
+packages/<domain>/src/
   domain/*
   service/*
   procedures/*
@@ -76,13 +79,13 @@ packages/<capability>/src/
   errors.ts
   index.ts
 
-plugins/api/<capability>-api/src/
+plugins/api/<domain>-api/src/
   contract.ts
   operations/*
   router.ts
   index.ts
 
-plugins/workflows/<capability>-workflows/src/
+plugins/workflows/<domain>-workflows/src/
   contract.ts
   operations/*
   router.ts
@@ -153,8 +156,11 @@ state: os.state.router({
 ## 9) Naming, Adoption, and Scale Governance (Global)
 1. Canonical role names: `contract.ts`, `router.ts`, `client.ts`, `operations/*`, `index.ts`.
 2. Internal package layered defaults may include `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
-3. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
-4. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
+3. Within one `domain/` folder, filenames avoid repeating the domain token (`status.ts`, not `invoice-status.ts` inside `invoicing/domain/`).
+4. Domain schema files are TypeBox-first and co-export static types from the same file.
+5. Package/plugin directory names prefer concise domain forms when clear (`invoicing`, `invoicing-api`, `invoicing-workflows`).
+6. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
+7. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
 
 ## 10) Source Anchors
 ### Local lineage

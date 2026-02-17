@@ -47,6 +47,9 @@ Tutorial docs are normative only where they reference locked axis policies. If a
 3. Caller-triggered workflow routes are oRPC workflow trigger routes; runtime durable ingress is `/api/inngest`.
 4. TypeBox-first schema flow remains the baseline for contract I/O and OpenAPI conversion.
 5. One runtime-owned Inngest bundle (`client + functions`) exists per process.
+6. Domain schema modules are TypeBox-first and co-export static types from the same file.
+7. Domain filenames within one `domain/` folder avoid redundant domain-prefix tokens.
+8. Package/plugin directory naming prefers concise, unambiguous domain names (for example `invoicing`, `invoicing-api`, `invoicing-workflows`).
 
 ## Packet Interaction Model
 ```text
@@ -68,11 +71,13 @@ Caller
 - API plugins own caller-facing contracts, boundary operations, and boundary routers.
 - Workflow plugins own trigger contracts/operations/routers and durable functions.
 - Host layer owns composition spine and explicit route mounting.
+- Naming defaults favor concise domain identifiers over longer redundant forms when semantics stay clear.
 
 ## Packet-Wide Rules
 1. Each axis doc owns one policy slice; cross-axis docs reference owners rather than duplicating policy text.
 2. Any new architecture-impacting ambiguity must be logged in [DECISIONS.md](./DECISIONS.md) before execution continues.
 3. This packet must remain consistent with `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`.
+4. Packet examples SHOULD follow the domain naming defaults used in walkthroughs (`invoicing`-style concise capability tokens when clear).
 
 ## Navigation Map (If You Need X, Read Y)
 - External client generation and OpenAPI surface ownership -> [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)

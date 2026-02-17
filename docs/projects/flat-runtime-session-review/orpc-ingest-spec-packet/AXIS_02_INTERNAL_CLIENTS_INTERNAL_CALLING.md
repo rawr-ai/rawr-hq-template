@@ -10,10 +10,13 @@
 - Workflow trigger and durability semantics (see [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)).
 
 ## Canonical Policy
-1. Default internal cross-boundary calls MUST use capability in-process internal clients (`packages/<capability>/src/client.ts`).
+1. Default internal cross-boundary calls MUST use domain package in-process internal clients (`packages/<domain>/src/client.ts`).
 2. Server runtime code MUST NOT self-call local HTTP (`/rpc`, `/api/orpc`) for in-process calls.
 3. Boundary handlers SHOULD NOT directly call `inngest.send` unless they are designated workflow trigger routers.
 4. Domain packages MUST remain transport-neutral.
+5. Domain schemas MUST be authored TypeBox-first and MUST export static types from the same file.
+6. Within one `domain/` folder, filenames MUST avoid redundant domain-prefix tokens.
+7. Package and plugin directory names SHOULD prefer concise domain names when unambiguous (for example `invoicing`).
 
 ## Why
 - Prevents “four ways to call” drift.
@@ -26,7 +29,7 @@
 
 ## Internal Package Default (Pure Capability)
 ```text
-packages/<capability>/src/
+packages/<domain>/src/
   domain/*
   service/*
   procedures/*
@@ -37,7 +40,7 @@ packages/<capability>/src/
 ```
 
 ### Layer roles
-- `domain/*`: entities/value objects and invariants only.
+- `domain/*`: TypeBox-first entities/value objects/invariants with co-located static type exports.
 - `service/*`: pure use-case logic with injected dependencies.
 - `procedures/*`: internal procedure boundary (schema + handlers).
 - `router.ts`: package-internal route composition.
@@ -49,9 +52,18 @@ packages/<capability>/src/
 
 ### Domain layer
 ```ts
-// packages/invoice-processing/src/domain/invoice-status.ts
-export const INVOICE_STATUS = ["queued", "running", "completed", "failed", "canceled"] as const;
-export type InvoiceStatus = (typeof INVOICE_STATUS)[number];
+// packages/invoicing/src/domain/status.ts
+import { Type, type Static } from "typebox";
+
+export const InvoiceStatusSchema = Type.Union([
+  Type.Literal("queued"),
+  Type.Literal("running"),
+  Type.Literal("completed"),
+  Type.Literal("failed"),
+  Type.Literal("canceled"),
+]);
+
+export type InvoiceStatus = Static<typeof InvoiceStatusSchema>;
 
 export function canCancel(status: InvoiceStatus) {
   return status === "queued" || status === "running";
@@ -59,20 +71,25 @@ export function canCancel(status: InvoiceStatus) {
 ```
 
 ```ts
-// packages/invoice-processing/src/domain/invoice.ts
-import type { InvoiceStatus } from "./invoice-status";
+// packages/invoicing/src/domain/run.ts
+import { Type, type Static } from "typebox";
+import { InvoiceStatusSchema } from "./status";
 
-export type InvoiceRun = {
-  runId: string;
-  invoiceId: string;
-  requestedBy: string;
-  status: InvoiceStatus;
-};
+export const InvoiceRunSchema = Type.Object({
+  runId: Type.String(),
+  invoiceId: Type.String(),
+  requestedBy: Type.String(),
+  status: InvoiceStatusSchema,
+});
+
+export type InvoiceRun = Static<typeof InvoiceRunSchema>;
 ```
 
 ### Service layer
 ```ts
-// packages/invoice-processing/src/service/lifecycle.ts
+// packages/invoicing/src/service/lifecycle.ts
+import type { InvoiceRun } from "../domain/run";
+
 export type InvoiceServiceDeps = {
   newRunId: () => string;
   saveRun: (run: InvoiceRun) => Promise<void>;
@@ -91,7 +108,7 @@ export async function startInvoice(
 ```
 
 ```ts
-// packages/invoice-processing/src/service/status.ts
+// packages/invoicing/src/service/status.ts
 export async function getInvoiceStatus(deps: InvoiceServiceDeps, input: { runId: string }) {
   const run = await deps.getRun(input.runId);
   return run ? { runId: run.runId, status: run.status } : { runId: input.runId, status: "failed" as const };
@@ -99,7 +116,7 @@ export async function getInvoiceStatus(deps: InvoiceServiceDeps, input: { runId:
 ```
 
 ```ts
-// packages/invoice-processing/src/service/cancellation.ts
+// packages/invoicing/src/service/cancellation.ts
 export async function cancelInvoice(deps: InvoiceServiceDeps, input: { runId: string }) {
   const run = await deps.getRun(input.runId);
   if (!run || !canCancel(run.status)) return { accepted: false as const };
@@ -110,7 +127,7 @@ export async function cancelInvoice(deps: InvoiceServiceDeps, input: { runId: st
 
 ### Internal procedure boundary
 ```ts
-// packages/invoice-processing/src/procedures/start.ts
+// packages/invoicing/src/procedures/start.ts
 const o = os.$context<InvoiceProcedureContext>();
 
 export const startProcedure = o
@@ -126,7 +143,7 @@ export const startProcedure = o
 ```
 
 ```ts
-// packages/invoice-processing/src/procedures/index.ts
+// packages/invoicing/src/procedures/index.ts
 export const invoiceProcedures = {
   start: startProcedure,
   getStatus: getStatusProcedure,
@@ -135,14 +152,14 @@ export const invoiceProcedures = {
 ```
 
 ```ts
-// packages/invoice-processing/src/router.ts
+// packages/invoicing/src/router.ts
 export type InvoiceProcedureContext = { deps: InvoiceServiceDeps };
 export const invoiceInternalRouter = invoiceProcedures;
 ```
 
 ### Internal client default
 ```ts
-// packages/invoice-processing/src/client.ts
+// packages/invoicing/src/client.ts
 import { createRouterClient } from "@orpc/server";
 import { invoiceInternalRouter, type InvoiceProcedureContext } from "./router";
 
@@ -152,7 +169,7 @@ export function createInvoiceInternalClient(context: InvoiceProcedureContext) {
 ```
 
 ```ts
-// packages/invoice-processing/src/errors.ts
+// packages/invoicing/src/errors.ts
 export class InvoiceNotFoundError extends Error {
   constructor(public readonly runId: string) {
     super(`Invoice run not found: ${runId}`);
@@ -161,8 +178,8 @@ export class InvoiceNotFoundError extends Error {
 ```
 
 ```ts
-// packages/invoice-processing/src/index.ts
-export * from "./domain/invoice";
+// packages/invoicing/src/index.ts
+export * from "./domain/run";
 export * from "./service";
 export { invoiceInternalRouter, type InvoiceProcedureContext } from "./router";
 export { createInvoiceInternalClient } from "./client";
@@ -171,7 +188,7 @@ export * from "./errors";
 
 ### Example A (operation -> internal client)
 ```ts
-// plugins/api/invoice-processing-api/src/operations/start.ts
+// plugins/api/invoicing-api/src/operations/start.ts
 export async function startInvoiceOperation(
   context: InvoiceApiContext,
   input: { invoiceId: string; requestedBy: string },
@@ -183,6 +200,9 @@ export async function startInvoiceOperation(
 ## Naming Defaults (Applicable)
 1. Canonical role names: `contract.ts`, `router.ts`, `client.ts`, `operations/*`, `index.ts`.
 2. Internal layered defaults may include: `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
+3. Domain filenames omit redundant domain prefixes when already scoped by folder (`domain/status.ts`, not `domain/invoice-status.ts` for `invoicing`).
+4. Domain schema modules co-locate TypeBox schema values and static type exports.
+5. Prefer concise domain naming for package/plugin directories when unambiguous (`packages/invoicing`, `plugins/api/invoicing-api`).
 
 ## References
 - Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts:5`

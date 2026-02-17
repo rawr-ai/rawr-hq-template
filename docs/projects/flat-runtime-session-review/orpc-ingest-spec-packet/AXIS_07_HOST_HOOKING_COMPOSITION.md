@@ -25,12 +25,14 @@
 - This is desired for clarity and operational control.
 
 ## Naming Rules (Canonical)
-1. Use short descriptive names by role, not implementation trivia.
+1. Use short descriptive names by role, not implementation trivia; prefer concise domain/plugin directory names when clear (`invoicing`, `invoicing-api`, `invoicing-workflows`).
 2. Canonical defaults: `contract.ts`, `router.ts`, `client.ts`, `operations/*`, `index.ts`.
 3. Internal package layered defaults MAY include `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
-4. Keep role context in prose, not context-baked filename suffixes.
-5. Preferred helper names: `capability-composer.ts`, `surfaces.ts`, `with-internal-client.ts`.
-6. Avoid ambiguous helper names that hide ownership or execution semantics.
+4. Within one `domain/` folder, filenames avoid redundant domain prefixes (`status.ts`, not `invoice-status.ts` for `invoicing/domain/`).
+5. Domain schema modules are TypeBox-first and co-export static types from the same file.
+6. Keep role context in prose, not context-baked filename suffixes.
+7. Preferred helper names: `capability-composer.ts`, `surfaces.ts`, `with-internal-client.ts`.
+8. Avoid ambiguous helper names that hide ownership or execution semantics.
 
 ## Canonical Runtime/Host Inventory
 1. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts`
@@ -55,7 +57,7 @@ packages/orpc-standards/src/
   typebox-standard-schema.ts
 packages/coordination-inngest/src/
   adapter.ts
-packages/<capability>/src/
+packages/<domain>/src/
   domain/*
   service/*
   procedures/*
@@ -63,12 +65,12 @@ packages/<capability>/src/
   client.ts
   errors.ts
   index.ts
-plugins/api/<capability>-api/src/
+plugins/api/<domain>-api/src/
   contract.ts
   operations/*
   router.ts
   index.ts
-plugins/workflows/<capability>-workflows/src/
+plugins/workflows/<domain>-workflows/src/
   contract.ts
   operations/*
   router.ts
