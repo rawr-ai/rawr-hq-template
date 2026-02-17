@@ -22,3 +22,6 @@ Updates
 Clarity pass
 - Rewrote D-005 through D-010 sections into narrative form (goal/problem/impact/recommendation) before presenting technical appendices, keeping recommendations unchanged.
 - Each section now ends with practical implications and validation guidance to help non-author readers understand developer impact and guardrails.
+Boundary notes
+- Added explicit “What Changes”/“What Stays the Same” subsections for D-005..D-010 so readers know the scope of each change.
+- Included a concise system shape block under D-005 showing the new workflow handler sitting beside the existing `/rpc` and `/api/orpc` mounts.

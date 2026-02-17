@@ -26,6 +26,22 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
    }, { parse: "none" });
    ```
 *Alternative snippet:* Keep only `/rpc` mounts in `registerOrpcRoutes`, so the workflow trigger routed through `os.coordination.queueRun` never leaves the `/rpc` namespace.
+**What Changes**
+We keep the existing `/rpc` and `/api/orpc` mounts in place but add a parallel `/api/workflows/*` handler. The host wiring now includes a dedicated workflow context module and handler that mounts alongside the existing RPC/OpenAPI routes, without removing or replacing them.
+
+**What Stays the Same / Out of Scope**
+`apps/server/src/orpc.ts` continues to expose `registerOrpcRoutes` for the RPC and `/api/orpc` surfaces. No change occurs to how `/rpc` or `/api/orpc` respond; they remain the coordination entry for existing admin APIs. The new workflow handler complements, rather than replaces, those routes.
+
+**Relevant system shape**
+```text
+apps/server/src/
+  orpc.ts             # existing /rpc and /api/orpc mounts remain untouched
+  workflows/context.ts # new boundary context for workflow route
+  rawr.ts             # now registers OpenAPIHandler for /api/workflows plus existing mounts
+packages/core/src/
+  orpc/hq-router.ts   # still composes the RPC/OpenAPI contract
+rawr.hq.ts            # exports workflow surface used above
+```
 
 **D-006 — Canonical ownership of workflow contract artifacts**
 1. **Goal:** Producers and consumers of workflow metadata need one agreed-upon file that defines the workflow contract so SDKs, host wiring, and docs all converge on the same TypeBox schemas.
@@ -51,6 +67,11 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
    export { invoicingWorkflowContract } from "@rawr/invoicing/workflows/contract";
    ```
 *Alternative snippet:* Keep the document-only contract in `plugins/workflows/<domain>/src/contract.ts` and have packages re-export by reaching into the plugin directory, which blurs package boundaries.
+**What Changes**
+The package now owns the contract file, and workflow plugins re-export it. CI/docs generation tools point at the package path.
+
+**What Stays the Same / Out of Scope**
+Workflow plugins still manage their routers, context wiring, and operations; this change does not move operation logic or runtime glue into the package layer.
 
 **D-007 — First-party micro-frontend workflow client strategy**
 1. **What we want:** Browsers should trigger workflows and read status through a documented workflow surface (`/api/workflows`), using one shared, contract-typed client so they never have to call `/api/inngest`.
@@ -79,6 +100,11 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
    }
    ```
 *Alternative snapshot:* Browser code issuing raw `fetch("/api/inngest", …)` or constructing its own handlers, which exposes runtime ingress to unsafe consumers.
+**What Changes**
+We add the shared web client module and make it the sanctioned way for browsers to talk to `/api/workflows`.
+
+**What Stays the Same / Out of Scope**
+Server-only internal clients remain server-side; browsers still cannot call `/api/inngest`. The new client simply centralizes what they should already be doing.
 
 **D-008 — Extended traces middleware initialization order**
 1. **Objective:** Ensure telemetry captures every workflow run by registering `extendedTracesMiddleware` before any durable functions or steps exist.
@@ -109,8 +135,11 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
    });
    ```
 *Alternative snapshot:* Ingest client created without middleware (no `middleware` array), leaving trace pipelines detached.
-3. **Tradeoff**: Simpler bootstrap but results in missing trace links and harder observability.
+**What Changes**
+`rawr.hq.ts` now includes `extendedTracesMiddleware` in the Inngest client creation path so every function starts with instrumentation attached.
 
+**What Stays the Same / Out of Scope**
+Existing durable functions, runtime adapters, and `createCoordinationInngestFunction` logic stay untouched; only the client instantiation gains the middleware reference.
 **D-009 — Required dedupe marker policy for heavy oRPC middleware**
 1. **What we seek:** Expensive or stateful middleware should only run once per logical request, even when internal clients trigger the same procedures again.
 2. **Existing issue:** ORPC built-in dedupe works only for middleware chains that share ordering and exist in the leading subset; once internal clients or other packages re-use middleware, it executes again, duplicating checks (see `packages/invoicing/src/middleware.ts` in `E2E_04`).
@@ -140,6 +169,11 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
    });
    ```
 *Alternative snapshot:* Middleware without any state, so nested or internal calls run the check every time, defeating dedupe intentions.
+**What Changes**
+Middleware state tracking for dedupe now lives in each package middleware module, and doc guidance spells out how to set/read `middlewareState`.
+
+**What Stays the Same / Out of Scope**
+ORPC router definitions, contexts, and operations do not change; we only add context caching for middleware performance. The rule doesn’t force router-level dedupe rewrites.
 
 **D-010 — Inngest finished-hook side-effect guardrail**
 1. **What we aim for:** Engineers understand that Inngest’s `finished` hook re-runs on retries, so only idempotent logging/metrics belong there while critical state changes live inside `step.run` or the handler.
@@ -166,6 +200,11 @@ Locking the remaining ORPC/Inngest packet decisions now guarantees that the docu
    });
    ```
 *Alternative snapshot:* `finished` hooks that update runtime stores, replaying duplicates when retries occur.
+**What Changes**
+`AXIS_05`/`AXIS_06` explicitly block state mutations in `finished`, directing teams to `step.run` for side effects and to use `finished` for logging only.
+
+**What Stays the Same / Out of Scope**
+The Inngest lifecycle (step semantics, retries, timeline updates) remains unchanged; the policy addition simply documents existing runtime behavior and safe usage.
 
 **Proposed Lock Order**
 ```yaml
