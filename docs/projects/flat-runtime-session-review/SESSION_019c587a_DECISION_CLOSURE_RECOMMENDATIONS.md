@@ -44,7 +44,7 @@ rawr.hq.ts            # exports workflow surface used above
 ```
 
 **Why This Is Non-Obvious (or Obvious)**
-Bumping the existing route surface to include `/api/workflows` still looks like a composition detail, but the decision remains open because the docs and E2E examples already assume a dedicated host entry. The ambiguity is whether to keep workflows tucked inside `/rpc` (simpler) or to expose them explicitly for SDK generation/guardrails. That conflicts with the goal of preventing callers from accidentally hitting runtime ingress, so it needs this explicit lock rather than being treated as a routine refactor.
+This is non-obvious because two valid paths still exist in practice: keep workflow triggers inside existing `/rpc` coordination routes (less host wiring), or introduce an explicit `/api/workflows` surface (stronger contract for SDKs and guardrails). The docs prefer the explicit surface, but current runtime still works without it, so the ambiguity is real. The decision matters because choosing the implicit route preserves short-term simplicity but weakens boundary clarity and increases the chance that callers drift toward runtime ingress patterns.
 
 **D-006 — Canonical ownership of workflow contract artifacts**
 1. **Goal:** Producers and consumers of workflow metadata need one agreed-upon file that defines the workflow contract so SDKs, host wiring, and docs all converge on the same TypeBox schemas.
@@ -150,7 +150,7 @@ Providing a browser client might seem like a usability tweak, but it stays a dec
 Existing durable functions, runtime adapters, and `createCoordinationInngestFunction` logic stay untouched; only the client instantiation gains the middleware reference.
 
 **Why This Is Non-Obvious (or Obvious)**
-Adding middleware to Inngest might read as a straightforward instrumentation tweak, but the decision remains because the docs already expect every host to produce complete traces. The conflict is whether to keep the current minimal bootstrap (simpler) or to demand the middleware early (needed for spec compliance). That tradeoff—observability vs. adding another required dependency—keeps it on the decision list.
+This is non-obvious because the middleware-order choice trades off bootstrap simplicity against trace reliability. Leaving initialization loose keeps host setup lighter, but risks partial or missing traces when middleware is added too late. Locking early initialization adds explicit setup requirements, but gives predictable observability across hosts. That makes it a real architecture guardrail decision, not just a cosmetic instrumentation tweak.
 **D-009 — Required dedupe marker policy for heavy oRPC middleware**
 1. **What we seek:** Expensive or stateful middleware should only run once per logical request, even when internal clients trigger the same procedures again.
 2. **Existing issue:** ORPC built-in dedupe works only for middleware chains that share ordering and exist in the leading subset; once internal clients or other packages re-use middleware, it executes again, duplicating checks (see `packages/invoicing/src/middleware.ts` in `E2E_04`).
