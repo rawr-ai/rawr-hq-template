@@ -3,284 +3,360 @@
 ## Inputs
 - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_L_CONTRACT_FIRST_RECOMMENDATION.md`
 - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_M_ROUTER_FIRST_RECOMMENDATION.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_N_ORPC_SANITY_CHECK_RECOMMENDATION.md`
 - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
 
-## Converged Result
-Both investigations converge on the same posture:
+## What Went Wrong In The Prior Revision
+The prior revision over-corrected while trying to illustrate scale (`N=3`) and contract-first mechanics. That turned optional decomposition patterns into implied defaults:
 
-1. Do **not** switch to pure contract-first everywhere.
-2. Do **not** switch to pure router-first everywhere.
-3. Adopt a **deliberate/narrowed hybrid**:
-- Contract-first default at boundary-owned and externally relevant surfaces.
-- Router-first (or service-first) default for internal leaf modules.
+1. It made internal package shape look like `contract + router + operations`, which is not the intended internal default.
+2. It made API plugin shape look like `contracts/* + handlers/* + recomposition`, which is valid but too heavy as the baseline.
+3. It introduced threshold/conditional language in too many places, forcing unnecessary authoring decisions.
 
-This is the highest-confidence model that reduces low-value duplication while preserving all locked posture rules.
+That is why it felt like thrash: the document shifted from policy clarity to structure experimentation.
 
-## Canonical Model (By Layer)
+## Locked Converged Posture (No Optional Churn)
 
-### 1) Domain/internal package layer
-- Default: router-first/service-first acceptable for internal leaf logic.
-- Promote to dedicated contract-first when threshold is reached (e.g. multi-caller reuse, compatibility pressure, explicit contract governance need).
-- Keep package transport-neutral and aligned with internal client rule.
+### 1) Internal domain package (pure package) — **router/service-first default**
+Use one stable shape:
 
-### 2) API plugin boundary layer
-- Default: contract-first.
-- Rationale: boundary ownership, OpenAPI/client generation stability, metadata/governance clarity.
-- Router-first may be used for local implementation internals, but boundary exposure remains contract-first.
+- `services/*`: pure domain logic.
+- `router.ts`: one package router; procedures are authored here (inline input/output schemas + metadata + handlers).
+- `client.ts`: in-process client exported for internal callers.
+- `index.ts`: package exports.
 
-### 3) Workflow plugin trigger layer
-- Default: contract-first for caller-facing workflow trigger APIs.
-- Durable execution remains Inngest-native (`createFunction`, `step.*`).
-- No second first-party trigger authoring path.
+Do **not** introduce per-operation contract files in internal packages by default.
+Do **not** nest `operations` under `internal` as a canonical pattern.
 
-### 4) Composition layer
-- May use explicit helpers/composers to reduce boilerplate.
-- Must preserve one external contract source and split harness boundaries.
+### 2) API plugin (boundary surface) — **contract-first default**
+Use one stable shape:
 
-## Why This Matches Current Posture Spec
-This recommendation is fully compatible with the accepted ORPC+Inngest posture:
+- `contract.ts`: full boundary contract for that API plugin namespace.
+- `operations/*`: implementation functions (one file per operation is fine).
+- `router.ts`: `implement(contract)` + operation binding.
+- `index.ts`: exports for composition.
 
-- oRPC remains primary boundary/client harness.
-- Inngest remains primary durability harness.
-- `/api/inngest` remains runtime ingress only.
-- External SDK generation remains single-source from composed oRPC/OpenAPI contract.
-- Anti-dual-path policy remains intact.
+Do **not** use per-operation `contracts/*` as the default.
 
-## Direct Answer To “Are we in a weird hybrid now?”
-You are not wrong about the confusion risk.
+### 3) Workflow trigger API plugin — **same contract-first default as API plugin**
+Use the same shape as API plugins (`contract.ts`, `operations/*`, `router.ts`, `index.ts`) for `/api/workflows/...` trigger surfaces.
+Inngest ingress remains separate (`/api/inngest`).
 
-The current shape is defensible **if** we explicitly define where each style is allowed.
-Without that rule, it feels like accidental hybrid.
-With that rule, it becomes an intentional hybrid with clear benefits.
+## Canonical Structures (N=1 and N=3)
 
-## Recommended Policy Addition (short)
-Add this to canonical policy docs:
+### Internal domain package
 
-1. **Boundary surfaces are contract-first by default** (`plugins/api/*`, workflow trigger APIs).
-2. **Internal leaf modules are router/service-first by default** unless promotion criteria are met.
-3. **Promotion criteria** for internal modules:
-- 2+ independent caller groups,
-- compatibility/versioning pressure,
-- contract-drift risk requiring explicit artifact governance,
-- expected near-term externalization.
-
-## Illustrative Deliberate Hybrid (N=1 and N=3)
-
-### 1) Internal leaf modules (internal packages) — router/service-first
-
-N=1 shape:
+N=1:
 
 ```text
-packages/invoice-processing/src/internal/
-  operations/
-    start.ts
+packages/invoice-processing/src/
   services/
     invoice-service.ts
   router.ts
+  client.ts
+  index.ts
 ```
 
-N=3 shape (scaled):
+N=3 (same shape, more procedures, no structure rewrite):
 
 ```text
-packages/invoice-processing/src/internal/
+packages/invoice-processing/src/
+  services/
+    invoice-service.ts
+  router.ts
+  client.ts
+  index.ts
+```
+
+### API plugin (boundary)
+
+N=1:
+
+```text
+plugins/api/invoice-api/src/
+  contract.ts
+  operations/
+    start.ts
+  router.ts
+  index.ts
+```
+
+N=3 (scaled):
+
+```text
+plugins/api/invoice-api/src/
+  contract.ts
   operations/
     start.ts
     get-status.ts
     cancel.ts
-    index.ts
-  services/
-    invoice-service.ts
   router.ts
   index.ts
 ```
 
-Example operation (router/service-first, no separate contract artifact):
+## Code Illustration (Canonical Defaults)
+
+### A) Internal domain package — router/service-first
 
 ```ts
-// packages/invoice-processing/src/internal/operations/start.ts
+// packages/invoice-processing/src/services/invoice-service.ts
+export type InvoiceServiceDeps = {
+  newRunId: () => string;
+  saveRun: (run: { runId: string; status: "queued" | "running" | "completed" | "failed" }) => Promise<void>;
+  getRun: (runId: string) => Promise<{ runId: string; status: "queued" | "running" | "completed" | "failed" } | null>;
+  cancelRun: (runId: string) => Promise<void>;
+};
+
+export async function startInvoice(deps: InvoiceServiceDeps, input: { invoiceId: string; requestedBy: string }) {
+  const runId = deps.newRunId();
+  await deps.saveRun({ runId, status: "queued" });
+  return { runId, accepted: true as const };
+}
+
+export async function getInvoiceStatus(deps: InvoiceServiceDeps, input: { runId: string }) {
+  return (await deps.getRun(input.runId)) ?? { runId: input.runId, status: "failed" as const };
+}
+
+export async function cancelInvoice(deps: InvoiceServiceDeps, input: { runId: string }) {
+  await deps.cancelRun(input.runId);
+  return { accepted: true as const };
+}
+```
+
+```ts
+// packages/invoice-processing/src/router.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
 import { typeBoxStandardSchema } from "@rawr/orpc-standards";
-import { startInvoice } from "../services/invoice-service";
+import { cancelInvoice, getInvoiceStatus, startInvoice, type InvoiceServiceDeps } from "./services/invoice-service";
 
-export type InternalContext = {
-  deps: {
-    newRunId: () => string;
-    saveRun: (run: { runId: string; invoiceId: string }) => Promise<void>;
-  };
+export type InvoicePackageContext = {
+  deps: InvoiceServiceDeps;
 };
 
-const o = os.$context<InternalContext>();
+const o = os.$context<InvoicePackageContext>();
 
-export const startMeta = {
-  kind: "internal-op",
-  capability: "invoicing",
+export const invoiceInternalRouter = {
+  start: o
+    .input(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            invoiceId: Type.String({ minLength: 1 }),
+            requestedBy: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+            accepted: Type.Literal(true),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .handler(({ context, input }) => startInvoice(context.deps, input)),
+
+  getStatus: o
+    .input(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+            status: Type.Union([
+              Type.Literal("queued"),
+              Type.Literal("running"),
+              Type.Literal("completed"),
+              Type.Literal("failed"),
+            ]),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .handler(({ context, input }) => getInvoiceStatus(context.deps, input)),
+
+  cancel: o
+    .input(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            accepted: Type.Literal(true),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .handler(({ context, input }) => cancelInvoice(context.deps, input)),
 } as const;
-
-export const start = o
-  .input(
-    typeBoxStandardSchema(
-      Type.Object(
-        {
-          invoiceId: Type.String({ minLength: 1 }),
-          requestedBy: Type.String({ minLength: 1 }),
-        },
-        { additionalProperties: false },
-      ),
-    ),
-  )
-  .output(
-    typeBoxStandardSchema(
-      Type.Object(
-        {
-          runId: Type.String({ minLength: 1 }),
-          accepted: Type.Literal(true),
-        },
-        { additionalProperties: false },
-      ),
-    ),
-  )
-  .handler(async ({ input, context }) => {
-    return startInvoice(context.deps, input);
-  });
 ```
 
 ```ts
-// packages/invoice-processing/src/internal/router.ts
-import { start, startMeta } from "./operations/start";
-import { getStatus, getStatusMeta } from "./operations/get-status";
-import { cancel, cancelMeta } from "./operations/cancel";
+// packages/invoice-processing/src/client.ts
+import { createRouterClient } from "@orpc/server";
+import { invoiceInternalRouter, type InvoicePackageContext } from "./router";
 
-export const internalRouter = { start, getStatus, cancel } as const;
-export const internalRouterMeta = {
-  start: startMeta,
-  getStatus: getStatusMeta,
-  cancel: cancelMeta,
-} as const;
+export function createInvoiceInternalClient(context: InvoicePackageContext) {
+  return createRouterClient(invoiceInternalRouter, { context });
+}
 ```
 
-Where authoring primarily happens:
-1. Input/output schemas: in each `operations/*.ts`.
-2. Metadata schema/object: in each `operations/*.ts` (for example `startMeta`).
-3. Implementation logic: in service modules (`services/*`), called by operation handlers.
-
-### 2) API plugin / workflow trigger API — contract-first
-
-N=1 shape:
-
-```text
-plugins/api/invoice-api/src/
-  contract.ts
-  router.ts
-```
-
-N=3 shape (scaled):
-
-```text
-plugins/api/invoice-api/src/
-  contracts/
-    start.contract.ts
-    get-status.contract.ts
-    cancel.contract.ts
-  handlers/
-    start.handler.ts
-    get-status.handler.ts
-    cancel.handler.ts
-  contract.ts
-  router.ts
-  index.ts
-```
-
-Boundary contract (authoring source of truth for caller-facing shape):
-
-```ts
-// plugins/api/invoice-api/src/contracts/start.contract.ts
-import { oc } from "@orpc/contract";
-import { Type } from "typebox";
-import { typeBoxStandardSchema } from "@rawr/orpc-standards";
-
-export const startContract = oc
-  .route({ method: "POST", path: "/invoices/processing/start" })
-  .input(
-    typeBoxStandardSchema(
-      Type.Object(
-        {
-          invoiceId: Type.String({ minLength: 1 }),
-          requestedBy: Type.String({ minLength: 1 }),
-          traceToken: Type.Optional(Type.String()),
-        },
-        { additionalProperties: false },
-      ),
-    ),
-  )
-  .output(
-    typeBoxStandardSchema(
-      Type.Object(
-        {
-          runId: Type.String({ minLength: 1 }),
-          accepted: Type.Boolean(),
-        },
-        { additionalProperties: false },
-      ),
-    ),
-  );
-```
+### B) API plugin — contract-first with centralized contract + operation handlers
 
 ```ts
 // plugins/api/invoice-api/src/contract.ts
 import { oc } from "@orpc/contract";
-import { startContract } from "./contracts/start.contract";
-import { getStatusContract } from "./contracts/get-status.contract";
-import { cancelContract } from "./contracts/cancel.contract";
+import { Type } from "typebox";
+import { typeBoxStandardSchema } from "@rawr/orpc-standards";
 
 export const invoiceApiContract = oc.router({
-  startInvoiceProcessing: startContract,
-  getInvoiceProcessingStatus: getStatusContract,
-  cancelInvoiceProcessing: cancelContract,
+  startInvoiceProcessing: oc
+    .route({ method: "POST", path: "/invoices/processing/start" })
+    .input(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            invoiceId: Type.String({ minLength: 1 }),
+            requestedBy: Type.String({ minLength: 1 }),
+            traceToken: Type.Optional(Type.String()),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+            accepted: Type.Boolean(),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
+
+  getInvoiceProcessingStatus: oc
+    .route({ method: "GET", path: "/invoices/processing/{runId}" })
+    .input(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+            status: Type.Union([
+              Type.Literal("queued"),
+              Type.Literal("running"),
+              Type.Literal("completed"),
+              Type.Literal("failed"),
+            ]),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
+
+  cancelInvoiceProcessing: oc
+    .route({ method: "POST", path: "/invoices/processing/{runId}/cancel" })
+    .input(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            runId: Type.String({ minLength: 1 }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      typeBoxStandardSchema(
+        Type.Object(
+          {
+            accepted: Type.Literal(true),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
 });
+```
+
+```ts
+// plugins/api/invoice-api/src/operations/start.ts
+import type { InvoiceApiContext } from "../router";
+
+export async function startInvoiceOperation(context: InvoiceApiContext, input: { invoiceId: string; requestedBy: string }) {
+  return context.invoice.start({ invoiceId: input.invoiceId, requestedBy: input.requestedBy });
+}
 ```
 
 ```ts
 // plugins/api/invoice-api/src/router.ts
 import { implement } from "@orpc/server";
+import type { InvoicePackageContext } from "@rawr/invoice-processing";
+import { createInvoiceInternalClient } from "@rawr/invoice-processing";
 import { invoiceApiContract } from "./contract";
-import { startHandler } from "./handlers/start.handler";
-import { getStatusHandler } from "./handlers/get-status.handler";
-import { cancelHandler } from "./handlers/cancel.handler";
+import { startInvoiceOperation } from "./operations/start";
+import { getStatusOperation } from "./operations/get-status";
+import { cancelOperation } from "./operations/cancel";
 
-export type InvoiceApiContext = {
-  internal: {
-    start: (input: { invoiceId: string; requestedBy: string }) => Promise<{ runId: string; accepted: true }>;
-    getStatus: (input: { runId: string }) => Promise<{ runId: string; status: string }>;
-    cancel: (input: { runId: string }) => Promise<{ accepted: true }>;
-  };
+export type InvoiceApiContext = InvoicePackageContext & {
+  invoice: ReturnType<typeof createInvoiceInternalClient>;
 };
 
 const os = implement<typeof invoiceApiContract, InvoiceApiContext>(invoiceApiContract);
 
 export function createInvoiceApiRouter() {
   return os.router({
-    startInvoiceProcessing: os.startInvoiceProcessing.handler(startHandler),
-    getInvoiceProcessingStatus: os.getInvoiceProcessingStatus.handler(getStatusHandler),
-    cancelInvoiceProcessing: os.cancelInvoiceProcessing.handler(cancelHandler),
+    startInvoiceProcessing: os.startInvoiceProcessing.handler(({ context, input }) => startInvoiceOperation(context, input)),
+    getInvoiceProcessingStatus: os.getInvoiceProcessingStatus.handler(({ context, input }) => getStatusOperation(context, input)),
+    cancelInvoiceProcessing: os.cancelInvoiceProcessing.handler(({ context, input }) => cancelOperation(context, input)),
   });
 }
 ```
 
-Where authoring primarily happens:
-1. Input/output schemas + HTTP metadata: `contracts/*.contract.ts`.
-2. Implementation handling: `handlers/*.handler.ts` (or directly in `router.ts` for small N=1).
-3. Composition of contract vs implementation mapping: `contract.ts` + `router.ts`.
+## One Scale Rule (Only Rule)
+If scale requires splitting, split **implementation handlers only** (`operations/*`) and keep one plugin `contract.ts` as boundary source of truth.
 
-What changes under deliberate hybrid:
-1. Internal leaf modules can stay router/service-first by default.
-2. Boundary APIs/workflow trigger APIs remain contract-first (unchanged default).
-3. This is the side-by-side rule that prevents accidental “three-layer confusion.”
+Do not add per-operation contract files unless an explicit governance requirement is approved.
 
-## Not Yet Integrated Elsewhere
-Still pending back-port/integration into canonical E2E docs:
+## Final Recommendation
+Keep the explicit hybrid, but keep it simple and strict:
 
-1. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_H_DX_SIMPLIFICATION_REVIEW.md`
-2. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
-3. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_L_CONTRACT_FIRST_RECOMMENDATION.md`
-4. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_M_ROUTER_FIRST_RECOMMENDATION.md`
+1. Internal domain packages: `services/* + router.ts + client.ts`.
+2. API/workflow trigger plugins: `contract.ts + operations/* + router.ts`.
+3. No extra conditional structure trees in baseline guidance.
