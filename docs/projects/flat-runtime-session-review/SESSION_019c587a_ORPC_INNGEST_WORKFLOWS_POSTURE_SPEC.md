@@ -45,25 +45,26 @@ This is a policy/spec artifact. It is not a migration checklist.
 3. External SDK generation comes from one composed oRPC/OpenAPI boundary surface.
 4. One runtime-owned Inngest client bundle exists per process in host composition.
 5. Domain packages stay transport-neutral.
-6. TypeBox-first schema flow is preserved for procedure-local/boundary-contract I/O and OpenAPI conversion.
+6. TypeBox-only schema authoring is required for contract/procedure surfaces (no Zod-authored contract/procedure schemas); TypeBox flow is preserved for procedure-local/boundary-contract I/O and OpenAPI conversion.
 7. Domain modules (`domain/*`) hold transport-independent domain concepts only (entities/value objects/invariants/state shapes).
 8. Procedure input/output schemas live with the owning procedure (internal package surface) or boundary contract (`contract.ts` on API/workflow surfaces), not in domain modules.
 9. Domain filenames inside one `domain/` folder omit redundant domain-prefix tokens.
 10. Naming defaults prefer concise, unambiguous domain identifiers for package/plugin directories and namespaces (for example `invoicing`).
 11. Shared context contract defaults live in `context.ts` (or equivalent dedicated context module), and routers consume that contract rather than re-declaring it inline.
 12. Request/correlation/principal/network metadata contracts are context-layer concerns and belong in `context.ts` (or equivalent context module), not `domain/*`.
-13. Snippet alias default is `typeBoxStandardSchema as std`; terse aliases like `_`/`_$` are feasible but non-canonical due to readability.
-14. Spec docs/examples default to inline procedure/contract I/O schema declarations at `.input(...)` and `.output(...)` callsites.
-15. Schema extraction is exception-only, for shared schemas or large schemas where inline form materially harms readability.
-16. When extraction is used, canonical shape is a paired object with `.input` and `.output` properties (for example `TriggerInvoiceReconciliationSchema.input` and `.output`).
-17. No second first-party trigger authoring path for the same workflow behavior.
-18. No local HTTP self-calls (`/rpc`, `/api/orpc`) as in-process default.
-19. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
-20. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
-21. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
-22. Context envelopes remain split by runtime model: oRPC boundary request context and Inngest function runtime context are distinct and not forced into one universal context object.
-23. Middleware control planes remain split by runtime model: boundary enforcement in oRPC/Elysia, durable lifecycle control in Inngest middleware + `step.*`.
-24. oRPC middleware dedupe assumptions stay explicit: use context-cached markers for heavy checks, and treat built-in dedupe as constrained to leading-subset/same-order chains.
+13. Docs helper default for object-root schemas is `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
+14. For non-`Type.Object` roots, docs/snippets should keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
+15. Spec docs/examples default to inline procedure/contract I/O schema declarations at `.input(...)` and `.output(...)` callsites.
+16. Schema extraction is exception-only, for shared schemas or large schemas where inline form materially harms readability.
+17. When extraction is used, canonical shape is a paired object with `.input` and `.output` properties (for example `TriggerInvoiceReconciliationSchema.input` and `.output`).
+18. No second first-party trigger authoring path for the same workflow behavior.
+19. No local HTTP self-calls (`/rpc`, `/api/orpc`) as in-process default.
+20. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
+21. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
+22. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
+23. Context envelopes remain split by runtime model: oRPC boundary request context and Inngest function runtime context are distinct and not forced into one universal context object.
+24. Middleware control planes remain split by runtime model: boundary enforcement in oRPC/Elysia, durable lifecycle control in Inngest middleware + `step.*`.
+25. oRPC middleware dedupe assumptions stay explicit: use context-cached markers for heavy checks, and treat built-in dedupe as constrained to leading-subset/same-order chains.
 
 ## 5) Axis Map (Coverage)
 | Axis | Policy surface | Canonical leaf spec |
@@ -173,11 +174,12 @@ state: os.state.router({
 6. Request/correlation/principal/network metadata contracts belong in `context.ts` (or equivalent context module), not `domain/*`.
 7. Package/plugin directory names prefer concise domain forms when clear (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
 8. Shared context contracts default to `context.ts` (or equivalent dedicated context module), and router modules consume that contract.
-9. In policy snippets, use `typeBoxStandardSchema as std` as the readability-first alias; `_`/`_$` may appear in local code but are not canonical in spec docs.
-10. Docs/examples default to inline procedure/contract I/O schemas at `.input(...)` and `.output(...)`.
-11. Extraction is exception-only for shared or large readability cases, and extracted shape should be paired as `{ input, output }`.
-12. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
-13. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
+9. In policy docs, prefer `schema({...})` for object-root wrapper shorthand where `schema({...})` means `std(Type.Object({...}))`.
+10. Keep `std(...)` (or `typeBoxStandardSchema(...)`) explicit for non-`Type.Object` roots.
+11. Docs/examples default to inline procedure/contract I/O schemas at `.input(...)` and `.output(...)`.
+12. Extraction is exception-only for shared or large readability cases, and extracted shape should be paired as `{ input, output }`.
+13. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
+14. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
 
 ## 10) Source Anchors
 ### Local lineage

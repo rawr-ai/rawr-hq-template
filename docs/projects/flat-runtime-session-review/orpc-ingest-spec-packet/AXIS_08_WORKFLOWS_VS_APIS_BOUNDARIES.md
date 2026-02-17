@@ -21,6 +21,8 @@
 9. Docs/examples for workflow trigger procedures MUST default to inline I/O schemas at `.input(...)` and `.output(...)`.
 10. I/O schema extraction SHOULD be used only for shared schemas or large readability cases.
 11. When extracted, workflow trigger I/O schemas SHOULD use paired-object shape with `.input` and `.output` (for example `TriggerInvoiceReconciliationSchema.input` / `.output`).
+12. For object-root schema wrappers in docs, prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
+13. For non-`Type.Object` roots, keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
 
 ## Why
 - Preserves one trigger story for callers and one durability story for runtime.
@@ -47,8 +49,9 @@ plugins/workflows/<domain>/src/contract.ts
 3. If a workflow package owns `domain/*`, avoid redundant domain-prefix filenames inside that folder.
 4. Keep procedure I/O schema ownership in `contract.ts` (boundary) or procedure-local modules, not in `domain/*`.
 5. Keep request/correlation/principal/network metadata contracts in `context.ts`, not `domain/*`.
-6. In snippets, prefer `typeBoxStandardSchema as std`; `_`/`_$` aliases are feasible but non-canonical for readability.
-7. If snippet I/O is extracted instead of inline, prefer paired-object naming (`<ProcedureName>Schema.input` / `.output`) over separate `*InputSchema` and `*OutputSchema` constants.
+6. In docs, prefer `schema({...})` for object-root wrappers (`schema({...})` => `std(Type.Object({...}))`).
+7. Keep `std(...)` (or `typeBoxStandardSchema(...)`) explicit for non-`Type.Object` roots.
+8. If snippet I/O is extracted instead of inline, prefer paired-object naming (`<ProcedureName>Schema.input` / `.output`) over separate `*InputSchema` and `*OutputSchema` constants.
 
 ## Canonical Snippets
 
@@ -57,8 +60,8 @@ plugins/workflows/<domain>/src/contract.ts
 export const invoiceWorkflowTriggerContract = oc.router({
   triggerInvoiceReconciliation: oc
     .route({ method: "POST", path: "/invoicing/reconciliation/trigger" })
-    .input(std(Type.Object({ runId: Type.String() })))
-    .output(std(Type.Object({ accepted: Type.Literal(true) }))),
+    .input(schema({ runId: Type.String() }))
+    .output(schema({ accepted: Type.Literal(true) })),
 });
 ```
 

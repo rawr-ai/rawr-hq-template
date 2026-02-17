@@ -32,9 +32,10 @@
 5. Domain schema modules are TypeBox-first and co-export static types from the same file.
 6. Shared context contracts default to explicit `context.ts` modules (or equivalent dedicated context modules), consumed by router modules.
 7. Keep role context in prose, not context-baked filename suffixes.
-8. Snippet alias default is `typeBoxStandardSchema as std`; `_`/`_$` remain feasible but are non-canonical due to readability.
-9. Preferred helper names: `capability-composer.ts`, `surfaces.ts`, `with-internal-client.ts`.
-10. Avoid ambiguous helper names that hide ownership or execution semantics.
+8. In docs, prefer `schema({...})` for object-root wrappers (`schema({...})` => `std(Type.Object({...}))`).
+9. Keep `std(...)` (or `typeBoxStandardSchema(...)`) explicit for non-`Type.Object` roots.
+10. Preferred helper names: `capability-composer.ts`, `surfaces.ts`, `with-internal-client.ts`.
+11. Avoid ambiguous helper names that hide ownership or execution semantics.
 
 ## Canonical Runtime/Host Inventory
 1. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts`
