@@ -192,7 +192,7 @@ packages/invoicing/src/
 ```ts
 // packages/invoicing/src/workflows/contract.ts
 import { oc } from "@orpc/contract";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { RunStatusSchema, RunTimelineSchema } from "../domain/status";
 
@@ -207,25 +207,21 @@ export const invoicingWorkflowContract = oc.router({
       operationId: "invoicingTriggerReconciliation",
     })
     .input(
-      std(
-        Type.Object(
-          {
-            invoiceId: Type.String({ minLength: 1 }),
-            requestedBy: Type.String({ minLength: 1 }),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          invoiceId: Type.String({ minLength: 1 }),
+          requestedBy: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
       ),
     )
     .output(
-      std(
-        Type.Object(
-          {
-            accepted: Type.Literal(true),
-            runId: Type.String({ minLength: 1 }),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          accepted: Type.Literal(true),
+          runId: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
       ),
     ),
 
@@ -236,7 +232,7 @@ export const invoicingWorkflowContract = oc.router({
       tags: tag,
       operationId: "invoicingGetRunStatus",
     })
-    .input(std(Type.Object({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false })))
+    .input(schema({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false }))
     .output(std(RunStatusSchema)),
 
   getRunTimeline: oc
@@ -246,7 +242,7 @@ export const invoicingWorkflowContract = oc.router({
       tags: tag,
       operationId: "invoicingGetRunTimeline",
     })
-    .input(std(Type.Object({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false })))
+    .input(schema({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false }))
     .output(std(RunTimelineSchema)),
 });
 ```
@@ -643,10 +639,11 @@ Browser-safe vs server-only boundary in this implementation:
 
 | Policy | Status | Notes |
 | --- | --- | --- |
-| TypeBox-first + static types in same file | Satisfied | Domain schema files co-locate `Type.*` artifacts with `Static<typeof Schema>` exports. |
+| TypeBox-only contract/procedure schema authoring + static types in same file | Satisfied | Contract/procedure snippets remain TypeBox-authored (no Zod-authored contract/procedure snippets), and domain schema files co-locate `Type.*` artifacts with `Static<typeof Schema>` exports. |
+| Inline-I/O default + paired extraction shape | Satisfied | Route/procedure snippets default to inline `.input/.output`; extracted I/O uses paired `{ input, output }` shape only when shared or large. |
 | `context.ts` contract placement | Satisfied | Package, workflow plugin, and host boundary context contracts are explicit `context.ts` modules. |
 | Procedure/boundary I/O ownership | Satisfied | Trigger/status route I/O schemas are defined in workflow contract snippets, not in `domain/*` files. |
-| `typeBoxStandardSchema as std` alias usage | Satisfied | Workflow contract snippet imports `typeBoxStandardSchema as std` and uses `std(...)` for route I/O. |
+| Object-root schema wrapper usage | Satisfied | Workflow contract snippet uses `schema({...})` for object-root I/O and keeps explicit `std(...)` for non-object roots. |
 | Concise naming + non-redundant domain filenames | Satisfied | Capability naming stays `invoicing`; domain files are concise (`reconciliation.ts`, `status.ts`, `view.ts`). |
 | Split semantics (`/api/workflows/*` vs `/api/inngest`) | Satisfied | Trigger/status is caller-facing; ingress is runtime-only. |
 | Internal server calls use package internal client | Satisfied | Durable function calls package `client.ts` path server-side. |

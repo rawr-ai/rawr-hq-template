@@ -228,21 +228,21 @@ export type InvoicingProcedureContext = { deps: InvoicingServiceDeps };
 // packages/invoicing/src/procedures/start.ts
 import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 import { startInvoice } from "../service/lifecycle";
 import type { InvoicingProcedureContext } from "../context";
 
 const o = os.$context<InvoicingProcedureContext>();
 
 export const startProcedure = o
-  .input(std(Type.Object({
+  .input(schema({
     invoiceId: Type.String(),
     requestedBy: Type.String(),
-  })))
-  .output(std(Type.Object({
+  }))
+  .output(schema({
     runId: Type.String(),
     accepted: Type.Boolean(),
-  })))
+  }))
   .handler(async ({ context, input }) => {
     try {
       return await startInvoice(context.deps, input);
@@ -256,7 +256,7 @@ export const startProcedure = o
 // packages/invoicing/src/procedures/get-status.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 import { StatusSchema } from "../domain/status";
 import { getInvoiceStatus } from "../service/status";
 import type { InvoicingProcedureContext } from "../context";
@@ -264,11 +264,11 @@ import type { InvoicingProcedureContext } from "../context";
 const o = os.$context<InvoicingProcedureContext>();
 
 export const getStatusProcedure = o
-  .input(std(Type.Object({ runId: Type.String() })))
-  .output(std(Type.Object({
+  .input(schema({ runId: Type.String() }))
+  .output(schema({
     runId: Type.String(),
     status: StatusSchema,
-  })))
+  }))
   .handler(({ context, input }) => getInvoiceStatus(context.deps, input));
 ```
 
@@ -309,25 +309,25 @@ plugins/api/invoicing/src/
 // plugins/api/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 
 export const invoicingApiContract = oc.router({
   startInvoiceProcessing: oc
     .route({ method: "POST", path: "/invoices/processing/start" })
-    .input(std(Type.Object({
+    .input(schema({
       invoiceId: Type.String(),
       requestedByUserId: Type.String(),
       requestSource: Type.Optional(Type.String()),
-    })))
-    .output(std(Type.Object({
+    }))
+    .output(schema({
       runId: Type.String(),
       accepted: Type.Boolean(),
-    }))),
+    })),
 
   getInvoiceProcessingStatus: oc
     .route({ method: "GET", path: "/invoices/processing/{runId}" })
-    .input(std(Type.Object({ runId: Type.String() })))
-    .output(std(Type.Object({
+    .input(schema({ runId: Type.String() }))
+    .output(schema({
       runId: Type.String(),
       phase: Type.Union([
         Type.Literal("queued"),
@@ -337,7 +337,7 @@ export const invoicingApiContract = oc.router({
         Type.Literal("canceled"),
       ]),
       isTerminal: Type.Boolean(),
-    }))),
+    })),
 });
 ```
 
@@ -562,7 +562,7 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 1. Boundary contract ownership keeps external semantics stable and independently evolvable.
 2. Internal package remains transport-neutral and reusable for non-HTTP paths.
 3. Explicit `operations/*` makes adaptation logic visible (no hidden glue).
-4. TypeBox-first artifacts keep one schema strategy across validation and OpenAPI conversion, with domain files exporting both schema and `Static<typeof Schema>` types from one source of truth.
+4. TypeBox-authored artifacts keep one schema strategy across validation and OpenAPI conversion, with no Zod-authored contract/procedure schemas introduced and domain files exporting both schema and `Static<typeof Schema>` types from one source of truth.
 5. Trade-off: there is intentional duplication between internal and boundary shapes.
 6. Payoff: boundary can diverge safely (policy, naming, response shape) without forcing package redesign.
 7. Snippet default keeps procedure/contract I/O schemas inline at `.input/.output`; if extraction is needed for shared or very large shapes, use paired schema objects (`const XSchema = { input, output }`) and wire with `.input(std(XSchema.input))` + `.output(std(XSchema.output))`.
@@ -579,12 +579,12 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 | `/api/inngest` treated as caller API | Runtime ingress semantics misunderstood | Document and enforce ingress-only policy in host and docs |
 | `/api/workflows` and `/api/inngest` semantics blurred | Split policy ignored | Keep both path roles explicit, even when one is not used in this example |
 | OpenAPI schema degradation | `__typebox` converter missing | Centralize TypeBox Standard Schema adapter and OpenAPI converter |
-| One-off extracted procedure/contract schemas | Local I/O ownership becomes harder to scan | Default to inline `.input(std(Type.*))` / `.output(std(Type.*))`; extract only when shared or very large, and pair as `const XSchema = { input, output }` |
+| One-off extracted procedure/contract schemas | Local I/O ownership becomes harder to scan | Default to inline `.input(schema({...}))` / `.output(schema({...}))` for object-root wrappers, keep `std(...)` for non-object roots; extract only when shared or very large, and pair as `const XSchema = { input, output }` |
 
 ## 9) Explicit policy consistency checklist
 
-- [x] TypeBox-first schemas are used for package and boundary I/O.
-- [x] Domain type files are TypeBox-first (`schema + Static<typeof Schema>` in the same file), minimizing hand-written TS-only shape drift.
+- [x] TypeBox-only contract/procedure schema authoring is used for package and boundary I/O (no Zod-authored contract/procedure snippets).
+- [x] Domain type files are TypeBox-authored (`schema + Static<typeof Schema>` in the same file), minimizing hand-written TS-only shape drift.
 - [x] Snippets default to inline procedure/contract schema callsites (`.input/.output`) for local readability and ownership clarity.
 - [x] When extraction is justified (shared or very large shapes), snippets use paired schema objects (`const XSchema = { input, output }`) with `.input(std(XSchema.input))` + `.output(std(XSchema.output))`.
 - [x] Internal package shape follows `domain/ service/ procedures/ context.ts router.ts client.ts errors.ts index.ts`.

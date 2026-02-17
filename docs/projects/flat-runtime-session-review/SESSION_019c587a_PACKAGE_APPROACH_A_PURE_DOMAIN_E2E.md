@@ -226,7 +226,7 @@ Naming clarifications:
 
 This architecture is TypeBox-first end-to-end:
 1. Contract modules define schemas with TypeBox (`Type.Object`, `Type.Union`, etc.).
-2. Contract I/O uses a TypeBox -> oRPC Standard Schema adapter (`typeBoxStandardSchema(...)`) imported from one centralized helper package.
+2. Contract I/O uses `schema({...})` shorthand for object-root wrappers (backed by the TypeBox -> oRPC Standard Schema adapter) from one centralized helper package.
 3. Adapter stores raw schema on `__typebox` for OpenAPI conversion in host layer.
 4. Host oRPC/OpenAPI layer uses a `ConditionalSchemaConverter` to extract `__typebox` and emit JSON Schema into generated OpenAPI.
 
@@ -338,58 +338,50 @@ export async function getInvoiceProcessingStatus(deps: InvoiceLifecycleDeps, run
 // packages/invoice-processing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 
 export const invoiceInternalContract = oc.router({
   start: oc
     .input(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            invoiceId: Type.String({ minLength: 1 }),
-            requestedBy: Type.String({ minLength: 1 }),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          invoiceId: Type.String({ minLength: 1 }),
+          requestedBy: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
       ),
     )
     .output(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            runId: Type.String({ minLength: 1 }),
-            accepted: Type.Literal(true),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          runId: Type.String({ minLength: 1 }),
+          accepted: Type.Literal(true),
+        },
+        { additionalProperties: false },
       ),
     ),
 
   getStatus: oc
     .input(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            runId: Type.String({ minLength: 1 }),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          runId: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
       ),
     )
     .output(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            runId: Type.String({ minLength: 1 }),
-            status: Type.Union([
-              Type.Literal("queued"),
-              Type.Literal("running"),
-              Type.Literal("completed"),
-              Type.Literal("failed"),
-            ]),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          runId: Type.String({ minLength: 1 }),
+          status: Type.Union([
+            Type.Literal("queued"),
+            Type.Literal("running"),
+            Type.Literal("completed"),
+            Type.Literal("failed"),
+          ]),
+        },
+        { additionalProperties: false },
       ),
     ),
 });
@@ -443,61 +435,53 @@ export type { InvoiceLifecycleDeps } from "./services/invoice-lifecycle.service"
 // plugins/api/invoice-processing-api/src/contract.ts (boundary contract)
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 
 export const invoiceApiContract = oc.router({
   startInvoiceProcessing: oc
     .route({ method: "POST", path: "/invoices/processing/start" })
     .input(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            invoiceId: Type.String({ minLength: 1 }),
-            requestedBy: Type.String({ minLength: 1 }),
-            traceToken: Type.Optional(Type.String()),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          invoiceId: Type.String({ minLength: 1 }),
+          requestedBy: Type.String({ minLength: 1 }),
+          traceToken: Type.Optional(Type.String()),
+        },
+        { additionalProperties: false },
       ),
     )
     .output(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            runId: Type.String({ minLength: 1 }),
-            accepted: Type.Boolean(),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          runId: Type.String({ minLength: 1 }),
+          accepted: Type.Boolean(),
+        },
+        { additionalProperties: false },
       ),
     ),
 
   getInvoiceProcessingStatus: oc
     .route({ method: "GET", path: "/invoices/processing/{runId}" })
     .input(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            runId: Type.String({ minLength: 1 }),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          runId: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
       ),
     )
     .output(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            runId: Type.String({ minLength: 1 }),
-            status: Type.Union([
-              Type.Literal("queued"),
-              Type.Literal("running"),
-              Type.Literal("completed"),
-              Type.Literal("failed"),
-            ]),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          runId: Type.String({ minLength: 1 }),
+          status: Type.Union([
+            Type.Literal("queued"),
+            Type.Literal("running"),
+            Type.Literal("completed"),
+            Type.Literal("failed"),
+          ]),
+        },
+        { additionalProperties: false },
       ),
     ),
 });
@@ -563,53 +547,45 @@ Path A use/non-use criteria are canonical in `API Plugin Policy (Boundary-Owned 
 // plugins/workflows/invoice-processing-workflows/src/contract.ts (workflow triggers contract)
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 
 export const invoiceWorkflowTriggerContract = oc.router({
   triggerInvoiceReconciliation: oc
     .route({ method: "POST", path: "/invoicing/trigger-reconciliation" })
     .input(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            runId: Type.String({ minLength: 1 }),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          runId: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
       ),
     )
     .output(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            accepted: Type.Boolean(),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          accepted: Type.Boolean(),
+        },
+        { additionalProperties: false },
       ),
     ),
 
   retryInvoiceReconciliation: oc
     .route({ method: "POST", path: "/invoicing/retry" })
     .input(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            runId: Type.String({ minLength: 1 }),
-            reason: Type.String({ minLength: 1 }),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          runId: Type.String({ minLength: 1 }),
+          reason: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
       ),
     )
     .output(
-      typeBoxStandardSchema(
-        Type.Object(
-          {
-            accepted: Type.Boolean(),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          accepted: Type.Boolean(),
+        },
+        { additionalProperties: false },
       ),
     ),
 });
@@ -851,8 +827,8 @@ This revision removes or replaces prior ambiguity:
 7. No cross-plugin runtime import pattern is introduced; cross-workflow calls flow through composed surfaces only.
 8. Discovery is explicitly deferred as cutover-only with cutover trigger and non-goal statement.
 9. No duplicate or conflicting policy statements remain between policy sections, examples, and owner matrix.
-10. Contract examples use TypeBox-first schemas and `typeBoxStandardSchema(...)` for oRPC I/O definitions.
-11. Contract examples import `typeBoxStandardSchema` from one centralized helper package (`@rawr/orpc-standards`), not duplicated helper implementations.
+10. Contract examples use TypeBox-first schemas and `schema({...})` for object-root oRPC I/O definitions.
+11. Contract examples import schema helpers from one centralized helper package (`@rawr/orpc-standards`), not duplicated helper implementations.
 12. Contract examples default to inline `input`/`output` schema definitions unless reusable domain schema artifacts are warranted.
 13. OpenAPI conversion path is explicit and concrete: `__typebox` payload in adapter, consumed by host `ConditionalSchemaConverter`.
 14. API/workflow example filenames use canonical `contract.ts`, `router.ts`, `index.ts` with context in prose instead of context-baked suffixes.

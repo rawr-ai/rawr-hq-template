@@ -71,8 +71,8 @@ return generator.generate(router, {
 export const invoiceApiContract = oc.router({
   startInvoiceProcessing: oc
     .route({ method: "POST", path: "/invoices/processing/start" })
-    .input(typeBoxStandardSchema(Type.Object({ invoiceId: Type.String(), requestedBy: Type.String() })))
-    .output(typeBoxStandardSchema(Type.Object({ runId: Type.String(), accepted: Type.Boolean() }))),
+    .input(schema({ invoiceId: Type.String(), requestedBy: Type.String() }))
+    .output(schema({ runId: Type.String(), accepted: Type.Boolean() })),
 });
 ```
 

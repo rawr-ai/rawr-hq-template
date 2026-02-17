@@ -123,15 +123,15 @@ Role: internal RPC boundary for the package (schema + handler composition).
 // packages/invoice-processing/src/procedures/start.ts
 import { os, ORPCError } from "@orpc/server";
 import { Type } from "typebox";
-import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 import { startInvoice } from "../service";
 import type { InvoiceProcedureContext } from "../router";
 
 const o = os.$context<InvoiceProcedureContext>();
 
 export const startProcedure = o
-  .input(typeBoxStandardSchema(Type.Object({ invoiceId: Type.String(), requestedBy: Type.String() })))
-  .output(typeBoxStandardSchema(Type.Object({ runId: Type.String(), accepted: Type.Boolean() })))
+  .input(schema({ invoiceId: Type.String(), requestedBy: Type.String() }))
+  .output(schema({ runId: Type.String(), accepted: Type.Boolean() }))
   .handler(async ({ context, input }) => {
     try {
       return await startInvoice(context.deps, input);
@@ -145,15 +145,15 @@ export const startProcedure = o
 // packages/invoice-processing/src/procedures/get-status.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 import { getInvoiceStatus } from "../service";
 import type { InvoiceProcedureContext } from "../router";
 
 const o = os.$context<InvoiceProcedureContext>();
 
 export const getStatusProcedure = o
-  .input(typeBoxStandardSchema(Type.Object({ runId: Type.String() })))
-  .output(typeBoxStandardSchema(Type.Object({ runId: Type.String(), status: Type.String() })))
+  .input(schema({ runId: Type.String() }))
+  .output(schema({ runId: Type.String(), status: Type.String() }))
   .handler(({ context, input }) => getInvoiceStatus(context.deps, input));
 ```
 
@@ -161,15 +161,15 @@ export const getStatusProcedure = o
 // packages/invoice-processing/src/procedures/cancel.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 import { cancelInvoice } from "../service";
 import type { InvoiceProcedureContext } from "../router";
 
 const o = os.$context<InvoiceProcedureContext>();
 
 export const cancelProcedure = o
-  .input(typeBoxStandardSchema(Type.Object({ runId: Type.String() })))
-  .output(typeBoxStandardSchema(Type.Object({ accepted: Type.Boolean() })))
+  .input(schema({ runId: Type.String() }))
+  .output(schema({ accepted: Type.Boolean() }))
   .handler(({ context, input }) => cancelInvoice(context.deps, input));
 ```
 
@@ -249,23 +249,23 @@ plugins/api/invoice-api/src/
 // plugins/api/invoice-api/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 
 export const invoiceApiContract = oc.router({
   startInvoiceProcessing: oc
     .route({ method: "POST", path: "/invoices/processing/start" })
-    .input(typeBoxStandardSchema(Type.Object({ invoiceId: Type.String(), requestedBy: Type.String() })))
-    .output(typeBoxStandardSchema(Type.Object({ runId: Type.String(), accepted: Type.Boolean() }))),
+    .input(schema({ invoiceId: Type.String(), requestedBy: Type.String() }))
+    .output(schema({ runId: Type.String(), accepted: Type.Boolean() })),
 
   getInvoiceProcessingStatus: oc
     .route({ method: "GET", path: "/invoices/processing/{runId}" })
-    .input(typeBoxStandardSchema(Type.Object({ runId: Type.String() })))
-    .output(typeBoxStandardSchema(Type.Object({ runId: Type.String(), status: Type.String() }))),
+    .input(schema({ runId: Type.String() }))
+    .output(schema({ runId: Type.String(), status: Type.String() })),
 
   cancelInvoiceProcessing: oc
     .route({ method: "POST", path: "/invoices/processing/{runId}/cancel" })
-    .input(typeBoxStandardSchema(Type.Object({ runId: Type.String() })))
-    .output(typeBoxStandardSchema(Type.Object({ accepted: Type.Boolean() }))),
+    .input(schema({ runId: Type.String() }))
+    .output(schema({ accepted: Type.Boolean() })),
 });
 ```
 
@@ -368,13 +368,13 @@ plugins/workflows/invoice-workflows/src/
 // plugins/workflows/invoice-workflows/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 
 export const invoiceWorkflowTriggerContract = oc.router({
   triggerInvoiceReconciliation: oc
     .route({ method: "POST", path: "/invoicing/reconciliation/trigger" })
-    .input(typeBoxStandardSchema(Type.Object({ runId: Type.String() })))
-    .output(typeBoxStandardSchema(Type.Object({ accepted: Type.Literal(true) }))),
+    .input(schema({ runId: Type.String() }))
+    .output(schema({ accepted: Type.Literal(true) })),
 });
 ```
 

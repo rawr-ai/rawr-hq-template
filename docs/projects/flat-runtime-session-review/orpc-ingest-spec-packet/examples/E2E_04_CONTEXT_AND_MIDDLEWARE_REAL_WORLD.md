@@ -222,7 +222,7 @@ export const hydrateDepsMiddleware = base.middleware(async ({ context, next }) =
 // packages/invoicing/src/procedures/preflight-reconciliation.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import { ReconciliationScopeSchema } from "../domain/reconciliation";
 import type { InvoicingProcedureContext } from "../context";
 import { hydrateDepsMiddleware, requireFinanceWriteMiddleware } from "../middleware";
@@ -233,26 +233,22 @@ export const preflightReconciliationProcedure = base
   .use(requireFinanceWriteMiddleware)
   .use(hydrateDepsMiddleware)
   .input(
-    std(
-      Type.Object(
-        {
-          requestId: Type.String({ minLength: 1 }),
-          scope: ReconciliationScopeSchema,
-        },
-        { additionalProperties: false },
-      ),
+    schema(
+      {
+        requestId: Type.String({ minLength: 1 }),
+        scope: ReconciliationScopeSchema,
+      },
+      { additionalProperties: false },
     ),
   )
   .output(
-    std(
-      Type.Object(
-        {
-          accepted: Type.Literal(true),
-          runId: Type.String({ minLength: 1 }),
-          correlationId: Type.String({ minLength: 1 }),
-        },
-        { additionalProperties: false },
-      ),
+    schema(
+      {
+        accepted: Type.Literal(true),
+        runId: Type.String({ minLength: 1 }),
+        correlationId: Type.String({ minLength: 1 }),
+      },
+      { additionalProperties: false },
     ),
   )
   .handler(async ({ context, input }) => {
@@ -278,7 +274,7 @@ const base = os.$context<InvoicingProcedureContext>();
 export const getReconciliationStatusProcedure = base
   .use(requireFinanceWriteMiddleware)
   .use(hydrateDepsMiddleware)
-  .input(std(Type.Object({ runId: Type.String({ minLength: 1 }) })))
+  .input(schema({ runId: Type.String({ minLength: 1 }) }))
   .output(std(ReconciliationStatusSchema))
   .handler(async ({ context, input }) => {
     const status = await context.deps.getStatus({
@@ -301,7 +297,7 @@ export const getReconciliationStatusProcedure = base
 // packages/invoicing/src/procedures/mark-reconciliation-result.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import { ReconciliationStatusSchema } from "../domain/reconciliation";
 import type { InvoicingProcedureContext } from "../context";
 import { hydrateDepsMiddleware, requireFinanceWriteMiddleware } from "../middleware";
@@ -312,14 +308,12 @@ export const markReconciliationResultProcedure = base
   .use(requireFinanceWriteMiddleware)
   .use(hydrateDepsMiddleware)
   .input(
-    std(
-      Type.Object(
-        {
-          runId: Type.String({ minLength: 1 }),
-          ok: Type.Boolean(),
-        },
-        { additionalProperties: false },
-      ),
+    schema(
+      {
+        runId: Type.String({ minLength: 1 }),
+        ok: Type.Boolean(),
+      },
+      { additionalProperties: false },
     ),
   )
   .output(std(ReconciliationStatusSchema))
@@ -397,7 +391,7 @@ export type InvoicingApiContext = {
 // plugins/api/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import {
   ReconciliationScopeSchema,
   ReconciliationStatusSchema,
@@ -414,26 +408,22 @@ export const invoicingApiContract = oc.router({
       operationId: "invoicingStartReconciliation",
     })
     .input(
-      std(
-        Type.Object(
-          {
-            requestId: Type.String({ minLength: 1 }),
-            scope: ReconciliationScopeSchema,
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          requestId: Type.String({ minLength: 1 }),
+          scope: ReconciliationScopeSchema,
+        },
+        { additionalProperties: false },
       ),
     )
     .output(
-      std(
-        Type.Object(
-          {
-            accepted: Type.Literal(true),
-            runId: Type.String({ minLength: 1 }),
-            correlationId: Type.String({ minLength: 1 }),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          accepted: Type.Literal(true),
+          runId: Type.String({ minLength: 1 }),
+          correlationId: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
       ),
     ),
 
@@ -444,7 +434,7 @@ export const invoicingApiContract = oc.router({
       tags: tag,
       operationId: "invoicingGetReconciliationStatus",
     })
-    .input(std(Type.Object({ runId: Type.String({ minLength: 1 }) })))
+    .input(schema({ runId: Type.String({ minLength: 1 }) }))
     .output(std(ReconciliationStatusSchema)),
 });
 ```
@@ -565,7 +555,7 @@ export type InvoicingWorkflowContext = {
 // plugins/workflows/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import {
   ReconciliationScopeSchema,
   ReconciliationStatusSchema,
@@ -582,26 +572,22 @@ export const invoicingWorkflowContract = oc.router({
       operationId: "invoicingTriggerReconciliation",
     })
     .input(
-      std(
-        Type.Object(
-          {
-            requestId: Type.String({ minLength: 1 }),
-            scope: ReconciliationScopeSchema,
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          requestId: Type.String({ minLength: 1 }),
+          scope: ReconciliationScopeSchema,
+        },
+        { additionalProperties: false },
       ),
     )
     .output(
-      std(
-        Type.Object(
-          {
-            accepted: Type.Literal(true),
-            runId: Type.String({ minLength: 1 }),
-            correlationId: Type.String({ minLength: 1 }),
-          },
-          { additionalProperties: false },
-        ),
+      schema(
+        {
+          accepted: Type.Literal(true),
+          runId: Type.String({ minLength: 1 }),
+          correlationId: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false },
       ),
     ),
 
@@ -612,7 +598,7 @@ export const invoicingWorkflowContract = oc.router({
       tags: tag,
       operationId: "invoicingWorkflowGetRunStatus",
     })
-    .input(std(Type.Object({ runId: Type.String({ minLength: 1 }) })))
+    .input(schema({ runId: Type.String({ minLength: 1 }) }))
     .output(std(ReconciliationStatusSchema)),
 });
 ```
@@ -1004,11 +990,12 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
 ## 10) Policy Consistency Checklist
 | Policy | Status | Notes |
 | --- | --- | --- |
-| TypeBox-first + static types in same file | Satisfied | Domain schemas and `Static<typeof Schema>` are co-located. |
+| TypeBox-only contract/procedure schema authoring + static types in same file | Satisfied | Contract/procedure snippets remain TypeBox-authored (no Zod-authored contract/procedure snippets), and domain schemas with `Static<typeof Schema>` remain co-located. |
+| Inline-I/O default + paired extraction shape | Satisfied | Contract/procedure snippets default to inline `.input/.output`; extracted I/O remains exception-only and uses paired `{ input, output }`. |
 | `context.ts` contract placement | Satisfied | Package/API/workflow context contracts are explicit modules. |
 | Procedure/boundary I/O ownership | Satisfied | Procedure and boundary contract snippets own trigger/mark/status route I/O schemas; domain module stays concept-only. |
 | Request metadata ownership | Satisfied | `requestId`/`correlationId`/network request metadata live in context-layer request types, not domain schema ownership. |
-| `typeBoxStandardSchema as std` alias | Satisfied | Snippets use `std(...)` consistently for contract/procedure I/O. |
+| Object-root schema wrapper usage | Satisfied | Snippets use `schema({...})` for object-root I/O and keep explicit `std(...)` for non-object roots. |
 | Split semantics (`/api/workflows/*` vs `/api/inngest`) | Satisfied | Trigger/status and runtime ingress are explicitly separate mounts. |
 | Boundary vs runtime middleware separation | Satisfied | API/workflow boundary checks stay outside durable function internals. |
 | Middleware dedupe guidance | Satisfied | Explicit table documents once/repeated semantics and caveats. |

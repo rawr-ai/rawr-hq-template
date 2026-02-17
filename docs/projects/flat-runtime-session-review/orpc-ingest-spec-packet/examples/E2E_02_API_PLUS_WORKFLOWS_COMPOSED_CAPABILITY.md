@@ -215,17 +215,17 @@ export type InvoicingProcedureContext = {
 // packages/invoicing/src/procedures/queue-reconciliation.ts
 import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import { queueReconciliation } from "../service/lifecycle";
 import type { InvoicingProcedureContext } from "../context";
 
 const o = os.$context<InvoicingProcedureContext>();
 
 export const queueReconciliationProcedure = o
-  .input(std(Type.Object({
+  .input(schema({
     runId: Type.String(),
     requestedBy: Type.String(),
-  })))
+  }))
   .output(std(Type.Union([
     Type.Object({ accepted: Type.Literal(true), runId: Type.String() }),
     Type.Object({
@@ -284,24 +284,24 @@ plugins/api/invoicing/src/
 // plugins/api/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 
 export const invoicingApiContract = oc.router({
   startInvoiceProcessing: oc
     .route({ method: "POST", path: "/invoicing/start" })
-    .input(std(Type.Object({
+    .input(schema({
       invoiceId: Type.String(),
       requestedBy: Type.String(),
-    })))
-    .output(std(Type.Object({
+    }))
+    .output(schema({
       runId: Type.String(),
       accepted: Type.Boolean(),
-    }))),
+    })),
 
   getInvoiceProcessingStatus: oc
     .route({ method: "GET", path: "/invoicing/{runId}" })
-    .input(std(Type.Object({ runId: Type.String() })))
-    .output(std(Type.Object({ runId: Type.String(), status: Type.String() }))),
+    .input(schema({ runId: Type.String() }))
+    .output(schema({ runId: Type.String(), status: Type.String() })),
 });
 ```
 
@@ -365,19 +365,19 @@ plugins/workflows/invoicing/src/
 // plugins/workflows/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 
 export const invoicingWorkflowTriggerContract = oc.router({
   triggerReconciliation: oc
     .route({ method: "POST", path: "/invoicing/reconciliation/trigger" })
-    .input(std(Type.Object({
+    .input(schema({
       runId: Type.String(),
       requestedBy: Type.String(),
-    })))
-    .output(std(Type.Object({
+    }))
+    .output(schema({
       accepted: Type.Literal(true),
       runId: Type.String(),
-    }))),
+    })),
 });
 ```
 
@@ -621,19 +621,19 @@ export function registerOrpcRoutes(
 | Workflow trigger and runtime ingress collapse into one path | External callers hit `/api/inngest` directly | Keep `/api/workflows/*` and `/api/inngest` mounts separate with separate handlers |
 | Trigger operation bypasses internal package client | Duplicate business rules in plugin operations | Require trigger operation preflight via `context.invoicing.*` |
 | Plugin-to-plugin runtime coupling | API plugin imports workflow plugin (or reverse) | Import package surfaces only (`@rawr/invoicing`) in both plugins |
-| TypeBox drift to ad hoc schema styles | OpenAPI mismatch or validator mismatch | Keep `std(Type.*)` (alias for `typeBoxStandardSchema`) for all contracts/procedures |
-| One-off extracted procedure/contract schemas | Local I/O ownership becomes harder to scan | Default to inline `.input(std(Type.*))` / `.output(std(Type.*))`; extract only when shared or very large, and pair as `const XSchema = { input, output }` |
+| TypeBox drift to ad hoc schema styles (including Zod-authored contract/procedure snippets) | OpenAPI mismatch or validator mismatch | Keep object-root wrappers on `schema({...})`; keep explicit `std(...)` for non-object roots |
+| One-off extracted procedure/contract schemas | Local I/O ownership becomes harder to scan | Default to inline `.input(schema({...}))` / `.output(schema({...}))` for object-root wrappers; extract only when shared or very large, and pair as `const XSchema = { input, output }` |
 | Hidden glue in composition | Hard-to-debug route ownership | Keep `rawr.hq.ts` explicit with per-capability `api` and `workflows` nodes |
 | Context mismatch between host and handlers | `undefined` runtime/inngest at runtime | Use one shared context object injected at mount registration |
 
 ## 9) Explicit Policy Consistency Checklist
-- [x] TypeBox-first contract and procedure schemas are used everywhere.
+- [x] TypeBox-only contract/procedure schema authoring is used everywhere (no Zod-authored contract/procedure snippets).
 - [x] Shared context contracts live in explicit `context.ts` snippets instead of being embedded in `router.ts`.
-- [x] `typeBoxStandardSchema` is consistently imported as the readable short alias `std`.
+- [x] Object-root wrappers use `schema({...})`, with explicit `std(...)` retained for non-object roots.
 - [x] Snippets default to inline procedure/contract schema callsites (`.input/.output`) for local readability and ownership clarity.
 - [x] When extraction is justified (shared or very large shapes), snippets use paired schema objects (`const XSchema = { input, output }`) with `.input(std(XSchema.input))` + `.output(std(XSchema.output))`.
 - [x] Each 4.x subsection includes a mini file-tree snippet for local orientation.
-- [x] Domain models are TypeBox-first and export static types from the same files.
+- [x] Domain models are TypeBox-authored and export static types from the same files.
 - [x] Domain filenames are concise (`domain/run.ts`, `domain/status.ts`) with no repeated domain prefix.
 - [x] Procedure and boundary I/O schemas are authored with procedures/contracts, not owned by domain modules.
 - [x] Internal package shape includes `domain/ service/ procedures/ router.ts client.ts errors.ts index.ts`.
