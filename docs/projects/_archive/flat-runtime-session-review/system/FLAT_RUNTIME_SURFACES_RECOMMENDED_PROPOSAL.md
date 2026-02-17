@@ -6,8 +6,8 @@
 - It replaces iterative variants for implementation planning.
 - Composition authority is `rawr.hq.ts` (single standard).
 - Detailed implementation packet and decision register:
-  - `docs/system/spec-packet/FLAT_RUNTIME_SPEC_PACKET.md`
-  - `docs/system/spec-packet/DECISIONS.md`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/FLAT_RUNTIME_SPEC_PACKET.md`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/DECISIONS.md`
 
 ## Locked Decisions
 1. Keep plugin roots split by runtime surface:

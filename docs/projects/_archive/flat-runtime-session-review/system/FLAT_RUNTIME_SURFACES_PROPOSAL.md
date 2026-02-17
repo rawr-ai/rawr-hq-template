@@ -2,9 +2,11 @@
 
 ## Status
 - This document now serves as proposal history/context.
-- The locked implementation baseline is: `docs/system/FLAT_RUNTIME_SURFACES_RECOMMENDED_PROPOSAL.md`.
-- The decision-complete implementation packet is: `docs/system/spec-packet/FLAT_RUNTIME_SPEC_PACKET.md`.
-- Use the locked document for all forward planning and implementation work.
+- The historical locked baseline is archived at: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/FLAT_RUNTIME_SURFACES_RECOMMENDED_PROPOSAL.md`.
+- The current authoritative packet is:
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`
+- Use the authoritative packet for all forward planning and implementation work.
 
 ## Overarching intent
 - Keep day-to-day authoring simple for AI agents.

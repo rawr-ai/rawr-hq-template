@@ -1,9 +1,9 @@
 # Legacy System, Testing, Lifecycle, and Sync Guidance (Extraction)
 
-> Content extracted from `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/system/spec-packet/AXIS_04_SYSTEM_TESTING_SYNC.md`. The canonical ORPC/Inngest posture is recorded at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md` and the posture spec.
+> Content extracted from `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/AXIS_04_SYSTEM_TESTING_SYNC.md`. The canonical ORPC/Inngest posture is recorded at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md` and the posture spec.
 
 ## Source anchor
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/system/spec-packet/AXIS_04_SYSTEM_TESTING_SYNC.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/AXIS_04_SYSTEM_TESTING_SYNC.md`
 
 ## Why this axis matters
 This architecture only works if enforcement and operations evolve with it. Without test and sync changes, `rawr.hq.ts` becomes optional in practice, and boundaries erode.

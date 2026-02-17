@@ -4,8 +4,8 @@
 ## Status
 - Date: 2026-02-13
 - Scope: Decision-complete architecture packet for flat runtime surfaces and manifest-first composition.
-- Primary baseline doc: `docs/system/FLAT_RUNTIME_SURFACES_RECOMMENDED_PROPOSAL.md`
-- Decision register: `docs/system/spec-packet/DECISIONS.md`
+- Primary baseline doc: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/FLAT_RUNTIME_SURFACES_RECOMMENDED_PROPOSAL.md`
+- Decision register: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/DECISIONS.md`
 
 ## 1) Problem Statement
 We currently have valid building blocks (TypeBox + oRPC + Inngest + host fixtures), but composition authority is still easy to spread across multiple places (`apps/server`, plugin loaders, and docs conventions). That creates three failures over time:
@@ -193,11 +193,11 @@ Mitigation:
 5. Written architecture model no longer describes dual composition authority.
 
 ## 9) Supporting Axis Docs
-- `docs/system/spec-packet/AXIS_01_TECH_CORRECTNESS.md`
-- `docs/system/spec-packet/AXIS_02_ARCHITECTURE_LIFECYCLE.md`
-- `docs/system/spec-packet/AXIS_03_END_TO_END_EXAMPLES.md`
-- `docs/system/spec-packet/AXIS_04_SYSTEM_TESTING_SYNC.md`
-- `docs/system/spec-packet/AXIS_05_SIMPLICITY_LEGACY_REMOVAL.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/AXIS_01_TECH_CORRECTNESS.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/AXIS_02_ARCHITECTURE_LIFECYCLE.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/AXIS_03_END_TO_END_EXAMPLES.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/AXIS_04_SYSTEM_TESTING_SYNC.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/AXIS_05_SIMPLICITY_LEGACY_REMOVAL.md`
 
 ## 10) No Hidden Decisions Rule
 If implementation reveals a new architecture-impacting choice, add it to `DECISIONS.md` before continuing.

@@ -3,7 +3,8 @@
 This document defines the target plugin architecture and operational workflow for `RAWR HQ-Template` and downstream `RAWR HQ` repos.
 
 Canonical spec packet:
-- `docs/system/spec-packet/FLAT_RUNTIME_SPEC_PACKET.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
 
 ## Command Surface Contract (Current)
 - Channel A (external oclif plugin manager): `rawr plugins ...`
