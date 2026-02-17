@@ -234,6 +234,15 @@ Allowed non-overlapping example (explicit):
 
 This pair is allowed because intents are distinct; they are not two authoring paths for the same caller-facing trigger surface.
 
+### Naming Rules (Canonical)
+1. Use short, descriptive file names that describe role, not implementation trivia.
+2. Canonical defaults:
+- `contract.ts`, `router.ts`, `client.ts`, `index.ts`.
+3. Keep role context in prose when needed (for example, “workflow trigger router”), not in context-baked file suffixes.
+4. Avoid ambiguous generic names in core harness modules.
+- Preferred: `capability-composer.ts`, `surfaces.ts`, `with-internal-client.ts`.
+- Avoid: unclear names that hide ownership or execution semantics.
+
 ## 5) Implementation Inventory / Glue Code
 
 ### Canonical File Inventory
@@ -260,6 +269,315 @@ Capability canonical ownership (policy-level, from converged debate outputs):
 - Workflow trigger + durable function surface.
 4. Optional additive ingress only:
 - `plugins/workflows/<capability>-workflows/src/durable/*` for Durable Endpoint adapters (no first-party trigger replacement).
+
+### Canonical Harness Files (Explicit Code)
+
+#### A) `packages/core/src/orpc/hq-router.ts`
+
+```ts
+import { oc } from "@orpc/contract";
+import { coordinationContract } from "@rawr/coordination/orpc";
+import { stateContract } from "@rawr/state/orpc";
+
+export const hqContract = oc.router({
+  coordination: coordinationContract,
+  state: stateContract,
+});
+
+export type HqContract = typeof hqContract;
+```
+
+How it connects:
+1. This is the root contract used by server-side router implementation (`apps/server/src/orpc.ts`).
+2. External OpenAPI generation is derived from routers implemented against this contract tree.
+3. Workflow-trigger namespaces are composed at the runtime composition layer and then mounted through the same oRPC registration path (single boundary harness).
+
+#### B) `packages/coordination-inngest/src/adapter.ts`
+
+```ts
+import { Inngest } from "inngest";
+import { serve as inngestServe } from "inngest/bun";
+import {
+  isSafeCoordinationId,
+  validateWorkflow,
+  type CoordinationWorkflowV1,
+  type JsonValue,
+  type RunStatusV1,
+} from "@rawr/coordination";
+import { createDeskEvent, defaultTraceLinks } from "@rawr/coordination-observability";
+import { COORDINATION_RUN_EVENT } from "./browser";
+
+export type CoordinationRuntimeAdapter = Readonly<{
+  readMemory: (workflow: CoordinationWorkflowV1, deskId: string) => Promise<unknown>;
+  writeMemory: (workflow: CoordinationWorkflowV1, desk: unknown, value: JsonValue) => Promise<void>;
+  getRunStatus: (runId: string) => Promise<RunStatusV1 | null>;
+  saveRunStatus: (run: RunStatusV1) => Promise<void>;
+  appendTimeline: (runId: string, event: unknown) => Promise<void>;
+  inngestBaseUrl?: string;
+}>;
+
+export type QueueCoordinationRunOptions = Readonly<{
+  client: Inngest;
+  runtime: CoordinationRuntimeAdapter;
+  workflow: CoordinationWorkflowV1;
+  runId: string;
+  input?: JsonValue;
+  baseUrl: string;
+}>;
+
+export function createInngestClient(appId = "rawr-coordination"): Inngest {
+  return new Inngest({ id: appId });
+}
+
+export function createInngestServeHandler(input: { client: Inngest; functions: readonly unknown[] }) {
+  return inngestServe({
+    client: input.client,
+    functions: input.functions as any,
+  });
+}
+
+export async function queueCoordinationRunWithInngest(options: QueueCoordinationRunOptions) {
+  if (!isSafeCoordinationId(options.runId)) {
+    throw new Error(`Invalid runId: ${options.runId}`);
+  }
+
+  const validation = validateWorkflow(options.workflow);
+  if (!validation.ok) {
+    const details = validation.errors.map((entry) => entry.message).join("; ");
+    throw new Error(`Workflow validation failed: ${details}`);
+  }
+
+  const existing = await options.runtime.getRunStatus(options.runId);
+  if (existing) return { run: existing, eventIds: [] };
+
+  const queuedRun: RunStatusV1 = {
+    runId: options.runId,
+    workflowId: options.workflow.workflowId,
+    workflowVersion: options.workflow.version,
+    status: "queued",
+    startedAt: new Date().toISOString(),
+    input: options.input ?? {},
+    traceLinks: defaultTraceLinks(options.baseUrl, options.runId, {
+      inngestBaseUrl: options.runtime.inngestBaseUrl,
+    }),
+  };
+
+  await options.runtime.saveRunStatus(queuedRun);
+  await options.runtime.appendTimeline(
+    options.runId,
+    createDeskEvent({
+      runId: options.runId,
+      workflowId: options.workflow.workflowId,
+      type: "run.started",
+      status: "queued",
+      detail: "Coordination run queued for Inngest execution",
+      payload: options.input ?? {},
+    }),
+  );
+
+  const sendResult = await options.client.send({
+    name: COORDINATION_RUN_EVENT,
+    data: {
+      runId: options.runId,
+      workflow: options.workflow,
+      input: options.input ?? {},
+      baseUrl: options.baseUrl,
+    },
+  });
+
+  return {
+    run: await options.runtime.getRunStatus(options.runId),
+    eventIds: sendResult.ids,
+  };
+}
+
+export function createCoordinationInngestFunction(input: {
+  runtime: CoordinationRuntimeAdapter;
+  client?: Inngest;
+  appId?: string;
+}) {
+  const client = input.client ?? createInngestClient(input.appId);
+
+  const runner = client.createFunction(
+    { id: "coordination-workflow-runner", retries: 2 },
+    { event: COORDINATION_RUN_EVENT },
+    async ({ event, runId, step }) => {
+      await step.run("coordination/run-start", async () => {
+        await input.runtime.appendTimeline(
+          event.data.runId,
+          createDeskEvent({
+            runId: event.data.runId,
+            workflowId: event.data.workflow.workflowId,
+            type: "run.started",
+            status: "running",
+            detail: `Inngest execution started (${runId})`,
+          }),
+        );
+      });
+      return { ok: true as const, runId: event.data.runId };
+    },
+  );
+
+  return {
+    client,
+    functions: [runner],
+  } as const;
+}
+```
+
+How it connects:
+1. `queueCoordinationRunWithInngest(...)` is called by oRPC queue handlers in `apps/server/src/orpc.ts`.
+2. `createCoordinationInngestFunction(...)` produces `{ client, functions }`.
+3. `createInngestServeHandler(...)` wraps `{ client, functions }` and is mounted by `apps/server/src/rawr.ts` at `/api/inngest`.
+
+#### C) `apps/server/src/orpc.ts`
+
+```ts
+import { hqContract } from "@rawr/core/orpc";
+import { queueCoordinationRunWithInngest, type CoordinationRuntimeAdapter } from "@rawr/coordination-inngest";
+import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
+import { OpenAPIHandler } from "@orpc/openapi/fetch";
+import { implement, ORPCError } from "@orpc/server";
+import { RPCHandler } from "@orpc/server/fetch";
+import type { Inngest } from "inngest";
+import type { AnyElysia } from "./plugins";
+
+type RawrOrpcContext = {
+  repoRoot: string;
+  baseUrl: string;
+  runtime: CoordinationRuntimeAdapter;
+  inngestClient: Inngest;
+};
+
+export type RegisterOrpcRoutesOptions = RawrOrpcContext;
+
+export function createOrpcRouter() {
+  const os = implement<typeof hqContract, RawrOrpcContext>(hqContract);
+
+  return os.router({
+    coordination: os.coordination.router({
+      queueRun: os.coordination.queueRun.handler(async ({ context, input }) => {
+        const workflow = input.workflow;
+        const runId = typeof input.runId === "string" && input.runId.trim() !== ""
+          ? input.runId
+          : `run-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+        try {
+          return await queueCoordinationRunWithInngest({
+            client: context.inngestClient,
+            runtime: context.runtime,
+            workflow,
+            runId,
+            input: input.input ?? {},
+            baseUrl: context.baseUrl,
+          });
+        } catch (err) {
+          throw new ORPCError("RUN_QUEUE_FAILED", {
+            status: 500,
+            message: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }),
+    }),
+    state: os.state.router({
+      getRuntimeState: os.state.getRuntimeState.handler(async ({ context }) => {
+        // local state read path
+        return { repoRoot: context.repoRoot };
+      }),
+    }),
+  });
+}
+
+async function createOpenApiSpec(router: ReturnType<typeof createOrpcRouter>, baseUrl: string) {
+  const typeBoxSchemaConverter: ConditionalSchemaConverter = {
+    condition: (schema) => Boolean(schema && typeof schema === "object" && "__typebox" in schema),
+    convert: (schema) => {
+      const rawSchema = (schema as { __typebox?: unknown }).__typebox;
+      if (!rawSchema || typeof rawSchema !== "object") return [false, {}];
+      return [true, JSON.parse(JSON.stringify(rawSchema)) as JSONSchema];
+    },
+  };
+
+  const generator = new OpenAPIGenerator({
+    schemaConverters: [typeBoxSchemaConverter],
+  });
+
+  return generator.generate(router, {
+    info: { title: "RAWR HQ ORPC API", version: "1.0.0" },
+    servers: [{ url: baseUrl }],
+  });
+}
+
+export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: RegisterOrpcRoutesOptions): TApp {
+  const router = createOrpcRouter();
+  const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
+  const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router);
+
+  app.get("/api/orpc/openapi.json", async () => {
+    const spec = await createOpenApiSpec(router, options.baseUrl);
+    return new Response(JSON.stringify(spec), {
+      headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+    });
+  });
+
+  app.all("/rpc", async (ctx) => (await rpcHandler.handle(ctx.request as Request, { prefix: "/rpc", context: options })).response, {
+    parse: "none",
+  });
+  app.all("/rpc/*", async (ctx) => (await rpcHandler.handle(ctx.request as Request, { prefix: "/rpc", context: options })).response, {
+    parse: "none",
+  });
+  app.all("/api/orpc", async (ctx) => (await openapiHandler.handle(ctx.request as Request, { prefix: "/api/orpc", context: options })).response, {
+    parse: "none",
+  });
+  app.all("/api/orpc/*", async (ctx) => (await openapiHandler.handle(ctx.request as Request, { prefix: "/api/orpc", context: options })).response, {
+    parse: "none",
+  });
+
+  return app;
+}
+```
+
+How it connects:
+1. This file binds the oRPC contract tree to concrete handlers and mount paths.
+2. It bridges queue operations from oRPC handlers into Inngest via `queueCoordinationRunWithInngest(...)`.
+3. It produces the single OpenAPI contract artifact for external SDK generation.
+
+#### D) `apps/server/src/rawr.ts`
+
+```ts
+import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
+import { createCoordinationRuntimeAdapter } from "./coordination";
+import { registerOrpcRoutes } from "./orpc";
+
+export function registerRawrRoutes(app: any, opts: { repoRoot: string; baseUrl?: string }) {
+  const runtime = createCoordinationRuntimeAdapter({
+    repoRoot: opts.repoRoot,
+    inngestBaseUrl: process.env.INNGEST_BASE_URL ?? "http://localhost:8288",
+  });
+
+  const inngestBundle = createCoordinationInngestFunction({ runtime });
+  const inngestHandler = createInngestServeHandler({
+    client: inngestBundle.client,
+    functions: inngestBundle.functions,
+  });
+
+  app.all("/api/inngest", async ({ request }: { request: Request }) => inngestHandler(request));
+
+  registerOrpcRoutes(app, {
+    repoRoot: opts.repoRoot,
+    baseUrl: opts.baseUrl ?? "http://localhost:3000",
+    runtime,
+    inngestClient: inngestBundle.client,
+  });
+
+  return app;
+}
+```
+
+How it connects:
+1. This is the canonical host composition spine.
+2. Mount order is explicit: create runtime -> create Inngest bundle -> mount `/api/inngest` -> mount oRPC routes.
+3. This preserves the split policy with one caller API harness (`/api/orpc`, `/rpc`) and one durability ingress (`/api/inngest`).
 
 ### Canonical File Tree
 
@@ -295,16 +613,109 @@ plugins/workflows/<capability>-workflows/src/
 5. Domain packages own reusable capability logic and internal client contract.
 
 ### Optional Composition Helpers (Explicit, Non-Black-Box)
-These helpers are optional DX simplifiers and do not change semantic policy:
-1. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/packages/core/src/composition/capability-composer.ts`
-- `defineCapability(...)` and `composeCapabilities(...)` compose one capability list into `{ orpc, inngest }` manifest shape.
-- Wiring point: imported by `rawr.hq.ts`, replacing repeated manual contract/router/functions merge blocks.
-2. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/packages/core/src/composition/surfaces.ts`
-- `defineApiSurface(...)` and `defineWorkflowSurface(...)` enforce surface shape at plugin export boundaries.
-- Wiring point: imported by `plugins/api/*/src/index.ts` and `plugins/workflows/*/src/index.ts`.
-3. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/packages/core/src/orpc/with-internal-client.ts`
-- `withInternalClient(...)` standardizes internal client binding in handlers.
-- Wiring point: imported by API/workflow router modules where repeated `create<Capability>InternalClient(context)` allocation exists.
+These helpers are optional DX simplifiers and do not change semantic policy.
+
+#### Helper A: `packages/core/src/composition/capability-composer.ts`
+
+```ts
+// packages/core/src/composition/capability-composer.ts
+import { oc } from "@orpc/contract";
+
+export type Capability = {
+  capabilityId: string;
+  api: { contract: Record<string, unknown>; router: Record<string, unknown> };
+  workflows: {
+    triggerContract: Record<string, unknown>;
+    triggerRouter: Record<string, unknown>;
+    functions: readonly unknown[];
+  };
+};
+
+export function defineCapability<const T extends Capability>(capability: T): T {
+  return capability;
+}
+
+export function composeCapabilities<const T extends readonly Capability[]>(capabilities: T, inngestClient: unknown) {
+  const contract = oc.router(
+    Object.fromEntries(
+      capabilities.map((capability) => [
+        capability.capabilityId,
+        { api: capability.api.contract, workflows: capability.workflows.triggerContract },
+      ]),
+    ),
+  );
+
+  const router = Object.fromEntries(
+    capabilities.map((capability) => [
+      capability.capabilityId,
+      { api: capability.api.router, workflows: capability.workflows.triggerRouter },
+    ]),
+  );
+
+  return {
+    capabilities,
+    orpc: { contract, router },
+    inngest: { client: inngestClient, functions: capabilities.flatMap((capability) => capability.workflows.functions) },
+  } as const;
+}
+```
+
+Wiring:
+1. Import at composition root (`rawr.hq.ts` or equivalent manifest module).
+2. Replace repeated manual `contract`, `router`, and `functions` merge blocks.
+
+#### Helper B: `packages/core/src/composition/surfaces.ts`
+
+```ts
+// packages/core/src/composition/surfaces.ts
+export type ApiSurface<TContract, TRouter> = {
+  contract: TContract;
+  router: TRouter;
+};
+
+export function defineApiSurface<const TContract, const TRouter>(surface: ApiSurface<TContract, TRouter>) {
+  return surface;
+}
+
+export type WorkflowSurface<TContract, TRouter, TFunctions extends readonly unknown[]> = {
+  triggerContract: TContract;
+  triggerRouter: TRouter;
+  functions: TFunctions;
+};
+
+export function defineWorkflowSurface<
+  const TContract,
+  const TRouter,
+  const TFunctions extends readonly unknown[],
+>(surface: WorkflowSurface<TContract, TRouter, TFunctions>) {
+  return surface;
+}
+```
+
+Wiring:
+1. Import in `plugins/api/*/src/index.ts` for API surface exports.
+2. Import in `plugins/workflows/*/src/index.ts` for workflow surface exports.
+
+#### Helper C: `packages/core/src/orpc/with-internal-client.ts`
+
+```ts
+// packages/core/src/orpc/with-internal-client.ts
+export function withInternalClient<TContext, TClient>(
+  getClient: (context: TContext) => TClient,
+) {
+  return async <TInput, TOutput>(
+    args: { context: TContext; input: TInput },
+    run: (client: TClient, input: TInput) => Promise<TOutput>,
+  ): Promise<TOutput> => {
+    const client = getClient(args.context);
+    return run(client, args.input);
+  };
+}
+```
+
+Wiring:
+1. Import in API/workflow router handlers.
+2. Replace repeated per-handler `create<Capability>InternalClient(context)` boilerplate while keeping handler logic explicit.
 
 ## 6) End-to-End Examples
 
