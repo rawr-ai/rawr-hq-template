@@ -175,3 +175,60 @@ Rationale:
   - Primary API harness: oRPC (RPC + OpenAPI exposure).
   - Additive durability harness: Inngest (functions + `/api/inngest` serve endpoint).
 - Represent durable execution initiation as explicit trigger procedures in oRPC, not by collapsing execution ingress into standard API surface.
+
+## 9) Posture Spec Draft Notes (Agent J primary-owner write pass)
+
+### Locked synthesis to encode
+- Converged posture accepted: keep split semantics, reject full collapse.
+- Primary API harness: oRPC.
+- Primary durable harness: Inngest functions.
+- Durable endpoints: additive ingress only; never parallel first-party trigger authoring path.
+
+### Tensions to preserve in scope section
+- Collapse simplicity vs semantic correctness.
+- Single-path governance vs tool flexibility drift.
+- External SDK contract consistency vs runtime ingress convenience.
+- Internal-call DX vs deterministic call intent rules.
+
+### Must-cover axes list
+- External client generation.
+- Internal clients/internal calling.
+- Split vs collapse.
+- Context creation/propagation.
+- Errors/logging/observability.
+- Middleware/cross-cutting.
+- Host hooking/composition.
+- Workflows vs APIs boundaries.
+- Durable endpoints vs durable functions.
+
+### Anti-dual-path policy language
+- No duplicate trigger semantics for same capability operation.
+- Only allow dual path when semantics are non-overlapping by contract:
+  - in-process internal package client = synchronous domain/API boundary calls.
+  - Inngest function/event path = durable async orchestration.
+- Explicit prohibition targets:
+  - direct self-HTTP internal calls.
+  - direct `inngest.send` from arbitrary API boundary modules.
+  - external SDK generation from package-internal contracts.
+
+### Implementation inventory anchors
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts`
+- Canonical policy references:
+  - `SESSION_019c587a_AGENT_I_SPLIT_HARDEN_RECOMMENDATION.md`
+  - `SESSION_019c587a_AGENT_K_INTERNAL_CALLING_PACKAGING_RECOMMENDATION.md`
+  - `SESSION_019c587a_AGENT_H_DX_SIMPLIFICATION_REVIEW.md`
+  - `SESSION_019c587a_INNGEST_ORPC_DEBATE_INTEGRATED_RECOMMENDATION.md`
+
+### Example paths to include
+1. External API -> oRPC boundary -> package internal client -> domain service.
+2. External API workflow trigger -> oRPC trigger router -> Inngest send -> Inngest function (`step.run`) -> run timeline/status.
+3. Non-workflow normal endpoint (`state.getRuntimeState`) through oRPC only.
+
+### Draft completion note
+- Wrote standalone converged posture spec:
+  - `SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
+- Includes locked decision, axes catalog, per-axis policy/rationale/references/trade-offs, normative rules, anti-dual-path policy, implementation inventory/tree, and 3 end-to-end path examples.
+- Explicitly keeps canonical E2E doc untouched in this step.
