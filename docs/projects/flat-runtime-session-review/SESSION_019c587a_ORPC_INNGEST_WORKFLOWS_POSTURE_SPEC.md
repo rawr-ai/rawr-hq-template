@@ -173,5 +173,9 @@ state: os.state.router({
 
 ## 11) Navigation
 - If you need one axis policy in implementation-ready depth, start in `orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md` and follow its axis map.
+- If you need tutorial-style concrete implementations, read:
+  - `orpc-ingest-spec-packet/examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md`
+  - `orpc-ingest-spec-packet/examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md`
+  - `orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
 - If you need “what moved where” from pre-breakout monolith, use `orpc-ingest-spec-packet/REDISTRIBUTION_TRACEABILITY.md`.
 - If you identify a new architecture-impacting ambiguity, record it in `orpc-ingest-spec-packet/DECISIONS.md` before continuing.

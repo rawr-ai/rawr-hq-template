@@ -32,6 +32,15 @@ The parent overview (`../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md
 8. [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
 9. [AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md](./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md)
 
+## End-to-End Walkthroughs (Tutorial Layer)
+These are implementation-oriented walkthroughs that apply the axis policies in concrete flows.
+
+1. [E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md](./examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md)
+2. [E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md](./examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md)
+3. [E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md](./examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md)
+
+Tutorial docs are normative only where they reference locked axis policies. If a walkthrough surfaces ambiguity, the ambiguity must be tracked in [DECISIONS.md](./DECISIONS.md) before further drift occurs.
+
 ## Cross-Cutting Defaults
 1. External SDK generation uses one composed oRPC/OpenAPI boundary surface.
 2. Internal in-process cross-boundary calls default to package internal clients (`client.ts`), not local HTTP.
@@ -75,6 +84,7 @@ Caller
 - Host composition spine, fixtures, and mount order -> [AXIS_07_HOST_HOOKING_COMPOSITION.md](./AXIS_07_HOST_HOOKING_COMPOSITION.md)
 - Workflow trigger authoring vs durable execution authoring -> [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
 - Durable endpoint additive-only constraints -> [AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md](./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md)
+- Full walkthroughs by scenario -> [examples/](./examples/)
 - Section-by-section redistribution map from old monolith -> [REDISTRIBUTION_TRACEABILITY.md](./REDISTRIBUTION_TRACEABILITY.md)
 
 ## Decision Log
