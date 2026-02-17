@@ -40,8 +40,8 @@ Only run rebase drills as an explicit incident/escape-hatch exercise.
 
 If a docs cleanup changes router topology (`AGENTS.md` placement, additions, removals, replacements):
 
-1. Update `docs/projects/agent-readiness/AGENTS_COVERAGE_MATRIX.md`.
-2. Add a dated addendum entry in `docs/projects/agent-readiness/FINAL_REPORT.md`.
+1. Update `docs/projects/_archive/agent-readiness/AGENTS_COVERAGE_MATRIX.md`.
+2. Add a dated addendum entry in `docs/projects/_archive/agent-readiness/FINAL_REPORT.md`.
 3. Update any affected pointers in root/scoped `AGENTS.md` files.
 
 Do not land router changes without all three updates.

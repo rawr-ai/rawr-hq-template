@@ -9,6 +9,7 @@ This file is execution-prep only (no filesystem mutation performed in this phase
 
 ## Source Artifacts
 - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_DOCS_ARCHIVE_SWEEP_MATRIX.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_PROJECTS_ARCHIVE_AND_CONFLICT_MATRIX.md`
 - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORIGINAL_TO_ORPC_INGEST_ALIGNMENT_MATRIX.md`
 - Context bridge (protected, no deletion):
   - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_LOOP_CLOSURE_BRIDGE.md`
@@ -16,10 +17,19 @@ This file is execution-prep only (no filesystem mutation performed in this phase
 ## Outcome Snapshot
 ```yaml
 archive_sweep:
+  total_files_reviewed: 194
   docs_system_files_classified: 10
+  docs_projects_files_reviewed: 184
+  docs_projects_directories_reviewed: 10
   safe_to_move_now: 1
   needs_merge_first: 8
   must_remain_canonical: 1
+  project_dispositions:
+    active_now: 1
+    session_relevant_supporting: 2
+    archive_candidate: 5
+    ambiguous_needs_owner_decision: 2
+  project_conflict_clusters: 4
 
 integration_map:
   total_rows: 107
@@ -27,6 +37,29 @@ integration_map:
   replace: 23
   merge_align: 39
   retire: 3
+```
+
+## Final Candidate List — `docs/projects` Project Roots
+```yaml
+docs_projects_disposition:
+  safe_to_archive_now:
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/agent-readiness
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/architecture-stabilization
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/finalization
+
+  archive_after_merge:
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/agent-coordination-canvas-v1
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/hq-core-extraction
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/hq-foundation-salvage
+
+  keep_active:
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/repo-split
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_LOOP_CLOSURE_BRIDGE.md
+
+  ambiguous_requires_decision:
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/plugin-lifecycle-promotion
+    - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/template-core-transition
 ```
 
 ## Final Candidate List — `docs/system` Keep vs Move
