@@ -141,10 +141,26 @@ export const rawrHqManifest = {
 } as const;
 ```
 
+This manifest is the canonical composition spine: capability identifiers, API routers, workflow routers, and Inngest function lists are emitted from plugin/package metadata so host wiring (`apps/server/src/rawr.ts`) does not change when new capabilities land. `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` documents how to keep the manifest in sync.
+
 ### Host fixture split mount contract
 ```ts
 // apps/server/src/rawr.ts
 app.all("/api/inngest", async ({ request }) => inngestHandler(request));
+const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.router);
+
+app.all("/api/workflows/*", async ({ request }) => {
+  const context = createWorkflowBoundaryContext({
+    principal: requirePrincipal(request),
+    inngest: inngestBundle.client,
+    runtime,
+  });
+  const result = await workflowHandler.handle(request, {
+    prefix: "/api/workflows",
+    context,
+  });
+  return result.matched ? result.response : new Response("not found", { status: 404 });
+}, { parse: "none" });
 
 registerOrpcRoutes(app, {
   repoRoot: opts.repoRoot,

@@ -20,6 +20,7 @@ The parent overview (`../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md
 2. oRPC is the primary boundary API harness.
 3. Inngest functions are the primary durability harness.
 4. Durable endpoints are additive ingress adapters only.
+5. D-005: Workflow trigger + manifest-driven workflow surfaces operate via capability-first `/api/workflows/<capability>/*` mounts sourced from `rawr.hq.ts`, with an explicit workflow context helper and single Inngest bundle (see `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md`).
 
 ## Axis Coverage (Complete)
 1. [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)

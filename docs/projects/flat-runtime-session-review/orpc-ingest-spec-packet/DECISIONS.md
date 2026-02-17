@@ -9,9 +9,10 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
 ## Decision Register
 
 ### D-005 — Workflow trigger route convergence
-- `status`: `open`
+- `status`: `closed`
+- `resolution`: Host now forces capability-first `/api/workflows/<capability>/*` mounts managed from a generated `rawr.hq.ts` manifest, keeps `/api/inngest` runtime-only, and centralizes workflow boundary context helpers so plugin additions never require manual edits to `apps/*` while the capability manifest drives both the `OpenAPIHandler` routes and the Inngest client/function bundle.
 - `question`: Should canonical workflow trigger paths (`/api/workflows/<capability>/*`) become first-class mounted routes in current server runtime, instead of relying primarily on coordination procedures under `/rpc` and `/api/orpc`?
-- `why_open`: Tutorial examples and packet policy expect explicit split paths; runtime convergence is not complete yet.
+- `why_closed`: Packet-level review confirmed host wiring described in `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md`, axis docs now cite that manifest-driven composition, and the runtime code already centers on a single Inngest bundle exposed by `createInngestServeHandler`.
 - `impacted_docs`:
   - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
   - `examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md`

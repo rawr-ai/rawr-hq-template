@@ -182,6 +182,9 @@ app.all("/api/workflows/*", async ({ request }) => {
 app.all("/api/inngest", async ({ request }) => inngestHandler(request));
 ```
 
+### Manifest-driven composition note
+The workflow handler above is sourced from `rawrHqManifest.workflows.router`, where each capability exports its API and workflow surfaces. Hosts regenerate `rawr.hq.ts` (or regenerate at build time) so `/api/workflows/<capability>` mounts, the `OpenAPIHandler`, and the Inngest function bundle stay in sync without manual edits under `apps/*`. This manifest-based spine is the canonical way to keep the workflow trigger surface in lockstep with `packages/*` and `plugins/*` assets (see `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md`).
+
 ### Workflow surface export
 ```ts
 export function createInvoiceWorkflowSurface(inngest: Inngest) {

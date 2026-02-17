@@ -35,6 +35,7 @@ This is a policy/spec artifact. It is not a migration checklist.
 2. Use oRPC as the primary API harness (contracts, routers, OpenAPI, external client generation).
 3. Use Inngest functions as the primary durability harness (durable orchestration, retries, step semantics).
 4. Treat Inngest Durable Endpoints as additive ingress adapters only, never as a second first-party trigger authoring path.
+5. Resolve D-005 by making capability-first `/api/workflows/<capability>/*` mounts manifest-driven, pairing each workflow router with a workflow-boundary context helper and Inngest client bundle so plugin authors can ship new surfaces without touching `apps/*`.
 
 ## 3) Original Tensions (Resolved)
 1. Collapse into one plugin/surface for simplicity vs preserve semantic correctness across non-equivalent runtime models.

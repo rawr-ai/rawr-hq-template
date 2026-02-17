@@ -11,6 +11,12 @@
 - **graphite:** Confirms repo uses `gt` stacks; no Git commands beyond inspection; maintain unambiguous worktree state.
 - **git-worktrees:** Reminds me to avoid relative paths and to stay inside this worktree; already within the provided path.
 
+## Key constraints lifted from skill references
+- **oRPC:** TypeBox-first contracts, explicit context injection, and parse-safe handler mounts are required; dedupe-heavy middleware must cache markers because built-in dedupe is limited.
+- **Inngest:** `/api/inngest` must stay runtime-only, and `extendedTracesMiddleware`/`step.*` semantics demand durable-step guardrails; glue (serve handler) must own client+functions bundle per process.
+- **Elysia:** Mounts must use `{ parse: "none" }` when handing off to RPC/OpenAPI/Inngest to avoid body exhaustion; plugin life-cycle order controls middleware context scope.
+- **Architecture:** Resolve spine-level decisions before downstream doc updates; host composition and manifest generation form the spine and should never mix with plugin-level semantics.
+
 ## D-005 Context Notes
 - Packet currently defines `/api/workflows/*` + `/api/inngest` split; D-005 is about whether workflow trigger routes should be mounted as top-level runtime surfaces (host hooking) rather than just coordination procedures under `/rpc` (per question text). Need to resolve if host should expose dedicated `/api/workflows/<capability>` surfaces and register handlers there.
 - Need to ensure personal plugin authors can add new capabilities without touching `apps/*`. Hosting design must provide host-level composition that discovers/instantiates surfaces from `plugins/*` and `packages/*` (maybe via manifest). Possibly new helper (capability composer) or using `rawr.hq.ts` manifest.
@@ -37,3 +43,9 @@
 4. Use Search capability example (package + API plugin + workflow plugin) to ground host surfaces, context, and runtime hooking.
 5. Lock down Inngest registration/discovery path and note internal workflow triggering model.
 6. List open questions + phased plan for closing D-005 and verifying doc/runbook adjustments.
+
+## Integration status
+- `AXIS_07_HOST_HOOKING_COMPOSITION.md`: will articulate `rawr.hq.ts` manifest, `/api/workflows` mount, and workflow context helper.
+- `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`: will surface the explicit capability-first `/api/workflows/*` path and its separation from `/api/inngest`.
+- `DECISIONS.md`: will record D-005 as closed and cite the new doc anchors.
+- `SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md` & `ORPC_INGEST_SPEC_PACKET.md`: will mention D-005 so the packet overview aligns with the new host posture.

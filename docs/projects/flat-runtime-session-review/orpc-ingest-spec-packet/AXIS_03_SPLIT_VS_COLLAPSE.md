@@ -12,6 +12,7 @@
 ## Canonical Policy
 1. Split is retained as canonical: API boundary and durability harness are distinct.
 2. Full collapse into one surface is rejected.
+3. D-005 ensures a manifest-driven `/api/workflows/<capability>/*` host path so workflow triggers remain split and scoped to capability routers without creating a parallel durable ingestion surface.
 
 ## Why
 - External API contract semantics and durable execution semantics are non-equivalent.
