@@ -24,6 +24,12 @@
 12. For object-root schema wrappers in docs, prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
 13. For non-`Type.Object` roots, keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
 
+## Consumer model
+1. **External callers** (third-party APIs, micro-frontends) hit `/rpc*`, `/api/orpc*`, and the capability-specific `/api/workflows/<capability>/*` trigger/status paths. These surfaces remain public and audited by `apps/server/src/orpc.ts`.
+2. **Internal packages** re-use capability logic through in-process clients (`packages/<capability>/src/client.ts`), keeping domain semantics centralized and bypassing HTTP when appropriate.
+3. **Coordination tooling** (the `hqContract` + coordination operations in `apps/server/src/orpc.ts`) powers dashboards, run discovery, and orchestration controls; these consumers speak the administrative contract, not workflow triggers.
+Closing the loop on D-005 requires recognizing all three groups so we keep `/api/workflows` caller-facing, `/api/inngest` runtime-only, and tooling on the coordination canvas.
+
 ## Why
 - Preserves one trigger story for callers and one durability story for runtime.
 - Keeps auth/visibility policy explicit on trigger routes.
@@ -182,8 +188,20 @@ app.all("/api/workflows/*", async ({ request }) => {
 app.all("/api/inngest", async ({ request }) => inngestHandler(request));
 ```
 
+### Path strategy: capability-first vs surface-first
+- **Surface-first (rejected):** One generic `/api/workflows/*` path requires payload-based routing, complicates API discovery, and still forces host logic to route to per-capability routers. This offers no tangible DX benefit for plugin authors.
+- **Capability-first (chosen):** Namespace workflows per capability (e.g., `/api/workflows/search/enrich`), aligning paths with `plugins/api/<capability>` and `plugins/workflows/<capability>`. The manifest (`rawrHqManifest.workflows.triggerRouter`) can enumerate these namespaces so regenerating docs/SDKs is mechanical.
+Recommendation: keep capability prefixes explicit, emit them via the manifest helper, and hook them into the host’s `OpenAPIHandler`.
+
+### Internal calling + workflow triggering model
+- **Internal clients** use `withInternalClient(context, args, run)` to reach `packages/<capability>/src/client.ts` (service logic + validation), which prevents HTTP round-trips for server-only work.
+- **Workflow triggers** call `queueCoordinationRunWithInngest(...)` (in `apps/server/src/orpc.ts`), which persists run/timeline state (`CoordinationRuntimeAdapter`), sets trace links (`createDeskEvent`), and sends the Inngest event.
+- **Manifest-driven registration** ensures `rawrHqManifest.workflows.triggerRouter` maps each capability to the right handler and `rawrHqManifest.inngest` supplies the durable functions; the workflow boundary context helpers (`apps/server/src/workflows/context.ts`) keep principal/correlation metadata separate from `RawrOrpcContext`.
+
+
 ### Manifest-driven composition note
-The workflow handler above is sourced from `rawrHqManifest.workflows.router`, where each capability exports its API and workflow surfaces. Hosts regenerate `rawr.hq.ts` (or regenerate at build time) so `/api/workflows/<capability>` mounts, the `OpenAPIHandler`, and the Inngest function bundle stay in sync without manual edits under `apps/*`. This manifest-based spine is the canonical way to keep the workflow trigger surface in lockstep with `packages/*` and `plugins/*` assets (see `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md`).
+Hosts build the workflow handler from `rawrHqManifest.workflows.triggerRouter`, so capability-first `/api/workflows/<capability>` mounts, the `OpenAPIHandler`, and the Inngest function bundle stay in sync even when new capabilities land. Regenerate `rawr.hq.ts` via the manifest generator described in `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` instead of editing `apps/*`.
+
 
 ### Workflow surface export
 ```ts

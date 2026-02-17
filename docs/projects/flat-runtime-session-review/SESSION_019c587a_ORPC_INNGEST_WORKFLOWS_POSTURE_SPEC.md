@@ -169,7 +169,14 @@ state: os.state.router({
 3. Mount `/api/inngest` explicitly.
 4. Register oRPC routes (`/rpc`, `/api/orpc`) with parse-safe forwarding and injected context.
 
-## 9) Naming, Adoption, and Scale Governance (Global)
+## 9) D-005 cohesion snapshot
+- **Consumers:** External callers, internal package clients, and coordination tooling all cohabit the host; D-005 locks a three-consumer model so `/api/workflows/*` stays caller-facing, package clients stay in-process, and tooling uses the coordination canvas.
+- **Host spine:** A generated `rawr.hq.ts` manifest offers canonical `orpc` and `workflows` namespaces plus the shared Inngest bundle; hosts mount `rawrHqManifest.workflows.triggerRouter` at capability-first `/api/workflows/<capability>/*` and wire `rawrHqManifest.inngest` into `createInngestServeHandler` while keeping `/api/inngest` runtime-only.
+- **Path strategy:** Capability-first routing wins because it mirrors `plugins/api/<capability>` and `plugins/workflows/<capability>` directories, simplifies SDK/discovery generation, and avoids surface-first payload routing complexity; the manifest makes this declarative.
+- **Internal calling + workflows:** Workflow routers use helpers like `withInternalClient` and `queueCoordinationRunWithInngest` so validation lives in `packages/*`, run/timeline state flows through the `CoordinationRuntimeAdapter`, and the same manifest registers durable functions.
+- **File structure:** The only new host fixture is `apps/server/src/workflows/context.ts` (principal + runtime helpers), while `apps/server/src/rawr.ts` mounts the new routes; actual capability files remain under `packages/*`/`plugins/*`.
+
+## 10) Naming, Adoption, and Scale Governance (Global)
 1. Canonical role names: `contract.ts`, `router.ts`, `client.ts`, `operations/*`, `index.ts`.
 2. Internal package layered defaults may include `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
 3. Within one `domain/` folder, filenames avoid repeating the domain token (`status.ts`, not `invoice-status.ts` inside `invoicing/domain/`).
@@ -185,7 +192,7 @@ state: os.state.router({
 13. Adoption exception is allowed only for true 1:1 overlap between boundary and internal surface, and must be explicitly documented.
 14. Scale rule: split handlers/operations first; split contracts only when behavior/policy/audience diverges.
 
-## 10) Source Anchors
+## 11) Source Anchors
 ### Local lineage
 1. `SESSION_019c587a_AGENT_I_SPLIT_HARDEN_RECOMMENDATION.md`
 2. `SESSION_019c587a_AGENT_J_COLLAPSE_UNIFY_RECOMMENDATION.md`
@@ -202,7 +209,7 @@ state: os.state.router({
 3. Elysia: [Lifecycle](https://elysiajs.com/essential/life-cycle), [Mount](https://elysiajs.com/patterns/mount)
 4. TypeBox: [Repository/docs](https://github.com/sinclairzx81/typebox)
 
-## 11) Navigation
+## 12) Navigation
 - If you need one axis policy in implementation-ready depth, start in `orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md` and follow its axis map.
 - If you need tutorial-style concrete implementations, read:
   - `orpc-ingest-spec-packet/examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md`

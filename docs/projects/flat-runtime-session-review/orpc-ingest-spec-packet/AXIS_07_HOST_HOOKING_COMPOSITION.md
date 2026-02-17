@@ -52,6 +52,8 @@
 apps/server/src/
   rawr.ts
   orpc.ts
+  workflows/
+    context.ts
 rawr.hq.ts
 packages/core/src/orpc/
   hq-router.ts
@@ -119,35 +121,22 @@ export function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Stat
 
 ### Composition root fixture (`rawr.hq.ts`)
 ```ts
-const inngest = new Inngest({ id: "rawr-hq" });
-const invoiceWorkflows = createInvoiceWorkflowSurface(inngest);
+const inngest = createInngestClient("rawr-hq");
+const capabilities = [
+  createInvoicingCapabilitySurface(inngest),
+  createSearchCapabilitySurface(inngest),
+] as const;
 
-export const rawrHqManifest = {
-  orpc: {
-    contract: oc.router({
-      invoicing: {
-        api: invoiceApiSurface.contract,
-        workflows: invoiceWorkflows.triggerContract,
-      },
-    }),
-    router: {
-      invoicing: {
-        api: invoiceApiSurface.router,
-        workflows: invoiceWorkflows.triggerRouter,
-      },
-    },
-  },
-  inngest: { client: inngest, functions: [...invoiceWorkflows.functions] },
-} as const;
+export const rawrHqManifest = composeCapabilities(capabilities, inngest);
 ```
 
-This manifest is the canonical composition spine: capability identifiers, API routers, workflow routers, and Inngest function lists are emitted from plugin/package metadata so host wiring (`apps/server/src/rawr.ts`) does not change when new capabilities land. `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` documents how to keep the manifest in sync.
+The manifest emits separate `orpc` and `workflows` namespaces so host wiring can mount `/rpc*` + `/api/orpc*` from `rawrHqManifest.orpc` while `/api/workflows/*` uses `rawrHqManifest.workflows` routes and the same `inngest` bundle. Plugin-generated capability metadata feeds the manifest so `apps/*` never needs manual edits; see `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` for the generator+helper story.
 
 ### Host fixture split mount contract
 ```ts
 // apps/server/src/rawr.ts
 app.all("/api/inngest", async ({ request }) => inngestHandler(request));
-const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.router);
+const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
 
 app.all("/api/workflows/*", async ({ request }) => {
   const context = createWorkflowBoundaryContext({
@@ -196,6 +185,13 @@ const inngestHandler = createInngestServeHandler({
 app.all("/api/inngest", async ({ request }) => inngestHandler(request));
 ```
 
+### File-structure implications
+The manifest-driven spine adds one new fixture: `apps/server/src/workflows/context.ts` (principal resolution, workflow boundary metadata, and runtime helpers) while keeping `apps/server/src/rawr.ts` focused on mounting `/api/workflows/*` and `/api/inngest`. Capability metadata stays inside `packages/*` and `plugins/*`, and `rawr.hq.ts` is generated under the repo root so host owners do not edit it manually.
+
+### What changes vs what stays the same
+- **Changes:** generate `rawr.hq.ts` from capability metadata, add workflow context fixtures, mount `OpenAPIHandler(rawrHqManifest.workflows.triggerRouter)` at `/api/workflows/*`, and pass the manifest’s `inngest` bundle into `createInngestServeHandler`. The capability namespace mapping is now explicit, and helper scripts (e.g., `composeCapabilities`, manifest generator) orchestrate wiring.
+- **Unchanged:** `/rpc*` + `/api/orpc*` still go through `registerOrpcRoutes()`, the same `CoordinationRuntimeAdapter`/`createCoordinationInngestFunction()` pair supports durability, and `packages/core` still owns the `hqContract` neighborhood. The DECISIONS entry now predicates D-005 on the new policy rather than claiming runtime is done.
+
 ## Glue Boundaries and Ownership
 1. Host app owns mount boundaries and runtime wiring.
 2. oRPC layer owns boundary contract exposure and request context.
@@ -207,31 +203,67 @@ app.all("/api/inngest", async ({ request }) => inngestHandler(request));
 1. `packages/core/src/composition/capability-composer.ts`
 2. `packages/core/src/composition/surfaces.ts`
 3. `packages/core/src/orpc/with-internal-client.ts`
+4. `apps/server/src/workflows/register-workflow-routes.ts`
 
 These are optional DX helpers and do not alter semantic policy.
 
 ```ts
 // capability-composer.ts
 export function composeCapabilities<const T extends readonly Capability[]>(capabilities: T, inngestClient: unknown) {
-  const contract = oc.router(
+  const orpcContract = oc.router(
     Object.fromEntries(
       capabilities.map((capability) => [
         capability.capabilityId,
-        { api: capability.api.contract, workflows: capability.workflows.triggerContract },
+        capability.api.contract,
       ]),
     ),
   );
-  const router = Object.fromEntries(
+  const orpcRouter = Object.fromEntries(
     capabilities.map((capability) => [
       capability.capabilityId,
-      { api: capability.api.router, workflows: capability.workflows.triggerRouter },
+      capability.api.router,
     ]),
   );
+  const triggerContract = oc.router(
+    Object.fromEntries(
+      capabilities.map((capability) => [
+        capability.capabilityId,
+        capability.workflows.triggerContract,
+      ]),
+    ),
+  );
+  const triggerRouter = Object.fromEntries(
+    capabilities.map((capability) => [
+      capability.capabilityId,
+      capability.workflows.triggerRouter,
+    ]),
+  );
+
   return {
     capabilities,
-    orpc: { contract, router },
+    orpc: { contract: orpcContract, router: orpcRouter },
+    workflows: { triggerContract, triggerRouter },
     inngest: { client: inngestClient, functions: capabilities.flatMap((capability) => capability.workflows.functions) },
   } as const;
+}
+```
+
+```ts
+// register-workflow-routes.ts
+export function registerWorkflowRoutes(app: Elysia, manifest: RawrHqManifest, deps: WorkflowRouteDeps) {
+  const workflowHandler = new OpenAPIHandler(manifest.workflows.triggerRouter);
+  app.all("/api/workflows/*", async ({ request }) => {
+    const context = createWorkflowBoundaryContext({
+      principal: requirePrincipal(request),
+      inngest: deps.inngestClient,
+      runtime: deps.runtime,
+    });
+    const result = await workflowHandler.handle(request, {
+      prefix: "/api/workflows",
+      context,
+    });
+    return result.matched ? result.response : new Response("not found", { status: 404 });
+  }, { parse: "none" });
 }
 ```
 
