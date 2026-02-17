@@ -3,6 +3,9 @@
 ## Document Role
 This file is the integrative subsystem overview for ORPC + Inngest posture.
 
+Loop-closure lineage and context map lives in:
+- `SESSION_019c587a_LOOP_CLOSURE_BRIDGE.md`
+
 Canonical axis-level leaf specs now live in:
 - `orpc-ingest-spec-packet/AXIS_01_EXTERNAL_CLIENT_GENERATION.md`
 - `orpc-ingest-spec-packet/AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`
