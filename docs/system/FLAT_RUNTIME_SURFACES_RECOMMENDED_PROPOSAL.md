@@ -1,4 +1,5 @@
 # Flat Runtime Surfaces: Locked Recommended Proposal
+> **Authority note:** This document is now a historical artifact. The current ORPC/Inngest posture and axis rules live under `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md` and `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`. Unique legacy context is captured under `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/additive-extractions/`.
 
 ## Status
 - This is the locked baseline for this architecture cycle.

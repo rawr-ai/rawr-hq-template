@@ -11,7 +11,8 @@ Target-state runtime composition is manifest-first:
 - host mounting in `apps/*`.
 
 Canonical target packet:
-- `docs/system/spec-packet/FLAT_RUNTIME_SPEC_PACKET.md`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`
+  (see `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`)
 
 ## Procedure API Spine (ORPC)
 
