@@ -1,35 +1,47 @@
 # Axis 09: Durable Endpoints vs Durable Functions
 
-## Role Metadata
-- Role: Normative Annex
-- Authority: Binding choice and guardrails for durable execution path selection.
-- Owns: canonical durable-execution primitive for first-party workflows and additive-adapter constraints.
-- Depends on: `./ORPC_INGEST_SPEC_PACKET.md`, `./DECISIONS.md`, `./CANONICAL_ROLE_CONTRACT.md`.
-- Last validated against: `../SESSION_019c587a_INFO_DESIGN_CONVERGED_DIRECTION.md`.
+## In Scope
+- Canonical durability model choice for first-party workflows.
+- Constraints for optional durable endpoint adapters.
+- Guardrails preventing parallel first-party trigger paths.
 
-## Depends on Core (Normative)
-1. Packet-global route-family and caller/auth boundaries are owned in `./ORPC_INGEST_SPEC_PACKET.md`.
-2. Decision-state ownership for workflow split posture remains in `./DECISIONS.md`.
+## Out of Scope
+- General workflow trigger contract/router authoring (see [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)).
+- Host mount internals (see [AXIS_07_HOST_HOOKING_COMPOSITION.md](./AXIS_07_HOST_HOOKING_COMPOSITION.md)).
 
-## Axis-Specific Normative Deltas
-1. Inngest durable functions are canonical for first-party durable workflow execution.
+## Canonical Policy
+1. Durable functions are canonical for first-party durable workflow execution.
 2. Durable endpoints MAY be used only as additive ingress adapters for non-overlapping ingress needs.
 3. Durable endpoints MUST NOT create a parallel first-party trigger authoring path for the same capability behavior.
-4. If durable endpoints are introduced, they MUST remain explicitly subordinate to canonical workflow-trigger and durable-function ownership, with non-overlap documented.
+
+## Why
+- Maintains one contract path for caller-facing APIs.
+- Allows targeted ingress flexibility without semantic drift.
+
+## Trade-Offs
+- Not all ingress styles collapse into one code shape.
+- This is acceptable and prevents client confusion.
 
 ## Canonical Placement
 ```text
 plugins/workflows/<capability>/src/
-  functions/*   # canonical durable execution
-  durable/*     # optional additive ingress adapters only
+  functions/*            # canonical durable execution
+  durable/*              # optional additive ingress adapters only
 ```
 
-## Out of Scope
-- Workflow trigger contract/router authoring (`AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`).
-- Host mount/bootstrap wiring (`AXIS_07_HOST_HOOKING_COMPOSITION.md`).
+## Allowed vs Disallowed
+- Allowed:
+  - Durable endpoint adapter for ingress needs that do not overlap caller-facing trigger behavior.
+  - Continued canonical first-party trigger authoring on oRPC workflow trigger surfaces.
+- Disallowed:
+  - Durable endpoint as alternate first-party trigger authoring path for the same behavior.
 
 ## References
-- Core owner: `./ORPC_INGEST_SPEC_PACKET.md`
-- Decision ledger: `./DECISIONS.md`
-- Inngest durable endpoints: https://www.inngest.com/docs/learn/durable-endpoints
-- Inngest functions: https://www.inngest.com/docs/reference/functions/create
+- Inngest: [Durable endpoints](https://www.inngest.com/docs/learn/durable-endpoints)
+- Inngest: [Functions](https://www.inngest.com/docs/reference/functions/create)
+- Inngest: [Serve](https://www.inngest.com/docs/reference/serve)
+- Packet entrypoint: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`
+
+## Cross-Axis Links
+- Workflow trigger boundary ownership: [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
+- Split/anti-dual-path posture: [AXIS_03_SPLIT_VS_COLLAPSE.md](./AXIS_03_SPLIT_VS_COLLAPSE.md)

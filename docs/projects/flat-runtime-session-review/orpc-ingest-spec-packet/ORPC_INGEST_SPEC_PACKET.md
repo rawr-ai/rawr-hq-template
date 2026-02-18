@@ -1,21 +1,4 @@
-# ORPC + Inngest Spec Packet (Canonical Entrypoint)
-
-## Role Metadata
-- Role: Normative Core
-- Authority: Sole canonical entrypoint for this packet and normative owner of packet-wide invariants/caller/auth semantics.
-- Owns: canonical read-start contract, global invariants, caller/auth boundary matrix, packet-wide defaults.
-- Depends on: `./DECISIONS.md`, `./CANONICAL_ROLE_CONTRACT.md`, `./CANONICAL_READ_PATH.md`, `./AXIS_01_EXTERNAL_CLIENT_GENERATION.md` through `./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md`.
-- Last validated against: `../SESSION_019c587a_INFO_DESIGN_CONVERGED_DIRECTION.md`.
-
-## Canonical Entrypoint Contract
-1. This file is the only canonical read start for ORPC/Inngest packet policy.
-2. Global invariants and the caller/auth matrix are authoritative only in this file.
-3. Annex/reference/history artifacts must link back here when citing packet-wide policy; they do not re-own global policy.
-
-## Canonical Read Order
-1. Start with this file.
-2. Follow `./CANONICAL_READ_PATH.md` for deterministic sequence.
-3. Use `./DECISIONS.md` for current decision state (closed/locked/open).
+# ORPC + Inngest Spec Packet (Self-Contained Entry)
 
 ## In Scope
 - Canonical leaf-spec packet for ORPC boundary APIs, workflow trigger APIs, Inngest durable execution, and host composition.
@@ -28,7 +11,12 @@
 - Platform migration planning beyond what is encoded in posture policy.
 - Replacing the integrative overview role of `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`.
 
-## Locked Subsystem Policies (Global Invariants — Single Source)
+## Packet Role
+This packet is the canonical leaf-level spec set.
+
+This packet is self-contained for policy decisions, caller/auth semantics, and ownership boundaries. The parent overview (`../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`) provides subsystem-level orientation.
+
+## Locked Subsystem Policies
 1. API boundary and durable execution remain split.
 2. oRPC is the primary boundary API harness.
 3. Inngest functions are the primary durability harness.
@@ -42,7 +30,7 @@
 
 > D-005 lock: workflow trigger APIs are caller-facing on manifest-driven `/api/workflows/<capability>/*`; `/rpc` remains first-party/internal transport only, and `/api/inngest` remains signed runtime ingress only.
 
-## Caller/Auth Boundary Matrix (Single Source)
+## Caller/Auth Boundary Matrix
 ```yaml
 caller_modes:
   - caller: browser_mfe_or_network_consumer
@@ -71,9 +59,7 @@ caller_modes:
       - browser_access
 ```
 
-The caller/auth matrix above is packet-global and must not be redefined in annex/reference artifacts.
-
-## Normative Annex Coverage (Axis 01-09)
+## Axis Coverage (Complete)
 1. [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)
 2. [AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md](./AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md)
 3. [AXIS_03_SPLIT_VS_COLLAPSE.md](./AXIS_03_SPLIT_VS_COLLAPSE.md)
@@ -84,7 +70,7 @@ The caller/auth matrix above is packet-global and must not be redefined in annex
 8. [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
 9. [AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md](./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md)
 
-## Reference Walkthroughs (Non-Normative By Default)
+## End-to-End Walkthroughs (Tutorial Layer)
 These are implementation-oriented walkthroughs that apply axis policies in concrete flows.
 
 1. [E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md](./examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md)
@@ -92,9 +78,9 @@ These are implementation-oriented walkthroughs that apply axis policies in concr
 3. [E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md](./examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md)
 4. [E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md](./examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md)
 
-These walkthroughs are normative only where they explicitly cite locked policy owners in this file or in axis annexes. If a walkthrough surfaces ambiguity, record it in [DECISIONS.md](./DECISIONS.md).
+Tutorial docs are normative only where they reference locked axis policies. If a walkthrough surfaces ambiguity, record it in [DECISIONS.md](./DECISIONS.md).
 
-## Cross-Cutting Defaults (Global Invariants — Single Source)
+## Cross-Cutting Defaults
 1. External SDK generation uses one composed oRPC/OpenAPI boundary surface.
 2. Internal in-process cross-boundary calls default to package internal clients (`client.ts`), not local HTTP.
 3. Caller-triggered workflow routes are oRPC workflow trigger routes on `/api/workflows/<capability>/*`; runtime durable ingress is `/api/inngest`.
@@ -174,5 +160,3 @@ Caller
 
 ## Decision Log
 - Packet-local decisions: [DECISIONS.md](./DECISIONS.md)
-- Role taxonomy and metadata rules: [CANONICAL_ROLE_CONTRACT.md](./CANONICAL_ROLE_CONTRACT.md)
-- Deterministic read order: [CANONICAL_READ_PATH.md](./CANONICAL_READ_PATH.md)

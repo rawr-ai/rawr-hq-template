@@ -1,27 +1,5 @@
 # E2E 03 — Micro-Frontend + Workflow Integration Without Semantic Duplication
 
-## Role Metadata
-- Role: Reference
-- Authority: Non-normative walkthrough for first-party MFE + workflow integration choices.
-- Owns: illustrative boundary/domain reuse patterns, transport examples, and scenario-level guardrails.
-- Depends on: `../ORPC_INGEST_SPEC_PACKET.md`, `../DECISIONS.md`, `../AXIS_01_EXTERNAL_CLIENT_GENERATION.md`, `../AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`, `../AXIS_03_SPLIT_VS_COLLAPSE.md`, `../AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`.
-- Last validated against: `../../SESSION_019c587a_INFO_DESIGN_CONVERGED_DIRECTION.md`.
-
-## Normative Boundary
-1. This example is non-normative by default.
-2. Requirement terms in this file mirror canonical packet policy and do not establish policy ownership here.
-3. Only blocks explicitly tagged as `Normative quote` with owner links should be treated as normative; none are defined unless tagged inline.
-4. Canonical read start remains `../ORPC_INGEST_SPEC_PACKET.md`.
-
-## Canonical Policy Anchors for This Walkthrough
-| Concern in this walkthrough | Canonical owner |
-| --- | --- |
-| Global caller/auth matrix and split transport boundaries | `../ORPC_INGEST_SPEC_PACKET.md`, `../DECISIONS.md` (D-007) |
-| First-party vs published client-generation posture | `../AXIS_01_EXTERNAL_CLIENT_GENERATION.md` |
-| Internal package reuse boundaries for server-side calls | `../AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md` |
-| Anti-collapse guardrails and no parallel first-party trigger path | `../AXIS_03_SPLIT_VS_COLLAPSE.md`, `../DECISIONS.md` (D-005, D-006) |
-| Workflow trigger/status ownership and runtime ingress split | `../AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md` |
-
 ## 1) Goal and Use-Case Framing
 
 ### Goal

@@ -1,27 +1,5 @@
 # E2E 01 — Basic Internal Package + API Boundary (TypeBox-First)
 
-## Role Metadata
-- Role: Reference
-- Authority: Non-normative walkthrough for basic package + API boundary composition.
-- Owns: illustrative file layout, snippet sequencing, and guardrail examples for this scenario.
-- Depends on: `../ORPC_INGEST_SPEC_PACKET.md`, `../DECISIONS.md`, `../AXIS_01_EXTERNAL_CLIENT_GENERATION.md`, `../AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`, `../AXIS_03_SPLIT_VS_COLLAPSE.md`, `../AXIS_07_HOST_HOOKING_COMPOSITION.md`.
-- Last validated against: `../../SESSION_019c587a_INFO_DESIGN_CONVERGED_DIRECTION.md`.
-
-## Normative Boundary
-1. This example is non-normative by default.
-2. Requirement terms in this file mirror canonical packet policy; they do not create policy ownership here.
-3. Only blocks explicitly tagged as `Normative quote` with owner links should be treated as normative; none are defined unless tagged inline.
-4. Canonical read start remains `../ORPC_INGEST_SPEC_PACKET.md`.
-
-## Canonical Policy Anchors for This Walkthrough
-| Concern in this walkthrough | Canonical owner |
-| --- | --- |
-| Caller/auth route boundaries and global invariants | `../ORPC_INGEST_SPEC_PACKET.md` |
-| External publication boundary and internal RPC stance | `../AXIS_01_EXTERNAL_CLIENT_GENERATION.md`, `../DECISIONS.md` (D-007) |
-| Internal in-process package calling defaults | `../AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md` |
-| Split-semantics retention (`/api/workflows/*` vs `/api/inngest`) | `../AXIS_03_SPLIT_VS_COLLAPSE.md`, `../DECISIONS.md` (D-005) |
-| Explicit host composition and route mounting posture | `../AXIS_07_HOST_HOOKING_COMPOSITION.md`, `../DECISIONS.md` (D-008) |
-
 ## 1) Goal and use-case framing
 
 This walkthrough shows the smallest policy-compliant end-to-end path for:

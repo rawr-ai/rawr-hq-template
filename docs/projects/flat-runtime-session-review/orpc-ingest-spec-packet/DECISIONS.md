@@ -1,22 +1,10 @@
 # ORPC + Inngest Spec Packet Decisions
 
-## Role Metadata
-- Role: Normative Core
-- Authority: Canonical decision-state ledger for the ORPC/Inngest packet.
-- Owns: decision IDs, status lifecycle (closed/locked/open), resolution text, and policy change-control notes.
-- Depends on: `./ORPC_INGEST_SPEC_PACKET.md` (global invariants + caller/auth matrix), `./CANONICAL_ROLE_CONTRACT.md`, `./CANONICAL_READ_PATH.md`.
-- Last validated against: `../SESSION_019c587a_INFO_DESIGN_CONVERGED_DIRECTION.md`.
-
 ## Scope
 Packet-local decision tracking for documentation-architecture changes only.
 
-## Global Policy Ownership Guardrail
-1. This file does not own packet-global invariants or the caller/auth matrix.
-2. Packet-global invariants and caller/auth semantics are single-sourced in `./ORPC_INGEST_SPEC_PACKET.md`.
-3. Decision entries may reference those invariants but must not redefine them.
-
 ## Current Status
-D-005, D-006, D-007, and D-008 are closed policy locks; D-011 and D-012 are locked posture decisions; D-009 and D-010 remain open/non-blocking guidance. Policy meaning remains unchanged from the canonical core.
+Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, context metadata placement, and caller/transport publication boundaries are explicitly locked. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
 
 ## Decision Register
 
@@ -144,9 +132,8 @@ D-005, D-006, D-007, and D-008 are closed policy locks; D-011 and D-012 are lock
   - `AXIS_07_HOST_HOOKING_COMPOSITION.md`
   - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
 
-## Canonical Dependencies
-- Normative core (global invariants + caller/auth matrix): `./ORPC_INGEST_SPEC_PACKET.md`
-- Integrative reference context (non-normative owner): `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
+## Inherited Canonical Decision Source
+- `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
 
 ## Rule
 If future packet edits reveal a new architecture-impacting ambiguity, add it here before continuing edits.
