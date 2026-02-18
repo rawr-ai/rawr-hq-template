@@ -18,7 +18,7 @@
 ## Canonical Policy
 1. Externally published SDK/client generation MUST come from OpenAPI boundary surfaces only (`/api/orpc/*`, `/api/workflows/<capability>/*`).
 2. `/rpc` is first-party/internal transport only. `RPCLink` clients and RPC client artifacts MUST NOT be externally published.
-3. First-party callers (including MFEs by default) SHOULD use `RPCLink` on `/rpc` unless an explicit exception is documented.
+3. First-party browser/network callers (including MFEs by default) SHOULD use `RPCLink` on `/rpc` unless an explicit exception is documented.
 4. Boundary APIs remain contract-first by default.
 5. Workflow/API boundary contracts are plugin-owned. Packages may export shared domain schemas and domain helpers, but workflow trigger/status I/O schemas and caller-facing boundary contract ownership remain in plugins.
 6. Browser/network callers MUST NOT target `/api/inngest`; runtime ingress is not a client publication surface.
@@ -29,7 +29,8 @@ This table is an axis-local projection of the canonical caller/auth matrix in [A
 
 | Caller class | Contract source | Link + route | Publication boundary | Auth mode | Forbidden routes |
 | --- | --- | --- | --- | --- | --- |
-| First-party callers (MFE default, internal services, CLI) | internal composed contracts | `RPCLink` -> `/rpc` | Internal only (never externally published) | first-party boundary session or trusted service context | `/api/inngest` |
+| First-party browser/network callers (MFE default) | internal composed contracts | `RPCLink` -> `/rpc` | Internal only (never externally published) | first-party boundary session/auth | `/api/inngest` |
+| Server-internal callers | package internal client contracts | `createRouterClient` -> in-process | Internal only (never externally published) | trusted service context | local HTTP self-calls as default, `/api/inngest` |
 | External/third-party callers | `plugins/api/<capability>/src/contract.ts`, `plugins/workflows/<capability>/src/contract.ts` | `OpenAPILink` -> `/api/orpc/*`, `/api/workflows/<capability>/*` | Externally published OpenAPI clients | boundary auth/session/token | `/rpc`, `/api/inngest` |
 | Runtime ingress | Inngest runtime bundle | Inngest callback -> `/api/inngest` | Runtime-only (not a caller SDK) | signed ingress verification | `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
 

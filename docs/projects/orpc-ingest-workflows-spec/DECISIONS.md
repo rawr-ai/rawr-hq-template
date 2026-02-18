@@ -4,7 +4,7 @@
 Packet-local decision tracking for documentation-architecture changes only.
 
 ## Current Status
-Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, context metadata placement, and caller/transport publication boundaries are explicitly locked. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
+Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, context metadata placement, caller/transport publication boundaries, and legacy metadata runtime simplification are explicitly locked. D-014 and D-015 are explicitly locked in this register. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
 
 ## Decision Register
 
@@ -76,10 +76,70 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
   - `https://orpc.dev/docs/contract-first/define-contract`
 - `impacted_docs`:
   - `ARCHITECTURE.md`
-  - `ARCHITECTURE.md`
   - `axes/04-context-propagation.md`
   - `axes/06-middleware.md`
   - `axes/08-workflow-api-boundaries.md`
+
+### D-013 — Legacy metadata runtime simplification and lifecycle obligations
+- `status`: `locked`
+- `locked_decision`:
+  - Runtime behavior and composition semantics in this packet are derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`.
+  - `templateRole` and `channel` are removed from runtime semantics and MUST NOT drive route mounting, caller-mode selection, auth posture, runtime ingress selection, or durable execution behavior.
+  - `publishTier` and `published` remain release/distribution metadata only and MUST NOT drive runtime composition, host route exposure, or runtime wiring behavior.
+  - Manifest-first composition via generated `rawr.hq.ts` is the sole composition authority in packet target-state language.
+  - D-005..D-012 semantics are unchanged by this lock.
+- `policy_obligations`:
+  - Downstream docs/process/runbook/testing artifacts MUST align to this reduced metadata model and remove runtime behavior claims tied to `templateRole`, `channel`, `publishTier`, or `published`.
+  - Downstream validation/testing policy MUST enforce `manifest-smoke`, `metadata-contract` (`rawr.kind` + `rawr.capability` required), `import-boundary`, and `host-composition-guard` checks.
+  - Downstream lifecycle/status tooling MUST report and operate by `rawr.kind` + `rawr.capability` under manifest-owned composition surfaces.
+- `source_anchors`:
+  - `../_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/additive-extractions/LEGACY_METADATA_REMOVAL.md`
+  - `../_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/additive-extractions/LEGACY_TESTING_SYNC.md`
+  - `../_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/additive-extractions/LEGACY_DECISIONS_APPENDIX.md`
+- `impacted_docs`:
+  - `ARCHITECTURE.md`
+  - `axes/07-host-composition.md`
+  - `axes/10-legacy-metadata-and-lifecycle-simplification.md`
+
+### D-014 — Core infrastructure packaging and composition guarantees
+- `status`: `locked`
+- `locked_decision`:
+  - Shared harness/core/infrastructure abstractions are package-owned by default and remain transport-neutral.
+  - Host composition owns concrete adapter wiring, context factories, and dependency injection for boundary/runtime execution.
+  - Capability packages define reusable ports/contracts for infrastructure seams; plugin boundaries consume injected ports instead of owning shared infrastructure wiring.
+  - Import direction remains one-way: hosts/plugins may import packages; packages must not import plugin runtime modules.
+  - Workflow/API boundary ownership remains plugin-owned (D-006 unchanged); route/caller semantics remain unchanged (D-005/D-007 unchanged).
+- `source_anchors`:
+  - `axes/11-core-infrastructure-packaging-and-composition-guarantees.md`
+  - `axes/02-internal-clients.md`
+  - `axes/07-host-composition.md`
+  - `axes/08-workflow-api-boundaries.md`
+- `impacted_docs`:
+  - `ARCHITECTURE.md`
+  - `axes/02-internal-clients.md`
+  - `axes/07-host-composition.md`
+  - `axes/08-workflow-api-boundaries.md`
+  - `axes/11-core-infrastructure-packaging-and-composition-guarantees.md`
+
+### D-015 — Testing harness and verification strategy
+- `status`: `locked`
+- `locked_decision`:
+  - Axis 12 is the canonical testing harness and verification-layer authority for packet behavior.
+  - Harness patterns are explicit by caller/surface: in-process (`createRouterClient`), first-party boundary (`RPCLink` on `/rpc`), and external boundary (`OpenAPILink` on `/api/orpc/*` and `/api/workflows/<capability>/*`).
+  - `/api/inngest` is runtime-ingress verification only and is never a caller-facing route in test harnesses.
+  - Caller-path negative-route assertions are mandatory across harnesses.
+  - `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md` is the canonical downstream docs/runbook/testing update contract for later execution (external docs are intentionally not edited in this packet layer).
+  - D-013 and D-014 compatibility constraints are required across downstream testing/doc update work.
+- `source_anchors`:
+  - `axes/12-testing-harness-and-verification-strategy.md`
+  - `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md`
+- `impacted_docs`:
+  - `ARCHITECTURE.md`
+  - `axes/05-errors-observability.md`
+  - `axes/06-middleware.md`
+  - `axes/12-testing-harness-and-verification-strategy.md`
+  - `examples/e2e-04-context-middleware.md`
+  - `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md`
 
 ### D-008 — Extended traces middleware initialization order standard
 - `status`: `closed`
@@ -93,7 +153,6 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
 - `source_anchors`:
   - `https://www.inngest.com/docs/reference/typescript/extended-traces`
 - `impacted_docs`:
-  - `ARCHITECTURE.md`
   - `ARCHITECTURE.md`
   - `axes/05-errors-observability.md`
   - `axes/06-middleware.md`

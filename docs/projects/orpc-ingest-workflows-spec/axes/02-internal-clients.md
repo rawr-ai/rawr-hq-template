@@ -31,6 +31,11 @@
 13. External/third-party callers use published OpenAPI routes (`/api/orpc/*`, `/api/workflows/<capability>/*`); RPC clients are not externally published.
 14. Caller traffic MUST NOT use `/api/inngest`; runtime ingress is runtime-only.
 15. Packages MUST NOT own workflow trigger/status boundary contracts or workflow boundary I/O schemas; those stay in `plugins/workflows/<capability>/src/contract.ts`.
+16. Shared auth/db-ready infrastructure seams SHOULD be expressed as typed ports/contracts in package-oriented shared modules by default (interfaces + factory shapes), so package contexts can consume them without binding to a concrete adapter.
+17. Concrete auth/db/runtime adapters MUST be composed and injected outside package internals (host/plugin composition), then consumed through package `context.ts` contracts.
+18. Package internals MUST NOT instantiate process-global auth/db singletons; package logic stays adapter-agnostic and testable through injected ports.
+19. Import direction MUST remain deterministic: packages MAY depend on shared infrastructure packages, plugins/hosts MAY depend on packages, and packages MUST NOT import plugins or host runtime modules.
+20. D-014 composition guarantees for these seams are captured in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
 
 ## Why
 - Prevents “four ways to call” drift.
@@ -77,6 +82,23 @@ packages/<domain>/src/
 - `client.ts`: default internal invocation path.
 - `errors.ts`: package-level typed errors.
 - `index.ts`: package export surface.
+
+## Core Infrastructure Layering Contract (D-014)
+Status note: this section is canonical D-014 language mapped to `DECISIONS.md`.
+
+| Layer | Owns | Must not own |
+| --- | --- | --- |
+| Shared infrastructure primitives (`packages/*` shared modules) | transport-neutral context/auth/db-ready ports, metadata types, pure helper/factory contracts | caller-facing workflow/API contracts, host mount wiring |
+| Capability package internals (`packages/<domain>/src/*`) | domain/service/procedures/internal client using injected ports | boundary contract ownership, concrete host adapter creation |
+| Boundary plugins (`plugins/api/*`, `plugins/workflows/*`) | caller-facing contracts/operations/router wiring to package clients | package-domain ownership transfer, global singleton adapter construction |
+| Host composition (`apps/*`, `rawr.hq.ts`) | concrete adapter construction, dependency assembly, route registration/mount order | package-domain logic, boundary contract ownership |
+
+### Deterministic guarantees
+1. Package internal clients stay the server-internal default and consume infrastructure through typed context ports.
+2. Plugin authors receive deterministic wiring expectations: boundary context + package client injection + no local HTTP self-call default.
+3. Concrete auth/db/runtime adapter selection remains a host/composition concern and can evolve without package contract churn.
+4. Shared infrastructure remains transport-neutral and reusable across API, workflow, and durable-runtime contexts.
+5. This contract does not alter D-005, D-006, D-007, D-011, or D-012 semantics.
 
 ## Canonical Snippets
 
@@ -262,4 +284,5 @@ export async function startInvoiceOperation(
 - External generation boundary: [01-external-client-generation.md](./01-external-client-generation.md)
 - Split posture and anti-dual-path: [03-split-vs-collapse.md](./03-split-vs-collapse.md)
 - Workflow trigger boundary exception: [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md)
+- Core infrastructure packaging + composition guarantees: [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md)
 - Micro-frontend walkthrough: [e2e-03-microfrontend-integration.md](../examples/e2e-03-microfrontend-integration.md)

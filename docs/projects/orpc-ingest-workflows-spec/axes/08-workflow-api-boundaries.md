@@ -34,6 +34,11 @@
 16. For object-root schema wrappers in docs, prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
 17. For non-`Type.Object` roots, keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
 18. Workflow composition/mounting docs MUST stay explicit; do not collapse route ownership into black-box host helpers.
+19. Workflow boundary routers MUST consume host-injected infrastructure ports through explicit `context.ts` contracts; plugin modules MUST NOT bootstrap concrete auth/db/runtime adapters.
+20. Workflow trigger operations MAY depend on auth/db-ready interfaces exposed in context ports, but concrete adapter selection remains host composition owned.
+21. Durable functions SHOULD consume shared package/internal-client abstractions wired from host-injected ports; this reuse does not transfer boundary contract ownership from plugins to packages.
+22. D-014 seam guarantees are specified in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
+23. When workflow/API boundaries need harness/core infrastructure abstractions, package-oriented shared surfaces are the default; exact package granularity remains implementation-flexible as long as ownership/import invariants hold.
 
 ## Consumer model
 1. **First-party callers** (including MFEs by default) use `RPCLink` on `/rpc` for workflow-trigger and workflow-status calls under the composed internal contract tree.
@@ -66,6 +71,20 @@ This table is an axis-local projection of the canonical caller/auth matrix in [A
 ## Trade-Offs
 - Trigger authoring remains explicit instead of inferred.
 - This is beneficial for policy clarity and operational visibility.
+
+## Boundary/Runtime Infrastructure Seam Guarantees (D-014)
+Status note: this section maps workflow/API boundary seams to D-014 candidate language and does not alter D-005..D-012 meaning.
+
+| Seam | Owner | Guarantee |
+| --- | --- | --- |
+| Boundary context seam | host context factories + workflow plugin `context.ts` | Boundary handlers receive principal/request/correlation/network metadata and infrastructure ports through explicit typed context. |
+| Trigger operation seam | workflow plugin operations | Trigger operations consume injected ports and package internal clients; they do not construct concrete adapters. |
+| Durable runtime seam | host runtime composition + Inngest function wiring | Durable functions execute with runtime-owned bundle and reuse package logic through injected clients/ports. |
+| Shared infrastructure seam | shared packages (`packages/*`) | Auth/db-ready interfaces and helper contracts remain transport-neutral and reusable across API/workflow surfaces. |
+
+## What Changes vs Unchanged
+- **Changes:** Workflow/API boundary language now explicitly defines infrastructure seam ownership (host injects ports, plugins consume ports, durable functions reuse injected abstractions), mapped as D-014 text.
+- **Unchanged:** D-005 route split semantics, D-006 plugin boundary ownership, D-007 caller transport/publication boundaries, D-011 context/schema ownership, and D-012 inline-I/O defaults remain intact.
 
 ## Canonical Workflow Plugin Shape
 ```text
@@ -285,4 +304,5 @@ Caller intent: trigger durable workflow run.
 - Durable endpoint additive-only limits: [09-durable-endpoints.md](./09-durable-endpoints.md)
 - Host mount boundaries: [07-host-composition.md](./07-host-composition.md)
 - Context envelope boundaries: [04-context-propagation.md](./04-context-propagation.md)
+- Core infrastructure packaging + composition guarantees: [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md)
 - Micro-frontend integration baseline: [e2e-03-microfrontend-integration.md](../examples/e2e-03-microfrontend-integration.md)

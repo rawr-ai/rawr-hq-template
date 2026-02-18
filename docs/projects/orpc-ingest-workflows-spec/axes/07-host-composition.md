@@ -28,6 +28,12 @@
 9. Host bootstrap MUST initialize baseline `extendedTracesMiddleware()` before constructing the Inngest client, composing workflow functions, or registering routes.
 10. Host mount/control-plane order MUST be explicit: `/api/inngest` first, `/api/workflows/*` second, then `/rpc` and `/api/orpc/*`.
 11. Plugin middleware MAY add runtime context/instrumentation but MUST inherit baseline traces middleware and MUST NOT replace or reorder that baseline.
+12. Host composition MUST assemble concrete infrastructure adapters (auth/db/runtime clients) and inject typed ports into boundary/package contexts; concrete adapter construction MUST NOT move into plugin/package modules.
+13. Host boundary/workflow context factories MUST be explicit and deterministic (`createBoundaryContext`, `createWorkflowBoundaryContext`, or equivalent), including principal/request/correlation metadata derivation.
+14. Plugin and package modules MUST consume injected infrastructure ports and MUST NOT import host runtime modules to construct adapters.
+15. Composition determinants MUST remain explicit and stable: manifest surface map, context factories, single runtime-owned Inngest bundle, and fixed mount/control-plane order.
+16. D-014 infrastructure packaging/composition guarantees are defined in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
+17. Harness/core/infrastructure abstractions SHOULD be package-oriented shared surfaces by default; host composition consumes those shared surfaces instead of duplicating ad hoc host-local abstractions.
 
 ## Route Family Purpose Table
 This table aligns with the canonical route and caller policy in [ARCHITECTURE.md](../ARCHITECTURE.md).
@@ -55,6 +61,24 @@ This table is an axis-local projection of the canonical caller/auth matrix in [A
 ## Trade-Offs
 - Host has explicit multi-mount configuration.
 - This is desired for clarity and operational control.
+
+## Deterministic Composition Determinants (D-014)
+Status note: this section maps host guarantees to D-014 candidate language and does not mutate D-005..D-012 behavior.
+
+| Determinant | Canonical owner | Guarantee |
+| --- | --- | --- |
+| Manifest surface map | `rawr.hq.ts` (generated composition authority) | API/workflow contracts and routers compose predictably by capability. |
+| Context factories | host boundary modules (`apps/server/src/workflows/context.ts` or equivalent) | Principal/request/correlation/network metadata are derived once per request boundary and injected consistently. |
+| Infrastructure adapter assembly | host composition root (`apps/server/src/rawr.ts` or equivalent) | Concrete auth/db/runtime adapters are wired outside plugins/packages and passed as typed ports. |
+| Runtime bundle ownership | host runtime composition | One runtime-owned Inngest bundle per process is reused for enqueue + ingress execution. |
+| Mount/control-plane ordering | host route registration | `/api/inngest` -> `/api/workflows/*` -> `/rpc` + `/api/orpc/*` remains explicit and testable. |
+
+## Infrastructure Wiring Contract (Stubs/Hooks Only)
+1. Shared packages define infrastructure contracts as ports/interfaces and small factory helpers, not concrete provider bootstraps.
+2. Host composition binds concrete adapters to those ports and injects them through context factories.
+3. Plugins declare required ports in `context.ts` and consume them via handlers/operations.
+4. Packages consume injected ports through internal client context and remain transport-neutral.
+5. This axis intentionally does not prescribe full auth or DB implementation flows.
 
 ## Naming Rules (Canonical)
 1. Use short descriptive names by role, not implementation trivia; prefer concise domain/plugin directory names when clear (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
@@ -245,7 +269,7 @@ app.all("/api/inngest", async ({ request }) => inngestHandler(request));
 The manifest-driven spine adds one new fixture: `apps/server/src/workflows/context.ts` (principal resolution, workflow boundary metadata, and runtime helpers) while keeping `apps/server/src/rawr.ts` focused on mounting `/api/workflows/*` and `/api/inngest`. Capability metadata stays inside `packages/*` and `plugins/*`, and `rawr.hq.ts` is generated under the repo root so host owners do not edit it manually.
 
 ### What changes vs what stays the same
-- **Changes:** Host bootstrap now initializes baseline traces first, keeps a single runtime-owned Inngest bundle, mounts `/api/inngest` then `/api/workflows/*`, and only then registers `/rpc` + `/api/orpc/*`. Generated manifest wiring and helper composition remain explicit.
+- **Changes:** Host bootstrap now initializes baseline traces first, keeps a single runtime-owned Inngest bundle, mounts `/api/inngest` then `/api/workflows/*`, and only then registers `/rpc` + `/api/orpc/*`. Generated manifest wiring and helper composition remain explicit, and host-owned infrastructure adapter injection guarantees are now explicit (D-014 language).
 - **Unchanged:** D-005 route split semantics, D-006 plugin boundary ownership, and D-007 caller transport/publication boundaries are unchanged. `/rpc*` + `/api/orpc*` still go through `registerOrpcRoutes()`, and the same `CoordinationRuntimeAdapter`/`createCoordinationInngestFunction()` pairing still supports durability.
 
 ## Glue Boundaries and Ownership
@@ -356,4 +380,5 @@ export function withInternalClient<TContext, TClient>(getClient: (context: TCont
 - External generation surface policy: [01-external-client-generation.md](./01-external-client-generation.md)
 - Context envelope ownership: [04-context-propagation.md](./04-context-propagation.md)
 - Workflow/API boundary ownership: [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md)
+- Core infrastructure packaging + composition guarantees: [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md)
 - Micro-frontend mount integration: [e2e-03-microfrontend-integration.md](../examples/e2e-03-microfrontend-integration.md)

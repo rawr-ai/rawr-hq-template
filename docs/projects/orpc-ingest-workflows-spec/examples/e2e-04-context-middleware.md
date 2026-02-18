@@ -1062,6 +1062,103 @@ const externalWorkflowClient = createORPCClient(externalContracts.invoicing.work
 | Runtime ingress enforcement | Satisfied | `/api/inngest` path is treated as signed runtime ingress with explicit signature verification before dispatch. |
 | Boundary vs runtime middleware separation | Satisfied | API/workflow boundary checks stay outside durable function internals. |
 | Middleware dedupe guidance | Satisfied | Explicit table documents once/repeated semantics and caveats. |
+| D-013 metadata runtime simplification compatibility | Satisfied | Test blueprint keys runtime assertions by manifest-owned surfaces and `rawr.kind` + `rawr.capability`; legacy metadata fields are excluded from runtime-behavior assertions. |
+| D-014 package-first/import-direction compatibility | Satisfied | Blueprint keeps reusable in-process helpers package-first and preserves one-way import direction (`plugins/*` tests -> `packages/*` helpers only). |
+
+## 11) Harness Verification Blueprint (Axis 12 Alignment)
+
+### 11.0 Package-first ownership and DX contract
+1. Treat this blueprint as a design contract, not implementation prescription.
+2. Keep reusable in-process harness helpers package-first (`packages/*`) and keep plugin suites surface-specific.
+3. Keep test import direction clean: plugin suites may consume package helpers; package suites do not depend on plugin runtime modules.
+4. Prefer deterministic helper entrypoints and typed TS factories to keep plugin/package author wiring low-friction.
+
+### 11.1 Surface-to-harness suite map
+| Surface context | Primary suite type | Harness + route | Core assertions | Forbidden route assertions |
+| --- | --- | --- | --- | --- |
+| Web plugin (first-party default) | boundary/network integration | `RPCLink` -> `/rpc` | trigger + status behavior, boundary auth, typed errors | browser path never targets `/api/inngest` |
+| Web plugin (published external mode) | boundary/network integration | `OpenAPILink` -> `/api/orpc/*` and `/api/workflows/<capability>/*` | published OpenAPI contract shape and auth semantics | external mode never uses `/rpc`; never uses `/api/inngest` |
+| CLI plugin (internal command flow) | in-process integration | `createRouterClient` (no local HTTP self-call default) | operation/package flow, middleware dedupe markers, context contract usage | CLI caller-style tests do not call `/api/inngest` |
+| API plugin | in-process + boundary/network integration | `createRouterClient` + `OpenAPILink` on `/api/orpc/*` | operation mapping, boundary policy enforcement, error shape | API caller harness does not use `/api/inngest` |
+| Workflow plugin trigger/status | in-process + boundary/network integration | `createRouterClient`, `RPCLink` on `/rpc`, `OpenAPILink` on `/api/workflows/<capability>/*` | preflight->enqueue mapping, trigger/status contract behavior | trigger/status caller harness does not use `/api/inngest` |
+| Workflow runtime function | runtime ingress verification | signed callback -> `/api/inngest` | signature enforcement, runtime middleware lifecycle, durable step/run status continuity | runtime ingress suite does not claim caller-boundary behavior for `/rpc` or published OpenAPI routes |
+
+### 11.2 Verification layers (purpose boundaries)
+| Layer | What this E2E stack should verify | What this layer must not claim |
+| --- | --- | --- |
+| Unit | domain invariants, operation mapping, explicit middleware helper behavior | route publication/auth/mount correctness |
+| In-process integration | package internal client flow, middleware dedupe markers, trigger preflight internals | boundary-network route behavior |
+| Boundary/network integration | `/rpc` first-party behavior, published OpenAPI boundary behavior, typed boundary errors | runtime ingress callback semantics |
+| Runtime ingress verification | signed `/api/inngest` handling, durable middleware + `step.run` lifecycle behavior | caller-facing boundary contract guarantees |
+| Full E2E | trigger -> enqueue -> durable execution -> status polling with correlation continuity | policy shortcuts that bypass route/caller split |
+
+### 11.3 Canonical negative route tests
+```ts
+it(\"blocks browser-style caller use of /api/inngest\", async () => {
+  const response = await fetch(`${baseUrl}/api/inngest`, {
+    method: \"POST\",
+    headers: { \"content-type\": \"application/json\" },
+    body: JSON.stringify({}),
+  });
+  expect([401, 403, 404]).toContain(response.status);
+});
+
+it(\"rejects external caller access to /rpc\", async () => {
+  const response = await fetch(`${externalBaseUrl}/rpc/invoicing/workflows/getRunStatus`, {
+    method: \"POST\",
+    headers: { \"content-type\": \"application/json\" },
+    body: JSON.stringify({ input: { runId: \"run-1\" } }),
+  });
+  expect([401, 403, 404]).toContain(response.status);
+});
+
+it(\"keeps runtime ingress verification isolated from caller-route assertions\", async () => {
+  const ingressResponse = await signedInngestCallback(baseUrl, payload);
+  expect(ingressResponse.status).toBe(200);
+  // Caller-route assertions happen in separate /rpc or /api/* boundary suites.
+});
+```
+
+### 11.4 What changes vs unchanged for this blueprint
+- **Changes:** This example now includes a reusable, route-aware testing harness blueprint mapped to caller contexts and verification layers.
+- **Unchanged:** D-005 route split, D-006 plugin ownership, D-007 caller transport/publication boundaries, and D-008 bootstrap ordering remain exactly as already locked.
+
+### 11.5 Execution-Ready Acceptance Checklist (Copy/Paste)
+Use this checklist verbatim when applying downstream docs/runbook updates:
+
+1. **Web first-party suite (`RPCLink` on `/rpc`)**
+   - Assert typed boundary errors and correlation continuity on workflow trigger/status calls.
+   - Assert browser/web caller path rejects `/api/inngest`.
+2. **Web published-external suite (`OpenAPILink` on `/api/orpc/*` and `/api/workflows/<capability>/*`)**
+   - Assert published OpenAPI contract behavior and auth boundaries.
+   - Assert external suite rejects `/rpc`.
+   - Assert external suite rejects `/api/inngest`.
+3. **CLI internal suite (`createRouterClient`)**
+   - Assert in-process package flow, dedupe markers, and context contract usage.
+   - Assert no local HTTP self-call default replaces in-process verification.
+4. **API plugin suite (in-process + published boundary)**
+   - Assert operation mapping + boundary middleware behavior.
+   - Assert API caller path rejects `/api/inngest`.
+5. **Workflow trigger/status suite (`RPCLink` first-party + `OpenAPILink` published)**
+   - Assert preflight -> enqueue -> status-read continuity and route-family correctness.
+   - Assert caller paths reject `/api/inngest`.
+6. **Runtime-ingress suite (signed callback `/api/inngest`)**
+   - Assert signature verification and durable middleware/step lifecycle behavior.
+   - Assert runtime-ingress suite does not claim caller-boundary guarantees for `/rpc`, `/api/orpc/*`, or `/api/workflows/<capability>/*`.
+7. **Cross-suite metadata/composition checks**
+   - Assert runtime identity keys are `rawr.kind` + `rawr.capability` on manifest-owned surfaces.
+   - Assert no suite uses `templateRole`, `channel`, `publishTier`, or `published` as runtime behavior keys.
+   - Assert helper imports keep one-way direction (`plugins/*` suites may import `packages/*` helpers; package suites do not import plugin runtime modules).
+
+### 11.6 Mandatory Suite IDs for Downstream Tracking
+The downstream docs/runbooks must track these suite IDs explicitly:
+1. `suite:web:first-party-rpc`
+2. `suite:web:published-openapi`
+3. `suite:cli:in-process`
+4. `suite:api:boundary`
+5. `suite:workflow:trigger-status`
+6. `suite:runtime:ingress`
+7. `suite:cross-surface:metadata-import-boundary`
 
 ### Source-Parity Canonical File Tree (verbatim legacy tree block)
 ```text

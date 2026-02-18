@@ -9,10 +9,12 @@
 ## In Scope
 - Placement rules for boundary middleware vs durable runtime controls.
 - Reuse policy for shared logic without collapsing harness-specific application points.
+- Middleware-specific verification boundaries across in-process, boundary, and runtime ingress harnesses.
 
 ## Out of Scope
 - Full context semantics (see [04-context-propagation.md](./04-context-propagation.md)).
 - Full error/timeline semantics (see [05-errors-observability.md](./05-errors-observability.md)).
+- Full test harness taxonomy and layer definitions (see [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md)).
 
 ## Canonical Policy
 1. Boundary/API middleware (auth, shape validation, visibility, rate policy) MUST live in oRPC/Elysia boundary layer.
@@ -24,6 +26,12 @@
 7. Middleware that depends on request/correlation/principal/network metadata MUST consume those contracts from context-layer modules (`context.ts`), not from `domain/*`.
 8. Middleware-adjacent procedure/contract docs/examples SHOULD default to inline I/O schemas; extraction is exception-only for shared/large readability and should use paired `{ input, output }` shape.
 9. Host baseline traces middleware (`extendedTracesMiddleware()`) anchors runtime instrumentation; plugin middleware MAY extend this baseline but MUST NOT replace or reorder it.
+10. Middleware verification MUST remain harness-specific: boundary middleware is verified via boundary harnesses (`RPCLink`/`OpenAPILink`), package middleware via in-process harnesses (`createRouterClient`), and durable middleware via runtime-ingress harnesses (`/api/inngest` callback flow).
+11. Middleware-related test suites MUST include negative route assertions that enforce caller/runtime route separation (for example: caller paths do not use `/api/inngest`, external caller paths do not use `/rpc`).
+12. Middleware verification layering MUST align with [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md).
+13. Middleware lifecycle suites for web, CLI, API, workflow trigger/status, and runtime ingress MUST declare required harness, route family, and route-forbidden assertions explicitly.
+14. Middleware docs/tests MUST treat `rawr.kind` + `rawr.capability` and manifest-owned surfaces as canonical runtime composition anchors, and MUST NOT assign middleware behavior to `templateRole`, `channel`, `publishTier`, or `published`.
+15. Reusable middleware harness helpers MUST remain package-first; plugin suites MAY consume package helpers, and package suites MUST NOT import plugin runtime modules.
 
 ## Why
 - API boundary policy and durable execution policy are separate control planes.
@@ -42,6 +50,28 @@
 ## Decision Status Notes
 1. D-008 is closed: host bootstrap initializes baseline traces first and owns ordering between runtime and boundary control planes.
 2. D-010 remains open and non-blocking: `finished` hook side effects stay idempotent/non-critical guidance without new architecture-level policy expansion.
+
+## Middleware Test Harness Contract (Axis 12)
+| Middleware concern | Verification layer | Required harness | Must-not assertion gap |
+| --- | --- | --- | --- |
+| Package/oRPC dedupe markers (`middlewareState`) | in-process integration | `createRouterClient` | do not infer HTTP route publication behavior |
+| Boundary auth/network middleware | boundary/network integration | `RPCLink` for first-party `/rpc`; `OpenAPILink` for published routes | do not treat `/api/inngest` as caller route |
+| Runtime Inngest middleware lifecycle | runtime ingress verification | signed callback transport on `/api/inngest` | do not infer caller API semantics for runtime ingress |
+| Cross-surface policy coherence | E2E | mixed route-aware harnesses | do not collapse boundary/runtime control planes |
+
+## Surface-Specific Middleware Lifecycle Expectations
+| Surface | Required suites | Required middleware assertions | Mandatory negative assertions |
+| --- | --- | --- | --- |
+| Web plugin (first-party default) | boundary/network middleware suite | `/rpc` boundary auth/visibility/rate policy execution with typed failures | web suite rejects caller use of `/api/inngest` |
+| CLI plugin (internal command flow) | in-process middleware suite | `createRouterClient` path validates dedupe markers and context hydration behavior | CLI internal suite does not replace in-process verification with local HTTP self-calls |
+| API plugin (published boundary) | boundary/network middleware suite | `/api/orpc/*` policy checks and typed boundary failures | API published suite does not treat `/api/inngest` as boundary route |
+| Workflow trigger/status plugin | boundary + in-process middleware suites | trigger/status permission checks plus package middleware reuse expectations | external workflow suite rejects `/rpc`; caller suites reject `/api/inngest` |
+| Workflow runtime ingress | runtime-ingress middleware suite | signed callback validation, run-lifecycle middleware behavior, retry-safe middleware effects | runtime-ingress suite does not claim caller-route semantics for `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
+
+## D-013 and D-014 Compatibility Checks
+1. Middleware lifecycle docs/tests remain manifest-first and capability keyed (`rawr.kind` + `rawr.capability`).
+2. Middleware lifecycle docs/tests do not use legacy metadata fields as runtime decision keys.
+3. Middleware harness ownership and import direction align with [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md) and [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md).
 
 ## Canonical Snippets
 
@@ -117,3 +147,4 @@ export const requireFinanceWriteMiddleware = base.middleware(async ({ context, n
 - Error and observability semantics by surface: [05-errors-observability.md](./05-errors-observability.md)
 - Host composition application points: [07-host-composition.md](./07-host-composition.md)
 - Trigger/runtime boundary enforcement: [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md)
+- Canonical harness and verification layer strategy: [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md)

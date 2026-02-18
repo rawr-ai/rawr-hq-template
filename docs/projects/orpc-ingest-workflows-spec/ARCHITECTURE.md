@@ -3,7 +3,7 @@
 ## Document Role
 This file is the canonical integrative architecture authority for ORPC + Inngest workflows.
 
-Leaf policy depth remains in:
+Normative leaf policy depth remains in:
 - `axes/01-external-client-generation.md`
 - `axes/02-internal-clients.md`
 - `axes/03-split-vs-collapse.md`
@@ -13,6 +13,21 @@ Leaf policy depth remains in:
 - `axes/07-host-composition.md`
 - `axes/08-workflow-api-boundaries.md`
 - `axes/09-durable-endpoints.md`
+- `axes/10-legacy-metadata-and-lifecycle-simplification.md`
+- `axes/11-core-infrastructure-packaging-and-composition-guarantees.md`
+- `axes/12-testing-harness-and-verification-strategy.md`
+
+Reference walkthrough depth remains in:
+- `examples/e2e-01-basic-package-api.md`
+- `examples/e2e-02-api-workflows-composed.md`
+- `examples/e2e-03-microfrontend-integration.md`
+- `examples/e2e-04-context-middleware.md`
+
+Implementation-adjacent downstream update contract remains in:
+- `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md`
+
+Concern-based expansion navigation remains in:
+- `CANONICAL_EXPANSION_NAV.md`
 
 Decision authority is in `DECISIONS.md`.
 
@@ -36,9 +51,12 @@ This is a policy/spec artifact. It is not a migration checklist.
 7. Caller-mode transport semantics are fixed: first-party callers (including MFEs by default) use `RPCLink` on `/rpc` unless an explicit exception is documented; external/third-party callers use published OpenAPI clients on `/api/orpc/*` and `/api/workflows/<capability>/*`; server-internal callers use in-process package clients; `/api/inngest` is signed runtime ingress only.
 8. Host bootstrap initializes baseline `extendedTracesMiddleware()` before Inngest client/function composition or route registration, and host mount/control-plane ordering remains explicit (`/api/inngest` -> `/api/workflows/*` -> `/rpc` + `/api/orpc/*`).
 9. Plugin middleware may extend baseline instrumentation context but may not replace or reorder the baseline traces middleware.
-10. These policies define canonical target-state behavior independent of implementation sequencing.
+10. Runtime composition semantics are minimal and manifest-owned: runtime behavior is derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`; legacy fields (`templateRole`, `channel`, `publishTier`, `published`) do not drive runtime behavior.
+11. These policies define canonical target-state behavior independent of implementation sequencing.
 
 > D-005 lock: workflow trigger APIs are caller-facing on manifest-driven `/api/workflows/<capability>/*`; `/rpc` remains first-party/internal transport only, and `/api/inngest` remains signed runtime ingress only.
+>
+> D-013 lock: runtime metadata semantics are reduced to canonical manifest composition keys (`rawr.kind`, `rawr.capability`, surface root + `rawr.hq.ts` registration). Legacy metadata fields are non-runtime.
 
 ## 2.1) Canonical Caller/Auth Matrix
 This is the canonical caller/auth matrix source. Any matrix renderings in axis/example docs are contextual views.
@@ -88,6 +106,10 @@ This is the canonical caller/auth matrix source. Any matrix renderings in axis/e
 29. Context envelopes remain split by runtime model: oRPC boundary request context and Inngest function runtime context are distinct.
 30. Middleware control planes remain split by runtime model: boundary enforcement in oRPC/Elysia, durable lifecycle control in Inngest middleware + `step.*`.
 31. oRPC middleware dedupe assumptions stay explicit: use context-cached markers for heavy checks; built-in dedupe remains constrained to leading-subset/same-order chains.
+32. Runtime composition decisions are derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`.
+33. `templateRole` and `channel` have no runtime semantics and do not influence runtime composition behavior.
+34. `publishTier` and `published` may be retained as release/distribution metadata but do not influence runtime composition behavior.
+35. Downstream docs/runbook/testing artifacts are required to align with this metadata contract (`manifest-smoke`, `metadata-contract`, `import-boundary`, `host-composition-guard`) even when those artifacts live outside this packet.
 
 ## 5) Cross-Cutting Defaults
 1. External SDK generation uses one composed oRPC/OpenAPI boundary surface.
@@ -115,6 +137,9 @@ This is the canonical caller/auth matrix source. Any matrix renderings in axis/e
 23. Context modeling keeps two envelopes by design: oRPC boundary request context and Inngest runtime function context; packet policy rejects a forced universal context object.
 24. Middleware policy keeps two control planes by design: boundary controls in oRPC/Elysia and durable lifecycle controls in Inngest middleware + `step.*`.
 25. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe is constrained to leading-subset/same-order middleware chains.
+26. Runtime metadata semantics are minimal: runtime behavior is derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`.
+27. Legacy metadata fields (`templateRole`, `channel`, `publishTier`, `published`) are non-runtime and do not alter host mount, caller-mode, or durability behavior.
+28. Downstream conformance checks include `manifest-smoke`, `metadata-contract` (`rawr.kind` + `rawr.capability` required), `import-boundary`, and `host-composition-guard`.
 
 ## 6) Composition Spine (Cross-Axis Contract)
 1. Initialize baseline `extendedTracesMiddleware()` before host composition work.
@@ -209,7 +234,21 @@ state: os.state.router({
 - **Caller-mode split:** First-party callers (including MFEs by default) use `RPCLink` on `/rpc`; external callers use published OpenAPI clients (`/api/orpc/*`, `/api/workflows/<capability>/*`); runtime ingress remains signed `/api/inngest`.
 - **File structure:** Host wiring remains explicit in `apps/server/src/rawr.ts` and workflow context helpers; capability files remain under `packages/*` and `plugins/*`.
 
-## 10) Axis Coverage Map
+## 10) Legacy Metadata Target-State Snapshot (D-013)
+- **What changes:**
+  - `templateRole` and `channel` are removed from runtime semantics.
+  - `publishTier` and `published` are retained only as release/distribution metadata and do not drive runtime behavior.
+  - Runtime behavior derivation is constrained to plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`.
+- **What stays unchanged:**
+  - D-005..D-012 route/ownership/caller/context/middleware/schema semantics remain unchanged.
+  - Split route model stays fixed: caller-facing routes remain `/rpc` and `/api/workflows/<capability>/*`; runtime ingress remains `/api/inngest`.
+  - Plugin-owned boundary contract model remains unchanged.
+- **Policy obligations (external artifact updates required, but not edited here):**
+  - Docs/process/runbook artifacts must remove legacy metadata runtime claims.
+  - Testing/lint gates must include `manifest-smoke`, `metadata-contract`, `import-boundary`, and `host-composition-guard`.
+  - Lifecycle/status tooling must operate by `rawr.kind` + `rawr.capability` on manifest-owned surfaces.
+
+## 11) Axis Coverage Map
 | Axis | Policy surface | Canonical leaf spec |
 | --- | --- | --- |
 | 1 | External client generation | `axes/01-external-client-generation.md` |
@@ -221,8 +260,11 @@ state: os.state.router({
 | 7 | Host hooking/composition | `axes/07-host-composition.md` |
 | 8 | Workflows vs APIs boundaries | `axes/08-workflow-api-boundaries.md` |
 | 9 | Durable endpoints vs durable functions | `axes/09-durable-endpoints.md` |
+| 10 | Legacy metadata + lifecycle simplification | `axes/10-legacy-metadata-and-lifecycle-simplification.md` |
+| 11 | Core infrastructure packaging + composition guarantees | `axes/11-core-infrastructure-packaging-and-composition-guarantees.md` |
+| 12 | Testing harness + verification strategy | `axes/12-testing-harness-and-verification-strategy.md` |
 
-## 11) Navigation Map (If You Need X, Read Y)
+## 12) Navigation Map (If You Need X, Read Y)
 - External client generation and OpenAPI surface ownership -> `axes/01-external-client-generation.md`
 - Internal call defaults and package layering -> `axes/02-internal-clients.md`
 - Why split is locked and anti-dual-path guardrails -> `axes/03-split-vs-collapse.md`
@@ -233,15 +275,20 @@ state: os.state.router({
 - Host composition spine, fixtures, and mount order -> `axes/07-host-composition.md`
 - Workflow trigger authoring vs durable execution authoring -> `axes/08-workflow-api-boundaries.md`
 - Durable endpoint additive-only constraints -> `axes/09-durable-endpoints.md`
+- Legacy metadata runtime simplification and lifecycle obligations -> `axes/10-legacy-metadata-and-lifecycle-simplification.md`
+- Core infrastructure seam ownership and import-direction guarantees (D-014 locked concern) -> `axes/11-core-infrastructure-packaging-and-composition-guarantees.md`
+- Canonical testing harness matrix and verification-layer boundaries (D-015 locked concern) -> `axes/12-testing-harness-and-verification-strategy.md`
+- Downstream docs/runbook/testing update execution contract (implementation-adjacent, non-policy-authority) -> `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md`
 - Micro-frontend caller-mode walkthrough -> `examples/e2e-03-microfrontend-integration.md`
+- Expansion concern index (D-013/D-014/D-015 quick routing) -> `CANONICAL_EXPANSION_NAV.md`
 - Section-by-section redistribution map from old monolith -> `../_archive/orpc-ingest-workflows-spec/session-lineage-from-ongoing/redistribution-traceability.md`
 
-## 12) Source Anchors
+## 13) Source Anchors
 - Decision register: `DECISIONS.md`
-- Integrative overview source: `ARCHITECTURE.md`
-- Leaf packet source: `ARCHITECTURE.md`
+- Packet router/authority index: `README.md`
+- Implementation-adjacent update contract: `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md`
 
-## 13) No-Drift Note
+## 14) No-Drift Note
 This document is a clarity/structure consolidation. Locked policy meaning is preserved from the canonical posture + packet sources.
 
 ## Appendix: Source-Parity Snippets (No-Drift Gate)
