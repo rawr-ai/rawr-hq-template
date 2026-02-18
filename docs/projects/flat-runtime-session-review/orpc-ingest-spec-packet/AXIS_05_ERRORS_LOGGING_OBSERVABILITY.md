@@ -13,6 +13,8 @@
 1. API boundary errors MUST use oRPC typed error semantics (`ORPCError` with status/code).
 2. Durable execution state MUST be recorded as run/timeline lifecycle events in runtime adapter.
 3. Trigger-to-run correlation SHOULD be attached to trace links and persisted status.
+4. Host bootstrap MUST initialize `extendedTracesMiddleware()` before Inngest client/function composition so trigger and durable paths share the baseline trace envelope.
+5. Inngest `finished` hook usage SHOULD stay idempotent/non-critical; this remains operational guidance and is not expanded into stricter packet policy in this axis.
 
 ## Why
 - Request/response error consumers and asynchronous run lifecycle operators are different audiences.
@@ -23,6 +25,10 @@
   - boundary API error shape,
   - run/timeline state shape.
 - This is intended and operationally correct.
+
+## D-008 Integration Scope
+- **Changes:** Baseline trace initialization order is now explicit at host bootstrap and applies to both `/api/workflows/*` and `/api/inngest` execution paths.
+- **Unchanged:** Typed boundary error semantics and runtime timeline/status recording remain the same; route ownership/publication boundaries from D-005/D-006/D-007 are unchanged.
 
 ## Canonical Snippets
 

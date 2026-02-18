@@ -82,12 +82,19 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
   - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
 
 ### D-008 — Extended traces middleware initialization order standard
-- `status`: `open`
-- `question`: Should this packet lock a canonical import-order/bootstrap pattern for `extendedTracesMiddleware()` so auto instrumentation behavior is consistent across hosts?
-- `why_open`: Upstream docs require early initialization for full auto instrumentation, but packet-level bootstrap ordering is not yet standardized.
+- `status`: `closed`
+- `resolution`:
+  - Host bootstrap initializes `extendedTracesMiddleware()` first, before Inngest client construction, workflow function composition, or route registration.
+  - Host composition uses a single runtime-owned Inngest bundle (`client + functions`) per process.
+  - Host mount/control-plane ordering is explicit: mount `/api/inngest`, then `/api/workflows/*`, then register `/rpc` and `/api/orpc/*`.
+  - Plugin authors inherit baseline instrumentation; they may extend middleware context, but may not replace or reorder the baseline traces middleware.
+- `closure_scope`: spec-policy lock only.
+- `why_closed`: Packet docs now encode baseline tracing bootstrap, runtime bundle ownership, and mount/control-plane ordering semantics without changing existing route/ownership/caller locks.
 - `source_anchors`:
   - `https://www.inngest.com/docs/reference/typescript/extended-traces`
 - `impacted_docs`:
+  - `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
+  - `ORPC_INGEST_SPEC_PACKET.md`
   - `AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md`
   - `AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md`
   - `AXIS_07_HOST_HOOKING_COMPOSITION.md`
@@ -96,7 +103,8 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
 ### D-009 — Required dedupe marker policy for heavy oRPC middleware
 - `status`: `open`
 - `question`: Should packet policy require explicit context-cached dedupe markers for heavy oRPC middleware instead of relying on built-in dedupe constraints?
-- `why_open`: Built-in dedupe applies only under leading-subset/same-order conditions; policy warning is documented but lock level (`MUST` vs `SHOULD`) is unresolved.
+- `why_open`: This remains non-blocking. Packet docs already carry minimal guidance (`SHOULD` + caveats) and avoid escalating to a stricter architecture-level lock until repeated implementation evidence justifies it.
+- `non_blocking_guidance`: Keep context-cached markers for heavy checks and treat built-in dedupe as constrained to leading-subset/same-order chains.
 - `source_anchors`:
   - `https://orpc.dev/docs/best-practices/dedupe-middleware`
 - `impacted_docs`:
@@ -107,7 +115,8 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
 ### D-010 — Inngest finished-hook side-effect guardrail
 - `status`: `open`
 - `question`: Should this packet explicitly restrict `finished` hook usage to idempotent/non-critical side effects?
-- `why_open`: Lifecycle docs note `finished` is not guaranteed exactly once; packet-level enforcement language is not yet locked.
+- `why_open`: This remains non-blocking. Packet docs already provide minimal operational guidance, and no additional architecture-level enforcement language is required for this packet iteration.
+- `non_blocking_guidance`: Treat `finished` as non-exactly-once; keep hook side effects idempotent and non-critical.
 - `source_anchors`:
   - `https://www.inngest.com/docs/reference/middleware/lifecycle`
 - `impacted_docs`:

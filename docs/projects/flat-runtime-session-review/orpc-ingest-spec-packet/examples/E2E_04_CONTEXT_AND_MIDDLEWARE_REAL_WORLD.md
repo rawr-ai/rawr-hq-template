@@ -33,6 +33,12 @@ This is intentionally not a toy single-parameter example.
 2. Deny non-runtime traffic to `/api/inngest` at gateway/proxy and route middleware.
 3. Keep `/api/inngest` out of published SDK/docs; publish only `/api/orpc/*` and `/api/workflows/<capability>/*`.
 
+### 2.3 D-008 Bootstrap Baseline
+1. Host bootstrap initializes `extendedTracesMiddleware()` before composing the Inngest client/functions or route registration helpers.
+2. One runtime-owned Inngest bundle is reused across `/api/inngest` ingress and workflow trigger enqueue paths.
+3. Plugin middleware can extend runtime instrumentation context but does not replace/reorder the host baseline traces middleware.
+4. Mount/control-plane order is explicit: `/api/inngest`, then `/api/workflows/*`, then `/rpc` and `/api/orpc/*`.
+
 ## 3) Topology Diagram
 ```mermaid
 flowchart LR
@@ -801,6 +807,7 @@ import {
   invoicingRunContextMiddleware,
 } from "./plugins/workflows/invoicing/src";
 
+initializeExtendedTracesBaseline();
 const inngest = new Inngest({
   id: "rawr-hq",
   middleware: [invoicingRunContextMiddleware],
@@ -901,6 +908,8 @@ import { rawrHqManifest } from "../../rawr.hq";
 import { createBoundaryContext, createWorkflowBoundaryContext } from "./workflows/context";
 
 export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidrs: string[] }) {
+  initializeExtendedTracesBaseline();
+
   const internalRpcRouter = {
     invoicing: {
       api: rawrHqManifest.api.router,
@@ -911,6 +920,32 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
   const apiHandler = new OpenAPIHandler(rawrHqManifest.api.router);
   const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
   const inngestHandler = createInngestServeHandler(rawrHqManifest.inngest);
+
+  app.all("/api/inngest", async ({ request }: { request: Request }) => {
+    // Runtime ingress only: verify signature before dispatch.
+    const isVerified = await verifyInngestSignature(request);
+    if (!isVerified) return new Response("forbidden", { status: 403 });
+    return inngestHandler(request);
+  });
+
+  app.all(
+    "/api/workflows/*",
+    async ({ request }: { request: Request }) => {
+      const context = createWorkflowBoundaryContext(request, {
+        inngest: rawrHqManifest.inngest.client,
+        invoicingDeps: deps.invoicingDeps,
+        trustedCidrs: deps.trustedCidrs,
+      });
+
+      const result = await workflowHandler.handle(request, {
+        prefix: "/api/workflows",
+        context,
+      });
+
+      return result.matched ? result.response : new Response("not found", { status: 404 });
+    },
+    { parse: "none" },
+  );
 
   app.all(
     "/rpc/*",
@@ -949,32 +984,6 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
     },
     { parse: "none" },
   );
-
-  app.all(
-    "/api/workflows/*",
-    async ({ request }: { request: Request }) => {
-      const context = createWorkflowBoundaryContext(request, {
-        inngest: rawrHqManifest.inngest.client,
-        invoicingDeps: deps.invoicingDeps,
-        trustedCidrs: deps.trustedCidrs,
-      });
-
-      const result = await workflowHandler.handle(request, {
-        prefix: "/api/workflows",
-        context,
-      });
-
-      return result.matched ? result.response : new Response("not found", { status: 404 });
-    },
-    { parse: "none" },
-  );
-
-  app.all("/api/inngest", async ({ request }: { request: Request }) => {
-    // Runtime ingress only: verify signature before dispatch.
-    const isVerified = await verifyInngestSignature(request);
-    if (!isVerified) return new Response("forbidden", { status: 403 });
-    return inngestHandler(request);
-  });
 }
 ```
 
@@ -1020,12 +1029,13 @@ const externalWorkflowClient = createORPCClient(externalContracts.invoicing.work
 5. Trigger route returns immediately with `{ accepted, runId, correlationId }`.
 
 ### 7.3 Durable runtime path (`/api/inngest`)
-1. Inngest invokes `serve` ingress with signed callback payload.
-2. Host verifies ingress signature before dispatch.
-3. Inngest middleware injects run trace context.
-4. Function executes `step.run` durable blocks.
-5. Function writes final status through package internal client.
-6. Caller polls workflow status route for updates.
+1. Host bootstrap has already initialized baseline traces and mounted runtime ingress before boundary route families.
+2. Inngest invokes `serve` ingress with signed callback payload.
+3. Host verifies ingress signature before dispatch.
+4. Inngest middleware injects run trace context.
+5. Function executes `step.run` durable blocks.
+6. Function writes final status through package internal client.
+7. Caller polls workflow status route for updates.
 
 ## 8) Source-Backed Rationale
 1. oRPC separates initial/execution context and supports middleware-based context injection, matching explicit package + boundary context layering.
@@ -1045,23 +1055,16 @@ const externalWorkflowClient = createORPCClient(externalContracts.invoicing.work
 - https://www.inngest.com/docs/reference/middleware/lifecycle
 - https://www.inngest.com/docs/reference/typescript/extended-traces
 
-## 9) Open Questions (Explicit Caveats)
-1. Extended traces initialization order:
-- Caveat: official docs recommend initializing `extendedTracesMiddleware()` before other imports for full auto instrumentation.
-- Risk: shared bootstrap files may violate ordering unless standardized.
-- Source: https://www.inngest.com/docs/reference/typescript/extended-traces
-2. oRPC dedupe assumptions:
-- Caveat: built-in dedupe depends on leading subset + same ordering and is not universal.
-- Risk: accidental duplicate expensive middleware work if teams assume global dedupe.
-- Source: https://orpc.dev/docs/best-practices/dedupe-middleware
-3. Inngest `finished` hook behavior:
-- Caveat: docs state it is not guaranteed once and can run multiple times.
-- Risk: non-idempotent side effects in finalization hooks.
-- Source: https://www.inngest.com/docs/reference/middleware/lifecycle
+## 9) Decision Status Notes
+1. D-008 is closed: host bootstrap initializes `extendedTracesMiddleware()` first, host composition keeps one runtime-owned Inngest bundle, mount/control-plane ordering is explicit, and plugin middleware extends (but does not replace/reorder) baseline traces middleware.
+2. D-009 remains open and non-blocking: keep heavy middleware dedupe at `SHOULD` with explicit context markers and constrained built-in dedupe assumptions.
+3. D-010 remains open and non-blocking: keep `finished` hook effects idempotent/non-critical without adding stricter packet-level enforcement language.
 
 ## 10) Policy Consistency Checklist
 | Policy | Status | Notes |
 | --- | --- | --- |
+| D-008 baseline traces bootstrap + single runtime bundle + explicit mount order | Satisfied | Snippets lock initialization and mount ordering (`/api/inngest`, `/api/workflows/*`, then `/rpc` + `/api/orpc/*`) while preserving split control planes. |
+| D-005/D-006/D-007 invariants | Satisfied | Caller route split, plugin-owned boundary contracts, and caller transport/publication boundaries are unchanged in this walkthrough. |
 | TypeBox-only contract/procedure schema authoring + static types in same file | Satisfied | Contract/procedure snippets remain TypeBox-authored (no Zod-authored contract/procedure snippets), and domain schemas with `Static<typeof Schema>` remain co-located. |
 | Inline-I/O default + paired extraction shape | Satisfied | Contract/procedure snippets default to inline `.input/.output`; extracted I/O remains exception-only and uses paired `{ input, output }`. |
 | `context.ts` contract placement | Satisfied | Package/API/workflow context contracts are explicit modules. |

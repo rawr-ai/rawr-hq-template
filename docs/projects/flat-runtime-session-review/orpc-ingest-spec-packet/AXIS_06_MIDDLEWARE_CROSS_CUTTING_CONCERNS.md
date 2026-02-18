@@ -17,6 +17,7 @@
 6. Split path enforcement is part of middleware placement: first-party/internal caller policy executes on `/rpc`, published boundary policy executes on `/api/orpc/*` and `/api/workflows/<capability>/*`, while `/api/inngest` remains runtime ingress.
 7. Middleware that depends on request/correlation/principal/network metadata MUST consume those contracts from context-layer modules (`context.ts`), not from `domain/*`.
 8. Middleware-adjacent procedure/contract docs/examples SHOULD default to inline I/O schemas; extraction is exception-only for shared/large readability and should use paired `{ input, output }` shape.
+9. Host baseline traces middleware (`extendedTracesMiddleware()`) anchors runtime instrumentation; plugin middleware MAY extend this baseline but MUST NOT replace or reorder it.
 
 ## Why
 - API boundary policy and durable execution policy are separate control planes.
@@ -30,6 +31,11 @@
 1. Manual dedupe pattern is canonical for heavy/expensive boundary checks: write a marker into context and return early on re-entry.
 2. Built-in oRPC middleware dedupe applies only when router-level middleware chains satisfy strict ordering/leading-subset constraints.
 3. Durable runtime retry behavior stays in Inngest controls (`createFunction`, middleware lifecycle hooks, `step.run`) and is not merged with boundary dedupe assumptions.
+4. D-009 remains open and non-blocking: keep this as `SHOULD` guidance (not a new `MUST`) unless repeated implementation evidence requires a stronger lock.
+
+## Decision Status Notes
+1. D-008 is closed: host bootstrap initializes baseline traces first and owns ordering between runtime and boundary control planes.
+2. D-010 remains open and non-blocking: `finished` hook side effects stay idempotent/non-critical guidance without new architecture-level policy expansion.
 
 ## Canonical Snippets
 

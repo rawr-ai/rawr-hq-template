@@ -19,6 +19,9 @@
 6. Host MUST enforce caller-mode route boundaries: first-party callers (including MFEs by default) use `/rpc` via `RPCLink`, external callers use published OpenAPI surfaces (`/api/orpc/*`, `/api/workflows/<capability>/*`), and `/api/inngest` stays runtime-only signed ingress.
 7. Host MUST NOT add a dedicated `/rpc/workflows` mount by default; first-party workflow RPC procedures compose under the existing `/rpc` surface.
 8. Host composition docs/snippets MUST keep mount ownership explicit; do not hide wiring behind black-box composition narratives.
+9. Host bootstrap MUST initialize baseline `extendedTracesMiddleware()` before constructing the Inngest client, composing workflow functions, or registering routes.
+10. Host mount/control-plane order MUST be explicit: `/api/inngest` first, `/api/workflows/*` second, then `/rpc` and `/api/orpc/*`.
+11. Plugin middleware MAY add runtime context/instrumentation but MUST inherit baseline traces middleware and MUST NOT replace or reorder that baseline.
 
 ## Route Family Purpose Table
 | Route family | Primary caller class | Link/transport | Publication boundary | Auth expectation | Forbidden usage |
@@ -60,7 +63,7 @@
 1. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts`
    - Builds router from `hqContract`, injects `RawrOrpcContext`, mounts `/rpc*` and `/api/orpc*`, generates OpenAPI with TypeBox converter.
 2. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts`
-   - Creates runtime adapter + Inngest bundle, mounts `/api/inngest`, registers oRPC routes.
+   - Initializes baseline traces first, creates runtime adapter + Inngest bundle, mounts `/api/inngest` and `/api/workflows/*`, then registers `/rpc` and `/api/orpc/*`.
 3. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts`
    - Aggregate contract root (`hqContract`) for composed API namespaces.
 4. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts`
@@ -143,6 +146,7 @@ export function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Stat
 
 ### Composition root fixture (`rawr.hq.ts`)
 ```ts
+initializeExtendedTracesBaseline();
 const inngest = createInngestClient("rawr-hq");
 const capabilities = [
   createInvoicingCapabilitySurface(inngest),
@@ -153,10 +157,13 @@ export const rawrHqManifest = composeCapabilities(capabilities, inngest);
 ```
 
 The manifest emits separate `orpc` and `workflows` namespaces so host wiring can mount `/rpc*` + `/api/orpc*` from `rawrHqManifest.orpc` while `/api/workflows/*` uses `rawrHqManifest.workflows.triggerRouter` plus workflow-boundary context helpers and the same `inngest` bundle. `/rpc` remains first-party/internal transport only, and there is no separate `/rpc/workflows` mount by default. Plugin-generated capability metadata feeds the manifest so `apps/*` does not require manual capability route edits, while mount ownership remains explicit in packet composition docs.
+Host bootstrap order is explicit and stable: initialize baseline traces first, create the single runtime-owned Inngest bundle, mount `/api/inngest`, mount `/api/workflows/*`, then register `/rpc` and `/api/orpc/*`.
 
 ### Host fixture split mount contract
 ```ts
 // apps/server/src/rawr.ts
+initializeExtendedTracesBaseline();
+const inngestBundle = createCoordinationInngestFunction({ runtime });
 app.all("/api/inngest", async ({ request }) => inngestHandler(request));
 const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
 
@@ -228,8 +235,8 @@ app.all("/api/inngest", async ({ request }) => inngestHandler(request));
 The manifest-driven spine adds one new fixture: `apps/server/src/workflows/context.ts` (principal resolution, workflow boundary metadata, and runtime helpers) while keeping `apps/server/src/rawr.ts` focused on mounting `/api/workflows/*` and `/api/inngest`. Capability metadata stays inside `packages/*` and `plugins/*`, and `rawr.hq.ts` is generated under the repo root so host owners do not edit it manually.
 
 ### What changes vs what stays the same
-- **Changes:** generate `rawr.hq.ts` from capability metadata, add workflow context fixtures, mount `OpenAPIHandler(rawrHqManifest.workflows.triggerRouter)` at `/api/workflows/*`, and pass the manifest’s `inngest` bundle into `createInngestServeHandler`. The capability namespace mapping is now explicit, and helper scripts (e.g., `composeCapabilities`, manifest generator) orchestrate wiring.
-- **Unchanged:** `/rpc*` + `/api/orpc*` still go through `registerOrpcRoutes()`, the same `CoordinationRuntimeAdapter`/`createCoordinationInngestFunction()` pair supports durability, and `packages/core` still owns the `hqContract` neighborhood.
+- **Changes:** Host bootstrap now initializes baseline traces first, keeps a single runtime-owned Inngest bundle, mounts `/api/inngest` then `/api/workflows/*`, and only then registers `/rpc` + `/api/orpc/*`. Generated manifest wiring and helper composition remain explicit.
+- **Unchanged:** D-005 route split semantics, D-006 plugin boundary ownership, and D-007 caller transport/publication boundaries are unchanged. `/rpc*` + `/api/orpc*` still go through `registerOrpcRoutes()`, and the same `CoordinationRuntimeAdapter`/`createCoordinationInngestFunction()` pairing still supports durability.
 
 ## Glue Boundaries and Ownership
 1. Host app owns mount boundaries and runtime wiring.
