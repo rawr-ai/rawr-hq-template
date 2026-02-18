@@ -85,11 +85,11 @@ await step.run("coordination/run-start", async () => {
 ```
 
 ## References
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:80`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:200`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts:149`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts:298`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts:333`
+- Local: `apps/server/src/orpc.ts:80`
+- Local: `apps/server/src/orpc.ts:200`
+- Local: `packages/coordination-inngest/src/adapter.ts:149`
+- Local: `packages/coordination-inngest/src/adapter.ts:298`
+- Local: `packages/coordination-inngest/src/adapter.ts:333`
 
 ## Cross-Axis Links
 - Context propagation contract: [AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md](./AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md)

@@ -65,8 +65,8 @@ Direct adoption exception is allowed only when all are documented:
 7. Proposal treats `/rpc` as an externally published transport.
 
 ## References
-- Packet decisions: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md:11`
-- Packet example: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md:22`
+- Packet decisions: `docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md:11`
+- Packet example: `docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md:22`
 - Inngest: [Serve](https://www.inngest.com/docs/reference/serve)
 - Inngest: [Durable endpoints](https://www.inngest.com/docs/learn/durable-endpoints)
 

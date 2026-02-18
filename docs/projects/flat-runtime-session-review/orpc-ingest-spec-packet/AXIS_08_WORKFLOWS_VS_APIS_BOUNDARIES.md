@@ -261,9 +261,9 @@ Caller intent: trigger durable workflow run.
 5. Caller checks run status through caller-facing workflow status route, not `/api/inngest`.
 
 ## References
-- Packet entrypoint: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`
-- Packet decisions: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md:11`
-- Host composition policy: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_07_HOST_HOOKING_COMPOSITION.md`
+- Packet entrypoint: `docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`
+- Packet decisions: `docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md:11`
+- Host composition policy: `docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_07_HOST_HOOKING_COMPOSITION.md`
 - E2E: [E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md](./examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md)
 - oRPC: [Procedure](https://orpc.dev/docs/procedure)
 - oRPC: [Contract-first define](https://orpc.dev/docs/contract-first/define-contract)

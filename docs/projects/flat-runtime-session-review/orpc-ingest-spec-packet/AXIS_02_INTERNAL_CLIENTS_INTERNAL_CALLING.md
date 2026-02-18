@@ -246,8 +246,8 @@ export async function startInvoiceOperation(
 8. Keep `std(...)` (or `typeBoxStandardSchema(...)`) explicit for non-`Type.Object` roots.
 
 ## References
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts:5`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:104`
+- Local: `packages/core/src/orpc/hq-router.ts:5`
+- Local: `apps/server/src/orpc.ts:104`
 - oRPC: [Server-side clients](https://orpc.dev/docs/client/server-side)
 
 ## Cross-Axis Links

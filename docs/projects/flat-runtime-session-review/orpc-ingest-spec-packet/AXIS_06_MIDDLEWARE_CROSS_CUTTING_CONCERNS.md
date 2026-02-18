@@ -95,9 +95,9 @@ export const requireFinanceWriteMiddleware = base.middleware(async ({ context, n
 | Shared utility logic | Reusable package utility, applied separately in each harness |
 
 ## References
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:339`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts:214`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts:253`
+- Local: `apps/server/src/orpc.ts:339`
+- Local: `packages/coordination-inngest/src/adapter.ts:214`
+- Local: `packages/coordination-inngest/src/adapter.ts:253`
 - E2E: [E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md](./examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md)
 - oRPC: [Middleware](https://orpc.dev/docs/middleware)
 - oRPC: [Dedupe middleware](https://orpc.dev/docs/best-practices/dedupe-middleware)

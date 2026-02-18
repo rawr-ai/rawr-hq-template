@@ -1,11 +1,13 @@
 # Legacy Decisions Appendix (Deferred)
 
-> Extracted from `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/DECISIONS.md`. The current canonical register is `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md`, which now documents the locked-in decisions. This appendix retains the deferred decisions that still need closure.
+> Extracted from `docs/projects/_archive/flat-runtime-session-review/system/spec-packet/DECISIONS.md`. The current canonical register is `docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md`, which now documents the locked-in decisions. This appendix retains the deferred decisions that still need closure.
 
 ## Source anchor
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/_archive/flat-runtime-session-review/system/spec-packet/DECISIONS.md`
+- `docs/projects/_archive/flat-runtime-session-review/system/spec-packet/DECISIONS.md`
 
 ## Deferred decisions
+> Legacy ID namespace notice: `D-004` and `D-005` in this appendix are historical archive IDs and are not the active packet decision IDs. Use `docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md` for current canonical decision meanings/status.
+
 | ID | Title | Status | Default / Resolution | Rationale | Impact | Owner | Closure Criterion |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | D-004 | Workflow-backed ORPC helper abstraction | deferred | Do not add in phase 1; evaluate after at least two capabilities show repeated boilerplate. | Avoids premature abstraction. | Temporary duplication in API handlers until evidence threshold is met. | API platform owner | Re-open after two capabilities with evidence of repeated pattern. |

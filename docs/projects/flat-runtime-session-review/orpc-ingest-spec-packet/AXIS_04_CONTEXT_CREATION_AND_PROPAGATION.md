@@ -86,10 +86,10 @@ return inngest.createFunction(
 3. Durable function step timeline writes preserve run ID continuity.
 
 ## References
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:41`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:314`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts:91`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts:175`
+- Local: `apps/server/src/orpc.ts:41`
+- Local: `apps/server/src/orpc.ts:314`
+- Local: `packages/coordination-inngest/src/adapter.ts:91`
+- Local: `packages/coordination-inngest/src/adapter.ts:175`
 - E2E: [E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md](./examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md)
 - oRPC: [Context](https://orpc.dev/docs/context)
 - oRPC: [Procedure](https://orpc.dev/docs/procedure)

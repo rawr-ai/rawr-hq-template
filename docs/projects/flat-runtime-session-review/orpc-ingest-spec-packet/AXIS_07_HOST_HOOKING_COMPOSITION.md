@@ -60,13 +60,13 @@
 11. Avoid ambiguous helper names that hide ownership or execution semantics.
 
 ## Canonical Runtime/Host Inventory
-1. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts`
+1. `apps/server/src/orpc.ts`
    - Builds router from `hqContract`, injects `RawrOrpcContext`, mounts `/rpc*` and `/api/orpc*`, generates OpenAPI with TypeBox converter.
-2. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts`
+2. `apps/server/src/rawr.ts`
    - Initializes baseline traces first, creates runtime adapter + Inngest bundle, mounts `/api/inngest` and `/api/workflows/*`, then registers `/rpc` and `/api/orpc/*`.
-3. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts`
+3. `packages/core/src/orpc/hq-router.ts`
    - Aggregate contract root (`hqContract`) for composed API namespaces.
-4. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/coordination-inngest/src/adapter.ts`
+4. `packages/coordination-inngest/src/adapter.ts`
    - Inngest serve handler factory, run queue bridge, durable function definition, lifecycle timeline events.
 
 ## Canonical File Tree (Composition-Critical)
@@ -337,10 +337,10 @@ export function withInternalClient<TContext, TClient>(getClient: (context: TCont
 ```
 
 ## References
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts:105`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts:111`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts:113`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:339`
+- Local: `apps/server/src/rawr.ts:105`
+- Local: `apps/server/src/rawr.ts:111`
+- Local: `apps/server/src/rawr.ts:113`
+- Local: `apps/server/src/orpc.ts:339`
 
 ## Cross-Axis Links
 - External generation surface policy: [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)

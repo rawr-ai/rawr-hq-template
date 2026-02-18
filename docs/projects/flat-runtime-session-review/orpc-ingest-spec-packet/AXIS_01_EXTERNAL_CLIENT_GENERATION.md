@@ -168,8 +168,8 @@ const workflows = createORPCClient(capabilityClients.invoicing.workflows, {
 4. Keep `RPCLink` clients internal-only and out of external publication artifacts.
 
 ## References
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts:5`
-- Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts:282`
+- Local: `packages/core/src/orpc/hq-router.ts:5`
+- Local: `apps/server/src/orpc.ts:282`
 - oRPC: [OpenAPI handler](https://orpc.dev/docs/openapi/openapi-handler)
 - oRPC: [OpenAPI client](https://orpc.dev/docs/openapi/client)
 - oRPC: [OpenAPI specification](https://orpc.dev/docs/openapi/openapi-specification)
