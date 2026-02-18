@@ -23,7 +23,7 @@ This packet is self-contained for policy decisions, caller/auth semantics, and o
 4. Durable endpoints are additive ingress adapters only.
 5. Workflow trigger surfaces are manifest-driven and capability-first (`/api/workflows/<capability>/*`) via `rawr.hq.ts`, with explicit workflow context helpers and one runtime-owned Inngest bundle.
 6. Workflow/API boundary contracts are plugin-owned (`plugins/workflows/<capability>/src/contract.ts`, `plugins/api/<capability>/src/contract.ts`); packages own shared domain logic/domain schemas only, and workflow trigger/status I/O schemas remain workflow boundary owned.
-7. Browser/network callers use composed boundary clients on `/api/orpc/*` and `/api/workflows/<capability>/*`; server-internal callers use in-process package clients; `/api/inngest` is signed runtime ingress only.
+7. Caller-mode transport semantics are fixed: first-party callers (including MFEs by default) use `RPCLink` on `/rpc` unless an explicit exception is documented; external/third-party callers use published OpenAPI clients on `/api/orpc/*` and `/api/workflows/<capability>/*`; server-internal callers use in-process package clients; `/api/inngest` is signed runtime ingress only.
 8. Host bootstrap initializes baseline `extendedTracesMiddleware()` before Inngest client/function composition or route registration, and host mount/control-plane ordering remains explicit (`/api/inngest` -> `/api/workflows/*` -> `/rpc` + `/api/orpc/*`).
 9. Plugin middleware may extend baseline instrumentation context but may not replace or reorder the baseline traces middleware.
 10. These policies define canonical target-state behavior independent of implementation sequencing.
@@ -33,13 +33,22 @@ This packet is self-contained for policy decisions, caller/auth semantics, and o
 ## Caller/Auth Boundary Matrix
 ```yaml
 caller_modes:
-  - caller: browser_mfe_or_network_consumer
-    client: composed_boundary_clients
+  - caller: first_party_mfe_default
+    client: rpc_link_on_rpc
+    auth: first_party_boundary_session_auth
+    routes:
+      - /rpc
+    forbidden:
+      - /api/inngest
+
+  - caller: external_or_third_party_consumer
+    client: published_openapi_clients
     auth: boundary_auth_session_token
     routes:
       - /api/orpc/*
       - /api/workflows/<capability>/*
     forbidden:
+      - /rpc
       - /api/inngest
 
   - caller: server_internal_consumer
@@ -86,7 +95,7 @@ Tutorial docs are normative only where they reference locked axis policies. If a
 3. Caller-triggered workflow routes are oRPC workflow trigger routes on `/api/workflows/<capability>/*`; runtime durable ingress is `/api/inngest`.
 4. Workflow routing is manifest-driven and capability-first; capability routes come from `rawrHqManifest.workflows.triggerRouter`, the same manifest supplies `rawrHqManifest.inngest`, and workflow boundary context helpers keep `/api/workflows/<capability>/*` caller-facing while `/api/inngest` stays runtime-only.
 5. Workflow/API boundary contract ownership remains in plugins; packages do not own caller-facing boundary contracts or workflow trigger/status I/O schemas.
-6. Caller-mode client semantics are fixed: browser/network callers use composed boundary clients; server-internal callers use package internal clients; runtime ingress uses signed `/api/inngest` only.
+6. Caller-mode client semantics are fixed: first-party callers (including MFEs by default) use `RPCLink` on `/rpc` unless an explicit exception is documented; external/third-party callers use published OpenAPI clients on `/api/orpc/*` and `/api/workflows/<capability>/*`; server-internal callers use package internal clients; runtime ingress uses signed `/api/inngest` only.
 7. TypeBox-only schema authoring is required for contract/procedure surfaces (no Zod-authored contract/procedure schemas); TypeBox remains the baseline for contract I/O and OpenAPI conversion.
 8. One runtime-owned Inngest bundle (`client + functions`) exists per process.
 9. Host bootstrap initializes `extendedTracesMiddleware()` before building the Inngest bundle and before mounting route families.
