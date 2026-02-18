@@ -3,6 +3,20 @@
 ## Working Goal
 Route/API-surface assessment against canonical packet baseline, with runtime reality check.
 
+## Compacted Baseline Before Follow-up
+- Canonical packet baseline:
+  - Caller-facing APIs: `/api/orpc/*` and target `/api/workflows/<capability>/*`.
+  - Runtime ingress only: `/api/inngest`.
+  - Internal server default: in-process package client, not local self-HTTP.
+- Current runtime reality in this worktree:
+  - Mounted: `/rpc*`, `/api/orpc*`, `/api/orpc/openapi.json`, `/api/inngest`.
+  - Not yet mounted: `/api/workflows/*` and manifest-driven workflow context wiring.
+  - First-party clients (CLI + web app in repo) currently use `RPCLink` on `/rpc`.
+- Prior review baseline:
+  - Strong split posture, but transport/caller documentation had ambiguity.
+  - Main drift risk: packet target-state vs current runtime convergence status.
+  - Primary correction path: tighten caller/link policy docs and converge workflow mounts.
+
 ## Canonical Baseline Notes
 
 ### Locked route semantics (packet)
@@ -142,3 +156,15 @@ Route/API-surface assessment against canonical packet baseline, with runtime rea
 - `C-4` (route namespace clarity at scale) -> final review sections:
   - `5) Risks/confusions at scale` item 4
   - `8) Actionable doc updates` high-priority caller/transport matrix
+
+## Follow-up lock assimilation notes
+- Applied new lock in final review:
+  - RPC link/client is first-party/internal only.
+  - RPC client is not externally published.
+  - OpenAPI client is externally published.
+  - In-repo services + MFEs default to RPC unless explicit exception.
+- Naming conclusions carried into final review:
+  - Keep `/api/orpc` while dual transport exists (do not flatten to broad `/api/*`).
+  - Keep `/api/inngest` (do not rename to `/api/events`).
+- Mount implication captured:
+  - No separate `/rpc/workflows` mount required; workflow RPC should compose under existing `/rpc/*` contract namespace when enabled.
