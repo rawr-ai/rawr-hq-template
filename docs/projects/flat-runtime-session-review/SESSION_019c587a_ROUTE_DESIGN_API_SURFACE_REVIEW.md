@@ -68,7 +68,7 @@ Scratchpad traceability:
   - Browser app and CLI currently use `RPCLink` against `/rpc`.
 
 ### Practical interpretation
-- The runtime is currently sufficient for coordination-focused flows and dual transport support.
+- The runtime is currently sufficient for current first-party internal flows and dual transport support.
 - It is not yet converged to the packet’s workflow route model (`/api/workflows/*` mount + manifest workflow context).
 - With follow-up locks, prior `/rpc` external ambiguity is now resolved in this review: `/rpc` is first-party/internal transport only.
 
@@ -172,11 +172,11 @@ Yes, under this lock there are two client variants:
 ### If first-party/internal services call Workflows via RPC link, do we need `/rpc/workflows` mount?
 No separate mount is required by design. Existing `/rpc/*` can carry namespaced workflow procedures once those procedures are composed into the HQ RPC contract/router tree. This is a **medium** composition change (contract/router composition), but a **small/no** mount-layer change.
 
-### Coordination canvas impact of the above
-Keeping one `/rpc/*` first-party transport is favorable for coordination canvas continuity:
-1. Existing coordination RPC usage patterns stay intact.
-2. Workflow RPC procedures can be added under the same HQ client namespace.
-3. No second RPC mount/proxy surface is needed for canvas integration.
+### Optional downstream consumer example (coordination canvas)
+Coordination canvas should be treated as one optional internal consumer example, not a primary design driver:
+1. Existing internal RPC usage can remain on the same `/rpc/*` transport.
+2. Workflow RPC procedures can be added under the same HQ client namespace if needed.
+3. No second RPC mount/proxy surface is required for this optional consumer.
 
 ### Should Inngest ingress remain `/api/inngest` or move to an internal-only pattern?
 Remain `/api/inngest` as canonical runtime ingress. Do not repurpose it as a caller surface. "Internal-only" should be treated as an infrastructure deployment option (network control/proxying), not as a route-structure change. The route semantics are correct; enforcement/documentation should be tightened.

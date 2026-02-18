@@ -168,3 +168,8 @@ Route/API-surface assessment against canonical packet baseline, with runtime rea
   - Keep `/api/inngest` (do not rename to `/api/events`).
 - Mount implication captured:
   - No separate `/rpc/workflows` mount required; workflow RPC should compose under existing `/rpc/*` contract namespace when enabled.
+
+## Clarification update applied
+- User clarification incorporated: coordination canvas is no longer framed as central in the review.
+- Review lens remains core hosting structure and route/API design.
+- Coordination canvas now appears only as an optional downstream/internal consumer example.
