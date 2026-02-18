@@ -1,8 +1,19 @@
-# SESSION_019c587a — ORPC + Inngest/Workflows Posture Spec (Integrative Overview)
+# SESSION_019c587a — ORPC + Inngest/Workflows Integration Overview (Reference)
 
-## Document Role
-This file is the integrative subsystem overview for ORPC + Inngest posture.
+## Role Metadata
+- Role: Reference
+- Authority: Integrative cross-axis overview for ORPC + Inngest composition.
+- Owns: Explanatory topology, interaction synthesis, and navigation guidance for canonical packet artifacts.
+- Depends on: `orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`, `orpc-ingest-spec-packet/DECISIONS.md`, `orpc-ingest-spec-packet/CANONICAL_READ_PATH.md`, `orpc-ingest-spec-packet/CANONICAL_ROLE_CONTRACT.md`, `orpc-ingest-spec-packet/AXIS_01_EXTERNAL_CLIENT_GENERATION.md` through `orpc-ingest-spec-packet/AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md`.
+- Last validated against: `SESSION_019c587a_INFO_DESIGN_CONVERGED_DIRECTION.md`.
 
+## Normative Boundary
+1. This file is non-normative by default.
+2. Requirement language in this file mirrors canonical packet policy and does not create independent policy ownership.
+3. Canonical policy authority remains in `orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`, `orpc-ingest-spec-packet/DECISIONS.md`, and the axis annexes.
+4. If this file conflicts with canonical packet artifacts, canonical packet artifacts win.
+
+## Canonical Packet References
 Canonical axis-level leaf specs live in:
 - `orpc-ingest-spec-packet/AXIS_01_EXTERNAL_CLIENT_GENERATION.md`
 - `orpc-ingest-spec-packet/AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`
@@ -25,9 +36,9 @@ This subsystem posture defines how this system composes:
 4. optional Durable Endpoint ingress adapters,
 under TypeBox + oRPC + Elysia + Inngest.
 
-This is a policy/spec artifact. It is not a migration checklist.
+This is an integration reference artifact. It does not establish canonical policy ownership and it is not a migration checklist.
 
-## 2) Locked Policies
+## 2) Canonical Policy Snapshot (Reference Mirror)
 1. Split semantics are fixed between API boundary and durable execution.
 2. oRPC is the primary API harness (contracts, routers, OpenAPI, external client generation).
 3. Inngest functions are the primary durability harness (durable orchestration, retries, step semantics).
@@ -57,7 +68,7 @@ This is a policy/spec artifact. It is not a migration checklist.
 3. Reduce composition boilerplate vs avoid hiding ownership and runtime boundaries.
 4. Reuse one client-generation path vs introduce ingress-specific behaviors that weaken contract guarantees.
 
-## 4) Global Invariants (Subsystem-Wide)
+## 4) Core Invariants Map (Reference Mirror)
 1. `/api/inngest` is runtime ingress only.
 2. Caller-triggered workflow APIs stay on oRPC workflow trigger surfaces (`/api/workflows/<capability>/*`).
 3. `/rpc` is first-party/internal transport only.
@@ -89,6 +100,14 @@ This is a policy/spec artifact. It is not a migration checklist.
 29. Context envelopes remain split by runtime model: oRPC boundary request context and Inngest function runtime context are distinct.
 30. Middleware control planes remain split by runtime model: boundary enforcement in oRPC/Elysia, durable lifecycle control in Inngest middleware + `step.*`.
 31. oRPC middleware dedupe assumptions stay explicit: use context-cached markers for heavy checks; built-in dedupe remains constrained to leading-subset/same-order chains.
+
+## 4.1) Invariant Ownership Map
+| Reference section in this file | Canonical owner |
+| --- | --- |
+| `2) Canonical Policy Snapshot (Reference Mirror)` | `orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md` (`Locked Subsystem Policies`) and `orpc-ingest-spec-packet/DECISIONS.md` (D-005..D-010 state) |
+| `2.1) Canonical Caller/Transport Matrix` | `orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md` (`Caller/Auth Boundary Matrix`) |
+| `4) Core Invariants Map (Reference Mirror)` | `orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md` (`Cross-Cutting Defaults`) |
+| `9.1) D-008 Integration Scope` | `orpc-ingest-spec-packet/DECISIONS.md` (`D-008`) and `orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md` (`D-008 Integration Scope`) |
 
 ## 5) Axis Map (Coverage)
 | Axis | Policy surface | Canonical leaf spec |

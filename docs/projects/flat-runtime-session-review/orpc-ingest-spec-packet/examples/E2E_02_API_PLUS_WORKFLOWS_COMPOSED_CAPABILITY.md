@@ -1,5 +1,27 @@
 # E2E 02 — API + Workflows Composed Capability (TypeBox-First, Split Posture)
 
+## Role Metadata
+- Role: Reference
+- Authority: Non-normative walkthrough for composed API + workflow capability wiring.
+- Owns: illustrative composition topology, code-path examples, and trade-off narration for this scenario.
+- Depends on: `../ORPC_INGEST_SPEC_PACKET.md`, `../DECISIONS.md`, `../AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`, `../AXIS_07_HOST_HOOKING_COMPOSITION.md`, `../AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`, `../AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md`.
+- Last validated against: `../../SESSION_019c587a_INFO_DESIGN_CONVERGED_DIRECTION.md`.
+
+## Normative Boundary
+1. This example is non-normative by default.
+2. Requirement terms in this file mirror canonical packet policy and are explanatory here.
+3. Only blocks explicitly tagged as `Normative quote` with owner links should be treated as normative; none are defined unless tagged inline.
+4. Canonical read start remains `../ORPC_INGEST_SPEC_PACKET.md`.
+
+## Canonical Policy Anchors for This Walkthrough
+| Concern in this walkthrough | Canonical owner |
+| --- | --- |
+| Global caller/auth matrix and packet-wide invariants | `../ORPC_INGEST_SPEC_PACKET.md` |
+| Internal package client defaults and transport-neutral package boundaries | `../AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md` |
+| Host bootstrap/mount ordering and single Inngest bundle posture | `../AXIS_07_HOST_HOOKING_COMPOSITION.md`, `../DECISIONS.md` (D-008) |
+| Workflow trigger vs runtime ingress split | `../AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`, `../DECISIONS.md` (D-005, D-006, D-007) |
+| Durable function canonical path vs additive durable endpoint posture | `../AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md` |
+
 ## 1) Goal and Use-Case Framing
 This walkthrough shows one capability (`invoicing`) composed end to end with two caller-facing surfaces and one runtime ingress surface:
 1. API surface for immediate request/response behavior (`start`, `get status`).

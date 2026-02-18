@@ -1,5 +1,28 @@
 # E2E 04 — Real-World Context and Middleware Across Package, API, and Workflows
 
+## Role Metadata
+- Role: Reference
+- Authority: Non-normative walkthrough for context and middleware behavior across boundary and durable runtimes.
+- Owns: illustrative end-to-end examples, middleware placement narrative, and scenario-level guardrails.
+- Depends on: `../ORPC_INGEST_SPEC_PACKET.md`, `../DECISIONS.md`, `../AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md`, `../AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md`, `../AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md`, `../AXIS_07_HOST_HOOKING_COMPOSITION.md`, `../AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`.
+- Last validated against: `../../SESSION_019c587a_INFO_DESIGN_CONVERGED_DIRECTION.md`.
+
+## Normative Boundary
+1. This example is non-normative by default.
+2. Requirement terms in this file mirror canonical packet policy and are explanatory in this reference context.
+3. Only blocks explicitly tagged as `Normative quote` with owner links should be treated as normative; none are defined unless tagged inline.
+4. Canonical read start remains `../ORPC_INGEST_SPEC_PACKET.md`.
+
+## Canonical Policy Anchors for This Walkthrough
+| Concern in this walkthrough | Canonical owner |
+| --- | --- |
+| Global caller/auth route boundaries and packet-wide defaults | `../ORPC_INGEST_SPEC_PACKET.md` |
+| Two-context-envelope model and propagation constraints | `../AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md` |
+| Error/timeline and observability posture (including D-010 guidance) | `../AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md`, `../DECISIONS.md` (D-010) |
+| Boundary-vs-durable middleware placement and dedupe guidance | `../AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md`, `../DECISIONS.md` (D-009) |
+| Host bootstrap order + route mounting lock | `../AXIS_07_HOST_HOOKING_COMPOSITION.md`, `../DECISIONS.md` (D-008) |
+| Workflow trigger/status boundary ownership and ingress split | `../AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`, `../DECISIONS.md` (D-005, D-006, D-007) |
+
 ## 1) Goal and Real-World Framing
 This walkthrough shows one capability (`invoicing`) under realistic context scale:
 1. Multi-tenant principal + role checks.

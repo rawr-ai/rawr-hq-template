@@ -1,5 +1,17 @@
 # Redistribution Traceability
 
+## Role Metadata
+- Role: Reference
+- Authority: Provenance-oriented reference map for section redistribution lineage.
+- Owns: historical section-to-section mapping from prior monolith to current packet/overview locations.
+- Depends on: `./ORPC_INGEST_SPEC_PACKET.md`, `./DECISIONS.md`, `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`.
+- Last validated against: `../SESSION_019c587a_INFO_DESIGN_CONVERGED_DIRECTION.md`.
+
+## Normative Boundary
+1. This file is non-normative by default.
+2. It records lineage only and does not create or modify policy ownership.
+3. Canonical policy authority remains in `./ORPC_INGEST_SPEC_PACKET.md`, `./DECISIONS.md`, and axis annexes.
+
 ## Purpose
 This artifact proves where content from the prior monolithic posture spec was redistributed.
 
@@ -17,7 +29,7 @@ Current leaf packet:
 
 | Old monolith section | New location(s) |
 | --- | --- |
-| `## 1) Scope + Locked Decision` | Overview: `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md` sections `1) Scope`, `2) Locked Decisions`, `3) Original Tensions` |
+| `## 1) Scope + Locked Decision` | Overview: `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md` sections `1) Scope`, `2) Canonical Policy Snapshot (Reference Mirror)`, `3) Original Tensions` |
 | `## 2) Axes Catalog` | Overview: `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md` section `5) Axis Map (Coverage)` and packet index in `./ORPC_INGEST_SPEC_PACKET.md` |
 | `### Axis 1: External Client Generation` | `./AXIS_01_EXTERNAL_CLIENT_GENERATION.md` |
 | `### Axis 2: Internal Clients/Internal Calling` | `./AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md` |
@@ -28,10 +40,10 @@ Current leaf packet:
 | `### Axis 7: Host Hooking/Composition` | `./AXIS_07_HOST_HOOKING_COMPOSITION.md` |
 | `### Axis 8: Workflows vs APIs Boundaries` | `./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md` |
 | `### Axis 9: Durable Endpoints vs Durable Functions` | `./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md` |
-| `## 4) Rules and Boundaries (Normative)` | Global invariants and governance moved to overview section `4) Global Invariants` and overview section `9) Naming, Adoption, and Scale Governance`; detailed application split across `AXIS_01`, `AXIS_02`, `AXIS_03`, `AXIS_08`, `AXIS_09` |
-| `### Hard Rules (MUST / MUST NOT / SHOULD)` | Overview section `4) Global Invariants` + axis-owned enforcement details in `AXIS_01`..`AXIS_09` |
+| `## 4) Rules and Boundaries (Normative)` | Global invariants and governance moved to overview section `4) Core Invariants Map (Reference Mirror)` and overview section `10) Naming, Adoption, and Scale Governance (Global)`; detailed application split across `AXIS_01`, `AXIS_02`, `AXIS_03`, `AXIS_08`, `AXIS_09` |
+| `### Hard Rules (MUST / MUST NOT / SHOULD)` | Overview section `4) Core Invariants Map (Reference Mirror)` + axis-owned enforcement details in `AXIS_01`..`AXIS_09` |
 | `### Explicit Anti-Dual-Path Policy` | `./AXIS_03_SPLIT_VS_COLLAPSE.md` |
-| `### Naming Rules (Canonical)` | Overview section `9) Naming, Adoption, and Scale Governance`; concrete usage in `AXIS_02`, `AXIS_07` |
+| `### Naming Rules (Canonical)` | Overview section `10) Naming, Adoption, and Scale Governance (Global)`; concrete usage in `AXIS_02`, `AXIS_07` |
 | `### Adoption Exception (Explicit)` | `./AXIS_03_SPLIT_VS_COLLAPSE.md` |
 | `### Scale Rule (Default Progression)` | `./AXIS_03_SPLIT_VS_COLLAPSE.md` |
 | `## 5) Implementation Inventory / Glue Code` | Core inventory and fixtures moved to `./AXIS_07_HOST_HOOKING_COMPOSITION.md`; internal package default moved to `./AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`; boundary API plugin default moved to `./AXIS_01_EXTERNAL_CLIENT_GENERATION.md`; workflow trigger split moved to `./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`; durable adapter constraints moved to `./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md` |
@@ -40,7 +52,7 @@ Current leaf packet:
 | `### Glue Boundaries and Ownership` | `./AXIS_07_HOST_HOOKING_COMPOSITION.md` |
 | `### Optional Composition Helpers` | `./AXIS_07_HOST_HOOKING_COMPOSITION.md` |
 | `## 6) End-to-End Examples` | Overview section `7) Integrative Interaction Flows`; axis-owned deeper snippets in `AXIS_02`, `AXIS_08`, `AXIS_07` |
-| `## 7) Source Anchors` | Overview section `10) Source Anchors`; axis-specific references retained in each leaf |
+| `## 7) Source Anchors` | Overview section `11) Source Anchors`; axis-specific references retained in each leaf |
 
 ## Completeness Notes
 1. All nine axis policies now have explicit dedicated leaf specs.

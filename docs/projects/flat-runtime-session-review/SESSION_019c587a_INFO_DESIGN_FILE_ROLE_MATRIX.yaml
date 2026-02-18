@@ -1,0 +1,121 @@
+session_id: SESSION_019c587a
+canonical_entrypoint: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md
+read_path:
+  canonical_core:
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/CANONICAL_ROLE_CONTRACT.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/CANONICAL_READ_PATH.md
+  normative_annexes:
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_01_EXTERNAL_CLIENT_GENERATION.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_03_SPLIT_VS_COLLAPSE.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_07_HOST_HOOKING_COMPOSITION.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md
+  reference_layer:
+    - docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md
+    - docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/REDISTRIBUTION_TRACEABILITY.md
+role_taxonomy:
+  normative_core:
+    description: Highest authority. Owns packet-global policy, decision state, and canonical read contract.
+  normative_annex:
+    description: Binding only for delegated axis scope. Must reference core for global policy.
+  reference:
+    description: Non-normative by default. Explains and illustrates; does not own policy.
+  historical_provenance:
+    description: Record-only operational/session lineage.
+files:
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md
+    role: normative_core
+    authority_owner: packet_global_invariants_and_caller_matrix
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md
+    role: normative_core
+    authority_owner: decision_state_ledger
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/CANONICAL_ROLE_CONTRACT.md
+    role: normative_core
+    authority_owner: role_taxonomy_contract
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/CANONICAL_READ_PATH.md
+    role: normative_core
+    authority_owner: deterministic_read_sequence
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_01_EXTERNAL_CLIENT_GENERATION.md
+    role: normative_annex
+    authority_owner: axis_01_external_client_generation
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md
+    role: normative_annex
+    authority_owner: axis_02_internal_clients_internal_calling
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_03_SPLIT_VS_COLLAPSE.md
+    role: normative_annex
+    authority_owner: axis_03_split_vs_collapse
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md
+    role: normative_annex
+    authority_owner: axis_04_context_creation_and_propagation
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md
+    role: normative_annex
+    authority_owner: axis_05_errors_logging_observability
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md
+    role: normative_annex
+    authority_owner: axis_06_middleware_cross_cutting_concerns
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_07_HOST_HOOKING_COMPOSITION.md
+    role: normative_annex
+    authority_owner: axis_07_host_hooking_composition
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md
+    role: normative_annex
+    authority_owner: axis_08_workflows_vs_apis_boundaries
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md
+    role: normative_annex
+    authority_owner: axis_09_durable_endpoints_vs_durable_functions
+    canonical_layer: true
+  - path: docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md
+    role: reference
+    authority_owner: integrative_overview
+    canonical_layer: false
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md
+    role: reference
+    authority_owner: e2e_reference_example
+    canonical_layer: false
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md
+    role: reference
+    authority_owner: e2e_reference_example
+    canonical_layer: false
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md
+    role: reference
+    authority_owner: e2e_reference_example
+    canonical_layer: false
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md
+    role: reference
+    authority_owner: e2e_reference_example
+    canonical_layer: false
+  - path: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/REDISTRIBUTION_TRACEABILITY.md
+    role: reference
+    authority_owner: redistribution_lineage_map
+    canonical_layer: false
+historical_provenance_examples:
+  - docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_ROUTE_DESIGN_REVIEW_PLAN.md
+  - docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_ROUTE_DESIGN_REVIEW_SCRATCHPAD.md
+  - docs/projects/flat-runtime-session-review/SESSION_019c587a_D008_CLOSURE_PLAN_VERBATIM.md
+  - docs/projects/flat-runtime-session-review/SESSION_019c587a_D008_CLOSURE_ORCHESTRATOR_SCRATCHPAD.md
+  - docs/projects/flat-runtime-session-review/SESSION_019c587a_D008_INTEGRATION_CHANGELOG.md
+  - docs/projects/flat-runtime-session-review/SESSION_019c587a_D008_D010_CLOSURE_FINAL_REVIEW.md
+  - docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D008_PLAN_VERBATIM.md
+  - docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D008_RECOMMENDATION.md
+  - docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D008_SCRATCHPAD.md
