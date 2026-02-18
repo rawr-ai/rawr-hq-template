@@ -26,6 +26,8 @@ This packet is self-contained for policy decisions, caller/auth semantics, and o
 7. Browser/network callers use composed boundary clients on `/api/orpc/*` and `/api/workflows/<capability>/*`; server-internal callers use in-process package clients; `/api/inngest` is signed runtime ingress only.
 8. These policies define canonical target-state behavior independent of implementation sequencing.
 
+> D-005 lock: workflow trigger APIs are caller-facing on manifest-driven `/api/workflows/<capability>/*`; `/rpc` remains first-party/internal transport only, and `/api/inngest` remains signed runtime ingress only.
+
 ## Caller/Auth Boundary Matrix
 ```yaml
 caller_modes:

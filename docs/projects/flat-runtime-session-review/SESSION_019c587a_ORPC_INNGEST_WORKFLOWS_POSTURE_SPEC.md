@@ -34,8 +34,20 @@ This is a policy/spec artifact. It is not a migration checklist.
 4. Durable Endpoints are additive ingress adapters only, never a second first-party trigger authoring path.
 5. Workflow trigger mounts are manifest-driven and capability-first at `/api/workflows/<capability>/*`, with explicit workflow boundary context helpers and one runtime-owned Inngest bundle.
 6. Workflow/API boundary contracts are plugin-owned (`plugins/api/*/contract.ts`, `plugins/workflows/*/contract.ts`); workflow trigger/status I/O schemas remain workflow boundary owned.
-7. Caller-mode client semantics are fixed: browser/network callers use composed boundary clients, server-internal callers use package internal clients, runtime ingress uses signed `/api/inngest`.
-8. Composition and mounting contracts are explicit and non-black-box.
+7. `/rpc` + `RPCLink` are first-party/internal only; RPC client artifacts are never externally published.
+8. First-party callers (including MFEs by default) use `RPCLink` on `/rpc` unless an explicit exception is documented.
+9. Externally published clients use OpenAPI boundary routes (`/api/orpc/*`, `/api/workflows/<capability>/*`).
+10. Runtime ingress uses signed `/api/inngest` only.
+11. No dedicated `/rpc/workflows` mount is added by default.
+12. Composition and mounting contracts are explicit and non-black-box.
+
+## 2.1) Canonical Caller/Transport Matrix
+| Caller type | Route family | Link type | Publication boundary | Auth expectation | Forbidden routes |
+| --- | --- | --- | --- | --- | --- |
+| First-party MFE (default) | `/rpc` | `RPCLink` | internal only (never published) | first-party boundary session/auth | `/api/inngest` |
+| First-party server/CLI | in-process package client (default), optional `/rpc` | `createRouterClient` / `RPCLink` | internal only (never published) | trusted service context | `/api/inngest` |
+| Third-party/external caller | `/api/orpc/*`, `/api/workflows/<capability>/*` | `OpenAPILink` | externally published OpenAPI clients | boundary auth/session/token | `/rpc`, `/api/inngest` |
+| Runtime ingress (Inngest) | `/api/inngest` | Inngest callback transport | runtime-only | signed ingress verification + gateway allow-listing | `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
 
 ## 3) Original Tensions (Resolved)
 1. Collapse into one plugin/surface for simplicity vs preserve semantic correctness across non-equivalent runtime models.
@@ -46,31 +58,33 @@ This is a policy/spec artifact. It is not a migration checklist.
 ## 4) Global Invariants (Subsystem-Wide)
 1. `/api/inngest` is runtime ingress only.
 2. Caller-triggered workflow APIs stay on oRPC workflow trigger surfaces (`/api/workflows/<capability>/*`).
-3. External SDK generation comes from one composed oRPC/OpenAPI boundary surface.
-4. One runtime-owned Inngest client bundle exists per process in host composition.
-5. Domain packages stay transport-neutral.
-6. Workflow/API boundary contracts are plugin-owned; packages do not own workflow boundary contracts or workflow trigger/status I/O schemas.
-7. Browser/network callers use composed boundary clients on `/api/orpc/*` and `/api/workflows/<capability>/*`; they do not call `/api/inngest`.
-8. Server-internal callers use in-process package internal clients with trusted service context and no local HTTP self-calls as default.
-9. TypeBox-only schema authoring is required for contract/procedure surfaces (no Zod-authored contract/procedure schemas).
-10. Domain modules (`domain/*`) hold transport-independent domain concepts only.
-11. Procedure input/output schemas live with owning procedures or boundary contracts, not in domain modules.
-12. Domain filenames inside one `domain/` folder omit redundant domain-prefix tokens.
-13. Naming defaults prefer concise, unambiguous domain identifiers for package/plugin directories and namespaces.
-14. Shared context contracts live in `context.ts` (or equivalent dedicated context module).
-15. Request/correlation/principal/network metadata contracts belong in context modules, not `domain/*`.
-16. Docs helper default for object-root schemas is `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
-17. For non-`Type.Object` roots, docs/snippets keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
-18. Spec docs/examples default to inline procedure/contract I/O schema declarations at `.input(...)` and `.output(...)` callsites.
-19. Schema extraction is exception-only for shared schemas or large readability cases.
-20. Extracted schema shape is paired as `{ input, output }`.
-21. No second first-party trigger authoring path exists for the same workflow behavior.
-22. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
-23. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
-24. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
-25. Context envelopes remain split by runtime model: oRPC boundary request context and Inngest function runtime context are distinct.
-26. Middleware control planes remain split by runtime model: boundary enforcement in oRPC/Elysia, durable lifecycle control in Inngest middleware + `step.*`.
-27. oRPC middleware dedupe assumptions stay explicit: use context-cached markers for heavy checks; built-in dedupe remains constrained to leading-subset/same-order chains.
+3. `/rpc` is first-party/internal transport only.
+4. First-party callers (including MFEs by default) use `RPCLink` on `/rpc` unless an explicit exception is documented.
+5. External SDK generation comes from published OpenAPI surfaces (`/api/orpc/*`, `/api/workflows/<capability>/*`) and never from RPC clients.
+6. One runtime-owned Inngest client bundle exists per process in host composition.
+7. Domain packages stay transport-neutral.
+8. Workflow/API boundary contracts are plugin-owned; packages do not own workflow boundary contracts or workflow trigger/status I/O schemas.
+9. Server-internal callers use in-process package internal clients with trusted service context and no local HTTP self-calls as default.
+10. No dedicated `/rpc/workflows` mount exists by default.
+11. TypeBox-only schema authoring is required for contract/procedure surfaces (no Zod-authored contract/procedure schemas).
+12. Domain modules (`domain/*`) hold transport-independent domain concepts only.
+13. Procedure input/output schemas live with owning procedures or boundary contracts, not in domain modules.
+14. Domain filenames inside one `domain/` folder omit redundant domain-prefix tokens.
+15. Naming defaults prefer concise, unambiguous domain identifiers for package/plugin directories and namespaces.
+16. Shared context contracts live in `context.ts` (or equivalent dedicated context module).
+17. Request/correlation/principal/network metadata contracts belong in context modules, not `domain/*`.
+18. Docs helper default for object-root schemas is `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
+19. For non-`Type.Object` roots, docs/snippets keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
+20. Spec docs/examples default to inline procedure/contract I/O schema declarations at `.input(...)` and `.output(...)` callsites.
+21. Schema extraction is exception-only for shared schemas or large readability cases.
+22. Extracted schema shape is paired as `{ input, output }`.
+23. No second first-party trigger authoring path exists for the same workflow behavior.
+24. No direct `inngest.send` from arbitrary boundary API modules when canonical workflow trigger routers exist.
+25. Shared TypeBox adapter and OpenAPI converter helper usage is centralized.
+26. Typed composition helpers are optional DX accelerators, not hidden runtime policy.
+27. Context envelopes remain split by runtime model: oRPC boundary request context and Inngest function runtime context are distinct.
+28. Middleware control planes remain split by runtime model: boundary enforcement in oRPC/Elysia, durable lifecycle control in Inngest middleware + `step.*`.
+29. oRPC middleware dedupe assumptions stay explicit: use context-cached markers for heavy checks; built-in dedupe remains constrained to leading-subset/same-order chains.
 
 ## 5) Axis Map (Coverage)
 | Axis | Policy surface | Canonical leaf spec |
@@ -165,14 +179,15 @@ state: os.state.router({
 1. Compose one oRPC contract/router tree for boundary API surfaces.
 2. Compose one runtime-owned Inngest bundle (`client + functions`).
 3. Mount `/api/inngest` explicitly.
-4. Register oRPC routes (`/rpc`, `/api/orpc`) with parse-safe forwarding and injected context.
+4. Register oRPC routes (`/rpc`, `/api/orpc`) with parse-safe forwarding and injected context, keeping `/rpc` internal-only.
 5. Mount `/api/workflows/*` with explicit workflow boundary context helpers and manifest-owned trigger routers.
 
 ## 9) Routing, Ownership, and Caller Semantics Snapshot
 - **Host/route spine:** Capability-first `/api/workflows/<capability>/*` remains caller-facing and `/api/inngest` remains runtime-only ingress.
+- **Internal transport:** `/rpc` is first-party/internal only; no dedicated `/rpc/workflows` mount is required by default.
 - **Manifest composition:** `rawr.hq.ts` exposes canonical `orpc` and `workflows` namespaces plus the shared Inngest bundle; hosts mount `rawrHqManifest.workflows.triggerRouter` and `rawrHqManifest.inngest` explicitly.
 - **Ownership split:** Workflow/API boundary contracts are plugin-owned; packages remain transport-neutral and own shared domain logic/domain schemas plus internal client/service layers only.
-- **Caller-mode split:** Browser/network callers use composed boundary clients (`/api/orpc/*`, `/api/workflows/<capability>/*`) with boundary auth semantics; server-internal callers use package internal clients; runtime ingress remains signed `/api/inngest`.
+- **Caller-mode split:** First-party callers (including MFEs by default) use `RPCLink` on `/rpc`; external callers use published OpenAPI clients (`/api/orpc/*`, `/api/workflows/<capability>/*`); runtime ingress remains signed `/api/inngest`.
 - **File structure:** Host wiring remains explicit in `apps/server/src/rawr.ts` and workflow context helpers; capability files remain under `packages/*` and `plugins/*`.
 
 ## 10) Naming, Adoption, and Scale Governance (Global)

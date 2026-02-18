@@ -1,0 +1,39 @@
+- target_file: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md
+  current_state_summary: lacks a single caller-to-transport/auth/publication matrix that captures the new follow-up locks (RPC internal-only, OpenAPI external, MFE default RPC) and the `/api/workflows` vs `/api/inngest` naming commitments.
+  required_change: add a YAML/markdown table near the top that maps caller mode -> route family -> link type -> publication status -> auth expectations, cite the locked policies, and highlight that the runtime is still transitively converging toward `/api/workflows`.
+  reason: clarifies onboarding, documentation, and spec consistency; makes the locked transport/publication story explicit for future integrations.
+  depends_on: DECISIONS.md (to reference the locked policies) and AXIS_08 (to link to workflow boundary guidance).
+  risk_level: medium
+  verification_check: confirm the new matrix renders in the packet index, references the locked follow-up decisions, and cross-links from AXIS_08.
+
+- target_file: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md
+  current_state_summary: decision log is missing the follow-up locks (RPC first-party/internal only, RPC client never published, OpenAPI client is the external SDK, MFEs default to RPC) and lacks a transitional note about `/api/workflows` rollout.
+  required_change: add closed/locked entries (or extend D-005/D-007) that record these constraints plus a short 'runtime delta' note explaining the current `/api/workflows/*` mount is pending while the packet remains the target state.
+  reason: keeps the decision register authoritative and ensures future editors know the policy context for updates.
+  depends_on: ORPC_INGEST_SPEC_PACKET.md (for the caller matrix) and AXIS_07 or AXIS_08 (for cross-referencing the same policies).
+  risk_level: low
+  verification_check: decision register lists the new locks and references the route convergence note, and the follow-up lock citations appear in the matrix and axis docs.
+
+- target_file: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_07_HOST_HOOKING_COMPOSITION.md
+  current_state_summary: host-axis text references the mount spine but lacks the mini route-family purpose table and explicit mention of `rawrHqManifest.workflows.triggerRouter` vs manifest orbit.
+  required_change: insert an explicit `/rpc`, `/api/orpc`, `/api/workflows`, `/api/inngest` purpose table (caller vs runtime vs manifest wiring), mention the workflow manifest/host context fixtures, and note the manifest-route mount is the canonical wiring.
+  reason: ensures host docs spell out exactly how caller mode maps to each mount and prevents fallback to undocumented helper surfaces.
+  depends_on: ORPC_INGEST_SPEC_PACKET.md (matrix) and AXIS_08 (workflow boundary story).
+  risk_level: medium
+  verification_check: table appears in AXIS_07, referencing the manifest and route names, and doc cross-links to ORPC_INGEST_SPEC_PACKET.
+
+- target_file: docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md
+  current_state_summary: workflow-axis doc explains split semantics but does not yet call out ingress enforcement expectations (signed `/api/inngest`, gateway/filter) nor the new MFE default-to-RPC policy.
+  required_change: add a section summarizing ingress enforcement requirements, highlight that MFEs/browsers call `/api/workflows` (and default to RPC), and mention that `/api/inngest` is off-limits to browsers by policy.
+  reason: lowers confusion about runtime ingress and mirrors the locked publication/caller scope story from the route review.
+  depends_on: DECISIONS.md (for the locks) and E2E examples (for concrete enforcement examples).
+  risk_level: medium
+  verification_check: new enforcement paragraph present, cross-linked to E2E_03/E2E_04, and the new policy is referenced in the caller matrix.
+
+- target_file: apps/server/openapi/README.md
+  current_state_summary: developer-facing README describes OpenAPI artifacts but doesn’t call out that `/api/orpc/openapi.json` is the publication surface and how to wire `RPCLink`/`OpenAPILink` clients for browser/internal callers.
+  required_change: add a note clarifying `/api/orpc/openapi.json` is the external surface, link it to the caller matrix, and include high-level snippets showing `RPCLink` (internal) vs `OpenAPILink` (external) setup.
+  reason: fills the missing code-illustration gap mentioned in the session review and makes it easier to grasp the dual transport policy while reading the packet pointers.
+  depends_on: ORPC_INGEST_SPEC_PACKET.md (matrix) and `apps/server/src/orpc.ts` (code snippet source).
+  risk_level: low
+  verification_check: README includes the snippet, references the route names, and reviewers can match the sample to the handler code in `apps/server/src/orpc.ts`.

@@ -4,15 +4,15 @@
 Packet-local decision tracking for documentation-architecture changes only.
 
 ## Current Status
-Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, and context metadata placement are explicitly locked. D-005, D-006, and D-007 are closed as spec-policy locks; runtime rollout remains a separate implementation track and is not declared complete by this decision log. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
+Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, context metadata placement, and caller/transport publication boundaries are explicitly locked. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
 
 ## Decision Register
 
 ### D-005 — Workflow trigger route convergence
 - `status`: `closed`
-- `resolution`: The packet locks on a manifest-driven host spine: capability-first `/api/workflows/<capability>/*` mounts come from generated `rawr.hq.ts`; workflow routers live under `rawrHqManifest.workflows.triggerRouter`; the same manifest supplies `rawrHqManifest.inngest`; workflow boundary context helpers keep `/api/workflows/<capability>/*` caller-facing while `/api/inngest` remains runtime-only.
-- `historical_question`: Should canonical workflow trigger paths (`/api/workflows/<capability>/*`) become first-class mounted routes in current server runtime, instead of relying primarily on coordination procedures under `/rpc` and `/api/orpc`?
-- `closure_scope`: spec-policy lock only; this entry does not claim runtime rollout is complete.
+- `resolution`: The packet locks on a manifest-driven host spine: capability-first `/api/workflows/<capability>/*` mounts come from generated `rawr.hq.ts`; workflow routers live under `rawrHqManifest.workflows.triggerRouter`; the same manifest supplies `rawrHqManifest.inngest`; workflow boundary context helpers keep `/api/workflows/<capability>/*` caller-facing while `/api/inngest` remains runtime-only. `/rpc` remains first-party/internal transport, and no dedicated `/rpc/workflows` mount is added by default.
+- `historical_question`: Should workflow trigger APIs remain first-class caller-facing routes (`/api/workflows/<capability>/*`) with explicit mount ownership distinct from runtime ingress?
+- `closure_scope`: spec-policy lock only.
 - `why_closed`: Packet docs now encode manifest-driven route composition, caller/runtime split semantics, and host mounting rules directly.
 - `impacted_docs`:
   - `ORPC_INGEST_SPEC_PACKET.md`
@@ -34,17 +34,19 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
   - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
   - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
 
-### D-007 — First-party micro-frontend workflow client strategy
+### D-007 — Caller transport and publication boundary strategy
 - `status`: `closed`
-- `resolution`: Browser/network callers (including micro-frontends) use composed boundary clients to call `/api/orpc/*` and `/api/workflows/<capability>/*` with boundary auth/session semantics. Server-internal callers may use in-process package internal clients. `/api/inngest` remains signed runtime-only ingress and is never a browser caller surface.
+- `resolution`: `RPCLink` on `/rpc` is first-party/internal transport. First-party callers (including MFEs by default) use RPC unless an explicit exception is documented. RPC client artifacts are never externally published. External/third-party callers use published OpenAPI clients on `/api/orpc/*` and `/api/workflows/<capability>/*`. `/api/inngest` remains signed runtime-only ingress and is never a browser caller surface.
 - `closure_scope`: spec-policy lock
-- `why_closed`: Caller-mode semantics are explicit by route, auth context, and runtime boundary; this resolves client confusion without collapsing split architecture.
+- `why_closed`: Caller-mode semantics are explicit by route, transport, publication boundary, and runtime ownership; this resolves client ambiguity without collapsing split architecture.
 - `impacted_docs`:
   - `ORPC_INGEST_SPEC_PACKET.md`
   - `AXIS_01_EXTERNAL_CLIENT_GENERATION.md`
+  - `AXIS_07_HOST_HOOKING_COMPOSITION.md`
   - `AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`
   - `AXIS_03_SPLIT_VS_COLLAPSE.md`
   - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
+  - `examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md`
   - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
 
 ### D-011 — Procedure I/O schema ownership and context metadata placement

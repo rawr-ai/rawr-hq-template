@@ -10,37 +10,29 @@
 - Workflow trigger vs durable ingress split (see [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)).
 
 ## Canonical Policy
-1. External SDK/client generation MUST come from one composed boundary oRPC/OpenAPI surface.
-2. Package-internal contracts MUST NOT be used for external SDK generation.
-3. Boundary APIs remain contract-first by default.
-4. Workflow/API boundary contracts are plugin-owned. Packages may export shared domain schemas and domain helpers, but workflow trigger/status I/O schemas and caller-facing boundary contract ownership remain in plugins.
-5. Browser/network client generation MUST target caller-facing boundary routes only (`/api/orpc/*`, `/api/workflows/<capability>/*`) and MUST NOT target `/api/inngest`.
+1. Externally published SDK/client generation MUST come from OpenAPI boundary surfaces only (`/api/orpc/*`, `/api/workflows/<capability>/*`).
+2. `/rpc` is first-party/internal transport only. `RPCLink` clients and RPC client artifacts MUST NOT be externally published.
+3. First-party callers (including MFEs by default) SHOULD use `RPCLink` on `/rpc` unless an explicit exception is documented.
+4. Boundary APIs remain contract-first by default.
+5. Workflow/API boundary contracts are plugin-owned. Packages may export shared domain schemas and domain helpers, but workflow trigger/status I/O schemas and caller-facing boundary contract ownership remain in plugins.
+6. Browser/network callers MUST NOT target `/api/inngest`; runtime ingress is not a client publication surface.
+7. No dedicated `/rpc/workflows` mount is required by default; workflow RPC procedures compose under the existing `/rpc` surface when first-party workflow RPC is needed.
 
-## External Caller Ownership and Auth View
-```yaml
-external_callers:
-  contract_source:
-    - plugins/api/<capability>/src/contract.ts
-    - plugins/workflows/<capability>/src/contract.ts
-  generated_clients:
-    - composed_api_client
-    - composed_workflow_client
-  allowed_routes:
-    - /api/orpc/*
-    - /api/workflows/<capability>/*
-  forbidden_routes:
-    - /api/inngest
-  auth_mode: boundary_auth_session_token
-```
+## Caller Transport and Publication View
+| Caller class | Contract source | Link + route | Publication boundary | Auth mode | Forbidden routes |
+| --- | --- | --- | --- | --- | --- |
+| First-party callers (MFE default, internal services, CLI) | internal composed contracts | `RPCLink` -> `/rpc` | Internal only (never externally published) | first-party boundary session or trusted service context | `/api/inngest` |
+| External/third-party callers | `plugins/api/<capability>/src/contract.ts`, `plugins/workflows/<capability>/src/contract.ts` | `OpenAPILink` -> `/api/orpc/*`, `/api/workflows/<capability>/*` | Externally published OpenAPI clients | boundary auth/session/token | `/rpc`, `/api/inngest` |
+| Runtime ingress | Inngest runtime bundle | Inngest callback -> `/api/inngest` | Runtime-only (not a caller SDK) | signed ingress verification | `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
 
 ## Why
-- One contract tree preserves stable external semantics and prevents drift.
-- Composed router state is already the runtime source for OpenAPI generation.
-- External caller contracts stay aligned with runtime route ownership and auth boundaries.
+- OpenAPI publication stays deterministic and auditable for external integrators.
+- Internal RPC semantics stay decoupled from external publication concerns.
+- Contract source ownership stays aligned with plugin-owned boundary routes.
 
 ## Trade-Offs
-- Some internal contracts remain intentionally unexposed.
-- This is intentional to preserve boundary ownership and avoid accidental public surface expansion.
+- Internal RPC contracts remain intentionally unexposed externally.
+- First-party MFE exceptions to OpenAPI require explicit documentation.
 
 ## Boundary Plugin Default (Contract-First + Explicit Operations)
 ```text
@@ -128,9 +120,38 @@ export const invoiceApiSurface = {
 } as const;
 ```
 
-### Browser-facing composed client usage
+### First-party default client usage (`RPCLink` on `/rpc`)
 ```ts
 // plugins/web/invoicing-console/src/client.ts
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import { capabilityClients } from "@rawr/composition/manifest-generator";
+
+export function createFirstPartyClients(baseUrl: string) {
+  const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
+  return {
+    api: createORPCClient(capabilityClients.invoicing.api, {
+      link: new RPCLink({
+        url: `${normalizedBaseUrl}/rpc`,
+        fetch: (request, init) => fetch(request, { ...init, credentials: "include" }),
+      }),
+    }),
+    workflows: createORPCClient(capabilityClients.invoicing.workflows, {
+      link: new RPCLink({
+        url: `${normalizedBaseUrl}/rpc`,
+        fetch: (request, init) => fetch(request, { ...init, credentials: "include" }),
+      }),
+    }),
+  } as const;
+}
+```
+
+### External published client usage (`OpenAPILink`)
+```ts
+// plugins/web/invoicing-console/src/client.ts
+import { createORPCClient } from "@orpc/client";
+import { OpenAPILink } from "@orpc/openapi-client/fetch";
+
 const api = createORPCClient(capabilityClients.invoicing.api, {
   link: new OpenAPILink({ url: `${baseUrl}/api/orpc` }),
 });
@@ -143,7 +164,8 @@ const workflows = createORPCClient(capabilityClients.invoicing.workflows, {
 ## Related Normative Rules
 1. Preserve TypeBox-first schema flow for oRPC contract I/O and OpenAPI conversion.
 2. Centralize shared TypeBox adapter and OpenAPI converter helper usage.
-3. Keep external caller client generation on composed plugin-owned boundary contracts.
+3. Keep externally published client generation on composed plugin-owned OpenAPI boundary contracts.
+4. Keep `RPCLink` clients internal-only and out of external publication artifacts.
 
 ## References
 - Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts:5`

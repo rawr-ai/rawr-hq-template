@@ -14,39 +14,19 @@ without duplicating workflow/domain semantics across browser, plugin, and runtim
 1. Canonical API/workflow boundary contracts live in plugins.
 2. Packages provide domain logic/domain schemas and browser-safe helpers.
 3. Workflow plugin implements trigger + durable execution with plugin-local route I/O schemas.
-4. Micro-frontend calls workflow trigger/status APIs (not `/api/inngest`) and may reuse browser-safe package logic.
-5. API plugin consumption is optional, not required for workflow invocation.
+4. First-party micro-frontends use `RPCLink` on `/rpc` by default and may reuse browser-safe package logic.
+5. OpenAPI workflow/API routes (`/api/workflows/<capability>/*`, `/api/orpc/*`) are externally published surfaces and are used by third-party callers (or explicit first-party exceptions).
+6. API plugin consumption is optional, not required for workflow invocation.
 
 This default preserves boundary ownership while still preventing semantic duplication through package-level domain reuse.
 
 ### Caller/Auth Semantics
-```yaml
-caller_modes:
-  - caller: browser_mfe_or_network_consumer
-    client: composed_boundary_clients
-    auth: boundary_auth_session_token
-    allowed_routes:
-      - /api/orpc/*
-      - /api/workflows/<capability>/*
-    forbidden_routes:
-      - /api/inngest
-
-  - caller: server_internal_consumer
-    client: package_internal_client
-    auth: trusted_service_context
-    allowed_routes:
-      - in_process_only
-    forbidden_routes:
-      - local_http_self_calls_as_default
-
-  - caller: runtime_ingress
-    client: inngest_runtime_bundle
-    auth: signed_runtime_ingress
-    allowed_routes:
-      - /api/inngest
-    forbidden_routes:
-      - browser_access
-```
+| Caller type | Route family | Link type | Publication boundary | Auth expectation | Forbidden routes |
+| --- | --- | --- | --- | --- | --- |
+| First-party MFE (default) | `/rpc` | `RPCLink` | internal only (RPC client never published) | first-party session/auth | `/api/inngest` |
+| First-party internal service/CLI | in-process package client (default), optional `/rpc` | `createRouterClient` / `RPCLink` | internal only (RPC client never published) | trusted service context | `/api/inngest` |
+| Third-party/external caller | `/api/orpc/*`, `/api/workflows/<capability>/*` | `OpenAPILink` | externally published OpenAPI clients | boundary auth/session/token | `/rpc`, `/api/inngest` |
+| Runtime ingress (Inngest) | `/api/inngest` | Inngest callback transport | runtime-only | signed ingress verification | `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
 
 ---
 
@@ -54,8 +34,9 @@ caller_modes:
 
 ```mermaid
 flowchart LR
-  MFE["Web Micro-Frontend\n(browser)"] -->|"POST /api/workflows/invoicing/reconciliation/trigger"| WFAPI["Workflow Trigger Router\n(oRPC/OpenAPI boundary)"]
-  MFE -->|"GET /api/workflows/invoicing/runs/:runId"| WFAPI
+  MFE["Web Micro-Frontend\n(first-party browser)"] -->|"POST /rpc (workflow proc)"| WFAPI["Workflow Trigger Router\n(oRPC internal boundary)"]
+  MFE -->|"GET /rpc (status proc)"| WFAPI
+  EXT["External Caller"] -->|"POST /api/workflows/invoicing/reconciliation/trigger"| WFAPI
   WFAPI -->|"enqueue event (inngest.send)"| INGRESS["/api/inngest\n(runtime ingress only)"]
   INGRESS --> FUNC["Inngest Durable Function\n(step.run / retries)"]
   FUNC --> PKGCLI["Package Internal Client\n(server-only)"]
@@ -66,7 +47,7 @@ flowchart LR
 
 Boundary meaning:
 1. Browser never calls `/api/inngest`.
-2. `/api/workflows/...` is caller-trigger/status surface.
+2. First-party MFE defaults to `/rpc`; `/api/workflows/...` is the published external workflow boundary.
 3. Durable orchestration lives only inside Inngest functions.
 
 ---
@@ -491,16 +472,29 @@ packages/core/src/composition/manifest-generator.ts
 ```ts
 // plugins/web/invoicing-console/src/client.ts
 import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
 import type { ContractRouterClient } from "@orpc/contract";
 import { OpenAPILink } from "@orpc/openapi-client/fetch";
 import { capabilityClients } from "@rawr/composition/manifest-generator";
 
 type InvoicingWorkflowClient = ContractRouterClient<typeof capabilityClients.invoicing.workflows>;
 
-export function createInvoicingWorkflowClient(baseUrl: string) {
+export function createFirstPartyInvoicingWorkflowClient(baseUrl: string) {
+  const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
+  return createORPCClient<InvoicingWorkflowClient>(
+    new RPCLink({
+      url: `${normalizedBaseUrl}/rpc`,
+      fetch: (request, init) => fetch(request, { ...init, credentials: "include" }),
+    }),
+  );
+}
+
+// Published OpenAPI path for third-party callers (or explicit first-party exception).
+export function createExternalInvoicingWorkflowClient(baseUrl: string) {
+  const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
   return createORPCClient<InvoicingWorkflowClient>(
     new OpenAPILink({
-      url: `${baseUrl.replace(/\/$/, "")}/api/workflows`,
+      url: `${normalizedBaseUrl}/api/workflows`,
       fetch: (request, init) => fetch(request, { ...init, credentials: "include" }),
     }),
   );
@@ -510,11 +504,11 @@ export function createInvoicingWorkflowClient(baseUrl: string) {
 ```ts
 // plugins/web/invoicing-console/src/web.ts
 import type { MountContext } from "@rawr/ui-sdk";
-import { createInvoicingWorkflowClient } from "./client";
+import { createFirstPartyInvoicingWorkflowClient } from "./client";
 import { toRunBadge } from "@rawr/invoicing/browser";
 
 export async function mount(el: HTMLElement, _ctx: MountContext) {
-  const client = createInvoicingWorkflowClient(window.location.origin);
+  const client = createFirstPartyInvoicingWorkflowClient(window.location.origin);
 
   const button = document.createElement("button");
   button.textContent = "Run reconciliation";
@@ -558,9 +552,10 @@ Browser-safe vs server-only boundary in this implementation:
 3. Implement explicit package/workflow/host context contracts in `context.ts`, then implement the workflow router using those contracts plus visibility/auth enforcement.
 4. Implement durable function(s) in workflow plugin, using package internal client for server-only orchestration.
 5. Compose workflows + functions in `rawr.hq.ts`.
-6. Mount caller-trigger/status surface at `/api/workflows/*` with boundary auth context created from host `context.ts`.
+6. Mount `/rpc*` for first-party internal callers and mount `/api/workflows/*` for published workflow boundary routes.
 7. Mount runtime ingress at `/api/inngest` for Inngest runtime callbacks only.
-8. In web plugin, call workflow trigger/status procedures via typed client and render status with shared package view logic.
+8. In web plugin, use `RPCLink` by default for first-party MFE workflow calls, and use `OpenAPILink` only for explicit external/public publication paths.
+9. Render status with shared package view logic regardless of transport path.
 
 ---
 
@@ -568,9 +563,10 @@ Browser-safe vs server-only boundary in this implementation:
 
 ### Trigger path
 1. User action in micro-frontend calls `triggerReconciliation`.
-2. Request hits `/api/workflows/invoicing/reconciliation/trigger`.
-3. Workflow router resolves principal from boundary auth context and enforces visibility.
-4. Router emits `invoicing.reconciliation.requested` via `inngest.send` and returns `{ accepted: true, runId }`.
+2. By default, request uses `RPCLink` and hits `/rpc` (workflow namespace procedure).
+3. External/public clients use `/api/workflows/invoicing/reconciliation/trigger`.
+4. Workflow router resolves principal from boundary auth context and enforces visibility.
+5. Router emits `invoicing.reconciliation.requested` via `inngest.send` and returns `{ accepted: true, runId }`.
 
 ### Durable path
 1. Inngest receives event at `/api/inngest`.
@@ -578,9 +574,10 @@ Browser-safe vs server-only boundary in this implementation:
 3. Runtime adapter writes run state/timeline updates.
 
 ### Status/result path
-1. Micro-frontend polls `getRunStatus` and optionally `getRunTimeline` on `/api/workflows/...`.
-2. Workflow router reads runtime state and returns typed status/timeline.
-3. UI uses shared package projection helpers for consistent status rendering.
+1. Micro-frontend polls `getRunStatus` and optionally `getRunTimeline` on `/rpc` by default.
+2. External/public clients poll via `/api/workflows/...`.
+3. Workflow router reads runtime state and returns typed status/timeline.
+4. UI uses shared package projection helpers for consistent status rendering.
 
 ---
 
@@ -588,14 +585,16 @@ Browser-safe vs server-only boundary in this implementation:
 
 ### Why this default
 1. Single semantic source for domain concepts: shared package owns domain status/state semantics consumed by workflow router, durable function, and micro-frontend; workflow trigger/status route I/O remains boundary-owned in the workflow plugin.
-2. API plugin remains optional: workflow-related integration does not require an API plugin layer unless the capability needs separate boundary concerns.
-3. Boundary integrity: browser-facing workflow calls remain caller-trigger/status APIs, while `/api/inngest` stays runtime-only.
+2. Internal transport is deterministic: first-party MFEs use internal `/rpc` + `RPCLink` by default, so internal callers do not couple to published OpenAPI packaging.
+3. API plugin remains optional: workflow-related integration does not require an API plugin layer unless the capability needs separate boundary concerns.
+4. Boundary integrity: published caller surfaces stay on `/api/workflows/*`/`/api/orpc/*`, while `/api/inngest` stays runtime-only.
 
 ### Alternatives considered
 
 | Alternative | Decision | Why |
 | --- | --- | --- |
 | API-plugin-centric only (MFE -> API plugin -> workflow) | Not default | Valid for capabilities needing heavy boundary transformations, but not required for workflow-focused MFE and can add extra semantic mapping layers. |
+| First-party MFE on OpenAPI workflow routes | Exception-only | Allowed only when explicitly documented; default stays internal RPC transport. |
 | Host-injected capability gateway (MFE does not build own client) | Not default | Good DX and auth centralization, but requires a stable gateway contract before becoming baseline. |
 | Direct browser calls to `/api/inngest` | Rejected | Violates split semantics and breaks security/runtime ownership boundaries. |
 
@@ -621,7 +620,7 @@ Browser-safe vs server-only boundary in this implementation:
 
 5. **Route/mount mismatch**
 - Risk: contract route paths and mount prefix diverge, causing 404/incorrect operation routing.
-- Guardrail: integration tests for `/api/workflows/*` and `/api/inngest`, plus contract snapshot/OpenAPI checks.
+- Guardrail: integration tests for `/rpc*`, `/api/workflows/*`, and `/api/inngest`, plus contract snapshot/OpenAPI checks.
 
 ---
 
@@ -636,6 +635,7 @@ Browser-safe vs server-only boundary in this implementation:
 | Object-root schema wrapper usage | Satisfied | Workflow contract snippet uses `schema({...})` for object-root I/O and keeps explicit `std(...)` for non-object roots. |
 | Concise naming + non-redundant domain filenames | Satisfied | Capability naming stays `invoicing`; domain files are concise (`reconciliation.ts`, `status.ts`, `view.ts`). |
 | Split semantics (`/api/workflows/<capability>/*` vs `/api/inngest`) | Satisfied | Trigger/status is caller-facing; ingress is runtime-only. |
+| First-party MFE default transport | Satisfied | First-party browser usage defaults to `/rpc` via `RPCLink`; OpenAPI path is explicit external/exception usage. |
 | Internal server calls use package internal client | Satisfied | Durable function calls package `client.ts` path server-side. |
 | No plugin-to-plugin runtime imports | Satisfied | Shared artifacts move through `packages/*`; workflow plugin owns boundary contract and may import package domain schemas only when transport-independent. |
 | Boundary auth/visibility in boundary layer | Satisfied | Router context enforces principal and visibility before enqueue/read operations. |

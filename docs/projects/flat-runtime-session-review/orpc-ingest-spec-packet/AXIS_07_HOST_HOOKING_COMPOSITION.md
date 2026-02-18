@@ -16,34 +16,24 @@
 3. Host SHOULD keep parse-safe forwarding semantics for oRPC handler mounts.
 4. Host MUST keep one runtime-owned Inngest client bundle per process.
 5. Host composition MUST consume plugin-owned boundary contracts/routers from the generated manifest; packages contribute shared logic/schema inputs, not boundary ownership.
-6. Host MUST enforce caller-mode route boundaries: browser/network callers use `/api/orpc/*` + `/api/workflows/<capability>/*`, while `/api/inngest` stays runtime-only signed ingress.
-7. Host composition docs/snippets MUST keep mount ownership explicit; do not hide wiring behind black-box composition narratives.
+6. Host MUST enforce caller-mode route boundaries: first-party callers (including MFEs by default) use `/rpc` via `RPCLink`, external callers use published OpenAPI surfaces (`/api/orpc/*`, `/api/workflows/<capability>/*`), and `/api/inngest` stays runtime-only signed ingress.
+7. Host MUST NOT add a dedicated `/rpc/workflows` mount by default; first-party workflow RPC procedures compose under the existing `/rpc` surface.
+8. Host composition docs/snippets MUST keep mount ownership explicit; do not hide wiring behind black-box composition narratives.
+
+## Route Family Purpose Table
+| Route family | Primary caller class | Link/transport | Publication boundary | Auth expectation | Forbidden usage |
+| --- | --- | --- | --- | --- | --- |
+| `/rpc` | First-party internal callers (MFE default, internal services, CLI) | `RPCLink` | Internal-only, never externally published | first-party boundary session or trusted service context | external third-party callers, runtime ingress traffic |
+| `/api/orpc/*` | External and exception first-party OpenAPI consumers | `OpenAPILink` | Externally published | boundary auth/session/token semantics | runtime ingress traffic |
+| `/api/workflows/<capability>/*` | External and exception first-party workflow boundary consumers | `OpenAPILink` | Externally published | boundary auth/session/token semantics | runtime ingress traffic |
+| `/api/inngest` | Inngest runtime only | Inngest serve callback | Runtime-only | signed ingress verification + gateway allow-listing | browser/API caller traffic |
 
 ## Host Route/Auth Enforcement Matrix
-```yaml
-caller_modes:
-  - caller: browser_or_network_consumer
-    auth: boundary_auth_session_token
-    allowed_routes:
-      - /api/orpc/*
-      - /api/workflows/<capability>/*
-    forbidden_routes:
-      - /api/inngest
-
-  - caller: server_internal_consumer
-    auth: trusted_service_context
-    allowed_routes:
-      - in_process_only
-    forbidden_routes:
-      - local_http_self_calls_as_default
-
-  - caller: runtime_ingress
-    auth: signed_runtime_ingress
-    allowed_routes:
-      - /api/inngest
-    forbidden_routes:
-      - browser_access
-```
+| Caller mode | Allowed routes | Default link type | Auth mode | Forbidden routes |
+| --- | --- | --- | --- | --- |
+| First-party MFE/internal caller | `/rpc` | `RPCLink` | boundary session or trusted service context | `/api/inngest` |
+| External/third-party caller | `/api/orpc/*`, `/api/workflows/<capability>/*` | `OpenAPILink` | boundary auth/session/token | `/rpc`, `/api/inngest` |
+| Runtime ingress | `/api/inngest` | Inngest callback transport | signed ingress verification | `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
 
 ## Why
 - Explicit host wiring prevents hidden coupling.
@@ -162,7 +152,7 @@ const capabilities = [
 export const rawrHqManifest = composeCapabilities(capabilities, inngest);
 ```
 
-The manifest emits separate `orpc` and `workflows` namespaces so host wiring can mount `/rpc*` + `/api/orpc*` from `rawrHqManifest.orpc` while `/api/workflows/*` uses `rawrHqManifest.workflows.triggerRouter` plus workflow-boundary context helpers and the same `inngest` bundle. Plugin-generated capability metadata feeds the manifest so `apps/*` does not require manual capability route edits, while mount ownership remains explicit in packet composition docs.
+The manifest emits separate `orpc` and `workflows` namespaces so host wiring can mount `/rpc*` + `/api/orpc*` from `rawrHqManifest.orpc` while `/api/workflows/*` uses `rawrHqManifest.workflows.triggerRouter` plus workflow-boundary context helpers and the same `inngest` bundle. `/rpc` remains first-party/internal transport only, and there is no separate `/rpc/workflows` mount by default. Plugin-generated capability metadata feeds the manifest so `apps/*` does not require manual capability route edits, while mount ownership remains explicit in packet composition docs.
 
 ### Host fixture split mount contract
 ```ts
@@ -204,6 +194,23 @@ app.all("/rpc/*", async (ctx) =>
     context: options,
   })).response,
 { parse: "none" });
+```
+
+### First-party vs external link setup
+```ts
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import { OpenAPILink } from "@orpc/openapi-client/fetch";
+
+// First-party/internal (default, including MFEs by default)
+const firstPartyClient = createORPCClient(capabilityClients.invoicing.workflows, {
+  link: new RPCLink({ url: `${baseUrl}/rpc` }),
+});
+
+// External or explicit OpenAPI exception
+const publishedClient = createORPCClient(externalContracts.invoicing.workflows, {
+  link: new OpenAPILink({ url: `${baseUrl}/api/workflows` }),
+});
 ```
 
 ### Inngest serve handler mount

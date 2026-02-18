@@ -18,48 +18,37 @@
 6. Workflow/API boundary contracts are plugin-owned (`plugins/workflows/*/contract.ts`, `plugins/api/*/contract.ts`); packages provide shared domain schemas/domain logic but are not canonical boundary contract owners, and workflow trigger/status I/O schemas stay at the workflow plugin boundary.
 7. Domain modules (`domain/*`) MAY be used for transport-independent domain concepts only; they MUST NOT own procedure input/output schema semantics.
 8. Shared workflow trigger context contracts and request metadata types (principal/request/correlation/network metadata) SHOULD live in explicit `context.ts` modules (or equivalent context modules), consumed by routers.
-9. Browser and generic API callers MUST NOT invoke `/api/inngest` directly.
-10. Docs/examples for workflow trigger procedures MUST default to inline I/O schemas at `.input(...)` and `.output(...)`.
-11. I/O schema extraction SHOULD be used only for shared schemas or large readability cases.
-12. When extracted, workflow trigger I/O schemas SHOULD use paired-object shape with `.input` and `.output` (for example `TriggerInvoiceReconciliationSchema.input` / `.output`).
-13. For object-root schema wrappers in docs, prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
-14. For non-`Type.Object` roots, keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
-15. Workflow composition/mounting docs MUST stay explicit; do not collapse route ownership into black-box host helpers.
+9. `/rpc` is first-party/internal transport only; first-party callers (including MFEs by default) use `RPCLink` unless an explicit exception is documented.
+10. Workflow OpenAPI surfaces (`/api/workflows/<capability>/*`) are externally published boundaries and MAY be used by first-party callers only via explicit exception.
+11. Browser and generic API callers MUST NOT invoke `/api/inngest` directly.
+12. No dedicated `/rpc/workflows` mount is required by default; workflow RPC procedures compose under existing `/rpc`.
+13. Docs/examples for workflow trigger procedures MUST default to inline I/O schemas at `.input(...)` and `.output(...)`.
+14. I/O schema extraction SHOULD be used only for shared schemas or large readability cases.
+15. When extracted, workflow trigger I/O schemas SHOULD use paired-object shape with `.input` and `.output` (for example `TriggerInvoiceReconciliationSchema.input` / `.output`).
+16. For object-root schema wrappers in docs, prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
+17. For non-`Type.Object` roots, keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
+18. Workflow composition/mounting docs MUST stay explicit; do not collapse route ownership into black-box host helpers.
 
 ## Consumer model
-1. **External callers** (third-party APIs, micro-frontends) hit `/rpc*`, `/api/orpc*`, and the capability-specific `/api/workflows/<capability>/*` trigger/status paths. These surfaces remain public and are mounted through host composition with dedicated workflow-route registration (`apps/server/src/rawr.ts` + `apps/server/src/workflows/context.ts`) while `/rpc*` and `/api/orpc*` remain in `apps/server/src/orpc.ts`.
-2. **Internal packages/services** re-use capability logic through in-process clients (`packages/<capability>/src/client.ts`) with trusted service context, keeping domain semantics centralized and bypassing HTTP when appropriate.
-3. **Coordination tooling** (the `hqContract` + coordination operations in `apps/server/src/orpc.ts`) powers dashboards, run discovery, and orchestration controls; these consumers speak the administrative contract, not workflow triggers.
-This model keeps `/api/workflows/<capability>/*` caller-facing, `/api/inngest` runtime-only, and coordination tooling on the administrative contract canvas.
+1. **First-party callers** (including MFEs by default) use `RPCLink` on `/rpc` for workflow-trigger and workflow-status calls under the composed internal contract tree.
+2. **External/third-party callers** use published OpenAPI clients on `/api/orpc/*` and `/api/workflows/<capability>/*`; they do not receive RPC clients.
+3. **Internal packages/services** re-use capability logic through in-process clients (`packages/<capability>/src/client.ts`) with trusted service context, keeping domain semantics centralized and bypassing HTTP when appropriate.
+4. **Runtime ingress** is `/api/inngest` only, reserved for signed Inngest callback traffic and excluded from browser/API caller usage.
+5. **Coordination tooling** (the `hqContract` + coordination operations in `apps/server/src/orpc.ts`) remains an internal administrative contract surface.
+This model keeps `/api/workflows/<capability>/*` caller-facing as a published boundary, `/rpc` internal-only for first-party callers, and `/api/inngest` runtime-only.
 
 ## Caller/Auth Matrix
-```yaml
-caller_modes:
-  - caller: browser_mfe_or_network_consumer
-    client: composed_boundary_clients
-    auth: boundary_auth_session_token
-    allowed_routes:
-      - /api/orpc/*
-      - /api/workflows/<capability>/*
-    forbidden_routes:
-      - /api/inngest
+| Caller mode | Allowed routes | Default link | Publication boundary | Auth mode | Forbidden routes |
+| --- | --- | --- | --- | --- | --- |
+| First-party MFE/internal caller | `/rpc` | `RPCLink` | internal only | first-party boundary session or trusted service context | `/api/inngest` |
+| External/third-party caller | `/api/orpc/*`, `/api/workflows/<capability>/*` | `OpenAPILink` | externally published | boundary auth/session/token | `/rpc`, `/api/inngest` |
+| Runtime ingress | `/api/inngest` | Inngest callback transport | runtime only | signed ingress verification + gateway allow-listing | `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
 
-  - caller: server_internal_consumer
-    client: package_internal_client
-    auth: trusted_service_context
-    allowed_routes:
-      - in_process_only
-    forbidden_routes:
-      - local_http_self_calls_as_default
-
-  - caller: runtime_ingress
-    client: inngest_runtime_bundle
-    auth: signed_runtime_ingress
-    allowed_routes:
-      - /api/inngest
-    forbidden_routes:
-      - browser_access
-```
+## Runtime Ingress Enforcement Requirements
+1. `/api/inngest` requests MUST pass signature verification before dispatching to function handlers.
+2. Gateway/proxy policy MUST deny browser/API-originated traffic to `/api/inngest`.
+3. `/api/inngest` handlers MUST avoid exposing caller-facing error payloads that imply this path is a public API.
+4. All caller-facing workflow trigger/status semantics MUST remain on `/api/workflows/<capability>/*` and/or internal `/rpc` procedures.
 
 ## Why
 - Preserves one trigger story for callers and one durability story for runtime.
@@ -217,6 +206,23 @@ app.all("/api/workflows/*", async ({ request }) => {
 }, { parse: "none" });
 
 app.all("/api/inngest", async ({ request }) => inngestHandler(request));
+```
+
+### First-party MFE default vs external workflow client transport
+```ts
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import { OpenAPILink } from "@orpc/openapi-client/fetch";
+
+// First-party default (internal transport)
+const internalWorkflowClient = createORPCClient(capabilityClients.invoicing.workflows, {
+  link: new RPCLink({ url: `${baseUrl}/rpc` }),
+});
+
+// External publication surface (or documented first-party exception)
+const publishedWorkflowClient = createORPCClient(externalContracts.invoicing.workflows, {
+  link: new OpenAPILink({ url: `${baseUrl}/api/workflows` }),
+});
 ```
 
 ### Path strategy: capability-first vs surface-first

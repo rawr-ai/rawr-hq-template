@@ -14,7 +14,7 @@
 3. Middleware control planes MUST remain separated by runtime model: boundary middleware stacks do not become durable runtime middleware stacks, and vice versa.
 4. Shared policy logic MAY be reused, but application points MUST remain harness-specific.
 5. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe MUST be treated as constrained (leading subset in identical order), not universal.
-6. Split path enforcement is part of middleware placement: caller-facing policy executes on `/api/orpc/*` or capability-first `/api/workflows/<capability>/*`, while `/api/inngest` remains runtime ingress.
+6. Split path enforcement is part of middleware placement: first-party/internal caller policy executes on `/rpc`, published boundary policy executes on `/api/orpc/*` and `/api/workflows/<capability>/*`, while `/api/inngest` remains runtime ingress.
 7. Middleware that depends on request/correlation/principal/network metadata MUST consume those contracts from context-layer modules (`context.ts`), not from `domain/*`.
 8. Middleware-adjacent procedure/contract docs/examples SHOULD default to inline I/O schemas; extraction is exception-only for shared/large readability and should use paired `{ input, output }` shape.
 

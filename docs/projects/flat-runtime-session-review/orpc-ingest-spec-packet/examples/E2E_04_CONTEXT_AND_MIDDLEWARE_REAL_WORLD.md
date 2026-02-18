@@ -12,49 +12,38 @@ This walkthrough shows one capability (`invoicing`) under realistic context scal
 This is intentionally not a toy single-parameter example.
 
 ## 2) Non-Negotiable Route Semantics
-1. `/api/workflows/<capability>/*` is caller-facing trigger/status (mounted at host via `/api/workflows/*` wildcard).
-2. `/api/inngest` is runtime ingress only.
-3. Browser and API callers do not invoke `/api/inngest` directly.
-4. API/workflow boundary contracts are plugin-owned; workflow trigger/status I/O schemas stay at the workflow plugin boundary.
-5. Package layer remains transport-neutral and does not own caller-facing workflow boundary contracts/schemas.
+1. `/rpc` is first-party/internal transport only (`RPCLink`) and is never externally published.
+2. First-party callers (including MFEs by default) use `/rpc`; external callers use published OpenAPI routes.
+3. `/api/workflows/<capability>/*` is caller-facing trigger/status publication surface (mounted at host via `/api/workflows/*` wildcard).
+4. `/api/orpc/*` is the caller-facing OpenAPI publication surface for non-workflow API boundaries.
+5. `/api/inngest` is runtime ingress only and never a caller-facing API.
+6. API/workflow boundary contracts are plugin-owned; workflow trigger/status I/O schemas stay at the workflow plugin boundary.
+7. Package layer remains transport-neutral and does not own caller-facing workflow boundary contracts/schemas.
+8. No dedicated `/rpc/workflows` mount is required by default.
 
 ### 2.1 Caller/Auth Semantics
-```yaml
-caller_modes:
-  - caller: browser_or_network_consumer
-    client: composed_boundary_clients
-    auth: boundary_auth_session_token
-    routes:
-      - /api/orpc/*
-      - /api/workflows/<capability>/*
-    forbidden:
-      - /api/inngest
+| Caller type | Route family | Link type | Publication boundary | Auth expectation | Forbidden routes |
+| --- | --- | --- | --- | --- | --- |
+| First-party MFE/internal caller | `/rpc` | `RPCLink` | internal only (RPC never published) | first-party session/auth or trusted service context | `/api/inngest` |
+| External/third-party caller | `/api/orpc/*`, `/api/workflows/<capability>/*` | `OpenAPILink` | externally published OpenAPI clients | boundary auth/session/token | `/rpc`, `/api/inngest` |
+| Runtime ingress (Inngest) | `/api/inngest` | Inngest callback transport | runtime-only | signed ingress verification + gateway allow-listing | `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
 
-  - caller: server_internal_consumer
-    client: package_internal_client
-    auth: trusted_service_context
-    routes:
-      - in_process_only
-    forbidden:
-      - local_http_self_calls_as_default
-
-  - caller: runtime_ingress
-    client: inngest_runtime_bundle
-    auth: signed_runtime_ingress
-    routes:
-      - /api/inngest
-    forbidden:
-      - browser_access
-```
+### 2.2 Runtime Ingress Enforcement Minimum
+1. Verify Inngest request signatures before handing requests to runtime handlers.
+2. Deny non-runtime traffic to `/api/inngest` at gateway/proxy and route middleware.
+3. Keep `/api/inngest` out of published SDK/docs; publish only `/api/orpc/*` and `/api/workflows/<capability>/*`.
 
 ## 3) Topology Diagram
 ```mermaid
 flowchart LR
-  Caller["Caller or Internal UI"] --> Api["/api/orpc/invoicing/*"]
-  Caller --> Workflows["/api/workflows/invoicing/*"]
+  FirstParty["First-party caller (MFE/internal)"] --> Rpc["/rpc"]
+  External["External caller"] --> Api["/api/orpc/invoicing/*"]
+  External --> Workflows["/api/workflows/invoicing/*"]
 
   Api --> ApiPlugin["plugins/api/invoicing\ncontext + contract + operations + router"]
   Workflows --> WfPlugin["plugins/workflows/invoicing\ncontext + contract + operations + router"]
+  Rpc --> ApiPlugin
+  Rpc --> WfPlugin
 
   ApiPlugin --> PkgClient["packages/invoicing/src/client.ts"]
   WfPlugin --> PkgClient
@@ -906,14 +895,41 @@ export function createWorkflowBoundaryContext(request: Request, deps: BoundaryCo
 ```ts
 // apps/server/src/rawr.ts
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
+import { RPCHandler } from "@orpc/server/fetch";
 import { createInngestServeHandler } from "@rawr/coordination-inngest";
 import { rawrHqManifest } from "../../rawr.hq";
 import { createBoundaryContext, createWorkflowBoundaryContext } from "./workflows/context";
 
 export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidrs: string[] }) {
+  const internalRpcRouter = {
+    invoicing: {
+      api: rawrHqManifest.api.router,
+      workflows: rawrHqManifest.workflows.triggerRouter,
+    },
+  };
+  const rpcHandler = new RPCHandler(internalRpcRouter);
   const apiHandler = new OpenAPIHandler(rawrHqManifest.api.router);
   const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
   const inngestHandler = createInngestServeHandler(rawrHqManifest.inngest);
+
+  app.all(
+    "/rpc/*",
+    async ({ request }: { request: Request }) => {
+      const context = createBoundaryContext(request, {
+        inngest: rawrHqManifest.inngest.client,
+        invoicingDeps: deps.invoicingDeps,
+        trustedCidrs: deps.trustedCidrs,
+      });
+
+      const result = await rpcHandler.handle(request, {
+        prefix: "/rpc",
+        context,
+      });
+
+      return result.matched ? result.response : new Response("not found", { status: 404 });
+    },
+    { parse: "none" },
+  );
 
   app.all(
     "/api/orpc/invoicing/*",
@@ -954,10 +970,29 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
   );
 
   app.all("/api/inngest", async ({ request }: { request: Request }) => {
-    // Runtime ingress only.
+    // Runtime ingress only: verify signature before dispatch.
+    const isVerified = await verifyInngestSignature(request);
+    if (!isVerified) return new Response("forbidden", { status: 403 });
     return inngestHandler(request);
   });
 }
+```
+
+### 5.5 First-party default vs published client transport
+```ts
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
+import { OpenAPILink } from "@orpc/openapi-client/fetch";
+
+// First-party default (MFE/internal): internal RPC surface
+const firstPartyWorkflowClient = createORPCClient(capabilityClients.invoicing.workflows, {
+  link: new RPCLink({ url: `${baseUrl}/rpc` }),
+});
+
+// Published external OpenAPI surface
+const externalWorkflowClient = createORPCClient(externalContracts.invoicing.workflows, {
+  link: new OpenAPILink({ url: `${baseUrl}/api/workflows` }),
+});
 ```
 
 ## 6) Middleware Deduplication Boundaries (Run Once vs Repeated)
@@ -977,18 +1012,20 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
 3. Operation calls package internal client (`preflightReconciliation`).
 4. Package middleware validates role, hydrates deps, and returns typed output.
 
-### 7.2 Workflow-trigger path (`/api/workflows/<capability>/*`)
-1. Host creates boundary context.
-2. Workflow router enforces trigger permissions.
-3. Trigger operation calls package preflight and then sends `invoicing.reconciliation.requested`.
-4. Trigger route returns immediately with `{ accepted, runId, correlationId }`.
+### 7.2 Workflow-trigger path (first-party default `/rpc`, external `/api/workflows/<capability>/*`)
+1. First-party callers hit workflow procedures through `/rpc`; external callers use `/api/workflows/<capability>/*`.
+2. Host creates boundary context.
+3. Workflow router enforces trigger permissions.
+4. Trigger operation calls package preflight and then sends `invoicing.reconciliation.requested`.
+5. Trigger route returns immediately with `{ accepted, runId, correlationId }`.
 
 ### 7.3 Durable runtime path (`/api/inngest`)
-1. Inngest invokes `serve` ingress.
-2. Inngest middleware injects run trace context.
-3. Function executes `step.run` durable blocks.
-4. Function writes final status through package internal client.
-5. Caller polls workflow status route for updates.
+1. Inngest invokes `serve` ingress with signed callback payload.
+2. Host verifies ingress signature before dispatch.
+3. Inngest middleware injects run trace context.
+4. Function executes `step.run` durable blocks.
+5. Function writes final status through package internal client.
+6. Caller polls workflow status route for updates.
 
 ## 8) Source-Backed Rationale
 1. oRPC separates initial/execution context and supports middleware-based context injection, matching explicit package + boundary context layering.
@@ -1031,6 +1068,8 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
 | Procedure/boundary I/O ownership | Satisfied | Procedure and boundary contract snippets own trigger/mark/status route I/O schemas; domain module stays concept-only. |
 | Request metadata ownership | Satisfied | `requestId`/`correlationId`/network request metadata live in context-layer request types, not domain schema ownership. |
 | Object-root schema wrapper usage | Satisfied | Snippets use `schema({...})` for object-root I/O and keep explicit `std(...)` for non-object roots. |
+| First-party default workflow transport | Satisfied | First-party callers default to `/rpc` via `RPCLink`; OpenAPI workflow routes remain published external boundaries (or explicit exception use). |
 | Split semantics (`/api/workflows/<capability>/*` vs `/api/inngest`) | Satisfied | Trigger/status and runtime ingress are explicitly separate mounts. |
+| Runtime ingress enforcement | Satisfied | `/api/inngest` path is treated as signed runtime ingress with explicit signature verification before dispatch. |
 | Boundary vs runtime middleware separation | Satisfied | API/workflow boundary checks stay outside durable function internals. |
 | Middleware dedupe guidance | Satisfied | Explicit table documents once/repeated semantics and caveats. |

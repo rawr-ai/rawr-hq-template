@@ -14,37 +14,16 @@
 2. Full collapse into one surface is rejected.
 3. Workflow surfaces are manifest-driven and capability-first (`/api/workflows/<capability>/*`) while `/api/inngest` remains runtime ingress only.
 4. Workflow/API boundary contracts are plugin-owned; workflow trigger/status I/O schemas remain at workflow plugin boundary contracts.
-5. Caller mode determines client + auth semantics (browser/network callers use composed boundary clients; server-internal callers use in-process package clients; runtime ingress uses signed `/api/inngest`).
+5. Caller mode determines client + auth semantics (first-party callers including MFEs by default use `RPCLink` on `/rpc`; external callers use published OpenAPI clients on `/api/orpc/*` and `/api/workflows/<capability>/*`; runtime ingress uses signed `/api/inngest`).
 6. Composition and mounting language MUST stay explicit (no black-box route or ownership narratives).
+7. No dedicated `/rpc/workflows` mount is required by default.
 
 ## Caller-Mode Boundary Enforcement
-```yaml
-caller_modes:
-  - caller: browser_or_network_consumer
-    client: composed_boundary_clients
-    auth: boundary_auth_session_token
-    routes:
-      - /api/orpc/*
-      - /api/workflows/<capability>/*
-    forbidden:
-      - /api/inngest
-
-  - caller: server_internal_consumer
-    client: package_internal_client
-    auth: trusted_service_context
-    routes:
-      - in_process_only
-    forbidden:
-      - local_http_self_calls_as_default
-
-  - caller: runtime_ingress
-    client: inngest_runtime_bundle
-    auth: signed_runtime_ingress
-    routes:
-      - /api/inngest
-    forbidden:
-      - browser_access
-```
+| Caller mode | Primary route family | Link/client | Publication boundary | Auth | Forbidden routes |
+| --- | --- | --- | --- | --- | --- |
+| First-party caller (MFE default/internal services) | `/rpc` | `RPCLink` / internal clients | internal only | first-party session/auth or trusted service context | `/api/inngest` |
+| External/third-party caller | `/api/orpc/*`, `/api/workflows/<capability>/*` | `OpenAPILink` | externally published OpenAPI clients | boundary auth/session/token | `/rpc`, `/api/inngest` |
+| Runtime ingress | `/api/inngest` | Inngest callback transport | runtime only | signed runtime ingress | `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
 
 ## Why
 - External API contract semantics and durable execution semantics are non-equivalent.
@@ -83,6 +62,7 @@ Direct adoption exception is allowed only when all are documented:
 4. Proposal routes browser/network callers to `/api/inngest` instead of caller-facing workflow/API boundaries.
 5. Proposal moves workflow trigger/status boundary contracts or I/O schemas into packages.
 6. Proposal hides route mounting/composition ownership behind black-box helpers without explicit wiring contracts.
+7. Proposal treats `/rpc` as an externally published transport.
 
 ## References
 - Packet decisions: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md:11`
