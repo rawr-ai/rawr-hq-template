@@ -21,23 +21,27 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
   - `AXIS_07_HOST_HOOKING_COMPOSITION.md`
 
 ### D-006 — Canonical ownership of workflow contract artifacts
-- `status`: `open`
-- `question`: Should shared workflow contract artifacts live canonically in domain packages (for no-duplication and import direction), with plugins re-exporting/implementing, or remain plugin-owned by default?
-- `why_open`: Both patterns exist across docs/examples; one final canonical default is not yet centrally locked.
+- `status`: `closed`
+- `resolution`: Workflow and API boundary contracts are plugin-owned (`plugins/workflows/<capability>/src/contract.ts` and `plugins/api/<capability>/src/contract.ts`). Packages own shared domain logic/domain schemas only; workflow trigger/status I/O schemas are owned at workflow plugin boundary contracts. Manifest composition consumes plugin boundary contracts/routers as canonical boundary inputs.
+- `closure_scope`: spec-policy lock
+- `why_closed`: This restores the original boundary principle, keeps package logic transport-neutral, and avoids boundary ownership drift while preserving manifest-driven composition.
 - `impacted_docs`:
   - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
   - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
   - `AXIS_01_EXTERNAL_CLIENT_GENERATION.md`
+  - `AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`
 
 ### D-007 — First-party micro-frontend workflow client strategy
-- `status`: `proposed`
-- `proposal`: Standardize a browser-safe workflow client pattern that calls caller-facing workflow trigger/status APIs only; explicitly prohibit browser access to `/api/inngest`.
-- `why_proposed`: Advanced E2E can be implemented this way today, but canonical packaging/distribution of generated client artifacts is not yet locked.
-- `triage_note`: This is tracked as a proposed design thread, not as a packet-open unresolved blocker in the D-005 final sweep gate.
+- `status`: `closed`
+- `resolution`: Browser/network callers (including micro-frontends) use composed boundary clients to call `/api/orpc/*` and `/api/workflows/<capability>/*` with boundary auth/session semantics. Server-internal callers may use in-process package internal clients. `/api/inngest` remains signed runtime-only ingress and is never a browser caller surface.
+- `closure_scope`: spec-policy lock
+- `why_closed`: This resolves client confusion by caller mode and preserves split semantics without blocking internal server efficiency.
 - `impacted_docs`:
   - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
   - `AXIS_01_EXTERNAL_CLIENT_GENERATION.md`
   - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
+  - `AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`
+  - `AXIS_03_SPLIT_VS_COLLAPSE.md`
 
 ### D-011 — Procedure I/O schema ownership and context metadata placement
 - `status`: `locked`

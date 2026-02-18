@@ -13,6 +13,7 @@
 1. External SDK/client generation MUST come from one composed boundary oRPC/OpenAPI surface.
 2. Package-internal contracts MUST NOT be used for external SDK generation.
 3. Boundary APIs remain contract-first by default.
+4. Workflow/API boundary contracts are plugin-owned. Packages may export shared domain schemas and domain helpers, but workflow trigger/status I/O schemas and caller-facing boundary contract ownership remain in plugins.
 
 ## Why
 - One contract tree preserves stable external semantics and prevents drift.

@@ -20,6 +20,9 @@
 8. Shared procedure context contracts MUST live in explicit `context.ts` (or equivalent dedicated context module), and routers/clients MUST consume that contract.
 9. For object-root schema wrappers, docs should prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
 10. For non-`Type.Object` roots, docs/snippets should keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
+11. Browser/network callers MUST use composed boundary clients on caller-facing routes with boundary auth semantics.
+12. Server-internal callers MAY use in-process package internal clients with trusted service context.
+13. Browser/network callers MUST NOT use `/api/inngest`; runtime ingress is runtime-only.
 
 ## Why
 - Prevents “four ways to call” drift.
@@ -29,6 +32,35 @@
 ## Trade-Offs
 - Less flexibility for ad hoc shortcuts.
 - Better consistency and lower long-term drift risk.
+
+## Caller/Auth Matrix
+```yaml
+caller_modes:
+  - caller: browser_or_network_consumer
+    client: composed_boundary_client
+    auth: boundary_auth_session_token
+    routes:
+      - /api/orpc/*
+      - /api/workflows/<capability>/*
+    forbidden:
+      - /api/inngest
+
+  - caller: server_internal_consumer
+    client: package_internal_client
+    auth: trusted_service_context
+    routes:
+      - in_process_only
+    forbidden:
+      - local_http_self_calls_as_default
+
+  - caller: runtime_ingress
+    client: inngest_runtime_bundle
+    auth: signed_runtime_ingress
+    routes:
+      - /api/inngest
+    forbidden:
+      - browser_access
+```
 
 ## Internal Package Default (Pure Capability)
 ```text

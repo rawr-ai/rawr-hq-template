@@ -249,3 +249,16 @@ lock_order:
 
 **User Decision Needed**
 - Decide where and how the canonical workflow client artifacts should be published: (1) bundle them in each capability package (e.g., via `packages/<domain>/src/browser.ts` re-exporting generated clients), (2) surface them through dedicated web/plugin packages, or (3) rely on secondary SDK generators that point at `/api/workflows`. The right choice determines the docs, packaging scripts, and future client tooling.
+# Superseded Notice
+This document is historical analysis and is **not authoritative** for D-006/D-007.
+
+Authoritative sources are:
+1. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_D006_D007_AUTHORITY_DECISION_PACKET.md`
+2. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_C_D006_COHESIVE_ARCHITECTURE_SYNTHESIS.md`
+3. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md`
+
+Current locked direction:
+- Workflow/API boundary contracts are plugin-owned.
+- Workflow trigger/status I/O schemas are boundary-owned at workflow plugin contracts.
+- Packages own shared domain logic/domain schemas only.
+- `/api/workflows/*` is caller-facing; `/api/inngest` is runtime-only.

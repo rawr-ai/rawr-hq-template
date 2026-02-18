@@ -10,13 +10,14 @@ Show one advanced, policy-consistent end-to-end pattern where a micro-frontend c
 without duplicating workflow/domain semantics across browser, plugin, and runtime layers.
 
 ### Chosen default path (for this walkthrough)
-**Shared-package-first workflow integration**:
-1. Canonical semantics live in `packages/<capability>`.
-2. Workflow plugin implements trigger + durable execution using those package semantics.
-3. Micro-frontend calls workflow trigger/status APIs (not `/api/inngest`) and reuses browser-safe package logic.
-4. API plugin consumption is optional, not required for workflow invocation.
+**Plugin-boundary + package-domain workflow integration**:
+1. Canonical boundary contracts live in workflow plugins.
+2. Packages provide domain logic/domain schemas and browser-safe helpers.
+3. Workflow plugin implements trigger + durable execution with plugin-local route I/O schemas.
+4. Micro-frontend calls workflow trigger/status APIs (not `/api/inngest`) and may reuse browser-safe package logic.
+5. API plugin consumption is optional, not required for workflow invocation.
 
-This is the recommended default because it satisfies no-duplication + dependency-direction constraints better than API-plugin-only or ingress-direct alternatives.
+This default preserves boundary ownership while still preventing semantic duplication through package-level domain reuse.
 
 ---
 
@@ -59,14 +60,12 @@ packages/invoicing/src/
   router.ts                              # internal router (server-only)
   client.ts                              # in-process internal client (server-only)
   errors.ts                              # typed capability errors
-  workflows/
-    contract.ts                          # shared workflow trigger/status contract artifact
   browser.ts                             # browser-safe exports only
   index.ts
 
 plugins/workflows/invoicing/src/
   context.ts                             # shared workflow boundary context contract
-  contract.ts                            # re-export shared package workflow contract
+  contract.ts                            # plugin-owned workflow boundary contract (owns workflow I/O schemas)
   operations/
     trigger.ts
     status.ts
@@ -176,73 +175,36 @@ export type InvoicingProcedureContext = {
 };
 ```
 
-### 4.2 Shared workflow contract artifact (single source, reusable)
+### 4.2 Workflow boundary contract I/O schemas (plugin-owned)
 
-I/O ownership note: trigger/status route schemas are authored at the workflow contract boundary, while `domain/*` keeps domain concepts and invariants. Inline `.input/.output` schemas are the default; only truly shared/large route payloads should be extracted, and then as `{ input, output }` pairs.
+I/O ownership note: trigger/status route schemas are authored at the workflow contract boundary (`plugins/workflows/*/contract.ts`), while `domain/*` keeps transport-independent domain concepts and invariants. Inline `.input/.output` schemas are the default; only truly shared/large route payloads should be extracted, and then as `{ input, output }` pairs.
 
 ```text
-packages/invoicing/src/
-  domain/
-    reconciliation.ts
-    status.ts
-  workflows/
-    contract.ts
+plugins/workflows/invoicing/src/
+  contract.ts
 ```
 
 ```ts
-// packages/invoicing/src/workflows/contract.ts
+// plugins/workflows/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { RunStatusSchema, RunTimelineSchema } from "../domain/status";
+import { RunStatusSchema, RunTimelineSchema } from "@rawr/invoicing/domain/status";
 
 const tag = ["invoicing"] as const;
 
 export const invoicingWorkflowContract = oc.router({
   triggerReconciliation: oc
-    .route({
-      method: "POST",
-      path: "/invoicing/reconciliation/trigger",
-      tags: tag,
-      operationId: "invoicingTriggerReconciliation",
-    })
-    .input(
-      schema(
-        {
-          invoiceId: Type.String({ minLength: 1 }),
-          requestedBy: Type.String({ minLength: 1 }),
-        },
-        { additionalProperties: false },
-      ),
-    )
-    .output(
-      schema(
-        {
-          accepted: Type.Literal(true),
-          runId: Type.String({ minLength: 1 }),
-        },
-        { additionalProperties: false },
-      ),
-    ),
-
+    .route({ method: "POST", path: "/invoicing/reconciliation/trigger", tags: tag, operationId: "invoicingTriggerReconciliation" })
+    .input(schema({ invoiceId: Type.String({ minLength: 1 }), requestedBy: Type.String({ minLength: 1 }) }))
+    .output(schema({ accepted: Type.Literal(true), runId: Type.String({ minLength: 1 }) })),
   getRunStatus: oc
-    .route({
-      method: "GET",
-      path: "/invoicing/runs/{runId}",
-      tags: tag,
-      operationId: "invoicingGetRunStatus",
-    })
-    .input(schema({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false }))
+    .route({ method: "GET", path: "/invoicing/runs/{runId}", tags: tag, operationId: "invoicingGetRunStatus" })
+    .input(schema({ runId: Type.String({ minLength: 1 }) }))
     .output(std(RunStatusSchema)),
-
   getRunTimeline: oc
-    .route({
-      method: "GET",
-      path: "/invoicing/runs/{runId}/timeline",
-      tags: tag,
-      operationId: "invoicingGetRunTimeline",
-    })
-    .input(schema({ runId: Type.String({ minLength: 1 }) }, { additionalProperties: false }))
+    .route({ method: "GET", path: "/invoicing/runs/{runId}/timeline", tags: tag, operationId: "invoicingGetRunTimeline" })
+    .input(schema({ runId: Type.String({ minLength: 1 }) }))
     .output(std(RunTimelineSchema)),
 });
 ```
@@ -276,11 +238,6 @@ export type InvoicingWorkflowContext = {
   inngest: Inngest;
   runtime: WorkflowRuntime;
 };
-```
-
-```ts
-// plugins/workflows/invoicing/src/contract.ts
-export { invoicingWorkflowContract } from "@rawr/invoicing/workflows/contract";
 ```
 
 ```ts
@@ -396,7 +353,7 @@ import { implement } from "@orpc/server";
 import { Inngest } from "inngest";
 import { createInvoicingWorkflowRouter } from "./plugins/workflows/invoicing/src/router";
 import { createInvoicingReconciliationFunction } from "./plugins/workflows/invoicing/src/functions/reconcile";
-import { invoicingWorkflowContract } from "@rawr/invoicing/workflows/contract";
+import { invoicingWorkflowContract } from "./plugins/workflows/invoicing/src/contract";
 
 const inngest = new Inngest({ id: "rawr-hq" });
 const triggerContract = oc.router({ invoicing: invoicingWorkflowContract });
@@ -492,10 +449,8 @@ export function registerWorkflowAndInngestRoutes(app: any, runtime: any) {
 plugins/web/invoicing-console/src/
   client.ts
   web.ts
-packages/invoicing/src/
-  browser.ts
-  workflows/
-    contract.ts
+packages/invoicing/src/browser.ts
+packages/core/src/composition/manifest-generator.ts
 ```
 
 ```ts
@@ -503,9 +458,9 @@ packages/invoicing/src/
 import { createORPCClient } from "@orpc/client";
 import type { ContractRouterClient } from "@orpc/contract";
 import { OpenAPILink } from "@orpc/openapi-client/fetch";
-import { invoicingWorkflowContract } from "@rawr/invoicing/workflows/contract";
+import { capabilityClients } from "@rawr/composition/manifest-generator";
 
-type InvoicingWorkflowClient = ContractRouterClient<typeof invoicingWorkflowContract>;
+type InvoicingWorkflowClient = ContractRouterClient<typeof capabilityClients.invoicing.workflows>;
 
 export function createInvoicingWorkflowClient(baseUrl: string) {
   return createORPCClient<InvoicingWorkflowClient>(
@@ -563,8 +518,8 @@ Browser-safe vs server-only boundary in this implementation:
 
 ## 5) Wiring Steps (host -> composition -> plugin/package -> runtime)
 
-1. Define canonical workflow payload/result semantics in `packages/invoicing/src/domain/*` (TypeBox-first, schema + static type in the same file).
-2. Define shared workflow trigger/status contract in `packages/invoicing/src/workflows/contract.ts`.
+1. Define canonical workflow/domain semantics in `packages/invoicing/src/domain/*` (TypeBox-first, schema + static type in the same file).
+2. Define workflow trigger/status boundary contract in `plugins/workflows/invoicing/src/contract.ts` (inline I/O by default).
 3. Implement explicit package/workflow/host context contracts in `context.ts`, then implement the workflow router using those contracts plus visibility/auth enforcement.
 4. Implement durable function(s) in workflow plugin, using package internal client for server-only orchestration.
 5. Compose workflows + functions in `rawr.hq.ts`.
@@ -597,7 +552,7 @@ Browser-safe vs server-only boundary in this implementation:
 ## 7) Rationale and Trade-Offs
 
 ### Why this default
-1. Single semantic source: shared package owns payload/status semantics consumed by workflow router, durable function, and micro-frontend.
+1. Single semantic source for domain concepts: shared package owns domain status/state semantics consumed by workflow router, durable function, and micro-frontend; workflow trigger/status route I/O remains boundary-owned in the workflow plugin.
 2. API plugin remains optional: workflow-related integration does not require an API plugin layer unless the capability needs separate boundary concerns.
 3. Boundary integrity: browser-facing workflow calls remain caller-trigger/status APIs, while `/api/inngest` stays runtime-only.
 
@@ -615,7 +570,7 @@ Browser-safe vs server-only boundary in this implementation:
 
 1. **Semantic drift across layers**
 - Risk: browser, workflow router, and durable function each define their own payload/status shape.
-- Guardrail: keep canonical TypeBox schemas in package domain/workflow modules; import everywhere else.
+- Guardrail: keep canonical TypeBox domain schemas in package `domain/*` and boundary I/O schemas in workflow plugin contracts; avoid a second workflow-schema source in packages.
 
 2. **Boundary collapse (`/api/workflows` vs `/api/inngest`)**
 - Risk: browser starts calling ingress route directly.
@@ -647,7 +602,7 @@ Browser-safe vs server-only boundary in this implementation:
 | Concise naming + non-redundant domain filenames | Satisfied | Capability naming stays `invoicing`; domain files are concise (`reconciliation.ts`, `status.ts`, `view.ts`). |
 | Split semantics (`/api/workflows/*` vs `/api/inngest`) | Satisfied | Trigger/status is caller-facing; ingress is runtime-only. |
 | Internal server calls use package internal client | Satisfied | Durable function calls package `client.ts` path server-side. |
-| No plugin-to-plugin runtime imports | Satisfied | Shared artifacts move through `packages/*`; workflow plugin re-exports from package as needed. |
+| No plugin-to-plugin runtime imports | Satisfied | Shared artifacts move through `packages/*`; workflow plugin owns boundary contract and may import package domain schemas only when transport-independent. |
 | Boundary auth/visibility in boundary layer | Satisfied | Router context enforces principal and visibility before enqueue/read operations. |
 | No glue black boxes | Satisfied | Composition and mount code shown explicitly in `rawr.hq.ts` and host route registration. |
 | API plugin mandatory for workflow path | Not required by design | API plugin is optional and only included when capability-specific boundary concerns justify it. |
@@ -658,24 +613,19 @@ Browser-safe vs server-only boundary in this implementation:
 
 D-005 route convergence is locked for this packet and represented by capability-first `/api/workflows/<capability>/*` composition using `rawrHqManifest.workflows.triggerRouter`. The unresolved items below are the current packet-level open decisions only.
 
-1. **D-006 — Shared workflow contract ownership location**
-- Packet examples still show both plugin-owned and package-owned placement for workflow `contract.ts`.
-- Why unresolved: both patterns are present in docs, and one canonical placement rule is not yet centrally locked.
-- Lock target: codify one default ownership rule across `AXIS_01`, `AXIS_08`, and this walkthrough.
-
-2. **D-008 — Extended traces middleware initialization order standard**
+1. **D-008 — Extended traces middleware initialization order standard**
 - Host/bootstrap snippets do not yet enforce one canonical early-init order for `extendedTracesMiddleware()`.
 - Why unresolved: upstream guidance exists, but packet-level bootstrap ordering is not yet standardized.
 - Lock target: lock a bootstrap-order pattern across `AXIS_05`, `AXIS_06`, `AXIS_07`, and `E2E_04`.
 
-3. **D-009 — Required dedupe marker policy for heavy oRPC middleware**
+2. **D-009 — Required dedupe marker policy for heavy oRPC middleware**
 - Heavy middleware snippets document dedupe caveats but do not yet lock explicit marker policy strength (`MUST` vs `SHOULD`).
 - Why unresolved: built-in dedupe constraints are now documented, but the enforceable packet policy level is still open.
 - Lock target: finalize marker policy and propagate across `AXIS_04`, `AXIS_06`, and `E2E_04`.
 
-4. **D-010 — Inngest finished-hook side-effect guardrail**
+3. **D-010 — Inngest finished-hook side-effect guardrail**
 - Lifecycle snippets discuss hook usage but do not yet lock side-effect constraints for `finished` hooks.
 - Why unresolved: `finished` is not guaranteed exactly once, and packet-level enforcement language is still open.
 - Lock target: lock idempotent/non-critical usage guardrails across `AXIS_05`, `AXIS_06`, and `E2E_04`.
 
-Decision-state note: D-004 remains locked/deferred (not open), and D-007 remains proposed (not an open blocker in this final contradiction sweep).
+Decision-state note: D-004 remains locked/deferred, and D-006/D-007 are closed in the corrected ownership/client model.

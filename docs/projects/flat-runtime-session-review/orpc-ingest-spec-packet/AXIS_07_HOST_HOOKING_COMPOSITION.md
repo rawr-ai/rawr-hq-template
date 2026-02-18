@@ -15,6 +15,7 @@
 2. Host MUST own Inngest client/function bundle composition and pass client into oRPC context where enqueue bridge is needed.
 3. Host SHOULD keep parse-safe forwarding semantics for oRPC handler mounts.
 4. Host MUST keep one runtime-owned Inngest client bundle per process.
+5. Host composition MUST consume plugin-owned boundary contracts/routers from the generated manifest; packages contribute shared logic/schema inputs, not boundary ownership.
 
 ## Why
 - Explicit host wiring prevents hidden coupling.

@@ -13,6 +13,7 @@
 1. Split is retained as canonical: API boundary and durability harness are distinct.
 2. Full collapse into one surface is rejected.
 3. D-005 ensures a manifest-driven `/api/workflows/<capability>/*` host path so workflow triggers remain split and scoped to capability routers without creating a parallel durable ingestion surface.
+4. Boundary contracts remain plugin-owned; packages provide shared logic/schemas but do not become canonical boundary owners.
 
 ## Why
 - External API contract semantics and durable execution semantics are non-equivalent.
@@ -47,6 +48,7 @@ Direct adoption exception is allowed only when all are documented:
 1. Proposal creates duplicate first-party trigger authoring paths for same capability behavior.
 2. Proposal blurs caller-trigger API routes and `/api/inngest` ingress.
 3. Proposal uses local HTTP self-calls as internal default.
+4. Proposal routes browser/network callers to `/api/inngest` instead of caller-facing workflow/API boundaries.
 
 ## References
 - Agent J: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_J_COLLAPSE_UNIFY_RECOMMENDATION.md:3`
