@@ -21,6 +21,7 @@ The parent overview (`../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md
 3. Inngest functions are the primary durability harness.
 4. Durable endpoints are additive ingress adapters only.
 5. D-005: Workflow trigger + manifest-driven workflow surfaces operate via capability-first `/api/workflows/<capability>/*` mounts sourced from `rawr.hq.ts`, with an explicit workflow context helper and single Inngest bundle (see `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md`).
+6. D-005 closure in this packet is a spec-policy lock; runtime rollout status is tracked separately and is not implied complete here.
 
 ## Axis Coverage (Complete)
 1. [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)
@@ -46,8 +47,8 @@ Tutorial docs are normative only where they reference locked axis policies. If a
 ## Cross-Cutting Defaults
 1. External SDK generation uses one composed oRPC/OpenAPI boundary surface.
 2. Internal in-process cross-boundary calls default to package internal clients (`client.ts`), not local HTTP.
-3. Caller-triggered workflow routes are oRPC workflow trigger routes on `/api/workflows/*`; runtime durable ingress is `/api/inngest`.
-4. D-005 locks the manifest-driven, capability-first `/api/workflows/<capability>/*` spine described in `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md`; capability routes come from `rawrHqManifest.workflows.triggerRouter`, the same manifest supplies `rawrHqManifest.inngest`, and workflow boundary context helpers keep `/api/workflows` caller-facing while `/api/inngest` stays runtime-only.
+3. Caller-triggered workflow routes are oRPC workflow trigger routes on `/api/workflows/<capability>/*`; runtime durable ingress is `/api/inngest`.
+4. D-005 locks the manifest-driven, capability-first `/api/workflows/<capability>/*` spine described in `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md`; capability routes come from `rawrHqManifest.workflows.triggerRouter`, the same manifest supplies `rawrHqManifest.inngest`, and workflow boundary context helpers keep `/api/workflows/<capability>/*` caller-facing while `/api/inngest` stays runtime-only.
 5. TypeBox-only schema authoring is required for contract/procedure surfaces (no Zod-authored contract/procedure schemas); TypeBox remains the baseline for contract I/O and OpenAPI conversion.
 6. One runtime-owned Inngest bundle (`client + functions`) exists per process.
 7. Domain modules (`domain/*`) hold transport-independent domain concepts only (entities/value objects/invariants/state shapes).

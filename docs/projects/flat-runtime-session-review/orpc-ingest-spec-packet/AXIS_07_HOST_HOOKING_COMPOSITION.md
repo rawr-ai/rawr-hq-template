@@ -130,7 +130,7 @@ const capabilities = [
 export const rawrHqManifest = composeCapabilities(capabilities, inngest);
 ```
 
-The manifest emits separate `orpc` and `workflows` namespaces so host wiring can mount `/rpc*` + `/api/orpc*` from `rawrHqManifest.orpc` while `/api/workflows/*` uses `rawrHqManifest.workflows` routes and the same `inngest` bundle. Plugin-generated capability metadata feeds the manifest so `apps/*` never needs manual edits; see `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` for the generator+helper story.
+The manifest emits separate `orpc` and `workflows` namespaces so host wiring can mount `/rpc*` + `/api/orpc*` from `rawrHqManifest.orpc` while `/api/workflows/*` uses `rawrHqManifest.workflows.triggerRouter` plus workflow-boundary context helpers and the same `inngest` bundle. Plugin-generated capability metadata feeds the manifest so `apps/*` never needs manual edits; see `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` for the generator+helper story.
 
 ### Host fixture split mount contract
 ```ts

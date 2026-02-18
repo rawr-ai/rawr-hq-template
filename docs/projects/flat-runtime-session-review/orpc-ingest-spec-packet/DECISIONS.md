@@ -4,15 +4,16 @@
 Packet-local decision tracking for documentation-architecture changes only.
 
 ## Current Status
-Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, and context metadata placement are now explicitly locked. New walkthrough work and post-research context/middleware findings also surfaced open and proposed items that require a future lock.
+Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, and context metadata placement are now explicitly locked. D-005 is closed as a spec-policy lock; runtime rollout remains a separate implementation track and is not declared complete by this decision log. New walkthrough work and post-research context/middleware findings also surfaced open and proposed items that require a future lock.
 
 ## Decision Register
 
 ### D-005 — Workflow trigger route convergence
 - `status`: `closed`
 - `resolution`: The packet now locks on a manifest-driven host spine: capability-first `/api/workflows/<capability>/*` mounts come from a generated `rawr.hq.ts`, workflow routers live under `rawrHqManifest.workflows.triggerRouter`, the same manifest powers `rawrHqManifest.inngest`, and workflow boundary context helpers keep `/api/workflows` caller-facing while `/api/inngest` remains runtime-only. Plugin authors may change only `packages/*`/`plugins/*` while the manifest generator orchestrates routing.
-- `question`: Should canonical workflow trigger paths (`/api/workflows/<capability>/*`) become first-class mounted routes in current server runtime, instead of relying primarily on coordination procedures under `/rpc` and `/api/orpc`?
-- `why_closed`: Packet authors integrated `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` guidance, axis docs document the manifest-driven posture, and future runtime work will follow this spec spine when wiring `apps/server/src/rawr.ts`.
+- `historical_question`: Should canonical workflow trigger paths (`/api/workflows/<capability>/*`) become first-class mounted routes in current server runtime, instead of relying primarily on coordination procedures under `/rpc` and `/api/orpc`?
+- `closure_scope`: Spec/policy lock only; this entry does not claim runtime rollout is already complete.
+- `why_closed`: Packet authors integrated `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` guidance and axis docs now document the manifest-driven posture as the canonical implementation target.
 - `impacted_docs`:
   - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
   - `examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md`
@@ -32,6 +33,7 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
 - `status`: `proposed`
 - `proposal`: Standardize a browser-safe workflow client pattern that calls caller-facing workflow trigger/status APIs only; explicitly prohibit browser access to `/api/inngest`.
 - `why_proposed`: Advanced E2E can be implemented this way today, but canonical packaging/distribution of generated client artifacts is not yet locked.
+- `triage_note`: This is tracked as a proposed design thread, not as a packet-open unresolved blocker in the D-005 final sweep gate.
 - `impacted_docs`:
   - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
   - `AXIS_01_EXTERNAL_CLIENT_GENERATION.md`

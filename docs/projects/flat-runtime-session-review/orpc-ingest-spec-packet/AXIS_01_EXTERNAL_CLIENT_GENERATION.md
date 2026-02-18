@@ -24,7 +24,7 @@
 
 ## Boundary Plugin Default (Contract-First + Explicit Operations)
 ```text
-plugins/api/<capability>-api/src/
+plugins/api/<capability>/src/
   contract.ts
   operations/*
   router.ts
@@ -67,7 +67,7 @@ return generator.generate(router, {
 
 ### Contract-first boundary implementation
 ```ts
-// plugins/api/invoice-api/src/contract.ts
+// plugins/api/invoicing/src/contract.ts
 export const invoiceApiContract = oc.router({
   startInvoiceProcessing: oc
     .route({ method: "POST", path: "/invoices/processing/start" })
@@ -77,7 +77,7 @@ export const invoiceApiContract = oc.router({
 ```
 
 ```ts
-// plugins/api/invoice-api/src/operations/start.ts
+// plugins/api/invoicing/src/operations/start.ts
 export async function startInvoiceOperation(
   context: InvoiceApiContext,
   input: { invoiceId: string; requestedBy: string },
@@ -88,7 +88,7 @@ export async function startInvoiceOperation(
 
 ### Router binding and composed export
 ```ts
-// plugins/api/invoice-api/src/router.ts
+// plugins/api/invoicing/src/router.ts
 const os = implement<typeof invoiceApiContract, InvoiceApiContext>(invoiceApiContract);
 
 export function createInvoiceApiRouter() {
@@ -101,7 +101,7 @@ export function createInvoiceApiRouter() {
 ```
 
 ```ts
-// plugins/api/invoice-api/src/index.ts
+// plugins/api/invoicing/src/index.ts
 export const invoiceApiSurface = {
   contract: invoiceApiContract,
   router: createInvoiceApiRouter(),

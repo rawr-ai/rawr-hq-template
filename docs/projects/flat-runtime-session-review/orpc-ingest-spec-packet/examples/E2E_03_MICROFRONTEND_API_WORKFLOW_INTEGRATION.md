@@ -399,14 +399,14 @@ import { createInvoicingReconciliationFunction } from "./plugins/workflows/invoi
 import { invoicingWorkflowContract } from "@rawr/invoicing/workflows/contract";
 
 const inngest = new Inngest({ id: "rawr-hq" });
-const workflowContract = oc.router({ invoicing: invoicingWorkflowContract });
-const os = implement<typeof workflowContract, any>(workflowContract);
-const workflowRouter = os.router({ invoicing: createInvoicingWorkflowRouter() });
+const triggerContract = oc.router({ invoicing: invoicingWorkflowContract });
+const os = implement<typeof triggerContract, any>(triggerContract);
+const triggerRouter = os.router({ invoicing: createInvoicingWorkflowRouter() });
 
 export const rawrHqManifest = {
   workflows: {
-    contract: workflowContract,
-    router: workflowRouter,
+    triggerContract,
+    triggerRouter,
   },
   inngest: {
     client: inngest,
@@ -458,7 +458,7 @@ import { rawrHqManifest } from "../../rawr.hq";
 import { createWorkflowBoundaryContext, requirePrincipal } from "./workflows/context";
 
 export function registerWorkflowAndInngestRoutes(app: any, runtime: any) {
-  const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.router);
+  const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
   const inngestHandler = createInngestServeHandler(rawrHqManifest.inngest);
 
   app.all(
@@ -654,24 +654,28 @@ Browser-safe vs server-only boundary in this implementation:
 
 ---
 
-## 10) Unresolved Gaps (Mandatory)
+## 10) Open Follow-Ups (Decision-Tracked, Non-D-005)
 
-1. **Current runtime route reality vs canonical workflow prefix**
-- Current server code in this worktree primarily exposes workflow run actions through coordination procedures on `/rpc` and `/api/orpc`, not dedicated `/api/workflows/<capability>/*` mounts.
-- Why unresolved: canonical split policy is documented, but implementation convergence is incomplete in the live branch.
+D-005 route convergence is locked for this packet and represented by capability-first `/api/workflows/<capability>/*` composition using `rawrHqManifest.workflows.triggerRouter`. The unresolved items below are the current packet-level open decisions only.
 
-2. **Shared workflow contract ownership location**
-- Packet examples often place workflow `contract.ts` inside workflow plugin shape, while no-duplication + import-boundary constraints push toward package-owned contract artifacts.
-- Why unresolved: both patterns are present in docs; a single canonical placement rule is not yet fully codified in one authoritative section.
+1. **D-006 — Shared workflow contract ownership location**
+- Packet examples still show both plugin-owned and package-owned placement for workflow `contract.ts`.
+- Why unresolved: both patterns are present in docs, and one canonical placement rule is not yet centrally locked.
+- Lock target: codify one default ownership rule across `AXIS_01`, `AXIS_08`, and this walkthrough.
 
-3. **Mount-context-level capability gateway contract**
-- Host-injected workflow/API gateway is a strong DX/security option for micro-frontends, but current `MountContext` does not define a standardized capability gateway or principal/auth payload.
-- Why unresolved: introducing that contract is a cross-surface API decision requiring explicit acceptance.
+2. **D-008 — Extended traces middleware initialization order standard**
+- Host/bootstrap snippets do not yet enforce one canonical early-init order for `extendedTracesMiddleware()`.
+- Why unresolved: upstream guidance exists, but packet-level bootstrap ordering is not yet standardized.
+- Lock target: lock a bootstrap-order pattern across `AXIS_05`, `AXIS_06`, `AXIS_07`, and `E2E_04`.
 
-4. **Workflow client generation strategy for first-party MFEs**
-- OpenAPI artifacts exist (`apps/server/openapi/*`), but a canonical generated workflow client package for first-party web plugins is not yet established.
-- Why unresolved: first-party guidance is RPC-first, while plugin boundary/import constraints make workflow-surface client ergonomics an open design point.
+3. **D-009 — Required dedupe marker policy for heavy oRPC middleware**
+- Heavy middleware snippets document dedupe caveats but do not yet lock explicit marker policy strength (`MUST` vs `SHOULD`).
+- Why unresolved: built-in dedupe constraints are now documented, but the enforceable packet policy level is still open.
+- Lock target: finalize marker policy and propagate across `AXIS_04`, `AXIS_06`, and `E2E_04`.
 
-5. **Deferred helper abstraction (D-004)**
-- Repeated boilerplate across trigger routers/operations may justify a workflow-backed ORPC helper abstraction.
-- Why unresolved: decision D-004 explicitly defers this until evidence threshold is met.
+4. **D-010 — Inngest finished-hook side-effect guardrail**
+- Lifecycle snippets discuss hook usage but do not yet lock side-effect constraints for `finished` hooks.
+- Why unresolved: `finished` is not guaranteed exactly once, and packet-level enforcement language is still open.
+- Lock target: lock idempotent/non-critical usage guardrails across `AXIS_05`, `AXIS_06`, and `E2E_04`.
+
+Decision-state note: D-004 remains locked/deferred (not open), and D-007 remains proposed (not an open blocker in this final contradiction sweep).

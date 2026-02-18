@@ -792,8 +792,8 @@ export const rawrHqManifest = {
     router: createInvoicingApiRouter(),
   },
   workflows: {
-    contract: invoicingWorkflowContract,
-    router: createInvoicingWorkflowRouter(),
+    triggerContract: invoicingWorkflowContract,
+    triggerRouter: createInvoicingWorkflowRouter(),
   },
   inngest: {
     client: inngest,
@@ -877,7 +877,7 @@ import { createBoundaryContext } from "./boundary/context";
 
 export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidrs: string[] }) {
   const apiHandler = new OpenAPIHandler(rawrHqManifest.api.router);
-  const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.router);
+  const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
   const inngestHandler = createInngestServeHandler(rawrHqManifest.inngest);
 
   app.all(

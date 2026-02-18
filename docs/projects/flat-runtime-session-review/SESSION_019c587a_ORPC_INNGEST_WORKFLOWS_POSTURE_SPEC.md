@@ -36,6 +36,7 @@ This is a policy/spec artifact. It is not a migration checklist.
 3. Use Inngest functions as the primary durability harness (durable orchestration, retries, step semantics).
 4. Treat Inngest Durable Endpoints as additive ingress adapters only, never as a second first-party trigger authoring path.
 5. Resolve D-005 by making capability-first `/api/workflows/<capability>/*` mounts manifest-driven, pairing each workflow router with a workflow-boundary context helper and Inngest client bundle so plugin authors can ship new surfaces without touching `apps/*`.
+6. D-005 closure in this posture is a spec-policy lock; it does not claim runtime rollout is already complete.
 
 ## 3) Original Tensions (Resolved)
 1. Collapse into one plugin/surface for simplicity vs preserve semantic correctness across non-equivalent runtime models.
@@ -45,7 +46,7 @@ This is a policy/spec artifact. It is not a migration checklist.
 
 ## 4) Global Invariants (Subsystem-Wide)
 1. `/api/inngest` is runtime ingress only.
-2. Caller-triggered workflow APIs stay on oRPC workflow trigger surfaces (for example `/api/workflows/<domain>/*`).
+2. Caller-triggered workflow APIs stay on oRPC workflow trigger surfaces (for example `/api/workflows/<capability>/*`).
 3. External SDK generation comes from one composed oRPC/OpenAPI boundary surface.
 4. One runtime-owned Inngest client bundle exists per process in host composition.
 5. Domain packages stay transport-neutral.
@@ -170,11 +171,12 @@ state: os.state.router({
 4. Register oRPC routes (`/rpc`, `/api/orpc`) with parse-safe forwarding and injected context.
 
 ## 9) D-005 cohesion snapshot
-- **Consumers:** External callers, internal package clients, and coordination tooling all cohabit the host; D-005 locks a three-consumer model so `/api/workflows/*` stays caller-facing, package clients stay in-process, and tooling uses the coordination canvas.
+- **Consumers:** External callers, internal package clients, and coordination tooling all cohabit the host; D-005 locks a three-consumer model so `/api/workflows/<capability>/*` stays caller-facing, package clients stay in-process, and tooling uses the coordination canvas.
 - **Host spine:** A generated `rawr.hq.ts` manifest offers canonical `orpc` and `workflows` namespaces plus the shared Inngest bundle; hosts mount `rawrHqManifest.workflows.triggerRouter` at capability-first `/api/workflows/<capability>/*` and wire `rawrHqManifest.inngest` into `createInngestServeHandler` while keeping `/api/inngest` runtime-only.
 - **Path strategy:** Capability-first routing wins because it mirrors `plugins/api/<capability>` and `plugins/workflows/<capability>` directories, simplifies SDK/discovery generation, and avoids surface-first payload routing complexity; the manifest makes this declarative.
 - **Internal calling + workflows:** Workflow routers use helpers like `withInternalClient` and `queueCoordinationRunWithInngest` so validation lives in `packages/*`, run/timeline state flows through the `CoordinationRuntimeAdapter`, and the same manifest registers durable functions.
 - **File structure:** The only new host fixture is `apps/server/src/workflows/context.ts` (principal + runtime helpers), while `apps/server/src/rawr.ts` mounts the new routes; actual capability files remain under `packages/*`/`plugins/*`.
+- **Closure semantics:** This D-005 snapshot defines the target spec posture only; runtime rollout completion is tracked separately from this document.
 
 ## 10) Naming, Adoption, and Scale Governance (Global)
 1. Canonical role names: `contract.ts`, `router.ts`, `client.ts`, `operations/*`, `index.ts`.

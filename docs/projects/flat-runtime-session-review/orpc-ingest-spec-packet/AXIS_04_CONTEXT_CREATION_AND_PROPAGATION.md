@@ -14,7 +14,7 @@
 2. Durable run context MUST be derived from Inngest runtime handler context (`event`, `step`, `runId`, `attempt`, logger/runtime middleware fields) during execution.
 3. Context envelopes MUST remain explicitly split: boundary request context and runtime function context are separate contracts, not one universal context object.
 4. Correlation metadata SHOULD be propagated from trigger boundary to durable run payload/timeline.
-5. Host route split MUST be preserved because it enforces the context model: caller-facing APIs (`/api/orpc/*`, `/api/workflows/*`) create boundary context, while `/api/inngest` is runtime ingress.
+5. Host route split MUST be preserved because it enforces the context model: caller-facing APIs (`/api/orpc/*`, `/api/workflows/<capability>/*`) create boundary context, while `/api/inngest` is runtime ingress.
 6. Request/correlation/principal/network metadata types are context-layer contracts and SHOULD live in `context.ts` (or equivalent context modules), not in `domain/*`.
 7. Context-related trigger/procedure docs/examples SHOULD default to inline I/O schema declarations; extraction is exception-only for shared/large readability and should use paired `{ input, output }` shape.
 

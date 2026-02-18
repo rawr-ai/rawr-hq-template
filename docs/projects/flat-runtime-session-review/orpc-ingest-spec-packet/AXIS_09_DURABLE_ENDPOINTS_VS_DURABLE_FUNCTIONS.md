@@ -24,7 +24,7 @@
 
 ## Canonical Placement
 ```text
-plugins/workflows/<capability>-workflows/src/
+plugins/workflows/<capability>/src/
   functions/*            # canonical durable execution
   durable/*              # optional additive ingress adapters only
 ```

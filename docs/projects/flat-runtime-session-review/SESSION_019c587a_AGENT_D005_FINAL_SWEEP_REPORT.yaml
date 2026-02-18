@@ -1,0 +1,106 @@
+metadata:
+  generated_at_utc: "2026-02-18T00:21:34Z"
+  session: "SESSION_019c587a"
+  agent: "A-final"
+  mission: "D-005 stabilization final contradiction sweep"
+  workspace: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal"
+  branch: "codex/pure-package-e2e-convergence-orchestration"
+
+inputs_loaded:
+  contradiction_inventory: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D005_CONTRADICTION_INVENTORY.yaml"
+  walkthrough_coverage: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D005_WALKTHROUGH_COVERAGE.yaml"
+  policy_alignment: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D005_POLICY_ALIGNMENT.yaml"
+  posture_spec: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md"
+  packet_root: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet"
+  packet_examples: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples"
+  authoritative_source: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md"
+
+edits_applied:
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md"
+    action: "updated"
+    summary:
+      - "Reframed Section 10 as decision-tracked open follow-ups only."
+      - "Open list now contains only D-006, D-008, D-009, D-010."
+      - "Added explicit non-open note for D-004 (locked/deferred) and D-007 (proposed)."
+      - "Retained explicit D-005 spec-lock wording (not runtime-done)."
+    evidence:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md:657"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md:681"
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md"
+    action: "updated"
+    summary:
+      - "Added D-007 triage note clarifying proposed status is not part of packet-open unresolved blocker set for this sweep gate."
+    evidence:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md:36"
+
+acceptance_checks:
+  - id: "1_manifest_router_key"
+    requirement: "zero hits for rawrHqManifest.workflows.router in packet+posture+examples"
+    command: "rg -n \"rawrHqManifest\\.workflows\\.router\" <posture+packet+examples>"
+    result: "pass"
+    hits: 0
+
+  - id: "2_stale_d005_contradiction_language"
+    requirement: "no stale D-005 contradiction language (including implementation-convergence framing used against locked policy)"
+    command: "rg -n \"implementation convergence incomplete|Current runtime route reality|reopen D-005|D-005 unresolved|route convergence is incomplete|against locked policy\" <posture+packet+examples>"
+    result: "pass"
+    hits: 0
+
+  - id: "3_route_role_semantics"
+    requirement: "`/api/workflows` caller-facing and `/api/inngest` runtime-only everywhere"
+    method: "grep scan + manual context validation on all route-role mentions"
+    result: "pass"
+    validated_examples:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md:48"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md:50"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md:16"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md:39"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md:602"
+    note: "Mentions of anti-patterns (e.g., external callers hitting `/api/inngest`) appear only inside rejected-risk rows/guardrails, not as normative recommendations."
+
+  - id: "4_unresolved_list_quality"
+    requirement: "only true open items remain (D-006, D-008, D-009, D-010 unless justified otherwise)"
+    result: "pass"
+    decisions_open_ids:
+      - "D-006"
+      - "D-008"
+      - "D-009"
+      - "D-010"
+    e2e03_open_followup_ids:
+      - "D-006"
+      - "D-008"
+      - "D-009"
+      - "D-010"
+    justified_non_open_references:
+      - id: "D-004"
+        status: "locked/deferred"
+        evidence: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md:681"
+      - id: "D-007"
+        status: "proposed"
+        evidence:
+          - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md:681"
+          - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md:36"
+
+required_artifacts:
+  plan_doc:
+    path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D005_STABILITY_A_FINAL_SWEEP_PLAN.md"
+    status: "created"
+  scratchpad:
+    path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D005_STABILITY_A_FINAL_SWEEP_SCRATCHPAD.md"
+    status: "created"
+  final_report:
+    path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D005_FINAL_SWEEP_REPORT.yaml"
+    status: "created"
+
+changed_files_this_sweep:
+  - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md"
+  - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md"
+  - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D005_STABILITY_A_FINAL_SWEEP_PLAN.md"
+  - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D005_STABILITY_A_FINAL_SWEEP_SCRATCHPAD.md"
+  - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_D005_FINAL_SWEEP_REPORT.yaml"
+
+overall:
+  status: "pass"
+  d005_posture: "closed_spec_lock"
+  runtime_done_claim: false

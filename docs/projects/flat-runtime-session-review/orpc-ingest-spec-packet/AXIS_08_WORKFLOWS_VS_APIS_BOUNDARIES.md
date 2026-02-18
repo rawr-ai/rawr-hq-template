@@ -13,7 +13,7 @@
 1. Workflow trigger APIs MUST remain caller-trigger surfaces distinct from Inngest execution ingress.
 2. API-exposed workflow triggers MUST be authored as oRPC procedures that dispatch into Inngest durable execution.
 3. Durable execution functions MUST remain Inngest function definitions.
-4. Split path enforcement MUST be explicit at host mounts: caller-facing workflow trigger/status routes live on `/api/workflows/*` (or equivalent caller-facing oRPC workflow surface), while `/api/inngest` is runtime ingress only.
+4. Split path enforcement MUST be explicit at host mounts: caller-facing workflow trigger/status routes live on capability-first `/api/workflows/<capability>/*` paths (mounted under `/api/workflows/*`), while `/api/inngest` is runtime ingress only.
 5. Workflow trigger procedure input/output schemas MUST be declared in boundary contract modules (`contract.ts`) or procedure-local modules adjacent to handlers.
 6. Domain modules (`domain/*`) MAY be used for transport-independent domain concepts only; they MUST NOT own procedure input/output schema semantics.
 7. Shared workflow trigger context contracts and request metadata types (principal/request/correlation/network metadata) SHOULD live in explicit `context.ts` modules (or equivalent context modules), consumed by routers.
@@ -25,10 +25,10 @@
 13. For non-`Type.Object` roots, keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
 
 ## Consumer model
-1. **External callers** (third-party APIs, micro-frontends) hit `/rpc*`, `/api/orpc*`, and the capability-specific `/api/workflows/<capability>/*` trigger/status paths. These surfaces remain public and audited by `apps/server/src/orpc.ts`.
+1. **External callers** (third-party APIs, micro-frontends) hit `/rpc*`, `/api/orpc*`, and the capability-specific `/api/workflows/<capability>/*` trigger/status paths. These surfaces remain public and are mounted through host composition with dedicated workflow-route registration (`apps/server/src/rawr.ts` + `apps/server/src/workflows/context.ts`) while `/rpc*` and `/api/orpc*` remain in `apps/server/src/orpc.ts`.
 2. **Internal packages** re-use capability logic through in-process clients (`packages/<capability>/src/client.ts`), keeping domain semantics centralized and bypassing HTTP when appropriate.
 3. **Coordination tooling** (the `hqContract` + coordination operations in `apps/server/src/orpc.ts`) powers dashboards, run discovery, and orchestration controls; these consumers speak the administrative contract, not workflow triggers.
-Closing the loop on D-005 requires recognizing all three groups so we keep `/api/workflows` caller-facing, `/api/inngest` runtime-only, and tooling on the coordination canvas.
+Closing the loop on D-005 requires recognizing all three groups so we keep `/api/workflows/<capability>/*` caller-facing, `/api/inngest` runtime-only, and tooling on the coordination canvas.
 
 ## Why
 - Preserves one trigger story for callers and one durability story for runtime.
