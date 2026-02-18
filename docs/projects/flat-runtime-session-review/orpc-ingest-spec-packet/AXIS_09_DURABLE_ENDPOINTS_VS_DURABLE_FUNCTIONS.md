@@ -40,7 +40,7 @@ plugins/workflows/<capability>/src/
 - Inngest: [Durable endpoints](https://www.inngest.com/docs/learn/durable-endpoints)
 - Inngest: [Functions](https://www.inngest.com/docs/reference/functions/create)
 - Inngest: [Serve](https://www.inngest.com/docs/reference/serve)
-- Agent I: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_I_SPLIT_HARDEN_RECOMMENDATION.md:9`
+- Packet entrypoint: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`
 
 ## Cross-Axis Links
 - Workflow trigger boundary ownership: [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)

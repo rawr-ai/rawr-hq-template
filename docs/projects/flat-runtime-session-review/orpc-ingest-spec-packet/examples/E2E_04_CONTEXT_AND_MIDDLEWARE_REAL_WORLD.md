@@ -12,9 +12,40 @@ This walkthrough shows one capability (`invoicing`) under realistic context scal
 This is intentionally not a toy single-parameter example.
 
 ## 2) Non-Negotiable Route Semantics
-1. `/api/workflows/*` is caller-facing trigger/status.
+1. `/api/workflows/<capability>/*` is caller-facing trigger/status (mounted at host via `/api/workflows/*` wildcard).
 2. `/api/inngest` is runtime ingress only.
 3. Browser and API callers do not invoke `/api/inngest` directly.
+4. API/workflow boundary contracts are plugin-owned; workflow trigger/status I/O schemas stay at the workflow plugin boundary.
+5. Package layer remains transport-neutral and does not own caller-facing workflow boundary contracts/schemas.
+
+### 2.1 Caller/Auth Semantics
+```yaml
+caller_modes:
+  - caller: browser_or_network_consumer
+    client: composed_boundary_clients
+    auth: boundary_auth_session_token
+    routes:
+      - /api/orpc/*
+      - /api/workflows/<capability>/*
+    forbidden:
+      - /api/inngest
+
+  - caller: server_internal_consumer
+    client: package_internal_client
+    auth: trusted_service_context
+    routes:
+      - in_process_only
+    forbidden:
+      - local_http_self_calls_as_default
+
+  - caller: runtime_ingress
+    client: inngest_runtime_bundle
+    auth: signed_runtime_ingress
+    routes:
+      - /api/inngest
+    forbidden:
+      - browser_access
+```
 
 ## 3) Topology Diagram
 ```mermaid
@@ -44,7 +75,7 @@ flowchart LR
 rawr.hq.ts
 apps/server/src/
   rawr.ts
-  boundary/
+  workflows/
     context.ts
 packages/orpc-standards/src/
   typebox-standard-schema.ts
@@ -809,7 +840,7 @@ export const rawrHqManifest = {
 ```
 
 ```ts
-// apps/server/src/boundary/context.ts
+// apps/server/src/workflows/context.ts
 import type { Inngest } from "inngest";
 import { createInvoicingInternalClient, type InvoicingDeps } from "@rawr/invoicing";
 
@@ -866,6 +897,10 @@ export function createBoundaryContext(request: Request, deps: BoundaryContextDep
     invoicing,
   };
 }
+
+export function createWorkflowBoundaryContext(request: Request, deps: BoundaryContextDeps) {
+  return createBoundaryContext(request, deps);
+}
 ```
 
 ```ts
@@ -873,7 +908,7 @@ export function createBoundaryContext(request: Request, deps: BoundaryContextDep
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { createInngestServeHandler } from "@rawr/coordination-inngest";
 import { rawrHqManifest } from "../../rawr.hq";
-import { createBoundaryContext } from "./boundary/context";
+import { createBoundaryContext, createWorkflowBoundaryContext } from "./workflows/context";
 
 export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidrs: string[] }) {
   const apiHandler = new OpenAPIHandler(rawrHqManifest.api.router);
@@ -902,7 +937,7 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
   app.all(
     "/api/workflows/*",
     async ({ request }: { request: Request }) => {
-      const context = createBoundaryContext(request, {
+      const context = createWorkflowBoundaryContext(request, {
         inngest: rawrHqManifest.inngest.client,
         invoicingDeps: deps.invoicingDeps,
         trustedCidrs: deps.trustedCidrs,
@@ -942,7 +977,7 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
 3. Operation calls package internal client (`preflightReconciliation`).
 4. Package middleware validates role, hydrates deps, and returns typed output.
 
-### 7.2 Workflow-trigger path (`/api/workflows/*`)
+### 7.2 Workflow-trigger path (`/api/workflows/<capability>/*`)
 1. Host creates boundary context.
 2. Workflow router enforces trigger permissions.
 3. Trigger operation calls package preflight and then sends `invoicing.reconciliation.requested`.
@@ -996,6 +1031,6 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
 | Procedure/boundary I/O ownership | Satisfied | Procedure and boundary contract snippets own trigger/mark/status route I/O schemas; domain module stays concept-only. |
 | Request metadata ownership | Satisfied | `requestId`/`correlationId`/network request metadata live in context-layer request types, not domain schema ownership. |
 | Object-root schema wrapper usage | Satisfied | Snippets use `schema({...})` for object-root I/O and keep explicit `std(...)` for non-object roots. |
-| Split semantics (`/api/workflows/*` vs `/api/inngest`) | Satisfied | Trigger/status and runtime ingress are explicitly separate mounts. |
+| Split semantics (`/api/workflows/<capability>/*` vs `/api/inngest`) | Satisfied | Trigger/status and runtime ingress are explicitly separate mounts. |
 | Boundary vs runtime middleware separation | Satisfied | API/workflow boundary checks stay outside durable function internals. |
 | Middleware dedupe guidance | Satisfied | Explicit table documents once/repeated semantics and caveats. |

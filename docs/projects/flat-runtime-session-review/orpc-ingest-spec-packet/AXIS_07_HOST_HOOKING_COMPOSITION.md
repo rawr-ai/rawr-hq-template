@@ -16,6 +16,34 @@
 3. Host SHOULD keep parse-safe forwarding semantics for oRPC handler mounts.
 4. Host MUST keep one runtime-owned Inngest client bundle per process.
 5. Host composition MUST consume plugin-owned boundary contracts/routers from the generated manifest; packages contribute shared logic/schema inputs, not boundary ownership.
+6. Host MUST enforce caller-mode route boundaries: browser/network callers use `/api/orpc/*` + `/api/workflows/<capability>/*`, while `/api/inngest` stays runtime-only signed ingress.
+7. Host composition docs/snippets MUST keep mount ownership explicit; do not hide wiring behind black-box composition narratives.
+
+## Host Route/Auth Enforcement Matrix
+```yaml
+caller_modes:
+  - caller: browser_or_network_consumer
+    auth: boundary_auth_session_token
+    allowed_routes:
+      - /api/orpc/*
+      - /api/workflows/<capability>/*
+    forbidden_routes:
+      - /api/inngest
+
+  - caller: server_internal_consumer
+    auth: trusted_service_context
+    allowed_routes:
+      - in_process_only
+    forbidden_routes:
+      - local_http_self_calls_as_default
+
+  - caller: runtime_ingress
+    auth: signed_runtime_ingress
+    allowed_routes:
+      - /api/inngest
+    forbidden_routes:
+      - browser_access
+```
 
 ## Why
 - Explicit host wiring prevents hidden coupling.
@@ -84,6 +112,9 @@ plugins/workflows/<domain>/src/contract.ts
   functions/*
   durable/*
   index.ts
+plugins/web/<domain>/src/
+  client.ts
+  components/*
 ```
 
 ## Required Root Fixtures (Brief, Concrete)
@@ -131,7 +162,7 @@ const capabilities = [
 export const rawrHqManifest = composeCapabilities(capabilities, inngest);
 ```
 
-The manifest emits separate `orpc` and `workflows` namespaces so host wiring can mount `/rpc*` + `/api/orpc*` from `rawrHqManifest.orpc` while `/api/workflows/*` uses `rawrHqManifest.workflows.triggerRouter` plus workflow-boundary context helpers and the same `inngest` bundle. Plugin-generated capability metadata feeds the manifest so `apps/*` never needs manual edits; see `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` for the generator+helper story.
+The manifest emits separate `orpc` and `workflows` namespaces so host wiring can mount `/rpc*` + `/api/orpc*` from `rawrHqManifest.orpc` while `/api/workflows/*` uses `rawrHqManifest.workflows.triggerRouter` plus workflow-boundary context helpers and the same `inngest` bundle. Plugin-generated capability metadata feeds the manifest so `apps/*` does not require manual capability route edits, while mount ownership remains explicit in packet composition docs.
 
 ### Host fixture split mount contract
 ```ts
@@ -191,7 +222,7 @@ The manifest-driven spine adds one new fixture: `apps/server/src/workflows/conte
 
 ### What changes vs what stays the same
 - **Changes:** generate `rawr.hq.ts` from capability metadata, add workflow context fixtures, mount `OpenAPIHandler(rawrHqManifest.workflows.triggerRouter)` at `/api/workflows/*`, and pass the manifest’s `inngest` bundle into `createInngestServeHandler`. The capability namespace mapping is now explicit, and helper scripts (e.g., `composeCapabilities`, manifest generator) orchestrate wiring.
-- **Unchanged:** `/rpc*` + `/api/orpc*` still go through `registerOrpcRoutes()`, the same `CoordinationRuntimeAdapter`/`createCoordinationInngestFunction()` pair supports durability, and `packages/core` still owns the `hqContract` neighborhood. The DECISIONS entry now predicates D-005 on the new policy rather than claiming runtime is done.
+- **Unchanged:** `/rpc*` + `/api/orpc*` still go through `registerOrpcRoutes()`, the same `CoordinationRuntimeAdapter`/`createCoordinationInngestFunction()` pair supports durability, and `packages/core` still owns the `hqContract` neighborhood.
 
 ## Glue Boundaries and Ownership
 1. Host app owns mount boundaries and runtime wiring.
@@ -301,3 +332,4 @@ export function withInternalClient<TContext, TClient>(getClient: (context: TCont
 - External generation surface policy: [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)
 - Context envelope ownership: [AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md](./AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md)
 - Workflow/API boundary ownership: [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
+- Micro-frontend mount integration: [E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md](./examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md)

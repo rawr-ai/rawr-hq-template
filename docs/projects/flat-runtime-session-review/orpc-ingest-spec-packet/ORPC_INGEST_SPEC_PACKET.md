@@ -4,24 +4,56 @@
 - Canonical leaf-spec packet for ORPC boundary APIs, workflow trigger APIs, Inngest durable execution, and host composition.
 - Axis-by-axis normative policy coverage with implementation-ready snippets.
 - Cross-axis interaction guidance needed to ship changes without semantic drift.
+- Canonical policy for workflow routing, boundary ownership, and caller/auth semantics.
 
 ## Out of Scope
 - Runtime code changes.
-- Platform migration planning beyond what is already encoded in posture policy.
+- Platform migration planning beyond what is encoded in posture policy.
 - Replacing the integrative overview role of `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`.
 
 ## Packet Role
 This packet is the canonical leaf-level spec set.
 
-The parent overview (`../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`) provides subsystem synthesis; this packet provides axis-owned implementation policy depth.
+This packet is self-contained for policy decisions, caller/auth semantics, and ownership boundaries. The parent overview (`../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`) provides subsystem-level orientation.
 
-## Locked Subsystem Decisions (Inherited)
+## Locked Subsystem Policies
 1. API boundary and durable execution remain split.
 2. oRPC is the primary boundary API harness.
 3. Inngest functions are the primary durability harness.
 4. Durable endpoints are additive ingress adapters only.
-5. D-005: Workflow trigger + manifest-driven workflow surfaces operate via capability-first `/api/workflows/<capability>/*` mounts sourced from `rawr.hq.ts`, with an explicit workflow context helper and single Inngest bundle (see `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md`).
-6. D-005 closure in this packet is a spec-policy lock; runtime rollout status is tracked separately and is not implied complete here.
+5. Workflow trigger surfaces are manifest-driven and capability-first (`/api/workflows/<capability>/*`) via `rawr.hq.ts`, with explicit workflow context helpers and one runtime-owned Inngest bundle.
+6. Workflow/API boundary contracts are plugin-owned (`plugins/workflows/<capability>/src/contract.ts`, `plugins/api/<capability>/src/contract.ts`); packages own shared domain logic/domain schemas only, and workflow trigger/status I/O schemas remain workflow boundary owned.
+7. Browser/network callers use composed boundary clients on `/api/orpc/*` and `/api/workflows/<capability>/*`; server-internal callers use in-process package clients; `/api/inngest` is signed runtime ingress only.
+8. These policies define canonical target-state behavior independent of implementation sequencing.
+
+## Caller/Auth Boundary Matrix
+```yaml
+caller_modes:
+  - caller: browser_mfe_or_network_consumer
+    client: composed_boundary_clients
+    auth: boundary_auth_session_token
+    routes:
+      - /api/orpc/*
+      - /api/workflows/<capability>/*
+    forbidden:
+      - /api/inngest
+
+  - caller: server_internal_consumer
+    client: package_internal_client
+    auth: trusted_service_context
+    routes:
+      - in_process_only
+    forbidden:
+      - local_http_self_calls_as_default
+
+  - caller: runtime_ingress
+    client: inngest_runtime_bundle
+    auth: signed_runtime_ingress
+    routes:
+      - /api/inngest
+    forbidden:
+      - browser_access
+```
 
 ## Axis Coverage (Complete)
 1. [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)
@@ -35,36 +67,38 @@ The parent overview (`../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md
 9. [AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md](./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md)
 
 ## End-to-End Walkthroughs (Tutorial Layer)
-These are implementation-oriented walkthroughs that apply the axis policies in concrete flows.
+These are implementation-oriented walkthroughs that apply axis policies in concrete flows.
 
 1. [E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md](./examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md)
 2. [E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md](./examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md)
 3. [E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md](./examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md)
 4. [E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md](./examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md)
 
-Tutorial docs are normative only where they reference locked axis policies. If a walkthrough surfaces ambiguity, the ambiguity must be tracked in [DECISIONS.md](./DECISIONS.md) before further drift occurs.
+Tutorial docs are normative only where they reference locked axis policies. If a walkthrough surfaces ambiguity, record it in [DECISIONS.md](./DECISIONS.md).
 
 ## Cross-Cutting Defaults
 1. External SDK generation uses one composed oRPC/OpenAPI boundary surface.
 2. Internal in-process cross-boundary calls default to package internal clients (`client.ts`), not local HTTP.
 3. Caller-triggered workflow routes are oRPC workflow trigger routes on `/api/workflows/<capability>/*`; runtime durable ingress is `/api/inngest`.
-4. D-005 locks the manifest-driven, capability-first `/api/workflows/<capability>/*` spine described in `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md`; capability routes come from `rawrHqManifest.workflows.triggerRouter`, the same manifest supplies `rawrHqManifest.inngest`, and workflow boundary context helpers keep `/api/workflows/<capability>/*` caller-facing while `/api/inngest` stays runtime-only.
-5. TypeBox-only schema authoring is required for contract/procedure surfaces (no Zod-authored contract/procedure schemas); TypeBox remains the baseline for contract I/O and OpenAPI conversion.
-6. One runtime-owned Inngest bundle (`client + functions`) exists per process.
-7. Domain modules (`domain/*`) hold transport-independent domain concepts only (entities/value objects/invariants/state shapes).
-8. Procedure input/output schemas are co-located with procedures (internal package surfaces) or boundary contracts (`contract.ts`) for API/workflow surfaces.
-9. Domain filenames within one `domain/` folder avoid redundant domain-prefix tokens.
-10. Package/plugin directory naming prefers concise, unambiguous domain names (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
-11. Shared context contracts default to explicit `context.ts` modules (or equivalent dedicated context modules), consumed by routers instead of being re-declared inline in router snippets.
-12. Request/correlation/principal/network metadata contracts are context-layer concerns and belong in `context.ts` (or equivalent context module), not `domain/*`.
-13. Docs helper default for object-root schema wrapping is `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
-14. For non-`Type.Object` roots, packet docs/snippets should keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
-15. Packet docs/examples default to inline procedure/contract I/O schema declarations at `.input(...)` and `.output(...)`.
-16. Schema extraction is exception-only, for shared schemas or large schemas where inline form materially harms readability.
-17. When extraction is used, canonical shape is a paired object with `.input` and `.output` properties (for example `TriggerInvoiceReconciliationSchema.input` and `.output`).
-18. Context modeling keeps two envelopes by design: oRPC boundary request context and Inngest runtime function context; packet policy rejects a forced universal context object.
-19. Middleware policy keeps two control planes by design: boundary controls in oRPC/Elysia and durable lifecycle controls in Inngest middleware + `step.*`.
-20. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe is constrained to leading-subset/same-order middleware chains.
+4. Workflow routing is manifest-driven and capability-first; capability routes come from `rawrHqManifest.workflows.triggerRouter`, the same manifest supplies `rawrHqManifest.inngest`, and workflow boundary context helpers keep `/api/workflows/<capability>/*` caller-facing while `/api/inngest` stays runtime-only.
+5. Workflow/API boundary contract ownership remains in plugins; packages do not own caller-facing boundary contracts or workflow trigger/status I/O schemas.
+6. Caller-mode client semantics are fixed: browser/network callers use composed boundary clients; server-internal callers use package internal clients; runtime ingress uses signed `/api/inngest` only.
+7. TypeBox-only schema authoring is required for contract/procedure surfaces (no Zod-authored contract/procedure schemas); TypeBox remains the baseline for contract I/O and OpenAPI conversion.
+8. One runtime-owned Inngest bundle (`client + functions`) exists per process.
+9. Domain modules (`domain/*`) hold transport-independent domain concepts only (entities/value objects/invariants/state shapes).
+10. Procedure input/output schemas are co-located with procedures (internal package surfaces) or boundary contracts (`contract.ts`) for API/workflow surfaces.
+11. Domain filenames within one `domain/` folder avoid redundant domain-prefix tokens.
+12. Package/plugin directory naming prefers concise, unambiguous domain names (for example `packages/invoicing`, `plugins/api/invoicing`, `plugins/workflows/invoicing`).
+13. Shared context contracts default to explicit `context.ts` modules (or equivalent dedicated context modules), consumed by routers instead of being re-declared inline in router snippets.
+14. Request/correlation/principal/network metadata contracts are context-layer concerns and belong in `context.ts` (or equivalent context module), not `domain/*`.
+15. Docs helper default for object-root schema wrapping is `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
+16. For non-`Type.Object` roots, packet docs/snippets should keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
+17. Packet docs/examples default to inline procedure/contract I/O schema declarations at `.input(...)` and `.output(...)`.
+18. Schema extraction is exception-only, for shared schemas or large schemas where inline form materially harms readability.
+19. When extraction is used, canonical shape is a paired object with `.input` and `.output` properties (for example `TriggerInvoiceReconciliationSchema.input` and `.output`).
+20. Context modeling keeps two envelopes by design: oRPC boundary request context and Inngest runtime function context; packet policy rejects a forced universal context object.
+21. Middleware policy keeps two control planes by design: boundary controls in oRPC/Elysia and durable lifecycle controls in Inngest middleware + `step.*`.
+22. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe is constrained to leading-subset/same-order middleware chains.
 
 ## Packet Interaction Model
 ```text
@@ -110,7 +144,7 @@ Caller
 - Host composition spine, fixtures, and mount order -> [AXIS_07_HOST_HOOKING_COMPOSITION.md](./AXIS_07_HOST_HOOKING_COMPOSITION.md)
 - Workflow trigger authoring vs durable execution authoring -> [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
 - Durable endpoint additive-only constraints -> [AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md](./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md)
-- Full walkthroughs by scenario -> [examples/](./examples/)
+- Micro-frontend caller-mode walkthrough -> [E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md](./examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md)
 - Section-by-section redistribution map from old monolith -> [REDISTRIBUTION_TRACEABILITY.md](./REDISTRIBUTION_TRACEABILITY.md)
 
 ## Decision Log

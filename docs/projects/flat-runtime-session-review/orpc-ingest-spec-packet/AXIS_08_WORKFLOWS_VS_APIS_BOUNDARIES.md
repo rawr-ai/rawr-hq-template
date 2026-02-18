@@ -24,12 +24,42 @@
 12. When extracted, workflow trigger I/O schemas SHOULD use paired-object shape with `.input` and `.output` (for example `TriggerInvoiceReconciliationSchema.input` / `.output`).
 13. For object-root schema wrappers in docs, prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
 14. For non-`Type.Object` roots, keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
+15. Workflow composition/mounting docs MUST stay explicit; do not collapse route ownership into black-box host helpers.
 
 ## Consumer model
 1. **External callers** (third-party APIs, micro-frontends) hit `/rpc*`, `/api/orpc*`, and the capability-specific `/api/workflows/<capability>/*` trigger/status paths. These surfaces remain public and are mounted through host composition with dedicated workflow-route registration (`apps/server/src/rawr.ts` + `apps/server/src/workflows/context.ts`) while `/rpc*` and `/api/orpc*` remain in `apps/server/src/orpc.ts`.
 2. **Internal packages/services** re-use capability logic through in-process clients (`packages/<capability>/src/client.ts`) with trusted service context, keeping domain semantics centralized and bypassing HTTP when appropriate.
 3. **Coordination tooling** (the `hqContract` + coordination operations in `apps/server/src/orpc.ts`) powers dashboards, run discovery, and orchestration controls; these consumers speak the administrative contract, not workflow triggers.
-Closing the loop on D-005 requires recognizing all three groups so we keep `/api/workflows/<capability>/*` caller-facing, `/api/inngest` runtime-only, and tooling on the coordination canvas.
+This model keeps `/api/workflows/<capability>/*` caller-facing, `/api/inngest` runtime-only, and coordination tooling on the administrative contract canvas.
+
+## Caller/Auth Matrix
+```yaml
+caller_modes:
+  - caller: browser_mfe_or_network_consumer
+    client: composed_boundary_clients
+    auth: boundary_auth_session_token
+    allowed_routes:
+      - /api/orpc/*
+      - /api/workflows/<capability>/*
+    forbidden_routes:
+      - /api/inngest
+
+  - caller: server_internal_consumer
+    client: package_internal_client
+    auth: trusted_service_context
+    allowed_routes:
+      - in_process_only
+    forbidden_routes:
+      - local_http_self_calls_as_default
+
+  - caller: runtime_ingress
+    client: inngest_runtime_bundle
+    auth: signed_runtime_ingress
+    allowed_routes:
+      - /api/inngest
+    forbidden_routes:
+      - browser_access
+```
 
 ## Why
 - Preserves one trigger story for callers and one durability story for runtime.
@@ -201,7 +231,7 @@ Recommendation: keep capability prefixes explicit, emit them via the manifest he
 
 
 ### Manifest-driven composition note
-Hosts build the workflow handler from `rawrHqManifest.workflows.triggerRouter`, so capability-first `/api/workflows/<capability>` mounts, the `OpenAPIHandler`, and the Inngest function bundle stay in sync even when new capabilities land. Regenerate `rawr.hq.ts` via the manifest generator described in `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` instead of editing `apps/*`.
+Hosts build the workflow handler from `rawrHqManifest.workflows.triggerRouter`, so capability-first `/api/workflows/<capability>/*` mounts, the `OpenAPIHandler`, and the Inngest function bundle stay in sync even when new capabilities land. Regenerate `rawr.hq.ts` through the packet’s manifest composition flow (see `ORPC_INGEST_SPEC_PACKET.md` and `AXIS_07_HOST_HOOKING_COMPOSITION.md`) instead of editing `apps/*` directly.
 
 
 ### Workflow surface export
@@ -225,9 +255,9 @@ Caller intent: trigger durable workflow run.
 5. Caller checks run status through caller-facing workflow status route, not `/api/inngest`.
 
 ## References
-- Agent I: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_I_SPLIT_HARDEN_RECOMMENDATION.md:6`
-- Integrated synthesis: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_INNGEST_ORPC_DEBATE_INTEGRATED_RECOMMENDATION.md:61`
-- Canonical baseline: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_PACKAGE_APPROACH_A_PURE_DOMAIN_E2E.md:42`
+- Packet entrypoint: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md`
+- Packet decisions: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md:11`
+- Host composition policy: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_07_HOST_HOOKING_COMPOSITION.md`
 - E2E: [E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md](./examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md)
 - oRPC: [Procedure](https://orpc.dev/docs/procedure)
 - oRPC: [Contract-first define](https://orpc.dev/docs/contract-first/define-contract)
@@ -241,3 +271,4 @@ Caller intent: trigger durable workflow run.
 - Durable endpoint additive-only limits: [AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md](./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md)
 - Host mount boundaries: [AXIS_07_HOST_HOOKING_COMPOSITION.md](./AXIS_07_HOST_HOOKING_COMPOSITION.md)
 - Context envelope boundaries: [AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md](./AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md)
+- Micro-frontend integration baseline: [E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md](./examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md)

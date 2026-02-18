@@ -11,13 +11,42 @@ without duplicating workflow/domain semantics across browser, plugin, and runtim
 
 ### Chosen default path (for this walkthrough)
 **Plugin-boundary + package-domain workflow integration**:
-1. Canonical boundary contracts live in workflow plugins.
+1. Canonical API/workflow boundary contracts live in plugins.
 2. Packages provide domain logic/domain schemas and browser-safe helpers.
 3. Workflow plugin implements trigger + durable execution with plugin-local route I/O schemas.
 4. Micro-frontend calls workflow trigger/status APIs (not `/api/inngest`) and may reuse browser-safe package logic.
 5. API plugin consumption is optional, not required for workflow invocation.
 
 This default preserves boundary ownership while still preventing semantic duplication through package-level domain reuse.
+
+### Caller/Auth Semantics
+```yaml
+caller_modes:
+  - caller: browser_mfe_or_network_consumer
+    client: composed_boundary_clients
+    auth: boundary_auth_session_token
+    allowed_routes:
+      - /api/orpc/*
+      - /api/workflows/<capability>/*
+    forbidden_routes:
+      - /api/inngest
+
+  - caller: server_internal_consumer
+    client: package_internal_client
+    auth: trusted_service_context
+    allowed_routes:
+      - in_process_only
+    forbidden_routes:
+      - local_http_self_calls_as_default
+
+  - caller: runtime_ingress
+    client: inngest_runtime_bundle
+    auth: signed_runtime_ingress
+    allowed_routes:
+      - /api/inngest
+    forbidden_routes:
+      - browser_access
+```
 
 ---
 
@@ -73,6 +102,12 @@ plugins/workflows/invoicing/src/
   router.ts                              # boundary auth/visibility + trigger/status handlers
   functions/
     reconcile.ts                         # durable execution
+  index.ts
+
+plugins/api/invoicing/src/               # optional API boundary surface (also plugin-owned)
+  contract.ts
+  operations/*
+  router.ts
   index.ts
 
 rawr.hq.ts                               # composition authority
@@ -560,8 +595,8 @@ Browser-safe vs server-only boundary in this implementation:
 
 | Alternative | Decision | Why |
 | --- | --- | --- |
-| API-plugin-centric only (MFE -> API plugin -> workflow) | Deferred as default | Valid for capabilities needing heavy boundary transformations, but not required for workflow-focused MFE and can add extra semantic mapping layers. |
-| Host-injected capability gateway (MFE does not build own client) | Deferred (phase 2) | Good DX and auth centralization, but current mount context does not yet define a stable gateway contract. |
+| API-plugin-centric only (MFE -> API plugin -> workflow) | Not default | Valid for capabilities needing heavy boundary transformations, but not required for workflow-focused MFE and can add extra semantic mapping layers. |
+| Host-injected capability gateway (MFE does not build own client) | Not default | Good DX and auth centralization, but requires a stable gateway contract before becoming baseline. |
 | Direct browser calls to `/api/inngest` | Rejected | Violates split semantics and breaks security/runtime ownership boundaries. |
 
 ---
@@ -600,32 +635,9 @@ Browser-safe vs server-only boundary in this implementation:
 | Procedure/boundary I/O ownership | Satisfied | Trigger/status route I/O schemas are defined in workflow contract snippets, not in `domain/*` files. |
 | Object-root schema wrapper usage | Satisfied | Workflow contract snippet uses `schema({...})` for object-root I/O and keeps explicit `std(...)` for non-object roots. |
 | Concise naming + non-redundant domain filenames | Satisfied | Capability naming stays `invoicing`; domain files are concise (`reconciliation.ts`, `status.ts`, `view.ts`). |
-| Split semantics (`/api/workflows/*` vs `/api/inngest`) | Satisfied | Trigger/status is caller-facing; ingress is runtime-only. |
+| Split semantics (`/api/workflows/<capability>/*` vs `/api/inngest`) | Satisfied | Trigger/status is caller-facing; ingress is runtime-only. |
 | Internal server calls use package internal client | Satisfied | Durable function calls package `client.ts` path server-side. |
 | No plugin-to-plugin runtime imports | Satisfied | Shared artifacts move through `packages/*`; workflow plugin owns boundary contract and may import package domain schemas only when transport-independent. |
 | Boundary auth/visibility in boundary layer | Satisfied | Router context enforces principal and visibility before enqueue/read operations. |
 | No glue black boxes | Satisfied | Composition and mount code shown explicitly in `rawr.hq.ts` and host route registration. |
 | API plugin mandatory for workflow path | Not required by design | API plugin is optional and only included when capability-specific boundary concerns justify it. |
-
----
-
-## 10) Open Follow-Ups (Decision-Tracked, Non-D-005)
-
-D-005 route convergence is locked for this packet and represented by capability-first `/api/workflows/<capability>/*` composition using `rawrHqManifest.workflows.triggerRouter`. The unresolved items below are the current packet-level open decisions only.
-
-1. **D-008 — Extended traces middleware initialization order standard**
-- Host/bootstrap snippets do not yet enforce one canonical early-init order for `extendedTracesMiddleware()`.
-- Why unresolved: upstream guidance exists, but packet-level bootstrap ordering is not yet standardized.
-- Lock target: lock a bootstrap-order pattern across `AXIS_05`, `AXIS_06`, `AXIS_07`, and `E2E_04`.
-
-2. **D-009 — Required dedupe marker policy for heavy oRPC middleware**
-- Heavy middleware snippets document dedupe caveats but do not yet lock explicit marker policy strength (`MUST` vs `SHOULD`).
-- Why unresolved: built-in dedupe constraints are now documented, but the enforceable packet policy level is still open.
-- Lock target: finalize marker policy and propagate across `AXIS_04`, `AXIS_06`, and `E2E_04`.
-
-3. **D-010 — Inngest finished-hook side-effect guardrail**
-- Lifecycle snippets discuss hook usage but do not yet lock side-effect constraints for `finished` hooks.
-- Why unresolved: `finished` is not guaranteed exactly once, and packet-level enforcement language is still open.
-- Lock target: lock idempotent/non-critical usage guardrails across `AXIS_05`, `AXIS_06`, and `E2E_04`.
-
-Decision-state note: D-004 remains locked/deferred, and D-006/D-007 are closed in the corrected ownership/client model.

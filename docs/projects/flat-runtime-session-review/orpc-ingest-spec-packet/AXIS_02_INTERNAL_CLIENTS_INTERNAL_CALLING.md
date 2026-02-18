@@ -23,6 +23,7 @@
 11. Browser/network callers MUST use composed boundary clients on caller-facing routes with boundary auth semantics.
 12. Server-internal callers MAY use in-process package internal clients with trusted service context.
 13. Browser/network callers MUST NOT use `/api/inngest`; runtime ingress is runtime-only.
+14. Packages MUST NOT own workflow trigger/status boundary contracts or workflow boundary I/O schemas; those stay in `plugins/workflows/<capability>/src/contract.ts`.
 
 ## Why
 - Prevents “four ways to call” drift.
@@ -62,6 +63,9 @@ caller_modes:
       - browser_access
 ```
 
+### Boundary ownership guardrail for internal calling
+Even when package internal clients power server-internal execution, caller-facing workflow trigger/status contracts and their I/O schemas remain workflow plugin boundary owned. Internal client reuse does not transfer boundary ownership to packages.
+
 ## Internal Package Default (Pure Capability)
 ```text
 packages/<domain>/src/
@@ -71,6 +75,7 @@ packages/<domain>/src/
   context.ts
   router.ts
   client.ts
+  browser.ts   # optional browser-safe helper exports only
   errors.ts
   index.ts
 ```
@@ -269,3 +274,4 @@ export async function startInvoiceOperation(
 - External generation boundary: [AXIS_01_EXTERNAL_CLIENT_GENERATION.md](./AXIS_01_EXTERNAL_CLIENT_GENERATION.md)
 - Split posture and anti-dual-path: [AXIS_03_SPLIT_VS_COLLAPSE.md](./AXIS_03_SPLIT_VS_COLLAPSE.md)
 - Workflow trigger boundary exception: [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
+- Micro-frontend walkthrough: [E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md](./examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md)

@@ -4,44 +4,48 @@
 Packet-local decision tracking for documentation-architecture changes only.
 
 ## Current Status
-Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, and context metadata placement are now explicitly locked. D-005 is closed as a spec-policy lock; runtime rollout remains a separate implementation track and is not declared complete by this decision log. New walkthrough work and post-research context/middleware findings also surfaced open and proposed items that require a future lock.
+Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, and context metadata placement are explicitly locked. D-005, D-006, and D-007 are closed as spec-policy locks; runtime rollout remains a separate implementation track and is not declared complete by this decision log. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
 
 ## Decision Register
 
 ### D-005 — Workflow trigger route convergence
 - `status`: `closed`
-- `resolution`: The packet now locks on a manifest-driven host spine: capability-first `/api/workflows/<capability>/*` mounts come from a generated `rawr.hq.ts`, workflow routers live under `rawrHqManifest.workflows.triggerRouter`, the same manifest powers `rawrHqManifest.inngest`, and workflow boundary context helpers keep `/api/workflows` caller-facing while `/api/inngest` remains runtime-only. Plugin authors may change only `packages/*`/`plugins/*` while the manifest generator orchestrates routing.
+- `resolution`: The packet locks on a manifest-driven host spine: capability-first `/api/workflows/<capability>/*` mounts come from generated `rawr.hq.ts`; workflow routers live under `rawrHqManifest.workflows.triggerRouter`; the same manifest supplies `rawrHqManifest.inngest`; workflow boundary context helpers keep `/api/workflows/<capability>/*` caller-facing while `/api/inngest` remains runtime-only.
 - `historical_question`: Should canonical workflow trigger paths (`/api/workflows/<capability>/*`) become first-class mounted routes in current server runtime, instead of relying primarily on coordination procedures under `/rpc` and `/api/orpc`?
-- `closure_scope`: Spec/policy lock only; this entry does not claim runtime rollout is already complete.
-- `why_closed`: Packet authors integrated `SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md` guidance and axis docs now document the manifest-driven posture as the canonical implementation target.
+- `closure_scope`: spec-policy lock only; this entry does not claim runtime rollout is complete.
+- `why_closed`: Packet docs now encode manifest-driven route composition, caller/runtime split semantics, and host mounting rules directly.
 - `impacted_docs`:
-  - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
-  - `examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md`
-  - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
+  - `ORPC_INGEST_SPEC_PACKET.md`
   - `AXIS_07_HOST_HOOKING_COMPOSITION.md`
+  - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
+  - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
 
 ### D-006 — Canonical ownership of workflow contract artifacts
 - `status`: `closed`
 - `resolution`: Workflow and API boundary contracts are plugin-owned (`plugins/workflows/<capability>/src/contract.ts` and `plugins/api/<capability>/src/contract.ts`). Packages own shared domain logic/domain schemas only; workflow trigger/status I/O schemas are owned at workflow plugin boundary contracts. Manifest composition consumes plugin boundary contracts/routers as canonical boundary inputs.
 - `closure_scope`: spec-policy lock
-- `why_closed`: This restores the original boundary principle, keeps package logic transport-neutral, and avoids boundary ownership drift while preserving manifest-driven composition.
+- `why_closed`: This preserves boundary ownership integrity, keeps package logic transport-neutral, and prevents package-owned workflow boundary contract drift.
 - `impacted_docs`:
-  - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
-  - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
+  - `ORPC_INGEST_SPEC_PACKET.md`
   - `AXIS_01_EXTERNAL_CLIENT_GENERATION.md`
   - `AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`
+  - `AXIS_03_SPLIT_VS_COLLAPSE.md`
+  - `AXIS_07_HOST_HOOKING_COMPOSITION.md`
+  - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
+  - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
 
 ### D-007 — First-party micro-frontend workflow client strategy
 - `status`: `closed`
 - `resolution`: Browser/network callers (including micro-frontends) use composed boundary clients to call `/api/orpc/*` and `/api/workflows/<capability>/*` with boundary auth/session semantics. Server-internal callers may use in-process package internal clients. `/api/inngest` remains signed runtime-only ingress and is never a browser caller surface.
 - `closure_scope`: spec-policy lock
-- `why_closed`: This resolves client confusion by caller mode and preserves split semantics without blocking internal server efficiency.
+- `why_closed`: Caller-mode semantics are explicit by route, auth context, and runtime boundary; this resolves client confusion without collapsing split architecture.
 - `impacted_docs`:
-  - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
+  - `ORPC_INGEST_SPEC_PACKET.md`
   - `AXIS_01_EXTERNAL_CLIENT_GENERATION.md`
-  - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
   - `AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md`
   - `AXIS_03_SPLIT_VS_COLLAPSE.md`
+  - `AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md`
+  - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
 
 ### D-011 — Procedure I/O schema ownership and context metadata placement
 - `status`: `locked`
@@ -90,7 +94,7 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
 ### D-009 — Required dedupe marker policy for heavy oRPC middleware
 - `status`: `open`
 - `question`: Should packet policy require explicit context-cached dedupe markers for heavy oRPC middleware instead of relying on built-in dedupe constraints?
-- `why_open`: Built-in dedupe applies only under leading-subset/same-order conditions; policy warning is now documented but lock level (`MUST` vs `SHOULD`) is unresolved.
+- `why_open`: Built-in dedupe applies only under leading-subset/same-order conditions; policy warning is documented but lock level (`MUST` vs `SHOULD`) is unresolved.
 - `source_anchors`:
   - `https://orpc.dev/docs/best-practices/dedupe-middleware`
 - `impacted_docs`:
@@ -117,9 +121,8 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
   - `AXIS_07_HOST_HOOKING_COMPOSITION.md`
   - `examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md`
 
-## Inherited Canonical Decision Sources
+## Inherited Canonical Decision Source
 - `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md`
-- `../SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md` locked decisions and global invariants
 
 ## Rule
 If future packet edits reveal a new architecture-impacting ambiguity, add it here before continuing edits.

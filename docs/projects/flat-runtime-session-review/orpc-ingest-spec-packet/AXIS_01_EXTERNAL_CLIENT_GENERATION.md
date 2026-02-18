@@ -14,10 +14,29 @@
 2. Package-internal contracts MUST NOT be used for external SDK generation.
 3. Boundary APIs remain contract-first by default.
 4. Workflow/API boundary contracts are plugin-owned. Packages may export shared domain schemas and domain helpers, but workflow trigger/status I/O schemas and caller-facing boundary contract ownership remain in plugins.
+5. Browser/network client generation MUST target caller-facing boundary routes only (`/api/orpc/*`, `/api/workflows/<capability>/*`) and MUST NOT target `/api/inngest`.
+
+## External Caller Ownership and Auth View
+```yaml
+external_callers:
+  contract_source:
+    - plugins/api/<capability>/src/contract.ts
+    - plugins/workflows/<capability>/src/contract.ts
+  generated_clients:
+    - composed_api_client
+    - composed_workflow_client
+  allowed_routes:
+    - /api/orpc/*
+    - /api/workflows/<capability>/*
+  forbidden_routes:
+    - /api/inngest
+  auth_mode: boundary_auth_session_token
+```
 
 ## Why
 - One contract tree preserves stable external semantics and prevents drift.
 - Composed router state is already the runtime source for OpenAPI generation.
+- External caller contracts stay aligned with runtime route ownership and auth boundaries.
 
 ## Trade-Offs
 - Some internal contracts remain intentionally unexposed.
@@ -109,9 +128,22 @@ export const invoiceApiSurface = {
 } as const;
 ```
 
+### Browser-facing composed client usage
+```ts
+// plugins/web/invoicing-console/src/client.ts
+const api = createORPCClient(capabilityClients.invoicing.api, {
+  link: new OpenAPILink({ url: `${baseUrl}/api/orpc` }),
+});
+
+const workflows = createORPCClient(capabilityClients.invoicing.workflows, {
+  link: new OpenAPILink({ url: `${baseUrl}/api/workflows` }),
+});
+```
+
 ## Related Normative Rules
 1. Preserve TypeBox-first schema flow for oRPC contract I/O and OpenAPI conversion.
 2. Centralize shared TypeBox adapter and OpenAPI converter helper usage.
+3. Keep external caller client generation on composed plugin-owned boundary contracts.
 
 ## References
 - Local: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc/hq-router.ts:5`
@@ -124,3 +156,4 @@ export const invoiceApiSurface = {
 - Internal call defaults: [AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md](./AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md)
 - Host composition wiring: [AXIS_07_HOST_HOOKING_COMPOSITION.md](./AXIS_07_HOST_HOOKING_COMPOSITION.md)
 - Workflow/API boundary split: [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
+- Micro-frontend walkthrough: [E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md](./examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md)

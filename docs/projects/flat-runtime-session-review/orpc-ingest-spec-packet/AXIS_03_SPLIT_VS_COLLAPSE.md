@@ -12,12 +12,44 @@
 ## Canonical Policy
 1. Split is retained as canonical: API boundary and durability harness are distinct.
 2. Full collapse into one surface is rejected.
-3. D-005 ensures a manifest-driven `/api/workflows/<capability>/*` host path so workflow triggers remain split and scoped to capability routers without creating a parallel durable ingestion surface.
-4. Boundary contracts remain plugin-owned; packages provide shared logic/schemas but do not become canonical boundary owners.
+3. Workflow surfaces are manifest-driven and capability-first (`/api/workflows/<capability>/*`) while `/api/inngest` remains runtime ingress only.
+4. Workflow/API boundary contracts are plugin-owned; workflow trigger/status I/O schemas remain at workflow plugin boundary contracts.
+5. Caller mode determines client + auth semantics (browser/network callers use composed boundary clients; server-internal callers use in-process package clients; runtime ingress uses signed `/api/inngest`).
+6. Composition and mounting language MUST stay explicit (no black-box route or ownership narratives).
+
+## Caller-Mode Boundary Enforcement
+```yaml
+caller_modes:
+  - caller: browser_or_network_consumer
+    client: composed_boundary_clients
+    auth: boundary_auth_session_token
+    routes:
+      - /api/orpc/*
+      - /api/workflows/<capability>/*
+    forbidden:
+      - /api/inngest
+
+  - caller: server_internal_consumer
+    client: package_internal_client
+    auth: trusted_service_context
+    routes:
+      - in_process_only
+    forbidden:
+      - local_http_self_calls_as_default
+
+  - caller: runtime_ingress
+    client: inngest_runtime_bundle
+    auth: signed_runtime_ingress
+    routes:
+      - /api/inngest
+    forbidden:
+      - browser_access
+```
 
 ## Why
 - External API contract semantics and durable execution semantics are non-equivalent.
 - Inngest ingress/runtime behavior must not define first-party API contract behavior.
+- Explicit caller-mode boundaries prevent accidental collapse from convenience integrations.
 
 ## Trade-Offs
 - Two harnesses remain.
@@ -49,10 +81,12 @@ Direct adoption exception is allowed only when all are documented:
 2. Proposal blurs caller-trigger API routes and `/api/inngest` ingress.
 3. Proposal uses local HTTP self-calls as internal default.
 4. Proposal routes browser/network callers to `/api/inngest` instead of caller-facing workflow/API boundaries.
+5. Proposal moves workflow trigger/status boundary contracts or I/O schemas into packages.
+6. Proposal hides route mounting/composition ownership behind black-box helpers without explicit wiring contracts.
 
 ## References
-- Agent J: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_AGENT_J_COLLAPSE_UNIFY_RECOMMENDATION.md:3`
-- Integrated synthesis: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_INNGEST_ORPC_DEBATE_INTEGRATED_RECOMMENDATION.md:51`
+- Packet decisions: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md:11`
+- Packet example: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md:22`
 - Inngest: [Serve](https://www.inngest.com/docs/reference/serve)
 - Inngest: [Durable endpoints](https://www.inngest.com/docs/learn/durable-endpoints)
 
@@ -60,3 +94,4 @@ Direct adoption exception is allowed only when all are documented:
 - Internal calling defaults: [AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md](./AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md)
 - Workflow/API trigger boundary: [AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md](./AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md)
 - Durable endpoint additive posture: [AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md](./AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md)
+- Micro-frontend integration example: [E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md](./examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md)
