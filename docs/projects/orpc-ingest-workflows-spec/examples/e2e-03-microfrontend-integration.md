@@ -23,7 +23,7 @@ without duplicating workflow/domain semantics across browser, plugin, and runtim
 2. Packages provide domain logic/domain schemas and browser-safe helpers.
 3. Workflow plugin implements trigger + durable execution with plugin-local route I/O schemas.
 4. First-party micro-frontends use `RPCLink` on `/rpc` by default and may reuse browser-safe package logic.
-5. OpenAPI workflow/API routes (`/api/workflows/<capability>/*`, `/api/orpc/*`) are externally published surfaces for third-party callers; first-party use is explicit exception-only.
+5. OpenAPI workflow/API routes (`/api/workflows/<capability>/*`, `/api/orpc/*`) are externally published surfaces and are used by third-party callers (or explicit first-party exceptions).
 6. API plugin consumption is optional, not required for workflow invocation.
 
 This default preserves boundary ownership while still preventing semantic duplication through package-level domain reuse.
@@ -56,7 +56,7 @@ flowchart LR
 
 Boundary meaning:
 1. Browser never calls `/api/inngest`.
-2. First-party MFE defaults to `/rpc`; `/api/workflows/...` is the published external workflow boundary and first-party exception path only.
+2. First-party MFE defaults to `/rpc`; `/api/workflows/...` is the published external workflow boundary.
 3. Durable orchestration lives only inside Inngest functions.
 
 ---
@@ -71,8 +71,9 @@ packages/invoicing/src/domain/
 packages/invoicing/src/
   browser.ts
 
-plugins/workflows/invoicing/src/
-  router.ts  # direct procedure exports (no thin operations wrappers)
+plugins/workflows/invoicing/src/operations/
+  status.ts
+  timeline.ts
 
 apps/server/src/workflows/
   context.ts
@@ -125,20 +126,28 @@ export function isTerminalReconciliationState(state: ReconciliationState): boole
 import { Type, type Static } from "typebox";
 import { ReconciliationStateSchema } from "./reconciliation";
 
-// Browser projection model for shared UI helpers.
-// Caller-facing workflow route I/O remains owned by workflow plugin contracts.
-export const RunBadgeInputSchema = Type.Object(
-  { status: ReconciliationStateSchema },
+export const RunStatusSchema = Type.Object(
+  {
+    runId: Type.String({ minLength: 1 }),
+    status: ReconciliationStateSchema,
+    isTerminal: Type.Boolean(),
+  },
   { additionalProperties: false },
 );
-export type RunBadgeInput = Static<typeof RunBadgeInputSchema>;
+export type RunStatus = Static<typeof RunStatusSchema>;
+
+export const RunTimelineSchema = Type.Object(
+  { runId: Type.String({ minLength: 1 }), events: Type.Array(Type.Any()) },
+  { additionalProperties: false },
+);
+export type RunTimeline = Static<typeof RunTimelineSchema>;
 ```
 
 ```ts
 // packages/invoicing/src/domain/view.ts
-import type { RunBadgeInput } from "./status";
+import type { RunStatus } from "./status";
 
-export function toRunBadge(run: RunBadgeInput): "neutral" | "warning" | "success" | "danger" {
+export function toRunBadge(run: RunStatus): "neutral" | "warning" | "success" | "danger" {
   if (run.status === "completed") return "success";
   if (run.status === "failed") return "danger";
   if (run.status === "running") return "warning";
@@ -177,9 +186,9 @@ plugins/workflows/invoicing/src/
 ```ts
 // plugins/workflows/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
-import { schema } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { ReconciliationStateSchema } from "@rawr/invoicing/domain/reconciliation";
+import { RunStatusSchema, RunTimelineSchema } from "@rawr/invoicing/domain/status";
 
 const tag = ["invoicing"] as const;
 
@@ -191,34 +200,15 @@ export const invoicingWorkflowContract = oc.router({
   getRunStatus: oc
     .route({ method: "GET", path: "/invoicing/runs/{runId}", tags: tag, operationId: "invoicingGetRunStatus" })
     .input(schema({ runId: Type.String({ minLength: 1 }) }))
-    .output(
-      schema(
-        {
-          runId: Type.String({ minLength: 1 }),
-          status: ReconciliationStateSchema,
-          isTerminal: Type.Boolean(),
-        },
-        { additionalProperties: false },
-      ),
-    ),
+    .output(std(RunStatusSchema)),
   getRunTimeline: oc
     .route({ method: "GET", path: "/invoicing/runs/{runId}/timeline", tags: tag, operationId: "invoicingGetRunTimeline" })
     .input(schema({ runId: Type.String({ minLength: 1 }) }))
-    .output(
-      schema(
-        {
-          runId: Type.String({ minLength: 1 }),
-          events: Type.Array(Type.Any()),
-        },
-        { additionalProperties: false },
-      ),
-    ),
+    .output(std(RunTimelineSchema)),
 });
 ```
 
 ### 4.3 Workflow plugin router (auth + visibility + trigger semantics)
-
-Direct-procedure pattern note: this example exports oRPC procedure handlers directly from `router.ts` because the workflow boundary logic is local and does not need separate thin operation wrappers. When boundary/package shape adaptation is non-trivial, use explicit `operations/*` mapping (canonical default shape in `axes/01-external-client-generation.md`).
 
 ```text
 plugins/workflows/invoicing/src/
@@ -252,7 +242,6 @@ export type InvoicingWorkflowContext = {
 ```ts
 // plugins/workflows/invoicing/src/router.ts
 import { implement, ORPCError } from "@orpc/server";
-import { isTerminalReconciliationState, type ReconciliationState } from "@rawr/invoicing/domain/reconciliation";
 import { invoicingWorkflowContract } from "./contract";
 import type { InvoicingWorkflowContext, Principal } from "./context";
 
@@ -268,56 +257,43 @@ function assertVisible(proc: keyof typeof visibility, principal: Principal) {
   }
 }
 
-function normalizeReconciliationState(status: string): ReconciliationState {
-  if (status === "queued" || status === "running" || status === "completed" || status === "failed") {
-    return status;
-  }
-  throw new ORPCError("INTERNAL_SERVER_ERROR", {
-    status: 500,
-    message: `Unsupported run status: ${status}`,
-  });
-}
-
 const os = implement<typeof invoicingWorkflowContract, InvoicingWorkflowContext>(invoicingWorkflowContract);
 
-export const triggerReconciliationProcedure = os.triggerReconciliation.handler(async ({ context, input }) => {
-  assertVisible("triggerReconciliation", context.principal);
+export function createInvoicingWorkflowRouter() {
+  return os.router({
+    triggerReconciliation: os.triggerReconciliation.handler(async ({ context, input }) => {
+      assertVisible("triggerReconciliation", context.principal);
 
-  const runId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  await context.inngest.send({
-    name: "invoicing.reconciliation.requested",
-    data: {
-      runId,
-      invoiceId: input.invoiceId,
-      requestedBy: context.principal.subject,
-    },
+      const runId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      await context.inngest.send({
+        name: "invoicing.reconciliation.requested",
+        data: {
+          runId,
+          invoiceId: input.invoiceId,
+          requestedBy: context.principal.subject,
+        },
+      });
+
+      return { accepted: true, runId };
+    }),
+
+    getRunStatus: os.getRunStatus.handler(async ({ context, input }) => {
+      assertVisible("getRunStatus", context.principal);
+      const run = await context.runtime.getRunStatus(input.runId);
+      if (!run) throw new ORPCError("RUN_NOT_FOUND", { status: 404, message: "Run not found" });
+      return {
+        runId: run.runId,
+        status: run.status as "queued" | "running" | "completed" | "failed",
+        isTerminal: run.status === "completed" || run.status === "failed",
+      };
+    }),
+
+    getRunTimeline: os.getRunTimeline.handler(async ({ context, input }) => {
+      assertVisible("getRunTimeline", context.principal);
+      return { runId: input.runId, events: await context.runtime.getRunTimeline(input.runId) };
+    }),
   });
-
-  return { accepted: true, runId };
-});
-
-export const getRunStatusProcedure = os.getRunStatus.handler(async ({ context, input }) => {
-  assertVisible("getRunStatus", context.principal);
-  const run = await context.runtime.getRunStatus(input.runId);
-  if (!run) throw new ORPCError("RUN_NOT_FOUND", { status: 404, message: "Run not found" });
-  const status = normalizeReconciliationState(run.status);
-  return {
-    runId: run.runId,
-    status,
-    isTerminal: isTerminalReconciliationState(status),
-  };
-});
-
-export const getRunTimelineProcedure = os.getRunTimeline.handler(async ({ context, input }) => {
-  assertVisible("getRunTimeline", context.principal);
-  return { runId: input.runId, events: await context.runtime.getRunTimeline(input.runId) };
-});
-
-export const invoicingWorkflowRouter = os.router({
-  triggerReconciliation: triggerReconciliationProcedure,
-  getRunStatus: getRunStatusProcedure,
-  getRunTimeline: getRunTimelineProcedure,
-});
+}
 ```
 
 ### 4.4 Durable execution function (server-only)
@@ -372,26 +348,27 @@ plugins/workflows/invoicing/src/
 ```ts
 // rawr.hq.ts
 import { oc } from "@orpc/contract";
+import { implement } from "@orpc/server";
 import { Inngest } from "inngest";
-import type { InvoicingProcedureContext } from "@rawr/invoicing";
-import { invoicingWorkflowRouter } from "./plugins/workflows/invoicing/src/router";
+import { createInvoicingWorkflowRouter } from "./plugins/workflows/invoicing/src/router";
 import { createInvoicingReconciliationFunction } from "./plugins/workflows/invoicing/src/functions/reconcile";
 import { invoicingWorkflowContract } from "./plugins/workflows/invoicing/src/contract";
 
-export function createRawrHqManifest(packageContext: InvoicingProcedureContext) {
-  const inngest = new Inngest({ id: "rawr-hq" });
+const inngest = new Inngest({ id: "rawr-hq" });
+const triggerContract = oc.router({ invoicing: invoicingWorkflowContract });
+const os = implement<typeof triggerContract, any>(triggerContract);
+const triggerRouter = os.router({ invoicing: createInvoicingWorkflowRouter() });
 
-  return {
-    workflows: {
-      triggerContract: oc.router({ invoicing: invoicingWorkflowContract }),
-      triggerRouter: { invoicing: invoicingWorkflowRouter },
-    },
-    inngest: {
-      client: inngest,
-      functions: [createInvoicingReconciliationFunction(inngest, packageContext)],
-    },
-  } as const;
-}
+export const rawrHqManifest = {
+  workflows: {
+    triggerContract,
+    triggerRouter,
+  },
+  inngest: {
+    client: inngest,
+    functions: [createInvoicingReconciliationFunction(inngest, /* packageContext */ {} as any)],
+  },
+} as const;
 ```
 
 ```ts
@@ -432,32 +409,14 @@ export function createWorkflowBoundaryContext(args: {
 ```ts
 // apps/server/src/rawr.ts (workflow-relevant excerpt)
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
-import { createInngestServeHandler, initializeExtendedTracesBaseline } from "@rawr/coordination-inngest";
-import type { InvoicingProcedureContext } from "@rawr/invoicing";
-import { createRawrHqManifest } from "../../rawr.hq";
-import { registerOrpcRoutes } from "./orpc";
+import { createInngestServeHandler } from "@rawr/coordination-inngest";
+import { rawrHqManifest } from "../../rawr.hq";
 import { createWorkflowBoundaryContext, requirePrincipal } from "./workflows/context";
 
-export function registerWorkflowAndInngestRoutes(
-  app: any,
-  runtime: any,
-  packageContext: InvoicingProcedureContext,
-  orpcOptions: any,
-) {
-  // Host bootstrap helper; initialize before composition/mount work.
-  initializeExtendedTracesBaseline();
-
-  const rawrHqManifest = createRawrHqManifest(packageContext);
+export function registerWorkflowAndInngestRoutes(app: any, runtime: any) {
   const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
   const inngestHandler = createInngestServeHandler(rawrHqManifest.inngest);
 
-  // 1) Runtime ingress first.
-  app.all("/api/inngest", async ({ request }: { request: Request }) => {
-    // Runtime ingress auth/signature check belongs here, never in browser.
-    return inngestHandler(request);
-  });
-
-  // 2) Caller-facing workflow boundary second.
   app.all(
     "/api/workflows/*",
     async ({ request }: { request: Request }) => {
@@ -476,8 +435,10 @@ export function registerWorkflowAndInngestRoutes(
     { parse: "none" },
   );
 
-  // 3) Register first-party/internal + published ORPC routes after ingress/workflow mounts.
-  registerOrpcRoutes(app, orpcOptions);
+  app.all("/api/inngest", async ({ request }: { request: Request }) => {
+    // Runtime ingress auth/signature check belongs here, never in browser.
+    return inngestHandler(request);
+  });
 }
 ```
 
@@ -495,28 +456,31 @@ packages/core/src/composition/manifest-generator.ts
 // plugins/web/invoicing-console/src/client.ts
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
+import type { ContractRouterClient } from "@orpc/contract";
 import { OpenAPILink } from "@orpc/openapi-client/fetch";
-import { capabilityClients, externalContracts } from "@rawr/composition/manifest-generator";
+import { capabilityClients } from "@rawr/composition/manifest-generator";
+
+type InvoicingWorkflowClient = ContractRouterClient<typeof capabilityClients.invoicing.workflows>;
 
 export function createFirstPartyInvoicingWorkflowClient(baseUrl: string) {
   const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
-  return createORPCClient(capabilityClients.invoicing.workflows, {
-    link: new RPCLink({
+  return createORPCClient<InvoicingWorkflowClient>(
+    new RPCLink({
       url: `${normalizedBaseUrl}/rpc`,
       fetch: (request, init) => fetch(request, { ...init, credentials: "include" }),
     }),
-  });
+  );
 }
 
 // Published OpenAPI path for third-party callers (or explicit first-party exception).
 export function createExternalInvoicingWorkflowClient(baseUrl: string) {
   const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
-  return createORPCClient(externalContracts.invoicing.workflows, {
-    link: new OpenAPILink({
+  return createORPCClient<InvoicingWorkflowClient>(
+    new OpenAPILink({
       url: `${normalizedBaseUrl}/api/workflows`,
       fetch: (request, init) => fetch(request, { ...init, credentials: "include" }),
     }),
-  });
+  );
 }
 ```
 
@@ -568,15 +532,13 @@ Browser-safe vs server-only boundary in this implementation:
 
 1. Define canonical workflow/domain semantics in `packages/invoicing/src/domain/*` (TypeBox-first, schema + static type in the same file).
 2. Define workflow trigger/status boundary contract in `plugins/workflows/invoicing/src/contract.ts` (inline I/O by default).
-3. Implement explicit package/workflow/host context contracts in `context.ts`, then export workflow procedures directly from `router.ts` when boundary logic is local (use `operations/*` only when mapping/adaptation needs are non-trivial).
+3. Implement explicit package/workflow/host context contracts in `context.ts`, then implement the workflow router using those contracts plus visibility/auth enforcement.
 4. Implement durable function(s) in workflow plugin, using package internal client for server-only orchestration.
 5. Compose workflows + functions in `rawr.hq.ts`.
-6. In host bootstrap, initialize baseline traces first.
+6. Mount `/rpc*` for first-party internal callers and mount `/api/workflows/*` for published workflow boundary routes.
 7. Mount runtime ingress at `/api/inngest` for Inngest runtime callbacks only.
-8. Mount `/api/workflows/*` for caller-facing workflow boundaries.
-9. Register `/rpc*` (first-party/internal) and `/api/orpc/*` (published API boundary) after ingress/workflow mounts.
-10. In web plugin, use `RPCLink` by default for first-party MFE workflow calls, and use `OpenAPILink` only for explicit external/public publication paths.
-11. Render status with shared package view logic regardless of transport path.
+8. In web plugin, use `RPCLink` by default for first-party MFE workflow calls, and use `OpenAPILink` only for explicit external/public publication paths.
+9. Render status with shared package view logic regardless of transport path.
 
 ---
 
@@ -663,29 +625,16 @@ Browser-safe vs server-only boundary in this implementation:
 | No glue black boxes | Satisfied | Composition and mount code shown explicitly in `rawr.hq.ts` and host route registration. |
 | API plugin mandatory for workflow path | Not required by design | API plugin is optional and only included when capability-specific boundary concerns justify it. |
 
-## 10) Conformance Anchors
-
-| Example segment | Canonical authority | Alignment summary |
-| --- | --- | --- |
-| Goal, caller model, and route split | `ARCHITECTURE.md` (Section 2.1, global invariants), `axes/03-split-vs-collapse.md`, `axes/08-workflow-api-boundaries.md` | First-party MFE default is `/rpc`; external/public is OpenAPI; `/api/inngest` remains runtime ingress only. |
-| Caller/Auth Semantics table | `ARCHITECTURE.md` canonical matrix, `axes/01-external-client-generation.md`, `axes/02-internal-clients.md` | Table mirrors caller/route/link/auth/forbidden constraints without adding new policy. |
-| Workflow contract ownership and I/O posture | `DECISIONS.md` D-006, D-011, D-012, `axes/08-workflow-api-boundaries.md` | Workflow trigger/status boundary I/O is contract-owned in plugin boundary modules; package imports are domain reuse only. |
-| Direct procedure exports in workflow router | `axes/08-workflow-api-boundaries.md`, `axes/11-core-infrastructure-packaging-and-composition-guarantees.md`, `ARCHITECTURE.md` integrative topology note | Direct procedure exports are used when logic is local/clear; `operations/*` remains optional for heavier mapping/adaptation and is not a blanket MUST. |
-| MFE client transport defaults and exception path | `DECISIONS.md` D-007, `axes/01-external-client-generation.md`, `axes/12-testing-harness-and-verification-strategy.md` | `/rpc` + `RPCLink` is first-party default; OpenAPI client path is external/exception-only and explicit. |
-| Host composition and mount ordering | `DECISIONS.md` D-008, `axes/07-host-composition.md` | Baseline traces initialized first; control-plane mount order stays explicit (`/api/inngest` -> `/api/workflows/*` -> `/rpc` + `/api/orpc/*`). |
-| Durable execution semantics | `axes/08-workflow-api-boundaries.md`, `axes/09-durable-endpoints.md`, `axes/05-errors-observability.md` | Durable work stays in Inngest functions; ingress remains signed runtime path; status/timeline remains caller-facing through boundary routes. |
-| Risks, guardrails, and checklist | `axes/05-errors-observability.md`, `axes/06-middleware.md`, `axes/12-testing-harness-and-verification-strategy.md` | Negative-route assertions and boundary/runtime separation remain explicit and testable. |
-
-## 11) Bridge to E2E 04
+## 10) Bridge to E2E 04
 
 Next step: continue with `e2e-04-context-middleware.md` to layer in production-scale principal metadata, request/correlation tracing, and explicit middleware control-plane separation across API, workflow, and durable runtime surfaces.
 
-### Canonical File Tree (Direct-Procedure Variant)
+### Source-Parity Canonical File Tree (verbatim legacy tree block)
 ```text
 packages/invoicing/src/
   domain/                                # shared semantic source (browser-safe + server-safe)
     reconciliation.ts                    # domain reconciliation state + invariants
-    status.ts                            # browser projection input schema + static type
+    status.ts                            # domain run status/timeline schemas + static types
     view.ts                              # browser-safe status projection
   service/                               # server-only orchestration/business operations
     reconciliation.ts
@@ -703,7 +652,11 @@ packages/invoicing/src/
 plugins/workflows/invoicing/src/
   context.ts                             # shared workflow boundary context contract
   contract.ts                            # plugin-owned workflow boundary contract (owns workflow I/O schemas)
-  router.ts                              # boundary auth/visibility + direct procedure exports
+  operations/
+    trigger.ts
+    status.ts
+    timeline.ts
+  router.ts                              # boundary auth/visibility + trigger/status handlers
   functions/
     reconcile.ts                         # durable execution
   index.ts
@@ -718,7 +671,7 @@ rawr.hq.ts                               # composition authority
 apps/server/src/
   workflows/
     context.ts                           # host boundary context contract + principal resolution
-  rawr.ts                                # mounts /api/inngest -> /api/workflows/* -> /rpc + /api/orpc/*
+  rawr.ts                                # mounts /api/workflows + /api/inngest
 
 plugins/web/invoicing-console/src/
   client.ts                              # browser client to workflow trigger/status surface

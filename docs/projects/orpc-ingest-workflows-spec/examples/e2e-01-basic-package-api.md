@@ -1,42 +1,31 @@
-# E2E 01 — Basic Internal Package + API Boundary (TypeBox-First, API-Only Baseline)
+# E2E 01 — Basic Internal Package + API Boundary (TypeBox-First)
 
-## 1) Goal and Scope Boundary
+## 1) Goal and use-case framing
 
-This walkthrough is the minimal policy-aligned baseline for:
+This walkthrough shows the smallest policy-compliant end-to-end path for:
 1. one internal capability package,
-2. one API boundary plugin that owns caller-facing API contracts,
-3. one explicit host boundary mount path for `/rpc` and `/api/orpc/*`.
+2. one API boundary plugin that owns its own contract,
+3. one host composition path from mounts to package execution.
 
-Use-case: expose invoicing APIs while keeping package logic transport-neutral and reusable.
-
-### In Scope
-- TypeBox-first package domain/service/procedure/client flow.
-- Plugin-owned API contract + direct router-bound procedures.
-- Explicit host boundary route registration (`/rpc`, `/api/orpc/*`).
-
-### Out of Scope (for E2E-01)
-- Workflow trigger authoring and workflow plugin routing (`/api/workflows/<capability>/*`).
-- Runtime ingress and durable execution wiring (`/api/inngest`, Inngest functions).
-
-Those concerns are intentionally covered in later examples.
+Use-case: expose invoicing APIs to callers while keeping domain logic transport-neutral and reusable.
 
 ### Key Axes Covered
-- AXIS_01: external publication boundary and contract ownership posture.
-- AXIS_02: package internal client defaults and transport-neutral package layering.
-- AXIS_07: explicit host composition/mount behavior for boundary APIs.
 
-### Quick Coordinates
+- AXIS_01: Contract-first API boundary generation and publication posture.
+- AXIS_02: Internal package structure and in-process client usage.
+- AXIS_07: Host mount/composition pattern for an API-only capability.
+
+### Quick coordinates
 
 | Concern | Canonical location / route |
 | --- | --- |
-| Operational host routes in this example | `/rpc`, `/api/orpc/*` |
-| Contract-backed external API paths shown in this example | `/api/orpc/invoices/processing/start`, `/api/orpc/invoices/processing/{runId}` |
-| Policy-only routes not implemented here | `/api/workflows/<capability>/*`, `/api/inngest` |
+| Hosting mount paths | `/rpc`, `/api/orpc`, `/api/workflows`, `/api/inngest` |
 | Internal package location | `packages/invoicing/src/*` |
 | API plugin location | `plugins/api/invoicing/src/*` |
-| Composition chain | `rawr.hq.ts` -> `apps/server/src/rawr.ts` -> `apps/server/src/orpc.ts` -> `plugins/api/invoicing/src/router.ts` -> `packages/invoicing/src/client.ts` |
+| Composition route | `rawr.hq.ts` -> `apps/server/src/rawr.ts` -> `apps/server/src/orpc.ts` -> `plugins/api/invoicing/src/router.ts` -> `packages/invoicing/src/client.ts` |
 
-### Endpoint divergence shown in this baseline
+### Endpoint divergences included in this basic example
+
 1. Start endpoint input divergence:
    - Boundary input: `{ invoiceId, requestedByUserId, requestSource? }`
    - Internal package input: `{ invoiceId, requestedBy }`
@@ -44,29 +33,32 @@ Those concerns are intentionally covered in later examples.
    - Internal package output: `{ runId, status }`
    - Boundary API output: `{ runId, phase, isTerminal }`
 
-## 2) E2E Topology Diagram
+### Split semantics are preserved (even in this API-only walkthrough)
+
+1. `/api/workflows/...` remains caller-trigger namespace by policy.
+2. `/api/inngest` remains runtime ingress only.
+3. This document implements API boundary only; it does not collapse or repurpose either workflow path.
+
+## 2) E2E topology diagram
 
 ```mermaid
 flowchart LR
-  FP["First-party caller"] --> RPC["/rpc/*"]
-  EX["External caller"] --> OR["/api/orpc/invoices/processing/*"]
-  RPC --> RH["Elysia mount: /rpc/* (parse none)"]
-  OR --> EH["Elysia mount: /api/orpc/* (parse none)"]
-  RH --> RPH["oRPC RPCHandler"]
+  C["Caller"] --> OR["/api/orpc/invoicing/api/*"]
+  OR --> EH["Elysia mount: /api/orpc* (parse none)"]
   EH --> OAH["oRPC OpenAPIHandler"]
-  RPH --> HQ["Composed hq router namespace: invoicing.api"]
   OAH --> HQ["Composed hq router namespace: invoicing.api"]
-  HQ --> APIR["invoicing API router (implement(contract))"]
-  APIR --> ICL["invoicing internal client (createRouterClient)"]
+  HQ --> APIR["invoicing router (implement(contract))"]
+  APIR --> OPS["operations/* mapping layer"]
+  OPS --> ICL["invoicing internal client (createRouterClient)"]
   ICL --> PR["invoicing internal procedures"]
   PR --> SV["service layer"]
   SV --> DM["domain invariants + entities"]
 
-  W["Workflow boundary (out-of-scope here)"] -. policy context .-> WF["/api/workflows/<capability>/*"]
-  ING["Runtime ingress (out-of-scope here)"] -. policy context .-> INGM["/api/inngest"]
+  W["Caller-trigger workflow APIs (separate policy namespace)"] -. reserved .-> WF["/api/workflows/..."]
+  ING["Inngest runtime"] --> INGM["/api/inngest (runtime ingress only)"]
 ```
 
-## 3) Canonical File Tree (API-Only Baseline)
+## 3) Canonical file tree
 
 ```text
 .
@@ -98,11 +90,14 @@ flowchart LR
 └── plugins/api/invoicing/src/
     ├── contract.ts
     ├── context.ts
+    ├── operations/
+    │   ├── start.ts
+    │   └── get-status.ts
     ├── router.ts
     └── index.ts
 ```
 
-## 4) Key Files With Concrete Code
+## 4) Key files with concrete code
 
 ### 4.1 TypeBox Standard Schema adapter (shared contract bridge)
 
@@ -305,12 +300,13 @@ export function createInvoicingInternalClient(context: InvoicingProcedureContext
 }
 ```
 
-### 4.3 API boundary plugin: contract ownership + direct procedure exports
+### 4.3 API boundary plugin: contract ownership + operation mapping
 
 ```text
 plugins/api/invoicing/src/
 ├── contract.ts
 ├── context.ts
+├── operations/{start.ts,get-status.ts}
 ├── router.ts
 └── index.ts
 ```
@@ -361,39 +357,59 @@ export type InvoicingApiContext = {
 ```
 
 ```ts
-// plugins/api/invoicing/src/router.ts
-import { implement } from "@orpc/server";
-import { invoicingApiContract } from "./contract";
-import type { InvoicingApiContext } from "./context";
+// plugins/api/invoicing/src/operations/start.ts
+import type { InvoicingApiContext } from "../context";
 
-const os = implement<typeof invoicingApiContract, InvoicingApiContext>(invoicingApiContract);
+export async function startInvoiceOperation(
+  context: InvoicingApiContext,
+  input: { invoiceId: string; requestedByUserId: string; requestSource?: string },
+) {
+  // Divergence A: boundary input is adapted before package call.
+  return context.invoicing.start({
+    invoiceId: input.invoiceId,
+    requestedBy: input.requestedByUserId,
+  });
+}
+```
+
+```ts
+// plugins/api/invoicing/src/operations/get-status.ts
+import type { InvoicingApiContext } from "../context";
 
 function isTerminal(status: "queued" | "running" | "completed" | "failed" | "canceled"): boolean {
   return status === "completed" || status === "failed" || status === "canceled";
 }
 
-// Canonical defaults often split `operations/*`; this baseline keeps direct procedure
-// exports to remove unnecessary indirection for two small handlers.
-export const startInvoiceProcessingProcedure = os.startInvoiceProcessing.handler(({ context, input }) =>
-  context.invoicing.start({
-    invoiceId: input.invoiceId,
-    requestedBy: input.requestedByUserId,
-  }),
-);
-
-export const getInvoiceProcessingStatusProcedure = os.getInvoiceProcessingStatus.handler(async ({ context, input }) => {
+export async function getStatusOperation(context: InvoicingApiContext, input: { runId: string }) {
   const internal = await context.invoicing.getStatus({ runId: input.runId });
+
+  // Divergence B: boundary output is an API-shaped projection.
   return {
     runId: internal.runId,
     phase: internal.status,
     isTerminal: isTerminal(internal.status),
   };
-});
+}
+```
+
+```ts
+// plugins/api/invoicing/src/router.ts
+import { implement } from "@orpc/server";
+import { invoicingApiContract } from "./contract";
+import type { InvoicingApiContext } from "./context";
+import { getStatusOperation } from "./operations/get-status";
+import { startInvoiceOperation } from "./operations/start";
+
+const os = implement<typeof invoicingApiContract, InvoicingApiContext>(invoicingApiContract);
 
 export function createInvoicingApiRouter() {
   return os.router({
-    startInvoiceProcessing: startInvoiceProcessingProcedure,
-    getInvoiceProcessingStatus: getInvoiceProcessingStatusProcedure,
+    startInvoiceProcessing: os.startInvoiceProcessing.handler(({ context, input }) =>
+      startInvoiceOperation(context, input),
+    ),
+    getInvoiceProcessingStatus: os.getInvoiceProcessingStatus.handler(({ context, input }) =>
+      getStatusOperation(context, input),
+    ),
   });
 }
 ```
@@ -409,7 +425,7 @@ export const invoicingApiSurface = {
 } as const;
 ```
 
-### 4.4 Composition root and host mounts (boundary-only in this baseline)
+### 4.4 Composition root and host mounting glue
 
 ```text
 rawr.hq.ts
@@ -420,7 +436,10 @@ apps/server/src/orpc.ts
 ```ts
 // rawr.hq.ts
 import { oc } from "@orpc/contract";
+import { Inngest } from "inngest";
 import { invoicingApiSurface } from "./plugins/api/invoicing/src";
+
+const inngest = new Inngest({ id: "rawr-hq" });
 
 export const rawrHqManifest = {
   orpc: {
@@ -435,7 +454,43 @@ export const rawrHqManifest = {
       },
     },
   },
+  // API-only basic example: keep runtime ingress wired, with no workflow functions in this walkthrough.
+  inngest: { client: inngest, functions: [] as const },
 } as const;
+```
+
+```ts
+// apps/server/src/rawr.ts
+import { createCoordinationRuntimeAdapter } from "./coordination";
+import type { AnyElysia } from "./plugins";
+import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
+import { registerOrpcRoutes } from "./orpc";
+
+export type RawrRoutesOptions = {
+  repoRoot: string;
+  baseUrl?: string;
+};
+
+export function registerRawrRoutes(app: AnyElysia, opts: RawrRoutesOptions) {
+  const runtime = createCoordinationRuntimeAdapter({ repoRoot: opts.repoRoot, inngestBaseUrl: "http://localhost:8288" });
+  const inngestBundle = createCoordinationInngestFunction({ runtime });
+  const inngestHandler = createInngestServeHandler({
+    client: inngestBundle.client,
+    functions: inngestBundle.functions,
+  });
+
+  // Runtime ingress only.
+  app.all("/api/inngest", async ({ request }) => inngestHandler(request));
+
+  registerOrpcRoutes(app, {
+    repoRoot: opts.repoRoot,
+    baseUrl: opts.baseUrl ?? "http://localhost:3000",
+    runtime,
+    inngestClient: inngestBundle.client,
+  });
+
+  return app;
+}
 ```
 
 ```ts
@@ -443,139 +498,113 @@ export const rawrHqManifest = {
 import type { AnyElysia } from "./plugins";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { RPCHandler } from "@orpc/server/fetch";
-import type { createInvoicingInternalClient } from "@rawr/invoicing";
+// Excerpt note: createOrpcRouter, RawrOrpcContext, and RegisterOrpcRoutesOptions
+// are defined in the same file above this route-registration section.
 
-export type RegisterOrpcRoutesContext = {
-  invoicing: ReturnType<typeof createInvoicingInternalClient>;
-};
+export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOptions) {
+  const router = createOrpcRouter();
+  const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
+  const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router);
 
-export function registerOrpcRoutes<TRouter>(app: AnyElysia, router: TRouter, context: RegisterOrpcRoutesContext) {
-  const rpcHandler = new RPCHandler(router);
-  const openapiHandler = new OpenAPIHandler(router);
+  app.all("/rpc/*", async (ctx) => {
+    const request = ctx.request as Request;
+    const result = await rpcHandler.handle(request, { prefix: "/rpc", context: options });
+    return result.matched ? result.response : new Response("not found", { status: 404 });
+  }, { parse: "none" });
 
-  app.all(
-    "/rpc/*",
-    async (ctx) => {
-      const request = ctx.request as Request;
-      const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
-      return result.matched ? result.response : new Response("not found", { status: 404 });
-    },
-    { parse: "none" },
-  );
-
-  app.all(
-    "/api/orpc/*",
-    async (ctx) => {
-      const request = ctx.request as Request;
-      const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
-      return result.matched ? result.response : new Response("not found", { status: 404 });
-    },
-    { parse: "none" },
-  );
+  app.all("/api/orpc/*", async (ctx) => {
+    const request = ctx.request as Request;
+    const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context: options });
+    return result.matched ? result.response : new Response("not found", { status: 404 });
+  }, { parse: "none" });
 
   return app;
 }
 ```
 
-```ts
-// apps/server/src/rawr.ts
-import type { AnyElysia } from "./plugins";
-import { createInvoicingInternalClient } from "@rawr/invoicing";
-import { rawrHqManifest } from "../../rawr.hq";
-import { registerOrpcRoutes } from "./orpc";
+## 5) Wiring steps (host -> composition -> plugin/package -> runtime)
 
-export function registerRoutes(
-  app: AnyElysia,
-  invoicingDeps: Parameters<typeof createInvoicingInternalClient>[0]["deps"],
-) {
-  const context = {
-    invoicing: createInvoicingInternalClient({ deps: invoicingDeps }),
-  } as const;
-
-  return registerOrpcRoutes(app, rawrHqManifest.orpc.router, context);
-}
-```
-
-## 5) Wiring Steps (Host -> Composition -> Plugin/Package)
-
-1. Build TypeBox adapter once (`packages/orpc-standards/src/typebox-standard-schema.ts`) and reuse it for package and boundary contracts.
-2. Build package layers in `packages/invoicing/src/*`:
-   - `domain/*` -> `service/*` -> `context.ts` -> `procedures/*` -> `router.ts` -> `client.ts`.
-3. Build API plugin in `plugins/api/invoicing/src/*`:
+1. Build TypeBox adapter once (`packages/orpc-standards/src/typebox-standard-schema.ts`) and reuse it across package and boundary contracts.
+2. Build internal package layers under `packages/invoicing/src/*`:
+   - domain (`run.ts`, `status.ts`) -> service -> `context.ts` -> procedures -> router -> client.
+3. Build API plugin under `plugins/api/invoicing/src/*`:
    - boundary `contract.ts`,
-   - boundary `context.ts`,
-   - direct procedure exports in `router.ts` via `implement(contract)`.
-4. Compose the API surface in `rawr.hq.ts` (`invoicing.api` namespace).
-5. In `apps/server/src/rawr.ts`, construct boundary context once (`invoicing` internal client) and call `registerOrpcRoutes(...)`.
-6. Keep mount forwarding parse-safe (`{ parse: "none" }`) for `/rpc/*` and `/api/orpc/*`.
-7. At request time, boundary handlers call the package internal client directly and package procedures execute service/domain logic.
+   - shared boundary `context.ts` for operation/router contracts,
+   - explicit `operations/*` mapping,
+   - `router.ts` via `implement(contract)`.
+4. Compose boundary surfaces in `rawr.hq.ts` into one boundary contract/router namespace (`invoicing.api`).
+5. In host boot (`apps/server/src/rawr.ts`), create runtime adapter and mount `/api/inngest` for runtime ingress only.
+6. In host boot, call `registerOrpcRoutes(...)` to mount `/rpc*` and `/api/orpc*` with `parse: "none"`.
+7. At request time, boundary handler delegates to operation; operation uses package internal client (`createRouterClient`) for in-process call.
+8. Package procedures execute service/domain logic and return typed output to boundary layer; boundary operation returns caller-facing shape.
 
-## 6) Request Sequence Walkthrough
+## 6) Runtime sequence walkthrough
 
-### Sequence A: `POST /api/orpc/invoices/processing/start`
-1. Caller sends `{ invoiceId, requestedByUserId, requestSource? }`.
-2. `/api/orpc/*` mount forwards to `OpenAPIHandler`.
-3. Boundary input is validated.
-4. `startInvoiceProcessing` procedure performs boundary-to-package input adaptation inline.
-5. Procedure maps boundary input to package input (`requestedByUserId -> requestedBy`).
-6. Package client calls `invoicingInternalRouter.start`.
-7. Package service returns `{ runId, accepted: true }`.
-8. Boundary returns typed API response.
+### Sequence A: `POST /api/orpc/invoicing/api/startInvoiceProcessing`
 
-### Sequence B: `GET /api/orpc/invoices/processing/{runId}`
-1. Caller sends `runId` as the route path parameter.
-2. Boundary procedure calls package `getStatus(...)`.
-3. Procedure invokes package client `getStatus({ runId })`.
+1. Caller sends boundary input `{ invoiceId, requestedByUserId, requestSource? }`.
+2. Elysia route `/api/orpc/*` forwards request to `OpenAPIHandler`.
+3. oRPC validates TypeBox-backed boundary input schema.
+4. `startInvoiceProcessing` handler calls `startInvoiceOperation(...)`.
+5. Operation maps boundary input to package input (`requestedByUserId -> requestedBy`).
+6. Package internal client calls `invoicingInternalRouter.start`.
+7. Package procedure validates internal schema and runs service logic.
+8. Service persists queued run and returns `{ runId, accepted: true }`.
+9. Response flows back through boundary handler to caller.
+
+### Sequence B: `GET /api/orpc/invoicing/api/getInvoiceProcessingStatus`
+
+1. Caller requests status by `runId`.
+2. Boundary handler delegates to `getStatusOperation(...)`.
+3. Operation calls package internal client `invoice.getStatus({ runId })`.
 4. Package returns `{ runId, status }`.
-5. Procedure projects boundary output `{ runId, phase, isTerminal }`.
-6. Caller receives API-shaped response without coupling to internal package shape.
+5. Boundary operation projects to caller shape:
+   - `phase = status`
+   - `isTerminal = status in [completed, failed, canceled]`
+6. Caller receives API-shaped response without exposing package internals directly.
 
-## 7) Rationale and Trade-Offs
+## 7) Rationale and trade-offs
 
-1. Plugin-owned boundary contracts keep caller-facing semantics independently evolvable.
-2. Package stays transport-neutral and reusable for internal call paths.
-3. Direct procedure exports keep adaptation logic local and obvious in this small baseline.
-4. TypeBox-first artifacts keep runtime validation and static typing aligned.
-5. Trade-off: internal and boundary shapes may intentionally diverge.
-6. Benefit: boundary evolution does not force package redesign.
-7. Inline I/O remains the default for local readability and ownership clarity; extraction is exception-only for shared/large shapes.
+1. Boundary contract ownership keeps external semantics stable and independently evolvable.
+2. Internal package remains transport-neutral and reusable for non-HTTP paths.
+3. Explicit `operations/*` makes adaptation logic visible (no hidden glue).
+4. TypeBox-authored artifacts keep one schema strategy across validation and OpenAPI conversion, with no Zod-authored contract/procedure schemas introduced and domain files exporting both schema and `Static<typeof Schema>` types from one source of truth.
+5. Trade-off: there is intentional duplication between internal and boundary shapes.
+6. Payoff: boundary can diverge safely (policy, naming, response shape) without forcing package redesign.
+7. Snippet default keeps procedure/contract I/O schemas inline at `.input/.output`; if extraction is needed for shared or very large shapes, use paired schema objects (`const XSchema = { input, output }`) and wire with `.input(std(XSchema.input))` + `.output(std(XSchema.output))`.
 
-## 8) What Can Go Wrong + Guardrails
+## 8) What can go wrong + guardrails
 
 | Failure mode | Why it happens | Guardrail |
 | --- | --- | --- |
-| Prefix mismatch (`/api/orpc` mount vs handler prefix) | Mount and handler config drift | Keep mount path and handler `prefix` adjacent in `registerOrpcRoutes` |
-| Request body consumed before handler | parser consumes stream | Keep `{ parse: "none" }` on forwarded mounts |
-| Boundary/package shape drift | implicit or ad hoc mapping | keep adaptation code explicit in direct procedure exports and test both divergent endpoints |
-| Package leaks boundary semantics | boundary concerns moved into package | keep package transport-neutral (`domain/service/procedures`) |
-| Server-internal calls routed over local HTTP | convenience shortcut | default to `createRouterClient` in package `client.ts` |
-| Baseline example drifts into workflow/runtime implementation | scope boundary blurred | keep workflow/runtime as out-of-scope notes and route readers to E2E-02 |
+| Prefix mismatch (`/api/orpc` vs handler prefix) | Mount path and handler prefix drift | Keep route + handler prefix side-by-side in `registerOrpcRoutes` |
+| Request body consumed before oRPC handler | Parser reads body first | Keep `{ parse: "none" }` on forwarded mounts |
+| Type drift between boundary and package | Operation mapping omitted or ad hoc | Require explicit `operations/*` and test each divergence |
+| Internal package leaks HTTP semantics | Boundary concerns moved into package | Keep package layers transport-neutral (`domain/service/procedures`) |
+| Local HTTP self-calls for internal invocation | Shortcutting through `/api/orpc` | Default to `createRouterClient` in `packages/<capability>/src/client.ts` |
+| `/api/inngest` treated as caller API | Runtime ingress semantics misunderstood | Document and enforce ingress-only policy in host and docs |
+| `/api/workflows` and `/api/inngest` semantics blurred | Split policy ignored | Keep both path roles explicit, even when one is not used in this example |
+| OpenAPI schema degradation | `__typebox` converter missing | Centralize TypeBox Standard Schema adapter and OpenAPI converter |
+| One-off extracted procedure/contract schemas | Local I/O ownership becomes harder to scan | Default to inline `.input(schema({...}))` / `.output(schema({...}))` for object-root wrappers, keep `std(...)` for non-object roots; extract only when shared or very large, and pair as `const XSchema = { input, output }` |
 
-## 9) Explicit Policy Consistency Checklist
+## 9) Explicit policy consistency checklist
 
-- [x] TypeBox-only contract/procedure schema authoring is used for package and boundary I/O.
-- [x] Domain schema files co-locate schema artifacts and `Static<typeof Schema>` exports.
-- [x] Snippets default to inline procedure/contract schema callsites (`.input/.output`).
+- [x] TypeBox-only contract/procedure schema authoring is used for package and boundary I/O (no Zod-authored contract/procedure snippets).
+- [x] Domain type files are TypeBox-authored (`schema + Static<typeof Schema>` in the same file), minimizing hand-written TS-only shape drift.
+- [x] Snippets default to inline procedure/contract schema callsites (`.input/.output`) for local readability and ownership clarity.
+- [x] When extraction is justified (shared or very large shapes), snippets use paired schema objects (`const XSchema = { input, output }`) with `.input(std(XSchema.input))` + `.output(std(XSchema.output))`.
 - [x] Internal package shape follows `domain/ service/ procedures/ context.ts router.ts client.ts errors.ts index.ts`.
-- [x] API plugin shape in this minimal baseline is `contract.ts + context.ts + router.ts + index.ts` with direct procedure exports.
-- [x] Procedure and boundary I/O schemas are owned by procedures/contracts, not by domain modules.
-- [x] Domain file naming is concise and non-redundant (`status.ts`, `run.ts`).
-- [x] Internal default invocation path is in-process package client, not local HTTP self-calls.
-- [x] Host mounts are explicit and parse-safe for `/rpc/*` and `/api/orpc/*`.
-- [x] Workflow/runtime implementation is intentionally out-of-scope in this baseline and deferred to E2E-02+.
+- [x] Shared procedure/API context contracts are defined in explicit `context.ts` files, not convenience in-router type declarations.
+- [x] Domain file names inside `domain/` avoid redundant capability prefixes (`status.ts`, `run.ts`).
+- [x] Procedure and boundary I/O schemas are owned by procedures/contracts, while domain modules stay domain-concept-only.
+- [x] API plugin shape follows `contract.ts + context.ts + operations/* + router.ts + index.ts`.
+- [x] Capability naming stays concise (`packages/invoicing`, `plugins/api/invoicing`) while preserving boundary clarity.
+- [x] Glue is explicit: composition root, host route mounts, and handler forwarding are shown concretely.
+- [x] Internal default invocation path is in-process client, not local HTTP self-calls.
+- [x] Boundary API and runtime ingress remain split semantics.
+- [x] `/api/workflows/...` and `/api/inngest` role clarity is preserved explicitly, even though this example is API-only.
+- [x] External boundary contract remains composed under one oRPC boundary surface.
 
-## 10) Conformance Anchors
+## 10) Bridge to E2E 02
 
-| Example segment | Canonical anchor(s) | Why this anchor applies |
-| --- | --- | --- |
-| Scope boundary and non-goals | `ARCHITECTURE.md` §2, §4; `axes/03-split-vs-collapse.md`; `axes/08-workflow-api-boundaries.md` | Keeps API-only baseline while preserving split posture correctness. |
-| Plugin-owned API contract and direct boundary procedures | `DECISIONS.md` D-006, D-011, D-012; `axes/01-external-client-generation.md`; `axes/02-internal-clients.md`; `axes/11-core-infrastructure-packaging-and-composition-guarantees.md` | Preserves plugin contract ownership while keeping boundary adaptation logic explicit and local for this minimal case. |
-| Internal package structure and in-process client path | `axes/02-internal-clients.md`; `axes/11-core-infrastructure-packaging-and-composition-guarantees.md` | Preserves transport-neutral package layering and internal client default. |
-| Host boundary route registration (`/rpc`, `/api/orpc/*`) | `axes/07-host-composition.md`; `ARCHITECTURE.md` §2.1 | Keeps explicit mount semantics and first-party transport boundaries. |
-| TypeBox-first schema bridge and snippet style | `ARCHITECTURE.md` §4 (TypeBox invariant); `DECISIONS.md` D-012; `axes/02-internal-clients.md` | Keeps schema-first authoring and inline-I/O default discipline. |
-| Guardrails and negative-surface clarity | `axes/05-errors-observability.md`; `axes/06-middleware.md`; `axes/12-testing-harness-and-verification-strategy.md` | Prevents route misuse and baseline scope drift. |
-| Canonical policy authority hierarchy | `ARCHITECTURE.md`; `DECISIONS.md`; `README.md` | Positions E2E-01 as a reference walkthrough under canonical policy authority. |
-
-## 11) Bridge to E2E 02
-
-Next step: `e2e-02-api-workflows-composed.md` adds caller-triggered workflow routing and runtime ingress/durable execution while preserving this package+API baseline and its ownership boundaries.
+Next step: to add caller-triggered durable behavior without duplicating capability logic, continue with `e2e-02-api-workflows-composed.md`. E2E 02 keeps this same package/API baseline and layers in a workflow plugin plus Inngest runtime ingress split.
