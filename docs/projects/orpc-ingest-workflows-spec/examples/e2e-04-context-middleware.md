@@ -1,106 +1,104 @@
-# E2E 04 — Real-World Context and Middleware Across Package, API, and Workflows
+# E2E 04 — Golden Example: Context + Middleware Across Package, API, and Workflows
 
-## 1) Goal and Real-World Framing
-This walkthrough shows one capability (`invoicing`) under realistic context scale:
-1. Multi-tenant principal + role checks.
-2. Request metadata (`requestId`, `correlationId`, IP, UA).
-3. Network policy (trusted ingress + egress policy tagging).
-4. Internal package orchestration via in-process client.
-5. Workflow trigger API that enqueues durable execution.
-6. Inngest runtime execution with run-level middleware context.
+## 1) Goal and Golden Scope
+This walkthrough is the **golden full-picture example** for this packet. It demonstrates one capability (`invoicing`) under production-like context and middleware constraints while staying fully aligned with canonical policy.
 
-This is intentionally not a toy single-parameter example.
+What this example covers end to end:
+1. Boundary context (principal, request metadata, network policy).
+2. Package-internal middleware and in-process client usage.
+3. API boundary + workflow trigger boundary, both plugin-owned.
+4. Durable runtime execution via Inngest ingress only.
+5. Explicit host mount/control-plane ordering and trace bootstrap.
+6. Route-aware testing harness expectations.
 
-### Key Axes Covered
-- AXIS_04: Full context envelope scope (principal, request metadata, correlation, network hints).
-- AXIS_05: Error handling, timeline recording, and trace correlation continuity.
-- AXIS_06: Middleware placement split (boundary vs durable runtime) and dedupe guidance.
-- AXIS_07: Baseline traces bootstrap order and explicit mount/control-plane order.
-- Prior example axes remain in force; this walkthrough composes them under production-like constraints.
+This file is a reference walkthrough, not policy authority; canonical policy remains in `ARCHITECTURE.md`, `DECISIONS.md`, and `axes/*.md`.
 
-## 2) Non-Negotiable Route Semantics
-1. `/rpc` is first-party/internal transport only (`RPCLink`) and is never externally published.
-2. First-party callers (including MFEs by default) use `/rpc`; external callers use published OpenAPI routes.
-3. `/api/workflows/<capability>/*` is caller-facing trigger/status publication surface (mounted at host via `/api/workflows/*` wildcard).
-4. `/api/orpc/*` is the caller-facing OpenAPI publication surface for non-workflow API boundaries.
-5. `/api/inngest` is runtime ingress only and never a caller-facing API.
-6. API/workflow boundary contracts are plugin-owned; workflow trigger/status I/O schemas stay at the workflow plugin boundary.
-7. Package layer remains transport-neutral and does not own caller-facing workflow boundary contracts/schemas.
-8. No dedicated `/rpc/workflows` mount is required by default.
+## 2) Locked Route and Ownership Contract
 
-### 2.1 Caller/Auth Semantics
+### 2.1 Non-negotiable route semantics
+1. `/rpc` is first-party/internal transport only.
+2. First-party callers (including MFEs by default) use `RPCLink` on `/rpc` unless an explicit exception is documented.
+3. External/third-party callers use published OpenAPI boundaries on `/api/orpc/*` and `/api/workflows/<capability>/*` via `OpenAPILink`.
+4. `/api/inngest` is signed runtime ingress only, never a caller-facing API route.
+5. No dedicated `/rpc/workflows` mount is required by default; first-party workflow procedures compose under existing `/rpc`.
+
+### 2.2 Canonical caller/auth matrix (contextual projection)
 | Caller type | Route family | Link type | Publication boundary | Auth expectation | Forbidden routes |
 | --- | --- | --- | --- | --- | --- |
-| First-party MFE/internal caller | `/rpc` | `RPCLink` | internal only (RPC never published) | first-party session/auth or trusted service context | `/api/inngest` |
+| First-party MFE/internal caller | `/rpc` | `RPCLink` | internal-only (never published) | first-party boundary session/auth or trusted service context | `/api/inngest` |
 | External/third-party caller | `/api/orpc/*`, `/api/workflows/<capability>/*` | `OpenAPILink` | externally published OpenAPI clients | boundary auth/session/token | `/rpc`, `/api/inngest` |
-| Runtime ingress (Inngest) | `/api/inngest` | Inngest callback transport | runtime-only | signed ingress verification + gateway allow-listing | `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
+| Runtime ingress (Inngest) | `/api/inngest` | Inngest callback transport | runtime-only | signed ingress verification + allow-listing | `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*` |
 
-### 2.2 Runtime Ingress Enforcement Minimum
-1. Verify Inngest request signatures before handing requests to runtime handlers.
-2. Deny non-runtime traffic to `/api/inngest` at gateway/proxy and route middleware.
-3. Keep `/api/inngest` out of published SDK/docs; publish only `/api/orpc/*` and `/api/workflows/<capability>/*`.
+### 2.3 Ownership split (D-006, D-011, D-014 compatible)
+1. Workflow/API boundary contracts are plugin-owned (`plugins/api/*/contract.ts`, `plugins/workflows/*/contract.ts`).
+2. Packages own transport-neutral domain logic/domain schemas/internal procedures/internal clients.
+3. Host composition owns concrete adapter assembly and route mounting.
+4. Plugins/packages consume injected ports/context; they do not bootstrap concrete host adapters.
 
-### 2.3 D-008 Bootstrap Baseline
-1. Host bootstrap initializes `extendedTracesMiddleware()` before composing the Inngest client/functions or route registration helpers.
-2. One runtime-owned Inngest bundle is reused across `/api/inngest` ingress and workflow trigger enqueue paths.
-3. Plugin middleware can extend runtime instrumentation context but does not replace/reorder the host baseline traces middleware.
-4. Mount/control-plane order is explicit: `/api/inngest`, then `/api/workflows/*`, then `/rpc` and `/api/orpc/*`.
-
-## 3) Topology Diagram
+## 3) End-to-End Topology
 ```mermaid
 flowchart LR
   FirstParty["First-party caller (MFE/internal)"] --> Rpc["/rpc"]
-  External["External caller"] --> Api["/api/orpc/invoicing/*"]
+  External["External caller"] --> Api["/api/orpc/*"]
   External --> Workflows["/api/workflows/invoicing/*"]
 
-  Api --> ApiPlugin["plugins/api/invoicing\ncontext + contract + operations + router"]
-  Workflows --> WfPlugin["plugins/workflows/invoicing\ncontext + contract + operations + router"]
-  Rpc --> ApiPlugin
-  Rpc --> WfPlugin
+  Rpc --> ApiPlugin["plugins/api/invoicing"]
+  Rpc --> WfPlugin["plugins/workflows/invoicing"]
+  Api --> ApiPlugin
+  Workflows --> WfPlugin
 
   ApiPlugin --> PkgClient["packages/invoicing/src/client.ts"]
   WfPlugin --> PkgClient
 
-  WfPlugin --> SendEvent["inngest.send(invoicing.reconciliation.requested)"]
+  WfPlugin --> SendEvent["inngest.send(...)"]
   SendEvent --> Ingress["/api/inngest"]
-  Ingress --> Fn["Inngest function\ninvoicing.reconciliation"]
+  Ingress --> Fn["Inngest function: invoicing.reconciliation"]
   Fn --> PkgClient
 
-  Host["apps/server/src/rawr.ts"] --> Api
+  Host["apps/server/src/rawr.ts"] --> Ingress
   Host --> Workflows
-  Host --> Ingress
-  Compose["rawr.hq.ts"] --> Host
+  Host --> Rpc
+  Host --> Api
+  Manifest["rawr.hq.ts"] --> Host
 ```
 
-## 4) File Tree Diff from E2E 03
+## 4) Canonical File Map (Adaptable Skeleton)
 ```text
+rawr.hq.ts
+apps/server/src/
+  rawr.ts
+  workflows/context.ts
 packages/invoicing/src/
+  domain/
+    reconciliation.ts
+  context.ts
   middleware.ts
-
-packages/invoicing/src/procedures/
-  preflight-reconciliation.ts
-  get-reconciliation-status.ts
-  mark-reconciliation-result.ts
-
-plugins/api/invoicing/src/operations/
-  start-reconciliation.ts
-  get-reconciliation-status.ts
-
+  procedures/
+    preflight-reconciliation.ts
+    get-reconciliation-status.ts
+    mark-reconciliation-result.ts
+  router.ts
+  client.ts
+  browser.ts
+plugins/api/invoicing/src/
+  context.ts
+  contract.ts
+  router.ts
 plugins/workflows/invoicing/src/
+  context.ts
+  contract.ts
+  router.ts
   inngest-middleware.ts
-
-plugins/workflows/invoicing/src/operations/
-  trigger-reconciliation.ts
-  get-run-status.ts
+  functions/reconciliation.ts
 ```
 
-Baseline note: core topology, composition root, and browser/multi-caller integration remain as established in `e2e-03-microfrontend-integration.md`; this walkthrough adds context-depth and middleware control details.
+## 5) Implementation Walkthrough (Code-Specific)
 
-## 5) Key Files and Concrete Code
-
-### 5.1 Package layer: shared domain, context contract, and idempotent middleware
-
-I/O ownership note: domain modules keep domain concepts only; procedure and boundary route schemas are defined beside procedures/contracts. Inline `.input/.output` is default for route/procedure I/O, and extracted I/O schemas are reserved for truly shared/large payloads using `{ input, output }` pairing.
+### 5.1 Package layer: domain + context + middleware + internal procedures
+I/O ownership note:
+1. `domain/*` keeps transport-independent domain concepts.
+2. Procedure/route I/O is owned in procedures/contracts.
+3. Snippets default to inline `.input/.output` schemas; extracted shapes are exception-only.
 
 ```ts
 // packages/invoicing/src/domain/reconciliation.ts
@@ -127,10 +125,6 @@ export const ReconciliationStateSchema = Type.Union(
 );
 export type ReconciliationState = Static<typeof ReconciliationStateSchema>;
 
-export function isTerminalReconciliationState(status: ReconciliationState): boolean {
-  return status === "completed" || status === "failed";
-}
-
 export const ReconciliationStatusSchema = Type.Object(
   {
     runId: Type.String({ minLength: 1 }),
@@ -155,7 +149,6 @@ export type InvoicingPrincipal = {
 };
 
 export type InvoicingRequest = {
-  // Request metadata is boundary/context-owned, not a domain concept.
   requestId: string;
   correlationId: string;
   sourceIp?: string;
@@ -163,8 +156,6 @@ export type InvoicingRequest = {
 };
 
 export type InvoicingDeps = {
-  newRunId: () => string;
-  nowIso: () => string;
   preflightReconciliation: (args: {
     tenantId: string;
     requestedBy: string;
@@ -195,7 +186,7 @@ import type { InvoicingProcedureContext } from "./context";
 const base = os.$context<InvoicingProcedureContext>();
 
 export const requireFinanceWriteMiddleware = base.middleware(async ({ context, next }) => {
-  // Manual dedupe: avoid repeating expensive or noisy checks in nested internal calls.
+  // D-009 guidance: explicit context marker for heavy checks.
   if (context.middlewareState?.roleChecked) return next();
 
   if (!context.principal.roles.includes("finance:write")) {
@@ -234,7 +225,7 @@ export const hydrateDepsMiddleware = base.middleware(async ({ context, next }) =
 // packages/invoicing/src/procedures/preflight-reconciliation.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 import { ReconciliationScopeSchema } from "../domain/reconciliation";
 import type { InvoicingProcedureContext } from "../context";
 import { hydrateDepsMiddleware, requireFinanceWriteMiddleware } from "../middleware";
@@ -263,7 +254,7 @@ export const preflightReconciliationProcedure = base
       { additionalProperties: false },
     ),
   )
-  .handler(async ({ context, input }) => {
+  .handler(({ context, input }) => {
     return context.deps.preflightReconciliation({
       tenantId: context.principal.tenantId,
       requestedBy: context.principal.subject,
@@ -276,7 +267,7 @@ export const preflightReconciliationProcedure = base
 // packages/invoicing/src/procedures/get-reconciliation-status.ts
 import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
 import { ReconciliationStatusSchema } from "../domain/reconciliation";
 import type { InvoicingProcedureContext } from "../context";
 import { hydrateDepsMiddleware, requireFinanceWriteMiddleware } from "../middleware";
@@ -287,6 +278,7 @@ export const getReconciliationStatusProcedure = base
   .use(requireFinanceWriteMiddleware)
   .use(hydrateDepsMiddleware)
   .input(schema({ runId: Type.String({ minLength: 1 }) }))
+  // Exception: shared domain status schema reused across package/API/workflow boundaries.
   .output(std(ReconciliationStatusSchema))
   .handler(async ({ context, input }) => {
     const status = await context.deps.getStatus({
@@ -329,7 +321,7 @@ export const markReconciliationResultProcedure = base
     ),
   )
   .output(std(ReconciliationStatusSchema))
-  .handler(async ({ context, input }) => {
+  .handler(({ context, input }) => {
     return context.deps.markResult({
       tenantId: context.principal.tenantId,
       input,
@@ -357,15 +349,15 @@ import { createRouterClient } from "@orpc/server";
 import { invoicingRouter } from "./router";
 import type { InvoicingProcedureContext } from "./context";
 
-export type InvoicingClient = ReturnType<typeof createInvoicingInternalClient>;
-
 export function createInvoicingInternalClient(context: InvoicingProcedureContext) {
   return createRouterClient(invoicingRouter, { context });
 }
+
+export type InvoicingClient = ReturnType<typeof createInvoicingInternalClient>;
 ```
 
-### 5.2 API plugin: boundary context and middleware concerns (auth/role/network)
-
+### 5.2 API boundary plugin: boundary-owned contract + direct procedure exports
+This example uses direct ORPC procedure exports in `router.ts` for cleaner flow when handler logic is local and readable. `operations/*` remains a valid optional split for larger mapping logic, but it is not required by canonical policy.
 ```ts
 // plugins/api/invoicing/src/context.ts
 import type { InvoicingClient } from "@rawr/invoicing";
@@ -452,10 +444,13 @@ export const invoicingApiContract = oc.router({
 ```
 
 ```ts
-// plugins/api/invoicing/src/operations/start-reconciliation.ts
-import { ORPCError } from "@orpc/server";
-import type { ReconciliationScope } from "@rawr/invoicing/domain/reconciliation";
-import type { InvoicingApiContext } from "../context";
+// plugins/api/invoicing/src/router.ts
+import { implement, ORPCError } from "@orpc/server";
+import type { ReconciliationStatus } from "@rawr/invoicing/domain/reconciliation";
+import { invoicingApiContract } from "./contract";
+import type { InvoicingApiContext } from "./context";
+
+const os = implement<typeof invoicingApiContract, InvoicingApiContext>(invoicingApiContract);
 
 function assertNetworkPolicy(context: InvoicingApiContext) {
   if (!context.networkPolicy.enforceInternalOnly) return;
@@ -481,62 +476,40 @@ function assertRole(context: InvoicingApiContext) {
   }
 }
 
-export async function startReconciliationOperation(
-  context: InvoicingApiContext,
-  input: { requestId: string; scope: ReconciliationScope },
-): Promise<{ accepted: true; runId: string; correlationId: string }> {
-  assertNetworkPolicy(context);
-  assertRole(context);
+export const startReconciliationProcedure = os.startReconciliation.handler(
+  async ({ context, input }): Promise<{ accepted: true; runId: string; correlationId: string }> => {
+    assertNetworkPolicy(context);
+    assertRole(context);
 
-  return context.invoicing.preflightReconciliation({
-    ...input,
-    // boundary-owned trace key propagation
-    requestId: context.request.requestId,
-  });
-}
-```
+    return context.invoicing.preflightReconciliation({
+      ...input,
+      requestId: context.request.requestId,
+    });
+  },
+);
 
-```ts
-// plugins/api/invoicing/src/operations/get-reconciliation-status.ts
-import type { ReconciliationStatus } from "@rawr/invoicing/domain/reconciliation";
-import type { InvoicingApiContext } from "../context";
-
-export async function getReconciliationStatusOperation(
-  context: InvoicingApiContext,
-  input: { runId: string },
-): Promise<ReconciliationStatus> {
-  return context.invoicing.getReconciliationStatus(input);
-}
-```
-
-```ts
-// plugins/api/invoicing/src/router.ts
-import { implement } from "@orpc/server";
-import { invoicingApiContract } from "./contract";
-import type { InvoicingApiContext } from "./context";
-import { getReconciliationStatusOperation } from "./operations/get-reconciliation-status";
-import { startReconciliationOperation } from "./operations/start-reconciliation";
-
-const os = implement<typeof invoicingApiContract, InvoicingApiContext>(invoicingApiContract);
+export const getReconciliationStatusProcedure = os.getReconciliationStatus.handler(
+  ({ context, input }): Promise<ReconciliationStatus> => {
+    assertNetworkPolicy(context);
+    assertRole(context);
+    return context.invoicing.getReconciliationStatus(input);
+  },
+);
 
 export function createInvoicingApiRouter() {
   return os.router({
-    startReconciliation: os.startReconciliation.handler(async ({ context, input }) =>
-      startReconciliationOperation(context, input),
-    ),
-    getReconciliationStatus: os.getReconciliationStatus.handler(async ({ context, input }) =>
-      getReconciliationStatusOperation(context, input),
-    ),
+    startReconciliation: startReconciliationProcedure,
+    getReconciliationStatus: getReconciliationStatusProcedure,
   });
 }
 ```
 
-### 5.3 Workflow plugin: trigger boundary and Inngest runtime relationship
-
+### 5.3 Workflow boundary plugin: trigger/status API separated from runtime ingress (direct procedure exports)
 ```ts
 // plugins/workflows/invoicing/src/context.ts
 import type { Inngest } from "inngest";
 import type { InvoicingClient } from "@rawr/invoicing";
+import type { ReconciliationState } from "@rawr/invoicing/domain/reconciliation";
 
 export type WorkflowPrincipal = {
   subject: string;
@@ -551,7 +524,10 @@ export type WorkflowRequest = {
 };
 
 export type WorkflowRuntime = {
-  getRunStatus: (runId: string, tenantId: string) => Promise<{ runId: string; status: string; updatedAt: string } | null>;
+  getRunStatus: (
+    runId: string,
+    tenantId: string,
+  ) => Promise<{ runId: string; status: ReconciliationState; updatedAt: string } | null>;
 };
 
 export type InvoicingWorkflowContext = {
@@ -616,10 +592,12 @@ export const invoicingWorkflowContract = oc.router({
 ```
 
 ```ts
-// plugins/workflows/invoicing/src/operations/trigger-reconciliation.ts
-import { ORPCError } from "@orpc/server";
-import type { ReconciliationScope } from "@rawr/invoicing/domain/reconciliation";
-import type { InvoicingWorkflowContext } from "../context";
+// plugins/workflows/invoicing/src/router.ts
+import { implement, ORPCError } from "@orpc/server";
+import { invoicingWorkflowContract } from "./contract";
+import type { InvoicingWorkflowContext } from "./context";
+
+const os = implement<typeof invoicingWorkflowContract, InvoicingWorkflowContext>(invoicingWorkflowContract);
 
 function assertWorkflowRole(context: InvoicingWorkflowContext) {
   if (!context.principal.canTriggerWorkflows) {
@@ -630,83 +608,63 @@ function assertWorkflowRole(context: InvoicingWorkflowContext) {
   }
 }
 
-export async function triggerReconciliationOperation(
-  context: InvoicingWorkflowContext,
-  input: { requestId: string; scope: ReconciliationScope },
-): Promise<{ accepted: true; runId: string; correlationId: string }> {
-  assertWorkflowRole(context);
+export const triggerReconciliationProcedure = os.triggerReconciliation.handler(
+  async ({ context, input }) => {
+    assertWorkflowRole(context);
 
-  // Reuse package preflight before durable enqueue.
-  const preflight = await context.invoicing.preflightReconciliation({
-    ...input,
-    requestId: context.request.requestId,
-  });
-
-  await context.inngest.send({
-    name: "invoicing.reconciliation.requested",
-    data: {
-      tenantId: context.principal.tenantId,
-      runId: preflight.runId,
+    const preflight = await context.invoicing.preflightReconciliation({
+      ...input,
       requestId: context.request.requestId,
-      correlationId: context.request.correlationId,
-      requestedBy: context.principal.subject,
-      scope: input.scope,
-    },
-  });
-
-  return preflight;
-}
-```
-
-```ts
-// plugins/workflows/invoicing/src/operations/get-run-status.ts
-import { ORPCError } from "@orpc/server";
-import type { ReconciliationStatus } from "@rawr/invoicing/domain/reconciliation";
-import type { InvoicingWorkflowContext } from "../context";
-
-export async function getRunStatusOperation(
-  context: InvoicingWorkflowContext,
-  input: { runId: string },
-): Promise<ReconciliationStatus> {
-  const run = await context.runtime.getRunStatus(input.runId, context.principal.tenantId);
-
-  if (!run) {
-    throw new ORPCError("NOT_FOUND", {
-      status: 404,
-      message: `Run not found: ${input.runId}`,
     });
-  }
 
-  return {
-    runId: run.runId,
-    tenantId: context.principal.tenantId,
-    status: run.status as "queued" | "running" | "completed" | "failed",
-    isTerminal: run.status === "completed" || run.status === "failed",
-    updatedAt: run.updatedAt,
-  };
-}
-```
+    await context.inngest.send({
+      name: "invoicing.reconciliation.requested",
+      data: {
+        tenantId: context.principal.tenantId,
+        runId: preflight.runId,
+        requestId: context.request.requestId,
+        correlationId: context.request.correlationId,
+        requestedBy: context.principal.subject,
+        scope: input.scope,
+      },
+    });
 
-```ts
-// plugins/workflows/invoicing/src/router.ts
-import { implement } from "@orpc/server";
-import { invoicingWorkflowContract } from "./contract";
-import type { InvoicingWorkflowContext } from "./context";
-import { getRunStatusOperation } from "./operations/get-run-status";
-import { triggerReconciliationOperation } from "./operations/trigger-reconciliation";
+    return preflight;
+  },
+);
 
-const os = implement<typeof invoicingWorkflowContract, InvoicingWorkflowContext>(invoicingWorkflowContract);
+export const getRunStatusProcedure = os.getRunStatus.handler(
+  async ({ context, input }) => {
+    assertWorkflowRole(context);
+
+    const run = await context.runtime.getRunStatus(input.runId, context.principal.tenantId);
+
+    if (!run) {
+      throw new ORPCError("NOT_FOUND", {
+        status: 404,
+        message: `Run not found: ${input.runId}`,
+      });
+    }
+
+    return {
+      runId: run.runId,
+      tenantId: context.principal.tenantId,
+      status: run.status,
+      isTerminal: run.status === "completed" || run.status === "failed",
+      updatedAt: run.updatedAt,
+    };
+  },
+);
 
 export function createInvoicingWorkflowRouter() {
   return os.router({
-    triggerReconciliation: os.triggerReconciliation.handler(async ({ context, input }) =>
-      triggerReconciliationOperation(context, input),
-    ),
-    getRunStatus: os.getRunStatus.handler(async ({ context, input }) => getRunStatusOperation(context, input)),
+    triggerReconciliation: triggerReconciliationProcedure,
+    getRunStatus: getRunStatusProcedure,
   });
 }
 ```
 
+### 5.4 Durable runtime middleware + function (Inngest control plane)
 ```ts
 // plugins/workflows/invoicing/src/inngest-middleware.ts
 import { InngestMiddleware } from "inngest";
@@ -759,7 +717,7 @@ export function createInvoicingReconciliationFunction(args: {
       });
 
       await step.run("invoicing/reconcile", async () => {
-        // External reconciliation work omitted for brevity.
+        // External reconciliation side-effects omitted.
         return { ok: true as const };
       });
 
@@ -780,11 +738,12 @@ export function createInvoicingReconciliationFunction(args: {
 }
 ```
 
-### 5.4 Host wiring: composition root and route mounts
-
+### 5.5 Manifest composition and host mounts (D-008 and D-014 explicit)
 ```ts
 // rawr.hq.ts
+import { oc } from "@orpc/contract";
 import { Inngest } from "inngest";
+import type { InvoicingClient } from "@rawr/invoicing";
 import { createInvoicingApiRouter, invoicingApiContract } from "./plugins/api/invoicing/src";
 import {
   createInvoicingWorkflowRouter,
@@ -793,32 +752,50 @@ import {
   invoicingRunContextMiddleware,
 } from "./plugins/workflows/invoicing/src";
 
-initializeExtendedTracesBaseline();
-const inngest = new Inngest({
-  id: "rawr-hq",
-  middleware: [invoicingRunContextMiddleware],
-});
+export function createRawrHqManifest(args: { invoicing: InvoicingClient }) {
+  const inngest = new Inngest({
+    id: "rawr-hq",
+    middleware: [invoicingRunContextMiddleware],
+  });
 
-export const rawrHqManifest = {
-  api: {
-    contract: invoicingApiContract,
-    router: createInvoicingApiRouter(),
-  },
-  workflows: {
-    triggerContract: invoicingWorkflowContract,
-    triggerRouter: createInvoicingWorkflowRouter(),
-  },
-  inngest: {
-    client: inngest,
-    functions: [
-      createInvoicingReconciliationFunction({
-        inngest,
-        // host injects context-bound package client at runtime
-        invoicing: {} as any,
+  const workflowTriggerRouter = createInvoicingWorkflowRouter();
+  const apiRouter = createInvoicingApiRouter();
+
+  return {
+    // Internal composed surface for /rpc first-party calls.
+    orpc: {
+      contract: oc.router({
+        invoicing: {
+          api: invoicingApiContract,
+          workflows: invoicingWorkflowContract,
+        },
       }),
-    ],
-  },
-} as const;
+      router: {
+        invoicing: {
+          api: apiRouter,
+          workflows: workflowTriggerRouter,
+        },
+      },
+    },
+
+    // Published workflow boundary surface for /api/workflows/<capability>/*.
+    workflows: {
+      triggerContract: oc.router({ invoicing: invoicingWorkflowContract }),
+      triggerRouter: { invoicing: workflowTriggerRouter },
+    },
+
+    // Single runtime-owned ingress bundle.
+    inngest: {
+      client: inngest,
+      functions: [
+        createInvoicingReconciliationFunction({
+          inngest,
+          invoicing: args.invoicing,
+        }),
+      ],
+    },
+  } as const;
+}
 ```
 
 ```ts
@@ -881,6 +858,7 @@ export function createBoundaryContext(request: Request, deps: BoundaryContextDep
 }
 
 export function createWorkflowBoundaryContext(request: Request, deps: BoundaryContextDeps) {
+  // Intentional alias: workflow boundary uses the same context contract as API boundary.
   return createBoundaryContext(request, deps);
 }
 ```
@@ -890,38 +868,67 @@ export function createWorkflowBoundaryContext(request: Request, deps: BoundaryCo
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { RPCHandler } from "@orpc/server/fetch";
 import { createInngestServeHandler } from "@rawr/coordination-inngest";
-import { rawrHqManifest } from "../../rawr.hq";
+import { createInvoicingInternalClient, type InvoicingDeps } from "@rawr/invoicing";
+import { createRawrHqManifest } from "../../rawr.hq";
 import { createBoundaryContext, createWorkflowBoundaryContext } from "./workflows/context";
 
-export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidrs: string[] }) {
+type RouteApp = {
+  all: (
+    path: string,
+    handler: (ctx: { request: Request }) => Promise<Response> | Response,
+    options?: { parse: "none" },
+  ) => void;
+};
+
+type RouteDeps = {
+  invoicingDeps: InvoicingDeps;
+  trustedCidrs: string[];
+};
+
+export function registerRoutes(app: RouteApp, deps: RouteDeps) {
+  // D-008: baseline traces initialized before Inngest bundle usage and route registration.
   initializeExtendedTracesBaseline();
 
-  const internalRpcRouter = {
-    invoicing: {
-      api: rawrHqManifest.api.router,
-      workflows: rawrHqManifest.workflows.triggerRouter,
+  const runtimeInvoicingClient = createInvoicingInternalClient({
+    principal: {
+      subject: "runtime",
+      tenantId: "system",
+      roles: ["system:runtime", "finance:write"],
     },
-  };
-  const rpcHandler = new RPCHandler(internalRpcRouter);
-  const apiHandler = new OpenAPIHandler(rawrHqManifest.api.router);
+    request: {
+      requestId: "runtime-bootstrap",
+      correlationId: "runtime-bootstrap",
+    },
+    deps: deps.invoicingDeps,
+    middlewareState: {},
+  });
+
+  const rawrHqManifest = createRawrHqManifest({
+    invoicing: runtimeInvoicingClient,
+  });
+
+  const rpcHandler = new RPCHandler(rawrHqManifest.orpc.router);
+  const apiHandler = new OpenAPIHandler(rawrHqManifest.orpc.router.invoicing.api);
   const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
   const inngestHandler = createInngestServeHandler(rawrHqManifest.inngest);
+  const contextDeps = {
+    inngest: rawrHqManifest.inngest.client,
+    invoicingDeps: deps.invoicingDeps,
+    trustedCidrs: deps.trustedCidrs,
+  } as const;
 
+  // 1) Runtime ingress first.
   app.all("/api/inngest", async ({ request }: { request: Request }) => {
-    // Runtime ingress only: verify signature before dispatch.
     const isVerified = await verifyInngestSignature(request);
     if (!isVerified) return new Response("forbidden", { status: 403 });
     return inngestHandler(request);
   });
 
+  // 2) Caller-facing workflow boundary routes.
   app.all(
     "/api/workflows/*",
     async ({ request }: { request: Request }) => {
-      const context = createWorkflowBoundaryContext(request, {
-        inngest: rawrHqManifest.inngest.client,
-        invoicingDeps: deps.invoicingDeps,
-        trustedCidrs: deps.trustedCidrs,
-      });
+      const context = createWorkflowBoundaryContext(request, contextDeps);
 
       const result = await workflowHandler.handle(request, {
         prefix: "/api/workflows",
@@ -933,14 +940,11 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
     { parse: "none" },
   );
 
+  // 3) First-party internal /rpc and published /api/orpc/*.
   app.all(
     "/rpc/*",
     async ({ request }: { request: Request }) => {
-      const context = createBoundaryContext(request, {
-        inngest: rawrHqManifest.inngest.client,
-        invoicingDeps: deps.invoicingDeps,
-        trustedCidrs: deps.trustedCidrs,
-      });
+      const context = createBoundaryContext(request, contextDeps);
 
       const result = await rpcHandler.handle(request, {
         prefix: "/rpc",
@@ -953,16 +957,12 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
   );
 
   app.all(
-    "/api/orpc/invoicing/*",
+    "/api/orpc/*",
     async ({ request }: { request: Request }) => {
-      const context = createBoundaryContext(request, {
-        inngest: rawrHqManifest.inngest.client,
-        invoicingDeps: deps.invoicingDeps,
-        trustedCidrs: deps.trustedCidrs,
-      });
+      const context = createBoundaryContext(request, contextDeps);
 
       const result = await apiHandler.handle(request, {
-        prefix: "/api/orpc/invoicing",
+        prefix: "/api/orpc",
         context,
       });
 
@@ -973,185 +973,110 @@ export function registerRoutes(app: any, deps: { invoicingDeps: any; trustedCidr
 }
 ```
 
-### 5.5 First-party default vs published client transport
+### 5.6 First-party default vs external published client transport
 ```ts
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { OpenAPILink } from "@orpc/openapi-client/fetch";
 
-// First-party default (MFE/internal): internal RPC surface
+// First-party default (including MFE by default): /rpc
 const firstPartyWorkflowClient = createORPCClient(capabilityClients.invoicing.workflows, {
   link: new RPCLink({ url: `${baseUrl}/rpc` }),
 });
 
-// Published external OpenAPI surface
+// Published external boundary: /api/workflows/<capability>/*
 const externalWorkflowClient = createORPCClient(externalContracts.invoicing.workflows, {
   link: new OpenAPILink({ url: `${baseUrl}/api/workflows` }),
 });
+
+// Published API boundary: /api/orpc/*
+const externalApiClient = createORPCClient(externalContracts.invoicing.api, {
+  link: new OpenAPILink({ url: `${baseUrl}/api/orpc` }),
+});
 ```
 
-## 6) Middleware Deduplication Boundaries (Run Once vs Repeated)
-| Boundary | Runs Once | Can Repeat | Dedup Strategy |
+## 6) Middleware and Context Boundaries (Control-Plane Split)
+
+### 6.1 Boundary vs runtime control-plane matrix
+| Concern | Boundary control plane (oRPC/Elysia) | Runtime control plane (Inngest) |
+| --- | --- | --- |
+| Auth/role/network policy | yes | no |
+| Caller route access policy | yes | no |
+| Request context hydration (`requestId`, `correlationId`, principal) | yes | no |
+| Durable retries/concurrency/step lifecycle | no | yes |
+| Runtime trace enrichment (`runTrace`) | no | yes |
+| `finished` hook side-effects | n/a | idempotent/non-critical guidance (D-010 open) |
+
+### 6.2 Dedupe boundaries
+| Layer | Runs once | Can repeat | Guidance |
 | --- | --- | --- | --- |
-| Host boundary context creation | Once per HTTP request | Every request | Keep pure/idempotent request hydration in one host helper. |
-| oRPC package middleware | Once per call chain when deduped | Can repeat via nested internal calls | Use context flags (`middlewareState`) for manual dedupe; rely on built-in dedupe only when leading-subset ordering conditions match. |
-| API/workflow boundary checks | Once per boundary request | Every boundary request | Keep auth/network enforcement at boundary, not package runtime. |
-| Inngest middleware hooks | Once per function execution phase | Can run again on retries/parallel branches | Restrict side effects to idempotent operations; avoid exactly-once assumptions in hooks like `finished`. |
-| `step.run` durable steps | Once per successful step ID state | Retried independently on failure | Use stable step IDs; keep step handler logic retry-safe. |
+| Host context factory | once per request | every request | keep deterministic and pure |
+| oRPC middleware | often once per chain | can repeat in nested calls | use explicit context markers for heavy checks (D-009 guidance) |
+| Inngest middleware hooks | per run/phase | can rerun on retries | avoid exactly-once assumptions |
+| `step.run` blocks | per successful step-id state | retried on failure | keep step handlers retry-safe |
 
 ## 7) Runtime Sequence Walkthrough
 
-### 7.1 API-start path (`/api/orpc/invoicing/*`)
-1. Host creates boundary context from request.
-2. API router enforces network/role concerns.
-3. Operation calls package internal client (`preflightReconciliation`).
-4. Package middleware validates role, hydrates deps, and returns typed output.
+### 7.1 API path (`/api/orpc/*`)
+1. Host creates boundary context from request headers and injected deps.
+2. API route enforces boundary role/network policy.
+3. API procedure handler calls package internal client in-process.
+4. Package middleware validates role + hydrates deps.
+5. Procedure returns typed boundary output.
 
-### 7.2 Workflow-trigger path (first-party default `/rpc`, external `/api/workflows/<capability>/*`)
-1. First-party callers hit workflow procedures through `/rpc`; external callers use `/api/workflows/<capability>/*`.
-2. Host creates boundary context.
-3. Workflow router enforces trigger permissions.
-4. Trigger operation calls package preflight and then sends `invoicing.reconciliation.requested`.
-5. Trigger route returns immediately with `{ accepted, runId, correlationId }`.
+### 7.2 Workflow trigger/status path (first-party `/rpc`, external `/api/workflows/<capability>/*`)
+1. Host creates boundary context.
+2. Workflow router checks trigger permissions.
+3. Trigger procedure handler preflights through package internal client.
+4. Trigger procedure handler enqueues `invoicing.reconciliation.requested` via `inngest.send`.
+5. Caller receives `{ accepted, runId, correlationId }` immediately.
 
-### 7.3 Durable runtime path (`/api/inngest`)
-1. Host bootstrap has already initialized baseline traces and mounted runtime ingress before boundary route families.
-2. Inngest invokes `serve` ingress with signed callback payload.
-3. Host verifies ingress signature before dispatch.
-4. Inngest middleware injects run trace context.
-5. Function executes `step.run` durable blocks.
-6. Function writes final status through package internal client.
-7. Caller polls workflow status route for updates.
+### 7.3 Runtime ingress path (`/api/inngest` only)
+1. Host verifies signed runtime callback.
+2. Inngest middleware enriches runtime context (`runTrace`).
+3. Durable function executes `step.run` blocks.
+4. Function writes final status through package internal client.
+5. Caller polls status via `/rpc` (first-party default) or `/api/workflows/*` (published boundary).
 
-## 8) Source-Backed Rationale
-1. oRPC separates initial/execution context and supports middleware-based context injection, matching explicit package + boundary context layering.
-- https://orpc.dev/docs/context
-- https://orpc.dev/docs/middleware
-2. Contract-first + handler mounts + per-request context injection support explicit host composition and mount split.
-- https://orpc.dev/docs/contract-first/implement-contract
-- https://orpc.dev/docs/openapi/openapi-handler
-- https://orpc.dev/docs/adapters/elysia
-3. Server-side client calls are first-class in oRPC, matching package-internal client usage.
-- https://orpc.dev/docs/client/server-side
-4. Inngest `serve` is runtime ingress, while `createFunction` + `step.run` own durable control-plane semantics.
-- https://www.inngest.com/docs/reference/serve
-- https://www.inngest.com/docs/reference/functions/create
-- https://www.inngest.com/docs/reference/functions/step-run
-5. Inngest middleware lifecycle and tracing docs support explicit runtime middleware layer and observability caveats.
-- https://www.inngest.com/docs/reference/middleware/lifecycle
-- https://www.inngest.com/docs/reference/typescript/extended-traces
+## 8) Harness Verification Blueprint (Axis 12 Aligned)
 
-## 9) Decision Status Notes
-1. D-008 is closed: host bootstrap initializes `extendedTracesMiddleware()` first, host composition keeps one runtime-owned Inngest bundle, mount/control-plane ordering is explicit, and plugin middleware extends (but does not replace/reorder) baseline traces middleware.
-2. D-009 remains open and non-blocking: keep heavy middleware dedupe at `SHOULD` with explicit context markers and constrained built-in dedupe assumptions.
-3. D-010 remains open and non-blocking: keep `finished` hook effects idempotent/non-critical without adding stricter packet-level enforcement language.
-
-## 10) Policy Consistency Checklist
-| Policy | Status | Notes |
-| --- | --- | --- |
-| D-008 baseline traces bootstrap + single runtime bundle + explicit mount order | Satisfied | Snippets lock initialization and mount ordering (`/api/inngest`, `/api/workflows/*`, then `/rpc` + `/api/orpc/*`) while preserving split control planes. |
-| D-005/D-006/D-007 invariants | Satisfied | Caller route split, plugin-owned boundary contracts, and caller transport/publication boundaries are unchanged in this walkthrough. |
-| TypeBox-only contract/procedure schema authoring + static types in same file | Satisfied | Contract/procedure snippets remain TypeBox-authored (no Zod-authored contract/procedure snippets), and domain schemas with `Static<typeof Schema>` remain co-located. |
-| Inline-I/O default + paired extraction shape | Satisfied | Contract/procedure snippets default to inline `.input/.output`; extracted I/O remains exception-only and uses paired `{ input, output }`. |
-| `context.ts` contract placement | Satisfied | Package/API/workflow context contracts are explicit modules. |
-| Procedure/boundary I/O ownership | Satisfied | Procedure and boundary contract snippets own trigger/mark/status route I/O schemas; domain module stays concept-only. |
-| Request metadata ownership | Satisfied | `requestId`/`correlationId`/network request metadata live in context-layer request types, not domain schema ownership. |
-| Object-root schema wrapper usage | Satisfied | Snippets use `schema({...})` for object-root I/O and keep explicit `std(...)` for non-object roots. |
-| First-party default workflow transport | Satisfied | First-party callers default to `/rpc` via `RPCLink`; OpenAPI workflow routes remain published external boundaries (or explicit exception use). |
-| Split semantics (`/api/workflows/<capability>/*` vs `/api/inngest`) | Satisfied | Trigger/status and runtime ingress are explicitly separate mounts. |
-| Runtime ingress enforcement | Satisfied | `/api/inngest` path is treated as signed runtime ingress with explicit signature verification before dispatch. |
-| Boundary vs runtime middleware separation | Satisfied | API/workflow boundary checks stay outside durable function internals. |
-| Middleware dedupe guidance | Satisfied | Explicit table documents once/repeated semantics and caveats. |
-| D-013 metadata runtime simplification compatibility | Satisfied | Test blueprint keys runtime assertions by manifest-owned surfaces and `rawr.kind` + `rawr.capability`; legacy metadata fields are excluded from runtime-behavior assertions. |
-| D-014 package-first/import-direction compatibility | Satisfied | Blueprint keeps reusable in-process helpers package-first and preserves one-way import direction (`plugins/*` tests -> `packages/*` helpers only). |
-
-## 11) Harness Verification Blueprint (Axis 12 Alignment)
-
-### 11.0 Package-first ownership and DX contract
-1. Treat this blueprint as a design contract, not implementation prescription.
-2. Keep reusable in-process harness helpers package-first (`packages/*`) and keep plugin suites surface-specific.
-3. Keep test import direction clean: plugin suites may consume package helpers; package suites do not depend on plugin runtime modules.
-4. Prefer deterministic helper entrypoints and typed TS factories to keep plugin/package author wiring low-friction.
-
-### 11.1 Surface-to-harness suite map
-| Surface context | Primary suite type | Harness + route | Core assertions | Forbidden route assertions |
+### 8.1 Surface-to-harness map
+| Surface context | Primary harness | Route family | Required positives | Required negatives |
 | --- | --- | --- | --- | --- |
-| Web plugin (first-party default) | boundary/network integration | `RPCLink` -> `/rpc` | trigger + status behavior, boundary auth, typed errors | browser path never targets `/api/inngest` |
-| Web plugin (published external mode) | boundary/network integration | `OpenAPILink` -> `/api/orpc/*` and `/api/workflows/<capability>/*` | published OpenAPI contract shape and auth semantics | external mode never uses `/rpc`; never uses `/api/inngest` |
-| CLI plugin (internal command flow) | in-process integration | `createRouterClient` (no local HTTP self-call default) | operation/package flow, middleware dedupe markers, context contract usage | CLI caller-style tests do not call `/api/inngest` |
-| API plugin | in-process + boundary/network integration | `createRouterClient` + `OpenAPILink` on `/api/orpc/*` | operation mapping, boundary policy enforcement, error shape | API caller harness does not use `/api/inngest` |
-| Workflow plugin trigger/status | in-process + boundary/network integration | `createRouterClient`, `RPCLink` on `/rpc`, `OpenAPILink` on `/api/workflows/<capability>/*` | preflight->enqueue mapping, trigger/status contract behavior | trigger/status caller harness does not use `/api/inngest` |
-| Workflow runtime function | runtime ingress verification | signed callback -> `/api/inngest` | signature enforcement, runtime middleware lifecycle, durable step/run status continuity | runtime ingress suite does not claim caller-boundary behavior for `/rpc` or published OpenAPI routes |
+| Web first-party | `RPCLink` | `/rpc` | trigger/status behavior, typed errors, correlation continuity | reject `/api/inngest` |
+| Web external/published | `OpenAPILink` | `/api/orpc/*`, `/api/workflows/<capability>/*` | published contract + auth boundaries | reject `/rpc`; reject `/api/inngest` |
+| CLI internal | `createRouterClient` | in-process | package flow correctness, dedupe behavior, context contracts | no local HTTP self-call default |
+| API plugin boundary | `createRouterClient` + `OpenAPILink` | in-process + `/api/orpc/*` | boundary procedure mapping + boundary middleware behavior | reject `/api/inngest` |
+| Workflow trigger/status | `RPCLink` + `OpenAPILink` + `createRouterClient` | `/rpc` + `/api/workflows/<capability>/*` + in-process preflight | preflight -> enqueue -> status continuity | caller suites reject `/api/inngest`; external suites reject `/rpc` |
+| Runtime ingress | signed callback transport | `/api/inngest` | signature, durable lifecycle, step behavior | do not assert caller-route semantics |
 
-### 11.2 Verification layers (purpose boundaries)
-| Layer | What this E2E stack should verify | What this layer must not claim |
-| --- | --- | --- |
-| Unit | domain invariants, operation mapping, explicit middleware helper behavior | route publication/auth/mount correctness |
-| In-process integration | package internal client flow, middleware dedupe markers, trigger preflight internals | boundary-network route behavior |
-| Boundary/network integration | `/rpc` first-party behavior, published OpenAPI boundary behavior, typed boundary errors | runtime ingress callback semantics |
-| Runtime ingress verification | signed `/api/inngest` handling, durable middleware + `step.run` lifecycle behavior | caller-facing boundary contract guarantees |
-| Full E2E | trigger -> enqueue -> durable execution -> status polling with correlation continuity | policy shortcuts that bypass route/caller split |
-
-### 11.3 Canonical negative route tests
+### 8.2 Mandatory negative-route tests
 ```ts
-it(\"blocks browser-style caller use of /api/inngest\", async () => {
-  const response = await fetch(`${baseUrl}/api/inngest`, {
-    method: \"POST\",
-    headers: { \"content-type\": \"application/json\" },
-    body: JSON.stringify({}),
-  });
-  expect([401, 403, 404]).toContain(response.status);
+it("keeps /api/inngest out of caller-route surfaces", () => {
+  const callerRouteFamilies = getCallerRouteFamiliesFromManifest(rawrHqManifest);
+  expect(callerRouteFamilies).toEqual(
+    expect.arrayContaining(["/rpc", "/api/orpc/*", "/api/workflows/<capability>/*"]),
+  );
+  expect(callerRouteFamilies).not.toContain("/api/inngest");
 });
 
-it(\"rejects external caller access to /rpc\", async () => {
+it("rejects external caller access to /rpc", async () => {
   const response = await fetch(`${externalBaseUrl}/rpc/invoicing/workflows/getRunStatus`, {
-    method: \"POST\",
-    headers: { \"content-type\": \"application/json\" },
-    body: JSON.stringify({ input: { runId: \"run-1\" } }),
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ input: { runId: "run-1" } }),
   });
   expect([401, 403, 404]).toContain(response.status);
 });
 
-it(\"keeps runtime ingress verification isolated from caller-route assertions\", async () => {
+it("keeps runtime ingress verification isolated from caller-route assertions", async () => {
   const ingressResponse = await signedInngestCallback(baseUrl, payload);
   expect(ingressResponse.status).toBe(200);
-  // Caller-route assertions happen in separate /rpc or /api/* boundary suites.
+  // Caller-route assertions belong in separate /rpc and /api/* suites.
 });
 ```
 
-### 11.4 What changes vs unchanged for this blueprint
-- **Changes:** This example now includes a reusable, route-aware testing harness blueprint mapped to caller contexts and verification layers.
-- **Unchanged:** D-005 route split, D-006 plugin ownership, D-007 caller transport/publication boundaries, and D-008 bootstrap ordering remain exactly as already locked.
-
-### 11.5 Execution-Ready Acceptance Checklist (Copy/Paste)
-Use this checklist verbatim when applying downstream docs/runbook updates:
-
-1. **Web first-party suite (`RPCLink` on `/rpc`)**
-   - Assert typed boundary errors and correlation continuity on workflow trigger/status calls.
-   - Assert browser/web caller path rejects `/api/inngest`.
-2. **Web published-external suite (`OpenAPILink` on `/api/orpc/*` and `/api/workflows/<capability>/*`)**
-   - Assert published OpenAPI contract behavior and auth boundaries.
-   - Assert external suite rejects `/rpc`.
-   - Assert external suite rejects `/api/inngest`.
-3. **CLI internal suite (`createRouterClient`)**
-   - Assert in-process package flow, dedupe markers, and context contract usage.
-   - Assert no local HTTP self-call default replaces in-process verification.
-4. **API plugin suite (in-process + published boundary)**
-   - Assert operation mapping + boundary middleware behavior.
-   - Assert API caller path rejects `/api/inngest`.
-5. **Workflow trigger/status suite (`RPCLink` first-party + `OpenAPILink` published)**
-   - Assert preflight -> enqueue -> status-read continuity and route-family correctness.
-   - Assert caller paths reject `/api/inngest`.
-6. **Runtime-ingress suite (signed callback `/api/inngest`)**
-   - Assert signature verification and durable middleware/step lifecycle behavior.
-   - Assert runtime-ingress suite does not claim caller-boundary guarantees for `/rpc`, `/api/orpc/*`, or `/api/workflows/<capability>/*`.
-7. **Cross-suite metadata/composition checks**
-   - Assert runtime identity keys are `rawr.kind` + `rawr.capability` on manifest-owned surfaces.
-   - Assert no suite uses `templateRole`, `channel`, `publishTier`, or `published` as runtime behavior keys.
-   - Assert helper imports keep one-way direction (`plugins/*` suites may import `packages/*` helpers; package suites do not import plugin runtime modules).
-
-### 11.6 Mandatory Suite IDs for Downstream Tracking
-The downstream docs/runbooks must track these suite IDs explicitly:
+### 8.3 Suite IDs for downstream tracking
 1. `suite:web:first-party-rpc`
 2. `suite:web:published-openapi`
 3. `suite:cli:in-process`
@@ -1160,47 +1085,36 @@ The downstream docs/runbooks must track these suite IDs explicitly:
 6. `suite:runtime:ingress`
 7. `suite:cross-surface:metadata-import-boundary`
 
-### Source-Parity Canonical File Tree (verbatim legacy tree block)
-```text
-rawr.hq.ts
-apps/server/src/
-  rawr.ts
-  workflows/
-    context.ts
-packages/orpc-standards/src/
-  typebox-standard-schema.ts
-  index.ts
-packages/invoicing/src/
-  context.ts
-  domain/
-    reconciliation.ts
-  middleware.ts
-  procedures/
-    preflight-reconciliation.ts
-    get-reconciliation-status.ts
-    mark-reconciliation-result.ts
-    index.ts
-  router.ts
-  client.ts
-  errors.ts
-  index.ts
-plugins/api/invoicing/src/
-  context.ts
-  contract.ts
-  operations/
-    start-reconciliation.ts
-    get-reconciliation-status.ts
-  router.ts
-  index.ts
-plugins/workflows/invoicing/src/
-  context.ts
-  contract.ts
-  operations/
-    trigger-reconciliation.ts
-    get-run-status.ts
-  router.ts
-  inngest-middleware.ts
-  functions/
-    reconciliation.ts
-  index.ts
-```
+## 9) D-013 / D-014 / D-015 Compatibility Notes
+1. Runtime identity and composition checks are keyed to manifest-owned surfaces and `rawr.kind` + `rawr.capability` (D-013).
+2. Legacy metadata fields (`templateRole`, `channel`, `publishTier`, `published`) are not runtime behavior keys (D-013).
+3. Reusable harness and infrastructure helpers remain package-first; plugin suites may import package helpers, not vice versa (D-014/D-015).
+4. Verification stays route-aware and layer-specific per Axis 12 (D-015).
+
+## 10) Policy Consistency Checklist
+- [x] Route split and caller/auth semantics match canonical matrix.
+- [x] `/api/inngest` remains runtime-only and signed.
+- [x] Workflow/API boundary contracts are plugin-owned.
+- [x] Package remains transport-neutral and internal-client-first.
+- [x] Context envelopes remain split (boundary request context vs runtime function context).
+- [x] Middleware control planes remain split (boundary vs durable runtime).
+- [x] D-008 bootstrap order is explicit and host-owned.
+- [x] D-009 remains guidance-level (`SHOULD`) for heavy middleware dedupe markers.
+- [x] D-010 remains guidance-level (idempotent/non-critical `finished` side effects).
+- [x] D-013 compatibility is explicit (manifest + capability/kind keys only).
+- [x] D-014 compatibility is explicit (host-owned adapter assembly + one-way import direction).
+- [x] D-015 harness/negative-route expectations are explicit.
+
+## Conformance Anchors
+| Example segment | Canonical anchors |
+| --- | --- |
+| Sections 2.1-2.3 (route, caller, ownership contract) | `ARCHITECTURE.md` sections 2, 2.1, 4, 5; `DECISIONS.md` D-005, D-006, D-007 |
+| Sections 3-4 (topology + file map) | `ARCHITECTURE.md` sections 6-9; `axes/07-host-composition.md`; `axes/08-workflow-api-boundaries.md` |
+| Section 5.1 (package context/middleware/procedures) | `axes/02-internal-clients.md`; `axes/04-context-propagation.md`; `axes/06-middleware.md`; `DECISIONS.md` D-011, D-012 |
+| Sections 5.2-5.3 (plugin-owned contracts/direct procedures) | `axes/01-external-client-generation.md`; `axes/08-workflow-api-boundaries.md`; `DECISIONS.md` D-006, D-011, D-012 |
+| Sections 5.4-5.5 (runtime middleware + host bootstrap/mount order) | `axes/05-errors-observability.md`; `axes/06-middleware.md`; `axes/07-host-composition.md`; `DECISIONS.md` D-008, D-009, D-010 |
+| Section 5.6 (transport split by caller mode) | `axes/01-external-client-generation.md`; `axes/03-split-vs-collapse.md`; `ARCHITECTURE.md` caller/auth matrix |
+| Sections 6-7 (control-plane split + runtime sequences) | `axes/04-context-propagation.md`; `axes/05-errors-observability.md`; `axes/06-middleware.md`; `axes/08-workflow-api-boundaries.md` |
+| Section 8 (harness blueprint) | `axes/12-testing-harness-and-verification-strategy.md`; `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md`; `DECISIONS.md` D-015 |
+| Section 9 (metadata + infrastructure seam compatibility) | `axes/10-legacy-metadata-and-lifecycle-simplification.md`; `axes/11-core-infrastructure-packaging-and-composition-guarantees.md`; `DECISIONS.md` D-013, D-014 |
+| Section 10 (consistency checklist) | `README.md` authority split + all canonical docs above |

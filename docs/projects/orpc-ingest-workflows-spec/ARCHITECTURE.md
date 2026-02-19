@@ -182,6 +182,8 @@ apps/server/src/orpc.ts
 apps/server/src/rawr.ts
 ```
 
+Topology note: `operations/*` is the canonical default organization for boundary mapping logic, but direct boundary procedure exports in `router.ts` are valid for small/local handlers when ownership and route semantics remain unchanged.
+
 ## 8) Integrative Interaction Flows
 
 ### Flow A: External API -> Internal Package Client Path

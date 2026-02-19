@@ -33,11 +33,11 @@
 | --- | --- | --- | --- |
 | Shared infrastructure package layer | define reusable ports/contracts + pure helpers | context metadata types, `AuthPort`, `DbPort`, resolver helpers | boundary route contracts, host route mounting |
 | Capability package layer | domain/service/procedures/internal clients consuming injected ports | `packages/<domain>/src/context.ts`, `client.ts`, `service/*` | plugin boundary ownership, host adapter bootstrapping |
-| Boundary plugin layer | caller-facing contracts/operations/router composition | `plugins/api/*/contract.ts`, `plugins/workflows/*/router.ts` | concrete auth/db adapter construction, host mount ownership |
+| Boundary plugin layer | caller-facing contract + procedure/router composition (direct router handlers or `operations/*` modules) | `plugins/api/*/contract.ts`, `plugins/workflows/*/router.ts` | concrete auth/db adapter construction, host mount ownership |
 | Host composition layer | concrete adapter assembly + context factories + mount order | `rawr.hq.ts`, `apps/server/src/rawr.ts`, `apps/server/src/workflows/context.ts` | package-domain behavior ownership |
 
 ## Composition Guarantees
-1. Plugin authors implement contracts/operations and declare required context ports; they do not design infrastructure bootstrapping.
+1. Plugin authors implement contracts and boundary procedures (direct router handlers or `operations/*` modules) and declare required context ports; they do not design infrastructure bootstrapping.
 2. Host owners wire concrete adapters once and inject them into boundary contexts and package clients.
 3. Capability packages stay reusable across API/workflow/durable paths because dependencies are injected through typed ports.
 4. Boundary/runtime split remains explicit: caller-facing routes consume boundary context factories, while runtime ingress/durable execution consumes runtime-owned adapters.
@@ -52,7 +52,7 @@
 | Host composition | plugins, capability packages, shared infrastructure packages | none (host is terminal composition owner) |
 
 ## Minimal Plugin Author Wiring Contract
-1. Declare boundary contract/procedures in plugin `contract.ts` and `operations/*`.
+1. Declare boundary contracts in plugin `contract.ts`, and implement boundary procedures either directly in `router.ts` or in `operations/*` modules (`operations/*` remains the canonical default for larger mapping logic).
 2. Declare required context ports in plugin `context.ts` (principal/request/runtime/auth/db-ready facades as needed).
 3. Consume package internal clients via injected context, not HTTP self-calls for server-internal paths.
 4. Rely on host composition for concrete adapter provisioning.
