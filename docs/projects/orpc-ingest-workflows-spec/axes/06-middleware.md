@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is a focused slice and does not override canonical core policy.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for middleware placement and cross-cutting control-plane behavior.
+- **What it covers:** boundary-vs-runtime middleware separation, dedupe guidance, metadata/context usage constraints, and harness-specific verification obligations.
+- **What this communicates:** middleware logic may be shared, but boundary and durable runtime control planes must remain operationally separate.
+- **Who should read this:** plugin authors adding middleware, runtime owners, and test maintainers validating route-specific middleware behavior.
+- **Jump conditions:** for context contract boundaries, jump to [04-context-propagation.md](./04-context-propagation.md); for error/timeline semantics, jump to [05-errors-observability.md](./05-errors-observability.md); for harness-layer verification model, jump to [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md).
+
 
 ## In Scope
 - Placement rules for boundary middleware vs durable runtime controls.
@@ -17,21 +24,29 @@
 - Full test harness taxonomy and layer definitions (see [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md)).
 
 ## Canonical Policy
+
+### Control-Plane Placement Invariants
 1. Boundary/API middleware (auth, shape validation, visibility, rate policy) MUST live in oRPC/Elysia boundary layer.
 2. Durable runtime controls (retry, idempotency behavior, step boundaries, concurrency policy) MUST live in Inngest function configuration/implementation.
 3. Middleware control planes MUST remain separated by runtime model: boundary middleware stacks do not become durable runtime middleware stacks, and vice versa.
 4. Shared policy logic MAY be reused, but application points MUST remain harness-specific.
-5. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe MUST be treated as constrained (leading subset in identical order), not universal.
-6. Split path enforcement is part of middleware placement: first-party/internal caller policy executes on `/rpc`, published boundary policy executes on `/api/orpc/*` and `/api/workflows/<capability>/*`, while `/api/inngest` remains runtime ingress.
-7. Middleware that depends on request/correlation/principal/network metadata MUST consume those contracts from context-layer modules (`context.ts`), not from `domain/*`.
-8. Middleware-adjacent procedure/contract docs/examples SHOULD default to inline I/O schemas; extraction is exception-only for shared/large readability and should use paired `{ input, output }` shape.
-9. Host baseline traces middleware (`extendedTracesMiddleware()`) anchors runtime instrumentation; plugin middleware MAY extend this baseline but MUST NOT replace or reorder it.
-10. Middleware verification MUST remain harness-specific: boundary middleware is verified via boundary harnesses (`RPCLink`/`OpenAPILink`), package middleware via in-process harnesses (`createRouterClient`), and durable middleware via runtime-ingress harnesses (`/api/inngest` callback flow).
-11. Middleware-related test suites MUST include negative route assertions that enforce caller/runtime route separation (for example: caller paths do not use `/api/inngest`, external caller paths do not use `/rpc`).
-12. Middleware verification layering MUST align with [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md).
-13. Middleware lifecycle suites for web, CLI, API, workflow trigger/status, and runtime ingress MUST declare required harness, route family, and route-forbidden assertions explicitly.
-14. Middleware docs/tests MUST treat `rawr.kind` + `rawr.capability` and manifest-owned surfaces as canonical runtime composition anchors, and MUST NOT assign middleware behavior to `templateRole`, `channel`, `publishTier`, or `published`.
-15. Reusable middleware harness helpers MUST remain package-first; plugin suites MAY consume package helpers, and package suites MUST NOT import plugin runtime modules.
+5. Split path enforcement is part of middleware placement: first-party/internal caller policy executes on `/rpc`, published boundary policy executes on `/api/orpc/*` and `/api/workflows/<capability>/*`, while `/api/inngest` remains runtime ingress.
+6. Host baseline traces middleware (`extendedTracesMiddleware()`) anchors runtime instrumentation; plugin middleware MAY extend this baseline but MUST NOT replace or reorder it.
+
+### Dedupe and Context/Schema Handling
+1. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe MUST be treated as constrained (leading subset in identical order), not universal.
+2. Middleware that depends on request/correlation/principal/network metadata MUST consume those contracts from context-layer modules (`context.ts`), not from `domain/*`.
+3. Middleware-adjacent procedure/contract docs/examples SHOULD default to inline I/O schemas; extraction is exception-only for shared/large readability and should use paired `{ input, output }` shape.
+
+### Verification and Route-Guard Obligations
+1. Middleware verification MUST remain harness-specific: boundary middleware is verified via boundary harnesses (`RPCLink`/`OpenAPILink`), package middleware via in-process harnesses (`createRouterClient`), and durable middleware via runtime-ingress harnesses (`/api/inngest` callback flow).
+2. Middleware-related test suites MUST include negative route assertions that enforce caller/runtime route separation (for example: caller paths do not use `/api/inngest`, external caller paths do not use `/rpc`).
+3. Middleware verification layering MUST align with [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md).
+4. Middleware lifecycle suites for web, CLI, API, workflow trigger/status, and runtime ingress MUST declare required harness, route family, and route-forbidden assertions explicitly.
+5. Reusable middleware harness helpers MUST remain package-first; plugin suites MAY consume package helpers, and package suites MUST NOT import plugin runtime modules.
+
+### Metadata and Composition Compatibility
+1. Middleware docs/tests MUST treat `rawr.kind` + `rawr.capability` and manifest-owned surfaces as canonical runtime composition anchors, and MUST NOT assign middleware behavior to `templateRole`, `channel`, `publishTier`, or `published`.
 
 ## Why
 - API boundary policy and durable execution policy are separate control planes.

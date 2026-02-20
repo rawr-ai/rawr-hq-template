@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is a focused slice and does not override canonical core policy.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice that decides split-vs-collapse posture for API boundaries and durable execution.
+- **What it covers:** split invariants, anti-dual-path guardrails, adoption exceptions, and rejection signals for collapse drift.
+- **What this communicates:** API boundary behavior and durable runtime behavior remain intentionally split and must not collapse into one surface.
+- **Who should read this:** architecture owners, plugin authors proposing simplifications, and reviewers evaluating workflow/API boundary changes.
+- **Jump conditions:** for host wiring details, jump to [07-host-composition.md](./07-host-composition.md); for workflow trigger/runtime boundary details, jump to [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md); for durable endpoint constraints, jump to [09-durable-endpoints.md](./09-durable-endpoints.md).
+
 
 ## In Scope
 - Canonical split posture between boundary API harness and durable execution harness.

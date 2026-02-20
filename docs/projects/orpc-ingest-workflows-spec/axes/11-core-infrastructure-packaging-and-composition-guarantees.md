@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is canonical policy language for D-014 and does not override locked D-005..D-012 semantics.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for D-014 infrastructure packaging and composition guarantees.
+- **What it covers:** shared-infrastructure layering, host/plugin/package ownership seams, and deterministic import-direction rules.
+- **What this communicates:** infrastructure contracts stay package-oriented and injected, while host composition remains the concrete adapter owner.
+- **Who should read this:** host/composition owners, plugin/package maintainers, and reviewers validating infrastructure seam boundaries.
+- **Jump conditions:** for internal calling defaults, jump to [02-internal-clients.md](./02-internal-clients.md); for host mount/control-plane determinants, jump to [07-host-composition.md](./07-host-composition.md); for workflow/API seam application, jump to [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md).
+
 ## In Scope
 - Deterministic layering contract for shared infrastructure primitives and composition seams.
 - Host-vs-plugin-vs-package ownership guarantees for auth/db-ready stubs/hooks.
@@ -27,6 +34,15 @@
 9. Infrastructure ports SHOULD be small and capability-oriented (principal resolution, metadata, auth check facade, db/work-unit facade, runtime persistence facade).
 10. This axis specifies stubs/hooks and guarantees only; full provider-specific auth/db flows remain deferred.
 11. This axis does not force one concrete package topology beyond the ownership and import-direction guarantees defined here.
+
+## Why
+- Reduces integration ambiguity by fixing ownership and import direction at seam boundaries.
+- Keeps capability packages reusable by preventing concrete infrastructure coupling inside package/plugin internals.
+- Preserves existing D-005..D-012 behavior while adding deterministic composition guarantees for D-014.
+
+## Trade-Offs
+- Host composition carries explicit adapter-wiring responsibility instead of distributing setup across plugins.
+- Infrastructure seams require clear typed port contracts up front to keep package/plugin boundaries stable.
 
 ## Deterministic Layer Model
 | Layer | Canonical responsibility | Examples | Forbidden ownership |

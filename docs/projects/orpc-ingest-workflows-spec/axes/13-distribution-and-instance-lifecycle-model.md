@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is canonical policy language for D-016 and does not override locked D-005..D-015 semantics.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for D-016 distribution defaults and instance-lifecycle boundaries.
+- **What it covers:** consumer-vs-maintainer distribution posture, alias/instance seam requirements, and do-now vs defer-later lifecycle scope boundaries.
+- **What this communicates:** distribution posture and lifecycle seams are explicit now, while broader UX/packaging mechanics remain deferred.
+- **Who should read this:** maintainers defining distribution lifecycle posture, reviewers checking D-016 conformance, and teams validating instance-aware runtime assumptions.
+- **Jump conditions:** for metadata runtime semantics carried forward, jump to [10-legacy-metadata-and-lifecycle-simplification.md](./10-legacy-metadata-and-lifecycle-simplification.md); for testing implications, jump to [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md); for decision authority, use [DECISIONS.md](../DECISIONS.md).
+
 ## In Scope
 - Distribution default posture for consumers vs maintainers.
 - Instance lifecycle policy seams required now at contract level.
@@ -25,6 +32,15 @@
 6. Multi-owner invariant is required now: no new singleton-global assumptions may be introduced in composition/runtime contracts.
 7. Alias/instance seam is required now by contract; full feature UX/packaging mechanics are deferred.
 8. This axis is additive and does not alter D-005..D-015 route/ownership/caller/context/middleware/schema/testing semantics.
+
+## Why
+- Locks a stable distribution default while preserving upstream engineering authority.
+- Makes multi-owner/instance safety explicit before broader lifecycle productization.
+- Keeps D-013 metadata and D-015 harness implications aligned under one lifecycle posture.
+
+## Trade-Offs
+- Immediate policy scope is contract-level, so full UX/automation details stay intentionally deferred.
+- Maintainer and consumer paths remain distinct, which increases clarity but requires explicit posture communication.
 
 ## Do-Now vs Defer-Later Boundary (Centralized)
 | Category | Do now (locked) | Defer later (centralized here) |

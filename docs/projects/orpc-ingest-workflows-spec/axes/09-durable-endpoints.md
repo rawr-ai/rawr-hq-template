@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is a focused slice and does not override canonical core policy.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for durable endpoint usage relative to canonical durable function execution.
+- **What it covers:** first-party durability model choice and strict additive-only constraints for durable endpoint adapters.
+- **What this communicates:** durable endpoints can exist only as non-overlapping ingress adapters and cannot become parallel trigger authoring paths.
+- **Who should read this:** workflow/runtime authors and reviewers deciding whether a durable endpoint is policy-compliant.
+- **Jump conditions:** for workflow trigger boundary posture, jump to [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md); for split/anti-dual-path guardrails, jump to [03-split-vs-collapse.md](./03-split-vs-collapse.md).
+
 
 ## In Scope
 - Canonical durability model choice for first-party workflows.

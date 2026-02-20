@@ -3,32 +3,23 @@
 ## Scope
 This directory is the canonical packet for ORPC + Inngest workflow architecture posture in this initiative. It keeps one integrative policy source while preserving leaf-policy depth and reference examples.
 
-## Canonical Source of Truth (Read First)
-1. `ARCHITECTURE.md` — **normative integrative architecture policy** (caller/auth matrix, invariants, cross-axis contract).
-2. `DECISIONS.md` — **normative decision register** (locked/open decision status and decision-level authority).
-3. `axes/*.md` — **normative leaf policy slices by concern**.
-4. `examples/*.md` — **reference walkthroughs** (implementation-shaped examples, not policy authority).
-5. `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md` — **implementation-adjacent downstream update contract** (execution directives for later docs/runbook/testing updates).
-6. `CANONICAL_EXPANSION_NAV.md` — **concern-based expansion index** for D-013/D-014/D-015/D-016 routing.
+## Document Role Boundaries
+1. `README.md` — packet entrypoint, inventory, and read order.
+2. `ARCHITECTURE.md` — normative integrative architecture policy (global invariants + canonical caller/auth matrix authority).
+3. `DECISIONS.md` — normative decision register (locked/open decision status and authority IDs).
+4. `axes/*.md` — normative leaf policy slices by concern.
+5. `CANONICAL_EXPANSION_NAV.md` — concern-based expansion router (D-013/D-014/D-015/D-016, downstream update routing).
+6. `examples/*.md` — reference walkthroughs (non-normative).
+7. `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md` — implementation-adjacent downstream update contract.
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
 ## If You Need X, Read Y
 - Canonical locked subsystem posture and caller/auth matrix: `ARCHITECTURE.md`
 - Open vs closed decisions and decision IDs: `DECISIONS.md`
-- D-013 runtime metadata simplification obligations: `axes/10-legacy-metadata-and-lifecycle-simplification.md`
-- D-014 core infrastructure packaging/composition guarantees: `axes/11-core-infrastructure-packaging-and-composition-guarantees.md`
-- D-015 testing harness and downstream update contract: `axes/12-testing-harness-and-verification-strategy.md`, `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md`
-- D-016 distribution default and instance lifecycle boundary: `axes/13-distribution-and-instance-lifecycle-model.md`
-- External OpenAPI publication rules: `axes/01-external-client-generation.md`
-- Internal client default and package layering: `axes/02-internal-clients.md`
-- Split-vs-collapse guardrails: `axes/03-split-vs-collapse.md`
-- Context envelope and propagation contract: `axes/04-context-propagation.md`
-- Error/timeline observability split: `axes/05-errors-observability.md`
-- Middleware placement and dedupe guidance: `axes/06-middleware.md`
-- Host composition and mount order: `axes/07-host-composition.md`
-- Workflow trigger boundary vs runtime ingress: `axes/08-workflow-api-boundaries.md`
-- Durable endpoint additive-only constraints: `axes/09-durable-endpoints.md`
+- Concern-based D-013/D-014/D-015/D-016 routing: `CANONICAL_EXPANSION_NAV.md`
+- Full leaf-policy by concern: `axes/*.md` (see axis index below)
+- Example walkthroughs only (non-normative): `examples/*.md`
 
 ## Axis Index (Normative Leaf Policy)
 1. `axes/01-external-client-generation.md`

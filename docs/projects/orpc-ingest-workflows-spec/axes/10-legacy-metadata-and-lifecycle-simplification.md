@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is a focused slice and does not override canonical core policy.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for runtime metadata simplification and lifecycle semantics authority.
+- **What it covers:** retained-vs-removed metadata runtime meaning, manifest-first runtime authority, and downstream conformance obligations.
+- **What this communicates:** runtime behavior is keyed by manifest + surface + capability identity, while legacy metadata fields are non-runtime.
+- **Who should read this:** maintainers updating runtime/docs/testing contracts and reviewers validating D-013 policy conformance.
+- **Jump conditions:** for host composition determinants, jump to [07-host-composition.md](./07-host-composition.md); for workflow/API split semantics, jump to [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md); for distribution/lifecycle carry-forward, jump to [13-distribution-and-instance-lifecycle-model.md](./13-distribution-and-instance-lifecycle-model.md).
+
 ## In Scope
 - Target-state metadata contract for runtime composition semantics.
 - Removal of legacy metadata fields from runtime behavior.
@@ -57,6 +64,10 @@ These are required policy obligations for downstream artifacts; this packet does
 - Reduces semantic ambiguity in runtime composition.
 - Keeps runtime behavior deterministic and auditable.
 - Preserves clear separation between runtime architecture and release/governance metadata.
+
+## Trade-Offs
+- Legacy field names can still appear in files, but they no longer carry runtime composition meaning.
+- Downstream docs/tests need explicit conformance checks to prevent semantic drift back to removed runtime keys.
 
 ## Cross-Axis Links
 - Host composition and explicit mount ownership: [07-host-composition.md](./07-host-composition.md)

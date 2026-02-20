@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is a focused slice and does not override canonical core policy.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for error semantics and observability behavior across boundary and durable surfaces.
+- **What it covers:** typed boundary errors, runtime run/timeline recording, correlation continuity, and route-aware verification expectations.
+- **What this communicates:** boundary error contracts and durable lifecycle observability are distinct but must remain correlated end to end.
+- **Who should read this:** API/workflow plugin authors, runtime owners, and maintainers writing observability-focused verification suites.
+- **Jump conditions:** for context-envelope modeling, jump to [04-context-propagation.md](./04-context-propagation.md); for middleware placement and dedupe, jump to [06-middleware.md](./06-middleware.md); for harness-layer verification strategy, jump to [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md).
+
 
 ## In Scope
 - API boundary error contract semantics.

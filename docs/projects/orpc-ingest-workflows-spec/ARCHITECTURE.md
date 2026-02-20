@@ -3,34 +3,18 @@
 ## Document Role
 This file is the canonical integrative architecture authority for ORPC + Inngest workflows.
 
-Normative leaf policy depth remains in:
-- `axes/01-external-client-generation.md`
-- `axes/02-internal-clients.md`
-- `axes/03-split-vs-collapse.md`
-- `axes/04-context-propagation.md`
-- `axes/05-errors-observability.md`
-- `axes/06-middleware.md`
-- `axes/07-host-composition.md`
-- `axes/08-workflow-api-boundaries.md`
-- `axes/09-durable-endpoints.md`
-- `axes/10-legacy-metadata-and-lifecycle-simplification.md`
-- `axes/11-core-infrastructure-packaging-and-composition-guarantees.md`
-- `axes/12-testing-harness-and-verification-strategy.md`
-- `axes/13-distribution-and-instance-lifecycle-model.md`
+This document role is intentionally narrow:
+1. Defines the integrative subsystem posture and global invariants.
+2. Owns the canonical caller/auth matrix authority.
+3. Anchors cross-axis contracts without duplicating every leaf-policy detail.
 
-Reference walkthrough depth remains in:
-- `examples/e2e-01-basic-package-api.md`
-- `examples/e2e-02-api-workflows-composed.md`
-- `examples/e2e-03-microfrontend-integration.md`
-- `examples/e2e-04-context-middleware.md`
-
-Implementation-adjacent downstream update contract remains in:
-- `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md`
-
-Concern-based expansion navigation remains in:
-- `CANONICAL_EXPANSION_NAV.md`
-
-Decision authority is in `DECISIONS.md`.
+Use complementary packet docs by role:
+1. `README.md` for packet inventory and read order.
+2. `DECISIONS.md` for decision authority and lock status.
+3. `axes/*.md` for normative leaf-policy depth by concern.
+4. `CANONICAL_EXPANSION_NAV.md` for concern-based expansion routing.
+5. `examples/*.md` for non-normative walkthroughs.
+6. `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md` for downstream implementation-adjacent update obligations.
 
 ## 1) Scope
 This subsystem posture defines how this system composes:

@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is the canonical test harness and verification authority for this packet.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for selecting and structuring verification harnesses by caller mode and route family.
+- **What it covers:** layer-by-layer harness boundaries, required negative route assertions, package-first harness ownership, and D-015 lock language.
+- **What this communicates:** verification confidence depends on route-aware harness choice and non-overlapping layer responsibilities.
+- **Who should read this:** test-suite maintainers, plugin/package authors adding coverage, and reviewers evaluating conformance to route/caller policy.
+- **Jump conditions:** for observability-specific assertions, jump to [05-errors-observability.md](./05-errors-observability.md); for middleware verification constraints, jump to [06-middleware.md](./06-middleware.md); for distribution/lifecycle seam implications, jump to [13-distribution-and-instance-lifecycle-model.md](./13-distribution-and-instance-lifecycle-model.md).
+
 ## In Scope
 - Canonical harness selection by caller mode, route family, and plugin surface.
 - Verification layer boundaries (unit, in-process integration, boundary/network integration, runtime ingress verification, E2E).
@@ -34,6 +41,15 @@
 13. Import direction in tests MUST remain clean: `plugins/*` tests may depend on `packages/*` test helpers/contracts, but package-layer tests MUST NOT depend on plugin runtime modules.
 14. TypeScript test harness utilities SHOULD expose explicit typed factories/contracts (no implicit `any` escape hatches in canonical snippets).
 15. This axis is additive and does not alter D-005..D-012 semantics.
+
+## Why
+- Route-family and caller-mode policy cannot be validated reliably with one generic harness.
+- Layer-specific verification boundaries reduce false confidence and make drift easier to detect.
+- Negative-route assertions are necessary to preserve the split between caller APIs and runtime ingress.
+
+## Trade-Offs
+- Teams maintain multiple harness patterns instead of one universal test style.
+- Coverage planning is more explicit, but this yields clearer failure signals and policy conformance evidence.
 
 ## Package-First Harness Ownership Contract
 This section is a **design contract**, not an implementation prescription.

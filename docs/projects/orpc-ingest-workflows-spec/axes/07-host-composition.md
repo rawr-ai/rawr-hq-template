@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is a focused slice and does not override canonical core policy.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for host composition, route mounting, and runtime/boundary wiring ownership.
+- **What it covers:** mount/control-plane invariants, manifest-driven composition determinants, infrastructure adapter injection seams, and composition-critical file structure defaults.
+- **What this communicates:** host wiring must stay explicit, route-family boundaries are fixed, and composition ownership remains deterministic.
+- **Who should read this:** host/runtime owners, plugin authors integrating into host composition, and reviewers validating wiring and mount-order changes.
+- **Jump conditions:** for workflow trigger/runtime boundary semantics, jump to [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md); for core infrastructure seam guarantees, jump to [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md); for canonical caller/auth matrix authority, use [ARCHITECTURE.md](../ARCHITECTURE.md).
+
 
 ## In Scope
 - Host mount boundaries and composition spine.
@@ -17,23 +24,29 @@
 - Workflow trigger boundary semantics (see [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md)).
 
 ## Canonical Policy
+
+### Mount and Control-Plane Invariants
 1. Host MUST mount oRPC endpoints and Inngest ingress as separate explicit mounts.
 2. Host MUST own Inngest client/function bundle composition and pass client into oRPC context where enqueue bridge is needed.
 3. Host SHOULD keep parse-safe forwarding semantics for oRPC handler mounts.
 4. Host MUST keep one runtime-owned Inngest client bundle per process.
-5. Host composition MUST consume plugin-owned boundary contracts/routers from the generated manifest; packages contribute shared logic/schema inputs, not boundary ownership.
-6. Host MUST enforce caller-mode route boundaries: first-party callers (including MFEs by default) use `/rpc` via `RPCLink`, external callers use published OpenAPI surfaces (`/api/orpc/*`, `/api/workflows/<capability>/*`), and `/api/inngest` stays runtime-only signed ingress.
-7. Host MUST NOT add a dedicated `/rpc/workflows` mount by default; first-party workflow RPC procedures compose under the existing `/rpc` surface.
-8. Host composition docs/snippets MUST keep mount ownership explicit; do not hide wiring behind black-box composition narratives.
-9. Host bootstrap MUST initialize baseline `extendedTracesMiddleware()` before constructing the Inngest client, composing workflow functions, or registering routes.
-10. Host mount/control-plane order MUST be explicit: `/api/inngest` first, `/api/workflows/*` second, then `/rpc` and `/api/orpc/*`.
-11. Plugin middleware MAY add runtime context/instrumentation but MUST inherit baseline traces middleware and MUST NOT replace or reorder that baseline.
-12. Host composition MUST assemble concrete infrastructure adapters (auth/db/runtime clients) and inject typed ports into boundary/package contexts; concrete adapter construction MUST NOT move into plugin/package modules.
-13. Host boundary/workflow context factories MUST be explicit and deterministic (`createBoundaryContext`, `createWorkflowBoundaryContext`, or equivalent), including principal/request/correlation metadata derivation.
-14. Plugin and package modules MUST consume injected infrastructure ports and MUST NOT import host runtime modules to construct adapters.
-15. Composition determinants MUST remain explicit and stable: manifest surface map, context factories, single runtime-owned Inngest bundle, and fixed mount/control-plane order.
-16. D-014 infrastructure packaging/composition guarantees are defined in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
-17. Harness/core/infrastructure abstractions SHOULD be package-oriented shared surfaces by default; host composition consumes those shared surfaces instead of duplicating ad hoc host-local abstractions.
+5. Host MUST enforce caller-mode route boundaries: first-party callers (including MFEs by default) use `/rpc` via `RPCLink`, external callers use published OpenAPI surfaces (`/api/orpc/*`, `/api/workflows/<capability>/*`), and `/api/inngest` stays runtime-only signed ingress.
+6. Host MUST NOT add a dedicated `/rpc/workflows` mount by default; first-party workflow RPC procedures compose under the existing `/rpc` surface.
+7. Host bootstrap MUST initialize baseline `extendedTracesMiddleware()` before constructing the Inngest client, composing workflow functions, or registering routes.
+8. Host mount/control-plane order MUST be explicit: `/api/inngest` first, `/api/workflows/*` second, then `/rpc` and `/api/orpc/*`.
+9. Plugin middleware MAY add runtime context/instrumentation but MUST inherit baseline traces middleware and MUST NOT replace or reorder that baseline.
+
+### Ownership and Composition Determinants
+1. Host composition MUST consume plugin-owned boundary contracts/routers from the generated manifest; packages contribute shared logic/schema inputs, not boundary ownership.
+2. Host composition docs/snippets MUST keep mount ownership explicit; do not hide wiring behind black-box composition narratives.
+3. Host composition MUST assemble concrete infrastructure adapters (auth/db/runtime clients) and inject typed ports into boundary/package contexts; concrete adapter construction MUST NOT move into plugin/package modules.
+4. Host boundary/workflow context factories MUST be explicit and deterministic (`createBoundaryContext`, `createWorkflowBoundaryContext`, or equivalent), including principal/request/correlation metadata derivation.
+5. Plugin and package modules MUST consume injected infrastructure ports and MUST NOT import host runtime modules to construct adapters.
+6. Composition determinants MUST remain explicit and stable: manifest surface map, context factories, single runtime-owned Inngest bundle, and fixed mount/control-plane order.
+7. D-014 infrastructure packaging/composition guarantees are defined in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
+
+### Shared Abstraction Default
+1. Harness/core/infrastructure abstractions SHOULD be package-oriented shared surfaces by default; host composition consumes those shared surfaces instead of duplicating ad hoc host-local abstractions.
 
 ## Route Family Purpose Table
 This table aligns with the canonical route and caller policy in [ARCHITECTURE.md](../ARCHITECTURE.md).

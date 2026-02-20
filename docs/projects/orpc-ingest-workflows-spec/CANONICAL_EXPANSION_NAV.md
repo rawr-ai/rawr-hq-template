@@ -2,6 +2,7 @@
 
 ## Document Role
 This file is a concern-based navigation index for expansion additions. It does not define policy; it routes readers to canonical authorities.
+It is not a packet inventory (use `README.md` for full packet map) and not an integrative policy source (use `ARCHITECTURE.md` for that).
 
 ## Authority Split
 - **Normative integrative policy:** `ARCHITECTURE.md`

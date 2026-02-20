@@ -1,5 +1,8 @@
 # E2E 02 — API + Workflows Composed Capability (TypeBox-First, Split Posture)
 
+## Authority and Usage
+> This walkthrough is **non-normative** reference material. Canonical policy authority remains in `README.md`, `ARCHITECTURE.md`, `DECISIONS.md`, and `axes/*.md`. If any example detail appears to conflict with those sources, follow the canonical packet policy docs.
+
 ## 1) Goal and Use-Case Framing
 This walkthrough shows one capability (`invoicing`) composed end to end with two caller-facing surfaces and one runtime ingress surface:
 1. API surface for immediate request/response behavior (`start`, `get status`).
