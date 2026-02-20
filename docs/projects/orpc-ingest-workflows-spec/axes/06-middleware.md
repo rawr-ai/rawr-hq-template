@@ -46,7 +46,7 @@
 5. Reusable middleware harness helpers MUST remain package-first; plugin suites MAY consume package helpers, and package suites MUST NOT import plugin runtime modules.
 
 ### Metadata and Composition Compatibility
-1. Middleware docs/tests MUST treat `rawr.kind` + `rawr.capability` and manifest-owned surfaces as canonical runtime composition anchors, and MUST NOT assign middleware behavior to `templateRole`, `channel`, `publishTier`, or `published`.
+1. Middleware docs/tests MUST treat `rawr.kind` + `rawr.capability` and manifest-owned surfaces as canonical runtime composition anchors, and MUST treat `templateRole`, `channel`, `publishTier`, and `published` as forbidden active metadata keys.
 
 ## Why
 - API boundary policy and durable execution policy are separate control planes.
@@ -85,7 +85,7 @@
 
 ## D-013 and D-014 Compatibility Checks
 1. Middleware lifecycle docs/tests remain manifest-first and capability keyed (`rawr.kind` + `rawr.capability`).
-2. Middleware lifecycle docs/tests do not use legacy metadata fields as runtime decision keys.
+2. Middleware lifecycle docs/tests treat legacy metadata fields as forbidden active metadata keys.
 3. Middleware harness ownership and import direction align with [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md) and [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md).
 
 ## Canonical Snippets

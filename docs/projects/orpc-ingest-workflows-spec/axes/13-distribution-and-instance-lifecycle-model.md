@@ -28,10 +28,11 @@
 2. Default consumer distribution path is **instance-kit / no-fork-repeatability**.
 3. Long-lived fork posture is a maintainer path and is NOT the default consumer path.
 4. Manifest-first authority remains explicit: generated `rawr.hq.ts` is canonical composition authority.
-5. Runtime lifecycle semantics remain constrained to plugin surface root + `rawr.kind` + `rawr.capability` + manifest registration; legacy metadata fields are non-runtime (D-013 unchanged).
+5. Runtime lifecycle semantics remain constrained to plugin surface root + `rawr.kind` + `rawr.capability` + manifest registration; legacy metadata fields are hard-deleted from non-archival runtime/tooling/scaffold metadata surfaces (D-013 unchanged).
 6. Multi-owner invariant is required now: no new singleton-global assumptions may be introduced in composition/runtime contracts.
 7. Alias/instance seam is required now by contract; full feature UX/packaging mechanics are deferred.
-8. This axis is additive and does not alter D-005..D-015 route/ownership/caller/context/middleware/schema/testing semantics.
+8. Channel A (`rawr plugins ...`) and Channel B (`rawr plugins web ...`) remain command surfaces only and MUST NOT be runtime metadata semantics.
+9. This axis is additive and does not alter D-005..D-015 route/ownership/caller/context/middleware/schema/testing semantics.
 
 ## Why
 - Locks a stable distribution default while preserving upstream engineering authority.
@@ -48,11 +49,11 @@
 | Distribution default | Instance-kit/no-fork-repeatability is default consumer posture. | Broader distribution ergonomics and packaging UX workflows. |
 | Fork policy | Long-lived fork remains maintainer-only path by default. | Maintainer tooling/process optimization for long-lived fork operations. |
 | Runtime authority | `rawr.hq.ts` manifest composition authority is required. | Additional composition automation layers on top of manifest contract. |
-| Lifecycle semantics | Runtime keyed by `rawr.kind` + `rawr.capability`; legacy metadata non-runtime. | Expanded lifecycle dashboards/UX beyond current contract surface. |
+| Lifecycle semantics | Runtime keyed by `rawr.kind` + `rawr.capability`; legacy metadata keys are forbidden in non-archival runtime/tooling/scaffold metadata surfaces. | Expanded lifecycle dashboards/UX beyond current contract surface. |
 | Multi-owner behavior | Alias/instance seam is contract-required; no singleton-global assumptions. | Full multi-instance control-plane product features and packaging details. |
 
 ## D-013 Migration Implications (Carry-Forward)
-1. Metadata migration remains mandatory: runtime claims tied to `templateRole`, `channel`, `publishTier`, and `published` stay removed from runtime behavior language.
+1. Metadata migration remains mandatory: `templateRole`, `channel`, `publishTier`, and `published` are removed from non-archival runtime/tooling/scaffold metadata surfaces and conformance fixtures.
 2. Lifecycle/status semantics remain keyed to `rawr.kind` + `rawr.capability` and manifest-owned composition surfaces.
 3. Downstream conformance gates remain required: `manifest-smoke`, `metadata-contract`, `import-boundary`, `host-composition-guard`.
 

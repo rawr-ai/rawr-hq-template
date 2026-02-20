@@ -19,10 +19,10 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
 2. `/api/inngest` remains runtime-ingress-only and must stay caller-forbidden.
 3. Ingress signature verification is host-enforced before runtime dispatch.
 4. Runtime metadata behavior is keyed only by `rawr.kind`, `rawr.capability`, and manifest registration.
-5. `templateRole`, `channel`, `publishTier`, and `published` are non-runtime fields.
+5. `templateRole`, `channel`, `publishTier`, and `published` are forbidden legacy keys and must be removed from non-archival runtime/tooling/scaffold metadata surfaces in Phase A.
 6. Plugin metadata interpretation is centralized in one shared parser contract used by both workspace discovery paths.
 7. Harness and negative-route gates are hard-fail by end of `A1` (baseline wiring in `A0` is allowed).
-8. Compatibility shims are time-boxed and removed in `A6`.
+8. Legacy-metadata hard deletion is enforced as a blocking gate and must be complete by `A6`.
 
 ## Ownership Semantics (Explicit)
 `Owner` means the accountable role for decision and merge-complete outcome of a slice, not an advisory stakeholder.
@@ -32,12 +32,10 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
 | Runtime/Host Composition Owner | `@rawr-runtime-host` | `@rawr-platform-duty` | Host wiring, context seam, ingress guard, route-family mounts |
 | Plugin Lifecycle Owner | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Metadata contract, discovery roots, shared parser adoption |
 | Verification & Gates Owner | `@rawr-verification-gates` | `@rawr-release-duty` | CI gates, negative-route assertions, harness completeness |
-| Distribution/Lifecycle Contract Owner | `@rawr-distribution-lifecycle` | `@rawr-runtime-host` | Alias/instance seam assertions and shim retirement |
+| Distribution/Lifecycle Contract Owner | `@rawr-distribution-lifecycle` | `@rawr-runtime-host` | Alias/instance seam assertions and legacy metadata hard-delete closure |
 | Review Closure Owner | `@rawr-review-closure` | `@rawr-verification-gates` | TypeScript + ORPC review closure, finding triage, and fix-loop completion |
 | Docs & Cleanup Owner | `@rawr-docs-maintainer` | `@rawr-release-duty` | Canonical docs/runbook updates and scratch/review artifact cleanup |
 | Phase Sequencing Owner | `@rawr-phase-sequencing` | `@rawr-architecture-duty` | Post-Phase-A readjustment and next-phase (Phase B+) hardening |
-
-SLA rule: if owner misses SLA, backup becomes acting owner for that decision.
 
 ## Slice Plan (Decision-Complete)
 
@@ -46,7 +44,7 @@ SLA rule: if owner misses SLA, backup becomes acting owner for that decision.
 - Depends on: none
 - Implement:
   1. Wire gate jobs: `metadata-contract`, `import-boundary`, `manifest-smoke-baseline`, `host-composition-guard`, `route-negative-assertions`, `harness-matrix`, `observability-contract`.
-  2. Wire deterministic static guard check command for legacy runtime branching (targeted pattern scan + tests).
+  2. Wire deterministic static guard check command for forbidden legacy metadata keys across non-archival runtime/tooling/scaffold metadata surfaces (targeted pattern scan + tests).
 - Primary paths:
   - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/package.json`
   - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/turbo.json`
@@ -63,9 +61,10 @@ SLA rule: if owner misses SLA, backup becomes acting owner for that decision.
   2. Move runtime-key interpretation to shared parser and consume it from:
      - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts`
      - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts`
-  3. Keep legacy fields as non-runtime data only (no branching by legacy fields).
+  3. Remove legacy key parsing/typing/output (`templateRole`, `channel`, `publishTier`, `published`) from active metadata contract paths and hard-fail if these keys are present.
+  4. Replace legacy `templateRole`/`channel`-driven lifecycle selection with explicit rules keyed by `rawr.kind`, `rawr.capability`, discovery root, and manifest-owned exports; Channel A/Channel B remain command surfaces only and MUST NOT be encoded as runtime metadata semantics.
 - Acceptance:
-  1. `metadata-contract` fails on any runtime branch using legacy fields.
+  1. `metadata-contract` fails on any active legacy key declaration, runtime use, or missing required `rawr.capability` in active plugin manifests.
   2. Both discovery implementations import the shared parser contract.
   3. No duplicate runtime metadata parser remains.
 
@@ -138,22 +137,30 @@ SLA rule: if owner misses SLA, backup becomes acting owner for that decision.
   1. `harness-matrix` fails if any required suite ID is missing.
   2. `route-negative-assertions` is fully green.
 
-### A6 - D-016 Seam Assertions + Shim Retirement
+### A6 - D-016 Seam Assertions + Legacy Metadata Hard-Delete Closure
 - Owner: `Distribution/Lifecycle Contract Owner`
 - Depends on: `A1`, `A5`
 - Implement:
   1. Add alias/instance seam assertions in lifecycle-relevant tests.
   2. Add no-singleton-global negative assertions for runtime composition assumptions.
-  3. Remove compatibility-read shims introduced during `A1`.
+  3. Remove all remaining legacy metadata key handling from active parser/runtime/tooling paths (`templateRole`, `channel`, `publishTier`, `published`).
+  4. Make instance-local workspace root the default lifecycle authority in canonical-root resolution paths; any global-owner fallback must be explicit and test-guarded.
 - Primary paths:
   - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test`
   - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts`
   - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/install/state.ts`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/install-state.ts`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable.ts`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable/all.ts`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/cli/install/all.ts`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts`
 - Acceptance:
   1. `metadata-contract` gate is green.
-  2. Static legacy-runtime-branch guard check (pattern scan + tests) is green.
+  2. Static legacy-metadata hard-delete guard check (pattern scan + tests) is green.
   3. Alias/instance and no-singleton assertions are green.
-  4. Compatibility shims are deleted.
+  4. No non-archival runtime/tooling/scaffold metadata surface declares or reads forbidden legacy keys.
+  5. Canonical-root resolution assertions prove instance-local lifecycle isolation (no implicit singleton-global owner behavior).
 
 ### A7 - Full Review Pass (TypeScript + ORPC) + Fix Closure
 - Owner: `Review Closure Owner`
@@ -223,10 +230,17 @@ Required gates:
 
 Deterministic static guard check (completion/exit):
 ```sh
-bun scripts/phase-a/check-legacy-runtime-branching.mjs \
+bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs \
   /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts \
   /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts \
-  && bunx vitest run --project hq --project plugin-plugins --testNamePattern='legacy runtime branch guard'
+  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/install/state.ts \
+  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/install-state.ts \
+  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable.ts \
+  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable/all.ts \
+  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/cli/install/all.ts \
+  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts \
+  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/*/*/package.json \
+  && bunx vitest run --project hq --project plugin-plugins --testNamePattern='forbidden legacy metadata keys'
 ```
 
 Telemetry note (optional, non-blocking):
@@ -242,12 +256,13 @@ Telemetry note (optional, non-blocking):
 2. All required gates are green with no warning-only mode.
 3. `manifest-smoke-completion` is green with zero pending families.
 4. `metadata-contract` gate is green.
-5. Static legacy-runtime-branch guard check (pattern scan + tests) is green.
-6. Compatibility shim code paths are removed in `A6`.
+5. Static legacy-metadata hard-delete guard check (pattern scan + tests) is green.
+6. Legacy metadata key handling and declarations are removed from non-archival runtime/tooling/scaffold metadata surfaces in `A6`.
 7. No runtime behavior branches on legacy metadata fields.
-8. `/api/workflows/<capability>/*` is active and route-policy-correct.
-9. `A7` review findings are closed or explicitly accepted with owner/rationale.
-10. `A8` canonical docs/runbooks and cleanup manifest are complete.
+8. Lifecycle command semantics are keyed by `rawr.kind` + `rawr.capability` + manifest/discovery rules (not `templateRole`/`channel` semantics).
+9. `/api/workflows/<capability>/*` is active and route-policy-correct.
+10. `A7` review findings are closed or explicitly accepted with owner/rationale.
+11. `A8` canonical docs/runbooks and cleanup manifest are complete.
 
 ## Post-Landing Realignment Criteria
 1. `A9` is complete and Phase B kickoff posture is explicit (`ready` or `not-ready`).
@@ -256,7 +271,7 @@ Telemetry note (optional, non-blocking):
 ## Deferred Register (Centralized, Concise)
 | Defer ID | Deferred Item | Why Deferred | Unblock Trigger | Target Phase | Owner |
 | --- | --- | --- | --- | --- | --- |
-| `DR-001` | D-016 UX/packaging product features | Not required for seam-now safety | Phase A completion + shim retirement | Phase D | `@rawr-distribution-lifecycle` |
+| `DR-001` | D-016 UX/packaging product features | Not required for seam-now safety | Phase A completion + hard-delete conformance closure | Phase D | `@rawr-distribution-lifecycle` |
 | `DR-002` | Cross-instance storage-backed lock redesign | Not required for Phase A contract convergence | Evidence of cross-instance duplication risk after `A6` | Phase C | `@rawr-runtime-host` |
 | `DR-003` | Expanded telemetry beyond required gate diagnostics | Keep Phase A narrow and execution-focused | Post-Phase-A observability backlog intake | Phase C | `@rawr-verification-gates` |
 | `DR-004` | Broad non-convergence refactors | Would dilute Phase A delivery focus | New scoped milestone approval after Phase A | Phase B | `@rawr-plugin-lifecycle` |

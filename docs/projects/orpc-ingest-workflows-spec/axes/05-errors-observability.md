@@ -34,7 +34,7 @@
 7. Caller-path observability suites (browser, CLI caller flows, external SDK flows) MUST assert `/api/inngest` is not a caller-facing route.
 8. Surface-level observability suites for web, CLI, API, and workflow paths MUST explicitly state route family, harness type, and required negative-route assertions.
 9. Observability drift checks MUST include `manifest-smoke`, `metadata-contract`, `import-boundary`, and `host-composition-guard`, and MUST treat `rawr.kind` + `rawr.capability` as canonical runtime identity keys.
-10. Observability assertions MUST NOT branch on legacy metadata fields (`templateRole`, `channel`, `publishTier`, `published`) for runtime behavior expectations.
+10. Observability assertions MUST treat legacy metadata keys (`templateRole`, `channel`, `publishTier`, `published`) as forbidden in active metadata contracts and fail if they appear.
 11. Reusable observability harness helpers MUST remain package-first, with one-way import direction (`plugins/*` suites may import `packages/*` helpers; package suites MUST NOT import plugin runtime modules).
 
 ## Why
@@ -70,7 +70,7 @@
 
 ## D-013 and D-014 Compatibility Checks
 1. Observability docs/tests treat runtime composition identity as `rawr.kind` + `rawr.capability` and manifest-owned surfaces.
-2. Observability docs/tests do not assign runtime behavior to `templateRole`, `channel`, `publishTier`, or `published`.
+2. Observability docs/tests treat `templateRole`, `channel`, `publishTier`, and `published` as forbidden active metadata keys.
 3. Observability helper placement and imports follow the package-first and one-way import-direction contract described in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
 
 ## Canonical Snippets

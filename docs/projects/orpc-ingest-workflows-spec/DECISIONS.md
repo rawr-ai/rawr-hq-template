@@ -4,7 +4,7 @@
 Packet-local decision tracking for documentation-architecture changes only.
 
 ## Current Status
-Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, context metadata placement, caller/transport publication boundaries, and legacy metadata runtime simplification are explicitly locked. D-014, D-015, and D-016 are explicitly locked in this register. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
+Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, context metadata placement, caller/transport publication boundaries, and legacy metadata hard deletion are explicitly locked. D-014, D-015, and D-016 are explicitly locked in this register. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
 
 ## Decision Register
 
@@ -80,17 +80,17 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
   - `axes/06-middleware.md`
   - `axes/08-workflow-api-boundaries.md`
 
-### D-013 — Legacy metadata runtime simplification and lifecycle obligations
+### D-013 — Legacy metadata hard deletion and lifecycle obligations
 - `status`: `locked`
 - `locked_decision`:
   - Runtime behavior and composition semantics in this packet are derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`.
-  - `templateRole` and `channel` are removed from runtime semantics and MUST NOT drive route mounting, caller-mode selection, auth posture, runtime ingress selection, or durable execution behavior.
-  - `publishTier` and `published` remain release/distribution metadata only and MUST NOT drive runtime composition, host route exposure, or runtime wiring behavior.
+  - `templateRole`, `channel`, `publishTier`, and `published` are removed from target-state metadata contracts and MUST NOT appear in active plugin manifests, parser outputs, runtime wiring, or lifecycle tooling.
+  - Validation/parsing/tooling MUST hard-fail when these legacy metadata fields are present in active plugin metadata surfaces.
   - Manifest-first composition via generated `rawr.hq.ts` is the sole composition authority in packet target-state language.
   - D-005..D-012 semantics are unchanged by this lock.
 - `policy_obligations`:
-  - Downstream docs/process/runbook/testing artifacts MUST align to this reduced metadata model and remove runtime behavior claims tied to `templateRole`, `channel`, `publishTier`, or `published`.
-  - Downstream validation/testing policy MUST enforce `manifest-smoke`, `metadata-contract` (`rawr.kind` + `rawr.capability` required), `import-boundary`, and `host-composition-guard` checks.
+  - Downstream docs/process/runbook/testing artifacts MUST align to hard deletion and remove all active metadata contract examples/claims tied to `templateRole`, `channel`, `publishTier`, or `published`.
+  - Downstream validation/testing policy MUST enforce `manifest-smoke`, `metadata-contract` (`rawr.kind` + `rawr.capability` required, legacy metadata keys forbidden), `import-boundary`, and `host-composition-guard` checks.
   - Downstream lifecycle/status tooling MUST report and operate by `rawr.kind` + `rawr.capability` under manifest-owned composition surfaces.
 - `source_anchors`:
   - `../_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/additive-extractions/LEGACY_METADATA_REMOVAL.md`
@@ -148,12 +148,12 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
   - Default consumer distribution path is instance-kit / no-fork-repeatability.
   - Long-lived fork posture is maintainer-only by default and is not the default consumer path.
   - Manifest-first composition authority remains canonical in generated `rawr.hq.ts`.
-  - Runtime lifecycle semantics remain derived from plugin surface root + `rawr.kind` + `rawr.capability` + manifest registration; legacy metadata fields remain non-runtime (D-013 unchanged).
+  - Runtime lifecycle semantics remain derived from plugin surface root + `rawr.kind` + `rawr.capability` + manifest registration; legacy metadata fields are hard-deleted from non-archival runtime/tooling/scaffold metadata surfaces (D-013 unchanged).
   - Multi-owner invariant is required now: no new singleton-global assumptions; alias/instance seam is contract-required now, while full feature UX/packaging mechanics are deferred.
   - D-005..D-015 semantics remain unchanged.
 - `policy_obligations`:
   - Do-now vs defer-later boundary is centralized in `axes/13-distribution-and-instance-lifecycle-model.md`.
-  - D-013 metadata migration obligations remain required across downstream docs/process/runbook/test artifacts.
+  - D-013 hard-deletion obligations remain required across downstream docs/process/runbook/test artifacts.
   - D-015 testing rollout must include no-singleton and alias/instance seam assertions where lifecycle/distribution behavior is validated.
 - `source_anchors`:
   - `axes/13-distribution-and-instance-lifecycle-model.md`

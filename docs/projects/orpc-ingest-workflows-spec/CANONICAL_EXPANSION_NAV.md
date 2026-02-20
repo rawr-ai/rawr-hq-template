@@ -14,7 +14,7 @@ It is not a packet inventory (use `README.md` for full packet map) and not an in
 ## Concern Router
 | Concern | Primary canonical source | Secondary supporting source | Artifact class |
 | --- | --- | --- | --- |
-| D-013 legacy metadata runtime simplification | `axes/10-legacy-metadata-and-lifecycle-simplification.md` | `DECISIONS.md` (`D-013`) | normative policy |
+| D-013 legacy metadata hard deletion | `axes/10-legacy-metadata-and-lifecycle-simplification.md` | `DECISIONS.md` (`D-013`) | normative policy |
 | D-014 core infrastructure packaging/composition guarantees | `axes/11-core-infrastructure-packaging-and-composition-guarantees.md` | `axes/02-internal-clients.md`, `axes/07-host-composition.md`, `axes/08-workflow-api-boundaries.md` | normative policy |
 | D-015 testing harness model | `axes/12-testing-harness-and-verification-strategy.md` | `axes/05-errors-observability.md`, `axes/06-middleware.md`, `examples/e2e-04-context-middleware.md` | normative policy + reference |
 | D-016 distribution default + instance lifecycle boundary | `axes/13-distribution-and-instance-lifecycle-model.md` | `DECISIONS.md` (`D-016`), `axes/10-legacy-metadata-and-lifecycle-simplification.md`, `axes/12-testing-harness-and-verification-strategy.md` | normative policy |

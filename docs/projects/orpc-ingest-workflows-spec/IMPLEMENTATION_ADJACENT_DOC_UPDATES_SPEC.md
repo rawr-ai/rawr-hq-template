@@ -25,7 +25,7 @@ This document remains packet-only by design:
 4. D-009 and D-010 remain open/non-blocking.
 5. D-013 compatibility is mandatory:
    - runtime composition identity keys are `rawr.kind` + `rawr.capability`,
-   - `templateRole`, `channel`, `publishTier`, `published` are not runtime behavior keys.
+   - `templateRole`, `channel`, `publishTier`, `published` are forbidden legacy keys in non-archival runtime/tooling/scaffold metadata surfaces.
 6. D-014 compatibility is mandatory for downstream planning in this packet:
    - reusable harness helpers are package-first,
    - import direction remains one-way (`plugins/*` suites -> `packages/*` helpers; package suites do not import plugin runtime modules).
@@ -88,7 +88,7 @@ Required content under headings:
 1. Reference Axis 12 as canonical harness authority.
 2. Re-state five verification layers exactly: unit, in-process integration, boundary/network integration, runtime ingress verification, E2E.
 3. Re-state caller-route split and `/api/inngest` non-caller rule.
-4. Re-state D-013 runtime identity keys (`rawr.kind` + `rawr.capability`) and legacy-metadata exclusion.
+4. Re-state D-013 runtime identity keys (`rawr.kind` + `rawr.capability`) and legacy-key hard deletion requirement.
 
 Acceptance checks:
 1. All four route families appear in one table with harness mapping.
@@ -111,7 +111,7 @@ Required content under heading:
 1. Include the canonical lifecycle harness matrix rows relevant to the runbook’s surface.
 2. Include required positive assertions and required negative assertions for that surface.
 3. Include package-first harness ownership and one-way import-direction note.
-4. Include D-013 metadata key rule (`rawr.kind` + `rawr.capability`) and legacy-field exclusion.
+4. Include D-013 metadata key rule (`rawr.kind` + `rawr.capability`) and forbidden legacy-key hard deletion requirement.
 5. Include D-016 seam contract notes:
    - alias/instance seam assertions are required,
    - singleton-global assumptions are forbidden and must be tested negatively.
@@ -155,7 +155,7 @@ Required content under heading:
    - caller traffic on `/api/inngest`,
    - external `/rpc` usage,
    - missing route-forbidden tests,
-   - legacy metadata used as runtime test key.
+   - any active metadata contract still declaring legacy keys (`templateRole`, `channel`, `publishTier`, `published`).
 2. Triage steps mapped by caller type (web, CLI, API, workflow runtime).
 3. Reference Axis 12 and E2E-04 Section 11 blueprint.
 
