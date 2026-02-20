@@ -1,0 +1,189 @@
+version: 1
+as_of: 2026-02-20
+summary:
+  highest_risk: "Route/caller boundary drift and legacy metadata semantic drift"
+  posture: "Target architecture is sound; execution risk is currently front-loaded in control-plane/tooling gaps"
+risks:
+  - id: R-001
+    title: "Caller/runtime route boundary drift"
+    severity: critical
+    likelihood: medium
+    what_gets_us: "Caller traffic uses runtime ingress or external callers reach internal RPC path"
+    trigger_signals:
+      - "Tests do not contain negative assertions for /api/inngest from browser/CLI personas"
+      - "External traffic observed on /rpc"
+    impacted_axes: [system-design, api-design, team-design]
+    proposal_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/ARCHITECTURE.md:64"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/12-testing-harness-and-verification-strategy.md:119"
+    runtime_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/test/orpc-handlers.test.ts:18"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/test/rawr.test.ts:57"
+    mitigation:
+      - "Add blocking negative-route tests per persona (browser, external, ingress)"
+      - "Enforce gateway allow-list and signed ingress constraints for /api/inngest"
+    recommended_phase: 0
+    status: open
+
+  - id: R-002
+    title: "Legacy metadata continues to control runtime behavior"
+    severity: critical
+    likelihood: high
+    what_gets_us: "Autonomous composition decisions branch on templateRole/channel/publishTier instead of capability identity"
+    trigger_signals:
+      - "Workspace plugin tooling still parses templateRole/channel/publishTier"
+      - "Scaffold commands emit legacy fields as first-class operational defaults"
+    impacted_axes: [solution-design, domain-design, team-design]
+    proposal_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md:86"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/10-legacy-metadata-and-lifecycle-simplification.md:19"
+    runtime_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/hq/src/workspace/plugins.ts:10"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/hq/src/workspace/plugins.ts:124"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts:107"
+    mitigation:
+      - "Introduce metadata-contract CI gate requiring rawr.kind + rawr.capability"
+      - "Move legacy fields to compatibility-read only and time-box removal"
+    recommended_phase: 1
+    status: open
+
+  - id: R-003
+    title: "Autonomous extension blocked by incomplete plugin root discovery"
+    severity: high
+    likelihood: high
+    what_gets_us: "Agents add API/workflow capabilities that do not appear in lifecycle tooling"
+    trigger_signals:
+      - "Discovery scans only cli/agents/web plugin roots"
+      - "No default path discovery for plugins/api and plugins/workflows"
+    impacted_axes: [domain-design, system-design, team-design]
+    proposal_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/SYSTEM.md:79"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/system/PLUGINS.md:22"
+    runtime_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/hq/src/workspace/plugins.ts:81"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/hq/src/workspace/plugins.ts:84"
+    mitigation:
+      - "Expand discovery roots to all target runtime surfaces"
+      - "Add manifest-smoke checks for discovered surfaces"
+    recommended_phase: 1
+    status: open
+
+  - id: R-004
+    title: "Process-local enqueue lock causes cross-instance duplicate execution"
+    severity: high
+    likelihood: medium
+    what_gets_us: "Two replicas enqueue same runId concurrently and both proceed"
+    trigger_signals:
+      - "Duplicate event IDs/timelines for same runId"
+      - "Multiple queue calls across replicas for identical runId"
+    impacted_axes: [system-design, api-design]
+    proposal_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/05-errors-observability.md:24"
+    runtime_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/coordination-inngest/src/adapter.ts:25"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/coordination-inngest/src/adapter.ts:136"
+    mitigation:
+      - "Move idempotency to shared persistence boundary (unique constraint/compare-and-set)"
+      - "Add dedupe observability counter keyed by runId"
+    recommended_phase: 2
+    status: open
+
+  - id: R-005
+    title: "Queue failure persistence is partially silent"
+    severity: high
+    likelihood: medium
+    what_gets_us: "Queue fails and failure persistence/timeline append also fails without explicit secondary signal"
+    trigger_signals:
+      - "RUN_QUEUE_FAILED without matching run.failed timeline event"
+      - "Failed queue operations with missing status records"
+    impacted_axes: [system-design, api-design]
+    proposal_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/05-errors-observability.md:26"
+    runtime_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/orpc.ts:216"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/orpc.ts:229"
+    mitigation:
+      - "Emit explicit telemetry when failure-persistence fallback path is hit"
+      - "Introduce queue state machine (pending/queued/sent/failed)"
+    recommended_phase: 2
+    status: open
+
+  - id: R-006
+    title: "Context-envelope drift between policy and implementation"
+    severity: high
+    likelihood: medium
+    what_gets_us: "Auth/correlation semantics become inconsistent across route families"
+    trigger_signals:
+      - "Single static context object reused for all requests"
+      - "No explicit request-derived principal/correlation envelope in boundary handler setup"
+    impacted_axes: [typescript-context-design, api-design, system-design]
+    proposal_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/04-context-propagation.md:21"
+    runtime_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/orpc.ts:314"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/orpc.ts:343"
+    mitigation:
+      - "Introduce request-scoped context factory with explicit envelope type"
+      - "Add context-propagation tests across /rpc and /api/orpc"
+    recommended_phase: 2
+    status: open
+
+  - id: R-007
+    title: "D-015 test-harness policy not enforced in current suite"
+    severity: high
+    likelihood: high
+    what_gets_us: "False confidence from positive-route tests only"
+    trigger_signals:
+      - "No persona-based forbidden-route tests"
+      - "No /api/workflows/<capability>/* matrix verification in current suite"
+    impacted_axes: [solution-design, api-design, system-design]
+    proposal_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md:127"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/12-testing-harness-and-verification-strategy.md:25"
+    runtime_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/test/orpc-handlers.test.ts:18"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/core/test/orpc-contract-drift.test.ts:34"
+    mitigation:
+      - "Phase-in route/persona harness matrix; make negative assertions blocking"
+      - "Add CI gate mapping to D-015 rows"
+    recommended_phase: 3
+    status: open
+
+  - id: R-008
+    title: "Governance friction between template authority and downstream ownership"
+    severity: medium_high
+    likelihood: medium
+    what_gets_us: "Boundary rollout stalls because ownership/promotion handshake is implicit"
+    trigger_signals:
+      - "Template docs define target API/workflow boundary ownership while AGENTS split routes operational plugin authoring downstream"
+      - "Repeated unresolved ownership escalations"
+    impacted_axes: [team-design, domain-design, solution-design]
+    proposal_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/AGENTS_SPLIT.md:63"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/system/PLUGINS.md:71"
+    runtime_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/hq/src/workspace/plugins.ts:81"
+    mitigation:
+      - "Define explicit template->personal->template promotion protocol for API/workflow surfaces"
+      - "Assign single owner for lifecycle/discovery utility implementation"
+    recommended_phase: 0
+    status: open
+
+  - id: R-009
+    title: "Packet self-consistency drift (D-015 verbatim and stale sequence step)"
+    severity: medium
+    likelihood: medium
+    what_gets_us: "Execution runbook consumers follow stale instruction and duplicate work"
+    trigger_signals:
+      - "Implementation-adjacent doc still includes add-D-015 step despite lock"
+      - "Verbatim comparison fails due wording mismatch"
+    impacted_axes: [solution-design, team-design]
+    proposal_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md:34"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md:125"
+    runtime_sources:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md:174"
+    mitigation:
+      - "Normalize wording and remove stale sequence step before downstream pass"
+    recommended_phase: 0
+    status: open

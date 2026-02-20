@@ -4,7 +4,7 @@
 Packet-local decision tracking for documentation-architecture changes only.
 
 ## Current Status
-Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, context metadata placement, caller/transport publication boundaries, and legacy metadata runtime simplification are explicitly locked. D-014 and D-015 are explicitly locked in this register. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
+Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, context metadata placement, caller/transport publication boundaries, and legacy metadata runtime simplification are explicitly locked. D-014, D-015, and D-016 are explicitly locked in this register. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
 
 ## Decision Register
 
@@ -140,6 +140,30 @@ Packet remains locked on split posture and TypeBox-only contract/procedure schem
   - `axes/12-testing-harness-and-verification-strategy.md`
   - `examples/e2e-04-context-middleware.md`
   - `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md`
+
+### D-016 — Distribution default and instance-lifecycle boundary
+- `status`: `locked`
+- `locked_decision`:
+  - `RAWR HQ-Template` remains upstream engineering truth.
+  - Default consumer distribution path is instance-kit / no-fork-repeatability.
+  - Long-lived fork posture is maintainer-only by default and is not the default consumer path.
+  - Manifest-first composition authority remains canonical in generated `rawr.hq.ts`.
+  - Runtime lifecycle semantics remain derived from plugin surface root + `rawr.kind` + `rawr.capability` + manifest registration; legacy metadata fields remain non-runtime (D-013 unchanged).
+  - Multi-owner invariant is required now: no new singleton-global assumptions; alias/instance seam is contract-required now, while full feature UX/packaging mechanics are deferred.
+  - D-005..D-015 semantics remain unchanged.
+- `policy_obligations`:
+  - Do-now vs defer-later boundary is centralized in `axes/13-distribution-and-instance-lifecycle-model.md`.
+  - D-013 metadata migration obligations remain required across downstream docs/process/runbook/test artifacts.
+  - D-015 testing rollout must include no-singleton and alias/instance seam assertions where lifecycle/distribution behavior is validated.
+- `source_anchors`:
+  - `axes/13-distribution-and-instance-lifecycle-model.md`
+  - `axes/10-legacy-metadata-and-lifecycle-simplification.md`
+  - `axes/12-testing-harness-and-verification-strategy.md`
+- `impacted_docs`:
+  - `ARCHITECTURE.md`
+  - `README.md`
+  - `CANONICAL_EXPANSION_NAV.md`
+  - `axes/13-distribution-and-instance-lifecycle-model.md`
 
 ### D-008 — Extended traces middleware initialization order standard
 - `status`: `closed`

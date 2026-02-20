@@ -1,0 +1,166 @@
+version: 1
+as_of: 2026-02-20
+gaps:
+  - id: G-001
+    area: route-topology
+    axis: [solution-design, system-design, api-design]
+    claim: "Manifest-driven capability workflow route family is required"
+    proposal_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md:13"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/ARCHITECTURE.md:49"
+    runtime_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/rawr.ts:111"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/orpc.ts:339"
+    alignment_status: divergent
+    impact: high
+    confidence: 0.96
+    closure_criteria:
+      - "Host mounts /api/workflows/<capability>/* from manifest-owned workflow routers"
+      - "Tests validate route semantics by persona"
+
+  - id: G-002
+    area: boundary-ownership
+    axis: [domain-design, api-design]
+    claim: "Workflow/API boundary contracts must be plugin-owned"
+    proposal_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md:25"
+    runtime_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/core/src/orpc/hq-router.ts:5"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/coordination/src/orpc/contract.ts:22"
+    alignment_status: divergent
+    impact: high
+    confidence: 0.94
+    closure_criteria:
+      - "Boundary contracts for API/workflows live under plugins/api and plugins/workflows"
+      - "Package contracts remain transport-neutral and reusable"
+
+  - id: G-003
+    area: metadata-contract
+    axis: [domain-design, team-design, solution-design]
+    claim: "Runtime semantics should use rawr.kind + rawr.capability only"
+    proposal_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md:86"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/10-legacy-metadata-and-lifecycle-simplification.md:19"
+    runtime_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/hq/src/workspace/plugins.ts:10"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/hq/src/workspace/plugins.ts:124"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/plugins/cli/plugins/src/commands/plugins/web/enable.ts:71"
+    alignment_status: divergent
+    impact: high
+    confidence: 0.98
+    closure_criteria:
+      - "Legacy fields removed from runtime decision logic"
+      - "metadata-contract CI gate fails on missing rawr.kind/rawr.capability"
+
+  - id: G-004
+    area: plugin-discovery
+    axis: [domain-design, team-design]
+    claim: "All target plugin roots should be lifecycle-discoverable"
+    proposal_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/SYSTEM.md:74"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/system/PLUGINS.md:21"
+    runtime_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/hq/src/workspace/plugins.ts:81"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/hq/src/workspace/plugins.ts:84"
+    alignment_status: divergent
+    impact: high
+    confidence: 0.97
+    closure_criteria:
+      - "Discovery includes api/workflows/mcp roots"
+      - "Lifecycle commands operate on capability identity across all roots"
+
+  - id: G-005
+    area: caller-route-tests
+    axis: [api-design, system-design]
+    claim: "Negative-route assertions are mandatory across personas"
+    proposal_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md:130"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/12-testing-harness-and-verification-strategy.md:123"
+    runtime_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/test/orpc-handlers.test.ts:18"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/test/rawr.test.ts:57"
+    alignment_status: divergent
+    impact: high
+    confidence: 0.95
+    closure_criteria:
+      - "Suite includes forbidden-route tests for browser, external, runtime ingress personas"
+      - "CI blocks on missing negative-route coverage"
+
+  - id: G-006
+    area: context-envelope
+    axis: [typescript-context-design, api-design]
+    claim: "Request context must be request-scoped and ingress-derived"
+    proposal_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/04-context-propagation.md:21"
+    runtime_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/orpc.ts:314"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/orpc.ts:343"
+    alignment_status: divergent
+    impact: high
+    confidence: 0.92
+    closure_criteria:
+      - "Context factory derives per-request principal/correlation/network fields"
+      - "Context propagation verified in /rpc and /api/orpc suites"
+
+  - id: G-007
+    area: distributed-idempotency
+    axis: [system-design]
+    claim: "Durable queueing should be idempotent across process boundaries"
+    proposal_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/05-errors-observability.md:24"
+    runtime_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/coordination-inngest/src/adapter.ts:25"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/packages/coordination-inngest/src/adapter.ts:136"
+    alignment_status: divergent
+    impact: high
+    confidence: 0.88
+    closure_criteria:
+      - "Shared-store dedupe key exists for runId enqueue"
+      - "Duplicate enqueue integration test across multi-process simulation"
+
+  - id: G-008
+    area: queue-failure-observability
+    axis: [system-design, api-design]
+    claim: "Failure persistence should not be silent under queue failures"
+    proposal_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/axes/05-errors-observability.md:26"
+    runtime_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/orpc.ts:216"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/orpc.ts:229"
+    alignment_status: divergent
+    impact: medium_high
+    confidence: 0.89
+    closure_criteria:
+      - "Fallback path emits explicit error telemetry and failure marker"
+      - "Queue-failure contract test verifies timeline/status guarantees"
+
+  - id: G-009
+    area: packet-consistency
+    axis: [solution-design, team-design]
+    claim: "D-015 downstream execution contract should be internally consistent"
+    proposal_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md:34"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md:125"
+    runtime_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md:174"
+    alignment_status: divergent
+    impact: medium
+    confidence: 0.96
+    closure_criteria:
+      - "Remove stale downstream step and normalize D-015 wording parity"
+
+  - id: G-010
+    area: package-first-infra
+    axis: [system-design, domain-design]
+    claim: "Host-owned injection and package-owned shared infra seams are working"
+    proposal_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md:107"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md:108"
+    runtime_source:
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/rawr.ts:101"
+      - "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/apps/server/src/rawr.ts:113"
+    alignment_status: aligned
+    impact: medium_high
+    confidence: 0.93
+    closure_criteria:
+      - "Preserve this seam while migrating route topology/metadata contracts"
