@@ -1,0 +1,161 @@
+owners:
+  runtime_host_composition_owner:
+    primary_handle: "@rawr-runtime-host"
+    backup_approver: "@rawr-platform-duty"
+    decision_sla:
+      standard: "1 business day"
+      gate_blocker: "4 business hours"
+    scope:
+      - host mount ordering
+      - ingress signature guard
+      - request/workflow boundary context factory
+      - workflow route family composition
+  plugin_lifecycle_owner:
+    primary_handle: "@rawr-plugin-lifecycle"
+    backup_approver: "@rawr-architecture-duty"
+    decision_sla:
+      standard: "1 business day"
+    scope:
+      - metadata runtime contract
+      - plugin discovery roots
+      - shared metadata parser contract module
+  verification_gates_owner:
+    primary_handle: "@rawr-verification-gates"
+    backup_approver: "@rawr-release-duty"
+    decision_sla:
+      standard: "1 business day"
+      gate_blocker: "4 business hours"
+    scope:
+      - CI gate implementation
+      - persona route-negative assertion matrix
+      - harness matrix completeness checks
+  distribution_lifecycle_contract_owner:
+    primary_handle: "@rawr-distribution-lifecycle"
+    backup_approver: "@rawr-runtime-host"
+    decision_sla:
+      standard: "1 business day"
+    scope:
+      - alias_instance seam assertions
+      - no_singleton assertions
+      - bridge shim retirement enforcement
+
+owner_resolution_policy:
+  source_of_truth: "this file"
+  reassignment_allowed_in_phase_a: false
+  sla_miss_rule: "backup_approver becomes acting decision owner"
+
+slices:
+  - id: A0
+    title: Baseline and Gate Scaffolding
+    owner: verification_gates_owner
+    after: []
+    deliverables:
+      - gate shell commands + CI wiring
+      - baseline metrics snapshot
+    touched_paths:
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/package.json
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/turbo.json
+    acceptance:
+      - all required gates execute in CI
+      - baseline coverage report generated
+
+  - id: A1
+    title: D-013 Metadata Contract Shift
+    owner: plugin_lifecycle_owner
+    after: [A0]
+    deliverables:
+      - runtime behavior keyed by rawr.kind/rawr.capability
+      - legacy metadata compatibility-read telemetry only
+      - shared parser contract extraction
+    touched_paths:
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace
+    acceptance:
+      - metadata-contract gate blocks legacy runtime branching
+      - parser contract consumed in both discovery implementations
+
+  - id: A2
+    title: Plugin Discovery Surface Expansion
+    owner: plugin_lifecycle_owner
+    after: [A1]
+    deliverables:
+      - API/workflow roots discovered
+      - lifecycle operations stable for existing roots
+    touched_paths:
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts
+    acceptance:
+      - fixture tests include plugins/api and plugins/workflows
+      - no regressions for existing plugin categories
+
+  - id: A3
+    title: Host Context and Ingress Hardening
+    owner: runtime_host_composition_owner
+    after: [A0]
+    deliverables:
+      - request-scoped context factories
+      - explicit mount order
+      - signed ingress guard
+    touched_paths:
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/workflows
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/rawr.test.ts
+    acceptance:
+      - host-composition-guard passes
+      - ingress signature tests pass
+
+  - id: A4
+    title: Additive Capability Workflow Route Family
+    owner: runtime_host_composition_owner
+    after: [A2, A3]
+    deliverables:
+      - /api/workflows/<capability>/* route family mounted from manifest authority
+      - route split preserved
+    touched_paths:
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/rawr.hq.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/orpc-openapi.test.ts
+    acceptance:
+      - workflow trigger/status routes operational on /api/workflows/<capability>/*
+      - /api/inngest remains caller-forbidden
+
+  - id: A5
+    title: D-015 Harness Matrix Enforcement
+    owner: verification_gates_owner
+    after: [A3, A4]
+    deliverables:
+      - mandatory persona route-negative tests
+      - full required harness matrix suite IDs
+    touched_paths:
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/orpc-handlers.test.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/rawr.test.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/route-boundary-matrix.test.ts
+    acceptance:
+      - missing negative assertions fail CI
+      - harness matrix gate green
+
+  - id: A6
+    title: D-016 Seam Enforcement and Shim Retirement
+    owner: distribution_lifecycle_contract_owner
+    after: [A1, A5]
+    deliverables:
+      - alias_instance seam assertions
+      - no_singleton assertions
+      - compatibility shim removal
+    touched_paths:
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts
+      - /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts
+    acceptance:
+      - legacy runtime reads at zero for 7 consecutive days
+      - seam and no-singleton assertions pass
+
+bridge_timebox:
+  start_date: 2026-02-20
+  checkpoint_1: 2026-02-27
+  checkpoint_2: 2026-03-03
+  hard_expiry: 2026-03-06
