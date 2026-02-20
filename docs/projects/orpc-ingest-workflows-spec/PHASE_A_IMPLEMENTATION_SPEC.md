@@ -1,0 +1,491 @@
+# Phase A Implementation Spec
+
+## 0. Document Contract
+This document is the deep implementation spec for Phase A. It is not a milestone checklist.
+
+- Sequence entrypoint: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/PHASE_A_EXECUTION_PACKET.md`
+- This spec: implementation depth for each slice (`A0`..`A6`): concrete code surfaces, seam contracts, and gate/test wiring.
+
+## 1. Purpose, Non-Goals, Fixed Decisions
+
+### 1.1 Purpose
+Converge current runtime behavior in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template` to locked D-013, D-015, and D-016 seam-now policy by shipping a forward-only, slice-based implementation plan tied to real code paths.
+
+### 1.2 Non-goals (Phase A)
+- No rollback choreography, rollback matrices, or dual-track release strategy.
+- No full D-016 UX/productization (instance lifecycle UX, packaging workflows).
+- No broad refactors unrelated to metadata/runtime-route/harness convergence.
+- No reopening of D-005..D-016 locked decisions.
+
+### 1.3 Fixed Decisions (Must Hold)
+1. `/api/workflows/<capability>/*` is in Phase A scope and ships additively.
+2. `/api/inngest` remains runtime-ingress-only and caller-forbidden.
+3. Ingress signature verification is host-enforced before runtime dispatch.
+4. Runtime metadata behavior is keyed by `rawr.kind`, `rawr.capability`, and manifest registration only.
+5. `templateRole`, `channel`, `publishTier`, `published` are non-runtime fields.
+6. Metadata interpretation is centralized in one shared parser contract used by both discovery implementations.
+7. Harness and negative-route gates are hard-fail by end of `A1`.
+8. Compatibility shims are time-boxed and removed in `A6`.
+
+## 2. Relationship to `PHASE_A_EXECUTION_PACKET.md`
+
+- `PHASE_A_EXECUTION_PACKET.md` is the operational run order and phase gate checklist.
+- `PHASE_A_IMPLEMENTATION_SPEC.md` is the engineering depth reference:
+  - exact file ownership and changes,
+  - seam-level code shapes,
+  - acceptance checks mapped to code/test surfaces,
+  - unresolved implementation questions and defers.
+
+Use both together:
+1. Execute in packet order (`A0` -> ... -> `A6`).
+2. Implement each slice using this spec’s detailed contracts.
+
+## 3. Architecture Context
+
+### 3.1 Current Runtime Reality (as-grounded)
+- Host currently mounts `/api/inngest`, `/rpc`, `/api/orpc` in server wiring.
+- No `rawr.hq.ts` composition authority exists yet.
+- No `plugins/api/*` or `plugins/workflows/*` roots currently exist.
+- Metadata parsing/discovery logic is duplicated in:
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts`
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts`
+- Phase A gate identifiers (`metadata-contract`, `manifest-smoke`, etc.) are not wired yet.
+
+### 3.2 Target Runtime Composition (Phase A)
+- Manifest-first composition via `rawr.hq.ts` (or generated equivalent) becomes runtime authority.
+- Route families become explicit and policy-aligned:
+  - `/api/inngest` runtime ingress (signed only)
+  - `/api/workflows/<capability>/*` caller-facing workflow boundaries
+  - `/rpc` first-party/internal
+  - `/api/orpc/*` published OpenAPI boundaries
+- Request context is request-scoped and split from durable runtime context.
+- Metadata runtime semantics converge to `rawr.kind` + `rawr.capability` + manifest registration.
+
+### 3.3 Composition Diagram
+```mermaid
+flowchart TD
+  Host["apps/server/src/rawr.ts"] --> Ingress["/api/inngest"]
+  Host --> Workflows["/api/workflows/*"]
+  Host --> Rpc["/rpc"]
+  Host --> OpenApi["/api/orpc/*"]
+
+  Manifest["rawr.hq.ts / rawrHqManifest"] --> Host
+  Manifest --> TriggerRouter["workflows.triggerRouter"]
+  Manifest --> InngestBundle["inngest: client + functions"]
+
+  Workflows --> WfCtx["workflow boundary context factory"]
+  Rpc --> ReqCtx["request context factory"]
+  OpenApi --> ReqCtx
+
+  ReqCtx --> CoreRouter["packages/core/src/orpc/hq-router.ts"]
+  WfCtx --> TriggerRouter
+  TriggerRouter --> Enqueue["inngest.send"]
+  Enqueue --> Ingress
+  Ingress --> InngestBundle
+
+  PluginMetaA["packages/hq workspace discovery"] --> Parser["plugin-manifest-contract.ts"]
+  PluginMetaB["plugins/cli workspace discovery"] --> Parser
+  Parser --> Manifest
+```
+
+## 4. File Structure Map and Ownership Map
+
+### 4.1 Path Roots
+- `$ROOT`: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template`
+- `$SPEC`: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec`
+
+### 4.2 File Structure Map (Phase A)
+```yaml
+new_files:
+  - path: "$ROOT/packages/hq/src/workspace/plugin-manifest-contract.ts"
+    owner: "Plugin Lifecycle Owner"
+    purpose: "Single metadata parser contract for runtime keys + non-runtime legacy fields"
+  - path: "$ROOT/apps/server/src/workflows/context.ts"
+    owner: "Runtime/Host Composition Owner"
+    purpose: "Request/workflow boundary context factories"
+  - path: "$ROOT/rawr.hq.ts"
+    owner: "Runtime/Host Composition Owner"
+    purpose: "Manifest-first composition authority"
+  - path: "$ROOT/apps/server/test/route-boundary-matrix.test.ts"
+    owner: "Verification & Gates Owner"
+    purpose: "Mandatory negative-route assertion suite"
+
+modified_files:
+  - path: "$ROOT/packages/hq/src/workspace/plugins.ts"
+    owner: "Plugin Lifecycle Owner"
+    purpose: "Consume shared parser; discovery root expansion"
+  - path: "$ROOT/plugins/cli/plugins/src/lib/workspace-plugins.ts"
+    owner: "Plugin Lifecycle Owner"
+    purpose: "Consume shared parser; discovery root expansion"
+  - path: "$ROOT/apps/server/src/rawr.ts"
+    owner: "Runtime/Host Composition Owner"
+    purpose: "Mount order, ingress guard, manifest-driven workflow route mount"
+  - path: "$ROOT/apps/server/src/orpc.ts"
+    owner: "Runtime/Host Composition Owner"
+    purpose: "Request-scoped context factory usage; workflow route composition integration"
+  - path: "$ROOT/packages/core/src/orpc/hq-router.ts"
+    owner: "Runtime/Host Composition Owner"
+    purpose: "Capability namespace extensions for workflow trigger/status surfaces"
+  - path: "$ROOT/apps/server/test/rawr.test.ts"
+    owner: "Verification & Gates Owner"
+    purpose: "Ingress signature + mount-order assertions"
+  - path: "$ROOT/apps/server/test/orpc-handlers.test.ts"
+    owner: "Verification & Gates Owner"
+    purpose: "First-party/internal route behavior assertions"
+  - path: "$ROOT/apps/server/test/orpc-openapi.test.ts"
+    owner: "Verification & Gates Owner"
+    purpose: "Published boundary + workflow OpenAPI checks"
+  - path: "$ROOT/package.json"
+    owner: "Verification & Gates Owner"
+    purpose: "Gate scripts and CI runnable checks"
+  - path: "$ROOT/turbo.json"
+    owner: "Verification & Gates Owner"
+    purpose: "Task graph inclusion for gate scripts"
+
+expected_new_dirs:
+  - path: "$ROOT/plugins/api"
+    owner: "Plugin Lifecycle Owner"
+    purpose: "Discovery root and capability surface namespace"
+  - path: "$ROOT/plugins/workflows"
+    owner: "Plugin Lifecycle Owner"
+    purpose: "Workflow boundary surface namespace"
+```
+
+### 4.3 Ownership Map
+| Role | Handle | Backup | Scope | Decision SLA | Primary code areas |
+| --- | --- | --- | --- | --- | --- |
+| Runtime/Host Composition Owner | `@rawr-runtime-host` | `@rawr-platform-duty` | Route family mounting, context seam, ingress verification, manifest integration | 1 business day (4h gate blockers) | `$ROOT/apps/server/src/rawr.ts`, `$ROOT/apps/server/src/orpc.ts`, `$ROOT/apps/server/src/workflows/context.ts`, `$ROOT/rawr.hq.ts` |
+| Plugin Lifecycle Owner | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Metadata parser contract, workspace discovery roots, parser deduplication | 1 business day | `$ROOT/packages/hq/src/workspace/plugins.ts`, `$ROOT/plugins/cli/plugins/src/lib/workspace-plugins.ts`, `$ROOT/packages/hq/src/workspace/plugin-manifest-contract.ts` |
+| Verification & Gates Owner | `@rawr-verification-gates` | `@rawr-release-duty` | Gate wiring, harness matrix, negative-route enforcement, observability checks | 4h gate blockers, 1 business day otherwise | `$ROOT/apps/server/test/*`, `$ROOT/package.json`, `$ROOT/turbo.json` |
+| Distribution/Lifecycle Contract Owner | `@rawr-distribution-lifecycle` | `@rawr-runtime-host` | Alias/instance seam assertions, no-singleton checks, shim retirement | 1 business day | `$ROOT/apps/server/test/*`, metadata-reader paths in discovery modules |
+
+Failover rule: if owner misses SLA, backup becomes acting owner for that decision.
+
+## 5. Slice-by-Slice Implementation Spec
+
+## 5.1 A0 - Baseline Gate Scaffold
+
+### Inputs
+- Current scripts in `$ROOT/package.json` and task graph in `$ROOT/turbo.json`.
+- Existing server test suite in `$ROOT/apps/server/test`.
+
+### Code changes
+1. Add runnable gate entrypoints (scripts or TS scripts invoked by package scripts) for:
+   - `metadata-contract`
+   - `import-boundary`
+   - `manifest-smoke-baseline`
+   - `host-composition-guard`
+   - `route-negative-assertions`
+   - `harness-matrix`
+   - `observability-contract`
+2. Add deterministic static guard command for legacy runtime branching (pattern scan + tests).
+3. Keep telemetry hooks optional and non-blocking (no completion gate dependency).
+4. Wire gates into CI-invokable script(s) (single command or staged commands).
+
+### Outputs
+- All gate commands exist and execute.
+- Static guard command is available for completion/exit checks.
+
+### Acceptance checks
+- Running gate command set completes without missing-command failures.
+- Static guard command runs in CI.
+
+## 5.2 A1 - Metadata Runtime Contract Shift (D-013)
+
+### Inputs
+- Duplicate parser logic in both discovery implementations.
+- Existing plugin metadata fields in package manifests.
+
+### Code changes
+1. Introduce shared parser contract module at:
+   - `$ROOT/packages/hq/src/workspace/plugin-manifest-contract.ts`
+2. Move runtime-key interpretation to shared parser and consume from:
+   - `$ROOT/packages/hq/src/workspace/plugins.ts`
+   - `$ROOT/plugins/cli/plugins/src/lib/workspace-plugins.ts`
+3. Expand parsed model to include canonical runtime keys:
+   - `rawr.kind`
+   - `rawr.capability`
+4. Keep `templateRole`, `channel`, `publishTier`, `published` as non-runtime metadata only.
+5. Add explicit static guard coverage (pattern scan + tests) to prevent legacy runtime branching regressions.
+6. Update runtime-kind validator/test surfaces for new `rawr.kind` values (`api`, `workflows`), including:
+   - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/agent-sync/test/plugin-kinds.test.ts`
+
+### Outputs
+- One parser contract used in both discovery paths.
+- No runtime decision branches on legacy fields.
+
+### Acceptance checks
+- `metadata-contract` hard-fails when runtime branches read legacy fields.
+- Code search confirms shared parser import in both discovery modules.
+- No duplicate runtime metadata parser implementation remains.
+- Validator tests accept `rawr.kind` values `toolkit|agent|web|api|workflows`.
+
+## 5.3 A2 - Plugin Discovery Surface Expansion
+
+### Inputs
+- Current split roots: `plugins/cli/*`, `plugins/agents/*`, `plugins/web/*`.
+
+### Code changes
+1. Expand discovery roots in both implementations to include:
+   - `plugins/api/*`
+   - `plugins/workflows/*`
+2. Preserve existing category behavior for current roots.
+3. Add fixtures/tests for API/workflow plugin directory discovery.
+4. Update discovery validator/test coverage for new runtime kinds and roots, including:
+   - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/agent-sync/test/plugin-kinds.test.ts`
+
+### Outputs
+- API/workflow roots discovered and returned in workspace plugin lists.
+- Existing categories unchanged.
+- Runtime-kind validation coverage includes `plugins/{cli,agents,web,api,workflows}` roots.
+
+### Acceptance checks
+- Discovery tests include `plugins/api` and `plugins/workflows` fixtures.
+- Existing behavior tests remain green.
+- Validator/tests covering `rawr.kind` and plugin roots are updated for `api` and `workflows`.
+
+## 5.4 A3 - Host Context Seam + Ingress Hardening
+
+### Inputs
+- Current static `context` object in ORPC route registration.
+- Current `/api/inngest` mount without explicit host-level signature gate.
+
+### Code changes
+1. Replace static process-level context usage with request-scoped factory usage in:
+   - `$ROOT/apps/server/src/orpc.ts`
+2. Add boundary context module:
+   - `$ROOT/apps/server/src/workflows/context.ts`
+3. Add ingress verification guard before `inngestHandler(request)` in:
+   - `$ROOT/apps/server/src/rawr.ts`
+4. Enforce explicit mount order:
+   - `/api/inngest` -> `/api/workflows/*` -> `/rpc` + `/api/orpc/*`.
+
+### Outputs
+- Request-scoped boundary context factory in active path.
+- Signed ingress required for runtime ingress route.
+
+### Acceptance checks
+- `host-composition-guard` verifies mount order and request-scoped context invocation.
+- Unsigned ingress request tests fail with forbidden/unauthorized response.
+
+## 5.5 A4 - Additive `/api/workflows/<capability>/*` Family
+
+### Inputs
+- A2 discovery expansion complete.
+- A3 host/context seam complete.
+
+### Code changes
+1. Add manifest authority file:
+   - `$ROOT/rawr.hq.ts`
+2. Extend composition for workflow trigger routers under capability namespaces.
+3. Mount `/api/workflows/*` in host from manifest-owned trigger router.
+4. Keep `/rpc` internal and `/api/orpc/*` publication behavior unchanged.
+5. Do not introduce `/rpc/workflows` dedicated mount.
+
+### Outputs
+- Four route families mounted and policy-distinct.
+- Capability-first workflow boundary path active.
+
+### Acceptance checks
+- `manifest-smoke-completion` validates mounted families:
+  - `/rpc`
+  - `/api/orpc/*`
+  - `/api/workflows/<capability>/*`
+  - `/api/inngest`
+- No `/rpc/workflows` path appears in route registration.
+- Caller access to `/api/inngest` remains forbidden.
+
+## 5.6 A5 - D-015 Harness Matrix + Negative Assertions
+
+### Inputs
+- A3/A4 route/context model active.
+
+### Code changes
+1. Add required suite identifiers and enforcement in test/gate wiring:
+   - `suite:web:first-party-rpc`
+   - `suite:web:published-openapi`
+   - `suite:cli:in-process`
+   - `suite:api:boundary`
+   - `suite:workflow:trigger-status`
+   - `suite:runtime:ingress`
+   - `suite:cross-surface:metadata-import-boundary`
+2. Implement mandatory negative-route assertions:
+   - first-party/external callers reject `/api/inngest`
+   - external callers reject `/rpc`
+   - runtime-ingress suite does not claim caller-boundary semantics
+   - in-process suite does not default to local HTTP self-calls
+3. Add/extend route boundary matrix tests:
+   - `$ROOT/apps/server/test/route-boundary-matrix.test.ts`
+
+### Outputs
+- Harness matrix coverage becomes hard-fail.
+- Negative-route contract is executable.
+
+### Acceptance checks
+- `harness-matrix` fails when any required suite ID is missing.
+- `route-negative-assertions` is fully green.
+
+## 5.7 A6 - D-016 Seam Assertions + Shim Retirement
+
+### Inputs
+- A1 parser bridge in place.
+- A5 harness matrix and negative assertions enforced.
+
+### Code changes
+1. Add alias/instance seam assertions in lifecycle-relevant tests.
+2. Add no-singleton-global negative assertions for runtime composition assumptions.
+3. Remove compatibility-read runtime shims introduced in A1.
+4. Enforce deterministic completion checks: `metadata-contract` gate + static legacy-runtime-branch guard check.
+
+### Outputs
+- Shim-free runtime metadata path.
+- Instance-safe seam assertions active.
+
+### Acceptance checks
+- `metadata-contract` gate is green.
+- Static legacy-runtime-branch guard check (pattern scan + tests) is green.
+- Alias/instance + no-singleton assertions are green.
+- Compatibility shim code paths deleted.
+
+## 6. Critical Seam Code-Shape Examples
+
+### 6.1 Metadata Parser Contract (Shared)
+```ts
+// $ROOT/packages/hq/src/workspace/plugin-manifest-contract.ts
+export type RuntimePluginIdentity = {
+  kind: "toolkit" | "agent" | "web" | "api" | "workflows";
+  capability: string;
+};
+
+export type LegacyMetadata = {
+  templateRole?: "fixture" | "example" | "operational";
+  channel?: "A" | "B" | "both";
+  publishTier?: "blocked" | "candidate";
+  published?: boolean;
+};
+
+export type ParsedPluginManifest = {
+  id: string;
+  absPath: string;
+  runtime: RuntimePluginIdentity;
+  legacy: LegacyMetadata;
+};
+
+export function parsePluginManifest(pkg: unknown, absPath: string): ParsedPluginManifest {
+  // Parse + validate rawr.kind/rawr.capability as runtime keys.
+  // Keep legacy fields parsed but never returned as runtime selectors.
+  // Optional: emit lightweight diagnostics for migration visibility (non-blocking).
+}
+```
+
+### 6.2 Request Context Factory
+```ts
+// $ROOT/apps/server/src/workflows/context.ts
+export type BoundaryContextDeps = {
+  runtime: CoordinationRuntimeAdapter;
+  inngestClient: Inngest;
+};
+
+export function createBoundaryContext(request: Request, deps: BoundaryContextDeps): RawrOrpcContext {
+  const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
+  const correlationId = request.headers.get("x-correlation-id") ?? requestId;
+
+  return {
+    requestId,
+    correlationId,
+    runtime: deps.runtime,
+    inngestClient: deps.inngestClient,
+  } as RawrOrpcContext;
+}
+```
+
+### 6.3 Route Mount Registration (Manifest-Driven)
+```ts
+// $ROOT/apps/server/src/rawr.ts
+const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
+
+app.all("/api/inngest", async ({ request }) => {
+  if (!(await verifyInngestSignature(request))) {
+    return new Response("forbidden", { status: 403 });
+  }
+  return inngestHandler(request);
+});
+
+app.all("/api/workflows/*", async ({ request }) => {
+  const context = createWorkflowBoundaryContext(request, deps);
+  const result = await workflowHandler.handle(request, {
+    prefix: "/api/workflows",
+    context,
+  });
+  return result.matched ? result.response : new Response("not found", { status: 404 });
+}, { parse: "none" });
+
+registerOrpcRoutes(app, /* mounts /rpc + /api/orpc */);
+```
+
+### 6.4 Verification Gate Wiring
+```json
+{
+  "scripts": {
+    "phase-a:gate:metadata-contract": "bunx vitest run --project hq --project plugin-plugins --testNamePattern='metadata contract'",
+    "phase-a:gate:import-boundary": "bunx vitest run --project hq --project plugin-plugins --testNamePattern='import direction'",
+    "phase-a:gate:host-composition-guard": "bunx vitest run --project server --testNamePattern='mount order|ingress signature|request scoped context'",
+    "phase-a:gate:route-negative-assertions": "bunx vitest run --project server --testNamePattern='reject.*api/inngest|reject.*rpc'",
+    "phase-a:gate:harness-matrix": "bun scripts/phase-a/verify-harness-matrix.mjs",
+    "phase-a:gate:manifest-smoke-baseline": "bun scripts/phase-a/manifest-smoke.mjs --mode=baseline",
+    "phase-a:gate:manifest-smoke-completion": "bun scripts/phase-a/manifest-smoke.mjs --mode=completion",
+    "phase-a:gate:observability-contract": "bunx vitest run --project server --project coordination-observability --testNamePattern='correlation|timeline|trace links'",
+    "phase-a:gate:legacy-runtime-branch-static-guard": "bun scripts/phase-a/check-legacy-runtime-branching.mjs && bunx vitest run --project hq --project plugin-plugins --testNamePattern='legacy runtime branch guard'",
+    "phase-a:gates:baseline": "bun run phase-a:gate:metadata-contract && bun run phase-a:gate:import-boundary && bun run phase-a:gate:manifest-smoke-baseline && bun run phase-a:gate:host-composition-guard && bun run phase-a:gate:route-negative-assertions && bun run phase-a:gate:harness-matrix && bun run phase-a:gate:observability-contract",
+    "phase-a:gates:completion": "bun run phase-a:gate:metadata-contract && bun run phase-a:gate:import-boundary && bun run phase-a:gate:manifest-smoke-completion && bun run phase-a:gate:host-composition-guard && bun run phase-a:gate:route-negative-assertions && bun run phase-a:gate:harness-matrix && bun run phase-a:gate:observability-contract",
+    "phase-a:gates:exit": "bun run phase-a:gates:completion && bun run phase-a:gate:legacy-runtime-branch-static-guard"
+  }
+}
+```
+
+## 7. Gate/Test Contract Mapped to Slices
+| Gate | Primary slice(s) | Test surfaces | Expected fail mode |
+| --- | --- | --- | --- |
+| `metadata-contract` | `A1`, `A6` | `$ROOT/packages/hq/test`, `$ROOT/plugins/cli/plugins/test` | Legacy metadata used as runtime branch key |
+| `import-boundary` | `A1`, `A2` | package/plugin import scanning + tests | Package layer imports plugin runtime modules |
+| `manifest-smoke-baseline` | `A0` | manifest and route registration checks | Missing manifest authority wiring snapshot |
+| `host-composition-guard` | `A3`, `A4` | `$ROOT/apps/server/test/rawr.test.ts` | Mount order drift, static context usage, unsigned ingress accepted |
+| `route-negative-assertions` | `A5` | `$ROOT/apps/server/test/route-boundary-matrix.test.ts` | Caller path reaches forbidden route families |
+| `harness-matrix` | `A5` | suite-id registry + test metadata scan | Required suite IDs missing |
+| `observability-contract` | `A0`, `A5`, `A6` | server + coordination-observability tests | Missing correlation/timeline diagnostics |
+| `manifest-smoke-completion` | `A4`, Phase A exit | route family completeness check | Missing `/api/workflows/<capability>/*` family or pending markers |
+| `legacy-runtime-branch-static-guard` | `A1`, `A6`, Phase A exit | targeted pattern scan + metadata contract tests | Runtime branch logic reintroduced on legacy metadata fields |
+
+## 8. Unresolved Questions and Deferred Register
+
+### 8.1 Deterministic Decision Table
+| question | default_now | owner_handle | decision_by_slice | fallback_if_unresolved |
+| --- | --- | --- | --- | --- |
+| Ingress signature source of truth | Environment-backed signing config is authoritative in Phase A; host verifies signature before runtime dispatch. | `@rawr-runtime-host` | `A3` | If config source integration is incomplete, keep env-only verification and deny unsigned/unverifiable ingress requests. |
+| Manifest generation mode | Checked-in `rawr.hq.ts` is the runtime composition authority in Phase A (no generated manifest artifact path). | `@rawr-runtime-host` | `A4` | If automation is not ready, continue with manual `rawr.hq.ts` updates gated by `manifest-smoke-completion`. |
+| Workflow route behavior with zero capabilities | `/api/workflows/*` returns canonical 404 with explicit policy headers for the workflow family. | `@rawr-runtime-host` | `A4` | If policy header implementation slips, keep canonical 404 and block Phase A exit until headers are added. |
+| Legacy-runtime diagnostics mode | Telemetry is optional and lightweight; completion uses static guard + tests, not event streams. | `@rawr-plugin-lifecycle` | `A1` | If telemetry is unavailable, proceed with static guard and gate checks only. |
+
+### 8.2 Deferred Register (Inherited, unchanged)
+| Defer ID | Deferred item | Why deferred | Unblock trigger | Target phase |
+| --- | --- | --- | --- | --- |
+| `DR-001` | D-016 UX/packaging product features | Not needed for Phase A seam safety | Phase A complete + shim retirement | Phase D |
+| `DR-002` | Cross-instance storage-backed lock redesign | Not required for immediate convergence | Evidence of cross-instance duplication risk after A6 | Phase C |
+| `DR-003` | Expanded telemetry beyond gate diagnostics | Keep Phase A narrow | Post-Phase-A observability intake | Phase C |
+| `DR-004` | Broad non-convergence refactors | Would dilute deterministic convergence | New scoped milestone post-Phase-A | Phase B |
+
+## 9. Forward-Only Delivery Rules
+1. Remediate failing slices in-place; do not introduce rollback branches.
+2. Keep compatibility shims strictly time-boxed and delete in `A6`.
+3. Treat gate failures as blocking until green.
+4. Do not widen Phase A scope to absorb deferred lifecycle productization.
+
+## 10. Exit Criteria (Spec-Scoped)
+1. Slices `A0`..`A6` implemented in dependency order.
+2. All required gates green; none in warning-only mode.
+3. `manifest-smoke-completion` confirms all four route families mounted.
+4. `metadata-contract` gate is green.
+5. Static legacy-runtime-branch guard check (pattern scan + tests) is green.
+6. Compatibility shim code paths are removed in `A6`.
+7. No runtime branching on legacy metadata fields remains.
+8. `/api/workflows/<capability>/*` is active and policy-correct.

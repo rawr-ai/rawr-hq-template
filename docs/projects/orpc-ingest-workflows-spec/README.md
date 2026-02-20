@@ -11,6 +11,8 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 5. `CANONICAL_EXPANSION_NAV.md` — concern-based expansion router (D-013/D-014/D-015/D-016, downstream update routing).
 6. `examples/*.md` — reference walkthroughs (non-normative).
 7. `IMPLEMENTATION_ADJACENT_DOC_UPDATES_SPEC.md` — implementation-adjacent downstream update contract.
+8. `PHASE_A_EXECUTION_PACKET.md` — canonical Phase A execution entrypoint (slice order, ownership, gates, exit criteria).
+9. `PHASE_A_IMPLEMENTATION_SPEC.md` — deep Phase A implementation specification (architecture context, file structures, seam examples).
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -18,6 +20,8 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Canonical locked subsystem posture and caller/auth matrix: `ARCHITECTURE.md`
 - Open vs closed decisions and decision IDs: `DECISIONS.md`
 - Concern-based D-013/D-014/D-015/D-016 routing: `CANONICAL_EXPANSION_NAV.md`
+- Phase A execution order and operator view: `PHASE_A_EXECUTION_PACKET.md`
+- Phase A deep implementation detail: `PHASE_A_IMPLEMENTATION_SPEC.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 
