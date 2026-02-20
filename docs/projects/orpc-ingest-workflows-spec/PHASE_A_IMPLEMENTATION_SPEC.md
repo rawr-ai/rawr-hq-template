@@ -4,7 +4,7 @@
 This document is the deep implementation spec for Phase A. It is not a milestone checklist.
 
 - Sequence entrypoint: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/PHASE_A_EXECUTION_PACKET.md`
-- This spec: implementation depth for each slice (`A0`..`A6`): concrete code surfaces, seam contracts, and gate/test wiring.
+- This spec: implementation depth for each slice (`A0`..`A9`): concrete code surfaces, seam contracts, and gate/test wiring.
 
 ## 1. Purpose, Non-Goals, Fixed Decisions
 
@@ -37,7 +37,7 @@ Converge current runtime behavior in `/Users/mateicanavra/Documents/.nosync/DEV/
   - unresolved implementation questions and defers.
 
 Use both together:
-1. Execute in packet order (`A0` -> ... -> `A6`).
+1. Execute in packet order (`A0` -> ... -> `A9`).
 2. Implement each slice using this spec’s detailed contracts.
 
 ## 3. Architecture Context
@@ -158,6 +158,9 @@ expected_new_dirs:
 | Plugin Lifecycle Owner | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Metadata parser contract, workspace discovery roots, parser deduplication | 1 business day | `$ROOT/packages/hq/src/workspace/plugins.ts`, `$ROOT/plugins/cli/plugins/src/lib/workspace-plugins.ts`, `$ROOT/packages/hq/src/workspace/plugin-manifest-contract.ts` |
 | Verification & Gates Owner | `@rawr-verification-gates` | `@rawr-release-duty` | Gate wiring, harness matrix, negative-route enforcement, observability checks | 4h gate blockers, 1 business day otherwise | `$ROOT/apps/server/test/*`, `$ROOT/package.json`, `$ROOT/turbo.json` |
 | Distribution/Lifecycle Contract Owner | `@rawr-distribution-lifecycle` | `@rawr-runtime-host` | Alias/instance seam assertions, no-singleton checks, shim retirement | 1 business day | `$ROOT/apps/server/test/*`, metadata-reader paths in discovery modules |
+| Review Closure Owner | `@rawr-review-closure` | `@rawr-verification-gates` | Full TypeScript + ORPC review closure, finding triage, fix-loop closure | 1 business day (4h blocking findings) | Phase A changed runtime paths + `$SPEC/PHASE_A_EXECUTION_PACKET.md` + `$SPEC/PHASE_A_IMPLEMENTATION_SPEC.md` |
+| Docs & Cleanup Owner | `@rawr-docs-maintainer` | `@rawr-release-duty` | Canonical docs/runbook sync and scratch/review cleanup | 1 business day | `$ROOT/docs/process/*`, `$ROOT/docs/process/runbooks/*`, `$SPEC/*` |
+| Phase Sequencing Owner | `@rawr-phase-sequencing` | `@rawr-architecture-duty` | Post-Phase-A readjustment and next-phase (Phase B+) readiness hardening | 1 business day | `$SPEC/DECISIONS.md`, `$SPEC/ARCHITECTURE.md`, `$SPEC/axes/*` |
 
 Failover rule: if owner misses SLA, backup becomes acting owner for that decision.
 
@@ -347,6 +350,80 @@ Failover rule: if owner misses SLA, backup becomes acting owner for that decisio
 - Alias/instance + no-singleton assertions are green.
 - Compatibility shim code paths deleted.
 
+## 5.8 A7 - Full Review Pass (TypeScript + ORPC) + Fix Closure
+
+### Inputs
+- Completed Phase A implementation changes from `A0`..`A6`.
+- Canonical packet + execution context:
+  - `$SPEC/README.md`
+  - `$SPEC/ARCHITECTURE.md`
+  - `$SPEC/DECISIONS.md`
+  - `$SPEC/PHASE_A_EXECUTION_PACKET.md`
+  - `$SPEC/PHASE_A_IMPLEMENTATION_SPEC.md`
+
+### Code/process changes
+1. Run full implementation review from both TypeScript and ORPC perspectives.
+2. Review agents must be grounded before review:
+   - introspect `/Users/mateicanavra/.codex-rawr/skills/typescript/SKILL.md`
+   - introspect `/Users/mateicanavra/.codex-rawr/skills/orpc/SKILL.md`
+3. Require each review agent to maintain:
+   - review plan document
+   - review scratchpad
+   - severity-ranked review report with file/line evidence and concrete fixes
+4. If an agent finished a large prior task and is being reassigned to review/fix, send `/compact` before assigning the new task.
+5. Resolve review findings with dedicated fix cycles (new fix agents or reassigned implementation agents).
+6. Re-run impacted gates/tests after fixes and perform a short re-review of touched areas.
+
+### Outputs
+- Closed review loop with explicit finding disposition and fixes merged.
+- Verified post-fix gate status for impacted surfaces.
+
+### Acceptance checks
+- Blocking/high findings are fixed.
+- Any accepted medium findings are explicitly documented with owner + rationale + follow-up target.
+- Re-review confirms no regression from fixes.
+
+## 5.9 A8 - Guaranteed Docs + Cleanup Slice
+
+### Inputs
+- `A7` review/fix closure complete.
+- Landed Phase A behavior from implementation branch/stack.
+
+### Code/process changes
+1. Update canonical docs and runbooks impacted by landed Phase A behavior.
+2. Remove or archive Phase A scratch/review artifacts that are no longer needed post-merge.
+3. Keep canonical decision/spec/runbook docs as authoritative references.
+4. Produce a cleanup manifest that lists archived/deleted paths with rationale.
+
+### Outputs
+- Canonical docs reflect shipped behavior.
+- Scratch/review clutter removed or archived intentionally.
+
+### Acceptance checks
+- Runbook and canonical doc deltas are complete and internally consistent.
+- Cleanup manifest is present and readable.
+- No stale Phase A scratch/review artifacts remain in active packet paths unless intentionally retained.
+
+## 5.10 A9 - Post-Land Readjustment/Realignment (Phase B+ Prep)
+
+### Inputs
+- `A8` doc/cleanup closure complete.
+- Final landed Phase A behavior and gate outcomes.
+
+### Code/process changes
+1. Review remaining packet docs (`ARCHITECTURE.md`, `DECISIONS.md`, `axes/*`) for next-phase readiness.
+2. Tighten sequencing and scope boundaries for Phase B+ based on Phase A outcomes.
+3. Update only what is needed for next-phase execution clarity (avoid speculative over-planning).
+4. Produce Phase B readiness outcome with blockers (if any), owners, and suggested opening slices.
+
+### Outputs
+- Reconciled post-Phase-A spec for future phase execution.
+- Explicit Phase B kickoff posture (`ready` or `not-ready`) and reasons.
+
+### Acceptance checks
+- Blocking vs non-blocking open questions for Phase B are explicit.
+- Updated next-phase sequencing is concrete enough to start a new execution packet pass.
+
 ## 6. Critical Seam Code-Shape Examples
 
 ### 6.1 Metadata Parser Contract (Shared)
@@ -455,6 +532,9 @@ registerOrpcRoutes(app, /* mounts /rpc + /api/orpc */);
 | `observability-contract` | `A0`, `A5`, `A6` | server + coordination-observability tests | Missing correlation/timeline diagnostics |
 | `manifest-smoke-completion` | `A4`, Phase A exit | route family completeness check | Missing `/api/workflows/<capability>/*` family or pending markers |
 | `legacy-runtime-branch-static-guard` | `A1`, `A6`, Phase A exit | targeted pattern scan + metadata contract tests | Runtime branch logic reintroduced on legacy metadata fields |
+| `review-closure` | `A7` | review findings + disposition + targeted reruns | High/blocking findings unresolved or unverified |
+| `docs-sync-cleanup` | `A8` | canonical docs/runbooks + cleanup manifest | Landed behavior not reflected in docs or stale scratch artifacts retained |
+| `phase-sequence-readjustment` | `A9` | packet reconciliation outputs for Phase B+ | Phase B kickoff ambiguity remains |
 
 ## 8. Unresolved Questions and Deferred Register
 
@@ -479,9 +559,11 @@ registerOrpcRoutes(app, /* mounts /rpc + /api/orpc */);
 2. Keep compatibility shims strictly time-boxed and delete in `A6`.
 3. Treat gate failures as blocking until green.
 4. Do not widen Phase A scope to absorb deferred lifecycle productization.
+5. Run mandatory review/fix closure (`A7`) before docs/cleanup (`A8`).
+6. Run post-land realignment (`A9`) before opening the next implementation phase.
 
-## 10. Exit Criteria (Spec-Scoped)
-1. Slices `A0`..`A6` implemented in dependency order.
+## 10. Phase A Landing Criteria (Spec-Scoped)
+1. Slices `A0`..`A8` implemented in dependency order.
 2. All required gates green; none in warning-only mode.
 3. `manifest-smoke-completion` confirms all four route families mounted.
 4. `metadata-contract` gate is green.
@@ -489,3 +571,9 @@ registerOrpcRoutes(app, /* mounts /rpc + /api/orpc */);
 6. Compatibility shim code paths are removed in `A6`.
 7. No runtime branching on legacy metadata fields remains.
 8. `/api/workflows/<capability>/*` is active and policy-correct.
+9. `A7` review closure is complete with fixes applied.
+10. `A8` docs/runbook updates and cleanup manifest are complete.
+
+## 11. Post-Landing Realignment Criteria
+1. `A9` is complete with explicit Phase B kickoff posture (`ready` or `not-ready`).
+2. Remaining blockers (if any) are owner-assigned and ordered for next pass.

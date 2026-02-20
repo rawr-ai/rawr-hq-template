@@ -4,9 +4,12 @@
 This is the only execution packet for Phase A.
 
 Execute strictly in this order:
-1. `A0` -> `A1` -> `A2` -> `A3` -> `A4` -> `A5` -> `A6`
+1. `A0` -> `A1` -> `A2` -> `A3` -> `A4` -> `A5` -> `A6` -> `A7` -> `A8` -> `A9`
 2. Do not start a slice until all dependency slices are green.
 3. Forward-only posture: remediate failing slices in place; do not run rollback tracks.
+4. `A7` is a mandatory full review + fix closure before docs/cleanup.
+5. `A8` is the mandatory docs/cleanup closeout for landed Phase A.
+6. `A9` is a mandatory post-land realignment pass for Phase B+ planning readiness.
 
 ## Phase A Objective
 Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with implementation-ready slices tied to real code paths.
@@ -30,6 +33,9 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
 | Plugin Lifecycle Owner | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Metadata contract, discovery roots, shared parser adoption |
 | Verification & Gates Owner | `@rawr-verification-gates` | `@rawr-release-duty` | CI gates, negative-route assertions, harness completeness |
 | Distribution/Lifecycle Contract Owner | `@rawr-distribution-lifecycle` | `@rawr-runtime-host` | Alias/instance seam assertions and shim retirement |
+| Review Closure Owner | `@rawr-review-closure` | `@rawr-verification-gates` | TypeScript + ORPC review closure, finding triage, and fix-loop completion |
+| Docs & Cleanup Owner | `@rawr-docs-maintainer` | `@rawr-release-duty` | Canonical docs/runbook updates and scratch/review artifact cleanup |
+| Phase Sequencing Owner | `@rawr-phase-sequencing` | `@rawr-architecture-duty` | Post-Phase-A readjustment and next-phase (Phase B+) hardening |
 
 SLA rule: if owner misses SLA, backup becomes acting owner for that decision.
 
@@ -149,6 +155,61 @@ SLA rule: if owner misses SLA, backup becomes acting owner for that decision.
   3. Alias/instance and no-singleton assertions are green.
   4. Compatibility shims are deleted.
 
+### A7 - Full Review Pass (TypeScript + ORPC) + Fix Closure
+- Owner: `Review Closure Owner`
+- Depends on: `A6`
+- Implement:
+  1. Run a full review of all Phase A implementation changes from both TypeScript and ORPC design perspectives.
+  2. Review agents are mandatory and must be grounded before review:
+     - Introspect `/Users/mateicanavra/.codex-rawr/skills/typescript/SKILL.md`
+     - Introspect `/Users/mateicanavra/.codex-rawr/skills/orpc/SKILL.md`
+     - Read original packet sources and execution docs at minimum:
+       - `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/README.md`
+       - `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/ARCHITECTURE.md`
+       - `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md`
+       - `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/PHASE_A_EXECUTION_PACKET.md`
+       - `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/PHASE_A_IMPLEMENTATION_SPEC.md`
+  3. Require review artifacts from each review agent:
+     - review plan document
+     - review scratchpad
+     - severity-ranked review report with file/line evidence
+  4. Fix findings discovered in review (dispatch fix agents or re-dispatch implementation agents).
+  5. If reusing agents after large-topic switches, send `/compact` before assigning the new review/fix task.
+  6. Re-run impacted gate/test suites after fixes.
+- Acceptance:
+  1. Review reports are complete, evidence-mapped, and severity-ranked.
+  2. All blocking/high findings are fixed.
+  3. Any deferred medium findings are explicitly accepted with owner, rationale, and target slice.
+  4. Re-review of fixed areas is green.
+
+### A8 - Guaranteed Docs + Cleanup Slice
+- Owner: `Docs & Cleanup Owner`
+- Depends on: `A7`
+- Implement:
+  1. Update canonical docs/runbooks impacted by Phase A implementation.
+  2. Clean up no-longer-needed Phase A scratch/review artifacts once Phase A implementation is merged/landed:
+     - archive if record value remains
+     - delete if superseded/no longer useful
+  3. Keep canonical packet docs, decisions, and runbooks as source of truth.
+  4. Publish a short cleanup manifest listing archived/deleted paths.
+- Acceptance:
+  1. Canonical docs and relevant runbooks reflect Phase A landed reality.
+  2. Scratch/review clutter for Phase A is removed or archived with explicit rationale.
+  3. Cleanup manifest exists and is reviewer-readable.
+
+### A9 - Post-Land Readjustment/Realignment (Phase B+ Prep)
+- Owner: `Phase Sequencing Owner`
+- Depends on: `A8`
+- Implement:
+  1. Run a look-ahead across remaining packet docs (`axes/*`, `DECISIONS.md`, `ARCHITECTURE.md`) for next-phase execution readiness.
+  2. Tighten/harden remaining phase sequencing where Phase A outcomes changed assumptions.
+  3. Update deferred register and decision notes only where needed to make Phase B planning decision-complete.
+  4. Produce a concise “Phase B readiness” output with blockers (if any) and recommended first slices.
+- Acceptance:
+  1. Remaining spec is reconciled against landed Phase A behavior.
+  2. Open questions are classified as blocking vs non-blocking for Phase B.
+  3. Phase B kickoff recommendation is explicit (`ready` or `not-ready`) with reasons.
+
 ## Gate Contract (Concrete)
 Required gates:
 1. `metadata-contract`
@@ -171,8 +232,13 @@ bun scripts/phase-a/check-legacy-runtime-branching.mjs \
 Telemetry note (optional, non-blocking):
 - Diagnostic telemetry for migration visibility is allowed but must not gate Phase A completion.
 
-## Phase A Exit Criteria
-1. All slices `A0`..`A6` complete in dependency order.
+## Closure Checks (A7-A9)
+1. `review-closure` (`A7`): full TypeScript + ORPC review artifacts complete, findings dispositioned, fixes merged, and targeted reruns green.
+2. `docs-sync-cleanup` (`A8`): canonical docs/runbooks updated and cleanup manifest complete.
+3. `phase-sequence-readjustment` (`A9`): remaining packet reconciled and Phase B kickoff posture explicit.
+
+## Phase A Landing Criteria
+1. All slices `A0`..`A8` complete in dependency order.
 2. All required gates are green with no warning-only mode.
 3. `manifest-smoke-completion` is green with zero pending families.
 4. `metadata-contract` gate is green.
@@ -180,6 +246,12 @@ Telemetry note (optional, non-blocking):
 6. Compatibility shim code paths are removed in `A6`.
 7. No runtime behavior branches on legacy metadata fields.
 8. `/api/workflows/<capability>/*` is active and route-policy-correct.
+9. `A7` review findings are closed or explicitly accepted with owner/rationale.
+10. `A8` canonical docs/runbooks and cleanup manifest are complete.
+
+## Post-Landing Realignment Criteria
+1. `A9` is complete and Phase B kickoff posture is explicit (`ready` or `not-ready`).
+2. Any required Phase B preconditions are documented with owners and target order.
 
 ## Deferred Register (Centralized, Concise)
 | Defer ID | Deferred Item | Why Deferred | Unblock Trigger | Target Phase | Owner |
