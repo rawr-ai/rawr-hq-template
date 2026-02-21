@@ -231,6 +231,7 @@ state: os.state.router({
 - **Ownership split:** Workflow/API boundary contracts are plugin-owned; packages remain transport-neutral and own shared domain logic/domain schemas plus internal client/service layers only.
 - **Caller-mode split:** First-party callers (including MFEs by default) use `RPCLink` on `/rpc`; external callers use published OpenAPI clients (`/api/orpc/*`, `/api/workflows/<capability>/*`); runtime ingress remains signed `/api/inngest`.
 - **File structure:** Host wiring remains explicit in `apps/server/src/rawr.ts` and workflow context helpers; capability files remain under `packages/*` and `plugins/*`.
+- **Implementation status tracking:** Landed/runtime-state snapshots live in `docs/projects/orpc-ingest-workflows-spec/PHASE_A_EXECUTION_PACKET.md` and `docs/projects/orpc-ingest-workflows-spec/PHASE_A_IMPLEMENTATION_SPEC.md`.
 
 ## 10) Legacy Metadata + Distribution/Instance Lifecycle Snapshot (D-013, D-016)
 - **What changes:**

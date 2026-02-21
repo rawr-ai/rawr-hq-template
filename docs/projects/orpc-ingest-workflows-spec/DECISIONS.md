@@ -6,6 +6,10 @@ Packet-local decision tracking for documentation-architecture changes only.
 ## Current Status
 Packet remains locked on split posture and TypeBox-only contract/procedure schema authoring policy (no Zod-authored contract/procedure schemas). Procedure I/O schema ownership, inline-I/O docs/examples posture, context metadata placement, caller/transport publication boundaries, and legacy metadata hard deletion are explicitly locked. D-014, D-015, and D-016 are explicitly locked in this register. This file is canonical for packet decisions; synthesis docs are context, not a policy prerequisite.
 
+Implementation-state snapshots are tracked in phase execution artifacts, not in this decision register:
+- `docs/projects/orpc-ingest-workflows-spec/PHASE_A_EXECUTION_PACKET.md`
+- `docs/projects/orpc-ingest-workflows-spec/PHASE_A_IMPLEMENTATION_SPEC.md`
+
 ## Decision Register
 
 ### D-005 — Workflow trigger route convergence

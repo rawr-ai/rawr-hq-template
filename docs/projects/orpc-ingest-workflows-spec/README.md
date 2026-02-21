@@ -22,6 +22,7 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Concern-based D-013/D-014/D-015/D-016 routing: `CANONICAL_EXPANSION_NAV.md`
 - Phase A execution order and operator view: `PHASE_A_EXECUTION_PACKET.md`
 - Phase A deep implementation detail: `PHASE_A_IMPLEMENTATION_SPEC.md`
+- Phase A landed runtime status + review/docs closure snapshots: `PHASE_A_EXECUTION_PACKET.md` ("As-Landed Snapshot"), `PHASE_A_IMPLEMENTATION_SPEC.md` ("Current Runtime Reality (as-landed)")
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 
