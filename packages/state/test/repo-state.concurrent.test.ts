@@ -18,6 +18,22 @@ async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function findNonRunningPid(): number {
+  const start = Math.max(50_000, process.pid + 10_000);
+  const end = start + 20_000;
+
+  for (let pid = start; pid < end; pid += 1) {
+    try {
+      process.kill(pid, 0);
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      if (err.code === "ESRCH") return pid;
+    }
+  }
+
+  throw new Error("Unable to find a non-running PID for stale lock test.");
+}
+
 afterEach(async () => {
   while (tempDirs.length > 0) {
     const dir = tempDirs.pop();
@@ -56,13 +72,14 @@ describe("@rawr/state repo-state concurrency", () => {
     await expect(fs.stat(stateLockPath(repoRoot))).rejects.toMatchObject({ code: "ENOENT" });
   });
 
-  it("takes over stale lock files deterministically when contention guard is stale", async () => {
+  it("takes over stale lock files deterministically when lock-holder pid is no longer alive", async () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-state-stale-lock-"));
     tempDirs.push(repoRoot);
 
     const lockPath = stateLockPath(repoRoot);
     await fs.mkdir(path.dirname(lockPath), { recursive: true });
-    await fs.writeFile(lockPath, "{\"pid\":0}\n", "utf8");
+    const deadPid = findNonRunningPid();
+    await fs.writeFile(lockPath, `${JSON.stringify({ pid: deadPid, acquiredAt: new Date().toISOString() })}\n`, "utf8");
     const staleTime = new Date(Date.now() - 5 * 60_000);
     await fs.utimes(lockPath, staleTime, staleTime);
 
@@ -86,6 +103,44 @@ describe("@rawr/state repo-state concurrency", () => {
     expect(result.state.plugins.enabled).toEqual(["@rawr/plugin-stale-lock"]);
     const persisted = await getRepoState(repoRoot);
     expect(persisted.plugins.enabled).toEqual(["@rawr/plugin-stale-lock"]);
+  });
+
+  it("does not reclaim stale-aged lock files when the lock-holder pid is still alive", async () => {
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-state-active-lock-"));
+    tempDirs.push(repoRoot);
+
+    const lockPath = stateLockPath(repoRoot);
+    await fs.mkdir(path.dirname(lockPath), { recursive: true });
+    await fs.writeFile(
+      lockPath,
+      `${JSON.stringify({ pid: process.pid, acquiredAt: new Date(Date.now() - 5 * 60_000).toISOString() })}\n`,
+      "utf8",
+    );
+    const staleTime = new Date(Date.now() - 5 * 60_000);
+    await fs.utimes(lockPath, staleTime, staleTime);
+
+    await expect(
+      mutateRepoStateAtomically(
+        repoRoot,
+        async (current) => ({
+          ...current,
+          plugins: {
+            ...current.plugins,
+            enabled: [...current.plugins.enabled, "@rawr/plugin-should-not-write"],
+            lastUpdatedAt: new Date().toISOString(),
+          },
+        }),
+        {
+          lockTimeoutMs: 75,
+          retryDelayMs: 5,
+          staleLockMs: 10,
+        },
+      ),
+    ).rejects.toThrow("Timed out waiting for repo state lock");
+
+    const lockPayload = await fs.readFile(lockPath, "utf8");
+    expect(lockPayload).toContain(`\"pid\":${process.pid}`);
+    await expect(fs.stat(statePath(repoRoot))).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("keeps the public enablePlugin API stable under high contention", async () => {
