@@ -1,0 +1,40 @@
+{
+  "criterion": "d4-dedupe-scan",
+  "triggerRule": "heavy middleware chain depth >= 3 missing explicit context-cached dedupe marker",
+  "triggered": false,
+  "summary": "No dedupe-marker drift detected in D1-owned contract/runtime assertions.",
+  "checks": [
+    {
+      "id": "context-marker-surface",
+      "message": "context.ts exports RAWR_MIDDLEWARE_DEDUPE_MARKERS",
+      "pass": true
+    },
+    {
+      "id": "context-rpc-auth-marker",
+      "message": "context.ts defines RPC_AUTHORIZATION_DECISION marker",
+      "pass": true
+    },
+    {
+      "id": "context-marker-cache",
+      "message": "context.ts keeps request-scoped marker cache",
+      "pass": true
+    },
+    {
+      "id": "orpc-dedupe-evaluation",
+      "message": "orpc.ts evaluates RPC auth through request-scoped dedupe",
+      "pass": true
+    },
+    {
+      "id": "orpc-marker-assertions",
+      "message": "orpc.ts asserts dedupe marker in both /rpc handlers",
+      "pass": true
+    },
+    {
+      "id": "runtime-drift-test",
+      "message": "middleware-dedupe test keeps structural drift hard-fail",
+      "pass": true
+    }
+  ],
+  "failedCheckIds": [],
+  "generatedAt": "2026-02-21T13:06:22.305Z"
+}
