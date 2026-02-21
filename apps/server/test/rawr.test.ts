@@ -106,6 +106,12 @@ describe("rawr server routes", () => {
     expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"]);
   });
 
+  it("host-composition-guard: manifest composes routers from package seam, not app internals", async () => {
+    const manifestSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
+    expect(manifestSource).toContain("./packages/core/src/orpc/runtime-router");
+    expect(manifestSource).not.toContain("./apps/server/src/orpc");
+  });
+
   it("host-composition-guard: serves capability-first workflow family paths", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
     const res = await app.handle(new Request("http://localhost/api/workflows/coordination/workflows"));
