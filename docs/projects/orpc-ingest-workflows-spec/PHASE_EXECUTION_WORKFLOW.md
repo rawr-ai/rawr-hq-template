@@ -58,6 +58,7 @@ Reusable execution loop for remaining phases (D+), grounded in what worked acros
 2. Keep normative docs normative; put operational snapshots in phase execution docs.
 3. Remove superseded scratch/review artifacts; keep only minimal closure outputs needed to enter the next phase.
 4. Re-check artifact roots at phase end to prevent lineage noise from accumulating across phases.
+5. Before deleting artifacts, verify no active gate script hard-depends on those files; if it does, either retain the file until phase exit or harden the gate to consume durable closure artifacts instead of scratch docs.
 
 ### 6) Post-Land Realignment Loop
 1. Reconcile remaining packet assumptions for next phase kickoff.
@@ -110,6 +111,14 @@ Reusable execution loop for remaining phases (D+), grounded in what worked acros
 5. Keep closure artifacts minimal by default:
    - retain execution report, review disposition, cleanup manifest, readiness, final handoff;
    - remove agent plans/scratch and superseded intermediate analysis once integrated.
+
+## Phase D Carry-Forward Adjustments
+1. Run stack-hygiene preflight before first submit in a phase:
+   - detect empty ancestor branches that can block downstream Graphite submit,
+   - resolve by reparenting or planned fallback publication path before slices close.
+2. Keep conditional disposition verifiers independent of ephemeral scratchpads once cleanup starts.
+3. Preserve per-slice publication discipline even when Graphite metadata is degraded; do not batch multiple closed slices into one branch.
+4. Treat cleanup as a gate-impacting change and rerun disposition/exit gates after cleanup edits.
 
 ## Minimal Artifact Set Per Phase
 Keep:
