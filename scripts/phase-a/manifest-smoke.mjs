@@ -2,6 +2,20 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import ts from "typescript";
+import {
+  asObjectLiteral,
+  findVariableObjectLiteral,
+  getObjectPropertyInitializer,
+  hasIdentifierCall,
+  hasNamedImport,
+  hasPropertyAccessChain,
+  hasRouteRegistration,
+  hasStringLiteral,
+  matchesPropertyAccessChain,
+  parseTypeScript,
+  unwrapExpression,
+  visit,
+} from "./ts-ast-utils.mjs";
 
 const modeArg = process.argv.find((arg) => arg.startsWith("--mode="));
 const mode = (modeArg?.split("=", 2)[1] ?? "baseline").trim();
@@ -22,156 +36,6 @@ const manifestSource = mode === "completion" ? await fs.readFile(manifestFile, "
 const rawrAst = parseTypeScript(rawrFile, rawrSource);
 const orpcAst = parseTypeScript(orpcFile, orpcSource);
 const manifestAst = mode === "completion" ? parseTypeScript(manifestFile, manifestSource) : null;
-
-function parseTypeScript(filePath, source) {
-  return ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-}
-
-function visit(node, fn) {
-  fn(node);
-  node.forEachChild((child) => visit(child, fn));
-}
-
-function unwrapExpression(expression) {
-  let current = expression;
-  while (current) {
-    if (ts.isAsExpression(current) || ts.isParenthesizedExpression(current)) {
-      current = current.expression;
-      continue;
-    }
-    if (typeof ts.isSatisfiesExpression === "function" && ts.isSatisfiesExpression(current)) {
-      current = current.expression;
-      continue;
-    }
-    return current;
-  }
-  return undefined;
-}
-
-function propertyNameText(nameNode) {
-  if (!nameNode) return undefined;
-  if (ts.isIdentifier(nameNode) || ts.isStringLiteral(nameNode)) return nameNode.text;
-  return undefined;
-}
-
-function asObjectLiteral(expression) {
-  const unwrapped = unwrapExpression(expression);
-  return unwrapped && ts.isObjectLiteralExpression(unwrapped) ? unwrapped : undefined;
-}
-
-function getObjectProperty(objectLiteral, key) {
-  return objectLiteral.properties.find((property) => {
-    if (!ts.isPropertyAssignment(property)) return false;
-    return propertyNameText(property.name) === key;
-  });
-}
-
-function getObjectPropertyInitializer(objectLiteral, key) {
-  const property = getObjectProperty(objectLiteral, key);
-  return property ? property.initializer : undefined;
-}
-
-function findVariableObjectLiteral(sourceFile, variableName) {
-  for (const statement of sourceFile.statements) {
-    if (!ts.isVariableStatement(statement)) continue;
-    for (const declaration of statement.declarationList.declarations) {
-      if (!ts.isIdentifier(declaration.name) || declaration.name.text !== variableName) continue;
-      if (!declaration.initializer) continue;
-      const objectLiteral = asObjectLiteral(declaration.initializer);
-      if (objectLiteral) return objectLiteral;
-    }
-  }
-  return undefined;
-}
-
-function collectPropertyAccessSegments(expression) {
-  const segments = [];
-  let current = expression;
-
-  while (ts.isPropertyAccessExpression(current)) {
-    segments.unshift(current.name.text);
-    current = current.expression;
-  }
-
-  if (ts.isIdentifier(current)) {
-    segments.unshift(current.text);
-    return segments;
-  }
-
-  return [];
-}
-
-function matchesPropertyAccessChain(expression, segments) {
-  const found = collectPropertyAccessSegments(expression);
-  if (found.length !== segments.length) return false;
-  return segments.every((segment, idx) => segment === found[idx]);
-}
-
-function hasPropertyAccessChain(sourceFile, segments) {
-  let matched = false;
-  visit(sourceFile, (node) => {
-    if (matched || !ts.isPropertyAccessExpression(node)) return;
-    if (matchesPropertyAccessChain(node, segments)) {
-      matched = true;
-    }
-  });
-  return matched;
-}
-
-function hasRouteRegistration(sourceFile, routeLiteral) {
-  let matched = false;
-  visit(sourceFile, (node) => {
-    if (matched || !ts.isCallExpression(node)) return;
-    if (node.arguments.length === 0) return;
-    const [firstArg] = node.arguments;
-    if (!ts.isStringLiteral(firstArg) || firstArg.text !== routeLiteral) return;
-    if (!ts.isPropertyAccessExpression(node.expression)) return;
-    const methodName = node.expression.name.text;
-    if (methodName === "all" || methodName === "get" || methodName === "post") {
-      matched = true;
-    }
-  });
-  return matched;
-}
-
-function hasIdentifierCall(sourceFile, identifierName) {
-  let matched = false;
-  visit(sourceFile, (node) => {
-    if (matched || !ts.isCallExpression(node)) return;
-    if (!ts.isIdentifier(node.expression)) return;
-    if (node.expression.text === identifierName) {
-      matched = true;
-    }
-  });
-  return matched;
-}
-
-function hasStringLiteral(sourceFile, predicate) {
-  let matched = false;
-  visit(sourceFile, (node) => {
-    if (matched || !ts.isStringLiteral(node)) return;
-    if (predicate(node.text)) {
-      matched = true;
-    }
-  });
-  return matched;
-}
-
-function hasNamedImport(sourceFile, moduleName, importName) {
-  for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement)) continue;
-    if (!ts.isStringLiteral(statement.moduleSpecifier)) continue;
-    if (statement.moduleSpecifier.text !== moduleName) continue;
-    const clause = statement.importClause;
-    if (!clause || !clause.namedBindings || !ts.isNamedImports(clause.namedBindings)) continue;
-    for (const element of clause.namedBindings.elements) {
-      if ((element.propertyName?.text ?? element.name.text) === importName) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
 
 function hasRegisterOrpcRoutesManifestRouter(rawrSourceFile) {
   let matched = false;
