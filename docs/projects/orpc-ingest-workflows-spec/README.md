@@ -14,7 +14,12 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 8. `PHASE_A_EXECUTION_PACKET.md` — canonical Phase A execution entrypoint (slice order, ownership, gates, exit criteria).
 9. `PHASE_A_IMPLEMENTATION_SPEC.md` — deep Phase A implementation specification (architecture context, file structures, seam examples).
 10. `PHASE_EXECUTION_WORKFLOW.md` — reusable multi-phase execution loop (agent prep, verification/fix loops, drift guards).
-11. `PHASE_B_PLANNING_RUNBOOK_DRAFT.md` — draft planning runbook for Phase B packet production.
+11. `PHASE_B_PLANNING_RUNBOOK_DRAFT.md` — draft runbook lineage (superseded by finalized Phase B planning packet docs).
+12. `PHASE_B_EXECUTION_PACKET.md` — canonical Phase B execution entrypoint.
+13. `PHASE_B_IMPLEMENTATION_SPEC.md` — deep Phase B implementation specification.
+14. `PHASE_B_ACCEPTANCE_GATES.md` — Phase B gate cadence and exit contract.
+15. `PHASE_B_WORKBREAKDOWN.yaml` — machine-readable Phase B slice/owner/file/gate map.
+16. `PHASE_B_REVIEW_DISPOSITION.md` — planning review disposition and kickoff conditions.
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -26,7 +31,11 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase A deep implementation detail: `PHASE_A_IMPLEMENTATION_SPEC.md`
 - Phase A landed runtime status + review/docs closure snapshots: `PHASE_A_EXECUTION_PACKET.md` ("As-Landed Snapshot"), `PHASE_A_IMPLEMENTATION_SPEC.md` ("Current Runtime Reality (as-landed)")
 - Reusable phase workflow and drift controls: `PHASE_EXECUTION_WORKFLOW.md`
-- Next-phase planning draft entrypoint: `PHASE_B_PLANNING_RUNBOOK_DRAFT.md`
+- Phase B canonical execution entrypoint: `PHASE_B_EXECUTION_PACKET.md`
+- Phase B deep implementation contract: `PHASE_B_IMPLEMENTATION_SPEC.md`
+- Phase B gate cadence and exit contract: `PHASE_B_ACCEPTANCE_GATES.md`
+- Phase B slice/owner/file map: `PHASE_B_WORKBREAKDOWN.yaml`
+- Phase B planning review disposition: `PHASE_B_REVIEW_DISPOSITION.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 
