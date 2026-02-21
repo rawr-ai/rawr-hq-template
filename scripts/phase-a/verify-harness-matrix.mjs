@@ -2,6 +2,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import ts from "typescript";
+import {
+  findConstArrayLiteral,
+  parseTypeScript,
+  propertyNameText,
+  stringArrayValues,
+  unwrapExpression,
+  visit,
+} from "./ts-ast-utils.mjs";
 
 const REQUIRED_SUITES = [
   "suite:web:first-party-rpc",
@@ -51,63 +59,6 @@ async function listTestFiles(dir) {
   }
 
   return out;
-}
-
-function visit(node, fn) {
-  fn(node);
-  node.forEachChild((child) => visit(child, fn));
-}
-
-function parseTypeScript(filePath, source) {
-  return ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-}
-
-function unwrapExpression(expression) {
-  let current = expression;
-  while (current) {
-    if (ts.isAsExpression(current) || ts.isParenthesizedExpression(current)) {
-      current = current.expression;
-      continue;
-    }
-    if (typeof ts.isSatisfiesExpression === "function" && ts.isSatisfiesExpression(current)) {
-      current = current.expression;
-      continue;
-    }
-    return current;
-  }
-  return undefined;
-}
-
-function propertyNameText(nameNode) {
-  if (!nameNode) return undefined;
-  if (ts.isIdentifier(nameNode) || ts.isStringLiteral(nameNode)) return nameNode.text;
-  return undefined;
-}
-
-function findConstArrayLiteral(sourceFile, variableName) {
-  for (const statement of sourceFile.statements) {
-    if (!ts.isVariableStatement(statement)) continue;
-    for (const declaration of statement.declarationList.declarations) {
-      if (!ts.isIdentifier(declaration.name) || declaration.name.text !== variableName) continue;
-      if (!declaration.initializer) continue;
-      const unwrapped = unwrapExpression(declaration.initializer);
-      if (unwrapped && ts.isArrayLiteralExpression(unwrapped)) {
-        return unwrapped;
-      }
-    }
-  }
-  return undefined;
-}
-
-function stringArrayValues(arrayLiteral) {
-  const values = [];
-  for (const element of arrayLiteral.elements) {
-    const unwrapped = unwrapExpression(element);
-    if (unwrapped && ts.isStringLiteral(unwrapped)) {
-      values.push(unwrapped.text);
-    }
-  }
-  return values;
 }
 
 function collectObjectPropertyStringValues(sourceFile, propertyName) {
