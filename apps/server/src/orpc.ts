@@ -5,13 +5,18 @@ import { RPCHandler } from "@orpc/server/fetch";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import type { AnyElysia } from "./plugins";
 import {
+  assertRequestScopedMiddlewareMarker,
   createRequestScopedBoundaryContext,
+  RAWR_MIDDLEWARE_DEDUPE_MARKERS,
+  resolveRequestScopedMiddlewareValue,
   type RawrBoundaryContext,
   type RawrBoundaryContextDeps,
 } from "./workflows/context";
 
 type RawrOrpcContext = RawrBoundaryContext;
 type RawrOrpcRouter = ReturnType<typeof createOrpcRouter>;
+
+const RPC_AUTH_DEDUPE_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION;
 
 export type RegisterOrpcRoutesOptions = RawrBoundaryContextDeps & {
   router?: RawrOrpcRouter;
@@ -26,6 +31,14 @@ export function createOrpcRouter() {
 
 export function createWorkflowTriggerRouter() {
   return createWorkflowTriggerRuntimeRouter<RawrOrpcContext>();
+}
+
+function isRpcRequestAllowedWithDedupe(request: Request, policy: RpcAuthPolicy): boolean {
+  return resolveRequestScopedMiddlewareValue(request, RPC_AUTH_DEDUPE_MARKER, () => isRpcRequestAllowed(request, policy));
+}
+
+function assertRpcAuthDedupeMarker(context: RawrOrpcContext): void {
+  assertRequestScopedMiddlewareMarker(context, RPC_AUTH_DEDUPE_MARKER);
 }
 
 async function createOpenApiSpec(router: RawrOrpcRouter, baseUrl: string) {
@@ -91,10 +104,11 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/rpc",
     async (ctx) => {
       const request = ctx.request as Request;
-      if (!isRpcRequestAllowed(request, rpcAuthPolicy)) {
+      if (!isRpcRequestAllowedWithDedupe(request, rpcAuthPolicy)) {
         return new Response("forbidden", { status: 403 });
       }
       const context = contextFactory(request, contextDeps);
+      assertRpcAuthDedupeMarker(context);
       options.onContextCreated?.(context);
       const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
       return result.matched ? result.response : new Response("not found", { status: 404 });
@@ -106,10 +120,11 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/rpc/*",
     async (ctx) => {
       const request = ctx.request as Request;
-      if (!isRpcRequestAllowed(request, rpcAuthPolicy)) {
+      if (!isRpcRequestAllowedWithDedupe(request, rpcAuthPolicy)) {
         return new Response("forbidden", { status: 403 });
       }
       const context = contextFactory(request, contextDeps);
+      assertRpcAuthDedupeMarker(context);
       options.onContextCreated?.(context);
       const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
       return result.matched ? result.response : new Response("not found", { status: 404 });
