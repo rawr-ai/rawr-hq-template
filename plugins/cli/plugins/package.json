@@ -44,9 +44,7 @@
     "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
   },
   "rawr": {
-    "templateRole": "example",
     "kind": "toolkit",
-    "channel": "A",
-    "publishTier": "blocked"
+    "capability": "plugins"
   }
 }

@@ -40,9 +40,7 @@
     "test": "vitest run"
   },
   "rawr": {
-    "templateRole": "example",
     "kind": "web",
-    "channel": "B",
-    "publishTier": "blocked"
+    "capability": "mfe-demo"
   }
 }

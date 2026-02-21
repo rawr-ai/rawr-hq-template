@@ -4,10 +4,8 @@
   "type": "module",
   "packageManager": "bun@1.3.7",
   "rawr": {
-    "templateRole": "operational",
     "kind": "agent",
-    "channel": "B",
-    "publishTier": "blocked",
+    "capability": "hq",
     "pluginContent": {
       "version": 1
     }
