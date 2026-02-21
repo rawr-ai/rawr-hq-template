@@ -1,5 +1,8 @@
 # E2E 01 — Basic Internal Package + API Boundary (TypeBox-First)
 
+## Authority and Usage
+> This walkthrough is **non-normative** reference material. Canonical policy authority remains in `README.md`, `ARCHITECTURE.md`, `DECISIONS.md`, and `axes/*.md`. If any example detail appears to conflict with those sources, follow the canonical packet policy docs.
+
 ## 1) Goal and use-case framing
 
 This walkthrough shows the smallest policy-compliant end-to-end path for:

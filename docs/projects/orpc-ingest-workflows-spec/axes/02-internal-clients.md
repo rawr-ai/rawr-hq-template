@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is a focused slice and does not override canonical core policy.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for server-internal calling and package-layer capability boundaries.
+- **What it covers:** internal client defaults, package layering/schema conventions, caller-mode transport boundaries, and D-014 seam guarantees.
+- **What this communicates:** server-internal behavior defaults to in-process package clients with explicit ownership and deterministic import direction.
+- **Who should read this:** package authors, plugin authors wiring internal calls, and host owners defining infrastructure seam boundaries.
+- **Jump conditions:** for external publication rules, jump to [01-external-client-generation.md](./01-external-client-generation.md); for workflow boundary ownership, jump to [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md); for D-014 composition guarantees, jump to [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
+
 
 ## In Scope
 - Internal cross-boundary call defaults.
@@ -16,26 +23,34 @@
 - Workflow trigger and durability semantics (see [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md)).
 
 ## Canonical Policy
+
+### Core Internal-Calling Invariants
 1. Default internal cross-boundary calls MUST use domain package in-process internal clients (`packages/<domain>/src/client.ts`).
 2. Server runtime code MUST NOT self-call local HTTP (`/rpc`, `/api/orpc`) for in-process calls.
 3. Boundary handlers SHOULD NOT directly call `inngest.send` unless they are designated workflow trigger routers.
 4. Domain packages MUST remain transport-neutral.
-5. Domain schemas MUST be authored TypeBox-first and MUST export static types from the same file.
-6. Within one `domain/` folder, filenames MUST avoid redundant domain-prefix tokens.
-7. Package and plugin directory names SHOULD prefer concise domain names when unambiguous (for example `invoicing`).
-8. Shared procedure context contracts MUST live in explicit `context.ts` (or equivalent dedicated context module), and routers/clients MUST consume that contract.
-9. For object-root schema wrappers, docs should prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
-10. For non-`Type.Object` roots, docs/snippets should keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
-11. First-party callers (including MFEs by default) use `RPCLink` on `/rpc` when they need HTTP transport.
-12. Server-internal callers MAY use in-process package internal clients with trusted service context.
-13. External/third-party callers use published OpenAPI routes (`/api/orpc/*`, `/api/workflows/<capability>/*`); RPC clients are not externally published.
-14. Caller traffic MUST NOT use `/api/inngest`; runtime ingress is runtime-only.
-15. Packages MUST NOT own workflow trigger/status boundary contracts or workflow boundary I/O schemas; those stay in `plugins/workflows/<capability>/src/contract.ts`.
-16. Shared auth/db-ready infrastructure seams SHOULD be expressed as typed ports/contracts in package-oriented shared modules by default (interfaces + factory shapes), so package contexts can consume them without binding to a concrete adapter.
-17. Concrete auth/db/runtime adapters MUST be composed and injected outside package internals (host/plugin composition), then consumed through package `context.ts` contracts.
-18. Package internals MUST NOT instantiate process-global auth/db singletons; package logic stays adapter-agnostic and testable through injected ports.
-19. Import direction MUST remain deterministic: packages MAY depend on shared infrastructure packages, plugins/hosts MAY depend on packages, and packages MUST NOT import plugins or host runtime modules.
-20. D-014 composition guarantees for these seams are captured in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
+5. Packages MUST NOT own workflow trigger/status boundary contracts or workflow boundary I/O schemas; those stay in `plugins/workflows/<capability>/src/contract.ts`.
+
+### Schema, Context, and Naming Conventions
+1. Domain schemas MUST be authored TypeBox-first and MUST export static types from the same file.
+2. Within one `domain/` folder, filenames MUST avoid redundant domain-prefix tokens.
+3. Package and plugin directory names SHOULD prefer concise domain names when unambiguous (for example `invoicing`).
+4. Shared procedure context contracts MUST live in explicit `context.ts` (or equivalent dedicated context module), and routers/clients MUST consume that contract.
+5. For object-root schema wrappers, docs should prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
+6. For non-`Type.Object` roots, docs/snippets should keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
+
+### Caller-Mode Route and Publication Rules
+1. First-party callers (including MFEs by default) use `RPCLink` on `/rpc` when they need HTTP transport.
+2. Server-internal callers MAY use in-process package internal clients with trusted service context.
+3. External/third-party callers use published OpenAPI routes (`/api/orpc/*`, `/api/workflows/<capability>/*`); RPC clients are not externally published.
+4. Caller traffic MUST NOT use `/api/inngest`; runtime ingress is runtime-only.
+
+### D-014 Infrastructure and Composition Guarantees
+1. Shared auth/db-ready infrastructure seams SHOULD be expressed as typed ports/contracts in package-oriented shared modules by default (interfaces + factory shapes), so package contexts can consume them without binding to a concrete adapter.
+2. Concrete auth/db/runtime adapters MUST be composed and injected outside package internals (host/plugin composition), then consumed through package `context.ts` contracts.
+3. Package internals MUST NOT instantiate process-global auth/db singletons; package logic stays adapter-agnostic and testable through injected ports.
+4. Import direction MUST remain deterministic: packages MAY depend on shared infrastructure packages, plugins/hosts MAY depend on packages, and packages MUST NOT import plugins or host runtime modules.
+5. D-014 composition guarantees for these seams are captured in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
 
 ## Why
 - Prevents “four ways to call” drift.

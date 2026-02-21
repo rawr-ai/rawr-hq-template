@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is a focused slice and does not override canonical core policy.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for workflow trigger boundaries versus durable runtime ingress.
+- **What it covers:** workflow trigger authoring posture, contract/schema ownership boundaries, caller-mode route semantics, and host/runtime seam guarantees.
+- **What this communicates:** caller-facing workflow APIs stay on boundary routes, while `/api/inngest` remains runtime ingress only.
+- **Who should read this:** workflow plugin authors, host/runtime owners, and reviewers evaluating workflow boundary proposals.
+- **Jump conditions:** for host mount and control-plane ordering, jump to [07-host-composition.md](./07-host-composition.md); for additive durable endpoint constraints, jump to [09-durable-endpoints.md](./09-durable-endpoints.md); for anti-dual-path posture, jump to [03-split-vs-collapse.md](./03-split-vs-collapse.md).
+
 
 ## In Scope
 - Caller-triggered workflow API authoring posture.
@@ -16,29 +23,35 @@
 - Host mount implementation specifics (see [07-host-composition.md](./07-host-composition.md)).
 
 ## Canonical Policy
+
+### Trigger-vs-Runtime Boundary Invariants
 1. Workflow trigger APIs MUST remain caller-trigger surfaces distinct from Inngest execution ingress.
 2. API-exposed workflow triggers MUST be authored as oRPC procedures that dispatch into Inngest durable execution.
 3. Durable execution functions MUST remain Inngest function definitions.
 4. Split path enforcement MUST be explicit at host mounts: caller-facing workflow trigger/status routes live on capability-first `/api/workflows/<capability>/*` paths (mounted under `/api/workflows/*`), while `/api/inngest` is runtime ingress only.
-5. Workflow trigger procedure input/output schemas MUST be declared in boundary contract modules (`contract.ts`) or procedure-local modules adjacent to handlers.
-6. Workflow/API boundary contracts are plugin-owned (`plugins/workflows/*/contract.ts`, `plugins/api/*/contract.ts`); packages provide shared domain schemas/domain logic but are not canonical boundary contract owners, and workflow trigger/status I/O schemas stay at the workflow plugin boundary.
-7. Domain modules (`domain/*`) MAY be used for transport-independent domain concepts only; they MUST NOT own procedure input/output schema semantics.
-8. Shared workflow trigger context contracts and request metadata types (principal/request/correlation/network metadata) SHOULD live in explicit `context.ts` modules (or equivalent context modules), consumed by routers.
-9. `/rpc` is first-party/internal transport only; first-party callers (including MFEs by default) use `RPCLink` unless an explicit exception is documented.
-10. Workflow OpenAPI surfaces (`/api/workflows/<capability>/*`) are externally published boundaries and MAY be used by first-party callers only via explicit exception.
-11. Browser and generic API callers MUST NOT invoke `/api/inngest` directly.
-12. No dedicated `/rpc/workflows` mount is required by default; workflow RPC procedures compose under existing `/rpc`.
-13. Docs/examples for workflow trigger procedures MUST default to inline I/O schemas at `.input(...)` and `.output(...)`.
-14. I/O schema extraction SHOULD be used only for shared schemas or large readability cases.
-15. When extracted, workflow trigger I/O schemas SHOULD use paired-object shape with `.input` and `.output` (for example `TriggerInvoiceReconciliationSchema.input` / `.output`).
-16. For object-root schema wrappers in docs, prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
-17. For non-`Type.Object` roots, keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
-18. Workflow composition/mounting docs MUST stay explicit; do not collapse route ownership into black-box host helpers.
-19. Workflow boundary routers MUST consume host-injected infrastructure ports through explicit `context.ts` contracts; plugin modules MUST NOT bootstrap concrete auth/db/runtime adapters.
-20. Workflow trigger operations MAY depend on auth/db-ready interfaces exposed in context ports, but concrete adapter selection remains host composition owned.
-21. Durable functions SHOULD consume shared package/internal-client abstractions wired from host-injected ports; this reuse does not transfer boundary contract ownership from plugins to packages.
-22. D-014 seam guarantees are specified in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
-23. When workflow/API boundaries need harness/core infrastructure abstractions, package-oriented shared surfaces are the default; exact package granularity remains implementation-flexible as long as ownership/import invariants hold.
+5. `/rpc` is first-party/internal transport only; first-party callers (including MFEs by default) use `RPCLink` unless an explicit exception is documented.
+6. Workflow OpenAPI surfaces (`/api/workflows/<capability>/*`) are externally published boundaries and MAY be used by first-party callers only via explicit exception.
+7. Browser and generic API callers MUST NOT invoke `/api/inngest` directly.
+8. No dedicated `/rpc/workflows` mount is required by default; workflow RPC procedures compose under existing `/rpc`.
+
+### Contract and Schema Ownership Rules
+1. Workflow trigger procedure input/output schemas MUST be declared in boundary contract modules (`contract.ts`) or procedure-local modules adjacent to handlers.
+2. Workflow/API boundary contracts are plugin-owned (`plugins/workflows/*/contract.ts`, `plugins/api/*/contract.ts`); packages provide shared domain schemas/domain logic but are not canonical boundary contract owners, and workflow trigger/status I/O schemas stay at the workflow plugin boundary.
+3. Domain modules (`domain/*`) MAY be used for transport-independent domain concepts only; they MUST NOT own procedure input/output schema semantics.
+4. Shared workflow trigger context contracts and request metadata types (principal/request/correlation/network metadata) SHOULD live in explicit `context.ts` modules (or equivalent context modules), consumed by routers.
+5. Docs/examples for workflow trigger procedures MUST default to inline I/O schemas at `.input(...)` and `.output(...)`.
+6. I/O schema extraction SHOULD be used only for shared schemas or large readability cases.
+7. When extracted, workflow trigger I/O schemas SHOULD use paired-object shape with `.input` and `.output` (for example `TriggerInvoiceReconciliationSchema.input` / `.output`).
+8. For object-root schema wrappers in docs, prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
+9. For non-`Type.Object` roots, keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
+
+### Composition and Infrastructure Seam Guarantees
+1. Workflow composition/mounting docs MUST stay explicit; do not collapse route ownership into black-box host helpers.
+2. Workflow boundary routers MUST consume host-injected infrastructure ports through explicit `context.ts` contracts; plugin modules MUST NOT bootstrap concrete auth/db/runtime adapters.
+3. Workflow trigger operations MAY depend on auth/db-ready interfaces exposed in context ports, but concrete adapter selection remains host composition owned.
+4. Durable functions SHOULD consume shared package/internal-client abstractions wired from host-injected ports; this reuse does not transfer boundary contract ownership from plugins to packages.
+5. D-014 seam guarantees are specified in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
+6. When workflow/API boundaries need harness/core infrastructure abstractions, package-oriented shared surfaces are the default; exact package granularity remains implementation-flexible as long as ownership/import invariants hold.
 
 ## Consumer model
 1. **First-party callers** (including MFEs by default) use `RPCLink` on `/rpc` for workflow-trigger and workflow-status calls under the composed internal contract tree.

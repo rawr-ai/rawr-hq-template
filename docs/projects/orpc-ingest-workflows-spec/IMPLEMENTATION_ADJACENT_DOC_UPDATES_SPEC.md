@@ -1,4 +1,4 @@
-# Implementation-Adjacent Doc Updates Spec (D-015)
+# Implementation-Adjacent Doc Updates Spec (D-015, D-016 Compatibility)
 
 ## Document Role
 This file is the packet-local execution contract for future downstream documentation/runbook/testing-doc updates.
@@ -7,7 +7,8 @@ It defines what must be updated, where it must be inserted, and what acceptance 
 This document remains packet-only by design:
 1. keep D-005..D-012 unchanged,
 2. preserve D-013 and D-014 compatibility,
-3. defer external-doc edits to a dedicated downstream execution pass.
+3. preserve D-016 seam-contract compatibility,
+4. defer external-doc edits to a dedicated downstream execution pass.
 
 ## Status
 - Spec contract in packet: complete.
@@ -24,11 +25,16 @@ This document remains packet-only by design:
 4. D-009 and D-010 remain open/non-blocking.
 5. D-013 compatibility is mandatory:
    - runtime composition identity keys are `rawr.kind` + `rawr.capability`,
-   - `templateRole`, `channel`, `publishTier`, `published` are not runtime behavior keys.
+   - `templateRole`, `channel`, `publishTier`, `published` are forbidden legacy keys in non-archival runtime/tooling/scaffold metadata surfaces.
 6. D-014 compatibility is mandatory for downstream planning in this packet:
    - reusable harness helpers are package-first,
    - import direction remains one-way (`plugins/*` suites -> `packages/*` helpers; package suites do not import plugin runtime modules).
 7. Downstream checks must include: `manifest-smoke`, `metadata-contract`, `import-boundary`, and `host-composition-guard`.
+8. D-016 compatibility is mandatory at policy/seam level:
+   - default consumer distribution posture is instance-kit/no-fork-repeatability; long-lived fork posture is maintainer-only by default,
+   - manifest-first composition authority remains `rawr.hq.ts` with runtime identity keyed by `rawr.kind` + `rawr.capability`,
+   - downstream testing docs/runbooks MUST require alias/instance seam assertions and MUST require no-singleton-global negative assertions,
+   - do not introduce deferred UX/packaging mechanics into downstream execution contract language.
 
 ## D-015 Locked Statement (Verbatim)
 Use this verbatim when validating D-015 language in `DECISIONS.md`:
@@ -38,6 +44,14 @@ Use this verbatim when validating D-015 language in `DECISIONS.md`:
 3. `/api/inngest` is runtime-ingress verification only and is never a caller-facing boundary API path.
 4. D-013 and D-014 compatibility constraints apply to all downstream testing-doc/runbook updates.
 5. This decision locks documentation/testing contract obligations; rollout sequencing remains implementation planning work.
+
+## D-016 Compatibility Addendum (Policy/Seam Level)
+Downstream execution updates MUST include these D-016-compatible constraints:
+1. Treat instance-kit/no-fork-repeatability as the default consumer distribution posture and maintainer fork posture as non-default consumer path.
+2. Keep runtime authority manifest-first (`rawr.hq.ts`) and lifecycle identity keyed by `rawr.kind` + `rawr.capability`.
+3. Require alias/instance seam assertions in boundary/runtime verification documentation.
+4. Require explicit negative assertions against singleton-global assumptions in instance-aware composition.
+5. Keep deferred UX/packaging mechanics out of this implementation-adjacent execution contract.
 
 ## Canonical Lifecycle Harness Matrix (Verbatim)
 Downstream docs must include this matrix exactly as written.
@@ -74,7 +88,7 @@ Required content under headings:
 1. Reference Axis 12 as canonical harness authority.
 2. Re-state five verification layers exactly: unit, in-process integration, boundary/network integration, runtime ingress verification, E2E.
 3. Re-state caller-route split and `/api/inngest` non-caller rule.
-4. Re-state D-013 runtime identity keys (`rawr.kind` + `rawr.capability`) and legacy-metadata exclusion.
+4. Re-state D-013 runtime identity keys (`rawr.kind` + `rawr.capability`) and legacy-key hard deletion requirement.
 
 Acceptance checks:
 1. All four route families appear in one table with harness mapping.
@@ -97,7 +111,10 @@ Required content under heading:
 1. Include the canonical lifecycle harness matrix rows relevant to the runbook’s surface.
 2. Include required positive assertions and required negative assertions for that surface.
 3. Include package-first harness ownership and one-way import-direction note.
-4. Include D-013 metadata key rule (`rawr.kind` + `rawr.capability`) and legacy-field exclusion.
+4. Include D-013 metadata key rule (`rawr.kind` + `rawr.capability`) and forbidden legacy-key hard deletion requirement.
+5. Include D-016 seam contract notes:
+   - alias/instance seam assertions are required,
+   - singleton-global assumptions are forbidden and must be tested negatively.
 
 Required negative tests by runbook:
 1. Web: reject `/api/inngest`.
@@ -109,6 +126,7 @@ Acceptance checks:
 1. Each required runbook contains exactly two assertion blocks named `### Positive Assertions` and `### Negative Assertions`.
 2. Each required runbook contains a route-family/harness table.
 3. Each required runbook contains D-013 and D-014 compatibility notes.
+4. Each required runbook contains D-016 seam assertions and no-singleton negative assertions (policy-level, no deferred mechanics).
 
 ## Directive 4: Manifest Composition Runbook (`RAWR_HQ_MANIFEST_COMPOSITION.md`)
 Required content under heading:
@@ -137,7 +155,7 @@ Required content under heading:
    - caller traffic on `/api/inngest`,
    - external `/rpc` usage,
    - missing route-forbidden tests,
-   - legacy metadata used as runtime test key.
+   - any active metadata contract still declaring legacy keys (`templateRole`, `channel`, `publishTier`, `published`).
 2. Triage steps mapped by caller type (web, CLI, API, workflow runtime).
 3. Reference Axis 12 and E2E-04 Section 11 blueprint.
 
@@ -153,11 +171,13 @@ Required sections:
 4. Package-first harness ownership and import-direction contract.
 5. TypeScript harness quality rules (typed factories, no implicit `any` in canonical helpers).
 6. CI gate checklist including D-013/D-014 compatibility checks.
+7. D-016 seam assertions checklist (alias/instance required assertions + no-singleton negative assertions).
 
 Acceptance checks:
 1. Web, CLI, API, workflow trigger/status, and runtime-ingress surfaces are all present.
 2. `/api/inngest` non-caller rule appears in both matrix and negative-test sections.
 3. D-013 and D-014 compatibility checks are explicit.
+4. D-016 seam assertions and no-singleton negative assertions are explicit.
 
 ## Directive 8: Cadence and Agent-Loop Drift Checks (`MAINTENANCE_CADENCE.md`, `AGENT_LOOPS.md`)
 Required content under heading:
@@ -171,7 +191,7 @@ Acceptance checks:
 2. Fail conditions are binary and actionable.
 
 ## Execution Order for Downstream Pass
-1. Add D-015 in `DECISIONS.md`.
+1. Validate D-015 lock language and D-016 seam-compatibility language in `DECISIONS.md`.
 2. Update `docs/SYSTEM.md` and `docs/PROCESS.md`.
 3. Update `docs/process/RUNBOOKS.md`.
 4. Update lifecycle runbooks (web, CLI, workflow, optional agent).
@@ -189,18 +209,21 @@ The downstream pass must produce a report with these sections:
 4. `matrix_validation`: confirmation that canonical matrix rows are present.
 5. `negative_assertion_validation`: confirmation by surface.
 6. `d013_d014_validation`: confirmation of metadata and import-direction checks.
-7. `ci_gate_validation`: confirmation of required gate references.
+7. `d016_seam_validation`: confirmation that alias/instance seam assertions and no-singleton negative assertions were added.
+8. `ci_gate_validation`: confirmation of required gate references.
 
 ## Completion Criteria for Downstream Pass
 1. Every required target path has the required heading and content contract satisfied.
 2. No downstream doc suggests caller access to `/api/inngest`.
 3. Route-family references are consistent with `ARCHITECTURE.md` and `axes/12-testing-harness-and-verification-strategy.md`.
 4. Terminology is stable (`createRouterClient`, `RPCLink`, `OpenAPILink`, runtime ingress callback).
-5. D-005..D-014 semantics remain unchanged.
+5. D-005..D-015 semantics remain unchanged.
+6. D-016 seam-contract obligations are present without introducing deferred implementation mechanics.
 
 ## Source Anchors
 - [axes/12-testing-harness-and-verification-strategy.md](./axes/12-testing-harness-and-verification-strategy.md)
 - [axes/05-errors-observability.md](./axes/05-errors-observability.md)
 - [axes/06-middleware.md](./axes/06-middleware.md)
 - [examples/e2e-04-context-middleware.md](./examples/e2e-04-context-middleware.md)
+- [axes/13-distribution-and-instance-lifecycle-model.md](./axes/13-distribution-and-instance-lifecycle-model.md)
 - Archive context: `docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/additive-extractions/LEGACY_TESTING_SYNC.md`

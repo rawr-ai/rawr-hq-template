@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is a focused slice and does not override canonical core policy.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for external client publication and boundary contract generation.
+- **What it covers:** OpenAPI publication ownership, first-party vs external transport defaults, and boundary contract ownership posture.
+- **What this communicates:** external SDK/client publication must come from OpenAPI boundary surfaces, while `/rpc` remains internal transport.
+- **Who should read this:** API/workflow plugin authors, host composition owners, and maintainers generating or publishing clients.
+- **Jump conditions:** for internal call defaults, jump to [02-internal-clients.md](./02-internal-clients.md); for workflow trigger/runtime split, jump to [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md); for canonical caller/auth matrix, use [ARCHITECTURE.md](../ARCHITECTURE.md).
+
 
 ## In Scope
 - External SDK/client generation ownership.

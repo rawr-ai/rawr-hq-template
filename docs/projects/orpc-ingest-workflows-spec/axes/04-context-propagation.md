@@ -5,6 +5,13 @@
 - Architecture-level decision authority: [DECISIONS.md](../DECISIONS.md).
 - This axis is a focused slice and does not override canonical core policy.
 
+## Axis Opening
+- **What this axis is:** the canonical policy slice for context creation and propagation across boundary and durable runtime models.
+- **What it covers:** request-context creation, runtime-context derivation, envelope split rules, and trigger-to-run correlation propagation.
+- **What this communicates:** boundary request context and durable runtime context are separate contracts that should stay explicitly split.
+- **Who should read this:** host owners, workflow/runtime authors, and plugin/package maintainers modeling context contracts.
+- **Jump conditions:** for error/timeline semantics, jump to [05-errors-observability.md](./05-errors-observability.md); for middleware control-plane placement, jump to [06-middleware.md](./06-middleware.md); for host composition boundaries, jump to [07-host-composition.md](./07-host-composition.md).
+
 
 ## In Scope
 - Request context creation and injection for oRPC boundary handling.

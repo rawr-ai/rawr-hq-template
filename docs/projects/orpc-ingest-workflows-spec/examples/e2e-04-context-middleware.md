@@ -1,5 +1,8 @@
 # E2E 04 — Real-World Context and Middleware Across Package, API, and Workflows
 
+## Authority and Usage
+> This walkthrough is **non-normative** reference material. Canonical policy authority remains in `README.md`, `ARCHITECTURE.md`, `DECISIONS.md`, and `axes/*.md`. If any example detail appears to conflict with those sources, follow the canonical packet policy docs.
+
 ## 1) Goal and Real-World Framing
 This walkthrough shows one capability (`invoicing`) under realistic context scale:
 1. Multi-tenant principal + role checks.
