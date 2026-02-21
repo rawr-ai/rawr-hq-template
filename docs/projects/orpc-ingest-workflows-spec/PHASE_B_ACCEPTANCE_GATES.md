@@ -13,6 +13,10 @@ Define deterministic verification for Phase B slice progression and phase exit.
    - run before independent review,
    - run at phase exit.
 
+## As-Landed Gate Posture (through B4A on 2026-02-21)
+1. Runtime slices `B0..B4A` are landed; `B5` docs/cleanup is the active closure slice.
+2. Canonical B3 anti-regression is structural gate enforcement in `phase-a:gates:exit`; dedicated adapter-shim ownership test files are not present in landed branch state.
+
 ## Slice Gate Matrix
 
 ### B0
@@ -68,13 +72,11 @@ Quick:
 
 Full:
 - `bun run phase-a:gates:exit`
-- `bunx vitest run --project hq packages/hq/test/adapter-shim-ownership.test.ts`
-- `bunx vitest run --project plugin-plugins plugins/cli/plugins/test/adapter-shim-ownership.test.ts`
 
 Required outcomes:
 1. Structural assertions replace brittle string-only checks for ownership-critical seams.
 2. D-015 suite IDs and negative assertions remain complete.
-3. Adapter-shim anti-regression checks are green.
+3. Workspace/install seam ownership anti-regression checks are green through `metadata-contract` + `import-boundary` in the canonical exit chain.
 
 ## Mandatory Review + Fix Gate (B4)
 1. Independent TypeScript + ORPC review runs after B3 first full-green.
