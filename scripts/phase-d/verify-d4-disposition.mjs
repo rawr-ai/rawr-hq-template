@@ -19,14 +19,20 @@ const D3_OWNED_PATH_TOKENS = [
 ];
 const D3_GATE_COMMAND = "phase-d:gate:d3-ingress-middleware-structural-contract";
 
-await Promise.all([mustExist(DEDUPE_RESULT_PATH), mustExist(FINISHED_HOOK_RESULT_PATH), mustExist(DISPOSITION_PATH), mustExist(AGENT3_SCRATCHPAD_PATH)]);
+await Promise.all([mustExist(DEDUPE_RESULT_PATH), mustExist(FINISHED_HOOK_RESULT_PATH), mustExist(DISPOSITION_PATH)]);
 
-const [dedupeRaw, finishedHookRaw, dispositionSource, agent3Scratchpad] = await Promise.all([
+const [dedupeRaw, finishedHookRaw, dispositionSource] = await Promise.all([
   fs.readFile(path.join(process.cwd(), DEDUPE_RESULT_PATH), "utf8"),
   fs.readFile(path.join(process.cwd(), FINISHED_HOOK_RESULT_PATH), "utf8"),
   fs.readFile(path.join(process.cwd(), DISPOSITION_PATH), "utf8"),
-  fs.readFile(path.join(process.cwd(), AGENT3_SCRATCHPAD_PATH), "utf8"),
 ]);
+
+let agent3Scratchpad = "";
+try {
+  agent3Scratchpad = await fs.readFile(path.join(process.cwd(), AGENT3_SCRATCHPAD_PATH), "utf8");
+} catch {
+  agent3Scratchpad = "";
+}
 
 const dedupeResult = JSON.parse(dedupeRaw);
 const finishedHookResult = JSON.parse(finishedHookRaw);

@@ -71,6 +71,9 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase D planning review disposition: `PHASE_D_REVIEW_DISPOSITION.md`
 - Phase D planning handoff to runtime: `PHASE_D_PLANNING_HANDOFF.md`
 - Phase D runtime closure artifacts (`D1..D7`): `_phase-d-runtime-execution-pass-01-2026-02-21/`
+- Phase D execution report: `_phase-d-runtime-execution-pass-01-2026-02-21/PHASE_D_EXECUTION_REPORT.md`
+- Phase D cleanup manifest: `_phase-d-runtime-execution-pass-01-2026-02-21/D6_CLEANUP_MANIFEST.md`
+- Phase E kickoff readiness from Phase D: `_phase-d-runtime-execution-pass-01-2026-02-21/D7_PHASE_E_READINESS.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 
