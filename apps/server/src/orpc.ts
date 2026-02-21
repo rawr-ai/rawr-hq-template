@@ -5,8 +5,10 @@ import { RPCHandler } from "@orpc/server/fetch";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import type { AnyElysia } from "./plugins";
 import {
+  assertHeavyMiddlewareDedupeMarkers,
   assertRequestScopedMiddlewareMarker,
   createRequestScopedBoundaryContext,
+  RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY,
   RAWR_MIDDLEWARE_DEDUPE_MARKERS,
   resolveRequestScopedMiddlewareValue,
   type RawrBoundaryContext,
@@ -41,6 +43,7 @@ function isRpcRequestAllowedWithDedupe(request: Request, policy: RpcAuthPolicy):
 
 function assertRpcAuthDedupeMarker(context: RawrOrpcContext): void {
   assertRequestScopedMiddlewareMarker(context, RPC_AUTH_DEDUPE_MARKER);
+  assertHeavyMiddlewareDedupeMarkers(context, RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY.requiredMarkers);
 }
 
 async function handleRpcRoute(args: {

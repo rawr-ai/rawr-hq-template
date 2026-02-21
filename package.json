@@ -71,7 +71,12 @@
     "phase-d:gate:d4-dedupe-scan": "bun scripts/phase-d/verify-d4-dedupe-trigger.mjs",
     "phase-d:gate:d4-finished-hook-scan": "bun scripts/phase-d/verify-d4-finished-hook-trigger.mjs",
     "phase-d:d4:assess": "bun run phase-d:gate:d4-dedupe-scan && bun run phase-d:gate:d4-finished-hook-scan",
-    "phase-d:gate:d4-disposition": "bun scripts/phase-d/verify-d4-disposition.mjs"
+    "phase-d:gate:d4-disposition": "bun scripts/phase-d/verify-d4-disposition.mjs",
+    "phase-e:gate:drift-core": "bun run phase-d:gate:drift-core",
+    "phase-e:gate:e1-dedupe-policy": "bun scripts/phase-e/verify-e1-dedupe-policy.mjs",
+    "phase-e:gate:e1-dedupe-runtime": "bunx vitest run --project server apps/server/test/middleware-dedupe.test.ts",
+    "phase-e:e1:quick": "bun run phase-e:gate:drift-core && bun run phase-e:gate:e1-dedupe-policy && bun run phase-e:gate:e1-dedupe-runtime",
+    "phase-e:e1:full": "bun run phase-e:e1:quick && bunx vitest run --project server apps/server/test/rawr.test.ts"
   },
   "overrides": {
     "npm": "11.9.0",
