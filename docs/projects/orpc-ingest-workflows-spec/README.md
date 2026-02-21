@@ -37,6 +37,13 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 31. `PHASE_D_REVIEW_DISPOSITION.md` — planning review disposition and readiness decision for runtime kickoff.
 32. `PHASE_D_PLANNING_HANDOFF.md` — planning-to-runtime handoff contract for Phase D execution.
 33. `_phase-d-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (D4/D5/D5A dispositions and final closure outputs).
+34. `PHASE_E_EXECUTION_PACKET.md` — canonical Phase E execution entrypoint.
+35. `PHASE_E_IMPLEMENTATION_SPEC.md` — deep Phase E implementation specification.
+36. `PHASE_E_ACCEPTANCE_GATES.md` — Phase E gate cadence and exit contract.
+37. `PHASE_E_WORKBREAKDOWN.yaml` — machine-readable Phase E slice/owner/file/gate map.
+38. `PHASE_E_REVIEW_DISPOSITION.md` — planning review disposition and readiness decision for runtime kickoff.
+39. `PHASE_E_PLANNING_HANDOFF.md` — planning-to-runtime handoff contract for Phase E execution.
+40. `_phase-e-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (E4/E5/E5A dispositions, E6 docs+cleanup closure outputs, and final closure outputs).
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -74,6 +81,19 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase D execution report: `_phase-d-runtime-execution-pass-01-2026-02-21/PHASE_D_EXECUTION_REPORT.md`
 - Phase D cleanup manifest: `_phase-d-runtime-execution-pass-01-2026-02-21/D6_CLEANUP_MANIFEST.md`
 - Phase E kickoff readiness from Phase D: `_phase-d-runtime-execution-pass-01-2026-02-21/D7_PHASE_E_READINESS.md`
+- Phase E canonical execution entrypoint: `PHASE_E_EXECUTION_PACKET.md`
+- Phase E deep implementation spec: `PHASE_E_IMPLEMENTATION_SPEC.md`
+- Phase E gates contract: `PHASE_E_ACCEPTANCE_GATES.md`
+- Phase E work breakdown map: `PHASE_E_WORKBREAKDOWN.yaml`
+- Phase E planning review disposition: `PHASE_E_REVIEW_DISPOSITION.md`
+- Phase E planning handoff to runtime: `PHASE_E_PLANNING_HANDOFF.md`
+- Phase E runtime closure artifacts (`E1..E7` closure chain): `_phase-e-runtime-execution-pass-01-2026-02-21/`
+- Phase E decision closure disposition: `_phase-e-runtime-execution-pass-01-2026-02-21/E4_DISPOSITION.md`
+- Phase E review disposition: `_phase-e-runtime-execution-pass-01-2026-02-21/E5_REVIEW_DISPOSITION.md`
+- Phase E structural disposition: `_phase-e-runtime-execution-pass-01-2026-02-21/E5A_STRUCTURAL_DISPOSITION.md`
+- Phase E docs + cleanup manifest: `_phase-e-runtime-execution-pass-01-2026-02-21/E6_CLEANUP_MANIFEST.md`
+- Phase E docs + cleanup execution scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_5_SCRATCHPAD.md`
+- Phase E docs + cleanup closure report: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_5_FINAL_E6_DOCS_CLEANUP.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 

@@ -1,7 +1,7 @@
 # Project Status
 
 - Project name: ORPC + Inngest Workflows Specification
-- Status: Phase A closed; Phase B runtime slices `B0..B6` landed; Phase C runtime slices `C1..C7` landed with review/structural/docs closure; Phase D runtime slices `D1..D7` landed with review/structural/docs/readiness closure
+- Status: Phase A closed; Phase B runtime slices `B0..B6` landed; Phase C runtime slices `C1..C7` landed with review/structural/docs closure; Phase D runtime slices `D1..D7` landed with review/structural/docs/readiness closure; Phase E runtime slices `E1..E6` landed with decision/review/structural/docs-cleanup closure and readiness/final handoff pending
 - Canonical entrypoint: `README.md`
 - Canonical architecture: `ARCHITECTURE.md`
 - Canonical decisions: `DECISIONS.md`
@@ -45,6 +45,21 @@
 - Phase D execution report: `_phase-d-runtime-execution-pass-01-2026-02-21/PHASE_D_EXECUTION_REPORT.md`
 - D7 Phase E readiness output: `_phase-d-runtime-execution-pass-01-2026-02-21/D7_PHASE_E_READINESS.md`
 - Phase D final handoff: `_phase-d-runtime-execution-pass-01-2026-02-21/FINAL_PHASE_D_HANDOFF.md`
+- Phase E prep note (historical kickoff): `PHASE_E_PREP_NOTE.md`
+- Phase E execution entrypoint: `PHASE_E_EXECUTION_PACKET.md`
+- Phase E implementation spec: `PHASE_E_IMPLEMENTATION_SPEC.md`
+- Phase E gates contract: `PHASE_E_ACCEPTANCE_GATES.md`
+- Phase E work breakdown map: `PHASE_E_WORKBREAKDOWN.yaml`
+- Phase E planning review disposition: `PHASE_E_REVIEW_DISPOSITION.md`
+- Phase E planning handoff: `PHASE_E_PLANNING_HANDOFF.md`
+- Phase E runtime execution lineage root: `_phase-e-runtime-execution-pass-01-2026-02-21/`
+- E4 decision closure disposition: `_phase-e-runtime-execution-pass-01-2026-02-21/E4_DISPOSITION.md`
+- E4 trigger evidence: `_phase-e-runtime-execution-pass-01-2026-02-21/E4_TRIGGER_EVIDENCE.md`
+- E5 review disposition: `_phase-e-runtime-execution-pass-01-2026-02-21/E5_REVIEW_DISPOSITION.md`
+- E5A structural disposition: `_phase-e-runtime-execution-pass-01-2026-02-21/E5A_STRUCTURAL_DISPOSITION.md`
+- E6 cleanup manifest: `_phase-e-runtime-execution-pass-01-2026-02-21/E6_CLEANUP_MANIFEST.md`
+- E6 docs closure scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_5_SCRATCHPAD.md`
+- E6 docs closure report: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_5_FINAL_E6_DOCS_CLEANUP.md`
 - Historical pre-Phase-B readiness lineage: `_phase-a-runtime-execution-pass-01-2026-02-20/A9_PHASE_B_READINESS.md`
 
 All session/process lineage is archived and non-canonical.
