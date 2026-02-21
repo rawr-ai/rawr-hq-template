@@ -50,7 +50,11 @@
     "phase-c:gate:c2-telemetry-contract": "bun scripts/phase-c/verify-telemetry-contract.mjs",
     "phase-c:gate:c2-telemetry-runtime": "bunx vitest run --project coordination-observability packages/coordination-observability/test/storage-lock-telemetry.test.ts && bunx vitest run --project server apps/server/test/ingress-signature-observability.test.ts",
     "phase-c:c2:quick": "bun run phase-c:gate:drift-core && bun run phase-c:gate:c2-telemetry-contract && bun run phase-c:gate:c2-telemetry-runtime",
-    "phase-c:c2:full": "bun run phase-c:c2:quick && bun run phase-a:gate:observability-contract"
+    "phase-c:c2:full": "bun run phase-c:c2:quick && bun run phase-a:gate:observability-contract",
+    "phase-c:gate:c3-distribution-contract": "bun scripts/phase-c/verify-distribution-instance-lifecycle.mjs",
+    "phase-c:gate:c3-distribution-runtime": "bunx vitest run --project hq packages/hq/test/instance-alias-isolation.test.ts && bunx vitest run --project plugin-plugins plugins/cli/plugins/test/distribution-alias-lifecycle.test.ts",
+    "phase-c:c3:quick": "bun run phase-c:gate:drift-core && bun run phase-c:gate:c3-distribution-contract && bun run phase-c:gate:c3-distribution-runtime",
+    "phase-c:c3:full": "bun run phase-c:c3:quick && bun run phase-a:gate:legacy-metadata-hard-delete-static-guard"
   },
   "overrides": {
     "npm": "11.9.0",
