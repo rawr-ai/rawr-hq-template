@@ -49,9 +49,13 @@ assertCondition(
   "orpc.ts must evaluate RPC auth through dedupe resolver",
 );
 const markerAssertionMatches = orpcSource.match(/assertRpcAuthDedupeMarker\(context\)/g) ?? [];
+const rpcRouteHandlerInvocations = orpcSource.match(/return handleRpcRoute\(\{/g) ?? [];
+const hasCentralizedRpcAssertion =
+  /async function handleRpcRoute\([\s\S]*assertRpcAuthDedupeMarker\(context\)/m.test(orpcSource) &&
+  rpcRouteHandlerInvocations.length >= 2;
 assertCondition(
-  markerAssertionMatches.length >= 2,
-  "orpc.ts must assert dedupe marker in both /rpc handlers",
+  markerAssertionMatches.length >= 2 || hasCentralizedRpcAssertion,
+  "orpc.ts must assert dedupe marker for both /rpc handlers (inline or centralized helper)",
 );
 assertCondition(
   middlewareDedupeTestSource.includes("RPC_AUTHORIZATION_DECISION") &&
