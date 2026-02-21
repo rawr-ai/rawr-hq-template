@@ -60,11 +60,11 @@
 1. Manual dedupe pattern is canonical for heavy/expensive boundary checks: write a marker into context and return early on re-entry.
 2. Built-in oRPC middleware dedupe applies only when router-level middleware chains satisfy strict ordering/leading-subset constraints.
 3. Durable runtime retry behavior stays in Inngest controls (`createFunction`, middleware lifecycle hooks, `step.run`) and is not merged with boundary dedupe assumptions.
-4. D-009 remains open and non-blocking: keep this as `SHOULD` guidance (not a new `MUST`) unless repeated implementation evidence requires a stronger lock.
+4. D-009 is locked: heavy/expensive boundary checks MUST define and enforce explicit context-cached dedupe markers; built-in dedupe remains optional optimization and MUST NOT be the sole correctness mechanism.
 
 ## Decision Status Notes
 1. D-008 is closed: host bootstrap initializes baseline traces first and owns ordering between runtime and boundary control planes.
-2. D-010 remains open and non-blocking: `finished` hook side effects stay idempotent/non-critical guidance without new architecture-level policy expansion.
+2. D-010 is locked: `finished` hook side effects MUST stay idempotent/non-critical with explicit non-exactly-once-safe runtime contract enforcement.
 
 ## Middleware Test Harness Contract (Axis 12)
 | Middleware concern | Verification layer | Required harness | Must-not assertion gap |

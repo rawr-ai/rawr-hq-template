@@ -188,10 +188,20 @@ Implementation-state snapshots are tracked in phase execution artifacts, not in 
   - `examples/e2e-04-context-middleware.md`
 
 ### D-009 — Required dedupe marker policy for heavy oRPC middleware
-- `status`: `open`
+- `status`: `locked`
 - `question`: Should packet policy require explicit context-cached dedupe markers for heavy oRPC middleware instead of relying on built-in dedupe constraints?
-- `why_open`: This remains non-blocking. Packet docs already carry minimal guidance (`SHOULD` + caveats) and avoid escalating to a stricter architecture-level lock until repeated implementation evidence justifies it.
-- `non_blocking_guidance`: Keep context-cached markers for heavy checks and treat built-in dedupe as constrained to leading-subset/same-order chains.
+- `locked_decision`:
+  - Heavy/expensive boundary middleware checks MUST use explicit context-cached dedupe markers.
+  - Built-in oRPC middleware dedupe remains optional optimization only, constrained by strict chain-order/leading-subset behavior.
+  - Absence of required heavy-marker assertions is a policy violation and MUST fail structural verification.
+- `closure_scope`: `Phase E / E1 + E3 evidence closure`
+- `closure_evidence`:
+  - `apps/server/src/workflows/context.ts`
+  - `apps/server/src/orpc.ts`
+  - `apps/server/test/middleware-dedupe.test.ts`
+  - `scripts/phase-e/verify-e1-dedupe-policy.mjs`
+  - `scripts/phase-e/verify-e3-evidence-integrity.mjs`
+- `status_transition`: `open -> locked (Phase E E4)`
 - `source_anchors`:
   - `https://orpc.dev/docs/best-practices/dedupe-middleware`
 - `impacted_docs`:
@@ -200,10 +210,20 @@ Implementation-state snapshots are tracked in phase execution artifacts, not in 
   - `examples/e2e-04-context-middleware.md`
 
 ### D-010 — Inngest finished-hook side-effect guardrail
-- `status`: `open`
+- `status`: `locked`
 - `question`: Should this packet explicitly restrict `finished` hook usage to idempotent/non-critical side effects?
-- `why_open`: This remains non-blocking. Packet docs already provide minimal operational guidance, and no additional architecture-level enforcement language is required for this packet iteration.
-- `non_blocking_guidance`: Treat `finished` as non-exactly-once; keep hook side effects idempotent and non-critical.
+- `locked_decision`:
+  - `finished` hook side effects MUST be idempotent and non-critical.
+  - Runtime contracts MUST encode non-exactly-once semantics explicitly and MUST permit safe duplicate invocation outcomes.
+  - Finished-hook policy conformance MUST be verified by structural and runtime gates.
+- `closure_scope`: `Phase E / E2 + E3 evidence closure`
+- `closure_evidence`:
+  - `packages/coordination-inngest/src/adapter.ts`
+  - `packages/coordination/src/types.ts`
+  - `packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts`
+  - `scripts/phase-e/verify-e2-finished-hook-policy.mjs`
+  - `scripts/phase-e/verify-e3-evidence-integrity.mjs`
+- `status_transition`: `open -> locked (Phase E E4)`
 - `source_anchors`:
   - `https://www.inngest.com/docs/reference/middleware/lifecycle`
 - `impacted_docs`:
