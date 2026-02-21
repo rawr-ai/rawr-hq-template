@@ -1,9 +1,8 @@
 # B4 Review Disposition
 
-## Source Reports
-- Initial review: `AGENT_4_REVIEW_REPORT.md` (superseded by re-review)
-- Fix closure: `AGENT_4_FIX_CLOSURE.md`
-- Re-review: `AGENT_4_RE_REVIEW_REPORT.md`
+## Source Record
+1. Review/fix closure outcome is summarized in this disposition.
+2. Binding fix commit: `6b83860` (HIGH-01 closure).
 
 ## Disposition
 `ready`
