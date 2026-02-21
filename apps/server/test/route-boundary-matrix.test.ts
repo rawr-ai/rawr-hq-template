@@ -43,6 +43,7 @@ type HttpMatrixCase = {
   path: string;
   headers?: Record<string, string>;
   body?: unknown;
+  env?: Record<string, string | undefined>;
   expectedStatus: StatusExpectation;
 };
 
@@ -73,6 +74,34 @@ function createApp() {
     enabledPluginIds: new Set(),
     baseUrl: "http://localhost:3000",
   });
+}
+
+async function withEnv<T>(env: Record<string, string | undefined> | undefined, run: () => Promise<T>): Promise<T> {
+  if (!env || Object.keys(env).length === 0) {
+    return run();
+  }
+
+  const previous = new Map<string, string | undefined>();
+  for (const [key, value] of Object.entries(env)) {
+    previous.set(key, process.env[key]);
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  try {
+    return await run();
+  } finally {
+    for (const [key, value] of previous.entries()) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
 }
 
 function assertStatus(expectation: StatusExpectation, status: number, caseId: string): void {
@@ -120,6 +149,9 @@ const MATRIX_CASES: MatrixCase[] = [
     description: "external callers use published OpenAPI route family",
     method: "GET",
     path: "/api/orpc/coordination/workflows",
+    headers: {
+      "x-rawr-caller-surface": "external",
+    },
     expectedStatus: 200,
   },
   {
@@ -128,10 +160,30 @@ const MATRIX_CASES: MatrixCase[] = [
     assertionKey: "assertion:reject-rpc-from-external-callers",
     callerSurface: "external",
     assertCallerBoundarySemantics: true,
-    description: "external callers reject /rpc paths",
-    method: "GET",
+    description: "external callers reject /rpc paths with valid RPC payload shape",
+    method: "POST",
     path: "/rpc/coordination/listWorkflows",
-    expectedStatus: (status) => status >= 400,
+    headers: {
+      "content-type": "application/json",
+      "x-rawr-caller-surface": "external",
+    },
+    body: { json: {} },
+    expectedStatus: 403,
+  },
+  {
+    kind: "http",
+    suiteId: "suite:api:boundary",
+    assertionKey: "assertion:reject-rpc-from-external-callers",
+    callerSurface: "external",
+    assertCallerBoundarySemantics: true,
+    description: "external-style unlabeled callers reject /rpc paths by default",
+    method: "POST",
+    path: "/rpc/coordination/listWorkflows",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: { json: {} },
+    expectedStatus: 403,
   },
   {
     kind: "http",
@@ -167,6 +219,26 @@ const MATRIX_CASES: MatrixCase[] = [
     expectedStatus: 403,
   },
   {
+    kind: "http",
+    suiteId: "suite:runtime:ingress",
+    assertionKey: "assertion:runtime-ingress-no-caller-boundary-semantics",
+    callerSurface: "runtime-ingress",
+    assertCallerBoundarySemantics: false,
+    description: "runtime ingress rejects invalid signature before dispatch",
+    method: "POST",
+    path: "/api/inngest",
+    headers: {
+      "content-type": "application/json",
+      "x-inngest-signature": `t=${Math.floor(Date.now() / 1000)}&s=deadbeef`,
+    },
+    body: { ping: true },
+    env: {
+      INNGEST_SIGNING_KEY: "signkey-test-rawr-ingress",
+      INNGEST_SIGNING_KEY_FALLBACK: undefined,
+    },
+    expectedStatus: 403,
+  },
+  {
     kind: "in-process",
     suiteId: "suite:cli:in-process",
     assertionKey: "assertion:in-process-no-local-http-self-call",
@@ -183,9 +255,9 @@ const MATRIX_CASES: MatrixCase[] = [
   {
     kind: "static",
     suiteId: "suite:cross-surface:metadata-import-boundary",
-    assertionKey: "assertion:metadata-import-boundary-shared-parser",
+    assertionKey: "assertion:metadata-import-boundary-shared-workspace-adapter",
     callerSurface: "cross-surface",
-    description: "workspace discovery surfaces share one manifest parser contract",
+    description: "workspace discovery surfaces use package-owned adapter forwarding",
     check: async () => {
       const hqWorkspacePath = path.join(repoRoot, "packages/hq/src/workspace/plugins.ts");
       const pluginWorkspacePath = path.join(repoRoot, "plugins/cli/plugins/src/lib/workspace-plugins.ts");
@@ -199,7 +271,15 @@ const MATRIX_CASES: MatrixCase[] = [
       expect(hqWorkspace).toContain("parseWorkspacePluginManifest");
 
       expect(pluginWorkspace).toContain('from "@rawr/hq/workspace"');
-      expect(pluginWorkspace).toContain("parseWorkspacePluginManifest");
+      expect(pluginWorkspace).toContain("findWorkspaceRootFromWorkspace");
+      expect(pluginWorkspace).toContain("listWorkspacePluginsFromWorkspace");
+      expect(pluginWorkspace).toContain("filterPluginsByKindFromWorkspace");
+      expect(pluginWorkspace).toContain("resolvePluginIdFromWorkspace");
+      expect(pluginWorkspace).toContain("export async function findWorkspaceRoot");
+      expect(pluginWorkspace).toContain("export async function listWorkspacePlugins");
+      expect(pluginWorkspace).toContain("export function filterPluginsByKind");
+      expect(pluginWorkspace).toContain("export function resolvePluginId");
+      expect(pluginWorkspace).not.toContain("parseWorkspacePluginManifest");
     },
   },
 ];
@@ -233,7 +313,7 @@ describe("route boundary matrix", () => {
       }
 
       if (testCase.callerSurface === "external" && testCase.path.startsWith("/rpc")) {
-        expect(typeof testCase.expectedStatus === "number" ? testCase.expectedStatus >= 400 : true).toBe(true);
+        expect(testCase.expectedStatus).toBe(403);
       }
 
       if (testCase.callerSurface === "runtime-ingress") {
@@ -257,7 +337,7 @@ describe("route boundary matrix", () => {
         body: testCase.body === undefined ? undefined : JSON.stringify(testCase.body),
       });
 
-      const response = await app.handle(request);
+      const response = await withEnv(testCase.env, async () => app.handle(request));
       assertStatus(testCase.expectedStatus, response.status, `${testCase.suiteId} :: ${testCase.description}`);
     }
   });

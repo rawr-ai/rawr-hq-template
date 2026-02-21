@@ -12,6 +12,10 @@ import os from "node:os";
 import type { CoordinationWorkflowV1 } from "@rawr/coordination";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const FIRST_PARTY_RPC_HEADERS = {
+  "content-type": "application/json",
+  "x-rawr-caller-surface": "first-party",
+} as const;
 
 async function createPluginFixture(input: { dirName: string; pluginId: string }) {
   const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-plugin-"));
@@ -62,6 +66,41 @@ describe("rawr server routes", () => {
     expect(res.status).toBe(403);
   });
 
+  it("host-composition-guard: rejects invalid ingress signatures before runtime dispatch", async () => {
+    const previousSigningKey = process.env.INNGEST_SIGNING_KEY;
+    const previousSigningKeyFallback = process.env.INNGEST_SIGNING_KEY_FALLBACK;
+    process.env.INNGEST_SIGNING_KEY = "signkey-test-rawr-ingress";
+    delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
+
+    try {
+      const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+      const res = await app.handle(
+        new Request("http://localhost/api/inngest", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-inngest-signature": `t=${Math.floor(Date.now() / 1000)}&s=deadbeef`,
+          },
+          body: JSON.stringify({ ping: true }),
+        }),
+      );
+      expect(res.status).toBe(403);
+      await expect(res.text()).resolves.toBe("forbidden");
+    } finally {
+      if (previousSigningKey === undefined) {
+        delete process.env.INNGEST_SIGNING_KEY;
+      } else {
+        process.env.INNGEST_SIGNING_KEY = previousSigningKey;
+      }
+
+      if (previousSigningKeyFallback === undefined) {
+        delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
+      } else {
+        process.env.INNGEST_SIGNING_KEY_FALLBACK = previousSigningKeyFallback;
+      }
+    }
+  });
+
   it("host-composition-guard: enforces ingress -> workflows -> rpc/openapi mount order contract", () => {
     expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"]);
   });
@@ -85,7 +124,7 @@ describe("rawr server routes", () => {
     const res = await app.handle(
       new Request("http://localhost/rpc/workflows/coordination/workflows", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),
       }),
     );
@@ -163,7 +202,7 @@ describe("rawr server routes", () => {
     const saveRes = await app.handle(
       new Request("http://localhost/rpc/coordination/saveWorkflow", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: { workflow } }),
       }),
     );
@@ -174,7 +213,7 @@ describe("rawr server routes", () => {
     const validateRes = await app.handle(
       new Request("http://localhost/rpc/coordination/validateWorkflow", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: { workflowId: "wf-server" } }),
       }),
     );
@@ -187,7 +226,7 @@ describe("rawr server routes", () => {
     const runRes = await app.handle(
       new Request("http://localhost/rpc/coordination/queueRun", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: { workflowId: "wf-server", input: { ticket: "T-100" } } }),
       }),
     );
@@ -202,7 +241,7 @@ describe("rawr server routes", () => {
     const statusRes = await app.handle(
       new Request("http://localhost/rpc/coordination/getRunStatus", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: { runId } }),
       }),
     );
@@ -213,7 +252,7 @@ describe("rawr server routes", () => {
     const timelineRes = await app.handle(
       new Request("http://localhost/rpc/coordination/getRunTimeline", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: { runId } }),
       }),
     );
@@ -248,7 +287,7 @@ describe("rawr server routes", () => {
     const invalidWorkflowIdRes = await app.handle(
       new Request("http://localhost/rpc/coordination/getWorkflow", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: { workflowId: "invalid id" } }),
       }),
     );
@@ -261,7 +300,7 @@ describe("rawr server routes", () => {
     const missingRunRes = await app.handle(
       new Request("http://localhost/rpc/coordination/getRunStatus", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: { runId: "run-missing" } }),
       }),
     );
@@ -297,7 +336,7 @@ describe("rawr server routes", () => {
     const first = await app.handle(
       new Request("http://localhost/rpc/coordination/listWorkflows", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-request-id": "req-a" },
+        headers: { ...FIRST_PARTY_RPC_HEADERS, "x-request-id": "req-a" },
         body: JSON.stringify({ json: {} }),
       }),
     );
@@ -306,7 +345,7 @@ describe("rawr server routes", () => {
     const second = await app.handle(
       new Request("http://localhost/rpc/coordination/listWorkflows", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-request-id": "req-b" },
+        headers: { ...FIRST_PARTY_RPC_HEADERS, "x-request-id": "req-b" },
         body: JSON.stringify({ json: {} }),
       }),
     );

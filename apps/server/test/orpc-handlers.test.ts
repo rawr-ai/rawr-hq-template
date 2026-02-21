@@ -5,6 +5,10 @@ import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const FIRST_PARTY_RPC_HEADERS = {
+  "content-type": "application/json",
+  "x-rawr-caller-surface": "first-party",
+} as const;
 
 function createApp() {
   return registerRawrRoutes(createServerApp(), {
@@ -21,7 +25,7 @@ describe("orpc handlers", () => {
     const rpcRes = await app.handle(
       new Request("http://localhost/rpc/coordination/listWorkflows", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),
       }),
     );
@@ -40,7 +44,7 @@ describe("orpc handlers", () => {
     const res = await app.handle(
       new Request("http://localhost/rpc/coordination/getWorkflow", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: { workflowId: "invalid id" } }),
       }),
     );
