@@ -9,6 +9,15 @@ const FINISHED_HOOK_RESULT_PATH = `${PASS_ROOT}/D4_FINISHED_HOOK_SCAN_RESULT.jso
 const DISPOSITION_PATH = `${PASS_ROOT}/D4_DISPOSITION.md`;
 const TRIGGER_EVIDENCE_PATH = `${PASS_ROOT}/D4_TRIGGER_EVIDENCE.md`;
 const AGENT3_SCRATCHPAD_PATH = `${PASS_ROOT}/AGENT_3_SCRATCHPAD.md`;
+const D3_OWNED_PATH_TOKENS = [
+  "scripts/phase-d/_verify-utils.mjs",
+  "scripts/phase-d/verify-d3-ingress-middleware-structural-contract.mjs",
+  "apps/server/test/route-boundary-matrix.test.ts",
+  "apps/server/test/ingress-signature-observability.test.ts",
+  "apps/server/test/phase-a-gates.test.ts",
+  "package.json",
+];
+const D3_GATE_COMMAND_PATTERN = /phase-d:(?:gate:d3-ingress-middleware-structural-contract|d3:(?:quick|full))/;
 
 await Promise.all([mustExist(DEDUPE_RESULT_PATH), mustExist(FINISHED_HOOK_RESULT_PATH), mustExist(DISPOSITION_PATH), mustExist(AGENT3_SCRATCHPAD_PATH)]);
 
@@ -22,14 +31,49 @@ const [dedupeRaw, finishedHookRaw, dispositionSource, agent3Scratchpad] = await 
 const dedupeResult = JSON.parse(dedupeRaw);
 const finishedHookResult = JSON.parse(finishedHookRaw);
 
-const d3FailureLines = agent3Scratchpad
+const scratchpadEntries = agent3Scratchpad
   .split(/\r?\n/u)
-  .filter((line) => /phase-d:d3:(quick|full)/.test(line) && /failed|error/i.test(line));
-const d3SuccessLines = agent3Scratchpad
-  .split(/\r?\n/u)
-  .filter((line) => /phase-d:d3:(quick|full)/.test(line) && /Validation passed/i.test(line));
+  .map((line, index) => ({ line, index }))
+  .filter((entry) => entry.line.trim().length > 0);
 
-const d3RecurrenceTriggered = d3FailureLines.length >= 2;
+const d3FailureEntries = scratchpadEntries.filter(
+  (entry) => D3_GATE_COMMAND_PATTERN.test(entry.line) && /failed|error/i.test(entry.line),
+);
+const d3SuccessEntries = scratchpadEntries.filter(
+  (entry) => D3_GATE_COMMAND_PATTERN.test(entry.line) && /validation passed|pass(?:ed)?/i.test(entry.line),
+);
+
+function referencesD3OwnedPath(entryLine) {
+  return D3_OWNED_PATH_TOKENS.some((token) => entryLine.includes(token));
+}
+
+const d3RemediationEntries = scratchpadEntries.filter(
+  (entry) =>
+    /remediation/i.test(entry.line) &&
+    /commit/i.test(entry.line) &&
+    referencesD3OwnedPath(entry.line) &&
+    /d3|phase-d/i.test(entry.line),
+);
+
+const d3RecurrenceCycles = [];
+for (const firstFailure of d3FailureEntries) {
+  const remediationAfterFailure = d3RemediationEntries.filter((entry) => entry.index > firstFailure.index);
+  for (const remediationEntry of remediationAfterFailure) {
+    const rerunFailure = d3FailureEntries.find((entry) => entry.index > remediationEntry.index);
+    if (!rerunFailure) continue;
+    const successBetweenFailures = d3SuccessEntries.some(
+      (entry) => entry.index > firstFailure.index && entry.index < rerunFailure.index,
+    );
+    if (successBetweenFailures) continue;
+    d3RecurrenceCycles.push({
+      firstFailure: firstFailure.line,
+      remediation: remediationEntry.line,
+      rerunFailure: rerunFailure.line,
+    });
+  }
+}
+
+const d3RecurrenceTriggered = d3RecurrenceCycles.length > 0;
 const anyTriggered = Boolean(dedupeResult.triggered) || Boolean(finishedHookResult.triggered) || d3RecurrenceTriggered;
 const expectedState = anyTriggered ? "triggered" : "deferred";
 
@@ -70,5 +114,5 @@ console.log("phase-d d4 disposition verified");
 console.log(
   `state=${declaredState}; dedupeTriggered=${Boolean(dedupeResult.triggered)}; finishedHookTriggered=${Boolean(
     finishedHookResult.triggered,
-  )}; d3RecurrenceTriggered=${d3RecurrenceTriggered}; d3SuccessEvidence=${d3SuccessLines.length}; d3FailureEvidence=${d3FailureLines.length}`,
+  )}; d3RecurrenceTriggered=${d3RecurrenceTriggered}; d3SuccessEvidence=${d3SuccessEntries.length}; d3FailureEvidence=${d3FailureEntries.length}; d3RemediationEvidence=${d3RemediationEntries.length}; d3RecurrenceCycles=${d3RecurrenceCycles.length}`,
 );
