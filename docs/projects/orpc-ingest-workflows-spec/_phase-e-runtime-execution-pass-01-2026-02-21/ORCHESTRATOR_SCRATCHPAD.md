@@ -25,3 +25,10 @@
 - Completed: `bun run phase-e:e2:full`
 - Result: PASS
 - Notes: finished-hook policy verifier and runtime/tests aligned on `skipped|success|error`, `nonCritical`, `idempotencyRequired`, and timeout metadata.
+
+## 2026-02-21T15:21:20-0800 — E3 gate closure
+- Branch: `codex/phase-e-e3-structural-evidence-gates`
+- Completed: `bun run phase-e:e3:quick`
+- Completed: `bun run phase-e:e3:full`
+- Result: PASS
+- Notes: phase-e evidence/disposition gate chain now uses durable runtime-pass artifacts and cleanup-safe verification wiring.
