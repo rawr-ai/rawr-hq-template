@@ -1,0 +1,113 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`workflow trigger contract drift > matches the minified trigger contract snapshot 1`] = `
+{
+  "coordination": {
+    "getRunStatus": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "operationId": "coordinationGetRunStatus",
+          "path": "/coordination/runs/{runId}",
+          "summary": "Get workflow run status",
+          "tags": [
+            "coordination",
+          ],
+        },
+      },
+    },
+    "getRunTimeline": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "operationId": "coordinationGetRunTimeline",
+          "path": "/coordination/runs/{runId}/timeline",
+          "summary": "Get workflow run timeline",
+          "tags": [
+            "coordination",
+          ],
+        },
+      },
+    },
+    "getWorkflow": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "operationId": "coordinationGetWorkflow",
+          "path": "/coordination/workflows/{workflowId}",
+          "summary": "Get a coordination workflow by id",
+          "tags": [
+            "coordination",
+          ],
+        },
+      },
+    },
+    "listWorkflows": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "operationId": "coordinationListWorkflows",
+          "path": "/coordination/workflows",
+          "summary": "List saved coordination workflows",
+          "tags": [
+            "coordination",
+          ],
+        },
+      },
+    },
+    "queueRun": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "POST",
+          "operationId": "coordinationQueueRun",
+          "path": "/coordination/workflows/{workflowId}/run",
+          "summary": "Queue a workflow run",
+          "tags": [
+            "coordination",
+          ],
+        },
+      },
+    },
+    "saveWorkflow": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "POST",
+          "operationId": "coordinationSaveWorkflow",
+          "path": "/coordination/workflows",
+          "summary": "Create or update a coordination workflow",
+          "tags": [
+            "coordination",
+          ],
+        },
+      },
+    },
+    "validateWorkflow": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "POST",
+          "operationId": "coordinationValidateWorkflow",
+          "path": "/coordination/workflows/{workflowId}/validate",
+          "summary": "Validate a coordination workflow",
+          "tags": [
+            "coordination",
+          ],
+        },
+      },
+    },
+  },
+}
+`;
