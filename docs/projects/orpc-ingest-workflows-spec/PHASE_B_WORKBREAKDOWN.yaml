@@ -1,5 +1,6 @@
 phase: B
-status: planning_complete
+status: execution_in_progress_b0_b4a_landed
+as_landed_through: B4A
 entrypoint: docs/projects/orpc-ingest-workflows-spec/PHASE_B_EXECUTION_PACKET.md
 
 invariants:
@@ -100,16 +101,15 @@ slices:
     owner: '@rawr-verification-gates'
     backup: '@rawr-release-duty'
     depends_on: [B2]
-    objective: Replace brittle text-shape checks with structural ownership assertions and adapter anti-regression checks.
+    objective: Replace brittle text-shape checks with structural ownership assertions and structural workspace/install seam anti-regression checks.
     files:
       - path: scripts/phase-a/manifest-smoke.mjs
       - path: scripts/phase-a/verify-gate-scaffold.mjs
       - path: scripts/phase-a/verify-harness-matrix.mjs
       - path: apps/server/test/route-boundary-matrix.test.ts
+      - path: apps/server/test/phase-a-gates.test.ts
       - path: packages/hq/test/phase-a-gates.test.ts
       - path: plugins/cli/plugins/test/phase-a-gates.test.ts
-      - path: packages/hq/test/adapter-shim-ownership.test.ts
-      - path: plugins/cli/plugins/test/adapter-shim-ownership.test.ts
     gates:
       quick:
         - bun scripts/phase-a/verify-harness-matrix.mjs
@@ -117,12 +117,10 @@ slices:
         - bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts
       full:
         - bun run phase-a:gates:exit
-        - bunx vitest run --project hq packages/hq/test/adapter-shim-ownership.test.ts
-        - bunx vitest run --project plugin-plugins plugins/cli/plugins/test/adapter-shim-ownership.test.ts
     acceptance:
       - structural_ownership_assertions_green
       - d015_required_suite_ids_and_negatives_intact
-      - adapter_shim_anti_regression_green
+      - workspace_install_seam_ownership_guards_green
 
   - id: B4
     title: Independent review and fix closure
