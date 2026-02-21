@@ -8,6 +8,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
   "x-rawr-caller-surface": "first-party",
+  "x-rawr-session-auth": "verified",
 } as const;
 
 function createApp() {
