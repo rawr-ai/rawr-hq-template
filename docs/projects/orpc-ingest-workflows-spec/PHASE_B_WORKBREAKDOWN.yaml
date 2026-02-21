@@ -1,0 +1,194 @@
+phase: B
+status: planning_complete
+entrypoint: docs/projects/orpc-ingest-workflows-spec/PHASE_B_EXECUTION_PACKET.md
+
+invariants:
+  - runtime_semantics: rawr.kind + rawr.capability + manifest registration
+  - route_families:
+      - /rpc internal/first-party
+      - /api/orpc/* published OpenAPI
+      - /api/workflows/<capability>/* workflow boundary
+      - /api/inngest signed runtime ingress only
+  - manifest_authority: rawr.hq.ts
+  - process_posture: forward_only_no_rollback
+
+slices:
+  - id: B0
+    title: RPC auth-source hardening
+    owner: '@rawr-runtime-host'
+    backup: '@rawr-platform-duty'
+    depends_on: []
+    objective: Replace header-only rpc caller trust with host auth-evidence classifier while preserving route policy.
+    files:
+      - path: apps/server/src/orpc.ts
+      - path: apps/server/src/rawr.ts
+      - path: apps/server/src/auth/rpc-auth.ts
+      - path: apps/server/test/orpc-handlers.test.ts
+      - path: apps/server/test/rawr.test.ts
+      - path: apps/server/test/route-boundary-matrix.test.ts
+      - path: apps/server/test/rpc-auth-source.test.ts
+    gates:
+      quick:
+        - bunx vitest run --project server apps/server/test/rawr.test.ts
+        - bunx vitest run --project server apps/server/test/orpc-handlers.test.ts
+        - bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts
+      full:
+        - bun run phase-a:gates:completion
+        - bunx vitest run --project server apps/server/test/rpc-auth-source.test.ts
+    acceptance:
+      - external_or_unlabeled_rpc_denied
+      - first_party_or_internal_rpc_valid
+      - ingress_behavior_unchanged
+
+  - id: B1
+    title: Workflow trigger-router isolation
+    owner: '@rawr-plugin-lifecycle'
+    backup: '@rawr-architecture-duty'
+    depends_on: [B0]
+    objective: Isolate workflow trigger router from broad root orpc coupling.
+    files:
+      - path: packages/core/src/orpc/hq-router.ts
+      - path: packages/core/src/orpc/index.ts
+      - path: apps/server/src/orpc.ts
+      - path: rawr.hq.ts
+      - path: apps/server/test/rawr.test.ts
+      - path: apps/server/test/route-boundary-matrix.test.ts
+      - path: packages/core/test/workflow-trigger-contract-drift.test.ts
+      - path: packages/core/test/__snapshots__/workflow-trigger-contract-drift.test.ts.snap
+    gates:
+      quick:
+        - bunx vitest run --project server apps/server/test/rawr.test.ts
+        - bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts
+        - bunx vitest run --project core packages/core/test/workflow-trigger-contract-drift.test.ts
+      full:
+        - bun run phase-a:gates:completion
+        - bun scripts/phase-a/manifest-smoke.mjs --mode=completion
+    acceptance:
+      - workflows_route_family_capability_scoped
+      - no_rpc_workflows_mount
+      - no_non_workflow_surface_leak
+
+  - id: B2
+    title: Manifest-host seam hardening
+    owner: '@rawr-plugin-lifecycle'
+    backup: '@rawr-architecture-duty'
+    depends_on: [B1]
+    objective: Harden manifest and host seam while preserving manifest authority and import direction.
+    files:
+      - path: packages/core/src/orpc/runtime-router.ts
+      - path: packages/core/src/orpc/index.ts
+      - path: apps/server/src/orpc.ts
+      - path: apps/server/src/workflows/context.ts
+      - path: rawr.hq.ts
+      - path: apps/server/test/orpc-openapi.test.ts
+      - path: packages/core/test/runtime-router.test.ts
+    gates:
+      quick:
+        - bunx vitest run --project core packages/core/test/runtime-router.test.ts
+        - bunx vitest run --project server apps/server/test/orpc-openapi.test.ts
+        - bunx vitest run --project server apps/server/test/rawr.test.ts
+      full:
+        - bun run phase-a:gates:completion
+        - bun scripts/phase-a/manifest-smoke.mjs --mode=completion
+    acceptance:
+      - rawr_hq_manifest_stays_authority
+      - host_consumes_package_owned_seams
+      - no_import_cycle_or_direction_regression
+
+  - id: B3
+    title: Verification structural hardening
+    owner: '@rawr-verification-gates'
+    backup: '@rawr-release-duty'
+    depends_on: [B2]
+    objective: Replace brittle text-shape checks with structural ownership assertions and adapter anti-regression checks.
+    files:
+      - path: scripts/phase-a/manifest-smoke.mjs
+      - path: scripts/phase-a/verify-gate-scaffold.mjs
+      - path: scripts/phase-a/verify-harness-matrix.mjs
+      - path: apps/server/test/route-boundary-matrix.test.ts
+      - path: packages/hq/test/phase-a-gates.test.ts
+      - path: plugins/cli/plugins/test/phase-a-gates.test.ts
+      - path: packages/hq/test/adapter-shim-ownership.test.ts
+      - path: plugins/cli/plugins/test/adapter-shim-ownership.test.ts
+    gates:
+      quick:
+        - bun scripts/phase-a/verify-harness-matrix.mjs
+        - bun run phase-a:gate:route-negative-assertions
+        - bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts
+      full:
+        - bun run phase-a:gates:exit
+        - bunx vitest run --project hq packages/hq/test/adapter-shim-ownership.test.ts
+        - bunx vitest run --project plugin-plugins plugins/cli/plugins/test/adapter-shim-ownership.test.ts
+    acceptance:
+      - structural_ownership_assertions_green
+      - d015_required_suite_ids_and_negatives_intact
+      - adapter_shim_anti_regression_green
+
+  - id: B4
+    title: Independent review and fix closure
+    owner: '@rawr-review-closure'
+    backup: '@rawr-verification-gates'
+    depends_on: [B3]
+    objective: Run TS+ORPC review and close all blocking/high findings.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_B_REVIEW_DISPOSITION.md
+    acceptance:
+      - no_unresolved_blocking_or_high_findings
+      - re_review_green_after_fixes
+
+  - id: B4A
+    title: Structural assessment and taste pass
+    owner: '@rawr-structural-steward'
+    backup: '@rawr-review-closure'
+    depends_on: [B4]
+    objective: Review and improve naming, file boundaries, and domain mapping quality without reopening locked architecture.
+    files:
+      - path: apps/server/src
+      - path: packages/core/src
+      - path: apps/server/test
+      - path: packages/core/test
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_B_REVIEW_DISPOSITION.md
+    acceptance:
+      - structural_findings_dispositioned
+      - blocking_or_high_structural_findings_fixed
+      - no_fundamental_architecture_shift
+
+  - id: B5
+    title: Canonical docs and cleanup closure
+    owner: '@rawr-docs-maintainer'
+    backup: '@rawr-release-duty'
+    depends_on: [B4A]
+    objective: Align canonical docs to landed behavior and cleanup superseded artifacts.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/README.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PROJECT_STATUS.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_B_EXECUTION_PACKET.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_B_IMPLEMENTATION_SPEC.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_B_ACCEPTANCE_GATES.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_B_REVIEW_DISPOSITION.md
+    acceptance:
+      - canonical_docs_aligned
+      - cleanup_manifest_published
+
+  - id: B6
+    title: Post-land realignment
+    owner: '@rawr-phase-sequencing'
+    backup: '@rawr-architecture-duty'
+    depends_on: [B5]
+    objective: Publish next-phase readiness and owner-assigned blocker order.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/ARCHITECTURE.md
+      - path: docs/projects/orpc-ingest-workflows-spec/DECISIONS.md
+      - path: docs/projects/orpc-ingest-workflows-spec/axes
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-a-runtime-execution-pass-01-2026-02-20/A9_PHASE_B_READINESS.md
+    acceptance:
+      - next_phase_posture_explicit
+      - blockers_owned_and_ordered
+
+deferred_non_blocking:
+  - d016_ux_productization_mechanics
+  - cross_instance_storage_lock_redesign
+  - expanded_telemetry_beyond_gate_diagnostics
+  - d009_stricter_middleware_dedupe_policy
+  - d010_stricter_inngest_finished_hook_policy
+  - global_owner_fallback_ux_polish
