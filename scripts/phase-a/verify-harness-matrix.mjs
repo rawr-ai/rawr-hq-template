@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import fs from "node:fs/promises";
 import path from "node:path";
+import ts from "typescript";
 
 const REQUIRED_SUITES = [
   "suite:web:first-party-rpc",
@@ -15,6 +16,7 @@ const REQUIRED_SUITES = [
 const REQUIRED_NEGATIVE_ASSERTION_KEYS = [
   "assertion:reject-api-inngest-from-caller-paths",
   "assertion:reject-rpc-from-external-callers",
+  "assertion:reject-rpc-workflows-route-family",
   "assertion:runtime-ingress-no-caller-boundary-semantics",
   "assertion:in-process-no-local-http-self-call",
 ];
@@ -26,7 +28,6 @@ const searchRoots = [
 ];
 
 const routeBoundaryMatrixPath = path.join(process.cwd(), "apps", "server", "test", "route-boundary-matrix.test.ts");
-const suiteIdPattern = /\bsuite:[a-z0-9-]+:[a-z0-9-]+\b/gu;
 
 async function listTestFiles(dir) {
   const out = [];
@@ -52,23 +53,84 @@ async function listTestFiles(dir) {
   return out;
 }
 
-async function readFileOrEmpty(filePath) {
-  try {
-    return await fs.readFile(filePath, "utf8");
-  } catch {
-    return "";
-  }
+function visit(node, fn) {
+  fn(node);
+  node.forEachChild((child) => visit(child, fn));
 }
 
-function collectSuiteCoverage(files, fileContents) {
+function parseTypeScript(filePath, source) {
+  return ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+}
+
+function unwrapExpression(expression) {
+  let current = expression;
+  while (current) {
+    if (ts.isAsExpression(current) || ts.isParenthesizedExpression(current)) {
+      current = current.expression;
+      continue;
+    }
+    if (typeof ts.isSatisfiesExpression === "function" && ts.isSatisfiesExpression(current)) {
+      current = current.expression;
+      continue;
+    }
+    return current;
+  }
+  return undefined;
+}
+
+function propertyNameText(nameNode) {
+  if (!nameNode) return undefined;
+  if (ts.isIdentifier(nameNode) || ts.isStringLiteral(nameNode)) return nameNode.text;
+  return undefined;
+}
+
+function findConstArrayLiteral(sourceFile, variableName) {
+  for (const statement of sourceFile.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (!ts.isIdentifier(declaration.name) || declaration.name.text !== variableName) continue;
+      if (!declaration.initializer) continue;
+      const unwrapped = unwrapExpression(declaration.initializer);
+      if (unwrapped && ts.isArrayLiteralExpression(unwrapped)) {
+        return unwrapped;
+      }
+    }
+  }
+  return undefined;
+}
+
+function stringArrayValues(arrayLiteral) {
+  const values = [];
+  for (const element of arrayLiteral.elements) {
+    const unwrapped = unwrapExpression(element);
+    if (unwrapped && ts.isStringLiteral(unwrapped)) {
+      values.push(unwrapped.text);
+    }
+  }
+  return values;
+}
+
+function collectObjectPropertyStringValues(sourceFile, propertyName) {
+  const values = new Set();
+  visit(sourceFile, (node) => {
+    if (!ts.isPropertyAssignment(node)) return;
+    if (propertyNameText(node.name) !== propertyName) return;
+    const initializer = unwrapExpression(node.initializer);
+    if (initializer && ts.isStringLiteral(initializer)) {
+      values.add(initializer.text);
+    }
+  });
+  return values;
+}
+
+function collectSuiteCoverage(files, fileAsts) {
   const coverage = new Map();
 
-  for (let idx = 0; idx < files.length; idx += 1) {
-    const filePath = files[idx];
-    const text = fileContents[idx];
-    const matches = text.match(suiteIdPattern) ?? [];
+  for (const [idx, filePath] of files.entries()) {
+    const ast = fileAsts[idx];
+    const suiteIds = collectObjectPropertyStringValues(ast, "suiteId");
 
-    for (const suiteId of matches) {
+    for (const suiteId of suiteIds) {
       const paths = coverage.get(suiteId) ?? [];
       paths.push(filePath);
       coverage.set(suiteId, paths);
@@ -84,8 +146,9 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-const fileContents = await Promise.all(files.map((file) => readFileOrEmpty(file)));
-const coverage = collectSuiteCoverage(files, fileContents);
+const fileSources = await Promise.all(files.map((file) => fs.readFile(file, "utf8")));
+const fileAsts = fileSources.map((source, idx) => parseTypeScript(files[idx], source));
+const coverage = collectSuiteCoverage(files, fileAsts);
 
 const missingSuites = REQUIRED_SUITES.filter((suiteId) => !coverage.has(suiteId));
 if (missingSuites.length > 0) {
@@ -96,18 +159,114 @@ if (missingSuites.length > 0) {
   process.exit(1);
 }
 
-const routeBoundaryMatrix = await readFileOrEmpty(routeBoundaryMatrixPath);
-if (!routeBoundaryMatrix) {
+let routeBoundaryMatrixSource = "";
+try {
+  routeBoundaryMatrixSource = await fs.readFile(routeBoundaryMatrixPath, "utf8");
+} catch {
+  routeBoundaryMatrixSource = "";
+}
+
+if (!routeBoundaryMatrixSource) {
   console.error(`harness-matrix failed: missing required route matrix file ${routeBoundaryMatrixPath}`);
   process.exit(1);
 }
+const routeBoundaryMatrixAst = parseTypeScript(routeBoundaryMatrixPath, routeBoundaryMatrixSource);
 
-const missingNegativeKeys = REQUIRED_NEGATIVE_ASSERTION_KEYS.filter((key) => !routeBoundaryMatrix.includes(key));
+const routeMatrixDeclaredSuiteArray = findConstArrayLiteral(routeBoundaryMatrixAst, "REQUIRED_SUITE_IDS");
+const routeMatrixDeclaredNegativeArray = findConstArrayLiteral(routeBoundaryMatrixAst, "REQUIRED_NEGATIVE_ASSERTION_KEYS");
+if (!routeMatrixDeclaredSuiteArray || !routeMatrixDeclaredNegativeArray) {
+  console.error("harness-matrix failed: route boundary matrix must declare REQUIRED_SUITE_IDS and REQUIRED_NEGATIVE_ASSERTION_KEYS arrays.");
+  process.exit(1);
+}
+
+const routeDeclaredSuites = new Set(stringArrayValues(routeMatrixDeclaredSuiteArray));
+const routeDeclaredNegatives = new Set(stringArrayValues(routeMatrixDeclaredNegativeArray));
+const missingRouteDeclaredSuites = REQUIRED_SUITES.filter((suiteId) => !routeDeclaredSuites.has(suiteId));
+if (missingRouteDeclaredSuites.length > 0) {
+  console.error("harness-matrix failed: route boundary matrix declaration is missing required suite IDs:");
+  for (const suiteId of missingRouteDeclaredSuites) {
+    console.error(`  - ${suiteId}`);
+  }
+  process.exit(1);
+}
+
+const missingRouteDeclaredNegatives = REQUIRED_NEGATIVE_ASSERTION_KEYS.filter((key) => !routeDeclaredNegatives.has(key));
+if (missingRouteDeclaredNegatives.length > 0) {
+  console.error("harness-matrix failed: route boundary matrix declaration is missing required negative assertion keys:");
+  for (const key of missingRouteDeclaredNegatives) {
+    console.error(`  - ${key}`);
+  }
+  process.exit(1);
+}
+
+const routeCasesArray = findConstArrayLiteral(routeBoundaryMatrixAst, "MATRIX_CASES");
+if (!routeCasesArray) {
+  console.error("harness-matrix failed: route boundary matrix must declare MATRIX_CASES.");
+  process.exit(1);
+}
+
+const routeCaseSuiteIds = new Set();
+const routeCaseNegativeKeys = new Set();
+let hasRpcWorkflowsNegativeCase = false;
+
+for (const element of routeCasesArray.elements) {
+  const unwrapped = unwrapExpression(element);
+  if (!unwrapped || !ts.isObjectLiteralExpression(unwrapped)) continue;
+
+  let suiteId;
+  let assertionKey;
+  let routePath;
+  let expectedStatus;
+
+  for (const property of unwrapped.properties) {
+    if (!ts.isPropertyAssignment(property)) continue;
+    const propName = propertyNameText(property.name);
+    const initializer = unwrapExpression(property.initializer);
+
+    if (propName === "suiteId" && initializer && ts.isStringLiteral(initializer)) suiteId = initializer.text;
+    if (propName === "assertionKey" && initializer && ts.isStringLiteral(initializer)) assertionKey = initializer.text;
+    if (propName === "path" && initializer && ts.isStringLiteral(initializer)) routePath = initializer.text;
+    if (propName === "expectedStatus" && initializer && ts.isNumericLiteral(initializer)) {
+      expectedStatus = Number(initializer.text);
+    }
+  }
+
+  if (suiteId) routeCaseSuiteIds.add(suiteId);
+  if (assertionKey) routeCaseNegativeKeys.add(assertionKey);
+
+  if (
+    assertionKey === "assertion:reject-rpc-workflows-route-family" &&
+    typeof routePath === "string" &&
+    routePath.startsWith("/rpc/workflows") &&
+    typeof expectedStatus === "number" &&
+    expectedStatus >= 400
+  ) {
+    hasRpcWorkflowsNegativeCase = true;
+  }
+}
+
+const missingMatrixSuiteIds = REQUIRED_SUITES.filter((suiteId) => !routeCaseSuiteIds.has(suiteId));
+if (missingMatrixSuiteIds.length > 0) {
+  console.error("harness-matrix failed: MATRIX_CASES is missing required suite IDs:");
+  for (const suiteId of missingMatrixSuiteIds) {
+    console.error(`  - ${suiteId}`);
+  }
+  process.exit(1);
+}
+
+const missingNegativeKeys = REQUIRED_NEGATIVE_ASSERTION_KEYS.filter((key) => !routeCaseNegativeKeys.has(key));
 if (missingNegativeKeys.length > 0) {
-  console.error("harness-matrix failed: route boundary matrix is missing required negative assertion keys:");
+  console.error("harness-matrix failed: MATRIX_CASES is missing required negative assertion keys:");
   for (const key of missingNegativeKeys) {
     console.error(`  - ${key}`);
   }
+  process.exit(1);
+}
+
+if (!hasRpcWorkflowsNegativeCase) {
+  console.error(
+    "harness-matrix failed: MATRIX_CASES must include a /rpc/workflows negative case using assertion:reject-rpc-workflows-route-family.",
+  );
   process.exit(1);
 }
 
