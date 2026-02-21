@@ -102,6 +102,36 @@ describe("rpc auth source classification", () => {
     ).toBe("unlabeled");
   });
 
+  it("does not trust cookie, authorization prefix, or user-agent auth heuristics", () => {
+    expect(
+      classify({
+        headers: {
+          "x-rawr-caller-surface": "first-party",
+          cookie: "rawr-session=spoofed-session",
+        },
+      }),
+    ).toBe("unlabeled");
+
+    expect(
+      classify({
+        headers: {
+          "x-rawr-caller-surface": "internal",
+          authorization: "service spoofed-token",
+        },
+      }),
+    ).toBe("unlabeled");
+
+    expect(
+      classify({
+        headers: {
+          "x-rawr-caller-surface": "cli",
+          "x-rawr-service-auth": "verified",
+          "user-agent": "rawr-cli/9.9.9",
+        },
+      }),
+    ).toBe("unlabeled");
+  });
+
   it("denies runtime-ingress, external, and unlabeled rpc requests", () => {
     expect(classify({ headers: { "x-rawr-caller-surface": "runtime-ingress" } })).toBe("runtime-ingress");
     expect(classify({ headers: { "x-rawr-caller-surface": "external" } })).toBe("external");
