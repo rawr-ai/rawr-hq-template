@@ -20,7 +20,8 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 14. `PHASE_B_ACCEPTANCE_GATES.md` — Phase B gate cadence and exit contract.
 15. `PHASE_B_WORKBREAKDOWN.yaml` — machine-readable Phase B slice/owner/file/gate map.
 16. `PHASE_B_REVIEW_DISPOSITION.md` — planning review disposition and kickoff conditions (pre-implementation lineage).
-17. `_phase-b-runtime-execution-pass-01-2026-02-20/*` — runtime execution artifacts (B2/B3 implementation evidence, B4/B4A closure, B5 docs cleanup outputs, B6 readiness outputs).
+17. `_phase-b-runtime-execution-pass-01-2026-02-20/*` — runtime execution closure artifacts (review disposition, cleanup manifest, readiness, execution report, handoff).
+18. `PHASE_C_PLANNING_RUNBOOK_DRAFT.md` — prep runbook for the upcoming Phase C planning pass.
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -37,8 +38,9 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase B gate cadence and exit contract: `PHASE_B_ACCEPTANCE_GATES.md`
 - Phase B slice/owner/file map: `PHASE_B_WORKBREAKDOWN.yaml`
 - Phase B planning kickoff disposition (historical): `PHASE_B_REVIEW_DISPOSITION.md`
-- Phase B landed runtime evidence (`B0..B6`) + closure artifacts: `_phase-b-runtime-execution-pass-01-2026-02-20/`
+- Phase B landed runtime closure artifacts (`B0..B6`): `_phase-b-runtime-execution-pass-01-2026-02-20/`
 - Phase C kickoff readiness output from B6: `_phase-b-runtime-execution-pass-01-2026-02-20/B6_PHASE_C_READINESS.md`
+- Phase C planning prep runbook draft: `PHASE_C_PLANNING_RUNBOOK_DRAFT.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 

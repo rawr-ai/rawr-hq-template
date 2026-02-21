@@ -179,7 +179,7 @@ slices:
       - path: docs/projects/orpc-ingest-workflows-spec/DECISIONS.md
       - path: docs/projects/orpc-ingest-workflows-spec/axes
       - path: docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/B6_PHASE_C_READINESS.md
-      - path: docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_6_FINAL_REALIGNMENT.md
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/PHASE_B_EXECUTION_REPORT.md
     acceptance:
       - next_phase_posture_explicit
       - blockers_owned_and_ordered

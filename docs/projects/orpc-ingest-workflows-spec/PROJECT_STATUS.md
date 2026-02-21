@@ -12,11 +12,12 @@
 - Phase B work breakdown: `PHASE_B_WORKBREAKDOWN.yaml`
 - Phase B planning disposition (historical kickoff): `PHASE_B_REVIEW_DISPOSITION.md`
 - Phase B runtime execution lineage root: `_phase-b-runtime-execution-pass-01-2026-02-20/`
-- B4 review fix closure: `_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_4_FIX_CLOSURE.md`
-- B4 re-review closure: `_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_4_RE_REVIEW_REPORT.md`
-- B4A structural assessment closure: `_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_4A_FINAL_STRUCTURAL_ASSESSMENT.md`
-- B5 docs cleanup closure: `_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_5_FINAL_DOCS_CLEANUP.md`
+- B4 review disposition: `_phase-b-runtime-execution-pass-01-2026-02-20/B4_REVIEW_DISPOSITION.md`
+- B5 cleanup manifest: `_phase-b-runtime-execution-pass-01-2026-02-20/B5_CLEANUP_MANIFEST.md`
+- Phase B execution report: `_phase-b-runtime-execution-pass-01-2026-02-20/PHASE_B_EXECUTION_REPORT.md`
+- Phase B final handoff: `_phase-b-runtime-execution-pass-01-2026-02-20/FINAL_PHASE_B_HANDOFF.md`
 - B6 Phase C readiness output: `_phase-b-runtime-execution-pass-01-2026-02-20/B6_PHASE_C_READINESS.md`
+- Phase C planning prep runbook draft: `PHASE_C_PLANNING_RUNBOOK_DRAFT.md`
 - Historical pre-Phase-B readiness lineage: `_phase-a-runtime-execution-pass-01-2026-02-20/A9_PHASE_B_READINESS.md`
 
 All session/process lineage is archived and non-canonical.
