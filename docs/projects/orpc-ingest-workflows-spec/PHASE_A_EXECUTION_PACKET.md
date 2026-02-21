@@ -14,6 +14,21 @@ Execute strictly in this order:
 ## Phase A Objective
 Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with implementation-ready slices tied to real code paths.
 
+## As-Landed Snapshot (2026-02-21)
+1. Runtime implementation slices `A0` through `A8` are landed in the Phase A runtime execution branch/worktree.
+2. Phase A exit validation chain is green in landed state:
+   - `bun run phase-a:gates:exit`
+3. Route/boundary contract is enforced in runtime and tests:
+   - `/api/inngest` signed ingress verification before dispatch
+   - `/rpc` caller-surface gate enforcement with default deny when caller surface is absent
+   - `/api/workflows/<capability>/*` capability-first manifest-owned route family
+4. Legacy metadata hard deletion is closed in active runtime/tooling/scaffold surfaces and guarded by:
+   - parser contract enforcement
+   - static forbidden-key guard + metadata gate tests
+5. Targeted structural consolidation shipped in A7 closure:
+   - plugin-local workspace/install libs now delegate to package-owned `@rawr/hq/workspace` and `@rawr/hq/install`
+   - consolidation is intentionally limited to workspace/install authority seams in Phase A
+
 ## Locked Decisions (No Re-open Inside Phase A)
 1. `/api/workflows/<capability>/*` ships in Phase A as an additive caller-facing route family.
 2. `/api/inngest` remains runtime-ingress-only and must stay caller-forbidden.
@@ -46,9 +61,9 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
   1. Wire gate jobs: `metadata-contract`, `import-boundary`, `manifest-smoke-baseline`, `host-composition-guard`, `route-negative-assertions`, `harness-matrix`, `observability-contract`.
   2. Wire deterministic static guard check command for forbidden legacy metadata keys across non-archival runtime/tooling/scaffold metadata surfaces (targeted pattern scan + tests).
 - Primary paths:
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/package.json`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/turbo.json`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test`
+  - `package.json`
+  - `turbo.json`
+  - `apps/server/test`
 - Acceptance:
   1. All gate jobs execute in CI.
   2. Static guard check command is runnable in CI.
@@ -57,10 +72,10 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
 - Owner: `Plugin Lifecycle Owner`
 - Depends on: `A0`
 - Implement:
-  1. Create shared parser contract module at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugin-manifest-contract.ts`.
+  1. Create shared parser contract module at `packages/hq/src/workspace/plugin-manifest-contract.ts`.
   2. Move runtime-key interpretation to shared parser and consume it from:
-     - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts`
-     - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts`
+     - `packages/hq/src/workspace/plugins.ts`
+     - `plugins/cli/plugins/src/lib/workspace-plugins.ts`
   3. Remove legacy key parsing/typing/output (`templateRole`, `channel`, `publishTier`, `published`) from active metadata contract paths and hard-fail if these keys are present.
   4. Replace legacy `templateRole`/`channel`-driven lifecycle selection with explicit rules keyed by `rawr.kind`, `rawr.capability`, discovery root, and manifest-owned exports; Channel A/Channel B remain command surfaces only and MUST NOT be encoded as runtime metadata semantics.
 - Acceptance:
@@ -75,8 +90,8 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
   1. Expand discovery roots to include `plugins/api/*` and `plugins/workflows/*` in both workspace discovery paths.
   2. Preserve current behavior for existing roots (`plugins/cli/*`, `plugins/agents/*`, `plugins/web/*`).
 - Primary paths:
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts`
+  - `packages/hq/src/workspace/plugins.ts`
+  - `plugins/cli/plugins/src/lib/workspace-plugins.ts`
 - Acceptance:
   1. Tests include fixtures for API/workflow roots.
   2. Existing root behavior remains unchanged.
@@ -85,9 +100,9 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
 - Owner: `Runtime/Host Composition Owner`
 - Depends on: `A0`
 - Implement:
-  1. Replace static process-level ORPC context with request-scoped context factory in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts`.
-  2. Add explicit workflow boundary context factory module at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/workflows/context.ts`.
-  3. Add ingress verification guard before runtime dispatch in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts`.
+  1. Replace static process-level ORPC context with request-scoped context factory in `apps/server/src/orpc.ts`.
+  2. Add explicit workflow boundary context factory module at `apps/server/src/workflows/context.ts`.
+  3. Add ingress verification guard before runtime dispatch in `apps/server/src/rawr.ts`.
   4. Enforce mount order contract in host composition: `/api/inngest` -> `/api/workflows/*` -> `/rpc` + `/api/orpc/*`.
 - Acceptance:
   1. `host-composition-guard` confirms mount order and request-scoped context usage.
@@ -97,15 +112,15 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
 - Owner: `Runtime/Host Composition Owner`
 - Depends on: `A2`, `A3`
 - Implement:
-  1. Add manifest authority file `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/rawr.hq.ts` as runtime composition source.
+  1. Add manifest authority file `rawr.hq.ts` as runtime composition source.
   2. Add workflow trigger contract/router composition in core ORPC layer under capability namespaces.
   3. Mount `/api/workflows/*` using manifest-owned trigger router (capability-first paths).
   4. Keep `/rpc` first-party/internal and `/api/orpc/*` published boundary behavior unchanged.
 - Primary paths:
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/rawr.hq.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/orpc.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/core/src/orpc`
+  - `rawr.hq.ts`
+  - `apps/server/src/rawr.ts`
+  - `apps/server/src/orpc.ts`
+  - `packages/core/src/orpc`
 - Acceptance:
   1. `manifest-smoke-completion` passes with all four families mounted: `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*`, `/api/inngest`.
   2. No `/rpc/workflows` dedicated mount is introduced.
@@ -129,10 +144,10 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
      - runtime-ingress suites do not assert caller-boundary semantics
      - in-process suites do not default to local HTTP self-calls
 - Primary test paths:
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/orpc-handlers.test.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/orpc-openapi.test.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/rawr.test.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/route-boundary-matrix.test.ts`
+  - `apps/server/test/orpc-handlers.test.ts`
+  - `apps/server/test/orpc-openapi.test.ts`
+  - `apps/server/test/rawr.test.ts`
+  - `apps/server/test/route-boundary-matrix.test.ts`
 - Acceptance:
   1. `harness-matrix` fails if any required suite ID is missing.
   2. `route-negative-assertions` is fully green.
@@ -146,15 +161,15 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
   3. Remove all remaining legacy metadata key handling from active parser/runtime/tooling paths (`templateRole`, `channel`, `publishTier`, `published`).
   4. Make instance-local workspace root the default lifecycle authority in canonical-root resolution paths; any global-owner fallback must be explicit and test-guarded.
 - Primary paths:
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/install/state.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/install-state.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable/all.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/cli/install/all.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts`
+  - `apps/server/test`
+  - `packages/hq/src/workspace/plugins.ts`
+  - `plugins/cli/plugins/src/lib/workspace-plugins.ts`
+  - `packages/hq/src/install/state.ts`
+  - `plugins/cli/plugins/src/lib/install-state.ts`
+  - `plugins/cli/plugins/src/commands/plugins/web/enable.ts`
+  - `plugins/cli/plugins/src/commands/plugins/web/enable/all.ts`
+  - `plugins/cli/plugins/src/commands/plugins/cli/install/all.ts`
+  - `plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts`
 - Acceptance:
   1. `metadata-contract` gate is green.
   2. Static legacy-metadata hard-delete guard check (pattern scan + tests) is green.
@@ -168,14 +183,14 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
 - Implement:
   1. Run a full review of all Phase A implementation changes from both TypeScript and ORPC design perspectives.
   2. Review agents are mandatory and must be grounded before review:
-     - Introspect `/Users/mateicanavra/.codex-rawr/skills/typescript/SKILL.md`
-     - Introspect `/Users/mateicanavra/.codex-rawr/skills/orpc/SKILL.md`
+     - Introspect `~/.codex-rawr/skills/typescript/SKILL.md`
+     - Introspect `~/.codex-rawr/skills/orpc/SKILL.md`
      - Read original packet sources and execution docs at minimum:
-       - `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/README.md`
-       - `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/ARCHITECTURE.md`
-       - `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md`
-       - `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/PHASE_A_EXECUTION_PACKET.md`
-       - `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/PHASE_A_IMPLEMENTATION_SPEC.md`
+       - `docs/projects/orpc-ingest-workflows-spec/README.md`
+       - `docs/projects/orpc-ingest-workflows-spec/ARCHITECTURE.md`
+       - `docs/projects/orpc-ingest-workflows-spec/DECISIONS.md`
+       - `docs/projects/orpc-ingest-workflows-spec/PHASE_A_EXECUTION_PACKET.md`
+       - `docs/projects/orpc-ingest-workflows-spec/PHASE_A_IMPLEMENTATION_SPEC.md`
   3. Require review artifacts from each review agent:
      - review plan document
      - review scratchpad
@@ -183,11 +198,13 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
   4. Fix findings discovered in review (dispatch fix agents or re-dispatch implementation agents).
   5. If reusing agents after large-topic switches, send `/compact` before assigning the new review/fix task.
   6. Re-run impacted gate/test suites after fixes.
+  7. Keep A7 structural fix scope narrow: prefer seam consolidation that reduces drift (for example package-owned workspace/install authority adapters) without reopening locked architecture goals.
 - Acceptance:
   1. Review reports are complete, evidence-mapped, and severity-ranked.
   2. All blocking/high findings are fixed.
   3. Any deferred medium findings are explicitly accepted with owner, rationale, and target slice.
   4. Re-review of fixed areas is green.
+  5. Review disposition is published in a canonical pass artifact (`A7_REVIEW_DISPOSITION.md`).
 
 ### A8 - Guaranteed Docs + Cleanup Slice
 - Owner: `Docs & Cleanup Owner`
@@ -199,10 +216,14 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
      - delete if superseded/no longer useful
   3. Keep canonical packet docs, decisions, and runbooks as source of truth.
   4. Publish a short cleanup manifest listing archived/deleted paths.
+  5. Publish A7 finding disposition status and A8 cleanup inventory as explicit pass artifacts:
+     - `A7_REVIEW_DISPOSITION.md`
+     - `A8_CLEANUP_MANIFEST.md`
 - Acceptance:
   1. Canonical docs and relevant runbooks reflect Phase A landed reality.
   2. Scratch/review clutter for Phase A is removed or archived with explicit rationale.
   3. Cleanup manifest exists and is reviewer-readable.
+  4. A7 disposition and A8 cleanup outputs are present and reference concrete evidence paths.
 
 ### A9 - Post-Land Readjustment/Realignment (Phase B+ Prep)
 - Owner: `Phase Sequencing Owner`
@@ -231,15 +252,15 @@ Required gates:
 Deterministic static guard check (completion/exit):
 ```sh
 bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs \
-  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts \
-  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts \
-  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/install/state.ts \
-  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/install-state.ts \
-  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable.ts \
-  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable/all.ts \
-  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/cli/install/all.ts \
-  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts \
-  /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/*/*/package.json \
+  packages/hq/src/workspace/plugins.ts \
+  plugins/cli/plugins/src/lib/workspace-plugins.ts \
+  packages/hq/src/install/state.ts \
+  plugins/cli/plugins/src/lib/install-state.ts \
+  plugins/cli/plugins/src/commands/plugins/web/enable.ts \
+  plugins/cli/plugins/src/commands/plugins/web/enable/all.ts \
+  plugins/cli/plugins/src/commands/plugins/cli/install/all.ts \
+  plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts \
+  plugins/*/*/package.json \
   && bunx vitest run --project hq --project plugin-plugins --testNamePattern='forbidden legacy metadata keys'
 ```
 
@@ -247,8 +268,8 @@ Telemetry note (optional, non-blocking):
 - Diagnostic telemetry for migration visibility is allowed but must not gate Phase A completion.
 
 ## Closure Checks (A7-A9)
-1. `review-closure` (`A7`): full TypeScript + ORPC review artifacts complete, findings dispositioned, fixes merged, and targeted reruns green.
-2. `docs-sync-cleanup` (`A8`): canonical docs/runbooks updated and cleanup manifest complete.
+1. `review-closure` (`A7`): full TypeScript + ORPC review artifacts complete, findings dispositioned, fixes merged, targeted reruns green, and `A7_REVIEW_DISPOSITION.md` published.
+2. `docs-sync-cleanup` (`A8`): canonical docs/runbooks updated, cleanup manifest complete, and `A8_CLEANUP_MANIFEST.md` published.
 3. `phase-sequence-readjustment` (`A9`): remaining packet reconciled and Phase B kickoff posture explicit.
 
 ## Phase A Landing Criteria

@@ -3,13 +3,13 @@
 ## 0. Document Contract
 This document is the deep implementation spec for Phase A. It is not a milestone checklist.
 
-- Sequence entrypoint: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec/PHASE_A_EXECUTION_PACKET.md`
+- Sequence entrypoint: `docs/projects/orpc-ingest-workflows-spec/PHASE_A_EXECUTION_PACKET.md`
 - This spec: implementation depth for each slice (`A0`..`A9`): concrete code surfaces, seam contracts, and gate/test wiring.
 
 ## 1. Purpose, Non-Goals, Fixed Decisions
 
 ### 1.1 Purpose
-Converge current runtime behavior in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template` to locked D-013, D-015, and D-016 seam-now policy by shipping a forward-only, slice-based implementation plan tied to real code paths.
+Converge current runtime behavior in this repository to locked D-013, D-015, and D-016 seam-now policy by shipping a forward-only, slice-based implementation plan tied to real code paths.
 
 ### 1.2 Non-goals (Phase A)
 - No rollback choreography, rollback matrices, or dual-track release strategy.
@@ -42,14 +42,19 @@ Use both together:
 
 ## 3. Architecture Context
 
-### 3.1 Current Runtime Reality (as-grounded)
-- Host currently mounts `/api/inngest`, `/rpc`, `/api/orpc` in server wiring.
-- No `rawr.hq.ts` composition authority exists yet.
-- No `plugins/api/*` or `plugins/workflows/*` roots currently exist.
-- Metadata parsing/discovery logic is duplicated in:
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts`
-- Phase A gate identifiers (`metadata-contract`, `manifest-smoke`, etc.) are not wired yet.
+### 3.1 Current Runtime Reality (as-landed on 2026-02-21)
+- Host mount order is explicit and active: `/api/inngest` -> `/api/workflows/*` -> `/rpc` + `/api/orpc/*`.
+- `/api/inngest` enforces host-side signature verification before runtime dispatch and returns `403` on missing/invalid signatures.
+- `/rpc` route access is caller-surface-gated in runtime; missing caller-surface defaults to deny.
+- `rawr.hq.ts` is active manifest composition authority and is consumed by host runtime for:
+  - `rawrHqManifest.orpc.router`
+  - `rawrHqManifest.workflows.capabilities` + `rawrHqManifest.workflows.triggerRouter`
+  - `rawrHqManifest.inngest.bundleFactory` + `rawrHqManifest.inngest.serveHandlerFactory`
+- Discovery categories include `plugins/api/*` and `plugins/workflows/*`; those directories are optional per workspace and may be absent.
+- Workspace/install authority consolidation is intentionally limited in Phase A landed state:
+  - `plugins/cli/plugins/src/lib/workspace-plugins.ts` delegates to package-owned `@rawr/hq/workspace`
+  - `plugins/cli/plugins/src/lib/install-state.ts` delegates to package-owned `@rawr/hq/install`
+- Phase A gate wiring is present and executable; landed exit chain is green via `bun run phase-a:gates:exit`.
 
 ### 3.2 Target Runtime Composition (Phase A)
 - Manifest-first composition via `rawr.hq.ts` (or generated equivalent) becomes runtime authority.
@@ -83,16 +88,16 @@ flowchart TD
   Enqueue --> Ingress
   Ingress --> InngestBundle
 
-  PluginMetaA["packages/hq workspace discovery"] --> Parser["plugin-manifest-contract.ts"]
-  PluginMetaB["plugins/cli workspace discovery"] --> Parser
+  PluginMetaPkg["packages/hq workspace discovery + parser authority"] --> Parser["plugin-manifest-contract.ts"]
+  PluginMetaCli["plugins/cli workspace adapter -> @rawr/hq/workspace"] --> PluginMetaPkg
   Parser --> Manifest
 ```
 
 ## 4. File Structure Map and Ownership Map
 
 ### 4.1 Path Roots
-- `$ROOT`: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template`
-- `$SPEC`: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-orpc-inngest-autonomy-assessment/docs/projects/orpc-ingest-workflows-spec`
+- `$ROOT`: repository root (`.`)
+- `$SPEC`: `docs/projects/orpc-ingest-workflows-spec`
 
 ### 4.2 File Structure Map (Phase A)
 ```yaml
@@ -116,7 +121,7 @@ modified_files:
     purpose: "Consume shared parser; discovery root expansion"
   - path: "$ROOT/plugins/cli/plugins/src/lib/workspace-plugins.ts"
     owner: "Plugin Lifecycle Owner"
-    purpose: "Consume shared parser; discovery root expansion"
+    purpose: "Thin adapter forwarding to package-owned @rawr/hq/workspace authority"
   - path: "$ROOT/apps/server/src/rawr.ts"
     owner: "Runtime/Host Composition Owner"
     purpose: "Mount order, ingress guard, manifest-driven workflow route mount"
@@ -146,7 +151,7 @@ modified_files:
     purpose: "Remove legacy key-driven lifecycle/install decisions"
   - path: "$ROOT/plugins/cli/plugins/src/lib/install-state.ts"
     owner: "Distribution/Lifecycle Contract Owner"
-    purpose: "Remove legacy key-driven lifecycle/install decisions"
+    purpose: "Thin adapter forwarding to package-owned @rawr/hq/install authority"
   - path: "$ROOT/plugins/cli/plugins/src/commands/plugins/web/enable.ts"
     owner: "Distribution/Lifecycle Contract Owner"
     purpose: "Remove legacy template-role based enablement decisions"
@@ -160,22 +165,22 @@ modified_files:
     owner: "Distribution/Lifecycle Contract Owner"
     purpose: "Stop emitting forbidden legacy metadata keys in scaffolds"
 
-expected_new_dirs:
+optional_dirs:
   - path: "$ROOT/plugins/api"
     owner: "Plugin Lifecycle Owner"
-    purpose: "Discovery root and capability surface namespace"
+    purpose: "Optional discovery root and capability surface namespace"
   - path: "$ROOT/plugins/workflows"
     owner: "Plugin Lifecycle Owner"
-    purpose: "Workflow boundary surface namespace"
+    purpose: "Optional workflow boundary surface namespace"
 ```
 
 ### 4.3 Ownership Map
 | Role | Handle | Backup | Scope | Primary code areas |
 | --- | --- | --- | --- | --- |
 | Runtime/Host Composition Owner | `@rawr-runtime-host` | `@rawr-platform-duty` | Route family mounting, context seam, ingress verification, manifest integration | `$ROOT/apps/server/src/rawr.ts`, `$ROOT/apps/server/src/orpc.ts`, `$ROOT/apps/server/src/workflows/context.ts`, `$ROOT/rawr.hq.ts` |
-| Plugin Lifecycle Owner | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Metadata parser contract, workspace discovery roots, parser deduplication | `$ROOT/packages/hq/src/workspace/plugins.ts`, `$ROOT/plugins/cli/plugins/src/lib/workspace-plugins.ts`, `$ROOT/packages/hq/src/workspace/plugin-manifest-contract.ts` |
+| Plugin Lifecycle Owner | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Metadata parser contract, workspace discovery roots, and package-owned workspace authority adapters | `$ROOT/packages/hq/src/workspace/plugins.ts`, `$ROOT/packages/hq/src/workspace/plugin-manifest-contract.ts`, `$ROOT/plugins/cli/plugins/src/lib/workspace-plugins.ts` |
 | Verification & Gates Owner | `@rawr-verification-gates` | `@rawr-release-duty` | Gate wiring, harness matrix, negative-route enforcement, observability checks | `$ROOT/apps/server/test/*`, `$ROOT/package.json`, `$ROOT/turbo.json` |
-| Distribution/Lifecycle Contract Owner | `@rawr-distribution-lifecycle` | `@rawr-runtime-host` | Alias/instance seam assertions, no-singleton checks, legacy metadata hard-delete closure | `$ROOT/apps/server/test/*`, metadata-reader paths in discovery modules |
+| Distribution/Lifecycle Contract Owner | `@rawr-distribution-lifecycle` | `@rawr-runtime-host` | Alias/instance seam assertions, no-singleton checks, legacy metadata hard-delete closure, and package-owned install authority adapters | `$ROOT/apps/server/test/*`, `$ROOT/packages/hq/src/install/state.ts`, `$ROOT/plugins/cli/plugins/src/lib/install-state.ts` |
 | Review Closure Owner | `@rawr-review-closure` | `@rawr-verification-gates` | Full TypeScript + ORPC review closure, finding triage, fix-loop closure | Phase A changed runtime paths + `$SPEC/PHASE_A_EXECUTION_PACKET.md` + `$SPEC/PHASE_A_IMPLEMENTATION_SPEC.md` |
 | Docs & Cleanup Owner | `@rawr-docs-maintainer` | `@rawr-release-duty` | Canonical docs/runbook sync and scratch/review cleanup | `$ROOT/docs/process/*`, `$ROOT/docs/process/runbooks/*`, `$SPEC/*` |
 | Phase Sequencing Owner | `@rawr-phase-sequencing` | `@rawr-architecture-duty` | Post-Phase-A readjustment and next-phase (Phase B+) readiness hardening | `$SPEC/DECISIONS.md`, `$SPEC/ARCHITECTURE.md`, `$SPEC/axes/*` |
@@ -183,6 +188,7 @@ expected_new_dirs:
 Failover rule: if primary owner is unavailable, backup becomes acting owner for that decision.
 
 ## 5. Slice-by-Slice Implementation Spec
+Slices `A0`..`A8` are landed in current runtime pass; this section remains as both execution contract and as-built reference for the shipped seam behavior.
 
 ## 5.1 A0 - Baseline Gate Scaffold
 
@@ -229,7 +235,7 @@ Failover rule: if primary owner is unavailable, backup becomes acting owner for 
 4. Remove and forbid legacy keys (`templateRole`, `channel`, `publishTier`, `published`) in active parser/output contracts and metadata declarations.
 5. Add explicit static guard coverage (pattern scan + tests) to prevent forbidden-key regressions.
 6. Update runtime-kind validator/test surfaces for new `rawr.kind` values (`api`, `workflows`), including:
-   - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/agent-sync/test/plugin-kinds.test.ts`
+   - `packages/agent-sync/test/plugin-kinds.test.ts`
 7. Replace legacy `templateRole`/`channel`-driven lifecycle selection semantics with explicit rules keyed by `rawr.kind`, `rawr.capability`, discovery root, and manifest-owned exports; Channel A/Channel B remain command surfaces only.
 
 ### Outputs
@@ -255,7 +261,7 @@ Failover rule: if primary owner is unavailable, backup becomes acting owner for 
 2. Preserve existing category behavior for current roots.
 3. Add fixtures/tests for API/workflow plugin directory discovery.
 4. Update discovery validator/test coverage for new runtime kinds and roots, including:
-   - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/agent-sync/test/plugin-kinds.test.ts`
+   - `packages/agent-sync/test/plugin-kinds.test.ts`
 
 ### Outputs
 - API/workflow roots discovered and returned in workspace plugin lists.
@@ -392,8 +398,8 @@ Failover rule: if primary owner is unavailable, backup becomes acting owner for 
 ### Code/process changes
 1. Run full implementation review from both TypeScript and ORPC perspectives.
 2. Review agents must be grounded before review:
-   - introspect `/Users/mateicanavra/.codex-rawr/skills/typescript/SKILL.md`
-   - introspect `/Users/mateicanavra/.codex-rawr/skills/orpc/SKILL.md`
+   - introspect `~/.codex-rawr/skills/typescript/SKILL.md`
+   - introspect `~/.codex-rawr/skills/orpc/SKILL.md`
 3. Require each review agent to maintain:
    - review plan document
    - review scratchpad
@@ -405,6 +411,7 @@ Failover rule: if primary owner is unavailable, backup becomes acting owner for 
 ### Outputs
 - Closed review loop with explicit finding disposition and fixes merged.
 - Verified post-fix gate status for impacted surfaces.
+- Targeted consolidation landed for workspace/install authority seams (plugin-local adapter forwarding to package-owned modules).
 
 ### Acceptance checks
 - Blocking/high findings are fixed.
@@ -426,6 +433,7 @@ Failover rule: if primary owner is unavailable, backup becomes acting owner for 
 ### Outputs
 - Canonical docs reflect shipped behavior.
 - Scratch/review clutter removed or archived intentionally.
+- Canonical pass outputs include `A7_REVIEW_DISPOSITION.md` and `A8_CLEANUP_MANIFEST.md`.
 
 ### Acceptance checks
 - Runbook and canonical doc deltas are complete and internally consistent.
@@ -452,88 +460,120 @@ Failover rule: if primary owner is unavailable, backup becomes acting owner for 
 - Blocking vs non-blocking open questions for Phase B are explicit.
 - Updated next-phase sequencing is concrete enough to start a new execution packet pass.
 
+## 5.11 Landed Validation Snapshot (A0-A8)
+- `bun run phase-a:gates:exit` is green in landed runtime state.
+- `apps/server/test/route-boundary-matrix.test.ts` rerun is green for required suite IDs and negative assertions.
+- A7 review closure reruns are green for:
+  - `apps/server/test/rawr.test.ts`
+  - `apps/server/test/route-boundary-matrix.test.ts`
+  - `apps/cli/test/plugins-command-surface-cutover.test.ts`
+- No forbidden legacy metadata key references are present in active scanned non-archival runtime/tooling/scaffold metadata surfaces.
+
 ## 6. Critical Seam Code-Shape Examples
 
 ### 6.1 Metadata Parser Contract (Shared)
 ```ts
 // $ROOT/packages/hq/src/workspace/plugin-manifest-contract.ts
-export type RuntimePluginIdentity = {
-  kind: "toolkit" | "agent" | "web" | "api" | "workflows";
+export const FORBIDDEN_LEGACY_RAWR_KEYS = ["templateRole", "channel", "publishTier", "published"] as const;
+
+export type ParsedWorkspacePluginManifest = {
+  name?: string;
+  kind: WorkspacePluginKind;
   capability: string;
 };
 
-export type ParsedPluginManifest = {
-  id: string;
-  absPath: string;
-  runtime: RuntimePluginIdentity;
-};
+export function parseWorkspacePluginManifest(input: ManifestParseInput): ParsedWorkspacePluginManifest {
+  // Required `rawr` object and discovery-root to kind matching are enforced.
+  assertNoForbiddenLegacyKeys(rawr, input.pkgJsonPath);
+  const kind = parseKind(rawr, input.pkgJsonPath);
+  assertKindMatchesDiscoveryRoot(kind, input.discoveryRoot, input.pkgJsonPath);
 
-export function parsePluginManifest(pkg: unknown, absPath: string): ParsedPluginManifest {
-  // Parse + validate rawr.kind/rawr.capability as runtime keys.
-  // Hard-fail if any forbidden legacy metadata key is present.
+  return {
+    name: toOptionalString(input.manifest.name),
+    kind,
+    capability: parseCapability(rawr, input.pkgJsonPath),
+  };
 }
 ```
 
 ### 6.2 Request Context Factory
 ```ts
 // $ROOT/apps/server/src/workflows/context.ts
-export type BoundaryContextDeps = {
+export type RawrBoundaryContextDeps = {
+  repoRoot: string;
+  baseUrl: string;
   runtime: CoordinationRuntimeAdapter;
   inngestClient: Inngest;
 };
 
-export function createBoundaryContext(request: Request, deps: BoundaryContextDeps): RawrOrpcContext {
+export type RawrBoundaryContext = RawrBoundaryContextDeps & {
+  requestId: string;
+  correlationId: string;
+};
+
+export function createRequestScopedBoundaryContext(request: Request, deps: RawrBoundaryContextDeps): RawrBoundaryContext {
   const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
   const correlationId = request.headers.get("x-correlation-id") ?? requestId;
 
   return {
+    ...deps,
     requestId,
     correlationId,
-    runtime: deps.runtime,
-    inngestClient: deps.inngestClient,
-  } as RawrOrpcContext;
+  };
+}
+
+export function createWorkflowBoundaryContext(request: Request, deps: RawrBoundaryContextDeps): RawrBoundaryContext {
+  return createRequestScopedBoundaryContext(request, deps);
 }
 ```
 
 ### 6.3 Route Mount Registration (Manifest-Driven)
 ```ts
 // $ROOT/apps/server/src/rawr.ts
-const workflowHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
+const workflowOpenApiHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
 
 app.all("/api/inngest", async ({ request }) => {
-  if (!(await verifyInngestSignature(request))) {
+  if (!(await verifyInngestIngressRequest(request))) {
     return new Response("forbidden", { status: 403 });
   }
   return inngestHandler(request);
 });
 
 app.all("/api/workflows/*", async ({ request }) => {
+  const capability = resolveWorkflowCapability(new URL(request.url).pathname);
+  if (!capability) {
+    return new Response("not found", { status: 404 });
+  }
+
   const context = createWorkflowBoundaryContext(request, deps);
-  const result = await workflowHandler.handle(request, {
+  const result = await workflowOpenApiHandler.handle(request, {
     prefix: "/api/workflows",
     context,
   });
   return result.matched ? result.response : new Response("not found", { status: 404 });
 }, { parse: "none" });
 
-registerOrpcRoutes(app, /* mounts /rpc + /api/orpc */);
+registerOrpcRoutes(app, {
+  ...deps,
+  router: rawrHqManifest.orpc.router,
+});
 ```
 
 ### 6.4 Verification Gate Wiring
 ```json
 {
   "scripts": {
-    "phase-a:gate:metadata-contract": "bunx vitest run --project hq --project plugin-plugins --testNamePattern='metadata contract'",
-    "phase-a:gate:import-boundary": "bunx vitest run --project hq --project plugin-plugins --testNamePattern='import direction'",
-    "phase-a:gate:host-composition-guard": "bunx vitest run --project server --testNamePattern='mount order|ingress signature|request scoped context'",
-    "phase-a:gate:route-negative-assertions": "bunx vitest run --project server --testNamePattern='reject.*api/inngest|reject.*rpc'",
+    "phase-a:gate:metadata-contract": "bun scripts/phase-a/verify-gate-scaffold.mjs metadata-contract && bunx vitest run --project hq --project plugin-plugins --testNamePattern='metadata contract gate scaffold'",
+    "phase-a:gate:import-boundary": "bun scripts/phase-a/verify-gate-scaffold.mjs import-boundary && bunx vitest run --project hq --project plugin-plugins --testNamePattern='import boundary gate scaffold'",
+    "phase-a:gate:host-composition-guard": "bun scripts/phase-a/verify-gate-scaffold.mjs host-composition-guard && bunx vitest run --project server --testNamePattern='host composition guard gate scaffold'",
+    "phase-a:gate:route-negative-assertions": "bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts",
     "phase-a:gate:harness-matrix": "bun scripts/phase-a/verify-harness-matrix.mjs",
     "phase-a:gate:manifest-smoke-baseline": "bun scripts/phase-a/manifest-smoke.mjs --mode=baseline",
     "phase-a:gate:manifest-smoke-completion": "bun scripts/phase-a/manifest-smoke.mjs --mode=completion",
-    "phase-a:gate:observability-contract": "bunx vitest run --project server --project coordination-observability --testNamePattern='correlation|timeline|trace links'",
-    "phase-a:gate:legacy-metadata-hard-delete-static-guard": "bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/workspace/plugins.ts /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/workspace-plugins.ts /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/hq/src/install/state.ts /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/lib/install-state.ts /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable.ts /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/web/enable/all.ts /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/cli/install/all.ts /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/plugins/*/*/package.json && bunx vitest run --project hq --project plugin-plugins --testNamePattern='forbidden legacy metadata keys'",
-    "phase-a:gates:baseline": "bun run phase-a:gate:metadata-contract && bun run phase-a:gate:import-boundary && bun run phase-a:gate:manifest-smoke-baseline && bun run phase-a:gate:host-composition-guard && bun run phase-a:gate:route-negative-assertions && bun run phase-a:gate:harness-matrix && bun run phase-a:gate:observability-contract",
-    "phase-a:gates:completion": "bun run phase-a:gate:metadata-contract && bun run phase-a:gate:import-boundary && bun run phase-a:gate:manifest-smoke-completion && bun run phase-a:gate:host-composition-guard && bun run phase-a:gate:route-negative-assertions && bun run phase-a:gate:harness-matrix && bun run phase-a:gate:observability-contract",
+    "phase-a:gate:observability-contract": "bun scripts/phase-a/verify-gate-scaffold.mjs observability-contract && bunx vitest run --project server --testNamePattern='observability contract gate scaffold'",
+    "phase-a:gate:legacy-metadata-hard-delete-static-guard": "bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs packages/hq/src/workspace/plugins.ts plugins/cli/plugins/src/lib/workspace-plugins.ts packages/hq/src/install/state.ts plugins/cli/plugins/src/lib/install-state.ts plugins/cli/plugins/src/commands/plugins/web/enable.ts plugins/cli/plugins/src/commands/plugins/web/enable/all.ts plugins/cli/plugins/src/commands/plugins/cli/install/all.ts plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts plugins/*/*/package.json && bunx vitest run --project hq --project plugin-plugins --testNamePattern='forbidden legacy metadata keys gate scaffold'",
+    "phase-a:gates:baseline": "bun run phase-a:gate:metadata-contract && bun run phase-a:gate:import-boundary && bun run phase-a:gate:manifest-smoke-baseline && bun run phase-a:gate:host-composition-guard && bun run phase-a:gate:route-negative-assertions && bun run phase-a:gate:harness-matrix && bun run phase-a:gate:observability-contract && (bun run phase-a:telemetry:optional || true)",
+    "phase-a:gates:completion": "bun run phase-a:gate:metadata-contract && bun run phase-a:gate:import-boundary && bun run phase-a:gate:manifest-smoke-completion && bun run phase-a:gate:host-composition-guard && bun run phase-a:gate:route-negative-assertions && bun run phase-a:gate:harness-matrix && bun run phase-a:gate:observability-contract && (bun run phase-a:telemetry:optional || true)",
     "phase-a:gates:exit": "bun run phase-a:gates:completion && bun run phase-a:gate:legacy-metadata-hard-delete-static-guard"
   }
 }
@@ -548,7 +588,7 @@ registerOrpcRoutes(app, /* mounts /rpc + /api/orpc */);
 | `host-composition-guard` | `A3`, `A4` | `$ROOT/apps/server/test/rawr.test.ts` | Mount order drift, static context usage, unsigned ingress accepted |
 | `route-negative-assertions` | `A5` | `$ROOT/apps/server/test/route-boundary-matrix.test.ts` | Caller path reaches forbidden route families |
 | `harness-matrix` | `A5` | suite-id registry + test metadata scan | Required suite IDs missing |
-| `observability-contract` | `A0`, `A5`, `A6` | server + coordination-observability tests | Missing correlation/timeline diagnostics |
+| `observability-contract` | `A0`, `A5`, `A6` | gate scaffold check + server phase-a gate tests | Missing required observability gate scaffold/test coverage |
 | `manifest-smoke-completion` | `A4`, Phase A exit | route family completeness check | Missing `/api/workflows/<capability>/*` family or pending markers |
 | `legacy-metadata-hard-delete-static-guard` | `A1`, `A6`, Phase A exit | targeted pattern scan across runtime/tooling/scaffold + active manifests (`plugins/*/*/package.json`) + metadata contract tests | Forbidden legacy metadata keys reintroduced in active metadata surfaces |
 | `review-closure` | `A7` | review findings + disposition + targeted reruns | High/blocking findings unresolved or unverified |
