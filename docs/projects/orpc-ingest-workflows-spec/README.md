@@ -43,7 +43,7 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 37. `PHASE_E_WORKBREAKDOWN.yaml` — machine-readable Phase E slice/owner/file/gate map.
 38. `PHASE_E_REVIEW_DISPOSITION.md` — planning review disposition and readiness decision for runtime kickoff.
 39. `PHASE_E_PLANNING_HANDOFF.md` — planning-to-runtime handoff contract for Phase E execution.
-40. `_phase-e-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (E4/E5/E5A dispositions, E6 docs+cleanup closure outputs, and final closure outputs).
+40. `_phase-e-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (E4/E5/E5A dispositions, E6 docs+cleanup outputs, E7 readiness, execution report, and final handoff outputs).
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -94,6 +94,11 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase E docs + cleanup manifest: `_phase-e-runtime-execution-pass-01-2026-02-21/E6_CLEANUP_MANIFEST.md`
 - Phase E docs + cleanup execution scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_5_SCRATCHPAD.md`
 - Phase E docs + cleanup closure report: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_5_FINAL_E6_DOCS_CLEANUP.md`
+- Phase E readiness output for Phase F kickoff: `_phase-e-runtime-execution-pass-01-2026-02-21/E7_PHASE_F_READINESS.md`
+- Phase E runtime execution report: `_phase-e-runtime-execution-pass-01-2026-02-21/PHASE_E_EXECUTION_REPORT.md`
+- Phase E final handoff summary: `_phase-e-runtime-execution-pass-01-2026-02-21/FINAL_PHASE_E_HANDOFF.md`
+- Phase E readiness closure scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_6_SCRATCHPAD.md`
+- Phase E readiness closure report: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_6_FINAL_E7_READINESS_AND_HANDOFF.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 
