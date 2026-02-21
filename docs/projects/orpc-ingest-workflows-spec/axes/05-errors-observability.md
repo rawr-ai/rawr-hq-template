@@ -29,7 +29,7 @@
 2. Durable execution state MUST be recorded as run/timeline lifecycle events in runtime adapter.
 3. Trigger-to-run correlation SHOULD be attached to trace links and persisted status.
 4. Host bootstrap MUST initialize `extendedTracesMiddleware()` before Inngest client/function composition so trigger and durable paths share the baseline trace envelope.
-5. Inngest `finished` hook usage SHOULD stay idempotent/non-critical; this remains operational guidance and is not expanded into stricter packet policy in this axis.
+5. Inngest `finished` hook usage MUST stay idempotent/non-critical and explicitly non-exactly-once-safe; this is a locked packet policy requirement.
 6. Observability verification MUST use route-appropriate harnesses defined in [12-testing-harness-and-verification-strategy.md](./12-testing-harness-and-verification-strategy.md) (`createRouterClient` in-process, `RPCLink` on `/rpc`, `OpenAPILink` on published boundaries, runtime-ingress callback on `/api/inngest`).
 7. Caller-path observability suites (browser, CLI caller flows, external SDK flows) MUST assert `/api/inngest` is not a caller-facing route.
 8. Surface-level observability suites for web, CLI, API, and workflow paths MUST explicitly state route family, harness type, and required negative-route assertions.

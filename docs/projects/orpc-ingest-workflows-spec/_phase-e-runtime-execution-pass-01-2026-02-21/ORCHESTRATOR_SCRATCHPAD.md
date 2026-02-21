@@ -32,3 +32,10 @@
 - Completed: `bun run phase-e:e3:full`
 - Result: PASS
 - Notes: phase-e evidence/disposition gate chain now uses durable runtime-pass artifacts and cleanup-safe verification wiring.
+
+## 2026-02-21T16:02:40-0800 — E4 disposition closure
+- Branch: `codex/phase-e-e4-decision-closure`
+- Completed: `bun run phase-e:gate:e4-disposition`
+- Result: PASS
+- Decision disposition: `state=triggered`; `D-009=locked`; `D-010=locked`.
+- Notes: phase-e submit chain is blocked by Graphite first-50 PR-open limit on deep historical stack; slice PRs are being created directly with explicit stacked bases while Graphite tracking is preserved.
