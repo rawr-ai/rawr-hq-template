@@ -18,8 +18,12 @@
   "dependencies": {
     "@oclif/core": "^4.2.10",
     "@orpc/contract": "^1.13.5",
+    "@orpc/server": "^1.13.5",
     "@rawr/coordination": "workspace:*",
-    "@rawr/state": "workspace:*"
+    "@rawr/coordination-inngest": "workspace:*",
+    "@rawr/coordination-observability": "workspace:*",
+    "@rawr/state": "workspace:*",
+    "inngest": "3.51.0"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
