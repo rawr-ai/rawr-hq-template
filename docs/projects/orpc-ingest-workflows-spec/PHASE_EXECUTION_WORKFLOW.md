@@ -20,7 +20,8 @@ Reusable execution loop for remaining phases (B+), grounded in what actually wor
 1. Create a stacked child branch + dedicated worktree for the phase.
 2. Agent sweep: close stale agents; reuse only with `/compact` and direct topic continuity.
 3. Reconfirm canonical corpus and phase entrypoint docs.
-4. Write orchestrator plan/scratch immediately in phase pass root.
+4. Verify active branch/worktree context before dispatch so slices do not land on the wrong branch.
+5. Write orchestrator plan/scratch immediately in phase pass root.
 
 ### 1) Phase Packet Hardening (Planning Mode)
 1. Produce an execution packet with explicit slices, owners, dependencies, touched paths, acceptance gates.
@@ -44,11 +45,19 @@ Reusable execution loop for remaining phases (B+), grounded in what actually wor
 3. Route findings back to owning slice agent(s).
 4. Re-run impacted tests/gates.
 5. Re-review until no unresolved blocking/high findings remain.
+6. Include adversarial boundary checks (spoof/forgery cases), not just nominal-path correctness tests.
+
+### 4A) Structural Assessment + Taste Pass
+1. Run a dedicated structural assessment after review closure and before docs cleanup.
+2. Focus on naming, module boundaries, duplication removal, and domain clarity.
+3. Keep architecture fixed; allow only non-topology refactors.
+4. Require validation reruns after structural changes.
 
 ### 5) Canonical Docs + Cleanup Loop
 1. Align canonical spec/runbook docs to as-landed behavior (no policy drift).
 2. Keep normative docs normative; put operational snapshots in phase execution docs.
-3. Remove superseded scratch/review artifacts; keep only canonical/final lineage outputs.
+3. Remove superseded scratch/review artifacts; keep only minimal closure outputs needed to enter the next phase.
+4. Re-check artifact roots at phase end to prevent lineage noise from accumulating across phases.
 
 ### 6) Post-Land Realignment Loop
 1. Reconcile remaining packet assumptions for next phase kickoff.
@@ -77,6 +86,7 @@ Reusable execution loop for remaining phases (B+), grounded in what actually wor
 2. Independent review found boundary mismatches that green tests missed.
 3. Mandatory fix loop + re-review prevented “known issue carry-forward.”
 4. Re-running full phase exit gates after major fixes prevented local false-greens.
+5. Boundary-adversarial tests (e.g., auth spoof attempts) caught issues that functional happy-path tests did not.
 
 ## Phase A Repeatables (Keep Doing)
 1. Branch-per-slice with immediate `gt submit --ai --no-edit` after slice closure.
@@ -84,6 +94,13 @@ Reusable execution loop for remaining phases (B+), grounded in what actually wor
 3. Tight “do now vs defer” decisions during review-fix cycles to prevent scope snowball.
 4. Short structural refactors only when they reduce future drift in the next phase.
 5. Canonical docs alignment immediately after review closure, not deferred to later phases.
+
+## Phase B Carry-Forward Adjustments
+1. Treat auth and caller-boundary checks as adversarial by default; require spoof-resistance tests for boundary claims.
+2. Keep structural assessment (`4A`) mandatory; it improved maintainability without architecture drift.
+3. Keep per-slice Graphite submissions strict; avoid accumulating multiple slices in one branch.
+4. Enforce pass-root pruning at phase exit to avoid artifact sprawl.
+5. Maintain a single explicit phase readiness artifact before opening the next planning loop.
 
 ## Minimal Artifact Set Per Phase
 Keep:
