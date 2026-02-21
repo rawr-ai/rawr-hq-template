@@ -28,6 +28,7 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 22. `PHASE_C_WORKBREAKDOWN.yaml` — machine-readable Phase C slice/owner/file/gate map.
 23. `PHASE_C_REVIEW_DISPOSITION.md` — planning review disposition and readiness decision for runtime kickoff.
 24. `PHASE_C_PLANNING_HANDOFF.md` — planning-to-runtime handoff contract for Phase C execution.
+25. `_phase-c-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (execution report, review disposition, cleanup manifest, readiness, final handoff).
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -53,6 +54,7 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase C work breakdown map: `PHASE_C_WORKBREAKDOWN.yaml`
 - Phase C planning review disposition: `PHASE_C_REVIEW_DISPOSITION.md`
 - Phase C planning handoff to runtime: `PHASE_C_PLANNING_HANDOFF.md`
+- Phase C landed runtime closure artifacts (`C1..C7`): `_phase-c-runtime-execution-pass-01-2026-02-21/`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 
