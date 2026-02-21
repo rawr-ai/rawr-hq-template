@@ -1,6 +1,6 @@
 phase: B
-status: execution_in_progress_b0_b4a_landed
-as_landed_through: B4A
+status: execution_complete_b0_b6_landed
+as_landed_through: B6
 entrypoint: docs/projects/orpc-ingest-workflows-spec/PHASE_B_EXECUTION_PACKET.md
 
 invariants:
@@ -178,7 +178,8 @@ slices:
       - path: docs/projects/orpc-ingest-workflows-spec/ARCHITECTURE.md
       - path: docs/projects/orpc-ingest-workflows-spec/DECISIONS.md
       - path: docs/projects/orpc-ingest-workflows-spec/axes
-      - path: docs/projects/orpc-ingest-workflows-spec/_phase-a-runtime-execution-pass-01-2026-02-20/A9_PHASE_B_READINESS.md
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/B6_PHASE_C_READINESS.md
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_6_FINAL_REALIGNMENT.md
     acceptance:
       - next_phase_posture_explicit
       - blockers_owned_and_ordered
