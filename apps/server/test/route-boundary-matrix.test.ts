@@ -125,6 +125,7 @@ const MATRIX_CASES: MatrixCase[] = [
     headers: {
       "content-type": "application/json",
       "x-rawr-caller-surface": "first-party",
+      "x-rawr-session-auth": "verified",
     },
     body: { json: {} },
     expectedStatus: 200,
