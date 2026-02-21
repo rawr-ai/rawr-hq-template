@@ -5,10 +5,10 @@
   "heavyChainDepthThreshold": 3,
   "rpcHandlerCount": 2,
   "stepCoverage": {
-    "authGate": 3,
-    "contextFactory": 4,
+    "authGate": 2,
+    "contextFactory": 2,
     "markerAssertion": 2,
-    "contextCreatedHook": 4,
+    "contextCreatedHook": 2,
     "handlerDispatch": 2
   },
   "measuredRpcMiddlewareChainDepth": 5,

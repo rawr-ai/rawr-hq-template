@@ -44,3 +44,26 @@ export async function readPackageScripts() {
   const pkg = JSON.parse(pkgRaw);
   return pkg.scripts ?? {};
 }
+
+export async function writeFileIfChanged(relPath, nextContent) {
+  const absPath = path.join(root, relPath);
+  await fs.mkdir(path.dirname(absPath), { recursive: true });
+
+  let previousContent = null;
+  try {
+    previousContent = await fs.readFile(absPath, "utf8");
+  } catch {
+    previousContent = null;
+  }
+
+  if (previousContent === nextContent) {
+    return { changed: false };
+  }
+
+  await fs.writeFile(absPath, nextContent, "utf8");
+  return { changed: true };
+}
+
+export async function writeJsonIfChanged(relPath, value) {
+  return writeFileIfChanged(relPath, `${JSON.stringify(value, null, 2)}\n`);
+}
