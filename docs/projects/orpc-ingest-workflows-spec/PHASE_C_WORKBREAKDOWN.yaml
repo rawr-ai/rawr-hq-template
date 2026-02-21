@@ -1,0 +1,180 @@
+phase: C
+status: planning_ready_pending_steward_review
+entrypoint: docs/projects/orpc-ingest-workflows-spec/PHASE_C_EXECUTION_PACKET.md
+
+invariants:
+  - runtime_semantics: rawr.kind + rawr.capability + manifest registration
+  - route_families:
+      - /rpc internal/first-party
+      - /api/orpc/* published OpenAPI
+      - /api/workflows/<capability>/* workflow boundary
+      - /api/inngest signed runtime ingress only
+  - manifest_authority: rawr.hq.ts
+  - process_posture: forward_only_no_rollback
+
+slices:
+  - id: C0
+    title: Phase C planning packet and gate contract
+    owner: '@rawr-phase-sequencing'
+    backup: '@rawr-architecture-duty'
+    depends_on: []
+    objective: Publish decision-complete packet, implementation spec, acceptance gates, and work breakdown.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_C_EXECUTION_PACKET.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_C_IMPLEMENTATION_SPEC.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_C_ACCEPTANCE_GATES.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_C_WORKBREAKDOWN.yaml
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_C_REVIEW_DISPOSITION.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_C_PLANNING_HANDOFF.md
+
+  - id: C1
+    title: Cross-instance storage-lock redesign
+    owner: '@rawr-runtime-host'
+    backup: '@rawr-platform-duty'
+    depends_on: [C0]
+    objective: Make repo state writes deterministic and collision-safe while preserving instance-local authority defaults.
+    files:
+      - path: packages/state/src/repo-state.ts
+      - path: packages/state/src/types.ts
+      - path: packages/state/src/index.ts
+      - path: scripts/phase-c/verify-storage-lock-contract.mjs
+      - path: packages/state/src/orpc/contract.ts
+      - path: packages/hq/src/install/state.ts
+      - path: packages/hq/test/install-state.test.ts
+      - path: plugins/cli/plugins/test/install-state.test.ts
+      - path: packages/state/test/repo-state.concurrent.test.ts
+      - path: packages/coordination/test/storage-lock-cross-instance.test.ts
+      - path: apps/server/test/storage-lock-route-guard.test.ts
+
+  - id: C2
+    title: Telemetry and diagnostics contract expansion
+    owner: '@rawr-verification-gates'
+    backup: '@rawr-runtime-host'
+    depends_on: [C1]
+    objective: Promote telemetry checks from optional to required structural gate contract.
+    files:
+      - path: packages/coordination-observability/src/events.ts
+      - path: packages/coordination-observability/test/observability.test.ts
+      - path: packages/coordination-inngest/src/adapter.ts
+      - path: packages/core/src/orpc/runtime-router.ts
+      - path: scripts/phase-c/verify-telemetry-contract.mjs
+      - path: apps/server/test/phase-a-gates.test.ts
+      - path: package.json
+      - path: packages/coordination-observability/test/storage-lock-telemetry.test.ts
+      - path: apps/server/test/ingress-signature-observability.test.ts
+
+  - id: C3
+    title: Distribution and lifecycle mechanics (D-016 deferred mechanics)
+    owner: '@rawr-distribution-lifecycle'
+    backup: '@rawr-platform-duty'
+    depends_on: [C2]
+    objective: Improve alias/instance seam ergonomics without runtime semantics drift.
+    files:
+      - path: scripts/dev/install-global-rawr.sh
+      - path: scripts/dev/activate-global-rawr.sh
+      - path: scripts/phase-c/verify-distribution-instance-lifecycle.mjs
+      - path: apps/cli/src/commands/doctor/global.ts
+      - path: apps/cli/test/doctor-global.test.ts
+      - path: packages/hq/src/install/state.ts
+      - path: packages/hq/test/instance-alias-isolation.test.ts
+      - path: plugins/cli/plugins/test/distribution-alias-lifecycle.test.ts
+
+  - id: C4
+    title: Conditional D-009/D-010 tightening
+    owner: '@rawr-architecture-duty'
+    backup: '@rawr-runtime-host'
+    depends_on: [C1, C2, C3]
+    objective: Tighten D-009 and/or D-010 only if runtime evidence from C1-C3 triggers policy need.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/DECISIONS.md
+      - path: packages/core/src/orpc/runtime-router.ts
+      - path: packages/coordination-inngest/src/adapter.ts
+      - path: scripts/phase-c/verify-c4-dedupe-trigger.mjs
+      - path: scripts/phase-c/verify-c4-finished-hook-trigger.mjs
+      - path: scripts/phase-c/verify-c4-disposition.mjs
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-c-runtime-execution-pass-01-2026-02-21/C4_TRIGGER_EVIDENCE.md
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-c-runtime-execution-pass-01-2026-02-21/C4_DISPOSITION.md
+    conditional: true
+    trigger_criteria:
+      - phase-c:gate:c4-dedupe-scan detects middleware chain depth >=3 with missing explicit context-cached dedupe marker
+      - phase-c:gate:c4-finished-hook-scan detects state-mutating or external finished-hook side effects without explicit idempotency contract
+
+  - id: C5
+    title: Independent review and fix closure
+    owner: '@rawr-review-closure'
+    backup: '@rawr-verification-gates'
+    depends_on: [C3]
+    depends_on_if_triggered: [C4]
+    requires_artifacts:
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-c-runtime-execution-pass-01-2026-02-21/C4_DISPOSITION.md
+    objective: Run TS+oRPC review, fix blocking/high findings, and re-review touched scope.
+
+  - id: C5A
+    title: Structural assessment and taste pass
+    owner: '@rawr-structural-steward'
+    backup: '@rawr-review-closure'
+    depends_on: [C5]
+    objective: Improve naming/module boundaries/domain clarity with no architecture shifts.
+
+  - id: C6
+    title: Canonical docs and cleanup closure
+    owner: '@rawr-docs-maintainer'
+    backup: '@rawr-release-duty'
+    depends_on: [C5A]
+    objective: Align canonical docs to landed behavior and cleanup superseded artifacts.
+
+  - id: C7
+    title: Post-land realignment and Phase D readiness
+    owner: '@rawr-phase-sequencing'
+    backup: '@rawr-architecture-duty'
+    depends_on: [C6]
+    objective: Publish explicit Phase D kickoff posture and include C4 triggered/deferred disposition.
+
+gates:
+  C1:
+    quick:
+      - bun run phase-c:c1:quick
+    full:
+      - bun run phase-c:c1:full
+  C2:
+    quick:
+      - bun run phase-c:c2:quick
+    full:
+      - bun run phase-c:c2:full
+  C3:
+    quick:
+      - bun run phase-c:c3:quick
+    full:
+      - bun run phase-c:c3:full
+  C4:
+    assess:
+      - bun run phase-c:c4:assess
+    full_if_triggered:
+      - rerun_touched_slice_full_commands
+    mandatory_before_C5:
+      - bun run phase-c:gate:c4-disposition
+  C5:
+    closure:
+      - blocking_high_findings_closed
+      - re_review_green
+  C5A:
+    closure:
+      - structural_blocking_high_closed
+      - impacted_full_gates_green
+  C6:
+    closure:
+      - cleanup_manifest_published
+      - canonical_docs_aligned
+  C7:
+    closure:
+      - phase_d_readiness_published
+      - c4_trigger_or_defer_disposition_recorded
+  phase_exit:
+    full:
+      - bun run phase-c:gates:exit
+
+deferred_non_blocking:
+  - full_d016_productized_ux_control_plane
+  - route_topology_expansion_beyond_locked_families
+  - compatibility_bridge_that_weakens_d013
+  - d009_d010_tightening_when_c4_not_triggered

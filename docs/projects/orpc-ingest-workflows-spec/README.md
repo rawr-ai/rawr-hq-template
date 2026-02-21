@@ -22,6 +22,12 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 16. `PHASE_B_REVIEW_DISPOSITION.md` — planning review disposition and kickoff conditions (pre-implementation lineage).
 17. `_phase-b-runtime-execution-pass-01-2026-02-20/*` — runtime execution closure artifacts (review disposition, cleanup manifest, readiness, execution report, handoff).
 18. `PHASE_C_PLANNING_RUNBOOK_DRAFT.md` — prep runbook for the upcoming Phase C planning pass.
+19. `PHASE_C_EXECUTION_PACKET.md` — canonical Phase C execution entrypoint.
+20. `PHASE_C_IMPLEMENTATION_SPEC.md` — deep Phase C implementation specification.
+21. `PHASE_C_ACCEPTANCE_GATES.md` — Phase C gate cadence and exit contract.
+22. `PHASE_C_WORKBREAKDOWN.yaml` — machine-readable Phase C slice/owner/file/gate map.
+23. `PHASE_C_REVIEW_DISPOSITION.md` — planning review disposition and readiness decision for runtime kickoff.
+24. `PHASE_C_PLANNING_HANDOFF.md` — planning-to-runtime handoff contract for Phase C execution.
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -41,6 +47,12 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase B landed runtime closure artifacts (`B0..B6`): `_phase-b-runtime-execution-pass-01-2026-02-20/`
 - Phase C kickoff readiness output from B6: `_phase-b-runtime-execution-pass-01-2026-02-20/B6_PHASE_C_READINESS.md`
 - Phase C planning prep runbook draft: `PHASE_C_PLANNING_RUNBOOK_DRAFT.md`
+- Phase C canonical execution entrypoint: `PHASE_C_EXECUTION_PACKET.md`
+- Phase C deep implementation spec: `PHASE_C_IMPLEMENTATION_SPEC.md`
+- Phase C gates contract: `PHASE_C_ACCEPTANCE_GATES.md`
+- Phase C work breakdown map: `PHASE_C_WORKBREAKDOWN.yaml`
+- Phase C planning review disposition: `PHASE_C_REVIEW_DISPOSITION.md`
+- Phase C planning handoff to runtime: `PHASE_C_PLANNING_HANDOFF.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 
