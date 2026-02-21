@@ -120,6 +120,12 @@ describe("rawr server routes", () => {
     expect(res.status).toBe(404);
   });
 
+  it("host-composition-guard: does not leak non-workflow procedures through /api/workflows", async () => {
+    const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+    const res = await app.handle(new Request("http://localhost/api/workflows/state/runtime"));
+    expect(res.status).toBe(404);
+  });
+
   it("host-composition-guard: does not add a dedicated /rpc/workflows mount", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
     const res = await app.handle(

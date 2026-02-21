@@ -8,3 +8,9 @@ export const hqContract = oc.router({
 });
 
 export type HqContract = typeof hqContract;
+
+export const workflowTriggerContract = oc.router({
+  coordination: coordinationContract,
+});
+
+export type WorkflowTriggerContract = typeof workflowTriggerContract;

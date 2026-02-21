@@ -210,6 +210,17 @@ const MATRIX_CASES: MatrixCase[] = [
   },
   {
     kind: "http",
+    suiteId: "suite:workflow:trigger-status",
+    assertionKey: "assertion:workflow-trigger-router-no-non-workflow-leakage",
+    callerSurface: "external",
+    assertCallerBoundarySemantics: true,
+    description: "workflow trigger/status suite does not expose non-workflow procedures",
+    method: "GET",
+    path: "/api/workflows/state/runtime",
+    expectedStatus: 404,
+  },
+  {
+    kind: "http",
     suiteId: "suite:runtime:ingress",
     assertionKey: "assertion:runtime-ingress-no-caller-boundary-semantics",
     callerSurface: "runtime-ingress",
