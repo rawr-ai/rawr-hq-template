@@ -17,7 +17,6 @@ B5 cleanup is docs-only and focuses on canonical Phase B alignment to landed `B0
 | `docs/projects/orpc-ingest-workflows-spec/README.md` | `update` | Updated packet navigation to reference landed Phase B runtime artifact root and historical planning disposition. |
 | `docs/projects/orpc-ingest-workflows-spec/PROJECT_STATUS.md` | `update` | Updated project state to landed `B0..B4A`, active `B5`, pending `B6`; linked closure artifacts. |
 | `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/B5_CLEANUP_MANIFEST.md` | `add` | B5 cleanup action log and disposition. |
-| `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_5_FINAL_DOCS_CLEANUP.md` | `add` | B5 final report artifact. |
 
 ## Deleted as Superseded in B5
 - `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_2_PLAN_VERBATIM.md`
@@ -31,5 +30,5 @@ B5 cleanup is docs-only and focuses on canonical Phase B alignment to landed `B0
 - `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_4A_SCRATCHPAD.md`
 
 Reasoning:
-1. These plan/scratch/intermediate artifacts were superseded by final slice reports and re-review closure outputs.
-2. Lineage-critical final artifacts were retained to preserve execution traceability.
+1. These plan/scratch/intermediate artifacts were superseded by canonical packet updates and closure artifacts.
+2. Only closure-critical artifacts were retained for traceability; agent-local finals were pruned once integrated.
