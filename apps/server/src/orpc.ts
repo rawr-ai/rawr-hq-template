@@ -12,10 +12,7 @@ import {
   type JsonValue,
   type RunStatusV1,
 } from "@rawr/coordination/node";
-import {
-  queueCoordinationRunWithInngest,
-  type CoordinationRuntimeAdapter,
-} from "@rawr/coordination-inngest";
+import { queueCoordinationRunWithInngest } from "@rawr/coordination-inngest";
 import { createDeskEvent, defaultTraceLinks } from "@rawr/coordination-observability";
 import { hqContract } from "@rawr/core/orpc";
 import { getRepoState } from "@rawr/state";
@@ -24,8 +21,12 @@ import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { implement } from "@orpc/server";
 import { ORPCError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
-import type { Inngest } from "inngest";
 import type { AnyElysia } from "./plugins";
+import {
+  createRequestScopedBoundaryContext,
+  type RawrBoundaryContext,
+  type RawrBoundaryContextDeps,
+} from "./workflows/context";
 
 type ParsedRunId =
   | {
@@ -38,14 +39,12 @@ type ParsedRunId =
       value: unknown;
     };
 
-type RawrOrpcContext = {
-  repoRoot: string;
-  baseUrl: string;
-  runtime: CoordinationRuntimeAdapter;
-  inngestClient: Inngest;
-};
+type RawrOrpcContext = RawrBoundaryContext;
 
-export type RegisterOrpcRoutesOptions = RawrOrpcContext;
+export type RegisterOrpcRoutesOptions = RawrBoundaryContextDeps & {
+  contextFactory?: (request: Request, deps: RawrBoundaryContextDeps) => RawrOrpcContext;
+  onContextCreated?: (context: RawrOrpcContext) => void;
+};
 
 function toJsonValue(value: unknown): JsonValue {
   if (value === undefined) return null;
@@ -311,12 +310,13 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
   const router = createOrpcRouter();
   const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
   const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router);
-  const context: RawrOrpcContext = {
+  const contextDeps: RawrBoundaryContextDeps = {
     repoRoot: options.repoRoot,
     baseUrl: options.baseUrl,
     runtime: options.runtime,
     inngestClient: options.inngestClient,
   };
+  const contextFactory = options.contextFactory ?? createRequestScopedBoundaryContext;
 
   let openapiSpecPromise: Promise<unknown> | undefined;
   const getOpenApiSpec = () => {
@@ -340,6 +340,8 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/rpc",
     async (ctx) => {
       const request = ctx.request as Request;
+      const context = contextFactory(request, contextDeps);
+      options.onContextCreated?.(context);
       const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
       return result.matched ? result.response : new Response("not found", { status: 404 });
     },
@@ -350,6 +352,8 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/rpc/*",
     async (ctx) => {
       const request = ctx.request as Request;
+      const context = contextFactory(request, contextDeps);
+      options.onContextCreated?.(context);
       const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
       return result.matched ? result.response : new Response("not found", { status: 404 });
     },
@@ -360,6 +364,8 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/api/orpc",
     async (ctx) => {
       const request = ctx.request as Request;
+      const context = contextFactory(request, contextDeps);
+      options.onContextCreated?.(context);
       const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
       return result.matched ? result.response : new Response("not found", { status: 404 });
     },
@@ -370,6 +376,8 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/api/orpc/*",
     async (ctx) => {
       const request = ctx.request as Request;
+      const context = contextFactory(request, contextDeps);
+      options.onContextCreated?.(context);
       const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
       return result.matched ? result.response : new Response("not found", { status: 404 });
     },

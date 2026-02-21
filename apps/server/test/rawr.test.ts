@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
 import { createCoordinationRuntimeAdapter } from "../src/coordination";
 import { registerOrpcRoutes } from "../src/orpc";
-import { registerRawrRoutes } from "../src/rawr";
+import { PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
 import { processCoordinationRunEvent } from "@rawr/coordination-inngest";
 import type { Inngest } from "inngest";
 import path from "node:path";
@@ -54,12 +54,16 @@ describe("rawr server routes", () => {
     expect(text).toContain("mount");
   });
 
-  it("registers an Inngest serve endpoint", async () => {
+  it("host-composition-guard: rejects unsigned ingress before runtime dispatch", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
     const res = await app.handle(
       new Request("http://localhost/api/inngest", { method: "GET", headers: { host: "localhost" } }),
     );
-    expect(res.status).not.toBe(404);
+    expect(res.status).toBe(403);
+  });
+
+  it("host-composition-guard: enforces ingress -> workflows -> rpc/openapi mount order contract", () => {
+    expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/*", "/rpc + /api/orpc/*"]);
   });
 
   it("creates, validates, runs, and returns timeline through ORPC RPC handlers", async () => {
@@ -241,5 +245,47 @@ describe("rawr server routes", () => {
     };
     expect(missingRunJson.json?.code).toBe("RUN_NOT_FOUND");
     expect(missingRunJson.json?.status).toBe(404);
+  });
+
+  it("host-composition-guard: request scoped context factory runs per ORPC request", async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-coord-context-"));
+    const runtime = createCoordinationRuntimeAdapter({
+      repoRoot: tempRoot,
+      inngestBaseUrl: "http://localhost:8288",
+    });
+    const fakeInngest = {
+      send: async () => ({ ids: ["evt-test-1"] }),
+    } as unknown as Inngest;
+
+    const requestIds: string[] = [];
+    const app = registerOrpcRoutes(createServerApp(), {
+      repoRoot: tempRoot,
+      baseUrl: "http://localhost:3000",
+      inngestClient: fakeInngest,
+      runtime,
+      onContextCreated: (context) => {
+        requestIds.push(context.requestId);
+      },
+    });
+
+    const first = await app.handle(
+      new Request("http://localhost/rpc/coordination/listWorkflows", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-request-id": "req-a" },
+        body: JSON.stringify({ json: {} }),
+      }),
+    );
+    expect(first.status).toBe(200);
+
+    const second = await app.handle(
+      new Request("http://localhost/rpc/coordination/listWorkflows", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-request-id": "req-b" },
+        body: JSON.stringify({ json: {} }),
+      }),
+    );
+    expect(second.status).toBe(200);
+
+    expect(requestIds).toEqual(["req-a", "req-b"]);
   });
 });
