@@ -23,15 +23,19 @@
 10. `AGENT_6_SCRATCHPAD.md`
 11. `AGENT_6_FINAL_E7_READINESS_AND_HANDOFF.md`
 12. `FINAL_PHASE_E_HANDOFF.md`
+13. `AGENT_7_PLAN_VERBATIM.md`
+14. `AGENT_7_SCRATCHPAD.md`
+15. `AGENT_7_FINAL_E7_STEWARD_STRUCTURAL_CHECK.md`
 
 ## Canonical Docs Updated
 1. `README.md`
 2. `PROJECT_STATUS.md`
 
 ## Phase Result
-Phase E is closed end-to-end through readiness and handoff (`E1..E7`) with explicit gate evidence, decision closure, independent review closure, structural disposition, docs+cleanup closure, and next-phase kickoff posture.
+Phase E is closed end-to-end through readiness, handoff, and steward final-gate structural check (`E1..E7`) with explicit gate evidence, decision closure, independent review closure, structural disposition, docs+cleanup closure, and next-phase kickoff posture.
 
 ## Notes
 1. E4 decision closure is locked and evidence-backed (`D-009`, `D-010` triggered).
 2. Forward-only delivery posture was preserved with no rollback-track artifacts.
 3. E6/E7 publication remains the only stack submission follow-up (PR creation), while runtime closure artifacts are complete in-repo.
+4. Steward structural/taste pass preserved route-family, command-surface, and manifest-authority invariants.
