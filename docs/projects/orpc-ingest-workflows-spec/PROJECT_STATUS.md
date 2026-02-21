@@ -1,7 +1,7 @@
 # Project Status
 
 - Project name: ORPC + Inngest Workflows Specification
-- Status: Phase A closed; Phase B runtime slices `B0..B6` landed; Phase C runtime slices `C1..C7` landed with review/structural/docs closure; Phase D runtime slices `D1..D5A` landed and closure slices `D6..D7` are active
+- Status: Phase A closed; Phase B runtime slices `B0..B6` landed; Phase C runtime slices `C1..C7` landed with review/structural/docs closure; Phase D runtime slices `D1..D7` landed with review/structural/docs/readiness closure
 - Canonical entrypoint: `README.md`
 - Canonical architecture: `ARCHITECTURE.md`
 - Canonical decisions: `DECISIONS.md`
@@ -41,6 +41,10 @@
 - D4 disposition: `_phase-d-runtime-execution-pass-01-2026-02-21/D4_DISPOSITION.md`
 - D5 review disposition: `_phase-d-runtime-execution-pass-01-2026-02-21/D5_REVIEW_DISPOSITION.md`
 - D5A structural disposition: `_phase-d-runtime-execution-pass-01-2026-02-21/D5A_STRUCTURAL_DISPOSITION.md`
+- D6 cleanup manifest: `_phase-d-runtime-execution-pass-01-2026-02-21/D6_CLEANUP_MANIFEST.md`
+- Phase D execution report: `_phase-d-runtime-execution-pass-01-2026-02-21/PHASE_D_EXECUTION_REPORT.md`
+- D7 Phase E readiness output: `_phase-d-runtime-execution-pass-01-2026-02-21/D7_PHASE_E_READINESS.md`
+- Phase D final handoff: `_phase-d-runtime-execution-pass-01-2026-02-21/FINAL_PHASE_D_HANDOFF.md`
 - Historical pre-Phase-B readiness lineage: `_phase-a-runtime-execution-pass-01-2026-02-20/A9_PHASE_B_READINESS.md`
 
 All session/process lineage is archived and non-canonical.
