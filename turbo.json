@@ -8,7 +8,43 @@
     },
     "typecheck": { "dependsOn": ["^typecheck"], "outputs": [] },
     "lint": { "outputs": [] },
-    "test": { "dependsOn": ["^build"], "outputs": [] }
+    "test": { "dependsOn": ["^build"], "outputs": [] },
+    "phase-a:gate:metadata-contract": { "outputs": [] },
+    "phase-a:gate:import-boundary": { "outputs": [] },
+    "phase-a:gate:manifest-smoke-baseline": { "outputs": [] },
+    "phase-a:gate:host-composition-guard": { "outputs": [] },
+    "phase-a:gate:route-negative-assertions": { "outputs": [] },
+    "phase-a:gate:harness-matrix": { "outputs": [] },
+    "phase-a:gate:observability-contract": { "outputs": [] },
+    "phase-a:gate:manifest-smoke-completion": { "outputs": [] },
+    "phase-a:gate:legacy-metadata-hard-delete-static-guard": { "outputs": [] },
+    "phase-a:gates:baseline": {
+      "dependsOn": [
+        "phase-a:gate:metadata-contract",
+        "phase-a:gate:import-boundary",
+        "phase-a:gate:manifest-smoke-baseline",
+        "phase-a:gate:host-composition-guard",
+        "phase-a:gate:route-negative-assertions",
+        "phase-a:gate:harness-matrix",
+        "phase-a:gate:observability-contract"
+      ],
+      "outputs": []
+    },
+    "phase-a:gates:completion": {
+      "dependsOn": [
+        "phase-a:gate:metadata-contract",
+        "phase-a:gate:import-boundary",
+        "phase-a:gate:manifest-smoke-completion",
+        "phase-a:gate:host-composition-guard",
+        "phase-a:gate:route-negative-assertions",
+        "phase-a:gate:harness-matrix",
+        "phase-a:gate:observability-contract"
+      ],
+      "outputs": []
+    },
+    "phase-a:gates:exit": {
+      "dependsOn": ["phase-a:gates:completion", "phase-a:gate:legacy-metadata-hard-delete-static-guard"],
+      "outputs": []
+    }
   }
 }
-
