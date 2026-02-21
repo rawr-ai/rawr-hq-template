@@ -63,7 +63,33 @@ describe("rawr server routes", () => {
   });
 
   it("host-composition-guard: enforces ingress -> workflows -> rpc/openapi mount order contract", () => {
-    expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/*", "/rpc + /api/orpc/*"]);
+    expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"]);
+  });
+
+  it("host-composition-guard: serves capability-first workflow family paths", async () => {
+    const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+    const res = await app.handle(new Request("http://localhost/api/workflows/coordination/workflows"));
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as { workflows?: unknown[] };
+    expect(Array.isArray(json.workflows)).toBe(true);
+  });
+
+  it("host-composition-guard: rejects unknown workflow capability paths", async () => {
+    const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+    const res = await app.handle(new Request("http://localhost/api/workflows/unknown/workflows"));
+    expect(res.status).toBe(404);
+  });
+
+  it("host-composition-guard: does not add a dedicated /rpc/workflows mount", async () => {
+    const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+    const res = await app.handle(
+      new Request("http://localhost/rpc/workflows/coordination/workflows", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ json: {} }),
+      }),
+    );
+    expect(res.status).toBe(404);
   });
 
   it("creates, validates, runs, and returns timeline through ORPC RPC handlers", async () => {
