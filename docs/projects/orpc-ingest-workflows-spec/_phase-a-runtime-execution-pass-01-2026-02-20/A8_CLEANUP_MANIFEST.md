@@ -8,9 +8,10 @@ Worktree: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-ph
 Remove superseded pass-local planning/scratch/intermediate review artifacts while preserving currently existing orchestrator/core lineage artifacts.
 
 ## Executed Actions
-- Deleted superseded `*_PLAN_VERBATIM.md` artifacts except current Agent 5 plan and orchestrator plan.
-- Deleted superseded `*_SCRATCHPAD.md` artifacts except current Agent 5 scratchpad and orchestrator scratchpad.
+- Deleted superseded `*_PLAN_VERBATIM.md` artifacts except orchestrator plan.
+- Deleted superseded `*_SCRATCHPAD.md` artifacts except orchestrator scratchpad.
 - Deleted intermediate Agent 4 non-final review drafts superseded by final review outputs.
+- During final handoff, removed now-superseded Agent 5 and Agent 6 plan/scratch artifacts after their final reports were published.
 
 ## Deleted Artifacts
 - `AGENT_1_PLAN_VERBATIM.md`
@@ -41,6 +42,10 @@ Remove superseded pass-local planning/scratch/intermediate review artifacts whil
 - `AGENT_Q2_SCRATCHPAD.md`
 - `AGENT_R1_PLAN_VERBATIM.md`
 - `AGENT_R1_SCRATCHPAD.md`
+- `AGENT_5_PLAN_VERBATIM.md`
+- `AGENT_5_SCRATCHPAD.md`
+- `AGENT_6_PLAN_VERBATIM.md`
+- `AGENT_6_SCRATCHPAD.md`
 
 ## Retained Artifacts (Currently Existing Required/Core)
 - `ORCHESTRATOR_PLAN_VERBATIM.md`
@@ -60,9 +65,6 @@ Remove superseded pass-local planning/scratch/intermediate review artifacts whil
   - `AGENT_Q1_REFACTOR_REVIEW.md`
   - `AGENT_Q2_FINAL_PACKAGING_DOMAIN_REVIEW.md`
   - `AGENT_R1_FINAL_STRUCTURAL_REFACTOR.md`
-- Current Agent 5 procedural artifacts retained for this pass:
-  - `AGENT_5_PLAN_VERBATIM.md`
-  - `AGENT_5_SCRATCHPAD.md`
 - A8 pass closure artifacts:
   - `A7_REVIEW_DISPOSITION.md`
   - `A8_CLEANUP_MANIFEST.md`
