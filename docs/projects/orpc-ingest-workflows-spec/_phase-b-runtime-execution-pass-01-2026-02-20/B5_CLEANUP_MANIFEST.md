@@ -13,18 +13,23 @@ B5 cleanup is docs-only and focuses on canonical Phase B alignment to landed `B0
 | `docs/projects/orpc-ingest-workflows-spec/PHASE_B_EXECUTION_PACKET.md` | `update` | Added as-landed snapshot through `B4A`; removed stale B3 adapter-shim required-file contract; re-baselined to structural gate chain. |
 | `docs/projects/orpc-ingest-workflows-spec/PHASE_B_IMPLEMENTATION_SPEC.md` | `update` | Added as-landed runtime reality through `B4A`; replaced adapter-shim test requirement with canonical structural checks (`metadata-contract` + `import-boundary`). |
 | `docs/projects/orpc-ingest-workflows-spec/PHASE_B_ACCEPTANCE_GATES.md` | `update` | Replaced missing adapter-shim full-gate commands with canonical `phase-a:gates:exit` structural contract. |
-| `docs/projects/orpc-ingest-workflows-spec/PHASE_B_WORKBREAKDOWN.yaml` | `update` | Updated status from planning to landed-through-B4A posture; re-baselined B3 objective/files/gates/acceptance to structural checks. |
+| `docs/projects/orpc-ingest-workflows-spec/PHASE_B_WORKBREAKDOWN.yaml` | `update` | Updated status to landed-through-B4A posture; re-baselined B3 objective/files/gates/acceptance to structural checks. |
 | `docs/projects/orpc-ingest-workflows-spec/README.md` | `update` | Updated packet navigation to reference landed Phase B runtime artifact root and historical planning disposition. |
 | `docs/projects/orpc-ingest-workflows-spec/PROJECT_STATUS.md` | `update` | Updated project state to landed `B0..B4A`, active `B5`, pending `B6`; linked closure artifacts. |
-| `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_5_PLAN_VERBATIM.md` | `add` | Required B5 plan artifact. |
-| `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_5_SCRATCHPAD.md` | `add` | Required B5 scratchpad artifact with execution trace. |
-| `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/B5_CLEANUP_MANIFEST.md` | `add` | Required B5 cleanup manifest. |
-| `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_5_FINAL_DOCS_CLEANUP.md` | `add` | Required final B5 docs cleanup report. |
+| `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/B5_CLEANUP_MANIFEST.md` | `add` | B5 cleanup action log and disposition. |
+| `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_5_FINAL_DOCS_CLEANUP.md` | `add` | B5 final report artifact. |
 
-## Deletion Review
-No pass-local deletions were applied in B5.
+## Deleted as Superseded in B5
+- `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_2_PLAN_VERBATIM.md`
+- `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_2_SCRATCHPAD.md`
+- `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_3_PLAN_VERBATIM.md`
+- `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_3_SCRATCHPAD.md`
+- `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_4_PLAN_VERBATIM.md`
+- `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_4_SCRATCHPAD.md`
+- `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_4_REVIEW_REPORT.md`
+- `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_4A_PLAN_VERBATIM.md`
+- `docs/projects/orpc-ingest-workflows-spec/_phase-b-runtime-execution-pass-01-2026-02-20/AGENT_4A_SCRATCHPAD.md`
 
 Reasoning:
-1. Existing `B2/B3/B4/B4A` artifacts remain active lineage evidence for `B6` realignment.
-2. Emergency fallback objective prioritized canonical drift closure over artifact pruning.
-3. Repo delta remains docs-only and reviewer-readable without destructive cleanup.
+1. These plan/scratch/intermediate artifacts were superseded by final slice reports and re-review closure outputs.
+2. Lineage-critical final artifacts were retained to preserve execution traceability.

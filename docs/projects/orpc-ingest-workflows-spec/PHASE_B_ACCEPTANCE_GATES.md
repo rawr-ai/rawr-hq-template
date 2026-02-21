@@ -13,9 +13,10 @@ Define deterministic verification for Phase B slice progression and phase exit.
    - run before independent review,
    - run at phase exit.
 
-## As-Landed Gate Posture (through B4A on 2026-02-21)
-1. Runtime slices `B0..B4A` are landed; `B5` docs/cleanup is the active closure slice.
+## As-Landed Gate Posture (through B6 on 2026-02-21)
+1. Runtime slices `B0..B6` are landed; mandatory review, structural assessment, docs cleanup, and readiness closure slices are complete.
 2. Canonical B3 anti-regression is structural gate enforcement in `phase-a:gates:exit`; dedicated adapter-shim ownership test files are not present in landed branch state.
+3. B6 readiness output is published at `_phase-b-runtime-execution-pass-01-2026-02-20/B6_PHASE_C_READINESS.md`.
 
 ## Slice Gate Matrix
 
