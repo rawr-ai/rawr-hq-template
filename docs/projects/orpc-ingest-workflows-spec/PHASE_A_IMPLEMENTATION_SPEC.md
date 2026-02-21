@@ -605,13 +605,27 @@ registerOrpcRoutes(app, {
 | Workflow route behavior with zero capabilities | `/api/workflows/*` returns canonical 404 with explicit policy headers for the workflow family. | `@rawr-runtime-host` | `A4` | If policy header implementation slips, keep canonical 404 and block Phase A exit until headers are added. |
 | Legacy metadata migration mode | Hard deletion in Phase A with no compatibility bridge for legacy metadata keys. | `@rawr-plugin-lifecycle` | `A1` | If any legacy key remains in active metadata surfaces, fail gate and block progression. |
 
-### 8.2 Deferred Register (Inherited, unchanged)
+### 8.2 Deferred Register (A9 reconciled)
 | Defer ID | Deferred item | Why deferred | Unblock trigger | Target phase |
 | --- | --- | --- | --- | --- |
 | `DR-001` | D-016 UX/packaging product features | Not needed for Phase A seam safety | Phase A complete + hard-delete conformance closure | Phase D |
 | `DR-002` | Cross-instance storage-backed lock redesign | Not required for immediate convergence | Evidence of cross-instance duplication risk after A6 | Phase C |
 | `DR-003` | Expanded telemetry beyond gate diagnostics | Keep Phase A narrow | Post-Phase-A observability intake | Phase C |
-| `DR-004` | Broad non-convergence refactors | Would dilute deterministic convergence | New scoped milestone post-Phase-A | Phase B |
+| `DR-004` | Phase B seam-hardening tranche (`/rpc` auth-source hardening, workflow trigger router isolation, manifest/host seam hardening, structural gate hardening) | Deferred to keep deterministic Phase A convergence while review/docs closure completed | `A9` readiness output marks kickoff `ready`, owners assigned, and ordered opening slices published | Phase B |
+
+### 8.3 Phase B Opening Sequence (A9 reconciled)
+The next execution packet pass should open Phase B in this order:
+
+| Slice | Scope | Depends on | Primary owner |
+| --- | --- | --- | --- |
+| `B0` | `/rpc` auth-source hardening: replace caller-surface header trust as the sole classifier with host/session/service-auth-derived classification, while preserving D-005 route boundaries. | `A9` complete | `@rawr-runtime-host` |
+| `B1` | Workflow trigger router seam isolation: make `workflows.triggerRouter` trigger/status-scoped and remove broad ORPC router coupling risk. | `B0` | `@rawr-plugin-lifecycle` |
+| `B2` | Manifest/host composition seam hardening: reduce `rawr.hq.ts` host-internal coupling while keeping manifest-first authority and D-014 import-direction guarantees. | `B1` | `@rawr-plugin-lifecycle` |
+| `B3` | Verification hardening: promote manifest/gate checks to structural ownership assertions and add anti-regression checks for package-owned adapter shim surfaces. | `B2` | `@rawr-verification-gates` |
+
+Non-blocking carry-forward:
+1. D-009 and D-010 remain open/non-blocking and do not block Phase B kickoff.
+2. Global-owner fallback UX choices remain backlog candidates unless elevated by operator evidence.
 
 ## 9. Forward-Only Delivery Rules
 1. Remediate failing slices in-place; do not introduce rollback branches.

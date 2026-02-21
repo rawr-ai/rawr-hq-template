@@ -295,4 +295,18 @@ Telemetry note (optional, non-blocking):
 | `DR-001` | D-016 UX/packaging product features | Not required for seam-now safety | Phase A completion + hard-delete conformance closure | Phase D | `@rawr-distribution-lifecycle` |
 | `DR-002` | Cross-instance storage-backed lock redesign | Not required for Phase A contract convergence | Evidence of cross-instance duplication risk after `A6` | Phase C | `@rawr-runtime-host` |
 | `DR-003` | Expanded telemetry beyond required gate diagnostics | Keep Phase A narrow and execution-focused | Post-Phase-A observability backlog intake | Phase C | `@rawr-verification-gates` |
-| `DR-004` | Broad non-convergence refactors | Would dilute Phase A delivery focus | New scoped milestone approval after Phase A | Phase B | `@rawr-plugin-lifecycle` |
+| `DR-004` | Phase B seam-hardening tranche (`/rpc` auth-source hardening, workflow trigger router isolation, manifest/host seam hardening, structural gate hardening) | Deferred to keep Phase A convergence narrow while `A7`/`A8` closure completed | `A9` readiness output marks kickoff `ready`, owners assigned, and ordered opening slices published | Phase B | `@rawr-phase-sequencing` |
+
+## Phase B Opening Sequence (A9 Reconciled)
+Ordered opening slices for the next execution packet pass:
+
+| Slice | Scope | Depends on | Primary owner |
+| --- | --- | --- | --- |
+| `B0` | `/rpc` auth-source hardening: move from caller-surface header trust to host/session/service-auth-derived classification while keeping route policy unchanged. | Phase A complete (`A0`..`A9`) | `@rawr-runtime-host` |
+| `B1` | Workflow trigger router seam isolation: make `workflows.triggerRouter` trigger/status-scoped and remove accidental coupling to broad ORPC router composition. | `B0` | `@rawr-plugin-lifecycle` |
+| `B2` | Manifest/host composition seam hardening: reduce `rawr.hq.ts` host-internal coupling while preserving manifest-first authority and D-014 import direction guarantees. | `B1` | `@rawr-plugin-lifecycle` |
+| `B3` | Verification hardening: upgrade manifest/gate checks from string-shape to structural ownership assertions and add anti-regression guards for package-owned adapter shims. | `B2` | `@rawr-verification-gates` |
+
+Non-blocking carry-forward during Phase B planning/execution:
+1. D-009 and D-010 remain open/non-blocking (`DECISIONS.md`) and do not block kickoff.
+2. Global-owner fallback UX choices stay non-blocking and can be addressed in Phase B backlog if they become operator pain points.
