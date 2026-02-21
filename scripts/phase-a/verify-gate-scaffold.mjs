@@ -18,10 +18,9 @@ import {
 } from "./ts-ast-utils.mjs";
 
 const gateId = process.argv[2];
-const optional = process.argv.includes("--optional");
 
 if (!gateId) {
-  console.error("Usage: bun scripts/phase-a/verify-gate-scaffold.mjs <gate-id> [--optional]");
+  console.error("Usage: bun scripts/phase-a/verify-gate-scaffold.mjs <gate-id>");
   process.exit(2);
 }
 
@@ -246,23 +245,55 @@ async function verifyObservabilityContract() {
   await mustExist("packages/coordination-observability/test/observability.test.ts");
 }
 
+async function verifyTelemetryContract() {
+  await Promise.all([
+    mustExist("scripts/phase-c/verify-telemetry-contract.mjs"),
+    mustExist("packages/coordination-observability/src/events.ts"),
+    mustExist("packages/coordination-observability/test/storage-lock-telemetry.test.ts"),
+    mustExist("apps/server/test/ingress-signature-observability.test.ts"),
+  ]);
+
+  const [eventsSource, phaseCTelemetryVerifierSource, packageJsonRaw] = await Promise.all([
+    fs.readFile(path.join(root, "packages/coordination-observability/src/events.ts"), "utf8"),
+    fs.readFile(path.join(root, "scripts/phase-c/verify-telemetry-contract.mjs"), "utf8"),
+    fs.readFile(path.join(root, "package.json"), "utf8"),
+  ]);
+  const packageJson = JSON.parse(packageJsonRaw);
+  const scripts = packageJson.scripts ?? {};
+
+  assertCondition(
+    /export\s+type\s+CreateDeskEventInput\s*=/.test(eventsSource),
+    "events.ts must export CreateDeskEventInput",
+  );
+  assertCondition(
+    /export\s+type\s+TraceLinkOptions\s*=/.test(eventsSource),
+    "events.ts must export TraceLinkOptions",
+  );
+  assertCondition(
+    /assertRunLifecycleStatusContract\s*\(\s*input\.type\s*,\s*input\.status\s*\)/.test(eventsSource),
+    "events.ts must enforce lifecycle status contract",
+  );
+  assertCondition(
+    phaseCTelemetryVerifierSource.includes("phase-c telemetry contract verified"),
+    "phase-c telemetry verifier must remain the source-of-truth structural gate",
+  );
+  assertCondition(
+    scripts["phase-a:gate:telemetry-contract"] === "bun scripts/phase-a/verify-gate-scaffold.mjs telemetry",
+    "package.json must hard-wire phase-a telemetry contract gate",
+  );
+  assertCondition(
+    !Object.prototype.hasOwnProperty.call(scripts, "phase-a:telemetry:optional"),
+    "package.json must not expose optional phase-a telemetry gate semantics",
+  );
+}
+
 const gateChecksById = {
   "metadata-contract": verifyMetadataContract,
   "import-boundary": verifyImportBoundary,
   "host-composition-guard": verifyHostCompositionGuard,
   "route-negative-assertions": verifyRouteNegativeAssertions,
   "observability-contract": verifyObservabilityContract,
-  telemetry: async () => {
-    if (process.env.RAWR_PHASE_A_TELEMETRY_OPT_IN === "1") {
-      console.log("phase-a telemetry opted in (no-op scaffold).");
-      return;
-    }
-    if (optional) {
-      console.log("phase-a telemetry not configured; optional/non-blocking.");
-      return;
-    }
-    throw new Error("phase-a telemetry not configured");
-  },
+  telemetry: verifyTelemetryContract,
 };
 
 const check = gateChecksById[gateId];
