@@ -23,7 +23,9 @@ const REQUIRED_SUITE_IDS = [
 
 const REQUIRED_NEGATIVE_ASSERTION_KEYS = [
   "assertion:reject-api-inngest-from-caller-paths",
+  "assertion:reject-ingress-spoofed-caller-headers",
   "assertion:reject-rpc-from-external-callers",
+  "assertion:reject-rpc-from-runtime-ingress",
   "assertion:reject-rpc-workflows-route-family",
   "assertion:runtime-ingress-no-caller-boundary-semantics",
   "assertion:in-process-no-local-http-self-call",
@@ -144,6 +146,31 @@ const MATRIX_CASES: MatrixCase[] = [
   },
   {
     kind: "http",
+    suiteId: "suite:web:first-party-rpc",
+    assertionKey: "assertion:reject-ingress-spoofed-caller-headers",
+    callerSurface: "first-party",
+    assertCallerBoundarySemantics: true,
+    description: "first-party caller headers cannot spoof runtime ingress access",
+    method: "POST",
+    path: "/api/inngest",
+    headers: {
+      "content-type": "application/json",
+      "x-rawr-caller-surface": "first-party",
+      "x-rawr-session-auth": "verified",
+      "x-inngest-signature": `t=${Math.floor(Date.now() / 1000)}&s=deadbeef`,
+    },
+    body: {
+      name: "coordination/workflow.run",
+      data: { runId: "run-route-boundary-spoof", workflowId: "wf-route-boundary-spoof", input: {} },
+    },
+    env: {
+      INNGEST_SIGNING_KEY: "signkey-test-rawr-ingress",
+      INNGEST_SIGNING_KEY_FALLBACK: undefined,
+    },
+    expectedStatus: 403,
+  },
+  {
+    kind: "http",
     suiteId: "suite:web:published-openapi",
     assertionKey: "assertion:published-openapi-available",
     callerSurface: "external",
@@ -168,6 +195,23 @@ const MATRIX_CASES: MatrixCase[] = [
     headers: {
       "content-type": "application/json",
       "x-rawr-caller-surface": "external",
+    },
+    body: { json: {} },
+    expectedStatus: 403,
+  },
+  {
+    kind: "http",
+    suiteId: "suite:api:boundary",
+    assertionKey: "assertion:reject-rpc-from-runtime-ingress",
+    callerSurface: "runtime-ingress",
+    assertCallerBoundarySemantics: true,
+    description: "runtime ingress callers cannot spoof access to /rpc route family",
+    method: "POST",
+    path: "/rpc/coordination/listWorkflows",
+    headers: {
+      "content-type": "application/json",
+      "x-rawr-caller-surface": "runtime-ingress",
+      "x-rawr-service-auth": "verified",
     },
     body: { json: {} },
     expectedStatus: 403,
@@ -350,8 +394,13 @@ describe("route boundary matrix", () => {
         expect(typeof testCase.expectedStatus === "number" ? testCase.expectedStatus >= 400 : true).toBe(true);
       }
 
-      if (testCase.callerSurface === "runtime-ingress") {
+      if (testCase.callerSurface === "runtime-ingress" && testCase.path === "/api/inngest") {
         expect(testCase.assertCallerBoundarySemantics).toBe(false);
+      }
+
+      if (testCase.callerSurface === "runtime-ingress" && testCase.path.startsWith("/rpc")) {
+        expect(testCase.expectedStatus).toBe(403);
+        expect(testCase.assertCallerBoundarySemantics).toBe(true);
       }
     }
 

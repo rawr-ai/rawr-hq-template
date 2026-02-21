@@ -8,6 +8,22 @@ export function assertCondition(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+export function assertIncludes(source, snippet, message) {
+  assertCondition(source.includes(snippet), message);
+}
+
+export function assertMatches(source, pattern, message) {
+  assertCondition(pattern.test(source), message);
+}
+
+export function assertNotMatches(source, pattern, message) {
+  assertCondition(!pattern.test(source), message);
+}
+
+export function assertScriptEquals(scripts, scriptName, expectedCommand) {
+  assertCondition(scripts[scriptName] === expectedCommand, `package.json must define ${scriptName}`);
+}
+
 export async function mustExist(relPath) {
   const absPath = path.join(root, relPath);
   try {
