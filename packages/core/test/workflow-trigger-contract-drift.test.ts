@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { minifyContractRouter } from "@orpc/contract";
 import { workflowTriggerContract } from "../src/orpc";
+import { RunStatusSchema } from "@rawr/coordination/orpc";
 
 type RouteShape = {
   method?: string;
@@ -44,5 +45,15 @@ describe("workflow trigger contract drift", () => {
 
   it("matches the minified trigger contract snapshot", () => {
     expect(minifyContractRouter(workflowTriggerContract)).toMatchSnapshot();
+  });
+
+  it("keeps D2 finalization schema available to trigger contract consumers", () => {
+    const asRecord = RunStatusSchema as unknown as {
+      required?: string[];
+      properties?: Record<string, unknown>;
+    };
+
+    expect(asRecord.properties).toHaveProperty("finalization");
+    expect(asRecord.required ?? []).not.toContain("finalization");
   });
 });

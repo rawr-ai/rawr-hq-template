@@ -54,4 +54,12 @@ describe("runtime router seam", () => {
       "coordination.validateWorkflow POST /coordination/workflows/{workflowId}/validate",
     ]);
   });
+
+  it("does not introduce finished-hook route families while adding D2 guardrails", () => {
+    const rootRoutes = collectProcedureRoutes(createHqRuntimeRouter());
+    const triggerRoutes = collectProcedureRoutes(createWorkflowTriggerRuntimeRouter());
+    const allRoutes = [...rootRoutes, ...triggerRoutes];
+
+    expect(allRoutes.some((route) => route.toLowerCase().includes("finished"))).toBe(false);
+  });
 });

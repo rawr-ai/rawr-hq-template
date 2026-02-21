@@ -9,6 +9,9 @@ import type {
   HandoffDefinitionV1,
   JsonSchemaV1,
   JsonValue,
+  RunFinalizationContractV1,
+  RunFinalizationStateV1,
+  RunFinishedHookStateV1,
   RunStatusV1,
   RuntimePolicyV1,
   ValidationErrorV1,
@@ -102,6 +105,39 @@ const RunTraceLinkSchema = Type.Object(
   { additionalProperties: false },
 );
 
+const RunFinishedHookStateSchema = Type.Unsafe<RunFinishedHookStateV1>(
+  Type.Object(
+    {
+      attemptedAt: Type.String(),
+      outcome: Type.Union([Type.Literal("succeeded"), Type.Literal("failed")]),
+      error: Type.Optional(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const RunFinalizationContractSchema = Type.Unsafe<RunFinalizationContractV1>(
+  Type.Object(
+    {
+      delivery: Type.Literal("at-least-once"),
+      exactlyOnce: Type.Literal(false),
+      sideEffectPolicy: Type.Literal("idempotent-non-critical"),
+      failureMode: Type.Literal("best-effort-non-blocking"),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const RunFinalizationStateSchema = Type.Unsafe<RunFinalizationStateV1>(
+  Type.Object(
+    {
+      contract: RunFinalizationContractSchema,
+      finishedHook: Type.Optional(RunFinishedHookStateSchema),
+    },
+    { additionalProperties: false },
+  ),
+);
+
 export const RunStatusSchema = Type.Unsafe<RunStatusV1>(
   Type.Object(
     {
@@ -120,6 +156,7 @@ export const RunStatusSchema = Type.Unsafe<RunStatusV1>(
       output: Type.Optional(JsonValueSchema),
       error: Type.Optional(Type.String()),
       traceLinks: Type.Array(RunTraceLinkSchema),
+      finalization: Type.Optional(RunFinalizationStateSchema),
     },
     { additionalProperties: false },
   ),
