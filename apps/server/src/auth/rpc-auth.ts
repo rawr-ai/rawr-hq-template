@@ -1,11 +1,7 @@
 const RPC_CALLER_SURFACE_HEADER = "x-rawr-caller-surface";
 const RPC_FORWARDED_HOST_HEADER = "x-forwarded-host";
-const RPC_AUTHORIZATION_HEADER = "authorization";
-const RPC_COOKIE_HEADER = "cookie";
-const RPC_USER_AGENT_HEADER = "user-agent";
 const RPC_TRUSTED_HOSTS_ENV = "RAWR_RPC_TRUSTED_HOSTS";
 const DEFAULT_TRUSTED_RPC_HOSTNAMES = ["localhost", "127.0.0.1", "::1"] as const;
-const SESSION_COOKIE_NAME_PATTERN = /(?:^|;\s*)rawr(?:[-_.])?session=/u;
 const RPC_AFFIRMATIVE_AUTH_TOKENS = new Set(["1", "true", "yes", "valid", "verified", "trusted"]);
 
 export const RPC_SESSION_AUTH_HEADER = "x-rawr-session-auth";
@@ -74,25 +70,6 @@ function isAffirmativeAuthSignal(value: string | null): boolean {
   return RPC_AFFIRMATIVE_AUTH_TOKENS.has(normalized);
 }
 
-function hasSessionCookie(request: Request): boolean {
-  const cookie = request.headers.get(RPC_COOKIE_HEADER);
-  if (!cookie) return false;
-  return SESSION_COOKIE_NAME_PATTERN.test(cookie);
-}
-
-function hasServiceAuthorization(request: Request): boolean {
-  const authorization = normalizeToken(request.headers.get(RPC_AUTHORIZATION_HEADER));
-  if (!authorization) return false;
-  if (authorization.startsWith("service ")) return true;
-  return authorization.startsWith("bearer svc_");
-}
-
-function hasCliUserAgent(request: Request): boolean {
-  const userAgent = normalizeToken(request.headers.get(RPC_USER_AGENT_HEADER));
-  if (!userAgent) return false;
-  return userAgent.includes("rawr-cli/");
-}
-
 function resolveRequestHostnames(request: Request): string[] {
   const hostnames = new Set<string>();
   const requestHostname = hostnameFromUrl(request.url);
@@ -157,18 +134,17 @@ export function createRpcAuthPolicy(input: RpcAuthPolicyInput = {}): RpcAuthPoli
 
 export function resolveRpcAuthEvidence(request: Request, policy: RpcAuthPolicy): RpcAuthEvidence {
   const requestHostnames = resolveRequestHostnames(request);
-  const serviceAuthenticated =
-    isAffirmativeAuthSignal(request.headers.get(RPC_SERVICE_AUTH_HEADER)) || hasServiceAuthorization(request);
+  // Only explicit auth evidence fields should influence caller authorization.
+  const serviceAuthenticated = isAffirmativeAuthSignal(request.headers.get(RPC_SERVICE_AUTH_HEADER));
 
   return {
     callerSurface: callerSurfaceFromRequest(request),
     requestHostnames,
     trustedHostnames: policy.trustedHostnames,
     hostTrusted: isHostTrusted(requestHostnames, policy.trustedHostnames),
-    sessionAuthenticated: isAffirmativeAuthSignal(request.headers.get(RPC_SESSION_AUTH_HEADER)) || hasSessionCookie(request),
+    sessionAuthenticated: isAffirmativeAuthSignal(request.headers.get(RPC_SESSION_AUTH_HEADER)),
     serviceAuthenticated,
-    cliAuthenticated:
-      isAffirmativeAuthSignal(request.headers.get(RPC_CLI_AUTH_HEADER)) || (hasCliUserAgent(request) && serviceAuthenticated),
+    cliAuthenticated: isAffirmativeAuthSignal(request.headers.get(RPC_CLI_AUTH_HEADER)),
   };
 }
 
