@@ -18,3 +18,10 @@
 - E1 implementation complete on `codex/phase-e-e1-dedupe-policy-hardening`.
 - Added heavy middleware dedupe policy contract, E1 verifier script, and Phase E E1 gate chain wiring.
 - Validation: `bun run phase-e:e1:quick` passed; `bun run phase-e:e1:full` passed.
+
+## 2026-02-21T15:08:10-0800 — E2 gate closure
+- Branch: `codex/phase-e-e2-finished-hook-policy-hardening`
+- Completed: `bun run phase-e:e2:quick`
+- Completed: `bun run phase-e:e2:full`
+- Result: PASS
+- Notes: finished-hook policy verifier and runtime/tests aligned on `skipped|success|error`, `nonCritical`, `idempotencyRequired`, and timeout metadata.

@@ -26,6 +26,7 @@ import {
 
 const COORDINATION_FUNCTION_ID = "coordination-workflow-runner";
 const runQueueLocks = new Map<string, Promise<void>>();
+const FINISHED_HOOK_TIMEOUT_MS = 5_000;
 
 async function withRunQueueLock<T>(runId: string, task: () => Promise<T>): Promise<T> {
   const previous = runQueueLocks.get(runId) ?? Promise.resolve();
@@ -112,6 +113,20 @@ function createRunFinalizationState(finishedHook?: RunFinishedHookStateV1): RunF
   return finishedHook ? { contract: RUN_FINALIZATION_CONTRACT_V1, finishedHook } : { contract: RUN_FINALIZATION_CONTRACT_V1 };
 }
 
+async function runWithTimeout<T>(task: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error(`finished hook exceeded timeout (${timeoutMs}ms)`)), timeoutMs);
+    });
+    return await Promise.race([task, timeout]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
 async function executeFinishedHookWithGuardrails(input: {
   hook: CoordinationFinishedHook | undefined;
   payload: CoordinationRunEventData;
@@ -119,17 +134,39 @@ async function executeFinishedHookWithGuardrails(input: {
   run: RunStatusV1;
 }): Promise<RunFinishedHookStateV1> {
   const attemptedAt = new Date().toISOString();
+  if (!input.hook) {
+    return {
+      attemptedAt,
+      outcome: "skipped",
+      nonCritical: true,
+      idempotencyRequired: true,
+      timeoutMs: FINISHED_HOOK_TIMEOUT_MS,
+    };
+  }
+
   try {
-    await input.hook?.({
-      payload: input.payload,
-      runtime: input.runtime,
-      run: input.run,
-    });
-    return { attemptedAt, outcome: "succeeded" };
+    await runWithTimeout(
+      input.hook({
+        payload: input.payload,
+        runtime: input.runtime,
+        run: input.run,
+      }),
+      FINISHED_HOOK_TIMEOUT_MS,
+    );
+    return {
+      attemptedAt,
+      outcome: "succeeded",
+      nonCritical: true,
+      idempotencyRequired: true,
+      timeoutMs: FINISHED_HOOK_TIMEOUT_MS,
+    };
   } catch (error) {
     return {
       attemptedAt,
       outcome: "failed",
+      nonCritical: true,
+      idempotencyRequired: true,
+      timeoutMs: FINISHED_HOOK_TIMEOUT_MS,
       error: error instanceof Error ? error.message : String(error),
     };
   }

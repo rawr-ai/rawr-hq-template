@@ -94,11 +94,14 @@ export type RunLifecycleStateV1 = "queued" | "running" | "completed" | "failed";
 export type RunFinalizationDeliveryV1 = "at-least-once";
 export type RunFinalizationSideEffectPolicyV1 = "idempotent-non-critical";
 export type RunFinalizationFailureModeV1 = "best-effort-non-blocking";
-export type RunFinishedHookOutcomeV1 = "succeeded" | "failed";
+export type RunFinishedHookOutcomeV1 = "succeeded" | "failed" | "skipped";
 
 export type RunFinishedHookStateV1 = Readonly<{
   attemptedAt: string;
   outcome: RunFinishedHookOutcomeV1;
+  nonCritical: true;
+  idempotencyRequired: true;
+  timeoutMs: number;
   error?: string;
 }>;
 
