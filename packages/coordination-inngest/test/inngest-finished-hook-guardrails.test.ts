@@ -114,6 +114,9 @@ describe("inngest finished-hook guardrails", () => {
     expect(completed?.finalization?.contract.exactlyOnce).toBe(false);
     expect(completed?.finalization?.contract.delivery).toBe("at-least-once");
     expect(completed?.finalization?.finishedHook?.outcome).toBe("failed");
+    expect(completed?.finalization?.finishedHook?.nonCritical).toBe(true);
+    expect(completed?.finalization?.finishedHook?.idempotencyRequired).toBe(true);
+    expect(completed?.finalization?.finishedHook?.timeoutMs).toBeGreaterThan(0);
     expect(completed?.finalization?.finishedHook?.error).toContain("finished hook side effect failed");
     expect(hookCalls).toBe(1);
   });
@@ -144,6 +147,32 @@ describe("inngest finished-hook guardrails", () => {
     expect(failed?.status).toBe("failed");
     expect(failed?.finalization?.contract).toEqual(RUN_FINALIZATION_CONTRACT_V1);
     expect(failed?.finalization?.finishedHook?.outcome).toBe("succeeded");
+    expect(failed?.finalization?.finishedHook?.nonCritical).toBe(true);
+    expect(failed?.finalization?.finishedHook?.idempotencyRequired).toBe(true);
     expect(hookCalls).toBe(1);
+  });
+
+  it("marks finished-hook state as skipped when no hook is configured", async () => {
+    const { runtime, statuses } = createRuntimeMock();
+
+    await processCoordinationRunEvent({
+      payload: {
+        runId: "run-d2-finished-hook-skipped",
+        workflow,
+        input: { ticket: "T-4" },
+        baseUrl: "http://localhost:3000",
+      },
+      runtime,
+      inngestRunId: "inngest-run-d2-3",
+      inngestEventId: "evt-d2-3",
+      step: createStepHarness(),
+    });
+
+    const completed = statuses.get("run-d2-finished-hook-skipped");
+    expect(completed?.status).toBe("completed");
+    expect(completed?.finalization?.finishedHook?.outcome).toBe("skipped");
+    expect(completed?.finalization?.finishedHook?.nonCritical).toBe(true);
+    expect(completed?.finalization?.finishedHook?.idempotencyRequired).toBe(true);
+    expect(completed?.finalization?.finishedHook?.timeoutMs).toBeGreaterThan(0);
   });
 });
