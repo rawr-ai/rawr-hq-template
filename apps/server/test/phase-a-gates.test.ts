@@ -16,6 +16,21 @@ function visit(node: ts.Node, fn: (node: ts.Node) => void): void {
   node.forEachChild((child) => visit(child, fn));
 }
 
+function unwrapExpression(expression: ts.Expression): ts.Expression {
+  let current: ts.Expression = expression;
+  while (true) {
+    if (ts.isAsExpression(current) || ts.isParenthesizedExpression(current)) {
+      current = current.expression;
+      continue;
+    }
+    if (typeof ts.isSatisfiesExpression === "function" && ts.isSatisfiesExpression(current)) {
+      current = current.expression;
+      continue;
+    }
+    return current;
+  }
+}
+
 function propertyNameText(nameNode: ts.PropertyName | ts.PrivateIdentifier | undefined): string | undefined {
   if (!nameNode) return undefined;
   if (ts.isIdentifier(nameNode) || ts.isStringLiteral(nameNode)) return nameNode.text;
@@ -37,11 +52,11 @@ function hasNamedImport(sourceFile: ts.SourceFile, moduleName: string, importNam
 
 function collectPropertyAccessSegments(expression: ts.Expression): string[] {
   const segments: string[] = [];
-  let current: ts.Expression = expression;
+  let current: ts.Expression = unwrapExpression(expression);
 
   while (ts.isPropertyAccessExpression(current)) {
     segments.unshift(current.name.text);
-    current = current.expression;
+    current = unwrapExpression(current.expression);
   }
 
   if (ts.isIdentifier(current)) {
@@ -50,12 +65,17 @@ function collectPropertyAccessSegments(expression: ts.Expression): string[] {
   return segments;
 }
 
+function matchesPropertyAccessChain(expression: ts.Expression, segments: string[]): boolean {
+  const found = collectPropertyAccessSegments(expression);
+  if (found.length !== segments.length) return false;
+  return segments.every((segment, idx) => segment === found[idx]);
+}
+
 function hasPropertyAccessChain(sourceFile: ts.SourceFile, segments: string[]): boolean {
   let matched = false;
   visit(sourceFile, (node) => {
     if (matched || !ts.isPropertyAccessExpression(node)) return;
-    const found = collectPropertyAccessSegments(node);
-    if (found.length === segments.length && found.every((segment, idx) => segment === segments[idx])) {
+    if (matchesPropertyAccessChain(node, segments)) {
       matched = true;
     }
   });
@@ -77,20 +97,17 @@ function hasRouteRegistration(sourceFile: ts.SourceFile, routeLiteral: string): 
   return matched;
 }
 
-function hasRegisterOrpcManifestRouter(sourceFile: ts.SourceFile): boolean {
+function hasRegisterOrpcRoutesManifestRouter(sourceFile: ts.SourceFile): boolean {
   let matched = false;
   visit(sourceFile, (node) => {
     if (matched || !ts.isCallExpression(node) || !ts.isIdentifier(node.expression)) return;
     if (node.expression.text !== "registerOrpcRoutes" || node.arguments.length < 2) return;
-    const optionsArg = node.arguments[1];
+    const optionsArg = unwrapExpression(node.arguments[1]);
     if (!ts.isObjectLiteralExpression(optionsArg)) return;
     for (const property of optionsArg.properties) {
       if (!ts.isPropertyAssignment(property) || propertyNameText(property.name) !== "router") continue;
-      if (ts.isPropertyAccessExpression(property.initializer)) {
-        const chain = collectPropertyAccessSegments(property.initializer);
-        if (chain.join(".") === "rawrHqManifest.orpc.router") {
-          matched = true;
-        }
+      if (matchesPropertyAccessChain(property.initializer, ["rawrHqManifest", "orpc", "router"])) {
+        matched = true;
       }
     }
   });
@@ -102,12 +119,12 @@ function findConstStringArray(sourceFile: ts.SourceFile, variableName: string): 
     if (!ts.isVariableStatement(statement)) continue;
     for (const declaration of statement.declarationList.declarations) {
       if (!ts.isIdentifier(declaration.name) || declaration.name.text !== variableName || !declaration.initializer) continue;
-      const initializer =
-        ts.isAsExpression(declaration.initializer) || ts.isParenthesizedExpression(declaration.initializer)
-          ? declaration.initializer.expression
-          : declaration.initializer;
+      const initializer = unwrapExpression(declaration.initializer);
       if (!ts.isArrayLiteralExpression(initializer)) continue;
-      return initializer.elements.flatMap((element) => (ts.isStringLiteral(element) ? [element.text] : []));
+      return initializer.elements.flatMap((element) => {
+        const unwrapped = unwrapExpression(element);
+        return ts.isStringLiteral(unwrapped) ? [unwrapped.text] : [];
+      });
     }
   }
   return [];
@@ -121,7 +138,7 @@ describe("phase-a gate scaffold (server)", () => {
     expect(hasNamedImport(rawrAst, "../../../rawr.hq", "rawrHqManifest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/inngest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/workflows/*")).toBe(true);
-    expect(hasRegisterOrpcManifestRouter(rawrAst)).toBe(true);
+    expect(hasRegisterOrpcRoutesManifestRouter(rawrAst)).toBe(true);
     expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "triggerRouter"])).toBe(true);
     expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "bundleFactory"])).toBe(true);
     expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "serveHandlerFactory"])).toBe(true);
