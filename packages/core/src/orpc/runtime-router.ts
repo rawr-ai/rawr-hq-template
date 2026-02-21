@@ -1,4 +1,5 @@
 import {
+  RUN_FINALIZATION_CONTRACT_V1,
   ensureCoordinationStorage,
   getRunStatus,
   getRunTimeline,
@@ -202,6 +203,9 @@ function createCoordinationProcedures<Context extends RuntimeRouterContext>(
           traceLinks: defaultTraceLinks(context.baseUrl, runId, {
             inngestBaseUrl: context.runtime.inngestBaseUrl,
           }),
+          finalization: {
+            contract: RUN_FINALIZATION_CONTRACT_V1,
+          },
         };
 
         try {
