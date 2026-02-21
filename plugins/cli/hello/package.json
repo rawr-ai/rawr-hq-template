@@ -37,9 +37,7 @@
     "test": "vitest run"
   },
   "rawr": {
-    "templateRole": "fixture",
     "kind": "toolkit",
-    "channel": "A",
-    "publishTier": "blocked"
+    "capability": "hello"
   }
 }

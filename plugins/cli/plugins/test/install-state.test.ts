@@ -42,10 +42,8 @@ async function createWorkspace(root: string, input?: { pluginRootOverride?: stri
     name: CANONICAL_SYNC_PLUGIN_NAME,
     private: true,
     rawr: {
-      templateRole: "operational",
       kind: "toolkit",
-      channel: "A",
-      publishTier: "blocked",
+      capability: "plugins",
     },
     oclif: {
       commands: "./src/commands",
