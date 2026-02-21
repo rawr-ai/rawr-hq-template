@@ -40,8 +40,14 @@ type ParsedRunId =
     };
 
 type RawrOrpcContext = RawrBoundaryContext;
+type RawrOrpcRouter = ReturnType<typeof createOrpcRouter>;
+
+const RPC_CALLER_SURFACE_HEADER = "x-rawr-caller-surface";
+const RPC_ALLOWED_CALLER_SURFACES = new Set(["first-party", "internal", "in-process", "trusted-service", "cli"]);
+const RPC_DENIED_CALLER_SURFACES = new Set(["external", "third-party", "runtime-ingress"]);
 
 export type RegisterOrpcRoutesOptions = RawrBoundaryContextDeps & {
+  router?: RawrOrpcRouter;
   contextFactory?: (request: Request, deps: RawrBoundaryContextDeps) => RawrOrpcContext;
   onContextCreated?: (context: RawrOrpcContext) => void;
 };
@@ -74,6 +80,20 @@ function parseRunId(value: unknown): ParsedRunId {
 
 function generateRunId(): string {
   return `run-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function callerSurfaceFromRequest(request: Request): string | null {
+  const value = request.headers.get(RPC_CALLER_SURFACE_HEADER);
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase();
+  return normalized === "" ? null : normalized;
+}
+
+export function isRpcRequestAllowed(request: Request): boolean {
+  const callerSurface = callerSurfaceFromRequest(request);
+  if (!callerSurface) return false;
+  if (RPC_DENIED_CALLER_SURFACES.has(callerSurface)) return false;
+  return RPC_ALLOWED_CALLER_SURFACES.has(callerSurface);
 }
 
 function badRequest(code: string, message: string, data?: unknown): never {
@@ -307,7 +327,7 @@ export async function generateOrpcOpenApiSpec(baseUrl: string) {
 }
 
 export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: RegisterOrpcRoutesOptions): TApp {
-  const router = createOrpcRouter();
+  const router = options.router ?? createOrpcRouter();
   const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
   const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router);
   const contextDeps: RawrBoundaryContextDeps = {
@@ -340,6 +360,9 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/rpc",
     async (ctx) => {
       const request = ctx.request as Request;
+      if (!isRpcRequestAllowed(request)) {
+        return new Response("forbidden", { status: 403 });
+      }
       const context = contextFactory(request, contextDeps);
       options.onContextCreated?.(context);
       const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
@@ -352,6 +375,9 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/rpc/*",
     async (ctx) => {
       const request = ctx.request as Request;
+      if (!isRpcRequestAllowed(request)) {
+        return new Response("forbidden", { status: 403 });
+      }
       const context = contextFactory(request, contextDeps);
       options.onContextCreated?.(context);
       const result = await rpcHandler.handle(request, { prefix: "/rpc", context });

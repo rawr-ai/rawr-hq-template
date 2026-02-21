@@ -1,12 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { rawrHqManifest } from "../../../rawr.hq";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { AnyElysia } from "./plugins";
-import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
 import { createCoordinationRuntimeAdapter } from "./coordination";
-import { createOrpcRouter, registerOrpcRoutes } from "./orpc";
+import { registerOrpcRoutes } from "./orpc";
 import { createWorkflowBoundaryContext, type RawrBoundaryContextDeps } from "./workflows/context";
 
 export type RawrRoutesOptions = {
@@ -18,11 +18,16 @@ export type RawrRoutesOptions = {
 export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"] as const;
 
 const INNGEST_SIGNATURE_HEADERS = ["x-inngest-signature", "inngest-signature"] as const;
+const INNGEST_SIGNATURE_MAX_AGE_MS = 5 * 60 * 1000;
 const WORKFLOW_BASE_PATH = "/api/workflows";
 const WORKFLOW_CAPABILITY_PATHS = Object.entries(rawrHqManifest.workflows.capabilities).map(([capability, manifest]) => ({
   capability,
   pathPrefix: normalizeWorkflowPathPrefix(manifest.pathPrefix),
 }));
+type ParsedInngestSignature = Readonly<{
+  timestampSeconds: number;
+  signature: string;
+}>;
 
 function asUrl(value: string | undefined): string | undefined {
   if (!value) return undefined;
@@ -43,23 +48,82 @@ function resolveInngestBaseUrl(): string {
   );
 }
 
-function hasConfiguredIngressSigningKey(): boolean {
-  const signingKey = process.env.INNGEST_SIGNING_KEY;
-  return typeof signingKey === "string" && signingKey.trim() !== "";
+function configuredIngressSigningKeys(): string[] {
+  const signingKey = process.env.INNGEST_SIGNING_KEY?.trim() ?? "";
+  const fallback = process.env.INNGEST_SIGNING_KEY_FALLBACK?.trim() ?? "";
+
+  const keys = [signingKey, fallback].filter((value) => value !== "");
+  return [...new Set(keys)];
 }
 
-function hasIngressSignatureHeader(request: Request): boolean {
+function ingressSignatureHeader(request: Request): string | null {
   for (const header of INNGEST_SIGNATURE_HEADERS) {
     const value = request.headers.get(header);
     if (typeof value === "string" && value.trim() !== "") {
+      return value.trim();
+    }
+  }
+  return null;
+}
+
+function parseIngressSignature(value: string): ParsedInngestSignature | null {
+  const params = new URLSearchParams(value);
+  const timestampRaw = params.get("t");
+  const signature = params.get("s");
+  if (!timestampRaw || !signature) return null;
+
+  const timestampSeconds = Number.parseInt(timestampRaw, 10);
+  if (!Number.isFinite(timestampSeconds) || timestampSeconds <= 0) return null;
+
+  const normalizedSignature = signature.trim().toLowerCase();
+  if (normalizedSignature === "") return null;
+
+  return {
+    timestampSeconds,
+    signature: normalizedSignature,
+  };
+}
+
+function isExpiredIngressSignature(timestampSeconds: number): boolean {
+  const signedAtMs = timestampSeconds * 1000;
+  return Date.now() - signedAtMs > INNGEST_SIGNATURE_MAX_AGE_MS;
+}
+
+function normalizeSigningKey(signingKey: string): string {
+  return signingKey.replace(/signkey-\w+-/u, "");
+}
+
+function signIngressPayload(body: string, timestampSeconds: number, signingKey: string): string {
+  return createHmac("sha256", normalizeSigningKey(signingKey)).update(body).update(String(timestampSeconds)).digest("hex");
+}
+
+function signaturesMatch(expected: string, actual: string): boolean {
+  const expectedHex = Buffer.from(expected, "hex");
+  const actualHex = Buffer.from(actual, "hex");
+  if (expectedHex.length === 0 || actualHex.length === 0 || expectedHex.length !== actualHex.length) {
+    return false;
+  }
+  return timingSafeEqual(expectedHex, actualHex);
+}
+
+export async function verifyInngestIngressRequest(request: Request): Promise<boolean> {
+  const signingKeys = configuredIngressSigningKeys();
+  if (signingKeys.length === 0) return false;
+
+  const signatureHeader = ingressSignatureHeader(request);
+  if (!signatureHeader) return false;
+
+  const signature = parseIngressSignature(signatureHeader);
+  if (!signature || isExpiredIngressSignature(signature.timestampSeconds)) return false;
+
+  const requestBody = await request.clone().text();
+  for (const key of signingKeys) {
+    const expectedSignature = signIngressPayload(requestBody, signature.timestampSeconds, key);
+    if (signaturesMatch(expectedSignature, signature.signature)) {
       return true;
     }
   }
   return false;
-}
-
-export function verifyInngestIngressRequest(request: Request): boolean {
-  return hasConfiguredIngressSigningKey() && hasIngressSignatureHeader(request);
 }
 
 function normalizeWorkflowPathPrefix(pathPrefix: string): string {
@@ -150,24 +214,21 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     repoRoot: opts.repoRoot,
     inngestBaseUrl: resolveInngestBaseUrl(),
   });
-  const inngestBundle = createCoordinationInngestFunction({ runtime });
-  const inngestHandler = createInngestServeHandler({
-    client: inngestBundle.client,
-    functions: inngestBundle.functions,
-  });
+  const inngestBundle = rawrHqManifest.inngest.bundleFactory(runtime);
+  const inngestHandler = rawrHqManifest.inngest.serveHandlerFactory(inngestBundle);
   const boundaryContextDeps: RawrBoundaryContextDeps = {
     repoRoot: opts.repoRoot,
     baseUrl: opts.baseUrl ?? "http://localhost:3000",
     runtime,
     inngestClient: inngestBundle.client,
   };
-  const workflowOpenApiHandler = new OpenAPIHandler(createOrpcRouter());
+  const workflowOpenApiHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
 
   app.all(
     "/api/inngest",
     async ({ request }) => {
       const req = request as Request;
-      if (!verifyInngestIngressRequest(req)) {
+      if (!(await verifyInngestIngressRequest(req))) {
         return new Response("forbidden", { status: 403 });
       }
       return inngestHandler(req);
@@ -194,7 +255,10 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     { parse: "none" },
   );
 
-  registerOrpcRoutes(app, boundaryContextDeps);
+  registerOrpcRoutes(app, {
+    ...boundaryContextDeps,
+    router: rawrHqManifest.orpc.router,
+  });
 
   return app;
 }
