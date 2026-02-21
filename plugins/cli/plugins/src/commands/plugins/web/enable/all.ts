@@ -7,7 +7,7 @@ import { RawrCommand } from "@rawr/core";
 import { enablePlugin as persistEnablePlugin } from "@rawr/state";
 
 import { loadSecurityModule, missingSecurityFn } from "../../../../lib/security";
-import { filterOperationalPlugins, findWorkspaceRoot, listWorkspacePlugins } from "../../../../lib/workspace-plugins";
+import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../../lib/workspace-plugins";
 
 type EnableAttempt = {
   pluginId: string;
@@ -44,10 +44,6 @@ export default class PluginsWebEnableAll extends RawrCommand {
     }),
     staged: Flags.boolean({ description: "Gate enablement based on staged scan", default: false }),
     force: Flags.boolean({ description: "Override gating failure (recorded later)", default: false }),
-    "allow-non-operational": Flags.boolean({
-      description: "Include fixture/example plugins (default: true)",
-      default: true,
-    }),
   } as const;
 
   private hasExplicitRiskFlag(argv: string[]): boolean {
@@ -61,7 +57,6 @@ export default class PluginsWebEnableAll extends RawrCommand {
     const mode: "staged" | "repo" = flags.staged ? "staged" : "repo";
     let riskTolerance = String(flags.risk);
     const force = Boolean(flags.force);
-    const allowNonOperational = Boolean((flags as any)["allow-non-operational"]);
 
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     if (!workspaceRoot) {
@@ -79,7 +74,7 @@ export default class PluginsWebEnableAll extends RawrCommand {
     }
 
     const all = await listWorkspacePlugins(workspaceRoot);
-    const visible = filterOperationalPlugins(all, allowNonOperational);
+    const visible = filterPluginsByKind(all, "web");
 
     const security = await loadSecurityModule();
     const gateEnable = security.gateEnable;
@@ -94,19 +89,13 @@ export default class PluginsWebEnableAll extends RawrCommand {
     const skipped: { pluginId: string; reason: string }[] = [];
 
     for (const plugin of visible) {
-      const channelHasB = plugin.channel === "B" || plugin.channel === "both";
-      if (channelHasB) {
-        planned.push({ pluginId: plugin.id });
-        continue;
-      }
-
       const pkgJson = await readJsonFile(path.join(plugin.absPath, "package.json"));
       if (hasRuntimeExports(pkgJson)) {
         planned.push({ pluginId: plugin.id, reason: "has runtime exports" });
         continue;
       }
 
-      skipped.push({ pluginId: plugin.id, reason: "not a Channel B runtime plugin" });
+      skipped.push({ pluginId: plugin.id, reason: "plugin package has no runtime exports (./server or ./web)" });
     }
 
     const attempts: EnableAttempt[] = [];

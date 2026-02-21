@@ -22,10 +22,6 @@ export default class PluginsWebEnable extends RawrCommand {
     }),
     staged: Flags.boolean({ description: "Gate enablement based on staged scan", default: false }),
     force: Flags.boolean({ description: "Override gating failure (recorded later)", default: false }),
-    "allow-non-operational": Flags.boolean({
-      description: "Allow enabling fixture/example plugins",
-      default: false,
-    }),
   } as const;
 
   private hasExplicitRiskFlag(argv: string[]): boolean {
@@ -39,7 +35,6 @@ export default class PluginsWebEnable extends RawrCommand {
     const mode: "staged" | "repo" = flags.staged ? "staged" : "repo";
     let riskTolerance = String(flags.risk);
     const force = Boolean(flags.force);
-    const allowNonOperational = Boolean((flags as any)["allow-non-operational"]);
 
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     if (!workspaceRoot) {
@@ -68,14 +63,14 @@ export default class PluginsWebEnable extends RawrCommand {
       return;
     }
 
-    if (plugin.templateRole !== "operational" && !allowNonOperational) {
+    if (plugin.kind !== "web") {
       const result = this.fail(
-        `Plugin ${plugin.id} is marked ${plugin.templateRole}. Re-run with --allow-non-operational to enable explicitly.`,
+        `Plugin ${plugin.id} is rawr.kind=${plugin.kind}; rawr plugins web enable requires rawr.kind=web.`,
         {
-          code: "PLUGIN_ROLE_BLOCKED",
+          code: "PLUGIN_KIND_MISMATCH",
           details: {
             pluginId: plugin.id,
-            templateRole: plugin.templateRole,
+            kind: plugin.kind,
           },
         },
       );

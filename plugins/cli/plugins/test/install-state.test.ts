@@ -141,7 +141,7 @@ describe("install-state drift engine", () => {
     expect(report.actions.some((action) => action.command === "rawr plugins uninstall @rawr/plugin-agent-sync")).toBe(true);
   });
 
-  it("prefers global owner root when present and valid", async () => {
+  it("defaults canonical workspace root to the instance-local workspace", async () => {
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-install-state-owner-"));
     tempDirs.push(tmp);
 
@@ -162,9 +162,35 @@ describe("install-state drift engine", () => {
       runtimePlugins: [{ name: CANONICAL_SYNC_PLUGIN_NAME, alias: CANONICAL_SYNC_PLUGIN_NAME, type: "core", root: workspaceCurrent.workspaceRoot }],
     }));
 
+    expect(report.canonicalWorkspaceSource).toBe("workspace-root");
+    expect(report.canonicalWorkspaceRoot).toBe(path.resolve(workspaceCurrent.workspaceRoot));
+    expect(report.status).toBe("IN_SYNC");
+    expect(report.issues).toEqual([]);
+  });
+
+  it("uses global-owner root only when explicitly requested", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-install-state-owner-explicit-"));
+    tempDirs.push(tmp);
+
+    const workspaceCurrent = await createWorkspace(path.join(tmp, "current-repo"));
+    const workspaceOwner = await createWorkspace(path.join(tmp, "owner-repo"));
+
+    const oclifDataDir = path.join(tmp, ".local", "share", "@rawr", "cli");
+    await createPluginManagerManifest(oclifDataDir, [
+      { name: CANONICAL_SYNC_PLUGIN_NAME, type: "link", root: workspaceCurrent.pluginRoot },
+    ]);
+
+    await mkdirp(path.join(tmp, ".rawr"));
+    await fs.writeFile(path.join(tmp, ".rawr", "global-rawr-owner-path"), `${workspaceOwner.workspaceRoot}\n`, "utf8");
+
+    const report = await withHome(tmp, async () => assessInstallState({
+      workspaceRoot: workspaceCurrent.workspaceRoot,
+      oclifDataDir,
+      allowGlobalOwnerFallback: true,
+      runtimePlugins: [{ name: CANONICAL_SYNC_PLUGIN_NAME, alias: CANONICAL_SYNC_PLUGIN_NAME, type: "core", root: workspaceCurrent.workspaceRoot }],
+    }));
+
     expect(report.canonicalWorkspaceSource).toBe("global-owner");
     expect(report.canonicalWorkspaceRoot).toBe(path.resolve(workspaceOwner.workspaceRoot));
-    expect(report.status).toBe("DRIFT_DETECTED");
-    expect(report.issues.some((issue) => issue.kind === "path_mismatch")).toBe(true);
   });
 });
