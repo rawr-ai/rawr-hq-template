@@ -1,27 +1,5 @@
 #!/usr/bin/env bun
-import fs from "node:fs/promises";
-import path from "node:path";
-
-const root = process.cwd();
-
-function assertCondition(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-async function readFile(relPath) {
-  const absPath = path.join(root, relPath);
-  return fs.readFile(absPath, "utf8");
-}
-
-async function mustExist(relPath) {
-  const absPath = path.join(root, relPath);
-  try {
-    const stat = await fs.stat(absPath);
-    assertCondition(stat.isFile(), `${relPath} must be a file`);
-  } catch {
-    throw new Error(`missing file: ${relPath}`);
-  }
-}
+import { assertCondition, mustExist, readFile } from "./_verify-utils.mjs";
 
 function hasExportedFunction(source, fnName) {
   return new RegExp(`export\\s+async\\s+function\\s+${fnName}\\s*\\(`, "m").test(source) ||
