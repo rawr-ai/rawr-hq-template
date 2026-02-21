@@ -1,0 +1,40 @@
+{
+  "criterion": "d4-finished-hook-scan",
+  "triggerRule": "state-mutating or external finished-hook side effects without explicit idempotent/non-critical contract",
+  "triggered": false,
+  "summary": "No finished-hook guardrail drift detected in D2-owned contract/runtime assertions.",
+  "checks": [
+    {
+      "id": "types-finalization-contract",
+      "message": "types.ts encodes non-exactly-once + idempotent/non-critical finalization contract",
+      "pass": true
+    },
+    {
+      "id": "schemas-finalization-contract",
+      "message": "schemas.ts exposes additive optional finalization contract",
+      "pass": true
+    },
+    {
+      "id": "adapter-guardrails",
+      "message": "adapter.ts executes finished-hook side effects through guardrails",
+      "pass": true
+    },
+    {
+      "id": "adapter-non-critical-failure",
+      "message": "adapter.ts captures failed finished-hook outcomes without escalating run failure",
+      "pass": true
+    },
+    {
+      "id": "runtime-router-fallback-contract",
+      "message": "runtime-router queue fallback includes explicit finalization contract",
+      "pass": true
+    },
+    {
+      "id": "guardrails-runtime-tests",
+      "message": "runtime tests assert non-critical/idempotent finished-hook behavior",
+      "pass": true
+    }
+  ],
+  "failedCheckIds": [],
+  "generatedAt": "2026-02-21T13:06:22.854Z"
+}
