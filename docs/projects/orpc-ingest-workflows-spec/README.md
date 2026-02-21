@@ -43,7 +43,7 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 37. `PHASE_E_WORKBREAKDOWN.yaml` — machine-readable Phase E slice/owner/file/gate map.
 38. `PHASE_E_REVIEW_DISPOSITION.md` — planning review disposition and readiness decision for runtime kickoff.
 39. `PHASE_E_PLANNING_HANDOFF.md` — planning-to-runtime handoff contract for Phase E execution.
-40. `_phase-e-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (E4/E5/E5A dispositions, E6 docs+cleanup outputs, E7 readiness, execution report, and final handoff outputs).
+40. `_phase-e-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (E4/E5/E5A dispositions, E6 docs+cleanup outputs, E7 readiness, execution report, final handoff outputs, and steward final-gate outputs).
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -99,6 +99,9 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase E final handoff summary: `_phase-e-runtime-execution-pass-01-2026-02-21/FINAL_PHASE_E_HANDOFF.md`
 - Phase E readiness closure scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_6_SCRATCHPAD.md`
 - Phase E readiness closure report: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_6_FINAL_E7_READINESS_AND_HANDOFF.md`
+- Phase E steward structural pass plan: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_PLAN_VERBATIM.md`
+- Phase E steward structural pass scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_SCRATCHPAD.md`
+- Phase E steward structural pass final check: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_FINAL_E7_STEWARD_STRUCTURAL_CHECK.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 

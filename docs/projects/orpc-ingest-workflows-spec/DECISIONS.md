@@ -220,6 +220,7 @@ Implementation-state snapshots are tracked in phase execution artifacts, not in 
 - `closure_evidence`:
   - `packages/coordination-inngest/src/adapter.ts`
   - `packages/coordination/src/types.ts`
+  - `packages/coordination/src/orpc/schemas.ts`
   - `packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts`
   - `scripts/phase-e/verify-e2-finished-hook-policy.mjs`
   - `scripts/phase-e/verify-e3-evidence-integrity.mjs`

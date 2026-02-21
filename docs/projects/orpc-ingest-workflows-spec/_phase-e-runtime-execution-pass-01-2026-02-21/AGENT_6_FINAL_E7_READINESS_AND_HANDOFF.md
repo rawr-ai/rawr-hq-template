@@ -39,7 +39,7 @@ E7 closure is complete on `codex/phase-e-e7-phase-f-readiness`: Phase F readines
 ## Unresolved Questions
 1. Should E6 and E7 be submitted as two separate docs-only PRs, or should E7 absorb E6 for a single terminal stack PR?
 
-## Closure summary
+## Closure outcome recap
 1. E7 readiness and handoff artifacts are published and coherent.
 2. Required verification commands passed.
 3. Canonical status docs now reflect full Phase E closure (`E1..E7`).
