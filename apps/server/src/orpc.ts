@@ -14,7 +14,7 @@ import {
 } from "@rawr/coordination/node";
 import { queueCoordinationRunWithInngest } from "@rawr/coordination-inngest";
 import { createDeskEvent, defaultTraceLinks } from "@rawr/coordination-observability";
-import { hqContract } from "@rawr/core/orpc";
+import { hqContract, workflowTriggerContract } from "@rawr/core/orpc";
 import { getRepoState } from "@rawr/state";
 import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
@@ -49,6 +49,8 @@ export type RegisterOrpcRoutesOptions = RawrBoundaryContextDeps & {
   onContextCreated?: (context: RawrOrpcContext) => void;
   rpcAuthPolicy?: RpcAuthPolicy;
 };
+
+type CoordinationContractImplementation = ReturnType<typeof implement<typeof hqContract, RawrOrpcContext>>["coordination"];
 
 function toJsonValue(value: unknown): JsonValue {
   if (value === undefined) return null;
@@ -104,174 +106,178 @@ function internalError(code: string, message: string, data?: unknown): never {
   });
 }
 
+function createCoordinationProcedures(coordination: CoordinationContractImplementation) {
+  return {
+    listWorkflows: coordination.listWorkflows.handler(async ({ context }) => {
+      await ensureCoordinationStorage(context.repoRoot);
+      const workflows = await listWorkflows(context.repoRoot);
+      return { workflows };
+    }),
+
+    saveWorkflow: coordination.saveWorkflow.handler(async ({ context, input }) => {
+      await ensureCoordinationStorage(context.repoRoot);
+      const validation = validateWorkflow(input.workflow);
+      if (!validation.ok) {
+        badRequest("WORKFLOW_VALIDATION_FAILED", "Workflow validation failed", validation);
+      }
+
+      await saveWorkflow(context.repoRoot, input.workflow);
+      return { workflow: input.workflow };
+    }),
+
+    getWorkflow: coordination.getWorkflow.handler(async ({ context, input }) => {
+      await ensureCoordinationStorage(context.repoRoot);
+      const workflowId = parseCoordinationId(input.workflowId);
+      if (!workflowId) {
+        badRequest("INVALID_WORKFLOW_ID", "Invalid workflowId format", {
+          workflowId: typeof input.workflowId === "string" ? input.workflowId : null,
+        });
+      }
+
+      const workflow = await getWorkflow(context.repoRoot, workflowId);
+      if (!workflow) {
+        notFound("WORKFLOW_NOT_FOUND", "workflow not found", { workflowId });
+      }
+
+      return { workflow };
+    }),
+
+    validateWorkflow: coordination.validateWorkflow.handler(async ({ context, input }) => {
+      await ensureCoordinationStorage(context.repoRoot);
+      const workflowId = parseCoordinationId(input.workflowId);
+      if (!workflowId) {
+        badRequest("INVALID_WORKFLOW_ID", "Invalid workflowId format", {
+          workflowId: typeof input.workflowId === "string" ? input.workflowId : null,
+        });
+      }
+
+      const workflow = await getWorkflow(context.repoRoot, workflowId);
+      if (!workflow) {
+        notFound("WORKFLOW_NOT_FOUND", "workflow not found", { workflowId });
+      }
+
+      return {
+        workflowId,
+        validation: validateWorkflow(workflow),
+      };
+    }),
+
+    queueRun: coordination.queueRun.handler(async ({ context, input }) => {
+      await ensureCoordinationStorage(context.repoRoot);
+      const workflowId = parseCoordinationId(input.workflowId);
+      if (!workflowId) {
+        badRequest("INVALID_WORKFLOW_ID", "Invalid workflowId format", {
+          workflowId: typeof input.workflowId === "string" ? input.workflowId : null,
+        });
+      }
+
+      const workflow = await getWorkflow(context.repoRoot, workflowId);
+      if (!workflow) {
+        notFound("WORKFLOW_NOT_FOUND", "workflow not found", { workflowId });
+      }
+
+      const parsedRunId = parseRunId(input.runId);
+      if (!parsedRunId.ok) {
+        badRequest("INVALID_RUN_ID", parsedRunId.message, {
+          runId: typeof parsedRunId.value === "string" ? parsedRunId.value : null,
+        });
+      }
+
+      const runId = parsedRunId.runId;
+
+      try {
+        const result = await queueCoordinationRunWithInngest({
+          client: context.inngestClient,
+          runtime: context.runtime,
+          workflow,
+          runId,
+          input: toJsonValue(input.input ?? {}),
+          baseUrl: context.baseUrl,
+        });
+
+        return {
+          run: result.run,
+          eventIds: result.eventIds,
+        };
+      } catch (err) {
+        const failedAt = new Date().toISOString();
+        const failedRun: RunStatusV1 = {
+          runId,
+          workflowId,
+          workflowVersion: workflow.version,
+          status: "failed",
+          startedAt: failedAt,
+          finishedAt: failedAt,
+          input: toJsonValue(input.input ?? {}),
+          error: err instanceof Error ? err.message : String(err),
+          traceLinks: defaultTraceLinks(context.baseUrl, runId, {
+            inngestBaseUrl: context.runtime.inngestBaseUrl,
+          }),
+        };
+
+        try {
+          await context.runtime.saveRunStatus(failedRun);
+          await context.runtime.appendTimeline(
+            runId,
+            createDeskEvent({
+              runId,
+              workflowId,
+              type: "run.failed",
+              status: "failed",
+              detail: failedRun.error,
+              payload: failedRun.input,
+            }),
+          );
+        } catch {
+          // Preserve original queue failure even if failure persistence fails.
+        }
+
+        internalError("RUN_QUEUE_FAILED", failedRun.error ?? "Workflow run failed", { run: failedRun });
+      }
+    }),
+
+    getRunStatus: coordination.getRunStatus.handler(async ({ context, input }) => {
+      await ensureCoordinationStorage(context.repoRoot);
+      const runId = parseCoordinationId(input.runId);
+      if (!runId) {
+        badRequest("INVALID_RUN_ID", "Invalid runId format", {
+          runId: typeof input.runId === "string" ? input.runId : null,
+        });
+      }
+
+      const run = await getRunStatus(context.repoRoot, runId);
+      if (!run) {
+        notFound("RUN_NOT_FOUND", "run not found", { runId });
+      }
+
+      return { run };
+    }),
+
+    getRunTimeline: coordination.getRunTimeline.handler(async ({ context, input }) => {
+      await ensureCoordinationStorage(context.repoRoot);
+      const runId = parseCoordinationId(input.runId);
+      if (!runId) {
+        badRequest("INVALID_RUN_ID", "Invalid runId format", {
+          runId: typeof input.runId === "string" ? input.runId : null,
+        });
+      }
+
+      const run = await getRunStatus(context.repoRoot, runId);
+      if (!run) {
+        notFound("RUN_NOT_FOUND", "run not found", { runId });
+      }
+
+      const timeline = await getRunTimeline(context.repoRoot, runId);
+      return { runId, timeline };
+    }),
+  };
+}
+
 export function createOrpcRouter() {
   const os = implement<typeof hqContract, RawrOrpcContext>(hqContract);
 
   return os.router({
-    coordination: os.coordination.router({
-      listWorkflows: os.coordination.listWorkflows.handler(async ({ context }) => {
-        await ensureCoordinationStorage(context.repoRoot);
-        const workflows = await listWorkflows(context.repoRoot);
-        return { workflows };
-      }),
-
-      saveWorkflow: os.coordination.saveWorkflow.handler(async ({ context, input }) => {
-        await ensureCoordinationStorage(context.repoRoot);
-        const validation = validateWorkflow(input.workflow);
-        if (!validation.ok) {
-          badRequest("WORKFLOW_VALIDATION_FAILED", "Workflow validation failed", validation);
-        }
-
-        await saveWorkflow(context.repoRoot, input.workflow);
-        return { workflow: input.workflow };
-      }),
-
-      getWorkflow: os.coordination.getWorkflow.handler(async ({ context, input }) => {
-        await ensureCoordinationStorage(context.repoRoot);
-        const workflowId = parseCoordinationId(input.workflowId);
-        if (!workflowId) {
-          badRequest("INVALID_WORKFLOW_ID", "Invalid workflowId format", {
-            workflowId: typeof input.workflowId === "string" ? input.workflowId : null,
-          });
-        }
-
-        const workflow = await getWorkflow(context.repoRoot, workflowId);
-        if (!workflow) {
-          notFound("WORKFLOW_NOT_FOUND", "workflow not found", { workflowId });
-        }
-
-        return { workflow };
-      }),
-
-      validateWorkflow: os.coordination.validateWorkflow.handler(async ({ context, input }) => {
-        await ensureCoordinationStorage(context.repoRoot);
-        const workflowId = parseCoordinationId(input.workflowId);
-        if (!workflowId) {
-          badRequest("INVALID_WORKFLOW_ID", "Invalid workflowId format", {
-            workflowId: typeof input.workflowId === "string" ? input.workflowId : null,
-          });
-        }
-
-        const workflow = await getWorkflow(context.repoRoot, workflowId);
-        if (!workflow) {
-          notFound("WORKFLOW_NOT_FOUND", "workflow not found", { workflowId });
-        }
-
-        return {
-          workflowId,
-          validation: validateWorkflow(workflow),
-        };
-      }),
-
-      queueRun: os.coordination.queueRun.handler(async ({ context, input }) => {
-        await ensureCoordinationStorage(context.repoRoot);
-        const workflowId = parseCoordinationId(input.workflowId);
-        if (!workflowId) {
-          badRequest("INVALID_WORKFLOW_ID", "Invalid workflowId format", {
-            workflowId: typeof input.workflowId === "string" ? input.workflowId : null,
-          });
-        }
-
-        const workflow = await getWorkflow(context.repoRoot, workflowId);
-        if (!workflow) {
-          notFound("WORKFLOW_NOT_FOUND", "workflow not found", { workflowId });
-        }
-
-        const parsedRunId = parseRunId(input.runId);
-        if (!parsedRunId.ok) {
-          badRequest("INVALID_RUN_ID", parsedRunId.message, {
-            runId: typeof parsedRunId.value === "string" ? parsedRunId.value : null,
-          });
-        }
-
-        const runId = parsedRunId.runId;
-
-        try {
-          const result = await queueCoordinationRunWithInngest({
-            client: context.inngestClient,
-            runtime: context.runtime,
-            workflow,
-            runId,
-            input: toJsonValue(input.input ?? {}),
-            baseUrl: context.baseUrl,
-          });
-
-          return {
-            run: result.run,
-            eventIds: result.eventIds,
-          };
-        } catch (err) {
-          const failedAt = new Date().toISOString();
-          const failedRun: RunStatusV1 = {
-            runId,
-            workflowId,
-            workflowVersion: workflow.version,
-            status: "failed",
-            startedAt: failedAt,
-            finishedAt: failedAt,
-            input: toJsonValue(input.input ?? {}),
-            error: err instanceof Error ? err.message : String(err),
-            traceLinks: defaultTraceLinks(context.baseUrl, runId, {
-              inngestBaseUrl: context.runtime.inngestBaseUrl,
-            }),
-          };
-
-          try {
-            await context.runtime.saveRunStatus(failedRun);
-            await context.runtime.appendTimeline(
-              runId,
-              createDeskEvent({
-                runId,
-                workflowId,
-                type: "run.failed",
-                status: "failed",
-                detail: failedRun.error,
-                payload: failedRun.input,
-              }),
-            );
-          } catch {
-            // Preserve original queue failure even if failure persistence fails.
-          }
-
-          internalError("RUN_QUEUE_FAILED", failedRun.error ?? "Workflow run failed", { run: failedRun });
-        }
-      }),
-
-      getRunStatus: os.coordination.getRunStatus.handler(async ({ context, input }) => {
-        await ensureCoordinationStorage(context.repoRoot);
-        const runId = parseCoordinationId(input.runId);
-        if (!runId) {
-          badRequest("INVALID_RUN_ID", "Invalid runId format", {
-            runId: typeof input.runId === "string" ? input.runId : null,
-          });
-        }
-
-        const run = await getRunStatus(context.repoRoot, runId);
-        if (!run) {
-          notFound("RUN_NOT_FOUND", "run not found", { runId });
-        }
-
-        return { run };
-      }),
-
-      getRunTimeline: os.coordination.getRunTimeline.handler(async ({ context, input }) => {
-        await ensureCoordinationStorage(context.repoRoot);
-        const runId = parseCoordinationId(input.runId);
-        if (!runId) {
-          badRequest("INVALID_RUN_ID", "Invalid runId format", {
-            runId: typeof input.runId === "string" ? input.runId : null,
-          });
-        }
-
-        const run = await getRunStatus(context.repoRoot, runId);
-        if (!run) {
-          notFound("RUN_NOT_FOUND", "run not found", { runId });
-        }
-
-        const timeline = await getRunTimeline(context.repoRoot, runId);
-        return { runId, timeline };
-      }),
-    }),
+    coordination: os.coordination.router(createCoordinationProcedures(os.coordination)),
 
     state: os.state.router({
       getRuntimeState: os.state.getRuntimeState.handler(async ({ context }) => {
@@ -279,6 +285,14 @@ export function createOrpcRouter() {
         return { state };
       }),
     }),
+  });
+}
+
+export function createWorkflowTriggerRouter() {
+  const os = implement<typeof workflowTriggerContract, RawrOrpcContext>(workflowTriggerContract);
+
+  return os.router({
+    coordination: os.coordination.router(createCoordinationProcedures(os.coordination)),
   });
 }
 
