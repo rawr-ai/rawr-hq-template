@@ -1,0 +1,31 @@
+# AGENT 1 Scratchpad (C1)
+
+- [2026-02-21T08:44:04Z] Confirmed target worktree `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-phase-c-runtime-implementation` on branch `codex/phase-c-c1-storage-lock-redesign`.
+- [2026-02-21T08:44:04Z] Introspected required skills:
+  - `/Users/mateicanavra/.codex-rawr/skills/typescript/SKILL.md`
+  - `/Users/mateicanavra/.codex-rawr/skills/system-design/SKILL.md`
+  - `/Users/mateicanavra/.codex-rawr/skills/domain-design/SKILL.md`
+  - `/Users/mateicanavra/.codex-rawr/skills/solution-design/SKILL.md`
+  - `/Users/mateicanavra/.codex-rawr/skills/rawr-hq-orientation/SKILL.md`
+- [2026-02-21T08:44:04Z] Read required grounding corpus documents (`PHASE_C_EXECUTION_PACKET.md`, `PHASE_C_IMPLEMENTATION_SPEC.md`, `PHASE_C_ACCEPTANCE_GATES.md`, `ARCHITECTURE.md`, `DECISIONS.md`).
+- [2026-02-21T08:44:04Z] Wrote `AGENT_1_PLAN_VERBATIM.md` before substantive runtime edits.
+- [2026-02-21T08:48:44Z] User interruption received; resumed with only `packages/state/src/types.ts` modified.
+- [2026-02-21T08:51:49Z] Implemented lock-backed atomic mutation seam in `packages/state/src/repo-state.ts` (lock file, stale lock cleanup, atomic temp-file rename, local queue serialization).
+- [2026-02-21T08:51:49Z] Added additive exports/types in `packages/state/src/index.ts` + `packages/state/src/types.ts`.
+- [2026-02-21T08:51:49Z] Added required C1 tests:
+  - `packages/state/test/repo-state.concurrent.test.ts`
+  - `packages/coordination/test/storage-lock-cross-instance.test.ts`
+  - `apps/server/test/storage-lock-route-guard.test.ts`
+- [2026-02-21T08:51:49Z] Added static contract gate `scripts/phase-c/verify-storage-lock-contract.mjs` and wired C1 gate commands in root `package.json`.
+- [2026-02-21T09:01:54Z] Installed missing local dependencies via `bun install` (required to resolve `vitest`/`typescript` in this worktree).
+- [2026-02-21T09:01:54Z] Passed static contract gate: `bun scripts/phase-c/verify-storage-lock-contract.mjs`.
+- [2026-02-21T09:01:54Z] First quick-gate attempt failed due default 5s test timeout in cross-instance test.
+- [2026-02-21T09:01:54Z] Fixed by setting explicit timeout (`20_000`) on `packages/coordination/test/storage-lock-cross-instance.test.ts`.
+- [2026-02-21T09:01:54Z] Re-ran and passed:
+  - `bun run phase-c:gate:c1-storage-lock-runtime`
+  - `bun run phase-c:c1:quick`
+  - `bunx vitest run --project hq packages/hq/test/install-state.test.ts`
+  - `bunx vitest run --project plugin-plugins plugins/cli/plugins/test/install-state.test.ts`
+- [2026-02-21T09:04:42Z] Normalized execution artifacts and wrote final implementation report: `AGENT_1_FINAL_C1_IMPLEMENTATION.md`.
+- [2026-02-21T09:10:14Z] Identified intermittent flake risk source: contention-heavy route-guard test used default Vitest 5s timeout while sibling contention tests had explicit extended budgets.
+- [2026-02-21T09:10:14Z] Patched `apps/server/test/storage-lock-route-guard.test.ts` to set explicit timeout `20_000ms` for the contention regression case; assertions and runtime semantics unchanged.

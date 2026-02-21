@@ -7,3 +7,18 @@ export type RepoState = {
   };
 };
 
+export type RepoStateMutator = (current: RepoState) => RepoState | Promise<RepoState>;
+
+export type RepoStateMutationOptions = {
+  lockTimeoutMs?: number;
+  retryDelayMs?: number;
+  staleLockMs?: number;
+};
+
+export type RepoStateMutationResult = {
+  state: RepoState;
+  statePath: string;
+  lockPath: string;
+  attempts: number;
+  waitedMs: number;
+};
