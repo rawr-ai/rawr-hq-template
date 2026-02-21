@@ -54,7 +54,12 @@
     "phase-c:gate:c3-distribution-contract": "bun scripts/phase-c/verify-distribution-instance-lifecycle.mjs",
     "phase-c:gate:c3-distribution-runtime": "bunx vitest run --project hq packages/hq/test/instance-alias-isolation.test.ts && bunx vitest run --project plugin-plugins plugins/cli/plugins/test/distribution-alias-lifecycle.test.ts",
     "phase-c:c3:quick": "bun run phase-c:gate:drift-core && bun run phase-c:gate:c3-distribution-contract && bun run phase-c:gate:c3-distribution-runtime",
-    "phase-c:c3:full": "bun run phase-c:c3:quick && bun run phase-a:gate:legacy-metadata-hard-delete-static-guard"
+    "phase-c:c3:full": "bun run phase-c:c3:quick && bun run phase-a:gate:legacy-metadata-hard-delete-static-guard",
+    "phase-d:gate:drift-core": "bun run phase-c:gate:drift-core",
+    "phase-d:gate:d1-middleware-dedupe-contract": "bun scripts/phase-d/verify-d1-middleware-dedupe-contract.mjs",
+    "phase-d:gate:d1-middleware-dedupe-runtime": "bunx vitest run --project server apps/server/test/middleware-dedupe.test.ts",
+    "phase-d:d1:quick": "bun run phase-d:gate:drift-core && bun run phase-d:gate:d1-middleware-dedupe-contract && bun run phase-d:gate:d1-middleware-dedupe-runtime",
+    "phase-d:d1:full": "bun run phase-d:d1:quick && bunx vitest run --project server apps/server/test/rawr.test.ts"
   },
   "overrides": {
     "npm": "11.9.0",
