@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { filterOperationalPlugins, resolvePluginId, type WorkspacePlugin } from "../src/workspace";
+import { filterPluginsByKind, resolvePluginId, type WorkspacePlugin } from "../src/workspace";
 
 describe("@rawr/hq workspace helpers", () => {
   const plugins: WorkspacePlugin[] = [
@@ -11,25 +11,19 @@ describe("@rawr/hq workspace helpers", () => {
       absPath: "/repo/plugins/web/alpha",
       kind: "web",
       capability: "alpha",
-      templateRole: "operational",
-      channel: "both",
-      publishTier: "candidate",
     },
     {
       id: "@rawr/plugin-beta",
       name: "@rawr/plugin-beta",
       dirName: "beta",
       absPath: "/repo/plugins/web/beta",
-      kind: "web",
+      kind: "toolkit",
       capability: "beta",
-      templateRole: "fixture",
-      channel: "B",
-      publishTier: "blocked",
     },
   ];
 
-  it("filters non-operational plugins by default", () => {
-    const visible = filterOperationalPlugins(plugins, false);
+  it("filters by rawr.kind", () => {
+    const visible = filterPluginsByKind(plugins, "web");
     expect(visible.map((plugin) => plugin.id)).toEqual(["@rawr/plugin-alpha"]);
   });
 

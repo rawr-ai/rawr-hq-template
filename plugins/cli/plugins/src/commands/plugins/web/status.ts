@@ -1,18 +1,13 @@
-import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { getRepoState } from "@rawr/state";
 
-import { filterOperationalPlugins, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
+import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
 
 export default class PluginsWebStatus extends RawrCommand {
   static description = "Show workspace runtime web plugins and whether they are enabled";
 
   static flags = {
     ...RawrCommand.baseFlags,
-    all: Flags.boolean({
-      description: "Include fixture/example plugins (default shows operational only)",
-      default: false,
-    }),
   } as const;
 
   async run() {
@@ -28,7 +23,7 @@ export default class PluginsWebStatus extends RawrCommand {
     }
 
     const [plugins, state] = await Promise.all([listWorkspacePlugins(workspaceRoot), getRepoState(workspaceRoot)]);
-    const visiblePlugins = filterOperationalPlugins(plugins, Boolean(flags.all));
+    const visiblePlugins = filterPluginsByKind(plugins, "web");
     const enabled = new Set(state.plugins.enabled);
 
     const enriched = visiblePlugins.map((p) => ({

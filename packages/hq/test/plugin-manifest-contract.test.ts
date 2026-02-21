@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parseWorkspacePluginManifest } from "../src/workspace/plugin-manifest-contract";
 
 describe("workspace plugin manifest contract", () => {
-  it("parses required rawr.kind + rawr.capability and derives compatibility fields", () => {
+  it("parses required rawr.kind + rawr.capability", () => {
     const parsed = parseWorkspacePluginManifest({
       manifest: {
         name: "@rawr/plugin-demo",
@@ -20,9 +20,6 @@ describe("workspace plugin manifest contract", () => {
       name: "@rawr/plugin-demo",
       kind: "web",
       capability: "demo",
-      templateRole: "operational",
-      channel: "B",
-      publishTier: "blocked",
     });
   });
 

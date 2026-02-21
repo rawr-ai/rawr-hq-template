@@ -5,7 +5,7 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 
-import { filterOperationalPlugins, findWorkspaceRoot, listWorkspacePlugins } from "../../../../lib/workspace-plugins";
+import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../../lib/workspace-plugins";
 
 type PlannedLink = {
   pluginId: string;
@@ -58,10 +58,6 @@ export default class PluginsInstallAll extends RawrCommand {
       description: "Link without passing --install to the plugin manager",
       default: false,
     }),
-    "include-non-operational": Flags.boolean({
-      description: "Include fixture/example plugins (default: true for install-all convenience)",
-      default: true,
-    }),
   } as const;
 
   async run() {
@@ -69,7 +65,6 @@ export default class PluginsInstallAll extends RawrCommand {
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     const dryRun = Boolean((flags as any)["dry-run"]);
     const willInstall = !(flags as any)["no-install"];
-    const includeNonOperational = Boolean((flags as any)["include-non-operational"]);
 
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     if (!workspaceRoot) {
@@ -80,7 +75,7 @@ export default class PluginsInstallAll extends RawrCommand {
     }
 
     const allPlugins = await listWorkspacePlugins(workspaceRoot);
-    const visible = filterOperationalPlugins(allPlugins, includeNonOperational);
+    const visible = filterPluginsByKind(allPlugins, "toolkit");
 
     const planned: PlannedLink[] = [];
     const skipped: Skipped[] = [];
@@ -88,7 +83,6 @@ export default class PluginsInstallAll extends RawrCommand {
     for (const plugin of visible) {
       const pkgJsonPath = path.join(plugin.absPath, "package.json");
       const pkgJson = await readJsonFile(pkgJsonPath);
-      const channelHasA = plugin.channel === "A" || plugin.channel === "both";
 
       if (!pkgJson) {
         skipped.push({ pluginId: plugin.id, dirName: plugin.dirName, absPath: plugin.absPath, reason: "missing package.json" });
@@ -101,7 +95,7 @@ export default class PluginsInstallAll extends RawrCommand {
           pluginId: plugin.id,
           dirName: plugin.dirName,
           absPath: plugin.absPath,
-          reason: channelHasA ? "rawr.channel includes A, but package.json#oclif is missing/invalid" : "not an oclif command plugin",
+          reason: "toolkit plugin missing/invalid package.json#oclif command wiring",
         });
         continue;
       }

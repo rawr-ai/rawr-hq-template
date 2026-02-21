@@ -117,6 +117,19 @@ async function resolveCanonicalWorkspaceRoot(workspaceRoot: string): Promise<{
   return { root: path.resolve(workspaceRoot), source: "workspace-root" };
 }
 
+async function resolveCanonicalWorkspaceRootWithExplicitFallback(
+  workspaceRoot: string,
+  allowGlobalOwnerFallback: boolean,
+): Promise<{
+  root: string;
+  source: "global-owner" | "workspace-root";
+}> {
+  if (allowGlobalOwnerFallback) {
+    return resolveCanonicalWorkspaceRoot(workspaceRoot);
+  }
+  return { root: path.resolve(workspaceRoot), source: "workspace-root" };
+}
+
 function normalizeAbsPathMaybeReal(p: string): string {
   const resolved = path.resolve(p);
   try {
@@ -124,10 +137,6 @@ function normalizeAbsPathMaybeReal(p: string): string {
   } catch {
     return resolved;
   }
-}
-
-function isManagedByChannelA(channel: "A" | "B" | "both"): boolean {
-  return channel === "A" || channel === "both";
 }
 
 async function hasOclifCommands(absPath: string): Promise<boolean> {
@@ -154,7 +163,7 @@ async function listExpectedWorkspaceLinks(workspaceRoot: string): Promise<Map<st
   const expected = new Map<string, string>();
 
   for (const plugin of plugins) {
-    if (!isManagedByChannelA(plugin.channel)) continue;
+    if (plugin.kind !== "toolkit") continue;
     if (!(await hasOclifCommands(plugin.absPath))) continue;
     expected.set(plugin.id, path.resolve(plugin.absPath));
   }
@@ -216,9 +225,13 @@ export async function assessInstallState(input: {
   workspaceRoot: string;
   runtimePlugins?: RuntimePluginSnapshot[];
   oclifDataDir?: string;
+  allowGlobalOwnerFallback?: boolean;
 }): Promise<InstallStateReport> {
   const workspaceRootAbs = path.resolve(input.workspaceRoot);
-  const canonical = await resolveCanonicalWorkspaceRoot(workspaceRootAbs);
+  const canonical = await resolveCanonicalWorkspaceRootWithExplicitFallback(
+    workspaceRootAbs,
+    Boolean(input.allowGlobalOwnerFallback),
+  );
   const expectedLinks = await listExpectedWorkspaceLinks(canonical.root);
   const manager = await loadPluginManagerEntries({ oclifDataDir: input.oclifDataDir });
   const linksByName = new Map<string, PluginManagerEntry>();

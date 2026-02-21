@@ -11,9 +11,6 @@ export type ParsedWorkspacePluginManifest = {
   name?: string;
   kind: WorkspacePluginKind;
   capability: string;
-  templateRole: "operational";
-  channel: "A" | "B";
-  publishTier: "blocked";
 };
 
 const EXPECTED_KIND_BY_ROOT: Record<WorkspacePluginDiscoveryRoot, WorkspacePluginKind> = {
@@ -41,15 +38,6 @@ function toOptionalString(value: unknown): string | undefined {
 
 function throwContractError(pkgJsonPath: string, message: string): never {
   throw new Error(`Plugin manifest contract violation at ${pkgJsonPath}: ${message}`);
-}
-
-function deriveLegacyCompatibilityFields(kind: WorkspacePluginKind): Pick<ParsedWorkspacePluginManifest, "templateRole" | "channel" | "publishTier"> {
-  return {
-    // Legacy lifecycle fields are retained as compatibility outputs only.
-    templateRole: "operational",
-    channel: kind === "toolkit" ? "A" : "B",
-    publishTier: "blocked",
-  };
 }
 
 function assertNoForbiddenLegacyKeys(rawr: Record<string, unknown>, pkgJsonPath: string): void {
@@ -109,6 +97,5 @@ export function parseWorkspacePluginManifest(input: ManifestParseInput): ParsedW
     name: toOptionalString(input.manifest.name),
     kind,
     capability: parseCapability(rawr, input.pkgJsonPath),
-    ...deriveLegacyCompatibilityFields(kind),
   };
 }
