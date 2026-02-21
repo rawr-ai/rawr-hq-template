@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import {
+  assertCondition,
   assertIncludes,
   assertMatches,
   assertNotMatches,
@@ -53,14 +54,18 @@ assertIncludes(
 
 assertNotMatches(orpcSource, /"\/api\/inngest"/, "orpc.ts must not own /api/inngest ingress route");
 assertNotMatches(orpcSource, /"\/api\/workflows\/\*"/, "orpc.ts must not own /api/workflows route family");
-assertMatches(
-  orpcSource,
-  /app\.all\(\s*"\/rpc"[\s\S]*?isRpcRequestAllowedWithDedupe/m,
+const hasInlineRpcPolicyForRoot = /app\.all\(\s*"\/rpc"[\s\S]*?isRpcRequestAllowedWithDedupe/m.test(orpcSource);
+const hasInlineRpcPolicyForWildcard = /app\.all\(\s*"\/rpc\/\*"[\s\S]*?isRpcRequestAllowedWithDedupe/m.test(orpcSource);
+const hasCentralizedRpcPolicy = /async function handleRpcRoute\([\s\S]*?isRpcRequestAllowedWithDedupe\(/m.test(orpcSource);
+const hasRootRpcRouteHelper = /app\.all\(\s*"\/rpc"[\s\S]*?handleRpcRoute\(\{/m.test(orpcSource);
+const hasWildcardRpcRouteHelper = /app\.all\(\s*"\/rpc\/\*"[\s\S]*?handleRpcRoute\(\{/m.test(orpcSource);
+
+assertCondition(
+  hasInlineRpcPolicyForRoot || (hasCentralizedRpcPolicy && hasRootRpcRouteHelper),
   "orpc.ts must gate /rpc route family through deduped caller auth policy",
 );
-assertMatches(
-  orpcSource,
-  /app\.all\(\s*"\/rpc\/\*"[\s\S]*?isRpcRequestAllowedWithDedupe/m,
+assertCondition(
+  hasInlineRpcPolicyForWildcard || (hasCentralizedRpcPolicy && hasWildcardRpcRouteHelper),
   "orpc.ts must gate /rpc/* route family through deduped caller auth policy",
 );
 

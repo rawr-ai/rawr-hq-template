@@ -1,7 +1,5 @@
 #!/usr/bin/env bun
-import fs from "node:fs/promises";
-import path from "node:path";
-import { mustExist, readFile } from "./_verify-utils.mjs";
+import { mustExist, readFile, writeJsonIfChanged } from "./_verify-utils.mjs";
 
 const PASS_ROOT = "docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21";
 const RESULT_PATH = `${PASS_ROOT}/D4_DEDUPE_SCAN_RESULT.json`;
@@ -20,14 +18,36 @@ const [contextSource, orpcSource, middlewareDedupeTestSource] = await Promise.al
 
 const RPC_ROUTE_HANDLER_PATTERN = /app\.all\(\s*"\/rpc(?:\/\*)?"/g;
 const HEAVY_CHAIN_DEPTH_THRESHOLD = 3;
-
 const rpcHandlerCount = (orpcSource.match(RPC_ROUTE_HANDLER_PATTERN) ?? []).length;
+const rpcRouteHelperInvocationCount = (orpcSource.match(/handleRpcRoute\(\{/g) ?? []).length;
+const hasCentralizedAuthGate =
+  rpcRouteHelperInvocationCount >= rpcHandlerCount &&
+  /async function handleRpcRoute\([\s\S]*isRpcRequestAllowedWithDedupe\(/m.test(orpcSource);
+const hasCentralizedContextFactory =
+  rpcRouteHelperInvocationCount >= rpcHandlerCount &&
+  /async function handleRpcRoute\([\s\S]*const context = contextFactory\(/m.test(orpcSource);
+const hasCentralizedMarkerAssertion =
+  rpcRouteHelperInvocationCount >= rpcHandlerCount &&
+  /async function handleRpcRoute\([\s\S]*assertRpcAuthDedupeMarker\(context\)/m.test(orpcSource);
+const hasCentralizedContextCreatedHook =
+  rpcRouteHelperInvocationCount >= rpcHandlerCount &&
+  /async function handleRpcRoute\([\s\S]*onContextCreated\?\.\(context\)/m.test(orpcSource);
+const hasCentralizedHandlerDispatch =
+  rpcRouteHelperInvocationCount >= rpcHandlerCount &&
+  /async function handleRpcRoute\([\s\S]*rpcHandler\.handle\(/m.test(orpcSource);
+
 const stepCoverage = {
-  authGate: (orpcSource.match(/isRpcRequestAllowedWithDedupe\(/g) ?? []).length,
-  contextFactory: (orpcSource.match(/const context = contextFactory\(/g) ?? []).length,
-  markerAssertion: (orpcSource.match(/assertRpcAuthDedupeMarker\(context\)/g) ?? []).length,
-  contextCreatedHook: (orpcSource.match(/options\.onContextCreated\?\.\(context\)/g) ?? []).length,
-  handlerDispatch: (orpcSource.match(/rpcHandler\.handle\(/g) ?? []).length,
+  authGate: hasCentralizedAuthGate ? rpcHandlerCount : (orpcSource.match(/isRpcRequestAllowedWithDedupe\(/g) ?? []).length,
+  contextFactory: hasCentralizedContextFactory
+    ? rpcHandlerCount
+    : (orpcSource.match(/const context = contextFactory\(/g) ?? []).length,
+  markerAssertion: hasCentralizedMarkerAssertion
+    ? rpcHandlerCount
+    : (orpcSource.match(/assertRpcAuthDedupeMarker\(context\)/g) ?? []).length,
+  contextCreatedHook: hasCentralizedContextCreatedHook
+    ? rpcHandlerCount
+    : (orpcSource.match(/options\.onContextCreated\?\.\(context\)/g) ?? []).length,
+  handlerDispatch: hasCentralizedHandlerDispatch ? rpcHandlerCount : (orpcSource.match(/rpcHandler\.handle\(/g) ?? []).length,
 };
 const measuredRpcMiddlewareChainDepth = [
   stepCoverage.authGate >= rpcHandlerCount ? 1 : 0,
@@ -62,7 +82,9 @@ const checks = [
   {
     id: "orpc-marker-assertions",
     message: "orpc.ts asserts dedupe marker in both /rpc handlers",
-    pass: (orpcSource.match(/assertRpcAuthDedupeMarker\(context\)/g) ?? []).length >= 2,
+    pass:
+      (orpcSource.match(/assertRpcAuthDedupeMarker\(context\)/g) ?? []).length >= rpcHandlerCount ||
+      hasCentralizedMarkerAssertion,
   },
   {
     id: "runtime-drift-test",
@@ -103,18 +125,7 @@ const result = {
   failedMarkerCheckIds,
 };
 
-const absResultPath = path.join(process.cwd(), RESULT_PATH);
-await fs.mkdir(path.dirname(absResultPath), { recursive: true });
-const nextSerialized = `${JSON.stringify(result, null, 2)}\n`;
-let previousSerialized = null;
-try {
-  previousSerialized = await fs.readFile(absResultPath, "utf8");
-} catch {
-  previousSerialized = null;
-}
-if (previousSerialized !== nextSerialized) {
-  await fs.writeFile(absResultPath, nextSerialized, "utf8");
-}
+const writeResult = await writeJsonIfChanged(RESULT_PATH, result);
 
 if (triggered) {
   console.log("phase-d d4 dedupe scan: TRIGGERED");
@@ -129,5 +140,5 @@ if (triggered) {
   console.log("phase-d d4 dedupe scan: clear");
 }
 console.log(
-  `wrote ${RESULT_PATH}${previousSerialized === nextSerialized ? " (unchanged)" : ""}; depth=${measuredRpcMiddlewareChainDepth}; heavyChain=${heavyChainDepthCriterionMet}; missingMarker=${missingExplicitMarker}`,
+  `wrote ${RESULT_PATH}${writeResult.changed ? "" : " (unchanged)"}; depth=${measuredRpcMiddlewareChainDepth}; heavyChain=${heavyChainDepthCriterionMet}; missingMarker=${missingExplicitMarker}`,
 );

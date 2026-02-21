@@ -15,6 +15,8 @@ import {
 
 type RawrOrpcContext = RawrBoundaryContext;
 type RawrOrpcRouter = ReturnType<typeof createOrpcRouter>;
+type RawrOrpcContextFactory = (request: Request, deps: RawrBoundaryContextDeps) => RawrOrpcContext;
+type OnRawrOrpcContextCreated = (context: RawrOrpcContext) => void;
 
 const RPC_AUTH_DEDUPE_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION;
 
@@ -39,6 +41,40 @@ function isRpcRequestAllowedWithDedupe(request: Request, policy: RpcAuthPolicy):
 
 function assertRpcAuthDedupeMarker(context: RawrOrpcContext): void {
   assertRequestScopedMiddlewareMarker(context, RPC_AUTH_DEDUPE_MARKER);
+}
+
+async function handleRpcRoute(args: {
+  request: Request;
+  rpcHandler: RPCHandler<RawrOrpcContext>;
+  contextFactory: RawrOrpcContextFactory;
+  contextDeps: RawrBoundaryContextDeps;
+  rpcAuthPolicy: RpcAuthPolicy;
+  onContextCreated?: OnRawrOrpcContextCreated;
+}): Promise<Response> {
+  const { request, rpcHandler, contextFactory, contextDeps, rpcAuthPolicy, onContextCreated } = args;
+  if (!isRpcRequestAllowedWithDedupe(request, rpcAuthPolicy)) {
+    return new Response("forbidden", { status: 403 });
+  }
+
+  const context = contextFactory(request, contextDeps);
+  assertRpcAuthDedupeMarker(context);
+  onContextCreated?.(context);
+  const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
+  return result.matched ? result.response : new Response("not found", { status: 404 });
+}
+
+async function handleOpenApiRoute(args: {
+  request: Request;
+  openapiHandler: OpenAPIHandler<RawrOrpcContext>;
+  contextFactory: RawrOrpcContextFactory;
+  contextDeps: RawrBoundaryContextDeps;
+  onContextCreated?: OnRawrOrpcContextCreated;
+}): Promise<Response> {
+  const { request, openapiHandler, contextFactory, contextDeps, onContextCreated } = args;
+  const context = contextFactory(request, contextDeps);
+  onContextCreated?.(context);
+  const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
+  return result.matched ? result.response : new Response("not found", { status: 404 });
 }
 
 async function createOpenApiSpec(router: RawrOrpcRouter, baseUrl: string) {
@@ -104,14 +140,14 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/rpc",
     async (ctx) => {
       const request = ctx.request as Request;
-      if (!isRpcRequestAllowedWithDedupe(request, rpcAuthPolicy)) {
-        return new Response("forbidden", { status: 403 });
-      }
-      const context = contextFactory(request, contextDeps);
-      assertRpcAuthDedupeMarker(context);
-      options.onContextCreated?.(context);
-      const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
-      return result.matched ? result.response : new Response("not found", { status: 404 });
+      return handleRpcRoute({
+        request,
+        rpcHandler,
+        contextFactory,
+        contextDeps,
+        rpcAuthPolicy,
+        onContextCreated: options.onContextCreated,
+      });
     },
     { parse: "none" },
   );
@@ -120,14 +156,14 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/rpc/*",
     async (ctx) => {
       const request = ctx.request as Request;
-      if (!isRpcRequestAllowedWithDedupe(request, rpcAuthPolicy)) {
-        return new Response("forbidden", { status: 403 });
-      }
-      const context = contextFactory(request, contextDeps);
-      assertRpcAuthDedupeMarker(context);
-      options.onContextCreated?.(context);
-      const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
-      return result.matched ? result.response : new Response("not found", { status: 404 });
+      return handleRpcRoute({
+        request,
+        rpcHandler,
+        contextFactory,
+        contextDeps,
+        rpcAuthPolicy,
+        onContextCreated: options.onContextCreated,
+      });
     },
     { parse: "none" },
   );
@@ -136,10 +172,13 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/api/orpc",
     async (ctx) => {
       const request = ctx.request as Request;
-      const context = contextFactory(request, contextDeps);
-      options.onContextCreated?.(context);
-      const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
-      return result.matched ? result.response : new Response("not found", { status: 404 });
+      return handleOpenApiRoute({
+        request,
+        openapiHandler,
+        contextFactory,
+        contextDeps,
+        onContextCreated: options.onContextCreated,
+      });
     },
     { parse: "none" },
   );
@@ -148,10 +187,13 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/api/orpc/*",
     async (ctx) => {
       const request = ctx.request as Request;
-      const context = contextFactory(request, contextDeps);
-      options.onContextCreated?.(context);
-      const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
-      return result.matched ? result.response : new Response("not found", { status: 404 });
+      return handleOpenApiRoute({
+        request,
+        openapiHandler,
+        contextFactory,
+        contextDeps,
+        onContextCreated: options.onContextCreated,
+      });
     },
     { parse: "none" },
   );
