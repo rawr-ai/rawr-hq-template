@@ -151,7 +151,9 @@ describe("phase-a gate scaffold (server)", () => {
     const negativeKeys = new Set(findConstStringArray(routeMatrixAst, "REQUIRED_NEGATIVE_ASSERTION_KEYS"));
 
     expect(negativeKeys.has("assertion:reject-api-inngest-from-caller-paths")).toBe(true);
+    expect(negativeKeys.has("assertion:reject-ingress-spoofed-caller-headers")).toBe(true);
     expect(negativeKeys.has("assertion:reject-rpc-from-external-callers")).toBe(true);
+    expect(negativeKeys.has("assertion:reject-rpc-from-runtime-ingress")).toBe(true);
     expect(negativeKeys.has("assertion:reject-rpc-workflows-route-family")).toBe(true);
     expect(routeMatrixSource.includes("/rpc/workflows/coordination/workflows")).toBe(true);
   });
