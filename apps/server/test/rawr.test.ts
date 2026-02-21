@@ -102,6 +102,47 @@ describe("rawr server routes", () => {
     }
   });
 
+  it("host-composition-guard: rejects spoofed /rpc auth heuristics", async () => {
+    const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+
+    const spoofedRequests = [
+      new Request("http://localhost/rpc/coordination/listWorkflows", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-rawr-caller-surface": "first-party",
+          cookie: "rawr-session=spoofed-session",
+        },
+        body: JSON.stringify({ json: {} }),
+      }),
+      new Request("http://localhost/rpc/coordination/listWorkflows", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-rawr-caller-surface": "trusted-service",
+          authorization: "bearer svc_spoofed-token",
+        },
+        body: JSON.stringify({ json: {} }),
+      }),
+      new Request("http://localhost/rpc/coordination/listWorkflows", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-rawr-caller-surface": "cli",
+          "x-rawr-service-auth": "verified",
+          "user-agent": "rawr-cli/9.9.9",
+        },
+        body: JSON.stringify({ json: {} }),
+      }),
+    ];
+
+    for (const request of spoofedRequests) {
+      const response = await app.handle(request);
+      expect(response.status).toBe(403);
+      await expect(response.text()).resolves.toBe("forbidden");
+    }
+  });
+
   it("host-composition-guard: enforces ingress -> workflows -> rpc/openapi mount order contract", () => {
     expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"]);
   });
