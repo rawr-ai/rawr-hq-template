@@ -41,8 +41,6 @@ Branch lineage:
 ## Review Closure
 - Primary review dispositions:
   - `A7_REVIEW_DISPOSITION.md`
-  - `AGENT_4_REVIEW_REPORT_FINAL.md`
-  - `AGENT_4_REVIEW_REPORT_FINAL_RERUN.md`
 - All prior blocking/high findings are closed.
 
 ## Docs and Cleanup
