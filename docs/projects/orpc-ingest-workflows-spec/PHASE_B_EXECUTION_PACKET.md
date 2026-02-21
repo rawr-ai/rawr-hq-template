@@ -15,7 +15,7 @@ Execute in this order:
 ## Objective
 Harden Phase A seams into implementation-safe interfaces with explicit ownership and structural verification so downstream phases execute with lower ambiguity and lower drift risk.
 
-## As-Landed Snapshot (through B4A on 2026-02-21)
+## As-Landed Snapshot (through B6 on 2026-02-21)
 1. Runtime implementation slices `B0..B4A` are landed in the Phase B runtime execution branch/worktree.
 2. `B0` auth-source hardening is landed and the blocking review finding (`HIGH-01`) is closed in fix closure.
 3. `B1`/`B2` seam hardening is landed: host composition consumes package-owned runtime seams while `rawr.hq.ts` remains manifest authority.
@@ -26,6 +26,8 @@ Harden Phase A seams into implementation-safe interfaces with explicit ownership
    Dedicated `adapter-shim-ownership.test.ts` files are not present in landed state and are not required by the canonical B3 contract.
 5. `B4` re-review disposition is `ready` (no unresolved blocking/high findings); remaining medium docs drift is handled in `B5`.
 6. `B4A` structural assessment improvements are landed (shared AST utilities + structural test/scaffold clarity) without architecture shifts.
+7. `B5` docs/cleanup closure is complete; canonical Phase B docs and status surfaces are re-baselined to landed runtime behavior.
+8. `B6` realignment output is published with explicit Phase C kickoff posture (`ready`), no kickoff blockers, and owner-assigned opening order.
 
 ## Locked Constraints (No Re-open in Phase B)
 1. Runtime semantics stay on `rawr.kind` + `rawr.capability` + manifest registration.

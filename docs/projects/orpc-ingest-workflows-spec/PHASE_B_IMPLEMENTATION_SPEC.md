@@ -18,13 +18,15 @@ Convert Phase A seam decisions into implementation-safe interfaces and structura
 3. No reopening D-005..D-016.
 4. No broad refactor bucket outside `B0..B3` core objectives.
 
-### 1.3 Current Runtime Reality (as-landed through B4A on 2026-02-21)
+### 1.3 Current Runtime Reality (as-landed through B6 on 2026-02-21)
 1. `B0` is landed with host-evidence `/rpc` auth classification; blocking review finding closure is complete.
 2. `B1`/`B2` are landed with manifest-first authority preserved and package-owned runtime seam consumption in host composition.
 3. `B3` structural hardening is landed through canonical gate scripts/tests (`phase-a:gates:exit`, `verify-gate-scaffold`, `verify-harness-matrix`, route matrix + gate scaffolds).
 4. Dedicated adapter-shim ownership test files are not present in landed branch state; canonical anti-regression for workspace/install seams is structural gate enforcement (`metadata-contract` + `import-boundary`), not missing-file requirements.
 5. `B4` review closure is `ready` with no unresolved blocking/high findings.
 6. `B4A` structural assessment landed refactors (shared AST helper extraction and gate/test robustness polish) without route/authority/policy changes.
+7. `B5` docs + cleanup closure is complete and canonical docs were re-baselined to landed behavior.
+8. `B6` post-land realignment is complete with explicit Phase C readiness output (`ready`) and ordered owner-assigned opening queue.
 
 ## 2) Phase B Interface Deltas
 
