@@ -1,0 +1,273 @@
+phase: D
+status: planning_approved_pending_runtime_kickoff
+entrypoint: docs/projects/orpc-ingest-workflows-spec/PHASE_D_EXECUTION_PACKET.md
+
+invariants:
+  - runtime_semantics: rawr.kind + rawr.capability + manifest registration
+  - route_families:
+      - /rpc internal/first-party
+      - /api/orpc/* published OpenAPI
+      - /api/workflows/<capability>/* workflow boundary
+      - /api/inngest signed runtime ingress only
+  - manifest_authority: rawr.hq.ts
+  - process_posture: forward_only_no_rollback
+
+slices:
+  - id: D0
+    title: Phase D planning closure and steward drift check
+    owner: '@rawr-phase-sequencing'
+    backup: '@rawr-architecture-duty'
+    depends_on: []
+    objective: Close planning packet and steward drift check before runtime branch kickoff.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_D_EXECUTION_PACKET.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_D_IMPLEMENTATION_SPEC.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_D_ACCEPTANCE_GATES.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_D_WORKBREAKDOWN.yaml
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_D_REVIEW_DISPOSITION.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_D_PLANNING_HANDOFF.md
+    gates:
+      quick:
+        - planning_docs_integrated
+      full:
+        - steward_review_disposition_approve
+    failure_triggers:
+      - unresolved_blocking_or_high_planning_findings
+      - drift_check_reports_invariant_violation
+
+  - id: D1
+    title: Middleware dedupe hardening
+    owner: '@rawr-runtime-host'
+    backup: '@rawr-verification-gates'
+    depends_on: [D0]
+    objective: Add explicit context-cached dedupe markers and prevent middleware drift.
+    files:
+      - path: apps/server/src/workflows/context.ts
+      - path: apps/server/src/orpc.ts
+      - path: apps/server/test/middleware-dedupe.test.ts
+      - path: scripts/phase-d/verify-d1-middleware-dedupe-contract.mjs
+    gates:
+      quick:
+        - bun run phase-d:d1:quick
+      full:
+        - bun run phase-d:d1:full
+    failure_triggers:
+      - heavy_middleware_chain_missing_explicit_dedupe_marker
+      - route_family_semantics_drift_detected
+      - red_gate_in_d1_quick_or_full
+
+  - id: D2
+    title: Inngest finished-hook guardrails
+    owner: '@rawr-runtime-host'
+    backup: '@rawr-verification-gates'
+    depends_on: [D1]
+    objective: Enforce idempotent/non-critical finished-hook contract with additive schema compatibility.
+    files:
+      - path: packages/coordination/src/types.ts
+      - path: packages/coordination/src/orpc/schemas.ts
+      - path: packages/coordination/src/orpc/contract.ts
+      - path: packages/coordination-inngest/src/adapter.ts
+      - path: packages/core/src/orpc/runtime-router.ts
+      - path: packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts
+      - path: packages/core/test/runtime-router.test.ts
+      - path: packages/core/test/orpc-contract-drift.test.ts
+      - path: packages/core/test/workflow-trigger-contract-drift.test.ts
+      - path: scripts/phase-d/verify-d2-finished-hook-contract.mjs
+    gates:
+      quick:
+        - bun run phase-d:d2:quick
+      full:
+        - bun run phase-d:d2:full
+    failure_triggers:
+      - non_idempotent_or_critical_finished_hook_side_effect_detected
+      - non_additive_contract_or_schema_regression
+      - red_gate_in_d2_quick_or_full
+
+  - id: D3
+    title: Ingress and middleware structural gates
+    owner: '@rawr-verification-gates'
+    backup: '@rawr-runtime-host'
+    depends_on: [D2]
+    objective: Strengthen anti-spoof and ownership assertions for ingress and middleware.
+    files:
+      - path: scripts/phase-d/_verify-utils.mjs
+      - path: scripts/phase-d/verify-d3-ingress-middleware-structural-contract.mjs
+      - path: apps/server/test/route-boundary-matrix.test.ts
+      - path: apps/server/test/ingress-signature-observability.test.ts
+      - path: apps/server/test/phase-a-gates.test.ts
+      - path: package.json
+    gates:
+      quick:
+        - bun run phase-d:d3:quick
+      full:
+        - bun run phase-d:d3:full
+    failure_triggers:
+      - ingress_anti_spoof_assertions_missing_or_failing
+      - route_boundary_negative_assertions_regressed
+      - package_import_direction_or_gate_wiring_drift
+      - red_gate_in_d3_quick_or_full
+
+  - id: D4
+    title: Conditional D-009/D-010 tightening
+    owner: '@rawr-architecture-duty'
+    backup: '@rawr-runtime-host'
+    depends_on: [D1, D2, D3]
+    objective: Tighten D-009 and/or D-010 only if measurable trigger evidence requires policy hardening.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/DECISIONS.md
+      - path: scripts/phase-d/verify-d4-dedupe-trigger.mjs
+      - path: scripts/phase-d/verify-d4-finished-hook-trigger.mjs
+      - path: scripts/phase-d/verify-d4-disposition.mjs
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/D4_TRIGGER_EVIDENCE.md
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/D4_DISPOSITION.md
+    conditional: true
+    trigger_criteria:
+      - phase-d:gate:d4-dedupe-scan detects heavy middleware chain depth >=3 missing explicit context-cached dedupe marker
+      - phase-d:gate:d4-finished-hook-scan detects state-mutating or external finished-hook side effects without explicit idempotent/non-critical contract
+      - phase-d:gate:d3-ingress-middleware-structural-contract fails twice with one remediation attempt (commit touching D3-owned paths plus one rerun of that gate) between failures
+    requires_artifacts:
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/D4_DISPOSITION.md
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/D4_TRIGGER_EVIDENCE.md
+        when: triggered
+    gates:
+      assess:
+        - bun run phase-d:d4:assess
+      mandatory_before_next:
+        - bun run phase-d:gate:d4-disposition
+      full_if_triggered:
+        - rerun_touched_slice_full_commands
+    failure_triggers:
+      - decision_tightening_without_trigger_evidence
+      - missing_or_invalid_d4_disposition_artifact
+      - triggered_path_missing_d4_trigger_evidence_artifact
+
+  - id: D5
+    title: Independent review and fix closure
+    owner: '@rawr-review-closure'
+    backup: '@rawr-verification-gates'
+    depends_on: [D3]
+    depends_on_if_triggered: [D4]
+    requires_artifacts:
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/D4_DISPOSITION.md
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/D4_TRIGGER_EVIDENCE.md
+        when: triggered
+    objective: Close blocking/high TypeScript and oRPC findings with re-review to approve.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/D5_REVIEW_DISPOSITION.md
+      - path: apps/server/src/**
+      - path: packages/core/src/**
+      - path: packages/coordination*/src/**
+      - path: scripts/phase-d/**
+    gates:
+      closure:
+        - blocking_high_findings_closed
+        - re_review_green
+        - impacted_quick_and_full_gates_green
+    failure_triggers:
+      - unresolved_blocking_or_high_review_finding
+      - fix_set_without_required_gate_reruns
+      - re_review_not_approved
+
+  - id: D5A
+    title: Structural assessment and taste pass
+    owner: '@rawr-structural-steward'
+    backup: '@rawr-review-closure'
+    depends_on: [D5]
+    objective: Improve naming, module boundaries, and duplication with no topology drift.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/D5A_STRUCTURAL_DISPOSITION.md
+      - path: apps/server/src/**
+      - path: packages/**/src/**
+    gates:
+      closure:
+        - structural_blocking_high_closed
+        - impacted_quick_and_full_gates_green
+    failure_triggers:
+      - structural_change_introduces_architecture_or_route_drift
+      - unresolved_blocking_or_high_structural_finding
+
+  - id: D6
+    title: Canonical docs and cleanup closure
+    owner: '@rawr-docs-maintainer'
+    backup: '@rawr-release-duty'
+    depends_on: [D5A]
+    objective: Align canonical docs with landed behavior and prune superseded runtime artifacts.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/README.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PROJECT_STATUS.md
+      - path: docs/projects/orpc-ingest-workflows-spec/PHASE_EXECUTION_WORKFLOW.md
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/D6_CLEANUP_MANIFEST.md
+    gates:
+      closure:
+        - canonical_docs_aligned
+        - cleanup_manifest_published
+    failure_triggers:
+      - canonical_docs_do_not_match_landed_runtime_behavior
+      - cleanup_manifest_missing_or_incomplete
+
+  - id: D7
+    title: Post-land realignment and Phase E readiness
+    owner: '@rawr-phase-sequencing'
+    backup: '@rawr-architecture-duty'
+    depends_on: [D6]
+    objective: Publish explicit Phase E readiness with blockers, owners, order, and D4 disposition carry-forward.
+    files:
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/D7_PHASE_E_READINESS.md
+      - path: docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21/FINAL_PHASE_D_HANDOFF.md
+    gates:
+      closure:
+        - phase_e_readiness_published
+        - d4_trigger_or_defer_disposition_recorded
+    failure_triggers:
+      - readiness_missing_owner_or_order_or_blocker_clarity
+      - deferred_watchpoints_not_captured
+
+gates:
+  D1:
+    quick:
+      - bun run phase-d:d1:quick
+    full:
+      - bun run phase-d:d1:full
+  D2:
+    quick:
+      - bun run phase-d:d2:quick
+    full:
+      - bun run phase-d:d2:full
+  D3:
+    quick:
+      - bun run phase-d:d3:quick
+    full:
+      - bun run phase-d:d3:full
+  D4:
+    assess:
+      - bun run phase-d:d4:assess
+    full_if_triggered:
+      - rerun_touched_slice_full_commands
+    mandatory_before_D5:
+      - bun run phase-d:gate:d4-disposition
+  D5:
+    closure:
+      - blocking_high_findings_closed
+      - re_review_green
+      - impacted_full_gates_green
+  D5A:
+    closure:
+      - structural_blocking_high_closed
+      - impacted_full_gates_green
+  D6:
+    closure:
+      - canonical_docs_aligned
+      - cleanup_manifest_published
+  D7:
+    closure:
+      - phase_e_readiness_published
+      - d4_trigger_or_defer_disposition_recorded
+  phase_exit:
+    full:
+      - bun run phase-d:gates:exit
+
+deferred_non_blocking:
+  - broad_d016_productization_ux_and_control_plane
+  - route_topology_expansion_beyond_locked_families
+  - rollback_playbook_track
+  - d009_or_d010_lock_tightening_without_d4_trigger_evidence
