@@ -17,7 +17,7 @@ const D3_OWNED_PATH_TOKENS = [
   "apps/server/test/phase-a-gates.test.ts",
   "package.json",
 ];
-const D3_GATE_COMMAND_PATTERN = /phase-d:(?:gate:d3-ingress-middleware-structural-contract|d3:(?:quick|full))/;
+const D3_GATE_COMMAND = "phase-d:gate:d3-ingress-middleware-structural-contract";
 
 await Promise.all([mustExist(DEDUPE_RESULT_PATH), mustExist(FINISHED_HOOK_RESULT_PATH), mustExist(DISPOSITION_PATH), mustExist(AGENT3_SCRATCHPAD_PATH)]);
 
@@ -37,10 +37,10 @@ const scratchpadEntries = agent3Scratchpad
   .filter((entry) => entry.line.trim().length > 0);
 
 const d3FailureEntries = scratchpadEntries.filter(
-  (entry) => D3_GATE_COMMAND_PATTERN.test(entry.line) && /failed|error/i.test(entry.line),
+  (entry) => entry.line.includes(D3_GATE_COMMAND) && /failed|error/i.test(entry.line),
 );
 const d3SuccessEntries = scratchpadEntries.filter(
-  (entry) => D3_GATE_COMMAND_PATTERN.test(entry.line) && /validation passed|pass(?:ed)?/i.test(entry.line),
+  (entry) => entry.line.includes(D3_GATE_COMMAND) && /validation passed|pass(?:ed)?/i.test(entry.line),
 );
 
 function referencesD3OwnedPath(entryLine) {
