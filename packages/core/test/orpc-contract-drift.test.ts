@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { minifyContractRouter } from "@orpc/contract";
 import { hqContract } from "../src/orpc";
+import { RunStatusSchema } from "@rawr/coordination/orpc";
 
 type RouteShape = {
   method?: string;
@@ -45,5 +46,19 @@ describe("hq orpc contract drift", () => {
 
   it("matches the minified contract snapshot", () => {
     expect(minifyContractRouter(hqContract)).toMatchSnapshot();
+  });
+
+  it("keeps D2 finalization semantics additive in run status schema", () => {
+    const asRecord = RunStatusSchema as unknown as {
+      required?: string[];
+      properties?: Record<string, unknown>;
+    };
+    const serialized = JSON.stringify(RunStatusSchema);
+
+    expect(asRecord.properties).toHaveProperty("finalization");
+    expect(asRecord.required ?? []).not.toContain("finalization");
+    expect(serialized).toContain("at-least-once");
+    expect(serialized).toContain("idempotent-non-critical");
+    expect(serialized).toContain("best-effort-non-blocking");
   });
 });

@@ -59,7 +59,11 @@
     "phase-d:gate:d1-middleware-dedupe-contract": "bun scripts/phase-d/verify-d1-middleware-dedupe-contract.mjs",
     "phase-d:gate:d1-middleware-dedupe-runtime": "bunx vitest run --project server apps/server/test/middleware-dedupe.test.ts",
     "phase-d:d1:quick": "bun run phase-d:gate:drift-core && bun run phase-d:gate:d1-middleware-dedupe-contract && bun run phase-d:gate:d1-middleware-dedupe-runtime",
-    "phase-d:d1:full": "bun run phase-d:d1:quick && bunx vitest run --project server apps/server/test/rawr.test.ts"
+    "phase-d:d1:full": "bun run phase-d:d1:quick && bunx vitest run --project server apps/server/test/rawr.test.ts",
+    "phase-d:gate:d2-finished-hook-contract": "bun scripts/phase-d/verify-d2-finished-hook-contract.mjs",
+    "phase-d:gate:d2-finished-hook-runtime": "bunx vitest run --project coordination-inngest packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts && bunx vitest run --project core packages/core/test/runtime-router.test.ts",
+    "phase-d:d2:quick": "bun run phase-d:gate:drift-core && bun run phase-d:gate:d2-finished-hook-contract && bun run phase-d:gate:d2-finished-hook-runtime",
+    "phase-d:d2:full": "bun run phase-d:d2:quick && bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts && bunx vitest run --project core packages/core/test/workflow-trigger-contract-drift.test.ts"
   },
   "overrides": {
     "npm": "11.9.0",

@@ -91,6 +91,36 @@ export type RunTraceLinkV1 = Readonly<{
 
 export type RunLifecycleStateV1 = "queued" | "running" | "completed" | "failed";
 
+export type RunFinalizationDeliveryV1 = "at-least-once";
+export type RunFinalizationSideEffectPolicyV1 = "idempotent-non-critical";
+export type RunFinalizationFailureModeV1 = "best-effort-non-blocking";
+export type RunFinishedHookOutcomeV1 = "succeeded" | "failed";
+
+export type RunFinishedHookStateV1 = Readonly<{
+  attemptedAt: string;
+  outcome: RunFinishedHookOutcomeV1;
+  error?: string;
+}>;
+
+export type RunFinalizationContractV1 = Readonly<{
+  delivery: RunFinalizationDeliveryV1;
+  exactlyOnce: false;
+  sideEffectPolicy: RunFinalizationSideEffectPolicyV1;
+  failureMode: RunFinalizationFailureModeV1;
+}>;
+
+export type RunFinalizationStateV1 = Readonly<{
+  contract: RunFinalizationContractV1;
+  finishedHook?: RunFinishedHookStateV1;
+}>;
+
+export const RUN_FINALIZATION_CONTRACT_V1: RunFinalizationContractV1 = {
+  delivery: "at-least-once",
+  exactlyOnce: false,
+  sideEffectPolicy: "idempotent-non-critical",
+  failureMode: "best-effort-non-blocking",
+} as const;
+
 export type RunStatusV1 = Readonly<{
   runId: string;
   workflowId: string;
@@ -102,6 +132,7 @@ export type RunStatusV1 = Readonly<{
   output?: JsonValue;
   error?: string;
   traceLinks: RunTraceLinkV1[];
+  finalization?: RunFinalizationStateV1;
 }>;
 
 export type DeskRunEventTypeV1 =
