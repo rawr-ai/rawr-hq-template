@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertHeavyMiddlewareDedupeMarkers,
   RAWR_MIDDLEWARE_DEDUPE_MARKERS,
+  RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY,
   createRequestScopedBoundaryContext,
   hasRequestScopedMiddlewareMarker,
   resolveRequestScopedMiddlewareValue,
@@ -71,6 +73,20 @@ describe("middleware dedupe", () => {
     expect(contextA.middlewareState).toBe(contextB.middlewareState);
     expect(hasRequestScopedMiddlewareMarker(contextA, RPC_AUTH_MARKER)).toBe(true);
     expect(hasRequestScopedMiddlewareMarker(contextB, RPC_AUTH_MARKER)).toBe(true);
+  });
+
+  it("enforces heavy middleware marker policy for request contexts", () => {
+    const request = new Request("http://localhost/rpc/coordination/listWorkflows");
+    const context = createRequestScopedBoundaryContext(request, TEST_DEPS);
+
+    expect(() =>
+      assertHeavyMiddlewareDedupeMarkers(context, RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY.requiredMarkers)
+    ).toThrowError(/missing required heavy middleware dedupe marker/);
+
+    resolveRequestScopedMiddlewareValue(request, RPC_AUTH_MARKER, () => true);
+    expect(() =>
+      assertHeavyMiddlewareDedupeMarkers(context, RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY.requiredMarkers)
+    ).not.toThrow();
   });
 
   it("marks RPC auth dedupe marker before handler dispatch", async () => {

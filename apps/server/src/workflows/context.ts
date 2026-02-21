@@ -8,6 +8,10 @@ export const RAWR_MIDDLEWARE_DEDUPE_MARKERS = {
 export type RawrMiddlewareDedupeMarker =
   (typeof RAWR_MIDDLEWARE_DEDUPE_MARKERS)[keyof typeof RAWR_MIDDLEWARE_DEDUPE_MARKERS];
 
+export const RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY = {
+  requiredMarkers: [RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION] as const,
+} as const;
+
 export type RawrBoundaryMiddlewareState = {
   markerCache: Map<RawrMiddlewareDedupeMarker, unknown>;
 };
@@ -85,6 +89,18 @@ export function assertRequestScopedMiddlewareMarker(
   }
 
   throw new Error(`missing request-scoped middleware dedupe marker: ${marker}`);
+}
+
+export function assertHeavyMiddlewareDedupeMarkers(
+  context: Pick<RawrBoundaryContext, "middlewareState">,
+  markers: readonly RawrMiddlewareDedupeMarker[],
+): void {
+  const missing = markers.filter((marker) => !hasRequestScopedMiddlewareMarker(context, marker));
+  if (missing.length === 0) {
+    return;
+  }
+
+  throw new Error(`missing required heavy middleware dedupe marker(s): ${missing.join(", ")}`);
 }
 
 export function createRequestScopedBoundaryContext(
