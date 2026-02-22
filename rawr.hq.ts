@@ -4,10 +4,10 @@ import {
   type CoordinationFunctionBundle,
   type CoordinationRuntimeAdapter,
 } from "./packages/coordination-inngest/src/adapter";
-import { createOrpcRouter } from "./apps/server/src/orpc";
+import { createOrpcRouter, createWorkflowTriggerRouter } from "./apps/server/src/orpc";
 
 const composedOrpcRouter = createOrpcRouter();
-const composedWorkflowTriggerRouter = createOrpcRouter();
+const composedWorkflowTriggerRouter = createWorkflowTriggerRouter();
 
 export const rawrHqManifest = {
   orpc: {
