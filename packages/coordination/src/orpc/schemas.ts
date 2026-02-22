@@ -109,7 +109,10 @@ const RunFinishedHookStateSchema = Type.Unsafe<RunFinishedHookStateV1>(
   Type.Object(
     {
       attemptedAt: Type.String(),
-      outcome: Type.Union([Type.Literal("succeeded"), Type.Literal("failed")]),
+      outcome: Type.Union([Type.Literal("succeeded"), Type.Literal("failed"), Type.Literal("skipped")]),
+      nonCritical: Type.Literal(true),
+      idempotencyRequired: Type.Literal(true),
+      timeoutMs: Type.Integer({ minimum: 1 }),
       error: Type.Optional(Type.String()),
     },
     { additionalProperties: false },

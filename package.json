@@ -76,7 +76,11 @@
     "phase-e:gate:e1-dedupe-policy": "bun scripts/phase-e/verify-e1-dedupe-policy.mjs",
     "phase-e:gate:e1-dedupe-runtime": "bunx vitest run --project server apps/server/test/middleware-dedupe.test.ts",
     "phase-e:e1:quick": "bun run phase-e:gate:drift-core && bun run phase-e:gate:e1-dedupe-policy && bun run phase-e:gate:e1-dedupe-runtime",
-    "phase-e:e1:full": "bun run phase-e:e1:quick && bunx vitest run --project server apps/server/test/rawr.test.ts"
+    "phase-e:e1:full": "bun run phase-e:e1:quick && bunx vitest run --project server apps/server/test/rawr.test.ts",
+    "phase-e:gate:e2-finished-hook-policy": "bun scripts/phase-e/verify-e2-finished-hook-policy.mjs",
+    "phase-e:gate:e2-finished-hook-runtime": "bunx vitest run --project coordination-inngest packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts",
+    "phase-e:e2:quick": "bun run phase-e:e1:quick && bun run phase-e:gate:e2-finished-hook-policy && bun run phase-e:gate:e2-finished-hook-runtime",
+    "phase-e:e2:full": "bun run phase-e:e2:quick && bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts"
   },
   "overrides": {
     "npm": "11.9.0",
