@@ -63,7 +63,11 @@
     "phase-d:gate:d2-finished-hook-contract": "bun scripts/phase-d/verify-d2-finished-hook-contract.mjs",
     "phase-d:gate:d2-finished-hook-runtime": "bunx vitest run --project coordination-inngest packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts && bunx vitest run --project core packages/core/test/runtime-router.test.ts",
     "phase-d:d2:quick": "bun run phase-d:gate:drift-core && bun run phase-d:gate:d2-finished-hook-contract && bun run phase-d:gate:d2-finished-hook-runtime",
-    "phase-d:d2:full": "bun run phase-d:d2:quick && bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts && bunx vitest run --project core packages/core/test/workflow-trigger-contract-drift.test.ts"
+    "phase-d:d2:full": "bun run phase-d:d2:quick && bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts && bunx vitest run --project core packages/core/test/workflow-trigger-contract-drift.test.ts",
+    "phase-d:gate:d3-ingress-middleware-structural-contract": "bun scripts/phase-d/verify-d3-ingress-middleware-structural-contract.mjs",
+    "phase-d:gate:d3-ingress-middleware-structural-runtime": "bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts && bunx vitest run --project server apps/server/test/ingress-signature-observability.test.ts && bunx vitest run --project server apps/server/test/phase-a-gates.test.ts",
+    "phase-d:d3:quick": "bun run phase-d:gate:drift-core && bun run phase-d:gate:d3-ingress-middleware-structural-contract && bun run phase-d:gate:d3-ingress-middleware-structural-runtime",
+    "phase-d:d3:full": "bun run phase-d:d3:quick && bun run phase-a:gate:host-composition-guard && bun run phase-a:gate:route-negative-assertions"
   },
   "overrides": {
     "npm": "11.9.0",
