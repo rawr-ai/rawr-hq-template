@@ -18,7 +18,7 @@
 | F1 | `codex/phase-f-f1-runtime-lifecycle-seams` | submitted | PR #157 (v2), all F1 required verifications pass |
 | F2 | `codex/phase-f-f2-interface-policy-hardening` | submitted | PR #158 (v1), all F2 required verifications pass |
 | F3 | `codex/phase-f-f3-structural-evidence-gates` | submitted | PR #159 (v1), structural gate chain landed |
-| F4 | `codex/phase-f-f4-decision-closure` | pending | |
+| F4 | `codex/phase-f-f4-decision-closure` | submitted | PR #160 (v1), deferred disposition closure complete |
 | F5 | `codex/phase-f-f5-review-fix-closure` | pending | |
 | F5A | `codex/phase-f-f5a-structural-assessment` | pending | |
 | F6 | `codex/phase-f-f6-docs-cleanup` | pending | |
@@ -27,7 +27,7 @@
 ## Agent Registry
 | Agent | Scope | Branch | Status | Compact/Close |
 | --- | --- | --- | --- | --- |
-| I1 | F1 + F4 | `codex/phase-f-f1-runtime-lifecycle-seams` | complete (F1) | closed |
+| I1 | F1 + F4 | `codex/phase-f-f4-decision-closure` | complete (F4) | closed |
 | I2 | F2 | `codex/phase-f-f2-interface-policy-hardening` | complete (F2) | closed |
 | I3 | F3 | `codex/phase-f-f3-structural-evidence-gates` | complete (F3) | closed |
 | I4 | F5 independent review | pending | pending | pending |
@@ -98,5 +98,25 @@
 20. F3 submitted:
    - PR #159 (`codex/phase-f-f3-structural-evidence-gates`)
 21. Post-submit checks:
+   - `gt sync --no-restack` pass
+   - `gt log --show-untracked` clean
+22. Opened F4 slice branch and tracking:
+   - `gt create codex/phase-f-f4-decision-closure`
+   - `gt track codex/phase-f-f4-decision-closure -p codex/phase-f-f3-structural-evidence-gates`
+23. Spawned I1 default agent for F4 decision closure.
+24. F4 artifacts updated:
+   - `F4_DISPOSITION.md` with explicit `state: deferred`
+   - `F4_TRIGGER_EVIDENCE.md` intentionally absent for deferred posture
+   - `AGENT_1_PLAN_VERBATIM.md` (F4 scope update)
+   - `AGENT_1_SCRATCHPAD.md` (timestamped F4 updates)
+   - `AGENT_1_FINAL_F4_DECISION_CLOSURE.md`
+25. F4 verification outcomes:
+   - `bun run phase-f:gate:f4-assess` pass (`triggered: false`, counters `1/0/0`)
+   - `bun run phase-f:gate:f4-disposition` pass (`state=deferred`)
+26. F4 branch committed with Graphite modify:
+   - `8d16c4d docs(phase-f): publish f4 deferred disposition for d-004`
+27. F4 submitted:
+   - PR #160 (`codex/phase-f-f4-decision-closure`)
+28. Post-submit checks:
    - `gt sync --no-restack` pass
    - `gt log --show-untracked` clean
