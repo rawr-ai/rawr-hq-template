@@ -15,8 +15,8 @@
 ## Slice Registry
 | Slice | Branch | Status | Notes |
 | --- | --- | --- | --- |
-| F1 | `codex/phase-f-f1-runtime-lifecycle-seams` | submitted | PR #157 (v1), all F1 required verifications pass |
-| F2 | `codex/phase-f-f2-interface-policy-hardening` | in_review | I2 complete, gates pass, awaiting submit |
+| F1 | `codex/phase-f-f1-runtime-lifecycle-seams` | submitted | PR #157 (v2), all F1 required verifications pass |
+| F2 | `codex/phase-f-f2-interface-policy-hardening` | submitted | PR #158 (v1), all F2 required verifications pass |
 | F3 | `codex/phase-f-f3-structural-evidence-gates` | pending | |
 | F4 | `codex/phase-f-f4-decision-closure` | pending | |
 | F5 | `codex/phase-f-f5-review-fix-closure` | pending | |
@@ -27,8 +27,8 @@
 ## Agent Registry
 | Agent | Scope | Branch | Status | Compact/Close |
 | --- | --- | --- | --- | --- |
-| I1 | F1 + F4 | `codex/phase-f-f1-runtime-lifecycle-seams` | complete (F1) | keep_open_for_F4 |
-| I2 | F2 | `codex/phase-f-f2-interface-policy-hardening` | complete (F2) | close_after_submit |
+| I1 | F1 + F4 | `codex/phase-f-f1-runtime-lifecycle-seams` | complete (F1) | closed |
+| I2 | F2 | `codex/phase-f-f2-interface-policy-hardening` | complete (F2) | closed |
 | I3 | F3 | pending | pending | pending |
 | I4 | F5 independent review | pending | pending | pending |
 | I4A | F5A structural assessment | pending | pending | pending |
@@ -72,3 +72,10 @@
    - `bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts packages/core/test/workflow-trigger-contract-drift.test.ts`
    - `bunx vitest run --project core packages/core/test/runtime-router.test.ts`
    - `bun run typecheck`
+12. F2 branch committed with Graphite modify:
+   - `5ec375a feat(coordination): tighten f2 id policy and contract boundaries`
+13. F2 submitted:
+   - PR #158 (`codex/phase-f-f2-interface-policy-hardening`)
+14. Post-submit checks:
+   - `gt sync --no-restack` pass
+   - `gt log --show-untracked` clean
