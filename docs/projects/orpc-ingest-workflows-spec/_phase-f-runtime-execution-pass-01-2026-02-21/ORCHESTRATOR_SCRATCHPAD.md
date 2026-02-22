@@ -20,8 +20,8 @@
 | F3 | `codex/phase-f-f3-structural-evidence-gates` | submitted | PR #159 (v2), structural gate chain landed |
 | F4 | `codex/phase-f-f4-decision-closure` | submitted | PR #160 (v2), deferred disposition closure complete |
 | F5 | `codex/phase-f-f5-review-fix-closure` | submitted | PR #161 (v2), review disposition approved |
-| F5A | `codex/phase-f-f5a-structural-assessment` | submitted | PR #162 (v1), structural disposition approved |
-| F6 | `codex/phase-f-f6-docs-cleanup` | pending | |
+| F5A | `codex/phase-f-f5a-structural-assessment` | submitted | PR #162 (v2), structural disposition approved |
+| F6 | `codex/phase-f-f6-docs-cleanup` | submitted | PR #163 (v1), docs cleanup closure complete |
 | F7 | `codex/phase-f-f7-next-phase-readiness` | pending | |
 
 ## Agent Registry
@@ -32,7 +32,7 @@
 | I3 | F3 | `codex/phase-f-f3-structural-evidence-gates` | complete (F3) | closed |
 | I4 | F5 independent review | `codex/phase-f-f5-review-fix-closure` | complete (approve) | closed |
 | I4A | F5A structural assessment | `codex/phase-f-f5a-structural-assessment` | complete (approve) | closed |
-| I5 | F6 + F7 docs/readiness | pending | pending | pending |
+| I5 | F6 + F7 docs/readiness | `codex/phase-f-f6-docs-cleanup` | complete (F6) | keep_open_for_F7 |
 
 ## Gate Checklist
 - [ ] G2 core runtime slices complete
@@ -156,5 +156,27 @@
 42. F5A submitted:
    - PR #162 (`codex/phase-f-f5a-structural-assessment`)
 43. Post-submit checks:
+   - `gt sync --no-restack` pass
+   - `gt log --show-untracked` clean
+44. Opened F6 slice branch and tracking:
+   - `gt create codex/phase-f-f6-docs-cleanup`
+   - `gt track codex/phase-f-f6-docs-cleanup -p codex/phase-f-f5a-structural-assessment`
+45. Spawned I5 default agent for F6 docs/cleanup closure.
+46. I5 outputs written:
+   - `AGENT_6_PLAN_VERBATIM.md`
+   - `AGENT_6_SCRATCHPAD.md`
+   - `AGENT_6_FINAL_F6_DOCS_CLEANUP.md`
+   - `F6_CLEANUP_MANIFEST.md`
+47. F6 canonical docs alignment updates:
+   - `README.md`
+   - `PROJECT_STATUS.md`
+48. F6 verification outcomes:
+   - `bun run phase-f:gate:f6-cleanup-manifest` pass
+   - `bun run phase-f:gate:f6-cleanup-integrity` pass
+49. F6 branch committed with Graphite modify:
+   - `25046cb docs(phase-f): finalize f6 cleanup manifest and docs alignment`
+50. F6 submitted:
+   - PR #163 (`codex/phase-f-f6-docs-cleanup`)
+51. Post-submit checks:
    - `gt sync --no-restack` pass
    - `gt log --show-untracked` clean

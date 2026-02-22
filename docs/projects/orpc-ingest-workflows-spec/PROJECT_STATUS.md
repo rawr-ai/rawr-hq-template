@@ -1,7 +1,7 @@
 # Project Status
 
 - Project name: ORPC + Inngest Workflows Specification
-- Status: Phase A closed; Phase B runtime slices `B0..B6` landed; Phase C runtime slices `C1..C7` landed with review/structural/docs closure; Phase D runtime slices `D1..D7` landed with review/structural/docs/readiness closure; Phase E runtime slices `E1..E7` landed with decision/review/structural/docs/readiness/report/handoff closure complete
+- Status: Phase A closed; Phase B runtime slices `B0..B6` landed; Phase C runtime slices `C1..C7` landed with review/structural/docs closure; Phase D runtime slices `D1..D7` landed with review/structural/docs/readiness closure; Phase E runtime slices `E1..E7` landed with decision/review/structural/docs/readiness/report/handoff closure complete; Phase F runtime slices `F1..F5A` landed with `F4` deferred disposition closed and `F6` docs/cleanup closure complete (`F7` readiness/handoff pending)
 - Canonical entrypoint: `README.md`
 - Canonical architecture: `ARCHITECTURE.md`
 - Canonical decisions: `DECISIONS.md`
@@ -68,6 +68,15 @@
 - E7 steward structural plan: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_PLAN_VERBATIM.md`
 - E7 steward structural scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_SCRATCHPAD.md`
 - E7 steward structural final check: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_FINAL_E7_STEWARD_STRUCTURAL_CHECK.md`
+- Phase F prep note (historical kickoff): `PHASE_F_PREP_NOTE.md`
+- Phase F runtime execution lineage root: `_phase-f-runtime-execution-pass-01-2026-02-21/`
+- F4 trigger scan result: `_phase-f-runtime-execution-pass-01-2026-02-21/F4_TRIGGER_SCAN_RESULT.json`
+- F4 decision closure disposition: `_phase-f-runtime-execution-pass-01-2026-02-21/F4_DISPOSITION.md`
+- F5 review disposition: `_phase-f-runtime-execution-pass-01-2026-02-21/F5_REVIEW_DISPOSITION.md`
+- F5A structural disposition: `_phase-f-runtime-execution-pass-01-2026-02-21/F5A_STRUCTURAL_DISPOSITION.md`
+- F6 cleanup manifest: `_phase-f-runtime-execution-pass-01-2026-02-21/F6_CLEANUP_MANIFEST.md`
+- F6 docs closure scratchpad: `_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_6_SCRATCHPAD.md`
+- F6 docs closure report: `_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_6_FINAL_F6_DOCS_CLEANUP.md`
 - Historical pre-Phase-B readiness lineage: `_phase-a-runtime-execution-pass-01-2026-02-20/A9_PHASE_B_READINESS.md`
 
 All session/process lineage is archived and non-canonical.
