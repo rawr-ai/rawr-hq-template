@@ -16,10 +16,10 @@
 | Slice | Branch | Status | Notes |
 | --- | --- | --- | --- |
 | F1 | `codex/phase-f-f1-runtime-lifecycle-seams` | submitted | PR #157 (v2), all F1 required verifications pass |
-| F2 | `codex/phase-f-f2-interface-policy-hardening` | submitted | PR #158 (v1), all F2 required verifications pass |
-| F3 | `codex/phase-f-f3-structural-evidence-gates` | submitted | PR #159 (v1), structural gate chain landed |
-| F4 | `codex/phase-f-f4-decision-closure` | submitted | PR #160 (v1), deferred disposition closure complete |
-| F5 | `codex/phase-f-f5-review-fix-closure` | pending | |
+| F2 | `codex/phase-f-f2-interface-policy-hardening` | submitted | PR #158 (v2), all F2 required verifications pass |
+| F3 | `codex/phase-f-f3-structural-evidence-gates` | submitted | PR #159 (v2), structural gate chain landed |
+| F4 | `codex/phase-f-f4-decision-closure` | submitted | PR #160 (v2), deferred disposition closure complete |
+| F5 | `codex/phase-f-f5-review-fix-closure` | in_review | I4 review complete, disposition approve, awaiting submit |
 | F5A | `codex/phase-f-f5a-structural-assessment` | pending | |
 | F6 | `codex/phase-f-f6-docs-cleanup` | pending | |
 | F7 | `codex/phase-f-f7-next-phase-readiness` | pending | |
@@ -30,7 +30,7 @@
 | I1 | F1 + F4 | `codex/phase-f-f4-decision-closure` | complete (F4) | closed |
 | I2 | F2 | `codex/phase-f-f2-interface-policy-hardening` | complete (F2) | closed |
 | I3 | F3 | `codex/phase-f-f3-structural-evidence-gates` | complete (F3) | closed |
-| I4 | F5 independent review | pending | pending | pending |
+| I4 | F5 independent review | `codex/phase-f-f5-review-fix-closure` | complete (approve) | close_after_submit |
 | I4A | F5A structural assessment | pending | pending | pending |
 | I5 | F6 + F7 docs/readiness | pending | pending | pending |
 
@@ -120,3 +120,16 @@
 28. Post-submit checks:
    - `gt sync --no-restack` pass
    - `gt log --show-untracked` clean
+29. Opened F5 slice branch and tracking:
+   - `gt create codex/phase-f-f5-review-fix-closure`
+   - `gt track codex/phase-f-f5-review-fix-closure -p codex/phase-f-f4-decision-closure`
+30. Spawned I4 default agent for independent Phase F review (TypeScript + oRPC lens).
+31. I4 outputs written:
+   - `AGENT_4_PLAN_VERBATIM.md`
+   - `AGENT_4_SCRATCHPAD.md`
+   - `AGENT_4_FINAL_F5_INDEPENDENT_REVIEW.md`
+   - `F5_REVIEW_DISPOSITION.md` (`disposition: approve`)
+32. I4 verification:
+   - `bun run phase-f:gates:full` pass
+33. Review findings:
+   - No blocking/high/medium findings.
