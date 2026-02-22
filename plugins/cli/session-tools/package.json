@@ -25,9 +25,7 @@
     "test": "vitest run"
   },
   "rawr": {
-    "templateRole": "example",
     "kind": "toolkit",
-    "channel": "A",
-    "publishTier": "blocked"
+    "capability": "session-tools"
   }
 }

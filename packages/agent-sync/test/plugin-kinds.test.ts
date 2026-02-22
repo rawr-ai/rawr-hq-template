@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const AllowedKinds = ["toolkit", "agent", "web"] as const;
+const AllowedKinds = ["toolkit", "agent", "web", "api", "workflows"] as const;
 type RawrKind = (typeof AllowedKinds)[number];
 
 async function pathExists(p: string): Promise<boolean> {
@@ -21,13 +21,13 @@ async function readJson(p: string): Promise<any> {
 }
 
 describe("plugin kinds", () => {
-  it("every plugins/{cli,agents,web}/* package.json declares rawr.kind", async () => {
+  it("every plugins/{cli,agents,web,api,workflows}/* package.json declares rawr.kind + rawr.capability", async () => {
     const workspaceRoot = path.resolve(__dirname, "..", "..", "..");
     const pluginsDir = path.join(workspaceRoot, "plugins");
 
     const failures: string[] = [];
 
-    for (const rootName of ["cli", "agents", "web"] as const) {
+    for (const rootName of ["cli", "agents", "web", "api", "workflows"] as const) {
       const rootAbs = path.join(pluginsDir, rootName);
       if (!(await pathExists(rootAbs))) continue;
       const dirents = await fs.readdir(rootAbs, { withFileTypes: true });
@@ -40,8 +40,12 @@ describe("plugin kinds", () => {
 
         const pkg = await readJson(pkgPath);
         const kind: RawrKind | undefined = pkg?.rawr?.kind;
+        const capability = typeof pkg?.rawr?.capability === "string" ? pkg.rawr.capability.trim() : "";
         if (!kind || !AllowedKinds.includes(kind)) {
           failures.push(`${rootName}/${dirent.name}: missing/invalid rawr.kind`);
+        }
+        if (!capability) {
+          failures.push(`${rootName}/${dirent.name}: missing/invalid rawr.capability`);
         }
       }
     }

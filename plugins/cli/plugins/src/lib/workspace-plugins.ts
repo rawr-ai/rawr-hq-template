@@ -2,11 +2,19 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  parseWorkspacePluginManifest,
+  type WorkspacePluginDiscoveryRoot,
+  type WorkspacePluginKind,
+} from "@rawr/hq/workspace";
+
 export type WorkspacePlugin = {
   id: string;
   name?: string;
   dirName: string;
   absPath: string;
+  kind: WorkspacePluginKind;
+  capability: string;
   templateRole: "fixture" | "example" | "operational";
   channel: "A" | "B" | "both";
   publishTier: "blocked" | "candidate";
@@ -58,7 +66,12 @@ export async function findWorkspaceRoot(startDir = process.cwd()): Promise<strin
   return findWorkspaceRootUpwards(moduleDir);
 }
 
-async function listLeafPluginDirsUnder(root: string): Promise<string[]> {
+type WorkspacePluginDir = {
+  absPath: string;
+  discoveryRoot: WorkspacePluginDiscoveryRoot;
+};
+
+async function listLeafPluginDirsUnder(root: string, discoveryRoot: WorkspacePluginDiscoveryRoot): Promise<WorkspacePluginDir[]> {
   let dirents: Array<{ name: string; isDirectory: () => boolean }>;
   try {
     dirents = await fs.readdir(root, { withFileTypes: true });
@@ -66,28 +79,33 @@ async function listLeafPluginDirsUnder(root: string): Promise<string[]> {
     return [];
   }
 
-  const out: string[] = [];
+  const out: WorkspacePluginDir[] = [];
   for (const dirent of dirents) {
     if (!dirent.isDirectory()) continue;
     if (dirent.name.startsWith(".")) continue;
-    out.push(path.join(root, dirent.name));
+    out.push({
+      absPath: path.join(root, dirent.name),
+      discoveryRoot,
+    });
   }
   return out;
 }
 
-async function listWorkspacePluginPackageDirs(workspaceRoot: string): Promise<string[]> {
+async function listWorkspacePluginPackageDirs(workspaceRoot: string): Promise<WorkspacePluginDir[]> {
   const pluginsDir = path.join(workspaceRoot, "plugins");
 
-  const splitRoots = [
-    path.join(pluginsDir, "cli"),
-    path.join(pluginsDir, "agents"),
-    path.join(pluginsDir, "web"),
+  const splitRoots: Array<{ rootPath: string; discoveryRoot: WorkspacePluginDiscoveryRoot }> = [
+    { rootPath: path.join(pluginsDir, "cli"), discoveryRoot: "cli" },
+    { rootPath: path.join(pluginsDir, "agents"), discoveryRoot: "agents" },
+    { rootPath: path.join(pluginsDir, "web"), discoveryRoot: "web" },
   ];
 
-  const out: string[] = [];
-  for (const r of splitRoots) out.push(...(await listLeafPluginDirsUnder(r)));
+  const out: WorkspacePluginDir[] = [];
+  for (const root of splitRoots) {
+    out.push(...(await listLeafPluginDirsUnder(root.rootPath, root.discoveryRoot)));
+  }
 
-  out.sort((a, b) => a.localeCompare(b));
+  out.sort((a, b) => a.absPath.localeCompare(b.absPath));
   return out;
 }
 
@@ -95,51 +113,37 @@ export async function listWorkspacePlugins(workspaceRoot: string): Promise<Works
   const pluginDirs = await listWorkspacePluginPackageDirs(workspaceRoot);
   const plugins: WorkspacePlugin[] = [];
 
-  for (const absPath of pluginDirs) {
+  for (const pluginDir of pluginDirs) {
+    const absPath = pluginDir.absPath;
     const dirName = path.basename(absPath);
     const pkgJsonPath = path.join(absPath, "package.json");
 
-    let name: string | undefined;
-    let templateRole: WorkspacePlugin["templateRole"] = "operational";
-    let channel: WorkspacePlugin["channel"] = "both";
-    let publishTier: WorkspacePlugin["publishTier"] = "blocked";
-    if (await pathExists(pkgJsonPath)) {
-      try {
-        const parsed = JSON.parse(await fs.readFile(pkgJsonPath, "utf8")) as {
-          name?: unknown;
-          rawr?: {
-            templateRole?: unknown;
-            channel?: unknown;
-            publishTier?: unknown;
-          };
-        };
-        if (typeof parsed.name === "string") name = parsed.name;
-        if (
-          parsed.rawr?.templateRole === "fixture" ||
-          parsed.rawr?.templateRole === "example" ||
-          parsed.rawr?.templateRole === "operational"
-        ) {
-          templateRole = parsed.rawr.templateRole;
-        }
-        if (parsed.rawr?.channel === "A" || parsed.rawr?.channel === "B" || parsed.rawr?.channel === "both") {
-          channel = parsed.rawr.channel;
-        }
-        if (parsed.rawr?.publishTier === "blocked" || parsed.rawr?.publishTier === "candidate") {
-          publishTier = parsed.rawr.publishTier;
-        }
-      } catch {
-        // ignore
-      }
+    if (!(await pathExists(pkgJsonPath))) continue;
+
+    let parsedPackageJson: unknown;
+    try {
+      parsedPackageJson = JSON.parse(await fs.readFile(pkgJsonPath, "utf8")) as unknown;
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to parse plugin manifest ${pkgJsonPath}: ${detail}`);
     }
 
+    const parsed = parseWorkspacePluginManifest({
+      manifest: parsedPackageJson,
+      pkgJsonPath,
+      discoveryRoot: pluginDir.discoveryRoot,
+    });
+
     plugins.push({
-      id: name ?? dirName,
-      name,
+      id: parsed.name ?? dirName,
+      name: parsed.name,
       dirName,
       absPath,
-      templateRole,
-      channel,
-      publishTier,
+      kind: parsed.kind,
+      capability: parsed.capability,
+      templateRole: parsed.templateRole,
+      channel: parsed.channel,
+      publishTier: parsed.publishTier,
     });
   }
 
