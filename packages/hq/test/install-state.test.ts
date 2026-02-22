@@ -119,4 +119,51 @@ describe("@rawr/hq install state", () => {
     expect(report.status).toBe("LEGACY_OVERLAP");
     expect(report.issues.some((issue) => issue.kind === "legacy_overlap")).toBe(true);
   });
+
+  it("defaults canonical root to the instance-local workspace even when owner file exists", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-hq-install-state-owner-local-"));
+    tempDirs.push(tmp);
+    const current = await createWorkspace(path.join(tmp, "current-repo"));
+    const owner = await createWorkspace(path.join(tmp, "owner-repo"));
+    const oclifDataDir = path.join(tmp, ".local", "share", "@rawr", "cli");
+    await createPluginManagerManifest(oclifDataDir, [
+      { name: CANONICAL_SYNC_PLUGIN_NAME, type: "link", root: current.pluginRoot },
+    ]);
+    await mkdirp(path.join(tmp, ".rawr"));
+    await fs.writeFile(path.join(tmp, ".rawr", "global-rawr-owner-path"), `${owner.workspaceRoot}\n`, "utf8");
+
+    const report = await withHome(tmp, async () =>
+      assessInstallState({
+        workspaceRoot: current.workspaceRoot,
+        oclifDataDir,
+        runtimePlugins: [{ name: CANONICAL_SYNC_PLUGIN_NAME, alias: CANONICAL_SYNC_PLUGIN_NAME, type: "core", root: current.workspaceRoot }],
+      }));
+
+    expect(report.canonicalWorkspaceSource).toBe("workspace-root");
+    expect(report.canonicalWorkspaceRoot).toBe(path.resolve(current.workspaceRoot));
+  });
+
+  it("uses global-owner root only when explicitly enabled", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-hq-install-state-owner-explicit-"));
+    tempDirs.push(tmp);
+    const current = await createWorkspace(path.join(tmp, "current-repo"));
+    const owner = await createWorkspace(path.join(tmp, "owner-repo"));
+    const oclifDataDir = path.join(tmp, ".local", "share", "@rawr", "cli");
+    await createPluginManagerManifest(oclifDataDir, [
+      { name: CANONICAL_SYNC_PLUGIN_NAME, type: "link", root: current.pluginRoot },
+    ]);
+    await mkdirp(path.join(tmp, ".rawr"));
+    await fs.writeFile(path.join(tmp, ".rawr", "global-rawr-owner-path"), `${owner.workspaceRoot}\n`, "utf8");
+
+    const report = await withHome(tmp, async () =>
+      assessInstallState({
+        workspaceRoot: current.workspaceRoot,
+        oclifDataDir,
+        allowGlobalOwnerFallback: true,
+        runtimePlugins: [{ name: CANONICAL_SYNC_PLUGIN_NAME, alias: CANONICAL_SYNC_PLUGIN_NAME, type: "core", root: current.workspaceRoot }],
+      }));
+
+    expect(report.canonicalWorkspaceSource).toBe("global-owner");
+    expect(report.canonicalWorkspaceRoot).toBe(path.resolve(owner.workspaceRoot));
+  });
 });

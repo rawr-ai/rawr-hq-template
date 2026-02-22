@@ -1,17 +1,12 @@
-import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 
-import { filterOperationalPlugins, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
+import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
 
 export default class PluginsWebList extends RawrCommand {
   static description = "List workspace runtime web plugins";
 
   static flags = {
     ...RawrCommand.baseFlags,
-    all: Flags.boolean({
-      description: "Include fixture/example plugins (default shows operational only)",
-      default: false,
-    }),
   } as const;
 
   async run() {
@@ -27,7 +22,7 @@ export default class PluginsWebList extends RawrCommand {
     }
 
     const plugins = await listWorkspacePlugins(workspaceRoot);
-    const visiblePlugins = filterOperationalPlugins(plugins, Boolean(flags.all));
+    const visiblePlugins = filterPluginsByKind(plugins, "web");
     const result = this.ok({ workspaceRoot, plugins: visiblePlugins, excludedCount: plugins.length - visiblePlugins.length });
     this.outputResult(result, {
       flags: baseFlags,

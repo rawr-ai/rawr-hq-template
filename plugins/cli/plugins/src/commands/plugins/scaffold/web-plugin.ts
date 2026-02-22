@@ -105,10 +105,8 @@ export default class PluginsScaffoldWebPlugin extends RawrCommand {
               test: "vitest run",
             },
             rawr: {
-              templateRole: "operational",
               kind: "web",
-              channel: kind === "both" ? "both" : "B",
-              publishTier: publishReady ? "candidate" : "blocked",
+              capability: dirName,
             },
           },
           null,

@@ -15,9 +15,6 @@ export type WorkspacePlugin = {
   absPath: string;
   kind: WorkspacePluginKind;
   capability: string;
-  templateRole: "fixture" | "example" | "operational";
-  channel: "A" | "B" | "both";
-  publishTier: "blocked" | "candidate";
 };
 
 async function pathExists(p: string): Promise<boolean> {
@@ -143,9 +140,6 @@ export async function listWorkspacePlugins(workspaceRoot: string): Promise<Works
       absPath,
       kind: parsed.kind,
       capability: parsed.capability,
-      templateRole: parsed.templateRole,
-      channel: parsed.channel,
-      publishTier: parsed.publishTier,
     });
   }
 
@@ -153,9 +147,8 @@ export async function listWorkspacePlugins(workspaceRoot: string): Promise<Works
   return plugins;
 }
 
-export function filterOperationalPlugins(plugins: WorkspacePlugin[], includeNonOperational: boolean): WorkspacePlugin[] {
-  if (includeNonOperational) return plugins;
-  return plugins.filter((plugin) => plugin.templateRole === "operational");
+export function filterPluginsByKind(plugins: WorkspacePlugin[], kind: WorkspacePluginKind): WorkspacePlugin[] {
+  return plugins.filter((plugin) => plugin.kind === kind);
 }
 
 export function resolvePluginId(plugins: WorkspacePlugin[], inputId: string): WorkspacePlugin | undefined {
