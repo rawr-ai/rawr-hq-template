@@ -34,12 +34,43 @@ if (mode === "completion") {
       manifestSource.includes("pathPrefix"),
   });
   requiredChecks.push({
+    label: "manifest-owned composition seams declared",
+    ok:
+      manifestSource.includes("orpc") &&
+      manifestSource.includes("router") &&
+      manifestSource.includes("triggerRouter") &&
+      manifestSource.includes("inngest") &&
+      manifestSource.includes("bundleFactory") &&
+      manifestSource.includes("serveHandlerFactory"),
+  });
+  requiredChecks.push({
     label: "/api/workflows capability-family wiring",
     ok: rawrSource.includes('"/api/workflows/*"') && rawrSource.includes("resolveWorkflowCapability"),
   });
   requiredChecks.push({
     label: "manifest capability mapping consumed in runtime routing",
     ok: rawrSource.includes("rawrHqManifest.workflows.capabilities"),
+  });
+  requiredChecks.push({
+    label: "manifest-owned workflow trigger router seam consumed by host",
+    ok: rawrSource.includes("rawrHqManifest.workflows.triggerRouter"),
+  });
+  requiredChecks.push({
+    label: "manifest-owned inngest seams consumed by host",
+    ok:
+      rawrSource.includes("rawrHqManifest.inngest.bundleFactory") &&
+      rawrSource.includes("rawrHqManifest.inngest.serveHandlerFactory"),
+  });
+  requiredChecks.push({
+    label: "manifest-owned orpc seam consumed by host",
+    ok: rawrSource.includes("rawrHqManifest.orpc.router"),
+  });
+  requiredChecks.push({
+    label: "host avoids ad-hoc local composition for manifest-owned seams",
+    ok:
+      !rawrSource.includes("createCoordinationInngestFunction(") &&
+      !rawrSource.includes("createInngestServeHandler(") &&
+      !rawrSource.includes("createOrpcRouter("),
   });
   requiredChecks.push({
     label: "no dedicated /rpc/workflows mount",
