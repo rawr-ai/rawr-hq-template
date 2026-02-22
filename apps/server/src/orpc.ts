@@ -21,6 +21,7 @@ import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { implement } from "@orpc/server";
 import { ORPCError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
+import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import type { AnyElysia } from "./plugins";
 import {
   createRequestScopedBoundaryContext,
@@ -42,14 +43,11 @@ type ParsedRunId =
 type RawrOrpcContext = RawrBoundaryContext;
 type RawrOrpcRouter = ReturnType<typeof createOrpcRouter>;
 
-const RPC_CALLER_SURFACE_HEADER = "x-rawr-caller-surface";
-const RPC_ALLOWED_CALLER_SURFACES = new Set(["first-party", "internal", "in-process", "trusted-service", "cli"]);
-const RPC_DENIED_CALLER_SURFACES = new Set(["external", "third-party", "runtime-ingress"]);
-
 export type RegisterOrpcRoutesOptions = RawrBoundaryContextDeps & {
   router?: RawrOrpcRouter;
   contextFactory?: (request: Request, deps: RawrBoundaryContextDeps) => RawrOrpcContext;
   onContextCreated?: (context: RawrOrpcContext) => void;
+  rpcAuthPolicy?: RpcAuthPolicy;
 };
 
 function toJsonValue(value: unknown): JsonValue {
@@ -80,20 +78,6 @@ function parseRunId(value: unknown): ParsedRunId {
 
 function generateRunId(): string {
   return `run-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function callerSurfaceFromRequest(request: Request): string | null {
-  const value = request.headers.get(RPC_CALLER_SURFACE_HEADER);
-  if (typeof value !== "string") return null;
-  const normalized = value.trim().toLowerCase();
-  return normalized === "" ? null : normalized;
-}
-
-export function isRpcRequestAllowed(request: Request): boolean {
-  const callerSurface = callerSurfaceFromRequest(request);
-  if (!callerSurface) return false;
-  if (RPC_DENIED_CALLER_SURFACES.has(callerSurface)) return false;
-  return RPC_ALLOWED_CALLER_SURFACES.has(callerSurface);
 }
 
 function badRequest(code: string, message: string, data?: unknown): never {
@@ -330,6 +314,7 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
   const router = options.router ?? createOrpcRouter();
   const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
   const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router);
+  const rpcAuthPolicy = options.rpcAuthPolicy ?? createRpcAuthPolicy({ baseUrl: options.baseUrl });
   const contextDeps: RawrBoundaryContextDeps = {
     repoRoot: options.repoRoot,
     baseUrl: options.baseUrl,
@@ -360,7 +345,7 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/rpc",
     async (ctx) => {
       const request = ctx.request as Request;
-      if (!isRpcRequestAllowed(request)) {
+      if (!isRpcRequestAllowed(request, rpcAuthPolicy)) {
         return new Response("forbidden", { status: 403 });
       }
       const context = contextFactory(request, contextDeps);
@@ -375,7 +360,7 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     "/rpc/*",
     async (ctx) => {
       const request = ctx.request as Request;
-      if (!isRpcRequestAllowed(request)) {
+      if (!isRpcRequestAllowed(request, rpcAuthPolicy)) {
         return new Response("forbidden", { status: 403 });
       }
       const context = contextFactory(request, contextDeps);
