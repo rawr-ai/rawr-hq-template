@@ -2,11 +2,25 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import ts from "typescript";
+import {
+  hasIdentifierCall,
+  hasImport,
+  hasNamedImport,
+  hasPropertyAccessChain,
+  hasRouteRegistration,
+  importModuleSet,
+  matchesPropertyAccessChain,
+  namedImportInfo,
+  parseTypeScript,
+  propertyNameText,
+  unwrapExpression,
+  visit,
+} from "./ts-ast-utils.mjs";
 
-const gate = process.argv[2];
+const gateId = process.argv[2];
 const optional = process.argv.includes("--optional");
 
-if (!gate) {
+if (!gateId) {
   console.error("Usage: bun scripts/phase-a/verify-gate-scaffold.mjs <gate-id> [--optional]");
   process.exit(2);
 }
@@ -29,10 +43,6 @@ function assertCondition(condition, message) {
   }
 }
 
-function parseTypeScript(filePath, source) {
-  return ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-}
-
 async function readTypeScriptFile(relPath) {
   const abs = path.join(root, relPath);
   const source = await fs.readFile(abs, "utf8");
@@ -40,65 +50,6 @@ async function readTypeScriptFile(relPath) {
     source,
     ast: parseTypeScript(abs, source),
   };
-}
-
-function visit(node, fn) {
-  fn(node);
-  node.forEachChild((child) => visit(child, fn));
-}
-
-function unwrapExpression(expression) {
-  let current = expression;
-  while (current) {
-    if (ts.isAsExpression(current) || ts.isParenthesizedExpression(current)) {
-      current = current.expression;
-      continue;
-    }
-    if (typeof ts.isSatisfiesExpression === "function" && ts.isSatisfiesExpression(current)) {
-      current = current.expression;
-      continue;
-    }
-    return current;
-  }
-  return undefined;
-}
-
-function propertyNameText(nameNode) {
-  if (!nameNode) return undefined;
-  if (ts.isIdentifier(nameNode) || ts.isStringLiteral(nameNode)) return nameNode.text;
-  return undefined;
-}
-
-function namedImportInfo(sourceFile, moduleName) {
-  const result = new Map();
-  for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
-    if (statement.moduleSpecifier.text !== moduleName) continue;
-    const clause = statement.importClause;
-    if (!clause || !clause.namedBindings || !ts.isNamedImports(clause.namedBindings)) continue;
-    for (const element of clause.namedBindings.elements) {
-      const imported = element.propertyName?.text ?? element.name.text;
-      result.set(imported, element.name.text);
-    }
-  }
-  return result;
-}
-
-function importModuleSet(sourceFile) {
-  const modules = new Set();
-  for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
-    modules.add(statement.moduleSpecifier.text);
-  }
-  return modules;
-}
-
-function hasImport(sourceFile, moduleName) {
-  return importModuleSet(sourceFile).has(moduleName);
-}
-
-function hasNamedImport(sourceFile, moduleName, importName) {
-  return namedImportInfo(sourceFile, moduleName).has(importName);
 }
 
 function findExportedFunction(sourceFile, functionName) {
@@ -145,65 +96,6 @@ function functionReturnsCallTo(functionDecl, calleeIdentifier) {
     }
   });
 
-  return matched;
-}
-
-function hasIdentifierCall(sourceFile, identifierName) {
-  let matched = false;
-  visit(sourceFile, (node) => {
-    if (matched || !ts.isCallExpression(node)) return;
-    if (ts.isIdentifier(node.expression) && node.expression.text === identifierName) {
-      matched = true;
-    }
-  });
-  return matched;
-}
-
-function collectPropertyAccessSegments(expression) {
-  const segments = [];
-  let current = expression;
-
-  while (ts.isPropertyAccessExpression(current)) {
-    segments.unshift(current.name.text);
-    current = current.expression;
-  }
-
-  if (ts.isIdentifier(current)) {
-    segments.unshift(current.text);
-    return segments;
-  }
-  return [];
-}
-
-function matchesPropertyAccessChain(expression, segments) {
-  const found = collectPropertyAccessSegments(expression);
-  if (found.length !== segments.length) return false;
-  return segments.every((segment, idx) => found[idx] === segment);
-}
-
-function hasPropertyAccessChain(sourceFile, segments) {
-  let matched = false;
-  visit(sourceFile, (node) => {
-    if (matched || !ts.isPropertyAccessExpression(node)) return;
-    if (matchesPropertyAccessChain(node, segments)) {
-      matched = true;
-    }
-  });
-  return matched;
-}
-
-function hasRouteRegistration(sourceFile, routeLiteral) {
-  let matched = false;
-  visit(sourceFile, (node) => {
-    if (matched || !ts.isCallExpression(node) || node.arguments.length === 0) return;
-    const [firstArg] = node.arguments;
-    if (!ts.isStringLiteral(firstArg) || firstArg.text !== routeLiteral) return;
-    if (!ts.isPropertyAccessExpression(node.expression)) return;
-    const method = node.expression.name.text;
-    if (method === "all" || method === "get" || method === "post") {
-      matched = true;
-    }
-  });
   return matched;
 }
 
@@ -354,7 +246,7 @@ async function verifyObservabilityContract() {
   await mustExist("packages/coordination-observability/test/observability.test.ts");
 }
 
-const checkMap = {
+const gateChecksById = {
   "metadata-contract": verifyMetadataContract,
   "import-boundary": verifyImportBoundary,
   "host-composition-guard": verifyHostCompositionGuard,
@@ -373,17 +265,17 @@ const checkMap = {
   },
 };
 
-const check = checkMap[gate];
+const check = gateChecksById[gateId];
 if (!check) {
-  console.error(`Unknown gate scaffold id: ${gate}`);
+  console.error(`Unknown gate scaffold id: ${gateId}`);
   process.exit(2);
 }
 
 try {
   await check();
-  console.log(`Gate scaffold check passed: ${gate}`);
+  console.log(`Gate scaffold check passed: ${gateId}`);
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
-  console.error(`Gate scaffold check failed (${gate}): ${message}`);
+  console.error(`Gate scaffold check failed (${gateId}): ${message}`);
   process.exit(1);
 }
