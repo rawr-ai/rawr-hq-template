@@ -45,7 +45,7 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 39. `PHASE_E_PLANNING_HANDOFF.md` — planning-to-runtime handoff contract for Phase E execution.
 40. `_phase-e-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (E4/E5/E5A dispositions, E6 docs+cleanup outputs, E7 readiness, execution report, final handoff outputs, and steward final-gate outputs).
 41. `PHASE_F_PREP_NOTE.md` — historical Phase F kickoff grounding and readiness note.
-42. `_phase-f-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (F4/F5/F5A dispositions, F6 docs+cleanup outputs, and F7-prep lineage).
+42. `_phase-f-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (F4/F5/F5A dispositions, F6 docs+cleanup outputs, and F7 readiness/report/handoff closure artifacts).
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -105,14 +105,18 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase E steward structural pass scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_SCRATCHPAD.md`
 - Phase E steward structural pass final check: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_FINAL_E7_STEWARD_STRUCTURAL_CHECK.md`
 - Phase F prep note (historical kickoff): `PHASE_F_PREP_NOTE.md`
-- Phase F runtime closure artifacts (`F1..F6` landed, `F7` pending): `_phase-f-runtime-execution-pass-01-2026-02-21/`
+- Phase F runtime closure artifacts (`F1..F7` closed): `_phase-f-runtime-execution-pass-01-2026-02-21/`
 - Phase F trigger scan artifact: `_phase-f-runtime-execution-pass-01-2026-02-21/F4_TRIGGER_SCAN_RESULT.json`
 - Phase F deferred/triggered disposition: `_phase-f-runtime-execution-pass-01-2026-02-21/F4_DISPOSITION.md`
 - Phase F review disposition: `_phase-f-runtime-execution-pass-01-2026-02-21/F5_REVIEW_DISPOSITION.md`
 - Phase F structural disposition: `_phase-f-runtime-execution-pass-01-2026-02-21/F5A_STRUCTURAL_DISPOSITION.md`
 - Phase F docs + cleanup manifest: `_phase-f-runtime-execution-pass-01-2026-02-21/F6_CLEANUP_MANIFEST.md`
-- Phase F docs + cleanup execution scratchpad: `_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_6_SCRATCHPAD.md`
+- Phase F readiness output for next phase: `_phase-f-runtime-execution-pass-01-2026-02-21/F7_NEXT_PHASE_READINESS.md`
+- Phase F execution report: `_phase-f-runtime-execution-pass-01-2026-02-21/PHASE_F_EXECUTION_REPORT.md`
+- Phase F final handoff summary: `_phase-f-runtime-execution-pass-01-2026-02-21/FINAL_PHASE_F_HANDOFF.md`
+- Phase F docs/readiness continuity scratchpad: `_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_6_SCRATCHPAD.md`
 - Phase F docs + cleanup closure report: `_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_6_FINAL_F6_DOCS_CLEANUP.md`
+- Phase F readiness + handoff closure report: `_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_6_FINAL_F7_READINESS_AND_HANDOFF.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 
