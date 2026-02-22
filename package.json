@@ -67,7 +67,11 @@
     "phase-d:gate:d3-ingress-middleware-structural-contract": "bun scripts/phase-d/verify-d3-ingress-middleware-structural-contract.mjs",
     "phase-d:gate:d3-ingress-middleware-structural-runtime": "bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts && bunx vitest run --project server apps/server/test/ingress-signature-observability.test.ts && bunx vitest run --project server apps/server/test/phase-a-gates.test.ts",
     "phase-d:d3:quick": "bun run phase-d:gate:drift-core && bun run phase-d:gate:d3-ingress-middleware-structural-contract && bun run phase-d:gate:d3-ingress-middleware-structural-runtime",
-    "phase-d:d3:full": "bun run phase-d:d3:quick && bun run phase-a:gate:host-composition-guard && bun run phase-a:gate:route-negative-assertions"
+    "phase-d:d3:full": "bun run phase-d:d3:quick && bun run phase-a:gate:host-composition-guard && bun run phase-a:gate:route-negative-assertions",
+    "phase-d:gate:d4-dedupe-scan": "bun scripts/phase-d/verify-d4-dedupe-trigger.mjs",
+    "phase-d:gate:d4-finished-hook-scan": "bun scripts/phase-d/verify-d4-finished-hook-trigger.mjs",
+    "phase-d:d4:assess": "bun run phase-d:gate:d4-dedupe-scan && bun run phase-d:gate:d4-finished-hook-scan",
+    "phase-d:gate:d4-disposition": "bun scripts/phase-d/verify-d4-disposition.mjs"
   },
   "overrides": {
     "npm": "11.9.0",
