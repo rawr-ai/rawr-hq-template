@@ -76,12 +76,20 @@ const result = {
     : "No finished-hook guardrail drift detected in D2-owned contract/runtime assertions.",
   checks,
   failedCheckIds: failedChecks.map((check) => check.id),
-  generatedAt: new Date().toISOString(),
 };
 
 const absResultPath = path.join(process.cwd(), RESULT_PATH);
 await fs.mkdir(path.dirname(absResultPath), { recursive: true });
-await fs.writeFile(absResultPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
+const nextSerialized = `${JSON.stringify(result, null, 2)}\n`;
+let previousSerialized = null;
+try {
+  previousSerialized = await fs.readFile(absResultPath, "utf8");
+} catch {
+  previousSerialized = null;
+}
+if (previousSerialized !== nextSerialized) {
+  await fs.writeFile(absResultPath, nextSerialized, "utf8");
+}
 
 if (triggered) {
   console.log("phase-d d4 finished-hook scan: TRIGGERED");
@@ -91,4 +99,4 @@ if (triggered) {
 } else {
   console.log("phase-d d4 finished-hook scan: clear");
 }
-console.log(`wrote ${RESULT_PATH}`);
+console.log(`wrote ${RESULT_PATH}${previousSerialized === nextSerialized ? " (unchanged)" : ""}`);

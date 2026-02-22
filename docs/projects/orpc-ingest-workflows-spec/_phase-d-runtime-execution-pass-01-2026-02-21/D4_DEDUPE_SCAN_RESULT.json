@@ -2,7 +2,19 @@
   "criterion": "d4-dedupe-scan",
   "triggerRule": "heavy middleware chain depth >= 3 missing explicit context-cached dedupe marker",
   "triggered": false,
-  "summary": "No dedupe-marker drift detected in D1-owned contract/runtime assertions.",
+  "heavyChainDepthThreshold": 3,
+  "rpcHandlerCount": 2,
+  "stepCoverage": {
+    "authGate": 3,
+    "contextFactory": 4,
+    "markerAssertion": 2,
+    "contextCreatedHook": 4,
+    "handlerDispatch": 2
+  },
+  "measuredRpcMiddlewareChainDepth": 5,
+  "heavyChainDepthCriterionMet": true,
+  "missingExplicitMarker": false,
+  "summary": "No dedupe-marker drift detected in heavy D1-owned middleware chain.",
   "checks": [
     {
       "id": "context-marker-surface",
@@ -36,5 +48,5 @@
     }
   ],
   "failedCheckIds": [],
-  "generatedAt": "2026-02-21T13:06:22.305Z"
+  "failedMarkerCheckIds": []
 }
