@@ -1,7 +1,7 @@
 # Project Status
 
 - Project name: ORPC + Inngest Workflows Specification
-- Status: Phase A closed; Phase B planning packet finalized, implementation execution ready
+- Status: Phase A closed; Phase B runtime slices `B0..B6` landed; Phase C planning packet is ready and runtime kickoff is prepared
 - Canonical entrypoint: `README.md`
 - Canonical architecture: `ARCHITECTURE.md`
 - Canonical decisions: `DECISIONS.md`
@@ -10,7 +10,20 @@
 - Phase B implementation spec: `PHASE_B_IMPLEMENTATION_SPEC.md`
 - Phase B gates contract: `PHASE_B_ACCEPTANCE_GATES.md`
 - Phase B work breakdown: `PHASE_B_WORKBREAKDOWN.yaml`
-- Phase B planning disposition: `PHASE_B_REVIEW_DISPOSITION.md`
-- Current next-phase readiness: `_phase-a-runtime-execution-pass-01-2026-02-20/A9_PHASE_B_READINESS.md`
+- Phase B planning disposition (historical kickoff): `PHASE_B_REVIEW_DISPOSITION.md`
+- Phase B runtime execution lineage root: `_phase-b-runtime-execution-pass-01-2026-02-20/`
+- B4 review disposition: `_phase-b-runtime-execution-pass-01-2026-02-20/B4_REVIEW_DISPOSITION.md`
+- B5 cleanup manifest: `_phase-b-runtime-execution-pass-01-2026-02-20/B5_CLEANUP_MANIFEST.md`
+- Phase B execution report: `_phase-b-runtime-execution-pass-01-2026-02-20/PHASE_B_EXECUTION_REPORT.md`
+- Phase B final handoff: `_phase-b-runtime-execution-pass-01-2026-02-20/FINAL_PHASE_B_HANDOFF.md`
+- B6 Phase C readiness output: `_phase-b-runtime-execution-pass-01-2026-02-20/B6_PHASE_C_READINESS.md`
+- Phase C planning prep runbook draft: `PHASE_C_PLANNING_RUNBOOK_DRAFT.md`
+- Phase C execution entrypoint: `PHASE_C_EXECUTION_PACKET.md`
+- Phase C implementation spec: `PHASE_C_IMPLEMENTATION_SPEC.md`
+- Phase C gates contract: `PHASE_C_ACCEPTANCE_GATES.md`
+- Phase C work breakdown map: `PHASE_C_WORKBREAKDOWN.yaml`
+- Phase C planning review disposition: `PHASE_C_REVIEW_DISPOSITION.md`
+- Phase C planning handoff: `PHASE_C_PLANNING_HANDOFF.md`
+- Historical pre-Phase-B readiness lineage: `_phase-a-runtime-execution-pass-01-2026-02-20/A9_PHASE_B_READINESS.md`
 
 All session/process lineage is archived and non-canonical.

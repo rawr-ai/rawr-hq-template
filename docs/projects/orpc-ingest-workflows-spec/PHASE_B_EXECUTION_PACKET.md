@@ -15,6 +15,20 @@ Execute in this order:
 ## Objective
 Harden Phase A seams into implementation-safe interfaces with explicit ownership and structural verification so downstream phases execute with lower ambiguity and lower drift risk.
 
+## As-Landed Snapshot (through B6 on 2026-02-21)
+1. Runtime implementation slices `B0..B4A` are landed in the Phase B runtime execution branch/worktree.
+2. `B0` auth-source hardening is landed and the blocking review finding (`HIGH-01`) is closed in fix closure.
+3. `B1`/`B2` seam hardening is landed: host composition consumes package-owned runtime seams while `rawr.hq.ts` remains manifest authority.
+4. `B3` anti-drift verification is structurally enforced through the canonical gate chain:
+   - `bun run phase-a:gates:exit`
+   - `scripts/phase-a/verify-gate-scaffold.mjs` (`metadata-contract`, `import-boundary`, `host-composition-guard`, `route-negative-assertions`)
+   - `scripts/phase-a/verify-harness-matrix.mjs` + `apps/server/test/route-boundary-matrix.test.ts`
+   Dedicated `adapter-shim-ownership.test.ts` files are not present in landed state and are not required by the canonical B3 contract.
+5. `B4` re-review disposition is `ready` (no unresolved blocking/high findings); remaining medium docs drift is handled in `B5`.
+6. `B4A` structural assessment improvements are landed (shared AST utilities + structural test/scaffold clarity) without architecture shifts.
+7. `B5` docs/cleanup closure is complete; canonical Phase B docs and status surfaces are re-baselined to landed runtime behavior.
+8. `B6` realignment output is published with explicit Phase C kickoff posture (`ready`), no kickoff blockers, and owner-assigned opening order.
+
 ## Locked Constraints (No Re-open in Phase B)
 1. Runtime semantics stay on `rawr.kind` + `rawr.capability` + manifest registration.
 2. Route-family boundaries remain:
@@ -98,21 +112,20 @@ Harden Phase A seams into implementation-safe interfaces with explicit ownership
 - Depends on: `B2`
 - Implement:
   1. Upgrade string-shape checks into structural ownership assertions.
-  2. Add adapter-shim anti-regression checks for workspace/install seams.
+  2. Re-baseline workspace/install seam anti-regression to structural gate checks (`metadata-contract` + `import-boundary`) in the canonical exit chain.
   3. Preserve D-015 route-negative and harness matrix obligations.
 - Primary paths:
   - `scripts/phase-a/manifest-smoke.mjs`
   - `scripts/phase-a/verify-gate-scaffold.mjs`
   - `scripts/phase-a/verify-harness-matrix.mjs`
   - `apps/server/test/route-boundary-matrix.test.ts`
+  - `apps/server/test/phase-a-gates.test.ts`
   - `packages/hq/test/phase-a-gates.test.ts`
   - `plugins/cli/plugins/test/phase-a-gates.test.ts`
-  - `packages/hq/test/adapter-shim-ownership.test.ts` (new)
-  - `plugins/cli/plugins/test/adapter-shim-ownership.test.ts` (new)
 - Acceptance:
   1. Structural anti-drift gates are green.
   2. Harness matrix and route-negative assertions remain intact.
-  3. False-green paths from text-only checks are removed.
+  3. Workspace/install seam ownership anti-regression is enforced by structural gate checks in `phase-a:gates:exit`.
 
 ### B4 - Independent Review + Fix Closure
 - Owner: `@rawr-review-closure`
