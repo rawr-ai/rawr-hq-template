@@ -1,7 +1,5 @@
 #!/usr/bin/env bun
-import fs from "node:fs/promises";
-import path from "node:path";
-import { mustExist, readFile } from "./_verify-utils.mjs";
+import { mustExist, readFile, writeJsonIfChanged } from "./_verify-utils.mjs";
 
 const PASS_ROOT = "docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21";
 const RESULT_PATH = `${PASS_ROOT}/D4_FINISHED_HOOK_SCAN_RESULT.json`;
@@ -78,18 +76,7 @@ const result = {
   failedCheckIds: failedChecks.map((check) => check.id),
 };
 
-const absResultPath = path.join(process.cwd(), RESULT_PATH);
-await fs.mkdir(path.dirname(absResultPath), { recursive: true });
-const nextSerialized = `${JSON.stringify(result, null, 2)}\n`;
-let previousSerialized = null;
-try {
-  previousSerialized = await fs.readFile(absResultPath, "utf8");
-} catch {
-  previousSerialized = null;
-}
-if (previousSerialized !== nextSerialized) {
-  await fs.writeFile(absResultPath, nextSerialized, "utf8");
-}
+const writeResult = await writeJsonIfChanged(RESULT_PATH, result);
 
 if (triggered) {
   console.log("phase-d d4 finished-hook scan: TRIGGERED");
@@ -99,4 +86,4 @@ if (triggered) {
 } else {
   console.log("phase-d d4 finished-hook scan: clear");
 }
-console.log(`wrote ${RESULT_PATH}${previousSerialized === nextSerialized ? " (unchanged)" : ""}`);
+console.log(`wrote ${RESULT_PATH}${writeResult.changed ? "" : " (unchanged)"}`);
