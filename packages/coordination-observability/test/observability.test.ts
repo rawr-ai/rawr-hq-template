@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createDeskEvent, defaultTraceLinks } from "../src";
+import {
+  createDeskEvent,
+  defaultTraceLinks,
+  REQUIRED_RUN_LIFECYCLE_EVENT_TYPES,
+  REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT,
+  type CreateDeskEventInput,
+} from "../src";
 
 describe("coordination observability", () => {
   it("creates run events", () => {
@@ -16,6 +22,24 @@ describe("coordination observability", () => {
     expect(event.type).toBe("run.started");
     expect(event.status).toBe("running");
     expect(event.eventId).toMatch(/^evt-/);
+  });
+
+  it("exports required run lifecycle telemetry contract", () => {
+    expect(REQUIRED_RUN_LIFECYCLE_EVENT_TYPES).toEqual(["run.started", "run.completed", "run.failed"]);
+    expect(REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT["run.started"]).toEqual(["queued", "running"]);
+    expect(REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT["run.completed"]).toEqual(["completed"]);
+    expect(REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT["run.failed"]).toEqual(["failed"]);
+  });
+
+  it("hard-fails invalid run lifecycle status pairs", () => {
+    const invalidEvent = {
+      runId: "run-1",
+      workflowId: "wf-1",
+      type: "run.completed",
+      status: "running",
+    } as unknown as CreateDeskEventInput;
+
+    expect(() => createDeskEvent(invalidEvent)).toThrow("invalid lifecycle status");
   });
 
   it("builds default trace links", () => {
