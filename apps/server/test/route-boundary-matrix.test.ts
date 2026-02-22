@@ -24,6 +24,7 @@ const REQUIRED_SUITE_IDS = [
 const REQUIRED_NEGATIVE_ASSERTION_KEYS = [
   "assertion:reject-api-inngest-from-caller-paths",
   "assertion:reject-rpc-from-external-callers",
+  "assertion:reject-rpc-workflows-route-family",
   "assertion:runtime-ingress-no-caller-boundary-semantics",
   "assertion:in-process-no-local-http-self-call",
 ] as const;
@@ -199,6 +200,23 @@ const MATRIX_CASES: MatrixCase[] = [
   },
   {
     kind: "http",
+    suiteId: "suite:api:boundary",
+    assertionKey: "assertion:reject-rpc-workflows-route-family",
+    callerSurface: "first-party",
+    assertCallerBoundarySemantics: true,
+    description: "first-party RPC callers do not get a dedicated /rpc/workflows route family",
+    method: "POST",
+    path: "/rpc/workflows/coordination/workflows",
+    headers: {
+      "content-type": "application/json",
+      "x-rawr-caller-surface": "first-party",
+      "x-rawr-session-auth": "verified",
+    },
+    body: { json: {} },
+    expectedStatus: 404,
+  },
+  {
+    kind: "http",
     suiteId: "suite:workflow:trigger-status",
     assertionKey: "assertion:workflow-trigger-status-route-family",
     callerSurface: "external",
@@ -326,6 +344,10 @@ describe("route boundary matrix", () => {
 
       if (testCase.callerSurface === "external" && testCase.path.startsWith("/rpc")) {
         expect(testCase.expectedStatus).toBe(403);
+      }
+
+      if (testCase.path.startsWith("/rpc/workflows")) {
+        expect(typeof testCase.expectedStatus === "number" ? testCase.expectedStatus >= 400 : true).toBe(true);
       }
 
       if (testCase.callerSurface === "runtime-ingress") {
