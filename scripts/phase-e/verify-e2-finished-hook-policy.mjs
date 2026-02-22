@@ -4,7 +4,7 @@ import {
   mustExist,
   readFile,
   readPackageScripts,
-} from "../phase-d/_verify-utils.mjs";
+} from "./_verify-utils.mjs";
 
 await Promise.all([
   mustExist("packages/coordination/src/types.ts"),
