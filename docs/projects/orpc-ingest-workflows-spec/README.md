@@ -30,6 +30,13 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 24. `PHASE_C_PLANNING_HANDOFF.md` — planning-to-runtime handoff contract for Phase C execution.
 25. `_phase-c-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (execution report, review disposition, cleanup manifest, readiness, final handoff).
 26. `PHASE_D_PLANNING_RUNBOOK_DRAFT.md` — prep runbook for the upcoming Phase D planning pass.
+27. `PHASE_D_EXECUTION_PACKET.md` — canonical Phase D execution entrypoint.
+28. `PHASE_D_IMPLEMENTATION_SPEC.md` — deep Phase D implementation specification.
+29. `PHASE_D_ACCEPTANCE_GATES.md` — Phase D gate cadence and exit contract.
+30. `PHASE_D_WORKBREAKDOWN.yaml` — machine-readable Phase D slice/owner/file/gate map.
+31. `PHASE_D_REVIEW_DISPOSITION.md` — planning review disposition and readiness decision for runtime kickoff.
+32. `PHASE_D_PLANNING_HANDOFF.md` — planning-to-runtime handoff contract for Phase D execution.
+33. `_phase-d-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (D4/D5/D5A dispositions and final closure outputs).
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -57,6 +64,16 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase C planning handoff to runtime: `PHASE_C_PLANNING_HANDOFF.md`
 - Phase C landed runtime closure artifacts (`C1..C7`): `_phase-c-runtime-execution-pass-01-2026-02-21/`
 - Phase D planning prep runbook draft: `PHASE_D_PLANNING_RUNBOOK_DRAFT.md`
+- Phase D canonical execution entrypoint: `PHASE_D_EXECUTION_PACKET.md`
+- Phase D deep implementation spec: `PHASE_D_IMPLEMENTATION_SPEC.md`
+- Phase D gates contract: `PHASE_D_ACCEPTANCE_GATES.md`
+- Phase D work breakdown map: `PHASE_D_WORKBREAKDOWN.yaml`
+- Phase D planning review disposition: `PHASE_D_REVIEW_DISPOSITION.md`
+- Phase D planning handoff to runtime: `PHASE_D_PLANNING_HANDOFF.md`
+- Phase D runtime closure artifacts (`D1..D7`): `_phase-d-runtime-execution-pass-01-2026-02-21/`
+- Phase D execution report: `_phase-d-runtime-execution-pass-01-2026-02-21/PHASE_D_EXECUTION_REPORT.md`
+- Phase D cleanup manifest: `_phase-d-runtime-execution-pass-01-2026-02-21/D6_CLEANUP_MANIFEST.md`
+- Phase E kickoff readiness from Phase D: `_phase-d-runtime-execution-pass-01-2026-02-21/D7_PHASE_E_READINESS.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 
