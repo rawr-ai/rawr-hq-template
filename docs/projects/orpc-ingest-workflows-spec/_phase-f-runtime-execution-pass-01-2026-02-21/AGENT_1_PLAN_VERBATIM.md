@@ -1,7 +1,7 @@
-# Agent 1 Plan Verbatim (F1 Runtime Lifecycle Seams)
+# Agent 1 Plan Verbatim (F4 Decision Closure)
 
 ## Role
-I1 execution scope for F1 runtime lifecycle seam hardening on `codex/phase-f-f1-runtime-lifecycle-seams`.
+I1 execution scope for F4 conditional D-004 disposition closure on `codex/phase-f-f4-decision-closure`.
 
 ## Grounding
 1. `/Users/mateicanavra/.codex-rawr/skills/typescript/SKILL.md`
@@ -9,36 +9,35 @@ I1 execution scope for F1 runtime lifecycle seam hardening on `codex/phase-f-f1-
 3. `/Users/mateicanavra/.codex-rawr/skills/architecture/SKILL.md`
 4. `/Users/mateicanavra/.codex-rawr/skills/decision-logging/SKILL.md`
 5. `/Users/mateicanavra/.codex-rawr/skills/graphite/SKILL.md`
-6. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/axes/13-distribution-and-instance-lifecycle-model.md`
-7. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/state/src/repo-state.ts`
-8. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/state/test/repo-state.concurrent.test.ts`
-9. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts`
-10. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/rawr.test.ts`
-11. Phase F packet docs sourced from `codex/phase-f-planning-packet` via `git show`:
+6. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/_phase-f-runtime-execution-pass-01-2026-02-21/ORCHESTRATOR_PLAN_VERBATIM.md`
+7. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/_phase-f-runtime-execution-pass-01-2026-02-21/F4_TRIGGER_SCAN_RESULT.json`
+8. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/scripts/phase-f/verify-f4-trigger-scan.mjs`
+9. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/scripts/phase-f/verify-f4-disposition.mjs`
+10. Phase F packet/spec docs sourced from `codex/phase-f-planning-packet` via `git show`:
 - `docs/projects/orpc-ingest-workflows-spec/PHASE_F_EXECUTION_PACKET.md`
 - `docs/projects/orpc-ingest-workflows-spec/PHASE_F_IMPLEMENTATION_SPEC.md`
 - `docs/projects/orpc-ingest-workflows-spec/PHASE_F_ACCEPTANCE_GATES.md`
+- `docs/projects/orpc-ingest-workflows-spec/PHASE_F_WORKBREAKDOWN.yaml`
+11. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md` (D-004 status and lock language baseline)
 
 ## Scope Lock
-1. Runtime lifecycle seam hardening only (`F1`).
-2. Preserve route-family invariants and manifest composition authority.
-3. No edits to scripts or `package.json`.
-4. Docs changes limited to required runtime pass artifacts in this folder.
+1. F4 disposition closure only (`triggered` or `deferred`).
+2. No architecture pivot and no route-family drift.
+3. Keep D-004 locked unless F4 trigger criteria are all met.
+4. Do not edit orchestrator-owned scratchpad docs.
+5. Do not commit.
 
 ## Plan
-1. Canonicalize repo state authority in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/state/src/repo-state.ts` (realpath fallback) and keep mutation/read behavior deterministic across alias/canonical roots.
-2. Add alias/canonical seam tests in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/state/test/repo-state.concurrent.test.ts`.
-3. Canonicalize server runtime authority root in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts` and apply that authority root consistently to plugin lookup and runtime/context dependencies.
-4. Add runtime seam regression coverage in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/rawr.test.ts` for alias lifecycle stability.
-5. Diagnose and fix the failing alias-root authority stability assertion in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/rawr.test.ts` with minimal code movement.
-6. Run the required F1 verification commands before handoff:
-   - `bunx vitest run --project state packages/state/test/repo-state.concurrent.test.ts`
-   - `bunx vitest run --project server apps/server/test/rawr.test.ts`
-   - `bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts`
-   - `bun run phase-c:gate:c1-storage-lock-runtime`
+1. Re-run `bun run phase-f:gate:f4-assess` and confirm counters/state in `F4_TRIGGER_SCAN_RESULT.json`.
+2. Author `F4_DISPOSITION.md` with one explicit state (`triggered` or `deferred`) and required sections (`Trigger Matrix Summary`, `Carry-Forward Watchpoints`).
+3. If state is `deferred`, keep D-004 locked with explicit non-ambiguous language and do not create `F4_TRIGGER_EVIDENCE.md`.
+4. If state is `triggered`, publish `F4_TRIGGER_EVIDENCE.md` and minimally update D-004 in `DECISIONS.md` with explicit `locked -> closed` transition language.
+5. Run `bun run phase-f:gate:f4-disposition`.
+6. Update runtime-pass agent artifacts for closure (`AGENT_1_SCRATCHPAD.md`, `AGENT_1_FINAL_F4_DECISION_CLOSURE.md`) with evidence map and verification outcomes.
 
 ## Expected Files
-1. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/state/src/repo-state.ts`
-2. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/packages/state/test/repo-state.concurrent.test.ts`
-3. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts`
-4. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/test/rawr.test.ts`
+1. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/_phase-f-runtime-execution-pass-01-2026-02-21/F4_DISPOSITION.md`
+2. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/_phase-f-runtime-execution-pass-01-2026-02-21/F4_TRIGGER_EVIDENCE.md` (triggered path only)
+3. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_1_SCRATCHPAD.md`
+4. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_1_FINAL_F4_DECISION_CLOSURE.md`
+5. `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/DECISIONS.md` (triggered path only)
