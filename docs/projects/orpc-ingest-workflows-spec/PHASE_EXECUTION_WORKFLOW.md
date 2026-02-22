@@ -1,7 +1,7 @@
 # Phase Execution Workflow (Reusable Loop)
 
 ## Purpose
-Reusable execution loop for remaining phases (B+), grounded in what actually worked in Phase A.
+Reusable execution loop for remaining phases (D+), grounded in what worked across Phases A, B, and C.
 
 ## Invariant Core (Drift Guard)
 1. Runtime semantics must stay on `rawr.kind` + `rawr.capability` + manifest registration; legacy metadata keys are not runtime semantics.
@@ -101,6 +101,15 @@ Reusable execution loop for remaining phases (B+), grounded in what actually wor
 3. Keep per-slice Graphite submissions strict; avoid accumulating multiple slices in one branch.
 4. Enforce pass-root pruning at phase exit to avoid artifact sprawl.
 5. Maintain a single explicit phase readiness artifact before opening the next planning loop.
+
+## Phase C Carry-Forward Adjustments
+1. Keep Stage `1.5` steward drift-check mandatory before opening runtime implementation branches.
+2. Treat conditional decision slices (like `C4`) as explicit artifacts with trigger evidence and written disposition; never leave them implicit.
+3. Require branch/worktree verification before every slice start to prevent cross-branch landing mistakes.
+4. Keep review and structural assessment as distinct gates; avoid combining them into one pass.
+5. Keep closure artifacts minimal by default:
+   - retain execution report, review disposition, cleanup manifest, readiness, final handoff;
+   - remove agent plans/scratch and superseded intermediate analysis once integrated.
 
 ## Minimal Artifact Set Per Phase
 Keep:

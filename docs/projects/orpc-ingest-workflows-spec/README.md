@@ -21,13 +21,15 @@ This directory is the canonical packet for ORPC + Inngest workflow architecture 
 15. `PHASE_B_WORKBREAKDOWN.yaml` — machine-readable Phase B slice/owner/file/gate map.
 16. `PHASE_B_REVIEW_DISPOSITION.md` — planning review disposition and kickoff conditions (pre-implementation lineage).
 17. `_phase-b-runtime-execution-pass-01-2026-02-20/*` — runtime execution closure artifacts (review disposition, cleanup manifest, readiness, execution report, handoff).
-18. `PHASE_C_PLANNING_RUNBOOK_DRAFT.md` — prep runbook for the upcoming Phase C planning pass.
+18. `PHASE_C_PLANNING_RUNBOOK_DRAFT.md` — historical prep runbook lineage for Phase C planning.
 19. `PHASE_C_EXECUTION_PACKET.md` — canonical Phase C execution entrypoint.
 20. `PHASE_C_IMPLEMENTATION_SPEC.md` — deep Phase C implementation specification.
 21. `PHASE_C_ACCEPTANCE_GATES.md` — Phase C gate cadence and exit contract.
 22. `PHASE_C_WORKBREAKDOWN.yaml` — machine-readable Phase C slice/owner/file/gate map.
 23. `PHASE_C_REVIEW_DISPOSITION.md` — planning review disposition and readiness decision for runtime kickoff.
 24. `PHASE_C_PLANNING_HANDOFF.md` — planning-to-runtime handoff contract for Phase C execution.
+25. `_phase-c-runtime-execution-pass-01-2026-02-21/*` — runtime execution closure artifacts (execution report, review disposition, cleanup manifest, readiness, final handoff).
+26. `PHASE_D_PLANNING_RUNBOOK_DRAFT.md` — prep runbook for the upcoming Phase D planning pass.
 
 The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix variants in leaf docs are contextual views.
 
@@ -53,6 +55,8 @@ The canonical caller/auth matrix is defined in `ARCHITECTURE.md` only; matrix va
 - Phase C work breakdown map: `PHASE_C_WORKBREAKDOWN.yaml`
 - Phase C planning review disposition: `PHASE_C_REVIEW_DISPOSITION.md`
 - Phase C planning handoff to runtime: `PHASE_C_PLANNING_HANDOFF.md`
+- Phase C landed runtime closure artifacts (`C1..C7`): `_phase-c-runtime-execution-pass-01-2026-02-21/`
+- Phase D planning prep runbook draft: `PHASE_D_PLANNING_RUNBOOK_DRAFT.md`
 - Full leaf-policy by concern: `axes/*.md` (see axis index below)
 - Example walkthroughs only (non-normative): `examples/*.md`
 
