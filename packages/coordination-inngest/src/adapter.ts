@@ -3,6 +3,7 @@ import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
 import {
   DESK_KINDS_V1,
+  RUN_FINALIZATION_CONTRACT_V1,
   isSafeCoordinationId,
   topologicalDeskOrder,
   validateWorkflow,
@@ -10,6 +11,8 @@ import {
   type DeskDefinitionV1,
   type DeskRunEventV1,
   type JsonValue,
+  type RunFinalizationStateV1,
+  type RunFinishedHookStateV1,
   type RunStatusV1,
 } from "@rawr/coordination";
 import { createDeskEvent, defaultTraceLinks } from "@rawr/coordination-observability";
@@ -84,6 +87,14 @@ export type CoordinationFunctionBundle = Readonly<{
   functions: readonly unknown[];
 }>;
 
+export type CoordinationFinishedHookContext = Readonly<{
+  payload: CoordinationRunEventData;
+  runtime: CoordinationRuntimeAdapter;
+  run: RunStatusV1;
+}>;
+
+export type CoordinationFinishedHook = (context: CoordinationFinishedHookContext) => Promise<void>;
+
 type StepToolLike = Readonly<{
   run: (id: string, fn: () => Promise<unknown>) => Promise<unknown>;
 }>;
@@ -94,7 +105,35 @@ export type CoordinationRunProcessorOptions = Readonly<{
   inngestRunId: string;
   inngestEventId?: string;
   step: StepToolLike;
+  finishedHook?: CoordinationFinishedHook;
 }>;
+
+function createRunFinalizationState(finishedHook?: RunFinishedHookStateV1): RunFinalizationStateV1 {
+  return finishedHook ? { contract: RUN_FINALIZATION_CONTRACT_V1, finishedHook } : { contract: RUN_FINALIZATION_CONTRACT_V1 };
+}
+
+async function executeFinishedHookWithGuardrails(input: {
+  hook: CoordinationFinishedHook | undefined;
+  payload: CoordinationRunEventData;
+  runtime: CoordinationRuntimeAdapter;
+  run: RunStatusV1;
+}): Promise<RunFinishedHookStateV1> {
+  const attemptedAt = new Date().toISOString();
+  try {
+    await input.hook?.({
+      payload: input.payload,
+      runtime: input.runtime,
+      run: input.run,
+    });
+    return { attemptedAt, outcome: "succeeded" };
+  } catch (error) {
+    return {
+      attemptedAt,
+      outcome: "failed",
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
 
 export function createInngestClient(appId = "rawr-coordination"): Inngest {
   return new Inngest({ id: appId });
@@ -157,6 +196,7 @@ export async function queueCoordinationRunWithInngest(
       traceLinks: defaultTraceLinks(options.baseUrl, options.runId, {
         inngestBaseUrl: options.runtime.inngestBaseUrl,
       }),
+      finalization: createRunFinalizationState(),
     };
 
     await options.runtime.saveRunStatus(queuedRun);
@@ -208,6 +248,7 @@ export function createCoordinationInngestFunction(input: {
   runtime: CoordinationRuntimeAdapter;
   client?: Inngest;
   appId?: string;
+  finishedHook?: CoordinationFinishedHook;
 }): CoordinationFunctionBundle {
   const client = input.client ?? createInngestClient(input.appId);
 
@@ -229,6 +270,7 @@ export function createCoordinationInngestFunction(input: {
         inngestRunId: runId,
         inngestEventId: event.id,
         step,
+        finishedHook: input.finishedHook,
       });
       return { ok: true, runId: payload.runId, output: result.output };
     },
@@ -263,6 +305,7 @@ export async function processCoordinationRunEvent(options: CoordinationRunProces
         inngestRunId: options.inngestRunId,
         inngestEventId: options.inngestEventId,
       }),
+      finalization: createRunFinalizationState(),
     };
 
     await options.runtime.saveRunStatus(runningStatus);
@@ -297,7 +340,7 @@ export async function processCoordinationRunEvent(options: CoordinationRunProces
 
     await options.step.run("coordination/run-completed", async () => {
       const finishedAt = new Date().toISOString();
-      const completedStatus: RunStatusV1 = {
+      const baseCompletedStatus: RunStatusV1 = {
         runId: options.payload.runId,
         workflowId: options.payload.workflow.workflowId,
         workflowVersion: options.payload.workflow.version,
@@ -311,6 +354,18 @@ export async function processCoordinationRunEvent(options: CoordinationRunProces
           inngestRunId: options.inngestRunId,
           inngestEventId: options.inngestEventId,
         }),
+        finalization: createRunFinalizationState(),
+      };
+      // Finished-hook side effects are best-effort by policy; failures are recorded but non-blocking.
+      const finishedHookState = await executeFinishedHookWithGuardrails({
+        hook: options.finishedHook,
+        payload: options.payload,
+        runtime: options.runtime,
+        run: baseCompletedStatus,
+      });
+      const completedStatus: RunStatusV1 = {
+        ...baseCompletedStatus,
+        finalization: createRunFinalizationState(finishedHookState),
       };
 
       await options.runtime.saveRunStatus(completedStatus);
@@ -332,7 +387,7 @@ export async function processCoordinationRunEvent(options: CoordinationRunProces
     const error = err instanceof Error ? err.message : String(err);
     await options.step.run("coordination/run-failed", async () => {
       const failedAt = new Date().toISOString();
-      const failedStatus: RunStatusV1 = {
+      const baseFailedStatus: RunStatusV1 = {
         runId: options.payload.runId,
         workflowId: options.payload.workflow.workflowId,
         workflowVersion: options.payload.workflow.version,
@@ -346,6 +401,18 @@ export async function processCoordinationRunEvent(options: CoordinationRunProces
           inngestRunId: options.inngestRunId,
           inngestEventId: options.inngestEventId,
         }),
+        finalization: createRunFinalizationState(),
+      };
+      // Keep primary run-failure semantics intact even when finished-hook side effects fail.
+      const finishedHookState = await executeFinishedHookWithGuardrails({
+        hook: options.finishedHook,
+        payload: options.payload,
+        runtime: options.runtime,
+        run: baseFailedStatus,
+      });
+      const failedStatus: RunStatusV1 = {
+        ...baseFailedStatus,
+        finalization: createRunFinalizationState(finishedHookState),
       };
 
       await options.runtime.saveRunStatus(failedStatus);
