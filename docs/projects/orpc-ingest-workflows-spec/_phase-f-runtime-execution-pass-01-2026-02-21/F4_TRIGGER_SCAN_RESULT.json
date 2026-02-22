@@ -1,0 +1,36 @@
+{
+  "criterion": "f4-d004-trigger-scan",
+  "triggerRule": "capabilitySurfaceCount >= 3 AND duplicatedBoilerplateClusterCount >= 2 AND correctnessSignalCount >= 1",
+  "triggered": false,
+  "thresholds": {
+    "capabilitySurfaceCount": 3,
+    "duplicatedBoilerplateClusterCount": 2,
+    "correctnessSignalCount": 1
+  },
+  "capabilitySurfaceIds": [
+    "coordination"
+  ],
+  "capabilitySurfaceCount": 1,
+  "duplicatedBoilerplateClusterCount": 0,
+  "duplicatedBoilerplateClusters": [
+    {
+      "id": "workflow-id-validation",
+      "occurrences": 3
+    },
+    {
+      "id": "workflow-not-found",
+      "occurrences": 3
+    },
+    {
+      "id": "run-id-validation",
+      "occurrences": 2
+    },
+    {
+      "id": "invalid-id-errors",
+      "occurrences": 6
+    }
+  ],
+  "correctnessSignalCount": 0,
+  "correctnessSignalHits": 2,
+  "summary": "F4 trigger criteria not met; disposition should be deferred with carry-forward watchpoints."
+}

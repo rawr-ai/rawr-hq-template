@@ -17,7 +17,7 @@
 | --- | --- | --- | --- |
 | F1 | `codex/phase-f-f1-runtime-lifecycle-seams` | submitted | PR #157 (v2), all F1 required verifications pass |
 | F2 | `codex/phase-f-f2-interface-policy-hardening` | submitted | PR #158 (v1), all F2 required verifications pass |
-| F3 | `codex/phase-f-f3-structural-evidence-gates` | pending | |
+| F3 | `codex/phase-f-f3-structural-evidence-gates` | submitted | PR #159 (v1), structural gate chain landed |
 | F4 | `codex/phase-f-f4-decision-closure` | pending | |
 | F5 | `codex/phase-f-f5-review-fix-closure` | pending | |
 | F5A | `codex/phase-f-f5a-structural-assessment` | pending | |
@@ -29,7 +29,7 @@
 | --- | --- | --- | --- | --- |
 | I1 | F1 + F4 | `codex/phase-f-f1-runtime-lifecycle-seams` | complete (F1) | closed |
 | I2 | F2 | `codex/phase-f-f2-interface-policy-hardening` | complete (F2) | closed |
-| I3 | F3 | pending | pending | pending |
+| I3 | F3 | `codex/phase-f-f3-structural-evidence-gates` | complete (F3) | closed |
 | I4 | F5 independent review | pending | pending | pending |
 | I4A | F5A structural assessment | pending | pending | pending |
 | I5 | F6 + F7 docs/readiness | pending | pending | pending |
@@ -77,5 +77,26 @@
 13. F2 submitted:
    - PR #158 (`codex/phase-f-f2-interface-policy-hardening`)
 14. Post-submit checks:
+   - `gt sync --no-restack` pass
+   - `gt log --show-untracked` clean
+15. Opened F3 slice branch and tracking:
+   - `gt create codex/phase-f-f3-structural-evidence-gates`
+   - `gt track codex/phase-f-f3-structural-evidence-gates -p codex/phase-f-f2-interface-policy-hardening`
+16. Spawned I3 default agent for F3 structural evidence/gate implementation.
+17. I3 completed F3 implementation and produced required artifacts:
+   - `AGENT_3_PLAN_VERBATIM.md`
+   - `AGENT_3_SCRATCHPAD.md`
+   - `AGENT_3_FINAL_F3_STRUCTURAL_EVIDENCE_GATES.md`
+18. F3 verification outcomes:
+   - `bun run phase-f:f1:quick` pass
+   - `bun run phase-f:f2:quick` pass
+   - `bun run phase-f:f3:quick` pass
+   - `bun run phase-f:gate:f4-assess` pass (wrote `F4_TRIGGER_SCAN_RESULT.json`, deferred posture)
+   - `bun run phase-f:gate:f4-disposition` expected fail until `F4_DISPOSITION.md` exists
+19. F3 branch committed with Graphite modify:
+   - `2f0d094 feat(verification): add phase f structural evidence and disposition gates`
+20. F3 submitted:
+   - PR #159 (`codex/phase-f-f3-structural-evidence-gates`)
+21. Post-submit checks:
    - `gt sync --no-restack` pass
    - `gt log --show-untracked` clean
