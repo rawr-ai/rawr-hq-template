@@ -21,8 +21,8 @@
 | F4 | `codex/phase-f-f4-decision-closure` | submitted | PR #160 (v2), deferred disposition closure complete |
 | F5 | `codex/phase-f-f5-review-fix-closure` | submitted | PR #161 (v2), review disposition approved |
 | F5A | `codex/phase-f-f5a-structural-assessment` | submitted | PR #162 (v2), structural disposition approved |
-| F6 | `codex/phase-f-f6-docs-cleanup` | submitted | PR #163 (v1), docs cleanup closure complete |
-| F7 | `codex/phase-f-f7-next-phase-readiness` | pending | |
+| F6 | `codex/phase-f-f6-docs-cleanup` | submitted | PR #163 (v2), docs cleanup closure complete |
+| F7 | `codex/phase-f-f7-next-phase-readiness` | in_review | I5 readiness/report/handoff complete, awaiting submit |
 
 ## Agent Registry
 | Agent | Scope | Branch | Status | Compact/Close |
@@ -32,13 +32,13 @@
 | I3 | F3 | `codex/phase-f-f3-structural-evidence-gates` | complete (F3) | closed |
 | I4 | F5 independent review | `codex/phase-f-f5-review-fix-closure` | complete (approve) | closed |
 | I4A | F5A structural assessment | `codex/phase-f-f5a-structural-assessment` | complete (approve) | closed |
-| I5 | F6 + F7 docs/readiness | `codex/phase-f-f6-docs-cleanup` | complete (F6) | keep_open_for_F7 |
+| I5 | F6 + F7 docs/readiness | `codex/phase-f-f7-next-phase-readiness` | complete (F7) | close_after_submit |
 
 ## Gate Checklist
-- [ ] G2 core runtime slices complete
-- [ ] G3 independent review + fix closure complete
-- [ ] G4 structural assessment complete
-- [ ] G5 docs/cleanup complete
+- [x] G2 core runtime slices complete
+- [x] G3 independent review + fix closure complete
+- [x] G4 structural assessment complete
+- [x] G5 docs/cleanup complete
 - [ ] G6 readiness + final handoff complete
 
 ## Command Ledger
@@ -180,3 +180,18 @@
 51. Post-submit checks:
    - `gt sync --no-restack` pass
    - `gt log --show-untracked` clean
+52. Opened F7 slice branch and tracking:
+   - `gt create codex/phase-f-f7-next-phase-readiness`
+   - `gt track codex/phase-f-f7-next-phase-readiness -p codex/phase-f-f6-docs-cleanup`
+53. Reused I5 for F7 continuity on readiness/report/handoff synthesis.
+54. F7 outputs written:
+   - `F7_NEXT_PHASE_READINESS.md`
+   - `PHASE_F_EXECUTION_REPORT.md`
+   - `FINAL_PHASE_F_HANDOFF.md`
+   - `AGENT_6_FINAL_F7_READINESS_AND_HANDOFF.md`
+55. F7 canonical docs/status updates:
+   - `README.md`
+   - `PROJECT_STATUS.md`
+56. F7 verification outcomes:
+   - `bun run phase-f:gate:f7-readiness` pass
+   - `bun run phase-f:gates:exit` pass
