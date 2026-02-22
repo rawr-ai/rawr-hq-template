@@ -54,5 +54,4 @@ Dependency rule:
 - `docs/projects/orpc-ingest-workflows-spec/DECISIONS.md`
 - `docs/projects/orpc-ingest-workflows-spec/_phase-a-runtime-execution-pass-01-2026-02-20/A7_REVIEW_DISPOSITION.md`
 - `docs/projects/orpc-ingest-workflows-spec/_phase-a-runtime-execution-pass-01-2026-02-20/A8_CLEANUP_MANIFEST.md`
-- `docs/projects/orpc-ingest-workflows-spec/_phase-a-runtime-execution-pass-01-2026-02-20/AGENT_Q1_FINAL_TYPESCRIPT_API_REVIEW.md`
-- `docs/projects/orpc-ingest-workflows-spec/_phase-a-runtime-execution-pass-01-2026-02-20/AGENT_Q2_FINAL_PACKAGING_DOMAIN_REVIEW.md`
+- `docs/projects/orpc-ingest-workflows-spec/_phase-a-runtime-execution-pass-01-2026-02-20/PHASE_A_EXECUTION_REPORT.md`

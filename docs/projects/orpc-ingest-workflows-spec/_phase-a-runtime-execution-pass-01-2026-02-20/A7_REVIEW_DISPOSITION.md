@@ -8,12 +8,9 @@ Worktree: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-ph
 Disposition for A7 TypeScript + ORPC review closure, including targeted structural improvements landed during fix loops.
 
 ## Primary Evidence
-- `AGENT_4_REVIEW_REPORT_FINAL.md`
-- `AGENT_4_REVIEW_REPORT_FINAL_RERUN.md`
-- `AGENT_R1_FINAL_STRUCTURAL_REFACTOR.md`
-- `AGENT_Q1_FINAL_TYPESCRIPT_API_REVIEW.md`
-- `AGENT_Q1_REFACTOR_REVIEW.md`
-- `AGENT_Q2_FINAL_PACKAGING_DOMAIN_REVIEW.md`
+- `PHASE_A_EXECUTION_REPORT.md`
+- `A8_CLEANUP_MANIFEST.md`
+- branch/PR lineage for A7 closure (`codex/phase-a-a7-review-closure`, PR #106)
 
 ## Finding Disposition
 1. `/rpc` unlabeled/default caller handling drift: **resolved**.
