@@ -28,6 +28,7 @@ export const DESK_KINDS_V1 = [
 ] as const;
 
 export type DeskKindV1 = (typeof DESK_KINDS_V1)[number];
+export type CoordinationIdV1 = string;
 
 export type RuntimePolicyV1 = Readonly<{
   retries?: number;
@@ -42,7 +43,7 @@ export type DeskMemoryScopeV1 = Readonly<{
 }>;
 
 export type DeskDefinitionV1 = Readonly<{
-  deskId: string;
+  deskId: CoordinationIdV1;
   kind: DeskKindV1 | string;
   name: string;
   responsibility: string;
@@ -54,19 +55,19 @@ export type DeskDefinitionV1 = Readonly<{
 }>;
 
 export type HandoffDefinitionV1 = Readonly<{
-  handoffId: string;
-  fromDeskId: string;
-  toDeskId: string;
+  handoffId: CoordinationIdV1;
+  fromDeskId: CoordinationIdV1;
+  toDeskId: CoordinationIdV1;
   condition?: string;
   mappingRefs?: Record<string, string>;
 }>;
 
 export type CoordinationWorkflowV1 = Readonly<{
-  workflowId: string;
+  workflowId: CoordinationIdV1;
   version: number;
   name: string;
   description?: string;
-  entryDeskId: string;
+  entryDeskId: CoordinationIdV1;
   desks: DeskDefinitionV1[];
   handoffs: HandoffDefinitionV1[];
   observabilityProfile?: "basic" | "full";
@@ -74,9 +75,9 @@ export type CoordinationWorkflowV1 = Readonly<{
 }>;
 
 export type DeskMemoryRecordV1 = Readonly<{
-  workflowId: string;
+  workflowId: CoordinationIdV1;
   workflowVersion: number;
-  deskId: string;
+  deskId: CoordinationIdV1;
   memoryKey: string;
   data: JsonValue;
   updatedAt: string;
@@ -125,8 +126,8 @@ export const RUN_FINALIZATION_CONTRACT_V1: RunFinalizationContractV1 = {
 } as const;
 
 export type RunStatusV1 = Readonly<{
-  runId: string;
-  workflowId: string;
+  runId: CoordinationIdV1;
+  workflowId: CoordinationIdV1;
   workflowVersion: number;
   status: RunLifecycleStateV1;
   startedAt: string;
@@ -148,9 +149,9 @@ export type DeskRunEventTypeV1 =
 
 export type DeskRunEventV1 = Readonly<{
   eventId: string;
-  runId: string;
-  workflowId: string;
-  deskId?: string;
+  runId: CoordinationIdV1;
+  workflowId: CoordinationIdV1;
+  deskId?: CoordinationIdV1;
   type: DeskRunEventTypeV1;
   ts: string;
   status: RunLifecycleStateV1;
@@ -178,8 +179,8 @@ export type ValidationErrorCodeV1 =
 export type ValidationErrorV1 = Readonly<{
   code: ValidationErrorCodeV1;
   message: string;
-  deskId?: string;
-  handoffId?: string;
+  deskId?: CoordinationIdV1;
+  handoffId?: CoordinationIdV1;
 }>;
 
 export type ValidationResultV1 = Readonly<{

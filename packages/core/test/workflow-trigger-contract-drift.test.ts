@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { minifyContractRouter } from "@orpc/contract";
+import {
+  GetRunTimelineInputSchema,
+  QueueRunInputSchema,
+  RunStatusSchema,
+  typeBoxStandardSchema,
+} from "@rawr/coordination/orpc";
+import type { JsonValue } from "@rawr/coordination";
 import { workflowTriggerContract } from "../src/orpc";
-import { RunStatusSchema } from "@rawr/coordination/orpc";
 
 type RouteShape = {
   method?: string;
@@ -27,6 +33,13 @@ function collectProcedureRoutes(node: unknown, namespace: string[] = []): string
   return items;
 }
 
+function schemaAccepts<TSchemaInput extends Parameters<typeof typeBoxStandardSchema>[0]>(
+  schema: TSchemaInput,
+  value: JsonValue,
+): boolean {
+  return "value" in typeBoxStandardSchema(schema)["~standard"].validate(value);
+}
+
 describe("workflow trigger contract drift", () => {
   it("keeps trigger/status procedure routes scoped", () => {
     const minified = minifyContractRouter(workflowTriggerContract);
@@ -48,12 +61,72 @@ describe("workflow trigger contract drift", () => {
   });
 
   it("keeps D2 finalization schema available to trigger contract consumers", () => {
-    const asRecord = RunStatusSchema as unknown as {
-      required?: string[];
-      properties?: Record<string, unknown>;
+    const runWithoutFinalization = {
+      runId: "run-trigger-f2",
+      workflowId: "wf-trigger-f2",
+      workflowVersion: 1,
+      status: "running",
+      startedAt: "2026-02-22T00:00:00.000Z",
+      traceLinks: [
+        {
+          provider: "inngest",
+          label: "trigger",
+          url: "https://inngest.test/runs/run-trigger-f2",
+        },
+      ],
     };
 
-    expect(asRecord.properties).toHaveProperty("finalization");
-    expect(asRecord.required ?? []).not.toContain("finalization");
+    expect(schemaAccepts(RunStatusSchema, runWithoutFinalization)).toBe(true);
+    expect(
+      schemaAccepts(RunStatusSchema, {
+        ...runWithoutFinalization,
+        finalization: {
+          contract: {
+            delivery: "at-least-once",
+            exactlyOnce: false,
+            sideEffectPolicy: "idempotent-non-critical",
+            failureMode: "best-effort-non-blocking",
+          },
+        },
+      }),
+    ).toBe(true);
+    expect(
+      schemaAccepts(RunStatusSchema, {
+        ...runWithoutFinalization,
+        finalization: {
+          contract: {
+            delivery: "at-least-once",
+            exactlyOnce: false,
+            sideEffectPolicy: "idempotent-non-critical",
+            failureMode: "best-effort-non-blocking",
+          },
+          finishedHook: {
+            attemptedAt: "2026-02-22T00:00:00.000Z",
+            outcome: "succeeded",
+            nonCritical: true,
+            idempotencyRequired: true,
+            timeoutMs: 1500,
+          },
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("enforces F2 workflow trigger ID constraints at the contract edge", () => {
+    expect(schemaAccepts(GetRunTimelineInputSchema, { runId: "run.trigger-f2" })).toBe(true);
+    expect(schemaAccepts(GetRunTimelineInputSchema, { runId: " run.trigger-f2 " })).toBe(true);
+    expect(schemaAccepts(GetRunTimelineInputSchema, { runId: "run/trigger-f2" })).toBe(false);
+
+    expect(
+      schemaAccepts(QueueRunInputSchema, {
+        workflowId: "wf.trigger-f2",
+        runId: "run.trigger-f2",
+      }),
+    ).toBe(true);
+    expect(
+      schemaAccepts(QueueRunInputSchema, {
+        workflowId: "wf/trigger-f2",
+      }),
+    ).toBe(false);
   });
 });

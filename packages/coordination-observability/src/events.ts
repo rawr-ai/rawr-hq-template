@@ -57,8 +57,8 @@ function isRequiredRunLifecycleEventType(type: DeskRunEventTypeV1): type is Requ
 
 function assertRunLifecycleStatusContract(type: DeskRunEventTypeV1, status: DeskRunEventV1["status"]): void {
   if (!isRequiredRunLifecycleEventType(type)) return;
-  const allowed = REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT[type];
-  if (!allowed.includes(status)) {
+  const allowedStatuses: readonly DeskRunEventV1["status"][] = REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT[type];
+  if (!allowedStatuses.includes(status)) {
     throw new Error(`invalid lifecycle status '${status}' for event '${type}'`);
   }
 }
