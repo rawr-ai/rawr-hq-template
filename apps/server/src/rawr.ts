@@ -5,12 +5,17 @@ import type { AnyElysia } from "./plugins";
 import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
 import { createCoordinationRuntimeAdapter } from "./coordination";
 import { registerOrpcRoutes } from "./orpc";
+import { createWorkflowBoundaryContext, type RawrBoundaryContextDeps } from "./workflows/context";
 
 export type RawrRoutesOptions = {
   repoRoot: string;
   enabledPluginIds: ReadonlySet<string>;
   baseUrl?: string;
 };
+
+export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/*", "/rpc + /api/orpc/*"] as const;
+
+const INNGEST_SIGNATURE_HEADERS = ["x-inngest-signature", "inngest-signature"] as const;
 
 function asUrl(value: string | undefined): string | undefined {
   if (!value) return undefined;
@@ -29,6 +34,25 @@ function resolveInngestBaseUrl(): string {
     asUrl(process.env.INNGEST_DEV) ??
     "http://localhost:8288"
   );
+}
+
+function hasConfiguredIngressSigningKey(): boolean {
+  const signingKey = process.env.INNGEST_SIGNING_KEY;
+  return typeof signingKey === "string" && signingKey.trim() !== "";
+}
+
+function hasIngressSignatureHeader(request: Request): boolean {
+  for (const header of INNGEST_SIGNATURE_HEADERS) {
+    const value = request.headers.get(header);
+    if (typeof value === "string" && value.trim() !== "") {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function verifyInngestIngressRequest(request: Request): boolean {
+  return hasConfiguredIngressSigningKey() && hasIngressSignatureHeader(request);
 }
 
 function isSafeDirName(input: string): boolean {
@@ -107,15 +131,35 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     client: inngestBundle.client,
     functions: inngestBundle.functions,
   });
-
-  app.all("/api/inngest", async ({ request }) => inngestHandler(request));
-
-  registerOrpcRoutes(app, {
+  const boundaryContextDeps: RawrBoundaryContextDeps = {
     repoRoot: opts.repoRoot,
     baseUrl: opts.baseUrl ?? "http://localhost:3000",
     runtime,
     inngestClient: inngestBundle.client,
-  });
+  };
+
+  app.all(
+    "/api/inngest",
+    async ({ request }) => {
+      const req = request as Request;
+      if (!verifyInngestIngressRequest(req)) {
+        return new Response("forbidden", { status: 403 });
+      }
+      return inngestHandler(req);
+    },
+    { parse: "none" },
+  );
+
+  app.all(
+    "/api/workflows/*",
+    async ({ request }) => {
+      void createWorkflowBoundaryContext(request as Request, boundaryContextDeps);
+      return new Response("not found", { status: 404 });
+    },
+    { parse: "none" },
+  );
+
+  registerOrpcRoutes(app, boundaryContextDeps);
 
   return app;
 }
