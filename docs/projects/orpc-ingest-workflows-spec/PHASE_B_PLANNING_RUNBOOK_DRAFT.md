@@ -1,4 +1,13 @@
-# Phase B Planning Runbook (Draft)
+# Phase B Planning Runbook (Draft, Superseded)
+
+This draft is retained for lineage only.
+
+Canonical Phase B planning/execution packet now lives in:
+1. `PHASE_B_EXECUTION_PACKET.md`
+2. `PHASE_B_IMPLEMENTATION_SPEC.md`
+3. `PHASE_B_ACCEPTANCE_GATES.md`
+4. `PHASE_B_WORKBREAKDOWN.yaml`
+5. `PHASE_B_REVIEW_DISPOSITION.md`
 
 ## Goal
 Produce a decision-complete, implementer-ready Phase B execution packet using the same execution discipline that closed Phase A.
