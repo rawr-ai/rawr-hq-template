@@ -4,6 +4,7 @@ import { createCoordinationRuntimeAdapter } from "../src/coordination";
 import { registerOrpcRoutes } from "../src/orpc";
 import { PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
 import { processCoordinationRunEvent } from "@rawr/coordination-inngest";
+import { enablePlugin } from "@rawr/state";
 import type { Inngest } from "inngest";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -183,6 +184,46 @@ describe("rawr server routes", () => {
       }),
     );
     expect(res.status).toBe(404);
+  });
+
+  it("host-composition-guard: keeps runtime authority stable when initialized from alias repo roots", async () => {
+    const canonicalRepoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-alias-root-"));
+    const aliasRepoRoot = `${canonicalRepoRoot}-alias`;
+    await fs.symlink(canonicalRepoRoot, aliasRepoRoot);
+
+    try {
+      await enablePlugin(canonicalRepoRoot, "@rawr/plugin-alias-root");
+      const app = registerRawrRoutes(createServerApp(), {
+        repoRoot: aliasRepoRoot,
+        enabledPluginIds: new Set(),
+      });
+
+      await fs.rm(aliasRepoRoot, { force: true });
+
+      const stateResponse = await app.handle(
+        new Request("http://localhost/rpc/state/getRuntimeState", {
+          method: "POST",
+          headers: FIRST_PARTY_RPC_HEADERS,
+          body: JSON.stringify({ json: {} }),
+        }),
+      );
+      expect(stateResponse.status).toBe(200);
+
+      const body = (await stateResponse.json()) as {
+        json?: {
+          state?: {
+            plugins?: {
+              enabled?: string[];
+            };
+          };
+        };
+      };
+
+      expect(body.json?.state?.plugins?.enabled).toContain("@rawr/plugin-alias-root");
+    } finally {
+      await fs.rm(aliasRepoRoot, { force: true });
+      await fs.rm(canonicalRepoRoot, { recursive: true, force: true });
+    }
   });
 
   it("creates, validates, runs, and returns timeline through ORPC RPC handlers", async () => {

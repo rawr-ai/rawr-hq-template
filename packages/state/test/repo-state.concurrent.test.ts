@@ -153,4 +153,39 @@ describe("@rawr/state repo-state concurrency", () => {
     const state = await getRepoState(repoRoot);
     expect(state.plugins.enabled).toEqual([...pluginIds].sort());
   });
+
+  it("uses one authority root across canonical and alias repo paths", async () => {
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-state-alias-seam-"));
+    const aliasRoot = `${repoRoot}-alias`;
+    tempDirs.push(repoRoot);
+    tempDirs.push(aliasRoot);
+
+    await fs.symlink(repoRoot, aliasRoot);
+
+    await mutateRepoStateAtomically(repoRoot, async (current) => ({
+      ...current,
+      plugins: {
+        ...current.plugins,
+        enabled: [...current.plugins.enabled, "@rawr/plugin-canonical"],
+        lastUpdatedAt: new Date().toISOString(),
+      },
+    }));
+
+    const aliasMutation = await mutateRepoStateAtomically(aliasRoot, async (current) => ({
+      ...current,
+      plugins: {
+        ...current.plugins,
+        enabled: [...current.plugins.enabled, "@rawr/plugin-alias"],
+        lastUpdatedAt: new Date().toISOString(),
+      },
+    }));
+
+    const authorityRoot = await fs.realpath(repoRoot);
+    expect(aliasMutation.statePath).toBe(statePath(authorityRoot));
+    expect(aliasMutation.lockPath).toBe(stateLockPath(authorityRoot));
+
+    const state = await getRepoState(repoRoot);
+    expect(state.plugins.enabled).toEqual(["@rawr/plugin-alias", "@rawr/plugin-canonical"]);
+    await expect(fs.stat(stateLockPath(authorityRoot))).rejects.toMatchObject({ code: "ENOENT" });
+  });
 });
