@@ -15,7 +15,7 @@
 ## Slice Registry
 | Slice | Branch | Status | Notes |
 | --- | --- | --- | --- |
-| F1 | `codex/phase-f-f1-runtime-lifecycle-seams` | in_review | I1 completed implementation + verification; awaiting submit |
+| F1 | `codex/phase-f-f1-runtime-lifecycle-seams` | submitted | PR #157 (v1), all F1 required verifications pass |
 | F2 | `codex/phase-f-f2-interface-policy-hardening` | pending | |
 | F3 | `codex/phase-f-f3-structural-evidence-gates` | pending | |
 | F4 | `codex/phase-f-f4-decision-closure` | pending | |
@@ -53,3 +53,10 @@
    - `bunx vitest run --project server apps/server/test/rawr.test.ts`
    - `bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts`
    - `bun run phase-c:gate:c1-storage-lock-runtime`
+5. F1 branch committed with Graphite modify:
+   - `57323c3 fix(runtime): harden phase f f1 authority-root lifecycle seams`
+6. F1 submitted:
+   - PR #157 (`codex/phase-f-f1-runtime-lifecycle-seams`)
+7. Post-submit checks:
+   - `gt sync --no-restack` pass
+   - `gt log --show-untracked` clean
