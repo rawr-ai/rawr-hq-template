@@ -1,0 +1,151 @@
+version: 1
+generated_at_utc: "2026-02-18T21:54:14Z"
+mode: "current-filesystem-destination-truth"
+
+checks:
+  destination_map_materialization: PASS
+  snippet_parity: PASS
+  stale_link_gate_canonical_destination_docs: PASS
+  stale_link_gate_global_core_docs: PASS
+  overall: PASS
+
+totals:
+  mapping_records: 17
+  destination_files_expected_from_map: 17
+  destination_files_present_from_map: 17
+  destination_files_missing_from_map: 0
+  source_snippet_count: 159
+  destination_snippet_count: 162
+  exact_hash_matches_in_mapped_destination: 159
+  snippets_missing_from_mapped_destination: 0
+  snippets_found_in_other_destination_files: 0
+
+status_summary:
+  pass_records: 14
+  fail_records: 0
+  no_source_snippets_records: 3
+
+mappings:
+  - source: "docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md"
+    destination: "docs/projects/flat-runtime/ARCHITECTURE.md"
+    destination_exists: true
+    source_snippet_count: 4
+    matched_snippet_count: 4
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md"
+    destination: "docs/projects/flat-runtime/ARCHITECTURE.md"
+    destination_exists: true
+    source_snippet_count: 2
+    matched_snippet_count: 2
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md"
+    destination: "docs/projects/flat-runtime/DECISIONS.md"
+    destination_exists: true
+    source_snippet_count: 0
+    matched_snippet_count: 0
+    missing_snippet_count: 0
+    status: "NO_SOURCE_SNIPPETS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_01_EXTERNAL_CLIENT_GENERATION.md"
+    destination: "docs/projects/flat-runtime/axes/01-external-client-generation.md"
+    destination_exists: true
+    source_snippet_count: 9
+    matched_snippet_count: 9
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md"
+    destination: "docs/projects/flat-runtime/axes/02-internal-clients.md"
+    destination_exists: true
+    source_snippet_count: 14
+    matched_snippet_count: 14
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_03_SPLIT_VS_COLLAPSE.md"
+    destination: "docs/projects/flat-runtime/axes/03-split-vs-collapse.md"
+    destination_exists: true
+    source_snippet_count: 0
+    matched_snippet_count: 0
+    missing_snippet_count: 0
+    status: "NO_SOURCE_SNIPPETS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md"
+    destination: "docs/projects/flat-runtime/axes/04-context-propagation.md"
+    destination_exists: true
+    source_snippet_count: 2
+    matched_snippet_count: 2
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md"
+    destination: "docs/projects/flat-runtime/axes/05-errors-observability.md"
+    destination_exists: true
+    source_snippet_count: 3
+    matched_snippet_count: 3
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md"
+    destination: "docs/projects/flat-runtime/axes/06-middleware.md"
+    destination_exists: true
+    source_snippet_count: 3
+    matched_snippet_count: 3
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_07_HOST_HOOKING_COMPOSITION.md"
+    destination: "docs/projects/flat-runtime/axes/07-host-composition.md"
+    destination_exists: true
+    source_snippet_count: 12
+    matched_snippet_count: 12
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md"
+    destination: "docs/projects/flat-runtime/axes/08-workflow-api-boundaries.md"
+    destination_exists: true
+    source_snippet_count: 10
+    matched_snippet_count: 10
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md"
+    destination: "docs/projects/flat-runtime/axes/09-durable-endpoints.md"
+    destination_exists: true
+    source_snippet_count: 1
+    matched_snippet_count: 1
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_01_BASIC_PACKAGE_PLUS_API_BOUNDARY.md"
+    destination: "docs/projects/flat-runtime/examples/e2e-01-basic-package-api.md"
+    destination_exists: true
+    source_snippet_count: 25
+    matched_snippet_count: 25
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md"
+    destination: "docs/projects/flat-runtime/examples/e2e-02-api-workflows-composed.md"
+    destination_exists: true
+    source_snippet_count: 26
+    matched_snippet_count: 26
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md"
+    destination: "docs/projects/flat-runtime/examples/e2e-03-microfrontend-integration.md"
+    destination_exists: true
+    source_snippet_count: 22
+    matched_snippet_count: 22
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md"
+    destination: "docs/projects/flat-runtime/examples/e2e-04-context-middleware.md"
+    destination_exists: true
+    source_snippet_count: 26
+    matched_snippet_count: 26
+    missing_snippet_count: 0
+    status: "PASS"
+  - source: "docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/REDISTRIBUTION_TRACEABILITY.md"
+    destination: "docs/projects/flat-runtime/_session-lineage/redistribution-traceability.md"
+    destination_exists: true
+    source_snippet_count: 0
+    matched_snippet_count: 0
+    missing_snippet_count: 0
+    status: "NO_SOURCE_SNIPPETS"
+
+missing_snippets: []
+
+unresolved_items: []

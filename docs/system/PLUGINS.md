@@ -1,116 +1,83 @@
 # PLUGINS
 
-This document defines plugin architecture and workflows for `RAWR HQ-Template` and downstream `RAWR HQ` repos.
+This document defines the target plugin architecture and operational workflow for `RAWR HQ-Template` and downstream `RAWR HQ` repos.
 
-## Two Plugin Channels
+Canonical spec packet:
+- `docs/projects/orpc-ingest-workflows-spec/README.md`
+- `docs/projects/orpc-ingest-workflows-spec/ARCHITECTURE.md`
 
-## Channel A: External oclif plugins
+## Command Surface Contract (Current)
+- Channel A (external oclif plugin manager): `rawr plugins ...`
+- Channel B (workspace runtime plugins): `rawr plugins web ...`
 
-Use oclif plugin manager commands:
-- `rawr plugins install <pkg-or-url>`
-- `rawr plugins link <path>`
-- `rawr plugins inspect <plugin>`
-- `rawr plugins update`
-- `rawr plugins cli install all`
+Do not mix command families.
 
-Channel A is for CLI command extensions that can be installed from npm/GitHub or linked locally.
+## Runtime Model (Target)
+1. Shared capability logic/contracts/events/schemas live in `packages/*`.
+2. Runtime adapters live in `plugins/*` split by surface.
+3. Final cross-surface composition lives in `rawr.hq.ts`.
+4. Host apps (`apps/*`) mount manifest exports and do not author per-capability wiring.
 
-## Channel B: Workspace runtime plugins
+## Runtime Plugin Roots (Target)
+- `plugins/api/*`
+- `plugins/workflows/*`
+- `plugins/web/*`
+- `plugins/cli/*`
+- `plugins/agents/*`
+- `plugins/mcp/*` (optional)
 
-Use RAWR HQ runtime plugin commands:
-- `rawr plugins web list`
-- `rawr plugins web enable <id>`
-- `rawr plugins web disable <id>`
-- `rawr plugins web status`
+## Metadata Contract (Target)
+Required:
+- `rawr.kind`: `api | workflows | web | cli | agents | mcp`
+- `rawr.capability`: stable capability slug
 
-Channel B is local-first and integrates with runtime state and security gating.
+Derived:
+- channel classification is inferred from plugin surface root and command family.
 
-## HQ Plugin-Management Surfaces
+Removed from runtime semantics:
+- `templateRole`
+- `channel`
 
-System-management plugin workflows run through:
-- `rawr plugins status`
-- `rawr plugins doctor links`
-- `rawr plugins sync ...`
-- `rawr plugins converge`
+Deprecated for later removal:
+- `publishTier` / `published`
 
-`rawr plugins converge` is the canonical deterministic loop:
-1. repair install/link drift,
-2. run sync-all convergence,
-3. verify final healthy status.
+## Surface Registration Contracts (Target)
+- `registerApiPlugin(...) -> { namespace, contract, router }`
+- `registerWorkflowPlugin(...) -> { functions }`
+- `registerWebPlugin(...) -> { mounts }`
+- `registerCliPlugin(...) -> { commands }`
+- `registerAgentPlugin(...) -> { capabilities, knowledgeRefs }`
+- `registerMcpPlugin(...) -> { actions }` (optional)
 
-## Runtime Contract (Channel B)
+## Composition Contract
+`rawr.hq.ts` is the single composition authority.
 
-- Workspace runtime plugin packages live under `plugins/web/*`.
-- Plugin id is package name (preferred) or directory name fallback.
-- Enabling is gated by security checks.
-- Enabled set is persisted to `.rawr/state/state.json`.
-- Server/web paths consume enabled state.
+It aggregates and exports:
+- ORPC contract/router/context,
+- Inngest client/functions,
+- web mounts,
+- CLI commands,
+- agent capabilities,
+- optional MCP actions.
 
-## Procedure API Contract (ORPC-First)
+## Import Boundary Contract
+Allowed:
+- `plugins/**` importing `packages/**` and approved host interfaces/types.
 
-Web/CLI/plugin consumers should use the HQ ORPC contract for procedure APIs.
-
-- RPC base path: `/rpc`
-- OpenAPI base path: `/api/orpc`
-- OpenAPI spec: `/api/orpc/openapi.json`
-
-Current procedure namespaces:
-- `coordination.*`
-- `state.getRuntimeState`
-
-Plugin authoring guidance:
-- Runtime plugins that need coordination/state data should use ORPC clients bound to `@rawr/core/orpc`.
-- Avoid direct first-party fetches to legacy ad-hoc procedure routes.
-- Keep `/rawr/plugins/web/:dirName` usage for module loading; it is a non-procedure serving route by design.
-
-## Repo Plugin Roots (Internal Layout)
-
-- `plugins/cli/*`: CLI toolkits (oclif plugins; `rawr.kind=toolkit`)
-- `plugins/web/*`: workspace runtime plugins (server/web exports; `rawr.kind=web`)
-- `plugins/agents/*`: agent offices (skills/workflows/agents/scripts; `rawr.kind=agent`)
-
-## Template Plugin Role Contract
-
-Template plugins must declare role metadata in `package.json#rawr`:
-- `templateRole`: `fixture | example | operational`
-- `kind`: `toolkit | web | agent`
-- `channel`: `A | B | both`
-- `publishTier`: `blocked | candidate`
-
-Template default policy:
-- `fixture` and `example` are baseline-allowed.
-- `operational` is not a template default and should live in personal HQ unless explicitly promoted.
-- Template plugin packages remain `private: true` unless release policy explicitly changes.
-
-## Publishing Rails
-
-For publishable plugin packages, include:
-- `name`
-- `version`
-- `files`
-- `exports`
-- `engines`
-- `publishConfig`
-- `README.md`
-
-Scaffolded plugin package templates should include these fields by default.
-
-## Local-Only vs Connected
-
-- Local-only default: author/build/enable runtime plugins in workspace.
-- Connected opt-in: publish plugins, install external oclif plugins, sync from upstream template.
-
-## Current Publish Posture
-
-- Current default posture is local-only.
-- Template sample plugin packages are marked `private: true`; npm publishing is intentionally blocked until publish rails are explicitly enabled.
+Not allowed:
+- `plugins/**` importing other `plugins/**` runtime code.
 
 ## Ownership Summary
+- Template repo owns baseline shared contracts, fixtures/examples, and process/docs contracts.
+- Operational plugin authoring remains downstream personal-HQ-first by default.
+- Promotion to template is explicit and should be justified as baseline fixture/example value.
 
-- Core CLI contracts and publish ownership are template-owned.
-- Core HQ/plugin-management template domain includes:
-  - `plugins/agents/hq/**` (full HQ agent office ownership)
-  - `plugins/cli/plugins/**` (shared lifecycle/runtime plugin command surface)
-  - shared package surfaces listed in `scripts/githooks/template-managed-paths.txt`
-- Personal mechanical dev workflow package paths (for example `packages/dev/**`) remain personal-HQ-owned.
-- Operational plugin authoring is personal-HQ-owned by default.
+## Publishing and Release Posture
+- Publishing posture is a release-governance concern, not runtime composition logic.
+- During transition, legacy publish metadata may remain documented, but runtime behavior must not depend on it.
+
+## Related Process Docs
+- `docs/process/PLUGIN_E2E_WORKFLOW.md`
+- `docs/process/runbooks/RAWR_HQ_MANIFEST_COMPOSITION.md`
+- `docs/process/HQ_OPERATIONS.md`
+- `AGENTS_SPLIT.md`

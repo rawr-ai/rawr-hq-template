@@ -1,0 +1,119 @@
+meta:
+  session: "SESSION_019c587a"
+  agent: "C"
+  mission: "implementation-doc stabilization for packet + posture"
+  generated_at: "2026-02-18"
+  phase: "post_patch"
+  authority:
+    d005_doc: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md"
+
+lock_contract:
+  d005:
+    status: "closed"
+    closure_mode: "spec_lock"
+    runtime_rollout_state: "not-implied-complete"
+    required_narrative:
+      - "Manifest-driven capability-first workflow routes are canonical."
+      - "Workflow caller surface remains `/api/workflows/<capability>/*`."
+      - "Runtime ingress remains `/api/inngest` only."
+      - "`registerOrpcRoutes()` remains scoped to `/rpc*` and `/api/orpc*`."
+      - "Workflow route context helper is distinct from generic ORPC boundary context."
+
+scope:
+  editable_paths:
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_01_EXTERNAL_CLIENT_GENERATION.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_03_SPLIT_VS_COLLAPSE.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_07_HOST_HOOKING_COMPOSITION.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md"
+    - "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md"
+
+alignment_matrix:
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_01_EXTERNAL_CLIENT_GENERATION.md"
+    status: "aligned_after_patch"
+    contradictions: []
+    actions:
+      - "Normalized path template to `plugins/api/<capability>/src/`."
+      - "Normalized snippet comments from `invoice-api` to capability-first directory form."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_02_INTERNAL_CLIENTS_INTERNAL_CALLING.md"
+    status: "aligned_or_minor_touch"
+    contradictions: []
+    actions:
+      - "Retain current D-005-compatible internal-calling policy wording unless cross-file consistency adjustments are required."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_03_SPLIT_VS_COLLAPSE.md"
+    status: "aligned"
+    contradictions: []
+    actions:
+      - "Preserve split-policy lock language."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_04_CONTEXT_CREATION_AND_PROPAGATION.md"
+    status: "aligned_or_minor_touch"
+    contradictions:
+      - "Could read as shared boundary context if not explicitly tied to workflow-specific helper in host narrative."
+    actions:
+      - "Tighten wording to mention workflow-boundary context helper separation when needed."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_05_ERRORS_LOGGING_OBSERVABILITY.md"
+    status: "aligned"
+    contradictions: []
+    actions:
+      - "No contradiction-driven changes expected."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_06_MIDDLEWARE_CROSS_CUTTING_CONCERNS.md"
+    status: "aligned"
+    contradictions: []
+    actions:
+      - "No contradiction-driven changes expected."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_07_HOST_HOOKING_COMPOSITION.md"
+    status: "aligned_after_patch"
+    contradictions: []
+    actions:
+      - "Normalized to explicit `rawrHqManifest.workflows.triggerRouter` wording."
+      - "Reinforced separate workflow context helper wording."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_08_WORKFLOWS_VS_APIS_BOUNDARIES.md"
+    status: "aligned_after_patch"
+    contradictions: []
+    actions:
+      - "Clarified workflow caller surfaces are mounted via dedicated workflow route registration in host composition."
+      - "Kept three-consumer model and D-005 closure language."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md"
+    status: "aligned_after_patch"
+    contradictions: []
+    actions:
+      - "Normalized path template to `plugins/workflows/<capability>/src/`."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/DECISIONS.md"
+    status: "aligned_after_patch"
+    contradictions: []
+    actions:
+      - "Clarified D-005 closure as policy lock with runtime implementation tracked separately."
+      - "Kept open decisions D-006, D-008, D-009, D-010 as non-contradictory follow-ups."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/ORPC_INGEST_SPEC_PACKET.md"
+    status: "aligned_after_patch"
+    contradictions: []
+    actions:
+      - "Added explicit lock-language clarification and capability-first workflow path wording."
+
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_ORPC_INNGEST_WORKFLOWS_POSTURE_SPEC.md"
+    status: "aligned_after_patch"
+    contradictions: []
+    actions:
+      - "Normalized key D-005 lines to `/api/workflows/<capability>/*`."
+      - "Added explicit sentence reinforcing D-005 closure as spec lock with runtime rollout tracked separately."
+
+out_of_scope_notes:
+  - path: "/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md"
+    observation: "Contains one legacy alias (`workflows.router`) that appears to seed downstream drift."
+    action: "No edits in this mission; annotate only."

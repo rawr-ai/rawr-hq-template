@@ -1,0 +1,97 @@
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_01_EXTERNAL_CLIENT_GENERATION.md
+  section_anchor: "Boundary Plugin Default (Contract-First + Explicit Operations)"
+  issue_type: naming_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section E (Path strategy decision) + Section H (File structure illustration)"
+  action: align
+  notes: "Uses `plugins/api/<capability>-api/src/` and `plugins/api/invoice-api/...`; D-005 locks capability-first concise plugin directory naming (`plugins/api/<capability>`)."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/AXIS_09_DURABLE_ENDPOINTS_VS_DURABLE_FUNCTIONS.md
+  section_anchor: "Canonical Placement"
+  issue_type: naming_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section E (Path strategy decision) + Section H (File structure illustration)"
+  action: align
+  notes: "Uses `plugins/workflows/<capability>-workflows/src/`; D-005 uses concise `plugins/workflows/<capability>` capability namespaces."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md
+  section_anchor: "4.4 `rawr.hq.ts`: compose API + workflow trigger + Inngest functions"
+  issue_type: manifest_shape_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section C (Manifest-driven composition) + Section F (Internal calling + workflow triggering model)"
+  action: align
+  notes: "Manifest nests workflows under `rawrHqManifest.orpc` (`invoicing.workflows`) instead of D-005's dedicated workflow surface (`workflows.triggerContract`/`workflows.triggerRouter`) paired with shared Inngest bundle."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md
+  section_anchor: "4.5 Host mounting: explicit `/api/workflows/...` vs `/api/inngest` split"
+  issue_type: mount_ownership_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section C (Host wiring) + Section G (What changes vs what stays the same)"
+  action: align
+  notes: "`registerOrpcRoutes(...)` mounts both API and workflow prefixes (`workflowPrefix`); D-005 keeps `registerOrpcRoutes()` scoped to `/rpc*` + `/api/orpc*` and mounts `/api/workflows/*` separately."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md
+  section_anchor: "4.5 Host mounting: explicit `/api/workflows/...` vs `/api/inngest` split"
+  issue_type: workflow_context_separation_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section C (Context separation) + Section H (File structure illustration)"
+  action: align
+  notes: "Workflow handler receives generic `opts.context`; D-005 requires explicit workflow boundary context helpers (`apps/server/src/workflows/context.ts`) and separate context envelope for workflow routes."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md
+  section_anchor: "4.5 Host composition + mount glue (explicit, no black box)"
+  issue_type: manifest_key_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section F + Section I"
+  action: align
+  notes: "Uses `rawrHqManifest.workflows.router` in both manifest and host mount; packet lock and D-005 closure language use `workflows.triggerRouter`."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md
+  section_anchor: "4.5 Host composition + mount glue (explicit, no black box)"
+  issue_type: host_spine_coverage_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section C (Host wiring) + Section G (Stays the same)"
+  action: annotate
+  notes: "Example manifest is workflows-only (`workflows` + `inngest`) and omits explicit `orpc`/coordination spine; add explicit 'workflow-only slice' qualifier or align to full host spine to avoid implying `/rpc` + `/api/orpc` removal."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_03_MICROFRONTEND_API_WORKFLOW_INTEGRATION.md
+  section_anchor: "10) Unresolved Gaps (Mandatory)"
+  issue_type: decision_state_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Decision register (D-005 closed) + orpc-ingest-spec-packet/DECISIONS.md (D-005 closed)"
+  action: align
+  notes: "Gap #1 frames dedicated `/api/workflows/<capability>/*` mounts as unresolved runtime route reality; keep as rollout status note only, not as policy ambiguity that reopens D-005 semantics."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md
+  section_anchor: "5.4 Host wiring: composition root and route mounts"
+  issue_type: manifest_namespace_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section C (Manifest-driven composition) + Section F"
+  action: align
+  notes: "Manifest uses top-level `api` + `workflows` with `workflows.router`; D-005 closure language expects canonical host spine with existing oRPC composition plus dedicated workflow trigger namespace keyed by trigger router semantics."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md
+  section_anchor: "5.4 Host wiring: composition root and route mounts"
+  issue_type: workflow_context_boundary_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section C (Context separation) + Section H (apps/server/src/workflows/context.ts)"
+  action: align
+  notes: "Uses shared `apps/server/src/boundary/context.ts` (`createBoundaryContext`) for both API and workflow routes; D-005 explicitly calls for workflow-boundary-specific context helper separation."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md
+  section_anchor: "5.4 Host wiring: composition root and route mounts"
+  issue_type: route_prefix_drift
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section C (Host wiring keeps `/api/orpc*`) + Section G"
+  action: align
+  notes: "Mounts capability-specific API prefix (`/api/orpc/invoicing/*`) while contract paths are already capability-scoped (`/invoicing/...`), diverging from host-wide `/api/orpc*` ownership and increasing prefix duplication risk."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_02_API_PLUS_WORKFLOWS_COMPOSED_CAPABILITY.md
+  section_anchor: "5) Wiring Steps (Host -> Composition -> Plugin/Package -> Runtime)"
+  issue_type: manifest_generation_process_gap
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section C (manifest generated/re-generated) + Section K (Prep)"
+  action: annotate
+  notes: "Shows hand composition in `rawr.hq.ts` but omits generator/regeneration loop and plugin-author workflow constraint (`packages/*` + `plugins/*` only, no recurring `apps/*` edits)."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/orpc-ingest-spec-packet/examples/E2E_04_CONTEXT_AND_MIDDLEWARE_REAL_WORLD.md
+  section_anchor: "5.4 Host wiring: composition root and route mounts"
+  issue_type: manifest_generation_process_gap
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section C (manifest generated/re-generated) + Section K (Prep)"
+  action: annotate
+  notes: "Raw manifest snippet reads as manually authored runtime composition; add explicit note that this is generated output (or align snippet to generator workflow) to preserve D-005's non-manual-app-edit contract."
+
+- path: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/docs/projects/flat-runtime-session-review/SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md
+  section_anchor: "C) Hosting/mounting/composition recommended architecture"
+  issue_type: authoritative_alias_conflict
+  authoritative_target: "SESSION_019c587a_D005_HOSTING_COMPOSITION_COHESIVE_RECOMMENDATION.md :: Section I helper signatures + packet lock language"
+  action: annotate
+  notes: "Section C references `OpenAPIHandler(rawrHqManifest.workflows.router)` while Section I and downstream lock language converge on `workflows.triggerRouter`; alias mismatch appears to be source of downstream drift."

@@ -28,6 +28,7 @@ Use this when you need exact commands for:
 | Lifecycle: skill quality gates | `docs/process/runbooks/LIFECYCLE_SKILL.md` |
 | Lifecycle: workflow quality gates | `docs/process/runbooks/LIFECYCLE_WORKFLOW.md` |
 | Lifecycle: composed multi-surface changes | `docs/process/runbooks/LIFECYCLE_COMPOSED_CHANGES.md` |
+| Compose runtime surfaces in `rawr.hq.ts` | `docs/process/runbooks/RAWR_HQ_MANIFEST_COMPOSITION.md` |
 | Operate coordination canvas + Inngest runtime | `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` |
 | Drain Graphite stacks safely (publish/merge/prune loop) | `docs/process/runbooks/STACK_DRAIN_LOOP.md` |
 | Integrate template -> personal with sync-first sequencing | `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md` |

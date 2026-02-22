@@ -35,6 +35,13 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - The change is project/product customization not meant for all template consumers.
 - You are authoring or evolving operational plugins.
 - You are implementing operator-specific dev workflow mechanics (`packages/dev/**`, `plugins/cli/devops/**`).
+- You are authoring operational surface plugins under:
+  - `plugins/api/**`
+  - `plugins/workflows/**`
+  - `plugins/web/**`
+  - `plugins/cli/**`
+  - `plugins/agents/**`
+  - `plugins/mcp/**`
 
 ## Promotion Path (Personal -> Template)
 
@@ -53,7 +60,13 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - Template-managed HQ/plugin-management domain includes:
   - `plugins/agents/hq/**` (full ownership)
   - `plugins/cli/plugins/**` (shared lifecycle/runtime command surface)
-- Operational plugin development in other plugin roots starts in personal `RAWR HQ`.
+- Operational plugin development in other plugin roots starts in personal `RAWR HQ`, including:
+  - `plugins/api/**`
+  - `plugins/workflows/**`
+  - `plugins/web/**`
+  - `plugins/cli/**` (outside `plugins/cli/plugins/**`)
+  - `plugins/agents/**` (outside `plugins/agents/hq/**`)
+  - `plugins/mcp/**`
 - Promote non-HQ personal plugin artifacts to template only when they are truly baseline fixture/example material.
 
 ## Global CLI Wiring Ownership
