@@ -5,6 +5,12 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+type AliasInstanceSeamStatus =
+  | "owner-file-missing"
+  | "owner-file-empty"
+  | "owner-current-instance"
+  | "owner-other-instance";
+
 type DoctorGlobalData = {
   commandPath: string | null;
   commandPathReal: string | null;
@@ -17,6 +23,18 @@ type DoctorGlobalData = {
   pnpmRawrShimExists: boolean;
   pnpmBeforeBunInPath: boolean;
   workspaceDependencyCount: number;
+  currentInstanceRoot: string;
+  currentInstanceRootReal: string | null;
+  ownerFilePath: string;
+  ownerFileExists: boolean;
+  ownerWorkspacePath: string | null;
+  ownerWorkspaceReal: string | null;
+  ownerMatchesCurrentInstanceByRealpath: boolean | null;
+  aliasInstanceSeamStatus: AliasInstanceSeamStatus;
+  commandSurfaces: {
+    externalCliPlugins: "rawr plugins ...";
+    workspaceRuntimePlugins: "rawr plugins web ...";
+  };
   recommendedMode: "bun-symlink";
 };
 
@@ -69,6 +87,36 @@ export default class DoctorGlobal extends RawrCommand {
     const cliBinReal = safeRealpath(cliBinPath);
     const bunGlobalRawrReal = safeRealpath(bunGlobalRawrPath);
 
+    const currentInstanceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../..");
+    const currentInstanceRootReal = safeRealpath(currentInstanceRoot);
+
+    const ownerFilePath = path.join(home, ".rawr", "global-rawr-owner-path");
+    const ownerFileExists = fs.existsSync(ownerFilePath);
+    let ownerWorkspacePath: string | null = null;
+    if (ownerFileExists) {
+      try {
+        const raw = fs.readFileSync(ownerFilePath, "utf8").trim();
+        if (raw.length > 0) ownerWorkspacePath = path.resolve(raw);
+      } catch {
+        ownerWorkspacePath = null;
+      }
+    }
+
+    const ownerWorkspaceReal = ownerWorkspacePath ? safeRealpath(ownerWorkspacePath) : null;
+    let aliasInstanceSeamStatus: AliasInstanceSeamStatus = "owner-file-missing";
+    let ownerMatchesCurrentInstanceByRealpath: boolean | null = null;
+
+    if (ownerFileExists) {
+      if (!ownerWorkspacePath) {
+        aliasInstanceSeamStatus = "owner-file-empty";
+      } else {
+        const ownerComparable = ownerWorkspaceReal ?? path.resolve(ownerWorkspacePath);
+        const currentComparable = currentInstanceRootReal ?? path.resolve(currentInstanceRoot);
+        ownerMatchesCurrentInstanceByRealpath = ownerComparable === currentComparable;
+        aliasInstanceSeamStatus = ownerMatchesCurrentInstanceByRealpath ? "owner-current-instance" : "owner-other-instance";
+      }
+    }
+
     const pathEntries = (process.env.PATH ?? "").split(path.delimiter).filter(Boolean);
     const pnpmBinDir = path.join(home, "Library", "pnpm");
     const pnpmIndex = pathIndex(pathEntries, pnpmBinDir);
@@ -94,12 +142,24 @@ export default class DoctorGlobal extends RawrCommand {
       bunGlobalBinDir,
       bunGlobalRawrPath,
       bunGlobalRawrReal,
-      cliBinPath: cliBinPath,
-      cliBinReal: cliBinReal,
+      cliBinPath,
+      cliBinReal,
       pnpmRawrShimPath,
       pnpmRawrShimExists: fs.existsSync(pnpmRawrShimPath),
       pnpmBeforeBunInPath,
       workspaceDependencyCount,
+      currentInstanceRoot,
+      currentInstanceRootReal,
+      ownerFilePath,
+      ownerFileExists,
+      ownerWorkspacePath,
+      ownerWorkspaceReal,
+      ownerMatchesCurrentInstanceByRealpath,
+      aliasInstanceSeamStatus,
+      commandSurfaces: {
+        externalCliPlugins: "rawr plugins ...",
+        workspaceRuntimePlugins: "rawr plugins web ...",
+      },
       recommendedMode: "bun-symlink",
     };
 
@@ -108,6 +168,24 @@ export default class DoctorGlobal extends RawrCommand {
       bunGlobalRawrReal !== null &&
       cliBinReal !== null &&
       bunGlobalRawrReal === cliBinReal;
+
+    const warnings: string[] = [];
+    if (data.pnpmRawrShimExists) warnings.push(`Stale pnpm shim exists at ${data.pnpmRawrShimPath}`);
+    if (data.pnpmBeforeBunInPath)
+      warnings.push("PATH currently prefers pnpm bin over Bun bin; this can shadow rawr unexpectedly.");
+    if (data.workspaceDependencyCount > 0) {
+      warnings.push(
+        "CLI package uses workspace dependencies; Bun global install/link expects published or fully linkable deps. Use scripts/dev/install-global-rawr.sh for local-global setup.",
+      );
+    }
+    if (data.aliasInstanceSeamStatus === "owner-file-empty") {
+      warnings.push(`Owner file exists but is empty: ${data.ownerFilePath}`);
+    }
+    if (data.aliasInstanceSeamStatus === "owner-other-instance") {
+      warnings.push(
+        `Owner file points to another checkout (${data.ownerWorkspacePath}); run ./scripts/dev/activate-global-rawr.sh in this checkout to transfer ownership explicitly.`,
+      );
+    }
 
     if (!looksHealthy) {
       const result = this.fail("Global rawr is not configured for Bun-global execution", {
@@ -121,25 +199,30 @@ export default class DoctorGlobal extends RawrCommand {
           this.log(`- command -v rawr: ${commandResolved ?? "(not found)"}`);
           this.log(`- expected path: ${bunGlobalRawrPath}`);
           this.log(`- expected target: ${cliBinPath}`);
+          this.log(`- alias/instance seam: ${data.aliasInstanceSeamStatus}`);
+          this.log(`- owner file: ${data.ownerFilePath}`);
+          if (data.ownerWorkspacePath) this.log(`- owner workspace: ${data.ownerWorkspacePath}`);
+          this.log(`- current instance root: ${data.currentInstanceRoot}`);
           this.log("");
           this.log("Fix:");
-          this.log("1. ./scripts/dev/install-global-rawr.sh");
-          this.log("2. hash -r");
-          this.log("3. git config core.hooksPath scripts/githooks");
+          let step = 1;
+          if (data.aliasInstanceSeamStatus === "owner-other-instance") {
+            this.log(`${step}. ./scripts/dev/activate-global-rawr.sh`);
+            step += 1;
+          }
+          this.log(`${step}. ./scripts/dev/install-global-rawr.sh`);
+          step += 1;
+          this.log(`${step}. hash -r`);
+          step += 1;
+          this.log(`${step}. git config core.hooksPath scripts/githooks`);
+          this.log("");
+          this.log("Command surfaces:");
+          this.log(`- ${data.commandSurfaces.externalCliPlugins} (external CLI plugin channel)`);
+          this.log(`- ${data.commandSurfaces.workspaceRuntimePlugins} (workspace runtime plugin channel)`);
         },
       });
       this.exit(1);
       return;
-    }
-
-    const warnings: string[] = [];
-    if (data.pnpmRawrShimExists) warnings.push(`Stale pnpm shim exists at ${data.pnpmRawrShimPath}`);
-    if (data.pnpmBeforeBunInPath)
-      warnings.push("PATH currently prefers pnpm bin over Bun bin; this can shadow rawr unexpectedly.");
-    if (data.workspaceDependencyCount > 0) {
-      warnings.push(
-        "CLI package uses workspace dependencies; Bun global install/link expects published or fully linkable deps. Use scripts/dev/install-global-rawr.sh for local-global setup.",
-      );
     }
 
     const result = this.ok(data, undefined, warnings.length > 0 ? warnings : undefined);
@@ -149,11 +232,19 @@ export default class DoctorGlobal extends RawrCommand {
         this.log("Global rawr is configured for Bun-global execution.");
         this.log(`- command -v rawr: ${data.commandPath}`);
         this.log(`- target: ${data.cliBinPath}`);
+        this.log(`- alias/instance seam: ${data.aliasInstanceSeamStatus}`);
+        this.log(`- owner file: ${data.ownerFilePath}`);
+        if (data.ownerWorkspacePath) this.log(`- owner workspace: ${data.ownerWorkspacePath}`);
+        this.log(`- current instance root: ${data.currentInstanceRoot}`);
         if (warnings.length > 0) {
           this.log("");
           this.log("Warnings:");
           for (const warning of warnings) this.log(`- ${warning}`);
         }
+        this.log("");
+        this.log("Command surfaces:");
+        this.log(`- ${data.commandSurfaces.externalCliPlugins} (external CLI plugin channel)`);
+        this.log(`- ${data.commandSurfaces.workspaceRuntimePlugins} (workspace runtime plugin channel)`);
       },
     });
   }
