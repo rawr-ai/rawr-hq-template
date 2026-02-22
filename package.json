@@ -80,7 +80,12 @@
     "phase-e:gate:e2-finished-hook-policy": "bun scripts/phase-e/verify-e2-finished-hook-policy.mjs",
     "phase-e:gate:e2-finished-hook-runtime": "bunx vitest run --project coordination-inngest packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts",
     "phase-e:e2:quick": "bun run phase-e:e1:quick && bun run phase-e:gate:e2-finished-hook-policy && bun run phase-e:gate:e2-finished-hook-runtime",
-    "phase-e:e2:full": "bun run phase-e:e2:quick && bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts"
+    "phase-e:e2:full": "bun run phase-e:e2:quick && bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts",
+    "phase-e:gate:e3-evidence-integrity": "bun scripts/phase-e/verify-e3-evidence-integrity.mjs",
+    "phase-e:e3:quick": "bun run phase-e:e2:quick && bun run phase-e:gate:e3-evidence-integrity",
+    "phase-e:e3:full": "bun run phase-e:e3:quick && bun run phase-a:gate:harness-matrix",
+    "phase-e:gate:e4-disposition": "bun scripts/phase-e/verify-e3-evidence-integrity.mjs --mode=e4-disposition",
+    "phase-e:gates:exit": "bun run phase-e:e3:full && bun run phase-e:gate:e4-disposition && bun run phase-a:gates:exit"
   },
   "overrides": {
     "npm": "11.9.0",
