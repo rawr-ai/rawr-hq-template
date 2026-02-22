@@ -13,9 +13,11 @@ if (mode !== "baseline" && mode !== "completion") {
 const root = process.cwd();
 const rawrFile = path.join(root, "apps", "server", "src", "rawr.ts");
 const orpcFile = path.join(root, "apps", "server", "src", "orpc.ts");
+const manifestFile = path.join(root, "rawr.hq.ts");
 
 const rawrSource = await fs.readFile(rawrFile, "utf8");
 const orpcSource = await fs.readFile(orpcFile, "utf8");
+const manifestSource = mode === "completion" ? await fs.readFile(manifestFile, "utf8") : "";
 
 const requiredChecks = [
   { label: "/api/inngest mount", ok: rawrSource.includes('"/api/inngest"') },
@@ -25,8 +27,23 @@ const requiredChecks = [
 
 if (mode === "completion") {
   requiredChecks.push({
-    label: "/api/workflows route family wiring",
-    ok: rawrSource.includes('"/api/workflows') || rawrSource.includes("'/api/workflows"),
+    label: "manifest workflow capability mapping authority",
+    ok:
+      manifestSource.includes("workflows") &&
+      manifestSource.includes("capabilities") &&
+      manifestSource.includes("pathPrefix"),
+  });
+  requiredChecks.push({
+    label: "/api/workflows capability-family wiring",
+    ok: rawrSource.includes('"/api/workflows/*"') && rawrSource.includes("resolveWorkflowCapability"),
+  });
+  requiredChecks.push({
+    label: "manifest capability mapping consumed in runtime routing",
+    ok: rawrSource.includes("rawrHqManifest.workflows.capabilities"),
+  });
+  requiredChecks.push({
+    label: "no dedicated /rpc/workflows mount",
+    ok: !rawrSource.includes('"/rpc/workflows') && !orpcSource.includes('"/rpc/workflows'),
   });
 }
 

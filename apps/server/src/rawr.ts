@@ -1,10 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { rawrHqManifest } from "../../../rawr.hq";
+import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { AnyElysia } from "./plugins";
 import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
 import { createCoordinationRuntimeAdapter } from "./coordination";
-import { registerOrpcRoutes } from "./orpc";
+import { createOrpcRouter, registerOrpcRoutes } from "./orpc";
 import { createWorkflowBoundaryContext, type RawrBoundaryContextDeps } from "./workflows/context";
 
 export type RawrRoutesOptions = {
@@ -13,9 +15,14 @@ export type RawrRoutesOptions = {
   baseUrl?: string;
 };
 
-export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/*", "/rpc + /api/orpc/*"] as const;
+export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"] as const;
 
 const INNGEST_SIGNATURE_HEADERS = ["x-inngest-signature", "inngest-signature"] as const;
+const WORKFLOW_BASE_PATH = "/api/workflows";
+const WORKFLOW_CAPABILITY_PATHS = Object.entries(rawrHqManifest.workflows.capabilities).map(([capability, manifest]) => ({
+  capability,
+  pathPrefix: normalizeWorkflowPathPrefix(manifest.pathPrefix),
+}));
 
 function asUrl(value: string | undefined): string | undefined {
   if (!value) return undefined;
@@ -53,6 +60,23 @@ function hasIngressSignatureHeader(request: Request): boolean {
 
 export function verifyInngestIngressRequest(request: Request): boolean {
   return hasConfiguredIngressSigningKey() && hasIngressSignatureHeader(request);
+}
+
+function normalizeWorkflowPathPrefix(pathPrefix: string): string {
+  const withLeadingSlash = pathPrefix.startsWith("/") ? pathPrefix : `/${pathPrefix}`;
+  const withoutTrailingSlash = withLeadingSlash.replace(/\/+$/u, "");
+  return withoutTrailingSlash === "" ? "/" : withoutTrailingSlash;
+}
+
+function resolveWorkflowCapability(pathname: string): string | null {
+  if (!pathname.startsWith(`${WORKFLOW_BASE_PATH}/`)) return null;
+  const workflowPathname = pathname.slice(WORKFLOW_BASE_PATH.length);
+  for (const entry of WORKFLOW_CAPABILITY_PATHS) {
+    if (workflowPathname === entry.pathPrefix || workflowPathname.startsWith(`${entry.pathPrefix}/`)) {
+      return entry.capability;
+    }
+  }
+  return null;
 }
 
 function isSafeDirName(input: string): boolean {
@@ -137,6 +161,7 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     runtime,
     inngestClient: inngestBundle.client,
   };
+  const workflowOpenApiHandler = new OpenAPIHandler(createOrpcRouter());
 
   app.all(
     "/api/inngest",
@@ -153,8 +178,18 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
   app.all(
     "/api/workflows/*",
     async ({ request }) => {
-      void createWorkflowBoundaryContext(request as Request, boundaryContextDeps);
-      return new Response("not found", { status: 404 });
+      const req = request as Request;
+      const capability = resolveWorkflowCapability(new URL(req.url).pathname);
+      if (!capability) {
+        return new Response("not found", { status: 404 });
+      }
+
+      const context = createWorkflowBoundaryContext(req, boundaryContextDeps);
+      const result = await workflowOpenApiHandler.handle(req, {
+        prefix: WORKFLOW_BASE_PATH,
+        context,
+      });
+      return result.matched ? result.response : new Response("not found", { status: 404 });
     },
     { parse: "none" },
   );
