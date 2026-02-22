@@ -20,7 +20,7 @@
 | F3 | `codex/phase-f-f3-structural-evidence-gates` | submitted | PR #159 (v2), structural gate chain landed |
 | F4 | `codex/phase-f-f4-decision-closure` | submitted | PR #160 (v2), deferred disposition closure complete |
 | F5 | `codex/phase-f-f5-review-fix-closure` | submitted | PR #161 (v1), review disposition approved |
-| F5A | `codex/phase-f-f5a-structural-assessment` | pending | |
+| F5A | `codex/phase-f-f5a-structural-assessment` | in_review | I4A structural disposition approve, awaiting submit |
 | F6 | `codex/phase-f-f6-docs-cleanup` | pending | |
 | F7 | `codex/phase-f-f7-next-phase-readiness` | pending | |
 
@@ -31,7 +31,7 @@
 | I2 | F2 | `codex/phase-f-f2-interface-policy-hardening` | complete (F2) | closed |
 | I3 | F3 | `codex/phase-f-f3-structural-evidence-gates` | complete (F3) | closed |
 | I4 | F5 independent review | `codex/phase-f-f5-review-fix-closure` | complete (approve) | closed |
-| I4A | F5A structural assessment | pending | pending | pending |
+| I4A | F5A structural assessment | `codex/phase-f-f5a-structural-assessment` | complete (approve) | close_after_submit |
 | I5 | F6 + F7 docs/readiness | pending | pending | pending |
 
 ## Gate Checklist
@@ -140,3 +140,14 @@
 36. Post-submit checks:
    - `gt sync --no-restack` pass
    - `gt log --show-untracked` clean
+37. Opened F5A slice branch and tracking:
+   - `gt create codex/phase-f-f5a-structural-assessment`
+   - `gt track codex/phase-f-f5a-structural-assessment -p codex/phase-f-f5-review-fix-closure`
+38. Spawned I4A default agent for structural/taste assessment.
+39. I4A outputs written:
+   - `AGENT_5_PLAN_VERBATIM.md`
+   - `AGENT_5_SCRATCHPAD.md`
+   - `AGENT_5_FINAL_F5A_STRUCTURAL_ASSESSMENT.md`
+   - `F5A_STRUCTURAL_DISPOSITION.md` (`disposition: approve`)
+40. I4A verification:
+   - `bun run phase-f:gate:f5a-structural-closure` pass
