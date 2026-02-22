@@ -41,5 +41,5 @@ Before opening `codex/phase-d-runtime-implementation`:
 3. Apply packet fixes if drift is detected.
 4. Then start D1 runtime implementation.
 
-## Planning Artifact Root
-`docs/projects/orpc-ingest-workflows-spec/_phase-d-planning-pass-01-2026-02-21/`
+## Historical Planning Artifact Recovery
+Planning-pass working artifacts were pruned after closure. Use `HISTORY_RECOVERY.md` for git-history recovery commands.

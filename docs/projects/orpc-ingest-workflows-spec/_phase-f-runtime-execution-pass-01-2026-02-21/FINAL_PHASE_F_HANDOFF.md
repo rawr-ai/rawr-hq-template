@@ -19,10 +19,7 @@
 6. `F7_NEXT_PHASE_READINESS.md`
 7. `PHASE_F_EXECUTION_REPORT.md`
 8. `FINAL_PHASE_F_HANDOFF.md`
-9. `AGENT_6_PLAN_VERBATIM.md`
-10. `AGENT_6_SCRATCHPAD.md`
-11. `AGENT_6_FINAL_F6_DOCS_CLEANUP.md`
-12. `AGENT_6_FINAL_F7_READINESS_AND_HANDOFF.md`
+9. `docs/projects/orpc-ingest-workflows-spec/HISTORY_RECOVERY.md` (for removed non-canonical working artifacts)
 
 ## Phase Exit Posture
 ### Posture
@@ -58,4 +55,4 @@ None.
 ## Notes
 1. Forward-only delivery posture was preserved; no rollback-track artifacts were introduced.
 2. F6/F7 slices were docs-only and did not alter runtime code.
-3. `ORCHESTRATOR_SCRATCHPAD.md` remained untouched in this slice.
+3. Runtime working artifacts were pruned post-closure; use `docs/projects/orpc-ingest-workflows-spec/HISTORY_RECOVERY.md` for git-history recovery when needed.

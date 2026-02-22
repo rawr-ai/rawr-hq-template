@@ -9,8 +9,7 @@ Independent steward review and re-review of the integrated Phase D planning pack
 - `PHASE_D_PLANNING_HANDOFF.md`
 
 ## Source Reviews
-1. Initial steward review: `_phase-d-planning-pass-01-2026-02-21/AGENT_4_REVIEW_REPORT.md`
-2. Re-review after fix cycle: `_phase-d-planning-pass-01-2026-02-21/AGENT_4_RE_REVIEW_REPORT.md`
+Steward source-review working artifacts were pruned post-closure. Recover them via `HISTORY_RECOVERY.md` when deep audit replay is required.
 
 ## Findings Summary
 ### Initial Round

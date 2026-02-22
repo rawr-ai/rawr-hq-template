@@ -1,7 +1,7 @@
 # D5 Review Disposition
 
 ## Initial Independent Review
-- Source: `AGENT_5_REVIEW_REPORT.md`
+- Source: runtime independent-review working artifact (pruned post-closure; recover via `docs/projects/orpc-ingest-workflows-spec/HISTORY_RECOVERY.md`)
 - Disposition: `approve_with_changes`
 - Findings:
 1. High: D4 recurrence trigger logic did not enforce remediation-cycle evidence semantics.
@@ -9,7 +9,7 @@
 3. Medium: D4 scan artifacts used volatile timestamp fields causing deterministic churn.
 
 ## Fix Cycle 1
-- Source: `AGENT_FIX_1_FINAL.md`
+- Source: runtime fix-cycle report (pruned post-closure; recover via `docs/projects/orpc-ingest-workflows-spec/HISTORY_RECOVERY.md`)
 - Commit: `ca9c57b`
 - Fixes applied:
 1. Enforced remediation-cycle evidence requirement in D4 disposition logic.
@@ -21,13 +21,13 @@
 3. `bun run phase-d:gate:d3-ingress-middleware-structural-contract`
 
 ## Re-Review
-- Source: `AGENT_5_RE_REVIEW_REPORT.md`
+- Source: runtime re-review working artifact (pruned post-closure; recover via `docs/projects/orpc-ingest-workflows-spec/HISTORY_RECOVERY.md`)
 - Disposition: `approve_with_changes`
 - Remaining issue:
 1. Medium: recurrence evidence matching still accepted broad `phase-d:d3:quick/full` patterns instead of exact gate criterion.
 
 ## Fix Cycle 2
-- Source: `AGENT_FIX_2_FINAL.md`
+- Source: runtime second fix-cycle report (pruned post-closure; recover via `docs/projects/orpc-ingest-workflows-spec/HISTORY_RECOVERY.md`)
 - Commit: `5ee6dc2`
 - Fixes applied:
 1. Narrowed recurrence evidence matching to exact `phase-d:gate:d3-ingress-middleware-structural-contract` command criteria.
@@ -37,7 +37,7 @@
 3. `bun run phase-d:gate:d3-ingress-middleware-structural-contract`
 
 ## Final Re-Review
-- Source: `AGENT_5_FINAL_RE_REVIEW_NOTE.md`
+- Source: runtime final re-review note (pruned post-closure; recover via `docs/projects/orpc-ingest-workflows-spec/HISTORY_RECOVERY.md`)
 - Final disposition: `approve`
 
 ## Exit Result
