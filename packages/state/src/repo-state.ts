@@ -90,10 +90,60 @@ type LockHandle = {
   release: () => Promise<void>;
 };
 
+type LockMetadata = {
+  pid: number;
+  acquiredAt?: string;
+};
+
+function parseLockMetadata(raw: string): LockMetadata | null {
+  try {
+    const parsed = JSON.parse(raw) as { pid?: unknown; acquiredAt?: unknown };
+    if (typeof parsed.pid !== "number" || !Number.isInteger(parsed.pid) || parsed.pid <= 0) return null;
+    return {
+      pid: parsed.pid,
+      ...(typeof parsed.acquiredAt === "string" && parsed.acquiredAt.trim() !== ""
+        ? { acquiredAt: parsed.acquiredAt }
+        : {}),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function isProcessAlive(pid: number): boolean {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  if (pid === process.pid) return true;
+
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    if (err.code === "ESRCH") return false;
+    // EPERM means the process exists but is not signalable by current user.
+    if (err.code === "EPERM") return true;
+    return true;
+  }
+}
+
+async function canReclaimStaleLock(lockPath: string): Promise<boolean> {
+  try {
+    const raw = await fs.readFile(lockPath, "utf8");
+    const metadata = parseLockMetadata(raw);
+    if (!metadata) return true;
+    return !isProcessAlive(metadata.pid);
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    if (err.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
 async function cleanupStaleLock(lockPath: string, staleLockMs: number): Promise<void> {
   try {
     const stat = await fs.stat(lockPath);
     if (Date.now() - stat.mtimeMs < staleLockMs) return;
+    if (!(await canReclaimStaleLock(lockPath))) return;
     await fs.rm(lockPath, { force: true });
   } catch (error) {
     const err = error as NodeJS.ErrnoException;
