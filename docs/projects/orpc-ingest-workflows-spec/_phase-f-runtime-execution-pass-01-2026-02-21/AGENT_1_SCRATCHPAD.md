@@ -1,46 +1,56 @@
 # Agent 1 Scratchpad
 
+## Session Header
+- Timestamp (UTC): `2026-02-22T04:04:42Z`
+- Branch: `codex/phase-f-f4-decision-closure`
+- Scope: Phase F `F4` only (conditional D-004 disposition closure)
+
 ## Timestamped Updates
-- 2026-02-22T22:23:01: Confirmed branch is `codex/phase-f-f1-runtime-lifecycle-seams`.
-- 2026-02-22T22:23:01: Observed pre-existing local edits in F1 runtime files and pass artifacts; treated as in-branch working state and did not revert.
-- 2026-02-22T22:23:35: Required skill introspection completed for `typescript`, `orpc`, `architecture`, `decision-logging`, and `graphite`.
-- 2026-02-22T22:24:18: Grounded on Phase F/F1 docs:
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/PHASE_F_PREP_NOTE.md`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/_phase-e-runtime-execution-pass-01-2026-02-21/E7_PHASE_F_READINESS.md`
-  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/docs/projects/orpc-ingest-workflows-spec/axes/13-distribution-and-instance-lifecycle-model.md`
-  - `PHASE_F_EXECUTION_PACKET.md`, `PHASE_F_IMPLEMENTATION_SPEC.md`, `PHASE_F_ACCEPTANCE_GATES.md` sourced from `codex/phase-f-planning-packet` via `git show`.
-- 2026-02-22T22:24:31: Reproduced failing test:
-  - `bunx vitest run --project server apps/server/test/rawr.test.ts`
-  - Failure: alias-root authority stability assertion (`expected [] to include '@rawr/plugin-alias-root'`).
-- 2026-02-22T22:24:54: Diagnosed root cause: `resolveAuthorityRepoRoot` in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts` referenced `fsSync.realpathSync(...)` without importing `node:fs`, causing fallback to alias path.
-- 2026-02-22T22:24:59: Applied minimal F1 fix: added `import fsSync from "node:fs";` in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/rawr.ts`.
-- 2026-02-22T22:25:01: Re-ran failing target; test passed.
-- 2026-02-22T22:25:18: Ran required verification commands; all green.
+- 2026-02-22T03:58:xxZ: Confirmed branch scope and observed pre-existing orchestrator scratchpad edits; left orchestrator artifact untouched.
+- 2026-02-22T03:59:xxZ: Completed required skills introspection (`typescript`, `orpc`, `architecture`, `decision-logging`, `graphite`).
+- 2026-02-22T04:00:xxZ: Grounded on Phase F packet/spec via `git show codex/phase-f-planning-packet:...` (`PHASE_F_EXECUTION_PACKET.md`, `PHASE_F_IMPLEMENTATION_SPEC.md`, `PHASE_F_ACCEPTANCE_GATES.md`, `PHASE_F_WORKBREAKDOWN.yaml`).
+- 2026-02-22T04:01:xxZ: Read F4 gate scripts and confirmed strict disposition contract:
+  - `state: triggered|deferred` must be explicit and singular.
+  - `F4_TRIGGER_EVIDENCE.md` is required only when `state: triggered`.
+  - `F4_DISPOSITION.md` must include `Trigger Matrix Summary`, `Carry-Forward Watchpoints`, and `phase-f:gate:f4-assess` + `F4_TRIGGER_SCAN_RESULT.json` references.
+- 2026-02-22T04:02:xxZ: Evaluated `F4_TRIGGER_SCAN_RESULT.json`; current counters are below thresholds (`capabilitySurfaceCount=1`, `duplicatedBoilerplateClusterCount=0`, `correctnessSignalCount=0`), so trigger criteria are not met.
+- 2026-02-22T04:04:xxZ: Authored `F4_DISPOSITION.md` with explicit deferred state, explicit D-004 lock retention, and hardened carry-forward watchpoints.
+- 2026-02-22T04:05:xxZ: First run of `bun run phase-f:gate:f4-disposition` failed because `F4_DISPOSITION.md` contained both regex state tokens in prose (`state: deferred` plus `state: triggered` inside a watchpoint).
+- 2026-02-22T04:06:xxZ: Tightened watchpoint wording to remove the extra `state: triggered` token and keep exactly one explicit declared state.
+- 2026-02-22T04:06:xxZ: Re-ran required gates; both passed (`phase-f:gate:f4-assess`, `phase-f:gate:f4-disposition`).
+- 2026-02-22T04:06:xxZ: Confirmed `F4_TRIGGER_EVIDENCE.md` is absent, as required for deferred posture.
+- 2026-02-22T04:07:xxZ: Published `AGENT_1_FINAL_F4_DECISION_CLOSURE.md` with required sections (skills/evidence/assumptions/risks/questions/verification outcomes).
 
 ## Implementation Decisions
 
-### Canonicalize runtime authority root at seam boundaries
-- Context: F1 requires deterministic instance/alias lifecycle behavior without route/manifest drift.
-- Options: keep `path.resolve` only, or add realpath-based canonical authority with fallback.
-- Choice: canonical authority (`realpath` fallback to resolved absolute path) in state and server runtime seam code.
-- Rationale: removes alias-path ambiguity and stabilizes authority identity while preserving all existing route families.
-- Risk: returned path identity can shift from alias form to canonical form for some call sites.
+### Keep D-004 locked under deferred posture
+- Context: F4 trigger matrix requires all three counters to meet thresholds before closure.
+- Options: force closure anyway, or defer with explicit lock retention.
+- Choice: defer and keep D-004 locked.
+- Rationale: scan artifact fails all three thresholds, so closure is unsupported by Phase F rules.
+- Risk: duplicated boilerplate may continue to accumulate until future threshold-crossing evidence appears.
 
-### Fix alias-root instability with import-only server correction
-- Context: F1 regression test failed even though canonicalization helper existed.
-- Options: refactor canonicalization flow, change test behavior, or repair missing runtime import.
-- Choice: repair missing runtime import (`node:fs`) so existing helper logic executes.
-- Rationale: smallest possible change that restores canonical authority seam without topology or contract changes.
-- Risk: none beyond normal module import surface; behavior is aligned with intended helper logic.
+### Avoid ambiguous partial-closure language
+- Context: F4 deferred path requires non-ambiguous D-004 status handling.
+- Options: “partially closed/soft closed” language or explicit locked/no-transition wording.
+- Choice: explicit locked/no-transition wording only.
+- Rationale: avoids policy drift and preserves machine-verifiable decision posture.
+- Risk: none; strict language is intentional.
 
-### Keep F1 free of public contract expansion
-- Context: Phase F implementation packet separates runtime seam hardening (F1) from interface hardening (F2).
-- Options: add new public fields now, or keep signatures stable and defer schema/interface shifts.
-- Choice: keep F1 signature-stable and avoid new public contract fields.
-- Rationale: minimizes blast radius and keeps dependency order aligned with packet intent.
-- Risk: some observability detail remains deferred to F2+.
+### Keep trigger evidence artifact absent while deferred
+- Context: `verify-f4-disposition.mjs` rejects `F4_TRIGGER_EVIDENCE.md` when state is deferred.
+- Options: always create evidence file for context, or keep it conditional.
+- Choice: keep it conditional and absent on deferred path.
+- Rationale: aligns exactly with F4 gate contract.
+- Risk: deferred rationale must stay sufficiently detailed inside `F4_DISPOSITION.md`.
 
 ## Watchpoints
-- Do not alter route-family semantics: `/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*`, `/api/inngest`.
-- Do not introduce command-surface semantics into runtime metadata logic.
-- Do not touch scripts or `package.json` in this slice.
+- Re-assess F4 immediately if workflow capability count or runtime-router duplication patterns expand.
+- Keep D-004 locked until all trigger counters meet thresholds in `F4_TRIGGER_SCAN_RESULT.json`.
+- If thresholds flip to triggered, create `F4_TRIGGER_EVIDENCE.md` and perform explicit D-004 `locked -> closed` transition with minimal `DECISIONS.md` update.
+
+## Verification Log
+1. `bun run phase-f:gate:f4-assess` -> pass (`phase-f f4 trigger scan: deferred posture`; counters `1/0/0`).
+2. `bun run phase-f:gate:f4-disposition` (first attempt) -> fail (`must declare exactly one explicit state`) due extra `state: triggered` token in prose.
+3. `bun run phase-f:gate:f4-assess` (rerun) -> pass.
+4. `bun run phase-f:gate:f4-disposition` (rerun) -> pass (`phase-f f4 disposition verified`; `state=deferred`).
