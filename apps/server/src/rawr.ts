@@ -1,3 +1,4 @@
+import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -176,12 +177,23 @@ async function resolveWebModulePath(pluginRoot: string): Promise<string | null> 
   return null;
 }
 
+function resolveAuthorityRepoRoot(repoRoot: string): string {
+  const resolvedRoot = path.resolve(repoRoot);
+  try {
+    return fsSync.realpathSync(resolvedRoot);
+  } catch {
+    return resolvedRoot;
+  }
+}
+
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
+  const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
+
   app.get("/rawr/plugins/web/:dirName", async ({ params }) => {
     const dirName = String((params as any).dirName ?? "");
     if (!isSafeDirName(dirName)) return new Response("not found", { status: 404 });
 
-    const pluginRoot = path.join(opts.repoRoot, "plugins", "web", dirName);
+    const pluginRoot = path.join(authorityRepoRoot, "plugins", "web", dirName);
     try {
       const st = await fs.stat(pluginRoot);
       if (!st.isDirectory()) return new Response("not found", { status: 404 });
@@ -211,13 +223,13 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
   });
 
   const runtime = createCoordinationRuntimeAdapter({
-    repoRoot: opts.repoRoot,
+    repoRoot: authorityRepoRoot,
     inngestBaseUrl: resolveInngestBaseUrl(),
   });
   const inngestBundle = rawrHqManifest.inngest.bundleFactory(runtime);
   const inngestHandler = rawrHqManifest.inngest.serveHandlerFactory(inngestBundle);
   const boundaryContextDeps: RawrBoundaryContextDeps = {
-    repoRoot: opts.repoRoot,
+    repoRoot: authorityRepoRoot,
     baseUrl: opts.baseUrl ?? "http://localhost:3000",
     runtime,
     inngestClient: inngestBundle.client,

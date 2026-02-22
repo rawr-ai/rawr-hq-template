@@ -15,7 +15,7 @@
 ## Slice Registry
 | Slice | Branch | Status | Notes |
 | --- | --- | --- | --- |
-| F1 | `codex/phase-f-f1-runtime-lifecycle-seams` | pending | |
+| F1 | `codex/phase-f-f1-runtime-lifecycle-seams` | submitted | PR #157 (v1), all F1 required verifications pass |
 | F2 | `codex/phase-f-f2-interface-policy-hardening` | pending | |
 | F3 | `codex/phase-f-f3-structural-evidence-gates` | pending | |
 | F4 | `codex/phase-f-f4-decision-closure` | pending | |
@@ -27,7 +27,7 @@
 ## Agent Registry
 | Agent | Scope | Branch | Status | Compact/Close |
 | --- | --- | --- | --- | --- |
-| I1 | F1 + F4 | pending | pending | pending |
+| I1 | F1 + F4 | `codex/phase-f-f1-runtime-lifecycle-seams` | complete (F1) | keep_open_for_F4 |
 | I2 | F2 | pending | pending | pending |
 | I3 | F3 | pending | pending | pending |
 | I4 | F5 independent review | pending | pending | pending |
@@ -44,3 +44,19 @@
 ## Command Ledger
 1. Runtime root branch created and parent-tracked from `codex/phase-f-prep-grounding-runbook`.
 2. Runtime stack sync and untracked checks passed at kickoff.
+3. I1 completed F1 implementation and produced required artifacts:
+   - `AGENT_1_PLAN_VERBATIM.md`
+   - `AGENT_1_SCRATCHPAD.md`
+   - `AGENT_1_FINAL_F1_RUNTIME_LIFECYCLE_SEAMS.md`
+4. I1 verification outcomes (all pass):
+   - `bunx vitest run --project state packages/state/test/repo-state.concurrent.test.ts`
+   - `bunx vitest run --project server apps/server/test/rawr.test.ts`
+   - `bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts`
+   - `bun run phase-c:gate:c1-storage-lock-runtime`
+5. F1 branch committed with Graphite modify:
+   - `57323c3 fix(runtime): harden phase f f1 authority-root lifecycle seams`
+6. F1 submitted:
+   - PR #157 (`codex/phase-f-f1-runtime-lifecycle-seams`)
+7. Post-submit checks:
+   - `gt sync --no-restack` pass
+   - `gt log --show-untracked` clean

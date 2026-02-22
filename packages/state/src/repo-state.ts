@@ -28,6 +28,15 @@ export function stateLockPath(repoRoot: string): string {
   return path.join(repoRoot, ".rawr", "state", "state.lock");
 }
 
+async function resolveRepoStateAuthorityRoot(repoRoot: string): Promise<string> {
+  const resolvedRoot = path.resolve(repoRoot);
+  try {
+    return await fs.realpath(resolvedRoot);
+  } catch {
+    return resolvedRoot;
+  }
+}
+
 function toPositiveInteger(value: number | undefined, fallback: number): number {
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return fallback;
   return Math.floor(value);
@@ -243,7 +252,8 @@ async function withLocalMutationQueue<T>(repoRoot: string, task: () => Promise<T
 }
 
 export async function getRepoState(repoRoot: string): Promise<RepoState> {
-  return readStateFile(path.resolve(repoRoot));
+  const authorityRoot = await resolveRepoStateAuthorityRoot(repoRoot);
+  return readStateFile(authorityRoot);
 }
 
 export async function mutateRepoStateAtomically(
@@ -251,19 +261,19 @@ export async function mutateRepoStateAtomically(
   mutator: RepoStateMutator,
   options?: RepoStateMutationOptions,
 ): Promise<RepoStateMutationResult> {
-  const resolvedRepoRoot = path.resolve(repoRoot);
-  const lockPath = stateLockPath(resolvedRepoRoot);
-  const resolvedStatePath = statePath(resolvedRepoRoot);
+  const authorityRoot = await resolveRepoStateAuthorityRoot(repoRoot);
+  const lockPath = stateLockPath(authorityRoot);
+  const resolvedStatePath = statePath(authorityRoot);
 
   await fs.mkdir(path.dirname(resolvedStatePath), { recursive: true });
 
-  return withLocalMutationQueue(resolvedRepoRoot, async () => {
+  return withLocalMutationQueue(authorityRoot, async () => {
     const lock = await acquireRepoStateLock(lockPath, options);
     try {
-      const current = await readStateFile(resolvedRepoRoot);
+      const current = await readStateFile(authorityRoot);
       const mutated = await mutator(current);
       const nextState = normalizeRepoState(mutated);
-      await writeRepoStateAtomically(resolvedRepoRoot, nextState);
+      await writeRepoStateAtomically(authorityRoot, nextState);
       return {
         state: nextState,
         statePath: resolvedStatePath,
