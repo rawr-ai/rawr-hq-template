@@ -8,9 +8,7 @@ Independent steward review and re-review of the integrated Phase C planning pack
 - `PHASE_C_WORKBREAKDOWN.yaml`
 
 ## Source Reviews
-1. Initial steward review: `_phase-c-planning-pass-01-2026-02-21/AGENT_4_REVIEW_REPORT.md`
-2. Re-review after fix cycle: `_phase-c-planning-pass-01-2026-02-21/AGENT_4_RE_REVIEW_REPORT.md`
-3. Final quick-check note: `_phase-c-planning-pass-01-2026-02-21/AGENT_4_FINAL_RE_REVIEW_NOTE.md`
+Steward source-review working artifacts were pruned post-closure. Recover them via `HISTORY_RECOVERY.md` when deep audit replay is required.
 
 ## Findings Summary
 ### Initial Round

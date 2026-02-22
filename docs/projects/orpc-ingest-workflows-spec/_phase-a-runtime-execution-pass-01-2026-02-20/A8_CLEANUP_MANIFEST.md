@@ -16,7 +16,7 @@ Capture the A8 cleanup action that removed superseded planning/scratch artifacts
 
 ## Current State Note
 A later grounding/prep cleanup further reduced packet noise and removed remaining agent-level report files that had already been integrated into final handoff artifacts. Current forward-facing cleanup source:
-- `docs/projects/orpc-ingest-workflows-spec/GROUNDING_WORKSPACE_PREP_CLEANUP.md`
+- `docs/projects/orpc-ingest-workflows-spec/HISTORY_RECOVERY.md`
 
 ## Rationale
 A8 focused on preserving phase closure traceability while eliminating high-noise intermediate artifacts. Subsequent cleanup tightened this further for Phase B readiness.

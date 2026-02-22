@@ -17,7 +17,6 @@
 - Phase B execution report: `_phase-b-runtime-execution-pass-01-2026-02-20/PHASE_B_EXECUTION_REPORT.md`
 - Phase B final handoff: `_phase-b-runtime-execution-pass-01-2026-02-20/FINAL_PHASE_B_HANDOFF.md`
 - B6 Phase C readiness output: `_phase-b-runtime-execution-pass-01-2026-02-20/B6_PHASE_C_READINESS.md`
-- Phase C planning prep runbook draft: `PHASE_C_PLANNING_RUNBOOK_DRAFT.md`
 - Phase C execution entrypoint: `PHASE_C_EXECUTION_PACKET.md`
 - Phase C implementation spec: `PHASE_C_IMPLEMENTATION_SPEC.md`
 - Phase C gates contract: `PHASE_C_ACCEPTANCE_GATES.md`
@@ -30,7 +29,6 @@
 - Phase C execution report: `_phase-c-runtime-execution-pass-01-2026-02-21/PHASE_C_EXECUTION_REPORT.md`
 - C7 Phase D readiness output: `_phase-c-runtime-execution-pass-01-2026-02-21/C7_PHASE_D_READINESS.md`
 - Phase C final handoff: `_phase-c-runtime-execution-pass-01-2026-02-21/FINAL_PHASE_C_HANDOFF.md`
-- Phase D planning prep runbook draft: `PHASE_D_PLANNING_RUNBOOK_DRAFT.md`
 - Phase D execution entrypoint: `PHASE_D_EXECUTION_PACKET.md`
 - Phase D implementation spec: `PHASE_D_IMPLEMENTATION_SPEC.md`
 - Phase D gates contract: `PHASE_D_ACCEPTANCE_GATES.md`
@@ -45,7 +43,6 @@
 - Phase D execution report: `_phase-d-runtime-execution-pass-01-2026-02-21/PHASE_D_EXECUTION_REPORT.md`
 - D7 Phase E readiness output: `_phase-d-runtime-execution-pass-01-2026-02-21/D7_PHASE_E_READINESS.md`
 - Phase D final handoff: `_phase-d-runtime-execution-pass-01-2026-02-21/FINAL_PHASE_D_HANDOFF.md`
-- Phase E prep note (historical kickoff): `PHASE_E_PREP_NOTE.md`
 - Phase E execution entrypoint: `PHASE_E_EXECUTION_PACKET.md`
 - Phase E implementation spec: `PHASE_E_IMPLEMENTATION_SPEC.md`
 - Phase E gates contract: `PHASE_E_ACCEPTANCE_GATES.md`
@@ -58,17 +55,9 @@
 - E5 review disposition: `_phase-e-runtime-execution-pass-01-2026-02-21/E5_REVIEW_DISPOSITION.md`
 - E5A structural disposition: `_phase-e-runtime-execution-pass-01-2026-02-21/E5A_STRUCTURAL_DISPOSITION.md`
 - E6 cleanup manifest: `_phase-e-runtime-execution-pass-01-2026-02-21/E6_CLEANUP_MANIFEST.md`
-- E6 docs closure scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_5_SCRATCHPAD.md`
-- E6 docs closure report: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_5_FINAL_E6_DOCS_CLEANUP.md`
 - E7 Phase F readiness output: `_phase-e-runtime-execution-pass-01-2026-02-21/E7_PHASE_F_READINESS.md`
 - Phase E execution report: `_phase-e-runtime-execution-pass-01-2026-02-21/PHASE_E_EXECUTION_REPORT.md`
 - Phase E final handoff: `_phase-e-runtime-execution-pass-01-2026-02-21/FINAL_PHASE_E_HANDOFF.md`
-- E7 readiness scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_6_SCRATCHPAD.md`
-- E7 readiness closure report: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_6_FINAL_E7_READINESS_AND_HANDOFF.md`
-- E7 steward structural plan: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_PLAN_VERBATIM.md`
-- E7 steward structural scratchpad: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_SCRATCHPAD.md`
-- E7 steward structural final check: `_phase-e-runtime-execution-pass-01-2026-02-21/AGENT_7_FINAL_E7_STEWARD_STRUCTURAL_CHECK.md`
-- Phase F prep note (historical kickoff): `PHASE_F_PREP_NOTE.md`
 - Phase F runtime execution lineage root: `_phase-f-runtime-execution-pass-01-2026-02-21/`
 - F4 trigger scan result: `_phase-f-runtime-execution-pass-01-2026-02-21/F4_TRIGGER_SCAN_RESULT.json`
 - F4 decision closure disposition: `_phase-f-runtime-execution-pass-01-2026-02-21/F4_DISPOSITION.md`
@@ -78,9 +67,7 @@
 - F7 next-phase readiness output: `_phase-f-runtime-execution-pass-01-2026-02-21/F7_NEXT_PHASE_READINESS.md`
 - Phase F execution report: `_phase-f-runtime-execution-pass-01-2026-02-21/PHASE_F_EXECUTION_REPORT.md`
 - Phase F final handoff: `_phase-f-runtime-execution-pass-01-2026-02-21/FINAL_PHASE_F_HANDOFF.md`
-- F6/F7 continuity scratchpad: `_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_6_SCRATCHPAD.md`
-- F6 docs closure report: `_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_6_FINAL_F6_DOCS_CLEANUP.md`
-- F7 readiness + handoff closure report: `_phase-f-runtime-execution-pass-01-2026-02-21/AGENT_6_FINAL_F7_READINESS_AND_HANDOFF.md`
+- Removed/superseded planning and runtime working artifact recovery: `HISTORY_RECOVERY.md`
 - Historical pre-Phase-B readiness lineage: `_phase-a-runtime-execution-pass-01-2026-02-20/A9_PHASE_B_READINESS.md`
 
 All session/process lineage is archived and non-canonical.

@@ -34,5 +34,5 @@ Before opening `codex/phase-c-runtime-implementation`:
 3. apply mini realignment doc fix if needed,
 4. then start C1 runtime implementation.
 
-## Planning Artifact Root
-`docs/projects/orpc-ingest-workflows-spec/_phase-c-planning-pass-01-2026-02-21/`
+## Historical Planning Artifact Recovery
+Planning-pass working artifacts were pruned after closure. Use `HISTORY_RECOVERY.md` for git-history recovery commands.

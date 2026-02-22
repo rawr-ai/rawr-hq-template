@@ -10,7 +10,7 @@ D4 is deferred for this pass. None of the Phase D trigger criteria were met in t
 | --- | --- | --- | --- |
 | Heavy middleware chain depth `>= 3` without explicit context-cached dedupe marker | `phase-d:gate:d4-dedupe-scan` | not triggered | `D4_DEDUPE_SCAN_RESULT.json` reports `triggered: false` with all checks passing. |
 | State-mutating or external finished-hook side effects without explicit idempotent/non-critical contract | `phase-d:gate:d4-finished-hook-scan` | not triggered | `D4_FINISHED_HOOK_SCAN_RESULT.json` reports `triggered: false` with all checks passing. |
-| D3 recurrence: two failed `phase-d:gate:d3-ingress-middleware-structural-contract` runs with one remediation attempt between failures | D3 runtime evidence (`AGENT_3_SCRATCHPAD.md`) | not triggered | D3 scratchpad records successful `phase-d:d3:quick` and `phase-d:d3:full` and no qualifying consecutive-failure/remediation sequence. |
+| D3 recurrence: two failed `phase-d:gate:d3-ingress-middleware-structural-contract` runs with one remediation attempt between failures | D3 runtime evidence log (working artifact pruned post-closure; recover via `docs/projects/orpc-ingest-workflows-spec/HISTORY_RECOVERY.md`) | not triggered | D3 evidence records successful `phase-d:d3:quick` and `phase-d:d3:full` and no qualifying consecutive-failure/remediation sequence. |
 
 ## Decision Register Impact
 - `DECISIONS.md` unchanged in this D4 slice.
