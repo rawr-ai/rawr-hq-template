@@ -4,8 +4,8 @@ import {
   getRunStatus,
   getRunTimeline,
   getWorkflow,
-  isSafeCoordinationId,
   listWorkflows,
+  normalizeCoordinationId,
   saveWorkflow,
   validateWorkflow,
   type JsonValue,
@@ -47,9 +47,7 @@ function toJsonValue(value: unknown): JsonValue {
 
 function parseCoordinationId(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (trimmed === "") return null;
-  return isSafeCoordinationId(trimmed) ? trimmed : null;
+  return normalizeCoordinationId(value);
 }
 
 function parseRunId(value: unknown): ParsedRunId {
@@ -60,10 +58,11 @@ function parseRunId(value: unknown): ParsedRunId {
 
   const trimmed = value.trim();
   if (trimmed === "") return { ok: true, runId: generateRunId() };
-  if (!isSafeCoordinationId(trimmed)) {
+  const normalized = normalizeCoordinationId(value);
+  if (!normalized) {
     return { ok: false, message: `Invalid runId format: ${trimmed}`, value: trimmed };
   }
-  return { ok: true, runId: trimmed };
+  return { ok: true, runId: normalized };
 }
 
 function generateRunId(): string {
@@ -275,7 +274,7 @@ export function createHqRuntimeRouter<Context extends RuntimeRouterContext = Run
     state: os.state.router({
       getRuntimeState: os.state.getRuntimeState.handler(async ({ context }) => {
         const state = await getRepoState(context.repoRoot);
-        return { state };
+        return { state, authorityRepoRoot: context.repoRoot };
       }),
     }),
   });
