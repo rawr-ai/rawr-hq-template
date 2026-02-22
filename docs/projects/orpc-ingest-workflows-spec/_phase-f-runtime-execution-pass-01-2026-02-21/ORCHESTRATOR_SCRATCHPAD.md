@@ -21,7 +21,7 @@
 | F4 | `codex/phase-f-f4-decision-closure` | submitted | PR #160 (v2), deferred disposition closure complete |
 | F5 | `codex/phase-f-f5-review-fix-closure` | submitted | PR #161 (v2), review disposition approved |
 | F5A | `codex/phase-f-f5a-structural-assessment` | submitted | PR #162 (v2), structural disposition approved |
-| F6 | `codex/phase-f-f6-docs-cleanup` | in_review | I5 docs/cleanup complete, gates pass, awaiting submit |
+| F6 | `codex/phase-f-f6-docs-cleanup` | submitted | PR #163 (v1), docs cleanup closure complete |
 | F7 | `codex/phase-f-f7-next-phase-readiness` | pending | |
 
 ## Agent Registry
@@ -173,3 +173,10 @@
 48. F6 verification outcomes:
    - `bun run phase-f:gate:f6-cleanup-manifest` pass
    - `bun run phase-f:gate:f6-cleanup-integrity` pass
+49. F6 branch committed with Graphite modify:
+   - `25046cb docs(phase-f): finalize f6 cleanup manifest and docs alignment`
+50. F6 submitted:
+   - PR #163 (`codex/phase-f-f6-docs-cleanup`)
+51. Post-submit checks:
+   - `gt sync --no-restack` pass
+   - `gt log --show-untracked` clean
