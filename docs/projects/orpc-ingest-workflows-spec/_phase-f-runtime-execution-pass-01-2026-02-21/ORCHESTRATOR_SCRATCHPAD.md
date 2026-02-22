@@ -19,8 +19,8 @@
 | F2 | `codex/phase-f-f2-interface-policy-hardening` | submitted | PR #158 (v2), all F2 required verifications pass |
 | F3 | `codex/phase-f-f3-structural-evidence-gates` | submitted | PR #159 (v2), structural gate chain landed |
 | F4 | `codex/phase-f-f4-decision-closure` | submitted | PR #160 (v2), deferred disposition closure complete |
-| F5 | `codex/phase-f-f5-review-fix-closure` | submitted | PR #161 (v1), review disposition approved |
-| F5A | `codex/phase-f-f5a-structural-assessment` | pending | |
+| F5 | `codex/phase-f-f5-review-fix-closure` | submitted | PR #161 (v2), review disposition approved |
+| F5A | `codex/phase-f-f5a-structural-assessment` | submitted | PR #162 (v1), structural disposition approved |
 | F6 | `codex/phase-f-f6-docs-cleanup` | pending | |
 | F7 | `codex/phase-f-f7-next-phase-readiness` | pending | |
 
@@ -31,7 +31,7 @@
 | I2 | F2 | `codex/phase-f-f2-interface-policy-hardening` | complete (F2) | closed |
 | I3 | F3 | `codex/phase-f-f3-structural-evidence-gates` | complete (F3) | closed |
 | I4 | F5 independent review | `codex/phase-f-f5-review-fix-closure` | complete (approve) | closed |
-| I4A | F5A structural assessment | pending | pending | pending |
+| I4A | F5A structural assessment | `codex/phase-f-f5a-structural-assessment` | complete (approve) | closed |
 | I5 | F6 + F7 docs/readiness | pending | pending | pending |
 
 ## Gate Checklist
@@ -138,5 +138,23 @@
 35. F5 submitted:
    - PR #161 (`codex/phase-f-f5-review-fix-closure`)
 36. Post-submit checks:
+   - `gt sync --no-restack` pass
+   - `gt log --show-untracked` clean
+37. Opened F5A slice branch and tracking:
+   - `gt create codex/phase-f-f5a-structural-assessment`
+   - `gt track codex/phase-f-f5a-structural-assessment -p codex/phase-f-f5-review-fix-closure`
+38. Spawned I4A default agent for structural/taste assessment.
+39. I4A outputs written:
+   - `AGENT_5_PLAN_VERBATIM.md`
+   - `AGENT_5_SCRATCHPAD.md`
+   - `AGENT_5_FINAL_F5A_STRUCTURAL_ASSESSMENT.md`
+   - `F5A_STRUCTURAL_DISPOSITION.md` (`disposition: approve`)
+40. I4A verification:
+   - `bun run phase-f:gate:f5a-structural-closure` pass
+41. F5A branch committed with Graphite modify:
+   - `bce3b23 docs(phase-f): capture f5a structural assessment approval`
+42. F5A submitted:
+   - PR #162 (`codex/phase-f-f5a-structural-assessment`)
+43. Post-submit checks:
    - `gt sync --no-restack` pass
    - `gt log --show-untracked` clean
