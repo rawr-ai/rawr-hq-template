@@ -66,3 +66,10 @@
    - `AGENT_4_FINAL_PHASE_F_STEWARD_REVIEW.md`
 9. Applied P4-requested planning fixes across top-level and planning-pass Phase F packet docs; re-review requested.
 10. P4 re-review disposition: `approve` (no blocking/high findings).
+11. Submitted planning stack:
+   - `codex/phase-f-prep-grounding-runbook` -> PR #154
+   - `codex/phase-f-planning-packet` -> PR #155
+12. Post-submit checks:
+   - `gt sync --no-restack` passed
+   - `gt log --show-untracked` clean
+   - `git status --short --branch` clean
