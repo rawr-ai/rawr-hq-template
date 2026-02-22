@@ -23,7 +23,10 @@ export const RuntimeStateSchema = Type.Unsafe<RepoState>(
 );
 
 export const GetRuntimeStateOutputSchema = Type.Object(
-  { state: RuntimeStateSchema },
+  {
+    state: RuntimeStateSchema,
+    authorityRepoRoot: Type.Optional(Type.String({ minLength: 1 })),
+  },
   { additionalProperties: false },
 );
 

@@ -1,6 +1,11 @@
 import type { Schema, SchemaIssue } from "@orpc/contract";
 import { Type, type Static, type TSchema } from "typebox";
 import { Value } from "typebox/value";
+import {
+  COORDINATION_ID_MAX_LENGTH,
+  COORDINATION_ID_PATTERN_SOURCE,
+  COORDINATION_ID_TRIMMED_PATTERN_SOURCE,
+} from "../ids";
 import type {
   CoordinationWorkflowV1,
   DeskDefinitionV1,
@@ -25,6 +30,17 @@ const JsonValueSchema = Type.Unsafe<JsonValue>({
 const JsonSchemaV1Schema = Type.Unsafe<JsonSchemaV1>({
   type: "object",
   title: "JsonSchemaV1",
+});
+
+const CoordinationIdSchema = Type.String({
+  minLength: 1,
+  maxLength: COORDINATION_ID_MAX_LENGTH,
+  pattern: `^${COORDINATION_ID_PATTERN_SOURCE}$`,
+});
+
+const CoordinationIdInputSchema = Type.String({
+  minLength: 1,
+  pattern: COORDINATION_ID_TRIMMED_PATTERN_SOURCE,
 });
 
 const RuntimePolicySchema = Type.Unsafe<RuntimePolicyV1>(
@@ -52,7 +68,7 @@ const DeskMemoryScopeSchema = Type.Unsafe<DeskMemoryScopeV1>(
 const DeskDefinitionSchema = Type.Unsafe<DeskDefinitionV1>(
   Type.Object(
     {
-      deskId: Type.String({ minLength: 1 }),
+      deskId: CoordinationIdSchema,
       kind: Type.String({ minLength: 1 }),
       name: Type.String({ minLength: 1 }),
       responsibility: Type.String({ minLength: 1 }),
@@ -69,9 +85,9 @@ const DeskDefinitionSchema = Type.Unsafe<DeskDefinitionV1>(
 const HandoffDefinitionSchema = Type.Unsafe<HandoffDefinitionV1>(
   Type.Object(
     {
-      handoffId: Type.String({ minLength: 1 }),
-      fromDeskId: Type.String({ minLength: 1 }),
-      toDeskId: Type.String({ minLength: 1 }),
+      handoffId: CoordinationIdSchema,
+      fromDeskId: CoordinationIdSchema,
+      toDeskId: CoordinationIdSchema,
       condition: Type.Optional(Type.String()),
       mappingRefs: Type.Optional(Type.Record(Type.String(), Type.String())),
     },
@@ -82,11 +98,11 @@ const HandoffDefinitionSchema = Type.Unsafe<HandoffDefinitionV1>(
 export const CoordinationWorkflowSchema = Type.Unsafe<CoordinationWorkflowV1>(
   Type.Object(
     {
-      workflowId: Type.String({ minLength: 1 }),
+      workflowId: CoordinationIdSchema,
       version: Type.Integer({ minimum: 1 }),
       name: Type.String({ minLength: 1 }),
       description: Type.Optional(Type.String()),
-      entryDeskId: Type.String({ minLength: 1 }),
+      entryDeskId: CoordinationIdSchema,
       desks: Type.Array(DeskDefinitionSchema),
       handoffs: Type.Array(HandoffDefinitionSchema),
       observabilityProfile: Type.Optional(Type.Union([Type.Literal("basic"), Type.Literal("full")])),
@@ -144,8 +160,8 @@ const RunFinalizationStateSchema = Type.Unsafe<RunFinalizationStateV1>(
 export const RunStatusSchema = Type.Unsafe<RunStatusV1>(
   Type.Object(
     {
-      runId: Type.String({ minLength: 1 }),
-      workflowId: Type.String({ minLength: 1 }),
+      runId: CoordinationIdSchema,
+      workflowId: CoordinationIdSchema,
       workflowVersion: Type.Integer({ minimum: 1 }),
       status: Type.Union([
         Type.Literal("queued"),
@@ -169,9 +185,9 @@ export const DeskRunEventSchema = Type.Unsafe<DeskRunEventV1>(
   Type.Object(
     {
       eventId: Type.String({ minLength: 1 }),
-      runId: Type.String({ minLength: 1 }),
-      workflowId: Type.String({ minLength: 1 }),
-      deskId: Type.Optional(Type.String()),
+      runId: CoordinationIdSchema,
+      workflowId: CoordinationIdSchema,
+      deskId: Type.Optional(CoordinationIdSchema),
       type: Type.Union([
         Type.Literal("run.started"),
         Type.Literal("run.completed"),
@@ -200,8 +216,8 @@ const ValidationErrorSchema = Type.Unsafe<ValidationErrorV1>(
     {
       code: Type.String({ minLength: 1 }),
       message: Type.String({ minLength: 1 }),
-      deskId: Type.Optional(Type.String()),
-      handoffId: Type.Optional(Type.String()),
+      deskId: Type.Optional(CoordinationIdSchema),
+      handoffId: Type.Optional(CoordinationIdSchema),
     },
     { additionalProperties: false },
   ),
@@ -233,7 +249,7 @@ export const SaveWorkflowOutputSchema = Type.Object(
 );
 
 export const GetWorkflowInputSchema = Type.Object(
-  { workflowId: Type.String({ minLength: 1 }) },
+  { workflowId: CoordinationIdInputSchema },
   { additionalProperties: false },
 );
 export const GetWorkflowOutputSchema = Type.Object(
@@ -242,12 +258,12 @@ export const GetWorkflowOutputSchema = Type.Object(
 );
 
 export const ValidateWorkflowInputSchema = Type.Object(
-  { workflowId: Type.String({ minLength: 1 }) },
+  { workflowId: CoordinationIdInputSchema },
   { additionalProperties: false },
 );
 export const ValidateWorkflowOutputSchema = Type.Object(
   {
-    workflowId: Type.String({ minLength: 1 }),
+    workflowId: CoordinationIdSchema,
     validation: ValidationResultSchema,
   },
   { additionalProperties: false },
@@ -255,8 +271,8 @@ export const ValidateWorkflowOutputSchema = Type.Object(
 
 export const QueueRunInputSchema = Type.Object(
   {
-    workflowId: Type.String({ minLength: 1 }),
-    runId: Type.Optional(Type.String({ minLength: 1 })),
+    workflowId: CoordinationIdInputSchema,
+    runId: Type.Optional(CoordinationIdInputSchema),
     input: Type.Optional(JsonValueSchema),
   },
   { additionalProperties: false },
@@ -270,7 +286,7 @@ export const QueueRunOutputSchema = Type.Object(
 );
 
 export const GetRunStatusInputSchema = Type.Object(
-  { runId: Type.String({ minLength: 1 }) },
+  { runId: CoordinationIdInputSchema },
   { additionalProperties: false },
 );
 export const GetRunStatusOutputSchema = Type.Object(
@@ -279,12 +295,12 @@ export const GetRunStatusOutputSchema = Type.Object(
 );
 
 export const GetRunTimelineInputSchema = Type.Object(
-  { runId: Type.String({ minLength: 1 }) },
+  { runId: CoordinationIdInputSchema },
   { additionalProperties: false },
 );
 export const GetRunTimelineOutputSchema = Type.Object(
   {
-    runId: Type.String({ minLength: 1 }),
+    runId: CoordinationIdSchema,
     timeline: Type.Array(DeskRunEventSchema),
   },
   { additionalProperties: false },

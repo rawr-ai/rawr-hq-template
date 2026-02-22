@@ -16,7 +16,7 @@
 | Slice | Branch | Status | Notes |
 | --- | --- | --- | --- |
 | F1 | `codex/phase-f-f1-runtime-lifecycle-seams` | submitted | PR #157 (v1), all F1 required verifications pass |
-| F2 | `codex/phase-f-f2-interface-policy-hardening` | pending | |
+| F2 | `codex/phase-f-f2-interface-policy-hardening` | in_review | I2 complete, gates pass, awaiting submit |
 | F3 | `codex/phase-f-f3-structural-evidence-gates` | pending | |
 | F4 | `codex/phase-f-f4-decision-closure` | pending | |
 | F5 | `codex/phase-f-f5-review-fix-closure` | pending | |
@@ -28,7 +28,7 @@
 | Agent | Scope | Branch | Status | Compact/Close |
 | --- | --- | --- | --- | --- |
 | I1 | F1 + F4 | `codex/phase-f-f1-runtime-lifecycle-seams` | complete (F1) | keep_open_for_F4 |
-| I2 | F2 | pending | pending | pending |
+| I2 | F2 | `codex/phase-f-f2-interface-policy-hardening` | complete (F2) | close_after_submit |
 | I3 | F3 | pending | pending | pending |
 | I4 | F5 independent review | pending | pending | pending |
 | I4A | F5A structural assessment | pending | pending | pending |
@@ -60,3 +60,15 @@
 7. Post-submit checks:
    - `gt sync --no-restack` pass
    - `gt log --show-untracked` clean
+8. Opened F2 slice branch and tracking:
+   - `gt create codex/phase-f-f2-interface-policy-hardening`
+   - `gt track codex/phase-f-f2-interface-policy-hardening -p codex/phase-f-f1-runtime-lifecycle-seams`
+9. Spawned I2 default agent for F2 implementation/testing/artifact delivery.
+10. I2 completed F2 implementation and produced required artifacts:
+   - `AGENT_2_PLAN_VERBATIM.md`
+   - `AGENT_2_SCRATCHPAD.md`
+   - `AGENT_2_FINAL_F2_INTERFACE_POLICY_HARDENING.md`
+11. F2 verification outcomes (all pass):
+   - `bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts packages/core/test/workflow-trigger-contract-drift.test.ts`
+   - `bunx vitest run --project core packages/core/test/runtime-router.test.ts`
+   - `bun run typecheck`
