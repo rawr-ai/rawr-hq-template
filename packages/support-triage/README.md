@@ -8,7 +8,7 @@ It demonstrates how one transport-neutral domain package can be reused across:
 
 ## Domain Meaning
 
-The package models triage job lifecycle behavior (`queued -> running -> completed|failed`) for support tickets, including explicit completion and failure details.
+The package models triage work-item lifecycle behavior (`queued -> running -> completed|failed`) for support tickets, including explicit completion and failure details.
 
 ## Hypothetical vs Production
 

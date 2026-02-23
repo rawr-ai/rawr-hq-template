@@ -13,6 +13,7 @@ import { createServerApp } from "../src/app";
 import { createCoordinationRuntimeAdapter } from "../src/coordination";
 import { registerOrpcRoutes } from "../src/orpc";
 import { registerRawrRoutes } from "../src/rawr";
+import { createRequestScopedBoundaryContext } from "../src/workflows/context";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -80,6 +81,7 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
         inngestClient: fakeInngest,
         router: rawrHqManifest.orpc.router,
         workflowTriggerRouter: rawrHqManifest.workflows.triggerRouter,
+        contextFactory: (request, deps) => rawrHqManifest.orpc.enrichContext(createRequestScopedBoundaryContext(request, deps)),
       });
 
       const triggerRes = await app.handle(
@@ -98,11 +100,12 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
 
       expect(triggerRes.status).toBe(200);
       const triggerPayload = (await triggerRes.json()) as {
-        json?: { accepted?: boolean; eventIds?: string[]; run?: { runId?: string; status?: string } };
+        json?: { accepted?: boolean; eventIds?: string[]; run?: { runId?: string; workItemId?: string; status?: string } };
       };
       expect(triggerPayload.json?.accepted).toBe(true);
       expect(triggerPayload.json?.eventIds).toEqual(["evt-support-triage-1"]);
       expect(typeof triggerPayload.json?.run?.runId).toBe("string");
+      expect(typeof triggerPayload.json?.run?.workItemId).toBe("string");
       expect(triggerPayload.json?.run?.status).toBe("queued");
 
       const runId = triggerPayload.json?.run?.runId ?? "";
@@ -121,4 +124,3 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
     }
   });
 });
-

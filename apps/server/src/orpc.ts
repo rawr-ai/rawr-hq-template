@@ -1,9 +1,9 @@
 import { createHqRuntimeRouter, createWorkflowTriggerRuntimeRouter } from "@rawr/core/orpc";
 import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
+import type { AnyContractRouter } from "@orpc/contract";
 import type { Router } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
-import type { SupportTriageInternalClient } from "@rawr/support-triage";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import type { AnyElysia } from "./plugins";
 import {
@@ -17,49 +17,52 @@ import {
   type RawrBoundaryContextDeps,
 } from "./workflows/context";
 
-type RawrOrpcContext = RawrBoundaryContext & {
-  // Example capability fixture injected by the host when enabled.
-  supportTriage?: SupportTriageInternalClient;
-};
-type RawrOrpcRouter = Router<any, RawrOrpcContext>;
-type RawrOrpcContextFactory = (request: Request, deps: RawrBoundaryContextDeps) => RawrOrpcContext;
-type OnRawrOrpcContextCreated = (context: RawrOrpcContext) => void;
+type RawrOrpcContext = RawrBoundaryContext;
+type RawrOrpcRouter = Router<AnyContractRouter, RawrOrpcContext>;
 
 const RPC_AUTH_DEDUPE_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION;
 
-export type RegisterOrpcRoutesOptions = RawrBoundaryContextDeps & {
-  router?: RawrOrpcRouter;
-  workflowTriggerRouter?: RawrOrpcRouter;
-  contextFactory?: (request: Request, deps: RawrBoundaryContextDeps) => RawrOrpcContext;
-  onContextCreated?: (context: RawrOrpcContext) => void;
+export type RegisterOrpcRoutesOptions<
+  TContext extends RawrBoundaryContext = RawrBoundaryContext,
+  TWorkflowContext extends RawrBoundaryContext = TContext,
+  TRequestContext extends TContext & TWorkflowContext = TContext & TWorkflowContext,
+> = RawrBoundaryContextDeps & {
+  router?: Router<AnyContractRouter, TContext>;
+  workflowTriggerRouter?: Router<AnyContractRouter, TWorkflowContext>;
+  contextFactory?: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext;
+  onContextCreated?: (context: TRequestContext) => void;
   rpcAuthPolicy?: RpcAuthPolicy;
 };
 
-export function createOrpcRouter() {
-  return createHqRuntimeRouter<RawrOrpcContext>();
+export function createOrpcRouter<TContext extends RawrBoundaryContext = RawrBoundaryContext>() {
+  return createHqRuntimeRouter<TContext>();
 }
 
-export function createWorkflowTriggerRouter() {
-  return createWorkflowTriggerRuntimeRouter<RawrOrpcContext>();
+export function createWorkflowTriggerRouter<TContext extends RawrBoundaryContext = RawrBoundaryContext>() {
+  return createWorkflowTriggerRuntimeRouter<TContext>();
 }
 
 function isRpcRequestAllowedWithDedupe(request: Request, policy: RpcAuthPolicy): boolean {
   return resolveRequestScopedMiddlewareValue(request, RPC_AUTH_DEDUPE_MARKER, () => isRpcRequestAllowed(request, policy));
 }
 
-function assertRpcAuthDedupeMarker(context: RawrOrpcContext): void {
+function assertRpcAuthDedupeMarker(context: RawrBoundaryContext): void {
   assertRequestScopedMiddlewareMarker(context, RPC_AUTH_DEDUPE_MARKER);
   assertHeavyMiddlewareDedupeMarkers(context, RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY.requiredMarkers);
 }
 
-async function handleRpcRoute(args: {
+async function handleRpcRoute<
+  TContext extends RawrBoundaryContext,
+  TWorkflowContext extends RawrBoundaryContext,
+  TRequestContext extends TContext & TWorkflowContext,
+>(args: {
   request: Request;
-  rpcHandler: RPCHandler<RawrOrpcContext>;
-  workflowTriggerRpcHandler?: RPCHandler<RawrOrpcContext>;
-  contextFactory: RawrOrpcContextFactory;
+  rpcHandler: RPCHandler<TContext>;
+  workflowTriggerRpcHandler?: RPCHandler<TWorkflowContext>;
+  contextFactory: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext;
   contextDeps: RawrBoundaryContextDeps;
   rpcAuthPolicy: RpcAuthPolicy;
-  onContextCreated?: OnRawrOrpcContextCreated;
+  onContextCreated?: (context: TRequestContext) => void;
 }): Promise<Response> {
   const { request, rpcHandler, workflowTriggerRpcHandler, contextFactory, contextDeps, rpcAuthPolicy, onContextCreated } =
     args;
@@ -88,12 +91,12 @@ async function handleRpcRoute(args: {
   return workflowResult.matched ? workflowResult.response : new Response("not found", { status: 404 });
 }
 
-async function handleOpenApiRoute(args: {
+async function handleOpenApiRoute<TContext extends RawrBoundaryContext, TRequestContext extends TContext>(args: {
   request: Request;
-  openapiHandler: OpenAPIHandler<RawrOrpcContext>;
-  contextFactory: RawrOrpcContextFactory;
+  openapiHandler: OpenAPIHandler<TContext>;
+  contextFactory: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext;
   contextDeps: RawrBoundaryContextDeps;
-  onContextCreated?: OnRawrOrpcContextCreated;
+  onContextCreated?: (context: TRequestContext) => void;
 }): Promise<Response> {
   const { request, openapiHandler, contextFactory, contextDeps, onContextCreated } = args;
   const context = contextFactory(request, contextDeps);
@@ -102,7 +105,10 @@ async function handleOpenApiRoute(args: {
   return result.matched ? result.response : new Response("not found", { status: 404 });
 }
 
-async function createOpenApiSpec(router: RawrOrpcRouter, baseUrl: string) {
+async function createOpenApiSpec<TContext extends RawrBoundaryContext>(
+  router: Router<AnyContractRouter, TContext>,
+  baseUrl: string,
+) {
   const typeBoxSchemaConverter: ConditionalSchemaConverter = {
     condition: (schema) => Boolean(schema && typeof schema === "object" && "__typebox" in schema),
     convert: (schema) => {
@@ -130,13 +136,21 @@ export async function generateOrpcOpenApiSpec(baseUrl: string) {
   return createOpenApiSpec(createOrpcRouter(), baseUrl);
 }
 
-export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: RegisterOrpcRoutesOptions): TApp {
-  const router = options.router ?? createOrpcRouter();
-  const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
+export function registerOrpcRoutes<
+  TApp extends AnyElysia,
+  TContext extends RawrBoundaryContext = RawrBoundaryContext,
+  TWorkflowContext extends RawrBoundaryContext = TContext,
+  TRequestContext extends TContext & TWorkflowContext = TContext & TWorkflowContext,
+>(
+  app: TApp,
+  options: RegisterOrpcRoutesOptions<TContext, TWorkflowContext, TRequestContext>,
+): TApp {
+  const router = options.router ?? createOrpcRouter<TContext>();
+  const rpcHandler = new RPCHandler<TContext>(router);
   const workflowTriggerRpcHandler = options.workflowTriggerRouter
-    ? new RPCHandler<RawrOrpcContext>(options.workflowTriggerRouter)
+    ? new RPCHandler<TWorkflowContext>(options.workflowTriggerRouter)
     : undefined;
-  const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router);
+  const openapiHandler = new OpenAPIHandler<TContext>(router);
   const rpcAuthPolicy = options.rpcAuthPolicy ?? createRpcAuthPolicy({ baseUrl: options.baseUrl });
   const contextDeps: RawrBoundaryContextDeps = {
     repoRoot: options.repoRoot,
@@ -144,7 +158,9 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
     runtime: options.runtime,
     inngestClient: options.inngestClient,
   };
-  const contextFactory = options.contextFactory ?? createRequestScopedBoundaryContext;
+  const contextFactory: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext =
+    options.contextFactory ??
+    ((request, deps) => createRequestScopedBoundaryContext(request, deps) as TRequestContext);
 
   let openapiSpecPromise: Promise<unknown> | undefined;
   const getOpenApiSpec = () => {

@@ -1,26 +1,26 @@
 import { os } from "@orpc/server";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { TriageJobSchema } from "../domain";
+import { TriageWorkItemSchema } from "../domain";
 import type { SupportTriageProcedureContext } from "../context";
-import { getSupportTriageJob } from "../service/lifecycle";
+import { getSupportTriageWorkItem } from "../service/lifecycle";
 import { throwSupportTriageDomainErrorAsOrpc } from "./boundary-errors";
 
 const o = os.$context<SupportTriageProcedureContext>();
 
-export const getJobProcedure = o
+export const getWorkItemProcedure = o
   .input(
     schema(
       Type.Object(
         {
-          jobId: Type.String({
+          workItemId: Type.String({
             minLength: 1,
-            description: "Stable identifier of the support triage job to fetch.",
+            description: "Stable identifier of the support triage work item to fetch.",
           }),
         },
         {
           additionalProperties: false,
-          description: "Route parameters for fetching one support triage job.",
+          description: "Route parameters for fetching one support triage work item.",
         },
       ),
     ),
@@ -29,18 +29,18 @@ export const getJobProcedure = o
     schema(
       Type.Object(
         {
-          job: TriageJobSchema,
+          workItem: TriageWorkItemSchema,
         },
         {
           additionalProperties: false,
-          description: "Response envelope containing the requested support triage job lifecycle record.",
+          description: "Response envelope containing the requested support triage work item.",
         },
       ),
     ),
   )
   .handler(async ({ context, input }) => {
     try {
-      return await getSupportTriageJob(context.deps, input);
+      return await getSupportTriageWorkItem(context.deps, input);
     } catch (error) {
       throwSupportTriageDomainErrorAsOrpc(error);
     }
