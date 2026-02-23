@@ -1,6 +1,6 @@
 import type { CoordinationRuntimeAdapter } from "@rawr/coordination-inngest";
 import type { Inngest } from "inngest";
-import type { SupportTriageInternalClient } from "@rawr/support-triage";
+import type { SupportTriageClient } from "@rawr/support-triage";
 
 // Keep this structurally aligned with `apps/server/src/workflows/context.ts` so workflow plugin routers
 // can be composed into host boundaries without leaking plugin-specific context contracts.
@@ -19,5 +19,5 @@ export type SupportTriageWorkflowContext = {
   correlationId: string;
   middlewareState: RawrBoundaryMiddlewareState;
   // Provided by the host when the example capability is enabled.
-  supportTriage?: SupportTriageInternalClient;
+  supportTriage: SupportTriageClient;
 };

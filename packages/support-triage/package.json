@@ -18,21 +18,9 @@
       "types": "./src/service/index.ts",
       "default": "./src/service/index.ts"
     },
-    "./context": {
-      "types": "./src/context.ts",
-      "default": "./src/context.ts"
-    },
-    "./procedures": {
-      "types": "./src/procedures/index.ts",
-      "default": "./src/procedures/index.ts"
-    },
-    "./router": {
-      "types": "./src/router.ts",
-      "default": "./src/router.ts"
-    },
     "./client": {
-      "types": "./src/client.ts",
-      "default": "./src/client.ts"
+      "types": "./src/client/index.ts",
+      "default": "./src/client/index.ts"
     }
   },
   "scripts": {
