@@ -1,7 +1,7 @@
 import { createORPCClient } from "@orpc/client";
-import { RPCLink } from "@orpc/client/fetch";
 import type { ContractRouterClient } from "@orpc/contract";
 import { hqContract } from "@rawr/core/orpc";
+import { createFirstPartyRpcLink } from "@rawr/orpc-client";
 import { publicEnv } from "../config/publicEnv";
 
 function resolveRpcUrl(): string {
@@ -16,7 +16,7 @@ function resolveRpcUrl(): string {
 }
 
 export const hqClient = createORPCClient<ContractRouterClient<typeof hqContract>>(
-  new RPCLink({
+  createFirstPartyRpcLink({
     url: resolveRpcUrl(),
   }),
 );
