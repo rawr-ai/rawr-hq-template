@@ -1,17 +1,15 @@
-import type { SupportTriageClient } from "@rawr/support-triage";
+import { getSupportTriageJob } from "@rawr/support-triage";
 import type { SupportTriageApiContext, SupportTriageApiOperationDeps } from "../context";
-
-type GetTriageJobInput = Parameters<SupportTriageClient["getTriageJob"]>[0];
-type GetTriageJobOutput = Awaited<ReturnType<SupportTriageClient["getTriageJob"]>>;
-
-type GetTriageJobHandlerArgs<Context extends SupportTriageApiContext> = {
-  context: Context;
-  input: GetTriageJobInput;
-};
+import { throwSupportTriageDomainErrorAsBoundary } from "../errors";
 
 export function createGetTriageJobHandler<Context extends SupportTriageApiContext>(
   deps: SupportTriageApiOperationDeps<Context>,
 ) {
-  return ({ context, input }: GetTriageJobHandlerArgs<Context>): Promise<GetTriageJobOutput> =>
-    deps.resolveClient(context).getTriageJob(input);
+  return async ({ context, input }: { context: Context; input: { jobId: string } }) => {
+    try {
+      return await getSupportTriageJob(deps.resolveDeps(context), input);
+    } catch (error) {
+      throwSupportTriageDomainErrorAsBoundary(error);
+    }
+  };
 }

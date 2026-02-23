@@ -1,5 +1,5 @@
 import type { GetSupportTriageStatusInput, GetSupportTriageStatusOutput } from "../contract";
-import { throwSupportTriageBoundaryError } from "@rawr/support-triage";
+import { throwSupportTriageBoundaryError } from "../errors";
 import type { SupportTriageWorkflowContext } from "../context";
 import { SUPPORT_TRIAGE_CAPABILITY, normalizeSupportTriageRunId } from "../models";
 import { getSupportTriageRun } from "../run-store";
