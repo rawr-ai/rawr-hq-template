@@ -17,6 +17,22 @@
     "./service": {
       "types": "./src/service/index.ts",
       "default": "./src/service/index.ts"
+    },
+    "./context": {
+      "types": "./src/context.ts",
+      "default": "./src/context.ts"
+    },
+    "./procedures": {
+      "types": "./src/procedures/index.ts",
+      "default": "./src/procedures/index.ts"
+    },
+    "./router": {
+      "types": "./src/router.ts",
+      "default": "./src/router.ts"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
     }
   },
   "scripts": {
@@ -25,6 +41,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@orpc/server": "^1.13.5",
+    "@rawr/orpc-standards": "workspace:*",
     "typebox": "^1.0.81"
   },
   "devDependencies": {

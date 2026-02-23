@@ -3,6 +3,7 @@ import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } fr
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { Router } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
+import type { SupportTriageInternalClient } from "@rawr/support-triage";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import type { AnyElysia } from "./plugins";
 import {
@@ -16,7 +17,10 @@ import {
   type RawrBoundaryContextDeps,
 } from "./workflows/context";
 
-type RawrOrpcContext = RawrBoundaryContext;
+type RawrOrpcContext = RawrBoundaryContext & {
+  // Example capability fixture injected by the host when enabled.
+  supportTriage?: SupportTriageInternalClient;
+};
 type RawrOrpcRouter = Router<any, RawrOrpcContext>;
 type RawrOrpcContextFactory = (request: Request, deps: RawrBoundaryContextDeps) => RawrOrpcContext;
 type OnRawrOrpcContextCreated = (context: RawrOrpcContext) => void;

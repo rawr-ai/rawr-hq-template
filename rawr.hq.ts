@@ -32,9 +32,7 @@ function resolveSupportTriageDeps(repoRoot: string): SupportTriageServiceDeps {
 const supportTriageInngestClient = new Inngest({ id: "rawr-support-triage" });
 
 const coreOrpcRouter = createHqRuntimeRouter();
-const supportTriageApiPlugin = registerSupportTriageApiPlugin({
-  resolveDeps: (context) => resolveSupportTriageDeps(context.repoRoot),
-});
+const supportTriageApiPlugin = registerSupportTriageApiPlugin();
 const supportTriageWorkflowPlugin = registerSupportTriageWorkflowPlugin();
 const composedOrpcRouter = {
   ...coreOrpcRouter,
@@ -44,6 +42,11 @@ const composedWorkflowTriggerRouter = supportTriageWorkflowPlugin.router;
 const supportTriageInngestFunctions = createSupportTriageInngestFunctions({ client: supportTriageInngestClient });
 
 export const rawrHqManifest = {
+  fixtures: {
+    supportTriage: {
+      resolveServiceDeps: resolveSupportTriageDeps,
+    },
+  },
   orpc: {
     router: composedOrpcRouter,
   },

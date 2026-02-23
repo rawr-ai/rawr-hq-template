@@ -5,10 +5,15 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { rawrHqManifest } from "../../../rawr.hq";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
+import { createSupportTriageInternalClient } from "@rawr/support-triage";
 import type { AnyElysia } from "./plugins";
 import { createCoordinationRuntimeAdapter } from "./coordination";
 import { registerOrpcRoutes } from "./orpc";
-import { createWorkflowBoundaryContext, type RawrBoundaryContextDeps } from "./workflows/context";
+import {
+  createRequestScopedBoundaryContext,
+  createWorkflowBoundaryContext,
+  type RawrBoundaryContextDeps,
+} from "./workflows/context";
 
 export type RawrRoutesOptions = {
   repoRoot: string;
@@ -284,6 +289,12 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     ...boundaryContextDeps,
     router: rawrHqManifest.orpc.router,
     workflowTriggerRouter: rawrHqManifest.workflows.triggerRouter,
+    contextFactory: (request, deps) => ({
+      ...createRequestScopedBoundaryContext(request, deps),
+      supportTriage: createSupportTriageInternalClient({
+        deps: rawrHqManifest.fixtures.supportTriage.resolveServiceDeps(deps.repoRoot),
+      }),
+    }),
   });
 
   return app;

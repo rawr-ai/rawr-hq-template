@@ -1,15 +1,11 @@
-import { implement } from "@orpc/server";
-import { supportTriageWorkflowContract } from "./contract";
-import type { SupportTriageWorkflowContext } from "./context";
-import { getSupportTriageStatus } from "./operations/get-triage-status";
-import { triggerSupportTriage } from "./operations/trigger-triage";
-
-const os = implement<typeof supportTriageWorkflowContract, SupportTriageWorkflowContext>(supportTriageWorkflowContract);
+import { getStatus } from "./operations/get-status";
+import { triggerRun } from "./operations/trigger-run";
+import { os } from "./orpc";
 
 export function createSupportTriageWorkflowRouter() {
   return os.router({
-    triggerSupportTriage: os.triggerSupportTriage.handler(triggerSupportTriage),
-    getSupportTriageStatus: os.getSupportTriageStatus.handler(getSupportTriageStatus),
+    triggerRun,
+    getStatus,
   });
 }
 
