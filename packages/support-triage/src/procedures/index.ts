@@ -1,14 +1,13 @@
-import { completeTriageJobProcedure } from "./complete-triage-job";
-import { getTriageJobProcedure } from "./get-triage-job";
-import { listTriageJobsProcedure } from "./list-triage-jobs";
-import { requestTriageJobProcedure } from "./request-triage-job";
-import { startTriageJobProcedure } from "./start-triage-job";
+import { completeJobProcedure } from "./complete-job";
+import { getJobProcedure } from "./get-job";
+import { listJobsProcedure } from "./list-jobs";
+import { requestJobProcedure } from "./request-job";
+import { startJobProcedure } from "./start-job";
 
-export const supportTriageProcedures = {
-  requestTriageJob: requestTriageJobProcedure,
-  listTriageJobs: listTriageJobsProcedure,
-  getTriageJob: getTriageJobProcedure,
-  startTriageJob: startTriageJobProcedure,
-  completeTriageJob: completeTriageJobProcedure,
+export const procedures = {
+  requestJob: requestJobProcedure,
+  listJobs: listJobsProcedure,
+  getJob: getJobProcedure,
+  startJob: startJobProcedure,
+  completeJob: completeJobProcedure,
 } as const;
-

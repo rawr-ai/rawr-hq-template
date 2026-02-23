@@ -3,7 +3,7 @@ import { SUPPORT_TRIAGE_CAPABILITY, normalizeSupportTriageRunId } from "../model
 import { getSupportTriageRun } from "../run-store";
 import { os } from "../orpc";
 
-export const getSupportTriageStatus = os.getSupportTriageStatus.handler(async ({ input }) => {
+export const getStatus = os.getStatus.handler(async ({ input }) => {
   if (!input.runId) {
     return {
       capability: SUPPORT_TRIAGE_CAPABILITY,

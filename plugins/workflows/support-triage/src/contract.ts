@@ -59,7 +59,7 @@ export const SupportTriageRunSchema = Type.Object(
 );
 
 export const supportTriageWorkflowContract = oc.router({
-  triggerSupportTriage: oc
+  triggerRun: oc
     .route({
       method: "POST",
       path: "/support-triage/runs",
@@ -123,7 +123,7 @@ export const supportTriageWorkflowContract = oc.router({
       ),
     ),
 
-  getSupportTriageStatus: oc
+  getStatus: oc
     .route({
       method: "GET",
       path: "/support-triage/status",
@@ -176,21 +176,21 @@ export const supportTriageWorkflowContract = oc.router({
 export type SupportTriageWorkflowContract = typeof supportTriageWorkflowContract;
 
 export type SupportTriageRun = Static<typeof SupportTriageRunSchema>;
-export type TriggerSupportTriageInput = {
+export type TriggerRunInput = {
   queueId: string;
   requestedBy: string;
   runId?: string;
   dryRun?: boolean;
 };
-export type TriggerSupportTriageOutput = {
+export type TriggerRunOutput = {
   accepted: boolean;
   run: SupportTriageRun;
   eventIds: string[];
 };
-export type GetSupportTriageStatusInput = {
+export type GetStatusInput = {
   runId?: string;
 };
-export type GetSupportTriageStatusOutput = {
+export type GetStatusOutput = {
   capability: "support-triage";
   healthy: boolean;
   run: SupportTriageRun | null;

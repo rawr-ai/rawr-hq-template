@@ -28,7 +28,7 @@ describe("support-triage workflow plugin", () => {
 
     const client = createRouterClient(router, { context });
 
-    const triggered = await client.triggerSupportTriage({
+    const triggered = await client.triggerRun({
       queueId: "queue-main",
       requestedBy: "leg1-impl-workflows",
       dryRun: true,
@@ -39,11 +39,11 @@ describe("support-triage workflow plugin", () => {
     expect(triggered.run.queueId).toBe("queue-main");
     expect(triggered.eventIds).toEqual(["evt-support-triage-1"]);
 
-    const capabilityStatus = await client.getSupportTriageStatus({});
+    const capabilityStatus = await client.getStatus({});
     expect(capabilityStatus.capability).toBe("support-triage");
     expect(capabilityStatus.healthy).toBe(true);
 
-    const runStatus = await client.getSupportTriageStatus({ runId: triggered.run.runId });
+    const runStatus = await client.getStatus({ runId: triggered.run.runId });
     expect(runStatus.run?.runId).toBe(triggered.run.runId);
     expect(runStatus.run?.status).toBe("queued");
   });
@@ -62,7 +62,7 @@ describe("support-triage workflow plugin", () => {
     };
     const client = createRouterClient(router, { context });
 
-    const triggered = await client.triggerSupportTriage({
+    const triggered = await client.triggerRun({
       queueId: "queue-main",
       requestedBy: "leg1-impl-workflows",
       dryRun: false,
@@ -91,7 +91,7 @@ describe("support-triage workflow plugin", () => {
     expect(summary.triagedTicketCount).toBe(42);
     expect(summary.escalatedTicketCount).toBe(6);
 
-    const finalStatus = await client.getSupportTriageStatus({ runId: triggered.run.runId });
+    const finalStatus = await client.getStatus({ runId: triggered.run.runId });
     expect(finalStatus.run?.status).toBe("completed");
     expect(finalStatus.run?.triagedTicketCount).toBe(42);
     expect(finalStatus.run?.escalatedTicketCount).toBe(6);

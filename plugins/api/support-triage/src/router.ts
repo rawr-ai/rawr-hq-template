@@ -1,19 +1,18 @@
 import { os } from "./orpc";
-import { completeTriageJob } from "./operations/complete-triage-job";
-import { getTriageJob } from "./operations/get-triage-job";
-import { listTriageJobs } from "./operations/list-triage-jobs";
-import { requestTriageJob } from "./operations/request-triage-job";
-import { startTriageJob } from "./operations/start-triage-job";
+import { completeJob } from "./operations/complete-job";
+import { getJob } from "./operations/get-job";
+import { listJobs } from "./operations/list-jobs";
+import { requestJob } from "./operations/request-job";
+import { startJob } from "./operations/start-job";
 
 export const supportTriageApiRouter = os.router({
   supportTriage: os.supportTriage.router({
-    requestTriageJob,
-    listTriageJobs,
-    getTriageJob,
-    startTriageJob,
-    completeTriageJob,
+    requestJob,
+    listJobs,
+    getJob,
+    startJob,
+    completeJob,
   }),
 });
 
 export type SupportTriageApiRouter = typeof supportTriageApiRouter;
-

@@ -31,7 +31,7 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
 
     const res = await app.handle(
-      new Request("http://localhost/rpc/getSupportTriageStatus", {
+      new Request("http://localhost/rpc/getStatus", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),
@@ -83,7 +83,7 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
       });
 
       const triggerRes = await app.handle(
-        new Request("http://localhost/rpc/triggerSupportTriage", {
+        new Request("http://localhost/rpc/triggerRun", {
           method: "POST",
           headers: FIRST_PARTY_RPC_HEADERS,
           body: JSON.stringify({
@@ -107,7 +107,7 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
 
       const runId = triggerPayload.json?.run?.runId ?? "";
       const statusRes = await app.handle(
-        new Request("http://localhost/rpc/getSupportTriageStatus", {
+        new Request("http://localhost/rpc/getStatus", {
           method: "POST",
           headers: FIRST_PARTY_RPC_HEADERS,
           body: JSON.stringify({ json: { runId } }),
