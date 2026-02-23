@@ -27,7 +27,7 @@ describe("api plugin example surface", () => {
     const app = createApp();
 
     const requestResponse = await app.handle(
-      new Request("http://localhost/rpc/supportTriage/requestTriageJob", {
+      new Request("http://localhost/rpc/supportTriage/requestJob", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({
@@ -53,7 +53,7 @@ describe("api plugin example surface", () => {
     expect(requestPayload.json?.job?.status).toBe("queued");
 
     const listResponse = await app.handle(
-      new Request("http://localhost/rpc/supportTriage/listTriageJobs", {
+      new Request("http://localhost/rpc/supportTriage/listJobs", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),

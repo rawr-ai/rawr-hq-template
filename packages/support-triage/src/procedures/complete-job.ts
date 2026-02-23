@@ -8,7 +8,7 @@ import { throwSupportTriageDomainErrorAsOrpc } from "./boundary-errors";
 
 const o = os.$context<SupportTriageProcedureContext>();
 
-export const completeTriageJobProcedure = o
+export const completeJobProcedure = o
   .input(
     schema(
       Type.Object(

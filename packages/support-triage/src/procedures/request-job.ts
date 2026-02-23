@@ -1,26 +1,31 @@
 import { os } from "@orpc/server";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { TriageJobSchema } from "../domain";
+import { TriageJobSchema, TriageJobSourceSchema } from "../domain";
 import type { SupportTriageProcedureContext } from "../context";
-import { getSupportTriageJob } from "../service/lifecycle";
+import { requestSupportTriageJob } from "../service/lifecycle";
 import { throwSupportTriageDomainErrorAsOrpc } from "./boundary-errors";
 
 const o = os.$context<SupportTriageProcedureContext>();
 
-export const getTriageJobProcedure = o
+export const requestJobProcedure = o
   .input(
     schema(
       Type.Object(
         {
-          jobId: Type.String({
+          queueId: Type.String({
             minLength: 1,
-            description: "Stable identifier of the support triage job to fetch.",
+            description: "Stable identifier of the support queue to process.",
           }),
+          requestedBy: Type.String({
+            minLength: 1,
+            description: "Principal identifier of the caller requesting triage.",
+          }),
+          source: Type.Optional(TriageJobSourceSchema),
         },
         {
           additionalProperties: false,
-          description: "Route parameters for fetching one support triage job.",
+          description: "Request payload for queueing a support triage job.",
         },
       ),
     ),
@@ -33,14 +38,14 @@ export const getTriageJobProcedure = o
         },
         {
           additionalProperties: false,
-          description: "Response envelope containing the requested support triage job lifecycle record.",
+          description: "Response envelope containing the newly queued support triage job.",
         },
       ),
     ),
   )
   .handler(async ({ context, input }) => {
     try {
-      return await getSupportTriageJob(context.deps, input);
+      return await requestSupportTriageJob(context.deps, input);
     } catch (error) {
       throwSupportTriageDomainErrorAsOrpc(error);
     }

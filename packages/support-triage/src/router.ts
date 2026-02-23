@@ -1,4 +1,4 @@
-import { supportTriageProcedures } from "./procedures";
+import { procedures } from "./procedures";
 
-export const supportTriageInternalRouter = supportTriageProcedures;
+export const internalRouter = procedures;
 

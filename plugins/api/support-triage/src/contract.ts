@@ -7,14 +7,14 @@ const supportTriageTag = ["support-triage"] as const;
 
 export const supportTriageApiContract = oc.router({
   supportTriage: oc.router({
-    requestTriageJob: oc
+    requestJob: oc
       .route({
         method: "POST",
         path: "/support-triage/jobs",
         tags: supportTriageTag,
         summary: "Queue triage job",
         description: "Creates a queue-scoped API TriageJob lifecycle record in queued state.",
-        operationId: "supportTriageRequestTriageJob",
+        operationId: "supportTriageRequestJob",
       })
       .input(
         schema(
@@ -51,14 +51,14 @@ export const supportTriageApiContract = oc.router({
         ),
       ),
 
-    listTriageJobs: oc
+    listJobs: oc
       .route({
         method: "GET",
         path: "/support-triage/jobs",
         tags: supportTriageTag,
         summary: "List triage jobs",
         description: "Returns queue-scoped API TriageJob records, optionally filtered by lifecycle status.",
-        operationId: "supportTriageListTriageJobs",
+        operationId: "supportTriageListJobs",
       })
       .input(
         schema(
@@ -89,14 +89,14 @@ export const supportTriageApiContract = oc.router({
         ),
       ),
 
-    getTriageJob: oc
+    getJob: oc
       .route({
         method: "GET",
         path: "/support-triage/jobs/{jobId}",
         tags: supportTriageTag,
         summary: "Get triage job",
         description: "Fetches one API TriageJob lifecycle record by stable job identifier.",
-        operationId: "supportTriageGetTriageJob",
+        operationId: "supportTriageGetJob",
       })
       .input(
         schema(
@@ -128,14 +128,14 @@ export const supportTriageApiContract = oc.router({
         ),
       ),
 
-    startTriageJob: oc
+    startJob: oc
       .route({
         method: "POST",
         path: "/support-triage/jobs/{jobId}/start",
         tags: supportTriageTag,
         summary: "Start triage job",
         description: "Transitions a queued API TriageJob into running state.",
-        operationId: "supportTriageStartTriageJob",
+        operationId: "supportTriageStartJob",
       })
       .input(
         schema(
@@ -167,7 +167,7 @@ export const supportTriageApiContract = oc.router({
         ),
       ),
 
-    completeTriageJob: oc
+    completeJob: oc
       .route({
         method: "POST",
         path: "/support-triage/jobs/{jobId}/complete",
@@ -175,7 +175,7 @@ export const supportTriageApiContract = oc.router({
         summary: "Complete triage job",
         description:
           "Finalizes a running API TriageJob with run-compatible triage metrics. Workflow TriageRun state is tracked separately.",
-        operationId: "supportTriageCompleteTriageJob",
+        operationId: "supportTriageCompleteJob",
       })
       .input(
         schema(

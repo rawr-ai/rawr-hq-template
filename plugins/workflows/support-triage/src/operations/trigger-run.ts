@@ -9,7 +9,7 @@ import {
 import { getSupportTriageRun, saveSupportTriageRun } from "../run-store";
 import { os } from "../orpc";
 
-export const triggerSupportTriage = os.triggerSupportTriage.handler(async ({ context, input }) => {
+export const triggerRun = os.triggerRun.handler(async ({ context, input }) => {
   const queueId = normalizeSupportTriageQueueId(input.queueId);
   if (!queueId) {
     throw new ORPCError("INVALID_QUEUE_ID", {

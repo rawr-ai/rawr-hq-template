@@ -1,11 +1,11 @@
-import { getSupportTriageStatus } from "./operations/get-triage-status";
-import { triggerSupportTriage } from "./operations/trigger-triage";
+import { getStatus } from "./operations/get-status";
+import { triggerRun } from "./operations/trigger-run";
 import { os } from "./orpc";
 
 export function createSupportTriageWorkflowRouter() {
   return os.router({
-    triggerSupportTriage,
-    getSupportTriageStatus,
+    triggerRun,
+    getStatus,
   });
 }
 
