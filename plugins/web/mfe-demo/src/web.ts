@@ -1,4 +1,6 @@
 import type { MountContext } from "@rawr/ui-sdk";
+import { createORPCClient } from "@orpc/client";
+import { RPCLink } from "@orpc/client/fetch";
 
 export const name = "@rawr/plugin-mfe-demo";
 
@@ -16,6 +18,34 @@ type SupportTriageRun = Readonly<{
   triagedTicketCount?: number;
   escalatedTicketCount?: number;
   error?: string;
+}>;
+
+type TriggerSupportTriageInput = Readonly<{
+  queueId: string;
+  requestedBy: string;
+  runId?: string;
+  dryRun?: boolean;
+}>;
+
+type TriggerSupportTriageOutput = Readonly<{
+  accepted: boolean;
+  run: SupportTriageRun;
+  eventIds: ReadonlyArray<string>;
+}>;
+
+type GetSupportTriageStatusInput = Readonly<{
+  runId?: string;
+}>;
+
+type GetSupportTriageStatusOutput = Readonly<{
+  capability: "support-triage";
+  healthy: boolean;
+  run: SupportTriageRun | null;
+}>;
+
+type SupportTriageWorkflowRpcClient = Readonly<{
+  triggerSupportTriage(input: TriggerSupportTriageInput): Promise<TriggerSupportTriageOutput>;
+  getSupportTriageStatus(input: GetSupportTriageStatusInput): Promise<GetSupportTriageStatusOutput>;
 }>;
 
 function getCssVar(root: HTMLElement, variableName: string, fallback: string) {
@@ -86,16 +116,11 @@ function prettyJson(value: unknown): string {
   }
 }
 
-async function readResponseBody(response: Response): Promise<unknown> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    try {
-      return await response.json();
-    } catch {
-      return await response.text();
-    }
+function resolveRpcBaseUrl(apiPrefix: string): string {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}${apiPrefix}`;
   }
-  return await response.text();
+  return `http://localhost:3000${apiPrefix}`;
 }
 
 export function mount(el: HTMLElement, ctx: MountContext) {
@@ -139,7 +164,7 @@ export function mount(el: HTMLElement, ctx: MountContext) {
   routeHints.style.fontSize = "12px";
   routeHints.style.marginBottom = "10px";
   routeHints.textContent =
-    "workflow boundary: POST /api/workflows/support-triage/runs · GET /api/workflows/support-triage/status?runId=...";
+    "workflow RPC: triggerSupportTriage + getSupportTriageStatus via /rpc (first-party default)";
 
   const stateCard = document.createElement("div");
   stateCard.style.display = "grid";
@@ -318,7 +343,6 @@ export function mount(el: HTMLElement, ctx: MountContext) {
   let lastStatusResponse: unknown | null = null;
 
   let pollTimer: number | null = null;
-  let pollAbort: AbortController | null = null;
   let pollInFlight = false;
 
   function stopPolling() {
@@ -326,8 +350,6 @@ export function mount(el: HTMLElement, ctx: MountContext) {
       window.clearInterval(pollTimer);
       pollTimer = null;
     }
-    pollAbort?.abort();
-    pollAbort = null;
     polling = false;
   }
 
@@ -343,32 +365,16 @@ export function mount(el: HTMLElement, ctx: MountContext) {
     statusBlock.pre.textContent = lastStatusResponse ? prettyJson(lastStatusResponse) : "(none)";
   }
 
+  const workflowClient = createORPCClient<SupportTriageWorkflowRpcClient>(
+    new RPCLink({
+      url: `${resolveRpcBaseUrl(apiPrefix)}/rpc`,
+    }),
+  );
+
   async function fetchStatus(runIdValue: string | null) {
-    const statusUrl = runIdValue
-      ? `${apiPrefix}/api/workflows/support-triage/status?runId=${encodeURIComponent(runIdValue)}`
-      : `${apiPrefix}/api/workflows/support-triage/status`;
-
-    pollAbort?.abort();
-    pollAbort = new AbortController();
-
-    const response = await fetch(statusUrl, {
-      method: "GET",
-      headers: { accept: "application/json" },
-      signal: pollAbort.signal,
-    });
-
-    const body = await readResponseBody(response);
+    const body = await workflowClient.getSupportTriageStatus(runIdValue ? { runId: runIdValue } : {});
     lastStatusResponse = body;
-
-    if (!response.ok) {
-      error = `status request failed (${response.status})`;
-      return;
-    }
-
-    if (!isRecord(body)) return;
-    const nextHealthy = readResponseField<boolean>(body, "healthy");
-    if (typeof nextHealthy === "boolean") healthy = nextHealthy;
-
+    healthy = body.healthy;
     run = parseSupportTriageRun(body.run);
     if (run?.runId) runIdInput.value = run.runId;
   }
@@ -385,29 +391,15 @@ export function mount(el: HTMLElement, ctx: MountContext) {
 
     stopPolling();
 
-    const response = await fetch(`${apiPrefix}/api/workflows/support-triage/runs`, {
-      method: "POST",
-      headers: { "content-type": "application/json", accept: "application/json" },
-      body: JSON.stringify({
-        queueId,
-        requestedBy,
-        ...(runIdValue ? { runId: runIdValue } : {}),
-        ...(dryRun ? { dryRun } : {}),
-      }),
+    const body = await workflowClient.triggerSupportTriage({
+      queueId,
+      requestedBy,
+      ...(runIdValue ? { runId: runIdValue } : {}),
+      ...(dryRun ? { dryRun } : {}),
     });
-
-    const body = await readResponseBody(response);
     lastTriggerResponse = body;
-
-    if (!response.ok) {
-      error = `trigger request failed (${response.status})`;
-      return;
-    }
-
-    if (isRecord(body) && isRecord(body.run)) {
-      run = parseSupportTriageRun(body.run);
-      if (run?.runId) runIdInput.value = run.runId;
-    }
+    run = parseSupportTriageRun(body.run);
+    if (run?.runId) runIdInput.value = run.runId;
   }
 
   async function pollOnce(runIdValue: string) {
@@ -489,4 +481,3 @@ export function mount(el: HTMLElement, ctx: MountContext) {
     },
   };
 }
-

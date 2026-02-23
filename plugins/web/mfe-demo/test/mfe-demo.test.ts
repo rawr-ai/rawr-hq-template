@@ -21,9 +21,10 @@ describe("@rawr/plugin-mfe-demo", () => {
       capability: "support-triage",
       exampleDomain: true,
       routeHints: {
-        publishedBoundary: {
-          triggerRun: "POST /api/workflows/support-triage/runs",
-          getStatus: "GET /api/workflows/support-triage/status?runId=...",
+        firstPartyDefault: {
+          transport: "RPCLink",
+          triggerRun: "POST /rpc (procedure: triggerSupportTriage)",
+          getStatus: "POST /rpc (procedure: getSupportTriageStatus; optional: { runId })",
         },
       },
     });
@@ -36,50 +37,113 @@ describe("@rawr/plugin-mfe-demo", () => {
     const runId = "support-triage-123-test";
     let runStatusCalls = 0;
 
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const method = (init?.method ?? "GET").toUpperCase();
-      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : (input as Request).url;
+    async function readRequestBodyText(body: RequestInit["body"]): Promise<string> {
+      if (typeof body === "string") return body;
+      if (!body) return "";
 
-      if (method === "GET" && url.includes("/api/workflows/support-triage/status") && !url.includes("runId=")) {
-        return new Response(JSON.stringify({ capability: "support-triage", healthy: true, run: null }), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        });
+      try {
+        return await new Response(body).text();
+      } catch {
+        return "";
       }
+    }
 
-      if (method === "POST" && url.includes("/api/workflows/support-triage/runs")) {
+    function parseRequestUrl(input: string): URL | null {
+      try {
+        return new URL(input);
+      } catch {
+        try {
+          return new URL(input, "http://localhost");
+        } catch {
+          return null;
+        }
+      }
+    }
+
+    function safeJsonParse(value: string): unknown {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return null;
+      }
+    }
+
+    function isRecord(value: unknown): value is Record<string, unknown> {
+      return typeof value === "object" && value !== null;
+    }
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : null;
+      const method = (request?.method ?? init?.method ?? "GET").toUpperCase();
+      const urlText = typeof input === "string" ? input : input instanceof URL ? input.toString() : (input as Request).url;
+      const url = parseRequestUrl(urlText);
+      const pathname = url?.pathname ?? urlText;
+
+      // RPCLink calls `/rpc/<procedure>` (e.g. `/rpc/getSupportTriageStatus`) and
+      // expects the response to be a StandardRPC envelope: `{ json: <payload> }`.
+      const pathParts = pathname.split("/").filter(Boolean);
+      if (pathParts[0] !== "rpc") return new Response("not found", { status: 404 });
+      const procedure = pathParts.slice(1).join("/");
+      if (!procedure) return new Response("not found", { status: 404 });
+
+      const dataText =
+        method === "GET"
+          ? (url?.searchParams.get("data") ?? "")
+          : request
+            ? await request.clone().text()
+            : await readRequestBodyText(init?.body);
+
+      const envelope = safeJsonParse(dataText);
+      const inputJson = isRecord(envelope) && isRecord(envelope.json) ? envelope.json : {};
+
+      if (procedure === "triggerSupportTriage") {
         return new Response(
           JSON.stringify({
-            accepted: true,
-            run: {
-              runId,
-              queueId: "queue-demo",
-              requestedBy: "mfe-demo",
-              dryRun: true,
-              status: "queued",
-              startedAt: now,
+            json: {
+              accepted: true,
+              run: {
+                runId,
+                queueId: "queue-demo",
+                requestedBy: "mfe-demo",
+                dryRun: true,
+                status: "queued",
+                startedAt: now,
+              },
+              eventIds: ["evt_123"],
             },
-            eventIds: ["evt_123"],
           }),
           { status: 200, headers: { "content-type": "application/json" } },
         );
       }
 
-      if (method === "GET" && url.includes(`/api/workflows/support-triage/status?runId=${runId}`)) {
+      if (procedure === "getSupportTriageStatus") {
+        const requestedRunId = typeof inputJson.runId === "string" ? inputJson.runId : null;
+
+        if (!requestedRunId) {
+          return new Response(JSON.stringify({ json: { capability: "support-triage", healthy: true, run: null } }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
         runStatusCalls += 1;
         const status = runStatusCalls <= 1 ? "running" : "completed";
         return new Response(
           JSON.stringify({
-            capability: "support-triage",
-            healthy: true,
-            run: {
-              runId,
-              queueId: "queue-demo",
-              requestedBy: "mfe-demo",
-              dryRun: true,
-              status,
-              startedAt: now,
-              ...(status === "completed" ? { finishedAt: now, triagedTicketCount: 12, escalatedTicketCount: 3 } : {}),
+            json: {
+              capability: "support-triage",
+              healthy: true,
+              run: {
+                runId: requestedRunId,
+                queueId: "queue-demo",
+                requestedBy: "mfe-demo",
+                dryRun: true,
+                status,
+                startedAt: now,
+                ...(status === "completed"
+                  ? { finishedAt: now, triagedTicketCount: 12, escalatedTicketCount: 3 }
+                  : {}),
+              },
             },
           }),
           { status: 200, headers: { "content-type": "application/json" } },
@@ -94,6 +158,17 @@ describe("@rawr/plugin-mfe-demo", () => {
 
     const flush = async (count = 12) => {
       for (let i = 0; i < count; i += 1) await Promise.resolve();
+      // `Response.text()` resolution can land on the macrotask queue in some environments.
+      // Yield once to avoid flakiness when the MFE makes its initial RPCLink call.
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    };
+
+    const settleAsyncWork = async () => {
+      // RPCLink's fetch + Response parsing can land on a macrotask turn.
+      // Under fake timers, advancing by 0ms flushes those turns reliably.
+      await flush();
+      await vi.advanceTimersByTimeAsync(0);
+      await flush();
     };
 
     const el = document.createElement("div");
@@ -107,22 +182,22 @@ describe("@rawr/plugin-mfe-demo", () => {
     expect(el.textContent).toContain("Support triage example micro-frontend");
     expect(el.textContent).toContain("status: idle");
 
-    await flush();
+    await settleAsyncWork();
     expect(el.textContent).toContain("healthy: true");
 
     const triggerButton = Array.from(el.querySelectorAll("button")).find((button) => button.textContent === "Trigger Workflow Run");
     expect(triggerButton).toBeDefined();
     triggerButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
-    await flush();
+    await settleAsyncWork();
     expect(el.textContent).toContain(`runId: ${runId}`);
     expect(el.textContent).toContain("polling: on");
 
-    await flush();
+    await settleAsyncWork();
     expect(el.textContent).toContain("status: running");
 
     await vi.advanceTimersByTimeAsync(1500);
-    await flush();
+    await settleAsyncWork();
     expect(el.textContent).toContain("status: completed");
     expect(el.textContent).toContain("polling: off");
     expect(el.textContent).toContain("triagedTicketCount: 12");
