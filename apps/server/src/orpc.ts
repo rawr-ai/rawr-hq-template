@@ -1,6 +1,7 @@
 import { createHqRuntimeRouter, createWorkflowTriggerRuntimeRouter } from "@rawr/core/orpc";
 import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
+import type { Router } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import type { AnyElysia } from "./plugins";
@@ -16,7 +17,7 @@ import {
 } from "./workflows/context";
 
 type RawrOrpcContext = RawrBoundaryContext;
-type RawrOrpcRouter = ReturnType<typeof createOrpcRouter>;
+type RawrOrpcRouter = Router<any, RawrOrpcContext>;
 type RawrOrpcContextFactory = (request: Request, deps: RawrBoundaryContextDeps) => RawrOrpcContext;
 type OnRawrOrpcContextCreated = (context: RawrOrpcContext) => void;
 
@@ -24,7 +25,7 @@ const RPC_AUTH_DEDUPE_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_
 
 export type RegisterOrpcRoutesOptions = RawrBoundaryContextDeps & {
   router?: RawrOrpcRouter;
-  workflowTriggerRouter?: unknown;
+  workflowTriggerRouter?: RawrOrpcRouter;
   contextFactory?: (request: Request, deps: RawrBoundaryContextDeps) => RawrOrpcContext;
   onContextCreated?: (context: RawrOrpcContext) => void;
   rpcAuthPolicy?: RpcAuthPolicy;
@@ -129,7 +130,7 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
   const router = options.router ?? createOrpcRouter();
   const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
   const workflowTriggerRpcHandler = options.workflowTriggerRouter
-    ? new RPCHandler<RawrOrpcContext>(options.workflowTriggerRouter as any)
+    ? new RPCHandler<RawrOrpcContext>(options.workflowTriggerRouter)
     : undefined;
   const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router);
   const rpcAuthPolicy = options.rpcAuthPolicy ?? createRpcAuthPolicy({ baseUrl: options.baseUrl });

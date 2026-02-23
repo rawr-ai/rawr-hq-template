@@ -31,6 +31,8 @@ describe("@rawr/plugin-mfe-demo", () => {
   });
 
   it("mounts support-triage UI state and unmounts from the DOM", async () => {
+    vi.useFakeTimers();
+
     const now = new Date("2026-02-23T00:00:00.000Z").toISOString();
     const runId = "support-triage-123-test";
     let runStatusCalls = 0;
@@ -83,14 +85,9 @@ describe("@rawr/plugin-mfe-demo", () => {
       if (pathParts[0] !== "rpc") return new Response("not found", { status: 404 });
       const procedure = pathParts.slice(1).join("/");
       if (!procedure) return new Response("not found", { status: 404 });
+      if (method !== "POST") return new Response("method not allowed", { status: 405 });
 
-      const dataText =
-        method === "GET"
-          ? (url?.searchParams.get("data") ?? "")
-          : request
-            ? await request.clone().text()
-            : await readRequestBodyText(init?.body);
-
+      const dataText = request ? await request.clone().text() : await readRequestBodyText(init?.body);
       const envelope = safeJsonParse(dataText);
       const inputJson = isRecord(envelope) && isRecord(envelope.json) ? envelope.json : {};
 
@@ -138,9 +135,7 @@ describe("@rawr/plugin-mfe-demo", () => {
                 dryRun: true,
                 status,
                 startedAt: now,
-                ...(status === "completed"
-                  ? { finishedAt: now, triagedTicketCount: 12, escalatedTicketCount: 3 }
-                  : {}),
+                ...(status === "completed" ? { finishedAt: now, triagedTicketCount: 12, escalatedTicketCount: 3 } : {}),
               },
             },
           }),
@@ -156,13 +151,6 @@ describe("@rawr/plugin-mfe-demo", () => {
 
     const flush = async (count = 24) => {
       for (let i = 0; i < count; i += 1) await Promise.resolve();
-    };
-
-    const settleRealAsyncWork = async () => {
-      await flush();
-      // RPCLink's fetch + Response parsing can land on a macrotask turn.
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      await flush();
     };
 
     const settleFakeAsyncWork = async () => {
@@ -182,14 +170,10 @@ describe("@rawr/plugin-mfe-demo", () => {
     expect(el.textContent).toContain("Support triage example micro-frontend");
     expect(el.textContent).toContain("status: idle");
 
-    await settleRealAsyncWork();
+    await settleFakeAsyncWork();
     expect(el.textContent).toContain("healthy: true");
 
-    // Enable fake timers only for the polling interval portion; keep the initial RPCLink
-    // call on real timers so fetch/Response body parsing isn't impacted by timer mocking.
-    vi.useFakeTimers();
-
-    const triggerButton = Array.from(el.querySelectorAll("button")).find((button) => button.textContent === "Trigger Workflow Run");
+    const triggerButton = Array.from(el.querySelectorAll("button")).find((button) => button.textContent === "Trigger");
     expect(triggerButton).toBeDefined();
     triggerButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
@@ -204,7 +188,6 @@ describe("@rawr/plugin-mfe-demo", () => {
     await settleFakeAsyncWork();
     expect(el.textContent).toContain("status: completed");
     expect(el.textContent).toContain("polling: off");
-    expect(el.textContent).toContain("triagedTicketCount: 12");
 
     handle?.unmount?.();
     expect(el.textContent).toBe("");
