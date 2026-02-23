@@ -1,5 +1,4 @@
 import { createORPCClient, ORPCError } from "@orpc/client";
-import { RPCLink } from "@orpc/client/fetch";
 import type { ContractRouterClient } from "@orpc/contract";
 import {
   coordinationFailure,
@@ -11,6 +10,7 @@ import {
 } from "@rawr/coordination";
 import { loadRawrConfig } from "@rawr/control-plane";
 import { hqContract } from "@rawr/core/orpc";
+import { createCliRpcLink } from "@rawr/orpc-client";
 import { findWorkspaceRoot } from "./workspace-plugins";
 
 type HqClient = ContractRouterClient<typeof hqContract>;
@@ -34,7 +34,7 @@ function getCoordinationClient(baseUrl: string): CoordinationClient {
   }
 
   const client = createORPCClient<HqClient>(
-    new RPCLink({
+    createCliRpcLink({
       url: rpcUrl,
     }),
   );

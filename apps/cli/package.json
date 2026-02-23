@@ -15,6 +15,7 @@
     "@rawr/core": "workspace:*",
     "@rawr/hq": "workspace:*",
     "@rawr/journal": "workspace:*",
+    "@rawr/orpc-client": "workspace:*",
     "@rawr/plugin-plugins": "workspace:*",
     "@rawr/state": "workspace:*",
     "@rawr/security": "workspace:*",
