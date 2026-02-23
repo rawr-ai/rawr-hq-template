@@ -5,20 +5,12 @@ import { RPCLink } from "@orpc/client/fetch";
 export const name = "@rawr/plugin-mfe-demo";
 
 type TerminalRunStatus = "completed" | "failed";
-type RunStatus = "queued" | "running" | TerminalRunStatus;
 
 type SupportTriageRun = Readonly<{
   runId: string;
-  queueId: string;
-  requestedBy: string;
-  dryRun: boolean;
-  status: RunStatus | (string & {});
-  startedAt: string;
-  finishedAt?: string;
-  triagedTicketCount?: number;
-  escalatedTicketCount?: number;
-  error?: string;
-}>;
+  status: string;
+}> &
+  Readonly<Record<string, unknown>>;
 
 type TriggerSupportTriageInput = Readonly<{
   queueId: string;
@@ -33,12 +25,10 @@ type TriggerSupportTriageOutput = Readonly<{
   eventIds: ReadonlyArray<string>;
 }>;
 
-type GetSupportTriageStatusInput = Readonly<{
-  runId?: string;
-}>;
+type GetSupportTriageStatusInput = Readonly<{ runId?: string }>;
 
 type GetSupportTriageStatusOutput = Readonly<{
-  capability: "support-triage";
+  capability: string;
   healthy: boolean;
   run: SupportTriageRun | null;
 }>;
@@ -48,11 +38,6 @@ type SupportTriageWorkflowRpcClient = Readonly<{
   getSupportTriageStatus(input: GetSupportTriageStatusInput): Promise<GetSupportTriageStatusOutput>;
 }>;
 
-function getCssVar(root: HTMLElement, variableName: string, fallback: string) {
-  const value = getComputedStyle(root).getPropertyValue(variableName).trim();
-  return value || fallback;
-}
-
 function normalizeBasePath(basePath: string | undefined): string {
   const raw = (basePath ?? "").trim();
   if (raw === "" || raw === "/") return "";
@@ -60,52 +45,12 @@ function normalizeBasePath(basePath: string | undefined): string {
   return withLeadingSlash.replace(/\/+$/u, "");
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function readResponseField<T>(obj: Record<string, unknown>, key: string): T | undefined {
-  return obj[key] as T | undefined;
-}
-
-function parseSupportTriageRun(value: unknown): SupportTriageRun | null {
-  if (!isRecord(value)) return null;
-
-  const runId = readResponseField<string>(value, "runId");
-  const queueId = readResponseField<string>(value, "queueId");
-  const requestedBy = readResponseField<string>(value, "requestedBy");
-  const dryRun = readResponseField<boolean>(value, "dryRun");
-  const status = readResponseField<string>(value, "status");
-  const startedAt = readResponseField<string>(value, "startedAt");
-
-  if (typeof runId !== "string" || runId.trim() === "") return null;
-  if (typeof queueId !== "string" || queueId.trim() === "") return null;
-  if (typeof requestedBy !== "string" || requestedBy.trim() === "") return null;
-  if (typeof dryRun !== "boolean") return null;
-  if (typeof status !== "string" || status.trim() === "") return null;
-  if (typeof startedAt !== "string" || startedAt.trim() === "") return null;
-
-  const finishedAt = readResponseField<unknown>(value, "finishedAt");
-  const triagedTicketCount = readResponseField<unknown>(value, "triagedTicketCount");
-  const escalatedTicketCount = readResponseField<unknown>(value, "escalatedTicketCount");
-  const error = readResponseField<unknown>(value, "error");
-
-  return {
-    runId,
-    queueId,
-    requestedBy,
-    dryRun,
-    status: status as SupportTriageRun["status"],
-    startedAt,
-    ...(typeof finishedAt === "string" ? { finishedAt } : {}),
-    ...(typeof triagedTicketCount === "number" && Number.isFinite(triagedTicketCount) ? { triagedTicketCount } : {}),
-    ...(typeof escalatedTicketCount === "number" && Number.isFinite(escalatedTicketCount) ? { escalatedTicketCount } : {}),
-    ...(typeof error === "string" && error.trim() !== "" ? { error } : {}),
-  };
-}
-
-function isTerminalStatus(status: SupportTriageRun["status"] | null | undefined): status is TerminalRunStatus {
-  return status === "completed" || status === "failed";
+function resolveRpcUrl(basePath: string): string {
+  const path = `${basePath}/rpc`;
+  if (typeof window !== "undefined") {
+    return new URL(path, window.location.href).toString();
+  }
+  return `http://localhost:3000${path}`;
 }
 
 function prettyJson(value: unknown): string {
@@ -116,357 +61,253 @@ function prettyJson(value: unknown): string {
   }
 }
 
-function resolveRpcBaseUrl(apiPrefix: string): string {
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}${apiPrefix}`;
-  }
-  return `http://localhost:3000${apiPrefix}`;
+function isTerminalStatus(status: string | null): status is TerminalRunStatus {
+  return status === "completed" || status === "failed";
 }
 
 export function mount(el: HTMLElement, ctx: MountContext) {
-  const borderDefault = getCssVar(el, "--ui-border-default", "rgba(15, 23, 42, 0.24)");
-  const borderSubtle = getCssVar(el, "--ui-border-subtle", "rgba(15, 23, 42, 0.15)");
-  const surface = getCssVar(el, "--ui-surface-1", "rgba(248, 250, 252, 0.95)");
-  const surfaceInset = getCssVar(el, "--ui-surface-inset", "rgba(226, 232, 240, 0.6)");
-  const textPrimary = getCssVar(el, "--ui-text-primary", "#0f172a");
-  const textSecondary = getCssVar(el, "--ui-text-secondary", "#334155");
-  const accent = getCssVar(el, "--ui-accent", "#06b6d4");
-  const accentInk = getCssVar(el, "--ui-accent-ink", "#022c38");
+  const basePath = normalizeBasePath(ctx.basePath);
 
-  const apiPrefix = normalizeBasePath(ctx.basePath);
+  const client = createORPCClient<SupportTriageWorkflowRpcClient>(
+    new RPCLink({
+      url: resolveRpcUrl(basePath),
+    }),
+  );
 
   const root = document.createElement("div");
-  root.style.padding = "14px";
-  root.style.border = `1px solid ${borderDefault}`;
-  root.style.borderRadius = "12px";
-  root.style.background = surface;
-  root.style.color = textPrimary;
+  root.style.fontFamily = "ui-sans-serif, system-ui";
+  root.style.fontSize = "14px";
+  root.style.lineHeight = "1.4";
+  root.style.padding = "12px";
+  root.style.border = "1px solid rgba(15, 23, 42, 0.18)";
+  root.style.borderRadius = "10px";
 
   const title = document.createElement("div");
   title.style.fontWeight = "700";
-  title.style.marginBottom = "8px";
   title.textContent = "Support triage example micro-frontend";
 
-  const subtitle = document.createElement("div");
-  subtitle.style.color = textSecondary;
-  subtitle.style.fontSize = "12px";
-  subtitle.style.marginBottom = "8px";
-  subtitle.textContent = "Example domain only. Not a production support triage surface.";
+  const hint = document.createElement("div");
+  hint.style.marginTop = "4px";
+  hint.style.color = "rgba(15, 23, 42, 0.7)";
+  hint.textContent = "First-party demo: calls workflow procedures over /rpc via oRPC RPCLink.";
 
-  const meta = document.createElement("div");
-  meta.style.color = textSecondary;
-  meta.style.fontSize = "12px";
-  meta.style.marginBottom = "10px";
-  meta.textContent = `plugin: ${name} · basePath: ${ctx.basePath ?? "/"}`;
-
-  const routeHints = document.createElement("div");
-  routeHints.style.color = textSecondary;
-  routeHints.style.fontSize = "12px";
-  routeHints.style.marginBottom = "10px";
-  routeHints.textContent =
-    "workflow RPC: triggerSupportTriage + getSupportTriageStatus via /rpc (first-party default)";
-
-  const stateCard = document.createElement("div");
-  stateCard.style.display = "grid";
-  stateCard.style.gap = "4px";
-  stateCard.style.padding = "10px";
-  stateCard.style.border = `1px solid ${borderSubtle}`;
-  stateCard.style.borderRadius = "10px";
-  stateCard.style.background = surfaceInset;
-  stateCard.style.marginBottom = "10px";
-
-  const statusEl = document.createElement("div");
-  statusEl.style.fontWeight = "600";
-
-  const healthyEl = document.createElement("div");
-  healthyEl.style.fontVariantNumeric = "tabular-nums";
-
-  const pollingEl = document.createElement("div");
-  pollingEl.style.fontVariantNumeric = "tabular-nums";
-
-  const runIdEl = document.createElement("div");
-  runIdEl.style.fontVariantNumeric = "tabular-nums";
-
-  const triagedEl = document.createElement("div");
-  triagedEl.style.fontVariantNumeric = "tabular-nums";
-
-  const escalatedEl = document.createElement("div");
-  escalatedEl.style.fontVariantNumeric = "tabular-nums";
-
-  const errorEl = document.createElement("div");
-  errorEl.style.fontVariantNumeric = "tabular-nums";
-  errorEl.style.whiteSpace = "pre-wrap";
-
-  stateCard.append(statusEl, healthyEl, pollingEl, runIdEl, triagedEl, escalatedEl, errorEl);
-
-  const actions = document.createElement("div");
-  actions.style.display = "flex";
-  actions.style.alignItems = "center";
-  actions.style.gap = "10px";
-  actions.style.padding = "10px";
-  actions.style.border = `1px solid ${borderSubtle}`;
-  actions.style.borderRadius = "10px";
-  actions.style.background = surfaceInset;
-  actions.style.flexWrap = "wrap";
-
-  function createLabeledInput(labelText: string, input: HTMLInputElement) {
-    const wrap = document.createElement("label");
-    wrap.style.display = "flex";
-    wrap.style.flexDirection = "column";
-    wrap.style.gap = "4px";
-    wrap.style.fontSize = "12px";
-    wrap.style.color = textSecondary;
-
-    const label = document.createElement("div");
-    label.textContent = labelText;
-
-    input.style.border = `1px solid ${borderDefault}`;
-    input.style.borderRadius = "8px";
-    input.style.padding = "6px 10px";
-    input.style.background = surface;
-    input.style.color = textPrimary;
-    input.style.minWidth = "220px";
-
-    wrap.append(label, input);
-    return wrap;
-  }
+  const form = document.createElement("div");
+  form.style.display = "grid";
+  form.style.gap = "8px";
+  form.style.marginTop = "10px";
 
   const queueIdInput = document.createElement("input");
-  queueIdInput.type = "text";
   queueIdInput.value = "queue-demo";
+  queueIdInput.placeholder = "queueId";
 
   const requestedByInput = document.createElement("input");
-  requestedByInput.type = "text";
   requestedByInput.value = "mfe-demo";
+  requestedByInput.placeholder = "requestedBy";
 
   const runIdInput = document.createElement("input");
-  runIdInput.type = "text";
-  runIdInput.placeholder = "(optional) idempotency key";
+  runIdInput.value = "";
+  runIdInput.placeholder = "runId (optional)";
 
   const dryRunWrap = document.createElement("label");
   dryRunWrap.style.display = "flex";
   dryRunWrap.style.alignItems = "center";
-  dryRunWrap.style.gap = "8px";
-  dryRunWrap.style.fontSize = "12px";
-  dryRunWrap.style.color = textSecondary;
+  dryRunWrap.style.gap = "6px";
 
   const dryRunInput = document.createElement("input");
   dryRunInput.type = "checkbox";
   dryRunInput.checked = true;
   dryRunWrap.append(dryRunInput, document.createTextNode("dryRun"));
 
-  function styleButton(button: HTMLButtonElement, variant: "accent" | "surface") {
-    button.type = "button";
-    button.style.border = `1px solid ${borderDefault}`;
-    button.style.borderRadius = "8px";
-    button.style.padding = "6px 10px";
-    button.style.fontWeight = "600";
-    button.style.cursor = "pointer";
+  const buttons = document.createElement("div");
+  buttons.style.display = "flex";
+  buttons.style.flexWrap = "wrap";
+  buttons.style.gap = "8px";
 
-    if (variant === "accent") {
-      button.style.background = accent;
-      button.style.color = accentInk;
-      button.style.transition = "filter 140ms ease-out";
-      button.addEventListener("mouseenter", () => {
-        button.style.filter = "brightness(1.06)";
-      });
-      button.addEventListener("mouseleave", () => {
-        button.style.filter = "brightness(1)";
-      });
-      return;
-    }
+  const triggerBtn = document.createElement("button");
+  triggerBtn.type = "button";
+  triggerBtn.textContent = "Trigger";
 
-    button.style.background = surface;
-    button.style.color = textPrimary;
-  }
+  const fetchBtn = document.createElement("button");
+  fetchBtn.type = "button";
+  fetchBtn.textContent = "Fetch status";
 
-  const triggerButton = document.createElement("button");
-  triggerButton.textContent = "Trigger Workflow Run";
-  styleButton(triggerButton, "accent");
+  const stopBtn = document.createElement("button");
+  stopBtn.type = "button";
+  stopBtn.textContent = "Stop polling";
 
-  const refreshButton = document.createElement("button");
-  refreshButton.textContent = "Fetch Status";
-  styleButton(refreshButton, "surface");
+  buttons.append(triggerBtn, fetchBtn, stopBtn);
 
-  const stopButton = document.createElement("button");
-  stopButton.textContent = "Stop Polling";
-  styleButton(stopButton, "surface");
+  form.append(queueIdInput, requestedByInput, runIdInput, dryRunWrap, buttons);
 
-  actions.append(
-    createLabeledInput("queueId", queueIdInput),
-    createLabeledInput("requestedBy", requestedByInput),
-    createLabeledInput("runId (optional)", runIdInput),
-    dryRunWrap,
-    triggerButton,
-    refreshButton,
-    stopButton,
-  );
+  const state = document.createElement("div");
+  state.style.marginTop = "10px";
+  state.style.display = "grid";
+  state.style.gap = "4px";
 
-  const responseCard = document.createElement("div");
-  responseCard.style.display = "grid";
-  responseCard.style.gap = "10px";
-  responseCard.style.marginTop = "10px";
-  responseCard.style.padding = "10px";
-  responseCard.style.border = `1px solid ${borderSubtle}`;
-  responseCard.style.borderRadius = "10px";
-  responseCard.style.background = surfaceInset;
+  const statusEl = document.createElement("div");
+  const healthyEl = document.createElement("div");
+  const pollingEl = document.createElement("div");
+  const runIdEl = document.createElement("div");
+  const errorEl = document.createElement("div");
+  errorEl.style.whiteSpace = "pre-wrap";
 
-  function createResponseBlock(titleText: string) {
-    const title = document.createElement("div");
-    title.style.fontSize = "12px";
-    title.style.color = textSecondary;
-    title.textContent = titleText;
+  state.append(statusEl, healthyEl, pollingEl, runIdEl, errorEl);
 
-    const pre = document.createElement("pre");
+  const outWrap = document.createElement("div");
+  outWrap.style.marginTop = "10px";
+  outWrap.style.display = "grid";
+  outWrap.style.gap = "8px";
+
+  const triggerPre = document.createElement("pre");
+  const statusPre = document.createElement("pre");
+  for (const pre of [triggerPre, statusPre]) {
     pre.style.margin = "0";
-    pre.style.padding = "10px";
-    pre.style.border = `1px solid ${borderSubtle}`;
-    pre.style.borderRadius = "10px";
-    pre.style.background = surface;
-    pre.style.color = textPrimary;
+    pre.style.padding = "8px";
+    pre.style.border = "1px solid rgba(15, 23, 42, 0.12)";
+    pre.style.borderRadius = "8px";
     pre.style.overflowX = "auto";
     pre.style.fontSize = "12px";
-    pre.textContent = "(none)";
-
-    return { title, pre };
   }
 
-  const triggerBlock = createResponseBlock("last trigger response");
-  const statusBlock = createResponseBlock("last status response");
-  responseCard.append(triggerBlock.title, triggerBlock.pre, statusBlock.title, statusBlock.pre);
+  outWrap.append(triggerPre, statusPre);
+
+  root.append(title, hint, form, state, outWrap);
+  el.appendChild(root);
 
   let healthy: boolean | null = null;
   let polling = false;
-  let run: SupportTriageRun | null = null;
-  let error: string | null = null;
-  let lastTriggerResponse: unknown | null = null;
-  let lastStatusResponse: unknown | null = null;
+  let runId: string | null = null;
+  let status: string | null = null;
+  let lastError: string | null = null;
+  let lastTrigger: unknown | null = null;
+  let lastStatus: unknown | null = null;
 
-  let pollTimer: number | null = null;
-  let pollInFlight = false;
+  let timer: number | null = null;
+  let inFlight = false;
 
   function stopPolling() {
-    if (pollTimer !== null) {
-      window.clearInterval(pollTimer);
-      pollTimer = null;
+    if (timer !== null) {
+      window.clearInterval(timer);
+      timer = null;
     }
     polling = false;
   }
 
   function render() {
-    statusEl.textContent = `status: ${run?.status ?? "idle"}`;
+    statusEl.textContent = `status: ${status ?? "idle"}`;
     healthyEl.textContent = `healthy: ${healthy ?? "unknown"}`;
     pollingEl.textContent = `polling: ${polling ? "on" : "off"}`;
-    runIdEl.textContent = `runId: ${run?.runId ?? "none"}`;
-    triagedEl.textContent = `triagedTicketCount: ${run?.triagedTicketCount ?? 0}`;
-    escalatedEl.textContent = `escalatedTicketCount: ${run?.escalatedTicketCount ?? 0}`;
-    errorEl.textContent = error ? `error: ${error}` : "error: none";
-    triggerBlock.pre.textContent = lastTriggerResponse ? prettyJson(lastTriggerResponse) : "(none)";
-    statusBlock.pre.textContent = lastStatusResponse ? prettyJson(lastStatusResponse) : "(none)";
+    runIdEl.textContent = `runId: ${runId ?? "none"}`;
+    errorEl.textContent = `error: ${lastError ?? "none"}`;
+    triggerPre.textContent = `last trigger:\n${lastTrigger ? prettyJson(lastTrigger) : "(none)"}`;
+    statusPre.textContent = `last status:\n${lastStatus ? prettyJson(lastStatus) : "(none)"}`;
   }
 
-  const workflowClient = createORPCClient<SupportTriageWorkflowRpcClient>(
-    new RPCLink({
-      url: `${resolveRpcBaseUrl(apiPrefix)}/rpc`,
-    }),
-  );
-
-  async function fetchStatus(runIdValue: string | null) {
-    const body = await workflowClient.getSupportTriageStatus(runIdValue ? { runId: runIdValue } : {});
-    lastStatusResponse = body;
+  function updateFromStatus(body: GetSupportTriageStatusOutput) {
     healthy = body.healthy;
-    run = parseSupportTriageRun(body.run);
-    if (run?.runId) runIdInput.value = run.runId;
+    const r = body.run;
+    if (r && typeof r.runId === "string") {
+      runId = r.runId;
+      runIdInput.value = r.runId;
+    }
+    status = r && typeof r.status === "string" ? r.status : null;
   }
 
-  async function triggerRun() {
-    const queueId = queueIdInput.value.trim();
-    const requestedBy = requestedByInput.value.trim();
-    const runIdValue = runIdInput.value.trim();
-    const dryRun = dryRunInput.checked;
-
-    error = null;
-    lastTriggerResponse = null;
-    lastStatusResponse = null;
-
-    stopPolling();
-
-    const body = await workflowClient.triggerSupportTriage({
-      queueId,
-      requestedBy,
-      ...(runIdValue ? { runId: runIdValue } : {}),
-      ...(dryRun ? { dryRun } : {}),
-    });
-    lastTriggerResponse = body;
-    run = parseSupportTriageRun(body.run);
-    if (run?.runId) runIdInput.value = run.runId;
+  async function fetchStatus(id: string | null) {
+    const body = await client.getSupportTriageStatus(id ? { runId: id } : {});
+    lastStatus = body;
+    updateFromStatus(body);
   }
 
-  async function pollOnce(runIdValue: string) {
-    if (pollInFlight) return;
-    pollInFlight = true;
+  async function trigger() {
+    const input: TriggerSupportTriageInput = {
+      queueId: queueIdInput.value.trim(),
+      requestedBy: requestedByInput.value.trim(),
+      ...(runIdInput.value.trim() ? { runId: runIdInput.value.trim() } : {}),
+      dryRun: dryRunInput.checked,
+    };
+
+    const body = await client.triggerSupportTriage(input);
+    lastTrigger = body;
+
+    const r = body.run;
+    if (r && typeof r.runId === "string") {
+      runId = r.runId;
+      runIdInput.value = r.runId;
+    }
+    status = r && typeof r.status === "string" ? r.status : "queued";
+  }
+
+  async function pollOnce() {
+    if (!runId || inFlight) return;
+    inFlight = true;
     try {
-      await fetchStatus(runIdValue);
-      if (isTerminalStatus(run?.status)) stopPolling();
+      await fetchStatus(runId);
+      if (isTerminalStatus(status)) stopPolling();
     } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
+      lastError = err instanceof Error ? err.message : String(err);
+      stopPolling();
     } finally {
-      pollInFlight = false;
+      inFlight = false;
       render();
     }
   }
 
-  function startPolling(runIdValue: string) {
+  function startPolling() {
+    if (!runId) return;
     stopPolling();
     polling = true;
-    void pollOnce(runIdValue);
-    pollTimer = window.setInterval(() => void pollOnce(runIdValue), 1500);
+    void pollOnce();
+    timer = window.setInterval(() => void pollOnce(), 1500);
   }
 
-  triggerButton.addEventListener("click", async () => {
-    triggerButton.disabled = true;
-    refreshButton.disabled = true;
-    stopButton.disabled = true;
+  triggerBtn.addEventListener("click", async () => {
+    triggerBtn.disabled = true;
+    fetchBtn.disabled = true;
+    stopBtn.disabled = true;
+
+    lastError = null;
+    stopPolling();
+    render();
+
     try {
-      await triggerRun();
-      if (run?.runId) startPolling(run.runId);
+      await trigger();
+      startPolling();
     } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
+      lastError = err instanceof Error ? err.message : String(err);
     } finally {
-      triggerButton.disabled = false;
-      refreshButton.disabled = false;
-      stopButton.disabled = false;
+      triggerBtn.disabled = false;
+      fetchBtn.disabled = false;
+      stopBtn.disabled = false;
       render();
     }
   });
 
-  refreshButton.addEventListener("click", async () => {
-    refreshButton.disabled = true;
+  fetchBtn.addEventListener("click", async () => {
+    fetchBtn.disabled = true;
+    lastError = null;
+    render();
+
     try {
-      error = null;
-      const value = runIdInput.value.trim();
-      await fetchStatus(value === "" ? null : value);
+      await fetchStatus(runIdInput.value.trim() || null);
     } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
+      lastError = err instanceof Error ? err.message : String(err);
     } finally {
-      refreshButton.disabled = false;
+      fetchBtn.disabled = false;
       render();
     }
   });
 
-  stopButton.addEventListener("click", () => {
+  stopBtn.addEventListener("click", () => {
     stopPolling();
     render();
   });
-
-  root.append(title, subtitle, meta, routeHints, stateCard, actions, responseCard);
-  el.appendChild(root);
 
   void (async () => {
     try {
       await fetchStatus(null);
     } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
+      lastError = err instanceof Error ? err.message : String(err);
     } finally {
       render();
     }
