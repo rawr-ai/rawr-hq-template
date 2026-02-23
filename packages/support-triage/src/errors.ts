@@ -1,16 +1,37 @@
-export type SupportTriageDomainErrorCode =
-  | "INVALID_QUEUE_ID"
-  | "INVALID_REQUESTED_BY"
-  | "INVALID_WORK_ITEM_ID"
-  | "WORK_ITEM_NOT_FOUND"
-  | "INVALID_STATUS_TRANSITION"
-  | "INVALID_COMPLETION_INPUT";
+import type { TriageWorkItemStatus } from "./domain";
 
-export class SupportTriageDomainError extends Error {
-  readonly code: SupportTriageDomainErrorCode;
-  readonly details?: Record<string, unknown>;
+export type SupportTriageDomainErrorDetailsByCode = {
+  INVALID_QUEUE_ID: {
+    queueId?: string;
+  };
+  INVALID_REQUESTED_BY: {
+    requestedBy?: string;
+  };
+  INVALID_WORK_ITEM_ID: {
+    workItemId?: string;
+  };
+  WORK_ITEM_NOT_FOUND: {
+    workItemId?: string;
+  };
+  INVALID_STATUS_TRANSITION: {
+    workItemId?: string;
+    from?: TriageWorkItemStatus;
+    to?: TriageWorkItemStatus;
+  };
+  INVALID_COMPLETION_INPUT: {
+    workItemId?: string;
+  };
+};
 
-  constructor(code: SupportTriageDomainErrorCode, message: string, details?: Record<string, unknown>) {
+export type SupportTriageDomainErrorCode = keyof SupportTriageDomainErrorDetailsByCode;
+
+export class SupportTriageDomainError<
+  TCode extends SupportTriageDomainErrorCode = SupportTriageDomainErrorCode,
+> extends Error {
+  readonly code: TCode;
+  readonly details?: SupportTriageDomainErrorDetailsByCode[TCode];
+
+  constructor(code: TCode, message: string, details?: SupportTriageDomainErrorDetailsByCode[TCode]) {
     super(message);
     this.name = "SupportTriageDomainError";
     this.code = code;
@@ -18,6 +39,10 @@ export class SupportTriageDomainError extends Error {
   }
 }
 
-export function isSupportTriageDomainError(error: unknown): error is SupportTriageDomainError {
+export type AnySupportTriageDomainError = {
+  [Code in SupportTriageDomainErrorCode]: SupportTriageDomainError<Code>;
+}[SupportTriageDomainErrorCode];
+
+export function isSupportTriageDomainError(error: unknown): error is AnySupportTriageDomainError {
   return error instanceof SupportTriageDomainError;
 }

@@ -4,7 +4,8 @@ import { Type } from "typebox";
 import { TriageWorkItemSchema, TriageWorkItemSourceSchema } from "../domain";
 import type { SupportTriageProcedureContext } from "../context";
 import { requestSupportTriageWorkItem } from "../service/lifecycle";
-import { throwSupportTriageDomainErrorAsOrpc } from "./boundary-errors";
+import { supportTriageProcedureErrorMap } from "./error-map";
+import { throwSupportTriageDomainErrorAsProcedureError } from "./procedure-errors";
 
 const o = os.$context<SupportTriageProcedureContext>();
 
@@ -43,10 +44,11 @@ export const requestWorkItemProcedure = o
       ),
     ),
   )
-  .handler(async ({ context, input }) => {
+  .errors(supportTriageProcedureErrorMap)
+  .handler(async ({ context, input, errors }) => {
     try {
       return await requestSupportTriageWorkItem(context.deps, input);
     } catch (error) {
-      throwSupportTriageDomainErrorAsOrpc(error);
+      throwSupportTriageDomainErrorAsProcedureError(error, errors);
     }
   });

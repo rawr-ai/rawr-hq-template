@@ -11,3 +11,5 @@ export const procedures = {
   startWorkItem: startWorkItemProcedure,
   completeWorkItem: completeWorkItemProcedure,
 } as const;
+
+export { supportTriageProcedureErrorMap } from "./error-map";
