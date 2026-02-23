@@ -14,13 +14,10 @@ export function registerServer(app: any, _ctx: { baseUrl: string }) {
     capability: "support-triage",
     exampleDomain: true,
     routeHints: {
-      firstPartyDefault: "/rpc (supportTriage workflow procedures)",
-      publishedBoundary: "/api/workflows/support-triage/*",
-    },
-    run: {
-      runId: "support-triage-demo-run",
-      queueId: "queue-demo",
-      status: "queued",
+      publishedBoundary: {
+        triggerRun: "POST /api/workflows/support-triage/runs",
+        getStatus: "GET /api/workflows/support-triage/status?runId=...",
+      },
     },
   }));
 }
