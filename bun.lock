@@ -5,6 +5,7 @@
     "": {
       "name": "rawr-hq-template",
       "dependencies": {
+        "@rawr/core": "workspace:*",
         "@rawr/orpc-standards": "workspace:*",
         "@rawr/support-triage": "workspace:*",
       },
