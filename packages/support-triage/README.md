@@ -2,8 +2,7 @@
 
 `@rawr/support-triage` models the **support-triage** capability domain in this template.
 
-It demonstrates how one transport-neutral package can be reused across:
-- package-local oRPC procedures,
+It demonstrates how one transport-neutral domain package can be reused across:
 - API plugin boundary contracts/operations, and
 - workflow plugin trigger/durable execution surfaces.
 

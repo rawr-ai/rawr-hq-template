@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   completeSupportTriageJob,
   createInMemoryTriageJobStore,
-  createSupportTriageClientFromDeps,
   requestSupportTriageJob,
   startSupportTriageJob,
   type SupportTriageServiceDeps,
@@ -71,40 +70,5 @@ describe("support-triage service", () => {
         triagedTicketCount: 1,
       }),
     ).rejects.toThrow(/Cannot transition queued -> completed/);
-  });
-});
-
-describe("support-triage client", () => {
-  it("exposes internal package procedures through createRouterClient", async () => {
-    const deps = createDeps({
-      now: ["2026-02-22T12:00:00.000Z", "2026-02-22T12:00:01.000Z", "2026-02-22T12:00:02.000Z"],
-      ids: ["triage.queue-003"],
-    });
-
-    const client = createSupportTriageClientFromDeps(deps, {
-      requestId: "req-test",
-      correlationId: "corr-test",
-    });
-
-    const requested = await client.requestTriageJob({
-      queueId: "queue.gamma",
-      requestedBy: "user.test",
-    });
-
-    await client.startTriageJob({ jobId: requested.job.jobId });
-    await client.completeTriageJob({
-      jobId: requested.job.jobId,
-      succeeded: false,
-      triagedTicketCount: 4,
-      escalatedTicketCount: 1,
-      failureReason: "Downstream enrichment service unavailable",
-      failureCode: "ENRICHMENT_TIMEOUT",
-    });
-
-    const listed = await client.listTriageJobs({});
-    expect(listed.jobs).toHaveLength(1);
-    expect(listed.jobs[0]?.status).toBe("failed");
-    expect(listed.jobs[0]?.triagedTicketCount).toBe(4);
-    expect(listed.jobs[0]?.failureReason).toMatch(/unavailable/);
   });
 });
