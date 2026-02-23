@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { createInngestServeHandler } from "@rawr/coordination-inngest";
 import { createHqRuntimeRouter } from "@rawr/core/orpc";
-import { createInMemoryTriageJobStore, type SupportTriageServiceDeps } from "@rawr/support-triage";
+import {
+  createInMemoryTriageWorkItemStore,
+  createSupportTriageInternalClient,
+  type SupportTriageServiceDeps,
+} from "@rawr/support-triage";
 import { Inngest } from "inngest";
 import { registerSupportTriageApiPlugin } from "./plugins/api/support-triage";
 import { createSupportTriageInngestFunctions, registerSupportTriageWorkflowPlugin } from "./plugins/workflows/support-triage";
@@ -9,7 +13,7 @@ import { createSupportTriageInngestFunctions, registerSupportTriageWorkflowPlugi
 // Keep capability fixture state stable per repo root across requests in local dev/test runs.
 const supportTriageDepsByRepoRoot = new Map<string, SupportTriageServiceDeps>();
 
-function createSupportTriageJobId(): string {
+function createSupportTriageWorkItemId(): string {
   return `support-triage-${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`;
 }
 
@@ -20,12 +24,21 @@ function resolveSupportTriageDeps(repoRoot: string): SupportTriageServiceDeps {
   }
 
   const deps: SupportTriageServiceDeps = {
-    store: createInMemoryTriageJobStore(),
+    store: createInMemoryTriageWorkItemStore(),
     now: () => new Date().toISOString(),
-    generateJobId: createSupportTriageJobId,
+    generateWorkItemId: createSupportTriageWorkItemId,
   };
   supportTriageDepsByRepoRoot.set(repoRoot, deps);
   return deps;
+}
+
+function enrichSupportTriageContext<T extends { repoRoot: string }>(context: T) {
+  return {
+    ...context,
+    supportTriage: createSupportTriageInternalClient({
+      deps: resolveSupportTriageDeps(context.repoRoot),
+    }),
+  };
 }
 
 // Host owns one runtime client instance and injects it into the workflow bundle.
@@ -39,7 +52,10 @@ const composedOrpcRouter = {
   ...supportTriageApiPlugin.router,
 };
 const composedWorkflowTriggerRouter = supportTriageWorkflowPlugin.router;
-const supportTriageInngestFunctions = createSupportTriageInngestFunctions({ client: supportTriageInngestClient });
+const supportTriageInngestFunctions = createSupportTriageInngestFunctions({
+  client: supportTriageInngestClient,
+  resolveSupportTriageDeps,
+});
 
 export const rawrHqManifest = {
   fixtures: {
@@ -49,6 +65,7 @@ export const rawrHqManifest = {
   },
   orpc: {
     router: composedOrpcRouter,
+    enrichContext: enrichSupportTriageContext,
   },
   workflows: {
     capabilities: {
@@ -57,6 +74,7 @@ export const rawrHqManifest = {
       },
     },
     triggerRouter: composedWorkflowTriggerRouter,
+    enrichContext: enrichSupportTriageContext,
   },
   inngest: {
     client: supportTriageInngestClient,

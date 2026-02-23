@@ -27,7 +27,7 @@ describe("api plugin example surface", () => {
     const app = createApp();
 
     const requestResponse = await app.handle(
-      new Request("http://localhost/rpc/supportTriage/requestJob", {
+      new Request("http://localhost/rpc/supportTriage/requestWorkItem", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({
@@ -43,17 +43,17 @@ describe("api plugin example surface", () => {
     expect(requestResponse.status).toBe(200);
     const requestPayload = (await requestResponse.json()) as {
       json?: {
-        job?: {
-          jobId?: string;
+        workItem?: {
+          workItemId?: string;
           status?: string;
         };
       };
     };
-    expect(typeof requestPayload.json?.job?.jobId).toBe("string");
-    expect(requestPayload.json?.job?.status).toBe("queued");
+    expect(typeof requestPayload.json?.workItem?.workItemId).toBe("string");
+    expect(requestPayload.json?.workItem?.status).toBe("queued");
 
     const listResponse = await app.handle(
-      new Request("http://localhost/rpc/supportTriage/listJobs", {
+      new Request("http://localhost/rpc/supportTriage/listWorkItems", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),
@@ -63,18 +63,18 @@ describe("api plugin example surface", () => {
     expect(listResponse.status).toBe(200);
     const listPayload = (await listResponse.json()) as {
       json?: {
-        jobs?: unknown[];
+        workItems?: unknown[];
       };
     };
-    expect(Array.isArray(listPayload.json?.jobs)).toBe(true);
-    expect(listPayload.json?.jobs?.length).toBeGreaterThan(0);
+    expect(Array.isArray(listPayload.json?.workItems)).toBe(true);
+    expect(listPayload.json?.workItems?.length).toBeGreaterThan(0);
   });
 
   it("serves support-triage routes for external /api/orpc/* callers", async () => {
     const app = createApp();
 
     const createResponse = await app.handle(
-      new Request("http://localhost/api/orpc/support-triage/jobs", {
+      new Request("http://localhost/api/orpc/support-triage/work-items", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -90,15 +90,15 @@ describe("api plugin example surface", () => {
 
     expect(createResponse.status).toBe(200);
     const created = (await createResponse.json()) as {
-      job?: {
-        jobId?: string;
+      workItem?: {
+        workItemId?: string;
       };
     };
-    expect(typeof created.job?.jobId).toBe("string");
+    expect(typeof created.workItem?.workItemId).toBe("string");
 
-    const jobId = created.job?.jobId ?? "";
+    const workItemId = created.workItem?.workItemId ?? "";
     const getResponse = await app.handle(
-      new Request(`http://localhost/api/orpc/support-triage/jobs/${jobId}`, {
+      new Request(`http://localhost/api/orpc/support-triage/work-items/${workItemId}`, {
         headers: {
           "x-rawr-caller-surface": "external",
         },
@@ -107,13 +107,13 @@ describe("api plugin example surface", () => {
 
     expect(getResponse.status).toBe(200);
     const getPayload = (await getResponse.json()) as {
-      job?: {
-        jobId?: string;
+      workItem?: {
+        workItemId?: string;
         queueId?: string;
       };
     };
-    expect(getPayload.job?.jobId).toBe(jobId);
-    expect(getPayload.job?.queueId).toBe("queue.external");
+    expect(getPayload.workItem?.workItemId).toBe(workItemId);
+    expect(getPayload.workItem?.queueId).toBe("queue.external");
   });
 
   it("rejects caller paths on /api/inngest", async () => {

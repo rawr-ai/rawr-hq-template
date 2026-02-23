@@ -1,59 +1,59 @@
 import { Type, type Static } from "typebox";
-import { TriageJobStatusSchema } from "./status";
+import { TriageWorkItemStatusSchema } from "./status";
 
-export const TriageJobSourceSchema = Type.Union(
+export const TriageWorkItemSourceSchema = Type.Union(
   [
     Type.Literal("manual", { description: "Requested directly by a person or operator action." }),
     Type.Literal("workflow", { description: "Requested by an automated workflow trigger." }),
     Type.Literal("escalation", { description: "Requested by an escalation policy path." }),
   ],
   {
-    description: "Source channel that initiated the triage job.",
+    description: "Source channel that initiated the triage work item.",
   },
 );
 
-export type TriageJobSource = Static<typeof TriageJobSourceSchema>;
+export type TriageWorkItemSource = Static<typeof TriageWorkItemSourceSchema>;
 
-export const TriageJobSchema = Type.Object(
+export const TriageWorkItemSchema = Type.Object(
   {
-    jobId: Type.String({
+    workItemId: Type.String({
       minLength: 1,
-      description: "Stable identifier for the API triage job lifecycle record.",
+      description: "Stable identifier for the triage work item lifecycle record.",
     }),
     queueId: Type.String({
       minLength: 1,
-      description: "Stable identifier for the queue this job processes.",
+      description: "Stable identifier for the queue this work item belongs to.",
     }),
     requestedBy: Type.String({
       minLength: 1,
-      description: "Principal identifier that requested the triage job.",
+      description: "Principal identifier that requested the triage work item.",
     }),
-    source: TriageJobSourceSchema,
-    status: TriageJobStatusSchema,
+    source: TriageWorkItemSourceSchema,
+    status: TriageWorkItemStatusSchema,
     createdAt: Type.String({
       format: "date-time",
-      description: "ISO timestamp when the job was initially created.",
+      description: "ISO timestamp when the work item was initially created.",
     }),
     updatedAt: Type.String({
       format: "date-time",
-      description: "ISO timestamp when the job state was last updated.",
+      description: "ISO timestamp when the work item state was last updated.",
     }),
     startedAt: Type.Optional(
       Type.String({
         format: "date-time",
-        description: "ISO timestamp when job processing started.",
+        description: "ISO timestamp when work item processing started.",
       }),
     ),
     completedAt: Type.Optional(
       Type.String({
         format: "date-time",
-        description: "ISO timestamp when the job reached successful completion.",
+        description: "ISO timestamp when the work item reached successful completion.",
       }),
     ),
     triagedTicketCount: Type.Optional(
       Type.Integer({
         minimum: 0,
-        description: "Number of tickets triaged by the job run compatible completion payload.",
+        description: "Number of tickets triaged by the completion payload.",
       }),
     ),
     escalatedTicketCount: Type.Optional(
@@ -65,7 +65,7 @@ export const TriageJobSchema = Type.Object(
     failedAt: Type.Optional(
       Type.String({
         format: "date-time",
-        description: "ISO timestamp when the job transitioned to failed.",
+        description: "ISO timestamp when the work item transitioned to failed.",
       }),
     ),
     failureReason: Type.Optional(
@@ -84,8 +84,8 @@ export const TriageJobSchema = Type.Object(
   {
     additionalProperties: false,
     description:
-      "Canonical API TriageJob lifecycle record (queue scoped). Workflow TriageRun lifecycle is a separate runtime concern.",
+      "Canonical triage work item lifecycle record (queue-scoped).",
   },
 );
 
-export type TriageJob = Static<typeof TriageJobSchema>;
+export type TriageWorkItem = Static<typeof TriageWorkItemSchema>;

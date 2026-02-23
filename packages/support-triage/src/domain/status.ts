@@ -1,24 +1,24 @@
 import { Type, type Static } from "typebox";
 
-export const TriageJobStatusSchema = Type.Union(
+export const TriageWorkItemStatusSchema = Type.Union(
   [
-    Type.Literal("queued", { description: "Job is accepted and waiting for an agent to start triage." }),
-    Type.Literal("running", { description: "Job is actively being triaged." }),
-    Type.Literal("completed", { description: "Job finished successfully with triage output." }),
-    Type.Literal("failed", { description: "Job failed and requires follow-up or retry." }),
+    Type.Literal("queued", { description: "Work item is accepted and waiting for an agent to start triage." }),
+    Type.Literal("running", { description: "Work item is actively being triaged." }),
+    Type.Literal("completed", { description: "Work item finished successfully with triage output." }),
+    Type.Literal("failed", { description: "Work item failed and requires follow-up." }),
   ],
   {
-    description: "Lifecycle status for support-triage jobs.",
+    description: "Lifecycle status for support-triage work items.",
   },
 );
 
-export type TriageJobStatus = Static<typeof TriageJobStatusSchema>;
+export type TriageWorkItemStatus = Static<typeof TriageWorkItemStatusSchema>;
 
-export function isTerminalTriageJobStatus(status: TriageJobStatus): boolean {
+export function isTerminalTriageWorkItemStatus(status: TriageWorkItemStatus): boolean {
   return status === "completed" || status === "failed";
 }
 
-export function canTransitionTriageJobStatus(from: TriageJobStatus, to: TriageJobStatus): boolean {
+export function canTransitionTriageWorkItemStatus(from: TriageWorkItemStatus, to: TriageWorkItemStatus): boolean {
   if (from === to) return true;
   if (from === "queued") return to === "running";
   if (from === "running") return to === "completed" || to === "failed";
