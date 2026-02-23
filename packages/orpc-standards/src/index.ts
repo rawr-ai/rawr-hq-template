@@ -46,3 +46,76 @@ export function typeBoxStandardSchema<T extends TSchema>(typeboxSchema: T): Sche
 export function schema<T extends TSchema>(typeboxSchema: T): Schema<Static<T>, Static<T>> {
   return typeBoxStandardSchema(typeboxSchema);
 }
+
+export type DomainErrorCatalog = Record<
+  string,
+  {
+    status: number;
+    message: string;
+    data: TSchema;
+  }
+>;
+
+export type DomainErrorDetailsByCode<TCatalog extends DomainErrorCatalog> = {
+  [Code in keyof TCatalog]: Static<TCatalog[Code]["data"]>;
+};
+
+export type DomainErrorLike<TCatalog extends DomainErrorCatalog> = {
+  [Code in keyof TCatalog]: {
+    code: Code;
+    message: string;
+    details?: DomainErrorDetailsByCode<TCatalog>[Code];
+  };
+}[keyof TCatalog];
+
+export type OrpcErrorMapFromDomainCatalog<TCatalog extends DomainErrorCatalog> = {
+  [Code in keyof TCatalog]: {
+    status: TCatalog[Code]["status"];
+    message: TCatalog[Code]["message"];
+    data: Schema<Static<TCatalog[Code]["data"]>, Static<TCatalog[Code]["data"]>>;
+  };
+};
+
+export function createOrpcErrorMapFromDomainCatalog<TCatalog extends DomainErrorCatalog>(
+  catalog: TCatalog,
+): OrpcErrorMapFromDomainCatalog<TCatalog> {
+  const mapped = {} as OrpcErrorMapFromDomainCatalog<TCatalog>;
+
+  for (const code of Object.keys(catalog) as Array<keyof TCatalog>) {
+    const definition = catalog[code];
+    mapped[code] = {
+      status: definition.status,
+      message: definition.message,
+      data: schema(definition.data),
+    } as OrpcErrorMapFromDomainCatalog<TCatalog>[typeof code];
+  }
+
+  return mapped;
+}
+
+type DomainErrorConstructorMap<TCatalog extends DomainErrorCatalog> = {
+  [Code in keyof TCatalog]: (input: {
+    message: string;
+    data: DomainErrorDetailsByCode<TCatalog>[Code];
+  }) => unknown;
+};
+
+export function throwDomainErrorAsOrpcError<TCatalog extends DomainErrorCatalog>(args: {
+  error: unknown;
+  isDomainError: (error: unknown) => error is DomainErrorLike<TCatalog>;
+  errors: DomainErrorConstructorMap<TCatalog>;
+}): never {
+  if (!args.isDomainError(args.error)) {
+    throw args.error;
+  }
+
+  const createOrpcError = args.errors[args.error.code as keyof TCatalog] as (input: {
+    message: string;
+    data: unknown;
+  }) => unknown;
+
+  throw createOrpcError({
+    message: args.error.message,
+    data: args.error.details ?? {},
+  });
+}
