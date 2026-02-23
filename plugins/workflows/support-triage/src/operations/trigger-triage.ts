@@ -1,6 +1,4 @@
-import { throwSupportTriageBoundaryError } from "../errors";
-import type { TriggerSupportTriageInput, TriggerSupportTriageOutput } from "../contract";
-import type { SupportTriageWorkflowContext } from "../context";
+import { ORPCError } from "@orpc/server";
 import {
   SUPPORT_TRIAGE_EVENT_NAME,
   createSupportTriageRunId,
@@ -9,17 +7,13 @@ import {
   normalizeSupportTriageRunId,
 } from "../models";
 import { getSupportTriageRun, saveSupportTriageRun } from "../run-store";
+import { os } from "../orpc";
 
-export async function triggerSupportTriage(
-  args: Readonly<{ context: SupportTriageWorkflowContext; input: TriggerSupportTriageInput }>,
-): Promise<TriggerSupportTriageOutput> {
-  const { context, input } = args;
+export const triggerSupportTriage = os.triggerSupportTriage.handler(async ({ context, input }) => {
   const queueId = normalizeSupportTriageQueueId(input.queueId);
   if (!queueId) {
-    throwSupportTriageBoundaryError({
-      transportCode: "BAD_REQUEST",
+    throw new ORPCError("INVALID_QUEUE_ID", {
       status: 400,
-      domainCode: "INVALID_QUEUE_ID",
       message: "queueId must be a valid identifier",
       data: { queueId: input.queueId },
     });
@@ -27,10 +21,8 @@ export async function triggerSupportTriage(
 
   const requestedBy = input.requestedBy.trim();
   if (requestedBy.length === 0) {
-    throwSupportTriageBoundaryError({
-      transportCode: "BAD_REQUEST",
+    throw new ORPCError("INVALID_REQUESTED_BY", {
       status: 400,
-      domainCode: "INVALID_REQUESTED_BY",
       message: "requestedBy must be a non-empty string",
       data: { requestedBy: input.requestedBy },
     });
@@ -38,10 +30,8 @@ export async function triggerSupportTriage(
 
   const runId = input.runId ? normalizeSupportTriageRunId(input.runId) : createSupportTriageRunId();
   if (!runId) {
-    throwSupportTriageBoundaryError({
-      transportCode: "BAD_REQUEST",
+    throw new ORPCError("INVALID_SUPPORT_TRIAGE_RUN_ID", {
       status: 400,
-      domainCode: "INVALID_SUPPORT_TRIAGE_RUN_ID",
       message: "runId must be a valid identifier when provided",
       data: { runId: input.runId },
     });
@@ -96,12 +86,10 @@ export async function triggerSupportTriage(
 
     saveSupportTriageRun(failedRun);
 
-    throwSupportTriageBoundaryError({
-      transportCode: "INTERNAL_SERVER_ERROR",
+    throw new ORPCError("SUPPORT_TRIAGE_TRIGGER_FAILED", {
       status: 500,
-      domainCode: "SUPPORT_TRIAGE_TRIGGER_FAILED",
       message: failedRun.error,
       data: { runId },
     });
   }
-}
+});

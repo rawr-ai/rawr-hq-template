@@ -233,6 +233,8 @@
     "packages/support-triage": {
       "name": "@rawr/support-triage",
       "dependencies": {
+        "@orpc/server": "^1.13.5",
+        "@rawr/orpc-standards": "workspace:*",
         "typebox": "^1.0.81",
       },
       "devDependencies": {

@@ -1,15 +1,6 @@
-import { getSupportTriageJob } from "@rawr/support-triage";
-import type { SupportTriageApiContext, SupportTriageApiOperationDeps } from "../context";
-import { throwSupportTriageDomainErrorAsBoundary } from "../errors";
+import { os } from "../orpc";
+import { requireSupportTriageClient } from "../require-client";
 
-export function createGetTriageJobHandler<Context extends SupportTriageApiContext>(
-  deps: SupportTriageApiOperationDeps<Context>,
-) {
-  return async ({ context, input }: { context: Context; input: { jobId: string } }) => {
-    try {
-      return await getSupportTriageJob(deps.resolveDeps(context), input);
-    } catch (error) {
-      throwSupportTriageDomainErrorAsBoundary(error);
-    }
-  };
-}
+export const getTriageJob = os.supportTriage.getTriageJob.handler(async ({ context, input }) => {
+  return requireSupportTriageClient(context).getTriageJob(input);
+});
