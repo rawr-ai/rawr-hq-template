@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
-import { registerRawrRoutes } from "../src/rawr";
+import { registerRawrRoutes, verifyInngestIngressRequest } from "../src/rawr";
 
 async function pathExists(targetPath: string): Promise<boolean> {
   try {
@@ -24,6 +24,37 @@ afterEach(async () => {
 });
 
 describe("ingress signature observability", () => {
+  it("allows unsigned ingress in explicit dev mode (local Inngest Dev Server)", async () => {
+    const prev = {
+      INNGEST_DEV: process.env.INNGEST_DEV,
+      NODE_ENV: process.env.NODE_ENV,
+      INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
+      INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
+      INNGEST_SIGNING_KEY_FALLBACK: process.env.INNGEST_SIGNING_KEY_FALLBACK,
+    };
+
+    process.env.INNGEST_DEV = "http://localhost:8288";
+    delete process.env.INNGEST_SIGNING_KEY;
+    delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
+    delete process.env.INNGEST_EVENT_KEY;
+
+    try {
+      const ok = await verifyInngestIngressRequest(
+        new Request("http://localhost/api/inngest", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name: "support-triage/run.requested", data: {} }),
+        }),
+      );
+      expect(ok).toBe(true);
+    } finally {
+      for (const [key, value] of Object.entries(prev)) {
+        if (value === undefined) delete (process.env as any)[key];
+        else (process.env as any)[key] = value;
+      }
+    }
+  });
+
   it("rejects invalid ingress signatures before telemetry side effects", async () => {
     const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-ingress-observability-"));
     tempDirs.push(fixtureRoot);
@@ -122,10 +153,11 @@ describe("ingress signature observability", () => {
     const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-ingress-route-family-"));
     tempDirs.push(fixtureRoot);
     const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot, enabledPluginIds: new Set() });
-    const response = await app.handle(new Request("http://localhost/api/workflows/coordination/workflows"));
+    const response = await app.handle(new Request("http://localhost/api/workflows/support-triage/status"));
 
     expect(response.status).toBe(200);
-    const payload = (await response.json()) as { workflows?: unknown[] };
-    expect(Array.isArray(payload.workflows)).toBe(true);
+    const payload = (await response.json()) as { capability?: string; healthy?: boolean };
+    expect(payload.capability).toBe("support-triage");
+    expect(payload.healthy).toBe(true);
   });
 });

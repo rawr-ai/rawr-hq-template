@@ -1,13 +1,51 @@
-import {
-  createCoordinationInngestFunction,
-  createInngestServeHandler,
-  type CoordinationFunctionBundle,
-  type CoordinationRuntimeAdapter,
-} from "./packages/coordination-inngest/src/adapter";
-import { createHqRuntimeRouter, createWorkflowTriggerRuntimeRouter } from "./packages/core/src/orpc/runtime-router";
+import { randomUUID } from "node:crypto";
+import { createInngestServeHandler } from "@rawr/coordination-inngest";
+import { createInMemoryTriageJobStore, createSupportTriageClientFromDeps, type SupportTriageServiceDeps } from "@rawr/support-triage";
+import { createHqRuntimeRouter } from "./packages/core/src/orpc/runtime-router";
+import { Inngest } from "inngest";
+import { registerSupportTriageApiPlugin } from "./plugins/api/support-triage/src";
+import { createSupportTriageInngestFunctions, registerSupportTriageWorkflowPlugin } from "./plugins/workflows/support-triage";
 
-const composedOrpcRouter = createHqRuntimeRouter();
-const composedWorkflowTriggerRouter = createWorkflowTriggerRuntimeRouter();
+// Keep capability fixture state stable per repo root across requests in local dev/test runs.
+const supportTriageDepsByRepoRoot = new Map<string, SupportTriageServiceDeps>();
+
+function createSupportTriageJobId(): string {
+  return `support-triage-${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`;
+}
+
+function resolveSupportTriageDeps(repoRoot: string): SupportTriageServiceDeps {
+  const existing = supportTriageDepsByRepoRoot.get(repoRoot);
+  if (existing) {
+    return existing;
+  }
+
+  const deps: SupportTriageServiceDeps = {
+    store: createInMemoryTriageJobStore(),
+    now: () => new Date().toISOString(),
+    generateJobId: createSupportTriageJobId,
+  };
+  supportTriageDepsByRepoRoot.set(repoRoot, deps);
+  return deps;
+}
+
+// Host owns one runtime client instance and injects it into the workflow bundle.
+const supportTriageInngestClient = new Inngest({ id: "rawr-support-triage" });
+
+const coreOrpcRouter = createHqRuntimeRouter();
+const supportTriageApiPlugin = registerSupportTriageApiPlugin({
+  resolveClient: (context) =>
+    createSupportTriageClientFromDeps(resolveSupportTriageDeps(context.repoRoot), {
+      requestId: context.requestId,
+      correlationId: context.correlationId,
+    }),
+});
+const supportTriageWorkflowPlugin = registerSupportTriageWorkflowPlugin();
+const composedOrpcRouter = {
+  ...coreOrpcRouter,
+  ...supportTriageApiPlugin.router,
+};
+const composedWorkflowTriggerRouter = supportTriageWorkflowPlugin.router;
+const supportTriageInngestFunctions = createSupportTriageInngestFunctions({ client: supportTriageInngestClient });
 
 export const rawrHqManifest = {
   orpc: {
@@ -15,17 +53,16 @@ export const rawrHqManifest = {
   },
   workflows: {
     capabilities: {
-      coordination: {
-        pathPrefix: "/coordination",
+      "support-triage": {
+        pathPrefix: "/support-triage",
       },
     },
     triggerRouter: composedWorkflowTriggerRouter,
   },
   inngest: {
-    bundleFactory: (runtime: CoordinationRuntimeAdapter): CoordinationFunctionBundle =>
-      createCoordinationInngestFunction({ runtime }),
-    serveHandlerFactory: (bundle: CoordinationFunctionBundle) =>
-      createInngestServeHandler({ client: bundle.client, functions: bundle.functions }),
+    client: supportTriageInngestClient,
+    functions: supportTriageInngestFunctions,
+    handler: createInngestServeHandler({ client: supportTriageInngestClient, functions: supportTriageInngestFunctions }),
   },
 } as const;
 

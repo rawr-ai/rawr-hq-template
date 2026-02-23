@@ -84,9 +84,10 @@ function hasManifestCompositionSeams(manifestObject) {
 
   const hasOrpcRouter = Boolean(getObjectPropertyInitializer(orpcObject, "router"));
   const hasTriggerRouter = Boolean(getObjectPropertyInitializer(workflowsObject, "triggerRouter"));
-  const bundleFactory = getObjectPropertyInitializer(inngestObject, "bundleFactory");
-  const serveHandlerFactory = getObjectPropertyInitializer(inngestObject, "serveHandlerFactory");
-  return hasOrpcRouter && hasTriggerRouter && isFunctionLikeExpression(bundleFactory) && isFunctionLikeExpression(serveHandlerFactory);
+  const hasInngestClient = Boolean(getObjectPropertyInitializer(inngestObject, "client"));
+  const hasInngestFunctions = Boolean(getObjectPropertyInitializer(inngestObject, "functions"));
+  const hasInngestHandler = Boolean(getObjectPropertyInitializer(inngestObject, "handler"));
+  return hasOrpcRouter && hasTriggerRouter && hasInngestClient && hasInngestFunctions && hasInngestHandler;
 }
 
 const requiredChecks = [
@@ -125,8 +126,8 @@ if (mode === "completion") {
   requiredChecks.push({
     label: "host consumes manifest inngest seams",
     ok:
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "bundleFactory"]) &&
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "serveHandlerFactory"]),
+      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "client"]) &&
+      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "handler"]),
   });
   requiredChecks.push({
     label: "host consumes manifest-owned ORPC router seam",

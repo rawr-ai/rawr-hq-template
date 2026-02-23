@@ -2,9 +2,24 @@ import type { MountContext } from "@rawr/ui-sdk";
 
 export const name = "@rawr/plugin-mfe-demo";
 
+type DemoStatus = "idle" | "queued" | "running" | "completed";
+
+type DemoRunState = {
+  runCount: number;
+  runId: string;
+  status: DemoStatus;
+  triagedTicketCount: number;
+};
+
 function getCssVar(root: HTMLElement, variableName: string, fallback: string) {
   const value = getComputedStyle(root).getPropertyValue(variableName).trim();
   return value || fallback;
+}
+
+function renderState(target: { status: HTMLElement; runId: HTMLElement; triagedTicketCount: HTMLElement }, state: DemoRunState) {
+  target.status.textContent = `status: ${state.status}`;
+  target.runId.textContent = `runId: ${state.runId}`;
+  target.triagedTicketCount.textContent = `triagedTicketCount: ${state.triagedTicketCount}`;
 }
 
 export function mount(el: HTMLElement, ctx: MountContext) {
@@ -27,7 +42,13 @@ export function mount(el: HTMLElement, ctx: MountContext) {
   const title = document.createElement("div");
   title.style.fontWeight = "700";
   title.style.marginBottom = "8px";
-  title.textContent = "Micro-frontend demo plugin";
+  title.textContent = "Support triage example micro-frontend";
+
+  const subtitle = document.createElement("div");
+  subtitle.style.color = textSecondary;
+  subtitle.style.fontSize = "12px";
+  subtitle.style.marginBottom = "8px";
+  subtitle.textContent = "Example domain only. Not a production support triage surface.";
 
   const meta = document.createElement("div");
   meta.style.color = textSecondary;
@@ -35,51 +56,97 @@ export function mount(el: HTMLElement, ctx: MountContext) {
   meta.style.marginBottom = "10px";
   meta.textContent = `plugin: ${name} · basePath: ${ctx.basePath ?? "/"}`;
 
-  const row = document.createElement("div");
-  row.style.display = "flex";
-  row.style.alignItems = "center";
-  row.style.gap = "10px";
-  row.style.padding = "10px";
-  row.style.border = `1px solid ${borderSubtle}`;
-  row.style.borderRadius = "10px";
-  row.style.background = surfaceInset;
+  const routeHints = document.createElement("div");
+  routeHints.style.color = textSecondary;
+  routeHints.style.fontSize = "12px";
+  routeHints.style.marginBottom = "10px";
+  routeHints.textContent = "first-party route: /rpc · published boundary: /api/workflows/support-triage/*";
 
-  const button = document.createElement("button");
-  button.type = "button";
-  button.textContent = "Increment";
-  button.style.border = `1px solid ${borderDefault}`;
-  button.style.borderRadius = "8px";
-  button.style.padding = "6px 10px";
-  button.style.fontWeight = "600";
-  button.style.background = accent;
-  button.style.color = accentInk;
-  button.style.cursor = "pointer";
-  button.style.transition = "filter 140ms ease-out";
-  button.addEventListener("mouseenter", () => {
-    button.style.filter = "brightness(1.06)";
+  const stateCard = document.createElement("div");
+  stateCard.style.display = "grid";
+  stateCard.style.gap = "4px";
+  stateCard.style.padding = "10px";
+  stateCard.style.border = `1px solid ${borderSubtle}`;
+  stateCard.style.borderRadius = "10px";
+  stateCard.style.background = surfaceInset;
+  stateCard.style.marginBottom = "10px";
+
+  const status = document.createElement("div");
+  status.style.fontWeight = "600";
+
+  const runId = document.createElement("div");
+  runId.style.fontVariantNumeric = "tabular-nums";
+
+  const triagedTicketCount = document.createElement("div");
+  triagedTicketCount.style.fontVariantNumeric = "tabular-nums";
+
+  stateCard.append(status, runId, triagedTicketCount);
+
+  const actions = document.createElement("div");
+  actions.style.display = "flex";
+  actions.style.alignItems = "center";
+  actions.style.gap = "10px";
+  actions.style.padding = "10px";
+  actions.style.border = `1px solid ${borderSubtle}`;
+  actions.style.borderRadius = "10px";
+  actions.style.background = surfaceInset;
+
+  const queueButton = document.createElement("button");
+  queueButton.type = "button";
+  queueButton.textContent = "Queue Triage Run";
+  queueButton.style.border = `1px solid ${borderDefault}`;
+  queueButton.style.borderRadius = "8px";
+  queueButton.style.padding = "6px 10px";
+  queueButton.style.fontWeight = "600";
+  queueButton.style.background = accent;
+  queueButton.style.color = accentInk;
+  queueButton.style.cursor = "pointer";
+  queueButton.style.transition = "filter 140ms ease-out";
+  queueButton.addEventListener("mouseenter", () => {
+    queueButton.style.filter = "brightness(1.06)";
   });
-  button.addEventListener("mouseleave", () => {
-    button.style.filter = "brightness(1)";
+  queueButton.addEventListener("mouseleave", () => {
+    queueButton.style.filter = "brightness(1)";
   });
 
-  const value = document.createElement("span");
-  value.style.fontVariantNumeric = "tabular-nums";
-  value.style.fontWeight = "700";
-  value.textContent = "0";
+  const completeButton = document.createElement("button");
+  completeButton.type = "button";
+  completeButton.textContent = "Mark Completed";
+  completeButton.style.border = `1px solid ${borderDefault}`;
+  completeButton.style.borderRadius = "8px";
+  completeButton.style.padding = "6px 10px";
+  completeButton.style.fontWeight = "600";
+  completeButton.style.background = surface;
+  completeButton.style.color = textPrimary;
+  completeButton.style.cursor = "pointer";
 
-  let count = 0;
-  button.addEventListener("click", () => {
-    count += 1;
-    value.textContent = String(count);
+  actions.append(queueButton, completeButton);
+
+  const state: DemoRunState = {
+    runCount: 0,
+    runId: "none",
+    status: "idle",
+    triagedTicketCount: 0,
+  };
+
+  queueButton.addEventListener("click", () => {
+    state.runCount += 1;
+    state.runId = `support-triage-demo-${state.runCount}`;
+    state.status = "queued";
+    state.triagedTicketCount = 0;
+    renderState({ status, runId, triagedTicketCount }, state);
   });
 
-  row.appendChild(button);
-  row.appendChild(value);
+  completeButton.addEventListener("click", () => {
+    if (state.status === "idle") return;
+    state.status = "completed";
+    state.triagedTicketCount = Math.max(12, state.runCount * 12);
+    renderState({ status, runId, triagedTicketCount }, state);
+  });
 
-  root.appendChild(title);
-  root.appendChild(meta);
-  root.appendChild(row);
+  renderState({ status, runId, triagedTicketCount }, state);
 
+  root.append(title, subtitle, meta, routeHints, stateCard, actions);
   el.appendChild(root);
 
   return {
