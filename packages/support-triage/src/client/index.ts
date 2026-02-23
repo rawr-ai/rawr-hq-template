@@ -4,6 +4,27 @@ export {
   supportTriageClientErrorMap,
   throwSupportTriageDomainErrorAsClientError,
 } from "./errors";
-import { supportTriageClientProcedures } from "./procedures";
-export { supportTriageClientProcedures } from "./procedures";
+export {
+  requestWorkItemProcedure,
+  listWorkItemsProcedure,
+  getWorkItemProcedure,
+  startWorkItemProcedure,
+  completeWorkItemProcedure,
+} from "./procedures";
+import {
+  requestWorkItemProcedure,
+  listWorkItemsProcedure,
+  getWorkItemProcedure,
+  startWorkItemProcedure,
+  completeWorkItemProcedure,
+} from "./procedures";
+
+export const supportTriageClientProcedures = {
+  requestWorkItem: requestWorkItemProcedure,
+  listWorkItems: listWorkItemsProcedure,
+  getWorkItem: getWorkItemProcedure,
+  startWorkItem: startWorkItemProcedure,
+  completeWorkItem: completeWorkItemProcedure,
+} as const;
+
 export type SupportTriageClient = RouterClient<typeof supportTriageClientProcedures>;

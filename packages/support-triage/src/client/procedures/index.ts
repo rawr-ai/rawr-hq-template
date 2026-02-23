@@ -1,13 +1,5 @@
-import { completeWorkItemProcedure } from "./complete-work-item";
-import { getWorkItemProcedure } from "./get-work-item";
-import { listWorkItemsProcedure } from "./list-work-items";
-import { requestWorkItemProcedure } from "./request-work-item";
-import { startWorkItemProcedure } from "./start-work-item";
-
-export const supportTriageClientProcedures = {
-  requestWorkItem: requestWorkItemProcedure,
-  listWorkItems: listWorkItemsProcedure,
-  getWorkItem: getWorkItemProcedure,
-  startWorkItem: startWorkItemProcedure,
-  completeWorkItem: completeWorkItemProcedure,
-} as const;
+export { requestWorkItemProcedure } from "./request-work-item";
+export { listWorkItemsProcedure } from "./list-work-items";
+export { getWorkItemProcedure } from "./get-work-item";
+export { startWorkItemProcedure } from "./start-work-item";
+export { completeWorkItemProcedure } from "./complete-work-item";
