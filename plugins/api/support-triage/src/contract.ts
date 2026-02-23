@@ -1,7 +1,12 @@
 import { oc } from "@orpc/contract";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { TriageWorkItemSchema, TriageWorkItemSourceSchema, TriageWorkItemStatusSchema } from "@rawr/support-triage";
+import {
+  TriageWorkItemSchema,
+  TriageWorkItemSourceSchema,
+  TriageWorkItemStatusSchema,
+  supportTriageProcedureErrorMap,
+} from "@rawr/support-triage";
 
 const supportTriageTag = ["support-triage"] as const;
 
@@ -49,7 +54,8 @@ export const supportTriageApiContract = oc.router({
             },
           ),
         ),
-      ),
+      )
+      .errors(supportTriageProcedureErrorMap),
 
     listWorkItems: oc
       .route({
@@ -87,7 +93,8 @@ export const supportTriageApiContract = oc.router({
             },
           ),
         ),
-      ),
+      )
+      .errors(supportTriageProcedureErrorMap),
 
     getWorkItem: oc
       .route({
@@ -126,7 +133,8 @@ export const supportTriageApiContract = oc.router({
             },
           ),
         ),
-      ),
+      )
+      .errors(supportTriageProcedureErrorMap),
 
     startWorkItem: oc
       .route({
@@ -165,7 +173,8 @@ export const supportTriageApiContract = oc.router({
             },
           ),
         ),
-      ),
+      )
+      .errors(supportTriageProcedureErrorMap),
 
     completeWorkItem: oc
       .route({
@@ -231,9 +240,9 @@ export const supportTriageApiContract = oc.router({
             },
           ),
         ),
-      ),
+      )
+      .errors(supportTriageProcedureErrorMap),
   }),
 });
 
 export type SupportTriageApiContract = typeof supportTriageApiContract;
-

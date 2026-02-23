@@ -1,4 +1,8 @@
-import { createHqRuntimeRouter, createWorkflowTriggerRuntimeRouter } from "@rawr/core/orpc";
+import {
+  createHqRuntimeRouter,
+  createWorkflowTriggerRuntimeRouter,
+  type RuntimeRouterContext,
+} from "@rawr/core/orpc";
 import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { AnyContractRouter } from "@orpc/contract";
@@ -17,15 +21,17 @@ import {
   type RawrBoundaryContextDeps,
 } from "./workflows/context";
 
-type RawrOrpcContext = RawrBoundaryContext;
+type RawrOrpcContext = RuntimeRouterContext;
 type RawrOrpcRouter = Router<AnyContractRouter, RawrOrpcContext>;
 
 const RPC_AUTH_DEDUPE_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION;
 
 export type RegisterOrpcRoutesOptions<
-  TContext extends RawrBoundaryContext = RawrBoundaryContext,
-  TWorkflowContext extends RawrBoundaryContext = TContext,
-  TRequestContext extends TContext & TWorkflowContext = TContext & TWorkflowContext,
+  TContext extends RuntimeRouterContext = RuntimeRouterContext,
+  TWorkflowContext extends RuntimeRouterContext = TContext,
+  TRequestContext extends RawrBoundaryContext & TContext & TWorkflowContext = RawrBoundaryContext &
+    TContext &
+    TWorkflowContext,
 > = RawrBoundaryContextDeps & {
   router?: Router<AnyContractRouter, TContext>;
   workflowTriggerRouter?: Router<AnyContractRouter, TWorkflowContext>;
@@ -34,11 +40,11 @@ export type RegisterOrpcRoutesOptions<
   rpcAuthPolicy?: RpcAuthPolicy;
 };
 
-export function createOrpcRouter<TContext extends RawrBoundaryContext = RawrBoundaryContext>() {
+export function createOrpcRouter<TContext extends RuntimeRouterContext = RuntimeRouterContext>() {
   return createHqRuntimeRouter<TContext>();
 }
 
-export function createWorkflowTriggerRouter<TContext extends RawrBoundaryContext = RawrBoundaryContext>() {
+export function createWorkflowTriggerRouter<TContext extends RuntimeRouterContext = RuntimeRouterContext>() {
   return createWorkflowTriggerRuntimeRouter<TContext>();
 }
 
@@ -52,9 +58,9 @@ function assertRpcAuthDedupeMarker(context: RawrBoundaryContext): void {
 }
 
 async function handleRpcRoute<
-  TContext extends RawrBoundaryContext,
-  TWorkflowContext extends RawrBoundaryContext,
-  TRequestContext extends TContext & TWorkflowContext,
+  TContext extends RuntimeRouterContext,
+  TWorkflowContext extends RuntimeRouterContext,
+  TRequestContext extends RawrBoundaryContext & TContext & TWorkflowContext,
 >(args: {
   request: Request;
   rpcHandler: RPCHandler<TContext>;
@@ -91,7 +97,10 @@ async function handleRpcRoute<
   return workflowResult.matched ? workflowResult.response : new Response("not found", { status: 404 });
 }
 
-async function handleOpenApiRoute<TContext extends RawrBoundaryContext, TRequestContext extends TContext>(args: {
+async function handleOpenApiRoute<
+  TContext extends RuntimeRouterContext,
+  TRequestContext extends RawrBoundaryContext & TContext,
+>(args: {
   request: Request;
   openapiHandler: OpenAPIHandler<TContext>;
   contextFactory: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext;
@@ -105,7 +114,7 @@ async function handleOpenApiRoute<TContext extends RawrBoundaryContext, TRequest
   return result.matched ? result.response : new Response("not found", { status: 404 });
 }
 
-async function createOpenApiSpec<TContext extends RawrBoundaryContext>(
+async function createOpenApiSpec<TContext extends RuntimeRouterContext>(
   router: Router<AnyContractRouter, TContext>,
   baseUrl: string,
 ) {
@@ -138,9 +147,11 @@ export async function generateOrpcOpenApiSpec(baseUrl: string) {
 
 export function registerOrpcRoutes<
   TApp extends AnyElysia,
-  TContext extends RawrBoundaryContext = RawrBoundaryContext,
-  TWorkflowContext extends RawrBoundaryContext = TContext,
-  TRequestContext extends TContext & TWorkflowContext = TContext & TWorkflowContext,
+  TContext extends RuntimeRouterContext = RuntimeRouterContext,
+  TWorkflowContext extends RuntimeRouterContext = TContext,
+  TRequestContext extends RawrBoundaryContext & TContext & TWorkflowContext = RawrBoundaryContext &
+    TContext &
+    TWorkflowContext,
 >(
   app: TApp,
   options: RegisterOrpcRoutesOptions<TContext, TWorkflowContext, TRequestContext>,
