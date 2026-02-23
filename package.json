@@ -114,6 +114,7 @@
     "tar": "7.5.7"
   },
   "dependencies": {
+    "@rawr/core": "workspace:*",
     "@rawr/orpc-standards": "workspace:*",
     "@rawr/support-triage": "workspace:*"
   },
