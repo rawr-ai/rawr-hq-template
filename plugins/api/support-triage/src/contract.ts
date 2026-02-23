@@ -5,7 +5,7 @@ import {
   TriageWorkItemSchema,
   TriageWorkItemSourceSchema,
   TriageWorkItemStatusSchema,
-  supportTriageProcedureErrorMap,
+  supportTriageClientErrorMap,
 } from "@rawr/support-triage";
 
 const supportTriageTag = ["support-triage"] as const;
@@ -55,7 +55,7 @@ export const supportTriageApiContract = oc.router({
           ),
         ),
       )
-      .errors(supportTriageProcedureErrorMap),
+      .errors(supportTriageClientErrorMap),
 
     listWorkItems: oc
       .route({
@@ -94,7 +94,7 @@ export const supportTriageApiContract = oc.router({
           ),
         ),
       )
-      .errors(supportTriageProcedureErrorMap),
+      .errors(supportTriageClientErrorMap),
 
     getWorkItem: oc
       .route({
@@ -134,7 +134,7 @@ export const supportTriageApiContract = oc.router({
           ),
         ),
       )
-      .errors(supportTriageProcedureErrorMap),
+      .errors(supportTriageClientErrorMap),
 
     startWorkItem: oc
       .route({
@@ -174,7 +174,7 @@ export const supportTriageApiContract = oc.router({
           ),
         ),
       )
-      .errors(supportTriageProcedureErrorMap),
+      .errors(supportTriageClientErrorMap),
 
     completeWorkItem: oc
       .route({
@@ -241,7 +241,7 @@ export const supportTriageApiContract = oc.router({
           ),
         ),
       )
-      .errors(supportTriageProcedureErrorMap),
+      .errors(supportTriageClientErrorMap),
   }),
 });
 

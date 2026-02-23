@@ -1,14 +1,15 @@
 # `@rawr/support-triage`
 
-`@rawr/support-triage` models the **support-triage** capability domain in this template.
+`@rawr/support-triage` models the **support-triage** capability with explicit module authority:
 
-It demonstrates how one transport-neutral domain package can be reused across:
-- API plugin boundary contracts/operations, and
-- workflow plugin trigger/durable execution surfaces.
+- `domain/`: business concepts and invariants (`TriageWorkItem`, status model, domain errors)
+- `service/`: use-case lifecycle logic and persistence interfaces
+- `client/`: oRPC adapter layer (context, procedures, error map, router)
 
-## Domain Meaning
+## Router-first internal calling
 
-The package models triage work-item lifecycle behavior (`queued -> running -> completed|failed`) for support tickets, including explicit completion and failure details.
+This package exports `supportTriageClientRouter` and `SupportTriageClient`.
+Host/plugin composition creates in-process clients via `createRouterClient(...)` with caller-owned context.
 
 ## Hypothetical vs Production
 
