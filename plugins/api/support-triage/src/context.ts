@@ -1,4 +1,4 @@
-import type { SupportTriageClient } from "@rawr/support-triage";
+import type { SupportTriageServiceDeps } from "@rawr/support-triage";
 
 export type SupportTriageApiContext = {
   repoRoot: string;
@@ -6,10 +6,10 @@ export type SupportTriageApiContext = {
   correlationId?: string;
 };
 
-export type SupportTriageApiClientResolver<Context extends SupportTriageApiContext = SupportTriageApiContext> = (
+export type SupportTriageApiDepsResolver<Context extends SupportTriageApiContext = SupportTriageApiContext> = (
   context: Context,
-) => SupportTriageClient;
+) => SupportTriageServiceDeps;
 
 export type SupportTriageApiOperationDeps<Context extends SupportTriageApiContext = SupportTriageApiContext> = {
-  resolveClient: SupportTriageApiClientResolver<Context>;
+  resolveDeps: SupportTriageApiDepsResolver<Context>;
 };
