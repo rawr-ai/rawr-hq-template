@@ -1,16 +1,5 @@
 import type { RouterClient } from "@orpc/server";
-export type { SupportTriageClientContext } from "./context";
-export {
-  supportTriageClientErrorMap,
-  throwSupportTriageDomainErrorAsClientError,
-} from "./errors";
-export {
-  requestWorkItemProcedure,
-  listWorkItemsProcedure,
-  getWorkItemProcedure,
-  startWorkItemProcedure,
-  completeWorkItemProcedure,
-} from "./procedures";
+export { supportTriageClientErrorMap } from "./errors";
 import {
   requestWorkItemProcedure,
   listWorkItemsProcedure,

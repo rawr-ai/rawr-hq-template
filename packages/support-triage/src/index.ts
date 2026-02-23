@@ -1,4 +1,5 @@
 export * from "./domain";
 export * from "./ids";
 export * from "./service";
-export * from "./client";
+export { supportTriageClientErrorMap, supportTriageClientProcedures } from "./client";
+export type { SupportTriageClient } from "./client";
