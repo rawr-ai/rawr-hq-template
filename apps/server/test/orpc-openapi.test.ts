@@ -31,5 +31,7 @@ describe("orpc openapi", () => {
     const spec = (await res.json()) as { paths?: Record<string, unknown> };
     expect(spec.paths?.["/coordination/workflows"]).toBeDefined();
     expect(spec.paths?.["/state/runtime"]).toBeDefined();
+    expect(spec.paths?.["/support-triage/status"]).toBeUndefined();
+    expect(spec.paths?.["/support-triage/runs"]).toBeUndefined();
   });
 });

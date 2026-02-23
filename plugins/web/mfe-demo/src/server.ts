@@ -14,9 +14,10 @@ export function registerServer(app: any, _ctx: { baseUrl: string }) {
     capability: "support-triage",
     exampleDomain: true,
     routeHints: {
-      publishedBoundary: {
-        triggerRun: "POST /api/workflows/support-triage/runs",
-        getStatus: "GET /api/workflows/support-triage/status?runId=...",
+      firstPartyDefault: {
+        transport: "RPCLink",
+        triggerRun: "POST /rpc (procedure: triggerSupportTriage)",
+        getStatus: "POST /rpc (procedure: getSupportTriageStatus; optional: { runId })",
       },
     },
   }));
