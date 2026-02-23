@@ -8,7 +8,7 @@
 
 ## Router-first internal calling
 
-This package exports `supportTriageClientRouter` and `SupportTriageClient`.
+This package exports `supportTriageClientProcedures` and `SupportTriageClient`.
 Host/plugin composition creates in-process clients via `createRouterClient(...)` with caller-owned context.
 
 ## Hypothetical vs Production

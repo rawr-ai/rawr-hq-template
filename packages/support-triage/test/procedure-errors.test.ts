@@ -1,12 +1,12 @@
 import { createRouterClient } from "@orpc/server";
 import { describe, expect, it } from "vitest";
-import { createInMemoryTriageWorkItemStore, supportTriageClientRouter } from "../src";
+import { createInMemoryTriageWorkItemStore, supportTriageClientProcedures } from "../src";
 
 function createClient() {
   const store = createInMemoryTriageWorkItemStore();
   let idCounter = 0;
 
-  return createRouterClient(supportTriageClientRouter, {
+  return createRouterClient(supportTriageClientProcedures, {
     context: {
       deps: {
         store,

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRouterClient } from "@orpc/server";
 import type { Inngest } from "inngest";
-import { createInMemoryTriageWorkItemStore, supportTriageClientRouter } from "@rawr/support-triage";
+import { createInMemoryTriageWorkItemStore, supportTriageClientProcedures } from "@rawr/support-triage";
 import {
   __resetSupportTriageRunStoreForTests,
   createSupportTriageWorkflowRouter,
@@ -35,7 +35,7 @@ describe("support-triage workflow plugin", () => {
         inngestBaseUrl: "http://localhost:8288",
       }),
       inngestClient: fakeInngest,
-      supportTriage: createRouterClient(supportTriageClientRouter, { context: { deps } }),
+      supportTriage: createRouterClient(supportTriageClientProcedures, { context: { deps } }),
       requestId: "req-1",
       correlationId: "corr-1",
       middlewareState: { markerCache: new Map() },
@@ -84,7 +84,7 @@ describe("support-triage workflow plugin", () => {
         inngestBaseUrl: "http://localhost:8288",
       }),
       inngestClient: fakeInngest,
-      supportTriage: createRouterClient(supportTriageClientRouter, { context: { deps } }),
+      supportTriage: createRouterClient(supportTriageClientProcedures, { context: { deps } }),
       requestId: "req-1",
       correlationId: "corr-1",
       middlewareState: { markerCache: new Map() },
