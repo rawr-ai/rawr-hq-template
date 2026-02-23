@@ -28,6 +28,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@orpc/client": "^1.13.5",
     "@rawr/ui-sdk": "workspace:*"
   },
   "devDependencies": {
