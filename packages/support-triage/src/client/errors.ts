@@ -1,85 +1,50 @@
-import type { ErrorMap } from "@orpc/contract";
+import type { ErrorMap, Schema } from "@orpc/contract";
 import type { ORPCErrorConstructorMap } from "@orpc/server";
 import { schema } from "@rawr/orpc-standards";
-import { Type } from "typebox";
-import { TriageWorkItemStatusSchema, isSupportTriageDomainError } from "../domain";
+import type { Static, TSchema } from "typebox";
+import {
+  isSupportTriageDomainError,
+  supportTriageDomainErrorCatalog,
+  type SupportTriageDomainErrorCode,
+} from "../domain";
 
-const optionalString = Type.Optional(
-  Type.String({
-    minLength: 1,
-  }),
-);
+type DomainErrorCatalog = Record<
+  string,
+  {
+    status: number;
+    message: string;
+    data: TSchema;
+  }
+>;
 
-const queueIdDataSchema = schema(
-  Type.Object(
-    {
-      queueId: optionalString,
-    },
-    { additionalProperties: false },
-  ),
-);
+type ClientErrorMapFromDomainCatalog<TCatalog extends DomainErrorCatalog> = {
+  [Code in keyof TCatalog]: {
+    status: TCatalog[Code]["status"];
+    message: TCatalog[Code]["message"];
+    data: Schema<Static<TCatalog[Code]["data"]>, Static<TCatalog[Code]["data"]>>;
+  };
+};
 
-const requestedByDataSchema = schema(
-  Type.Object(
-    {
-      requestedBy: optionalString,
-    },
-    { additionalProperties: false },
-  ),
-);
+function createSupportTriageClientErrorMap<TCatalog extends DomainErrorCatalog>(
+  catalog: TCatalog,
+): ClientErrorMapFromDomainCatalog<TCatalog> {
+  const mapped = {} as ClientErrorMapFromDomainCatalog<TCatalog>;
 
-const workItemIdDataSchema = schema(
-  Type.Object(
-    {
-      workItemId: optionalString,
-    },
-    { additionalProperties: false },
-  ),
-);
+  for (const code of Object.keys(catalog) as Array<keyof TCatalog>) {
+    const definition = catalog[code];
+    mapped[code] = {
+      status: definition.status,
+      message: definition.message,
+      data: schema(definition.data),
+    } as ClientErrorMapFromDomainCatalog<TCatalog>[typeof code];
+  }
 
-const statusTransitionDataSchema = schema(
-  Type.Object(
-    {
-      workItemId: optionalString,
-      from: Type.Optional(TriageWorkItemStatusSchema),
-      to: Type.Optional(TriageWorkItemStatusSchema),
-    },
-    { additionalProperties: false },
-  ),
-);
+  return mapped;
+}
 
-export const supportTriageClientErrorMap = {
-  INVALID_QUEUE_ID: {
-    status: 400,
-    message: "Invalid queueId",
-    data: queueIdDataSchema,
-  },
-  INVALID_REQUESTED_BY: {
-    status: 400,
-    message: "Invalid requestedBy",
-    data: requestedByDataSchema,
-  },
-  INVALID_WORK_ITEM_ID: {
-    status: 400,
-    message: "Invalid workItemId",
-    data: workItemIdDataSchema,
-  },
-  INVALID_COMPLETION_INPUT: {
-    status: 400,
-    message: "Invalid completion input",
-    data: workItemIdDataSchema,
-  },
-  WORK_ITEM_NOT_FOUND: {
-    status: 404,
-    message: "Work item not found",
-    data: workItemIdDataSchema,
-  },
-  INVALID_STATUS_TRANSITION: {
-    status: 409,
-    message: "Invalid status transition",
-    data: statusTransitionDataSchema,
-  },
-} as const satisfies ErrorMap;
+export const supportTriageClientErrorMap = createSupportTriageClientErrorMap(
+  supportTriageDomainErrorCatalog,
+) satisfies ErrorMap;
 
 type SupportTriageClientErrorConstructors = ORPCErrorConstructorMap<typeof supportTriageClientErrorMap>;
 
@@ -94,36 +59,11 @@ export function throwSupportTriageDomainErrorAsClientError(
     throw error;
   }
 
-  switch (error.code) {
-    case "INVALID_QUEUE_ID":
-      throw errors.INVALID_QUEUE_ID({
-        message: error.message,
-        data: error.details ?? {},
-      });
-    case "INVALID_REQUESTED_BY":
-      throw errors.INVALID_REQUESTED_BY({
-        message: error.message,
-        data: error.details ?? {},
-      });
-    case "INVALID_WORK_ITEM_ID":
-      throw errors.INVALID_WORK_ITEM_ID({
-        message: error.message,
-        data: error.details ?? {},
-      });
-    case "INVALID_COMPLETION_INPUT":
-      throw errors.INVALID_COMPLETION_INPUT({
-        message: error.message,
-        data: error.details ?? {},
-      });
-    case "WORK_ITEM_NOT_FOUND":
-      throw errors.WORK_ITEM_NOT_FOUND({
-        message: error.message,
-        data: error.details ?? {},
-      });
-    case "INVALID_STATUS_TRANSITION":
-      throw errors.INVALID_STATUS_TRANSITION({
-        message: error.message,
-        data: error.details ?? {},
-      });
-  }
+  const code = error.code as keyof SupportTriageClientErrorConstructors & SupportTriageDomainErrorCode;
+  const createOrpcError = errors[code] as (payload: { message: string; data: unknown }) => never;
+
+  throw createOrpcError({
+    message: error.message,
+    data: error.details ?? {},
+  });
 }
