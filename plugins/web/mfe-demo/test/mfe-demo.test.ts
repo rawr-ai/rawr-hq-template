@@ -31,8 +31,6 @@ describe("@rawr/plugin-mfe-demo", () => {
   });
 
   it("mounts support-triage UI state and unmounts from the DOM", async () => {
-    vi.useFakeTimers();
-
     const now = new Date("2026-02-23T00:00:00.000Z").toISOString();
     const runId = "support-triage-123-test";
     let runStatusCalls = 0;
@@ -156,16 +154,18 @@ describe("@rawr/plugin-mfe-demo", () => {
     const originalFetch = globalThis.fetch;
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-    const flush = async (count = 12) => {
+    const flush = async (count = 24) => {
       for (let i = 0; i < count; i += 1) await Promise.resolve();
-      // `Response.text()` resolution can land on the macrotask queue in some environments.
-      // Yield once to avoid flakiness when the MFE makes its initial RPCLink call.
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
     };
 
-    const settleAsyncWork = async () => {
+    const settleRealAsyncWork = async () => {
+      await flush();
       // RPCLink's fetch + Response parsing can land on a macrotask turn.
-      // Under fake timers, advancing by 0ms flushes those turns reliably.
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      await flush();
+    };
+
+    const settleFakeAsyncWork = async () => {
       await flush();
       await vi.advanceTimersByTimeAsync(0);
       await flush();
@@ -182,22 +182,26 @@ describe("@rawr/plugin-mfe-demo", () => {
     expect(el.textContent).toContain("Support triage example micro-frontend");
     expect(el.textContent).toContain("status: idle");
 
-    await settleAsyncWork();
+    await settleRealAsyncWork();
     expect(el.textContent).toContain("healthy: true");
+
+    // Enable fake timers only for the polling interval portion; keep the initial RPCLink
+    // call on real timers so fetch/Response body parsing isn't impacted by timer mocking.
+    vi.useFakeTimers();
 
     const triggerButton = Array.from(el.querySelectorAll("button")).find((button) => button.textContent === "Trigger Workflow Run");
     expect(triggerButton).toBeDefined();
     triggerButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
-    await settleAsyncWork();
+    await settleFakeAsyncWork();
     expect(el.textContent).toContain(`runId: ${runId}`);
     expect(el.textContent).toContain("polling: on");
 
-    await settleAsyncWork();
+    await settleFakeAsyncWork();
     expect(el.textContent).toContain("status: running");
 
     await vi.advanceTimersByTimeAsync(1500);
-    await settleAsyncWork();
+    await settleFakeAsyncWork();
     expect(el.textContent).toContain("status: completed");
     expect(el.textContent).toContain("polling: off");
     expect(el.textContent).toContain("triagedTicketCount: 12");
