@@ -1,2 +1,2 @@
-export * from "./job";
+export * from "./work-item";
 export * from "./status";

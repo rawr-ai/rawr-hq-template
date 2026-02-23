@@ -1,28 +1,28 @@
-import type { TriageJob } from "../domain";
+import type { TriageWorkItem } from "../domain";
 
-export interface TriageJobStore {
-  save(job: TriageJob): Promise<void>;
-  get(jobId: string): Promise<TriageJob | null>;
-  list(): Promise<TriageJob[]>;
+export interface TriageWorkItemStore {
+  save(workItem: TriageWorkItem): Promise<void>;
+  get(workItemId: string): Promise<TriageWorkItem | null>;
+  list(): Promise<TriageWorkItem[]>;
 }
 
-class InMemoryTriageJobStore implements TriageJobStore {
-  private readonly jobs = new Map<string, TriageJob>();
+class InMemoryTriageWorkItemStore implements TriageWorkItemStore {
+  private readonly workItems = new Map<string, TriageWorkItem>();
 
-  async save(job: TriageJob): Promise<void> {
-    this.jobs.set(job.jobId, { ...job });
+  async save(workItem: TriageWorkItem): Promise<void> {
+    this.workItems.set(workItem.workItemId, { ...workItem });
   }
 
-  async get(jobId: string): Promise<TriageJob | null> {
-    const job = this.jobs.get(jobId);
-    return job ? { ...job } : null;
+  async get(workItemId: string): Promise<TriageWorkItem | null> {
+    const workItem = this.workItems.get(workItemId);
+    return workItem ? { ...workItem } : null;
   }
 
-  async list(): Promise<TriageJob[]> {
-    return [...this.jobs.values()].map((job) => ({ ...job }));
+  async list(): Promise<TriageWorkItem[]> {
+    return [...this.workItems.values()].map((workItem) => ({ ...workItem }));
   }
 }
 
-export function createInMemoryTriageJobStore(): TriageJobStore {
-  return new InMemoryTriageJobStore();
+export function createInMemoryTriageWorkItemStore(): TriageWorkItemStore {
+  return new InMemoryTriageWorkItemStore();
 }

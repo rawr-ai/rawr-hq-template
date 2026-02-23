@@ -1,13 +1,13 @@
-import { completeJobProcedure } from "./complete-job";
-import { getJobProcedure } from "./get-job";
-import { listJobsProcedure } from "./list-jobs";
-import { requestJobProcedure } from "./request-job";
-import { startJobProcedure } from "./start-job";
+import { completeWorkItemProcedure } from "./complete-work-item";
+import { getWorkItemProcedure } from "./get-work-item";
+import { listWorkItemsProcedure } from "./list-work-items";
+import { requestWorkItemProcedure } from "./request-work-item";
+import { startWorkItemProcedure } from "./start-work-item";
 
 export const procedures = {
-  requestJob: requestJobProcedure,
-  listJobs: listJobsProcedure,
-  getJob: getJobProcedure,
-  startJob: startJobProcedure,
-  completeJob: completeJobProcedure,
+  requestWorkItem: requestWorkItemProcedure,
+  listWorkItems: listWorkItemsProcedure,
+  getWorkItem: getWorkItemProcedure,
+  startWorkItem: startWorkItemProcedure,
+  completeWorkItem: completeWorkItemProcedure,
 } as const;

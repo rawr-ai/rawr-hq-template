@@ -1,21 +1,21 @@
 import { os } from "@orpc/server";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { TriageJobSchema } from "../domain";
+import { TriageWorkItemSchema } from "../domain";
 import type { SupportTriageProcedureContext } from "../context";
-import { completeSupportTriageJob } from "../service/lifecycle";
+import { completeSupportTriageWorkItem } from "../service/lifecycle";
 import { throwSupportTriageDomainErrorAsOrpc } from "./boundary-errors";
 
 const o = os.$context<SupportTriageProcedureContext>();
 
-export const completeJobProcedure = o
+export const completeWorkItemProcedure = o
   .input(
     schema(
       Type.Object(
         {
-          jobId: Type.String({
+          workItemId: Type.String({
             minLength: 1,
-            description: "Stable identifier of the support triage job being finalized.",
+            description: "Stable identifier of the support triage work item being finalized.",
           }),
           succeeded: Type.Boolean({
             description: "Whether triage completed successfully.",
@@ -23,7 +23,7 @@ export const completeJobProcedure = o
           triagedTicketCount: Type.Optional(
             Type.Integer({
               minimum: 0,
-              description: "Count of tickets triaged during this job completion transition.",
+              description: "Count of tickets triaged during this completion transition.",
             }),
           ),
           escalatedTicketCount: Type.Optional(
@@ -47,7 +47,7 @@ export const completeJobProcedure = o
         },
         {
           additionalProperties: false,
-          description: "Completion payload for transitioning a support triage job to terminal state.",
+          description: "Completion payload for transitioning a support triage work item to terminal state.",
         },
       ),
     ),
@@ -56,18 +56,18 @@ export const completeJobProcedure = o
     schema(
       Type.Object(
         {
-          job: TriageJobSchema,
+          workItem: TriageWorkItemSchema,
         },
         {
           additionalProperties: false,
-          description: "Response envelope containing the finalized support triage job lifecycle record.",
+          description: "Response envelope containing the finalized support triage work item.",
         },
       ),
     ),
   )
   .handler(async ({ context, input }) => {
     try {
-      return await completeSupportTriageJob(context.deps, input);
+      return await completeSupportTriageWorkItem(context.deps, input);
     } catch (error) {
       throwSupportTriageDomainErrorAsOrpc(error);
     }

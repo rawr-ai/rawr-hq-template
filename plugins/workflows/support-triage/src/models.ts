@@ -6,6 +6,8 @@ export const SUPPORT_TRIAGE_EVENT_NAME = "support-triage/run.requested" as const
 
 export type SupportTriageRequestedEventData = {
   runId: string;
+  workItemId: string;
+  repoRoot: string;
   queueId: string;
   requestedBy: string;
   dryRun: boolean;
@@ -21,18 +23,24 @@ export function normalizeSupportTriageQueueId(value: string): string | null {
   return normalizeSupportTriageId(value);
 }
 
+export function normalizeSupportTriageWorkItemId(value: string): string | null {
+  return normalizeSupportTriageId(value);
+}
+
 export function createSupportTriageRunId(now = Date.now()): string {
   return `support-triage-${now}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export function createQueuedSupportTriageRun(input: Readonly<{
   runId: string;
+  workItemId: string;
   queueId: string;
   requestedBy: string;
   dryRun: boolean;
 }>): SupportTriageRun {
   return {
     runId: input.runId,
+    workItemId: input.workItemId,
     status: "queued",
     startedAt: new Date().toISOString(),
     queueId: input.queueId,
