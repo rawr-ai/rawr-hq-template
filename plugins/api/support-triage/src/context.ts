@@ -1,4 +1,4 @@
-import type { SupportTriageClient } from "../../../../packages/support-triage";
+import type { SupportTriageClient } from "@rawr/support-triage";
 
 export type SupportTriageApiContext = {
   repoRoot: string;
