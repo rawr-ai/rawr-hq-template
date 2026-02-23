@@ -34,6 +34,7 @@
         "@rawr/core": "workspace:*",
         "@rawr/hq": "workspace:*",
         "@rawr/journal": "workspace:*",
+        "@rawr/orpc-client": "workspace:*",
         "@rawr/plugin-plugins": "workspace:*",
         "@rawr/security": "workspace:*",
         "@rawr/state": "workspace:*",
@@ -75,6 +76,7 @@
         "@rawr/coordination": "workspace:*",
         "@rawr/coordination-inngest": "workspace:*",
         "@rawr/core": "workspace:*",
+        "@rawr/orpc-client": "workspace:*",
         "@rawr/ui-sdk": "workspace:*",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -186,6 +188,15 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/orpc-client": {
+      "name": "@rawr/orpc-client",
+      "dependencies": {
+        "@orpc/client": "^1.13.5",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/orpc-standards": {
       "name": "@rawr/orpc-standards",
       "dependencies": {
@@ -222,8 +233,6 @@
     "packages/support-triage": {
       "name": "@rawr/support-triage",
       "dependencies": {
-        "@orpc/contract": "^1.13.5",
-        "@orpc/server": "^1.13.5",
         "typebox": "^1.0.81",
       },
       "devDependencies": {
@@ -287,6 +296,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@orpc/client": "^1.13.5",
+        "@rawr/orpc-client": "workspace:*",
         "@rawr/ui-sdk": "workspace:*",
       },
       "devDependencies": {
@@ -723,6 +733,8 @@
     "@rawr/hq": ["@rawr/hq@workspace:packages/hq"],
 
     "@rawr/journal": ["@rawr/journal@workspace:packages/journal"],
+
+    "@rawr/orpc-client": ["@rawr/orpc-client@workspace:packages/orpc-client"],
 
     "@rawr/orpc-standards": ["@rawr/orpc-standards@workspace:packages/orpc-standards"],
 

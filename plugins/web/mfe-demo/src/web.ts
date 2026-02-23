@@ -1,6 +1,6 @@
 import type { MountContext } from "@rawr/ui-sdk";
 import { createORPCClient } from "@orpc/client";
-import { RPCLink } from "@orpc/client/fetch";
+import { createFirstPartyRpcLink } from "@rawr/orpc-client";
 
 export const name = "@rawr/plugin-mfe-demo";
 
@@ -69,7 +69,7 @@ export function mount(el: HTMLElement, ctx: MountContext) {
   const basePath = normalizeBasePath(ctx.basePath);
 
   const client = createORPCClient<SupportTriageWorkflowRpcClient>(
-    new RPCLink({
+    createFirstPartyRpcLink({
       url: resolveRpcUrl(basePath),
     }),
   );
