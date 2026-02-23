@@ -7,3 +7,4 @@ export { internalRouter } from "./router";
 export { createSupportTriageInternalClient } from "./client";
 export type { SupportTriageInternalClient } from "./client";
 export { procedures } from "./procedures";
+export { supportTriageProcedureErrorMap } from "./procedures";
