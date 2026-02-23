@@ -24,6 +24,7 @@ const RPC_AUTH_DEDUPE_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_
 
 export type RegisterOrpcRoutesOptions = RawrBoundaryContextDeps & {
   router?: RawrOrpcRouter;
+  workflowTriggerRouter?: unknown;
   contextFactory?: (request: Request, deps: RawrBoundaryContextDeps) => RawrOrpcContext;
   onContextCreated?: (context: RawrOrpcContext) => void;
   rpcAuthPolicy?: RpcAuthPolicy;
@@ -49,12 +50,14 @@ function assertRpcAuthDedupeMarker(context: RawrOrpcContext): void {
 async function handleRpcRoute(args: {
   request: Request;
   rpcHandler: RPCHandler<RawrOrpcContext>;
+  workflowTriggerRpcHandler?: RPCHandler<RawrOrpcContext>;
   contextFactory: RawrOrpcContextFactory;
   contextDeps: RawrBoundaryContextDeps;
   rpcAuthPolicy: RpcAuthPolicy;
   onContextCreated?: OnRawrOrpcContextCreated;
 }): Promise<Response> {
-  const { request, rpcHandler, contextFactory, contextDeps, rpcAuthPolicy, onContextCreated } = args;
+  const { request, rpcHandler, workflowTriggerRpcHandler, contextFactory, contextDeps, rpcAuthPolicy, onContextCreated } =
+    args;
   if (!isRpcRequestAllowedWithDedupe(request, rpcAuthPolicy)) {
     return new Response("forbidden", { status: 403 });
   }
@@ -62,8 +65,22 @@ async function handleRpcRoute(args: {
   const context = contextFactory(request, contextDeps);
   assertRpcAuthDedupeMarker(context);
   onContextCreated?.(context);
+
+  // The oRPC RPC handler may consume the request body before it can decide that a procedure is unmatched.
+  // Clone upfront so we can safely fall back to the workflow trigger router without double-consuming the stream.
+  const workflowFallbackRequest = workflowTriggerRpcHandler ? request.clone() : undefined;
+
   const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
-  return result.matched ? result.response : new Response("not found", { status: 404 });
+  if (result.matched) {
+    return result.response;
+  }
+
+  if (!workflowTriggerRpcHandler || !workflowFallbackRequest) {
+    return new Response("not found", { status: 404 });
+  }
+
+  const workflowResult = await workflowTriggerRpcHandler.handle(workflowFallbackRequest, { prefix: "/rpc", context });
+  return workflowResult.matched ? workflowResult.response : new Response("not found", { status: 404 });
 }
 
 async function handleOpenApiRoute(args: {
@@ -111,6 +128,9 @@ export async function generateOrpcOpenApiSpec(baseUrl: string) {
 export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: RegisterOrpcRoutesOptions): TApp {
   const router = options.router ?? createOrpcRouter();
   const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
+  const workflowTriggerRpcHandler = options.workflowTriggerRouter
+    ? new RPCHandler<RawrOrpcContext>(options.workflowTriggerRouter as any)
+    : undefined;
   const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router);
   const rpcAuthPolicy = options.rpcAuthPolicy ?? createRpcAuthPolicy({ baseUrl: options.baseUrl });
   const contextDeps: RawrBoundaryContextDeps = {
@@ -146,6 +166,7 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
       return handleRpcRoute({
         request,
         rpcHandler,
+        workflowTriggerRpcHandler,
         contextFactory,
         contextDeps,
         rpcAuthPolicy,
@@ -162,6 +183,7 @@ export function registerOrpcRoutes<TApp extends AnyElysia>(app: TApp, options: R
       return handleRpcRoute({
         request,
         rpcHandler,
+        workflowTriggerRpcHandler,
         contextFactory,
         contextDeps,
         rpcAuthPolicy,
