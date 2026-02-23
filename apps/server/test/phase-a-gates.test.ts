@@ -140,8 +140,9 @@ describe("phase-a gate scaffold (server)", () => {
     expect(hasRouteRegistration(rawrAst, "/api/workflows/*")).toBe(true);
     expect(hasRegisterOrpcRoutesManifestRouter(rawrAst)).toBe(true);
     expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "triggerRouter"])).toBe(true);
-    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "bundleFactory"])).toBe(true);
-    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "serveHandlerFactory"])).toBe(true);
+    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "client"])).toBe(true);
+    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "functions"])).toBe(true);
+    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "handler"])).toBe(true);
   });
 
   it("route negative assertions gate scaffold keeps D-015 negatives explicit", async () => {
@@ -155,7 +156,7 @@ describe("phase-a gate scaffold (server)", () => {
     expect(negativeKeys.has("assertion:reject-rpc-from-external-callers")).toBe(true);
     expect(negativeKeys.has("assertion:reject-rpc-from-runtime-ingress")).toBe(true);
     expect(negativeKeys.has("assertion:reject-rpc-workflows-route-family")).toBe(true);
-    expect(routeMatrixSource.includes("/rpc/workflows/coordination/workflows")).toBe(true);
+    expect(routeMatrixSource.includes("/rpc/workflows/support-triage/status")).toBe(true);
   });
 
   it("observability contract gate scaffold keeps observability package path present", async () => {

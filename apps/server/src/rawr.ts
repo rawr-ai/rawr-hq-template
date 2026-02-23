@@ -107,12 +107,24 @@ function signaturesMatch(expected: string, actual: string): boolean {
   return timingSafeEqual(expectedHex, actualHex);
 }
 
+function shouldAllowUnsignedInngestIngress(): boolean {
+  // In explicit dev mode, allow local Inngest Dev Server to sync/execute without signature headers.
+  // Production remains strict and always requires a valid signature.
+  if ((process.env.INNGEST_DEV ?? "").trim() !== "") return true;
+
+  const nodeEnv = (process.env.NODE_ENV ?? "").trim();
+  const eventKey = (process.env.INNGEST_EVENT_KEY ?? "").trim();
+  return nodeEnv !== "production" && eventKey === "local";
+}
+
 export async function verifyInngestIngressRequest(request: Request): Promise<boolean> {
+  const signatureHeader = ingressSignatureHeader(request);
+  if (!signatureHeader) {
+    return shouldAllowUnsignedInngestIngress();
+  }
+
   const signingKeys = configuredIngressSigningKeys();
   if (signingKeys.length === 0) return false;
-
-  const signatureHeader = ingressSignatureHeader(request);
-  if (!signatureHeader) return false;
 
   const signature = parseIngressSignature(signatureHeader);
   if (!signature || isExpiredIngressSignature(signature.timestampSeconds)) return false;
@@ -226,14 +238,15 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     repoRoot: authorityRepoRoot,
     inngestBaseUrl: resolveInngestBaseUrl(),
   });
-  const inngestBundle = rawrHqManifest.inngest.bundleFactory(runtime);
-  const inngestHandler = rawrHqManifest.inngest.serveHandlerFactory(inngestBundle);
   const boundaryContextDeps: RawrBoundaryContextDeps = {
     repoRoot: authorityRepoRoot,
     baseUrl: opts.baseUrl ?? "http://localhost:3000",
     runtime,
-    inngestClient: inngestBundle.client,
+    inngestClient: rawrHqManifest.inngest.client,
   };
+  // Host intentionally consumes manifest-owned Inngest seams (client + functions + handler).
+  // The handler is precomposed in `rawr.hq.ts`, but the function registry remains part of the contract.
+  void rawrHqManifest.inngest.functions;
   const workflowOpenApiHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
 
   app.all(
@@ -243,7 +256,7 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
       if (!(await verifyInngestIngressRequest(req))) {
         return new Response("forbidden", { status: 403 });
       }
-      return inngestHandler(req);
+      return rawrHqManifest.inngest.handler(req);
     },
     { parse: "none" },
   );
