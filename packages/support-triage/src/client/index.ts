@@ -5,8 +5,5 @@ export {
   throwSupportTriageDomainErrorAsClientError,
 } from "./errors";
 import { supportTriageClientProcedures } from "./procedures";
-
 export { supportTriageClientProcedures } from "./procedures";
-export const supportTriageClientRouter = supportTriageClientProcedures;
-
-export type SupportTriageClient = RouterClient<typeof supportTriageClientRouter>;
+export type SupportTriageClient = RouterClient<typeof supportTriageClientProcedures>;

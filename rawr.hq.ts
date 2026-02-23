@@ -4,7 +4,7 @@ import { createInngestServeHandler } from "@rawr/coordination-inngest";
 import { createHqRuntimeRouter } from "@rawr/core/orpc";
 import {
   createInMemoryTriageWorkItemStore,
-  supportTriageClientRouter,
+  supportTriageClientProcedures,
   type SupportTriageServiceDeps,
 } from "@rawr/support-triage";
 import { Inngest } from "inngest";
@@ -36,7 +36,7 @@ function resolveSupportTriageDeps(repoRoot: string): SupportTriageServiceDeps {
 function enrichSupportTriageContext<T extends { repoRoot: string }>(context: T) {
   return {
     ...context,
-    supportTriage: createRouterClient(supportTriageClientRouter, {
+    supportTriage: createRouterClient(supportTriageClientProcedures, {
       context: {
         deps: resolveSupportTriageDeps(context.repoRoot),
       },
