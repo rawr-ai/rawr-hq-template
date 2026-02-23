@@ -150,7 +150,7 @@ describe("rawr server routes", () => {
 
   it("host-composition-guard: manifest composes routers from package seam, not app internals", async () => {
     const manifestSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
-    expect(manifestSource).toContain("./plugins/api/support-triage/src");
+    expect(manifestSource).toContain("./plugins/api/support-triage");
     expect(manifestSource).toContain("registerSupportTriageApiPlugin");
     expect(manifestSource).toContain("./plugins/workflows/support-triage");
     expect(manifestSource).toContain("registerSupportTriageWorkflowPlugin");

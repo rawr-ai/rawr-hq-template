@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { createInngestServeHandler } from "@rawr/coordination-inngest";
+import { createHqRuntimeRouter } from "@rawr/core/orpc";
 import { createInMemoryTriageJobStore, createSupportTriageClientFromDeps, type SupportTriageServiceDeps } from "@rawr/support-triage";
-import { createHqRuntimeRouter } from "./packages/core/src/orpc/runtime-router";
 import { Inngest } from "inngest";
-import { registerSupportTriageApiPlugin } from "./plugins/api/support-triage/src";
+import { registerSupportTriageApiPlugin } from "./plugins/api/support-triage";
 import { createSupportTriageInngestFunctions, registerSupportTriageWorkflowPlugin } from "./plugins/workflows/support-triage";
 
 // Keep capability fixture state stable per repo root across requests in local dev/test runs.
