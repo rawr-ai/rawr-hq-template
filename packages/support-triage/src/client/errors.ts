@@ -5,6 +5,7 @@ import type { Static, TSchema } from "typebox";
 import {
   isSupportTriageDomainError,
   supportTriageDomainErrorCatalog,
+  type SupportTriageDomainError,
   type SupportTriageDomainErrorCode,
 } from "../domain";
 
@@ -48,6 +49,17 @@ export const supportTriageClientErrorMap = createSupportTriageClientErrorMap(
 
 type SupportTriageClientErrorConstructors = ORPCErrorConstructorMap<typeof supportTriageClientErrorMap>;
 
+function throwTypedSupportTriageClientError<TCode extends SupportTriageDomainErrorCode>(
+  error: SupportTriageDomainError<TCode>,
+  errors: SupportTriageClientErrorConstructors,
+): never {
+  const createOrpcError = errors[error.code];
+  throw createOrpcError({
+    message: error.message,
+    data: error.details ?? {},
+  });
+}
+
 /**
  * Convert a transport-neutral support-triage domain error into a typed oRPC client error.
  */
@@ -59,11 +71,5 @@ export function throwSupportTriageDomainErrorAsClientError(
     throw error;
   }
 
-  const code = error.code as keyof SupportTriageClientErrorConstructors & SupportTriageDomainErrorCode;
-  const createOrpcError = errors[code] as (payload: { message: string; data: unknown }) => never;
-
-  throw createOrpcError({
-    message: error.message,
-    data: error.details ?? {},
-  });
+  throwTypedSupportTriageClientError(error, errors);
 }

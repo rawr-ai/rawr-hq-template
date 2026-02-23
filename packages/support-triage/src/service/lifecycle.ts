@@ -1,6 +1,6 @@
 import type { TriageWorkItem, TriageWorkItemSource, TriageWorkItemStatus } from "../domain";
 import { canTransitionTriageWorkItemStatus, isTerminalTriageWorkItemStatus } from "../domain";
-import { SupportTriageDomainError } from "../domain/errors";
+import { createSupportTriageDomainError, SupportTriageDomainError } from "../domain/errors";
 import { normalizeSupportTriageId } from "../ids";
 import type { TriageWorkItemStore } from "./store";
 
@@ -106,7 +106,10 @@ export async function requestSupportTriageWorkItem(
 
   const generatedWorkItemId = normalizeSupportTriageId(deps.generateWorkItemId());
   if (!generatedWorkItemId) {
-    throw new SupportTriageDomainError("INVALID_WORK_ITEM_ID", "Generated work item id is invalid");
+    throw createSupportTriageDomainError({
+      code: "INVALID_WORK_ITEM_ID",
+      message: "Generated work item id is invalid",
+    });
   }
 
   const now = deps.now();

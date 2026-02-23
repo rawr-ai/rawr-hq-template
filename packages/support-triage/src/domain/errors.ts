@@ -85,8 +85,13 @@ export class SupportTriageDomainError<
   readonly status: (typeof supportTriageDomainErrorCatalog)[TCode]["status"];
   readonly details?: SupportTriageDomainErrorDetailsByCode[TCode];
 
-  constructor(code: TCode, message: string, details?: SupportTriageDomainErrorDetailsByCode[TCode]) {
-    super(message);
+  constructor(
+    code: TCode,
+    message: string | undefined = undefined,
+    details?: SupportTriageDomainErrorDetailsByCode[TCode],
+  ) {
+    const resolvedMessage = message ?? supportTriageDomainErrorCatalog[code].message;
+    super(resolvedMessage);
     this.name = "SupportTriageDomainError";
     this.code = code;
     this.status = supportTriageDomainErrorCatalog[code].status;
@@ -100,4 +105,12 @@ export type AnySupportTriageDomainError = {
 
 export function isSupportTriageDomainError(error: unknown): error is AnySupportTriageDomainError {
   return error instanceof SupportTriageDomainError;
+}
+
+export function createSupportTriageDomainError<TCode extends SupportTriageDomainErrorCode>(input: {
+  code: TCode;
+  details?: SupportTriageDomainErrorDetailsByCode[TCode];
+  message?: string;
+}): SupportTriageDomainError<TCode> {
+  return new SupportTriageDomainError(input.code, input.message, input.details);
 }
