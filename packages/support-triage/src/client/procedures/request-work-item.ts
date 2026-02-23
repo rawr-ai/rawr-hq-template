@@ -1,13 +1,13 @@
 import { os } from "@orpc/server";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { TriageWorkItemSchema, TriageWorkItemSourceSchema } from "../domain";
-import type { SupportTriageProcedureContext } from "../context";
-import { requestSupportTriageWorkItem } from "../service/lifecycle";
-import { supportTriageProcedureErrorMap } from "./error-map";
-import { throwSupportTriageDomainErrorAsProcedureError } from "./procedure-errors";
+import { TriageWorkItemSchema, TriageWorkItemSourceSchema } from "../../domain";
+import type { SupportTriageClientContext } from "../context";
+import { requestSupportTriageWorkItem } from "../../service/lifecycle";
+import { supportTriageClientErrorMap } from "../errors";
+import { throwSupportTriageDomainErrorAsClientError } from "../errors";
 
-const o = os.$context<SupportTriageProcedureContext>();
+const o = os.$context<SupportTriageClientContext>();
 
 export const requestWorkItemProcedure = o
   .input(
@@ -44,11 +44,11 @@ export const requestWorkItemProcedure = o
       ),
     ),
   )
-  .errors(supportTriageProcedureErrorMap)
+  .errors(supportTriageClientErrorMap)
   .handler(async ({ context, input, errors }) => {
     try {
       return await requestSupportTriageWorkItem(context.deps, input);
     } catch (error) {
-      throwSupportTriageDomainErrorAsProcedureError(error, errors);
+      throwSupportTriageDomainErrorAsClientError(error, errors);
     }
   });

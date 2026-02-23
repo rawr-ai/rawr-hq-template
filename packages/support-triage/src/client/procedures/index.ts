@@ -4,12 +4,10 @@ import { listWorkItemsProcedure } from "./list-work-items";
 import { requestWorkItemProcedure } from "./request-work-item";
 import { startWorkItemProcedure } from "./start-work-item";
 
-export const procedures = {
+export const supportTriageClientProcedures = {
   requestWorkItem: requestWorkItemProcedure,
   listWorkItems: listWorkItemsProcedure,
   getWorkItem: getWorkItemProcedure,
   startWorkItem: startWorkItemProcedure,
   completeWorkItem: completeWorkItemProcedure,
 } as const;
-
-export { supportTriageProcedureErrorMap } from "./error-map";

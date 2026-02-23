@@ -1,10 +1,4 @@
 export * from "./domain";
-export * from "./errors";
 export * from "./ids";
 export * from "./service";
-export type { SupportTriageProcedureContext } from "./context";
-export { internalRouter } from "./router";
-export { createSupportTriageInternalClient } from "./client";
-export type { SupportTriageInternalClient } from "./client";
-export { procedures } from "./procedures";
-export { supportTriageProcedureErrorMap } from "./procedures";
+export * from "./client";

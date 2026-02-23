@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRouterClient } from "@orpc/server";
 import type { Inngest } from "inngest";
-import { createSupportTriageInternalClient, createInMemoryTriageWorkItemStore } from "@rawr/support-triage";
+import { createInMemoryTriageWorkItemStore, supportTriageClientRouter } from "@rawr/support-triage";
 import {
   __resetSupportTriageRunStoreForTests,
   createSupportTriageWorkflowRouter,
@@ -35,7 +35,7 @@ describe("support-triage workflow plugin", () => {
         inngestBaseUrl: "http://localhost:8288",
       }),
       inngestClient: fakeInngest,
-      supportTriage: createSupportTriageInternalClient({ deps }),
+      supportTriage: createRouterClient(supportTriageClientRouter, { context: { deps } }),
       requestId: "req-1",
       correlationId: "corr-1",
       middlewareState: { markerCache: new Map() },
@@ -84,7 +84,7 @@ describe("support-triage workflow plugin", () => {
         inngestBaseUrl: "http://localhost:8288",
       }),
       inngestClient: fakeInngest,
-      supportTriage: createSupportTriageInternalClient({ deps }),
+      supportTriage: createRouterClient(supportTriageClientRouter, { context: { deps } }),
       requestId: "req-1",
       correlationId: "corr-1",
       middlewareState: { markerCache: new Map() },
@@ -128,11 +128,7 @@ describe("support-triage workflow plugin", () => {
     expect(finalStatus.run?.triagedTicketCount).toBe(42);
     expect(finalStatus.run?.escalatedTicketCount).toBe(6);
 
-    const supportTriageClient = context.supportTriage;
-    if (!supportTriageClient) {
-      throw new Error("support-triage client not configured in workflow test context");
-    }
-    const workItemStatus = await supportTriageClient.getWorkItem({ workItemId: triggered.run.workItemId });
+    const workItemStatus = await context.supportTriage.getWorkItem({ workItemId: triggered.run.workItemId });
     expect(workItemStatus.workItem.status).toBe("completed");
   });
 });

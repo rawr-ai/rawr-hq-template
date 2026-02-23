@@ -1,6 +1,6 @@
 import type { RuntimeRouterContext } from "@rawr/core/orpc";
-import type { SupportTriageInternalClient } from "@rawr/support-triage";
+import type { SupportTriageClient } from "@rawr/support-triage";
 
 export type SupportTriageApiContext = RuntimeRouterContext & {
-  supportTriage: SupportTriageInternalClient;
+  supportTriage: SupportTriageClient;
 };

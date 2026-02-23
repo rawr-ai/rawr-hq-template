@@ -1,4 +1,4 @@
-import type { TriageWorkItemStatus } from "./domain";
+import type { TriageWorkItemStatus } from "./status";
 
 export type SupportTriageDomainErrorDetailsByCode = {
   INVALID_QUEUE_ID: {

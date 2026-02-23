@@ -1,16 +1,20 @@
+import { createRouterClient } from "@orpc/server";
 import { describe, expect, it } from "vitest";
-import { createInMemoryTriageWorkItemStore, createSupportTriageInternalClient } from "../src";
+import { createInMemoryTriageWorkItemStore, supportTriageClientRouter } from "../src";
 
 function createClient() {
   const store = createInMemoryTriageWorkItemStore();
   let idCounter = 0;
-  return createSupportTriageInternalClient({
-    deps: {
-      store,
-      now: () => "2026-02-24T00:00:00.000Z",
-      generateWorkItemId: () => {
-        idCounter += 1;
-        return `work-item-${idCounter}`;
+
+  return createRouterClient(supportTriageClientRouter, {
+    context: {
+      deps: {
+        store,
+        now: () => "2026-02-24T00:00:00.000Z",
+        generateWorkItemId: () => {
+          idCounter += 1;
+          return `work-item-${idCounter}`;
+        },
       },
     },
   });

@@ -1,6 +1,6 @@
 import type { TriageWorkItem, TriageWorkItemSource, TriageWorkItemStatus } from "../domain";
 import { canTransitionTriageWorkItemStatus, isTerminalTriageWorkItemStatus } from "../domain";
-import { SupportTriageDomainError } from "../errors";
+import { SupportTriageDomainError } from "../domain/errors";
 import { normalizeSupportTriageId } from "../ids";
 import type { TriageWorkItemStore } from "./store";
 
