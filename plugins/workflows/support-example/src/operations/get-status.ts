@@ -3,7 +3,7 @@ import { SUPPORT_EXAMPLE_CAPABILITY, normalizeSupportExampleRunId } from "../mod
 import { getSupportExampleRun } from "../run-store";
 import { os } from "../orpc";
 
-export const getStatus = os.getStatus.handler(async ({ input }) => {
+export const getStatus = os.supportExample.triage.getStatus.handler(async ({ input }) => {
   if (!input.runId) {
     return {
       capability: SUPPORT_EXAMPLE_CAPABILITY,

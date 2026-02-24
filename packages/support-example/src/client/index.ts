@@ -8,7 +8,6 @@ export const supportExampleClientProcedures = {
   },
 } as const;
 
-// Keep the existing exported name to avoid churn in plugin contracts.
 export const supportExampleClientErrorMap = supportExampleContractErrorMap;
 
 export type SupportExampleClient = RouterClient<typeof supportExampleClientProcedures>;

@@ -2,7 +2,7 @@
 
 `@rawr/support-example` models the **support-example** capability with explicit module authority:
 
-- `domain/`: business concepts and invariants (`TriageWorkItem`, status model, domain errors)
+- `domain/`: business concepts and invariants (`TriageWorkItem`, status model)
 - `contract/`: oRPC contract surface organized by caller navigation (`triage/items/{request,list,get,start,complete}.ts`)
 - `service/`: lifecycle logic, persistence interfaces, and procedure handlers
 - `client/`: exported in-process router shape + client type

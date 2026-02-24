@@ -5,6 +5,7 @@ import { createHqRuntimeRouter } from "@rawr/core/orpc";
 import {
   createInMemoryTriageWorkItemStore,
   supportExampleClientProcedures,
+  type SupportExampleClient,
   type SupportExampleServiceDeps,
 } from "@rawr/support-example";
 import { Inngest } from "inngest";
@@ -33,14 +34,18 @@ function resolveSupportExampleDeps(repoRoot: string): SupportExampleServiceDeps 
   return deps;
 }
 
+function resolveSupportExampleClient(repoRoot: string): SupportExampleClient {
+  return createRouterClient(supportExampleClientProcedures, {
+    context: {
+      deps: resolveSupportExampleDeps(repoRoot),
+    },
+  });
+}
+
 function enrichSupportExampleContext<T extends { repoRoot: string }>(context: T) {
   return {
     ...context,
-    supportExample: createRouterClient(supportExampleClientProcedures, {
-      context: {
-        deps: resolveSupportExampleDeps(context.repoRoot),
-      },
-    }),
+    supportExample: resolveSupportExampleClient(context.repoRoot),
   };
 }
 
@@ -57,7 +62,7 @@ const composedOrpcRouter = {
 const composedWorkflowTriggerRouter = supportExampleWorkflowPlugin.router;
 const supportExampleInngestFunctions = createSupportExampleInngestFunctions({
   client: supportExampleInngestClient,
-  resolveSupportExampleDeps,
+  resolveSupportExampleClient,
 });
 
 export const rawrHqManifest = {
@@ -73,7 +78,7 @@ export const rawrHqManifest = {
   workflows: {
     capabilities: {
       "support-example": {
-        pathPrefix: "/support-example",
+        pathPrefix: "/support-example/triage",
       },
     },
     triggerRouter: composedWorkflowTriggerRouter,
