@@ -1,7 +1,7 @@
 # ORPC + Ingest (E‑E‑S‑T) — Domain Packages “Golden Example” Grounding
 
 Created: 2026-02-24  
-Repo snapshot: `rawr-hq-template` @ branch `codex/support-example-orpc-unified-golden`, commit `1acfd4db`
+Repo snapshot (initial): `rawr-hq-template` @ branch `codex/support-example-orpc-unified-golden`, commit `1acfd4db`
 
 ## What this doc is
 
@@ -81,4 +81,108 @@ Standardize the setup enough that we can generate a package from our WR / CLI di
 ## Notes / constraints observed so far
 
 - Graphite CLI (`gt`) cannot run in this sandbox because it cannot access `~/.local/share/graphite/...` (permission error). We can still preserve Graphite workflow invariants using git directly in this environment.
+
+## Relevant constraints (skills → extracted)
+
+### oRPC (contract-first canonical guidance; router-first exists but is “alternative”)
+
+From the oRPC reference skill:
+
+- oRPC artifacts are separable: **contract** → **implementation** → **router** → transports (`RPCHandler`, `OpenAPIHandler`) → **clients**.
+- Recommended monorepo rule-of-thumb:
+  - keep **transports at the edge** (mount `RPCHandler` / `OpenAPIHandler` in apps, not in shared packages),
+  - keep “contract” packages dependency-clean (no app/framework imports),
+  - keep domain packages reusable (domain should not depend on implementation packages).
+- For testing, `createRouterClient(router, { context })` is a fast “no-network” way to call procedures in-process.
+
+### Inngest (durable execution; adapters at edges)
+
+From the Inngest reference skill:
+
+- Inngest is **durable execution**: handlers can re-run; step boundaries (`step.run`, `step.sleep`, etc.) are the durability / idempotency unit.
+- Keep **adapters at the edges** (the `serve()` wiring lives in an app endpoint); keep shared workflow packages portable.
+- Treat event names + payload schemas like an internal API (centralize, evolve additively, version via new event names).
+
+### System design (boundary discipline)
+
+From the system-design skill:
+
+- Boundaries are *choices*; define what’s inside/outside and what flows across.
+- Prefer designs where changes do not cascade (reduce coupling), and force yourself to trace second-order effects (what gets worse when this gets better).
+
+## What the repo currently demonstrates (important signals)
+
+As of the `codex/support-example-orpc-unified-golden` branch:
+
+### Two competing “domain package” patterns are already present
+
+1) **Contract-only domain packages (contract-first posture)**  
+Example: `packages/state/src/orpc/contract.ts` exports `stateContract` only.
+
+2) **Router-first domain package (router is the authority; contract derived from router)**  
+Example: `packages/support-example/README.md` explicitly states “router-first authority chain”, and `packages/support-example/src/contract.ts` derives the contract via `minifyContractRouter(supportExampleRouter)`.
+
+### How support-example currently composes router/contract/client
+
+- **Router**: `packages/support-example/src/router.ts` composes module routers (e.g. `triage/items/*`) into `supportExampleRouter`.
+- **Procedures + handlers**: modules like `packages/support-example/src/modules/triage/items/request.ts` define procedures via `os.$context<...>().route().input().output().handler(...)` (i.e., oRPC server is inside the package).
+- **Contract**: `packages/support-example/src/contract.ts` minifies/derives a contract view from the router (no separate contract tree).
+- **Client (internal, no-network)**:
+  - tests create an in-process client via `createRouterClient(supportExampleRouter, { context })` (`packages/support-example/test/*`),
+  - the host wires the client into request context in `rawr.hq.ts` (`resolveSupportExampleClient`, `enrichSupportExampleContext`).
+
+### How plugins integrate with the domain package (support-example)
+
+- API plugin provides a boundary router that **delegates** to the in-process domain client (see `plugins/api/support-example/src/operations/**`).
+- API plugin uses `implement<typeof supportExampleRouter, SupportExampleApiContext>(supportExampleRouter)` as a typed procedure handle surface, then attaches delegating handlers (see `plugins/api/support-example/src/orpc.ts`).
+
+## Decision surface we need to converge on (for the golden examples)
+
+The key is to standardize the relationship between:
+1) **domain logic**, 2) **router**, 3) **contract**, 4) **client**.
+
+We need one canonical pattern that:
+- feels minimal at N-of-1 (ToDo),
+- scales cleanly at N-of-3/4/5 (support-example),
+- is “agent-proof” (hard to wire incorrectly),
+- preserves the domain-package boundary (import direction + dependency hygiene).
+
+### Architecture options (not decided yet)
+
+#### Option A — “Router-first domain package” (oRPC defines the service)
+
+Domain package exports:
+- `router` (procedures + handlers),
+- `contract` derived from router,
+- optionally helpers to create an in-process client (`createRouterClient(router, { context })`).
+
+Implications:
+- Easiest to make N-of-1 feel real and usable quickly.
+- Strong “single authority” story (router is what exists; contract is a view).
+- Domain package depends on `@orpc/server` (purity is intentionally traded for ergonomics).
+
+#### Option B — “Pure domain services + ORPC adapters at the edge”
+
+Domain package exports:
+- domain models + services (no oRPC),
+- possibly a narrow service interface for tests and DI.
+
+Then *some boundary layer* (plugin/app or a dedicated adapter submodule) exports:
+- oRPC `contract`,
+- oRPC `router` via `implement(contract)` whose handlers call domain services.
+
+Implications:
+- Cleanest boundary and import direction; easiest to enforce “domain purity”.
+- More artifacts to keep in sync (contract vs implementation vs domain).
+- N-of-1 feels heavier unless we define a strict minimum skeleton / generator.
+
+#### Option C — “Layered domain package (pure core + ORPC adapter submodule)”
+
+Domain package contains both:
+- `domain/` (pure),
+- `orpc/` (contract + router adapter), with a hard rule that only `orpc/` imports `@orpc/*`.
+
+Implications:
+- Keeps “one package” scaling story while preserving a meaningful internal boundary.
+- Slightly more structure up front, but reduces drift and confusion long-term.
 
