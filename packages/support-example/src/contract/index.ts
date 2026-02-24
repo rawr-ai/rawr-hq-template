@@ -8,15 +8,15 @@ import {
 } from "./triage";
 
 export const supportExampleContract = oc.router({
-  triage: oc.router({
-    items: oc.router({
+  triage: {
+    items: {
       request: requestItemContract,
       list: listItemsContract,
       get: getItemContract,
       start: startItemContract,
       complete: completeItemContract,
-    }),
-  }),
+    },
+  },
 });
 
 export type SupportExampleContract = typeof supportExampleContract;
