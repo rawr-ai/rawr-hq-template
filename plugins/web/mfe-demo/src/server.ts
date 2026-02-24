@@ -4,20 +4,20 @@ export function registerServer(app: any, _ctx: { baseUrl: string }) {
   app.get("/mfe-demo/health", () => ({
     ok: true,
     plugin: name,
-    capability: "support-triage",
+    capability: "support-example",
     exampleDomain: true,
   }));
 
-  app.get("/mfe-demo/support-triage/status", () => ({
+  app.get("/mfe-demo/support-example/status", () => ({
     ok: true,
     plugin: name,
-    capability: "support-triage",
+    capability: "support-example",
     exampleDomain: true,
     routeHints: {
       firstPartyDefault: {
         transport: "RPCLink",
-        triggerRun: "POST /rpc (procedure: triggerSupportTriage)",
-        getStatus: "POST /rpc (procedure: getSupportTriageStatus; optional: { runId })",
+        triggerRun: "POST /rpc (procedure: triggerSupportExample)",
+        getStatus: "POST /rpc (procedure: getSupportExampleStatus; optional: { runId })",
       },
     },
   }));
