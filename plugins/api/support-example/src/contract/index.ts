@@ -8,17 +8,17 @@ import {
 } from "./triage";
 
 export const supportExampleApiContract = oc.router({
-  supportExample: oc.router({
-    triage: oc.router({
-      items: oc.router({
+  supportExample: {
+    triage: {
+      items: {
         request: requestWorkItemApiContract,
         list: listWorkItemsApiContract,
         get: getWorkItemApiContract,
         start: startWorkItemApiContract,
         complete: completeWorkItemApiContract,
-      }),
-    }),
-  }),
+      },
+    },
+  },
 });
 
 export type SupportExampleApiContract = typeof supportExampleApiContract;
