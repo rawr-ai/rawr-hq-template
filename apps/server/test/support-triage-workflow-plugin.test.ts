@@ -43,7 +43,7 @@ describe("support-example workflow plugin", () => {
 
     const client = createRouterClient(router, { context });
 
-    const triggered = await client.triggerRun({
+    const triggered = await client.supportExample.triage.triggerRun({
       queueId: "queue-main",
       requestedBy: "leg1-impl-workflows",
       dryRun: true,
@@ -55,11 +55,11 @@ describe("support-example workflow plugin", () => {
     expect(typeof triggered.run.workItemId).toBe("string");
     expect(triggered.eventIds).toEqual(["evt-support-example-1"]);
 
-    const capabilityStatus = await client.getStatus({});
+    const capabilityStatus = await client.supportExample.triage.getStatus({});
     expect(capabilityStatus.capability).toBe("support-example");
     expect(capabilityStatus.healthy).toBe(true);
 
-    const runStatus = await client.getStatus({ runId: triggered.run.runId });
+    const runStatus = await client.supportExample.triage.getStatus({ runId: triggered.run.runId });
     expect(runStatus.run?.runId).toBe(triggered.run.runId);
     expect(runStatus.run?.status).toBe("queued");
   });
@@ -91,7 +91,7 @@ describe("support-example workflow plugin", () => {
     };
     const client = createRouterClient(router, { context });
 
-    const triggered = await client.triggerRun({
+    const triggered = await client.supportExample.triage.triggerRun({
       queueId: "queue-main",
       requestedBy: "leg1-impl-workflows",
       dryRun: false,
@@ -117,13 +117,13 @@ describe("support-example workflow plugin", () => {
           return value;
         },
       },
-      deps,
+      supportClient: context.supportExample,
     });
 
     expect(summary.triagedTicketCount).toBe(42);
     expect(summary.escalatedTicketCount).toBe(6);
 
-    const finalStatus = await client.getStatus({ runId: triggered.run.runId });
+    const finalStatus = await client.supportExample.triage.getStatus({ runId: triggered.run.runId });
     expect(finalStatus.run?.status).toBe("completed");
     expect(finalStatus.run?.triagedTicketCount).toBe(42);
     expect(finalStatus.run?.escalatedTicketCount).toBe(6);

@@ -32,7 +32,7 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
 
     const res = await app.handle(
-      new Request("http://localhost/rpc/getStatus", {
+      new Request("http://localhost/rpc/supportExample/triage/getStatus", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),
@@ -49,11 +49,11 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
   it("does not serve workflow OpenAPI routes through /api/orpc/*", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
 
-    const statusRes = await app.handle(new Request("http://localhost/api/orpc/support-example/status"));
+    const statusRes = await app.handle(new Request("http://localhost/api/orpc/support-example/triage/status"));
     expect(statusRes.status).toBe(404);
 
     const triggerRes = await app.handle(
-      new Request("http://localhost/api/orpc/support-example/runs", {
+      new Request("http://localhost/api/orpc/support-example/triage/runs", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ queueId: "queue-1", requestedBy: "user" }),
@@ -85,7 +85,7 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
       });
 
       const triggerRes = await app.handle(
-        new Request("http://localhost/rpc/triggerRun", {
+        new Request("http://localhost/rpc/supportExample/triage/triggerRun", {
           method: "POST",
           headers: FIRST_PARTY_RPC_HEADERS,
           body: JSON.stringify({
@@ -110,7 +110,7 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
 
       const runId = triggerPayload.json?.run?.runId ?? "";
       const statusRes = await app.handle(
-        new Request("http://localhost/rpc/getStatus", {
+        new Request("http://localhost/rpc/supportExample/triage/getStatus", {
           method: "POST",
           headers: FIRST_PARTY_RPC_HEADERS,
           body: JSON.stringify({ json: { runId } }),

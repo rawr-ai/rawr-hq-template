@@ -7,4 +7,4 @@ export const supportExampleContract = oc.router({
 
 export type SupportExampleContract = typeof supportExampleContract;
 
-export { supportExampleContractErrorMap, throwSupportExampleDomainErrorAsContractError } from "./errors";
+export { supportExampleContractErrorMap } from "./errors";
