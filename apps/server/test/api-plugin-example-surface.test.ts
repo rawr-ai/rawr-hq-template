@@ -43,7 +43,7 @@ describe("api plugin example surface", () => {
     const app = createApp();
 
     const requestResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/requestWorkItem", {
+      new Request("http://localhost/rpc/supportExample/triage/items/request", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({
@@ -69,7 +69,7 @@ describe("api plugin example surface", () => {
     expect(requestPayload.json?.workItem?.status).toBe("queued");
 
     const listResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/listWorkItems", {
+      new Request("http://localhost/rpc/supportExample/triage/items/list", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),
@@ -90,7 +90,7 @@ describe("api plugin example surface", () => {
     const app = createApp();
 
     const createResponse = await app.handle(
-      new Request("http://localhost/api/orpc/support-example/work-items", {
+      new Request("http://localhost/api/orpc/support-example/triage/work-items", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -114,7 +114,7 @@ describe("api plugin example surface", () => {
 
     const workItemId = created.workItem?.workItemId ?? "";
     const getResponse = await app.handle(
-      new Request(`http://localhost/api/orpc/support-example/work-items/${workItemId}`, {
+      new Request(`http://localhost/api/orpc/support-example/triage/work-items/${workItemId}`, {
         headers: {
           "x-rawr-caller-surface": "external",
         },
@@ -161,7 +161,7 @@ describe("api plugin example surface", () => {
     const app = createApp();
 
     const rpcResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/requestWorkItem", {
+      new Request("http://localhost/rpc/supportExample/triage/items/request", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({
@@ -180,7 +180,7 @@ describe("api plugin example surface", () => {
     expect(rpcPayload.json?.data).toMatchObject({ queueId: "   " });
 
     const openApiResponse = await app.handle(
-      new Request("http://localhost/api/orpc/support-example/work-items", {
+      new Request("http://localhost/api/orpc/support-example/triage/work-items", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -204,7 +204,7 @@ describe("api plugin example surface", () => {
     const app = createApp();
 
     const rpcResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/getWorkItem", {
+      new Request("http://localhost/rpc/supportExample/triage/items/get", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({
@@ -222,7 +222,7 @@ describe("api plugin example surface", () => {
     expect(rpcPayload.json?.data).toMatchObject({ workItemId: "missing-work-item" });
 
     const openApiResponse = await app.handle(
-      new Request("http://localhost/api/orpc/support-example/work-items/missing-work-item", {
+      new Request("http://localhost/api/orpc/support-example/triage/work-items/missing-work-item", {
         headers: {
           "x-rawr-caller-surface": "external",
         },
@@ -240,7 +240,7 @@ describe("api plugin example surface", () => {
     const app = createApp();
 
     const requestResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/requestWorkItem", {
+      new Request("http://localhost/rpc/supportExample/triage/items/request", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({
@@ -259,7 +259,7 @@ describe("api plugin example surface", () => {
     expect(workItemId).not.toBe("");
 
     const rpcResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/completeWorkItem", {
+      new Request("http://localhost/rpc/supportExample/triage/items/complete", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({
@@ -283,7 +283,7 @@ describe("api plugin example surface", () => {
     });
 
     const openApiResponse = await app.handle(
-      new Request(`http://localhost/api/orpc/support-example/work-items/${workItemId}/complete`, {
+      new Request(`http://localhost/api/orpc/support-example/triage/work-items/${workItemId}/complete`, {
         method: "POST",
         headers: {
           "content-type": "application/json",

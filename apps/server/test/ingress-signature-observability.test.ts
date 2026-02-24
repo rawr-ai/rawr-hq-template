@@ -153,7 +153,7 @@ describe("ingress signature observability", () => {
     const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-ingress-route-family-"));
     tempDirs.push(fixtureRoot);
     const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot, enabledPluginIds: new Set() });
-    const response = await app.handle(new Request("http://localhost/api/workflows/support-example/status"));
+    const response = await app.handle(new Request("http://localhost/api/workflows/support-example/triage/status"));
 
     expect(response.status).toBe(200);
     const payload = (await response.json()) as { capability?: string; healthy?: boolean };

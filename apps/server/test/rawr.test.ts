@@ -159,7 +159,7 @@ describe("rawr server routes", () => {
 
   it("host-composition-guard: serves capability-first workflow family paths", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
-    const res = await app.handle(new Request("http://localhost/api/workflows/support-example/status"));
+    const res = await app.handle(new Request("http://localhost/api/workflows/support-example/triage/status"));
     expect(res.status).toBe(200);
     const json = (await res.json()) as { capability?: string; healthy?: boolean; run?: unknown };
     expect(json.capability).toBe("support-example");
@@ -182,7 +182,7 @@ describe("rawr server routes", () => {
   it("host-composition-guard: does not add a dedicated /rpc/workflows mount", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
     const res = await app.handle(
-      new Request("http://localhost/rpc/workflows/support-example/status", {
+      new Request("http://localhost/rpc/workflows/support-example/triage/status", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),

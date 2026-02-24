@@ -73,11 +73,11 @@ export const SupportExampleRunSchema = Type.Object(
   },
 );
 
-export const supportExampleWorkflowContract = oc.router({
+const triageWorkflowContract = oc.router({
   triggerRun: oc
     .route({
       method: "POST",
-      path: "/support-example/runs",
+      path: "/support-example/triage/runs",
       tags: supportExampleTag,
       summary: "Trigger a support triage run",
       description: "Queues a durable support triage run and dispatches the corresponding Inngest event.",
@@ -141,7 +141,7 @@ export const supportExampleWorkflowContract = oc.router({
   getStatus: oc
     .route({
       method: "GET",
-      path: "/support-example/status",
+      path: "/support-example/triage/status",
       tags: supportExampleTag,
       summary: "Get support triage capability status and optional run status",
       description: "Returns capability health plus optional status details for a specific support triage run.",
@@ -186,6 +186,12 @@ export const supportExampleWorkflowContract = oc.router({
         ),
       ),
     ),
+});
+
+export const supportExampleWorkflowContract = oc.router({
+  supportExample: oc.router({
+    triage: triageWorkflowContract,
+  }),
 });
 
 export type SupportExampleWorkflowContract = typeof supportExampleWorkflowContract;

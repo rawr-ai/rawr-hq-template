@@ -1,8 +1,7 @@
-import { implement } from "@orpc/server";
-import { supportExampleContract, throwSupportExampleDomainErrorAsContractError } from "../contract";
+import { implement, type ORPCErrorConstructorMap } from "@orpc/server";
+import { supportExampleContract, supportExampleContractErrorMap } from "../contract";
 import type { TriageWorkItem, TriageWorkItemSource, TriageWorkItemStatus } from "../domain";
 import { canTransitionTriageWorkItemStatus, isTerminalTriageWorkItemStatus } from "../domain";
-import { createSupportExampleDomainError, SupportExampleDomainError } from "../domain/errors";
 import { normalizeSupportExampleId } from "../ids";
 import type { TriageWorkItemStore } from "./store";
 
@@ -31,25 +30,56 @@ export type CompleteTriageWorkItemInput = {
   failureCode?: string;
 };
 
-function normalizeRequiredId(
-  value: string,
-  code: "INVALID_QUEUE_ID" | "INVALID_REQUESTED_BY" | "INVALID_WORK_ITEM_ID",
-  label: string,
-): string {
-  const normalized = normalizeSupportExampleId(value);
+type SupportExampleErrorConstructors = ORPCErrorConstructorMap<typeof supportExampleContractErrorMap>;
+
+function normalizeQueueId(queueId: string, errors: SupportExampleErrorConstructors): string {
+  const normalized = normalizeSupportExampleId(queueId);
   if (!normalized) {
-    throw new SupportExampleDomainError(code, `Invalid ${label}`, { [label]: value });
+    throw errors.INVALID_QUEUE_ID({
+      message: "Invalid queueId",
+      data: { queueId },
+    });
   }
   return normalized;
 }
 
-function normalizeCount(value: number | undefined, label: "triagedTicketCount" | "escalatedTicketCount"): number | undefined {
+function normalizeRequestedBy(requestedBy: string, errors: SupportExampleErrorConstructors): string {
+  const normalized = normalizeSupportExampleId(requestedBy);
+  if (!normalized) {
+    throw errors.INVALID_REQUESTED_BY({
+      message: "Invalid requestedBy",
+      data: { requestedBy },
+    });
+  }
+  return normalized;
+}
+
+function normalizeWorkItemId(workItemId: string, errors: SupportExampleErrorConstructors): string {
+  const normalized = normalizeSupportExampleId(workItemId);
+  if (!normalized) {
+    throw errors.INVALID_WORK_ITEM_ID({
+      message: "Invalid workItemId",
+      data: { workItemId },
+    });
+  }
+  return normalized;
+}
+
+function normalizeCount(
+  value: number | undefined,
+  label: "triagedTicketCount" | "escalatedTicketCount",
+  workItemId: string,
+  errors: SupportExampleErrorConstructors,
+): number | undefined {
   if (value === undefined) {
     return undefined;
   }
 
   if (!Number.isFinite(value) || value < 0) {
-    throw new SupportExampleDomainError("INVALID_COMPLETION_INPUT", `${label} must be a non-negative number`);
+    throw errors.INVALID_COMPLETION_INPUT({
+      message: `${label} must be a non-negative number`,
+      data: { workItemId },
+    });
   }
 
   return Math.floor(value);
@@ -57,60 +87,65 @@ function normalizeCount(value: number | undefined, label: "triagedTicketCount" |
 
 function validateCompletionInput(
   input: CompleteTriageWorkItemInput,
+  errors: SupportExampleErrorConstructors,
 ): { triagedCount: number | undefined; escalatedCount: number | undefined } {
-  const triagedCount = normalizeCount(input.triagedTicketCount, "triagedTicketCount");
-  const escalatedCount = normalizeCount(input.escalatedTicketCount, "escalatedTicketCount");
+  const triagedCount = normalizeCount(input.triagedTicketCount, "triagedTicketCount", input.workItemId, errors);
+  const escalatedCount = normalizeCount(input.escalatedTicketCount, "escalatedTicketCount", input.workItemId, errors);
 
   if (input.succeeded && triagedCount === undefined) {
-    throw new SupportExampleDomainError("INVALID_COMPLETION_INPUT", "triagedTicketCount is required when succeeded=true", {
-      workItemId: input.workItemId,
+    throw errors.INVALID_COMPLETION_INPUT({
+      message: "triagedTicketCount is required when succeeded=true",
+      data: { workItemId: input.workItemId },
     });
   }
 
   if (!input.succeeded && (!input.failureReason || input.failureReason.trim() === "")) {
-    throw new SupportExampleDomainError("INVALID_COMPLETION_INPUT", "failureReason is required when succeeded=false", {
-      workItemId: input.workItemId,
+    throw errors.INVALID_COMPLETION_INPUT({
+      message: "failureReason is required when succeeded=false",
+      data: { workItemId: input.workItemId },
     });
   }
 
   if (triagedCount !== undefined && escalatedCount !== undefined && escalatedCount > triagedCount) {
-    throw new SupportExampleDomainError(
-      "INVALID_COMPLETION_INPUT",
-      "escalatedTicketCount cannot exceed triagedTicketCount",
-      { workItemId: input.workItemId },
-    );
+    throw errors.INVALID_COMPLETION_INPUT({
+      message: "escalatedTicketCount cannot exceed triagedTicketCount",
+      data: { workItemId: input.workItemId },
+    });
   }
 
   return { triagedCount, escalatedCount };
 }
 
-async function resolveWorkItemOrThrow(store: TriageWorkItemStore, workItemId: string): Promise<TriageWorkItem> {
-  const normalizedWorkItemId = normalizeRequiredId(workItemId, "INVALID_WORK_ITEM_ID", "workItemId");
+async function resolveWorkItemOrThrow(
+  store: TriageWorkItemStore,
+  workItemId: string,
+  errors: SupportExampleErrorConstructors,
+): Promise<TriageWorkItem> {
+  const normalizedWorkItemId = normalizeWorkItemId(workItemId, errors);
   const existing = await store.get(normalizedWorkItemId);
   if (!existing) {
-    throw new SupportExampleDomainError(
-      "WORK_ITEM_NOT_FOUND",
-      `Support triage work item not found: ${normalizedWorkItemId}`,
-      {
-        workItemId: normalizedWorkItemId,
-      },
-    );
+    throw errors.WORK_ITEM_NOT_FOUND({
+      message: `Support triage work item not found: ${normalizedWorkItemId}`,
+      data: { workItemId: normalizedWorkItemId },
+    });
   }
+
   return existing;
 }
 
-export async function requestSupportExampleWorkItem(
+async function requestWorkItem(
   deps: SupportExampleServiceDeps,
   input: RequestTriageWorkItemInput,
+  errors: SupportExampleErrorConstructors,
 ): Promise<{ workItem: TriageWorkItem }> {
-  const queueId = normalizeRequiredId(input.queueId, "INVALID_QUEUE_ID", "queueId");
-  const requestedBy = normalizeRequiredId(input.requestedBy, "INVALID_REQUESTED_BY", "requestedBy");
+  const queueId = normalizeQueueId(input.queueId, errors);
+  const requestedBy = normalizeRequestedBy(input.requestedBy, errors);
 
   const generatedWorkItemId = normalizeSupportExampleId(deps.generateWorkItemId());
   if (!generatedWorkItemId) {
-    throw createSupportExampleDomainError({
-      code: "INVALID_WORK_ITEM_ID",
+    throw errors.INVALID_WORK_ITEM_ID({
       message: "Generated work item id is invalid",
+      data: {},
     });
   }
 
@@ -129,7 +164,7 @@ export async function requestSupportExampleWorkItem(
   return { workItem };
 }
 
-export async function listSupportExampleWorkItems(
+async function listWorkItems(
   deps: SupportExampleServiceDeps,
   input: ListTriageWorkItemsInput = {},
 ): Promise<{ workItems: TriageWorkItem[] }> {
@@ -140,26 +175,31 @@ export async function listSupportExampleWorkItems(
   return { workItems: filtered };
 }
 
-export async function getSupportExampleWorkItem(
+async function getWorkItem(
   deps: SupportExampleServiceDeps,
   input: { workItemId: string },
+  errors: SupportExampleErrorConstructors,
 ): Promise<{ workItem: TriageWorkItem }> {
-  const workItem = await resolveWorkItemOrThrow(deps.store, input.workItemId);
+  const workItem = await resolveWorkItemOrThrow(deps.store, input.workItemId, errors);
   return { workItem };
 }
 
-export async function startSupportExampleWorkItem(
+async function startWorkItem(
   deps: SupportExampleServiceDeps,
   input: { workItemId: string },
+  errors: SupportExampleErrorConstructors,
 ): Promise<{ workItem: TriageWorkItem }> {
-  const current = await resolveWorkItemOrThrow(deps.store, input.workItemId);
+  const current = await resolveWorkItemOrThrow(deps.store, input.workItemId, errors);
   const nextStatus: TriageWorkItemStatus = "running";
 
   if (!canTransitionTriageWorkItemStatus(current.status, nextStatus)) {
-    throw new SupportExampleDomainError("INVALID_STATUS_TRANSITION", `Cannot transition ${current.status} -> ${nextStatus}`, {
-      workItemId: current.workItemId,
-      from: current.status,
-      to: nextStatus,
+    throw errors.INVALID_STATUS_TRANSITION({
+      message: `Cannot transition ${current.status} -> ${nextStatus}`,
+      data: {
+        workItemId: current.workItemId,
+        from: current.status,
+        to: nextStatus,
+      },
     });
   }
 
@@ -181,28 +221,35 @@ export async function startSupportExampleWorkItem(
   return { workItem: updated };
 }
 
-export async function completeSupportExampleWorkItem(
+async function completeWorkItem(
   deps: SupportExampleServiceDeps,
   input: CompleteTriageWorkItemInput,
+  errors: SupportExampleErrorConstructors,
 ): Promise<{ workItem: TriageWorkItem }> {
-  const { triagedCount, escalatedCount } = validateCompletionInput(input);
+  const { triagedCount, escalatedCount } = validateCompletionInput(input, errors);
 
-  const current = await resolveWorkItemOrThrow(deps.store, input.workItemId);
+  const current = await resolveWorkItemOrThrow(deps.store, input.workItemId, errors);
   const nextStatus: TriageWorkItemStatus = input.succeeded ? "completed" : "failed";
 
   if (!canTransitionTriageWorkItemStatus(current.status, nextStatus)) {
-    throw new SupportExampleDomainError("INVALID_STATUS_TRANSITION", `Cannot transition ${current.status} -> ${nextStatus}`, {
-      workItemId: current.workItemId,
-      from: current.status,
-      to: nextStatus,
+    throw errors.INVALID_STATUS_TRANSITION({
+      message: `Cannot transition ${current.status} -> ${nextStatus}`,
+      data: {
+        workItemId: current.workItemId,
+        from: current.status,
+        to: nextStatus,
+      },
     });
   }
 
   if (isTerminalTriageWorkItemStatus(current.status)) {
-    throw new SupportExampleDomainError("INVALID_STATUS_TRANSITION", `Work item ${current.workItemId} is already terminal`, {
-      workItemId: current.workItemId,
-      from: current.status,
-      to: current.status,
+    throw errors.INVALID_STATUS_TRANSITION({
+      message: `Work item ${current.workItemId} is already terminal`,
+      data: {
+        workItemId: current.workItemId,
+        from: current.status,
+        to: current.status,
+      },
     });
   }
 
@@ -243,42 +290,22 @@ const o = implement<typeof supportExampleContract, SupportExampleProcedureContex
 
 export const supportExampleTriageItemProcedures = {
   request: o.triage.items.request.handler(async ({ context, input, errors }) => {
-    try {
-      return await requestSupportExampleWorkItem(context.deps, input);
-    } catch (error) {
-      throwSupportExampleDomainErrorAsContractError(error, errors);
-    }
+    return requestWorkItem(context.deps, input, errors);
   }),
 
-  list: o.triage.items.list.handler(async ({ context, input, errors }) => {
-    try {
-      return await listSupportExampleWorkItems(context.deps, input);
-    } catch (error) {
-      throwSupportExampleDomainErrorAsContractError(error, errors);
-    }
+  list: o.triage.items.list.handler(async ({ context, input }) => {
+    return listWorkItems(context.deps, input);
   }),
 
   get: o.triage.items.get.handler(async ({ context, input, errors }) => {
-    try {
-      return await getSupportExampleWorkItem(context.deps, input);
-    } catch (error) {
-      throwSupportExampleDomainErrorAsContractError(error, errors);
-    }
+    return getWorkItem(context.deps, input, errors);
   }),
 
   start: o.triage.items.start.handler(async ({ context, input, errors }) => {
-    try {
-      return await startSupportExampleWorkItem(context.deps, input);
-    } catch (error) {
-      throwSupportExampleDomainErrorAsContractError(error, errors);
-    }
+    return startWorkItem(context.deps, input, errors);
   }),
 
   complete: o.triage.items.complete.handler(async ({ context, input, errors }) => {
-    try {
-      return await completeSupportExampleWorkItem(context.deps, input);
-    } catch (error) {
-      throwSupportExampleDomainErrorAsContractError(error, errors);
-    }
+    return completeWorkItem(context.deps, input, errors);
   }),
 } as const;

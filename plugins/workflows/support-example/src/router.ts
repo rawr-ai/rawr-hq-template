@@ -4,8 +4,12 @@ import { os } from "./orpc";
 
 export function createSupportExampleWorkflowRouter() {
   return os.router({
-    triggerRun,
-    getStatus,
+    supportExample: os.supportExample.router({
+      triage: os.supportExample.triage.router({
+        triggerRun,
+        getStatus,
+      }),
+    }),
   });
 }
 
