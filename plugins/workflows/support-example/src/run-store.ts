@@ -1,4 +1,4 @@
-import type { SupportExampleRun } from "./contract";
+import type { SupportExampleRun } from "./models";
 
 // Template example store: in-process only (non-durable).
 const runs = new Map<string, SupportExampleRun>();

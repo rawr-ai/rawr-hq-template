@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createRouterClient } from "@orpc/server";
+import { createRouterClient, type RouterClient } from "@orpc/server";
 import type { Inngest } from "inngest";
-import { supportExampleClientProcedures, type SupportExampleClientContext } from "@rawr/support-example/client";
-import type { TriageWorkItem } from "@rawr/support-example/domain";
+import { supportExampleRouter } from "@rawr/support-example/router";
 import {
   __resetSupportExampleRunStoreForTests,
   createSupportExampleWorkflowRouter,
@@ -11,20 +10,30 @@ import {
 } from "../../../plugins/workflows/support-example";
 import { createCoordinationRuntimeAdapter } from "../src/coordination";
 
-type SupportExampleServiceDeps = SupportExampleClientContext["deps"];
+type SupportExampleClient = RouterClient<typeof supportExampleRouter>;
+type SupportExampleWorkItem = Awaited<ReturnType<SupportExampleClient["triage"]["items"]["request"]>>["workItem"];
+type SupportExampleServiceDeps = {
+  store: {
+    save(workItem: SupportExampleWorkItem): Promise<void>;
+    get(workItemId: string): Promise<SupportExampleWorkItem | null>;
+    list(): Promise<SupportExampleWorkItem[]>;
+  };
+  now: () => string;
+  generateWorkItemId: () => string;
+};
 
 function createInMemoryTriageWorkItemStore(): SupportExampleServiceDeps["store"] {
-  const workItems = new Map<string, TriageWorkItem>();
+  const workItems = new Map<string, SupportExampleWorkItem>();
 
   return {
-    async save(workItem: TriageWorkItem): Promise<void> {
+    async save(workItem: SupportExampleWorkItem): Promise<void> {
       workItems.set(workItem.workItemId, { ...workItem });
     },
-    async get(workItemId: string): Promise<TriageWorkItem | null> {
+    async get(workItemId: string): Promise<SupportExampleWorkItem | null> {
       const workItem = workItems.get(workItemId);
       return workItem ? { ...workItem } : null;
     },
-    async list(): Promise<TriageWorkItem[]> {
+    async list(): Promise<SupportExampleWorkItem[]> {
       return [...workItems.values()].map((workItem) => ({ ...workItem }));
     },
   };
@@ -55,7 +64,7 @@ describe("support-example workflow plugin", () => {
         inngestBaseUrl: "http://localhost:8288",
       }),
       inngestClient: fakeInngest,
-      supportExample: createRouterClient(supportExampleClientProcedures, { context: { deps } }),
+      supportExample: createRouterClient(supportExampleRouter, { context: { deps } }),
       requestId: "req-1",
       correlationId: "corr-1",
       middlewareState: { markerCache: new Map() },
@@ -104,7 +113,7 @@ describe("support-example workflow plugin", () => {
         inngestBaseUrl: "http://localhost:8288",
       }),
       inngestClient: fakeInngest,
-      supportExample: createRouterClient(supportExampleClientProcedures, { context: { deps } }),
+      supportExample: createRouterClient(supportExampleRouter, { context: { deps } }),
       requestId: "req-1",
       correlationId: "corr-1",
       middlewareState: { markerCache: new Map() },

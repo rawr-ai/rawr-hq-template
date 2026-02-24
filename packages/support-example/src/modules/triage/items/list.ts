@@ -1,10 +1,17 @@
-import { oc } from "@orpc/contract";
+import { os } from "@orpc/server";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { TriageWorkItemSchema, TriageWorkItemStatusSchema } from "../../../domain";
-import { supportExampleContractErrorMap } from "../../errors";
+import type { SupportExampleServiceContext } from "../context";
+import { supportExampleTriageErrorMap } from "../errors";
 
-export const listItemsContract = oc
+const triageItemProcedure = os.$context<SupportExampleServiceContext>().errors(supportExampleTriageErrorMap);
+
+export const listItemsProcedure = triageItemProcedure
+  .route({
+    method: "GET",
+    path: "/support-example/triage/work-items",
+  })
   .input(
     schema(
       Type.Object(
@@ -33,4 +40,10 @@ export const listItemsContract = oc
       ),
     ),
   )
-  .errors(supportExampleContractErrorMap);
+  .handler(async ({ context, input }) => {
+    const all = await context.deps.store.list();
+    const filtered = input.status ? all.filter((workItem) => workItem.status === input.status) : all;
+
+    filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return { workItems: filtered };
+  });

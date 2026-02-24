@@ -1,6 +1,8 @@
 import { implement } from "@orpc/server";
-import { supportExampleApiContract } from "./contract";
+import { supportExampleRouter } from "@rawr/support-example/router";
 import type { SupportExampleApiContext } from "./context";
 
-export const os = implement<typeof supportExampleApiContract, SupportExampleApiContext>(supportExampleApiContract);
-
+// Treat the package router as the contract surface; API plugin only swaps the handler to delegate via `context.supportExample`.
+export const os = implement<typeof supportExampleRouter, SupportExampleApiContext>(
+  supportExampleRouter as unknown as typeof supportExampleRouter,
+);
