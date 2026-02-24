@@ -1,8 +1,22 @@
 import { oc } from "@orpc/contract";
-import { triageContract } from "./triage";
+import {
+  completeItemContract,
+  getItemContract,
+  listItemsContract,
+  requestItemContract,
+  startItemContract,
+} from "./triage";
 
 export const supportExampleContract = oc.router({
-  triage: triageContract,
+  triage: oc.router({
+    items: oc.router({
+      request: requestItemContract,
+      list: listItemsContract,
+      get: getItemContract,
+      start: startItemContract,
+      complete: completeItemContract,
+    }),
+  }),
 });
 
 export type SupportExampleContract = typeof supportExampleContract;
