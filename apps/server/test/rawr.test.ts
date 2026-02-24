@@ -150,19 +150,19 @@ describe("rawr server routes", () => {
 
   it("host-composition-guard: manifest composes routers from package seam, not app internals", async () => {
     const manifestSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
-    expect(manifestSource).toContain("./plugins/api/support-triage");
-    expect(manifestSource).toContain("registerSupportTriageApiPlugin");
-    expect(manifestSource).toContain("./plugins/workflows/support-triage");
-    expect(manifestSource).toContain("registerSupportTriageWorkflowPlugin");
+    expect(manifestSource).toContain("./plugins/api/support-example");
+    expect(manifestSource).toContain("registerSupportExampleApiPlugin");
+    expect(manifestSource).toContain("./plugins/workflows/support-example");
+    expect(manifestSource).toContain("registerSupportExampleWorkflowPlugin");
     expect(manifestSource).not.toContain("./apps/server/src/orpc");
   });
 
   it("host-composition-guard: serves capability-first workflow family paths", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
-    const res = await app.handle(new Request("http://localhost/api/workflows/support-triage/status"));
+    const res = await app.handle(new Request("http://localhost/api/workflows/support-example/status"));
     expect(res.status).toBe(200);
     const json = (await res.json()) as { capability?: string; healthy?: boolean; run?: unknown };
-    expect(json.capability).toBe("support-triage");
+    expect(json.capability).toBe("support-example");
     expect(json.healthy).toBe(true);
     expect(json.run).toBeNull();
   });
@@ -182,7 +182,7 @@ describe("rawr server routes", () => {
   it("host-composition-guard: does not add a dedicated /rpc/workflows mount", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
     const res = await app.handle(
-      new Request("http://localhost/rpc/workflows/support-triage/status", {
+      new Request("http://localhost/rpc/workflows/support-example/status", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),

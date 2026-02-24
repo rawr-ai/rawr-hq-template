@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { Inngest } from "inngest";
 
 import { rawrHqManifest } from "../../../rawr.hq";
-import { __resetSupportTriageRunStoreForTests } from "../../../plugins/workflows/support-triage";
+import { __resetSupportExampleRunStoreForTests } from "../../../plugins/workflows/support-example";
 
 import { createServerApp } from "../src/app";
 import { createCoordinationRuntimeAdapter } from "../src/coordination";
@@ -25,7 +25,7 @@ const FIRST_PARTY_RPC_HEADERS = {
 
 describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
   beforeEach(() => {
-    __resetSupportTriageRunStoreForTests();
+    __resetSupportExampleRunStoreForTests();
   });
 
   it("serves workflow status via /rpc using the workflow trigger router (host mount)", async () => {
@@ -41,7 +41,7 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
 
     expect(res.status).toBe(200);
     const payload = (await res.json()) as { json?: { capability?: string; healthy?: boolean; run?: unknown } };
-    expect(payload.json?.capability).toBe("support-triage");
+    expect(payload.json?.capability).toBe("support-example");
     expect(payload.json?.healthy).toBe(true);
     expect(payload.json?.run).toBeNull();
   });
@@ -49,11 +49,11 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
   it("does not serve workflow OpenAPI routes through /api/orpc/*", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
 
-    const statusRes = await app.handle(new Request("http://localhost/api/orpc/support-triage/status"));
+    const statusRes = await app.handle(new Request("http://localhost/api/orpc/support-example/status"));
     expect(statusRes.status).toBe(404);
 
     const triggerRes = await app.handle(
-      new Request("http://localhost/api/orpc/support-triage/runs", {
+      new Request("http://localhost/api/orpc/support-example/runs", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ queueId: "queue-1", requestedBy: "user" }),
@@ -71,7 +71,7 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
       });
 
       const fakeInngest = {
-        send: async () => ({ ids: ["evt-support-triage-1"] }),
+        send: async () => ({ ids: ["evt-support-example-1"] }),
       } as unknown as Inngest;
 
       const app = registerOrpcRoutes(createServerApp(), {
@@ -103,7 +103,7 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
         json?: { accepted?: boolean; eventIds?: string[]; run?: { runId?: string; workItemId?: string; status?: string } };
       };
       expect(triggerPayload.json?.accepted).toBe(true);
-      expect(triggerPayload.json?.eventIds).toEqual(["evt-support-triage-1"]);
+      expect(triggerPayload.json?.eventIds).toEqual(["evt-support-example-1"]);
       expect(typeof triggerPayload.json?.run?.runId).toBe("string");
       expect(typeof triggerPayload.json?.run?.workItemId).toBe("string");
       expect(triggerPayload.json?.run?.status).toBe("queued");

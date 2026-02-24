@@ -6,36 +6,36 @@ export const name = "@rawr/plugin-mfe-demo";
 
 type TerminalRunStatus = "completed" | "failed";
 
-type SupportTriageRun = Readonly<{
+type SupportExampleRun = Readonly<{
   runId: string;
   status: string;
 }> &
   Readonly<Record<string, unknown>>;
 
-type TriggerSupportTriageInput = Readonly<{
+type TriggerSupportExampleInput = Readonly<{
   queueId: string;
   requestedBy: string;
   runId?: string;
   dryRun?: boolean;
 }>;
 
-type TriggerSupportTriageOutput = Readonly<{
+type TriggerSupportExampleOutput = Readonly<{
   accepted: boolean;
-  run: SupportTriageRun;
+  run: SupportExampleRun;
   eventIds: ReadonlyArray<string>;
 }>;
 
-type GetSupportTriageStatusInput = Readonly<{ runId?: string }>;
+type GetSupportExampleStatusInput = Readonly<{ runId?: string }>;
 
-type GetSupportTriageStatusOutput = Readonly<{
+type GetSupportExampleStatusOutput = Readonly<{
   capability: string;
   healthy: boolean;
-  run: SupportTriageRun | null;
+  run: SupportExampleRun | null;
 }>;
 
-type SupportTriageWorkflowRpcClient = Readonly<{
-  triggerSupportTriage(input: TriggerSupportTriageInput): Promise<TriggerSupportTriageOutput>;
-  getSupportTriageStatus(input: GetSupportTriageStatusInput): Promise<GetSupportTriageStatusOutput>;
+type SupportExampleWorkflowRpcClient = Readonly<{
+  triggerSupportExample(input: TriggerSupportExampleInput): Promise<TriggerSupportExampleOutput>;
+  getSupportExampleStatus(input: GetSupportExampleStatusInput): Promise<GetSupportExampleStatusOutput>;
 }>;
 
 function normalizeBasePath(basePath: string | undefined): string {
@@ -68,7 +68,7 @@ function isTerminalStatus(status: string | null): status is TerminalRunStatus {
 export function mount(el: HTMLElement, ctx: MountContext) {
   const basePath = normalizeBasePath(ctx.basePath);
 
-  const client = createORPCClient<SupportTriageWorkflowRpcClient>(
+  const client = createORPCClient<SupportExampleWorkflowRpcClient>(
     createFirstPartyRpcLink({
       url: resolveRpcUrl(basePath),
     }),
@@ -203,7 +203,7 @@ export function mount(el: HTMLElement, ctx: MountContext) {
     statusPre.textContent = `last status:\n${lastStatus ? prettyJson(lastStatus) : "(none)"}`;
   }
 
-  function updateFromStatus(body: GetSupportTriageStatusOutput) {
+  function updateFromStatus(body: GetSupportExampleStatusOutput) {
     healthy = body.healthy;
     const r = body.run;
     if (r && typeof r.runId === "string") {
@@ -214,20 +214,20 @@ export function mount(el: HTMLElement, ctx: MountContext) {
   }
 
   async function fetchStatus(id: string | null) {
-    const body = await client.getSupportTriageStatus(id ? { runId: id } : {});
+    const body = await client.getSupportExampleStatus(id ? { runId: id } : {});
     lastStatus = body;
     updateFromStatus(body);
   }
 
   async function trigger() {
-    const input: TriggerSupportTriageInput = {
+    const input: TriggerSupportExampleInput = {
       queueId: queueIdInput.value.trim(),
       requestedBy: requestedByInput.value.trim(),
       ...(runIdInput.value.trim() ? { runId: runIdInput.value.trim() } : {}),
       dryRun: dryRunInput.checked,
     };
 
-    const body = await client.triggerSupportTriage(input);
+    const body = await client.triggerSupportExample(input);
     lastTrigger = body;
 
     const r = body.run;

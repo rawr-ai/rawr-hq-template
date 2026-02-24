@@ -11,7 +11,7 @@ import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 type DemoStep = StepResult & { stdoutJson?: any };
 
 export default class WorkflowDemoMfe extends RawrCommand {
-  static description = "Enable + build + verify the support-triage micro-frontend demo plugin end-to-end";
+  static description = "Enable + build + verify the support-example micro-frontend demo plugin end-to-end";
 
   static flags = {
     ...RawrCommand.baseFlags,
@@ -129,7 +129,7 @@ export default class WorkflowDemoMfe extends RawrCommand {
         if (ok) {
           this.log("next:");
           this.log("- run: rawr dev up");
-          this.log("- visit: http://localhost:5173/mounts (support-triage example card)");
+          this.log("- visit: http://localhost:5173/mounts (support-example example card)");
         }
       },
     });
@@ -150,16 +150,16 @@ function tryParseJson(raw: string): any | null {
 async function tryWriteDemoSnippet(input: { repoRoot: string; ok: boolean; pluginId: string }): Promise<void> {
   const id = journalId();
   const ts = new Date().toISOString();
-  const title = `workflow demo-mfe support-triage (${input.ok ? "ok" : "failed"})`;
+  const title = `workflow demo-mfe support-example (${input.ok ? "ok" : "failed"})`;
   const body = [
     "workflow: demo-mfe",
-    "domain: support-triage (example)",
+    "domain: support-example (example)",
     `ok: ${input.ok ? "true" : "false"}`,
     `plugin: ${input.pluginId}`,
     "",
     "how to view:",
     "- run: rawr dev up",
-    "- visit: http://localhost:5173/mounts (support-triage example card)",
+    "- visit: http://localhost:5173/mounts (support-example example card)",
   ].join("\n");
 
   const snippet: JournalSnippet = {
@@ -169,7 +169,7 @@ async function tryWriteDemoSnippet(input: { repoRoot: string; ok: boolean; plugi
     title,
     preview: safePreview(`ok=${input.ok} plugin=${input.pluginId}`),
     body,
-    tags: ["workflow", "demo-mfe", "support-triage-example", input.pluginId],
+    tags: ["workflow", "demo-mfe", "support-example-example", input.pluginId],
   };
 
   try {

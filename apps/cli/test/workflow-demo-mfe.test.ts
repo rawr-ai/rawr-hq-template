@@ -12,7 +12,7 @@ function runRawr(args: string[]) {
   });
 }
 
-describe("workflow demo-mfe (support-triage example)", () => {
+describe("workflow demo-mfe (support-example example)", () => {
   it("supports --json --dry-run with planned steps", () => {
     const proc = runRawr(["workflow", "demo-mfe", "--json", "--dry-run"]);
     expect(proc.status).toBe(0);

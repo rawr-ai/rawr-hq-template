@@ -7,7 +7,7 @@
       "dependencies": {
         "@rawr/core": "workspace:*",
         "@rawr/orpc-standards": "workspace:*",
-        "@rawr/support-triage": "workspace:*",
+        "@rawr/support-example": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^22.14.0",
@@ -230,8 +230,8 @@
         "typescript": "^5.9.3",
       },
     },
-    "packages/support-triage": {
-      "name": "@rawr/support-triage",
+    "packages/support-example": {
+      "name": "@rawr/support-example",
       "dependencies": {
         "@orpc/server": "^1.13.5",
         "@rawr/orpc-standards": "workspace:*",
@@ -758,7 +758,7 @@
 
     "@rawr/state": ["@rawr/state@workspace:packages/state"],
 
-    "@rawr/support-triage": ["@rawr/support-triage@workspace:packages/support-triage"],
+    "@rawr/support-example": ["@rawr/support-example@workspace:packages/support-example"],
 
     "@rawr/test-utils": ["@rawr/test-utils@workspace:packages/test-utils"],
 
