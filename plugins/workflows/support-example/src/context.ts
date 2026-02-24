@@ -1,6 +1,6 @@
 import type { CoordinationRuntimeAdapter } from "@rawr/coordination-inngest";
+import type { SupportExampleClient } from "@rawr/support-example/client";
 import type { Inngest } from "inngest";
-import type { SupportExampleClient } from "@rawr/support-example";
 
 // Keep this structurally aligned with `apps/server/src/workflows/context.ts` so workflow plugin routers
 // can be composed into host boundaries without leaking plugin-specific context contracts.

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRouterClient } from "@orpc/server";
 import type { Inngest } from "inngest";
-import { createInMemoryTriageWorkItemStore, supportExampleClientProcedures } from "@rawr/support-example";
+import { supportExampleClientProcedures, type SupportExampleClientContext } from "@rawr/support-example/client";
+import type { TriageWorkItem } from "@rawr/support-example/domain";
 import {
   __resetSupportExampleRunStoreForTests,
   createSupportExampleWorkflowRouter,
@@ -9,6 +10,25 @@ import {
   type SupportExampleWorkflowContext,
 } from "../../../plugins/workflows/support-example";
 import { createCoordinationRuntimeAdapter } from "../src/coordination";
+
+type SupportExampleServiceDeps = SupportExampleClientContext["deps"];
+
+function createInMemoryTriageWorkItemStore(): SupportExampleServiceDeps["store"] {
+  const workItems = new Map<string, TriageWorkItem>();
+
+  return {
+    async save(workItem: TriageWorkItem): Promise<void> {
+      workItems.set(workItem.workItemId, { ...workItem });
+    },
+    async get(workItemId: string): Promise<TriageWorkItem | null> {
+      const workItem = workItems.get(workItemId);
+      return workItem ? { ...workItem } : null;
+    },
+    async list(): Promise<TriageWorkItem[]> {
+      return [...workItems.values()].map((workItem) => ({ ...workItem }));
+    },
+  };
+}
 
 describe("support-example workflow plugin", () => {
   beforeEach(() => {

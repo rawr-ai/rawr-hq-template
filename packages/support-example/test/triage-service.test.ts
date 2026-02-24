@@ -1,6 +1,7 @@
 import { createRouterClient } from "@orpc/server";
 import { describe, expect, it } from "vitest";
-import { createInMemoryTriageWorkItemStore, supportExampleClientProcedures } from "../src";
+import { supportExampleClientProcedures } from "../src/client";
+import { createInMemoryTriageWorkItemStore } from "../src/service/triage/store";
 
 function createClient(seed: { now: string[]; ids: string[] }) {
   const store = createInMemoryTriageWorkItemStore();

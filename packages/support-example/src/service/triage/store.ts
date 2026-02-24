@@ -1,4 +1,4 @@
-import type { TriageWorkItem } from "../domain";
+import type { TriageWorkItem } from "../../domain";
 
 export interface TriageWorkItemStore {
   save(workItem: TriageWorkItem): Promise<void>;

@@ -1,4 +1,4 @@
-import { normalizeSupportExampleId } from "@rawr/support-example";
+import { normalizeSupportExampleId } from "@rawr/support-example/ids";
 import type { SupportExampleRun } from "./contract";
 
 export const SUPPORT_EXAMPLE_CAPABILITY = "support-example" as const;
