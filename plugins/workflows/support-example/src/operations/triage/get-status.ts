@@ -1,9 +1,8 @@
-import { ORPCError } from "@orpc/server";
-import { SUPPORT_EXAMPLE_CAPABILITY, normalizeSupportExampleRunId } from "../models";
-import { getSupportExampleRun } from "../run-store";
-import { os } from "../orpc";
+import { SUPPORT_EXAMPLE_CAPABILITY, normalizeSupportExampleRunId } from "../../models";
+import { os } from "../../orpc";
+import { getSupportExampleRun } from "../../run-store";
 
-export const getStatus = os.supportExample.triage.getStatus.handler(async ({ input }) => {
+export const getStatus = os.supportExample.triage.getStatus.handler(async ({ input, errors }) => {
   if (!input.runId) {
     return {
       capability: SUPPORT_EXAMPLE_CAPABILITY,
@@ -14,8 +13,7 @@ export const getStatus = os.supportExample.triage.getStatus.handler(async ({ inp
 
   const runId = normalizeSupportExampleRunId(input.runId);
   if (!runId) {
-    throw new ORPCError("INVALID_SUPPORT_EXAMPLE_RUN_ID", {
-      status: 400,
+    throw errors.INVALID_SUPPORT_EXAMPLE_RUN_ID({
       message: "runId must be a valid identifier",
       data: { runId: input.runId },
     });
@@ -23,8 +21,7 @@ export const getStatus = os.supportExample.triage.getStatus.handler(async ({ inp
 
   const run = getSupportExampleRun(runId);
   if (!run) {
-    throw new ORPCError("SUPPORT_EXAMPLE_RUN_NOT_FOUND", {
-      status: 404,
+    throw errors.SUPPORT_EXAMPLE_RUN_NOT_FOUND({
       message: "support triage run not found",
       data: { runId },
     });

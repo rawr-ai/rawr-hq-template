@@ -1,5 +1,5 @@
-import { getStatus } from "./operations/get-status";
-import { triggerRun } from "./operations/trigger-run";
+import { getStatus } from "./operations/triage/get-status";
+import { triggerRun } from "./operations/triage/trigger-run";
 import { os } from "./orpc";
 
 export function createSupportExampleWorkflowRouter() {

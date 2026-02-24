@@ -14,10 +14,6 @@
       "types": "./src/domain/index.ts",
       "default": "./src/domain/index.ts"
     },
-    "./service": {
-      "types": "./src/service/index.ts",
-      "default": "./src/service/index.ts"
-    },
     "./contract": {
       "types": "./src/contract/index.ts",
       "default": "./src/contract/index.ts"
@@ -25,6 +21,10 @@
     "./client": {
       "types": "./src/client/index.ts",
       "default": "./src/client/index.ts"
+    },
+    "./ids": {
+      "types": "./src/ids.ts",
+      "default": "./src/ids.ts"
     }
   },
   "scripts": {

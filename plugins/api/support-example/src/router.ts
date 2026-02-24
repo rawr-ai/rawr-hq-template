@@ -1,9 +1,9 @@
 import { os } from "./orpc";
-import { completeWorkItem } from "./operations/complete-work-item";
-import { getWorkItem } from "./operations/get-work-item";
-import { listWorkItems } from "./operations/list-work-items";
-import { requestWorkItem } from "./operations/request-work-item";
-import { startWorkItem } from "./operations/start-work-item";
+import { completeWorkItem } from "./operations/triage/items/complete";
+import { getWorkItem } from "./operations/triage/items/get";
+import { listWorkItems } from "./operations/triage/items/list";
+import { requestWorkItem } from "./operations/triage/items/request";
+import { startWorkItem } from "./operations/triage/items/start";
 
 export const supportExampleApiRouter = os.router({
   supportExample: os.supportExample.router({

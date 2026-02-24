@@ -1,19 +1,17 @@
-import { ORPCError } from "@orpc/server";
 import {
   SUPPORT_EXAMPLE_EVENT_NAME,
-  createSupportExampleRunId,
   createQueuedSupportExampleRun,
+  createSupportExampleRunId,
   normalizeSupportExampleQueueId,
   normalizeSupportExampleRunId,
-} from "../models";
-import { getSupportExampleRun, saveSupportExampleRun } from "../run-store";
-import { os } from "../orpc";
+} from "../../models";
+import { os } from "../../orpc";
+import { getSupportExampleRun, saveSupportExampleRun } from "../../run-store";
 
-export const triggerRun = os.supportExample.triage.triggerRun.handler(async ({ context, input }) => {
+export const triggerRun = os.supportExample.triage.triggerRun.handler(async ({ context, input, errors }) => {
   const queueId = normalizeSupportExampleQueueId(input.queueId);
   if (!queueId) {
-    throw new ORPCError("INVALID_QUEUE_ID", {
-      status: 400,
+    throw errors.INVALID_QUEUE_ID({
       message: "queueId must be a valid identifier",
       data: { queueId: input.queueId },
     });
@@ -21,8 +19,7 @@ export const triggerRun = os.supportExample.triage.triggerRun.handler(async ({ c
 
   const requestedBy = input.requestedBy.trim();
   if (requestedBy.length === 0) {
-    throw new ORPCError("INVALID_REQUESTED_BY", {
-      status: 400,
+    throw errors.INVALID_REQUESTED_BY({
       message: "requestedBy must be a non-empty string",
       data: { requestedBy: input.requestedBy },
     });
@@ -30,8 +27,7 @@ export const triggerRun = os.supportExample.triage.triggerRun.handler(async ({ c
 
   const runId = input.runId ? normalizeSupportExampleRunId(input.runId) : createSupportExampleRunId();
   if (!runId) {
-    throw new ORPCError("INVALID_SUPPORT_EXAMPLE_RUN_ID", {
-      status: 400,
+    throw errors.INVALID_SUPPORT_EXAMPLE_RUN_ID({
       message: "runId must be a valid identifier when provided",
       data: { runId: input.runId },
     });
@@ -95,8 +91,7 @@ export const triggerRun = os.supportExample.triage.triggerRun.handler(async ({ c
 
     saveSupportExampleRun(failedRun);
 
-    throw new ORPCError("SUPPORT_EXAMPLE_TRIGGER_FAILED", {
-      status: 500,
+    throw errors.SUPPORT_EXAMPLE_TRIGGER_FAILED({
       message: failedRun.error,
       data: { runId },
     });
