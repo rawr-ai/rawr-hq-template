@@ -86,6 +86,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/support-example"),
+        test: { name: "support-example", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/session-tools"),
         test: { name: "session-tools", environment: "node", include: [...includes] },
       },
