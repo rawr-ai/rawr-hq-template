@@ -1,2 +1,2 @@
-export { supportExampleClientProcedures } from "./client";
-export type { SupportExampleClient, SupportExampleClientContext } from "./client";
+export { supportExampleContract } from "./contract";
+export { supportExampleRouter } from "./router";

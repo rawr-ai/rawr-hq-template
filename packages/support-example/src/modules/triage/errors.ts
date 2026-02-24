@@ -1,6 +1,6 @@
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { TriageWorkItemStatusSchema } from "../domain";
+import { TriageWorkItemStatusSchema } from "../../domain";
 
 const optionalString = Type.Optional(
   Type.String({
@@ -8,7 +8,7 @@ const optionalString = Type.Optional(
   }),
 );
 
-export const supportExampleContractErrorMap = {
+export const supportExampleTriageErrorMap = {
   INVALID_QUEUE_ID: {
     status: 400,
     message: "Invalid queueId",

@@ -1,6 +1,5 @@
-import { implement } from "@orpc/server";
-import { supportExampleWorkflowContract } from "./contract";
+import { os } from "@orpc/server";
 import type { SupportExampleWorkflowContext } from "./context";
+import { supportExampleWorkflowErrorMap } from "./errors";
 
-export const os = implement<typeof supportExampleWorkflowContract, SupportExampleWorkflowContext>(supportExampleWorkflowContract);
-
+export const workflowProcedure = os.$context<SupportExampleWorkflowContext>().errors(supportExampleWorkflowErrorMap);
