@@ -3,7 +3,7 @@ import { registerServer } from "../src/server";
 import { mount } from "../src/web";
 
 describe("@rawr/plugin-mfe-demo", () => {
-  it("registers support-triage example routes", () => {
+  it("registers support-example example routes", () => {
     const routes = new Map<string, () => unknown>();
     const app = {
       get(path: string, handler: () => unknown) {
@@ -13,28 +13,28 @@ describe("@rawr/plugin-mfe-demo", () => {
 
     registerServer(app, { baseUrl: "/" });
     expect(routes.has("/mfe-demo/health")).toBe(true);
-    expect(routes.has("/mfe-demo/support-triage/status")).toBe(true);
+    expect(routes.has("/mfe-demo/support-example/status")).toBe(true);
 
-    const status = routes.get("/mfe-demo/support-triage/status");
+    const status = routes.get("/mfe-demo/support-example/status");
     expect(status).toBeDefined();
     expect(status?.()).toMatchObject({
-      capability: "support-triage",
+      capability: "support-example",
       exampleDomain: true,
       routeHints: {
         firstPartyDefault: {
           transport: "RPCLink",
-          triggerRun: "POST /rpc (procedure: triggerSupportTriage)",
-          getStatus: "POST /rpc (procedure: getSupportTriageStatus; optional: { runId })",
+          triggerRun: "POST /rpc (procedure: triggerSupportExample)",
+          getStatus: "POST /rpc (procedure: getSupportExampleStatus; optional: { runId })",
         },
       },
     });
   });
 
-  it("mounts support-triage UI state and unmounts from the DOM", async () => {
+  it("mounts support-example UI state and unmounts from the DOM", async () => {
     vi.useFakeTimers();
 
     const now = new Date("2026-02-23T00:00:00.000Z").toISOString();
-    const runId = "support-triage-123-test";
+    const runId = "support-example-123-test";
     let runStatusCalls = 0;
 
     async function readRequestBodyText(body: RequestInit["body"]): Promise<string> {
@@ -79,7 +79,7 @@ describe("@rawr/plugin-mfe-demo", () => {
       const url = parseRequestUrl(urlText);
       const pathname = url?.pathname ?? urlText;
 
-      // RPCLink calls `/rpc/<procedure>` (e.g. `/rpc/getSupportTriageStatus`) and
+      // RPCLink calls `/rpc/<procedure>` (e.g. `/rpc/getSupportExampleStatus`) and
       // expects the response to be a StandardRPC envelope: `{ json: <payload> }`.
       const pathParts = pathname.split("/").filter(Boolean);
       if (pathParts[0] !== "rpc") return new Response("not found", { status: 404 });
@@ -91,7 +91,7 @@ describe("@rawr/plugin-mfe-demo", () => {
       const envelope = safeJsonParse(dataText);
       const inputJson = isRecord(envelope) && isRecord(envelope.json) ? envelope.json : {};
 
-      if (procedure === "triggerSupportTriage") {
+      if (procedure === "triggerSupportExample") {
         return new Response(
           JSON.stringify({
             json: {
@@ -111,11 +111,11 @@ describe("@rawr/plugin-mfe-demo", () => {
         );
       }
 
-      if (procedure === "getSupportTriageStatus") {
+      if (procedure === "getSupportExampleStatus") {
         const requestedRunId = typeof inputJson.runId === "string" ? inputJson.runId : null;
 
         if (!requestedRunId) {
-          return new Response(JSON.stringify({ json: { capability: "support-triage", healthy: true, run: null } }), {
+          return new Response(JSON.stringify({ json: { capability: "support-example", healthy: true, run: null } }), {
             status: 200,
             headers: { "content-type": "application/json" },
           });
@@ -126,7 +126,7 @@ describe("@rawr/plugin-mfe-demo", () => {
         return new Response(
           JSON.stringify({
             json: {
-              capability: "support-triage",
+              capability: "support-example",
               healthy: true,
               run: {
                 runId: requestedRunId,
