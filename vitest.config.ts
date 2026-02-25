@@ -91,6 +91,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/example-todo"),
+        test: { name: "example-todo", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/session-tools"),
         test: { name: "session-tools", environment: "node", include: [...includes] },
       },
