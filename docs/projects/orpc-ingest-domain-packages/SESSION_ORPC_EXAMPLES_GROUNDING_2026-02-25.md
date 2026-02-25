@@ -72,12 +72,104 @@ Produce a grounded, enforceable path to three ORPC-focused domain package exampl
 - Pin B: `n = 1` example must still satisfy real requirements (not toy-only).
 - Pin C: Intermediate and advanced examples must show continuity with the same underlying package standards.
 - Pin D: Domain package standards must become explicit and enforceable (not implicit narrative only).
+- Pin E: Domain package boundary remains transport-agnostic; HTTP handlers stay outside the package.
+- Pin F: Internal calls inside one domain package prefer direct module/repository composition over client-to-client hops.
+- Pin G: Package structure should make extension obvious from code layout, minimizing reliance on external rules docs.
+- Pin H: Keep one obvious caller surface (`createTodoClient` + `todoRouter`) even as module count grows.
 
 ## Open Questions (To Resolve During Grounding)
 
 - What exact “must-pass” criteria define success for the simplest ORPC example?
 - Which existing example artifacts should be preserved, refactored, or discarded?
 - What is the minimal domain package invariant set we can enforce immediately without overfitting?
+
+## Grounding Pass 01 (Reference Implementation + ORPC Docs)
+
+### Reference implementation normalized structure
+
+`docs/projects/orpc-ingest-domain-packages/reference-impl` now reflects the intended single-package, three-module layout:
+
+- Root service files: `index.ts`, `router.ts`, `base.ts`, `deps.ts`, `errors.ts`, `unwrap.ts`
+- Leaf module: `tasks/{schemas,repository,router}.ts`
+- Leaf module: `tags/{schemas,errors,repository,router}.ts`
+- Composite module: `assignments/{schemas,errors,repository,router}.ts`
+
+### How this reference intends to use ORPC
+
+1. Router-first service package:
+   - Procedures are authored directly with `@orpc/server` builders (`os.context`, `.use`, `.input`, `.output`, `.handler`).
+   - Module routers (`tasks`, `tags`, `assignments`) are composed into one `todoRouter`.
+
+2. Context and middleware layering:
+   - `base.ts` defines initial context (`deps`), then shared middleware (`withService`) to expose `logger`/`clock`.
+   - Each module adds module-local context via middleware (`repo`, and for assignments also `tasks`/`tags` repos).
+
+3. In-process domain client surface:
+   - `index.ts` exports `createTodoClient(deps)` using `createRouterClient(todoRouter, { context })`.
+   - Consumer experience is one flat namespaced client surface: `todo.tasks.*`, `todo.tags.*`, `todo.assignments.*`.
+
+4. Centralized error translation boundary:
+   - Domain/repository errors are modeled as tagged unions.
+   - `unwrap.ts` is a package-level adapter mapping all known domain errors to `ORPCError` codes/data.
+
+5. Internal composition choice:
+   - Cross-module behavior inside the same domain package uses direct repository imports (`assignments` -> `tasks`/`tags` repos), not intra-package client calls.
+
+### Why this approach was chosen (inferred from code + comments)
+
+- Keep one clear authority surface per package (`todoRouter`) and one local client factory (`createTodoClient`).
+- Keep transport concerns out of domain packages while still leveraging ORPC as the primary internal framework.
+- Make module growth additive: each capability module repeats the same `schemas + repository + router` recipe.
+- Keep agent navigation simple: root invariants are fixed, leaf module pattern is consistent, composite modules show sanctioned cross-module composition.
+
+### Divergences vs current repo intent/patterns (not actioned yet)
+
+- Schema library mismatch: reference uses Zod heavily; current repo posture leans TypeBox-based schemas/adapters.
+- Contract artifact difference: reference exports router/client only; current `@rawr/support-example` also exports a derived contract via `minifyContractRouter`.
+- Procedure metadata difference: reference procedures omit `.route({ method, path })`; some existing repo procedures include OpenAPI-friendly route metadata.
+- Error style difference: reference centralizes domain-to-ORPC translation via `unwrap.ts`; existing repo also uses procedure-level `.errors(...)` maps in places.
+
+### ORPC official docs findings used for grounding
+
+Primary sources:
+
+- Router docs: <https://orpc.dev/docs/router>
+- Procedure docs: <https://orpc.dev/docs/procedure>
+- Context docs: <https://orpc.dev/docs/context>
+- Middleware docs: <https://orpc.dev/docs/middleware>
+- Contract-first define/implement: <https://orpc.dev/docs/contract-first/define-contract>, <https://orpc.dev/docs/contract-first/implement-contract>
+- Router-to-contract: <https://orpc.dev/docs/contract-first/router-to-contract>
+- Server-side clients (`createRouterClient`): <https://orpc.dev/docs/client/server-side>
+- OpenAPI handler: <https://orpc.dev/docs/openapi/openapi-handler>
+
+Key confirmations:
+
+- oRPC supports router-first directly: routers are plain nestable objects of procedures.
+- Context model matches this reference exactly: initial context + middleware-added execution context, merged through the chain.
+- `createRouterClient` is an official no-network server-side pattern for in-process invocation.
+- Contract-first is a parallel first-class path (`oc` + `implement(contract)`), and oRPC explicitly supports router-to-contract conversion/minification.
+- OpenAPI exposure is optional and external to package internals (`OpenAPIHandler` at transport boundary), which aligns with transport-agnostic domain packaging.
+
+### Why this scales from n=1 to n=infinity
+
+The scaling mechanism is structural repetition with a stable core:
+
+- Stable core: one shared dependency/context base, one root router, one error unwrapping boundary.
+- Repeatable leaf-module recipe: `schemas + repository + router`.
+- Predictable promotion path: when cross-capability orchestration is needed, add a composite module (like `assignments`) without changing root invariants.
+- Constant consumer API shape: one namespaced client interface regardless of module count.
+- Optional contract publication path remains available later (`router -> contract`), without forcing early duplication.
+
+## Current Read of Package Standard Direction
+
+For this initiative phase, the strongest candidate posture is:
+
+- Router-first inside domain packages as the internal source of truth.
+- Transport handlers remain app/plugin edge concerns.
+- Contract publication is optional/derived, used when needed for external/client-facing surfaces.
+- Module topology:
+  - leaf modules are isolated capabilities,
+  - composite modules orchestrate leaf repositories directly inside the same domain boundary.
 
 ## Implementation Decisions
 
@@ -90,3 +182,23 @@ Produce a grounded, enforceable path to three ORPC-focused domain package exampl
 - Choice: Create in `docs/projects/orpc-ingest-domain-packages/`.
 - Rationale: Keeps this session artifact adjacent to the existing domain-package grounding/BOOK materials it will evolve with.
 - Risk: Low; this is doc placement only and can be relocated later if doc architecture demands it.
+
+### D-002 — Normalize reference implementation into intended package layout
+
+- Context: The provided reference files were nested under a generated `mnt/.../todo/src` path and mixed with root-level files, making boundary analysis noisy.
+- Options considered:
+  - Leave files in place and reason across two layouts.
+  - Reorganize in-place to the intended single-package `tasks/tags/assignments` layout first.
+- Choice: Reorganize in-place before deeper grounding.
+- Rationale: Reduces interpretation ambiguity and lets follow-on analysis map directly to intended architecture.
+- Risk: Low-to-medium; file movement could hide provenance breadcrumbs, but no code semantics were changed.
+
+### D-003 — Treat this pass as ORPC-shape grounding, not implementation migration
+
+- Context: The reference diverges from repo conventions (notably Zod vs TypeBox and contract export style).
+- Options considered:
+  - Immediately rewrite divergences during grounding.
+  - Record divergences and preserve semantics for analysis first.
+- Choice: Record divergences only; do not rewrite yet.
+- Rationale: Preserves the fidelity of the provided reference while we lock architectural intent before conversion work.
+- Risk: Medium; temporary mismatch persists until follow-up implementation passes.
