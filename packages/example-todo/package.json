@@ -1,0 +1,32 @@
+{
+  "name": "@rawr/example-todo",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./router": {
+      "types": "./src/router.ts",
+      "default": "./src/router.ts"
+    }
+  },
+  "scripts": {
+    "build": "bunx tsc -p tsconfig.json",
+    "typecheck": "bunx tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@orpc/server": "^1.13.5",
+    "@rawr/orpc-standards": "workspace:*",
+    "neverthrow": "^8.2.0",
+    "typebox": "^1.0.81"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

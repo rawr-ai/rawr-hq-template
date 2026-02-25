@@ -202,3 +202,22 @@ For this initiative phase, the strongest candidate posture is:
 - Choice: Record divergences only; do not rewrite yet.
 - Rationale: Preserves the fidelity of the provided reference while we lock architectural intent before conversion work.
 - Risk: Medium; temporary mismatch persists until follow-up implementation passes.
+
+### D-004 — Error placement model for `example-todo` implementation
+
+- Context: We needed per-procedure ORPC error precision without turning every error into procedure-local duplication.
+- Options considered:
+  - One global service error map applied everywhere.
+  - Strictly procedure-local error definitions only.
+  - Hybrid layering (service + module + procedure-local where needed).
+- Choice: Hybrid layering.
+- Rationale: Keeps shared error definitions centralized while preserving per-procedure declarations and avoiding oversized error surfaces.
+- Risk: Low; requires discipline to keep procedure maps narrow and intentional.
+
+## Implementation Pass Note (example-todo)
+
+- A new package `packages/example-todo` is being implemented as the concrete TypeBox + neverthrow version of the reference structure.
+- It keeps router-first/in-process defaults (`todoRouter` + `createTodoClient`) and does not export a derived contract in this pass.
+- Error handling is now split by boundary:
+  - repositories/pure domain logic return `Result` / `ResultAsync` (`neverthrow`),
+  - procedures declare and throw explicit ORPC errors via `.errors(...)`.
