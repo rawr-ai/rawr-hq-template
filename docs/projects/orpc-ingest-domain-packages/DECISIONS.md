@@ -45,3 +45,41 @@ When top-level structure changes by size tier, agents and developers spend cycle
 Use dev tooling/CLI scaffolding flags to select template depth (for example simple/intermediate/advanced) while preserving the same core package structure.
 
 The flags choose what gets pre-populated, not where major boundary/module folders live.
+
+## Decision #3 (2026-02-26)
+
+### Question
+For our router-client-only domain packages, should we keep the domain-catalog-to-ORPC mapping + `unwrap` flow (`createOrpcErrorMapFromDomainCatalog` + unwrap helpers), or switch to a more direct ORPC-native boundary pattern?
+
+### Decision
+Switch to ORPC-native boundary errors and remove the legacy indirection from active paths.
+
+Concretely:
+
+- Procedures explicitly declare their boundary errors with `.errors(...)`.
+- Procedures map known domain failures directly to declared ORPC errors at the boundary.
+- `neverthrow` remains available internally where composition/recovery is useful, but it is not an always-on repository contract.
+- We will remove `createOrpcErrorMapFromDomainCatalog` + `unwrap` interactions across affected code, in sequence (example package first, broader cleanup second).
+
+### Why
+Our architecture has one hard entrypoint: callers use the in-process ORPC router client.
+
+Given that boundary, the cleanest and most readable contract is the procedure-level ORPC error surface itself. The catalog-to-map + unwrap pattern creates an extra translation layer that increases cognitive load for humans and agents without adding boundary value in this setup.
+
+This decision also collapses error handling into one obvious flow:
+
+1. Internal logic raises domain failures (and may optionally use neverthrow internally).
+2. Procedure boundary declares exactly what can be returned.
+3. Procedure converts known failures into those declared ORPC errors.
+
+### References
+
+- ORPC procedure model and error declarations: <https://orpc.dev/docs/procedure>
+- ORPC context/middleware model: <https://orpc.dev/docs/context>, <https://orpc.dev/docs/middleware>
+- ORPC in-process router clients: <https://orpc.dev/docs/client/server-side>
+
+### Implementation posture
+
+- Keep boundary contracts explicit and narrow per procedure.
+- Prefer direct mapping at procedure handlers over generic/global conversion layers.
+- Use neverthrow surgically where it helps internal composition/recovery; do not force it as repository API shape.

@@ -18,9 +18,9 @@ import { randomUUID } from "node:crypto";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { base, withService } from "../../boundary/base";
-import { todoServiceErrorMap } from "../../boundary/error-catalog";
-import { unwrapDatabaseResult } from "../../boundary/unwrap";
-import { tagErrorMap } from "./errors";
+import { todoProcedureErrorMap } from "../../boundary/procedure-errors";
+import { DatabaseError } from "../../boundary/service-errors";
+import { DuplicateTagError, tagErrorMap } from "./errors";
 import { createTagRepository } from "./repository";
 import { type Tag, TagSchema } from "./schemas";
 
@@ -40,12 +40,12 @@ const withTags = withService.use(({ context, next }) =>
  * `create` adds duplicate conflict, while `list` needs only database errors.
  */
 const createTagErrorMap = {
-  DATABASE_ERROR: todoServiceErrorMap.DATABASE_ERROR,
+  DATABASE_ERROR: todoProcedureErrorMap.DATABASE_ERROR,
   DUPLICATE_TAG: tagErrorMap.DUPLICATE_TAG,
 } as const;
 
 const listTagErrorMap = {
-  DATABASE_ERROR: todoServiceErrorMap.DATABASE_ERROR,
+  DATABASE_ERROR: todoProcedureErrorMap.DATABASE_ERROR,
 } as const;
 
 const create = withTags
@@ -72,22 +72,26 @@ const create = withTags
 
     context.logger.info("todo.tags.create", { tagId: tag.id, name: tag.name });
 
-    const result = await context.repo.insert(tag);
-    if (result.isOk()) {
-      return result.value;
-    }
+    try {
+      return await context.repo.insert(tag);
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        throw errors.DATABASE_ERROR({
+          message: "Unable to create tag",
+          data: { operation: "tags.insert" },
+        });
+      }
 
-    if (result.error._tag === "DuplicateTagError") {
-      throw errors.DUPLICATE_TAG({
-        message: result.error.message,
-        data: { name: result.error.name },
-      });
-    }
+      if (error instanceof DuplicateTagError) {
+        const duplicate = error;
+        throw errors.DUPLICATE_TAG({
+          message: duplicate.message,
+          data: { name: duplicate.name },
+        });
+      }
 
-    throw errors.DATABASE_ERROR({
-      message: "Unable to create tag",
-      data: { operation: "tags.insert" },
-    });
+      throw error;
+    }
   });
 
 const list = withTags
@@ -98,16 +102,20 @@ const list = withTags
     ),
   )
   .output(schema(Type.Array(TagSchema)))
-  .handler(({ context, errors }) =>
-    unwrapDatabaseResult(context.repo.findAll(), {
-      onDatabaseError: () => {
+  .handler(async ({ context, errors }) => {
+    try {
+      return await context.repo.findAll();
+    } catch (error) {
+      if (error instanceof DatabaseError) {
         throw errors.DATABASE_ERROR({
           message: "Unable to list tags",
           data: { operation: "tags.findAll" },
         });
-      },
-    }),
-  );
+      }
+
+      throw error;
+    }
+  });
 
 export const tagsRouter = base.router({
   create,
