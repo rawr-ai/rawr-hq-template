@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Assignment repository with composite-domain constraints.
+ *
+ * @remarks
+ * This repository handles assignment persistence and local conflict detection
+ * (`AlreadyAssignedError`). It does not verify task/tag existence; that check is
+ * composed at router level using other repositories.
+ *
+ * @agents
+ * Preserve this split:
+ * - repository handles assignment table behavior,
+ * - router composes cross-module existence checks and contract-level mapping.
+ */
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import type { Sql } from "../deps";
 import { DatabaseError } from "../errors";
