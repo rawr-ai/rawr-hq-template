@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Assignment-module-specific errors and ORPC error map entries.
+ *
+ * @remarks
+ * This file captures assignment-specific conflict semantics that are not shared
+ * by all modules.
+ *
+ * @agents
+ * Keep shared failures out of this file. Use service-level shared errors for
+ * generic not-found/database cases and keep assignment-specific conflicts here.
+ */
 import { createOrpcErrorMapFromDomainCatalog } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 

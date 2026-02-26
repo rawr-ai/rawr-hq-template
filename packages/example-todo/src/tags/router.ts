@@ -1,3 +1,19 @@
+/**
+ * @fileoverview Tag module router.
+ *
+ * @remarks
+ * This module shows hybrid error reuse:
+ * - shared service errors for generic failures,
+ * - module-specific errors for tag-only failures.
+ *
+ * Extension guidance:
+ * - keep repository calls in procedures,
+ * - keep per-procedure `.errors(...)` explicit and narrow.
+ *
+ * @agents
+ * If you see repeated error mapping code across procedures, extract a small
+ * helper only when it does not hide which ORPC errors each procedure declares.
+ */
 import { randomUUID } from "node:crypto";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
@@ -19,6 +35,10 @@ const withTags = withService.use(({ context, next }) =>
   }),
 );
 
+/**
+ * Procedure error declarations:
+ * `create` adds duplicate conflict, while `list` needs only database errors.
+ */
 const createTagErrorMap = {
   DATABASE_ERROR: todoServiceErrorMap.DATABASE_ERROR,
   DUPLICATE_TAG: tagErrorMap.DUPLICATE_TAG,

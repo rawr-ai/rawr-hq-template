@@ -1,3 +1,17 @@
+/**
+ * @fileoverview Assignments composite-module router.
+ *
+ * @remarks
+ * This module demonstrates in-package composition via repository-to-repository
+ * calls (tasks + tags + assignments), not client-to-client calls.
+ *
+ * Why: these are trusted internal calls inside one domain package boundary.
+ * This keeps orchestration local and avoids extra transport-style indirection.
+ *
+ * @agents
+ * Keep cross-module composition here (procedure layer). Do not move this into
+ * `router.ts` root assembly, and do not call `createRouterClient` internally.
+ */
 import { randomUUID } from "node:crypto";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
@@ -25,6 +39,12 @@ const withAssignments = withService.use(({ context, next }) =>
   }),
 );
 
+/**
+ * Procedure-level error declarations for this module.
+ *
+ * `assign` can fail with not-found, duplicate assignment, or database failures.
+ * `listForTask` can fail with not-found and database failures.
+ */
 const assignErrorMap = {
   RESOURCE_NOT_FOUND: todoServiceErrorMap.RESOURCE_NOT_FOUND,
   DATABASE_ERROR: todoServiceErrorMap.DATABASE_ERROR,

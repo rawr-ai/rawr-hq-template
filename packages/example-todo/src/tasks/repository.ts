@@ -1,3 +1,19 @@
+/**
+ * @fileoverview Task repository (data access + domain-level failure mapping).
+ *
+ * @remarks
+ * Repositories return `ResultAsync` instead of throwing expected failures.
+ * This keeps domain composition explicit and testable.
+ *
+ * Invariants:
+ * - Translate adapter errors to `DatabaseError`.
+ * - Translate missing rows to domain `NotFoundError` where relevant.
+ * - Do not create ORPC errors here.
+ *
+ * @agents
+ * Keep SQL and row-to-domain mapping here. If a new query is added, return a
+ * typed `ResultAsync` and let the router decide ORPC-level error surface.
+ */
 import { err, ok, ResultAsync } from "neverthrow";
 import type { Sql } from "../deps";
 import { DatabaseError, NotFoundError } from "../errors";
