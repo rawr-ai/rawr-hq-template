@@ -12,6 +12,24 @@ It is intentionally scoped to:
 
 It intentionally does **not** attempt to specify the full final implementation for all three examples yet.
 
+## Current Direction (Locked for This Phase)
+
+We are standardizing on an always-present two-way split in `src/`:
+
+- `boundary/` for always-on package boundary scaffolding.
+- `modules/` for service capability modules and router composition.
+
+Working shape:
+
+- `src/index.ts` stays as the primary package entry surface.
+- `src/boundary/` holds package-level setup/wiring and boundary helpers.
+- `src/modules/` holds module routers, schemas, repositories, and orchestration modules.
+
+Epistemic status:
+
+- High confidence on the value of stable top-level semantics for both human and AI navigation.
+- Medium confidence on exact file naming inside `boundary/`; names can still evolve without changing the structural intent.
+
 ## Invariants (must not change from n=1 to n=∞)
 
 - Router-first domain package.
@@ -32,14 +50,15 @@ It intentionally does **not** attempt to specify the full final implementation f
 
 - Cross-module sharing is not a golden-only axis. It is normal by intermediate level.
 - Golden path should show how to keep that sharing disciplined as density grows.
+- Package structure itself is **not** an axis between examples in this phase. Structure is standardized; behavior/coordination patterns are what vary.
 
 ## Example Progression (What Changes vs What Stays Fixed)
 
 | Example | What stays fixed | What this example intentionally demonstrates |
 | --- | --- | --- |
-| 1. Minimal (beginner) | All invariants above | Left side of most axes: leaf-only, no peer-module composition, mostly local rules |
-| 2. Current/intermediate | All invariants above | Midpoint: multiple modules + at least one composite module, selective sharing where it is clearly real |
-| 3. Golden path | All invariants above | Right side: denser composition, stricter layering and invariants, automated governance |
+| 1. Minimal (beginner) | All invariants above + standard `boundary/` and `modules/` layout | Left side of most axes: leaf-only, no peer-module composition, mostly local rules |
+| 2. Current/intermediate | All invariants above + standard `boundary/` and `modules/` layout | Midpoint: multiple modules + at least one composite module, selective sharing where it is clearly real |
+| 3. Golden path | All invariants above + standard `boundary/` and `modules/` layout | Right side: denser composition, stricter layering and invariants, automated governance |
 
 ## How the 3 examples should differ
 
@@ -57,15 +76,18 @@ It intentionally does **not** attempt to specify the full final implementation f
 ```text
 packages/example-minimal/src/
 ├── index.ts
-├── router.ts
-├── base.ts
-├── deps.ts
-├── errors.ts
-├── unwrap.ts
-└── tasks/
-    ├── schemas.ts
-    ├── repository.ts
-    └── router.ts
+├── boundary/
+│   ├── base.ts
+│   ├── deps.ts
+│   ├── service-errors.ts
+│   ├── error-catalog.ts
+│   └── unwrap.ts
+└── modules/
+    ├── router.ts
+    └── tasks/
+        ├── schemas.ts
+        ├── repository.ts
+        └── router.ts
 ```
 
 Axes illustrated here:
@@ -81,25 +103,28 @@ Axes illustrated here:
 ```text
 packages/example-todo/src/
 ├── index.ts
-├── router.ts
-├── base.ts
-├── deps.ts
-├── errors.ts
-├── unwrap.ts
-├── tasks/
-│   ├── schemas.ts
-│   ├── repository.ts
-│   └── router.ts
-├── tags/
-│   ├── schemas.ts
-│   ├── errors.ts
-│   ├── repository.ts
-│   └── router.ts
-└── assignments/
-    ├── schemas.ts
-    ├── errors.ts
-    ├── repository.ts
-    └── router.ts
+├── boundary/
+│   ├── base.ts
+│   ├── deps.ts
+│   ├── service-errors.ts
+│   ├── error-catalog.ts
+│   └── unwrap.ts
+└── modules/
+    ├── router.ts
+    ├── tasks/
+    │   ├── schemas.ts
+    │   ├── repository.ts
+    │   └── router.ts
+    ├── tags/
+    │   ├── schemas.ts
+    │   ├── errors.ts
+    │   ├── repository.ts
+    │   └── router.ts
+    └── assignments/
+        ├── schemas.ts
+        ├── errors.ts
+        ├── repository.ts
+        └── router.ts
 ```
 
 Axes illustrated here:
@@ -115,33 +140,36 @@ Axes illustrated here:
 ```text
 packages/example-golden/src/
 ├── index.ts
-├── router.ts
-├── base.ts
-├── deps.ts
-├── errors.ts
-├── unwrap.ts
-├── shared/
-│   ├── schemas.ts
-│   ├── services.ts
-│   └── invariants.ts
-├── tasks/
-│   ├── schemas.ts
-│   ├── errors.ts
-│   ├── repository.ts
-│   └── router.ts
-├── tags/
-│   ├── schemas.ts
-│   ├── errors.ts
-│   ├── repository.ts
-│   └── router.ts
-├── assignments/
-│   ├── schemas.ts
-│   ├── errors.ts
-│   ├── repository.ts
-│   └── router.ts
-└── use-cases/
-    ├── create-task-with-tags.ts
-    └── reassign-tags.ts
+├── boundary/
+│   ├── base.ts
+│   ├── deps.ts
+│   ├── service-errors.ts
+│   ├── error-catalog.ts
+│   └── unwrap.ts
+└── modules/
+    ├── router.ts
+    ├── shared/
+    │   ├── schemas.ts
+    │   ├── services.ts
+    │   └── invariants.ts
+    ├── tasks/
+    │   ├── schemas.ts
+    │   ├── errors.ts
+    │   ├── repository.ts
+    │   └── router.ts
+    ├── tags/
+    │   ├── schemas.ts
+    │   ├── errors.ts
+    │   ├── repository.ts
+    │   └── router.ts
+    ├── assignments/
+    │   ├── schemas.ts
+    │   ├── errors.ts
+    │   ├── repository.ts
+    │   └── router.ts
+    └── use-cases/
+        ├── create-task-with-tags.ts
+        └── reassign-tags.ts
 ```
 
 ```text
