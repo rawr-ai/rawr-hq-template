@@ -1,3 +1,15 @@
+/**
+ * @fileoverview Task entity schema and inferred type.
+ *
+ * @remarks
+ * This module defines the canonical runtime shape for task data in this domain.
+ * Procedure inputs/outputs can be smaller than this shape; entity schema models
+ * persisted row shape.
+ *
+ * @agents
+ * Keep schema and type co-located. If you evolve storage fields, update both the
+ * schema and all module procedures that expose this entity.
+ */
 import { type Static, Type } from "typebox";
 
 export const TaskSchema = Type.Object(

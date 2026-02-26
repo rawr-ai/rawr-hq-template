@@ -1,3 +1,19 @@
+/**
+ * @fileoverview Tag repository (query logic + domain failure typing).
+ *
+ * @remarks
+ * This repository demonstrates a module-specific domain error
+ * (`DuplicateTagError`) alongside shared service errors.
+ *
+ * Constraints:
+ * - Never throw ORPC errors from here.
+ * - Keep "expected" conflicts (like duplicate names) as typed domain failures.
+ * - Convert adapter exceptions to `DatabaseError`.
+ *
+ * @agents
+ * When adding writes, decide whether the failure mode is shared (`DatabaseError`)
+ * or module-specific (new tag error class in `tags/errors.ts`).
+ */
 import { err, errAsync, ok, okAsync, ResultAsync } from "neverthrow";
 import type { Sql } from "../deps";
 import { DatabaseError, NotFoundError } from "../errors";

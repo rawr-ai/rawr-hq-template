@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Tag entity schema and inferred type.
+ *
+ * @remarks
+ * Keep this as the canonical shape for tag records. Procedure contracts may be
+ * more specific in input form but should resolve to this output entity shape.
+ *
+ * @agents
+ * If tag semantics change (for example color format rules), update this schema
+ * and the procedures that accept/normalize input accordingly.
+ */
 import { type Static, Type } from "typebox";
 
 export const TagSchema = Type.Object(

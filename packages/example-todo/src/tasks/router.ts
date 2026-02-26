@@ -1,3 +1,20 @@
+/**
+ * @fileoverview Task module router (procedure contracts + orchestration).
+ *
+ * @remarks
+ * This is the procedure boundary where:
+ * - input/output schemas are declared,
+ * - per-procedure ORPC errors are declared,
+ * - repository `Result` failures are mapped into declared ORPC errors.
+ *
+ * Trap to avoid: widening `.errors(...)` to "just in case" errors. Keep each
+ * procedure error map as narrow as possible.
+ *
+ * @agents
+ * Add new task procedures here. Reuse shared error map entries when they are
+ * truly shared, and prefer procedure-local definitions for one-off validation
+ * failures to keep intent close to behavior.
+ */
 import { randomUUID } from "node:crypto";
 import { schema, createOrpcErrorMapFromDomainCatalog } from "@rawr/orpc-standards";
 import { Type } from "typebox";
@@ -18,6 +35,9 @@ const withTasks = withService.use(({ context, next }) =>
   }),
 );
 
+/**
+ * Local validation error for this procedure only.
+ */
 const taskCreateLocalErrorMap = createOrpcErrorMapFromDomainCatalog({
   INVALID_TASK_TITLE: {
     status: 400,
@@ -31,6 +51,12 @@ const taskCreateLocalErrorMap = createOrpcErrorMapFromDomainCatalog({
   },
 } as const);
 
+/**
+ * Procedure-level error declarations.
+ *
+ * `create` includes local validation + shared database surface.
+ * `get` includes shared not-found + shared database surface.
+ */
 const createTaskErrorMap = {
   INVALID_TASK_TITLE: taskCreateLocalErrorMap.INVALID_TASK_TITLE,
   DATABASE_ERROR: todoServiceErrorMap.DATABASE_ERROR,
