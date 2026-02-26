@@ -15,8 +15,8 @@
  * typed `ResultAsync` and let the router decide ORPC-level error surface.
  */
 import { err, ok, ResultAsync } from "neverthrow";
-import type { Sql } from "../deps";
-import { DatabaseError, NotFoundError } from "../errors";
+import type { Sql } from "../../boundary/deps";
+import { DatabaseError, NotFoundError } from "../../boundary/service-errors";
 import type { Task } from "./schemas";
 
 function toDatabaseError(cause: unknown): DatabaseError {
