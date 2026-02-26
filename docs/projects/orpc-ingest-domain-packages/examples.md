@@ -30,11 +30,16 @@ Epistemic status:
 - High confidence on the value of stable top-level semantics for both human and AI navigation.
 - Medium confidence on exact file naming inside `boundary/`; names can still evolve without changing the structural intent.
 
+Error posture update for this phase:
+
+- High confidence that procedure-level ORPC `.errors(...)` should remain the canonical boundary contract.
+- Medium confidence on how much internal neverthrow usage each example should carry; this remains template-dependent and is intentionally not fixed as an invariant.
+
 ## Invariants (must not change from n=1 to n=∞)
 
 - Router-first domain package.
 - Transport-agnostic internals (no HTTP concerns inside package).
-- Repositories/pure logic return neverthrow results.
+- Internal logic may use neverthrow where composition/recovery adds value (not mandatory as repository contract).
 - Procedures declare explicit ORPC errors and map domain failures at boundary.
 - One stable package entry surface (router + in-process client factory).
 
@@ -51,6 +56,18 @@ Epistemic status:
 - Cross-module sharing is not a golden-only axis. It is normal by intermediate level.
 - Golden path should show how to keep that sharing disciplined as density grows.
 - Package structure itself is **not** an axis between examples in this phase. Structure is standardized; behavior/coordination patterns are what vary.
+- `createOrpcErrorMapFromDomainCatalog` + `unwrap` indirection is not part of the forward example posture. Keep error mapping direct at procedure boundaries.
+
+## Why This Direction (Current Read)
+
+This document now assumes one hard architectural boundary: consumers call the package through the in-process ORPC router client.
+
+Given that, the highest-signal contract is the procedure's own `.errors(...)` surface. We currently believe that catalog-to-map conversion plus unwrap helpers add more indirection than value for this boundary shape.
+
+Epistemic framing:
+
+- High confidence in removing global unwrap/catalog indirection from examples.
+- Medium confidence on exactly where to demonstrate optional neverthrow usage across intermediate vs golden templates.
 
 ## Example Progression (What Changes vs What Stays Fixed)
 
@@ -80,8 +97,7 @@ packages/example-minimal/src/
 │   ├── base.ts
 │   ├── deps.ts
 │   ├── service-errors.ts
-│   ├── error-catalog.ts
-│   └── unwrap.ts
+│   └── procedure-errors.ts
 └── modules/
     ├── router.ts
     └── tasks/
@@ -107,8 +123,7 @@ packages/example-todo/src/
 │   ├── base.ts
 │   ├── deps.ts
 │   ├── service-errors.ts
-│   ├── error-catalog.ts
-│   └── unwrap.ts
+│   └── procedure-errors.ts
 └── modules/
     ├── router.ts
     ├── tasks/
@@ -144,8 +159,7 @@ packages/example-golden/src/
 │   ├── base.ts
 │   ├── deps.ts
 │   ├── service-errors.ts
-│   ├── error-catalog.ts
-│   └── unwrap.ts
+│   └── procedure-errors.ts
 └── modules/
     ├── router.ts
     ├── shared/

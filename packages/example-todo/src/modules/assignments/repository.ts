@@ -23,15 +23,16 @@ function toDatabaseError(cause: unknown): DatabaseError {
 
 export function createAssignmentRepository(sql: Sql) {
   return {
-    findByTask(taskId: string): ResultAsync<Assignment[], DatabaseError> {
-      return ResultAsync.fromPromise(
-        sql.query<Assignment>("SELECT * FROM task_tags WHERE task_id = $1 ORDER BY created_at DESC", [taskId]),
-        toDatabaseError,
-      );
+    async findByTask(taskId: string): Promise<Assignment[]> {
+      try {
+        return await sql.query<Assignment>("SELECT * FROM task_tags WHERE task_id = $1 ORDER BY created_at DESC", [taskId]);
+      } catch (error) {
+        throw toDatabaseError(error);
+      }
     },
 
-    insert(assignment: Assignment): ResultAsync<Assignment, AlreadyAssignedError | DatabaseError> {
-      return ResultAsync.fromPromise(
+    async insert(assignment: Assignment): Promise<Assignment> {
+      const result = await ResultAsync.fromPromise(
         sql.queryOne<{ id: string }>("SELECT id FROM task_tags WHERE task_id = $1 AND tag_id = $2", [
           assignment.taskId,
           assignment.tagId,
@@ -51,6 +52,12 @@ export function createAssignmentRepository(sql: Sql) {
           toDatabaseError,
         ).andThen((row) => (row ? okAsync(row) : errAsync(new DatabaseError("task_tags.insert returned no row"))));
       });
+
+      if (result.isErr()) {
+        throw result.error;
+      }
+
+      return result.value;
     },
   };
 }

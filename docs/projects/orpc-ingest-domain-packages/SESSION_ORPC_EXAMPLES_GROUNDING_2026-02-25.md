@@ -214,10 +214,51 @@ For this initiative phase, the strongest candidate posture is:
 - Rationale: Keeps shared error definitions centralized while preserving per-procedure declarations and avoiding oversized error surfaces.
 - Risk: Low; requires discipline to keep procedure maps narrow and intentional.
 
-## Implementation Pass Note (example-todo)
+### D-005 — ORPC-native boundary error posture (post-grounding correction)
 
-- A new package `packages/example-todo` is being implemented as the concrete TypeBox + neverthrow version of the reference structure.
-- It keeps router-first/in-process defaults (`todoRouter` + `createTodoClient`) and does not export a derived contract in this pass.
-- Error handling is now split by boundary:
-  - repositories/pure domain logic return `Result` / `ResultAsync` (`neverthrow`),
-  - procedures declare and throw explicit ORPC errors via `.errors(...)`.
+- Context: After reviewing ORPC docs and current package wiring, we identified extra indirection in `createOrpcErrorMapFromDomainCatalog` + `unwrap`.
+- Options considered:
+  - Keep catalog-to-map + unwrap as a generalized error translation system.
+  - Move to direct procedure-level mapping with `.errors(...)` as canonical boundary.
+- Choice: Move to direct ORPC-native boundary mapping and remove catalog/unwrap interaction from active examples.
+- Rationale: The package boundary is router-client-only. Procedure-level ORPC errors are the contract callers consume, so direct mapping improves readability and reduces agent/human cognitive load.
+- Risk: Medium; this is a behavioral refactor touching multiple modules and helper surfaces.
+
+### D-006 — Neverthrow posture update
+
+- Context: We still want neverthrow available, but not as forced repository API shape.
+- Options considered:
+  - Keep neverthrow `Result` as mandatory repository contract.
+  - Remove neverthrow entirely from the domain package examples.
+  - Keep neverthrow as optional internal mechanism where composition/recovery benefits are real.
+- Choice: Optional internal mechanism only.
+- Rationale: Preserves useful composition/recovery tools without forcing an extra abstraction layer in simple repository APIs.
+- Risk: Low-to-medium; requires docs/guidance clarity so usage remains intentional, not random.
+
+### D-007 — Boundary error definition naming after catalog removal
+
+- Context: Removing catalog-to-map conversion left a naming/placement choice for reusable ORPC error definitions.
+- Options considered:
+  - Keep `error-catalog.ts` and repurpose internals.
+  - Rename to a boundary-contract-oriented file (`procedure-errors.ts`).
+- Choice: Use `boundary/procedure-errors.ts`.
+- Rationale: Reduces ambiguity by naming the file after its function: reusable procedure boundary error entries.
+- Risk: Low; mostly import churn and naming semantics.
+
+### D-008 — Legacy helper cleanup scope
+
+- Context: `@rawr/orpc-standards` still exported catalog-era helpers after migration.
+- Options considered:
+  - Keep helpers for potential future usage.
+  - Remove helpers immediately because active code no longer uses that pattern.
+- Choice: Remove now (`createOrpcErrorMapFromDomainCatalog` and related catalog adapter types/helpers).
+- Rationale: Prevents accidental reintroduction of the deprecated pattern and keeps standards package surface aligned with current posture.
+- Risk: Medium; potential breakage for out-of-tree consumers relying on removed exports.
+
+## Implementation Pass Note (Current Target Posture)
+
+- `packages/example-todo` remains router-first and in-process (`todoRouter` + `createTodoClient`), with no derived contract export for this phase.
+- Error boundary is procedure-native:
+  - procedures declare explicit ORPC errors via `.errors(...)`,
+  - procedures map known domain failures directly to declared ORPC errors.
+- Internal neverthrow usage is allowed where it has clear leverage (composition/recovery), but repository methods are no longer required to expose `Result`/`ResultAsync` contracts.

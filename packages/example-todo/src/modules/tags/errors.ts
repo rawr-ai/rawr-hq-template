@@ -9,7 +9,7 @@
  * Add to this file when the same tag-specific failure is reused by multiple tag
  * procedures. For one-off failures in a single procedure, prefer local error maps.
  */
-import { createOrpcErrorMapFromDomainCatalog } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 
 export class DuplicateTagError extends Error {
@@ -20,17 +20,17 @@ export class DuplicateTagError extends Error {
   }
 }
 
-export const tagErrorCatalog = {
+export const tagErrorMap = {
   DUPLICATE_TAG: {
     status: 409,
     message: "Tag already exists",
-    data: Type.Object(
-      {
-        name: Type.Optional(Type.String({ minLength: 1 })),
-      },
-      { additionalProperties: false },
+    data: schema(
+      Type.Object(
+        {
+          name: Type.Optional(Type.String({ minLength: 1 })),
+        },
+        { additionalProperties: false },
+      ),
     ),
   },
 } as const;
-
-export const tagErrorMap = createOrpcErrorMapFromDomainCatalog(tagErrorCatalog);
