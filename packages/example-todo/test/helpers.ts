@@ -1,7 +1,7 @@
-import type { TodoDeps } from "../src/deps";
-import type { Assignment } from "../src/assignments/schemas";
-import type { Tag } from "../src/tags/schemas";
-import type { Task } from "../src/tasks/schemas";
+import type { TodoDeps } from "../src/boundary/deps";
+import type { Assignment } from "../src/modules/assignments/schemas";
+import type { Tag } from "../src/modules/tags/schemas";
+import type { Task } from "../src/modules/tasks/schemas";
 
 type InMemorySqlOptions = {
   failIfQueryIncludes?: string[];

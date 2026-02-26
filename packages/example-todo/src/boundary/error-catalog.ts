@@ -1,14 +1,9 @@
 /**
- * @fileoverview Service-level error definitions and shared ORPC error catalog.
+ * @fileoverview Shared ORPC error catalog for service-level reusable procedure errors.
  *
  * @remarks
- * This file is for service-level errors shared across modules. Typical setup:
- * 1) Define shared domain error classes (`NotFoundError`, `DatabaseError`).
- * 2) Define shared ORPC error catalog entries for reusable procedure surfaces.
- * 3) Build reusable ORPC error map from the catalog.
- *
- * Keep module-specific failures in each module's `errors.ts` to avoid turning
- * this file into a cross-domain dumping ground.
+ * This file defines ORPC-facing error shapes that procedures can reuse. Domain
+ * error classes live in `service-errors.ts` and module-local `errors.ts` files.
  *
  * @agents
  * Add entries here only when the same failure surface is reused across multiple
@@ -17,25 +12,6 @@
  */
 import { createOrpcErrorMapFromDomainCatalog } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-
-export class NotFoundError extends Error {
-  readonly _tag = "NotFoundError" as const;
-
-  constructor(
-    readonly entity: string,
-    readonly id: string,
-  ) {
-    super(`${entity} '${id}' not found`);
-  }
-}
-
-export class DatabaseError extends Error {
-  readonly _tag = "DatabaseError" as const;
-
-  constructor(readonly cause: unknown) {
-    super("Database operation failed");
-  }
-}
 
 const optionalString = Type.Optional(
   Type.String({

@@ -19,7 +19,7 @@
  * values and map to ORPC errors only in procedure handlers.
  */
 import type { Result } from "neverthrow";
-import type { DatabaseError, NotFoundError } from "./errors";
+import type { DatabaseError, NotFoundError } from "./service-errors";
 
 export async function unwrapDatabaseResult<T>(
   result: PromiseLike<Result<T, DatabaseError>>,
