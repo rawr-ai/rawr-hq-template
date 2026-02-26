@@ -9,7 +9,7 @@
  * Keep shared failures out of this file. Use service-level shared errors for
  * generic not-found/database cases and keep assignment-specific conflicts here.
  */
-import { createOrpcErrorMapFromDomainCatalog } from "@rawr/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 
 export class AlreadyAssignedError extends Error {
@@ -23,18 +23,18 @@ export class AlreadyAssignedError extends Error {
   }
 }
 
-export const assignmentErrorCatalog = {
+export const assignmentErrorMap = {
   ALREADY_ASSIGNED: {
     status: 409,
     message: "Task/tag assignment already exists",
-    data: Type.Object(
-      {
-        taskId: Type.Optional(Type.String({ minLength: 1 })),
-        tagId: Type.Optional(Type.String({ minLength: 1 })),
-      },
-      { additionalProperties: false },
+    data: schema(
+      Type.Object(
+        {
+          taskId: Type.Optional(Type.String({ minLength: 1 })),
+          tagId: Type.Optional(Type.String({ minLength: 1 })),
+        },
+        { additionalProperties: false },
+      ),
     ),
   },
 } as const;
-
-export const assignmentErrorMap = createOrpcErrorMapFromDomainCatalog(assignmentErrorCatalog);
