@@ -21,3 +21,27 @@ Given that, the only clear value of extracting a contract right now is tooling a
 Keep this package router-first and in-process-first.
 
 Only add a derived contract later if we explicitly need contract-level drift/snapshot checks (or another concrete consumer requirement emerges).
+
+## Decision #2 (2026-02-26)
+
+### Question
+How should we standardize package structure for ORPC domain examples and scaffolding as package size grows?
+
+### Decision
+Use pre-structured packages with a consistent layout across package sizes:
+
+- always-present `boundary/` for package boundary scaffolding,
+- always-present `modules/` for service modules and router composition,
+- stable root entry surface via `index.ts`.
+
+Do not pick a different top-level structure based on package size. Keep one structure and vary only the internal template content.
+
+### Why
+We are optimizing for fast comprehension and predictable navigation for both humans and AI agents.
+
+When top-level structure changes by size tier, agents and developers spend cycles re-learning layout conventions instead of extending behavior. A fixed structural contract reduces ambiguity and keeps the differences focused on real capability axes (topology/composition/reuse/coordination/governance), not folder shape drift.
+
+### Implementation posture
+Use dev tooling/CLI scaffolding flags to select template depth (for example simple/intermediate/advanced) while preserving the same core package structure.
+
+The flags choose what gets pre-populated, not where major boundary/module folders live.
