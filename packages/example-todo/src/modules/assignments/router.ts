@@ -15,9 +15,9 @@
 import { randomUUID } from "node:crypto";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { base, withService } from "../base";
-import { todoServiceErrorMap } from "../errors";
-import { unwrapDatabaseResult, unwrapSharedResult } from "../unwrap";
+import { base, withService } from "../../boundary/base";
+import { todoServiceErrorMap } from "../../boundary/error-catalog";
+import { unwrapDatabaseResult, unwrapSharedResult } from "../../boundary/unwrap";
 import { createTagRepository } from "../tags/repository";
 import { TagSchema } from "../tags/schemas";
 import { createTaskRepository } from "../tasks/repository";

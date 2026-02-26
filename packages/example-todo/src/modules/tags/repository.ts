@@ -15,8 +15,8 @@
  * or module-specific (new tag error class in `tags/errors.ts`).
  */
 import { err, errAsync, ok, okAsync, ResultAsync } from "neverthrow";
-import type { Sql } from "../deps";
-import { DatabaseError, NotFoundError } from "../errors";
+import type { Sql } from "../../boundary/deps";
+import { DatabaseError, NotFoundError } from "../../boundary/service-errors";
 import { DuplicateTagError } from "./errors";
 import type { Tag } from "./schemas";
 

@@ -12,8 +12,8 @@
  * - router composes cross-module existence checks and contract-level mapping.
  */
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
-import type { Sql } from "../deps";
-import { DatabaseError } from "../errors";
+import type { Sql } from "../../boundary/deps";
+import { DatabaseError } from "../../boundary/service-errors";
 import { AlreadyAssignedError } from "./errors";
 import type { Assignment } from "./schemas";
 
