@@ -11,10 +11,11 @@
 import { oc } from "@orpc/contract";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
+import { todoProcedure } from "../../boundary/procedure-meta";
 import { TagSchema } from "./schemas";
 
 export const tagsContract = oc.router({
-  create: oc
+  create: todoProcedure({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -59,7 +60,7 @@ export const tagsContract = oc.router({
         ),
       },
     }),
-  list: oc
+  list: todoProcedure({ idempotent: true })
     .input(
       schema(
         Type.Object(

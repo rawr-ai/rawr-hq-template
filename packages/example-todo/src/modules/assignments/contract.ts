@@ -12,13 +12,14 @@
 import { oc } from "@orpc/contract";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
+import { todoProcedure } from "../../boundary/procedure-meta";
 import { RESOURCE_NOT_FOUND } from "../../boundary/procedure-errors";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
 
 export const assignmentsContract = oc.router({
-  assign: oc
+  assign: todoProcedure({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -71,7 +72,7 @@ export const assignmentsContract = oc.router({
         ),
       },
     }),
-  listForTask: oc
+  listForTask: todoProcedure({ idempotent: true })
     .input(
       schema(
         Type.Object(
