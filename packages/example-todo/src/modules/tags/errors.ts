@@ -6,17 +6,20 @@
  * Internal subsystem errors are not part of this contract by default.
  */
 import { schema } from "@rawr/orpc-standards";
+import type { ErrorMapItem } from "@orpc/server";
 import { Type } from "typebox";
 
-export const DUPLICATE_TAG = {
+const DuplicateTagData = schema(
+  Type.Object(
+    {
+      name: Type.Optional(Type.String({ minLength: 1 })),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+export const DUPLICATE_TAG: ErrorMapItem<typeof DuplicateTagData> = {
   status: 409,
   message: "Tag already exists",
-  data: schema(
-    Type.Object(
-      {
-        name: Type.Optional(Type.String({ minLength: 1 })),
-      },
-      { additionalProperties: false },
-    ),
-  ),
+  data: DuplicateTagData,
 } as const;
