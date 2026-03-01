@@ -15,6 +15,18 @@ import { TagSchema } from "./schemas";
 
 export const tagsContract = oc.router({
   create: oc
+    .input(
+      schema(
+        Type.Object(
+          {
+            name: Type.String({ minLength: 1, maxLength: 50 }),
+            color: Type.String({ pattern: "^#[0-9a-fA-F]{6}$" }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(schema(TagSchema))
     .errors({
       DUPLICATE_TAG: {
         status: 409,
@@ -28,19 +40,7 @@ export const tagsContract = oc.router({
           ),
         ),
       },
-    } as const)
-    .input(
-      schema(
-        Type.Object(
-          {
-            name: Type.String({ minLength: 1, maxLength: 50 }),
-            color: Type.String({ pattern: "^#[0-9a-fA-F]{6}$" }),
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    )
-    .output(schema(TagSchema)),
+    } as const),
   list: oc.input(schema(Type.Object({}, { additionalProperties: false }))).output(schema(Type.Array(TagSchema))),
 });
 

@@ -21,6 +21,18 @@ import { TaskSchema } from "./schemas";
 
 export const tasksContract = oc.router({
   create: oc
+    .input(
+      schema(
+        Type.Object(
+          {
+            title: Type.String({ minLength: 1, maxLength: 500 }),
+            description: Type.Optional(Type.String({ maxLength: 2000 })),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(schema(TaskSchema))
     .errors({
       INVALID_TASK_TITLE: {
         status: 400,
@@ -34,21 +46,8 @@ export const tasksContract = oc.router({
           ),
         ),
       },
-    } as const)
-    .input(
-      schema(
-        Type.Object(
-          {
-            title: Type.String({ minLength: 1, maxLength: 500 }),
-            description: Type.Optional(Type.String({ maxLength: 2000 })),
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    )
-    .output(schema(TaskSchema)),
+    } as const),
   get: oc
-    .errors({ RESOURCE_NOT_FOUND } as const)
     .input(
       schema(
         Type.Object(
@@ -59,7 +58,8 @@ export const tasksContract = oc.router({
         ),
       ),
     )
-    .output(schema(TaskSchema)),
+    .output(schema(TaskSchema))
+    .errors({ RESOURCE_NOT_FOUND } as const),
 });
 
 export type TasksContract = typeof tasksContract;

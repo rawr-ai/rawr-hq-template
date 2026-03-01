@@ -19,6 +19,18 @@ import { AssignmentSchema } from "./schemas";
 
 export const assignmentsContract = oc.router({
   assign: oc
+    .input(
+      schema(
+        Type.Object(
+          {
+            taskId: Type.String({ format: "uuid" }),
+            tagId: Type.String({ format: "uuid" }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(schema(AssignmentSchema))
     .errors({
       RESOURCE_NOT_FOUND,
       ALREADY_ASSIGNED: {
@@ -34,21 +46,8 @@ export const assignmentsContract = oc.router({
           ),
         ),
       },
-    } as const)
-    .input(
-      schema(
-        Type.Object(
-          {
-            taskId: Type.String({ format: "uuid" }),
-            tagId: Type.String({ format: "uuid" }),
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    )
-    .output(schema(AssignmentSchema)),
+    } as const),
   listForTask: oc
-    .errors({ RESOURCE_NOT_FOUND } as const)
     .input(
       schema(
         Type.Object(
@@ -69,7 +68,8 @@ export const assignmentsContract = oc.router({
           { additionalProperties: false },
         ),
       ),
-    ),
+    )
+    .errors({ RESOURCE_NOT_FOUND } as const),
 });
 
 export type AssignmentsContract = typeof assignmentsContract;
