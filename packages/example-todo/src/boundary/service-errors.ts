@@ -1,29 +1,17 @@
 /**
- * @fileoverview Shared service-level domain error classes.
+ * @fileoverview Shared internal-only error helpers.
  *
  * @remarks
- * This file holds domain failures reused by multiple modules. Keep these errors
- * transport-agnostic and independent from ORPC-specific status/code concerns.
+ * These errors are for unexpected internal states inside the package boundary.
+ * They are not ORPC boundary contract errors and should not be surfaced as
+ * typed caller-actionable errors by default.
  *
  * @agents
- * Add a class here only when it is reused across module boundaries. Module-only
- * domain errors belong in that module's `errors.ts`.
+ * Keep expected business states as values (null/exists/result objects).
+ * Use this file only for truly unexpected internal failure context.
  */
-export class NotFoundError extends Error {
-  readonly _tag = "NotFoundError" as const;
-
-  constructor(
-    readonly entity: string,
-    readonly id: string,
-  ) {
-    super(`${entity} '${id}' not found`);
-  }
-}
-
-export class DatabaseError extends Error {
-  readonly _tag = "DatabaseError" as const;
-
-  constructor(readonly cause: unknown) {
-    super("Database operation failed");
+export class UnexpectedInternalError extends Error {
+  constructor(message: string, readonly cause?: unknown) {
+    super(message);
   }
 }
