@@ -12,7 +12,7 @@ import { randomUUID } from "node:crypto";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { base, withService } from "../../boundary/base";
-import { tagProcedureErrors } from "./errors";
+import { DUPLICATE_TAG } from "./errors";
 import { createTagRepository } from "./repository";
 import { type Tag, TagSchema } from "./schemas";
 
@@ -29,7 +29,7 @@ const withTags = withService.use(({ context, next }) =>
 
 const create = withTags
   .errors({
-    DUPLICATE_TAG: tagProcedureErrors.DUPLICATE_TAG,
+    DUPLICATE_TAG,
   } as const)
   .input(
     schema(

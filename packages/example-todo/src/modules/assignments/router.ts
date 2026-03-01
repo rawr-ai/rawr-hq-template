@@ -10,12 +10,12 @@ import { randomUUID } from "node:crypto";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { base, withService } from "../../boundary/base";
-import { todoProcedureErrors } from "../../boundary/procedure-errors";
+import { RESOURCE_NOT_FOUND } from "../../boundary/procedure-errors";
 import { createTagRepository } from "../tags/repository";
 import { TagSchema } from "../tags/schemas";
 import { createTaskRepository } from "../tasks/repository";
 import { TaskSchema } from "../tasks/schemas";
-import { assignmentProcedureErrors } from "./errors";
+import { ALREADY_ASSIGNED } from "./errors";
 import { createAssignmentRepository } from "./repository";
 import { type Assignment, AssignmentSchema } from "./schemas";
 
@@ -34,8 +34,8 @@ const withAssignments = withService.use(({ context, next }) =>
 
 const assign = withAssignments
   .errors({
-    RESOURCE_NOT_FOUND: todoProcedureErrors.RESOURCE_NOT_FOUND,
-    ALREADY_ASSIGNED: assignmentProcedureErrors.ALREADY_ASSIGNED,
+    RESOURCE_NOT_FOUND,
+    ALREADY_ASSIGNED,
   } as const)
   .input(
     schema(
@@ -85,7 +85,7 @@ const assign = withAssignments
 
 const listForTask = withAssignments
   .errors({
-    RESOURCE_NOT_FOUND: todoProcedureErrors.RESOURCE_NOT_FOUND,
+    RESOURCE_NOT_FOUND,
   } as const)
   .input(
     schema(
