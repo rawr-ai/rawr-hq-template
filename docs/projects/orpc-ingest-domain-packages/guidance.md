@@ -27,6 +27,9 @@ Rules:
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
+- Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
+- In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
+- Prefer TypeBox `description` metadata on schema objects/properties for semantic documentation; avoid extra schema-only JSDoc noise.
 
 ## Boundary Error Standard
 
@@ -68,8 +71,8 @@ Boundary rule still applies either way: procedures expose ORPC boundary errors, 
 Use sharing-based placement:
 
 - `boundary/procedure-errors.ts` for reusable cross-module boundary error definitions,
-- `modules/<name>/errors.ts` for module-specific boundary error definitions,
-- procedure-local errors only when truly local.
+- module-specific boundary errors inline in `modules/<name>/contract.ts`,
+- procedure-local errors only when truly local to one procedure.
 
 Each procedure still declares only the errors it can throw.
 

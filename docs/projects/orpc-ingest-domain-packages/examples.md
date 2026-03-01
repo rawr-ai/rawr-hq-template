@@ -32,6 +32,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Cross-module sharing is not golden-only; it is normal by intermediate.
 - Golden-path value is disciplined sharing under high dependency density, not introducing sharing for the first time.
 - Structure is not an axis in this phase; structure stays fixed (`boundary/` + `modules/`).
+- Module-specific boundary errors are defined inline in `contract.ts` (not separate module `errors.ts` files).
 
 ## How the 3 examples differ
 
@@ -68,8 +69,7 @@ packages/example-minimal/src/
         ├── contract.ts
         ├── router.ts
         ├── repository.ts
-        ├── schemas.ts
-        └── errors.ts
+        └── schemas.ts
 ```
 
 ### 2) Current / Intermediate
@@ -88,20 +88,17 @@ packages/example-todo/src/
     │   ├── contract.ts
     │   ├── router.ts
     │   ├── repository.ts
-    │   ├── schemas.ts
-    │   └── errors.ts
+    │   └── schemas.ts
     ├── tags/
     │   ├── contract.ts
     │   ├── router.ts
     │   ├── repository.ts
-    │   ├── schemas.ts
-    │   └── errors.ts
+    │   └── schemas.ts
     └── assignments/
         ├── contract.ts
         ├── router.ts
         ├── repository.ts
-        ├── schemas.ts
-        └── errors.ts
+        └── schemas.ts
 ```
 
 ### 3) Golden Path
@@ -124,20 +121,17 @@ packages/example-golden/src/
     │   ├── contract.ts
     │   ├── router.ts
     │   ├── repository.ts
-    │   ├── schemas.ts
-    │   └── errors.ts
+    │   └── schemas.ts
     ├── tags/
     │   ├── contract.ts
     │   ├── router.ts
     │   ├── repository.ts
-    │   ├── schemas.ts
-    │   └── errors.ts
+    │   └── schemas.ts
     ├── assignments/
     │   ├── contract.ts
     │   ├── router.ts
     │   ├── repository.ts
-    │   ├── schemas.ts
-    │   └── errors.ts
+    │   └── schemas.ts
     └── use-cases/
         ├── create-task-with-tags.ts
         └── reassign-tags.ts
