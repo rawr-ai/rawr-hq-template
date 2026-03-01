@@ -11,24 +11,37 @@
 import { oc } from "@orpc/contract";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { DUPLICATE_TAG } from "./errors";
 import { TagSchema } from "./schemas";
 
-const createTagInputSchema = schema(
-  Type.Object(
-    {
-      name: Type.String({ minLength: 1, maxLength: 50 }),
-      color: Type.String({ pattern: "^#[0-9a-fA-F]{6}$" }),
-    },
-    { additionalProperties: false },
-  ),
-);
-
-const listTagsInputSchema = schema(Type.Object({}, { additionalProperties: false }));
-
 export const tagsContract = oc.router({
-  create: oc.errors({ DUPLICATE_TAG } as const).input(createTagInputSchema).output(schema(TagSchema)),
-  list: oc.input(listTagsInputSchema).output(schema(Type.Array(TagSchema))),
+  create: oc
+    .errors({
+      DUPLICATE_TAG: {
+        status: 409,
+        message: "Tag already exists",
+        data: schema(
+          Type.Object(
+            {
+              name: Type.Optional(Type.String({ minLength: 1 })),
+            },
+            { additionalProperties: false },
+          ),
+        ),
+      },
+    } as const)
+    .input(
+      schema(
+        Type.Object(
+          {
+            name: Type.String({ minLength: 1, maxLength: 50 }),
+            color: Type.String({ pattern: "^#[0-9a-fA-F]{6}$" }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(schema(TagSchema)),
+  list: oc.input(schema(Type.Object({}, { additionalProperties: false }))).output(schema(Type.Array(TagSchema))),
 });
 
 export type TagsContract = typeof tagsContract;

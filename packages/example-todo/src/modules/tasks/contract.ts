@@ -17,31 +17,49 @@ import { oc } from "@orpc/contract";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { RESOURCE_NOT_FOUND } from "../../boundary/procedure-errors";
-import { INVALID_TASK_TITLE } from "./errors";
 import { TaskSchema } from "./schemas";
 
-const createTaskInputSchema = schema(
-  Type.Object(
-    {
-      title: Type.String({ minLength: 1, maxLength: 500 }),
-      description: Type.Optional(Type.String({ maxLength: 2000 })),
-    },
-    { additionalProperties: false },
-  ),
-);
-
-const getTaskInputSchema = schema(
-  Type.Object(
-    {
-      id: Type.String({ format: "uuid" }),
-    },
-    { additionalProperties: false },
-  ),
-);
-
 export const tasksContract = oc.router({
-  create: oc.errors({ INVALID_TASK_TITLE } as const).input(createTaskInputSchema).output(schema(TaskSchema)),
-  get: oc.errors({ RESOURCE_NOT_FOUND } as const).input(getTaskInputSchema).output(schema(TaskSchema)),
+  create: oc
+    .errors({
+      INVALID_TASK_TITLE: {
+        status: 400,
+        message: "Invalid task title",
+        data: schema(
+          Type.Object(
+            {
+              title: Type.Optional(Type.String()),
+            },
+            { additionalProperties: false },
+          ),
+        ),
+      },
+    } as const)
+    .input(
+      schema(
+        Type.Object(
+          {
+            title: Type.String({ minLength: 1, maxLength: 500 }),
+            description: Type.Optional(Type.String({ maxLength: 2000 })),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(schema(TaskSchema)),
+  get: oc
+    .errors({ RESOURCE_NOT_FOUND } as const)
+    .input(
+      schema(
+        Type.Object(
+          {
+            id: Type.String({ format: "uuid" }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(schema(TaskSchema)),
 });
 
 export type TasksContract = typeof tasksContract;
