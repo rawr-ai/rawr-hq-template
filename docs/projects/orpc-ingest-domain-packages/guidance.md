@@ -15,6 +15,23 @@ Use one stable top-level structure across package sizes:
 - `src/boundary/` for boundary scaffolding,
 - `src/modules/` for capability modules and router composition.
 
+## Terminology (This Repo, Not Generic oRPC)
+
+To avoid overloaded "router" language, these terms are canonical in this doc:
+
+- **Module contract object**: plain object exported from `modules/<name>/contract.ts`.
+  Example:
+  ```ts
+  export const tasksContract = {
+    create: todoProcedure({ idempotent: false }).input(...).output(...).errors(...),
+    get: todoProcedure({ idempotent: true }).input(...).output(...).errors(...),
+  };
+  ```
+- **Contract-router builder**: optional oRPC builder form `oc.errors(...).router({...})`.
+  We are not using this by default in `example-todo`.
+- **Module implementation router**: server router exported from `modules/<name>/router.ts` via `implement(contract)`.
+- **Package composed router**: server router exported from `src/modules/router.ts` (`base.router({...})`) and consumed by `createRouterClient`.
+
 ## Module Shape: `contract.ts` + `router.ts`
 
 Each module should split boundary definition from behavior:
@@ -78,11 +95,11 @@ Not required in this phase:
 - No standing domain-catalog/unwrap translation layer in active examples.
 - Inline conversion at the procedure boundary is the intended pattern.
 
-### Router-Level / Global Error Policy
+### Contract-Router / Global Error Policy
 
 Do not define a mandatory "every package must expose these errors" set by default.
 
-Use router-level shared `.errors(...)` only when all conditions are true:
+Use **contract-router-level** shared `.errors(...)` (`oc.errors(...).router({...})`) only when all conditions are true:
 
 - the error is truly cross-cutting and can occur on every procedure,
 - the failure is enforced by shared middleware/infrastructure (not ad hoc handler logic),
@@ -94,9 +111,14 @@ Examples that may justify router-level shared errors later:
 - uniform platform guards (`RATE_LIMITED`, `SERVICE_UNAVAILABLE`, `PACKAGE_DISABLED`).
 
 Do not promote domain/business errors (for example `RESOURCE_NOT_FOUND`) to package-wide/global by default.
-Those remain procedure-level unless a package has a real universal guard that makes them universally possible.
+Those remain **procedure-level on module contract procedures** unless a package has a real universal guard that makes them universally possible.
 
 For `example-todo` in this phase: no package-wide global error set.
+
+Precision notes:
+
+- `.errors(...)` lives on **contract procedures** (and optional contract-router builder), not on the package composed server router (`base.router({...})`).
+- Current default is explicit per-procedure declarations in `modules/*/contract.ts`.
 
 ## neverthrow Guidance
 
