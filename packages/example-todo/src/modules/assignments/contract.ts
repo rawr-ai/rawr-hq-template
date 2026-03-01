@@ -23,14 +23,25 @@ export const assignmentsContract = oc.router({
       schema(
         Type.Object(
           {
-            taskId: Type.String({ format: "uuid" }),
-            tagId: Type.String({ format: "uuid" }),
+            taskId: Type.String({
+              format: "uuid",
+              description: "Task identifier to attach a tag to.",
+            }),
+            tagId: Type.String({
+              format: "uuid",
+              description: "Tag identifier being assigned to the task.",
+            }),
           },
-          { additionalProperties: false },
+          {
+            additionalProperties: false,
+            description: "Input payload for creating a task-tag assignment.",
+          },
         ),
       ),
     )
-    .output(schema(AssignmentSchema))
+    .output(
+      schema(AssignmentSchema),
+    )
     .errors({
       RESOURCE_NOT_FOUND,
       ALREADY_ASSIGNED: {
@@ -39,10 +50,23 @@ export const assignmentsContract = oc.router({
         data: schema(
           Type.Object(
             {
-              taskId: Type.Optional(Type.String({ minLength: 1 })),
-              tagId: Type.Optional(Type.String({ minLength: 1 })),
+              taskId: Type.Optional(
+                Type.String({
+                  minLength: 1,
+                  description: "Task id that is already associated with the tag.",
+                }),
+              ),
+              tagId: Type.Optional(
+                Type.String({
+                  minLength: 1,
+                  description: "Tag id that is already associated with the task.",
+                }),
+              ),
             },
-            { additionalProperties: false },
+            {
+              additionalProperties: false,
+              description: "Context for ALREADY_ASSIGNED errors.",
+            },
           ),
         ),
       },
@@ -52,9 +76,15 @@ export const assignmentsContract = oc.router({
       schema(
         Type.Object(
           {
-            taskId: Type.String({ format: "uuid" }),
+            taskId: Type.String({
+              format: "uuid",
+              description: "Task identifier to fetch all assigned tags for.",
+            }),
           },
-          { additionalProperties: false },
+          {
+            additionalProperties: false,
+            description: "Input payload for listing tags assigned to a task.",
+          },
         ),
       ),
     )
@@ -62,10 +92,24 @@ export const assignmentsContract = oc.router({
       schema(
         Type.Object(
           {
-            task: TaskSchema,
-            tags: Type.Array(TagSchema),
+            task: Type.Object(TaskSchema.properties, {
+              additionalProperties: false,
+              description: "Task entity for the requested task id.",
+            }),
+            tags: Type.Array(
+              Type.Object(TagSchema.properties, {
+                additionalProperties: false,
+                description: "Tag entity assigned to the task.",
+              }),
+              {
+                description: "All tags currently assigned to the task.",
+              },
+            ),
           },
-          { additionalProperties: false },
+          {
+            additionalProperties: false,
+            description: "Task plus all tags assigned to that task.",
+          },
         ),
       ),
     )

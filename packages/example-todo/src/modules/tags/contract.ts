@@ -19,10 +19,20 @@ export const tagsContract = oc.router({
       schema(
         Type.Object(
           {
-            name: Type.String({ minLength: 1, maxLength: 50 }),
-            color: Type.String({ pattern: "^#[0-9a-fA-F]{6}$" }),
+            name: Type.String({
+              minLength: 1,
+              maxLength: 50,
+              description: "Unique tag label shown to users.",
+            }),
+            color: Type.String({
+              pattern: "^#[0-9a-fA-F]{6}$",
+              description: "Hex color used to render the tag.",
+            }),
           },
-          { additionalProperties: false },
+          {
+            additionalProperties: false,
+            description: "Input payload for creating a new tag.",
+          },
         ),
       ),
     )
@@ -34,14 +44,40 @@ export const tagsContract = oc.router({
         data: schema(
           Type.Object(
             {
-              name: Type.Optional(Type.String({ minLength: 1 })),
+              name: Type.Optional(
+                Type.String({
+                  minLength: 1,
+                  description: "Tag name that conflicts with an existing tag.",
+                }),
+              ),
             },
-            { additionalProperties: false },
+            {
+              additionalProperties: false,
+              description: "Context for DUPLICATE_TAG errors.",
+            },
           ),
         ),
       },
     } as const),
-  list: oc.input(schema(Type.Object({}, { additionalProperties: false }))).output(schema(Type.Array(TagSchema))),
+  list: oc
+    .input(
+      schema(
+        Type.Object(
+          {},
+          {
+            additionalProperties: false,
+            description: "No-input payload for listing all tags.",
+          },
+        ),
+      ),
+    )
+    .output(
+      schema(
+        Type.Array(TagSchema, {
+          description: "All tags currently available in the todo domain.",
+        }),
+      ),
+    ),
 });
 
 export type TagsContract = typeof tagsContract;

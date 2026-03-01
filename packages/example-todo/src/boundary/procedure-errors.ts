@@ -9,19 +9,26 @@ import { schema } from "@rawr/orpc-standards";
 import type { ErrorMapItem } from "@orpc/server";
 import { Type } from "typebox";
 
-const optionalString = Type.Optional(
-  Type.String({
-    minLength: 1,
-  }),
-);
-
 const ResourceNotFoundData = schema(
   Type.Object(
     {
-      entity: optionalString,
-      id: optionalString,
+      entity: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Entity name that was not found (for example Task or Tag).",
+        }),
+      ),
+      id: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Identifier associated with the missing entity.",
+        }),
+      ),
     },
-    { additionalProperties: false },
+    {
+      additionalProperties: false,
+      description: "Context payload for RESOURCE_NOT_FOUND boundary errors.",
+    },
   ),
 );
 
