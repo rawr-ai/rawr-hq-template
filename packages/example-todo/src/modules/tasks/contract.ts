@@ -13,14 +13,13 @@
  * Extend task capability by updating this contract first, then implement handlers
  * in `router.ts`. Keep this file free of execution logic and dependencies.
  */
-import { oc } from "@orpc/contract";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { todoProcedure } from "../../boundary/procedure-meta";
 import { RESOURCE_NOT_FOUND } from "../../boundary/procedure-errors";
 import { TaskSchema } from "./schemas";
 
-export const tasksContract = oc.router({
+export const tasksContract = {
   create: todoProcedure({ idempotent: false })
     .input(
       schema(
@@ -90,6 +89,6 @@ export const tasksContract = oc.router({
       schema(TaskSchema),
     )
     .errors({ RESOURCE_NOT_FOUND }),
-});
+};
 
 export type TasksContract = typeof tasksContract;
