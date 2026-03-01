@@ -16,6 +16,7 @@ import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { base, withService } from "../../boundary/base";
 import { RESOURCE_NOT_FOUND } from "../../boundary/procedure-errors";
+import { INVALID_TASK_TITLE } from "./errors";
 import { createTaskRepository } from "./repository";
 import { type Task, TaskSchema } from "./schemas";
 
@@ -32,18 +33,7 @@ const withTasks = withService.use(({ context, next }) =>
 
 const create = withTasks
   .errors({
-    INVALID_TASK_TITLE: {
-      status: 400,
-      message: "Invalid task title",
-      data: schema(
-        Type.Object(
-          {
-            title: Type.Optional(Type.String()),
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    },
+    INVALID_TASK_TITLE,
   } as const)
   .input(
     schema(
