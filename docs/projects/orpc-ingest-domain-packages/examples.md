@@ -6,40 +6,18 @@ This document is the source of truth for:
 
 - what stays fixed from `n=1` to `n=∞`,
 - what changes intentionally (axes),
-- how the three examples should differ.
+- how the three examples differ.
 
-It intentionally does not try to fully specify every implementation detail yet.
-
-## Current Direction (Locked)
-
-We keep a standardized package shape:
-
-- `src/index.ts` as stable public entry.
-- `src/boundary/` for package boundary scaffolding.
-- `src/modules/` for capability modules + router composition.
-
-Error posture (locked for this phase):
-
-- Procedures define caller-actionable `.errors(...)` only.
-- Shared error definition files (when present) are reuse helpers for `.errors(...)`, not conversion/mapping layers.
-- Expected business states inside the boundary are values (`null`, `exists`, result objects), not thrown domain exception classes.
-- Procedures throw actionable ORPC errors directly from those states.
-- Unexpected internal failures are not part of typed boundary contract by default.
-- No standing domain-exception-to-ORPC mapping helper pattern.
-
-Epistemic status:
-
-- High confidence on structural standardization (`boundary/` + `modules/`).
-- High confidence on actionable-only boundary error surface.
-- Medium confidence on where neverthrow should be showcased (likely advanced/golden example unless a clear intermediate need appears).
+It is intentionally scaffold-oriented, not a full implementation spec.
 
 ## Invariants (must not change from n=1 to n=∞)
 
-- Router-first domain package.
+- Router-first domain package boundary.
+- Module-level `contract.ts` + `router.ts` split (hybrid contract-first implementation).
 - Transport-agnostic internals (no HTTP concerns inside package).
 - Procedures declare explicit ORPC boundary errors for caller-actionable outcomes.
 - Expected business states are modeled as values inside the boundary.
-- One stable package entry surface (router + in-process client factory).
+- One stable package entry surface (`todoRouter` + in-process client factory pattern).
 
 ## Real axes that should change
 
@@ -51,23 +29,30 @@ Epistemic status:
 
 ## Clarifications
 
-- Cross-module sharing is not a golden-only axis. It is normal by intermediate level.
-- Golden path should show how to keep sharing disciplined as dependency density grows.
-- Package structure is not an axis in this phase; behavior/coordination is.
-- Avoid surfacing internal subsystem failures as typed boundary errors unless callers actually need a distinct branch on them.
+- Cross-module sharing is not golden-only; it is normal by intermediate.
+- Golden-path value is disciplined sharing under high dependency density, not introducing sharing for the first time.
+- Structure is not an axis in this phase; structure stays fixed (`boundary/` + `modules/`).
 
-## How the 3 examples should differ
+## How the 3 examples differ
 
 1. Minimal (beginner)
-   - one leaf module, no peer dependencies, single-entity CRUD-ish flow.
+   - one leaf module,
+   - no peer module dependencies,
+   - single-entity flow,
+   - minimal shared primitives.
 2. Current/intermediate
-   - multiple modules, at least one composite module that composes peer repositories directly, shared primitives only where reuse is real.
+   - multiple modules,
+   - at least one composite module composing peer repositories directly,
+   - shared primitives only where reuse is real.
 3. Golden path
-   - same core pattern, high-density composition, stronger invariants and automation guardrails.
+   - same base structure,
+   - higher composition density,
+   - shared cross-module services/use-cases,
+   - stronger automated governance.
 
-## Suggested File Structures (Scaffold-Level)
+## Suggested Structures
 
-### 1) Minimal (beginner)
+### 1) Minimal
 
 ```text
 packages/example-minimal/src/
@@ -80,19 +65,14 @@ packages/example-minimal/src/
 └── modules/
     ├── router.ts
     └── tasks/
-        ├── errors.ts
-        ├── schemas.ts
+        ├── contract.ts
+        ├── router.ts
         ├── repository.ts
-        └── router.ts
+        ├── schemas.ts
+        └── errors.ts
 ```
 
-Axes emphasized:
-
-- leaf topology,
-- no cross-module dependency,
-- convention-driven governance.
-
-### 2) Current/intermediate
+### 2) Current / Intermediate
 
 ```text
 packages/example-todo/src/
@@ -105,29 +85,26 @@ packages/example-todo/src/
 └── modules/
     ├── router.ts
     ├── tasks/
-    │   ├── errors.ts
-    │   ├── schemas.ts
+    │   ├── contract.ts
+    │   ├── router.ts
     │   ├── repository.ts
-    │   └── router.ts
+    │   ├── schemas.ts
+    │   └── errors.ts
     ├── tags/
-    │   ├── schemas.ts
-    │   ├── errors.ts
+    │   ├── contract.ts
+    │   ├── router.ts
     │   ├── repository.ts
-    │   └── router.ts
+    │   ├── schemas.ts
+    │   └── errors.ts
     └── assignments/
-        ├── schemas.ts
-        ├── errors.ts
+        ├── contract.ts
+        ├── router.ts
         ├── repository.ts
-        └── router.ts
+        ├── schemas.ts
+        └── errors.ts
 ```
 
-Axes emphasized:
-
-- leaf + composite orchestration,
-- intentional cross-module dependency,
-- first multi-entity flows.
-
-### 3) Golden path
+### 3) Golden Path
 
 ```text
 packages/example-golden/src/
@@ -144,20 +121,23 @@ packages/example-golden/src/
     │   ├── services.ts
     │   └── invariants.ts
     ├── tasks/
-    │   ├── schemas.ts
-    │   ├── errors.ts
+    │   ├── contract.ts
+    │   ├── router.ts
     │   ├── repository.ts
-    │   └── router.ts
+    │   ├── schemas.ts
+    │   └── errors.ts
     ├── tags/
-    │   ├── schemas.ts
-    │   ├── errors.ts
+    │   ├── contract.ts
+    │   ├── router.ts
     │   ├── repository.ts
-    │   └── router.ts
+    │   ├── schemas.ts
+    │   └── errors.ts
     ├── assignments/
-    │   ├── schemas.ts
-    │   ├── errors.ts
+    │   ├── contract.ts
+    │   ├── router.ts
     │   ├── repository.ts
-    │   └── router.ts
+    │   ├── schemas.ts
+    │   └── errors.ts
     └── use-cases/
         ├── create-task-with-tags.ts
         └── reassign-tags.ts
@@ -170,17 +150,11 @@ packages/example-golden/test/
 └── module-boundary.test.ts
 ```
 
-Axes emphasized:
+## Reading Rule
 
-- high-density composition,
-- shared use-case services,
-- automated governance.
-
-## Practical Reading Rule
-
-When reviewing examples, ask:
+For any diff across examples, ask:
 
 1. Which invariant stayed fixed?
 2. Which axis moved and why?
 
-If a change cannot be explained by an axis, treat it as accidental complexity until proven necessary.
+If a change cannot be mapped to an axis, treat it as accidental complexity until justified.

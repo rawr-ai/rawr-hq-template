@@ -2,80 +2,81 @@
 
 ## What This Document Is
 
-- `guidance.md` captures current implementation posture and defaults.
-- It can evolve as examples mature.
+- `guidance.md` is operational implementation guidance.
+- It captures current defaults and conventions for building/maintaining domain example packages.
 - Hard architectural locks belong in `DECISIONS.md`.
-- Example progression and invariant/axis framing belong in `examples.md`.
+- Example progression (invariants + axes) belongs in `examples.md`.
 
-## Boundary Error Posture (Current Default)
+## Package Shape (Always-On)
 
-### Router-Client Boundary Rule
+Use one stable top-level structure across package sizes:
 
-- Domain packages are consumed through ORPC router clients.
-- ORPC procedure `.errors(...)` declarations are the boundary contract callers rely on.
-- Procedures should throw only caller-actionable boundary errors.
+- `src/index.ts` for public package entry,
+- `src/boundary/` for boundary scaffolding,
+- `src/modules/` for capability modules and router composition.
 
-### What We Surface vs Hide
+## Module Shape: `contract.ts` + `router.ts`
 
-- Surface: validation/not-found/conflict style errors when callers must branch.
-- Hide: infra/runtime internals that callers cannot meaningfully action.
-- Default for hidden internals: bubble and let ORPC treat them as internal server failures, with logging/traces for diagnosis.
+Each module should split boundary definition from behavior:
 
-For this posture:
+- `contract.ts`: procedure names, input/output schemas, `.errors(...)` declarations.
+- `router.ts`: handler implementation only (`implement(contract)`), context wiring, orchestration logic.
 
-- do not expose `DATABASE_ERROR` as a default typed boundary contract,
-- do not maintain a standing domain-catalog-to-ORPC mapping layer.
+Rules:
 
-## Internal Error Taxonomy (Inside The Boundary)
+- Do not duplicate contract shape in `router.ts`.
+- Do not place business orchestration in module `contract.ts`.
+- Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 
-### Expected Business States
+## Boundary Error Standard
 
-- Model expected states as values (`null`, `exists`, result objects), not thrown exception classes.
+### Caller Contract
 
-### Unexpected Internal Faults
+- ORPC procedure `.errors(...)` declarations are the canonical caller contract.
+- Procedures throw only caller-actionable boundary errors.
 
-- Throw plain internal errors for dependency/runtime failures.
-- Optionally throw `UnexpectedInternalError` only when local code detects an invariant break ("this should be impossible").
+### Inside Boundary
 
-When to use `UnexpectedInternalError`:
+- Expected business states should be values (`null`, `exists`, result objects).
+- Procedure handlers decide when those states become caller-actionable errors.
 
-- Use it as an internal marker for invariant violations you want to classify in logs/alerts.
-- Do not expose it as a typed ORPC boundary error unless callers should action it (normally they should not).
+### Internal Failures
 
-When plain throws are enough:
+- Unexpected internals should not be part of typed boundary error contracts by default.
+- Default posture: allow unexpected internals to bubble; rely on logging/tracing for diagnosis.
 
-- If you are not actively using invariant classification/telemetry, plain internal throws are sufficient.
-- Client-visible behavior is the same by default (internal failure at boundary).
+### On Mapping Layers
+
+- No standing domain-catalog/unwrap translation layer in active examples.
+- Inline conversion at the procedure boundary is the intended pattern.
 
 ## neverthrow Guidance
 
-Use neverthrow as an internal tool, not a package-wide repository API requirement.
+Neverthrow is available, but not an always-on repository API contract.
 
-Use it where it clearly helps:
+Use it where it adds leverage:
 
-- multi-step internal composition (`andThen`, `combine`) where failures stay inside module/service logic,
-- conditional recovery/fallback logic (`orElse`, `match`) before crossing the ORPC procedure boundary,
-- pure function pipelines where explicit `Result` flow improves readability.
+- multi-step composition and recovery,
+- internal pipelines where `Result` flow improves clarity.
 
-Do not use it by default where it does not add leverage. Repository methods can return `Promise<T>` when that is clearer.
+Avoid forcing neverthrow where simple `Promise<T>` is clearer.
 
-Boundary reminder:
-
-- procedures still declare `.errors(...)` explicitly and throw only caller-actionable boundary errors.
+Boundary rule still applies either way: procedures expose ORPC boundary errors, not internal mechanics.
 
 ## Error Definition Placement
 
-Use a hybrid placement model based on actual sharing:
+Use sharing-based placement:
 
-- service-level errors for failures shared across modules,
-- module-level errors for failures shared within one module,
-- procedure-local errors for truly local behavior.
+- `boundary/procedure-errors.ts` for reusable cross-module boundary error definitions,
+- `modules/<name>/errors.ts` for module-specific boundary error definitions,
+- procedure-local errors only when truly local.
 
-Each procedure still declares only the errors it can throw via `.errors(...)`. Shared definitions can be reused, but declaration remains procedure-specific.
-These shared definitions are reference shapes only, not a domain-to-ORPC translation/mapping layer.
+Each procedure still declares only the errors it can throw.
 
-Consistency rule for this example standard:
+## `UnexpectedInternalError` Usage
 
-- each module keeps boundary error definitions in `modules/<name>/errors.ts`,
-- each error is exported as an individually typed ORPC `ErrorMapItem`,
-- routers import those constants directly and pass them to `.errors(...)`.
+Use `UnexpectedInternalError` only when local code detects an invariant violation you want to classify in telemetry.
+
+Do not use it as a default replacement for ordinary thrown internals.
+
+If you do not need invariant classification, plain internal throws are sufficient.

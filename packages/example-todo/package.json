@@ -21,6 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@orpc/contract": "^1.13.5",
     "@orpc/server": "^1.13.5",
     "@rawr/orpc-standards": "workspace:*",
     "typebox": "^1.0.81"

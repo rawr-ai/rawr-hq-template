@@ -2,8 +2,10 @@
  * @fileoverview Shared ORPC context and middleware baseline.
  *
  * @remarks
- * `base` defines the minimal required context (`deps`), and `withService`
- * derives cross-cutting services (`logger`, `clock`) once for all modules.
+ * `base` defines the minimal required context (`deps`).
+ * `serviceContextMiddleware` derives shared services (`logger`, `clock`) once.
+ * Both router-first and contract-first module implementations should reuse this
+ * middleware to keep context wiring consistent.
  *
  * Invariant: module routers should extend context from `withService`, not bypass it.
  *
@@ -26,7 +28,7 @@ export interface ServiceContext extends BaseContext {
 
 export const base = os.$context<BaseContext>();
 
-export const withService = base.use(({ context, next }) => {
+export const serviceContextMiddleware = base.middleware(({ context, next }) => {
   return next({
     context: {
       deps: context.deps,
@@ -35,3 +37,5 @@ export const withService = base.use(({ context, next }) => {
     },
   });
 });
+
+export const withService = base.use(serviceContextMiddleware);
