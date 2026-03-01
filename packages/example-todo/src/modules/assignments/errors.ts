@@ -7,7 +7,7 @@
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 
-export const assignmentErrorMap = {
+export const assignmentProcedureErrors = {
   ALREADY_ASSIGNED: {
     status: 409,
     message: "Task/tag assignment already exists",

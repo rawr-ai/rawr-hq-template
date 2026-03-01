@@ -10,12 +10,12 @@ import { randomUUID } from "node:crypto";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { base, withService } from "../../boundary/base";
-import { todoProcedureErrorMap } from "../../boundary/procedure-errors";
+import { todoProcedureErrors } from "../../boundary/procedure-errors";
 import { createTagRepository } from "../tags/repository";
 import { TagSchema } from "../tags/schemas";
 import { createTaskRepository } from "../tasks/repository";
 import { TaskSchema } from "../tasks/schemas";
-import { assignmentErrorMap } from "./errors";
+import { assignmentProcedureErrors } from "./errors";
 import { createAssignmentRepository } from "./repository";
 import { type Assignment, AssignmentSchema } from "./schemas";
 
@@ -32,17 +32,11 @@ const withAssignments = withService.use(({ context, next }) =>
   }),
 );
 
-const assignErrorMap = {
-  RESOURCE_NOT_FOUND: todoProcedureErrorMap.RESOURCE_NOT_FOUND,
-  ALREADY_ASSIGNED: assignmentErrorMap.ALREADY_ASSIGNED,
-} as const;
-
-const listForTaskErrorMap = {
-  RESOURCE_NOT_FOUND: todoProcedureErrorMap.RESOURCE_NOT_FOUND,
-} as const;
-
 const assign = withAssignments
-  .errors(assignErrorMap)
+  .errors({
+    RESOURCE_NOT_FOUND: todoProcedureErrors.RESOURCE_NOT_FOUND,
+    ALREADY_ASSIGNED: assignmentProcedureErrors.ALREADY_ASSIGNED,
+  } as const)
   .input(
     schema(
       Type.Object(
@@ -90,7 +84,9 @@ const assign = withAssignments
   });
 
 const listForTask = withAssignments
-  .errors(listForTaskErrorMap)
+  .errors({
+    RESOURCE_NOT_FOUND: todoProcedureErrors.RESOURCE_NOT_FOUND,
+  } as const)
   .input(
     schema(
       Type.Object(

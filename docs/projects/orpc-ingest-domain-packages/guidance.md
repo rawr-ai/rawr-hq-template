@@ -72,3 +72,4 @@ Use a hybrid placement model based on actual sharing:
 - procedure-local errors for truly local behavior.
 
 Each procedure still declares only the errors it can throw via `.errors(...)`. Shared definitions can be reused, but declaration remains procedure-specific.
+These shared definitions are reference shapes only, not a domain-to-ORPC translation/mapping layer.
