@@ -1,4 +1,5 @@
 import type { Schema, SchemaIssue } from "@orpc/contract";
+import { createRouterClient, type AnyRouter, type InferRouterInitialContext, type RouterClient } from "@orpc/server";
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
 
@@ -45,4 +46,35 @@ export function typeBoxStandardSchema<T extends TSchema>(typeboxSchema: T): Sche
 
 export function schema<T extends TSchema>(typeboxSchema: T): Schema<Static<T>, Static<T>> {
   return typeBoxStandardSchema(typeboxSchema);
+}
+
+/**
+ * Extracts the canonical dependency bag type from an oRPC router that expects
+ * initial context shaped as `{ deps: ... }`.
+ */
+export type InferDomainDeps<TRouter extends AnyRouter> =
+  InferRouterInitialContext<TRouter> extends { deps: infer TDeps } ? TDeps : never;
+
+/**
+ * Shared descriptor for internal domain packages consumed in-process.
+ *
+ * All packages using this helper expose the same bootstrap surface:
+ * `domain.createClient(deps)` -> `createRouterClient(router, { context: { deps } })`.
+ */
+export interface InProcessDomainPackage<TRouter extends AnyRouter> {
+  readonly router: TRouter;
+  createClient(deps: InferDomainDeps<TRouter>): RouterClient<TRouter>;
+}
+
+export function defineInProcessDomainPackage<TRouter extends AnyRouter>(
+  router: TRouter,
+): InProcessDomainPackage<TRouter> {
+  return {
+    router,
+    createClient(deps) {
+      return createRouterClient(router, {
+        context: { deps } as InferRouterInitialContext<TRouter>,
+      });
+    },
+  };
 }
