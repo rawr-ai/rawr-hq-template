@@ -15,7 +15,7 @@ import { randomUUID } from "node:crypto";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { base, withService } from "../../boundary/base";
-import { todoProcedureErrors } from "../../boundary/procedure-errors";
+import { RESOURCE_NOT_FOUND } from "../../boundary/procedure-errors";
 import { createTaskRepository } from "./repository";
 import { type Task, TaskSchema } from "./schemas";
 
@@ -82,7 +82,7 @@ const create = withTasks
 
 const get = withTasks
   .errors({
-    RESOURCE_NOT_FOUND: todoProcedureErrors.RESOURCE_NOT_FOUND,
+    RESOURCE_NOT_FOUND,
   } as const)
   .input(
     schema(

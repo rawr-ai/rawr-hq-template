@@ -8,17 +8,15 @@
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 
-export const tagProcedureErrors = {
-  DUPLICATE_TAG: {
-    status: 409,
-    message: "Tag already exists",
-    data: schema(
-      Type.Object(
-        {
-          name: Type.Optional(Type.String({ minLength: 1 })),
-        },
-        { additionalProperties: false },
-      ),
+export const DUPLICATE_TAG = {
+  status: 409,
+  message: "Tag already exists",
+  data: schema(
+    Type.Object(
+      {
+        name: Type.Optional(Type.String({ minLength: 1 })),
+      },
+      { additionalProperties: false },
     ),
-  },
+  ),
 } as const;
