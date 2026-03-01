@@ -12,16 +12,16 @@
  * If you add a new module, wire it into `modules/router.ts` first, then re-export
  * only the minimum public types from here. Avoid exporting internal helpers by default.
  */
-import { defineInProcessDomainPackage } from "@rawr/orpc-standards";
+import { defineDomainPackage } from "@rawr/orpc-standards";
 import type { TodoDeps } from "./boundary/deps";
 import { todoRouter } from "./modules/router";
 
 export { todoRouter, type TodoRouter } from "./modules/router";
 
-export const todoDomainPackage = defineInProcessDomainPackage(todoRouter);
+export const todoPackage = defineDomainPackage(todoRouter);
 
 export function createTodoClient(deps: TodoDeps) {
-  return todoDomainPackage.createClient(deps);
+  return todoPackage.createClient(deps);
 }
 
 export type TodoClient = ReturnType<typeof createTodoClient>;
