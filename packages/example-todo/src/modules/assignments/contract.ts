@@ -70,7 +70,7 @@ export const assignmentsContract = oc.router({
           ),
         ),
       },
-    } as const),
+    }),
   listForTask: oc
     .input(
       schema(
@@ -113,7 +113,7 @@ export const assignmentsContract = oc.router({
         ),
       ),
     )
-    .errors({ RESOURCE_NOT_FOUND } as const),
+    .errors({ RESOURCE_NOT_FOUND }),
 });
 
 export type AssignmentsContract = typeof assignmentsContract;

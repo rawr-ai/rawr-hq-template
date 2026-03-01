@@ -67,7 +67,7 @@ export const tasksContract = oc.router({
           ),
         ),
       },
-    } as const),
+    }),
   get: oc
     .input(
       schema(
@@ -88,7 +88,7 @@ export const tasksContract = oc.router({
     .output(
       schema(TaskSchema),
     )
-    .errors({ RESOURCE_NOT_FOUND } as const),
+    .errors({ RESOURCE_NOT_FOUND }),
 });
 
 export type TasksContract = typeof tasksContract;

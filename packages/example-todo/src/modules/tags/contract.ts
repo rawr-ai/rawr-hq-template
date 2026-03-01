@@ -58,7 +58,7 @@ export const tagsContract = oc.router({
           ),
         ),
       },
-    } as const),
+    }),
   list: oc
     .input(
       schema(
