@@ -80,6 +80,7 @@ packages/example-minimal/src/
 └── modules/
     ├── router.ts
     └── tasks/
+        ├── errors.ts
         ├── schemas.ts
         ├── repository.ts
         └── router.ts
@@ -104,6 +105,7 @@ packages/example-todo/src/
 └── modules/
     ├── router.ts
     ├── tasks/
+    │   ├── errors.ts
     │   ├── schemas.ts
     │   ├── repository.ts
     │   └── router.ts

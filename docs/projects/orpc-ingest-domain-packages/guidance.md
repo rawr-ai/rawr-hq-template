@@ -73,3 +73,9 @@ Use a hybrid placement model based on actual sharing:
 
 Each procedure still declares only the errors it can throw via `.errors(...)`. Shared definitions can be reused, but declaration remains procedure-specific.
 These shared definitions are reference shapes only, not a domain-to-ORPC translation/mapping layer.
+
+Consistency rule for this example standard:
+
+- each module keeps boundary error definitions in `modules/<name>/errors.ts`,
+- each error is exported as an individually typed ORPC `ErrorMapItem`,
+- routers import those constants directly and pass them to `.errors(...)`.
