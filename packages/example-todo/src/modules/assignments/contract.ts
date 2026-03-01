@@ -9,7 +9,6 @@
  * Keep this contract focused on caller-visible shape. Cross-module access
  * patterns belong in `router.ts`, not here.
  */
-import { oc } from "@orpc/contract";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { todoProcedure } from "../../boundary/procedure-meta";
@@ -18,7 +17,7 @@ import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
 
-export const assignmentsContract = oc.router({
+export const assignmentsContract = {
   assign: todoProcedure({ idempotent: false })
     .input(
       schema(
@@ -115,6 +114,6 @@ export const assignmentsContract = oc.router({
       ),
     )
     .errors({ RESOURCE_NOT_FOUND }),
-});
+};
 
 export type AssignmentsContract = typeof assignmentsContract;

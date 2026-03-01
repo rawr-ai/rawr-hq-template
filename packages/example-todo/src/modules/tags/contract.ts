@@ -8,13 +8,12 @@
  * @agents
  * Add/modify procedures here first. Then implement behavior in `router.ts`.
  */
-import { oc } from "@orpc/contract";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { todoProcedure } from "../../boundary/procedure-meta";
 import { TagSchema } from "./schemas";
 
-export const tagsContract = oc.router({
+export const tagsContract = {
   create: todoProcedure({ idempotent: false })
     .input(
       schema(
@@ -79,6 +78,6 @@ export const tagsContract = oc.router({
         }),
       ),
     ),
-});
+};
 
 export type TagsContract = typeof tagsContract;
