@@ -17,6 +17,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Transport-agnostic internals (no HTTP concerns inside package).
 - Procedures declare explicit ORPC boundary errors for caller-actionable outcomes.
 - Expected business states are modeled as values inside the boundary.
+- Procedures carry shared metadata (`domain`, `audience`) plus explicit per-procedure `idempotent`.
 - One stable package entry surface (`todoRouter` + in-process client factory pattern).
 
 ## Real axes that should change
@@ -33,6 +34,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Golden-path value is disciplined sharing under high dependency density, not introducing sharing for the first time.
 - Structure is not an axis in this phase; structure stays fixed (`boundary/` + `modules/`).
 - Module-specific boundary errors are defined inline in `contract.ts` (not separate module `errors.ts` files).
+- Metadata should stay minimal and operational in this phase (`idempotent` required, `sideEffects` deferred).
 
 ## How the 3 examples differ
 

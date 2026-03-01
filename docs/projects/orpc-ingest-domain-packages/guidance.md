@@ -31,6 +31,31 @@ Rules:
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
 - Prefer TypeBox `description` metadata on schema objects/properties for semantic documentation; avoid extra schema-only JSDoc noise.
 
+## Procedure Metadata Standard
+
+Use oRPC-native procedure metadata (`.meta(...)`) to encode small, agent-useful execution semantics.
+
+Current required baseline:
+
+- shared package metadata: `domain: "todo"` and `audience: "internal"`,
+- per-procedure required field: `idempotent: boolean`.
+
+Recommended pattern:
+
+- define shared package metadata once in `boundary/procedure-meta.ts`,
+- expose a helper (for example `todoProcedure({ idempotent })`) that starts procedure chains,
+- keep module contracts explicit by setting `idempotent` on every procedure.
+
+Why this baseline:
+
+- high signal for agent/runtime decisions (safe retries, mutation awareness),
+- low authoring overhead,
+- avoids repeating derivable labels ad hoc in every module.
+
+Not required in this phase:
+
+- `sideEffects` classification (deferred until we have a concrete automated consumer and enforcement).
+
 ## Boundary Error Standard
 
 ### Caller Contract
