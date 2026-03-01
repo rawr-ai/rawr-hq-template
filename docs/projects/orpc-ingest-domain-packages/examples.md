@@ -12,7 +12,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 
 ## Invariants (must not change from n=1 to n=∞)
 
-- Router-first domain package boundary.
+- Package boundary is the composed server router (`src/modules/router.ts`) plus in-process client factory; module internals stay `contract.ts` + `router.ts`.
 - Module-level `contract.ts` + `router.ts` split (hybrid contract-first implementation).
 - Transport-agnostic internals (no HTTP concerns inside package).
 - Procedures declare explicit ORPC boundary errors for caller-actionable outcomes.
@@ -35,7 +35,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Structure is not an axis in this phase; structure stays fixed (`boundary/` + `modules/`).
 - Module-specific boundary errors are defined inline in `contract.ts` (not separate module `errors.ts` files).
 - Metadata should stay minimal and operational in this phase (`idempotent` required, `sideEffects` deferred).
-- Global/router-level error policy is defined in `guidance.md` (canonical); examples should not introduce package-wide error sets unless that policy's conditions are met.
+- Contract-router/global error policy is defined in `guidance.md` (canonical); examples should not introduce package-wide shared error sets unless that policy's conditions are met.
 
 ## How the 3 examples differ
 
