@@ -1,88 +1,51 @@
 /**
- * @fileoverview Tag repository (query logic + domain failure typing).
+ * @fileoverview Tag repository (data access only).
  *
  * @remarks
- * This repository demonstrates a module-specific domain error
- * (`DuplicateTagError`) alongside shared service errors.
+ * Expected duplicate/missing states are represented as values:
+ * - `existsByName` returns a boolean.
+ * - `findById` returns `null` when missing.
  *
- * Constraints:
- * - Never throw ORPC errors from here.
- * - Keep "expected" conflicts (like duplicate names) as typed domain failures.
- * - Convert adapter exceptions to `DatabaseError`.
+ * Unexpected/internal failures bubble via thrown adapter exceptions.
  *
  * @agents
- * When adding writes, decide whether the failure mode is shared (`DatabaseError`)
- * or module-specific (new tag error class in `tags/errors.ts`).
+ * Keep procedure boundary concerns out of this file.
  */
-import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import type { Sql } from "../../boundary/deps";
-import { DatabaseError, NotFoundError } from "../../boundary/service-errors";
-import { DuplicateTagError } from "./errors";
+import { UnexpectedInternalError } from "../../boundary/service-errors";
 import type { Tag } from "./schemas";
-
-function toDatabaseError(cause: unknown): DatabaseError {
-  return new DatabaseError(cause);
-}
 
 export function createTagRepository(sql: Sql) {
   return {
-    async findById(id: string): Promise<Tag> {
-      try {
-        const row = await sql.queryOne<Tag>("SELECT * FROM tags WHERE id = $1", [id]);
-        if (!row) {
-          throw new NotFoundError("Tag", id);
-        }
-
-        return row;
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          throw error;
-        }
-
-        throw toDatabaseError(error);
-      }
+    async findById(id: string): Promise<Tag | null> {
+      return await sql.queryOne<Tag>("SELECT * FROM tags WHERE id = $1", [id]);
     },
 
     async findByIds(ids: string[]): Promise<Tag[]> {
-      try {
-        return await sql.query<Tag>("SELECT * FROM tags WHERE id = ANY($1) ORDER BY name ASC", [ids]);
-      } catch (error) {
-        throw toDatabaseError(error);
-      }
+      return await sql.query<Tag>("SELECT * FROM tags WHERE id = ANY($1) ORDER BY name ASC", [ids]);
     },
 
     async findAll(): Promise<Tag[]> {
-      try {
-        return await sql.query<Tag>("SELECT * FROM tags ORDER BY name ASC");
-      } catch (error) {
-        throw toDatabaseError(error);
-      }
+      return await sql.query<Tag>("SELECT * FROM tags ORDER BY name ASC");
+    },
+
+    async existsByName(name: string): Promise<boolean> {
+      const row = await sql.queryOne<{ id: string }>("SELECT id FROM tags WHERE name = $1", [name]);
+      return !!row;
     },
 
     async insert(tag: Tag): Promise<Tag> {
-      const result = await ResultAsync.fromPromise(
-        sql.queryOne<{ id: string }>("SELECT id FROM tags WHERE name = $1", [tag.name]),
-        toDatabaseError,
-      ).andThen((existing) => {
-        if (existing) {
-          return errAsync(new DuplicateTagError(tag.name));
-        }
+      const row = await sql.queryOne<Tag>(
+        `INSERT INTO tags (id, name, color, created_at)
+         VALUES ($1, $2, $3, $4) RETURNING *`,
+        [tag.id, tag.name, tag.color, tag.createdAt],
+      );
 
-        return ResultAsync.fromPromise(
-          sql.queryOne<Tag>(
-            `INSERT INTO tags (id, name, color, created_at)
-             VALUES ($1, $2, $3, $4) RETURNING *`,
-            [tag.id, tag.name, tag.color, tag.createdAt],
-          ),
-          toDatabaseError,
-        ).andThen((row) => (row ? okAsync(row) : errAsync(new DatabaseError("tags.insert returned no row"))));
-      });
-
-      if (result.isErr()) {
-        throw result.error;
+      if (!row) {
+        throw new UnexpectedInternalError("tags.insert returned no row");
       }
 
-      return result.value;
+      return row;
     },
   };
 }

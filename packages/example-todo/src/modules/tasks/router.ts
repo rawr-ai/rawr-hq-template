@@ -1,26 +1,21 @@
 /**
- * @fileoverview Task module router (procedure contracts + orchestration).
+ * @fileoverview Task module router (boundary contract + orchestration).
  *
  * @remarks
- * This is the procedure boundary where:
- * - input/output schemas are declared,
- * - per-procedure ORPC errors are declared,
- * - domain failures are mapped into declared ORPC errors.
- *
- * Trap to avoid: widening `.errors(...)` to "just in case" errors. Keep each
- * procedure error map as narrow as possible.
+ * This boundary throws only caller-actionable ORPC errors. Expected missing
+ * states come from repository return values (`null`) and are converted directly
+ * into typed boundary errors here.
  *
  * @agents
- * Add new task procedures here. Reuse shared error map entries when they are
- * truly shared, and prefer procedure-local definitions for one-off validation
- * failures to keep intent close to behavior.
+ * Keep this pattern:
+ * - repositories return expected states as values,
+ * - procedures throw boundary errors directly when callers must branch.
  */
 import { randomUUID } from "node:crypto";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { base, withService } from "../../boundary/base";
 import { todoProcedureErrorMap } from "../../boundary/procedure-errors";
-import { DatabaseError, NotFoundError } from "../../boundary/service-errors";
 import { createTaskRepository } from "./repository";
 import { type Task, TaskSchema } from "./schemas";
 
@@ -35,9 +30,6 @@ const withTasks = withService.use(({ context, next }) =>
   }),
 );
 
-/**
- * Local validation error for this procedure only.
- */
 const taskCreateErrorMap = {
   INVALID_TASK_TITLE: {
     status: 400,
@@ -51,12 +43,10 @@ const taskCreateErrorMap = {
       ),
     ),
   },
-  DATABASE_ERROR: todoProcedureErrorMap.DATABASE_ERROR,
 } as const;
 
 const getTaskErrorMap = {
   RESOURCE_NOT_FOUND: todoProcedureErrorMap.RESOURCE_NOT_FOUND,
-  DATABASE_ERROR: todoProcedureErrorMap.DATABASE_ERROR,
 } as const;
 
 const create = withTasks
@@ -93,19 +83,7 @@ const create = withTasks
     };
 
     context.logger.info("todo.tasks.create", { taskId: task.id });
-
-    try {
-      return await context.repo.insert(task);
-    } catch (error) {
-      if (error instanceof DatabaseError) {
-        throw errors.DATABASE_ERROR({
-          message: "Unable to create task",
-          data: { operation: "tasks.insert" },
-        });
-      }
-
-      throw error;
-    }
+    return await context.repo.insert(task);
   });
 
 const get = withTasks
@@ -122,25 +100,15 @@ const get = withTasks
   )
   .output(schema(TaskSchema))
   .handler(async ({ context, input, errors }) => {
-    try {
-      return await context.repo.findById(input.id);
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw errors.RESOURCE_NOT_FOUND({
-          message: error.message,
-          data: { entity: error.entity, id: error.id },
-        });
-      }
-
-      if (error instanceof DatabaseError) {
-        throw errors.DATABASE_ERROR({
-          message: "Unable to load task",
-          data: { operation: "tasks.findById" },
-        });
-      }
-
-      throw error;
+    const task = await context.repo.findById(input.id);
+    if (!task) {
+      throw errors.RESOURCE_NOT_FOUND({
+        message: `Task '${input.id}' not found`,
+        data: { entity: "Task", id: input.id },
+      });
     }
+
+    return task;
   });
 
 export const tasksRouter = base.router({

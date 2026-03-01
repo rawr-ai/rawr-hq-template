@@ -255,10 +255,31 @@ For this initiative phase, the strongest candidate posture is:
 - Rationale: Prevents accidental reintroduction of the deprecated pattern and keeps standards package surface aligned with current posture.
 - Risk: Medium; potential breakage for out-of-tree consumers relying on removed exports.
 
+### D-009 — Expected business states as values (no thrown domain classes)
+
+- Context: We clarified that this package should not keep a standing translation layer from thrown domain exceptions into ORPC boundary errors.
+- Options considered:
+  - Keep expected-state domain exception classes (`NotFoundError`, `DuplicateTagError`, etc.) and translate in routers.
+  - Model expected business outcomes as values (`null`, `exists`) and throw ORPC boundary errors directly in procedures.
+- Choice: Model expected business outcomes as values and throw ORPC boundary errors directly in procedures.
+- Rationale: Removes repetitive try/catch translation boilerplate and keeps boundary behavior explicit and caller-focused.
+- Risk: Medium; internal repository contracts change and router logic must be updated consistently.
+
+### D-010 — Do not surface typed `DATABASE_ERROR` by default
+
+- Context: We needed to decide whether infra/storage failures should remain typed boundary contract in this example.
+- Options considered:
+  - Keep typed `DATABASE_ERROR` for procedure contracts.
+  - Treat unexpected infra/storage failures as non-defined/internal errors by default.
+- Choice: Treat unexpected infra/storage failures as non-defined/internal errors by default for this example.
+- Rationale: Callers should branch on domain-relevant errors; internal subsystem details belong in observability, not default boundary contracts.
+- Risk: Low-to-medium; tests and docs must align so this remains intentional.
+
 ## Implementation Pass Note (Current Target Posture)
 
 - `packages/example-todo` remains router-first and in-process (`todoRouter` + `createTodoClient`), with no derived contract export for this phase.
 - Error boundary is procedure-native:
   - procedures declare explicit ORPC errors via `.errors(...)`,
-  - procedures map known domain failures directly to declared ORPC errors.
-- Internal neverthrow usage is allowed where it has clear leverage (composition/recovery), but repository methods are no longer required to expose `Result`/`ResultAsync` contracts.
+  - procedures throw caller-actionable boundary errors directly from value-state checks.
+- Expected business states are modeled as values inside the boundary (`null`, `exists`) rather than thrown domain exception classes.
+- Unexpected infra/storage failures are non-defined/internal by default in this example posture.

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { safe } from "@orpc/server";
 import { createTodoClient } from "../src";
 import { createTodoDeps, type OrpcErrorShape } from "./helpers";
 
@@ -88,20 +89,16 @@ describe("example-todo typed procedure errors", () => {
     );
   });
 
-  it("returns DATABASE_ERROR when storage fails", async () => {
+  it("treats unexpected storage failure as non-defined internal error", async () => {
     const client = createTodoClient(
       createTodoDeps({
         failIfQueryIncludes: ["SELECT * FROM tasks WHERE id = $1"],
       }),
     );
 
-    await expectOrpcError(
-      client.tasks.get({ id: "00000000-0000-0000-0000-000000000001" }),
-      {
-        code: "DATABASE_ERROR",
-        status: 500,
-        data: { operation: "tasks.findById" },
-      },
-    );
+    const result = await safe(client.tasks.get({ id: "00000000-0000-0000-0000-000000000001" }));
+    expect(result.isSuccess).toBe(false);
+    expect(result.isDefined).toBe(false);
+    expect(result.error).toBeTruthy();
   });
 });

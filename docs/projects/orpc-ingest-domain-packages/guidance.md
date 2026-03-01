@@ -1,5 +1,12 @@
 # Guidance
 
+## What This Document Is
+
+- `guidance.md` captures current implementation posture and defaults.
+- It can evolve as examples mature.
+- Hard architectural locks belong in `DECISIONS.md`.
+- Example progression and invariant/axis framing belong in `examples.md`.
+
 ## Guidance #1 (2026-02-25)
 
 ### Question
@@ -32,6 +39,29 @@ Do not use it by default where it does not add leverage. Repository methods can 
 
 At the ORPC boundary, keep one rule:
 
-- procedures declare `.errors(...)` explicitly and map known domain failures to those declared ORPC errors.
+- procedures declare `.errors(...)` explicitly and throw only caller-actionable boundary errors.
 
 This keeps external behavior predictable while still allowing neverthrow in the specific internal places where it earns its complexity.
+
+## Guidance #3 (2026-03-01)
+
+### Question
+What is the simplest robust error model for our router-client-only domain packages?
+
+### Guidance
+Use boundary-actionable errors only.
+
+- Procedures declare and throw only caller-actionable ORPC errors.
+- Expected business states inside the boundary should be modeled as values (`null`, `exists`, result objects), not thrown domain exception classes.
+- Do not keep a standing domain-exception-to-ORPC mapping layer pattern.
+- Unexpected infra/runtime failures should bubble as non-defined/internal failures and be debugged through logs/traces.
+
+For this example posture:
+
+- keep typed boundary errors for domain-relevant states (validation/not found/conflict),
+- do not expose `DATABASE_ERROR` as a default typed boundary contract.
+
+neverthrow note:
+
+- neverthrow remains available when composition/recovery is genuinely useful,
+- the current `example-todo` baseline does not require it and should stay simple.

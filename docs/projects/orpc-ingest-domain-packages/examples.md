@@ -2,45 +2,42 @@
 
 ## Purpose
 
-This document is the source of truth for how the three domain-package examples differ.
-
-It is intentionally scoped to:
+This document is the source of truth for:
 
 - what stays fixed from `n=1` to `n=∞`,
-- what changes on purpose (axes),
-- what each example is meant to demonstrate.
+- what changes intentionally (axes),
+- how the three examples should differ.
 
-It intentionally does **not** attempt to specify the full final implementation for all three examples yet.
+It intentionally does not try to fully specify every implementation detail yet.
 
-## Current Direction (Locked for This Phase)
+## Current Direction (Locked)
 
-We are standardizing on an always-present two-way split in `src/`:
+We keep a standardized package shape:
 
-- `boundary/` for always-on package boundary scaffolding.
-- `modules/` for service capability modules and router composition.
+- `src/index.ts` as stable public entry.
+- `src/boundary/` for package boundary scaffolding.
+- `src/modules/` for capability modules + router composition.
 
-Working shape:
+Error posture (locked for this phase):
 
-- `src/index.ts` stays as the primary package entry surface.
-- `src/boundary/` holds package-level setup/wiring and boundary helpers.
-- `src/modules/` holds module routers, schemas, repositories, and orchestration modules.
+- Procedures define caller-actionable `.errors(...)` only.
+- Expected business states inside the boundary are values (`null`, `exists`, result objects), not thrown domain exception classes.
+- Procedures throw actionable ORPC errors directly from those states.
+- Unexpected internal failures are not part of typed boundary contract by default.
+- No standing domain-exception-to-ORPC mapping helper pattern.
 
 Epistemic status:
 
-- High confidence on the value of stable top-level semantics for both human and AI navigation.
-- Medium confidence on exact file naming inside `boundary/`; names can still evolve without changing the structural intent.
-
-Error posture update for this phase:
-
-- High confidence that procedure-level ORPC `.errors(...)` should remain the canonical boundary contract.
-- Medium confidence on how much internal neverthrow usage each example should carry; this remains template-dependent and is intentionally not fixed as an invariant.
+- High confidence on structural standardization (`boundary/` + `modules/`).
+- High confidence on actionable-only boundary error surface.
+- Medium confidence on where neverthrow should be showcased (likely advanced/golden example unless a clear intermediate need appears).
 
 ## Invariants (must not change from n=1 to n=∞)
 
 - Router-first domain package.
 - Transport-agnostic internals (no HTTP concerns inside package).
-- Internal logic may use neverthrow where composition/recovery adds value (not mandatory as repository contract).
-- Procedures declare explicit ORPC errors and map domain failures at boundary.
+- Procedures declare explicit ORPC boundary errors for caller-actionable outcomes.
+- Expected business states are modeled as values inside the boundary.
 - One stable package entry surface (router + in-process client factory).
 
 ## Real axes that should change
@@ -54,37 +51,18 @@ Error posture update for this phase:
 ## Clarifications
 
 - Cross-module sharing is not a golden-only axis. It is normal by intermediate level.
-- Golden path should show how to keep that sharing disciplined as density grows.
-- Package structure itself is **not** an axis between examples in this phase. Structure is standardized; behavior/coordination patterns are what vary.
-- `createOrpcErrorMapFromDomainCatalog` + `unwrap` indirection is not part of the forward example posture. Keep error mapping direct at procedure boundaries.
-
-## Why This Direction (Current Read)
-
-This document now assumes one hard architectural boundary: consumers call the package through the in-process ORPC router client.
-
-Given that, the highest-signal contract is the procedure's own `.errors(...)` surface. We currently believe that catalog-to-map conversion plus unwrap helpers add more indirection than value for this boundary shape.
-
-Epistemic framing:
-
-- High confidence in removing global unwrap/catalog indirection from examples.
-- Medium confidence on exactly where to demonstrate optional neverthrow usage across intermediate vs golden templates.
-
-## Example Progression (What Changes vs What Stays Fixed)
-
-| Example | What stays fixed | What this example intentionally demonstrates |
-| --- | --- | --- |
-| 1. Minimal (beginner) | All invariants above + standard `boundary/` and `modules/` layout | Left side of most axes: leaf-only, no peer-module composition, mostly local rules |
-| 2. Current/intermediate | All invariants above + standard `boundary/` and `modules/` layout | Midpoint: multiple modules + at least one composite module, selective sharing where it is clearly real |
-| 3. Golden path | All invariants above + standard `boundary/` and `modules/` layout | Right side: denser composition, stricter layering and invariants, automated governance |
+- Golden path should show how to keep sharing disciplined as dependency density grows.
+- Package structure is not an axis in this phase; behavior/coordination is.
+- Avoid surfacing internal subsystem failures as typed boundary errors unless callers actually need a distinct branch on them.
 
 ## How the 3 examples should differ
 
 1. Minimal (beginner)
-   - One leaf module, no peer dependencies, mostly local errors/schemas, single-entity CRUD-ish flow.
+   - one leaf module, no peer dependencies, single-entity CRUD-ish flow.
 2. Current/intermediate
-   - Multiple modules, at least one composite module that composes peer repositories directly, shared error/schema primitives where reuse is real.
+   - multiple modules, at least one composite module that composes peer repositories directly, shared primitives only where reuse is real.
 3. Golden path
-   - Same core pattern, but with high-density internal composition: clear layering rules, shared use-case services for repeated cross-module workflows, stronger invariants (idempotency/transactions where relevant), and automation enforcing structure.
+   - same core pattern, high-density composition, stronger invariants and automation guardrails.
 
 ## Suggested File Structures (Scaffold-Level)
 
@@ -106,13 +84,11 @@ packages/example-minimal/src/
         └── router.ts
 ```
 
-Axes illustrated here:
+Axes emphasized:
 
-- Topology: leaf-only.
-- Composition: no cross-module dependency.
-- Reuse: mostly procedure-local.
-- Coordination: single-entity.
-- Governance: conventions by example.
+- leaf topology,
+- no cross-module dependency,
+- convention-driven governance.
 
 ### 2) Current/intermediate
 
@@ -142,13 +118,11 @@ packages/example-todo/src/
         └── router.ts
 ```
 
-Axes illustrated here:
+Axes emphasized:
 
-- Topology: leaf + composite orchestration.
-- Composition: intentional cross-module dependency in composite module(s).
-- Reuse: shared service/module errors only where clearly reused.
-- Coordination: first multi-entity flows.
-- Governance: still mostly convention-driven.
+- leaf + composite orchestration,
+- intentional cross-module dependency,
+- first multi-entity flows.
 
 ### 3) Golden path
 
@@ -193,19 +167,17 @@ packages/example-golden/test/
 └── module-boundary.test.ts
 ```
 
-Axes illustrated here:
+Axes emphasized:
 
-- Topology: dense composite orchestration.
-- Composition: frequent but disciplined cross-module composition.
-- Reuse: shared primitives/services for repeated patterns.
-- Coordination: multi-entity invariants as first-class concerns.
-- Governance: automated guardrails enforce structure and drift checks.
+- high-density composition,
+- shared use-case services,
+- automated governance.
 
 ## Practical Reading Rule
 
-When reviewing examples, read them in order and ask two questions only:
+When reviewing examples, ask:
 
-1. What invariant stayed fixed?
-2. Which axis moved, and why?
+1. Which invariant stayed fixed?
+2. Which axis moved and why?
 
-If a change cannot be explained by one of the defined axes, it should be treated as accidental complexity until proven necessary.
+If a change cannot be explained by an axis, treat it as accidental complexity until proven necessary.

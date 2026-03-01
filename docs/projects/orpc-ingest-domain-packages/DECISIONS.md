@@ -83,3 +83,27 @@ This decision also collapses error handling into one obvious flow:
 - Keep boundary contracts explicit and narrow per procedure.
 - Prefer direct mapping at procedure handlers over generic/global conversion layers.
 - Use neverthrow surgically where it helps internal composition/recovery; do not force it as repository API shape.
+
+## Decision #4 (2026-03-01)
+
+### Question
+Given our router-client-only architecture, should expected business failures continue as thrown domain exceptions that procedures translate, or should procedures throw actionable boundary errors directly from value-state checks?
+
+### Decision
+Procedures throw actionable ORPC boundary errors directly from value-state checks. Expected business states are not represented as thrown domain exception classes in lower layers.
+
+### Why
+This keeps the error model aligned with caller needs and removes avoidable translation machinery:
+
+- lower layers return expected states as values (`null`, `exists`, result objects),
+- procedures decide boundary outcomes and throw typed ORPC errors only when callers need to branch,
+- unexpected internal failures stay internal and surface as non-defined/internal errors.
+
+This avoids the old habit of over-contracting infra failures (for example exposing every DB failure as typed boundary API).
+
+### Implementation posture
+
+- No standing domain-exception-to-ORPC mapping layer pattern.
+- No default typed `DATABASE_ERROR` boundary contract in this example.
+- Keep boundary errors explicit and narrow per procedure.
+- Preserve internal observability via logs/traces rather than boundary error detail leakage.
