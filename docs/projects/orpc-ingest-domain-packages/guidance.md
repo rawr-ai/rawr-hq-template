@@ -7,26 +7,48 @@
 - Hard architectural locks belong in `DECISIONS.md`.
 - Example progression and invariant/axis framing belong in `examples.md`.
 
-## Guidance #1 (2026-02-25)
+## Boundary Error Posture (Current Default)
 
-### Question
-Where should ORPC error definitions live when we need procedure-level precision?
+### Router-Client Boundary Rule
 
-### Guidance
-Use a hybrid placement model based on actual sharing:
+- Domain packages are consumed through ORPC router clients.
+- ORPC procedure `.errors(...)` declarations are the boundary contract callers rely on.
+- Procedures should throw only caller-actionable boundary errors.
 
-- Service-level errors for failures shared across modules (for example generic database/not-found surfaces).
-- Module-level errors for failures shared within one module.
-- Procedure-local errors for truly local behavior.
+### What We Surface vs Hide
 
-Each procedure should still declare only the errors it can throw via `.errors(...)`. Shared definitions can be reused, but declaration remains procedure-specific.
+- Surface: validation/not-found/conflict style errors when callers must branch.
+- Hide: infra/runtime internals that callers cannot meaningfully action.
+- Default for hidden internals: bubble and let ORPC treat them as internal server failures, with logging/traces for diagnosis.
 
-## Guidance #2 (2026-02-26)
+For this posture:
 
-### Question
-How should we use neverthrow after Decision #3 if procedure-level ORPC errors are the boundary contract?
+- do not expose `DATABASE_ERROR` as a default typed boundary contract,
+- do not maintain a standing domain-catalog-to-ORPC mapping layer.
 
-### Guidance
+## Internal Error Taxonomy (Inside The Boundary)
+
+### Expected Business States
+
+- Model expected states as values (`null`, `exists`, result objects), not thrown exception classes.
+
+### Unexpected Internal Faults
+
+- Throw plain internal errors for dependency/runtime failures.
+- Optionally throw `UnexpectedInternalError` only when local code detects an invariant break ("this should be impossible").
+
+When to use `UnexpectedInternalError`:
+
+- Use it as an internal marker for invariant violations you want to classify in logs/alerts.
+- Do not expose it as a typed ORPC boundary error unless callers should action it (normally they should not).
+
+When plain throws are enough:
+
+- If you are not actively using invariant classification/telemetry, plain internal throws are sufficient.
+- Client-visible behavior is the same by default (internal failure at boundary).
+
+## neverthrow Guidance
+
 Use neverthrow as an internal tool, not a package-wide repository API requirement.
 
 Use it where it clearly helps:
@@ -35,33 +57,18 @@ Use it where it clearly helps:
 - conditional recovery/fallback logic (`orElse`, `match`) before crossing the ORPC procedure boundary,
 - pure function pipelines where explicit `Result` flow improves readability.
 
-Do not use it by default where it does not add leverage. Repository methods can return `Promise<T>` and throw typed domain errors when that is clearer.
+Do not use it by default where it does not add leverage. Repository methods can return `Promise<T>` when that is clearer.
 
-At the ORPC boundary, keep one rule:
+Boundary reminder:
 
-- procedures declare `.errors(...)` explicitly and throw only caller-actionable boundary errors.
+- procedures still declare `.errors(...)` explicitly and throw only caller-actionable boundary errors.
 
-This keeps external behavior predictable while still allowing neverthrow in the specific internal places where it earns its complexity.
+## Error Definition Placement
 
-## Guidance #3 (2026-03-01)
+Use a hybrid placement model based on actual sharing:
 
-### Question
-What is the simplest robust error model for our router-client-only domain packages?
+- service-level errors for failures shared across modules,
+- module-level errors for failures shared within one module,
+- procedure-local errors for truly local behavior.
 
-### Guidance
-Use boundary-actionable errors only.
-
-- Procedures declare and throw only caller-actionable ORPC errors.
-- Expected business states inside the boundary should be modeled as values (`null`, `exists`, result objects), not thrown domain exception classes.
-- Do not keep a standing domain-exception-to-ORPC mapping layer pattern.
-- Unexpected infra/runtime failures should bubble as non-defined/internal failures and be debugged through logs/traces.
-
-For this example posture:
-
-- keep typed boundary errors for domain-relevant states (validation/not found/conflict),
-- do not expose `DATABASE_ERROR` as a default typed boundary contract.
-
-neverthrow note:
-
-- neverthrow remains available when composition/recovery is genuinely useful,
-- the current `example-todo` baseline does not require it and should stay simple.
+Each procedure still declares only the errors it can throw via `.errors(...)`. Shared definitions can be reused, but declaration remains procedure-specific.
