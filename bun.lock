@@ -170,6 +170,17 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/example-todo": {
+      "name": "@rawr/example-todo",
+      "dependencies": {
+        "@orpc/server": "^1.13.5",
+        "@rawr/orpc-standards": "workspace:*",
+        "typebox": "^1.0.81",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/hq": {
       "name": "@rawr/hq",
       "dependencies": {
@@ -233,6 +244,7 @@
     "packages/support-example": {
       "name": "@rawr/support-example",
       "dependencies": {
+        "@orpc/contract": "^1.13.5",
         "@orpc/server": "^1.13.5",
         "@rawr/orpc-standards": "workspace:*",
         "typebox": "^1.0.81",
@@ -731,6 +743,8 @@
     "@rawr/coordination-observability": ["@rawr/coordination-observability@workspace:packages/coordination-observability"],
 
     "@rawr/core": ["@rawr/core@workspace:packages/core"],
+
+    "@rawr/example-todo": ["@rawr/example-todo@workspace:packages/example-todo"],
 
     "@rawr/hq": ["@rawr/hq@workspace:packages/hq"],
 
