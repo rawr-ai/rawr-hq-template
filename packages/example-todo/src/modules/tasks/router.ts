@@ -15,7 +15,7 @@ import { randomUUID } from "node:crypto";
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { base, withService } from "../../boundary/base";
-import { todoProcedureErrorMap } from "../../boundary/procedure-errors";
+import { todoProcedureErrors } from "../../boundary/procedure-errors";
 import { createTaskRepository } from "./repository";
 import { type Task, TaskSchema } from "./schemas";
 
@@ -30,27 +30,21 @@ const withTasks = withService.use(({ context, next }) =>
   }),
 );
 
-const taskCreateErrorMap = {
-  INVALID_TASK_TITLE: {
-    status: 400,
-    message: "Invalid task title",
-    data: schema(
-      Type.Object(
-        {
-          title: Type.Optional(Type.String()),
-        },
-        { additionalProperties: false },
-      ),
-    ),
-  },
-} as const;
-
-const getTaskErrorMap = {
-  RESOURCE_NOT_FOUND: todoProcedureErrorMap.RESOURCE_NOT_FOUND,
-} as const;
-
 const create = withTasks
-  .errors(taskCreateErrorMap)
+  .errors({
+    INVALID_TASK_TITLE: {
+      status: 400,
+      message: "Invalid task title",
+      data: schema(
+        Type.Object(
+          {
+            title: Type.Optional(Type.String()),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    },
+  } as const)
   .input(
     schema(
       Type.Object(
@@ -87,7 +81,9 @@ const create = withTasks
   });
 
 const get = withTasks
-  .errors(getTaskErrorMap)
+  .errors({
+    RESOURCE_NOT_FOUND: todoProcedureErrors.RESOURCE_NOT_FOUND,
+  } as const)
   .input(
     schema(
       Type.Object(

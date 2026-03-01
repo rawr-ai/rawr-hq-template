@@ -21,6 +21,7 @@ We keep a standardized package shape:
 Error posture (locked for this phase):
 
 - Procedures define caller-actionable `.errors(...)` only.
+- Shared error definition files (when present) are reuse helpers for `.errors(...)`, not conversion/mapping layers.
 - Expected business states inside the boundary are values (`null`, `exists`, result objects), not thrown domain exception classes.
 - Procedures throw actionable ORPC errors directly from those states.
 - Unexpected internal failures are not part of typed boundary contract by default.

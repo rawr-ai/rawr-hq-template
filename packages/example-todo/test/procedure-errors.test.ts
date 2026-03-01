@@ -11,18 +11,20 @@ async function expectOrpcError(
     data?: Record<string, unknown>;
   },
 ) {
-  try {
-    await promise;
-    throw new Error(`expected ORPCError ${expected.code}`);
-  } catch (error) {
-    const typed = error as OrpcErrorShape;
-    expect(typed.defined).toBe(true);
-    expect(typed.code).toBe(expected.code);
-    expect(typed.status).toBe(expected.status);
+  const result = await safe(promise);
+  expect(result.isSuccess).toBe(false);
+  expect(result.isDefined).toBe(true);
 
-    if (expected.data) {
-      expect(typed.data).toMatchObject(expected.data);
-    }
+  if (result.isSuccess || !result.isDefined) {
+    throw new Error(`expected defined ORPC error ${expected.code}`);
+  }
+
+  const typed = result.error as OrpcErrorShape;
+  expect(typed.code).toBe(expected.code);
+  expect(typed.status).toBe(expected.status);
+
+  if (expected.data) {
+    expect(typed.data).toMatchObject(expected.data);
   }
 }
 
@@ -100,5 +102,21 @@ describe("example-todo typed procedure errors", () => {
     expect(result.isSuccess).toBe(false);
     expect(result.isDefined).toBe(false);
     expect(result.error).toBeTruthy();
+  });
+
+  it("rejects schema-invalid input before repository execution", async () => {
+    const client = createTodoClient(
+      createTodoDeps({
+        failIfQueryIncludes: ["SELECT * FROM tasks WHERE id = $1"],
+      }),
+    );
+
+    const result = await safe(client.tasks.get({ id: "not-a-uuid" }));
+    expect(result.isSuccess).toBe(false);
+
+    if (!result.isSuccess) {
+      const message = result.error instanceof Error ? result.error.message : String(result.error);
+      expect(message).not.toContain("forced failure for queryOne");
+    }
   });
 });

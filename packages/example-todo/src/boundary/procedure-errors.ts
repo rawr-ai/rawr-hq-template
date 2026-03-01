@@ -1,5 +1,5 @@
 /**
- * @fileoverview Shared ORPC procedure error definitions for the todo package boundary.
+ * @fileoverview Shared ORPC boundary error definitions for the todo package.
  *
  * @remarks
  * This file defines reusable ORPC error entries for failures that are common
@@ -23,7 +23,7 @@ const optionalString = Type.Optional(
   }),
 );
 
-export const todoProcedureErrorMap = {
+export const todoProcedureErrors = {
   RESOURCE_NOT_FOUND: {
     status: 404,
     message: "Resource not found",

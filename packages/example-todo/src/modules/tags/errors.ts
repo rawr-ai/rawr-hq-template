@@ -8,7 +8,7 @@
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 
-export const tagErrorMap = {
+export const tagProcedureErrors = {
   DUPLICATE_TAG: {
     status: 409,
     message: "Tag already exists",
