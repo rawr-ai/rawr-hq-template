@@ -15,47 +15,61 @@ import { Type } from "typebox";
 import { RESOURCE_NOT_FOUND } from "../../boundary/procedure-errors";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
-import { ALREADY_ASSIGNED } from "./errors";
 import { AssignmentSchema } from "./schemas";
-
-const assignInputSchema = schema(
-  Type.Object(
-    {
-      taskId: Type.String({ format: "uuid" }),
-      tagId: Type.String({ format: "uuid" }),
-    },
-    { additionalProperties: false },
-  ),
-);
-
-const listForTaskInputSchema = schema(
-  Type.Object(
-    {
-      taskId: Type.String({ format: "uuid" }),
-    },
-    { additionalProperties: false },
-  ),
-);
-
-const listForTaskOutputSchema = schema(
-  Type.Object(
-    {
-      task: TaskSchema,
-      tags: Type.Array(TagSchema),
-    },
-    { additionalProperties: false },
-  ),
-);
 
 export const assignmentsContract = oc.router({
   assign: oc
-    .errors({ RESOURCE_NOT_FOUND, ALREADY_ASSIGNED } as const)
-    .input(assignInputSchema)
+    .errors({
+      RESOURCE_NOT_FOUND,
+      ALREADY_ASSIGNED: {
+        status: 409,
+        message: "Task/tag assignment already exists",
+        data: schema(
+          Type.Object(
+            {
+              taskId: Type.Optional(Type.String({ minLength: 1 })),
+              tagId: Type.Optional(Type.String({ minLength: 1 })),
+            },
+            { additionalProperties: false },
+          ),
+        ),
+      },
+    } as const)
+    .input(
+      schema(
+        Type.Object(
+          {
+            taskId: Type.String({ format: "uuid" }),
+            tagId: Type.String({ format: "uuid" }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
     .output(schema(AssignmentSchema)),
   listForTask: oc
     .errors({ RESOURCE_NOT_FOUND } as const)
-    .input(listForTaskInputSchema)
-    .output(listForTaskOutputSchema),
+    .input(
+      schema(
+        Type.Object(
+          {
+            taskId: Type.String({ format: "uuid" }),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(
+      schema(
+        Type.Object(
+          {
+            task: TaskSchema,
+            tags: Type.Array(TagSchema),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
 });
 
 export type AssignmentsContract = typeof assignmentsContract;
