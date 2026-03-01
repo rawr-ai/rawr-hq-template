@@ -23,7 +23,6 @@
   "dependencies": {
     "@orpc/server": "^1.13.5",
     "@rawr/orpc-standards": "workspace:*",
-    "neverthrow": "^8.2.0",
     "typebox": "^1.0.81"
   },
   "devDependencies": {

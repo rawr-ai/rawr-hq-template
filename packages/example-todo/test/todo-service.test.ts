@@ -8,7 +8,7 @@ describe("example-todo service", () => {
 
     const created = await client.tasks.create({
       title: "Ship n=1 todo package",
-      description: "Wire TypeBox + neverthrow + ORPC errors",
+      description: "Wire TypeBox + direct ORPC boundary errors",
     });
 
     const loaded = await client.tasks.get({ id: created.id });
