@@ -14,14 +14,43 @@ import { type Static, Type } from "typebox";
 
 export const TaskSchema = Type.Object(
   {
-    id: Type.String({ format: "uuid" }),
-    title: Type.String({ minLength: 1, maxLength: 500 }),
-    description: Type.Union([Type.String({ maxLength: 2000 }), Type.Null()]),
-    completed: Type.Boolean(),
-    createdAt: Type.String({ format: "date-time" }),
-    updatedAt: Type.String({ format: "date-time" }),
+    id: Type.String({
+      format: "uuid",
+      description: "Stable unique identifier for the task.",
+    }),
+    title: Type.String({
+      minLength: 1,
+      maxLength: 500,
+      description: "Primary task title.",
+    }),
+    description: Type.Union(
+      [
+        Type.String({
+          maxLength: 2000,
+          description: "Optional detailed notes for the task.",
+        }),
+        Type.Null({
+          description: "No description is set for this task.",
+        }),
+      ],
+      { description: "Optional task description value." },
+    ),
+    completed: Type.Boolean({
+      description: "Completion status of the task.",
+    }),
+    createdAt: Type.String({
+      format: "date-time",
+      description: "ISO timestamp when the task was created.",
+    }),
+    updatedAt: Type.String({
+      format: "date-time",
+      description: "ISO timestamp when the task was last updated.",
+    }),
   },
-  { additionalProperties: false },
+  {
+    additionalProperties: false,
+    description: "Canonical persisted task entity.",
+  },
 );
 
 export type Task = Static<typeof TaskSchema>;

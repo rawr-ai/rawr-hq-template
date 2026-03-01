@@ -13,12 +13,28 @@ import { type Static, Type } from "typebox";
 
 export const TagSchema = Type.Object(
   {
-    id: Type.String({ format: "uuid" }),
-    name: Type.String({ minLength: 1, maxLength: 50 }),
-    color: Type.String({ pattern: "^#[0-9a-fA-F]{6}$" }),
-    createdAt: Type.String({ format: "date-time" }),
+    id: Type.String({
+      format: "uuid",
+      description: "Stable unique identifier for the tag.",
+    }),
+    name: Type.String({
+      minLength: 1,
+      maxLength: 50,
+      description: "Display label for the tag.",
+    }),
+    color: Type.String({
+      pattern: "^#[0-9a-fA-F]{6}$",
+      description: "Hex color associated with the tag.",
+    }),
+    createdAt: Type.String({
+      format: "date-time",
+      description: "ISO timestamp when the tag was created.",
+    }),
   },
-  { additionalProperties: false },
+  {
+    additionalProperties: false,
+    description: "Canonical persisted tag entity.",
+  },
 );
 
 export type Tag = Static<typeof TagSchema>;

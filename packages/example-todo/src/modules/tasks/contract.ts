@@ -25,14 +25,28 @@ export const tasksContract = oc.router({
       schema(
         Type.Object(
           {
-            title: Type.String({ minLength: 1, maxLength: 500 }),
-            description: Type.Optional(Type.String({ maxLength: 2000 })),
+            title: Type.String({
+              minLength: 1,
+              maxLength: 500,
+              description: "Human-readable task title.",
+            }),
+            description: Type.Optional(
+              Type.String({
+                maxLength: 2000,
+                description: "Optional longer details for the task.",
+              }),
+            ),
           },
-          { additionalProperties: false },
+          {
+            additionalProperties: false,
+            description: "Input payload for creating a new task.",
+          },
         ),
       ),
     )
-    .output(schema(TaskSchema))
+    .output(
+      schema(TaskSchema),
+    )
     .errors({
       INVALID_TASK_TITLE: {
         status: 400,
@@ -40,9 +54,16 @@ export const tasksContract = oc.router({
         data: schema(
           Type.Object(
             {
-              title: Type.Optional(Type.String()),
+              title: Type.Optional(
+                Type.String({
+                  description: "Raw title value that failed validation or normalization.",
+                }),
+              ),
             },
-            { additionalProperties: false },
+            {
+              additionalProperties: false,
+              description: "Context describing why the task title was rejected.",
+            },
           ),
         ),
       },
@@ -52,13 +73,21 @@ export const tasksContract = oc.router({
       schema(
         Type.Object(
           {
-            id: Type.String({ format: "uuid" }),
+            id: Type.String({
+              format: "uuid",
+              description: "Unique task identifier.",
+            }),
           },
-          { additionalProperties: false },
+          {
+            additionalProperties: false,
+            description: "Input payload for fetching a task by id.",
+          },
         ),
       ),
     )
-    .output(schema(TaskSchema))
+    .output(
+      schema(TaskSchema),
+    )
     .errors({ RESOURCE_NOT_FOUND } as const),
 });
 
