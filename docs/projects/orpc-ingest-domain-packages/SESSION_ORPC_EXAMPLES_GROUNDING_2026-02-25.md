@@ -162,11 +162,14 @@ The scaling mechanism is structural repetition with a stable core:
 
 ## Current Read of Package Standard Direction
 
-For this initiative phase, the strongest candidate posture is:
+For this initiative phase, the active posture is:
 
-- Router-first inside domain packages as the internal source of truth.
+- Package boundary remains router-client-first (`todoRouter` + `createTodoClient`) for in-process usage.
+- Module internals use hybrid contract-first:
+  - `modules/<name>/contract.ts` defines boundary shape,
+  - `modules/<name>/router.ts` implements handlers via `implement(contract)`.
 - Transport handlers remain app/plugin edge concerns.
-- Contract publication is optional/derived, used when needed for external/client-facing surfaces.
+- Package-level derived contract export remains deferred unless explicitly needed (for example drift/snapshot tooling).
 - Module topology:
   - leaf modules are isolated capabilities,
   - composite modules orchestrate leaf repositories directly inside the same domain boundary.
@@ -277,7 +280,8 @@ For this initiative phase, the strongest candidate posture is:
 
 ## Implementation Pass Note (Current Target Posture)
 
-- `packages/example-todo` remains router-first and in-process (`todoRouter` + `createTodoClient`), with no derived contract export for this phase.
+- `packages/example-todo` remains in-process (`todoRouter` + `createTodoClient`) with no package-level derived contract export for this phase.
+- Modules are split into `contract.ts` (boundary definition) and `router.ts` (handler implementation).
 - Error boundary is procedure-native:
   - procedures declare explicit ORPC errors via `.errors(...)`,
   - procedures throw caller-actionable boundary errors directly from value-state checks.

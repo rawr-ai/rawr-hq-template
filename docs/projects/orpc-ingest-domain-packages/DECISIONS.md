@@ -3,107 +3,85 @@
 ## Decision #1 (2026-02-25)
 
 ### Question
-Do we automatically expose/export a contract derived from the router from day one?
+Do we automatically expose/export a package-level contract derived from the domain router from day one?
 
 ### Decision
 No, not for now.
 
 ### Why
-For in-process usage, the router is the thing we actually need. We create the client directly from the router (`createRouterClient(router, { context })`), so extracting/exporting a contract is not required to make this package usable internally.
+For in-process usage, callers use the router client created from the router itself (`createRouterClient(router, { context })`). A package-level exported contract is not required for internal consumption.
 
-This domain package is also not being exposed publicly or externally.
+This domain package is also not a public API surface. External/OpenAPI exposure is handled by the plugin boundary, not by exporting package contracts directly from domain packages.
 
-We are not doing this as part of an external/OpenAPI transition path either, because we already have a separate boundary for that in this repo: the plugin system wraps these internal clients for external-facing surfaces.
-
-Given that, the only clear value of extracting a contract right now is tooling around explicit drift/snapshot checks. That is still a valid future step, but it is intentionally deferred.
-
-### Follow-up posture
-Keep this package router-first and in-process-first.
-
-Only add a derived contract later if we explicitly need contract-level drift/snapshot checks (or another concrete consumer requirement emerges).
+The remaining value of package-level contract extraction is drift/snapshot tooling, which is valid but intentionally deferred.
 
 ## Decision #2 (2026-02-26)
 
 ### Question
-How should we standardize package structure for ORPC domain examples and scaffolding as package size grows?
+How should we standardize package structure for ORPC domain examples and scaffolding?
 
 ### Decision
-Use pre-structured packages with a consistent layout across package sizes:
+Use pre-structured packages with one consistent top-level layout across size tiers:
 
-- always-present `boundary/` for package boundary scaffolding,
-- always-present `modules/` for service modules and router composition,
-- stable root entry surface via `index.ts`.
-
-Do not pick a different top-level structure based on package size. Keep one structure and vary only the internal template content.
+- always-present `boundary/`
+- always-present `modules/`
+- stable root entry surface via `index.ts`
 
 ### Why
-We are optimizing for fast comprehension and predictable navigation for both humans and AI agents.
+We are optimizing for rapid comprehension and predictable navigation for both humans and AI agents. Structural drift by package size creates unnecessary cognitive overhead.
 
-When top-level structure changes by size tier, agents and developers spend cycles re-learning layout conventions instead of extending behavior. A fixed structural contract reduces ambiguity and keeps the differences focused on real capability axes (topology/composition/reuse/coordination/governance), not folder shape drift.
-
-### Implementation posture
-Use dev tooling/CLI scaffolding flags to select template depth (for example simple/intermediate/advanced) while preserving the same core package structure.
-
-The flags choose what gets pre-populated, not where major boundary/module folders live.
+CLI/template flags should vary content depth (`simple`, `intermediate`, `advanced`), not top-level shape.
 
 ## Decision #3 (2026-02-26)
 
 ### Question
-For our router-client-only domain packages, should we keep the domain-catalog-to-ORPC mapping + `unwrap` flow (`createOrpcErrorMapFromDomainCatalog` + unwrap helpers), or switch to a more direct ORPC-native boundary pattern?
+For router-client-only domain packages, should we keep legacy catalog/unwrap translation layers?
 
 ### Decision
-Switch to ORPC-native boundary errors and remove the legacy indirection from active paths.
+No. Use ORPC-native boundary contracts and remove legacy indirection from active paths.
 
 Concretely:
 
-- Procedures explicitly declare their boundary errors with `.errors(...)`.
-- Procedures map known domain failures directly to declared ORPC errors at the boundary.
-- `neverthrow` remains available internally where composition/recovery is useful, but it is not an always-on repository contract.
-- We will remove `createOrpcErrorMapFromDomainCatalog` + `unwrap` interactions across affected code, in sequence (example package first, broader cleanup second).
+- procedures declare boundary errors via `.errors(...)`,
+- procedures throw caller-actionable boundary errors directly,
+- no standing `createOrpcErrorMapFromDomainCatalog` + `unwrap` layer in active examples.
 
 ### Why
-Our architecture has one hard entrypoint: callers use the in-process ORPC router client.
-
-Given that boundary, the cleanest and most readable contract is the procedure-level ORPC error surface itself. The catalog-to-map + unwrap pattern creates an extra translation layer that increases cognitive load for humans and agents without adding boundary value in this setup.
-
-This decision also collapses error handling into one obvious flow:
-
-1. Internal logic raises domain failures (and may optionally use neverthrow internally).
-2. Procedure boundary declares exactly what can be returned.
-3. Procedure converts known failures into those declared ORPC errors.
-
-### References
-
-- ORPC procedure model and error declarations: <https://orpc.dev/docs/procedure>
-- ORPC context/middleware model: <https://orpc.dev/docs/context>, <https://orpc.dev/docs/middleware>
-- ORPC in-process router clients: <https://orpc.dev/docs/client/server-side>
-
-### Implementation posture
-
-- Keep boundary contracts explicit and narrow per procedure.
-- Prefer direct mapping at procedure handlers over generic/global conversion layers.
-- Use neverthrow surgically where it helps internal composition/recovery; do not force it as repository API shape.
+The caller contract is procedure-level ORPC errors. Extra translation layers increase indirection without improving boundary semantics in this architecture.
 
 ## Decision #4 (2026-03-01)
 
 ### Question
-Given our router-client-only architecture, should expected business failures continue as thrown domain exceptions that procedures translate, or should procedures throw actionable boundary errors directly from value-state checks?
+How should expected business states and internal failures be represented?
 
 ### Decision
-Procedures throw actionable ORPC boundary errors directly from value-state checks. Expected business states are not represented as thrown domain exception classes in lower layers.
+Expected business states stay as values inside the boundary (`null`, `exists`, result objects). Procedures convert those states into caller-actionable ORPC errors when callers need to branch.
+
+Unexpected internals are not part of the typed caller contract by default.
 
 ### Why
-This keeps the error model aligned with caller needs and removes avoidable translation machinery:
+This keeps boundary contracts focused on caller behavior, reduces repetitive try/catch translation code, and avoids over-exposing internals.
 
-- lower layers return expected states as values (`null`, `exists`, result objects),
-- procedures decide boundary outcomes and throw typed ORPC errors only when callers need to branch,
-- unexpected internal failures stay internal and surface as non-defined/internal errors.
+## Decision #5 (2026-03-01)
 
-This avoids the old habit of over-contracting infra failures (for example exposing every DB failure as typed boundary API).
+### Question
+Within the standardized `modules/` layout, should modules stay router-only or use an explicit contract/implementation split?
 
-### Implementation posture
+### Decision
+Adopt module-level hybrid contract-first:
 
-- No standing domain-exception-to-ORPC mapping layer pattern.
-- No default typed `DATABASE_ERROR` boundary contract in this example.
-- Keep boundary errors explicit and narrow per procedure.
-- Preserve internal observability via logs/traces rather than boundary error detail leakage.
+- each module defines `contract.ts` (input/output/errors/procedure shape),
+- each module defines `router.ts` that implements that contract via `implement(contract)`,
+- package boundary remains router-client-first (`todoRouter` + `createTodoClient`).
+
+### Why
+This gives us explicit module contracts for readability and enforcement while preserving the existing in-process package boundary surface.
+
+It also makes “what is boundary shape” vs “what is runtime behavior” obvious in code, which improves maintainability and agent navigation.
+
+### References
+
+- Define contract: <https://orpc.dev/docs/contract-first/define-contract>
+- Implement contract: <https://orpc.dev/docs/contract-first/implement-contract>
+- Router-first alternative: <https://orpc.dev/docs/router-first/procedure-first>
+- Monorepo setup/hybrid context: <https://orpc.dev/docs/advanced/monorepo-setup>
