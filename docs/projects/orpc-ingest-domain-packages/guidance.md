@@ -78,6 +78,26 @@ Not required in this phase:
 - No standing domain-catalog/unwrap translation layer in active examples.
 - Inline conversion at the procedure boundary is the intended pattern.
 
+### Router-Level / Global Error Policy
+
+Do not define a mandatory "every package must expose these errors" set by default.
+
+Use router-level shared `.errors(...)` only when all conditions are true:
+
+- the error is truly cross-cutting and can occur on every procedure,
+- the failure is enforced by shared middleware/infrastructure (not ad hoc handler logic),
+- callers should branch on it consistently across procedures.
+
+Examples that may justify router-level shared errors later:
+
+- uniform auth failures (`UNAUTHENTICATED`, `FORBIDDEN`),
+- uniform platform guards (`RATE_LIMITED`, `SERVICE_UNAVAILABLE`, `PACKAGE_DISABLED`).
+
+Do not promote domain/business errors (for example `RESOURCE_NOT_FOUND`) to package-wide/global by default.
+Those remain procedure-level unless a package has a real universal guard that makes them universally possible.
+
+For `example-todo` in this phase: no package-wide global error set.
+
 ## neverthrow Guidance
 
 Neverthrow is available, but not an always-on repository API contract.
