@@ -4,17 +4,17 @@
  * @remarks
  * This file follows the standard module-router structure used in this package:
  * 1) create module implementer (`os`) from the module contract,
- * 2) apply shared package telemetry middleware,
- * 3) attach module-local middleware for repository wiring,
- * 4) implement handlers from `os.<procedure>.handler(...)`,
- * 5) export plain-object `router`.
+ * 2) attach package context and optional module middleware,
+ * 3) implement handlers from `os.<procedure>.handler(...)`,
+ * 4) export plain-object `router`.
  *
  * @agents
  * `contract.ts` owns boundary shape (input/output/errors/meta). This file owns
  * execution setup + handler behavior only.
  */
 import { randomUUID } from "node:crypto";
-import { createModule, withUnhandledTelemetry } from "../../orpc-runtime/base";
+import { implement } from "@orpc/server";
+import { type BaseContext } from "../../orpc-runtime/context";
 import { contract } from "./contract";
 import { createRepository } from "./repository";
 import { type Tag } from "./schemas";
@@ -23,11 +23,11 @@ import { type Tag } from "./schemas";
  * @remarks
  * Module implementer setup (always present).
  *
- * Use this block to apply shared middleware first, then inject module-scoped dependencies
+ * Use this block to bind package context and inject module-scoped dependencies
  * (for example repository adapters). Keep business branching out of this block.
  */
-const os = createModule(contract)
-  .use(withUnhandledTelemetry)
+const os = implement(contract)
+  .$context<BaseContext>()
   .use(({ context, next }) =>
     next({
       context: {
