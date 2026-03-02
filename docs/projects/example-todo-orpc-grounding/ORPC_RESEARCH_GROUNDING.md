@@ -1,4 +1,4 @@
-# oRPC Research Grounding (Example Todo)
+# oRPC Skills Grounding (Example Todo)
 
 ## Quick map (how to navigate)
 
@@ -33,7 +33,7 @@
 - Metadata: what’s the supported mechanism for metadata, how is it merged, and what are safe uses (vs coupling to internal fields)?
 - TS authoring patterns: what “SDK authoring” patterns keep surfaces small, inference strong, and dependency direction clear (without `any`)?
 
-## Findings (working notes; organized by lane)
+## Findings (to be filled; organized by lane)
 
 ### Lane A: Middleware (procedure-level composition)
 
