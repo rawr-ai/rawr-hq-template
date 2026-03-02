@@ -11,9 +11,14 @@
 
 Use one stable top-level structure across package sizes:
 
-- `src/index.ts` for public package entry,
-- `src/boundary/` for boundary scaffolding,
-- `src/modules/` for capability modules and router composition.
+- `src/index.ts` for public package exports only,
+- `src/client.ts` for in-process client construction only,
+- `src/router.ts` for package router composition only,
+- `src/orpc-runtime/` for shared ORPC runtime scaffolding,
+- `src/modules/` for capability module contracts and implementations.
+
+Do not use `src/boundary/` as the internal scaffolding folder name; it overloads
+public-boundary and runtime-boundary semantics.
 
 ## Terminology (This Repo, Not Generic oRPC)
 
@@ -30,14 +35,15 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
 - **Contract-router builder**: optional oRPC builder form `oc.errors(...).router({...})`.
   We are not using this by default in `example-todo`.
 - **Module implementation router**: server router exported from `modules/<name>/router.ts` via `implement(contract)`.
-- **Package composed router**: server router exported from `src/modules/router.ts` (`base.router({...})`) and consumed by `createRouterClient`.
+- **Package composed router**: server router exported from `src/router.ts` (`base.router({...})`) and consumed by `createRouterClient`.
+- **Shared ORPC runtime scaffolding**: reusable module-facing internals under `src/orpc-runtime/*` (base context, deps contracts, shared metadata, shared error definitions).
 
 ## Naming Conventions
 
 Default scaffold naming is generic for singleton package surfaces and helpers.
 
 - package entry exports: `router`, `createClient`, `Client`, `Deps`, `domain`,
-- boundary helper names: `procedure`, `ProcedureMeta`, `SHARED_META`.
+- ORPC runtime helper names: `procedure`, `ProcedureMeta`, `SHARED_META`.
 
 Use domain-prefixed names only when they carry intentional disambiguation value that cannot be handled cleanly at import sites.
 
@@ -68,7 +74,7 @@ Current required baseline:
 
 Recommended pattern:
 
-- define shared package metadata once in `boundary/procedure-meta.ts`,
+- define shared package metadata once in `orpc-runtime/meta.ts`,
 - expose a helper (for example `procedure({ idempotent })`) that starts procedure chains,
 - keep module contracts explicit by setting `idempotent` on every procedure.
 
@@ -146,7 +152,7 @@ Boundary rule still applies either way: procedures expose ORPC boundary errors, 
 
 Use sharing-based placement:
 
-- `boundary/procedure-errors.ts` for reusable cross-module boundary error definitions,
+- `orpc-runtime/errors.ts` for reusable cross-module boundary error definitions,
 - module-specific boundary errors inline in `modules/<name>/contract.ts`,
 - procedure-local errors only when truly local to one procedure.
 

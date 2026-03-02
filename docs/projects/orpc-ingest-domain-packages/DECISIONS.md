@@ -23,9 +23,9 @@ How should we standardize package structure for ORPC domain examples and scaffol
 ### Decision
 Use pre-structured packages with one consistent top-level layout across size tiers:
 
-- always-present `boundary/`
+- always-present `orpc-runtime/`
 - always-present `modules/`
-- stable root entry surface via `index.ts`
+- stable root boundary surface via `index.ts`, `client.ts`, and `router.ts`
 
 ### Why
 We are optimizing for rapid comprehension and predictable navigation for both humans and AI agents. Structural drift by package size creates unnecessary cognitive overhead.
@@ -100,3 +100,22 @@ Use domain-specific prefixes only when intentional discrimination is needed.
 
 ### Why
 Each domain package exposes one primary boundary surface. Generic names reduce repeated naming noise, keep scaffolding uniform across packages, and let consumers alias at import sites where disambiguation is needed.
+
+## Decision #7 (2026-03-02)
+
+### Question
+How should we name and place shared ORPC scaffolding so that a fresh agent can immediately distinguish public package boundary from internal runtime wiring?
+
+### Decision
+Use this fixed file-placement model in domain package scaffolding:
+
+- `src/index.ts`: package export surface only,
+- `src/client.ts`: in-process client factory only,
+- `src/router.ts`: package-composed router only,
+- `src/modules/*`: capability contracts/implementations only,
+- `src/orpc-runtime/*`: shared ORPC runtime scaffolding only.
+
+Do not use `boundary/` as the folder name for shared internal ORPC scaffolding.
+
+### Why
+`boundary` overloads two meanings (public package boundary vs internal ORPC procedure runtime). `orpc-runtime` removes that ambiguity and improves both human and agent navigation.

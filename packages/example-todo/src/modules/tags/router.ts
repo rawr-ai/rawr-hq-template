@@ -9,7 +9,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { implement } from "@orpc/server";
-import { type BaseContext, serviceContextMiddleware } from "../../boundary/base";
+import { type BaseContext, serviceContextMiddleware } from "../../orpc-runtime/base";
 import { createTagRepository } from "./repository";
 import { type Tag } from "./schemas";
 import { tagsContract } from "./contract";

@@ -12,12 +12,13 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 
 ## Invariants (must not change from n=1 to n=∞)
 
-- Package boundary is the composed server router (`src/modules/router.ts`) plus in-process client factory; module internals stay `contract.ts` + `router.ts`.
+- Package boundary is always `src/index.ts` + `src/client.ts` + `src/router.ts`; module internals stay `contract.ts` + `router.ts`.
 - Module-level `contract.ts` + `router.ts` split (hybrid contract-first implementation).
 - Transport-agnostic internals (no HTTP concerns inside package).
 - Procedures declare explicit ORPC boundary errors for caller-actionable outcomes.
 - Expected business states are modeled as values inside the boundary.
 - Procedures carry shared metadata (`domain`, `audience`) plus explicit per-procedure `idempotent`.
+- Shared ORPC runtime scaffolding lives in `src/orpc-runtime/*`, not `src/boundary/*`.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
 
 ## Real axes that should change
@@ -32,7 +33,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 
 - Cross-module sharing is not golden-only; it is normal by intermediate.
 - Golden-path value is disciplined sharing under high dependency density, not introducing sharing for the first time.
-- Structure is not an axis in this phase; structure stays fixed (`boundary/` + `modules/`).
+- Structure is not an axis in this phase; structure stays fixed (`index.ts` + `client.ts` + `router.ts` + `orpc-runtime/` + `modules/`).
 - Module-specific boundary errors are defined inline in `contract.ts` (not separate module `errors.ts` files).
 - Metadata should stay minimal and operational in this phase (`idempotent` required, `sideEffects` deferred).
 - Contract-router/global error policy is defined in `guidance.md` (canonical); examples should not introduce package-wide shared error sets unless that policy's conditions are met.
@@ -61,13 +62,15 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 ```text
 packages/example-minimal/src/
 ├── index.ts
-├── boundary/
+├── client.ts
+├── router.ts
+├── orpc-runtime/
 │   ├── base.ts
 │   ├── deps.ts
-│   ├── service-errors.ts
-│   └── procedure-errors.ts
+│   ├── internal-errors.ts
+│   ├── errors.ts
+│   └── meta.ts
 └── modules/
-    ├── router.ts
     └── tasks/
         ├── contract.ts
         ├── router.ts
@@ -80,13 +83,15 @@ packages/example-minimal/src/
 ```text
 packages/example-todo/src/
 ├── index.ts
-├── boundary/
+├── client.ts
+├── router.ts
+├── orpc-runtime/
 │   ├── base.ts
 │   ├── deps.ts
-│   ├── service-errors.ts
-│   └── procedure-errors.ts
+│   ├── internal-errors.ts
+│   ├── errors.ts
+│   └── meta.ts
 └── modules/
-    ├── router.ts
     ├── tasks/
     │   ├── contract.ts
     │   ├── router.ts
@@ -109,13 +114,15 @@ packages/example-todo/src/
 ```text
 packages/example-golden/src/
 ├── index.ts
-├── boundary/
+├── client.ts
+├── router.ts
+├── orpc-runtime/
 │   ├── base.ts
 │   ├── deps.ts
-│   ├── service-errors.ts
-│   └── procedure-errors.ts
+│   ├── internal-errors.ts
+│   ├── errors.ts
+│   └── meta.ts
 └── modules/
-    ├── router.ts
     ├── shared/
     │   ├── schemas.ts
     │   ├── services.ts
