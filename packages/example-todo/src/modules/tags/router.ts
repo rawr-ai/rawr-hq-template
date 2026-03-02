@@ -2,10 +2,15 @@
  * @fileoverview Tag module router implementation.
  *
  * @remarks
- * Implements `tagsContract` with module context wiring and handler logic.
+ * This file follows the standard module-router structure used in this package:
+ * 1) create module implementer (`os`) from the module contract,
+ * 2) attach package base context and optional module middleware,
+ * 3) implement handlers from `os.<procedure>.handler(...)`,
+ * 4) export plain-object `router`.
  *
  * @agents
- * Keep this file implementation-only; contract shape belongs in `contract.ts`.
+ * `contract.ts` owns boundary shape (input/output/errors/meta). This file owns
+ * execution setup + handler behavior only.
  */
 import { randomUUID } from "node:crypto";
 import { implement } from "@orpc/server";
@@ -14,6 +19,13 @@ import { createTagRepository } from "./repository";
 import { type Tag } from "./schemas";
 import { tagsContract } from "./contract";
 
+/**
+ * @remarks
+ * Module implementer setup (always present).
+ *
+ * Use this block to bind package context and inject module-scoped dependencies
+ * (for example repository adapters). Keep business branching out of this block.
+ */
 const os = implement(tagsContract)
   .$context<BaseContext>()
   .use(({ context, next }) =>
@@ -50,6 +62,7 @@ const list = os.list.handler(async ({ context }) => {
   return await context.repo.findAll();
 });
 
+/** Plain object router export by package convention (no `.router(...)` wrapper). */
 export const router = {
   create,
   list,

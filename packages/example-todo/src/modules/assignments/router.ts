@@ -2,12 +2,15 @@
  * @fileoverview Assignments module router implementation.
  *
  * @remarks
- * This composite module implements `assignmentsContract` and composes
- * assignments/tasks/tags repositories directly inside the domain boundary.
+ * This file follows the standard module-router structure used in this package:
+ * 1) create module implementer (`os`) from the module contract,
+ * 2) attach package base context and optional module middleware,
+ * 3) implement handlers from `os.<procedure>.handler(...)`,
+ * 4) export plain-object `router`.
  *
  * @agents
- * Keep cross-module orchestration here. Do not route through client-to-client
- * calls inside the same domain package.
+ * This module is composite; cross-module orchestration belongs in handlers here.
+ * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
 import { implement } from "@orpc/server";
@@ -18,6 +21,14 @@ import { type Assignment } from "./schemas";
 import { createAssignmentRepository } from "./repository";
 import { assignmentsContract } from "./contract";
 
+/**
+ * @remarks
+ * Module implementer setup (always present).
+ *
+ * Use this block to bind package context and inject module-scoped dependencies
+ * (assignment repo + peer module repos for composition). Keep business
+ * branching out of this block.
+ */
 const os = implement(assignmentsContract)
   .$context<BaseContext>()
   .use(({ context, next }) =>
@@ -82,6 +93,7 @@ const listForTask = os.listForTask.handler(async ({ context, input, errors }) =>
   return { task, tags };
 });
 
+/** Plain object router export by package convention (no `.router(...)` wrapper). */
 export const router = {
   assign,
   listForTask,
