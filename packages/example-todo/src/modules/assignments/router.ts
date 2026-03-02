@@ -15,11 +15,11 @@
 import { randomUUID } from "node:crypto";
 import { implement } from "@orpc/server";
 import { type BaseContext } from "../../orpc-runtime/context";
-import { createTagRepository } from "../tags/repository";
-import { createTaskRepository } from "../tasks/repository";
+import { createRepository as createTagRepository } from "../tags/repository";
+import { createRepository as createTaskRepository } from "../tasks/repository";
+import { contract } from "./contract";
+import { createRepository as createAssignmentRepository } from "./repository";
 import { type Assignment } from "./schemas";
-import { createAssignmentRepository } from "./repository";
-import { assignmentsContract } from "./contract";
 
 /**
  * @remarks
@@ -29,7 +29,7 @@ import { assignmentsContract } from "./contract";
  * (assignment repo + peer module repos for composition). Keep business
  * branching out of this block.
  */
-const os = implement(assignmentsContract)
+const os = implement(contract)
   .$context<BaseContext>()
   .use(({ context, next }) =>
     next({

@@ -9,7 +9,7 @@ import type { Sql } from "../../orpc-runtime/deps";
 import { UnexpectedInternalError } from "../../orpc-runtime/internal-errors";
 import type { Assignment } from "./schemas";
 
-export function createAssignmentRepository(sql: Sql) {
+export function createRepository(sql: Sql) {
   return {
     async findByTask(taskId: string): Promise<Assignment[]> {
       return await sql.query<Assignment>("SELECT * FROM task_tags WHERE task_id = $1 ORDER BY created_at DESC", [taskId]);
@@ -36,4 +36,4 @@ export function createAssignmentRepository(sql: Sql) {
   };
 }
 
-export type AssignmentRepository = ReturnType<typeof createAssignmentRepository>;
+export type Repository = ReturnType<typeof createRepository>;

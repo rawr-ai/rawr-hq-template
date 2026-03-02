@@ -15,7 +15,7 @@ import type { Sql } from "../../orpc-runtime/deps";
 import { UnexpectedInternalError } from "../../orpc-runtime/internal-errors";
 import type { Tag } from "./schemas";
 
-export function createTagRepository(sql: Sql) {
+export function createRepository(sql: Sql) {
   return {
     async findById(id: string): Promise<Tag | null> {
       return await sql.queryOne<Tag>("SELECT * FROM tags WHERE id = $1", [id]);
@@ -50,4 +50,4 @@ export function createTagRepository(sql: Sql) {
   };
 }
 
-export type TagRepository = ReturnType<typeof createTagRepository>;
+export type Repository = ReturnType<typeof createRepository>;
