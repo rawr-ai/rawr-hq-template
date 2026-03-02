@@ -37,7 +37,7 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
 - **Module contract object**: plain object exported from `modules/<name>/contract.ts`.
   Example:
   ```ts
-  export const tasksContract = {
+  export const contract = {
     create: procedure({ idempotent: false }).input(...).output(...).errors(...),
     get: procedure({ idempotent: true }).input(...).output(...).errors(...),
   };
@@ -45,7 +45,7 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
 - **Contract-router builder**: optional oRPC builder form `oc.errors(...).router({...})`.
   We are not using this by default in `example-todo`.
 - **Module implementation router**: server router exported from `modules/<name>/router.ts` via `implement(contract)`.
-- **Package composed router**: server router exported from `src/router.ts` (`base.router({...})`) and consumed by `createRouterClient`.
+- **Package composed router**: plain object router exported from `src/router.ts` and consumed by `createRouterClient`.
 - **Shared ORPC runtime scaffolding**: reusable module-facing internals under `src/orpc-runtime/*` (base context, deps contracts, shared metadata, shared error definitions).
 
 ## Naming Conventions
@@ -53,9 +53,19 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
 Default scaffold naming is generic for singleton package surfaces and helpers.
 
 - package entry exports: `router`, `createClient`, `Router`, `Client`,
+- module contract exports: `contract`, `Contract`,
+- module router exports: `router`,
+- module repository exports: `createRepository`, `Repository`,
 - ORPC runtime helper names: `procedure`, `ProcedureMeta`, `SHARED_META`.
 
-Use domain-prefixed names only when they carry intentional disambiguation value that cannot be handled cleanly at import sites.
+Use local generic names inside each module. When importing multiple modules into one file, alias at the import site for disambiguation.
+
+Example:
+```ts
+import { contract as tasksContract } from "../tasks/contract";
+import { contract as tagsContract } from "../tags/contract";
+import { createRepository as createTaskRepository } from "../tasks/repository";
+```
 
 ## Public Export Surface
 
@@ -165,7 +175,7 @@ For `example-todo` in this phase: no package-wide global error set.
 
 Precision notes:
 
-- `.errors(...)` lives on **contract procedures** (and optional contract-router builder), not on the package composed server router (`base.router({...})`).
+- `.errors(...)` lives on **contract procedures** (and optional contract-router builder), not on the package composed router object in `src/router.ts`.
 - Current default is explicit per-procedure declarations in `modules/*/contract.ts`.
 
 ## neverthrow Guidance

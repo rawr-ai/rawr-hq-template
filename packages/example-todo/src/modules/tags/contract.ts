@@ -13,7 +13,7 @@ import { Type } from "typebox";
 import { procedure } from "../../orpc-runtime/meta";
 import { TagSchema } from "./schemas";
 
-export const tagsContract = {
+export const contract = {
   create: procedure({ idempotent: false })
     .input(
       schema(
@@ -80,4 +80,4 @@ export const tagsContract = {
     ),
 };
 
-export type TagsContract = typeof tagsContract;
+export type Contract = typeof contract;

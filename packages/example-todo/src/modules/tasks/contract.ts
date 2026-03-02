@@ -7,7 +7,7 @@
  * - input/output schemas,
  * - caller-actionable ORPC errors.
  *
- * Implementation belongs in `router.ts` via `implement(tasksContract)`.
+ * Implementation belongs in `router.ts` via `implement(contract)`.
  *
  * @agents
  * Extend task capability by updating this contract first, then implement handlers
@@ -19,7 +19,7 @@ import { procedure } from "../../orpc-runtime/meta";
 import { RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
 import { TaskSchema } from "./schemas";
 
-export const tasksContract = {
+export const contract = {
   create: procedure({ idempotent: false })
     .input(
       schema(
@@ -91,4 +91,4 @@ export const tasksContract = {
     .errors({ RESOURCE_NOT_FOUND }),
 };
 
-export type TasksContract = typeof tasksContract;
+export type Contract = typeof contract;

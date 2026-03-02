@@ -17,7 +17,7 @@ import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
 
-export const assignmentsContract = {
+export const contract = {
   assign: procedure({ idempotent: false })
     .input(
       schema(
@@ -116,4 +116,4 @@ export const assignmentsContract = {
     .errors({ RESOURCE_NOT_FOUND }),
 };
 
-export type AssignmentsContract = typeof assignmentsContract;
+export type Contract = typeof contract;

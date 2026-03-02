@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { assignmentsContract } from "../src/modules/assignments/contract";
-import { tagsContract } from "../src/modules/tags/contract";
-import { tasksContract } from "../src/modules/tasks/contract";
+import { contract as assignmentsContract } from "../src/modules/assignments/contract";
+import { contract as tagsContract } from "../src/modules/tags/contract";
+import { contract as tasksContract } from "../src/modules/tasks/contract";
 
 type ProcedureMeta = {
   domain: string;

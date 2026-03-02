@@ -16,7 +16,7 @@ import type { Sql } from "../../orpc-runtime/deps";
 import { UnexpectedInternalError } from "../../orpc-runtime/internal-errors";
 import type { Task } from "./schemas";
 
-export function createTaskRepository(sql: Sql) {
+export function createRepository(sql: Sql) {
   return {
     async findById(id: string): Promise<Task | null> {
       return await sql.queryOne<Task>("SELECT * FROM tasks WHERE id = $1", [id]);
@@ -42,4 +42,4 @@ export function createTaskRepository(sql: Sql) {
   };
 }
 
-export type TaskRepository = ReturnType<typeof createTaskRepository>;
+export type Repository = ReturnType<typeof createRepository>;

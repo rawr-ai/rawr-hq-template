@@ -15,9 +15,9 @@
 import { randomUUID } from "node:crypto";
 import { implement } from "@orpc/server";
 import { type BaseContext } from "../../orpc-runtime/context";
-import { createTagRepository } from "./repository";
+import { contract } from "./contract";
+import { createRepository } from "./repository";
 import { type Tag } from "./schemas";
-import { tagsContract } from "./contract";
 
 /**
  * @remarks
@@ -26,12 +26,12 @@ import { tagsContract } from "./contract";
  * Use this block to bind package context and inject module-scoped dependencies
  * (for example repository adapters). Keep business branching out of this block.
  */
-const os = implement(tagsContract)
+const os = implement(contract)
   .$context<BaseContext>()
   .use(({ context, next }) =>
     next({
       context: {
-        repo: createTagRepository(context.deps.sql),
+        repo: createRepository(context.deps.sql),
       },
     }),
   );
