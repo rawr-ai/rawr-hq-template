@@ -15,10 +15,13 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Package boundary is always `src/index.ts` + `src/client.ts` + `src/router.ts`; module internals stay `contract.ts` + `router.ts`.
 - Module-level `contract.ts` + `router.ts` split (hybrid contract-first implementation).
 - Transport-agnostic internals (no HTTP concerns inside package).
+- Package root exports stay boundary-only (`createClient`, `router`, `Client`, `Router`).
 - Procedures declare explicit ORPC boundary errors for caller-actionable outcomes.
 - Expected business states are modeled as values inside the boundary.
 - Procedures carry shared metadata (`domain`, `audience`) plus explicit per-procedure `idempotent`.
 - Shared ORPC runtime scaffolding lives in `src/orpc-runtime/*`, not `src/boundary/*`.
+- `src/orpc-runtime/context.ts` is always present as a stable scaffold slot.
+- Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
 
 ## Real axes that should change
@@ -34,6 +37,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Cross-module sharing is not golden-only; it is normal by intermediate.
 - Golden-path value is disciplined sharing under high dependency density, not introducing sharing for the first time.
 - Structure is not an axis in this phase; structure stays fixed (`index.ts` + `client.ts` + `router.ts` + `orpc-runtime/` + `modules/`).
+- Structure is deterministic for scaffolding; avoid conditional "add this core file later" guidance.
 - Module-specific boundary errors are defined inline in `contract.ts` (not separate module `errors.ts` files).
 - Metadata should stay minimal and operational in this phase (`idempotent` required, `sideEffects` deferred).
 - Contract-router/global error policy is defined in `guidance.md` (canonical); examples should not introduce package-wide shared error sets unless that policy's conditions are met.
@@ -66,6 +70,7 @@ packages/example-minimal/src/
 ├── router.ts
 ├── orpc-runtime/
 │   ├── base.ts
+│   ├── context.ts
 │   ├── deps.ts
 │   ├── internal-errors.ts
 │   ├── errors.ts
@@ -87,6 +92,7 @@ packages/example-todo/src/
 ├── router.ts
 ├── orpc-runtime/
 │   ├── base.ts
+│   ├── context.ts
 │   ├── deps.ts
 │   ├── internal-errors.ts
 │   ├── errors.ts
@@ -118,6 +124,7 @@ packages/example-golden/src/
 ├── router.ts
 ├── orpc-runtime/
 │   ├── base.ts
+│   ├── context.ts
 │   ├── deps.ts
 │   ├── internal-errors.ts
 │   ├── errors.ts

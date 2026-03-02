@@ -94,7 +94,8 @@ Should domain package scaffolding use domain-prefixed public names (for example 
 ### Decision
 Use generic singleton naming by default for package scaffolding:
 
-- `router`, `createClient`, `Client`, `Deps`, `domain`.
+- package boundary exports: `router`, `createClient`, `Router`, `Client`,
+- internal singleton helpers/types can stay generic (for example `Deps`, `base`, `procedure`) without domain prefixes.
 
 Use domain-specific prefixes only when intentional discrimination is needed.
 
@@ -119,3 +120,35 @@ Do not use `boundary/` as the folder name for shared internal ORPC scaffolding.
 
 ### Why
 `boundary` overloads two meanings (public package boundary vs internal ORPC procedure runtime). `orpc-runtime` removes that ambiguity and improves both human and agent navigation.
+
+## Decision #8 (2026-03-02)
+
+### Question
+When scaffolding package structure for agents, should we favor minimal files or deterministic always-present structure?
+
+### Decision
+Favor deterministic always-present structure.
+
+Concretely:
+
+- keep expected scaffold slots even when initially thin (for example `src/orpc-runtime/context.ts`),
+- avoid conditional "create this later if needed" structural guidance for core package shape.
+
+### Why
+We are optimizing for low-decision agent navigation. Predictable structure reduces branching logic in prompts, lowers documentation burden, and makes extension behavior obvious from topology.
+
+## Decision #9 (2026-03-02)
+
+### Question
+What should be mandatory in base package dependencies, and what belongs on package root exports?
+
+### Decision
+`logger` is mandatory in the shared base dependency contract for domain packages (`BaseDeps` in `@rawr/orpc-standards`).
+
+Package root exports are boundary-only by default:
+
+- export boundary call surface (`createClient`, `router`) and boundary types (`Client`, `Router`),
+- do not export runtime internals, module schemas, or compatibility aliases from root by default.
+
+### Why
+Mandatory logger ensures every package has baseline observability capability. Boundary-only root exports prevent surface creep and keep package intent clear for both callers and agents.
