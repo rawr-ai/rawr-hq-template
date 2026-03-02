@@ -21,6 +21,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Procedures carry shared metadata (`domain`, `audience`) plus explicit per-procedure `idempotent`.
 - Shared ORPC runtime scaffolding lives in `src/orpc-runtime/*`, not `src/boundary/*`.
 - `src/orpc-runtime/context.ts` is always present as a stable scaffold slot.
+- `src/orpc-runtime/middleware/` is always present for package-global cross-cutting concerns.
 - Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
 
@@ -71,6 +72,9 @@ packages/example-minimal/src/
 ├── orpc-runtime/
 │   ├── context.ts
 │   ├── module.ts
+│   ├── middleware/
+│   │   ├── with-read-only-mode.ts
+│   │   └── with-telemetry.ts
 │   ├── deps.ts
 │   ├── internal-errors.ts
 │   ├── errors.ts
@@ -93,6 +97,9 @@ packages/example-todo/src/
 ├── orpc-runtime/
 │   ├── context.ts
 │   ├── module.ts
+│   ├── middleware/
+│   │   ├── with-read-only-mode.ts
+│   │   └── with-telemetry.ts
 │   ├── deps.ts
 │   ├── internal-errors.ts
 │   ├── errors.ts
@@ -125,6 +132,10 @@ packages/example-golden/src/
 ├── orpc-runtime/
 │   ├── context.ts
 │   ├── module.ts
+│   ├── middleware/
+│   │   ├── with-read-only-mode.ts
+│   │   ├── with-telemetry.ts
+│   │   └── with-auth.ts
 │   ├── deps.ts
 │   ├── internal-errors.ts
 │   ├── errors.ts

@@ -16,7 +16,7 @@
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { procedure } from "../../orpc-runtime/meta";
-import { RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
+import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
 import { TaskSchema } from "./schemas";
 
 export const contract = {
@@ -48,6 +48,7 @@ export const contract = {
       schema(TaskSchema),
     )
     .errors({
+      READ_ONLY_MODE,
       INVALID_TASK_TITLE: {
         status: 400,
         message: "Invalid task title",

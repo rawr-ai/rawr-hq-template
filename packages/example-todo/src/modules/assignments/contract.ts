@@ -12,7 +12,7 @@
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { procedure } from "../../orpc-runtime/meta";
-import { RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
+import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
@@ -43,6 +43,7 @@ export const contract = {
       schema(AssignmentSchema),
     )
     .errors({
+      READ_ONLY_MODE,
       RESOURCE_NOT_FOUND,
       ALREADY_ASSIGNED: {
         status: 409,

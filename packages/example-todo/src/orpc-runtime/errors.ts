@@ -32,8 +32,31 @@ const ResourceNotFoundData = schema(
   ),
 );
 
+const ReadOnlyModeData = schema(
+  Type.Object(
+    {
+      path: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Procedure path that was blocked while read-only mode was enabled.",
+        }),
+      ),
+    },
+    {
+      additionalProperties: false,
+      description: "Context payload for READ_ONLY_MODE boundary errors.",
+    },
+  ),
+);
+
 export const RESOURCE_NOT_FOUND: ErrorMapItem<typeof ResourceNotFoundData> = {
   status: 404,
   message: "Resource not found",
   data: ResourceNotFoundData,
+} as const;
+
+export const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
+  status: 409,
+  message: "Write operations are blocked while read-only mode is enabled",
+  data: ReadOnlyModeData,
 } as const;

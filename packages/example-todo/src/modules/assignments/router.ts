@@ -14,6 +14,8 @@
  */
 import { randomUUID } from "node:crypto";
 import { createModule } from "../../orpc-runtime/module";
+import { withReadOnlyMode } from "../../orpc-runtime/middleware/with-read-only-mode";
+import { withTelemetry } from "../../orpc-runtime/middleware/with-telemetry";
 import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 import { contract } from "./contract";
@@ -24,11 +26,15 @@ import { type Assignment } from "./schemas";
  * @remarks
  * Module implementer setup (always present).
  *
- * `createModule(contract)` already applies package context setup.
+ * `createModule(contract)` applies package context setup.
+ * Attach reusable package-wide middleware first (`withTelemetry`, `withReadOnlyMode`),
+ * then add module-local dependency wiring.
  * Use this block to inject module-scoped dependencies (assignment repo + peer module
  * repos for composition). Keep business branching out of this block.
  */
 const os = createModule(contract)
+  .use(withTelemetry)
+  .use(withReadOnlyMode)
   .use(({ context, next }) =>
     next({
       context: {

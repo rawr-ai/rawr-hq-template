@@ -19,6 +19,7 @@ Use one stable top-level structure across package sizes:
 
 Inside `src/orpc-runtime/`, `context.ts` is an always-present scaffold slot.
 Inside `src/orpc-runtime/`, `module.ts` is an always-present scaffold slot.
+Inside `src/orpc-runtime/`, `middleware/` is the always-on slot for package-global middleware concerns.
 
 Do not use `src/boundary/` as the internal scaffolding folder name; it overloads
 public-boundary and runtime-boundary semantics.
@@ -133,12 +134,24 @@ Use context/middleware at the level where each concern actually belongs:
 - `deps` should extend shared `BaseDeps` from `@rawr/orpc-standards` (mandatory `logger`).
 - Module middleware injects module-local repos/services into execution context.
 - Package-level middleware should be used for real runtime concerns (auth, tracing, tenant/session, transaction/request scope), not for aliasing `deps` fields.
-- Prefer wiring shared ORPC setup once in `orpc-runtime/module.ts` rather than repeating it per module router.
+- Keep shared ORPC setup in `orpc-runtime/module.ts` (context baseline) and reusable middleware definitions in `orpc-runtime/middleware/with-*.ts`.
+- Apply package-wide middleware from each module implementer (`createModule(contract).use(withX)`), so ORPC keeps concrete per-module typing.
 
 Practical defaults:
 
 - Access logger/clock as `context.deps.logger` / `context.deps.clock`.
 - Avoid alias-only middleware like `deps.logger -> logger` unless there is a concrete runtime reason.
+
+### Package-Global Middleware Pattern
+
+Use package-global middleware for cross-cutting behavior that should apply to every module router automatically.
+
+- Define one concern per file in `src/orpc-runtime/middleware/` (for example `with-read-only-mode.ts`, `with-telemetry.ts`).
+- Compose package-wide middleware in each module router immediately after `createModule(contract)`:
+  `createModule(contract).use(withTelemetry).use(withReadOnlyMode)`.
+- Keep module routers focused on module-local repo/service wiring and handlers.
+- Read-only policy should use procedure metadata (`idempotent`) plus runtime config (`deps.runtime.readOnly`) to block mutations.
+- Telemetry middleware should log and rethrow; it must not remap boundary errors.
 
 ## Boundary Error Standard
 

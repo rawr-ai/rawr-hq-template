@@ -11,6 +11,7 @@
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
 import { procedure } from "../../orpc-runtime/meta";
+import { READ_ONLY_MODE } from "../../orpc-runtime/errors";
 import { TagSchema } from "./schemas";
 
 export const contract = {
@@ -38,6 +39,7 @@ export const contract = {
     )
     .output(schema(TagSchema))
     .errors({
+      READ_ONLY_MODE,
       DUPLICATE_TAG: {
         status: 409,
         message: "Tag already exists",
