@@ -14,17 +14,17 @@ import { createTagRepository } from "./repository";
 import { type Tag } from "./schemas";
 import { tagsContract } from "./contract";
 
-const os = implement(tagsContract).$context<BaseContext>();
+const os = implement(tagsContract)
+  .$context<BaseContext>()
+  .use(({ context, next }) =>
+    next({
+      context: {
+        repo: createTagRepository(context.deps.sql),
+      },
+    }),
+  );
 
-const withTags = os.use(({ context, next }) =>
-  next({
-    context: {
-      repo: createTagRepository(context.deps.sql),
-    },
-  }),
-);
-
-const create = withTags.create.handler(async ({ context, input, errors }) => {
+const create = os.create.handler(async ({ context, input, errors }) => {
   const normalizedName = input.name.trim();
   const normalizedColor = input.color.toLowerCase();
 
@@ -46,11 +46,11 @@ const create = withTags.create.handler(async ({ context, input, errors }) => {
   return await context.repo.insert(tag);
 });
 
-const list = withTags.list.handler(async ({ context }) => {
+const list = os.list.handler(async ({ context }) => {
   return await context.repo.findAll();
 });
 
-export const tagsRouter = withTags.router({
+export const router = {
   create,
   list,
-});
+};

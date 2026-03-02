@@ -18,19 +18,19 @@ import { type Assignment } from "./schemas";
 import { createAssignmentRepository } from "./repository";
 import { assignmentsContract } from "./contract";
 
-const os = implement(assignmentsContract).$context<BaseContext>();
+const os = implement(assignmentsContract)
+  .$context<BaseContext>()
+  .use(({ context, next }) =>
+    next({
+      context: {
+        repo: createAssignmentRepository(context.deps.sql),
+        tasks: createTaskRepository(context.deps.sql),
+        tags: createTagRepository(context.deps.sql),
+      },
+    }),
+  );
 
-const withAssignments = os.use(({ context, next }) =>
-  next({
-    context: {
-      repo: createAssignmentRepository(context.deps.sql),
-      tasks: createTaskRepository(context.deps.sql),
-      tags: createTagRepository(context.deps.sql),
-    },
-  }),
-);
-
-const assign = withAssignments.assign.handler(async ({ context, input, errors }) => {
+const assign = os.assign.handler(async ({ context, input, errors }) => {
   const task = await context.tasks.findById(input.taskId);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
@@ -64,7 +64,7 @@ const assign = withAssignments.assign.handler(async ({ context, input, errors })
   return await context.repo.insert(assignment);
 });
 
-const listForTask = withAssignments.listForTask.handler(async ({ context, input, errors }) => {
+const listForTask = os.listForTask.handler(async ({ context, input, errors }) => {
   const task = await context.tasks.findById(input.taskId);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
@@ -82,7 +82,7 @@ const listForTask = withAssignments.listForTask.handler(async ({ context, input,
   return { task, tags };
 });
 
-export const assignmentsRouter = withAssignments.router({
+export const router = {
   assign,
   listForTask,
-});
+};

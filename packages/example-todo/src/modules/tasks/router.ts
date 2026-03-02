@@ -16,17 +16,17 @@ import { createTaskRepository } from "./repository";
 import { type Task } from "./schemas";
 import { tasksContract } from "./contract";
 
-const os = implement(tasksContract).$context<BaseContext>();
+const os = implement(tasksContract)
+  .$context<BaseContext>()
+  .use(({ context, next }) =>
+    next({
+      context: {
+        repo: createTaskRepository(context.deps.sql),
+      },
+    }),
+  );
 
-const withTasks = os.use(({ context, next }) =>
-  next({
-    context: {
-      repo: createTaskRepository(context.deps.sql),
-    },
-  }),
-);
-
-const create = withTasks.create.handler(async ({ context, input, errors }) => {
+const create = os.create.handler(async ({ context, input, errors }) => {
   const title = input.title.trim();
   if (title.length === 0) {
     throw errors.INVALID_TASK_TITLE({
@@ -49,7 +49,7 @@ const create = withTasks.create.handler(async ({ context, input, errors }) => {
   return await context.repo.insert(task);
 });
 
-const get = withTasks.get.handler(async ({ context, input, errors }) => {
+const get = os.get.handler(async ({ context, input, errors }) => {
   const task = await context.repo.findById(input.id);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
@@ -61,7 +61,7 @@ const get = withTasks.get.handler(async ({ context, input, errors }) => {
   return task;
 });
 
-export const tasksRouter = withTasks.router({
+export const router = {
   create,
   get,
-});
+};

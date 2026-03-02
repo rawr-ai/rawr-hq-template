@@ -10,15 +10,14 @@
  * This is package composition, not module implementation. Add module routers
  * here, but keep cross-module orchestration inside module handlers/services.
  */
-import { base } from "./orpc-runtime/base";
-import { assignmentsRouter } from "./modules/assignments/router";
-import { tagsRouter } from "./modules/tags/router";
-import { tasksRouter } from "./modules/tasks/router";
+import { router as assignments } from "./modules/assignments/router";
+import { router as tags } from "./modules/tags/router";
+import { router as tasks } from "./modules/tasks/router";
 
-export const router = base.router({
-  tasks: tasksRouter,
-  tags: tagsRouter,
-  assignments: assignmentsRouter,
-});
+export const router = {
+  tasks,
+  tags,
+  assignments,
+};
 
 export type Router = typeof router;
