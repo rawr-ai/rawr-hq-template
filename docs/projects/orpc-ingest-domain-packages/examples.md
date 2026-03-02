@@ -70,6 +70,7 @@ packages/example-minimal/src/
 ├── router.ts
 ├── orpc-runtime/
 │   ├── context.ts
+│   ├── base.ts
 │   ├── deps.ts
 │   ├── internal-errors.ts
 │   ├── errors.ts
@@ -91,6 +92,7 @@ packages/example-todo/src/
 ├── router.ts
 ├── orpc-runtime/
 │   ├── context.ts
+│   ├── base.ts
 │   ├── deps.ts
 │   ├── internal-errors.ts
 │   ├── errors.ts
@@ -122,6 +124,7 @@ packages/example-golden/src/
 ├── router.ts
 ├── orpc-runtime/
 │   ├── context.ts
+│   ├── base.ts
 │   ├── deps.ts
 │   ├── internal-errors.ts
 │   ├── errors.ts
