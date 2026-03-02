@@ -10,7 +10,7 @@
  * deep-link to this file directly unless explicitly needed for testing.
  */
 import { defineDomainPackage } from "@rawr/hq-sdk";
-import type { Deps } from "./orpc-runtime";
+import type { Deps } from "./orpc-runtime/deps";
 import { router } from "./router";
 
 const domain = defineDomainPackage(router);

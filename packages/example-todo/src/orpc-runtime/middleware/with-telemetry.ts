@@ -9,7 +9,7 @@
  * Keep log payload keys stable (`path`, `durationMs`, `code`, `status`) so test
  * assertions stay resilient as implementation evolves.
  */
-import { base } from "./base";
+import { runtimeBase } from "../base";
 
 type ErrorShape = {
   name?: unknown;
@@ -33,7 +33,7 @@ function toErrorDetails(error: unknown) {
   };
 }
 
-export const withTelemetry = base.middleware(async ({ context, path, next }) => {
+export const withTelemetry = runtimeBase.middleware(async ({ context, path, next }) => {
   const start = Date.now();
   const pathLabel = path.join(".");
 
