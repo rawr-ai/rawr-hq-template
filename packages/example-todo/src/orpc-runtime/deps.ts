@@ -13,7 +13,7 @@
  * Extend these interfaces only when multiple procedures need the new capability.
  * For one-off logic, prefer module-local composition over global dependency growth.
  */
-import type { BaseDeps, Logger } from "@rawr/orpc-standards";
+import type { BaseDeps } from "@rawr/orpc-standards";
 
 export interface Sql {
   query<T>(text: string, params?: unknown[]): Promise<T[]>;
@@ -28,5 +28,3 @@ export interface Deps extends BaseDeps {
   sql: Sql;
   clock: Clock;
 }
-
-export type { Logger };
