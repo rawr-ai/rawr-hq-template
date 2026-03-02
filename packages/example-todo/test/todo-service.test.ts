@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createTodoClient } from "../src";
-import { createTodoDeps } from "./helpers";
+import { createClient } from "../src";
+import { createDeps } from "./helpers";
 
 describe("example-todo service", () => {
   it("creates and fetches tasks", async () => {
-    const client = createTodoClient(createTodoDeps());
+    const client = createClient(createDeps());
 
     const created = await client.tasks.create({
       title: "Ship n=1 todo package",
@@ -22,7 +22,7 @@ describe("example-todo service", () => {
   });
 
   it("composes tasks, tags, and assignments within one router", async () => {
-    const client = createTodoClient(createTodoDeps());
+    const client = createClient(createDeps());
 
     const task = await client.tasks.create({ title: "Prepare release" });
     const urgent = await client.tags.create({ name: "urgent", color: "#ff0000" });

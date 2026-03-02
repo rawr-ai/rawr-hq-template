@@ -3,8 +3,8 @@
  *
  * @remarks
  * Module routers stay isolated in their folders and are merged here into one
- * domain router. This keeps the consumer surface stable (`todo.tasks.*`,
- * `todo.tags.*`, `todo.assignments.*`) as capabilities grow.
+ * domain router. This keeps the consumer surface stable (`client.tasks.*`,
+ * `client.tags.*`, `client.assignments.*`) as capabilities grow.
  *
  * @agents
  * When adding a module:
@@ -16,10 +16,10 @@ import { assignmentsRouter } from "./assignments/router";
 import { tagsRouter } from "./tags/router";
 import { tasksRouter } from "./tasks/router";
 
-export const todoRouter = base.router({
+export const router = base.router({
   tasks: tasksRouter,
   tags: tagsRouter,
   assignments: assignmentsRouter,
 });
 
-export type TodoRouter = typeof todoRouter;
+export type Router = typeof router;

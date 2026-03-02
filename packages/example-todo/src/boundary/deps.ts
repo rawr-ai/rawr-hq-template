@@ -26,7 +26,7 @@ export interface Clock {
   now(): string;
 }
 
-export interface TodoDeps {
+export interface Deps {
   sql: Sql;
   logger: Logger;
   clock: Clock;

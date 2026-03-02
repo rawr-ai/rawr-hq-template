@@ -3,8 +3,8 @@
  *
  * @remarks
  * This file intentionally exposes two main integration entrypoints:
- * 1) `todoRouter` for composition inside larger router trees.
- * 2) `createTodoClient(deps)` for in-process calls via `createRouterClient`.
+ * 1) `router` for composition inside larger router trees.
+ * 2) `createClient(deps)` for in-process calls via `createRouterClient`.
  *
  * Keep this file thin. It should re-export stable API, not host business logic.
  *
@@ -13,20 +13,20 @@
  * only the minimum public types from here. Avoid exporting internal helpers by default.
  */
 import { defineDomainPackage } from "@rawr/orpc-standards";
-import type { TodoDeps } from "./boundary/deps";
-import { todoRouter } from "./modules/router";
+import type { Deps } from "./boundary/deps";
+import { router } from "./modules/router";
 
-export { todoRouter, type TodoRouter } from "./modules/router";
+export { router, type Router } from "./modules/router";
 
-export const todoPackage = defineDomainPackage(todoRouter);
+export const domain = defineDomainPackage(router);
 
-export function createTodoClient(deps: TodoDeps) {
-  return todoPackage.createClient(deps);
+export function createClient(deps: Deps) {
+  return domain.createClient(deps);
 }
 
-export type TodoClient = ReturnType<typeof createTodoClient>;
+export type Client = ReturnType<typeof createClient>;
 
-export type { Clock, Logger, Sql, TodoDeps } from "./boundary/deps";
+export type { Clock, Deps, Logger, Sql } from "./boundary/deps";
 export type { Assignment } from "./modules/assignments/schemas";
 export type { Tag } from "./modules/tags/schemas";
 export type { Task } from "./modules/tasks/schemas";

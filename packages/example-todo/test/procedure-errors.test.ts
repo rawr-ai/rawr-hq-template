@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { safe } from "@orpc/server";
-import { createTodoClient } from "../src";
-import { createTodoDeps, type OrpcErrorShape } from "./helpers";
+import { createClient } from "../src";
+import { createDeps, type OrpcErrorShape } from "./helpers";
 
 async function expectOrpcError(
   promise: Promise<unknown>,
@@ -30,7 +30,7 @@ async function expectOrpcError(
 
 describe("example-todo typed procedure errors", () => {
   it("returns INVALID_TASK_TITLE for whitespace title after normalization", async () => {
-    const client = createTodoClient(createTodoDeps());
+    const client = createClient(createDeps());
 
     await expectOrpcError(
       client.tasks.create({ title: "   " }),
@@ -43,7 +43,7 @@ describe("example-todo typed procedure errors", () => {
   });
 
   it("returns DUPLICATE_TAG when creating same tag name twice", async () => {
-    const client = createTodoClient(createTodoDeps());
+    const client = createClient(createDeps());
 
     await client.tags.create({ name: "infra", color: "#123456" });
 
@@ -58,7 +58,7 @@ describe("example-todo typed procedure errors", () => {
   });
 
   it("returns RESOURCE_NOT_FOUND when assignment references missing task", async () => {
-    const client = createTodoClient(createTodoDeps());
+    const client = createClient(createDeps());
     const tag = await client.tags.create({ name: "ops", color: "#00aaff" });
 
     await expectOrpcError(
@@ -75,7 +75,7 @@ describe("example-todo typed procedure errors", () => {
   });
 
   it("returns ALREADY_ASSIGNED when same task/tag pair is assigned twice", async () => {
-    const client = createTodoClient(createTodoDeps());
+    const client = createClient(createDeps());
     const task = await client.tasks.create({ title: "Review PR" });
     const tag = await client.tags.create({ name: "review", color: "#ff6600" });
 
@@ -92,8 +92,8 @@ describe("example-todo typed procedure errors", () => {
   });
 
   it("treats unexpected storage failure as non-defined internal error", async () => {
-    const client = createTodoClient(
-      createTodoDeps({
+    const client = createClient(
+      createDeps({
         failIfQueryIncludes: ["SELECT * FROM tasks WHERE id = $1"],
       }),
     );
@@ -105,8 +105,8 @@ describe("example-todo typed procedure errors", () => {
   });
 
   it("rejects schema-invalid input before repository execution", async () => {
-    const client = createTodoClient(
-      createTodoDeps({
+    const client = createClient(
+      createDeps({
         failIfQueryIncludes: ["SELECT * FROM tasks WHERE id = $1"],
       }),
     );

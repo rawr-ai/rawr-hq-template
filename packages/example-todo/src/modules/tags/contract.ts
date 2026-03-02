@@ -10,11 +10,11 @@
  */
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { todoProcedure } from "../../boundary/procedure-meta";
+import { procedure } from "../../boundary/procedure-meta";
 import { TagSchema } from "./schemas";
 
 export const tagsContract = {
-  create: todoProcedure({ idempotent: false })
+  create: procedure({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -59,7 +59,7 @@ export const tagsContract = {
         ),
       },
     }),
-  list: todoProcedure({ idempotent: true })
+  list: procedure({ idempotent: true })
     .input(
       schema(
         Type.Object(
