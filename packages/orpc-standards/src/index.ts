@@ -2,6 +2,8 @@ import type { Schema, SchemaIssue } from "@orpc/contract";
 import { createRouterClient, type AnyRouter, type InferRouterInitialContext, type RouterClient } from "@orpc/server";
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
+import type { BaseDeps } from "./deps";
+export type { BaseDeps, Logger } from "./deps";
 
 function decodePathSegment(segment: string): string {
   return decodeURIComponent(segment.replace(/~1/g, "/").replace(/~0/g, "~"));
@@ -67,7 +69,7 @@ export interface DomainPackage<TRouter extends AnyRouter> {
 }
 
 export function defineDomainPackage<TRouter extends AnyRouter>(
-  router: TRouter,
+  router: InferRouterInitialContext<TRouter> extends { deps: BaseDeps } ? TRouter : never,
 ): DomainPackage<TRouter> {
   return {
     router,
