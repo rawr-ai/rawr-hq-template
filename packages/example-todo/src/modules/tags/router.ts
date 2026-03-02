@@ -13,7 +13,9 @@
  * execution setup + handler behavior only.
  */
 import { randomUUID } from "node:crypto";
-import { createModule, withReadOnlyMode, withTelemetry } from "../../orpc-runtime";
+import { createModule } from "../../orpc-runtime/base";
+import { withReadOnlyMode } from "../../orpc-runtime/middleware/with-read-only-mode";
+import { withTelemetry } from "../../orpc-runtime/middleware/with-telemetry";
 import { contract } from "./contract";
 import { createRepository } from "./repository";
 import { type Tag } from "./schemas";

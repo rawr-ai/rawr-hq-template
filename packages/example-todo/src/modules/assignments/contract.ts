@@ -11,7 +11,7 @@
  */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { contractBase } from "../../orpc-runtime";
+import { contractBase } from "../../orpc-runtime/base";
 import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
