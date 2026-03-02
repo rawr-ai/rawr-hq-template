@@ -9,8 +9,7 @@
  * Keep log payload keys stable (`path`, `durationMs`, `code`, `status`) so test
  * assertions stay resilient as implementation evolves.
  */
-import { os } from "@orpc/server";
-import type { BaseContext } from "../context";
+import { base } from "./base";
 
 type ErrorShape = {
   name?: unknown;
@@ -33,8 +32,6 @@ function toErrorDetails(error: unknown) {
     status: typeof typed.status === "number" ? typed.status : undefined,
   };
 }
-
-const base = os.$context<BaseContext>();
 
 export const withTelemetry = base.middleware(async ({ context, path, next }) => {
   const start = Date.now();
