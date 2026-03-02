@@ -37,6 +37,8 @@
   },
   "dependencies": {
     "@rawr/agent-sync": "workspace:*",
+    "@rawr/core": "workspace:*",
+    "@rawr/journal": "workspace:*",
     "@rawr/security": "workspace:*"
   },
   "devDependencies": {
