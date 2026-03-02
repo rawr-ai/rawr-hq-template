@@ -18,7 +18,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Procedures declare explicit ORPC boundary errors for caller-actionable outcomes.
 - Expected business states are modeled as values inside the boundary.
 - Procedures carry shared metadata (`domain`, `audience`) plus explicit per-procedure `idempotent`.
-- One stable package entry surface (`todoRouter` + in-process client factory pattern).
+- One stable package entry surface (`router` + `createClient` in-process factory pattern).
 
 ## Real axes that should change
 

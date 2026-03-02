@@ -72,7 +72,7 @@ Adopt module-level hybrid contract-first:
 
 - each module defines `contract.ts` (input/output/errors/procedure shape),
 - each module defines `router.ts` that implements that contract via `implement(contract)`,
-- package boundary remains router-client-first (`todoRouter` + `createTodoClient`).
+- package boundary remains router-client-first (`router` + `createClient`).
 
 ### Why
 This gives us explicit module contracts for readability and enforcement while preserving the existing in-process package boundary surface.
@@ -85,3 +85,18 @@ It also makes “what is boundary shape” vs “what is runtime behavior” obv
 - Implement contract: <https://orpc.dev/docs/contract-first/implement-contract>
 - Router-first alternative: <https://orpc.dev/docs/router-first/procedure-first>
 - Monorepo setup/hybrid context: <https://orpc.dev/docs/advanced/monorepo-setup>
+
+## Decision #6 (2026-03-02)
+
+### Question
+Should domain package scaffolding use domain-prefixed public names (for example `createTodoClient`) or generic singleton names?
+
+### Decision
+Use generic singleton naming by default for package scaffolding:
+
+- `router`, `createClient`, `Client`, `Deps`, `domain`.
+
+Use domain-specific prefixes only when intentional discrimination is needed.
+
+### Why
+Each domain package exposes one primary boundary surface. Generic names reduce repeated naming noise, keep scaffolding uniform across packages, and let consumers alias at import sites where disambiguation is needed.

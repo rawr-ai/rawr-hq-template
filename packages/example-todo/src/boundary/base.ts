@@ -11,14 +11,14 @@
  *
  * @agents
  * If a new cross-module dependency is needed (for example metrics/tracing),
- * add it to `TodoDeps` and promote it through `withService` once instead of
+ * add it to `Deps` and promote it through `withService` once instead of
  * repeating ad-hoc injection inside each module.
  */
 import { os } from "@orpc/server";
-import type { Clock, Logger, TodoDeps } from "./deps";
+import type { Clock, Deps, Logger } from "./deps";
 
 export interface BaseContext {
-  deps: TodoDeps;
+  deps: Deps;
 }
 
 export interface ServiceContext extends BaseContext {

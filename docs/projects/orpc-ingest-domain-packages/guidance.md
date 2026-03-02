@@ -23,14 +23,23 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
   Example:
   ```ts
   export const tasksContract = {
-    create: todoProcedure({ idempotent: false }).input(...).output(...).errors(...),
-    get: todoProcedure({ idempotent: true }).input(...).output(...).errors(...),
+    create: procedure({ idempotent: false }).input(...).output(...).errors(...),
+    get: procedure({ idempotent: true }).input(...).output(...).errors(...),
   };
   ```
 - **Contract-router builder**: optional oRPC builder form `oc.errors(...).router({...})`.
   We are not using this by default in `example-todo`.
 - **Module implementation router**: server router exported from `modules/<name>/router.ts` via `implement(contract)`.
 - **Package composed router**: server router exported from `src/modules/router.ts` (`base.router({...})`) and consumed by `createRouterClient`.
+
+## Naming Conventions
+
+Default scaffold naming is generic for singleton package surfaces and helpers.
+
+- package entry exports: `router`, `createClient`, `Client`, `Deps`, `domain`,
+- boundary helper names: `procedure`, `ProcedureMeta`, `SHARED_META`.
+
+Use domain-prefixed names only when they carry intentional disambiguation value that cannot be handled cleanly at import sites.
 
 ## Module Shape: `contract.ts` + `router.ts`
 
@@ -60,7 +69,7 @@ Current required baseline:
 Recommended pattern:
 
 - define shared package metadata once in `boundary/procedure-meta.ts`,
-- expose a helper (for example `todoProcedure({ idempotent })`) that starts procedure chains,
+- expose a helper (for example `procedure({ idempotent })`) that starts procedure chains,
 - keep module contracts explicit by setting `idempotent` on every procedure.
 
 Why this baseline:

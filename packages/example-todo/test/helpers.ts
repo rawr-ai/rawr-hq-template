@@ -1,4 +1,4 @@
-import type { TodoDeps } from "../src/boundary/deps";
+import type { Deps } from "../src/boundary/deps";
 import type { Assignment } from "../src/modules/assignments/schemas";
 import type { Tag } from "../src/modules/tags/schemas";
 import type { Task } from "../src/modules/tasks/schemas";
@@ -122,7 +122,7 @@ export function createInMemorySql(options: InMemorySqlOptions = {}) {
   return { queryOne, query };
 }
 
-export function createTodoDeps(options: InMemorySqlOptions = {}): TodoDeps {
+export function createDeps(options: InMemorySqlOptions = {}): Deps {
   let tick = 0;
   const sql = createInMemorySql(options);
 

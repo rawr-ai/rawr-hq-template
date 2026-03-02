@@ -6,23 +6,23 @@
  * repeat derivable package-level labels on every procedure.
  *
  * @agents
- * Use `todoProcedure({ idempotent })` as the procedure starting point in
+ * Use `procedure({ idempotent })` as the procedure starting point in
  * module contracts, then chain `.input(...)`, `.output(...)`, `.errors(...)`.
  */
 import { oc } from "@orpc/contract";
 
-export const TODO_PROCEDURE_SHARED_META = {
+export const SHARED_META = {
   domain: "todo",
   audience: "internal",
 } as const;
 
-export type TodoProcedureMeta = typeof TODO_PROCEDURE_SHARED_META & {
+export type ProcedureMeta = typeof SHARED_META & {
   idempotent: boolean;
 };
 
-export function todoProcedure(meta: Pick<TodoProcedureMeta, "idempotent">) {
+export function procedure(meta: Pick<ProcedureMeta, "idempotent">) {
   return oc.meta({
-    ...TODO_PROCEDURE_SHARED_META,
+    ...SHARED_META,
     ...meta,
   });
 }

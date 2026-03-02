@@ -15,12 +15,12 @@
  */
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { todoProcedure } from "../../boundary/procedure-meta";
+import { procedure } from "../../boundary/procedure-meta";
 import { RESOURCE_NOT_FOUND } from "../../boundary/procedure-errors";
 import { TaskSchema } from "./schemas";
 
 export const tasksContract = {
-  create: todoProcedure({ idempotent: false })
+  create: procedure({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -68,7 +68,7 @@ export const tasksContract = {
         ),
       },
     }),
-  get: todoProcedure({ idempotent: true })
+  get: procedure({ idempotent: true })
     .input(
       schema(
         Type.Object(
