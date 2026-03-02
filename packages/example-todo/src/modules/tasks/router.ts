@@ -11,7 +11,8 @@
  */
 import { randomUUID } from "node:crypto";
 import { implement } from "@orpc/server";
-import { type BaseContext, serviceContextMiddleware } from "../../orpc-runtime/base";
+import { serviceContextMiddleware } from "../../orpc-runtime/base";
+import { type BaseContext } from "../../orpc-runtime/context";
 import { createTaskRepository } from "./repository";
 import { type Task } from "./schemas";
 import { tasksContract } from "./contract";
