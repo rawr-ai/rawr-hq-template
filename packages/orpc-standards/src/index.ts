@@ -4,6 +4,7 @@ import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
 import type { BaseDeps } from "./deps";
 export type { BaseDeps, Logger } from "./deps";
+export { createDomainModule, type DomainContext } from "./module";
 
 function decodePathSegment(segment: string): string {
   return decodeURIComponent(segment.replace(/~1/g, "/").replace(/~0/g, "~"));
