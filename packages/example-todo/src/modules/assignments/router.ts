@@ -13,7 +13,9 @@
  * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
-import { createModule, withReadOnlyMode, withTelemetry } from "../../orpc-runtime";
+import { createModule } from "../../orpc-runtime/base";
+import { withReadOnlyMode } from "../../orpc-runtime/middleware/with-read-only-mode";
+import { withTelemetry } from "../../orpc-runtime/middleware/with-telemetry";
 import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 import { contract } from "./contract";
