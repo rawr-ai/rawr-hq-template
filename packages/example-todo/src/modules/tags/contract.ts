@@ -10,11 +10,12 @@
  */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { procedure, READ_ONLY_MODE } from "../../orpc-runtime";
+import { contractBase } from "../../orpc-runtime";
+import { READ_ONLY_MODE } from "../../orpc-runtime/errors";
 import { TagSchema } from "./schemas";
 
 export const contract = {
-  create: procedure({ idempotent: false })
+  create: contractBase.meta({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -60,7 +61,7 @@ export const contract = {
         ),
       },
     }),
-  list: procedure({ idempotent: true })
+  list: contractBase.meta({ idempotent: true })
     .input(
       schema(
         Type.Object(

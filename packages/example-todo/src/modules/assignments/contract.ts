@@ -11,13 +11,14 @@
  */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { procedure, READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime";
+import { contractBase } from "../../orpc-runtime";
+import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
 
 export const contract = {
-  assign: procedure({ idempotent: false })
+  assign: contractBase.meta({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -71,7 +72,7 @@ export const contract = {
         ),
       },
     }),
-  listForTask: procedure({ idempotent: true })
+  listForTask: contractBase.meta({ idempotent: true })
     .input(
       schema(
         Type.Object(
