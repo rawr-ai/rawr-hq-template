@@ -10,7 +10,7 @@
  */
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { procedure } from "../../boundary/procedure-meta";
+import { procedure } from "../../orpc-runtime/meta";
 import { TagSchema } from "./schemas";
 
 export const tagsContract = {

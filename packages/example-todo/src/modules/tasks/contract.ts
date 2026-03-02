@@ -15,8 +15,8 @@
  */
 import { schema } from "@rawr/orpc-standards";
 import { Type } from "typebox";
-import { procedure } from "../../boundary/procedure-meta";
-import { RESOURCE_NOT_FOUND } from "../../boundary/procedure-errors";
+import { procedure } from "../../orpc-runtime/meta";
+import { RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
 import { TaskSchema } from "./schemas";
 
 export const tasksContract = {

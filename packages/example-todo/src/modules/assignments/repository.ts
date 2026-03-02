@@ -5,8 +5,8 @@
  * Expected duplicate checks are returned as values (`exists`) so procedure
  * handlers can decide caller-actionable boundary errors explicitly.
  */
-import type { Sql } from "../../boundary/deps";
-import { UnexpectedInternalError } from "../../boundary/service-errors";
+import type { Sql } from "../../orpc-runtime/deps";
+import { UnexpectedInternalError } from "../../orpc-runtime/internal-errors";
 import type { Assignment } from "./schemas";
 
 export function createAssignmentRepository(sql: Sql) {
