@@ -13,8 +13,7 @@
  * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
-import { implement } from "@orpc/server";
-import { type BaseContext } from "../../orpc-runtime/context";
+import { createModule } from "../../orpc-runtime/base";
 import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 import { contract } from "./contract";
@@ -29,8 +28,7 @@ import { type Assignment } from "./schemas";
  * (assignment repo + peer module repos for composition). Keep business
  * branching out of this block.
  */
-const os = implement(contract)
-  .$context<BaseContext>()
+const os = createModule(contract)
   .use(({ context, next }) =>
     next({
       context: {

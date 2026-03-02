@@ -18,6 +18,7 @@ Use one stable top-level structure across package sizes:
 - `src/modules/` for capability module contracts and implementations.
 
 Inside `src/orpc-runtime/`, `context.ts` is an always-present scaffold slot.
+Inside `src/orpc-runtime/`, `base.ts` is an always-present scaffold slot.
 
 Do not use `src/boundary/` as the internal scaffolding folder name; it overloads
 public-boundary and runtime-boundary semantics.
@@ -87,12 +88,13 @@ Package root (`src/index.ts`) is boundary-only by default.
 Each module should split boundary definition from behavior:
 
 - `contract.ts`: procedure names, input/output schemas, `.errors(...)` declarations.
-- `router.ts`: handler implementation only (`implement(contract)`), context wiring, orchestration logic.
+- `router.ts`: handler implementation only, starting from `createModule(contract)`, then module-local context wiring and orchestration logic.
 
 Rules:
 
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
+- Start every module router with `createModule(contract)` from `orpc-runtime/base.ts`.
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
