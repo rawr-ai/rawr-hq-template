@@ -11,7 +11,6 @@
  */
 import { randomUUID } from "node:crypto";
 import { implement } from "@orpc/server";
-import { serviceContextMiddleware } from "../../orpc-runtime/base";
 import { type BaseContext } from "../../orpc-runtime/context";
 import { createTagRepository } from "../tags/repository";
 import { createTaskRepository } from "../tasks/repository";
@@ -21,10 +20,9 @@ import { assignmentsContract } from "./contract";
 
 const os = implement(assignmentsContract).$context<BaseContext>();
 
-const withAssignments = os.use(serviceContextMiddleware).use(({ context, next }) =>
+const withAssignments = os.use(({ context, next }) =>
   next({
     context: {
-      ...context,
       repo: createAssignmentRepository(context.deps.sql),
       tasks: createTaskRepository(context.deps.sql),
       tags: createTagRepository(context.deps.sql),
@@ -60,7 +58,7 @@ const assign = withAssignments.assign.handler(async ({ context, input, errors })
     id: randomUUID(),
     taskId: input.taskId,
     tagId: input.tagId,
-    createdAt: context.clock.now(),
+    createdAt: context.deps.clock.now(),
   };
 
   return await context.repo.insert(assignment);

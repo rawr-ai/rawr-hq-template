@@ -9,7 +9,6 @@
  */
 import { randomUUID } from "node:crypto";
 import { implement } from "@orpc/server";
-import { serviceContextMiddleware } from "../../orpc-runtime/base";
 import { type BaseContext } from "../../orpc-runtime/context";
 import { createTagRepository } from "./repository";
 import { type Tag } from "./schemas";
@@ -17,10 +16,9 @@ import { tagsContract } from "./contract";
 
 const os = implement(tagsContract).$context<BaseContext>();
 
-const withTags = os.use(serviceContextMiddleware).use(({ context, next }) =>
+const withTags = os.use(({ context, next }) =>
   next({
     context: {
-      ...context,
       repo: createTagRepository(context.deps.sql),
     },
   }),
@@ -41,10 +39,10 @@ const create = withTags.create.handler(async ({ context, input, errors }) => {
     id: randomUUID(),
     name: normalizedName,
     color: normalizedColor,
-    createdAt: context.clock.now(),
+    createdAt: context.deps.clock.now(),
   };
 
-  context.logger.info("todo.tags.create", { tagId: tag.id, name: tag.name });
+  context.deps.logger.info("todo.tags.create", { tagId: tag.id, name: tag.name });
   return await context.repo.insert(tag);
 });
 

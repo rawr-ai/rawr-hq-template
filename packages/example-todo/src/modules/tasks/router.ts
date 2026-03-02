@@ -11,7 +11,6 @@
  */
 import { randomUUID } from "node:crypto";
 import { implement } from "@orpc/server";
-import { serviceContextMiddleware } from "../../orpc-runtime/base";
 import { type BaseContext } from "../../orpc-runtime/context";
 import { createTaskRepository } from "./repository";
 import { type Task } from "./schemas";
@@ -19,10 +18,9 @@ import { tasksContract } from "./contract";
 
 const os = implement(tasksContract).$context<BaseContext>();
 
-const withTasks = os.use(serviceContextMiddleware).use(({ context, next }) =>
+const withTasks = os.use(({ context, next }) =>
   next({
     context: {
-      ...context,
       repo: createTaskRepository(context.deps.sql),
     },
   }),
@@ -37,7 +35,7 @@ const create = withTasks.create.handler(async ({ context, input, errors }) => {
     });
   }
 
-  const now = context.clock.now();
+  const now = context.deps.clock.now();
   const task: Task = {
     id: randomUUID(),
     title,
@@ -47,7 +45,7 @@ const create = withTasks.create.handler(async ({ context, input, errors }) => {
     updatedAt: now,
   };
 
-  context.logger.info("todo.tasks.create", { taskId: task.id });
+  context.deps.logger.info("todo.tasks.create", { taskId: task.id });
   return await context.repo.insert(task);
 });
 

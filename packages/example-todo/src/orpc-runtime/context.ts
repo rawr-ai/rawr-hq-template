@@ -7,16 +7,10 @@
  *
  * @agents
  * Add fields to `BaseContext` only when every procedure should receive them at
- * call entry. Add fields to `ServiceContext` when they are derived once by
- * package middleware from base dependencies.
+ * call entry.
  */
-import type { Clock, Deps, Logger } from "./deps";
+import type { Deps } from "./deps";
 
 export interface BaseContext {
   deps: Deps;
-}
-
-export interface ServiceContext extends BaseContext {
-  logger: Logger;
-  clock: Clock;
 }
