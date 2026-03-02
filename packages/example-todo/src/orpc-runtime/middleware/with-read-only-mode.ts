@@ -9,27 +9,13 @@
  * Keep read-only policy logic here. Do not duplicate write-block checks in module
  * handlers when this middleware is active.
  */
-import { ORPCError, os } from "@orpc/server";
+import { ORPCError } from "@orpc/server";
 import { READ_ONLY_MODE } from "../errors";
-import type { BaseContext } from "../context";
-
-type ProcedureMeta = {
-  idempotent?: unknown;
-};
-
-function isMutating(meta: unknown): boolean {
-  if (typeof meta !== "object" || meta === null) {
-    return false;
-  }
-
-  const typed = meta as ProcedureMeta;
-  return typed.idempotent === false;
-}
-
-const base = os.$context<BaseContext>();
+import { isMutatingProcedure } from "../meta";
+import { base } from "./base";
 
 export const withReadOnlyMode = base.middleware(async ({ context, procedure, path, next }) => {
-  if (!context.deps.runtime.readOnly || !isMutating(procedure["~orpc"].meta)) {
+  if (!context.deps.runtime.readOnly || !isMutatingProcedure(procedure["~orpc"].meta)) {
     return await next();
   }
 

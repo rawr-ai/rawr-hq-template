@@ -16,7 +16,7 @@ const SHARED_META = {
   audience: "internal",
 } as const;
 
-type ProcedureMeta = typeof SHARED_META & {
+export type ProcedureMeta = typeof SHARED_META & {
   idempotent: boolean;
 };
 
@@ -25,4 +25,12 @@ export function procedure(meta: Pick<ProcedureMeta, "idempotent">) {
     ...SHARED_META,
     ...meta,
   });
+}
+
+export function isMutatingProcedure(meta: unknown): boolean {
+  if (typeof meta !== "object" || meta === null) {
+    return false;
+  }
+
+  return (meta as Partial<ProcedureMeta>).idempotent === false;
 }
