@@ -7,6 +7,17 @@ type InMemorySqlOptions = {
   failIfQueryIncludes?: string[];
 };
 
+export type LogEntry = {
+  level: "info" | "error";
+  event: string;
+  payload: Record<string, unknown>;
+};
+
+type DepsOptions = InMemorySqlOptions & {
+  readOnly?: boolean;
+  logs?: LogEntry[];
+};
+
 export type OrpcErrorShape = {
   defined?: boolean;
   code?: string;
@@ -122,7 +133,7 @@ export function createInMemorySql(options: InMemorySqlOptions = {}) {
   return { queryOne, query };
 }
 
-export function createDeps(options: InMemorySqlOptions = {}): Deps {
+export function createDeps(options: DepsOptions = {}): Deps {
   let tick = 0;
   const sql = createInMemorySql(options);
 
@@ -135,8 +146,23 @@ export function createDeps(options: InMemorySqlOptions = {}): Deps {
       },
     },
     logger: {
-      info: () => {},
-      error: () => {},
+      info: (event, payload) => {
+        options.logs?.push({
+          level: "info",
+          event,
+          payload: (payload as Record<string, unknown> | undefined) ?? {},
+        });
+      },
+      error: (event, payload) => {
+        options.logs?.push({
+          level: "error",
+          event,
+          payload: (payload as Record<string, unknown> | undefined) ?? {},
+        });
+      },
+    },
+    runtime: {
+      readOnly: options.readOnly ?? false,
     },
   };
 }

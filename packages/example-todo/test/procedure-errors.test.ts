@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { safe } from "@orpc/server";
 import { createClient } from "../src";
 import { createDeps, type OrpcErrorShape } from "./helpers";
+import { contract as assignmentsContract } from "../src/modules/assignments/contract";
+import { contract as tagsContract } from "../src/modules/tags/contract";
+import { contract as tasksContract } from "../src/modules/tasks/contract";
 
 async function expectOrpcError(
   promise: Promise<unknown>,
@@ -29,6 +32,28 @@ async function expectOrpcError(
 }
 
 describe("example-todo typed procedure errors", () => {
+  it("declares READ_ONLY_MODE only on mutating procedures", () => {
+    expect("READ_ONLY_MODE" in tasksContract.create["~orpc"].errorMap).toBe(true);
+    expect("READ_ONLY_MODE" in tagsContract.create["~orpc"].errorMap).toBe(true);
+    expect("READ_ONLY_MODE" in assignmentsContract.assign["~orpc"].errorMap).toBe(true);
+
+    expect("READ_ONLY_MODE" in tasksContract.get["~orpc"].errorMap).toBe(false);
+    expect("READ_ONLY_MODE" in tagsContract.list["~orpc"].errorMap).toBe(false);
+    expect("READ_ONLY_MODE" in assignmentsContract.listForTask["~orpc"].errorMap).toBe(false);
+  });
+
+  it("returns READ_ONLY_MODE when write procedures are called in read-only mode", async () => {
+    const client = createClient(createDeps({ readOnly: true }));
+
+    await expectOrpcError(
+      client.tasks.create({ title: "blocked write" }),
+      {
+        code: "READ_ONLY_MODE",
+        status: 409,
+      },
+    );
+  });
+
   it("returns INVALID_TASK_TITLE for whitespace title after normalization", async () => {
     const client = createClient(createDeps());
 
