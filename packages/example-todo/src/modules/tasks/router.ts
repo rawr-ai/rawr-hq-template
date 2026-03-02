@@ -2,12 +2,15 @@
  * @fileoverview Task module router implementation.
  *
  * @remarks
- * This file implements `tasksContract`. Keep contract details in `contract.ts`
- * and keep this file focused on execution logic + boundary decisions.
+ * This file follows the standard module-router structure used in this package:
+ * 1) create module implementer (`os`) from the module contract,
+ * 2) attach package base context and optional module middleware,
+ * 3) implement handlers from `os.<procedure>.handler(...)`,
+ * 4) export plain-object `router`.
  *
  * @agents
- * Extend `contract.ts` first. Then implement corresponding handlers here.
- * Avoid redefining input/output/error schemas in this file.
+ * `contract.ts` owns boundary shape (input/output/errors/meta). This file owns
+ * execution setup + handler behavior only.
  */
 import { randomUUID } from "node:crypto";
 import { implement } from "@orpc/server";
@@ -16,6 +19,13 @@ import { createTaskRepository } from "./repository";
 import { type Task } from "./schemas";
 import { tasksContract } from "./contract";
 
+/**
+ * @remarks
+ * Module implementer setup (always present).
+ *
+ * Use this block to bind package context and inject module-scoped dependencies
+ * (for example repository adapters). Keep business branching out of this block.
+ */
 const os = implement(tasksContract)
   .$context<BaseContext>()
   .use(({ context, next }) =>
@@ -61,6 +71,7 @@ const get = os.get.handler(async ({ context, input, errors }) => {
   return task;
 });
 
+/** Plain object router export by package convention (no `.router(...)` wrapper). */
 export const router = {
   create,
   get,
