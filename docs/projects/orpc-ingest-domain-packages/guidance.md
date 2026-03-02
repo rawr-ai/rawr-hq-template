@@ -17,8 +17,18 @@ Use one stable top-level structure across package sizes:
 - `src/orpc-runtime/` for shared ORPC runtime scaffolding,
 - `src/modules/` for capability module contracts and implementations.
 
+Inside `src/orpc-runtime/`, `context.ts` is an always-present scaffold slot.
+
 Do not use `src/boundary/` as the internal scaffolding folder name; it overloads
 public-boundary and runtime-boundary semantics.
+
+## Scaffold Determinism Rule
+
+When choosing between "minimal now" vs "predictable later", prefer predictable scaffold slots for core structure.
+
+- Keep always-present structural files that are expected as a package grows (for example `orpc-runtime/context.ts`), even if initially thin.
+- Do not push structural timing decisions ("add this file later") onto agents for core package layout.
+- Use templates/CLI shape flags to vary content depth, not to vary foundational topology.
 
 ## Terminology (This Repo, Not Generic oRPC)
 
@@ -42,10 +52,19 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
 
 Default scaffold naming is generic for singleton package surfaces and helpers.
 
-- package entry exports: `router`, `createClient`, `Client`, `Deps`, `domain`,
+- package entry exports: `router`, `createClient`, `Router`, `Client`,
 - ORPC runtime helper names: `procedure`, `ProcedureMeta`, `SHARED_META`.
 
 Use domain-prefixed names only when they carry intentional disambiguation value that cannot be handled cleanly at import sites.
+
+## Public Export Surface
+
+Package root (`src/index.ts`) is boundary-only by default.
+
+- Export: `createClient`, `router`, `Client`, `Router`.
+- Do not export runtime internals (`orpc-runtime/*`) from root.
+- Do not export module schemas/contracts/repositories from root by default.
+- Do not keep compatibility aliases in examples unless explicitly required by a migration plan.
 
 ## Module Shape: `contract.ts` + `router.ts`
 
@@ -87,6 +106,20 @@ Why this baseline:
 Not required in this phase:
 
 - `sideEffects` classification (deferred until we have a concrete automated consumer and enforcement).
+
+## Context + Middleware Layering
+
+Use context/middleware at the level where each concern actually belongs:
+
+- Initial context (`BaseContext`) carries `deps` at package boundary.
+- `deps` should extend shared `BaseDeps` from `@rawr/orpc-standards` (mandatory `logger`).
+- Module middleware injects module-local repos/services into execution context.
+- Package-level middleware should be used for real runtime concerns (auth, tracing, tenant/session, transaction/request scope), not for aliasing `deps` fields.
+
+Practical defaults:
+
+- Access logger/clock as `context.deps.logger` / `context.deps.clock`.
+- Avoid alias-only middleware like `deps.logger -> logger` unless there is a concrete runtime reason.
 
 ## Boundary Error Standard
 
