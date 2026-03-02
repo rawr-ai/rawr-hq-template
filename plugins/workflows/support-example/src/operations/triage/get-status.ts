@@ -1,4 +1,4 @@
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { SUPPORT_EXAMPLE_CAPABILITY, SupportExampleRunSchema, normalizeSupportExampleRunId } from "../../models";
 import { workflowProcedure } from "../../orpc";

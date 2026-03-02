@@ -135,7 +135,7 @@ export const invoiceWorkflowTriggerContract = oc.router({
 ```ts
 import { oc } from "@orpc/contract";
 import { Type, type Static } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { typeBoxStandardSchema as std } from "@rawr/hq-sdk";
 
 // Exception: extracted because input/output shapes are reused by contract wiring
 // and operation-level static types.

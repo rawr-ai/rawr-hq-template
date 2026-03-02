@@ -1,5 +1,5 @@
 import { os } from "@orpc/server";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { TriageWorkItemSchema } from "../../../domain";
 import { normalizeSupportExampleId } from "../../../domain/ids";

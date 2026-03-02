@@ -250,7 +250,7 @@ For this initiative phase, the active posture is:
 
 ### D-008 — Legacy helper cleanup scope
 
-- Context: `@rawr/orpc-standards` still exported catalog-era helpers after migration.
+- Context: `@rawr/hq-sdk` still exported catalog-era helpers after migration.
 - Options considered:
   - Keep helpers for potential future usage.
   - Remove helpers immediately because active code no longer uses that pattern.

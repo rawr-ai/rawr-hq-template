@@ -46,7 +46,7 @@ apps/server/src/
 ```ts
 // plugins/workflows/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
-import { std } from "@rawr/orpc-standards";
+import { std } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 
 export const invoicingWorkflowContract = oc.router({
