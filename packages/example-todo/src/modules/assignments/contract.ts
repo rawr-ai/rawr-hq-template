@@ -9,10 +9,9 @@
  * Keep this contract focused on caller-visible shape. Cross-module access
  * patterns belong in `router.ts`, not here.
  */
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { procedure } from "../../orpc-runtime/meta";
-import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
+import { procedure, READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";

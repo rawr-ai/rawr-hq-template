@@ -13,10 +13,9 @@
  * Extend task capability by updating this contract first, then implement handlers
  * in `router.ts`. Keep this file free of execution logic and dependencies.
  */
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { procedure } from "../../orpc-runtime/meta";
-import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
+import { procedure, READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime";
 import { TaskSchema } from "./schemas";
 
 export const contract = {

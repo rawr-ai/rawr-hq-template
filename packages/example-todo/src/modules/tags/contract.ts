@@ -8,10 +8,9 @@
  * @agents
  * Add/modify procedures here first. Then implement behavior in `router.ts`.
  */
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { procedure } from "../../orpc-runtime/meta";
-import { READ_ONLY_MODE } from "../../orpc-runtime/errors";
+import { procedure, READ_ONLY_MODE } from "../../orpc-runtime";
 import { TagSchema } from "./schemas";
 
 export const contract = {

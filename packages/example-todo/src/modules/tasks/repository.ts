@@ -12,8 +12,7 @@
  * Keep boundary concerns out of this file. Procedure routers decide caller
  * actionable errors from returned values.
  */
-import type { Sql } from "../../orpc-runtime/deps";
-import { UnexpectedInternalError } from "../../orpc-runtime/internal-errors";
+import { UnexpectedInternalError, type Sql } from "../../orpc-runtime";
 import type { Task } from "./schemas";
 
 export function createRepository(sql: Sql) {

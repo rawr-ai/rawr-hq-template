@@ -143,7 +143,7 @@ We are optimizing for low-decision agent navigation. Predictable structure reduc
 What should be mandatory in base package dependencies, and what belongs on package root exports?
 
 ### Decision
-`logger` is mandatory in the shared base dependency contract for domain packages (`BaseDeps` in `@rawr/orpc-standards`).
+`logger` is mandatory in the shared base dependency contract for domain packages (`BaseDeps` in `@rawr/hq-sdk`).
 
 Package root exports are boundary-only by default:
 

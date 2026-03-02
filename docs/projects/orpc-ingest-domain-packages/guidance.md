@@ -131,7 +131,7 @@ Not required in this phase:
 Use context/middleware at the level where each concern actually belongs:
 
 - Initial context (`BaseContext`) carries `deps` at package boundary.
-- `deps` should extend shared `BaseDeps` from `@rawr/orpc-standards` (mandatory `logger`).
+- `deps` should extend shared `BaseDeps` from `@rawr/hq-sdk` (mandatory `logger`).
 - Module middleware injects module-local repos/services into execution context.
 - Package-level middleware should be used for real runtime concerns (auth, tracing, tenant/session, transaction/request scope), not for aliasing `deps` fields.
 - Keep shared ORPC setup in `orpc-runtime/module.ts` (context baseline) and reusable middleware definitions in `orpc-runtime/middleware/with-*.ts`.

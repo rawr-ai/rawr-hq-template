@@ -9,8 +9,8 @@
  * Consumers should import `createClient` from package root (`index.ts`), not
  * deep-link to this file directly unless explicitly needed for testing.
  */
-import { defineDomainPackage } from "@rawr/orpc-standards";
-import type { Deps } from "./orpc-runtime/deps";
+import { defineDomainPackage } from "@rawr/hq-sdk";
+import type { Deps } from "./orpc-runtime";
 import { router } from "./router";
 
 const domain = defineDomainPackage(router);

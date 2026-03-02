@@ -6,7 +6,7 @@
       "name": "rawr-hq-template",
       "dependencies": {
         "@rawr/core": "workspace:*",
-        "@rawr/orpc-standards": "workspace:*",
+        "@rawr/hq-sdk": "workspace:*",
         "@rawr/support-example": "workspace:*",
       },
       "devDependencies": {
@@ -175,7 +175,7 @@
       "dependencies": {
         "@orpc/contract": "^1.13.5",
         "@orpc/server": "^1.13.5",
-        "@rawr/orpc-standards": "workspace:*",
+        "@rawr/hq-sdk": "workspace:*",
         "typebox": "^1.0.81",
       },
       "devDependencies": {
@@ -186,10 +186,23 @@
       "name": "@rawr/hq",
       "dependencies": {
         "@rawr/agent-sync": "workspace:*",
+        "@rawr/core": "workspace:*",
+        "@rawr/journal": "workspace:*",
         "@rawr/security": "workspace:*",
       },
       "devDependencies": {
         "@types/bun": "^1.2.10",
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/hq-sdk": {
+      "name": "@rawr/hq-sdk",
+      "dependencies": {
+        "@orpc/contract": "^1.13.5",
+        "@orpc/server": "^1.13.5",
+        "typebox": "^1.0.81",
+      },
+      "devDependencies": {
         "typescript": "^5.9.3",
       },
     },
@@ -204,17 +217,6 @@
       "name": "@rawr/orpc-client",
       "dependencies": {
         "@orpc/client": "^1.13.5",
-      },
-      "devDependencies": {
-        "typescript": "^5.9.3",
-      },
-    },
-    "packages/orpc-standards": {
-      "name": "@rawr/orpc-standards",
-      "dependencies": {
-        "@orpc/contract": "^1.13.5",
-        "@orpc/server": "^1.13.5",
-        "typebox": "^1.0.81",
       },
       "devDependencies": {
         "typescript": "^5.9.3",
@@ -248,7 +250,7 @@
       "dependencies": {
         "@orpc/contract": "^1.13.5",
         "@orpc/server": "^1.13.5",
-        "@rawr/orpc-standards": "workspace:*",
+        "@rawr/hq-sdk": "workspace:*",
         "typebox": "^1.0.81",
       },
       "devDependencies": {
@@ -750,11 +752,11 @@
 
     "@rawr/hq": ["@rawr/hq@workspace:packages/hq"],
 
+    "@rawr/hq-sdk": ["@rawr/hq-sdk@workspace:packages/hq-sdk"],
+
     "@rawr/journal": ["@rawr/journal@workspace:packages/journal"],
 
     "@rawr/orpc-client": ["@rawr/orpc-client@workspace:packages/orpc-client"],
-
-    "@rawr/orpc-standards": ["@rawr/orpc-standards@workspace:packages/orpc-standards"],
 
     "@rawr/plugin-hello": ["@rawr/plugin-hello@workspace:plugins/cli/hello"],
 
