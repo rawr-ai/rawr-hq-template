@@ -13,7 +13,7 @@ import { defineDomainPackage } from "@rawr/orpc-standards";
 import type { Deps } from "./orpc-runtime/deps";
 import { router } from "./router";
 
-export const domain = defineDomainPackage(router);
+const domain = defineDomainPackage(router);
 
 export function createClient(deps: Deps) {
   return domain.createClient(deps);
