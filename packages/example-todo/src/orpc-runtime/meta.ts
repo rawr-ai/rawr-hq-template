@@ -26,11 +26,3 @@ export function procedure(meta: Pick<ProcedureMeta, "idempotent">) {
     ...meta,
   });
 }
-
-export function isMutatingProcedure(meta: unknown): boolean {
-  if (typeof meta !== "object" || meta === null) {
-    return false;
-  }
-
-  return (meta as Partial<ProcedureMeta>).idempotent === false;
-}
