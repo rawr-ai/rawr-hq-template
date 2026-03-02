@@ -79,5 +79,3 @@ export const contract = {
       ),
     ),
 };
-
-export type Contract = typeof contract;

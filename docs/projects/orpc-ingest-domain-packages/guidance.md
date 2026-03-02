@@ -53,10 +53,10 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
 Default scaffold naming is generic for singleton package surfaces and helpers.
 
 - package entry exports: `router`, `createClient`, `Router`, `Client`,
-- module contract exports: `contract`, `Contract`,
+- module contract exports: `contract`,
 - module router exports: `router`,
-- module repository exports: `createRepository`, `Repository`,
-- ORPC runtime helper names: `procedure`, `ProcedureMeta`, `SHARED_META`.
+- module repository exports: `createRepository`,
+- ORPC runtime helper names: `procedure` (and only helpers used outside the defining file).
 
 Use local generic names inside each module. When importing multiple modules into one file, alias at the import site for disambiguation.
 
@@ -66,6 +66,12 @@ import { contract as tasksContract } from "../tasks/contract";
 import { contract as tagsContract } from "../tags/contract";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 ```
+
+Minimal-export rule:
+
+- export only symbols consumed by another file/package boundary.
+- do not export convenience type aliases (`Contract`, `Repository`) by default.
+- do not export internal constants/types from runtime helpers unless another file imports them.
 
 ## Public Export Surface
 

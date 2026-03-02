@@ -35,5 +35,3 @@ export function createRepository(sql: Sql) {
     },
   };
 }
-
-export type Repository = ReturnType<typeof createRepository>;

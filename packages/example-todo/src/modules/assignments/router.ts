@@ -4,7 +4,7 @@
  * @remarks
  * This file follows the standard module-router structure used in this package:
  * 1) create module implementer (`os`) from the module contract,
- * 2) attach package base context and optional module middleware,
+ * 2) attach package context and optional module middleware,
  * 3) implement handlers from `os.<procedure>.handler(...)`,
  * 4) export plain-object `router`.
  *
