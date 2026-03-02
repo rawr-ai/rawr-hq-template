@@ -12,7 +12,7 @@
  */
 export { createClient, domain, type Client } from "./client";
 export { router, type Router } from "./router";
-export type { Clock, Deps, Logger, Sql } from "./orpc-runtime/deps";
+export type { Clock, Deps, Sql } from "./orpc-runtime/deps";
 export type { Assignment } from "./modules/assignments/schemas";
 export type { Tag } from "./modules/tags/schemas";
 export type { Task } from "./modules/tasks/schemas";
