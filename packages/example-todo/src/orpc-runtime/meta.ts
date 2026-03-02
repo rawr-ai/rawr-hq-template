@@ -11,12 +11,12 @@
  */
 import { oc } from "@orpc/contract";
 
-export const SHARED_META = {
+const SHARED_META = {
   domain: "todo",
   audience: "internal",
 } as const;
 
-export type ProcedureMeta = typeof SHARED_META & {
+type ProcedureMeta = typeof SHARED_META & {
   idempotent: boolean;
 };
 

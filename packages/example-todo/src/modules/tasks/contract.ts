@@ -90,5 +90,3 @@ export const contract = {
     )
     .errors({ RESOURCE_NOT_FOUND }),
 };
-
-export type Contract = typeof contract;
