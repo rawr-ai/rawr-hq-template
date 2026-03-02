@@ -18,6 +18,7 @@ Use one stable top-level structure across package sizes:
 - `src/modules/` for capability module contracts and implementations.
 
 Inside `src/orpc-runtime/`, `context.ts` is an always-present scaffold slot.
+Inside `src/orpc-runtime/`, `module.ts` is an always-present scaffold slot.
 
 Do not use `src/boundary/` as the internal scaffolding folder name; it overloads
 public-boundary and runtime-boundary semantics.
@@ -44,7 +45,7 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
   ```
 - **Contract-router builder**: optional oRPC builder form `oc.errors(...).router({...})`.
   We are not using this by default in `example-todo`.
-- **Module implementation router**: server router exported from `modules/<name>/router.ts` via `implement(contract)`.
+- **Module implementation router**: server router exported from `modules/<name>/router.ts` via `createModule(contract)`.
 - **Package composed router**: plain object router exported from `src/router.ts` and consumed by `createRouterClient`.
 - **Shared ORPC runtime scaffolding**: reusable module-facing internals under `src/orpc-runtime/*` (base context, deps contracts, shared metadata, shared error definitions).
 
@@ -87,12 +88,13 @@ Package root (`src/index.ts`) is boundary-only by default.
 Each module should split boundary definition from behavior:
 
 - `contract.ts`: procedure names, input/output schemas, `.errors(...)` declarations.
-- `router.ts`: handler implementation only (`implement(contract)`), context wiring, orchestration logic.
+- `router.ts`: handler implementation only (`createModule(contract)`), module-local wiring, orchestration logic.
 
 Rules:
 
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
+- Start each module router from `createModule(contract)` in `orpc-runtime/module.ts`.
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
@@ -131,6 +133,7 @@ Use context/middleware at the level where each concern actually belongs:
 - `deps` should extend shared `BaseDeps` from `@rawr/orpc-standards` (mandatory `logger`).
 - Module middleware injects module-local repos/services into execution context.
 - Package-level middleware should be used for real runtime concerns (auth, tracing, tenant/session, transaction/request scope), not for aliasing `deps` fields.
+- Prefer wiring shared ORPC setup once in `orpc-runtime/module.ts` rather than repeating it per module router.
 
 Practical defaults:
 

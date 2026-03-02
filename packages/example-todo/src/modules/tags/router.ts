@@ -13,8 +13,7 @@
  * execution setup + handler behavior only.
  */
 import { randomUUID } from "node:crypto";
-import { implement } from "@orpc/server";
-import { type BaseContext } from "../../orpc-runtime/context";
+import { createModule } from "../../orpc-runtime/module";
 import { contract } from "./contract";
 import { createRepository } from "./repository";
 import { type Tag } from "./schemas";
@@ -23,11 +22,11 @@ import { type Tag } from "./schemas";
  * @remarks
  * Module implementer setup (always present).
  *
- * Use this block to bind package context and inject module-scoped dependencies
- * (for example repository adapters). Keep business branching out of this block.
+ * `createModule(contract)` already applies package context setup.
+ * Use this block to inject module-scoped dependencies (for example repository adapters).
+ * Keep business branching out of this block.
  */
-const os = implement(contract)
-  .$context<BaseContext>()
+const os = createModule(contract)
   .use(({ context, next }) =>
     next({
       context: {
