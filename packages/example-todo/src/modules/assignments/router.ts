@@ -13,8 +13,7 @@
  * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
-import { implement } from "@orpc/server";
-import { type BaseContext } from "../../orpc-runtime/context";
+import { createModule } from "../../orpc-runtime/module";
 import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 import { contract } from "./contract";
@@ -25,12 +24,11 @@ import { type Assignment } from "./schemas";
  * @remarks
  * Module implementer setup (always present).
  *
- * Use this block to bind package context and inject module-scoped dependencies
- * (assignment repo + peer module repos for composition). Keep business
- * branching out of this block.
+ * `createModule(contract)` already applies package context setup.
+ * Use this block to inject module-scoped dependencies (assignment repo + peer module
+ * repos for composition). Keep business branching out of this block.
  */
-const os = implement(contract)
-  .$context<BaseContext>()
+const os = createModule(contract)
   .use(({ context, next }) =>
     next({
       context: {
