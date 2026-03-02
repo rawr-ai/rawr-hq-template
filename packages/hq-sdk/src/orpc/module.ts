@@ -1,6 +1,6 @@
 import type { AnyContractRouter } from "@orpc/contract";
 import { implement } from "@orpc/server";
-import type { BaseDeps } from "./deps";
+import type { BaseDeps } from "../deps";
 
 export interface DomainContext<TDeps extends BaseDeps = BaseDeps> {
   deps: TDeps;
