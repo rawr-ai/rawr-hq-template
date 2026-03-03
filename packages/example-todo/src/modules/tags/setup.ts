@@ -1,13 +1,13 @@
 /**
- * @fileoverview Task module runtime setup.
+ * @fileoverview Tag module runtime setup.
  *
  * @remarks
  * This file owns module setup only:
  * - start from the package-level implementer base
- * - inject task module dependencies/context
+ * - inject tag module dependencies/context
  * - export configured `os` for handler implementations
  */
-import { implementModuleRouter } from "../../orpc-runtime/base";
+import { implementModuleRouter } from "../../orpc/base";
 import { contract } from "./contract";
 import { createRepository } from "./repository";
 

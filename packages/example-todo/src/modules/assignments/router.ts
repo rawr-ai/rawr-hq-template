@@ -2,17 +2,17 @@
  * @fileoverview Assignments module router implementation.
  *
  * @remarks
- * Module setup lives in `base.ts`.
+ * Module setup lives in `setup.ts`.
  * This file owns concrete handler implementations and exports plain-object `router`.
  *
  * @agents
  * `contract.ts` owns boundary shape (input/output/errors/meta).
- * `base.ts` owns module setup.
+ * `setup.ts` owns module setup.
  * This module is composite; cross-module orchestration belongs in handlers here.
  * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
-import { os } from "./base";
+import { os } from "./setup";
 import { type Assignment } from "./schemas";
 
 /**
