@@ -7,28 +7,34 @@
 - Hard architectural locks belong in `DECISIONS.md`.
 - Example progression (invariants + axes) belongs in `examples.md`.
 
+## Agent Click Path (Recommended)
+
+If you are an agent arriving to implement business logic fast:
+
+- **Start at the boundary choke point**: `src/orpc/router.ts` (global middleware + base context/meta)
+- **Then go to the domain map**: `src/modules/router.ts` (what modules exist and how they’re composed)
+- **Then live in a module**: `src/modules/<name>/{contract,setup,router}.ts`
+
+If you are wiring exports/packaging: `src/index.ts`, `src/client.ts`, and `src/router.ts` (public alias).
+
 ## Package Shape (Always-On)
 
 Use one stable top-level structure across package sizes:
 
 - `src/index.ts` for public package exports only,
 - `src/client.ts` for in-process client construction only,
-- `src/router.ts` for package router composition only,
-- `src/orpc-runtime/` for shared ORPC runtime scaffolding,
-- `src/modules/` for capability module contracts and implementations.
+- `src/router.ts` for the stable public router export (`@rawr/<pkg>/router`) via re-export,
+- `src/orpc/` for package-boundary runtime scaffolding (base context/meta + global middleware + boundary-wrapped router),
+- `src/modules/` for domain modules and domain router composition.
 
-Inside `src/orpc-runtime/`, `context.ts` is an always-present scaffold slot.
-Inside `src/orpc-runtime/`, `module.ts` is an always-present scaffold slot.
-Inside `src/orpc-runtime/`, `middleware/` is the always-on slot for package-global middleware concerns.
-
-Do not use `src/boundary/` as the internal scaffolding folder name; it overloads
-public-boundary and runtime-boundary semantics.
+Within `src/orpc/`, `middleware/` is the always-on slot for package-global middleware concerns.
+Within `src/modules/`, `router.ts` is the always-on slot for domain composition.
 
 ## Scaffold Determinism Rule
 
 When choosing between "minimal now" vs "predictable later", prefer predictable scaffold slots for core structure.
 
-- Keep always-present structural files that are expected as a package grows (for example `orpc-runtime/context.ts`), even if initially thin.
+- Keep always-present structural files that are expected as a package grows (for example `src/orpc/base.ts`, `src/orpc/router.ts`, `src/modules/router.ts`), even if initially thin.
 - Do not push structural timing decisions ("add this file later") onto agents for core package layout.
 - Use templates/CLI shape flags to vary content depth, not to vary foundational topology.
 
@@ -46,9 +52,11 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
   ```
 - **Contract-router builder**: optional oRPC builder form `oc.errors(...).router({...})`.
   We are not using this by default in `example-todo`.
-- **Module implementation router**: server router exported from `modules/<name>/router.ts` via `createModule(contract)`.
-- **Package composed router**: plain object router exported from `src/router.ts` and consumed by `createRouterClient`.
-- **Shared ORPC runtime scaffolding**: reusable module-facing internals under `src/orpc-runtime/*` (base context, deps contracts, shared metadata, shared error definitions).
+- **Module setup**: context injection exported from `modules/<name>/setup.ts` (repos/services derived from `context.deps`).
+- **Module implementation router**: oRPC server router exported from `modules/<name>/router.ts` via `os.router({ ... })`.
+- **Domain composed router**: plain-object router exported from `src/modules/router.ts` (tree of module routers).
+- **Boundary-wrapped router**: final router exported from `src/orpc/router.ts` after global middleware is applied once.
+- **Shared oRPC scaffolding**: reusable internals under `src/orpc/*` (base context, deps contracts, shared metadata, shared error definitions, shared middleware).
 
 ## Naming Conventions
 
@@ -80,22 +88,23 @@ Minimal-export rule:
 Package root (`src/index.ts`) is boundary-only by default.
 
 - Export: `createClient`, `router`, `Client`, `Router`.
-- Do not export runtime internals (`orpc-runtime/*`) from root.
+- Do not export runtime internals (`orpc/*`) from root.
 - Do not export module schemas/contracts/repositories from root by default.
 - Do not keep compatibility aliases in examples unless explicitly required by a migration plan.
 
-## Module Shape: `contract.ts` + `router.ts`
+## Module Shape: `contract.ts` + `setup.ts` + `router.ts`
 
 Each module should split boundary definition from behavior:
 
 - `contract.ts`: procedure names, input/output schemas, `.errors(...)` declarations.
-- `router.ts`: handler implementation only (`createModule(contract)`), module-local wiring, orchestration logic.
+- `setup.ts`: module runtime injection only (middleware extending execution context; repos/services).
+- `router.ts`: handler implementation only; exports the contract-enforced module router.
 
 Rules:
 
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
-- Start each module router from `createModule(contract)` in `orpc-runtime/module.ts`.
+- Start each module setup from the package implementer base in `src/orpc/base.ts` (`implementModuleRouter(contract)`).
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
@@ -112,9 +121,9 @@ Current required baseline:
 
 Recommended pattern:
 
-- define shared package metadata once in `orpc-runtime/meta.ts`,
-- expose a helper (for example `procedure({ idempotent })`) that starts procedure chains,
-- keep module contracts explicit by setting `idempotent` on every procedure.
+- define base metadata defaults once in `src/orpc/base.ts`,
+- keep module contracts explicit by setting `idempotent` on every procedure,
+- read metadata in middleware via `procedure["~orpc"].meta` (oRPC runtime metadata surface).
 
 Why this baseline:
 
@@ -130,12 +139,12 @@ Not required in this phase:
 
 Use context/middleware at the level where each concern actually belongs:
 
-- Initial context (`BaseContext`) carries `deps` at package boundary.
+- Initial context (`InitialContext`) carries `deps` at package boundary (`src/orpc/base.ts`).
 - `deps` should extend shared `BaseDeps` from `@rawr/hq-sdk` (mandatory `logger`).
-- Module middleware injects module-local repos/services into execution context.
-- Package-level middleware should be used for real runtime concerns (auth, tracing, tenant/session, transaction/request scope), not for aliasing `deps` fields.
-- Keep shared ORPC setup in `orpc-runtime/module.ts` (context baseline) and reusable middleware definitions in `orpc-runtime/middleware/with-*.ts`.
-- Apply package-wide middleware from each module implementer (`createModule(contract).use(withX)`), so ORPC keeps concrete per-module typing.
+- Module setup injects module-local repos/services into execution context (`modules/<name>/setup.ts`).
+- Package-global middleware should be used for real cross-cutting concerns (auth, tracing, tenant/session, request scope), not for aliasing `deps` fields.
+- Keep reusable middleware definitions in `src/orpc/middleware/with-*.ts`.
+- Apply package-global middleware **once** at the boundary choke point (`src/orpc/router.ts`) to avoid duplication and drift.
 
 Practical defaults:
 
@@ -146,9 +155,9 @@ Practical defaults:
 
 Use package-global middleware for cross-cutting behavior that should apply to every module router automatically.
 
-- Define one concern per file in `src/orpc-runtime/middleware/` (for example `with-read-only-mode.ts`, `with-telemetry.ts`).
-- Compose package-wide middleware in each module router immediately after `createModule(contract)`:
-  `createModule(contract).use(withTelemetry).use(withReadOnlyMode)`.
+- Define one concern per file in `src/orpc/middleware/` (for example `with-read-only-mode.ts`, `with-telemetry.ts`).
+- Compose package-wide middleware once in `src/orpc/router.ts`:
+  `middlewareBuilder.use(withTelemetry).use(withReadOnlyMode).router(modulesRouter)`.
 - Keep module routers focused on module-local repo/service wiring and handlers.
 - Read-only policy should use procedure metadata (`idempotent`) plus runtime config (`deps.runtime.readOnly`) to block mutations.
 - Telemetry middleware should log and rethrow; it must not remap boundary errors.
@@ -217,7 +226,7 @@ Boundary rule still applies either way: procedures expose ORPC boundary errors, 
 
 Use sharing-based placement:
 
-- `orpc-runtime/errors.ts` for reusable cross-module boundary error definitions,
+- `orpc/errors.ts` for reusable cross-module boundary error definitions,
 - module-specific boundary errors inline in `modules/<name>/contract.ts`,
 - procedure-local errors only when truly local to one procedure.
 
