@@ -1,5 +1,8 @@
 # Decisions
 
+This file is intentionally small: it records only **hard boundaries / explicit choices**.
+Operational guidance belongs in `guidance.md`; worked walk-throughs belong in `examples.md`.
+
 ## Decision #1 (2026-02-25)
 
 ### Question
@@ -15,17 +18,24 @@ This domain package is also not a public API surface. External/OpenAPI exposure 
 
 The remaining value of package-level contract extraction is drift/snapshot tooling, which is valid but intentionally deferred.
 
-## Decision #2 (2026-02-26)
+## Decision #2 (2026-03-03)
 
 ### Question
-How should we standardize package structure for ORPC domain examples and scaffolding?
+What is the canonical domain-package topology (and choke points) for agents?
 
 ### Decision
-Use pre-structured packages with one consistent top-level layout across size tiers:
+Use a two-lane structure with **two distinct router concerns**:
 
-- always-present `orpc-runtime/`
-- always-present `modules/`
-- stable root boundary surface via `index.ts`, `client.ts`, and `router.ts`
+- **Lane A — package boundary (`src/orpc/`)**: base context + base metadata + global middleware + boundary-wrapped router
+- **Lane B — domain surface (`src/modules/`)**: modules + domain router composition
+
+Router responsibilities are fixed:
+
+- `src/modules/router.ts`: **domain composition** (what procedures exist + hierarchy)
+- `src/orpc/router.ts`: **boundary choke point** (global middleware applied once)
+- `src/router.ts`: **stable public alias** for `@rawr/<pkg>/router` (re-export only)
+
+Within `src/orpc/`, keep package-global middleware in `src/orpc/middleware/*`.
 
 ### Why
 We are optimizing for rapid comprehension and predictable navigation for both humans and AI agents. Structural drift by package size creates unnecessary cognitive overhead.
@@ -65,13 +75,14 @@ This keeps boundary contracts focused on caller behavior, reduces repetitive try
 ## Decision #5 (2026-03-01)
 
 ### Question
-Within the standardized `modules/` layout, should modules stay router-only or use an explicit contract/implementation split?
+Within `src/modules/`, what is the canonical module split?
 
 ### Decision
 Adopt module-level hybrid contract-first:
 
-- each module defines `contract.ts` (input/output/errors/procedure shape),
-- each module defines `router.ts` that implements that contract via `implement(contract)`,
+- each module defines `contract.ts` (boundary: input/output/errors/metadata),
+- each module defines `setup.ts` (runtime injection: context middleware, repos/services),
+- each module defines `router.ts` (behavior: handlers + contract-enforced router export),
 - package boundary remains router-client-first (`router` + `createClient`).
 
 ### Why
@@ -86,69 +97,17 @@ It also makes “what is boundary shape” vs “what is runtime behavior” obv
 - Router-first alternative: <https://orpc.dev/docs/router-first/procedure-first>
 - Monorepo setup/hybrid context: <https://orpc.dev/docs/advanced/monorepo-setup>
 
-## Decision #6 (2026-03-02)
+## Decision #6 (2026-03-03)
 
 ### Question
-Should domain package scaffolding use domain-prefixed public names (for example `createTodoClient`) or generic singleton names?
+How do we represent nested modules while keeping composition obvious and oRPC-native?
 
 ### Decision
-Use generic singleton naming by default for package scaffolding:
+Nested modules are **folders under a module** and are composed explicitly (no auto-discovery):
 
-- package boundary exports: `router`, `createClient`, `Router`, `Client`,
-- internal singleton helpers/types can stay generic (for example `Deps`, `base`, `procedure`) without domain prefixes.
-
-Use domain-specific prefixes only when intentional discrimination is needed.
-
-### Why
-Each domain package exposes one primary boundary surface. Generic names reduce repeated naming noise, keep scaffolding uniform across packages, and let consumers alias at import sites where disambiguation is needed.
-
-## Decision #7 (2026-03-02)
-
-### Question
-How should we name and place shared ORPC scaffolding so that a fresh agent can immediately distinguish public package boundary from internal runtime wiring?
-
-### Decision
-Use this fixed file-placement model in domain package scaffolding:
-
-- `src/index.ts`: package export surface only,
-- `src/client.ts`: in-process client factory only,
-- `src/router.ts`: package-composed router only,
-- `src/modules/*`: capability contracts/implementations only,
-- `src/orpc-runtime/*`: shared ORPC runtime scaffolding only.
-
-Do not use `boundary/` as the folder name for shared internal ORPC scaffolding.
+- a parent module owns composition of its submodules (import + mount in `router.ts`),
+- boundary wrapping remains at `src/orpc/router.ts` (global middleware does not move),
+- module setup/injection remains local (typically in each module’s `setup.ts`).
 
 ### Why
-`boundary` overloads two meanings (public package boundary vs internal ORPC procedure runtime). `orpc-runtime` removes that ambiguity and improves both human and agent navigation.
-
-## Decision #8 (2026-03-02)
-
-### Question
-When scaffolding package structure for agents, should we favor minimal files or deterministic always-present structure?
-
-### Decision
-Favor deterministic always-present structure.
-
-Concretely:
-
-- keep expected scaffold slots even when initially thin (for example `src/orpc-runtime/context.ts`),
-- avoid conditional "create this later if needed" structural guidance for core package shape.
-
-### Why
-We are optimizing for low-decision agent navigation. Predictable structure reduces branching logic in prompts, lowers documentation burden, and makes extension behavior obvious from topology.
-
-## Decision #9 (2026-03-02)
-
-### Question
-What should be mandatory in base package dependencies, and what belongs on package root exports?
-
-### Decision
-`logger` is mandatory in the shared base dependency contract for domain packages (`BaseDeps` in `@rawr/hq-sdk`).
-
-Package root exports are boundary-only by default:
-
-- export boundary call surface (`createClient`, `router`) and boundary types (`Client`, `Router`),
-- do not export runtime internals, module schemas, or compatibility aliases from root by default.
-
-### Why
-Mandatory logger ensures every package has baseline observability capability. Boundary-only root exports prevent surface creep and keep package intent clear for both callers and agents.
+This keeps the “agent drill-down” model fractal without introducing implicit wiring, while preserving one global middleware choke point.

@@ -12,16 +12,22 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 
 ## Invariants (must not change from n=1 to n=∞)
 
-- Package boundary is always `src/index.ts` + `src/client.ts` + `src/router.ts`; module internals stay `contract.ts` + `router.ts`.
-- Module-level `contract.ts` + `router.ts` split (hybrid contract-first implementation).
+- Package exports are boundary-only (`src/index.ts` exports `createClient`, `router`, `Client`, `Router`).
+- Stable public router import remains available via `@rawr/<pkg>/router` (`src/router.ts` is a thin re-export).
+- Two-lane topology:
+  - **Lane A (`src/orpc/`)**: base context/meta, package-global middleware, boundary-wrapped router.
+  - **Lane B (`src/modules/`)**: domain composition + modules.
+- Router responsibilities are distinct and fixed:
+  - `src/modules/router.ts` is the domain map (composition).
+  - `src/orpc/router.ts` is the global middleware choke point (applied once).
+- Module internals stay `contract.ts` + `setup.ts` + `router.ts`.
+- Module-level hybrid contract-first: `contract.ts` is boundary shape; `router.ts` is handler behavior.
 - Transport-agnostic internals (no HTTP concerns inside package).
-- Package root exports stay boundary-only (`createClient`, `router`, `Client`, `Router`).
 - Procedures declare explicit ORPC boundary errors for caller-actionable outcomes.
 - Expected business states are modeled as values inside the boundary.
 - Procedures carry shared metadata (`domain`, `audience`) plus explicit per-procedure `idempotent`.
-- Shared ORPC runtime scaffolding lives in `src/orpc-runtime/*`, not `src/boundary/*`.
-- `src/orpc-runtime/context.ts` is always present as a stable scaffold slot.
-- `src/orpc-runtime/middleware/` is always present for package-global cross-cutting concerns.
+- Shared oRPC scaffolding lives in `src/orpc/*`.
+- `src/orpc/middleware/` is always present for package-global cross-cutting concerns.
 - Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
 
@@ -37,7 +43,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 
 - Cross-module sharing is not golden-only; it is normal by intermediate.
 - Golden-path value is disciplined sharing under high dependency density, not introducing sharing for the first time.
-- Structure is not an axis in this phase; structure stays fixed (`index.ts` + `client.ts` + `router.ts` + `orpc-runtime/` + `modules/`).
+- Structure is not an axis in this phase; structure stays fixed (`index.ts` + `client.ts` + `router.ts` + `orpc/` + `modules/`).
 - Structure is deterministic for scaffolding; avoid conditional "add this core file later" guidance.
 - Module-specific boundary errors are defined inline in `contract.ts` (not separate module `errors.ts` files).
 - Metadata should stay minimal and operational in this phase (`idempotent` required, `sideEffects` deferred).
@@ -69,23 +75,29 @@ packages/example-minimal/src/
 ├── index.ts
 ├── client.ts
 ├── router.ts
-├── orpc-runtime/
-│   ├── context.ts
-│   ├── module.ts
+├── orpc/
+│   ├── base.ts
+│   ├── router.ts
 │   ├── middleware/
 │   │   ├── with-read-only-mode.ts
 │   │   └── with-telemetry.ts
 │   ├── deps.ts
-│   ├── internal-errors.ts
 │   ├── errors.ts
-│   └── meta.ts
+│   └── internal-errors.ts
 └── modules/
+    ├── router.ts
     └── tasks/
         ├── contract.ts
+        ├── setup.ts
         ├── router.ts
         ├── repository.ts
         └── schemas.ts
 ```
+
+Example change at this scale (small): add a new procedure.
+
+- Touch `modules/tasks/contract.ts` (add `.meta({ idempotent })`, `.input`, `.output`, `.errors`)
+- Touch `modules/tasks/router.ts` (implement handler and include it in `os.router({ ... })`)
 
 ### 2) Current / Intermediate
 
@@ -94,33 +106,42 @@ packages/example-todo/src/
 ├── index.ts
 ├── client.ts
 ├── router.ts
-├── orpc-runtime/
-│   ├── context.ts
-│   ├── module.ts
+├── orpc/
+│   ├── base.ts
+│   ├── router.ts
 │   ├── middleware/
 │   │   ├── with-read-only-mode.ts
 │   │   └── with-telemetry.ts
 │   ├── deps.ts
-│   ├── internal-errors.ts
 │   ├── errors.ts
-│   └── meta.ts
+│   └── internal-errors.ts
 └── modules/
+    ├── router.ts
     ├── tasks/
     │   ├── contract.ts
+    │   ├── setup.ts
     │   ├── router.ts
     │   ├── repository.ts
     │   └── schemas.ts
     ├── tags/
     │   ├── contract.ts
+    │   ├── setup.ts
     │   ├── router.ts
     │   ├── repository.ts
     │   └── schemas.ts
     └── assignments/
         ├── contract.ts
+        ├── setup.ts
         ├── router.ts
         ├── repository.ts
         └── schemas.ts
 ```
+
+Example change at this scale (medium): add a new module.
+
+- Add `modules/projects/{contract,setup,router,repository,schemas}.ts`
+- Wire it into `modules/router.ts` (import + add to exported object)
+- No changes needed in `orpc/router.ts` unless you’re changing package-global middleware
 
 ### 3) Golden Path
 
@@ -129,34 +150,43 @@ packages/example-golden/src/
 ├── index.ts
 ├── client.ts
 ├── router.ts
-├── orpc-runtime/
-│   ├── context.ts
-│   ├── module.ts
+├── orpc/
+│   ├── base.ts
+│   ├── router.ts
 │   ├── middleware/
 │   │   ├── with-read-only-mode.ts
 │   │   ├── with-telemetry.ts
 │   │   └── with-auth.ts
 │   ├── deps.ts
-│   ├── internal-errors.ts
 │   ├── errors.ts
-│   └── meta.ts
+│   └── internal-errors.ts
 └── modules/
     ├── shared/
     │   ├── schemas.ts
     │   ├── services.ts
     │   └── invariants.ts
+    ├── router.ts
     ├── tasks/
     │   ├── contract.ts
+    │   ├── setup.ts
     │   ├── router.ts
     │   ├── repository.ts
     │   └── schemas.ts
+    │   └── comments/
+    │       ├── contract.ts
+    │       ├── setup.ts
+    │       ├── router.ts
+    │       ├── repository.ts
+    │       └── schemas.ts
     ├── tags/
     │   ├── contract.ts
+    │   ├── setup.ts
     │   ├── router.ts
     │   ├── repository.ts
     │   └── schemas.ts
     ├── assignments/
     │   ├── contract.ts
+    │   ├── setup.ts
     │   ├── router.ts
     │   ├── repository.ts
     │   └── schemas.ts
