@@ -7,7 +7,7 @@
  * - input/output schemas,
  * - caller-actionable ORPC errors.
  *
- * Implementation belongs in `router.ts` via `implement(contract)`.
+ * Module setup belongs in `base.ts`; handler implementation belongs in `router.ts`.
  *
  * @agents
  * Extend task capability by updating this contract first, then implement handlers
@@ -15,12 +15,12 @@
  */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { contractBase } from "../../orpc-runtime/base";
+import { contractBuilder as oc } from "../../orpc-runtime/base";
 import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
 import { TaskSchema } from "./schemas";
 
 export const contract = {
-  create: contractBase.meta({ idempotent: false })
+  create: oc.meta({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -69,7 +69,7 @@ export const contract = {
         ),
       },
     }),
-  get: contractBase.meta({ idempotent: true })
+  get: oc.meta({ idempotent: true })
     .input(
       schema(
         Type.Object(
