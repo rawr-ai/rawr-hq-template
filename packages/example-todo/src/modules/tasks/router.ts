@@ -54,8 +54,8 @@ const get = os.get.handler(async ({ context, input, errors }) => {
   return task;
 });
 
-/** Plain object router export by package convention (no `.router(...)` wrapper). */
-export const router = {
+/** Contract-enforced module router (fails typecheck if contract and router drift). */
+export const router = os.router({
   create,
   get,
-};
+});
