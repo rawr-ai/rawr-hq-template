@@ -13,11 +13,19 @@
 import { router as assignments } from "./modules/assignments/router";
 import { router as tags } from "./modules/tags/router";
 import { router as tasks } from "./modules/tasks/router";
+import { middlewareBuilder } from "./orpc-runtime/base";
+import { withReadOnlyMode } from "./orpc-runtime/middleware/with-read-only-mode";
+import { withTelemetry } from "./orpc-runtime/middleware/with-telemetry";
 
-export const router = {
+const rawRouter = {
   tasks,
   tags,
   assignments,
 };
+
+export const router = middlewareBuilder
+  .use(withTelemetry)
+  .use(withReadOnlyMode)
+  .router(rawRouter);
 
 export type Router = typeof router;

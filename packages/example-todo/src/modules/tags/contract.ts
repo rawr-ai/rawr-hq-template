@@ -6,16 +6,17 @@
  * Keep this file declarative: no persistence logic or orchestration.
  *
  * @agents
- * Add/modify procedures here first. Then implement behavior in `router.ts`.
+ * Add/modify procedures here first. Module setup lives in `base.ts`, and
+ * handler behavior lives in `router.ts`.
  */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { contractBase } from "../../orpc-runtime/base";
+import { contractBuilder as oc } from "../../orpc-runtime/base";
 import { READ_ONLY_MODE } from "../../orpc-runtime/errors";
 import { TagSchema } from "./schemas";
 
 export const contract = {
-  create: contractBase.meta({ idempotent: false })
+  create: oc.meta({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -61,7 +62,7 @@ export const contract = {
         ),
       },
     }),
-  list: contractBase.meta({ idempotent: true })
+  list: oc.meta({ idempotent: true })
     .input(
       schema(
         Type.Object(

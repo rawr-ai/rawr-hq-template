@@ -2,49 +2,24 @@
  * @fileoverview Assignments module router implementation.
  *
  * @remarks
- * This file follows the standard module-router structure used in this package:
- * 1) create module implementer (`os`) from the module contract,
- * 2) attach package context and optional module middleware,
- * 3) implement handlers from `os.<procedure>.handler(...)`,
- * 4) export plain-object `router`.
+ * Module setup lives in `base.ts`.
+ * This file owns concrete handler implementations and exports plain-object `router`.
  *
  * @agents
+ * `contract.ts` owns boundary shape (input/output/errors/meta).
+ * `base.ts` owns module setup.
  * This module is composite; cross-module orchestration belongs in handlers here.
  * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
-import { createModule } from "../../orpc-runtime/base";
-import { withReadOnlyMode } from "../../orpc-runtime/middleware/with-read-only-mode";
-import { withTelemetry } from "../../orpc-runtime/middleware/with-telemetry";
-import { createRepository as createTagRepository } from "../tags/repository";
-import { createRepository as createTaskRepository } from "../tasks/repository";
-import { contract } from "./contract";
-import { createRepository as createAssignmentRepository } from "./repository";
+import { os } from "./base";
 import { type Assignment } from "./schemas";
 
 /**
- * @remarks
- * Module implementer setup (always present).
+ * SECTION: Module Procedure Implementations (Always Present)
  *
- * `createModule(contract)` applies package context setup.
- * Attach reusable package-wide middleware first (`withTelemetry`, `withReadOnlyMode`),
- * then add module-local dependency wiring.
- * Use this block to inject module-scoped dependencies (assignment repo + peer module
- * repos for composition). Keep business branching out of this block.
+ * Implement concrete procedure handlers below using `os.<procedure>.handler(...)`.
  */
-const os = createModule(contract)
-  .use(withTelemetry)
-  .use(withReadOnlyMode)
-  .use(({ context, next }) =>
-    next({
-      context: {
-        repo: createAssignmentRepository(context.deps.sql),
-        tasks: createTaskRepository(context.deps.sql),
-        tags: createTagRepository(context.deps.sql),
-      },
-    }),
-  );
-
 const assign = os.assign.handler(async ({ context, input, errors }) => {
   const task = await context.tasks.findById(input.taskId);
   if (!task) {
