@@ -6,13 +6,13 @@
  * Keep this file declarative: no persistence logic or orchestration.
  *
  * @agents
- * Add/modify procedures here first. Module setup lives in `base.ts`, and
+ * Add/modify procedures here first. Module setup lives in `setup.ts`, and
  * handler behavior lives in `router.ts`.
  */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { contractBuilder as oc } from "../../orpc-runtime/base";
-import { READ_ONLY_MODE } from "../../orpc-runtime/errors";
+import { contractBuilder as oc } from "../../orpc/base";
+import { READ_ONLY_MODE } from "../../orpc/errors";
 import { TagSchema } from "./schemas";
 
 export const contract = {

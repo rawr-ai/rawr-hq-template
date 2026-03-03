@@ -1,31 +1,8 @@
 /**
- * @fileoverview Package router assembly for the todo domain.
+ * @fileoverview Package router export for `@rawr/example-todo/router`.
  *
  * @remarks
- * Each module exports a plain-object `router`. This file composes those module
- * routers into the package-level plain-object router shape:
- * `client.tasks.*`, `client.tags.*`, `client.assignments.*`.
- *
- * @agents
- * This is package composition, not module implementation. Add/remove modules
- * here. Keep cross-module orchestration inside module handlers/services.
+ * Keep this file as the stable import surface for consumers. The authoritative
+ * oRPC boundary wrapper lives in `./orpc/router.ts`.
  */
-import { router as assignments } from "./modules/assignments/router";
-import { router as tags } from "./modules/tags/router";
-import { router as tasks } from "./modules/tasks/router";
-import { middlewareBuilder } from "./orpc-runtime/base";
-import { withReadOnlyMode } from "./orpc-runtime/middleware/with-read-only-mode";
-import { withTelemetry } from "./orpc-runtime/middleware/with-telemetry";
-
-const rawRouter = {
-  tasks,
-  tags,
-  assignments,
-};
-
-export const router = middlewareBuilder
-  .use(withTelemetry)
-  .use(withReadOnlyMode)
-  .router(rawRouter);
-
-export type Router = typeof router;
+export { router, type Router } from "./orpc/router";

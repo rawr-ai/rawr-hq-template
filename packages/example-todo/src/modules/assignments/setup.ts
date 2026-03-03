@@ -7,7 +7,7 @@
  * - inject assignment + dependent module repositories
  * - export configured `os` for handler implementations
  */
-import { implementModuleRouter } from "../../orpc-runtime/base";
+import { implementModuleRouter } from "../../orpc/base";
 import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 import { contract } from "./contract";

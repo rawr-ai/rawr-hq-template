@@ -1,4 +1,4 @@
-import type { Deps } from "../src/orpc-runtime/deps";
+import type { Deps } from "../src/orpc/deps";
 import type { Assignment } from "../src/modules/assignments/schemas";
 import type { Tag } from "../src/modules/tags/schemas";
 import type { Task } from "../src/modules/tasks/schemas";

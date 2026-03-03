@@ -3,7 +3,7 @@
  *
  * @remarks
  * Assignment is a composite module. This contract declares multi-entity
- * boundary behavior; setup is in `base.ts` and implementation in `router.ts`.
+ * boundary behavior; setup is in `setup.ts` and implementation in `router.ts`.
  *
  * @agents
  * Keep this contract focused on caller-visible shape. Cross-module access
@@ -11,8 +11,8 @@
  */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { contractBuilder as oc } from "../../orpc-runtime/base";
-import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc-runtime/errors";
+import { contractBuilder as oc } from "../../orpc/base";
+import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../orpc/errors";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
