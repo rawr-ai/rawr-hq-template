@@ -45,8 +45,8 @@ const list = os.list.handler(async ({ context }) => {
   return await context.repo.findAll();
 });
 
-/** Plain object router export by package convention (no `.router(...)` wrapper). */
-export const router = {
+/** Contract-enforced module router (fails typecheck if contract and router drift). */
+export const router = os.router({
   create,
   list,
-};
+});

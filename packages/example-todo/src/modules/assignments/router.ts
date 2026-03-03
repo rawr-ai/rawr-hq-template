@@ -72,8 +72,8 @@ const listForTask = os.listForTask.handler(async ({ context, input, errors }) =>
   return { task, tags };
 });
 
-/** Plain object router export by package convention (no `.router(...)` wrapper). */
-export const router = {
+/** Contract-enforced module router (fails typecheck if contract and router drift). */
+export const router = os.router({
   assign,
   listForTask,
-};
+});
