@@ -9,18 +9,13 @@
 import { oc, type ContractRouter } from "@orpc/contract";
 import { implement, os } from "@orpc/server";
 
-export type BaseMetadata = {
-  idempotent: boolean;
-  domain?: string;
-  audience?: string;
-};
+import type { BaseMetadata, InitialContext } from "./base";
+import { withTelemetry } from "./middleware/with-telemetry";
 
-export type InitialContext<TDeps> = {
-  deps: TDeps;
-};
+export type { BaseMetadata, InitialContext } from "./base";
 
-export type CreateOrpcKitOptions = {
-  baseMetadata: BaseMetadata;
+export type CreateOrpcKitOptions<TMeta extends BaseMetadata = BaseMetadata> = {
+  baseMetadata: TMeta;
 };
 
 /**
@@ -32,11 +27,19 @@ export type CreateOrpcKitOptions = {
  * - module contracts (via `oc`)
  * - module routers (via `implementModuleRouter`)
  */
-export function createOrpcKit<TDeps>(options: CreateOrpcKitOptions) {
-  const contractBuilder = oc.$meta<BaseMetadata>(options.baseMetadata);
-  const middlewareBuilder = os.$context<InitialContext<TDeps>>().$meta<BaseMetadata>(options.baseMetadata);
+export function createOrpcKit<TDeps, TMeta extends BaseMetadata = BaseMetadata>(
+  options: CreateOrpcKitOptions<TMeta>,
+) {
+  const contractBuilder = oc.$meta<TMeta>(options.baseMetadata);
 
-  function implementModuleRouter<TContract extends ContractRouter<BaseMetadata>>(contract: TContract) {
+  const baseMiddlewareBuilder = os
+    .$context<InitialContext<TDeps>>()
+    .$meta<TMeta>(options.baseMetadata);
+
+  const defaultDomain = options.baseMetadata.domain ?? "unknown";
+  const middlewareBuilder = baseMiddlewareBuilder.use(withTelemetry(baseMiddlewareBuilder, { defaultDomain }));
+
+  function implementModuleRouter<TContract extends ContractRouter<TMeta>>(contract: TContract) {
     return implement(contract).$context<InitialContext<TDeps>>();
   }
 

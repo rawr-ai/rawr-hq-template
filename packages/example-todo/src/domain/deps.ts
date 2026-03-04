@@ -3,9 +3,9 @@
  *
  * @remarks
  * Domain logic depends on interfaces (`Sql`, `Clock`) rather than concrete
- * adapters. `logger` is inherited from the shared `BaseDeps` contract in
- * `@rawr/hq-sdk`. `runtime` holds runtime mode toggles used by
- * package-global middleware.
+ * adapters. `logger` is inherited from the kit baseline `BaseDeps` contract
+ * exported via the package kit seam (`src/orpc.ts`). `runtime` holds runtime
+ * mode toggles used by package-global middleware.
  *
  * Trap to avoid: adding transport concerns (HTTP request/response types) here.
  * This package is transport-agnostic by design.
@@ -14,7 +14,7 @@
  * Extend these interfaces only when multiple procedures need the new capability.
  * For one-off logic, prefer module-local composition over global dependency growth.
  */
-import type { BaseDeps } from "@rawr/hq-sdk";
+import type { BaseDeps } from "../orpc";
 
 export interface Sql {
   query<T>(text: string, params?: unknown[]): Promise<T[]>;

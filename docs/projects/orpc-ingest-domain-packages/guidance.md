@@ -143,7 +143,7 @@ Not required in this phase:
 Use context/middleware at the level where each concern actually belongs:
 
 - Initial context carries `deps` at the kit boundary (the `InitialContext` type in `src/orpc/*`).
-- `deps` should extend shared `BaseDeps` from `@rawr/hq-sdk` (mandatory `logger`).
+- `deps` should extend the kit baseline `BaseDeps` (mandatory `logger`), exported via the package kit seam (`src/orpc.ts`).
 - Module setup injects module-local repos/services into execution context (`domain/modules/<name>/setup.ts`).
 - Kit-level middleware should be used for cross-cutting concerns that should be reusable across domain packages (telemetry/tracing, import-fault classification, request scoping).
 - Domain-wide middleware should be used for domain guards/semantics (read-only mode, authz policy, tenancy invariants) that need procedure metadata awareness.
@@ -159,8 +159,8 @@ Practical defaults:
 Use kit-level middleware for cross-cutting behavior that should be reusable across domain packages.
 
 - Define one concern per file in `src/orpc/middleware/` (for example `with-telemetry.ts`).
-- Apply kit-level middleware explicitly in `src/domain/router.ts` (the shipping chain).
-- Keep module routers focused on module-local repo/service wiring and handlers.
+- Wire truly “applies everywhere” kit middleware into the kit factory (`src/orpc/factory.ts`) so it’s invisible to domain packages.
+- Keep domain router middleware authoring focused on domain semantics (read-only mode, authz/tenancy guards).
 
 ### Domain-Wide Middleware Pattern
 
