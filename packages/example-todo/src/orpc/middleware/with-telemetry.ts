@@ -52,28 +52,30 @@ type TelemetryContext = {
 };
 
 export function withTelemetry(options: WithTelemetryOptions) {
-  return os.$context<TelemetryContext>().middleware(async ({ context, path, procedure, next }) => {
-    const start = Date.now();
-    const pathLabel = path.join(".");
-    const domain = getProcedureDomain(procedure) ?? options.defaultDomain;
-    const successEvent = `${domain}.procedure.success`;
-    const errorEvent = `${domain}.procedure.error`;
+  return os
+    .$context<TelemetryContext>()
+    .middleware(async ({ context, path, procedure, next }) => {
+      const start = Date.now();
+      const pathLabel = path.join(".");
+      const domain = getProcedureDomain(procedure) ?? options.defaultDomain;
+      const successEvent = `${domain}.procedure.success`;
+      const errorEvent = `${domain}.procedure.error`;
 
-    try {
-      const result = await next();
-      context.deps.logger.info(successEvent, {
-        path: pathLabel,
-        durationMs: Date.now() - start,
-      });
-      return result;
-    }
-    catch (error) {
-      context.deps.logger.error(errorEvent, {
-        path: pathLabel,
-        durationMs: Date.now() - start,
-        ...toErrorDetails(error),
-      });
-      throw error;
-    }
-  });
+      try {
+        const result = await next();
+        context.deps.logger.info(successEvent, {
+          path: pathLabel,
+          durationMs: Date.now() - start,
+        });
+        return result;
+      }
+      catch (error) {
+        context.deps.logger.error(errorEvent, {
+          path: pathLabel,
+          durationMs: Date.now() - start,
+          ...toErrorDetails(error),
+        });
+        throw error;
+      }
+    });
 }
