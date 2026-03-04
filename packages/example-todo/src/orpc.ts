@@ -6,5 +6,9 @@
  * Later, this file becomes the single swap point to import the shared SDK kit
  * instead (without rewriting domain/module code).
  */
-export { createOrpcKit, type BaseMetadata, type InitialContext } from "./orpc/factory";
-export { withTelemetry } from "./orpc/middleware";
+export type { BaseDeps, Logger, BaseMetadata, InitialContext } from "./orpc/base";
+export { createOrpcKit, type CreateOrpcKitOptions } from "./orpc/factory";
+export type { DomainPackage, InferDeps } from "./orpc/domain-package";
+export { defineDomainPackage } from "./orpc/domain-package";
+export { createDomainModule, type DomainContext } from "./orpc/module";
+export { schema, typeBoxStandardSchema } from "./orpc/schema";

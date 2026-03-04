@@ -6,7 +6,6 @@
  * inline, applies domain-wide middleware in-order, and performs a single final
  * `.router(...)` attach.
  */
-import { withTelemetry } from "../orpc";
 import { router as assignments } from "./modules/assignments/router";
 import { router as tags } from "./modules/tags/router";
 import { router as tasks } from "./modules/tasks/router";
@@ -14,7 +13,6 @@ import { withReadOnlyMode } from "./middleware/with-read-only-mode";
 import { os } from "./setup";
 
 export const router = os
-  .use(withTelemetry(os, { defaultDomain: "todo" }))
   .use(withReadOnlyMode)
   .router({
     tasks,

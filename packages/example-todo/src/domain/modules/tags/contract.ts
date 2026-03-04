@@ -9,7 +9,7 @@
  * Add/modify procedures here first. Module setup lives in `setup.ts`, and
  * handler behavior lives in `router.ts`.
  */
-import { schema } from "@rawr/hq-sdk";
+import { schema } from "../../../orpc";
 import { Type } from "typebox";
 import { oc } from "../../setup";
 import { READ_ONLY_MODE } from "../../shared/errors";
