@@ -3,7 +3,7 @@
  *
  * @remarks
  * This file is intentionally oRPC-native and domain-authored:
- * - compose the root contract (contract bubble-up),
+ * - import the root contract (contract bubble-up),
  * - implement the contract once (central implementer),
  * - attach package-wide middleware here (telemetry, read-only mode),
  * - export the implementer tree for modules to derive from (`orpc.<module>`).
@@ -14,19 +14,11 @@
 import { implement } from "@orpc/server";
 
 import type { Deps } from "./domain/deps";
+import { contract } from "./domain/contract";
 import { withReadOnlyMode } from "./domain/middleware/with-read-only-mode";
-import { contract as assignments } from "./domain/modules/assignments/contract";
-import { contract as tags } from "./domain/modules/tags/contract";
-import { contract as tasks } from "./domain/modules/tasks/contract";
 import { os } from "./domain/setup";
 import { withTelemetry } from "./orpc/middleware/with-telemetry";
 import type { InitialContext } from "./orpc-sdk";
-
-const rootContract = {
-  tasks,
-  tags,
-  assignments,
-};
 
 /**
  * Central implementer tree derived from the root contract.
@@ -36,11 +28,10 @@ const rootContract = {
  * 1) telemetry (baseline)
  * 2) domain guards (read-only mode)
  */
-export const orpc = implement(rootContract)
+export const orpc = implement(contract)
   .$context<InitialContext<Deps>>()
   .use(withTelemetry(os, { defaultDomain: "todo" }))
   .use(withReadOnlyMode);
 
 export type Orpc = typeof orpc;
-export type RootContract = typeof rootContract;
-
+export type RootContract = typeof contract;
