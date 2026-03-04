@@ -15,12 +15,12 @@
  */
 import { schema } from "../../../orpc-sdk";
 import { Type } from "typebox";
-import { oc } from "../../setup";
+import { ocBase } from "../../setup";
 import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../shared/errors";
 import { TaskSchema } from "./schemas";
 
 export const contract = {
-  create: oc.meta({ idempotent: false })
+  create: ocBase.meta({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -69,7 +69,7 @@ export const contract = {
         ),
       },
     }),
-  get: oc.meta({ idempotent: true })
+  get: ocBase.meta({ idempotent: true })
     .input(
       schema(
         Type.Object(

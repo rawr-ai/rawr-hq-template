@@ -10,10 +10,10 @@
  * handlers when this middleware is active.
  */
 import { ORPCError } from "@orpc/server";
-import { os } from "../setup";
+import { osBase } from "../setup";
 import { READ_ONLY_MODE } from "../shared/errors";
 
-export const withReadOnlyMode = os.middleware(async ({ context, procedure, path, next }) => {
+export const withReadOnlyMode = osBase.middleware(async ({ context, procedure, path, next }) => {
   const isMutatingProcedure = procedure["~orpc"].meta.idempotent === false;
 
   if (!context.deps.runtime.readOnly || !isMutatingProcedure) {

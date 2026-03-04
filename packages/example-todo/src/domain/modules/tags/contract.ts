@@ -11,12 +11,12 @@
  */
 import { schema } from "../../../orpc-sdk";
 import { Type } from "typebox";
-import { oc } from "../../setup";
+import { ocBase } from "../../setup";
 import { READ_ONLY_MODE } from "../../shared/errors";
 import { TagSchema } from "./schemas";
 
 export const contract = {
-  create: oc.meta({ idempotent: false })
+  create: ocBase.meta({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -62,7 +62,7 @@ export const contract = {
         ),
       },
     }),
-  list: oc.meta({ idempotent: true })
+  list: ocBase.meta({ idempotent: true })
     .input(
       schema(
         Type.Object(

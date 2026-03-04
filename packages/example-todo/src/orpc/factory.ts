@@ -38,19 +38,19 @@ export type CreateOrpcKitOptions<TMeta extends BaseMetadata = BaseMetadata> = {
  * - module contracts (via `oc`)
  *
  * Packages should implement their root contract and attach middleware in
- * `src/orpc.ts`, then derive module implementers from `orpc.<module>` subtrees.
+ * `src/orpc.ts`, then derive module implementers from `impl.<module>` subtrees.
  */
 export function createOrpcKit<TDeps, TMeta extends BaseMetadata = BaseMetadata>(
   options: CreateOrpcKitOptions<TMeta>,
 ) {
-  const contractBuilder = oc.$meta<TMeta>(options.baseMetadata as TMeta);
+  const baseContractBuilder = oc.$meta<TMeta>(options.baseMetadata as TMeta);
 
-  const middlewareBaseBuilder = os
+  const baseMiddlewareBuilder = os
     .$context<InitialContext<TDeps>>()
     .$meta<TMeta>(options.baseMetadata as TMeta);
 
   return {
-    oc: contractBuilder,
-    os: middlewareBaseBuilder,
+    oc: baseContractBuilder,
+    os: baseMiddlewareBuilder,
   };
 }

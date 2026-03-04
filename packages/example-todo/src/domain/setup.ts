@@ -3,8 +3,8 @@
  *
  * @remarks
  * This is the single file modules should import to get the configured oRPC kit:
- * - `oc` for contract authoring
- * - `os` for middleware authoring (base builder; no baked-in middleware)
+ * - `ocBase` for contract authoring
+ * - `osBase` for middleware authoring (base builder; no baked-in middleware)
  *
  * Modules should derive their implementers from the central implementer in
  * `src/orpc.ts` (the oRPC-native composition point for middleware + contract).
@@ -12,8 +12,8 @@
  * Keep this file domain-authored (concrete values live here). The kit factory
  * implementation lives under `../orpc/*`.
  */
-import { oc as ocBase } from "@orpc/contract";
-import { os as osBase } from "@orpc/server";
+import { oc } from "@orpc/contract";
+import { os } from "@orpc/server";
 
 import type { BaseMetadata, InitialContext } from "../orpc-sdk";
 
@@ -40,8 +40,8 @@ const baseMetadata = {
 // Nothing here should be "clever": it should mirror oRPC-native usage.
 // -------------------------------------------------------------------------------------
 
-export const oc = ocBase.$meta<BaseMetadata>(baseMetadata);
+export const ocBase = oc.$meta<BaseMetadata>(baseMetadata);
 
-export const os = osBase
+export const osBase = os
   .$context<InitialContext<Deps>>()
   .$meta<BaseMetadata>(baseMetadata);

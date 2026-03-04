@@ -7,7 +7,7 @@
  * - inject tag module dependencies/context
  * - export configured `os` for handler implementations
  */
-import { orpc } from "../../../orpc";
+import { impl } from "../../../orpc";
 import { createRepository } from "./repository";
 
 /**
@@ -15,7 +15,7 @@ import { createRepository } from "./repository";
  *
  * Keep module-wide setup here so procedure handlers can stay focused on business logic.
  */
-export const os = orpc.tags
+export const os = impl.tags
   .use(({ context, next }) =>
     next({
       context: {
