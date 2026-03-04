@@ -2,7 +2,7 @@
  * @fileoverview Task entity schema and inferred type.
  *
  * @remarks
- * This module defines the canonical runtime shape for task data in this domain.
+ * This module defines the canonical runtime shape for task data in this domain module.
  * Procedure inputs/outputs can be smaller than this shape; entity schema models
  * persisted row shape.
  *

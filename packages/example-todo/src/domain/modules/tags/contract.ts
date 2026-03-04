@@ -11,8 +11,8 @@
  */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { contractBuilder as oc } from "../../orpc/base";
-import { READ_ONLY_MODE } from "../../orpc/errors";
+import { oc } from "../../setup";
+import { READ_ONLY_MODE } from "../../shared/errors";
 import { TagSchema } from "./schemas";
 
 export const contract = {

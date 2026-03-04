@@ -2,7 +2,7 @@
  * @fileoverview Tag entity schema and inferred type.
  *
  * @remarks
- * Keep this as the canonical shape for tag records. Procedure contracts may be
+ * Keep this as the canonical shape for tag records in this domain module. Procedure contracts may be
  * more specific in input form but should resolve to this output entity shape.
  *
  * @agents

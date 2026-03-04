@@ -9,7 +9,7 @@
  * Keep log payload keys stable (`path`, `durationMs`, `code`, `status`) so test
  * assertions stay resilient as implementation evolves.
  */
-import { middlewareBuilder as os } from "../base";
+import { os } from "../../domain/setup";
 
 type ErrorShape = {
   name?: unknown;

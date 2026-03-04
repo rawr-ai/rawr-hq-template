@@ -3,6 +3,6 @@
  *
  * @remarks
  * Keep this file as the stable import surface for consumers. The authoritative
- * oRPC boundary wrapper lives in `./orpc/router.ts`.
+ * package boundary wrapper lives in `./boundary/router.ts`.
  */
-export { router, type Router } from "./orpc/router";
+export { router, type Router } from "./boundary/router";

@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { safe } from "@orpc/server";
 import { createClient } from "../src";
 import { createDeps, type OrpcErrorShape } from "./helpers";
-import { contract as assignmentsContract } from "../src/modules/assignments/contract";
-import { contract as tagsContract } from "../src/modules/tags/contract";
-import { contract as tasksContract } from "../src/modules/tasks/contract";
+import { contract as assignmentsContract } from "../src/domain/modules/assignments/contract";
+import { contract as tagsContract } from "../src/domain/modules/tags/contract";
+import { contract as tasksContract } from "../src/domain/modules/tasks/contract";
 
 async function expectOrpcError(
   promise: Promise<unknown>,
