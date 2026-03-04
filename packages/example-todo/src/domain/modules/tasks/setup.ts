@@ -7,8 +7,7 @@
  * - inject task module dependencies/context
  * - export configured `os` for handler implementations
  */
-import { implementModuleRouter } from "../../setup";
-import { contract } from "./contract";
+import { orpc } from "../../../orpc";
 import { createRepository } from "./repository";
 
 /**
@@ -16,7 +15,7 @@ import { createRepository } from "./repository";
  *
  * Keep module-wide setup here so procedure handlers can stay focused on business logic.
  */
-export const os = implementModuleRouter(contract)
+export const os = orpc.tasks
   .use(({ context, next }) =>
     next({
       context: {
