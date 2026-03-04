@@ -7,10 +7,9 @@
  * - inject assignment + dependent module repositories
  * - export configured `os` for handler implementations
  */
-import { implementModuleRouter } from "../../setup";
+import { orpc } from "../../../orpc";
 import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
-import { contract } from "./contract";
 import { createRepository as createAssignmentRepository } from "./repository";
 
 /**
@@ -18,7 +17,7 @@ import { createRepository as createAssignmentRepository } from "./repository";
  *
  * Keep module-wide setup here so procedure handlers can stay focused on business logic.
  */
-export const os = implementModuleRouter(contract)
+export const os = orpc.assignments
   .use(({ context, next }) =>
     next({
       context: {
