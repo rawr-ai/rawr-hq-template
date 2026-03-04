@@ -10,6 +10,9 @@
  * assertions stay resilient as implementation evolves.
  */
 
+import { os } from "@orpc/server";
+import type { Logger } from "../base";
+
 type ErrorShape = {
   name?: unknown;
   message?: unknown;
@@ -42,15 +45,16 @@ export type WithTelemetryOptions = {
   defaultDomain: string;
 };
 
-export function withTelemetry(os: any, options: WithTelemetryOptions) {
-  return os.middleware(async (optionsOrpc: any) => {
-    const { context, path, procedure, next } = optionsOrpc as {
-      context: { deps: { logger: { info: Function; error: Function } } };
-      path: readonly string[];
-      procedure?: unknown;
-      next: () => Promise<unknown>;
-    };
+type TelemetryContext = {
+  deps: {
+    logger: Logger;
+  };
+};
 
+const telemetryOs = os.$context<TelemetryContext>();
+
+export function withTelemetry(options: WithTelemetryOptions) {
+  return telemetryOs.middleware(async ({ context, path, procedure, next }) => {
     const start = Date.now();
     const pathLabel = path.join(".");
     const domain = getProcedureDomain(procedure) ?? options.defaultDomain;

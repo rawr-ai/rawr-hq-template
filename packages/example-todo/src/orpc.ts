@@ -20,6 +20,8 @@ import { osBase } from "./domain/base";
 import { withTelemetry } from "./orpc/middleware/with-telemetry";
 import type { InitialContext } from "./orpc-sdk";
 
+export const yo = osBase.use(withTelemetry({ defaultDomain: "yo" }));
+
 /**
  * Central implementer tree derived from the root contract.
  *
@@ -30,7 +32,7 @@ import type { InitialContext } from "./orpc-sdk";
  */
 export const impl = implement(contract)
   .$context<InitialContext<Deps>>()
-  .use(withTelemetry(osBase, { defaultDomain: "todo" }))
+  .use(withTelemetry({ defaultDomain: "todo" }))
   .use(withReadOnlyMode);
 
 export type Impl = typeof impl;
