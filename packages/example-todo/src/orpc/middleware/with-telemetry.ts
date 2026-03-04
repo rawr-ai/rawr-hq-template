@@ -51,10 +51,8 @@ type TelemetryContext = {
   };
 };
 
-const telemetryOs = os.$context<TelemetryContext>();
-
 export function withTelemetry(options: WithTelemetryOptions) {
-  return telemetryOs.middleware(async ({ context, path, procedure, next }) => {
+  return os.$context<TelemetryContext>().middleware(async ({ context, path, procedure, next }) => {
     const start = Date.now();
     const pathLabel = path.join(".");
     const domain = getProcedureDomain(procedure) ?? options.defaultDomain;
