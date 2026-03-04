@@ -11,7 +11,7 @@
  */
 import { schema } from "../../../orpc-sdk";
 import { Type } from "typebox";
-import { ocBase } from "../../setup";
+import { ocBase } from "../../base";
 import { READ_ONLY_MODE } from "../../shared/errors";
 import { TagSchema } from "./schemas";
 

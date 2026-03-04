@@ -15,7 +15,7 @@
  */
 import { schema } from "../../../orpc-sdk";
 import { Type } from "typebox";
-import { ocBase } from "../../setup";
+import { ocBase } from "../../base";
 import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../shared/errors";
 import { TaskSchema } from "./schemas";
 

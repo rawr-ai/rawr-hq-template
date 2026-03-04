@@ -10,13 +10,27 @@
  * deep-link to this file directly unless explicitly needed for testing.
  */
 import type { Deps } from "./domain/deps";
-import { defineDomainPackage } from "./orpc-sdk";
+import { createRouterClient } from "@orpc/server";
+import type { InitialContext } from "./orpc-sdk";
 import { router } from "./router";
 
-const domain = defineDomainPackage(router);
+// -------------------------------------------------------------------------------------
+// PREVIOUS (SDK helper) client wiring:
+//
+//   import { defineDomainPackage } from "./orpc-sdk";
+//   const domain = defineDomainPackage(router);
+//   export function createClient(deps: Deps) {
+//     return domain.createClient(deps);
+//   }
+//
+// This is temporarily commented out while we validate that the SDK helper still
+// matches the current oRPC composition model.
+// -------------------------------------------------------------------------------------
 
 export function createClient(deps: Deps) {
-  return domain.createClient(deps);
+  return createRouterClient(router, {
+    context: { deps } as InitialContext<Deps>,
+  });
 }
 
 export type Client = ReturnType<typeof createClient>;
