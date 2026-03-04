@@ -14,7 +14,7 @@
  * Extend these interfaces only when multiple procedures need the new capability.
  * For one-off logic, prefer module-local composition over global dependency growth.
  */
-import type { BaseDeps } from "../orpc";
+import type { BaseDeps } from "../orpc-sdk";
 
 export interface Sql {
   query<T>(text: string, params?: unknown[]): Promise<T[]>;

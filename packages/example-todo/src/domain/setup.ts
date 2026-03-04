@@ -11,8 +11,8 @@
  * Keep this file domain-authored (concrete values live here). The kit factory
  * implementation lives under `../orpc/*`.
  */
-import { createOrpcKit } from "../orpc";
-import type { BaseMetadata } from "../orpc";
+import { createOrpcKit } from "../orpc-sdk";
+import type { BaseMetadata } from "../orpc-sdk";
 
 import type { Deps } from "./deps";
 
