@@ -18,24 +18,32 @@ This domain package is also not a public API surface. External/OpenAPI exposure 
 
 The remaining value of package-level contract extraction is drift/snapshot tooling, which is valid but intentionally deferred.
 
-## Decision #2 (2026-03-03)
+## Decision #2 (2026-03-04)
 
 ### Question
 What is the canonical domain-package topology (and choke points) for agents?
 
 ### Decision
-Use a two-lane structure with **two distinct router concerns**:
+Use a three-layer structure with **two distinct router concerns**:
 
-- **Lane A — package boundary (`src/orpc/`)**: base context + base metadata + global middleware + boundary-wrapped router
-- **Lane B — domain surface (`src/modules/`)**: modules + domain router composition
+- **Layer 1 — kit seam (`src/orpc.ts`, `src/orpc/*`)**: local oRPC kit primitives (no domain concretions)
+- **Layer 2 — domain surface (`src/domain/`)**: deps + shared kit instance + domain semantics + domain router composition + modules
+- **Layer 3 — package boundary (`src/boundary/`)**: package-wide middleware + final router attach (single choke point)
 
 Router responsibilities are fixed:
 
-- `src/modules/router.ts`: **domain composition** (what procedures exist + hierarchy)
-- `src/orpc/router.ts`: **boundary choke point** (global middleware applied once)
+- `src/domain/router.ts`: **domain composition** (what procedures exist + hierarchy)
+- `src/boundary/router.ts`: **boundary choke point** (package middleware + domain middleware, then single final `.router(...)` attach)
 - `src/router.ts`: **stable public alias** for `@rawr/<pkg>/router` (re-export only)
 
-Within `src/orpc/`, keep package-global middleware in `src/orpc/middleware/*`.
+Hard choke points / invariants:
+
+- `src/boundary/router.ts` is the **only** place allowed to call `.router(...)` (single-shot attach).
+- `src/domain/boundary.ts` exports **domain middleware ordering as data** (so boundary can decide outer ordering, e.g. telemetry wraps read-only).
+- Import DAG must remain one-way:
+  - `src/orpc/**` imports nothing from `src/domain/**` or `src/boundary/**`
+  - `src/domain/modules/**` imports nothing from `src/boundary/**`
+  - `src/boundary/**` may import from `src/domain/**` (and boundary-local middleware)
 
 ### Why
 We are optimizing for rapid comprehension and predictable navigation for both humans and AI agents. Structural drift by package size creates unnecessary cognitive overhead.
@@ -72,10 +80,10 @@ Unexpected internals are not part of the typed caller contract by default.
 ### Why
 This keeps boundary contracts focused on caller behavior, reduces repetitive try/catch translation code, and avoids over-exposing internals.
 
-## Decision #5 (2026-03-01)
+## Decision #5 (2026-03-04)
 
 ### Question
-Within `src/modules/`, what is the canonical module split?
+Within `src/domain/modules/`, what is the canonical module split?
 
 ### Decision
 Adopt module-level hybrid contract-first:
@@ -83,7 +91,8 @@ Adopt module-level hybrid contract-first:
 - each module defines `contract.ts` (boundary: input/output/errors/metadata),
 - each module defines `setup.ts` (runtime injection: context middleware, repos/services),
 - each module defines `router.ts` (behavior: handlers + contract-enforced router export),
-- package boundary remains router-client-first (`router` + `createClient`).
+- modules share a single domain kit import surface (`src/domain/setup.ts`),
+- package boundary remains router-client-first (`router` + `createClient` entrypoints).
 
 ### Why
 This gives us explicit module contracts for readability and enforcement while preserving the existing in-process package boundary surface.
@@ -97,7 +106,7 @@ It also makes “what is boundary shape” vs “what is runtime behavior” obv
 - Router-first alternative: <https://orpc.dev/docs/router-first/procedure-first>
 - Monorepo setup/hybrid context: <https://orpc.dev/docs/advanced/monorepo-setup>
 
-## Decision #6 (2026-03-03)
+## Decision #6 (2026-03-04)
 
 ### Question
 How do we represent nested modules while keeping composition obvious and oRPC-native?
@@ -106,7 +115,7 @@ How do we represent nested modules while keeping composition obvious and oRPC-na
 Nested modules are **folders under a module** and are composed explicitly (no auto-discovery):
 
 - a parent module owns composition of its submodules (import + mount in `router.ts`),
-- boundary wrapping remains at `src/orpc/router.ts` (global middleware does not move),
+- boundary wrapping remains at `src/boundary/router.ts` (single final attach does not move),
 - module setup/injection remains local (typically in each module’s `setup.ts`).
 
 ### Why

@@ -11,9 +11,10 @@
 
 If you are an agent arriving to implement business logic fast:
 
-- **Start at the boundary choke point**: `src/orpc/router.ts` (global middleware + base context/meta)
-- **Then go to the domain map**: `src/modules/router.ts` (what modules exist and how they’re composed)
-- **Then live in a module**: `src/modules/<name>/{contract,setup,router}.ts`
+- **Start at the boundary choke point**: `src/boundary/router.ts` (package middleware + domain middleware + single final attach)
+- **Then go to the domain map**: `src/domain/router.ts` (what modules exist and how they’re composed)
+- **Then live in a module**: `src/domain/modules/<name>/{contract,setup,router}.ts`
+- **When you need “the one import everyone uses”**: `src/domain/setup.ts` (configured kit surface)
 
 If you are wiring exports/packaging: `src/index.ts`, `src/client.ts`, and `src/router.ts` (public alias).
 
@@ -24,17 +25,21 @@ Use one stable top-level structure across package sizes:
 - `src/index.ts` for public package exports only,
 - `src/client.ts` for in-process client construction only,
 - `src/router.ts` for the stable public router export (`@rawr/<pkg>/router`) via re-export,
-- `src/orpc/` for package-boundary runtime scaffolding (base context/meta + global middleware + boundary-wrapped router),
-- `src/modules/` for domain modules and domain router composition.
+- `src/orpc.ts` + `src/orpc/*` for local oRPC kit primitives (domain-agnostic; future-SDK seam),
+- `src/domain/` for domain semantics (deps + kit instance + middleware ordering + domain router + modules),
+- `src/boundary/` for package boundary wiring (package middleware + single final attach).
 
-Within `src/orpc/`, `middleware/` is the always-on slot for package-global middleware concerns.
-Within `src/modules/`, `router.ts` is the always-on slot for domain composition.
+Always-on slots:
+
+- `src/boundary/router.ts` is the always-on boundary choke point (single `.router(...)` attach).
+- `src/domain/router.ts` is the always-on domain composition slot.
+- `src/domain/boundary.ts` is the always-on domain middleware ordering slot (exported as data).
 
 ## Scaffold Determinism Rule
 
 When choosing between "minimal now" vs "predictable later", prefer predictable scaffold slots for core structure.
 
-- Keep always-present structural files that are expected as a package grows (for example `src/orpc/base.ts`, `src/orpc/router.ts`, `src/modules/router.ts`), even if initially thin.
+- Keep always-present structural files that are expected as a package grows (for example `src/boundary/router.ts`, `src/domain/setup.ts`, `src/domain/router.ts`, `src/orpc.ts`), even if initially thin.
 - Do not push structural timing decisions ("add this file later") onto agents for core package layout.
 - Use templates/CLI shape flags to vary content depth, not to vary foundational topology.
 
@@ -42,7 +47,7 @@ When choosing between "minimal now" vs "predictable later", prefer predictable s
 
 To avoid overloaded "router" language, these terms are canonical in this doc:
 
-- **Module contract object**: plain object exported from `modules/<name>/contract.ts`.
+- **Module contract object**: plain object exported from `domain/modules/<name>/contract.ts`.
   Example:
   ```ts
   export const contract = {
@@ -52,11 +57,11 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
   ```
 - **Contract-router builder**: optional oRPC builder form `oc.errors(...).router({...})`.
   We are not using this by default in `example-todo`.
-- **Module setup**: context injection exported from `modules/<name>/setup.ts` (repos/services derived from `context.deps`).
-- **Module implementation router**: oRPC server router exported from `modules/<name>/router.ts` via `os.router({ ... })`.
-- **Domain composed router**: plain-object router exported from `src/modules/router.ts` (tree of module routers).
-- **Boundary-wrapped router**: final router exported from `src/orpc/router.ts` after global middleware is applied once.
-- **Shared oRPC scaffolding**: reusable internals under `src/orpc/*` (base context, deps contracts, shared metadata, shared error definitions, shared middleware).
+- **Module setup**: context injection exported from `domain/modules/<name>/setup.ts` (repos/services derived from `context.deps`).
+- **Module implementation router**: oRPC server router exported from `domain/modules/<name>/router.ts` via `os.router({ ... })`.
+- **Domain composed router**: plain-object router exported from `src/domain/router.ts` (tree of module routers).
+- **Boundary-wrapped router**: final router exported from `src/boundary/router.ts` after package + domain middleware are applied and the domain router is attached once.
+- **Kit seam**: domain-agnostic oRPC kit primitives under `src/orpc.ts` and `src/orpc/*`.
 
 ## Naming Conventions
 
@@ -104,7 +109,7 @@ Rules:
 
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
-- Start each module setup from the package implementer base in `src/orpc/base.ts` (`implementModuleRouter(contract)`).
+- Start each module setup from the domain setup surface in `src/domain/setup.ts` (`implementModuleRouter(contract)`).
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
@@ -121,7 +126,7 @@ Current required baseline:
 
 Recommended pattern:
 
-- define base metadata defaults once in `src/orpc/base.ts`,
+- define base metadata defaults once in `src/domain/setup.ts`,
 - keep module contracts explicit by setting `idempotent` on every procedure,
 - read metadata in middleware via `procedure["~orpc"].meta` (oRPC runtime metadata surface).
 
@@ -139,26 +144,40 @@ Not required in this phase:
 
 Use context/middleware at the level where each concern actually belongs:
 
-- Initial context (`InitialContext`) carries `deps` at package boundary (`src/orpc/base.ts`).
+- Initial context carries `deps` at the kit boundary (the `InitialContext` type in `src/orpc/*`).
 - `deps` should extend shared `BaseDeps` from `@rawr/hq-sdk` (mandatory `logger`).
-- Module setup injects module-local repos/services into execution context (`modules/<name>/setup.ts`).
-- Package-global middleware should be used for real cross-cutting concerns (auth, tracing, tenant/session, request scope), not for aliasing `deps` fields.
-- Keep reusable middleware definitions in `src/orpc/middleware/with-*.ts`.
-- Apply package-global middleware **once** at the boundary choke point (`src/orpc/router.ts`) to avoid duplication and drift.
+- Module setup injects module-local repos/services into execution context (`domain/modules/<name>/setup.ts`).
+- Package-boundary middleware should be used for cross-cutting concerns that must wrap *everything* (telemetry/tracing, import-fault classification, request scoping).
+- Domain-wide middleware should be used for domain guards/semantics (read-only mode, authz policy, tenancy invariants) that need procedure metadata awareness.
+- Apply middleware at most once per concern: boundary attaches the domain router once and applies package + domain middleware in a single choke point.
 
 Practical defaults:
 
 - Access logger/clock as `context.deps.logger` / `context.deps.clock`.
 - Avoid alias-only middleware like `deps.logger -> logger` unless there is a concrete runtime reason.
 
-### Package-Global Middleware Pattern
+### Boundary Middleware Pattern
 
-Use package-global middleware for cross-cutting behavior that should apply to every module router automatically.
+Use boundary middleware for cross-cutting behavior that should apply to the entire domain router tree.
 
-- Define one concern per file in `src/orpc/middleware/` (for example `with-read-only-mode.ts`, `with-telemetry.ts`).
-- Compose package-wide middleware once in `src/orpc/router.ts`:
-  `middlewareBuilder.use(withTelemetry).use(withReadOnlyMode).router(modulesRouter)`.
-- Keep module routers focused on module-local repo/service wiring and handlers.
+- Define one concern per file in `src/boundary/middleware/` (for example `with-telemetry.ts`).
+- Compose package-wide middleware once in `src/boundary/router.ts` (single choke point).
+- Keep module routers focused on module-local repo/service wiring and handlers (no package-wide wiring).
+
+### Domain-Wide Middleware Pattern
+
+Use domain-wide middleware for domain semantics that should apply uniformly across modules.
+
+- Define one concern per file in `src/domain/middleware/`.
+- Export **ordered** domain middleware as data from `src/domain/boundary.ts`.
+- Apply domain middleware in `src/boundary/router.ts` so package middleware can wrap domain failures when needed (for example telemetry should see read-only blocks).
+
+### Module-Local Middleware Pattern
+
+Use module-local middleware only when it is truly local to one module (or sub-tree of a module).
+
+- Keep it next to the module in `src/domain/modules/<name>/setup.ts` (or an optional `src/domain/modules/<name>/middleware/*`).
+- Promote to `src/domain/middleware/*` only when two+ modules genuinely share it.
 - Read-only policy should use procedure metadata (`idempotent`) plus runtime config (`deps.runtime.readOnly`) to block mutations.
 - Telemetry middleware should log and rethrow; it must not remap boundary errors.
 
@@ -207,7 +226,7 @@ For `example-todo` in this phase: no package-wide global error set.
 Precision notes:
 
 - `.errors(...)` lives on **contract procedures** (and optional contract-router builder), not on the package composed router object in `src/router.ts`.
-- Current default is explicit per-procedure declarations in `modules/*/contract.ts`.
+- Current default is explicit per-procedure declarations in `domain/modules/*/contract.ts`.
 
 ## neverthrow Guidance
 
@@ -226,8 +245,8 @@ Boundary rule still applies either way: procedures expose ORPC boundary errors, 
 
 Use sharing-based placement:
 
-- `orpc/errors.ts` for reusable cross-module boundary error definitions,
-- module-specific boundary errors inline in `modules/<name>/contract.ts`,
+- `domain/shared/errors.ts` for reusable cross-module boundary error definitions,
+- module-specific boundary errors inline in `domain/modules/<name>/contract.ts`,
 - procedure-local errors only when truly local to one procedure.
 
 Each procedure still declares only the errors it can throw.
