@@ -11,14 +11,14 @@
  */
 import { schema } from "../../../orpc-sdk";
 import { Type } from "typebox";
-import { oc } from "../../setup";
+import { ocBase } from "../../setup";
 import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../shared/errors";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
 
 export const contract = {
-  assign: oc.meta({ idempotent: false })
+  assign: ocBase.meta({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -72,7 +72,7 @@ export const contract = {
         ),
       },
     }),
-  listForTask: oc.meta({ idempotent: true })
+  listForTask: ocBase.meta({ idempotent: true })
     .input(
       schema(
         Type.Object(

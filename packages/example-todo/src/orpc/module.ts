@@ -11,7 +11,7 @@ export interface DomainContext<TDeps extends BaseDeps = BaseDeps> {
  *
  * @remarks
  * In the current model, packages implement the root contract once in `src/orpc.ts`,
- * then modules derive their implementers from `orpc.<module>` subtrees.
+ * then modules derive their implementers from `impl.<module>` subtrees.
  *
  * Keeping this helper local still makes it easier to upstream to a shared SDK later.
  */
