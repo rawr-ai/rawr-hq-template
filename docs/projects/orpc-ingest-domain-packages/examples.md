@@ -14,13 +14,11 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 
 - Package exports are boundary-only (`src/index.ts` exports `createClient`, `router`, `Client`, `Router`).
 - Stable public router import remains available via `@rawr/<pkg>/router` (`src/router.ts` is a thin re-export).
-- Three-layer topology:
+- Two-layer topology:
   - **Kit seam (`src/orpc.ts`, `src/orpc/*`)**: domain-agnostic oRPC kit primitives (future SDK extraction seam).
-  - **Domain surface (`src/domain/`)**: deps + configured kit + domain semantics + domain router composition + modules.
-  - **Package boundary (`src/boundary/`)**: package middleware + single final attach (the choke point).
+  - **Domain surface (`src/domain/`)**: deps + configured kit + domain semantics + **shipping router** + modules.
 - Router responsibilities are distinct and fixed:
-  - `src/domain/router.ts` is the domain map (composition).
-  - `src/boundary/router.ts` is the global middleware choke point (applied once) and the only allowed `.router(...)` attach.
+  - `src/domain/router.ts` is the shipping router (composition + middleware chain + single final attach).
 - Module internals stay `contract.ts` + `setup.ts` + `router.ts`.
 - Module-level hybrid contract-first: `contract.ts` is boundary shape; `router.ts` is handler behavior.
 - Transport-agnostic internals (no HTTP concerns inside package).
@@ -28,8 +26,8 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Expected business states are modeled as values inside the boundary.
 - Procedures carry shared metadata (`domain`, `audience`) plus explicit per-procedure `idempotent`.
 - Shared oRPC scaffolding lives in `src/orpc/*` (and is intentionally domain-agnostic).
-- `src/boundary/middleware/` is always present for package-global cross-cutting concerns.
-- `src/domain/middleware/` is available for domain-wide cross-cutting concerns; ordering is exported from `src/domain/boundary.ts`.
+- `src/orpc/middleware/` is always present for kit-level cross-cutting concerns (telemetry, generic wrappers).
+- `src/domain/middleware/` is available for domain-wide cross-cutting concerns; ordering is visible in `src/domain/router.ts`.
 - Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
 
@@ -45,7 +43,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 
 - Cross-module sharing is not golden-only; it is normal by intermediate.
 - Golden-path value is disciplined sharing under high dependency density, not introducing sharing for the first time.
-- Structure is not an axis in this phase; structure stays fixed (`index.ts` + `client.ts` + `router.ts` + `orpc.ts` + `orpc/` + `domain/` + `boundary/`).
+- Structure is not an axis in this phase; structure stays fixed (`index.ts` + `client.ts` + `router.ts` + `orpc.ts` + `orpc/` + `domain/`).
 - Structure is deterministic for scaffolding; avoid conditional "add this core file later" guidance.
 - Module-specific boundary errors are defined inline in `contract.ts` (not separate module `errors.ts` files).
 - Metadata should stay minimal and operational in this phase (`idempotent` required, `sideEffects` deferred).
@@ -79,18 +77,17 @@ packages/example-minimal/src/
 ├── router.ts
 ├── orpc.ts
 ├── orpc/
-│   └── factory.ts
-├── boundary/
-│   ├── router.ts
+│   ├── factory.ts
 │   └── middleware/
 │       └── with-telemetry.ts
 └── domain/
     ├── deps.ts
     ├── setup.ts
-    ├── boundary.ts
     ├── router.ts
     ├── middleware/
     │   └── with-read-only-mode.ts
+    ├── adapters/
+    │   └── README.md
     ├── shared/
     │   ├── README.md
     │   ├── errors.ts
@@ -118,18 +115,17 @@ packages/example-todo/src/
 ├── router.ts
 ├── orpc.ts
 ├── orpc/
-│   └── factory.ts
-├── boundary/
-│   ├── router.ts
+│   ├── factory.ts
 │   └── middleware/
 │       └── with-telemetry.ts
 └── domain/
     ├── deps.ts
     ├── setup.ts
-    ├── boundary.ts
     ├── router.ts
     ├── middleware/
     │   └── with-read-only-mode.ts
+    ├── adapters/
+    │   └── README.md
     ├── shared/
     │   ├── README.md
     │   ├── errors.ts
@@ -159,7 +155,7 @@ Example change at this scale (medium): add a new module.
 
 - Add `domain/modules/projects/{contract,setup,router,repository,schemas}.ts`
 - Wire it into `domain/router.ts` (import + add to exported object)
-- No changes needed in `boundary/router.ts` unless you’re changing package-global middleware
+- No changes needed outside `domain/router.ts` unless you’re changing kit/domain middleware definitions
 
 ### 3) Golden Path
 
@@ -170,19 +166,18 @@ packages/example-golden/src/
 ├── router.ts
 ├── orpc.ts
 ├── orpc/
-│   └── factory.ts
-├── boundary/
-│   ├── router.ts
+│   ├── factory.ts
 │   └── middleware/
 │       ├── with-telemetry.ts
 │       └── with-auth.ts
 └── domain/
     ├── deps.ts
     ├── setup.ts
-    ├── boundary.ts
     ├── router.ts
     ├── middleware/
     │   └── with-read-only-mode.ts
+    ├── adapters/
+    │   └── README.md
     ├── shared/
     │   ├── README.md
     │   ├── errors.ts
