@@ -6,16 +6,27 @@
  * into a shared SDK package. Concrete domain values (deps shape, metadata
  * defaults, domain-wide middleware) belong in `../domain/*`.
  */
-import { oc, type ContractRouter } from "@orpc/contract";
-import { implement, os } from "@orpc/server";
+import { oc } from "@orpc/contract";
+import { os } from "@orpc/server";
 
 import type { BaseMetadata, InitialContext } from "./base";
-import { withTelemetry } from "./middleware/with-telemetry";
 
 export type { BaseMetadata, InitialContext } from "./base";
 
 export type CreateOrpcKitOptions<TMeta extends BaseMetadata = BaseMetadata> = {
-  baseMetadata: TMeta;
+  /**
+   * Default metadata applied to every contract/procedure in the package.
+   *
+   * @remarks
+   * Important: this is intentionally typed as `BaseMetadata` (widened). We do
+   * not want TypeScript to infer a literal metadata type (for example
+   * `idempotent: true`) from the default value, because that would make later
+   * per-procedure overrides like `meta({ idempotent: false })` illegal.
+   *
+   * If a package wants to extend metadata, it should pass an explicit `TMeta`
+   * type parameter to `createOrpcKit<..., TMeta>(...)`.
+   */
+  baseMetadata: BaseMetadata;
 };
 
 /**
@@ -26,32 +37,20 @@ export type CreateOrpcKitOptions<TMeta extends BaseMetadata = BaseMetadata> = {
  * - domain-wide middleware (via `os`)
  * - module contracts (via `oc`)
  *
- * Most packages should implement their root contract and attach middleware in
+ * Packages should implement their root contract and attach middleware in
  * `src/orpc.ts`, then derive module implementers from `orpc.<module>` subtrees.
- *
- * `implementModuleRouter` is kept as a temporary escape hatch while converging
- * on the final kit abstraction.
  */
 export function createOrpcKit<TDeps, TMeta extends BaseMetadata = BaseMetadata>(
   options: CreateOrpcKitOptions<TMeta>,
 ) {
-  const contractBuilder = oc.$meta<TMeta>(options.baseMetadata);
+  const contractBuilder = oc.$meta<TMeta>(options.baseMetadata as TMeta);
 
   const middlewareBaseBuilder = os
     .$context<InitialContext<TDeps>>()
-    .$meta<TMeta>(options.baseMetadata);
-
-  const defaultDomain = options.baseMetadata.domain ?? "unknown";
-  const shippingBuilder = middlewareBaseBuilder.use(withTelemetry(middlewareBaseBuilder, { defaultDomain }));
-
-  function implementModuleRouter<TContract extends ContractRouter<TMeta>>(contract: TContract) {
-    return implement(contract).$context<InitialContext<TDeps>>();
-  }
+    .$meta<TMeta>(options.baseMetadata as TMeta);
 
   return {
     oc: contractBuilder,
     os: middlewareBaseBuilder,
-    ship: shippingBuilder,
-    implementModuleRouter,
   };
 }
