@@ -16,11 +16,8 @@ import { implement } from "@orpc/server";
 import type { Deps } from "./domain/deps";
 import { contract } from "./domain/contract";
 import { withReadOnlyMode } from "./domain/middleware/with-read-only-mode";
-import { osBase } from "./domain/base";
 import { withTelemetry } from "./orpc/middleware/with-telemetry";
 import type { InitialContext } from "./orpc-sdk";
-
-export const yo = osBase.use(withTelemetry({ defaultDomain: "yo" }));
 
 /**
  * Central implementer tree derived from the root contract.
