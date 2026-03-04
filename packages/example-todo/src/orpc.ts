@@ -7,4 +7,4 @@
  * instead (without rewriting domain/module code).
  */
 export { createOrpcKit, type BaseMetadata, type InitialContext } from "./orpc/factory";
-
+export { withTelemetry } from "./orpc/middleware";

@@ -2,15 +2,24 @@
  * @fileoverview Domain module composition for the todo package.
  *
  * @remarks
- * This is pure domain composition (plain object), with no boundary wrapping.
- * Nested modules should compose manually via parent module routers (no magic).
+ * This file is the shipping router for the package. It composes domain modules
+ * inline, applies domain-wide middleware in-order, and performs a single final
+ * `.router(...)` attach.
  */
+import { withTelemetry } from "../orpc";
 import { router as assignments } from "./modules/assignments/router";
 import { router as tags } from "./modules/tags/router";
 import { router as tasks } from "./modules/tasks/router";
+import { withReadOnlyMode } from "./middleware/with-read-only-mode";
+import { os } from "./setup";
 
-export const router = {
-  tasks,
-  tags,
-  assignments,
-};
+export const router = os
+  .use(withTelemetry(os, { defaultDomain: "todo" }))
+  .use(withReadOnlyMode)
+  .router({
+    tasks,
+    tags,
+    assignments,
+  });
+
+export type Router = typeof router;
