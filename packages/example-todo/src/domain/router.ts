@@ -10,9 +10,9 @@ import { router as assignments } from "./modules/assignments/router";
 import { router as tags } from "./modules/tags/router";
 import { router as tasks } from "./modules/tasks/router";
 import { withReadOnlyMode } from "./middleware/with-read-only-mode";
-import { os } from "./setup";
+import { ship } from "./setup";
 
-export const router = os
+export const router = ship
   .use(withReadOnlyMode)
   .router({
     tasks,

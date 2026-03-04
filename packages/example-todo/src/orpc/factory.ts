@@ -32,12 +32,12 @@ export function createOrpcKit<TDeps, TMeta extends BaseMetadata = BaseMetadata>(
 ) {
   const contractBuilder = oc.$meta<TMeta>(options.baseMetadata);
 
-  const baseMiddlewareBuilder = os
+  const middlewareBaseBuilder = os
     .$context<InitialContext<TDeps>>()
     .$meta<TMeta>(options.baseMetadata);
 
   const defaultDomain = options.baseMetadata.domain ?? "unknown";
-  const middlewareBuilder = baseMiddlewareBuilder.use(withTelemetry(baseMiddlewareBuilder, { defaultDomain }));
+  const shippingBuilder = middlewareBaseBuilder.use(withTelemetry(middlewareBaseBuilder, { defaultDomain }));
 
   function implementModuleRouter<TContract extends ContractRouter<TMeta>>(contract: TContract) {
     return implement(contract).$context<InitialContext<TDeps>>();
@@ -45,7 +45,8 @@ export function createOrpcKit<TDeps, TMeta extends BaseMetadata = BaseMetadata>(
 
   return {
     oc: contractBuilder,
-    os: middlewareBuilder,
+    os: middlewareBaseBuilder,
+    ship: shippingBuilder,
     implementModuleRouter,
   };
 }
