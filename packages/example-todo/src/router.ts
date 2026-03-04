@@ -3,6 +3,6 @@
  *
  * @remarks
  * Keep this file as the stable import surface for consumers. The authoritative
- * package boundary wrapper lives in `./boundary/router.ts`.
+ * shipping router lives in `./domain/router.ts`.
  */
-export { router, type Router } from "./boundary/router";
+export { router, type Router } from "./domain/router";
