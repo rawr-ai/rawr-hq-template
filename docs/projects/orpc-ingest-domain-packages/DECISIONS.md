@@ -24,26 +24,22 @@ The remaining value of package-level contract extraction is drift/snapshot tooli
 What is the canonical domain-package topology (and choke points) for agents?
 
 ### Decision
-Use a three-layer structure with **two distinct router concerns**:
+Use a two-layer structure with **one shipping router choke point**:
 
-- **Layer 1 — kit seam (`src/orpc.ts`, `src/orpc/*`)**: local oRPC kit primitives (no domain concretions)
-- **Layer 2 — domain surface (`src/domain/`)**: deps + shared kit instance + domain semantics + domain router composition + modules
-- **Layer 3 — package boundary (`src/boundary/`)**: package-wide middleware + final router attach (single choke point)
+- **Layer 1 — kit seam (`src/orpc.ts`, `src/orpc/*`)**: local proto-SDK kit primitives (no domain concretions)
+- **Layer 2 — domain surface (`src/domain/`)**: deps + shared kit instance + domain semantics + **shipping router** + modules
 
 Router responsibilities are fixed:
 
-- `src/domain/router.ts`: **domain composition** (what procedures exist + hierarchy)
-- `src/boundary/router.ts`: **boundary choke point** (package middleware + domain middleware, then single final `.router(...)` attach)
+- `src/domain/router.ts`: **shipping router** (domain composition + middleware chain + single final `.router(...)` attach)
 - `src/router.ts`: **stable public alias** for `@rawr/<pkg>/router` (re-export only)
 
 Hard choke points / invariants:
 
-- `src/boundary/router.ts` is the **only** place allowed to call `.router(...)` (single-shot attach).
-- `src/domain/boundary.ts` exports **domain middleware ordering as data** (so boundary can decide outer ordering, e.g. telemetry wraps read-only).
+- `src/domain/router.ts` is the **only** place allowed to call `.router(...)` (single-shot attach).
 - Import DAG must remain one-way:
-  - `src/orpc/**` imports nothing from `src/domain/**` or `src/boundary/**`
-  - `src/domain/modules/**` imports nothing from `src/boundary/**`
-  - `src/boundary/**` may import from `src/domain/**` (and boundary-local middleware)
+  - `src/orpc/**` imports nothing from `src/domain/**`
+  - `src/domain/modules/**` imports nothing from package entrypoints (`src/index.ts`, `src/router.ts`, `src/client.ts`)
 
 ### Why
 We are optimizing for rapid comprehension and predictable navigation for both humans and AI agents. Structural drift by package size creates unnecessary cognitive overhead.
@@ -115,7 +111,7 @@ How do we represent nested modules while keeping composition obvious and oRPC-na
 Nested modules are **folders under a module** and are composed explicitly (no auto-discovery):
 
 - a parent module owns composition of its submodules (import + mount in `router.ts`),
-- boundary wrapping remains at `src/boundary/router.ts` (single final attach does not move),
+- boundary wrapping remains at `src/domain/router.ts` (single final attach does not move),
 - module setup/injection remains local (typically in each module’s `setup.ts`).
 
 ### Why
