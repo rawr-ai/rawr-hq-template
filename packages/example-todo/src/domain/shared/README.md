@@ -9,6 +9,6 @@ Cross-module shared, **domain-internal** constructs live here.
 - Keep `domain/shared/` focused on **domain semantics** (errors, schemas/types, invariants), not adapter glue.
 - Put shared adapter/infrastructure helpers in `domain/adapters/` instead.
 - Keep `domain/shared/` free of dependency wiring. Wiring belongs in:
-  - `domain/setup.ts` (domain kit instance),
+  - `domain/base.ts` (domain base primitives),
   - `domain/router.ts` (shipping router chain), or
   - `domain/modules/*/setup.ts` (module-local injection).

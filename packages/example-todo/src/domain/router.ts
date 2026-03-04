@@ -10,11 +10,12 @@
 import { router as assignments } from "./modules/assignments/router";
 import { router as tags } from "./modules/tags/router";
 import { router as tasks } from "./modules/tasks/router";
+import { impl } from "../orpc";
 
-export const router = {
+export const router = impl.router({
   tasks,
   tags,
   assignments,
-};
+});
 
 export type Router = typeof router;

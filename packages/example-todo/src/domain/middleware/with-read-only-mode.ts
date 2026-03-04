@@ -10,7 +10,7 @@
  * handlers when this middleware is active.
  */
 import { ORPCError } from "@orpc/server";
-import { osBase } from "../setup";
+import { osBase } from "../base";
 import { READ_ONLY_MODE } from "../shared/errors";
 
 export const withReadOnlyMode = osBase.middleware(async ({ context, procedure, path, next }) => {
