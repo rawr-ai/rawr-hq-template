@@ -14,7 +14,7 @@ If you are an agent arriving to implement business logic fast:
 - **Start at oRPC composition**: `src/orpc.ts` (root contract implementer + package-wide middleware order)
 - **Then open the domain router**: `src/domain/router.ts` (module router composition + single final attach)
 - **Then live in a module**: `src/domain/modules/<name>/{contract,setup,router}.ts`
-- **When you need “the one import for contract authoring / middleware authoring”**: `src/domain/setup.ts` (`oc` + unwrapped `os`)
+- **When you need “the one import for contract authoring / middleware authoring”**: `src/domain/base.ts` (`ocBase` + unwrapped `osBase`)
 - **When you need “the one import for handler implementers”**: `src/orpc.ts` (`orpc.<module>` subtrees)
 - **When you need kit-level middleware** (telemetry, generic wrappers): `src/orpc/middleware/*`
 
@@ -34,7 +34,7 @@ Use one stable top-level structure across package sizes:
 Always-on slots:
 
 - `src/domain/router.ts` is the always-on domain router composition choke point (single final attach).
-- `src/domain/setup.ts` is the always-on kit instance import surface.
+- `src/domain/base.ts` is the always-on base primitives import surface.
 - `src/orpc/middleware/*` is the always-on slot for kit-level middleware definitions.
  - `src/orpc.ts` is the always-on oRPC composition surface (implement root contract + attach middleware).
 
@@ -42,7 +42,7 @@ Always-on slots:
 
 When choosing between "minimal now" vs "predictable later", prefer predictable scaffold slots for core structure.
 
-- Keep always-present structural files that are expected as a package grows (for example `src/domain/setup.ts`, `src/domain/router.ts`, `src/orpc.ts`, `src/orpc/middleware/*`), even if initially thin.
+- Keep always-present structural files that are expected as a package grows (for example `src/domain/base.ts`, `src/domain/router.ts`, `src/orpc.ts`, `src/orpc/middleware/*`), even if initially thin.
 - Do not push structural timing decisions ("add this file later") onto agents for core package layout.
 - Use templates/CLI shape flags to vary content depth, not to vary foundational topology.
 
@@ -129,7 +129,7 @@ Current required baseline:
 
 Recommended pattern:
 
-- define base metadata defaults once in `src/domain/setup.ts`,
+- define base metadata defaults once in `src/domain/base.ts`,
 - keep module contracts explicit by setting `idempotent` on every procedure,
 - read metadata in middleware via `procedure["~orpc"].meta` (oRPC runtime metadata surface).
 

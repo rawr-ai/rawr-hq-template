@@ -173,15 +173,15 @@ This refactor is tightly coupled (moves + import rewrites). Parallel code editin
 1. Move/replace `src/orpc/deps.ts` → `src/domain/deps.ts`.
 2. Move `src/orpc/errors.ts` → `src/domain/shared/errors.ts`.
 3. Move `src/orpc/internal-errors.ts` → `src/domain/shared/internal-errors.ts`.
-4. Create `src/domain/setup.ts` (“the file everyone imports”):
+4. Create `src/domain/base.ts` (“the file everyone imports”):
    - It is the single domain kit instance:
      - imports `createOrpcKit` (or equivalent) from `../orpc.ts`,
      - defines domain-authored `baseMetadata` (domain/audience/idempotent defaults),
-     - exports `oc`, `os`, and `implementModuleRouter` (and any other primitives modules need).
-   - **Hard rule**: `domain/setup.ts` must not import module code.
+     - exports `ocBase` and `osBase` (domain-authored base builders).
+   - **Hard rule**: `domain/base.ts` must not import module code.
 5. Create `src/domain/middleware/with-read-only-mode.ts`:
    - Move logic from `src/orpc/middleware/with-read-only-mode.ts`,
-   - Build from `os`/middleware builder exported by `domain/setup.ts`,
+   - Build from `osBase`/middleware builder exported by `domain/base.ts`,
    - Import `READ_ONLY_MODE` from `domain/shared/errors.ts`.
 6. Create `src/domain/boundary.ts`:
    - Export a domain-wide middleware chain primitive (e.g. `domainBoundary = os.use(withReadOnlyMode)`),
@@ -193,8 +193,8 @@ This refactor is tightly coupled (moves + import rewrites). Parallel code editin
 ### Phase 4 — Nest modules under `domain/modules/**` and update module imports
 1. Move `src/modules/**` → `src/domain/modules/**` (folders intact).
 2. For each module:
-   - Update `contract.ts` to import `oc` from `../../setup` (i.e., `domain/setup.ts`), not `orpc/base.ts`.
-   - Update `setup.ts` to import `implementModuleRouter` from `../../setup`.
+   - Update `contract.ts` to import `ocBase` from `../../base` (i.e., `domain/base.ts`), not `orpc/base.ts`.
+   - Update `setup.ts` to derive its implementer subtree from the central implementer (`src/orpc.ts`).
    - Update any error imports to `../../shared/errors`.
    - Update internal error imports to `../../shared/internal-errors`.
 3. Update relative imports inside module files (`./schemas`, `./repository`, etc.) if path depth changed.
@@ -206,16 +206,15 @@ This refactor is tightly coupled (moves + import rewrites). Parallel code editin
    - apply package middleware (telemetry, etc.),
    - perform the **single final attach** to the domain router.
 2. Move `src/orpc/middleware/with-telemetry.ts` → `src/boundary/middleware/with-telemetry.ts`:
-   - Update it to build from a builder exported by `domain/setup.ts` (or use `domainBoundary` if your pattern supports that).
+   - Update it to build from a builder exported by `domain/base.ts` (or use `domainBoundary` if your pattern supports that).
    - Ensure it remains observability-only and doesn’t remap errors.
 
 ### Phase 6 — Convert `src/orpc/**` into a proto-SDK kit (and add `src/orpc.ts` seam)
 1. Replace `src/orpc/base.ts` with `src/orpc/factory.ts` (or refactor it in place, but end state must be “factory-ified”):
    - Export `createOrpcKit<Deps>(options)` that returns:
      - `oc` (contract builder),
-     - `os` (middleware builder),
-     - `implementModuleRouter(contract)` (typed implementer base).
-   - The factory accepts `baseMetadata` (domain-authored values supplied by `domain/setup.ts`).
+     - `os` (middleware builder).
+   - The factory accepts `baseMetadata` (domain-authored values supplied by `domain/base.ts`).
    - **Hard rule**: no domain concretes inside `orpc/**`.
 2. Add `src/orpc.ts`:
    - Re-export `createOrpcKit` (and only the kit API surface needed by domain).
@@ -253,7 +252,7 @@ Static audits (grep-based):
 ### Phase 10 — Final review + cleanup
 1. Orchestrator reviews diffs end-to-end (not just green tests):
    - Does the directory topology read cleanly?
-   - Are the “front doors” obvious (`domain/setup.ts`, `domain/router.ts`, `boundary/router.ts`)?
+   - Are the “front doors” obvious (`domain/base.ts`, `domain/router.ts`, `boundary/router.ts`)?
    - Is module-local middleware still a first-class pattern?
 2. Delete temporary per-agent working pads if desired (per your “throw away” requirement), **but keep** `PLAN_SCRATCH.md` as the canonical plan copy.
 3. Ensure the worktree is clean and branch state is consistent with Graphite expectations (no half-finished moves).
@@ -298,7 +297,7 @@ Per requirement: we will **not** immediately lock doc changes without discussion
 - **DECISIONS.md (hard rules only)**:
   - The DAG constraints (no forbidden imports).
   - Single-shot final attach rule.
-  - “domain/setup.ts is the one shared import” rule.
+  - “domain/base.ts is the one shared import” rule.
   - “orpc/** contains no domain concretes” rule.
 - **guidance.md (soft guidance + rationale)**:
   - Authoring journey by task type (module vs domain vs boundary).
@@ -315,4 +314,3 @@ Per requirement: we will **not** immediately lock doc changes without discussion
 - `with-read-only-mode` is a **domain semantic**, not a package boundary concern, so it lives under `domain/middleware/` and is applied via `domain/boundary.ts`.
 - `with-telemetry` is **package wiring**, so it lives under `boundary/middleware/` and is applied via `boundary/router.ts`.
 - Composition remains manual and explicit; no auto-discovery.
-
