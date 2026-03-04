@@ -11,9 +11,11 @@
 
 If you are an agent arriving to implement business logic fast:
 
-- **Start at the shipping router**: `src/domain/router.ts` (module composition + middleware chain + single final attach)
+- **Start at oRPC composition**: `src/orpc.ts` (root contract implementer + package-wide middleware order)
+- **Then open the domain router**: `src/domain/router.ts` (module router composition + single final attach)
 - **Then live in a module**: `src/domain/modules/<name>/{contract,setup,router}.ts`
-- **When you need “the one import everyone uses”**: `src/domain/setup.ts` (configured kit surface)
+- **When you need “the one import for contract authoring / middleware authoring”**: `src/domain/setup.ts` (`oc` + unwrapped `os`)
+- **When you need “the one import for handler implementers”**: `src/orpc.ts` (`orpc.<module>` subtrees)
 - **When you need kit-level middleware** (telemetry, generic wrappers): `src/orpc/middleware/*`
 
 If you are wiring exports/packaging: `src/index.ts`, `src/client.ts`, and `src/router.ts` (public alias).
@@ -25,14 +27,16 @@ Use one stable top-level structure across package sizes:
 - `src/index.ts` for public package exports only,
 - `src/client.ts` for in-process client construction only,
 - `src/router.ts` for the stable public router export (`@rawr/<pkg>/router`) via re-export,
-- `src/orpc.ts` + `src/orpc/*` for local oRPC kit primitives (domain-agnostic; future-SDK seam),
-- `src/domain/` for domain semantics (deps + kit instance + **shipping router** + modules + shared constructs).
+- `src/orpc-sdk.ts` + `src/orpc/*` for local oRPC kit primitives (domain-agnostic; future-SDK seam),
+- `src/orpc.ts` for oRPC-native contract implementation + package-wide middleware stacking,
+- `src/domain/` for domain semantics (deps + kit instance + modules + shared constructs + contract bubble-up + router composition).
 
 Always-on slots:
 
-- `src/domain/router.ts` is the always-on shipping router choke point (single `.router(...)` attach).
+- `src/domain/router.ts` is the always-on domain router composition choke point (single final attach).
 - `src/domain/setup.ts` is the always-on kit instance import surface.
 - `src/orpc/middleware/*` is the always-on slot for kit-level middleware definitions.
+ - `src/orpc.ts` is the always-on oRPC composition surface (implement root contract + attach middleware).
 
 ## Scaffold Determinism Rule
 
@@ -58,8 +62,9 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
   We are not using this by default in `example-todo`.
 - **Module setup**: context injection exported from `domain/modules/<name>/setup.ts` (repos/services derived from `context.deps`).
 - **Module implementation router**: oRPC server router exported from `domain/modules/<name>/router.ts` via `os.router({ ... })`.
-- **Shipping router**: final router exported from `src/domain/router.ts` after middleware is applied and module routers are attached once.
-- **Kit seam**: domain-agnostic oRPC kit primitives under `src/orpc.ts` and `src/orpc/*`.
+- **Domain router**: final router exported from `src/domain/router.ts` after module routers are attached once.
+- **Kit seam**: domain-agnostic oRPC kit primitives under `src/orpc-sdk.ts` and `src/orpc/*`.
+- **oRPC composition**: `src/orpc.ts` (implements the root contract and attaches package-wide middleware).
 
 ## Naming Conventions
 
@@ -107,7 +112,7 @@ Rules:
 
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
-- Start each module setup from the domain setup surface in `src/domain/setup.ts` (`implementModuleRouter(contract)`).
+- Start each module setup from the central implementer subtree in `src/orpc.ts` (`orpc.<module>`), then inject repos/services.
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
@@ -147,7 +152,7 @@ Use context/middleware at the level where each concern actually belongs:
 - Module setup injects module-local repos/services into execution context (`domain/modules/<name>/setup.ts`).
 - Kit-level middleware should be used for cross-cutting concerns that should be reusable across domain packages (telemetry/tracing, import-fault classification, request scoping).
 - Domain-wide middleware should be used for domain guards/semantics (read-only mode, authz policy, tenancy invariants) that need procedure metadata awareness.
-- Apply middleware at most once per concern: the shipping router attaches module routers once and applies middleware in one obvious chain.
+- Apply middleware at most once per concern: attach package-wide middleware in `src/orpc.ts`, then attach module routers once in `src/domain/router.ts`.
 
 Practical defaults:
 
@@ -159,7 +164,7 @@ Practical defaults:
 Use kit-level middleware for cross-cutting behavior that should be reusable across domain packages.
 
 - Define one concern per file in `src/orpc/middleware/` (for example `with-telemetry.ts`).
-- Wire truly “applies everywhere” kit middleware into the kit factory (`src/orpc/factory.ts`) so it’s invisible to domain packages.
+- Wire truly “applies everywhere” middleware into `src/orpc.ts` so it is consistent and obvious across packages.
 - Keep domain router middleware authoring focused on domain semantics (read-only mode, authz/tenancy guards).
 
 ### Domain-Wide Middleware Pattern
@@ -167,7 +172,7 @@ Use kit-level middleware for cross-cutting behavior that should be reusable acro
 Use domain-wide middleware for domain semantics that should apply uniformly across modules.
 
 - Define one concern per file in `src/domain/middleware/`.
-- Apply domain middleware in `src/domain/router.ts` so ordering is visible in the shipping chain.
+- Apply domain middleware in `src/orpc.ts` so middleware order is centralized and oRPC-native.
 
 ### Module-Local Middleware Pattern
 
