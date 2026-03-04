@@ -10,10 +10,10 @@
  * handlers when this middleware is active.
  */
 import { ORPCError } from "@orpc/server";
+import { os } from "../setup";
 import { READ_ONLY_MODE } from "../shared/errors";
 
-export const withReadOnlyMode = async (optionsOrpc: any) => {
-  const { context, procedure, path, next } = optionsOrpc as any;
+export const withReadOnlyMode = os.middleware(async ({ context, procedure, path, next }) => {
   const isMutatingProcedure = procedure["~orpc"].meta.idempotent === false;
 
   if (!context.deps.runtime.readOnly || !isMutatingProcedure) {
@@ -26,4 +26,4 @@ export const withReadOnlyMode = async (optionsOrpc: any) => {
     message: "Write operation blocked: service is in read-only mode",
     data: { path: path.join(".") },
   });
-};
+});

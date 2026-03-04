@@ -4,7 +4,8 @@
  * @remarks
  * This is the single file modules should import to get the configured oRPC kit:
  * - `oc` for contract authoring
- * - `os` for middleware authoring / boundary composition
+ * - `os` for middleware authoring (base builder; no baked-in middleware)
+ * - `ship` for shipping composition (baked-in kit middleware)
  * - `implementModuleRouter` for module router implementation
  *
  * Keep this file domain-authored (concrete values live here). The kit factory
@@ -27,4 +28,5 @@ const kit = createOrpcKit<Deps>({
 
 export const oc = kit.oc;
 export const os = kit.os;
+export const ship = kit.ship;
 export const implementModuleRouter = kit.implementModuleRouter;
