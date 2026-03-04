@@ -9,14 +9,13 @@
  * Modules should derive their implementers from the central implementer in
  * `src/orpc.ts` (the oRPC-native composition point for middleware + contract).
  *
- * Legacy kit exports (`ship`, `implementModuleRouter`) are kept temporarily to
- * avoid churn while we converge on the final abstraction.
- *
  * Keep this file domain-authored (concrete values live here). The kit factory
  * implementation lives under `../orpc/*`.
  */
-import { createOrpcKit } from "../orpc-sdk";
-import type { BaseMetadata } from "../orpc-sdk";
+import { oc as ocBase } from "@orpc/contract";
+import { os as osBase } from "@orpc/server";
+
+import type { BaseMetadata, InitialContext } from "../orpc-sdk";
 
 import type { Deps } from "./deps";
 
@@ -26,11 +25,23 @@ const baseMetadata = {
   audience: "internal",
 } satisfies BaseMetadata;
 
-const kit = createOrpcKit<Deps>({
-  baseMetadata,
-});
+// -------------------------------------------------------------------------------------
+// PREVIOUS (kit-based) setup (kept as a reference while we stage and evaluate the kit):
+//
+//   import { createOrpcKit } from "../orpc-sdk";
+//   const kit = createOrpcKit<Deps>({ baseMetadata });
+//   export const oc = kit.oc;
+//   export const os = kit.os;
+//
+// -------------------------------------------------------------------------------------
+// CURRENT (manual) setup:
+//
+// Goal: make the wiring obvious so we can decide what the kit actually must do.
+// Nothing here should be "clever": it should mirror oRPC-native usage.
+// -------------------------------------------------------------------------------------
 
-export const oc = kit.oc;
-export const os = kit.os;
-export const ship = kit.ship;
-export const implementModuleRouter = kit.implementModuleRouter;
+export const oc = ocBase.$meta<BaseMetadata>(baseMetadata);
+
+export const os = osBase
+  .$context<InitialContext<Deps>>()
+  .$meta<BaseMetadata>(baseMetadata);
