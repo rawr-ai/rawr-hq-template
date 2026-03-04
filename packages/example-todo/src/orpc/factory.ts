@@ -25,7 +25,12 @@ export type CreateOrpcKitOptions<TMeta extends BaseMetadata = BaseMetadata> = {
  * The returned builders are the primitives used by:
  * - domain-wide middleware (via `os`)
  * - module contracts (via `oc`)
- * - module routers (via `implementModuleRouter`)
+ *
+ * Most packages should implement their root contract and attach middleware in
+ * `src/orpc.ts`, then derive module implementers from `orpc.<module>` subtrees.
+ *
+ * `implementModuleRouter` is kept as a temporary escape hatch while converging
+ * on the final kit abstraction.
  */
 export function createOrpcKit<TDeps, TMeta extends BaseMetadata = BaseMetadata>(
   options: CreateOrpcKitOptions<TMeta>,

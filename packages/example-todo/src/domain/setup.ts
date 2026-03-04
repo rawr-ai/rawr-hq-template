@@ -5,8 +5,12 @@
  * This is the single file modules should import to get the configured oRPC kit:
  * - `oc` for contract authoring
  * - `os` for middleware authoring (base builder; no baked-in middleware)
- * - `ship` for shipping composition (baked-in kit middleware)
- * - `implementModuleRouter` for module router implementation
+ *
+ * Modules should derive their implementers from the central implementer in
+ * `src/orpc.ts` (the oRPC-native composition point for middleware + contract).
+ *
+ * Legacy kit exports (`ship`, `implementModuleRouter`) are kept temporarily to
+ * avoid churn while we converge on the final abstraction.
  *
  * Keep this file domain-authored (concrete values live here). The kit factory
  * implementation lives under `../orpc/*`.
