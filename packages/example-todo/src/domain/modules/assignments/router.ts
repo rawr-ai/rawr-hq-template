@@ -2,7 +2,7 @@
  * @fileoverview Assignments module router implementation.
  *
  * @remarks
- * Module setup lives in `setup.ts`.
+ * Module setup lives in `./setup.ts`.
  * This file owns concrete handler implementations and exports plain-object `router`.
  *
  * @agents

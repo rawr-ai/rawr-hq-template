@@ -1,5 +1,5 @@
 /**
- * @fileoverview Runtime dependency contracts (ports) for this domain package.
+ * @fileoverview Domain dependency contracts (ports) for this domain package.
  *
  * @remarks
  * Domain logic depends on interfaces (`Sql`, `Clock`) rather than concrete

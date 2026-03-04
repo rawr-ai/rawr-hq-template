@@ -11,8 +11,8 @@
  * @agents
  * Keep procedure boundary concerns out of this file.
  */
-import type { Sql } from "../../orpc/deps";
-import { UnexpectedInternalError } from "../../orpc/internal-errors";
+import type { Sql } from "../../deps";
+import { UnexpectedInternalError } from "../../shared/internal-errors";
 import type { Tag } from "./schemas";
 
 export function createRepository(sql: Sql) {
