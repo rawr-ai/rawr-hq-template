@@ -9,6 +9,7 @@
 import { oc } from "@orpc/contract";
 import type { AnyContractRouter } from "@orpc/contract";
 import { implement, os } from "@orpc/server";
+import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
 import type { BaseContext, BaseDeps, BaseMetadata } from "./base";
 import type { TelemetryContext, WithTelemetryOptions } from "./middleware/with-telemetry";
@@ -125,13 +126,25 @@ export type CreateImplementerOptions = {
  * the service after calling this.
  */
 export function createImplementer<
-  TContract extends Record<string, AnyContractRouter>,
+  const TContract extends AnyContractRouter,
   TContext extends TelemetryContext,
 >(
   contract: TContract,
   options: CreateImplementerOptions,
 ) {
-  return implement(contract)
-    .$context<TContext>()
-    .use(withTelemetry<TContext>(options.telemetry));
+  const impl = implement(contract).$context<TContext>();
+
+  // TypeScript note:
+  // oRPC's implementer types expose a union of `.use(...)` overloads across
+  // procedure/router implementers. For a generic contract type, TS can refuse
+  // to pick a compatible signature even when the runtime behavior is correct.
+  //
+  // We keep the public return type precise (so modules get a typed implementer
+  // tree) and use a tiny internal escape hatch to apply guaranteed baseline
+  // middleware (telemetry) without forcing consumers to spell it manually.
+  return (impl as any).use(withTelemetry<TContext>(options.telemetry)) as ImplementerInternalWithMiddlewares<
+    TContract,
+    TContext,
+    TContext
+  >;
 }

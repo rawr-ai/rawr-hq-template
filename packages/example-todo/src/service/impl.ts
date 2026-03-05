@@ -18,6 +18,7 @@ import type { ServiceContext } from "./base";
 import { contract } from "./contract";
 import { withReadOnlyMode } from "./middleware/with-read-only-mode";
 import { withTelemetry } from "../orpc/middleware/with-telemetry";
+import { createImplementer } from "../orpc-sdk";
 
 /**
  * Central implementer tree derived from the root contract.
@@ -27,7 +28,18 @@ import { withTelemetry } from "../orpc/middleware/with-telemetry";
  * 1) telemetry (baseline)
  * 2) domain guards (read-only mode)
  */
-export const impl = implement(contract)
+export const implManual = implement(contract)
   .$context<ServiceContext>()
   .use(withTelemetry({ defaultDomain: "todo" }))
   .use(withReadOnlyMode);
+
+/**
+ * Proto-SDK-shaped implementer wiring.
+ *
+ * @remarks
+ * This should remain behavior-identical to `implManual`. Keep both exported
+ * until we're confident the SDK abstraction is truly zero-footgun.
+ */
+export const impl = createImplementer<typeof contract, ServiceContext>(contract, {
+  telemetry: { defaultDomain: "todo" },
+}).use(withReadOnlyMode);
