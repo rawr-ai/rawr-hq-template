@@ -20,7 +20,8 @@ import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../shared/errors";
 import { TaskSchema } from "./schemas";
 
 export const contract = {
-  create: ocBase.meta({ idempotent: false })
+  create: ocBase
+    .meta({ idempotent: false })
     .input(
       schema(
         Type.Object(

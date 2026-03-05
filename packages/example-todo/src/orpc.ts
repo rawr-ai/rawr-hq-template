@@ -31,5 +31,3 @@ export const impl = implement(contract)
   .$context<InitialContext<Deps>>()
   .use(withTelemetry({ defaultDomain: "todo" }))
   .use(withReadOnlyMode);
-
-export type Impl = typeof impl;
