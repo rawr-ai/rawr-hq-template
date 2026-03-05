@@ -8,16 +8,16 @@
  * - attach package-wide middleware here (telemetry, read-only mode),
  * - export the implementer tree for modules to derive from (`impl.<module>`).
  *
- * The domain router (`domain/router.ts`) should only compose module routers and
+ * The service router (`service/router.ts`) should only compose module routers and
  * call `.router(...)` once (no `.use(...)` there).
  */
 import { implement } from "@orpc/server";
 
-import type { Deps } from "./domain/deps";
-import { contract } from "./domain/contract";
-import { withReadOnlyMode } from "./domain/middleware/with-read-only-mode";
-import { withTelemetry } from "./orpc/middleware/with-telemetry";
-import type { InitialContext } from "./orpc-sdk";
+import type { Deps } from "./deps";
+import { contract } from "./contract";
+import { withReadOnlyMode } from "./middleware/with-read-only-mode";
+import { withTelemetry } from "../orpc/middleware/with-telemetry";
+import type { InitialContext } from "../orpc-sdk";
 
 /**
  * Central implementer tree derived from the root contract.

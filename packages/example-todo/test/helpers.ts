@@ -1,7 +1,7 @@
-import type { Deps } from "../src/domain/deps";
-import type { Assignment } from "../src/domain/modules/assignments/schemas";
-import type { Tag } from "../src/domain/modules/tags/schemas";
-import type { Task } from "../src/domain/modules/tasks/schemas";
+import type { Deps } from "../src/service/deps";
+import type { Assignment } from "../src/service/modules/assignments/schemas";
+import type { Tag } from "../src/service/modules/tags/schemas";
+import type { Task } from "../src/service/modules/tasks/schemas";
 
 type InMemorySqlOptions = {
   failIfQueryIncludes?: string[];

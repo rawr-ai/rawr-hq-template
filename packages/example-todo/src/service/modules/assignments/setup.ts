@@ -7,7 +7,7 @@
  * - inject assignment + dependent module repositories
  * - export configured `os` for handler implementations
  */
-import { impl } from "../../../orpc";
+import { impl } from "../../impl";
 import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 import { createRepository as createAssignmentRepository } from "./repository";

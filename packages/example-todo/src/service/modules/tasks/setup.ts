@@ -7,7 +7,7 @@
  * - inject task module dependencies/context
  * - export configured `os` for handler implementations
  */
-import { impl } from "../../../orpc";
+import { impl } from "../../impl";
 import { createRepository } from "./repository";
 
 /**
