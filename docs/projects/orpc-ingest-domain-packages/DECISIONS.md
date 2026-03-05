@@ -27,26 +27,26 @@ What is the canonical domain-package topology (and choke points) for agents?
 Use a two-layer structure with **explicit contract bubble-up** and **one router composition choke point**:
 
 - **Layer 1 — kit seam (`src/orpc-sdk.ts`, `src/orpc/*`)**: local proto-SDK kit primitives (no domain concretions)
-- **Layer 2 — domain surface (`src/domain/`)**: deps + shared kit instance + domain semantics + modules + root contract composition
+- **Layer 2 — service surface (`src/service/`)**: deps + base primitives + middleware + modules + root contract composition
 
-In addition, each domain package has one oRPC-native composition file:
+In addition, each domain package has one oRPC-native composition file (central implementer):
 
-- `src/orpc.ts`: root contract implementation + package-wide middleware stacking (the “official ORPC.ts pattern”, local-first)
+- `src/service/impl.ts`: root contract implementation + package-wide middleware stacking (the “official ORPC.ts pattern”, local-first)
 
 Router responsibilities are fixed:
 
-- `src/domain/contract.ts`: root contract composition (contracts bubble up here)
-- `src/orpc.ts`: implement the root contract once and attach middleware (telemetry + domain guards)
-- `src/domain/router.ts`: router composition only (mount module routers into one shape; single final attach)
+- `src/service/contract.ts`: root contract composition (contracts bubble up here)
+- `src/service/impl.ts`: implement the root contract once and attach middleware (telemetry + domain guards)
+- `src/service/router.ts`: router composition only (mount module routers into one shape; single final attach)
 - `src/router.ts`: **stable public alias** for `@rawr/<pkg>/router` (re-export only)
 
 Hard choke points / invariants:
 
-- `src/orpc.ts` is the **only** place allowed to call `.use(...)` for package-wide middleware.
-- `src/domain/router.ts` is the **only** place allowed to mount module routers into the top-level router shape.
+- `src/service/impl.ts` is the **only** place allowed to call `.use(...)` for package-wide middleware.
+- `src/service/router.ts` is the **only** place allowed to mount module routers into the top-level router shape.
 - Import DAG must remain one-way:
-  - `src/orpc/**` imports nothing from `src/domain/**`
-  - `src/domain/modules/**` imports nothing from package entrypoints (`src/index.ts`, `src/router.ts`, `src/client.ts`)
+  - `src/orpc/**` imports nothing from `src/service/**`
+  - `src/service/modules/**` imports nothing from package entrypoints (`src/index.ts`, `src/router.ts`, `src/client.ts`)
 
 ### Why
 We are optimizing for rapid comprehension and predictable navigation for both humans and AI agents. Structural drift by package size creates unnecessary cognitive overhead.
@@ -86,7 +86,7 @@ This keeps boundary contracts focused on caller behavior, reduces repetitive try
 ## Decision #5 (2026-03-04)
 
 ### Question
-Within `src/domain/modules/`, what is the canonical module split?
+Within `src/service/modules/`, what is the canonical module split?
 
 ### Decision
 Adopt module-level hybrid contract-first:
@@ -94,8 +94,8 @@ Adopt module-level hybrid contract-first:
 - each module defines `contract.ts` (boundary: input/output/errors/metadata),
 - each module defines `setup.ts` (runtime injection: context middleware, repos/services),
 - each module defines `router.ts` (behavior: handlers + contract-enforced router export),
-- modules derive their implementer subtrees from the central `orpc` in `src/orpc.ts`,
-- modules share a single domain base import surface for contract authoring + middleware authoring (`src/domain/base.ts`),
+- modules derive their implementer subtrees from the central `impl` in `src/service/impl.ts`,
+- modules share a single service base import surface for contract authoring + middleware authoring (`src/service/base.ts`),
 - package boundary remains router-client-first (`router` + `createClient` entrypoints).
 
 ### Why
@@ -119,8 +119,8 @@ How do we represent nested modules while keeping composition obvious and oRPC-na
 Nested modules are **folders under a module** and are composed explicitly (no auto-discovery):
 
 - a parent module owns composition of its submodules (import + mount in `router.ts`),
-- middleware ordering is authored at `src/orpc.ts` (one obvious stacking point),
-- router composition remains at `src/domain/router.ts` (single final attach does not move),
+- middleware ordering is authored at `src/service/impl.ts` (one obvious stacking point),
+- router composition remains at `src/service/router.ts` (single final attach does not move),
 - module setup/injection remains local (typically in each module’s `setup.ts`).
 
 ### Why
