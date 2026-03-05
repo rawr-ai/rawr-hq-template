@@ -12,8 +12,10 @@ import { implement, os } from "@orpc/server";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
 import type { BaseContext, BaseDeps, BaseMetadata } from "./base";
-import type { TelemetryContext, WithTelemetryOptions } from "./middleware/with-telemetry";
+import type { WithTelemetryOptions } from "./middleware/with-telemetry";
 import { withTelemetry } from "./middleware/with-telemetry";
+import type { AnalyticsContext, WithAnalyticsOptions } from "./middleware/mock/with-analytics";
+import { withAnalytics } from "./middleware/mock/with-analytics";
 
 export type { BaseContext, BaseMetadata, InitialContext } from "./base";
 
@@ -127,7 +129,7 @@ export type CreateImplementerOptions = {
  */
 export function createImplementer<
   const TContract extends AnyContractRouter,
-  TContext extends TelemetryContext,
+  TContext extends BaseContext<BaseDeps>,
 >(
   contract: TContract,
   options: CreateImplementerOptions,
@@ -143,6 +145,36 @@ export function createImplementer<
   // tree) and use a tiny internal escape hatch to apply guaranteed baseline
   // middleware (telemetry) without forcing consumers to spell it manually.
   return (impl as any).use(withTelemetry<TContext>(options.telemetry)) as ImplementerInternalWithMiddlewares<
+    TContract,
+    TContext,
+    TContext
+  >;
+}
+
+// -------------------------------------------------------------------------------------
+// Mock example: "always-on" analytics (wireframe only).
+//
+// This is not used by the todo service; it's here to illustrate the pattern:
+// - If a middleware is guaranteed baseline, it should be attached here once.
+// - Its deps requirements become part of the SDK/service baseline contract.
+// -------------------------------------------------------------------------------------
+
+export type CreateImplementerWithAnalyticsMockOptions = CreateImplementerOptions & {
+  analytics: WithAnalyticsOptions;
+};
+
+export function createImplementerWithAnalyticsMock<
+  const TContract extends AnyContractRouter,
+  TContext extends AnalyticsContext,
+>(
+  contract: TContract,
+  options: CreateImplementerWithAnalyticsMockOptions,
+) {
+  const impl = implement(contract).$context<TContext>();
+
+  return (impl as any)
+    .use(withTelemetry<TContext>(options.telemetry))
+    .use(withAnalytics<TContext>(options.analytics)) as ImplementerInternalWithMiddlewares<
     TContract,
     TContext,
     TContext
