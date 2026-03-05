@@ -10,8 +10,8 @@
  * deep-link to this file directly unless explicitly needed for testing.
  */
 import type { Deps } from "./service/deps";
+import type { ServiceContext } from "./service/base";
 import { createRouterClient } from "@orpc/server";
-import type { InitialContext } from "./orpc-sdk";
 import { router } from "./router";
 
 // -------------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ import { router } from "./router";
 
 export function createClient(deps: Deps) {
   return createRouterClient(router, {
-    context: { deps } as InitialContext<Deps>,
+    context: { deps } as ServiceContext,
   });
 }
 

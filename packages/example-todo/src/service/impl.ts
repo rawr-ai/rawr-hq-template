@@ -14,10 +14,10 @@
 import { implement } from "@orpc/server";
 
 import type { Deps } from "./deps";
+import type { ServiceContext } from "./base";
 import { contract } from "./contract";
 import { withReadOnlyMode } from "./middleware/with-read-only-mode";
 import { withTelemetry } from "../orpc/middleware/with-telemetry";
-import type { InitialContext } from "../orpc-sdk";
 
 /**
  * Central implementer tree derived from the root contract.
@@ -28,6 +28,6 @@ import type { InitialContext } from "../orpc-sdk";
  * 2) domain guards (read-only mode)
  */
 export const impl = implement(contract)
-  .$context<InitialContext<Deps>>()
+  .$context<ServiceContext>()
   .use(withTelemetry({ defaultDomain: "todo" }))
   .use(withReadOnlyMode);
