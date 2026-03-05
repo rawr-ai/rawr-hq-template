@@ -45,15 +45,17 @@ export type WithTelemetryOptions = {
   defaultDomain: string;
 };
 
-type TelemetryContext = {
+export type TelemetryContext = {
   deps: {
     logger: Logger;
   };
 };
 
-export function withTelemetry(options: WithTelemetryOptions) {
+export function withTelemetry<TContext extends TelemetryContext = TelemetryContext>(
+  options: WithTelemetryOptions,
+) {
   return os
-    .$context<TelemetryContext>()
+    .$context<TContext>()
     .middleware(async ({ context, path, procedure, next }) => {
       const start = Date.now();
       const pathLabel = path.join(".");

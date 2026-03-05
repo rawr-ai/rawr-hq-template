@@ -2,14 +2,17 @@
  * @fileoverview Local proto-SDK ORPC kit factory for this repo.
  *
  * @remarks
- * This directory is intentionally domain-agnostic so it can later be extracted
- * into a shared SDK package. Concrete domain values (deps shape, metadata
+ * This directory is intentionally service-agnostic so it can later be extracted
+ * into a shared SDK package. Concrete service values (deps shape, metadata
  * defaults, service-wide middleware) belong in `../service/*`.
  */
 import { oc } from "@orpc/contract";
-import { os } from "@orpc/server";
+import type { AnyContractRouter } from "@orpc/contract";
+import { implement, os } from "@orpc/server";
 
-import type { BaseContext, BaseMetadata } from "./base";
+import type { BaseContext, BaseDeps, BaseMetadata } from "./base";
+import type { TelemetryContext, WithTelemetryOptions } from "./middleware/with-telemetry";
+import { withTelemetry } from "./middleware/with-telemetry";
 
 export type { BaseContext, BaseMetadata, InitialContext } from "./base";
 
@@ -53,4 +56,82 @@ export function createOrpcKit<TDeps, TMeta extends BaseMetadata = BaseMetadata>(
     oc: baseContractBuilder,
     os: baseMiddlewareBuilder,
   };
+}
+
+// -------------------------------------------------------------------------------------
+// Proto-SDK wireframe (membro): smaller, more explicit factories.
+//
+// Keep `createOrpcKit` above for side-by-side comparison while we converge on
+// the right public surface.
+// -------------------------------------------------------------------------------------
+
+export type CreateContractBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> = {
+  /**
+   * Default metadata applied to every contract/procedure in the service.
+   *
+   * @remarks
+   * Intentionally widened to `BaseMetadata` to prevent literal inference.
+   * Services extend metadata by supplying an explicit `TMeta` type parameter.
+   */
+  baseMetadata: BaseMetadata;
+};
+
+export function createContractBuilder<TMeta extends BaseMetadata = BaseMetadata>(
+  options: CreateContractBuilderOptions<TMeta>,
+) {
+  return oc.$meta<TMeta>(options.baseMetadata as TMeta);
+}
+
+export type CreateMiddlewareBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> = {
+  /**
+   * Default metadata applied to every procedure; available to middleware via
+   * `procedure["~orpc"].meta`.
+   *
+   * @remarks
+   * Intentionally widened to `BaseMetadata` to prevent literal inference.
+   */
+  baseMetadata: BaseMetadata;
+};
+
+/**
+ * Create an oRPC server builder for authoring middleware.
+ *
+ * @remarks
+ * The proto-SDK baseline is `BaseContext<TDeps>` (deps-only). Services can
+ * extend context by choosing a `TContext` that is a supertype of
+ * `BaseContext<...>` (for example `InitialContext<TDeps, { requestId: string }>`).
+ */
+export function createMiddlewareBuilder<
+  TContext extends BaseContext<BaseDeps>,
+  TMeta extends BaseMetadata = BaseMetadata,
+>(
+  options: CreateMiddlewareBuilderOptions<TMeta>,
+) {
+  return os
+    .$context<TContext>()
+    .$meta<TMeta>(options.baseMetadata as TMeta);
+}
+
+export type CreateImplementerOptions = {
+  telemetry: WithTelemetryOptions;
+};
+
+/**
+ * Create the central implementer tree with guaranteed baseline middleware.
+ *
+ * @remarks
+ * Today the only guaranteed baseline middleware is telemetry.
+ * Service-specific guards (for example read-only mode) should be layered on by
+ * the service after calling this.
+ */
+export function createImplementer<
+  TContract extends Record<string, AnyContractRouter>,
+  TContext extends TelemetryContext,
+>(
+  contract: TContract,
+  options: CreateImplementerOptions,
+) {
+  return implement(contract)
+    .$context<TContext>()
+    .use(withTelemetry<TContext>(options.telemetry));
 }

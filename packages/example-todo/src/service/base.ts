@@ -16,6 +16,7 @@ import { oc } from "@orpc/contract";
 import { os } from "@orpc/server";
 
 import type { BaseContext, BaseMetadata, InitialContext } from "../orpc-sdk";
+import { createContractBuilder, createMiddlewareBuilder } from "../orpc-sdk";
 
 import type { Deps } from "./deps";
 
@@ -83,8 +84,21 @@ export type ServiceContext = InitialContext<
 // Nothing here should be "clever": it should mirror oRPC-native usage.
 // -------------------------------------------------------------------------------------
 
-export const ocBase = oc.$meta<ServiceMetadata>(baseMetadata);
+/**
+ * Declarative (proto-SDK-shaped) setup.
+ *
+ * @remarks
+ * Target ergonomics: types + defaults + one call per builder.
+ */
+export const ocBase = createContractBuilder<ServiceMetadata>({ baseMetadata });
 
-export const osBase = os
+export const osBase = createMiddlewareBuilder<ServiceContext, ServiceMetadata>({ baseMetadata });
+
+/**
+ * Manual (direct oRPC) setup kept for side-by-side comparison.
+ */
+export const ocBaseManual = oc.$meta<ServiceMetadata>(baseMetadata);
+
+export const osBaseManual = os
   .$context<ServiceContext>()
   .$meta<ServiceMetadata>(baseMetadata);
