@@ -19,7 +19,7 @@ import { withReadOnlyMode } from "./middleware/with-read-only-mode";
 import { withAnalytics } from "../orpc/middleware/with-analytics";
 import { withTelemetry } from "../orpc/middleware/with-telemetry";
 import { createImplementer } from "../orpc-sdk";
-import { withFeedback, type WithFeedbackContext } from "../orpc/middleware/mock/with-feedback";
+import { withFeedback, type WithFeedbackContext } from "../orpc/middleware/with-feedback";
 
 /**
  * Central implementer tree derived from the root contract.

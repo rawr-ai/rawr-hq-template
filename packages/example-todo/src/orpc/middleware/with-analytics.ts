@@ -8,30 +8,21 @@
 
 import { os } from "@orpc/server";
 
-import type { AnalyticsClient, BaseContext, BaseDeps } from "../base";
+import type { AnalyticsClient } from "../base";
 
 export type WithAnalyticsOptions = {
   app: string;
 };
 
 /**
- * Analytics deps requirement (SDK baseline).
- *
- * @remarks
- * Analytics is guaranteed baseline middleware, so its requirements should be
- * expressible in terms of the SDK's single baseline primitive (`BaseContext`).
+ * Analytics deps requirement (baseline).
  */
-export type AnalyticsDeps = Pick<BaseDeps, "analytics">;
+export type AnalyticsDeps = {
+  analytics: AnalyticsClient;
+};
 
-export type AnalyticsContext = BaseContext<AnalyticsDeps>;
-
-/**
- * Legacy standalone deps shape (kept for side-by-side comparison).
- */
-export type AnalyticsContextLegacy = {
-  deps: {
-    analytics: AnalyticsClient;
-  };
+export type AnalyticsContext = {
+  deps: AnalyticsDeps;
 };
 
 export function withAnalytics<TContext extends AnalyticsContext = AnalyticsContext>(
@@ -46,4 +37,3 @@ export function withAnalytics<TContext extends AnalyticsContext = AnalyticsConte
     return result;
   });
 }
-
