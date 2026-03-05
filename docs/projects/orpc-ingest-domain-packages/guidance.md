@@ -247,7 +247,7 @@ Boundary rule still applies either way: procedures expose ORPC boundary errors, 
 
 Use sharing-based placement:
 
-- `domain/shared/errors.ts` for reusable cross-module boundary error definitions,
+- `service/shared/errors.ts` for reusable cross-module boundary error definitions,
 - module-specific boundary errors inline in `service/modules/<name>/contract.ts`,
 - procedure-local errors only when truly local to one procedure.
 
@@ -255,8 +255,8 @@ Use sharing-based placement:
 
 When a construct is shared by multiple modules, choose the directory based on semantics:
 
-- `domain/shared/`: domain semantics (errors, schemas/types, invariants).
-- `domain/adapters/`: shared adapter/infrastructure helpers (SQL helpers, mapping utilities).
+- `service/shared/`: domain semantics (errors, schemas/types, invariants).
+- `service/adapters/`: shared adapter/infrastructure helpers (SQL helpers, mapping utilities).
 
 Each procedure still declares only the errors it can throw.
 
