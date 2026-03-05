@@ -15,6 +15,13 @@ export interface Logger {
 }
 
 /**
+ * Canonical analytics client contract used by kit-level middleware (analytics).
+ */
+export interface AnalyticsClient {
+  track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+}
+
+/**
  * Minimum dependency contract expected by ORPC domain packages.
  *
  * @remarks
@@ -23,6 +30,7 @@ export interface Logger {
  */
 export interface BaseDeps {
   logger: Logger;
+  analytics: AnalyticsClient;
 }
 
 /**

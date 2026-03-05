@@ -12,10 +12,10 @@ import { implement, os } from "@orpc/server";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
 import type { BaseContext, BaseDeps, BaseMetadata } from "./base";
+import type { WithAnalyticsOptions } from "./middleware/with-analytics";
+import { withAnalytics } from "./middleware/with-analytics";
 import type { WithTelemetryOptions } from "./middleware/with-telemetry";
 import { withTelemetry } from "./middleware/with-telemetry";
-import type { AnalyticsContext, WithAnalyticsOptions } from "./middleware/mock/with-analytics";
-import { withAnalytics } from "./middleware/mock/with-analytics";
 
 export type { BaseContext, BaseMetadata, InitialContext } from "./base";
 
@@ -117,13 +117,14 @@ export function createMiddlewareBuilder<
 
 export type CreateImplementerOptions = {
   telemetry: WithTelemetryOptions;
+  analytics: WithAnalyticsOptions;
 };
 
 /**
  * Create the central implementer tree with guaranteed baseline middleware.
  *
  * @remarks
- * Today the only guaranteed baseline middleware is telemetry.
+ * Today guaranteed baseline middleware includes telemetry + analytics.
  * Service-specific guards (for example read-only mode) should be layered on by
  * the service after calling this.
  */
@@ -137,14 +138,16 @@ export function createImplementer<
   const impl = implement(contract).$context<TContext>();
 
   // TypeScript note:
-  // oRPC's implementer types expose a union of `.use(...)` overloads across
-  // procedure/router implementers. For a generic contract type, TS can refuse
-  // to pick a compatible signature even when the runtime behavior is correct.
+  // `ContractRouter` is defined as a union (procedure OR router). When this
+  // function is generic over `TContract`, oRPC's implementer tree type becomes a
+  // conditional/union that causes `.use(...)` to be seen as a union of call
+  // signatures. TS then refuses to call it even though runtime behavior is fine.
   //
-  // We keep the public return type precise (so modules get a typed implementer
-  // tree) and use a tiny internal escape hatch to apply guaranteed baseline
-  // middleware (telemetry) without forcing consumers to spell it manually.
-  return (impl as any).use(withTelemetry<TContext>(options.telemetry)) as ImplementerInternalWithMiddlewares<
+  // Keep this escape hatch localized: apply guaranteed baseline middleware here
+  // once, then return a precisely-typed implementer tree for module code.
+  return (impl as any)
+    .use(withTelemetry<TContext>(options.telemetry))
+    .use(withAnalytics<TContext>(options.analytics)) as ImplementerInternalWithMiddlewares<
     TContract,
     TContext,
     TContext
@@ -159,24 +162,21 @@ export function createImplementer<
 // - Its deps requirements become part of the SDK/service baseline contract.
 // -------------------------------------------------------------------------------------
 
-export type CreateImplementerWithAnalyticsMockOptions = CreateImplementerOptions & {
-  analytics: WithAnalyticsOptions;
-};
+/**
+ * Legacy wrapper kept for side-by-side comparison.
+ *
+ * @remarks
+ * `createImplementer` now includes analytics baseline middleware directly, so
+ * this wrapper is redundant and exists only to preserve the earlier wireframe.
+ */
+export type CreateImplementerWithAnalyticsMockOptions = CreateImplementerOptions;
 
 export function createImplementerWithAnalyticsMock<
   const TContract extends AnyContractRouter,
-  TContext extends AnalyticsContext,
+  TContext extends BaseContext<BaseDeps>,
 >(
   contract: TContract,
   options: CreateImplementerWithAnalyticsMockOptions,
 ) {
-  const impl = implement(contract).$context<TContext>();
-
-  return (impl as any)
-    .use(withTelemetry<TContext>(options.telemetry))
-    .use(withAnalytics<TContext>(options.analytics)) as ImplementerInternalWithMiddlewares<
-    TContract,
-    TContext,
-    TContext
-  >;
+  return createImplementer<TContract, TContext>(contract, options);
 }

@@ -3,9 +3,9 @@
  *
  * @remarks
  * Domain logic depends on interfaces (`Sql`, `Clock`) rather than concrete
- * adapters. `logger` is inherited from the kit baseline `BaseDeps` contract
- * exported via the package kit seam (`src/orpc.ts`). `runtime` holds runtime
- * mode toggles used by package-global middleware.
+ * adapters. `logger` + `analytics` are inherited from the kit baseline
+ * `BaseDeps` contract exported via the package kit seam (`src/orpc-sdk.ts`).
+ * `runtime` holds runtime mode toggles used by package-global middleware.
  *
  * Trap to avoid: adding transport concerns (HTTP request/response types) here.
  * This package is transport-agnostic by design.

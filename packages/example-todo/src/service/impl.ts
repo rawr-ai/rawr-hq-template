@@ -17,8 +17,11 @@ import type { Deps } from "./deps";
 import type { ServiceContext } from "./base";
 import { contract } from "./contract";
 import { withReadOnlyMode } from "./middleware/with-read-only-mode";
+import { withAnalytics } from "../orpc/middleware/with-analytics";
 import { withTelemetry } from "../orpc/middleware/with-telemetry";
 import { createImplementer } from "../orpc-sdk";
+import type { FeedbackClient } from "../orpc/middleware/mock/with-feedback";
+import { withFeedback } from "../orpc/middleware/mock/with-feedback";
 
 /**
  * Central implementer tree derived from the root contract.
@@ -26,11 +29,13 @@ import { createImplementer } from "../orpc-sdk";
  * @remarks
  * Middleware order is authored here:
  * 1) telemetry (baseline)
+ * 2) analytics (baseline)
  * 2) domain guards (read-only mode)
  */
 export const implManual = implement(contract)
   .$context<ServiceContext>()
   .use(withTelemetry({ defaultDomain: "todo" }))
+  .use(withAnalytics({ app: "todo" }))
   .use(withReadOnlyMode);
 
 /**
@@ -40,6 +45,31 @@ export const implManual = implement(contract)
  * This should remain behavior-identical to `implManual`. Keep both exported
  * until we're confident the SDK abstraction is truly zero-footgun.
  */
-export const impl = createImplementer<typeof contract, ServiceContext>(contract, {
-  telemetry: { defaultDomain: "todo" },
-}).use(withReadOnlyMode);
+export const impl =
+  createImplementer<typeof contract, ServiceContext>(contract, {
+    telemetry: { defaultDomain: "todo" },
+    analytics: { app: "todo" },
+  }).use(withReadOnlyMode);
+
+/**
+ * Optional feature example: opt into feedback middleware at the service layer.
+ *
+ * @remarks
+ * This illustrates the intended contract:
+ * - baseline middleware (telemetry + analytics) is always attached by the SDK,
+ * - optional middleware is attached only by services that also provide the
+ *   required deps adapter.
+ */
+export type ServiceContextWithFeedback = ServiceContext & {
+  deps: Deps & {
+    feedback: FeedbackClient;
+  };
+};
+
+export const implWithFeedback =
+  createImplementer<typeof contract, ServiceContextWithFeedback>(contract, {
+    telemetry: { defaultDomain: "todo" },
+    analytics: { app: "todo" },
+  })
+    .use(withReadOnlyMode)
+    .use(withFeedback());
