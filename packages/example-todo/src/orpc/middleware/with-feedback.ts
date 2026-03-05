@@ -1,17 +1,13 @@
 /**
- * @fileoverview Mock feedback middleware (wireframe only).
+ * @fileoverview Feedback middleware (optional feature).
  *
  * @remarks
  * This exists to illustrate "optional" middleware: only services that choose
  * to attach this middleware (and provide its deps) get the additional execution
  * context it produces.
- *
- * Nothing in the todo service uses this yet.
  */
 
 import { os } from "@orpc/server";
-
-import type { BaseContext } from "../../base";
 
 export type FeedbackClient = {
   createSession(input: { path: string; requestId?: string }): Promise<{ sessionId: string }>;
@@ -34,7 +30,8 @@ export type WithFeedbackContext<TContext extends { deps: object }> = TContext & 
   deps: TContext["deps"] & FeedbackDeps;
 };
 
-export type FeedbackRequiredContext = BaseContext<FeedbackDeps> & {
+export type FeedbackRequiredContext = {
+  deps: FeedbackDeps;
   requestId?: string;
 };
 

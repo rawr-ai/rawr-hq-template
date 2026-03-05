@@ -11,7 +11,7 @@
  */
 
 import { os } from "@orpc/server";
-import type { BaseContext, BaseDeps, Logger } from "../base";
+import type { Logger } from "../base";
 
 type ErrorShape = {
   name?: unknown;
@@ -46,26 +46,14 @@ export type WithTelemetryOptions = {
 };
 
 /**
- * Telemetry deps requirement (SDK baseline).
- *
- * @remarks
- * Telemetry is guaranteed baseline middleware, so its requirements should be
- * expressible in terms of the SDK's single baseline primitive (`BaseContext`).
- *
- * Keep `TelemetryContextLegacy` below while we evaluate which shape reads
- * clearest and is most resilient to future SDK baseline evolution.
+ * Telemetry deps requirement (baseline).
  */
-export type TelemetryDeps = Pick<BaseDeps, "logger">;
+export type TelemetryDeps = {
+  logger: Logger;
+};
 
-export type TelemetryContext = BaseContext<TelemetryDeps>;
-
-/**
- * Legacy standalone context shape (kept for side-by-side comparison).
- */
-export type TelemetryContextLegacy = {
-  deps: {
-    logger: Logger;
-  };
+export type TelemetryContext = {
+  deps: TelemetryDeps;
 };
 
 export function withTelemetry<TContext extends TelemetryContext = TelemetryContext>(

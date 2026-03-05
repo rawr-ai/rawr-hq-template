@@ -134,22 +134,3 @@ export function createImplementer(
   // so we assert it once here (instead of `as any`-casting the `.use(...)` chain).
   return createRouterImplementer(contract as AnyContractRouterObject, options);
 }
-
-// -------------------------------------------------------------------------------------
-// Mock example: "always-on" analytics (wireframe only).
-//
-// This is not used by the todo service; it's here to illustrate the pattern:
-// - If a middleware is guaranteed baseline, it should be attached here once.
-// - Its deps requirements become part of the SDK/service baseline contract.
-// -------------------------------------------------------------------------------------
-
-/**
- * Legacy wrapper kept for side-by-side comparison.
- *
- * @remarks
- * `createImplementer` now includes analytics baseline middleware directly, so
- * this wrapper is redundant and exists only to preserve the earlier wireframe.
- */
-export type CreateImplementerWithAnalyticsMockOptions = CreateImplementerOptions;
-
-export const createImplementerWithAnalyticsMock = createImplementer;
