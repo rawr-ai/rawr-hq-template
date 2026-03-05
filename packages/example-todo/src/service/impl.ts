@@ -13,15 +13,13 @@
  */
 import { implement } from "@orpc/server";
 
-import type { Deps } from "./deps";
 import type { ServiceContext } from "./base";
 import { contract } from "./contract";
 import { withReadOnlyMode } from "./middleware/with-read-only-mode";
 import { withAnalytics } from "../orpc/middleware/with-analytics";
 import { withTelemetry } from "../orpc/middleware/with-telemetry";
 import { createImplementer } from "../orpc-sdk";
-import type { FeedbackClient } from "../orpc/middleware/mock/with-feedback";
-import { withFeedback } from "../orpc/middleware/mock/with-feedback";
+import { withFeedback, type WithFeedbackContext } from "../orpc/middleware/mock/with-feedback";
 
 /**
  * Central implementer tree derived from the root contract.
@@ -60,14 +58,8 @@ export const impl =
  * - optional middleware is attached only by services that also provide the
  *   required deps adapter.
  */
-export type ServiceContextWithFeedback = ServiceContext & {
-  deps: Deps & {
-    feedback: FeedbackClient;
-  };
-};
-
 export const implWithFeedback =
-  createImplementer<typeof contract, ServiceContextWithFeedback>(contract, {
+  createImplementer<typeof contract, WithFeedbackContext<ServiceContext>>(contract, {
     telemetry: { defaultDomain: "todo" },
     analytics: { app: "todo" },
   })

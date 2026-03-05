@@ -1,9 +1,9 @@
 /**
- * @fileoverview ORPC kit seam for this domain package.
+ * @fileoverview oRPC SDK seam for this domain package.
  *
  * @remarks
- * Today this re-exports the local proto-SDK kit implementation in `./orpc/*`.
- * Later, this file becomes the single swap point to import the shared SDK kit
+ * Today this re-exports the local proto-SDK implementation in `./orpc/*`.
+ * Later, this file becomes the single swap point to import the shared SDK
  * instead (without rewriting domain/module code).
  */
 export type {
@@ -17,11 +17,9 @@ export {
   createContractBuilder,
   createImplementer,
   createMiddlewareBuilder,
-  createOrpcKit,
   type CreateContractBuilderOptions,
   type CreateImplementerOptions,
   type CreateMiddlewareBuilderOptions,
-  type CreateOrpcKitOptions,
 } from "./orpc/factory";
 export type { DomainPackage, InferDeps } from "./orpc/domain-package";
 export { defineDomainPackage } from "./orpc/domain-package";
