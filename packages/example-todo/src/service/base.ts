@@ -16,6 +16,7 @@ import { oc } from "@orpc/contract";
 import { os } from "@orpc/server";
 
 import type { BaseMetadata, InitialContext } from "../orpc-sdk";
+import { createContractBuilder, createMiddlewareBuilder } from "../orpc-sdk";
 
 import type { Deps } from "./deps";
 
@@ -68,3 +69,10 @@ export type ServiceContext = InitialContext<
 export const ocBase = oc.$meta<ServiceMetadata>(baseMetadata);
 
 export const osBase = os.$context<ServiceContext>().$meta<ServiceMetadata>(baseMetadata);
+
+// -------------------------------------------------------------------------------------
+// Proto SDK wireframe (kept alongside the oRPC-native form for comparison).
+// Not used by modules right now.
+// -------------------------------------------------------------------------------------
+export const ocProto = createContractBuilder<ServiceMetadata>({ baseMetadata });
+export const osProto = createMiddlewareBuilder<ServiceContext, ServiceMetadata>({ baseMetadata });
