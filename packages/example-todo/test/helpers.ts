@@ -13,9 +13,15 @@ export type LogEntry = {
   payload: Record<string, unknown>;
 };
 
+export type AnalyticsEntry = {
+  event: string;
+  payload: Record<string, unknown>;
+};
+
 type DepsOptions = InMemorySqlOptions & {
   readOnly?: boolean;
   logs?: LogEntry[];
+  analytics?: AnalyticsEntry[];
 };
 
 export type OrpcErrorShape = {
@@ -156,6 +162,14 @@ export function createDeps(options: DepsOptions = {}): Deps {
       error: (event, payload) => {
         options.logs?.push({
           level: "error",
+          event,
+          payload: (payload as Record<string, unknown> | undefined) ?? {},
+        });
+      },
+    },
+    analytics: {
+      track: (event, payload) => {
+        options.analytics?.push({
           event,
           payload: (payload as Record<string, unknown> | undefined) ?? {},
         });
