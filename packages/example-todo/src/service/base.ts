@@ -12,8 +12,10 @@
  * Keep this file domain-authored (concrete values live here). The SDK factory
  * implementation lives under `../orpc/*`.
  */
+import { oc } from "@orpc/contract";
+import { os } from "@orpc/server";
+
 import type { BaseMetadata, InitialContext } from "../orpc-sdk";
-import { createContractBuilder, createMiddlewareBuilder } from "../orpc-sdk";
 
 import type { Deps } from "./deps";
 
@@ -26,8 +28,7 @@ import type { Deps } from "./deps";
  * consistently without every module inventing a new shape.
  *
  * This package does not *use* these fields yet; they're here to help us shape
- * the proto SDK API (`createContractBuilder`, `createMiddlewareBuilder`,
- * `createImplementer`) around what `service/base.ts` needs to express.
+ * the eventual shared SDK API around what `service/base.ts` needs to express.
  */
 export type ServiceMetadata = BaseMetadata & {
   audit?: "none" | "basic" | "full";
@@ -64,10 +65,6 @@ export type ServiceContext = InitialContext<
  * @remarks
  * Target ergonomics: types + defaults + one call per builder.
  */
-export const ocBase = createContractBuilder<ServiceMetadata>({ baseMetadata });
-// Equivalent oRPC-native form:
-//   oc.$meta<ServiceMetadata>(baseMetadata)
+export const ocBase = oc.$meta<ServiceMetadata>(baseMetadata);
 
-export const osBase = createMiddlewareBuilder<ServiceContext, ServiceMetadata>({ baseMetadata });
-// Equivalent oRPC-native form:
-//   os.$context<ServiceContext>().$meta<ServiceMetadata>(baseMetadata)
+export const osBase = os.$context<ServiceContext>().$meta<ServiceMetadata>(baseMetadata);

@@ -18,8 +18,6 @@ import { contract } from "./contract";
 import { withReadOnlyMode } from "./middleware/with-read-only-mode";
 import { withAnalytics } from "../orpc/middleware/with-analytics";
 import { withTelemetry } from "../orpc/middleware/with-telemetry";
-import { createImplementer } from "../orpc-sdk";
-import { withFeedback, type WithFeedbackContext } from "../orpc/middleware/with-feedback";
 
 /**
  * Central implementer tree derived from the root contract.
@@ -28,40 +26,10 @@ import { withFeedback, type WithFeedbackContext } from "../orpc/middleware/with-
  * Middleware order is authored here:
  * 1) telemetry (baseline)
  * 2) analytics (baseline)
- * 2) domain guards (read-only mode)
+ * 3) domain guards (read-only mode)
  */
-export const implManual = implement(contract)
+export const impl = implement(contract)
   .$context<ServiceContext>()
   .use(withTelemetry({ defaultDomain: "todo" }))
   .use(withAnalytics({ app: "todo" }))
   .use(withReadOnlyMode);
-
-/**
- * Proto-SDK-shaped implementer wiring.
- *
- * @remarks
- * This should remain behavior-identical to `implManual`. Keep both exported
- * until we're confident the SDK abstraction is truly zero-footgun.
- */
-export const impl =
-  createImplementer<typeof contract, ServiceContext>(contract, {
-    telemetry: { defaultDomain: "todo" },
-    analytics: { app: "todo" },
-  }).use(withReadOnlyMode);
-
-/**
- * Optional feature example: opt into feedback middleware at the service layer.
- *
- * @remarks
- * This illustrates the intended contract:
- * - baseline middleware (telemetry + analytics) is always attached by the SDK,
- * - optional middleware is attached only by services that also provide the
- *   required deps adapter.
- */
-export const implWithFeedback =
-  createImplementer<typeof contract, WithFeedbackContext<ServiceContext>>(contract, {
-    telemetry: { defaultDomain: "todo" },
-    analytics: { app: "todo" },
-  })
-    .use(withReadOnlyMode)
-    .use(withFeedback());

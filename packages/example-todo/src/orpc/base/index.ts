@@ -1,5 +1,5 @@
 /**
- * @fileoverview Base contracts for domain-package ORPC kits.
+ * @fileoverview Baseline contracts for oRPC domain service packages.
  *
  * @remarks
  * These are the baseline guarantees that all domain packages can rely on.
@@ -7,7 +7,7 @@
  */
 
 /**
- * Canonical logger contract used by kit-level middleware (telemetry).
+ * Canonical logger contract used by baseline middleware (telemetry).
  */
 export interface Logger {
   info(message: string, meta?: Record<string, unknown>): void;
@@ -15,7 +15,7 @@ export interface Logger {
 }
 
 /**
- * Canonical analytics client contract used by kit-level middleware (analytics).
+ * Canonical analytics client contract used by baseline middleware (analytics).
  */
 export interface AnalyticsClient {
   track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
@@ -37,7 +37,7 @@ export interface BaseDeps {
  * Baseline metadata shared across procedures.
  *
  * @remarks
- * Domain packages can extend this metadata bag per-package. Kit-level middleware
+ * Domain packages can extend this metadata bag per-package. Baseline middleware
  * may read fields from this baseline (`idempotent`, optional `domain`).
  */
 export type BaseMetadata = {
