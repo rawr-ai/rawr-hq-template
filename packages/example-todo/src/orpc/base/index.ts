@@ -39,9 +39,23 @@ export type BaseMetadata = {
 };
 
 /**
- * Baseline initial context shape used by domain-package routers.
+ * Baseline context shape used by domain-package routers.
+ *
+ * @remarks
+ * This is the *unextended* context contract: what the SDK guarantees before any
+ * service/package-specific additions. Services can extend context for their
+ * package; the resulting shape is modeled as `InitialContext`.
  */
-export type InitialContext<TDeps> = {
+export type BaseContext<TDeps> = {
   deps: TDeps;
 };
 
+/**
+ * Service/package-specific initial context.
+ *
+ * @remarks
+ * Conceptually, "initial context" is the *extended* context: base + service
+ * additions. In many packages it remains `BaseContext<TDeps>` (no extensions),
+ * but this type exists so extension has a single obvious place to land.
+ */
+export type InitialContext<TDeps, TExt extends object = {}> = BaseContext<TDeps> & TExt;

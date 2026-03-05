@@ -9,9 +9,9 @@
 import { oc } from "@orpc/contract";
 import { os } from "@orpc/server";
 
-import type { BaseMetadata, InitialContext } from "./base";
+import type { BaseContext, BaseMetadata } from "./base";
 
-export type { BaseMetadata, InitialContext } from "./base";
+export type { BaseContext, BaseMetadata, InitialContext } from "./base";
 
 export type CreateOrpcKitOptions<TMeta extends BaseMetadata = BaseMetadata> = {
   /**
@@ -46,7 +46,7 @@ export function createOrpcKit<TDeps, TMeta extends BaseMetadata = BaseMetadata>(
   const baseContractBuilder = oc.$meta<TMeta>(options.baseMetadata as TMeta);
 
   const baseMiddlewareBuilder = os
-    .$context<InitialContext<TDeps>>()
+    .$context<BaseContext<TDeps>>()
     .$meta<TMeta>(options.baseMetadata as TMeta);
 
   return {
