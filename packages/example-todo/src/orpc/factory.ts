@@ -7,7 +7,8 @@
  * defaults, service-wide middleware) belong in `../service/*`.
  */
 import { oc } from "@orpc/contract";
-import type { AnyContractRouter } from "@orpc/contract";
+import { isContractProcedure } from "@orpc/contract";
+import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
 import { implement, os } from "@orpc/server";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
@@ -120,6 +121,10 @@ export type CreateImplementerOptions = {
   analytics: WithAnalyticsOptions;
 };
 
+type AnyContractRouterObject = {
+  [k: string]: AnyContractRouter;
+};
+
 /**
  * Create the central implementer tree with guaranteed baseline middleware.
  *
@@ -128,30 +133,55 @@ export type CreateImplementerOptions = {
  * Service-specific guards (for example read-only mode) should be layered on by
  * the service after calling this.
  */
-export function createImplementer<
-  const TContract extends AnyContractRouter,
+export function createProcedureImplementer<
+  const TContract extends AnyContractProcedure,
   TContext extends BaseContext<BaseDeps>,
->(
-  contract: TContract,
+>(contract: TContract, options: CreateImplementerOptions) {
+  return implement(contract)
+    .$context<TContext>()
+    .use(withTelemetry<TContext>(options.telemetry))
+    .use(withAnalytics<TContext>(options.analytics));
+}
+
+export function createRouterImplementer<
+  const TContract extends AnyContractRouterObject,
+  TContext extends BaseContext<BaseDeps>,
+>(contract: TContract, options: CreateImplementerOptions) {
+  return implement(contract)
+    .$context<TContext>()
+    .use(withTelemetry<TContext>(options.telemetry))
+    .use(withAnalytics<TContext>(options.analytics));
+}
+
+export function createImplementer<
+  const TContract extends AnyContractProcedure,
+  TContext extends BaseContext<BaseDeps>,
+>(contract: TContract, options: CreateImplementerOptions): ImplementerInternalWithMiddlewares<
+  TContract,
+  TContext,
+  TContext
+>;
+export function createImplementer<
+  const TContract extends AnyContractRouterObject,
+  TContext extends BaseContext<BaseDeps>,
+>(contract: TContract, options: CreateImplementerOptions): ImplementerInternalWithMiddlewares<
+  TContract,
+  TContext,
+  TContext
+>;
+export function createImplementer(
+  contract: AnyContractRouter,
   options: CreateImplementerOptions,
 ) {
-  const impl = implement(contract).$context<TContext>();
+  if (isContractProcedure(contract)) {
+    return createProcedureImplementer(contract, options);
+  }
 
   // TypeScript note:
-  // `ContractRouter` is defined as a union (procedure OR router). When this
-  // function is generic over `TContract`, oRPC's implementer tree type becomes a
-  // conditional/union that causes `.use(...)` to be seen as a union of call
-  // signatures. TS then refuses to call it even though runtime behavior is fine.
-  //
-  // Keep this escape hatch localized: apply guaranteed baseline middleware here
-  // once, then return a precisely-typed implementer tree for module code.
-  return (impl as any)
-    .use(withTelemetry<TContext>(options.telemetry))
-    .use(withAnalytics<TContext>(options.analytics)) as ImplementerInternalWithMiddlewares<
-    TContract,
-    TContext,
-    TContext
-  >;
+  // `ContractRouter` is defined as a union (procedure OR router-object). After
+  // runtime narrowing, TS cannot prove the remaining branch is a router-object,
+  // so we assert it once here (instead of `as any`-casting the `.use(...)` chain).
+  return createRouterImplementer(contract as AnyContractRouterObject, options);
 }
 
 // -------------------------------------------------------------------------------------
@@ -171,12 +201,4 @@ export function createImplementer<
  */
 export type CreateImplementerWithAnalyticsMockOptions = CreateImplementerOptions;
 
-export function createImplementerWithAnalyticsMock<
-  const TContract extends AnyContractRouter,
-  TContext extends BaseContext<BaseDeps>,
->(
-  contract: TContract,
-  options: CreateImplementerWithAnalyticsMockOptions,
-) {
-  return createImplementer<TContract, TContext>(contract, options);
-}
+export const createImplementerWithAnalyticsMock = createImplementer;
