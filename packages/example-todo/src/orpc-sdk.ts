@@ -13,7 +13,16 @@ export type {
   BaseContext,
   InitialContext,
 } from "./orpc/base";
-export { createOrpcKit, type CreateOrpcKitOptions } from "./orpc/factory";
+export {
+  createContractBuilder,
+  createImplementer,
+  createMiddlewareBuilder,
+  createOrpcKit,
+  type CreateContractBuilderOptions,
+  type CreateImplementerOptions,
+  type CreateMiddlewareBuilderOptions,
+  type CreateOrpcKitOptions,
+} from "./orpc/factory";
 export type { DomainPackage, InferDeps } from "./orpc/domain-package";
 export { defineDomainPackage } from "./orpc/domain-package";
 export { createDomainModule, type DomainContext } from "./orpc/module";
