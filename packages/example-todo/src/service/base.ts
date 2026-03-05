@@ -2,20 +2,17 @@
  * @fileoverview Service base primitives for the todo package.
  *
  * @remarks
- * This is the single file modules should import to get the configured oRPC kit:
+ * This is the single file modules should import to get the configured oRPC primitives:
  * - `ocBase` for contract authoring
  * - `osBase` for middleware authoring (base builder; no baked-in middleware)
  *
  * Modules should derive their implementers from the central implementer in
  * `src/service/impl.ts` (the oRPC-native composition point for middleware + contract).
  *
- * Keep this file domain-authored (concrete values live here). The kit factory
+ * Keep this file domain-authored (concrete values live here). The SDK factory
  * implementation lives under `../orpc/*`.
  */
-import { oc } from "@orpc/contract";
-import { os } from "@orpc/server";
-
-import type { BaseContext, BaseMetadata, InitialContext } from "../orpc-sdk";
+import type { BaseMetadata, InitialContext } from "../orpc-sdk";
 import { createContractBuilder, createMiddlewareBuilder } from "../orpc-sdk";
 
 import type { Deps } from "./deps";
@@ -46,14 +43,6 @@ const baseMetadata: ServiceMetadata = {
 };
 
 /**
- * Base (unextended) context for this service.
- *
- * @remarks
- * This is the SDK-guaranteed minimum: deps only.
- */
-export type ServiceBaseContext = BaseContext<Deps>;
-
-/**
  * Initial (extended) context for this service (wireframe).
  *
  * @remarks
@@ -69,21 +58,6 @@ export type ServiceContext = InitialContext<
   }
 >;
 
-// -------------------------------------------------------------------------------------
-// PREVIOUS (kit-based) setup (kept as a reference while we stage and evaluate the kit):
-//
-//   import { createOrpcKit } from "../orpc-sdk";
-//   const kit = createOrpcKit<Deps>({ baseMetadata });
-//   export const oc = kit.oc;
-//   export const os = kit.os;
-//
-// -------------------------------------------------------------------------------------
-// CURRENT (manual) setup:
-//
-// Goal: make the wiring obvious so we can decide what the kit actually must do.
-// Nothing here should be "clever": it should mirror oRPC-native usage.
-// -------------------------------------------------------------------------------------
-
 /**
  * Declarative (proto-SDK-shaped) setup.
  *
@@ -91,14 +65,9 @@ export type ServiceContext = InitialContext<
  * Target ergonomics: types + defaults + one call per builder.
  */
 export const ocBase = createContractBuilder<ServiceMetadata>({ baseMetadata });
+// Equivalent oRPC-native form:
+//   oc.$meta<ServiceMetadata>(baseMetadata)
 
 export const osBase = createMiddlewareBuilder<ServiceContext, ServiceMetadata>({ baseMetadata });
-
-/**
- * Manual (direct oRPC) setup kept for side-by-side comparison.
- */
-export const ocBaseManual = oc.$meta<ServiceMetadata>(baseMetadata);
-
-export const osBaseManual = os
-  .$context<ServiceContext>()
-  .$meta<ServiceMetadata>(baseMetadata);
+// Equivalent oRPC-native form:
+//   os.$context<ServiceContext>().$meta<ServiceMetadata>(baseMetadata)

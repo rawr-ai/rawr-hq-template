@@ -11,26 +11,31 @@
 
 import { os } from "@orpc/server";
 
-import type { BaseContext, BaseDeps } from "../../base";
+import type { BaseContext } from "../../base";
 
 export type FeedbackClient = {
   createSession(input: { path: string; requestId?: string }): Promise<{ sessionId: string }>;
 };
 
-export type FeedbackDeps = BaseDeps & {
+export type FeedbackDeps = {
   feedback: FeedbackClient;
 };
 
-export type FeedbackContext = BaseContext<FeedbackDeps> & {
+/**
+ * Helper type: opt a service context into the feedback deps requirement.
+ *
+ * @remarks
+ * This keeps service code lightweight: import one middleware + one helper type.
+ *
+ * `withFeedback` itself is context-augmenting (it adds `context.feedback`), so
+ * services do *not* need to pre-declare a `feedback?` slot on their context.
+ */
+export type WithFeedbackContext<TContext extends { deps: object }> = TContext & {
+  deps: TContext["deps"] & FeedbackDeps;
+};
+
+export type FeedbackRequiredContext = BaseContext<FeedbackDeps> & {
   requestId?: string;
-  /**
-   * Optional slot populated by `withFeedback`.
-   *
-   * @remarks
-   * This mirrors a common oRPC-native pattern: the *shape* exists up-front in
-   * the service context, and middleware fills it in at runtime.
-   */
-  feedback?: FeedbackExecutionContext["feedback"];
 };
 
 export type FeedbackExecutionContext = {
@@ -50,7 +55,7 @@ export type FeedbackExecutionContext = {
  * and avoids surprising unsoundness.
  */
 export function withFeedback() {
-  return os.$context<FeedbackContext>().middleware(async ({ context, path, next }) => {
+  return os.$context<FeedbackRequiredContext>().middleware(async ({ context, path, next }) => {
     const session = await context.deps.feedback.createSession({
       path: path.join("."),
       requestId: context.requestId,
