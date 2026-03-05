@@ -18,6 +18,7 @@ import { contract } from "./contract";
 import { withReadOnlyMode } from "./middleware/with-read-only-mode";
 import { withAnalytics } from "../orpc/middleware/with-analytics";
 import { withTelemetry } from "../orpc/middleware/with-telemetry";
+import { createImplementer } from "../orpc-sdk";
 
 /**
  * Central implementer tree derived from the root contract.
@@ -33,3 +34,12 @@ export const impl = implement(contract)
   .use(withTelemetry({ defaultDomain: "todo" }))
   .use(withAnalytics({ app: "todo" }))
   .use(withReadOnlyMode);
+
+// -------------------------------------------------------------------------------------
+// Proto SDK wireframe (kept alongside the oRPC-native form for comparison).
+// Not used by the shipped router right now (`src/service/router.ts` imports `impl`).
+// -------------------------------------------------------------------------------------
+export const implProto = createImplementer<typeof contract, ServiceContext>(contract, {
+  telemetry: { defaultDomain: "todo" },
+  analytics: { app: "todo" },
+}).use(withReadOnlyMode);
