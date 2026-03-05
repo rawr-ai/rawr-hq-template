@@ -9,7 +9,7 @@
  * Consumers should import `createClient` from package root (`index.ts`), not
  * deep-link to this file directly unless explicitly needed for testing.
  */
-import type { Deps } from "./domain/deps";
+import type { Deps } from "./service/deps";
 import { createRouterClient } from "@orpc/server";
 import type { InitialContext } from "./orpc-sdk";
 import { router } from "./router";

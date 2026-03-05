@@ -4,7 +4,7 @@
  * @remarks
  * This directory is intentionally domain-agnostic so it can later be extracted
  * into a shared SDK package. Concrete domain values (deps shape, metadata
- * defaults, domain-wide middleware) belong in `../domain/*`.
+ * defaults, service-wide middleware) belong in `../service/*`.
  */
 import { oc } from "@orpc/contract";
 import { os } from "@orpc/server";
