@@ -60,7 +60,7 @@ export type ServiceContext = InitialContext<
 >;
 
 /**
- * Declarative (proto-SDK-shaped) setup.
+ * Declarative setup.
  *
  * @remarks
  * Target ergonomics: types + defaults + one call per builder.
