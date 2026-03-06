@@ -5,7 +5,7 @@
  * This file is the single service middleware composition point:
  * - import the root contract (contract bubble-up),
  * - derive the central implementer once,
- * - attach package-wide middleware here (SQL provider, read-only mode),
+ * - attach package-wide middleware here (providers, guards),
  * - export the implementer tree for modules to derive from (`impl.<module>`).
  *
  * The service router (`service/router.ts`) should only compose module routers and
@@ -21,7 +21,7 @@ import { createImplementer, sqlProvider } from "../orpc-sdk";
  *
  * @remarks
  * Middleware order is authored here:
- * 1) baseline telemetry + analytics (inside `createImplementer`)
+ * 1) baseline observability middleware (inside `createImplementer`)
  * 2) SQL provider (`deps.dbPool` -> `sql`)
  * 3) domain guard (`readOnlyMode`)
  */

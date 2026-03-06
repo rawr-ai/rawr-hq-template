@@ -89,6 +89,7 @@ export const ocBase = createContractBuilder<ServiceMetadata>({ baseMetadata });
  * - the required context shape mirrors runtime shape directly
  * - required dependencies stay explicitly declared under `deps`
  * - service metadata is always typed/available on `procedure["~orpc"].meta`
+ * - zero-config middleware can call this helper with no type argument
  *
  * This does *not* carry the full service context automatically; middleware
  * should still declare only the minimal required context fragment it actually

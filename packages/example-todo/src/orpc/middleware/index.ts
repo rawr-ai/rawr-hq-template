@@ -1,10 +1,4 @@
-export {
-  createTelemetryMiddleware,
-  type TelemetryMiddlewareOptions,
-} from "./telemetry-middleware";
-export {
-  createAnalyticsMiddleware,
-  type AnalyticsMiddlewareOptions,
-} from "./analytics-middleware";
+export { createTelemetryMiddleware } from "./telemetry";
+export { createAnalyticsMiddleware } from "./analytics";
 export { feedbackProvider } from "./feedback-provider";
 export { sqlProvider } from "./sql-provider";

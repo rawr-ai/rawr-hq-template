@@ -160,7 +160,10 @@ Use context/middleware at the level where each concern actually belongs:
 - Name middleware by what it is:
   - zero-config middleware exports a ready-to-use value (`sqlProvider`, `feedbackProvider`, `readOnlyMode`)
   - configurable middleware exports an explicit constructor (`createTelemetryMiddleware`, `createAnalyticsMiddleware`)
-- Keep middleware filenames aligned with that semantic split (`sql-provider.ts`, `feedback-provider.ts`, `read-only-mode.ts`, `telemetry-middleware.ts`).
+- Keep middleware filenames short and semantic:
+  - plain concern names for configurable middleware (`telemetry.ts`, `analytics.ts`)
+  - provider/guard names where the role matters (`sql-provider.ts`, `feedback-provider.ts`, `read-only-mode.ts`)
+- Keep providers flat in `src/orpc/middleware/` unless the provider set becomes large enough to justify a second routing layer.
 
 ### Context Taxonomy
 
@@ -271,7 +274,7 @@ Examples:
 
 Use kit-level middleware for cross-cutting behavior that should be reusable across domain packages.
 
-- Define one concern per file in `src/orpc/middleware/` (for example `telemetry-middleware.ts`).
+- Define one concern per file in `src/orpc/middleware/` (for example `telemetry.ts`).
 - Wire truly “applies everywhere” middleware into `src/service/impl.ts` so it is consistent and obvious across packages.
 - Keep service middleware authoring focused on domain semantics (read-only mode, authz/tenancy guards).
 

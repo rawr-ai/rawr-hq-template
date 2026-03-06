@@ -83,7 +83,7 @@ packages/example-minimal/src/
 ├── orpc/
 │   ├── factory.ts
 │   └── middleware/
-│       └── telemetry-middleware.ts
+│       └── telemetry.ts
 └── service/
     ├── contract.ts
     ├── base.ts
@@ -122,8 +122,8 @@ packages/example-todo/src/
 ├── orpc/
 │   ├── factory.ts
 │   └── middleware/
-│       ├── telemetry-middleware.ts
-│       ├── analytics-middleware.ts
+│       ├── telemetry.ts
+│       ├── analytics.ts
 │       ├── sql-provider.ts
 │       └── feedback-provider.ts
 └── service/
@@ -178,8 +178,8 @@ packages/example-golden/src/
 ├── orpc/
 │   ├── factory.ts
 │   └── middleware/
-│       ├── telemetry-middleware.ts
-│       ├── analytics-middleware.ts
+│       ├── telemetry.ts
+│       ├── analytics.ts
 │       ├── sql-provider.ts
 │       └── feedback-provider.ts
 └── service/
