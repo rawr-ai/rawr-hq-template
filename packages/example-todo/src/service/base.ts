@@ -38,14 +38,6 @@ export type ServiceMetadata = ServiceMetadataOf<{
   entity?: "service" | "task" | "tag" | "assignment";
 }>;
 
-const baseMetadata: ServiceMetadata = {
-  idempotent: true,
-  domain: "todo",
-  audience: "internal",
-  audit: "basic",
-  entity: "service",
-};
-
 /**
  * Host-owned time source used by task/tag creation and similar flows.
  */
@@ -81,17 +73,28 @@ export type ServiceContext = ServiceContextOf<ServiceDeps, {
   requestId?: string;
 }>;
 
-const {
-  oc: ocBase,
-  createMiddleware: createServiceMiddleware,
-} = defineService<ServiceMetadata>({
-  metadata: baseMetadata,
+/**
+ * Bound service authoring surface.
+ *
+ * @remarks
+ * This is a single call to `defineService(...)`, not a second invocation layer.
+ * The trailing `()` belongs to that function call itself. The returned object is
+ * then used to expose the two service-facing authoring surfaces below.
+ */
+const service = defineService<ServiceMetadata>({
+  metadata: {
+    idempotent: true,
+    domain: "todo",
+    audience: "internal",
+    audit: "basic",
+    entity: "service",
+  },
 });
 
 /**
  * Declarative setup for contract authoring.
  */
-export { ocBase };
+export const ocBase = service.oc;
 
 /**
  * Service-local middleware builder.
@@ -107,4 +110,4 @@ export { ocBase };
  * should still declare only the minimal required context fragment it actually
  * needs.
  */
-export { createServiceMiddleware };
+export const createServiceMiddleware = service.createMiddleware;
