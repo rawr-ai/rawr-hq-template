@@ -68,6 +68,36 @@ export function createMiddlewareBuilder<
     .$meta<TMeta>(options.baseMetadata as TMeta);
 }
 
+type DefineServiceOptions<TMeta extends BaseMetadata> = {
+  metadata: TMeta;
+};
+
+/**
+ * Bind service metadata to the authoring surfaces that need it.
+ *
+ * @remarks
+ * This helper is intentionally small. It owns only:
+ * - contract authoring
+ * - service-local middleware authoring
+ *
+ * Concrete service types (`ServiceDeps`, `ServiceMetadata`, `ServiceContext`)
+ * stay explicit in `src/service/base.ts`.
+ */
+export function defineService<TMeta extends BaseMetadata>(
+  options: DefineServiceOptions<TMeta>,
+) {
+  return {
+    oc: createContractBuilder<TMeta>({ baseMetadata: options.metadata }),
+    createMiddleware<
+      TRequiredContext extends { deps: object } = { deps: {} },
+    >() {
+      return createMiddlewareBuilder<TRequiredContext, TMeta>({
+        baseMetadata: options.metadata,
+      });
+    },
+  };
+}
+
 const baseMiddlewareMetadata: BaseMetadata = {
   idempotent: true,
 };

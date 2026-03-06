@@ -15,11 +15,14 @@ export type {
   BaseDeps,
   BaseMetadata,
   InitialContext,
+  ServiceDepsOf,
+  ServiceMetadataOf,
+  ServiceContextOf,
 } from "./orpc/base";
 export type { DbPool, Sql } from "./orpc/adapters/sql";
 export type { FeedbackClient } from "./orpc/adapters/feedback";
 export {
-  createContractBuilder,
+  defineService,
   createImplementer,
 } from "./orpc/factory";
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
