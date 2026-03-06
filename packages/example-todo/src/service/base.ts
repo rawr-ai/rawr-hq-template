@@ -1,24 +1,21 @@
 /**
- * @fileoverview Service base primitives for the todo package.
+ * @fileoverview Service definition for the todo package.
  *
  * @remarks
- * This is the single file modules should import to get the configured oRPC primitives:
+ * This is the single authored service-definition surface:
+ * - `ServiceDeps` / `ServiceContext`
+ * - `ServiceMetadata`
  * - `ocBase` for contract authoring
- * - `osBase` for middleware authoring (base builder; no baked-in middleware)
  *
- * Modules should derive their implementers from the central implementer in
- * `src/service/impl.ts` (the oRPC-native composition point for middleware + contract).
+ * Modules should derive runtime behavior from the central implementer in
+ * `src/service/impl.ts`. This file owns the host boundary contract and shared
+ * metadata defaults, not the middleware chain itself.
  *
  * Keep this file domain-authored (concrete values live here). The SDK factory
  * implementation lives under `../orpc/*`.
  */
-import { oc } from "@orpc/contract";
-import { os } from "@orpc/server";
-
-import type { BaseMetadata, InitialContext } from "../orpc-sdk";
+import type { BaseDeps, BaseMetadata, DbPool, InitialContext } from "../orpc-sdk";
 import { createContractBuilder, createMiddlewareBuilder } from "../orpc-sdk";
-
-import type { Deps } from "./deps";
 
 /**
  * Service-specific metadata extension (wireframe).
@@ -45,34 +42,60 @@ const baseMetadata: ServiceMetadata = {
 };
 
 /**
- * Initial (extended) context for this service (wireframe).
- *
- * @remarks
- * These are plausible service-level additions that are useful across modules.
- * Keep them optional while we wireframe ergonomics so we don't force runtime
- * call sites to change during this spike.
+ * Host-owned time source used by task/tag creation and similar flows.
  */
-export type ServiceContext = InitialContext<
-  Deps,
-  {
-    workspaceId?: string;
-    requestId?: string;
-  }
->;
+export interface Clock {
+  now(): string;
+}
 
 /**
- * Declarative setup.
+ * Host-owned runtime toggles used by package-global policy middleware.
+ */
+export interface Runtime {
+  readOnly: boolean;
+}
+
+/**
+ * Host-owned dependencies for this service.
  *
  * @remarks
- * Target ergonomics: types + defaults + one call per builder.
+ * This is the single authored dependency contract for the service.
+ * Keep baseline deps vs service deps as a type-authoring distinction only.
  */
-export const ocBase = oc.$meta<ServiceMetadata>(baseMetadata);
+export interface ServiceDeps extends BaseDeps {
+  dbPool: DbPool;
+  clock: Clock;
+  runtime: Runtime;
+}
 
-export const osBase = os.$context<ServiceContext>().$meta<ServiceMetadata>(baseMetadata);
+/**
+ * Initial (extended) context for this service.
+ */
+export type ServiceContext = InitialContext<ServiceDeps, {
+  workspaceId?: string;
+  requestId?: string;
+}>;
 
-// -------------------------------------------------------------------------------------
-// Proto SDK wireframe (kept alongside the oRPC-native form for comparison).
-// Not used by modules right now.
-// -------------------------------------------------------------------------------------
-export const ocProto = createContractBuilder<ServiceMetadata>({ baseMetadata });
-export const osProto = createMiddlewareBuilder<ServiceContext, ServiceMetadata>({ baseMetadata });
+/**
+ * Declarative setup for contract authoring.
+ */
+export const ocBase = createContractBuilder<ServiceMetadata>({ baseMetadata });
+
+/**
+ * Service-local middleware builder.
+ *
+ * @remarks
+ * Use this for service-authored middleware so:
+ * - the required context shape mirrors runtime shape directly
+ * - required dependencies stay explicitly declared under `deps`
+ * - service metadata is always typed/available on `procedure["~orpc"].meta`
+ *
+ * This does *not* carry the full service context automatically; middleware
+ * should still declare only the minimal required context fragment it actually
+ * needs.
+ */
+export function createServiceMiddleware<
+  TRequiredContext extends { deps: object } = { deps: {} },
+>() {
+  return createMiddlewareBuilder<TRequiredContext, ServiceMetadata>({ baseMetadata });
+}

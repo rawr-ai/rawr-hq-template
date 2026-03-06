@@ -13,10 +13,10 @@ import { implement, os } from "@orpc/server";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
 import type { BaseContext, BaseDeps, BaseMetadata } from "./base";
-import type { WithAnalyticsOptions } from "./middleware/with-analytics";
-import { withAnalytics } from "./middleware/with-analytics";
-import type { WithTelemetryOptions } from "./middleware/with-telemetry";
-import { withTelemetry } from "./middleware/with-telemetry";
+import type { AnalyticsMiddlewareOptions } from "./middleware/analytics-middleware";
+import { createAnalyticsMiddleware } from "./middleware/analytics-middleware";
+import type { TelemetryMiddlewareOptions } from "./middleware/telemetry-middleware";
+import { createTelemetryMiddleware } from "./middleware/telemetry-middleware";
 
 export type { BaseContext, BaseMetadata, InitialContext } from "./base";
 
@@ -52,24 +52,47 @@ export type CreateMiddlewareBuilderOptions<TMeta extends BaseMetadata = BaseMeta
  * Create an oRPC server builder for authoring middleware.
  *
  * @remarks
- * The proto-SDK baseline is `BaseContext<TDeps>` (deps-only). Services can
- * extend context by choosing a `TContext` that is a supertype of
- * `BaseContext<...>` (for example `InitialContext<TDeps, { requestId: string }>`).
+ * This helper standardizes middleware authoring around the runtime shape we
+ * want to preserve:
+ * - required dependencies stay explicitly nested under a top-level `deps` bag
+ * - any additional request/execution input stays as explicit top-level keys
+ * - metadata typing is carried by the builder so middleware can read
+ *   `procedure["~orpc"].meta` without redefining metadata locally
  */
 export function createMiddlewareBuilder<
-  TContext extends BaseContext<BaseDeps>,
+  TRequiredContext extends { deps: object } = { deps: {} },
   TMeta extends BaseMetadata = BaseMetadata,
 >(
   options: CreateMiddlewareBuilderOptions<TMeta>,
 ) {
   return os
-    .$context<TContext>()
+    .$context<TRequiredContext>()
     .$meta<TMeta>(options.baseMetadata as TMeta);
 }
 
+const baseMiddlewareMetadata: BaseMetadata = {
+  idempotent: true,
+};
+
+/**
+ * Baseline middleware builder for reusable SDK/framework middleware.
+ *
+ * @remarks
+ * This mirrors the service-local helper, but carries only `BaseMetadata`.
+ * Reusable middleware should author the minimal required context fragment and
+ * should not depend on service-specific metadata extensions.
+ */
+export function createBaseMiddleware<
+  TRequiredContext extends { deps: object } = { deps: {} },
+>() {
+  return createMiddlewareBuilder<TRequiredContext, BaseMetadata>({
+    baseMetadata: baseMiddlewareMetadata,
+  });
+}
+
 export type CreateImplementerOptions = {
-  telemetry: WithTelemetryOptions;
-  analytics: WithAnalyticsOptions;
+  telemetry: TelemetryMiddlewareOptions;
+  analytics: AnalyticsMiddlewareOptions;
 };
 
 type AnyContractRouterObject = {
@@ -90,8 +113,8 @@ export function createProcedureImplementer<
 >(contract: TContract, options: CreateImplementerOptions) {
   return implement(contract)
     .$context<TContext>()
-    .use(withTelemetry<TContext>(options.telemetry))
-    .use(withAnalytics<TContext>(options.analytics));
+    .use(createTelemetryMiddleware(options.telemetry))
+    .use(createAnalyticsMiddleware(options.analytics));
 }
 
 export function createRouterImplementer<
@@ -100,8 +123,8 @@ export function createRouterImplementer<
 >(contract: TContract, options: CreateImplementerOptions) {
   return implement(contract)
     .$context<TContext>()
-    .use(withTelemetry<TContext>(options.telemetry))
-    .use(withAnalytics<TContext>(options.analytics));
+    .use(createTelemetryMiddleware(options.telemetry))
+    .use(createAnalyticsMiddleware(options.analytics));
 }
 
 export function createImplementer<

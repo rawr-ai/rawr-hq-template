@@ -1,4 +1,5 @@
-import type { Deps } from "../src/service/deps";
+import type { DbPool } from "../src/orpc/adapters/sql";
+import type { ServiceDeps } from "../src/service/base";
 import type { Assignment } from "../src/service/modules/assignments/schemas";
 import type { Tag } from "../src/service/modules/tags/schemas";
 import type { Task } from "../src/service/modules/tasks/schemas";
@@ -139,12 +140,15 @@ export function createInMemorySql(options: InMemorySqlOptions = {}) {
   return { queryOne, query };
 }
 
-export function createDeps(options: DepsOptions = {}): Deps {
+export function createDeps(options: DepsOptions = {}): ServiceDeps {
   let tick = 0;
   const sql = createInMemorySql(options);
+  const dbPool: DbPool = {
+    connect: () => sql,
+  };
 
   return {
-    sql,
+    dbPool,
     clock: {
       now: () => {
         tick += 1;

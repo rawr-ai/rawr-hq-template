@@ -9,9 +9,8 @@
  * Keep log payload keys stable (`path`, `durationMs`, `code`, `status`) so test
  * assertions stay resilient as implementation evolves.
  */
-
-import { os } from "@orpc/server";
 import type { Logger } from "../base";
+import { createBaseMiddleware } from "../factory";
 
 type ErrorShape = {
   name?: unknown;
@@ -41,48 +40,37 @@ function getProcedureDomain(procedure: unknown) {
   return typeof domain === "string" && domain.length > 0 ? domain : undefined;
 }
 
-export type WithTelemetryOptions = {
+export type TelemetryMiddlewareOptions = {
   defaultDomain: string;
 };
 
-/**
- * Telemetry deps requirement (baseline).
- */
-export type TelemetryDeps = {
-  logger: Logger;
-};
+export function createTelemetryMiddleware(options: TelemetryMiddlewareOptions) {
+  return createBaseMiddleware<{
+    deps: {
+      logger: Logger;
+    };
+  }>().middleware(async ({ context, path, procedure, next }) => {
+    const start = Date.now();
+    const pathLabel = path.join(".");
+    const domain = getProcedureDomain(procedure) ?? options.defaultDomain;
+    const successEvent = `${domain}.procedure.success`;
+    const errorEvent = `${domain}.procedure.error`;
 
-export type TelemetryContext = {
-  deps: TelemetryDeps;
-};
-
-export function withTelemetry<TContext extends TelemetryContext = TelemetryContext>(
-  options: WithTelemetryOptions,
-) {
-  return os
-    .$context<TContext>()
-    .middleware(async ({ context, path, procedure, next }) => {
-      const start = Date.now();
-      const pathLabel = path.join(".");
-      const domain = getProcedureDomain(procedure) ?? options.defaultDomain;
-      const successEvent = `${domain}.procedure.success`;
-      const errorEvent = `${domain}.procedure.error`;
-
-      try {
-        const result = await next();
-        context.deps.logger.info(successEvent, {
-          path: pathLabel,
-          durationMs: Date.now() - start,
-        });
-        return result;
-      }
-      catch (error) {
-        context.deps.logger.error(errorEvent, {
-          path: pathLabel,
-          durationMs: Date.now() - start,
-          ...toErrorDetails(error),
-        });
-        throw error;
-      }
-    });
+    try {
+      const result = await next();
+      context.deps.logger.info(successEvent, {
+        path: pathLabel,
+        durationMs: Date.now() - start,
+      });
+      return result;
+    }
+    catch (error) {
+      context.deps.logger.error(errorEvent, {
+        path: pathLabel,
+        durationMs: Date.now() - start,
+        ...toErrorDetails(error),
+      });
+      throw error;
+    }
+  });
 }

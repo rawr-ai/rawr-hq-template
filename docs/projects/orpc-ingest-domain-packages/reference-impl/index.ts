@@ -1,6 +1,6 @@
 import { createRouterClient } from '@orpc/server'
 import { todoRouter } from './router.js'
-import type { TodoDeps } from './deps.js'
+import type { TodoDeps } from './base.js'
 
 export { todoRouter, type TodoRouter } from './router.js'
 
@@ -14,4 +14,4 @@ export type TodoClient = ReturnType<typeof createTodoClient>
 export type { Task } from './tasks/schemas.js'
 export type { Tag } from './tags/schemas.js'
 export type { Assignment } from './assignments/schemas.js'
-export type { TodoDeps, Sql, Logger, Clock } from './deps.js'
+export type { TodoDeps, DbPool, Sql, Logger, Clock } from './base.js'

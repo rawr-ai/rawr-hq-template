@@ -5,30 +5,19 @@
  * Emits one analytics event per procedure execution. This is baseline-only:
  * it must not affect procedure behavior or remap errors.
  */
-
-import { os } from "@orpc/server";
-
 import type { AnalyticsClient } from "../base";
+import { createBaseMiddleware } from "../factory";
 
-export type WithAnalyticsOptions = {
+export type AnalyticsMiddlewareOptions = {
   app: string;
 };
 
-/**
- * Analytics deps requirement (baseline).
- */
-export type AnalyticsDeps = {
-  analytics: AnalyticsClient;
-};
-
-export type AnalyticsContext = {
-  deps: AnalyticsDeps;
-};
-
-export function withAnalytics<TContext extends AnalyticsContext = AnalyticsContext>(
-  options: WithAnalyticsOptions,
-) {
-  return os.$context<TContext>().middleware(async ({ context, path, next }) => {
+export function createAnalyticsMiddleware(options: AnalyticsMiddlewareOptions) {
+  return createBaseMiddleware<{
+    deps: {
+      analytics: AnalyticsClient;
+    };
+  }>().middleware(async ({ context, path, next }) => {
     const result = await next();
     await context.deps.analytics.track("orpc.procedure", {
       app: options.app,

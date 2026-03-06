@@ -29,12 +29,12 @@ Use one stable top-level structure across package sizes:
 - `src/router.ts` for the stable public router export (`@rawr/<pkg>/router`) via re-export,
 - `src/orpc-sdk.ts` + `src/orpc/*` for local oRPC kit primitives (domain-agnostic; future-SDK seam),
 - `src/service/impl.ts` for oRPC-native contract implementation + package-wide middleware stacking,
-- `src/service/` for service semantics (deps + base primitives + modules + shared constructs + contract bubble-up + router composition).
+- `src/service/` for service semantics (service definition + modules + shared constructs + contract bubble-up + router composition).
 
 Always-on slots:
 
 - `src/service/router.ts` is the always-on service router composition choke point (single final attach).
-- `src/service/base.ts` is the always-on base primitives import surface.
+- `src/service/base.ts` is the always-on service-definition surface (host deps, initial context, metadata defaults, contract builder).
 - `src/orpc/middleware/*` is the always-on slot for kit-level middleware definitions.
 - `src/service/impl.ts` is the always-on oRPC composition surface (implement root contract + attach middleware).
 
@@ -153,17 +153,125 @@ Use context/middleware at the level where each concern actually belongs:
 - Kit-level middleware should be used for cross-cutting concerns that should be reusable across domain packages (telemetry/tracing, import-fault classification, request scoping).
 - Domain-wide middleware should be used for domain guards/semantics (read-only mode, authz policy, tenancy invariants) that need procedure metadata awareness.
 - Apply middleware at most once per concern: attach package-wide middleware in `src/service/impl.ts`, then attach module routers once in `src/service/router.ts`.
+- Author middleware against the mirrored required-context shape directly:
+  - framework middleware via `createBaseMiddleware<{ deps: { ... } }>()`
+  - service middleware via `createServiceMiddleware<{ deps: { ... } }>()`
+  - if a middleware has no required context, call the helper with no type argument
+- Name middleware by what it is:
+  - zero-config middleware exports a ready-to-use value (`sqlProvider`, `feedbackProvider`, `readOnlyMode`)
+  - configurable middleware exports an explicit constructor (`createTelemetryMiddleware`, `createAnalyticsMiddleware`)
+- Keep middleware filenames aligned with that semantic split (`sql-provider.ts`, `feedback-provider.ts`, `read-only-mode.ts`, `telemetry-middleware.ts`).
+
+### Context Taxonomy
+
+Use these runtime context categories consistently:
+
+- **`context.deps`**: host-provided, stable dependencies. This is the explicit dependency bag for injected services/capabilities the host owns.
+- **Top-level request input**: request-scoped values provided up front that are not dependencies (for example `requestId`, `workspaceId`, or a narrowly-scoped `request` object).
+- **Top-level execution context**: values added/derived by middleware during execution (for example `sql`, `user`, `feedbackSession`, `repo`).
+
+Do **not** create a second runtime dependency bag such as `context.base`.
+Do **not** use a generic runtime `metadata` bag by default. oRPC procedure metadata (`.meta(...)`) is separate from runtime context; if runtime grouping is needed later, use a specific name like `request`, not a generic `metadata` bucket.
 
 Practical defaults:
 
 - Access logger/clock as `context.deps.logger` / `context.deps.clock`.
 - Avoid alias-only middleware like `deps.logger -> logger` unless there is a concrete runtime reason.
+- Keep baseline deps and service deps as a type-authoring distinction (`BaseDeps` extended by service deps), not as separate runtime keys.
+
+### Provider Middleware Rule
+
+Use exactly two provider shapes:
+
+- **Self-provisioning provider**: allowed when the middleware can fully create its output on its own, so any input it reads is optional.
+- **Input-requiring provider**: allowed when the middleware needs a host-provided prerequisite before it can produce its output; that prerequisite must already exist in initial context before the middleware is attached.
+
+Rule of thumb:
+
+- If the middleware can fall back and provision the capability itself, make the input optional and let the provider own the output.
+- If the middleware cannot self-provision, do **not** pretend it can “create” its own prerequisite; declare the prerequisite in initial context and let the provider only create the downstream execution key.
+
+Why this rule exists:
+
+- oRPC distinguishes [initial context](https://orpc.dev/docs/context) from [execution context](https://orpc.dev/docs/context#execution-context).
+- Middleware may declare [dependent context](https://orpc.dev/docs/middleware#dependent-context), and any context passed to `next({ context })` is [merged with the existing context](https://orpc.dev/docs/middleware#middleware).
+- That means middleware can add downstream execution context, but it cannot magically satisfy its own missing required input. The official playground DB provider works because it uses an optional input and can self-provision when absent ([playground example](https://github.com/middleapi/orpc/blob/main/playgrounds/contract-first/src/middlewares/db.ts)).
+
+**Self-provisioning provider**
+
+```ts
+const withDb = os
+  .$context<{ db?: DB }>()
+  .middleware(async ({ context, next }) => {
+    const db = context.db ?? createFakeDB()
+
+    return next({
+      context: { db },
+    })
+  })
+
+implement(contract).$context<{}>().use(withDb) // works
+```
+
+- **Receives**: optional `db`
+- **Creates**: downstream `db`
+- **Why it works**: the middleware can satisfy its own seam because the input is optional
+
+**Input-requiring provider**
+
+```ts
+const withDb = os
+  .$context<{ dbPool: DBPool }>()
+  .middleware(async ({ context, next }) => {
+    return next({
+      context: { db: makeDb(context.dbPool) },
+    })
+  })
+
+implement(contract).$context<{}>().use(withDb) // does not type-check
+implement(contract).$context<{ dbPool: DBPool }>().use(withDb) // works
+```
+
+- **Receives**: required `dbPool`
+- **Creates**: downstream `db`
+- **Why the first case fails**: the provider cannot satisfy its own prerequisite; `dbPool` must already be part of initial context
+
+### What This Enables
+
+- Reusable providers that can either self-bootstrap or consume host-provided prerequisites.
+- A clean split between **what must exist at the boundary** (initial context) and **what middleware makes available downstream** (execution context).
+- Clear authoring choices for agents: either make a provider self-contained, or make its prerequisite explicit and keep the provider focused on downstream capability creation.
+
+### Choosing Between The Two
+
+- Choose **self-provisioning** for local/test/dev conveniences or defaultable capabilities.
+  - Example: fake/in-memory DB, synthetic request-scoped tracer, fallback feedback session.
+- Choose **input-requiring** when the capability depends on a real host-owned prerequisite.
+  - Example: `dbPool -> db`, `authClient -> user`, `feedbackClient + requestId -> feedbackSession`.
+
+Down the road, this gives us a stable rule for SDK authoring:
+
+- providers may add execution keys,
+- but required host-owned inputs remain explicit initial-context requirements unless the provider can truly self-provision.
+
+### Dependency vs Middleware Rule
+
+When deciding where something belongs:
+
+- Put it in **`deps`** when the host/environment must provide it directly and stably.
+- Make it **provider middleware** when middleware derives or attaches a new execution capability for downstream use.
+- Keep simple dependency-consuming middleware reading from `context.deps.*`; do not wrap a dependency in provider middleware unless the middleware actually creates or normalizes something new.
+
+Examples:
+
+- `deps.logger`, `deps.analytics`, `deps.runtime`, `deps.dbPool` are host-owned dependencies.
+- `sql`, `user`, `feedbackSession`, `repo` are execution keys created/attached by middleware or module setup.
 
 ### Kit-Level Middleware Pattern
 
 Use kit-level middleware for cross-cutting behavior that should be reusable across domain packages.
 
-- Define one concern per file in `src/orpc/middleware/` (for example `with-telemetry.ts`).
+- Define one concern per file in `src/orpc/middleware/` (for example `telemetry-middleware.ts`).
 - Wire truly “applies everywhere” middleware into `src/service/impl.ts` so it is consistent and obvious across packages.
 - Keep service middleware authoring focused on domain semantics (read-only mode, authz/tenancy guards).
 
