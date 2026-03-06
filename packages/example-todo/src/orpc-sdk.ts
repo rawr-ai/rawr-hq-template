@@ -2,15 +2,18 @@
  * @fileoverview oRPC SDK seam for this domain package.
  *
  * @remarks
- * Today this re-exports the local proto-SDK implementation in `./orpc/*`.
- * Later, this file becomes the single swap point to import the shared SDK
- * instead (without rewriting domain/module code).
+ * This is the intended package-local SDK surface for service/module authoring.
+ * Later, it becomes the single swap point to import the shared SDK instead
+ * (without rewriting domain/module code).
+ *
+ * Keep this surface intentionally narrow:
+ * - export types and helpers that service/module authors should actually use
+ * - keep lower-level construction primitives internal to `src/orpc/*` unless
+ *   they are part of the intended authoring model
  */
 export type {
   BaseDeps,
-  Logger,
   BaseMetadata,
-  BaseContext,
   InitialContext,
 } from "./orpc/base";
 export type { DbPool, Sql } from "./orpc/adapters/sql";
@@ -18,11 +21,7 @@ export type { FeedbackClient } from "./orpc/adapters/feedback";
 export {
   createContractBuilder,
   createImplementer,
-  createMiddlewareBuilder,
 } from "./orpc/factory";
-export type { DomainPackage, InferDeps } from "./orpc/domain-package";
-export { defineDomainPackage } from "./orpc/domain-package";
-export { createDomainModule, type DomainContext } from "./orpc/module";
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
 export {
   createTelemetryMiddleware,

@@ -14,8 +14,9 @@
  * Keep this file domain-authored (concrete values live here). The SDK factory
  * implementation lives under `../orpc/*`.
  */
-import type { BaseDeps, BaseMetadata, DbPool, InitialContext } from "../orpc-sdk";
-import { createContractBuilder, createMiddlewareBuilder } from "../orpc-sdk";
+import type { BaseDeps, BaseMetadata, InitialContext } from "../orpc/base";
+import type { DbPool } from "../orpc/adapters/sql";
+import { createContractBuilder, createMiddlewareBuilder } from "../orpc/factory";
 
 /**
  * Service-specific metadata extension (wireframe).
