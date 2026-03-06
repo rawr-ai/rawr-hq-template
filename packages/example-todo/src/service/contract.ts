@@ -2,9 +2,9 @@
  * @fileoverview Root domain contract composition for the todo package.
  *
  * @remarks
- * This file composes module contracts into a single root contract object.
- * `src/orpc.ts` implements this root contract once, then modules derive their
- * per-module implementers from the resulting `impl.<module>` subtrees.
+ * This file only composes module contracts into the root contract object.
+ * `src/service/impl.ts` implements that root contract once; modules then derive
+ * their implementer subtrees from `impl.<module>`.
  */
 import { contract as assignments } from "./modules/assignments/contract";
 import { contract as tags } from "./modules/tags/contract";

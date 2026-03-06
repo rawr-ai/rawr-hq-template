@@ -2,9 +2,8 @@
  * @fileoverview Feedback provider.
  *
  * @remarks
- * This exists to illustrate optional provider composition: only services that
- * choose to attach it (and provide its deps) get the additional execution
- * context it produces.
+ * Optional provider example. Only services that attach it get the downstream
+ * `feedbackSession` execution context.
  */
 
 import type { FeedbackClient } from "../adapters/feedback";
@@ -16,11 +15,9 @@ import { createBaseMiddleware } from "../factory";
  * @remarks
  * Export this as a ready-to-use middleware value.
  *
- * This middleware is intentionally *not* generic over an arbitrary `TContext`:
- * if we allow services to narrow `context.feedbackSession` to a stricter subtype, a
- * generic middleware cannot safely assign a concrete `{ sessionId: string }`
- * value to it. Keeping the context fixed makes the type relationship explicit
- * and avoids surprising unsoundness.
+ * This provider intentionally fixes the output shape it adds. If services were
+ * allowed to narrow `feedbackSession`, the provider could no longer safely
+ * assign its concrete `{ sessionId: string }` value.
  */
 export const feedbackProvider = createBaseMiddleware<{
   deps: {
@@ -38,10 +35,6 @@ export const feedbackProvider = createBaseMiddleware<{
       feedbackSession: {
         sessionId: session.sessionId,
       },
-    } satisfies {
-      feedbackSession: {
-        sessionId: string;
-      };
     },
   });
 });

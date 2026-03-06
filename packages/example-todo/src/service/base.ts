@@ -2,43 +2,16 @@
  * @fileoverview Service definition for the todo package.
  *
  * @remarks
- * This is the single authored service-definition surface:
- * - `ServiceDeps` / `ServiceContext`
- * - `ServiceMetadata`
- * - `ocBase` for contract authoring
- * - `createServiceMiddleware` for service-local middleware authoring
- * - `createServiceImplementer` for central contract implementation
+ * This file is the service-definition center of gravity:
+ * - host-owned deps and initial context
+ * - shared procedure metadata defaults
+ * - the bound authoring surfaces exported to the rest of the package
  *
- * Modules should derive runtime behavior from the central implementer in
- * `src/service/impl.ts`. This file owns the host boundary contract and shared
- * metadata defaults, not the middleware chain itself.
- *
- * Keep this file domain-authored (concrete values live here). The SDK factory
- * implementation lives under `../orpc/*`.
+ * Keep concrete service facts here. `src/service/impl.ts` owns middleware
+ * stacking; `src/orpc/*` owns the reusable SDK machinery behind these exports.
  */
-import type {
-  DbPool,
-  ServiceContextOf,
-  ServiceDepsOf,
-  ServiceMetadataOf,
-} from "../orpc-sdk";
+import type { DbPool, ServiceContextOf, ServiceDepsOf, ServiceMetadataOf } from "../orpc-sdk";
 import { defineService } from "../orpc-sdk";
-
-/**
- * Service-specific metadata extension (wireframe).
- *
- * @remarks
- * This is a realistic example of "domain-driven" metadata that a service might
- * standardize so baseline middleware (telemetry/audit/policy) can tag behavior
- * consistently without every module inventing a new shape.
- *
- * This package does not *use* these fields yet; they're here to help us shape
- * the eventual shared SDK API around what `service/base.ts` needs to express.
- */
-export type ServiceMetadata = ServiceMetadataOf<{
-  audit?: "none" | "basic" | "full";
-  entity?: "service" | "task" | "tag" | "assignment";
-}>;
 
 /**
  * Host-owned time source used by task/tag creation and similar flows.
@@ -55,11 +28,11 @@ export interface Runtime {
 }
 
 /**
- * Host-owned dependencies for this service.
+ * Host-owned dependencies for the todo service.
  *
  * @remarks
- * This is the single authored dependency contract for the service.
- * Keep baseline deps vs service deps as a type-authoring distinction only.
+ * This is the explicit dependency contract at the service boundary.
+ * Baseline deps vs service deps stays a type-authoring distinction only.
  */
 export interface ServiceDeps extends ServiceDepsOf<{
   dbPool: DbPool;
@@ -68,7 +41,11 @@ export interface ServiceDeps extends ServiceDepsOf<{
 }> {}
 
 /**
- * Initial (extended) context for this service.
+ * Initial service context.
+ *
+ * @remarks
+ * Keep request-scoped, non-dependency input here. Middleware-produced execution
+ * context belongs downstream, not in this type.
  */
 export type ServiceContext = ServiceContextOf<ServiceDeps, {
   workspaceId?: string;
@@ -76,12 +53,23 @@ export type ServiceContext = ServiceContextOf<ServiceDeps, {
 }>;
 
 /**
+ * Service-specific procedure metadata.
+ *
+ * @remarks
+ * Keep this small and operational. These are the metadata fields service-local
+ * middleware and policy can reasonably depend on.
+ */
+export type ServiceMetadata = ServiceMetadataOf<{
+  audit?: "none" | "basic" | "full";
+  entity?: "service" | "task" | "tag" | "assignment";
+}>;
+
+/**
  * Bound service authoring surface.
  *
  * @remarks
- * This is a single call to `defineService(...)`, not a second invocation layer.
- * The trailing `()` belongs to that function call itself. The returned object is
- * then used to expose the service-facing authoring surfaces below.
+ * `defineService(...)` binds the service-local authoring surfaces once:
+ * contract authoring, service middleware authoring, and implementer creation.
  */
 const service = defineService<ServiceMetadata, ServiceContext>({
   metadata: {
@@ -98,7 +86,7 @@ const service = defineService<ServiceMetadata, ServiceContext>({
 });
 
 /**
- * Declarative setup for contract authoring.
+ * Contract authoring surface for module contracts.
  */
 export const ocBase = service.oc;
 
@@ -106,15 +94,9 @@ export const ocBase = service.oc;
  * Service-local middleware builder.
  *
  * @remarks
- * Use this for service-authored middleware so:
- * - the required context shape mirrors runtime shape directly
- * - required dependencies stay explicitly declared under `deps`
- * - service metadata is always typed/available on `procedure["~orpc"].meta`
- * - zero-config middleware can call this helper with no type argument
- *
- * This does *not* carry the full service context automatically; middleware
- * should still declare only the minimal required context fragment it actually
- * needs.
+ * Use this for service-authored middleware.
+ * Declare only the minimal required context fragment under `deps`; do not
+ * restate the full `ServiceContext`.
  */
 export const createServiceMiddleware = service.createMiddleware;
 
@@ -122,7 +104,8 @@ export const createServiceMiddleware = service.createMiddleware;
  * Service-local implementer factory.
  *
  * @remarks
- * Use this in `src/service/impl.ts` to bind the root contract to the service
- * context and baseline implementer configuration in one place.
+ * `src/service/impl.ts` imports the root contract and calls this once. Keeping
+ * the factory here avoids repeating `ServiceContext` and baseline implementer
+ * options in every implementation file.
  */
 export const createServiceImplementer = service.createImplementer;

@@ -2,8 +2,8 @@
  * @fileoverview Baseline contracts for oRPC domain service packages.
  *
  * @remarks
- * These are the baseline guarantees that all domain packages can rely on.
- * Domain packages can extend these shapes (deps + metadata) as needed.
+ * These are the stable building blocks that every domain package extends:
+ * baseline deps, baseline metadata, and the initial-context shape.
  */
 
 /**
@@ -22,11 +22,10 @@ export interface AnalyticsClient {
 }
 
 /**
- * Minimum dependency contract expected by ORPC domain packages.
+ * Minimum dependency contract expected by domain packages.
  *
  * @remarks
- * Domain packages should extend this with domain-specific capabilities (for
- * example `sql`, `clock`, external service adapters).
+ * Services extend this with domain-specific host dependencies.
  */
 export interface BaseDeps {
   logger: Logger;
@@ -39,11 +38,11 @@ export interface BaseDeps {
 export type ServiceDepsOf<T extends object> = BaseDeps & T;
 
 /**
- * Baseline metadata shared across procedures.
+ * Baseline procedure metadata shared across packages.
  *
  * @remarks
- * Domain packages can extend this metadata bag per-package. Baseline middleware
- * may read fields from this baseline (`idempotent`, optional `domain`).
+ * Services can extend this per-package. Baseline middleware may read
+ * `idempotent` and optional routing tags like `domain`.
  */
 export type BaseMetadata = {
   idempotent: boolean;
@@ -57,24 +56,22 @@ export type BaseMetadata = {
 export type ServiceMetadataOf<T extends object = {}> = BaseMetadata & T;
 
 /**
- * Baseline context shape used by domain-package routers.
+ * Baseline initial-context shape.
  *
  * @remarks
- * This is the *unextended* context contract: what the SDK guarantees before any
- * service/package-specific additions. Services can extend context for their
- * package; the resulting shape is modeled as `InitialContext`.
+ * The SDK guarantees a top-level `deps` bag. Services extend this with
+ * request-scoped input through `InitialContext`.
  */
 export type BaseContext<TDeps> = {
   deps: TDeps;
 };
 
 /**
- * Service/package-specific initial context.
+ * Service-specific initial context.
  *
  * @remarks
- * Conceptually, "initial context" is the *extended* context: base + service
- * additions. In many packages it remains `BaseContext<TDeps>` (no extensions),
- * but this type exists so extension has a single obvious place to land.
+ * Use this for request-scoped top-level input that should exist before
+ * middleware runs. Middleware-produced execution context belongs downstream.
  */
 export type InitialContext<TDeps, TExt extends object = {}> = BaseContext<TDeps> & TExt;
 
