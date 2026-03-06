@@ -81,14 +81,17 @@ export type ServiceContext = ServiceContextOf<ServiceDeps, {
   requestId?: string;
 }>;
 
-const service = defineService<ServiceMetadata>({
+const {
+  oc: ocBase,
+  createMiddleware: createServiceMiddleware,
+} = defineService<ServiceMetadata>({
   metadata: baseMetadata,
 });
 
 /**
  * Declarative setup for contract authoring.
  */
-export const ocBase = service.oc;
+export { ocBase };
 
 /**
  * Service-local middleware builder.
@@ -104,6 +107,4 @@ export const ocBase = service.oc;
  * should still declare only the minimal required context fragment it actually
  * needs.
  */
-export const createServiceMiddleware = <
-  TRequiredContext extends { deps: object } = { deps: {} },
->() => service.createMiddleware<TRequiredContext>();
+export { createServiceMiddleware };
