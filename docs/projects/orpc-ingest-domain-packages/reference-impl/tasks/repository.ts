@@ -1,6 +1,6 @@
 import { ResultAsync, ok, err } from 'neverthrow'
 import type { Task } from './schemas.js'
-import type { Sql } from '../deps.js'
+import type { Sql } from '../base.js'
 import { NotFoundError, DatabaseError } from '../errors.js'
 
 export function createTaskRepository(sql: Sql) {

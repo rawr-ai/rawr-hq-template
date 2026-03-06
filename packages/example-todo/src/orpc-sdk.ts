@@ -13,8 +13,11 @@ export type {
   BaseContext,
   InitialContext,
 } from "./orpc/base";
+export type { DbPool, Sql } from "./orpc/adapters/sql";
+export type { FeedbackClient } from "./orpc/adapters/feedback";
 export {
   createContractBuilder,
+  createBaseMiddleware,
   createImplementer,
   createMiddlewareBuilder,
   type CreateContractBuilderOptions,
@@ -25,3 +28,9 @@ export type { DomainPackage, InferDeps } from "./orpc/domain-package";
 export { defineDomainPackage } from "./orpc/domain-package";
 export { createDomainModule, type DomainContext } from "./orpc/module";
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
+export {
+  createTelemetryMiddleware,
+  createAnalyticsMiddleware,
+  sqlProvider,
+  feedbackProvider,
+} from "./orpc/middleware";

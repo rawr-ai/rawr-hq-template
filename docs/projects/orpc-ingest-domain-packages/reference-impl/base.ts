@@ -1,33 +1,50 @@
-// ============================================================================
-// Shared oRPC base for all modules in this service.
-// Defines the root context and shared middleware.
-// Every module's router builds on top of this.
-// ============================================================================
-
 import { os } from '@orpc/server'
-import type { TodoDeps, Logger, Clock } from './deps.js'
 
-// ---- Context types ----
+export interface Sql {
+  query<T>(text: string, params?: unknown[]): Promise<T[]>
+  queryOne<T>(text: string, params?: unknown[]): Promise<T | null>
+}
+
+export interface DbPool {
+  connect(): Sql | Promise<Sql>
+}
+
+export interface Logger {
+  info(message: string, meta?: Record<string, unknown>): void
+  error(message: string, meta?: Record<string, unknown>): void
+}
+
+export interface Clock {
+  now(): Date
+}
+
+export interface TodoDeps {
+  dbPool: DbPool
+  logger: Logger
+  clock: Clock
+}
 
 export interface BaseContext {
   deps: TodoDeps
 }
 
-export interface ServiceContext {
-  logger: Logger
-  clock: Clock
+interface SqlProviderContext {
+  deps: {
+    dbPool: DbPool
+  }
 }
 
-// ---- Base + middleware ----
+interface SqlExecutionContext {
+  sql: Sql
+}
 
 export const base = os.context<BaseContext>()
 
-export const withService = base.use(({ context, next }) => {
-  const { deps } = context
+export const sqlProvider = os.context<SqlProviderContext>().use(async ({ context, next }) => {
+  const sql = await context.deps.dbPool.connect()
   return next({
     context: {
-      logger: deps.logger,
-      clock: deps.clock,
+      sql,
     },
   })
 })

@@ -9,28 +9,15 @@
  * Consumers should import `createClient` from package root (`index.ts`), not
  * deep-link to this file directly unless explicitly needed for testing.
  */
-import type { Deps } from "./service/deps";
-import type { ServiceContext } from "./service/base";
-import { createRouterClient } from "@orpc/server";
+import { defineDomainPackage, type InferDeps } from "./orpc-sdk";
 import { router } from "./router";
 
-// -------------------------------------------------------------------------------------
-// PREVIOUS (SDK helper) client wiring:
-//
-//   import { defineDomainPackage } from "./orpc-sdk";
-//   const domain = defineDomainPackage(router);
-//   export function createClient(deps: Deps) {
-//     return domain.createClient(deps);
-//   }
-//
-// This is temporarily commented out while we validate that the SDK helper still
-// matches the current oRPC composition model.
-// -------------------------------------------------------------------------------------
+const domain = defineDomainPackage(router);
+
+export type Deps = InferDeps<typeof router>;
 
 export function createClient(deps: Deps) {
-  return createRouterClient(router, {
-    context: { deps } as ServiceContext,
-  });
+  return domain.createClient(deps);
 }
 
 export type Client = ReturnType<typeof createClient>;

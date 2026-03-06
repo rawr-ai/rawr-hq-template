@@ -11,7 +11,7 @@
  * @agents
  * Keep procedure boundary concerns out of this file.
  */
-import type { Sql } from "../../deps";
+import type { Sql } from "../../../orpc-sdk";
 import { UnexpectedInternalError } from "../../shared/internal-errors";
 import type { Tag } from "./schemas";
 

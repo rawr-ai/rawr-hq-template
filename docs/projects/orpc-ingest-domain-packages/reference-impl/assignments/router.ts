@@ -7,7 +7,7 @@
 
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
-import { withService, base } from '../base.js'
+import { sqlProvider, base } from '../base.js'
 import { createAssignmentRepository } from './repository.js'
 import { createTaskRepository } from '../tasks/repository.js'
 import { createTagRepository } from '../tags/repository.js'
@@ -17,12 +17,12 @@ import { TagSchema } from '../tags/schemas.js'
 import type { Assignment } from './schemas.js'
 import { unwrap } from '../unwrap.js'
 
-const withAssignments = withService.use(({ context, next }) =>
+const withAssignments = base.use(sqlProvider).use(({ context, next }) =>
   next({
     context: {
-      repo: createAssignmentRepository(context.deps.sql),
-      tasks: createTaskRepository(context.deps.sql),
-      tags: createTagRepository(context.deps.sql),
+      repo: createAssignmentRepository(context.sql),
+      tasks: createTaskRepository(context.sql),
+      tags: createTagRepository(context.sql),
     },
   }),
 )
@@ -51,7 +51,7 @@ const assign = withAssignments
             id: randomUUID(),
             taskId: input.taskId,
             tagId: input.tagId,
-            createdAt: context.clock.now(),
+            createdAt: context.deps.clock.now(),
           } satisfies Assignment),
         ),
     ),

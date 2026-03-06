@@ -1,6 +1,6 @@
 import { ResultAsync, ok, err } from 'neverthrow'
 import type { Tag } from './schemas.js'
-import type { Sql } from '../deps.js'
+import type { Sql } from '../base.js'
 import { NotFoundError, DatabaseError } from '../errors.js'
 import { DuplicateTagError } from './errors.js'
 

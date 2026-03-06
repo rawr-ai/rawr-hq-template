@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
-import { withService, base } from '../base.js'
+import { sqlProvider, base } from '../base.js'
 import { createTaskRepository } from './repository.js'
 import { TaskSchema } from './schemas.js'
 import type { Task } from './schemas.js'
@@ -8,10 +8,10 @@ import { unwrap } from '../unwrap.js'
 
 // ---- Module middleware: adds task repo to context ----
 
-const withTasks = withService.use(({ context, next }) =>
+const withTasks = base.use(sqlProvider).use(({ context, next }) =>
   next({
     context: {
-      repo: createTaskRepository(context.deps.sql),
+      repo: createTaskRepository(context.sql),
     },
   }),
 )
@@ -25,7 +25,7 @@ const create = withTasks
   }))
   .output(TaskSchema)
   .handler(({ input, context }) => {
-    const now = context.clock.now()
+    const now = context.deps.clock.now()
     const task: Task = {
       id: randomUUID(),
       title: input.title.trim(),
@@ -34,7 +34,7 @@ const create = withTasks
       createdAt: now,
       updatedAt: now,
     }
-    context.logger.info('tasks.create', { id: task.id })
+    context.deps.logger.info('tasks.create', { id: task.id })
     return unwrap(context.repo.insert(task))
   })
 

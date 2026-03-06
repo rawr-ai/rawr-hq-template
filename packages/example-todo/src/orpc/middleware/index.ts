@@ -1,3 +1,10 @@
-export { withTelemetry, type WithTelemetryOptions } from "./with-telemetry";
-export { withAnalytics, type WithAnalyticsOptions } from "./with-analytics";
-export { withFeedback, type FeedbackClient, type WithFeedbackContext } from "./with-feedback";
+export {
+  createTelemetryMiddleware,
+  type TelemetryMiddlewareOptions,
+} from "./telemetry-middleware";
+export {
+  createAnalyticsMiddleware,
+  type AnalyticsMiddlewareOptions,
+} from "./analytics-middleware";
+export { feedbackProvider } from "./feedback-provider";
+export { sqlProvider } from "./sql-provider";

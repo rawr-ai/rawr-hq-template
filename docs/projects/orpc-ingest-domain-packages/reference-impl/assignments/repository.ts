@@ -1,6 +1,6 @@
 import { ResultAsync, ok, err } from 'neverthrow'
 import type { Assignment } from './schemas.js'
-import type { Sql } from '../deps.js'
+import type { Sql } from '../base.js'
 import { DatabaseError } from '../errors.js'
 import { AlreadyAssignedError } from './errors.js'
 

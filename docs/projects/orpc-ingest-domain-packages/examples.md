@@ -16,7 +16,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Stable public router import remains available via `@rawr/<pkg>/router` (`src/router.ts` is a thin re-export).
 - Two-layer topology:
   - **Kit seam (`src/orpc-sdk.ts`, `src/orpc/*`)**: domain-agnostic oRPC kit primitives (future SDK extraction seam).
-  - **Service surface (`src/service/`)**: deps + base primitives + modules + root contract bubble-up.
+  - **Service surface (`src/service/`)**: service definition + modules + root contract bubble-up.
 - One oRPC-native composition surface:
   - `src/service/impl.ts` implements the root contract and attaches package-wide middleware.
 - Router responsibilities are distinct and fixed:
@@ -31,6 +31,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - `src/orpc/middleware/` is always present for kit-level cross-cutting concerns (telemetry, generic wrappers).
 - `src/service/middleware/` is available for domain-wide cross-cutting concerns; ordering is authored in `src/service/impl.ts`.
 - Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
+- `context.deps` remains the single host-provided dependency bag; middleware/module setup may add top-level execution keys, but we do not split runtime dependencies into multiple bags.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
 
 ## Real axes that should change
@@ -49,6 +50,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Structure is deterministic for scaffolding; avoid conditional "add this core file later" guidance.
 - Module-specific boundary errors are defined inline in `contract.ts` (not separate module `errors.ts` files).
 - Metadata should stay minimal and operational in this phase (`idempotent` required, `sideEffects` deferred).
+- Runtime context should not introduce a generic `metadata` bag by default; use `deps` for host-owned dependencies and explicit top-level keys for request/execution values.
 - Contract-router/global error policy is defined in `guidance.md` (canonical); examples should not introduce package-wide shared error sets unless that policy's conditions are met.
 
 ## How the 3 examples differ
@@ -81,15 +83,14 @@ packages/example-minimal/src/
 ├── orpc/
 │   ├── factory.ts
 │   └── middleware/
-│       └── with-telemetry.ts
+│       └── telemetry-middleware.ts
 └── service/
     ├── contract.ts
-    ├── deps.ts
     ├── base.ts
     ├── impl.ts
     ├── router.ts
     ├── middleware/
-    │   └── with-read-only-mode.ts
+    │   └── read-only-mode.ts
     ├── adapters/
     │   └── README.md
     ├── shared/
@@ -121,15 +122,17 @@ packages/example-todo/src/
 ├── orpc/
 │   ├── factory.ts
 │   └── middleware/
-│       └── with-telemetry.ts
+│       ├── telemetry-middleware.ts
+│       ├── analytics-middleware.ts
+│       ├── sql-provider.ts
+│       └── feedback-provider.ts
 └── service/
     ├── contract.ts
-    ├── deps.ts
     ├── base.ts
     ├── impl.ts
     ├── router.ts
     ├── middleware/
-    │   └── with-read-only-mode.ts
+    │   └── read-only-mode.ts
     ├── adapters/
     │   └── README.md
     ├── shared/
@@ -175,15 +178,17 @@ packages/example-golden/src/
 ├── orpc/
 │   ├── factory.ts
 │   └── middleware/
-│       └── with-telemetry.ts
+│       ├── telemetry-middleware.ts
+│       ├── analytics-middleware.ts
+│       ├── sql-provider.ts
+│       └── feedback-provider.ts
 └── service/
     ├── contract.ts
-    ├── deps.ts
     ├── base.ts
     ├── impl.ts
     ├── router.ts
     ├── middleware/
-    │   └── with-read-only-mode.ts
+    │   └── read-only-mode.ts
     ├── adapters/
     │   └── README.md
     ├── shared/

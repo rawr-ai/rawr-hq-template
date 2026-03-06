@@ -27,7 +27,7 @@ What is the canonical domain-package topology (and choke points) for agents?
 Use a two-layer structure with **explicit contract bubble-up** and **one router composition choke point**:
 
 - **Layer 1 — kit seam (`src/orpc-sdk.ts`, `src/orpc/*`)**: local proto-SDK kit primitives (no domain concretions)
-- **Layer 2 — service surface (`src/service/`)**: deps + base primitives + middleware + modules + root contract composition
+- **Layer 2 — service surface (`src/service/`)**: service definition + middleware + modules + root contract composition
 
 In addition, each domain package has one oRPC-native composition file (central implementer):
 
@@ -125,3 +125,26 @@ Nested modules are **folders under a module** and are composed explicitly (no au
 
 ### Why
 This keeps the “agent drill-down” model fractal without introducing implicit wiring, while preserving one global middleware choke point.
+
+## Decision #7 (2026-03-05)
+
+### Question
+How should runtime context be divided between explicit dependencies and middleware-provided values?
+
+### Decision
+Keep a single dedicated dependency bag at `context.deps` for host-provided, stable dependencies. Keep middleware-provided values as top-level execution-context keys.
+
+Concretely:
+
+- baseline deps and service deps are a type-authoring distinction only (`BaseDeps` extended by service deps),
+- they do **not** become separate runtime bags such as `context.base` and `context.deps`,
+- request-scoped non-dependency input may live as explicit top-level keys (for example `requestId`) or a narrowly-scoped object like `request`,
+- do **not** introduce a generic runtime `metadata` bag by default.
+
+### Why
+This preserves one explicit host-input channel (`deps`) while still aligning with oRPC’s middleware model, where middleware adds downstream execution context at the top level.
+
+It keeps runtime semantics legible:
+
+- `context.deps.*` means “host-owned injected dependency”,
+- top-level `context.*` outside `deps` means “request/execution value attached during the pipeline”.

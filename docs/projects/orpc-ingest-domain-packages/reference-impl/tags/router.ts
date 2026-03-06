@@ -1,15 +1,15 @@
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
-import { withService, base } from '../base.js'
+import { sqlProvider, base } from '../base.js'
 import { createTagRepository } from './repository.js'
 import { TagSchema } from './schemas.js'
 import type { Tag } from './schemas.js'
 import { unwrap } from '../unwrap.js'
 
-const withTags = withService.use(({ context, next }) =>
+const withTags = base.use(sqlProvider).use(({ context, next }) =>
   next({
     context: {
-      repo: createTagRepository(context.deps.sql),
+      repo: createTagRepository(context.sql),
     },
   }),
 )
@@ -25,9 +25,9 @@ const create = withTags
       id: randomUUID(),
       name: input.name.trim(),
       color: input.color.toLowerCase(),
-      createdAt: context.clock.now(),
+      createdAt: context.deps.clock.now(),
     }
-    context.logger.info('tags.create', { id: tag.id, name: tag.name })
+    context.deps.logger.info('tags.create', { id: tag.id, name: tag.name })
     return unwrap(context.repo.insert(tag))
   })
 
