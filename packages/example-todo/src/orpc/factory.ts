@@ -70,6 +70,7 @@ export function createMiddlewareBuilder<
 
 type DefineServiceOptions<TMeta extends BaseMetadata> = {
   metadata: TMeta;
+  implementer: CreateImplementerOptions;
 };
 
 /**
@@ -79,13 +80,34 @@ type DefineServiceOptions<TMeta extends BaseMetadata> = {
  * This helper is intentionally small. It owns only:
  * - contract authoring
  * - service-local middleware authoring
+ * - service-local implementer creation
  *
  * Concrete service types (`ServiceDeps`, `ServiceMetadata`, `ServiceContext`)
  * stay explicit in `src/service/base.ts`.
  */
-export function defineService<TMeta extends BaseMetadata>(
+export function defineService<
+  TMeta extends BaseMetadata,
+  TContext extends BaseContext<BaseDeps>,
+>(
   options: DefineServiceOptions<TMeta>,
 ) {
+  function createServiceImplementer<const TContract extends AnyContractProcedure>(
+    contract: TContract,
+  ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
+  function createServiceImplementer<const TContract extends AnyContractRouterObject>(
+    contract: TContract,
+  ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
+  function createServiceImplementer(contract: AnyContractRouter): any {
+    if (isContractProcedure(contract)) {
+      return createProcedureImplementer(contract, options.implementer);
+    }
+
+    return createRouterImplementer(
+      contract as AnyContractRouterObject,
+      options.implementer,
+    );
+  }
+
   return {
     oc: createContractBuilder<TMeta>({ baseMetadata: options.metadata }),
     createMiddleware<
@@ -95,6 +117,7 @@ export function defineService<TMeta extends BaseMetadata>(
         baseMetadata: options.metadata,
       });
     },
+    createImplementer: createServiceImplementer,
   };
 }
 

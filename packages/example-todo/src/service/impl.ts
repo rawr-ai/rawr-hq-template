@@ -12,22 +12,19 @@
  * call `.router(...)` once (no `.use(...)` there).
  */
 import { contract } from "./contract";
+import { createServiceImplementer } from "./base";
 import { readOnlyMode } from "./middleware/read-only-mode";
-import type { ServiceContext } from "./base";
-import { createImplementer, sqlProvider } from "../orpc-sdk";
+import { sqlProvider } from "../orpc-sdk";
 
 /**
  * Central implementer tree derived from the root contract.
  *
  * @remarks
  * Middleware order is authored here:
- * 1) baseline observability middleware (inside `createImplementer`)
+ * 1) baseline observability middleware (inside `createServiceImplementer`)
  * 2) SQL provider (`deps.dbPool` -> `sql`)
  * 3) domain guard (`readOnlyMode`)
  */
-export const impl = createImplementer<typeof contract, ServiceContext>(contract, {
-  telemetry: { defaultDomain: "todo" },
-  analytics: { app: "todo" },
-})
+export const impl = createServiceImplementer(contract)
   .use(sqlProvider)
   .use(readOnlyMode);

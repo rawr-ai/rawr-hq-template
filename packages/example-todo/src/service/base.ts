@@ -6,6 +6,8 @@
  * - `ServiceDeps` / `ServiceContext`
  * - `ServiceMetadata`
  * - `ocBase` for contract authoring
+ * - `createServiceMiddleware` for service-local middleware authoring
+ * - `createServiceImplementer` for central contract implementation
  *
  * Modules should derive runtime behavior from the central implementer in
  * `src/service/impl.ts`. This file owns the host boundary contract and shared
@@ -79,15 +81,19 @@ export type ServiceContext = ServiceContextOf<ServiceDeps, {
  * @remarks
  * This is a single call to `defineService(...)`, not a second invocation layer.
  * The trailing `()` belongs to that function call itself. The returned object is
- * then used to expose the two service-facing authoring surfaces below.
+ * then used to expose the service-facing authoring surfaces below.
  */
-const service = defineService<ServiceMetadata>({
+const service = defineService<ServiceMetadata, ServiceContext>({
   metadata: {
     idempotent: true,
     domain: "todo",
     audience: "internal",
     audit: "basic",
     entity: "service",
+  },
+  implementer: {
+    telemetry: { defaultDomain: "todo" },
+    analytics: { app: "todo" },
   },
 });
 
@@ -111,3 +117,12 @@ export const ocBase = service.oc;
  * needs.
  */
 export const createServiceMiddleware = service.createMiddleware;
+
+/**
+ * Service-local implementer factory.
+ *
+ * @remarks
+ * Use this in `src/service/impl.ts` to bind the root contract to the service
+ * context and baseline implementer configuration in one place.
+ */
+export const createServiceImplementer = service.createImplementer;
