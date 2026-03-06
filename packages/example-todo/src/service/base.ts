@@ -14,9 +14,13 @@
  * Keep this file domain-authored (concrete values live here). The SDK factory
  * implementation lives under `../orpc/*`.
  */
-import type { BaseDeps, BaseMetadata, InitialContext } from "../orpc/base";
-import type { DbPool } from "../orpc/adapters/sql";
-import { createContractBuilder, createMiddlewareBuilder } from "../orpc/factory";
+import type {
+  DbPool,
+  ServiceContextOf,
+  ServiceDepsOf,
+  ServiceMetadataOf,
+} from "../orpc-sdk";
+import { defineService } from "../orpc-sdk";
 
 /**
  * Service-specific metadata extension (wireframe).
@@ -29,10 +33,10 @@ import { createContractBuilder, createMiddlewareBuilder } from "../orpc/factory"
  * This package does not *use* these fields yet; they're here to help us shape
  * the eventual shared SDK API around what `service/base.ts` needs to express.
  */
-export type ServiceMetadata = BaseMetadata & {
+export type ServiceMetadata = ServiceMetadataOf<{
   audit?: "none" | "basic" | "full";
   entity?: "service" | "task" | "tag" | "assignment";
-};
+}>;
 
 const baseMetadata: ServiceMetadata = {
   idempotent: true,
@@ -63,24 +67,28 @@ export interface Runtime {
  * This is the single authored dependency contract for the service.
  * Keep baseline deps vs service deps as a type-authoring distinction only.
  */
-export interface ServiceDeps extends BaseDeps {
+export interface ServiceDeps extends ServiceDepsOf<{
   dbPool: DbPool;
   clock: Clock;
   runtime: Runtime;
-}
+}> {}
 
 /**
  * Initial (extended) context for this service.
  */
-export type ServiceContext = InitialContext<ServiceDeps, {
+export type ServiceContext = ServiceContextOf<ServiceDeps, {
   workspaceId?: string;
   requestId?: string;
 }>;
 
+const service = defineService<ServiceMetadata>({
+  metadata: baseMetadata,
+});
+
 /**
  * Declarative setup for contract authoring.
  */
-export const ocBase = createContractBuilder<ServiceMetadata>({ baseMetadata });
+export const ocBase = service.oc;
 
 /**
  * Service-local middleware builder.
@@ -96,8 +104,6 @@ export const ocBase = createContractBuilder<ServiceMetadata>({ baseMetadata });
  * should still declare only the minimal required context fragment it actually
  * needs.
  */
-export function createServiceMiddleware<
+export const createServiceMiddleware = <
   TRequiredContext extends { deps: object } = { deps: {} },
->() {
-  return createMiddlewareBuilder<TRequiredContext, ServiceMetadata>({ baseMetadata });
-}
+>() => service.createMiddleware<TRequiredContext>();

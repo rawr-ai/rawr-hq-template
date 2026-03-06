@@ -34,6 +34,11 @@ export interface BaseDeps {
 }
 
 /**
+ * Service-local dependency extension helper.
+ */
+export type ServiceDepsOf<T extends object> = BaseDeps & T;
+
+/**
  * Baseline metadata shared across procedures.
  *
  * @remarks
@@ -45,6 +50,11 @@ export type BaseMetadata = {
   domain?: string;
   audience?: string;
 };
+
+/**
+ * Service-local metadata extension helper.
+ */
+export type ServiceMetadataOf<T extends object = {}> = BaseMetadata & T;
 
 /**
  * Baseline context shape used by domain-package routers.
@@ -67,3 +77,8 @@ export type BaseContext<TDeps> = {
  * but this type exists so extension has a single obvious place to land.
  */
 export type InitialContext<TDeps, TExt extends object = {}> = BaseContext<TDeps> & TExt;
+
+/**
+ * Service-local initial context extension helper.
+ */
+export type ServiceContextOf<TDeps extends BaseDeps, TExtra extends object = {}> = InitialContext<TDeps, TExtra>;
