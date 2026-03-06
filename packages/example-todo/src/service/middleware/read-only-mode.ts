@@ -1,8 +1,9 @@
 /**
- * @fileoverview Package-global read-only mode guard.
+ * @fileoverview Read-only mode guard.
  *
  * @remarks
- * This middleware blocks mutating procedures when `context.deps.runtime.readOnly`
+ * This is a zero-config, service-local guard. It blocks mutating procedures when
+ * `context.deps.runtime.readOnly`
  * is enabled. Mutability is derived from procedure metadata (`idempotent: false`).
  *
  * @agents
@@ -14,6 +15,13 @@ import { createServiceMiddleware } from "../base";
 import { READ_ONLY_MODE } from "../shared/errors";
 import type { Runtime } from "../base";
 
+/**
+ * Zero-config service guard.
+ *
+ * @remarks
+ * Export this as a ready-to-use middleware value. It consumes the stable
+ * service dependency `deps.runtime` and does not add any execution context.
+ */
 export const readOnlyMode = createServiceMiddleware<{
   deps: {
     runtime: Runtime;

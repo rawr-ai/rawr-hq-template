@@ -13,14 +13,12 @@ import { implement, os } from "@orpc/server";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
 import type { BaseContext, BaseDeps, BaseMetadata } from "./base";
-import type { AnalyticsMiddlewareOptions } from "./middleware/analytics-middleware";
-import { createAnalyticsMiddleware } from "./middleware/analytics-middleware";
-import type { TelemetryMiddlewareOptions } from "./middleware/telemetry-middleware";
-import { createTelemetryMiddleware } from "./middleware/telemetry-middleware";
+import { createAnalyticsMiddleware } from "./middleware/analytics";
+import { createTelemetryMiddleware } from "./middleware/telemetry";
 
 export type { BaseContext, BaseMetadata, InitialContext } from "./base";
 
-export type CreateContractBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> = {
+type CreateContractBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> = {
   /**
    * Default metadata applied to every contract/procedure in the service.
    *
@@ -37,7 +35,7 @@ export function createContractBuilder<TMeta extends BaseMetadata = BaseMetadata>
   return oc.$meta<TMeta>(options.baseMetadata as TMeta);
 }
 
-export type CreateMiddlewareBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> = {
+type CreateMiddlewareBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> = {
   /**
    * Default metadata applied to every procedure; available to middleware via
    * `procedure["~orpc"].meta`.
@@ -90,9 +88,9 @@ export function createBaseMiddleware<
   });
 }
 
-export type CreateImplementerOptions = {
-  telemetry: TelemetryMiddlewareOptions;
-  analytics: AnalyticsMiddlewareOptions;
+type CreateImplementerOptions = {
+  telemetry: { defaultDomain: string };
+  analytics: { app: string };
 };
 
 type AnyContractRouterObject = {

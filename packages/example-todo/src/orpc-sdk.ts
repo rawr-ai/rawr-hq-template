@@ -17,12 +17,8 @@ export type { DbPool, Sql } from "./orpc/adapters/sql";
 export type { FeedbackClient } from "./orpc/adapters/feedback";
 export {
   createContractBuilder,
-  createBaseMiddleware,
   createImplementer,
   createMiddlewareBuilder,
-  type CreateContractBuilderOptions,
-  type CreateImplementerOptions,
-  type CreateMiddlewareBuilderOptions,
 } from "./orpc/factory";
 export type { DomainPackage, InferDeps } from "./orpc/domain-package";
 export { defineDomainPackage } from "./orpc/domain-package";

@@ -1,5 +1,5 @@
 /**
- * @fileoverview ORPC telemetry middleware (proto SDK layer).
+ * @fileoverview Telemetry middleware (proto SDK layer).
  *
  * @remarks
  * Logs one event per procedure execution (success or failure). This middleware
@@ -40,11 +40,15 @@ function getProcedureDomain(procedure: unknown) {
   return typeof domain === "string" && domain.length > 0 ? domain : undefined;
 }
 
-export type TelemetryMiddlewareOptions = {
-  defaultDomain: string;
-};
-
-export function createTelemetryMiddleware(options: TelemetryMiddlewareOptions) {
+/**
+ * Create baseline telemetry middleware.
+ *
+ * @remarks
+ * This is configurable middleware, so it exports a constructor rather than a
+ * ready-to-use value. Required runtime dependencies still mirror the context
+ * shape directly under `deps`.
+ */
+export function createTelemetryMiddleware(options: { defaultDomain: string }) {
   return createBaseMiddleware<{
     deps: {
       logger: Logger;

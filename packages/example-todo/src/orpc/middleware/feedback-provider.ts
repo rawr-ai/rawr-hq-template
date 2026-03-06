@@ -1,9 +1,9 @@
 /**
- * @fileoverview Feedback provider (optional feature).
+ * @fileoverview Feedback provider.
  *
  * @remarks
- * This exists to illustrate "optional" middleware: only services that choose
- * to attach this middleware (and provide its deps) get the additional execution
+ * This exists to illustrate optional provider composition: only services that
+ * choose to attach it (and provide its deps) get the additional execution
  * context it produces.
  */
 
@@ -11,9 +11,11 @@ import type { FeedbackClient } from "../adapters/feedback";
 import { createBaseMiddleware } from "../factory";
 
 /**
- * Optional provider example.
+ * Optional feedback provider.
  *
  * @remarks
+ * Export this as a ready-to-use middleware value.
+ *
  * This middleware is intentionally *not* generic over an arbitrary `TContext`:
  * if we allow services to narrow `context.feedbackSession` to a stricter subtype, a
  * generic middleware cannot safely assign a concrete `{ sessionId: string }`
