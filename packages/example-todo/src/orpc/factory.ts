@@ -97,12 +97,15 @@ export function defineService<
   function createServiceImplementer<const TContract extends AnyContractRouterObject>(
     contract: TContract,
   ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
-  function createServiceImplementer(contract: AnyContractRouter): any {
+  function createServiceImplementer(contract: AnyContractRouter) {
     if (isContractProcedure(contract)) {
-      return createProcedureImplementer(contract, options.implementer);
+      return createProcedureImplementer<AnyContractProcedure, TContext>(
+        contract,
+        options.implementer,
+      );
     }
 
-    return createRouterImplementer(
+    return createRouterImplementer<AnyContractRouterObject, TContext>(
       contract as AnyContractRouterObject,
       options.implementer,
     );
