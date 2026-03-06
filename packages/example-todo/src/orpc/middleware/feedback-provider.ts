@@ -7,7 +7,7 @@
  */
 
 import type { FeedbackClient } from "../adapters/feedback";
-import { createBaseMiddleware } from "../factory";
+import { createBaseMiddleware } from "../base";
 
 /**
  * Optional feedback provider.

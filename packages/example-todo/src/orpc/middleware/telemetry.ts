@@ -10,7 +10,7 @@
  * assertions stay resilient as implementation evolves.
  */
 import type { Logger } from "../base";
-import { createBaseMiddleware } from "../factory";
+import { createBaseMiddleware } from "../base";
 
 type ErrorShape = {
   name?: unknown;

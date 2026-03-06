@@ -3,7 +3,7 @@ import { createRouterClient, implement } from "@orpc/server";
 import { Type } from "typebox";
 
 import type { BaseMetadata } from "../src/orpc/base";
-import { createContractBuilder } from "../src/orpc/factory";
+import { createContractBuilder } from "../src/orpc/factory/contract";
 import { defineService, schema, type FeedbackClient } from "../src/orpc-sdk";
 import { feedbackProvider } from "../src/orpc/middleware/feedback-provider";
 

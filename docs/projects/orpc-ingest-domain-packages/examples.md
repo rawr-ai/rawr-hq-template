@@ -82,7 +82,14 @@ packages/example-minimal/src/
 ├── router.ts
 ├── orpc-sdk.ts
 ├── orpc/
-│   ├── factory.ts
+│   ├── base.ts
+│   ├── package-boundary.ts
+│   ├── factory/
+│   │   ├── contract.ts
+│   │   ├── implementer.ts
+│   │   ├── middleware.ts
+│   │   ├── service.ts
+│   │   └── index.ts
 │   └── middleware/
 │       └── telemetry.ts
 └── service/
@@ -121,7 +128,14 @@ packages/example-todo/src/
 ├── router.ts
 ├── orpc-sdk.ts
 ├── orpc/
-│   ├── factory.ts
+│   ├── base.ts
+│   ├── package-boundary.ts
+│   ├── factory/
+│   │   ├── contract.ts
+│   │   ├── implementer.ts
+│   │   ├── middleware.ts
+│   │   ├── service.ts
+│   │   └── index.ts
 │   └── middleware/
 │       ├── telemetry.ts
 │       ├── analytics.ts
@@ -177,7 +191,14 @@ packages/example-golden/src/
 ├── router.ts
 ├── orpc-sdk.ts
 ├── orpc/
-│   ├── factory.ts
+│   ├── base.ts
+│   ├── package-boundary.ts
+│   ├── factory/
+│   │   ├── contract.ts
+│   │   ├── implementer.ts
+│   │   ├── middleware.ts
+│   │   ├── service.ts
+│   │   └── index.ts
 │   └── middleware/
 │       ├── telemetry.ts
 │       ├── analytics.ts

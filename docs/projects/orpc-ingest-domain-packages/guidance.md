@@ -35,6 +35,9 @@ Always-on slots:
 
 - `src/service/router.ts` is the always-on service router composition choke point (single final attach).
 - `src/service/base.ts` is the always-on service-definition surface (host deps, initial context, metadata defaults, and the bound service authoring surfaces from `defineService`).
+- `src/orpc/base.ts` is the always-on domain-package baseline definition surface.
+- `src/orpc/factory/*` is the always-on internal helper layer for abstract oRPC builders.
+- `src/orpc/package-boundary.ts` owns the package boundary wiring used by `src/client.ts`.
 - `src/orpc/middleware/*` is the always-on slot for kit-level middleware definitions.
 - `src/service/impl.ts` is the always-on oRPC composition surface (implement root contract + attach middleware).
 
