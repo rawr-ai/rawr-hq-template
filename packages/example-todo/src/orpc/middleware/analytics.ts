@@ -1,20 +1,19 @@
 /**
- * @fileoverview Analytics middleware (proto SDK layer).
+ * @fileoverview Baseline analytics middleware.
  *
  * @remarks
- * Emits one analytics event per procedure execution. This is baseline-only:
- * it must not affect procedure behavior or remap errors.
+ * Observer middleware: it emits one analytics event per procedure execution and
+ * must not affect procedure behavior.
  */
 import type { AnalyticsClient } from "../base";
 import { createBaseMiddleware } from "../factory";
 
 /**
- * Create baseline analytics middleware.
+ * Construct analytics middleware.
  *
  * @remarks
  * This is configurable middleware, so it exports a constructor rather than a
- * ready-to-use value. Required runtime dependencies still mirror the context
- * shape directly under `deps`.
+ * ready-to-use value.
  */
 export function createAnalyticsMiddleware(options: { app: string }) {
   return createBaseMiddleware<{

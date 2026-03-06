@@ -2,9 +2,9 @@
  * @fileoverview Local proto-SDK oRPC factories for this repo.
  *
  * @remarks
- * This directory is intentionally service-agnostic so it can later be extracted
- * into a shared SDK package. Concrete service values (deps shape, metadata
- * defaults, service-wide middleware) belong in `../service/*`.
+ * Keep this file service-agnostic. It exists to prove the reusable SDK shape:
+ * low-level builders, baseline middleware helpers, and the higher-level
+ * `defineService(...)` binding used by concrete services.
  */
 import { oc } from "@orpc/contract";
 import { isContractProcedure } from "@orpc/contract";
@@ -47,15 +47,8 @@ type CreateMiddlewareBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> =
 };
 
 /**
- * Create an oRPC server builder for authoring middleware.
- *
- * @remarks
- * This helper standardizes middleware authoring around the runtime shape we
- * want to preserve:
- * - required dependencies stay explicitly nested under a top-level `deps` bag
- * - any additional request/execution input stays as explicit top-level keys
- * - metadata typing is carried by the builder so middleware can read
- *   `procedure["~orpc"].meta` without redefining metadata locally
+ * Create an oRPC builder for authoring middleware against the mirrored runtime
+ * shape: a top-level `deps` bag plus any extra top-level input.
  */
 export function createMiddlewareBuilder<
   TRequiredContext extends { deps: object } = { deps: {} },
@@ -66,62 +59,6 @@ export function createMiddlewareBuilder<
   return os
     .$context<TRequiredContext>()
     .$meta<TMeta>(options.baseMetadata as TMeta);
-}
-
-type DefineServiceOptions<TMeta extends BaseMetadata> = {
-  metadata: TMeta;
-  implementer: CreateImplementerOptions;
-};
-
-/**
- * Bind service metadata to the authoring surfaces that need it.
- *
- * @remarks
- * This helper is intentionally small. It owns only:
- * - contract authoring
- * - service-local middleware authoring
- * - service-local implementer creation
- *
- * Concrete service types (`ServiceDeps`, `ServiceMetadata`, `ServiceContext`)
- * stay explicit in `src/service/base.ts`.
- */
-export function defineService<
-  TMeta extends BaseMetadata,
-  TContext extends BaseContext<BaseDeps>,
->(
-  options: DefineServiceOptions<TMeta>,
-) {
-  function createServiceImplementer<const TContract extends AnyContractProcedure>(
-    contract: TContract,
-  ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
-  function createServiceImplementer<const TContract extends AnyContractRouterObject>(
-    contract: TContract,
-  ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
-  function createServiceImplementer(contract: AnyContractRouter) {
-    if (isContractProcedure(contract)) {
-      return createProcedureImplementer<AnyContractProcedure, TContext>(
-        contract,
-        options.implementer,
-      );
-    }
-
-    return createRouterImplementer<AnyContractRouterObject, TContext>(
-      contract as AnyContractRouterObject,
-      options.implementer,
-    );
-  }
-
-  return {
-    oc: createContractBuilder<TMeta>({ baseMetadata: options.metadata }),
-    createMiddleware<
-      TRequiredContext extends { deps: object } = { deps: {} },
-    >() {
-      return createMiddlewareBuilder<TRequiredContext, TMeta>({
-        baseMetadata: options.metadata,
-      });
-    },
-    createImplementer: createServiceImplementer,
-  };
 }
 
 const baseMiddlewareMetadata: BaseMetadata = {
@@ -210,4 +147,60 @@ export function createImplementer(
   // runtime narrowing, TS cannot prove the remaining branch is a router-object,
   // so we assert it once here (instead of `as any`-casting the `.use(...)` chain).
   return createRouterImplementer(contract as AnyContractRouterObject, options);
+}
+
+type DefineServiceOptions<TMeta extends BaseMetadata> = {
+  metadata: TMeta;
+  implementer: CreateImplementerOptions;
+};
+
+/**
+ * Bind the service-local authoring surfaces once.
+ *
+ * @remarks
+ * `defineService(...)` is the high-level seam consumed by `src/service/base.ts`.
+ * It binds:
+ * - metadata-aware contract authoring
+ * - metadata-aware service middleware authoring
+ * - context-typed implementer creation
+ *
+ * Concrete service types stay explicit in `src/service/base.ts`.
+ */
+export function defineService<
+  TMeta extends BaseMetadata,
+  TContext extends BaseContext<BaseDeps>,
+>(
+  options: DefineServiceOptions<TMeta>,
+) {
+  function createServiceImplementer<const TContract extends AnyContractProcedure>(
+    contract: TContract,
+  ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
+  function createServiceImplementer<const TContract extends AnyContractRouterObject>(
+    contract: TContract,
+  ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
+  function createServiceImplementer(contract: AnyContractRouter) {
+    if (isContractProcedure(contract)) {
+      return createProcedureImplementer<AnyContractProcedure, TContext>(
+        contract,
+        options.implementer,
+      );
+    }
+
+    return createRouterImplementer<AnyContractRouterObject, TContext>(
+      contract as AnyContractRouterObject,
+      options.implementer,
+    );
+  }
+
+  return {
+    oc: createContractBuilder<TMeta>({ baseMetadata: options.metadata }),
+    createMiddleware<
+      TRequiredContext extends { deps: object } = { deps: {} },
+    >() {
+      return createMiddlewareBuilder<TRequiredContext, TMeta>({
+        baseMetadata: options.metadata,
+      });
+    },
+    createImplementer: createServiceImplementer,
+  };
 }

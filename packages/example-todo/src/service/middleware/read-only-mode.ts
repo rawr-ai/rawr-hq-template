@@ -2,9 +2,9 @@
  * @fileoverview Read-only mode guard.
  *
  * @remarks
- * This is a zero-config, service-local guard. It blocks mutating procedures when
- * `context.deps.runtime.readOnly`
- * is enabled. Mutability is derived from procedure metadata (`idempotent: false`).
+ * Zero-config service guard. It blocks mutating procedures when
+ * `context.deps.runtime.readOnly` is enabled. Mutability is derived from
+ * procedure metadata (`idempotent: false`).
  *
  * @agents
  * Keep read-only policy logic here. Do not duplicate write-block checks in module

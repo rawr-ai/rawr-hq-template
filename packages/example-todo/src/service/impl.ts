@@ -2,14 +2,9 @@
  * @fileoverview Central oRPC implementer for the todo domain package.
  *
  * @remarks
- * This file is the single service middleware composition point:
- * - import the root contract (contract bubble-up),
- * - derive the central implementer once,
- * - attach package-wide middleware here (providers, guards),
- * - export the implementer tree for modules to derive from (`impl.<module>`).
- *
- * The service router (`service/router.ts`) should only compose module routers and
- * call `.router(...)` once (no `.use(...)` there).
+ * This is the single package-wide middleware composition point.
+ * Import the root contract here, derive the central implementer once, and let
+ * modules consume `impl.<module>` subtrees from there.
  */
 import { contract } from "./contract";
 import { createServiceImplementer } from "./base";

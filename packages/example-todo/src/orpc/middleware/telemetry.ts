@@ -1,9 +1,9 @@
 /**
- * @fileoverview Telemetry middleware (proto SDK layer).
+ * @fileoverview Baseline telemetry middleware.
  *
  * @remarks
- * Logs one event per procedure execution (success or failure). This middleware
- * is observability-only and must not alter procedure behavior or remap errors.
+ * Observer middleware: it records one log event per procedure execution and
+ * must not change control flow or remap errors.
  *
  * @agents
  * Keep log payload keys stable (`path`, `durationMs`, `code`, `status`) so test
@@ -41,12 +41,11 @@ function getProcedureDomain(procedure: unknown) {
 }
 
 /**
- * Create baseline telemetry middleware.
+ * Construct telemetry middleware.
  *
  * @remarks
  * This is configurable middleware, so it exports a constructor rather than a
- * ready-to-use value. Required runtime dependencies still mirror the context
- * shape directly under `deps`.
+ * ready-to-use value.
  */
 export function createTelemetryMiddleware(options: { defaultDomain: string }) {
   return createBaseMiddleware<{

@@ -2,13 +2,13 @@
  * @fileoverview SQL provider.
  *
  * @remarks
- * This is a zero-config, input-requiring provider:
- * - the host must provide `deps.dbPool`,
- * - middleware derives a top-level `sql` execution capability,
- * - handlers and module setup consume `context.sql`, not `context.deps.dbPool`.
+ * Input-requiring provider:
+ * - the host provides `deps.dbPool`
+ * - middleware derives a top-level `sql` execution capability
+ * - handlers and module setup consume `context.sql`, not `context.deps.dbPool`
  */
 
-import type { DbPool, Sql } from "../adapters/sql";
+import type { DbPool } from "../adapters/sql";
 import { createBaseMiddleware } from "../factory";
 
 /**
@@ -28,8 +28,6 @@ export const sqlProvider = createBaseMiddleware<{
   return next({
     context: {
       sql,
-    } satisfies {
-      sql: Sql;
     },
   });
 });
