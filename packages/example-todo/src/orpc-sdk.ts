@@ -18,7 +18,7 @@ export type { DbPool, Sql } from "./orpc/adapters/sql";
 export type { FeedbackClient } from "./orpc/adapters/feedback";
 export {
   defineService,
-} from "./orpc/factory";
+} from "./orpc/factory/service";
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
 export {
   createTelemetryMiddleware,

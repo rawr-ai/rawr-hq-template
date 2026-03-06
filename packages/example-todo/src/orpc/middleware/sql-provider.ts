@@ -9,7 +9,7 @@
  */
 
 import type { DbPool } from "../adapters/sql";
-import { createBaseMiddleware } from "../factory";
+import { createBaseMiddleware } from "../base";
 
 /**
  * Zero-config SQL provider.
