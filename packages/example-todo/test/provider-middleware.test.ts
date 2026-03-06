@@ -52,10 +52,30 @@ describe("provider middleware", () => {
   });
 
   it("defineService binds metadata into contract and middleware authoring", async () => {
-    const service = defineService<BaseMetadata & { audit?: "basic" | "full" }>({
+    type TestMetadata = BaseMetadata & { audit?: "basic" | "full" };
+    type TestContext = {
+      deps: {
+        logger: {
+          info(message: string, meta?: Record<string, unknown>): void;
+          error(message: string, meta?: Record<string, unknown>): void;
+        };
+        analytics: {
+          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        };
+        runtime: {
+          readOnly: boolean;
+        };
+      };
+    };
+
+    const service = defineService<TestMetadata, TestContext>({
       metadata: {
         idempotent: true,
         audit: "basic",
+      },
+      implementer: {
+        telemetry: { defaultDomain: "test" },
+        analytics: { app: "test" },
       },
     });
 
@@ -82,5 +102,67 @@ describe("provider middleware", () => {
     const client = createRouterClient(router, { context: { deps: {} } });
 
     await expect(client.ping({})).resolves.toEqual({ ok: true });
+  });
+
+  it("defineService binds service context into implementer creation", async () => {
+    type TestMetadata = BaseMetadata;
+    type TestContext = {
+      deps: {
+        logger: {
+          info(message: string, meta?: Record<string, unknown>): void;
+          error(message: string, meta?: Record<string, unknown>): void;
+        };
+        analytics: {
+          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        };
+        runtime: {
+          readOnly: boolean;
+        };
+      };
+    };
+
+    const service = defineService<TestMetadata, TestContext>({
+      metadata: {
+        idempotent: true,
+      },
+      implementer: {
+        telemetry: { defaultDomain: "test" },
+        analytics: { app: "test" },
+      },
+    });
+
+    const contract = {
+      ping: service.oc
+        .input(schema(Type.Object({}, { additionalProperties: false })))
+        .output(schema(Type.Object({
+          readOnly: Type.Boolean(),
+        }, { additionalProperties: false }))),
+    };
+
+    const os = service.createImplementer(contract);
+
+    const ping = os.ping.handler(async ({ context }) => {
+      return { readOnly: context.deps.runtime.readOnly };
+    });
+
+    const router = os.router({ ping });
+    const client = createRouterClient(router, {
+      context: {
+        deps: {
+          logger: {
+            info() {},
+            error() {},
+          },
+          analytics: {
+            track() {},
+          },
+          runtime: {
+            readOnly: true,
+          },
+        },
+      },
+    });
+
+    await expect(client.ping({})).resolves.toEqual({ readOnly: true });
   });
 });

@@ -33,6 +33,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
 - `context.deps` remains the single host-provided dependency bag; middleware/module setup may add top-level execution keys, but we do not split runtime dependencies into multiple bags.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
+- `src/service/base.ts` binds the service-local authoring surfaces once (`ocBase`, `createServiceMiddleware`, `createServiceImplementer`).
 
 ## Real axes that should change
 

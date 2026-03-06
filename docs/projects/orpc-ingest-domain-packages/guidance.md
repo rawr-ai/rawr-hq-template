@@ -14,7 +14,7 @@ If you are an agent arriving to implement business logic fast:
 - **Start at oRPC composition**: `src/service/impl.ts` (root contract implementer + package-wide middleware order)
 - **Then open the service router**: `src/service/router.ts` (module router composition + single final attach)
 - **Then live in a module**: `src/service/modules/<name>/{contract,setup,router}.ts`
-- **When you need “the one import for contract authoring / middleware authoring”**: `src/service/base.ts` (`ocBase` + `createServiceMiddleware`)
+- **When you need “the one import for service authoring”**: `src/service/base.ts` (`ocBase` + `createServiceMiddleware` + `createServiceImplementer`)
 - **When you need “the one import for handler implementers”**: `src/service/impl.ts` (`impl.<module>` subtrees)
 - **When you need kit-level middleware** (telemetry, generic wrappers): `src/orpc/middleware/*`
 
@@ -34,7 +34,7 @@ Use one stable top-level structure across package sizes:
 Always-on slots:
 
 - `src/service/router.ts` is the always-on service router composition choke point (single final attach).
-- `src/service/base.ts` is the always-on service-definition surface (host deps, initial context, metadata defaults, `defineService` binding).
+- `src/service/base.ts` is the always-on service-definition surface (host deps, initial context, metadata defaults, and the bound service authoring surfaces from `defineService`).
 - `src/orpc/middleware/*` is the always-on slot for kit-level middleware definitions.
 - `src/service/impl.ts` is the always-on oRPC composition surface (implement root contract + attach middleware).
 
@@ -130,7 +130,7 @@ Current required baseline:
 Recommended pattern:
 
 - define base metadata defaults once in `src/service/base.ts`,
-- bind service-local contract/middleware authoring once in `src/service/base.ts` via `defineService(...)`,
+- bind service-local contract/middleware/implementer authoring once in `src/service/base.ts` via `defineService(...)`,
 - keep module contracts explicit by setting `idempotent` on every procedure,
 - read metadata in middleware via `procedure["~orpc"].meta` (oRPC runtime metadata surface).
 
@@ -193,6 +193,7 @@ The semantic line is simple:
 Author middleware against the mirrored required-context shape directly:
 
 - bind service-local authoring surfaces once in `src/service/base.ts` via `defineService(...)`
+- use `createServiceImplementer(contract)` in `src/service/impl.ts` so service context and baseline implementer options stay bound in one place
 - framework middleware via `createBaseMiddleware<{ deps: { ... } }>()`
 - service middleware via `createServiceMiddleware<{ deps: { ... } }>()`
 - if a middleware has no required context, call the helper with no type argument
