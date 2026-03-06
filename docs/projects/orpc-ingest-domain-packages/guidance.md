@@ -153,19 +153,8 @@ Use context/middleware at the level where each concern actually belongs:
 - Kit-level middleware should be used for cross-cutting concerns that should be reusable across domain packages (telemetry/tracing, import-fault classification, request scoping).
 - Domain-wide middleware should be used for domain guards/semantics (read-only mode, authz policy, tenancy invariants) that need procedure metadata awareness.
 - Apply middleware at most once per concern: attach package-wide middleware in `src/service/impl.ts`, then attach module routers once in `src/service/router.ts`.
-- Author middleware against the mirrored required-context shape directly:
-  - framework middleware via `createBaseMiddleware<{ deps: { ... } }>()`
-  - service middleware via `createServiceMiddleware<{ deps: { ... } }>()`
-  - if a middleware has no required context, call the helper with no type argument
-- Name middleware by what it is:
-  - zero-config middleware exports a ready-to-use value (`sqlProvider`, `feedbackProvider`, `readOnlyMode`)
-  - configurable middleware exports an explicit constructor (`createTelemetryMiddleware`, `createAnalyticsMiddleware`)
-- Keep middleware filenames short and semantic:
-  - plain concern names for configurable middleware (`telemetry.ts`, `analytics.ts`)
-  - provider/guard names where the role matters (`sql-provider.ts`, `feedback-provider.ts`, `read-only-mode.ts`)
-- Keep providers flat in `src/orpc/middleware/` unless the provider set becomes large enough to justify a second routing layer.
 
-### Context Taxonomy
+### Runtime Context Model
 
 Use these runtime context categories consistently:
 
@@ -181,6 +170,42 @@ Practical defaults:
 - Access logger/clock as `context.deps.logger` / `context.deps.clock`.
 - Avoid alias-only middleware like `deps.logger -> logger` unless there is a concrete runtime reason.
 - Keep baseline deps and service deps as a type-authoring distinction (`BaseDeps` extended by service deps), not as separate runtime keys.
+
+### Middleware Categories
+
+Treat middleware categories as behavioral roles, not just naming conventions:
+
+- **Provider middleware** adds downstream execution context with `next({ context: ... })`.
+  - Examples: `sqlProvider`, `feedbackProvider`
+- **Guard/policy middleware** consumes context and metadata to allow/block/shape execution, but does not add execution context.
+  - Example: `readOnlyMode`
+- **Observer/instrumentation middleware** consumes context and metadata to emit side effects, but does not add execution context.
+  - Examples: `createTelemetryMiddleware`, `createAnalyticsMiddleware`
+
+The semantic line is simple:
+
+- if middleware creates new downstream context, it is a provider
+- if it only observes, guards, or records, it is not a provider
+
+### Middleware Authoring Pattern
+
+Author middleware against the mirrored required-context shape directly:
+
+- framework middleware via `createBaseMiddleware<{ deps: { ... } }>()`
+- service middleware via `createServiceMiddleware<{ deps: { ... } }>()`
+- if a middleware has no required context, call the helper with no type argument
+
+Name middleware by what it is:
+
+- zero-config middleware exports a ready-to-use value (`sqlProvider`, `feedbackProvider`, `readOnlyMode`)
+- configurable middleware exports an explicit constructor (`createTelemetryMiddleware`, `createAnalyticsMiddleware`)
+
+Keep middleware filenames short and semantic:
+
+- plain concern names for configurable middleware (`telemetry.ts`, `analytics.ts`)
+- provider/guard names where the role matters (`sql-provider.ts`, `feedback-provider.ts`, `read-only-mode.ts`)
+
+Keep providers flat in `src/orpc/middleware/` unless the provider set becomes large enough to justify a second routing layer.
 
 ### Provider Middleware Rule
 
@@ -238,6 +263,20 @@ implement(contract).$context<{ dbPool: DBPool }>().use(withDb) // works
 - **Receives**: required `dbPool`
 - **Creates**: downstream `db`
 - **Why the first case fails**: the provider cannot satisfy its own prerequisite; `dbPool` must already be part of initial context
+
+### Execution Context Output Rule
+
+Provider middleware should return only the new execution keys it introduces.
+
+- Do **not** spread the existing `context` back into `next({ context })`.
+- Rely on oRPC’s merge behavior instead: the additional `context` you pass to `next` is merged with the existing context.
+- If a provider returns a key that already exists, it overrides that key; it does not replace the entire context object.
+
+For typing the provided execution context:
+
+- keep it lightweight for simple outputs (`{ sql }`)
+- use an explicit shape check only when the output is non-trivial or easy to drift
+- `satisfies` is acceptable as a local guardrail, but it is not mandatory for every provider
 
 ### What This Enables
 
