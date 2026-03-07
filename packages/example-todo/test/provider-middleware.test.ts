@@ -9,7 +9,7 @@ import { feedbackProvider } from "../src/orpc/middleware/feedback-provider";
 
 describe("provider middleware", () => {
   it("adds feedback execution context only when attached", async () => {
-    const calls: Array<{ path: string; requestId?: string }> = [];
+    const calls: Array<{ path: string; traceId?: string }> = [];
 
     const feedbackClient: FeedbackClient = {
       async createSession(input) {
@@ -31,7 +31,12 @@ describe("provider middleware", () => {
     };
 
     const os = implement(feedbackContract)
-      .$context<{ deps: { feedback: FeedbackClient }; requestId?: string }>()
+      .$context<{
+        deps: { feedback: FeedbackClient };
+        scope: {};
+        config: {};
+        invocation: { traceId: string };
+      }>()
       .use(feedbackProvider);
 
     const ping = os.ping.handler(async ({ context }) => {
@@ -41,14 +46,22 @@ describe("provider middleware", () => {
     const router = os.router({ ping });
 
     const client = createRouterClient(router, {
-      context: {
+      context: (clientContext: { invocation: { traceId: string } }) => ({
         deps: { feedback: feedbackClient },
-        requestId: "req-42",
-      },
+        scope: {},
+        config: {},
+        invocation: clientContext.invocation,
+      }),
     });
 
-    await expect(client.ping({})).resolves.toEqual({ sessionId: "session-123" });
-    expect(calls).toEqual([{ path: "ping", requestId: "req-42" }]);
+    await expect(client.ping({}, {
+      context: {
+        invocation: {
+          traceId: "trace-42",
+        },
+      },
+    })).resolves.toEqual({ sessionId: "session-123" });
+    expect(calls).toEqual([{ path: "ping", traceId: "trace-42" }]);
   });
 
   it("defineService binds metadata into contract and middleware authoring", async () => {
@@ -62,9 +75,13 @@ describe("provider middleware", () => {
         analytics: {
           track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
         };
-        runtime: {
-          readOnly: boolean;
-        };
+      };
+      scope: {};
+      config: {
+        readOnly: boolean;
+      };
+      invocation: {
+        traceId: string;
       };
     };
 
@@ -94,12 +111,32 @@ describe("provider middleware", () => {
     });
 
     const os = implement(contract)
-      .$context<{ deps: {} }>()
+      .$context<{
+        deps: {};
+        scope: {};
+        config: {
+          readOnly: boolean;
+        };
+        invocation: {
+          traceId: string;
+        };
+      }>()
       .use(metadataAwareMiddleware);
 
     const ping = os.ping.handler(async () => ({ ok: true }));
     const router = os.router({ ping });
-    const client = createRouterClient(router, { context: { deps: {} } });
+    const client = createRouterClient(router, {
+      context: {
+        deps: {},
+        scope: {},
+        config: {
+          readOnly: false,
+        },
+        invocation: {
+          traceId: "trace-metadata",
+        },
+      },
+    });
 
     await expect(client.ping({})).resolves.toEqual({ ok: true });
   });
@@ -115,9 +152,13 @@ describe("provider middleware", () => {
         analytics: {
           track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
         };
-        runtime: {
-          readOnly: boolean;
-        };
+      };
+      scope: {};
+      config: {
+        readOnly: boolean;
+      };
+      invocation: {
+        traceId: string;
       };
     };
 
@@ -142,7 +183,7 @@ describe("provider middleware", () => {
     const os = service.createImplementer(contract);
 
     const ping = os.ping.handler(async ({ context }) => {
-      return { readOnly: context.deps.runtime.readOnly };
+      return { readOnly: context.config.readOnly };
     });
 
     const router = os.router({ ping });
@@ -156,9 +197,13 @@ describe("provider middleware", () => {
           analytics: {
             track() {},
           },
-          runtime: {
-            readOnly: true,
-          },
+        },
+        scope: {},
+        config: {
+          readOnly: true,
+        },
+        invocation: {
+          traceId: "trace-read-only",
         },
       },
     });

@@ -4,12 +4,12 @@
  * @remarks
  * Input-requiring provider:
  * - the host provides `deps.dbPool`
- * - middleware derives a top-level `sql` execution capability
+ * - middleware derives a downstream `sql` execution capability
  * - handlers and module setup consume `context.sql`, not `context.deps.dbPool`
  */
 
 import type { DbPool } from "../adapters/sql";
-import { createBaseMiddleware } from "../base";
+import { createBaseMiddleware } from "../base-foundation";
 
 /**
  * Zero-config SQL provider.

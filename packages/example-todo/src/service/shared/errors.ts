@@ -49,6 +49,29 @@ const ReadOnlyModeData = schema(
   ),
 );
 
+const AssignmentLimitReachedData = schema(
+  Type.Object(
+    {
+      taskId: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Task id that hit the configured assignment limit.",
+        }),
+      ),
+      maxAssignmentsPerTask: Type.Optional(
+        Type.Number({
+          minimum: 1,
+          description: "Configured per-task assignment ceiling.",
+        }),
+      ),
+    },
+    {
+      additionalProperties: false,
+      description: "Context payload for ASSIGNMENT_LIMIT_REACHED boundary errors.",
+    },
+  ),
+);
+
 export const RESOURCE_NOT_FOUND: ErrorMapItem<typeof ResourceNotFoundData> = {
   status: 404,
   message: "Resource not found",
@@ -59,4 +82,10 @@ export const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
   status: 409,
   message: "Write operations are blocked while read-only mode is enabled",
   data: ReadOnlyModeData,
+} as const;
+
+export const ASSIGNMENT_LIMIT_REACHED: ErrorMapItem<typeof AssignmentLimitReachedData> = {
+  status: 409,
+  message: "Task reached the configured assignment limit",
+  data: AssignmentLimitReachedData,
 } as const;

@@ -21,9 +21,9 @@ export const os = impl.assignments
   .use(({ context, next }) =>
     next({
       context: {
-        repo: createAssignmentRepository(context.sql),
-        tasks: createTaskRepository(context.sql),
-        tags: createTagRepository(context.sql),
+        repo: createAssignmentRepository(context.sql, context.scope.workspaceId),
+        tasks: createTaskRepository(context.sql, context.scope.workspaceId),
+        tags: createTagRepository(context.sql, context.scope.workspaceId),
       },
     }),
   );

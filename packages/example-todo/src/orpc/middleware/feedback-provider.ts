@@ -7,7 +7,7 @@
  */
 
 import type { FeedbackClient } from "../adapters/feedback";
-import { createBaseMiddleware } from "../base";
+import { createBaseMiddleware } from "../base-foundation";
 
 /**
  * Optional feedback provider.
@@ -23,11 +23,13 @@ export const feedbackProvider = createBaseMiddleware<{
   deps: {
     feedback: FeedbackClient;
   };
-  requestId?: string;
+  invocation: {
+    traceId: string;
+  };
 }>().middleware(async ({ context, path, next }) => {
   const session = await context.deps.feedback.createSession({
     path: path.join("."),
-    requestId: context.requestId,
+    traceId: context.invocation.traceId,
   });
 
   return next({

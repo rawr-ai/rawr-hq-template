@@ -1,4 +1,5 @@
 import type { DbPool } from "../src/orpc/adapters/sql";
+import type { CreateClientOptions } from "../src/client";
 import type { ServiceDeps } from "../src/service/base";
 import type { Assignment } from "../src/service/modules/assignments/schemas";
 import type { Tag } from "../src/service/modules/tags/schemas";
@@ -20,9 +21,15 @@ export type AnalyticsEntry = {
 };
 
 type DepsOptions = InMemorySqlOptions & {
-  readOnly?: boolean;
   logs?: LogEntry[];
   analytics?: AnalyticsEntry[];
+};
+
+type ClientOptions = DepsOptions & {
+  deps?: ServiceDeps;
+  readOnly?: boolean;
+  maxAssignmentsPerTask?: number;
+  workspaceId?: string;
 };
 
 export type OrpcErrorShape = {
@@ -46,46 +53,57 @@ export function createInMemorySql(options: InMemorySqlOptions = {}) {
       throw new Error(`forced failure for queryOne: ${text}`);
     }
 
-    if (text.includes("SELECT * FROM tasks WHERE id = $1")) {
-      return (tasks.get(String(params[0])) ?? null) as T | null;
+    if (text.includes("SELECT * FROM tasks WHERE id = $1 AND workspace_id = $2")) {
+      const task = tasks.get(String(params[0])) ?? null;
+      const workspaceId = String(params[1]);
+      return (task && task.workspaceId === workspaceId ? task : null) as T | null;
     }
 
     if (text.includes("INSERT INTO tasks")) {
       const task: Task = {
         id: String(params[0]),
-        title: String(params[1]),
-        description: (params[2] as string | null) ?? null,
-        completed: Boolean(params[3]),
-        createdAt: String(params[4]),
-        updatedAt: String(params[5]),
+        workspaceId: String(params[1]),
+        title: String(params[2]),
+        description: (params[3] as string | null) ?? null,
+        completed: Boolean(params[4]),
+        createdAt: String(params[5]),
+        updatedAt: String(params[6]),
       };
       tasks.set(task.id, task);
       return task as T;
     }
 
-    if (text.includes("SELECT id FROM tags WHERE name = $1")) {
-      const existing = [...tags.values()].find((tag) => tag.name === String(params[0]));
+    if (text.includes("SELECT id FROM tags WHERE name = $1 AND workspace_id = $2")) {
+      const existing = [...tags.values()].find(
+        (tag) => tag.name === String(params[0]) && tag.workspaceId === String(params[1]),
+      );
       return (existing ? { id: existing.id } : null) as T | null;
     }
 
-    if (text.includes("SELECT * FROM tags WHERE id = $1")) {
-      return (tags.get(String(params[0])) ?? null) as T | null;
+    if (text.includes("SELECT * FROM tags WHERE id = $1 AND workspace_id = $2")) {
+      const tag = tags.get(String(params[0])) ?? null;
+      const workspaceId = String(params[1]);
+      return (tag && tag.workspaceId === workspaceId ? tag : null) as T | null;
     }
 
     if (text.includes("INSERT INTO tags")) {
       const tag: Tag = {
         id: String(params[0]),
-        name: String(params[1]),
-        color: String(params[2]),
-        createdAt: String(params[3]),
+        workspaceId: String(params[1]),
+        name: String(params[2]),
+        color: String(params[3]),
+        createdAt: String(params[4]),
       };
       tags.set(tag.id, tag);
       return tag as T;
     }
 
-    if (text.includes("SELECT id FROM task_tags WHERE task_id = $1 AND tag_id = $2")) {
+    if (text.includes("SELECT id FROM task_tags WHERE task_id = $1 AND tag_id = $2 AND workspace_id = $3")) {
       const existing = [...assignments.values()].find(
-        (assignment) => assignment.taskId === String(params[0]) && assignment.tagId === String(params[1]),
+        (assignment) =>
+          assignment.taskId === String(params[0])
+          && assignment.tagId === String(params[1])
+          && assignment.workspaceId === String(params[2]),
       );
       return (existing ? { id: existing.id } : null) as T | null;
     }
@@ -93,9 +111,10 @@ export function createInMemorySql(options: InMemorySqlOptions = {}) {
     if (text.includes("INSERT INTO task_tags")) {
       const assignment: Assignment = {
         id: String(params[0]),
-        taskId: String(params[1]),
-        tagId: String(params[2]),
-        createdAt: String(params[3]),
+        workspaceId: String(params[1]),
+        taskId: String(params[2]),
+        tagId: String(params[3]),
+        createdAt: String(params[4]),
       };
       assignments.set(assignment.id, assignment);
       return assignment as T;
@@ -109,28 +128,34 @@ export function createInMemorySql(options: InMemorySqlOptions = {}) {
       throw new Error(`forced failure for query: ${text}`);
     }
 
-    if (text.includes("SELECT * FROM tags ORDER BY name ASC")) {
-      return [...tags.values()].sort((a, b) => a.name.localeCompare(b.name)) as T[];
-    }
-
-    if (text.includes("SELECT * FROM tags WHERE id = ANY($1) ORDER BY name ASC")) {
-      const ids = new Set((params[0] as string[]) ?? []);
+    if (text.includes("SELECT * FROM tags WHERE workspace_id = $1 ORDER BY name ASC")) {
+      const workspaceId = String(params[0]);
       return [...tags.values()]
-        .filter((tag) => ids.has(tag.id))
+        .filter((tag) => tag.workspaceId === workspaceId)
         .sort((a, b) => a.name.localeCompare(b.name)) as T[];
     }
 
-    if (text.includes("SELECT * FROM tasks WHERE id = ANY($1) ORDER BY created_at DESC")) {
+    if (text.includes("SELECT * FROM tags WHERE id = ANY($1) AND workspace_id = $2 ORDER BY name ASC")) {
       const ids = new Set((params[0] as string[]) ?? []);
+      const workspaceId = String(params[1]);
+      return [...tags.values()]
+        .filter((tag) => ids.has(tag.id) && tag.workspaceId === workspaceId)
+        .sort((a, b) => a.name.localeCompare(b.name)) as T[];
+    }
+
+    if (text.includes("SELECT * FROM tasks WHERE id = ANY($1) AND workspace_id = $2 ORDER BY created_at DESC")) {
+      const ids = new Set((params[0] as string[]) ?? []);
+      const workspaceId = String(params[1]);
       return [...tasks.values()]
-        .filter((task) => ids.has(task.id))
+        .filter((task) => ids.has(task.id) && task.workspaceId === workspaceId)
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)) as T[];
     }
 
-    if (text.includes("SELECT * FROM task_tags WHERE task_id = $1 ORDER BY created_at DESC")) {
+    if (text.includes("SELECT * FROM task_tags WHERE task_id = $1 AND workspace_id = $2 ORDER BY created_at DESC")) {
       const taskId = String(params[0]);
+      const workspaceId = String(params[1]);
       return [...assignments.values()]
-        .filter((assignment) => assignment.taskId === taskId)
+        .filter((assignment) => assignment.taskId === taskId && assignment.workspaceId === workspaceId)
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)) as T[];
     }
 
@@ -179,8 +204,32 @@ export function createDeps(options: DepsOptions = {}): ServiceDeps {
         });
       },
     },
-    runtime: {
+  };
+}
+
+export function createClientOptions(options: ClientOptions = {}): CreateClientOptions {
+  return {
+    deps: options.deps ?? createDeps(options),
+    scope: {
+      workspaceId: options.workspaceId ?? "workspace-default",
+    },
+    config: {
       readOnly: options.readOnly ?? false,
+      limits: {
+        maxAssignmentsPerTask: options.maxAssignmentsPerTask ?? 2,
+      },
     },
   };
 }
+
+export function createInvocation(traceId = "trace-default") {
+  return {
+    context: {
+      invocation: {
+        traceId,
+      },
+    },
+  } as const;
+}
+
+export const invocation = createInvocation;

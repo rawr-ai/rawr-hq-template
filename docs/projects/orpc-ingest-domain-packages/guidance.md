@@ -151,8 +151,11 @@ Not required in this phase:
 
 Use context/middleware at the level where each concern actually belongs:
 
-- Initial context carries `deps` at the kit boundary (the `InitialContext` type in `src/orpc/*`).
+- Initial context carries explicit semantic lanes at the kit boundary.
 - `deps` should extend the kit baseline `BaseDeps` (mandatory `logger`), exported via the kit seam (`src/orpc-sdk.ts`).
+- `scope` should hold stable business/client-instance scope bound at `createClient(...)` time.
+- `config` should hold stable package behavior/configuration bound at `createClient(...)` time.
+- `invocation` should hold required per-call input passed through native oRPC client context.
 - Module setup injects module-local repos/services into execution context (`src/service/modules/<name>/setup.ts`).
 - Kit-level middleware should be used for cross-cutting concerns that should be reusable across domain packages (telemetry/tracing, import-fault classification, request scoping).
 - Domain-wide middleware should be used for domain guards/semantics (read-only mode, authz policy, tenancy invariants) that need procedure metadata awareness.
@@ -163,15 +166,22 @@ Use context/middleware at the level where each concern actually belongs:
 Use these runtime context categories consistently:
 
 - **`context.deps`**: host-provided, stable dependencies. This is the explicit dependency bag for injected services/capabilities the host owns.
-- **Top-level request input**: request-scoped values provided up front that are not dependencies (for example `requestId`, `workspaceId`, or a narrowly-scoped `request` object).
+- **`context.scope`**: stable business/client-instance scope bound when the client is created.
+- **`context.config`**: stable package behavior/configuration bound when the client is created.
+- **`context.invocation`**: per-call invocation input supplied through native oRPC client context.
 - **Top-level execution context**: values added/derived by middleware during execution (for example `sql`, `user`, `feedbackSession`, `repo`).
 
 Do **not** create a second runtime dependency bag such as `context.base`.
 Do **not** use a generic runtime `metadata` bag by default. oRPC procedure metadata (`.meta(...)`) is separate from runtime context; if runtime grouping is needed later, use a specific name like `request`, not a generic `metadata` bucket.
+Do **not** use ad hoc top-level request input as the normal package-boundary pattern.
+Do **not** use middleware-context as the repo-default way to satisfy required invocation input. oRPC supports it, but this repo does not currently have a legitimate use case for it, so treat it as strongly discouraged unless the broader architecture changes.
 
 Practical defaults:
 
 - Access logger/clock as `context.deps.logger` / `context.deps.clock`.
+- Access stable scope as `context.scope.*`.
+- Access stable behavior config as `context.config.*`.
+- Access required invocation input as `context.invocation.*`.
 - Avoid alias-only middleware like `deps.logger -> logger` unless there is a concrete runtime reason.
 - Keep baseline deps and service deps as a type-authoring distinction (`BaseDeps` extended by service deps), not as separate runtime keys.
 
@@ -197,9 +207,18 @@ Author middleware against the mirrored required-context shape directly:
 
 - bind service-local authoring surfaces once in `src/service/base.ts` via `defineService(...)`
 - use `createServiceImplementer(contract)` in `src/service/impl.ts` so service context and baseline implementer options stay bound in one place
-- framework middleware via `createBaseMiddleware<{ deps: { ... } }>()`
-- service middleware via `createServiceMiddleware<{ deps: { ... } }>()`
+- framework middleware via `createBaseMiddleware<{ ...lane fragments... }>()`
+- service middleware via `createServiceMiddleware<{ ...lane fragments... }>()`
 - if a middleware has no required context, call the helper with no type argument
+
+Declare only the minimal lane fragments a middleware needs. Examples:
+
+- `deps` fragment when middleware depends on host capabilities
+- `config` fragment when middleware enforces stable package behavior
+- `invocation` fragment when middleware consumes required per-call input
+- combinations when a middleware legitimately spans multiple lanes
+
+Do **not** create one helper per lane (`createScopeMiddleware`, `createConfigMiddleware`, etc.). The lane model is for clarity and typing, not for multiplying authoring APIs.
 
 Name middleware by what it is:
 
@@ -293,9 +312,9 @@ For typing the provided execution context:
 ### Choosing Between The Two
 
 - Choose **self-provisioning** for local/test/dev conveniences or defaultable capabilities.
-  - Example: fake/in-memory DB, synthetic request-scoped tracer, fallback feedback session.
+  - Example: fake/in-memory DB, fallback feedback session.
 - Choose **input-requiring** when the capability depends on a real host-owned prerequisite.
-  - Example: `dbPool -> db`, `authClient -> user`, `feedbackClient + requestId -> feedbackSession`.
+  - Example: `dbPool -> db`, `authClient -> user`, `feedbackClient + invocation.traceId -> feedbackSession`.
 
 Down the road, this gives us a stable rule for SDK authoring:
 
@@ -307,12 +326,18 @@ Down the road, this gives us a stable rule for SDK authoring:
 When deciding where something belongs:
 
 - Put it in **`deps`** when the host/environment must provide it directly and stably.
+- Put it in **`scope`** when it describes what a client instance is stably scoped to.
+- Put it in **`config`** when it is stable package behavior/configuration for that client instance.
+- Put it in **`invocation`** when it must be provided per call and enforced by the package boundary.
 - Make it **provider middleware** when middleware derives or attaches a new execution capability for downstream use.
 - Keep simple dependency-consuming middleware reading from `context.deps.*`; do not wrap a dependency in provider middleware unless the middleware actually creates or normalizes something new.
 
 Examples:
 
-- `deps.logger`, `deps.analytics`, `deps.runtime`, `deps.dbPool` are host-owned dependencies.
+- `deps.logger`, `deps.analytics`, `deps.dbPool` are host-owned dependencies.
+- `scope.workspaceId` is stable business scope.
+- `config.readOnly` and `config.limits.maxAssignmentsPerTask` are stable package behavior config.
+- `invocation.traceId` is required per-call input.
 - `sql`, `user`, `feedbackSession`, `repo` are execution keys created/attached by middleware or module setup.
 
 ### Kit-Level Middleware Pattern
@@ -336,7 +361,8 @@ Use module-local middleware only when it is truly local to one module (or sub-tr
 
 - Keep it next to the module in `src/service/modules/<name>/setup.ts` (or an optional `src/service/modules/<name>/middleware/*`).
 - Promote to `src/service/middleware/*` only when two+ modules genuinely share it.
-- Read-only policy should use procedure metadata (`idempotent`) plus runtime config (`deps.runtime.readOnly`) to block mutations.
+- Read-only policy should use procedure metadata (`idempotent`) plus stable package config (`config.readOnly`) to block mutations.
+- Invocation-trace middleware should consume `context.invocation.traceId` through native client context, not through middleware-context attachment.
 - Telemetry middleware should log and rethrow; it must not remap boundary errors.
 
 ## Boundary Error Standard

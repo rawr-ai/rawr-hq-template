@@ -44,8 +44,20 @@ const assign = os.assign.handler(async ({ context, input, errors }) => {
     });
   }
 
+  const existingAssignments = await context.repo.countByTask(input.taskId);
+  if (existingAssignments >= context.config.limits.maxAssignmentsPerTask) {
+    throw errors.ASSIGNMENT_LIMIT_REACHED({
+      message: `Task '${input.taskId}' already has the maximum number of tag assignments`,
+      data: {
+        taskId: input.taskId,
+        maxAssignmentsPerTask: context.config.limits.maxAssignmentsPerTask,
+      },
+    });
+  }
+
   const assignment: Assignment = {
     id: randomUUID(),
+    workspaceId: context.scope.workspaceId,
     taskId: input.taskId,
     tagId: input.tagId,
     createdAt: context.deps.clock.now(),

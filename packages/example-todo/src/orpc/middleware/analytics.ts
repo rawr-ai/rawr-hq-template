@@ -6,7 +6,7 @@
  * must not affect procedure behavior.
  */
 import type { AnalyticsClient } from "../base";
-import { createBaseMiddleware } from "../base";
+import { createBaseMiddleware } from "../base-foundation";
 
 /**
  * Construct analytics middleware.

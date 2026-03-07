@@ -8,5 +8,5 @@
  */
 
 export interface FeedbackClient {
-  createSession(input: { path: string; requestId?: string }): Promise<{ sessionId: string }>;
+  createSession(input: { path: string; traceId: string }): Promise<{ sessionId: string }>;
 }

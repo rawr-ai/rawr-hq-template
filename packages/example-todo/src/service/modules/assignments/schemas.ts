@@ -18,6 +18,10 @@ export const AssignmentSchema = Type.Object(
       format: "uuid",
       description: "Stable unique identifier for the assignment row.",
     }),
+    workspaceId: Type.String({
+      minLength: 1,
+      description: "Workspace scope that owns this assignment row.",
+    }),
     taskId: Type.String({
       format: "uuid",
       description: "Identifier of the task being tagged.",

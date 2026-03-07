@@ -26,7 +26,7 @@ type DefineServiceOptions<TMeta extends BaseMetadata> = {
  */
 export function defineService<
   TMeta extends BaseMetadata,
-  TContext extends BaseContext<BaseDeps>,
+  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
 >(
   options: DefineServiceOptions<TMeta>,
 ) {
@@ -53,7 +53,7 @@ export function defineService<
   return {
     oc: createContractBuilder<TMeta>({ baseMetadata: options.metadata }),
     createMiddleware<
-      TRequiredContext extends { deps: object } = { deps: {} },
+      TRequiredContext extends object = {},
     >() {
       return createMiddlewareBuilder<TRequiredContext, TMeta>({
         baseMetadata: options.metadata,
