@@ -137,6 +137,24 @@ That gives us a clean native split:
 - require `invocation` input per procedure call
 - build the actual procedure initial context from both
 
+## Locked posture
+
+The currently locked posture for this SDK is:
+
+- use **native oRPC client context** as the default mechanism for required invocation-scoped input
+- use **middleware-context attachment** only as a secondary, host-owned integration pattern
+- do **not** standardize middleware-context as the default reusable domain-package scaffold
+
+The key reason is not where tracing or invocation data originates. The host can
+source that data either way. The real distinction is **where the requirement is
+expressed and enforced**:
+
+- **native client context**: the package boundary owns the invocation contract
+- **middleware-context attachment**: the host/runtime integration owns the invocation contract
+
+For reusable domain-package scaffolding, the package-owned contract is the
+stronger and more portable default.
+
 ## Why the `invocation` bag is useful
 
 A dedicated `invocation` bag keeps per-call input explicit and stable instead of letting ad hoc top-level one-offs accumulate.
@@ -231,6 +249,78 @@ That advice lines up with the model above:
 - `deps` and `scope` are construction-time inputs
 - `invocation` is per-call input
 
+## Comparative ORPC posture
+
+Within oRPC, there are several coherent ways to shape context and calling
+surfaces. This SDK is intentionally narrowing that space.
+
+### Approaches we are not using as the default
+
+#### 1. Full raw initial-context package boundary
+
+Example direction:
+
+```ts
+createClient({
+  deps,
+  requestId,
+  workspaceId,
+  headers,
+})
+```
+
+Why not:
+
+- it broadens the package boundary into a generic invocation surface
+- it weakens scaffold consistency
+- it makes it easier for request/runtime concerns to leak into long-lived client construction
+
+#### 2. Arbitrary top-level spread
+
+Example direction:
+
+```ts
+createClient({
+  deps,
+  workspaceId,
+  tenantId,
+  traceId,
+  anythingElse,
+})
+```
+
+Why not:
+
+- semantics are weak
+- lane ownership becomes unclear
+- it invites drift and makes later scaffolding harder to reason about
+
+#### 3. Generic `metadata` or `options/config` bag as the default
+
+Why not:
+
+- those bags become junk drawers quickly
+- they blur scope vs dependency vs invocation concerns
+- we do not yet have enough stable cross-package evidence to justify them
+
+#### 4. Middleware-context as the default package contract
+
+Why not:
+
+- it hides invocation requirements from direct package callers
+- it shifts the invariant into host conventions
+- it is only compelling when the host has a real invocation boundary or ambient execution context
+
+### Approach we are using as the default
+
+For reusable domain-package scaffolding:
+
+- `createClient({ deps, scope })` for stable construction-time input
+- native oRPC client context for required per-call `invocation` input
+
+This keeps the package boundary explicit, portable, and type-enforced while
+still allowing the host to source invocation data however it wants.
+
 ## Two ways to handle invocation-scoped input
 
 ### A. Middleware-context approach
@@ -281,6 +371,18 @@ In that model, something outside the domain package would ensure that `invocatio
 - when the invocation environment already has a strong middleware pipeline
 - when the domain package should stay agnostic of the caller’s invocation mechanics
 - when the host/runtime is the natural owner of invocation-local state
+- when the host creates one invocation-scoped client per request/job/action, or uses ambient execution context
+
+#### Important limit
+
+If this pattern degenerates into “one wrapper per procedure call,” it is usually
+not buying much. In that form, it is mostly weaker than native client context.
+
+The middleware-context approach only really earns its keep when there is a real
+invocation boundary above the package:
+
+- one invocation-scoped client per request/job/action, or
+- ambient context from something like `AsyncLocalStorage` / OpenTelemetry runtime state
 
 ### B. Function-as-initial-context / native client-context approach
 
@@ -339,10 +441,12 @@ context.invocation.traceId
 - when invocation-scoped input is a first-class part of the package contract
 - when you want compile-time enforcement at the callsite
 - when the same package may be used across multiple hosts and you do not want each host inventing its own attachment convention
+- when the package boundary should own the “depth” of the invocation requirement instead of hiding it in host wiring
 
 ## Comparison and current recommendation
 
-Both approaches are valid.
+Both approaches are valid inside oRPC. They are **not** co-equal defaults for
+this SDK.
 
 ### Middleware-context approach
 
@@ -362,7 +466,7 @@ Best when:
 
 ### Current recommendation
 
-For this SDK, the cleaner general-purpose model is:
+For this SDK, the locked default model is:
 
 - `deps` for stable host capabilities
 - `scope` for stable business/client scope
@@ -370,7 +474,87 @@ For this SDK, the cleaner general-purpose model is:
 
 That keeps the lifetime split explicit and gives us a scalable package shape.
 
-If a value is required for **every procedure invocation** but should not be frozen into client construction, the native oRPC client-context path is the better fit.
+If a value is required for **every procedure invocation** but should not be
+frozen into client construction, the native oRPC client-context path is the
+better fit.
+
+Middleware-context remains documented because it is a legitimate secondary
+pattern in host-controlled systems. It is not the default scaffold posture.
+
+## Middleware categorization for later builders
+
+This section is intentionally descriptive, not a full middleware-system design.
+
+### 1. Construction-time / deps-contributing middleware or composition
+
+Purpose:
+
+- contributes to the stable `deps` lane
+- prepares values that belong in `context.deps`
+- feeds long-lived or invocation-scoped client construction, not per-call user input
+
+Examples:
+
+- logger
+- analytics client
+- db pool / adapter handles
+- clock
+- stable host/runtime policy objects
+
+Characteristics:
+
+- stable for the intended client lifetime
+- owned by host composition
+- should not be modeled as per-call invocation state
+
+Practical note:
+
+- in many cases this is not package middleware at all; it is host-side
+  composition that assembles the `deps` bag before `createClient(...)`
+
+### 2. Invocation-contributing middleware or context attachment
+
+Purpose:
+
+- contributes to the per-call `invocation` lane
+- feeds values that vary per request/job/action/call
+- ultimately becomes execution-time initial context for procedures
+
+Examples:
+
+- `traceId`
+- correlation IDs
+- invocation-local annotations
+- request-local execution hints
+
+Characteristics:
+
+- not stable across the client lifetime
+- should not be frozen into long-lived client construction
+- should be treated as call-scoped input
+
+Default posture:
+
+- if the package boundary should own the invariant, prefer **native client context**
+- if the host/runtime should own the invariant, middleware-context attachment is acceptable as a secondary integration pattern
+
+### 3. Execution-derived middleware outputs
+
+Purpose:
+
+- derive additional execution context during procedure execution
+- do not redefine the package-construction contract
+
+Examples in current code shape:
+
+- provider-style middleware that turns stable input into downstream execution values
+- middleware that derives session or feedback context from already-supplied input
+
+Why this category matters:
+
+- it prevents future agents from confusing “middleware that builds deps,”
+  “middleware that attaches invocation input,” and “middleware that derives
+  downstream execution context”
 
 ## Why this is useful for scaffolding
 
@@ -430,4 +614,5 @@ The current working conclusion is:
 - add/support a per-call `invocation` bag
 - do not treat request/request-id style context as part of client construction
 - use native oRPC client context for required invocation-scoped values when the package boundary should enforce them
+- treat middleware-context attachment as a legitimate but secondary host-owned integration pattern, not the default scaffold posture
 - avoid arbitrary top-level spread and avoid a generic `metadata` junk drawer
