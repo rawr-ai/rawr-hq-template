@@ -108,18 +108,23 @@ Package root (`src/index.ts`) is boundary-only by default.
 Each module should split boundary definition from behavior:
 
 - `contract.ts`: procedure names, input/output schemas, `.errors(...)` declarations.
-- `setup.ts`: module runtime injection only (middleware extending execution context; repos/services).
+- `setup.ts`: module runtime composition only; this is the scaffolding entry point that prepares the module-local implementer/exported `os`.
+- `middleware.ts` (optional): standalone module-local middleware/provider definitions when they are worth naming separately.
 - `router.ts`: handler implementation only; exports the contract-enforced module router.
 
 Rules:
 
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
-- Start each module setup from the central implementer subtree in `src/service/impl.ts` (`impl.<module>`), then inject repos/services.
+- Start each module setup from the central implementer subtree in `src/service/impl.ts` (`impl.<module>`), then attach any standalone module middleware and/or inline middleware there.
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
 - Prefer TypeBox `description` metadata on schema objects/properties for semantic documentation; avoid extra schema-only JSDoc noise.
+- `setup.ts` should make it obvious that both patterns are valid:
+  - attach standalone module middleware from `middleware.ts`
+  - author inline middleware directly in `setup.ts`
+- Do not treat the presence of `middleware.ts` as meaning inline middleware is forbidden.
 
 ## Procedure Metadata Standard
 
@@ -169,8 +174,7 @@ Use these runtime context categories consistently:
 - **`context.scope`**: stable business/client-instance scope bound when the client is created.
 - **`context.config`**: stable package behavior/configuration bound when the client is created.
 - **`context.invocation`**: per-call invocation input supplied through native oRPC client context.
-- **`context.provided`**: shared/framework provider output bucket (for example `provided.sql`, `provided.feedbackSession`).
-- **Top-level execution context**: service-local values added/derived during execution (for example `repo`, `tasks`, `tags`, `user`).
+- **`context.provided`**: execution-time provider output bag for any downstream values attached/derived by middleware or setup (for example `provided.sql`, `provided.feedbackSession`, `provided.repo`, `provided.tasks`, `provided.tags`).
 
 Do **not** create a second runtime dependency bag such as `context.base`.
 Do **not** use a generic runtime `metadata` bag by default. oRPC procedure metadata (`.meta(...)`) is separate from runtime context; if runtime grouping is needed later, use a specific name like `request`, not a generic `metadata` bucket.
@@ -184,7 +188,8 @@ Practical defaults:
 - Access stable scope as `context.scope.*`.
 - Access stable behavior config as `context.config.*`.
 - Access required invocation input as `context.invocation.*`.
-- Access shared/framework provider output as `context.provided.*`.
+- Access provider-derived execution context as `context.provided.*`.
+- Treat `context.provided` keys as append-only. Providers must not overwrite an existing provided key.
 - Avoid alias-only middleware like `deps.logger -> logger` unless there is a concrete runtime reason.
 - Keep baseline deps and service deps as a type-authoring distinction (`BaseDeps` extended by service deps), not as separate runtime keys.
 
@@ -193,8 +198,7 @@ Practical defaults:
 Treat middleware categories as behavioral roles, not just naming conventions:
 
 - **Provider middleware** is the only middleware category allowed to add downstream execution context.
-  - Shared/framework providers write only under `context.provided.*`
-  - Service-local providers may add top-level execution keys
+  - Providers write under `context.provided.*`
   - Examples: `sqlProvider`, `feedbackProvider`, module-local `repo` setup
 - **Guard/policy middleware** consumes context and metadata to allow/block/shape execution, but does not add execution context.
   - Example: `readOnlyMode`
@@ -205,6 +209,7 @@ The semantic line is simple:
 
 - if middleware creates new downstream context, it is a provider
 - if it only observes, guards, or records, it is not a provider
+- raw inline oRPC middleware remains an escape hatch; prefer the provider/non-provider builders unless you intentionally need to step outside the enforced model
 
 ### Middleware Authoring Pattern
 
@@ -239,6 +244,41 @@ Keep middleware filenames short and semantic:
 - provider/guard names where the role matters (`sql-provider.ts`, `feedback-provider.ts`, `read-only-mode.ts`)
 
 Keep providers flat in `src/orpc/middleware/` unless the provider set becomes large enough to justify a second routing layer.
+
+### Attach-Time Mental Model
+
+Context requirements are checked at the point where middleware is attached.
+
+That means a provider's required context fragment does **not** automatically
+become a new public entry requirement for the package.
+
+What matters is whether the required context already exists in the current
+context at the attachment site.
+
+Concrete example:
+
+- `sqlProvider` is attached earlier in `src/service/impl.ts`
+- it creates `context.provided.sql`
+- later, a module-local service provider in `setup.ts` may require
+  `provided.sql` plus `scope.workspaceId`
+- that works because both are already present by the time the module provider is
+  attached
+
+The key consequence:
+
+- if a required context fragment is already satisfied upstream, attaching a
+  downstream provider does **not** expand the package's public initial context
+- if the fragment is **not** already satisfied, the type system surfaces that at
+  the attachment site and the missing context would need to come from earlier in
+  the pipeline
+
+This is the intended oRPC usage model:
+
+- middleware declares dependent context
+- `.use(...)` checks that dependency against the current context where the
+  middleware is attached
+- our provider-builder typing reinforces that model; it does not bypass or
+  replace it
 
 ### Provider Middleware Rule
 
@@ -303,14 +343,13 @@ Provider middleware should return only the new execution keys it introduces.
 
 - Do **not** spread the existing `context` back into `next({ context })`.
 - Rely on oRPC’s merge behavior instead: the additional `context` you pass to `next` is merged with the existing context.
-- If a service-local provider returns a top-level key that already exists, it overrides that key; it does not replace the entire context object.
-- Shared/framework providers should not add arbitrary top-level keys. They write under `context.provided.*`.
-- Service-local providers may add top-level execution keys, but those keys must not overlap `deps`, `scope`, `config`, `invocation`, or `provided`.
+- Providers write into `context.provided.*`; they do not write arbitrary top-level execution keys.
+- The provider helpers in this repo accept only the new fragment and merge it into the existing `provided` bag internally.
 - If you want ergonomic access, reshape locally in setup/handler code rather than creating global alias middleware for semantic lanes.
 
 For typing the provided execution context:
 
-- keep shared/framework outputs lightweight under `provided` (`{ sql }` -> `context.provided.sql`)
+- keep provider outputs lightweight under `provided` (`{ sql }` -> `context.provided.sql`)
 - use an explicit shape check only when the output is non-trivial or easy to drift
 - `satisfies` is acceptable as a local guardrail, but it is not mandatory for every provider
 
@@ -349,7 +388,7 @@ Examples:
 - `scope.workspaceId` is stable business scope.
 - `config.readOnly` and `config.limits.maxAssignmentsPerTask` are stable package behavior config.
 - `invocation.traceId` is required per-call input.
-- `provided.sql`, `provided.feedbackSession`, and `repo` are execution keys created/attached by middleware or module setup.
+- `provided.sql`, `provided.feedbackSession`, and `provided.repo` are execution keys created/attached by middleware or module setup.
 
 ### Kit-Level Middleware Pattern
 
@@ -370,7 +409,8 @@ Use domain-wide middleware for domain semantics that should apply uniformly acro
 
 Use module-local middleware only when it is truly local to one module (or sub-tree of a module).
 
-- Keep it next to the module in `src/service/modules/<name>/setup.ts` (or an optional `src/service/modules/<name>/middleware/*`).
+- Keep standalone module-local middleware next to the module in `src/service/modules/<name>/middleware.ts` when that middleware is worth naming separately.
+- Keep module-local composition/attachment in `src/service/modules/<name>/setup.ts`.
 - Promote to `src/service/middleware/*` only when two+ modules genuinely share it.
 - Read-only policy should use procedure metadata (`idempotent`) plus stable package config (`config.readOnly`) to block mutations.
 - Invocation-trace middleware should consume `context.invocation.traceId` through native client context, not through middleware-context attachment.

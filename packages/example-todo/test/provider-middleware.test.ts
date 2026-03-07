@@ -297,4 +297,106 @@ describe("provider middleware", () => {
 
     await expect(client.ping({})).resolves.toEqual({ repoId: "repo-123" });
   });
+
+  it("throws when providers try to overwrite an existing provided key", async () => {
+    type TestMetadata = BaseMetadata;
+    type TestContext = {
+      deps: {
+        logger: {
+          info(message: string, meta?: Record<string, unknown>): void;
+          error(message: string, meta?: Record<string, unknown>): void;
+        };
+        analytics: {
+          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        };
+      };
+      scope: {};
+      config: {
+        readOnly: boolean;
+      };
+      invocation: {
+        traceId: string;
+      };
+      provided: {};
+    };
+
+    const service = defineService<TestMetadata, TestContext>({
+      metadata: {
+        idempotent: true,
+      },
+      implementer: {
+        telemetry: { defaultDomain: "test" },
+        analytics: { app: "test" },
+      },
+    });
+
+    const contract = {
+      ping: service.oc
+        .input(schema(Type.Object({}, { additionalProperties: false })))
+        .output(schema(Type.Object({
+          repoId: Type.String(),
+        }, { additionalProperties: false }))),
+    };
+
+    const firstProvider = service.createProvider().middleware<{
+      repo: {
+        id: string;
+      };
+    }>(async ({ next }) => {
+      return next({
+        repo: {
+          id: "repo-1",
+        },
+      });
+    });
+
+    // Deliberately bypass the typed provider surface to prove the runtime guard
+    // still blocks duplicate `provided` keys on escape-hatch paths.
+    const collidingProvider = (service.createProvider as () => {
+      middleware<TAdded extends object>(
+        callback: (options: {
+          next(provided: TAdded): unknown;
+        }) => unknown,
+      ): unknown;
+    })().middleware<{ repo: { id: string } }>(({ next }) => {
+      return next({
+        repo: {
+          id: "repo-overwrite",
+        },
+      });
+    });
+
+    const os = service.createImplementer(contract)
+      .use(firstProvider)
+      .use(collidingProvider as never);
+
+    const ping = os.ping.handler(async ({ context }) => {
+      return { repoId: context.provided.repo.id };
+    });
+
+    const router = os.router({ ping });
+    const client = createRouterClient(router, {
+      context: {
+        deps: {
+          logger: {
+            info() {},
+            error() {},
+          },
+          analytics: {
+            track() {},
+          },
+        },
+        scope: {},
+        config: {
+          readOnly: false,
+        },
+        invocation: {
+          traceId: "trace-overwrite",
+        },
+        provided: {},
+      },
+    });
+
+    await expect(client.ping({})).rejects.toThrow(/overwrite existing provided keys: repo/);
+  });
 });
