@@ -115,7 +115,7 @@
   },
   "dependencies": {
     "@rawr/core": "workspace:*",
-    "@rawr/orpc-standards": "workspace:*",
+    "@rawr/hq-sdk": "workspace:*",
     "@rawr/support-example": "workspace:*"
   },
   "devDependencies": {

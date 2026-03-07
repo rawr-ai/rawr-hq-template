@@ -72,7 +72,7 @@ apps/server/src/
   rawr.ts
   workflows/
     context.ts
-packages/orpc-standards/src/
+packages/hq-sdk/src/
   typebox-standard-schema.ts
   index.ts
 packages/invoicing/src/
@@ -248,7 +248,7 @@ export const hydrateDepsMiddleware = base.middleware(async ({ context, next }) =
 // packages/invoicing/src/procedures/preflight-reconciliation.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/hq-sdk";
 import { ReconciliationScopeSchema } from "../domain/reconciliation";
 import type { InvoicingProcedureContext } from "../context";
 import { hydrateDepsMiddleware, requireFinanceWriteMiddleware } from "../middleware";
@@ -290,7 +290,7 @@ export const preflightReconciliationProcedure = base
 // packages/invoicing/src/procedures/get-reconciliation-status.ts
 import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
-import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { typeBoxStandardSchema as std } from "@rawr/hq-sdk";
 import { ReconciliationStatusSchema } from "../domain/reconciliation";
 import type { InvoicingProcedureContext } from "../context";
 import { hydrateDepsMiddleware, requireFinanceWriteMiddleware } from "../middleware";
@@ -323,7 +323,7 @@ export const getReconciliationStatusProcedure = base
 // packages/invoicing/src/procedures/mark-reconciliation-result.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/hq-sdk";
 import { ReconciliationStatusSchema } from "../domain/reconciliation";
 import type { InvoicingProcedureContext } from "../context";
 import { hydrateDepsMiddleware, requireFinanceWriteMiddleware } from "../middleware";
@@ -417,7 +417,7 @@ export type InvoicingApiContext = {
 // plugins/api/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/hq-sdk";
 import {
   ReconciliationScopeSchema,
   ReconciliationStatusSchema,
@@ -581,7 +581,7 @@ export type InvoicingWorkflowContext = {
 // plugins/workflows/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/hq-sdk";
 import {
   ReconciliationScopeSchema,
   ReconciliationStatusSchema,

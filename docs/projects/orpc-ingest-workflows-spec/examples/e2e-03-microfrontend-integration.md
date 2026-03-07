@@ -189,7 +189,7 @@ plugins/workflows/invoicing/src/
 ```ts
 // plugins/workflows/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
-import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { RunStatusSchema, RunTimelineSchema } from "@rawr/invoicing/domain/status";
 

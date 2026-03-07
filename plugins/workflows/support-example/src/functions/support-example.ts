@@ -1,5 +1,5 @@
 import type { Inngest } from "inngest";
-import type { SupportExampleClient } from "@rawr/support-example";
+import type { SupportExampleClient } from "../context";
 import {
   SUPPORT_EXAMPLE_EVENT_NAME,
   type SupportExampleRequestedEventData,

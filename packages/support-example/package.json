@@ -3,28 +3,16 @@
   "private": true,
   "type": "module",
   "packageManager": "bun@1.3.7",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./src/router.ts",
+  "types": "./src/router.ts",
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
-    },
-    "./domain": {
-      "types": "./src/domain/index.ts",
-      "default": "./src/domain/index.ts"
-    },
-    "./service": {
-      "types": "./src/service/index.ts",
-      "default": "./src/service/index.ts"
+    "./router": {
+      "types": "./src/router.ts",
+      "default": "./src/router.ts"
     },
     "./contract": {
-      "types": "./src/contract/index.ts",
-      "default": "./src/contract/index.ts"
-    },
-    "./client": {
-      "types": "./src/client/index.ts",
-      "default": "./src/client/index.ts"
+      "types": "./src/contract.ts",
+      "default": "./src/contract.ts"
     }
   },
   "scripts": {
@@ -33,8 +21,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@orpc/contract": "^1.13.5",
     "@orpc/server": "^1.13.5",
-    "@rawr/orpc-standards": "workspace:*",
+    "@rawr/hq-sdk": "workspace:*",
     "typebox": "^1.0.81"
   },
   "devDependencies": {
