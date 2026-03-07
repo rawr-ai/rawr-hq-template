@@ -31,7 +31,12 @@ describe("provider middleware", () => {
     };
 
     const os = implement(feedbackContract)
-      .$context<{ deps: { feedback: FeedbackClient }; invocation: { traceId: string } }>()
+      .$context<{
+        deps: { feedback: FeedbackClient };
+        scope: {};
+        config: {};
+        invocation: { traceId: string };
+      }>()
       .use(feedbackProvider);
 
     const ping = os.ping.handler(async ({ context }) => {
@@ -41,13 +46,21 @@ describe("provider middleware", () => {
     const router = os.router({ ping });
 
     const client = createRouterClient(router, {
-      context: {
+      context: (clientContext: { invocation: { traceId: string } }) => ({
         deps: { feedback: feedbackClient },
-        invocation: { traceId: "trace-42" },
-      },
+        scope: {},
+        config: {},
+        invocation: clientContext.invocation,
+      }),
     });
 
-    await expect(client.ping({})).resolves.toEqual({ sessionId: "session-123" });
+    await expect(client.ping({}, {
+      context: {
+        invocation: {
+          traceId: "trace-42",
+        },
+      },
+    })).resolves.toEqual({ sessionId: "session-123" });
     expect(calls).toEqual([{ path: "ping", traceId: "trace-42" }]);
   });
 
@@ -63,14 +76,9 @@ describe("provider middleware", () => {
           track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
         };
       };
-      scope: {
-        workspaceId: string;
-      };
+      scope: {};
       config: {
         readOnly: boolean;
-        limits: {
-          maxAssignmentsPerTask: number;
-        };
       };
       invocation: {
         traceId: string;
@@ -106,8 +114,12 @@ describe("provider middleware", () => {
       .$context<{
         deps: {};
         scope: {};
-        config: {};
-        invocation: {};
+        config: {
+          readOnly: boolean;
+        };
+        invocation: {
+          traceId: string;
+        };
       }>()
       .use(metadataAwareMiddleware);
 
@@ -117,8 +129,12 @@ describe("provider middleware", () => {
       context: {
         deps: {},
         scope: {},
-        config: {},
-        invocation: {},
+        config: {
+          readOnly: false,
+        },
+        invocation: {
+          traceId: "trace-metadata",
+        },
       },
     });
 
@@ -137,14 +153,9 @@ describe("provider middleware", () => {
           track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
         };
       };
-      scope: {
-        workspaceId: string;
-      };
+      scope: {};
       config: {
         readOnly: boolean;
-        limits: {
-          maxAssignmentsPerTask: number;
-        };
       };
       invocation: {
         traceId: string;
@@ -187,17 +198,12 @@ describe("provider middleware", () => {
             track() {},
           },
         },
-        scope: {
-          workspaceId: "workspace-test",
-        },
+        scope: {},
         config: {
           readOnly: true,
-          limits: {
-            maxAssignmentsPerTask: 3,
-          },
         },
         invocation: {
-          traceId: "trace-test",
+          traceId: "trace-read-only",
         },
       },
     });
