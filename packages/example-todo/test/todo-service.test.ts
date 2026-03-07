@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { safe } from "@orpc/server";
 import { createClient } from "../src";
 import {
+  type AnalyticsEntry,
   createClientOptions,
   createDeps,
   invocation,
@@ -136,16 +137,17 @@ describe("example-todo service", () => {
     }
   });
 
-  it("emits telemetry for success and failure paths", async () => {
+  it("keeps invocation logging and analytics observers working", async () => {
     const logs: LogEntry[] = [];
-    const client = createClient(createClientOptions({ logs, readOnly: true }));
+    const analytics: AnalyticsEntry[] = [];
+    const client = createClient(createClientOptions({ logs, analytics, readOnly: true }));
 
     await safe(client.tasks.create({ title: "blocked write" }, invocation("trace-error")));
     await client.tags.list({}, invocation("trace-success"));
 
-    expect(logs.some((entry) => entry.event === "todo.procedure.error" && entry.level === "error")).toBe(true);
-    expect(logs.some((entry) => entry.event === "todo.procedure.success" && entry.level === "info")).toBe(true);
+    expect(logs.some((entry) => entry.event === "todo.invocation.trace" && entry.level === "info")).toBe(true);
     expect(logs.some((entry) => entry.payload.traceId === "trace-error")).toBe(true);
     expect(logs.some((entry) => entry.payload.traceId === "trace-success")).toBe(true);
+    expect(analytics.some((entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list")).toBe(true);
   });
 });

@@ -92,7 +92,6 @@ describe("provider middleware", () => {
         audit: "basic",
       },
       implementer: {
-        telemetry: { defaultDomain: "test" },
         analytics: { app: "test" },
       },
     });
@@ -169,7 +168,6 @@ describe("provider middleware", () => {
         idempotent: true,
       },
       implementer: {
-        telemetry: { defaultDomain: "test" },
         analytics: { app: "test" },
       },
     });
@@ -241,7 +239,6 @@ describe("provider middleware", () => {
         idempotent: true,
       },
       implementer: {
-        telemetry: { defaultDomain: "test" },
         analytics: { app: "test" },
       },
     });
@@ -325,7 +322,6 @@ describe("provider middleware", () => {
         idempotent: true,
       },
       implementer: {
-        telemetry: { defaultDomain: "test" },
         analytics: { app: "test" },
       },
     });

@@ -21,7 +21,6 @@ export {
 } from "./orpc/factory/service";
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
 export {
-  createTelemetryMiddleware,
   createAnalyticsMiddleware,
   sqlProvider,
   feedbackProvider,

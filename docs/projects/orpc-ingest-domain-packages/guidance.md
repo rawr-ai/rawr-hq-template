@@ -16,7 +16,7 @@ If you are an agent arriving to implement business logic fast:
 - **Then live in a module**: `src/service/modules/<name>/{contract,setup,router}.ts`
 - **When you need “the one import for service authoring”**: `src/service/base.ts` (`ocBase` + `createServiceMiddleware` + `createServiceImplementer`)
 - **When you need “the one import for handler implementers”**: `src/service/impl.ts` (`impl.<module>` subtrees)
-- **When you need kit-level middleware** (telemetry, generic wrappers): `src/orpc/middleware/*`
+- **When you need kit-level middleware** (analytics, providers, generic wrappers): `src/orpc/middleware/*`
 
 If you are wiring exports/packaging: `src/index.ts`, `src/client.ts`, and `src/router.ts` (public alias).
 
@@ -162,7 +162,7 @@ Use context/middleware at the level where each concern actually belongs:
 - `config` should hold stable package behavior/configuration bound at `createClient(...)` time.
 - `invocation` should hold required per-call input passed through native oRPC client context.
 - Module setup injects module-local repos/services into execution context (`src/service/modules/<name>/setup.ts`).
-- Kit-level middleware should be used for cross-cutting concerns that should be reusable across domain packages (telemetry/tracing, import-fault classification, request scoping).
+- Kit-level middleware should be used for cross-cutting concerns that should be reusable across domain packages (analytics, import-fault classification, request scoping).
 - Domain-wide middleware should be used for domain guards/semantics (read-only mode, authz policy, tenancy invariants) that need procedure metadata awareness.
 - Apply middleware at most once per concern: attach package-wide middleware in `src/service/impl.ts`, then attach module routers once in `src/service/router.ts`.
 
@@ -203,7 +203,7 @@ Treat middleware categories as behavioral roles, not just naming conventions:
 - **Guard/policy middleware** consumes context and metadata to allow/block/shape execution, but does not add execution context.
   - Example: `readOnlyMode`
 - **Observer/instrumentation middleware** consumes context and metadata to emit side effects, but does not add execution context.
-  - Examples: `createTelemetryMiddleware`, `createAnalyticsMiddleware`
+  - Examples: `createAnalyticsMiddleware`, `invocationTrace`
 
 The semantic line is simple:
 
@@ -236,11 +236,11 @@ Do **not** use non-provider builders to add context; they intentionally expose o
 Name middleware by what it is:
 
 - zero-config middleware exports a ready-to-use value (`sqlProvider`, `feedbackProvider`, `readOnlyMode`)
-- configurable middleware exports an explicit constructor (`createTelemetryMiddleware`, `createAnalyticsMiddleware`)
+- configurable middleware exports an explicit constructor (`createAnalyticsMiddleware`)
 
 Keep middleware filenames short and semantic:
 
-- plain concern names for configurable middleware (`telemetry.ts`, `analytics.ts`)
+- plain concern names for configurable middleware (`analytics.ts`)
 - provider/guard names where the role matters (`sql-provider.ts`, `feedback-provider.ts`, `read-only-mode.ts`)
 
 Keep providers flat in `src/orpc/middleware/` unless the provider set becomes large enough to justify a second routing layer.
@@ -394,9 +394,22 @@ Examples:
 
 Use kit-level middleware for cross-cutting behavior that should be reusable across domain packages.
 
-- Define one concern per file in `src/orpc/middleware/` (for example `telemetry.ts`).
-- Wire truly “applies everywhere” middleware into `src/service/impl.ts` so it is consistent and obvious across packages.
+- Define one concern per file in `src/orpc/middleware/` when the concern is still package-local middleware (for example `analytics.ts`).
+- Wire truly “applies everywhere” package middleware into `src/service/impl.ts` so it is consistent and obvious across packages.
 - Keep service middleware authoring focused on domain semantics (read-only mode, authz/tenancy guards).
+
+### Telemetry Posture
+
+For this repo, baseline tracing should come from the host/runtime via the
+official oRPC OpenTelemetry integration, not from package-local middleware.
+
+- Treat package-local telemetry middleware as the wrong default for the golden
+  example.
+- Keep domain packages compatible with required per-call invocation input, but
+  do not make custom tracing middleware the source of truth for baseline
+  telemetry.
+- Use package/service middleware only for observability side effects or span
+  enrichment that sit on top of the baseline runtime instrumentation.
 
 ### Domain-Wide Middleware Pattern
 
@@ -414,7 +427,6 @@ Use module-local middleware only when it is truly local to one module (or sub-tr
 - Promote to `src/service/middleware/*` only when two+ modules genuinely share it.
 - Read-only policy should use procedure metadata (`idempotent`) plus stable package config (`config.readOnly`) to block mutations.
 - Invocation-trace middleware should consume `context.invocation.traceId` through native client context, not through middleware-context attachment.
-- Telemetry middleware should log and rethrow; it must not remap boundary errors.
 
 ## Boundary Error Standard
 

@@ -27,7 +27,7 @@ type DefineServiceOptions<TMeta extends BaseMetadata> = {
  */
 export function defineService<
   TMeta extends BaseMetadata,
-  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
+  TContext extends BaseContext<BaseDeps, object, object, object>,
 >(
   options: DefineServiceOptions<TMeta>,
 ) {

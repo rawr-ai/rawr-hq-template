@@ -28,7 +28,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Expected business states are modeled as values inside the boundary.
 - Procedures carry shared metadata (`domain`, `audience`) plus explicit per-procedure `idempotent`.
 - Shared oRPC scaffolding lives in `src/orpc/*` (and is intentionally domain-agnostic).
-- `src/orpc/middleware/` is always present for kit-level cross-cutting concerns (telemetry, generic wrappers).
+- `src/orpc/middleware/` is always present for kit-level cross-cutting concerns (analytics, providers, generic wrappers).
 - `src/service/middleware/` is available for domain-wide cross-cutting concerns; ordering is authored in `src/service/impl.ts`.
 - Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
 - `context.deps` remains the single host-provided dependency bag; middleware/module setup may add top-level execution keys, but we do not split runtime dependencies into multiple bags.
@@ -91,7 +91,7 @@ packages/example-minimal/src/
 │   │   ├── service.ts
 │   │   └── index.ts
 │   └── middleware/
-│       └── telemetry.ts
+│       └── analytics.ts
 └── service/
     ├── contract.ts
     ├── base.ts
@@ -137,7 +137,6 @@ packages/example-todo/src/
 │   │   ├── service.ts
 │   │   └── index.ts
 │   └── middleware/
-│       ├── telemetry.ts
 │       ├── analytics.ts
 │       ├── sql-provider.ts
 │       └── feedback-provider.ts
@@ -200,7 +199,6 @@ packages/example-golden/src/
 │   │   ├── service.ts
 │   │   └── index.ts
 │   └── middleware/
-│       ├── telemetry.ts
 │       ├── analytics.ts
 │       ├── sql-provider.ts
 │       └── feedback-provider.ts

@@ -98,7 +98,6 @@ const service = defineService<ServiceMetadata, ServiceContext>({
     entity: "service",
   },
   implementer: {
-    telemetry: { defaultDomain: "todo" },
     analytics: { app: "todo" },
   },
 });
