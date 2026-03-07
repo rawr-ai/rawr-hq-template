@@ -202,23 +202,20 @@ The better long-term model is semantic bags.
 ### Do not add right now
 
 - a generic `metadata` bag
-- a generic `options` / `config` bag
 
 ### Why not `metadata`
 
 A generic `metadata` bag is too vague and becomes a junk drawer.
 It also overlaps conceptually with oRPC procedure metadata even if it is technically different.
 
-### Why not `options/config`
+### About `options/config`
 
-`options/config` is plausible, but not the right default semantic lane.
-It risks becoming a dumping ground for values that are actually either:
+`options/config` is not locked here as a semantic lane.
 
-- stable dependencies,
-- stable scope, or
-- per-call invocation state.
-
-`deps`, `scope`, and `invocation` already give us clearer semantics.
+This document is intentionally not using it as part of the current context
+model because the locked posture is already expressed with `deps`, `scope`, and
+`invocation`. If we revisit `options/config`, that should be a separate
+decision, not something implied by this note.
 
 ## How to think about `readOnly`
 
@@ -251,14 +248,23 @@ That advice lines up with the model above:
 
 ## Comparative ORPC posture
 
-Within oRPC, there are several coherent ways to shape context and calling
-surfaces. This SDK is intentionally narrowing that space.
+oRPC supports broader context patterns than the one we are standardizing here.
+This section exists only to explain the locked choice, not to reopen those
+alternatives.
 
-### Approaches we are not using as the default
+### Locked default
 
-#### 1. Full raw initial-context package boundary
+For reusable domain-package scaffolding:
 
-Example direction:
+- `createClient({ deps, scope })` for stable construction-time input
+- native oRPC client context for required per-call `invocation` input
+
+This keeps the package boundary explicit, portable, and type-enforced while
+still allowing the host to source invocation data however it wants.
+
+### Why we are not using a broader package boundary
+
+oRPC can support package boundaries that look more like:
 
 ```ts
 createClient({
@@ -269,57 +275,25 @@ createClient({
 })
 ```
 
-Why not:
+or arbitrary top-level spread.
 
-- it broadens the package boundary into a generic invocation surface
-- it weakens scaffold consistency
-- it makes it easier for request/runtime concerns to leak into long-lived client construction
+We are not choosing that posture here because it:
 
-#### 2. Arbitrary top-level spread
+- broadens the package boundary into a generic invocation surface
+- weakens scaffold consistency
+- makes request/runtime concerns easier to leak into long-lived client construction
+- makes lane ownership less explicit than `deps` / `scope` / `invocation`
 
-Example direction:
+### Why middleware-context is documented but not chosen as the default
 
-```ts
-createClient({
-  deps,
-  workspaceId,
-  tenantId,
-  traceId,
-  anythingElse,
-})
-```
+oRPC and host runtimes can also satisfy invocation-scoped requirements through
+middleware-context attachment.
 
-Why not:
+We are not choosing that as the default scaffold posture because it:
 
-- semantics are weak
-- lane ownership becomes unclear
-- it invites drift and makes later scaffolding harder to reason about
-
-#### 3. Generic `metadata` or `options/config` bag as the default
-
-Why not:
-
-- those bags become junk drawers quickly
-- they blur scope vs dependency vs invocation concerns
-- we do not yet have enough stable cross-package evidence to justify them
-
-#### 4. Middleware-context as the default package contract
-
-Why not:
-
-- it hides invocation requirements from direct package callers
-- it shifts the invariant into host conventions
-- it is only compelling when the host has a real invocation boundary or ambient execution context
-
-### Approach we are using as the default
-
-For reusable domain-package scaffolding:
-
-- `createClient({ deps, scope })` for stable construction-time input
-- native oRPC client context for required per-call `invocation` input
-
-This keeps the package boundary explicit, portable, and type-enforced while
-still allowing the host to source invocation data however it wants.
+- hides invocation requirements from direct package callers
+- shifts the invariant into host conventions instead of the package contract
+- is strongest only when the host has a real invocation boundary or ambient execution context
 
 ## Two ways to handle invocation-scoped input
 
