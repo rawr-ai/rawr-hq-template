@@ -66,7 +66,7 @@ It is not a historical session recap. It is meant to answer: where are we now, w
   - package-level execution context is injected once by provider middleware
   - module-level repos/services are injected in `setup.ts`
 - The package-wide middleware story is explicit:
-  - baseline telemetry + analytics are attached by `createServiceImplementer(...)`
+  - baseline analytics are attached by `createServiceImplementer(...)`
   - `sqlProvider` is attached in `src/service/impl.ts`
   - `readOnlyMode` is attached in `src/service/impl.ts`
 - Metadata posture is explicit:

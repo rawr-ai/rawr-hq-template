@@ -1,8 +1,9 @@
 import { implement } from "@orpc/server";
 
 import { createClient } from "../src";
+import type { BaseMetadata } from "../src/orpc/base";
 import type { DbPool } from "../src/orpc/adapters/sql";
-import type { Sql } from "../src/orpc-sdk";
+import { defineService, type Sql } from "../src/orpc-sdk";
 import { createBaseProvider } from "../src/orpc/base-foundation";
 import type { CreateClientOptions } from "../src/client";
 import { sqlProvider } from "../src/orpc/middleware/sql-provider";
@@ -79,6 +80,22 @@ void invalidBoundary;
 
 const typedClient = createClient(validBoundary);
 void typedClient;
+
+const alternateInvocationService = defineService<BaseMetadata, {
+  deps: CreateClientOptions["deps"];
+  scope: { workspaceId: string };
+  config: CreateClientOptions["config"];
+  invocation: { requestId: string };
+  provided: {};
+}>({
+  metadata: {
+    idempotent: true,
+  },
+  implementer: {
+    analytics: { app: "alternate" },
+  },
+});
+void alternateInvocationService;
 
 const baseProvider = createBaseProvider().middleware<{
   sql: Sql;

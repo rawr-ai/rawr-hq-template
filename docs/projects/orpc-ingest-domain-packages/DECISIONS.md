@@ -36,7 +36,7 @@ In addition, each domain package has one oRPC-native composition file (central i
 Router responsibilities are fixed:
 
 - `src/service/contract.ts`: root contract composition (contracts bubble up here)
-- `src/service/impl.ts`: implement the root contract once and attach middleware (telemetry + domain guards)
+- `src/service/impl.ts`: implement the root contract once and attach middleware (baseline analytics/providers + domain guards)
 - `src/service/router.ts`: router composition only (mount module routers into one shape; single final attach)
 - `src/router.ts`: **stable public alias** for `@rawr/<pkg>/router` (re-export only)
 

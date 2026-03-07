@@ -14,7 +14,7 @@ type AnyContractRouterObject = {
  */
 export function createBareProcedureImplementer<
   const TContract extends AnyContractProcedure,
-  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
+  TContext extends BaseContext<BaseDeps, object, object, object>,
 >(contract: TContract) {
   return implement(contract).$context<TContext>();
 }
@@ -24,22 +24,22 @@ export function createBareProcedureImplementer<
  */
 export function createBareRouterImplementer<
   const TContract extends AnyContractRouterObject,
-  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
+  TContext extends BaseContext<BaseDeps, object, object, object>,
 >(contract: TContract) {
   return implement(contract).$context<TContext>();
 }
 
 export function createBareImplementer<
   const TContract extends AnyContractProcedure,
-  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
+  TContext extends BaseContext<BaseDeps, object, object, object>,
 >(contract: TContract): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBareImplementer<
   const TContract extends AnyContractRouterObject,
-  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
+  TContext extends BaseContext<BaseDeps, object, object, object>,
 >(contract: TContract): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBareImplementer<
   const TContract extends AnyContractProcedure | AnyContractRouterObject,
-  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
+  TContext extends BaseContext<BaseDeps, object, object, object>,
 >(contract: TContract) {
   if (isContractProcedure(contract)) {
     return createBareProcedureImplementer<

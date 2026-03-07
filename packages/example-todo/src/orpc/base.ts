@@ -11,7 +11,6 @@ import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
 import { createAnalyticsMiddleware } from "./middleware/analytics";
-import { createTelemetryMiddleware } from "./middleware/telemetry";
 import {
   createBareProcedureImplementer,
   createBareRouterImplementer,
@@ -77,7 +76,6 @@ export type {
 } from "./base-foundation";
 
 export type BaseImplementerOptions = {
-  telemetry: { defaultDomain: string };
   analytics: { app: string };
 };
 
@@ -91,13 +89,12 @@ type AnyContractRouterObject = {
  */
 export function createBaseProcedureImplementer<
   const TContract extends AnyContractProcedure,
-  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
+  TContext extends BaseContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
   options: BaseImplementerOptions,
 ) {
   return createBareProcedureImplementer<TContract, TContext>(contract)
-    .use(createTelemetryMiddleware(options.telemetry))
     .use(createAnalyticsMiddleware(options.analytics));
 }
 
@@ -107,26 +104,25 @@ export function createBaseProcedureImplementer<
  */
 export function createBaseRouterImplementer<
   const TContract extends AnyContractRouterObject,
-  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
+  TContext extends BaseContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
   options: BaseImplementerOptions,
 ) {
   return createBareRouterImplementer<TContract, TContext>(contract)
-    .use(createTelemetryMiddleware(options.telemetry))
     .use(createAnalyticsMiddleware(options.analytics));
 }
 
 export function createBaseImplementer<
   const TContract extends AnyContractProcedure,
-  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
+  TContext extends BaseContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
   options: BaseImplementerOptions,
 ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBaseImplementer<
   const TContract extends AnyContractRouterObject,
-  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
+  TContext extends BaseContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
   options: BaseImplementerOptions,
