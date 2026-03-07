@@ -21,11 +21,14 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
     "@orpc/contract": "^1.13.5",
     "@orpc/server": "^1.13.5",
     "typebox": "^1.0.81"
   },
   "devDependencies": {
+    "@opentelemetry/context-async-hooks": "^2.6.0",
+    "@opentelemetry/sdk-trace-base": "^2.6.0",
     "typescript": "^5.9.3"
   }
 }

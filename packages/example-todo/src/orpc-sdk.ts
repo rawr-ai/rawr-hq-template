@@ -22,6 +22,7 @@ export {
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
 export {
   createAnalyticsMiddleware,
+  createBaseObservabilityMiddleware,
   sqlProvider,
   feedbackProvider,
 } from "./orpc/middleware";

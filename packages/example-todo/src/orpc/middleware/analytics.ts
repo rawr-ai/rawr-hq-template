@@ -21,11 +21,22 @@ export function createAnalyticsMiddleware(options: { app: string }) {
       analytics: AnalyticsClient;
     };
   }>().middleware(async ({ context, path, next }) => {
-    const result = await next();
-    await context.deps.analytics.track("orpc.procedure", {
-      app: options.app,
-      path: path.join("."),
-    });
-    return result;
+    let outcome: "success" | "error" = "success";
+
+    try {
+      const result = await next();
+      return result;
+    }
+    catch (error) {
+      outcome = "error";
+      throw error;
+    }
+    finally {
+      await context.deps.analytics.track("orpc.procedure", {
+        app: options.app,
+        path: path.join("."),
+        outcome,
+      });
+    }
   });
 }

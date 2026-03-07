@@ -11,6 +11,7 @@ import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
 import { createAnalyticsMiddleware } from "./middleware/analytics";
+import { createBaseObservabilityMiddleware } from "./middleware/observability";
 import {
   createBareProcedureImplementer,
   createBareRouterImplementer,
@@ -95,6 +96,7 @@ export function createBaseProcedureImplementer<
   options: BaseImplementerOptions,
 ) {
   return createBareProcedureImplementer<TContract, TContext>(contract)
+    .use(createBaseObservabilityMiddleware())
     .use(createAnalyticsMiddleware(options.analytics));
 }
 
@@ -110,6 +112,7 @@ export function createBaseRouterImplementer<
   options: BaseImplementerOptions,
 ) {
   return createBareRouterImplementer<TContract, TContext>(contract)
+    .use(createBaseObservabilityMiddleware())
     .use(createAnalyticsMiddleware(options.analytics));
 }
 
