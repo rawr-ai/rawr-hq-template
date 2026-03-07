@@ -16,7 +16,11 @@ import {
   createBareProcedureImplementer,
   createBareRouterImplementer,
 } from "./factory/implementer";
-import { createMiddlewareBuilder } from "./factory/middleware";
+import type {
+  BaseContext,
+  InitialContext,
+  ServiceContextOf,
+} from "./base-foundation";
 
 /**
  * Canonical logger contract used by baseline middleware.
@@ -60,42 +64,16 @@ export type BaseMetadata = {
  */
 export type ServiceMetadataOf<T extends object = {}> = BaseMetadata & T;
 
-/**
- * Baseline initial-context shape.
- */
-export type BaseContext<TDeps> = {
-  deps: TDeps;
-};
-
-/**
- * Service-specific initial context.
- */
-export type InitialContext<TDeps, TExt extends object = {}> = BaseContext<TDeps> & TExt;
-
-/**
- * Service-local initial context extension helper.
- */
-export type ServiceContextOf<TDeps extends BaseDeps, TExtra extends object = {}> = InitialContext<TDeps, TExtra>;
+export type {
+  BaseContext,
+  InitialContext,
+  ServiceContextOf,
+} from "./base-foundation";
 
 export type BaseImplementerOptions = {
   telemetry: { defaultDomain: string };
   analytics: { app: string };
 };
-
-const baseMiddlewareMetadata: BaseMetadata = {
-  idempotent: true,
-};
-
-/**
- * Baseline middleware builder for reusable domain-package middleware.
- */
-export function createBaseMiddleware<
-  TRequiredContext extends { deps: object } = { deps: {} },
->() {
-  return createMiddlewareBuilder<TRequiredContext, BaseMetadata>({
-    baseMetadata: baseMiddlewareMetadata,
-  });
-}
 
 type AnyContractRouterObject = {
   [k: string]: AnyContractRouter;
@@ -107,7 +85,7 @@ type AnyContractRouterObject = {
  */
 export function createBaseProcedureImplementer<
   const TContract extends AnyContractProcedure,
-  TContext extends BaseContext<BaseDeps>,
+  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
 >(
   contract: TContract,
   options: BaseImplementerOptions,
@@ -123,7 +101,7 @@ export function createBaseProcedureImplementer<
  */
 export function createBaseRouterImplementer<
   const TContract extends AnyContractRouterObject,
-  TContext extends BaseContext<BaseDeps>,
+  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
 >(
   contract: TContract,
   options: BaseImplementerOptions,
@@ -135,14 +113,14 @@ export function createBaseRouterImplementer<
 
 export function createBaseImplementer<
   const TContract extends AnyContractProcedure,
-  TContext extends BaseContext<BaseDeps>,
+  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
 >(
   contract: TContract,
   options: BaseImplementerOptions,
 ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBaseImplementer<
   const TContract extends AnyContractRouterObject,
-  TContext extends BaseContext<BaseDeps>,
+  TContext extends BaseContext<BaseDeps, object, object, { traceId: string }>,
 >(
   contract: TContract,
   options: BaseImplementerOptions,

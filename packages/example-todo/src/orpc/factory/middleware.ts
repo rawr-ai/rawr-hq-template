@@ -8,10 +8,11 @@ type CreateMiddlewareBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> =
 
 /**
  * Create an oRPC builder for authoring middleware against the mirrored runtime
- * shape: a top-level `deps` bag plus any extra top-level input.
+ * shape: semantic construction/invocation lanes plus any downstream execution
+ * context additions.
  */
 export function createMiddlewareBuilder<
-  TRequiredContext extends { deps: object } = { deps: {} },
+  TRequiredContext extends object = {},
   TMeta extends BaseMetadata = BaseMetadata,
 >(
   options: CreateMiddlewareBuilderOptions<TMeta>,

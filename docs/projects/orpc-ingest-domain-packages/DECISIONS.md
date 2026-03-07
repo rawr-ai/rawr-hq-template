@@ -132,13 +132,15 @@ This keeps the “agent drill-down” model fractal without introducing implicit
 How should runtime context be divided between explicit dependencies and middleware-provided values?
 
 ### Decision
-Keep a single dedicated dependency bag at `context.deps` for host-provided, stable dependencies. Keep middleware-provided values as top-level execution-context keys.
+Keep a single dedicated dependency bag at `context.deps` for host-provided, stable dependencies, and standardize the rest of the package boundary around semantic lanes: `scope`, `config`, and `invocation`. Keep middleware-provided values as top-level execution-context keys.
 
 Concretely:
 
 - baseline deps and service deps are a type-authoring distinction only (`BaseDeps` extended by service deps),
 - they do **not** become separate runtime bags such as `context.base` and `context.deps`,
-- request-scoped non-dependency input may live as explicit top-level keys (for example `requestId`) or a narrowly-scoped object like `request`,
+- stable business/client-instance scope lives under `context.scope`,
+- stable package behavior/configuration lives under `context.config`,
+- required per-call input lives under `context.invocation` and should arrive through native oRPC client context rather than host-only middleware attachment,
 - do **not** introduce a generic runtime `metadata` bag by default.
 
 ### Why
@@ -147,4 +149,7 @@ This preserves one explicit host-input channel (`deps`) while still aligning wit
 It keeps runtime semantics legible:
 
 - `context.deps.*` means “host-owned injected dependency”,
-- top-level `context.*` outside `deps` means “request/execution value attached during the pipeline”.
+- `context.scope.*` means “stable business/client-instance scope”,
+- `context.config.*` means “stable package behavior/configuration”,
+- `context.invocation.*` means “per-call input enforced by the package boundary”,
+- top-level `context.*` outside those lanes means “execution value attached during the pipeline”.

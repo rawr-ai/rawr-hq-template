@@ -10,21 +10,39 @@ import type { BaseDeps, BaseMetadata } from "./base";
 import { createMiddlewareBuilder } from "./factory/middleware";
 
 /**
- * Baseline initial-context shape.
+ * Baseline lane-aware initial-context shape.
  */
-export type BaseContext<TDeps> = {
+export type BaseContext<
+  TDeps,
+  TScope extends object = {},
+  TConfig extends object = {},
+  TInvocation extends object = {},
+> = {
   deps: TDeps;
+  scope: TScope;
+  config: TConfig;
+  invocation: TInvocation;
 };
 
 /**
  * Service-specific initial context.
  */
-export type InitialContext<TDeps, TExt extends object = {}> = BaseContext<TDeps> & TExt;
+export type InitialContext<
+  TDeps,
+  TScope extends object = {},
+  TConfig extends object = {},
+  TInvocation extends object = {},
+> = BaseContext<TDeps, TScope, TConfig, TInvocation>;
 
 /**
  * Service-local initial context extension helper.
  */
-export type ServiceContextOf<TDeps extends BaseDeps, TExtra extends object = {}> = InitialContext<TDeps, TExtra>;
+export type ServiceContextOf<
+  TDeps extends BaseDeps,
+  TScope extends object = {},
+  TConfig extends object = {},
+  TInvocation extends object = {},
+> = InitialContext<TDeps, TScope, TConfig, TInvocation>;
 
 const baseMiddlewareMetadata: BaseMetadata = {
   idempotent: true,
@@ -34,7 +52,7 @@ const baseMiddlewareMetadata: BaseMetadata = {
  * Baseline middleware builder for reusable domain-package middleware.
  */
 export function createBaseMiddleware<
-  TRequiredContext extends { deps: object } = { deps: {} },
+  TRequiredContext extends object = {},
 >() {
   return createMiddlewareBuilder<TRequiredContext, BaseMetadata>({
     baseMetadata: baseMiddlewareMetadata,

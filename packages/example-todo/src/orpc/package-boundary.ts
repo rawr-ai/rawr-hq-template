@@ -3,42 +3,70 @@
  *
  * @remarks
  * This file owns the router-boundary surface used by `src/client.ts`:
- * infer the dependency bag from router initial context and expose a stable
- * `defineDomainPackage(router)` helper for local client creation.
+ * infer the construction-time bags from router initial context and expose a
+ * stable `defineDomainPackage(router)` helper for local client creation.
  */
 import { createRouterClient, type AnyRouter, type InferRouterInitialContext, type RouterClient } from "@orpc/server";
 import type { BaseDeps } from "./base";
 
 /**
- * Extracts the canonical dependency bag type from an oRPC router that expects
- * initial context shaped as `{ deps: ... }`.
+ * Extract a specific lane from router initial context.
  */
-export type InferDeps<TRouter extends AnyRouter> =
-  InferRouterInitialContext<TRouter> extends { deps: infer TDeps } ? TDeps : never;
+type InferLane<
+  TRouter extends AnyRouter,
+  TKey extends keyof InferRouterInitialContext<TRouter>,
+> = InferRouterInitialContext<TRouter> extends Record<TKey, infer TValue> ? TValue : never;
+
+export type InferDeps<TRouter extends AnyRouter> = InferLane<TRouter, "deps">;
+export type InferScope<TRouter extends AnyRouter> = InferLane<TRouter, "scope">;
+export type InferConfig<TRouter extends AnyRouter> = InferLane<TRouter, "config">;
+export type InferInvocation<TRouter extends AnyRouter> = InferLane<TRouter, "invocation">;
+
+/**
+ * Canonical construction-time boundary for an in-process domain package.
+ */
+export type DomainBoundary<TRouter extends AnyRouter> = {
+  deps: InferDeps<TRouter>;
+  scope: InferScope<TRouter>;
+  config: InferConfig<TRouter>;
+};
 
 /**
  * Shared descriptor for domain packages consumed in-process.
  *
  * @remarks
  * All packages using this helper expose the same bootstrap surface:
- * `domain.createClient(deps)` -> `createRouterClient(router, { context: { deps } })`.
+ * `domain.createClient({ deps, scope, config })` ->
+ * `createRouterClient(router, { context: (clientContext) => ({ ...boundary, invocation: clientContext.invocation }) })`.
  */
 export interface DomainPackage<TRouter extends AnyRouter> {
   readonly router: TRouter;
-  createClient(deps: InferDeps<TRouter>): RouterClient<TRouter>;
+  createClient(boundary: DomainBoundary<TRouter>): RouterClient<TRouter, {
+    invocation: InferInvocation<TRouter>;
+  }>;
 }
 
 /**
  * Bind a router to the standard in-process package boundary.
  */
 export function defineDomainPackage<TRouter extends AnyRouter>(
-  router: InferRouterInitialContext<TRouter> extends { deps: BaseDeps } ? TRouter : never,
+  router: InferRouterInitialContext<TRouter> extends {
+    deps: BaseDeps;
+    scope: object;
+    config: object;
+    invocation: object;
+  } ? TRouter : never,
 ): DomainPackage<TRouter> {
   return {
     router,
-    createClient(deps) {
+    createClient(boundary) {
       return createRouterClient(router, {
-        context: { deps } as InferRouterInitialContext<TRouter>,
+        context: (clientContext: { invocation: InferInvocation<TRouter> }) => ({
+          deps: boundary.deps,
+          scope: boundary.scope,
+          config: boundary.config,
+          invocation: clientContext.invocation,
+        }) as InferRouterInitialContext<TRouter>,
       });
     },
   };

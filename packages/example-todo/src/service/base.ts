@@ -21,10 +21,27 @@ export interface Clock {
 }
 
 /**
- * Host-owned runtime toggles used by package-global policy middleware.
+ * Stable client scope for the todo package.
  */
-export interface Runtime {
+export interface ServiceScope {
+  workspaceId: string;
+}
+
+/**
+ * Stable package configuration for the todo package.
+ */
+export interface ServiceConfig {
   readOnly: boolean;
+  limits: {
+    maxAssignmentsPerTask: number;
+  };
+}
+
+/**
+ * Invocation-scoped input for the todo package.
+ */
+export interface ServiceInvocation {
+  traceId: string;
 }
 
 /**
@@ -37,20 +54,21 @@ export interface Runtime {
 export interface ServiceDeps extends ServiceDepsOf<{
   dbPool: DbPool;
   clock: Clock;
-  runtime: Runtime;
 }> {}
 
 /**
  * Initial service context.
  *
  * @remarks
- * Keep request-scoped, non-dependency input here. Middleware-produced execution
- * context belongs downstream, not in this type.
+ * Keep the semantic lane model explicit here. Construction-time bags are
+ * `deps`, `scope`, and `config`; per-call input is `invocation`.
  */
-export type ServiceContext = ServiceContextOf<ServiceDeps, {
-  workspaceId?: string;
-  requestId?: string;
-}>;
+export type ServiceContext = ServiceContextOf<
+  ServiceDeps,
+  ServiceScope,
+  ServiceConfig,
+  ServiceInvocation
+>;
 
 /**
  * Service-specific procedure metadata.
@@ -95,8 +113,8 @@ export const ocBase = service.oc;
  *
  * @remarks
  * Use this for service-authored middleware.
- * Declare only the minimal required context fragment under `deps`; do not
- * restate the full `ServiceContext`.
+ * Declare only the minimal required lane fragments or execution context
+ * additions; do not restate the full `ServiceContext`.
  */
 export const createServiceMiddleware = service.createMiddleware;
 

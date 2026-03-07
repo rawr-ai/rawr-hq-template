@@ -32,6 +32,7 @@ const create = os.create.handler(async ({ context, input, errors }) => {
 
   const tag: Tag = {
     id: randomUUID(),
+    workspaceId: context.scope.workspaceId,
     name: normalizedName,
     color: normalizedColor,
     createdAt: context.deps.clock.now(),

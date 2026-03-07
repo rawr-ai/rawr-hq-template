@@ -18,6 +18,10 @@ export const TaskSchema = Type.Object(
       format: "uuid",
       description: "Stable unique identifier for the task.",
     }),
+    workspaceId: Type.String({
+      minLength: 1,
+      description: "Workspace scope that owns this task record.",
+    }),
     title: Type.String({
       minLength: 1,
       maxLength: 500,

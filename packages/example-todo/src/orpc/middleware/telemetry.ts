@@ -6,11 +6,11 @@
  * must not change control flow or remap errors.
  *
  * @agents
- * Keep log payload keys stable (`path`, `durationMs`, `code`, `status`) so test
- * assertions stay resilient as implementation evolves.
+ * Keep log payload keys stable (`path`, `durationMs`, `traceId`, `code`,
+ * `status`) so test assertions stay resilient as implementation evolves.
  */
 import type { Logger } from "../base";
-import { createBaseMiddleware } from "../base";
+import { createBaseMiddleware } from "../base-foundation";
 
 type ErrorShape = {
   name?: unknown;
@@ -52,6 +52,9 @@ export function createTelemetryMiddleware(options: { defaultDomain: string }) {
     deps: {
       logger: Logger;
     };
+    invocation: {
+      traceId: string;
+    };
   }>().middleware(async ({ context, path, procedure, next }) => {
     const start = Date.now();
     const pathLabel = path.join(".");
@@ -63,6 +66,7 @@ export function createTelemetryMiddleware(options: { defaultDomain: string }) {
       const result = await next();
       context.deps.logger.info(successEvent, {
         path: pathLabel,
+        traceId: context.invocation.traceId,
         durationMs: Date.now() - start,
       });
       return result;
@@ -70,6 +74,7 @@ export function createTelemetryMiddleware(options: { defaultDomain: string }) {
     catch (error) {
       context.deps.logger.error(errorEvent, {
         path: pathLabel,
+        traceId: context.invocation.traceId,
         durationMs: Date.now() - start,
         ...toErrorDetails(error),
       });

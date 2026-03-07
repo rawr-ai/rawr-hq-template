@@ -31,6 +31,7 @@ const create = os.create.handler(async ({ context, input, errors }) => {
   const now = context.deps.clock.now();
   const task: Task = {
     id: randomUUID(),
+    workspaceId: context.scope.workspaceId,
     title,
     description: input.description?.trim() ?? null,
     completed: false,

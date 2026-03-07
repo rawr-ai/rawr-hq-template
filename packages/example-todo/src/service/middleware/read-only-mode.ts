@@ -3,7 +3,7 @@
  *
  * @remarks
  * Zero-config service guard. It blocks mutating procedures when
- * `context.deps.runtime.readOnly` is enabled. Mutability is derived from
+ * `context.config.readOnly` is enabled. Mutability is derived from
  * procedure metadata (`idempotent: false`).
  *
  * @agents
@@ -13,23 +13,22 @@
 import { ORPCError } from "@orpc/server";
 import { createServiceMiddleware } from "../base";
 import { READ_ONLY_MODE } from "../shared/errors";
-import type { Runtime } from "../base";
 
 /**
  * Zero-config service guard.
  *
  * @remarks
- * Export this as a ready-to-use middleware value. It consumes the stable
- * service dependency `deps.runtime` and does not add any execution context.
+ * Export this as a ready-to-use middleware value. It consumes stable package
+ * configuration (`config.readOnly`) and does not add any execution context.
  */
 export const readOnlyMode = createServiceMiddleware<{
-  deps: {
-    runtime: Runtime;
+  config: {
+    readOnly: boolean;
   };
 }>().middleware(async ({ context, procedure, path, next }) => {
   const isMutatingProcedure = procedure["~orpc"].meta.idempotent === false;
 
-  if (!context.deps.runtime.readOnly || !isMutatingProcedure) {
+  if (!context.config.readOnly || !isMutatingProcedure) {
     return await next();
   }
 

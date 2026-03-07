@@ -17,6 +17,10 @@ export const TagSchema = Type.Object(
       format: "uuid",
       description: "Stable unique identifier for the tag.",
     }),
+    workspaceId: Type.String({
+      minLength: 1,
+      description: "Workspace scope that owns this tag record.",
+    }),
     name: Type.String({
       minLength: 1,
       maxLength: 50,

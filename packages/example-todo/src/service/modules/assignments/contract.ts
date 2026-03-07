@@ -12,7 +12,7 @@
 import { schema } from "../../../orpc-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
-import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../shared/errors";
+import { ASSIGNMENT_LIMIT_REACHED, READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../shared/errors";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
@@ -43,6 +43,7 @@ export const contract = {
       schema(AssignmentSchema),
     )
     .errors({
+      ASSIGNMENT_LIMIT_REACHED,
       READ_ONLY_MODE,
       RESOURCE_NOT_FOUND,
       ALREADY_ASSIGNED: {

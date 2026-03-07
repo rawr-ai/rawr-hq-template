@@ -19,7 +19,7 @@ export const os = impl.tasks
   .use(({ context, next }) =>
     next({
       context: {
-        repo: createRepository(context.sql),
+        repo: createRepository(context.sql, context.scope.workspaceId),
       },
     }),
   );
