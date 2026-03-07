@@ -146,6 +146,27 @@ createServiceProvider().middleware<{
   });
 });
 
+createServiceProvider<{
+  provided: {
+    repo: {
+      find(): null;
+    };
+  };
+}>().middleware<{
+  repo: {
+    save(): null;
+  };
+}>(async ({ next }) => {
+  // @ts-expect-error providers must not overwrite an existing provided key.
+  return next({
+    repo: {
+      save() {
+        return null;
+      },
+    },
+  });
+});
+
 // @ts-expect-error invocation context is required at the callsite.
 typedClient.tasks.get({ id: "00000000-0000-0000-0000-000000000001" });
 
