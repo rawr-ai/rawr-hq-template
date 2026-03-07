@@ -19,7 +19,7 @@ import { sqlProvider } from "../orpc-sdk";
  * Middleware order is authored here:
  * 1) baseline observability middleware (inside `createServiceImplementer`)
  * 2) invocation observer (`invocation.traceId`)
- * 3) SQL provider (`deps.dbPool` -> `sql`)
+ * 3) SQL provider (`deps.dbPool` -> `provided.sql`)
  * 4) domain guard (`readOnlyMode`)
  */
 export const impl = createServiceImplementer(contract)

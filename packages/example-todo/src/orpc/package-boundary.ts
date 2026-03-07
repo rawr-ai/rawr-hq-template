@@ -55,6 +55,7 @@ export function defineDomainPackage<TRouter extends AnyRouter>(
     scope: object;
     config: object;
     invocation: object;
+    provided: object;
   } ? TRouter : never,
 ): DomainPackage<TRouter> {
   return {
@@ -66,6 +67,7 @@ export function defineDomainPackage<TRouter extends AnyRouter>(
           scope: boundary.scope,
           config: boundary.config,
           invocation: clientContext.invocation,
+          provided: {},
         }) as InferRouterInitialContext<TRouter>,
       });
     },

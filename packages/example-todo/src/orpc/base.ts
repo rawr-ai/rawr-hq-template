@@ -19,6 +19,9 @@ import {
 import type {
   BaseContext,
   InitialContext,
+  ProvidedContext,
+  ReservedContextKey,
+  ReservedSemanticLaneKey,
   ServiceContextOf,
 } from "./base-foundation";
 
@@ -67,6 +70,9 @@ export type ServiceMetadataOf<T extends object = {}> = BaseMetadata & T;
 export type {
   BaseContext,
   InitialContext,
+  ProvidedContext,
+  ReservedContextKey,
+  ReservedSemanticLaneKey,
   ServiceContextOf,
 } from "./base-foundation";
 

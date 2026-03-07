@@ -119,6 +119,16 @@ export const ocBase = service.oc;
 export const createServiceMiddleware = service.createMiddleware;
 
 /**
+ * Service-local provider builder.
+ *
+ * @remarks
+ * Use this when service-authored middleware needs to add downstream execution
+ * context. Service-local providers also write into `context.provided.*`; they
+ * do not mutate or shadow the reserved semantic lanes.
+ */
+export const createServiceProvider = service.createProvider;
+
+/**
  * Service-local implementer factory.
  *
  * @remarks

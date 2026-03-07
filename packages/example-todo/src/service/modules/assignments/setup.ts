@@ -8,6 +8,8 @@
  * - export configured `os` for handler implementations
  */
 import { impl } from "../../impl";
+import { createServiceProvider } from "../../base";
+import type { Sql } from "../../../orpc-sdk";
 import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 import { createRepository as createAssignmentRepository } from "./repository";
@@ -17,13 +19,23 @@ import { createRepository as createAssignmentRepository } from "./repository";
  *
  * Keep module-wide setup here so procedure handlers can stay focused on business logic.
  */
-export const os = impl.assignments
-  .use(({ context, next }) =>
-    next({
-      context: {
-        repo: createAssignmentRepository(context.sql, context.scope.workspaceId),
-        tasks: createTaskRepository(context.sql, context.scope.workspaceId),
-        tags: createTagRepository(context.sql, context.scope.workspaceId),
-      },
-    }),
-  );
+const assignmentRepositoriesProvider = createServiceProvider<{
+  scope: {
+    workspaceId: string;
+  };
+  provided: {
+    sql: Sql;
+  };
+}>().middleware<{
+  repo: ReturnType<typeof createAssignmentRepository>;
+  tasks: ReturnType<typeof createTaskRepository>;
+  tags: ReturnType<typeof createTagRepository>;
+}>(async ({ context, next }) => {
+  return next({
+    repo: createAssignmentRepository(context.provided.sql, context.scope.workspaceId),
+    tasks: createTaskRepository(context.provided.sql, context.scope.workspaceId),
+    tags: createTagRepository(context.provided.sql, context.scope.workspaceId),
+  });
+});
+
+export const os = impl.assignments.use(assignmentRepositoriesProvider);
