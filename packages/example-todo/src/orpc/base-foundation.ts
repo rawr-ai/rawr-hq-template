@@ -7,7 +7,22 @@
  * code should continue to think in terms of `src/orpc/base.ts`.
  */
 import type { BaseDeps, BaseMetadata } from "./base";
-import { createMiddlewareBuilder } from "./factory/middleware";
+import {
+  createNormalMiddlewareBuilder,
+  createServiceProviderBuilder,
+  createSharedProviderBuilder,
+} from "./factory/middleware";
+
+export type ReservedSemanticLaneKey = "deps" | "scope" | "config" | "invocation";
+export type SharedProviderBucketKey = "provided";
+export type ReservedContextKey = ReservedSemanticLaneKey | SharedProviderBucketKey;
+
+/**
+ * Shared/framework provider output bucket.
+ */
+export type ProvidedContext<TProvided extends object = {}> = {
+  provided: TProvided;
+};
 
 /**
  * Baseline lane-aware initial-context shape.
@@ -17,11 +32,13 @@ export type BaseContext<
   TScope extends object = {},
   TConfig extends object = {},
   TInvocation extends object = {},
+  TProvided extends object = {},
 > = {
   deps: TDeps;
   scope: TScope;
   config: TConfig;
   invocation: TInvocation;
+  provided: TProvided;
 };
 
 /**
@@ -32,7 +49,8 @@ export type InitialContext<
   TScope extends object = {},
   TConfig extends object = {},
   TInvocation extends object = {},
-> = BaseContext<TDeps, TScope, TConfig, TInvocation>;
+  TProvided extends object = {},
+> = BaseContext<TDeps, TScope, TConfig, TInvocation, TProvided>;
 
 /**
  * Service-local initial context extension helper.
@@ -42,7 +60,8 @@ export type ServiceContextOf<
   TScope extends object = {},
   TConfig extends object = {},
   TInvocation extends object = {},
-> = InitialContext<TDeps, TScope, TConfig, TInvocation>;
+  TProvided extends object = {},
+> = InitialContext<TDeps, TScope, TConfig, TInvocation, TProvided>;
 
 const baseMiddlewareMetadata: BaseMetadata = {
   idempotent: true,
@@ -54,7 +73,29 @@ const baseMiddlewareMetadata: BaseMetadata = {
 export function createBaseMiddleware<
   TRequiredContext extends object = {},
 >() {
-  return createMiddlewareBuilder<TRequiredContext, BaseMetadata>({
+  return createNormalMiddlewareBuilder<TRequiredContext, BaseMetadata>({
+    baseMetadata: baseMiddlewareMetadata,
+  });
+}
+
+/**
+ * Baseline provider builder for shared/framework middleware.
+ */
+export function createBaseProvider<
+  TRequiredContext extends object = {},
+>() {
+  return createSharedProviderBuilder<TRequiredContext, BaseMetadata>({
+    baseMetadata: baseMiddlewareMetadata,
+  });
+}
+
+/**
+ * Service-local provider builder for domain-authored execution context.
+ */
+export function createBaseServiceProvider<
+  TRequiredContext extends object = {},
+>() {
+  return createServiceProviderBuilder<TRequiredContext, BaseMetadata>({
     baseMetadata: baseMiddlewareMetadata,
   });
 }

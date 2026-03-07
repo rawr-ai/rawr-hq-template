@@ -40,11 +40,11 @@ const create = os.create.handler(async ({ context, input, errors }) => {
   };
 
   context.deps.logger.info("todo.tasks.create", { taskId: task.id });
-  return await context.repo.insert(task);
+  return await context.provided.repo.insert(task);
 });
 
 const get = os.get.handler(async ({ context, input, errors }) => {
-  const task = await context.repo.findById(input.id);
+  const task = await context.provided.repo.findById(input.id);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
       message: `Task '${input.id}' not found`,

@@ -2,12 +2,16 @@ import { implement } from "@orpc/server";
 
 import { createClient } from "../src";
 import type { DbPool } from "../src/orpc/adapters/sql";
+import type { Sql } from "../src/orpc-sdk";
+import { createBaseProvider } from "../src/orpc/base-foundation";
 import type { CreateClientOptions } from "../src/client";
 import { sqlProvider } from "../src/orpc/middleware/sql-provider";
 import { contract } from "../src/service/contract";
+import { createServiceMiddleware, createServiceProvider } from "../src/service/base";
 
 declare const dbPool: DbPool;
 declare const deps: CreateClientOptions["deps"];
+declare const sql: Sql;
 
 // Missing nested dependency fragment should fail at `.use(...)`.
 const missingSqlDeps = implement(contract).$context<{
@@ -76,6 +80,72 @@ void invalidBoundary;
 const typedClient = createClient(validBoundary);
 void typedClient;
 
+const baseProvider = createBaseProvider().middleware<{
+  sql: Sql;
+}>(async ({ next }) => {
+  return next({
+    sql,
+  });
+});
+void baseProvider;
+
+const serviceProvider = createServiceProvider().middleware<{
+  repo: {
+    find(): null;
+  };
+}>(async ({ next }) => {
+  return next({
+    repo: {
+      find() {
+        return null;
+      },
+    },
+  });
+});
+void serviceProvider;
+
+createServiceMiddleware().middleware(async ({ next }) => {
+  // @ts-expect-error normal middleware must not add execution context.
+  return next({
+    repo: {
+      find() {
+        return null;
+      },
+    },
+  });
+});
+
+createBaseProvider().middleware<{
+  deps: {};
+}>(async ({ next }) => {
+  // @ts-expect-error shared providers must not write reserved lane names.
+  return next({
+    deps: {},
+  });
+});
+
+createServiceProvider().middleware<{
+  scope: {
+    workspaceId: string;
+  };
+}>(async ({ next }) => {
+  // @ts-expect-error service-local providers must not write reserved lane names.
+  return next({
+    scope: {
+      workspaceId: "workspace-typing",
+    },
+  });
+});
+
+createServiceProvider().middleware<{
+  provided: {};
+}>(async ({ next }) => {
+  // @ts-expect-error service-local providers must not write to the shared bucket.
+  return next({
+    provided: {},
+  });
+});
+
 // @ts-expect-error invocation context is required at the callsite.
 typedClient.tasks.get({ id: "00000000-0000-0000-0000-000000000001" });
 
@@ -84,3 +154,4 @@ typedClient.tasks.get(
   { context: { invocation: { traceId: "trace-123" } } },
 );
 void dbPool;
+void sql;

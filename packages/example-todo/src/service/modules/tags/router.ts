@@ -23,7 +23,7 @@ const create = os.create.handler(async ({ context, input, errors }) => {
   const normalizedName = input.name.trim();
   const normalizedColor = input.color.toLowerCase();
 
-  if (await context.repo.existsByName(normalizedName)) {
+  if (await context.provided.repo.existsByName(normalizedName)) {
     throw errors.DUPLICATE_TAG({
       message: `Tag '${normalizedName}' already exists`,
       data: { name: normalizedName },
@@ -39,11 +39,11 @@ const create = os.create.handler(async ({ context, input, errors }) => {
   };
 
   context.deps.logger.info("todo.tags.create", { tagId: tag.id, name: tag.name });
-  return await context.repo.insert(tag);
+  return await context.provided.repo.insert(tag);
 });
 
 const list = os.list.handler(async ({ context }) => {
-  return await context.repo.findAll();
+  return await context.provided.repo.findAll();
 });
 
 /** Contract-enforced module router (fails typecheck if contract and router drift). */

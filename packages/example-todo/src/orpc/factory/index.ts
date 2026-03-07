@@ -1,5 +1,9 @@
 export { createContractBuilder } from "./contract";
-export { createMiddlewareBuilder } from "./middleware";
+export {
+  createNormalMiddlewareBuilder,
+  createServiceProviderBuilder,
+  createSharedProviderBuilder,
+} from "./middleware";
 export {
   createBareProcedureImplementer,
   createBareRouterImplementer,

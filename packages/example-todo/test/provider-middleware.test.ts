@@ -40,7 +40,7 @@ describe("provider middleware", () => {
       .use(feedbackProvider);
 
     const ping = os.ping.handler(async ({ context }) => {
-      return { sessionId: context.feedbackSession.sessionId };
+      return { sessionId: context.provided.feedbackSession.sessionId };
     });
 
     const router = os.router({ ping });
@@ -83,6 +83,7 @@ describe("provider middleware", () => {
       invocation: {
         traceId: string;
       };
+      provided: {};
     };
 
     const service = defineService<TestMetadata, TestContext>({
@@ -160,6 +161,7 @@ describe("provider middleware", () => {
       invocation: {
         traceId: string;
       };
+      provided: {};
     };
 
     const service = defineService<TestMetadata, TestContext>({
@@ -205,9 +207,94 @@ describe("provider middleware", () => {
         invocation: {
           traceId: "trace-read-only",
         },
+        provided: {},
       },
     });
 
     await expect(client.ping({})).resolves.toEqual({ readOnly: true });
+  });
+
+  it("defineService exposes a provider builder for service-local context", async () => {
+    type TestMetadata = BaseMetadata;
+    type TestContext = {
+      deps: {
+        logger: {
+          info(message: string, meta?: Record<string, unknown>): void;
+          error(message: string, meta?: Record<string, unknown>): void;
+        };
+        analytics: {
+          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        };
+      };
+      scope: {};
+      config: {
+        readOnly: boolean;
+      };
+      invocation: {
+        traceId: string;
+      };
+      provided: {};
+    };
+
+    const service = defineService<TestMetadata, TestContext>({
+      metadata: {
+        idempotent: true,
+      },
+      implementer: {
+        telemetry: { defaultDomain: "test" },
+        analytics: { app: "test" },
+      },
+    });
+
+    const contract = {
+      ping: service.oc
+        .input(schema(Type.Object({}, { additionalProperties: false })))
+        .output(schema(Type.Object({
+          repoId: Type.String(),
+        }, { additionalProperties: false }))),
+    };
+
+    const repoProvider = service.createProvider().middleware<{
+      repo: {
+        id: string;
+      };
+    }>(async ({ next }) => {
+      return next({
+        repo: {
+          id: "repo-123",
+        },
+      });
+    });
+
+    const os = service.createImplementer(contract).use(repoProvider);
+
+    const ping = os.ping.handler(async ({ context }) => {
+      return { repoId: context.provided.repo.id };
+    });
+
+    const router = os.router({ ping });
+    const client = createRouterClient(router, {
+      context: {
+        deps: {
+          logger: {
+            info() {},
+            error() {},
+          },
+          analytics: {
+            track() {},
+          },
+        },
+        scope: {},
+        config: {
+          readOnly: false,
+        },
+        invocation: {
+          traceId: "trace-repo",
+        },
+        provided: {},
+      },
+    });
+
+    await expect(client.ping({})).resolves.toEqual({ repoId: "repo-123" });
   });
 });

@@ -5,7 +5,7 @@ import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 import type { BaseContext, BaseDeps, BaseImplementerOptions, BaseMetadata } from "../base";
 import { createBaseImplementer } from "../base";
 import { createContractBuilder } from "./contract";
-import { createMiddlewareBuilder } from "./middleware";
+import { createNormalMiddlewareBuilder, createServiceProviderBuilder } from "./middleware";
 
 type AnyContractRouterObject = {
   [k: string]: AnyContractRouter;
@@ -22,7 +22,8 @@ type DefineServiceOptions<TMeta extends BaseMetadata> = {
  * @remarks
  * `defineService(...)` is the high-level seam consumed by `src/service/base.ts`.
  * It binds metadata-aware contract authoring, metadata-aware service middleware
- * authoring, and context-typed implementer creation.
+ * authoring, metadata-aware service-provider authoring, and context-typed
+ * implementer creation.
  */
 export function defineService<
   TMeta extends BaseMetadata,
@@ -55,7 +56,14 @@ export function defineService<
     createMiddleware<
       TRequiredContext extends object = {},
     >() {
-      return createMiddlewareBuilder<TRequiredContext, TMeta>({
+      return createNormalMiddlewareBuilder<TRequiredContext, TMeta>({
+        baseMetadata: options.metadata,
+      });
+    },
+    createProvider<
+      TRequiredContext extends object = {},
+    >() {
+      return createServiceProviderBuilder<TRequiredContext, TMeta>({
         baseMetadata: options.metadata,
       });
     },

@@ -169,12 +169,14 @@ Use these runtime context categories consistently:
 - **`context.scope`**: stable business/client-instance scope bound when the client is created.
 - **`context.config`**: stable package behavior/configuration bound when the client is created.
 - **`context.invocation`**: per-call invocation input supplied through native oRPC client context.
-- **Top-level execution context**: values added/derived by middleware during execution (for example `sql`, `user`, `feedbackSession`, `repo`).
+- **`context.provided`**: shared/framework provider output bucket (for example `provided.sql`, `provided.feedbackSession`).
+- **Top-level execution context**: service-local values added/derived during execution (for example `repo`, `tasks`, `tags`, `user`).
 
 Do **not** create a second runtime dependency bag such as `context.base`.
 Do **not** use a generic runtime `metadata` bag by default. oRPC procedure metadata (`.meta(...)`) is separate from runtime context; if runtime grouping is needed later, use a specific name like `request`, not a generic `metadata` bucket.
 Do **not** use ad hoc top-level request input as the normal package-boundary pattern.
 Do **not** use middleware-context as the repo-default way to satisfy required invocation input. oRPC supports it, but this repo does not currently have a legitimate use case for it, so treat it as strongly discouraged unless the broader architecture changes.
+Do **not** write back into `deps`, `scope`, `config`, or `invocation` from middleware. Those semantic lanes are input-only.
 
 Practical defaults:
 
@@ -182,6 +184,7 @@ Practical defaults:
 - Access stable scope as `context.scope.*`.
 - Access stable behavior config as `context.config.*`.
 - Access required invocation input as `context.invocation.*`.
+- Access shared/framework provider output as `context.provided.*`.
 - Avoid alias-only middleware like `deps.logger -> logger` unless there is a concrete runtime reason.
 - Keep baseline deps and service deps as a type-authoring distinction (`BaseDeps` extended by service deps), not as separate runtime keys.
 
@@ -189,8 +192,10 @@ Practical defaults:
 
 Treat middleware categories as behavioral roles, not just naming conventions:
 
-- **Provider middleware** adds downstream execution context with `next({ context: ... })`.
-  - Examples: `sqlProvider`, `feedbackProvider`
+- **Provider middleware** is the only middleware category allowed to add downstream execution context.
+  - Shared/framework providers write only under `context.provided.*`
+  - Service-local providers may add top-level execution keys
+  - Examples: `sqlProvider`, `feedbackProvider`, module-local `repo` setup
 - **Guard/policy middleware** consumes context and metadata to allow/block/shape execution, but does not add execution context.
   - Example: `readOnlyMode`
 - **Observer/instrumentation middleware** consumes context and metadata to emit side effects, but does not add execution context.
@@ -207,8 +212,10 @@ Author middleware against the mirrored required-context shape directly:
 
 - bind service-local authoring surfaces once in `src/service/base.ts` via `defineService(...)`
 - use `createServiceImplementer(contract)` in `src/service/impl.ts` so service context and baseline implementer options stay bound in one place
-- framework middleware via `createBaseMiddleware<{ ...lane fragments... }>()`
-- service middleware via `createServiceMiddleware<{ ...lane fragments... }>()`
+- shared/framework non-providers via `createBaseMiddleware<{ ...lane fragments... }>()`
+- shared/framework providers via `createBaseProvider<{ ...lane fragments... }>()`
+- service non-providers via `createServiceMiddleware<{ ...lane fragments... }>()`
+- service-local providers via `createServiceProvider<{ ...lane fragments... }>()`
 - if a middleware has no required context, call the helper with no type argument
 
 Declare only the minimal lane fragments a middleware needs. Examples:
@@ -219,6 +226,7 @@ Declare only the minimal lane fragments a middleware needs. Examples:
 - combinations when a middleware legitimately spans multiple lanes
 
 Do **not** create one helper per lane (`createScopeMiddleware`, `createConfigMiddleware`, etc.). The lane model is for clarity and typing, not for multiplying authoring APIs.
+Do **not** use non-provider builders to add context; they intentionally expose only `next()`.
 
 Name middleware by what it is:
 
@@ -295,11 +303,14 @@ Provider middleware should return only the new execution keys it introduces.
 
 - Do **not** spread the existing `context` back into `next({ context })`.
 - Rely on oRPC’s merge behavior instead: the additional `context` you pass to `next` is merged with the existing context.
-- If a provider returns a key that already exists, it overrides that key; it does not replace the entire context object.
+- If a service-local provider returns a top-level key that already exists, it overrides that key; it does not replace the entire context object.
+- Shared/framework providers should not add arbitrary top-level keys. They write under `context.provided.*`.
+- Service-local providers may add top-level execution keys, but those keys must not overlap `deps`, `scope`, `config`, `invocation`, or `provided`.
+- If you want ergonomic access, reshape locally in setup/handler code rather than creating global alias middleware for semantic lanes.
 
 For typing the provided execution context:
 
-- keep it lightweight for simple outputs (`{ sql }`)
+- keep shared/framework outputs lightweight under `provided` (`{ sql }` -> `context.provided.sql`)
 - use an explicit shape check only when the output is non-trivial or easy to drift
 - `satisfies` is acceptable as a local guardrail, but it is not mandatory for every provider
 
@@ -338,7 +349,7 @@ Examples:
 - `scope.workspaceId` is stable business scope.
 - `config.readOnly` and `config.limits.maxAssignmentsPerTask` are stable package behavior config.
 - `invocation.traceId` is required per-call input.
-- `sql`, `user`, `feedbackSession`, `repo` are execution keys created/attached by middleware or module setup.
+- `provided.sql`, `provided.feedbackSession`, and `repo` are execution keys created/attached by middleware or module setup.
 
 ### Kit-Level Middleware Pattern
 

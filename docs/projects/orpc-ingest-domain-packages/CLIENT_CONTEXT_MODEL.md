@@ -77,6 +77,51 @@ Examples:
 This is the lane for data that should vary per procedure call rather than being
 baked into a reusable client instance.
 
+## Reserved semantic lanes
+
+The lane names themselves are reserved:
+
+- `deps`
+- `scope`
+- `config`
+- `invocation`
+
+These lanes are input-only.
+
+Middleware may:
+
+- read them
+- require fragments of them
+
+Middleware may not:
+
+- write to them
+- replace them
+- reshape them
+- create top-level keys that shadow them
+
+This is the hard boundary that keeps package-boundary input distinct from
+execution-time derived context.
+
+## Shared provider bucket
+
+Shared/framework providers now write under a dedicated `provided` bucket.
+
+Examples:
+
+- `context.provided.sql`
+- `context.provided.feedbackSession`
+
+`provided` is a reserved top-level execution bucket:
+
+- shared/framework providers may add values under it
+- service-local providers may not write to it
+- it exists to separate imported/shared provider output from service-local
+  top-level execution keys
+
+This keeps shared execution capabilities visible without treating them like
+ semantic input lanes.
+
 ## Current package boundary
 
 The canonical construction-time boundary is now:
@@ -184,6 +229,9 @@ Phase 1 now uses these examples to make the model real:
 - `config.limits.maxAssignmentsPerTask` enforces assignment policy
 - `invocation.traceId` flows through native oRPC client context and is consumed
   by middleware inside the package
+- shared SQL capability is attached as `context.provided.sql`
+- module setup then derives domain-local top-level execution keys such as
+  `repo`, `tasks`, and `tags`
 
 That combination is intentional: the example package should show not only the
 existence of the lanes, but also how they compose in realistic usage.
