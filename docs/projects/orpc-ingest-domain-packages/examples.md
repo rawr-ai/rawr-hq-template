@@ -29,6 +29,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Procedures carry shared metadata (`domain`, `audience`) plus explicit per-procedure `idempotent`.
 - Shared oRPC scaffolding lives in `src/orpc/*` (and is intentionally domain-agnostic).
 - `src/orpc/middleware/` is always present for kit-level cross-cutting concerns (analytics, providers, generic wrappers).
+- Host/runtime tracing bootstrap is required above the package and should be wired once before app/route composition.
 - `src/service/middleware/` is available for domain-wide cross-cutting concerns; ordering is authored in `src/service/impl.ts`.
 - Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
 - `context.deps` remains the single host-provided dependency bag; middleware/module setup may add top-level execution keys, but we do not split runtime dependencies into multiple bags.

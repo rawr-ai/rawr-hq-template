@@ -66,7 +66,8 @@ It is not a historical session recap. It is meant to answer: where are we now, w
   - package-level execution context is injected once by provider middleware
   - module-level repos/services are injected in `setup.ts`
 - The package-wide middleware story is explicit:
-  - baseline analytics are attached by `createServiceImplementer(...)`
+  - baseline framework observability + analytics are attached by `createServiceImplementer(...)`
+  - host/runtime tracing bootstrap now lives above the package
   - `sqlProvider` is attached in `src/service/impl.ts`
   - `readOnlyMode` is attached in `src/service/impl.ts`
 - Metadata posture is explicit:
@@ -129,7 +130,7 @@ It is not a historical session recap. It is meant to answer: where are we now, w
   - simple domain-module helper
 - What still looks intentionally local/transitional:
   - service-bound authoring helpers
-  - baseline observability policy
+  - package-level observability policy
   - stronger implementer-binding surfaces
   - example-local adapter contracts
 - The current structure appears compatible with later expansion to API-package support because the generic builder layer is now distinct from service-local composition, but the shared SDK surface is not yet carrying that richer responsibility.

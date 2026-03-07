@@ -137,7 +137,7 @@ describe("example-todo service", () => {
     }
   });
 
-  it("keeps invocation logging and analytics observers working", async () => {
+  it("keeps baseline and package observability logs plus analytics working without an active span", async () => {
     const logs: LogEntry[] = [];
     const analytics: AnalyticsEntry[] = [];
     const client = createClient(createClientOptions({ logs, analytics, readOnly: true }));
@@ -145,9 +145,11 @@ describe("example-todo service", () => {
     await safe(client.tasks.create({ title: "blocked write" }, invocation("trace-error")));
     await client.tags.list({}, invocation("trace-success"));
 
-    expect(logs.some((entry) => entry.event === "todo.invocation.trace" && entry.level === "info")).toBe(true);
-    expect(logs.some((entry) => entry.payload.traceId === "trace-error")).toBe(true);
-    expect(logs.some((entry) => entry.payload.traceId === "trace-success")).toBe(true);
+    expect(logs.some((entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "success")).toBe(true);
+    expect(logs.some((entry) => entry.event === "todo.procedure" && entry.payload.outcome === "error")).toBe(true);
+    expect(logs.some((entry) => entry.payload.invocationTraceId === "trace-error")).toBe(true);
+    expect(logs.some((entry) => entry.payload.invocationTraceId === "trace-success")).toBe(true);
+    expect(analytics.some((entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "error")).toBe(true);
     expect(analytics.some((entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list")).toBe(true);
   });
 });

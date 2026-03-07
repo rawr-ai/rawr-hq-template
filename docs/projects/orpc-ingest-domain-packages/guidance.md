@@ -203,7 +203,7 @@ Treat middleware categories as behavioral roles, not just naming conventions:
 - **Guard/policy middleware** consumes context and metadata to allow/block/shape execution, but does not add execution context.
   - Example: `readOnlyMode`
 - **Observer/instrumentation middleware** consumes context and metadata to emit side effects, but does not add execution context.
-  - Examples: `createAnalyticsMiddleware`, `invocationTrace`
+  - Examples: `createBaseObservabilityMiddleware`, `createAnalyticsMiddleware`, `todoObservability`
 
 The semantic line is simple:
 
@@ -403,6 +403,9 @@ Use kit-level middleware for cross-cutting behavior that should be reusable acro
 For this repo, baseline tracing should come from the host/runtime via the
 official oRPC OpenTelemetry integration, not from package-local middleware.
 
+- The canonical host seam should be a shared bootstrap helper above domain
+  packages (for example `installRawrOrpcTelemetry(...)`), called before app and
+  route composition.
 - Treat package-local telemetry middleware as the wrong default for the golden
   example.
 - Keep domain packages compatible with required per-call invocation input, but
@@ -410,6 +413,9 @@ official oRPC OpenTelemetry integration, not from package-local middleware.
   telemetry.
 - Use package/service middleware only for observability side effects or span
   enrichment that sit on top of the baseline runtime instrumentation.
+- Keep one framework-level observability middleware in the package SDK seam and
+  one package-level observability middleware in the service seam so every domain
+  package gets both by default.
 
 ### Domain-Wide Middleware Pattern
 
