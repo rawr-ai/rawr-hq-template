@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { safe } from "@orpc/server";
 import { createClient } from "../src";
-import { createClientOptions, invocation, type OrpcErrorShape } from "./helpers";
+import { createClientOptions, createInvocation, type OrpcErrorShape } from "./helpers";
 import { contract as assignmentsContract } from "../src/service/modules/assignments/contract";
 import { contract as tagsContract } from "../src/service/modules/tags/contract";
 import { contract as tasksContract } from "../src/service/modules/tasks/contract";
@@ -46,7 +46,7 @@ describe("example-todo typed procedure errors", () => {
     const client = createClient(createClientOptions({ readOnly: true }));
 
     await expectOrpcError(
-      client.tasks.create({ title: "blocked write" }, invocation("trace-read-only")),
+      client.tasks.create({ title: "blocked write" }, createInvocation("trace-read-only")),
       {
         code: "READ_ONLY_MODE",
         status: 409,
@@ -58,7 +58,7 @@ describe("example-todo typed procedure errors", () => {
     const client = createClient(createClientOptions());
 
     await expectOrpcError(
-      client.tasks.create({ title: "   " }, invocation("trace-invalid-title")),
+      client.tasks.create({ title: "   " }, createInvocation("trace-invalid-title")),
       {
         code: "INVALID_TASK_TITLE",
         status: 400,
@@ -70,10 +70,10 @@ describe("example-todo typed procedure errors", () => {
   it("returns DUPLICATE_TAG when creating same tag name twice", async () => {
     const client = createClient(createClientOptions());
 
-    await client.tags.create({ name: "infra", color: "#123456" }, invocation("trace-tag-1"));
+    await client.tags.create({ name: "infra", color: "#123456" }, createInvocation("trace-first-tag"));
 
     await expectOrpcError(
-      client.tags.create({ name: "infra", color: "#654321" }, invocation("trace-tag-2")),
+      client.tags.create({ name: "infra", color: "#654321" }, createInvocation("trace-second-tag")),
       {
         code: "DUPLICATE_TAG",
         status: 409,
@@ -84,13 +84,13 @@ describe("example-todo typed procedure errors", () => {
 
   it("returns RESOURCE_NOT_FOUND when assignment references missing task", async () => {
     const client = createClient(createClientOptions());
-    const tag = await client.tags.create({ name: "ops", color: "#00aaff" }, invocation("trace-tag"));
+    const tag = await client.tags.create({ name: "ops", color: "#00aaff" }, createInvocation("trace-tag"));
 
     await expectOrpcError(
       client.assignments.assign({
         taskId: "00000000-0000-0000-0000-000000000001",
         tagId: tag.id,
-      }, invocation("trace-missing-task")),
+      }, createInvocation("trace-missing-task")),
       {
         code: "RESOURCE_NOT_FOUND",
         status: 404,
@@ -100,14 +100,14 @@ describe("example-todo typed procedure errors", () => {
   });
 
   it("returns ALREADY_ASSIGNED when same task/tag pair is assigned twice", async () => {
-    const client = createClient(createClientOptions());
-    const task = await client.tasks.create({ title: "Review PR" }, invocation("trace-task"));
-    const tag = await client.tags.create({ name: "review", color: "#ff6600" }, invocation("trace-tag"));
+    const client = createClient(createClientOptions({ maxAssignmentsPerTask: 2 }));
+    const task = await client.tasks.create({ title: "Review PR" }, createInvocation("trace-task"));
+    const tag = await client.tags.create({ name: "review", color: "#ff6600" }, createInvocation("trace-tag"));
 
-    await client.assignments.assign({ taskId: task.id, tagId: tag.id }, invocation("trace-assign"));
+    await client.assignments.assign({ taskId: task.id, tagId: tag.id }, createInvocation("trace-first-assign"));
 
     await expectOrpcError(
-      client.assignments.assign({ taskId: task.id, tagId: tag.id }, invocation("trace-duplicate")),
+      client.assignments.assign({ taskId: task.id, tagId: tag.id }, createInvocation("trace-second-assign")),
       {
         code: "ALREADY_ASSIGNED",
         status: 409,
@@ -116,16 +116,16 @@ describe("example-todo typed procedure errors", () => {
     );
   });
 
-  it("returns ASSIGNMENT_LIMIT_REACHED when configured assignment ceiling is hit", async () => {
+  it("returns ASSIGNMENT_LIMIT_REACHED when configured assignment cap is exceeded", async () => {
     const client = createClient(createClientOptions({ maxAssignmentsPerTask: 1 }));
-    const task = await client.tasks.create({ title: "Bounded task" }, invocation("trace-limit-task"));
-    const urgent = await client.tags.create({ name: "urgent", color: "#ff0000" }, invocation("trace-limit-tag-1"));
-    const backend = await client.tags.create({ name: "backend", color: "#00aa00" }, invocation("trace-limit-tag-2"));
+    const task = await client.tasks.create({ title: "Capped task" }, createInvocation("trace-cap-task"));
+    const firstTag = await client.tags.create({ name: "first", color: "#101010" }, createInvocation("trace-cap-tag-1"));
+    const secondTag = await client.tags.create({ name: "second", color: "#202020" }, createInvocation("trace-cap-tag-2"));
 
-    await client.assignments.assign({ taskId: task.id, tagId: urgent.id }, invocation("trace-limit-assign-1"));
+    await client.assignments.assign({ taskId: task.id, tagId: firstTag.id }, createInvocation("trace-cap-first"));
 
     await expectOrpcError(
-      client.assignments.assign({ taskId: task.id, tagId: backend.id }, invocation("trace-limit-assign-2")),
+      client.assignments.assign({ taskId: task.id, tagId: secondTag.id }, createInvocation("trace-cap-second")),
       {
         code: "ASSIGNMENT_LIMIT_REACHED",
         status: 409,
@@ -144,10 +144,9 @@ describe("example-todo typed procedure errors", () => {
       }),
     );
 
-    const result = await safe(client.tasks.get(
-      { id: "00000000-0000-0000-0000-000000000001" },
-      invocation("trace-storage-failure"),
-    ));
+    const result = await safe(
+      client.tasks.get({ id: "00000000-0000-0000-0000-000000000001" }, createInvocation("trace-storage-failure")),
+    );
     expect(result.isSuccess).toBe(false);
     expect(result.isDefined).toBe(false);
     expect(result.error).toBeTruthy();
@@ -160,7 +159,7 @@ describe("example-todo typed procedure errors", () => {
       }),
     );
 
-    const result = await safe(client.tasks.get({ id: "not-a-uuid" }, invocation("trace-invalid-schema")));
+    const result = await safe(client.tasks.get({ id: "not-a-uuid" }, createInvocation("trace-invalid-id")));
     expect(result.isSuccess).toBe(false);
 
     if (!result.isSuccess) {
