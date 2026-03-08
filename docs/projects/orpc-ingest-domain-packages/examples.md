@@ -34,7 +34,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
 - `context.deps` remains the single host-provided dependency bag; middleware/module setup may add top-level execution keys, but we do not split runtime dependencies into multiple bags.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
-- `src/service/base.ts` binds the service-local authoring surfaces once (`ocBase`, `createServiceMiddleware`, `createServiceImplementer`).
+- `src/service/base/index.ts` binds the service-local authoring surfaces once (`ocBase`, `createServiceMiddleware`, `createServiceImplementer`) and assembles baseline concern profiles from sibling files in `src/service/base/`.
 
 ## Real axes that should change
 
@@ -95,7 +95,11 @@ packages/example-minimal/src/
 │       └── analytics.ts
 └── service/
     ├── contract.ts
-    ├── base.ts
+    ├── base/
+    │   ├── index.ts
+    │   ├── observability.ts
+    │   ├── analytics.ts
+    │   └── policy.ts
     ├── impl.ts
     ├── router.ts
     ├── middleware/
@@ -143,7 +147,11 @@ packages/example-todo/src/
 │       └── feedback-provider.ts
 └── service/
     ├── contract.ts
-    ├── base.ts
+    ├── base/
+    │   ├── index.ts
+    │   ├── observability.ts
+    │   ├── analytics.ts
+    │   └── policy.ts
     ├── impl.ts
     ├── router.ts
     ├── middleware/

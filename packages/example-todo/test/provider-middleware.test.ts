@@ -4,8 +4,46 @@ import { Type } from "typebox";
 
 import type { BaseMetadata } from "../src/orpc/base";
 import { createContractBuilder } from "../src/orpc/factory/contract";
-import { defineService, schema, type FeedbackClient } from "../src/orpc-sdk";
+import {
+  defineService,
+  schema,
+  type BaseObservabilityProfile,
+  type BasePolicyProfile,
+  type FeedbackClient,
+} from "../src/orpc-sdk";
 import { feedbackProvider } from "../src/orpc/middleware/feedback-provider";
+
+function createTestBase<TMeta extends BaseMetadata, TContext extends {
+  deps: {
+    logger: {
+      info(message: string, meta?: Record<string, unknown>): void;
+      error(message: string, meta?: Record<string, unknown>): void;
+    };
+    analytics: {
+      track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+    };
+  };
+}>() {
+  const observability: BaseObservabilityProfile<TMeta, TContext> = {
+    loggerEvent: "test.procedure",
+    startedEvent: "test.procedure.started",
+    succeededEvent: "test.procedure.succeeded",
+    failedEvent: "test.procedure.failed",
+    getAttributes() {
+      return {};
+    },
+    getLogFields() {
+      return {};
+    },
+  };
+  const policy: BasePolicyProfile = { events: {} };
+
+  return {
+    analytics: { app: "test" },
+    observability,
+    policy,
+  };
+}
 
 describe("provider middleware", () => {
   it("adds feedback execution context only when attached", async () => {
@@ -91,9 +129,7 @@ describe("provider middleware", () => {
         idempotent: true,
         audit: "basic",
       },
-      implementer: {
-        analytics: { app: "test" },
-      },
+      base: createTestBase<TestMetadata, TestContext>(),
     });
 
     const contract = {
@@ -167,9 +203,7 @@ describe("provider middleware", () => {
       metadata: {
         idempotent: true,
       },
-      implementer: {
-        analytics: { app: "test" },
-      },
+      base: createTestBase<TestMetadata, TestContext>(),
     });
 
     const contract = {
@@ -238,9 +272,7 @@ describe("provider middleware", () => {
       metadata: {
         idempotent: true,
       },
-      implementer: {
-        analytics: { app: "test" },
-      },
+      base: createTestBase<TestMetadata, TestContext>(),
     });
 
     const contract = {
@@ -321,9 +353,7 @@ describe("provider middleware", () => {
       metadata: {
         idempotent: true,
       },
-      implementer: {
-        analytics: { app: "test" },
-      },
+      base: createTestBase<TestMetadata, TestContext>(),
     });
 
     const contract = {

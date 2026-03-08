@@ -3,12 +3,41 @@ import { implement } from "@orpc/server";
 import { createClient } from "../src";
 import type { BaseMetadata } from "../src/orpc/base";
 import type { DbPool } from "../src/orpc/adapters/sql";
-import { defineService, type Sql } from "../src/orpc-sdk";
+import {
+  defineService,
+  type BaseObservabilityProfile,
+  type BasePolicyProfile,
+  type Sql,
+} from "../src/orpc-sdk";
 import { createBaseProvider } from "../src/orpc/base-foundation";
 import type { CreateClientOptions } from "../src/client";
 import { sqlProvider } from "../src/orpc/middleware/sql-provider";
 import { contract } from "../src/service/contract";
 import { createServiceMiddleware, createServiceProvider } from "../src/service/base";
+
+function createTestBase<TMeta extends BaseMetadata, TContext extends {
+  deps: CreateClientOptions["deps"];
+}>() {
+  const observability: BaseObservabilityProfile<TMeta, TContext> = {
+    loggerEvent: "test.procedure",
+    startedEvent: "test.procedure.started",
+    succeededEvent: "test.procedure.succeeded",
+    failedEvent: "test.procedure.failed",
+    getAttributes() {
+      return {};
+    },
+    getLogFields() {
+      return {};
+    },
+  };
+  const policy: BasePolicyProfile = { events: {} };
+
+  return {
+    analytics: { app: "alternate" },
+    observability,
+    policy,
+  };
+}
 
 declare const dbPool: DbPool;
 declare const deps: CreateClientOptions["deps"];
@@ -91,9 +120,13 @@ const alternateInvocationService = defineService<BaseMetadata, {
   metadata: {
     idempotent: true,
   },
-  implementer: {
-    analytics: { app: "alternate" },
-  },
+  base: createTestBase<BaseMetadata, {
+    deps: CreateClientOptions["deps"];
+    scope: { workspaceId: string };
+    config: CreateClientOptions["config"];
+    invocation: { requestId: string };
+    provided: {};
+  }>(),
 });
 void alternateInvocationService;
 

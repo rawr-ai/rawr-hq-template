@@ -10,7 +10,10 @@ import { isContractProcedure } from "@orpc/contract";
 import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
-import { createAnalyticsMiddleware } from "./middleware/analytics";
+import {
+  createAnalyticsMiddleware,
+  type BaseAnalyticsProfile,
+} from "./middleware/analytics";
 import { createBaseObservabilityMiddleware } from "./middleware/observability";
 import {
   createBareProcedureImplementer,
@@ -76,8 +79,8 @@ export type {
   ServiceContextOf,
 } from "./base-foundation";
 
-export type BaseImplementerOptions = {
-  analytics: { app: string };
+export type BaseAssemblyOptions = {
+  analytics: BaseAnalyticsProfile;
 };
 
 type AnyContractRouterObject = {
@@ -89,11 +92,11 @@ type AnyContractRouterObject = {
  * observability middleware.
  */
 export function createBaseProcedureImplementer<
-  const TContract extends AnyContractProcedure,
+ const TContract extends AnyContractProcedure,
   TContext extends BaseContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
-  options: BaseImplementerOptions,
+  options: BaseAssemblyOptions,
 ) {
   return createBareProcedureImplementer<TContract, TContext>(contract)
     .use(createBaseObservabilityMiddleware())
@@ -105,11 +108,11 @@ export function createBaseProcedureImplementer<
  * baseline observability middleware.
  */
 export function createBaseRouterImplementer<
-  const TContract extends AnyContractRouterObject,
+ const TContract extends AnyContractRouterObject,
   TContext extends BaseContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
-  options: BaseImplementerOptions,
+  options: BaseAssemblyOptions,
 ) {
   return createBareRouterImplementer<TContract, TContext>(contract)
     .use(createBaseObservabilityMiddleware())
@@ -121,18 +124,18 @@ export function createBaseImplementer<
   TContext extends BaseContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
-  options: BaseImplementerOptions,
+  options: BaseAssemblyOptions,
 ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBaseImplementer<
   const TContract extends AnyContractRouterObject,
   TContext extends BaseContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
-  options: BaseImplementerOptions,
+  options: BaseAssemblyOptions,
 ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBaseImplementer(
   contract: AnyContractRouter,
-  options: BaseImplementerOptions,
+  options: BaseAssemblyOptions,
 ) {
   if (isContractProcedure(contract)) {
     return createBaseProcedureImplementer(contract, options);
