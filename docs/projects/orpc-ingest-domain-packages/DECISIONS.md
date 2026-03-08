@@ -95,7 +95,7 @@ Adopt module-level hybrid contract-first:
 - each module defines `setup.ts` (runtime injection: context middleware, repos/services),
 - each module defines `router.ts` (behavior: handlers + contract-enforced router export),
 - modules derive their implementer subtrees from the central `impl` in `src/service/impl.ts`,
-- modules share a single service base import surface for contract authoring + middleware authoring (`src/service/base.ts`),
+- modules share a single service base import surface for contract authoring + middleware authoring (`src/service/base/` with `index.ts` as the assembly entrypoint),
 - package boundary remains router-client-first (`router` + `createClient` entrypoints).
 
 ### Why

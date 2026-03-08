@@ -7,6 +7,7 @@
  * `src/orpc/*` directly. Lower-level construction primitives stay internal.
  */
 export type {
+  BaseAssemblyOptions,
   BaseDeps,
   BaseMetadata,
   InitialContext,
@@ -14,6 +15,12 @@ export type {
   ServiceMetadataOf,
   ServiceContextOf,
 } from "./orpc/base";
+export type {
+  BaseAnalyticsProfile,
+  BaseObservabilityProfile,
+  BasePolicyProfile,
+  ObservabilityErrorDetails,
+} from "./orpc/middleware";
 export type { DbPool, Sql } from "./orpc/adapters/sql";
 export type { FeedbackClient } from "./orpc/adapters/feedback";
 export {

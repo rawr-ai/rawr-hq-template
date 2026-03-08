@@ -1,17 +1,26 @@
 /**
- * @fileoverview Service definition for the todo package.
+ * @fileoverview Service definition manifest for the todo package.
  *
  * @remarks
- * This file is the service-definition center of gravity:
+ * This directory is the service base-construction layer:
  * - host-owned deps and initial context
  * - shared procedure metadata defaults
- * - the bound authoring surfaces exported to the rest of the package
+ * - the bound service authoring surfaces exported to the rest of the package
+ * - baseline concern profiles imported from sibling files
  *
- * Keep concrete service facts here. `src/service/impl.ts` owns middleware
- * stacking; `src/orpc/*` owns the reusable SDK machinery behind these exports.
+ * Keep this file as the assembly manifest. Rich concern logic belongs in the
+ * sibling files under `src/service/base/`.
  */
-import type { DbPool, ServiceContextOf, ServiceDepsOf, ServiceMetadataOf } from "../orpc-sdk";
-import { defineService } from "../orpc-sdk";
+import type {
+  DbPool,
+  ServiceContextOf,
+  ServiceDepsOf,
+  ServiceMetadataOf,
+} from "../../orpc-sdk";
+import { defineService } from "../../orpc-sdk";
+import { analytics } from "./analytics";
+import { observability } from "./observability";
+import { policy } from "./policy";
 
 /**
  * Host-owned time source used by task/tag creation and similar flows.
@@ -88,6 +97,8 @@ export type ServiceMetadata = ServiceMetadataOf<{
  * @remarks
  * `defineService(...)` binds the service-local authoring surfaces once:
  * contract authoring, service middleware authoring, and implementer creation.
+ * The `base` property assembles the baseline concern profiles imported from the
+ * sibling files in this directory.
  */
 const service = defineService<ServiceMetadata, ServiceContext>({
   metadata: {
@@ -97,8 +108,10 @@ const service = defineService<ServiceMetadata, ServiceContext>({
     audit: "basic",
     entity: "service",
   },
-  implementer: {
-    analytics: { app: "todo" },
+  base: {
+    analytics,
+    observability,
+    policy,
   },
 });
 
@@ -132,7 +145,7 @@ export const createServiceProvider = service.createProvider;
  *
  * @remarks
  * `src/service/impl.ts` imports the root contract and calls this once. Keeping
- * the factory here avoids repeating `ServiceContext` and baseline implementer
- * options in every implementation file.
+ * the factory here avoids repeating `ServiceContext` and baseline service
+ * assembly options in every implementation file.
  */
 export const createServiceImplementer = service.createImplementer;

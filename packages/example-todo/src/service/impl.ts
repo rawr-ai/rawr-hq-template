@@ -8,7 +8,6 @@
  */
 import { contract } from "./contract";
 import { createServiceImplementer } from "./base";
-import { todoObservability } from "./middleware/observability";
 import { readOnlyMode } from "./middleware/read-only-mode";
 import { sqlProvider } from "../orpc-sdk";
 
@@ -18,11 +17,10 @@ import { sqlProvider } from "../orpc-sdk";
  * @remarks
  * Middleware order is authored here:
  * 1) framework-level observability + analytics (inside `createServiceImplementer`)
- * 2) package-level observability (`todoObservability`)
+ * 2) service-level baseline observability (inside `createServiceImplementer`)
  * 3) SQL provider (`deps.dbPool` -> `provided.sql`)
  * 4) domain guard (`readOnlyMode`)
  */
 export const impl = createServiceImplementer(contract)
-  .use(todoObservability)
   .use(sqlProvider)
   .use(readOnlyMode);

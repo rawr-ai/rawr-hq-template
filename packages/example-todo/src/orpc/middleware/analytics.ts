@@ -8,6 +8,15 @@
 import type { AnalyticsClient } from "../base";
 import { createBaseMiddleware } from "../base-foundation";
 
+export type BaseAnalyticsProfile = {
+  app: string;
+  event?: string;
+  getPayload?: (args: {
+    pathLabel: string;
+    outcome: "success" | "error";
+  }) => Record<string, unknown>;
+};
+
 /**
  * Construct analytics middleware.
  *
@@ -15,7 +24,7 @@ import { createBaseMiddleware } from "../base-foundation";
  * This is configurable middleware, so it exports a constructor rather than a
  * ready-to-use value.
  */
-export function createAnalyticsMiddleware(options: { app: string }) {
+export function createAnalyticsMiddleware(profile: BaseAnalyticsProfile) {
   return createBaseMiddleware<{
     deps: {
       analytics: AnalyticsClient;
@@ -32,10 +41,15 @@ export function createAnalyticsMiddleware(options: { app: string }) {
       throw error;
     }
     finally {
-      await context.deps.analytics.track("orpc.procedure", {
-        app: options.app,
-        path: path.join("."),
+      const pathLabel = path.join(".");
+      await context.deps.analytics.track(profile.event ?? "orpc.procedure", {
+        app: profile.app,
+        path: pathLabel,
         outcome,
+        ...profile.getPayload?.({
+          pathLabel,
+          outcome,
+        }),
       });
     }
   });

@@ -14,7 +14,8 @@ If you are an agent arriving to implement business logic fast:
 - **Start at oRPC composition**: `src/service/impl.ts` (root contract implementer + package-wide middleware order)
 - **Then open the service router**: `src/service/router.ts` (module router composition + single final attach)
 - **Then live in a module**: `src/service/modules/<name>/{contract,setup,router}.ts`
-- **When you need “the one import for service authoring”**: `src/service/base.ts` (`ocBase` + `createServiceMiddleware` + `createServiceImplementer`)
+- **When you need “the one import for service authoring”**: `src/service/base` (`ocBase` + `createServiceMiddleware` + `createServiceImplementer`)
+- **When you need to inspect or change baseline cross-cutting service behavior**: `src/service/base/{observability,analytics,policy}.ts`
 - **When you need “the one import for handler implementers”**: `src/service/impl.ts` (`impl.<module>` subtrees)
 - **When you need kit-level middleware** (analytics, providers, generic wrappers): `src/orpc/middleware/*`
 
@@ -34,18 +35,21 @@ Use one stable top-level structure across package sizes:
 Always-on slots:
 
 - `src/service/router.ts` is the always-on service router composition choke point (single final attach).
-- `src/service/base.ts` is the always-on service-definition surface (host deps, initial context, metadata defaults, and the bound service authoring surfaces from `defineService`).
+- `src/service/base/` is the always-on service base-construction layer.
+- `src/service/base/index.ts` is the assembly manifest for host deps, initial context, metadata defaults, and the bound service authoring surfaces from `defineService`.
+- `src/service/base/{observability,analytics,policy}.ts` are the stable baseline concern slots consumed automatically by `createServiceImplementer(...)`.
 - `src/orpc/base.ts` is the always-on domain-package baseline definition surface.
 - `src/orpc/factory/*` is the always-on internal helper layer for abstract oRPC builders.
 - `src/orpc/package-boundary.ts` owns the package boundary wiring used by `src/client.ts`.
 - `src/orpc/middleware/*` is the always-on slot for kit-level middleware definitions.
 - `src/service/impl.ts` is the always-on oRPC composition surface (implement root contract + attach middleware).
+- `src/service/impl.ts` should compose package-wide providers/guards and any extra non-baseline service middleware; it should not be the default home for baseline observability wiring.
 
 ## Scaffold Determinism Rule
 
 When choosing between "minimal now" vs "predictable later", prefer predictable scaffold slots for core structure.
 
-- Keep always-present structural files that are expected as a package grows (for example `src/service/base.ts`, `src/service/router.ts`, `src/service/impl.ts`, `src/orpc/middleware/*`), even if initially thin.
+- Keep always-present structural files/directories that are expected as a package grows (for example `src/service/base/`, `src/service/router.ts`, `src/service/impl.ts`, `src/orpc/middleware/*`), even if initially thin.
 - Do not push structural timing decisions ("add this file later") onto agents for core package layout.
 - Use templates/CLI shape flags to vary content depth, not to vary foundational topology.
 
@@ -137,8 +141,8 @@ Current required baseline:
 
 Recommended pattern:
 
-- define base metadata defaults once in `src/service/base.ts`,
-- bind service-local contract/middleware/implementer authoring once in `src/service/base.ts` via `defineService(...)`,
+- define base metadata defaults once in `src/service/base/index.ts`,
+- bind service-local contract/middleware/implementer authoring once in `src/service/base/index.ts` via `defineService(...)`,
 - keep module contracts explicit by setting `idempotent` on every procedure,
 - read metadata in middleware via `procedure["~orpc"].meta` (oRPC runtime metadata surface).
 
@@ -203,7 +207,7 @@ Treat middleware categories as behavioral roles, not just naming conventions:
 - **Guard/policy middleware** consumes context and metadata to allow/block/shape execution, but does not add execution context.
   - Example: `readOnlyMode`
 - **Observer/instrumentation middleware** consumes context and metadata to emit side effects, but does not add execution context.
-  - Examples: `createBaseObservabilityMiddleware`, `createAnalyticsMiddleware`, `todoObservability`
+  - Examples: `createBaseObservabilityMiddleware`, `createAnalyticsMiddleware`, `readOnlyMode`
 
 The semantic line is simple:
 
@@ -215,7 +219,7 @@ The semantic line is simple:
 
 Author middleware against the mirrored required-context shape directly:
 
-- bind service-local authoring surfaces once in `src/service/base.ts` via `defineService(...)`
+- bind service-local authoring surfaces once in `src/service/base/index.ts` via `defineService(...)`
 - use `createServiceImplementer(contract)` in `src/service/impl.ts` so service context and baseline implementer options stay bound in one place
 - shared/framework non-providers via `createBaseMiddleware<{ ...lane fragments... }>()`
 - shared/framework providers via `createBaseProvider<{ ...lane fragments... }>()`
