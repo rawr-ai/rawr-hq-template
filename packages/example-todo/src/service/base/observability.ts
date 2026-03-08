@@ -1,5 +1,5 @@
-import type { BaseObservabilityProfile } from "../../orpc-sdk";
-import type { ServiceContext, ServiceMetadata } from "./index";
+import type { ServiceObservabilityProfile } from "../../orpc-sdk";
+import type { ServiceContext, ServiceMetadata } from "./types";
 
 function inferEntity(segment?: string) {
   if (!segment) {
@@ -13,26 +13,29 @@ function inferEntity(segment?: string) {
  * Baseline service observability profile for the todo package.
  *
  * @remarks
- * Keep service-specific observability semantics here instead of re-authoring a
- * full middleware shell in `src/service/impl.ts`.
+ * Keep service-specific observability deltas and bounded hooks here instead of
+ * re-authoring a full middleware shell in `src/service/impl.ts`.
+ *
+ * The SDK derives the repetitive baseline from service metadata:
+ * - logger event names like `todo.procedure`
+ * - lifecycle event names like `todo.procedure.started`
+ * - attribute prefixes like `rawr.todo.*`
+ *
+ * This file should only declare what is specific to the todo service.
  */
-export const observability: BaseObservabilityProfile<ServiceMetadata, ServiceContext> = {
-  loggerEvent: "todo.procedure",
-  startedEvent: "todo.procedure.started",
-  succeededEvent: "todo.procedure.succeeded",
-  failedEvent: "todo.procedure.failed",
-  getAttributes: ({ context, meta, path }) => {
+export const observability: ServiceObservabilityProfile<ServiceMetadata, ServiceContext> = {
+  attributes: ({ context, meta, path }) => {
     const entity = meta.entity ?? inferEntity(path[0]);
 
     return {
-      "rawr.todo.workspace_id": context.scope.workspaceId,
-      "rawr.todo.read_only": context.config.readOnly,
-      "rawr.todo.invocation_trace_id": context.invocation.traceId,
-      ...(entity ? { "rawr.todo.entity": entity } : {}),
-      ...(meta.audit ? { "rawr.todo.audit": meta.audit } : {}),
+      workspace_id: context.scope.workspaceId,
+      read_only: context.config.readOnly,
+      invocation_trace_id: context.invocation.traceId,
+      ...(entity ? { entity } : {}),
+      ...(meta.audit ? { audit: meta.audit } : {}),
     };
   },
-  getLogFields: ({ context, meta, path, spanTraceId }) => {
+  logFields: ({ context, meta, path, spanTraceId }) => {
     const entity = meta.entity ?? inferEntity(path[0]);
 
     return {
@@ -44,30 +47,27 @@ export const observability: BaseObservabilityProfile<ServiceMetadata, ServiceCon
       readOnly: context.config.readOnly,
     };
   },
-  onStarted: ({ span, context, pathLabel }) => {
-    span?.addEvent("todo.procedure.started", {
-      path: pathLabel,
+  startedEventFields: ({ context }) => {
+    return {
       workspaceId: context.scope.workspaceId,
       traceId: context.invocation.traceId,
-    });
+    };
   },
-  onSucceeded: ({ span, context, pathLabel, durationMs }) => {
-    span?.addEvent("todo.procedure.succeeded", {
-      path: pathLabel,
-      durationMs,
+  succeededEventFields: ({ context }) => {
+    return {
       workspaceId: context.scope.workspaceId,
-    });
+    };
   },
-  onFailed: ({ span, context, pathLabel, error, policy }) => {
-    if (error.code === "READ_ONLY_MODE" && policy.events?.readOnlyRejected) {
-      span?.addEvent(policy.events.readOnlyRejected, {
+  onFailed: ({ span, context, pathLabel, error, policyEvents }) => {
+    if (error.code === "READ_ONLY_MODE" && policyEvents?.readOnlyRejected) {
+      span?.addEvent(policyEvents.readOnlyRejected, {
         path: pathLabel,
         workspaceId: context.scope.workspaceId,
       });
     }
 
-    if (error.code === "ASSIGNMENT_LIMIT_REACHED" && policy.events?.assignmentLimitReached) {
-      span?.addEvent(policy.events.assignmentLimitReached, {
+    if (error.code === "ASSIGNMENT_LIMIT_REACHED" && policyEvents?.assignmentLimitReached) {
+      span?.addEvent(policyEvents.assignmentLimitReached, {
         path: pathLabel,
         workspaceId: context.scope.workspaceId,
       });

@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Baseline observability middleware and service observability profile types.
+ *
+ * @remarks
+ * The framework owns the generic middleware envelope and baseline naming.
+ * Service packages only supply domain-specific deltas and bounded lifecycle
+ * hooks on top of that baseline.
+ */
 import type { Attributes, Span } from "@opentelemetry/api";
 import { SpanStatusCode, trace } from "@opentelemetry/api";
 import type { MiddlewareResult } from "@orpc/server";
@@ -5,20 +13,19 @@ import type { BaseMetadata, Logger } from "../base";
 import { createBaseMiddleware } from "../base-foundation";
 import { createNormalMiddlewareBuilder } from "../factory/middleware";
 
+type ObservabilityScalar = string | number | boolean;
+type ObservabilityFields = Record<string, ObservabilityScalar | undefined>;
+
 export type ObservabilityErrorDetails = ReturnType<typeof getErrorDetails>;
 
-export type BaseObservabilityProfile<
+type ResolvedObservabilityProfile<
   TMeta extends BaseMetadata,
   TContext extends {
     deps: {
       logger: Logger;
     };
   },
-  TPolicy extends {
-    events?: Record<string, string | undefined>;
-  } = {
-    events?: Record<string, string | undefined>;
-  },
+  TPolicyEvents extends Record<string, string | undefined> | undefined = undefined,
 > = {
   loggerEvent: string;
   startedEvent: string;
@@ -38,6 +45,27 @@ export type BaseObservabilityProfile<
     durationMs: number;
     spanTraceId?: string;
   }): Record<string, unknown>;
+  getStartedEventFields?(args: {
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+  }): Attributes;
+  getSucceededEventFields?(args: {
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+    durationMs: number;
+  }): Attributes;
+  getFailedEventFields?(args: {
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+    durationMs: number;
+    error: ObservabilityErrorDetails;
+  }): Attributes;
   onStarted?(args: {
     span: Span | undefined;
     context: TContext;
@@ -61,7 +89,82 @@ export type BaseObservabilityProfile<
     pathLabel: string;
     durationMs: number;
     error: ObservabilityErrorDetails;
-    policy: TPolicy;
+    policyEvents: TPolicyEvents;
+  }): void;
+};
+
+export type ServiceObservabilityProfile<
+  TMeta extends BaseMetadata,
+  TContext extends {
+    deps: {
+      logger: Logger;
+    };
+  },
+  TPolicy extends {
+    events?: Record<string, string | undefined>;
+  } = {
+    events?: Record<string, string | undefined>;
+  },
+> = {
+  attributes?: (args: {
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+  }) => ObservabilityFields;
+  logFields?: (args: {
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+    durationMs: number;
+    spanTraceId?: string;
+  }) => Record<string, unknown>;
+  startedEventFields?: (args: {
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+  }) => Attributes;
+  succeededEventFields?: (args: {
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+    durationMs: number;
+  }) => Attributes;
+  failedEventFields?: (args: {
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+    durationMs: number;
+    error: ObservabilityErrorDetails;
+  }) => Attributes;
+  onStarted?(args: {
+    span: Span | undefined;
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+  }): void;
+  onSucceeded?(args: {
+    span: Span | undefined;
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+    durationMs: number;
+  }): void;
+  onFailed?(args: {
+    span: Span | undefined;
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
+    pathLabel: string;
+    durationMs: number;
+    error: ObservabilityErrorDetails;
+    policyEvents: TPolicy["events"];
   }): void;
 };
 
@@ -91,7 +194,52 @@ function getErrorDetails(error: unknown) {
   };
 }
 
-function createObservabilityHandler<
+function toAttributes(fields: ObservabilityFields | undefined): Attributes {
+  const attributes: Attributes = {};
+
+  if (!fields) {
+    return attributes;
+  }
+
+  for (const [key, value] of Object.entries(fields)) {
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      attributes[key] = value;
+    }
+  }
+
+  return attributes;
+}
+
+function prefixAttributes(prefix: string, fields: ObservabilityFields | undefined): Attributes {
+  const attributes: Attributes = {};
+
+  if (!fields) {
+    return attributes;
+  }
+
+  for (const [key, value] of Object.entries(fields)) {
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      attributes[`${prefix}.${key}`] = value;
+    }
+  }
+
+  return attributes;
+}
+
+function deriveServiceNames(baseMetadata: BaseMetadata) {
+  const domain = baseMetadata.domain ?? "service";
+
+  return {
+    domain,
+    loggerEvent: `${domain}.procedure`,
+    startedEvent: `${domain}.procedure.started`,
+    succeededEvent: `${domain}.procedure.succeeded`,
+    failedEvent: `${domain}.procedure.failed`,
+    attributePrefix: `rawr.${domain}`,
+  };
+}
+
+function resolveServiceObservabilityProfile<
   TMeta extends BaseMetadata,
   TContext extends {
     deps: {
@@ -101,10 +249,57 @@ function createObservabilityHandler<
   TPolicy extends {
     events?: Record<string, string | undefined>;
   },
+>(
+  baseMetadata: TMeta,
+  profile: ServiceObservabilityProfile<TMeta, TContext, TPolicy>,
+): ResolvedObservabilityProfile<TMeta, TContext, TPolicy["events"]> {
+  const names = deriveServiceNames(baseMetadata);
+
+  return {
+    loggerEvent: names.loggerEvent,
+    startedEvent: names.startedEvent,
+    succeededEvent: names.succeededEvent,
+    failedEvent: names.failedEvent,
+    getAttributes: ({ context, meta, path, pathLabel }) =>
+      prefixAttributes(
+        names.attributePrefix,
+        profile.attributes?.({
+          context,
+          meta,
+          path,
+          pathLabel,
+        }),
+      ),
+    getLogFields: ({ context, meta, path, pathLabel, durationMs, spanTraceId }) =>
+      profile.logFields?.({
+        context,
+        meta,
+        path,
+        pathLabel,
+        durationMs,
+        spanTraceId,
+      }) ?? {},
+    getStartedEventFields: profile.startedEventFields,
+    getSucceededEventFields: profile.succeededEventFields,
+    getFailedEventFields: profile.failedEventFields,
+    onStarted: profile.onStarted,
+    onSucceeded: profile.onSucceeded,
+    onFailed: profile.onFailed,
+  };
+}
+
+function createObservabilityHandler<
+  TMeta extends BaseMetadata,
+  TContext extends {
+    deps: {
+      logger: Logger;
+    };
+  },
+  TPolicyEvents extends Record<string, string | undefined> | undefined,
 >(options: {
   getMeta(procedure: unknown): TMeta;
-  profile: BaseObservabilityProfile<TMeta, TContext, TPolicy>;
-  policy: TPolicy;
+  profile: ResolvedObservabilityProfile<TMeta, TContext, TPolicyEvents>;
+  policyEvents: TPolicyEvents;
 }) {
   return async ({
     context,
@@ -129,7 +324,15 @@ function createObservabilityHandler<
       path,
       pathLabel,
     }));
-    span?.addEvent(options.profile.startedEvent, { path: pathLabel });
+    span?.addEvent(options.profile.startedEvent, {
+      path: pathLabel,
+      ...options.profile.getStartedEventFields?.({
+        context,
+        meta,
+        path,
+        pathLabel,
+      }),
+    });
     options.profile.onStarted?.({
       span,
       context,
@@ -145,6 +348,13 @@ function createObservabilityHandler<
       span?.addEvent(options.profile.succeededEvent, {
         path: pathLabel,
         durationMs,
+        ...options.profile.getSucceededEventFields?.({
+          context,
+          meta,
+          path,
+          pathLabel,
+          durationMs,
+        }),
       });
       options.profile.onSucceeded?.({
         span,
@@ -185,6 +395,14 @@ function createObservabilityHandler<
         durationMs,
         ...(details.code ? { code: details.code } : {}),
         ...(typeof details.status === "number" ? { status: details.status } : {}),
+        ...options.profile.getFailedEventFields?.({
+          context,
+          meta,
+          path,
+          pathLabel,
+          durationMs,
+          error: details,
+        }),
       });
       options.profile.onFailed?.({
         span,
@@ -194,7 +412,7 @@ function createObservabilityHandler<
         pathLabel,
         durationMs,
         error: details,
-        policy: options.policy,
+        policyEvents: options.policyEvents,
       });
 
       context.deps.logger.error(options.profile.loggerEvent, {
@@ -217,8 +435,16 @@ function createObservabilityHandler<
   };
 }
 
+/**
+ * Construct the framework-level baseline observability middleware.
+ *
+ * @remarks
+ * This middleware emits generic `rawr.orpc.*` span attributes/events and one
+ * baseline structured log per procedure execution. It does not know about
+ * service-specific semantics.
+ */
 export function createBaseObservabilityMiddleware() {
-  const profile: BaseObservabilityProfile<
+  const profile: ResolvedObservabilityProfile<
     BaseMetadata,
     {
       deps: {
@@ -253,10 +479,19 @@ export function createBaseObservabilityMiddleware() {
   }>().middleware(createObservabilityHandler({
     getMeta: getProcedureMeta,
     profile,
-    policy: {},
+    policyEvents: undefined,
   }));
 }
 
+/**
+ * Construct service-level observability middleware from metadata and a light
+ * service profile.
+ *
+ * @remarks
+ * The SDK derives service event names, logger event names, and namespaced span
+ * attribute prefixes from service metadata. The service profile only supplies
+ * meaningful deltas and bounded hooks.
+ */
 export function createServiceObservabilityMiddleware<
   TMeta extends BaseMetadata,
   TContext extends {
@@ -269,9 +504,11 @@ export function createServiceObservabilityMiddleware<
   },
 >(
   baseMetadata: TMeta,
-  profile: BaseObservabilityProfile<TMeta, TContext, TPolicy>,
+  profile: ServiceObservabilityProfile<TMeta, TContext, TPolicy>,
   policy: TPolicy,
 ) {
+  const resolvedProfile = resolveServiceObservabilityProfile(baseMetadata, profile);
+
   return createNormalMiddlewareBuilder<TContext, TMeta>({
     baseMetadata,
   }).middleware(createObservabilityHandler({
@@ -279,7 +516,7 @@ export function createServiceObservabilityMiddleware<
       const anyProcedure = procedure as { ["~orpc"]?: { meta?: TMeta } };
       return anyProcedure?.["~orpc"]?.meta ?? baseMetadata;
     },
-    profile,
-    policy,
+    profile: resolvedProfile,
+    policyEvents: policy.events,
   }));
 }

@@ -3,7 +3,7 @@
  *
  * @remarks
  * This directory is the service base-construction layer:
- * - host-owned deps and initial context
+ * - shared service-base types
  * - shared procedure metadata defaults
  * - the bound service authoring surfaces exported to the rest of the package
  * - baseline concern profiles imported from sibling files
@@ -11,85 +11,20 @@
  * Keep this file as the assembly manifest. Rich concern logic belongs in the
  * sibling files under `src/service/base/`.
  */
-import type {
-  DbPool,
-  ServiceContextOf,
-  ServiceDepsOf,
-  ServiceMetadataOf,
-} from "../../orpc-sdk";
 import { defineService } from "../../orpc-sdk";
 import { analytics } from "./analytics";
 import { observability } from "./observability";
 import { policy } from "./policy";
-
-/**
- * Host-owned time source used by task/tag creation and similar flows.
- */
-export interface Clock {
-  now(): string;
-}
-
-/**
- * Stable client scope for the todo package.
- */
-export interface ServiceScope {
-  workspaceId: string;
-}
-
-/**
- * Stable package configuration for the todo package.
- */
-export interface ServiceConfig {
-  readOnly: boolean;
-  limits: {
-    maxAssignmentsPerTask: number;
-  };
-}
-
-/**
- * Invocation-scoped input for the todo package.
- */
-export interface ServiceInvocation {
-  traceId: string;
-}
-
-/**
- * Host-owned dependencies for the todo service.
- *
- * @remarks
- * This is the explicit dependency contract at the service boundary.
- * Baseline deps vs service deps stays a type-authoring distinction only.
- */
-export interface ServiceDeps extends ServiceDepsOf<{
-  dbPool: DbPool;
-  clock: Clock;
-}> {}
-
-/**
- * Initial service context.
- *
- * @remarks
- * Keep the semantic lane model explicit here. Construction-time bags are
- * `deps`, `scope`, and `config`; per-call input is `invocation`.
- */
-export type ServiceContext = ServiceContextOf<
-  ServiceDeps,
-  ServiceScope,
+export type {
+  Clock,
   ServiceConfig,
-  ServiceInvocation
->;
-
-/**
- * Service-specific procedure metadata.
- *
- * @remarks
- * Keep this small and operational. These are the metadata fields service-local
- * middleware and policy can reasonably depend on.
- */
-export type ServiceMetadata = ServiceMetadataOf<{
-  audit?: "none" | "basic" | "full";
-  entity?: "service" | "task" | "tag" | "assignment";
-}>;
+  ServiceContext,
+  ServiceDeps,
+  ServiceInvocation,
+  ServiceMetadata,
+  ServiceScope,
+} from "./types";
+import type { ServiceContext, ServiceMetadata } from "./types";
 
 /**
  * Bound service authoring surface.
@@ -98,7 +33,8 @@ export type ServiceMetadata = ServiceMetadataOf<{
  * `defineService(...)` binds the service-local authoring surfaces once:
  * contract authoring, service middleware authoring, and implementer creation.
  * The `base` property assembles the baseline concern profiles imported from the
- * sibling files in this directory.
+ * sibling files in this directory. Keep concern behavior there and keep this
+ * file focused on assembly.
  */
 const service = defineService<ServiceMetadata, ServiceContext>({
   metadata: {

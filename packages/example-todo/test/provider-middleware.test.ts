@@ -7,9 +7,10 @@ import { createContractBuilder } from "../src/orpc/factory/contract";
 import {
   defineService,
   schema,
-  type BaseObservabilityProfile,
   type BasePolicyProfile,
   type FeedbackClient,
+  type ServiceAnalyticsProfile,
+  type ServiceObservabilityProfile,
 } from "../src/orpc-sdk";
 import { feedbackProvider } from "../src/orpc/middleware/feedback-provider";
 
@@ -24,22 +25,19 @@ function createTestBase<TMeta extends BaseMetadata, TContext extends {
     };
   };
 }>() {
-  const observability: BaseObservabilityProfile<TMeta, TContext> = {
-    loggerEvent: "test.procedure",
-    startedEvent: "test.procedure.started",
-    succeededEvent: "test.procedure.succeeded",
-    failedEvent: "test.procedure.failed",
-    getAttributes() {
+  const analytics: ServiceAnalyticsProfile<TMeta, TContext> = {};
+  const observability: ServiceObservabilityProfile<TMeta, TContext> = {
+    attributes() {
       return {};
     },
-    getLogFields() {
+    logFields() {
       return {};
     },
   };
   const policy: BasePolicyProfile = { events: {} };
 
   return {
-    analytics: { app: "test" },
+    analytics,
     observability,
     policy,
   };
