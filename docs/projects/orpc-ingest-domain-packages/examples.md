@@ -35,6 +35,8 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - `context.deps` remains the single host-provided dependency bag; middleware/module setup may add top-level execution keys, but we do not split runtime dependencies into multiple bags.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
 - `src/service/base/index.ts` binds the service-local authoring surfaces once (`ocBase`, `createServiceMiddleware`, `createServiceImplementer`) and assembles baseline concern profiles from sibling files in `src/service/base/`.
+- `src/service/base/types.ts` is the shared type source for those sibling files; it exists to keep the base-construction layer acyclic.
+- `src/service/base/{observability,analytics}.ts` should contribute service-specific deltas, while the SDK derives baseline naming like `todo.procedure.*` and `rawr.todo.*` from service metadata.
 
 ## Real axes that should change
 
@@ -97,6 +99,7 @@ packages/example-minimal/src/
     ├── contract.ts
     ├── base/
     │   ├── index.ts
+    │   ├── types.ts
     │   ├── observability.ts
     │   ├── analytics.ts
     │   └── policy.ts
@@ -149,6 +152,7 @@ packages/example-todo/src/
     ├── contract.ts
     ├── base/
     │   ├── index.ts
+    │   ├── types.ts
     │   ├── observability.ts
     │   ├── analytics.ts
     │   └── policy.ts

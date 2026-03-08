@@ -5,8 +5,9 @@ import type { BaseMetadata } from "../src/orpc/base";
 import type { DbPool } from "../src/orpc/adapters/sql";
 import {
   defineService,
-  type BaseObservabilityProfile,
   type BasePolicyProfile,
+  type ServiceAnalyticsProfile,
+  type ServiceObservabilityProfile,
   type Sql,
 } from "../src/orpc-sdk";
 import { createBaseProvider } from "../src/orpc/base-foundation";
@@ -18,22 +19,19 @@ import { createServiceMiddleware, createServiceProvider } from "../src/service/b
 function createTestBase<TMeta extends BaseMetadata, TContext extends {
   deps: CreateClientOptions["deps"];
 }>() {
-  const observability: BaseObservabilityProfile<TMeta, TContext> = {
-    loggerEvent: "test.procedure",
-    startedEvent: "test.procedure.started",
-    succeededEvent: "test.procedure.succeeded",
-    failedEvent: "test.procedure.failed",
-    getAttributes() {
+  const analytics: ServiceAnalyticsProfile<TMeta, TContext> = {};
+  const observability: ServiceObservabilityProfile<TMeta, TContext> = {
+    attributes() {
       return {};
     },
-    getLogFields() {
+    logFields() {
       return {};
     },
   };
   const policy: BasePolicyProfile = { events: {} };
 
   return {
-    analytics: { app: "alternate" },
+    analytics,
     observability,
     policy,
   };

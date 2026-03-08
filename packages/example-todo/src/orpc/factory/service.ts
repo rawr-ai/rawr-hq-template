@@ -2,14 +2,18 @@ import { isContractProcedure } from "@orpc/contract";
 import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
-import type { BaseContext, BaseDeps, BaseAssemblyOptions, BaseMetadata } from "../base";
+import type { BaseContext, BaseDeps, BaseMetadata } from "../base";
 import { createBaseImplementer } from "../base";
 import { createContractBuilder } from "./contract";
 import { createNormalMiddlewareBuilder, createServiceProviderBuilder } from "./middleware";
 import {
   createServiceObservabilityMiddleware,
-  type BaseObservabilityProfile,
+  type ServiceObservabilityProfile,
 } from "../middleware/observability";
+import {
+  createServiceAnalyticsMiddleware,
+  type ServiceAnalyticsProfile,
+} from "../middleware/analytics";
 import type { BasePolicyProfile } from "../middleware/policy";
 
 type AnyContractRouterObject = {
@@ -19,8 +23,9 @@ type AnyContractRouterObject = {
 type DefineServiceBaseOptions<
   TMeta extends BaseMetadata,
   TContext extends BaseContext<BaseDeps, object, object, object>,
-> = BaseAssemblyOptions & {
-  observability: BaseObservabilityProfile<TMeta, TContext, BasePolicyProfile>;
+> = {
+  analytics: ServiceAnalyticsProfile<TMeta, TContext>;
+  observability: ServiceObservabilityProfile<TMeta, TContext, BasePolicyProfile>;
   policy: BasePolicyProfile;
 };
 
@@ -61,22 +66,22 @@ export function defineService<
       options.base.observability,
       options.base.policy,
     );
+    const serviceAnalytics = createServiceAnalyticsMiddleware(
+      options.metadata,
+      options.base.analytics,
+    );
 
     if (isContractProcedure(contract)) {
-      return createBaseImplementer<AnyContractProcedure, TContext>(
-        contract,
-        {
-          analytics: options.base.analytics,
-        },
-      ).use(serviceObservability);
+      return createBaseImplementer<AnyContractProcedure, TContext>(contract)
+        .use(serviceObservability)
+        .use(serviceAnalytics);
     }
 
     return createBaseImplementer<AnyContractRouterObject, TContext>(
       contract as AnyContractRouterObject,
-      {
-        analytics: options.base.analytics,
-      },
-    ).use(serviceObservability);
+    )
+      .use(serviceObservability)
+      .use(serviceAnalytics);
   }
 
   return {

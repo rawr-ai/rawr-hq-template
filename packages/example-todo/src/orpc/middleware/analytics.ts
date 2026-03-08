@@ -1,35 +1,50 @@
 /**
- * @fileoverview Baseline analytics middleware.
+ * @fileoverview Baseline analytics middleware and service analytics profile types.
  *
  * @remarks
- * Observer middleware: it emits one analytics event per procedure execution and
- * must not affect procedure behavior.
+ * Analytics remains baseline-on for every package, but service packages should
+ * only supply package-specific deltas here. The SDK owns the baseline event
+ * name and derives package identity from service metadata.
  */
+import type { BaseMetadata } from "../base";
+import { createNormalMiddlewareBuilder } from "../factory/middleware";
 import type { AnalyticsClient } from "../base";
-import { createBaseMiddleware } from "../base-foundation";
 
-export type BaseAnalyticsProfile = {
-  app: string;
-  event?: string;
-  getPayload?: (args: {
+export type ServiceAnalyticsProfile<
+  TMeta extends BaseMetadata = BaseMetadata,
+  TContext extends object = object,
+> = {
+  payload?: (args: {
+    context: TContext;
+    meta: TMeta;
+    path: readonly string[];
     pathLabel: string;
     outcome: "success" | "error";
   }) => Record<string, unknown>;
 };
 
 /**
- * Construct analytics middleware.
+ * Construct service-level analytics middleware from metadata and a lightweight
+ * service profile.
  *
  * @remarks
- * This is configurable middleware, so it exports a constructor rather than a
- * ready-to-use value.
+ * The baseline event name is always `orpc.procedure`. Package identity is
+ * derived from `metadata.domain` and included as `app` automatically.
  */
-export function createAnalyticsMiddleware(profile: BaseAnalyticsProfile) {
-  return createBaseMiddleware<{
+export function createServiceAnalyticsMiddleware<
+  TMeta extends BaseMetadata,
+  TContext extends {
     deps: {
       analytics: AnalyticsClient;
     };
-  }>().middleware(async ({ context, path, next }) => {
+  },
+>(
+  baseMetadata: TMeta,
+  profile: ServiceAnalyticsProfile<TMeta, TContext>,
+) {
+  return createNormalMiddlewareBuilder<TContext, TMeta>({
+    baseMetadata,
+  }).middleware(async ({ context, path, procedure, next }) => {
     let outcome: "success" | "error" = "success";
 
     try {
@@ -42,11 +57,17 @@ export function createAnalyticsMiddleware(profile: BaseAnalyticsProfile) {
     }
     finally {
       const pathLabel = path.join(".");
-      await context.deps.analytics.track(profile.event ?? "orpc.procedure", {
-        app: profile.app,
+      const anyProcedure = procedure as { ["~orpc"]?: { meta?: TMeta } };
+      const meta = anyProcedure?.["~orpc"]?.meta ?? baseMetadata;
+
+      await context.deps.analytics.track("orpc.procedure", {
+        app: meta.domain ?? "service",
         path: pathLabel,
         outcome,
-        ...profile.getPayload?.({
+        ...profile.payload?.({
+          context,
+          meta,
+          path,
           pathLabel,
           outcome,
         }),
