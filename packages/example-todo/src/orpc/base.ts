@@ -82,16 +82,16 @@ export type ServiceMetadataOf<T extends object = {}> = BaseMetadata & T;
 export type ServiceTypesOf<
   T extends ServiceDeclaration,
 > = {
-  Deps: ServiceDepsOf<T["deps"]>;
-  Scope: T["scope"];
-  Config: T["config"];
-  Invocation: T["invocation"];
+  Deps: ServiceDepsOf<T["initialContext"]["deps"]>;
+  Scope: T["initialContext"]["scope"];
+  Config: T["initialContext"]["config"];
+  Invocation: T["invocationContext"];
   Metadata: ServiceMetadataOf<T["metadata"]>;
   Context: ServiceContextOf<
-    ServiceDepsOf<T["deps"]>,
-    T["scope"],
-    T["config"],
-    T["invocation"]
+    ServiceDepsOf<T["initialContext"]["deps"]>,
+    T["initialContext"]["scope"],
+    T["initialContext"]["config"],
+    T["invocationContext"]
   >;
 };
 
@@ -99,15 +99,23 @@ export type ServiceTypesOf<
  * Canonical service declaration shape for `defineService(...)`.
  *
  * @remarks
- * Author-facing service definitions should declare these five lane fragments
- * once and let the SDK derive the composed `Deps`, `Metadata`, and `Context`
- * types internally.
+ * Author-facing service definitions should declare the service through three
+ * semantic categories:
+ * - `initialContext`: construction-time context supplied when the client is created
+ * - `invocationContext`: per-call context supplied at procedure invocation time
+ * - `metadata`: static procedure metadata authored by the service
+ *
+ * The SDK derives the composed `Deps`, `Metadata`, and lane-aware `Context`
+ * types internally from those grouped categories.
  */
+type ServiceInitialContextDeclaration = Pick<
+  InitialContext<object, object, object, object>,
+  "deps" | "scope" | "config"
+>;
+
 export type ServiceDeclaration = {
-  deps: object;
-  scope: object;
-  config: object;
-  invocation: object;
+  initialContext: ServiceInitialContextDeclaration;
+  invocationContext: object;
   metadata: object;
 };
 

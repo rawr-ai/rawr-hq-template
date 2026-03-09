@@ -35,7 +35,8 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - `context.deps` remains the single host-provided dependency bag; middleware/module setup may add top-level execution keys, but we do not split runtime dependencies into multiple bags.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
 - `src/service/base.ts` binds the service-local authoring surfaces once (`Service`, `ocBase`, additive middleware builders, `createServiceImplementer`) and assembles the service-wide baseline concerns inline.
-- `src/service/base.ts` should prefer one canonical `defineService<{ ... }>(...)` call plus `ServiceOf<typeof service>` over hand-writing a separate `Service = ServiceTypesOf<...>` projection.
+- `src/service/base.ts` should prefer one canonical `defineService<{ initialContext, invocationContext, metadata }>(...)` call plus `ServiceOf<typeof service>` over hand-writing a separate `Service = ServiceTypesOf<...>` projection.
+- `initialContext` should group the construction-time `deps` / `scope` / `config` lanes; `invocationContext` should describe per-call invocation input; `metadata` remains static procedure metadata.
 - `src/service/base.ts` should contribute service-specific baseline deltas, while the SDK derives baseline naming like `todo.procedure.*` and `rawr.todo.*` from service metadata.
 - `createServiceImplementer(...)` auto-attaches the service-wide baseline concerns from `src/service/base.ts`; module/procedure-local observability and analytics stay additive and attach via the pre-bound `createServiceObservabilityMiddleware(...)` and `createServiceAnalyticsMiddleware(...)` builders.
 

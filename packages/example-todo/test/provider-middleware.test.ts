@@ -97,20 +97,22 @@ describe("provider middleware", () => {
 
   it("defineService binds metadata into contract and middleware authoring", async () => {
     type TestService = {
-      deps: {
-        logger: {
-          info(message: string, meta?: Record<string, unknown>): void;
-          error(message: string, meta?: Record<string, unknown>): void;
+      initialContext: {
+        deps: {
+          logger: {
+            info(message: string, meta?: Record<string, unknown>): void;
+            error(message: string, meta?: Record<string, unknown>): void;
+          };
+          analytics: {
+            track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+          };
         };
-        analytics: {
-          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        scope: {};
+        config: {
+          readOnly: boolean;
         };
       };
-      scope: {};
-      config: {
-        readOnly: boolean;
-      };
-      invocation: {
+      invocationContext: {
         traceId: string;
       };
       metadata: {
@@ -119,7 +121,7 @@ describe("provider middleware", () => {
     };
 
     const service = defineService<TestService>({
-      metadata: {
+      metadataDefaults: {
         idempotent: true,
         audit: "basic",
       },
@@ -173,27 +175,29 @@ describe("provider middleware", () => {
 
   it("defineService binds service context into implementer creation", async () => {
     type TestService = {
-      deps: {
-        logger: {
-          info(message: string, meta?: Record<string, unknown>): void;
-          error(message: string, meta?: Record<string, unknown>): void;
+      initialContext: {
+        deps: {
+          logger: {
+            info(message: string, meta?: Record<string, unknown>): void;
+            error(message: string, meta?: Record<string, unknown>): void;
+          };
+          analytics: {
+            track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+          };
         };
-        analytics: {
-          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        scope: {};
+        config: {
+          readOnly: boolean;
         };
       };
-      scope: {};
-      config: {
-        readOnly: boolean;
-      };
-      invocation: {
+      invocationContext: {
         traceId: string;
       };
       metadata: {};
     };
 
     const service = defineService<TestService>({
-      metadata: {
+      metadataDefaults: {
         idempotent: true,
       },
       baseline: createTestBaseline<TestService>(),
@@ -241,27 +245,29 @@ describe("provider middleware", () => {
 
   it("defineService exposes a provider builder for service-local context", async () => {
     type TestService = {
-      deps: {
-        logger: {
-          info(message: string, meta?: Record<string, unknown>): void;
-          error(message: string, meta?: Record<string, unknown>): void;
+      initialContext: {
+        deps: {
+          logger: {
+            info(message: string, meta?: Record<string, unknown>): void;
+            error(message: string, meta?: Record<string, unknown>): void;
+          };
+          analytics: {
+            track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+          };
         };
-        analytics: {
-          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        scope: {};
+        config: {
+          readOnly: boolean;
         };
       };
-      scope: {};
-      config: {
-        readOnly: boolean;
-      };
-      invocation: {
+      invocationContext: {
         traceId: string;
       };
       metadata: {};
     };
 
     const service = defineService<TestService>({
-      metadata: {
+      metadataDefaults: {
         idempotent: true,
       },
       baseline: createTestBaseline<TestService>(),
@@ -321,27 +327,29 @@ describe("provider middleware", () => {
 
   it("throws when providers try to overwrite an existing provided key", async () => {
     type TestService = {
-      deps: {
-        logger: {
-          info(message: string, meta?: Record<string, unknown>): void;
-          error(message: string, meta?: Record<string, unknown>): void;
+      initialContext: {
+        deps: {
+          logger: {
+            info(message: string, meta?: Record<string, unknown>): void;
+            error(message: string, meta?: Record<string, unknown>): void;
+          };
+          analytics: {
+            track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+          };
         };
-        analytics: {
-          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        scope: {};
+        config: {
+          readOnly: boolean;
         };
       };
-      scope: {};
-      config: {
-        readOnly: boolean;
-      };
-      invocation: {
+      invocationContext: {
         traceId: string;
       };
       metadata: {};
     };
 
     const service = defineService<TestService>({
-      metadata: {
+      metadataDefaults: {
         idempotent: true,
       },
       baseline: createTestBaseline<TestService>(),

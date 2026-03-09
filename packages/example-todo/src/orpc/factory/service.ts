@@ -50,7 +50,7 @@ type DefineServiceOptions<
   TDeclaration extends ServiceDeclaration,
   TPolicy extends BasePolicyProfile,
 > = {
-  metadata: ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>;
+  metadataDefaults: ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>;
   baseline: DefineServiceBaselineOptions<TDeclaration, TPolicy>;
 };
 
@@ -129,7 +129,8 @@ export type ServiceOf<TDefinedService extends { readonly __service?: AnyService 
  * It binds metadata-aware contract authoring, metadata-aware service middleware
  * authoring, metadata-aware service-provider authoring, and context-typed
  * implementer creation. The `baseline` option is the service assembly manifest
- * for baseline cross-cutting concern profiles.
+ * for baseline cross-cutting concern profiles, while `metadataDefaults`
+ * supplies the service-authored default procedure metadata.
  *
  * Warning:
  * do not solve service-binding mismatches here with casts or silent type
@@ -155,12 +156,12 @@ export function defineService<
   ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
   function createServiceImplementer(contract: AnyContractRouter) {
     const serviceObservability = createServiceObservabilityBaselineMiddleware(
-      options.metadata,
+      options.metadataDefaults,
       options.baseline.observability,
       options.baseline.policy,
     );
     const serviceAnalytics = createServiceAnalyticsBaselineMiddleware(
-      options.metadata,
+      options.metadataDefaults,
       options.baseline.analytics,
     );
 
@@ -178,29 +179,29 @@ export function defineService<
   }
 
   return {
-    oc: createContractBuilder<TMeta>({ baseMetadata: options.metadata }),
+    oc: createContractBuilder<TMeta>({ baseMetadata: options.metadataDefaults }),
     createMiddleware<
       TRequiredContext extends object = {},
     >() {
       return createNormalMiddlewareBuilder<TRequiredContext, TMeta>({
-        baseMetadata: options.metadata,
+        baseMetadata: options.metadataDefaults,
       });
     },
     createObservabilityMiddleware<
       TRequiredContext extends object = TContext,
     >(input: ServiceObservabilityMiddlewareInput<TMeta, TRequiredContext>) {
-      return createServiceObservabilityMiddleware(options.metadata, input);
+      return createServiceObservabilityMiddleware(options.metadataDefaults, input);
     },
     createAnalyticsMiddleware<
       TRequiredContext extends object = TContext,
     >(input: ServiceAnalyticsMiddlewareInput<TMeta, TRequiredContext>) {
-      return createServiceAnalyticsMiddleware(options.metadata, input);
+      return createServiceAnalyticsMiddleware(options.metadataDefaults, input);
     },
     createProvider<
       TRequiredContext extends object = {},
     >() {
       return createServiceProviderBuilder<TRequiredContext, TMeta>({
-        baseMetadata: options.metadata,
+        baseMetadata: options.metadataDefaults,
       });
     },
     createImplementer: createServiceImplementer,

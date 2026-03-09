@@ -18,14 +18,16 @@ import { contract } from "../src/service/contract";
 import { createServiceMiddleware, createServiceProvider } from "../src/service/base";
 
 type DerivedTypingDeclaration = {
-  deps: {
-    dbPool: DbPool;
+  initialContext: {
+    deps: {
+      dbPool: DbPool;
+    };
+    scope: {
+      workspaceId: string;
+    };
+    config: CreateClientOptions["config"];
   };
-  scope: {
-    workspaceId: string;
-  };
-  config: CreateClientOptions["config"];
-  invocation: {
+  invocationContext: {
     traceId: string;
   };
   metadata: {
@@ -36,9 +38,35 @@ type DerivedTypingDeclaration = {
 type DerivedTypingService = ServiceTypesOf<DerivedTypingDeclaration>;
 
 const derivedService = defineService<DerivedTypingDeclaration>({
-  metadata: {
+  metadataDefaults: {
     idempotent: true,
     audit: "basic",
+  },
+  baseline: {
+    policy: { events: {} },
+    observability: {
+      attributes() {
+        return {};
+      },
+      logFields() {
+        return {};
+      },
+    },
+    analytics: {},
+  },
+});
+
+// @ts-expect-error initialContext must include deps, scope, and config lanes.
+defineService<{
+  initialContext: {
+    deps: {};
+    scope: {};
+  };
+  invocationContext: {};
+  metadata: {};
+}>({
+  metadataDefaults: {
+    idempotent: true,
   },
   baseline: {
     policy: { events: {} },
@@ -166,13 +194,15 @@ const typedClient = createClient(validBoundary);
 void typedClient;
 
 const alternateInvocationService = defineService<{
-  deps: CreateClientOptions["deps"];
-  scope: { workspaceId: string };
-  config: CreateClientOptions["config"];
-  invocation: { requestId: string };
+  initialContext: {
+    deps: CreateClientOptions["deps"];
+    scope: { workspaceId: string };
+    config: CreateClientOptions["config"];
+  };
+  invocationContext: { requestId: string };
   metadata: {};
 }>({
-  metadata: {
+  metadataDefaults: {
     idempotent: true,
   },
   baseline: {
@@ -232,13 +262,15 @@ alternateInvocationService.createAnalyticsMiddleware({
 });
 
 const additiveService = defineService<{
-  deps: CreateClientOptions["deps"];
-  scope: { workspaceId: string };
-  config: CreateClientOptions["config"];
-  invocation: { traceId: string };
+  initialContext: {
+    deps: CreateClientOptions["deps"];
+    scope: { workspaceId: string };
+    config: CreateClientOptions["config"];
+  };
+  invocationContext: { traceId: string };
   metadata: {};
 }>({
-  metadata: {
+  metadataDefaults: {
     idempotent: true,
     domain: "todo",
   },

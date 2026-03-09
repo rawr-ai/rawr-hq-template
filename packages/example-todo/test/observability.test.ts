@@ -225,22 +225,24 @@ describe("example-todo observability", () => {
 
   it("exposes additive service-local builders without duplicating the baseline lifecycle shell", async () => {
     type TestService = {
-      deps: {
-        logger: {
-          info(message: string, meta?: Record<string, unknown>): void;
-          error(message: string, meta?: Record<string, unknown>): void;
+      initialContext: {
+        deps: {
+          logger: {
+            info(message: string, meta?: Record<string, unknown>): void;
+            error(message: string, meta?: Record<string, unknown>): void;
+          };
+          analytics: {
+            track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+          };
         };
-        analytics: {
-          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        scope: {
+          workspaceId: string;
+        };
+        config: {
+          readOnly: boolean;
         };
       };
-      scope: {
-        workspaceId: string;
-      };
-      config: {
-        readOnly: boolean;
-      };
-      invocation: {
+      invocationContext: {
         traceId: string;
       };
       metadata: {};
@@ -249,7 +251,7 @@ describe("example-todo observability", () => {
     const logs: LogEntry[] = [];
     const analytics: AnalyticsEntry[] = [];
     const service = defineService<TestService>({
-      metadata: {
+      metadataDefaults: {
         idempotent: true,
         domain: "todo",
       },
