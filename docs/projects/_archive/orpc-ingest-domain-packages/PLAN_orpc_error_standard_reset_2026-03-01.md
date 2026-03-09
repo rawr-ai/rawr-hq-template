@@ -1,3 +1,7 @@
+> Archived on 2026-03-09. Historical context only. This implementation plan is
+> retained for lineage and is superseded by the current active docs in
+> `../../orpc-ingest-domain-packages/`.
+
 # ORPC Error Standard Reset Plan (`example-todo`)
 
 ## Summary

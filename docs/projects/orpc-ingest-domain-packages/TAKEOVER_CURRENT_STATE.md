@@ -2,6 +2,9 @@
 
 Created: 2026-03-06
 
+Update: This remains a useful structural snapshot, but the live branch/session
+handoff now continues in `TAKEOVER_SESSION_2026-03-09.md`.
+
 ## What This Document Is
 
 This is a present-state grounding document for the next finishing push on the `example-todo` golden example.
@@ -21,10 +24,12 @@ It is not a historical session recap. It is meant to answer: where are we now, w
   - `packages/hq-sdk/**`
   - `packages/support-example/**`
 - Primary docs packet:
+  - `docs/projects/orpc-ingest-domain-packages/README.md`
   - `docs/projects/orpc-ingest-domain-packages/DECISIONS.md`
   - `docs/projects/orpc-ingest-domain-packages/guidance.md`
   - `docs/projects/orpc-ingest-domain-packages/examples.md`
-  - `docs/projects/orpc-ingest-domain-packages/SESSION_ORPC_EXAMPLES_GROUNDING_2026-02-25.md`
+- Historical grounding archive:
+  - `docs/projects/_archive/orpc-ingest-domain-packages/SESSION_ORPC_EXAMPLES_GROUNDING_2026-02-25.md`
 - Relevant session context:
   - live takeover session `019cb058-860f-7a00-a3c0-c4f8f709fb58`
 - Normalizations used here:
@@ -163,7 +168,7 @@ It is not a historical session recap. It is meant to answer: where are we now, w
   - exports `router` and derived `contract`
   - no `createClient` boundary export
 - `support-example/README.md` explicitly describes itself as router-first and non-normative.
-- `SESSION_ORPC_EXAMPLES_GROUNDING_2026-02-25.md` already notes that `support-example` differs from the newer router-client-first reference posture.
+- The archived grounding note `docs/projects/_archive/orpc-ingest-domain-packages/SESSION_ORPC_EXAMPLES_GROUNDING_2026-02-25.md` already records that `support-example` differs from the newer router-client-first reference posture.
 
 ### Inferred
 
