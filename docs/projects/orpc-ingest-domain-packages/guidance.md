@@ -14,9 +14,8 @@ If you are an agent arriving to implement business logic fast:
 - **Start at oRPC composition**: `src/service/impl.ts` (root contract implementer + package-wide middleware order)
 - **Then open the service router**: `src/service/router.ts` (module router composition + single final attach)
 - **Then live in a module**: `src/service/modules/<name>/{contract,setup,router}.ts`
-- **When you need “the one import for service authoring”**: `src/service/base` (`ocBase` + `createServiceMiddleware` + `createServiceImplementer`)
-- **When you need the shared service-base types**: `src/service/base/types.ts`
-- **When you need to inspect or change baseline cross-cutting service behavior**: `src/service/base/{observability,analytics,policy}.ts`
+- **When you need “the one import for service authoring”**: `src/service/base.ts` (`Service` + `ocBase` + bound service builders)
+- **When you need to inspect or change service-wide baseline concerns**: `src/service/base.ts`
 - **When you need “the one import for handler implementers”**: `src/service/impl.ts` (`impl.<module>` subtrees)
 - **When you need kit-level middleware** (analytics, providers, generic wrappers): `src/orpc/middleware/*`
 
@@ -36,12 +35,10 @@ Use one stable top-level structure across package sizes:
 Always-on slots:
 
 - `src/service/router.ts` is the always-on service router composition choke point (single final attach).
-- `src/service/base/` is the always-on service base-construction layer.
-- `src/service/base/index.ts` is the assembly manifest for host deps, initial context, metadata defaults, and the bound service authoring surfaces from `defineService`.
-- `src/service/base/types.ts` is the shared type source for sibling base files and prevents them from depending on the assembly manifest.
-- `src/service/base/types.ts` should prefer composing through the SDK helper `ServiceTypesOf<...>` rather than hand-writing `ServiceDeps`, `ServiceMetadata`, and `ServiceContext` separately.
-- `src/service/base/{observability,analytics,policy}.ts` are the stable baseline concern slots consumed automatically by `createServiceImplementer(...)`.
-- `src/service/base/observability.ts` and `src/service/base/analytics.ts` should define service-specific deltas and bounded hooks, not restate baseline event names or package identity that the SDK can derive automatically.
+- `src/service/base.ts` is the always-on single-file service-definition layer.
+- `src/service/base.ts` owns the service lane declaration, metadata defaults, baseline concern definitions, and the bound service authoring surfaces from `defineService(...)`.
+- `src/service/base.ts` should prefer one canonical `defineService<{ ... }>(...)` call plus `ServiceOf<typeof service>` rather than hand-writing `ServiceDeps`, `ServiceMetadata`, and `ServiceContext` separately.
+- `src/service/base.ts` should define service-specific deltas and bounded baseline hooks, not restate repetitive baseline event names or package identity that the SDK can derive automatically.
 - Module/procedure-local observability and analytics are additive middleware, authored with `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` and attached where they belong (`modules/*/setup.ts` for module-wide additions, `modules/*/router.ts` for procedure-local additions).
 - `src/orpc/base.ts` is the always-on domain-package baseline definition surface.
 - `src/orpc/factory/*` is the always-on internal helper layer for abstract oRPC builders.
@@ -54,7 +51,7 @@ Always-on slots:
 
 When choosing between "minimal now" vs "predictable later", prefer predictable scaffold slots for core structure.
 
-- Keep always-present structural files/directories that are expected as a package grows (for example `src/service/base/`, `src/service/router.ts`, `src/service/impl.ts`, `src/orpc/middleware/*`), even if initially thin.
+- Keep always-present structural files/directories that are expected as a package grows (for example `src/service/base.ts`, `src/service/router.ts`, `src/service/impl.ts`, `src/orpc/middleware/*`), even if initially thin.
 - Do not push structural timing decisions ("add this file later") onto agents for core package layout.
 - Use templates/CLI shape flags to vary content depth, not to vary foundational topology.
 
@@ -126,7 +123,7 @@ Rules:
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
 - Start each module setup from the central implementer subtree in `src/service/impl.ts` (`impl.<module>`), then attach any standalone module middleware and/or inline middleware there.
-- Use `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` for additive local instrumentation at module/procedure scope; use `createServiceMiddleware(...)` for other additive observers/guards; keep `service/base/*` for service-wide defaults only.
+- Use `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` for additive local instrumentation at module/procedure scope; use `createServiceMiddleware(...)` for other additive observers/guards; keep `service/base.ts` for service-wide defaults only.
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
@@ -147,8 +144,8 @@ Current required baseline:
 
 Recommended pattern:
 
-- define base metadata defaults once in `src/service/base/index.ts`,
-- bind service-local contract/middleware/implementer authoring once in `src/service/base/index.ts` via `defineService(...)`,
+- define base metadata defaults once in `src/service/base.ts`,
+- bind service-local contract/middleware/implementer authoring once in `src/service/base.ts` via `defineService(...)`,
 - keep module contracts explicit by setting `idempotent` on every procedure,
 - read metadata in middleware via `procedure["~orpc"].meta` (oRPC runtime metadata surface).
 
@@ -225,7 +222,7 @@ The semantic line is simple:
 
 Author middleware against the mirrored required-context shape directly:
 
-- bind service-local authoring surfaces once in `src/service/base/index.ts` via `defineService(...)`
+- bind service-local authoring surfaces once in `src/service/base.ts` via `defineService(...)`
 - use `createServiceImplementer(contract)` in `src/service/impl.ts` so service context and baseline implementer options stay bound in one place
 - shared/framework non-providers via `createBaseMiddleware<{ ...lane fragments... }>()`
 - shared/framework providers via `createBaseProvider<{ ...lane fragments... }>()`

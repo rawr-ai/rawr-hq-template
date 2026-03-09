@@ -16,6 +16,7 @@ import {
   defineService,
   schema,
   type BasePolicyProfile,
+  type ServiceDeclaration,
   type ServiceTypesOf,
 } from "../src/orpc-sdk";
 
@@ -95,17 +96,12 @@ async function withRecordingSpan<T>(callback: (span: RecordingSpan) => Promise<T
   }
 }
 
-type AnyTestService = ServiceTypesOf<{
-  deps: object;
-  scope: object;
-  config: object;
-  invocation: object;
-  metadata: object;
-}>;
-
-function createTestBase<TService extends AnyTestService>() {
-  const analytics = defineServiceAnalyticsProfile<TService>({});
-  const observability = defineServiceObservabilityProfile<TService, BasePolicyProfile>({
+function createTestBaseline<TDeclaration extends ServiceDeclaration>() {
+  const analytics = defineServiceAnalyticsProfile<ServiceTypesOf<TDeclaration>>({});
+  const observability = defineServiceObservabilityProfile<
+    ServiceTypesOf<TDeclaration>,
+    BasePolicyProfile
+  >({
     attributes() {
       return {};
     },
@@ -228,7 +224,7 @@ describe("example-todo observability", () => {
   });
 
   it("exposes additive service-local builders without duplicating the baseline lifecycle shell", async () => {
-    type TestService = ServiceTypesOf<{
+    type TestService = {
       deps: {
         logger: {
           info(message: string, meta?: Record<string, unknown>): void;
@@ -248,7 +244,7 @@ describe("example-todo observability", () => {
         traceId: string;
       };
       metadata: {};
-    }>;
+    };
 
     const logs: LogEntry[] = [];
     const analytics: AnalyticsEntry[] = [];
@@ -257,7 +253,7 @@ describe("example-todo observability", () => {
         idempotent: true,
         domain: "todo",
       },
-      base: createTestBase<TestService>(),
+      baseline: createTestBaseline<TestService>(),
     });
 
     const contract = {

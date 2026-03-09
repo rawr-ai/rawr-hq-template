@@ -57,7 +57,7 @@ It is not a historical session recap. It is meant to answer: where are we now, w
   - `src/client.ts` binds the in-process client with `defineDomainPackage(router)`
   - `src/router.ts` is a thin public alias for `src/service/router.ts`
 - The current service choke points are explicit:
-  - `src/service/base/index.ts` binds service-local authoring surfaces and assembles baseline concern profiles
+  - `src/service/base.ts` binds service-local authoring surfaces and assembles baseline concern profiles
   - `src/service/contract.ts` bubbles module contracts up to the root contract
   - `src/service/impl.ts` creates the central implementer and attaches package-wide middleware
   - `src/service/router.ts` performs the single final router attach

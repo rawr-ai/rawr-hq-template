@@ -49,12 +49,12 @@ Treat the following as the live baseline unless a future discussion explicitly r
 - The older service-definition seam was restored before further tightening.
 
 2. The canonical service type seam is now a single author-facing `Service`.
-- `packages/example-todo/src/service/base/types.ts` authors one canonical:
-  - `Service = ServiceTypesOf<{ deps, scope, config, invocation, metadata }>`
+- `packages/example-todo/src/service/base.ts` authors one canonical service definition and exports:
+  - `type Service = ServiceOf<typeof service>`
 - `Clock` remains as a separate support type.
 - The prior exported matrix of standalone `ServiceContext` / `ServiceMetadata` style aliases is no longer the primary authoring posture.
 
-3. `ServiceTypesOf<...>` is the canonical service-type composition helper.
+3. `ServiceTypesOf<...>` remains the canonical internal service-type composition helper.
 - It lives in `packages/example-todo/src/orpc/base.ts`.
 - It preserves the older stable internal seams:
   - `ServiceDepsOf`
@@ -62,8 +62,8 @@ Treat the following as the live baseline unless a future discussion explicitly r
   - `ServiceContextOf`
 - The helper is explicitly documented as the safe composition path.
 
-4. SDK helpers now consume `Service` directly.
-- `defineService<Service>(...)`
+4. SDK helpers now derive `Service` from one declaration-first service manifest.
+- `defineService<{ deps, scope, config, invocation, metadata }>(...)`
 - `defineServiceObservabilityProfile<Service>(...)`
 - `defineServiceAnalyticsProfile<Service>(...)`
 - SDK internals project `Context`, `Metadata`, and `Deps` from `Service`.
@@ -71,11 +71,9 @@ Treat the following as the live baseline unless a future discussion explicitly r
 
 5. The good observability / analytics DX work remains intact.
 - Service-wide baseline concerns still live in:
-  - `packages/example-todo/src/service/base/observability.ts`
-  - `packages/example-todo/src/service/base/analytics.ts`
-  - `packages/example-todo/src/service/base/policy.ts`
+  - `packages/example-todo/src/service/base.ts`
 - Framework baseline remains automatic.
-- Service-wide baseline remains automatic through `defineService(...).base`.
+- Service-wide baseline remains automatic through `defineService(...).baseline`.
 - Module/procedure-local observability and analytics remain additive-only.
 
 6. The broader structural decisions remain settled enough for now.
@@ -126,7 +124,7 @@ The current DX discussion sits inside that lane as one focused question:
 4. It clarified observability layering:
    - host/runtime tracing bootstrap above the package
    - framework baseline in the base implementer
-   - service-wide baseline in `service/base/*`
+   - service-wide baseline in `service/base.ts`
    - additive module/procedure-local concerns only where needed
 5. It rejected the over-abstracted service-kit experiment and returned to a simpler seam.
 6. It tightened the service-type seam around one canonical `Service`.
@@ -147,15 +145,15 @@ The biggest remaining friction is no longer service typing. It is module authori
 What is now relatively clean:
 
 - one canonical `Service`
-- one assembly manifest in `service/base/index.ts`
-- one `defineService<Service>(...)` seam that keeps type projections internal
+- one single-file service definition in `service/base.ts`
+- one `defineService<{ ... }>(...)` seam that keeps type projections internal
 
 What still feels repetitive:
 
 - module setup repeatedly imports `impl` plus one or more service-bound helpers
 - module setup repeatedly creates providers and additive module middleware
 - procedure handlers repeatedly define additive observability/analytics middleware constants and attach them in order before `.handler(...)`
-- `service/base/index.ts` still fans out multiple bound helpers that module authors need to pick from explicitly
+- `service/base.ts` still fans out multiple bound helpers that module authors need to pick from explicitly
 
 The scout conclusion was:
 
@@ -191,11 +189,7 @@ The next agent should explicitly carry forward all of the following.
 - `../../../packages/example-todo/src/orpc/base.ts`
 - `../../../packages/example-todo/src/orpc/factory/service.ts`
 - `../../../packages/example-todo/src/orpc-sdk.ts`
-- `../../../packages/example-todo/src/service/base/types.ts`
-- `../../../packages/example-todo/src/service/base/index.ts`
-- `../../../packages/example-todo/src/service/base/observability.ts`
-- `../../../packages/example-todo/src/service/base/analytics.ts`
-- `../../../packages/example-todo/src/service/base/policy.ts`
+- `../../../packages/example-todo/src/service/base.ts`
 - `../../../packages/example-todo/src/service/impl.ts`
 
 ### Module-consumer examples that reveal the remaining friction

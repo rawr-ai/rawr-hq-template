@@ -9,6 +9,6 @@ Cross-module shared, **domain-internal** constructs live here.
 - Keep `service/shared/` focused on **domain semantics** (errors, schemas/types, invariants), not adapter glue.
 - Put shared adapter/infrastructure helpers in `service/adapters/` instead.
 - Keep `service/shared/` free of dependency wiring. Wiring belongs in:
-- `service/base/` (service base-construction layer),
-  - `service/router.ts` (service router attach), or
-  - `service/modules/*/setup.ts` (module-local injection).
+- `service/base.ts` (service definition + baseline concern layer)
+- `service/router.ts` (service router attach)
+- `service/modules/*/setup.ts` (module-local injection)

@@ -36,7 +36,7 @@ In addition, each domain package has one oRPC-native composition file (central i
 Router responsibilities are fixed:
 
 - `src/service/contract.ts`: root contract composition (contracts bubble up here)
-- `src/service/impl.ts`: implement the root contract once and attach only extra service-wide providers/guards; the baseline service-wide observability/analytics from `src/service/base/` are auto-attached by `createServiceImplementer(...)`
+- `src/service/impl.ts`: implement the root contract once and attach only extra service-wide providers/guards; the baseline service-wide observability/analytics from `src/service/base.ts` are auto-attached by `createServiceImplementer(...)`
 - `src/service/router.ts`: router composition only (mount module routers into one shape; single final attach)
 - `src/router.ts`: **stable public alias** for `@rawr/<pkg>/router` (re-export only)
 
@@ -95,7 +95,7 @@ Adopt module-level hybrid contract-first:
 - each module defines `setup.ts` (runtime injection: context middleware, repos/services),
 - each module defines `router.ts` (behavior: handlers + contract-enforced router export),
 - modules derive their implementer subtrees from the central `impl` in `src/service/impl.ts`,
-- modules share a single service base import surface for contract authoring + middleware authoring (`src/service/base/` with `index.ts` as the assembly entrypoint),
+- modules share a single service base import surface for contract authoring + middleware authoring (`src/service/base.ts` as the service-definition entrypoint),
 - package boundary remains router-client-first (`router` + `createClient` entrypoints).
 
 ### Why
