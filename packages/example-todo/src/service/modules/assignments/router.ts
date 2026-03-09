@@ -16,9 +16,6 @@ import { os } from "./setup";
 import {
   createServiceAnalyticsMiddleware,
   createServiceObservabilityMiddleware,
-  type ServiceDeps,
-  type ServiceInvocation,
-  type ServiceScope,
 } from "../../base";
 import { type Assignment } from "./schemas";
 
@@ -27,11 +24,7 @@ import { type Assignment } from "./schemas";
  *
  * Implement concrete procedure handlers below using `os.<procedure>.handler(...)`.
  */
-const assignProcedureObservability = createServiceObservabilityMiddleware<{
-  deps: Pick<ServiceDeps, "logger">;
-  scope: Pick<ServiceScope, "workspaceId">;
-  invocation: Pick<ServiceInvocation, "traceId">;
-}>({
+const assignProcedureObservability = createServiceObservabilityMiddleware({
   onStarted: ({ span, context, pathLabel }) => {
     span?.addEvent("todo.assignments.assign.requested", {
       workspace_id: context.scope.workspaceId,
@@ -46,11 +39,7 @@ const assignProcedureObservability = createServiceObservabilityMiddleware<{
   },
 });
 
-const assignProcedureAnalytics = createServiceAnalyticsMiddleware<{
-  deps: Pick<ServiceDeps, "analytics">;
-  scope: Pick<ServiceScope, "workspaceId">;
-  invocation: Pick<ServiceInvocation, "traceId">;
-}>({
+const assignProcedureAnalytics = createServiceAnalyticsMiddleware({
   payload: ({ context, pathLabel, outcome }) => ({
     analytics_layer: "procedure",
     analytics_procedure: pathLabel,
