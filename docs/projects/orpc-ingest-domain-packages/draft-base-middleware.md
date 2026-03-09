@@ -62,7 +62,7 @@ If the goal is to make required service-wide middleware impossible to forget, th
 
 - keep middleware behavior implemented in standalone files
 - let the SDK define the required middleware contract
-- require the service definition to supply the service-specific implementations for that contract
+- require the service definition to supply a late-bound factory that materializes the service-specific implementations for that contract
 - auto-attach those required middleware values inside `createServiceImplementer(...)`
 
 That gives us:
@@ -352,7 +352,7 @@ It should contain:
 - no runtime callbacks
 
 5. Required middleware registration
-- import required service-wide middleware values from `src/service/middleware/*`
+- import required service-wide middleware builders from `src/service/middleware/*`
 - satisfy the SDK-required middleware contract in the service definition
 - do not inline their behavior here
 
@@ -376,26 +376,27 @@ That logic should move to `src/service/middleware/*`.
 Concrete pattern:
 
 ```ts
-import { observability } from "./middleware/observability";
-import { analytics } from "./middleware/analytics";
+import { buildObservability } from "./middleware/observability";
+import { buildAnalytics } from "./middleware/analytics";
 
 const service = defineService<...>({
   metadataDefaults: { ... },
   baseline: {
     policy: { ... },
   },
-  requiredMiddleware: {
-    observability,
-    analytics,
-  },
+  requiredMiddleware: (api) => ({
+    observability: buildObservability(api),
+    analytics: buildAnalytics(api),
+  }),
 });
 ```
 
 Important distinction:
 
 - the SDK defines that `requiredMiddleware.observability` and `requiredMiddleware.analytics` are required slots
-- `base.ts` satisfies those slots
+- `base.ts` satisfies those slots through a factory, not by importing already-built middleware values
 - `base.ts` should not contain their runtime hook logic
+- `src/service/middleware/*` should stop importing `../base` for these required baseline middleware; they should build from the passed-in API instead
 
 ### 2.2.1 What “policy” means
 
@@ -484,6 +485,7 @@ If this split is not made explicit, agents will misread `base.ts` and `impl.ts` 
 Recommended interpretation under this draft:
 
 - the default service `observability` and `analytics` middleware files are expected to satisfy SDK-required service middleware slots
+- they should do so through late-bound builders rather than eager imports back into `base.ts`
 - `impl.ts` stays reserved for extra service-wide concerns beyond that required baseline set
 
 ### 2.5 Service observability middleware design
@@ -535,8 +537,8 @@ Until one of those is true, the draft should not claim that `createServiceObserv
 Naming rule:
 
 - scaffold `src/service/middleware/observability.ts`
-- export `observability`
-- register `observability` as required middleware in `src/service/base.ts`
+- export `buildObservability(api)`
+- satisfy the SDK-required `observability` slot from `src/service/base.ts`
 
 This is clearer than names like “service observability additions” because the file path already provides the scope.
 
@@ -577,8 +579,8 @@ So the service-level story is:
 Naming rule:
 
 - scaffold `src/service/middleware/analytics.ts`
-- export `analytics`
-- register `analytics` as required middleware in `src/service/base.ts`
+- export `buildAnalytics(api)`
+- satisfy the SDK-required `analytics` slot from `src/service/base.ts`
 
 ### 2.7 How service-level and module-level observability work together
 
@@ -673,7 +675,7 @@ Likely SDK adjustments under this draft:
 
 4. Add required middleware registration to `defineService(...)`
 - the SDK should declare required service-wide middleware slots on `defineService(...)`
-- the service definition should be required to supply values for those slots
+- the service definition should be required to supply a late-bound factory for those slots
 - `createServiceImplementer(...)` should auto-attach them in canonical order
 - this should be the enforcement mechanism for “every package must have X”
 
