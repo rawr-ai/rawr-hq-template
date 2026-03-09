@@ -33,8 +33,9 @@ import type { ServiceContext, ServiceMetadata } from "./types";
  * `defineService(...)` binds the service-local authoring surfaces once:
  * contract authoring, service middleware authoring, and implementer creation.
  * The `base` property assembles the baseline concern profiles imported from the
- * sibling files in this directory. Keep concern behavior there and keep this
- * file focused on assembly.
+ * sibling files in this directory, and `createServiceImplementer(...)`
+ * auto-attaches those service-wide defaults for every procedure. Keep baseline
+ * concern behavior there and keep this file focused on assembly.
  */
 const service = defineService<ServiceMetadata, ServiceContext>({
   metadata: {
@@ -60,7 +61,15 @@ export const ocBase = service.oc;
  * Service-local middleware builder.
  *
  * @remarks
- * Use this for service-authored middleware.
+ * Use this for additive service-authored middleware outside the baseline
+ * profiles in this directory.
+ *
+ * Typical attachment points:
+ * - module-level additions in module `setup.ts` files
+ * - procedure-level additions in module `router.ts` files
+ *
+ * Do not use this to recreate the default service-wide baseline middleware
+ * already declared under `service/base/`.
  * Declare only the minimal required lane fragments or execution context
  * additions; do not restate the full `ServiceContext`.
  */
@@ -82,6 +91,7 @@ export const createServiceProvider = service.createProvider;
  * @remarks
  * `src/service/impl.ts` imports the root contract and calls this once. Keeping
  * the factory here avoids repeating `ServiceContext` and baseline service
- * assembly options in every implementation file.
+ * assembly options in every implementation file. The returned implementer
+ * already includes the baseline concern profiles from this directory.
  */
 export const createServiceImplementer = service.createImplementer;

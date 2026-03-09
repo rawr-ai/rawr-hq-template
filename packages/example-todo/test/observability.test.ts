@@ -105,13 +105,23 @@ describe("example-todo observability", () => {
         "rawr.orpc.procedure.succeeded",
         "todo.procedure.started",
         "todo.procedure.succeeded",
+        "todo.tags.module.observed",
       ]));
     });
 
     expect(logs.some((entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "success")).toBe(true);
     expect(logs.some((entry) => entry.event === "todo.procedure" && entry.payload.outcome === "success")).toBe(true);
+    expect(logs.some((entry) =>
+      entry.event === "todo.tags.module"
+      && entry.payload.layer === "module"
+      && entry.payload.path === "tags.list")).toBe(true);
     expect(logs.some((entry) => entry.payload.spanTraceId === "1234567890abcdef1234567890abcdef")).toBe(true);
     expect(analytics.some((entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list")).toBe(true);
+    expect(analytics.some((entry) =>
+      entry.event === "todo.mock.module.analytics"
+      && entry.payload.layer === "module"
+      && entry.payload.module === "tags"
+      && entry.payload.path === "tags.list")).toBe(true);
   });
 
   it("degrades safely when no active span exists", async () => {
@@ -140,5 +150,41 @@ describe("example-todo observability", () => {
       entry.event === "todo.procedure"
       && entry.payload.outcome === "error"
       && entry.payload.code === "READ_ONLY_MODE")).toBe(true);
+  });
+
+  it("adds procedure-local observability and analytics on top of the service baseline", async () => {
+    const logs: LogEntry[] = [];
+    const analytics: AnalyticsEntry[] = [];
+    const client = createClient(createClientOptions({ logs, analytics }));
+
+    const task = await client.tasks.create({ title: "Procedure-local example" }, invocation("trace-seed-task"));
+    const tag = await client.tags.create({ name: "proc-local", color: "#336699" }, invocation("trace-seed-tag"));
+
+    await withRecordingSpan(async (span) => {
+      await client.assignments.assign(
+        { taskId: task.id, tagId: tag.id },
+        invocation("trace-procedure-local"),
+      );
+
+      expect(span.events.map((event) => event.name)).toEqual(expect.arrayContaining([
+        "todo.procedure.started",
+        "todo.procedure.succeeded",
+        "todo.assignments.assign.requested",
+      ]));
+    });
+
+    expect(logs.some((entry) =>
+      entry.event === "todo.assignments.assign.requested"
+      && entry.payload.layer === "procedure"
+      && entry.payload.procedure === "assignments.assign"
+      && entry.payload.taskId === task.id
+      && entry.payload.tagId === tag.id)).toBe(true);
+    expect(analytics.some((entry) =>
+      entry.event === "todo.mock.procedure.analytics"
+      && entry.payload.layer === "procedure"
+      && entry.payload.procedure === "assignments.assign"
+      && entry.payload.outcome === "success"
+      && entry.payload.taskId === task.id
+      && entry.payload.tagId === tag.id)).toBe(true);
   });
 });

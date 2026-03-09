@@ -7,12 +7,19 @@
  *
  * @agents
  * `contract.ts` owns boundary shape (input/output/errors/meta).
- * `setup.ts` owns module setup.
+ * `setup.ts` owns module setup, including module-local additive middleware.
  * This module is composite; cross-module orchestration belongs in handlers here.
  * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
+import { trace } from "@opentelemetry/api";
 import { os } from "./setup";
+import {
+  createServiceMiddleware,
+  type ServiceDeps,
+  type ServiceInvocation,
+  type ServiceScope,
+} from "../../base";
 import { type Assignment } from "./schemas";
 
 /**
@@ -20,7 +27,70 @@ import { type Assignment } from "./schemas";
  *
  * Implement concrete procedure handlers below using `os.<procedure>.handler(...)`.
  */
-const assign = os.assign.handler(async ({ context, input, errors }) => {
+type AssignBranchMiddleware = Parameters<typeof os.assign.use>[0];
+
+const assignProcedureObservability = createServiceMiddleware<{
+  deps: Pick<ServiceDeps, "logger">;
+  scope: Pick<ServiceScope, "workspaceId">;
+  invocation: Pick<ServiceInvocation, "traceId">;
+}>().middleware(async ({ context, next }, rawInput) => {
+  const input = rawInput as {
+    taskId: string;
+    tagId: string;
+  };
+
+  trace.getActiveSpan()?.addEvent("todo.assignments.assign.requested", {
+    workspace_id: context.scope.workspaceId,
+    task_id: input.taskId,
+    tag_id: input.tagId,
+  });
+  context.deps.logger.info("todo.assignments.assign.requested", {
+    layer: "procedure",
+    procedure: "assignments.assign",
+    workspaceId: context.scope.workspaceId,
+    invocationTraceId: context.invocation.traceId,
+    taskId: input.taskId,
+    tagId: input.tagId,
+  });
+
+  return next();
+}) as AssignBranchMiddleware;
+
+const assignProcedureAnalytics = createServiceMiddleware<{
+  deps: Pick<ServiceDeps, "analytics">;
+  scope: Pick<ServiceScope, "workspaceId">;
+  invocation: Pick<ServiceInvocation, "traceId">;
+}>().middleware(async ({ context, next }, rawInput) => {
+  const input = rawInput as {
+    taskId: string;
+    tagId: string;
+  };
+  let outcome: "success" | "error" = "success";
+
+  try {
+    return await next();
+  }
+  catch (error) {
+    outcome = "error";
+    throw error;
+  }
+  finally {
+    await context.deps.analytics.track("todo.mock.procedure.analytics", {
+      layer: "procedure",
+      procedure: "assignments.assign",
+      outcome,
+      workspaceId: context.scope.workspaceId,
+      invocationTraceId: context.invocation.traceId,
+      taskId: input.taskId,
+      tagId: input.tagId,
+    });
+  }
+}) as AssignBranchMiddleware;
+
+const assign = os.assign
+  .use(assignProcedureObservability)
+  .use(assignProcedureAnalytics)
+  .handler(async ({ context, input, errors }) => {
   const task = await context.provided.tasks.findById(input.taskId);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
