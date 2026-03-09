@@ -16,10 +16,13 @@ import { sqlProvider } from "../orpc-sdk";
  *
  * @remarks
  * Middleware order is authored here:
- * 1) framework-level observability + analytics (inside `createServiceImplementer`)
- * 2) service-level baseline observability (inside `createServiceImplementer`)
- * 3) SQL provider (`deps.dbPool` -> `provided.sql`)
- * 4) domain guard (`readOnlyMode`)
+ * 1) framework baseline middleware from the SDK seam
+ * 2) service-wide baseline observability + analytics declared in `service/base/`
+ * 3) extra service-wide providers/guards authored here
+ *
+ * Do not manually re-attach the default service-wide observability, analytics,
+ * or policy middleware in this file. Module/procedure-local additive middleware
+ * belongs in module `setup.ts` and `router.ts` files.
  */
 export const impl = createServiceImplementer(contract)
   .use(sqlProvider)

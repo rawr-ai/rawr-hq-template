@@ -37,6 +37,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - `src/service/base/index.ts` binds the service-local authoring surfaces once (`ocBase`, `createServiceMiddleware`, `createServiceImplementer`) and assembles baseline concern profiles from sibling files in `src/service/base/`.
 - `src/service/base/types.ts` is the shared type source for those sibling files; it exists to keep the base-construction layer acyclic.
 - `src/service/base/{observability,analytics}.ts` should contribute service-specific deltas, while the SDK derives baseline naming like `todo.procedure.*` and `rawr.todo.*` from service metadata.
+- `createServiceImplementer(...)` auto-attaches the service-wide baseline concerns from `src/service/base/`; module/procedure-local observability and analytics stay additive and attach via `createServiceMiddleware(...).use(...)`.
 
 ## Real axes that should change
 
@@ -193,6 +194,7 @@ Example change at this scale (medium): add a new module.
 - Wire it into `service/contract.ts` (import + add to exported contract object)
 - Wire it into `service/router.ts` (import module router + add to exported router object)
 - No changes needed outside `service/contract.ts` + `service/router.ts` unless you’re changing middleware ordering (`src/service/impl.ts`)
+- If the change is only module/procedure-local observability or analytics, prefer `service/modules/<name>/setup.ts` or `service/modules/<name>/router.ts`; do not re-attach the default service-wide baseline in `src/service/impl.ts`.
 
 ### 3) Golden Path
 
