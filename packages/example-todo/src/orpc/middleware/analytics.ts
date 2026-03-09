@@ -28,13 +28,6 @@ export type ServiceAnalyticsProfile<
   payload?: (args: AnalyticsPayloadArgs<TMeta, TContext>) => Record<string, unknown>;
 };
 
-export function defineServiceAnalyticsProfile<
-  TMeta extends BaseMetadata = BaseMetadata,
-  TContext extends object = object,
->(profile: ServiceAnalyticsProfile<TMeta, TContext>) {
-  return profile;
-}
-
 export type ServiceAnalyticsMiddlewareInput<
   TMeta extends BaseMetadata = BaseMetadata,
   TContext extends object = object,
@@ -168,7 +161,11 @@ export function createServiceAnalyticsBaselineMiddleware<
  */
 export function createServiceAnalyticsMiddleware<
   TMeta extends BaseMetadata,
-  TContext extends object,
+  TContext extends {
+    deps: {
+      analytics: AnalyticsClient;
+    };
+  },
 >(
   baseMetadata: TMeta,
   input: ServiceAnalyticsMiddlewareInput<TMeta, TContext>,

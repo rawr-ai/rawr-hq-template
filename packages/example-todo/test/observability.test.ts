@@ -11,11 +11,12 @@ import {
   type LogEntry,
 } from "./helpers";
 import {
-  createServiceKit,
   defineService,
   schema,
+  type BaseMetadata,
   type BasePolicyProfile,
-  type ServiceKit,
+  type ServiceAnalyticsProfile,
+  type ServiceObservabilityProfile,
 } from "../src/orpc-sdk";
 
 class RecordingSpan implements Span {
@@ -94,25 +95,27 @@ async function withRecordingSpan<T>(callback: (span: RecordingSpan) => Promise<T
   }
 }
 
-function createTestBase<
-  TInput extends {
-    deps: object;
-    scope: object;
-    config: object;
-    invocation: object;
-    metadata: object;
-  },
->(kit: ServiceKit<TInput>) {
-  const analytics = kit.defineAnalytics({});
-  const observability = kit.defineObservability({
+function createTestBase<TMeta extends BaseMetadata, TContext extends {
+  deps: {
+    logger: {
+      info(message: string, meta?: Record<string, unknown>): void;
+      error(message: string, meta?: Record<string, unknown>): void;
+    };
+    analytics: {
+      track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+    };
+  };
+}>() {
+  const analytics: ServiceAnalyticsProfile<TMeta, TContext> = {};
+  const observability: ServiceObservabilityProfile<TMeta, TContext> = {
     attributes() {
       return {};
     },
     logFields() {
       return {};
     },
-  });
-  const policy: BasePolicyProfile = kit.definePolicy({ events: {} });
+  };
+  const policy: BasePolicyProfile = { events: {} };
 
   return {
     analytics,
@@ -227,10 +230,16 @@ describe("example-todo observability", () => {
   });
 
   it("exposes additive service-local builders without duplicating the baseline lifecycle shell", async () => {
-    const logs: LogEntry[] = [];
-    const analytics: AnalyticsEntry[] = [];
-    const kit = createServiceKit<{
-      deps: {};
+    type TestContext = {
+      deps: {
+        logger: {
+          info(message: string, meta?: Record<string, unknown>): void;
+          error(message: string, meta?: Record<string, unknown>): void;
+        };
+        analytics: {
+          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        };
+      };
       scope: {
         workspaceId: string;
       };
@@ -240,15 +249,17 @@ describe("example-todo observability", () => {
       invocation: {
         traceId: string;
       };
-      metadata: {};
-    }>();
-    const service = defineService({
-      kit,
+      provided: {};
+    };
+
+    const logs: LogEntry[] = [];
+    const analytics: AnalyticsEntry[] = [];
+    const service = defineService<BaseMetadata, TestContext>({
       metadata: {
         idempotent: true,
         domain: "todo",
       },
-      base: createTestBase(kit),
+      base: createTestBase<BaseMetadata, TestContext>(),
     });
 
     const contract = {
