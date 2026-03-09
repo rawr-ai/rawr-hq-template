@@ -13,9 +13,6 @@ import {
   createServiceAnalyticsMiddleware,
   createServiceObservabilityMiddleware,
   createServiceProvider,
-  type ServiceDeps,
-  type ServiceInvocation,
-  type ServiceScope,
 } from "../../base";
 import type { Sql } from "../../../orpc-sdk";
 import { createRepository } from "./repository";
@@ -40,11 +37,7 @@ const tagRepositoryProvider = createServiceProvider<{
   });
 });
 
-const tagModuleObservability = createServiceObservabilityMiddleware<{
-  deps: Pick<ServiceDeps, "logger">;
-  scope: Pick<ServiceScope, "workspaceId">;
-  invocation: Pick<ServiceInvocation, "traceId">;
-}>({
+const tagModuleObservability = createServiceObservabilityMiddleware({
   attributes: ({ context }) => ({
     module: "tags",
     workspace_id: context.scope.workspaceId,
@@ -66,11 +59,7 @@ const tagModuleObservability = createServiceObservabilityMiddleware<{
   },
 });
 
-const tagModuleAnalytics = createServiceAnalyticsMiddleware<{
-  deps: Pick<ServiceDeps, "analytics">;
-  scope: Pick<ServiceScope, "workspaceId">;
-  invocation: Pick<ServiceInvocation, "traceId">;
-}>({
+const tagModuleAnalytics = createServiceAnalyticsMiddleware({
   payload: ({ context, pathLabel, outcome }) => ({
     analytics_layer: "module",
     analytics_module: "tags",
