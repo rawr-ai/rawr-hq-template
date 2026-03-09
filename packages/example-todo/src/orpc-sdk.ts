@@ -13,6 +13,7 @@ export type {
   ServiceDepsOf,
   ServiceMetadataOf,
   ServiceContextOf,
+  ServiceTypesOf,
 } from "./orpc/base";
 export type {
   BasePolicyProfile,
@@ -22,21 +23,14 @@ export type {
   ServiceObservabilityMiddlewareInput,
   ServiceObservabilityProfile,
 } from "./orpc/middleware";
+export {
+  defineServiceAnalyticsProfile,
+  defineServiceObservabilityProfile,
+} from "./orpc/middleware";
 export type { DbPool, Sql } from "./orpc/adapters/sql";
 export type { FeedbackClient } from "./orpc/adapters/feedback";
 export {
-  createServiceKit,
   defineService,
-} from "./orpc/factory/service";
-export type {
-  AnyServiceKit,
-  ServiceKit,
-  ServiceKitConfig,
-  ServiceKitContext,
-  ServiceKitDeps,
-  ServiceKitInvocation,
-  ServiceKitMetadata,
-  ServiceKitScope,
 } from "./orpc/factory/service";
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
 export {

@@ -1,4 +1,8 @@
-import { defineObservabilityProfile, type TodoServiceKit } from "./support";
+import {
+  defineServiceObservabilityProfile,
+  type BasePolicyProfile,
+} from "../../orpc-sdk";
+import type { ServiceContext, ServiceMetadata } from "./types";
 
 /**
  * Baseline service observability profile for the todo package.
@@ -16,46 +20,50 @@ import { defineObservabilityProfile, type TodoServiceKit } from "./support";
  *
  * This file should only declare what is specific to the todo service.
  */
-export function makeObservability(kit: TodoServiceKit) {
-  return kit.defineObservability(defineObservabilityProfile({
-    attributes: ({ context, meta, path }) => {
-      return {
-        workspace_id: context.scope.workspaceId,
-        read_only: context.config.readOnly,
-        invocation_trace_id: context.invocation.traceId,
-      };
-    },
-    logFields: ({ context, spanTraceId }) => ({
+export const observability = defineServiceObservabilityProfile<
+  ServiceMetadata,
+  ServiceContext,
+  BasePolicyProfile
+>({
+  attributes: ({ context, meta, path }) => {
+    return {
+      workspace_id: context.scope.workspaceId,
+      read_only: context.config.readOnly,
+      invocation_trace_id: context.invocation.traceId,
+    };
+  },
+  logFields: ({ context, spanTraceId }) => {
+    return {
       spanTraceId,
       invocationTraceId: context.invocation.traceId,
       workspaceId: context.scope.workspaceId,
       readOnly: context.config.readOnly,
-    }),
-    startedEventFields: ({ context }) => {
-      return {
+    };
+  },
+  startedEventFields: ({ context }) => {
+    return {
+      workspaceId: context.scope.workspaceId,
+      traceId: context.invocation.traceId,
+    };
+  },
+  succeededEventFields: ({ context }) => {
+    return {
+      workspaceId: context.scope.workspaceId,
+    };
+  },
+  onFailed: ({ span, context, pathLabel, error, policyEvents }) => {
+    if (error.code === "READ_ONLY_MODE" && policyEvents?.readOnlyRejected) {
+      span?.addEvent(policyEvents.readOnlyRejected, {
+        path: pathLabel,
         workspaceId: context.scope.workspaceId,
-        traceId: context.invocation.traceId,
-      };
-    },
-    succeededEventFields: ({ context }) => {
-      return {
-        workspaceId: context.scope.workspaceId,
-      };
-    },
-    onFailed: ({ span, context, pathLabel, error, policyEvents }) => {
-      if (error.code === "READ_ONLY_MODE" && policyEvents?.readOnlyRejected) {
-        span?.addEvent(policyEvents.readOnlyRejected, {
-          path: pathLabel,
-          workspaceId: context.scope.workspaceId,
-        });
-      }
+      });
+    }
 
-      if (error.code === "ASSIGNMENT_LIMIT_REACHED" && policyEvents?.assignmentLimitReached) {
-        span?.addEvent(policyEvents.assignmentLimitReached, {
-          path: pathLabel,
-          workspaceId: context.scope.workspaceId,
-        });
-      }
-    },
-  }));
-}
+    if (error.code === "ASSIGNMENT_LIMIT_REACHED" && policyEvents?.assignmentLimitReached) {
+      span?.addEvent(policyEvents.assignmentLimitReached, {
+        path: pathLabel,
+        workspaceId: context.scope.workspaceId,
+      });
+    }
+  },
+});

@@ -5,10 +5,11 @@ import { createClient } from "../src";
 import type { BaseMetadata } from "../src/orpc/base";
 import type { DbPool } from "../src/orpc/adapters/sql";
 import {
-  createServiceKit,
   defineService,
   type BasePolicyProfile,
-  type ServiceKit,
+  type ServiceAnalyticsProfile,
+  type ServiceObservabilityProfile,
+  type ServiceTypesOf,
   type Sql,
   schema,
 } from "../src/orpc-sdk";
@@ -18,31 +19,69 @@ import { sqlProvider } from "../src/orpc/middleware/sql-provider";
 import { contract } from "../src/service/contract";
 import { createServiceMiddleware, createServiceProvider } from "../src/service/base";
 
-function createTestBase<
-  TInput extends {
-    deps: object;
-    scope: object;
-    config: object;
-    invocation: object;
-    metadata: object;
-  },
->(kit: ServiceKit<TInput>) {
-  const analytics = kit.defineAnalytics({});
-  const observability = kit.defineObservability({
+function createTestBase<TMeta extends BaseMetadata, TContext extends {
+  deps: CreateClientOptions["deps"];
+}>() {
+  const analytics: ServiceAnalyticsProfile<TMeta, TContext> = {};
+  const observability: ServiceObservabilityProfile<TMeta, TContext> = {
     attributes() {
       return {};
     },
     logFields() {
       return {};
     },
-  });
-  const policy: BasePolicyProfile = kit.definePolicy({ events: {} });
+  };
+  const policy: BasePolicyProfile = { events: {} };
+
   return {
     analytics,
     observability,
     policy,
   };
 }
+
+type DerivedTypingService = ServiceTypesOf<{
+  deps: {
+    dbPool: DbPool;
+  };
+  scope: {
+    workspaceId: string;
+  };
+  config: CreateClientOptions["config"];
+  invocation: {
+    traceId: string;
+  };
+  metadata: {
+    audit?: "basic" | "full";
+  };
+}>;
+
+const derivedTypingDeps: DerivedTypingService["Deps"] = deps;
+void derivedTypingDeps;
+
+const derivedTypingMetadata: DerivedTypingService["Metadata"] = {
+  idempotent: true,
+  audit: "basic",
+};
+void derivedTypingMetadata;
+
+const derivedTypingContext: DerivedTypingService["Context"] = {
+  deps,
+  scope: {
+    workspaceId: "workspace-typing",
+  },
+  config: {
+    readOnly: false,
+    limits: {
+      maxAssignmentsPerTask: 2,
+    },
+  },
+  invocation: {
+    traceId: "trace-typing",
+  },
+  provided: {},
+};
+void derivedTypingContext;
 
 declare const dbPool: DbPool;
 declare const deps: CreateClientOptions["deps"];
@@ -115,20 +154,23 @@ void invalidBoundary;
 const typedClient = createClient(validBoundary);
 void typedClient;
 
-const alternateInvocationKit = createServiceKit<{
-  deps: {};
+const alternateInvocationService = defineService<BaseMetadata, {
+  deps: CreateClientOptions["deps"];
   scope: { workspaceId: string };
   config: CreateClientOptions["config"];
   invocation: { requestId: string };
-  metadata: {};
-}>();
-
-const alternateInvocationService = defineService({
-  kit: alternateInvocationKit,
+  provided: {};
+}>({
   metadata: {
     idempotent: true,
   },
-  base: createTestBase(alternateInvocationKit),
+  base: createTestBase<BaseMetadata, {
+    deps: CreateClientOptions["deps"];
+    scope: { workspaceId: string };
+    config: CreateClientOptions["config"];
+    invocation: { requestId: string };
+    provided: {};
+  }>(),
 });
 void alternateInvocationService;
 
@@ -173,21 +215,20 @@ alternateInvocationService.createAnalyticsMiddleware({
   event: "alternate.procedure",
 });
 
-const additiveKit = createServiceKit<{
-  deps: {};
+type AdditiveServiceContext = {
+  deps: CreateClientOptions["deps"];
   scope: { workspaceId: string };
   config: CreateClientOptions["config"];
   invocation: { traceId: string };
-  metadata: {};
-}>();
+  provided: {};
+};
 
-const additiveService = defineService({
-  kit: additiveKit,
+const additiveService = defineService<BaseMetadata, AdditiveServiceContext>({
   metadata: {
     idempotent: true,
     domain: "todo",
   },
-  base: createTestBase(additiveKit),
+  base: createTestBase<BaseMetadata, AdditiveServiceContext>(),
 });
 
 const additiveContract = {
