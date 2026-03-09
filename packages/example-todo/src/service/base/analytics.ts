@@ -1,5 +1,5 @@
 import { defineServiceAnalyticsProfile } from "../../orpc-sdk";
-import type { ServiceContext, ServiceMetadata } from "./types";
+import type { Service } from "./types";
 
 /**
  * Baseline analytics profile for the todo service.
@@ -17,4 +17,4 @@ import type { ServiceContext, ServiceMetadata } from "./types";
  * service metadata, so this file only contributes extra package-specific
  * payload fields when needed.
  */
-export const analytics = defineServiceAnalyticsProfile<ServiceMetadata, ServiceContext>({});
+export const analytics = defineServiceAnalyticsProfile<Service>({});

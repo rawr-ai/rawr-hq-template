@@ -1,6 +1,6 @@
 import type { DbPool } from "../src/orpc/adapters/sql";
 import type { CreateClientOptions } from "../src/client";
-import type { ServiceDeps } from "../src/service/base";
+import type { Service } from "../src/service/base";
 import type { Assignment } from "../src/service/modules/assignments/schemas";
 import type { Tag } from "../src/service/modules/tags/schemas";
 import type { Task } from "../src/service/modules/tasks/schemas";
@@ -26,7 +26,7 @@ type DepsOptions = InMemorySqlOptions & {
 };
 
 type ClientOptions = DepsOptions & {
-  deps?: ServiceDeps;
+  deps?: Service["Deps"];
   readOnly?: boolean;
   maxAssignmentsPerTask?: number;
   workspaceId?: string;
@@ -165,7 +165,7 @@ export function createInMemorySql(options: InMemorySqlOptions = {}) {
   return { queryOne, query };
 }
 
-export function createDeps(options: DepsOptions = {}): ServiceDeps {
+export function createDeps(options: DepsOptions = {}): Service["Deps"] {
   let tick = 0;
   const sql = createInMemorySql(options);
   const dbPool: DbPool = {

@@ -11,12 +11,12 @@ import {
   type LogEntry,
 } from "./helpers";
 import {
+  defineServiceAnalyticsProfile,
+  defineServiceObservabilityProfile,
   defineService,
   schema,
-  type BaseMetadata,
   type BasePolicyProfile,
-  type ServiceAnalyticsProfile,
-  type ServiceObservabilityProfile,
+  type ServiceTypesOf,
 } from "../src/orpc-sdk";
 
 class RecordingSpan implements Span {
@@ -95,26 +95,24 @@ async function withRecordingSpan<T>(callback: (span: RecordingSpan) => Promise<T
   }
 }
 
-function createTestBase<TMeta extends BaseMetadata, TContext extends {
-  deps: {
-    logger: {
-      info(message: string, meta?: Record<string, unknown>): void;
-      error(message: string, meta?: Record<string, unknown>): void;
-    };
-    analytics: {
-      track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
-    };
-  };
-}>() {
-  const analytics: ServiceAnalyticsProfile<TMeta, TContext> = {};
-  const observability: ServiceObservabilityProfile<TMeta, TContext> = {
+type AnyTestService = ServiceTypesOf<{
+  deps: object;
+  scope: object;
+  config: object;
+  invocation: object;
+  metadata: object;
+}>;
+
+function createTestBase<TService extends AnyTestService>() {
+  const analytics = defineServiceAnalyticsProfile<TService>({});
+  const observability = defineServiceObservabilityProfile<TService, BasePolicyProfile>({
     attributes() {
       return {};
     },
     logFields() {
       return {};
     },
-  };
+  });
   const policy: BasePolicyProfile = { events: {} };
 
   return {
@@ -230,7 +228,7 @@ describe("example-todo observability", () => {
   });
 
   it("exposes additive service-local builders without duplicating the baseline lifecycle shell", async () => {
-    type TestContext = {
+    type TestService = ServiceTypesOf<{
       deps: {
         logger: {
           info(message: string, meta?: Record<string, unknown>): void;
@@ -249,17 +247,17 @@ describe("example-todo observability", () => {
       invocation: {
         traceId: string;
       };
-      provided: {};
-    };
+      metadata: {};
+    }>;
 
     const logs: LogEntry[] = [];
     const analytics: AnalyticsEntry[] = [];
-    const service = defineService<BaseMetadata, TestContext>({
+    const service = defineService<TestService>({
       metadata: {
         idempotent: true,
         domain: "todo",
       },
-      base: createTestBase<BaseMetadata, TestContext>(),
+      base: createTestBase<TestService>(),
     });
 
     const contract = {

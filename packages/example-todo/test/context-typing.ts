@@ -5,10 +5,10 @@ import { createClient } from "../src";
 import type { BaseMetadata } from "../src/orpc/base";
 import type { DbPool } from "../src/orpc/adapters/sql";
 import {
+  defineServiceAnalyticsProfile,
+  defineServiceObservabilityProfile,
   defineService,
   type BasePolicyProfile,
-  type ServiceAnalyticsProfile,
-  type ServiceObservabilityProfile,
   type ServiceTypesOf,
   type Sql,
   schema,
@@ -19,18 +19,24 @@ import { sqlProvider } from "../src/orpc/middleware/sql-provider";
 import { contract } from "../src/service/contract";
 import { createServiceMiddleware, createServiceProvider } from "../src/service/base";
 
-function createTestBase<TMeta extends BaseMetadata, TContext extends {
-  deps: CreateClientOptions["deps"];
-}>() {
-  const analytics: ServiceAnalyticsProfile<TMeta, TContext> = {};
-  const observability: ServiceObservabilityProfile<TMeta, TContext> = {
+type AnyTestService = ServiceTypesOf<{
+  deps: object;
+  scope: object;
+  config: object;
+  invocation: object;
+  metadata: object;
+}>;
+
+function createTestBase<TService extends AnyTestService>() {
+  const analytics = defineServiceAnalyticsProfile<TService>({});
+  const observability = defineServiceObservabilityProfile<TService, BasePolicyProfile>({
     attributes() {
       return {};
     },
     logFields() {
       return {};
     },
-  };
+  });
   const policy: BasePolicyProfile = { events: {} };
 
   return {
@@ -154,23 +160,19 @@ void invalidBoundary;
 const typedClient = createClient(validBoundary);
 void typedClient;
 
-const alternateInvocationService = defineService<BaseMetadata, {
+type AlternateInvocationService = ServiceTypesOf<{
   deps: CreateClientOptions["deps"];
   scope: { workspaceId: string };
   config: CreateClientOptions["config"];
   invocation: { requestId: string };
-  provided: {};
-}>({
+  metadata: {};
+}>;
+
+const alternateInvocationService = defineService<AlternateInvocationService>({
   metadata: {
     idempotent: true,
   },
-  base: createTestBase<BaseMetadata, {
-    deps: CreateClientOptions["deps"];
-    scope: { workspaceId: string };
-    config: CreateClientOptions["config"];
-    invocation: { requestId: string };
-    provided: {};
-  }>(),
+  base: createTestBase<AlternateInvocationService>(),
 });
 void alternateInvocationService;
 
@@ -215,20 +217,20 @@ alternateInvocationService.createAnalyticsMiddleware({
   event: "alternate.procedure",
 });
 
-type AdditiveServiceContext = {
+type AdditiveService = ServiceTypesOf<{
   deps: CreateClientOptions["deps"];
   scope: { workspaceId: string };
   config: CreateClientOptions["config"];
   invocation: { traceId: string };
-  provided: {};
-};
+  metadata: {};
+}>;
 
-const additiveService = defineService<BaseMetadata, AdditiveServiceContext>({
+const additiveService = defineService<AdditiveService>({
   metadata: {
     idempotent: true,
     domain: "todo",
   },
-  base: createTestBase<BaseMetadata, AdditiveServiceContext>(),
+  base: createTestBase<AdditiveService>(),
 });
 
 const additiveContract = {

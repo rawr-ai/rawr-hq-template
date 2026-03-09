@@ -2,7 +2,7 @@ import {
   defineServiceObservabilityProfile,
   type BasePolicyProfile,
 } from "../../orpc-sdk";
-import type { ServiceContext, ServiceMetadata } from "./types";
+import type { Service } from "./types";
 
 /**
  * Baseline service observability profile for the todo package.
@@ -21,8 +21,7 @@ import type { ServiceContext, ServiceMetadata } from "./types";
  * This file should only declare what is specific to the todo service.
  */
 export const observability = defineServiceObservabilityProfile<
-  ServiceMetadata,
-  ServiceContext,
+  Service,
   BasePolicyProfile
 >({
   attributes: ({ context, meta, path }) => {

@@ -9,7 +9,13 @@
 import type { Attributes, Span } from "@opentelemetry/api";
 import { SpanStatusCode, trace } from "@opentelemetry/api";
 import type { MiddlewareResult } from "@orpc/server";
-import type { BaseMetadata, Logger } from "../base";
+import type {
+  AnyService,
+  BaseMetadata,
+  Logger,
+  ServiceContextFrom,
+  ServiceMetadataFrom,
+} from "../base";
 import { createBaseMiddleware } from "../base-foundation";
 import { createNormalMiddlewareBuilder } from "../factory/middleware";
 
@@ -113,14 +119,19 @@ export type ServiceObservabilityProfile<
 };
 
 export function defineServiceObservabilityProfile<
-  TMeta extends BaseMetadata,
-  TContext extends object,
+  TService extends AnyService,
   TPolicy extends {
     events?: Record<string, string | undefined>;
   } = {
     events?: Record<string, string | undefined>;
   },
->(profile: ServiceObservabilityProfile<TMeta, TContext, TPolicy>) {
+>(
+  profile: ServiceObservabilityProfile<
+    ServiceMetadataFrom<TService>,
+    ServiceContextFrom<TService>,
+    TPolicy
+  >,
+) {
   return profile;
 }
 
