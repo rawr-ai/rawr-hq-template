@@ -31,18 +31,18 @@ type MergeProvided<
 type AuthoringOptions<
   TInContext extends object,
   TMeta extends BaseMetadata,
-> = Omit<MiddlewareOptions<TInContext, unknown, any, TMeta>, "next">;
+> = Omit<MiddlewareOptions<TInContext, any, any, TMeta>, "next">;
 
 type NormalMiddlewareCallback<
   TInContext extends object,
   TMeta extends BaseMetadata,
 > = (
   options: AuthoringOptions<TInContext, TMeta> & {
-    next(): MiddlewareResult<Record<never, never>, unknown>;
+    next(): MiddlewareResult<Record<never, never>, any>;
   },
   input: unknown,
   output: MiddlewareOutputFn<unknown>,
-) => MaybePromise<MiddlewareResult<Record<never, never>, unknown>>;
+) => MaybePromise<MiddlewareResult<Record<never, never>, any>>;
 
 type ProviderCallback<
   TInContext extends object,
@@ -90,8 +90,8 @@ export function createNormalMiddlewareBuilder<
       const middleware: Middleware<
         TRequiredContext,
         Record<never, never>,
-        unknown,
-        unknown,
+        any,
+        any,
         any,
         TMeta
       > = (middlewareOptions, input, output) => {

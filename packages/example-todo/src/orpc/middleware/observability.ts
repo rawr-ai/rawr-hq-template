@@ -18,6 +18,42 @@ type ObservabilityFields = Record<string, ObservabilityScalar | undefined>;
 
 export type ObservabilityErrorDetails = ReturnType<typeof getErrorDetails>;
 
+type ObservabilityBaseArgs<
+  TMeta extends BaseMetadata,
+  TContext extends {
+    deps: {
+      logger: Logger;
+    };
+  },
+> = {
+  context: TContext;
+  meta: TMeta;
+  path: readonly string[];
+  pathLabel: string;
+};
+
+type ObservabilityDurationArgs<
+  TMeta extends BaseMetadata,
+  TContext extends {
+    deps: {
+      logger: Logger;
+    };
+  },
+> = ObservabilityBaseArgs<TMeta, TContext> & {
+  durationMs: number;
+};
+
+type ObservabilityFailedArgs<
+  TMeta extends BaseMetadata,
+  TContext extends {
+    deps: {
+      logger: Logger;
+    };
+  },
+> = ObservabilityDurationArgs<TMeta, TContext> & {
+  error: ObservabilityErrorDetails;
+};
+
 type ResolvedObservabilityProfile<
   TMeta extends BaseMetadata,
   TContext extends {
@@ -31,12 +67,7 @@ type ResolvedObservabilityProfile<
   startedEvent: string;
   succeededEvent: string;
   failedEvent: string;
-  getAttributes(args: {
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-  }): Attributes;
+  getAttributes(args: ObservabilityBaseArgs<TMeta, TContext>): Attributes;
   getLogFields(args: {
     context: TContext;
     meta: TMeta;
@@ -45,52 +76,19 @@ type ResolvedObservabilityProfile<
     durationMs: number;
     spanTraceId?: string;
   }): Record<string, unknown>;
-  getStartedEventFields?(args: {
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-  }): Attributes;
-  getSucceededEventFields?(args: {
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-    durationMs: number;
-  }): Attributes;
-  getFailedEventFields?(args: {
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-    durationMs: number;
-    error: ObservabilityErrorDetails;
-  }): Attributes;
+  getStartedEventFields?(args: ObservabilityBaseArgs<TMeta, TContext>): Attributes;
+  getSucceededEventFields?(args: ObservabilityDurationArgs<TMeta, TContext>): Attributes;
+  getFailedEventFields?(args: ObservabilityFailedArgs<TMeta, TContext>): Attributes;
   onStarted?(args: {
     span: Span | undefined;
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-  }): void;
+  } & ObservabilityBaseArgs<TMeta, TContext>): void;
   onSucceeded?(args: {
     span: Span | undefined;
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-    durationMs: number;
-  }): void;
+  } & ObservabilityDurationArgs<TMeta, TContext>): void;
   onFailed?(args: {
     span: Span | undefined;
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-    durationMs: number;
-    error: ObservabilityErrorDetails;
     policyEvents: TPolicyEvents;
-  }): void;
+  } & ObservabilityFailedArgs<TMeta, TContext>): void;
 };
 
 export type ServiceObservabilityProfile<
@@ -106,12 +104,7 @@ export type ServiceObservabilityProfile<
     events?: Record<string, string | undefined>;
   },
 > = {
-  attributes?: (args: {
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-  }) => ObservabilityFields;
+  attributes?: (args: ObservabilityBaseArgs<TMeta, TContext>) => ObservabilityFields;
   logFields?: (args: {
     context: TContext;
     meta: TMeta;
@@ -120,52 +113,39 @@ export type ServiceObservabilityProfile<
     durationMs: number;
     spanTraceId?: string;
   }) => Record<string, unknown>;
-  startedEventFields?: (args: {
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-  }) => Attributes;
-  succeededEventFields?: (args: {
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-    durationMs: number;
-  }) => Attributes;
-  failedEventFields?: (args: {
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-    durationMs: number;
-    error: ObservabilityErrorDetails;
-  }) => Attributes;
+  startedEventFields?: (args: ObservabilityBaseArgs<TMeta, TContext>) => Attributes;
+  succeededEventFields?: (args: ObservabilityDurationArgs<TMeta, TContext>) => Attributes;
+  failedEventFields?: (args: ObservabilityFailedArgs<TMeta, TContext>) => Attributes;
   onStarted?(args: {
     span: Span | undefined;
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-  }): void;
+  } & ObservabilityBaseArgs<TMeta, TContext>): void;
   onSucceeded?(args: {
     span: Span | undefined;
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-    durationMs: number;
-  }): void;
+  } & ObservabilityDurationArgs<TMeta, TContext>): void;
   onFailed?(args: {
     span: Span | undefined;
-    context: TContext;
-    meta: TMeta;
-    path: readonly string[];
-    pathLabel: string;
-    durationMs: number;
-    error: ObservabilityErrorDetails;
     policyEvents: TPolicy["events"];
-  }): void;
+  } & ObservabilityFailedArgs<TMeta, TContext>): void;
+};
+
+export type ServiceObservabilityMiddlewareInput<
+  TMeta extends BaseMetadata,
+  TContext extends {
+    deps: {
+      logger: Logger;
+    };
+  },
+> = {
+  attributes?: (args: ObservabilityBaseArgs<TMeta, TContext>) => ObservabilityFields;
+  onStarted?(args: {
+    span: Span | undefined;
+  } & ObservabilityBaseArgs<TMeta, TContext>): void;
+  onSucceeded?(args: {
+    span: Span | undefined;
+  } & ObservabilityDurationArgs<TMeta, TContext>): void;
+  onFailed?(args: {
+    span: Span | undefined;
+  } & ObservabilityFailedArgs<TMeta, TContext>): void;
 };
 
 type ErrorShape = {
@@ -175,9 +155,16 @@ type ErrorShape = {
   status?: unknown;
 };
 
-function getProcedureMeta(procedure: unknown): BaseMetadata {
-  const anyProcedure = procedure as { ["~orpc"]?: { meta?: BaseMetadata } };
-  return anyProcedure?.["~orpc"]?.meta ?? { idempotent: true };
+function getProcedureMeta<TMeta extends BaseMetadata>(
+  procedure: unknown,
+  fallback: TMeta,
+): TMeta {
+  const anyProcedure = procedure as { ["~orpc"]?: { meta?: TMeta } };
+  return anyProcedure?.["~orpc"]?.meta ?? fallback;
+}
+
+function getBaseProcedureMeta(procedure: unknown): BaseMetadata {
+  return getProcedureMeta(procedure, { idempotent: true });
 }
 
 function getErrorDetails(error: unknown) {
@@ -477,7 +464,7 @@ export function createBaseObservabilityMiddleware() {
       logger: Logger;
     };
   }>().middleware(createObservabilityHandler({
-    getMeta: getProcedureMeta,
+    getMeta: getBaseProcedureMeta,
     profile,
     policyEvents: undefined,
   }));
@@ -492,7 +479,7 @@ export function createBaseObservabilityMiddleware() {
  * attribute prefixes from service metadata. The service profile only supplies
  * meaningful deltas and bounded hooks.
  */
-export function createServiceObservabilityMiddleware<
+export function createServiceObservabilityBaselineMiddleware<
   TMeta extends BaseMetadata,
   TContext extends {
     deps: {
@@ -513,10 +500,81 @@ export function createServiceObservabilityMiddleware<
     baseMetadata,
   }).middleware(createObservabilityHandler({
     getMeta(procedure: unknown) {
-      const anyProcedure = procedure as { ["~orpc"]?: { meta?: TMeta } };
-      return anyProcedure?.["~orpc"]?.meta ?? baseMetadata;
+      return getProcedureMeta(procedure, baseMetadata);
     },
     profile: resolvedProfile,
     policyEvents: policy.events,
   }));
+}
+
+/**
+ * Construct additive service observability middleware for module/procedure
+ * scope without recreating the baseline lifecycle shell.
+ */
+export function createServiceObservabilityMiddleware<
+  TMeta extends BaseMetadata,
+  TContext extends {
+    deps: {
+      logger: Logger;
+    };
+  },
+>(
+  baseMetadata: TMeta,
+  input: ServiceObservabilityMiddlewareInput<TMeta, TContext>,
+) {
+  const names = deriveServiceNames(baseMetadata);
+
+  return createNormalMiddlewareBuilder<TContext, TMeta>({
+    baseMetadata,
+  }).middleware(async ({ context, path, procedure, next }) => {
+    const span = trace.getActiveSpan();
+    const startedAt = Date.now();
+    const meta = getProcedureMeta(procedure, baseMetadata);
+    const pathLabel = path.join(".");
+
+    span?.setAttributes(prefixAttributes(
+      names.attributePrefix,
+      input.attributes?.({
+        context,
+        meta,
+        path,
+        pathLabel,
+      }),
+    ));
+    input.onStarted?.({
+      span,
+      context,
+      meta,
+      path,
+      pathLabel,
+    });
+
+    try {
+      const result = await next();
+
+      input.onSucceeded?.({
+        span,
+        context,
+        meta,
+        path,
+        pathLabel,
+        durationMs: Date.now() - startedAt,
+      });
+
+      return result;
+    }
+    catch (error) {
+      input.onFailed?.({
+        span,
+        context,
+        meta,
+        path,
+        pathLabel,
+        durationMs: Date.now() - startedAt,
+        error: getErrorDetails(error),
+      });
+
+      throw error;
+    }
+  });
 }

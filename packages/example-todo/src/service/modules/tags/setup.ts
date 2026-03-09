@@ -8,10 +8,10 @@
  * - inject tag module dependencies/context
  * - export configured `os` for handler implementations
  */
-import { trace } from "@opentelemetry/api";
 import { impl } from "../../impl";
 import {
-  createServiceMiddleware,
+  createServiceAnalyticsMiddleware,
+  createServiceObservabilityMiddleware,
   createServiceProvider,
   type ServiceDeps,
   type ServiceInvocation,
@@ -40,53 +40,45 @@ const tagRepositoryProvider = createServiceProvider<{
   });
 });
 
-const tagModuleObservability = createServiceMiddleware<{
+const tagModuleObservability = createServiceObservabilityMiddleware<{
   deps: Pick<ServiceDeps, "logger">;
   scope: Pick<ServiceScope, "workspaceId">;
   invocation: Pick<ServiceInvocation, "traceId">;
-}>().middleware(async ({ context, path, next }) => {
-  const pathLabel = path.join(".");
-  trace.getActiveSpan()?.addEvent("todo.tags.module.observed", {
+}>({
+  attributes: ({ context }) => ({
     module: "tags",
-    path: pathLabel,
     workspace_id: context.scope.workspaceId,
-  });
-  context.deps.logger.info("todo.tags.module", {
-    layer: "module",
-    module: "tags",
-    path: pathLabel,
-    workspaceId: context.scope.workspaceId,
-    invocationTraceId: context.invocation.traceId,
-  });
-
-  return next();
-});
-
-const tagModuleAnalytics = createServiceMiddleware<{
-  deps: Pick<ServiceDeps, "analytics">;
-  scope: Pick<ServiceScope, "workspaceId">;
-  invocation: Pick<ServiceInvocation, "traceId">;
-}>().middleware(async ({ context, path, next }) => {
-  const pathLabel = path.join(".");
-  let outcome: "success" | "error" = "success";
-
-  try {
-    return await next();
-  }
-  catch (error) {
-    outcome = "error";
-    throw error;
-  }
-  finally {
-    await context.deps.analytics.track("todo.mock.module.analytics", {
+    invocation_trace_id: context.invocation.traceId,
+  }),
+  onStarted: ({ span, context, pathLabel }) => {
+    span?.addEvent("todo.tags.module.observed", {
+      module: "tags",
+      path: pathLabel,
+      workspace_id: context.scope.workspaceId,
+    });
+    context.deps.logger.info("todo.tags.module", {
       layer: "module",
       module: "tags",
       path: pathLabel,
-      outcome,
       workspaceId: context.scope.workspaceId,
       invocationTraceId: context.invocation.traceId,
     });
-  }
+  },
+});
+
+const tagModuleAnalytics = createServiceAnalyticsMiddleware<{
+  deps: Pick<ServiceDeps, "analytics">;
+  scope: Pick<ServiceScope, "workspaceId">;
+  invocation: Pick<ServiceInvocation, "traceId">;
+}>({
+  payload: ({ context, pathLabel, outcome }) => ({
+    analytics_layer: "module",
+    analytics_module: "tags",
+    analytics_path: pathLabel,
+    analytics_outcome: outcome,
+    analytics_workspace_id: context.scope.workspaceId,
+    analytics_trace_id: context.invocation.traceId,
+  }),
 });
 
 export const os = impl.tags

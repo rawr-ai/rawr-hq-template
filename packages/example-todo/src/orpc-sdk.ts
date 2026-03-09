@@ -17,7 +17,9 @@ export type {
 export type {
   BasePolicyProfile,
   ObservabilityErrorDetails,
+  ServiceAnalyticsMiddlewareInput,
   ServiceAnalyticsProfile,
+  ServiceObservabilityMiddlewareInput,
   ServiceObservabilityProfile,
 } from "./orpc/middleware";
 export type { DbPool, Sql } from "./orpc/adapters/sql";
@@ -27,8 +29,6 @@ export {
 } from "./orpc/factory/service";
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
 export {
-  createBaseObservabilityMiddleware,
-  createServiceAnalyticsMiddleware,
   sqlProvider,
   feedbackProvider,
 } from "./orpc/middleware";

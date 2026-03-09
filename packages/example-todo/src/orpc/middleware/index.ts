@@ -1,11 +1,10 @@
-export { createServiceAnalyticsMiddleware } from "./analytics";
-export type { ServiceAnalyticsProfile } from "./analytics";
-export {
-  createBaseObservabilityMiddleware,
-  createServiceObservabilityMiddleware,
-} from "./observability";
+export type {
+  ServiceAnalyticsMiddlewareInput,
+  ServiceAnalyticsProfile,
+} from "./analytics";
 export type {
   ObservabilityErrorDetails,
+  ServiceObservabilityMiddlewareInput,
   ServiceObservabilityProfile,
 } from "./observability";
 export { feedbackProvider } from "./feedback-provider";

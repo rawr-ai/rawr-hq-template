@@ -41,7 +41,7 @@ Always-on slots:
 - `src/service/base/types.ts` is the shared type source for sibling base files and prevents them from depending on the assembly manifest.
 - `src/service/base/{observability,analytics,policy}.ts` are the stable baseline concern slots consumed automatically by `createServiceImplementer(...)`.
 - `src/service/base/observability.ts` and `src/service/base/analytics.ts` should define service-specific deltas and bounded hooks, not restate baseline event names or package identity that the SDK can derive automatically.
-- Module/procedure-local observability and analytics are additive middleware, authored with `createServiceMiddleware(...)` and attached where they belong (`modules/*/setup.ts` for module-wide additions, `modules/*/router.ts` for procedure-local additions).
+- Module/procedure-local observability and analytics are additive middleware, authored with `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` and attached where they belong (`modules/*/setup.ts` for module-wide additions, `modules/*/router.ts` for procedure-local additions).
 - `src/orpc/base.ts` is the always-on domain-package baseline definition surface.
 - `src/orpc/factory/*` is the always-on internal helper layer for abstract oRPC builders.
 - `src/orpc/package-boundary.ts` owns the package boundary wiring used by `src/client.ts`.
@@ -125,7 +125,7 @@ Rules:
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
 - Start each module setup from the central implementer subtree in `src/service/impl.ts` (`impl.<module>`), then attach any standalone module middleware and/or inline middleware there.
-- Use `createServiceMiddleware(...)` for additive observer/guard middleware at module/procedure scope; keep `service/base/*` for service-wide defaults only.
+- Use `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` for additive local instrumentation at module/procedure scope; use `createServiceMiddleware(...)` for other additive observers/guards; keep `service/base/*` for service-wide defaults only.
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.

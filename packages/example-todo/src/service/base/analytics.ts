@@ -10,7 +10,8 @@ import type { ServiceContext, ServiceMetadata } from "./types";
  *
  * This file is for service-wide defaults that `createServiceImplementer(...)`
  * auto-attaches. Module/procedure-local analytics should be additive middleware
- * authored with `createServiceMiddleware(...)`, not copied back into `impl.ts`.
+ * authored with `createServiceAnalyticsMiddleware(...)`, not copied back into
+ * `impl.ts`.
  *
  * The SDK derives the baseline event shape and package identity from the
  * service metadata, so this file only contributes extra package-specific
