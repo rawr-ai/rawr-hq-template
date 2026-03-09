@@ -56,6 +56,22 @@ Service-wide observability and analytics are not one undifferentiated thing. Und
 
 This distinction matters because “service-wide” by itself is not enough to describe ownership. The baseline shell is automatic; additions are explicit.
 
+### Enforcement direction
+
+If the goal is to make required service-wide middleware impossible to forget, the strongest direction is:
+
+- keep middleware behavior implemented in standalone files
+- declare required service-wide middleware in the service definition seam
+- auto-attach those declared middleware values inside `createServiceImplementer(...)`
+
+That gives us:
+
+- **behavior lives in middleware files**
+- **required attachment lives in the service definition**
+- **runtime composition still happens through the implementer seam**
+
+This is stronger than scaffolding conventions or lint rules because the service definition becomes the registration point for required service-wide middleware.
+
 ### What “declarative baseline” means
 
 Declarative baseline is service-owned information that should be present for every procedure but is not itself middleware behavior.
@@ -140,6 +156,7 @@ This also matches oRPC’s own framing:
   - change declarations in `src/service/base.ts`
   - change service-wide behavior in `src/service/middleware/*`
   - change bounded additions in module `setup.ts` / `router.ts`
+- Agents do not have to remember to attach fundamental service-wide telemetry by hand if those middleware are registered as required in the service definition.
 - The service definition file can stay smaller and more semantic.
   - it stops being a place where large callback logic accumulates
 - The middleware layer becomes more honest.
@@ -179,6 +196,18 @@ Why:
 - it is not robust for scaffolding
 - it creates repetitive wiring pressure
 - it makes baseline guarantees depend on author memory instead of topology
+
+#### C.1 Enforce attachment through hidden context keys or ghost requirements
+
+Not chosen.
+
+Why:
+
+- it abuses context requirements to prove middleware attachment
+- it introduces fake runtime/context state just to satisfy type checks
+- it couples unrelated middleware through invisible sentinel keys
+- it is harder to explain, debug, and scale than explicit middleware registration
+- it can prove that “some middleware set a marker,” but not that the right baseline behavior is registered in the right place
 
 #### D. Reintroduce service-kit or other magical service wrappers
 
@@ -267,6 +296,7 @@ Draft adjustment:
 - narrow the declarative service slot to actual declaration
 - do not treat `policy`, `observability`, and `analytics` as false declarative peers
 - move service runtime logic out of the service profile objects
+- use the service definition seam as the registration point for required service-wide middleware references
 
 Current recommendation:
 
@@ -309,7 +339,12 @@ It should contain:
 - any truly static observability/analytics declaration inputs
 - no runtime callbacks
 
-5. Bound exports
+5. Required middleware registration
+- import required service-wide middleware values from `src/service/middleware/*`
+- register them in the service definition
+- do not inline their behavior here
+
+6. Bound exports
 - `Service`
 - `ocBase`
 - `createServiceMiddleware`
@@ -325,6 +360,29 @@ It should **not** contain:
 - service-wide behavioral middleware implementations
 
 That logic should move to `src/service/middleware/*`.
+
+Concrete pattern:
+
+```ts
+import { observability } from "./middleware/observability";
+import { analytics } from "./middleware/analytics";
+
+const service = defineService<...>({
+  metadataDefaults: { ... },
+  baseline: {
+    policy: { ... },
+  },
+  requiredMiddleware: {
+    observability,
+    analytics,
+  },
+});
+```
+
+Important distinction:
+
+- `base.ts` may register required middleware
+- `base.ts` should not contain their runtime hook logic
 
 ### 2.2.1 What “policy” means
 
@@ -361,16 +419,18 @@ Target composition story:
 
 1. SDK/framework baseline auto-attaches in the base implementer path
 2. service baseline shell auto-attaches through `createServiceImplementer(...)`
-3. explicit service-wide guards, providers, and runtime additions attach in `src/service/impl.ts`
-4. module/procedure-local additions attach lower in module `setup.ts` / `router.ts`
+3. service-declared required middleware auto-attach through `createServiceImplementer(...)`
+4. explicit additional service-wide guards, providers, and runtime additions attach in `src/service/impl.ts`
+5. module/procedure-local additions attach lower in module `setup.ts` / `router.ts`
 
 Canonical `impl.ts` phase order:
 
 1. automatic framework baseline shell
 2. automatic service baseline shell
-3. service-wide observability/analytics middleware
+3. service-declared required middleware
 4. service-wide providers and guards
-5. module setup and lower-level additions
+5. service-wide optional/additional runtime middleware
+6. module setup and lower-level additions
 
 Draft `impl.ts` shape:
 
@@ -379,12 +439,8 @@ import { contract } from "./contract";
 import { createServiceImplementer } from "./base";
 import { sqlProvider } from "../orpc-sdk";
 import { readOnlyMode } from "./middleware/read-only-mode";
-import { observability } from "./middleware/observability";
-import { analytics } from "./middleware/analytics";
 
 export const impl = createServiceImplementer(contract)
-  .use(observability)
-  .use(analytics)
   .use(sqlProvider)
   .use(readOnlyMode)
 ```
@@ -392,7 +448,8 @@ export const impl = createServiceImplementer(contract)
 Key property:
 
 - the baseline shell remains automatic
-- explicit service-wide additions live in the one official service-wide composition point
+- required service-wide middleware can also be automatic once registered in the service definition
+- explicit additional service-wide additions live in the one official service-wide composition point
 - runtime logic is no longer buried inside declarative profile callback objects
 
 ### 2.4 Telemetry ownership split
@@ -410,6 +467,11 @@ To keep this model teachable, the ownership split must be explicit:
   - do not recreate the baseline shell
 
 If this split is not made explicit, agents will misread `base.ts` and `impl.ts` as competing service-wide seams.
+
+Recommended interpretation under this draft:
+
+- the default service `observability` and `analytics` middleware files are expected to be registered as required service-wide middleware
+- `impl.ts` stays reserved for extra service-wide concerns beyond that required baseline set
 
 ### 2.5 Service observability middleware design
 
@@ -461,7 +523,7 @@ Naming rule:
 
 - scaffold `src/service/middleware/observability.ts`
 - export `observability`
-- attach `observability` in `src/service/impl.ts`
+- register `observability` as required middleware in `src/service/base.ts`
 
 This is clearer than names like “service observability additions” because the file path already provides the scope.
 
@@ -503,7 +565,7 @@ Naming rule:
 
 - scaffold `src/service/middleware/analytics.ts`
 - export `analytics`
-- attach `analytics` in `src/service/impl.ts`
+- register `analytics` as required middleware in `src/service/base.ts`
 
 ### 2.7 How service-level and module-level observability work together
 
@@ -555,7 +617,7 @@ Important caveat:
 
 ### 2.8.1 Why the service middleware order changed
 
-The service observability and analytics middleware should attach **before** service-wide providers and guards.
+Required service observability and analytics middleware should attach **before** service-wide providers and guards.
 
 Reason:
 
@@ -571,9 +633,10 @@ This does imply a discipline:
 So the intended order is:
 
 1. automatic shells first
-2. service-wide telemetry next
+2. service-declared required middleware next
 3. service-wide providers/guards after that
-4. bounded lower-level additions last
+4. service-wide optional/additional runtime middleware after that
+5. bounded lower-level additions last
 
 ### 2.9 SDK consequences
 
@@ -595,11 +658,17 @@ Likely SDK adjustments under this draft:
 - `createServiceMiddleware(...)`
 - `createServiceProvider(...)`
 
+4. Add required middleware registration to `defineService(...)`
+- the service definition should be able to register required service-wide middleware values
+- `createServiceImplementer(...)` should auto-attach them in canonical order
+- this should be the enforcement mechanism for “every package must have X”
+
 This is important because it means the refactor mostly changes placement and semantics, not the whole authoring surface.
 
 Likely minimum justified SDK adjustment:
 
 - extend additive observability so it can contribute log fields, event fields, and policy-aware failure hooks
+- add typed required-middleware registration so service-wide middleware attachment is enforced by the service definition seam rather than by memory or linting
 
 Safe transitional fallback if we do **not** make that SDK change immediately:
 
