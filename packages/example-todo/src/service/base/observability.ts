@@ -16,7 +16,7 @@ function inferEntity(segment?: string) {
  * Keep service-specific observability deltas and bounded hooks here instead of
  * re-authoring a full middleware shell in `src/service/impl.ts`.
  * Module/procedure-local additions belong in module `setup.ts` and `router.ts`
- * via `createServiceMiddleware(...)`.
+ * via `createServiceObservabilityMiddleware(...)`.
  *
  * The SDK derives the repetitive baseline from service metadata:
  * - logger event names like `todo.procedure`

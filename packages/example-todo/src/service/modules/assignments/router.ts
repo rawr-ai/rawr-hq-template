@@ -12,10 +12,10 @@
  * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
-import { trace } from "@opentelemetry/api";
 import { os } from "./setup";
 import {
-  createServiceMiddleware,
+  createServiceAnalyticsMiddleware,
+  createServiceObservabilityMiddleware,
   type ServiceDeps,
   type ServiceInvocation,
   type ServiceScope,
@@ -27,65 +27,38 @@ import { type Assignment } from "./schemas";
  *
  * Implement concrete procedure handlers below using `os.<procedure>.handler(...)`.
  */
-type AssignBranchMiddleware = Parameters<typeof os.assign.use>[0];
-
-const assignProcedureObservability = createServiceMiddleware<{
+const assignProcedureObservability = createServiceObservabilityMiddleware<{
   deps: Pick<ServiceDeps, "logger">;
   scope: Pick<ServiceScope, "workspaceId">;
   invocation: Pick<ServiceInvocation, "traceId">;
-}>().middleware(async ({ context, next }, rawInput) => {
-  const input = rawInput as {
-    taskId: string;
-    tagId: string;
-  };
+}>({
+  onStarted: ({ span, context, pathLabel }) => {
+    span?.addEvent("todo.assignments.assign.requested", {
+      workspace_id: context.scope.workspaceId,
+      path: pathLabel,
+    });
+    context.deps.logger.info("todo.assignments.assign.requested", {
+      layer: "procedure",
+      procedure: pathLabel,
+      workspaceId: context.scope.workspaceId,
+      invocationTraceId: context.invocation.traceId,
+    });
+  },
+});
 
-  trace.getActiveSpan()?.addEvent("todo.assignments.assign.requested", {
-    workspace_id: context.scope.workspaceId,
-    task_id: input.taskId,
-    tag_id: input.tagId,
-  });
-  context.deps.logger.info("todo.assignments.assign.requested", {
-    layer: "procedure",
-    procedure: "assignments.assign",
-    workspaceId: context.scope.workspaceId,
-    invocationTraceId: context.invocation.traceId,
-    taskId: input.taskId,
-    tagId: input.tagId,
-  });
-
-  return next();
-}) as AssignBranchMiddleware;
-
-const assignProcedureAnalytics = createServiceMiddleware<{
+const assignProcedureAnalytics = createServiceAnalyticsMiddleware<{
   deps: Pick<ServiceDeps, "analytics">;
   scope: Pick<ServiceScope, "workspaceId">;
   invocation: Pick<ServiceInvocation, "traceId">;
-}>().middleware(async ({ context, next }, rawInput) => {
-  const input = rawInput as {
-    taskId: string;
-    tagId: string;
-  };
-  let outcome: "success" | "error" = "success";
-
-  try {
-    return await next();
-  }
-  catch (error) {
-    outcome = "error";
-    throw error;
-  }
-  finally {
-    await context.deps.analytics.track("todo.mock.procedure.analytics", {
-      layer: "procedure",
-      procedure: "assignments.assign",
-      outcome,
-      workspaceId: context.scope.workspaceId,
-      invocationTraceId: context.invocation.traceId,
-      taskId: input.taskId,
-      tagId: input.tagId,
-    });
-  }
-}) as AssignBranchMiddleware;
+}>({
+  payload: ({ context, pathLabel, outcome }) => ({
+    analytics_layer: "procedure",
+    analytics_procedure: pathLabel,
+    analytics_outcome: outcome,
+    analytics_workspace_id: context.scope.workspaceId,
+    analytics_trace_id: context.invocation.traceId,
+  }),
+});
 
 const assign = os.assign
   .use(assignProcedureObservability)

@@ -8,10 +8,14 @@ import { createContractBuilder } from "./contract";
 import { createNormalMiddlewareBuilder, createServiceProviderBuilder } from "./middleware";
 import {
   createServiceObservabilityMiddleware,
+  createServiceObservabilityBaselineMiddleware,
+  type ServiceObservabilityMiddlewareInput,
   type ServiceObservabilityProfile,
 } from "../middleware/observability";
 import {
   createServiceAnalyticsMiddleware,
+  createServiceAnalyticsBaselineMiddleware,
+  type ServiceAnalyticsMiddlewareInput,
   type ServiceAnalyticsProfile,
 } from "../middleware/analytics";
 import type { BasePolicyProfile } from "../middleware/policy";
@@ -61,12 +65,12 @@ export function defineService<
     contract: TContract,
   ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
   function createServiceImplementer(contract: AnyContractRouter) {
-    const serviceObservability = createServiceObservabilityMiddleware(
+    const serviceObservability = createServiceObservabilityBaselineMiddleware(
       options.metadata,
       options.base.observability,
       options.base.policy,
     );
-    const serviceAnalytics = createServiceAnalyticsMiddleware(
+    const serviceAnalytics = createServiceAnalyticsBaselineMiddleware(
       options.metadata,
       options.base.analytics,
     );
@@ -92,6 +96,24 @@ export function defineService<
       return createNormalMiddlewareBuilder<TRequiredContext, TMeta>({
         baseMetadata: options.metadata,
       });
+    },
+    createObservabilityMiddleware<
+      TRequiredContext extends {
+        deps: {
+          logger: BaseDeps["logger"];
+        };
+      } = TContext,
+    >(input: ServiceObservabilityMiddlewareInput<TMeta, TRequiredContext>) {
+      return createServiceObservabilityMiddleware(options.metadata, input);
+    },
+    createAnalyticsMiddleware<
+      TRequiredContext extends {
+        deps: {
+          analytics: BaseDeps["analytics"];
+        };
+      } = TContext,
+    >(input: ServiceAnalyticsMiddlewareInput<TMeta, TRequiredContext>) {
+      return createServiceAnalyticsMiddleware(options.metadata, input);
     },
     createProvider<
       TRequiredContext extends object = {},

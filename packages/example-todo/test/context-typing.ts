@@ -1,4 +1,5 @@
 import { implement } from "@orpc/server";
+import { Type } from "typebox";
 
 import { createClient } from "../src";
 import type { BaseMetadata } from "../src/orpc/base";
@@ -9,6 +10,7 @@ import {
   type ServiceAnalyticsProfile,
   type ServiceObservabilityProfile,
   type Sql,
+  schema,
 } from "../src/orpc-sdk";
 import { createBaseProvider } from "../src/orpc/base-foundation";
 import type { CreateClientOptions } from "../src/client";
@@ -127,6 +129,95 @@ const alternateInvocationService = defineService<BaseMetadata, {
   }>(),
 });
 void alternateInvocationService;
+
+const localObservability = alternateInvocationService.createObservabilityMiddleware({
+  attributes({ context }) {
+    return {
+      workspace_id: context.scope.workspaceId,
+      request_id: context.invocation.requestId,
+    };
+  },
+  onFailed({ error }) {
+    void error.code;
+  },
+});
+void localObservability;
+
+const localAnalytics = alternateInvocationService.createAnalyticsMiddleware({
+  payload: ({ context, outcome }) => ({
+    requestId: context.invocation.requestId,
+    workspaceId: context.scope.workspaceId,
+    outcome,
+  }),
+});
+void localAnalytics;
+
+alternateInvocationService.createObservabilityMiddleware({
+  // @ts-expect-error additive observability middleware must not redefine the baseline log shell.
+  logFields() {
+    return {};
+  },
+});
+
+alternateInvocationService.createObservabilityMiddleware({
+  // @ts-expect-error additive observability hooks do not receive service baseline policy events.
+  onFailed({ policyEvents }) {
+    void policyEvents;
+  },
+});
+
+alternateInvocationService.createAnalyticsMiddleware({
+  // @ts-expect-error additive analytics middleware must not rename the baseline event stream.
+  event: "alternate.procedure",
+});
+
+type AdditiveServiceContext = {
+  deps: CreateClientOptions["deps"];
+  scope: { workspaceId: string };
+  config: CreateClientOptions["config"];
+  invocation: { traceId: string };
+  provided: {};
+};
+
+const additiveService = defineService<BaseMetadata, AdditiveServiceContext>({
+  metadata: {
+    idempotent: true,
+    domain: "todo",
+  },
+  base: createTestBase<BaseMetadata, AdditiveServiceContext>(),
+});
+
+const additiveContract = {
+  assign: additiveService.oc
+    .input(schema(Type.Object({
+      taskId: Type.String(),
+      tagId: Type.String(),
+    }, { additionalProperties: false })))
+    .output(schema(Type.Object({
+      ok: Type.Boolean(),
+    }, { additionalProperties: false }))),
+};
+
+const additiveObservability = additiveService.createObservabilityMiddleware({
+  attributes: ({ context }) => ({
+    workspace_id: context.scope.workspaceId,
+  }),
+});
+const additiveAnalytics = additiveService.createAnalyticsMiddleware({
+  payload: ({ context }) => ({
+    workspaceId: context.scope.workspaceId,
+  }),
+});
+
+const additiveModuleBranch = additiveService.createImplementer(additiveContract)
+  .use(additiveObservability)
+  .use(additiveAnalytics);
+void additiveModuleBranch;
+
+const additiveProcedureBranch = additiveService.createImplementer(additiveContract).assign
+  .use(additiveObservability)
+  .use(additiveAnalytics);
+void additiveProcedureBranch;
 
 const baseProvider = createBaseProvider().middleware<{
   sql: Sql;

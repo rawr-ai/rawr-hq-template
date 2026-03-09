@@ -76,6 +76,34 @@ export const ocBase = service.oc;
 export const createServiceMiddleware = service.createMiddleware;
 
 /**
+ * Service-local additive observability middleware builder.
+ *
+ * @remarks
+ * Use this for module- or procedure-level observability additions on top of
+ * the automatic service-wide baseline declared in this directory.
+ *
+ * This builder is additive-only:
+ * - it can add local fields, events, and hooks
+ * - it must not recreate the baseline lifecycle shell
+ * - it must not rename baseline event streams
+ */
+export const createServiceObservabilityMiddleware = service.createObservabilityMiddleware;
+
+/**
+ * Service-local additive analytics middleware builder.
+ *
+ * @remarks
+ * Use this for module- or procedure-level analytics additions on top of the
+ * automatic service-wide baseline declared in this directory.
+ *
+ * This builder is additive-only:
+ * - it contributes local analytics payload deltas
+ * - it does not emit a second baseline analytics stream
+ * - it does not rename the baseline analytics event
+ */
+export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddleware;
+
+/**
  * Service-local provider builder.
  *
  * @remarks
