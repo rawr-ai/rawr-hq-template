@@ -15,6 +15,7 @@ If you are an agent arriving to implement business logic fast:
 - **Then open the service router**: `src/service/router.ts` (module router composition + single final attach)
 - **Then live in a module**: `src/service/modules/<name>/{contract,setup,router}.ts`
 - **When you need “the one import for service authoring”**: `src/service/base` (`ocBase` + `createServiceMiddleware` + `createServiceImplementer`)
+- **When you need the shared service-base types**: `src/service/base/types.ts`
 - **When you need to inspect or change baseline cross-cutting service behavior**: `src/service/base/{observability,analytics,policy}.ts`
 - **When you need “the one import for handler implementers”**: `src/service/impl.ts` (`impl.<module>` subtrees)
 - **When you need kit-level middleware** (analytics, providers, generic wrappers): `src/orpc/middleware/*`
@@ -36,9 +37,9 @@ Always-on slots:
 
 - `src/service/router.ts` is the always-on service router composition choke point (single final attach).
 - `src/service/base/` is the always-on service base-construction layer.
-- `src/service/base/index.ts` is the assembly manifest and single service-type declaration seam: it defines the service kit, service metadata defaults, and the bound service authoring surfaces from `defineService`.
+- `src/service/base/index.ts` is the assembly manifest for host deps, initial context, metadata defaults, and the bound service authoring surfaces from `defineService`.
+- `src/service/base/types.ts` is the shared type source for sibling base files and prevents them from depending on the assembly manifest.
 - `src/service/base/{observability,analytics,policy}.ts` are the stable baseline concern slots consumed automatically by `createServiceImplementer(...)`.
-- Sibling files under `src/service/base/` should consume the bound service kit from `index.ts`; they are not the primary service type-authoring seam.
 - `src/service/base/observability.ts` and `src/service/base/analytics.ts` should define service-specific deltas and bounded hooks, not restate baseline event names or package identity that the SDK can derive automatically.
 - Module/procedure-local observability and analytics are additive middleware, authored with `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` and attached where they belong (`modules/*/setup.ts` for module-wide additions, `modules/*/router.ts` for procedure-local additions).
 - `src/orpc/base.ts` is the always-on domain-package baseline definition surface.
