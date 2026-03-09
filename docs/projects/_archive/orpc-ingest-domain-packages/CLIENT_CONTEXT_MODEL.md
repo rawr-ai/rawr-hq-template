@@ -1,3 +1,7 @@
+> Archived on 2026-03-09. Historical context only. This note reflects an older
+> client-context posture and is superseded by the current active docs in
+> `../../orpc-ingest-domain-packages/`.
+
 # Domain Package Client Context Model
 
 ## Purpose

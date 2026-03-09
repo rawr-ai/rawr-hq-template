@@ -8,6 +8,7 @@ This is the current session-level takeover handoff for the long-running `example
 
 It is meant to be read with, not instead of:
 
+- `./README.md`
 - `./TAKEOVER_CURRENT_STATE.md`
 - `./DECISIONS.md`
 - `./guidance.md`
@@ -15,9 +16,7 @@ It is meant to be read with, not instead of:
 
 This document carries forward the latest baseline after the `Service` seam cleanup, captures where that fits in the larger scaffold-hardening effort, and identifies the immediate next DX discussion without reopening already-settled architecture.
 
-Scratchpad kept at:
-
-- `../../../.scratch/takeover-session-2026-03-09-integrator.md`
+Scratchpad deleted after synthesis.
 
 Live session transcript:
 
@@ -182,11 +181,10 @@ The next agent should explicitly carry forward all of the following.
 
 ### Canonical docs packet for this thread
 
+- `./README.md`
 - `./DECISIONS.md`
 - `./guidance.md`
 - `./examples.md`
-- `./SESSION_ORPC_EXAMPLES_GROUNDING_2026-02-25.md`
-- `./PLAN_SCRATCH.md`
 
 ### Current code seams most relevant to the next DX discussion
 
@@ -213,13 +211,16 @@ The next agent should explicitly carry forward all of the following.
 - `../../../packages/example-todo/test/provider-middleware.test.ts`
 - `../../../packages/example-todo/test/observability.test.ts`
 
-### Adjacent scratch artifacts worth preserving for continuity
+### Historical archive retained for lineage only
 
-- `../../../.scratch/spec-packet-plan.md`
-- `../../../.scratch/spec-packet-integrator.md`
-- `../../../.scratch/verification-sweep-plan.md`
-- `../../../.scratch/verification-sweep-scratchpad.md`
-- `../../../.scratch/takeover-session-2026-03-09-integrator.md`
+- `../_archive/orpc-ingest-domain-packages/SESSION_ORPC_EXAMPLES_GROUNDING_2026-02-25.md`
+- `../_archive/orpc-ingest-domain-packages/PLAN_SCRATCH.md`
+- `../_archive/orpc-ingest-domain-packages/PLAN_orpc_error_standard_reset_2026-03-01.md`
+- `../_archive/orpc-ingest-domain-packages/CLIENT_CONTEXT_MODEL.md`
+
+### Archived scratchpads retained for lineage only
+
+- `../_archive/orpc-ingest-domain-packages/scratch/`
 
 ## Open Loops
 

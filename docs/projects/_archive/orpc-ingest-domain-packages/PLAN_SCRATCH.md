@@ -1,3 +1,7 @@
+> Archived on 2026-03-09. Historical context only. This plan captures an older
+> topology proposal and is superseded by the current active docs in
+> `../../orpc-ingest-domain-packages/`.
+
 # Plan Scratch — `@rawr/example-todo` domain topology refactor
 
 This file intentionally contains the implementation plan verbatim so it survives context compaction.

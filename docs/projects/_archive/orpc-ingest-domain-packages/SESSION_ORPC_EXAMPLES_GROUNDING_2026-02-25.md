@@ -1,8 +1,11 @@
+> Archived on 2026-03-09. Historical grounding only. Use the active packet in
+> `../../orpc-ingest-domain-packages/` for current authority.
+
 # Session Grounding and Posture — ORPC Domain Examples
 
 Created: 2026-02-25
 Branch: `agent-codex-dev-orpc-domain-examples-grounding-session`
-Status: Active grounding document (living; update as grounding deepens)
+Status: Archived grounding snapshot
 
 ## Purpose
 
@@ -287,3 +290,5 @@ For this initiative phase, the active posture is:
   - procedures throw caller-actionable boundary errors directly from value-state checks.
 - Expected business states are modeled as values inside the boundary (`null`, `exists`) rather than thrown domain exception classes.
 - Unexpected infra/storage failures are non-defined/internal by default in this example posture.
+> Archived on 2026-03-09. Historical grounding only. Use the active docs in
+> `../../orpc-ingest-domain-packages/` for current authority.
