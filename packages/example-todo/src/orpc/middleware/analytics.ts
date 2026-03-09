@@ -6,7 +6,12 @@
  * only supply package-specific deltas here. The SDK owns the baseline event
  * name and derives package identity from service metadata.
  */
-import type { BaseMetadata } from "../base";
+import type {
+  AnyService,
+  BaseMetadata,
+  ServiceContextFrom,
+  ServiceMetadataFrom,
+} from "../base";
 import { createNormalMiddlewareBuilder } from "../factory/middleware";
 import type { AnalyticsClient } from "../base";
 
@@ -29,9 +34,13 @@ export type ServiceAnalyticsProfile<
 };
 
 export function defineServiceAnalyticsProfile<
-  TMeta extends BaseMetadata = BaseMetadata,
-  TContext extends object = object,
->(profile: ServiceAnalyticsProfile<TMeta, TContext>) {
+  TService extends AnyService,
+>(
+  profile: ServiceAnalyticsProfile<
+    ServiceMetadataFrom<TService>,
+    ServiceContextFrom<TService>
+  >,
+) {
   return profile;
 }
 

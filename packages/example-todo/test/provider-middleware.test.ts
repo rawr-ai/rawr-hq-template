@@ -2,38 +2,37 @@ import { describe, expect, it } from "vitest";
 import { createRouterClient, implement } from "@orpc/server";
 import { Type } from "typebox";
 
-import type { BaseMetadata } from "../src/orpc/base";
 import { createContractBuilder } from "../src/orpc/factory/contract";
 import {
+  defineServiceAnalyticsProfile,
+  defineServiceObservabilityProfile,
   defineService,
   schema,
+  type BaseMetadata,
   type BasePolicyProfile,
   type FeedbackClient,
-  type ServiceAnalyticsProfile,
-  type ServiceObservabilityProfile,
+  type ServiceTypesOf,
 } from "../src/orpc-sdk";
 import { feedbackProvider } from "../src/orpc/middleware/feedback-provider";
 
-function createTestBase<TMeta extends BaseMetadata, TContext extends {
-  deps: {
-    logger: {
-      info(message: string, meta?: Record<string, unknown>): void;
-      error(message: string, meta?: Record<string, unknown>): void;
-    };
-    analytics: {
-      track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
-    };
-  };
-}>() {
-  const analytics: ServiceAnalyticsProfile<TMeta, TContext> = {};
-  const observability: ServiceObservabilityProfile<TMeta, TContext> = {
+type AnyTestService = ServiceTypesOf<{
+  deps: object;
+  scope: object;
+  config: object;
+  invocation: object;
+  metadata: object;
+}>;
+
+function createTestBase<TService extends AnyTestService>() {
+  const analytics = defineServiceAnalyticsProfile<TService>({});
+  const observability = defineServiceObservabilityProfile<TService, BasePolicyProfile>({
     attributes() {
       return {};
     },
     logFields() {
       return {};
     },
-  };
+  });
   const policy: BasePolicyProfile = { events: {} };
 
   return {
@@ -101,8 +100,7 @@ describe("provider middleware", () => {
   });
 
   it("defineService binds metadata into contract and middleware authoring", async () => {
-    type TestMetadata = BaseMetadata & { audit?: "basic" | "full" };
-    type TestContext = {
+    type TestService = ServiceTypesOf<{
       deps: {
         logger: {
           info(message: string, meta?: Record<string, unknown>): void;
@@ -119,15 +117,17 @@ describe("provider middleware", () => {
       invocation: {
         traceId: string;
       };
-      provided: {};
-    };
+      metadata: {
+        audit?: "basic" | "full";
+      };
+    }>;
 
-    const service = defineService<TestMetadata, TestContext>({
+    const service = defineService<TestService>({
       metadata: {
         idempotent: true,
         audit: "basic",
       },
-      base: createTestBase<TestMetadata, TestContext>(),
+      base: createTestBase<TestService>(),
     });
 
     const contract = {
@@ -176,8 +176,7 @@ describe("provider middleware", () => {
   });
 
   it("defineService binds service context into implementer creation", async () => {
-    type TestMetadata = BaseMetadata;
-    type TestContext = {
+    type TestService = ServiceTypesOf<{
       deps: {
         logger: {
           info(message: string, meta?: Record<string, unknown>): void;
@@ -194,14 +193,14 @@ describe("provider middleware", () => {
       invocation: {
         traceId: string;
       };
-      provided: {};
-    };
+      metadata: {};
+    }>;
 
-    const service = defineService<TestMetadata, TestContext>({
+    const service = defineService<TestService>({
       metadata: {
         idempotent: true,
       },
-      base: createTestBase<TestMetadata, TestContext>(),
+      base: createTestBase<TestService>(),
     });
 
     const contract = {
@@ -245,8 +244,7 @@ describe("provider middleware", () => {
   });
 
   it("defineService exposes a provider builder for service-local context", async () => {
-    type TestMetadata = BaseMetadata;
-    type TestContext = {
+    type TestService = ServiceTypesOf<{
       deps: {
         logger: {
           info(message: string, meta?: Record<string, unknown>): void;
@@ -263,14 +261,14 @@ describe("provider middleware", () => {
       invocation: {
         traceId: string;
       };
-      provided: {};
-    };
+      metadata: {};
+    }>;
 
-    const service = defineService<TestMetadata, TestContext>({
+    const service = defineService<TestService>({
       metadata: {
         idempotent: true,
       },
-      base: createTestBase<TestMetadata, TestContext>(),
+      base: createTestBase<TestService>(),
     });
 
     const contract = {
@@ -326,8 +324,7 @@ describe("provider middleware", () => {
   });
 
   it("throws when providers try to overwrite an existing provided key", async () => {
-    type TestMetadata = BaseMetadata;
-    type TestContext = {
+    type TestService = ServiceTypesOf<{
       deps: {
         logger: {
           info(message: string, meta?: Record<string, unknown>): void;
@@ -344,14 +341,14 @@ describe("provider middleware", () => {
       invocation: {
         traceId: string;
       };
-      provided: {};
-    };
+      metadata: {};
+    }>;
 
-    const service = defineService<TestMetadata, TestContext>({
+    const service = defineService<TestService>({
       metadata: {
         idempotent: true,
       },
-      base: createTestBase<TestMetadata, TestContext>(),
+      base: createTestBase<TestService>(),
     });
 
     const contract = {

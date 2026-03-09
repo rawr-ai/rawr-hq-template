@@ -101,6 +101,30 @@ export type ServiceTypesOf<
   >;
 };
 
+/**
+ * Internal canonical service-type shape used by SDK helpers.
+ *
+ * @remarks
+ * Author-facing code should prefer exporting one `Service =
+ * ServiceTypesOf<...>` declaration and pass that to higher-level helpers.
+ * Projection helpers below are for SDK internals; they should not become the
+ * normal authoring pattern.
+ */
+export type AnyService = ServiceTypesOf<{
+  deps: object;
+  scope: object;
+  config: object;
+  invocation: object;
+  metadata: object;
+}>;
+
+export type ServiceDepsFrom<TService extends AnyService> = TService["Deps"];
+export type ServiceScopeFrom<TService extends AnyService> = TService["Scope"];
+export type ServiceConfigFrom<TService extends AnyService> = TService["Config"];
+export type ServiceInvocationFrom<TService extends AnyService> = TService["Invocation"];
+export type ServiceMetadataFrom<TService extends AnyService> = TService["Metadata"];
+export type ServiceContextFrom<TService extends AnyService> = TService["Context"];
+
 export type {
   BaseContext,
   InitialContext,

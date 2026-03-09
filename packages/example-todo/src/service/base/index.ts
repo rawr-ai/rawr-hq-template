@@ -17,14 +17,9 @@ import { observability } from "./observability";
 import { policy } from "./policy";
 export type {
   Clock,
-  ServiceConfig,
-  ServiceContext,
-  ServiceDeps,
-  ServiceInvocation,
-  ServiceMetadata,
-  ServiceScope,
+  Service,
 } from "./types";
-import type { ServiceContext, ServiceMetadata } from "./types";
+import type { Service } from "./types";
 
 /**
  * Bound service authoring surface.
@@ -37,7 +32,7 @@ import type { ServiceContext, ServiceMetadata } from "./types";
  * auto-attaches those service-wide defaults for every procedure. Keep baseline
  * concern behavior there and keep this file focused on assembly.
  */
-const service = defineService<ServiceMetadata, ServiceContext>({
+const service = defineService<Service>({
   metadata: {
     idempotent: true,
     domain: "todo",

@@ -2,7 +2,14 @@ import { isContractProcedure } from "@orpc/contract";
 import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
-import type { BaseContext, BaseDeps, BaseMetadata } from "../base";
+import type {
+  AnyService,
+  BaseContext,
+  BaseDeps,
+  BaseMetadata,
+  ServiceContextFrom,
+  ServiceMetadataFrom,
+} from "../base";
 import { createBaseImplementer } from "../base";
 import { createContractBuilder } from "./contract";
 import { createNormalMiddlewareBuilder, createServiceProviderBuilder } from "./middleware";
@@ -24,21 +31,22 @@ type AnyContractRouterObject = {
   [k: string]: AnyContractRouter;
 };
 
-type DefineServiceBaseOptions<
-  TMeta extends BaseMetadata,
-  TContext extends BaseContext<BaseDeps, object, object, object>,
-> = {
-  analytics: ServiceAnalyticsProfile<TMeta, TContext>;
-  observability: ServiceObservabilityProfile<TMeta, TContext, BasePolicyProfile>;
+type DefineServiceBaseOptions<TService extends AnyService> = {
+  analytics: ServiceAnalyticsProfile<
+    ServiceMetadataFrom<TService>,
+    ServiceContextFrom<TService>
+  >;
+  observability: ServiceObservabilityProfile<
+    ServiceMetadataFrom<TService>,
+    ServiceContextFrom<TService>,
+    BasePolicyProfile
+  >;
   policy: BasePolicyProfile;
 };
 
-type DefineServiceOptions<
-  TMeta extends BaseMetadata,
-  TContext extends BaseContext<BaseDeps, object, object, object>,
-> = {
-  metadata: TMeta;
-  base: DefineServiceBaseOptions<TMeta, TContext>;
+type DefineServiceOptions<TService extends AnyService> = {
+  metadata: ServiceMetadataFrom<TService>;
+  base: DefineServiceBaseOptions<TService>;
 };
 
 /**
@@ -59,11 +67,13 @@ type DefineServiceOptions<
  * instead of hiding the mismatch.
  */
 export function defineService<
-  TMeta extends BaseMetadata,
-  TContext extends BaseContext<BaseDeps, object, object, object>,
+  TService extends AnyService,
 >(
-  options: DefineServiceOptions<TMeta, TContext>,
+  options: DefineServiceOptions<TService>,
 ) {
+  type TMeta = ServiceMetadataFrom<TService>;
+  type TContext = ServiceContextFrom<TService>;
+
   function createServiceImplementer<const TContract extends AnyContractProcedure>(
     contract: TContract,
   ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
