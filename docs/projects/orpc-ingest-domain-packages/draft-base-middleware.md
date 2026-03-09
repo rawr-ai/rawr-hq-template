@@ -1,770 +1,565 @@
-# Draft: Declarative Baseline vs Behavioral Middleware
+# Draft: Baseline Middleware Attachment and Service Telemetry Split
 
-## 1. Rationale and Design Choice
+## Purpose
 
-### Decision
+This draft defines the target architecture for baseline middleware attachment in
+`packages/example-todo`, with special focus on observability and analytics.
 
-Split service-wide baseline concerns into two categories:
+The goals are:
 
-- **Declarative baseline**
-  - static service-owned declarations
-  - no runtime branching
-  - no context-dependent logic
-  - safe to author in the service definition seam
-- **Behavioral middleware**
-  - runtime behavior over `context`, `procedure`, `path`, outcomes, errors, or events
-  - real middleware logic
-  - should live in `src/service/middleware/*`
-  - should be attached once in `src/service/impl.ts`
+- keep the service definition seam declarative
+- keep runtime behavior as real oRPC middleware
+- preserve SDK-owned baseline dependency guarantees
+- make required service-wide telemetry hard-bound and easy to reason about
+- keep module/procedure additive middleware unchanged
 
-### Mental model
+This draft is intended to be directly convertible into an implementation plan.
 
-The package should teach agents this topology directly:
+## Final Design
 
-- `src/orpc/*`
-  - framework baseline
-  - package-agnostic guarantees
-  - things agents should not normally need to touch
-- `src/service/base.ts`
-  - service declaration
-  - required static defaults and baseline declarations
-  - the bound authoring surfaces exported to the rest of the package
-- `src/service/impl.ts`
-  - the single package-wide middleware composition point
-  - the place where required service-wide runtime middleware is attached once
-- `src/service/middleware/*`
-  - service-authored runtime behavior
-  - guards, runtime observability logic, runtime analytics logic, and similar cross-cutting behavior
-- `src/service/modules/*`
-  - bounded module setup and bounded module/procedure additions
+### Decision summary
 
-This keeps the baseline guaranteed without hiding actual middleware behind a second abstraction layer.
+Use **four** telemetry layers, split by responsibility:
 
-### Two-layer telemetry contract
+1. **SDK baseline observability middleware**
+   - attached automatically at the SDK/base builder layer
+   - owns non-service-specific observability plumbing
+   - owns baseline observability dependencies
 
-Service-wide observability and analytics are not one undifferentiated thing. Under this draft they have two layers:
+2. **SDK baseline analytics middleware**
+   - attached automatically at the SDK/base builder layer
+   - owns non-service-specific analytics plumbing
+   - owns baseline analytics dependencies
 
-- **Layer A: auto-attached baseline shell**
-  - attached by `createServiceImplementer(...)`
-  - owns canonical observability lifecycle wiring
-  - owns canonical analytics emission
-  - is not manually recreated in `src/service/impl.ts`
-- **Layer B: explicit service-wide runtime additions**
-  - attached once in `src/service/impl.ts`
-  - owns extra service-wide runtime hooks, guards, and analytics payload contributors
-  - must not recreate the baseline shell or emit a second canonical analytics event
+3. **Required service observability middleware**
+   - required by `createServiceImplementer(...)`
+   - owns service-specific observability behavior
+   - attached automatically by the implementer factory once provided
 
-This distinction matters because “service-wide” by itself is not enough to describe ownership. The baseline shell is automatic; additions are explicit.
+4. **Required service analytics middleware**
+   - required by `createServiceImplementer(...)`
+   - owns service-specific analytics behavior
+   - attached automatically by the implementer factory once provided
 
-### Enforcement direction
+Everything else remains explicit and lower-scope:
 
-If the goal is to make required service-wide middleware impossible to forget, the strongest direction is:
+- service-wide providers/guards in `src/service/impl.ts`
+- service-wide optional extra middleware in `src/service/impl.ts`
+- module setup in module `setup.ts`
+- procedure-local additions in module `router.ts`
 
-- keep middleware behavior implemented in standalone files
-- let the SDK define the required middleware contract
-- require the service definition to supply a late-bound factory that materializes the service-specific implementations for that contract
-- auto-attach those required middleware values inside `createServiceImplementer(...)`
+### Why this is the right split
 
-That gives us:
+It keeps each concern in the seam where it actually belongs:
 
-- **behavior lives in middleware files**
-- **the requirement lives in the SDK**
-- **the service definition satisfies that requirement**
-- **runtime composition still happens through the implementer seam**
+- **SDK baseline dependencies and generic runtime shells** belong in the SDK
+- **service-specific runtime hooks** belong in service middleware files
+- **required attachment/enforcement** belongs in `createServiceImplementer(...)`
+- **declarative service identity/policy/static defaults** belong in `service/base.ts`
 
-This is stronger than scaffolding conventions or lint rules because the service definition becomes a typed satisfaction point for an SDK-owned requirement, not just a local registration convention.
+This is less work than a redesign of the whole service model. It is mainly:
 
-### What “declarative baseline” means
+- cleanup
+- clearer separation of concerns
+- moving enforcement to the right assembly seam
 
-Declarative baseline is service-owned information that should be present for every procedure but is not itself middleware behavior.
+## Mental Model
 
-Examples:
+### `src/orpc/*`
 
-- service metadata defaults
-- policy event names
-- narrow observability/analytics declarations that are truly constant
-- any required service-wide identifiers or naming inputs that do not inspect runtime context
+Framework baseline.
 
-These belong in `src/service/base.ts` because they describe the service, not runtime control flow.
+This layer owns:
 
-### What “behavioral middleware” means
+- base dependency contracts
+- framework-level baseline middleware
+- implementer factories
+- middleware builders and provider builders
+- lane discipline and `provided` collision protection
 
-Behavioral middleware is anything that needs to run during procedure execution or reason over runtime values.
+Agents should not normally need to change this layer unless they are evolving
+the SDK itself.
 
-Examples:
+### `src/service/base.ts`
 
-- read-only guards
-- observability hooks that inspect `context`, `path`, or failures
-- analytics payload logic that reads `context` or outcome
-- any service-wide runtime branching or side effects
+Declarative service definition.
 
-These should look like middleware, live in middleware files, and attach in `src/service/impl.ts`.
+This file should contain:
 
-### What declarative observability/analytics can still mean
+- support types
+- service declaration types
+- metadata defaults
+- declarative policy vocabulary
+- narrow declarative observability/analytics inputs if a real static need exists
+- bound exports used elsewhere in the service
 
-Observability and analytics are **not** “non-declarative by nature.” The important point is narrower:
+This file should **not** contain:
 
-- their rich runtime behavior does not belong in the service definition seam
-- but they may still have narrow declarative inputs
-
-Common declarative candidates that may exist at the service-definition level:
-
-- service-wide telemetry naming or namespace overrides that cannot be derived from metadata defaults alone
-- telemetry classification or redaction rules
-- stable service-wide event catalogs or reserved field names
-- explicit enablement/level choices when those are part of package semantics rather than deploy-time ops configuration
-
-What should usually be derivable automatically:
-
-- service/domain identity
-- audience
-- entity defaults
-- path
-- outcome
-- stable context-lane values such as workspace or invocation trace IDs
-
-So the right conclusion is not “observability/analytics have no declarative aspects.” It is:
-
-- keep a narrow declarative slot available if a real static need exists
-- do not use that slot for runtime hooks or context-driven branching
-
-### Why this split is the clearest scalable path
-
-This scales at both `N=1` and `N→∞` because it keeps ownership aligned with semantics:
-
-- the SDK owns universal baseline behavior
-- the service definition owns required static declarations
-- middleware files own runtime behavior
-- `impl.ts` remains the one obvious service-wide attachment point
-
-It also preserves the ORPC-native model:
-
-- middleware is still middleware
-- contract/metadata remains declarative
-- context-driven logic is not disguised as configuration
-
-This also matches oRPC’s own framing:
-
-- middleware is where you intercept execution, inject/guard context, and hook lifecycle behavior
-- initial context and execution context are distinct concerns
-- deduplication is an optimization for repeated identical middleware, not the primary architecture primitive
-
-### Practical implications
-
-- Agents do **not** need to remember to manually attach required service middleware all over the package.
-  - the baseline shell remains automatic in `createServiceImplementer(...)`
-  - explicit service-wide additions are attached exactly once in `src/service/impl.ts`
-- Agents can still tell where to make changes:
-  - change declarations in `src/service/base.ts`
-  - change service-wide behavior in `src/service/middleware/*`
-  - change bounded additions in module `setup.ts` / `router.ts`
-- Agents do not have to remember to attach fundamental service-wide telemetry by hand if the SDK requires those middleware and the service definition satisfies that requirement once.
-- The service definition file can stay smaller and more semantic.
-  - it stops being a place where large callback logic accumulates
-- The middleware layer becomes more honest.
-  - if it reads runtime context and changes behavior, it is middleware
-
-### Alternatives not chosen
-
-#### A. Wrapper that injects service context into “baseline middleware”
-
-Not chosen.
-
-Why:
-
-- it creates a second authoring model on top of ORPC
-- it obscures where middleware is actually attached
-- it teaches agents a local wrapper abstraction instead of the real ORPC flow
-- it looks convenient at small scale but becomes a learning tax as services multiply
-
-#### B. Keep dynamic observability/analytics hooks inline in `src/service/base.ts`
-
-Not chosen.
-
-Why:
-
-- it mixes static declaration with runtime behavior
-- it makes the service definition file heavier and semantically muddier
-- it is the main reason `base.ts` currently feels too callback-heavy
-- it weakens the “one place for service declaration, one place for middleware composition” story
-- it makes the service definition seam carry both declaration and lifecycle behavior, which is not the right ORPC shape
-
-#### C. Require every module or procedure author to remember baseline middleware manually
-
-Not chosen.
-
-Why:
-
-- it is not robust for scaffolding
-- it creates repetitive wiring pressure
-- it makes baseline guarantees depend on author memory instead of topology
-
-#### C.1 Enforce attachment through hidden context keys or ghost requirements
-
-Not chosen.
-
-Why:
-
-- it abuses context requirements to prove middleware attachment
-- it introduces fake runtime/context state just to satisfy type checks
-- it couples unrelated middleware through invisible sentinel keys
-- it is harder to explain, debug, and scale than explicit middleware registration
-- it can prove that “some middleware set a marker,” but not that the right baseline behavior is registered in the right place
-
-#### C.2 Leave required middleware as service-local convention only
-
-Not chosen.
-
-Why:
-
-- it lets packages drift out of sync
-- it makes enforcement depend on scaffolding and review discipline
-- it weakens the SDK’s ability to evolve one required baseline contract across many packages
-
-#### D. Reintroduce service-kit or other magical service wrappers
-
-Not chosen.
-
-Why:
-
-- that path has already been explored and rejected
-- it increases abstraction without improving the actual ORPC semantics
-- it hides the attachment and execution story instead of clarifying it
-
-## 2. Draft Design
-
-### Target shape
-
-```mermaid
-flowchart TD
-  A["src/orpc/base.ts<br/>framework baseline"] --> B["src/orpc/factory/service.ts<br/>defineService(...)"]
-  B --> C["src/service/base.ts<br/>service declaration + declarative baseline"]
-  C --> D["src/service/impl.ts<br/>single service-wide composition point"]
-  E["src/service/middleware/*.ts<br/>service runtime behavior"] --> D
-  D --> F["src/service/modules/*/setup.ts<br/>module setup"]
-  F --> G["src/service/modules/*/router.ts<br/>procedure handlers + local additions"]
-```
-
-### 2.1 Declarative baseline design
-
-The SDK should keep a reserved declarative baseline slot in `defineService(...)`, but that slot should be explicitly limited to service-owned declarations, not runtime callbacks.
-
-Target direction:
-
-```ts
-const service = defineService<...>({
-  metadataDefaults: {
-    idempotent: true,
-    domain: "todo",
-    audience: "internal",
-    audit: "basic",
-    entity: "service",
-  },
-  baseline: {
-    policy: {
-      events: {
-        readOnlyRejected: "todo.policy.read_only_rejected",
-        assignmentLimitReached: "todo.policy.assignment_limit_reached",
-      },
-    },
-    observability: {
-      // declarative only
-    },
-    analytics: {
-      // declarative only
-    },
-  },
-});
-```
-
-Concrete rule for that slot:
-
-- `baseline.policy`
-  - remains first-class
-  - it already has clear declarative meaning
-- `baseline.observability`
-  - should be optional and narrowly declarative
-  - should usually be omitted unless there is a real static service-wide need
-  - should not accept `context` callbacks or outcome hooks
-- `baseline.analytics`
-  - should be optional and narrowly declarative
-  - should usually be omitted unless there is a real static service-wide need
-  - should not accept runtime payload callbacks
-
-Current code evidence:
-
-- [`src/orpc/middleware/policy.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/middleware/policy.ts) is already purely declarative.
-- [`src/orpc/middleware/observability.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/middleware/observability.ts) currently mixes:
-  - stable naming/derivation
-  - runtime field callbacks
-  - runtime hooks
-- [`src/orpc/middleware/analytics.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/middleware/analytics.ts) currently mixes:
-  - canonical baseline event emission
-  - service callback payload logic
-
-Draft adjustment:
-
-- keep the automatic framework/service baseline shell
-- narrow the declarative service slot to actual declaration
-- do not treat `policy`, `observability`, and `analytics` as false declarative peers
-- move service runtime logic out of the service profile objects
-- use the service definition seam to satisfy an SDK-owned required middleware contract
-
-Current recommendation:
-
-- `baseline.policy` is the only clearly justified first-class declarative concern today beyond `metadataDefaults`
-- `baseline.observability` and `baseline.analytics` should not stay rich callback surfaces
-- if they remain at all, they should be optional and narrowly declarative
-- examples of acceptable future declarative inputs include:
-  - redaction/classification rules
-  - telemetry naming overrides that cannot be derived automatically
-  - explicit stable event catalogs
-
-### 2.1.1 Current state is still hybrid
-
-The current codebase has not made this cut yet.
-
-- [`src/service/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/service/base.ts) still contains runtime observability callbacks
-- [`src/orpc/factory/service.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/factory/service.ts) still requires and auto-attaches service observability and analytics baseline profiles
-
-That hybrid state is useful context for migration, but it should not be treated as the target model.
-
-### 2.2 `base.ts` under this model
-
-`src/service/base.ts` should become the service declaration file, not the service runtime behavior file.
-
-It should contain:
-
-1. Support types
-- `Clock`
-- whatever other service support types are genuinely part of the service declaration seam
-
-2. Service declaration types
-- likely the final semantic shape we are still deciding
-- whatever we choose, this file should show the service’s declared context/metadata categories clearly
-
-3. Metadata defaults
-- the concrete default metadata values
-
-4. Declarative baseline
-- policy event names
-- any truly static observability/analytics declaration inputs
-- no runtime callbacks
-
-5. Required middleware registration
-- import required service-wide middleware builders from `src/service/middleware/*`
-- satisfy the SDK-required middleware contract in the service definition
-- do not inline their behavior here
-
-6. Bound exports
-- `Service`
-- `ocBase`
-- `createServiceMiddleware`
-- `createServiceObservabilityMiddleware`
-- `createServiceAnalyticsMiddleware`
-- `createServiceProvider`
-- `createServiceImplementer`
-
-It should **not** contain:
-
-- large `onStarted` / `onFailed` / `payload` callback logic
-- service-wide runtime guards
+- runtime observability hooks
+- runtime analytics payload logic
+- service-wide guards
 - service-wide behavioral middleware implementations
 
-That logic should move to `src/service/middleware/*`.
+### `src/service/middleware/*`
 
-Concrete pattern:
+Service-specific runtime behavior.
+
+This is where service-wide runtime observability/analytics logic lives:
+
+- `src/service/middleware/observability.ts`
+- `src/service/middleware/analytics.ts`
+
+These files should export concrete middleware values:
+
+- `observability`
+- `analytics`
+
+They are built from the service-bound helper surface exported by `service/base.ts`
+and supplied to `createServiceImplementer(...)`.
+
+### `src/service/impl.ts`
+
+Single package-wide runtime composition point.
+
+This file should:
+
+- call `createServiceImplementer(...)` exactly once
+- provide the required service-wide telemetry middleware
+- add service-wide providers/guards
+- optionally add additional service-wide middleware beyond the required set
+
+It should not re-declare or re-derive service metadata defaults or declarative
+baseline config.
+
+## Required Middleware Enforcement
+
+### Enforcement point
+
+The SDK should enforce required service-wide telemetry at the
+`createServiceImplementer(...)` seam.
+
+Target shape:
 
 ```ts
-import { buildObservability } from "./middleware/observability";
-import { buildAnalytics } from "./middleware/analytics";
-
-const service = defineService<...>({
-  metadataDefaults: { ... },
-  baseline: {
-    policy: { ... },
-  },
-  requiredMiddleware: (api) => ({
-    observability: buildObservability(api),
-    analytics: buildAnalytics(api),
-  }),
-});
+const impl = createServiceImplementer(contract, {
+  observability,
+  analytics,
+})
+  .use(sqlProvider)
+  .use(readOnlyMode);
 ```
 
-Important distinction:
+### Why this is the right enforcement seam
 
-- the SDK defines that `requiredMiddleware.observability` and `requiredMiddleware.analytics` are required slots
-- `base.ts` satisfies those slots through a factory, not by importing already-built middleware values
-- `base.ts` should not contain their runtime hook logic
-- `src/service/middleware/*` should stop importing `../base` for these required baseline middleware; they should build from the passed-in API instead
+Because:
 
-### 2.2.1 What “policy” means
+- the required things are runtime middleware, not declarative service shape
+- `src/service/impl.ts` is already the one settled package-wide composition
+  choke point
+- missing required telemetry becomes a compile-time failure at the only valid
+  service assembly site
+- attachment remains SDK-owned because the implementer factory applies the
+  required middleware automatically once supplied
 
-`policy` is not the same thing as logging, analytics, or transport errors.
+### Why this is stronger than conventions
+
+If `createServiceImplementer(...)` requires:
+
+- `observability`
+- `analytics`
+
+then the failure mode is:
+
+- omit one -> compile-time error
+- wrong shape -> compile-time error
+- wrong order -> prevented by SDK-owned attachment order inside the factory
+
+That is a hard contract, not a lint rule or code review convention.
+
+## Separation of Concerns
+
+### Framework middleware vs service middleware
+
+The split should be explicit and clean.
+
+#### Framework observability middleware
+
+Owns:
+
+- required baseline observability dependencies
+- generic span/log lifecycle wrapping
+- generic path/outcome/duration handling
+- generic non-service-specific observability events/attributes
+- framework-level telemetry plumbing
+
+It should not own:
+
+- service-specific event names
+- service-specific policy names
+- service-specific domain enrichment
+- service-specific runtime hooks
+
+#### Framework analytics middleware
+
+Owns:
+
+- required baseline analytics dependencies
+- canonical baseline analytics emission plumbing
+- generic envelope fields that apply to every service
+
+It should not own:
+
+- service-specific analytics payload enrichment
+- service-specific business-domain signals
+
+#### Service observability middleware
+
+Owns:
+
+- service-specific naming/enrichment
+- service-specific observability hooks
+- policy-aware service instrumentation
+- service-global runtime observability logic
+
+It should wrap the whole downstream service pipeline after the framework
+observability middleware is already present.
+
+#### Service analytics middleware
+
+Owns:
+
+- service-specific analytics payload enrichment
+- service-global runtime analytics logic
+
+It should work on top of the framework analytics middleware rather than replace
+it.
+
+## Declarative Baseline
+
+### What stays declarative
+
+`service/base.ts` should still own declarative baseline information such as:
+
+- metadata defaults
+- policy event names / policy vocabulary
+
+Current target assumption:
+
+- the architecture does **not** rely on a normal declarative telemetry authoring
+  path in `service/base.ts`
+- if a future static observability/analytics need appears, it must be explicit,
+  tightly scoped, and justified as truly non-runtime
+- until such a need exists, telemetry should be treated as middleware-owned
+  rather than service-definition-owned
+
+### What does not stay declarative
+
+The service definition should not keep:
+
+- `onStarted` / `onFailed` observability callbacks
+- analytics payload functions
+- service-wide behavioral middleware logic
+
+Those are middleware concerns and should move to `src/service/middleware/*`.
+
+## Policy Clarification
+
+`policy` is not the same thing as:
+
+- errors
+- observability
+- analytics
 
 Short version:
 
-- **policy** = the declarative vocabulary for service-wide rules and decisions
+- **policy** = declarative vocabulary for service-wide rule decisions
 - **errors** = caller-facing boundary outcomes
 - **observability** = operational traces/logs/events about execution
-- **analytics** = structured product/domain signals
+- **analytics** = structured product/domain telemetry
 
-Why keep `policy` separate:
+Why keep policy separate:
 
-- a policy rule can surface as an error, but it is not identical to the error
-- the same policy decision may need to be observed consistently across logs, traces, and analytics
-- keeping policy names declarative gives the service one stable place to define the rule vocabulary
+- a policy decision may surface as an error, but it is not identical to the
+  error
+- the same policy decision may need to be consumed by observability and
+  analytics in a consistent way
+- policy vocabulary belongs in the service declaration seam, not hidden inside a
+  runtime callback
 
 Example:
 
-- `readOnlyRejected` is not “just logging”
-- it names a service-level rule decision that can drive:
+- `readOnlyRejected` is the name of a service-wide rule decision
+- it may correspond to:
   - a caller-facing error
   - an observability event
   - an analytics signal
 
-So `policy` is its own declarative category that other channels can consume.
+## One Middleware vs Multiple
 
-### 2.3 Middleware placement and composition
+### What “one single middleware” should mean
 
-The current single composition choke point in [`src/service/impl.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/service/impl.ts) is already the right place to attach required service-wide runtime middleware.
+The sane version is:
 
-Target composition story:
+- one canonical **observability** middleware attached once per service
+- one canonical **analytics** middleware attached once per service
 
-1. SDK/framework baseline auto-attaches in the base implementer path
-2. service baseline shell auto-attaches through `createServiceImplementer(...)`
-3. SDK-required service middleware auto-attach through `createServiceImplementer(...)` once the service definition supplies them
-4. explicit additional service-wide guards, providers, and runtime additions attach in `src/service/impl.ts`
-5. module/procedure-local additions attach lower in module `setup.ts` / `router.ts`
+It does **not** mean:
 
-Canonical `impl.ts` phase order:
+- collapsing observability and analytics into one mega-middleware
+- removing lower-scope additive contributor middleware
 
-1. automatic framework baseline shell
-2. automatic service baseline shell
-3. SDK-required service middleware
-4. service-wide providers and guards
-5. service-wide optional/additional runtime middleware
-6. module setup and lower-level additions
+### What this means for the SDK
 
-Draft `impl.ts` shape:
+The SDK should move toward:
 
-```ts
-import { contract } from "./contract";
-import { createServiceImplementer } from "./base";
-import { sqlProvider } from "../orpc-sdk";
-import { readOnlyMode } from "./middleware/read-only-mode";
+- one canonical framework observability middleware
+- one canonical framework analytics middleware
 
-export const impl = createServiceImplementer(contract)
-  .use(sqlProvider)
-  .use(readOnlyMode)
-```
+And the service layer should supply:
 
-Key property:
+- one required service observability middleware
+- one required service analytics middleware
 
-- the baseline shell remains automatic
-- required service-wide middleware can also be automatic once the service definition satisfies the SDK contract
-- explicit additional service-wide additions live in the one official service-wide composition point
-- runtime logic is no longer buried inside declarative profile callback objects
+That is the “one middleware per concern” model that still preserves real
+semantic structure.
 
-### 2.4 Telemetry ownership split
+## Analytics Invariant
 
-To keep this model teachable, the ownership split must be explicit:
+There should be **one canonical analytics emission path**.
 
-- **Auto baseline shell**
-  - owns canonical observability lifecycle wiring
-  - owns canonical `orpc.procedure` analytics emission
-  - owns policy-event threading as long as that plumbing still lives in the baseline path
-- **Explicit service-wide additions**
-  - own additional service-wide runtime observability hooks
-  - own service-wide analytics payload contributions
-  - do not emit a second canonical analytics event
-  - do not recreate the baseline shell
+That means:
 
-If this split is not made explicit, agents will misread `base.ts` and `impl.ts` as competing service-wide seams.
+- SDK baseline analytics middleware owns canonical analytics emission
+- required service analytics middleware enriches that path
+- module/procedure analytics remain additive contributors below that
 
-Recommended interpretation under this draft:
+Required service analytics middleware must **not**:
 
-- the default service `observability` and `analytics` middleware files are expected to satisfy SDK-required service middleware slots
-- they should do so through late-bound builders rather than eager imports back into `base.ts`
-- `impl.ts` stays reserved for extra service-wide concerns beyond that required baseline set
+- emit a second baseline analytics event
+- redefine the canonical analytics event stream
+- create a competing service-wide emitter by default
 
-### 2.5 Service observability middleware design
+If the architecture ever needs multiple canonical analytics streams, that should
+be a separate explicit design decision, not an accidental side effect of the
+service middleware split.
 
-Service observability that inspects runtime context should be authored as middleware, not as part of the declarative service manifest.
+## Dependency Aggregation
 
-Proposed file:
+### Guarantee to preserve
 
-- `src/service/middleware/observability.ts`
+Baseline dependencies should remain SDK-owned.
 
-Shape:
+Concretely:
 
-```ts
-import { createServiceObservabilityMiddleware } from "../base";
+- `logger` remains part of SDK baseline deps
+- `analytics` client remains part of SDK baseline deps
 
-export const observability = createServiceObservabilityMiddleware({
-  onStarted: ({ span, context, pathLabel }) => {
-    // service-wide runtime logic
-  },
-  onFailed: ({ span, context, pathLabel, error }) => {
-    // service-wide runtime logic
-  },
-});
-```
+This should continue to be modeled through the SDK’s base dependency contract,
+not through manual service-level dependency repetition.
 
-This should use the **same helper family** module/procedure authors already use where that helper is truly additive.
+### Why this matters
 
-Reason:
+If baseline deps move out of the SDK and become implicit consequences of
+middleware attachment, then:
 
-- the semantic difference is attach point, not helper kind
-- service-wide runtime observability should be additive observability middleware
-- no new special service-only runtime wrapper is needed
+- every service would have to restate those deps
+- agents would manually re-author framework requirements
+- the strongest existing baseline guarantee would be weakened
 
-Constraint:
+That is not desirable.
 
-- the current additive observability helper does **not** yet cover full parity with the current service baseline profile
-- today’s baseline profile also carries structured log enrichment, event field enrichment, and policy-aware failure hooks
+### Result under the target design
 
-Safe near-term options:
+Under the target design:
 
-1. keep the current baseline observability shell automatic and move only truly additive observability behavior into `service/middleware/observability.ts`
-2. make a small SDK adjustment so additive observability can also contribute:
-   - `logFields`
-   - started/succeeded/failed event fields
-   - policy-aware failure hooks
+- baseline observability/analytics deps still come from the SDK
+- required service telemetry middleware can assume those deps already exist
+- services do **not** manually restate baseline deps just because they supply
+  required telemetry middleware to `createServiceImplementer(...)`
 
-Until one of those is true, the draft should not claim that `createServiceObservabilityMiddleware(...)` fully replaces the current service baseline profile.
+This keeps the dependency model explicit at the host/package boundary while
+keeping the service declaration seam clean.
 
-Naming rule:
+## Middleware Ordering
 
-- scaffold `src/service/middleware/observability.ts`
-- export `buildObservability(api)`
-- satisfy the SDK-required `observability` slot from `src/service/base.ts`
+Target order:
 
-This is clearer than names like “service observability additions” because the file path already provides the scope.
+1. SDK baseline observability middleware
+2. SDK baseline analytics middleware
+3. required service observability middleware
+4. required service analytics middleware
+5. explicit service-wide providers and guards
+6. explicit optional extra service-wide middleware
+7. module setup and lower-level additive middleware
 
-### 2.6 Service analytics middleware design
+### Why this order
 
-Service analytics that derives runtime payload fields should follow the same rule.
+- baseline framework telemetry attaches first so required baseline deps and
+  generic runtime shells always exist
+- service telemetry attaches next so it wraps the whole service pipeline
+- providers/guards come after telemetry so telemetry can observe them
+- lower-level middleware stays additive and bounded
 
-Proposed file:
+### Discipline this implies
 
-- `src/service/middleware/analytics.ts`
+Required service telemetry should depend only on:
 
-Shape:
+- `deps`
+- `scope`
+- `config`
+- `invocation`
+- declarative service metadata/policy inputs
 
-```ts
-import { createServiceAnalyticsMiddleware } from "../base";
+If telemetry needs provider-added `provided.*` values, that logic belongs lower
+in module/procedure middleware.
 
-export const analytics = createServiceAnalyticsMiddleware({
-  payload: ({ context, pathLabel, outcome }) => ({
-    workspaceId: context.scope.workspaceId,
-    traceId: context.invocation.traceId,
-    path: pathLabel,
-    outcome,
-  }),
-});
-```
+## Module and Procedure Contributors
 
-This helper is contributor-only.
+Lower-scope additive middleware remains valid and unchanged in principle.
 
-- it contributes payload fields
-- it does **not** emit analytics by itself
-- it depends on the automatic service baseline analytics emitter
+Keep:
 
-So the service-level story is:
-
-- canonical analytics emission remains in the auto baseline shell
-- `src/service/middleware/analytics.ts` contributes service-wide runtime payload additions
-
-Naming rule:
-
-- scaffold `src/service/middleware/analytics.ts`
-- export `buildAnalytics(api)`
-- satisfy the SDK-required `analytics` slot from `src/service/base.ts`
-
-### 2.7 How service-level and module-level observability work together
-
-Use one additive model at two levels:
-
-- **service-level runtime observability**
-  - attached once in `src/service/impl.ts`
-  - applies to the whole service
-  - owns service-wide runtime additions
-- **module/procedure-level observability**
-  - attached lower in module `setup.ts` or `router.ts`
-  - contributes bounded local additions
-
-This already matches the existing additive middleware model in files like:
-
-- [`src/service/modules/assignments/router.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/service/modules/assignments/router.ts)
-
-That means the architecture stays fractal:
-
-- one helper family
-- one additive model
-- different attachment levels for different scopes
-
-### 2.8 Should service and module observability share the same helper?
-
-Mostly.
-
-Recommendation:
-
-- keep `createServiceObservabilityMiddleware(...)`
-- keep `createServiceAnalyticsMiddleware(...)`
-- use them for:
-  - service-wide runtime middleware in `src/service/middleware/*`
-- module-level additions in module `setup.ts`
-- procedure-level additions in module `router.ts`
-
-Do **not** introduce a second helper just for service-level runtime observability unless a real type-shape mismatch forces it.
-
-Current evidence suggests we do not need a new helper:
-
-- the existing service-level helper already produces additive middleware
-- the root difference is only where it is attached
-
-Important caveat:
-
-- analytics shares this helper model cleanly today
-- observability does **not** yet reach full parity with the current service baseline profile
-- if full parity is required, either extend the additive observability helper or preserve the current baseline observability helper while moving profile constants out of `base.ts`
-
-### 2.8.1 Why the service middleware order changed
-
-Required service observability and analytics middleware should attach **before** service-wide providers and guards.
-
-Reason:
-
-- service-wide telemetry should wrap the whole downstream service pipeline
-- that lets it observe provider work, guard failures, and handler outcomes
-- if it sits after a guard like `readOnlyMode`, a short-circuiting failure may bypass the service-level additions entirely
-
-This does imply a discipline:
-
-- service-wide telemetry should depend only on stable service lanes and baseline data
-- if telemetry needs module/provider-specific values, that belongs lower in module or procedure middleware
-
-So the intended order is:
-
-1. automatic shells first
-2. service-declared required middleware next
-3. service-wide providers/guards after that
-4. service-wide optional/additional runtime middleware after that
-5. bounded lower-level additions last
-
-### 2.9 SDK consequences
-
-Likely SDK adjustments under this draft:
-
-1. Narrow service declarative profile types
-- remove or de-emphasize runtime callback slots from:
-  - `ServiceObservabilityProfile`
-  - `ServiceAnalyticsProfile`
-- keep them focused on static declaration, if any remains necessary at all
-
-2. Keep automatic baseline shell behavior
-- framework baseline observability remains in [`src/orpc/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/base.ts)
-- service baseline wiring still happens through `createServiceImplementer(...)`
-
-3. Keep additive middleware builders unchanged if possible
 - `createServiceObservabilityMiddleware(...)`
 - `createServiceAnalyticsMiddleware(...)`
-- `createServiceMiddleware(...)`
-- `createServiceProvider(...)`
 
-4. Add required middleware registration to `defineService(...)`
-- the SDK should declare required service-wide middleware slots on `defineService(...)`
-- the service definition should be required to supply a late-bound factory for those slots
-- `createServiceImplementer(...)` should auto-attach them in canonical order
-- this should be the enforcement mechanism for “every package must have X”
+Use them for:
 
-This is important because it means the refactor mostly changes placement and semantics, not the whole authoring surface.
+- module-level additions in `setup.ts`
+- procedure-level additions in `router.ts`
 
-Likely minimum justified SDK adjustment:
+These remain additive contributors on top of the required service-wide baseline.
 
-- extend additive observability so it can contribute log fields, event fields, and policy-aware failure hooks
-- add typed required-middleware registration so service-wide middleware attachment is enforced by the service definition seam rather than by memory or linting
+## Current Code vs Target Design
 
-Safe transitional fallback if we do **not** make that SDK change immediately:
+### What the current code already gets right
 
-- move current service observability/analytics profile constants into `src/service/middleware/*`
-- import those constants into `src/service/base.ts`
-- keep the automatic baseline shell behavior unchanged while still cleaning up the service-definition file
+- there is already a single package-wide composition point in
+  `src/service/impl.ts`
+- framework baseline observability already exists in the SDK
+- service-wide analytics already resembles a canonical emitter plus lower-scope
+  contributors
+- lower-scope additive middleware already exists and works
 
-That transitional path is acceptable only while mechanics are being changed. It should not become the final steady-state if the SDK upgrade lands cleanly.
+### What the current code still gets wrong
 
-### 2.9.1 Policy event invariant
+- service runtime observability logic still lives in `service/base.ts`
+- service runtime analytics/observability are still too entangled with the
+  service-definition seam
+- observability’s additive helper does not yet have full parity with the
+  current service baseline profile
+- analytics framework/service split is less explicit than it should be
 
-If policy event names stay declarative while runtime emission moves out of `base.ts`, the design must preserve one invariant:
+## SDK Changes Required
 
-- service-wide runtime observability must still receive policy event names from the declarative baseline seam, either through the baseline shell path or an equivalent typed handoff
+### 1. Add framework baseline analytics middleware
 
-Without that, `baseline.policy.events` and service-wide failure instrumentation will drift apart.
+The SDK should own a clear framework analytics middleware, analogous to the
+existing framework observability middleware.
 
-### 2.10 Draft file layout
+### 2. Change `createServiceImplementer(...)` signature
+
+It should require the service-specific middleware:
+
+- `observability`
+- `analytics`
+
+and auto-attach them internally in canonical order.
+
+### 3. Keep baseline deps in SDK
+
+Do not move baseline `logger` / `analytics` dependency ownership out of the SDK.
+
+### 4. Extend service observability middleware capability
+
+Before service observability fully leaves `service/base.ts`, the SDK must allow
+service observability middleware to express the full current baseline behavior,
+including:
+
+- structured log enrichment
+- started/succeeded/failed event fields
+- policy-aware failure hooks
+
+Until that parity exists, service observability should not be treated as fully
+migrated.
+
+### 5. Narrow declarative profile types
+
+The current declarative observability/analytics profile types should either be:
+
+- narrowed to truly declarative inputs only, or
+- demoted from the primary authoring path
+
+## File Layout
 
 Target service surface:
 
 - `src/service/base.ts`
   - service declaration
   - metadata defaults
-  - declarative baseline
+  - policy vocabulary
+  - narrow declarative baseline inputs
   - bound exports
 - `src/service/impl.ts`
-  - root implementer
-  - one package-wide `.use(...)` stack
-- `src/service/middleware/read-only-mode.ts`
-  - zero-config service guard
+  - root implementer assembly
+  - required service observability/analytics middleware passed to
+    `createServiceImplementer(...)`
+  - additional providers/guards
 - `src/service/middleware/observability.ts`
-  - service-wide runtime observability additions
+  - service-wide required observability middleware
+  - exports `observability`
 - `src/service/middleware/analytics.ts`
-  - service-wide runtime analytics additions
+  - service-wide required analytics middleware
+  - exports `analytics`
+- `src/service/middleware/read-only-mode.ts`
+  - explicit service-wide guard
 - `src/service/modules/*/setup.ts`
-  - module setup and module-wide providers/additions
+  - module setup and module-wide additions
 - `src/service/modules/*/router.ts`
   - procedure handlers and procedure-local additions
 
-Scaffolding rule:
+## Draft `impl.ts` Shape
 
-- scaffold `src/service/middleware/observability.ts` and `src/service/middleware/analytics.ts` by default
-- empty files are acceptable when a service has no additions yet
-- this is preferable to leaving the location ambiguous for future agents
-- use the same middleware pattern at service, module, and procedure scope
-- treat oRPC deduplication as an optimization, not as the primary design mechanism
+```ts
+import { contract } from "./contract";
+import { createServiceImplementer } from "./base";
+import { observability } from "./middleware/observability";
+import { analytics } from "./middleware/analytics";
+import { readOnlyMode } from "./middleware/read-only-mode";
+import { sqlProvider } from "../orpc-sdk";
 
-### 2.11 What this draft does not decide yet
+export const impl = createServiceImplementer(contract, {
+  observability,
+  analytics,
+})
+  .use(sqlProvider)
+  .use(readOnlyMode);
+```
 
-This draft is scoped to the baseline split only. It does **not** finalize:
+## Risks and Conditions
 
-- the final semantic shape of the service declaration categories in `base.ts`
-- how far to fan back out `deps`, `scope`, and `config`
-- whether service declaration types should be more independently authored again
+### Main risk
 
-Those remain the next decision thread after this baseline split is accepted.
+The main risk is assuming the observability side is already ready for the target
+model when its helper surface is not yet sufficient.
 
-## 3. Open questions and risks
+### Minimum safe conditions
 
-### Open questions
+- framework baseline deps remain SDK-owned
+- `createServiceImplementer(...)` owns required telemetry attachment and order
+- service observability middleware reaches parity with the current baseline
+  profile before the old path is removed
+- additive module/procedure observability/analytics remain additive-only
+- policy vocabulary remains declarative and continues to feed required service
+  observability behavior
 
-- Do `baseline.observability` and `baseline.analytics` need explicit declarative slots at all, or should policy remain the only first-class declarative concern beyond metadata defaults until a real static need appears?
-- If declarative observability/analytics remain, what static inputs are actually worth keeping there without reintroducing callback-heavy profiles?
-- Do we want a small SDK upgrade for additive observability parity, or do we prefer the transitional “profile constants live in middleware files but are still imported by `base.ts`” path first?
+## Bottom line
 
-### Risks
+This is **not** a full redesign. It is a cleanup and separation-of-concerns
+refactor with one important SDK enforcement change:
 
-- If the declarative observability/analytics slots stay too rich, the split will collapse and runtime logic will drift back into `base.ts`.
-- If the service middleware files are not scaffolded or referenced clearly, agents may still put runtime logic back into the service definition file.
-- If the order in `src/service/impl.ts` is not documented carefully, service-wide runtime middleware may accidentally run in an unintended order relative to framework baseline or providers.
-- If we claim helper parity before it exists, service-wide observability behavior will regress or analytics ownership will become ambiguous.
+- SDK baseline observability and analytics remain in the SDK
+- required service observability and analytics move to the implementer seam
+- the service definition stays declarative
+- lower-scope additive contributors remain intact
 
-### Current recommendation
-
-Adopt this split and then make the service-definition decision on top of it:
-
-- `base.ts` for declaration
-- automatic baseline shell in `createServiceImplementer(...)`
-- `impl.ts` for explicit service-wide composition
-- `service/middleware/*` for service runtime behavior
-
-That is the cleanest ORPC-native baseline story currently visible in the codebase.
+That is the target architecture this draft is defining.
