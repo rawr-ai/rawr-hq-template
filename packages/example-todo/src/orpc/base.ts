@@ -66,6 +66,41 @@ export type BaseMetadata = {
  */
 export type ServiceMetadataOf<T extends object = {}> = BaseMetadata & T;
 
+/**
+ * Compose the canonical service boundary types from one declaration shape.
+ *
+ * @remarks
+ * This helper is the safe way to derive a service's composed `Deps`,
+ * `Metadata`, and lane-aware `Context` types from one declaration block while
+ * still preserving the baseline helper seam internally.
+ *
+ * Do not replace this with casts or ad hoc widened object types. If a future
+ * helper cannot preserve `ServiceDepsOf`, `ServiceMetadataOf`, and
+ * `ServiceContextOf`, the helper is wrong and should be redesigned rather than
+ * patched over with silent typing workarounds.
+ */
+export type ServiceTypesOf<
+  T extends {
+    deps: object;
+    scope: object;
+    config: object;
+    invocation: object;
+    metadata: object;
+  },
+> = {
+  Deps: ServiceDepsOf<T["deps"]>;
+  Scope: T["scope"];
+  Config: T["config"];
+  Invocation: T["invocation"];
+  Metadata: ServiceMetadataOf<T["metadata"]>;
+  Context: ServiceContextOf<
+    ServiceDepsOf<T["deps"]>,
+    T["scope"],
+    T["config"],
+    T["invocation"]
+  >;
+};
+
 export type {
   BaseContext,
   InitialContext,

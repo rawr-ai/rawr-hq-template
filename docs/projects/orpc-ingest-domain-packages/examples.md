@@ -34,7 +34,9 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
 - `context.deps` remains the single host-provided dependency bag; middleware/module setup may add top-level execution keys, but we do not split runtime dependencies into multiple bags.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
-- `src/service/base/index.ts` binds the service-local authoring surfaces once (`ocBase`, additive middleware builders, `createServiceImplementer`) and is also the single service-type declaration seam via `createServiceKit(...)`.
+- `src/service/base/index.ts` binds the service-local authoring surfaces once (`ocBase`, additive middleware builders, `createServiceImplementer`) and assembles baseline concern profiles from sibling files in `src/service/base/`.
+- `src/service/base/types.ts` is the shared type source for those sibling files; it exists to keep the base-construction layer acyclic.
+- When deriving a service's `Deps` / `Metadata` / `Context`, prefer the composable SDK helper `ServiceTypesOf<...>` over repeating the helper composition manually.
 - `src/service/base/{observability,analytics}.ts` should contribute service-specific deltas, while the SDK derives baseline naming like `todo.procedure.*` and `rawr.todo.*` from service metadata.
 - `createServiceImplementer(...)` auto-attaches the service-wide baseline concerns from `src/service/base/`; module/procedure-local observability and analytics stay additive and attach via the pre-bound `createServiceObservabilityMiddleware(...)` and `createServiceAnalyticsMiddleware(...)` builders.
 
@@ -99,6 +101,7 @@ packages/example-minimal/src/
     ├── contract.ts
     ├── base/
     │   ├── index.ts
+    │   ├── types.ts
     │   ├── observability.ts
     │   ├── analytics.ts
     │   └── policy.ts
@@ -151,6 +154,7 @@ packages/example-todo/src/
     ├── contract.ts
     ├── base/
     │   ├── index.ts
+    │   ├── types.ts
     │   ├── observability.ts
     │   ├── analytics.ts
     │   └── policy.ts

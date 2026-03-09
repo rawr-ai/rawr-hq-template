@@ -5,34 +5,36 @@ import { Type } from "typebox";
 import type { BaseMetadata } from "../src/orpc/base";
 import { createContractBuilder } from "../src/orpc/factory/contract";
 import {
-  createServiceKit,
   defineService,
   schema,
   type BasePolicyProfile,
   type FeedbackClient,
-  type ServiceKit,
+  type ServiceAnalyticsProfile,
+  type ServiceObservabilityProfile,
 } from "../src/orpc-sdk";
 import { feedbackProvider } from "../src/orpc/middleware/feedback-provider";
 
-function createTestBase<
-  TInput extends {
-    deps: object;
-    scope: object;
-    config: object;
-    invocation: object;
-    metadata: object;
-  },
->(kit: ServiceKit<TInput>) {
-  const analytics = kit.defineAnalytics({});
-  const observability = kit.defineObservability({
+function createTestBase<TMeta extends BaseMetadata, TContext extends {
+  deps: {
+    logger: {
+      info(message: string, meta?: Record<string, unknown>): void;
+      error(message: string, meta?: Record<string, unknown>): void;
+    };
+    analytics: {
+      track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+    };
+  };
+}>() {
+  const analytics: ServiceAnalyticsProfile<TMeta, TContext> = {};
+  const observability: ServiceObservabilityProfile<TMeta, TContext> = {
     attributes() {
       return {};
     },
     logFields() {
       return {};
     },
-  });
-  const policy: BasePolicyProfile = kit.definePolicy({ events: {} });
+  };
+  const policy: BasePolicyProfile = { events: {} };
 
   return {
     analytics,
@@ -99,8 +101,17 @@ describe("provider middleware", () => {
   });
 
   it("defineService binds metadata into contract and middleware authoring", async () => {
-    const kit = createServiceKit<{
-      deps: {};
+    type TestMetadata = BaseMetadata & { audit?: "basic" | "full" };
+    type TestContext = {
+      deps: {
+        logger: {
+          info(message: string, meta?: Record<string, unknown>): void;
+          error(message: string, meta?: Record<string, unknown>): void;
+        };
+        analytics: {
+          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        };
+      };
       scope: {};
       config: {
         readOnly: boolean;
@@ -108,18 +119,15 @@ describe("provider middleware", () => {
       invocation: {
         traceId: string;
       };
-      metadata: {
-        audit?: "basic" | "full";
-      };
-    }>();
+      provided: {};
+    };
 
-    const service = defineService({
-      kit,
+    const service = defineService<TestMetadata, TestContext>({
       metadata: {
         idempotent: true,
         audit: "basic",
       },
-      base: createTestBase(kit),
+      base: createTestBase<TestMetadata, TestContext>(),
     });
 
     const contract = {
@@ -168,8 +176,17 @@ describe("provider middleware", () => {
   });
 
   it("defineService binds service context into implementer creation", async () => {
-    const kit = createServiceKit<{
-      deps: {};
+    type TestMetadata = BaseMetadata;
+    type TestContext = {
+      deps: {
+        logger: {
+          info(message: string, meta?: Record<string, unknown>): void;
+          error(message: string, meta?: Record<string, unknown>): void;
+        };
+        analytics: {
+          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        };
+      };
       scope: {};
       config: {
         readOnly: boolean;
@@ -177,15 +194,14 @@ describe("provider middleware", () => {
       invocation: {
         traceId: string;
       };
-      metadata: {};
-    }>();
+      provided: {};
+    };
 
-    const service = defineService({
-      kit,
+    const service = defineService<TestMetadata, TestContext>({
       metadata: {
         idempotent: true,
       },
-      base: createTestBase(kit),
+      base: createTestBase<TestMetadata, TestContext>(),
     });
 
     const contract = {
@@ -229,8 +245,17 @@ describe("provider middleware", () => {
   });
 
   it("defineService exposes a provider builder for service-local context", async () => {
-    const kit = createServiceKit<{
-      deps: {};
+    type TestMetadata = BaseMetadata;
+    type TestContext = {
+      deps: {
+        logger: {
+          info(message: string, meta?: Record<string, unknown>): void;
+          error(message: string, meta?: Record<string, unknown>): void;
+        };
+        analytics: {
+          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        };
+      };
       scope: {};
       config: {
         readOnly: boolean;
@@ -238,15 +263,14 @@ describe("provider middleware", () => {
       invocation: {
         traceId: string;
       };
-      metadata: {};
-    }>();
+      provided: {};
+    };
 
-    const service = defineService({
-      kit,
+    const service = defineService<TestMetadata, TestContext>({
       metadata: {
         idempotent: true,
       },
-      base: createTestBase(kit),
+      base: createTestBase<TestMetadata, TestContext>(),
     });
 
     const contract = {
@@ -302,8 +326,17 @@ describe("provider middleware", () => {
   });
 
   it("throws when providers try to overwrite an existing provided key", async () => {
-    const kit = createServiceKit<{
-      deps: {};
+    type TestMetadata = BaseMetadata;
+    type TestContext = {
+      deps: {
+        logger: {
+          info(message: string, meta?: Record<string, unknown>): void;
+          error(message: string, meta?: Record<string, unknown>): void;
+        };
+        analytics: {
+          track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
+        };
+      };
       scope: {};
       config: {
         readOnly: boolean;
@@ -311,15 +344,14 @@ describe("provider middleware", () => {
       invocation: {
         traceId: string;
       };
-      metadata: {};
-    }>();
+      provided: {};
+    };
 
-    const service = defineService({
-      kit,
+    const service = defineService<TestMetadata, TestContext>({
       metadata: {
         idempotent: true,
       },
-      base: createTestBase(kit),
+      base: createTestBase<TestMetadata, TestContext>(),
     });
 
     const contract = {
