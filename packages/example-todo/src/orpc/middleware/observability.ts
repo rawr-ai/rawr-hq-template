@@ -20,11 +20,7 @@ export type ObservabilityErrorDetails = ReturnType<typeof getErrorDetails>;
 
 type ObservabilityBaseArgs<
   TMeta extends BaseMetadata,
-  TContext extends {
-    deps: {
-      logger: Logger;
-    };
-  },
+  TContext extends object,
 > = {
   context: TContext;
   meta: TMeta;
@@ -34,22 +30,14 @@ type ObservabilityBaseArgs<
 
 type ObservabilityDurationArgs<
   TMeta extends BaseMetadata,
-  TContext extends {
-    deps: {
-      logger: Logger;
-    };
-  },
+  TContext extends object,
 > = ObservabilityBaseArgs<TMeta, TContext> & {
   durationMs: number;
 };
 
 type ObservabilityFailedArgs<
   TMeta extends BaseMetadata,
-  TContext extends {
-    deps: {
-      logger: Logger;
-    };
-  },
+  TContext extends object,
 > = ObservabilityDurationArgs<TMeta, TContext> & {
   error: ObservabilityErrorDetails;
 };
@@ -93,11 +81,7 @@ type ResolvedObservabilityProfile<
 
 export type ServiceObservabilityProfile<
   TMeta extends BaseMetadata,
-  TContext extends {
-    deps: {
-      logger: Logger;
-    };
-  },
+  TContext extends object,
   TPolicy extends {
     events?: Record<string, string | undefined>;
   } = {
@@ -128,13 +112,21 @@ export type ServiceObservabilityProfile<
   } & ObservabilityFailedArgs<TMeta, TContext>): void;
 };
 
+export function defineServiceObservabilityProfile<
+  TMeta extends BaseMetadata,
+  TContext extends object,
+  TPolicy extends {
+    events?: Record<string, string | undefined>;
+  } = {
+    events?: Record<string, string | undefined>;
+  },
+>(profile: ServiceObservabilityProfile<TMeta, TContext, TPolicy>) {
+  return profile;
+}
+
 export type ServiceObservabilityMiddlewareInput<
   TMeta extends BaseMetadata,
-  TContext extends {
-    deps: {
-      logger: Logger;
-    };
-  },
+  TContext extends object,
 > = {
   attributes?: (args: ObservabilityBaseArgs<TMeta, TContext>) => ObservabilityFields;
   onStarted?(args: {
@@ -226,6 +218,24 @@ function deriveServiceNames(baseMetadata: BaseMetadata) {
   };
 }
 
+function inferEntity(segment?: string) {
+  if (!segment) {
+    return undefined;
+  }
+
+  return segment.endsWith("s") ? segment.slice(0, -1) : segment;
+}
+
+function getMetadataAudit(meta: BaseMetadata) {
+  const candidate = (meta as BaseMetadata & { audit?: unknown }).audit;
+  return typeof candidate === "string" ? candidate : undefined;
+}
+
+function getMetadataEntity(meta: BaseMetadata, path: readonly string[]) {
+  const candidate = (meta as BaseMetadata & { entity?: unknown }).entity;
+  return typeof candidate === "string" ? candidate : inferEntity(path[0]);
+}
+
 function resolveServiceObservabilityProfile<
   TMeta extends BaseMetadata,
   TContext extends {
@@ -248,24 +258,29 @@ function resolveServiceObservabilityProfile<
     succeededEvent: names.succeededEvent,
     failedEvent: names.failedEvent,
     getAttributes: ({ context, meta, path, pathLabel }) =>
-      prefixAttributes(
-        names.attributePrefix,
-        profile.attributes?.({
+      prefixAttributes(names.attributePrefix, {
+        ...(getMetadataAudit(meta) ? { audit: getMetadataAudit(meta) } : {}),
+        ...(getMetadataEntity(meta, path) ? { entity: getMetadataEntity(meta, path) } : {}),
+        ...profile.attributes?.({
           context,
           meta,
           path,
           pathLabel,
         }),
-      ),
+      }),
     getLogFields: ({ context, meta, path, pathLabel, durationMs, spanTraceId }) =>
-      profile.logFields?.({
-        context,
-        meta,
-        path,
-        pathLabel,
-        durationMs,
-        spanTraceId,
-      }) ?? {},
+      ({
+        ...(getMetadataEntity(meta, path) ? { entity: getMetadataEntity(meta, path) } : {}),
+        ...(getMetadataAudit(meta) ? { audit: getMetadataAudit(meta) } : {}),
+        ...(profile.logFields?.({
+          context,
+          meta,
+          path,
+          pathLabel,
+          durationMs,
+          spanTraceId,
+        }) ?? {}),
+      }),
     getStartedEventFields: profile.startedEventFields,
     getSucceededEventFields: profile.succeededEventFields,
     getFailedEventFields: profile.failedEventFields,
@@ -513,11 +528,7 @@ export function createServiceObservabilityBaselineMiddleware<
  */
 export function createServiceObservabilityMiddleware<
   TMeta extends BaseMetadata,
-  TContext extends {
-    deps: {
-      logger: Logger;
-    };
-  },
+  TContext extends object,
 >(
   baseMetadata: TMeta,
   input: ServiceObservabilityMiddlewareInput<TMeta, TContext>,
