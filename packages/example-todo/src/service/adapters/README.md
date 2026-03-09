@@ -8,7 +8,7 @@ This directory is intentionally small and optional. Create files here only when 
 
 - SQL helpers used by multiple repositories (query builders, transaction wrappers, row-shape helpers).
 - Infrastructure mapping utilities that are shared across modules.
-- “Glue” code that depends on service ports (from `service/base/`) but is not itself domain behavior.
+- “Glue” code that depends on service ports (from `service/base.ts`) but is not itself domain behavior.
 
 ## What does *not* belong here
 

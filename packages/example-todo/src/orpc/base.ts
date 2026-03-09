@@ -80,13 +80,7 @@ export type ServiceMetadataOf<T extends object = {}> = BaseMetadata & T;
  * patched over with silent typing workarounds.
  */
 export type ServiceTypesOf<
-  T extends {
-    deps: object;
-    scope: object;
-    config: object;
-    invocation: object;
-    metadata: object;
-  },
+  T extends ServiceDeclaration,
 > = {
   Deps: ServiceDepsOf<T["deps"]>;
   Scope: T["scope"];
@@ -102,21 +96,30 @@ export type ServiceTypesOf<
 };
 
 /**
- * Internal canonical service-type shape used by SDK helpers.
+ * Canonical service declaration shape for `defineService(...)`.
  *
  * @remarks
- * Author-facing code should prefer exporting one `Service =
- * ServiceTypesOf<...>` declaration and pass that to higher-level helpers.
- * Projection helpers below are for SDK internals; they should not become the
- * normal authoring pattern.
+ * Author-facing service definitions should declare these five lane fragments
+ * once and let the SDK derive the composed `Deps`, `Metadata`, and `Context`
+ * types internally.
  */
-export type AnyService = ServiceTypesOf<{
+export type ServiceDeclaration = {
   deps: object;
   scope: object;
   config: object;
   invocation: object;
   metadata: object;
-}>;
+};
+
+/**
+ * Internal canonical service-type shape used by SDK helpers.
+ *
+ * @remarks
+ * Author-facing code should prefer `defineService<{ ... }>(...)` plus
+ * `ServiceOf<typeof service>` as the primary seam. Projection helpers below are
+ * for SDK internals; they should not become the normal authoring pattern.
+ */
+export type AnyService = ServiceTypesOf<ServiceDeclaration>;
 
 export type ServiceDepsFrom<TService extends AnyService> = TService["Deps"];
 export type ServiceScopeFrom<TService extends AnyService> = TService["Scope"];

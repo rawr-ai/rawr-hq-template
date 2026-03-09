@@ -10,6 +10,7 @@ export type {
   BaseDeps,
   BaseMetadata,
   InitialContext,
+  ServiceDeclaration,
   ServiceDepsOf,
   ServiceMetadataOf,
   ServiceContextOf,
@@ -32,6 +33,7 @@ export type { FeedbackClient } from "./orpc/adapters/feedback";
 export {
   defineService,
 } from "./orpc/factory/service";
+export type { ServiceOf } from "./orpc/factory/service";
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
 export {
   sqlProvider,

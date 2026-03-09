@@ -4,9 +4,8 @@ import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
 import type {
   AnyService,
-  BaseContext,
-  BaseDeps,
-  BaseMetadata,
+  ServiceDeclaration,
+  ServiceTypesOf,
   ServiceContextFrom,
   ServiceMetadataFrom,
 } from "../base";
@@ -31,34 +30,106 @@ type AnyContractRouterObject = {
   [k: string]: AnyContractRouter;
 };
 
-type DefineServiceBaseOptions<TService extends AnyService> = {
+type DefineServiceBaselineOptions<
+  TDeclaration extends ServiceDeclaration,
+  TPolicy extends BasePolicyProfile,
+> = {
   analytics: ServiceAnalyticsProfile<
-    ServiceMetadataFrom<TService>,
-    ServiceContextFrom<TService>
+    ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
+    ServiceContextFrom<ServiceTypesOf<TDeclaration>>
   >;
   observability: ServiceObservabilityProfile<
-    ServiceMetadataFrom<TService>,
-    ServiceContextFrom<TService>,
-    BasePolicyProfile
+    ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
+    ServiceContextFrom<ServiceTypesOf<TDeclaration>>,
+    TPolicy
   >;
-  policy: BasePolicyProfile;
+  policy: TPolicy;
 };
 
-type DefineServiceOptions<TService extends AnyService> = {
-  metadata: ServiceMetadataFrom<TService>;
-  base: DefineServiceBaseOptions<TService>;
+type DefineServiceOptions<
+  TDeclaration extends ServiceDeclaration,
+  TPolicy extends BasePolicyProfile,
+> = {
+  metadata: ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>;
+  baseline: DefineServiceBaselineOptions<TDeclaration, TPolicy>;
 };
+
+export type DefinedService<
+  TDeclaration extends ServiceDeclaration,
+  TPolicy extends BasePolicyProfile = BasePolicyProfile,
+> = {
+  readonly __service?: ServiceTypesOf<TDeclaration>;
+  readonly __baselinePolicy?: TPolicy;
+  oc: ReturnType<typeof createContractBuilder<ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>>>;
+  createMiddleware<TRequiredContext extends object = {}>(): ReturnType<
+    typeof createNormalMiddlewareBuilder<
+      TRequiredContext,
+      ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>
+    >
+  >;
+  createObservabilityMiddleware<
+    TRequiredContext extends object = ServiceContextFrom<ServiceTypesOf<TDeclaration>>,
+  >(
+    input: ServiceObservabilityMiddlewareInput<
+      ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
+      TRequiredContext
+    >,
+  ): ReturnType<
+    typeof createServiceObservabilityMiddleware<
+      ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
+      TRequiredContext
+    >
+  >;
+  createAnalyticsMiddleware<
+    TRequiredContext extends object = ServiceContextFrom<ServiceTypesOf<TDeclaration>>,
+  >(
+    input: ServiceAnalyticsMiddlewareInput<
+      ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
+      TRequiredContext
+    >,
+  ): ReturnType<
+    typeof createServiceAnalyticsMiddleware<
+      ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
+      TRequiredContext
+    >
+  >;
+  createProvider<TRequiredContext extends object = {}>(): ReturnType<
+    typeof createServiceProviderBuilder<
+      TRequiredContext,
+      ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>
+    >
+  >;
+  createImplementer: {
+    <const TContract extends AnyContractProcedure>(
+      contract: TContract,
+    ): ImplementerInternalWithMiddlewares<
+      TContract,
+      ServiceContextFrom<ServiceTypesOf<TDeclaration>>,
+      ServiceContextFrom<ServiceTypesOf<TDeclaration>>
+    >;
+    <const TContract extends AnyContractRouterObject>(
+      contract: TContract,
+    ): ImplementerInternalWithMiddlewares<
+      TContract,
+      ServiceContextFrom<ServiceTypesOf<TDeclaration>>,
+      ServiceContextFrom<ServiceTypesOf<TDeclaration>>
+    >;
+  };
+};
+
+export type ServiceOf<TDefinedService extends { readonly __service?: AnyService }> =
+  NonNullable<TDefinedService["__service"]>;
 
 /**
  * Bind the service-local authoring surfaces once.
  *
  * @remarks
  * `defineService(...)` is the high-level seam consumed by
- * `src/service/base/index.ts`.
+ * `src/service/base.ts`.
  * It binds metadata-aware contract authoring, metadata-aware service middleware
  * authoring, metadata-aware service-provider authoring, and context-typed
- * implementer creation. The `base` option is the service assembly manifest for
- * baseline cross-cutting concern profiles.
+ * implementer creation. The `baseline` option is the service assembly manifest
+ * for baseline cross-cutting concern profiles.
  *
  * Warning:
  * do not solve service-binding mismatches here with casts or silent type
@@ -67,10 +138,12 @@ type DefineServiceOptions<TService extends AnyService> = {
  * instead of hiding the mismatch.
  */
 export function defineService<
-  TService extends AnyService,
+  TDeclaration extends ServiceDeclaration,
+  TPolicy extends BasePolicyProfile = BasePolicyProfile,
 >(
-  options: DefineServiceOptions<TService>,
-) {
+  options: DefineServiceOptions<TDeclaration, TPolicy>,
+): DefinedService<TDeclaration, TPolicy> {
+  type TService = ServiceTypesOf<TDeclaration>;
   type TMeta = ServiceMetadataFrom<TService>;
   type TContext = ServiceContextFrom<TService>;
 
@@ -83,12 +156,12 @@ export function defineService<
   function createServiceImplementer(contract: AnyContractRouter) {
     const serviceObservability = createServiceObservabilityBaselineMiddleware(
       options.metadata,
-      options.base.observability,
-      options.base.policy,
+      options.baseline.observability,
+      options.baseline.policy,
     );
     const serviceAnalytics = createServiceAnalyticsBaselineMiddleware(
       options.metadata,
-      options.base.analytics,
+      options.baseline.analytics,
     );
 
     if (isContractProcedure(contract)) {

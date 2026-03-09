@@ -17,7 +17,7 @@ import { sqlProvider } from "../orpc-sdk";
  * @remarks
  * Middleware order is authored here:
  * 1) framework baseline middleware from the SDK seam
- * 2) service-wide baseline observability + analytics declared in `service/base/`
+ * 2) service-wide baseline observability + analytics declared in `service/base.ts`
  * 3) extra service-wide providers/guards authored here
  *
  * Do not manually re-attach the default service-wide observability, analytics,

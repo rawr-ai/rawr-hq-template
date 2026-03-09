@@ -5,10 +5,8 @@ import { createClient } from "../src";
 import type { BaseMetadata } from "../src/orpc/base";
 import type { DbPool } from "../src/orpc/adapters/sql";
 import {
-  defineServiceAnalyticsProfile,
-  defineServiceObservabilityProfile,
   defineService,
-  type BasePolicyProfile,
+  type ServiceOf,
   type ServiceTypesOf,
   type Sql,
   schema,
@@ -19,34 +17,7 @@ import { sqlProvider } from "../src/orpc/middleware/sql-provider";
 import { contract } from "../src/service/contract";
 import { createServiceMiddleware, createServiceProvider } from "../src/service/base";
 
-type AnyTestService = ServiceTypesOf<{
-  deps: object;
-  scope: object;
-  config: object;
-  invocation: object;
-  metadata: object;
-}>;
-
-function createTestBase<TService extends AnyTestService>() {
-  const analytics = defineServiceAnalyticsProfile<TService>({});
-  const observability = defineServiceObservabilityProfile<TService, BasePolicyProfile>({
-    attributes() {
-      return {};
-    },
-    logFields() {
-      return {};
-    },
-  });
-  const policy: BasePolicyProfile = { events: {} };
-
-  return {
-    analytics,
-    observability,
-    policy,
-  };
-}
-
-type DerivedTypingService = ServiceTypesOf<{
+type DerivedTypingDeclaration = {
   deps: {
     dbPool: DbPool;
   };
@@ -60,7 +31,38 @@ type DerivedTypingService = ServiceTypesOf<{
   metadata: {
     audit?: "basic" | "full";
   };
-}>;
+};
+
+type DerivedTypingService = ServiceTypesOf<DerivedTypingDeclaration>;
+
+const derivedService = defineService<DerivedTypingDeclaration>({
+  metadata: {
+    idempotent: true,
+    audit: "basic",
+  },
+  baseline: {
+    policy: { events: {} },
+    observability: {
+      attributes() {
+        return {};
+      },
+      logFields() {
+        return {};
+      },
+    },
+    analytics: {},
+  },
+});
+
+type DerivedTypingServiceFromDefinition = ServiceOf<typeof derivedService>;
+const derivedTypingDepsFromDefinition: DerivedTypingServiceFromDefinition["Deps"] = deps;
+void derivedTypingDepsFromDefinition;
+
+const derivedTypingMetadataFromDefinition: DerivedTypingServiceFromDefinition["Metadata"] = {
+  idempotent: true,
+  audit: "basic",
+};
+void derivedTypingMetadataFromDefinition;
 
 const derivedTypingDeps: DerivedTypingService["Deps"] = deps;
 void derivedTypingDeps;
@@ -88,6 +90,9 @@ const derivedTypingContext: DerivedTypingService["Context"] = {
   provided: {},
 };
 void derivedTypingContext;
+
+const derivedTypingContextFromDefinition: DerivedTypingServiceFromDefinition["Context"] = derivedTypingContext;
+void derivedTypingContextFromDefinition;
 
 declare const dbPool: DbPool;
 declare const deps: CreateClientOptions["deps"];
@@ -160,19 +165,28 @@ void invalidBoundary;
 const typedClient = createClient(validBoundary);
 void typedClient;
 
-type AlternateInvocationService = ServiceTypesOf<{
+const alternateInvocationService = defineService<{
   deps: CreateClientOptions["deps"];
   scope: { workspaceId: string };
   config: CreateClientOptions["config"];
   invocation: { requestId: string };
   metadata: {};
-}>;
-
-const alternateInvocationService = defineService<AlternateInvocationService>({
+}>({
   metadata: {
     idempotent: true,
   },
-  base: createTestBase<AlternateInvocationService>(),
+  baseline: {
+    policy: { events: {} },
+    observability: {
+      attributes() {
+        return {};
+      },
+      logFields() {
+        return {};
+      },
+    },
+    analytics: {},
+  },
 });
 void alternateInvocationService;
 
@@ -217,20 +231,29 @@ alternateInvocationService.createAnalyticsMiddleware({
   event: "alternate.procedure",
 });
 
-type AdditiveService = ServiceTypesOf<{
+const additiveService = defineService<{
   deps: CreateClientOptions["deps"];
   scope: { workspaceId: string };
   config: CreateClientOptions["config"];
   invocation: { traceId: string };
   metadata: {};
-}>;
-
-const additiveService = defineService<AdditiveService>({
+}>({
   metadata: {
     idempotent: true,
     domain: "todo",
   },
-  base: createTestBase<AdditiveService>(),
+  baseline: {
+    policy: { events: {} },
+    observability: {
+      attributes() {
+        return {};
+      },
+      logFields() {
+        return {};
+      },
+    },
+    analytics: {},
+  },
 });
 
 const additiveContract = {
