@@ -27,19 +27,12 @@ export interface Clock {
 }
 
 /**
- * Bound todo service definition.
+ * Construction-time context supplied when the in-process client is created.
  *
  * @remarks
- * Declare the full service boundary once here.
- *
- * Lane model:
- * - `deps`, `scope`, and `config` are construction-time semantic lanes
- * - `invocation` is required per-call input
- *
- * The SDK preserves the stable helper seam internally while deriving the
- * composed `Deps`, `Metadata`, and `Context` types from this one declaration.
+ * These lanes are always available downstream in procedure context.
  */
-const service = defineService<{
+type InitialContext = {
   deps: {
     dbPool: DbPool;
     clock: Clock;
@@ -53,15 +46,47 @@ const service = defineService<{
       maxAssignmentsPerTask: number;
     };
   };
-  invocation: {
-    traceId: string;
-  };
-  metadata: {
-    audit?: "none" | "basic" | "full";
-    entity?: "service" | "task" | "tag" | "assignment";
-  };
+};
+
+/**
+ * Per-call context supplied at invocation time through the router client.
+ *
+ * @remarks
+ * This becomes `context.invocation` inside procedures.
+ */
+type InvocationContext = {
+  traceId: string;
+};
+
+/**
+ * Static procedure metadata authored by the service.
+ *
+ * @remarks
+ * This is not runtime context.
+ */
+type ProcedureMetadata = {
+  audit?: "none" | "basic" | "full";
+  entity?: "service" | "task" | "tag" | "assignment";
+};
+
+/**
+ * Bound todo service definition.
+ *
+ * @remarks
+ * Declare the full service boundary once here through three semantic groups:
+ * - `initialContext`: construction-time context supplied by the client up front
+ * - `invocationContext`: per-call context supplied at invocation time
+ * - `metadata`: static procedure metadata authored by the service
+ *
+ * The SDK preserves the stable helper seam internally while deriving the
+ * composed `Deps`, `Metadata`, and `Context` types from this one declaration.
+ */
+const service = defineService<{
+  initialContext: InitialContext;
+  invocationContext: InvocationContext;
+  metadata: ProcedureMetadata;
 }>({
-  metadata: {
+  metadataDefaults: {
     idempotent: true,
     domain: "todo",
     audience: "internal",

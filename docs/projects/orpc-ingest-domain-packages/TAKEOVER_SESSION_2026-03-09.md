@@ -63,7 +63,7 @@ Treat the following as the live baseline unless a future discussion explicitly r
 - The helper is explicitly documented as the safe composition path.
 
 4. SDK helpers now derive `Service` from one declaration-first service manifest.
-- `defineService<{ deps, scope, config, invocation, metadata }>(...)`
+- `defineService<{ initialContext, invocationContext, metadata }>(...)`
 - `defineServiceObservabilityProfile<Service>(...)`
 - `defineServiceAnalyticsProfile<Service>(...)`
 - SDK internals project `Context`, `Metadata`, and `Deps` from `Service`.

@@ -36,8 +36,8 @@ Always-on slots:
 
 - `src/service/router.ts` is the always-on service router composition choke point (single final attach).
 - `src/service/base.ts` is the always-on single-file service-definition layer.
-- `src/service/base.ts` owns the service lane declaration, metadata defaults, baseline concern definitions, and the bound service authoring surfaces from `defineService(...)`.
-- `src/service/base.ts` should prefer one canonical `defineService<{ ... }>(...)` call plus `ServiceOf<typeof service>` rather than hand-writing `ServiceDeps`, `ServiceMetadata`, and `ServiceContext` separately.
+- `src/service/base.ts` owns the grouped service declaration (`initialContext`, `invocationContext`, `metadata`), metadata defaults, baseline concern definitions, and the bound service authoring surfaces from `defineService(...)`.
+- `src/service/base.ts` should prefer one canonical `defineService<{ initialContext, invocationContext, metadata }>(...)` call plus `ServiceOf<typeof service>` rather than hand-writing `ServiceDeps`, `ServiceMetadata`, and `ServiceContext` separately.
 - `src/service/base.ts` should define service-specific deltas and bounded baseline hooks, not restate repetitive baseline event names or package identity that the SDK can derive automatically.
 - Module/procedure-local observability and analytics are additive middleware, authored with `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` and attached where they belong (`modules/*/setup.ts` for module-wide additions, `modules/*/router.ts` for procedure-local additions).
 - `src/orpc/base.ts` is the always-on domain-package baseline definition surface.
@@ -144,7 +144,11 @@ Current required baseline:
 
 Recommended pattern:
 
-- define base metadata defaults once in `src/service/base.ts`,
+- define the grouped service declaration once in `src/service/base.ts`:
+  - `initialContext` for construction-time `deps` / `scope` / `config`
+  - `invocationContext` for per-call invocation input
+  - `metadata` for static procedure metadata
+- define base metadata defaults once in `src/service/base.ts` as `metadataDefaults`,
 - bind service-local contract/middleware/implementer authoring once in `src/service/base.ts` via `defineService(...)`,
 - keep module contracts explicit by setting `idempotent` on every procedure,
 - read metadata in middleware via `procedure["~orpc"].meta` (oRPC runtime metadata surface).
@@ -174,6 +178,13 @@ Use context/middleware at the level where each concern actually belongs:
 - Apply middleware at most once per concern: attach package-wide middleware in `src/service/impl.ts`, then attach module routers once in `src/service/router.ts`.
 
 ### Runtime Context Model
+
+At the service-definition seam, these runtime concerns are authored as two separate categories:
+
+- **`initialContext`**: the construction-time context supplied when the in-process client is created
+- **`invocationContext`**: the per-call context supplied at invocation time
+
+Downstream inside handlers and middleware, both categories appear on the unified procedure `context` object under their established runtime lanes.
 
 Use these runtime context categories consistently:
 
