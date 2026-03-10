@@ -1,5 +1,10 @@
 # ORPC Domain Package Examples
 
+> Note:
+> We may still revisit how this document splits instructional guidance versus
+> straight example scaffold structure/code. That boundary is not fully locked
+> yet and may shift as we keep refining the example package.
+
 ## Purpose
 
 This document is the source of truth for:
