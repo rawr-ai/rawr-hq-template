@@ -61,6 +61,8 @@ Binary capability rule:
 
 - host-owned concrete adapters: **supported**
 - package-local concrete adapters: **not supported**
+- plugin-specific dependency configuration: **supported**, but only as explicit
+  typed code at the plugin boundary, not as a hidden DSL
 
 ## Important Clarification
 
@@ -117,6 +119,13 @@ That means:
 
 Packages and plugins participate through the framework seam; they do not own
 concrete OTel adapters.
+
+This does **not** mean every plugin receives one identical concrete dependency
+bundle. Host-owned means the host is the composition root and may provide:
+
+- shared instances where the resource identity is the same
+- separate instances of the same implementation type where plugin boundaries
+  need different resources/configuration
 
 We should only revisit that if a later integration shows that observability
 really needs an explicit host-facing contract.

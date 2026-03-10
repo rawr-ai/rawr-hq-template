@@ -179,6 +179,8 @@ Use this hard boundary model:
   of the package boundary.
 - If a contract is generically reusable across packages, it should be
   centralized rather than duplicated in each package-local proto SDK.
+- Plugin-specific dependency configuration is allowed, but it must be authored
+  as explicit typed code at the plugin boundary, not as a hidden DSL.
 - OpenTelemetry is a **framework/internal concrete integration**, configured by
   the runtime host once per deployment boundary. It is not part of the package
   adapter-contract model by default.

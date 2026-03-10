@@ -272,6 +272,78 @@ For a new integration, classify it in this order:
 5. If it is package-specific and truly part of what the package ships, it may
    belong in `src/orpc/adapters/*`.
 
+### Three-layer dependency model
+
+When a plugin/package needs infrastructure, use this mental model:
+
+1. **Declared dependency contract layer (package-local packaged SDK)**
+   - package declares the shape of the capability it needs
+   - this is where typed contracts/ports live when they truly belong to the
+     packaged boundary
+2. **Plugin boundary configuration layer**
+   - plugin declares what capability/configuration it needs for its own runtime
+     boundary
+   - plugin still does not instantiate concrete clients here
+3. **Host composition layer**
+   - host instantiates concrete clients/objects
+   - host injects the resulting dependency bundle into the plugin/package
+     boundary
+
+This is the important split:
+
+- package defines **shape**
+- plugin defines **need/config**
+- host performs **instantiation/wiring**
+
+### Plugin-specific configuration is allowed, but not as a hidden DSL
+
+Plugins should be able to express what they need without editing host runtime
+for every new integration. That does **not** mean introducing a generic
+mini-language.
+
+Use:
+
+- explicit typed code
+- explicit config objects
+- explicit config/env loaders
+- explicit composition helpers
+
+Do **not** use:
+
+- stringly-typed manifests with behavior encoded indirectly
+- opaque registry entries whose meaning only exists in host internals
+- generic per-plugin integration DSLs
+
+The package already gives us the right shape hint here:
+
+- `initialContext` and `config` are explicit typed lanes
+- plugin-level dependency configuration should follow that same spirit
+
+In other words: plugin-local dependency config should look like ordinary typed
+application code, not a bespoke declarative language.
+
+### Shared host does not mean identical concrete dependencies for every plugin
+
+One host can still compose different dependency bundles for different plugins.
+
+Separate these concepts:
+
+- same contract
+- same implementation type
+- same underlying resource
+
+Examples:
+
+- two plugins may both receive a PostHog-backed analytics client, but pointed at
+  different PostHog projects
+- two plugins may both receive Drizzle-backed DB clients, but backed by
+  different database files or schemas
+- two plugins may share the same concrete client instance when the resource
+  identity is actually the same
+
+So "host-owned" means the host chooses and wires the concrete dependencies. It
+does **not** mean every plugin must receive one identical singleton.
+
 ### OpenTelemetry guidance
 
 OpenTelemetry is not part of the adapter-contract model by default.
