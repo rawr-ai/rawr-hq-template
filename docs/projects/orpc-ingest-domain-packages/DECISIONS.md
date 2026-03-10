@@ -162,3 +162,44 @@ It keeps runtime semantics legible:
 - `context.config.*` means “stable package behavior/configuration”,
 - `context.invocation.*` means “per-call input enforced by the package boundary”,
 - `context.provided.*` means “execution value attached during the pipeline”.
+
+## Decision #8 (2026-03-10)
+
+### Question
+Where do concrete adapters and adapter contracts belong as we integrate real
+providers like PostHog and Drizzle?
+
+### Decision
+Use this hard boundary model:
+
+- **Concrete adapters are host-owned.**
+- **Package-local concrete adapters are not a supported capability.**
+- `src/service/*` stays pure and does not own concrete technology integrations.
+- `src/orpc/adapters/*` is only for packaged SDK contracts that are truly part
+  of the package boundary.
+- If a contract is generically reusable across packages, it should be
+  centralized rather than duplicated in each package-local proto SDK.
+- OpenTelemetry is a **framework/internal concrete integration**, configured by
+  the runtime host once per deployment boundary. It is not part of the package
+  adapter-contract model by default.
+
+### Why
+We want a binary capability model for agents:
+
+- supported
+- not supported
+
+Leaving package-local concrete adapters as a fuzzy maybe-capability would create
+architecture drift and unclear ownership. The correct ownership line is:
+
+- runtime host owns concrete wiring
+- plugins and packages consume injected ports/contracts
+
+### Implication
+If a future API plugin is broken out into its own standalone service, that
+service gets its **own host composition layer**. That does not change the
+boundary rule:
+
+- the host for that deployment still owns concrete adapters
+- the plugin/package boundary still consumes ports rather than owning concrete
+  implementations

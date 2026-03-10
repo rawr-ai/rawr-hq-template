@@ -31,6 +31,10 @@ contracts freely. If a contract is generically reusable across packages, that
 creates pressure to define it centrally rather than duplicating it in each
 package-local proto SDK.
 
+This directory is therefore **not** the generic home for "things a package
+needs from infrastructure." It is only for contracts that are truly part of the
+package-local packaged SDK.
+
 ### `src/service/*` stays pure by default
 
 The service package should remain:
@@ -52,6 +56,11 @@ Concrete integrations like:
 
 should generally be host-owned unless we deliberately decide that a reusable
 contract belongs in the packaged SDK.
+
+Binary capability rule:
+
+- host-owned concrete adapters: **supported**
+- package-local concrete adapters: **not supported**
 
 ## Important Clarification
 
@@ -77,6 +86,11 @@ It is:
 - "is this only a host-side concrete integration?"
 - or "is this a reusable contract the packaged SDK should expose?"
 
+If a reusable contract is needed, ask one more question immediately:
+
+- is it package-specific?
+- or is it generic enough that it should be centralized instead?
+
 ## `service/adapters` is suspect under the current model
 
 Because `src/service/*` is supposed to stay pure, a `service/adapters`
@@ -93,6 +107,16 @@ For now:
 
 - OpenTelemetry usage in the SDK is a framework/internal integration detail
 - it is not automatically part of the adapter-contract model
+- it is configured by the runtime host once per deployment boundary
+
+That means:
+
+- shared host today -> one concrete OTel integration at the host
+- standalone service later -> that service gets its own host-level OTel
+  integration
+
+Packages and plugins participate through the framework seam; they do not own
+concrete OTel adapters.
 
 We should only revisit that if a later integration shows that observability
 really needs an explicit host-facing contract.
