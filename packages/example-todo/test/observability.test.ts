@@ -242,19 +242,19 @@ describe("example-todo observability", () => {
         }, { additionalProperties: false }))),
     };
 
-    const requiredTelemetry = {
+    const requiredExtensions = {
       observability: service.createRequiredObservabilityMiddleware({}),
       analytics: service.createRequiredAnalyticsMiddleware({}),
     };
     const localObservability = service.createObservabilityMiddleware({
-      attributes: ({ context }) => ({
+      spanAttributes: ({ context }) => ({
         module: "ping",
         workspace_id: context.scope.workspaceId,
       }),
-      onStarted: ({ span, pathLabel }) => {
+      onStart: ({ span, pathLabel }) => {
         span?.addEvent("todo.local.started", { path: pathLabel });
       },
-      onSucceeded: ({ span, durationMs }) => {
+      onSuccess: ({ span, durationMs }) => {
         span?.addEvent("todo.local.succeeded", { durationMs });
       },
     });
@@ -266,7 +266,7 @@ describe("example-todo observability", () => {
       }),
     });
 
-    const os = service.createImplementer(contract, requiredTelemetry)
+    const os = service.createImplementer(contract, requiredExtensions)
       .use(localObservability)
       .use(localAnalytics);
     const ping = os.ping.handler(async () => ({ ok: true }));

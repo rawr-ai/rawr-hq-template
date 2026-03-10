@@ -230,13 +230,13 @@ const alternateInvocationService = defineService<{
 void alternateInvocationService;
 
 const localObservability = alternateInvocationService.createObservabilityMiddleware({
-  attributes({ context }) {
+  spanAttributes({ context }) {
     return {
       workspace_id: context.scope.workspaceId,
       request_id: context.invocation.requestId,
     };
   },
-  onFailed({ error }) {
+  onError({ error }) {
     void error.code;
   },
 });
@@ -252,7 +252,7 @@ const localAnalytics = alternateInvocationService.createAnalyticsMiddleware({
 void localAnalytics;
 
 alternateInvocationService.createRequiredObservabilityMiddleware({
-  attributes: ({ context }) => ({
+  spanAttributes: ({ context }) => ({
     workspace_id: context.scope.workspaceId,
     request_id: context.invocation.requestId,
     has_logger: typeof context.deps.logger.info === "function",
@@ -267,15 +267,15 @@ alternateInvocationService.createRequiredAnalyticsMiddleware({
 });
 
 alternateInvocationService.createRequiredObservabilityMiddleware({
-  attributes: ({ context }) => ({
-    // @ts-expect-error required service telemetry must not depend on provided context.
+  spanAttributes: ({ context }) => ({
+    // @ts-expect-error required service middleware extensions must not depend on provided context.
     repo_id: context.provided.repo.id,
   }),
 });
 
 alternateInvocationService.createRequiredAnalyticsMiddleware({
   payload: ({ context }) => ({
-    // @ts-expect-error required service telemetry must not depend on provided context.
+    // @ts-expect-error required service middleware extensions must not depend on provided context.
     repoId: context.provided.repo.id,
   }),
 });
@@ -289,7 +289,7 @@ alternateInvocationService.createObservabilityMiddleware({
 
 alternateInvocationService.createObservabilityMiddleware({
   // @ts-expect-error additive observability hooks do not receive service baseline policy events.
-  onFailed({ policyEvents }) {
+  onError({ policyEvents }) {
     void policyEvents;
   },
 });
@@ -329,7 +329,7 @@ const additiveContract = {
 };
 
 const additiveObservability = additiveService.createObservabilityMiddleware({
-  attributes: ({ context }) => ({
+  spanAttributes: ({ context }) => ({
     workspace_id: context.scope.workspaceId,
   }),
 });
@@ -339,31 +339,31 @@ const additiveAnalytics = additiveService.createAnalyticsMiddleware({
   }),
 });
 
-const requiredTelemetry = {
+const requiredExtensions = {
   observability: additiveService.createRequiredObservabilityMiddleware({}),
   analytics: additiveService.createRequiredAnalyticsMiddleware({}),
 };
 
-const additiveModuleBranch = additiveService.createImplementer(additiveContract, requiredTelemetry)
+const additiveModuleBranch = additiveService.createImplementer(additiveContract, requiredExtensions)
   .use(additiveObservability)
   .use(additiveAnalytics);
 void additiveModuleBranch;
 
-// @ts-expect-error required service telemetry must be supplied at implementer creation.
+// @ts-expect-error required service middleware extensions must be supplied at implementer creation.
 additiveService.createImplementer(additiveContract);
 
-const additiveProcedureBranch = additiveService.createImplementer(additiveContract, requiredTelemetry).assign
+const additiveProcedureBranch = additiveService.createImplementer(additiveContract, requiredExtensions).assign
   .use(additiveObservability)
   .use(additiveAnalytics);
 void additiveProcedureBranch;
 
-const invalidRequiredTelemetry = {
+const invalidRequiredExtensions = {
   observability: additiveObservability,
   analytics: additiveAnalytics,
 };
 
-// @ts-expect-error required telemetry slots must reject additive middleware.
-additiveService.createImplementer(additiveContract, invalidRequiredTelemetry);
+// @ts-expect-error required extension slots must reject additive middleware.
+additiveService.createImplementer(additiveContract, invalidRequiredExtensions);
 
 const baseProvider = createBaseProvider().middleware<{
   sql: Sql;

@@ -39,13 +39,17 @@ Always-on slots:
 - `src/service/base.ts` owns the grouped service declaration (`initialContext`, `invocationContext`, `metadata`), metadata defaults, policy vocabulary, and the bound service authoring surfaces from `defineService(...)`.
 - `src/service/base.ts` should prefer one canonical `defineService<{ initialContext, invocationContext, metadata }>(...)` call plus `ServiceOf<typeof service>` rather than hand-writing `ServiceDeps`, `ServiceMetadata`, and `ServiceContext` separately.
 - `src/service/base.ts` should remain declarative. Runtime observability and analytics behavior belongs in `src/service/middleware/*`, not in service-definition config blocks.
+- The canonical runtime specialization pattern is **required service middleware extension**:
+  - SDK baseline middleware stays SDK-owned
+  - a service may be required to supply a service-authored runtime extension when baseline behavior cannot be correct without it
+  - those extensions are enforced at `createServiceImplementer(...)`
 - Module/procedure-local observability and analytics are additive middleware, authored with `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` and attached where they belong (`modules/*/setup.ts` for module-wide additions, `modules/*/router.ts` for procedure-local additions).
 - `src/orpc/base.ts` is the always-on domain-package baseline definition surface.
 - `src/orpc/factory/*` is the always-on internal helper layer for abstract oRPC builders.
 - `src/orpc/package-boundary.ts` owns the package boundary wiring used by `src/client.ts`.
 - `src/orpc/middleware/*` is the always-on slot for kit-level middleware definitions.
 - `src/service/impl.ts` is the always-on oRPC composition surface (implement root contract + attach middleware).
-- `src/service/impl.ts` should supply required service-wide observability/analytics to `createServiceImplementer(...)`, then compose package-wide providers/guards and any extra service middleware after that.
+- `src/service/impl.ts` should supply required service middleware extensions (`observability`, `analytics`) to `createServiceImplementer(...)`, then compose package-wide providers/guards and any extra service middleware after that.
 
 ## Scaffold Determinism Rule
 
@@ -109,29 +113,32 @@ Package root (`src/index.ts`) is boundary-only by default.
 - Do not export module schemas/contracts/repositories from root by default.
 - Do not keep compatibility aliases in examples unless explicitly required by a migration plan.
 
-## Module Shape: `contract.ts` + `setup.ts` + `router.ts`
+## Module Shape: `contract.ts` + `middleware.ts` + `setup.ts` + `router.ts`
 
 Each module should split boundary definition from behavior:
 
 - `contract.ts`: procedure names, input/output schemas, `.errors(...)` declarations.
 - `setup.ts`: module runtime composition only; this is the scaffolding entry point that prepares the module-local implementer/exported `os`.
-- `middleware.ts` (optional): standalone module-local middleware/provider definitions when they are worth naming separately.
+- `middleware.ts`: standalone module-local middleware/provider definitions with generic exports such as `observability`, `analytics`, and `repository`/`repositories`.
 - `router.ts`: handler implementation only; exports the contract-enforced module router.
 
 Rules:
 
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
-- Start each module setup from the central implementer subtree in `src/service/impl.ts` (`impl.<module>`), then attach any standalone module middleware and/or inline middleware there.
+- Start each module setup from the central implementer subtree in `src/service/impl.ts` (`impl.<module>`), then attach any standalone module middleware there when the middleware is module-wide. Standalone procedure-local middleware may still be attached in module `router.ts`.
+- Keep module-local standalone middleware in `middleware.ts`, and use generic export names for recurring concepts:
+  - `observability`
+  - `analytics`
+  - `repository` / `repositories` when a standalone provider exists
 - Use `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` for additive local instrumentation at module/procedure scope; use `createServiceMiddleware(...)` for other additive observers/guards; keep `service/base.ts` for service-wide defaults only.
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
 - Prefer TypeBox `description` metadata on schema objects/properties for semantic documentation; avoid extra schema-only JSDoc noise.
-- `setup.ts` should make it obvious that both patterns are valid:
-  - attach standalone module middleware from `middleware.ts`
-  - author inline middleware directly in `setup.ts`
-- Do not treat the presence of `middleware.ts` as meaning inline middleware is forbidden.
+- `setup.ts` should make it obvious that standalone module middleware comes from `middleware.ts`.
+- In `example-todo`, every module keeps a `middleware.ts` file and exports generic names (`observability`, `analytics`, and `repository` / `repositories`) for consistency, even when some modules only use thin placeholders.
+- Inline middleware inside `setup.ts` or `router.ts` is still allowed when it is truly local and not worth naming separately, but recurring standalone module middleware should live in `middleware.ts`.
 
 ## Procedure Metadata Standard
 
@@ -150,7 +157,7 @@ Recommended pattern:
   - `metadata` for static procedure metadata
 - define base metadata defaults once in `src/service/base.ts` as `metadataDefaults`,
 - bind service-local contract/middleware/implementer authoring once in `src/service/base.ts` via `defineService(...)`,
-- keep runtime telemetry out of `src/service/base.ts`; required service telemetry belongs in `src/service/middleware/*`,
+- keep runtime telemetry out of `src/service/base.ts`; required service middleware extensions belong in `src/service/middleware/*`,
 - keep module contracts explicit by setting `idempotent` on every procedure,
 - read metadata in middleware via `procedure["~orpc"].meta` (oRPC runtime metadata surface).
 
@@ -235,13 +242,24 @@ The semantic line is simple:
 Author middleware against the mirrored required-context shape directly:
 
 - bind service-local authoring surfaces once in `src/service/base.ts` via `defineService(...)`
-- use `createServiceImplementer(contract, { observability, analytics })` in `src/service/impl.ts` so required service telemetry is explicit and enforced at the one package-wide assembly seam
+- use `createServiceImplementer(contract, { observability, analytics })` in `src/service/impl.ts` so required service middleware extensions are explicit and enforced at the one package-wide assembly seam
 - shared/framework non-providers via `createBaseMiddleware<{ ...lane fragments... }>()`
 - shared/framework providers via `createBaseProvider<{ ...lane fragments... }>()`
 - service non-providers via `createServiceMiddleware<{ ...lane fragments... }>()`
 - service-local providers via `createServiceProvider<{ ...lane fragments... }>()`
-- required service-wide telemetry via `createRequiredServiceObservabilityMiddleware(...)` / `createRequiredServiceAnalyticsMiddleware(...)`
+- required service middleware extensions via `createRequiredServiceObservabilityMiddleware(...)` / `createRequiredServiceAnalyticsMiddleware(...)`
 - if a middleware has no required context, call the helper with no type argument
+
+Required service middleware extension examples in `example-todo`:
+
+- `src/service/middleware/observability.ts` is the canonical **behavioral** example; it adds service-global runtime observability behavior the SDK cannot infer on its own.
+- `src/service/middleware/analytics.ts` is the canonical **contributor** example; it enriches the one canonical analytics emission path without becoming a second emitter.
+
+Keep this pattern narrow:
+
+- use a required service middleware extension only when SDK baseline behavior cannot be correct without service-authored runtime behavior
+- do not use additive middleware as a substitute for required extensions
+- do not turn every baseline concern into a required extension seam by default
 
 Declare only the minimal lane fragments a middleware needs. Examples:
 

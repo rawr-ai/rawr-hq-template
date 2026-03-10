@@ -37,6 +37,7 @@ Router responsibilities are fixed:
 
 - `src/service/contract.ts`: root contract composition (contracts bubble up here)
 - `src/service/impl.ts`: implement the root contract once, supply required service-wide observability/analytics to `createServiceImplementer(...)`, and then attach only extra service-wide providers/guards
+- required service middleware extensions are an explicit allowed pattern when SDK baseline middleware cannot be correct without service-authored runtime behavior
 - `src/service/router.ts`: router composition only (mount module routers into one shape; single final attach)
 - `src/router.ts`: **stable public alias** for `@rawr/<pkg>/router` (re-export only)
 
@@ -52,6 +53,13 @@ Hard choke points / invariants:
 We are optimizing for rapid comprehension and predictable navigation for both humans and AI agents. Structural drift by package size creates unnecessary cognitive overhead.
 
 CLI/template flags should vary content depth (`simple`, `intermediate`, `advanced`), not top-level shape.
+
+Required service middleware extension is now part of that topology contract:
+
+- `src/service/base.ts` stays declarative
+- `src/service/impl.ts` is the enforced runtime assembly seam
+- runtime service-wide telemetry stays in `src/service/middleware/*`
+- additive middleware is not a substitute for required extensions
 
 ## Decision #3 (2026-02-26)
 

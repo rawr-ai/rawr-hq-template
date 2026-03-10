@@ -17,9 +17,13 @@ It is intentionally decision-complete:
 
 - [x] Slice 1 complete: analytics moved to SDK baseline + service middleware
 - [x] Slice 2 complete: observability moved out of `service/base.ts` and
-  required telemetry is enforced at `createServiceImplementer(...)`
+  required service middleware extensions are enforced at `createServiceImplementer(...)`
 - [x] Slice 3 complete: public seam, tests, comments, and active docs packet
   updated
+- [x] Follow-up polish complete: required service middleware extension naming
+  locked in, observability surface renamed for OpenTelemetry/oRPC alignment,
+  and module-level standalone middleware extracted into per-module
+  `middleware.ts` files with generic exports
 
 This document is now a completed execution record for the refactor. The rest of
 the file captures the migration plan that was executed and can be used as
@@ -103,7 +107,7 @@ createServiceImplementer(contract, {
 })
 ```
 
-Missing required telemetry at this seam is a compile-time error.
+Missing required service middleware extensions at this seam is a compile-time error.
 
 ### 5. No normal telemetry config path in `service/base.ts`
 
@@ -187,7 +191,7 @@ the declaration posture during this change.
 - [`packages/example-todo/src/service/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/service/base.ts)
   still contains service runtime observability logic
 - [`packages/example-todo/src/service/impl.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/service/impl.ts)
-  still calls `createServiceImplementer(contract)` with no required telemetry
+  still calls `createServiceImplementer(contract)` with no required service middleware extensions
 
 ### Target state
 
@@ -247,7 +251,7 @@ distinct on purpose.
 
 ### Required middleware slots are distinct typed values
 
-The required telemetry slots at `createServiceImplementer(...)` must not accept
+The required service middleware extension slots at `createServiceImplementer(...)` must not accept
 plain middleware values.
 
 Implementation rule:
@@ -370,7 +374,7 @@ This is the only allowed hybrid state.
    - import `analytics` from `src/service/middleware/analytics.ts`
    - attach `.use(analytics)` explicitly after `createServiceImplementer(contract)`
    - treat this explicit analytics attachment as temporary and remove it in
-     Slice 2 when the required telemetry object becomes the enforcement seam
+     Slice 2 when the required service middleware extension object becomes the enforcement seam
 
 #### Acceptance criteria
 
@@ -424,7 +428,7 @@ preserving current lifecycle coverage and policy-aware behavior.
    - auto-attach required observability and analytics in SDK-owned order
    - require those slots to accept only the branded required middleware values,
      not additive middleware
-   - keep required telemetry bound to base service context only; the builders are
+   - keep required service middleware extensions bound to base service context only; the builders are
      not generic over extra required context and must reject `provided.*`
      dependencies
 
@@ -441,9 +445,9 @@ preserving current lifecycle coverage and policy-aware behavior.
    - consume exported policy vocabulary from `service/base.ts`
 
 5. Update [`packages/example-todo/src/service/impl.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/service/impl.ts):
-   - pass both required telemetry middleware
+   - pass both required service middleware extensions
    - keep `sqlProvider` and `readOnlyMode` as explicit `.use(...)` calls after
-     required telemetry
+     the required extensions
    - remove the temporary explicit `.use(analytics)` from Slice 1
 
 #### Acceptance criteria
@@ -453,9 +457,9 @@ preserving current lifecycle coverage and policy-aware behavior.
 - service-wide observability still emits one service logger event per call
 - module/procedure additive observability remains additive-only
 - SDK-owned ordering preserves both framework and service telemetry coverage
-- `createServiceImplementer(...)` now rejects missing required telemetry
+- `createServiceImplementer(...)` now rejects missing required service middleware extensions
 - additive telemetry middleware is not assignable to the required slots
-- required service telemetry builders cannot depend on `provided.*`
+- required service middleware extension builders cannot depend on `provided.*`
 
 #### Verification for Slice 2
 
@@ -478,7 +482,7 @@ architecture.
 1. Narrow `defineService(...)` options so `baseline` contains only `policy`.
 2. Migrate ad hoc/test-only service definitions off the old telemetry profile
    path:
-   - update test-local services to build required telemetry with
+   - update test-local services to build required service middleware extensions with
      `service.createRequiredObservabilityMiddleware(...)` and
      `service.createRequiredAnalyticsMiddleware(...)`
    - update test implementer assembly to pass `{ observability, analytics }`
@@ -497,16 +501,16 @@ architecture.
 7. Update [`packages/example-todo/test/context-typing.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/test/context-typing.ts):
    - `defineService(...)` should reject `baseline.observability`
    - `defineService(...)` should reject `baseline.analytics`
-   - `createServiceImplementer(contract)` without required telemetry should be a
+   - `createServiceImplementer(contract)` without required service middleware extensions should be a
      type error
    - `createServiceImplementer(contract, { observability, analytics })` should
      typecheck
-   - required telemetry slots should reject additive middleware values
-   - required telemetry builders should see `context.deps.logger` and
+   - required extension slots should reject additive middleware values
+   - required extension builders should see `context.deps.logger` and
      `context.deps.analytics` without the service restating baseline deps
-   - required telemetry builders should still preserve service-specific deps
+   - required extension builders should still preserve service-specific deps
      such as `dbPool`
-   - required telemetry builders should reject dependencies on `provided.*`
+   - required extension builders should reject dependencies on `provided.*`
    - additive observability/analytics builders should preserve their current
      constraints
 
@@ -548,7 +552,7 @@ architecture.
 - the public SDK seam does not advertise superseded profile helpers
 - service code uses runtime telemetry middleware files instead of declarative
   telemetry profile objects
-- compile-time tests enforce the required telemetry seam and boundary
+- compile-time tests enforce the required service middleware extension seam and boundary
   restrictions
 - active docs packet matches the code
 
@@ -620,7 +624,7 @@ Scope:
 Focus:
 
 - move runtime telemetry out of `base.ts`
-- wire required telemetry at implementer seam
+- wire required service middleware extensions at implementer seam
 - preserve service/package readability
 
 #### Agent 3: tests + docs + comment discipline worker
@@ -643,7 +647,7 @@ Focus:
    analytics split mechanics.
 2. After Slice 1 is green, Agent 3 can start the corresponding test updates
    that do not depend on the observability cutover.
-3. Slice 2 should stay orchestrator-owned until the required telemetry seam and
+3. Slice 2 should stay orchestrator-owned until the required service middleware extension seam and
    branded types are stable.
 4. Once Slice 2 is green, Agent 2 can help with service file cleanup while
    Agent 3 updates tests/comments/docs in parallel on disjoint files.

@@ -34,11 +34,12 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - Domain package deps include shared base deps (`BaseDeps`) so logger and analytics capabilities are always available.
 - `context.deps` remains the single host-provided dependency bag; middleware/module setup may add `context.provided.*` execution values, but we do not split runtime dependencies into multiple bags.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
-- `src/service/base.ts` binds the service-local authoring surfaces once (`Service`, `ocBase`, additive builders, required telemetry builders, `createServiceImplementer`) and stays declarative.
+- `src/service/base.ts` binds the service-local authoring surfaces once (`Service`, `ocBase`, additive builders, required extension builders, `createServiceImplementer`) and stays declarative.
 - `src/service/base.ts` should prefer one canonical `defineService<{ initialContext, invocationContext, metadata }>(...)` call plus `ServiceOf<typeof service>` over hand-writing a separate `Service = ServiceTypesOf<...>` projection.
 - `initialContext` should group the construction-time `deps` / `scope` / `config` lanes; `invocationContext` should describe per-call invocation input; `metadata` remains static procedure metadata.
 - `src/service/base.ts` should contribute service metadata defaults and policy vocabulary; runtime observability/analytics behavior belongs in `src/service/middleware/*`.
-- `createServiceImplementer(contract, { observability, analytics })` enforces required service-wide telemetry at the package-wide assembly seam; module/procedure-local observability and analytics stay additive and attach via the pre-bound `createServiceObservabilityMiddleware(...)` and `createServiceAnalyticsMiddleware(...)` builders.
+- `createServiceImplementer(contract, { observability, analytics })` enforces required service middleware extensions at the package-wide assembly seam; module/procedure-local observability and analytics stay additive and attach via the pre-bound `createServiceObservabilityMiddleware(...)` and `createServiceAnalyticsMiddleware(...)` builders.
+- `src/service/middleware/observability.ts` is the canonical required-extension example for service-global runtime behavior; `src/service/middleware/analytics.ts` is the contributor-style required-extension example.
 
 ## Real axes that should change
 
@@ -116,6 +117,7 @@ packages/example-minimal/src/
     └── modules/
         └── tasks/
             ├── contract.ts
+            ├── middleware.ts
             ├── setup.ts
             ├── router.ts
             ├── repository.ts
@@ -167,18 +169,21 @@ packages/example-todo/src/
     └── modules/
         ├── tasks/
         │   ├── contract.ts
+        │   ├── middleware.ts
         │   ├── setup.ts
         │   ├── router.ts
         │   ├── repository.ts
         │   └── schemas.ts
         ├── tags/
         │   ├── contract.ts
+        │   ├── middleware.ts
         │   ├── setup.ts
         │   ├── router.ts
         │   ├── repository.ts
         │   └── schemas.ts
         └── assignments/
             ├── contract.ts
+            ├── middleware.ts
             ├── setup.ts
             ├── router.ts
             ├── repository.ts
@@ -187,11 +192,11 @@ packages/example-todo/src/
 
 Example change at this scale (medium): add a new module.
 
-- Add `service/modules/projects/{contract,setup,router,repository,schemas}.ts`
+- Add `service/modules/projects/{contract,middleware,setup,router,repository,schemas}.ts`
 - Wire it into `service/contract.ts` (import + add to exported contract object)
 - Wire it into `service/router.ts` (import module router + add to exported router object)
 - No changes needed outside `service/contract.ts` + `service/router.ts` unless you’re changing middleware ordering (`src/service/impl.ts`)
-- If the change is only module/procedure-local observability or analytics, prefer `service/modules/<name>/setup.ts` or `service/modules/<name>/router.ts`; do not use additive middleware as a substitute for the required service-wide telemetry in `src/service/impl.ts`.
+- If the change is only module/procedure-local observability or analytics, prefer authoring the standalone middleware in `service/modules/<name>/middleware.ts` and then attaching it from `setup.ts` or `router.ts`; do not use additive middleware as a substitute for the required service middleware extensions in `src/service/impl.ts`.
 
 ### 3) Golden Path
 
@@ -236,6 +241,7 @@ packages/example-golden/src/
     └── modules/
         ├── tasks/
         │   ├── contract.ts
+        │   ├── middleware.ts
         │   ├── setup.ts
         │   ├── router.ts
         │   ├── repository.ts
@@ -248,12 +254,14 @@ packages/example-golden/src/
         │       └── schemas.ts
         ├── tags/
         │   ├── contract.ts
+        │   ├── middleware.ts
         │   ├── setup.ts
         │   ├── router.ts
         │   ├── repository.ts
         │   └── schemas.ts
         ├── assignments/
         │   ├── contract.ts
+        │   ├── middleware.ts
         │   ├── setup.ts
         │   ├── router.ts
         │   ├── repository.ts

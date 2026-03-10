@@ -188,11 +188,11 @@ describe("provider middleware", () => {
         }, { additionalProperties: false }))),
     };
 
-    const requiredTelemetry = {
+    const requiredExtensions = {
       observability: service.createRequiredObservabilityMiddleware({}),
       analytics: service.createRequiredAnalyticsMiddleware({}),
     };
-    const os = service.createImplementer(contract, requiredTelemetry);
+    const os = service.createImplementer(contract, requiredExtensions);
 
     const ping = os.ping.handler(async ({ context }) => {
       return { readOnly: context.config.readOnly };
@@ -276,11 +276,11 @@ describe("provider middleware", () => {
       });
     });
 
-    const requiredTelemetry = {
+    const requiredExtensions = {
       observability: service.createRequiredObservabilityMiddleware({}),
       analytics: service.createRequiredAnalyticsMiddleware({}),
     };
-    const os = service.createImplementer(contract, requiredTelemetry).use(repoProvider);
+    const os = service.createImplementer(contract, requiredExtensions).use(repoProvider);
 
     const ping = os.ping.handler(async ({ context }) => {
       return { repoId: context.provided.repo.id };
@@ -378,11 +378,11 @@ describe("provider middleware", () => {
       });
     });
 
-    const requiredTelemetry = {
+    const requiredExtensions = {
       observability: service.createRequiredObservabilityMiddleware({}),
       analytics: service.createRequiredAnalyticsMiddleware({}),
     };
-    const os = service.createImplementer(contract, requiredTelemetry)
+    const os = service.createImplementer(contract, requiredExtensions)
       .use(firstProvider)
       .use(collidingProvider as never);
 
