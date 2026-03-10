@@ -24,13 +24,13 @@ import { sqlProvider } from "../orpc-sdk";
  * @remarks
  * Middleware order is authored here:
  * 1) framework baseline middleware from the SDK seam
- * 2) required service-wide observability + analytics supplied here and
- *    auto-attached inside `createServiceImplementer(...)`
+ * 2) required service middleware extensions supplied here and auto-attached
+ *    inside `createServiceImplementer(...)`
  * 3) extra service-wide providers/guards authored here
  *
  * Do not attach additive telemetry middleware here to satisfy the required
- * service telemetry slots. Module/procedure-local additive middleware belongs
- * in module `setup.ts` and `router.ts` files.
+ * service middleware extension slots. Module/procedure-local additive
+ * middleware belongs in module `setup.ts` and `router.ts` files.
  */
 export const impl = createServiceImplementer(contract, {
   observability,

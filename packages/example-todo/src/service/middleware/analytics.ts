@@ -2,9 +2,13 @@
  * @fileoverview Required service-wide analytics middleware.
  *
  * @remarks
- * This file is the one service-global analytics contribution point. It is
- * supplied to `createServiceImplementer(...)` in `src/service/impl.ts` and
- * enriches the canonical SDK-owned analytics emission path.
+ * This file is a required service middleware extension, specifically the
+ * contributor-style example.
+ *
+ * It is supplied to `createServiceImplementer(...)` in `src/service/impl.ts`
+ * and enriches the canonical SDK-owned analytics emission path. Unlike the
+ * observability example, it demonstrates a required service-global payload
+ * contributor rather than a richer lifecycle wrapper.
  *
  * @agents
  * Put service-global analytics behavior here. Do not move analytics runtime

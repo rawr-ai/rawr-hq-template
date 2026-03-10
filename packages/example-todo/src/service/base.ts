@@ -10,8 +10,9 @@
  * - the bound service authoring surfaces exported to the rest of the package
  *
  * Keep this file as the one authoritative declarative service manifest.
- * Runtime telemetry behavior does not live here; required service telemetry is
- * authored in `src/service/middleware/*` and supplied at the implementer seam.
+ * Runtime telemetry behavior does not live here; required service middleware
+ * extensions are authored in `src/service/middleware/*` and supplied at the
+ * implementer seam.
  * Module- and procedure-local behavior still belongs in module `setup.ts` /
  * `router.ts` files. Lower-level construction primitives remain in
  * `src/orpc-sdk.ts`.
@@ -142,7 +143,7 @@ export const ocBase = service.oc;
  * - module-level additions in module `setup.ts` files
  * - procedure-level additions in module `router.ts` files
  *
- * Do not use this to recreate the required service-wide telemetry middleware
+ * Do not use this to recreate the required service middleware extensions
  * attached in `src/service/impl.ts`. Declare only the minimal required lane
  * fragments or execution context additions; do not restate the full
  * `Service["Context"]`.
@@ -154,8 +155,7 @@ export const createServiceMiddleware = service.createMiddleware;
  *
  * @remarks
  * Use this for module- or procedure-level observability additions on top of
- * the required service-wide observability middleware attached in
- * `src/service/impl.ts`.
+ * the required service observability extension attached in `src/service/impl.ts`.
  *
  * This builder is additive-only:
  * - it can add local fields, events, and hooks
@@ -172,6 +172,9 @@ export const createServiceObservabilityMiddleware = service.createObservabilityM
  * attached in `src/service/impl.ts`. It is not interchangeable with additive
  * observability middleware and cannot depend on provider-added `provided.*`
  * execution context.
+ *
+ * This is the service-facing builder for the required service middleware
+ * extension pattern.
  */
 export const createRequiredServiceObservabilityMiddleware = service.createRequiredObservabilityMiddleware;
 
@@ -180,7 +183,7 @@ export const createRequiredServiceObservabilityMiddleware = service.createRequir
  *
  * @remarks
  * Use this for module- or procedure-level analytics additions on top of the
- * required service-wide analytics middleware attached in `src/service/impl.ts`.
+ * required service analytics extension attached in `src/service/impl.ts`.
  *
  * This builder is additive-only:
  * - it contributes local analytics payload deltas
@@ -197,6 +200,9 @@ export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddlewar
  * attached in `src/service/impl.ts`. It contributes service-global analytics
  * payload to the one canonical analytics emission path and is not
  * interchangeable with additive analytics middleware.
+ *
+ * This is the service-facing builder for the required service middleware
+ * extension pattern.
  */
 export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAnalyticsMiddleware;
 
@@ -215,8 +221,8 @@ export const createServiceProvider = service.createProvider;
  *
  * @remarks
  * `src/service/impl.ts` imports the root contract and calls this once,
- * supplying the required service-wide telemetry middleware. The returned
+ * supplying the required service middleware extensions. The returned
  * implementer already includes SDK baseline telemetry and then auto-attaches
- * the required service telemetry in canonical order.
+ * the required extensions in canonical order.
  */
 export const createServiceImplementer = service.createImplementer;

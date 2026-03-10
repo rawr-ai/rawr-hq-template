@@ -7,16 +7,13 @@
  *
  * @agents
  * `contract.ts` owns boundary shape (input/output/errors/meta).
- * `setup.ts` owns module setup, including module-local additive middleware.
+ * `setup.ts` owns module setup, and `middleware.ts` owns standalone module middleware.
  * This module is composite; cross-module orchestration belongs in handlers here.
  * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
 import { os } from "./setup";
-import {
-  createServiceAnalyticsMiddleware,
-  createServiceObservabilityMiddleware,
-} from "../../base";
+import { analytics, observability } from "./middleware";
 import { type Assignment } from "./schemas";
 
 /**
@@ -24,34 +21,9 @@ import { type Assignment } from "./schemas";
  *
  * Implement concrete procedure handlers below using `os.<procedure>.handler(...)`.
  */
-const assignProcedureObservability = createServiceObservabilityMiddleware({
-  onStarted: ({ span, context, pathLabel }) => {
-    span?.addEvent("todo.assignments.assign.requested", {
-      workspace_id: context.scope.workspaceId,
-      path: pathLabel,
-    });
-    context.deps.logger.info("todo.assignments.assign.requested", {
-      layer: "procedure",
-      procedure: pathLabel,
-      workspaceId: context.scope.workspaceId,
-      invocationTraceId: context.invocation.traceId,
-    });
-  },
-});
-
-const assignProcedureAnalytics = createServiceAnalyticsMiddleware({
-  payload: ({ context, pathLabel, outcome }) => ({
-    analytics_layer: "procedure",
-    analytics_procedure: pathLabel,
-    analytics_outcome: outcome,
-    analytics_workspace_id: context.scope.workspaceId,
-    analytics_trace_id: context.invocation.traceId,
-  }),
-});
-
 const assign = os.assign
-  .use(assignProcedureObservability)
-  .use(assignProcedureAnalytics)
+  .use(observability)
+  .use(analytics)
   .handler(async ({ context, input, errors }) => {
   const task = await context.provided.tasks.findById(input.taskId);
   if (!task) {

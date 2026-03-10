@@ -51,7 +51,7 @@ type RequiredServiceContext<TService extends AnyService> = WithoutProvided<
   ServiceContextFrom<TService>
 >;
 
-type RequiredServiceTelemetry<
+type RequiredServiceExtensions<
   TService extends AnyService,
 > = {
   observability: RequiredServiceObservabilityMiddleware<
@@ -131,7 +131,7 @@ export type DefinedService<
   createImplementer: {
     <const TContract extends AnyContractProcedure>(
       contract: TContract,
-      requiredTelemetry: RequiredServiceTelemetry<ServiceTypesOf<TDeclaration>>,
+      requiredExtensions: RequiredServiceExtensions<ServiceTypesOf<TDeclaration>>,
     ): ImplementerInternalWithMiddlewares<
       TContract,
       ServiceContextFrom<ServiceTypesOf<TDeclaration>>,
@@ -139,7 +139,7 @@ export type DefinedService<
     >;
     <const TContract extends AnyContractRouterObject>(
       contract: TContract,
-      requiredTelemetry: RequiredServiceTelemetry<ServiceTypesOf<TDeclaration>>,
+      requiredExtensions: RequiredServiceExtensions<ServiceTypesOf<TDeclaration>>,
     ): ImplementerInternalWithMiddlewares<
       TContract,
       ServiceContextFrom<ServiceTypesOf<TDeclaration>>,
@@ -157,19 +157,26 @@ export type ServiceOf<TDefinedService extends { readonly __service?: AnyService 
  * @remarks
  * `defineService(...)` binds metadata-aware contract authoring, metadata-aware
  * additive middleware authoring, metadata-aware provider authoring, required
- * service telemetry builders, and context-typed implementer creation.
+ * service middleware extension builders, and context-typed implementer
+ * creation.
  *
  * The declarative service seam is intentionally narrow:
  * - `metadataDefaults` for static procedure metadata
  * - `baseline.policy` for service-wide policy vocabulary
  *
  * Runtime telemetry behavior does not live here. It is authored with the
- * required telemetry builders and supplied at `createServiceImplementer(...)`.
+ * required service middleware extension builders and supplied at
+ * `createServiceImplementer(...)`.
+ *
+ * A required service middleware extension is the enforced runtime pattern for
+ * service-authored baseline specialization when SDK-owned baseline middleware
+ * cannot be correct without service-specific runtime behavior.
  *
  * @agents
- * If you are changing service telemetry architecture, this is the SDK binding
- * seam that controls which builders exist and what `createServiceImplementer`
- * requires. Do not silently widen types here to make mismatches disappear.
+ * If you are changing required service middleware extension architecture, this
+ * is the SDK binding seam that controls which builders exist and what
+ * `createServiceImplementer` requires. Do not silently widen types here to make
+ * mismatches disappear.
  *
  * Warning:
  * do not solve service-binding mismatches here with casts or silent type
@@ -190,27 +197,27 @@ export function defineService<
 
   function createServiceImplementer<const TContract extends AnyContractProcedure>(
     contract: TContract,
-    requiredTelemetry: RequiredServiceTelemetry<TService>,
+    requiredExtensions: RequiredServiceExtensions<TService>,
   ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
   function createServiceImplementer<const TContract extends AnyContractRouterObject>(
     contract: TContract,
-    requiredTelemetry: RequiredServiceTelemetry<TService>,
+    requiredExtensions: RequiredServiceExtensions<TService>,
   ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
   function createServiceImplementer(
     contract: AnyContractRouter,
-    requiredTelemetry: RequiredServiceTelemetry<TService>,
+    requiredExtensions: RequiredServiceExtensions<TService>,
   ) {
     if (isContractProcedure(contract)) {
       return createBaseImplementer<AnyContractProcedure, TContext>(contract)
-        .use(requiredTelemetry.observability)
-        .use(requiredTelemetry.analytics);
+        .use(requiredExtensions.observability)
+        .use(requiredExtensions.analytics);
     }
 
     return createBaseImplementer<AnyContractRouterObject, TContext>(
       contract as AnyContractRouterObject,
     )
-      .use(requiredTelemetry.observability)
-      .use(requiredTelemetry.analytics);
+      .use(requiredExtensions.observability)
+      .use(requiredExtensions.analytics);
   }
 
   return {
