@@ -15,6 +15,24 @@ bun run test
 bun run test:heavy
 ```
 
+## Narsil Code Intel
+
+This repo should use a dedicated `narsil-mcp` instance as its primary code-intel MCP server.
+
+- Give `rawr-hq-template` its own Narsil instance instead of folding it into an unrelated shared domain index.
+- Keep the Narsil index outside the repo; do not commit generated cache or index state.
+- Prefer the persistent daemon model with `--persist --git --call-graph --watch --neural`.
+- Verify the repo is present in `list_repos`, then use Narsil tools such as `hybrid_search`, `find_symbols`, `find_references`, and `find_call_path`.
+
+Recommended local flow:
+
+```bash
+# start a dedicated instance for this repo
+narsil-mcp --repos . --git --call-graph --persist --watch --neural
+```
+
+Then verify from your MCP client or HTTP transport by confirming the repo appears in `list_repos`, then running a search such as `hybrid_search` or `find_symbols`.
+
 ## Core vs Extensions
 
 - Core lives in this template (`apps/cli`, `packages/core`, `packages/control-plane`, `packages/state`, `packages/security`, `packages/journal`).
