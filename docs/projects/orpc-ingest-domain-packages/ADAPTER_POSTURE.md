@@ -26,6 +26,11 @@ If something lives under `packages/example-todo/src/orpc/adapters/*`, it means:
 This is a stronger meaning than "some adapter-like thing we happen to need
 internally."
 
+It also does **not** mean every package should invent its own reusable
+contracts freely. If a contract is generically reusable across packages, that
+creates pressure to define it centrally rather than duplicating it in each
+package-local proto SDK.
+
 ### `src/service/*` stays pure by default
 
 The service package should remain:
@@ -58,6 +63,10 @@ The more precise rule is:
 - service/domain packages should not own concrete adapter implementations
 - packaged SDK layers may define reusable host-facing contracts when those
   contracts are truly part of the package boundary
+
+Package-local packaged contracts are therefore the exception, not the default.
+They only make sense when the contract is genuinely package-specific and
+semantically part of what that package ships.
 
 So the decision point for a new integration is **not**:
 
@@ -100,6 +109,16 @@ Before implementing a new provider/integration, classify it first:
 
 This is the repeatable process we want to validate, not just "can we wire in
 PostHog?" or "can we wire in Drizzle?"
+
+After that first classification, apply this second decision rule:
+
+1. Is this just a host-side concrete integration?
+2. If not, is a reusable contract actually needed?
+3. If a reusable contract is needed, is it package-specific or generically reusable?
+
+If it is generically reusable, centralize it.
+If it is package-specific and truly part of the package boundary, the
+package-local proto SDK may own it.
 
 ## What This Means For The Next Step
 
