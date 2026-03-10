@@ -545,7 +545,15 @@ Use sharing-based placement:
 When a construct is shared by multiple modules, choose the directory based on semantics:
 
 - `service/shared/`: domain semantics (errors, schemas/types, invariants).
-- `service/adapters/`: shared adapter/infrastructure helpers (SQL helpers, mapping utilities).
+
+Do **not** default to a `service/adapters/` layer under the current model. If a
+shared infrastructure/helper concern appears, stop and classify it first:
+
+- packaged SDK contract
+- provider middleware
+- framework/internal integration
+- host-side concrete integration
+- service-local runtime behavior
 
 Each procedure still declares only the errors it can throw.
 
