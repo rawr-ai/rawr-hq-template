@@ -41,6 +41,14 @@ Use **four** telemetry layers, split by responsibility:
    - owns service-specific analytics behavior
    - attached automatically by the implementer factory once provided
 
+Load-bearing rule:
+
+- `service/base.ts` does **not** have a normal observability configuration
+  surface
+- `service/base.ts` does **not** have a normal analytics configuration surface
+- recurring declarative service semantics belong in metadata defaults or policy,
+  not in dedicated telemetry configuration sections
+
 Everything else remains explicit and lower-scope:
 
 - service-wide providers/guards in `src/service/impl.ts`
@@ -90,7 +98,6 @@ This file should contain:
 - service declaration types
 - metadata defaults
 - declarative policy vocabulary
-- narrow declarative observability/analytics inputs if a real static need exists
 - bound exports used elsewhere in the service
 
 This file should **not** contain:
@@ -243,19 +250,23 @@ it.
 - metadata defaults
 - policy event names / policy vocabulary
 
-Current target assumption:
+This is a hard rule, not a soft preference:
 
-- the architecture does **not** rely on a normal declarative telemetry authoring
+- the architecture does **not** provide a normal declarative telemetry authoring
   path in `service/base.ts`
-- if a future static observability/analytics need appears, it must be explicit,
-  tightly scoped, and justified as truly non-runtime
-- until such a need exists, telemetry should be treated as middleware-owned
-  rather than service-definition-owned
+- the generic telemetry envelope is already derivable from metadata defaults,
+  procedure shape, stable lanes, and policy vocabulary
+- recurring non-derived declarative service inputs belong to metadata or policy
+  instead
+- a dedicated telemetry configuration surface would mostly duplicate semantics
+  already expressed elsewhere and weaken the architecture
 
 ### What does not stay declarative
 
 The service definition should not keep:
 
+- observability configuration blocks
+- analytics configuration blocks
 - `onStarted` / `onFailed` observability callbacks
 - analytics payload functions
 - service-wide behavioral middleware logic
