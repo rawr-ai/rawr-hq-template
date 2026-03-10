@@ -2,16 +2,24 @@
  * @fileoverview Single service definition seam for the todo package.
  *
  * @remarks
- * Author the todo service boundary and its service-wide baseline concerns once
+ * Author the todo service boundary and its declarative service-wide concerns once
  * in this file:
  * - support types like `Clock`
  * - the canonical service declaration
- * - service-wide baseline metadata, policy, observability, and analytics
+ * - service-wide metadata defaults and policy vocabulary
  * - the bound service authoring surfaces exported to the rest of the package
  *
- * Keep this file as the one authoritative service manifest. Module- and
- * procedure-local behavior still belongs in module `setup.ts` / `router.ts`
- * files. Lower-level construction primitives remain in `src/orpc-sdk.ts`.
+ * Keep this file as the one authoritative declarative service manifest.
+ * Runtime telemetry behavior does not live here; required service telemetry is
+ * authored in `src/service/middleware/*` and supplied at the implementer seam.
+ * Module- and procedure-local behavior still belongs in module `setup.ts` /
+ * `router.ts` files. Lower-level construction primitives remain in
+ * `src/orpc-sdk.ts`.
+ *
+ * @agents
+ * Read this file to understand what the service is. Do not add runtime
+ * observability or analytics behavior here; that belongs in
+ * `src/service/middleware/*`.
  */
 import {
   defineService,
@@ -70,6 +78,21 @@ type ProcedureMetadata = {
 };
 
 /**
+ * Declarative service-wide policy vocabulary.
+ *
+ * @remarks
+ * Policy names are static service semantics that runtime observability may
+ * consume. They are distinct from caller-facing errors and from telemetry
+ * behavior itself.
+ */
+export const policy = {
+  events: {
+    readOnlyRejected: "todo.policy.read_only_rejected",
+    assignmentLimitReached: "todo.policy.assignment_limit_reached",
+  },
+} as const;
+
+/**
  * Bound todo service definition.
  *
  * @remarks
@@ -94,56 +117,7 @@ const service = defineService<{
     entity: "service",
   },
   baseline: {
-    policy: {
-      events: {
-        readOnlyRejected: "todo.policy.read_only_rejected",
-        assignmentLimitReached: "todo.policy.assignment_limit_reached",
-      },
-    },
-    observability: {
-      attributes: ({ context }) => {
-        return {
-          workspace_id: context.scope.workspaceId,
-          read_only: context.config.readOnly,
-          invocation_trace_id: context.invocation.traceId,
-        };
-      },
-      logFields: ({ context, spanTraceId }) => {
-        return {
-          spanTraceId,
-          invocationTraceId: context.invocation.traceId,
-          workspaceId: context.scope.workspaceId,
-          readOnly: context.config.readOnly,
-        };
-      },
-      startedEventFields: ({ context }) => {
-        return {
-          workspaceId: context.scope.workspaceId,
-          traceId: context.invocation.traceId,
-        };
-      },
-      succeededEventFields: ({ context }) => {
-        return {
-          workspaceId: context.scope.workspaceId,
-        };
-      },
-      onFailed: ({ span, context, pathLabel, error, policyEvents }) => {
-        if (error.code === "READ_ONLY_MODE" && policyEvents?.readOnlyRejected) {
-          span?.addEvent(policyEvents.readOnlyRejected, {
-            path: pathLabel,
-            workspaceId: context.scope.workspaceId,
-          });
-        }
-
-        if (error.code === "ASSIGNMENT_LIMIT_REACHED" && policyEvents?.assignmentLimitReached) {
-          span?.addEvent(policyEvents.assignmentLimitReached, {
-            path: pathLabel,
-            workspaceId: context.scope.workspaceId,
-          });
-        }
-      },
-    },
-    analytics: {},
+    policy,
   },
 });
 
@@ -162,15 +136,16 @@ export const ocBase = service.oc;
  *
  * @remarks
  * Use this for additive service-authored middleware outside the baseline
- * concerns defined in this file.
+ * declarative concerns defined in this file.
  *
  * Typical attachment points:
  * - module-level additions in module `setup.ts` files
  * - procedure-level additions in module `router.ts` files
  *
- * Do not use this to recreate the default service-wide baseline middleware
- * already declared here. Declare only the minimal required lane fragments or
- * execution context additions; do not restate the full `Service["Context"]`.
+ * Do not use this to recreate the required service-wide telemetry middleware
+ * attached in `src/service/impl.ts`. Declare only the minimal required lane
+ * fragments or execution context additions; do not restate the full
+ * `Service["Context"]`.
  */
 export const createServiceMiddleware = service.createMiddleware;
 
@@ -179,7 +154,8 @@ export const createServiceMiddleware = service.createMiddleware;
  *
  * @remarks
  * Use this for module- or procedure-level observability additions on top of
- * the automatic service-wide baseline declared in this file.
+ * the required service-wide observability middleware attached in
+ * `src/service/impl.ts`.
  *
  * This builder is additive-only:
  * - it can add local fields, events, and hooks
@@ -189,11 +165,22 @@ export const createServiceMiddleware = service.createMiddleware;
 export const createServiceObservabilityMiddleware = service.createObservabilityMiddleware;
 
 /**
+ * Required service-wide observability middleware builder.
+ *
+ * @remarks
+ * Use this only for the one required service-wide observability middleware
+ * attached in `src/service/impl.ts`. It is not interchangeable with additive
+ * observability middleware and cannot depend on provider-added `provided.*`
+ * execution context.
+ */
+export const createRequiredServiceObservabilityMiddleware = service.createRequiredObservabilityMiddleware;
+
+/**
  * Service-local additive analytics middleware builder.
  *
  * @remarks
  * Use this for module- or procedure-level analytics additions on top of the
- * automatic service-wide baseline declared in this file.
+ * required service-wide analytics middleware attached in `src/service/impl.ts`.
  *
  * This builder is additive-only:
  * - it contributes local analytics payload deltas
@@ -201,6 +188,17 @@ export const createServiceObservabilityMiddleware = service.createObservabilityM
  * - it does not rename the baseline analytics event
  */
 export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddleware;
+
+/**
+ * Required service-wide analytics middleware builder.
+ *
+ * @remarks
+ * Use this only for the one required service-wide analytics middleware
+ * attached in `src/service/impl.ts`. It contributes service-global analytics
+ * payload to the one canonical analytics emission path and is not
+ * interchangeable with additive analytics middleware.
+ */
+export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAnalyticsMiddleware;
 
 /**
  * Service-local provider builder.
@@ -216,8 +214,9 @@ export const createServiceProvider = service.createProvider;
  * Service-local implementer factory.
  *
  * @remarks
- * `src/service/impl.ts` imports the root contract and calls this once. The
- * returned implementer already includes the service-wide baseline concerns
- * defined in this file.
+ * `src/service/impl.ts` imports the root contract and calls this once,
+ * supplying the required service-wide telemetry middleware. The returned
+ * implementer already includes SDK baseline telemetry and then auto-attaches
+ * the required service telemetry in canonical order.
  */
 export const createServiceImplementer = service.createImplementer;

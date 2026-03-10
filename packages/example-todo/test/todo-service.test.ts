@@ -152,4 +152,61 @@ describe("example-todo service", () => {
     expect(analytics.some((entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "error")).toBe(true);
     expect(analytics.some((entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list")).toBe(true);
   });
+
+  it("keeps analytics enrichment stable when the same invocation object is reused concurrently", async () => {
+    const analytics: AnalyticsEntry[] = [];
+    const client = createClient(createClientOptions({ analytics }));
+    const sharedInvocation = invocation("trace-shared").context.invocation;
+
+    await Promise.all([
+      client.tags.list({}, { context: { invocation: sharedInvocation } }),
+      client.tags.list({}, { context: { invocation: sharedInvocation } }),
+    ]);
+
+    const tagEvents = analytics.filter((entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list");
+    expect(tagEvents).toHaveLength(2);
+    for (const entry of tagEvents) {
+      expect(entry.payload.analytics_layer).toBe("module");
+      expect(entry.payload.analytics_module).toBe("tags");
+      expect(entry.payload.analytics_workspace_id).toBe("workspace-default");
+      expect(entry.payload.analytics_trace_id).toBe("trace-shared");
+    }
+  });
+
+  it("does not mutate or require extensible invocation objects for analytics", async () => {
+    const analytics: AnalyticsEntry[] = [];
+    const client = createClient(createClientOptions({ analytics }));
+
+    await expect(
+      client.tags.list({}, {
+        context: {
+          invocation: Object.freeze({ traceId: "trace-frozen" }),
+        },
+      }),
+    ).resolves.toEqual([]);
+
+    expect(analytics.some((entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list")).toBe(true);
+  });
+
+  it("fails open when analytics emission throws", async () => {
+    const logs: LogEntry[] = [];
+    const deps = createDeps({ logs });
+    deps.analytics = {
+      track() {
+        throw new Error("analytics down");
+      },
+    };
+
+    const client = createClient({
+      deps,
+      scope: { workspaceId: "workspace-default" },
+      config: {
+        readOnly: false,
+        limits: { maxAssignmentsPerTask: 2 },
+      },
+    });
+
+    await expect(client.tags.list({}, invocation("trace-analytics-failure"))).resolves.toEqual([]);
+    expect(logs.some((entry) => entry.level === "error" && entry.event === "orpc.analytics")).toBe(true);
+  });
 });

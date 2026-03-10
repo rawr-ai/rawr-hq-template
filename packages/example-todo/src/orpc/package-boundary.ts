@@ -66,7 +66,9 @@ export function defineDomainPackage<TRouter extends AnyRouter>(
           deps: boundary.deps,
           scope: boundary.scope,
           config: boundary.config,
-          invocation: clientContext.invocation,
+          invocation: {
+            ...(clientContext.invocation as object),
+          } as InferInvocation<TRouter>,
           provided: {},
         }) as InferRouterInitialContext<TRouter>,
       });

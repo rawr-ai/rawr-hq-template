@@ -2,20 +2,23 @@ import { implement } from "@orpc/server";
 import { Type } from "typebox";
 
 import { createClient } from "../src";
-import type { BaseMetadata } from "../src/orpc/base";
 import type { DbPool } from "../src/orpc/adapters/sql";
+import { createBaseProvider } from "../src/orpc/base-foundation";
+import { sqlProvider } from "../src/orpc/middleware/sql-provider";
 import {
   defineService,
+  schema,
   type ServiceOf,
   type ServiceTypesOf,
   type Sql,
-  schema,
 } from "../src/orpc-sdk";
-import { createBaseProvider } from "../src/orpc/base-foundation";
 import type { CreateClientOptions } from "../src/client";
-import { sqlProvider } from "../src/orpc/middleware/sql-provider";
 import { contract } from "../src/service/contract";
 import { createServiceMiddleware, createServiceProvider } from "../src/service/base";
+
+declare const dbPool: DbPool;
+declare const deps: CreateClientOptions["deps"];
+declare const sql: Sql;
 
 type DerivedTypingDeclaration = {
   initialContext: {
@@ -44,56 +47,16 @@ const derivedService = defineService<DerivedTypingDeclaration>({
   },
   baseline: {
     policy: { events: {} },
-    observability: {
-      attributes() {
-        return {};
-      },
-      logFields() {
-        return {};
-      },
-    },
-    analytics: {},
-  },
-});
-
-// @ts-expect-error initialContext must include deps, scope, and config lanes.
-defineService<{
-  initialContext: {
-    deps: {};
-    scope: {};
-  };
-  invocationContext: {};
-  metadata: {};
-}>({
-  metadataDefaults: {
-    idempotent: true,
-  },
-  baseline: {
-    policy: { events: {} },
-    observability: {
-      attributes() {
-        return {};
-      },
-      logFields() {
-        return {};
-      },
-    },
-    analytics: {},
   },
 });
 
 type DerivedTypingServiceFromDefinition = ServiceOf<typeof derivedService>;
-const derivedTypingDepsFromDefinition: DerivedTypingServiceFromDefinition["Deps"] = deps;
-void derivedTypingDepsFromDefinition;
-
-const derivedTypingMetadataFromDefinition: DerivedTypingServiceFromDefinition["Metadata"] = {
-  idempotent: true,
-  audit: "basic",
-};
-void derivedTypingMetadataFromDefinition;
 
 const derivedTypingDeps: DerivedTypingService["Deps"] = deps;
 void derivedTypingDeps;
+
+const derivedTypingDepsFromDefinition: DerivedTypingServiceFromDefinition["Deps"] = deps;
+void derivedTypingDepsFromDefinition;
 
 const derivedTypingMetadata: DerivedTypingService["Metadata"] = {
   idempotent: true,
@@ -119,12 +82,60 @@ const derivedTypingContext: DerivedTypingService["Context"] = {
 };
 void derivedTypingContext;
 
-const derivedTypingContextFromDefinition: DerivedTypingServiceFromDefinition["Context"] = derivedTypingContext;
-void derivedTypingContextFromDefinition;
+// @ts-expect-error initialContext must include deps, scope, and config lanes.
+defineService<{
+  initialContext: {
+    deps: {};
+    scope: {};
+  };
+  invocationContext: {};
+  metadata: {};
+}>({
+  metadataDefaults: {
+    idempotent: true,
+  },
+  baseline: {
+    policy: { events: {} },
+  },
+});
 
-declare const dbPool: DbPool;
-declare const deps: CreateClientOptions["deps"];
-declare const sql: Sql;
+defineService<{
+  initialContext: {
+    deps: CreateClientOptions["deps"];
+    scope: { workspaceId: string };
+    config: CreateClientOptions["config"];
+  };
+  invocationContext: { traceId: string };
+  metadata: {};
+}>({
+  metadataDefaults: {
+    idempotent: true,
+  },
+  baseline: {
+    policy: { events: {} },
+    // @ts-expect-error telemetry config no longer belongs in defineService baseline.
+    observability: {},
+  },
+});
+
+defineService<{
+  initialContext: {
+    deps: CreateClientOptions["deps"];
+    scope: { workspaceId: string };
+    config: CreateClientOptions["config"];
+  };
+  invocationContext: { traceId: string };
+  metadata: {};
+}>({
+  metadataDefaults: {
+    idempotent: true,
+  },
+  baseline: {
+    policy: { events: {} },
+    // @ts-expect-error telemetry config no longer belongs in defineService baseline.
+    analytics: {},
+  },
+});
 
 // Missing nested dependency fragment should fail at `.use(...)`.
 const missingSqlDeps = implement(contract).$context<{
@@ -173,7 +184,6 @@ const validBoundary: CreateClientOptions = {
 };
 void validBoundary;
 
-// Old top-level request-scoped fields should fail at the package boundary.
 const invalidBoundary: CreateClientOptions = {
   deps,
   scope: {
@@ -193,6 +203,14 @@ void invalidBoundary;
 const typedClient = createClient(validBoundary);
 void typedClient;
 
+// @ts-expect-error invocation context is required at the callsite.
+typedClient.tasks.get({ id: "00000000-0000-0000-0000-000000000001" });
+
+typedClient.tasks.get(
+  { id: "00000000-0000-0000-0000-000000000001" },
+  { context: { invocation: { traceId: "trace-123" } } },
+);
+
 const alternateInvocationService = defineService<{
   initialContext: {
     deps: CreateClientOptions["deps"];
@@ -207,15 +225,6 @@ const alternateInvocationService = defineService<{
   },
   baseline: {
     policy: { events: {} },
-    observability: {
-      attributes() {
-        return {};
-      },
-      logFields() {
-        return {};
-      },
-    },
-    analytics: {},
   },
 });
 void alternateInvocationService;
@@ -241,6 +250,35 @@ const localAnalytics = alternateInvocationService.createAnalyticsMiddleware({
   }),
 });
 void localAnalytics;
+
+alternateInvocationService.createRequiredObservabilityMiddleware({
+  attributes: ({ context }) => ({
+    workspace_id: context.scope.workspaceId,
+    request_id: context.invocation.requestId,
+    has_logger: typeof context.deps.logger.info === "function",
+  }),
+});
+
+alternateInvocationService.createRequiredAnalyticsMiddleware({
+  payload: ({ context }) => ({
+    requestId: context.invocation.requestId,
+    has_analytics: typeof context.deps.analytics.track === "function",
+  }),
+});
+
+alternateInvocationService.createRequiredObservabilityMiddleware({
+  attributes: ({ context }) => ({
+    // @ts-expect-error required service telemetry must not depend on provided context.
+    repo_id: context.provided.repo.id,
+  }),
+});
+
+alternateInvocationService.createRequiredAnalyticsMiddleware({
+  payload: ({ context }) => ({
+    // @ts-expect-error required service telemetry must not depend on provided context.
+    repoId: context.provided.repo.id,
+  }),
+});
 
 alternateInvocationService.createObservabilityMiddleware({
   // @ts-expect-error additive observability middleware must not redefine the baseline log shell.
@@ -276,15 +314,6 @@ const additiveService = defineService<{
   },
   baseline: {
     policy: { events: {} },
-    observability: {
-      attributes() {
-        return {};
-      },
-      logFields() {
-        return {};
-      },
-    },
-    analytics: {},
   },
 });
 
@@ -310,15 +339,31 @@ const additiveAnalytics = additiveService.createAnalyticsMiddleware({
   }),
 });
 
-const additiveModuleBranch = additiveService.createImplementer(additiveContract)
+const requiredTelemetry = {
+  observability: additiveService.createRequiredObservabilityMiddleware({}),
+  analytics: additiveService.createRequiredAnalyticsMiddleware({}),
+};
+
+const additiveModuleBranch = additiveService.createImplementer(additiveContract, requiredTelemetry)
   .use(additiveObservability)
   .use(additiveAnalytics);
 void additiveModuleBranch;
 
-const additiveProcedureBranch = additiveService.createImplementer(additiveContract).assign
+// @ts-expect-error required service telemetry must be supplied at implementer creation.
+additiveService.createImplementer(additiveContract);
+
+const additiveProcedureBranch = additiveService.createImplementer(additiveContract, requiredTelemetry).assign
   .use(additiveObservability)
   .use(additiveAnalytics);
 void additiveProcedureBranch;
+
+const invalidRequiredTelemetry = {
+  observability: additiveObservability,
+  analytics: additiveAnalytics,
+};
+
+// @ts-expect-error required telemetry slots must reject additive middleware.
+additiveService.createImplementer(additiveContract, invalidRequiredTelemetry);
 
 const baseProvider = createBaseProvider().middleware<{
   sql: Sql;
@@ -407,12 +452,5 @@ createServiceProvider<{
   });
 });
 
-// @ts-expect-error invocation context is required at the callsite.
-typedClient.tasks.get({ id: "00000000-0000-0000-0000-000000000001" });
-
-typedClient.tasks.get(
-  { id: "00000000-0000-0000-0000-000000000001" },
-  { context: { invocation: { traceId: "trace-123" } } },
-);
 void dbPool;
 void sql;

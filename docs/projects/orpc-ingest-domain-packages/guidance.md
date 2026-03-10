@@ -15,7 +15,7 @@ If you are an agent arriving to implement business logic fast:
 - **Then open the service router**: `src/service/router.ts` (module router composition + single final attach)
 - **Then live in a module**: `src/service/modules/<name>/{contract,setup,router}.ts`
 - **When you need “the one import for service authoring”**: `src/service/base.ts` (`Service` + `ocBase` + bound service builders)
-- **When you need to inspect or change service-wide baseline concerns**: `src/service/base.ts`
+- **When you need to inspect or change service-wide runtime telemetry**: `src/service/middleware/{observability,analytics}.ts`
 - **When you need “the one import for handler implementers”**: `src/service/impl.ts` (`impl.<module>` subtrees)
 - **When you need kit-level middleware** (analytics, providers, generic wrappers): `src/orpc/middleware/*`
 
@@ -36,16 +36,16 @@ Always-on slots:
 
 - `src/service/router.ts` is the always-on service router composition choke point (single final attach).
 - `src/service/base.ts` is the always-on single-file service-definition layer.
-- `src/service/base.ts` owns the grouped service declaration (`initialContext`, `invocationContext`, `metadata`), metadata defaults, baseline concern definitions, and the bound service authoring surfaces from `defineService(...)`.
+- `src/service/base.ts` owns the grouped service declaration (`initialContext`, `invocationContext`, `metadata`), metadata defaults, policy vocabulary, and the bound service authoring surfaces from `defineService(...)`.
 - `src/service/base.ts` should prefer one canonical `defineService<{ initialContext, invocationContext, metadata }>(...)` call plus `ServiceOf<typeof service>` rather than hand-writing `ServiceDeps`, `ServiceMetadata`, and `ServiceContext` separately.
-- `src/service/base.ts` should define service-specific deltas and bounded baseline hooks, not restate repetitive baseline event names or package identity that the SDK can derive automatically.
+- `src/service/base.ts` should remain declarative. Runtime observability and analytics behavior belongs in `src/service/middleware/*`, not in service-definition config blocks.
 - Module/procedure-local observability and analytics are additive middleware, authored with `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` and attached where they belong (`modules/*/setup.ts` for module-wide additions, `modules/*/router.ts` for procedure-local additions).
 - `src/orpc/base.ts` is the always-on domain-package baseline definition surface.
 - `src/orpc/factory/*` is the always-on internal helper layer for abstract oRPC builders.
 - `src/orpc/package-boundary.ts` owns the package boundary wiring used by `src/client.ts`.
 - `src/orpc/middleware/*` is the always-on slot for kit-level middleware definitions.
 - `src/service/impl.ts` is the always-on oRPC composition surface (implement root contract + attach middleware).
-- `src/service/impl.ts` should compose package-wide providers/guards and any extra non-baseline service middleware; it should not be the default home for baseline observability/analytics wiring that already comes from `createServiceImplementer(...)`.
+- `src/service/impl.ts` should supply required service-wide observability/analytics to `createServiceImplementer(...)`, then compose package-wide providers/guards and any extra service middleware after that.
 
 ## Scaffold Determinism Rule
 
@@ -150,6 +150,7 @@ Recommended pattern:
   - `metadata` for static procedure metadata
 - define base metadata defaults once in `src/service/base.ts` as `metadataDefaults`,
 - bind service-local contract/middleware/implementer authoring once in `src/service/base.ts` via `defineService(...)`,
+- keep runtime telemetry out of `src/service/base.ts`; required service telemetry belongs in `src/service/middleware/*`,
 - keep module contracts explicit by setting `idempotent` on every procedure,
 - read metadata in middleware via `procedure["~orpc"].meta` (oRPC runtime metadata surface).
 
@@ -168,7 +169,7 @@ Not required in this phase:
 Use context/middleware at the level where each concern actually belongs:
 
 - Initial context carries explicit semantic lanes at the kit boundary.
-- `deps` should extend the kit baseline `BaseDeps` (mandatory `logger`), exported via the kit seam (`src/orpc-sdk.ts`).
+- `deps` should extend the kit baseline `BaseDeps` (mandatory `logger` and `analytics`), exported via the kit seam (`src/orpc-sdk.ts`).
 - `scope` should hold stable business/client-instance scope bound at `createClient(...)` time.
 - `config` should hold stable package behavior/configuration bound at `createClient(...)` time.
 - `invocation` should hold required per-call input passed through native oRPC client context.
@@ -234,11 +235,12 @@ The semantic line is simple:
 Author middleware against the mirrored required-context shape directly:
 
 - bind service-local authoring surfaces once in `src/service/base.ts` via `defineService(...)`
-- use `createServiceImplementer(contract)` in `src/service/impl.ts` so service context and baseline implementer options stay bound in one place
+- use `createServiceImplementer(contract, { observability, analytics })` in `src/service/impl.ts` so required service telemetry is explicit and enforced at the one package-wide assembly seam
 - shared/framework non-providers via `createBaseMiddleware<{ ...lane fragments... }>()`
 - shared/framework providers via `createBaseProvider<{ ...lane fragments... }>()`
 - service non-providers via `createServiceMiddleware<{ ...lane fragments... }>()`
 - service-local providers via `createServiceProvider<{ ...lane fragments... }>()`
+- required service-wide telemetry via `createRequiredServiceObservabilityMiddleware(...)` / `createRequiredServiceAnalyticsMiddleware(...)`
 - if a middleware has no required context, call the helper with no type argument
 
 Declare only the minimal lane fragments a middleware needs. Examples:
