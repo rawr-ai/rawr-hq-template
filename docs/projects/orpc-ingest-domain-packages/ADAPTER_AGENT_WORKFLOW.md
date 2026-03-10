@@ -28,6 +28,8 @@ preserve unless the architecture still justifies them after classification.
   and for what it implies about future package creation and maintenance.
 - Use the binary capability model from `DECISIONS.md` and `ADAPTER_POSTURE.md`.
   Do not invent in-between capabilities while exploring.
+- Plugin-specific dependency configuration is allowed, but agents must model it
+  as explicit typed code/config at the plugin boundary, not as a hidden DSL.
 
 ## Workflow
 
