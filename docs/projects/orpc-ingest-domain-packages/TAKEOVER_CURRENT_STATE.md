@@ -112,7 +112,7 @@ It is not a historical session recap. It is meant to answer: where are we now, w
 - `defineService(...)` is the current high-level service-binding seam.
 - `packages/example-todo/src/orpc/package-boundary.ts` isolates the in-process boundary helper (`defineDomainPackage`, `InferDeps`).
 - `packages/example-todo/src/orpc/schema.ts` is generic TypeBox-to-oRPC glue.
-- `packages/example-todo/src/orpc/adapters/{sql,feedback}.ts` define adapter contracts that are generic in shape but still local to the example package.
+- `packages/example-todo/src/orpc/ports/{db,feedback}.ts` define package-facing ports that are generic in shape but still local to the example package.
 - `packages/hq-sdk/src/**` currently contains only a narrower subset:
   - `deps.ts`
   - `orpc/domain-package.ts`
@@ -137,7 +137,7 @@ It is not a historical session recap. It is meant to answer: where are we now, w
   - service-bound authoring helpers
   - package-level observability policy
   - stronger implementer-binding surfaces
-  - example-local adapter contracts
+  - example-local ports
 - The current structure appears compatible with later expansion to API-package support because the generic builder layer is now distinct from service-local composition, but the shared SDK surface is not yet carrying that richer responsibility.
 
 ## How Representative the Example Is Right Now

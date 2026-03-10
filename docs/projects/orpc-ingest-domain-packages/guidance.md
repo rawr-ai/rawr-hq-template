@@ -240,60 +240,67 @@ The semantic line is simple:
 - if it only observes, guards, or records, it is not a provider
 - raw inline oRPC middleware remains an escape hatch; prefer the provider/non-provider builders unless you intentionally need to step outside the enforced model
 
-## Adapter Classification Guidance
+## Ports & Adapters Guidance
 
 Use this section to classify integrations. Hard allow/forbid rules live in
 `DECISIONS.md`; this section explains how to think.
 
-### First distinction: do not overload the word "adapter"
+### First distinction: ports are not adapters
 
-In the wider RAWR repo, a plugin may be described as a runtime adapter surface.
-That is a **different meaning** from a host capability adapter like SQL,
-analytics, or telemetry wiring.
+A **port** defines the capability shape the package can consume.
+A **host adapter** is the concrete implementation that satisfies that port.
+
+In the wider RAWR repo, a plugin may also be described as a runtime adapter
+surface. That is a **different meaning** from a host capability adapter like
+DB, analytics, or telemetry wiring.
 
 For this package architecture:
 
-- plugins/packages consume host capability ports
-- runtime host composition owns concrete capability wiring
+- `src/orpc/ports/*` defines package-facing ports
+- `src/orpc/host-adapters/*` contains host-owned concrete adapters
+- plugins/packages consume ports
+- runtime host composition owns concrete adapter wiring
 
 Do not treat "plugin runtime adapter" as proof that plugins should own concrete
-database, analytics, or telemetry clients.
+DB, analytics, or telemetry clients.
 
 ### Classification order
 
 For a new integration, classify it in this order:
 
 1. Is it a **host-side concrete integration**?
-2. If not, is a reusable contract actually needed?
-3. If a reusable contract is needed, is it:
+2. If not, is a reusable port actually needed?
+3. If a reusable port is needed, is it:
    - package-specific, or
    - generically reusable across packages?
 4. If it is generically reusable, centralize it.
 5. If it is package-specific and truly part of what the package ships, it may
-   belong in `src/orpc/adapters/*`.
+   belong in `src/orpc/ports/*`.
 
 ### Three-layer dependency model
 
 When a plugin/package needs infrastructure, use this mental model:
 
-1. **Declared dependency contract layer (package-local packaged SDK)**
+1. **Declared capability port layer (package-local packaged SDK)**
    - package declares the shape of the capability it needs
-   - this is where typed contracts/ports live when they truly belong to the
+   - typed ports live in `src/orpc/ports/*` when they truly belong to the
      packaged boundary
 2. **Plugin boundary configuration layer**
    - plugin declares what capability/configuration it needs for its own runtime
      boundary
    - plugin still does not instantiate concrete clients here
-3. **Host composition layer**
+3. **Host composition + adapter layer**
    - host instantiates concrete clients/objects
+   - host adapters in `src/orpc/host-adapters/*` satisfy ports or provide
+     framework-level concrete integrations
    - host injects the resulting dependency bundle into the plugin/package
      boundary
 
 This is the important split:
 
-- package defines **shape**
+- package defines **port shape**
 - plugin defines **need/config**
-- host performs **instantiation/wiring**
+- host performs **instantiation/wiring** via concrete adapters
 
 ### Plugin-specific configuration is allowed, but not as a hidden DSL
 
@@ -346,12 +353,13 @@ does **not** mean every plugin must receive one identical singleton.
 
 ### OpenTelemetry guidance
 
-OpenTelemetry is not part of the adapter-contract model by default.
+OpenTelemetry is not part of the package-facing port model by default.
 
 Treat it as:
 
 - framework/internal integration
 - configured by the runtime host once per deployment boundary
+- implemented through `src/orpc/host-adapters/telemetry/opentelemetry.ts`
 - consumed by package middleware through the framework seam
 
 If a plugin later runs as its own standalone service, that standalone service is
@@ -669,7 +677,7 @@ When a construct is shared by multiple modules, choose the directory based on se
 Do **not** default to a `service/adapters/` layer under the current model. If a
 shared infrastructure/helper concern appears, stop and classify it first:
 
-- packaged SDK contract
+- packaged SDK port
 - provider middleware
 - framework/internal integration
 - host-side concrete integration

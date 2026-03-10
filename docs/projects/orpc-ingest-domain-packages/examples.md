@@ -230,8 +230,6 @@ packages/example-golden/src/
     │   ├── analytics.ts
     │   ├── observability.ts
     │   └── read-only-mode.ts
-    ├── adapters/
-    │   └── README.md
     ├── shared/
     │   ├── README.md
     │   ├── errors.ts

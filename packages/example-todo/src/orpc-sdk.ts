@@ -26,8 +26,8 @@ export type {
   ServiceAnalyticsMiddlewareInput,
   ServiceObservabilityMiddlewareInput,
 } from "./orpc/middleware";
-export type { DbPool, Sql } from "./orpc/adapters/sql";
-export type { FeedbackClient } from "./orpc/adapters/feedback";
+export type { DbPool, Sql } from "./orpc/ports/db";
+export type { FeedbackClient } from "./orpc/ports/feedback";
 export {
   defineService,
 } from "./orpc/factory/service";

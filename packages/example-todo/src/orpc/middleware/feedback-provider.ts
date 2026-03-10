@@ -6,7 +6,7 @@
  * `provided.feedbackSession` execution context.
  */
 
-import type { FeedbackClient } from "../adapters/feedback";
+import type { FeedbackClient } from "../ports/feedback";
 import { createBaseProvider } from "../base-foundation";
 
 /**

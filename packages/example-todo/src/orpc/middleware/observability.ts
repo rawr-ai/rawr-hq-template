@@ -10,8 +10,8 @@
  * This is intentionally not modeled like analytics. Service-wide observability
  * needs real lifecycle wrapper behavior, not just a late payload contributor.
  */
-import type { Attributes, Span } from "@opentelemetry/api";
-import { SpanStatusCode, trace } from "@opentelemetry/api";
+import type { Attributes, Span } from "../host-adapters/telemetry/opentelemetry";
+import { SpanStatusCode, trace } from "../host-adapters/telemetry/opentelemetry";
 import type { MiddlewareResult } from "@orpc/server";
 
 import type { BaseMetadata, Logger } from "../base";

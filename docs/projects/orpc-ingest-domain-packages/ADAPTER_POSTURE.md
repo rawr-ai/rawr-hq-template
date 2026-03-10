@@ -7,7 +7,7 @@ with more real integrations like PostHog and Drizzle.
 
 Do not collapse these into one category:
 
-- packaged SDK contracts
+- packaged SDK ports
 - service/domain package code
 - host-side concrete integrations
 
@@ -15,25 +15,33 @@ They play different roles.
 
 ## Current Working Model
 
-### `src/orpc/adapters/*` is for packaged SDK contracts
+### `src/orpc/ports/*` is for packaged SDK ports
 
-If something lives under `packages/example-todo/src/orpc/adapters/*`, it means:
+If something lives under `packages/example-todo/src/orpc/ports/*`, it means:
 
 - it is part of the package-local proto SDK surface
-- it is a reusable contract the package may export
+- it is a reusable port the package may export
 - it is not just local service scaffolding
 
 This is a stronger meaning than "some adapter-like thing we happen to need
 internally."
 
-It also does **not** mean every package should invent its own reusable
-contracts freely. If a contract is generically reusable across packages, that
+It also does **not** mean every package should invent its own reusable ports
+freely. If a port is generically reusable across packages, that
 creates pressure to define it centrally rather than duplicating it in each
 package-local proto SDK.
 
 This directory is therefore **not** the generic home for "things a package
-needs from infrastructure." It is only for contracts that are truly part of the
+needs from infrastructure." It is only for ports that are truly part of the
 package-local packaged SDK.
+
+### `src/orpc/host-adapters/*` is for host-owned concrete adapters
+
+If something lives under `packages/example-todo/src/orpc/host-adapters/*`, it means:
+
+- it is a concrete host-side adapter or framework binding
+- it is not a package-facing port
+- it exists to satisfy ports or provide host/framework integrations explicitly
 
 ### `src/service/*` stays pure by default
 
@@ -86,7 +94,7 @@ So the decision point for a new integration is **not**:
 It is:
 
 - "is this only a host-side concrete integration?"
-- or "is this a reusable contract the packaged SDK should expose?"
+- or "is this a reusable port the packaged SDK should expose?"
 
 If a reusable contract is needed, ask one more question immediately:
 
@@ -108,8 +116,9 @@ Observability remains framework/internal by default.
 For now:
 
 - OpenTelemetry usage in the SDK is a framework/internal integration detail
-- it is not automatically part of the adapter-contract model
+- it is not automatically part of the package-facing port model
 - it is configured by the runtime host once per deployment boundary
+- it currently lives under `src/orpc/host-adapters/telemetry/`
 
 That means:
 
@@ -134,7 +143,7 @@ really needs an explicit host-facing contract.
 
 Before implementing a new provider/integration, classify it first:
 
-1. packaged SDK contract
+1. packaged SDK port
 2. provider middleware
 3. framework/internal integration
 4. host-side concrete integration
@@ -146,12 +155,12 @@ PostHog?" or "can we wire in Drizzle?"
 After that first classification, apply this second decision rule:
 
 1. Is this just a host-side concrete integration?
-2. If not, is a reusable contract actually needed?
-3. If a reusable contract is needed, is it package-specific or generically reusable?
+2. If not, is a reusable port actually needed?
+3. If a reusable port is needed, is it package-specific or generically reusable?
 
 If it is generically reusable, centralize it.
 If it is package-specific and truly part of the package boundary, the
-package-local proto SDK may own it.
+package-local proto SDK may own it under `src/orpc/ports/*`.
 
 ## What This Means For The Next Step
 

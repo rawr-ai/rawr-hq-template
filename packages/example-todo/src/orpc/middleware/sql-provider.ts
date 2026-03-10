@@ -9,7 +9,7 @@
  *   as `repo` from `context.provided.sql`
  */
 
-import type { DbPool, Sql } from "../adapters/sql";
+import type { DbPool, Sql } from "../ports/db";
 import { createBaseProvider } from "../base-foundation";
 
 /**
