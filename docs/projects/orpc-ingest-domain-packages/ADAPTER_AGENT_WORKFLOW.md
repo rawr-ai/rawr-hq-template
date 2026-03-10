@@ -26,6 +26,8 @@ preserve unless the architecture still justifies them after classification.
 - They should be easy to scaffold and spin up repeatedly.
 - That means every integration should be judged both for the immediate package
   and for what it implies about future package creation and maintenance.
+- Use the binary capability model from `DECISIONS.md` and `ADAPTER_POSTURE.md`.
+  Do not invent in-between capabilities while exploring.
 
 ## Workflow
 
@@ -49,6 +51,12 @@ Classify each part of the integration into one or more of these buckets:
 5. service-local runtime behavior
 
 Do not skip this step.
+
+Also record whether the integration is:
+
+- already supported directly by the current capability model
+- exposing a gap in the model
+- or proving that a currently unsupported capability must be promoted
 
 ### 3. Track how the current shape changes
 
@@ -104,3 +112,6 @@ architecture to move.
   them if they are truly generic.
 - Do not treat observability as part of the adapter model by default; only
   revisit that if the integration clearly forces it.
+- Do not assume plugin ownership of a runtime surface means plugin ownership of
+  concrete capability adapters. In this architecture, runtime host composition
+  owns concrete adapter wiring; plugins/packages consume ports.

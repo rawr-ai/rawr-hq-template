@@ -7,6 +7,9 @@
 - Hard architectural locks belong in `DECISIONS.md`.
 - Example progression (invariants + axes) belongs in `examples.md`.
 
+For hard adapter-ownership rules, see `DECISIONS.md` Decision #8 and
+`ADAPTER_POSTURE.md`.
+
 ## Agent Click Path (Recommended)
 
 If you are an agent arriving to implement business logic fast:
@@ -236,6 +239,51 @@ The semantic line is simple:
 - if middleware creates new downstream context, it is a provider
 - if it only observes, guards, or records, it is not a provider
 - raw inline oRPC middleware remains an escape hatch; prefer the provider/non-provider builders unless you intentionally need to step outside the enforced model
+
+## Adapter Classification Guidance
+
+Use this section to classify integrations. Hard allow/forbid rules live in
+`DECISIONS.md`; this section explains how to think.
+
+### First distinction: do not overload the word "adapter"
+
+In the wider RAWR repo, a plugin may be described as a runtime adapter surface.
+That is a **different meaning** from a host capability adapter like SQL,
+analytics, or telemetry wiring.
+
+For this package architecture:
+
+- plugins/packages consume host capability ports
+- runtime host composition owns concrete capability wiring
+
+Do not treat "plugin runtime adapter" as proof that plugins should own concrete
+database, analytics, or telemetry clients.
+
+### Classification order
+
+For a new integration, classify it in this order:
+
+1. Is it a **host-side concrete integration**?
+2. If not, is a reusable contract actually needed?
+3. If a reusable contract is needed, is it:
+   - package-specific, or
+   - generically reusable across packages?
+4. If it is generically reusable, centralize it.
+5. If it is package-specific and truly part of what the package ships, it may
+   belong in `src/orpc/adapters/*`.
+
+### OpenTelemetry guidance
+
+OpenTelemetry is not part of the adapter-contract model by default.
+
+Treat it as:
+
+- framework/internal integration
+- configured by the runtime host once per deployment boundary
+- consumed by package middleware through the framework seam
+
+If a plugin later runs as its own standalone service, that standalone service is
+simply a new runtime host. The classification does not change.
 
 ### Middleware Authoring Pattern
 
