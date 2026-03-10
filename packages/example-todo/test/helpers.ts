@@ -1,4 +1,4 @@
-import type { DbPool } from "../src/orpc/adapters/sql";
+import type { DbPool } from "../src/orpc/ports/db";
 import type { CreateClientOptions } from "../src/client";
 import type { Service } from "../src/service/base";
 import type { Assignment } from "../src/service/modules/assignments/schemas";

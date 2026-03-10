@@ -1,4 +1,4 @@
-# Adapter Integration Workflow
+# Ports & Adapters Integration Workflow
 
 This note frames how agents should approach integration stress-tests like
 PostHog and Drizzle.
@@ -46,7 +46,7 @@ Before proposing code, restate:
 
 Classify each part of the integration into one or more of these buckets:
 
-1. packaged SDK contract
+1. packaged SDK port
 2. provider middleware
 3. framework/internal integration
 4. host-side concrete integration
@@ -109,9 +109,9 @@ architecture to move.
 ## Important Guardrails
 
 - Do not assume `service/adapters/` is a valid destination under the current model.
-- Do not assume every needed contract should be package-local.
-- Do not assume generic reusable contracts belong in each package; centralize
-  them if they are truly generic.
+- Do not assume every needed port should be package-local.
+- Do not assume generic reusable ports belong in each package; centralize them
+  if they are truly generic.
 - Do not treat observability as part of the adapter model by default; only
   revisit that if the integration clearly forces it.
 - Do not assume plugin ownership of a runtime surface means plugin ownership of

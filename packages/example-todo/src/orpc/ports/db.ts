@@ -1,9 +1,12 @@
 /**
- * @fileoverview Canonical SQL execution contracts used by the example package.
+ * @fileoverview Canonical DB execution ports used by the example package.
  *
  * @remarks
- * `DbPool` is the host-provided prerequisite. `Sql` is the execution capability
+ * `DbPool` is the host-provided prerequisite port. `Sql` is the execution port
  * exposed to handlers after the SQL provider middleware runs.
+ *
+ * Concrete host adapters such as Drizzle-backed implementations must satisfy
+ * these ports.
  */
 
 export interface Sql {

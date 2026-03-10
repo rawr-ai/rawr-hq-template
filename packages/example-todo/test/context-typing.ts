@@ -2,7 +2,7 @@ import { implement } from "@orpc/server";
 import { Type } from "typebox";
 
 import { createClient } from "../src";
-import type { DbPool } from "../src/orpc/adapters/sql";
+import type { DbPool } from "../src/orpc/ports/db";
 import { createBaseProvider } from "../src/orpc/base-foundation";
 import { sqlProvider } from "../src/orpc/middleware/sql-provider";
 import {

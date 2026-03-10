@@ -166,7 +166,7 @@ It keeps runtime semantics legible:
 ## Decision #8 (2026-03-10)
 
 ### Question
-Where do concrete adapters and adapter contracts belong as we integrate real
+Where do concrete adapters and ports belong as we integrate real
 providers like PostHog and Drizzle?
 
 ### Decision
@@ -175,9 +175,11 @@ Use this hard boundary model:
 - **Concrete adapters are host-owned.**
 - **Package-local concrete adapters are not a supported capability.**
 - `src/service/*` stays pure and does not own concrete technology integrations.
-- `src/orpc/adapters/*` is only for packaged SDK contracts that are truly part
-  of the package boundary.
-- If a contract is generically reusable across packages, it should be
+- `src/orpc/ports/*` is only for packaged SDK ports that are truly part of the
+  package boundary.
+- `src/orpc/host-adapters/*` is the staging home for host-owned concrete
+  adapters inside the proto SDK.
+- If a port is generically reusable across packages, it should be
   centralized rather than duplicated in each package-local proto SDK.
 - Plugin-specific dependency configuration is allowed, but it must be authored
   as explicit typed code at the plugin boundary, not as a hidden DSL.
@@ -195,7 +197,7 @@ Leaving package-local concrete adapters as a fuzzy maybe-capability would create
 architecture drift and unclear ownership. The correct ownership line is:
 
 - runtime host owns concrete wiring
-- plugins and packages consume injected ports/contracts
+- plugins and packages consume injected ports
 
 ### Implication
 If a future API plugin is broken out into its own standalone service, that
