@@ -3,6 +3,7 @@ import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-ho
 import { describe, expect, it } from "vitest";
 import { createRouterClient, safe } from "@orpc/server";
 import { Type } from "typebox";
+
 import { createClient } from "../src";
 import {
   createClientOptions,
@@ -11,13 +12,8 @@ import {
   type LogEntry,
 } from "./helpers";
 import {
-  defineServiceAnalyticsProfile,
-  defineServiceObservabilityProfile,
   defineService,
   schema,
-  type BasePolicyProfile,
-  type ServiceDeclaration,
-  type ServiceTypesOf,
 } from "../src/orpc-sdk";
 
 class RecordingSpan implements Span {
@@ -94,28 +90,6 @@ async function withRecordingSpan<T>(callback: (span: RecordingSpan) => Promise<T
   finally {
     manager.disable();
   }
-}
-
-function createTestBaseline<TDeclaration extends ServiceDeclaration>() {
-  const analytics = defineServiceAnalyticsProfile<ServiceTypesOf<TDeclaration>>({});
-  const observability = defineServiceObservabilityProfile<
-    ServiceTypesOf<TDeclaration>,
-    BasePolicyProfile
-  >({
-    attributes() {
-      return {};
-    },
-    logFields() {
-      return {};
-    },
-  });
-  const policy: BasePolicyProfile = { events: {} };
-
-  return {
-    analytics,
-    observability,
-    policy,
-  };
 }
 
 describe("example-todo observability", () => {
@@ -255,7 +229,9 @@ describe("example-todo observability", () => {
         idempotent: true,
         domain: "todo",
       },
-      baseline: createTestBaseline<TestService>(),
+      baseline: {
+        policy: { events: {} },
+      },
     });
 
     const contract = {
@@ -266,6 +242,10 @@ describe("example-todo observability", () => {
         }, { additionalProperties: false }))),
     };
 
+    const requiredTelemetry = {
+      observability: service.createRequiredObservabilityMiddleware({}),
+      analytics: service.createRequiredAnalyticsMiddleware({}),
+    };
     const localObservability = service.createObservabilityMiddleware({
       attributes: ({ context }) => ({
         module: "ping",
@@ -286,7 +266,7 @@ describe("example-todo observability", () => {
       }),
     });
 
-    const os = service.createImplementer(contract)
+    const os = service.createImplementer(contract, requiredTelemetry)
       .use(localObservability)
       .use(localAnalytics);
     const ping = os.ping.handler(async () => ({ ok: true }));
@@ -295,14 +275,14 @@ describe("example-todo observability", () => {
       context: {
         deps: {
           logger: {
-            info(event, payload) {
+            info(event: string, payload?: Record<string, unknown>) {
               logs.push({
                 level: "info",
                 event,
                 payload: payload ?? {},
               });
             },
-            error(event, payload) {
+            error(event: string, payload?: Record<string, unknown>) {
               logs.push({
                 level: "error",
                 event,
@@ -311,7 +291,7 @@ describe("example-todo observability", () => {
             },
           },
           analytics: {
-            track(event, payload) {
+            track(event: string, payload?: Record<string, unknown>) {
               analytics.push({
                 event,
                 payload: payload ?? {},

@@ -19,14 +19,12 @@ export type {
 export type {
   BasePolicyProfile,
   ObservabilityErrorDetails,
+  RequiredServiceAnalyticsMiddleware,
+  RequiredServiceAnalyticsMiddlewareInput,
+  RequiredServiceObservabilityMiddleware,
+  RequiredServiceObservabilityMiddlewareInput,
   ServiceAnalyticsMiddlewareInput,
-  ServiceAnalyticsProfile,
   ServiceObservabilityMiddlewareInput,
-  ServiceObservabilityProfile,
-} from "./orpc/middleware";
-export {
-  defineServiceAnalyticsProfile,
-  defineServiceObservabilityProfile,
 } from "./orpc/middleware";
 export type { DbPool, Sql } from "./orpc/adapters/sql";
 export type { FeedbackClient } from "./orpc/adapters/feedback";

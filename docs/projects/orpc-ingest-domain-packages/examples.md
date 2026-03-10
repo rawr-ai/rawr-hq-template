@@ -31,14 +31,14 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - `src/orpc/middleware/` is always present for kit-level cross-cutting concerns (analytics, providers, generic wrappers).
 - Host/runtime tracing bootstrap is required above the package and should be wired once before app/route composition.
 - `src/service/middleware/` is available for domain-wide cross-cutting concerns; ordering is authored in `src/service/impl.ts`.
-- Domain package deps include shared base deps (`BaseDeps`) so logger capability is always available.
-- `context.deps` remains the single host-provided dependency bag; middleware/module setup may add top-level execution keys, but we do not split runtime dependencies into multiple bags.
+- Domain package deps include shared base deps (`BaseDeps`) so logger and analytics capabilities are always available.
+- `context.deps` remains the single host-provided dependency bag; middleware/module setup may add `context.provided.*` execution values, but we do not split runtime dependencies into multiple bags.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
-- `src/service/base.ts` binds the service-local authoring surfaces once (`Service`, `ocBase`, additive middleware builders, `createServiceImplementer`) and assembles the service-wide baseline concerns inline.
+- `src/service/base.ts` binds the service-local authoring surfaces once (`Service`, `ocBase`, additive builders, required telemetry builders, `createServiceImplementer`) and stays declarative.
 - `src/service/base.ts` should prefer one canonical `defineService<{ initialContext, invocationContext, metadata }>(...)` call plus `ServiceOf<typeof service>` over hand-writing a separate `Service = ServiceTypesOf<...>` projection.
 - `initialContext` should group the construction-time `deps` / `scope` / `config` lanes; `invocationContext` should describe per-call invocation input; `metadata` remains static procedure metadata.
-- `src/service/base.ts` should contribute service-specific baseline deltas, while the SDK derives baseline naming like `todo.procedure.*` and `rawr.todo.*` from service metadata.
-- `createServiceImplementer(...)` auto-attaches the service-wide baseline concerns from `src/service/base.ts`; module/procedure-local observability and analytics stay additive and attach via the pre-bound `createServiceObservabilityMiddleware(...)` and `createServiceAnalyticsMiddleware(...)` builders.
+- `src/service/base.ts` should contribute service metadata defaults and policy vocabulary; runtime observability/analytics behavior belongs in `src/service/middleware/*`.
+- `createServiceImplementer(contract, { observability, analytics })` enforces required service-wide telemetry at the package-wide assembly seam; module/procedure-local observability and analytics stay additive and attach via the pre-bound `createServiceObservabilityMiddleware(...)` and `createServiceAnalyticsMiddleware(...)` builders.
 
 ## Real axes that should change
 
@@ -96,13 +96,16 @@ packages/example-minimal/src/
 │   │   ├── service.ts
 │   │   └── index.ts
 │   └── middleware/
-│       └── analytics.ts
+│       ├── analytics.ts
+│       └── observability.ts
 └── service/
     ├── contract.ts
     ├── base.ts
     ├── impl.ts
     ├── router.ts
     ├── middleware/
+    │   ├── analytics.ts
+    │   ├── observability.ts
     │   └── read-only-mode.ts
     ├── adapters/
     │   └── README.md
@@ -143,6 +146,7 @@ packages/example-todo/src/
 │   │   └── index.ts
 │   └── middleware/
 │       ├── analytics.ts
+│       ├── observability.ts
 │       ├── sql-provider.ts
 │       └── feedback-provider.ts
 └── service/
@@ -151,6 +155,8 @@ packages/example-todo/src/
     ├── impl.ts
     ├── router.ts
     ├── middleware/
+    │   ├── analytics.ts
+    │   ├── observability.ts
     │   └── read-only-mode.ts
     ├── adapters/
     │   └── README.md
@@ -185,7 +191,7 @@ Example change at this scale (medium): add a new module.
 - Wire it into `service/contract.ts` (import + add to exported contract object)
 - Wire it into `service/router.ts` (import module router + add to exported router object)
 - No changes needed outside `service/contract.ts` + `service/router.ts` unless you’re changing middleware ordering (`src/service/impl.ts`)
-- If the change is only module/procedure-local observability or analytics, prefer `service/modules/<name>/setup.ts` or `service/modules/<name>/router.ts`; do not re-attach the default service-wide baseline in `src/service/impl.ts`.
+- If the change is only module/procedure-local observability or analytics, prefer `service/modules/<name>/setup.ts` or `service/modules/<name>/router.ts`; do not use additive middleware as a substitute for the required service-wide telemetry in `src/service/impl.ts`.
 
 ### 3) Golden Path
 
@@ -206,6 +212,7 @@ packages/example-golden/src/
 │   │   └── index.ts
 │   └── middleware/
 │       ├── analytics.ts
+│       ├── observability.ts
 │       ├── sql-provider.ts
 │       └── feedback-provider.ts
 └── service/
@@ -214,6 +221,8 @@ packages/example-golden/src/
     ├── impl.ts
     ├── router.ts
     ├── middleware/
+    │   ├── analytics.ts
+    │   ├── observability.ts
     │   └── read-only-mode.ts
     ├── adapters/
     │   └── README.md

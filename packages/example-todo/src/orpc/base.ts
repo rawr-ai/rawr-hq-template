@@ -10,6 +10,7 @@ import { isContractProcedure } from "@orpc/contract";
 import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
+import { createBaseAnalyticsMiddleware } from "./middleware/analytics";
 import { createBaseObservabilityMiddleware } from "./middleware/observability";
 import {
   createBareProcedureImplementer,
@@ -150,8 +151,8 @@ type AnyContractRouterObject = {
 };
 
 /**
- * Create the central domain-package implementer tree with guaranteed baseline
- * observability middleware.
+ * Create the central domain-package implementer tree with guaranteed framework
+ * baseline middleware.
  */
 export function createBaseProcedureImplementer<
  const TContract extends AnyContractProcedure,
@@ -160,12 +161,13 @@ export function createBaseProcedureImplementer<
   contract: TContract,
 ) {
   return createBareProcedureImplementer<TContract, TContext>(contract)
-    .use(createBaseObservabilityMiddleware());
+    .use(createBaseObservabilityMiddleware())
+    .use(createBaseAnalyticsMiddleware());
 }
 
 /**
  * Create the central domain-package router implementer tree with guaranteed
- * baseline observability middleware.
+ * framework baseline middleware.
  */
 export function createBaseRouterImplementer<
  const TContract extends AnyContractRouterObject,
@@ -174,7 +176,8 @@ export function createBaseRouterImplementer<
   contract: TContract,
 ) {
   return createBareRouterImplementer<TContract, TContext>(contract)
-    .use(createBaseObservabilityMiddleware());
+    .use(createBaseObservabilityMiddleware())
+    .use(createBaseAnalyticsMiddleware());
 }
 
 export function createBaseImplementer<

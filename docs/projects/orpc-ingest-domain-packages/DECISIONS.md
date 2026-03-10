@@ -36,7 +36,7 @@ In addition, each domain package has one oRPC-native composition file (central i
 Router responsibilities are fixed:
 
 - `src/service/contract.ts`: root contract composition (contracts bubble up here)
-- `src/service/impl.ts`: implement the root contract once and attach only extra service-wide providers/guards; the baseline service-wide observability/analytics from `src/service/base.ts` are auto-attached by `createServiceImplementer(...)`
+- `src/service/impl.ts`: implement the root contract once, supply required service-wide observability/analytics to `createServiceImplementer(...)`, and then attach only extra service-wide providers/guards
 - `src/service/router.ts`: router composition only (mount module routers into one shape; single final attach)
 - `src/router.ts`: **stable public alias** for `@rawr/<pkg>/router` (re-export only)
 
@@ -132,7 +132,7 @@ This keeps the “agent drill-down” model fractal without introducing implicit
 How should runtime context be divided between explicit dependencies and middleware-provided values?
 
 ### Decision
-Keep a single dedicated dependency bag at `context.deps` for host-provided, stable dependencies, and standardize the rest of the package boundary around semantic lanes: `scope`, `config`, and `invocation`. Keep middleware-provided values as top-level execution-context keys.
+Keep a single dedicated dependency bag at `context.deps` for host-provided, stable dependencies, and standardize the rest of the package boundary around semantic lanes: `scope`, `config`, and `invocation`. Keep middleware-provided values under `context.provided.*`.
 
 Concretely:
 
@@ -141,6 +141,7 @@ Concretely:
 - stable business/client-instance scope lives under `context.scope`,
 - stable package behavior/configuration lives under `context.config`,
 - required per-call input lives under `context.invocation` and should arrive through native oRPC client context rather than host-only middleware attachment,
+- middleware/module setup writes downstream execution values under `context.provided.*`,
 - do **not** introduce a generic runtime `metadata` bag by default.
 
 ### Why
@@ -152,4 +153,4 @@ It keeps runtime semantics legible:
 - `context.scope.*` means “stable business/client-instance scope”,
 - `context.config.*` means “stable package behavior/configuration”,
 - `context.invocation.*` means “per-call input enforced by the package boundary”,
-- top-level `context.*` outside those lanes means “execution value attached during the pipeline”.
+- `context.provided.*` means “execution value attached during the pipeline”.

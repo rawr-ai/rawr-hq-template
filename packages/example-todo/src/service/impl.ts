@@ -5,9 +5,16 @@
  * This is the single package-wide middleware composition point.
  * Import the root contract here, derive the central implementer once, and let
  * modules consume `impl.<module>` subtrees from there.
+ *
+ * @agents
+ * This file is the only package-wide runtime assembly seam. Required service
+ * telemetry is supplied here exactly once; extra providers and guards are
+ * layered here after that.
  */
 import { contract } from "./contract";
 import { createServiceImplementer } from "./base";
+import { analytics } from "./middleware/analytics";
+import { observability } from "./middleware/observability";
 import { readOnlyMode } from "./middleware/read-only-mode";
 import { sqlProvider } from "../orpc-sdk";
 
@@ -17,13 +24,17 @@ import { sqlProvider } from "../orpc-sdk";
  * @remarks
  * Middleware order is authored here:
  * 1) framework baseline middleware from the SDK seam
- * 2) service-wide baseline observability + analytics declared in `service/base.ts`
+ * 2) required service-wide observability + analytics supplied here and
+ *    auto-attached inside `createServiceImplementer(...)`
  * 3) extra service-wide providers/guards authored here
  *
- * Do not manually re-attach the default service-wide observability, analytics,
- * or policy middleware in this file. Module/procedure-local additive middleware
- * belongs in module `setup.ts` and `router.ts` files.
+ * Do not attach additive telemetry middleware here to satisfy the required
+ * service telemetry slots. Module/procedure-local additive middleware belongs
+ * in module `setup.ts` and `router.ts` files.
  */
-export const impl = createServiceImplementer(contract)
+export const impl = createServiceImplementer(contract, {
+  observability,
+  analytics,
+})
   .use(sqlProvider)
   .use(readOnlyMode);

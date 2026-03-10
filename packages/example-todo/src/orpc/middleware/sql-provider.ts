@@ -5,8 +5,8 @@
  * Input-requiring provider:
  * - the host provides `deps.dbPool`
  * - middleware derives a downstream `provided.sql` execution capability
- * - module setup can then create domain-local top-level execution keys such as
- *   `repo` from `context.provided.sql`
+ * - module setup can then create domain-local `context.provided.*` values such
+ *   as `repo` from `context.provided.sql`
  */
 
 import type { DbPool, Sql } from "../adapters/sql";

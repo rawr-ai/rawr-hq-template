@@ -13,7 +13,19 @@ It is intentionally decision-complete:
 - the migration order is explicit
 - tests, comments, docs, and agent workflow are part of the work, not cleanup
 
-This plan is for the current branch state, where:
+## Implementation Status
+
+- [x] Slice 1 complete: analytics moved to SDK baseline + service middleware
+- [x] Slice 2 complete: observability moved out of `service/base.ts` and
+  required telemetry is enforced at `createServiceImplementer(...)`
+- [x] Slice 3 complete: public seam, tests, comments, and active docs packet
+  updated
+
+This document is now a completed execution record for the refactor. The rest of
+the file captures the migration plan that was executed and can be used as
+implementation history and rationale, not as current-state guidance.
+
+It was written against the branch state where:
 
 - `src/service/base.ts` is already the single-file service-definition seam
 - service-wide telemetry is still partly authored there
@@ -161,7 +173,7 @@ This implementation does not reopen the grouped service declaration shape.
 `defineService<{ initialContext, invocationContext, metadata }>(...)` remains
 the declaration posture during this change.
 
-## Current State vs Target
+## Historical Starting State vs Target
 
 ### Current state
 
@@ -289,7 +301,7 @@ SDK-owned canonical order:
 
 This order is not configurable at the service call site.
 
-## Implementation Slices
+## Implemented Slices
 
 Each slice should end with a green tree for the tests relevant to that slice.
 

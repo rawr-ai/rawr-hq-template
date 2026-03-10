@@ -4,39 +4,12 @@ import { Type } from "typebox";
 
 import { createContractBuilder } from "../src/orpc/factory/contract";
 import {
-  defineServiceAnalyticsProfile,
-  defineServiceObservabilityProfile,
   defineService,
   schema,
   type BaseMetadata,
-  type BasePolicyProfile,
   type FeedbackClient,
-  type ServiceDeclaration,
-  type ServiceTypesOf,
 } from "../src/orpc-sdk";
 import { feedbackProvider } from "../src/orpc/middleware/feedback-provider";
-
-function createTestBaseline<TDeclaration extends ServiceDeclaration>() {
-  const analytics = defineServiceAnalyticsProfile<ServiceTypesOf<TDeclaration>>({});
-  const observability = defineServiceObservabilityProfile<
-    ServiceTypesOf<TDeclaration>,
-    BasePolicyProfile
-  >({
-    attributes() {
-      return {};
-    },
-    logFields() {
-      return {};
-    },
-  });
-  const policy: BasePolicyProfile = { events: {} };
-
-  return {
-    analytics,
-    observability,
-    policy,
-  };
-}
 
 describe("provider middleware", () => {
   it("adds feedback execution context only when attached", async () => {
@@ -125,7 +98,9 @@ describe("provider middleware", () => {
         idempotent: true,
         audit: "basic",
       },
-      baseline: createTestBaseline<TestService>(),
+      baseline: {
+        policy: { events: {} },
+      },
     });
 
     const contract = {
@@ -200,7 +175,9 @@ describe("provider middleware", () => {
       metadataDefaults: {
         idempotent: true,
       },
-      baseline: createTestBaseline<TestService>(),
+      baseline: {
+        policy: { events: {} },
+      },
     });
 
     const contract = {
@@ -211,7 +188,11 @@ describe("provider middleware", () => {
         }, { additionalProperties: false }))),
     };
 
-    const os = service.createImplementer(contract);
+    const requiredTelemetry = {
+      observability: service.createRequiredObservabilityMiddleware({}),
+      analytics: service.createRequiredAnalyticsMiddleware({}),
+    };
+    const os = service.createImplementer(contract, requiredTelemetry);
 
     const ping = os.ping.handler(async ({ context }) => {
       return { readOnly: context.config.readOnly };
@@ -270,7 +251,9 @@ describe("provider middleware", () => {
       metadataDefaults: {
         idempotent: true,
       },
-      baseline: createTestBaseline<TestService>(),
+      baseline: {
+        policy: { events: {} },
+      },
     });
 
     const contract = {
@@ -293,7 +276,11 @@ describe("provider middleware", () => {
       });
     });
 
-    const os = service.createImplementer(contract).use(repoProvider);
+    const requiredTelemetry = {
+      observability: service.createRequiredObservabilityMiddleware({}),
+      analytics: service.createRequiredAnalyticsMiddleware({}),
+    };
+    const os = service.createImplementer(contract, requiredTelemetry).use(repoProvider);
 
     const ping = os.ping.handler(async ({ context }) => {
       return { repoId: context.provided.repo.id };
@@ -352,7 +339,9 @@ describe("provider middleware", () => {
       metadataDefaults: {
         idempotent: true,
       },
-      baseline: createTestBaseline<TestService>(),
+      baseline: {
+        policy: { events: {} },
+      },
     });
 
     const contract = {
@@ -375,8 +364,6 @@ describe("provider middleware", () => {
       });
     });
 
-    // Deliberately bypass the typed provider surface to prove the runtime guard
-    // still blocks duplicate `provided` keys on escape-hatch paths.
     const collidingProvider = (service.createProvider as () => {
       middleware<TAdded extends object>(
         callback: (options: {
@@ -391,7 +378,11 @@ describe("provider middleware", () => {
       });
     });
 
-    const os = service.createImplementer(contract)
+    const requiredTelemetry = {
+      observability: service.createRequiredObservabilityMiddleware({}),
+      analytics: service.createRequiredAnalyticsMiddleware({}),
+    };
+    const os = service.createImplementer(contract, requiredTelemetry)
       .use(firstProvider)
       .use(collidingProvider as never);
 
