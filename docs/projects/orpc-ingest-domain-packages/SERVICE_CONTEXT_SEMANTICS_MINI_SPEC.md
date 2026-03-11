@@ -7,7 +7,7 @@ before the next middleware integration slices.
 
 The goal is to make the distinction between:
 
-- service-declared stable input
+- service-declared stable input lanes
 - per-call invocation/client input
 - execution-time provided resources
 
@@ -238,13 +238,14 @@ Instead:
   - `metadata`
 - use ORPC terminology more directly in the internal projection model where it
   actually applies:
-  - `ExecutionContext` instead of generic `RuntimeContext`
+  - `ORPCInitialContext`
+  - `ExecutionContext`
   - explicit acknowledgement that oRPC itself talks about:
     - `initial context`
     - `execution context`
     - client-side `client context`
 - clarify the internal factory/type model so it explicitly distinguishes:
-  - stable initial lanes declared by the service
+  - `DeclaredContext`
   - the full oRPC initial context assembled at the boundary
   - execution context
   - required-extension execution context
@@ -266,17 +267,17 @@ That part is good.
 The semantic blur happens internally:
 
 - [`base-foundation.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/base-foundation.ts#L27)
-  defines `BaseContext` as the merged runtime object containing:
+  defines `BaseContext` as the merged execution object containing:
   - `deps`
   - `scope`
   - `config`
   - `invocation`
   - `provided`
-- `InitialContext` is currently just an alias of that merged runtime object.
-- `ServiceContextOf` is also an alias of that merged runtime object.
+- `InitialContext` is currently just an alias of that merged execution object.
+- `ServiceContextOf` is also an alias of that merged execution object.
 
 So internally the name `InitialContext` no longer means "declared service input
-lanes." It means "fully merged runtime context." That is the main semantic
+lanes." It means "fully merged execution context." That is the main semantic
 problem this slice fixes.
 
 There is a second, related pressure point:
@@ -309,8 +310,8 @@ identical to oRPC's terminology.
 
 Use **Execution Context** for the full context seen by middleware/handlers.
 
-That is a real semantic match with oRPC and is better than an internal term
-like "runtime context".
+That is a real semantic match with oRPC and is better than the older internal
+term "runtime context".
 
 ### Where we intentionally keep an SDK convention
 
@@ -327,37 +328,37 @@ Reason:
 
 ### Where we must be explicit about divergence
 
-Our author-facing `initialContext` property is **not** the full oRPC initial
-context object.
+Our author-facing `initialContext` property is **not** the full
+`ORPCInitialContext`.
 
-Instead, it is the **stable initial lane declaration** authored by the service:
+Instead, it is the service's **Declared Context**:
 
 - `deps`
 - `scope`
 - `config`
 
-At the package boundary, the SDK assembles the full oRPC initial context by
+At the package boundary, the SDK assembles the full `ORPCInitialContext` by
 combining:
 
-- stable initial lanes
+- `DeclaredContext`
 - the per-call `invocationContext`
 - the initial empty `provided` bucket
 
 So if we keep the property name `initialContext`, the docs and internal types
 must explicitly state that it means:
 
-- "stable initial lanes declared by the service"
+- "Declared Context authored at the service-definition seam"
 
 not:
 
-- "the full concrete oRPC initial context object passed to execution"
+- "the full concrete ORPC initial context object passed into execution"
 
 ## Proposed Projection Model
 
 The projection model should distinguish four layers:
 
 ```ts
-type StableInitialContext = {
+type DeclaredContext = {
   deps: ...;
   scope: ...;
   config: ...;
@@ -365,12 +366,12 @@ type StableInitialContext = {
 
 type InvocationContext = ...;
 
-type ORPCInitialContext = StableInitialContext & {
+type ORPCInitialContext = DeclaredContext & {
   invocation: InvocationContext;
   provided: {};
 };
 
-type ExecutionContext<TProvided = {}> = StableInitialContext & {
+type ExecutionContext<TProvided = {}> = DeclaredContext & {
   invocation: InvocationContext;
   provided: TProvided;
 };
@@ -381,7 +382,7 @@ type RequiredExtensionExecutionContext =
 
 In this model:
 
-- service authors declare `StableInitialContext` through the existing
+- service authors declare `DeclaredContext` through the existing
   `initialContext` property
 - the boundary assembles `ORPCInitialContext`
 - middleware/handlers run against `ExecutionContext`
@@ -537,37 +538,31 @@ This slice must preserve all of the above.
 
 ## Naming and Semantic Rules
 
-Because ORPC already gives `initialContext` and `invocationContext` specific
-meaning at the declaration boundary, do not repurpose those terms internally in
-a way that hides the distinction.
+Because ORPC already gives `initial context`, `execution context`, and
+client-side `client context` specific meanings, do not repurpose those terms
+internally in a way that hides the distinction.
 
 ### Rule 1. Keep ORPC declaration terminology at the authoring seam
 
 `defineService<{ initialContext, invocationContext, metadata }>(...)` stays as
 the author-facing declaration model.
 
-### Rule 2. Introduce explicit internal runtime terminology
+### Rule 2. Use the agreed internal projection names
 
 Inside the SDK/service factory layer, use names that distinguish:
 
-- **declared initial context**
-- **runtime context**
-- **required-extension context**
+- **DeclaredContext**
+- **ORPCInitialContext**
+- **ExecutionContext**
+- **RequiredExtensionExecutionContext**
 
-The important point is the distinction, not the exact spelling. Suitable names
-include:
-
-- `DeclaredInitialContextOf<T>`
-- `RuntimeServiceContextOf<...>`
-- `RequiredServiceExtensionContextOf<...>`
-
-### Rule 3. Do not call the merged runtime object `InitialContext`
+### Rule 3. Do not call the merged execution object `InitialContext`
 
 That is the semantic confusion to remove.
 
 ### Rule 4. Do not flatten provider resources package-wide
 
-`context.provided.*` remains the canonical runtime bucket for provider-derived
+`context.provided.*` remains the canonical execution bucket for provider-derived
 execution resources.
 
 If local ergonomic flattening is needed, it still belongs in module setup or
@@ -601,10 +596,10 @@ Interpretation:
 - `invocationContext` = per-call required input lane
 - `metadata` = static procedure metadata
 
-### 2. Runtime composition categories
+### 2. Execution composition categories
 
-At runtime, middleware and handlers operate against a merged runtime context
-with these semantic lanes:
+At execution time, middleware and handlers operate against a merged execution
+context with these semantic lanes:
 
 - `deps`
 - `scope`
@@ -618,13 +613,14 @@ This can be illustrated as:
 flowchart TD
   A["Declared service\ninitialContext + invocationContext + metadata"] --> B["Client construction\nprovides deps/scope/config"]
   B --> C["Procedure invocation\nprovides invocation"]
-  C --> D["Runtime context\n deps\n scope\n config\n invocation\n provided"]
-  D --> E["Required service extensions\n can read deps/scope/config/invocation"]
-  D --> F["Additive middleware\n can read runtime context"]
-  D --> G["Providers\n append under provided"]
+  C --> D["ORPCInitialContext\n deps\n scope\n config\n invocation\n provided={}"]
+  D --> E["ExecutionContext\n deps\n scope\n config\n invocation\n provided"]
+  E --> F["Required service extensions\n can read deps/scope/config/invocation"]
+  E --> G["Additive middleware\n can read execution context"]
+  E --> H["Providers\n append under provided"]
 ```
 
-### 3. Required-extension context is a proper runtime subset
+### 3. Required-extension context is a proper execution subset
 
 Required service extensions should operate on:
 
@@ -640,8 +636,8 @@ provided from full context" if there is a clearer internal type available.
 
 ## Required Internal Type/Projection Changes
 
-The exact final names are flexible, but the service type model must make these
-semantic projections available.
+For this slice, the service type model must make these specific semantic
+projections available.
 
 ### A. Declared service inputs
 
@@ -653,11 +649,11 @@ The service projection should retain the author-facing declared categories:
 - `Invocation`
 - `Metadata`
 
-### B. Declared initial context
+### B. Declared context
 
 Add an explicit projection for the declared stable host-supplied lanes:
 
-- `DeclaredInitialContext`
+- `DeclaredContext`
 
 This should correspond to:
 
@@ -667,11 +663,11 @@ This should correspond to:
 
 and should not include `invocation` or `provided`.
 
-### C. Runtime context
+### C. ORPC initial context
 
-Add an explicit projection for the full runtime context:
+Add an explicit projection for the assembled ORPC initial context:
 
-- `RuntimeContext`
+- `ORPCInitialContext`
 
 This should correspond to:
 
@@ -681,11 +677,27 @@ This should correspond to:
 - `invocation`
 - `provided`
 
-### D. Required-extension context
+with `provided` initially empty at the package boundary.
+
+### D. Execution context
+
+Add an explicit projection for the full execution context:
+
+- `ExecutionContext`
+
+This should correspond to:
+
+- `deps`
+- `scope`
+- `config`
+- `invocation`
+- `provided`
+
+### E. Required-extension execution context
 
 Add an explicit projection for required service middleware extension authoring:
 
-- `RequiredExtensionContext`
+- `RequiredExtensionExecutionContext`
 
 This should correspond to:
 
@@ -696,10 +708,10 @@ This should correspond to:
 
 and should exclude `provided`.
 
-### E. Backward-compatibility aliasing
+### F. Backward-compatibility aliasing
 
 If keeping `Service["Context"]` is useful for compatibility, it should mean the
-full runtime context and should be documented that way.
+full execution context and should be documented that way.
 
 If old internal helper names remain temporarily, they should point at the new
 semantics rather than preserve misleading names.
@@ -712,18 +724,19 @@ This slice must cover every service authoring surface exported from
 ### `Service`
 
 `Service` should project the clearer service type model so downstream docs and
-factory builders talk about runtime context honestly.
+factory builders talk about execution context honestly.
 
 Expected outcome:
 
 - stable host-supplied lanes are still visible as distinct categories
-- runtime context remains the context used by handlers and additive middleware
+- execution context remains the context used by handlers and additive middleware
 
 ### `ocBase`
 
 No semantic change required.
 
-It remains a contract authoring surface driven by metadata, not runtime context.
+It remains a contract authoring surface driven by metadata, not execution
+context.
 
 ### `createServiceMiddleware`
 
@@ -733,20 +746,20 @@ It should remain the generic additive middleware builder for service-local
 middleware that does not add execution context.
 
 Its authoring docs should continue to tell authors not to restate the full
-service runtime context when only a fragment is needed.
+service execution context when only a fragment is needed.
 
 ### `createServiceObservabilityMiddleware`
 
 No behavior change required.
 
-It should continue to default to additive runtime middleware semantics and may
-depend on runtime context as currently allowed.
+It should continue to default to additive execution middleware semantics and may
+depend on execution context as currently allowed.
 
 ### `createRequiredServiceObservabilityMiddleware`
 
 Its semantics should become clearer through typing, not broader.
 
-It must remain pinned to required-extension context:
+It must remain pinned to required-extension execution context:
 
 - may read `deps`
 - may read `scope`
@@ -777,15 +790,16 @@ No semantic broadening.
 It should still author middleware that appends execution context under
 `provided`.
 
-The clearer context model should make it more obvious that providers add runtime
-resources; they do not declare host input lanes.
+The clearer context model should make it more obvious that providers add
+execution-time resources; they do not declare host input lanes.
 
 ### `createServiceImplementer`
 
 This must keep the strongest distinction in the system:
 
-- the returned implementer operates on full runtime context
-- required extension slots are typed against required-extension context
+- the returned implementer operates on full execution context
+- required extension slots are typed against required-extension execution
+  context
 
 The current shape already does this semantically; the cleanup should make that
 model explicit and easier to understand.
@@ -797,11 +811,12 @@ model explicit and easier to understand.
 In
 [`packages/example-todo/src/orpc/base-foundation.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/base-foundation.ts):
 
-- stop using `InitialContext` as the name for the merged runtime shape
+- stop using `InitialContext` as the name for the merged execution shape
 - introduce explicit internal types for:
-  - declared stable initial lanes
-  - runtime context
-  - required-extension runtime context
+  - `DeclaredContext`
+  - `ORPCInitialContext`
+  - `ExecutionContext`
+  - `RequiredExtensionExecutionContext`
 
 ### 2. Refactor service type projection helpers
 
@@ -809,9 +824,10 @@ In
 [`packages/example-todo/src/orpc/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/base.ts):
 
 - update `ServiceTypesOf<T>` to project:
-  - declared initial context
-  - runtime context
-  - required-extension context
+  - `DeclaredContext`
+  - `ORPCInitialContext`
+  - `ExecutionContext`
+  - `RequiredExtensionExecutionContext`
 - preserve `Deps`, `Scope`, `Config`, `Invocation`, and `Metadata`
 - preserve or intentionally alias the current `Context` projection
 
@@ -822,8 +838,8 @@ In
 
 - replace ad hoc context derivations with the clearer projections where
   possible
-- keep `createImplementer(...)` typed over full runtime context
-- keep required extension slots typed over required-extension context
+- keep `createImplementer(...)` typed over full execution context
+- keep required extension slots typed over required-extension execution context
 
 ### 4. Preserve provider builder behavior
 
@@ -850,14 +866,14 @@ In
 The slice is complete when:
 
 1. service authoring in `src/service/base.ts` is still effectively the same
-2. internal type names/projections no longer confuse declared initial input with
-   merged runtime context
-3. required service extensions are explicitly modeled as "runtime without
-   provided"
+2. internal type names/projections no longer confuse `DeclaredContext` with
+   `ORPCInitialContext` or `ExecutionContext`
+3. required service extensions are explicitly modeled as "execution context
+   without provided"
 4. provider semantics remain unchanged
 5. `context-typing.ts` still enforces all current guardrails
-6. any changed tests or docs make the declaration/runtime distinction easier for
-   an implementation agent to understand
+6. any changed tests or docs make the declaration/execution distinction easier
+   for an implementation agent to understand
 
 ## Validation
 
@@ -869,7 +885,7 @@ At minimum:
 
 ## Risks
 
-### Risk 1. Semantic cleanup silently broadens runtime access
+### Risk 1. Semantic cleanup silently broadens execution access
 
 Bad outcome:
 
