@@ -344,6 +344,9 @@ combining:
 - the per-call `invocationContext`
 - the initial empty `provided` bucket
 
+`ORPCInitialContext` is therefore the initial execution seed handed into oRPC,
+not the final or fully evolved execution view seen after middleware runs.
+
 So if we keep the property name `initialContext`, the docs and internal types
 must explicitly state that it means:
 
@@ -384,8 +387,9 @@ In this model:
 
 - service authors declare `DeclaredContext` through the existing
   `initialContext` property
-- the boundary assembles `ORPCInitialContext`
-- middleware/handlers run against `ExecutionContext`
+- the boundary assembles `ORPCInitialContext` as the initial execution seed
+- middleware evolves that seed into `ExecutionContext`
+- handlers and additive middleware run against `ExecutionContext`
 - required service middleware runs against
   `RequiredExtensionExecutionContext`
 
@@ -613,11 +617,12 @@ This can be illustrated as:
 flowchart TD
   A["Declared service\ninitialContext + invocationContext + metadata"] --> B["Client construction\nprovides deps/scope/config"]
   B --> C["Procedure invocation\nprovides invocation"]
-  C --> D["ORPCInitialContext\n deps\n scope\n config\n invocation\n provided={}"]
-  D --> E["ExecutionContext\n deps\n scope\n config\n invocation\n provided"]
-  E --> F["Required service extensions\n can read deps/scope/config/invocation"]
-  E --> G["Additive middleware\n can read execution context"]
-  E --> H["Providers\n append under provided"]
+  C --> D["ORPCInitialContext\n initial execution seed\n deps\n scope\n config\n invocation\n provided={}"]
+  D --> E["Middleware composition / providers"]
+  E --> F["ExecutionContext\n evolving execution view\n deps\n scope\n config\n invocation\n provided"]
+  F --> G["Required service extensions\n can read deps/scope/config/invocation"]
+  F --> H["Additive middleware\n can read execution context"]
+  F --> I["Providers\n append under provided"]
 ```
 
 ### 3. Required-extension context is a proper execution subset
