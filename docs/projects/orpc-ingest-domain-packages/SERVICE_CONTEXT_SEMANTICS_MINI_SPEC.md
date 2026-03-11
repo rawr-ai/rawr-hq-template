@@ -444,6 +444,21 @@ This is the more conservative path.
 - procedure handlers would then use a narrower execution-facing surface rather
   than reasoning directly about origin bags
 
+If we take this path, the current best exploratory candidate is a dedicated
+surface such as `context.resources`, not arbitrary package-wide top-level
+spreading.
+
+Reason:
+
+- it gives procedure authors one obvious place to look for business-facing
+  execution resources
+- it preserves the lower-level distinction between stable deps and derived
+  provider output beneath that authoring surface
+- it avoids turning the top level of `context` into an unstructured namespace
+  of mixed origins
+- it can be shaped explicitly in service/module setup without pretending that
+  all values share the same lifecycle
+
 This could reduce author confusion, but it is a larger design step and should
 not be conflated with the initial projection cleanup.
 
