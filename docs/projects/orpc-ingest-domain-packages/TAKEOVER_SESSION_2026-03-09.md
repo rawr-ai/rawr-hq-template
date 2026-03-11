@@ -2,6 +2,10 @@
 
 Created: 2026-03-09
 
+Update: Superseded as the primary active handoff by `ACTIVE_GROUNDING.md` for
+the next PostHog + Drizzle integration round. Keep this file as the takeover
+brief for the prior seam-hardening phase.
+
 ## What This Document Is
 
 This is the current session-level takeover handoff for the long-running `example-todo` golden-example thread.
