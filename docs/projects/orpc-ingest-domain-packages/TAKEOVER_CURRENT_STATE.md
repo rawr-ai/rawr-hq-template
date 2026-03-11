@@ -2,6 +2,10 @@
 
 Created: 2026-03-06
 
+Update: Superseded as the primary active handoff by `ACTIVE_GROUNDING.md` for
+the PostHog + Drizzle stress-test phase. Keep this file for historical
+current-state context tied to the prior finishing/hardening phase.
+
 Update: This remains a useful structural snapshot, but the live branch/session
 handoff now continues in `TAKEOVER_SESSION_2026-03-09.md`.
 
