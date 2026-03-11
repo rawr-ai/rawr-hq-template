@@ -8,6 +8,7 @@ with more real integrations like PostHog and Drizzle.
 Do not collapse these into one category:
 
 - packaged SDK ports
+- provider middleware
 - service/domain package code
 - host-side concrete integrations
 
@@ -43,6 +44,18 @@ If something lives under `packages/example-todo/src/orpc/host-adapters/*`, it me
 - it is not a package-facing port
 - it exists to satisfy ports or provide host/framework integrations explicitly
 
+### `src/orpc/middleware/*` contains provider middleware
+
+Provider middleware is distinct from both ports and host adapters.
+
+- ports define the capability contract
+- host adapters provide the concrete binding
+- provider middleware provisions downstream execution capability under
+  `context.provided.*`
+
+This layer is where host prerequisites become the runtime keys handlers and
+module setup actually consume.
+
 ### `src/service/*` stays pure by default
 
 The service package should remain:
@@ -71,6 +84,9 @@ Binary capability rule:
 - package-local concrete adapters: **not supported**
 - plugin-specific dependency configuration: **supported**, but only as explicit
   typed code at the plugin boundary, not as a hidden DSL
+- analytics-as-provider: **supported and preferred**
+- direct raw `deps.analytics` as the long-term package-facing usage model:
+  **not supported**
 
 ## Important Clarification
 
@@ -170,6 +186,7 @@ files go?" in the abstract.
 The first question is:
 
 - which parts are package boundary contracts
+- which parts are provider middleware
 - which parts are middleware/provider seams
 - which parts are host-owned concrete setup
 

@@ -172,6 +172,7 @@ providers like PostHog and Drizzle?
 ### Decision
 Use this hard boundary model:
 
+- **Ports, host adapters, and provider middleware are different layers.**
 - **Concrete adapters are host-owned.**
 - **Package-local concrete adapters are not a supported capability.**
 - `src/service/*` stays pure and does not own concrete technology integrations.
@@ -179,6 +180,9 @@ Use this hard boundary model:
   package boundary.
 - `src/orpc/host-adapters/*` is the staging home for host-owned concrete
   adapters inside the proto SDK.
+- Provider middleware remains in `src/orpc/middleware/*` and exists to turn
+  host-provided prerequisites into downstream execution capabilities under
+  `context.provided.*`.
 - If a port is generically reusable across packages, it should be
   centralized rather than duplicated in each package-local proto SDK.
 - Plugin-specific dependency configuration is allowed, but it must be authored
@@ -186,6 +190,12 @@ Use this hard boundary model:
 - OpenTelemetry is a **framework/internal concrete integration**, configured by
   the runtime host once per deployment boundary. It is not part of the package
   adapter-contract model by default.
+- Analytics should follow the provider pattern as well. Treat the current
+  `deps.analytics` baseline usage in `example-todo` as transitional while real
+  provider-backed analytics is integrated.
+- Provider outputs stay under `context.provided.*`; module setup is the only
+  supported place to inline/reshape those execution keys for module-local
+  handler ergonomics.
 
 ### Why
 We want a binary capability model for agents:
