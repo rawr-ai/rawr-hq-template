@@ -88,12 +88,28 @@ Pay special attention to:
 Treat the current package as the main teaching/reference surface. The intended
 design should be visible there, even if some seams are still transitional.
 
-### 3. Backup layer: ground in oRPC itself
+### 3. Introspect the relevant skill for the integration
+
+Each agent should introspect the specific skill most relevant to the work it is
+about to do.
+
+Examples:
+
+- a Drizzle-focused agent should introspect the `drizzle` skill
+- a PostHog/analytics-focused agent should introspect the `posthog` skill
+
+The point is not to defer to the skill blindly. The point is to refresh the
+agent on the current tool/library mental model before it designs changes in the
+package.
+
+### 4. Backup layer: ground in oRPC itself
 
 If needed to understand the underlying mechanism, consult oRPC docs or
 playground examples.
 
-This is especially relevant for:
+This can happen alongside skill introspection or as the final grounding layer.
+
+It is especially relevant for:
 
 - middleware layering
 - provider/dependent context
