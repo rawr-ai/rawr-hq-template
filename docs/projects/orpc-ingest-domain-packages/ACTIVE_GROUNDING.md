@@ -1,15 +1,21 @@
-# Active Grounding — PostHog + Drizzle Stress-Test
+# Active Grounding — Current Takeover / PostHog + Drizzle Stress-Test
 
 Created: 2026-03-10
-Status: Active grounding document for the next agent round
+Refreshed: 2026-03-11
+Status: Active grounding document for the next agent round and the current takeover
 
 ## Active-Document Rule
 
-This is the **active grounding document** for the upcoming `example-todo`
-integration round focused on real analytics and database integrations.
+This is the **only active grounding document** for the upcoming
+`example-todo` integration round focused on real analytics and database
+integrations.
 
 Use this file as the primary compaction-surviving artifact for the next agent
-wave.
+wave, the next continuation snippet, and the next post-compaction restart.
+
+If any other takeover, handoff, or grounding note disagrees with this file,
+this file wins unless it is explicitly superseded in a later commit by another
+file that clearly declares itself the active grounding document.
 
 It supersedes these older handoff notes as the primary session grounding for
 this phase:
@@ -20,6 +26,19 @@ this phase:
 Those files remain useful as historical context for the prior finishing/hardening
 phase, but they are no longer the primary handoff document for the current
 PostHog + Drizzle stress-test.
+
+## Takeover Basis
+
+This refresh was produced from:
+
+- the pasted "Current execution context" snippet from the user
+- the current live code under `packages/example-todo/src/orpc/*` and
+  `packages/example-todo/src/service/*`
+- the four current docs in the active source packet
+
+Session history has **not** been consulted during this refresh because the
+docs and live code were sufficient to resolve the current state without
+opening a wider transcript scan.
 
 ## What This Document Is
 
@@ -44,8 +63,9 @@ shape and learn:
 - Active worktree:
   `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden`
 - Active branch: `codex/example-todo-unified-golden`
-- Repo state before this update: clean
+- Repo state at takeover start: clean
 - Latest relevant commits:
+  - `c1a5dab3` `docs(example-todo): add active integration grounding`
   - `c19b36fc` `docs(example-todo): add skill grounding to agent workflow`
   - `49ce8ee3` `docs(example-todo): add grounding-first agent workflow`
   - `2e9ed075` `docs(example-todo): clarify ports adapters and providers`
@@ -113,6 +133,9 @@ critical ambiguity unresolved.
   - `assignments/setup.ts`
 - Provider-derived execution values continue to flow under
   `context.provided.*`.
+- `src/orpc/base.ts` still defines baseline `AnalyticsClient` in `BaseDeps`,
+  and baseline analytics emission still flows through
+  `context.deps.analytics.track("orpc.procedure", ...)`.
 
 ### Inferred
 
@@ -159,6 +182,9 @@ critical ambiguity unresolved.
 - The most important learning may not be "what file do we add?" but "should the
   analytics contract move out of baseline deps and into an explicit provider
   model analogous to SQL?"
+- The other likely pressure point is whether Drizzle should satisfy the current
+  `DbPool -> Sql -> module repository` seam cleanly, or whether the typed ORM
+  surface proves that the existing SQL execution port is too thin.
 
 ## Guardrails For The Upcoming Agent Team
 
@@ -175,6 +201,8 @@ Carry these forward explicitly:
 - Do not treat package-local concrete adapters as supported architecture.
 - Do not duplicate generic reusable ports per package if they really belong in
   a central shared SDK.
+- Do not reopen settled topology questions unless the real integrations expose a
+  concrete failure in the current model.
 
 ## What The Agent Team Should Actually Learn
 
@@ -202,6 +230,8 @@ For both together:
   rules
 - which seams are package-specific versus generically reusable
 - whether any current package-local port should instead be centralized
+- whether the package should keep one baseline analytics emission path but
+  change where the runtime capability comes from
 
 ## Immediate Agent-Grounding Checklist
 
@@ -227,6 +257,9 @@ Each upcoming worker should do this in order:
 - The DB seam is already closer to the target model than analytics.
 - The package currently exposes `DbPool` and `Sql` as package-local ports, while
   OpenTelemetry remains a host-adapter-only integration.
+- The service-wide analytics contribution is currently a required service
+  extension in `src/service/middleware/analytics.ts`, but the actual emitter is
+  still the SDK baseline analytics middleware.
 
 ### Inferred
 
@@ -236,6 +269,8 @@ Each upcoming worker should do this in order:
   - provider-backed analytics
   - host-owned ORM/database adapters
   - package-local versus centralized ports
+  - how much typed runtime capability should remain in baseline deps versus
+    move behind provider middleware
 
 ## Recommended Immediate Next Actions
 
