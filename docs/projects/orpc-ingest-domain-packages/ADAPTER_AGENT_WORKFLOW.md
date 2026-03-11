@@ -1,217 +1,310 @@
-# Ports & Adapters Integration Workflow
+# Ports & Adapters Agent Workflow
 
-This note frames how agents should approach integration stress-tests like
-PostHog and Drizzle inside `example-todo`.
+This is the worker-facing workflow for integration stress-tests like PostHog and
+Drizzle inside `example-todo`.
 
-The purpose is not to pre-specify a solution. The purpose is to make sure
-agents start from the right grounding, see the intended architecture clearly,
-and then design and implement the obvious solution that follows from the
-current package shape, docs, and oRPC model.
+Use this alongside:
 
-## Kickoff Frame
+- `ACTIVE_GROUNDING.md` for the current phase frame
+- `ADAPTER_POSTURE.md` for boundary classification
+- `ADAPTER_ORCHESTRATION_WORKFLOW.md` for coordinator and watcher behavior
 
-Use this workflow when exploring or implementing concrete integrations in
-`example-todo`.
-
-- Work from the **current Example-ToDo package** and its docs as the primary
-  source of intended structure.
-- Do **not** treat the current package shape as something to preserve
-  mechanically; treat it as soft rails that should guide the right conclusion.
-- Do **not** invent a hidden DSL or speculative plugin-boundary system.
-- Do **not** optimize for the plugin-boundary story in this round. Plugin
-  boundary configuration is a later concern and is out of scope unless the
-  work absolutely forces a note about it.
-- Assume the right answer should already be discoverable from:
-  - `DECISIONS.md`
-  - `guidance.md`
-  - the Example-ToDo package as it exists today
-  - oRPC itself, if needed
+This document is about how a single worker agent should move through the work.
+It is intentionally phase-gated. The worker should not improvise its own
+sequence.
 
 ## Purpose
 
-We are not just integrating two technologies and calling it done.
+We are not trying to "wire in a provider" as fast as possible.
 
-We are using real integrations to stress-test the architecture and answer:
+We are using real integrations to pressure-test:
 
-- how package boundaries need to change
-- what should become clearer or more enforceable
-- what patterns repeat across integrations and should become standard
+- which ports should exist
+- what host adapters should look like
+- what belongs in provider middleware
+- what should remain native oRPC versus wrapped by our SDK seam
+- which current seams are transitional and should be rewritten
+- what should become scaffold and docs defaults later
 
-Assume the current seams may change. Do **not** treat them as fragile shapes to
-preserve unless the architecture still justifies them after grounding.
+The point is to discover the right shape, not to preserve the current one.
 
-## Working Frame
+## Non-Negotiable Operating Posture
 
-- Domain service packages are meant to scale from `N=1` to `N=∞`.
-- They should be easy to scaffold and spin up repeatedly.
-- That means every integration should be judged both for the immediate package
-  and for what it implies about future package creation and maintenance.
-- Use the binary capability model from `DECISIONS.md` and
-  `ADAPTER_POSTURE.md`.
-- Distinguish sharply between:
-  - ports (`src/orpc/ports/*`)
-  - host adapters (`src/orpc/host-adapters/*`)
-  - provider middleware (`src/orpc/middleware/*`)
-- Treat analytics-as-provider as the target posture. Do not preserve the
-  current direct raw `deps.analytics` usage just because it exists in the code
-  today.
-- If flattening execution context is useful for handlers, keep that reshaping
-  at module `setup.ts`, not at package-wide middleware scope.
+- Assume current analytics and SQL/database middleware may be rewritten
+  completely if the grounded solution requires it.
+- Do not preserve legacy behavior just because it already exists.
+- Do not invent a hidden DSL or speculative plugin-boundary system.
+- Stay as oRPC-native as possible, but respect the repo's explicit SDK/dev wraps
+  and hard boundaries.
+- Treat `ADAPTER_POSTURE.md`, `DECISIONS.md`, and `ACTIVE_GROUNDING.md` as hard
+  posture documents, not optional reading.
+- Do not start editing code during grounding or mini-solution design.
+- If the grounded answer implies a different slice or a prerequisite slice,
+  say so. Do not force an underspecified implementation through anyway.
 
-## Mandatory Grounding Step
+## Context Stacking Rule
 
-Before any design or implementation work begins, agents must complete grounding
-in this exact order.
+Context is progressive and just-in-time.
 
-### 1. Ground in `DECISIONS.md` and `guidance.md`
+Only ground in what is needed for the current phase.
 
-Read these first to understand the intended direction, constraints, and hard
-boundaries.
+### During grounding
 
-- Assume they are intended to be current and non-conflicting.
-- If they appear to conflict with each other or with the code, record that in
-  the scratch pad and grounding document rather than silently choosing one.
+Ground only in:
 
-### 2. Ground in the Example-ToDo package as it stands right now
+1. `ACTIVE_GROUNDING.md`
+2. `DECISIONS.md`
+3. `guidance.md`
+4. `ADAPTER_POSTURE.md`
+5. the live `example-todo` code surfaces relevant to the integration
+6. the relevant skill for the technology being investigated
+7. targeted oRPC references and playground examples only if needed
 
-Read the package itself for patterns, comments, and structural intention.
+Do **not** ingest broad session history unless the coordinator explicitly says a
+critical gap remains unresolved.
 
-Pay special attention to:
+### During mini-solution design
 
-- `src/orpc/ports/*`
-- `src/orpc/host-adapters/*`
-- `src/orpc/middleware/*`
-- `src/service/base.ts`
-- `src/service/impl.ts`
-- `src/service/modules/*`
+Work primarily from:
 
-Treat the current package as the main teaching/reference surface. The intended
-design should be visible there, even if some seams are still transitional.
+- the worker's own grounding document
+- the active grounding document
+- the smallest additional packet needed to resolve open questions
 
-### 3. Introspect the relevant skill for the integration
+### During implementation
 
-Each agent should introspect the specific skill most relevant to the work it is
-about to do.
+Work primarily from:
 
-Examples:
+- the approved mini-solution document
+- the worker's implementation scratch
+- only the code files required by the approved design
 
-- a Drizzle-focused agent should introspect the `drizzle` skill
-- a PostHog/analytics-focused agent should introspect the `posthog` skill
+## ORPC Grounding Requirement
 
-The point is not to defer to the skill blindly. The point is to refresh the
-agent on the current tool/library mental model before it designs changes in the
-package.
+Before solution design, the worker must understand both:
 
-### 4. Backup layer: ground in oRPC itself
+- what oRPC enables natively
+- what this repo intentionally wraps, restricts, or stabilizes through the SDK
+  seam
 
-If needed to understand the underlying mechanism, consult oRPC docs or
-playground examples.
-
-This can happen alongside skill introspection or as the final grounding layer.
-
-It is especially relevant for:
+In particular, think through:
 
 - middleware layering
-- provider/dependent context
-- execution-context expansion
-- what should be done with provider middleware versus direct dependency use
+- provider/dependent context flow
+- `context.deps` versus `context.provided.*`
+- service-wide required middleware versus additive module/procedure middleware
+- where the repo stays close to native oRPC
+- where the repo adds wrappers for guarantees, boundaries, or authoring shape
 
-## Grounding Artifacts
+Use the mini oRPC playgrounds and focused upstream examples only to clarify
+middleware composition and provision patterns. Do not wander broadly once the
+required mechanism is understood.
 
-Each agent must produce and maintain two artifacts during the grounding step:
+## Artifact Ladder
 
-### Scratch pad
+The worker produces one durable artifact per phase boundary.
 
-Ongoing working notes capturing:
+### 1. Scratch document
 
-- framing notes
-- classification decisions
-- sources/references used
-- seams that changed
-- unresolved questions
-- candidate generalizations
+This is the worker's heartbeat and working log.
 
-### Grounding document
+Capture:
 
-A short grounding note produced during the grounding step that captures the
-nuance and conclusions that should survive compaction.
+- sources checked
+- observations
+- conflicts found
+- hypotheses
+- open questions
+- design notes
+- implementation notes
 
-This grounding document is the **only** artifact that should be treated as
-surviving the required post-grounding compaction.
+This replaces status pings. The coordinator should inspect the scratch document
+rather than interrupting the worker.
 
-## Required Compaction Step
+### 2. Grounding document
 
-After grounding is complete:
+This is the compaction-surviving artifact for the grounding phase.
 
-- the coordinating agent must send a `/compact` message to compact the worker
-  agent
-- after compaction, the agent should continue using its grounding document plus
-  scratch pad as the preserved frame
+It must capture:
 
-Grounding is not optional, and compaction happens **after** grounding, not
-before.
+- observed current state
+- transitional seams
+- hard constraints
+- what the worker believes the real question is
+- what must not be reinforced accidentally
+- unresolved questions that block design
 
-## Workflow After Grounding
+### 3. Mini-solution document
 
-### 1. Solution design
+This is the compaction-surviving artifact for the design phase.
 
-Only after grounding and compaction:
+It must capture:
 
-- restate what the technology/provider is
-- restate what capability the package actually needs from it
-- classify the integration
-- identify which seams will likely change
+- the capability the package actually needs from the provider
+- the classification of each major piece:
+  - packaged SDK port
+  - provider middleware
+  - framework/internal integration
+  - host-side concrete integration
+  - service-local runtime behavior
+- the recommended solution shape
+- alternatives considered and why they were rejected
+- exact seams expected to change
+- exact files likely to change
+- non-goals
+- risks and failure modes
+- validation plan
+- whether the work should proceed now or be split into another slice
 
-### 2. Implementation design and coding
+### 4. Implementation note
 
-Then propose and implement the concrete code shape.
+This is the compaction-surviving artifact for the implementation phase.
 
-Explicitly identify:
+It must capture:
 
-- what belongs in packaged SDK ports
-- what belongs in host adapters
-- what belongs in provider middleware
-- what belongs in service/module runtime behavior
+- what changed
+- where implementation differed from the mini-solution, if at all
+- validation run
+- known risks
+- what should be reviewed for architecture drift
 
-### 3. Testing and review
+## Phase Model
 
-After implementation:
+Every phase is strict. Do not skip ahead.
 
-- run the relevant validation
-- review the changed seams against the grounding document
-- record what generalized and should be fed back into docs, JSDoc, scaffold
-  structure, or SDK boundaries
+### Phase 0. Intake
 
-## Classification Step
+Inputs from coordinator:
 
-During solution design, classify each part of the integration into one or more
-of these buckets:
+- the current active grounding document
+- the specific slice/question
+- the worker artifact location
+- the minimal context packet for this phase
 
-1. packaged SDK port
-2. provider middleware
-3. framework/internal integration
-4. host-side concrete integration
-5. service-local runtime behavior
+Worker action:
 
-Do not skip this step.
+- confirm the mission from artifacts, not from broad transcript history
+- open the scratch document immediately
 
-Also record whether the integration is:
+### Phase 1. Grounding
 
-- already supported directly by the current capability model
-- exposing a gap in the model
-- or proving that a currently unsupported capability must be promoted
+Worker actions:
 
-## Important Guardrails
+1. Read the current active grounding document.
+2. Read `DECISIONS.md`, `guidance.md`, and `ADAPTER_POSTURE.md`.
+3. Ground in the relevant live code surfaces.
+4. Introspect the relevant skill:
+   - Drizzle work -> `drizzle`
+   - PostHog work -> `posthog`
+5. Understand the relevant oRPC middleware model and the repo's wrapper posture.
+6. Write scratch notes continuously.
+7. Produce the grounding document.
 
-- Do not assume `service/adapters/` is a valid destination.
-- Do not assume every needed port should be package-local.
-- Do not assume generic reusable ports belong in each package; centralize them
-  if they are truly generic.
-- Do not treat observability as part of the adapter model by default; only
-  revisit that if the integration clearly forces it.
-- Do not teach agents that analytics is a raw long-term `deps.*` dependency;
-  the integration work should correct that seam, not reinforce it.
-- Do not introduce plugin-boundary configuration systems or hidden DSLs in this
-  round.
-- Do not flatten provider outputs package-wide; keep inline execution-context
-  reshaping at module setup.
+Hard rule:
+
+- no code edits in this phase
+
+Stop conditions:
+
+- if docs and live code conflict on a hard boundary, stop and surface it
+- if the worker cannot classify the integration with high confidence, stop and
+  surface it
+
+### Phase 1 Exit Ritual
+
+When the grounding document is complete:
+
+1. stop phase work
+2. notify the coordinator through the artifact, not through chatty status
+3. wait for the coordinator to send `/compact`
+4. confirm compaction is complete
+5. do not begin design until the next phase packet arrives
+
+### Phase 2. Mini-Solution Design
+
+Worker actions:
+
+1. Re-ground from the compacted state using:
+   - the grounding document
+   - the active grounding document
+   - any narrow follow-up sources explicitly requested
+2. Restate the real package need, not the vendor feature list.
+3. Classify the integration shape.
+4. Think through the agent journey:
+   - what context is available initially
+   - what middleware contributes to service context
+   - what must be host-owned
+   - what must be package-facing
+   - what should remain native oRPC
+   - what the SDK seam should enforce
+5. Produce the mini-solution document.
+
+Hard rules:
+
+- no code edits in this phase
+- do not move to implementation on "first plausible answer"
+- if the right answer is "split the slice," say so explicitly
+
+### Phase 2 Exit Ritual
+
+When the mini-solution document is complete:
+
+1. stop phase work
+2. wait for watcher review and coordinator approval
+3. wait for the coordinator to send `/compact`
+4. confirm compaction is complete
+5. do not begin implementation until an approved implementation packet arrives
+
+### Phase 3. Implementation
+
+Worker actions:
+
+1. Re-ground from the approved mini-solution.
+2. Implement only the approved solution scope.
+3. Keep the scratch document current.
+4. Write the implementation note before handing off.
+
+Hard rules:
+
+- do not preserve a bad seam because it is already there
+- do not expand scope silently
+- if implementation reveals the mini-solution is wrong, stop and surface the
+  mismatch rather than improvising a second design in code
+
+### Phase 3 Exit Ritual
+
+When the implementation note is complete:
+
+1. stop phase work
+2. wait for the coordinator to send `/compact`
+3. confirm compaction is complete
+4. hand off to review
+
+### Phase 4. Review Support
+
+The worker may be asked to answer focused follow-ups after review, but review is
+not assumed to be self-approval.
+
+## Failure Modes To Guard Against
+
+- mistaking current implementation shape for target shape
+- reinforcing transitional `deps.analytics` usage
+- treating a concrete host binding as a package-facing port
+- skipping classification because the coding path seems obvious
+- reading too much irrelevant context too early
+- using broad oRPC exploration as an excuse to defer design discipline
+- implementing a hidden second design because the first design was never
+  written down
+
+## One-Worker Default
+
+Assume one worker at a time unless the coordinator explicitly chooses
+otherwise.
+
+The default pattern is:
+
+- one worker owns one slice
+- watcher agents review the worker's phase artifacts for usability and handoff
+- the coordinator decides when to advance phases
+
+This workflow is designed to make that serialized learning loop explicit.

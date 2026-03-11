@@ -91,7 +91,8 @@ phase:
 2. `./guidance.md`
 3. `./ADAPTER_POSTURE.md`
 4. `./ADAPTER_AGENT_WORKFLOW.md`
-5. this file
+5. `./ADAPTER_ORCHESTRATION_WORKFLOW.md`
+6. this file
 
 Use these code surfaces as the primary live package grounding:
 
@@ -247,6 +248,10 @@ Each upcoming worker should do this in order:
 6. Compact only after grounding is complete.
 7. After compaction, continue from the grounding document rather than from raw
    transcript history.
+
+The coordinator should additionally operate from
+`ADAPTER_ORCHESTRATION_WORKFLOW.md` so agent phase changes, watcher review, and
+compaction rituals stay explicit.
 
 ## Open Loops
 
