@@ -10,6 +10,28 @@
 For hard adapter-ownership rules, see `DECISIONS.md` Decision #8 and
 `ADAPTER_POSTURE.md`.
 
+## Ports, Adapters, and Providers
+
+Use these terms precisely:
+
+- **Port**: the typed capability contract the package can consume.
+- **Host adapter**: the concrete host-owned implementation or framework binding
+  that satisfies a port or wires a framework integration.
+- **Provider middleware**: runtime middleware that turns a host prerequisite
+  into a downstream execution capability under `context.provided.*`.
+
+Concrete examples in this repo:
+
+- `src/orpc/ports/db.ts` is a port.
+- `src/orpc/host-adapters/telemetry/opentelemetry.ts` is a host adapter.
+- `src/orpc/middleware/sql-provider.ts` is provider middleware.
+
+Do not collapse these into one category.
+
+- Ports define shape.
+- Host adapters satisfy or bind that shape concretely.
+- Providers provision execution-time capability for downstream handlers.
+
 ## Agent Click Path (Recommended)
 
 If you are an agent arriving to implement business logic fast:
@@ -329,6 +351,23 @@ The package already gives us the right shape hint here:
 In other words: plugin-local dependency config should look like ordinary typed
 application code, not a bespoke declarative language.
 
+### Analytics correction
+
+Do not treat analytics as a permanent `context.deps.analytics` dependency shape
+just because the current `example-todo` code still does.
+
+Target posture:
+
+- analytics should be modeled through the same port/adapter/provider logic as
+  other runtime capabilities
+- a host adapter can construct the concrete analytics client
+- provider middleware can expose the execution-time analytics capability the
+  package actually uses
+
+So when integrating a real analytics provider, treat the current direct
+`deps.analytics` baseline usage as transitional and fix it rather than copying
+it forward.
+
 ### Shared host does not mean identical concrete dependencies for every plugin
 
 One host can still compose different dependency bundles for different plugins.
@@ -511,7 +550,28 @@ Provider middleware should return only the new execution keys it introduces.
 - Rely on oRPC’s merge behavior instead: the additional `context` you pass to `next` is merged with the existing context.
 - Providers write into `context.provided.*`; they do not write arbitrary top-level execution keys.
 - The provider helpers in this repo accept only the new fragment and merge it into the existing `provided` bag internally.
-- If you want ergonomic access, reshape locally in setup/handler code rather than creating global alias middleware for semantic lanes.
+- If you want ergonomic access, reshape locally in module setup rather than
+  creating package-wide alias middleware for semantic lanes.
+
+### Module-level inline execution-context expansion
+
+If a module wants flatter handler ergonomics, do the inline expansion at the
+**module setup** layer and nowhere higher.
+
+That means:
+
+- provider middleware still writes into `context.provided.*`
+- package-wide service middleware does **not** spread provider outputs onto
+  arbitrary top-level keys
+- module `setup.ts` is the one supported place to reshape the execution
+  context for the handlers in that module
+
+Why this rule exists:
+
+- it preserves a clear semantic split between host inputs and runtime-derived
+  execution keys
+- it keeps package-wide middleware honest
+- it lets each module expose only the runtime keys its handlers actually use
 
 For typing the provided execution context:
 
@@ -550,11 +610,13 @@ When deciding where something belongs:
 
 Examples:
 
-- `deps.logger`, `deps.analytics`, `deps.dbPool` are host-owned dependencies.
+- `deps.logger` and `deps.dbPool` are host-owned dependencies.
 - `scope.workspaceId` is stable business scope.
 - `config.readOnly` and `config.limits.maxAssignmentsPerTask` are stable package behavior config.
 - `invocation.traceId` is required per-call input.
 - `provided.sql`, `provided.feedbackSession`, and `provided.repo` are execution keys created/attached by middleware or module setup.
+- analytics should ultimately follow this same runtime-capability pattern rather
+  than remain a raw `deps.*` read.
 
 ### Kit-Level Middleware Pattern
 

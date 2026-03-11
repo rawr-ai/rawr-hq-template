@@ -30,6 +30,10 @@ preserve unless the architecture still justifies them after classification.
   Do not invent in-between capabilities while exploring.
 - Plugin-specific dependency configuration is allowed, but agents must model it
   as explicit typed code/config at the plugin boundary, not as a hidden DSL.
+- Distinguish sharply between:
+  - ports (`src/orpc/ports/*`)
+  - host adapters (`src/orpc/host-adapters/*`)
+  - provider middleware (`src/orpc/middleware/*`)
 
 ## Workflow
 
@@ -53,6 +57,13 @@ Classify each part of the integration into one or more of these buckets:
 5. service-local runtime behavior
 
 Do not skip this step.
+
+For analytics specifically:
+
+- do not preserve the current direct `deps.analytics` usage just because it
+  exists in the codebase today
+- treat provider-backed analytics as the target posture while integrating a
+  real provider
 
 Also record whether the integration is:
 
@@ -78,6 +89,8 @@ Only after framing and classification:
 - propose the concrete code shape
 - identify what belongs in the package vs the host
 - identify what belongs in packaged SDK vs service layer vs provider middleware
+- if flattening execution context is useful for handlers, keep that reshaping at
+  module `setup.ts`, not at package-wide middleware scope
 
 ### 5. Feed the learning back
 
@@ -117,3 +130,5 @@ architecture to move.
 - Do not assume plugin ownership of a runtime surface means plugin ownership of
   concrete capability adapters. In this architecture, runtime host composition
   owns concrete adapter wiring; plugins/packages consume ports.
+- Do not teach agents that analytics is a raw long-term `deps.*` dependency;
+  the integration work should correct that seam, not reinforce it.
