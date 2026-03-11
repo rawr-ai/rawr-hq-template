@@ -73,7 +73,7 @@ enough.
 
 Today the package already shows:
 
-- stable host-supplied deps in the baseline/service boundary, such as
+- stable host-supplied deps in the runtime boundary, such as
   `logger`, `analytics`, `clock`, and `dbPool`
 - a provider pattern where a host-supplied prerequisite becomes a downstream
   execution resource, for example `deps.dbPool -> provided.sql`
@@ -81,6 +81,17 @@ Today the package already shows:
 - package behavior configuration under `config`
 - host/framework-owned concrete integration outside the service seam, such as
   OpenTelemetry host adapters
+
+One important live-code nuance matters here:
+
+- the service authoring seam in `src/service/base.ts` does **not** declare
+  `logger` or `analytics`
+- those still arrive through the SDK baseline `BaseDeps` layer
+- that means the current ambiguity is partly caused by the system teaching two
+  different things at once:
+  - service authors only declare package-local deps like `dbPool` and `clock`
+  - but handlers/middleware still see additional baseline deps that were never
+    declared in the service-local `initialContext`
 
 So the ambiguity is **not** that there is literally no pattern.
 
@@ -155,6 +166,8 @@ Analytics is currently ambiguous in the codebase because:
 - the docs/posture increasingly treat provider-backed analytics as the target
   direction
 - but the runtime baseline still carries `analytics` directly in `BaseDeps`
+- required service analytics middleware and SDK baseline analytics emission both
+  still type against `context.deps.analytics`
 
 That makes analytics a transitional seam and a bad teaching example for agents
 unless we describe it explicitly as transitional.
@@ -164,12 +177,36 @@ unless we describe it explicitly as transitional.
 Telemetry also exposes the conceptual layering:
 
 - OpenTelemetry binding is host/framework-owned
-- logger is a stable host capability
+- logger is currently still an intentional stable host capability in the
+  baseline SDK layer
 - analytics currently behaves like a stable host capability in code, but may not
   remain that way architecturally
 
 So "dependency" can sound overloaded even when the underlying roles are
 different.
+
+## Live-Code Clarification
+
+The current code does **not** support the broad claim "baseline-injected
+dependencies are categorically wrong."
+
+The live system is more specific than that:
+
+- baseline `logger` is still part of the intended SDK baseline capability model
+- baseline `analytics` is the seam explicitly called transitional by the
+  posture docs
+- service-local declaration in `src/service/base.ts` is already narrower than
+  the deeper runtime baseline and only declares package-local deps
+
+So the cleanup target is not "remove all baseline injection."
+
+The more accurate cleanup target is:
+
+- clarify the semantic split between service-declared deps and deeper SDK
+  baseline deps
+- stop treating `analytics` and `logger` as if they are the same kind of
+  dependency question
+- avoid letting current transitional analytics behavior teach the general model
 
 ## What This Document Is Not Trying To Settle
 
@@ -233,6 +270,16 @@ The semantic blur happens internally:
 So internally the name `InitialContext` no longer means "declared service input
 lanes." It means "fully merged runtime context." That is the main semantic
 problem this slice fixes.
+
+There is a second, related pressure point:
+
+- `src/service/base.ts` authors only package-local deps/config/scope/invocation
+- `src/orpc/base.ts` still widens the runtime dependency bag with baseline
+  `logger` and `analytics`
+
+That split is not necessarily wrong, but it must become explicit enough that
+agents do not mistake "visible at runtime" for "must be declared here by the
+service author."
 
 ## Non-Goals
 
