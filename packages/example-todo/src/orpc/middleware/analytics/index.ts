@@ -11,141 +11,30 @@
  * They supply runtime analytics behavior through required service middleware at
  * the implementer seam.
  */
-import type { BaseMetadata } from "../base";
-import type { AnalyticsClient, Logger } from "../base";
-import { createBaseMiddleware } from "../base-foundation";
-import { createNormalMiddlewareBuilder } from "../factory/middleware";
+import type { BaseMetadata } from "../../base";
+import type { AnalyticsClient, Logger } from "../../base";
+import { createBaseMiddleware } from "../../base-foundation";
+import { createNormalMiddlewareBuilder } from "../../factory/middleware";
+import { getProcedureMeta, resolveLocalAnalyticsPayload } from "./helpers";
+import {
+  clearAnalyticsState,
+  getLocalAnalyticsContributors,
+  getRequiredAnalyticsContributor,
+  setRequiredAnalyticsContributor,
+} from "./state";
+import {
+  requiredAnalyticsMiddlewareBrand,
+  type AnalyticsPayloadArgs,
+  type RequiredServiceAnalyticsMiddleware,
+  type RequiredServiceAnalyticsMiddlewareInput,
+  type ServiceAnalyticsMiddlewareInput,
+} from "./types";
 
-type AnalyticsPayloadArgs<
-  TMeta extends BaseMetadata,
-  TContext extends object,
-> = {
-  context: TContext;
-  meta: TMeta;
-  path: readonly string[];
-  pathLabel: string;
-  outcome: "success" | "error";
-};
-
-type AnalyticsPayloadContributor<
-  TMeta extends BaseMetadata,
-  TContext extends object,
-> = (args: AnalyticsPayloadArgs<TMeta, TContext>) => Record<string, unknown> | undefined;
-
-export type RequiredServiceAnalyticsMiddlewareInput<
-  TMeta extends BaseMetadata = BaseMetadata,
-  TContext extends object = object,
-> = {
-  payload?: (args: AnalyticsPayloadArgs<TMeta, TContext>) => Record<string, unknown>;
-};
-
-export type ServiceAnalyticsMiddlewareInput<
-  TMeta extends BaseMetadata = BaseMetadata,
-  TContext extends object = object,
-> = {
-  payload?: (args: AnalyticsPayloadArgs<TMeta, TContext>) => Record<string, unknown>;
-};
-
-const requiredAnalyticsMiddlewareBrand = Symbol("rawr.orpc.requiredAnalyticsMiddleware");
-
-export type RequiredServiceAnalyticsMiddleware<
-  TContext extends object = object,
-  TMeta extends BaseMetadata = BaseMetadata,
-> = ReturnType<
-  typeof createNormalMiddlewareBuilder<TContext, TMeta>
->["middleware"] extends (callback: infer _T) => infer TMiddleware
-  ? TMiddleware & { readonly [requiredAnalyticsMiddlewareBrand]: "analytics" }
-  : never;
-
-const analyticsState = new WeakMap<object, {
-  requiredContributor?: AnalyticsPayloadContributor<any, any>;
-  localContributors?: AnalyticsPayloadContributor<any, any>[];
-}>();
-
-function getAnalyticsCarrier(context: object) {
-  const maybeInvocation = (context as { invocation?: object }).invocation;
-  if (typeof maybeInvocation === "object" && maybeInvocation !== null) {
-    return maybeInvocation;
-  }
-
-  const maybeProvided = (context as { provided?: object }).provided;
-  return typeof maybeProvided === "object" && maybeProvided !== null ? maybeProvided : context;
-}
-
-function getAnalyticsState(context: object) {
-  const carrier = getAnalyticsCarrier(context);
-  let state = analyticsState.get(carrier);
-  if (!state) {
-    state = {};
-    analyticsState.set(carrier, state);
-  }
-
-  return state;
-}
-
-function clearAnalyticsState(context: object) {
-  analyticsState.delete(getAnalyticsCarrier(context));
-}
-
-function getProcedureMeta<TMeta extends BaseMetadata>(
-  procedure: unknown,
-  fallback: TMeta,
-): TMeta {
-  const anyProcedure = procedure as { ["~orpc"]?: { meta?: TMeta } };
-  return anyProcedure?.["~orpc"]?.meta ?? fallback;
-}
-
-function getRequiredAnalyticsContributor<
-  TMeta extends BaseMetadata,
-  TContext extends object,
->(context: TContext) {
-  return getAnalyticsState(context).requiredContributor as
-    | AnalyticsPayloadContributor<TMeta, TContext>
-    | undefined;
-}
-
-function setRequiredAnalyticsContributor<
-  TMeta extends BaseMetadata,
-  TContext extends object,
->(
-  context: TContext,
-  contributor: AnalyticsPayloadContributor<TMeta, TContext>,
-) {
-  getAnalyticsState(context).requiredContributor = contributor as AnalyticsPayloadContributor<any, any>;
-}
-
-function getLocalAnalyticsContributors<
-  TMeta extends BaseMetadata,
-  TContext extends object,
->(context: TContext) {
-  const state = getAnalyticsState(context);
-  state.localContributors ??= [];
-  return state.localContributors as AnalyticsPayloadContributor<TMeta, TContext>[];
-}
-
-function resolveLocalAnalyticsPayload<
-  TMeta extends BaseMetadata,
-  TContext extends object,
->(
-  context: TContext,
-  args: AnalyticsPayloadArgs<TMeta, TContext>,
-) {
-  const contributors = getAnalyticsState(context).localContributors as
-    | AnalyticsPayloadContributor<TMeta, TContext>[]
-    | undefined
-    ?? [];
-
-  if (contributors.length === 0) {
-    return {};
-  }
-
-  const payload = Object.assign(
-    {},
-    ...contributors.map((contributor) => contributor(args) ?? {}),
-  );
-
-  return payload;
-}
+export type {
+  RequiredServiceAnalyticsMiddleware,
+  RequiredServiceAnalyticsMiddlewareInput,
+  ServiceAnalyticsMiddlewareInput,
+} from "./types";
 
 function brandRequiredAnalyticsMiddleware<
   TContext extends object,
