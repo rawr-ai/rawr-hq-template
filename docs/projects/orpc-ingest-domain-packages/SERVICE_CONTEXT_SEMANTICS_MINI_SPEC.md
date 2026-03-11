@@ -1,4 +1,4 @@
-# Mini Spec: Service Context Semantics Cleanup
+# Mini Spec: Service Context Semantics and Dependency Declaration
 
 ## Purpose
 
@@ -15,6 +15,174 @@ more explicit in the SDK/service factory layer without thrashing the
 author-facing service definition surface.
 
 This is a prerequisite semantic cleanup, not a middleware redesign.
+
+## Status
+
+This document captures the current working hypothesis from an exploratory
+conversation.
+
+It is **not locked in**.
+
+It intentionally preserves disagreement and open tension, including the
+possibility that some of the current direction here is wrong or incomplete.
+
+In particular:
+
+- this is **not** a finalized governance or enforcement system
+- this is **not** the final dependency declaration model
+- some floated enforcement examples from the conversation, especially
+  package-specific allow/deny-list style approaches, are explicitly considered
+  poor and unmaintainable and should **not** be treated as accepted direction
+
+The likely next step after this document is a behind-the-scenes refactor to
+simplify the service/context seam before deeper middleware design resumes.
+
+## The Crux
+
+The main ambiguity is not just "what is context?" but:
+
+- where a package declares that it needs something
+- whether that thing is a host-supplied prerequisite or a middleware-provided
+  execution resource
+- whether a value belongs in `deps`, `config`, or `provided`
+- whether agents should construct runtime resources directly or consume a
+  canonical provided form
+
+The pressure point is that an agent often starts from a business-logic need:
+
+- "I need analytics"
+- "I need SQL"
+- "I need a repo"
+
+and then has to decide where that need should be declared.
+
+Without a clear classification rule, multiple patterns look plausible:
+
+- put a constructed client in `deps`
+- put primitive infrastructure input in `config`
+- add a provider that derives the client from a prerequisite
+- bypass the provider and consume the prerequisite directly
+
+That is the crux this document is trying to make explicit.
+
+## Why The Crux Exists
+
+The ambiguity exists because the codebase currently demonstrates multiple valid
+layers, but does not yet teach one canonical classification rule strongly
+enough.
+
+Today the package already shows:
+
+- stable host-supplied deps in the baseline/service boundary, such as
+  `logger`, `analytics`, `clock`, and `dbPool`
+- a provider pattern where a host-supplied prerequisite becomes a downstream
+  execution resource, for example `deps.dbPool -> provided.sql`
+- module-local provider composition where `provided.sql -> provided.repo`
+- package behavior configuration under `config`
+- host/framework-owned concrete integration outside the service seam, such as
+  OpenTelemetry host adapters
+
+So the ambiguity is **not** that there is literally no pattern.
+
+The ambiguity is that there are several adjacent concepts:
+
+- stable host prerequisite
+- stable package behavior config
+- runtime execution resource
+- host/framework integration detail
+
+and agents do not yet have a hard-enough way to classify a new need into one of
+those buckets.
+
+That ambiguity shows up most obviously when someone asks:
+
+- "Should the host pass me the analytics client directly?"
+- "Should SQL be a direct dependency or a provider output?"
+- "Does a database URL belong in config or deps?"
+- "If telemetry is baseline, why does it also feel provided?"
+
+## Current Working Hypothesis
+
+My current hypothesis is:
+
+- there really are two valid layers:
+  - host-supplied prerequisites/capabilities
+  - middleware-provided execution resources
+- the problem is not that we failed to choose a single layer
+- the problem is that we have not yet encoded the classification rule that
+  tells agents which layer a thing belongs to
+
+The useful working distinction is:
+
+- `deps` = stable host-owned prerequisites or baseline capabilities
+- `config` = stable package behavior knobs, not infrastructure composition
+- `scope` = stable business/client-instance identity
+- `invocation` = required per-call input
+- `provided` = runtime execution resources derived in the pipeline
+
+In that model:
+
+- a provider does not replace host dependencies
+- a provider consumes host prerequisites and produces execution resources
+
+So the question should not be:
+
+- "host dependency or provider?"
+
+It should be:
+
+- "what is the host prerequisite?"
+- "what is the derived runtime resource?"
+- "which of those should business logic consume?"
+
+## Examples Of The Ambiguity
+
+### SQL / database
+
+The current SQL provider already encodes the layered model:
+
+- host supplies `dbPool`
+- provider derives `sql`
+- module middleware derives `repo`
+
+This is materially different from directly passing a constructed SQL client
+through the package boundary.
+
+### Analytics
+
+Analytics is currently ambiguous in the codebase because:
+
+- the docs/posture increasingly treat provider-backed analytics as the target
+  direction
+- but the runtime baseline still carries `analytics` directly in `BaseDeps`
+
+That makes analytics a transitional seam and a bad teaching example for agents
+unless we describe it explicitly as transitional.
+
+### Telemetry / logging
+
+Telemetry also exposes the conceptual layering:
+
+- OpenTelemetry binding is host/framework-owned
+- logger is a stable host capability
+- analytics currently behaves like a stable host capability in code, but may not
+  remain that way architecturally
+
+So "dependency" can sound overloaded even when the underlying roles are
+different.
+
+## What This Document Is Not Trying To Settle
+
+This document does **not** settle:
+
+- the final enforcement model
+- the final analytics architecture
+- whether every future capability should become provider-backed
+- package-by-package allowlist or denylist policy structures
+- broad governance machinery
+
+It exists to capture the current version of the crux and the most useful
+working distinctions before the next round of refactoring and design.
 
 ## Decision Summary
 
