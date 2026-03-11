@@ -7,9 +7,9 @@ before the next middleware integration slices.
 
 The goal is to make the distinction between:
 
-- service-declared host input
-- per-call invocation input
-- runtime-provided execution resources
+- service-declared stable input
+- per-call invocation/client input
+- execution-time provided resources
 
 more explicit in the SDK/service factory layer without thrashing the
 author-facing service definition surface.
@@ -232,14 +232,22 @@ semantics.
 
 Instead:
 
-- keep ORPC-facing declaration terminology:
+- keep the current author-facing declaration shape:
   - `initialContext`
   - `invocationContext`
   - `metadata`
+- use ORPC terminology more directly in the internal projection model where it
+  actually applies:
+  - `ExecutionContext` instead of generic `RuntimeContext`
+  - explicit acknowledgement that oRPC itself talks about:
+    - `initial context`
+    - `execution context`
+    - client-side `client context`
 - clarify the internal factory/type model so it explicitly distinguishes:
-  - declared initial lanes
-  - runtime context
-  - required-extension runtime context
+  - stable initial lanes declared by the service
+  - the full oRPC initial context assembled at the boundary
+  - execution context
+  - required-extension execution context
 - keep provider output under `context.provided.*`
 - do **not** flatten provider-derived resources to top-level runtime lanes
 
@@ -280,6 +288,169 @@ There is a second, related pressure point:
 That split is not necessarily wrong, but it must become explicit enough that
 agents do not mistake "visible at runtime" for "must be declared here by the
 service author."
+
+## ORPC Alignment
+
+Official oRPC context docs use these terms:
+
+- **Initial Context**: context provided explicitly when invoking a procedure
+- **Execution Context**: context generated during procedure execution, usually
+  via middleware
+
+Official oRPC client docs also use:
+
+- **Client Context**: the client-side context type passed when invoking a
+  client
+
+This means our current service-definition vocabulary is only **partly**
+identical to oRPC's terminology.
+
+### Where we should align directly
+
+Use **Execution Context** for the full context seen by middleware/handlers.
+
+That is a real semantic match with oRPC and is better than an internal term
+like "runtime context".
+
+### Where we intentionally keep an SDK convention
+
+Keep the author-facing `invocationContext` property for now.
+
+Reason:
+
+- it tells service authors what this context is for in package semantics:
+  per-call invocation input
+- it is clearer inside package authoring than a more generic label like
+  `clientContext`
+- the actual oRPC client context is broader infrastructure terminology than the
+  semantic lane we expose to service authors
+
+### Where we must be explicit about divergence
+
+Our author-facing `initialContext` property is **not** the full oRPC initial
+context object.
+
+Instead, it is the **stable initial lane declaration** authored by the service:
+
+- `deps`
+- `scope`
+- `config`
+
+At the package boundary, the SDK assembles the full oRPC initial context by
+combining:
+
+- stable initial lanes
+- the per-call `invocationContext`
+- the initial empty `provided` bucket
+
+So if we keep the property name `initialContext`, the docs and internal types
+must explicitly state that it means:
+
+- "stable initial lanes declared by the service"
+
+not:
+
+- "the full concrete oRPC initial context object passed to execution"
+
+## Proposed Projection Model
+
+The projection model should distinguish four layers:
+
+```ts
+type StableInitialContext = {
+  deps: ...;
+  scope: ...;
+  config: ...;
+};
+
+type InvocationContext = ...;
+
+type ORPCInitialContext = StableInitialContext & {
+  invocation: InvocationContext;
+  provided: {};
+};
+
+type ExecutionContext<TProvided = {}> = StableInitialContext & {
+  invocation: InvocationContext;
+  provided: TProvided;
+};
+
+type RequiredExtensionExecutionContext =
+  Omit<ExecutionContext, "provided">;
+```
+
+In this model:
+
+- service authors declare `StableInitialContext` through the existing
+  `initialContext` property
+- the boundary assembles `ORPCInitialContext`
+- middleware/handlers run against `ExecutionContext`
+- required service middleware runs against
+  `RequiredExtensionExecutionContext`
+
+## Authoring Confusion: Dependencies Vs Provided Resources
+
+The current codebase does **not** yet make the distinction obvious enough at
+procedure/module authoring time.
+
+There is some help today:
+
+- typed `context` tells authors whether a value is currently available under
+  `deps` or `provided`
+- provider middleware and module middleware already demonstrate the layering in
+  concrete code such as:
+  - `deps.dbPool -> provided.sql`
+  - `provided.sql -> provided.repo`
+
+But that is not enough to make discovery easy.
+
+The author still has to answer:
+
+- "should I ask for this as a stable dependency?"
+- "should I consume it as a provided execution resource?"
+- "where do I even look to find which one it is?"
+
+So the current `provided` concept is useful, but not yet sufficient as the
+authoring-story by itself.
+
+## Exploratory Direction For Procedure Authoring
+
+One important open question is whether procedure authors should keep reaching
+into semantic bags directly, or whether we should create a narrower authoring
+funnel before handlers are written.
+
+Two viable directions remain open:
+
+### Option A: keep the semantic bags, but clarify and strengthen the funnel
+
+- keep:
+  - `context.deps`
+  - `context.scope`
+  - `context.config`
+  - `context.invocation`
+  - `context.provided`
+- make the projection model and docs explicit enough that authors know:
+  - stable host capabilities/prerequisites live in `deps`
+  - execution resources derived during the pipeline live in `provided`
+- keep module setup as the supported place to reshape or alias execution values
+  for module-local ergonomics
+
+This is the more conservative path.
+
+### Option B: add a narrower authoring surface above the bags
+
+- keep the semantic bags internally
+- but let service/module setup explicitly reshape the values procedures consume
+- procedure handlers would then use a narrower execution-facing surface rather
+  than reasoning directly about origin bags
+
+This could reduce author confusion, but it is a larger design step and should
+not be conflated with the initial projection cleanup.
+
+Current recommendation:
+
+- do the projection-model cleanup first
+- then revisit whether handler authoring still needs a stronger funnel
 
 ## Non-Goals
 
