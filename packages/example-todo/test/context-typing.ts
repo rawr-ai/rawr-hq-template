@@ -240,6 +240,17 @@ const validBoundary: CreateClientOptions = {
 };
 void validBoundary;
 
+const invalidBoundaryDeps: CreateClientOptions["deps"] = {
+  ...deps,
+  // @ts-expect-error telemetry no longer belongs in CreateClientOptions["deps"].
+  telemetry: {
+    getActiveSpan() {
+      return undefined;
+    },
+  },
+};
+void invalidBoundaryDeps;
+
 const invalidBoundary: CreateClientOptions = {
   deps,
   scope: {

@@ -14,10 +14,10 @@ import { createBaseMiddleware } from "../../baseline/middleware";
 import type { BaseMetadata } from "../../baseline/types";
 import type { Logger } from "../../ports/logger";
 import { createNormalMiddlewareBuilder } from "../../factory/middleware";
-import { trace } from "../../host-adapters/telemetry/opentelemetry";
 import { getErrorDetails } from "./errors";
 import { createObservabilityHandler } from "./handler";
 import { deriveServiceNames, prefixAttributes } from "./naming";
+import { getActiveSpan } from "./otel";
 import {
   createBaseObservabilityProfile,
   resolveRequiredServiceObservabilityProfile,
@@ -149,7 +149,7 @@ export function createServiceObservabilityMiddleware<
   return createNormalMiddlewareBuilder<TContext, TMeta>({
     baseMetadata,
   }).middleware(async ({ context, path, procedure, next }) => {
-    const span = trace.getActiveSpan();
+    const span = getActiveSpan();
     const startedAt = Date.now();
     const meta = getProcedureMeta(procedure, baseMetadata);
     const pathLabel = path.join(".");

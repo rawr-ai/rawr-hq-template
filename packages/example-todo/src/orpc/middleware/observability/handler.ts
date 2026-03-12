@@ -1,7 +1,7 @@
-import { SpanStatusCode, trace } from "../../host-adapters/telemetry/opentelemetry";
 import type { BaseMetadata } from "../../baseline/types";
 import type { Logger } from "../../ports/logger";
 import { getErrorDetails } from "./errors";
+import { getActiveSpan, getTraceId, setSpanError } from "./otel";
 import type { ResolvedObservabilityProfile } from "./profiles";
 import type { ObservabilityHandlerArgs } from "./types";
 
@@ -24,11 +24,11 @@ export function createObservabilityHandler<
     procedure,
     next,
   }: ObservabilityHandlerArgs<TMeta, TContext>) => {
-    const span = trace.getActiveSpan();
+    const span = getActiveSpan();
     const startedAt = Date.now();
     const meta = options.getMeta(procedure);
     const pathLabel = path.join(".");
-    const spanTraceId = span?.spanContext().traceId;
+    const spanTraceId = getTraceId(span);
 
     span?.setAttributes(options.profile.getSpanAttributes({
       context,
@@ -102,13 +102,12 @@ export function createObservabilityHandler<
           ? error
           : new Error(String(details.errorMessage ?? "procedure failed")),
       );
-      span?.setStatus({
-        code: SpanStatusCode.ERROR,
-        message:
-          typeof details.errorMessage === "string"
-            ? details.errorMessage
-            : "procedure failed",
-      });
+      setSpanError(
+        span,
+        typeof details.errorMessage === "string"
+          ? details.errorMessage
+          : "procedure failed",
+      );
       span?.addEvent(options.profile.failedEvent, {
         path: pathLabel,
         durationMs,

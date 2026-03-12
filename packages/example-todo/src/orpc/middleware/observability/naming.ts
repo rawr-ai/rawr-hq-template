@@ -1,4 +1,4 @@
-import type { Attributes } from "../../host-adapters/telemetry/opentelemetry";
+import type { Attributes } from "@opentelemetry/api";
 import type { BaseMetadata } from "../../baseline/types";
 import type { ObservabilityFields } from "./types";
 

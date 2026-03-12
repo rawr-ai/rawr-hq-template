@@ -235,7 +235,7 @@ export const createServiceProvider = service.createProvider;
  * @remarks
  * `src/service/impl.ts` imports the root contract and calls this once,
  * supplying the required service middleware extensions. The returned
- * implementer already includes SDK baseline telemetry and then auto-attaches
- * the required extensions in canonical order.
+ * implementer already includes SDK baseline middleware and then auto-attaches
+ * the required service middleware extensions in canonical order.
  */
 export const createServiceImplementer = service.createImplementer;

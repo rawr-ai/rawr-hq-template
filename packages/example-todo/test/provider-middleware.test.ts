@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { createRouterClient, implement } from "@orpc/server";
 import { Type } from "typebox";
 
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "../src/orpc/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "../src/orpc/host-adapters/logger/embedded-placeholder";
 import { createContractBuilder } from "../src/orpc/factory/contract";
 import {
   defineService,
@@ -10,6 +12,13 @@ import {
   type FeedbackClient,
 } from "../src/orpc-sdk";
 import { feedbackProvider } from "../src/orpc/middleware/feedback-provider";
+
+function createBaselineDeps() {
+  return {
+    logger: createEmbeddedPlaceholderLoggerAdapter(),
+    analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+  };
+}
 
 describe("provider middleware", () => {
   it("adds feedback execution context only when attached", async () => {
@@ -202,13 +211,7 @@ describe("provider middleware", () => {
     const client = createRouterClient(router, {
       context: {
         deps: {
-          logger: {
-            info() {},
-            error() {},
-          },
-          analytics: {
-            track() {},
-          },
+          ...createBaselineDeps(),
         },
         scope: {},
         config: {
@@ -290,13 +293,7 @@ describe("provider middleware", () => {
     const client = createRouterClient(router, {
       context: {
         deps: {
-          logger: {
-            info() {},
-            error() {},
-          },
-          analytics: {
-            track() {},
-          },
+          ...createBaselineDeps(),
         },
         scope: {},
         config: {
@@ -394,13 +391,7 @@ describe("provider middleware", () => {
     const client = createRouterClient(router, {
       context: {
         deps: {
-          logger: {
-            info() {},
-            error() {},
-          },
-          analytics: {
-            track() {},
-          },
+          ...createBaselineDeps(),
         },
         scope: {},
         config: {

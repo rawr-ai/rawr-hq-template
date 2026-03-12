@@ -5,6 +5,8 @@ import { createRouterClient, safe } from "@orpc/server";
 import { Type } from "typebox";
 
 import { createClient } from "../src";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "../src/orpc/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "../src/orpc/host-adapters/logger/embedded-placeholder";
 import {
   createClientOptions,
   invocation,
@@ -15,6 +17,16 @@ import {
   defineService,
   schema,
 } from "../src/orpc-sdk";
+
+function createBaselineDeps(
+  logs: LogEntry[],
+  analytics: AnalyticsEntry[],
+) {
+  return {
+    logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logs }),
+    analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analytics }),
+  };
+}
 
 class RecordingSpan implements Span {
   readonly attributes: Record<string, string | number | boolean> = {};
@@ -274,30 +286,7 @@ describe("example-todo observability", () => {
     const client = createRouterClient(router, {
       context: {
         deps: {
-          logger: {
-            info(event: string, payload?: Record<string, unknown>) {
-              logs.push({
-                level: "info",
-                event,
-                payload: payload ?? {},
-              });
-            },
-            error(event: string, payload?: Record<string, unknown>) {
-              logs.push({
-                level: "error",
-                event,
-                payload: payload ?? {},
-              });
-            },
-          },
-          analytics: {
-            track(event: string, payload?: Record<string, unknown>) {
-              analytics.push({
-                event,
-                payload: payload ?? {},
-              });
-            },
-          },
+          ...createBaselineDeps(logs, analytics),
         },
         scope: {
           workspaceId: "workspace-local",

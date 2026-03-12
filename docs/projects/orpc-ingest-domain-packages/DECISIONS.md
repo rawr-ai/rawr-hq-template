@@ -145,6 +145,9 @@ Keep a single dedicated dependency bag at `context.deps` for host-provided, stab
 Concretely:
 
 - baseline deps and service deps are a type-authoring distinction only (`BaseDeps` extended by service deps),
+- capability contracts used by baseline deps should still live under
+  `src/orpc/ports/*` when they are swappable package-facing contracts (for
+  example logger and analytics),
 - they do **not** become separate runtime bags such as `context.base` and `context.deps`,
 - stable business/client-instance scope lives under `context.scope`,
 - stable package behavior/configuration lives under `context.config`,
@@ -187,12 +190,15 @@ Use this hard boundary model:
   centralized rather than duplicated in each package-local proto SDK.
 - Plugin-specific dependency configuration is allowed, but it must be authored
   as explicit typed code at the plugin boundary, not as a hidden DSL.
-- OpenTelemetry is a **framework/internal concrete integration**, configured by
-  the runtime host once per deployment boundary. It is not part of the package
-  adapter-contract model by default.
+- Telemetry contract and wiring are governed by Decision #9. Do not treat the
+  current `example-todo` package-local telemetry seam as the canonical target
+  architecture.
 - Analytics should follow the provider pattern as well. Treat the current
   `deps.analytics` baseline usage in `example-todo` as transitional while real
   provider-backed analytics is integrated.
+- Logger, analytics, and telemetry contracts are SDK ports even when baseline
+  still depends on them through `BaseDeps`; baseline owns the dependency
+  requirement, not the port contract definition.
 - Provider outputs stay under `context.provided.*`; module setup is the only
   supported place to inline/reshape those execution keys for module-local
   handler ergonomics.
@@ -217,3 +223,54 @@ boundary rule:
 - the host for that deployment still owns concrete adapters
 - the plugin/package boundary still consumes ports rather than owning concrete
   implementations
+
+## Decision #9 (2026-03-12)
+
+### Question
+How should telemetry work across hosts, plugins, and service packages?
+
+### Decision
+Telemetry is a **host-owned OpenTelemetry bootstrap + oRPC/OTel context
+propagation seam**, not a service-package dependency seam.
+
+Concretely:
+
+- each host/runtime bootstraps its own OpenTelemetry SDK once
+- the canonical bootstrap helper lives in `packages/core/src/orpc/telemetry.ts`
+- hosts register oRPC instrumentation during bootstrap
+- service packages and plugins consume the active span from OpenTelemetry
+  runtime context
+- service packages own telemetry semantics (attributes/events/log enrichment),
+  not SDK bootstrap
+- plugin and host request/network middleware own ingress/request telemetry
+  outside service-package boundaries
+- telemetry does **not** travel through service package boundaries as
+  `BaseDeps.telemetry`
+
+### Why
+OpenTelemetry already provides the right abstraction split:
+
+- host/runtime owns SDK lifecycle, exporters, resources, sampling, and
+  propagators
+- instrumented code consumes the active runtime context
+
+oRPC’s integration sits on top of that model by registering instrumentation. It
+does not turn telemetry into a package dependency that callers should pass
+through service boundaries.
+
+This supports:
+
+- one shared host runtime today
+- multiple future hosts later
+- stable downstream package shape across hosts
+- plugin-specific ingress/request telemetry without forcing host bootstrap into
+  service packages
+
+### Implication
+Telemetry is intentionally different from other seams such as SQL:
+
+- SQL is a provider-style execution capability (`deps.dbPool -> provided.sql`)
+- telemetry rides on host-owned OTel bootstrap + active runtime context
+
+Migration should move package observability code toward active-span access and
+remove telemetry from the package dependency model.

@@ -1,4 +1,5 @@
-import type { Attributes, Span } from "../../host-adapters/telemetry/opentelemetry";
+import type { Attributes, Span } from "@opentelemetry/api";
+
 import type { BaseMetadata } from "../../baseline/types";
 import type { Logger } from "../../ports/logger";
 import {

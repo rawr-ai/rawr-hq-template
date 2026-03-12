@@ -10,6 +10,31 @@
 For hard adapter-ownership rules, see `DECISIONS.md` Decision #8 and
 `ADAPTER_POSTURE.md`.
 
+For canonical telemetry architecture, see `TELEMETRY_DESIGN.md` and
+`DECISIONS.md` Decision #9.
+
+## Active Design Pressure: Service Deps vs Host Input
+
+The live code currently still uses a merged `deps` bag that includes both:
+
+- service-declared caller requirements
+- and SDK/baseline caller requirements
+
+Treat that as the **current implementation**, not as settled semantic guidance.
+
+The active design direction captured in
+`ADAPTER_PORTS_DESIGN_SCRATCH.md` is:
+
+- **service-declared deps** should mean only the caller requirements declared by
+  the service package itself
+- **host/framework caller requirements** should likely move to their own
+  top-level lane (`host`, `baseline`, or similar)
+- **execution-time derived values** remain separate under
+  `context.provided.*` (or a future renamed equivalent)
+
+Do not silently generalize from the current merged `deps` implementation as if
+that were the final model.
+
 ## Ports, Adapters, and Providers
 
 Use these terms precisely:
@@ -23,7 +48,7 @@ Use these terms precisely:
 Concrete examples in this repo:
 
 - `src/orpc/ports/db.ts` is a port.
-- `src/orpc/host-adapters/telemetry/opentelemetry.ts` is a host adapter.
+- `packages/core/src/orpc/telemetry.ts` is the host/runtime telemetry bootstrap seam.
 - `src/orpc/middleware/sql-provider.ts` is provider middleware.
 
 Do not collapse these into one category.
@@ -31,6 +56,43 @@ Do not collapse these into one category.
 - Ports define shape.
 - Host adapters satisfy or bind that shape concretely.
 - Providers provision execution-time capability for downstream handlers.
+
+## Telemetry Is Different
+
+Telemetry is not a normal service-package dependency seam.
+
+Use this rule:
+
+- SQL/feedback-style execution capabilities may flow through provider middleware
+  into `context.provided.*`
+- telemetry does not
+
+Telemetry is host-owned runtime bootstrap plus OpenTelemetry context
+propagation:
+
+- each host/runtime installs OpenTelemetry once
+- the host registers oRPC instrumentation
+- service/plugin code reads the active span from runtime context
+
+Therefore:
+
+- do not model telemetry as something callers pass through service package
+  boundaries
+- do not treat `BaseDeps.telemetry` as a target pattern
+- do not redesign telemetry as a service-local provider seam by default
+- do not generalize from the old package-local telemetry seam when designing
+  other cross-cutting capabilities
+- service/package observability should consume the active span from
+  OpenTelemetry runtime context (directly or through a tiny shared helper)
+
+Service packages still own observability semantics:
+
+- span attributes
+- span events
+- log enrichment derived from the active span
+
+Plugins and hosts still own ingress/request/network telemetry outside service
+packages.
 
 ## Agent Click Path (Recommended)
 
@@ -69,9 +131,12 @@ Always-on slots:
   - a service may be required to supply a service-authored runtime extension when baseline behavior cannot be correct without it
   - those extensions are enforced at `createServiceImplementer(...)`
 - Module/procedure-local observability and analytics are additive middleware, authored with `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` and attached where they belong (`modules/*/setup.ts` for module-wide additions, `modules/*/router.ts` for procedure-local additions).
-- `src/orpc/base.ts` is the always-on domain-package baseline definition surface.
+- `src/orpc/service/types.ts` is the always-on service projection surface for the proto SDK.
+- `src/orpc/service/define.ts` is the always-on service authoring surface (`defineService`, `ServiceOf`).
+- `src/orpc/baseline/{types,middleware,implementer}.ts` are the always-on baseline seams.
+- `src/orpc/context/types.ts` is the always-on execution-context type seam.
 - `src/orpc/factory/*` is the always-on internal helper layer for abstract oRPC builders.
-- `src/orpc/package-boundary.ts` owns the package boundary wiring used by `src/client.ts`.
+- `src/orpc/boundary/domain-package.ts` owns the package boundary wiring used by `src/client.ts`.
 - `src/orpc/middleware/*` is the always-on slot for kit-level middleware definitions.
 - `src/service/impl.ts` is the always-on oRPC composition surface (implement root contract + attach middleware).
 - `src/service/impl.ts` should supply required service middleware extensions (`observability`, `analytics`) to `createServiceImplementer(...)`, then compose package-wide providers/guards and any extra service middleware after that.
@@ -198,10 +263,19 @@ Not required in this phase:
 
 ## Context + Middleware Layering
 
-Use context/middleware at the level where each concern actually belongs:
+Use context/middleware at the level where each concern actually belongs.
+
+Important: this section mixes **current implementation** and **active target
+direction**. The current code still merges baseline requirements into `deps`;
+the active design conversation is testing whether that should split into
+service-declared deps plus a separate host/baseline top-level lane.
+
+Stable points:
 
 - Initial context carries explicit semantic lanes at the kit boundary.
-- `deps` should extend the kit baseline `BaseDeps` (mandatory `logger` and `analytics`), exported via the kit seam (`src/orpc-sdk.ts`).
+- Logger and analytics capability contracts live under
+  `src/orpc/ports/{logger,analytics}.ts`; telemetry is now handled through the
+  host-bootstrap/runtime-context model described in `TELEMETRY_DESIGN.md`.
 - `scope` should hold stable business/client-instance scope bound at `createClient(...)` time.
 - `config` should hold stable package behavior/configuration bound at `createClient(...)` time.
 - `invocation` should hold required per-call input passed through native oRPC client context.
@@ -221,11 +295,22 @@ Downstream inside handlers and middleware, both categories appear on the unified
 
 Use these runtime context categories consistently:
 
-- **`context.deps`**: host-provided, stable dependencies. This is the explicit dependency bag for injected services/capabilities the host owns.
+- **`context.deps`**: service-declared, caller-fulfilled dependencies in the
+  active target model. In the current implementation this is still widened by
+  baseline requirements, but that widening is under active reconsideration.
+- **`context.host` / `context.baseline`**: likely future top-level lane for
+  host/framework caller requirements. Exact naming is not locked in yet.
 - **`context.scope`**: stable business/client-instance scope bound when the client is created.
 - **`context.config`**: stable package behavior/configuration bound when the client is created.
 - **`context.invocation`**: per-call invocation input supplied through native oRPC client context.
 - **`context.provided`**: execution-time provider output bag for any downstream values attached/derived by middleware or setup (for example `provided.sql`, `provided.feedbackSession`, `provided.repo`, `provided.tasks`, `provided.tags`).
+
+The key semantic distinction is:
+
+- **host-provided** does **not** automatically mean `context.provided`
+- some host-owned capabilities may still belong to the up-front boundary
+- `context.provided` is specifically the later execution-time attached/derived
+  lane
 
 Do **not** create a second runtime dependency bag such as `context.base`.
 Do **not** use a generic runtime `metadata` bag by default. oRPC procedure metadata (`.meta(...)`) is separate from runtime context; if runtime grouping is needed later, use a specific name like `request`, not a generic `metadata` bucket.
@@ -235,14 +320,21 @@ Do **not** write back into `deps`, `scope`, `config`, or `invocation` from middl
 
 Practical defaults:
 
-- Access logger/clock as `context.deps.logger` / `context.deps.clock`.
+- Access clock as `context.deps.clock`.
+- Access logger/analytics through the current merged `context.deps.*`
+  implementation only as a transitional live-code fact, not as final target
+  guidance.
+- Access telemetry through the active OpenTelemetry span from runtime context,
+  not through `context.deps`.
 - Access stable scope as `context.scope.*`.
 - Access stable behavior config as `context.config.*`.
 - Access required invocation input as `context.invocation.*`.
 - Access provider-derived execution context as `context.provided.*`.
 - Treat `context.provided` keys as append-only. Providers must not overwrite an existing provided key.
 - Avoid alias-only middleware like `deps.logger -> logger` unless there is a concrete runtime reason.
-- Keep baseline deps and service deps as a type-authoring distinction (`BaseDeps` extended by service deps), not as separate runtime keys.
+- Treat the question of whether baseline deps and service deps should remain one
+  runtime key or split into separate runtime keys as an active design issue, not
+  as settled doctrine.
 
 ### Middleware Categories
 
@@ -356,6 +448,13 @@ application code, not a bespoke declarative language.
 Do not treat analytics as a permanent `context.deps.analytics` dependency shape
 just because the current `example-todo` code still does.
 
+Current posture:
+
+- telemetry now already follows the port + adapter model
+- logger, analytics, feedback, and SQL have explicit host-adapter homes
+- analytics is still transitional because the runtime emission path remains
+  `context.deps.analytics`, not a provider-backed execution capability
+
 Target posture:
 
 - analytics should be modeled through the same port/adapter/provider logic as
@@ -390,19 +489,23 @@ Examples:
 So "host-owned" means the host chooses and wires the concrete dependencies. It
 does **not** mean every plugin must receive one identical singleton.
 
-### OpenTelemetry guidance
+### Telemetry guidance
 
-OpenTelemetry is not part of the package-facing port model by default.
+Telemetry is intentionally different from the other host-owned capability
+seams.
 
 Treat it as:
 
-- framework/internal integration
-- configured by the runtime host once per deployment boundary
-- implemented through `src/orpc/host-adapters/telemetry/opentelemetry.ts`
-- consumed by package middleware through the framework seam
+- telemetry is not modeled as a service-package dependency
+- host/runtime OpenTelemetry SDK bootstrap in `packages/core/src/orpc/telemetry.ts`
+- host-specific bootstrap calls in runtime apps such as `apps/server/src/bootstrap.ts`
+- active-span access from OpenTelemetry runtime context inside service/package
+  observability
+- not a package-facing telemetry port and not a service-package dependency bag
 
-If a plugin later runs as its own standalone service, that standalone service is
-simply a new runtime host. The classification does not change.
+If a plugin later runs as its own standalone service, that standalone service
+is simply a new runtime host that bootstraps OpenTelemetry for itself and then
+exposes the same active-span behavior downstream.
 
 ### Middleware Authoring Pattern
 

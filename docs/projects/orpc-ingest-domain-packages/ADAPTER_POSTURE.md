@@ -134,7 +134,8 @@ For now:
 - OpenTelemetry usage in the SDK is a framework/internal integration detail
 - it is not automatically part of the package-facing port model
 - it is configured by the runtime host once per deployment boundary
-- it currently lives under `src/orpc/host-adapters/telemetry/`
+- it is bootstrapped from the host/runtime telemetry seam in
+  `packages/core/src/orpc/telemetry.ts`
 
 That means:
 
