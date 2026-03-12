@@ -3,7 +3,7 @@ import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
 import { implement } from "@orpc/server";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
-import type { BaseExecutionContext, BaseDeps } from "../base";
+import type { BaseDeps, ExecutionContext } from "../base";
 
 type AnyContractRouterObject = {
   [k: string]: AnyContractRouter;
@@ -14,7 +14,7 @@ type AnyContractRouterObject = {
  */
 export function createBareProcedureImplementer<
   const TContract extends AnyContractProcedure,
-  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
+  TContext extends ExecutionContext<BaseDeps, object, object, object>,
 >(contract: TContract) {
   return implement(contract).$context<TContext>();
 }
@@ -24,22 +24,22 @@ export function createBareProcedureImplementer<
  */
 export function createBareRouterImplementer<
   const TContract extends AnyContractRouterObject,
-  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
+  TContext extends ExecutionContext<BaseDeps, object, object, object>,
 >(contract: TContract) {
   return implement(contract).$context<TContext>();
 }
 
 export function createBareImplementer<
   const TContract extends AnyContractProcedure,
-  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
+  TContext extends ExecutionContext<BaseDeps, object, object, object>,
 >(contract: TContract): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBareImplementer<
   const TContract extends AnyContractRouterObject,
-  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
+  TContext extends ExecutionContext<BaseDeps, object, object, object>,
 >(contract: TContract): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBareImplementer<
   const TContract extends AnyContractProcedure | AnyContractRouterObject,
-  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
+  TContext extends ExecutionContext<BaseDeps, object, object, object>,
 >(contract: TContract) {
   if (isContractProcedure(contract)) {
     return createBareProcedureImplementer<
