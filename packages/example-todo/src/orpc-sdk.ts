@@ -9,11 +9,9 @@
 export type {
   BaseDeps,
   BaseMetadata,
-  InitialContext,
   ServiceDeclaration,
   ServiceDepsOf,
   ServiceMetadataOf,
-  ServiceContextOf,
   ServiceTypesOf,
 } from "./orpc/base";
 export type {

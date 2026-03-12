@@ -64,6 +64,46 @@ const derivedTypingMetadata: DerivedTypingService["Metadata"] = {
 };
 void derivedTypingMetadata;
 
+const declaredContext: DerivedTypingService["DeclaredContext"] = {
+  deps,
+  scope: {
+    workspaceId: "workspace-typing",
+  },
+  config: {
+    readOnly: false,
+    limits: {
+      maxAssignmentsPerTask: 2,
+    },
+  },
+};
+void declaredContext;
+
+const orpcInitialContext: DerivedTypingService["ORPCInitialContext"] = {
+  ...declaredContext,
+  invocation: {
+    traceId: "trace-typing",
+  },
+  provided: {},
+};
+void orpcInitialContext;
+
+const executionContext: DerivedTypingService["ExecutionContext"] = {
+  ...declaredContext,
+  invocation: {
+    traceId: "trace-typing",
+  },
+  provided: {},
+};
+void executionContext;
+
+const requiredExtensionExecutionContext: DerivedTypingService["RequiredExtensionExecutionContext"] = {
+  ...declaredContext,
+  invocation: {
+    traceId: "trace-typing",
+  },
+};
+void requiredExtensionExecutionContext;
+
 const derivedTypingContext: DerivedTypingService["Context"] = {
   deps,
   scope: {
@@ -81,6 +121,25 @@ const derivedTypingContext: DerivedTypingService["Context"] = {
   provided: {},
 };
 void derivedTypingContext;
+
+const executionContextAlias: DerivedTypingService["ExecutionContext"] = derivedTypingContext;
+void executionContextAlias;
+
+const invalidDeclaredContext: DerivedTypingService["DeclaredContext"] = {
+  ...declaredContext,
+  // @ts-expect-error DeclaredContext does not include invocation.
+  invocation: {
+    traceId: "trace-typing",
+  },
+};
+void invalidDeclaredContext;
+
+const invalidRequiredExtensionExecutionContext: DerivedTypingService["RequiredExtensionExecutionContext"] = {
+  ...requiredExtensionExecutionContext,
+  // @ts-expect-error Required service extension execution context excludes provided.
+  provided: {},
+};
+void invalidRequiredExtensionExecutionContext;
 
 // @ts-expect-error initialContext must include deps, scope, and config lanes.
 defineService<{

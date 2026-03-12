@@ -17,12 +17,14 @@ import {
   createBareRouterImplementer,
 } from "./factory/implementer";
 import type {
-  BaseContext,
-  InitialContext,
+  BaseExecutionContext,
+  DeclaredContext,
+  ExecutionContext,
+  ORPCInitialContext,
   ProvidedContext,
+  RequiredExtensionExecutionContext,
   ReservedContextKey,
   ReservedSemanticLaneKey,
-  ServiceContextOf,
 } from "./base-foundation";
 
 /**
@@ -72,13 +74,13 @@ export type ServiceMetadataOf<T extends object = {}> = BaseMetadata & T;
  *
  * @remarks
  * This helper is the safe way to derive a service's composed `Deps`,
- * `Metadata`, and lane-aware `Context` types from one declaration block while
- * still preserving the baseline helper seam internally.
+ * `Metadata`, and context projections from one declaration block while still
+ * preserving the baseline helper seam internally.
  *
  * Do not replace this with casts or ad hoc widened object types. If a future
- * helper cannot preserve `ServiceDepsOf`, `ServiceMetadataOf`, and
- * `ServiceContextOf`, the helper is wrong and should be redesigned rather than
- * patched over with silent typing workarounds.
+ * helper cannot preserve `ServiceDepsOf`, `ServiceMetadataOf`, and the
+ * execution-context projections, the helper is wrong and should be redesigned
+ * rather than patched over with silent typing workarounds.
  */
 export type ServiceTypesOf<
   T extends ServiceDeclaration,
@@ -88,7 +90,30 @@ export type ServiceTypesOf<
   Config: T["initialContext"]["config"];
   Invocation: T["invocationContext"];
   Metadata: ServiceMetadataOf<T["metadata"]>;
-  Context: ServiceContextOf<
+  DeclaredContext: DeclaredContext<
+    ServiceDepsOf<T["initialContext"]["deps"]>,
+    T["initialContext"]["scope"],
+    T["initialContext"]["config"]
+  >;
+  ORPCInitialContext: ORPCInitialContext<
+    ServiceDepsOf<T["initialContext"]["deps"]>,
+    T["initialContext"]["scope"],
+    T["initialContext"]["config"],
+    T["invocationContext"]
+  >;
+  ExecutionContext: ExecutionContext<
+    ServiceDepsOf<T["initialContext"]["deps"]>,
+    T["initialContext"]["scope"],
+    T["initialContext"]["config"],
+    T["invocationContext"]
+  >;
+  RequiredExtensionExecutionContext: RequiredExtensionExecutionContext<
+    ServiceDepsOf<T["initialContext"]["deps"]>,
+    T["initialContext"]["scope"],
+    T["initialContext"]["config"],
+    T["invocationContext"]
+  >;
+  Context: ExecutionContext<
     ServiceDepsOf<T["initialContext"]["deps"]>,
     T["initialContext"]["scope"],
     T["initialContext"]["config"],
@@ -106,11 +131,11 @@ export type ServiceTypesOf<
  * - `invocationContext`: per-call context supplied at procedure invocation time
  * - `metadata`: static procedure metadata authored by the service
  *
- * The SDK derives the composed `Deps`, `Metadata`, and lane-aware `Context`
- * types internally from those grouped categories.
+ * The SDK derives the composed `Deps`, `Metadata`, and execution-context
+ * projections internally from those grouped categories.
  */
 type ServiceInitialContextDeclaration = Pick<
-  InitialContext<object, object, object, object>,
+  DeclaredContext<object, object, object>,
   "deps" | "scope" | "config"
 >;
 
@@ -135,15 +160,22 @@ export type ServiceScopeFrom<TService extends AnyService> = TService["Scope"];
 export type ServiceConfigFrom<TService extends AnyService> = TService["Config"];
 export type ServiceInvocationFrom<TService extends AnyService> = TService["Invocation"];
 export type ServiceMetadataFrom<TService extends AnyService> = TService["Metadata"];
+export type ServiceDeclaredContextFrom<TService extends AnyService> = TService["DeclaredContext"];
+export type ServiceORPCInitialContextFrom<TService extends AnyService> = TService["ORPCInitialContext"];
+export type ServiceExecutionContextFrom<TService extends AnyService> = TService["ExecutionContext"];
+export type ServiceRequiredExtensionExecutionContextFrom<TService extends AnyService> =
+  TService["RequiredExtensionExecutionContext"];
 export type ServiceContextFrom<TService extends AnyService> = TService["Context"];
 
 export type {
-  BaseContext,
-  InitialContext,
+  BaseExecutionContext,
+  DeclaredContext,
+  ExecutionContext,
+  ORPCInitialContext,
   ProvidedContext,
+  RequiredExtensionExecutionContext,
   ReservedContextKey,
   ReservedSemanticLaneKey,
-  ServiceContextOf,
 } from "./base-foundation";
 
 type AnyContractRouterObject = {
@@ -156,7 +188,7 @@ type AnyContractRouterObject = {
  */
 export function createBaseProcedureImplementer<
  const TContract extends AnyContractProcedure,
-  TContext extends BaseContext<BaseDeps, object, object, object>,
+  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
 ) {
@@ -171,7 +203,7 @@ export function createBaseProcedureImplementer<
  */
 export function createBaseRouterImplementer<
  const TContract extends AnyContractRouterObject,
-  TContext extends BaseContext<BaseDeps, object, object, object>,
+  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
 ) {
@@ -182,13 +214,13 @@ export function createBaseRouterImplementer<
 
 export function createBaseImplementer<
   const TContract extends AnyContractProcedure,
-  TContext extends BaseContext<BaseDeps, object, object, object>,
+  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
 ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBaseImplementer<
   const TContract extends AnyContractRouterObject,
-  TContext extends BaseContext<BaseDeps, object, object, object>,
+  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
 ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
