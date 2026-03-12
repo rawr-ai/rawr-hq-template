@@ -11,7 +11,8 @@
  * needs real lifecycle wrapper behavior, not just a late payload contributor.
  */
 import { createBaseMiddleware } from "../../baseline/middleware";
-import type { BaseMetadata, Logger } from "../../baseline/types";
+import type { BaseMetadata } from "../../baseline/types";
+import type { Logger } from "../../ports/logger";
 import { createNormalMiddlewareBuilder } from "../../factory/middleware";
 import { trace } from "../../host-adapters/telemetry/opentelemetry";
 import { getErrorDetails } from "./errors";

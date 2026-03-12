@@ -1,20 +1,12 @@
-/**
- * Canonical logger contract used by baseline middleware.
- */
-export interface Logger {
-  info(message: string, meta?: Record<string, unknown>): void;
-  error(message: string, meta?: Record<string, unknown>): void;
-}
-
-/**
- * Canonical analytics client contract used by baseline middleware.
- */
-export interface AnalyticsClient {
-  track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
-}
+import type { AnalyticsClient } from "../ports/analytics";
+import type { Logger } from "../ports/logger";
 
 /**
  * Minimum dependency contract expected by domain packages.
+ *
+ * @remarks
+ * Baseline depends on these capability ports, but it does not own the port
+ * contracts themselves.
  */
 export interface BaseDeps {
   logger: Logger;
