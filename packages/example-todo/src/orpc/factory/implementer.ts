@@ -3,7 +3,8 @@ import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
 import { implement } from "@orpc/server";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
-import type { BaseDeps, ExecutionContext } from "../base";
+import type { ExecutionContext } from "../context/types";
+import type { BaseDeps } from "../baseline/types";
 
 type AnyContractRouterObject = {
   [k: string]: AnyContractRouter;

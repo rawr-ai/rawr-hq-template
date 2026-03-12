@@ -1,5 +1,5 @@
 import type { Attributes, Span } from "../../host-adapters/telemetry/opentelemetry";
-import type { BaseMetadata, Logger } from "../../base";
+import type { BaseMetadata, Logger } from "../../baseline/types";
 import {
   deriveServiceNames,
   getMetadataAudit,

@@ -1,17 +1,4 @@
-/**
- * @fileoverview Internal foundation for the domain-package baseline.
- *
- * @remarks
- * This file holds cycle-free primitives used by baseline middleware and the
- * authored `src/orpc/base.ts` surface. Keep it internal; service and module
- * code should continue to think in terms of `src/orpc/base.ts`.
- */
-import type { BaseDeps, BaseMetadata } from "./base";
-import {
-  createNormalMiddlewareBuilder,
-  createServiceProviderBuilder,
-  createSharedProviderBuilder,
-} from "./factory/middleware";
+import type { BaseDeps } from "../baseline/types";
 
 export type ReservedSemanticLaneKey = "deps" | "scope" | "config" | "invocation";
 export type SharedProviderBucketKey = "provided";
@@ -92,40 +79,3 @@ export type RequiredExtensionExecutionContext<
 > = DeclaredContext<TDeps, TScope, TConfig> & {
   invocation: TInvocation;
 };
-
-const baseMiddlewareMetadata: BaseMetadata = {
-  idempotent: true,
-};
-
-/**
- * Baseline middleware builder for reusable domain-package middleware.
- */
-export function createBaseMiddleware<
-  TRequiredContext extends object = {},
->() {
-  return createNormalMiddlewareBuilder<TRequiredContext, BaseMetadata>({
-    baseMetadata: baseMiddlewareMetadata,
-  });
-}
-
-/**
- * Baseline provider builder for shared/framework middleware.
- */
-export function createBaseProvider<
-  TRequiredContext extends object = {},
->() {
-  return createSharedProviderBuilder<TRequiredContext, BaseMetadata>({
-    baseMetadata: baseMiddlewareMetadata,
-  });
-}
-
-/**
- * Service-local provider builder for domain-authored execution context.
- */
-export function createBaseServiceProvider<
-  TRequiredContext extends object = {},
->() {
-  return createServiceProviderBuilder<TRequiredContext, BaseMetadata>({
-    baseMetadata: baseMiddlewareMetadata,
-  });
-}

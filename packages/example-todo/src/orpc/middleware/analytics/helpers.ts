@@ -1,4 +1,4 @@
-import type { BaseMetadata } from "../../base";
+import type { BaseMetadata } from "../../baseline/types";
 import { peekLocalAnalyticsContributors } from "./state";
 import type { AnalyticsPayloadArgs } from "./types";
 

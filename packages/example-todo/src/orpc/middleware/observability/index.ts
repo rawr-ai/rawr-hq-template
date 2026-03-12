@@ -10,8 +10,8 @@
  * This is intentionally not modeled like analytics. Service-wide observability
  * needs real lifecycle wrapper behavior, not just a late payload contributor.
  */
-import { createBaseMiddleware } from "../../base-foundation";
-import type { BaseMetadata, Logger } from "../../base";
+import { createBaseMiddleware } from "../../baseline/middleware";
+import type { BaseMetadata, Logger } from "../../baseline/types";
 import { createNormalMiddlewareBuilder } from "../../factory/middleware";
 import { trace } from "../../host-adapters/telemetry/opentelemetry";
 import { getErrorDetails } from "./errors";

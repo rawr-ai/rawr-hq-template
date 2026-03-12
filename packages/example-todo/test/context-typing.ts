@@ -3,7 +3,7 @@ import { Type } from "typebox";
 
 import { createClient } from "../src";
 import type { DbPool } from "../src/orpc/ports/db";
-import { createBaseProvider } from "../src/orpc/base-foundation";
+import { createBaseProvider } from "../src/orpc/baseline/middleware";
 import { sqlProvider } from "../src/orpc/middleware/sql-provider";
 import {
   defineService,

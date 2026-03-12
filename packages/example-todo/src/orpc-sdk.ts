@@ -9,11 +9,13 @@
 export type {
   BaseDeps,
   BaseMetadata,
-  ServiceDeclaration,
   ServiceDepsOf,
   ServiceMetadataOf,
+} from "./orpc/baseline/types";
+export type {
+  ServiceDeclaration,
   ServiceTypesOf,
-} from "./orpc/base";
+} from "./orpc/service/types";
 export type {
   BasePolicyProfile,
   ObservabilityErrorDetails,
@@ -28,8 +30,8 @@ export type { DbPool, Sql } from "./orpc/ports/db";
 export type { FeedbackClient } from "./orpc/ports/feedback";
 export {
   defineService,
-} from "./orpc/factory/service";
-export type { ServiceOf } from "./orpc/factory/service";
+} from "./orpc/service/define";
+export type { ServiceOf } from "./orpc/service/define";
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
 export {
   sqlProvider,

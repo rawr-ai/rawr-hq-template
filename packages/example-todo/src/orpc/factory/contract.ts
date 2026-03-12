@@ -1,6 +1,6 @@
 import { oc } from "@orpc/contract";
 
-import type { BaseMetadata } from "../base";
+import type { BaseMetadata } from "../baseline/types";
 
 type CreateContractBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> = {
   baseMetadata: BaseMetadata;

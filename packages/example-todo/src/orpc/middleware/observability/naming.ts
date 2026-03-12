@@ -1,5 +1,5 @@
 import type { Attributes } from "../../host-adapters/telemetry/opentelemetry";
-import type { BaseMetadata } from "../../base";
+import type { BaseMetadata } from "../../baseline/types";
 import type { ObservabilityFields } from "./types";
 
 export function prefixAttributes(
