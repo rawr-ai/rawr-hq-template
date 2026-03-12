@@ -78,7 +78,7 @@ type InvocationContext = {
  * Static procedure metadata authored by the service.
  *
  * @remarks
- * This is not runtime context.
+ * This is not execution context.
  */
 type ProcedureMetadata = {
   audit?: "none" | "basic" | "full";
@@ -153,7 +153,8 @@ export const ocBase = service.oc;
  *
  * Handlers and additive middleware ultimately run on `ExecutionContext`, but
  * authors should still declare only the minimal required lane fragments or
- * execution additions here rather than restating the full `Service["Context"]`.
+ * execution additions here rather than restating the full
+ * `Service["ExecutionContext"]`.
  *
  * Do not use this to recreate the required service middleware extensions
  * attached in `src/service/impl.ts`.

@@ -93,17 +93,6 @@ export type RequiredExtensionExecutionContext<
   invocation: TInvocation;
 };
 
-/**
- * Compatibility alias for the base execution context shape.
- */
-export type BaseExecutionContext<
-  TDeps,
-  TScope extends object = {},
-  TConfig extends object = {},
-  TInvocation extends object = {},
-  TProvided extends object = {},
-> = ExecutionContext<TDeps, TScope, TConfig, TInvocation, TProvided>;
-
 const baseMiddlewareMetadata: BaseMetadata = {
   idempotent: true,
 };

@@ -17,7 +17,6 @@ import {
   createBareRouterImplementer,
 } from "./factory/implementer";
 import type {
-  BaseExecutionContext,
   DeclaredContext,
   ExecutionContext,
   ORPCInitialContext,
@@ -113,12 +112,6 @@ export type ServiceTypesOf<
     T["initialContext"]["config"],
     T["invocationContext"]
   >;
-  Context: ExecutionContext<
-    ServiceDepsOf<T["initialContext"]["deps"]>,
-    T["initialContext"]["scope"],
-    T["initialContext"]["config"],
-    T["invocationContext"]
-  >;
 };
 
 /**
@@ -165,10 +158,8 @@ export type ServiceORPCInitialContextFrom<TService extends AnyService> = TServic
 export type ServiceExecutionContextFrom<TService extends AnyService> = TService["ExecutionContext"];
 export type ServiceRequiredExtensionExecutionContextFrom<TService extends AnyService> =
   TService["RequiredExtensionExecutionContext"];
-export type ServiceContextFrom<TService extends AnyService> = TService["Context"];
 
 export type {
-  BaseExecutionContext,
   DeclaredContext,
   ExecutionContext,
   ORPCInitialContext,
@@ -188,7 +179,7 @@ type AnyContractRouterObject = {
  */
 export function createBaseProcedureImplementer<
  const TContract extends AnyContractProcedure,
-  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
+  TContext extends ExecutionContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
 ) {
@@ -203,7 +194,7 @@ export function createBaseProcedureImplementer<
  */
 export function createBaseRouterImplementer<
  const TContract extends AnyContractRouterObject,
-  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
+  TContext extends ExecutionContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
 ) {
@@ -214,13 +205,13 @@ export function createBaseRouterImplementer<
 
 export function createBaseImplementer<
   const TContract extends AnyContractProcedure,
-  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
+  TContext extends ExecutionContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
 ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBaseImplementer<
   const TContract extends AnyContractRouterObject,
-  TContext extends BaseExecutionContext<BaseDeps, object, object, object>,
+  TContext extends ExecutionContext<BaseDeps, object, object, object>,
 >(
   contract: TContract,
 ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;

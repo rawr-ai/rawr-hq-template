@@ -131,7 +131,7 @@ function createProviderBuilder<
             const currentProvided = (middlewareOptions.context as { provided?: object }).provided ?? {};
             assertNoProvidedKeyCollisions(currentProvided, provided, builderKind);
 
-            // oRPC correctly merges the nested runtime context here, but TS does not
+            // oRPC correctly merges the nested execution context here, but TS does not
             // preserve the widened `provided` bag through `middlewareOptions.next(...)`.
             // Keep the cast local to this seam and pin the behavior with tests.
             return middlewareOptions.next({

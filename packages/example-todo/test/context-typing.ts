@@ -104,7 +104,7 @@ const requiredExtensionExecutionContext: DerivedTypingService["RequiredExtension
 };
 void requiredExtensionExecutionContext;
 
-const derivedTypingContext: DerivedTypingService["Context"] = {
+const derivedTypingExecutionContextAlias: DerivedTypingService["ExecutionContext"] = {
   deps,
   scope: {
     workspaceId: "workspace-typing",
@@ -120,10 +120,7 @@ const derivedTypingContext: DerivedTypingService["Context"] = {
   },
   provided: {},
 };
-void derivedTypingContext;
-
-const executionContextAlias: DerivedTypingService["ExecutionContext"] = derivedTypingContext;
-void executionContextAlias;
+void derivedTypingExecutionContextAlias;
 
 const invalidDeclaredContext: DerivedTypingService["DeclaredContext"] = {
   ...declaredContext,
