@@ -7,7 +7,7 @@
  */
 
 import type { FeedbackClient } from "../ports/feedback";
-import { createBaseProvider } from "../base-foundation";
+import { createBaseProvider } from "../baseline/middleware";
 
 /**
  * Optional feedback provider.

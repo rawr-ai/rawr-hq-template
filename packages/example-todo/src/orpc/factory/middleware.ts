@@ -1,7 +1,7 @@
 import type { Middleware, MiddlewareOptions, MiddlewareOutputFn, MiddlewareResult } from "@orpc/server";
 
-import type { BaseMetadata } from "../base";
-import type { ProvidedContext, ReservedContextKey } from "../base-foundation";
+import type { BaseMetadata } from "../baseline/types";
+import type { ProvidedContext, ReservedContextKey } from "../context/types";
 
 type CreateMiddlewareBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> = {
   baseMetadata: BaseMetadata;

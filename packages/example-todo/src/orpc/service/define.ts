@@ -6,13 +6,13 @@ import type {
   AnyService,
   ServiceDeclaration,
   ServiceExecutionContextFrom,
+  ServiceMetadataFrom,
   ServiceRequiredExtensionExecutionContextFrom,
   ServiceTypesOf,
-  ServiceMetadataFrom,
-} from "../base";
-import { createBaseImplementer } from "../base";
-import { createContractBuilder } from "./contract";
-import { createNormalMiddlewareBuilder, createServiceProviderBuilder } from "./middleware";
+} from "./types";
+import { createBaseImplementer } from "../baseline/implementer";
+import { createContractBuilder } from "../factory/contract";
+import { createNormalMiddlewareBuilder, createServiceProviderBuilder } from "../factory/middleware";
 import {
   createRequiredServiceObservabilityMiddleware,
   createServiceObservabilityMiddleware,

@@ -1,4 +1,4 @@
-import type { BaseMetadata } from "../../base";
+import type { BaseMetadata } from "../../baseline/types";
 import type { createNormalMiddlewareBuilder } from "../../factory/middleware";
 
 export type AnalyticsPayloadArgs<

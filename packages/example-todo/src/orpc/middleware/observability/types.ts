@@ -1,6 +1,6 @@
 import type { MiddlewareResult } from "@orpc/server";
 
-import type { BaseMetadata, Logger } from "../../base";
+import type { BaseMetadata, Logger } from "../../baseline/types";
 import type { Attributes, Span } from "../../host-adapters/telemetry/opentelemetry";
 import type { createNormalMiddlewareBuilder } from "../../factory/middleware";
 import type { getErrorDetails } from "./errors";

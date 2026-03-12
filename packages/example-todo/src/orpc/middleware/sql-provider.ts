@@ -10,7 +10,7 @@
  */
 
 import type { DbPool, Sql } from "../ports/db";
-import { createBaseProvider } from "../base-foundation";
+import { createBaseProvider } from "../baseline/middleware";
 
 /**
  * Zero-config SQL provider.

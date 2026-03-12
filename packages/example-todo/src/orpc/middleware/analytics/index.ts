@@ -11,9 +11,8 @@
  * They supply runtime analytics behavior through required service middleware at
  * the implementer seam.
  */
-import type { BaseMetadata } from "../../base";
-import type { AnalyticsClient, Logger } from "../../base";
-import { createBaseMiddleware } from "../../base-foundation";
+import type { AnalyticsClient, BaseMetadata, Logger } from "../../baseline/types";
+import { createBaseMiddleware } from "../../baseline/middleware";
 import { createNormalMiddlewareBuilder } from "../../factory/middleware";
 import { getProcedureMeta, resolveLocalAnalyticsPayload } from "./helpers";
 import {
