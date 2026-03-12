@@ -21,6 +21,11 @@ This is a prerequisite semantic cleanup, not a middleware redesign.
 This document captures the current working hypothesis from an exploratory
 conversation.
 
+It is now primarily a **supporting reference** for the earlier service-context
+semantic cleanup, not the main active scratch doc for the current adapter /
+host / input-layer design problem. For the live unresolved design knot, prefer
+`ADAPTER_PORTS_DESIGN_SCRATCH.md` first.
+
 It is **not locked in**.
 
 It intentionally preserves disagreement and open tension, including the
@@ -264,27 +269,29 @@ At the service-definition seam, [`base.ts`](/Users/mateicanavra/Documents/.nosyn
 
 That part is good.
 
-The semantic blur happens internally:
+The semantic blur happened internally at the SDK layer and was concentrated in
+the old pre-split catch-all files. The current split is now:
 
-- [`base-foundation.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/base-foundation.ts#L27)
-  defines `BaseContext` as the merged execution object containing:
+- [`context/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/context/types.ts)
+  defines the execution-context primitives:
   - `deps`
   - `scope`
   - `config`
   - `invocation`
   - `provided`
-- `InitialContext` is currently just an alias of that merged execution object.
-- `ServiceContextOf` is also an alias of that merged execution object.
+- [`service/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/service/types.ts)
+  now projects `DeclaredContext`, `ORPCInitialContext`, `ExecutionContext`, and
+  `RequiredExtensionExecutionContext` explicitly.
 
-So internally the name `InitialContext` no longer means "declared service input
-lanes." It means "fully merged execution context." That is the main semantic
-problem this slice fixes.
+That old naming confusion was the main semantic problem this slice fixed.
 
 There is a second, related pressure point:
 
 - `src/service/base.ts` authors only package-local deps/config/scope/invocation
-- `src/orpc/base.ts` still widens the runtime dependency bag with baseline
-  `logger` and `analytics`
+- `src/orpc/baseline/types.ts` still widens the runtime dependency bag with
+  baseline `logger`, `analytics`, and `telemetry`
+- the logger, analytics, and telemetry contracts themselves now live under
+  `src/orpc/ports/{logger,analytics,telemetry}.ts`
 
 That split is not necessarily wrong, but it must become explicit enough that
 agents do not mistake "visible at runtime" for "must be declared here by the
@@ -715,11 +722,10 @@ and should exclude `provided`.
 
 ### F. Backward-compatibility aliasing
 
-If keeping `Service["Context"]` is useful for compatibility, it should mean the
-full execution context and should be documented that way.
+Do not preserve ambiguous `Context` aliases inside the SDK surface.
 
-If old internal helper names remain temporarily, they should point at the new
-semantics rather than preserve misleading names.
+Use `ExecutionContext` explicitly instead of leaving `Service["Context"]` or
+similar compatibility spellings in place.
 
 ## What Needs To Change Inside `base.ts`
 
@@ -814,7 +820,7 @@ model explicit and easier to understand.
 ### 1. Refactor the internal context foundation types
 
 In
-[`packages/example-todo/src/orpc/base-foundation.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/base-foundation.ts):
+[`packages/example-todo/src/orpc/context/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/context/types.ts):
 
 - stop using `InitialContext` as the name for the merged execution shape
 - introduce explicit internal types for:
@@ -826,7 +832,7 @@ In
 ### 2. Refactor service type projection helpers
 
 In
-[`packages/example-todo/src/orpc/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/base.ts):
+[`packages/example-todo/src/orpc/service/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/service/types.ts):
 
 - update `ServiceTypesOf<T>` to project:
   - `DeclaredContext`
@@ -839,7 +845,7 @@ In
 ### 3. Refactor service factory typing
 
 In
-[`packages/example-todo/src/orpc/factory/service.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/factory/service.ts):
+[`packages/example-todo/src/orpc/service/define.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/service/define.ts):
 
 - replace ad hoc context derivations with the clearer projections where
   possible

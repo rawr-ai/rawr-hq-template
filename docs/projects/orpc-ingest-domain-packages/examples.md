@@ -36,7 +36,10 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - `src/orpc/middleware/` is always present for kit-level cross-cutting concerns (analytics, providers, generic wrappers).
 - Host/runtime tracing bootstrap is required above the package and should be wired once before app/route composition.
 - `src/service/middleware/` is available for domain-wide cross-cutting concerns; ordering is authored in `src/service/impl.ts`.
-- Domain package deps include shared base deps (`BaseDeps`) so logger and analytics capabilities are always available.
+- Domain package deps include shared base deps (`BaseDeps`) for package-level
+  cross-cutting capabilities such as logger and analytics. Telemetry is
+  different: host/runtime tracing bootstrap lives above the package and package
+  observability reads the active span from OTel runtime context.
 - `context.deps` remains the single host-provided dependency bag; middleware/module setup may add `context.provided.*` execution values, but we do not split runtime dependencies into multiple bags.
 - One stable package entry surface (`router` + `createClient` in-process factory pattern).
 - `src/service/base.ts` binds the service-local authoring surfaces once (`Service`, `ocBase`, additive builders, required extension builders, `createServiceImplementer`) and stays declarative.
@@ -93,14 +96,29 @@ packages/example-minimal/src/
 ├── router.ts
 ├── orpc-sdk.ts
 ├── orpc/
-│   ├── base.ts
-│   ├── package-boundary.ts
+│   ├── baseline/
+│   │   ├── implementer.ts
+│   │   ├── middleware.ts
+│   │   └── types.ts
+│   ├── boundary/
+│   │   └── domain-package.ts
+│   ├── context/
+│   │   └── types.ts
 │   ├── factory/
 │   │   ├── contract.ts
 │   │   ├── implementer.ts
 │   │   ├── middleware.ts
-│   │   ├── service.ts
-│   │   └── index.ts
+│   ├── host-adapters/
+│   │   ├── analytics/
+│   │   ├── logger/
+│   │   └── ...
+│   ├── ports/
+│   │   ├── analytics.ts
+│   │   ├── logger.ts
+│   │   └── ...
+│   ├── service/
+│   │   ├── define.ts
+│   │   └── types.ts
 │   └── middleware/
 │       ├── analytics.ts
 │       └── observability.ts
@@ -141,14 +159,31 @@ packages/example-todo/src/
 ├── router.ts
 ├── orpc-sdk.ts
 ├── orpc/
-│   ├── base.ts
-│   ├── package-boundary.ts
+│   ├── baseline/
+│   │   ├── implementer.ts
+│   │   ├── middleware.ts
+│   │   └── types.ts
+│   ├── boundary/
+│   │   └── domain-package.ts
+│   ├── context/
+│   │   └── types.ts
 │   ├── factory/
 │   │   ├── contract.ts
 │   │   ├── implementer.ts
 │   │   ├── middleware.ts
-│   │   ├── service.ts
-│   │   └── index.ts
+│   ├── host-adapters/
+│   │   ├── analytics/
+│   │   ├── feedback/
+│   │   ├── logger/
+│   │   └── sql/
+│   ├── ports/
+│   │   ├── analytics.ts
+│   │   ├── feedback.ts
+│   │   ├── logger.ts
+│   │   └── ...
+│   ├── service/
+│   │   ├── define.ts
+│   │   └── types.ts
 │   └── middleware/
 │       ├── analytics.ts
 │       ├── observability.ts
@@ -208,14 +243,29 @@ packages/example-golden/src/
 ├── router.ts
 ├── orpc-sdk.ts
 ├── orpc/
-│   ├── base.ts
-│   ├── package-boundary.ts
+│   ├── baseline/
+│   │   ├── implementer.ts
+│   │   ├── middleware.ts
+│   │   └── types.ts
+│   ├── boundary/
+│   │   └── domain-package.ts
+│   ├── context/
+│   │   └── types.ts
 │   ├── factory/
 │   │   ├── contract.ts
 │   │   ├── implementer.ts
 │   │   ├── middleware.ts
-│   │   ├── service.ts
-│   │   └── index.ts
+│   ├── host-adapters/
+│   │   ├── analytics/
+│   │   ├── logger/
+│   │   └── ...
+│   ├── ports/
+│   │   ├── analytics.ts
+│   │   ├── logger.ts
+│   │   └── ...
+│   ├── service/
+│   │   ├── define.ts
+│   │   └── types.ts
 │   └── middleware/
 │       ├── analytics.ts
 │       ├── observability.ts

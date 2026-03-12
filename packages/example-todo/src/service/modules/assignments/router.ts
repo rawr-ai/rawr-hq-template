@@ -25,7 +25,7 @@ const assign = os.assign
   .use(observability)
   .use(analytics)
   .handler(async ({ context, input, errors }) => {
-  const task = await context.provided.tasks.findById(input.taskId);
+  const task = await context.tasks.findById(input.taskId);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
       message: `Task '${input.taskId}' not found`,
@@ -33,7 +33,7 @@ const assign = os.assign
     });
   }
 
-  const tag = await context.provided.tags.findById(input.tagId);
+  const tag = await context.tags.findById(input.tagId);
   if (!tag) {
     throw errors.RESOURCE_NOT_FOUND({
       message: `Tag '${input.tagId}' not found`,
@@ -41,37 +41,37 @@ const assign = os.assign
     });
   }
 
-  if (await context.provided.repo.exists(input.taskId, input.tagId)) {
+  if (await context.repo.exists(input.taskId, input.tagId)) {
     throw errors.ALREADY_ASSIGNED({
       message: `Task '${input.taskId}' already has tag '${input.tagId}'`,
       data: { taskId: input.taskId, tagId: input.tagId },
     });
   }
 
-  const existingAssignments = await context.provided.repo.countByTask(input.taskId);
-  if (existingAssignments >= context.config.limits.maxAssignmentsPerTask) {
+  const existingAssignments = await context.repo.countByTask(input.taskId);
+  if (existingAssignments >= context.maxAssignmentsPerTask) {
     throw errors.ASSIGNMENT_LIMIT_REACHED({
       message: `Task '${input.taskId}' already has the maximum number of tag assignments`,
       data: {
         taskId: input.taskId,
-        maxAssignmentsPerTask: context.config.limits.maxAssignmentsPerTask,
+        maxAssignmentsPerTask: context.maxAssignmentsPerTask,
       },
     });
   }
 
   const assignment: Assignment = {
     id: randomUUID(),
-    workspaceId: context.scope.workspaceId,
+    workspaceId: context.workspaceId,
     taskId: input.taskId,
     tagId: input.tagId,
-    createdAt: context.deps.clock.now(),
+    createdAt: context.clock.now(),
   };
 
-  return await context.provided.repo.insert(assignment);
+  return await context.repo.insert(assignment);
 });
 
 const listForTask = os.listForTask.handler(async ({ context, input, errors }) => {
-  const task = await context.provided.tasks.findById(input.taskId);
+  const task = await context.tasks.findById(input.taskId);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
       message: `Task '${input.taskId}' not found`,
@@ -79,12 +79,12 @@ const listForTask = os.listForTask.handler(async ({ context, input, errors }) =>
     });
   }
 
-  const assignments = await context.provided.repo.findByTask(input.taskId);
+  const assignments = await context.repo.findByTask(input.taskId);
   if (assignments.length === 0) {
     return { task, tags: [] };
   }
 
-  const tags = await context.provided.tags.findByIds(assignments.map((assignment) => assignment.tagId));
+  const tags = await context.tags.findByIds(assignments.map((assignment) => assignment.tagId));
   return { task, tags };
 });
 

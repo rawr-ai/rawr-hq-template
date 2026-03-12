@@ -23,7 +23,7 @@ const create = os.create.handler(async ({ context, input, errors }) => {
   const normalizedName = input.name.trim();
   const normalizedColor = input.color.toLowerCase();
 
-  if (await context.provided.repo.existsByName(normalizedName)) {
+  if (await context.repo.existsByName(normalizedName)) {
     throw errors.DUPLICATE_TAG({
       message: `Tag '${normalizedName}' already exists`,
       data: { name: normalizedName },
@@ -32,18 +32,18 @@ const create = os.create.handler(async ({ context, input, errors }) => {
 
   const tag: Tag = {
     id: randomUUID(),
-    workspaceId: context.scope.workspaceId,
+    workspaceId: context.workspaceId,
     name: normalizedName,
     color: normalizedColor,
-    createdAt: context.deps.clock.now(),
+    createdAt: context.clock.now(),
   };
 
-  context.deps.logger.info("todo.tags.create", { tagId: tag.id, name: tag.name });
-  return await context.provided.repo.insert(tag);
+  context.logger.info("todo.tags.create", { tagId: tag.id, name: tag.name });
+  return await context.repo.insert(tag);
 });
 
 const list = os.list.handler(async ({ context }) => {
-  return await context.provided.repo.findAll();
+  return await context.repo.findAll();
 });
 
 /** Contract-enforced module router (fails typecheck if contract and router drift). */

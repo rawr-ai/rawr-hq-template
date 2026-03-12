@@ -7,7 +7,6 @@
  * stable `defineDomainPackage(router)` helper for local client creation.
  */
 import { createRouterClient, type AnyRouter, type InferRouterInitialContext, type RouterClient } from "@orpc/server";
-import type { BaseDeps } from "../baseline/types";
 
 /**
  * Extract a specific lane from router initial context.
@@ -51,7 +50,7 @@ export interface DomainPackage<TRouter extends AnyRouter> {
  */
 export function defineDomainPackage<TRouter extends AnyRouter>(
   router: InferRouterInitialContext<TRouter> extends {
-    deps: BaseDeps;
+    deps: object;
     scope: object;
     config: object;
     invocation: object;

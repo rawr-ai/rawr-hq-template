@@ -8,7 +8,7 @@
  *
  * @agents
  * This file is the only package-wide runtime assembly seam. Required service
- * telemetry is supplied here exactly once; extra providers and guards are
+ * observability semantics are supplied here exactly once; extra providers and guards are
  * layered here after that.
  */
 import { contract } from "./contract";
@@ -28,7 +28,7 @@ import { sqlProvider } from "../orpc-sdk";
  *    inside `createServiceImplementer(...)`
  * 3) extra service-wide providers/guards authored here
  *
- * Do not attach additive telemetry middleware here to satisfy the required
+ * Do not attach additive observability middleware here to satisfy the required
  * service middleware extension slots. Module/procedure-local additive
  * middleware belongs in module `setup.ts` and `router.ts` files.
  */

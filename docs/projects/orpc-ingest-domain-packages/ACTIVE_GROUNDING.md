@@ -1,8 +1,10 @@
 # Active Grounding — Current Takeover / PostHog + Drizzle Stress-Test
 
 Created: 2026-03-10
-Refreshed: 2026-03-11
+Refreshed: 2026-03-12
 Status: Active grounding document for the next agent round and the current takeover
+
+Role: current worker brief
 
 ## Active-Document Rule
 
@@ -56,6 +58,34 @@ shape and learn:
 - what patterns should become standard in docs, architecture, and future
   scaffold output
 
+There is also an active upstream semantic knot that must stay visible while
+those integrations are being reasoned about:
+
+- the current live SDK still merges service-declared deps with SDK/baseline
+  caller requirements in one `deps` bag
+- the active design direction is now exploring a split between:
+  - service-declared caller input
+  - host/framework top-level caller input
+  - execution-time derived resources
+- `ADAPTER_PORTS_DESIGN_SCRATCH.md` is the main live document for that split
+- `DESIGN.md` is the structural map for the seams/axes behind that split
+- `TELEMETRY_DESIGN.md` is the canonical target model for telemetry wiring and
+  ownership
+
+## Active Tension Snapshot
+
+Keep this mental model active for the current design round:
+
+- **Service-declared deps** must mean caller-fulfilled requirements declared by
+  the service package itself.
+- **Host/framework caller requirements** may still be caller-fulfilled, but
+  should not be mislabeled as service-declared deps.
+- **Execution-time resources** are later derived/attached values and should not
+  be confused with either of the above.
+
+The current live code is best understood as a transitional merged shape rather
+than as the final semantic target.
+
 ## Current Execution Context
 
 ### Observed
@@ -87,12 +117,21 @@ shape and learn:
 Read these first and treat them as the active authoritative packet for this
 phase:
 
-1. `./DECISIONS.md`
-2. `./guidance.md`
-3. `./ADAPTER_POSTURE.md`
-4. `./ADAPTER_AGENT_WORKFLOW.md`
-5. `./ADAPTER_ORCHESTRATION_WORKFLOW.md`
-6. this file
+1. this file
+2. `./DECISIONS.md`
+3. `./guidance.md`
+4. `./examples.md`
+5. `./DESIGN.md`
+6. `./TELEMETRY_DESIGN.md`
+7. `./ADAPTER_POSTURE.md`
+8. `./ADAPTER_PORTS_DESIGN_SCRATCH.md`
+
+Supporting references for this phase:
+
+- `./TELEMETRY_MIGRATION_IMPLEMENTATION_PLAN.md`
+- `./SERVICE_CONTEXT_SEMANTICS_MINI_SPEC.md`
+- `./ADAPTER_AGENT_WORKFLOW.md`
+- `./ADAPTER_ORCHESTRATION_WORKFLOW.md`
 
 Use these code surfaces as the primary live package grounding:
 
@@ -117,8 +156,13 @@ critical ambiguity unresolved.
 - `packages/example-todo/src/orpc/ports/` currently contains:
   - `db.ts`
   - `feedback.ts`
+  - `logger.ts`
+  - `analytics.ts`
 - `packages/example-todo/src/orpc/host-adapters/` currently contains:
-  - `telemetry/opentelemetry.ts`
+  - `logger/embedded-placeholder.ts`
+  - `analytics/embedded-placeholder.ts`
+  - `feedback/embedded-placeholder.ts`
+  - `sql/embedded-in-memory.ts`
 - `packages/example-todo/src/orpc/middleware/` currently contains:
   - provider middleware such as `sql-provider.ts` and `feedback-provider.ts`
   - framework/internal observability and analytics middleware
@@ -134,9 +178,15 @@ critical ambiguity unresolved.
   - `assignments/setup.ts`
 - Provider-derived execution values continue to flow under
   `context.provided.*`.
-- `src/orpc/base.ts` still defines baseline `AnalyticsClient` in `BaseDeps`,
-  and baseline analytics emission still flows through
+- logger and analytics capability contracts now live under:
+  - `src/orpc/ports/logger.ts`
+  - `src/orpc/ports/analytics.ts`
+- runtime telemetry bootstrap now lives above the package under:
+  - `packages/core/src/orpc/telemetry.ts`
+- baseline analytics emission still flows through
   `context.deps.analytics.track("orpc.procedure", ...)`.
+- telemetry is now a host-bootstrap/runtime-context concern rather than a
+  package-local port or package dependency seam.
 
 ### Inferred
 
@@ -157,15 +207,20 @@ critical ambiguity unresolved.
   - provider middleware: `src/orpc/middleware/sql-provider.ts`
   - module-local repository construction in module `middleware.ts`
 - Analytics does **not** yet follow the same model end-to-end:
-  - baseline analytics client contract still lives in `src/orpc/base.ts` as
-    `AnalyticsClient`
+  - baseline analytics currently still depends on the analytics port through
+    `BaseDeps`
   - framework baseline analytics middleware still emits through
     `context.deps.analytics.track(...)`
   - service/module analytics currently contribute payload to that one emission
     path
-- Observability is already explicitly treated as host-owned framework/internal
-  integration via:
-  - `src/orpc/host-adapters/telemetry/opentelemetry.ts`
+- Observability is intentionally different:
+  - host bootstrap owns OpenTelemetry SDK setup
+  - oRPC instrumentation activates spans
+  - service/package observability consumes active span from runtime context
+- Logger, analytics, feedback, and SQL now also have explicit adapter homes,
+  but only analytics/logger/feedback/SQL remain package-local capability seams;
+  host/runtime telemetry bootstrap is intentionally different from those seams.
+  SQL is currently backed by an in-memory/example implementation.
 - Module code already demonstrates the intended execution-context reshaping
   boundary:
   - `tasks/middleware.ts` and `tags/middleware.ts` derive `repo` from
@@ -180,12 +235,17 @@ critical ambiguity unresolved.
 - PostHog should likely pressure the current analytics seam more aggressively,
   because the target posture says analytics should become provider-backed rather
   than remain a long-term raw `deps.analytics` dependency.
-- The most important learning may not be "what file do we add?" but "should the
-  analytics contract move out of baseline deps and into an explicit provider
-  model analogous to SQL?"
+- The analytics contract has already moved out of baseline-owned type
+  definitions and into the ports layer. The next learning is whether analytics
+  should also move out of baseline dependency composition and into an explicit
+  provider model analogous to SQL.
 - The other likely pressure point is whether Drizzle should satisfy the current
   `DbPool -> Sql -> module repository` seam cleanly, or whether the typed ORM
   surface proves that the existing SQL execution port is too thin.
+- Another active pressure point is whether logger/analytics should continue to
+  live in the same caller-facing `deps` bag as service-declared requirements,
+  or move into a separate host/baseline top-level input lane. Telemetry is now
+  resolved separately and should not be folded back into that seam.
 
 ## Guardrails For The Upcoming Agent Team
 

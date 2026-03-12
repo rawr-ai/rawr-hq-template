@@ -16,4 +16,13 @@ import { repository } from "./middleware";
  *
  * Keep module-wide setup here so procedure handlers can stay focused on business logic.
  */
-export const os = impl.tasks.use(repository);
+export const os = impl.tasks
+  .use(repository)
+  .use(async ({ context, next }) => next({
+    context: {
+      clock: context.deps.clock,
+      logger: context.deps.logger,
+      workspaceId: context.scope.workspaceId,
+      repo: context.provided.repo,
+    },
+  }));
