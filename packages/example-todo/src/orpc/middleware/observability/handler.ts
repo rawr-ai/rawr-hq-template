@@ -1,5 +1,6 @@
 import { SpanStatusCode, trace } from "../../host-adapters/telemetry/opentelemetry";
-import type { BaseMetadata, Logger } from "../../baseline/types";
+import type { BaseMetadata } from "../../baseline/types";
+import type { Logger } from "../../ports/logger";
 import { getErrorDetails } from "./errors";
 import type { ResolvedObservabilityProfile } from "./profiles";
 import type { ObservabilityHandlerArgs } from "./types";
