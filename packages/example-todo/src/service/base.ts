@@ -39,7 +39,14 @@ export interface Clock {
  * Construction-time context supplied when the in-process client is created.
  *
  * @remarks
- * These lanes are always available downstream in procedure context.
+ * This is the service's declared stable input surface:
+ * - `deps`: stable host-owned prerequisites and capabilities
+ * - `scope`: stable business/client-instance identity
+ * - `config`: stable package behavior/configuration
+ *
+ * These lanes are always present in downstream execution context. Provider-
+ * derived execution resources do not belong here and instead arrive later under
+ * `context.provided.*`.
  */
 type InitialContext = {
   deps: {
@@ -98,12 +105,13 @@ export const policy = {
  *
  * @remarks
  * Declare the full service boundary once here through three semantic groups:
- * - `initialContext`: construction-time context supplied by the client up front
+ * - `initialContext`: declared stable lanes supplied by the client up front
  * - `invocationContext`: per-call context supplied at invocation time
  * - `metadata`: static procedure metadata authored by the service
  *
  * The SDK preserves the stable helper seam internally while deriving the
- * composed `Deps`, `Metadata`, and `Context` types from this one declaration.
+ * composed `Deps`, `Metadata`, and execution-context projections from this one
+ * declaration.
  */
 const service = defineService<{
   initialContext: InitialContext;
@@ -143,10 +151,12 @@ export const ocBase = service.oc;
  * - module-level additions in module `setup.ts` files
  * - procedure-level additions in module `router.ts` files
  *
+ * Handlers and additive middleware ultimately run on `ExecutionContext`, but
+ * authors should still declare only the minimal required lane fragments or
+ * execution additions here rather than restating the full `Service["Context"]`.
+ *
  * Do not use this to recreate the required service middleware extensions
- * attached in `src/service/impl.ts`. Declare only the minimal required lane
- * fragments or execution context additions; do not restate the full
- * `Service["Context"]`.
+ * attached in `src/service/impl.ts`.
  */
 export const createServiceMiddleware = service.createMiddleware;
 
@@ -171,7 +181,7 @@ export const createServiceObservabilityMiddleware = service.createObservabilityM
  * Use this only for the one required service-wide observability middleware
  * attached in `src/service/impl.ts`. It is not interchangeable with additive
  * observability middleware and cannot depend on provider-added `provided.*`
- * execution context.
+ * execution resources.
  *
  * This is the service-facing builder for the required service middleware
  * extension pattern.
@@ -199,7 +209,9 @@ export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddlewar
  * Use this only for the one required service-wide analytics middleware
  * attached in `src/service/impl.ts`. It contributes service-global analytics
  * payload to the one canonical analytics emission path and is not
- * interchangeable with additive analytics middleware.
+ * interchangeable with additive analytics middleware. Required service
+ * middleware runs before provider-added execution resources are available and
+ * therefore must not depend on `provided.*`.
  *
  * This is the service-facing builder for the required service middleware
  * extension pattern.
