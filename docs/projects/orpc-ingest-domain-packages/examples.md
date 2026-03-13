@@ -26,7 +26,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
   - `src/service/impl.ts` implements the root contract and attaches package-wide middleware.
 - Router responsibilities are distinct and fixed:
   - `src/service/router.ts` composes module routers and performs a single final attach (no middleware authored here).
-- Module internals stay `contract.ts` + `setup.ts` + `router.ts`.
+- Module internals stay `contract.ts` + `module.ts` + `router.ts`.
 - Module-level hybrid contract-first: `contract.ts` is boundary shape; `router.ts` is handler behavior.
 - Transport-agnostic internals (no HTTP concerns inside package).
 - Procedures declare explicit ORPC boundary errors for caller-actionable outcomes.
@@ -139,7 +139,7 @@ packages/example-minimal/src/
         └── tasks/
             ├── contract.ts
             ├── middleware.ts
-            ├── setup.ts
+            ├── module.ts
             ├── router.ts
             ├── repository.ts
             └── schemas.ts
@@ -148,7 +148,7 @@ packages/example-minimal/src/
 Example change at this scale (small): add a new procedure.
 
 - Touch `service/modules/tasks/contract.ts` (add `.meta({ idempotent })`, `.input`, `.output`, `.errors`)
-- Touch `service/modules/tasks/router.ts` (implement handler and include it in `os.router({ ... })`)
+- Touch `service/modules/tasks/router.ts` (implement handler and include it in `module.router({ ... })`)
 
 ### 2) Current / Intermediate
 
@@ -206,21 +206,21 @@ packages/example-todo/src/
         ├── tasks/
         │   ├── contract.ts
         │   ├── middleware.ts
-        │   ├── setup.ts
+        │   ├── module.ts
         │   ├── router.ts
         │   ├── repository.ts
         │   └── schemas.ts
         ├── tags/
         │   ├── contract.ts
         │   ├── middleware.ts
-        │   ├── setup.ts
+        │   ├── module.ts
         │   ├── router.ts
         │   ├── repository.ts
         │   └── schemas.ts
         └── assignments/
             ├── contract.ts
             ├── middleware.ts
-            ├── setup.ts
+            ├── module.ts
             ├── router.ts
             ├── repository.ts
             └── schemas.ts
@@ -232,7 +232,7 @@ Example change at this scale (medium): add a new module.
 - Wire it into `service/contract.ts` (import + add to exported contract object)
 - Wire it into `service/router.ts` (import module router + add to exported router object)
 - No changes needed outside `service/contract.ts` + `service/router.ts` unless you’re changing middleware ordering (`src/service/impl.ts`)
-- If the change is only module/procedure-local observability or analytics, prefer authoring the standalone middleware in `service/modules/<name>/middleware.ts` and then attaching it from `setup.ts` or `router.ts`; do not use additive middleware as a substitute for the required service middleware extensions in `src/service/impl.ts`.
+- If the change is only module/procedure-local observability or analytics, prefer authoring the standalone middleware in `service/modules/<name>/middleware.ts` and then attaching it from `module.ts` or `router.ts`; do not use additive middleware as a substitute for the required service middleware extensions in `src/service/impl.ts`.
 
 ### 3) Golden Path
 
@@ -291,27 +291,27 @@ packages/example-golden/src/
         ├── tasks/
         │   ├── contract.ts
         │   ├── middleware.ts
-        │   ├── setup.ts
+        │   ├── module.ts
         │   ├── router.ts
         │   ├── repository.ts
         │   ├── schemas.ts
         │   └── comments/
         │       ├── contract.ts
-        │       ├── setup.ts
+        │       ├── module.ts
         │       ├── router.ts
         │       ├── repository.ts
         │       └── schemas.ts
         ├── tags/
         │   ├── contract.ts
         │   ├── middleware.ts
-        │   ├── setup.ts
+        │   ├── module.ts
         │   ├── router.ts
         │   ├── repository.ts
         │   └── schemas.ts
         ├── assignments/
         │   ├── contract.ts
         │   ├── middleware.ts
-        │   ├── setup.ts
+        │   ├── module.ts
         │   ├── router.ts
         │   ├── repository.ts
         │   └── schemas.ts

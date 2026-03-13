@@ -2,7 +2,7 @@
  * @fileoverview Task module middleware exports.
  *
  * @remarks
- * Keep standalone module middleware here so `setup.ts` and `router.ts` can
+ * Keep standalone module middleware here so `module.ts` and `router.ts` can
  * import generic names:
  * - `observability`
  * - `analytics`
@@ -27,7 +27,7 @@ export const observability = createServiceObservabilityMiddleware({});
 /** Intentional scaffold placeholder for the module's generic analytics export. */
 export const analytics = createServiceAnalyticsMiddleware({});
 
-/** Standalone repository provider attached at module scope in `setup.ts`. */
+/** Standalone repository provider attached at module scope in `module.ts`. */
 export const repository = createServiceProvider<{
   scope: {
     workspaceId: string;

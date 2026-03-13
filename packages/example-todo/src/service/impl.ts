@@ -30,7 +30,7 @@ import { sqlProvider } from "../orpc-sdk";
  *
  * Do not attach additive observability middleware here to satisfy the required
  * service middleware extension slots. Module/procedure-local additive
- * middleware belongs in module `setup.ts` and `router.ts` files.
+ * middleware belongs in module `module.ts` and `router.ts` files.
  */
 export const impl = createServiceImplementer(contract, {
   observability,

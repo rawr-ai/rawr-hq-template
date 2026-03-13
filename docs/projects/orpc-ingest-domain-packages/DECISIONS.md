@@ -100,7 +100,7 @@ Within `src/service/modules/`, what is the canonical module split?
 Adopt module-level hybrid contract-first:
 
 - each module defines `contract.ts` (boundary: input/output/errors/metadata),
-- each module defines `setup.ts` (runtime injection: context middleware, repos/services),
+- each module defines `module.ts` (runtime composition: context middleware, repos/services),
 - each module defines `router.ts` (behavior: handlers + contract-enforced router export),
 - modules derive their implementer subtrees from the central `impl` in `src/service/impl.ts`,
 - modules share a single service base import surface for contract authoring + middleware authoring (`src/service/base.ts` as the service-definition entrypoint),
@@ -129,7 +129,7 @@ Nested modules are **folders under a module** and are composed explicitly (no au
 - a parent module owns composition of its submodules (import + mount in `router.ts`),
 - middleware ordering is authored at `src/service/impl.ts` (one obvious stacking point),
 - router composition remains at `src/service/router.ts` (single final attach does not move),
-- module setup/injection remains local (typically in each module’s `setup.ts`).
+- module composition/injection remains local (typically in each module’s `module.ts`).
 
 ### Why
 This keeps the “agent drill-down” model fractal without introducing implicit wiring, while preserving one global middleware choke point.

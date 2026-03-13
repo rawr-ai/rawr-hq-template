@@ -2,29 +2,25 @@
  * @fileoverview Assignments module router implementation.
  *
  * @remarks
- * Module setup lives in `./setup.ts`.
+ * Module composition lives in `./module.ts`.
  * This file owns concrete handler implementations and exports plain-object `router`.
  *
  * @agents
  * `contract.ts` owns boundary shape (input/output/errors/meta).
- * `setup.ts` owns module setup, and `middleware.ts` owns standalone module middleware.
+ * `module.ts` owns module composition, and `middleware.ts` owns standalone module middleware.
  * This module is composite; cross-module orchestration belongs in handlers here.
  * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
-import { os } from "./setup";
-import { analytics, observability } from "./middleware";
+import { module } from "./module";
 import { type Assignment } from "./schemas";
 
 /**
  * SECTION: Module Procedure Implementations (Always Present)
  *
- * Implement concrete procedure handlers below using `os.<procedure>.handler(...)`.
+ * Implement concrete procedure handlers below using `module.<procedure>.handler(...)`.
  */
-const assign = os.assign
-  .use(observability)
-  .use(analytics)
-  .handler(async ({ context, input, errors }) => {
+const assign = module.assign.handler(async ({ context, input, errors }) => {
   const task = await context.tasks.findById(input.taskId);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
@@ -70,7 +66,7 @@ const assign = os.assign
   return await context.repo.insert(assignment);
 });
 
-const listForTask = os.listForTask.handler(async ({ context, input, errors }) => {
+const listForTask = module.listForTask.handler(async ({ context, input, errors }) => {
   const task = await context.tasks.findById(input.taskId);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
@@ -89,7 +85,7 @@ const listForTask = os.listForTask.handler(async ({ context, input, errors }) =>
 });
 
 /** Contract-enforced module router (fails typecheck if contract and router drift). */
-export const router = os.router({
+export const router = module.router({
   assign,
   listForTask,
 });

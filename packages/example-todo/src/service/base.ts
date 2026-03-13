@@ -13,7 +13,7 @@
  * Runtime telemetry behavior does not live here; required service middleware
  * extensions are authored in `src/service/middleware/*` and supplied at the
  * implementer seam.
- * Module- and procedure-local behavior still belongs in module `setup.ts` /
+ * Module- and procedure-local behavior still belongs in module `module.ts` /
  * `router.ts` files. Lower-level construction primitives remain in
  * `src/orpc-sdk.ts`.
  *
@@ -148,7 +148,7 @@ export const ocBase = service.oc;
  * declarative concerns defined in this file.
  *
  * Typical attachment points:
- * - module-level additions in module `setup.ts` files
+ * - module-level additions in module `module.ts` files
  * - procedure-level additions in module `router.ts` files
  *
  * Handlers and additive middleware ultimately run on `ExecutionContext`, but

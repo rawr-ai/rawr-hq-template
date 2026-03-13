@@ -241,7 +241,7 @@ Inside a service package, telemetry/observability normally layers like this:
 3. **Additive module-level observability**
    - owned by each module as needed
    - adds module-local attributes/events/log enrichment
-   - typically attached in `modules/<name>/setup.ts`
+   - typically attached in `modules/<name>/module.ts`
 
 4. **Procedure handler code**
    - normally focuses on business logic

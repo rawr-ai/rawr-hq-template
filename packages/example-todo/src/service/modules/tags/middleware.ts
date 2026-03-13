@@ -2,7 +2,7 @@
  * @fileoverview Tag module middleware exports.
  *
  * @remarks
- * Keep standalone module middleware here so `setup.ts` and `router.ts` can
+ * Keep standalone module middleware here so `module.ts` and `router.ts` can
  * import generic names:
  * - `observability`
  * - `analytics`

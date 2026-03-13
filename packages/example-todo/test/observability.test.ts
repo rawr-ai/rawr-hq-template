@@ -172,7 +172,7 @@ describe("example-todo observability", () => {
       && entry.payload.code === "READ_ONLY_MODE")).toBe(true);
   });
 
-  it("adds procedure-local observability and analytics on top of the service baseline", async () => {
+  it("adds module-local observability and analytics on top of the service baseline", async () => {
     const logs: LogEntry[] = [];
     const analytics: AnalyticsEntry[] = [];
     const client = createClient(createClientOptions({ logs, analytics }));
@@ -189,21 +189,23 @@ describe("example-todo observability", () => {
       expect(span.events.map((event) => event.name)).toEqual(expect.arrayContaining([
         "todo.procedure.started",
         "todo.procedure.succeeded",
-        "todo.assignments.assign.requested",
+        "todo.assignments.module.observed",
       ]));
     });
 
     expect(logs.some((entry) =>
-      entry.event === "todo.assignments.assign.requested"
-      && entry.payload.layer === "procedure"
-      && entry.payload.procedure === "assignments.assign"
+      entry.event === "todo.assignments.module"
+      && entry.payload.layer === "module"
+      && entry.payload.module === "assignments"
+      && entry.payload.path === "assignments.assign"
       && entry.payload.workspaceId === "workspace-default"
       && entry.payload.invocationTraceId === "trace-procedure-local")).toBe(true);
     expect(analytics.some((entry) =>
       entry.event === "orpc.procedure"
       && entry.payload.path === "assignments.assign"
-      && entry.payload.analytics_layer === "procedure"
-      && entry.payload.analytics_procedure === "assignments.assign"
+      && entry.payload.analytics_layer === "module"
+      && entry.payload.analytics_module === "assignments"
+      && entry.payload.analytics_path === "assignments.assign"
       && entry.payload.analytics_outcome === "success"
       && entry.payload.analytics_workspace_id === "workspace-default"
       && entry.payload.analytics_trace_id === "trace-procedure-local")).toBe(true);

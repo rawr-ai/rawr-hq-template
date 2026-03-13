@@ -3,7 +3,7 @@
  *
  * @remarks
  * Assignment is a composite module. This contract declares multi-entity
- * boundary behavior; setup is in `setup.ts` and implementation in `router.ts`.
+ * boundary behavior; module composition is in `module.ts` and implementation in `router.ts`.
  *
  * @agents
  * Keep this contract focused on caller-visible shape. Cross-module access
