@@ -155,7 +155,7 @@ DX/risk note:
 - Preserves central manifest as declarative assembly only.
 
 4. Shared TypeBox adapter package hard requirement:
-- Use one `@rawr/orpc-standards` implementation; remove per-package inline copies.
+- Use one `@rawr/hq-sdk` implementation; remove per-package inline copies.
 - Matches proposal intent and resolves existing duplication in anchors.
 
 5. Router-local client binding helper:
@@ -188,9 +188,9 @@ Proposal-by-proposal completeness check:
 
 4. Shared TypeBox adapter + shared OpenAPI converter:
 - Added full adapter and converter snippets with exact paths:
-  - `packages/orpc-standards/src/typebox-standard-schema.ts`
-  - `packages/orpc-standards/src/openapi-typebox-converter.ts`
-  - `packages/orpc-standards/src/index.ts`
+  - `packages/hq-sdk/src/typebox-standard-schema.ts`
+  - `packages/hq-sdk/src/openapi-typebox-converter.ts`
+  - `packages/hq-sdk/src/index.ts`
 - Added contract and host import/invocation snippets and explicit replacement targets for duplicated in-repo implementations.
 
 5. Router-level internal-client binding (`withInternalClient`):

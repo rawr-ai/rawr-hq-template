@@ -231,7 +231,7 @@ This architecture is TypeBox-first end-to-end:
 4. Host oRPC/OpenAPI layer uses a `ConditionalSchemaConverter` to extract `__typebox` and emit JSON Schema into generated OpenAPI.
 
 ```ts
-// packages/orpc-standards/src/typebox-standard-schema.ts
+// packages/hq-sdk/src/typebox-standard-schema.ts
 import type { Schema, SchemaIssue } from "@orpc/contract";
 import { type Static, type TSchema } from "typebox";
 import { Value } from "typebox/value";
@@ -273,12 +273,12 @@ export function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Stat
 ```
 
 ```ts
-// packages/orpc-standards/src/index.ts
+// packages/hq-sdk/src/index.ts
 export { typeBoxStandardSchema } from "./typebox-standard-schema";
 ```
 
 Adapter usage rule (default):
-- Contract snippets import `typeBoxStandardSchema` from `@rawr/orpc-standards`.
+- Contract snippets import `typeBoxStandardSchema` from `@rawr/hq-sdk`.
 - Do not duplicate helper implementation per domain/API/workflow package.
 
 ```ts
@@ -338,7 +338,7 @@ export async function getInvoiceProcessingStatus(deps: InvoiceLifecycleDeps, run
 // packages/invoice-processing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 
 export const invoiceInternalContract = oc.router({
   start: oc
@@ -435,7 +435,7 @@ export type { InvoiceLifecycleDeps } from "./services/invoice-lifecycle.service"
 // plugins/api/invoice-processing-api/src/contract.ts (boundary contract)
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 
 export const invoiceApiContract = oc.router({
   startInvoiceProcessing: oc
@@ -547,7 +547,7 @@ Path A use/non-use criteria are canonical in `API Plugin Policy (Boundary-Owned 
 // plugins/workflows/invoice-processing-workflows/src/contract.ts (workflow triggers contract)
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 
 export const invoiceWorkflowTriggerContract = oc.router({
   triggerInvoiceReconciliation: oc
@@ -812,7 +812,7 @@ This revision removes or replaces prior ambiguity:
 9. Replaced opaque matrix layer naming with explicit composition-manifest ownership semantics (`Composition manifest (rawr.hq.ts)`).
 10. Removed Zod-first examples that conflicted with current stack; canonical snippets now use TypeBox-first contract schemas.
 11. Replaced implied conversion behavior with explicit TypeBox -> Standard Schema adapter and host `ConditionalSchemaConverter` OpenAPI extraction path.
-12. Removed per-capability helper placement drift; canonical examples now use one centralized adapter package (`@rawr/orpc-standards`).
+12. Removed per-capability helper placement drift; canonical examples now use one centralized adapter package (`@rawr/hq-sdk`).
 13. Removed verbose standalone per-procedure schema constants where not reusable; examples now default to inline procedure schema definitions.
 14. Replaced ambiguous example file `surface.ts` with canonical `index.ts` composition exports and explicit non-client clarification.
 15. Folded standalone `visibility.ts` example into `router.ts` visibility semantics by default.
@@ -828,7 +828,7 @@ This revision removes or replaces prior ambiguity:
 8. Discovery is explicitly deferred as cutover-only with cutover trigger and non-goal statement.
 9. No duplicate or conflicting policy statements remain between policy sections, examples, and owner matrix.
 10. Contract examples use TypeBox-first schemas and `schema({...})` for object-root oRPC I/O definitions.
-11. Contract examples import schema helpers from one centralized helper package (`@rawr/orpc-standards`), not duplicated helper implementations.
+11. Contract examples import schema helpers from one centralized helper package (`@rawr/hq-sdk`), not duplicated helper implementations.
 12. Contract examples default to inline `input`/`output` schema definitions unless reusable domain schema artifacts are warranted.
 13. OpenAPI conversion path is explicit and concrete: `__typebox` payload in adapter, consumed by host `ConditionalSchemaConverter`.
 14. API/workflow example filenames use canonical `contract.ts`, `router.ts`, `index.ts` with context in prose instead of context-baked suffixes.

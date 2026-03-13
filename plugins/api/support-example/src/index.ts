@@ -10,4 +10,3 @@ export function registerSupportExampleApiPlugin() {
 }
 
 export type SupportExampleApiPluginRegistration = ReturnType<typeof registerSupportExampleApiPlugin>;
-

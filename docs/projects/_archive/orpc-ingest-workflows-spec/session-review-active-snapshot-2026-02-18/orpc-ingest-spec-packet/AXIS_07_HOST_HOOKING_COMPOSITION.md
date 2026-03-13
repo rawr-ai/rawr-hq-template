@@ -79,7 +79,7 @@ apps/server/src/
 rawr.hq.ts
 packages/core/src/orpc/
   hq-router.ts
-packages/orpc-standards/src/
+packages/hq-sdk/src/
   index.ts
   typebox-standard-schema.ts
 packages/coordination-inngest/src/
@@ -114,12 +114,12 @@ plugins/web/<domain>/src/
 
 ### TypeBox standard-schema adapter package
 ```ts
-// packages/orpc-standards/src/index.ts
+// packages/hq-sdk/src/index.ts
 export { typeBoxStandardSchema } from "./typebox-standard-schema";
 ```
 
 ```ts
-// packages/orpc-standards/src/typebox-standard-schema.ts
+// packages/hq-sdk/src/typebox-standard-schema.ts
 function parseIssuePath(instancePath: unknown): PropertyKey[] | undefined {
   if (typeof instancePath !== "string" || instancePath === "" || instancePath === "/") return undefined;
   return instancePath.split("/").slice(1).map((segment) => (/^\d+$/.test(segment) ? Number(segment) : segment));

@@ -152,7 +152,7 @@ export async function cancelInvoice(deps: InvoiceServiceDeps, input: { runId: st
 // packages/invoicing/src/procedures/start.ts
 import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { startInvoice } from "../service/lifecycle";
 import type { InvoiceProcedureContext } from "../context";
 

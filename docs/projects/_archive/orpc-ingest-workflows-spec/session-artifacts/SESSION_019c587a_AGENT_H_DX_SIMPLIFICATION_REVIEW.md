@@ -272,7 +272,7 @@ Proposed abstraction:
 
 Implementation snippet:
 ```ts
-// packages/orpc-standards/src/typebox-standard-schema.ts
+// packages/hq-sdk/src/typebox-standard-schema.ts
 import type { Schema, SchemaIssue } from "@orpc/contract";
 import { type Static, type TSchema } from "typebox";
 import { Value } from "typebox/value";
@@ -312,7 +312,7 @@ export function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Stat
 ```
 
 ```ts
-// packages/orpc-standards/src/openapi-typebox-converter.ts
+// packages/hq-sdk/src/openapi-typebox-converter.ts
 import type { ConditionalSchemaConverter, JSONSchema } from "@orpc/openapi";
 
 export const typeBoxOpenApiSchemaConverter: ConditionalSchemaConverter = {
@@ -326,24 +326,24 @@ export const typeBoxOpenApiSchemaConverter: ConditionalSchemaConverter = {
 ```
 
 ```ts
-// packages/orpc-standards/src/index.ts
+// packages/hq-sdk/src/index.ts
 export { typeBoxStandardSchema } from "./typebox-standard-schema";
 export { typeBoxOpenApiSchemaConverter } from "./openapi-typebox-converter";
 ```
 
 Exact location:
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/packages/orpc-standards/src/typebox-standard-schema.ts`
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/packages/orpc-standards/src/openapi-typebox-converter.ts`
-- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/packages/orpc-standards/src/index.ts`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/packages/hq-sdk/src/typebox-standard-schema.ts`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/packages/hq-sdk/src/openapi-typebox-converter.ts`
+- `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template-wt-flat-runtime-proposal/packages/hq-sdk/src/index.ts`
 
 End-to-end wiring:
 - Contract imports:
 ```ts
-import { typeBoxStandardSchema } from "@rawr/orpc-standards";
+import { typeBoxStandardSchema } from "@rawr/hq-sdk";
 ```
 - Host OpenAPI generator import:
 ```ts
-import { typeBoxOpenApiSchemaConverter } from "@rawr/orpc-standards";
+import { typeBoxOpenApiSchemaConverter } from "@rawr/hq-sdk";
 ```
 - Host generator usage:
 ```ts
@@ -452,7 +452,7 @@ Keep-as-is alternative if rejected:
 - `packages/core/src/composition/capability-composer.ts`
 - `packages/core/src/composition/surfaces.ts`
 - `packages/core/src/orpc/with-internal-client.ts`
-- `packages/orpc-standards/src/{typebox-standard-schema.ts,openapi-typebox-converter.ts,index.ts}`
+- `packages/hq-sdk/src/{typebox-standard-schema.ts,openapi-typebox-converter.ts,index.ts}`
 2. In each capability package, define domain internals and a context factory.
 - `packages/<capability>/src/{contract.ts,router.ts,client.ts,context.ts}`
 3. In API and workflow plugins, export typed surfaces via `defineApiSurface(...)` / `defineWorkflowSurface(...)`.

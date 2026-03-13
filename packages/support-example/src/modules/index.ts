@@ -1,0 +1,1 @@
+export { triageRouter } from "./triage";

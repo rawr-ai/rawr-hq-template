@@ -13,7 +13,7 @@
 
 2. Standard schema helper alias normalized for readability.
 - Updated contract snippet import to:
-  - `import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";`
+  - `import { typeBoxStandardSchema as std } from "@rawr/hq-sdk";`
 - Updated all `.input(...)` / `.output(...)` calls in the contract snippet from `typeBoxStandardSchema(...)` to `std(...)`.
 
 3. Added mini file-tree snippets at the top of each 4.x subsection.

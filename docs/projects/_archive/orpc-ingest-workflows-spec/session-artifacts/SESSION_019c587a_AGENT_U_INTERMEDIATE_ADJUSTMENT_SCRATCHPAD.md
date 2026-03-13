@@ -47,7 +47,7 @@
 
 2. Readable schema helper alias:
 - Normalized schema helper imports to:
-  `import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";`
+  `import { typeBoxStandardSchema as std } from "@rawr/hq-sdk";`
 - Updated all shown contract/procedure schema calls to use `std(...)`.
 - Updated guardrail prose to reference `std(Type.*)` while preserving the original helper identity.
 

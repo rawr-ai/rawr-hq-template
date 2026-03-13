@@ -65,7 +65,7 @@
    - Snippets imported `typeBoxStandardSchema` directly and called `.input(typeBoxStandardSchema(...))` / `.output(typeBoxStandardSchema(...))`.
 2. After:
    - Snippets now use canonical alias:
-     - `import { typeBoxStandardSchema as std } from "@rawr/orpc-standards";`
+     - `import { typeBoxStandardSchema as std } from "@rawr/hq-sdk";`
      - `.input(std(...))` / `.output(std(...))`
    - Applied across internal procedures and boundary contract snippets.
 3. Why:
@@ -76,7 +76,7 @@
    - Subsections 4.1–4.4 started directly with code blocks.
 2. After:
    - Added small file-structure snippets at the top of each subsection:
-     - 4.1: `packages/orpc-standards/src/*`
+     - 4.1: `packages/hq-sdk/src/*`
      - 4.2: `packages/invoicing/src/*` (including `context.ts`)
      - 4.3: `plugins/api/invoicing/src/*` (including `context.ts`)
      - 4.4: `rawr.hq.ts` + host mounting files under `apps/server/src/*`
