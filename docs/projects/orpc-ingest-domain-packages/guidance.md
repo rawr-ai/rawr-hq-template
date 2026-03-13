@@ -142,7 +142,7 @@ Always-on slots:
   - SDK baseline middleware stays SDK-owned
   - a service may be required to supply a service-authored runtime extension when baseline behavior cannot be correct without it
   - those extensions are enforced at `createServiceImplementer(...)`
-- Module/procedure-local observability and analytics are additive middleware, authored with `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` and attached where they belong (`modules/*/setup.ts` for module-wide additions, `modules/*/router.ts` for procedure-local additions).
+- Module/procedure-local observability and analytics are additive middleware, authored with `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` and attached where they belong (`modules/*/module.ts` for module-wide additions, `modules/*/router.ts` for procedure-local additions).
 - `src/orpc/service/types.ts` is the always-on service projection surface for the proto SDK.
 - `src/orpc/service/define.ts` is the always-on service authoring surface (`defineService`, `ServiceOf`).
 - `src/orpc/baseline/{types,middleware,implementer}.ts` are the always-on baseline seams.
@@ -175,8 +175,8 @@ To avoid overloaded "router" language, these terms are canonical in this doc:
   ```
 - **Contract-router builder**: optional oRPC builder form `oc.errors(...).router({...})`.
   We are not using this by default in `example-todo`.
-- **Module setup**: context injection exported from `service/modules/<name>/setup.ts` (repos/services derived from `context.deps`).
-- **Module implementation router**: oRPC server router exported from `service/modules/<name>/router.ts` via `os.router({ ... })`.
+- **Module composition**: context injection exported from `service/modules/<name>/module.ts` (repos/services derived from `context.deps`).
+- **Module implementation router**: oRPC server router exported from `service/modules/<name>/router.ts` via `module.router({ ... })`.
 - **Service router**: final router exported from `src/service/router.ts` after module routers are attached once.
 - **Kit seam**: domain-agnostic oRPC kit primitives under `src/orpc-sdk.ts` and `src/orpc/*`.
 - **oRPC composition**: `src/service/impl.ts` (implements the root contract and attaches package-wide middleware).
@@ -215,12 +215,12 @@ Package root (`src/index.ts`) is boundary-only by default.
 - Do not export module schemas/contracts/repositories from root by default.
 - Do not keep compatibility aliases in examples unless explicitly required by a migration plan.
 
-## Module Shape: `contract.ts` + `middleware.ts` + `setup.ts` + `router.ts`
+## Module Shape: `contract.ts` + `middleware.ts` + `module.ts` + `router.ts`
 
 Each module should split boundary definition from behavior:
 
 - `contract.ts`: procedure names, input/output schemas, `.errors(...)` declarations.
-- `setup.ts`: module runtime composition only; this is the scaffolding entry point that prepares the module-local implementer/exported `os`.
+- `module.ts`: module runtime composition only; this is the scaffolding entry point that prepares the module-local implementer/exported `module`.
 - `middleware.ts`: standalone module-local middleware/provider definitions with generic exports such as `observability`, `analytics`, and `repository`/`repositories`.
 - `router.ts`: handler implementation only; exports the contract-enforced module router.
 
@@ -228,7 +228,7 @@ Rules:
 
 - Do not duplicate contract shape in `router.ts`.
 - Do not place business orchestration in module `contract.ts`.
-- Start each module setup from the central implementer subtree in `src/service/impl.ts` (`impl.<module>`), then attach any standalone module middleware there when the middleware is module-wide. Standalone procedure-local middleware may still be attached in module `router.ts`.
+- Start each module composition file from the central implementer subtree in `src/service/impl.ts` (`impl.<module>`), then attach any standalone module middleware there when the middleware is module-wide. Standalone procedure-local middleware may still be attached in module `router.ts`.
 - Keep module-local standalone middleware in `middleware.ts`, and use generic export names for recurring concepts:
   - `observability`
   - `analytics`
@@ -238,9 +238,9 @@ Rules:
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.
 - In procedure chains, place `.errors(...)` after `.input(...)` and `.output(...)` for consistent scan order.
 - Prefer TypeBox `description` metadata on schema objects/properties for semantic documentation; avoid extra schema-only JSDoc noise.
-- `setup.ts` should make it obvious that standalone module middleware comes from `middleware.ts`.
+- `module.ts` should make it obvious that standalone module middleware comes from `middleware.ts`.
 - In `example-todo`, every module keeps a `middleware.ts` file and exports generic names (`observability`, `analytics`, and `repository` / `repositories`) for consistency, even when some modules only use thin placeholders.
-- Inline middleware inside `setup.ts` or `router.ts` is still allowed when it is truly local and not worth naming separately, but recurring standalone module middleware should live in `middleware.ts`.
+- Inline middleware inside `module.ts` or `router.ts` is still allowed when it is truly local and not worth naming separately, but recurring standalone module middleware should live in `middleware.ts`.
 
 ## Procedure Metadata Standard
 
@@ -291,7 +291,7 @@ Stable points:
 - `scope` should hold stable business/client-instance scope bound at `createClient(...)` time.
 - `config` should hold stable package behavior/configuration bound at `createClient(...)` time.
 - `invocation` should hold required per-call input passed through native oRPC client context.
-- Module setup injects module-local repos/services into execution context (`src/service/modules/<name>/setup.ts`).
+- Module composition injects module-local repos/services into execution context (`src/service/modules/<name>/module.ts`).
 - Kit-level middleware should be used for cross-cutting concerns that should be reusable across domain packages (analytics, import-fault classification, request scoping).
 - Domain-wide middleware should be used for domain guards/semantics (read-only mode, authz policy, tenancy invariants) that need procedure metadata awareness.
 - Apply middleware at most once per concern: attach package-wide middleware in `src/service/impl.ts`, then attach module routers once in `src/service/router.ts`.
@@ -579,7 +579,7 @@ Concrete example:
 
 - `sqlProvider` is attached earlier in `src/service/impl.ts`
 - it creates `context.provided.sql`
-- later, a module-local service provider in `setup.ts` may require
+- later, a module-local service provider in `module.ts` may require
   `provided.sql` plus `scope.workspaceId`
 - that works because both are already present by the time the module provider is
   attached
@@ -671,14 +671,14 @@ Provider middleware should return only the new execution keys it introduces.
 ### Module-level inline execution-context expansion
 
 If a module wants flatter handler ergonomics, do the inline expansion at the
-**module setup** layer and nowhere higher.
+**module composition** layer and nowhere higher.
 
 That means:
 
 - provider middleware still writes into `context.provided.*`
 - package-wide service middleware does **not** spread provider outputs onto
   arbitrary top-level keys
-- module `setup.ts` is the one supported place to reshape the execution
+- module `module.ts` is the one supported place to reshape the execution
   context for the handlers in that module
 
 Why this rule exists:
@@ -772,7 +772,7 @@ Use domain-wide middleware for domain semantics that should apply uniformly acro
 Use module-local middleware only when it is truly local to one module (or sub-tree of a module).
 
 - Keep standalone module-local middleware next to the module in `src/service/modules/<name>/middleware.ts` when that middleware is worth naming separately.
-- Keep module-local composition/attachment in `src/service/modules/<name>/setup.ts`.
+- Keep module-local composition/attachment in `src/service/modules/<name>/module.ts`.
 - Promote to `src/service/middleware/*` only when two+ modules genuinely share it.
 - Read-only policy should use procedure metadata (`idempotent`) plus stable package config (`config.readOnly`) to block mutations.
 - Invocation-trace middleware should consume `context.invocation.traceId` through native client context, not through middleware-context attachment.

@@ -207,7 +207,7 @@ Concrete example:
 deps.dbPool
   -> sqlProvider
   -> provided.sql
-  -> tasks/setup.ts projects repo
+  -> tasks/module.ts projects repo
   -> tasks/router.ts uses context.repo
 ```
 

@@ -170,10 +170,10 @@ critical ambiguity unresolved.
   composition seam.
 - `packages/example-todo/src/service/base.ts` keeps the declarative service
   definition and exports bound builders for service middleware/providers.
-- Module setup remains the intended local reshaping seam:
-  - `tasks/setup.ts`
-  - `tags/setup.ts`
-  - `assignments/setup.ts`
+- Module composition remains the intended local reshaping seam:
+  - `tasks/module.ts`
+  - `tags/module.ts`
+  - `assignments/module.ts`
 - Provider-derived execution values continue to flow under
   `context.provided.*`.
 - logger and analytics capability contracts now live under:
@@ -256,7 +256,7 @@ Carry these forward explicitly:
 - Do not teach future scaffolds that analytics should stay as raw
   `context.deps.analytics`.
 - Do not flatten provider outputs package-wide; if ergonomic reshaping is
-  needed, do it in module `setup.ts` or module-local middleware.
+  needed, do it in module `module.ts` or module-local middleware.
 - Do not treat package-local concrete adapters as supported architecture.
 - Do not duplicate generic reusable ports per package if they really belong in
   a central shared SDK.

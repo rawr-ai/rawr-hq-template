@@ -2,24 +2,24 @@
  * @fileoverview Tag module router implementation.
  *
  * @remarks
- * Module setup lives in `./setup.ts`.
+ * Module composition lives in `./module.ts`.
  * This file owns concrete handler implementations and exports plain-object `router`.
  *
  * @agents
  * `contract.ts` owns boundary shape (input/output/errors/meta).
- * `setup.ts` owns module setup.
+ * `module.ts` owns module composition.
  * This file owns handler behavior and router composition.
  */
 import { randomUUID } from "node:crypto";
-import { os } from "./setup";
+import { module } from "./module";
 import { type Tag } from "./schemas";
 
 /**
  * SECTION: Module Procedure Implementations (Always Present)
  *
- * Implement concrete procedure handlers below using `os.<procedure>.handler(...)`.
+ * Implement concrete procedure handlers below using `module.<procedure>.handler(...)`.
  */
-const create = os.create.handler(async ({ context, input, errors }) => {
+const create = module.create.handler(async ({ context, input, errors }) => {
   const normalizedName = input.name.trim();
   const normalizedColor = input.color.toLowerCase();
 
@@ -42,12 +42,12 @@ const create = os.create.handler(async ({ context, input, errors }) => {
   return await context.repo.insert(tag);
 });
 
-const list = os.list.handler(async ({ context }) => {
+const list = module.list.handler(async ({ context }) => {
   return await context.repo.findAll();
 });
 
 /** Contract-enforced module router (fails typecheck if contract and router drift). */
-export const router = os.router({
+export const router = module.router({
   create,
   list,
 });

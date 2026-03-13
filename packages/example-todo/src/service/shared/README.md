@@ -12,4 +12,4 @@ Cross-module shared, **domain-internal** constructs live here.
 - `service/base.ts` (declarative service definition + policy vocabulary)
 - `service/impl.ts` (required service middleware extensions + package-wide assembly)
 - `service/router.ts` (service router attach)
-- `service/modules/*/setup.ts` (module-local injection)
+- `service/modules/*/module.ts` (module-local composition/injection)

@@ -7,7 +7,7 @@
  * - input/output schemas,
  * - caller-actionable ORPC errors.
  *
- * Module setup belongs in `setup.ts`; handler implementation belongs in `router.ts`.
+ * Module composition belongs in `module.ts`; handler implementation belongs in `router.ts`.
  *
  * @agents
  * Extend task capability by updating this contract first, then implement handlers

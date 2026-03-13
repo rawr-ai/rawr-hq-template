@@ -6,7 +6,7 @@
  * Keep this file declarative: no persistence logic or orchestration.
  *
  * @agents
- * Add/modify procedures here first. Module setup lives in `setup.ts`, and
+ * Add/modify procedures here first. Module composition lives in `module.ts`, and
  * handler behavior lives in `router.ts`.
  */
 import { schema } from "../../../orpc-sdk";
