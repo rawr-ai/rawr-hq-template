@@ -223,6 +223,107 @@ Canonical files:
 - `packages/example-todo/src/orpc/middleware/observability/*`
 - `packages/example-todo/src/service/middleware/observability.ts`
 
+## In-Package Observability Layering
+
+Inside a service package, telemetry/observability normally layers like this:
+
+1. **Framework baseline observability**
+   - owned by the local oRPC kit seam
+   - wraps every procedure execution
+   - emits generic runtime attributes/events/log fields
+   - should consume the active span from OTel runtime context
+
+2. **Required service-wide observability**
+   - owned by the service package
+   - attached once at the package-wide assembly seam
+   - adds service-global semantics the framework baseline cannot infer on its own
+
+3. **Additive module-level observability**
+   - owned by each module as needed
+   - adds module-local attributes/events/log enrichment
+   - typically attached in `modules/<name>/setup.ts`
+
+4. **Procedure handler code**
+   - normally focuses on business logic
+   - may emit ordinary structured logs
+   - should not usually manipulate OpenTelemetry directly
+
+The normal execution picture is:
+
+```text
+framework baseline
+  -> required service-wide observability
+  -> additive module observability
+  -> handler business logic
+```
+
+Example surfaces in `example-todo`:
+
+- framework baseline:
+  - `packages/example-todo/src/orpc/middleware/observability/index.ts`
+- required service-wide observability:
+  - `packages/example-todo/src/service/middleware/observability.ts`
+- additive module observability:
+  - `packages/example-todo/src/service/modules/tags/middleware.ts`
+- handler business logic:
+  - `packages/example-todo/src/service/modules/tags/router.ts`
+
+### What handlers usually do
+
+Handler code should usually rely on the surrounding observability layers rather
+than touching OpenTelemetry directly.
+
+The normal handler behavior is:
+
+- do business logic
+- call repositories/services
+- emit ordinary structured logs when useful
+
+The normal handler behavior is **not**:
+
+- fetch the active span
+- add generic start/success/error events
+- duplicate module/service observability middleware behavior
+
+## Domain-Moment Telemetry
+
+A **domain moment** is a specific business event inside a procedure that cannot
+be expressed cleanly as framework, service-wide, or module-wide middleware.
+
+This is rare. Most observability needs are better expressed in middleware
+because they apply:
+
+- to every procedure
+- to every procedure in a service
+- or to every procedure in a module
+
+Use direct procedure-level telemetry only when the event is:
+
+- tightly coupled to a specific branch of business logic
+- important enough to deserve span-level visibility
+- not a generic lifecycle concern already covered by middleware
+
+Concrete `example-todo`-style example:
+
+- a `tasks.create` procedure successfully creates the task but then detects that
+  requested tags were partially unavailable and falls back to creating the task
+  without some optional tag associations
+- that fallback is a meaningful domain event
+- it is not a generic start/success/error lifecycle event
+- it may deserve a specific span event such as
+  `todo.tasks.partial_tag_resolution`
+
+That kind of event belongs to the **domain service package**, not to the host,
+because it describes package/domain behavior rather than transport or ingress
+behavior.
+
+It is still the exception rather than the norm because:
+
+- most procedures do not have uniquely meaningful sub-events
+- generic runtime visibility is already supplied by the surrounding layers
+- putting too much span logic into handlers makes business code noisy and
+  duplicates the middleware model
+
 ### Plugin/host request and network instrumentation
 
 Plugin and host request/network middleware may author their own telemetry
