@@ -22,6 +22,11 @@ import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 import { createRepository as createAssignmentRepository } from "./repository";
 
+export {
+  createServiceAnalyticsMiddleware as createProcedureAnalytics,
+  createServiceObservabilityMiddleware as createProcedureObservability,
+} from "../../base";
+
 /** Composite repository provider attached at module scope in `module.ts`. */
 export const repositories = createServiceProvider<{
   scope: {

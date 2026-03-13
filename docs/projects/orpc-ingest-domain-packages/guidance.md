@@ -233,6 +233,10 @@ Rules:
   - `observability`
   - `analytics`
   - `repository` / `repositories` when a standalone provider exists
+- If a router needs extra procedure-local additive observability or analytics,
+  prefer re-exporting the builder locally from `middleware.ts` (for example
+  `createProcedureObservability` / `createProcedureAnalytics`) rather than
+  deep-importing service builders into `router.ts`.
 - Use `createServiceObservabilityMiddleware(...)` / `createServiceAnalyticsMiddleware(...)` for additive local instrumentation at module/procedure scope; use `createServiceMiddleware(...)` for other additive observers/guards; keep `service/base.ts` for service-wide defaults only.
 - Keep module `router.ts` readable as execution logic, not as schema-definition boilerplate.
 - Keep module `contract.ts` fully inline for procedure definitions (`.input(...)`, `.output(...)`, `.errors(...)`) in the same chain.

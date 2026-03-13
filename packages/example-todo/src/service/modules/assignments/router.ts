@@ -13,6 +13,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { module } from "./module";
+import { createProcedureObservability } from "./middleware";
 import { type Assignment } from "./schemas";
 
 /**
@@ -20,51 +21,59 @@ import { type Assignment } from "./schemas";
  *
  * Implement concrete procedure handlers below using `module.<procedure>.handler(...)`.
  */
-const assign = module.assign.handler(async ({ context, input, errors }) => {
-  const task = await context.tasks.findById(input.taskId);
-  if (!task) {
-    throw errors.RESOURCE_NOT_FOUND({
-      message: `Task '${input.taskId}' not found`,
-      data: { entity: "Task", id: input.taskId },
-    });
-  }
+const assign = module.assign
+  .use(createProcedureObservability({
+    onSuccess: ({ span, context }) => {
+      span?.addEvent("todo.assignments.assign.completed", {
+        workspace_id: context.workspaceId,
+      });
+    },
+  }))
+  .handler(async ({ context, input, errors }) => {
+    const task = await context.tasks.findById(input.taskId);
+    if (!task) {
+      throw errors.RESOURCE_NOT_FOUND({
+        message: `Task '${input.taskId}' not found`,
+        data: { entity: "Task", id: input.taskId },
+      });
+    }
 
-  const tag = await context.tags.findById(input.tagId);
-  if (!tag) {
-    throw errors.RESOURCE_NOT_FOUND({
-      message: `Tag '${input.tagId}' not found`,
-      data: { entity: "Tag", id: input.tagId },
-    });
-  }
+    const tag = await context.tags.findById(input.tagId);
+    if (!tag) {
+      throw errors.RESOURCE_NOT_FOUND({
+        message: `Tag '${input.tagId}' not found`,
+        data: { entity: "Tag", id: input.tagId },
+      });
+    }
 
-  if (await context.repo.exists(input.taskId, input.tagId)) {
-    throw errors.ALREADY_ASSIGNED({
-      message: `Task '${input.taskId}' already has tag '${input.tagId}'`,
-      data: { taskId: input.taskId, tagId: input.tagId },
-    });
-  }
+    if (await context.repo.exists(input.taskId, input.tagId)) {
+      throw errors.ALREADY_ASSIGNED({
+        message: `Task '${input.taskId}' already has tag '${input.tagId}'`,
+        data: { taskId: input.taskId, tagId: input.tagId },
+      });
+    }
 
-  const existingAssignments = await context.repo.countByTask(input.taskId);
-  if (existingAssignments >= context.maxAssignmentsPerTask) {
-    throw errors.ASSIGNMENT_LIMIT_REACHED({
-      message: `Task '${input.taskId}' already has the maximum number of tag assignments`,
-      data: {
-        taskId: input.taskId,
-        maxAssignmentsPerTask: context.maxAssignmentsPerTask,
-      },
-    });
-  }
+    const existingAssignments = await context.repo.countByTask(input.taskId);
+    if (existingAssignments >= context.maxAssignmentsPerTask) {
+      throw errors.ASSIGNMENT_LIMIT_REACHED({
+        message: `Task '${input.taskId}' already has the maximum number of tag assignments`,
+        data: {
+          taskId: input.taskId,
+          maxAssignmentsPerTask: context.maxAssignmentsPerTask,
+        },
+      });
+    }
 
-  const assignment: Assignment = {
-    id: randomUUID(),
-    workspaceId: context.workspaceId,
-    taskId: input.taskId,
-    tagId: input.tagId,
-    createdAt: context.clock.now(),
-  };
+    const assignment: Assignment = {
+      id: randomUUID(),
+      workspaceId: context.workspaceId,
+      taskId: input.taskId,
+      tagId: input.tagId,
+      createdAt: context.clock.now(),
+    };
 
-  return await context.repo.insert(assignment);
-});
+    return await context.repo.insert(assignment);
+  });
 
 const listForTask = module.listForTask.handler(async ({ context, input, errors }) => {
   const task = await context.tasks.findById(input.taskId);

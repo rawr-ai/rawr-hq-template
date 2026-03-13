@@ -16,6 +16,11 @@ import {
 import type { Sql } from "../../../orpc-sdk";
 import { createRepository } from "./repository";
 
+export {
+  createServiceAnalyticsMiddleware as createProcedureAnalytics,
+  createServiceObservabilityMiddleware as createProcedureObservability,
+} from "../../base";
+
 export const repository = createServiceProvider<{
   scope: {
     workspaceId: string;
