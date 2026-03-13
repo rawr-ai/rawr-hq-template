@@ -94,6 +94,18 @@ Service packages still own observability semantics:
 Plugins and hosts still own ingress/request/network telemetry outside service
 packages.
 
+Inside a service package, use this layering rule:
+
+- framework baseline observability wraps all procedures
+- one required service-wide observability middleware adds package-global
+  semantics
+- additive module observability middleware adds module-local semantics
+- handlers usually do business logic plus ordinary structured logging only
+
+Direct procedure-level span work should be rare and reserved for genuine
+domain-moment telemetry that cannot be expressed cleanly in surrounding
+middleware.
+
 ## Agent Click Path (Recommended)
 
 If you are an agent arriving to implement business logic fast:
