@@ -67,7 +67,6 @@ those integrations are being reasoned about:
   - service-declared caller input
   - host/framework top-level caller input
   - execution-time derived resources
-- `ADAPTER_PORTS_DESIGN_SCRATCH.md` is the main live document for that split
 - `DESIGN.md` is the structural map for the seams/axes behind that split
 - `TELEMETRY_DESIGN.md` is the canonical target model for telemetry wiring and
   ownership
@@ -124,7 +123,6 @@ phase:
 5. `./DESIGN.md`
 6. `./TELEMETRY_DESIGN.md`
 7. `./ADAPTER_POSTURE.md`
-8. `./ADAPTER_PORTS_DESIGN_SCRATCH.md`
 
 Supporting references for this phase:
 

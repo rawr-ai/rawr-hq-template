@@ -17,7 +17,6 @@ integration conversation:
 5. `DESIGN.md`
 6. `TELEMETRY_DESIGN.md`
 7. `ADAPTER_POSTURE.md`
-8. `ADAPTER_PORTS_DESIGN_SCRATCH.md`
 
 Supporting/reference docs:
 
@@ -42,5 +41,5 @@ Reading rule:
 
 - `ACTIVE_GROUNDING.md` = current worker brief
 - `DESIGN.md` = structural seam/axis map
-- `ADAPTER_PORTS_DESIGN_SCRATCH.md` = unresolved design tension scratchpad
+- `DESIGN.md` = structural seam/axis map for the remaining unresolved design work
 - `DECISIONS.md`, `guidance.md`, and `examples.md` = durable core trio

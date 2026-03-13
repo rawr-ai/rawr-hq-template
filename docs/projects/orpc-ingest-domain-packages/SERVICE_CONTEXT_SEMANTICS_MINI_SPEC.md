@@ -22,9 +22,9 @@ This document captures the current working hypothesis from an exploratory
 conversation.
 
 It is now primarily a **supporting reference** for the earlier service-context
-semantic cleanup, not the main active scratch doc for the current adapter /
+semantic cleanup, not the main active design map for the current adapter /
 host / input-layer design problem. For the live unresolved design knot, prefer
-`ADAPTER_PORTS_DESIGN_SCRATCH.md` first.
+`DESIGN.md` first.
 
 It is **not locked in**.
 

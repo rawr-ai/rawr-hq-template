@@ -23,7 +23,7 @@ The live code currently still uses a merged `deps` bag that includes both:
 Treat that as the **current implementation**, not as settled semantic guidance.
 
 The active design direction captured in
-`ADAPTER_PORTS_DESIGN_SCRATCH.md` is:
+`DESIGN.md` is:
 
 - **service-declared deps** should mean only the caller requirements declared by
   the service package itself

@@ -57,8 +57,8 @@ It does **not** yet replace the broader architecture already recorded across:
 - `examples.md`
 
 Some of the current design still lives there, and some of the active design
-work still lives in `ADAPTER_PORTS_DESIGN_SCRATCH.md`. We will consolidate
-later when the open seams are resolved.
+work still lives in the durable core docs. We will consolidate later when the
+open seams are resolved.
 
 For now, this file exists to make the design space legible enough to actually
 finish the remaining decisions.
@@ -95,14 +95,6 @@ Use this map to avoid treating every doc in this packet as equally current.
     still reflect the earlier telemetry seam and pre-telemetry-migration packet
     state
 
-### Active Scratch / Historical Design Trace
-
-- `ADAPTER_PORTS_DESIGN_SCRATCH.md`
-  - keep as historical design trace for now
-  - do not treat as canonical or equally current with `DESIGN.md`
-  - later integration should pull only still-valid seam insights, not revive
-    superseded telemetry discussion
-
 ### Supporting Workflow / Process References
 
 - `ADAPTER_AGENT_WORKFLOW.md`
@@ -121,8 +113,6 @@ When consolidating later:
   the place to resolve active design knots
 - mine `SERVICE_CONTEXT_SEMANTICS_MINI_SPEC.md` only for service-context
   semantics that still match the live SDK
-- mine `ADAPTER_PORTS_DESIGN_SCRATCH.md` only for unresolved analytics/Drizzle
-  seam pressure or useful historical rationale
 - once the remaining seams are locked, sharply mark or archive docs that are
   only preserving earlier working-state reasoning
 
@@ -522,8 +512,6 @@ That decision will determine:
   - worked scaffold shape and example progression
 - `TELEMETRY_DESIGN.md`
   - canonical telemetry architecture and migration target
-- `ADAPTER_PORTS_DESIGN_SCRATCH.md`
-  - unresolved tensions and active design scratch work
 
 This file should be treated as the clean structural map that makes those other
 docs easier to reason from, not as a replacement for them.
