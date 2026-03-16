@@ -1,0 +1,38 @@
+[
+  {
+    "kind": "low_confidence_relationship",
+    "from_id": "src-json-rawr-nx-evolution-sequence",
+    "to_id": "src-json-telemetry-vs-logging",
+    "type": "same_root_as",
+    "confidence": 0.78,
+    "notes": "Shared prefix length: 5"
+  },
+  {
+    "kind": "low_confidence_relationship",
+    "from_id": "src-md-rawr-hq-model-architecture-memo",
+    "to_id": "telemetry-vs-logging-nx-rawr-evolution",
+    "type": "fills_gap_for",
+    "confidence": 0.79,
+    "notes": "Link kept slightly lower confidence because the relationship is thematic rather than textually explicit."
+  },
+  {
+    "kind": "open_question",
+    "family_id": "encore-integration-with-rawr",
+    "question": "Whether a future cross-cloud substrate adapter should exist remains open."
+  },
+  {
+    "kind": "open_question",
+    "family_id": "inngest-plugin-api-strategy",
+    "question": "Exact generated router surface details remain an implementation question, not a resolved semantic conflict."
+  },
+  {
+    "kind": "open_question",
+    "family_id": "server-sidecar-process-model",
+    "question": "How much of the workflow trigger surface should stay inside workflow plugins versus a generic coordination layer still has some design-space ambiguity."
+  },
+  {
+    "kind": "open_question",
+    "family_id": "telemetry-vs-logging-nx-rawr-evolution",
+    "question": "No standalone canonical observability doc exists yet; observability guidance remains conversation-first."
+  }
+]
