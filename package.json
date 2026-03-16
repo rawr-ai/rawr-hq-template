@@ -114,9 +114,14 @@
     "tar": "7.5.7"
   },
   "dependencies": {
+    "@orpc/contract": "^1.13.5",
+    "@orpc/server": "^1.13.5",
+    "@rawr/coordination-inngest": "workspace:*",
     "@rawr/core": "workspace:*",
     "@rawr/hq-sdk": "workspace:*",
-    "@rawr/support-example": "workspace:*"
+    "@rawr/support-example": "workspace:*",
+    "inngest": "3.51.0",
+    "typebox": "^1.0.81"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
