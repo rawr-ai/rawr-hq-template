@@ -1,0 +1,323 @@
+{
+  "schema_version": "rawr.conversation-thread.v1",
+  "thread_id": "inngest-plugin-api-strategy",
+  "canonical_title": "Inngest Plugin API Strategy",
+  "root_source_ids": [
+    "src-json-inngest-plugin-api-strategy-branch-00"
+  ],
+  "source_files": [
+    {
+      "source_id": "src-json-inngest-plugin-api-strategy-branch-00",
+      "filename": "Inngest Plugin API Strategy Branch 00.json",
+      "path": "/Users/mateicanavra/Downloads/ChatGPT RAWR Conversation/source-material/conversations/raw-json/Inngest Plugin API Strategy Branch 00.json",
+      "title": "Branch \u00b7 Inngest Plugin API Strategy",
+      "classification": "root",
+      "link": "https://chatgpt.com/g/g-p-69b4589ea3088191a7e5ca496094e252-rawr-hq/c/69b4acbc-c194-8322-8dad-3c1810f09762",
+      "message_count": 6
+    },
+    {
+      "source_id": "src-json-inngest-plugin-api-strategy-branch-01",
+      "filename": "Inngest Plugin API Strategy Branch 01.json",
+      "path": "/Users/mateicanavra/Downloads/ChatGPT RAWR Conversation/source-material/conversations/raw-json/Inngest Plugin API Strategy Branch 01.json",
+      "title": "Branch \u00b7 Inngest Plugin API Strategy",
+      "classification": "duplicate",
+      "link": "https://chatgpt.com/g/g-p-69b4589ea3088191a7e5ca496094e252-rawr-hq/c/69b4acbc-c194-8322-8dad-3c1810f09762",
+      "message_count": 6
+    }
+  ],
+  "source_links": [
+    "https://chatgpt.com/g/g-p-69b4589ea3088191a7e5ca496094e252-rawr-hq/c/69b4acbc-c194-8322-8dad-3c1810f09762"
+  ],
+  "summary": "Workflow architecture thread that settles on a reusable workflow shell: public oRPC/OpenAPI control surfaces on one side, Inngest durable execution on the other, with private service clients providing business capability inside workflow steps.",
+  "nodes": [
+    {
+      "node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__000",
+      "type": "message",
+      "role": "Prompt",
+      "say": "Should we wrap all of our plugin APIs in inngest steps?\n\n\nhttps://www.inngest.com/docs/learn/how-functions-are-executed\n\n\nThink carefully about how this would work with our oRPC centric model. Think inside the boundaries and outside the box as needed to discover the truest answer.\n\n\nMake sure you read from the git nexus branch in the repo. Also see example-todo as the current golden example of a service package. The idea is that plugins use private service clients to build whatever runtime interface is needed to plug into the host.\n\n\nhttps://github.com/rawr-ai/rawr-hq-template/tree/codex/agent-codex-gitnexus-install",
+      "source_file_id": "src-json-inngest-plugin-api-strategy-branch-00",
+      "source_message_index": 0,
+      "source_title": "Branch \u00b7 Inngest Plugin API Strategy",
+      "source_link": "https://chatgpt.com/g/g-p-69b4589ea3088191a7e5ca496094e252-rawr-hq/c/69b4acbc-c194-8322-8dad-3c1810f09762"
+    },
+    {
+      "node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__001",
+      "type": "message",
+      "role": "Response",
+      "say": "Thought for 18s\n\n\nCalled tool\n\n\nThought for 2m 39s\n\n\nCalled tool\n\n\nThought for 2m 45s\n\n\nCalled tool\n\n\nThought for 3m 24s\n\n\nNo.\n\n\nDo not wrap all plugin APIs in Inngest steps.\n\n\nThe clean model in RAWR is:\n\n\nPlugin API boundary = oRPC / private in-process service client\nDurable execution mechanism = Inngest, only where durability is actually the job\n\n\nThat matches the architecture you already have on the git nexus branch.\n\n\nThe strongest evidence is the example-todo package. Its public surface is intentionally thin: package root exports createClient and router, and createClient builds an in-process router client from the stable boundary bags { deps, scope, config } plus per-call invocation context. That is a direct host-to-service composition model, not a workflow-engine-first model.\n\n\nindex\n\n\n[\n\n\nclient\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/client.ts)[\n\n\ndomain-package\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/orpc/boundary/domain-package.ts)\n\n\nThe service boundary is also explicit about what belongs where. deps, scope, and config are construction-time lanes; invocation is per-call; provided is middleware-accumulated later. The package-wide implementer attaches required observability and analytics once, then modules compose local providers and behavior on top. That is exactly the shape you want for plugin-private service clients that can be reused by host, CLI, web, tests, and runtime adapters without dragging in workflow semantics.\n\n\nbase\n\n\n[\n\n\nimpl\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/service/impl.ts)[\n\n\nrouter\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/service/router.ts)[\n\n\nsetup\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/service/modules/tasks/setup.ts)\n\n\nWhere Inngest shows up in your branch, it does not wrap an entire API surface. It wraps a durable runtime. @rawr/coordination-inngest is an adapter package, and inside it, step.run(...) is used around concrete durable units like run-start, memory-read, desk execute, memory-write, run-completed, and run-failed. That is the right granularity: steps mark replay/checkpoint boundaries inside workflow execution, not around every API call in the system.\n\n\npackage\n\n\n[\n\n\nadapter\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/coordination-inngest/src/adapter.ts)\n\n\nThat also lines up with your higher-level product docs. RAWR\u2019s opinions are already split cleanly: contracts and service interaction live in oRPC; workflow coordination lives in Inngest; the plugin system and workbench live in Nx. The docs describe Inngest as the coordination substrate for durable workflows and long-running processes, not as the universal wrapper around all plugin interfaces.\n\n\nrawr-product-synthesis\n\n\ngenerative-engine-design\n\n\nIf you wrap all plugin APIs in Inngest steps, several things break.\n\n\nFirst, you collapse the boundary between \u201ccalling a capability\u201d and \u201cexecuting a durable workflow.\u201d Those are not the same operation. A plugin API might be a fast read, a local transform, a host composition seam, or a simple command. Forcing all of that through step.run adds workflow semantics where they do not belong.\n\n\nSecond, you leak runtime concerns into service contracts. Example-todo is built so the same package can be called directly through an in-process oRPC client. If handlers or module setup start depending on Inngest step context, the package stops being a clean domain/service unit and becomes a workflow-bound package. That kills portability and makes the service less reusable across host surfaces.\n\n\nThird, reads become weird. A read API wrapped as a step is now participating in replay/checkpoint semantics for no real benefit. You pay latency and cognitive overhead, and you invite subtle idempotency bugs the moment somebody slips a side effect into what should have been a plain query.\n\n\nFourth, composition gets uglier. Your stated intent is that plugins use private service clients to build whatever runtime interface the host needs. That model wants a direct call graph:\nhost runtime adapter \u2192 private service client \u2192 oRPC router/service\nnot:\nhost runtime adapter \u2192 Inngest step wrapper \u2192 workflow engine \u2192 maybe service client\n\n\nThat extra layer only earns its keep when you need durability, retries, resumability, scheduling, fanout, or long-running orchestration.\n\n\nThe better model is execution-policy-based, not universal.\n\n\nA plugin operation should be one of three things.\n\n\nDirect call: plain private service client over oRPC. Use for reads, validation, cheap writes, local commands, and host composition.\n\n\nQueued/durable command: the plugin API is still oRPC, but the handler enqueues or starts a workflow/job and returns a handle. Inngest owns the long-running execution after the boundary.\n\n\nWorkflow-native runtime: the plugin\u2019s host-facing interface is something like start/status/cancel/inspect, while the internal runtime uses Inngest steps for the actual durable path.\n\n\nThat keeps the interface stable and the execution strategy swappable.\n\n\nSo the answer is not \u201cnever use steps around plugin APIs.\u201d It is: do not make steps the default envelope.\n\n\nUse Inngest steps only where all of these are true:\nthe work is long-running or retryable,\nreplay/checkpoint semantics are valuable,\nthe side effects can be made explicitly idempotent,\nand the operation is better modeled as workflow execution than as a direct service call.\n\n\nEverything else should stay oRPC-native.\n\n\nThe sharpest formulation is this:\n\n\noRPC is your capability boundary.\nInngest is your durable execution substrate.\nPlugins should adapt private service clients into host runtime interfaces.\nOnly some of those runtime interfaces should delegate into Inngest.\n\n\nSanity check against the current branch: that is already how coordination is shaped, and it is also how example-todo is shaped structurally. Universal step-wrapping would move you away from your own strongest pattern, not toward it.\n\n\nadapter\n\n\n[\n\n\nclient\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/client.ts)[\n\n\nbase\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/service/base.ts)\n\n\nIf you want, the next useful move is to turn this into a concrete decision rule matrix for plugin authors: \u201cdirect vs queued vs durable-step vs sidecar.\u201d",
+      "source_file_id": "src-json-inngest-plugin-api-strategy-branch-00",
+      "source_message_index": 1,
+      "source_title": "Branch \u00b7 Inngest Plugin API Strategy",
+      "source_link": "https://chatgpt.com/g/g-p-69b4589ea3088191a7e5ca496094e252-rawr-hq/c/69b4acbc-c194-8322-8dad-3c1810f09762"
+    },
+    {
+      "node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__002",
+      "type": "message",
+      "role": "Prompt",
+      "say": "I wasn\u2019t referring to doing any of this in the service package\u2026 but rather in an API plugin (so basically conjoin API and workflows into one plugin type and make everything execute via inngest",
+      "source_file_id": "src-json-inngest-plugin-api-strategy-branch-00",
+      "source_message_index": 2,
+      "source_title": "Branch \u00b7 Inngest Plugin API Strategy",
+      "source_link": "https://chatgpt.com/g/g-p-69b4589ea3088191a7e5ca496094e252-rawr-hq/c/69b4acbc-c194-8322-8dad-3c1810f09762"
+    },
+    {
+      "node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__003",
+      "type": "message",
+      "role": "Response",
+      "say": "That is a materially different proposal.\n\n\nIf the question is:\n\n\nShould an API plugin be a combined \u201cruntime + workflow\u201d plugin type, where every host-facing operation executes through Inngest?\n\n\nMy answer is still: probably not as the default architecture.\n\n\nYou can make that plugin type exist. You should not make it the universal API plugin model.\n\n\nHere\u2019s the core reason.\n\n\nYour current service-package shape is built around direct, in-process oRPC capability calls. createClient(boundary) binds { deps, scope, config } and then supplies per-call invocation context into the router client. That is a clean capability boundary. It is cheap, synchronous from the caller\u2019s point of view, and portable across host surfaces.\n\n\nclient\n\n\n[\n\n\ndomain-package\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/orpc/boundary/domain-package.ts)\n\n\nInngest in your repo is not acting like a generic API transport. It is acting like a durable coordination runtime. In @rawr/coordination-inngest, the unit of step.run(...) is a replayable execution checkpoint inside a workflow runner: start run, read memory, execute desk, write memory, complete/fail run. That is workflow semantics, not ordinary API semantics.\n\n\nadapter\n\n\nSo if you conjoin \u201cAPI plugin\u201d and \u201cworkflow plugin\u201d and make everything execute via Inngest, what you are really saying is:\n\n\nEvery plugin operation is a durable job, even when the caller thinks it is just calling a capability.\n\n\nThat is too blunt.\n\n\nIt breaks down along three axes.\n\n\nFirst, semantics.\n\n\nA host API operation can be one of several fundamentally different things:\na read,\na cheap write,\na validation/preflight,\na long-running job,\na resumable workflow,\na scheduled/background process.\n\n\nThose should not all smell the same from the caller\u2019s perspective. If everything goes through Inngest, then \u201cget status\u201d, \u201cvalidate config\u201d, and \u201cstart a 20-minute crawl\u201d all get flattened toward a job-runtime model. That is architectural drift.\n\n\nSecond, latency and developer experience.\n\n\nYour oRPC-centric model gives you a very strong private-client story: plugin host code can call service packages directly using typed boundaries and module routers. The example-todo package is explicitly structured for that. The package root exports createClient and router, while the service router composes modules under a single implementer tree.\n\n\nindex\n\n\n[\n\n\nrouter\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/service/router.ts)[\n\n\nimpl\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/service/impl.ts)\n\n\nIf every API plugin action has to enqueue/execute via Inngest, then you are imposing async durable orchestration even where the value is immediate direct composition. You lose one of the best parts of your current model: private service clients as the host\u2019s internal capability mesh.\n\n\nThird, boundary contamination.\n\n\nYou said you were not talking about polluting service packages themselves, only the API plugin layer. Good. That avoids the worst version of the problem.\n\n\nBut even at the plugin layer, if everything goes through Inngest, then the plugin API stops being a normal interface adapter and becomes a workflow fa\u00e7ade. That can be correct for some plugins. It is wrong for all plugins.\n\n\nThe truer split is this:\n\n\nService package = capability definition and execution boundary\nAPI plugin = host-facing runtime adapter\nInngest = execution policy for operations that need durable workflow semantics\n\n\nThat means the API plugin can absolutely compose both direct calls and workflow starts.\n\n\nA good API plugin can expose things like:\n\n\nvalidate() \u2192 direct oRPC call\nget() / list() / status() \u2192 direct oRPC call\nrun() / sync() / crawl() / backfill() \u2192 start via Inngest\ncancel() / resume() / retry() \u2192 workflow/runtime control surface\n\n\nThat is a much stronger model than \u201ceverything executes via Inngest,\u201d because it preserves semantic honesty.\n\n\nThe cleanest way to think about it is:\n\n\nThe API plugin should be allowed to unify API + workflows.\nIt should not erase the distinction between direct capabilities and durable workflows.\n\n\nSo yes, conjoining them into one plugin type can make sense, but only if the plugin type is internally bifurcated:\n\n\ndirect lane for immediate capability calls\nworkflow lane for durable execution\n\n\nIn other words, one plugin type, two execution modes.\n\n\nThat matches your existing architecture much better than an all-Inngest model, because your service packages already declare stable context lanes and expose in-process clients intended for exactly this kind of composition. InitialContext is explicitly split into deps, scope, and config, with invocation handled separately, and downstream providers added later. That structure is ideal for plugin runtime adapters choosing execution policy at the edge.\n\n\nbase\n\n\n[\n\n\nsetup\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/service/modules/tasks/setup.ts)\n\n\nThe only case where \u201ceverything via Inngest\u201d really makes sense is when the entire plugin is inherently workflow-native. For example:\na background agent plugin,\na crawl/sync plugin,\na long-running enrichment pipeline,\na human-in-the-loop approval flow,\na distributed coordination plugin.\n\n\nIn those cases, the host-facing API is honestly a job-control API, not a regular capability API. Then yes: start/status/cancel/replay through Inngest can be the whole surface.\n\n\nBut for normal API plugins, universal Inngest execution is overreach.\n\n\nA better architectural rule is:\n\n\nDefault plugin execution mode: direct private oRPC service client\nEscalation mode: Inngest-backed workflow for operations with durability, retry, scheduling, fanout, pause/resume, or long-running side effects\n\n\nThat gives you the leverage without the tax.\n\n\nSanity check against your repo:\nexample-todo is optimized for direct typed in-process calls, not mandatory workflow dispatch.\n\n\nclient\n\n\n[\n\n\ndomain-package\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/example-todo/src/orpc/boundary/domain-package.ts)\ncoordination-inngest is optimized for durable workflow checkpoints, not generic API wrapping.[\n\n\nadapter\n\n\n](https://github.com/rawr-ai/rawr-hq-template/blob/codex/agent-codex-gitnexus-install/packages/coordination-inngest/src/adapter.ts)\n\n\nThose are complementary primitives. Do not force one to impersonate the other.\n\n\nMy actual recommendation:\n\n\nCreate an API plugin type that may expose both direct and workflow-backed operations, but do not define the type as \u201ceverything runs through Inngest.\u201d Define it as \u201cthe plugin owns execution-policy routing.\u201d\n\n\nThat is the truest answer inside your current system and outside the box.\n\n\nIf you want, I\u2019ll turn that into a concrete canonical shape for an API plugin:\nfile tree, interfaces, and exact rules for when a route is direct versus workflow-backed.",
+      "source_file_id": "src-json-inngest-plugin-api-strategy-branch-00",
+      "source_message_index": 3,
+      "source_title": "Branch \u00b7 Inngest Plugin API Strategy",
+      "source_link": "https://chatgpt.com/g/g-p-69b4589ea3088191a7e5ca496094e252-rawr-hq/c/69b4acbc-c194-8322-8dad-3c1810f09762"
+    },
+    {
+      "node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__004",
+      "type": "message",
+      "role": "Prompt",
+      "say": "Okay got it. Scrap that idea because it\u2019s a bad path.\n\n\nThen just focusing on the currently incomplete cross-boundary between service packages (where we have strongly defined the architecture and boundaries) and workflow plugins, what should workflow plugins look like if we wrapped them in the same shell as service packages (well, not same shell, but whatever custom oRPC shell is needed to \u201cinvoke\u201d inngest functions defined in the workflow plugins use service)?\n\n\nShould we create an oRPC plugin that auto-converts inngest functions (which call private service clients inside steps) into an oRPC router? How does the current incomplete model work and what is it missing?\n\n\nConsider the project files we have on the planned semantic repo structure target as well. Make sure to read oRPC and inngest docs and our codebase as needed.",
+      "source_file_id": "src-json-inngest-plugin-api-strategy-branch-00",
+      "source_message_index": 4,
+      "source_title": "Branch \u00b7 Inngest Plugin API Strategy",
+      "source_link": "https://chatgpt.com/g/g-p-69b4589ea3088191a7e5ca496094e252-rawr-hq/c/69b4acbc-c194-8322-8dad-3c1810f09762"
+    },
+    {
+      "node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005",
+      "type": "message",
+      "role": "Response",
+      "say": "Thought for 19m 14s\n\n\nAnswer now\n\n\nYes to a workflow shell. No to auto-converting naked Inngest functions straight into public oRPC procedures.\n\n\nThe cleanest version is: make workflow plugins look like service packages in authoring ergonomics, but not in public semantics. Service packages expose direct capabilities. Workflow plugins should expose durable control surfaces: start, status, cancel, signal, timeline, maybe result lookup. Your semantic target already separates shared capability logic in packages/*, runtime adapters in plugins/*, and final composition in rawr.hq.ts, with plugins allowed to import packages but not other plugins. That points toward a reusable workflow bridge in packages/* that workflow plugins consume, not a bunch of one-off router glue inside each plugin. GitHub\n\n\nResponse: NX + RAWR evolution s\u2026\n\n\nWhat you have now on the branch is a good halfway state, but it is visibly split. In rawr.hq.ts, the host creates a private service client with createRouterClient(supportExampleRouter, { context: { deps } }), injects that client into both the oRPC and workflow contexts with enrichSupportExampleContext, registers an API plugin router separately from a workflow trigger router, and then independently builds the Inngest functions bundle plus /api/inngest handler from a host-owned Inngest client. The manifest exports these as sibling surfaces: orpc.router, workflows.triggerRouter, and inngest.{client,functions,handler}. GitHub+1\n\n\nThat part is architecturally sound. oRPC\u2019s context model is explicitly a type-safe DI mechanism with initial context and execution context, and createRouterClient is meant for direct server-side invocation with injected context. Inngest, meanwhile, wants nondeterministic work inside step.run() because steps are the durable execution units. So \u201cworkflow plugin calls private service clients inside steps\u201d is exactly the right service/workflow boundary. Also, your semantic docs already push semantic ownership into services and treat shared infra as normal but shared write ownership as dangerous, which means workflow plugins should orchestrate service-owned truth, not become another place that owns it. Inngest+3oRPC+3oRPC+3\n\n\nResponse: NX + RAWR evolution s\u2026\n\n\n[\n\n\nResponse: NX + RAWR evolution s\u2026\n\n\n](/g/g-p-69b4589ea3088191a7e5ca496094e252/c/69b45d87-9544-8321-a97e-de44516945b4?messageId=be16753f-b67e-4094-821d-f2f102eb06b8&conversation_save=1)\n\n\nWhat is missing is a single source of truth tying those three surfaces together. Right now, the branch has the pieces, but not the contract that binds them: the docs say coordination.* is the canonical oRPC namespace for workflow CRUD, validation, queueing, run status, and timeline, while rawr.hq.ts only records a workflow capability pathPrefix, a separate triggerRouter, and a separate function factory. You can also see duplication in context bridging: orpc.enrichContext, workflows.enrichContext, and resolveSupportExampleClient being passed again into function creation. That is a strong signal that the abstraction boundary is not finished yet. GitHub+1\n\n\nSo, should you create an \u201coRPC plugin\u201d that auto-converts Inngest functions into a router? Not literally. In oRPC\u2019s own terminology, a plugin is an interceptor bundle for handlers or links. That is not the main thing you need here. The main thing you need is a workflow descriptor + router generator package built on top of oRPC. oRPC plugins may still help with headers, correlation IDs, or response shaping, but the real artifact is a workflow bridge, not an interceptor plugin. oRPC+2oRPC+2\n\n\nAnd I would not derive that bridge from raw Inngest function objects alone. Inngest functions are execution artifacts, not public API contracts. They can be triggered by events, cron, webhooks, or other functions; Inngest itself positions events as the normal external trigger and step.invoke() as the more RPC-like tool for function-to-function composition inside workflows. Not every function should become externally invokable: some are cron-only, some are webhook-only, some are internal fanout/subfunctions, some are wait/signal continuations. Also, inngest.send() gives you event IDs, not a nice durable domain handle for your API callers. So a blind \u201cone function = one procedure\u201d conversion would leak the wrong abstraction. Inngest+3Inngest+3Inngest+3\n\n\nThe better move is this: define workflow operations declaratively, then generate both the oRPC control router and the Inngest functions from that shared descriptor.\n\n\nSomething like this is the right shape:\n\n\nconst triageWorkflow = defineWorkflowOperation({\n  capability: \"support-example\",\n  operation: \"triage\",\n  input: TriageRequestSchema,\n  public: {\n    start: true,\n    status: true,\n    cancel: true,\n    timeline: true,\n  },\n  trigger: {\n    type: \"event\",\n    name: \"support-example/triage.requested\",\n  },\n  idempotencyKey: ({ input }) => input.ticketId,\n  createFunctions: ({ inngest, services }) => [\n    inngest.createFunction(\n      { id: \"support-example-triage\", triggers: [{ event: \"support-example/triage.requested\" }] },\n      async ({ event, step }) => {\n        return await step.run(\"request-triage\", () =>\n          services.supportExample.triage.items.request(event.data)\n        );\n      }\n    ),\n  ],\n});\n\n\nFrom that descriptor, your shared shell in packages/* should generate four things: a typed oRPC control router, the Inngest functions bundle, host/CLI/UI metadata, and optional internal references for subworkflow composition. That fits your manifest-first target and keeps the plugin itself as a runtime adapter by surface. GitHub+2Inngest+2\n\n\nResponse: NX + RAWR evolution s\u2026\n\n\nThe generated oRPC side should not mirror the internal function tree. It should expose durable control verbs. At minimum: start, getStatus, getTimeline, cancel, and signal where relevant. If a workflow produces business results that matter later, those results should usually be materialized into a service-owned read model, then read through a normal service/API route. That keeps semantic truth in the service boundary instead of pretending the workflow engine is the source of truth. Inngest\u2019s job is durable orchestration; the service\u2019s job is business truth. Inngest+1\n\n\nResponse: NX + RAWR evolution s\u2026\n\n\n[\n\n\nResponse: NX + RAWR evolution s\u2026\n\n\n](/g/g-p-69b4589ea3088191a7e5ca496094e252/c/69b45d87-9544-8321-a97e-de44516945b4?messageId=be16753f-b67e-4094-821d-f2f102eb06b8&conversation_save=1)\n\n\nI would also keep coordination.* as the generic control plane, because your own docs already describe it that way. Workflow plugins should contribute typed capability descriptors and perhaps thin typed \u201crequest\u201d procedures, but the generic machinery for queueing, run status, timeline, cancellation, and validation should stay centralized. In practice that means the plugin-generated start procedure can delegate into a generic coordination layer that persists a RAWR workflow request, sends one Inngest event, and returns a RAWR-owned handle. Then coordination.* can serve status/timeline/cancel consistently across capabilities, while /api/inngest remains the framework-native ingress for function execution. GitHub+2Inngest+2\n\n\nSo my concrete recommendation is:\n\n\nDo build a reusable workflow shell, but put it in packages/*, not as an ad hoc repo plugin.\nDo let workflow plugins author typed workflow descriptors and Inngest functions that call private service clients inside step.run().\nDo generate an oRPC control router from those descriptors.\nDo not auto-convert arbitrary raw Inngest functions into public procedures.\nDo not make the public router mirror the internal function graph.\nDo make the public API a control plane over durable work.\n\n\nIf you want the sharpest formulation: service packages define capabilities; workflow plugins define orchestrations over capabilities; the oRPC shell exposes control over orchestrations; Inngest executes them durably.\n\n\nOne caveat: I could directly inspect rawr.hq.ts and docs/SYSTEM.md on the branch, but GitHub wasn\u2019t consistently returning deeper nested files, so this recommendation is grounded in the visible branch composition plus the semantic target docs rather than a full read of every nested package file.",
+      "source_file_id": "src-json-inngest-plugin-api-strategy-branch-00",
+      "source_message_index": 5,
+      "source_title": "Branch \u00b7 Inngest Plugin API Strategy",
+      "source_link": "https://chatgpt.com/g/g-p-69b4589ea3088191a7e5ca496094e252-rawr-hq/c/69b4acbc-c194-8322-8dad-3c1810f09762"
+    },
+    {
+      "node_id": "inngest-plugin-api-strategy__semantic-event__inngest-plugin-api-strategy-branch-00__005__canonicalization",
+      "type": "canonicalization",
+      "event_id": "inngest-plugin-api-strategy__semantic-event__inngest-plugin-api-strategy-branch-00__005__canonicalization",
+      "anchor_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005",
+      "branch_id": "inngest-plugin-api-strategy__branch__inngest-plugin-api-strategy-branch-00",
+      "summary": "The thread locks the workflow-shell model: control-plane APIs should not mirror raw Inngest function graphs.",
+      "evidence": [
+        "Concludes with a direct recommendation for a workflow descriptor + router generator.",
+        "Rejects one-function-equals-one-procedure mirroring as the wrong abstraction."
+      ],
+      "confidence": 0.96
+    },
+    {
+      "node_id": "inngest-plugin-api-strategy__document-link__inngest-plugin-api-strategy__derived_from",
+      "type": "document_link",
+      "document_id": "src-md-inngest-plugin-api-strategy",
+      "relation_type": "derived_from",
+      "target_family_id": "inngest-plugin-api-strategy",
+      "confidence": 0.98,
+      "evidence": [
+        "The document title matches the branch family title exactly.",
+        "The document restates the workflow shell split between oRPC/OpenAPI, Inngest, and private service clients."
+      ]
+    },
+    {
+      "node_id": "inngest-plugin-api-strategy__document-link__inngest-plugin-api-strategy__canonicalizes",
+      "type": "document_link",
+      "document_id": "src-md-inngest-plugin-api-strategy",
+      "relation_type": "canonicalizes",
+      "target_family_id": "inngest-plugin-api-strategy",
+      "confidence": 0.95,
+      "evidence": [
+        "The doc turns the thread's recommendation into a stable architectural shell.",
+        "It defines the durable public contract and execution split more cleanly than the conversation export."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__000",
+      "to_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__001",
+      "type": "next_message"
+    },
+    {
+      "from_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__001",
+      "to_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__002",
+      "type": "next_message"
+    },
+    {
+      "from_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__002",
+      "to_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__003",
+      "type": "next_message"
+    },
+    {
+      "from_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__003",
+      "to_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__004",
+      "type": "next_message"
+    },
+    {
+      "from_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__004",
+      "to_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005",
+      "type": "next_message"
+    },
+    {
+      "from_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005",
+      "to_node_id": "inngest-plugin-api-strategy__semantic-event__inngest-plugin-api-strategy-branch-00__005__canonicalization",
+      "type": "annotates"
+    }
+  ],
+  "branch_points": [],
+  "branches": [
+    {
+      "branch_id": "inngest-plugin-api-strategy__branch__inngest-plugin-api-strategy-branch-00",
+      "parent_branch_point_id": null,
+      "semantic_name": "inngest/workflow-shell-over-function-mirroring",
+      "status": "active",
+      "source_file_ids": [
+        "src-json-inngest-plugin-api-strategy-branch-00"
+      ],
+      "start_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__000",
+      "end_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005",
+      "confidence": 1.0,
+      "rationale": "Defines the durable workflow shell stance: control-plane API surfaces outside, Inngest runtime inside."
+    },
+    {
+      "branch_id": "inngest-plugin-api-strategy__branch__inngest-plugin-api-strategy-branch-01",
+      "parent_branch_point_id": null,
+      "semantic_name": "inngest/workflow-shell-over-function-mirroring/duplicate-export",
+      "status": "duplicate",
+      "source_file_ids": [
+        "src-json-inngest-plugin-api-strategy-branch-01"
+      ],
+      "start_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__000",
+      "end_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005",
+      "confidence": 1.0,
+      "rationale": "Exact duplicate export of Branch 00 with the same conversation link."
+    }
+  ],
+  "semantic_events": [
+    {
+      "event_id": "inngest-plugin-api-strategy__semantic-event__inngest-plugin-api-strategy-branch-00__005__canonicalization",
+      "type": "canonicalization",
+      "anchor_node_id": "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005",
+      "branch_id": "inngest-plugin-api-strategy__branch__inngest-plugin-api-strategy-branch-00",
+      "summary": "The thread locks the workflow-shell model: control-plane APIs should not mirror raw Inngest function graphs.",
+      "evidence": [
+        "Concludes with a direct recommendation for a workflow descriptor + router generator.",
+        "Rejects one-function-equals-one-procedure mirroring as the wrong abstraction."
+      ],
+      "confidence": 0.96
+    }
+  ],
+  "documents": [
+    {
+      "document_id": "src-md-inngest-plugin-api-strategy",
+      "title": "Inngest Plugin API Strategy",
+      "path": "/Users/mateicanavra/Downloads/ChatGPT RAWR Conversation/work/docs/source/Inngest Plugin API Strategy.md",
+      "relation_type": "derived_from",
+      "manifest_relationship_type": "derived_from",
+      "confidence": 0.98,
+      "evidence": [
+        "The document title matches the branch family title exactly.",
+        "The document restates the workflow shell split between oRPC/OpenAPI, Inngest, and private service clients."
+      ],
+      "notes": "Treat this Markdown file as the durable write-up of the Inngest strategy thread."
+    },
+    {
+      "document_id": "src-md-inngest-plugin-api-strategy",
+      "title": "Inngest Plugin API Strategy",
+      "path": "/Users/mateicanavra/Downloads/ChatGPT RAWR Conversation/work/docs/source/Inngest Plugin API Strategy.md",
+      "relation_type": "canonicalizes",
+      "manifest_relationship_type": "canonicalizes",
+      "confidence": 0.95,
+      "evidence": [
+        "The doc turns the thread's recommendation into a stable architectural shell.",
+        "It defines the durable public contract and execution split more cleanly than the conversation export."
+      ],
+      "notes": "Use the Markdown doc as the canonical reference for workflow-shell shape."
+    }
+  ],
+  "canonicality": {
+    "status": "canonical",
+    "summary": "Canonical for workflow-shell design: control-plane APIs outside, Inngest execution inside, with service-owned business truth.",
+    "canonical_sources": [
+      "Inngest Plugin API Strategy Branch 00.json",
+      "Inngest Plugin API Strategy.md"
+    ],
+    "secondary_sources": [],
+    "superseded_sources": [],
+    "unresolved_conflicts": [
+      "Exact generated router surface details remain an implementation question, not a resolved semantic conflict."
+    ]
+  },
+  "views": {
+    "default_reading_order": [
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__000",
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__001",
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__002",
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__003",
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__004",
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005"
+    ],
+    "root_path_order": [
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__000",
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__001",
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__002",
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__003",
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__004",
+      "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005"
+    ],
+    "branch_orders": {
+      "inngest-plugin-api-strategy__branch__inngest-plugin-api-strategy-branch-00": [
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__000",
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__001",
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__002",
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__003",
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__004",
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005"
+      ],
+      "inngest-plugin-api-strategy__branch__inngest-plugin-api-strategy-branch-01": [
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__000",
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__001",
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__002",
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__003",
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__004",
+        "inngest-plugin-api-strategy__msg__inngest-plugin-api-strategy-branch-00__005"
+      ]
+    },
+    "human_outline": [
+      {
+        "branch_id": "inngest-plugin-api-strategy__branch__inngest-plugin-api-strategy-branch-00",
+        "semantic_name": "inngest/workflow-shell-over-function-mirroring",
+        "status": "active",
+        "source_file_ids": [
+          "src-json-inngest-plugin-api-strategy-branch-00"
+        ]
+      },
+      {
+        "branch_id": "inngest-plugin-api-strategy__branch__inngest-plugin-api-strategy-branch-01",
+        "semantic_name": "inngest/workflow-shell-over-function-mirroring/duplicate-export",
+        "status": "duplicate",
+        "source_file_ids": [
+          "src-json-inngest-plugin-api-strategy-branch-01"
+        ]
+      }
+    ]
+  },
+  "anomalies": [
+    {
+      "anomaly_id": "anomaly-duplicate-messages-76f524fcc912",
+      "type": "duplicate_messages",
+      "source_ids": [
+        "src-json-inngest-plugin-api-strategy-branch-00",
+        "src-json-inngest-plugin-api-strategy-branch-01"
+      ],
+      "severity": "low",
+      "notes": "Exports share identical message content even if exporter metadata differs."
+    },
+    {
+      "anomaly_id": "anomaly-same-link-69b4acbc-c194-8322-8dad-3c1810f09762",
+      "type": "same_conversation_link",
+      "source_ids": [
+        "src-json-inngest-plugin-api-strategy-branch-00",
+        "src-json-inngest-plugin-api-strategy-branch-01"
+      ],
+      "severity": "low",
+      "notes": "Multiple exports share the same ChatGPT conversation link."
+    }
+  ]
+}

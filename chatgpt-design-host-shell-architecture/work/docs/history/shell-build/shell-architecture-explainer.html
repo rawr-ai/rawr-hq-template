@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAWR Architecture — How It Scales</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f1117;
+  --bg-card: #181b24;
+  --text: #e2e4ea;
+  --text-dim: #8b8fa3;
+  --text-bright: #ffffff;
+  --gold: #f0b850;
+  --gold-dim: #a07830;
+  --gold-glow: rgba(240, 184, 80, 0.15);
+  --teal: #4ec9b0;
+  --teal-dim: #2d7a68;
+  --teal-glow: rgba(78, 201, 176, 0.15);
+  --coral: #e06c75;
+  --coral-dim: #8a3a40;
+  --coral-glow: rgba(224, 108, 117, 0.15);
+  --gray: #636880;
+  --gray-light: #9ca0b0;
+  --purple: #c678dd;
+  --purple-glow: rgba(198, 120, 221, 0.12);
+  --blue: #61afef;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.6; overflow-x: hidden; }
+
+h1 { font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; }
+h2 { font-size: clamp(1.4rem, 3.5vw, 2.2rem); font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; }
+h3 { font-size: clamp(1.1rem, 2vw, 1.4rem); font-weight: 600; line-height: 1.3; }
+p, li { font-size: clamp(0.95rem, 1.5vw, 1.1rem); }
+
+section {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: clamp(2rem, 8vw, 6rem) clamp(1.5rem, 6vw, 8rem);
+  position: relative;
+}
+.section-inner { max-width: 1100px; width: 100%; margin: 0 auto; }
+
+.reveal {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .pulse, .scale-stage { animation: none !important; }
+}
+
+/* ===== SECTION SEP ===== */
+.section-sep {
+  width: 60px; height: 2px;
+  background: linear-gradient(to right, transparent, var(--text-dim), transparent);
+  margin: 0 auto 2rem;
+}
+
+/* ===== HERO ===== */
+#hero { text-align: center; }
+#hero h1 { color: var(--text-bright); margin-bottom: 1.5rem; }
+.spine-equation {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: 0.6rem 1rem; margin: 2.5rem 0;
+  font-family: var(--font-mono); font-size: clamp(1rem, 2.5vw, 1.5rem); font-weight: 600;
+}
+.spine-part { padding: 0.6rem 1.2rem; border-radius: 8px; border: 2px solid; }
+.spine-part.truth { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-glow); }
+.spine-part.projection { color: var(--teal); border-color: var(--teal-dim); background: var(--teal-glow); }
+.spine-part.authority { color: var(--coral); border-color: var(--coral-dim); background: var(--coral-glow); }
+.spine-neq { color: var(--text-dim); font-size: 1.6em; line-height: 1; }
+.hero-subtitle { color: var(--text-dim); font-size: clamp(1rem, 2vw, 1.25rem); max-width: 640px; margin: 0 auto; line-height: 1.6; }
+
+/* ===== FOUR KINDS ===== */
+.kinds-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2rem; margin: 2.5rem 0;
+}
+.kind-card { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; border-left: 4px solid; }
+.kind-card.packages { border-color: var(--gray-light); }
+.kind-card.services { border-color: var(--gold); }
+.kind-card.plugins { border-color: var(--teal); }
+.kind-card.hosts { border-color: var(--coral); }
+.kind-card .kind-label { font-family: var(--font-mono); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.3rem; }
+.kind-card.packages .kind-label { color: var(--gray-light); }
+.kind-card.services .kind-label { color: var(--gold); }
+.kind-card.plugins .kind-label { color: var(--teal); }
+.kind-card.hosts .kind-label { color: var(--coral); }
+.kind-card .kind-role { color: var(--text-dim); font-size: 0.95rem; }
+.kind-card .kind-boundary {
+  margin-top: 0.6rem; padding-top: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600;
+}
+
+.flow-strip {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.4rem; margin: 2rem 0 0.5rem; flex-wrap: wrap;
+}
+.flow-label { font-family: var(--font-mono); font-size: 0.85rem; padding: 0.3rem 0.7rem; border-radius: 6px; font-weight: 600; }
+.flow-label.pkg { color: var(--gray-light); background: rgba(156,160,176,0.1); }
+.flow-label.svc { color: var(--gold); background: var(--gold-glow); }
+.flow-label.plg { color: var(--teal); background: var(--teal-glow); }
+.flow-label.hst { color: var(--coral); background: var(--coral-glow); }
+.flow-arrow { color: var(--text-dim); font-size: 1.2rem; opacity: 0.7; }
+.direction-note { text-align: center; color: var(--text-dim); font-size: 0.9rem; margin-top: 0.3rem; }
+
+/* ===== THREE BOUNDARIES ===== */
+.boundaries-stack {
+  display: flex; flex-direction: column; gap: 0; margin: 2.5rem 0; position: relative;
+}
+.boundary-layer {
+  padding: 1.5rem 2rem; position: relative;
+  border-left: 3px solid;
+}
+.boundary-layer.semantic { border-color: var(--gold); background: rgba(240,184,80,0.04); border-radius: 12px 12px 0 0; }
+.boundary-layer.runtime  { border-color: var(--teal); background: rgba(78,201,176,0.04); }
+.boundary-layer.deploy   { border-color: var(--coral); background: rgba(224,108,117,0.04); border-radius: 0 0 12px 12px; }
+.boundary-layer .bl-header {
+  display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem;
+}
+.boundary-layer .bl-tag {
+  font-family: var(--font-mono); font-weight: 800; font-size: 0.7rem;
+  padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.boundary-layer.semantic .bl-tag { background: var(--gold-glow); color: var(--gold); }
+.boundary-layer.runtime  .bl-tag { background: var(--teal-glow); color: var(--teal); }
+.boundary-layer.deploy   .bl-tag { background: var(--coral-glow); color: var(--coral); }
+.boundary-layer .bl-title { font-weight: 700; font-size: 1.05rem; }
+.boundary-layer.semantic .bl-title { color: var(--gold); }
+.boundary-layer.runtime  .bl-title { color: var(--teal); }
+.boundary-layer.deploy   .bl-title { color: var(--coral); }
+.boundary-layer .bl-body { color: var(--text-dim); font-size: 0.92rem; line-height: 1.6; }
+.boundary-layer .bl-body strong { color: var(--text); }
+.boundary-layer .bl-what {
+  margin-top: 0.6rem; font-family: var(--font-mono); font-size: 0.8rem;
+  color: var(--text-dim); display: flex; gap: 1.5rem; flex-wrap: wrap;
+}
+.boundary-layer .bl-what span { white-space: nowrap; }
+
+.boundary-connector {
+  width: 3px; height: 20px; margin-left: 24px;
+  background: linear-gradient(to bottom, var(--gold-dim), var(--teal-dim));
+}
+.boundary-connector.rt {
+  background: linear-gradient(to bottom, var(--teal-dim), var(--coral-dim));
+}
+
+/* ===== THREE PLANES ===== */
+.planes-diagram {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0; margin: 2rem 0; max-width: 550px; margin-left: auto; margin-right: auto;
+}
+.plane-box {
+  width: 100%; padding: 0.8rem 1.2rem; text-align: center;
+  font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600;
+  border: 1.5px solid; position: relative;
+}
+.plane-box.server-plane { color: var(--teal); border-color: var(--teal-dim); background: var(--teal-glow); border-radius: 10px 10px 0 0; }
+.plane-box.async-plane  { color: var(--purple); border-color: rgba(198,120,221,0.3); background: var(--purple-glow); }
+.plane-box.service-plane { color: var(--gold); border-color: var(--gold-dim); background: var(--gold-glow); border-radius: 0 0 10px 10px; }
+.plane-arrow {
+  width: 100%; text-align: center; color: var(--text-dim); font-size: 0.7rem;
+  padding: 0.15rem 0; font-family: var(--font-mono);
+}
+
+/* ===== HOST BUNDLE ===== */
+.host-bundle-vis {
+  display: flex; flex-direction: column; align-items: center; margin: 2.5rem 0;
+}
+.deploy-boundary {
+  border: 2.5px solid var(--coral);
+  border-radius: 18px;
+  padding: 2rem 2.5rem;
+  position: relative;
+  background: rgba(224,108,117,0.03);
+  max-width: 560px; width: 100%;
+}
+.deploy-boundary-label {
+  position: absolute; top: -13px; left: 20px;
+  background: var(--bg); padding: 0 10px;
+  color: var(--coral); font-family: var(--font-mono);
+  font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.composition-node {
+  background: var(--coral-glow); border: 2px solid var(--coral);
+  color: var(--coral); font-family: var(--font-mono); font-weight: 700;
+  padding: 0.7rem 1.3rem; border-radius: 10px; font-size: 0.95rem;
+  text-align: center; margin: 0 auto; display: block; width: fit-content;
+}
+.mount-line {
+  width: 2px; height: 30px;
+  background: linear-gradient(to bottom, var(--coral-dim), var(--teal-dim));
+  margin: 0 auto;
+}
+.runtime-boundary {
+  border: 1.5px dashed var(--teal-dim);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  position: relative;
+  background: rgba(78,201,176,0.03);
+}
+.runtime-boundary-label {
+  position: absolute; top: -10px; left: 16px;
+  background: rgba(24,27,36,0.95); padding: 0 8px;
+  color: var(--teal-dim); font-family: var(--font-mono);
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.roles-fan { display: flex; gap: 0.7rem; flex-wrap: wrap; justify-content: center; }
+.role-chip {
+  font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600;
+  padding: 0.45rem 0.9rem; border-radius: 8px;
+  border: 1.5px solid var(--text-dim); color: var(--text); background: var(--bg-card);
+  transition: all 0.4s ease;
+}
+.role-chip.mounted {
+  border-color: var(--blue); color: var(--blue);
+  background: rgba(97, 175, 239, 0.08);
+  box-shadow: 0 0 12px rgba(97, 175, 239, 0.15);
+}
+.role-chip-note {
+  display: block; font-size: 0.6rem; color: var(--text-dim); font-weight: 400; margin-top: 2px;
+}
+
+.semantic-underlayer {
+  border: 1.5px dotted var(--gold-dim);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  margin-top: 0.8rem;
+  position: relative;
+  background: rgba(240,184,80,0.03);
+  text-align: center;
+}
+.semantic-underlayer-label {
+  position: absolute; top: -9px; left: 14px;
+  background: rgba(24,27,36,0.95); padding: 0 6px;
+  color: var(--gold-dim); font-family: var(--font-mono);
+  font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.semantic-underlayer .svc-items {
+  display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;
+}
+.semantic-underlayer .svc-item {
+  font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
+  color: var(--gold); padding: 0.25rem 0.6rem; border-radius: 5px;
+  background: var(--gold-glow);
+}
+
+.host-legend {
+  margin-top: 1.5rem; display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.78rem; color: var(--text-dim);
+}
+.legend-swatch {
+  width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid;
+}
+.legend-swatch.dep { border-color: var(--coral); background: var(--coral-glow); }
+.legend-swatch.rt  { border-color: var(--teal); background: var(--teal-glow); border-style: dashed; }
+.legend-swatch.sem { border-color: var(--gold); background: var(--gold-glow); border-style: dotted; }
+
+/* ===== SCALE STAGES ===== */
+#scale { min-height: auto; padding-top: 4rem; padding-bottom: 2rem; }
+.scale-stage {
+  margin-bottom: 4rem; opacity: 0; transform: translateX(-30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.scale-stage.visible { opacity: 1; transform: translateX(0); }
+.stage-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+.stage-badge {
+  font-family: var(--font-mono); font-weight: 800; font-size: 0.8rem;
+  padding: 0.3rem 0.8rem; border-radius: 6px; white-space: nowrap;
+}
+.stage-badge.s1 { background: rgba(97,175,239,0.15); color: var(--blue); }
+.stage-badge.s2 { background: var(--purple-glow); color: var(--purple); }
+.stage-badge.s3 { background: var(--gold-glow); color: var(--gold); }
+.stage-title { color: var(--text-bright); }
+.scale-diagram { background: var(--bg-card); border-radius: 14px; padding: 2rem; overflow: hidden; }
+.stage-annotation {
+  margin-top: 1rem; padding: 0.7rem 1rem; border-radius: 8px;
+  font-size: 0.82rem; font-family: var(--font-mono);
+  display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center;
+}
+.stage-annotation .ann-item { display: flex; align-items: center; gap: 0.4rem; }
+.ann-changed { color: var(--purple); }
+.ann-same { color: var(--gold); }
+.ann-icon { font-size: 0.9rem; }
+
+/* n=1 */
+.n1-outer {
+  border: 2.5px solid var(--coral); border-radius: 14px;
+  padding: 1.5rem; max-width: 420px; margin: 0 auto;
+  background: rgba(224,108,117,0.04); position: relative;
+}
+.n1-outer-label {
+  position: absolute; top: -11px; left: 16px;
+  background: var(--bg-card); padding: 0 8px;
+  color: var(--coral); font-family: var(--font-mono);
+  font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+}
+.n1-comp {
+  text-align: center; font-family: var(--font-mono); font-weight: 700;
+  color: var(--coral); font-size: 0.85rem; margin-bottom: 0.6rem;
+}
+.n1-process {
+  border: 1.5px dashed var(--teal-dim); border-radius: 10px;
+  padding: 0.8rem; display: flex; gap: 0.5rem; justify-content: center;
+  position: relative; background: rgba(78,201,176,0.03);
+}
+.n1-process-label {
+  position: absolute; top: -9px; left: 12px;
+  background: var(--bg-card); padding: 0 6px;
+  color: var(--teal-dim); font-family: var(--font-mono);
+  font-size: 0.6rem; font-weight: 700;
+}
+.n1-role {
+  font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600;
+  padding: 0.35rem 0.7rem; border-radius: 6px; border: 1px solid;
+}
+.n1-role.srv { color: var(--teal); border-color: var(--teal-dim); background: var(--teal-glow); }
+.n1-role.asy { color: var(--purple); border-color: rgba(198,120,221,0.3); background: var(--purple-glow); }
+
+/* split */
+.split-outer {
+  border: 2.5px solid var(--coral); border-radius: 14px;
+  padding: 1.5rem; max-width: 500px; margin: 0 auto;
+  background: rgba(224,108,117,0.04); position: relative;
+}
+.split-outer-label {
+  position: absolute; top: -11px; left: 16px;
+  background: var(--bg-card); padding: 0 8px;
+  color: var(--coral); font-family: var(--font-mono);
+  font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+}
+.split-comp {
+  text-align: center; font-family: var(--font-mono); font-weight: 700;
+  color: var(--coral); font-size: 0.85rem; margin-bottom: 0.6rem;
+}
+.split-processes {
+  display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+}
+.split-proc {
+  border: 1.5px dashed var(--teal-dim); border-radius: 10px;
+  padding: 0.8rem 1.2rem; text-align: center; min-width: 130px;
+  background: rgba(78,201,176,0.03); position: relative;
+}
+.split-proc-label {
+  position: absolute; top: -9px; left: 10px;
+  background: var(--bg-card); padding: 0 5px;
+  color: var(--teal-dim); font-family: var(--font-mono);
+  font-size: 0.6rem; font-weight: 700;
+}
+.split-proc .sp-role {
+  font-family: var(--font-mono); font-weight: 700; font-size: 0.85rem;
+}
+.split-proc.a .sp-role { color: var(--teal); }
+.split-proc.b .sp-role { color: var(--purple); }
+
+/* promote */
+.promote-diagram {
+  display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; align-items: flex-start;
+}
+.promote-bundle {
+  border: 2.5px solid; border-radius: 14px;
+  padding: 1.2rem; text-align: center; min-width: 180px;
+  position: relative; opacity: 0; transform: scale(0.85);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.promote-bundle.vis { opacity: 1; transform: scale(1); }
+.promote-bundle.hq  { border-color: var(--coral); background: rgba(224,108,117,0.05); }
+.promote-bundle.dom { border-color: var(--teal); background: rgba(78,201,176,0.04); }
+.promote-bundle-label {
+  position: absolute; top: -11px; left: 14px;
+  background: var(--bg-card); padding: 0 7px;
+  font-family: var(--font-mono); font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+}
+.promote-bundle.hq .promote-bundle-label { color: var(--coral); }
+.promote-bundle.dom .promote-bundle-label { color: var(--teal); }
+.promote-bundle .pb-comp {
+  font-family: var(--font-mono); font-weight: 700; font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+.promote-bundle.hq .pb-comp { color: var(--coral); }
+.promote-bundle.dom .pb-comp { color: var(--teal); }
+.promote-bundle .pb-roles {
+  display: flex; gap: 0.3rem; justify-content: center; flex-wrap: wrap;
+}
+.promote-bundle .pb-role {
+  font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
+  padding: 0.2rem 0.5rem; border-radius: 4px;
+  border: 1px solid var(--text-dim); color: var(--text-dim);
+}
+.promote-bundle .pb-kinds {
+  display: flex; gap: 0.25rem; justify-content: center; margin-top: 0.5rem; flex-wrap: wrap;
+}
+.pb-kind {
+  font-family: var(--font-mono); font-size: 0.55rem; font-weight: 700;
+  padding: 0.12rem 0.35rem; border-radius: 3px;
+}
+.pb-kind.k-pkg { background: rgba(156,160,176,0.1); color: var(--gray-light); }
+.pb-kind.k-svc { background: var(--gold-glow); color: var(--gold); }
+.pb-kind.k-plg { background: var(--teal-glow); color: var(--teal); }
+.pb-kind.k-hst { background: var(--coral-glow); color: var(--coral); }
+
+.promote-bridge {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; align-self: center; color: var(--text-dim);
+}
+.promote-bridge-text {
+  font-family: var(--font-mono); font-size: 0.7rem; text-align: center; line-height: 1.4;
+}
+
+/* ===== SNOWFLAKE ===== */
+#snowflake { min-height: 110vh; }
+.snowflake-container { position: relative; margin: 2rem auto; max-width: 900px; min-height: 500px; }
+.snowflake-svg { width: 100%; height: auto; min-height: 480px; }
+
+@keyframes kernelPulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--gold-glow); }
+  50% { box-shadow: 0 0 30px 10px var(--gold-glow); }
+}
+.kernel-pulse { animation: kernelPulse 3s ease-in-out infinite; }
+
+.snowflake-caption { text-align: center; color: var(--text-dim); font-size: 0.95rem; margin-top: 1.5rem; }
+
+/* ===== INVARIANT ===== */
+#invariant { text-align: center; }
+.invariant-box {
+  background: var(--bg-card); border-radius: 16px; padding: 2.5rem;
+  max-width: 750px; margin: 2rem auto;
+  border: 1px solid rgba(240,184,80,0.2);
+}
+.invariant-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.5rem; margin-top: 1.5rem;
+}
+.invariant-col h3 {
+  margin-bottom: 1rem; font-size: 0.8rem; font-family: var(--font-mono);
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+.invariant-col.changes h3 { color: var(--text-dim); }
+.invariant-col.boundary-type h3 { color: var(--teal); }
+.invariant-col.stays h3 { color: var(--gold); }
+.invariant-item {
+  font-size: 0.9rem; padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.invariant-col.changes .invariant-item { color: var(--text-dim); }
+.invariant-col.boundary-type .invariant-item { color: var(--teal); font-family: var(--font-mono); font-size: 0.82rem; }
+.invariant-col.stays .invariant-item { color: var(--text); font-weight: 500; }
+
+/* ===== COMPOSE CYCLE ===== */
+.cycle-container {
+  display: flex; justify-content: center; align-items: center;
+  gap: 0; margin: 3rem auto; max-width: 900px; flex-wrap: wrap;
+}
+.cycle-state {
+  flex: 1; min-width: 220px; max-width: 270px;
+  background: var(--bg-card); border-radius: 12px; padding: 1.5rem;
+  text-align: center; border: 2px solid transparent;
+  transition: border-color 0.5s ease, box-shadow 0.5s ease;
+}
+.cycle-state.active { border-color: var(--gold-dim); box-shadow: 0 0 20px var(--gold-glow); }
+.cycle-state .cycle-label { font-family: var(--font-mono); font-weight: 700; font-size: 1rem; margin-bottom: 0.8rem; }
+.cycle-state .cycle-desc { color: var(--text-dim); font-size: 0.82rem; line-height: 1.5; }
+.cycle-state .cycle-boundary-note {
+  margin-top: 0.6rem; padding-top: 0.4rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-family: var(--font-mono); font-size: 0.7rem;
+}
+.cycle-arrow { font-size: 1.5rem; color: var(--text-dim); padding: 0 0.5rem; flex-shrink: 0; }
+.cycle-kernel {
+  text-align: center; margin-top: 2rem; padding: 1rem 1.5rem;
+  border: 2px solid var(--gold-dim); border-radius: 10px;
+  background: var(--gold-glow); display: inline-block;
+  font-family: var(--font-mono); font-weight: 700; color: var(--gold); font-size: 0.95rem;
+}
+
+/* ===== CLOSING ===== */
+#closing { text-align: center; min-height: 70vh; }
+#closing h2 { color: var(--gold); margin-bottom: 1.5rem; }
+.closing-chain {
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin: 2rem 0;
+}
+.chain-link { font-family: var(--font-mono); font-size: clamp(0.9rem, 1.8vw, 1.15rem); color: var(--text); font-weight: 500; }
+.chain-arrow { color: var(--text-dim); font-size: 1rem; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  section { padding: 3rem 1.2rem; }
+  .invariant-grid { grid-template-columns: 1fr; }
+  .split-processes { flex-direction: column; align-items: center; }
+  .cycle-container { flex-direction: column; align-items: center; }
+  .cycle-arrow { transform: rotate(90deg); }
+  .promote-diagram { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 1. HERO ===== -->
+<section id="hero">
+  <div class="section-inner">
+    <h1 class="reveal">The Architecture That Scales<br>Without Rewriting Itself</h1>
+    <div class="spine-equation reveal reveal-delay-1">
+      <span class="spine-part truth">Semantic Truth</span>
+      <span class="spine-neq">&ne;</span>
+      <span class="spine-part projection">Runtime Projection</span>
+      <span class="spine-neq">&ne;</span>
+      <span class="spine-part authority">Host Authority</span>
+    </div>
+    <p class="hero-subtitle reveal reveal-delay-2">
+      Three distinct boundary types. Four nouns. A <em>semantic kernel</em> that stays stable
+      from a single process to a distributed ecosystem &mdash; only placement changes,
+      never meaning.
+    </p>
+  </div>
+</section>
+
+<!-- ===== 2. FOUR KINDS ===== -->
+<section id="kinds">
+  <div class="section-inner">
+    <div class="section-sep reveal"></div>
+    <h2 class="reveal">Four Kinds, One Direction</h2>
+    <p style="color:var(--text-dim);margin:1rem 0 0;">Every unit in the system is one of four kinds. Each lives at a different boundary type. Dependencies flow one way.</p>
+
+    <div class="kinds-grid">
+      <div class="kind-card packages reveal reveal-delay-1">
+        <div class="kind-label">packages/</div>
+        <div class="kind-role">Support matter. Shared types, SDKs, helpers. Raw materials that don't own business truth.</div>
+        <div class="kind-boundary" style="color:var(--gray-light);">No boundary of its own</div>
+      </div>
+      <div class="kind-card services reveal reveal-delay-2">
+        <div class="kind-label">services/</div>
+        <div class="kind-role">Capability truth. Contract-bearing boundaries that own business logic and invariants.</div>
+        <div class="kind-boundary" style="color:var(--gold);">Semantic boundary</div>
+      </div>
+      <div class="kind-card plugins reveal reveal-delay-3">
+        <div class="kind-label">plugins/</div>
+        <div class="kind-role">Runtime projection. Adapts and mounts capability into runtime surfaces. Not the semantic home.</div>
+        <div class="kind-boundary" style="color:var(--teal);">Runtime boundary</div>
+      </div>
+      <div class="kind-card hosts reveal reveal-delay-4">
+        <div class="kind-label">apps/hosts</div>
+        <div class="kind-role">Composition authority. Boot, lifecycle, and assembly into the deployable unit.</div>
+        <div class="kind-boundary" style="color:var(--coral);">Deployment boundary</div>
+      </div>
+    </div>
+
+    <div class="flow-strip reveal reveal-delay-3">
+      <span class="flow-label pkg">packages</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-label svc">services</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-label plg">plugins</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-label hst">apps/hosts</span>
+    </div>
+    <div class="direction-note reveal reveal-delay-4">Support feeds truth, truth feeds projection, projection feeds assembly</div>
+  </div>
+</section>
+
+<!-- ===== 3. THREE BOUNDARIES ===== -->
+<section id="boundaries">
+  <div class="section-inner">
+    <div class="section-sep reveal"></div>
+    <h2 class="reveal">Three Boundary Types</h2>
+    <p style="color:var(--text-dim);margin:0.8rem 0 0;max-width:640px;">
+      The architecture is built on the separation of three independent concerns.
+      Scaling changes the deployment boundary without touching the other two.
+    </p>
+
+    <div class="boundaries-stack reveal reveal-delay-1">
+      <div class="boundary-layer semantic">
+        <div class="bl-header">
+          <span class="bl-tag">Semantic</span>
+          <span class="bl-title">What capability IS</span>
+        </div>
+        <div class="bl-body">
+          <strong>Services</strong> define this. A service is a contract-bearing capability boundary &mdash;
+          transport-neutral, placement-neutral. It doesn't know or care whether it runs in-process or over RPC.
+          This boundary <strong>never changes with scale</strong>.
+        </div>
+        <div class="bl-what">
+          <span>Owns: contracts, invariants, business truth</span>
+          <span>Changes at scale: never</span>
+        </div>
+      </div>
+
+      <div class="boundary-connector"></div>
+
+      <div class="boundary-layer runtime">
+        <div class="bl-header">
+          <span class="bl-tag">Runtime</span>
+          <span class="bl-title">How capability is projected and executed</span>
+        </div>
+        <div class="bl-body">
+          <strong>Plugins</strong> project capability into runtime surfaces.
+          <strong>Runtime roles</strong> (server, async, cli, web, agent) are the kinds of process
+          a host bundle runs &mdash; each with its own entrypoint and runtime environment
+          (HTTP for server, durable execution for async, NanoClaw for agent, etc.).
+          They can be <strong>colocated in one process</strong> or <strong>split into individually deployed processes</strong>.
+        </div>
+        <div class="bl-what">
+          <span>Owns: projection, adaptation, surface exposure</span>
+          <span>Changes at scale: colocated &rarr; individually deployed</span>
+        </div>
+      </div>
+
+      <div class="boundary-connector rt"></div>
+
+      <div class="boundary-layer deploy">
+        <div class="bl-header">
+          <span class="bl-tag">Deployment</span>
+          <span class="bl-title">What gets deployed</span>
+        </div>
+        <div class="bl-body">
+          The <strong>host bundle</strong> is a deployable assembly built from one composition authority.
+          It governs which runtime roles exist and what they mount. Roles can share a process
+          or be individually deployed &mdash; but they all answer to the same composition authority.
+          <strong>Promotion</strong> creates a new host bundle with its own composition authority.
+        </div>
+        <div class="bl-what">
+          <span>Owns: boot, lifecycle, config, composition</span>
+          <span>Changes at scale: bundle count (via promotion)</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="reveal reveal-delay-2" style="text-align:center;margin-top:2.5rem;color:var(--text-dim);">The Three Planes</h3>
+    <p style="color:var(--text-dim);text-align:center;font-size:0.9rem;margin:0.5rem auto;max-width:500px;">
+      Both caller-facing and async planes call into the service plane. Services don't know which plane called them.
+    </p>
+    <div class="planes-diagram reveal reveal-delay-3">
+      <div class="plane-box server-plane">server / API plane &mdash; caller-facing synchronous</div>
+      <div class="plane-arrow">&darr; calls &darr;</div>
+      <div class="plane-box service-plane">service plane &mdash; capability truth (transport-neutral)</div>
+      <div class="plane-arrow">&uarr; calls &uarr;</div>
+      <div class="plane-box async-plane">async plane &mdash; durable / background execution</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. HOST BUNDLE ANATOMY ===== -->
+<section id="host-bundle">
+  <div class="section-inner">
+    <div class="section-sep reveal"></div>
+    <h2 class="reveal">Anatomy of a Host Bundle</h2>
+    <p style="color:var(--text-dim);margin:0.8rem 0 0;max-width:620px;">
+      One composition authority. Multiple peer runtime roles. Underneath, the services
+      that hold capability truth. The host bundle is the deployable assembly; runtime roles inside it
+      can share a process or each get their own.
+    </p>
+
+    <div class="host-bundle-vis reveal reveal-delay-1">
+      <div class="deploy-boundary" id="hostBundleFrame">
+        <span class="deploy-boundary-label">deployable unit: host bundle</span>
+        <div class="composition-node">rawr.hq.ts <span style="font-weight:400;font-size:0.8em;color:var(--text-dim);">(composition authority)</span></div>
+        <div class="mount-line"></div>
+        <div class="runtime-boundary">
+          <span class="runtime-boundary-label">runtime roles (colocated or individually deployed)</span>
+          <div class="roles-fan" id="rolesFan">
+            <div class="role-chip" data-role="server">server<span class="role-chip-note">sync callers</span></div>
+            <div class="role-chip" data-role="async">async<span class="role-chip-note">durable exec</span></div>
+            <div class="role-chip" data-role="cli">cli<span class="role-chip-note">operator</span></div>
+            <div class="role-chip" data-role="web">web<span class="role-chip-note">frontend</span></div>
+            <div class="role-chip" data-role="agent">agent<span class="role-chip-note">stewards</span></div>
+          </div>
+        </div>
+        <div class="semantic-underlayer">
+          <span class="semantic-underlayer-label">semantic truth (services, called in-process)</span>
+          <div class="svc-items">
+            <span class="svc-item">support</span>
+            <span class="svc-item">billing</span>
+            <span class="svc-item">comms</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="host-legend reveal reveal-delay-2">
+      <div class="legend-item"><div class="legend-swatch dep"></div> Deployment boundary (host bundle)</div>
+      <div class="legend-item"><div class="legend-swatch rt"></div> Runtime boundary (process-types)</div>
+      <div class="legend-item"><div class="legend-swatch sem"></div> Semantic boundary (services)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 5. SCALE STORY ===== -->
+<section id="scale">
+  <div class="section-inner">
+    <div class="section-sep reveal"></div>
+    <h2 class="reveal">How It Scales</h2>
+    <p style="color:var(--text-dim);margin:0.8rem 0 2rem;max-width:650px;">
+      Start simple without lying about what the system is.
+      Each scale step changes a specific boundary type while preserving the others.
+    </p>
+
+    <div class="scale-timeline">
+      <!-- n=1 -->
+      <div class="scale-stage" data-stage="1">
+        <div class="stage-header">
+          <span class="stage-badge s1">n = 1</span>
+          <h3 class="stage-title">Colocated &mdash; One Bundle, Shared Process</h3>
+        </div>
+        <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:1rem;max-width:550px;">
+          One host bundle, one composition authority. Runtime roles share a process. Services called in-process. This is real architecture, not a temporary monolith.
+        </p>
+        <div class="scale-diagram">
+          <div class="n1-outer">
+            <span class="n1-outer-label">1 host bundle (1 deploy unit)</span>
+            <div class="n1-comp">rawr.hq.ts</div>
+            <div class="n1-process">
+              <span class="n1-process-label">single process</span>
+              <div class="n1-role srv">server</div>
+              <div class="n1-role asy">async</div>
+            </div>
+          </div>
+        </div>
+        <div class="stage-annotation">
+          <div class="ann-item"><span class="ann-icon">&#9679;</span> <span class="ann-same">Semantic boundaries: unchanged</span></div>
+          <div class="ann-item"><span class="ann-icon">&#9679;</span> <span class="ann-same">Composition authorities: 1</span></div>
+          <div class="ann-item"><span class="ann-icon">&#9679;</span> <span class="ann-same">Processes: 1 (roles colocated)</span></div>
+        </div>
+      </div>
+
+      <!-- split -->
+      <div class="scale-stage" data-stage="2">
+        <div class="stage-header">
+          <span class="stage-badge s2">SPLIT</span>
+          <h3 class="stage-title">Split Roles &mdash; Same Composition Authority, Separate Processes</h3>
+        </div>
+        <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:1rem;max-width:550px;">
+          Roles split into individually deployed processes for operational reasons.
+          Still <strong style="color:var(--text);">one host bundle, one composition authority</strong> governing all of them.
+          The runtime boundary changed; the semantic and composition boundaries did not.
+        </p>
+        <div class="scale-diagram">
+          <div class="split-outer">
+            <span class="split-outer-label">1 host bundle &middot; 1 composition authority &middot; N processes</span>
+            <div class="split-comp">rawr.hq.ts</div>
+            <div class="split-processes">
+              <div class="split-proc a">
+                <span class="split-proc-label">process A</span>
+                <div class="sp-role">server</div>
+              </div>
+              <div class="split-proc b">
+                <span class="split-proc-label">process B</span>
+                <div class="sp-role">async</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="stage-annotation">
+          <div class="ann-item"><span class="ann-icon">&#9679;</span> <span class="ann-same">Semantic boundaries: unchanged</span></div>
+          <div class="ann-item"><span class="ann-icon">&#9679;</span> <span class="ann-same">Composition authority: still 1</span></div>
+          <div class="ann-item"><span class="ann-icon">&#9650;</span> <span class="ann-changed">Processes: 1 &rarr; N (roles individually deployed)</span></div>
+        </div>
+      </div>
+
+      <!-- promote -->
+      <div class="scale-stage" data-stage="3">
+        <div class="stage-header">
+          <span class="stage-badge s3">PROMOTE</span>
+          <h3 class="stage-title">Promote &mdash; New Deploy Unit, Peer Host Bundle</h3>
+        </div>
+        <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:1rem;max-width:600px;">
+          When a domain outgrows HQ, it <strong style="color:var(--gold);">promotes</strong> into its own host bundle
+          with its own composition authority. This is the scale step that creates a
+          <em>new composition authority</em> &mdash; a new peer of HQ, not a child.
+          The promoted bundle carries the same four-kind structure.
+        </p>
+        <div class="scale-diagram" style="padding:2rem;">
+          <div class="promote-diagram" id="promoteDiagram"></div>
+        </div>
+        <div class="stage-annotation">
+          <div class="ann-item"><span class="ann-icon">&#9679;</span> <span class="ann-same">Semantic boundaries: unchanged</span></div>
+          <div class="ann-item"><span class="ann-icon">&#9650;</span> <span class="ann-changed">Deploy units: 1 &rarr; 2</span></div>
+          <div class="ann-item"><span class="ann-icon">&#9650;</span> <span class="ann-changed">Composition authorities: 1 &rarr; 2</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. SNOWFLAKE ===== -->
+<section id="snowflake">
+  <div class="section-inner">
+    <div class="section-sep reveal"></div>
+    <h2 class="reveal" style="text-align:center;">See It at Full Scale</h2>
+    <p style="color:var(--text-dim);text-align:center;margin:0.8rem auto 0;max-width:620px;">
+      Multiple domains promoted to peer bundles. The semantic kernel sits at center.
+      Each host bundle is a deploy unit with the same internal structure.
+      Outer bundles can promote their own sub-domains &mdash; the pattern is recursive.
+    </p>
+
+    <div class="snowflake-container reveal reveal-delay-2">
+      <svg class="snowflake-svg" id="snowflakeSvg" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+        <g id="sfLines"></g>
+        <g id="sfNodes"></g>
+      </svg>
+    </div>
+    <p class="snowflake-caption reveal reveal-delay-3">
+      <span style="color:var(--gold);">Gold center</span> = semantic kernel (services + packages).
+      <span style="color:var(--coral);">Each coral node</span> = one deploy unit (host bundle) with its own
+      <span style="font-family:var(--font-mono);font-size:0.85em;">packages/ services/ plugins/ apps/</span>.
+    </p>
+  </div>
+</section>
+
+<!-- ===== 7. INVARIANT ===== -->
+<section id="invariant">
+  <div class="section-inner">
+    <div class="section-sep reveal"></div>
+    <h2 class="reveal" style="color:var(--gold);">The Invariant</h2>
+    <p style="color:var(--text-dim);max-width:540px;margin:0.8rem auto 0;text-align:center;">
+      At every scale state, the boundary types tell you exactly what changed and what didn't.
+    </p>
+
+    <div class="invariant-box reveal reveal-delay-2">
+      <div class="invariant-grid">
+        <div class="invariant-col changes">
+          <h3>What Changes</h3>
+          <div class="invariant-item">Process count</div>
+          <div class="invariant-item">Host bundle count</div>
+          <div class="invariant-item">Network topology</div>
+          <div class="invariant-item">In-process &rarr; RPC calls</div>
+          <div class="invariant-item">Deploy unit shape</div>
+        </div>
+        <div class="invariant-col boundary-type">
+          <h3>Boundary Type</h3>
+          <div class="invariant-item">runtime</div>
+          <div class="invariant-item">deployment</div>
+          <div class="invariant-item">deployment</div>
+          <div class="invariant-item">runtime</div>
+          <div class="invariant-item">deployment</div>
+        </div>
+        <div class="invariant-col stays">
+          <h3>What Stays</h3>
+          <div class="invariant-item">Service contracts</div>
+          <div class="invariant-item">Capability ownership</div>
+          <div class="invariant-item">Dependency direction</div>
+          <div class="invariant-item">What a plugin means</div>
+          <div class="invariant-item">What a host means</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. COMPOSE CYCLE ===== -->
+<section id="cycle">
+  <div class="section-inner">
+    <div class="section-sep reveal"></div>
+    <h2 class="reveal" style="text-align:center;">Compose &rarr; Decompose &rarr; Recompose</h2>
+    <p style="color:var(--text-dim);text-align:center;margin:0.8rem auto 0;max-width:600px;">
+      The system moves through three states. Each changes a different boundary.
+      The semantic kernel persists through all of them.
+    </p>
+
+    <div class="cycle-container reveal reveal-delay-2">
+      <div class="cycle-state" id="cyc1">
+        <div class="cycle-label" style="color:var(--blue);">Compose</div>
+        <div class="cycle-desc">
+          One host bundle. Roles share a process.<br>
+          Services called in-process.<br>
+          <strong style="color:var(--blue);">1 deploy unit</strong>
+        </div>
+        <div class="cycle-boundary-note" style="color:var(--text-dim);">No boundaries split</div>
+      </div>
+      <div class="cycle-arrow">&rarr;</div>
+      <div class="cycle-state" id="cyc2">
+        <div class="cycle-label" style="color:var(--purple);">Decompose</div>
+        <div class="cycle-desc">
+          Same composition authority. Roles individually deployed.<br>
+          Services via RPC when remote.<br>
+          <strong style="color:var(--purple);">1 bundle, N processes</strong>
+        </div>
+        <div class="cycle-boundary-note" style="color:var(--purple);">Runtime boundary splits</div>
+      </div>
+      <div class="cycle-arrow">&rarr;</div>
+      <div class="cycle-state" id="cyc3">
+        <div class="cycle-label" style="color:var(--gold);">Recompose</div>
+        <div class="cycle-desc">
+          Domains promoted to peer bundles.<br>
+          Each bundle composes its own roles.<br>
+          <strong style="color:var(--gold);">N deploy units</strong>
+        </div>
+        <div class="cycle-boundary-note" style="color:var(--coral);">Deployment boundary splits</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;" class="reveal reveal-delay-3">
+      <div class="cycle-kernel kernel-pulse">
+        semantic kernel: packages + services + plugins + apps/hosts
+      </div>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin-top:1rem;">
+        <span style="color:var(--gold);">Semantic boundaries never split.</span>
+        That's the load-bearing center.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 9. CLOSING ===== -->
+<section id="closing">
+  <div class="section-inner">
+    <div class="section-sep reveal"></div>
+    <h2 class="reveal">Why This Shape Exists</h2>
+    <div class="closing-chain reveal reveal-delay-1">
+      <span class="chain-link">Strong nouns with distinct boundary types</span>
+      <span class="chain-arrow">&darr;</span>
+      <span class="chain-link">Scale splits runtime or composition boundaries &mdash; never semantic ones</span>
+      <span class="chain-arrow">&darr;</span>
+      <span class="chain-link">Coherent systems at any scale</span>
+      <span class="chain-arrow">&darr;</span>
+      <span class="chain-link" style="color:var(--gold);">Leverage, not tidiness</span>
+    </div>
+    <div class="reveal reveal-delay-2" style="max-width:600px;margin:2rem auto 0;">
+      <p style="color:var(--text-dim);text-align:center;line-height:1.8;">
+        The architecture reduces ambient ambiguity so that later systems &mdash;
+        enforcement, scaffolding, observability, and eventually autonomous
+        stewardship &mdash; can be built on top of it without fighting the
+        structure at every layer.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer style="text-align:center;padding:3rem 1rem;color:var(--text-dim);font-size:0.8rem;font-family:var(--font-mono);">
+  RAWR Future Architecture &middot; Infographic Explainer
+</footer>
+
+<script>
+// ===== INTERSECTION OBSERVER =====
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+document.querySelectorAll('.reveal, .scale-stage').forEach(function(el) { observer.observe(el); });
+
+// ===== HOST BUNDLE: sequential role mounting =====
+var hostObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      var chips = document.querySelectorAll('#rolesFan .role-chip');
+      chips.forEach(function(chip, i) {
+        setTimeout(function() { chip.classList.add('mounted'); }, 300 + i * 200);
+      });
+      hostObs.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.3 });
+var hbf = document.getElementById('hostBundleFrame');
+if (hbf) hostObs.observe(hbf);
+
+// ===== PROMOTED BUNDLES =====
+function buildPromoteDiagram() {
+  var container = document.getElementById('promoteDiagram');
+  if (!container) return;
+
+  container.style.cssText = 'display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;align-items:flex-start;';
+
+  var bundles = [
+    { name: 'apps/hq', comp: 'rawr.hq.ts', roles: ['server', 'async'], cls: 'hq', delay: 0 },
+    { name: 'apps/support', comp: 'rawr.support.ts', roles: ['server', 'async'], cls: 'dom', delay: 0.4 },
+  ];
+
+  bundles.forEach(function(b) {
+    var div = document.createElement('div');
+    div.className = 'promote-bundle ' + b.cls;
+    div.style.transitionDelay = b.delay + 's';
+
+    var kindsHtml = '<div class="pb-kinds">'
+      + '<span class="pb-kind k-pkg">pkg</span>'
+      + '<span class="pb-kind k-svc">svc</span>'
+      + '<span class="pb-kind k-plg">plg</span>'
+      + '<span class="pb-kind k-hst">host</span>'
+      + '</div>';
+
+    div.innerHTML =
+      '<span class="promote-bundle-label">' + (b.cls === 'hq' ? 'deploy unit 1' : 'deploy unit 2 (promoted)') + '</span>'
+      + '<div class="pb-comp">' + b.name + '</div>'
+      + '<div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);margin-bottom:0.5rem;">' + b.comp + '</div>'
+      + '<div class="pb-roles">' + b.roles.map(function(r) { return '<span class="pb-role">' + r + '</span>'; }).join('') + '</div>'
+      + kindsHtml;
+
+    container.appendChild(div);
+  });
+
+  // Bridge
+  var bridge = document.createElement('div');
+  bridge.className = 'promote-bridge';
+  bridge.innerHTML = '<span style="font-size:1.8rem;">&#8596;</span><div class="promote-bridge-text">peer bundles<br>same ontology<br>separate deploy</div>';
+  container.insertBefore(bridge, container.children[1]);
+
+  var stage3 = document.querySelector('[data-stage="3"]');
+  var promObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        container.querySelectorAll('.promote-bundle').forEach(function(el) { el.classList.add('vis'); });
+        promObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  if (stage3) promObs.observe(stage3);
+}
+buildPromoteDiagram();
+
+// ===== SNOWFLAKE SVG =====
+function buildSnowflake() {
+  var linesG = document.getElementById('sfLines');
+  var nodesG = document.getElementById('sfNodes');
+  if (!linesG || !nodesG) return;
+
+  var cx = 450, cy = 250;
+  var kernel = { x: cx, y: cy, r: 42, lines: ['Semantic', 'Kernel'], fill: 'rgba(240,184,80,0.15)', stroke: '#f0b850', tc: '#f0b850' };
+
+  var r1a = [0, 72, 144, 216, 288];
+  var r1d = 155;
+  var names = ['apps/hq', 'apps/support', 'apps/billing', 'apps/comms', 'apps/analytics'];
+  var ring1 = r1a.map(function(a, i) {
+    var rad = (a - 90) * Math.PI / 180;
+    return { x: cx + Math.cos(rad) * r1d, y: cy + Math.sin(rad) * r1d, r: 32, lines: [names[i]], fill: 'rgba(224,108,117,0.12)', stroke: '#e06c75', tc: '#e06c75', delay: i * 0.15 };
+  });
+
+  var ring2 = [];
+  [0, 1, 2].forEach(function(pi) {
+    var p = ring1[pi]; var ba = r1a[pi] - 90;
+    [-25, 25].forEach(function(off, j) {
+      var rad = (ba + off) * Math.PI / 180;
+      ring2.push({ x: p.x + Math.cos(rad) * 100, y: p.y + Math.sin(rad) * 100, r: 18, lines: [], fill: 'rgba(224,108,117,0.08)', stroke: 'rgba(224,108,117,0.4)', tc: '#e06c75', pi: pi, delay: 0.8 + pi * 0.15 + j * 0.1 });
+    });
+  });
+
+  function mkLine(x1, y1, x2, y2, c, d) {
+    var l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+    l.setAttribute('stroke', c); l.setAttribute('stroke-width', '1.5');
+    l.setAttribute('stroke-dasharray', '200'); l.setAttribute('stroke-dashoffset', '200');
+    l.style.transition = 'stroke-dashoffset 0.8s ease ' + d + 's';
+    l.classList.add('sf-line');
+    return l;
+  }
+
+  ring1.forEach(function(n) { linesG.appendChild(mkLine(cx, cy, n.x, n.y, 'rgba(240,184,80,0.3)', n.delay)); });
+  ring2.forEach(function(n) { var p = ring1[n.pi]; linesG.appendChild(mkLine(p.x, p.y, n.x, n.y, 'rgba(224,108,117,0.25)', n.delay)); });
+
+  function mkNode(n, d) {
+    var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.style.opacity = '0'; g.style.transform = 'scale(0)';
+    g.style.transformOrigin = n.x + 'px ' + n.y + 'px';
+    g.style.transition = 'opacity 0.6s ease ' + d + 's, transform 0.6s cubic-bezier(0.34,1.56,0.64,1) ' + d + 's';
+
+    var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', n.x); c.setAttribute('cy', n.y); c.setAttribute('r', n.r);
+    c.setAttribute('fill', n.fill); c.setAttribute('stroke', n.stroke); c.setAttribute('stroke-width', '2');
+    g.appendChild(c);
+
+    if (n.lines && n.lines.length) {
+      n.lines.forEach(function(line, li) {
+        var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', n.x); t.setAttribute('y', n.y + (li - (n.lines.length - 1) / 2) * 13);
+        t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'central');
+        t.setAttribute('fill', n.tc); t.setAttribute('font-family', "'JetBrains Mono', monospace");
+        t.setAttribute('font-size', n.r > 25 ? '10' : '8'); t.setAttribute('font-weight', '600');
+        t.textContent = line;
+        g.appendChild(t);
+      });
+    }
+    return g;
+  }
+
+  nodesG.appendChild(mkNode(kernel, 0));
+  ring1.forEach(function(n) { nodesG.appendChild(mkNode(n, n.delay)); });
+  ring2.forEach(function(n) { nodesG.appendChild(mkNode(n, n.delay)); });
+
+  var svg = document.getElementById('snowflakeSvg');
+  var sfObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        svg.querySelectorAll('g[style]').forEach(function(n) { n.style.opacity = '1'; n.style.transform = 'scale(1)'; });
+        svg.querySelectorAll('.sf-line').forEach(function(l) { l.style.strokeDashoffset = '0'; });
+        sfObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  sfObs.observe(svg);
+}
+buildSnowflake();
+
+// ===== CYCLE ANIMATION =====
+(function() {
+  var states = [document.getElementById('cyc1'), document.getElementById('cyc2'), document.getElementById('cyc3')];
+  if (!states[0]) return;
+  var cur = 0;
+  function tick() {
+    states.forEach(function(s, i) { if (i === cur) s.classList.add('active'); else s.classList.remove('active'); });
+    cur = (cur + 1) % 3;
+  }
+  var cycObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) { tick(); setInterval(tick, 2500); cycObs.unobserve(entry.target); }
+    });
+  }, { threshold: 0.3 });
+  cycObs.observe(states[0].parentElement);
+})();
+</script>
+
+</body>
+</html>

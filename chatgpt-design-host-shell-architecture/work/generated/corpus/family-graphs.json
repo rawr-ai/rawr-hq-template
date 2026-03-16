@@ -1,0 +1,178 @@
+[
+  {
+    "family_id": "encore-integration-with-rawr",
+    "canonical_title": "Encore Integration with RAWR",
+    "summary": "Exploratory thread about whether Encore should sit beneath RAWR as an infrastructure substrate, with the conclusion that Railway + Nx is the more pragmatic near-term path while host contracts stay RAWR-owned.",
+    "member_source_ids": [
+      "src-json-encore-integration-with-rawr"
+    ],
+    "member_filenames": [
+      "Encore Integration with RAWR.json"
+    ],
+    "root_source_id": "src-json-encore-integration-with-rawr",
+    "classification": {
+      "src-json-encore-integration-with-rawr": "standalone"
+    },
+    "edges": []
+  },
+  {
+    "family_id": "inngest-plugin-api-strategy",
+    "canonical_title": "Inngest Plugin API Strategy",
+    "summary": "Workflow architecture thread that settles on a reusable workflow shell: public oRPC/OpenAPI control surfaces on one side, Inngest durable execution on the other, with private service clients providing business capability inside workflow steps.",
+    "member_source_ids": [
+      "src-json-inngest-plugin-api-strategy-branch-00",
+      "src-json-inngest-plugin-api-strategy-branch-01"
+    ],
+    "member_filenames": [
+      "Inngest Plugin API Strategy Branch 00.json",
+      "Inngest Plugin API Strategy Branch 01.json"
+    ],
+    "root_source_id": "src-json-inngest-plugin-api-strategy-branch-00",
+    "classification": {
+      "src-json-inngest-plugin-api-strategy-branch-00": "root",
+      "src-json-inngest-plugin-api-strategy-branch-01": "duplicate"
+    },
+    "edges": [
+      {
+        "from_source_id": "src-json-inngest-plugin-api-strategy-branch-01",
+        "to_source_id": "src-json-inngest-plugin-api-strategy-branch-00",
+        "type": "duplicate_of",
+        "confidence": 1.0,
+        "shared_prefix_len": 6,
+        "evidence": [
+          "exact_duplicate_hash=true",
+          "same_export_link=True"
+        ]
+      }
+    ]
+  },
+  {
+    "family_id": "telemetry-vs-logging-nx-rawr-evolution",
+    "canonical_title": "Telemetry vs Logging -> NX + RAWR Evolution Sequence",
+    "summary": "Conversation family that starts with observability tooling distinctions, then pivots into a broader architecture and repo-evolution sequence for RAWR, including document creation and service-internal structure.",
+    "member_source_ids": [
+      "src-json-rawr-nx-evolution-sequence",
+      "src-json-telemetry-vs-logging"
+    ],
+    "member_filenames": [
+      "RAWR NX Evolution Sequence.json",
+      "Telemetry vs Logging.json"
+    ],
+    "root_source_id": "src-json-telemetry-vs-logging",
+    "classification": {
+      "src-json-rawr-nx-evolution-sequence": "branch",
+      "src-json-telemetry-vs-logging": "root"
+    },
+    "edges": [
+      {
+        "from_source_id": "src-json-rawr-nx-evolution-sequence",
+        "to_source_id": "src-json-telemetry-vs-logging",
+        "type": "same_root_as",
+        "confidence": 0.78,
+        "shared_prefix_len": 5,
+        "evidence": [
+          "exact_shared_prefix_messages=5",
+          "fuzzy_shared_prefix_messages=18",
+          "same_first_prompt=true"
+        ]
+      }
+    ]
+  },
+  {
+    "family_id": "server-sidecar-process-model",
+    "canonical_title": "Server Sidecar Process Model",
+    "summary": "Deep host/runtime model family covering the distinction between hosts, processes, services, sidecars, runtime roles, service-centric capability ownership, and the eventual minimal assembly-entrypoint shape.",
+    "member_source_ids": [
+      "src-json-server-sidecar-process-model-branch-00",
+      "src-json-server-sidecar-process-model-branch-01",
+      "src-json-server-sidecar-process-model-branch-02",
+      "src-json-server-sidecar-process-model-branch-03",
+      "src-json-server-sidecar-process-model-branch-04",
+      "src-json-server-sidecar-process-model-branch-05"
+    ],
+    "member_filenames": [
+      "Server Sidecar Process Model Branch 00.json",
+      "Server Sidecar Process Model Branch 01.json",
+      "Server Sidecar Process Model Branch 02.json",
+      "Server Sidecar Process Model Branch 03.json",
+      "Server Sidecar Process Model Branch 04.json",
+      "Server Sidecar Process Model Branch 05.json"
+    ],
+    "root_source_id": "src-json-server-sidecar-process-model-branch-00",
+    "classification": {
+      "src-json-server-sidecar-process-model-branch-00": "root",
+      "src-json-server-sidecar-process-model-branch-01": "branch",
+      "src-json-server-sidecar-process-model-branch-02": "branch",
+      "src-json-server-sidecar-process-model-branch-03": "branch",
+      "src-json-server-sidecar-process-model-branch-04": "branch",
+      "src-json-server-sidecar-process-model-branch-05": "branch"
+    },
+    "edges": [
+      {
+        "from_source_id": "src-json-server-sidecar-process-model-branch-01",
+        "to_source_id": "src-json-server-sidecar-process-model-branch-00",
+        "type": "branches_from",
+        "confidence": 0.97,
+        "shared_prefix_len": 2,
+        "evidence": [
+          "exact_shared_prefix_messages=2",
+          "fuzzy_shared_prefix_messages=2",
+          "normalized_title_match=Server Sidecar Process Model",
+          "same_first_prompt=true"
+        ]
+      },
+      {
+        "from_source_id": "src-json-server-sidecar-process-model-branch-02",
+        "to_source_id": "src-json-server-sidecar-process-model-branch-01",
+        "type": "branches_from",
+        "confidence": 0.9,
+        "shared_prefix_len": 5,
+        "evidence": [
+          "exact_shared_prefix_messages=5",
+          "fuzzy_shared_prefix_messages=14",
+          "normalized_title_match=Server Sidecar Process Model",
+          "same_first_prompt=true"
+        ]
+      },
+      {
+        "from_source_id": "src-json-server-sidecar-process-model-branch-03",
+        "to_source_id": "src-json-server-sidecar-process-model-branch-02",
+        "type": "branches_from",
+        "confidence": 0.99,
+        "shared_prefix_len": 17,
+        "evidence": [
+          "exact_shared_prefix_messages=17",
+          "fuzzy_shared_prefix_messages=18",
+          "normalized_title_match=Server Sidecar Process Model",
+          "same_first_prompt=true"
+        ]
+      },
+      {
+        "from_source_id": "src-json-server-sidecar-process-model-branch-04",
+        "to_source_id": "src-json-server-sidecar-process-model-branch-03",
+        "type": "branches_from",
+        "confidence": 0.99,
+        "shared_prefix_len": 29,
+        "evidence": [
+          "exact_shared_prefix_messages=29",
+          "fuzzy_shared_prefix_messages=50",
+          "normalized_title_match=Server Sidecar Process Model",
+          "same_first_prompt=true"
+        ]
+      },
+      {
+        "from_source_id": "src-json-server-sidecar-process-model-branch-05",
+        "to_source_id": "src-json-server-sidecar-process-model-branch-04",
+        "type": "branches_from",
+        "confidence": 0.99,
+        "shared_prefix_len": 55,
+        "evidence": [
+          "exact_shared_prefix_messages=55",
+          "fuzzy_shared_prefix_messages=74",
+          "normalized_title_match=Server Sidecar Process Model",
+          "same_first_prompt=true"
+        ]
+      }
+    ]
+  }
+]
