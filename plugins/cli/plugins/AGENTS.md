@@ -52,8 +52,8 @@ Do not weaken partial-mode guardrails by default.
 From repo root:
 
 ```bash
-bunx turbo run build --filter=@rawr/agent-sync --filter=@rawr/plugin-plugins
-bunx turbo run test --filter=@rawr/agent-sync --filter=@rawr/plugin-plugins
+bunx nx run-many -t build --projects=@rawr/agent-sync,@rawr/plugin-plugins
+bunx nx run-many -t test --projects=@rawr/agent-sync,@rawr/plugin-plugins
 rawr plugins sync all --dry-run --json
 ```
 

@@ -152,8 +152,6 @@ export async function scanDependents(
         "!**/node_modules/**",
         "--glob",
         "!**/dist/**",
-        "--glob",
-        "!**/.turbo/**",
         token,
         ".",
       ],

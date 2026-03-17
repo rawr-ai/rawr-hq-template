@@ -21,7 +21,7 @@ Use this when converting an existing script (from anywhere on disk) into a prope
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 # scaffold command plugin package per runbook
-bunx turbo run build --filter=@rawr/plugin-demo-oclif
+bunx nx run @rawr/plugin-demo-oclif:build
 rawr plugins link "$(pwd)/plugins/cli/demo-oclif" --install
 rawr plugins inspect @rawr/plugin-demo-oclif --json
 ```
@@ -31,7 +31,7 @@ rawr plugins inspect @rawr/plugin-demo-oclif --json
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 rawr factory plugin new demo-runtime --kind both
-bunx turbo run build --filter=@rawr/plugin-demo-runtime
+bunx nx run @rawr/plugin-demo-runtime:build
 rawr plugins web enable demo-runtime --allow-non-operational --risk off
 rawr plugins web status --json
 ```

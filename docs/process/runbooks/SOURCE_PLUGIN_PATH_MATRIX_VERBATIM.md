@@ -1,6 +1,6 @@
 # Source Capture: Plugin/CLI Path Matrix (Verbatim)
 
-This file captures the previously provided path matrix narrative and commands verbatim, preserved as the immutable source reference.
+This file captures the previously provided path matrix narrative, with command examples refreshed to the current Nx orchestration substrate while preserving the underlying path matrix.
 
 Validated against the live CLI in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq` (current command surfaces + scaffolds).
 
@@ -60,8 +60,8 @@ Use when: consuming published CLI, not local source checkout.
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
 rawr factory plugin new my-plugin --kind both
-bunx turbo run build --filter=@rawr/plugin-my-plugin
-bunx turbo run test --filter=@rawr/plugin-my-plugin
+bunx nx run @rawr/plugin-my-plugin:build
+bunx nx run @rawr/plugin-my-plugin:test
 ```
 Generated files live under `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/plugins/my-plugin/*`.  
 Default manifest posture:
@@ -120,7 +120,7 @@ Key point: here “publish” means package available from npm/GitHub source; in
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
 rawr factory plugin new demo-runtime --kind both
-bunx turbo run build --filter=@rawr/plugin-demo-runtime
+bunx nx run @rawr/plugin-demo-runtime:build
 rawr plugins web enable demo-runtime --risk off
 rawr plugins web status --json
 ```
@@ -131,7 +131,7 @@ Caveat: run from inside workspace; outside repo it won’t find workspace root.
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
 # scaffold command plugin package per runbook
-bunx turbo run build --filter=@rawr/plugin-demo-oclif
+bunx nx run @rawr/plugin-demo-oclif:build
 rawr plugins link "$(pwd)/plugins/demo-oclif" --install
 rawr plugins inspect @rawr/plugin-demo-oclif --json
 rawr demo-hello
@@ -153,7 +153,7 @@ Caveat: plugin must be correctly packaged for oclif.
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
 ./scripts/dev/activate-global-rawr.sh
 rawr factory plugin new demo-global --kind both
-bunx turbo run build --filter=@rawr/plugin-demo-global
+bunx nx run @rawr/plugin-demo-global:build
 rawr plugins web enable demo-global --risk off
 ```
 How CLI knows: global `rawr` points to this checkout, then Channel B workspace scan applies.  

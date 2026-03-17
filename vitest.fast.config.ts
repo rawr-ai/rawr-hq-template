@@ -27,7 +27,6 @@ export default mergeConfig(
       exclude: [
         "**/dist/**",
         "**/node_modules/**",
-        "**/.turbo/**",
         "test/coordination.visual.test.ts",
         "**/apps/web/test/coordination.visual.test.ts",
         ...heavyCliTests,

@@ -21,8 +21,8 @@
 
 ## Build And Test
 - From repo root:
-  - `turbo run build --filter=@rawr/plugin-mfe-demo`
-  - `vitest run --project plugin-mfe-demo`
+  - `bunx nx run @rawr/plugin-mfe-demo:build`
+  - `bunx nx run @rawr/plugin-mfe-demo:test`
 - Tests run in `jsdom` (see root `vitest.config.ts`).
 
 ## Layout

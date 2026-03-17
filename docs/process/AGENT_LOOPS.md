@@ -44,6 +44,19 @@ This document defines repeatable, low-drift loops an AI agent can follow to ship
   - `gt sync --no-restack`
   - `gt restack --upstack` only on your own stack.
 
+### Nx posture
+
+- Use the Nx CLI for most workspace graph and target queries:
+  - `bunx nx show projects`
+  - `bunx nx show project <project-name>`
+  - `bunx nx graph`
+- Register `Nx MCP` in your real client config home, not in the repo:
+  - `codex mcp add nx -- bunx nx mcp --no-minimal --disableTelemetry`
+  - `claude mcp add -s local nx -- bunx nx mcp --no-minimal --disableTelemetry`
+- In this setup, that means `~/.codex-rawr/config.toml` for Codex and `~/.claude.json` for Claude Code local/user scope.
+- Use `Nx MCP` as supplementary graph/connectivity tooling with the non-minimal workspace/project tools enabled.
+- Keep Narsil as the primary code-intel MCP; use it for repo search and semantic/source-level investigation.
+
 ### Journaling expectation
 
 - Workflow/orchestrator commands should emit concise journal snippets summarizing steps, outcome, and artifacts.
@@ -129,8 +142,8 @@ Create an oclif plugin package with one or more CLI commands and plugin-local us
 3. Implement commands in `src/commands/*.ts`.
 4. Add plugin-local docs (markdown) inside plugin package as placeholder for future skill-sync pipeline.
 5. Build and test plugin:
-   - `turbo run build --filter=<plugin-package-name>`
-   - `vitest run --project <plugin-vitest-project>`
+   - `bunx nx run <plugin-package-name>:build`
+   - `bunx nx run <plugin-package-name>:test`
 6. Link plugin into CLI for local dev:
    - `bun run rawr -- plugins link plugins/cli/<dir> --install`
 
@@ -153,8 +166,8 @@ Create an oclif plugin package with one or more CLI commands and plugin-local us
 
 ### Checks
 
-- `turbo run build --filter=<plugin-package-name>`
-- `vitest run --project <plugin-vitest-project>`
+- `bunx nx run <plugin-package-name>:build`
+- `bunx nx run <plugin-package-name>:test`
 - command appears in help and runs end-to-end
 
 ### Failure modes
@@ -196,7 +209,7 @@ Create a gated plugin in `plugins/web/*` that integrates with RAWR state enablem
 
 ### Checks
 
-- `turbo run build --filter=<plugin-package-name>`
+- `bunx nx run <plugin-package-name>:build`
 - `bun run rawr -- plugins web status --json`
 - `bun run dev` then endpoint/UI verification
 
@@ -233,7 +246,7 @@ Ship a plugin UI mounted by host web app using the `@rawr/ui-sdk` contract.
 
 ### Checks
 
-- `turbo run build --filter=<plugin-package-name>`
+- `bunx nx run <plugin-package-name>:build`
 - `bun run rawr -- plugins web enable <id>`
 - `bun run dev` and validate mount behavior visually
 
