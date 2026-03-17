@@ -20,6 +20,10 @@
   },
   "devDependencies": {
     "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
   }
 }
-

@@ -49,5 +49,10 @@
   },
   "bin": {
     "rawr": "./bin/run.js"
+  },
+  "nx": {
+    "tags": [
+      "type:app"
+    ]
   }
 }

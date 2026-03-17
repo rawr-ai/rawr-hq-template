@@ -2,5 +2,7 @@
 node_modules/
 dist/
 .turbo/
+.nx/
+.tmp/
 .rawr/
 *.log

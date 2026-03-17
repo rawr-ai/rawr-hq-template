@@ -1,0 +1,7 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "plugin-workflows-support-example",
+  "root": "plugins/workflows/support-example",
+  "sourceRoot": "plugins/workflows/support-example/src",
+  "tags": ["type:plugin"]
+}

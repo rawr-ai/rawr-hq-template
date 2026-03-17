@@ -39,5 +39,10 @@
   "rawr": {
     "kind": "toolkit",
     "capability": "hello"
+  },
+  "nx": {
+    "tags": [
+      "type:plugin"
+    ]
   }
 }
