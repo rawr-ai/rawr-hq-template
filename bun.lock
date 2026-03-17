@@ -185,7 +185,7 @@
         "typescript": "^5.9.3",
       },
     },
-    "packages/example-todo": {
+    "services/example-todo": {
       "name": "@rawr/example-todo",
       "dependencies": {
         "@opentelemetry/api": "^1.9.0",
@@ -262,7 +262,7 @@
         "typescript": "^5.9.3",
       },
     },
-    "packages/support-example": {
+    "services/support-example": {
       "name": "@rawr/support-example",
       "dependencies": {
         "@orpc/contract": "^1.13.5",
@@ -767,7 +767,7 @@
 
     "@rawr/core": ["@rawr/core@workspace:packages/core"],
 
-    "@rawr/example-todo": ["@rawr/example-todo@workspace:packages/example-todo"],
+    "@rawr/example-todo": ["@rawr/example-todo@workspace:services/example-todo"],
 
     "@rawr/hq": ["@rawr/hq@workspace:packages/hq"],
 
@@ -795,7 +795,7 @@
 
     "@rawr/state": ["@rawr/state@workspace:packages/state"],
 
-    "@rawr/support-example": ["@rawr/support-example@workspace:packages/support-example"],
+    "@rawr/support-example": ["@rawr/support-example@workspace:services/support-example"],
 
     "@rawr/test-utils": ["@rawr/test-utils@workspace:packages/test-utils"],
 

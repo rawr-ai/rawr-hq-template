@@ -34,8 +34,8 @@ PostHog + Drizzle stress-test.
 This refresh was produced from:
 
 - the pasted "Current execution context" snippet from the user
-- the current live code under `packages/example-todo/src/orpc/*` and
-  `packages/example-todo/src/service/*`
+- the current live code under `services/example-todo/src/orpc/*` and
+  `services/example-todo/src/service/*`
 - the four current docs in the active source packet
 
 Session history has **not** been consulted during this refresh because the
@@ -133,12 +133,12 @@ Supporting references for this phase:
 
 Use these code surfaces as the primary live package grounding:
 
-- `../../../packages/example-todo/src/orpc/ports/*`
-- `../../../packages/example-todo/src/orpc/host-adapters/*`
-- `../../../packages/example-todo/src/orpc/middleware/*`
-- `../../../packages/example-todo/src/service/base.ts`
-- `../../../packages/example-todo/src/service/impl.ts`
-- `../../../packages/example-todo/src/service/modules/*`
+- `../../../services/example-todo/src/orpc/ports/*`
+- `../../../services/example-todo/src/orpc/host-adapters/*`
+- `../../../services/example-todo/src/orpc/middleware/*`
+- `../../../services/example-todo/src/service/base.ts`
+- `../../../services/example-todo/src/service/impl.ts`
+- `../../../services/example-todo/src/service/modules/*`
 
 Do **not** expand into full session history unless one of those sources leaves a
 critical ambiguity unresolved.
@@ -151,24 +151,24 @@ critical ambiguity unresolved.
   - ports
   - host adapters
   - provider middleware
-- `packages/example-todo/src/orpc/ports/` currently contains:
+- `services/example-todo/src/orpc/ports/` currently contains:
   - `db.ts`
   - `feedback.ts`
   - `logger.ts`
   - `analytics.ts`
-- `packages/example-todo/src/orpc/host-adapters/` currently contains:
+- `services/example-todo/src/orpc/host-adapters/` currently contains:
   - `logger/embedded-placeholder.ts`
   - `analytics/embedded-placeholder.ts`
   - `feedback/embedded-placeholder.ts`
   - `sql/embedded-in-memory.ts`
-- `packages/example-todo/src/orpc/middleware/` currently contains:
+- `services/example-todo/src/orpc/middleware/` currently contains:
   - provider middleware such as `sql-provider.ts` and `feedback-provider.ts`
   - framework/internal observability and analytics middleware
-- `packages/example-todo/src/service/impl.ts` is the one package-wide runtime
+- `services/example-todo/src/service/impl.ts` is the one package-wide runtime
   assembly seam.
-- `packages/example-todo/src/service/router.ts` is the one final router
+- `services/example-todo/src/service/router.ts` is the one final router
   composition seam.
-- `packages/example-todo/src/service/base.ts` keeps the declarative service
+- `services/example-todo/src/service/base.ts` keeps the declarative service
   definition and exports bound builders for service middleware/providers.
 - Module composition remains the intended local reshaping seam:
   - `tasks/module.ts`
