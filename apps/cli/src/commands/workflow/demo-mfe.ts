@@ -66,7 +66,7 @@ export default class WorkflowDemoMfe extends RawrCommand {
       {
         name: "build",
         cmd: "bunx",
-        args: ["turbo", "run", "build", "--filter", pluginId],
+        args: ["nx", "run", `${pluginId}:build`],
         cwd: workspaceRoot,
         status: "planned",
       },
