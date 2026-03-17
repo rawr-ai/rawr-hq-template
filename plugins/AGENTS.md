@@ -10,10 +10,12 @@
 
 ## Scope
 - Applies to everything under `plugins/**`.
-- This repo uses **three plugin roots**:
+- This repo uses **five plugin roots**:
   - `plugins/cli/*` for CLI toolkits (`rawr.kind=toolkit`)
   - `plugins/agents/*` for agent offices (`rawr.kind=agent`)
   - `plugins/web/*` for runtime/web plugins (`rawr.kind=web`)
+  - `plugins/api/*` for API runtime adapters (`rawr.kind=api`)
+  - `plugins/workflows/*` for workflow runtime adapters (`rawr.kind=workflows`)
 - Each leaf directory is a workspace package (see root `package.json#workspaces`).
 
 ## Plugin Roots

@@ -23,6 +23,44 @@ describe("workspace plugin manifest contract", () => {
     });
   });
 
+  it("parses api and workflows discovery roots when rawr.kind matches", () => {
+    const apiParsed = parseWorkspacePluginManifest({
+      manifest: {
+        name: "@rawr/support-api",
+        rawr: {
+          kind: "api",
+          capability: "support",
+        },
+      },
+      pkgJsonPath: "/repo/plugins/api/support/package.json",
+      discoveryRoot: "api",
+    });
+
+    const workflowsParsed = parseWorkspacePluginManifest({
+      manifest: {
+        name: "@rawr/support-workflows",
+        rawr: {
+          kind: "workflows",
+          capability: "support",
+        },
+      },
+      pkgJsonPath: "/repo/plugins/workflows/support/package.json",
+      discoveryRoot: "workflows",
+    });
+
+    expect(apiParsed).toEqual({
+      name: "@rawr/support-api",
+      kind: "api",
+      capability: "support",
+    });
+
+    expect(workflowsParsed).toEqual({
+      name: "@rawr/support-workflows",
+      kind: "workflows",
+      capability: "support",
+    });
+  });
+
   it("hard-fails on forbidden legacy metadata keys", () => {
     expect(() =>
       parseWorkspacePluginManifest({
