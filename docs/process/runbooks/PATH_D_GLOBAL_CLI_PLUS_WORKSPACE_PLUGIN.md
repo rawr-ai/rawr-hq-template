@@ -10,7 +10,7 @@ Use this when you want plain `rawr` globally and also want to author/use workspa
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 ./scripts/dev/activate-global-rawr.sh
 rawr factory plugin new demo-global --kind both
-bunx turbo run build --filter=@rawr/plugin-demo-global
+bunx nx run @rawr/plugin-demo-global:build
 rawr plugins web enable demo-global --allow-non-operational --risk off
 ```
 

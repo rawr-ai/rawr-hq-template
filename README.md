@@ -33,6 +33,29 @@ narsil-mcp --repos . --git --call-graph --persist --watch --neural
 
 Then verify from your MCP client or HTTP transport by confirming the repo appears in `list_repos`, then running a search such as `hybrid_search` or `find_symbols`.
 
+## Nx Graph and MCP
+
+Use the Nx CLI first for most workspace graph and target questions:
+
+```bash
+bunx nx show projects
+bunx nx show project @rawr/server
+bunx nx graph
+```
+
+Register `Nx MCP` in the actual client config homes for your local setup rather than in the repo:
+
+```bash
+codex mcp add nx -- bunx nx mcp --no-minimal --disableTelemetry
+claude mcp add -s local nx -- bunx nx mcp --no-minimal --disableTelemetry
+```
+
+In this setup, Codex persists MCP server config in `~/.codex-rawr/config.toml` and Claude Code persists local/user MCP config in `~/.claude.json`.
+
+- Use Nx MCP as supplementary graph/connectivity tooling.
+- Keep Narsil as the primary code-intel MCP for symbol search, references, and call-path work.
+- Do not treat Nx MCP as a replacement for reading source or for repo code-intel workflows.
+
 ## Core vs Extensions
 
 - Core lives in this template (`apps/cli`, `packages/core`, `packages/control-plane`, `packages/state`, `packages/security`, `packages/journal`).

@@ -62,7 +62,7 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
   2. Wire deterministic static guard check command for forbidden legacy metadata keys across non-archival runtime/tooling/scaffold metadata surfaces (targeted pattern scan + tests).
 - Primary paths:
   - `package.json`
-  - `turbo.json`
+  - `nx.json`
   - `apps/server/test`
 - Acceptance:
   1. All gate jobs execute in CI.

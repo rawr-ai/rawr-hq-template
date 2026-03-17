@@ -18,8 +18,8 @@ Do not mix command families.
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 rawr factory plugin new my-plugin --kind both
-bunx turbo run build --filter=@rawr/plugin-my-plugin
-bunx turbo run test --filter=@rawr/plugin-my-plugin
+bunx nx run @rawr/plugin-my-plugin:build
+bunx nx run @rawr/plugin-my-plugin:test
 ```
 
 Defaults generated:

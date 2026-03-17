@@ -15,7 +15,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: [...heavyCliIncludes],
-    exclude: ["**/dist/**", "**/node_modules/**", "**/.turbo/**"],
+    exclude: ["**/dist/**", "**/node_modules/**"],
     env: { NODE_ENV: "production" },
     testTimeout: 20_000,
     hookTimeout: 20_000,
