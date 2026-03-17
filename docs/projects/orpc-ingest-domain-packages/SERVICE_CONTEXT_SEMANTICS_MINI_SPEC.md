@@ -229,7 +229,7 @@ working distinctions before the next round of refactoring and design.
 ## Decision Summary
 
 Keep the current service authoring shape in
-[`packages/example-todo/src/service/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/service/base.ts).
+[`services/example-todo/src/service/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/service/base.ts).
 
 Do **not** make service authors import more internal helper types manually.
 Do **not** redesign `defineService(...)` authoring just to improve internal
@@ -261,7 +261,7 @@ Instead:
 
 Today, the service authoring site is already close to the right mental model.
 
-At the service-definition seam, [`base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/service/base.ts#L96) declares:
+At the service-definition seam, [`base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/service/base.ts#L96) declares:
 
 - `initialContext` for stable host-supplied lanes
 - `invocationContext` for per-call input
@@ -272,14 +272,14 @@ That part is good.
 The semantic blur happened internally at the SDK layer and was concentrated in
 the old pre-split catch-all files. The current split is now:
 
-- [`context/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/context/types.ts)
+- [`context/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/orpc/context/types.ts)
   defines the execution-context primitives:
   - `deps`
   - `scope`
   - `config`
   - `invocation`
   - `provided`
-- [`service/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/service/types.ts)
+- [`service/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/orpc/service/types.ts)
   now projects `DeclaredContext`, `ORPCInitialContext`, `ExecutionContext`, and
   `RequiredExtensionExecutionContext` explicitly.
 
@@ -501,7 +501,7 @@ These behaviors are already encoded in tests and are not optional.
 ### Service declaration requirements
 
 From
-[`packages/example-todo/test/context-typing.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/test/context-typing.ts#L85):
+[`services/example-todo/test/context-typing.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/test/context-typing.ts#L85):
 
 - `defineService` requires `initialContext.deps`
 - `defineService` requires `initialContext.scope`
@@ -512,7 +512,7 @@ From
 ### Client boundary semantics
 
 From
-[`packages/example-todo/test/context-typing.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/test/context-typing.ts#L173):
+[`services/example-todo/test/context-typing.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/test/context-typing.ts#L173):
 
 - `CreateClientOptions` contains stable host-supplied lanes only
 - invocation input is not allowed at client construction time
@@ -521,7 +521,7 @@ From
 ### Required service extension semantics
 
 From
-[`packages/example-todo/test/context-typing.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/test/context-typing.ts#L254):
+[`services/example-todo/test/context-typing.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/test/context-typing.ts#L254):
 
 - required service observability/analytics middleware may read:
   - `deps`
@@ -535,9 +535,9 @@ From
 ### Provider semantics
 
 From
-[`packages/example-todo/test/context-typing.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/test/context-typing.ts#L368)
+[`services/example-todo/test/context-typing.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/test/context-typing.ts#L368)
 and
-[`packages/example-todo/src/orpc/factory/middleware.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/factory/middleware.ts#L109):
+[`services/example-todo/src/orpc/factory/middleware.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/orpc/factory/middleware.ts#L109):
 
 - normal middleware must not add execution context
 - providers may only add execution context under `provided`
@@ -730,7 +730,7 @@ similar compatibility spellings in place.
 ## What Needs To Change Inside `base.ts`
 
 This slice must cover every service authoring surface exported from
-[`packages/example-todo/src/service/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/service/base.ts).
+[`services/example-todo/src/service/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/service/base.ts).
 
 ### `Service`
 
@@ -820,7 +820,7 @@ model explicit and easier to understand.
 ### 1. Refactor the internal context foundation types
 
 In
-[`packages/example-todo/src/orpc/context/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/context/types.ts):
+[`services/example-todo/src/orpc/context/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/orpc/context/types.ts):
 
 - stop using `InitialContext` as the name for the merged execution shape
 - introduce explicit internal types for:
@@ -832,7 +832,7 @@ In
 ### 2. Refactor service type projection helpers
 
 In
-[`packages/example-todo/src/orpc/service/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/service/types.ts):
+[`services/example-todo/src/orpc/service/types.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/orpc/service/types.ts):
 
 - update `ServiceTypesOf<T>` to project:
   - `DeclaredContext`
@@ -845,7 +845,7 @@ In
 ### 3. Refactor service factory typing
 
 In
-[`packages/example-todo/src/orpc/service/define.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/service/define.ts):
+[`services/example-todo/src/orpc/service/define.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/orpc/service/define.ts):
 
 - replace ad hoc context derivations with the clearer projections where
   possible
@@ -855,7 +855,7 @@ In
 ### 4. Preserve provider builder behavior
 
 In
-[`packages/example-todo/src/orpc/factory/middleware.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/orpc/factory/middleware.ts):
+[`services/example-todo/src/orpc/factory/middleware.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/orpc/factory/middleware.ts):
 
 - preserve current provider constraints
 - preserve the cast-local workaround unless a cleaner fix falls out naturally
@@ -864,7 +864,7 @@ In
 ### 5. Tighten and clarify JSDoc/comments at service authoring seam
 
 In
-[`packages/example-todo/src/service/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/packages/example-todo/src/service/base.ts):
+[`services/example-todo/src/service/base.ts`](/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-codex-example-todo-unified-golden/services/example-todo/src/service/base.ts):
 
 - explicitly state that only stable host-supplied lanes belong in
   `initialContext`

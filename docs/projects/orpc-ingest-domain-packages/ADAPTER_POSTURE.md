@@ -18,7 +18,7 @@ They play different roles.
 
 ### `src/orpc/ports/*` is for packaged SDK ports
 
-If something lives under `packages/example-todo/src/orpc/ports/*`, it means:
+If something lives under `services/example-todo/src/orpc/ports/*`, it means:
 
 - it is part of the package-local proto SDK surface
 - it is a reusable port the package may export
@@ -38,7 +38,7 @@ package-local packaged SDK.
 
 ### `src/orpc/host-adapters/*` is for host-owned concrete adapters
 
-If something lives under `packages/example-todo/src/orpc/host-adapters/*`, it means:
+If something lives under `services/example-todo/src/orpc/host-adapters/*`, it means:
 
 - it is a concrete host-side adapter or framework binding
 - it is not a package-facing port

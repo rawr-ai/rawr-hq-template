@@ -153,7 +153,7 @@ Example change at this scale (small): add a new procedure.
 ### 2) Current / Intermediate
 
 ```text
-packages/example-todo/src/
+services/example-todo/src/
 ├── index.ts
 ├── client.ts
 ├── router.ts
