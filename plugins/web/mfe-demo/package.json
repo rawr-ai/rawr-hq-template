@@ -44,5 +44,10 @@
   "rawr": {
     "kind": "web",
     "capability": "mfe-demo"
+  },
+  "nx": {
+    "tags": [
+      "type:plugin"
+    ]
   }
 }

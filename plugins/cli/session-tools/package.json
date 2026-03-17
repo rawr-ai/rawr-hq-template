@@ -27,5 +27,10 @@
   "rawr": {
     "kind": "toolkit",
     "capability": "session-tools"
+  },
+  "nx": {
+    "tags": [
+      "type:plugin"
+    ]
   }
 }

@@ -22,6 +22,7 @@
     "dev:inngest": "bun run dev:workflows",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "lint:boundaries": "eslint apps services packages plugins",
     "typecheck": "turbo run typecheck",
     "pretest:vitest": "turbo run build",
     "test:vitest": "vitest run --config vitest.fast.config.ts",
@@ -112,6 +113,9 @@
     "phase-f:gates:closure": "bun run phase-f:gate:f5-review-closure && bun run phase-f:gate:f5a-structural-closure && bun run phase-f:gate:f6-cleanup-manifest && bun run phase-f:gate:f6-cleanup-integrity && bun run phase-f:gate:f7-readiness",
     "phase-f:gates:exit": "bun run phase-f:gates:full && bun run phase-f:gates:closure && bun run phase-a:gates:exit"
   },
+  "nx": {
+    "includedScripts": ["lint:boundaries", "test:vitest", "phase-a:gates:baseline"]
+  },
   "overrides": {
     "npm": "11.9.0",
     "tar": "7.5.7"
@@ -127,10 +131,14 @@
     "typebox": "^1.0.81"
   },
   "devDependencies": {
+    "@nx/eslint-plugin": "^22.5.4",
+    "@typescript-eslint/parser": "^8.57.1",
     "@types/node": "^22.14.0",
     "@vitest/ui": "^4.0.18",
+    "eslint": "^10.0.3",
     "turbo": "^2.7.6",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "nx": "22.5.4"
   }
 }
