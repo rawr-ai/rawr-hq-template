@@ -116,7 +116,7 @@
   "dependencies": {
     "@rawr/core": "workspace:*",
     "@rawr/orpc-standards": "workspace:*",
-    "@rawr/support-triage": "workspace:*"
+    "@rawr/support-example": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

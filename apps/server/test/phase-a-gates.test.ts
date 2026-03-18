@@ -156,7 +156,7 @@ describe("phase-a gate scaffold (server)", () => {
     expect(negativeKeys.has("assertion:reject-rpc-from-external-callers")).toBe(true);
     expect(negativeKeys.has("assertion:reject-rpc-from-runtime-ingress")).toBe(true);
     expect(negativeKeys.has("assertion:reject-rpc-workflows-route-family")).toBe(true);
-    expect(routeMatrixSource.includes("/rpc/workflows/support-triage/status")).toBe(true);
+    expect(routeMatrixSource.includes("/rpc/workflows/support-example/status")).toBe(true);
   });
 
   it("observability contract gate scaffold keeps observability package path present", async () => {
