@@ -143,9 +143,9 @@ modified_files:
   - path: "$ROOT/package.json"
     owner: "Verification & Gates Owner"
     purpose: "Gate scripts and CI runnable checks"
-  - path: "$ROOT/turbo.json"
+  - path: "$ROOT/nx.json"
     owner: "Verification & Gates Owner"
-    purpose: "Task graph inclusion for gate scripts"
+    purpose: "Workspace orchestration and graph configuration for gate scripts"
   - path: "$ROOT/packages/hq/src/install/state.ts"
     owner: "Distribution/Lifecycle Contract Owner"
     purpose: "Remove legacy key-driven lifecycle/install decisions"
@@ -179,7 +179,7 @@ optional_dirs:
 | --- | --- | --- | --- | --- |
 | Runtime/Host Composition Owner | `@rawr-runtime-host` | `@rawr-platform-duty` | Route family mounting, context seam, ingress verification, manifest integration | `$ROOT/apps/server/src/rawr.ts`, `$ROOT/apps/server/src/orpc.ts`, `$ROOT/apps/server/src/workflows/context.ts`, `$ROOT/rawr.hq.ts` |
 | Plugin Lifecycle Owner | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Metadata parser contract, workspace discovery roots, and package-owned workspace authority adapters | `$ROOT/packages/hq/src/workspace/plugins.ts`, `$ROOT/packages/hq/src/workspace/plugin-manifest-contract.ts`, `$ROOT/plugins/cli/plugins/src/lib/workspace-plugins.ts` |
-| Verification & Gates Owner | `@rawr-verification-gates` | `@rawr-release-duty` | Gate wiring, harness matrix, negative-route enforcement, observability checks | `$ROOT/apps/server/test/*`, `$ROOT/package.json`, `$ROOT/turbo.json` |
+| Verification & Gates Owner | `@rawr-verification-gates` | `@rawr-release-duty` | Gate wiring, harness matrix, negative-route enforcement, observability checks | `$ROOT/apps/server/test/*`, `$ROOT/package.json`, `$ROOT/nx.json` |
 | Distribution/Lifecycle Contract Owner | `@rawr-distribution-lifecycle` | `@rawr-runtime-host` | Alias/instance seam assertions, no-singleton checks, legacy metadata hard-delete closure, and package-owned install authority adapters | `$ROOT/apps/server/test/*`, `$ROOT/packages/hq/src/install/state.ts`, `$ROOT/plugins/cli/plugins/src/lib/install-state.ts` |
 | Review Closure Owner | `@rawr-review-closure` | `@rawr-verification-gates` | Full TypeScript + ORPC review closure, finding triage, fix-loop closure | Phase A changed runtime paths + `$SPEC/PHASE_A_EXECUTION_PACKET.md` + `$SPEC/PHASE_A_IMPLEMENTATION_SPEC.md` |
 | Docs & Cleanup Owner | `@rawr-docs-maintainer` | `@rawr-release-duty` | Canonical docs/runbook sync and scratch/review cleanup | `$ROOT/docs/process/*`, `$ROOT/docs/process/runbooks/*`, `$SPEC/*` |
@@ -193,7 +193,7 @@ Slices `A0`..`A8` are landed in current runtime pass; this section remains as bo
 ## 5.1 A0 - Baseline Gate Scaffold
 
 ### Inputs
-- Current scripts in `$ROOT/package.json` and task graph in `$ROOT/turbo.json`.
+- Current scripts in `$ROOT/package.json` and workspace graph/orchestration config in `$ROOT/nx.json`.
 - Existing server test suite in `$ROOT/apps/server/test`.
 
 ### Code changes

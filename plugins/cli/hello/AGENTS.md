@@ -23,8 +23,8 @@
 
 ## Build And Test
 - From repo root:
-  - `turbo run build --filter=@rawr/plugin-hello`
-  - `vitest run --project plugin-hello`
+  - `bunx nx run @rawr/plugin-hello:build`
+  - `bunx nx run @rawr/plugin-hello:test`
 - From this package:
   - `bun run build`
   - `bun run test`
@@ -32,4 +32,4 @@
 ## Layout
 - `src/commands/**`: oclif commands (TypeScript source)
 - `test/**`: Vitest tests
-- `dist/**`: compiled output (checked by Turbo + ignored by tests)
+- `dist/**`: compiled output (checked by Nx build flows + ignored by tests)

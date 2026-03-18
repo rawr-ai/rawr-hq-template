@@ -35,16 +35,16 @@
 - If the plugin provides **oclif commands**, declare the oclif manifest in `package.json#oclif`:
   - `commands`: built output (match whatever `tsc` emits; commonly `./dist/src/commands`)
   - `typescript.commands`: source commands (typically `./src/commands`)
-- TypeScript convention: compile to `dist/**` (Turbo expects `dist/**` outputs).
+- TypeScript convention: compile to `dist/**` (Nx build/test flows consume emitted output where applicable).
 
 ## Build, Test, Lint
 - Workspace-wide:
   - `bun run build`
   - `bun run lint`
   - `bun run test`
-- Package-only (Turbo filter examples):
-  - `turbo run lint --filter=@rawr/plugin-agent-sync`
-  - `turbo run test --filter=@rawr/plugin-agent-sync`
+- Package-only (Nx project examples):
+  - `bunx nx run @rawr/plugin-plugins:lint`
+  - `bunx nx run @rawr/plugin-hello:test`
 - Unit tests live in `test/**/*.test.ts` and are wired in root `vitest.config.ts`.
 
 ## Security And Enablement

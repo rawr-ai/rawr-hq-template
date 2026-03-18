@@ -32,7 +32,6 @@ export default [
     ignores: [
       "**/node_modules/**",
       "**/dist/**",
-      "**/.turbo/**",
       "**/.nx/**",
       "**/coverage/**",
       "**/.tmp/**",

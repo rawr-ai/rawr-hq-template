@@ -15,7 +15,6 @@ export default defineConfig({
     exclude: [
       "**/dist/**",
       "**/node_modules/**",
-      "**/.turbo/**",
       "**/apps/web/test/coordination.visual.test.ts",
     ],
     projects: [
