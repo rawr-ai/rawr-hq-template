@@ -21,18 +21,17 @@ This repo vendors the official Nx skill pack.
 Canonical skill content lives in:
 
 ```bash
-.agents/skills/
+plugins/agents/nx/skills/
 ```
 
-Repo-local client entrypoints are surfaced via:
+Install or refresh that skill pack through the existing managed agent-plugin sync flow:
 
 ```bash
-.agent/skills/
-.claude/skills/
-skills/
+bun run rawr -- plugins sync nx --dry-run --json
+bun run rawr -- plugins sync nx
 ```
 
-These are vendor-managed Nx foundation assets. Keep them official; do not rewrite their contents into local substitutes.
+That sync path installs the `nx` agent plugin into the configured global Codex homes and Claude local plugin homes. Keep the vendored Nx content official; do not rewrite it into local substitutes.
 
 ## First-Hop Commands
 
@@ -58,6 +57,7 @@ Do not add repo-local `.mcp.json` here.
 
 - Keep repo-owned routing and invariants in `AGENTS.md` and nested `AGENTS.md` files.
 - Do not add a repo `CLAUDE.md` just because Nx can generate one.
+- Do not rely on repo-local `.agents/skills` fanout as the main installation mechanism for Nx here.
 - Integrate Nx guidance into the existing lattice rather than letting Nx-generated docs overwrite repo-owned router documents.
 
 ## Future Seam
