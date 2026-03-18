@@ -250,7 +250,7 @@ const MATRIX_CASES: MatrixCase[] = [
     assertCallerBoundarySemantics: true,
     description: "first-party RPC callers do not get a dedicated /rpc/workflows route family",
     method: "POST",
-    path: "/rpc/workflows/coordination/workflows",
+    path: "/rpc/workflows/support-triage/status",
     headers: {
       "content-type": "application/json",
       "x-rawr-caller-surface": "first-party",
@@ -265,9 +265,9 @@ const MATRIX_CASES: MatrixCase[] = [
     assertionKey: "assertion:workflow-trigger-status-route-family",
     callerSurface: "external",
     assertCallerBoundarySemantics: true,
-    description: "workflow trigger/status suite targets /api/workflows/<capability>/*",
+    description: "workflow trigger/status suite targets capability-first workflow status routes",
     method: "GET",
-    path: "/api/workflows/coordination/workflows",
+    path: "/api/workflows/support-triage/status",
     expectedStatus: 200,
   },
   {

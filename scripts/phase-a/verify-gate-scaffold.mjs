@@ -209,8 +209,8 @@ async function verifyHostCompositionGuard() {
     "rawr host must consume manifest-owned workflow trigger router seam",
   );
   assertCondition(
-    hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "bundleFactory"]) &&
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "serveHandlerFactory"]),
+    hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "client"]) &&
+      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "handler"]),
     "rawr host must consume manifest-owned inngest seams",
   );
   assertCondition(

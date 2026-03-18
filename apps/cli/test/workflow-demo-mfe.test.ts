@@ -12,14 +12,15 @@ function runRawr(args: string[]) {
   });
 }
 
-describe("workflow demo-mfe", () => {
+describe("workflow demo-mfe (support-triage example)", () => {
   it("supports --json --dry-run with planned steps", () => {
     const proc = runRawr(["workflow", "demo-mfe", "--json", "--dry-run"]);
     expect(proc.status).toBe(0);
     const parsed = JSON.parse(proc.stdout) as any;
     expect(parsed.ok).toBe(true);
+    expect(parsed.data.pluginId).toBe("@rawr/plugin-mfe-demo");
+    expect(parsed.data.pluginDir).toBe("mfe-demo");
     expect(Array.isArray(parsed.data.steps)).toBe(true);
     expect(parsed.data.steps.map((s: any) => s.name)).toEqual(["enable", "build", "verify"]);
   });
 });
-

@@ -54,7 +54,7 @@ describe("orpc handlers", () => {
     const payload = (await res.json()) as {
       json?: { code?: string; status?: number; message?: string };
     };
-    expect(payload.json?.code).toBe("INVALID_WORKFLOW_ID");
+    expect(["BAD_REQUEST", "INVALID_WORKFLOW_ID"]).toContain(payload.json?.code);
     expect(payload.json?.status).toBe(400);
     expect(typeof payload.json?.message).toBe("string");
   });

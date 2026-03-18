@@ -4,6 +4,10 @@
   "workspaces": {
     "": {
       "name": "rawr-hq-template",
+      "dependencies": {
+        "@rawr/orpc-standards": "workspace:*",
+        "@rawr/support-triage": "workspace:*",
+      },
       "devDependencies": {
         "@types/node": "^22.14.0",
         "@vitest/ui": "^4.0.18",
@@ -181,6 +185,16 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/orpc-standards": {
+      "name": "@rawr/orpc-standards",
+      "dependencies": {
+        "@orpc/contract": "^1.13.5",
+        "typebox": "^1.0.81",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/security": {
       "name": "@rawr/security",
       "devDependencies": {
@@ -198,6 +212,17 @@
       "name": "@rawr/state",
       "dependencies": {
         "@orpc/contract": "^1.13.5",
+        "typebox": "^1.0.81",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/support-triage": {
+      "name": "@rawr/support-triage",
+      "dependencies": {
+        "@orpc/contract": "^1.13.5",
+        "@orpc/server": "^1.13.5",
         "typebox": "^1.0.81",
       },
       "devDependencies": {
@@ -697,6 +722,8 @@
 
     "@rawr/journal": ["@rawr/journal@workspace:packages/journal"],
 
+    "@rawr/orpc-standards": ["@rawr/orpc-standards@workspace:packages/orpc-standards"],
+
     "@rawr/plugin-hello": ["@rawr/plugin-hello@workspace:plugins/cli/hello"],
 
     "@rawr/plugin-hq": ["@rawr/plugin-hq@workspace:plugins/agents/hq"],
@@ -714,6 +741,8 @@
     "@rawr/session-tools": ["@rawr/session-tools@workspace:packages/session-tools"],
 
     "@rawr/state": ["@rawr/state@workspace:packages/state"],
+
+    "@rawr/support-triage": ["@rawr/support-triage@workspace:packages/support-triage"],
 
     "@rawr/test-utils": ["@rawr/test-utils@workspace:packages/test-utils"],
 
