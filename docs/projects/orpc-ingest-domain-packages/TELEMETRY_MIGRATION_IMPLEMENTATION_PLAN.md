@@ -39,7 +39,7 @@ slices:
     depends_on: [slice-3]
 verification_bundles:
   package:
-    - cd packages/example-todo && bun run typecheck
+    - cd services/example-todo && bun run typecheck
   host:
     - bunx vitest run packages/core/test/telemetry.test.ts apps/server/test/telemetry-bootstrap.test.ts
 ```
@@ -92,9 +92,9 @@ Use a small coordinated team, not a single agent and not a large swarm.
 | Role | Owns | Primary write scope |
 |---|---|---|
 | `orchestrator` | migration packet, slice sequencing, phase gates, clean integration | cross-slice integration and final doc/verification state |
-| `slice_a` | boundary typing cleanup and shared observability seam migration | `packages/example-todo/src/orpc/baseline/*`, `packages/example-todo/src/orpc/service/*`, `packages/example-todo/src/orpc/middleware/observability/*`, `packages/example-todo/src/service/middleware/observability.ts`, `packages/example-todo/src/client.ts` |
-| `slice_b` | service-local follow-through after the seam moves | `packages/example-todo/src/service/impl.ts`, service-local doc/comments tied to telemetry semantics |
-| `slice_c` | tests and teaching-surface cleanup | `packages/example-todo/test/*`, related doc/examples that still teach the old seam |
+| `slice_a` | boundary typing cleanup and shared observability seam migration | `services/example-todo/src/orpc/baseline/*`, `services/example-todo/src/orpc/service/*`, `services/example-todo/src/orpc/middleware/observability/*`, `services/example-todo/src/service/middleware/observability.ts`, `services/example-todo/src/client.ts` |
+| `slice_b` | service-local follow-through after the seam moves | `services/example-todo/src/service/impl.ts`, service-local doc/comments tied to telemetry semantics |
+| `slice_c` | tests and teaching-surface cleanup | `services/example-todo/test/*`, related doc/examples that still teach the old seam |
 | `review` | implementation-plan compliance review, hidden legacy seam detection, verification evidence review | no primary write scope; may propose follow-up fixes against any slice output |
 | `design_check` | canonical telemetry-model conformance review against `TELEMETRY_DESIGN.md` | no primary write scope; may request corrections where code drifts from design |
 
@@ -247,13 +247,13 @@ Verification:
   - `guidance.md`
 - the conflict inventory in this plan names all currently known telemetry seam
   conflict surfaces:
-  - `packages/example-todo/src/orpc/baseline/types.ts`
-  - `packages/example-todo/src/orpc/boundary/domain-package.ts`
-  - `packages/example-todo/src/orpc/service/define.ts`
-  - `packages/example-todo/src/orpc/middleware/observability/*`
-  - `packages/example-todo/test/helpers.ts`
-  - `packages/example-todo/test/context-typing.ts`
-  - `packages/example-todo/test/observability.test.ts`
+  - `services/example-todo/src/orpc/baseline/types.ts`
+  - `services/example-todo/src/orpc/boundary/domain-package.ts`
+  - `services/example-todo/src/orpc/service/define.ts`
+  - `services/example-todo/src/orpc/middleware/observability/*`
+  - `services/example-todo/test/helpers.ts`
+  - `services/example-todo/test/context-typing.ts`
+  - `services/example-todo/test/observability.test.ts`
 - team ownership at the top of this plan maps each later slice to exactly one
   primary slice agent
 
@@ -282,10 +282,10 @@ Work:
 
 Primary targets:
 
-- `packages/example-todo/src/orpc/baseline/types.ts`
-- `packages/example-todo/src/orpc/boundary/domain-package.ts`
-- `packages/example-todo/src/orpc/service/define.ts`
-- `packages/example-todo/src/client.ts`
+- `services/example-todo/src/orpc/baseline/types.ts`
+- `services/example-todo/src/orpc/boundary/domain-package.ts`
+- `services/example-todo/src/orpc/service/define.ts`
+- `services/example-todo/src/client.ts`
 
 Acceptance criteria:
 
@@ -295,17 +295,17 @@ Acceptance criteria:
 
 Verification:
 
-- run from `packages/example-todo`:
+- run from `services/example-todo`:
   - `bun run typecheck`
 - static audit commands must satisfy all of the following:
-  - `rg -n "telemetry: Telemetry" packages/example-todo/src/orpc/baseline/types.ts packages/example-todo/src/orpc/service/define.ts` returns no matches
-  - `rg -n "deps: BaseDeps" packages/example-todo/src/orpc/boundary/domain-package.ts` returns no matches
-  - `rg -n "telemetry: createOpenTelemetryAdapter\\(|telemetry:\\s*createOpenTelemetryAdapter" packages/example-todo/src/client.ts packages/example-todo/test/helpers.ts` returns no matches in `src/client.ts`
+  - `rg -n "telemetry: Telemetry" services/example-todo/src/orpc/baseline/types.ts services/example-todo/src/orpc/service/define.ts` returns no matches
+  - `rg -n "deps: BaseDeps" services/example-todo/src/orpc/boundary/domain-package.ts` returns no matches
+  - `rg -n "telemetry: createOpenTelemetryAdapter\\(|telemetry:\\s*createOpenTelemetryAdapter" services/example-todo/src/client.ts services/example-todo/test/helpers.ts` returns no matches in `src/client.ts`
 - code-state assertions:
-  - `packages/example-todo/src/orpc/baseline/types.ts` no longer declares `telemetry` on `BaseDeps`
-  - `packages/example-todo/src/orpc/boundary/domain-package.ts` no longer requires `deps: BaseDeps` as the package-boundary contract
-  - `packages/example-todo/src/client.ts` / `CreateClientOptions["deps"]` no longer imply telemetry belongs in client construction input
-  - `packages/example-todo/test/context-typing.ts` contains a negative typing assertion proving telemetry is not part of `CreateClientOptions["deps"]`
+  - `services/example-todo/src/orpc/baseline/types.ts` no longer declares `telemetry` on `BaseDeps`
+  - `services/example-todo/src/orpc/boundary/domain-package.ts` no longer requires `deps: BaseDeps` as the package-boundary contract
+  - `services/example-todo/src/client.ts` / `CreateClientOptions["deps"]` no longer imply telemetry belongs in client construction input
+  - `services/example-todo/test/context-typing.ts` contains a negative typing assertion proving telemetry is not part of `CreateClientOptions["deps"]`
 
 Gate:
 
@@ -335,9 +335,9 @@ Work:
 
 Primary targets:
 
-- `packages/example-todo/src/orpc/middleware/observability/*`
-- `packages/example-todo/src/service/middleware/observability.ts`
-- related comments in `packages/example-todo/src/service/impl.ts`
+- `services/example-todo/src/orpc/middleware/observability/*`
+- `services/example-todo/src/service/middleware/observability.ts`
+- related comments in `services/example-todo/src/service/impl.ts`
 
 Acceptance criteria:
 
@@ -348,17 +348,17 @@ Acceptance criteria:
 
 Verification:
 
-- run from `packages/example-todo`:
+- run from `services/example-todo`:
   - `bun run typecheck`
   - `bunx vitest run test/observability.test.ts test/todo-service.test.ts test/procedure-errors.test.ts test/procedure-meta.test.ts`
 - static audit commands must satisfy all of the following:
-  - `rg -n "context\\.deps\\.telemetry" packages/example-todo/src/orpc/middleware/observability packages/example-todo/src/service/middleware/observability.ts packages/example-todo/src/service/impl.ts` returns no matches
-  - `rg -n "deps\\.telemetry|has_telemetry" packages/example-todo/test/observability.test.ts packages/example-todo/test/context-typing.ts` returns no matches
+  - `rg -n "context\\.deps\\.telemetry" services/example-todo/src/orpc/middleware/observability services/example-todo/src/service/middleware/observability.ts services/example-todo/src/service/impl.ts` returns no matches
+  - `rg -n "deps\\.telemetry|has_telemetry" services/example-todo/test/observability.test.ts services/example-todo/test/context-typing.ts` returns no matches
 - code-state assertions:
-  - baseline observability in `packages/example-todo/src/orpc/middleware/observability/handler.ts` reads the active span from OpenTelemetry runtime context, not from `context.deps.telemetry`
-  - additive observability in `packages/example-todo/src/orpc/middleware/observability/index.ts` no longer constrains middleware context with `deps.telemetry`
-  - required service observability in `packages/example-todo/src/service/middleware/observability.ts` still enriches spans with service semantics and no longer depends on a telemetry-bearing dependency context
-  - `packages/example-todo/test/observability.test.ts` verifies both:
+  - baseline observability in `services/example-todo/src/orpc/middleware/observability/handler.ts` reads the active span from OpenTelemetry runtime context, not from `context.deps.telemetry`
+  - additive observability in `services/example-todo/src/orpc/middleware/observability/index.ts` no longer constrains middleware context with `deps.telemetry`
+  - required service observability in `services/example-todo/src/service/middleware/observability.ts` still enriches spans with service semantics and no longer depends on a telemetry-bearing dependency context
+  - `services/example-todo/test/observability.test.ts` verifies both:
     - enrichment of an active span
     - safe behavior when no active span exists
 
@@ -387,10 +387,10 @@ Work:
 
 Primary targets:
 
-- `packages/example-todo/test/helpers.ts`
-- `packages/example-todo/test/observability.test.ts`
-- `packages/example-todo/test/context-typing.ts`
-- `packages/example-todo/test/host-adapters.test.ts`
+- `services/example-todo/test/helpers.ts`
+- `services/example-todo/test/observability.test.ts`
+- `services/example-todo/test/context-typing.ts`
+- `services/example-todo/test/host-adapters.test.ts`
 - package-local telemetry comments/docs
 
 Acceptance criteria:
@@ -401,18 +401,18 @@ Acceptance criteria:
 
 Verification:
 
-- run from `packages/example-todo`:
+- run from `services/example-todo`:
   - `bun run typecheck`
   - `bunx vitest run test/observability.test.ts test/provider-middleware.test.ts test/todo-service.test.ts test/procedure-errors.test.ts test/procedure-meta.test.ts`
 - static audit commands must satisfy all of the following:
-  - `rg -n "context\\.deps\\.telemetry" packages/example-todo/src packages/example-todo/test` returns no matches
-  - `rg -n "createOpenTelemetryAdapter\\(" packages/example-todo/test/helpers.ts packages/example-todo/test/observability.test.ts packages/example-todo/test/provider-middleware.test.ts` returns no matches
-  - `rg -n "has_telemetry|telemetry: createOpenTelemetryAdapter|deps:\\s*\\{[^}]*telemetry" packages/example-todo/test/context-typing.ts packages/example-todo/test/helpers.ts packages/example-todo/test/observability.test.ts packages/example-todo/test/provider-middleware.test.ts` returns no matches
-  - `rg -n "export type \\{ Telemetry|export \\{.*telemetry|ports/telemetry|host-adapters/telemetry" packages/example-todo/src/orpc-sdk.ts packages/example-todo/src/client.ts packages/example-todo/src/orpc/boundary packages/example-todo/src/orpc/baseline packages/example-todo/src/orpc/service` returns no matches
+  - `rg -n "context\\.deps\\.telemetry" services/example-todo/src services/example-todo/test` returns no matches
+  - `rg -n "createOpenTelemetryAdapter\\(" services/example-todo/test/helpers.ts services/example-todo/test/observability.test.ts services/example-todo/test/provider-middleware.test.ts` returns no matches
+  - `rg -n "has_telemetry|telemetry: createOpenTelemetryAdapter|deps:\\s*\\{[^}]*telemetry" services/example-todo/test/context-typing.ts services/example-todo/test/helpers.ts services/example-todo/test/observability.test.ts services/example-todo/test/provider-middleware.test.ts` returns no matches
+  - `rg -n "export type \\{ Telemetry|export \\{.*telemetry|ports/telemetry|host-adapters/telemetry" services/example-todo/src/orpc-sdk.ts services/example-todo/src/client.ts services/example-todo/src/orpc/boundary services/example-todo/src/orpc/baseline services/example-todo/src/orpc/service` returns no matches
 - code-state assertions:
-  - `packages/example-todo/test/helpers.ts` does not create or inject telemetry as part of package dependency composition
-  - `packages/example-todo/test/context-typing.ts` no longer teaches telemetry-through-deps
-  - `packages/example-todo/test/observability.test.ts` no longer seeds telemetry through `deps`
+  - `services/example-todo/test/helpers.ts` does not create or inject telemetry as part of package dependency composition
+  - `services/example-todo/test/context-typing.ts` no longer teaches telemetry-through-deps
+  - `services/example-todo/test/observability.test.ts` no longer seeds telemetry through `deps`
   - no package-local telemetry seam files remain in the package boundary, proto SDK, or tests
 
 Gate:
@@ -447,21 +447,21 @@ Verification:
 
 - run from repo root:
   - `bunx vitest run packages/core/test/telemetry.test.ts apps/server/test/telemetry-bootstrap.test.ts`
-- run from `packages/example-todo`:
+- run from `services/example-todo`:
   - `bun run typecheck`
   - `bunx vitest run test/observability.test.ts test/provider-middleware.test.ts test/todo-service.test.ts test/procedure-errors.test.ts test/procedure-meta.test.ts`
 - static audit commands must satisfy all of the following:
-  - `rg -n "context\\.deps\\.telemetry|deps:\\s*\\{[^}]*telemetry|BaseDeps.*telemetry|telemetry:\\s*Telemetry" packages/example-todo/src packages/example-todo/test` returns no matches
-  - `rg -n "createOpenTelemetryAdapter\\(|host-adapters/telemetry/opentelemetry|ports/telemetry" packages/example-todo/src packages/example-todo/test` returns no matches
+  - `rg -n "context\\.deps\\.telemetry|deps:\\s*\\{[^}]*telemetry|BaseDeps.*telemetry|telemetry:\\s*Telemetry" services/example-todo/src services/example-todo/test` returns no matches
+  - `rg -n "createOpenTelemetryAdapter\\(|host-adapters/telemetry/opentelemetry|ports/telemetry" services/example-todo/src services/example-todo/test` returns no matches
   - `rg -n "telemetry is not modeled as a service-package dependency|host-owned OpenTelemetry bootstrap|active span from OpenTelemetry context|TELEMETRY_MIGRATION_IMPLEMENTATION_PLAN.md" docs/projects/orpc-ingest-domain-packages/TELEMETRY_DESIGN.md docs/projects/orpc-ingest-domain-packages/DECISIONS.md docs/projects/orpc-ingest-domain-packages/guidance.md` returns matches in all three docs
 - code-state assertions:
   - the canonical telemetry model is represented only by host bootstrap + active-span consumption
   - no package boundary or package authoring surface implies telemetry belongs in service deps
-  - `packages/example-todo/src/client.ts` no longer implies telemetry in `CreateClientOptions["deps"]`
-  - `packages/example-todo/src/orpc/service/define.ts` no longer constrains observability builders around `deps.telemetry`
-  - `packages/example-todo/src/orpc/middleware/observability/*` reads active span from runtime context
-  - `packages/example-todo/src/service/middleware/observability.ts` still contributes service semantics without reintroducing dependency injection
-  - no package-local telemetry seam artifacts remain in `packages/example-todo/src` or `packages/example-todo/test`
+  - `services/example-todo/src/client.ts` no longer implies telemetry in `CreateClientOptions["deps"]`
+  - `services/example-todo/src/orpc/service/define.ts` no longer constrains observability builders around `deps.telemetry`
+  - `services/example-todo/src/orpc/middleware/observability/*` reads active span from runtime context
+  - `services/example-todo/src/service/middleware/observability.ts` still contributes service semantics without reintroducing dependency injection
+  - no package-local telemetry seam artifacts remain in `services/example-todo/src` or `services/example-todo/test`
 
 Gate:
 
@@ -512,17 +512,17 @@ The `design_check` role must verify:
 
 ### Conflict surfaces
 
-- `packages/example-todo/src/orpc/baseline/types.ts`
-- `packages/example-todo/src/orpc/boundary/domain-package.ts`
-- `packages/example-todo/src/orpc/service/define.ts`
-- `packages/example-todo/src/orpc/middleware/observability/*`
-- `packages/example-todo/src/orpc/ports/telemetry.ts`
-- `packages/example-todo/src/orpc/host-adapters/telemetry/opentelemetry.ts`
-- `packages/example-todo/src/orpc-sdk.ts`
-- `packages/example-todo/test/helpers.ts`
-- `packages/example-todo/test/host-adapters.test.ts`
-- `packages/example-todo/test/context-typing.ts`
-- `packages/example-todo/test/observability.test.ts`
+- `services/example-todo/src/orpc/baseline/types.ts`
+- `services/example-todo/src/orpc/boundary/domain-package.ts`
+- `services/example-todo/src/orpc/service/define.ts`
+- `services/example-todo/src/orpc/middleware/observability/*`
+- `services/example-todo/src/orpc/ports/telemetry.ts`
+- `services/example-todo/src/orpc/host-adapters/telemetry/opentelemetry.ts`
+- `services/example-todo/src/orpc-sdk.ts`
+- `services/example-todo/test/helpers.ts`
+- `services/example-todo/test/host-adapters.test.ts`
+- `services/example-todo/test/context-typing.ts`
+- `services/example-todo/test/observability.test.ts`
 
 ### Hidden risks / black ice
 

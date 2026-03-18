@@ -109,8 +109,8 @@ Responsibilities:
 
 Canonical files:
 
-- `packages/example-todo/src/orpc/middleware/observability/*`
-- `packages/example-todo/src/service/middleware/observability.ts`
+- `services/example-todo/src/orpc/middleware/observability/*`
+- `services/example-todo/src/service/middleware/observability.ts`
 
 These layers are intentionally different:
 
@@ -220,8 +220,8 @@ Responsibilities:
 
 Canonical files:
 
-- `packages/example-todo/src/orpc/middleware/observability/*`
-- `packages/example-todo/src/service/middleware/observability.ts`
+- `services/example-todo/src/orpc/middleware/observability/*`
+- `services/example-todo/src/service/middleware/observability.ts`
 
 ## In-Package Observability Layering
 
@@ -260,13 +260,13 @@ framework baseline
 Example surfaces in `example-todo`:
 
 - framework baseline:
-  - `packages/example-todo/src/orpc/middleware/observability/index.ts`
+  - `services/example-todo/src/orpc/middleware/observability/index.ts`
 - required service-wide observability:
-  - `packages/example-todo/src/service/middleware/observability.ts`
+  - `services/example-todo/src/service/middleware/observability.ts`
 - additive module observability:
-  - `packages/example-todo/src/service/modules/tags/middleware.ts`
+  - `services/example-todo/src/service/modules/tags/middleware.ts`
 - handler business logic:
-  - `packages/example-todo/src/service/modules/tags/router.ts`
+  - `services/example-todo/src/service/modules/tags/router.ts`
 
 ### What handlers usually do
 
@@ -435,8 +435,8 @@ that runtime.
 
 Files:
 
-- `packages/example-todo/src/orpc/middleware/observability/*`
-- `packages/example-todo/src/service/middleware/observability.ts`
+- `services/example-todo/src/orpc/middleware/observability/*`
+- `services/example-todo/src/service/middleware/observability.ts`
 
 Responsibilities:
 
@@ -524,10 +524,10 @@ apps/worker/src/bootstrap.ts
 apps/server/src/rawr.ts
   host/plugin request and route wiring
 
-packages/example-todo/src/orpc/middleware/observability/*
+services/example-todo/src/orpc/middleware/observability/*
   package-level observability semantics
 
-packages/example-todo/src/service/middleware/observability.ts
+services/example-todo/src/service/middleware/observability.ts
   required service-wide observability behavior
 ```
 

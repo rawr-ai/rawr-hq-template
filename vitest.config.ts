@@ -86,12 +86,12 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/support-example"),
+        root: r("services/support-example"),
         test: { name: "support-example", environment: "node", include: [...includes] },
       },
       {
         extends: true,
-        root: r("packages/example-todo"),
+        root: r("services/example-todo"),
         test: { name: "example-todo", environment: "node", include: [...includes] },
       },
       {

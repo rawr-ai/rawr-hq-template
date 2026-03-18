@@ -2,17 +2,17 @@
 
 ## Quick map (how to navigate)
 
-- Jump to: **Findings** (middleware/context/metadata), then **Mapping notes** (how this touches `packages/example-todo`), then **Open questions**.
+- Jump to: **Findings** (middleware/context/metadata), then **Mapping notes** (how this touches `services/example-todo`), then **Open questions**.
 
 ## What this is for (and what it is not)
 
 - This document is **research + synthesis only**.
 - No architectural decisions or refactors are made here.
-- Goal: become able to reshape `packages/example-todo` to be more **oRPC-native** (esp. around middleware/context/metadata) and to graduate stable, generic authoring helpers into `@rawr/hq-sdk`.
+- Goal: become able to reshape `services/example-todo` to be more **oRPC-native** (esp. around middleware/context/metadata) and to graduate stable, generic authoring helpers into `@rawr/hq-sdk`.
 
 ## When to reach for this doc
 
-- Use this as the reference when we’re reshaping `packages/example-todo/src/orpc-runtime/*`.
+- Use this as the reference when we’re reshaping `services/example-todo/src/orpc-runtime/*`.
 - When deciding “where should this logic live?”:
   - Prefer **procedure-level middleware** (`.use(...)`) when behavior is part of procedure semantics.
   - Prefer **handler/transport-level hooks** (e.g. `RPCHandler` config) when behavior is per-mount/per-transport and should not be implied by a procedure definition.
@@ -153,9 +153,9 @@ Notes we’ll use when shaping `@rawr/hq-sdk` surfaces (non-oRPC-specific, but r
   - types without runtime backing are lies;
   - parsing/validation belongs at boundaries.
 
-## Mapping notes: how this shows up in `packages/example-todo` today (options only)
+## Mapping notes: how this shows up in `services/example-todo` today (options only)
 
-Grounded observations from `packages/example-todo` today (no changes implied):
+Grounded observations from `services/example-todo` today (no changes implied):
 
 - Module routers attach package middleware in the module-local `.use(...)` chain:
   - `withTelemetry`
