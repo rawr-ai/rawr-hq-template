@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@orpc/client": "^1.13.5",
+    "@rawr/orpc-client": "workspace:*",
     "@rawr/ui-sdk": "workspace:*"
   },
   "devDependencies": {
