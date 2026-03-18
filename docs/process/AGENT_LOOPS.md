@@ -46,12 +46,8 @@ This document defines repeatable, low-drift loops an AI agent can follow to ship
 
 ### Nx posture
 
-- Use the official vendored Nx skills plus the Nx CLI as the first hop for workspace graph, project, target, and generator questions.
-- Canonical Nx skill source lives under:
-  - `plugins/agents/nx/skills/`
-- Install or refresh those skills through managed sync:
-  - `bun run rawr -- plugins sync nx --dry-run --json`
-  - `bun run rawr -- plugins sync nx`
+- Use the Nx CLI as the first hop for workspace graph, project, target, and generator questions.
+- If your downstream agent environment has the official Nx skills installed globally, use them as companion guidance with the Nx CLI.
 - Use the Nx CLI for most workspace graph and target queries:
   - `bunx nx show projects`
   - `bunx nx show project <project-name> --json`

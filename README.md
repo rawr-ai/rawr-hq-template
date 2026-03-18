@@ -35,22 +35,9 @@ Then verify from your MCP client or HTTP transport by confirming the repo appear
 
 ## Nx Graph and Skills
 
-Use the Nx CLI and the official vendored Nx skills first for workspace graph, routing, generator, and target questions.
+Use the Nx CLI first for workspace graph, routing, generator, and target questions.
 
-The canonical source for the Nx skill pack lives in:
-
-```bash
-plugins/agents/nx/skills/
-```
-
-Install or refresh those skills through the managed sync system rather than by copying files into agent homes manually:
-
-```bash
-bun run rawr -- plugins sync nx --dry-run --json
-bun run rawr -- plugins sync nx
-```
-
-That sync path installs the `nx` agent plugin into managed destinations such as `~/.codex-rawr` / `~/.codex` and Claude local plugin homes.
+If your downstream agent environment installs the official Nx skills, use them as a companion to the CLI rather than as a repo-local source of truth in this template.
 
 Use the Nx CLI first for most workspace graph and target questions:
 
@@ -62,7 +49,7 @@ bunx nx graph
 
 - Keep Narsil as the primary code-intel MCP for symbol search, references, and call-path work.
 - Do not add repo-local `.mcp.json` here.
-- Do not rely on repo-local `.agents/skills` fanout here; use managed global sync instead.
+- Do not treat this template repo as the canonical source for managed global Nx skill installation.
 - Nx MCP is intentionally out of scope for the current repo posture. If we bring it back later, it should be as a hosted/managed service rather than per-client local stdio wiring.
 - For the integrated agent workflow, see [`docs/process/NX_AGENT_WORKFLOW.md`](docs/process/NX_AGENT_WORKFLOW.md).
 

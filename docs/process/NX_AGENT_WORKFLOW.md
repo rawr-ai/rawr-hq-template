@@ -16,22 +16,9 @@ the first hop should be the Nx CLI and the official vendored Nx skills, not ad h
 
 ## Official Nx Skills
 
-This repo vendors the official Nx skill pack.
+Use the official Nx skills if your downstream agent environment installs them globally.
 
-Canonical skill content lives in:
-
-```bash
-plugins/agents/nx/skills/
-```
-
-Install or refresh that skill pack through the existing managed agent-plugin sync flow:
-
-```bash
-bun run rawr -- plugins sync nx --dry-run --json
-bun run rawr -- plugins sync nx
-```
-
-That sync path installs the `nx` agent plugin into the configured global Codex homes and Claude local plugin homes. Keep the vendored Nx content official; do not rewrite it into local substitutes.
+This template repo does not own the canonical managed distribution path for those skills.
 
 ## First-Hop Commands
 
@@ -57,7 +44,7 @@ Do not add repo-local `.mcp.json` here.
 
 - Keep repo-owned routing and invariants in `AGENTS.md` and nested `AGENTS.md` files.
 - Do not add a repo `CLAUDE.md` just because Nx can generate one.
-- Do not rely on repo-local `.agents/skills` fanout as the main installation mechanism for Nx here.
+- Do not turn this template repo into the canonical managed source for globally installed Nx skills.
 - Integrate Nx guidance into the existing lattice rather than letting Nx-generated docs overwrite repo-owned router documents.
 
 ## Future Seam

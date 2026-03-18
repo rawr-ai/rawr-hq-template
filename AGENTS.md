@@ -11,11 +11,7 @@
   - `bunx nx show projects`
   - `bunx nx show project <project-name> --json`
   - `bunx nx graph`
-- Official Nx skills are vendored in this repo under:
-  - `plugins/agents/nx/skills/`
-- Install or refresh them via the managed sync path:
-  - `bun run rawr -- plugins sync nx --dry-run --json`
-  - `bun run rawr -- plugins sync nx`
+- If your downstream agent environment has the official Nx skills installed globally, use them as companion guidance with the Nx CLI.
 - Use Nx for workspace/project truth, this AGENTS lattice for routing/ownership truth, and Narsil for source/symbol/reference truth.
 - Do not add or rely on repo-local `.mcp.json` or repo `CLAUDE.md` here.
 
@@ -46,7 +42,7 @@
 - `plugins/AGENTS.md` for plugin package contracts and enablement.
 - `scripts/AGENTS.md` for hook/script conventions.
 - `docs/AGENTS.md` for canonical documentation entrypoints.
-- `docs/process/NX_AGENT_WORKFLOW.md` for the integrated Nx CLI / Nx skills / managed sync / Narsil posture, plus the deferred note on a future hosted Nx integration.
+- `docs/process/NX_AGENT_WORKFLOW.md` for the integrated Nx CLI / Nx skills / Narsil posture, plus the deferred note on a future hosted Nx integration.
 
 ## Process Runbooks
 
