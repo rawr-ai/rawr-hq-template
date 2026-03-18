@@ -8,7 +8,9 @@
     "packages/*",
     "plugins/cli/*",
     "plugins/agents/*",
-    "plugins/web/*"
+    "plugins/web/*",
+    "plugins/api/*",
+    "plugins/workflows/*"
   ],
   "scripts": {
     "dev": "turbo run dev",
