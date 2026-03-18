@@ -1,7 +1,7 @@
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { TriageJobSchema, TriageJobSourceSchema, TriageJobStatusSchema } from "../../../../packages/support-triage";
-import { schema } from "../../../../packages/orpc-standards";
+import { schema } from "@rawr/orpc-standards";
+import { TriageJobSchema, TriageJobSourceSchema, TriageJobStatusSchema } from "@rawr/support-triage";
 
 const supportTriageTag = ["support-triage"] as const;
 
