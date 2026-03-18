@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
+import { createRouterClient } from "@orpc/server";
 import { createInngestServeHandler } from "@rawr/coordination-inngest";
 import { createHqRuntimeRouter } from "@rawr/core/orpc";
 import {
   createInMemoryTriageWorkItemStore,
-  createSupportTriageInternalClient,
+  supportTriageClientProcedures,
   type SupportTriageServiceDeps,
 } from "@rawr/support-triage";
 import { Inngest } from "inngest";
@@ -35,8 +36,10 @@ function resolveSupportTriageDeps(repoRoot: string): SupportTriageServiceDeps {
 function enrichSupportTriageContext<T extends { repoRoot: string }>(context: T) {
   return {
     ...context,
-    supportTriage: createSupportTriageInternalClient({
-      deps: resolveSupportTriageDeps(context.repoRoot),
+    supportTriage: createRouterClient(supportTriageClientProcedures, {
+      context: {
+        deps: resolveSupportTriageDeps(context.repoRoot),
+      },
     }),
   };
 }
