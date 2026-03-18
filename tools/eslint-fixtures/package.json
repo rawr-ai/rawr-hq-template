@@ -1,0 +1,9 @@
+{
+  "name": "eslint-fixtures",
+  "private": true,
+  "dependencies": {
+    "@rawr/core": "workspace:*",
+    "@rawr/plugin-plugins": "workspace:*",
+    "@rawr/server": "workspace:*"
+  }
+}

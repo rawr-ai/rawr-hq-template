@@ -41,5 +41,10 @@
     "build": "bunx tsc -p tsconfig.json",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
   }
 }

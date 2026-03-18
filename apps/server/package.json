@@ -31,5 +31,10 @@
     "orpc:openapi:write": "bun scripts/write-orpc-openapi.ts",
     "orpc:openapi:types": "bunx openapi-typescript ./openapi/orpc-openapi.json -o ./openapi/orpc-openapi.types.ts",
     "orpc:openapi:sdk": "bun run orpc:openapi:write && bun run orpc:openapi:types"
+  },
+  "nx": {
+    "tags": [
+      "type:app"
+    ]
   }
 }

@@ -1,0 +1,7 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "eslint-fixtures",
+  "root": "tools/eslint-fixtures",
+  "sourceRoot": "tools/eslint-fixtures",
+  "tags": ["type:service", "type:plugin"]
+}
