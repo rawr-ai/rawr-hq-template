@@ -46,16 +46,15 @@ This document defines repeatable, low-drift loops an AI agent can follow to ship
 
 ### Nx posture
 
+- Use the Nx CLI as the first hop for workspace graph, project, target, and generator questions.
+- If your downstream agent environment has the official Nx skills installed globally, use them as companion guidance with the Nx CLI.
 - Use the Nx CLI for most workspace graph and target queries:
   - `bunx nx show projects`
-  - `bunx nx show project <project-name>`
+  - `bunx nx show project <project-name> --json`
   - `bunx nx graph`
-- Register `Nx MCP` in your real client config home, not in the repo:
-  - `codex mcp add nx -- bunx nx mcp --no-minimal --disableTelemetry`
-  - `claude mcp add -s local nx -- bunx nx mcp --no-minimal --disableTelemetry`
-- In this setup, that means `~/.codex-rawr/config.toml` for Codex and `~/.claude.json` for Claude Code local/user scope.
-- Use `Nx MCP` as supplementary graph/connectivity tooling with the non-minimal workspace/project tools enabled.
 - Keep Narsil as the primary code-intel MCP; use it for repo search and semantic/source-level investigation.
+- Nx MCP is intentionally deferred. If it returns later, it should come back as a hosted/managed service, not repo guidance for per-client stdio setup.
+- Canonical integrated guidance: `docs/process/NX_AGENT_WORKFLOW.md`.
 
 ### Journaling expectation
 

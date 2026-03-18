@@ -18,6 +18,13 @@
   - `plugins/workflows/*` for workflow runtime adapters (`rawr.kind=workflows`)
 - Each leaf directory is a workspace package (see root `package.json#workspaces`).
 
+## Nx First Hop
+
+- Use Nx first to identify plugin project names, roots, tags, and runnable targets:
+  - `bunx nx show projects --projects "plugins/*"`
+  - `bunx nx show project <project-name> --json`
+- Use the vendored Nx skills for plugin workspace navigation and task execution before falling back to manual repo exploration.
+
 ## Plugin Roots
 - Leaf directory names must be **globally unique** across all roots.
   - Do not create both `plugins/cli/foo` and `plugins/agents/foo`.

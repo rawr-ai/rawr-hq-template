@@ -33,28 +33,25 @@ narsil-mcp --repos . --git --call-graph --persist --watch --neural
 
 Then verify from your MCP client or HTTP transport by confirming the repo appears in `list_repos`, then running a search such as `hybrid_search` or `find_symbols`.
 
-## Nx Graph and MCP
+## Nx Graph and Skills
+
+Use the Nx CLI first for workspace graph, routing, generator, and target questions.
+
+If your downstream agent environment installs the official Nx skills, use them as a companion to the CLI rather than as a repo-local source of truth in this template.
 
 Use the Nx CLI first for most workspace graph and target questions:
 
 ```bash
 bunx nx show projects
-bunx nx show project @rawr/server
+bunx nx show project @rawr/server --json
 bunx nx graph
 ```
 
-Register `Nx MCP` in the actual client config homes for your local setup rather than in the repo:
-
-```bash
-codex mcp add nx -- bunx nx mcp --no-minimal --disableTelemetry
-claude mcp add -s local nx -- bunx nx mcp --no-minimal --disableTelemetry
-```
-
-In this setup, Codex persists MCP server config in `~/.codex-rawr/config.toml` and Claude Code persists local/user MCP config in `~/.claude.json`.
-
-- Use Nx MCP as supplementary graph/connectivity tooling.
 - Keep Narsil as the primary code-intel MCP for symbol search, references, and call-path work.
-- Do not treat Nx MCP as a replacement for reading source or for repo code-intel workflows.
+- Do not add repo-local `.mcp.json` here.
+- Do not treat this template repo as the canonical source for managed global Nx skill installation.
+- Nx MCP is intentionally out of scope for the current repo posture. If we bring it back later, it should be as a hosted/managed service rather than per-client local stdio wiring.
+- For the integrated agent workflow, see [`docs/process/NX_AGENT_WORKFLOW.md`](docs/process/NX_AGENT_WORKFLOW.md).
 
 ## Core vs Extensions
 
