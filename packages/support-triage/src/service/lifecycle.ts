@@ -196,7 +196,8 @@ export async function completeSupportTriageWorkItem(
   if (isTerminalTriageWorkItemStatus(current.status)) {
     throw new SupportTriageDomainError("INVALID_STATUS_TRANSITION", `Work item ${current.workItemId} is already terminal`, {
       workItemId: current.workItemId,
-      status: current.status,
+      from: current.status,
+      to: current.status,
     });
   }
 
