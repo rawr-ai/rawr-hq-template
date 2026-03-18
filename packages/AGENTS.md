@@ -4,6 +4,12 @@
 
 - Applies to `packages/**`.
 
+## Nx First Hop
+
+- Use Nx to identify package project names, roots, tags, and available targets before reading package-local config by hand:
+  - `bunx nx show project <project-name> --json`
+- Use Narsil after Nx when the question shifts from package membership to source-level dependencies or symbol usage.
+
 ## Dependency Direction
 
 - `packages/*` may be consumed by `apps/*` and `plugins/*`.

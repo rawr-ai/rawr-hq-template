@@ -16,6 +16,7 @@ Applies to `docs/**`.
 
 - `docs/system/PLUGINS.md`
 - `docs/SECURITY_MODEL.md`
+- `docs/process/NX_AGENT_WORKFLOW.md`
 - `docs/process/AGENT_LOOPS.md`
 - `docs/process/GRAPHITE.md`
 - `docs/process/UPSTREAM_SYNC_RUNBOOK.md`
@@ -45,6 +46,7 @@ Use these names consistently:
 
 ## Conventions
 
+- Nx is the first hop for workspace/project navigation; this docs tree should reinforce that rather than duplicate Nx skill content.
 - Keep canonical truth in gateway docs and linked system/process docs.
 - Do not route active guidance through archived documents.
 - Treat parked concepts as doc-only until explicitly un-parked.

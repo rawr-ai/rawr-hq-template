@@ -4,6 +4,12 @@
 
 - Applies to `apps/**`.
 
+## Nx First Hop
+
+- Before exploring app code directly, use Nx to confirm the project name, root, tags, and targets:
+  - `bunx nx show project <project-name> --json`
+- Use the vendored Nx skills when the task is about workspace navigation, project structure, task execution, or generators.
+
 ## Runtime Surfaces
 
 - CLI runtime and command entrypoint: `apps/cli/`

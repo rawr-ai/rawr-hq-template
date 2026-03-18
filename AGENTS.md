@@ -4,6 +4,20 @@
 
 - Applies repo-wide when a deeper `AGENTS.md` is not present.
 
+## Nx First Hop
+
+- Nx is first-class in this repo. Use the official Nx skills and the Nx CLI before ad hoc file exploration.
+- Start workspace/navigation questions with:
+  - `bunx nx show projects`
+  - `bunx nx show project <project-name> --json`
+  - `bunx nx graph`
+- Official Nx skills are vendored in this repo under:
+  - `.agents/skills/`
+  - `.agent/skills/`
+  - `.claude/skills/`
+- Use Nx for workspace/project truth, this AGENTS lattice for routing/ownership truth, and Narsil for source/symbol/reference truth.
+- Do not add or rely on repo-local `.mcp.json` or repo `CLAUDE.md` here.
+
 ## Repo Role Boundary
 
 - `RAWR HQ-Template` is the upstream baseline for shared core behavior and docs.
@@ -31,10 +45,12 @@
 - `plugins/AGENTS.md` for plugin package contracts and enablement.
 - `scripts/AGENTS.md` for hook/script conventions.
 - `docs/AGENTS.md` for canonical documentation entrypoints.
+- `docs/process/NX_AGENT_WORKFLOW.md` for the integrated Nx CLI / Nx skills / Nx MCP / Narsil posture.
 
 ## Process Runbooks
 
 - CLI/plugin path index (start here): `docs/process/RUNBOOKS.md`.
+- Nx-first agent workflow: `docs/process/NX_AGENT_WORKFLOW.md`.
 - Graphite stack drain loop: `docs/process/runbooks/STACK_DRAIN_LOOP.md`.
 - Template->personal integration loop: `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md`.
 - Upstream sync workflow: `docs/process/UPSTREAM_SYNC_RUNBOOK.md`.
