@@ -24,11 +24,13 @@ async function pathExists(p: string): Promise<boolean> {
   }
 }
 
-function inferTypeFromPath(absPath: string): LifecycleType {
+export function inferTypeFromPath(absPath: string): LifecycleType {
   const normalized = absPath.split(path.sep).join("/");
   if (normalized.includes("/plugins/cli/")) return "cli";
   if (normalized.includes("/plugins/web/")) return "web";
   if (normalized.includes("/plugins/agents/")) return "agent";
+  if (normalized.includes("/plugins/workflows/")) return "workflow";
+  if (normalized.includes("/plugins/api/")) return "composed";
   return "composed";
 }
 
