@@ -1,13 +1,9 @@
-import type { GetSupportTriageStatusInput, GetSupportTriageStatusOutput } from "../contract";
-import { throwSupportTriageBoundaryError } from "../errors";
-import type { SupportTriageWorkflowContext } from "../context";
+import { ORPCError } from "@orpc/server";
 import { SUPPORT_TRIAGE_CAPABILITY, normalizeSupportTriageRunId } from "../models";
 import { getSupportTriageRun } from "../run-store";
+import { os } from "../orpc";
 
-export async function getSupportTriageStatus(
-  args: Readonly<{ context: SupportTriageWorkflowContext; input: GetSupportTriageStatusInput }>,
-): Promise<GetSupportTriageStatusOutput> {
-  const { input } = args;
+export const getStatus = os.getStatus.handler(async ({ input }) => {
   if (!input.runId) {
     return {
       capability: SUPPORT_TRIAGE_CAPABILITY,
@@ -18,10 +14,8 @@ export async function getSupportTriageStatus(
 
   const runId = normalizeSupportTriageRunId(input.runId);
   if (!runId) {
-    throwSupportTriageBoundaryError({
-      transportCode: "BAD_REQUEST",
+    throw new ORPCError("INVALID_SUPPORT_TRIAGE_RUN_ID", {
       status: 400,
-      domainCode: "INVALID_SUPPORT_TRIAGE_RUN_ID",
       message: "runId must be a valid identifier",
       data: { runId: input.runId },
     });
@@ -29,10 +23,8 @@ export async function getSupportTriageStatus(
 
   const run = getSupportTriageRun(runId);
   if (!run) {
-    throwSupportTriageBoundaryError({
-      transportCode: "NOT_FOUND",
+    throw new ORPCError("SUPPORT_TRIAGE_RUN_NOT_FOUND", {
       status: 404,
-      domainCode: "SUPPORT_TRIAGE_RUN_NOT_FOUND",
       message: "support triage run not found",
       data: { runId },
     });
@@ -43,4 +35,4 @@ export async function getSupportTriageStatus(
     healthy: true,
     run,
   };
-}
+});

@@ -1,15 +1,13 @@
 import { supportTriageApiContract } from "./contract";
-import type { SupportTriageApiContext, SupportTriageApiOperationDeps } from "./context";
-import { createSupportTriageApiRouter } from "./router";
+import { supportTriageApiRouter } from "./router";
 
-export function registerSupportTriageApiPlugin<Context extends SupportTriageApiContext = SupportTriageApiContext>(
-  deps: SupportTriageApiOperationDeps<Context>,
-) {
+export function registerSupportTriageApiPlugin() {
   return {
     namespace: "orpc" as const,
     contract: supportTriageApiContract,
-    router: createSupportTriageApiRouter<Context>(deps),
+    router: supportTriageApiRouter,
   };
 }
 
 export type SupportTriageApiPluginRegistration = ReturnType<typeof registerSupportTriageApiPlugin>;
+
