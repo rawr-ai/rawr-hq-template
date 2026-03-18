@@ -72,7 +72,7 @@ export async function processSupportTriageRequestedEvent(
     await options.step.run("support-triage/mark-completed", async () => {
       const completedRun = {
         ...runningRun,
-        status: "completed",
+        status: "completed" as const,
         finishedAt: new Date().toISOString(),
         error: undefined,
         triagedTicketCount: summary.triagedTicketCount,

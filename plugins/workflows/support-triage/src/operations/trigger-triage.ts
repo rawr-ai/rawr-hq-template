@@ -1,4 +1,4 @@
-import { throwSupportTriageBoundaryError } from "@rawr/support-triage";
+import { throwSupportTriageBoundaryError } from "../errors";
 import type { TriggerSupportTriageInput, TriggerSupportTriageOutput } from "../contract";
 import type { SupportTriageWorkflowContext } from "../context";
 import {
