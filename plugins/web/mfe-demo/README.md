@@ -12,7 +12,7 @@
   - `/mfe-demo/support-triage/status`
 - Route-boundary hints that align with workflow examples:
   - first-party default: `/rpc`
-  - published boundary: `/api/workflows/support-triage/*`
+  - published boundary: workflow OpenAPI routes (capability-scoped, exception-only for first-party callers)
 
 ## Local Usage
 

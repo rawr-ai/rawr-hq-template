@@ -286,6 +286,7 @@
       "name": "@rawr/plugin-mfe-demo",
       "version": "0.1.0",
       "dependencies": {
+        "@orpc/client": "^1.13.5",
         "@rawr/ui-sdk": "workspace:*",
       },
       "devDependencies": {
