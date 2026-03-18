@@ -14,17 +14,17 @@
     "plugins/workflows/*"
   ],
   "scripts": {
-    "dev": "turbo run dev",
-    "dev:server": "turbo run dev --filter=@rawr/server",
-    "dev:web": "turbo run dev --filter=@rawr/web",
+    "dev": "bunx nx run-many -t dev --projects=@rawr/server,@rawr/web --parallel",
+    "dev:server": "bunx nx run @rawr/server:dev",
+    "dev:web": "bunx nx run @rawr/web:dev",
     "dev:workflows": "bun run --cwd apps/server dev:inngest",
     "dev:up": "bash ./scripts/dev/up.sh",
     "dev:inngest": "bun run dev:workflows",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
+    "build": "bunx nx run-many -t build --projects=@rawr/agent-sync,@rawr/cli,@rawr/control-plane,@rawr/coordination,@rawr/coordination-inngest,@rawr/coordination-observability,@rawr/core,@rawr/example-todo,@rawr/hq,@rawr/hq-sdk,@rawr/journal,@rawr/orpc-client,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/security,@rawr/server,@rawr/session-tools,@rawr/state,@rawr/support-example,@rawr/ui-sdk,@rawr/web",
+    "lint": "bunx nx run-many -t lint --projects=@rawr/agent-sync,@rawr/cli,@rawr/control-plane,@rawr/plugin-hq,@rawr/plugin-plugins",
     "lint:boundaries": "eslint apps services packages plugins",
-    "typecheck": "turbo run typecheck",
-    "pretest:vitest": "turbo run build",
+    "typecheck": "bunx nx run-many -t typecheck --projects=@rawr/agent-sync,@rawr/cli,@rawr/control-plane,@rawr/coordination,@rawr/coordination-inngest,@rawr/coordination-observability,@rawr/core,@rawr/example-todo,@rawr/hq,@rawr/hq-sdk,@rawr/journal,@rawr/orpc-client,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/security,@rawr/server,@rawr/session-tools,@rawr/state,@rawr/support-example,@rawr/ui-sdk,@rawr/web",
+    "pretest:vitest": "bunx nx run-many -t build --projects=@rawr/agent-sync,@rawr/cli,@rawr/control-plane,@rawr/coordination,@rawr/coordination-inngest,@rawr/coordination-observability,@rawr/core,@rawr/example-todo,@rawr/hq,@rawr/hq-sdk,@rawr/journal,@rawr/orpc-client,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/security,@rawr/server,@rawr/session-tools,@rawr/state,@rawr/support-example,@rawr/ui-sdk,@rawr/web",
     "test:vitest": "vitest run --config vitest.fast.config.ts",
     "test:heavy:cli": "vitest run --config vitest.heavy.cli.config.ts",
     "test:heavy:visual": "bun run --cwd apps/web test:visual",
@@ -114,7 +114,12 @@
     "phase-f:gates:exit": "bun run phase-f:gates:full && bun run phase-f:gates:closure && bun run phase-a:gates:exit"
   },
   "nx": {
-    "includedScripts": ["lint:boundaries", "test:vitest", "phase-a:gates:baseline"]
+    "includedScripts": [
+      "lint:boundaries",
+      "pretest:vitest",
+      "test:vitest",
+      "phase-a:gates:baseline"
+    ]
   },
   "overrides": {
     "npm": "11.9.0",
@@ -136,7 +141,6 @@
     "@types/node": "^22.14.0",
     "@vitest/ui": "^4.0.18",
     "eslint": "^10.0.3",
-    "turbo": "^2.7.6",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
     "nx": "22.5.4"

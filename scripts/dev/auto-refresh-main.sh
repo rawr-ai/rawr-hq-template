@@ -22,7 +22,7 @@ elif git rev-parse --verify --quiet ORIG_HEAD^{commit} >/dev/null; then
 fi
 
 if [ -n "${changed_files}" ]; then
-  if ! printf '%s\n' "${changed_files}" | grep -Eq '^(apps/cli/|packages/|plugins/|package.json|bun.lock|turbo\.json|tsconfig)'; then
+  if ! printf '%s\n' "${changed_files}" | grep -Eq '^(apps/cli/|packages/|plugins/|package.json|bun.lock|nx\.json|eslint\.config\.mjs|tsconfig)'; then
     exit 0
   fi
 fi
