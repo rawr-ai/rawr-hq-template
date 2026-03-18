@@ -7,11 +7,15 @@ import { startWorkItem } from "./operations/start-work-item";
 
 export const supportExampleApiRouter = os.router({
   supportExample: os.supportExample.router({
-    requestWorkItem,
-    listWorkItems,
-    getWorkItem,
-    startWorkItem,
-    completeWorkItem,
+    triage: os.supportExample.triage.router({
+      items: os.supportExample.triage.items.router({
+        request: requestWorkItem,
+        list: listWorkItems,
+        get: getWorkItem,
+        start: startWorkItem,
+        complete: completeWorkItem,
+      }),
+    }),
   }),
 });
 

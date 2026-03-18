@@ -1,6 +1,5 @@
 import type { Inngest } from "inngest";
-import type { SupportExampleServiceDeps } from "@rawr/support-example";
-import { completeSupportExampleWorkItem, startSupportExampleWorkItem } from "@rawr/support-example";
+import type { SupportExampleClient } from "@rawr/support-example";
 import {
   SUPPORT_EXAMPLE_EVENT_NAME,
   type SupportExampleRequestedEventData,
@@ -17,7 +16,7 @@ type StepToolLike = Readonly<{
 export type ProcessSupportExampleRequestedEventOptions = Readonly<{
   payload: SupportExampleRequestedEventData;
   step: StepToolLike;
-  deps: SupportExampleServiceDeps;
+  supportClient: SupportExampleClient;
 }>;
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -64,7 +63,7 @@ export async function processSupportExampleRequestedEvent(
     const runningRun = (await options.step.run("support-example/mark-running", async () => {
       const next = { ...queuedRun, status: "running" as const };
       saveSupportExampleRun(next);
-      await startSupportExampleWorkItem(options.deps, { workItemId: options.payload.workItemId });
+      await options.supportClient.triage.items.start({ workItemId: options.payload.workItemId });
       return next;
     })) as typeof queuedRun;
 
@@ -89,7 +88,7 @@ export async function processSupportExampleRequestedEvent(
       };
       saveSupportExampleRun(completedRun);
 
-      await completeSupportExampleWorkItem(options.deps, {
+      await options.supportClient.triage.items.complete({
         workItemId: options.payload.workItemId,
         succeeded: true,
         triagedTicketCount: summary.triagedTicketCount,
@@ -109,7 +108,7 @@ export async function processSupportExampleRequestedEvent(
       };
       saveSupportExampleRun(failedRun);
 
-      await completeSupportExampleWorkItem(options.deps, {
+      await options.supportClient.triage.items.complete({
         workItemId: options.payload.workItemId,
         succeeded: false,
         failureReason: failedRun.error,
@@ -122,7 +121,7 @@ export async function processSupportExampleRequestedEvent(
 
 export function createSupportExampleInngestFunctions(input: {
   client: Inngest;
-  resolveSupportExampleDeps: (repoRoot: string) => SupportExampleServiceDeps;
+  resolveSupportExampleClient: (repoRoot: string) => SupportExampleClient;
 }): readonly unknown[] {
   const workflowRunner = input.client.createFunction(
     {
@@ -139,11 +138,11 @@ export function createSupportExampleInngestFunctions(input: {
         throw new Error("Invalid support triage event payload");
       }
 
-      const deps = input.resolveSupportExampleDeps(payload.repoRoot);
+      const supportClient = input.resolveSupportExampleClient(payload.repoRoot);
       const summary = await processSupportExampleRequestedEvent({
         payload,
         step,
-        deps,
+        supportClient,
       });
 
       return {
