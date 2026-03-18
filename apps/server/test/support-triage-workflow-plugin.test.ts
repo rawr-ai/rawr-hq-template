@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRouterClient } from "@orpc/server";
 import type { Inngest } from "inngest";
+import { createSupportTriageInternalClient, createInMemoryTriageWorkItemStore } from "@rawr/support-triage";
 import {
   __resetSupportTriageRunStoreForTests,
   createSupportTriageWorkflowRouter,
   processSupportTriageRequestedEvent,
   type SupportTriageWorkflowContext,
 } from "../../../plugins/workflows/support-triage";
+import { createCoordinationRuntimeAdapter } from "../src/coordination";
 
 describe("support-triage workflow plugin", () => {
   beforeEach(() => {
@@ -19,11 +21,24 @@ describe("support-triage workflow plugin", () => {
     } as unknown as Inngest;
 
     const router = createSupportTriageWorkflowRouter();
+    const store = createInMemoryTriageWorkItemStore();
+    const deps = {
+      store,
+      now: () => "2026-02-23T00:00:00.000Z",
+      generateWorkItemId: () => `work-item-${Math.random().toString(16).slice(2, 10)}`,
+    } as const;
     const context: SupportTriageWorkflowContext = {
       baseUrl: "http://localhost:3000",
+      repoRoot: "/tmp/rawr-test-repo",
+      runtime: createCoordinationRuntimeAdapter({
+        repoRoot: "/tmp/rawr-test-repo",
+        inngestBaseUrl: "http://localhost:8288",
+      }),
       inngestClient: fakeInngest,
+      supportTriage: createSupportTriageInternalClient({ deps }),
       requestId: "req-1",
       correlationId: "corr-1",
+      middlewareState: { markerCache: new Map() },
     };
 
     const client = createRouterClient(router, { context });
@@ -37,6 +52,7 @@ describe("support-triage workflow plugin", () => {
     expect(triggered.accepted).toBe(true);
     expect(triggered.run.status).toBe("queued");
     expect(triggered.run.queueId).toBe("queue-main");
+    expect(typeof triggered.run.workItemId).toBe("string");
     expect(triggered.eventIds).toEqual(["evt-support-triage-1"]);
 
     const capabilityStatus = await client.getStatus({});
@@ -54,11 +70,24 @@ describe("support-triage workflow plugin", () => {
     } as unknown as Inngest;
 
     const router = createSupportTriageWorkflowRouter();
+    const store = createInMemoryTriageWorkItemStore();
+    const deps = {
+      store,
+      now: () => "2026-02-23T00:00:00.000Z",
+      generateWorkItemId: () => "work-item-001",
+    } as const;
     const context: SupportTriageWorkflowContext = {
       baseUrl: "http://localhost:3000",
+      repoRoot: "/tmp/rawr-test-repo",
+      runtime: createCoordinationRuntimeAdapter({
+        repoRoot: "/tmp/rawr-test-repo",
+        inngestBaseUrl: "http://localhost:8288",
+      }),
       inngestClient: fakeInngest,
+      supportTriage: createSupportTriageInternalClient({ deps }),
       requestId: "req-1",
       correlationId: "corr-1",
+      middlewareState: { markerCache: new Map() },
     };
     const client = createRouterClient(router, { context });
 
@@ -72,6 +101,8 @@ describe("support-triage workflow plugin", () => {
     const summary = await processSupportTriageRequestedEvent({
       payload: {
         runId: triggered.run.runId,
+        workItemId: triggered.run.workItemId,
+        repoRoot: context.repoRoot,
         queueId: "queue-main",
         requestedBy: "leg1-impl-workflows",
         dryRun: false,
@@ -86,6 +117,7 @@ describe("support-triage workflow plugin", () => {
           return value;
         },
       },
+      deps,
     });
 
     expect(summary.triagedTicketCount).toBe(42);
@@ -95,5 +127,12 @@ describe("support-triage workflow plugin", () => {
     expect(finalStatus.run?.status).toBe("completed");
     expect(finalStatus.run?.triagedTicketCount).toBe(42);
     expect(finalStatus.run?.escalatedTicketCount).toBe(6);
+
+    const supportTriageClient = context.supportTriage;
+    if (!supportTriageClient) {
+      throw new Error("support-triage client not configured in workflow test context");
+    }
+    const workItemStatus = await supportTriageClient.getWorkItem({ workItemId: triggered.run.workItemId });
+    expect(workItemStatus.workItem.status).toBe("completed");
   });
 });

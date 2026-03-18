@@ -8,6 +8,7 @@ import {
 } from "../models";
 import { getSupportTriageRun, saveSupportTriageRun } from "../run-store";
 import { os } from "../orpc";
+import { requireSupportTriageClient } from "../require-client";
 
 export const triggerRun = os.triggerRun.handler(async ({ context, input }) => {
   const queueId = normalizeSupportTriageQueueId(input.queueId);
@@ -48,8 +49,15 @@ export const triggerRun = os.triggerRun.handler(async ({ context, input }) => {
 
   const dryRun = input.dryRun ?? false;
 
+  const { workItem } = await requireSupportTriageClient(context).requestWorkItem({
+    queueId,
+    requestedBy,
+    source: "workflow",
+  });
+
   const queuedRun = createQueuedSupportTriageRun({
     runId,
+    workItemId: workItem.workItemId,
     queueId,
     requestedBy,
     dryRun,
@@ -62,6 +70,8 @@ export const triggerRun = os.triggerRun.handler(async ({ context, input }) => {
       name: SUPPORT_TRIAGE_EVENT_NAME,
       data: {
         runId,
+        workItemId: workItem.workItemId,
+        repoRoot: context.repoRoot,
         queueId,
         requestedBy,
         dryRun,

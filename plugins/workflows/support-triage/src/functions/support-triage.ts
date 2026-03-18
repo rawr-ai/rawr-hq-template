@@ -1,9 +1,12 @@
 import type { Inngest } from "inngest";
+import type { SupportTriageServiceDeps } from "@rawr/support-triage";
+import { completeSupportTriageWorkItem, startSupportTriageWorkItem } from "@rawr/support-triage";
 import {
   SUPPORT_TRIAGE_EVENT_NAME,
   type SupportTriageRequestedEventData,
   normalizeSupportTriageQueueId,
   normalizeSupportTriageRunId,
+  normalizeSupportTriageWorkItemId,
 } from "../models";
 import { getSupportTriageRun, saveSupportTriageRun } from "../run-store";
 
@@ -14,6 +17,7 @@ type StepToolLike = Readonly<{
 export type ProcessSupportTriageRequestedEventOptions = Readonly<{
   payload: SupportTriageRequestedEventData;
   step: StepToolLike;
+  deps: SupportTriageServiceDeps;
 }>;
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -26,16 +30,20 @@ function parseSupportTriageEventPayload(value: unknown): SupportTriageRequestedE
   if (!record) return null;
 
   const runId = typeof record.runId === "string" ? normalizeSupportTriageRunId(record.runId) : null;
+  const workItemId = typeof record.workItemId === "string" ? normalizeSupportTriageWorkItemId(record.workItemId) : null;
+  const repoRoot = typeof record.repoRoot === "string" ? record.repoRoot.trim() : "";
   const queueId = typeof record.queueId === "string" ? normalizeSupportTriageQueueId(record.queueId) : null;
   const requestedBy = typeof record.requestedBy === "string" ? record.requestedBy.trim() : "";
   const dryRun = typeof record.dryRun === "boolean" ? record.dryRun : false;
 
-  if (!runId || !queueId || requestedBy.length === 0) {
+  if (!runId || !workItemId || repoRoot.length === 0 || !queueId || requestedBy.length === 0) {
     return null;
   }
 
   return {
     runId,
+    workItemId,
+    repoRoot,
     queueId,
     requestedBy,
     dryRun,
@@ -56,6 +64,7 @@ export async function processSupportTriageRequestedEvent(
     const runningRun = (await options.step.run("support-triage/mark-running", async () => {
       const next = { ...queuedRun, status: "running" as const };
       saveSupportTriageRun(next);
+      await startSupportTriageWorkItem(options.deps, { workItemId: options.payload.workItemId });
       return next;
     })) as typeof queuedRun;
 
@@ -79,6 +88,13 @@ export async function processSupportTriageRequestedEvent(
         escalatedTicketCount: summary.escalatedTicketCount,
       };
       saveSupportTriageRun(completedRun);
+
+      await completeSupportTriageWorkItem(options.deps, {
+        workItemId: options.payload.workItemId,
+        succeeded: true,
+        triagedTicketCount: summary.triagedTicketCount,
+        escalatedTicketCount: summary.escalatedTicketCount,
+      });
     });
 
     return summary;
@@ -92,13 +108,22 @@ export async function processSupportTriageRequestedEvent(
         error: error instanceof Error ? error.message : String(error),
       };
       saveSupportTriageRun(failedRun);
+
+      await completeSupportTriageWorkItem(options.deps, {
+        workItemId: options.payload.workItemId,
+        succeeded: false,
+        failureReason: failedRun.error,
+      });
     });
 
     throw error;
   }
 }
 
-export function createSupportTriageInngestFunctions(input: { client: Inngest }): readonly unknown[] {
+export function createSupportTriageInngestFunctions(input: {
+  client: Inngest;
+  resolveSupportTriageDeps: (repoRoot: string) => SupportTriageServiceDeps;
+}): readonly unknown[] {
   const workflowRunner = input.client.createFunction(
     {
       id: "support-triage-workflow-runner",
@@ -114,9 +139,11 @@ export function createSupportTriageInngestFunctions(input: { client: Inngest }):
         throw new Error("Invalid support triage event payload");
       }
 
+      const deps = input.resolveSupportTriageDeps(payload.repoRoot);
       const summary = await processSupportTriageRequestedEvent({
         payload,
         step,
+        deps,
       });
 
       return {

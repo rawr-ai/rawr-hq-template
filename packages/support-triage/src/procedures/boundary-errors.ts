@@ -3,14 +3,14 @@ import { isSupportTriageDomainError, type SupportTriageDomainErrorCode } from ".
 
 function statusForDomainCode(code: SupportTriageDomainErrorCode): number {
   switch (code) {
-    case "JOB_NOT_FOUND":
+    case "WORK_ITEM_NOT_FOUND":
       return 404;
     case "INVALID_STATUS_TRANSITION":
       return 409;
     case "INVALID_COMPLETION_INPUT":
     case "INVALID_QUEUE_ID":
     case "INVALID_REQUESTED_BY":
-    case "INVALID_JOB_ID":
+    case "INVALID_WORK_ITEM_ID":
       return 400;
     default: {
       const exhaustiveCheck: never = code;
@@ -36,4 +36,3 @@ export function throwSupportTriageDomainErrorAsOrpc(error: unknown): never {
     data: error.details,
   });
 }
-

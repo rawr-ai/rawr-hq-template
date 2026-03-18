@@ -1,20 +1,20 @@
 import { oc } from "@orpc/contract";
-import { Type } from "typebox";
 import { schema } from "@rawr/orpc-standards";
-import { TriageJobSchema, TriageJobSourceSchema, TriageJobStatusSchema } from "@rawr/support-triage";
+import { Type } from "typebox";
+import { TriageWorkItemSchema, TriageWorkItemSourceSchema, TriageWorkItemStatusSchema } from "@rawr/support-triage";
 
 const supportTriageTag = ["support-triage"] as const;
 
 export const supportTriageApiContract = oc.router({
   supportTriage: oc.router({
-    requestJob: oc
+    requestWorkItem: oc
       .route({
         method: "POST",
-        path: "/support-triage/jobs",
+        path: "/support-triage/work-items",
         tags: supportTriageTag,
-        summary: "Queue triage job",
-        description: "Creates a queue-scoped API TriageJob lifecycle record in queued state.",
-        operationId: "supportTriageRequestJob",
+        summary: "Queue triage work item",
+        description: "Creates a queue-scoped triage work item lifecycle record in queued state.",
+        operationId: "supportTriageRequestWorkItem",
       })
       .input(
         schema(
@@ -28,11 +28,11 @@ export const supportTriageApiContract = oc.router({
                 minLength: 1,
                 description: "Principal identifier of the caller requesting triage.",
               }),
-              source: Type.Optional(TriageJobSourceSchema),
+              source: Type.Optional(TriageWorkItemSourceSchema),
             },
             {
               additionalProperties: false,
-              description: "Request payload for queueing an API TriageJob.",
+              description: "Request payload for queueing a triage work item.",
             },
           ),
         ),
@@ -41,34 +41,34 @@ export const supportTriageApiContract = oc.router({
         schema(
           Type.Object(
             {
-              job: TriageJobSchema,
+              workItem: TriageWorkItemSchema,
             },
             {
               additionalProperties: false,
-              description: "Response envelope containing the newly queued API TriageJob.",
+              description: "Response envelope containing the newly queued triage work item.",
             },
           ),
         ),
       ),
 
-    listJobs: oc
+    listWorkItems: oc
       .route({
         method: "GET",
-        path: "/support-triage/jobs",
+        path: "/support-triage/work-items",
         tags: supportTriageTag,
-        summary: "List triage jobs",
-        description: "Returns queue-scoped API TriageJob records, optionally filtered by lifecycle status.",
-        operationId: "supportTriageListJobs",
+        summary: "List triage work items",
+        description: "Returns queue-scoped triage work items, optionally filtered by lifecycle status.",
+        operationId: "supportTriageListWorkItems",
       })
       .input(
         schema(
           Type.Object(
             {
-              status: Type.Optional(TriageJobStatusSchema),
+              status: Type.Optional(TriageWorkItemStatusSchema),
             },
             {
               additionalProperties: false,
-              description: "Optional query filter for listing API TriageJob records by lifecycle status.",
+              description: "Optional query filter for listing triage work items by lifecycle status.",
             },
           ),
         ),
@@ -77,39 +77,39 @@ export const supportTriageApiContract = oc.router({
         schema(
           Type.Object(
             {
-              jobs: Type.Array(TriageJobSchema, {
-                description: "API TriageJob records matching the provided listing filter.",
+              workItems: Type.Array(TriageWorkItemSchema, {
+                description: "Triage work items matching the provided listing filter.",
               }),
             },
             {
               additionalProperties: false,
-              description: "Response envelope containing matching API TriageJob records.",
+              description: "Response envelope containing matching triage work items.",
             },
           ),
         ),
       ),
 
-    getJob: oc
+    getWorkItem: oc
       .route({
         method: "GET",
-        path: "/support-triage/jobs/{jobId}",
+        path: "/support-triage/work-items/{workItemId}",
         tags: supportTriageTag,
-        summary: "Get triage job",
-        description: "Fetches one API TriageJob lifecycle record by stable job identifier.",
-        operationId: "supportTriageGetJob",
+        summary: "Get triage work item",
+        description: "Fetches one triage work item lifecycle record by stable identifier.",
+        operationId: "supportTriageGetWorkItem",
       })
       .input(
         schema(
           Type.Object(
             {
-              jobId: Type.String({
+              workItemId: Type.String({
                 minLength: 1,
-                description: "Stable identifier of the API TriageJob to fetch.",
+                description: "Stable identifier of the triage work item to fetch.",
               }),
             },
             {
               additionalProperties: false,
-              description: "Route parameters for fetching one API TriageJob.",
+              description: "Route parameters for fetching one triage work item.",
             },
           ),
         ),
@@ -118,37 +118,37 @@ export const supportTriageApiContract = oc.router({
         schema(
           Type.Object(
             {
-              job: TriageJobSchema,
+              workItem: TriageWorkItemSchema,
             },
             {
               additionalProperties: false,
-              description: "Response envelope containing the requested API TriageJob.",
+              description: "Response envelope containing the requested triage work item.",
             },
           ),
         ),
       ),
 
-    startJob: oc
+    startWorkItem: oc
       .route({
         method: "POST",
-        path: "/support-triage/jobs/{jobId}/start",
+        path: "/support-triage/work-items/{workItemId}/start",
         tags: supportTriageTag,
-        summary: "Start triage job",
-        description: "Transitions a queued API TriageJob into running state.",
-        operationId: "supportTriageStartJob",
+        summary: "Start triage work item",
+        description: "Transitions a queued triage work item into running state.",
+        operationId: "supportTriageStartWorkItem",
       })
       .input(
         schema(
           Type.Object(
             {
-              jobId: Type.String({
+              workItemId: Type.String({
                 minLength: 1,
-                description: "Stable identifier of the queued API TriageJob to start.",
+                description: "Stable identifier of the queued triage work item to start.",
               }),
             },
             {
               additionalProperties: false,
-              description: "Route parameters required to start an API TriageJob.",
+              description: "Route parameters required to start a triage work item.",
             },
           ),
         ),
@@ -157,33 +157,32 @@ export const supportTriageApiContract = oc.router({
         schema(
           Type.Object(
             {
-              job: TriageJobSchema,
+              workItem: TriageWorkItemSchema,
             },
             {
               additionalProperties: false,
-              description: "Response envelope containing the running API TriageJob.",
+              description: "Response envelope containing the running triage work item.",
             },
           ),
         ),
       ),
 
-    completeJob: oc
+    completeWorkItem: oc
       .route({
         method: "POST",
-        path: "/support-triage/jobs/{jobId}/complete",
+        path: "/support-triage/work-items/{workItemId}/complete",
         tags: supportTriageTag,
-        summary: "Complete triage job",
-        description:
-          "Finalizes a running API TriageJob with run-compatible triage metrics. Workflow TriageRun state is tracked separately.",
-        operationId: "supportTriageCompleteJob",
+        summary: "Complete triage work item",
+        description: "Finalizes a running triage work item with triage metrics.",
+        operationId: "supportTriageCompleteWorkItem",
       })
       .input(
         schema(
           Type.Object(
             {
-              jobId: Type.String({
+              workItemId: Type.String({
                 minLength: 1,
-                description: "Stable identifier of the API TriageJob being finalized.",
+                description: "Stable identifier of the triage work item being finalized.",
               }),
               succeeded: Type.Boolean({
                 description: "Whether triage completed successfully.",
@@ -191,7 +190,7 @@ export const supportTriageApiContract = oc.router({
               triagedTicketCount: Type.Optional(
                 Type.Integer({
                   minimum: 0,
-                  description: "Count of tickets triaged during this job completion transition.",
+                  description: "Count of tickets triaged during this completion transition.",
                 }),
               ),
               escalatedTicketCount: Type.Optional(
@@ -215,7 +214,7 @@ export const supportTriageApiContract = oc.router({
             },
             {
               additionalProperties: false,
-              description: "Completion payload for transitioning an API TriageJob to terminal state.",
+              description: "Completion payload for transitioning a triage work item to terminal state.",
             },
           ),
         ),
@@ -224,11 +223,11 @@ export const supportTriageApiContract = oc.router({
         schema(
           Type.Object(
             {
-              job: TriageJobSchema,
+              workItem: TriageWorkItemSchema,
             },
             {
               additionalProperties: false,
-              description: "Response envelope containing the finalized API TriageJob.",
+              description: "Response envelope containing the finalized triage work item.",
             },
           ),
         ),
@@ -237,3 +236,4 @@ export const supportTriageApiContract = oc.router({
 });
 
 export type SupportTriageApiContract = typeof supportTriageApiContract;
+

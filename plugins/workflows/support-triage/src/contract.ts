@@ -1,15 +1,30 @@
 import { oc } from "@orpc/contract";
-import { TriageJobStatusSchema } from "@rawr/support-triage";
 import { schema } from "@rawr/orpc-standards";
 import { Type, type Static } from "typebox";
 
 const supportTriageTag = ["support-triage"] as const;
+
+export const SupportTriageRunStatusSchema = Type.Union(
+  [
+    Type.Literal("queued", { description: "Run is accepted and queued for durable execution." }),
+    Type.Literal("running", { description: "Run is actively executing workflow steps." }),
+    Type.Literal("completed", { description: "Run completed successfully." }),
+    Type.Literal("failed", { description: "Run failed and may require follow-up or retry." }),
+  ],
+  {
+    description: "Lifecycle status for support-triage workflow runs.",
+  },
+);
 
 export const SupportTriageRunSchema = Type.Object(
   {
     runId: Type.String({
       minLength: 1,
       description: "Stable workflow run identifier for the support triage execution.",
+    }),
+    workItemId: Type.String({
+      minLength: 1,
+      description: "Stable triage work item identifier linked to this workflow run.",
     }),
     queueId: Type.String({
       minLength: 1,
@@ -22,7 +37,7 @@ export const SupportTriageRunSchema = Type.Object(
     dryRun: Type.Boolean({
       description: "Whether the run was executed as a dry-run without persisting workflow-side effects.",
     }),
-    status: TriageJobStatusSchema,
+    status: SupportTriageRunStatusSchema,
     startedAt: Type.String({
       format: "date-time",
       description: "ISO timestamp when this run was first created.",

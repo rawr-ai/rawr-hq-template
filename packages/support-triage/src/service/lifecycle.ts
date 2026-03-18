@@ -1,27 +1,27 @@
-import type { TriageJob, TriageJobSource, TriageJobStatus } from "../domain";
-import { canTransitionTriageJobStatus, isTerminalTriageJobStatus } from "../domain";
+import type { TriageWorkItem, TriageWorkItemSource, TriageWorkItemStatus } from "../domain";
+import { canTransitionTriageWorkItemStatus, isTerminalTriageWorkItemStatus } from "../domain";
 import { SupportTriageDomainError } from "../errors";
 import { normalizeSupportTriageId } from "../ids";
-import type { TriageJobStore } from "./store";
+import type { TriageWorkItemStore } from "./store";
 
 export type SupportTriageServiceDeps = {
-  store: TriageJobStore;
+  store: TriageWorkItemStore;
   now: () => string;
-  generateJobId: () => string;
+  generateWorkItemId: () => string;
 };
 
-export type RequestTriageJobInput = {
+export type RequestTriageWorkItemInput = {
   queueId: string;
   requestedBy: string;
-  source?: TriageJobSource;
+  source?: TriageWorkItemSource;
 };
 
-export type ListTriageJobsInput = {
-  status?: TriageJobStatus;
+export type ListTriageWorkItemsInput = {
+  status?: TriageWorkItemStatus;
 };
 
-export type CompleteTriageJobInput = {
-  jobId: string;
+export type CompleteTriageWorkItemInput = {
+  workItemId: string;
   succeeded: boolean;
   triagedTicketCount?: number;
   escalatedTicketCount?: number;
@@ -29,7 +29,11 @@ export type CompleteTriageJobInput = {
   failureCode?: string;
 };
 
-function normalizeRequiredId(value: string, code: "INVALID_QUEUE_ID" | "INVALID_REQUESTED_BY" | "INVALID_JOB_ID", label: string): string {
+function normalizeRequiredId(
+  value: string,
+  code: "INVALID_QUEUE_ID" | "INVALID_REQUESTED_BY" | "INVALID_WORK_ITEM_ID",
+  label: string,
+): string {
   const normalized = normalizeSupportTriageId(value);
   if (!normalized) {
     throw new SupportTriageDomainError(code, `Invalid ${label}`, { [label]: value });
@@ -49,19 +53,21 @@ function normalizeCount(value: number | undefined, label: "triagedTicketCount" |
   return Math.floor(value);
 }
 
-function validateCompletionInput(input: CompleteTriageJobInput): { triagedCount: number | undefined; escalatedCount: number | undefined } {
+function validateCompletionInput(
+  input: CompleteTriageWorkItemInput,
+): { triagedCount: number | undefined; escalatedCount: number | undefined } {
   const triagedCount = normalizeCount(input.triagedTicketCount, "triagedTicketCount");
   const escalatedCount = normalizeCount(input.escalatedTicketCount, "escalatedTicketCount");
 
   if (input.succeeded && triagedCount === undefined) {
     throw new SupportTriageDomainError("INVALID_COMPLETION_INPUT", "triagedTicketCount is required when succeeded=true", {
-      jobId: input.jobId,
+      workItemId: input.workItemId,
     });
   }
 
   if (!input.succeeded && (!input.failureReason || input.failureReason.trim() === "")) {
     throw new SupportTriageDomainError("INVALID_COMPLETION_INPUT", "failureReason is required when succeeded=false", {
-      jobId: input.jobId,
+      workItemId: input.workItemId,
     });
   }
 
@@ -69,39 +75,43 @@ function validateCompletionInput(input: CompleteTriageJobInput): { triagedCount:
     throw new SupportTriageDomainError(
       "INVALID_COMPLETION_INPUT",
       "escalatedTicketCount cannot exceed triagedTicketCount",
-      { jobId: input.jobId },
+      { workItemId: input.workItemId },
     );
   }
 
   return { triagedCount, escalatedCount };
 }
 
-async function resolveJobOrThrow(store: TriageJobStore, jobId: string): Promise<TriageJob> {
-  const normalizedJobId = normalizeRequiredId(jobId, "INVALID_JOB_ID", "jobId");
-  const existing = await store.get(normalizedJobId);
+async function resolveWorkItemOrThrow(store: TriageWorkItemStore, workItemId: string): Promise<TriageWorkItem> {
+  const normalizedWorkItemId = normalizeRequiredId(workItemId, "INVALID_WORK_ITEM_ID", "workItemId");
+  const existing = await store.get(normalizedWorkItemId);
   if (!existing) {
-    throw new SupportTriageDomainError("JOB_NOT_FOUND", `Support triage job not found: ${normalizedJobId}`, {
-      jobId: normalizedJobId,
-    });
+    throw new SupportTriageDomainError(
+      "WORK_ITEM_NOT_FOUND",
+      `Support triage work item not found: ${normalizedWorkItemId}`,
+      {
+        workItemId: normalizedWorkItemId,
+      },
+    );
   }
   return existing;
 }
 
-export async function requestSupportTriageJob(
+export async function requestSupportTriageWorkItem(
   deps: SupportTriageServiceDeps,
-  input: RequestTriageJobInput,
-): Promise<{ job: TriageJob }> {
+  input: RequestTriageWorkItemInput,
+): Promise<{ workItem: TriageWorkItem }> {
   const queueId = normalizeRequiredId(input.queueId, "INVALID_QUEUE_ID", "queueId");
   const requestedBy = normalizeRequiredId(input.requestedBy, "INVALID_REQUESTED_BY", "requestedBy");
 
-  const generatedJobId = normalizeSupportTriageId(deps.generateJobId());
-  if (!generatedJobId) {
-    throw new SupportTriageDomainError("INVALID_JOB_ID", "Generated job id is invalid");
+  const generatedWorkItemId = normalizeSupportTriageId(deps.generateWorkItemId());
+  if (!generatedWorkItemId) {
+    throw new SupportTriageDomainError("INVALID_WORK_ITEM_ID", "Generated work item id is invalid");
   }
 
   const now = deps.now();
-  const job: TriageJob = {
-    jobId: generatedJobId,
+  const workItem: TriageWorkItem = {
+    workItemId: generatedWorkItemId,
     queueId,
     requestedBy,
     source: input.source ?? "manual",
@@ -110,46 +120,46 @@ export async function requestSupportTriageJob(
     updatedAt: now,
   };
 
-  await deps.store.save(job);
-  return { job };
+  await deps.store.save(workItem);
+  return { workItem };
 }
 
-export async function listSupportTriageJobs(
+export async function listSupportTriageWorkItems(
   deps: SupportTriageServiceDeps,
-  input: ListTriageJobsInput = {},
-): Promise<{ jobs: TriageJob[] }> {
-  const allJobs = await deps.store.list();
-  const filtered = input.status ? allJobs.filter((job) => job.status === input.status) : allJobs;
+  input: ListTriageWorkItemsInput = {},
+): Promise<{ workItems: TriageWorkItem[] }> {
+  const all = await deps.store.list();
+  const filtered = input.status ? all.filter((workItem) => workItem.status === input.status) : all;
 
   filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  return { jobs: filtered };
+  return { workItems: filtered };
 }
 
-export async function getSupportTriageJob(
+export async function getSupportTriageWorkItem(
   deps: SupportTriageServiceDeps,
-  input: { jobId: string },
-): Promise<{ job: TriageJob }> {
-  const job = await resolveJobOrThrow(deps.store, input.jobId);
-  return { job };
+  input: { workItemId: string },
+): Promise<{ workItem: TriageWorkItem }> {
+  const workItem = await resolveWorkItemOrThrow(deps.store, input.workItemId);
+  return { workItem };
 }
 
-export async function startSupportTriageJob(
+export async function startSupportTriageWorkItem(
   deps: SupportTriageServiceDeps,
-  input: { jobId: string },
-): Promise<{ job: TriageJob }> {
-  const current = await resolveJobOrThrow(deps.store, input.jobId);
-  const nextStatus: TriageJobStatus = "running";
+  input: { workItemId: string },
+): Promise<{ workItem: TriageWorkItem }> {
+  const current = await resolveWorkItemOrThrow(deps.store, input.workItemId);
+  const nextStatus: TriageWorkItemStatus = "running";
 
-  if (!canTransitionTriageJobStatus(current.status, nextStatus)) {
+  if (!canTransitionTriageWorkItemStatus(current.status, nextStatus)) {
     throw new SupportTriageDomainError("INVALID_STATUS_TRANSITION", `Cannot transition ${current.status} -> ${nextStatus}`, {
-      jobId: current.jobId,
+      workItemId: current.workItemId,
       from: current.status,
       to: nextStatus,
     });
   }
 
   const startedAt = deps.now();
-  const updated: TriageJob = {
+  const updated: TriageWorkItem = {
     ...current,
     status: nextStatus,
     updatedAt: startedAt,
@@ -163,35 +173,35 @@ export async function startSupportTriageJob(
   };
 
   await deps.store.save(updated);
-  return { job: updated };
+  return { workItem: updated };
 }
 
-export async function completeSupportTriageJob(
+export async function completeSupportTriageWorkItem(
   deps: SupportTriageServiceDeps,
-  input: CompleteTriageJobInput,
-): Promise<{ job: TriageJob }> {
+  input: CompleteTriageWorkItemInput,
+): Promise<{ workItem: TriageWorkItem }> {
   const { triagedCount, escalatedCount } = validateCompletionInput(input);
 
-  const current = await resolveJobOrThrow(deps.store, input.jobId);
-  const nextStatus: TriageJobStatus = input.succeeded ? "completed" : "failed";
+  const current = await resolveWorkItemOrThrow(deps.store, input.workItemId);
+  const nextStatus: TriageWorkItemStatus = input.succeeded ? "completed" : "failed";
 
-  if (!canTransitionTriageJobStatus(current.status, nextStatus)) {
+  if (!canTransitionTriageWorkItemStatus(current.status, nextStatus)) {
     throw new SupportTriageDomainError("INVALID_STATUS_TRANSITION", `Cannot transition ${current.status} -> ${nextStatus}`, {
-      jobId: current.jobId,
+      workItemId: current.workItemId,
       from: current.status,
       to: nextStatus,
     });
   }
 
-  if (isTerminalTriageJobStatus(current.status)) {
-    throw new SupportTriageDomainError("INVALID_STATUS_TRANSITION", `Job ${current.jobId} is already terminal`, {
-      jobId: current.jobId,
+  if (isTerminalTriageWorkItemStatus(current.status)) {
+    throw new SupportTriageDomainError("INVALID_STATUS_TRANSITION", `Work item ${current.workItemId} is already terminal`, {
+      workItemId: current.workItemId,
       status: current.status,
     });
   }
 
   const terminalAt = deps.now();
-  const updated: TriageJob = input.succeeded
+  const updated: TriageWorkItem = input.succeeded
     ? {
         ...current,
         status: "completed",
@@ -216,5 +226,5 @@ export async function completeSupportTriageJob(
       };
 
   await deps.store.save(updated);
-  return { job: updated };
+  return { workItem: updated };
 }

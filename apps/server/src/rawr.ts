@@ -5,7 +5,6 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { rawrHqManifest } from "../../../rawr.hq";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
-import { createSupportTriageInternalClient } from "@rawr/support-triage";
 import type { AnyElysia } from "./plugins";
 import { createCoordinationRuntimeAdapter } from "./coordination";
 import { registerOrpcRoutes } from "./orpc";
@@ -207,7 +206,13 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
 
   app.get("/rawr/plugins/web/:dirName", async ({ params }) => {
-    const dirName = String((params as any).dirName ?? "");
+    const dirName =
+      typeof params === "object" &&
+      params !== null &&
+      "dirName" in params &&
+      typeof (params as { dirName?: unknown }).dirName === "string"
+        ? (params as { dirName: string }).dirName
+        : "";
     if (!isSafeDirName(dirName)) return new Response("not found", { status: 404 });
 
     const pluginRoot = path.join(authorityRepoRoot, "plugins", "web", dirName);
@@ -275,7 +280,9 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
         return new Response("not found", { status: 404 });
       }
 
-      const context = createWorkflowBoundaryContext(req, boundaryContextDeps);
+      const context = {
+        ...rawrHqManifest.workflows.enrichContext(createWorkflowBoundaryContext(req, boundaryContextDeps)),
+      };
       const result = await workflowOpenApiHandler.handle(req, {
         prefix: WORKFLOW_BASE_PATH,
         context,
@@ -289,12 +296,7 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     ...boundaryContextDeps,
     router: rawrHqManifest.orpc.router,
     workflowTriggerRouter: rawrHqManifest.workflows.triggerRouter,
-    contextFactory: (request, deps) => ({
-      ...createRequestScopedBoundaryContext(request, deps),
-      supportTriage: createSupportTriageInternalClient({
-        deps: rawrHqManifest.fixtures.supportTriage.resolveServiceDeps(deps.repoRoot),
-      }),
-    }),
+    contextFactory: (request, deps) => rawrHqManifest.orpc.enrichContext(createRequestScopedBoundaryContext(request, deps)),
   });
 
   return app;
