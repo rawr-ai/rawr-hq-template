@@ -51,20 +51,6 @@ Use Nx generators and Nx task execution when the relevant official Nx skill indi
 - **Nx CLI + official Nx skills**: workspace/project truth, targets, generators, task execution conventions
 - **AGENTS lattice**: repo routing, ownership boundaries, template-vs-personal destination rules, domain-specific guardrails
 - **Narsil**: source-level code intelligence, symbol lookups, references, call paths, semantic/code search
-- **Nx MCP**: supplementary connectivity tooling only
-
-Do not treat Nx MCP as the primary local workspace-analysis surface now that the official Nx skills are installed.
-
-## MCP Posture
-
-Register Nx MCP in client config homes, not in the repo.
-
-Examples:
-
-```bash
-codex mcp add nx -- bunx nx mcp --disableTelemetry
-claude mcp add -s local nx -- bunx nx mcp --disableTelemetry
-```
 
 Do not add repo-local `.mcp.json` here.
 
@@ -84,7 +70,9 @@ That seam should make later AGENTS generation/autostub work easier, but this rep
 
 ## Deferred
 
-Hosted or single-instance Nx MCP over HTTP/SSE is intentionally deferred.
+Hosted or managed Nx connectivity is intentionally deferred.
+
+If we revisit it, do it as a hosted/managed service rather than per-client local stdio wiring.
 
 Revisit it only if there is real leverage from:
 - shared multi-client connectivity

@@ -45,7 +45,7 @@
 - `plugins/AGENTS.md` for plugin package contracts and enablement.
 - `scripts/AGENTS.md` for hook/script conventions.
 - `docs/AGENTS.md` for canonical documentation entrypoints.
-- `docs/process/NX_AGENT_WORKFLOW.md` for the integrated Nx CLI / Nx skills / Nx MCP / Narsil posture.
+- `docs/process/NX_AGENT_WORKFLOW.md` for the integrated Nx CLI / Nx skills / Narsil posture, plus the deferred note on a future hosted Nx integration.
 
 ## Process Runbooks
 

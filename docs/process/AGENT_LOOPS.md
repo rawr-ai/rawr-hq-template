@@ -55,12 +55,8 @@ This document defines repeatable, low-drift loops an AI agent can follow to ship
   - `bunx nx show projects`
   - `bunx nx show project <project-name> --json`
   - `bunx nx graph`
-- Register `Nx MCP` in your real client config home, not in the repo:
-  - `codex mcp add nx -- bunx nx mcp --disableTelemetry`
-  - `claude mcp add -s local nx -- bunx nx mcp --disableTelemetry`
-- In this setup, that means `~/.codex-rawr/config.toml` for Codex and `~/.claude.json` for Claude Code local/user scope.
-- Use `Nx MCP` as supplementary connectivity tooling; do not depend on it for the primary workspace-analysis path.
 - Keep Narsil as the primary code-intel MCP; use it for repo search and semantic/source-level investigation.
+- Nx MCP is intentionally deferred. If it returns later, it should come back as a hosted/managed service, not repo guidance for per-client stdio setup.
 - Canonical integrated guidance: `docs/process/NX_AGENT_WORKFLOW.md`.
 
 ### Journaling expectation
