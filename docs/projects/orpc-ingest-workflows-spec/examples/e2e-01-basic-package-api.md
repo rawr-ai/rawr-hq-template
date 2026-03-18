@@ -105,13 +105,13 @@ flowchart LR
 ### 4.1 TypeBox Standard Schema adapter (shared contract bridge)
 
 ```text
-packages/orpc-standards/src/
+packages/hq-sdk/src/
 ├── typebox-standard-schema.ts
 └── index.ts
 ```
 
 ```ts
-// packages/orpc-standards/src/typebox-standard-schema.ts
+// packages/hq-sdk/src/typebox-standard-schema.ts
 import type { Schema, SchemaIssue } from "@orpc/contract";
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
@@ -237,7 +237,7 @@ export type InvoicingProcedureContext = { deps: InvoicingServiceDeps };
 // packages/invoicing/src/procedures/start.ts
 import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { startInvoice } from "../service/lifecycle";
 import type { InvoicingProcedureContext } from "../context";
 
@@ -265,7 +265,7 @@ export const startProcedure = o
 // packages/invoicing/src/procedures/get-status.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { StatusSchema } from "../domain/status";
 import { getInvoiceStatus } from "../service/status";
 import type { InvoicingProcedureContext } from "../context";
@@ -318,7 +318,7 @@ plugins/api/invoicing/src/
 // plugins/api/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 
 export const invoicingApiContract = oc.router({
   startInvoiceProcessing: oc
@@ -527,7 +527,7 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 
 ## 5) Wiring steps (host -> composition -> plugin/package -> runtime)
 
-1. Build TypeBox adapter once (`packages/orpc-standards/src/typebox-standard-schema.ts`) and reuse it across package and boundary contracts.
+1. Build TypeBox adapter once (`packages/hq-sdk/src/typebox-standard-schema.ts`) and reuse it across package and boundary contracts.
 2. Build internal package layers under `packages/invoicing/src/*`:
    - domain (`run.ts`, `status.ts`) -> service -> `context.ts` -> procedures -> router -> client.
 3. Build API plugin under `plugins/api/invoicing/src/*`:

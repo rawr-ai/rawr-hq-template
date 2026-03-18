@@ -1,23 +1,23 @@
 # `@rawr/support-example`
 
-`@rawr/support-example` models the **support-example** capability with explicit module authority:
+`@rawr/support-example` models the **support-example** capability with a router-first authority chain:
 
 - `domain/`: business concepts and invariants (`TriageWorkItem`, status model)
-- `contract/`: oRPC contract surface organized by caller navigation (`triage/items/{request,list,get,start,complete}.ts`)
-- `service/`: lifecycle logic, persistence interfaces, and procedure handlers
-- `client/`: exported in-process router shape + client type
+- `modules/`: procedure implementations + module router composition (`triage/items/*`, `triage/triage.ts`)
+- `router.ts`: source of truth for callable shape + handlers (`supportExample.triage.items.*`)
+- `contract.ts`: derived contract view from router (no duplicate contract tree)
 
-## Router-first internal calling
+## Public exports
 
-This package exports `supportExampleClientProcedures` and `SupportExampleClient` with nested calls:
+Package boundary exports are intentionally minimal:
 
-- `client.triage.items.request(...)`
-- `client.triage.items.list(...)`
-- `client.triage.items.get(...)`
-- `client.triage.items.start(...)`
-- `client.triage.items.complete(...)`
+- `@rawr/support-example/router`
+- `@rawr/support-example/contract`
 
-Host/plugin composition creates in-process clients via `createRouterClient(...)` with caller-owned context.
+Callers create an in-process client where needed:
+
+- `createRouterClient(supportExampleRouter, { context })`
+- then call `client.triage.items.request(...)` / `list(...)` / `get(...)` / `start(...)` / `complete(...)`
 
 ## Hypothetical vs Production
 

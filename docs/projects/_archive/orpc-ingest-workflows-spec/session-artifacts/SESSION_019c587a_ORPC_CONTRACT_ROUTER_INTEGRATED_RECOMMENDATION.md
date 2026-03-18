@@ -123,7 +123,7 @@ Role: internal RPC boundary for the package (schema + handler composition).
 // packages/invoice-processing/src/procedures/start.ts
 import { os, ORPCError } from "@orpc/server";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { startInvoice } from "../service";
 import type { InvoiceProcedureContext } from "../router";
 
@@ -145,7 +145,7 @@ export const startProcedure = o
 // packages/invoice-processing/src/procedures/get-status.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { getInvoiceStatus } from "../service";
 import type { InvoiceProcedureContext } from "../router";
 
@@ -161,7 +161,7 @@ export const getStatusProcedure = o
 // packages/invoice-processing/src/procedures/cancel.ts
 import { os } from "@orpc/server";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 import { cancelInvoice } from "../service";
 import type { InvoiceProcedureContext } from "../router";
 
@@ -249,7 +249,7 @@ plugins/api/invoice-api/src/
 // plugins/api/invoice-api/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 
 export const invoiceApiContract = oc.router({
   startInvoiceProcessing: oc
@@ -368,7 +368,7 @@ plugins/workflows/invoice-workflows/src/
 // plugins/workflows/invoice-workflows/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 
 export const invoiceWorkflowTriggerContract = oc.router({
   triggerInvoiceReconciliation: oc
@@ -455,12 +455,12 @@ These fixtures are required by the recommendation. Full internals remain in the 
 ### 1) TypeBox -> Standard Schema adapter package
 
 ```ts
-// packages/orpc-standards/src/index.ts
+// packages/hq-sdk/src/index.ts
 export { typeBoxStandardSchema } from "./typebox-standard-schema";
 ```
 
 ```ts
-// packages/orpc-standards/src/typebox-standard-schema.ts
+// packages/hq-sdk/src/typebox-standard-schema.ts
 // Minimal fixture shape; full implementation stays in the posture spec.
 import type { Schema, SchemaIssue } from "@orpc/contract";
 import type { Static, TSchema } from "typebox";

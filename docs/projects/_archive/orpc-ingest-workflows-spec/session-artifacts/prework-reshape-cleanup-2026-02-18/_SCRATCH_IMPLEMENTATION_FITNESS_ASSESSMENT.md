@@ -386,7 +386,7 @@ Is this pattern correct?
 
 **TypeBox skill truth:**
 - `std()` is a wrapper function that adapts TypeBox to Standard Schema
-- `schema()` would be a helper function defined in `packages/orpc-standards/src/`
+- `schema()` would be a helper function defined in `packages/hq-sdk/src/`
 - This is shorthand notation, not built-in TypeBox
 
 **Spec accuracy:** ✓ Correct, but the spec defines this notation locally and uses it consistently. E2E examples show both inline and the `std()` wrapper. This is a good convention.

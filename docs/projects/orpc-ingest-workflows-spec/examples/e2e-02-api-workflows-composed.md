@@ -199,7 +199,7 @@ export type InvoicingProcedureContext = {
 // packages/invoicing/src/procedures/queue-reconciliation.ts
 import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
-import { schema, typeBoxStandardSchema as std } from "@rawr/orpc-standards";
+import { schema, typeBoxStandardSchema as std } from "@rawr/hq-sdk";
 import { queueReconciliation } from "../service/lifecycle";
 import type { InvoicingProcedureContext } from "../context";
 
@@ -268,7 +268,7 @@ plugins/api/invoicing/src/
 // plugins/api/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 
 export const invoicingApiContract = oc.router({
   startInvoiceProcessing: oc
@@ -349,7 +349,7 @@ plugins/workflows/invoicing/src/
 // plugins/workflows/invoicing/src/contract.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { schema } from "@rawr/orpc-standards";
+import { schema } from "@rawr/hq-sdk";
 
 export const invoicingWorkflowTriggerContract = oc.router({
   triggerReconciliation: oc
@@ -639,7 +639,7 @@ rawr.hq.ts
 apps/server/src/
   rawr.ts
   orpc/register-routes.ts
-packages/orpc-standards/src/
+packages/hq-sdk/src/
   typebox-standard-schema.ts
   index.ts
 packages/invoicing/src/
