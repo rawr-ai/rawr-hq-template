@@ -81,7 +81,10 @@ describe("workflow trigger/status over /rpc (without OpenAPI leakage)", () => {
         inngestClient: fakeInngest,
         router: rawrHqManifest.orpc.router,
         workflowTriggerRouter: rawrHqManifest.workflows.triggerRouter,
-        contextFactory: (request, deps) => rawrHqManifest.orpc.enrichContext(createRequestScopedBoundaryContext(request, deps)),
+        contextFactory: (request, deps) =>
+          rawrHqManifest.workflows.enrichContext(
+            rawrHqManifest.orpc.enrichContext(createRequestScopedBoundaryContext(request, deps)),
+          ),
       });
 
       const triggerRes = await app.handle(

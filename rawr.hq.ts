@@ -5,10 +5,10 @@ import { createHqRuntimeRouter } from "@rawr/core/orpc";
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import { supportExampleRouter } from "@rawr/support-example/router";
 import { Inngest } from "inngest";
+import { createHostLoggerAdapter } from "./apps/server/src/logging";
 import { registerExampleTodoApiPlugin } from "./plugins/api/example-todo";
 import { createSupportExampleInngestFunctions, registerSupportExampleWorkflowPlugin } from "./plugins/workflows/support-example";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "./services/example-todo/src/orpc/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "./services/example-todo/src/orpc/host-adapters/logger/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "./services/example-todo/src/orpc/host-adapters/sql/embedded-in-memory";
 
 // Keep capability fixture state stable per repo root across requests in local dev/test runs.
@@ -25,6 +25,7 @@ type SupportExampleServiceDeps = {
 };
 const supportExampleDepsByRepoRoot = new Map<string, SupportExampleServiceDeps>();
 const exampleTodoClientsByRepoRoot = new Map<string, ExampleTodoClient>();
+const exampleTodoHostLogger = createHostLoggerAdapter();
 
 function createInMemoryTriageWorkItemStore(): SupportExampleServiceDeps["store"] {
   const workItems = new Map<string, SupportExampleWorkItem>();
@@ -84,7 +85,7 @@ function createExampleTodoBoundary() {
           return new Date(Date.UTC(2026, 1, 25, 0, 0, tick)).toISOString();
         },
       },
-      logger: createEmbeddedPlaceholderLoggerAdapter(),
+      logger: exampleTodoHostLogger,
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     },
     scope: {

@@ -10,6 +10,7 @@ import type { AnyContractRouter } from "@orpc/contract";
 import type { Router } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
+import { createHostLoggingContext, withHostLoggingContext, withHostLoggingSpanContext } from "./logging";
 import type { AnyElysia } from "./plugins";
 import {
   assertHeavyMiddlewareDedupeMarkers,
@@ -114,7 +115,7 @@ async function withRouteSpan(
     }
 
     try {
-      const response = await fn();
+      const response = await withHostLoggingSpanContext(span.spanContext(), fn);
       span.setAttribute("http.response.status_code", response.status);
       if (response.status >= 400) {
         span.setStatus({ code: SpanStatusCode.ERROR });
@@ -164,45 +165,48 @@ async function handleRpcRoute<
     const context = contextFactory(request, contextDeps);
     assertRpcAuthDedupeMarker(context);
     onContextCreated?.(context);
+    const loggingContext = createHostLoggingContext({
+      request,
+      repoRoot: context.repoRoot,
+      requestId: context.requestId,
+      correlationId: context.correlationId,
+      surface: "rpc",
+    });
 
     // The oRPC RPC handler may consume the request body before it can decide that a procedure is unmatched.
     // Clone upfront so we can safely fall back to the workflow trigger router without double-consuming the stream.
     const workflowFallbackRequest = workflowTriggerRpcHandler ? request.clone() : undefined;
 
-    const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
-    if (result.matched) {
-      recordRoutedRequestMetrics({
-        surface: "rpc",
-        statusCode: result.response.status,
-        durationMs: Date.now() - startedAt,
-        attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": "rpc" },
-      });
-      return result.response;
-    }
+    const routedResponse = await withHostLoggingContext(loggingContext, async () => {
+      const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
+      if (result.matched) {
+        return {
+          response: result.response,
+          router: "rpc" as const,
+        };
+      }
 
-    if (!workflowTriggerRpcHandler || !workflowFallbackRequest) {
-      const response = new Response("not found", { status: 404 });
-      recordRoutedRequestMetrics({
-        surface: "rpc",
-        statusCode: response.status,
-        durationMs: Date.now() - startedAt,
-        attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": "rpc" },
-      });
-      return response;
-    }
+      if (!workflowTriggerRpcHandler || !workflowFallbackRequest) {
+        return {
+          response: new Response("not found", { status: 404 }),
+          router: "rpc" as const,
+        };
+      }
 
-    const workflowResult = await workflowTriggerRpcHandler.handle(workflowFallbackRequest, { prefix: "/rpc", context });
-    const response = workflowResult.matched ? workflowResult.response : new Response("not found", { status: 404 });
+      const workflowResult = await workflowTriggerRpcHandler.handle(workflowFallbackRequest, { prefix: "/rpc", context });
+      return {
+        response: workflowResult.matched ? workflowResult.response : new Response("not found", { status: 404 }),
+        router: workflowResult.matched ? "workflow-trigger" as const : "rpc" as const,
+      };
+    });
+
     recordRoutedRequestMetrics({
       surface: "rpc",
-      statusCode: response.status,
+      statusCode: routedResponse.response.status,
       durationMs: Date.now() - startedAt,
-      attributes: {
-        "rawr.orpc.authorized": true,
-        "rawr.orpc.router": workflowResult.matched ? "workflow-trigger" : "rpc",
-      },
+      attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": routedResponse.router },
     });
-    return response;
+    return routedResponse.response;
   }).catch((error) => {
     recordRoutedRequestMetrics({
       surface: "rpc",
@@ -232,8 +236,21 @@ async function handleOpenApiRoute<
   }, async () => {
     const context = contextFactory(request, contextDeps);
     onContextCreated?.(context);
-    const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
-    const response = result.matched ? result.response : new Response("not found", { status: 404 });
+    const loggingContext = createHostLoggingContext({
+      request,
+      repoRoot: context.repoRoot,
+      requestId: context.requestId,
+      correlationId: context.correlationId,
+      surface: "openapi",
+    });
+
+    const response = await withHostLoggingContext(
+      loggingContext,
+      async () => {
+        const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
+        return result.matched ? result.response : new Response("not found", { status: 404 });
+      },
+    );
     recordRoutedRequestMetrics({
       surface: "openapi",
       statusCode: response.status,
