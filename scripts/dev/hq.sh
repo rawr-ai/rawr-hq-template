@@ -278,21 +278,26 @@ wait_for_http() {
   return 1
 }
 
-detect_browser_app() {
-  if [[ -n "${RAWR_HQ_BROWSER_APP:-}" ]]; then
-    printf '%s\n' "${RAWR_HQ_BROWSER_APP}"
+detect_default_browser_bundle_id() {
+  if [[ -n "${RAWR_HQ_BROWSER_BUNDLE_ID:-}" ]]; then
+    printf '%s\n' "${RAWR_HQ_BROWSER_BUNDLE_ID}"
     return 0
   fi
 
-  local candidate
-  for candidate in "Google Chrome" "Arc" "Brave Browser" "Safari"; do
-    if [[ -d "/Applications/${candidate}.app" ]]; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-  done
+  local launch_services_plist="${HOME}/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist"
+  if [[ ! -f "$launch_services_plist" ]] || ! command -v plutil >/dev/null 2>&1 || ! command -v python >/dev/null 2>&1; then
+    return 1
+  fi
 
-  return 1
+  plutil -convert json -o - "$launch_services_plist" 2>/dev/null \
+    | python -c 'import json, sys
+obj = json.load(sys.stdin)
+for entry in obj.get("LSHandlers", []):
+    if entry.get("LSHandlerURLScheme") in ("http", "https"):
+        bundle_id = entry.get("LSHandlerRoleAll")
+        if bundle_id:
+            print(bundle_id)
+            break'
 }
 
 open_urls_as_browser_session() {
@@ -300,58 +305,32 @@ open_urls_as_browser_session() {
     return 0
   fi
 
-  if command -v osascript >/dev/null 2>&1; then
-    local browser_app=""
-    browser_app="$(detect_browser_app || true)"
-    if [[ -n "$browser_app" ]]; then
-      case "$browser_app" in
-        "Google Chrome"|"Arc"|"Brave Browser")
-          BROWSER_APP="$browser_app" osascript - "$@" <<'APPLESCRIPT' >/dev/null 2>&1 || true
-on run argv
-  set browserApp to system attribute "BROWSER_APP"
-  tell application browserApp
-    activate
-    set newWindow to make new window
-    repeat with targetUrl in argv
-      tell newWindow to make new tab with properties {URL:(targetUrl as text)}
-    end repeat
-    try
-      close tab 1 of newWindow
-    end try
-  end tell
-end run
-APPLESCRIPT
+  if command -v open >/dev/null 2>&1; then
+    if [[ -n "${RAWR_HQ_BROWSER_APP:-}" ]]; then
+      # Prefer a single browser invocation so operational surfaces land together.
+      if open -a "${RAWR_HQ_BROWSER_APP}" "$@" >/dev/null 2>&1; then
+        return 0
+      fi
+      log "warn: unable to open HQ surfaces with browser app '${RAWR_HQ_BROWSER_APP}', falling back to system opener"
+    else
+      local browser_bundle_id=""
+      browser_bundle_id="$(detect_default_browser_bundle_id || true)"
+      if [[ -n "$browser_bundle_id" ]]; then
+        # Use the system default browser so HQ does not unexpectedly force Chrome.
+        if open -b "$browser_bundle_id" "$@" >/dev/null 2>&1; then
           return 0
-          ;;
-        "Safari")
-          osascript - "$@" <<'APPLESCRIPT' >/dev/null 2>&1 || true
-on run argv
-  tell application "Safari"
-    activate
-    make new document
-    repeat with targetUrl in argv
-      tell front window to make new tab with properties {URL:(targetUrl as text)}
-    end repeat
-    try
-      if (count of tabs of front window) > 1 then
-        close tab 1 of front window
-      end if
-    end try
-  end tell
-end run
-APPLESCRIPT
-          return 0
-          ;;
-      esac
+        fi
+        log "warn: unable to open HQ surfaces with default browser bundle '${browser_bundle_id}', falling back to system opener"
+      fi
+    fi
+
+    if open "$@" >/dev/null 2>&1; then
+      return 0
     fi
   fi
 
   local url
   for url in "$@"; do
-    if command -v open >/dev/null 2>&1; then
-      open "$url" >/dev/null 2>&1 || true
-      continue
-    fi
     if command -v xdg-open >/dev/null 2>&1; then
       xdg-open "$url" >/dev/null 2>&1 || true
     fi
