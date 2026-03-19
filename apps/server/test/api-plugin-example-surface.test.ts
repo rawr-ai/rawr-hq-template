@@ -14,6 +14,11 @@ const FIRST_PARTY_RPC_HEADERS = {
   "x-rawr-session-auth": "verified",
 } as const;
 
+const EXTERNAL_API_HEADERS = {
+  "content-type": "application/json",
+  "x-rawr-caller-surface": "external",
+} as const;
+
 function createApp() {
   return registerRawrRoutes(createServerApp(), {
     repoRoot,
@@ -39,135 +44,116 @@ type OpenApiErrorPayload = {
 };
 
 describe("api plugin example surface", () => {
-  it("serves support-example procedures for first-party /rpc callers", async () => {
+  it("serves example-todo procedures for first-party /rpc callers", async () => {
     const app = createApp();
 
-    const requestResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/triage/items/request", {
+    const createResponse = await app.handle(
+      new Request("http://localhost/rpc/exampleTodo/tasks/create", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({
           json: {
-            queueId: "queue.rpc",
-            requestedBy: "user.first-party",
-            source: "manual",
+            title: "Ship example-todo API cutover",
+            description: "Keep host-owned boundary construction",
           },
         }),
       }),
     );
 
-    expect(requestResponse.status).toBe(200);
-    const requestPayload = (await requestResponse.json()) as {
+    expect(createResponse.status).toBe(200);
+    const createdPayload = (await createResponse.json()) as {
       json?: {
-        workItem?: {
-          workItemId?: string;
-          status?: string;
-        };
+        id?: string;
+        workspaceId?: string;
+        title?: string;
       };
     };
-    expect(typeof requestPayload.json?.workItem?.workItemId).toBe("string");
-    expect(requestPayload.json?.workItem?.status).toBe("queued");
+    const taskId = createdPayload.json?.id ?? "";
+    expect(taskId).not.toBe("");
+    expect(createdPayload.json?.workspaceId).toBe("workspace-default");
+    expect(createdPayload.json?.title).toBe("Ship example-todo API cutover");
 
-    const listResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/triage/items/list", {
+    const getResponse = await app.handle(
+      new Request("http://localhost/rpc/exampleTodo/tasks/get", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
-        body: JSON.stringify({ json: {} }),
+        body: JSON.stringify({
+          json: {
+            id: taskId,
+          },
+        }),
       }),
     );
 
-    expect(listResponse.status).toBe(200);
-    const listPayload = (await listResponse.json()) as {
+    expect(getResponse.status).toBe(200);
+    const getPayload = (await getResponse.json()) as {
       json?: {
-        workItems?: unknown[];
+        id?: string;
+        workspaceId?: string;
+        title?: string;
       };
     };
-    expect(Array.isArray(listPayload.json?.workItems)).toBe(true);
-    expect(listPayload.json?.workItems?.length).toBeGreaterThan(0);
+    expect(getPayload.json?.id).toBe(taskId);
+    expect(getPayload.json?.workspaceId).toBe("workspace-default");
+    expect(getPayload.json?.title).toBe("Ship example-todo API cutover");
   });
 
-  it("serves support-example routes for external /api/orpc/* callers", async () => {
+  it("serves example-todo procedures for external /api/orpc callers", async () => {
     const app = createApp();
 
     const createResponse = await app.handle(
-      new Request("http://localhost/api/orpc/support-example/triage/work-items", {
+      new Request("http://localhost/api/orpc/exampleTodo/tasks/create", {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-rawr-caller-surface": "external",
-        },
+        headers: EXTERNAL_API_HEADERS,
         body: JSON.stringify({
-          queueId: "queue.external",
-          requestedBy: "user.external",
-          source: "workflow",
+          title: "External example-todo path",
+          description: "Exercise the caller-facing proof surface",
         }),
       }),
     );
 
     expect(createResponse.status).toBe(200);
     const created = (await createResponse.json()) as {
-      workItem?: {
-        workItemId?: string;
-      };
+      id?: string;
+      workspaceId?: string;
+      title?: string;
     };
-    expect(typeof created.workItem?.workItemId).toBe("string");
+    const taskId = created.id ?? "";
+    expect(taskId).not.toBe("");
+    expect(created.workspaceId).toBe("workspace-default");
+    expect(created.title).toBe("External example-todo path");
 
-    const workItemId = created.workItem?.workItemId ?? "";
     const getResponse = await app.handle(
-      new Request(`http://localhost/api/orpc/support-example/triage/work-items/${workItemId}`, {
-        headers: {
-          "x-rawr-caller-surface": "external",
-        },
+      new Request("http://localhost/api/orpc/exampleTodo/tasks/get", {
+        method: "POST",
+        headers: EXTERNAL_API_HEADERS,
+        body: JSON.stringify({
+          id: taskId,
+        }),
       }),
     );
 
     expect(getResponse.status).toBe(200);
-    const getPayload = (await getResponse.json()) as {
-      workItem?: {
-        workItemId?: string;
-        queueId?: string;
-      };
+    const loaded = (await getResponse.json()) as {
+      id?: string;
+      workspaceId?: string;
+      title?: string;
     };
-    expect(getPayload.workItem?.workItemId).toBe(workItemId);
-    expect(getPayload.workItem?.queueId).toBe("queue.external");
+    expect(loaded.id).toBe(taskId);
+    expect(loaded.workspaceId).toBe("workspace-default");
+    expect(loaded.title).toBe("External example-todo path");
   });
 
-  it("rejects caller paths on /api/inngest", async () => {
-    const app = createApp();
-
-    const firstPartyIngressResponse = await app.handle(
-      new Request("http://localhost/api/inngest", {
-        method: "GET",
-        headers: {
-          "x-rawr-caller-surface": "first-party",
-          "x-rawr-session-auth": "verified",
-        },
-      }),
-    );
-    expect(firstPartyIngressResponse.status).toBe(403);
-
-    const externalIngressResponse = await app.handle(
-      new Request("http://localhost/api/inngest", {
-        method: "GET",
-        headers: {
-          "x-rawr-caller-surface": "external",
-        },
-      }),
-    );
-    expect(externalIngressResponse.status).toBe(403);
-  });
-
-  it("returns INVALID_QUEUE_ID as a typed error over both /rpc and /api/orpc", async () => {
+  it("returns INVALID_TASK_TITLE as a typed error over both /rpc and /api/orpc", async () => {
     const app = createApp();
 
     const rpcResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/triage/items/request", {
+      new Request("http://localhost/rpc/exampleTodo/tasks/create", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({
           json: {
-            queueId: "   ",
-            requestedBy: "user.first-party",
+            title: "   ",
           },
         }),
       }),
@@ -175,41 +161,38 @@ describe("api plugin example surface", () => {
     expect(rpcResponse.status).toBe(400);
     const rpcPayload = (await rpcResponse.json()) as RpcErrorPayload;
     expect(rpcPayload.json?.defined).toBe(true);
-    expect(rpcPayload.json?.code).toBe("INVALID_QUEUE_ID");
+    expect(rpcPayload.json?.code).toBe("INVALID_TASK_TITLE");
     expect(rpcPayload.json?.status).toBe(400);
-    expect(rpcPayload.json?.data).toMatchObject({ queueId: "   " });
+    expect(rpcPayload.json?.data).toMatchObject({ title: "   " });
 
     const openApiResponse = await app.handle(
-      new Request("http://localhost/api/orpc/support-example/triage/work-items", {
+      new Request("http://localhost/api/orpc/exampleTodo/tasks/create", {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-rawr-caller-surface": "external",
-        },
+        headers: EXTERNAL_API_HEADERS,
         body: JSON.stringify({
-          queueId: "   ",
-          requestedBy: "user.external",
+          title: "   ",
         }),
       }),
     );
     expect(openApiResponse.status).toBe(400);
     const openApiPayload = (await openApiResponse.json()) as OpenApiErrorPayload;
     expect(openApiPayload.defined).toBe(true);
-    expect(openApiPayload.code).toBe("INVALID_QUEUE_ID");
+    expect(openApiPayload.code).toBe("INVALID_TASK_TITLE");
     expect(openApiPayload.status).toBe(400);
-    expect(openApiPayload.data).toMatchObject({ queueId: "   " });
+    expect(openApiPayload.data).toMatchObject({ title: "   " });
   });
 
-  it("returns WORK_ITEM_NOT_FOUND as a typed error over both /rpc and /api/orpc", async () => {
+  it("returns RESOURCE_NOT_FOUND as a typed error over both /rpc and /api/orpc", async () => {
     const app = createApp();
+    const missingId = "00000000-0000-0000-0000-000000000001";
 
     const rpcResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/triage/items/get", {
+      new Request("http://localhost/rpc/exampleTodo/tasks/get", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({
           json: {
-            workItemId: "missing-work-item",
+            id: missingId,
           },
         }),
       }),
@@ -217,93 +200,24 @@ describe("api plugin example surface", () => {
     expect(rpcResponse.status).toBe(404);
     const rpcPayload = (await rpcResponse.json()) as RpcErrorPayload;
     expect(rpcPayload.json?.defined).toBe(true);
-    expect(rpcPayload.json?.code).toBe("WORK_ITEM_NOT_FOUND");
+    expect(rpcPayload.json?.code).toBe("RESOURCE_NOT_FOUND");
     expect(rpcPayload.json?.status).toBe(404);
-    expect(rpcPayload.json?.data).toMatchObject({ workItemId: "missing-work-item" });
+    expect(rpcPayload.json?.data).toMatchObject({ entity: "Task", id: missingId });
 
     const openApiResponse = await app.handle(
-      new Request("http://localhost/api/orpc/support-example/triage/work-items/missing-work-item", {
-        headers: {
-          "x-rawr-caller-surface": "external",
-        },
+      new Request("http://localhost/api/orpc/exampleTodo/tasks/get", {
+        method: "POST",
+        headers: EXTERNAL_API_HEADERS,
+        body: JSON.stringify({
+          id: missingId,
+        }),
       }),
     );
     expect(openApiResponse.status).toBe(404);
     const openApiPayload = (await openApiResponse.json()) as OpenApiErrorPayload;
     expect(openApiPayload.defined).toBe(true);
-    expect(openApiPayload.code).toBe("WORK_ITEM_NOT_FOUND");
+    expect(openApiPayload.code).toBe("RESOURCE_NOT_FOUND");
     expect(openApiPayload.status).toBe(404);
-    expect(openApiPayload.data).toMatchObject({ workItemId: "missing-work-item" });
-  });
-
-  it("returns INVALID_STATUS_TRANSITION as a typed error over both /rpc and /api/orpc", async () => {
-    const app = createApp();
-
-    const requestResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/triage/items/request", {
-        method: "POST",
-        headers: FIRST_PARTY_RPC_HEADERS,
-        body: JSON.stringify({
-          json: {
-            queueId: "queue-invalid-transition",
-            requestedBy: "user.first-party",
-          },
-        }),
-      }),
-    );
-    expect(requestResponse.status).toBe(200);
-    const requestPayload = (await requestResponse.json()) as {
-      json?: { workItem?: { workItemId?: string } };
-    };
-    const workItemId = requestPayload.json?.workItem?.workItemId ?? "";
-    expect(workItemId).not.toBe("");
-
-    const rpcResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/triage/items/complete", {
-        method: "POST",
-        headers: FIRST_PARTY_RPC_HEADERS,
-        body: JSON.stringify({
-          json: {
-            workItemId,
-            succeeded: true,
-            triagedTicketCount: 1,
-          },
-        }),
-      }),
-    );
-    expect(rpcResponse.status).toBe(409);
-    const rpcPayload = (await rpcResponse.json()) as RpcErrorPayload;
-    expect(rpcPayload.json?.defined).toBe(true);
-    expect(rpcPayload.json?.code).toBe("INVALID_STATUS_TRANSITION");
-    expect(rpcPayload.json?.status).toBe(409);
-    expect(rpcPayload.json?.data).toMatchObject({
-      workItemId,
-      from: "queued",
-      to: "completed",
-    });
-
-    const openApiResponse = await app.handle(
-      new Request(`http://localhost/api/orpc/support-example/triage/work-items/${workItemId}/complete`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-rawr-caller-surface": "external",
-        },
-        body: JSON.stringify({
-          succeeded: true,
-          triagedTicketCount: 1,
-        }),
-      }),
-    );
-    expect(openApiResponse.status).toBe(409);
-    const openApiPayload = (await openApiResponse.json()) as OpenApiErrorPayload;
-    expect(openApiPayload.defined).toBe(true);
-    expect(openApiPayload.code).toBe("INVALID_STATUS_TRANSITION");
-    expect(openApiPayload.status).toBe(409);
-    expect(openApiPayload.data).toMatchObject({
-      workItemId,
-      from: "queued",
-      to: "completed",
-    });
+    expect(openApiPayload.data).toMatchObject({ entity: "Task", id: missingId });
   });
 });

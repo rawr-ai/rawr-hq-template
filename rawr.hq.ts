@@ -2,10 +2,14 @@ import { randomUUID } from "node:crypto";
 import { createRouterClient, type RouterClient } from "@orpc/server";
 import { createInngestServeHandler } from "@rawr/coordination-inngest";
 import { createHqRuntimeRouter } from "@rawr/core/orpc";
+import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import { supportExampleRouter } from "@rawr/support-example/router";
 import { Inngest } from "inngest";
-import { registerSupportExampleApiPlugin } from "./plugins/api/support-example";
+import { registerExampleTodoApiPlugin } from "./plugins/api/example-todo";
 import { createSupportExampleInngestFunctions, registerSupportExampleWorkflowPlugin } from "./plugins/workflows/support-example";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "./services/example-todo/src/orpc/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "./services/example-todo/src/orpc/host-adapters/logger/embedded-placeholder";
+import { createEmbeddedInMemoryDbPoolAdapter } from "./services/example-todo/src/orpc/host-adapters/sql/embedded-in-memory";
 
 // Keep capability fixture state stable per repo root across requests in local dev/test runs.
 type SupportExampleClient = RouterClient<typeof supportExampleRouter>;
@@ -20,6 +24,7 @@ type SupportExampleServiceDeps = {
   generateWorkItemId: () => string;
 };
 const supportExampleDepsByRepoRoot = new Map<string, SupportExampleServiceDeps>();
+const exampleTodoClientsByRepoRoot = new Map<string, ExampleTodoClient>();
 
 function createInMemoryTriageWorkItemStore(): SupportExampleServiceDeps["store"] {
   const workItems = new Map<string, SupportExampleWorkItem>();
@@ -67,7 +72,49 @@ function resolveSupportExampleClient(repoRoot: string): SupportExampleClient {
   });
 }
 
-function enrichSupportExampleContext<T extends { repoRoot: string }>(context: T) {
+function createExampleTodoBoundary() {
+  let tick = 0;
+
+  return {
+    deps: {
+      dbPool: createEmbeddedInMemoryDbPoolAdapter(),
+      clock: {
+        now: () => {
+          tick += 1;
+          return new Date(Date.UTC(2026, 1, 25, 0, 0, tick)).toISOString();
+        },
+      },
+      logger: createEmbeddedPlaceholderLoggerAdapter(),
+      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+    },
+    scope: {
+      workspaceId: "workspace-default",
+    },
+    config: {
+      readOnly: false,
+      limits: {
+        maxAssignmentsPerTask: 2,
+      },
+    },
+  } satisfies Parameters<typeof createExampleTodoClient>[0];
+}
+
+function resolveExampleTodoClient(repoRoot: string): ExampleTodoClient {
+  const existing = exampleTodoClientsByRepoRoot.get(repoRoot);
+  if (existing) {
+    return existing;
+  }
+
+  const client = createExampleTodoClient(createExampleTodoBoundary());
+  exampleTodoClientsByRepoRoot.set(repoRoot, client);
+  return client;
+}
+
+function passthroughOrpcContext<T>(context: T) {
+  return context;
+}
+
+function enrichSupportExampleWorkflowContext<T extends { repoRoot: string }>(context: T) {
   return {
     ...context,
     supportExample: resolveSupportExampleClient(context.repoRoot),
@@ -78,11 +125,13 @@ function enrichSupportExampleContext<T extends { repoRoot: string }>(context: T)
 const supportExampleInngestClient = new Inngest({ id: "rawr-support-example" });
 
 const coreOrpcRouter = createHqRuntimeRouter();
-const supportExampleApiPlugin = registerSupportExampleApiPlugin();
+const exampleTodoApiPlugin = registerExampleTodoApiPlugin({
+  resolveClient: resolveExampleTodoClient,
+});
 const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin();
 const composedOrpcRouter = {
   ...coreOrpcRouter,
-  ...supportExampleApiPlugin.router,
+  ...exampleTodoApiPlugin.router,
 };
 const composedWorkflowTriggerRouter = supportExampleWorkflowPlugin.router;
 const supportExampleInngestFunctions = createSupportExampleInngestFunctions({
@@ -92,13 +141,16 @@ const supportExampleInngestFunctions = createSupportExampleInngestFunctions({
 
 export const rawrHqManifest = {
   fixtures: {
+    exampleTodo: {
+      resolveClient: resolveExampleTodoClient,
+    },
     supportExample: {
       resolveServiceDeps: resolveSupportExampleDeps,
     },
   },
   orpc: {
     router: composedOrpcRouter,
-    enrichContext: enrichSupportExampleContext,
+    enrichContext: passthroughOrpcContext,
   },
   workflows: {
     capabilities: {
@@ -107,7 +159,7 @@ export const rawrHqManifest = {
       },
     },
     triggerRouter: composedWorkflowTriggerRouter,
-    enrichContext: enrichSupportExampleContext,
+    enrichContext: enrichSupportExampleWorkflowContext,
   },
   inngest: {
     client: supportExampleInngestClient,

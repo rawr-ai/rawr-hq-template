@@ -1,0 +1,7 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "plugin-api-example-todo",
+  "root": "plugins/api/example-todo",
+  "sourceRoot": "plugins/api/example-todo/src",
+  "tags": ["type:plugin"]
+}
