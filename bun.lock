@@ -57,6 +57,7 @@
     "apps/server": {
       "name": "@rawr/server",
       "dependencies": {
+        "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "^1.13.5",
         "@orpc/openapi": "^1.13.5",
         "@orpc/server": "^1.13.5",

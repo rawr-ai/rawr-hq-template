@@ -3,6 +3,7 @@ import {
   createWorkflowTriggerRuntimeRouter,
   type RuntimeRouterContext,
 } from "@rawr/core/orpc";
+import { metrics, SpanStatusCode, trace, type Counter, type Histogram } from "@opentelemetry/api";
 import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { AnyContractRouter } from "@orpc/contract";
@@ -25,6 +26,8 @@ type RawrOrpcContext = RuntimeRouterContext;
 type RawrOrpcRouter = Router<AnyContractRouter, RawrOrpcContext>;
 
 const RPC_AUTH_DEDUPE_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION;
+let routedRequestsCounter: Counter | undefined;
+let routedRequestDurationHistogram: Histogram | undefined;
 
 export type RegisterOrpcRoutesOptions<
   TContext extends RuntimeRouterContext = RuntimeRouterContext,
@@ -39,6 +42,11 @@ export type RegisterOrpcRoutesOptions<
   onContextCreated?: (context: TRequestContext) => void;
   rpcAuthPolicy?: RpcAuthPolicy;
 };
+
+export function __resetOrpcRouteTelemetryForTests() {
+  routedRequestsCounter = undefined;
+  routedRequestDurationHistogram = undefined;
+}
 
 export function createOrpcRouter<TContext extends RuntimeRouterContext = RuntimeRouterContext>() {
   return createHqRuntimeRouter<TContext>();
@@ -57,6 +65,71 @@ function assertRpcAuthDedupeMarker(context: RawrBoundaryContext): void {
   assertHeavyMiddlewareDedupeMarkers(context, RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY.requiredMarkers);
 }
 
+function getTelemetryInstruments() {
+  const meter = metrics.getMeter("@rawr/server");
+  routedRequestsCounter ??= meter.createCounter("rawr.orpc.requests", {
+    description: "Count of routed oRPC and OpenAPI requests handled by the host shell.",
+  });
+  routedRequestDurationHistogram ??= meter.createHistogram("rawr.orpc.request.duration", {
+    description: "Duration of routed oRPC and OpenAPI requests handled by the host shell.",
+    unit: "ms",
+  });
+
+  return {
+    routedRequestsCounter,
+    routedRequestDurationHistogram,
+  };
+}
+
+function getRouteTracer() {
+  return trace.getTracer("@rawr/server");
+}
+
+function recordRoutedRequestMetrics(args: {
+  surface: "rpc" | "openapi";
+  statusCode: number;
+  durationMs: number;
+  attributes?: Record<string, string | boolean>;
+}) {
+  const { surface, statusCode, durationMs, attributes } = args;
+  const telemetryAttributes = {
+    "rawr.orpc.surface": surface,
+    "http.response.status_code": statusCode,
+    ...attributes,
+  };
+  const { routedRequestsCounter, routedRequestDurationHistogram } = getTelemetryInstruments();
+
+  routedRequestsCounter.add(1, telemetryAttributes);
+  routedRequestDurationHistogram.record(durationMs, telemetryAttributes);
+}
+
+async function withRouteSpan(
+  name: string,
+  attributes: Record<string, string | boolean | number>,
+  fn: () => Promise<Response>,
+): Promise<Response> {
+  return getRouteTracer().startActiveSpan(name, async (span) => {
+    for (const [key, value] of Object.entries(attributes)) {
+      span.setAttribute(key, value);
+    }
+
+    try {
+      const response = await fn();
+      span.setAttribute("http.response.status_code", response.status);
+      if (response.status >= 400) {
+        span.setStatus({ code: SpanStatusCode.ERROR });
+      }
+      return response;
+    } catch (error) {
+      span.recordException(error as Error);
+      span.setStatus({ code: SpanStatusCode.ERROR });
+      throw error;
+    } finally {
+      span.end();
+    }
+  });
+}
+
 async function handleRpcRoute<
   TContext extends RuntimeRouterContext,
   TWorkflowContext extends RuntimeRouterContext,
@@ -72,29 +145,73 @@ async function handleRpcRoute<
 }): Promise<Response> {
   const { request, rpcHandler, workflowTriggerRpcHandler, contextFactory, contextDeps, rpcAuthPolicy, onContextCreated } =
     args;
-  if (!isRpcRequestAllowedWithDedupe(request, rpcAuthPolicy)) {
-    return new Response("forbidden", { status: 403 });
-  }
+  const startedAt = Date.now();
+  return withRouteSpan("rawr.orpc.rpc.request", {
+    "rawr.orpc.surface": "rpc",
+    "url.full": request.url,
+  }, async () => {
+    if (!isRpcRequestAllowedWithDedupe(request, rpcAuthPolicy)) {
+      const response = new Response("forbidden", { status: 403 });
+      recordRoutedRequestMetrics({
+        surface: "rpc",
+        statusCode: response.status,
+        durationMs: Date.now() - startedAt,
+        attributes: { "rawr.orpc.authorized": false, "rawr.orpc.router": "rpc" },
+      });
+      return response;
+    }
 
-  const context = contextFactory(request, contextDeps);
-  assertRpcAuthDedupeMarker(context);
-  onContextCreated?.(context);
+    const context = contextFactory(request, contextDeps);
+    assertRpcAuthDedupeMarker(context);
+    onContextCreated?.(context);
 
-  // The oRPC RPC handler may consume the request body before it can decide that a procedure is unmatched.
-  // Clone upfront so we can safely fall back to the workflow trigger router without double-consuming the stream.
-  const workflowFallbackRequest = workflowTriggerRpcHandler ? request.clone() : undefined;
+    // The oRPC RPC handler may consume the request body before it can decide that a procedure is unmatched.
+    // Clone upfront so we can safely fall back to the workflow trigger router without double-consuming the stream.
+    const workflowFallbackRequest = workflowTriggerRpcHandler ? request.clone() : undefined;
 
-  const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
-  if (result.matched) {
-    return result.response;
-  }
+    const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
+    if (result.matched) {
+      recordRoutedRequestMetrics({
+        surface: "rpc",
+        statusCode: result.response.status,
+        durationMs: Date.now() - startedAt,
+        attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": "rpc" },
+      });
+      return result.response;
+    }
 
-  if (!workflowTriggerRpcHandler || !workflowFallbackRequest) {
-    return new Response("not found", { status: 404 });
-  }
+    if (!workflowTriggerRpcHandler || !workflowFallbackRequest) {
+      const response = new Response("not found", { status: 404 });
+      recordRoutedRequestMetrics({
+        surface: "rpc",
+        statusCode: response.status,
+        durationMs: Date.now() - startedAt,
+        attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": "rpc" },
+      });
+      return response;
+    }
 
-  const workflowResult = await workflowTriggerRpcHandler.handle(workflowFallbackRequest, { prefix: "/rpc", context });
-  return workflowResult.matched ? workflowResult.response : new Response("not found", { status: 404 });
+    const workflowResult = await workflowTriggerRpcHandler.handle(workflowFallbackRequest, { prefix: "/rpc", context });
+    const response = workflowResult.matched ? workflowResult.response : new Response("not found", { status: 404 });
+    recordRoutedRequestMetrics({
+      surface: "rpc",
+      statusCode: response.status,
+      durationMs: Date.now() - startedAt,
+      attributes: {
+        "rawr.orpc.authorized": true,
+        "rawr.orpc.router": workflowResult.matched ? "workflow-trigger" : "rpc",
+      },
+    });
+    return response;
+  }).catch((error) => {
+    recordRoutedRequestMetrics({
+      surface: "rpc",
+      statusCode: 500,
+      durationMs: Date.now() - startedAt,
+      attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": "rpc" },
+    });
+    throw error;
+  });
 }
 
 async function handleOpenApiRoute<
@@ -108,10 +225,31 @@ async function handleOpenApiRoute<
   onContextCreated?: (context: TRequestContext) => void;
 }): Promise<Response> {
   const { request, openapiHandler, contextFactory, contextDeps, onContextCreated } = args;
-  const context = contextFactory(request, contextDeps);
-  onContextCreated?.(context);
-  const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
-  return result.matched ? result.response : new Response("not found", { status: 404 });
+  const startedAt = Date.now();
+  return withRouteSpan("rawr.orpc.openapi.request", {
+    "rawr.orpc.surface": "openapi",
+    "url.full": request.url,
+  }, async () => {
+    const context = contextFactory(request, contextDeps);
+    onContextCreated?.(context);
+    const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
+    const response = result.matched ? result.response : new Response("not found", { status: 404 });
+    recordRoutedRequestMetrics({
+      surface: "openapi",
+      statusCode: response.status,
+      durationMs: Date.now() - startedAt,
+      attributes: { "rawr.orpc.router": "openapi" },
+    });
+    return response;
+  }).catch((error) => {
+    recordRoutedRequestMetrics({
+      surface: "openapi",
+      statusCode: 500,
+      durationMs: Date.now() - startedAt,
+      attributes: { "rawr.orpc.router": "openapi" },
+    });
+    throw error;
+  });
 }
 
 async function createOpenApiSpec<TContext extends RuntimeRouterContext>(
