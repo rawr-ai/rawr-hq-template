@@ -294,6 +294,11 @@ open_url() {
 }
 
 open_ui_surfaces() {
+  local should_open_observability=0
+  if [[ "$open_policy" != "none" && -n "$otlp_endpoint" ]]; then
+    should_open_observability=1
+  fi
+
   case "$open_policy" in
     none)
       log "open policy: none"
@@ -312,11 +317,15 @@ open_ui_surfaces() {
       open_url "$HQ_WEB_URL" || true
       open_url "$HQ_COORDINATION_URL" || true
       open_url "$HQ_INNGEST_RUNS_URL" || true
-      if [[ -n "$otlp_endpoint" ]]; then
-        open_url "$HQ_OBSERVABILITY_UI_URL" || true
-      fi
       ;;
   esac
+
+  # HyperDX is part of the managed local stack posture, so when the stack opens
+  # browser surfaces we also pop the observability UI instead of hiding it
+  # behind a special-case `--open all` requirement.
+  if [[ "$should_open_observability" -eq 1 ]]; then
+    open_url "$HQ_OBSERVABILITY_UI_URL" || true
+  fi
 }
 
 list_descendants() {
@@ -594,6 +603,7 @@ log "  async: ${HQ_INNGEST_RUNS_URL}"
 log "  observability mode: ${observability_mode}"
 if [[ -n "$otlp_endpoint" ]]; then
   log "  otlp http: ${otlp_endpoint}"
+  log "  observability ui: ${HQ_OBSERVABILITY_UI_URL}"
 fi
 
 (
@@ -631,6 +641,9 @@ run_status_writer
 wait_for_http "$HQ_SERVER_HEALTH_URL" "server health" || true
 wait_for_http "$HQ_WEB_URL" "web app" || true
 wait_for_http "$HQ_INNGEST_RUNS_URL" "async runs" || true
+if [[ -n "$otlp_endpoint" ]]; then
+  wait_for_http "$HQ_OBSERVABILITY_UI_URL" "observability ui" || true
+fi
 run_status_writer
 
 log "managed HQ runtime ready"
