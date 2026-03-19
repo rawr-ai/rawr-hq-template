@@ -9,6 +9,7 @@ This runbook covers the canonical local HQ runtime path for the coordination can
 - ORPC OpenAPI transport: `/api/orpc/*`
 - Inngest serve endpoint: `/api/inngest`
 - Managed runtime surface: `rawr hq up|down|status|restart|attach`
+- Workspace graph explorer: `rawr hq graph`
 - Workflow CLI surface: `rawr workflow coord ...`
 
 ## Local Development
@@ -41,6 +42,11 @@ bun run rawr hq restart
 bun run rawr hq down
 ```
 
+Workspace exploration stays on-demand:
+```bash
+bun run rawr hq graph
+```
+
 Canonical runtime artifacts:
 - `.rawr/hq/state.env`
 - `.rawr/hq/status.json`
@@ -48,6 +54,7 @@ Canonical runtime artifacts:
 
 Canonical canvas surface:
 - Primary canvas URL: `http://localhost:5173/coordination`
+- Operations launcher URL: `http://localhost:5173/operations`
 - This is a host-shell route; standalone canvas serving is not enabled by default.
 
 Runtime flags and env:
@@ -83,6 +90,10 @@ Expected:
 - `support.observability` is nested under `support`
 - `support.observability.state` is `running`
 - `.rawr/hq/status.json` exists
+
+Optional workspace graph:
+- Run `bun run rawr hq graph` when you want the Nx project graph in a separate browser session.
+- The graph explorer is not part of HQ runtime health/status.
 
 2. Server health:
 ```bash

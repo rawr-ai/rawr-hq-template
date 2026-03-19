@@ -12,7 +12,7 @@ export default class HqRestart extends RawrCommand {
     open: Flags.string({
       description: "Open policy for local HQ surfaces",
       options: [...HQ_OPEN_POLICIES],
-      default: "coordination",
+      default: "all",
     }),
     observability: Flags.string({
       description: "Managed observability mode for local HyperDX support",

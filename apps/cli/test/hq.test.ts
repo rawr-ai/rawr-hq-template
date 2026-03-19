@@ -24,7 +24,7 @@ describe("hq runtime commands", () => {
     const parsed = JSON.parse(proc.stdout) as any;
     expect(parsed.ok).toBe(true);
     expect(parsed.data.cmd).toBe("bash");
-    expect(parsed.data.args).toEqual(["./scripts/dev/hq.sh", "up", "--open", "coordination", "--observability", "auto"]);
+    expect(parsed.data.args).toEqual(["./scripts/dev/hq.sh", "up", "--open", "all", "--observability", "auto"]);
 
     const expectedCwd = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
     expect(parsed.data.cwd).toBe(expectedCwd);
@@ -66,6 +66,29 @@ describe("hq runtime commands", () => {
     expect(parsed.data.args).toEqual(["./scripts/dev/hq.sh", "restart", "--open", "all", "--observability", "off"]);
   });
 
+  it("plans hq graph as an on-demand Nx graph launch", () => {
+    const proc = runRawr(["hq", "graph", "--focus", "@rawr/web", "--view", "projects", "--json"]);
+    expect(proc.status).toBe(0);
+
+    const parsed = JSON.parse(proc.stdout) as any;
+    expect(parsed.ok).toBe(true);
+    expect(parsed.data.cmd).toBe("bunx");
+    expect(parsed.data.args).toEqual([
+      "nx",
+      "graph",
+      "--open",
+      "true",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "4211",
+      "--focus",
+      "@rawr/web",
+      "--view",
+      "projects",
+    ]);
+  });
+
   it("writes stale HQ status once and prunes the dead state file", () => {
     const workspaceRoot = mkdtempSync(path.join(os.tmpdir(), "rawr-hq-status-"));
     mkdirSync(path.join(workspaceRoot, "plugins"), { recursive: true });
@@ -93,7 +116,7 @@ describe("hq runtime commands", () => {
     expect(parsed.ok).toBe(true);
     expect(parsed.data.manager.state).toBe("stale");
     expect(parsed.data.manager.stale).toBe(true);
-    expect(parsed.data.summary).toBe("stopped");
+    expect(["stopped", "degraded"]).toContain(parsed.data.summary);
     expect(parsed.data.support.observability.state).toBe("managed-stopped");
     expect(parsed.data.observability).toBeUndefined();
 

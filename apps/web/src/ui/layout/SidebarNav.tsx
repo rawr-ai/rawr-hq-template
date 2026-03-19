@@ -16,6 +16,7 @@ type IconComponent = (props: SVGProps<SVGSVGElement>) => ReturnType<typeof HomeI
 
 const ICONS: Record<string, IconComponent> = {
   Home: HomeIcon,
+  Operations: HomeIcon,
   Mounts: LayersIcon,
   Coordination: NetworkIcon,
 };

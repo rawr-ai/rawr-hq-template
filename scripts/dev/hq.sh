@@ -11,6 +11,7 @@ LOG_FILE="${STATE_DIR}/runtime.log"
 
 HQ_WEB_URL="http://localhost:5173/"
 HQ_COORDINATION_URL="http://localhost:5173/coordination"
+HQ_OPERATIONS_URL="http://localhost:5173/operations"
 HQ_INNGEST_RUNS_URL="http://localhost:8288/runs"
 HQ_SERVER_HEALTH_URL="http://localhost:3000/health"
 HQ_OBSERVABILITY_UI_URL="http://localhost:8080/"
@@ -26,7 +27,7 @@ INNGEST_CONNECT_EXECUTOR_GRPC_PORT=50053
 action="${1:-}"
 shift || true
 
-open_policy="${RAWR_HQ_OPEN:-coordination}"
+open_policy="${RAWR_HQ_OPEN:-all}"
 observability_mode="${RAWR_HQ_OBSERVABILITY:-auto}"
 
 hq_manager_pid=""
@@ -277,66 +278,122 @@ wait_for_http() {
   return 1
 }
 
-open_url() {
-  local url="$1"
-
-  if command -v open >/dev/null 2>&1; then
-    open "$url" >/dev/null 2>&1 || true
+detect_browser_app() {
+  if [[ -n "${RAWR_HQ_BROWSER_APP:-}" ]]; then
+    printf '%s\n' "${RAWR_HQ_BROWSER_APP}"
     return 0
   fi
 
-  if command -v xdg-open >/dev/null 2>&1; then
-    xdg-open "$url" >/dev/null 2>&1 || true
-    return 0
-  fi
+  local candidate
+  for candidate in "Google Chrome" "Arc" "Brave Browser" "Safari"; do
+    if [[ -d "/Applications/${candidate}.app" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
 
   return 1
 }
 
-open_ui_surfaces() {
-  local should_open_inngest=0
-  local should_open_observability=0
-  if [[ "$open_policy" != "none" ]]; then
-    should_open_inngest=1
-    if [[ -n "$otlp_endpoint" ]]; then
-      should_open_observability=1
+open_urls_as_browser_session() {
+  if [[ "$#" -eq 0 ]]; then
+    return 0
+  fi
+
+  if command -v osascript >/dev/null 2>&1; then
+    local browser_app=""
+    browser_app="$(detect_browser_app || true)"
+    if [[ -n "$browser_app" ]]; then
+      case "$browser_app" in
+        "Google Chrome"|"Arc"|"Brave Browser")
+          BROWSER_APP="$browser_app" osascript - "$@" <<'APPLESCRIPT' >/dev/null 2>&1 || true
+on run argv
+  set browserApp to system attribute "BROWSER_APP"
+  tell application browserApp
+    activate
+    set newWindow to make new window
+    repeat with targetUrl in argv
+      tell newWindow to make new tab with properties {URL:(targetUrl as text)}
+    end repeat
+    try
+      close tab 1 of newWindow
+    end try
+  end tell
+end run
+APPLESCRIPT
+          return 0
+          ;;
+        "Safari")
+          osascript - "$@" <<'APPLESCRIPT' >/dev/null 2>&1 || true
+on run argv
+  tell application "Safari"
+    activate
+    make new document
+    repeat with targetUrl in argv
+      tell front window to make new tab with properties {URL:(targetUrl as text)}
+    end repeat
+    try
+      if (count of tabs of front window) > 1 then
+        close tab 1 of front window
+      end if
+    end try
+  end tell
+end run
+APPLESCRIPT
+          return 0
+          ;;
+      esac
     fi
   fi
+
+  local url
+  for url in "$@"; do
+    if command -v open >/dev/null 2>&1; then
+      open "$url" >/dev/null 2>&1 || true
+      continue
+    fi
+    if command -v xdg-open >/dev/null 2>&1; then
+      xdg-open "$url" >/dev/null 2>&1 || true
+    fi
+  done
+}
+
+open_ui_surfaces() {
+  local urls=()
 
   case "$open_policy" in
     none)
       log "open policy: none"
+      return 0
       ;;
     coordination)
-      open_url "$HQ_COORDINATION_URL" || true
+      urls+=("$HQ_COORDINATION_URL")
       ;;
     app)
-      open_url "$HQ_WEB_URL" || true
+      urls+=("$HQ_OPERATIONS_URL")
       ;;
     app+inngest)
-      open_url "$HQ_WEB_URL" || true
-      open_url "$HQ_INNGEST_RUNS_URL" || true
+      urls+=("$HQ_OPERATIONS_URL" "$HQ_INNGEST_RUNS_URL")
       ;;
     all)
-      open_url "$HQ_WEB_URL" || true
-      open_url "$HQ_COORDINATION_URL" || true
-      open_url "$HQ_INNGEST_RUNS_URL" || true
+      urls+=("$HQ_OPERATIONS_URL" "$HQ_COORDINATION_URL" "$HQ_INNGEST_RUNS_URL")
       ;;
   esac
 
-  # The local Inngest dev portal is part of the managed HQ runtime story, so
-  # any browser-opening posture should surface it unless the user explicitly
-  # disabled opening entirely.
-  if [[ "$should_open_inngest" -eq 1 ]]; then
-    open_url "$HQ_INNGEST_RUNS_URL" || true
+  if [[ "$open_policy" != "none" && -n "$otlp_endpoint" ]]; then
+    urls+=("$HQ_OBSERVABILITY_UI_URL")
   fi
 
-  # HyperDX is part of the managed local stack posture, so when the stack opens
-  # browser surfaces we also pop the observability UI instead of hiding it
-  # behind a special-case `--open all` requirement.
-  if [[ "$should_open_observability" -eq 1 ]]; then
-    open_url "$HQ_OBSERVABILITY_UI_URL" || true
-  fi
+  local deduped=()
+  local url
+  for url in "${urls[@]}"; do
+    case " ${deduped[*]-} " in
+      *" ${url} "*) ;;
+      *) deduped+=("$url") ;;
+    esac
+  done
+
+  open_urls_as_browser_session "${deduped[@]}"
 }
 
 list_descendants() {
@@ -610,6 +667,7 @@ ensure_observability_posture
 log "starting managed HQ runtime"
 log "  server: ${HQ_SERVER_HEALTH_URL}"
 log "  web: ${HQ_WEB_URL}"
+log "  operations: ${HQ_OPERATIONS_URL}"
 log "  async: ${HQ_INNGEST_RUNS_URL}"
 log "  observability mode: ${observability_mode}"
 if [[ -n "$otlp_endpoint" ]]; then
@@ -664,6 +722,7 @@ fi
 run_status_writer
 
 log "managed HQ runtime ready"
+log "  operations: ${HQ_OPERATIONS_URL}"
 log "  coordination: ${HQ_COORDINATION_URL}"
 log "  log file: ${LOG_FILE}"
 log "  status file: ${STATUS_FILE}"

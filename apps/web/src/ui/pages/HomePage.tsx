@@ -1,5 +1,6 @@
 import { publicEnv } from "../config/publicEnv";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from "../components/ui";
+import { Link } from "../routing/router";
 
 export function HomePage() {
   return (
@@ -19,6 +20,19 @@ export function HomePage() {
           Mode: <code>{publicEnv.mode}</code>
         </p>
       </div>
+
+      <Card className="max-w-3xl">
+        <CardHeader>
+          <CardTitle>Operations</CardTitle>
+          <CardDescription>Open the local runtime dashboards and workspace launchers from one place.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="m-0 text-sm text-foreground/90">
+            Use the <Link to="/operations" className="text-primary underline-offset-4 hover:underline">Operations</Link> page to
+            launch coordination, Inngest, and HyperDX together, then start Nx graph on demand with <code>rawr hq graph</code>.
+          </p>
+        </CardContent>
+      </Card>
 
       <Card className="max-w-3xl">
         <CardHeader>

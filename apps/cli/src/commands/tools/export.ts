@@ -15,6 +15,7 @@ const TOOLS: ToolExport[] = [
   { command: "hq status", description: "Show managed HQ runtime status" },
   { command: "hq restart", description: "Restart the managed HQ runtime" },
   { command: "hq attach", description: "Attach to the managed HQ runtime log stream" },
+  { command: "hq graph", description: "Launch the Nx graph explorer on demand" },
   { command: "routine check", description: "Run doctor + security + tests" },
   { command: "routine snapshot", description: "Write a routine snapshot packet" },
   { command: "tools export", description: "Export a list of known CLI commands" },
