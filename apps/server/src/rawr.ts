@@ -5,6 +5,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { rawrHqManifest } from "../../../rawr.hq";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
+import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
 import type { AnyElysia } from "./plugins";
 import { createCoordinationRuntimeAdapter } from "./coordination";
 import { registerOrpcRoutes } from "./orpc";
@@ -19,6 +20,12 @@ export type RawrRoutesOptions = {
   enabledPluginIds: ReadonlySet<string>;
   baseUrl?: string;
 };
+
+export type HostInngestBundle = Readonly<{
+  runtime: ReturnType<typeof createCoordinationRuntimeAdapter>;
+  functions: readonly unknown[];
+  handler: ReturnType<typeof createInngestServeHandler>;
+}>;
 
 export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"] as const;
 
@@ -202,6 +209,30 @@ function resolveAuthorityRepoRoot(repoRoot: string): string {
   }
 }
 
+export function createHostInngestBundle(input: { repoRoot: string }): HostInngestBundle {
+  const runtime = createCoordinationRuntimeAdapter({
+    repoRoot: input.repoRoot,
+    inngestBaseUrl: resolveInngestBaseUrl(),
+  });
+  // Coordination run-state transitions depend on a repo-root-aware runtime adapter,
+  // so the host composes that runner here alongside manifest-owned workflow functions.
+  const coordinationInngest = createCoordinationInngestFunction({
+    runtime,
+    client: rawrHqManifest.inngest.client,
+  });
+  const functions = [...rawrHqManifest.inngest.functions, ...coordinationInngest.functions];
+  const handler = createInngestServeHandler({
+    client: rawrHqManifest.inngest.client,
+    functions,
+  });
+
+  return {
+    runtime,
+    functions,
+    handler,
+  };
+}
+
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
 
@@ -244,19 +275,18 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     }
   });
 
-  const runtime = createCoordinationRuntimeAdapter({
+  const hostInngest = createHostInngestBundle({
     repoRoot: authorityRepoRoot,
-    inngestBaseUrl: resolveInngestBaseUrl(),
   });
   const boundaryContextDeps: RawrBoundaryContextDeps = {
     repoRoot: authorityRepoRoot,
     baseUrl: opts.baseUrl ?? "http://localhost:3000",
-    runtime,
+    runtime: hostInngest.runtime,
     inngestClient: rawrHqManifest.inngest.client,
   };
-  // Host intentionally consumes manifest-owned Inngest seams (client + functions + handler).
-  // The handler is precomposed in `rawr.hq.ts`, but the function registry remains part of the contract.
-  void rawrHqManifest.inngest.functions;
+  // The manifest remains the authority for workflow function bundles and shared client
+  // identity, while the host composes runtime-owned coordination execution around them.
+  void hostInngest.functions;
   const workflowOpenApiHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
 
   app.all(
@@ -266,7 +296,7 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
       if (!(await verifyInngestIngressRequest(req))) {
         return new Response("forbidden", { status: 403 });
       }
-      return rawrHqManifest.inngest.handler(req);
+      return hostInngest.handler(req);
     },
     { parse: "none" },
   );

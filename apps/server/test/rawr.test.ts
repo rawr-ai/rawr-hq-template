@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
 import { createCoordinationRuntimeAdapter } from "../src/coordination";
 import { registerOrpcRoutes } from "../src/orpc";
-import { PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
+import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
 import { processCoordinationRunEvent } from "@rawr/coordination-inngest";
 import { enablePlugin } from "@rawr/state";
 import type { Inngest } from "inngest";
@@ -99,6 +99,22 @@ describe("rawr server routes", () => {
         delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
       } else {
         process.env.INNGEST_SIGNING_KEY_FALLBACK = previousSigningKeyFallback;
+      }
+    }
+  });
+
+  it("host-composition-guard: serves both legacy and coordination Inngest functions in explicit dev mode", async () => {
+    const previousInngestDev = process.env.INNGEST_DEV;
+    process.env.INNGEST_DEV = "http://localhost:8288";
+
+    try {
+      const bundle = createHostInngestBundle({ repoRoot });
+      expect(bundle.functions).toHaveLength(2);
+    } finally {
+      if (previousInngestDev === undefined) {
+        delete process.env.INNGEST_DEV;
+      } else {
+        process.env.INNGEST_DEV = previousInngestDev;
       }
     }
   });
