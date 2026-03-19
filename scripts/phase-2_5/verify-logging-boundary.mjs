@@ -1,6 +1,14 @@
 #!/usr/bin/env bun
+import { assertScriptEquals, mustExist, readPackageScripts } from "../phase-f/_verify-utils.mjs";
 
-console.error(
-  "[phase-2_5 scaffold] verify-logging-boundary.mjs is a Slice 0 gate placeholder. Implement the logging-boundary contract in Slice 5 before using this gate as acceptance evidence.",
+await mustExist("scripts/phase-2_5/verify-logging-boundary.mjs");
+
+const scripts = await readPackageScripts();
+
+assertScriptEquals(
+  scripts,
+  "phase-2_5:gate:logging",
+  "bun scripts/phase-2_5/verify-logging-boundary.mjs && bunx vitest run --project server apps/server/test/logging-correlation.test.ts && rg -n \"from \\\"pino\\\"|from 'pino'\" services/example-todo services/support-example",
 );
-process.exit(1);
+
+console.log("phase-2_5 logging gate scaffold verified");

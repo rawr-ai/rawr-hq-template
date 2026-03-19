@@ -1,6 +1,14 @@
 #!/usr/bin/env bun
+import { assertScriptEquals, mustExist, readPackageScripts } from "../phase-f/_verify-utils.mjs";
 
-console.error(
-  "[phase-2_5 scaffold] verify-example-cutover.mjs is a Slice 0 gate placeholder. Implement the canonical example cutover contract in Slice 3 before using this gate as acceptance evidence.",
+await mustExist("scripts/phase-2_5/verify-example-cutover.mjs");
+
+const scripts = await readPackageScripts();
+
+assertScriptEquals(
+  scripts,
+  "phase-2_5:gate:example-cutover",
+  "bun scripts/phase-2_5/verify-example-cutover.mjs && bunx vitest run --project server apps/server/test/rawr.test.ts apps/server/test/api-plugin-example-surface.test.ts",
 );
-process.exit(1);
+
+console.log("phase-2_5 example cutover gate scaffold verified");

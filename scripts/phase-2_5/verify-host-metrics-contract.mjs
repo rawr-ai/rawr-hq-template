@@ -1,6 +1,14 @@
 #!/usr/bin/env bun
+import { assertScriptEquals, mustExist, readPackageScripts } from "../phase-f/_verify-utils.mjs";
 
-console.error(
-  "[phase-2_5 scaffold] verify-host-metrics-contract.mjs is a Slice 0 gate placeholder. Implement the host-boundary metrics contract in Slice 2 before using this gate as acceptance evidence.",
+await mustExist("scripts/phase-2_5/verify-host-metrics-contract.mjs");
+
+const scripts = await readPackageScripts();
+
+assertScriptEquals(
+  scripts,
+  "phase-2_5:gate:host-metrics",
+  "bun scripts/phase-2_5/verify-host-metrics-contract.mjs && bunx vitest run --project server apps/server/test/orpc-metrics.test.ts apps/server/test/telemetry-bootstrap.test.ts",
 );
-process.exit(1);
+
+console.log("phase-2_5 host metrics gate scaffold verified");

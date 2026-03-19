@@ -1,6 +1,28 @@
 #!/usr/bin/env bun
+import { assertScriptEquals, mustExist, readPackageScripts } from "../phase-f/_verify-utils.mjs";
 
-console.error(
-  "[phase-2_5 scaffold] verify-telemetry-contract.mjs is a Slice 0 gate placeholder. Implement the telemetry-core contract in Slice 1 before using this gate as acceptance evidence.",
+await Promise.all([
+  mustExist("packages/core/src/orpc/telemetry.ts"),
+  mustExist("packages/core/test/telemetry.test.ts"),
+  mustExist("scripts/phase-2_5/verify-telemetry-contract.mjs"),
+]);
+
+const scripts = await readPackageScripts();
+
+assertScriptEquals(
+  scripts,
+  "phase-2_5:gate:telemetry-core",
+  "bun scripts/phase-2_5/verify-telemetry-contract.mjs && bunx vitest run --project core packages/core/test/telemetry.test.ts",
 );
-process.exit(1);
+assertScriptEquals(
+  scripts,
+  "phase-2_5:gates:quick",
+  "bun run phase-2_5:gate:telemetry-core && bun run phase-2_5:gate:host-metrics && bun run phase-2_5:gate:example-cutover && bun run phase-2_5:gate:hq-runtime",
+);
+assertScriptEquals(
+  scripts,
+  "phase-2_5:gates:exit",
+  "bun run phase-2_5:gates:quick && bun run phase-2_5:gate:logging && bun run phase-2_5:gate:closure",
+);
+
+console.log("phase-2_5 telemetry gate scaffold verified");

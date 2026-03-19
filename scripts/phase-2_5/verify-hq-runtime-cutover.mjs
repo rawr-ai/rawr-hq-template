@@ -1,6 +1,14 @@
 #!/usr/bin/env bun
+import { assertScriptEquals, mustExist, readPackageScripts } from "../phase-f/_verify-utils.mjs";
 
-console.error(
-  "[phase-2_5 scaffold] verify-hq-runtime-cutover.mjs is a Slice 0 gate placeholder. Implement the HQ runtime cutover contract in Slice 4 before using this gate as acceptance evidence.",
+await mustExist("scripts/phase-2_5/verify-hq-runtime-cutover.mjs");
+
+const scripts = await readPackageScripts();
+
+assertScriptEquals(
+  scripts,
+  "phase-2_5:gate:hq-runtime",
+  "bun scripts/phase-2_5/verify-hq-runtime-cutover.mjs && bunx vitest run --project cli apps/cli/test/hq.test.ts apps/cli/test/hq-legacy-surface.test.ts",
 );
-process.exit(1);
+
+console.log("phase-2_5 hq runtime gate scaffold verified");
