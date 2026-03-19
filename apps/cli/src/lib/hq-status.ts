@@ -33,6 +33,34 @@ export const HQ_OBSERVABILITY_STATES = [
 ] as const;
 export type HqObservabilityState = (typeof HQ_OBSERVABILITY_STATES)[number];
 
+function isHqObservabilityMode(value: string): value is HqObservabilityMode {
+  return (HQ_OBSERVABILITY_MODES as readonly string[]).includes(value);
+}
+
+function formatObservabilityModeError(value: string, source: string): string {
+  return `invalid ${source} '${value}' (expected one of: ${HQ_OBSERVABILITY_MODES.join(", ")})`;
+}
+
+function resolveObservabilityMode(args: {
+  mode?: HqObservabilityMode;
+  env: NodeJS.ProcessEnv;
+}): HqObservabilityMode {
+  if (args.mode) {
+    return args.mode;
+  }
+
+  const envValue = args.env.RAWR_HQ_OBSERVABILITY?.trim();
+  if (!envValue) {
+    return "auto";
+  }
+
+  if (isHqObservabilityMode(envValue)) {
+    return envValue;
+  }
+
+  throw new Error(formatObservabilityModeError(envValue, "RAWR_HQ_OBSERVABILITY"));
+}
+
 type HqRemediation = {
   code: string;
   message: string;
@@ -444,7 +472,7 @@ export async function collectHqStatus(args: {
 }): Promise<HqStatus> {
   const workspaceRoot = path.resolve(args.workspaceRoot);
   const { stateFile } = getArtifactPaths(workspaceRoot);
-  const requestedMode = args.mode ?? ((process.env.RAWR_HQ_OBSERVABILITY as HqObservabilityMode | undefined) ?? "auto");
+  const requestedMode = resolveObservabilityMode({ mode: args.mode, env: process.env });
   const state = await readStateFile(workspaceRoot);
   const managedPids = collectManagedPids(state);
   const anyManagedPidLive = managedPids.some((pid) => isPidRunning(pid));
@@ -586,10 +614,14 @@ function parseCliArgs(argv: string[]): {
       continue;
     }
     if (arg === "--mode") {
-      const next = argv[index + 1] as HqObservabilityMode | undefined;
-      if (next && (HQ_OBSERVABILITY_MODES as readonly string[]).includes(next)) {
-        mode = next;
+      const next = argv[index + 1];
+      if (!next) {
+        throw new Error("missing value for --mode");
       }
+      if (!isHqObservabilityMode(next)) {
+        throw new Error(formatObservabilityModeError(next, "--mode"));
+      }
+      mode = next;
       index += 1;
       continue;
     }

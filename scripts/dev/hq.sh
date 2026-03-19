@@ -9,19 +9,19 @@ STATE_FILE="${STATE_DIR}/state.env"
 STATUS_FILE="${STATE_DIR}/status.json"
 LOG_FILE="${STATE_DIR}/runtime.log"
 
-WEB_URL="${WEB_URL:-http://localhost:5173/}"
-COORDINATION_URL="${COORDINATION_URL:-http://localhost:5173/coordination}"
-INNGEST_RUNS_URL="${INNGEST_RUNS_URL:-http://localhost:8288/runs}"
-SERVER_HEALTH_URL="${SERVER_HEALTH_URL:-http://localhost:3000/health}"
-OBSERVABILITY_UI_URL="${OBSERVABILITY_UI_URL:-http://localhost:8080/}"
-OBSERVABILITY_OTLP_URL="${OBSERVABILITY_OTLP_URL:-http://127.0.0.1:4318}"
+HQ_WEB_URL="http://localhost:5173/"
+HQ_COORDINATION_URL="http://localhost:5173/coordination"
+HQ_INNGEST_RUNS_URL="http://localhost:8288/runs"
+HQ_SERVER_HEALTH_URL="http://localhost:3000/health"
+HQ_OBSERVABILITY_UI_URL="http://localhost:8080/"
+HQ_OBSERVABILITY_OTLP_URL="http://127.0.0.1:4318"
 
 SERVER_PORT=3000
 WEB_PORT=5173
 INNGEST_PORT=8288
-INNGEST_CONNECT_GATEWAY_PORT="${RAWR_HQ_INNGEST_CONNECT_GATEWAY_PORT:-8289}"
-INNGEST_CONNECT_GATEWAY_GRPC_PORT="${RAWR_HQ_INNGEST_CONNECT_GATEWAY_GRPC_PORT:-50052}"
-INNGEST_CONNECT_EXECUTOR_GRPC_PORT="${RAWR_HQ_INNGEST_CONNECT_EXECUTOR_GRPC_PORT:-50053}"
+INNGEST_CONNECT_GATEWAY_PORT=8289
+INNGEST_CONNECT_GATEWAY_GRPC_PORT=50052
+INNGEST_CONNECT_EXECUTOR_GRPC_PORT=50053
 
 action="${1:-}"
 shift || true
@@ -58,7 +58,7 @@ run_status_writer() {
     --workspace-root "$ROOT_DIR" \
     --mode "$observability_mode" \
     --write \
-    --quiet >/dev/null 2>&1 || true
+    --quiet
 }
 
 validate_open_policy() {
@@ -237,7 +237,7 @@ ensure_observability_posture() {
   local container_running=""
   container_running="$(docker inspect --format '{{.State.Running}}' rawr-hq-hyperdx 2>/dev/null || true)"
   if [[ "$container_running" == "true" ]]; then
-    otlp_endpoint="$OBSERVABILITY_OTLP_URL"
+    otlp_endpoint="$HQ_OBSERVABILITY_OTLP_URL"
     return 0
   fi
 
@@ -291,21 +291,21 @@ open_ui_surfaces() {
       log "open policy: none"
       ;;
     coordination)
-      open_url "$COORDINATION_URL" || true
+      open_url "$HQ_COORDINATION_URL" || true
       ;;
     app)
-      open_url "$WEB_URL" || true
+      open_url "$HQ_WEB_URL" || true
       ;;
     app+inngest)
-      open_url "$WEB_URL" || true
-      open_url "$INNGEST_RUNS_URL" || true
+      open_url "$HQ_WEB_URL" || true
+      open_url "$HQ_INNGEST_RUNS_URL" || true
       ;;
     all)
-      open_url "$WEB_URL" || true
-      open_url "$COORDINATION_URL" || true
-      open_url "$INNGEST_RUNS_URL" || true
+      open_url "$HQ_WEB_URL" || true
+      open_url "$HQ_COORDINATION_URL" || true
+      open_url "$HQ_INNGEST_RUNS_URL" || true
       if [[ -n "$otlp_endpoint" ]]; then
-        open_url "$OBSERVABILITY_UI_URL" || true
+        open_url "$HQ_OBSERVABILITY_UI_URL" || true
       fi
       ;;
   esac
@@ -580,9 +580,9 @@ ensure_observability_posture
 : >"$LOG_FILE"
 
 log "starting managed HQ runtime"
-log "  server: ${SERVER_HEALTH_URL}"
-log "  web: ${WEB_URL}"
-log "  async: ${INNGEST_RUNS_URL}"
+log "  server: ${HQ_SERVER_HEALTH_URL}"
+log "  web: ${HQ_WEB_URL}"
+log "  async: ${HQ_INNGEST_RUNS_URL}"
 log "  observability mode: ${observability_mode}"
 if [[ -n "$otlp_endpoint" ]]; then
   log "  otlp http: ${otlp_endpoint}"
@@ -620,13 +620,13 @@ stack_started_here=1
 write_state_file
 run_status_writer
 
-wait_for_http "$SERVER_HEALTH_URL" "server health" || true
-wait_for_http "$WEB_URL" "web app" || true
-wait_for_http "$INNGEST_RUNS_URL" "async runs" || true
+wait_for_http "$HQ_SERVER_HEALTH_URL" "server health" || true
+wait_for_http "$HQ_WEB_URL" "web app" || true
+wait_for_http "$HQ_INNGEST_RUNS_URL" "async runs" || true
 run_status_writer
 
 log "managed HQ runtime ready"
-log "  coordination: ${COORDINATION_URL}"
+log "  coordination: ${HQ_COORDINATION_URL}"
 log "  log file: ${LOG_FILE}"
 log "  status file: ${STATUS_FILE}"
 log "  open policy: ${open_policy}"

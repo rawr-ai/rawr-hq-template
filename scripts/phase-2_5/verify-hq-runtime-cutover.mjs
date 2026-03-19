@@ -22,11 +22,12 @@ await Promise.all([
   mustExist("scripts/phase-2_5/verify-hq-runtime-cutover.mjs"),
 ]);
 
-const [scripts, rootPackageRaw, toolsExportSource, hqStatusSource, runbookSource] = await Promise.all([
+const [scripts, rootPackageRaw, toolsExportSource, hqStatusSource, hqShellSource, runbookSource] = await Promise.all([
   readPackageScripts(),
   readFile("package.json"),
   readFile("apps/cli/src/commands/tools/export.ts"),
   readFile("apps/cli/src/lib/hq-status.ts"),
+  readFile("scripts/dev/hq.sh"),
   readFile("docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md"),
 ]);
 
@@ -41,8 +42,33 @@ assertCondition(
   "tools export must advertise the HQ lifecycle surface",
 );
 assertCondition(
+  toolsExportSource.includes('command: "hq down"')
+    && toolsExportSource.includes('command: "hq restart"')
+    && toolsExportSource.includes('command: "hq attach"'),
+  "tools export must advertise down, restart, and attach as first-class HQ lifecycle commands",
+);
+assertCondition(
   !toolsExportSource.includes('command: "dev up"') && !toolsExportSource.includes('command: "routine start"'),
   "tools export must omit legacy dev up and routine start surfaces",
+);
+assertCondition(
+  !hqShellSource.includes('${WEB_URL:-')
+    && !hqShellSource.includes('${COORDINATION_URL:-')
+    && !hqShellSource.includes('${INNGEST_RUNS_URL:-')
+    && !hqShellSource.includes('${SERVER_HEALTH_URL:-')
+    && !hqShellSource.includes('${OBSERVABILITY_UI_URL:-')
+    && !hqShellSource.includes('${OBSERVABILITY_OTLP_URL:-'),
+  "hq.sh must not expose unblessed URL/config environment overrides",
+);
+assertCondition(
+  !hqShellSource.includes("RAWR_HQ_INNGEST_CONNECT_GATEWAY_PORT")
+    && !hqShellSource.includes("RAWR_HQ_INNGEST_CONNECT_GATEWAY_GRPC_PORT")
+    && !hqShellSource.includes("RAWR_HQ_INNGEST_CONNECT_EXECUTOR_GRPC_PORT"),
+  "hq.sh must keep the public env contract limited to RAWR_HQ_OPEN and RAWR_HQ_OBSERVABILITY",
+);
+assertCondition(
+  !hqShellSource.includes("--quiet >/dev/null 2>&1 || true"),
+  "hq.sh must not silently swallow status writer failures",
 );
 assertCondition(
   hqStatusSource.includes('statusFile: ".rawr/hq/status.json"')
@@ -53,6 +79,11 @@ assertCondition(
 assertCondition(
   hqStatusSource.includes('support: {') && hqStatusSource.includes("observability"),
   "hq-status.ts must report observability under support infrastructure rather than as a peer runtime role",
+);
+assertCondition(
+  hqStatusSource.includes("resolveObservabilityMode")
+    && hqStatusSource.includes('"RAWR_HQ_OBSERVABILITY"'),
+  "hq-status.ts must validate RAWR_HQ_OBSERVABILITY before emitting the status contract",
 );
 assertCondition(
   runbookSource.includes("rawr hq up")

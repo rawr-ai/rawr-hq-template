@@ -30,6 +30,42 @@ describe("hq runtime commands", () => {
     expect(parsed.data.cwd).toBe(expectedCwd);
   });
 
+  it("plans hq down and attach with the canonical shell actions", () => {
+    const expectedCwd = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+
+    const down = runRawr(["hq", "down", "--json"]);
+    expect(down.status).toBe(0);
+    expect(JSON.parse(down.stdout)).toMatchObject({
+      ok: true,
+      data: {
+        cmd: "bash",
+        args: ["./scripts/dev/hq.sh", "down"],
+        cwd: expectedCwd,
+      },
+    });
+
+    const attach = runRawr(["hq", "attach", "--json"]);
+    expect(attach.status).toBe(0);
+    expect(JSON.parse(attach.stdout)).toMatchObject({
+      ok: true,
+      data: {
+        cmd: "bash",
+        args: ["./scripts/dev/hq.sh", "attach"],
+        cwd: expectedCwd,
+      },
+    });
+  });
+
+  it("plans hq restart with forwarded open and observability flags", () => {
+    const proc = runRawr(["hq", "restart", "--open", "all", "--observability", "off", "--json"]);
+    expect(proc.status).toBe(0);
+
+    const parsed = JSON.parse(proc.stdout) as any;
+    expect(parsed.ok).toBe(true);
+    expect(parsed.data.cmd).toBe("bash");
+    expect(parsed.data.args).toEqual(["./scripts/dev/hq.sh", "restart", "--open", "all", "--observability", "off"]);
+  });
+
   it("writes stale HQ status once and prunes the dead state file", () => {
     const workspaceRoot = mkdtempSync(path.join(os.tmpdir(), "rawr-hq-status-"));
     mkdirSync(path.join(workspaceRoot, "plugins"), { recursive: true });
@@ -66,5 +102,23 @@ describe("hq runtime commands", () => {
     );
     expect(readFileSync(path.join(workspaceRoot, ".rawr", "hq", "status.json"), "utf8")).toContain('"schemaVersion": 1');
     expect(() => readFileSync(path.join(workspaceRoot, ".rawr", "hq", "state.env"), "utf8")).toThrow();
+  });
+
+  it("rejects invalid RAWR_HQ_OBSERVABILITY values before writing status", () => {
+    const workspaceRoot = mkdtempSync(path.join(os.tmpdir(), "rawr-hq-invalid-mode-"));
+    mkdirSync(path.join(workspaceRoot, "plugins"), { recursive: true });
+    writeFileSync(path.join(workspaceRoot, "package.json"), JSON.stringify({ name: "status-fixture", private: true }, null, 2));
+
+    const proc = runRawr(["hq", "status", "--json"], {
+      env: {
+        RAWR_WORKSPACE_ROOT: workspaceRoot,
+        RAWR_HQ_OBSERVABILITY: "invalid",
+      },
+    });
+
+    expect(proc.status).not.toBe(0);
+    expect(`${proc.stdout}\n${proc.stderr}`).toContain("invalid RAWR_HQ_OBSERVABILITY 'invalid'");
+    expect(`${proc.stdout}\n${proc.stderr}`).not.toContain('"mode": "invalid"');
+    expect(() => readFileSync(path.join(workspaceRoot, ".rawr", "hq", "status.json"), "utf8")).toThrow();
   });
 });
