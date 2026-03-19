@@ -609,9 +609,15 @@ fi
 (
   cd apps/server
   if [[ -n "$otlp_endpoint" ]]; then
-    exec env OTEL_EXPORTER_OTLP_ENDPOINT="$otlp_endpoint" bun --hot src/index.ts > >(tee -a "$LOG_FILE") 2>&1
+    exec env \
+      OTEL_EXPORTER_OTLP_ENDPOINT="$otlp_endpoint" \
+      INNGEST_DEV="http://localhost:${INNGEST_PORT}" \
+      bun --hot src/index.ts > >(tee -a "$LOG_FILE") 2>&1
   fi
-  exec bun --hot src/index.ts > >(tee -a "$LOG_FILE") 2>&1
+  # Tell the host server it is running against the local Inngest Dev Server so
+  # `/api/inngest` accepts unsigned dev sync/serve handshakes without weakening
+  # production ingress verification.
+  exec env INNGEST_DEV="http://localhost:${INNGEST_PORT}" bun --hot src/index.ts > >(tee -a "$LOG_FILE") 2>&1
 ) &
 hq_server_pid="$!"
 
