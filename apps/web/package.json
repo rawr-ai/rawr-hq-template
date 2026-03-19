@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --project web",
     "test:visual": "playwright test test/coordination.visual.test.ts",
     "test:visual:update": "playwright test test/coordination.visual.test.ts --update-snapshots"
   },
