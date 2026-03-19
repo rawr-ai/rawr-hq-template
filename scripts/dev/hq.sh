@@ -289,8 +289,8 @@ detect_default_browser_bundle_id() {
     return 1
   fi
 
-  plutil -convert json -o - "$launch_services_plist" 2>/dev/null \
-    | python -c 'import json, sys
+plutil -convert json -o - "$launch_services_plist" 2>/dev/null \
+  | python -c 'import json, sys
 obj = json.load(sys.stdin)
 for entry in obj.get("LSHandlers", []):
     if entry.get("LSHandlerURLScheme") in ("http", "https"):
@@ -300,27 +300,123 @@ for entry in obj.get("LSHandlers", []):
             break'
 }
 
+resolve_browser_app_name() {
+  if [[ -n "${RAWR_HQ_BROWSER_APP:-}" ]]; then
+    printf '%s\n' "${RAWR_HQ_BROWSER_APP}"
+    return 0
+  fi
+
+  local browser_bundle_id=""
+  browser_bundle_id="$(detect_default_browser_bundle_id || true)"
+  case "$browser_bundle_id" in
+    company.thebrowser.browser)
+      printf '%s\n' "Arc"
+      return 0
+      ;;
+    com.google.Chrome)
+      printf '%s\n' "Google Chrome"
+      return 0
+      ;;
+    com.brave.Browser)
+      printf '%s\n' "Brave Browser"
+      return 0
+      ;;
+    com.apple.Safari)
+      printf '%s\n' "Safari"
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
+open_urls_with_browser_app() {
+  local browser_app="$1"
+  shift
+
+  if [[ "$#" -eq 0 ]]; then
+    return 0
+  fi
+
+  if ! command -v osascript >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local rendered_lines=""
+  local url=""
+  for url in "$@"; do
+    local escaped_url="${url//\\/\\\\}"
+    escaped_url="${escaped_url//\"/\\\"}"
+    case "$browser_app" in
+      "Arc"|"Google Chrome"|"Brave Browser")
+        rendered_lines="${rendered_lines}"$'\n'"  tell front window to make new tab with properties {URL:\"${escaped_url}\"}"
+        ;;
+      "Safari")
+        rendered_lines="${rendered_lines}"$'\n'"  tell front window to make new tab with properties {URL:\"${escaped_url}\"}"
+        ;;
+    esac
+  done
+
+  case "$browser_app" in
+    "Arc"|"Google Chrome"|"Brave Browser")
+      osascript >/dev/null 2>&1 <<APPLESCRIPT
+tell application "${browser_app}"
+  activate
+  try
+    set _hqWindow to front window
+  on error
+    make new window
+    delay 0.2
+  end try
+${rendered_lines}
+end tell
+APPLESCRIPT
+      return $?
+      ;;
+    "Safari")
+      osascript >/dev/null 2>&1 <<APPLESCRIPT
+tell application "Safari"
+  activate
+  try
+    set _hqWindow to front window
+  on error
+    make new document
+    delay 0.2
+  end try
+${rendered_lines}
+end tell
+APPLESCRIPT
+      return $?
+      ;;
+  esac
+
+  return 1
+}
+
 open_urls_as_browser_session() {
   if [[ "$#" -eq 0 ]]; then
     return 0
   fi
 
+  local browser_app=""
+  browser_app="$(resolve_browser_app_name || true)"
+  if [[ -n "$browser_app" ]]; then
+    if open_urls_with_browser_app "$browser_app" "$@"; then
+      return 0
+    fi
+    log "warn: unable to open HQ surfaces as tabs in '${browser_app}', falling back to direct URL opening"
+  fi
+
   if command -v open >/dev/null 2>&1; then
-    if [[ -n "${RAWR_HQ_BROWSER_APP:-}" ]]; then
-      # Prefer a single browser invocation so operational surfaces land together.
-      if open -a "${RAWR_HQ_BROWSER_APP}" "$@" >/dev/null 2>&1; then
+    if [[ -n "$browser_app" ]]; then
+      if open -a "$browser_app" "$@" >/dev/null 2>&1; then
         return 0
       fi
-      log "warn: unable to open HQ surfaces with browser app '${RAWR_HQ_BROWSER_APP}', falling back to system opener"
     else
       local browser_bundle_id=""
       browser_bundle_id="$(detect_default_browser_bundle_id || true)"
-      if [[ -n "$browser_bundle_id" ]]; then
-        # Use the system default browser so HQ does not unexpectedly force Chrome.
-        if open -b "$browser_bundle_id" "$@" >/dev/null 2>&1; then
-          return 0
-        fi
-        log "warn: unable to open HQ surfaces with default browser bundle '${browser_bundle_id}', falling back to system opener"
+      if [[ -n "$browser_bundle_id" ]] && open -b "$browser_bundle_id" "$@" >/dev/null 2>&1; then
+        return 0
       fi
     fi
 

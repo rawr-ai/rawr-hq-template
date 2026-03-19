@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui";
 
 type OperationalSurface = Readonly<{
@@ -43,6 +44,17 @@ function openLinksInTabs(urls: readonly string[]) {
 export function OperationsPage() {
   const surfaces = buildOperationalSurfaces();
   const graphCommand = "rawr hq graph";
+  const [graphCommandCopied, setGraphCommandCopied] = useState(false);
+
+  async function copyGraphCommand() {
+    try {
+      await navigator.clipboard.writeText(graphCommand);
+      setGraphCommandCopied(true);
+      window.setTimeout(() => setGraphCommandCopied(false), 2000);
+    } catch {
+      setGraphCommandCopied(false);
+    }
+  }
 
   return (
     <section className="mx-auto max-w-5xl space-y-4">
@@ -82,17 +94,22 @@ export function OperationsPage() {
         <CardContent>
           <div className="space-y-3 text-sm text-foreground/90">
             <p className="m-0">
-              Launch Nx graph from the terminal with <code>{graphCommand}</code>. That keeps workspace exploration separate from the
-              managed app/web/async/observability runtime.
+              Start Nx graph from the terminal with <code>{graphCommand}</code>. This page does not boot the graph server for you;
+              it only links to the graph after you have launched it explicitly.
             </p>
-            <a
-              href="http://127.0.0.1:4211/projects"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center rounded-sm border border-border/70 px-3 py-2 text-sm font-medium text-foreground transition hover:border-primary/35 hover:bg-muted/40"
-            >
-              Open Nx Graph If Already Running
-            </a>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="secondary" onClick={() => void copyGraphCommand()}>
+                {graphCommandCopied ? "Copied graph command" : "Copy rawr hq graph command"}
+              </Button>
+              <a
+                href="http://127.0.0.1:4211/projects"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center rounded-sm border border-border/70 px-3 py-2 text-sm font-medium text-foreground transition hover:border-primary/35 hover:bg-muted/40"
+              >
+                Open Nx Graph If It Is Already Running
+              </a>
+            </div>
           </div>
         </CardContent>
       </Card>
