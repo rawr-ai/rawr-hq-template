@@ -294,9 +294,13 @@ open_url() {
 }
 
 open_ui_surfaces() {
+  local should_open_inngest=0
   local should_open_observability=0
-  if [[ "$open_policy" != "none" && -n "$otlp_endpoint" ]]; then
-    should_open_observability=1
+  if [[ "$open_policy" != "none" ]]; then
+    should_open_inngest=1
+    if [[ -n "$otlp_endpoint" ]]; then
+      should_open_observability=1
+    fi
   fi
 
   case "$open_policy" in
@@ -319,6 +323,13 @@ open_ui_surfaces() {
       open_url "$HQ_INNGEST_RUNS_URL" || true
       ;;
   esac
+
+  # The local Inngest dev portal is part of the managed HQ runtime story, so
+  # any browser-opening posture should surface it unless the user explicitly
+  # disabled opening entirely.
+  if [[ "$should_open_inngest" -eq 1 ]]; then
+    open_url "$HQ_INNGEST_RUNS_URL" || true
+  fi
 
   # HyperDX is part of the managed local stack posture, so when the stack opens
   # browser surfaces we also pop the observability UI instead of hiding it
