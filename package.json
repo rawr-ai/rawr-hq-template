@@ -18,7 +18,6 @@
     "dev:server": "bunx nx run @rawr/server:dev",
     "dev:web": "bunx nx run @rawr/web:dev",
     "dev:workflows": "bun run --cwd apps/server dev:inngest",
-    "dev:up": "bash ./scripts/dev/up.sh",
     "dev:inngest": "bun run dev:workflows",
     "build": "bunx nx run-many -t build --projects=@rawr/agent-sync,@rawr/cli,@rawr/control-plane,@rawr/coordination,@rawr/coordination-inngest,@rawr/coordination-observability,@rawr/core,@rawr/example-todo,@rawr/hq,@rawr/hq-sdk,@rawr/journal,@rawr/orpc-client,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/security,@rawr/server,@rawr/session-tools,@rawr/state,@rawr/support-example,@rawr/ui-sdk,@rawr/web",
     "lint": "bunx nx run-many -t lint --projects=@rawr/agent-sync,@rawr/cli,@rawr/control-plane,@rawr/plugin-hq,@rawr/plugin-plugins",

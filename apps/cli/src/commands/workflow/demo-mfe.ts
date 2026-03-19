@@ -128,7 +128,7 @@ export default class WorkflowDemoMfe extends RawrCommand {
         this.log(`ok: ${ok ? "true" : "false"}`);
         if (ok) {
           this.log("next:");
-          this.log("- run: rawr dev up");
+          this.log("- run: rawr hq up");
           this.log("- visit: http://localhost:5173/mounts (support-example example card)");
         }
       },
@@ -158,7 +158,7 @@ async function tryWriteDemoSnippet(input: { repoRoot: string; ok: boolean; plugi
     `plugin: ${input.pluginId}`,
     "",
     "how to view:",
-    "- run: rawr dev up",
+    "- run: rawr hq up",
     "- visit: http://localhost:5173/mounts (support-example example card)",
   ].join("\n");
 

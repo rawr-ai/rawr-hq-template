@@ -1,6 +1,6 @@
 # Coordination Canvas Operations Runbook
 
-This runbook covers local and hosted operations for the coordination canvas + Inngest runtime path.
+This runbook covers the canonical local HQ runtime path for the coordination canvas and Inngest support surface.
 
 ## Scope
 
@@ -8,7 +8,8 @@ This runbook covers local and hosted operations for the coordination canvas + In
 - ORPC RPC transport: `/rpc/*`
 - ORPC OpenAPI transport: `/api/orpc/*`
 - Inngest serve endpoint: `/api/inngest`
-- CLI surface: `rawr workflow coord ...`
+- Managed runtime surface: `rawr hq up|down|status|restart|attach`
+- Workflow CLI surface: `rawr workflow coord ...`
 
 ## Local Development
 
@@ -16,74 +17,74 @@ This runbook covers local and hosted operations for the coordination canvas + In
 ```bash
 bun install
 ```
-2. Start coordination stack (server + web + Inngest dev):
+
+2. Start the managed HQ runtime:
 ```bash
-bun run dev:up
+bun run rawr hq up
 ```
 
-Lifecycle behavior:
-- If no managed stack is running, `dev:up` starts server/web/inngest.
-- If managed stack is already running:
-  - interactive terminal: prompts for `status` (default), `attach`, `stop`, or `restart`
-  - non-interactive/CI: defaults to `status` and exits (no duplicate process spawn)
-- If lifecycle ports are already occupied by another stack outside this worktree:
-  - `auto` mode treats that as an existing stack and exits cleanly with status/remediation guidance
-  - interactive mode offers to stop conflicting listeners and start in this worktree
-  - explicit `--action start` fails fast with remediation guidance
+Canonical lifecycle controls:
+```bash
+bun run rawr hq status
+bun run rawr hq attach
+bun run rawr hq restart
+bun run rawr hq down
+```
+
+Canonical runtime artifacts:
+- `.rawr/hq/state.env`
+- `.rawr/hq/status.json`
+- `.rawr/hq/runtime.log`
 
 Canonical canvas surface:
 - Primary canvas URL: `http://localhost:5173/coordination`
 - This is a host-shell route; standalone canvas serving is not enabled by default.
 
-Browser open policy defaults to one surface:
-- default: `coordination` (opens only `http://localhost:5173/coordination` once)
-- policy options: `none | coordination | app | app+inngest | all`
+Runtime flags and env:
+- `--open none|coordination|app|app+inngest|all`
+- `--observability auto|required|off`
+- `RAWR_HQ_OPEN=<policy>`
+- `RAWR_HQ_OBSERVABILITY=<mode>`
 
-Open-policy controls:
+Examples:
 ```bash
-RAWR_DEV_UP_OPEN=none bun run dev:up
+RAWR_HQ_OPEN=none bun run rawr hq up
+RAWR_HQ_OBSERVABILITY=required bun run rawr hq up
+bun run rawr hq restart --open all --observability auto
 ```
 
-Backward-compatibility aliases:
-- `RAWR_OPEN_POLICY=<policy>` (alias of `RAWR_DEV_UP_OPEN`)
-- `RAWR_OPEN_UI=0` -> `none`
-- `RAWR_OPEN_UI=1` -> `all`
-
-Lifecycle actions can be set explicitly:
+Low-level internal tasks remain available for debugging, but they are not managed lifecycle surfaces:
 ```bash
-bun run dev:up -- --action status
-bun run dev:up -- --action attach
-bun run dev:up -- --action stop
-bun run dev:up -- --action restart
-```
-
-3. Optional individual processes:
-```bash
+bun run dev
 bun run dev:server
 bun run dev:web
 bun run dev:workflows
 ```
 
-4. Backward-compatible alias:
-```bash
-bun run dev:inngest
-```
-
 ## Local Smoke Checks
 
-1. Server health:
+1. Confirm runtime status and artifact write:
+```bash
+bun run rawr hq status --json
+```
+Expected:
+- `summary` is present
+- `support.observability` is nested under `support`
+- `.rawr/hq/status.json` exists
+
+2. Server health:
 ```bash
 curl -sS http://localhost:3000/health
 ```
 Expected: `{"ok":true}`
 
-2. Inngest serve endpoint:
+3. Inngest serve endpoint:
 ```bash
 curl -sS http://localhost:3000/api/inngest
 ```
-Expected: `200` response from Inngest serve handler.
+Expected: `200` response from the Inngest serve handler.
 
-3. ORPC RPC workflow list:
+4. ORPC RPC workflow list:
 ```bash
 curl -sS http://localhost:3000/rpc/coordination/listWorkflows \
   -X POST \
@@ -92,34 +93,31 @@ curl -sS http://localhost:3000/rpc/coordination/listWorkflows \
 ```
 Expected: `200` response with JSON body containing `json.workflows`.
 
-4. Coordination workflow round-trip via CLI:
+5. Coordination workflow round-trip via CLI:
 ```bash
 bun run rawr workflow coord create --id wf-smoke --json
 bun run rawr workflow coord validate wf-smoke --json
 bun run rawr workflow coord run wf-smoke --json
 ```
 
-5. Canvas route:
+6. Canvas route:
 - Open `http://localhost:5173/coordination`
-- Confirm canvas loads, `Cmd/Ctrl+K` opens command palette, and run timeline updates after a run.
+- Confirm the canvas loads, `Cmd/Ctrl+K` opens the command palette, and the run timeline updates after a run.
 
-6. Repeated-start safety checks:
+7. Runtime log tail:
 ```bash
-bun run dev:up -- --action status
+bun run rawr hq attach
 ```
-Expected:
-- No new duplicate listeners are created when stack is already running.
-- Status output reports managed process pids and listener ownership for lifecycle ports.
 
 ## Hosted Runtime Notes (Railway / Similar)
 
 1. Environment variables:
-- `INNGEST_BASE_URL` (or `INNGEST_EVENT_API_BASE_URL` / `INNGEST_DEV`) should point to the Inngest runtime endpoint used for traces/links.
+- `INNGEST_BASE_URL` (or `INNGEST_EVENT_API_BASE_URL` / `INNGEST_DEV`) should point to the Inngest runtime endpoint used for traces and links.
 
 2. Persistence model:
-- Current coordination storage is file-backed under `.rawr/coordination` relative to server repo root.
-- In ephemeral filesystems, workflow/run/timeline/memory data can be lost on restart/redeploy.
-- For production durability, deploy with persistent disk/volume or replace the file-backed storage adapter with durable DB/object storage.
+- Current coordination storage is file-backed under `.rawr/coordination` relative to the server repo root.
+- In ephemeral filesystems, workflow, run, timeline, and memory data can be lost on restart or redeploy.
+- For production durability, deploy with persistent disk or replace the file-backed storage adapter with durable DB or object storage.
 
 3. Operational health checks:
 - `GET /health` for service liveness
@@ -129,10 +127,11 @@ Expected:
 
 ## Incident Triage Checklist
 
-1. Confirm server is healthy (`/health`).
-2. Confirm Inngest handler is reachable (`/api/inngest`).
-3. Confirm ORPC contract exposure (`/api/orpc/openapi.json`).
-4. Validate workflow by id (`POST /rpc/coordination/validateWorkflow` with `{"json":{"workflowId":"..."}}`).
-5. Check run status (`POST /rpc/coordination/getRunStatus`).
-6. Check timeline diagnostics (`POST /rpc/coordination/getRunTimeline` or `GET /api/orpc/coordination/runs/{runId}/timeline`).
-7. Verify trace links in run payload point to expected Inngest environment.
+1. Confirm the managed HQ runtime status: `bun run rawr hq status --json`.
+2. Confirm server health (`/health`).
+3. Confirm the Inngest handler is reachable (`/api/inngest`).
+4. Confirm ORPC contract exposure (`/api/orpc/openapi.json`).
+5. Validate the workflow by id (`POST /rpc/coordination/validateWorkflow` with `{"json":{"workflowId":"..."}}`).
+6. Check run status (`POST /rpc/coordination/getRunStatus`).
+7. Check timeline diagnostics (`POST /rpc/coordination/getRunTimeline` or `GET /api/orpc/coordination/runs/{runId}/timeline`).
+8. Inspect `.rawr/hq/runtime.log` for correlated runtime output.
