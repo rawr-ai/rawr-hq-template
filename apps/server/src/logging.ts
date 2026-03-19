@@ -24,6 +24,8 @@ export type HostLoggingContext = {
 const hostLoggingContext = new AsyncLocalStorage<HostLoggingContext>();
 const hostLoggingSpanContext = new AsyncLocalStorage<Pick<SpanContext, "traceId" | "spanId">>();
 
+// Keep one destination-backed logger per repo root so HQ writes a single
+// runtime log stream even when many routed requests pass through the host.
 const hostLoggersByRepoRoot = new Map<string, PinoLogger>();
 let hostLoggerOverrideDestination: DestinationStream | undefined;
 let fallbackHostLogger = createPinoLogger();
@@ -47,6 +49,8 @@ function createFileDestination(repoRoot: string): DestinationStream {
 function resolveHostLogger(): PinoLogger {
   const context = hostLoggingContext.getStore();
 
+  // Tests and non-request code paths still need a usable logger even when
+  // there is no host request context to resolve a repo-local runtime log file.
   if (!context) {
     return fallbackHostLogger;
   }
@@ -150,6 +154,8 @@ export async function withHostLoggingSpanContext<T>(
     return fn();
   }
 
+  // The route span is the canonical host-owned correlation seam, so persist
+  // its identifiers even if downstream code switches active tracing context.
   return hostLoggingSpanContext.run(spanContext, fn);
 }
 

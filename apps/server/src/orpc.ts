@@ -100,6 +100,8 @@ async function withRouteSpan(
   attributes: Record<string, string | boolean | number>,
   fn: () => Promise<Response>,
 ): Promise<Response> {
+  // Every caller-facing proof path must cross this host span so traces, metrics,
+  // and runtime logs describe the same routed execution.
   return getRouteTracer().startActiveSpan(name, async (span) => {
     for (const [key, value] of Object.entries(attributes)) {
       span.setAttribute(key, value);
@@ -153,6 +155,9 @@ async function handleRpcRoute<
     const context = contextFactory(request, contextDeps);
     assertRpcAuthDedupeMarker(context);
     onContextCreated?.(context);
+    // Request-scoped logging context is established at the shared host boundary,
+    // not inside the service package, so in-process execution still correlates
+    // logs with the routed RPC request.
     const loggingContext = createHostLoggingContext({
       request,
       repoRoot: context.repoRoot,
@@ -202,6 +207,8 @@ async function handleOpenApiRoute<
   }, async () => {
     const context = contextFactory(request, contextDeps);
     onContextCreated?.(context);
+    // OpenAPI requests must carry the same host-owned logging correlation model
+    // as RPC so the two public surfaces stay observably consistent.
     const loggingContext = createHostLoggingContext({
       request,
       repoRoot: context.repoRoot,

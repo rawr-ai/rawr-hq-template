@@ -43,10 +43,15 @@ function formatObservabilityModeError(value: string, source: string): string {
 
 function resolveObservabilityMode(args: {
   mode?: HqObservabilityMode;
+  stateMode?: HqObservabilityMode | null;
   env: NodeJS.ProcessEnv;
 }): HqObservabilityMode {
   if (args.mode) {
     return args.mode;
+  }
+
+  if (args.stateMode) {
+    return args.stateMode;
   }
 
   const envValue = args.env.RAWR_HQ_OBSERVABILITY?.trim();
@@ -134,6 +139,8 @@ type HqStateFile = {
   webPid: number | null;
   asyncPid: number | null;
   startedAt: string | null;
+  openPolicy: HqOpenPolicy | null;
+  observabilityMode: HqObservabilityMode | null;
 };
 
 const HQ_ARTIFACT_DIR = ".rawr/hq";
@@ -183,6 +190,16 @@ function isPidRunning(pid: number | null): boolean {
   }
 }
 
+function parseOpenPolicy(value: string | undefined): HqOpenPolicy | null {
+  if (!value) return null;
+  return (HQ_OPEN_POLICIES as readonly string[]).includes(value) ? (value as HqOpenPolicy) : null;
+}
+
+function parseObservabilityMode(value: string | undefined): HqObservabilityMode | null {
+  if (!value) return null;
+  return isHqObservabilityMode(value) ? value : null;
+}
+
 async function ensureArtifactDir(workspaceRoot: string): Promise<void> {
   await fs.mkdir(path.join(workspaceRoot, HQ_ARTIFACT_DIR), { recursive: true });
 }
@@ -219,12 +236,56 @@ async function readStateFile(workspaceRoot: string): Promise<HqStateFile | null>
     webPid: parsePid(parsed.get("hq_web_pid")),
     asyncPid: parsePid(parsed.get("hq_async_pid")),
     startedAt: parsed.get("hq_started_at") ?? null,
+    openPolicy: parseOpenPolicy(parsed.get("hq_open_policy")),
+    observabilityMode: parseObservabilityMode(parsed.get("hq_observability_mode")),
   };
 }
 
 function collectManagedPids(state: HqStateFile | null): number[] {
   if (!state) return [];
-  return [state.managerPid, state.serverPid, state.webPid, state.asyncPid].filter((value): value is number => value !== null);
+  const roots = [state.managerPid, state.serverPid, state.webPid, state.asyncPid].filter((value): value is number => value !== null);
+  const managed = new Set<number>();
+
+  // Child/grandchild processes inherit managed runtime ownership even when a
+  // wrapper PID is not the direct socket listener that status probes observe.
+  for (const pid of roots) {
+    for (const relatedPid of collectPidClosure(pid)) {
+      managed.add(relatedPid);
+    }
+  }
+
+  return [...managed];
+}
+
+function collectPidClosure(rootPid: number): number[] {
+  const seen = new Set<number>();
+
+  const visit = (pid: number) => {
+    if (seen.has(pid)) return;
+    seen.add(pid);
+    for (const child of getChildPids(pid)) {
+      visit(child);
+    }
+  };
+
+  visit(rootPid);
+  return [...seen];
+}
+
+function getChildPids(pid: number): number[] {
+  if (!commandExists("pgrep")) {
+    return [];
+  }
+
+  const proc = spawnSync("pgrep", ["-P", String(pid)], { encoding: "utf8" });
+  if (proc.status !== 0 && proc.stdout.trim() === "") {
+    return [];
+  }
+
+  return proc.stdout
+    .split(/\r?\n/)
+    .map((value) => Number.parseInt(value.trim(), 10))
+    .filter((value) => Number.isInteger(value) && value > 0);
 }
 
 function getListenerPids(port: number): { listenerPids: number[]; unknownOwnership: boolean } {
@@ -373,13 +434,17 @@ async function collectObservabilityStatus(args: {
   managerState: HqManagerState;
   managedPids: number[];
 }): Promise<HqObservabilityStatus> {
+  const docker = getDockerContainerState("rawr-hq-hyperdx");
   const ports = [HQ_PORTS.observabilityUi, HQ_PORTS.observabilityOtlp].map((port) => {
     const listeners = getListenerPids(port);
+    const ownership = docker.running && (listeners.listenerPids.length > 0 || listeners.unknownOwnership)
+      ? "managed"
+      : deriveOwnership(listeners.listenerPids, listeners.unknownOwnership, args.managedPids);
     return {
       port,
       listening: listeners.listenerPids.length > 0 || listeners.unknownOwnership,
       listenerPids: listeners.listenerPids,
-      ownership: deriveOwnership(listeners.listenerPids, listeners.unknownOwnership, args.managedPids),
+      ownership,
     } satisfies HqPortStatus;
   });
 
@@ -396,7 +461,6 @@ async function collectObservabilityStatus(args: {
       command: "rawr hq up",
     });
   } else {
-    const docker = getDockerContainerState("rawr-hq-hyperdx");
     const hasPortConflict = ports.some((port) => port.listening && port.ownership !== "unknown" && port.ownership !== "managed");
 
     if (!docker.available) {
@@ -424,8 +488,8 @@ async function collectObservabilityStatus(args: {
       state = "degraded-unavailable";
       remediation.push({
         code: "PROVISION_HYPERDX",
-        message: "Provision or start the local HyperDX container named rawr-hq-hyperdx.",
-        command: "docker start rawr-hq-hyperdx",
+        message: "Create the local HyperDX container named rawr-hq-hyperdx before requiring observability.",
+        command: "docker run -d --name rawr-hq-hyperdx -p 8080:8080 -p 4318:4318 docker.hyperdx.io/hyperdx/hyperdx-local",
       });
     }
   }
@@ -472,8 +536,14 @@ export async function collectHqStatus(args: {
 }): Promise<HqStatus> {
   const workspaceRoot = path.resolve(args.workspaceRoot);
   const { stateFile } = getArtifactPaths(workspaceRoot);
-  const requestedMode = resolveObservabilityMode({ mode: args.mode, env: process.env });
   const state = await readStateFile(workspaceRoot);
+  // Prefer the last successful runtime posture from state.env so `hq status`
+  // reports the active HQ mode instead of falling back to the auto default.
+  const requestedMode = resolveObservabilityMode({
+    mode: args.mode,
+    stateMode: state?.observabilityMode ?? null,
+    env: process.env,
+  });
   const managedPids = collectManagedPids(state);
   const anyManagedPidLive = managedPids.some((pid) => isPidRunning(pid));
   const stale = Boolean(state) && !anyManagedPidLive;

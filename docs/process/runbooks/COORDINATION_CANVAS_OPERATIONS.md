@@ -18,10 +18,20 @@ This runbook covers the canonical local HQ runtime path for the coordination can
 bun install
 ```
 
-2. Start the managed HQ runtime:
+2. Provision the local HyperDX support container once if you want managed traces and metrics:
 ```bash
-bun run rawr hq up
+docker run -d --name rawr-hq-hyperdx -p 8080:8080 -p 4318:4318 docker.hyperdx.io/hyperdx/hyperdx-local
 ```
+If the container already exists but is stopped:
+```bash
+docker start rawr-hq-hyperdx
+```
+
+3. Start the managed HQ runtime:
+```bash
+bun run rawr hq up --observability required
+```
+Use `--observability auto` only when you intentionally want HQ to degrade cleanly without the managed HyperDX stack.
 
 Canonical lifecycle controls:
 ```bash
@@ -69,7 +79,9 @@ bun run rawr hq status --json
 ```
 Expected:
 - `summary` is present
+- `summary` is `running` when all three roles are healthy and the HyperDX container is available
 - `support.observability` is nested under `support`
+- `support.observability.state` is `running`
 - `.rawr/hq/status.json` exists
 
 2. Server health:
@@ -108,6 +120,80 @@ bun run rawr workflow coord run wf-smoke --json
 ```bash
 bun run rawr hq attach
 ```
+
+8. Canonical `example-todo` proof-path smoke checks:
+```bash
+curl -sS http://localhost:3000/rpc/exampleTodo/tasks/create \
+  -X POST \
+  -H "content-type: application/json" \
+  -H "x-rawr-caller-surface: first-party" \
+  -H "x-rawr-session-auth: verified" \
+  -d '{"json":{"title":"slice-7 runtime smoke","description":"verify correlated host logging"}}'
+
+curl -sS http://localhost:3000/api/orpc/exampleTodo/tasks/create \
+  -X POST \
+  -H "content-type: application/json" \
+  -H "x-rawr-caller-surface: external" \
+  -d '{"title":"slice-7 external smoke","description":"verify caller-facing proof surface"}'
+```
+Expected:
+- both requests succeed with `200`
+- the canonical caller-facing proof path crosses both `/rpc/exampleTodo/*` and `/api/orpc/exampleTodo/*`
+
+9. Runtime log correlation evidence:
+```bash
+rg -n '"event":"(todo\\.tasks\\.create|todo\\.procedure|orpc\\.procedure)"' .rawr/hq/runtime.log | tail -n 12
+```
+Expected:
+- the emitted log lines contain `requestId`, `correlationId`, `requestPath`, `surface`, and `traceId`
+- the `/rpc/exampleTodo/tasks/create` and `/api/orpc/exampleTodo/tasks/create` requests both appear in `.rawr/hq/runtime.log`
+
+10. Trace and metric evidence in the local HyperDX stack:
+```bash
+docker exec rawr-hq-hyperdx clickhouse-client --query "
+SELECT Timestamp, SpanName, SpanAttributes['rawr.orpc.surface'], SpanAttributes['rawr.orpc.path'], SpanAttributes['url.full'], TraceId
+FROM default.otel_traces
+WHERE Timestamp > now() - INTERVAL 10 MINUTE
+  AND ServiceName='@rawr/server'
+  AND SpanAttributes['url.full'] LIKE '%exampleTodo/tasks/create'
+ORDER BY Timestamp DESC
+LIMIT 8
+FORMAT Vertical"
+
+docker exec rawr-hq-hyperdx clickhouse-client --query "
+SELECT TimeUnix, MetricName, Attributes
+FROM default.otel_metrics_sum
+WHERE TimeUnix > now() - INTERVAL 10 MINUTE
+  AND ServiceName='@rawr/server'
+  AND MetricName='rawr.orpc.requests'
+ORDER BY TimeUnix DESC
+LIMIT 8
+FORMAT Vertical"
+
+docker exec rawr-hq-hyperdx clickhouse-client --query "
+SELECT TimeUnix, MetricName, Attributes
+FROM default.otel_metrics_histogram
+WHERE TimeUnix > now() - INTERVAL 10 MINUTE
+  AND ServiceName='@rawr/server'
+  AND MetricName='rawr.orpc.request.duration'
+ORDER BY TimeUnix DESC
+LIMIT 8
+FORMAT Vertical"
+```
+Expected:
+- traces show `rawr.orpc.rpc.request` and `rawr.orpc.openapi.request` spans for the recent `exampleTodo` requests
+- `rawr.orpc.requests` and `rawr.orpc.request.duration` rows appear for both routed surfaces
+- the same execution shape is now proven across `.rawr/hq/runtime.log`, traces, and metrics without bypassing the shared host boundary
+
+11. Optional UI confirmation:
+Expected:
+- `http://localhost:8080/` is reachable while HQ is running with `--observability required`
+- HyperDX should now show the same recent `exampleTodo` traces/metrics already proven via ClickHouse queries
+
+12. Observability UI and OTLP flow:
+- Open `http://localhost:8080/`
+- confirm the local HyperDX UI is reachable while HQ is running with `--observability required`
+- verify the canonical `example-todo` request produces traces/metrics on the shared `/rpc` or `/api/orpc` host ingress path, not only package-level spans
 
 ## Hosted Runtime Notes (Railway / Similar)
 

@@ -98,6 +98,8 @@ load_state() {
   hq_web_pid=""
   hq_async_pid=""
   hq_started_at=""
+  hq_open_policy=""
+  hq_observability_mode=""
 
   if [[ ! -f "$STATE_FILE" ]]; then
     return 1
@@ -137,6 +139,10 @@ hq_server_pid=${hq_server_pid}
 hq_web_pid=${hq_web_pid}
 hq_async_pid=${hq_async_pid}
 hq_started_at=${hq_started_at}
+# Persist the chosen posture so later `rawr hq status` calls can report the
+# active HQ mode even when no explicit flags are passed.
+hq_open_policy=${open_policy}
+hq_observability_mode=${observability_mode}
 STATE
 }
 
@@ -220,6 +226,15 @@ ensure_observability_posture() {
     return 0
   fi
 
+  local container_running=""
+  container_running="$(docker inspect --format '{{.State.Running}}' rawr-hq-hyperdx 2>/dev/null || true)"
+  # The managed HyperDX container is expected to own 8080/4318 when observability is enabled.
+  # Check it before the generic port-conflict branch so required mode does not reject the managed stack itself.
+  if [[ "$container_running" == "true" ]]; then
+    otlp_endpoint="$HQ_OBSERVABILITY_OTLP_URL"
+    return 0
+  fi
+
   local ui_conflict=0
   local otlp_conflict=0
   if port_has_unmanaged_listener 8080; then ui_conflict=1; fi
@@ -231,13 +246,6 @@ ensure_observability_posture() {
     fi
     log "warn: HyperDX support ports are occupied; continuing without managed observability"
     otlp_endpoint=""
-    return 0
-  fi
-
-  local container_running=""
-  container_running="$(docker inspect --format '{{.State.Running}}' rawr-hq-hyperdx 2>/dev/null || true)"
-  if [[ "$container_running" == "true" ]]; then
-    otlp_endpoint="$HQ_OBSERVABILITY_OTLP_URL"
     return 0
   fi
 
