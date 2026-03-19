@@ -17,6 +17,12 @@ export default defineConfig({
       "**/node_modules/**",
       "**/apps/web/test/coordination.visual.test.ts",
     ],
+    // Temporary alignment note:
+    // Project package.json test scripts currently pin `vitest run --project <name>`
+    // so `nx run <project>:test` stays project-scoped when Vitest resolves this
+    // root multi-project config. This duplication should be replaced later by a
+    // single-source-of-truth Nx/Vitest integration instead of per-package script
+    // pinning.
     projects: [
       {
         extends: true,
