@@ -11,7 +11,7 @@ import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 type DemoStep = StepResult & { stdoutJson?: any };
 
 export default class WorkflowDemoMfe extends RawrCommand {
-  static description = "Enable + build + verify the support-example micro-frontend demo plugin end-to-end";
+  static description = "Enable + build + verify the legacy support-example micro-frontend demo plugin end-to-end";
 
   static flags = {
     ...RawrCommand.baseFlags,
@@ -127,9 +127,9 @@ export default class WorkflowDemoMfe extends RawrCommand {
         this.log(`plugin: ${pluginId}`);
         this.log(`ok: ${ok ? "true" : "false"}`);
         if (ok) {
-          this.log("next:");
+          this.log("next (legacy demo only):");
           this.log("- run: rawr hq up");
-          this.log("- visit: http://localhost:5173/mounts (support-example example card)");
+          this.log("- visit: http://localhost:5173/mounts (legacy support-example demo card)");
         }
       },
     });
@@ -150,16 +150,16 @@ function tryParseJson(raw: string): any | null {
 async function tryWriteDemoSnippet(input: { repoRoot: string; ok: boolean; pluginId: string }): Promise<void> {
   const id = journalId();
   const ts = new Date().toISOString();
-  const title = `workflow demo-mfe support-example (${input.ok ? "ok" : "failed"})`;
+  const title = `workflow demo-mfe legacy support-example (${input.ok ? "ok" : "failed"})`;
   const body = [
     "workflow: demo-mfe",
-    "domain: support-example (example)",
+    "domain: support-example (legacy demo allowlist)",
     `ok: ${input.ok ? "true" : "false"}`,
     `plugin: ${input.pluginId}`,
     "",
     "how to view:",
     "- run: rawr hq up",
-    "- visit: http://localhost:5173/mounts (support-example example card)",
+    "- visit: http://localhost:5173/mounts (legacy support-example demo card)",
   ].join("\n");
 
   const snippet: JournalSnippet = {
@@ -169,7 +169,7 @@ async function tryWriteDemoSnippet(input: { repoRoot: string; ok: boolean; plugi
     title,
     preview: safePreview(`ok=${input.ok} plugin=${input.pluginId}`),
     body,
-    tags: ["workflow", "demo-mfe", "support-example-example", input.pluginId],
+    tags: ["workflow", "demo-mfe", "support-example-legacy", input.pluginId],
   };
 
   try {

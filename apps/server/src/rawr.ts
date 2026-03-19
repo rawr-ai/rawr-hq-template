@@ -295,7 +295,6 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
   registerOrpcRoutes(app, {
     ...boundaryContextDeps,
     router: rawrHqManifest.orpc.router,
-    workflowTriggerRouter: rawrHqManifest.workflows.triggerRouter,
     contextFactory: (request, deps) =>
       rawrHqManifest.workflows.enrichContext(
         rawrHqManifest.orpc.enrichContext(createRequestScopedBoundaryContext(request, deps)),

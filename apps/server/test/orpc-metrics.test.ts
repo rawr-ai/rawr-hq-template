@@ -19,6 +19,7 @@ const spanSetAttribute = vi.fn();
 const spanSetStatus = vi.fn();
 const spanRecordException = vi.fn();
 const spanEnd = vi.fn();
+const spanContext = vi.fn();
 const startActiveSpan = vi.fn();
 
 async function createTestApp(args: {
@@ -48,6 +49,7 @@ beforeEach(() => {
   spanSetStatus.mockReset();
   spanRecordException.mockReset();
   spanEnd.mockReset();
+  spanContext.mockReset();
   startActiveSpan.mockReset();
   __resetOrpcRouteTelemetryForTests();
 
@@ -61,12 +63,20 @@ beforeEach(() => {
     setStatus(status: unknown): void;
     recordException(error: unknown): void;
     end(): void;
+    spanContext(): { traceId: string; spanId: string; traceFlags: number };
   }) => Promise<Response>) => fn({
     setAttribute: spanSetAttribute,
     setStatus: spanSetStatus,
     recordException: spanRecordException,
     end: spanEnd,
+    spanContext,
   }));
+
+  spanContext.mockReturnValue({
+    traceId: "11111111111111111111111111111111",
+    spanId: "2222222222222222",
+    traceFlags: 1,
+  });
 
   vi.spyOn(otelApi.trace, "getTracer").mockReturnValue({
     startActiveSpan,

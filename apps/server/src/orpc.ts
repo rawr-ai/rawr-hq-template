@@ -1,6 +1,5 @@
 import {
   createHqRuntimeRouter,
-  createWorkflowTriggerRuntimeRouter,
   type RuntimeRouterContext,
 } from "@rawr/core/orpc";
 import { metrics, SpanStatusCode, trace, type Counter, type Histogram } from "@opentelemetry/api";
@@ -32,13 +31,9 @@ let routedRequestDurationHistogram: Histogram | undefined;
 
 export type RegisterOrpcRoutesOptions<
   TContext extends RuntimeRouterContext = RuntimeRouterContext,
-  TWorkflowContext extends RuntimeRouterContext = TContext,
-  TRequestContext extends RawrBoundaryContext & TContext & TWorkflowContext = RawrBoundaryContext &
-    TContext &
-    TWorkflowContext,
+  TRequestContext extends RawrBoundaryContext & TContext = RawrBoundaryContext & TContext,
 > = RawrBoundaryContextDeps & {
   router?: Router<AnyContractRouter, TContext>;
-  workflowTriggerRouter?: Router<AnyContractRouter, TWorkflowContext>;
   contextFactory?: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext;
   onContextCreated?: (context: TRequestContext) => void;
   rpcAuthPolicy?: RpcAuthPolicy;
@@ -51,10 +46,6 @@ export function __resetOrpcRouteTelemetryForTests() {
 
 export function createOrpcRouter<TContext extends RuntimeRouterContext = RuntimeRouterContext>() {
   return createHqRuntimeRouter<TContext>();
-}
-
-export function createWorkflowTriggerRouter<TContext extends RuntimeRouterContext = RuntimeRouterContext>() {
-  return createWorkflowTriggerRuntimeRouter<TContext>();
 }
 
 function isRpcRequestAllowedWithDedupe(request: Request, policy: RpcAuthPolicy): boolean {
@@ -133,19 +124,16 @@ async function withRouteSpan(
 
 async function handleRpcRoute<
   TContext extends RuntimeRouterContext,
-  TWorkflowContext extends RuntimeRouterContext,
-  TRequestContext extends RawrBoundaryContext & TContext & TWorkflowContext,
+  TRequestContext extends RawrBoundaryContext & TContext,
 >(args: {
   request: Request;
   rpcHandler: RPCHandler<TContext>;
-  workflowTriggerRpcHandler?: RPCHandler<TWorkflowContext>;
   contextFactory: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext;
   contextDeps: RawrBoundaryContextDeps;
   rpcAuthPolicy: RpcAuthPolicy;
   onContextCreated?: (context: TRequestContext) => void;
 }): Promise<Response> {
-  const { request, rpcHandler, workflowTriggerRpcHandler, contextFactory, contextDeps, rpcAuthPolicy, onContextCreated } =
-    args;
+  const { request, rpcHandler, contextFactory, contextDeps, rpcAuthPolicy, onContextCreated } = args;
   const startedAt = Date.now();
   return withRouteSpan("rawr.orpc.rpc.request", {
     "rawr.orpc.surface": "rpc",
@@ -173,40 +161,18 @@ async function handleRpcRoute<
       surface: "rpc",
     });
 
-    // The oRPC RPC handler may consume the request body before it can decide that a procedure is unmatched.
-    // Clone upfront so we can safely fall back to the workflow trigger router without double-consuming the stream.
-    const workflowFallbackRequest = workflowTriggerRpcHandler ? request.clone() : undefined;
-
-    const routedResponse = await withHostLoggingContext(loggingContext, async () => {
+    const response = await withHostLoggingContext(loggingContext, async () => {
       const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
-      if (result.matched) {
-        return {
-          response: result.response,
-          router: "rpc" as const,
-        };
-      }
-
-      if (!workflowTriggerRpcHandler || !workflowFallbackRequest) {
-        return {
-          response: new Response("not found", { status: 404 }),
-          router: "rpc" as const,
-        };
-      }
-
-      const workflowResult = await workflowTriggerRpcHandler.handle(workflowFallbackRequest, { prefix: "/rpc", context });
-      return {
-        response: workflowResult.matched ? workflowResult.response : new Response("not found", { status: 404 }),
-        router: workflowResult.matched ? "workflow-trigger" as const : "rpc" as const,
-      };
+      return result.matched ? result.response : new Response("not found", { status: 404 });
     });
 
     recordRoutedRequestMetrics({
       surface: "rpc",
-      statusCode: routedResponse.response.status,
+      statusCode: response.status,
       durationMs: Date.now() - startedAt,
-      attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": routedResponse.router },
+      attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": "rpc" },
     });
-    return routedResponse.response;
+    return response;
   }).catch((error) => {
     recordRoutedRequestMetrics({
       surface: "rpc",
@@ -303,19 +269,13 @@ export async function generateOrpcOpenApiSpec(baseUrl: string) {
 export function registerOrpcRoutes<
   TApp extends AnyElysia,
   TContext extends RuntimeRouterContext = RuntimeRouterContext,
-  TWorkflowContext extends RuntimeRouterContext = TContext,
-  TRequestContext extends RawrBoundaryContext & TContext & TWorkflowContext = RawrBoundaryContext &
-    TContext &
-    TWorkflowContext,
+  TRequestContext extends RawrBoundaryContext & TContext = RawrBoundaryContext & TContext,
 >(
   app: TApp,
-  options: RegisterOrpcRoutesOptions<TContext, TWorkflowContext, TRequestContext>,
+  options: RegisterOrpcRoutesOptions<TContext, TRequestContext>,
 ): TApp {
   const router = options.router ?? createOrpcRouter<TContext>();
   const rpcHandler = new RPCHandler<TContext>(router);
-  const workflowTriggerRpcHandler = options.workflowTriggerRouter
-    ? new RPCHandler<TWorkflowContext>(options.workflowTriggerRouter)
-    : undefined;
   const openapiHandler = new OpenAPIHandler<TContext>(router);
   const rpcAuthPolicy = options.rpcAuthPolicy ?? createRpcAuthPolicy({ baseUrl: options.baseUrl });
   const contextDeps: RawrBoundaryContextDeps = {
@@ -353,7 +313,6 @@ export function registerOrpcRoutes<
       return handleRpcRoute({
         request,
         rpcHandler,
-        workflowTriggerRpcHandler,
         contextFactory,
         contextDeps,
         rpcAuthPolicy,
@@ -370,7 +329,6 @@ export function registerOrpcRoutes<
       return handleRpcRoute({
         request,
         rpcHandler,
-        workflowTriggerRpcHandler,
         contextFactory,
         contextDeps,
         rpcAuthPolicy,

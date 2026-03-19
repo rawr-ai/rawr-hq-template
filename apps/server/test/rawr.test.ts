@@ -158,6 +158,7 @@ describe("rawr server routes", () => {
     expect(manifestSource).not.toContain("./plugins/api/support-example");
     expect(manifestSource).not.toContain("registerSupportExampleApiPlugin");
     expect(manifestSource).not.toContain("./apps/server/src/orpc");
+    expect(manifestSource).toMatch(/const composedOrpcRouter = \{\s*\.\.\.coreOrpcRouter,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s);
   });
 
   it("host-composition-guard: serves capability-first workflow family paths", async () => {
@@ -192,6 +193,26 @@ describe("rawr server routes", () => {
       }),
     );
     expect(res.status).toBe(404);
+  });
+
+  it("host-composition-guard: keeps legacy support-example out of canonical /rpc and /api/orpc routes", async () => {
+    const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+
+    const rpcResponse = await app.handle(
+      new Request("http://localhost/rpc/supportExample/triage/getStatus", {
+        method: "POST",
+        headers: FIRST_PARTY_RPC_HEADERS,
+        body: JSON.stringify({ json: {} }),
+      }),
+    );
+    expect(rpcResponse.status).toBe(404);
+
+    const openApiResponse = await app.handle(
+      new Request("http://localhost/api/orpc/support-example/triage/status", {
+        method: "GET",
+      }),
+    );
+    expect(openApiResponse.status).toBe(404);
   });
 
   it("host-composition-guard: keeps runtime authority stable when initialized from alias repo roots", async () => {

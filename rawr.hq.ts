@@ -129,6 +129,7 @@ const coreOrpcRouter = createHqRuntimeRouter();
 const exampleTodoApiPlugin = registerExampleTodoApiPlugin({
   resolveClient: resolveExampleTodoClient,
 });
+// `support-example` survives only as an explicit legacy workflow/demo surface.
 const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin();
 const composedOrpcRouter = {
   ...coreOrpcRouter,
@@ -154,6 +155,7 @@ export const rawrHqManifest = {
     enrichContext: passthroughOrpcContext,
   },
   workflows: {
+    // Keep the legacy workflow/demo lane explicit so canonical API proof stays on example-todo.
     capabilities: {
       "support-example": {
         pathPrefix: "/support-example/triage",

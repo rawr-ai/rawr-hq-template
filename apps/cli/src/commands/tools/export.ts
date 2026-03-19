@@ -47,7 +47,7 @@ const TOOLS: ToolExport[] = [
   { command: "reflect", description: "Suggest commands/workflows based on journal" },
   { command: "workflow harden", description: "Run snapshot + security + posture workflow" },
   { command: "workflow forge-command", description: "Forge a new durable command via plugin scaffolding" },
-  { command: "workflow demo-mfe", description: "Enable + build + verify micro-frontend demo plugin" },
+  { command: "workflow demo-mfe", description: "Enable + build + verify the legacy micro-frontend demo plugin" },
   { command: "workflow coord create --id <workflow-id>", description: "Create a typed coordination workflow scaffold" },
   { command: "workflow coord validate <workflow-id>", description: "Validate a coordination workflow" },
   { command: "workflow coord run <workflow-id>", description: "Run a coordination workflow" },
