@@ -22,12 +22,21 @@ The canonical proof capability is `exampleTodo`.
 
 ## Prerequisites
 
-1. Start the managed HQ runtime with observability enabled:
+1. Ensure the local HyperDX support container exists and is running:
+```bash
+docker start rawr-hq-hyperdx
+```
+If the container does not exist yet:
+```bash
+docker run -d --name rawr-hq-hyperdx -p 8080:8080 -p 4318:4318 docker.hyperdx.io/hyperdx/hyperdx-local
+```
+
+2. Start the managed HQ runtime with observability enabled:
 ```bash
 bun run rawr hq up --observability required
 ```
 
-2. Confirm the runtime is healthy:
+3. Confirm the runtime is healthy:
 ```bash
 bun run rawr hq status --json
 ```

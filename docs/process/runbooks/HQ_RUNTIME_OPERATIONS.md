@@ -97,6 +97,7 @@ Utility surfaces:
 Current behavior:
 - HQ reuses and focuses an existing HQ browser context when possible.
 - `coordination` is a shell route inside the HQ UI, not a separate canonical utility surface.
+- Inngest, HyperDX, and Nx Graph launchers live in the shell sidebar.
 - utility surfaces open only as needed
 - `rawr hq graph` opens Nx Graph on demand; it is not part of runtime health
 
@@ -116,8 +117,9 @@ bun run rawr hq status --json
 ```
 Expected:
 - `summary` is present
-- `summary` is `running` when all runtime roles are healthy and the HyperDX container is available
-- `support.observability` is nested under `support`
+- `summary` is `running` when all runtime roles are healthy
+- when observability is enabled, `support.observability` is nested under `support`
+- when observability is intentionally off, `summary` can still be `running`
 - `.rawr/hq/status.json` exists
 
 2. Confirm server health:
