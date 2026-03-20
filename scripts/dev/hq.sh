@@ -342,7 +342,115 @@ render_applescript_url_list() {
   printf '{%s}' "${rendered[*]}"
 }
 
-open_urls_with_browser_app() {
+hq_browser_url_prefixes() {
+  local host=""
+  local port=""
+
+  # HQ cleanup intentionally keys off the local ports it owns, not route paths.
+  for host in localhost 127.0.0.1 0.0.0.0; do
+    for port in \
+      "$SERVER_PORT" \
+      "$WEB_PORT" \
+      "$INNGEST_PORT" \
+      8080 \
+      4318; do
+      printf 'http://%s:%s\n' "$host" "$port"
+      printf 'https://%s:%s\n' "$host" "$port"
+    done
+  done
+}
+
+close_hq_tabs_with_browser_app() {
+  local browser_app="$1"
+
+  if ! command -v osascript >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local prefix_urls=()
+  local prefix_url=""
+  while IFS= read -r prefix_url; do
+    [[ -n "$prefix_url" ]] || continue
+    prefix_urls+=("$prefix_url")
+  done < <(hq_browser_url_prefixes)
+
+  local hq_url_prefixes_list=""
+  hq_url_prefixes_list="$(render_applescript_url_list "${prefix_urls[@]}")"
+
+  case "$browser_app" in
+    "Arc")
+      osascript >/dev/null 2>&1 <<APPLESCRIPT
+tell application "Arc"
+  set urlPrefixes to ${hq_url_prefixes_list}
+  -- Arc normal windows share the same Space graph, so operate on front-window Spaces once.
+  if (count of every window) > 0 then
+    repeat with browserSpace in spaces of front window
+      repeat with prefixValue in urlPrefixes
+        try
+          close (every tab of browserSpace whose URL starts with (prefixValue as text))
+        end try
+      end repeat
+    end repeat
+  end if
+
+  repeat with browserWindow in every window
+    try
+      set windowMode to mode of browserWindow as text
+    on error
+      set windowMode to "unknown"
+    end try
+    if windowMode is not "normal" then
+      repeat with prefixValue in urlPrefixes
+        try
+          close (every tab of browserWindow whose URL starts with (prefixValue as text))
+        end try
+      end repeat
+    end if
+  end repeat
+end tell
+APPLESCRIPT
+      return $?
+      ;;
+    "Google Chrome"|"Brave Browser"|"Safari")
+      osascript >/dev/null 2>&1 <<APPLESCRIPT
+on url_matches_prefixes(theUrl, urlPrefixes)
+  repeat with prefixValue in urlPrefixes
+    if theUrl starts with (prefixValue as text) then return true
+  end repeat
+  return false
+end url_matches_prefixes
+
+tell application "${browser_app}"
+  set urlPrefixes to ${hq_url_prefixes_list}
+  repeat with browserWindow in every window
+    set tabsToClose to {}
+    repeat with browserTab in tabs of browserWindow
+      try
+        set tabUrl to URL of browserTab
+      on error
+        set tabUrl to ""
+      end try
+      if tabUrl is not "" and my url_matches_prefixes(tabUrl, urlPrefixes) then
+        set end of tabsToClose to browserTab
+      end if
+    end repeat
+
+    repeat with browserTab in tabsToClose
+      try
+        close browserTab
+      end try
+    end repeat
+  end repeat
+end tell
+APPLESCRIPT
+      return $?
+      ;;
+  esac
+
+  return 1
+}
+
+reclaim_hq_tabs_with_browser_app() {
   local browser_app="$1"
   shift
 
@@ -357,43 +465,65 @@ open_urls_with_browser_app() {
   local target_urls_list=""
   target_urls_list="$(render_applescript_url_list "$@")"
 
-  local escaped_home_url="${HQ_WEB_URL//\\/\\\\}"
-  escaped_home_url="${escaped_home_url//\"/\\\"}"
-  local escaped_coordination_url="${HQ_COORDINATION_URL//\\/\\\\}"
-  escaped_coordination_url="${escaped_coordination_url//\"/\\\"}"
+  local prefix_urls=()
+  local prefix_url=""
+  while IFS= read -r prefix_url; do
+    [[ -n "$prefix_url" ]] || continue
+    prefix_urls+=("$prefix_url")
+  done < <(hq_browser_url_prefixes)
+
+  local hq_url_prefixes_list=""
+  hq_url_prefixes_list="$(render_applescript_url_list "${prefix_urls[@]}")"
 
   case "$browser_app" in
     "Arc")
       osascript >/dev/null 2>&1 <<APPLESCRIPT
 on list_contains(theList, targetValue)
   repeat with candidateValue in theList
-    if (candidateValue as text) is targetValue then
-      return true
-    end if
+    if (candidateValue as text) is targetValue then return true
   end repeat
   return false
 end list_contains
 
-on score_window_urls(windowUrls, homeUrl, coordinationUrl, targetUrls)
-  set scoreValue to 0
-  if my list_contains(windowUrls, homeUrl) then set scoreValue to scoreValue + 100
-  if my list_contains(windowUrls, coordinationUrl) then set scoreValue to scoreValue + 100
-  repeat with targetUrl in targetUrls
-    if my list_contains(windowUrls, (targetUrl as text)) then set scoreValue to scoreValue + 1
+on append_unique(theList, targetValue)
+  if my list_contains(theList, targetValue) then return theList
+  set end of theList to targetValue
+  return theList
+end append_unique
+
+on url_matches_prefixes(theUrl, urlPrefixes)
+  repeat with prefixValue in urlPrefixes
+    if theUrl starts with (prefixValue as text) then return true
   end repeat
-  return scoreValue
-end score_window_urls
+  return false
+end url_matches_prefixes
+
+on count_target_matches(spaceUrls, targetUrls)
+  set matchCount to 0
+  repeat with targetUrl in targetUrls
+    if my list_contains(spaceUrls, (targetUrl as text)) then set matchCount to matchCount + 1
+  end repeat
+  return matchCount
+end count_target_matches
 
 tell application "Arc"
+  set urlPrefixes to ${hq_url_prefixes_list}
   set targetUrls to ${target_urls_list}
-  set homeUrl to "${escaped_home_url}"
-  set coordinationUrl to "${escaped_coordination_url}"
-  set targetWindow to missing value
-  set targetSpace to missing value
-  set bestScore to 0
+  set targetSpaceId to ""
+  set bestScore to -1
+  -- Reclaim into one Arc Space, then repopulate the exact HQ URL set there.
+  if (count of every window) is 0 then
+    make new window
+    delay 0.3
+  end if
 
-  repeat with browserWindow in every window
-    repeat with browserSpace in spaces of browserWindow
+  repeat with browserSpace in spaces of front window
+    try
+      set spaceId to id of browserSpace as text
+    on error
+      set spaceId to ""
+    end try
+    if spaceId is not "" then
       set spaceUrls to {}
       repeat with browserTab in tabs of browserSpace
         try
@@ -404,62 +534,88 @@ tell application "Arc"
         if tabUrl is not "" then set end of spaceUrls to tabUrl
       end repeat
 
-      set spaceScore to my score_window_urls(spaceUrls, homeUrl, coordinationUrl, targetUrls)
-      if spaceScore > bestScore then
+      set spaceScore to my count_target_matches(spaceUrls, targetUrls)
+      if spaceScore > 0 and spaceScore > bestScore then
         set bestScore to spaceScore
-        set targetWindow to browserWindow
-        set targetSpace to browserSpace
+        set targetSpaceId to spaceId
       end if
-    end repeat
+    end if
   end repeat
 
-  if targetWindow is missing value then
+  if targetSpaceId is "" then
     try
-      set targetWindow to front window
+      set targetSpaceId to id of active space of front window as text
     on error
-      set targetWindow to make new window
-      delay 0.2
+      return false
     end try
   end if
 
-  if targetSpace is missing value then
-    tell targetWindow
+  repeat with browserSpace in spaces of front window
+    repeat with prefixValue in urlPrefixes
       try
-        set targetSpace to active space
-      on error
-        set targetSpace to first space
+        close (every tab of browserSpace whose URL starts with (prefixValue as text))
       end try
-    end tell
+    end repeat
+  end repeat
+
+  repeat with browserWindow in every window
+    try
+      set windowMode to mode of browserWindow as text
+    on error
+      set windowMode to "unknown"
+    end try
+    if windowMode is not "normal" then
+      repeat with prefixValue in urlPrefixes
+        try
+          close (every tab of browserWindow whose URL starts with (prefixValue as text))
+        end try
+      end repeat
+    end if
+  end repeat
+
+  set targetSpace to missing value
+  repeat with browserSpace in spaces of front window
+    try
+      set spaceId to id of browserSpace as text
+    on error
+      set spaceId to ""
+    end try
+    if spaceId is targetSpaceId then
+      set targetSpace to browserSpace
+      exit repeat
+    end if
+  end repeat
+
+  if targetSpace is missing value then
+    try
+      set targetSpace to active space of front window
+      set targetSpaceId to id of targetSpace as text
+    on error
+      return false
+    end try
   end if
 
-  set existingUrls to {}
-  set homeTabIndex to 0
-  set tabIndex to 0
+  set existingTargetUrls to {}
   repeat with browserTab in tabs of targetSpace
-    set tabIndex to tabIndex + 1
     try
       set tabUrl to URL of browserTab
     on error
       set tabUrl to ""
     end try
-    if tabUrl is not "" then
-      set end of existingUrls to tabUrl
-      if tabUrl is homeUrl then set homeTabIndex to tabIndex
+    if tabUrl is not "" and my list_contains(targetUrls, tabUrl) then
+      set existingTargetUrls to my append_unique(existingTargetUrls, tabUrl)
     end if
   end repeat
 
   repeat with targetUrl in targetUrls
     set targetUrlText to targetUrl as text
-    if not my list_contains(existingUrls, targetUrlText) then
+    if not my list_contains(existingTargetUrls, targetUrlText) then
       tell targetSpace to make new tab with properties {URL:targetUrlText}
-      set end of existingUrls to targetUrlText
+      set existingTargetUrls to my append_unique(existingTargetUrls, targetUrlText)
     end if
   end repeat
 
   tell targetSpace to focus
-  if homeTabIndex is not 0 then
-    tell tab homeTabIndex of targetSpace to select
-  end if
   activate
 end tell
 APPLESCRIPT
@@ -469,30 +625,38 @@ APPLESCRIPT
       osascript >/dev/null 2>&1 <<APPLESCRIPT
 on list_contains(theList, targetValue)
   repeat with candidateValue in theList
-    if (candidateValue as text) is targetValue then
-      return true
-    end if
+    if (candidateValue as text) is targetValue then return true
   end repeat
   return false
 end list_contains
 
-on score_window_urls(windowUrls, homeUrl, coordinationUrl, targetUrls)
-  set scoreValue to 0
-  if my list_contains(windowUrls, homeUrl) then set scoreValue to scoreValue + 100
-  if my list_contains(windowUrls, coordinationUrl) then set scoreValue to scoreValue + 100
-  repeat with targetUrl in targetUrls
-    if my list_contains(windowUrls, (targetUrl as text)) then set scoreValue to scoreValue + 1
+on append_unique(theList, targetValue)
+  if my list_contains(theList, targetValue) then return theList
+  set end of theList to targetValue
+  return theList
+end append_unique
+
+on url_matches_prefixes(theUrl, urlPrefixes)
+  repeat with prefixValue in urlPrefixes
+    if theUrl starts with (prefixValue as text) then return true
   end repeat
-  return scoreValue
-end score_window_urls
+  return false
+end url_matches_prefixes
+
+on count_target_matches(windowUrls, targetUrls)
+  set matchCount to 0
+  repeat with targetUrl in targetUrls
+    if my list_contains(windowUrls, (targetUrl as text)) then set matchCount to matchCount + 1
+  end repeat
+  return matchCount
+end count_target_matches
 
 tell application "${browser_app}"
   activate
+  set urlPrefixes to ${hq_url_prefixes_list}
   set targetUrls to ${target_urls_list}
-  set homeUrl to "${escaped_home_url}"
-  set coordinationUrl to "${escaped_coordination_url}"
   set targetWindow to missing value
-  set bestScore to 0
+  set bestScore to -1
 
   repeat with browserWindow in every window
     set windowUrls to {}
@@ -505,35 +669,57 @@ tell application "${browser_app}"
       if tabUrl is not "" then set end of windowUrls to tabUrl
     end repeat
 
-    set windowScore to my score_window_urls(windowUrls, homeUrl, coordinationUrl, targetUrls)
-    if windowScore > bestScore then
+    set windowScore to my count_target_matches(windowUrls, targetUrls)
+    if windowScore > 0 and windowScore > bestScore then
       set bestScore to windowScore
       set targetWindow to browserWindow
     end if
   end repeat
 
   if targetWindow is missing value then
-    try
-      set targetWindow to front window
-    on error
-      set targetWindow to make new window
-      delay 0.2
-    end try
+    set targetWindow to make new window
+    delay 0.2
+    set targetWindow to front window
   end if
 
+  repeat with browserWindow in every window
+    set tabsToClose to {}
+    set seenTargetUrls to {}
+    repeat with browserTab in tabs of browserWindow
+      try
+        set tabUrl to URL of browserTab
+      on error
+        set tabUrl to ""
+      end try
+      if tabUrl is not "" and my url_matches_prefixes(tabUrl, urlPrefixes) then
+        if browserWindow is targetWindow and my list_contains(targetUrls, tabUrl) then
+          if my list_contains(seenTargetUrls, tabUrl) then
+            set end of tabsToClose to browserTab
+          else
+            set seenTargetUrls to my append_unique(seenTargetUrls, tabUrl)
+          end if
+        else
+          set end of tabsToClose to browserTab
+        end if
+      end if
+    end repeat
+
+    repeat with browserTab in tabsToClose
+      try
+        close browserTab
+      end try
+    end repeat
+  end repeat
+
   set existingUrls to {}
-  set homeTabIndex to 0
-  set tabIndex to 0
   repeat with browserTab in tabs of targetWindow
-    set tabIndex to tabIndex + 1
     try
       set tabUrl to URL of browserTab
     on error
       set tabUrl to ""
     end try
-    if tabUrl is not "" then
-      set end of existingUrls to tabUrl
-      if tabUrl is homeUrl then set homeTabIndex to tabIndex
+    if tabUrl is not "" and my list_contains(targetUrls, tabUrl) then
+      set existingUrls to my append_unique(existingUrls, tabUrl)
     end if
   end repeat
 
@@ -541,13 +727,10 @@ tell application "${browser_app}"
     set targetUrlText to targetUrl as text
     if not my list_contains(existingUrls, targetUrlText) then
       tell targetWindow to make new tab with properties {URL:targetUrlText}
-      set end of existingUrls to targetUrlText
+      set existingUrls to my append_unique(existingUrls, targetUrlText)
     end if
   end repeat
 
-  if homeTabIndex is not 0 then
-    set active tab index of targetWindow to homeTabIndex
-  end if
   set index of targetWindow to 1
 end tell
 APPLESCRIPT
@@ -557,30 +740,38 @@ APPLESCRIPT
       osascript >/dev/null 2>&1 <<APPLESCRIPT
 on list_contains(theList, targetValue)
   repeat with candidateValue in theList
-    if (candidateValue as text) is targetValue then
-      return true
-    end if
+    if (candidateValue as text) is targetValue then return true
   end repeat
   return false
 end list_contains
 
-on score_window_urls(windowUrls, homeUrl, coordinationUrl, targetUrls)
-  set scoreValue to 0
-  if my list_contains(windowUrls, homeUrl) then set scoreValue to scoreValue + 100
-  if my list_contains(windowUrls, coordinationUrl) then set scoreValue to scoreValue + 100
-  repeat with targetUrl in targetUrls
-    if my list_contains(windowUrls, (targetUrl as text)) then set scoreValue to scoreValue + 1
+on append_unique(theList, targetValue)
+  if my list_contains(theList, targetValue) then return theList
+  set end of theList to targetValue
+  return theList
+end append_unique
+
+on url_matches_prefixes(theUrl, urlPrefixes)
+  repeat with prefixValue in urlPrefixes
+    if theUrl starts with (prefixValue as text) then return true
   end repeat
-  return scoreValue
-end score_window_urls
+  return false
+end url_matches_prefixes
+
+on count_target_matches(windowUrls, targetUrls)
+  set matchCount to 0
+  repeat with targetUrl in targetUrls
+    if my list_contains(windowUrls, (targetUrl as text)) then set matchCount to matchCount + 1
+  end repeat
+  return matchCount
+end count_target_matches
 
 tell application "Safari"
   activate
+  set urlPrefixes to ${hq_url_prefixes_list}
   set targetUrls to ${target_urls_list}
-  set homeUrl to "${escaped_home_url}"
-  set coordinationUrl to "${escaped_coordination_url}"
   set targetWindow to missing value
-  set bestScore to 0
+  set bestScore to -1
 
   repeat with browserWindow in every window
     set windowUrls to {}
@@ -593,36 +784,57 @@ tell application "Safari"
       if tabUrl is not "" then set end of windowUrls to tabUrl
     end repeat
 
-    set windowScore to my score_window_urls(windowUrls, homeUrl, coordinationUrl, targetUrls)
-    if windowScore > bestScore then
+    set windowScore to my count_target_matches(windowUrls, targetUrls)
+    if windowScore > 0 and windowScore > bestScore then
       set bestScore to windowScore
       set targetWindow to browserWindow
     end if
   end repeat
 
   if targetWindow is missing value then
-    try
-      set targetWindow to front window
-    on error
-      make new document
-      delay 0.2
-      set targetWindow to front window
-    end try
+    make new document
+    delay 0.2
+    set targetWindow to front window
   end if
 
+  repeat with browserWindow in every window
+    set tabsToClose to {}
+    set seenTargetUrls to {}
+    repeat with browserTab in tabs of browserWindow
+      try
+        set tabUrl to URL of browserTab
+      on error
+        set tabUrl to ""
+      end try
+      if tabUrl is not "" and my url_matches_prefixes(tabUrl, urlPrefixes) then
+        if browserWindow is targetWindow and my list_contains(targetUrls, tabUrl) then
+          if my list_contains(seenTargetUrls, tabUrl) then
+            set end of tabsToClose to browserTab
+          else
+            set seenTargetUrls to my append_unique(seenTargetUrls, tabUrl)
+          end if
+        else
+          set end of tabsToClose to browserTab
+        end if
+      end if
+    end repeat
+
+    repeat with browserTab in tabsToClose
+      try
+        close browserTab
+      end try
+    end repeat
+  end repeat
+
   set existingUrls to {}
-  set homeTabIndex to 0
-  set tabIndex to 0
   repeat with browserTab in tabs of targetWindow
-    set tabIndex to tabIndex + 1
     try
       set tabUrl to URL of browserTab
     on error
       set tabUrl to ""
     end try
-    if tabUrl is not "" then
-      set end of existingUrls to tabUrl
-      if tabUrl is homeUrl then set homeTabIndex to tabIndex
+    if tabUrl is not "" and my list_contains(targetUrls, tabUrl) then
+      set existingUrls to my append_unique(existingUrls, tabUrl)
     end if
   end repeat
 
@@ -630,13 +842,10 @@ tell application "Safari"
     set targetUrlText to targetUrl as text
     if not my list_contains(existingUrls, targetUrlText) then
       tell targetWindow to make new tab with properties {URL:targetUrlText}
-      set end of existingUrls to targetUrlText
+      set existingUrls to my append_unique(existingUrls, targetUrlText)
     end if
   end repeat
 
-  if homeTabIndex is not 0 then
-    set current tab of targetWindow to tab homeTabIndex of targetWindow
-  end if
   set index of targetWindow to 1
 end tell
 APPLESCRIPT
@@ -645,6 +854,20 @@ APPLESCRIPT
   esac
 
   return 1
+}
+
+open_urls_with_browser_app() {
+  local browser_app="$1"
+  shift
+  reclaim_hq_tabs_with_browser_app "$browser_app" "$@"
+}
+
+close_hq_tabs_in_browser_session() {
+  local browser_app=""
+  browser_app="$(resolve_browser_app_name || true)"
+  if [[ -n "$browser_app" ]]; then
+    close_hq_tabs_with_browser_app "$browser_app" || true
+  fi
 }
 
 open_urls_as_browser_session() {
@@ -781,6 +1004,7 @@ stop_managed_stack() {
   if [[ -z "$candidates" ]]; then
     rm -f "$STATE_FILE"
     run_status_writer
+    close_hq_tabs_in_browser_session
     log "info: no managed HQ runtime state found"
     return 0
   fi
@@ -817,6 +1041,7 @@ stop_managed_stack() {
 
   rm -f "$STATE_FILE"
   run_status_writer
+  close_hq_tabs_in_browser_session
   log "stopped managed HQ runtime"
 }
 
@@ -874,6 +1099,7 @@ cleanup_running_stack() {
 
   rm -f "$STATE_FILE"
   run_status_writer
+  close_hq_tabs_in_browser_session
 }
 
 graceful_shutdown() {
