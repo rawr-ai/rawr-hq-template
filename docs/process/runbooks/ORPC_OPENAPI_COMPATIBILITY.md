@@ -4,10 +4,17 @@ Use this when a consumer cannot use the internal RPC client and needs OpenAPI ar
 
 ## Policy
 
-1. Internal first-party clients (web/CLI/plugins in this repo) should use ORPC RPC contracts.
-2. OpenAPI is day-1 available for compatibility, integrations, and external SDK generation.
-3. The canonical runtime spec endpoint is:
+1. Internal first-party clients in this repo use `/rpc` and the internal HQ contract by default.
+2. `/api/orpc/*` is the published API-plugin OpenAPI surface, not the full internal HQ router.
+3. Workflow trigger and status publication lives on `/api/workflows/<capability>/*`, not on `/api/orpc/*`.
+4. OpenAPI remains available for compatibility, integrations, and external SDK generation.
+5. The canonical published spec endpoint is:
    - `/api/orpc/openapi.json`
+
+Current published `/api/orpc` surface:
+- `exampleTodo.*`
+
+Internal-only HQ procedure namespaces such as `coordination.*` and `state.*` remain on `/rpc`.
 
 ## Generate local artifacts
 
@@ -41,4 +48,6 @@ RAWR_ORPC_OPENAPI_BASE_URL=https://your-host.example bun run orpc:openapi:write
 
 1. `bun run typecheck` in `apps/server`
 2. Confirm `/api/orpc/openapi.json` resolves on the running server
-3. Regenerate `apps/server/openapi/orpc-openapi.types.ts` after contract changes
+3. Confirm the generated spec includes `exampleTodo` paths
+4. Confirm the generated spec does not advertise `coordination` or `state`
+5. Regenerate `apps/server/openapi/orpc-openapi.types.ts` after contract changes

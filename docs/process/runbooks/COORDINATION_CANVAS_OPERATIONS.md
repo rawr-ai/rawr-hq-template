@@ -6,7 +6,7 @@ This runbook covers the canonical local HQ runtime path for the coordination can
 
 - Web coordination canvas route: `/coordination`
 - ORPC RPC transport: `/rpc/*`
-- ORPC OpenAPI transport: `/api/orpc/*`
+- Published ORPC OpenAPI transport: `/api/orpc/*`
 - Inngest serve endpoint: `/api/inngest`
 - Managed runtime surface: `rawr hq up|down|status|restart|attach`
 - Workspace graph explorer: `rawr hq graph`
@@ -55,7 +55,7 @@ Canonical runtime artifacts:
 Canonical canvas surface:
 - Primary canvas URL: `http://localhost:5173/coordination`
 - Host shell home: `http://localhost:5173/`
-- Deep links for Inngest, HyperDX, and Nx Graph live on the Home surface and in the shell sidebar.
+- Utility launchers for Inngest, HyperDX, and Nx Graph live in the shell sidebar.
 - Standalone canvas serving is not enabled by default.
 
 Runtime flags and env:
@@ -63,6 +63,11 @@ Runtime flags and env:
 - `--observability auto|required|off`
 - `RAWR_HQ_OPEN=<policy>`
 - `RAWR_HQ_OBSERVABILITY=<mode>`
+
+Browser launch behavior:
+- HQ reuses and focuses an existing HQ browser context when possible.
+- `coordination` is a shell route inside the HQ UI, not a separate canonical utility surface.
+- Utility surfaces such as Inngest, HyperDX, and Nx Graph open only as needed.
 
 Examples:
 ```bash
@@ -140,17 +145,18 @@ curl -sS http://localhost:3000/rpc/exampleTodo/tasks/create \
   -H "content-type: application/json" \
   -H "x-rawr-caller-surface: first-party" \
   -H "x-rawr-session-auth: verified" \
-  -d '{"json":{"title":"slice-7 runtime smoke","description":"verify correlated host logging"}}'
+  -d '{"json":{"title":"runtime smoke task","description":"verify correlated host logging"}}'
 
 curl -sS http://localhost:3000/api/orpc/exampleTodo/tasks/create \
   -X POST \
   -H "content-type: application/json" \
   -H "x-rawr-caller-surface: external" \
-  -d '{"title":"slice-7 external smoke","description":"verify caller-facing proof surface"}'
+  -d '{"title":"published smoke task","description":"verify caller-facing proof surface"}'
 ```
 Expected:
 - both requests succeed with `200`
-- the canonical caller-facing proof path crosses both `/rpc/exampleTodo/*` and `/api/orpc/exampleTodo/*`
+- the canonical proof path crosses both `/rpc/exampleTodo/*` and `/api/orpc/exampleTodo/*`
+- `/api/orpc` remains the published API-plugin surface; internal HQ procedures stay on `/rpc`
 
 9. Runtime log correlation evidence:
 ```bash
@@ -163,7 +169,7 @@ Expected:
 10. Trace and metric evidence in the local HyperDX stack:
 ```bash
 docker exec rawr-hq-hyperdx clickhouse-client --query "
-SELECT Timestamp, SpanName, SpanAttributes['rawr.orpc.surface'], SpanAttributes['rawr.orpc.path'], SpanAttributes['url.full'], TraceId
+SELECT Timestamp, SpanName, SpanAttributes['rawr.orpc.surface'], SpanAttributes['url.full'], TraceId
 FROM default.otel_traces
 WHERE Timestamp > now() - INTERVAL 10 MINUTE
   AND ServiceName='@rawr/server'
@@ -202,7 +208,7 @@ Expected:
 - `http://localhost:8080/` is reachable while HQ is running with `--observability required`
 - HyperDX should now show the same recent `exampleTodo` traces/metrics already proven via ClickHouse queries
 
-12. Observability UI and OTLP flow:
+12. Observability UI confirmation:
 - Open `http://localhost:8080/`
 - confirm the local HyperDX UI is reachable while HQ is running with `--observability required`
 - verify the canonical `example-todo` request produces traces/metrics on the shared `/rpc` or `/api/orpc` host ingress path, not only package-level spans
@@ -221,15 +227,15 @@ Expected:
 - `GET /health` for service liveness
 - `GET /api/inngest` reachability
 - `POST /rpc/coordination/listWorkflows` basic data-path validation
-- `GET /api/orpc/openapi.json` OpenAPI contract availability
+- `GET /api/orpc/openapi.json` published OpenAPI contract availability
 
 ## Incident Triage Checklist
 
 1. Confirm the managed HQ runtime status: `bun run rawr hq status --json`.
 2. Confirm server health (`/health`).
 3. Confirm the Inngest handler is reachable (`/api/inngest`).
-4. Confirm ORPC contract exposure (`/api/orpc/openapi.json`).
+4. Confirm published ORPC contract exposure (`/api/orpc/openapi.json`) and verify it advertises the public API-plugin surface.
 5. Validate the workflow by id (`POST /rpc/coordination/validateWorkflow` with `{"json":{"workflowId":"..."}}`).
 6. Check run status (`POST /rpc/coordination/getRunStatus`).
-7. Check timeline diagnostics (`POST /rpc/coordination/getRunTimeline` or `GET /api/orpc/coordination/runs/{runId}/timeline`).
+7. Check timeline diagnostics (`POST /rpc/coordination/getRunTimeline`).
 8. Inspect `.rawr/hq/runtime.log` for correlated runtime output.

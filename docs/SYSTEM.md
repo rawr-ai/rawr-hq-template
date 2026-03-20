@@ -18,13 +18,20 @@ Canonical target packet:
 
 Procedure-style APIs are contract-defined and exposed through the HQ ORPC root router.
 
-- RPC transport: `/rpc`
-- OpenAPI transport: `/api/orpc`
-- OpenAPI spec: `/api/orpc/openapi.json`
+- Internal RPC transport: `/rpc`
+- Published OpenAPI transport: `/api/orpc`
+- Published OpenAPI spec: `/api/orpc/openapi.json`
 
-Current canonical procedure namespaces:
+Current internal `/rpc` procedure namespaces include:
 - `coordination.*` (workflow CRUD, validation, queueing, run status, timeline)
 - `state.getRuntimeState`
+- published API-plugin namespaces such as `exampleTodo.*`
+
+Current published `/api/orpc` procedure namespaces:
+- `exampleTodo.*`
+
+Published workflow trigger/status procedures live separately on:
+- `/api/workflows/<capability>/*`
 
 Explicit non-procedure infrastructure routes that remain framework-native:
 - `/api/inngest` (Inngest ingress/webhook transport)
