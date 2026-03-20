@@ -190,7 +190,7 @@ Create a gated plugin in `plugins/web/*` that integrates with RAWR state enablem
 ### Steps
 
 1. Scaffold plugin:
-   - `bun run rawr -- factory plugin new <dirName> --kind <server|web|both> --dry-run`
+   - `bun run rawr -- plugins scaffold web-plugin <dirName> --kind <server|web|both> --dry-run`
    - Re-run without `--dry-run` once planned files are correct.
 2. Implement `src/server.ts` and/or `src/web.ts` exports.
 3. Build plugin package.
