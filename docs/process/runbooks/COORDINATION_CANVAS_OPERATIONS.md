@@ -118,6 +118,8 @@ Expected: `200` response from the Inngest serve handler.
 curl -sS http://localhost:3000/rpc/coordination/listWorkflows \
   -X POST \
   -H "content-type: application/json" \
+  -H "x-rawr-caller-surface: first-party" \
+  -H "x-rawr-session-auth: verified" \
   -d '{"json":{}}'
 ```
 Expected: `200` response with JSON body containing `json.workflows`.
@@ -226,10 +228,14 @@ Expected:
 3. Operational health checks:
 - `GET /health` for service liveness
 - `GET /api/inngest` reachability
-- `POST /rpc/coordination/listWorkflows` basic data-path validation
+- first-party `POST /rpc/coordination/listWorkflows` basic data-path validation
 - `GET /api/orpc/openapi.json` published OpenAPI contract availability
 
 ## Incident Triage Checklist
+
+For direct `/rpc` checks in this section, include first-party headers:
+- `x-rawr-caller-surface: first-party`
+- `x-rawr-session-auth: verified`
 
 1. Confirm the managed HQ runtime status: `bun run rawr hq status --json`.
 2. Confirm server health (`/health`).

@@ -82,7 +82,7 @@ Status note: this section maps host guarantees to D-014 candidate language and d
 | Determinant | Canonical owner | Guarantee |
 | --- | --- | --- |
 | Manifest surface map | `rawr.hq.ts` (generated composition authority) | API/workflow contracts and routers compose predictably by capability. |
-| Published OpenAPI filter | host oRPC seam (`apps/server/src/orpc.ts` or equivalent) | `/api/orpc/*` and `/api/orpc/openapi.json` expose only the published API-plugin subset of the composed router. |
+| Published OpenAPI filter | host oRPC seam (`apps/server/src/orpc.ts` or equivalent) | `/api/orpc/*` and `/api/orpc/openapi.json` expose only the published API-plugin subset of the composed router; the current host-owned filter is the transitional publication policy until metadata-driven publication lands. |
 | Context factories | host boundary modules (`apps/server/src/workflows/context.ts` or equivalent) | Principal/request/correlation/network metadata are derived once per request boundary and injected consistently. |
 | Infrastructure adapter assembly | host composition root (`apps/server/src/rawr.ts` or equivalent) | Concrete auth/db/runtime adapters are wired outside plugins/packages and passed as typed ports. |
 | Runtime bundle ownership | host runtime composition | One runtime-owned Inngest bundle per process is reused for enqueue + ingress execution. |
