@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as otelApi from "@opentelemetry/api";
+import { rawrHqManifest } from "../../../rawr.hq";
 import { createServerApp } from "../src/app";
 import { createCoordinationRuntimeAdapter } from "../src/coordination";
 import { __resetOrpcRouteTelemetryForTests, registerOrpcRoutes } from "../src/orpc";
@@ -36,6 +37,7 @@ async function createTestApp(args: {
     baseUrl: "http://localhost:3100",
     runtime,
     inngestClient: { send: vi.fn() } as never,
+    router: rawrHqManifest.orpc.router as never,
     ...(args.contextFactory ? { contextFactory: args.contextFactory as never } : {}),
   });
 
@@ -208,7 +210,18 @@ describe("host oRPC route metrics", () => {
     const { app, tempRoot } = await createTestApp({});
 
     try {
-      const response = await app.handle(new Request("http://localhost:3100/api/orpc/state/runtime"));
+      const response = await app.handle(
+        new Request("http://localhost:3100/api/orpc/exampleTodo/tasks/create", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-rawr-caller-surface": "external",
+          },
+          body: JSON.stringify({
+            title: "Metrics proof route",
+          }),
+        }),
+      );
 
       expect(response.status).toBe(200);
       expect(counterAdd).toHaveBeenCalledWith(1, expect.objectContaining({

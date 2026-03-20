@@ -6,7 +6,7 @@ import { metrics, SpanStatusCode, trace, type Counter, type Histogram } from "@o
 import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { AnyContractRouter } from "@orpc/contract";
-import type { Router } from "@orpc/server";
+import type { Router, TraverseContractProcedureCallbackOptions } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import { createHostLoggingContext, withHostLoggingContext, withHostLoggingSpanContext } from "./logging";
@@ -28,6 +28,21 @@ type RawrOrpcRouter = Router<AnyContractRouter, RawrOrpcContext>;
 const RPC_AUTH_DEDUPE_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION;
 let routedRequestsCounter: Counter | undefined;
 let routedRequestDurationHistogram: Histogram | undefined;
+
+const PUBLISHED_OPENAPI_ROOT_NAMES = new Set(["exampleTodo"]);
+
+/**
+ * Temporary publication allowlist for `/api/orpc`.
+ *
+ * We do not yet have the intended metadata-driven publication policy on every
+ * service/plugin package, so the host shell must explicitly restrict which
+ * top-level oRPC namespaces are published over OpenAPI. Remove this allowlist
+ * once publication metadata exists and the server can derive the public surface
+ * from package/plugin metadata instead of host-owned path matching.
+ */
+function isPublishedOpenApiProcedure({ path }: TraverseContractProcedureCallbackOptions): boolean {
+  return PUBLISHED_OPENAPI_ROOT_NAMES.has(path[0] ?? "");
+}
 
 export type RegisterOrpcRoutesOptions<
   TContext extends RuntimeRouterContext = RuntimeRouterContext,
@@ -266,11 +281,15 @@ async function createOpenApiSpec<TContext extends RuntimeRouterContext>(
       version: "1.0.0",
     },
     servers: [{ url: baseUrl }],
+    filter: isPublishedOpenApiProcedure,
   });
 }
 
-export async function generateOrpcOpenApiSpec(baseUrl: string) {
-  return createOpenApiSpec(createOrpcRouter(), baseUrl);
+export async function generateOrpcOpenApiSpec(
+  baseUrl: string,
+  router: Router<AnyContractRouter, any> = createOrpcRouter(),
+) {
+  return createOpenApiSpec(router, baseUrl);
 }
 
 export function registerOrpcRoutes<
@@ -283,7 +302,9 @@ export function registerOrpcRoutes<
 ): TApp {
   const router = options.router ?? createOrpcRouter<TContext>();
   const rpcHandler = new RPCHandler<TContext>(router);
-  const openapiHandler = new OpenAPIHandler<TContext>(router);
+  const openapiHandler = new OpenAPIHandler<TContext>(router, {
+    filter: isPublishedOpenApiProcedure,
+  });
   const rpcAuthPolicy = options.rpcAuthPolicy ?? createRpcAuthPolicy({ baseUrl: options.baseUrl });
   const contextDeps: RawrBoundaryContextDeps = {
     repoRoot: options.repoRoot,

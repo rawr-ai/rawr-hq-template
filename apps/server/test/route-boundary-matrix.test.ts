@@ -176,10 +176,14 @@ const MATRIX_CASES: MatrixCase[] = [
     callerSurface: "external",
     assertCallerBoundarySemantics: true,
     description: "external callers use published OpenAPI route family",
-    method: "GET",
-    path: "/api/orpc/coordination/workflows",
+    method: "POST",
+    path: "/api/orpc/exampleTodo/tasks/create",
     headers: {
+      "content-type": "application/json",
       "x-rawr-caller-surface": "external",
+    },
+    body: {
+      title: "Published proof route",
     },
     expectedStatus: 200,
   },
