@@ -42,6 +42,10 @@ Explicit non-procedure infrastructure routes that remain framework-native:
 - `/rawr/plugins/web/:dirName` (runtime module serving)
 - `/health` (liveness)
 
+Related runbooks:
+- `docs/process/runbooks/ORPC_OPENAPI_COMPATIBILITY.md`
+- `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md`
+
 ## Manifest Composition Contract
 
 `rawr.hq.ts` is the single composition authority for runtime surfaces.

@@ -2,6 +2,10 @@
 
 This runbook covers the canonical local HQ runtime path for the coordination canvas and Inngest support surface.
 
+Related docs:
+- `docs/SYSTEM.md`
+- `docs/system/TELEMETRY.md`
+
 ## Scope
 
 - Web coordination canvas route: `/coordination`

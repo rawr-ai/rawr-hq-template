@@ -2,6 +2,10 @@
 
 Use this when a consumer cannot use the internal RPC client and needs OpenAPI artifacts.
 
+Related docs:
+- `docs/SYSTEM.md`
+- `docs/system/TELEMETRY.md`
+
 ## Policy
 
 1. Internal first-party clients in this repo use `/rpc` and the internal HQ contract by default.

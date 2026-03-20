@@ -1,29 +1,38 @@
 # HQ Runtime Integration
 
-This document defines the current local HQ runtime integration for managed observability.
+This document defines how the telemetry subsystem attaches to the managed local HQ runtime.
 
-## CLI Surface
+For lifecycle commands, browser behavior, and operator steps, use `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md`.
 
-- Managed HQ lifecycle commands live under `rawr hq up|down|status|restart|attach`.
-- `rawr hq graph` is an on-demand Nx graph helper, not part of the managed lifecycle.
-- `rawr hq up` and `rawr hq restart` accept `--observability auto|required|off`.
-- `RAWR_HQ_OBSERVABILITY` is the environment contract for the same mode selection.
+## Runtime Attachment
 
-## Managed Backend
+The telemetry subsystem attaches to one composed local runtime bundle:
 
-- The current managed local observability backend is HyperDX.
-- The expected managed container name is `rawr-hq-hyperdx`.
-- The current HQ observability contract expects the HyperDX UI at `http://localhost:8080/` and OTLP HTTP ingest at `http://127.0.0.1:4318`.
-- `scripts/dev/hq.sh` passes `OTEL_EXPORTER_OTLP_ENDPOINT` to the server only when managed observability is active.
+- server
+- web
+- async workflow runtime
+- observability support infrastructure when enabled
 
-## Status Contract
+`rawr hq up` and `rawr hq restart` control that attachment with `--observability auto|required|off`.
 
-- `rawr hq status` writes `.rawr/hq/status.json`.
-- Observability state is nested under `support.observability`.
-- The status payload currently records backend `hyperdx`, the managed container name, current mode, URLs, port ownership, and remediations.
+## Observability Control
 
-## Runtime Posture
+Mode precedence is:
 
-- `auto` allows the HQ runtime to continue without managed observability when Docker, the HyperDX container, or required ports are unavailable.
-- `required` fails fast when the managed HyperDX backend is not available.
-- `off` disables managed observability and does not pass an OTLP endpoint into the server runtime.
+1. explicit CLI flag
+2. persisted runtime state in `.rawr/hq/state.env`
+3. `RAWR_HQ_OBSERVABILITY`
+
+`RAWR_HQ_OBSERVABILITY` is therefore the fallback environment contract for the same mode selection.
+
+## Runtime Artifacts
+
+The managed runtime contract is backed by:
+
+- `.rawr/hq/state.env`
+- `.rawr/hq/status.json`
+- `.rawr/hq/runtime.log`
+
+`rawr hq status` writes `.rawr/hq/status.json`.
+
+Observability state is nested under `support.observability`.
