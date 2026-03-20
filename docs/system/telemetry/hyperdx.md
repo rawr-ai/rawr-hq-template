@@ -28,6 +28,8 @@ The HQ lifecycle surface manages against that support container through:
 - `rawr hq restart --observability auto|required|off`
 - `rawr hq status`
 
+In this system, HyperDX is modeled as observability support infrastructure behind `rawr hq`, not as a peer runtime role with its own primary operator lifecycle. The operator-managed unit is the composed HQ runtime, so observability health, degradation, and remediation belong under `rawr hq status`.
+
 ## Mode Semantics
 
 - `required`
@@ -64,10 +66,11 @@ The supported operating model is:
 
 - provision the local HyperDX support container
 - run HQ with the required observability posture for the session
-- verify through `rawr hq status` and the coordination canvas runbook
+- verify through `rawr hq status` and the telemetry verification runbook
 
 ## Related Docs
 
 - `docs/system/TELEMETRY.md`
 - `docs/system/telemetry/hq-runtime.md`
-- `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md`
+- `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md`
+- `docs/process/runbooks/TELEMETRY_VERIFICATION.md`

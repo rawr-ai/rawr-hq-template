@@ -2,7 +2,7 @@
 
 This document defines how the telemetry subsystem attaches to the managed local HQ runtime.
 
-For lifecycle commands, browser behavior, and operator steps, use `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md`.
+For lifecycle commands, browser behavior, and operator steps, use `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md`.
 
 ## Runtime Attachment
 

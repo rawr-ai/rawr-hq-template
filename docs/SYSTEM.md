@@ -43,6 +43,7 @@ Explicit non-procedure infrastructure routes that remain framework-native:
 - `/health` (liveness)
 
 Related runbooks:
+- `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md`
 - `docs/process/runbooks/ORPC_OPENAPI_COMPATIBILITY.md`
 - `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md`
 
