@@ -450,7 +450,7 @@ open_ui_surfaces() {
       urls+=("$HQ_WEB_URL" "$HQ_INNGEST_RUNS_URL")
       ;;
     all)
-      urls+=("$HQ_WEB_URL" "$HQ_COORDINATION_URL" "$HQ_INNGEST_RUNS_URL")
+      urls+=("$HQ_WEB_URL" "$HQ_INNGEST_RUNS_URL")
       ;;
   esac
 
