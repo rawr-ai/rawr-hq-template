@@ -95,5 +95,6 @@ Two plugin channels are intentionally separate:
 - [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - [`docs/DOCS.md`](docs/DOCS.md)
 - [`docs/system/PLUGINS.md`](docs/system/PLUGINS.md)
+- [`docs/system/TELEMETRY.md`](docs/system/TELEMETRY.md)
 - [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - [`UPDATING.md`](UPDATING.md)

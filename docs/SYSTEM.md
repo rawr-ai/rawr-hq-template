@@ -14,6 +14,10 @@ Canonical target packet:
 - `docs/projects/orpc-ingest-workflows-spec/README.md`
   (see `docs/projects/orpc-ingest-workflows-spec/ARCHITECTURE.md`)
 
+Current subsystem docs:
+- `docs/system/PLUGINS.md`
+- `docs/system/TELEMETRY.md`
+
 ## Procedure API Spine (ORPC)
 
 Procedure-style APIs are contract-defined and exposed through the HQ ORPC root router.
