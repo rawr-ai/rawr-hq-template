@@ -11,7 +11,6 @@ LOG_FILE="${STATE_DIR}/runtime.log"
 
 HQ_WEB_URL="http://localhost:5173/"
 HQ_COORDINATION_URL="http://localhost:5173/coordination"
-HQ_OPERATIONS_URL="http://localhost:5173/operations"
 HQ_INNGEST_RUNS_URL="http://localhost:8288/runs"
 HQ_SERVER_HEALTH_URL="http://localhost:3000/health"
 HQ_OBSERVABILITY_UI_URL="http://localhost:8080/"
@@ -445,13 +444,13 @@ open_ui_surfaces() {
       urls+=("$HQ_COORDINATION_URL")
       ;;
     app)
-      urls+=("$HQ_OPERATIONS_URL")
+      urls+=("$HQ_WEB_URL")
       ;;
     app+inngest)
-      urls+=("$HQ_OPERATIONS_URL" "$HQ_INNGEST_RUNS_URL")
+      urls+=("$HQ_WEB_URL" "$HQ_INNGEST_RUNS_URL")
       ;;
     all)
-      urls+=("$HQ_OPERATIONS_URL" "$HQ_COORDINATION_URL" "$HQ_INNGEST_RUNS_URL")
+      urls+=("$HQ_WEB_URL" "$HQ_COORDINATION_URL" "$HQ_INNGEST_RUNS_URL")
       ;;
   esac
 
@@ -742,7 +741,6 @@ ensure_observability_posture
 log "starting managed HQ runtime"
 log "  server: ${HQ_SERVER_HEALTH_URL}"
 log "  web: ${HQ_WEB_URL}"
-log "  operations: ${HQ_OPERATIONS_URL}"
 log "  async: ${HQ_INNGEST_RUNS_URL}"
 log "  observability mode: ${observability_mode}"
 if [[ -n "$otlp_endpoint" ]]; then
@@ -797,7 +795,7 @@ fi
 run_status_writer
 
 log "managed HQ runtime ready"
-log "  operations: ${HQ_OPERATIONS_URL}"
+log "  home: ${HQ_WEB_URL}"
 log "  coordination: ${HQ_COORDINATION_URL}"
 log "  log file: ${LOG_FILE}"
 log "  status file: ${STATUS_FILE}"

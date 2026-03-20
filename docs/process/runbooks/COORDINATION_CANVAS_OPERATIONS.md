@@ -54,8 +54,9 @@ Canonical runtime artifacts:
 
 Canonical canvas surface:
 - Primary canvas URL: `http://localhost:5173/coordination`
-- Operations launcher URL: `http://localhost:5173/operations`
-- This is a host-shell route; standalone canvas serving is not enabled by default.
+- Host shell home: `http://localhost:5173/`
+- Deep links for Inngest, HyperDX, and Nx Graph live on the Home surface and in the shell sidebar.
+- Standalone canvas serving is not enabled by default.
 
 Runtime flags and env:
 - `--open none|coordination|app|app+inngest|all`
