@@ -55,7 +55,7 @@ plugins    = runtime projection
 apps       = top-level product/runtime identities
 ```
 
-That is the target-state file-tree truth.
+That is the canonical target-state file-tree model.
 
 The repo should prioritize those stable semantic boundaries. It should **not** primarily encode process placement, machine placement, or deployment topology.
 
@@ -278,7 +278,7 @@ Use the more precise noun instead:
 
 ### 2.5 Keep `app` simple
 
-`hq` is the app. Full stop.
+`hq` is the app identity.
 
 ```text
 apps/hq/ = the HQ app
