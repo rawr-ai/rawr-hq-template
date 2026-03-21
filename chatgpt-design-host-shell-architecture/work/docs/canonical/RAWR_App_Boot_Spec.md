@@ -1,9 +1,8 @@
 # RAWR App, Manifest, Entrypoint, Bootgraph, and Surface Canonical Specification
 
-Status: canonical supporting specification  
+Status: canonical specification  
 Scope: app manifest, role entrypoints, process-local bootgraph, surface composition, and operational mapping  
-Audience: principal/staff implementation handoff for HQ and future app splits  
-Supersedes: `RAWR_Host_Bundle_Bootgraph_oRPC_Canonical_Spec.md`, `RAWR_Arc_Nx_Integration_No_Conformance_Snippet.md`, `RAWR_Arc_oRPC_Integration_Revision.md`
+Audience: principal/staff architectural reference for HQ and future app splits  
 
 ---
 
@@ -11,15 +10,9 @@ Supersedes: `RAWR_Host_Bundle_Bootgraph_oRPC_Canonical_Spec.md`, `RAWR_Arc_Nx_In
 
 This document forward-locks the runtime integration model under the canonical RAWR future architecture.
 
-It does not replace the top-level architecture. It makes the existing one executable without semantic drift.
+It fixes the runtime-integration seam at the manifest / entrypoint / bootgraph / process boundary without semantic drift.
 
-This document intentionally evolves the previous canonical spec instead of appending to it. The earlier version still carried overloaded vocabulary from the old model: `host`, `host bundle`, `substrate`, and `deployment` were doing too much work at once. That produced category mistakes between:
-
-- stable code organization
-- process-local boot behavior
-- machine/service placement
-
-This document fixes that by separating:
+The durable separation is:
 
 ```text
 stable architecture    = app -> manifest -> role -> surface
@@ -35,12 +28,12 @@ This document locks the following things:
 - what belongs in `packages`, `services`, `plugins`, and `apps`
 - what `rawr.hq.ts` is and is not
 - what an entrypoint is and is not
-- what the Arc-derived package owns and does not own
+- what the RAWR bootgraph package, derived from Arc/`tsdkarc` core lifecycle ideas, owns and does not own
 - where oRPC belongs
 - where Inngest belongs
 - how local multi-process development maps to the model
 - how Railway service topology maps to the model
-- how HQ later splits into multiple apps without changing the ontology
+- how HQ splits into multiple apps without changing the ontology
 - the minimum concrete package/module/type shape needed to implement this cleanly
 
 This document does **not** lock every helper file name, every generated artifact, or every implementation detail inside the box. It locks the nouns, boundaries, invariants, and responsibility split that implementation must preserve.
@@ -62,7 +55,7 @@ plugins    = runtime projection
 apps       = top-level product/runtime identities
 ```
 
-That is the file-tree truth.
+That is the target-state file-tree truth.
 
 The repo should prioritize those stable semantic boundaries. It should **not** primarily encode process placement, machine placement, or deployment topology.
 
@@ -104,15 +97,13 @@ It defines what belongs to the app:
 - the role-local boot contributions
 - the role-local surfaces those roles expose or run
 
-For HQ, the manifest is:
+In the target-state HQ app topology, the manifest is:
 
 ```text
 apps/hq/rawr.hq.ts
 ```
 
 This file is the canonical definition of the HQ app in runtime terms.
-
-If older docs say “host bundle definition,” this specification replaces that with **app manifest**.
 
 #### Role
 
@@ -134,7 +125,7 @@ These are peer runtime roles. They are not machine counts, not deployment units,
 
 A **surface** is what a role exposes or runs.
 
-Examples:
+Target-state examples:
 
 - public oRPC API
 - internal trusted-only oRPC API
@@ -180,7 +171,7 @@ A **bootgraph** is the process-local lifecycle engine.
 
 It boots dependencies in order, rolls back on failure, and shuts down cleanly.
 
-It is the Arc-derived package.
+It is a RAWR support package derived from useful Arc/`tsdkarc` core lifecycle ideas, then narrowed to this architecture.
 
 Its home is:
 
@@ -244,32 +235,17 @@ That is the full model.
 
 ---
 
-## 2. Explicit terminology changes from the previous canonical spec
+## 2. Terminology precision
 
-This section is not optional. It replaces earlier wording.
+This seam uses a small set of precise nouns. Keep them precise.
 
-### 2.1 Retire `host bundle` from the core vocabulary
+### 2.1 Use `app manifest` for the app-level composition file
 
-The previous spec used **host bundle** as a core noun.
+The canonical noun for the app-level composition file is **app manifest**.
 
-This specification retires it from the primary ontology.
+### 2.2 Do not use bare `host` as a primary noun
 
-Reason: it was carrying too many meanings at once:
-
-- the app’s composition file
-- the deployable runtime assembly
-- sometimes the conceptual whole of the app
-- sometimes the thing split across multiple processes
-
-Those are related, but not the same level.
-
-Where the old spec said **host bundle definition**, this specification means **app manifest**.
-
-### 2.2 Retire `host` from the core vocabulary
-
-This specification does **not** use `host` as a primary noun.
-
-Reason: it is overloaded in too many ways across software and infrastructure:
+`host` is overloaded across software and infrastructure:
 
 - physical/virtual machine
 - container host
@@ -277,9 +253,7 @@ Reason: it is overloaded in too many ways across software and infrastructure:
 - application server
 - runtime shell
 
-That makes it a bad canonical term here.
-
-If an old document says `host`, implementation should resolve the intended meaning to one of:
+Use the more precise noun instead:
 
 - app
 - manifest
@@ -288,13 +262,9 @@ If an old document says `host`, implementation should resolve the intended meani
 - machine
 - Railway service
 
-### 2.3 Retire `substrate` from the core vocabulary
+### 2.3 Use concrete runtime nouns instead of `substrate`
 
-This specification does **not** use `substrate` as a primary architectural noun.
-
-Reason: it reads as external platform/runtime environment, not the app-defined executable shell.
-
-If needed, use concrete terms instead:
+`substrate` reads as an external runtime environment, not the app-defined executable shell. Use concrete terms instead:
 
 - HTTP server
 - worker harness
@@ -302,13 +272,9 @@ If needed, use concrete terms instead:
 - browser runtime
 - NanoClaw runtime
 
-### 2.4 Do not use bare `deployment` as a core noun
+### 2.4 Use operational placement nouns instead of bare `deployment`
 
-This specification does **not** use `deployment` as a primary architectural noun.
-
-Reason: it is an ops noun, not a stable code-organization noun.
-
-If an operational section needs to talk about Railway, it should say **Railway service** and **replica** explicitly.
+`deployment` is an ops noun, not a stable code-organization noun. When an operational section needs to talk about Railway, say **Railway service** and **replica** explicitly.
 
 ### 2.5 Keep `app` simple
 
@@ -401,7 +367,7 @@ That is the robustness the model is supposed to preserve.
 
 The file structure should prioritize the stable semantic layers, not process or machine placement.
 
-### 4.1 Canonical repo shape
+### 4.1 Canonical target-state repo shape
 
 ```text
 packages/
@@ -445,7 +411,7 @@ apps/
     agent.ts              # optional
 ```
 
-### 4.2 Why this file structure is correct
+### 4.2 Why this target-state file structure is correct
 
 This structure is aligned to the nouns that survive growth and bifurcation:
 
@@ -505,7 +471,7 @@ surfaces mount after boot
 
 ### 6.1 What the manifest is
 
-`apps/hq/rawr.hq.ts` is the HQ app manifest.
+In the target-state HQ app topology, `apps/hq/rawr.hq.ts` is the HQ app manifest.
 
 It answers one question:
 
@@ -572,6 +538,8 @@ export interface RoleBootManifest {
 The exact type file location may vary. The split cannot.
 
 ### 6.5 Example HQ manifest
+
+This is an illustrative target-state manifest shape. It shows the authority split the architecture requires; exact helper names, staging paths, and registration packages may vary while the repo converges.
 
 ```ts
 import { configModule, telemetryModule, postgresPoolModule } from './boot/modules'
@@ -642,6 +610,8 @@ Second, it derives one process-local boot input from those selected roles.
 
 Third, it starts the bootgraph and mounts the resulting surfaces.
 
+At that mount boundary, the mounting runtime may still add runtime-owned adapters, context factories, wrappers, or execution bridges that are specific to the running process. That does not move manifest authority out of the manifest. It is process-side runtime realization.
+
 That means an entrypoint is thin, but not empty.
 
 ### 7.3 What an entrypoint does not do
@@ -672,6 +642,8 @@ const runtime = await startBootGraph({
 
 const server = await buildServerHttpRuntime({
   ctx: runtime.ctx,
+  // Host-owned wrappers or runtime adapters may be applied here
+  // without taking manifest authority away from the manifest.
   surfaces: serverRole.surfaces,
 })
 
@@ -752,9 +724,11 @@ It does not own:
 - Railway topology
 - repo/workspace policy logic
 
-### 8.4 The Arc-derived patch set
+### 8.4 RAWR bootgraph derivation from Arc
 
-If `packages/bootgraph` vendors or ports `tsdkarc`, it must patch the raw model in the following ways.
+Arc/`tsdkarc` today provides a generic module lifecycle manager: `defineModule`, `start`, string `name` identity, nested `modules`, lifecycle hooks, dependency ordering, and rollback.
+
+`packages/bootgraph` keeps that useful core, then narrows and patches it into a RAWR-specific bootgraph. The following items are RAWR bootgraph policy and target API, not claims about Arc's current public model.
 
 First, replace raw string-name identity with structured `BootModuleKey` identity.
 
@@ -782,7 +756,9 @@ That is the complete lifetime model.
 
 The bootgraph must not pretend there is a lifetime broader than one process.
 
-### 8.6 Draft bootgraph types
+### 8.6 Target RAWR bootgraph types
+
+These are target `packages/bootgraph` interfaces for RAWR. They are not Arc-native APIs.
 
 ```ts
 export type AppRole = 'server' | 'async' | 'web' | 'cli' | 'agent'
@@ -826,6 +802,8 @@ export interface StartedBootGraph<Ctx extends object = {}> {
 
 ### 8.7 Minimal public API
 
+This is the target RAWR bootgraph API surface.
+
 ```ts
 export function defineBootModule<ReadCtx extends object, OwnSlice extends object = {}>(
   module: BootModule<ReadCtx, OwnSlice>
@@ -849,7 +827,8 @@ The service layer is the semantic capability plane.
 The preferred posture is:
 
 ```text
-services are oRPC-first local-first callable capability boundaries
+services are transport-neutral semantic capability boundaries
+with oRPC as the default local-first callable harness
 ```
 
 That means a service may use oRPC server primitives for:
@@ -881,7 +860,9 @@ Services do not own:
 - HTTP listener details
 - async runtime harness selection
 
-### 9.4 Recommended service package shape
+### 9.4 Illustrative service package shape
+
+One valid target-state package shape is:
 
 ```text
 services/
@@ -895,7 +876,7 @@ services/
       index.ts
 ```
 
-### 9.5 Example service shape
+### 9.5 Illustrative service shape
 
 ```ts
 // services/support/src/context.ts
@@ -930,12 +911,16 @@ export function createSupportClient(context: SupportServiceContext) {
 }
 ```
 
+Exact export shape, file layout, and context-lane decomposition may vary. The invariant is one semantic capability boundary with a stable local-first callable surface.
+
+Some services may expose richer lane decomposition such as `deps`, `scope`, `config`, and `invocation` instead of one flat context object. That is still consistent with this specification as long as the service boundary stays semantic-first and transport-neutral.
+
 ### 9.6 The critical boundary
 
 oRPC belongs in two places:
 
-- inside `services/*` as the local-first callable capability boundary
-- inside `plugins/server/*` as the server-surface composition layer
+- at the `services/*` boundary implementation layer as the default local-first callable harness
+- inside `plugins/server/*` as the server-surface composition and transport-projection layer
 
 What oRPC does **not** become is the bootgraph.
 
@@ -953,7 +938,7 @@ They translate service truth into role- and surface-specific runtime contributio
 
 ### 10.2 Canonical plugin roots
 
-This specification locks the following baseline roots:
+This specification locks the following target-state role-first roots:
 
 ```text
 plugins/server/api/*
@@ -968,7 +953,7 @@ plugins/agent/tools/*
 
 ### 10.3 What a plugin contributes
 
-A plugin contributes descriptors, not host-wide authority.
+A plugin contributes descriptors, not process-wide authority.
 
 A plugin may contribute:
 
@@ -1135,6 +1120,7 @@ The server process should:
 - start server role-local modules
 - build public server surfaces
 - build internal server surfaces only if they exist
+- apply any process-owned runtime adapters needed at the process boundary
 - compose the HTTP runtime and listen
 
 ### 11.2 Async role
@@ -1368,7 +1354,7 @@ That is the continuity the model is supposed to preserve.
 
 ---
 
-## 15. Invariants that must not change during implementation
+## 15. Canonical invariants
 
 These are load-bearing.
 
@@ -1464,113 +1450,7 @@ The architecture is about boundaries and responsibility split. Not every subordi
 
 ---
 
-## 17. Required implementation work
-
-### 17.1 New support package
-
-Create:
-
-```text
-packages/bootgraph
-```
-
-That package should vendor or port the useful core of `tsdkarc` and patch it to match this specification.
-
-### 17.2 HQ manifest
-
-Create or rewrite:
-
-```text
-apps/hq/rawr.hq.ts
-```
-
-so that it is the single canonical HQ app manifest.
-
-### 17.3 HQ entrypoints
-
-Create or rewrite:
-
-```text
-apps/hq/server.ts
-apps/hq/async.ts
-apps/hq/web.ts
-apps/hq/dev.ts
-```
-
-with optional `cli.ts` and `agent.ts` following the same model later.
-
-### 17.4 Plugin registrations
-
-Ensure plugins export registration descriptors rather than trying to own app-wide boot or composition authority.
-
-### 17.5 Service callable boundaries
-
-Ensure services expose stable callable capability boundaries that are local-first in-process by default and project cleanly into role/surface plugins.
-
-### 17.6 Railway scripts and service mapping
-
-Ensure the workspace exposes explicit per-entrypoint commands so Railway service mapping is trivial and does not require implicit process-shape inference.
-
----
-
-## 18. Minimum test surface
-
-### 18.1 Bootgraph tests
-
-- dependency-ordered boot
-- reverse-order shutdown
-- rollback on startup failure
-- fatal startup even when error hooks exist
-- dedupe by canonical boot-module identity
-- process-lifetime vs role-lifetime behavior
-- idempotent stop
-
-### 18.2 Manifest and entrypoint tests
-
-- `rawr.hq.ts` contains the expected baseline role set
-- `server.ts` boots only `server`
-- `async.ts` boots only `async`
-- `web.ts` boots only `web`
-- `dev.ts` boots the intended cohosted role set
-
-### 18.3 Surface assembly tests
-
-- public server surface composes the expected capability routes
-- internal server surface exists only when configured
-- async surface composition yields the expected workflow/consumer/schedule bundle
-
-### 18.4 Boundary tests
-
-- services do not import plugins or apps
-- bootgraph package does not depend on manifest or plugin policy semantics
-- entrypoints do not redefine service truth
-
-### 18.5 Railway mapping tests or smoke checks
-
-Where practical, smoke-check that each Railway-targeted start command boots the intended entrypoint and only that intended role set.
-
----
-
-## 19. Source basis and operational references
-
-This specification evolves the prior canonical spec and folds in the final clarified runtime model that separated:
-
-- stable architecture
-- process-local boot
-- Railway operational mapping
-
-Operational Railway references that informed the service/replica mapping:
-
-- Railway monorepo deployment and per-service custom start commands
-- Railway start-command behavior
-- Railway horizontal scaling by service replicas
-- Railway private networking and internal DNS within one project environment
-
-These are operational mappings layered on top of the architecture, not replacements for it.
-
----
-
-## 20. Final canonical picture
+## 17. Final canonical picture
 
 The final picture should be read as:
 
@@ -1580,7 +1460,7 @@ packages/
   shared-types/       shared support matter
 
 services/
-  */                  semantic capability truth, local-first callable boundaries
+  */                  semantic capability truth, transport-neutral capability boundaries with local-first callable harnesses
 
 plugins/
   server/api/*        public synchronous server surfaces
@@ -1616,7 +1496,7 @@ runtime realization:    entrypoint -> bootgraph -> process
 operational placement:  machine locally, Railway service/replica on Railway
 ```
 
-That is the implementation box.
+That is the canonical box.
 
-Everything inside the box can be resolved in the repo.
-The nouns, boundaries, layers, and invariants above should not change during that implementation.
+Implementation can resolve details inside the box.
+The nouns, boundaries, layers, and invariants above should remain fixed across implementation.

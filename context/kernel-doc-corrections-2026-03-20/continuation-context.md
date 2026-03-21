@@ -1,20 +1,25 @@
 ## Overarching goal
-You are implementing the approved Canonical Kernel Doc Corrections plan for the two canonical docs so they precisely express the locked target architecture, stay cohesive as canonical specs, and do not overclaim current repo state or Arc behavior.
+I want you to finish the Canonical Kernel Doc Corrections implementation on `RAWR_App_Boot_Spec.md` and `RAWR_Future_Architecture_V2.md` so both docs read as standalone canonical future-state specifications: precise, cohesive, non-meta, and aligned with the locked architecture.
 
 ## Current state / progress snapshot
-The very last thing that happened was initial implementation setup: you created the dedicated research workspace under `context/kernel-doc-corrections-2026-03-20/`, wrote `brain.md`, and captured the continuation packet before editing the docs. This preserves the framing and puts you at the checkpoint immediately before the required pre-edit git commit and doc patching work.
+The canonical-language cleanup pass is complete. Both docs were patched to remove mixed referentials, migration/program language, and residual ambiguity; the last semantic cleanup normalized the manifest-vs-mounting-runtime authority wording so neither doc uses bare `host` ambiguously at that seam. Validation has already passed:
+- `bun scripts/phase-a/manifest-smoke.mjs`
+- `bunx vitest run --project server apps/server/test/rawr.test.ts`
+
+The branch is still dirty only because the final edited docs and this continuation packet have not been committed yet. You are at the final repo-cleanup and closeout step.
 
 ## Invariants and decisions (for this continuation)
-1. The future architecture direction and load-bearing semantics are locked; do not renegotiate them.
-2. Current repo transitional layout mismatch is not, by itself, a reason to change the target architecture.
-3. The main semantic correction is to describe `bootgraph` as a RAWR derivative of Arc/`tsdkarc`, not Arc-as-is.
-4. Keep service boundaries transport-neutral; describe oRPC as the default local-first callable harness, not as service identity.
-5. Preserve the distinction between manifest authority and host mount-time runtime augmentation.
-6. Remove migration / implementation-program content from the canonical doc body.
-7. Use a ratcheting workflow with architecture and information-design review coverage.
+1. The future architecture direction and load-bearing semantics are locked. Do not renegotiate them.
+2. These docs are canonical future-state specs. They are explicitly not required to match the current repo layout.
+3. Canonical target-state wording should remain strong; do not weaken it to fit the transitional repo.
+4. Keep mixed referentials, supporting-doc governance chatter, self-reference, and semantically empty phrasing out of the spec bodies.
+5. Keep Arc/`tsdkarc` language precise: `packages/bootgraph` is a RAWR derivative of Arc core lifecycle ideas, not Arc-as-is.
+6. Keep service boundaries transport-neutral and oRPC as the default local-first callable harness, not service identity.
+7. Preserve the manifest-authority vs mounting-runtime augmentation distinction.
+8. Validation already passed; do not reopen the docs unless you find a concrete defect.
 
 ## Next step / immediate continuation
-Commit the current state of the canonical docs now, before any additional semantic edits, so the upcoming corrections have a clean checkpoint and traceable evolution.
+Commit the final edited docs plus the refreshed continuation packet so the branch is clean, then deliver the concise implementation summary with the validation results and the main architectural changes that landed.
 
 ## Verbatim continuation snippet (programmatically inserted)
 {{RAWR_VERBATIM_CONTINUATION_SNIPPET}}

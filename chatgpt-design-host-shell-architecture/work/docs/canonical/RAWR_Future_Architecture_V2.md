@@ -1,7 +1,5 @@
 # RAWR Future Architecture
 
-> This shell is parked as the current canonical destination artifact, not the final word. It is the platform-level architecture document: the stable frame another engineer or agent should use to understand what RAWR is, how it is organized, and how it is intended to scale. Supporting specifications go deeper on individual seams. This document changes only when the architecture itself changes.
-
 ## Scope
 
 This is the canonical future architecture for RAWR HQ and the platform shape it establishes for later apps.
@@ -14,8 +12,6 @@ It defines:
 - the runtime and boot model
 - the default topology and scale path
 - the top-level responsibility splits between `packages`, `services`, `plugins`, and `apps`
-
-Sequencing lives in the semantic architecture snapshot. Detailed boot-graph interfaces and implementation shape live in the supporting bootgraph specification. This document keeps the overall platform shell coherent.
 
 ## Architecture At A Glance
 
@@ -177,7 +173,7 @@ It owns:
 - role selection for each process shape
 - transport and surface mounting at the process boundary
 
-For HQ:
+In the target-state HQ app topology:
 
 ```text
 apps/hq/ = the HQ app
@@ -190,7 +186,7 @@ Inside an app, two app-internal constructs matter:
 
 The manifest is the app-level composition file. It defines what roles and surfaces belong to the app and what shared wiring exists between them.
 
-For HQ:
+In the target-state HQ app topology:
 
 ```text
 apps/hq/rawr.hq.ts = the HQ app manifest
@@ -211,7 +207,7 @@ The manifest and entrypoints are app-internal. They are not new top-level ontolo
 
 ### Minimal repo topology
 
-The following tree shows the current target-state direction at the level where composition behavior becomes architecturally meaningful.
+The following tree shows the canonical target-state topology at the level where composition behavior becomes architecturally meaningful.
 
 The important structural point is that first-level grouping follows stable semantic layers. Within `plugins`, first-level grouping follows runtime role and second-level grouping follows surface or contribution shape that changes composition behavior. Within `apps`, the structure follows app identity first and then the app's manifest and entrypoints.
 
@@ -284,7 +280,7 @@ Which surfaces belong to those roles?
 Which shared wiring and contributions do those roles rely on?
 ```
 
-For HQ, that definition lives in:
+In the target-state HQ app topology, that definition lives in:
 
 ```text
 apps/hq/rawr.hq.ts
@@ -299,6 +295,8 @@ The manifest should define:
 - shared wiring and shared support registrations
 - role contributions and mounted surfaces
 - the role shapes that entrypoints are allowed to boot
+
+The mounting runtime may still add runtime-owned adapters, context factories, or execution bridges when mounting manifest-owned surfaces at the process boundary. That does not move app-level composition authority out of the manifest.
 
 The manifest should not define machine placement as a core architectural fact. Machine and service placement are operational mappings applied to entrypoints.
 
@@ -326,7 +324,7 @@ Caller-facing synchronous boundary role.
 
 `server` owns request/response boundary projection: public or trusted synchronous APIs, transport and auth concerns, exposure policy, and control or trigger surfaces that must answer callers synchronously.
 
-For callable boundaries, oRPC is the default boundary harness. It shapes the server-side surface and can also be used in-process when caller and callee share a process. That does not make oRPC the boot system; it makes oRPC the canonical callable surface layer for `server`.
+For callable boundaries, oRPC is the default boundary harness. It shapes server-facing callable surfaces and can also be used in-process when caller and callee share a process. That does not make oRPC the boot system or the service itself; it makes oRPC the default callable harness used by `server` surfaces.
 
 Typical server surfaces include:
 
@@ -401,7 +399,7 @@ apps/hq/web.ts      -> boots web
 apps/hq/dev.ts      -> boots server + async + web together
 ```
 
-`cli.ts` and `agent.ts` remain valid later additions when those roles are implemented.
+Additional role entrypoints such as `cli.ts` and `agent.ts` are valid when those roles are present in the app.
 
 The durable idea is not the exact helper name under an app. The durable idea is that entrypoints select roles from the manifest and turn that role selection into one process-local boot plan.
 
@@ -409,7 +407,7 @@ The durable idea is not the exact helper name under an app. The durable idea is 
 
 The **bootgraph** is the process-local lifecycle engine.
 
-It is the Arc-derived support package that makes runtime realization concrete.
+It is a RAWR support package derived from Arc/`tsdkarc` core lifecycle ideas that makes runtime realization concrete.
 
 Its home is:
 
@@ -437,6 +435,8 @@ The bootgraph owns:
 - typed process context assembly
 - process-local and role-local lifetime semantics
 - lifecycle hooks
+
+Those lifetime and identity semantics are RAWR bootgraph policy. They should not be read as inherited Arc terminology.
 
 The bootgraph is process-local. That is load-bearing.
 
@@ -578,7 +578,7 @@ At the shell level, these planes stay distinct in tooling as well:
 - `oRPC` governs caller-facing or trusted callable boundaries and may be used locally or remotely
 - `Inngest` governs durable execution boundaries
 - `bootgraph` governs process-local lifecycle and long-lived resource boot/shutdown
-- `Nx` governs graph, policy, and later mechanical enforcement
+- `Nx` governs graph, policy, and mechanical enforcement
 
 These roles are complementary. They should not be smeared into one another.
 
@@ -626,7 +626,7 @@ The enforceable dependency direction is:
 
 Plugins declare what they need or provide. Apps decide how those declarations are mounted into roles and surfaces. Entrypoints decide which roles boot in one process. The bootgraph realizes that process safely.
 
-Detailed Nx tags, approved-scope policy, and lower-level import rules are governed in supporting docs.
+Detailed Nx tags, approved-scope policy, and lower-level import rules are downstream implementation policy, not part of this architecture.
 
 ### Plugin-service composition frontier
 
@@ -635,7 +635,7 @@ The governing principle is unchanged:
 - semantic composition belongs in services when it is part of service truth
 - plugins compose only when the composition is genuinely runtime-specific
 
-The unresolved frontier is when a multi-service surface is still just runtime projection and when it should instead become a composed service that a plugin mounts thinly. That question remains in the pressure-test program described in the semantic architecture snapshot.
+This shell does not further specify the exact threshold for promoting a multi-service runtime composition into a composed service. That seam remains downstream unless it rises to canonical architectural significance.
 
 ### Shared infrastructure is not shared semantic ownership
 
@@ -693,7 +693,7 @@ Its baseline long-running runtime set is `server`, `async`, and `web`.
 
 Those three roles are scaffolded as distinct entrypoints and distinct long-running process shapes from day one.
 
-What the baseline should look like:
+What the target-state baseline should look like:
 
 ```text
 apps/hq/server.ts
@@ -701,7 +701,7 @@ apps/hq/async.ts
 apps/hq/web.ts
 ```
 
-Optional entrypoints remain valid for:
+Additional entrypoints remain valid for:
 
 - `apps/hq/dev.ts` for an intentionally cohosted development process
 - `apps/hq/cli.ts` for CLI execution
@@ -896,7 +896,7 @@ flowchart LR
   EXEC -->|"execution authority"| ASY
 ```
 
-This aligns with the role model and the workflow strategy. Packaging and operation detail are governed in supporting docs.
+This aligns with the role model and the workflow strategy. Packaging and operation detail remain downstream of the responsibility split locked here.
 
 ### Agent runtime and stewardship
 
@@ -906,7 +906,7 @@ NanoClaw is not a peer ontology kind beside package, service, plugin, or app. It
 
 The durable stewardship commitments are:
 
-- stewards are real runtime concerns, not just future review metadata
+- stewards are real runtime concerns, not just dormant ownership labels
 - stewards execute on the `agent` role
 - stewardship combines ownership and runtime placement
 - stewardship overlays the existing ontology kinds rather than adding a new top-level kind
@@ -943,14 +943,13 @@ They make it easier to answer:
 - what an entrypoint boots
 - what the bootgraph owns
 - what the running process actually is
-- what can be enforced later
 - what an agent is actually allowed to operate over
 
 Strong nouns reduce the number of bad architectural moves that are even thinkable.
 
-When these boundaries hold, later systems become much easier to build coherently:
+When these boundaries hold, the system becomes much easier to build coherently:
 
-| Stable noun or seam | What it unlocks later |
+| Stable noun or seam | What it supports |
 | --- | --- |
 | `services` | one capability boundary that can stay local first and remote later |
 | `plugins` | runtime-specific projection without semantic drift |
@@ -975,20 +974,10 @@ The following are not governed at this level:
 - generator specifics
 - worktree harness implementation details
 - observability plumbing details
-- governance process details
 - exact platform-by-platform service configuration
 - exact helper filenames below the manifest/entrypoint/bootgraph seam
 
-Those belong in supporting docs or later implementation-phase work unless they rise to the level of canonical architecture.
-
-Relationship to supporting docs:
-
-| Supporting doc | What it should continue to own |
-| --- | --- |
-| semantic architecture snapshot | sequencing, next steps, pressure-test ordering |
-| bootgraph canonical specification | detailed manifest / entrypoint / bootgraph interfaces and process-lifecycle package shape |
-| service internal structure doc | service-internal ownership law |
-| workflow plugin strategy doc | workflow/plugin detail, except where this architecture explicitly locks top-level responsibility splits |
+Those remain downstream implementation concerns unless they rise to the level of canonical architecture.
 
 The durable kernel remains:
 
