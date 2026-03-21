@@ -32,9 +32,10 @@ const ignoredDirs = new Set([
   "chatgpt-design-host-shell-architecture",
   "dist",
   "node_modules",
+  "research",
 ]);
 
-const ignoredFiles = new Set(["bun.lock"]);
+const ignoredFiles = new Set(["bun.lock", "output.json"]);
 
 const legacySupportAllowlist = [
   "rawr.hq.ts",

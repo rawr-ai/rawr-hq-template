@@ -97,6 +97,17 @@ function hasRouteRegistration(sourceFile: ts.SourceFile, routeLiteral: string): 
   return matched;
 }
 
+function hasIdentifierCall(sourceFile: ts.SourceFile, identifierName: string): boolean {
+  let matched = false;
+  visit(sourceFile, (node) => {
+    if (matched || !ts.isCallExpression(node) || !ts.isIdentifier(node.expression)) return;
+    if (node.expression.text === identifierName) {
+      matched = true;
+    }
+  });
+  return matched;
+}
+
 function hasRegisterOrpcRoutesManifestRouter(sourceFile: ts.SourceFile): boolean {
   let matched = false;
   visit(sourceFile, (node) => {
@@ -142,7 +153,10 @@ describe("phase-a gate scaffold (server)", () => {
     expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "triggerRouter"])).toBe(true);
     expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "client"])).toBe(true);
     expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "functions"])).toBe(true);
-    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "handler"])).toBe(true);
+    expect(hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createCoordinationInngestFunction")).toBe(true);
+    expect(hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createInngestServeHandler")).toBe(true);
+    expect(hasIdentifierCall(rawrAst, "createCoordinationInngestFunction")).toBe(true);
+    expect(hasIdentifierCall(rawrAst, "createInngestServeHandler")).toBe(true);
   });
 
   it("route negative assertions gate scaffold keeps D-015 negatives explicit", async () => {

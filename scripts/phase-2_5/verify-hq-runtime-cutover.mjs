@@ -18,16 +18,18 @@ await Promise.all([
   mustExist("apps/cli/test/hq.test.ts"),
   mustExist("apps/cli/test/hq-legacy-surface.test.ts"),
   mustExist("scripts/dev/hq.sh"),
+  mustExist("docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md"),
   mustExist("docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md"),
   mustExist("scripts/phase-2_5/verify-hq-runtime-cutover.mjs"),
 ]);
 
-const [scripts, rootPackageRaw, toolsExportSource, hqStatusSource, hqShellSource, runbookSource] = await Promise.all([
+const [scripts, rootPackageRaw, toolsExportSource, hqStatusSource, hqShellSource, runtimeRunbookSource, coordinationRunbookSource] = await Promise.all([
   readPackageScripts(),
   readFile("package.json"),
   readFile("apps/cli/src/commands/tools/export.ts"),
   readFile("apps/cli/src/lib/hq-status.ts"),
   readFile("scripts/dev/hq.sh"),
+  readFile("docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md"),
   readFile("docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md"),
 ]);
 
@@ -86,17 +88,22 @@ assertCondition(
   "hq-status.ts must validate RAWR_HQ_OBSERVABILITY before emitting the status contract",
 );
 assertCondition(
-  runbookSource.includes("rawr hq up")
-    && runbookSource.includes("RAWR_HQ_OPEN")
-    && runbookSource.includes("RAWR_HQ_OBSERVABILITY"),
-  "coordination runbook must teach the canonical HQ lifecycle and env contract",
+  runtimeRunbookSource.includes("rawr hq up")
+    && runtimeRunbookSource.includes("RAWR_HQ_OPEN")
+    && runtimeRunbookSource.includes("RAWR_HQ_OBSERVABILITY"),
+  "HQ runtime runbook must teach the canonical HQ lifecycle and env contract",
 );
 assertCondition(
-  !runbookSource.includes("dev:up")
-    && !runbookSource.includes("RAWR_DEV_UP_OPEN")
-    && !runbookSource.includes("RAWR_OPEN_POLICY")
-    && !runbookSource.includes("RAWR_OPEN_UI"),
-  "coordination runbook must remove legacy lifecycle aliases and env names",
+  !runtimeRunbookSource.includes("dev:up")
+    && !runtimeRunbookSource.includes("RAWR_DEV_UP_OPEN")
+    && !runtimeRunbookSource.includes("RAWR_OPEN_POLICY")
+    && !runtimeRunbookSource.includes("RAWR_OPEN_UI"),
+  "HQ runtime runbook must remove legacy lifecycle aliases and env names",
+);
+assertCondition(
+  coordinationRunbookSource.includes("HQ_RUNTIME_OPERATIONS.md")
+    && coordinationRunbookSource.includes("managed HQ runtime is already running"),
+  "coordination runbook must delegate generic lifecycle behavior to the canonical HQ runtime runbook",
 );
 
 assertScriptEquals(
