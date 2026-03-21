@@ -16,6 +16,7 @@ Canonical target packet:
 
 Current subsystem docs:
 - `docs/system/PLUGINS.md`
+- `docs/system/enforcement.md`
 - `docs/system/TELEMETRY.md`
 
 ## Procedure API Spine (ORPC)
