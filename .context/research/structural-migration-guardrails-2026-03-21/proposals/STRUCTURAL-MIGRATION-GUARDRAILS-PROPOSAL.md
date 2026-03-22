@@ -691,4 +691,4 @@ That gives the migration the property it actually needs: every slice can be prov
 - [apps/server/src/rawr.ts](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/apps/server/src/rawr.ts)
 - [scripts/phase-a/verify-gate-scaffold.mjs](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/scripts/phase-a/verify-gate-scaffold.mjs)
 - [apps/server/test/route-boundary-matrix.test.ts](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/apps/server/test/route-boundary-matrix.test.ts)
-- [PROPOSAL-V3.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/.context/research/repo-structural-audit-2026-03-20/proposals/PROPOSAL-V3.md)
+- [PROPOSAL-V3.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/.context/research/structural-migration-proposal-2026-03-20/proposals/PROPOSAL-V3.md)

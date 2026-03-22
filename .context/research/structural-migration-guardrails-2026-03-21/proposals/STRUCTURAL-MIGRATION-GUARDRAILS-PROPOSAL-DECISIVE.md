@@ -5,7 +5,7 @@
 **Additional grounding**:
 - canonical boot specification packet under `chatgpt-design-host-shell-architecture/work/docs/canonical/RAWR_App_Boot_Spec/`
 - `chatgpt-design-host-shell-architecture/work/docs/canonical/RAWR_Future_Architecture_V2.md`
-- `.context/research/repo-structural-audit-2026-03-20/proposals/PROPOSAL-V3.md`
+- `.context/research/structural-migration-proposal-2026-03-20/proposals/PROPOSAL-V3.md`
 
 ---
 
@@ -707,8 +707,8 @@ That is the right up-front structural posture for this migration.
 
 ### Prior research and migration grounding
 
-- `.context/research/repo-structural-migration-guardrails-2026-03-21/proposals/STRUCTURAL-MIGRATION-GUARDRAILS-PROPOSAL.md`
-- `.context/research/repo-structural-audit-2026-03-20/proposals/PROPOSAL-V3.md`
+- `.context/research/structural-migration-guardrails-2026-03-21/proposals/STRUCTURAL-MIGRATION-GUARDRAILS-PROPOSAL.md`
+- `.context/research/structural-migration-proposal-2026-03-20/proposals/PROPOSAL-V3.md`
 
 ### Repo-local evidence
 

@@ -2,7 +2,7 @@
 # Nx-Backed Structural Migration Guardrails Proposal
 
 **Summary**
-- Create `.context/research/repo-structural-migration-guardrails-2026-03-21/` with `orchestrator/`, `team/v1-nx-guardrails/`, and `proposals/`, matching the repo’s existing research layout.
+- Create `.context/research/structural-migration-guardrails-2026-03-21/` with `orchestrator/`, `team/v1-nx-guardrails/`, and `proposals/`, matching the repo’s existing research layout.
 - Write scratchpads for the orchestrator and four research lanes: boundaries/ESLint, graph/extensibility, task orchestration, and repo-local mapping.
 - Produce `proposals/STRUCTURAL-MIGRATION-GUARDRAILS-PROPOSAL.md` as the deliverable.
 - Proposal thesis: apply a thin Nx control layer up front, then ratchet it slice-by-slice. Keep tests and existing structural gates as the behavioral oracle; use Nx for graph truth, selection, and repeatable enforcement.
