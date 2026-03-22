@@ -32,17 +32,19 @@ The load-bearing rules are:
 - services own semantic truth,
 - plugins project services into role- and surface-specific runtime seams,
 - apps own manifest and entrypoint composition authority,
-- the bootgraph owns process-local lifecycle semantics,
-- repo workflow and agent routing preserve where changes are allowed to land.
+- the bootgraph owns process-local lifecycle semantics.
+
+Around that mechanical core, repo workflow and agent routing constrain how changes are allowed to enter and move through the codebase.
 
 ## Enforcement Topology
 
 ```mermaid
 flowchart TB
   subgraph Seams["Architectural seams being protected"]
-    A["packages -> services -> plugins -> apps"]
-    B["app -> manifest -> role -> surface"]
-    C["entrypoint -> bootgraph -> process"]
+    A["semantic boundary direction"]
+    B["composition authority"]
+    C["runtime realization"]
+    D["operational safety edges"]
   end
 
   subgraph Deterministic["Deterministic proof layers"]
@@ -61,13 +63,12 @@ flowchart TB
 
   A --> D1
   A --> D2
-  B --> D1
+  A --> D3
   B --> D4
   B --> D5
-  C --> D1
   C --> D4
   C --> D5
-  D6 --> G1
+  D --> D6
   G1 --> G2
 ```
 
@@ -82,8 +83,6 @@ flowchart TB
 | Bootgraph and runtime seams | Process-local lifecycle stays in the bootgraph/runtime seam | Structural invariant targets and tests |
 | Runtime behavior | Routes, surfaces, telemetry, workflows, and cutover behavior remain correct | Tests |
 | Commit and activation safety | Secrets, drift, and plugin activation risk are blocked at the edge | Git hook and security gate |
-| Repo mutation policy | Stack operations and final acceptance remain controlled | Graphite and HQ operations |
-| Destination and routing policy | Changes land in the correct repo, path, and command surface | AGENTS lattice and canonical docs |
 
 ## How To Read Failures
 
@@ -96,6 +95,17 @@ When a change fails the enforcement stack, debug in this order:
 6. Do commit-time and activation-time gates still pass?
 7. Is the change still valid under repo workflow policy?
 8. Is the change landing in the correct place under the AGENTS lattice?
+
+## Invariant Classes
+
+Before thinking about tools, read the stack as four invariant classes:
+
+| Invariant class | What must remain true | Primary proof families |
+| --- | --- | --- |
+| Semantic boundary direction | Support matter stays in `packages`, semantic truth stays in `services`, runtime projection stays in `plugins`, app authority stays in `apps` | Nx graph, ESLint boundary policy, TypeScript |
+| Composition authority | Manifest definition stays upstream of entrypoint/runtime realization, and role selection stays explicit | Structural invariant targets, targeted tests |
+| Runtime realization | Bootgraph owns process-local lifecycle semantics and mounted runtime behavior remains correct | Structural invariant targets, runtime tests |
+| Operational safety | Commits and plugin enablement do not bypass safety checks | Git hook and activation gate |
 
 ## Deterministic Proof Layers
 
@@ -112,7 +122,7 @@ It proves:
 
 It does this through:
 - project discovery from `package.json` and `project.json`,
-- `nx.tags`,
+- graph vocabulary attached to projects,
 - `targetDefaults`,
 - `namedInputs`,
 - project-owned targets,
@@ -121,62 +131,8 @@ It does this through:
 - `nx sync:check`,
 - project-graph extensions when import edges alone are insufficient.
 
-Canonical graph language:
-- `type:*`
-- `capability:*`
-- `app:*`
-- `role:*`
-- `surface:*`
-- `migration-slice:*`
-
-Canonical project examples:
-
-```json
-{
-  "name": "@rawr/services-support",
-  "tags": ["type:service", "capability:support", "app:hq"]
-}
-```
-
-```json
-{
-  "name": "@rawr/plugins-server-api-support",
-  "tags": ["type:plugin", "capability:support", "app:hq", "role:server", "surface:api"]
-}
-```
-
-Canonical Nx configuration shape:
-
-```json
-{
-  "namedInputs": {
-    "default": ["{projectRoot}/**/*"],
-    "structural": [
-      "{projectRoot}/**/*",
-      "{workspaceRoot}/nx.json",
-      "{workspaceRoot}/eslint.config.mjs",
-      "{workspaceRoot}/apps/hq/rawr.hq.ts"
-    ]
-  },
-  "targetDefaults": {
-    "structural": {
-      "cache": true,
-      "inputs": ["structural", "^structural"]
-    },
-    "lint": {
-      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"]
-    }
-  }
-}
-```
-
-Canonical Nx verification commands:
-
-```bash
-bunx nx sync:check
-bunx nx affected -t structural,lint,test
-bunx nx run-many -t structural --projects=@rawr/services-support,@rawr/plugins-server-api-support
-```
+The important point is not the exact tag spelling or command line.
+The important point is that Nx owns the graph vocabulary and target surface that other deterministic layers consume.
 
 Nx does not define architectural semantics by itself.
 It is the graph, orchestration, and graph-derived-proof surface that other deterministic layers build on.
@@ -193,33 +149,8 @@ It proves:
 - plugins do not runtime-import other plugins,
 - app-level composition stays at the app layer.
 
-Canonical boundary rule shape:
-
-```js
-const boundaryRule = [
-  "error",
-  {
-    depConstraints: [
-      {
-        sourceTag: "type:service",
-        notDependOnLibsWithTags: ["type:plugin", "type:app"]
-      },
-      {
-        sourceTag: "type:plugin",
-        notDependOnLibsWithTags: ["type:plugin"]
-      },
-      {
-        allSourceTags: ["type:plugin", "role:server"],
-        onlyDependOnLibsWithTags: ["type:service", "type:package", "role:server", "surface:api", "surface:internal"]
-      },
-      {
-        sourceTag: "type:app",
-        onlyDependOnLibsWithTags: ["type:service", "type:plugin", "type:package"]
-      }
-    ]
-  }
-];
-```
+The important point is not a particular rule literal.
+The important point is that ESLint consumes the Nx graph vocabulary and encodes forbidden dependency directions across kind, capability, app, role, and surface axes.
 
 Lint proves architectural direction.
 It does not prove that the chosen manifest, entrypoint, or runtime behavior is correct after composition.
@@ -233,13 +164,6 @@ It proves:
 - project build surfaces still compile,
 - exported contract shapes still line up,
 - generated or shared types remain internally coherent.
-
-Representative commands:
-
-```bash
-bunx tsc -p tsconfig.json
-bunx tsc -p tsconfig.json --noEmit
-```
 
 TypeScript catches compile-time inconsistency.
 It does not prove architectural direction, manifest authority, lifecycle ownership, or runtime behavior.
@@ -270,21 +194,6 @@ Invariant-first view:
 | Forbidden routes stay absent at caller-facing boundaries | structural targets and route-negative tests |
 | Telemetry and observability stay on the intended seams | structural targets and telemetry tests |
 
-Canonical target shape:
-
-```json
-{
-  "targets": {
-    "structural": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun scripts/verify-server-api-surface.mjs"
-      }
-    }
-  }
-}
-```
-
 When the graph must reflect manifest-shell or bootgraph relationships that imports do not express directly, Nx graph-derived inventory and sync checks become part of this layer.
 
 ## 5. Runtime And Contract Tests
@@ -306,17 +215,6 @@ Canonical runtime proof scope follows the canonical runtime roles:
 - `cli`
 - `agent`
 
-Representative test surface:
-
-```ts
-projects: [
-  { root: r("apps/hq"), test: { name: "server" } },
-  { root: r("apps/hq"), test: { name: "async" } },
-  { root: r("apps/hq"), test: { name: "web" } },
-  { root: r("apps/hq"), test: { name: "cli" } }
-]
-```
-
 Tests prove behavior after composition.
 They complement, not replace, boundary lint and structural invariant targets.
 
@@ -333,52 +231,35 @@ The pre-commit gate proves:
 - template-managed surfaces are not silently mutated,
 - plugin sync/drift checks still pass before code lands.
 
-Representative gate commands:
-
-```bash
-bun run rawr -- security check --staged
-bun scripts/githooks/check-template-managed.ts
-bun run rawr -- plugins status --checks all
-```
-
 ### Activation boundary
 
 The activation gate proves:
 - plugin security checks ran before enablement,
 - enabled-state mutation only happens after the gate passes.
 
-Representative deterministic checks:
-- `bun audit --json`
-- `bun pm untrusted`
-- staged or repo secret scans
+Representative deterministic checks include:
+- dependency vulnerability audit,
+- install-script trust checks,
+- staged or repo secret scans.
 
 These are operational safety gates, not architectural boundary proofs.
 
-## Governance And Routing Layers
+## Adjacent Governance Controls
 
-These layers remain part of the enforcement stack, but they govern repo mutation and destination rather than runtime or compiler truth.
+These controls sit around the deterministic proof stack.
+They govern change flow and routing rather than mechanically proving runtime or compiler invariants.
 
 ## 7. Graphite And Repo Operations
 
-This layer proves:
+This layer governs:
 - stack mutation happens through the Graphite workflow,
 - trunk remains `main`,
 - final acceptance checks are explicit,
 - repo boundary and drain-loop policy are respected.
 
-Representative acceptance flow:
-
-```mermaid
-flowchart LR
-  A[change] --> B[git status clean]
-  B --> C[bun run build]
-  C --> D[bun run test]
-  D --> E[gt ls stable]
-```
-
 ## 8. AGENTS Lattice And Canonical Docs
 
-This layer proves, for participating agents:
+This layer governs, for participating agents:
 - Nx is the first hop for workspace truth,
 - changes route to the correct repo and path,
 - command surfaces are not mixed,
@@ -387,17 +268,3 @@ This layer proves, for participating agents:
 
 This layer is deterministic inside the agent loop.
 It is not a compiler, runtime, or test boundary for ordinary program execution.
-
-## Canonical Enforcement Surfaces
-
-The canonical enforcement surfaces in this repo are:
-- [nx.json](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/nx.json)
-- [eslint.config.mjs](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/eslint.config.mjs)
-- [tsconfig.base.json](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/tsconfig.base.json)
-- [vitest.config.ts](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/vitest.config.ts)
-- [package.json](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/package.json)
-- [scripts/githooks/pre-commit](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/scripts/githooks/pre-commit)
-- [SECURITY_MODEL.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/SECURITY_MODEL.md)
-- [GRAPHITE.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/process/GRAPHITE.md)
-- [HQ_OPERATIONS.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/process/HQ_OPERATIONS.md)
-- [AGENTS.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/AGENTS.md)
