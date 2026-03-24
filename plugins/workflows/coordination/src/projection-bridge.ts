@@ -11,14 +11,6 @@ const sharedDeps = {
   analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
 } as const;
 
-const emptyInvocation = {
-  context: {
-    invocation: {},
-  },
-} as const;
-
-export const coordinationWorkflowProjectionInvocation = emptyInvocation;
-
 export function createCoordinationWorkflowProjectionClient(context: CoordinationWorkflowContext) {
   return createClient({
     deps: {
@@ -44,7 +36,7 @@ export function createCoordinationWorkflowProjectionClient(context: Coordination
       repoRoot: context.repoRoot,
     },
     config: {},
-  });
+});
 }
 
 export type CoordinationWorkflowProjectionClient = ReturnType<

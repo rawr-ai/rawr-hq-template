@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { createAuthoringClient } from "../src/authoring";
 import * as coordination from "../src/index";
 import * as coordinationNode from "../src/node";
 import { contract as serviceContract } from "../src/service/contract";
@@ -75,6 +78,36 @@ describe("coordination public service shell", () => {
       "getRunStatus",
       "getRunTimeline",
     ]);
+  });
+
+  it("exposes a narrow authoring boundary that does not require run-dispatch deps", async () => {
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-coord-authoring-"));
+    await ensureCoordinationStorage(repoRoot);
+    await saveWorkflow(repoRoot, baseWorkflow);
+
+    const client = createAuthoringClient({
+      deps: {
+        logger: createEmbeddedPlaceholderLoggerAdapter(),
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+      },
+      scope: { repoRoot },
+      config: {},
+    });
+
+    await expect(
+      client.listWorkflows(
+        {},
+        {
+          context: {
+            invocation: {
+              traceId: "trace-coordination-authoring",
+            },
+          },
+        },
+      ),
+    ).resolves.toMatchObject({
+      workflows: [{ workflowId: "wf-a" }],
+    });
   });
 });
 

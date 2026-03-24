@@ -1,19 +1,23 @@
 import { defineApiPlugin } from "@rawr/hq-sdk/apis";
+import type { CoordinationAuthoringClientResolver } from "./context";
 import { coordinationApiContract } from "./contract";
 import { createCoordinationApiRouter } from "./router";
 
 export {
   createCoordinationApiRouter,
   type CoordinationApiContext,
+  type CoordinationAuthoringClientResolver,
   type CoordinationApiRouter,
 } from "./router";
 
-export function registerCoordinationApiPlugin() {
+export function registerCoordinationApiPlugin(input: {
+  resolveClient: CoordinationAuthoringClientResolver;
+}) {
   return defineApiPlugin({
     namespace: "orpc" as const,
     internal: {
       contract: coordinationApiContract,
-      router: createCoordinationApiRouter(),
+      router: createCoordinationApiRouter(input.resolveClient),
     },
   });
 }

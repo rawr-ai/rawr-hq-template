@@ -51,7 +51,9 @@ type InitialContext = {
   config: {};
 };
 
-type InvocationContext = {};
+type InvocationContext = {
+  traceId: string;
+};
 
 type ProcedureMetadata = {
   entity?: "workflow" | "run";
