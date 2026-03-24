@@ -16,7 +16,7 @@ import {
   type CoordinationWorkflowContext,
   type CoordinationRuntimeAdapter,
 } from "@rawr/plugin-workflows-coordination/server";
-import type { CoordinationWorkflowV1, DeskRunEventV1, RunStatusV1 } from "@rawr/coordination";
+import { createClient as createCoordinationClient, type CoordinationWorkflowV1, type DeskRunEventV1, type RunStatusV1 } from "@rawr/coordination";
 import { ensureCoordinationStorage, getRunTimeline, saveWorkflow } from "@rawr/coordination/node";
 import type { Inngest } from "inngest";
 
@@ -61,6 +61,7 @@ function createRuntimeMock() {
       memoryWrites.set(desk.deskId, value);
     },
     getRunStatus: async (runId) => statuses.get(runId) ?? null,
+    getRunTimeline: async (runId) => timelines.get(runId) ?? [],
     saveRunStatus: async (run) => {
       statuses.set(run.runId, run);
     },
@@ -73,6 +74,28 @@ function createRuntimeMock() {
   };
 
   return { runtime, statuses, timelines, memoryWrites };
+}
+
+const noopLogger = {
+  info() {},
+  error() {},
+} as const;
+
+const noopAnalytics = {
+  track() {},
+} as const;
+
+function resolveCoordinationAuthoringClient(repoRoot: string) {
+  return createCoordinationClient({
+    deps: {
+      logger: noopLogger,
+      analytics: noopAnalytics,
+    },
+    scope: {
+      repoRoot,
+    },
+    config: {},
+  }).workflows;
 }
 
 describe("coordination workflow inngest runtime", () => {
@@ -191,7 +214,7 @@ describe("coordination workflow inngest runtime", () => {
     await ensureCoordinationStorage(repoRoot);
     await saveWorkflow(repoRoot, workflow);
 
-    const router = createCoordinationWorkflowRouter();
+    const router = createCoordinationWorkflowRouter(resolveCoordinationAuthoringClient);
     const context: CoordinationWorkflowContext = {
       baseUrl: "http://localhost:3000",
       repoRoot,

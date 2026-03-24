@@ -205,7 +205,9 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
     stateApiPlugin,
     exampleTodoApiPlugin,
   ] as const);
-  const coordinationWorkflowPlugin = registerCoordinationWorkflowPlugin();
+  const coordinationWorkflowPlugin = registerCoordinationWorkflowPlugin({
+    resolveAuthoringClient: resolveCoordinationWorkflowClient,
+  });
   const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin({
     resolveSupportExampleClient,
   });

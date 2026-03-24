@@ -3,6 +3,7 @@ import { defineWorkflowPlugin, type WorkflowRuntimeInput } from "@rawr/hq-sdk/wo
 import {
   appendRunTimelineEvent,
   getRunStatus,
+  getRunTimeline,
   readDeskMemory,
   saveRunStatus,
   writeDeskMemory,
@@ -13,6 +14,7 @@ import {
   createInngestServeHandler,
   type CoordinationRuntimeAdapter,
 } from "./inngest";
+import type { CoordinationWorkflowAuthoringClientResolver } from "./context";
 import { createCoordinationWorkflowRouter } from "./router";
 
 export {
@@ -58,6 +60,10 @@ export type CoordinationWorkflowRuntimeAdapterInput = Readonly<{
   inngestBaseUrl?: string;
 }>;
 
+export type RegisterCoordinationWorkflowPluginOptions = Readonly<{
+  resolveAuthoringClient: CoordinationWorkflowAuthoringClientResolver;
+}>;
+
 export function createCoordinationWorkflowRuntimeAdapter(
   input: CoordinationWorkflowRuntimeAdapterInput,
 ): CoordinationRuntimeAdapter {
@@ -78,6 +84,7 @@ export function createCoordinationWorkflowRuntimeAdapter(
       );
     },
     getRunStatus: async (runId) => getRunStatus(input.repoRoot, runId),
+    getRunTimeline: async (runId) => getRunTimeline(input.repoRoot, runId),
     saveRunStatus: async (run) => {
       await saveRunStatus(input.repoRoot, run);
     },
@@ -92,10 +99,12 @@ export function createCoordinationWorkflowInngestFunctions(input: CoordinationWo
   return createCoordinationInngestFunction(input).functions;
 }
 
-export function registerCoordinationWorkflowPlugin() {
+export function registerCoordinationWorkflowPlugin(
+  options: RegisterCoordinationWorkflowPluginOptions,
+) {
   const surface = {
     contract: coordinationWorkflowContract,
-    router: createCoordinationWorkflowRouter(),
+    router: createCoordinationWorkflowRouter(options.resolveAuthoringClient),
   } as const;
 
   return defineWorkflowPlugin({
