@@ -34,6 +34,10 @@
       "types": "./src/apis.ts",
       "default": "./src/apis.ts"
     },
+    "./composition": {
+      "types": "./src/composition.ts",
+      "default": "./src/composition.ts"
+    },
     "./workflows": {
       "types": "./src/workflows.ts",
       "default": "./src/workflows.ts"

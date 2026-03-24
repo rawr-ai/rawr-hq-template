@@ -186,15 +186,17 @@ describe("rawr server routes", () => {
     expect(manifestSource).not.toContain("createInngestServeHandler");
     expect(manifestSource).toContain("composeWorkflowPlugins");
     expect(manifestSource).toContain("composeApiPlugins");
-    expect(manifestSource).toContain("surfaces: composedWorkflowSurface.surfaces");
-    expect(manifestSource).toContain("published: {");
+    expect(manifestSource).toContain("workflows: materializedSurfaces.workflows");
     expect(manifestSource).toContain("const composedApiSurface = composeApiPlugins");
-    expect(manifestSource).toContain("contract: composedApiSurface.publishedContract");
-    expect(manifestSource).toContain("const publishedApiRouter = requestScopedPublishedApi.router");
+    expect(manifestSource).toContain("materializeRequestScopedPluginSurfaces");
+    expect(manifestSource).toContain("orpc: materializedSurfaces.orpc");
     expect(manifestSource).not.toContain("new Inngest(");
-    expect(manifestSource).toContain("mergeDeclaredSurfaceTrees");
-    expect(manifestSource).toContain("composedWorkflowSurface.internalContract");
-    expect(manifestSource).toContain("composedWorkflowSurface.publishedContract");
+    expect(manifestSource).not.toContain("mergeDeclaredSurfaceTrees");
+    expect(manifestSource).not.toContain("published: {");
+    expect(manifestSource).not.toContain("contract: composedApiSurface.publishedContract");
+    expect(manifestSource).not.toContain("requestScopedPublishedApi.router");
+    expect(manifestSource).not.toContain("requestScopedPublishedWorkflow.router");
+    expect(manifestSource).not.toContain("requestScopedInternalWorkflow.router");
   });
 
   it("host-composition-guard: host realizes workflow runtime and keeps workflow context off canonical ORPC registration", async () => {
