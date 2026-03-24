@@ -18,12 +18,7 @@ import { analytics, observability, repository } from "./middleware";
  * business logic.
  */
 export const module = impl
-  .use(async ({ context, next }) => next({
-    context: {
-      repoRoot: context.scope.repoRoot,
-      traceId: context.invocation.traceId,
-    },
-  }))
+  .state
   .use(observability)
   .use(analytics)
   .use(repository)

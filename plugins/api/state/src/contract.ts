@@ -4,7 +4,7 @@ const stateTag = ["state"] as const;
 
 const router = {
   state: {
-    getRuntimeState: stateContract.getState.route({
+    getRuntimeState: stateContract.state.getState.route({
       method: "GET",
       path: "/state/runtime",
       tags: stateTag,

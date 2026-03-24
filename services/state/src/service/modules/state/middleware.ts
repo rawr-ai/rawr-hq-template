@@ -7,9 +7,6 @@
  * - `observability`
  * - `analytics`
  * - `repository`
- *
- * The state module currently has no standalone additive observability or
- * analytics behavior, so those exports are intentional no-op placeholders.
  */
 import {
   createServiceAnalyticsMiddleware,
@@ -23,12 +20,6 @@ export {
   createServiceObservabilityMiddleware as createProcedureObservability,
 } from "../../base";
 
-/** Intentional scaffold placeholder for the module's generic observability export. */
-export const observability = createServiceObservabilityMiddleware({});
-
-/** Intentional scaffold placeholder for the module's generic analytics export. */
-export const analytics = createServiceAnalyticsMiddleware({});
-
 /** Standalone repository provider attached at module scope in `module.ts`. */
 export const repository = createServiceProvider<{
   scope: {
@@ -40,4 +31,39 @@ export const repository = createServiceProvider<{
   return next({
     repository: createRepository(context.scope.repoRoot),
   });
+});
+
+/** Module-local observability middleware attached by `state/module.ts`. */
+export const observability = createServiceObservabilityMiddleware({
+  spanAttributes: ({ context }) => ({
+    module: "state",
+    repo_root: context.scope.repoRoot,
+    invocation_trace_id: context.invocation.traceId,
+  }),
+  onStart: ({ span, context, pathLabel }) => {
+    span?.addEvent("state.state.module.observed", {
+      module: "state",
+      path: pathLabel,
+      repo_root: context.scope.repoRoot,
+    });
+    context.deps.logger.info("state.state.module", {
+      layer: "module",
+      module: "state",
+      path: pathLabel,
+      repoRoot: context.scope.repoRoot,
+      invocationTraceId: context.invocation.traceId,
+    });
+  },
+});
+
+/** Module-local analytics middleware attached by `state/module.ts`. */
+export const analytics = createServiceAnalyticsMiddleware({
+  payload: ({ context, pathLabel, outcome }) => ({
+    analytics_layer: "module",
+    analytics_module: "state",
+    analytics_path: pathLabel,
+    analytics_outcome: outcome,
+    analytics_repo_root: context.scope.repoRoot,
+    analytics_trace_id: context.invocation.traceId,
+  }),
 });

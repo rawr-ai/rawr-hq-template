@@ -8,7 +8,7 @@ import {
 } from "@rawr/coordination/service/contract";
 import type { JsonValue } from "@rawr/coordination";
 import { typeBoxStandardSchema } from "@rawr/hq-sdk";
-import { GetStateOutputSchema } from "@rawr/state/service/contract";
+import { GetStateOutputSchema } from "@rawr/state/service/modules/state/contract";
 import { createTestingRawrHqManifest } from "../src/testing";
 
 type RouteShape = {

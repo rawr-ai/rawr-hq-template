@@ -48,8 +48,8 @@ if (!contextSource.includes("type StateClientResolver")) {
 
 if (
   !serverSource.includes("resolveClient") ||
-  !routerSource.includes("resolveClient(context.repoRoot)") ||
-  !routerSource.includes("traceId: context.correlationId") ||
+  !routerSource.includes("resolveClient(context.repoRoot).state.getState") ||
+  !routerSource.includes("createApiTraceForwardingOptions(context)") ||
   routerSource.includes("@rawr/hq-app")
 ) {
   console.error("plugin-api-state structural failed: router must remain a thin service projection.");
