@@ -32,7 +32,7 @@ export function createCoordinationWorkflowProjectionClient(context: Coordination
       repoRoot: context.repoRoot,
     },
     config: {},
-});
+  });
 }
 
 export type CoordinationWorkflowProjectionClient = ReturnType<

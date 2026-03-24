@@ -16,19 +16,19 @@ export function createCoordinationWorkflowRouter() {
   return os.router({
     coordination: {
       queueRun: os.coordination.queueRun.handler(async ({ context, input }) => {
-        return createCoordinationWorkflowProjectionClient(context).queueRun(
+        return createCoordinationWorkflowProjectionClient(context).runs.queueRun(
           input,
           createWorkflowTraceForwardingOptions(context),
         );
       }),
       getRunStatus: os.coordination.getRunStatus.handler(async ({ context, input }) => {
-        return createCoordinationWorkflowProjectionClient(context).getRunStatus(
+        return createCoordinationWorkflowProjectionClient(context).runs.getRunStatus(
           input,
           createWorkflowTraceForwardingOptions(context),
         );
       }),
       getRunTimeline: os.coordination.getRunTimeline.handler(async ({ context, input }) => {
-        return createCoordinationWorkflowProjectionClient(context).getRunTimeline(
+        return createCoordinationWorkflowProjectionClient(context).runs.getRunTimeline(
           input,
           createWorkflowTraceForwardingOptions(context),
         );

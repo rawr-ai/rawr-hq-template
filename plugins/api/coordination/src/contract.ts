@@ -4,28 +4,28 @@ const coordinationTag = ["coordination"] as const;
 
 export const coordinationApiRouterContract = {
   coordination: {
-    listWorkflows: coordinationContract.listWorkflows.route({
+    listWorkflows: coordinationContract.workflows.listWorkflows.route({
       method: "GET",
       path: "/coordination/workflows",
       tags: coordinationTag,
       summary: "List saved coordination workflows",
       operationId: "coordinationListWorkflows",
     }),
-    saveWorkflow: coordinationContract.saveWorkflow.route({
+    saveWorkflow: coordinationContract.workflows.saveWorkflow.route({
       method: "POST",
       path: "/coordination/workflows",
       tags: coordinationTag,
       summary: "Create or update a coordination workflow",
       operationId: "coordinationSaveWorkflow",
     }),
-    getWorkflow: coordinationContract.getWorkflow.route({
+    getWorkflow: coordinationContract.workflows.getWorkflow.route({
       method: "GET",
       path: "/coordination/workflows/{workflowId}",
       tags: coordinationTag,
       summary: "Get a coordination workflow by id",
       operationId: "coordinationGetWorkflow",
     }),
-    validateWorkflow: coordinationContract.validateWorkflow.route({
+    validateWorkflow: coordinationContract.workflows.validateWorkflow.route({
       method: "POST",
       path: "/coordination/workflows/{workflowId}/validate",
       tags: coordinationTag,
