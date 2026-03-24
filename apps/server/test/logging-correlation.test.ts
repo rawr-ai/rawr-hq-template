@@ -2,6 +2,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { RUN_FINALIZATION_CONTRACT_V1 } from "@rawr/coordination";
+import { saveRunStatus } from "@rawr/coordination/node";
 import { createServerApp } from "../src/app";
 import { __flushHostLoggerForTests, __resetHostLoggerForTests } from "../src/logging";
 import { registerRawrRoutes } from "../src/rawr";
@@ -131,6 +133,95 @@ describe("host logging correlation", () => {
       const entry = entries.find((candidate) => candidate.event === "todo.procedure" && candidate.requestId === "openapi-request-1");
       expect(entry?.traceId).toEqual(expect.any(String));
       expect(entry?.spanId).toEqual(expect.any(String));
+    } finally {
+      await fs.rm(repoRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("writes correlated coordination authoring logs into .rawr/hq/runtime.log", async () => {
+    const { app, repoRoot } = await createTestApp();
+
+    try {
+      const response = await app.handle(
+        new Request("http://localhost/rpc/coordination/listWorkflows", {
+          method: "POST",
+          headers: {
+            ...FIRST_PARTY_RPC_HEADERS,
+            "x-request-id": "coordination-authoring-request-1",
+            "x-correlation-id": "coordination-authoring-correlation-1",
+          },
+          body: JSON.stringify({ json: {} }),
+        }),
+      );
+
+      expect(response.status).toBe(200);
+
+      __flushHostLoggerForTests();
+
+      const entries = await readRuntimeLogs(repoRoot);
+      expect(entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          event: "coordination.procedure",
+          requestId: "coordination-authoring-request-1",
+          correlationId: "coordination-authoring-correlation-1",
+          requestMethod: "POST",
+          requestPath: "/rpc/coordination/listWorkflows",
+          surface: "rpc",
+          callerSurface: "first-party",
+        }),
+      ]));
+    } finally {
+      await fs.rm(repoRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("writes correlated coordination workflow projection logs into .rawr/hq/runtime.log", async () => {
+    const { app, repoRoot } = await createTestApp();
+
+    try {
+      await saveRunStatus(repoRoot, {
+        runId: "run-log-proof",
+        workflowId: "wf-log-proof",
+        workflowVersion: 1,
+        status: "completed",
+        startedAt: "2026-03-24T00:00:00.000Z",
+        finishedAt: "2026-03-24T00:00:01.000Z",
+        input: { ticket: "T-1" },
+        output: { ok: true },
+        traceLinks: [],
+        finalization: {
+          contract: RUN_FINALIZATION_CONTRACT_V1,
+        },
+      });
+
+      const response = await app.handle(
+        new Request("http://localhost/rpc/coordination/getRunStatus", {
+          method: "POST",
+          headers: {
+            ...FIRST_PARTY_RPC_HEADERS,
+            "x-request-id": "coordination-run-request-1",
+            "x-correlation-id": "coordination-run-correlation-1",
+          },
+          body: JSON.stringify({ json: { runId: "run-log-proof" } }),
+        }),
+      );
+
+      expect(response.status).toBe(200);
+
+      __flushHostLoggerForTests();
+
+      const entries = await readRuntimeLogs(repoRoot);
+      expect(entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          event: "coordination.procedure",
+          requestId: "coordination-run-request-1",
+          correlationId: "coordination-run-correlation-1",
+          requestMethod: "POST",
+          requestPath: "/rpc/coordination/getRunStatus",
+          surface: "rpc",
+          callerSurface: "first-party",
+        }),
+      ]));
     } finally {
       await fs.rm(repoRoot, { recursive: true, force: true });
     }
