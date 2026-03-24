@@ -10,7 +10,7 @@ const baseMiddlewareMetadata: BaseMetadata = {
 };
 
 /**
- * Baseline middleware builder for reusable domain-package middleware.
+ * Baseline middleware builder for reusable service-package middleware.
  */
 export function createBaseMiddleware<
   TRequiredContext extends object = {},

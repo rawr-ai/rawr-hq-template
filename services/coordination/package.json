@@ -52,8 +52,8 @@
   },
   "nx": {
     "tags": [
-      "type:package",
       "type:service",
+      "role:servicepackage",
       "migration-slice:structural-tranche"
     ]
   }

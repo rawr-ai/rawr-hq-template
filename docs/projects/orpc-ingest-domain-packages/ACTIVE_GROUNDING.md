@@ -76,7 +76,7 @@ those integrations are being reasoned about:
 Keep this mental model active for the current design round:
 
 - **Service-declared deps** must mean caller-fulfilled requirements declared by
-  the service package itself.
+  the servicepackage itself.
 - **Host/framework caller requirements** may still be caller-fulfilled, but
   should not be mislabeled as service-declared deps.
 - **Execution-time resources** are later derived/attached values and should not
@@ -164,7 +164,7 @@ critical ambiguity unresolved.
 - `services/example-todo/src/orpc/middleware/` currently contains:
   - provider middleware such as `sql-provider.ts` and `feedback-provider.ts`
   - framework/internal observability and analytics middleware
-- `services/example-todo/src/service/impl.ts` is the one package-wide runtime
+- `services/example-todo/src/service/impl.ts` is the one servicepackage-wide runtime
   assembly seam.
 - `services/example-todo/src/service/router.ts` is the one final router
   composition seam.
@@ -184,15 +184,16 @@ critical ambiguity unresolved.
 - baseline analytics emission still flows through
   `context.deps.analytics.track("orpc.procedure", ...)`.
 - telemetry is now a host-bootstrap/runtime-context concern rather than a
-  package-local port or package dependency seam.
+  servicepackage-local port or servicepackage dependency seam.
 
 ### Inferred
 
-- The current package is intentionally shaped so the next integrations should
+- The current servicepackage is intentionally shaped so the next integrations should
   land by classification, not by improvising a new directory or hidden system.
-- The package already teaches the target ownership line:
+- The servicepackage already teaches the target ownership line:
   - host owns concrete integrations
-  - packaged SDK exposes ports only when they are truly part of package
+  - packaged SDK exposes ports only when they are truly part of the
+    servicepackage
     boundary semantics
   - providers turn host prerequisites into downstream execution capability
 

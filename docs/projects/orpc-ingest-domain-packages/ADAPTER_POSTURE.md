@@ -9,7 +9,7 @@ Do not collapse these into one category:
 
 - packaged SDK ports
 - provider middleware
-- service/domain package code
+- servicepackage code
 - host-side concrete integrations
 
 They play different roles.
@@ -58,7 +58,7 @@ module setup actually consume.
 
 ### `src/service/*` stays pure by default
 
-The service package should remain:
+The servicepackage should remain:
 
 - transport-agnostic
 - concrete-adapter-agnostic
@@ -90,12 +90,12 @@ Binary capability rule:
 
 ## Important Clarification
 
-Saying the service package stays pure does **not** mean the package can never
+Saying the servicepackage stays pure does **not** mean the package can never
 define a host-facing contract.
 
 The more precise rule is:
 
-- service/domain packages should not own concrete adapter implementations
+- servicepackages should not own concrete adapter implementations
 - packaged SDK layers may define reusable host-facing contracts when those
   contracts are truly part of the package boundary
 

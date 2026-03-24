@@ -16,7 +16,7 @@ type AnyContractRouterObject = {
 };
 
 /**
- * Create the central domain-package implementer tree with guaranteed framework
+ * Create the central service-package implementer tree with guaranteed framework
  * baseline middleware.
  */
 export function createBaseProcedureImplementer<
@@ -31,7 +31,7 @@ export function createBaseProcedureImplementer<
 }
 
 /**
- * Create the central domain-package router implementer tree with guaranteed
+ * Create the central service-package router implementer tree with guaranteed
  * framework baseline middleware.
  */
 export function createBaseRouterImplementer<
