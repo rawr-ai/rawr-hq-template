@@ -1,15 +1,23 @@
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { createRouterClient } from "@orpc/server";
 import {
   fromWorkflowKitWorkflow,
   toWorkflowKitWorkflow,
 } from "@rawr/plugin-workflows-coordination/browser";
 import {
   compileWorkflowToInngest,
+  createCoordinationWorkflowRouter,
+  createCoordinationWorkflowRuntimeAdapter,
   processCoordinationRunEvent,
   queueCoordinationRunWithInngest,
+  type CoordinationWorkflowContext,
   type CoordinationRuntimeAdapter,
 } from "@rawr/plugin-workflows-coordination/server";
 import type { CoordinationWorkflowV1, DeskRunEventV1, RunStatusV1 } from "@rawr/coordination";
+import { ensureCoordinationStorage, getRunTimeline, saveWorkflow } from "@rawr/coordination/node";
 import type { Inngest } from "inngest";
 
 const workflow: CoordinationWorkflowV1 = {
@@ -176,5 +184,46 @@ describe("coordination workflow inngest runtime", () => {
     expect(sendCalls).toBe(1);
     expect(first.eventIds.length).toBe(1);
     expect(second.eventIds).toEqual([]);
+  });
+
+  it("owns queue/status/timeline handlers directly on the workflow plugin surface", async () => {
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-coordination-workflow-plugin-"));
+    await ensureCoordinationStorage(repoRoot);
+    await saveWorkflow(repoRoot, workflow);
+
+    const router = createCoordinationWorkflowRouter();
+    const context: CoordinationWorkflowContext = {
+      baseUrl: "http://localhost:3000",
+      repoRoot,
+      runtime: createCoordinationWorkflowRuntimeAdapter({
+        repoRoot,
+        inngestBaseUrl: "http://localhost:8288",
+      }),
+      inngestClient: {
+        send: async () => ({ ids: ["evt-router-1"] }),
+      } as unknown as Inngest,
+      requestId: "req-coordination-router",
+      correlationId: "corr-coordination-router",
+      middlewareState: { markerCache: new Map() },
+    };
+
+    const client = createRouterClient(router, { context });
+    const queued = await client.coordination.queueRun({
+      workflowId: workflow.workflowId,
+      runId: "run-router-owned",
+      input: { ticket: "T-300" },
+    });
+
+    expect(queued.run.status).toBe("queued");
+    expect(queued.eventIds).toEqual(["evt-router-1"]);
+
+    const status = await client.coordination.getRunStatus({ runId: "run-router-owned" });
+    expect(status.run.runId).toBe("run-router-owned");
+    expect(status.run.status).toBe("queued");
+
+    const timeline = await client.coordination.getRunTimeline({ runId: "run-router-owned" });
+    expect(timeline.runId).toBe("run-router-owned");
+    expect(timeline.timeline.some((event) => event.type === "run.started" && event.status === "queued")).toBe(true);
+    await expect(getRunTimeline(repoRoot, "run-router-owned")).resolves.toEqual(timeline.timeline);
   });
 });

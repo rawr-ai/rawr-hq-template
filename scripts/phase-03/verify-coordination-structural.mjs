@@ -3,25 +3,25 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
-const serviceRoot = path.join(root, "services", "coordination");
-const packagePath = path.join(serviceRoot, "package.json");
-const indexPath = path.join(serviceRoot, "src", "index.ts");
-const nodePath = path.join(serviceRoot, "src", "node.ts");
-const packageRouterPath = path.join(serviceRoot, "src", "router.ts");
-const httpPath = path.join(serviceRoot, "src", "http.ts");
-const serviceBasePath = path.join(serviceRoot, "src", "service", "base.ts");
-const serviceContractPath = path.join(serviceRoot, "src", "service", "contract.ts");
-const serviceRouterPath = path.join(serviceRoot, "src", "service", "router.ts");
-const serviceImplPath = path.join(serviceRoot, "src", "service", "impl.ts");
-const serviceClientPath = path.join(serviceRoot, "src", "client.ts");
-const serviceObservabilityMiddlewarePath = path.join(serviceRoot, "src", "service", "middleware", "observability.ts");
-const serviceAnalyticsMiddlewarePath = path.join(serviceRoot, "src", "service", "middleware", "analytics.ts");
-const runsModulePath = path.join(serviceRoot, "src", "service", "modules", "runs", "module.ts");
-const runsMiddlewarePath = path.join(serviceRoot, "src", "service", "modules", "runs", "middleware.ts");
-const workflowsRouterPath = path.join(serviceRoot, "src", "service", "modules", "workflows", "router.ts");
-const runsRouterPath = path.join(serviceRoot, "src", "service", "modules", "runs", "router.ts");
-const authoringRootPath = path.join(serviceRoot, "src", "authoring");
+const coordinationRoot = path.join(root, "services", "coordination");
+const workflowPluginRoot = path.join(root, "plugins", "workflows", "coordination");
 const tsconfigBasePath = path.join(root, "tsconfig.base.json");
+
+function fail(message) {
+  console.error(`coordination structural failed: ${message}`);
+  process.exit(1);
+}
+
+async function readFile(filePath) {
+  return await fs.readFile(filePath, "utf8");
+}
+
+async function exists(filePath) {
+  return await fs
+    .stat(filePath)
+    .then(() => true)
+    .catch(() => false);
+}
 
 const [
   pkgRaw,
@@ -35,99 +35,95 @@ const [
   serviceClientSource,
   serviceObservabilityMiddlewareSource,
   serviceAnalyticsMiddlewareSource,
-  runsModuleSource,
-  runsMiddlewareSource,
   workflowsRouterSource,
-  runsRouterSource,
+  pluginContractSource,
+  pluginRouterSource,
+  pluginContextSource,
+  pluginServerSource,
   tsconfigBaseSource,
   authoringExists,
   httpWrapperExists,
+  serviceRunsExists,
+  projectionBridgeExists,
 ] = await Promise.all([
-  fs.readFile(packagePath, "utf8"),
-  fs.readFile(indexPath, "utf8"),
-  fs.readFile(nodePath, "utf8"),
-  fs.readFile(packageRouterPath, "utf8"),
-  fs.readFile(serviceBasePath, "utf8"),
-  fs.readFile(serviceContractPath, "utf8"),
-  fs.readFile(serviceRouterPath, "utf8"),
-  fs.readFile(serviceImplPath, "utf8"),
-  fs.readFile(serviceClientPath, "utf8"),
-  fs.readFile(serviceObservabilityMiddlewarePath, "utf8"),
-  fs.readFile(serviceAnalyticsMiddlewarePath, "utf8"),
-  fs.readFile(runsModulePath, "utf8"),
-  fs.readFile(runsMiddlewarePath, "utf8"),
-  fs.readFile(workflowsRouterPath, "utf8"),
-  fs.readFile(runsRouterPath, "utf8"),
-  fs.readFile(tsconfigBasePath, "utf8"),
-  fs.stat(authoringRootPath).then(() => true).catch(() => false),
-  fs.stat(httpPath).then(() => true).catch(() => false),
+  readFile(path.join(coordinationRoot, "package.json")),
+  readFile(path.join(coordinationRoot, "src", "index.ts")),
+  readFile(path.join(coordinationRoot, "src", "node.ts")),
+  readFile(path.join(coordinationRoot, "src", "router.ts")),
+  readFile(path.join(coordinationRoot, "src", "service", "base.ts")),
+  readFile(path.join(coordinationRoot, "src", "service", "contract.ts")),
+  readFile(path.join(coordinationRoot, "src", "service", "router.ts")),
+  readFile(path.join(coordinationRoot, "src", "service", "impl.ts")),
+  readFile(path.join(coordinationRoot, "src", "client.ts")),
+  readFile(path.join(coordinationRoot, "src", "service", "middleware", "observability.ts")),
+  readFile(path.join(coordinationRoot, "src", "service", "middleware", "analytics.ts")),
+  readFile(path.join(coordinationRoot, "src", "service", "modules", "workflows", "router.ts")),
+  readFile(path.join(workflowPluginRoot, "src", "contract.ts")),
+  readFile(path.join(workflowPluginRoot, "src", "router.ts")),
+  readFile(path.join(workflowPluginRoot, "src", "context.ts")),
+  readFile(path.join(workflowPluginRoot, "src", "server.ts")),
+  readFile(tsconfigBasePath),
+  exists(path.join(coordinationRoot, "src", "authoring")),
+  exists(path.join(coordinationRoot, "src", "http.ts")),
+  exists(path.join(coordinationRoot, "src", "service", "modules", "runs")),
+  exists(path.join(workflowPluginRoot, "src", "projection-bridge.ts")),
 ]);
 
 const pkg = JSON.parse(pkgRaw);
 const tags = pkg.nx?.tags ?? [];
 
-if (!tags.includes("migration-slice:structural-tranche")) {
-  console.error("coordination structural failed: missing tranche tag.");
-  process.exit(1);
-}
-
-if (!tags.includes("type:service")) {
-  console.error("coordination structural failed: missing service tag.");
-  process.exit(1);
-}
-
-if (!tags.includes("role:servicepackage")) {
-  console.error("coordination structural failed: missing servicepackage role tag.");
-  process.exit(1);
+for (const tag of ["migration-slice:structural-tranche", "type:service", "role:servicepackage"]) {
+  if (!tags.includes(tag)) {
+    fail(`missing tag ${tag}.`);
+  }
 }
 
 if (tags.includes("type:package")) {
-  console.error("coordination structural failed: coordination must be tagged as a service, not a package.");
-  process.exit(1);
+  fail("coordination must be tagged as a service, not a package.");
 }
 
 for (const scriptName of ["sync", "structural"]) {
   if (!(scriptName in (pkg.scripts ?? {}))) {
-    console.error(`coordination structural failed: missing ${scriptName} script.`);
-    process.exit(1);
+    fail(`missing ${scriptName} script.`);
   }
 }
 
 if (pkg.exports?.["./orpc"]) {
-  console.error("coordination structural failed: package exports must not publish /orpc residue.");
-  process.exit(1);
+  fail("package exports must not publish /orpc residue.");
 }
 
 if (pkg.exports?.["./authoring"]) {
-  console.error("coordination structural failed: public authoring residue must stay removed.");
-  process.exit(1);
+  fail("public authoring residue must stay removed.");
 }
 
 for (const exportKey of [
   "./compat/http",
   "./domain/schemas",
-  "./service/modules/runs/schemas",
   "./service/modules/workflows/schemas",
 ]) {
   if (!pkg.exports?.[exportKey]) {
-    console.error(`coordination structural failed: missing required export ${exportKey}.`);
-    process.exit(1);
+    fail(`missing required export ${exportKey}.`);
   }
 }
 
+if (pkg.exports?.["./service/modules/runs/schemas"]) {
+  fail("service package must not export run schemas once the workflow plugin owns that surface.");
+}
+
 if (authoringExists) {
-  console.error("coordination structural failed: src/authoring residue must stay removed.");
-  process.exit(1);
+  fail("src/authoring residue must stay removed.");
 }
 
 if (tsconfigBaseSource.includes("@rawr/coordination/orpc")) {
-  console.error("coordination structural failed: stale @rawr/coordination/orpc path alias must stay removed.");
-  process.exit(1);
+  fail("stale @rawr/coordination/orpc path alias must stay removed.");
 }
 
-if (!/export const contract = \{\s*workflows,\s*runs,\s*\};/s.test(serviceContractSource)) {
-  console.error("coordination structural failed: service contract must keep canonical nested truth as { workflows, runs }.");
-  process.exit(1);
+if (!/export const contract = \{\s*workflows,\s*\};/s.test(serviceContractSource)) {
+  fail("service contract must keep canonical truth narrowed to { workflows }.");
+}
+
+if (/queueRun|getRunStatus|getRunTimeline/.test(serviceContractSource)) {
+  fail("service contract must not expose run procedures.");
 }
 
 for (const forbiddenSchemaExport of [
@@ -137,19 +133,16 @@ for (const forbiddenSchemaExport of [
   "ValidationResultSchema",
 ]) {
   if (serviceContractSource.includes(forbiddenSchemaExport)) {
-    console.error("coordination structural failed: service contract must not act as a schema barrel.");
-    process.exit(1);
+    fail("service contract must not act as a schema barrel.");
   }
 }
 
-if (!/export const router = impl\.router\(\{\s*workflows,\s*runs,\s*\}\);/s.test(serviceRouterSource)) {
-  console.error("coordination structural failed: service router must compose the canonical nested { workflows, runs } tree.");
-  process.exit(1);
+if (!/export const router = impl\.router\(\{\s*workflows,\s*\}\);/s.test(serviceRouterSource)) {
+  fail("service router must compose the canonical { workflows } tree.");
 }
 
 if (!packageRouterSource.includes('export { router, type Router } from "./service/router";')) {
-  console.error("coordination structural failed: package router seam must stay a thin re-export of the canonical service router.");
-  process.exit(1);
+  fail("package router seam must stay a thin re-export of the canonical service router.");
 }
 
 if (
@@ -158,23 +151,19 @@ if (
   !serviceObservabilityMiddlewareSource.includes("createRequiredServiceObservabilityMiddleware") ||
   !serviceAnalyticsMiddlewareSource.includes("createRequiredServiceAnalyticsMiddleware")
 ) {
-  console.error("coordination structural failed: required service middleware must live in dedicated middleware files.");
-  process.exit(1);
+  fail("required service middleware must live in dedicated middleware files.");
 }
 
-if (!serviceBaseSource.includes("runsRuntime?: CoordinationRunsRuntime")) {
-  console.error("coordination structural failed: run dispatch capability must be optional at the service dep boundary.");
-  process.exit(1);
+if (serviceBaseSource.includes("runsRuntime") || serviceBaseSource.includes("CoordinationRunsRuntime")) {
+  fail("service base must not declare run runtime ownership.");
 }
 
 if (!serviceClientSource.includes("const servicePackage = defineServicePackage(router);")) {
-  console.error("coordination structural failed: client must use defineServicePackage(router).");
-  process.exit(1);
+  fail("client must use defineServicePackage(router).");
 }
 
 if (!serviceClientSource.includes("return servicePackage.createClient(boundary);")) {
-  console.error("coordination structural failed: client must delegate to the canonical service package shell.");
-  process.exit(1);
+  fail("client must delegate to the canonical service package shell.");
 }
 
 if (
@@ -183,105 +172,104 @@ if (
   serviceClientSource.includes("runs: {") ||
   serviceClientSource.includes("provided:")
 ) {
-  console.error("coordination structural failed: client must not keep the custom runtime projection seam.");
-  process.exit(1);
+  fail("client must not keep custom runtime projection seams.");
 }
 
-if (!runsMiddlewareSource.includes("context.deps.runsRuntime")) {
-  console.error("coordination structural failed: run execution provider must source runtime from context.deps.");
-  process.exit(1);
-}
-
-if (runsMiddlewareSource.includes("context.provided.runsRuntime")) {
-  console.error("coordination structural failed: run execution provider must not read runtime from provided.");
-  process.exit(1);
-}
-
-if (!runsMiddlewareSource.includes("if (!runExecution)")) {
-  console.error("coordination structural failed: queue runtime provider must guard missing optional runtime.");
-  process.exit(1);
+if (serviceRunsExists) {
+  fail("service/modules/runs residue must be removed once workflow plugin owns the run surface.");
 }
 
 if (
-  !runsModuleSource.includes("export const readModule = baseModule") ||
-  !runsModuleSource.includes("export const queueRunModule = baseModule")
+  workflowsRouterSource.includes("@rawr/core") ||
+  workflowsRouterSource.includes("apps/server/src")
 ) {
-  console.error("coordination structural failed: runs module must split read and queue composition.");
-  process.exit(1);
+  fail("service workflow module must not depend on core or host implementation.");
 }
 
-if (!runsModuleSource.includes("queueRunModule = baseModule\n  .use(runExecution)")) {
-  console.error("coordination structural failed: queue run composition must keep local run-execution provider attachment.");
-  process.exit(1);
-}
-
-if (runsModuleSource.includes("readModule = baseModule\n  .use(runExecution)")) {
-  console.error("coordination structural failed: read run composition must not require run execution.");
-  process.exit(1);
-}
-
-if (runsModuleSource.includes("queueRepository")) {
-  console.error("coordination structural failed: queue-specific repository residue must stay removed.");
-  process.exit(1);
+if (!pluginContractSource.includes('path: "/coordination/workflows/{workflowId}/run"')) {
+  fail("workflow plugin contract must own the queue run route.");
 }
 
 if (
-  !runsRouterSource.includes("queueRunModule.queueRun.handler") ||
-  !runsRouterSource.includes("readModule.getRunStatus.handler") ||
-  !runsRouterSource.includes("readModule.getRunTimeline.handler")
+  !pluginContractSource.includes('operationId: "coordinationWorkflowQueueRun"') ||
+  !pluginContractSource.includes('operationId: "coordinationWorkflowGetRunStatus"') ||
+  !pluginContractSource.includes('operationId: "coordinationWorkflowGetRunTimeline"')
 ) {
-  console.error("coordination structural failed: runs router must keep queue and read handlers on their split module seams.");
-  process.exit(1);
+  fail("workflow plugin contract must keep published run operation ids stable.");
+}
+
+if (pluginContractSource.includes("@rawr/coordination/service/contract")) {
+  fail("workflow plugin contract must not derive run routes from the service contract.");
 }
 
 if (
-  workflowsRouterSource.includes("@rawr/core")
-  || workflowsRouterSource.includes("apps/server/src")
-  || runsRouterSource.includes("@rawr/core")
-  || runsRouterSource.includes("apps/server/src")
+  !pluginRouterSource.includes("queueCoordinationRunWithInngest") ||
+  !pluginRouterSource.includes("createCoordinationWorkflowAuthoringClient(context)") ||
+  !pluginRouterSource.includes("context.runtime.getRunStatus") ||
+  !pluginRouterSource.includes("getRunTimeline(context.repoRoot, runId)") ||
+  !pluginRouterSource.includes("RUN_FINALIZATION_CONTRACT_V1")
 ) {
-  console.error("coordination structural failed: service modules must not depend on core or host implementation.");
-  process.exit(1);
+  fail("workflow plugin router must own queue/status/timeline handling directly.");
 }
 
-if (!runsRouterSource.includes("RUN_FINALIZATION_CONTRACT_V1")) {
-  console.error("coordination structural failed: run module must own queue failure finalization fallback.");
-  process.exit(1);
+if (
+  pluginRouterSource.includes("createCoordinationWorkflowProjectionClient") ||
+  pluginRouterSource.includes("projection-bridge")
+) {
+  fail("workflow plugin router must not forward run routes through the service client bridge.");
+}
+
+if (
+  pluginRouterSource.includes("@rawr/core") ||
+  pluginRouterSource.includes("apps/server/src")
+) {
+  fail("workflow plugin router must stay host-agnostic.");
+}
+
+if (
+  !pluginContextSource.includes("createCoordinationWorkflowAuthoringClient") ||
+  !pluginContextSource.includes('createClient({')
+) {
+  fail("workflow plugin context must provide a narrow coordination workflow authoring client.");
+}
+
+if (projectionBridgeExists) {
+  fail("projection-bridge residue must be removed once the workflow plugin owns the run surface.");
+}
+
+if (
+  !pluginServerSource.includes("GetRunStatusInputSchema") ||
+  !pluginServerSource.includes("QueueRunInputSchema")
+) {
+  fail("workflow plugin server surface must re-export run schemas for downstream contract drift tests.");
 }
 
 if (!indexSource.includes('export { createClient, type Client } from "./client";')) {
-  console.error("coordination structural failed: package boundary client seam not exported.");
-  process.exit(1);
+  fail("package boundary client seam not exported.");
 }
 
 if (!indexSource.includes('export { router, type Router } from "./router";')) {
-  console.error("coordination structural failed: package boundary router seam not exported.");
-  process.exit(1);
+  fail("package boundary router seam not exported.");
 }
 
 if (indexSource.includes("coordinationContract")) {
-  console.error("coordination structural failed: package root must not expose service contract truth.");
-  process.exit(1);
+  fail("package root must not expose service contract truth.");
 }
 
 if (indexSource.includes("coordinationFailure") || indexSource.includes("coordinationSuccess")) {
-  console.error("coordination structural failed: package root must not expose legacy HTTP-envelope helpers.");
-  process.exit(1);
+  fail("package root must not expose legacy HTTP-envelope helpers.");
 }
 
 if (indexSource.includes("typeBoxStandardSchema")) {
-  console.error("coordination structural failed: package root must not re-export generic SDK schema helpers.");
-  process.exit(1);
+  fail("package root must not re-export generic SDK schema helpers.");
 }
 
 if (httpWrapperExists) {
-  console.error("coordination structural failed: dead src/http.ts compatibility wrapper must stay removed.");
-  process.exit(1);
+  fail("dead src/http.ts compatibility wrapper must stay removed.");
 }
 
 if (nodeSource.includes("validateWorkflow") || nodeSource.includes("normalizeCoordinationId")) {
-  console.error("coordination structural failed: node seam must stay storage-only.");
-  process.exit(1);
+  fail("node seam must stay storage-only.");
 }
 
 console.log("coordination structural verified");

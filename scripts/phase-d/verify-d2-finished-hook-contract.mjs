@@ -4,7 +4,7 @@ import { assertCondition, mustExist, readFile, readPackageScripts } from "./_ver
 await Promise.all([
   mustExist("services/coordination/src/domain/types.ts"),
   mustExist("services/coordination/src/domain/schemas.ts"),
-  mustExist("services/coordination/src/service/modules/runs/router.ts"),
+  mustExist("plugins/workflows/coordination/src/router.ts"),
   mustExist("plugins/workflows/coordination/src/inngest.ts"),
   mustExist("apps/hq/src/manifest.ts"),
   mustExist("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
@@ -17,7 +17,7 @@ const [
   typesSource,
   schemasSource,
   inngestSource,
-  coordinationRouterSource,
+  coordinationWorkflowRouterSource,
   manifestSource,
   guardrailsTestSource,
   runtimeRouterTestSource,
@@ -28,7 +28,7 @@ const [
   readFile("services/coordination/src/domain/types.ts"),
   readFile("services/coordination/src/domain/schemas.ts"),
   readFile("plugins/workflows/coordination/src/inngest.ts"),
-  readFile("services/coordination/src/service/modules/runs/router.ts"),
+  readFile("plugins/workflows/coordination/src/router.ts"),
   readFile("apps/hq/src/manifest.ts"),
   readFile("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
   readFile("apps/hq/test/runtime-router.test.ts"),
@@ -85,8 +85,8 @@ assertCondition(
 );
 
 assertCondition(
-  /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(coordinationRouterSource),
-  "coordination run module queue failure fallback must include explicit finalization contract",
+  /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(coordinationWorkflowRouterSource),
+  "coordination workflow plugin queue failure fallback must include explicit finalization contract",
 );
 assertCondition(
   manifestSource.includes("registerCoordinationApiPlugin") &&

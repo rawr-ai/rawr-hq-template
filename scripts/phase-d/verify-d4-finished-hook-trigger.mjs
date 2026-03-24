@@ -8,15 +8,15 @@ await Promise.all([
   mustExist("services/coordination/src/domain/types.ts"),
   mustExist("services/coordination/src/domain/schemas.ts"),
   mustExist("plugins/workflows/coordination/src/inngest.ts"),
-  mustExist("services/coordination/src/service/modules/runs/router.ts"),
+  mustExist("plugins/workflows/coordination/src/router.ts"),
   mustExist("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
 ]);
 
-const [typesSource, schemasSource, inngestSource, coordinationRouterSource, guardrailsTestSource] = await Promise.all([
+const [typesSource, schemasSource, inngestSource, coordinationWorkflowRouterSource, guardrailsTestSource] = await Promise.all([
   readFile("services/coordination/src/domain/types.ts"),
   readFile("services/coordination/src/domain/schemas.ts"),
   readFile("plugins/workflows/coordination/src/inngest.ts"),
-  readFile("services/coordination/src/service/modules/runs/router.ts"),
+  readFile("plugins/workflows/coordination/src/router.ts"),
   readFile("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
 ]);
 
@@ -50,8 +50,8 @@ const checks = [
   },
   {
     id: "runtime-router-fallback-contract",
-    message: "coordination run module queue fallback includes explicit finalization contract",
-    pass: /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(coordinationRouterSource),
+    message: "coordination workflow plugin queue fallback includes explicit finalization contract",
+    pass: /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(coordinationWorkflowRouterSource),
   },
   {
     id: "guardrails-runtime-tests",

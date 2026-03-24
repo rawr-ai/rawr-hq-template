@@ -18,6 +18,12 @@ import { createCoordinationWorkflowRouter } from "./router";
 export {
   coordinationWorkflowContract,
   type CoordinationWorkflowContract,
+  GetRunStatusInputSchema,
+  GetRunStatusOutputSchema,
+  GetRunTimelineInputSchema,
+  GetRunTimelineOutputSchema,
+  QueueRunInputSchema,
+  QueueRunOutputSchema,
 } from "./contract";
 export {
   createCoordinationWorkflowRouter,

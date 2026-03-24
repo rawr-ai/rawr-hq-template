@@ -22,10 +22,6 @@
       "types": "./src/service/contract.ts",
       "default": "./src/service/contract.ts"
     },
-    "./service/modules/runs/schemas": {
-      "types": "./src/service/modules/runs/schemas.ts",
-      "default": "./src/service/modules/runs/schemas.ts"
-    },
     "./service/modules/workflows/schemas": {
       "types": "./src/service/modules/workflows/schemas.ts",
       "default": "./src/service/modules/workflows/schemas.ts"
