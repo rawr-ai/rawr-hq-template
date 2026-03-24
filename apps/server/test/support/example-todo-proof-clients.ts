@@ -94,10 +94,9 @@ export function createExampleTodoProofClients(args: {
       },
       async getTask(input) {
         const response = await args.app.handle(
-          new Request(`${baseUrl}/api/orpc/exampleTodo/tasks/get`, {
-            method: "POST",
+          new Request(`${baseUrl}/api/orpc/exampleTodo/tasks/${input.id}`, {
+            method: "GET",
             headers: EXTERNAL_OPENAPI_HEADERS,
-            body: JSON.stringify(input),
           }),
         );
 

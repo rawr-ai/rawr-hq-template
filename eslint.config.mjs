@@ -7,8 +7,12 @@ const boundaryRule = [
     allow: ["../../../rawr.hq"],
     depConstraints: [
       {
+        sourceTag: "app:hq",
+        onlyDependOnLibsWithTags: ["type:package", "type:plugin", "type:service"]
+      },
+      {
         sourceTag: "type:app",
-        onlyDependOnLibsWithTags: ["type:package", "type:plugin"]
+        onlyDependOnLibsWithTags: ["type:package", "type:plugin", "type:service"]
       },
       {
         sourceTag: "type:service",

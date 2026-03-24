@@ -2,13 +2,12 @@
 import { assertCondition, mustExist, readFile, readPackageScripts } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("packages/coordination/src/types.ts"),
-  mustExist("packages/coordination/src/orpc/schemas.ts"),
-  mustExist("packages/coordination/src/orpc/contract.ts"),
-  mustExist("packages/coordination/src/orpc/router.ts"),
-  mustExist("packages/coordination-inngest/src/adapter.ts"),
-  mustExist("apps/hq/src/orpc.ts"),
-  mustExist("packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts"),
+  mustExist("services/coordination/src/types.ts"),
+  mustExist("services/coordination/src/schemas.ts"),
+  mustExist("services/coordination/src/service/modules/runs/router.ts"),
+  mustExist("plugins/workflows/coordination/src/inngest.ts"),
+  mustExist("apps/hq/src/manifest.ts"),
+  mustExist("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
   mustExist("apps/hq/test/runtime-router.test.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
@@ -17,21 +16,21 @@ await Promise.all([
 const [
   typesSource,
   schemasSource,
-  adapterSource,
+  inngestSource,
   coordinationRouterSource,
-  hqOrpcSource,
+  manifestSource,
   guardrailsTestSource,
   runtimeRouterTestSource,
   contractDriftTestSource,
   workflowDriftTestSource,
   scripts,
 ] = await Promise.all([
-  readFile("packages/coordination/src/types.ts"),
-  readFile("packages/coordination/src/orpc/schemas.ts"),
-  readFile("packages/coordination-inngest/src/adapter.ts"),
-  readFile("packages/coordination/src/orpc/router.ts"),
-  readFile("apps/hq/src/orpc.ts"),
-  readFile("packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts"),
+  readFile("services/coordination/src/types.ts"),
+  readFile("services/coordination/src/schemas.ts"),
+  readFile("plugins/workflows/coordination/src/inngest.ts"),
+  readFile("services/coordination/src/service/modules/runs/router.ts"),
+  readFile("apps/hq/src/manifest.ts"),
+  readFile("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
   readFile("apps/hq/test/runtime-router.test.ts"),
   readFile("apps/hq/test/orpc-contract-drift.test.ts"),
   readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
@@ -73,26 +72,28 @@ assertCondition(
 );
 
 assertCondition(
-  /executeFinishedHookWithGuardrails\(/.test(adapterSource),
-  "adapter.ts must execute finished-hook side effects through guardrails helper",
+  /executeFinishedHookWithGuardrails\(/.test(inngestSource),
+  "workflow plugin inngest.ts must execute finished-hook side effects through guardrails helper",
 );
 assertCondition(
-  /outcome:\s*"failed"/.test(adapterSource),
-  "adapter.ts must capture failed finished-hook outcomes instead of throwing",
+  /outcome:\s*"failed"/.test(inngestSource),
+  "workflow plugin inngest.ts must capture failed finished-hook outcomes instead of throwing",
 );
 assertCondition(
-  /finalization:\s*createRunFinalizationState\(finishedHookState\)/.test(adapterSource),
-  "adapter.ts must persist finished-hook outcomes on completed/failed run statuses",
+  /finalization:\s*createRunFinalizationState\(finishedHookState\)/.test(inngestSource),
+  "workflow plugin inngest.ts must persist finished-hook outcomes on completed/failed run statuses",
 );
 
 assertCondition(
   /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(coordinationRouterSource),
-  "coordination router queue failure fallback must include explicit finalization contract",
+  "coordination run module queue failure fallback must include explicit finalization contract",
 );
 assertCondition(
-  /export function createHqRuntimeRouter/.test(hqOrpcSource) &&
-    /export function createWorkflowTriggerRuntimeRouter/.test(hqOrpcSource),
-  "hq app oRPC seam must expose runtime router constructors",
+  manifestSource.includes("registerCoordinationApiPlugin") &&
+    manifestSource.includes("registerStateApiPlugin") &&
+    manifestSource.includes("registerSupportExampleWorkflowPlugin") &&
+    !manifestSource.includes("createHqRuntimeRouter"),
+  "hq app manifest must compose plugin-owned API/workflow seams without a special HQ router constructor",
 );
 
 assertCondition(
@@ -102,11 +103,12 @@ assertCondition(
 );
 assertCondition(
   runtimeRouterTestSource.includes("does not introduce finished-hook route families"),
-  "runtime-router.test.ts must assert route-family invariants remain unchanged under D2",
+  "runtime-router.test.ts must assert live manifest route-family invariants remain unchanged under D2",
 );
 assertCondition(
-  contractDriftTestSource.includes("finalization") && workflowDriftTestSource.includes("finalization"),
-  "core drift tests must verify additive finalization schema exposure",
+  contractDriftTestSource.includes("finalization") &&
+    workflowDriftTestSource.includes("workflow capability paths"),
+  "hq app drift tests must verify additive finalization exposure plus workflow capability scoping",
 );
 
 assertCondition(
@@ -115,7 +117,7 @@ assertCondition(
 );
 assertCondition(
   scripts["phase-d:gate:d2-finished-hook-runtime"] ===
-    "bunx vitest run --project coordination-inngest packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts && bunx vitest run --project hq-app apps/hq/test/runtime-router.test.ts",
+    "bunx vitest run --project plugin-workflows-coordination plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts && bunx vitest run --project hq-app apps/hq/test/runtime-router.test.ts",
   "package.json must define phase-d:gate:d2-finished-hook-runtime",
 );
 assertCondition(

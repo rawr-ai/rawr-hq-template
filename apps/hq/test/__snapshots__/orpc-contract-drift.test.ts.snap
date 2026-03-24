@@ -6,12 +6,17 @@ exports[`hq orpc contract drift > matches the minified contract snapshot 1`] = `
     "getRunStatus": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "coordination",
+          "entity": "run",
+          "idempotent": true,
+        },
         "route": {
           "method": "GET",
-          "operationId": "coordinationGetRunStatus",
+          "operationId": "coordinationWorkflowGetRunStatus",
           "path": "/coordination/runs/{runId}",
-          "summary": "Get workflow run status",
+          "summary": "Get coordination workflow run status",
           "tags": [
             "coordination",
           ],
@@ -21,12 +26,17 @@ exports[`hq orpc contract drift > matches the minified contract snapshot 1`] = `
     "getRunTimeline": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "coordination",
+          "entity": "run",
+          "idempotent": true,
+        },
         "route": {
           "method": "GET",
-          "operationId": "coordinationGetRunTimeline",
+          "operationId": "coordinationWorkflowGetRunTimeline",
           "path": "/coordination/runs/{runId}/timeline",
-          "summary": "Get workflow run timeline",
+          "summary": "Get coordination workflow run timeline",
           "tags": [
             "coordination",
           ],
@@ -36,7 +46,12 @@ exports[`hq orpc contract drift > matches the minified contract snapshot 1`] = `
     "getWorkflow": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "coordination",
+          "entity": "workflow",
+          "idempotent": true,
+        },
         "route": {
           "method": "GET",
           "operationId": "coordinationGetWorkflow",
@@ -51,7 +66,12 @@ exports[`hq orpc contract drift > matches the minified contract snapshot 1`] = `
     "listWorkflows": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "coordination",
+          "entity": "workflow",
+          "idempotent": true,
+        },
         "route": {
           "method": "GET",
           "operationId": "coordinationListWorkflows",
@@ -66,12 +86,17 @@ exports[`hq orpc contract drift > matches the minified contract snapshot 1`] = `
     "queueRun": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "coordination",
+          "entity": "run",
+          "idempotent": false,
+        },
         "route": {
           "method": "POST",
-          "operationId": "coordinationQueueRun",
+          "operationId": "coordinationWorkflowQueueRun",
           "path": "/coordination/workflows/{workflowId}/run",
-          "summary": "Queue a workflow run",
+          "summary": "Queue a coordination workflow run",
           "tags": [
             "coordination",
           ],
@@ -81,7 +106,12 @@ exports[`hq orpc contract drift > matches the minified contract snapshot 1`] = `
     "saveWorkflow": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "coordination",
+          "entity": "workflow",
+          "idempotent": false,
+        },
         "route": {
           "method": "POST",
           "operationId": "coordinationSaveWorkflow",
@@ -96,7 +126,12 @@ exports[`hq orpc contract drift > matches the minified contract snapshot 1`] = `
     "validateWorkflow": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "coordination",
+          "entity": "workflow",
+          "idempotent": true,
+        },
         "route": {
           "method": "POST",
           "operationId": "coordinationValidateWorkflow",
@@ -109,11 +144,62 @@ exports[`hq orpc contract drift > matches the minified contract snapshot 1`] = `
       },
     },
   },
+  "exampleTodo": {
+    "tasks": {
+      "create": {
+        "~orpc": {
+          "errorMap": {},
+          "meta": {
+            "audience": "internal",
+            "audit": "basic",
+            "domain": "todo",
+            "entity": "service",
+            "idempotent": false,
+          },
+          "route": {
+            "method": "POST",
+            "operationId": "exampleTodoCreateTask",
+            "path": "/exampleTodo/tasks/create",
+            "summary": "Create a task in the example todo capability",
+            "tags": [
+              "exampleTodo",
+            ],
+          },
+        },
+      },
+      "get": {
+        "~orpc": {
+          "errorMap": {},
+          "meta": {
+            "audience": "internal",
+            "audit": "basic",
+            "domain": "todo",
+            "entity": "service",
+            "idempotent": true,
+          },
+          "route": {
+            "method": "GET",
+            "operationId": "exampleTodoGetTask",
+            "path": "/exampleTodo/tasks/{id}",
+            "summary": "Get a task from the example todo capability",
+            "tags": [
+              "exampleTodo",
+            ],
+          },
+        },
+      },
+    },
+  },
   "state": {
     "getRuntimeState": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "state",
+          "entity": "state",
+          "idempotent": true,
+        },
         "route": {
           "method": "GET",
           "operationId": "stateGetRuntimeState",
@@ -122,6 +208,42 @@ exports[`hq orpc contract drift > matches the minified contract snapshot 1`] = `
           "tags": [
             "state",
           ],
+        },
+      },
+    },
+  },
+  "supportExample": {
+    "triage": {
+      "getStatus": {
+        "~orpc": {
+          "errorMap": {},
+          "meta": {},
+          "route": {
+            "description": "Returns capability health plus optional status details for a specific support triage run.",
+            "method": "GET",
+            "operationId": "supportExampleGetStatus",
+            "path": "/support-example/triage/status",
+            "summary": "Get support triage capability status and optional run status",
+            "tags": [
+              "support-example",
+            ],
+          },
+        },
+      },
+      "triggerRun": {
+        "~orpc": {
+          "errorMap": {},
+          "meta": {},
+          "route": {
+            "description": "Queues a durable support triage run and dispatches the corresponding Inngest event.",
+            "method": "POST",
+            "operationId": "supportExampleTriggerRun",
+            "path": "/support-example/triage/runs",
+            "summary": "Trigger a support triage run",
+            "tags": [
+              "support-example",
+            ],
+          },
         },
       },
     },

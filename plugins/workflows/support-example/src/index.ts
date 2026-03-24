@@ -1,20 +1,18 @@
-import { supportExampleWorkflowContract } from "./contract";
-import { createSupportExampleInngestFunctions, processSupportExampleRequestedEvent } from "./functions/support-example";
-import { createSupportExampleWorkflowRouter } from "./router";
-
-export function registerSupportExampleWorkflowPlugin() {
-  return {
-    namespace: "workflows" as const,
-    contract: supportExampleWorkflowContract,
-    router: createSupportExampleWorkflowRouter(),
-  };
-}
-
 export {
-  __resetSupportExampleRunStoreForTests,
-  getSupportExampleRun,
-  saveSupportExampleRun,
-} from "./run-store";
-export { createSupportExampleInngestFunctions, processSupportExampleRequestedEvent };
-export type { SupportExampleWorkflowContext } from "./context";
-export { createSupportExampleWorkflowRouter } from "./router";
+  supportExampleWorkflowContract,
+  type SupportExampleWorkflowContract,
+} from "./contract";
+export { supportExampleWorkflowErrorMap } from "./errors";
+export {
+  SUPPORT_EXAMPLE_CAPABILITY,
+  SUPPORT_EXAMPLE_EVENT_NAME,
+  SupportExampleRunSchema,
+  assertNever,
+  createQueuedSupportExampleRun,
+  createSupportExampleRunId,
+  normalizeSupportExampleQueueId,
+  normalizeSupportExampleRunId,
+  normalizeSupportExampleWorkItemId,
+  type SupportExampleRequestedEventData,
+  type SupportExampleRun,
+} from "./models";

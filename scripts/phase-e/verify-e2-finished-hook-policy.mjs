@@ -7,17 +7,17 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("packages/coordination/src/types.ts"),
-  mustExist("packages/coordination/src/orpc/schemas.ts"),
-  mustExist("packages/coordination-inngest/src/adapter.ts"),
-  mustExist("packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts"),
+  mustExist("services/coordination/src/types.ts"),
+  mustExist("services/coordination/src/schemas.ts"),
+  mustExist("plugins/workflows/coordination/src/inngest.ts"),
+  mustExist("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
 ]);
 
-const [typesSource, schemasSource, adapterSource, guardrailsTestSource, scripts] = await Promise.all([
-  readFile("packages/coordination/src/types.ts"),
-  readFile("packages/coordination/src/orpc/schemas.ts"),
-  readFile("packages/coordination-inngest/src/adapter.ts"),
-  readFile("packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts"),
+const [typesSource, schemasSource, inngestSource, guardrailsTestSource, scripts] = await Promise.all([
+  readFile("services/coordination/src/types.ts"),
+  readFile("services/coordination/src/schemas.ts"),
+  readFile("plugins/workflows/coordination/src/inngest.ts"),
+  readFile("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
   readPackageScripts(),
 ]);
 
@@ -46,16 +46,16 @@ assertCondition(
 );
 
 assertCondition(
-  /const FINISHED_HOOK_TIMEOUT_MS = 5_000;/.test(adapterSource),
-  "adapter.ts must define canonical finished-hook timeout",
+  /const FINISHED_HOOK_TIMEOUT_MS = 5_000;/.test(inngestSource),
+  "workflow plugin inngest.ts must define canonical finished-hook timeout",
 );
 assertCondition(
-  /async function runWithTimeout<[^>]+>\(/.test(adapterSource),
-  "adapter.ts must wrap finished-hook execution in timeout helper",
+  /async function runWithTimeout<[^>]+>\(/.test(inngestSource),
+  "workflow plugin inngest.ts must wrap finished-hook execution in timeout helper",
 );
 assertCondition(
-  /if \(!input\.hook\) \{[\s\S]*outcome: "skipped"/.test(adapterSource),
-  "adapter.ts must record skipped state when no finished hook is configured",
+  /if \(!input\.hook\) \{[\s\S]*outcome: "skipped"/.test(inngestSource),
+  "workflow plugin inngest.ts must record skipped state when no finished hook is configured",
 );
 
 assertCondition(
@@ -69,7 +69,7 @@ assertCondition(
 );
 assertCondition(
   scripts["phase-e:gate:e2-finished-hook-runtime"] ===
-    "bunx vitest run --project coordination-inngest packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts",
+    "bunx vitest run --project plugin-workflows-coordination plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts",
   "package.json must define phase-e:gate:e2-finished-hook-runtime",
 );
 assertCondition(

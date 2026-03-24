@@ -1,8 +1,7 @@
-import { createORPCClient } from "@orpc/client";
-import type { ContractRouterClient } from "@orpc/contract";
-import { coordinationContract } from "@rawr/coordination";
+import { createCoordinationApiClient } from "@rawr/plugin-api-coordination";
+import { createCoordinationWorkflowClient } from "@rawr/plugin-workflows-coordination";
 import { createFirstPartyRpcLink } from "@rawr/orpc-client";
-import { stateContract } from "@rawr/state";
+import { createStateApiClient } from "@rawr/plugin-api-state";
 import { publicEnv } from "../config/publicEnv";
 
 function resolveRpcUrl(): string {
@@ -17,12 +16,17 @@ function resolveRpcUrl(): string {
 }
 
 export const hqClient = {
-  coordination: createORPCClient<ContractRouterClient<typeof coordinationContract>>(
+  coordinationApi: createCoordinationApiClient(
     createFirstPartyRpcLink({
       url: resolveRpcUrl(),
     }),
   ),
-  state: createORPCClient<ContractRouterClient<typeof stateContract>>(
+  coordinationWorkflow: createCoordinationWorkflowClient(
+    createFirstPartyRpcLink({
+      url: resolveRpcUrl(),
+    }),
+  ),
+  state: createStateApiClient(
     createFirstPartyRpcLink({
       url: resolveRpcUrl(),
     }),

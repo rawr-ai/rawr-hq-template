@@ -44,7 +44,7 @@ type OpenApiErrorPayload = {
 };
 
 describe("api plugin example surface", () => {
-  it("does not expose legacy support-example procedures on canonical /rpc or /api/orpc paths", async () => {
+  it("keeps workflow plugin procedures off published /api/orpc while allowing first-party /rpc composition", async () => {
     const app = createApp();
 
     const rpcResponse = await app.handle(
@@ -54,7 +54,17 @@ describe("api plugin example surface", () => {
         body: JSON.stringify({ json: {} }),
       }),
     );
-    expect(rpcResponse.status).toBe(404);
+    expect(rpcResponse.status).toBe(200);
+    const rpcPayload = (await rpcResponse.json()) as {
+      json?: {
+        capability?: string;
+        healthy?: boolean;
+        run?: unknown;
+      };
+    };
+    expect(rpcPayload.json?.capability).toBe("support-example");
+    expect(rpcPayload.json?.healthy).toBe(true);
+    expect(rpcPayload.json?.run).toBeNull();
 
     const openApiResponse = await app.handle(
       new Request("http://localhost/api/orpc/support-example/triage/status", {
@@ -145,12 +155,11 @@ describe("api plugin example surface", () => {
     expect(created.title).toBe("External example-todo path");
 
     const getResponse = await app.handle(
-      new Request("http://localhost/api/orpc/exampleTodo/tasks/get", {
-        method: "POST",
-        headers: EXTERNAL_API_HEADERS,
-        body: JSON.stringify({
-          id: taskId,
-        }),
+      new Request(`http://localhost/api/orpc/exampleTodo/tasks/${taskId}`, {
+        method: "GET",
+        headers: {
+          "x-rawr-caller-surface": "external",
+        },
       }),
     );
 
@@ -226,12 +235,11 @@ describe("api plugin example surface", () => {
     expect(rpcPayload.json?.data).toMatchObject({ entity: "Task", id: missingId });
 
     const openApiResponse = await app.handle(
-      new Request("http://localhost/api/orpc/exampleTodo/tasks/get", {
-        method: "POST",
-        headers: EXTERNAL_API_HEADERS,
-        body: JSON.stringify({
-          id: missingId,
-        }),
+      new Request(`http://localhost/api/orpc/exampleTodo/tasks/${missingId}`, {
+        method: "GET",
+        headers: {
+          "x-rawr-caller-surface": "external",
+        },
       }),
     );
     expect(openApiResponse.status).toBe(404);

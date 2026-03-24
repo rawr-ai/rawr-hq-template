@@ -10,10 +10,6 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./orpc": {
-      "types": "./src/orpc.ts",
-      "default": "./src/orpc.ts"
-    },
     "./manifest": {
       "types": "./src/manifest.ts",
       "default": "./src/manifest.ts"
@@ -27,9 +23,13 @@
     "@orpc/contract": "^1.13.5",
     "@orpc/server": "^1.13.5",
     "@rawr/coordination": "workspace:*",
-    "@rawr/coordination-inngest": "workspace:*",
     "@rawr/example-todo": "workspace:*",
     "@rawr/hq-sdk": "workspace:*",
+    "@rawr/plugin-api-coordination": "workspace:*",
+    "@rawr/plugin-api-example-todo": "workspace:*",
+    "@rawr/plugin-api-state": "workspace:*",
+    "@rawr/plugin-workflows-coordination": "workspace:*",
+    "@rawr/plugin-workflows-support-example": "workspace:*",
     "@rawr/runtime-context": "workspace:*",
     "@rawr/state": "workspace:*",
     "@rawr/support-example": "workspace:*",
@@ -41,6 +41,7 @@
   },
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
+    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\"",
     "sync": "bun run --cwd ../.. sync:check --project @rawr/hq-app",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-app",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",

@@ -16,25 +16,25 @@ export function coordinationClientErrorMessage(error: unknown, fallback: string)
 }
 
 export function listWorkflows() {
-  return hqClient.coordination.listWorkflows({});
+  return hqClient.coordinationApi.listWorkflows({});
 }
 
 export function saveWorkflow(workflow: CoordinationWorkflowV1) {
-  return hqClient.coordination.saveWorkflow({ workflow });
+  return hqClient.coordinationApi.saveWorkflow({ workflow });
 }
 
 export function validateWorkflowById(workflowId: string) {
-  return hqClient.coordination.validateWorkflow({ workflowId });
+  return hqClient.coordinationApi.validateWorkflow({ workflowId });
 }
 
 export function runWorkflowById(workflowId: string, input: JsonValue) {
-  return hqClient.coordination.queueRun({ workflowId, input });
+  return hqClient.coordinationWorkflow.queueRun({ workflowId, input });
 }
 
 export function getRunStatus(runId: string) {
-  return hqClient.coordination.getRunStatus({ runId });
+  return hqClient.coordinationWorkflow.getRunStatus({ runId });
 }
 
 export function getRunTimeline(runId: string) {
-  return hqClient.coordination.getRunTimeline({ runId });
+  return hqClient.coordinationWorkflow.getRunTimeline({ runId });
 }

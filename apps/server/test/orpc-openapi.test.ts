@@ -11,7 +11,7 @@ const rawrHqManifest = createTestingRawrHqManifest();
 
 describe("orpc openapi", () => {
   it("generates published openapi paths only for the public example-todo surface", async () => {
-    const spec = (await generateOrpcOpenApiSpec("http://localhost:3000", rawrHqManifest.orpc.router)) as {
+    const spec = (await generateOrpcOpenApiSpec("http://localhost:3000", rawrHqManifest.orpc.published.router)) as {
       openapi?: string;
       paths?: Record<string, unknown>;
     };
@@ -19,7 +19,7 @@ describe("orpc openapi", () => {
     expect(typeof spec.openapi).toBe("string");
     expect(spec.paths).toBeDefined();
     expect(spec.paths?.["/exampleTodo/tasks/create"]).toBeDefined();
-    expect(spec.paths?.["/exampleTodo/tasks/get"]).toBeDefined();
+    expect(spec.paths?.["/exampleTodo/tasks/{id}"]).toBeDefined();
     expect(spec.paths?.["/coordination/workflows"]).toBeUndefined();
     expect(spec.paths?.["/state/runtime"]).toBeUndefined();
   });
@@ -33,7 +33,7 @@ describe("orpc openapi", () => {
 
     const spec = (await res.json()) as { paths?: Record<string, unknown> };
     expect(spec.paths?.["/exampleTodo/tasks/create"]).toBeDefined();
-    expect(spec.paths?.["/exampleTodo/tasks/get"]).toBeDefined();
+    expect(spec.paths?.["/exampleTodo/tasks/{id}"]).toBeDefined();
     expect(spec.paths?.["/coordination/workflows"]).toBeUndefined();
     expect(spec.paths?.["/state/runtime"]).toBeUndefined();
     expect(spec.paths?.["/support-example/triage/status"]).toBeUndefined();

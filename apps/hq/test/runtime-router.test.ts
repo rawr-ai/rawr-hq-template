@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createHqRuntimeRouter, createWorkflowTriggerRuntimeRouter } from "../src/orpc";
+import { createTestingRawrHqManifest } from "../src/testing";
 
 type RouteShape = {
   method?: string;
@@ -26,8 +26,10 @@ function collectProcedureRoutes(node: unknown, namespace: string[] = []): string
 }
 
 describe("runtime router seam", () => {
+  const manifest = createTestingRawrHqManifest();
+
   it("keeps root runtime route families stable", () => {
-    const routes = collectProcedureRoutes(createHqRuntimeRouter()).sort();
+    const routes = collectProcedureRoutes(manifest.orpc.router).sort();
 
     expect(routes).toEqual([
       "coordination.getRunStatus GET /coordination/runs/{runId}",
@@ -37,27 +39,29 @@ describe("runtime router seam", () => {
       "coordination.queueRun POST /coordination/workflows/{workflowId}/run",
       "coordination.saveWorkflow POST /coordination/workflows",
       "coordination.validateWorkflow POST /coordination/workflows/{workflowId}/validate",
+      "exampleTodo.tasks.create POST /exampleTodo/tasks/create",
+      "exampleTodo.tasks.get GET /exampleTodo/tasks/{id}",
       "state.getRuntimeState GET /state/runtime",
+      "supportExample.triage.getStatus GET /support-example/triage/status",
+      "supportExample.triage.triggerRun POST /support-example/triage/runs",
     ]);
   });
 
   it("keeps workflow trigger runtime routes workflow-scoped", () => {
-    const routes = collectProcedureRoutes(createWorkflowTriggerRuntimeRouter()).sort();
+    const routes = collectProcedureRoutes(manifest.workflows.published.router).sort();
 
     expect(routes).toEqual([
       "coordination.getRunStatus GET /coordination/runs/{runId}",
       "coordination.getRunTimeline GET /coordination/runs/{runId}/timeline",
-      "coordination.getWorkflow GET /coordination/workflows/{workflowId}",
-      "coordination.listWorkflows GET /coordination/workflows",
       "coordination.queueRun POST /coordination/workflows/{workflowId}/run",
-      "coordination.saveWorkflow POST /coordination/workflows",
-      "coordination.validateWorkflow POST /coordination/workflows/{workflowId}/validate",
+      "supportExample.triage.getStatus GET /support-example/triage/status",
+      "supportExample.triage.triggerRun POST /support-example/triage/runs",
     ]);
   });
 
   it("does not introduce finished-hook route families while adding D2 guardrails", () => {
-    const rootRoutes = collectProcedureRoutes(createHqRuntimeRouter());
-    const triggerRoutes = collectProcedureRoutes(createWorkflowTriggerRuntimeRouter());
+    const rootRoutes = collectProcedureRoutes(manifest.orpc.router);
+    const triggerRoutes = collectProcedureRoutes(manifest.workflows.published.router);
     const allRoutes = [...rootRoutes, ...triggerRoutes];
 
     expect(allRoutes.some((route) => route.toLowerCase().includes("finished"))).toBe(false);

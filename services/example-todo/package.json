@@ -10,6 +10,10 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./service/contract": {
+      "types": "./src/service/contract.ts",
+      "default": "./src/service/contract.ts"
+    },
     "./router": {
       "types": "./src/router.ts",
       "default": "./src/router.ts"

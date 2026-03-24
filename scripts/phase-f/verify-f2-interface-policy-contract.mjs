@@ -8,12 +8,12 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("packages/coordination/src/ids.ts"),
-  mustExist("packages/coordination/src/orpc/schemas.ts"),
-  mustExist("packages/state/src/orpc/contract.ts"),
-  mustExist("packages/state/src/orpc/router.ts"),
-  mustExist("packages/coordination/src/orpc/router.ts"),
-  mustExist("apps/hq/src/orpc.ts"),
+  mustExist("services/coordination/src/ids.ts"),
+  mustExist("services/coordination/src/schemas.ts"),
+  mustExist("services/coordination/src/service/shared/inputs.ts"),
+  mustExist("services/state/src/service/contract.ts"),
+  mustExist("services/state/src/service/router.ts"),
+  mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
@@ -21,21 +21,21 @@ await Promise.all([
 const [
   idsSource,
   schemasSource,
+  inputsSource,
   stateContractSource,
   stateRouterSource,
-  coordinationRouterSource,
-  hqOrpcSource,
+  manifestSource,
   hqDriftTestSource,
   triggerDriftTestSource,
   scripts,
 ] =
   await Promise.all([
-    readFile("packages/coordination/src/ids.ts"),
-    readFile("packages/coordination/src/orpc/schemas.ts"),
-    readFile("packages/state/src/orpc/contract.ts"),
-    readFile("packages/state/src/orpc/router.ts"),
-    readFile("packages/coordination/src/orpc/router.ts"),
-    readFile("apps/hq/src/orpc.ts"),
+    readFile("services/coordination/src/ids.ts"),
+    readFile("services/coordination/src/schemas.ts"),
+    readFile("services/coordination/src/service/shared/inputs.ts"),
+    readFile("services/state/src/service/contract.ts"),
+    readFile("services/state/src/service/router.ts"),
+    readFile("apps/hq/src/manifest.ts"),
     readFile("apps/hq/test/orpc-contract-drift.test.ts"),
     readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
     readPackageScripts(),
@@ -100,20 +100,22 @@ const checks = [
   },
   {
     id: "runtime-router-policy-plumbing",
-    message: "service/app routers must normalize IDs and return authorityRepoRoot",
+    message: "service/plugin/app seams must normalize IDs and return authorityRepoRoot without a special HQ router seam",
     pass:
-      /function parseCoordinationId\(value: unknown\): string \| null/u.test(coordinationRouterSource) &&
-      /return normalizeCoordinationId\(value\);/u.test(coordinationRouterSource) &&
+      /function parseCoordinationId\(value: unknown\): string \| null/u.test(inputsSource) &&
+      /return normalizeCoordinationId\(value\);/u.test(inputsSource) &&
       /return \{ state: currentState, authorityRepoRoot: context\.repoRoot \};/u.test(stateRouterSource) &&
-      /export function createHqRuntimeRouter/u.test(hqOrpcSource),
+      manifestSource.includes("registerCoordinationApiPlugin") &&
+      manifestSource.includes("registerStateApiPlugin") &&
+      !manifestSource.includes("createHqRuntimeRouter"),
   },
   {
     id: "f2-drift-tests",
-    message: "core drift suites must assert F2 ID policy + additive authority metadata",
+    message: "hq app drift suites must assert F2 ID policy + additive authority metadata",
     pass:
       /keeps F2 ID input policy aligned with runtime normalization rules/u.test(hqDriftTestSource) &&
       /authorityRepoRoot/u.test(hqDriftTestSource) &&
-      /enforces F2 workflow trigger ID constraints at the contract edge/u.test(triggerDriftTestSource),
+      /support-example capability paths/u.test(triggerDriftTestSource),
   },
 ];
 

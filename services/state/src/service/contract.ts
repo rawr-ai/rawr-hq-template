@@ -1,0 +1,26 @@
+/**
+ * @fileoverview Root domain contract composition for the state package.
+ */
+import { schema } from "@rawr/hq-sdk";
+import { Type } from "typebox";
+import { RepoStateSchema, type RepoState } from "../repo-state/model";
+import { ocBase } from "./base";
+
+export const GetStateInputSchema = Type.Object({}, { additionalProperties: false });
+
+export const GetStateOutputSchema = Type.Object(
+  {
+    state: RepoStateSchema,
+    authorityRepoRoot: Type.Optional(Type.String({ minLength: 1 })),
+  },
+  { additionalProperties: false },
+);
+
+export const contract = {
+  getState: ocBase
+    .meta({ idempotent: true })
+    .input(schema(GetStateInputSchema))
+    .output(schema(GetStateOutputSchema)),
+};
+
+export type Contract = typeof contract;

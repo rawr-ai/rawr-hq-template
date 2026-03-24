@@ -7,13 +7,6 @@ const noopLogger = {
 
 export function createTestingRawrHqManifest() {
   return createRawrHqManifest({
-    exampleTodoLogger: noopLogger,
+    hostLogger: noopLogger,
   });
 }
-
-export {
-  createHqRuntimeRouter,
-  createWorkflowTriggerRuntimeRouter,
-  hqContract,
-  workflowTriggerContract,
-} from "./orpc";

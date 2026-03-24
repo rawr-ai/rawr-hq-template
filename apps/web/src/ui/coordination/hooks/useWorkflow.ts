@@ -10,7 +10,7 @@ import {
 import {
   COORDINATION_RUN_EVENT,
   coordinationAvailableActions,
-} from "@rawr/coordination-inngest/browser";
+} from "@rawr/plugin-workflows-coordination";
 import type { Workflow as WorkflowKitWorkflow } from "@inngest/workflow-kit";
 import {
   coordinationClientErrorMessage,

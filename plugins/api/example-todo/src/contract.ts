@@ -1,17 +1,26 @@
-import { minifyContractRouter, type AnyContractRouter } from "@orpc/contract";
-import { router as exampleTodoRouter } from "@rawr/example-todo";
+import { contract as exampleTodoContract } from "@rawr/example-todo/service/contract";
 
 export const exampleTodoApiRouterContract = {
   exampleTodo: {
     tasks: {
-      create: exampleTodoRouter.tasks.create,
-      get: exampleTodoRouter.tasks.get,
+      create: exampleTodoContract.tasks.create.route({
+        method: "POST",
+        path: "/exampleTodo/tasks/create",
+        tags: ["exampleTodo"],
+        summary: "Create a task in the example todo capability",
+        operationId: "exampleTodoCreateTask",
+      }),
+      get: exampleTodoContract.tasks.get.route({
+        method: "GET",
+        path: "/exampleTodo/tasks/{id}",
+        tags: ["exampleTodo"],
+        summary: "Get a task from the example todo capability",
+        operationId: "exampleTodoGetTask",
+      }),
     },
   },
 } as const;
 
-export const exampleTodoApiContract = minifyContractRouter(
-  exampleTodoApiRouterContract as unknown as AnyContractRouter,
-) as typeof exampleTodoApiRouterContract;
+export const exampleTodoApiContract = exampleTodoApiRouterContract;
 
 export type ExampleTodoApiContract = typeof exampleTodoApiContract;

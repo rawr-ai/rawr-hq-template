@@ -151,13 +151,19 @@ describe("phase-a gate scaffold (server)", () => {
     expect(hasRouteRegistration(rawrAst, "/api/workflows/*")).toBe(true);
     expect(hasRegisterOrpcRoutesManifestRouter(rawrAst)).toBe(true);
     expect(hasIdentifierCall(rawrAst, "createRawrHqManifest")).toBe(true);
-    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "triggerRouter"])).toBe(true);
-    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "client"])).toBe(true);
-    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "functions"])).toBe(true);
-    expect(hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createCoordinationInngestFunction")).toBe(true);
-    expect(hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createInngestServeHandler")).toBe(true);
-    expect(hasIdentifierCall(rawrAst, "createCoordinationInngestFunction")).toBe(true);
-    expect(hasIdentifierCall(rawrAst, "createInngestServeHandler")).toBe(true);
+    expect(hasIdentifierCall(rawrAst, "createWorkflowRouteHarness")).toBe(true);
+    expect(hasNamedImport(rawrAst, "inngest/bun", "serve")).toBe(true);
+    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "createInngestFunctions"])).toBe(true);
+    expect(hasIdentifierCall(rawrAst, "inngestServe")).toBe(true);
+    expect(rawrSource).not.toContain("rawrHqManifest.inngest");
+    expect(rawrSource).not.toContain("@rawr/plugin-api-coordination/server");
+    expect(rawrSource).not.toContain("@rawr/plugin-workflows-support-example/server");
+    expect(rawrSource).not.toContain("./coordination");
+    expect(rawrSource).toContain("@rawr/plugin-workflows-coordination/server");
+    expect(rawrSource).toContain("createCoordinationWorkflowRuntimeAdapter");
+    expect(rawrSource).not.toContain("resolveWorkflowCapability");
+    expect(rawrSource).toContain("contextFactory: (request, deps) => createRequestScopedBoundaryContext(request, deps)");
+    expect(rawrSource).not.toContain("rawrHqManifest.orpc.enrichContext");
   });
 
   it("route negative assertions gate scaffold keeps D-015 negatives explicit", async () => {
@@ -174,9 +180,12 @@ describe("phase-a gate scaffold (server)", () => {
     expect(routeMatrixSource.includes("/rpc/workflows/support-example/triage/status")).toBe(true);
   });
 
-  it("observability contract gate scaffold keeps observability package path present", async () => {
+  it("observability contract gate scaffold keeps canonical coordination telemetry proofs present", async () => {
     await expect(
-      fs.access(path.join(repoRoot, "packages", "coordination-observability", "test", "observability.test.ts")),
+      fs.access(path.join(repoRoot, "services", "coordination", "test", "run-lifecycle-telemetry.test.ts")),
+    ).resolves.toBeUndefined();
+    await expect(
+      fs.access(path.join(repoRoot, "plugins", "workflows", "coordination", "test", "observability.test.ts")),
     ).resolves.toBeUndefined();
   });
 });

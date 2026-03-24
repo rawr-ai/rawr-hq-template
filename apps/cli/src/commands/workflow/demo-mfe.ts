@@ -41,7 +41,7 @@ export default class WorkflowDemoMfe extends RawrCommand {
     const verifyScript = [
       `import { createServerApp } from "./apps/server/src/app.ts";`,
       `import { registerRawrRoutes } from "./apps/server/src/rawr.ts";`,
-      `import { getRepoState } from "@rawr/state";`,
+      `import { getRepoState } from "@rawr/state/repo-state";`,
       `const repoRoot = process.cwd();`,
       `const state = await getRepoState(repoRoot);`,
       `const enabled = new Set(state.plugins.enabled);`,

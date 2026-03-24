@@ -36,7 +36,7 @@ if (!("./telemetry" in (pkg.exports ?? {}))) {
   process.exit(1);
 }
 
-for (const dependency of ["@rawr/coordination", "@rawr/coordination-inngest", "@rawr/runtime-context", "@rawr/state", "inngest"]) {
+for (const dependency of ["@rawr/coordination", "@rawr/runtime-context", "@rawr/state", "inngest"]) {
   if (dependency in (pkg.dependencies ?? {})) {
     console.error(`core structural failed: unexpected live dependency ${dependency}.`);
     process.exit(1);

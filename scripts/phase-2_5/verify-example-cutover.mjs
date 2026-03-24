@@ -10,16 +10,18 @@ import {
 await Promise.all([
   mustExist("apps/hq/src/manifest.ts"),
   mustExist("plugins/api/example-todo/src/index.ts"),
+  mustExist("plugins/api/example-todo/src/server.ts"),
   mustExist("plugins/api/example-todo/src/router.ts"),
   mustExist("apps/server/test/rawr.test.ts"),
   mustExist("apps/server/test/api-plugin-example-surface.test.ts"),
   mustExist("scripts/phase-2_5/verify-example-cutover.mjs"),
 ]);
 
-const [scripts, manifestSource, pluginSource, pluginRouterSource, rawrTestSource, apiSurfaceTestSource] = await Promise.all([
+const [scripts, manifestSource, pluginSource, pluginServerSource, pluginRouterSource, rawrTestSource, apiSurfaceTestSource] = await Promise.all([
   readPackageScripts(),
   readFile("apps/hq/src/manifest.ts"),
   readFile("plugins/api/example-todo/src/index.ts"),
+  readFile("plugins/api/example-todo/src/server.ts"),
   readFile("plugins/api/example-todo/src/router.ts"),
   readFile("apps/server/test/rawr.test.ts"),
   readFile("apps/server/test/api-plugin-example-surface.test.ts"),
@@ -30,16 +32,24 @@ assertCondition(
   "apps/hq/src/manifest.ts must compose the canonical example-todo API plugin from the package seam",
 );
 assertCondition(
+  manifestSource.includes("@rawr/plugin-api-example-todo/server"),
+  "apps/hq/src/manifest.ts must import the example-todo host registration from the plugin server surface",
+);
+assertCondition(
   !manifestSource.includes("./plugins/api/support-example") && !manifestSource.includes("registerSupportExampleApiPlugin"),
   "apps/hq/src/manifest.ts must remove support-example from the canonical ORPC API surface",
 );
 assertCondition(
-  manifestSource.includes("createClient as createExampleTodoClient") && manifestSource.includes("exampleTodoLogger"),
+  manifestSource.includes("createClient as createExampleTodoClient") && manifestSource.includes("hostLogger"),
   "apps/hq/src/manifest.ts must build example-todo clients from the package-root client factory while accepting host-injected logging",
 );
 assertCondition(
-  pluginSource.includes('namespace: "orpc"') && pluginSource.includes("exampleTodoApiContract"),
-  "plugins/api/example-todo/src/index.ts must register an ORPC plugin over the example-todo contract",
+  pluginSource.includes("exampleTodoApiContract") && !pluginSource.includes("registerExampleTodoApiPlugin"),
+  "plugins/api/example-todo/src/index.ts must stay app-safe and must not register the host ORPC surface",
+);
+assertCondition(
+  pluginServerSource.includes('namespace: "orpc"') && pluginServerSource.includes("exampleTodoApiContract"),
+  "plugins/api/example-todo/src/server.ts must register an ORPC plugin over the example-todo contract",
 );
 assertCondition(
   pluginRouterSource.includes("resolveClient(context.repoRoot).tasks.create")

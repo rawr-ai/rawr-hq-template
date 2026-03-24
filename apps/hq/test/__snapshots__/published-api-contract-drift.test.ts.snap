@@ -1,0 +1,52 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`published api contract drift > matches the minified published api contract snapshot 1`] = `
+{
+  "exampleTodo": {
+    "tasks": {
+      "create": {
+        "~orpc": {
+          "errorMap": {},
+          "meta": {
+            "audience": "internal",
+            "audit": "basic",
+            "domain": "todo",
+            "entity": "service",
+            "idempotent": false,
+          },
+          "route": {
+            "method": "POST",
+            "operationId": "exampleTodoCreateTask",
+            "path": "/exampleTodo/tasks/create",
+            "summary": "Create a task in the example todo capability",
+            "tags": [
+              "exampleTodo",
+            ],
+          },
+        },
+      },
+      "get": {
+        "~orpc": {
+          "errorMap": {},
+          "meta": {
+            "audience": "internal",
+            "audit": "basic",
+            "domain": "todo",
+            "entity": "service",
+            "idempotent": true,
+          },
+          "route": {
+            "method": "GET",
+            "operationId": "exampleTodoGetTask",
+            "path": "/exampleTodo/tasks/{id}",
+            "summary": "Get a task from the example todo capability",
+            "tags": [
+              "exampleTodo",
+            ],
+          },
+        },
+      },
+    },
+  },
+}
+`;

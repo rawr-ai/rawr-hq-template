@@ -101,8 +101,8 @@ assertCondition(
   "apps/hq/src/manifest.ts must not import or register the legacy support-example API plugin",
 );
 assertCondition(
-  /const composedOrpcRouter = \{\s*\.\.\.coreOrpcRouter,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s.test(manifestSource),
-  "apps/hq/src/manifest.ts must keep example-todo as the only canonical API projection in the oRPC router",
+  /const composedOrpcRouter = \{\s*\.\.\.coordinationApiPlugin\.router,\s*\.\.\.stateApiPlugin\.router,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s.test(manifestSource),
+  "apps/hq/src/manifest.ts must compose canonical API projections from coordination, state, and example-todo plugins",
 );
 assertCondition(
   !toolsExportSource.includes("support-example") && !toolsExportSource.includes("supportExample"),

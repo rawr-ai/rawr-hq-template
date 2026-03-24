@@ -1,0 +1,25 @@
+{
+  "name": "@rawr/plugin-api-state",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    },
+    "./server": {
+      "types": "./server.ts",
+      "default": "./server.ts"
+    }
+  },
+  "dependencies": {
+    "@orpc/client": "^1.13.5",
+    "@orpc/contract": "^1.13.5",
+    "@orpc/server": "^1.13.5",
+    "@rawr/runtime-context": "workspace:*",
+    "@rawr/state": "workspace:*"
+  }
+}

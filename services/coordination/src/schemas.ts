@@ -1,0 +1,307 @@
+import { Type } from "typebox";
+import {
+  COORDINATION_ID_MAX_LENGTH,
+  COORDINATION_ID_PATTERN_SOURCE,
+  COORDINATION_ID_TRIMMED_PATTERN_SOURCE,
+} from "./ids";
+import type {
+  CoordinationWorkflowV1,
+  DeskDefinitionV1,
+  DeskMemoryScopeV1,
+  DeskRunEventV1,
+  HandoffDefinitionV1,
+  JsonSchemaV1,
+  JsonValue,
+  RunFinalizationContractV1,
+  RunFinalizationStateV1,
+  RunFinishedHookStateV1,
+  RunStatusV1,
+  RuntimePolicyV1,
+  ValidationErrorV1,
+  ValidationResultV1,
+} from "./types";
+
+const JsonValueSchema = Type.Unsafe<JsonValue>({
+  title: "JsonValue",
+});
+
+const JsonSchemaV1Schema = Type.Unsafe<JsonSchemaV1>({
+  type: "object",
+  title: "JsonSchemaV1",
+});
+
+const CoordinationIdSchema = Type.String({
+  minLength: 1,
+  maxLength: COORDINATION_ID_MAX_LENGTH,
+  pattern: `^${COORDINATION_ID_PATTERN_SOURCE}$`,
+});
+
+const CoordinationIdInputSchema = Type.String({
+  minLength: 1,
+  pattern: COORDINATION_ID_TRIMMED_PATTERN_SOURCE,
+});
+
+const RuntimePolicySchema = Type.Unsafe<RuntimePolicyV1>(
+  Type.Object(
+    {
+      retries: Type.Optional(Type.Integer({ minimum: 0 })),
+      timeoutSeconds: Type.Optional(Type.Integer({ minimum: 0 })),
+      priority: Type.Optional(Type.Union([Type.Literal("low"), Type.Literal("normal"), Type.Literal("high")])),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const DeskMemoryScopeSchema = Type.Unsafe<DeskMemoryScopeV1>(
+  Type.Object(
+    {
+      persist: Type.Boolean(),
+      ttlSeconds: Type.Optional(Type.Integer({ minimum: 0 })),
+      namespace: Type.Optional(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const DeskDefinitionSchema = Type.Unsafe<DeskDefinitionV1>(
+  Type.Object(
+    {
+      deskId: CoordinationIdSchema,
+      kind: Type.String({ minLength: 1 }),
+      name: Type.String({ minLength: 1 }),
+      responsibility: Type.String({ minLength: 1 }),
+      domain: Type.String({ minLength: 1 }),
+      inputSchema: JsonSchemaV1Schema,
+      outputSchema: JsonSchemaV1Schema,
+      memoryScope: DeskMemoryScopeSchema,
+      runtimePolicy: Type.Optional(RuntimePolicySchema),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const HandoffDefinitionSchema = Type.Unsafe<HandoffDefinitionV1>(
+  Type.Object(
+    {
+      handoffId: CoordinationIdSchema,
+      fromDeskId: CoordinationIdSchema,
+      toDeskId: CoordinationIdSchema,
+      condition: Type.Optional(Type.String()),
+      mappingRefs: Type.Optional(Type.Record(Type.String(), Type.String())),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+export const CoordinationWorkflowSchema = Type.Unsafe<CoordinationWorkflowV1>(
+  Type.Object(
+    {
+      workflowId: CoordinationIdSchema,
+      version: Type.Integer({ minimum: 1 }),
+      name: Type.String({ minLength: 1 }),
+      description: Type.Optional(Type.String()),
+      entryDeskId: CoordinationIdSchema,
+      desks: Type.Array(DeskDefinitionSchema),
+      handoffs: Type.Array(HandoffDefinitionSchema),
+      observabilityProfile: Type.Optional(Type.Union([Type.Literal("basic"), Type.Literal("full")])),
+      updatedAt: Type.Optional(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const RunTraceLinkSchema = Type.Object(
+  {
+    provider: Type.Union([Type.Literal("inngest"), Type.Literal("rawr")]),
+    label: Type.String(),
+    url: Type.String(),
+  },
+  { additionalProperties: false },
+);
+
+const RunFinishedHookStateSchema = Type.Unsafe<RunFinishedHookStateV1>(
+  Type.Object(
+    {
+      attemptedAt: Type.String(),
+      outcome: Type.Union([Type.Literal("succeeded"), Type.Literal("failed"), Type.Literal("skipped")]),
+      nonCritical: Type.Literal(true),
+      idempotencyRequired: Type.Literal(true),
+      timeoutMs: Type.Integer({ minimum: 1 }),
+      error: Type.Optional(Type.String()),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const RunFinalizationContractSchema = Type.Unsafe<RunFinalizationContractV1>(
+  Type.Object(
+    {
+      delivery: Type.Literal("at-least-once"),
+      exactlyOnce: Type.Literal(false),
+      sideEffectPolicy: Type.Literal("idempotent-non-critical"),
+      failureMode: Type.Literal("best-effort-non-blocking"),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const RunFinalizationStateSchema = Type.Unsafe<RunFinalizationStateV1>(
+  Type.Object(
+    {
+      contract: RunFinalizationContractSchema,
+      finishedHook: Type.Optional(RunFinishedHookStateSchema),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+export const RunStatusSchema = Type.Unsafe<RunStatusV1>(
+  Type.Object(
+    {
+      runId: CoordinationIdSchema,
+      workflowId: CoordinationIdSchema,
+      workflowVersion: Type.Integer({ minimum: 1 }),
+      status: Type.Union([
+        Type.Literal("queued"),
+        Type.Literal("running"),
+        Type.Literal("completed"),
+        Type.Literal("failed"),
+      ]),
+      startedAt: Type.String(),
+      finishedAt: Type.Optional(Type.String()),
+      input: Type.Optional(JsonValueSchema),
+      output: Type.Optional(JsonValueSchema),
+      error: Type.Optional(Type.String()),
+      traceLinks: Type.Array(RunTraceLinkSchema),
+      finalization: Type.Optional(RunFinalizationStateSchema),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+export const DeskRunEventSchema = Type.Unsafe<DeskRunEventV1>(
+  Type.Object(
+    {
+      eventId: Type.String({ minLength: 1 }),
+      runId: CoordinationIdSchema,
+      workflowId: CoordinationIdSchema,
+      deskId: Type.Optional(CoordinationIdSchema),
+      type: Type.Union([
+        Type.Literal("run.started"),
+        Type.Literal("run.completed"),
+        Type.Literal("run.failed"),
+        Type.Literal("desk.started"),
+        Type.Literal("desk.completed"),
+        Type.Literal("desk.failed"),
+      ]),
+      ts: Type.String(),
+      status: Type.Union([
+        Type.Literal("queued"),
+        Type.Literal("running"),
+        Type.Literal("completed"),
+        Type.Literal("failed"),
+      ]),
+      detail: Type.Optional(Type.String()),
+      input: Type.Optional(JsonValueSchema),
+      output: Type.Optional(JsonValueSchema),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const ValidationErrorSchema = Type.Unsafe<ValidationErrorV1>(
+  Type.Object(
+    {
+      code: Type.String({ minLength: 1 }),
+      message: Type.String({ minLength: 1 }),
+      deskId: Type.Optional(CoordinationIdSchema),
+      handoffId: Type.Optional(CoordinationIdSchema),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+export const ValidationResultSchema = Type.Unsafe<ValidationResultV1>(
+  Type.Object(
+    {
+      ok: Type.Boolean(),
+      errors: Type.Array(ValidationErrorSchema),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+export const ListWorkflowsInputSchema = Type.Object({}, { additionalProperties: false });
+export const ListWorkflowsOutputSchema = Type.Object(
+  { workflows: Type.Array(CoordinationWorkflowSchema) },
+  { additionalProperties: false },
+);
+
+export const SaveWorkflowInputSchema = Type.Object(
+  { workflow: CoordinationWorkflowSchema },
+  { additionalProperties: false },
+);
+export const SaveWorkflowOutputSchema = Type.Object(
+  { workflow: CoordinationWorkflowSchema },
+  { additionalProperties: false },
+);
+
+export const GetWorkflowInputSchema = Type.Object(
+  { workflowId: CoordinationIdInputSchema },
+  { additionalProperties: false },
+);
+export const GetWorkflowOutputSchema = Type.Object(
+  { workflow: CoordinationWorkflowSchema },
+  { additionalProperties: false },
+);
+
+export const ValidateWorkflowInputSchema = Type.Object(
+  { workflowId: CoordinationIdInputSchema },
+  { additionalProperties: false },
+);
+export const ValidateWorkflowOutputSchema = Type.Object(
+  {
+    workflowId: CoordinationIdSchema,
+    validation: ValidationResultSchema,
+  },
+  { additionalProperties: false },
+);
+
+export const QueueRunInputSchema = Type.Object(
+  {
+    workflowId: CoordinationIdInputSchema,
+    runId: Type.Optional(CoordinationIdInputSchema),
+    input: Type.Optional(JsonValueSchema),
+  },
+  { additionalProperties: false },
+);
+export const QueueRunOutputSchema = Type.Object(
+  {
+    run: RunStatusSchema,
+    eventIds: Type.Array(Type.String()),
+  },
+  { additionalProperties: false },
+);
+
+export const GetRunStatusInputSchema = Type.Object(
+  { runId: CoordinationIdInputSchema },
+  { additionalProperties: false },
+);
+export const GetRunStatusOutputSchema = Type.Object(
+  { run: RunStatusSchema },
+  { additionalProperties: false },
+);
+
+export const GetRunTimelineInputSchema = Type.Object(
+  { runId: CoordinationIdInputSchema },
+  { additionalProperties: false },
+);
+export const GetRunTimelineOutputSchema = Type.Object(
+  {
+    runId: CoordinationIdSchema,
+    timeline: Type.Array(DeskRunEventSchema),
+  },
+  { additionalProperties: false },
+);
+
+export { typeBoxStandardSchema } from "@rawr/hq-sdk";

@@ -3,16 +3,26 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
-const packagePath = path.join(root, "packages", "state", "package.json");
-const routerPath = path.join(root, "packages", "state", "src", "orpc", "router.ts");
-const contractPath = path.join(root, "packages", "state", "src", "orpc", "contract.ts");
-const indexPath = path.join(root, "packages", "state", "src", "orpc", "index.ts");
+const packagePath = path.join(root, "services", "state", "package.json");
+const basePath = path.join(root, "services", "state", "src", "service", "base.ts");
+const implPath = path.join(root, "services", "state", "src", "service", "impl.ts");
+const observabilityMiddlewarePath = path.join(root, "services", "state", "src", "service", "middleware", "observability.ts");
+const analyticsMiddlewarePath = path.join(root, "services", "state", "src", "service", "middleware", "analytics.ts");
+const routerPath = path.join(root, "services", "state", "src", "service", "router.ts");
+const contractPath = path.join(root, "services", "state", "src", "service", "contract.ts");
+const indexPath = path.join(root, "services", "state", "src", "index.ts");
+const repoStateIndexPath = path.join(root, "services", "state", "src", "repo-state", "index.ts");
 
-const [pkgRaw, routerSource, contractSource, indexSource] = await Promise.all([
+const [pkgRaw, baseSource, implSource, observabilityMiddlewareSource, analyticsMiddlewareSource, routerSource, contractSource, indexSource, repoStateIndexSource] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
+  fs.readFile(basePath, "utf8"),
+  fs.readFile(implPath, "utf8"),
+  fs.readFile(observabilityMiddlewarePath, "utf8"),
+  fs.readFile(analyticsMiddlewarePath, "utf8"),
   fs.readFile(routerPath, "utf8"),
   fs.readFile(contractPath, "utf8"),
   fs.readFile(indexPath, "utf8"),
+  fs.readFile(repoStateIndexPath, "utf8"),
 ]);
 
 const pkg = JSON.parse(pkgRaw);
@@ -28,8 +38,28 @@ for (const scriptName of ["sync", "structural"]) {
   }
 }
 
-if (!routerSource.includes("export function createStateRouter")) {
+if (!routerSource.includes("export const router")) {
   console.error("state structural failed: service-owned router seam missing.");
+  process.exit(1);
+}
+
+if (
+  !baseSource.includes("type InvocationContext = {") ||
+  !baseSource.includes("traceId: string;") ||
+  !baseSource.includes("export const createServiceMiddleware = service.createMiddleware;") ||
+  !baseSource.includes("export const createServiceProvider = service.createProvider;")
+) {
+  console.error("state structural failed: service base seam must expose the golden authoring surface and invocation trace lane.");
+  process.exit(1);
+}
+
+if (
+  !implSource.includes('from "./middleware/analytics"') ||
+  !implSource.includes('from "./middleware/observability"') ||
+  !observabilityMiddlewareSource.includes("createRequiredServiceObservabilityMiddleware") ||
+  !analyticsMiddlewareSource.includes("createRequiredServiceAnalyticsMiddleware")
+) {
+  console.error("state structural failed: required service middleware must live in dedicated middleware files.");
   process.exit(1);
 }
 
@@ -43,8 +73,18 @@ if (routerSource.includes("@rawr/core") || routerSource.includes("apps/server/sr
   process.exit(1);
 }
 
-if (!indexSource.includes('export * from "./router"')) {
+if (!indexSource.includes('export { router, type Router } from "./router"')) {
   console.error("state structural failed: router seam not exported.");
+  process.exit(1);
+}
+
+if (indexSource.includes("getRepoState") || indexSource.includes("enablePlugin") || indexSource.includes("RepoState")) {
+  console.error("state structural failed: package root must stay thin and not export repo-state support helpers.");
+  process.exit(1);
+}
+
+if (!repoStateIndexSource.includes("getRepoState") || !repoStateIndexSource.includes("enablePlugin")) {
+  console.error("state structural failed: repo-state support subpath is incomplete.");
   process.exit(1);
 }
 

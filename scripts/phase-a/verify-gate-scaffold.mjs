@@ -197,7 +197,7 @@ async function verifyImportBoundary() {
 }
 
 async function verifyHostCompositionGuard() {
-  const { ast: rawrAst } = await readTypeScriptFile("apps/server/src/rawr.ts");
+  const { source, ast: rawrAst } = await readTypeScriptFile("apps/server/src/rawr.ts");
 
   assertCondition(hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest"), "rawr host must import HQ app manifest authority");
   assertCondition(hasRouteRegistration(rawrAst, "/api/inngest"), "rawr host must register /api/inngest route");
@@ -210,16 +210,23 @@ async function verifyHostCompositionGuard() {
     "rawr host must consume manifest-owned workflow trigger router seam",
   );
   assertCondition(
-    hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "client"]) &&
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "functions"]),
-    "rawr host must consume manifest-owned inngest client and function seams",
+    hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "createInngestFunctions"]) &&
+      !source.includes("rawrHqManifest.inngest"),
+    "rawr host must compose runtime workflow functions from manifest-owned workflow shells instead of manifest-owned inngest seams",
   );
   assertCondition(
-    hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createCoordinationInngestFunction") &&
-      hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createInngestServeHandler") &&
-      hasIdentifierCall(rawrAst, "createCoordinationInngestFunction") &&
-      hasIdentifierCall(rawrAst, "createInngestServeHandler"),
-    "rawr host must compose the runtime-owned inngest bundle through the coordination inngest seam",
+    hasNamedImport(rawrAst, "inngest/bun", "serve") &&
+      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "createInngestFunctions"]) &&
+      hasIdentifierCall(rawrAst, "inngestServe") &&
+      !hasImport(rawrAst, "@rawr/plugin-api-coordination/server") &&
+      !hasImport(rawrAst, "@rawr/plugin-workflows-support-example/server"),
+    "rawr host must compose the runtime-owned inngest bundle through manifest-owned workflow seams",
+  );
+  assertCondition(
+    /contextFactory:\s*\(request,\s*deps\)\s*=>\s*rawrHqManifest\.orpc\.enrichContext\(createRequestScopedBoundaryContext\(request,\s*deps\)\)/s.test(
+      source,
+    ),
+    "rawr host must keep workflow context enrichment out of canonical ORPC registration",
   );
   assertCondition(
     !hasNamedImport(rawrAst, "./orpc", "createOrpcRouter") && !hasIdentifierCall(rawrAst, "createOrpcRouter"),
@@ -244,37 +251,52 @@ async function verifyRouteNegativeAssertions() {
 }
 
 async function verifyObservabilityContract() {
-  await mustExist("packages/coordination-observability/package.json");
-  await mustExist("packages/coordination-observability/test/observability.test.ts");
+  await mustExist("services/coordination/src/events.ts");
+  await mustExist("services/coordination/test/run-lifecycle-telemetry.test.ts");
+  await mustExist("plugins/workflows/coordination/test/observability.test.ts");
 }
 
 async function verifyTelemetryContract() {
   await Promise.all([
     mustExist("scripts/phase-c/verify-telemetry-contract.mjs"),
-    mustExist("packages/coordination-observability/src/events.ts"),
-    mustExist("packages/coordination-observability/test/storage-lock-telemetry.test.ts"),
+    mustExist("services/coordination/src/events.ts"),
+    mustExist("services/coordination/test/run-lifecycle-telemetry.test.ts"),
+    mustExist("plugins/workflows/coordination/src/events.ts"),
+    mustExist("plugins/workflows/coordination/src/trace-links.ts"),
+    mustExist("plugins/workflows/coordination/test/observability.test.ts"),
     mustExist("apps/server/test/ingress-signature-observability.test.ts"),
   ]);
 
-  const [eventsSource, phaseCTelemetryVerifierSource, packageJsonRaw] = await Promise.all([
-    fs.readFile(path.join(root, "packages/coordination-observability/src/events.ts"), "utf8"),
-    fs.readFile(path.join(root, "scripts/phase-c/verify-telemetry-contract.mjs"), "utf8"),
-    fs.readFile(path.join(root, "package.json"), "utf8"),
-  ]);
+  const [serviceEventsSource, pluginEventsSource, traceLinksSource, phaseCTelemetryVerifierSource, packageJsonRaw] =
+    await Promise.all([
+      fs.readFile(path.join(root, "services/coordination/src/events.ts"), "utf8"),
+      fs.readFile(path.join(root, "plugins/workflows/coordination/src/events.ts"), "utf8"),
+      fs.readFile(path.join(root, "plugins/workflows/coordination/src/trace-links.ts"), "utf8"),
+      fs.readFile(path.join(root, "scripts/phase-c/verify-telemetry-contract.mjs"), "utf8"),
+      fs.readFile(path.join(root, "package.json"), "utf8"),
+    ]);
   const packageJson = JSON.parse(packageJsonRaw);
   const scripts = packageJson.scripts ?? {};
 
   assertCondition(
-    /export\s+type\s+CreateDeskEventInput\s*=/.test(eventsSource),
-    "events.ts must export CreateDeskEventInput",
+    /export\s+const\s+REQUIRED_RUN_LIFECYCLE_EVENT_TYPES\s*=/.test(serviceEventsSource),
+    "service events.ts must export REQUIRED_RUN_LIFECYCLE_EVENT_TYPES",
   );
   assertCondition(
-    /export\s+type\s+TraceLinkOptions\s*=/.test(eventsSource),
-    "events.ts must export TraceLinkOptions",
+    /export\s+const\s+REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT\s*=/.test(serviceEventsSource),
+    "service events.ts must export REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT",
   );
   assertCondition(
-    /assertRunLifecycleStatusContract\s*\(\s*input\.type\s*,\s*input\.status\s*\)/.test(eventsSource),
-    "events.ts must enforce lifecycle status contract",
+    /assertRunLifecycleStatusContract\s*\(\s*input\.type\s*,\s*input\.status\s*\)/.test(serviceEventsSource),
+    "service events.ts must enforce lifecycle status contract",
+  );
+  assertCondition(
+    /export\s+type\s+CreateDeskEventInput\s*=/.test(pluginEventsSource),
+    "workflow plugin events.ts must export CreateDeskEventInput",
+  );
+  assertCondition(
+    /export\s+type\s+TraceLinkOptions\s*=/.test(traceLinksSource),
+    "workflow plugin trace-links.ts must export TraceLinkOptions",
   );
   assertCondition(
     phaseCTelemetryVerifierSource.includes("phase-c telemetry contract verified"),
