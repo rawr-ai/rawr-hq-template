@@ -18,6 +18,10 @@
       "types": "./src/service/contract.ts",
       "default": "./src/service/contract.ts"
     },
+    "./service/modules/state/contract": {
+      "types": "./src/service/modules/state/contract.ts",
+      "default": "./src/service/modules/state/contract.ts"
+    },
     "./router": {
       "types": "./src/router.ts",
       "default": "./src/router.ts"

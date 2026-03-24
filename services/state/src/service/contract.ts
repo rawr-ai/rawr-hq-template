@@ -6,18 +6,10 @@
  * `src/service/impl.ts` implements that root contract once; module-local
  * composition then happens below that seam.
  */
-import {
-  GetStateInputSchema,
-  GetStateOutputSchema,
-  contract as state,
-} from "./modules/state/contract";
+import { contract as state } from "./modules/state/contract";
 
 export const contract = {
-  ...state,
+  state,
 };
 
 export type Contract = typeof contract;
-export {
-  GetStateInputSchema,
-  GetStateOutputSchema,
-};

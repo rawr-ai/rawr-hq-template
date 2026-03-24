@@ -96,19 +96,21 @@ describe("state observability", () => {
     }));
 
     await withRecordingSpan(async (span) => {
-      const result = await client.getState({}, invocation("trace-state-observability"));
+      const result = await client.state.getState({}, invocation("trace-state-observability"));
 
       expect(result.authorityRepoRoot).toBe("/tmp/rawr-state-observability");
-      expect(span.attributes["rawr.orpc.path"]).toBe("getState");
+      expect(span.attributes["rawr.orpc.path"]).toBe("state.getState");
       expect(span.attributes["rawr.orpc.domain"]).toBe("state");
       expect(span.attributes["rawr.orpc.audience"]).toBe("internal");
       expect(span.attributes["rawr.state.repo_root"]).toBe("/tmp/rawr-state-observability");
       expect(span.attributes["rawr.state.invocation_trace_id"]).toBe("trace-state-observability");
+      expect(span.attributes["rawr.state.module"]).toBe("state");
       expect(span.events.map((event) => event.name)).toEqual(expect.arrayContaining([
         "rawr.orpc.procedure.started",
         "rawr.orpc.procedure.succeeded",
         "state.procedure.started",
         "state.procedure.succeeded",
+        "state.state.module.observed",
       ]));
     });
 
@@ -117,9 +119,20 @@ describe("state observability", () => {
       && entry.payload.repoRoot === "/tmp/rawr-state-observability"
       && entry.payload.invocationTraceId === "trace-state-observability"
       && entry.payload.outcome === "success")).toBe(true);
+    expect(logs.some((entry) =>
+      entry.event === "state.state.module"
+      && entry.payload.layer === "module"
+      && entry.payload.module === "state"
+      && entry.payload.path === "state.getState"
+      && entry.payload.repoRoot === "/tmp/rawr-state-observability"
+      && entry.payload.invocationTraceId === "trace-state-observability")).toBe(true);
     expect(analytics.some((entry) =>
       entry.event === "orpc.procedure"
-      && entry.payload.path === "getState"
+      && entry.payload.path === "state.getState"
+      && entry.payload.analytics_layer === "module"
+      && entry.payload.analytics_module === "state"
+      && entry.payload.analytics_path === "state.getState"
+      && entry.payload.analytics_outcome === "success"
       && entry.payload.analytics_repo_root === "/tmp/rawr-state-observability"
       && entry.payload.analytics_trace_id === "trace-state-observability")).toBe(true);
   });
@@ -133,11 +146,12 @@ describe("state observability", () => {
       analytics,
     }));
 
-    await expect(client.getState({}, invocation("trace-state-no-span"))).resolves.toMatchObject({
+    await expect(client.state.getState({}, invocation("trace-state-no-span"))).resolves.toMatchObject({
       authorityRepoRoot: "/tmp/rawr-state-no-span",
     });
     expect(logs.some((entry) => entry.event === "orpc.procedure")).toBe(true);
     expect(logs.some((entry) => entry.event === "state.procedure")).toBe(true);
+    expect(logs.some((entry) => entry.event === "state.state.module")).toBe(true);
     expect(analytics.some((entry) => entry.event === "orpc.procedure")).toBe(true);
   });
 });

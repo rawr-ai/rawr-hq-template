@@ -64,7 +64,11 @@ if (!routerSource.includes("export const router")) {
   process.exit(1);
 }
 
-if (!routerSource.includes('from "./modules/state/router"') || !routerSource.includes("...state")) {
+if (
+  !routerSource.includes('from "./modules/state/router"')
+  || !routerSource.includes("state,")
+  || routerSource.includes("...state")
+) {
   console.error("state structural failed: root router seam must stay composition-only over the state module.");
   process.exit(1);
 }
@@ -91,10 +95,16 @@ if (
 
 if (
   !contractSource.includes('from "./modules/state/contract"')
-  || !contractSource.includes("GetStateOutputSchema")
+  || !contractSource.includes("state,")
+  || contractSource.includes("GetStateOutputSchema")
   || !moduleContractSource.includes("authorityRepoRoot")
 ) {
   console.error("state structural failed: authority metadata contract missing.");
+  process.exit(1);
+}
+
+if (!pkg.exports?.["./service/modules/state/contract"]) {
+  console.error("state structural failed: module contract export missing.");
   process.exit(1);
 }
 

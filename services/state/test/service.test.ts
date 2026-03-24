@@ -29,7 +29,7 @@ describe("state service", () => {
       repoRoot: aliasRepoRoot,
     }));
 
-    const result = await client.getState({}, invocation("trace-state-authority"));
+    const result = await client.state.getState({}, invocation("trace-state-authority"));
 
     expect(result.authorityRepoRoot).toBe(await fs.realpath(authorityRepoRoot));
   });
