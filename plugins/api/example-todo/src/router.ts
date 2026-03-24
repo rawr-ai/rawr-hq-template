@@ -1,8 +1,8 @@
-import { implement } from "@orpc/server";
+import { createApiRouterBuilder } from "@rawr/hq-sdk/apis";
 import type { ExampleTodoApiContext, ExampleTodoClientResolver } from "./context";
 import { exampleTodoApiContract } from "./contract";
 
-const os = implement<typeof exampleTodoApiContract, ExampleTodoApiContext>(exampleTodoApiContract);
+const os = createApiRouterBuilder<typeof exampleTodoApiContract, ExampleTodoApiContext>(exampleTodoApiContract);
 
 export function createExampleTodoApiRouter(resolveClient: ExampleTodoClientResolver) {
   return os.router({

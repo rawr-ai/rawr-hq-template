@@ -1,5 +1,7 @@
 import type { Inngest } from "inngest";
 import type { AnyContractRouterObject, AnyProcedureRouterObject } from "../orpc/router-shapes";
+import { createContextualRouterBuilder } from "../orpc/factory/implementer";
+import type { Context } from "@orpc/server";
 
 export type WorkflowSurfaceContribution<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
@@ -142,6 +144,13 @@ export function defineWorkflowPlugin<
     namespace: "workflows",
     ...input,
   };
+}
+
+export function createWorkflowRouterBuilder<
+  const TContract extends AnyContractRouterObject,
+  TContext extends Context,
+>(contract: TContract) {
+  return createContextualRouterBuilder<TContract, TContext>(contract);
 }
 
 export function composeWorkflowPlugins<const TPlugins extends readonly WorkflowPluginRegistration[]>(

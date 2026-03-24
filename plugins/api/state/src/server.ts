@@ -13,7 +13,6 @@ export function registerStateApiPlugin(input: {
   resolveClient: StateClientResolver;
 }) {
   return defineApiPlugin({
-    namespace: "orpc" as const,
     internal: {
       contract: stateApiContract,
       router: createStateRouter(input.resolveClient),

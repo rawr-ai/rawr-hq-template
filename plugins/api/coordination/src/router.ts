@@ -1,8 +1,8 @@
-import { implement } from "@orpc/server";
+import { createApiRouterBuilder } from "@rawr/hq-sdk/apis";
 import { coordinationApiContract } from "./contract";
 import type { CoordinationApiContext, CoordinationAuthoringClientResolver } from "./context";
 
-const os = implement<typeof coordinationApiContract, CoordinationApiContext>(coordinationApiContract);
+const os = createApiRouterBuilder<typeof coordinationApiContract, CoordinationApiContext>(coordinationApiContract);
 
 function createCoordinationRouter(resolveClient: CoordinationAuthoringClientResolver) {
   return os.router({

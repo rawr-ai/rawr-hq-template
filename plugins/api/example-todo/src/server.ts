@@ -18,7 +18,6 @@ export function registerExampleTodoApiPlugin(input: {
   } as const;
 
   return defineApiPlugin({
-    namespace: "orpc" as const,
     internal,
     published: internal,
   });

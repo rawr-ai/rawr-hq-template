@@ -14,7 +14,6 @@ export function registerCoordinationApiPlugin(input: {
   resolveClient: CoordinationAuthoringClientResolver;
 }) {
   return defineApiPlugin({
-    namespace: "orpc" as const,
     internal: {
       contract: coordinationApiContract,
       router: createCoordinationApiRouter(input.resolveClient),

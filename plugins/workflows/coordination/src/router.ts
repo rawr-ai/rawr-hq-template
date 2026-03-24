@@ -1,11 +1,11 @@
-import { implement } from "@orpc/server";
+import { createWorkflowRouterBuilder } from "@rawr/hq-sdk/workflows";
 import { coordinationWorkflowContract } from "./contract";
 import type { CoordinationWorkflowContext } from "./context";
 import {
   createCoordinationWorkflowProjectionClient,
 } from "./projection-bridge";
 
-const os = implement<typeof coordinationWorkflowContract, CoordinationWorkflowContext>(
+const os = createWorkflowRouterBuilder<typeof coordinationWorkflowContract, CoordinationWorkflowContext>(
   coordinationWorkflowContract,
 );
 
