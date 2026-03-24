@@ -10,6 +10,10 @@
       "types": "./index.ts",
       "default": "./index.ts"
     },
+    "./testing": {
+      "types": "./testing.ts",
+      "default": "./testing.ts"
+    },
     "./server": {
       "types": "./server.ts",
       "default": "./server.ts"
