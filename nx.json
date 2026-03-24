@@ -2,7 +2,29 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
     "default": ["{projectRoot}/**/*"],
-    "production": ["default", "!{projectRoot}/dist/**", "!{projectRoot}/coverage/**"]
+    "production": ["default", "!{projectRoot}/dist/**", "!{projectRoot}/coverage/**"],
+    "architectureGlobals": [
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/eslint.config.mjs",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/scripts/phase-a/**/*.mjs",
+      "{workspaceRoot}/scripts/phase-2_5/**/*.mjs",
+      "{workspaceRoot}/scripts/phase-03/**/*.mjs",
+      "{workspaceRoot}/tools/architecture-inventory/**/*.json"
+    ]
   },
-  "targetDefaults": {}
+  "targetDefaults": {
+    "sync": {
+      "cache": false,
+      "inputs": ["default", "^default", "architectureGlobals"]
+    },
+    "structural": {
+      "cache": false,
+      "dependsOn": ["sync"],
+      "inputs": ["default", "^default", "architectureGlobals"]
+    }
+  },
+  "sync": {
+    "globalGenerators": ["./tools/nx/generators.json:sync-slice-0-inventory"]
+  }
 }

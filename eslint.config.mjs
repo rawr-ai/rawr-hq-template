@@ -4,11 +4,11 @@ import tsParser from "@typescript-eslint/parser";
 const boundaryRule = [
   "error",
   {
-    allow: [],
+    allow: ["../../../rawr.hq"],
     depConstraints: [
       {
         sourceTag: "type:app",
-        onlyDependOnLibsWithTags: ["*"]
+        onlyDependOnLibsWithTags: ["type:package", "type:plugin"]
       },
       {
         sourceTag: "type:service",
@@ -20,7 +20,7 @@ const boundaryRule = [
       },
       {
         sourceTag: "type:plugin",
-        notDependOnLibsWithTags: ["type:plugin"]
+        notDependOnLibsWithTags: ["type:plugin", "type:app"]
       }
     ],
     enforceBuildableLibDependency: false
@@ -39,8 +39,7 @@ export default [
       "**/*.test.*",
       "apps/cli/bin/**",
       "apps/server/openapi/**",
-      "apps/server/scripts/**",
-      "apps/server/src/rawr.ts"
+      "apps/server/scripts/**"
     ]
   },
   {
