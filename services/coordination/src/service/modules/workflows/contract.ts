@@ -8,7 +8,7 @@ import {
   SaveWorkflowOutputSchema,
   ValidateWorkflowInputSchema,
   ValidateWorkflowOutputSchema,
-} from "../../../domain/schemas";
+} from "./schemas";
 import { ocBase } from "../../base";
 import {
   INVALID_WORKFLOW_ID,
@@ -16,7 +16,7 @@ import {
 } from "../../shared/errors";
 import { WORKFLOW_VALIDATION_FAILED } from "./errors";
 
-export const contract = {
+export const workflowsContract = {
   listWorkflows: ocBase
     .meta({ entity: "workflow", idempotent: true })
     .input(schema(ListWorkflowsInputSchema))
@@ -48,3 +48,5 @@ export const contract = {
       WORKFLOW_NOT_FOUND,
     }),
 };
+
+export const contract = workflowsContract;

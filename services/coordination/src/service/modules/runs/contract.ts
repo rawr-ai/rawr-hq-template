@@ -6,7 +6,7 @@ import {
   GetRunTimelineOutputSchema,
   QueueRunInputSchema,
   QueueRunOutputSchema,
-} from "../../../domain/schemas";
+} from "./schemas";
 import { ocBase } from "../../base";
 import {
   INVALID_WORKFLOW_ID,
@@ -14,7 +14,7 @@ import {
 } from "../../shared/errors";
 import { INVALID_RUN_ID, RUN_NOT_FOUND, RUN_QUEUE_FAILED } from "./errors";
 
-export const contract = {
+export const runsContract = {
   queueRun: ocBase
     .meta({ entity: "run", idempotent: false })
     .input(schema(QueueRunInputSchema))
@@ -44,3 +44,5 @@ export const contract = {
       RUN_NOT_FOUND,
     }),
 };
+
+export const contract = runsContract;

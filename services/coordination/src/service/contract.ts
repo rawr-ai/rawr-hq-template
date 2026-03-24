@@ -9,17 +9,23 @@ export {
   GetRunStatusOutputSchema,
   GetRunTimelineInputSchema,
   GetRunTimelineOutputSchema,
+  QueueRunInputSchema,
+  QueueRunOutputSchema,
+} from "./modules/runs/schemas";
+
+export {
   GetWorkflowInputSchema,
   GetWorkflowOutputSchema,
   ListWorkflowsInputSchema,
   ListWorkflowsOutputSchema,
-  QueueRunInputSchema,
-  QueueRunOutputSchema,
-  RunStatusSchema,
   SaveWorkflowInputSchema,
   SaveWorkflowOutputSchema,
   ValidateWorkflowInputSchema,
   ValidateWorkflowOutputSchema,
+} from "./modules/workflows/schemas";
+
+export {
+  RunStatusSchema,
   ValidationResultSchema,
 } from "../domain/schemas";
 

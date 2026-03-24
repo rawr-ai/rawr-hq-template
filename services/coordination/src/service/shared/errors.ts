@@ -1,6 +1,5 @@
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { RunStatusSchema } from "../../domain/schemas";
 
 const InvalidWorkflowIdDataSchema = Type.Object(
   {
