@@ -1,12 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { implement, type RouterClient, createRouterClient } from "@orpc/server";
+import { type RouterClient, createRouterClient } from "@orpc/server";
 import { createAuthoringClient as createCoordinationAuthoringClient, type AuthoringClient as CoordinationAuthoringClient } from "@rawr/coordination/authoring";
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import {
   composeApiPlugins,
-  type AnyContractRouterObject,
-  type AnyProcedureRouterObject,
 } from "@rawr/hq-sdk/apis";
+import { materializeRequestScopedPluginSurfaces } from "@rawr/hq-sdk/composition";
 import {
   composeWorkflowPlugins,
 } from "@rawr/hq-sdk/workflows";
@@ -149,39 +148,6 @@ function createCoordinationAuthoringBoundary(
   } satisfies CoordinationAuthoringBoundary;
 }
 
-function isMergeableSurfaceNode(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value) && !("~orpc" in (value as Record<string, unknown>));
-}
-
-function mergeDeclaredSurfaceTrees<TTree extends object>(
-  trees: readonly TTree[],
-  path: readonly string[] = [],
-): TTree {
-  const merged: Record<string, unknown> = {};
-
-  for (const tree of trees) {
-    for (const [key, value] of Object.entries(tree)) {
-      if (!(key in merged)) {
-        merged[key] = value;
-        continue;
-      }
-
-      const existing = merged[key];
-      if (isMergeableSurfaceNode(existing) && isMergeableSurfaceNode(value)) {
-        merged[key] = mergeDeclaredSurfaceTrees(
-          [existing, value] as readonly Record<string, unknown>[],
-          [...path, key],
-        );
-        continue;
-      }
-
-      throw new Error(`duplicate declared surface at ${[...path, key].join(".")}`);
-    }
-  }
-
-  return merged as TTree;
-}
-
 export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
   const coordinationAuthoringClientsByRepoRoot = new Map<string, CoordinationAuthoringClient>();
   const exampleTodoClientsByRepoRoot = new Map<string, ExampleTodoClient>();
@@ -246,23 +212,10 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
     supportExampleWorkflowPlugin,
     coordinationWorkflowPlugin,
   ] as const);
-  const composedOrpcContract = mergeDeclaredSurfaceTrees<AnyContractRouterObject>([
-    composedApiSurface.internalContract,
-    composedWorkflowSurface.internalContract,
-  ] as const);
-  const requestScopedOrpc = implement(composedOrpcContract).$context<BoundaryRequestSupportContext>();
-  const requestScopedPublishedApi = implement(composedApiSurface.publishedContract).$context<BoundaryRequestSupportContext>();
-  const requestScopedPublishedWorkflow = implement(composedWorkflowSurface.publishedContract)
-    .$context<BoundaryRequestSupportContext>();
-  const requestScopedInternalWorkflow = implement(composedWorkflowSurface.internalContract)
-    .$context<BoundaryRequestSupportContext>();
-  const composedOrpcRouter = requestScopedOrpc.router(mergeDeclaredSurfaceTrees<AnyProcedureRouterObject>([
-    composedApiSurface.internalRouter,
-    composedWorkflowSurface.internalRouter,
-  ] as const));
-  const publishedWorkflowRouter = requestScopedPublishedWorkflow.router(composedWorkflowSurface.publishedRouter);
-  const internalWorkflowRouter = requestScopedInternalWorkflow.router(composedWorkflowSurface.internalRouter);
-  const publishedApiRouter = requestScopedPublishedApi.router(composedApiSurface.publishedRouter);
+  const materializedSurfaces = materializeRequestScopedPluginSurfaces<BoundaryRequestSupportContext, typeof composedWorkflowSurface.createInngestFunctions>({
+    api: composedApiSurface,
+    workflows: composedWorkflowSurface,
+  });
 
   return {
     fixtures: {
@@ -274,26 +227,8 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
         resolveClient: resolveSupportExampleClient,
       },
     },
-    orpc: {
-      contract: composedOrpcContract,
-      router: composedOrpcRouter,
-      published: {
-        contract: composedApiSurface.publishedContract,
-        router: publishedApiRouter,
-      },
-    },
-    workflows: {
-      surfaces: composedWorkflowSurface.surfaces,
-      internal: {
-        contract: composedWorkflowSurface.internalContract,
-        router: internalWorkflowRouter,
-      },
-      published: {
-        contract: composedWorkflowSurface.publishedContract,
-        router: publishedWorkflowRouter,
-      },
-      createInngestFunctions: composedWorkflowSurface.createInngestFunctions,
-    },
+    orpc: materializedSurfaces.orpc,
+    workflows: materializedSurfaces.workflows,
   } as const;
 }
 

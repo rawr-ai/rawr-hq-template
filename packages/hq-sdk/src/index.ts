@@ -6,6 +6,7 @@ export type {
 } from "./orpc/baseline/types";
 export { createBaseProvider } from "./orpc/baseline/middleware";
 export { createContractBuilder } from "./orpc/factory/contract";
+export * from "./composition";
 export type {
   ServiceDeclaration,
   ServiceTypesOf,
