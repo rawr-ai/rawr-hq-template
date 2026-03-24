@@ -6,10 +6,10 @@ import { createClient as createExampleTodoClient, type Client as ExampleTodoClie
 import { supportExampleRouter } from "@rawr/support-example/router";
 import { Inngest } from "inngest";
 import { createHostLoggerAdapter } from "./apps/server/src/logging";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
 import { registerExampleTodoApiPlugin } from "./plugins/api/example-todo";
 import { createSupportExampleInngestFunctions, registerSupportExampleWorkflowPlugin } from "./plugins/workflows/support-example";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "./services/example-todo/src/orpc/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedInMemoryDbPoolAdapter } from "./services/example-todo/src/orpc/host-adapters/sql/embedded-in-memory";
 
 // Keep capability fixture state stable per repo root across requests in local dev/test runs.
 type SupportExampleClient = RouterClient<typeof supportExampleRouter>;

@@ -15,7 +15,7 @@ import {
   type InferConfig,
   type InferDeps,
   type InferScope,
-} from "./orpc/boundary/domain-package";
+} from "@rawr/hq-sdk/boundary";
 import { router } from "./router";
 
 const domain = defineDomainPackage(router);

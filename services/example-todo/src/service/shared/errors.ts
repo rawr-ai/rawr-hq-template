@@ -5,7 +5,7 @@
  * Export individual reusable error definitions directly. Procedures can import
  * these and pass them to `.errors(...)` without an intermediate map wrapper.
  */
-import { schema } from "../../orpc-sdk";
+import { schema } from "@rawr/hq-sdk";
 import type { ErrorMapItem } from "@orpc/server";
 import { Type } from "typebox";
 

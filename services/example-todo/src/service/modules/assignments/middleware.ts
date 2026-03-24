@@ -17,7 +17,7 @@ import {
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
-import type { Sql } from "../../../orpc-sdk";
+import type { Sql } from "@rawr/hq-sdk";
 import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 import { createRepository as createAssignmentRepository } from "./repository";

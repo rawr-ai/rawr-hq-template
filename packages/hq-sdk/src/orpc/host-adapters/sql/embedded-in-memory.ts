@@ -1,7 +1,30 @@
 import type { DbPool, Sql } from "../../ports/db";
-import type { Assignment } from "../../../service/modules/assignments/schemas";
-import type { Tag } from "../../../service/modules/tags/schemas";
-import type { Task } from "../../../service/modules/tasks/schemas";
+
+type EmbeddedTaskRow = {
+  id: string;
+  workspaceId: string;
+  title: string;
+  description: string | null;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type EmbeddedTagRow = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  color: string;
+  createdAt: string;
+};
+
+type EmbeddedAssignmentRow = {
+  id: string;
+  workspaceId: string;
+  taskId: string;
+  tagId: string;
+  createdAt: string;
+};
 
 /**
  * @fileoverview Embedded in-memory SQL adapter.
@@ -19,9 +42,9 @@ export type EmbeddedInMemorySqlOptions = {
 export function createEmbeddedInMemorySqlAdapter(
   options: EmbeddedInMemorySqlOptions = {},
 ): Sql {
-  const tasks = new Map<string, Task>();
-  const tags = new Map<string, Tag>();
-  const assignments = new Map<string, Assignment>();
+  const tasks = new Map<string, EmbeddedTaskRow>();
+  const tags = new Map<string, EmbeddedTagRow>();
+  const assignments = new Map<string, EmbeddedAssignmentRow>();
 
   function shouldFail(text: string): boolean {
     return options.failIfQueryIncludes?.some((pattern) => text.includes(pattern)) ?? false;
@@ -39,7 +62,7 @@ export function createEmbeddedInMemorySqlAdapter(
     }
 
     if (text.includes("INSERT INTO tasks")) {
-      const task: Task = {
+      const task: EmbeddedTaskRow = {
         id: String(params[0]),
         workspaceId: String(params[1]),
         title: String(params[2]),
@@ -66,7 +89,7 @@ export function createEmbeddedInMemorySqlAdapter(
     }
 
     if (text.includes("INSERT INTO tags")) {
-      const tag: Tag = {
+      const tag: EmbeddedTagRow = {
         id: String(params[0]),
         workspaceId: String(params[1]),
         name: String(params[2]),
@@ -88,7 +111,7 @@ export function createEmbeddedInMemorySqlAdapter(
     }
 
     if (text.includes("INSERT INTO task_tags")) {
-      const assignment: Assignment = {
+      const assignment: EmbeddedAssignmentRow = {
         id: String(params[0]),
         workspaceId: String(params[1]),
         taskId: String(params[2]),
