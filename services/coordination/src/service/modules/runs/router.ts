@@ -38,16 +38,14 @@ const queueRun = module.queueRun.handler(async ({ context, input, errors }) => {
 
   const runId = parsedRunId.runId;
   const normalizedInput = toJsonValue(input.input ?? {});
+  const runExecution = context.provided.runExecution;
 
   try {
-    const queuedRun = context.runsRuntime?.queueRun({
+    const queuedRun = runExecution.queueRun({
       workflow,
       runId,
       input: normalizedInput,
     });
-    if (!queuedRun) {
-      throw new Error("coordination runs runtime is not configured");
-    }
     return await queuedRun;
   } catch (err) {
     const failedRun = createQueueFailureRun({
@@ -56,7 +54,7 @@ const queueRun = module.queueRun.handler(async ({ context, input, errors }) => {
       workflowVersion: workflow.version,
       input: normalizedInput,
       error: err instanceof Error ? err.message : String(err),
-      createTraceLinks: context.runsRuntime?.createTraceLinks,
+      createTraceLinks: runExecution.createTraceLinks,
     });
 
     try {
