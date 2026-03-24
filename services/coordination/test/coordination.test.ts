@@ -63,7 +63,7 @@ describe("coordination public service shell", () => {
     expect(coordination.createClient).toBeTypeOf("function");
     expect(coordination.router).toBe(packageRouter);
     expect(packageRouter).toBe(serviceRouter);
-    expect(Object.keys(coordination.router)).toEqual(["workflows", "runs"]);
+    expect(Object.keys(coordination.router)).toEqual(["workflows"]);
     expect("coordinationContract" in coordination).toBe(false);
     expect("contract" in coordination).toBe(false);
     expect("ensureCoordinationStorage" in coordination).toBe(false);
@@ -72,7 +72,7 @@ describe("coordination public service shell", () => {
     expect("typeBoxStandardSchema" in coordination).toBe(false);
     expect("coordinationFailure" in coordinationNode).toBe(false);
     expect("validateWorkflow" in coordinationNode).toBe(false);
-    expect(Object.keys(serviceContract)).toEqual(["workflows", "runs"]);
+    expect(Object.keys(serviceContract)).toEqual(["workflows"]);
   });
 
   it("keeps workflow routes callable through local narrowing without touching run dispatch", async () => {
@@ -115,7 +115,7 @@ describe("coordination public service shell", () => {
     expect(Object.keys(serviceRouter.workflows)).toEqual(Object.keys(serviceContract.workflows));
   });
 
-  it("preserves the canonical client surface while routing storage through module providers", async () => {
+  it("keeps the client surface narrowed to workflow authoring procedures", async () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-coord-client-"));
     await ensureCoordinationStorage(repoRoot);
     await saveWorkflow(repoRoot, baseWorkflow);
@@ -124,18 +124,6 @@ describe("coordination public service shell", () => {
       deps: {
         logger: createEmbeddedPlaceholderLoggerAdapter(),
         analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-        runsRuntime: {
-          queueRun: async () => {
-            throw new Error("queue exploded");
-          },
-          createTraceLinks: ({ runId }) => [
-            {
-              provider: "rawr" as const,
-              label: "coordination run",
-              url: `https://rawr.test/runs/${runId}`,
-            },
-          ],
-        },
       },
       scope: { repoRoot },
       config: {},
@@ -155,43 +143,7 @@ describe("coordination public service shell", () => {
     ).resolves.toMatchObject({
       workflows: [{ workflowId: "wf-a" }],
     });
-
-    await expect(
-      client.runs.queueRun(
-        {
-          workflowId: "wf-a",
-          runId: "run-queue-failure",
-          input: { ticket: "T-1" },
-        },
-        {
-          context: {
-            invocation: {
-              traceId: "trace-coordination-client-queue",
-            },
-          },
-        },
-      ),
-    ).rejects.toBeTruthy();
-
-    await expect(coordinationNode.getRunStatus(repoRoot, "run-queue-failure")).resolves.toMatchObject({
-      status: "failed",
-      workflowId: "wf-a",
-      finalization: {
-        contract: {
-          delivery: "at-least-once",
-          exactlyOnce: false,
-        },
-      },
-    });
-
-    await expect(coordinationNode.getRunTimeline(repoRoot, "run-queue-failure")).resolves.toMatchObject([
-      {
-        runId: "run-queue-failure",
-        workflowId: "wf-a",
-        type: "run.failed",
-        status: "failed",
-      },
-    ]);
+    expect("runs" in client).toBe(false);
   });
 });
 

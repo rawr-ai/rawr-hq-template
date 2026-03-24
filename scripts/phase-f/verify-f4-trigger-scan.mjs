@@ -13,20 +13,20 @@ const THRESHOLDS = {
 await Promise.all([
   mustExist("apps/hq/src/manifest.ts"),
   mustExist("services/coordination/src/service/modules/workflows/router.ts"),
-  mustExist("services/coordination/src/service/modules/runs/router.ts"),
+  mustExist("plugins/workflows/coordination/src/router.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
-const [manifestSource, workflowsRouterSource, runsRouterSource, hqDriftTestSource, triggerDriftTestSource] = await Promise.all([
+const [manifestSource, workflowsRouterSource, workflowPluginRouterSource, hqDriftTestSource, triggerDriftTestSource] = await Promise.all([
   readFile("apps/hq/src/manifest.ts"),
   readFile("services/coordination/src/service/modules/workflows/router.ts"),
-  readFile("services/coordination/src/service/modules/runs/router.ts"),
+  readFile("plugins/workflows/coordination/src/router.ts"),
   readFile("apps/hq/test/orpc-contract-drift.test.ts"),
   readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
-const coordinationRouterSource = `${workflowsRouterSource}\n${runsRouterSource}`;
+const coordinationRouterSource = `${workflowsRouterSource}\n${workflowPluginRouterSource}`;
 
 const capabilitiesBlockMatch = manifestSource.match(/workflows:\s*\{[\s\S]*?capabilities:\s*\{([\s\S]*?)\}\s*,\s*triggerRouter:/u);
 const capabilitiesBlock = capabilitiesBlockMatch?.[1] ?? "";

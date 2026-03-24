@@ -3,7 +3,7 @@ import { minifyContractRouter } from "@orpc/contract";
 import {
   GetRunStatusInputSchema,
   QueueRunInputSchema,
-} from "@rawr/coordination/service/modules/runs/schemas";
+} from "@rawr/plugin-workflows-coordination/server";
 import { GetWorkflowInputSchema } from "@rawr/coordination/service/modules/workflows/schemas";
 import { RunStatusSchema } from "@rawr/coordination/domain/schemas";
 import type { JsonValue } from "@rawr/coordination";
