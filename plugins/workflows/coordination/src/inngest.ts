@@ -68,7 +68,9 @@ export type CoordinationRuntimeAdapter = WorkflowRuntimeAdapter<
   RunStatusV1,
   DeskRunEventV1,
   JsonValue
->;
+> & Readonly<{
+  getRunTimeline: (runId: string) => Promise<DeskRunEventV1[]>;
+}>;
 
 export type QueueCoordinationRunOptions = Readonly<{
   client: Inngest;

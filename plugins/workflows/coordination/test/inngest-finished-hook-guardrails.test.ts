@@ -36,6 +36,7 @@ function createRuntimeMock() {
     readMemory: async () => ({ previous: true }),
     writeMemory: async () => {},
     getRunStatus: async (runId) => statuses.get(runId) ?? null,
+    getRunTimeline: async (runId) => timelines.get(runId) ?? [],
     saveRunStatus: async (run) => {
       statuses.set(run.runId, run);
     },

@@ -9,10 +9,9 @@ import {
   type RunStatusV1,
 } from "@rawr/coordination";
 import { createStampedDeskEvent } from "@rawr/coordination/events";
-import { getRunTimeline } from "@rawr/coordination/node";
 import { coordinationWorkflowContract } from "./contract";
 import {
-  createCoordinationWorkflowAuthoringClient,
+  type CoordinationWorkflowAuthoringClientResolver,
   type CoordinationWorkflowContext,
 } from "./context";
 import { defaultTraceLinks } from "./trace-links";
@@ -22,7 +21,9 @@ const os = createWorkflowRouterBuilder<typeof coordinationWorkflowContract, Coor
   coordinationWorkflowContract,
 );
 
-export function createCoordinationWorkflowRouter() {
+export function createCoordinationWorkflowRouter(
+  resolveAuthoringClient: CoordinationWorkflowAuthoringClientResolver,
+) {
   return os.router({
     coordination: {
       queueRun: os.coordination.queueRun.handler(async ({ context, input, errors }) => {
@@ -36,7 +37,7 @@ export function createCoordinationWorkflowRouter() {
           });
         }
 
-        const workflow = await createCoordinationWorkflowAuthoringClient(context)
+        const workflow = await resolveAuthoringClient(context.repoRoot)
           .getWorkflow(
             { workflowId },
             createWorkflowTraceForwardingOptions(context),
@@ -140,7 +141,7 @@ export function createCoordinationWorkflowRouter() {
 
         return {
           runId,
-          timeline: await getRunTimeline(context.repoRoot, runId),
+          timeline: await context.runtime.getRunTimeline(runId),
         };
       }),
     },

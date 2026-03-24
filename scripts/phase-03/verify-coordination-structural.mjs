@@ -204,9 +204,9 @@ if (pluginContractSource.includes("@rawr/coordination/service/contract")) {
 
 if (
   !pluginRouterSource.includes("queueCoordinationRunWithInngest") ||
-  !pluginRouterSource.includes("createCoordinationWorkflowAuthoringClient(context)") ||
+  !pluginRouterSource.includes("resolveAuthoringClient(context.repoRoot)") ||
   !pluginRouterSource.includes("context.runtime.getRunStatus") ||
-  !pluginRouterSource.includes("getRunTimeline(context.repoRoot, runId)") ||
+  !pluginRouterSource.includes("context.runtime.getRunTimeline(runId)") ||
   !pluginRouterSource.includes("RUN_FINALIZATION_CONTRACT_V1")
 ) {
   fail("workflow plugin router must own queue/status/timeline handling directly.");
@@ -214,9 +214,10 @@ if (
 
 if (
   pluginRouterSource.includes("createCoordinationWorkflowProjectionClient") ||
-  pluginRouterSource.includes("projection-bridge")
+  pluginRouterSource.includes("projection-bridge") ||
+  pluginRouterSource.includes("@rawr/coordination/node")
 ) {
-  fail("workflow plugin router must not forward run routes through the service client bridge.");
+  fail("workflow plugin router must not forward run routes through the service client bridge or node backdoors.");
 }
 
 if (
@@ -227,10 +228,17 @@ if (
 }
 
 if (
-  !pluginContextSource.includes("createCoordinationWorkflowAuthoringClient") ||
-  !pluginContextSource.includes('createClient({')
+  !pluginContextSource.includes("CoordinationWorkflowAuthoringClientResolver") ||
+  !pluginContextSource.includes('CoordinationClient["workflows"]')
 ) {
-  fail("workflow plugin context must provide a narrow coordination workflow authoring client.");
+  fail("workflow plugin context must declare a narrow coordination workflow authoring client resolver.");
+}
+
+if (
+  pluginContextSource.includes("createEmbeddedPlaceholder") ||
+  pluginContextSource.includes('createClient({')
+) {
+  fail("workflow plugin context must not synthesize placeholder-backed coordination clients.");
 }
 
 if (projectionBridgeExists) {
@@ -239,9 +247,11 @@ if (projectionBridgeExists) {
 
 if (
   !pluginServerSource.includes("GetRunStatusInputSchema") ||
-  !pluginServerSource.includes("QueueRunInputSchema")
+  !pluginServerSource.includes("QueueRunInputSchema") ||
+  !pluginServerSource.includes("options.resolveAuthoringClient") ||
+  !pluginServerSource.includes("getRunTimeline: async (runId) => getRunTimeline(input.repoRoot, runId)")
 ) {
-  fail("workflow plugin server surface must re-export run schemas for downstream contract drift tests.");
+  fail("workflow plugin server surface must re-export run schemas and own runtime/authoring composition.");
 }
 
 if (!indexSource.includes('export { createClient, type Client } from "./client";')) {
