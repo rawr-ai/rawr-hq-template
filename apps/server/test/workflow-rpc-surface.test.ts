@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
 
 import { beforeEach, describe, expect, it } from "vitest";
-import { __resetSupportExampleRunStoreForTests } from "@rawr/plugin-workflows-support-example/server";
+import { __resetSupportExampleRunStoreForTests } from "@rawr/plugin-workflows-support-example/testing";
 
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";

@@ -23,6 +23,7 @@
       "@rawr/plugin-workflows-coordination": ["plugins/workflows/coordination/index.ts"],
       "@rawr/plugin-workflows-coordination/server": ["plugins/workflows/coordination/server.ts"],
       "@rawr/plugin-workflows-support-example": ["plugins/workflows/support-example/index.ts"],
+      "@rawr/plugin-workflows-support-example/testing": ["plugins/workflows/support-example/testing.ts"],
       "@rawr/plugin-workflows-support-example/server": ["plugins/workflows/support-example/server.ts"]
     }
   }

@@ -12,16 +12,12 @@ import {
 } from "./models";
 import { getSupportExampleRun, saveSupportExampleRun } from "./run-store";
 
-const missingSupportExampleClientResolver = () => {
-  throw new Error("support-example workflow router requires a support client resolver");
-};
-
 const os = createWorkflowRouterBuilder<typeof supportExampleWorkflowContract, SupportExampleWorkflowContext>(
   supportExampleWorkflowContract,
 );
 
 export function createSupportExampleWorkflowRouter(
-  resolveSupportExampleClient: (repoRoot: string) => SupportExampleClient = missingSupportExampleClientResolver,
+  resolveSupportExampleClient: (repoRoot: string) => SupportExampleClient,
 ) {
   return os.router({
     supportExample: {

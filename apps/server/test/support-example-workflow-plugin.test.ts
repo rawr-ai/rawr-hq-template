@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createRouterClient, type RouterClient } from "@orpc/server";
 import type { Inngest } from "inngest";
 import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
+import { __resetSupportExampleRunStoreForTests } from "@rawr/plugin-workflows-support-example/testing";
 import { supportExampleRouter } from "@rawr/support-example/router";
 import {
-  __resetSupportExampleRunStoreForTests,
   createSupportExampleWorkflowRouter,
   processSupportExampleRequestedEvent,
   type SupportExampleWorkflowContext,

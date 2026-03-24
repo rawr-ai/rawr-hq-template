@@ -39,11 +39,6 @@ export function registerSupportExampleWorkflowPlugin(
   });
 }
 
-export {
-  __resetSupportExampleRunStoreForTests,
-  getSupportExampleRun,
-  saveSupportExampleRun,
-} from "./run-store";
 export { createSupportExampleInngestFunctions, processSupportExampleRequestedEvent };
 export {
   supportExampleWorkflowContract,
