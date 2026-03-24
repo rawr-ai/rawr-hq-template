@@ -3,19 +3,19 @@ import { describe, expect, it } from "vitest";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
-} from "../src/orpc/host-adapters/analytics/embedded-placeholder";
+} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
   createEmbeddedPlaceholderFeedbackAdapter,
   type EmbeddedPlaceholderFeedbackSessionEntry,
-} from "../src/orpc/host-adapters/feedback/embedded-placeholder";
+} from "@rawr/hq-sdk/host-adapters/feedback/embedded-placeholder";
 import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
-} from "../src/orpc/host-adapters/logger/embedded-placeholder";
+} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import {
   createEmbeddedInMemoryDbPoolAdapter,
   createEmbeddedInMemorySqlAdapter,
-} from "../src/orpc/host-adapters/sql/embedded-in-memory";
+} from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
 
 describe("host adapters", () => {
   it("records placeholder logger output into the provided sink", () => {

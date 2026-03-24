@@ -16,7 +16,7 @@ import { createServiceImplementer } from "./base";
 import { analytics } from "./middleware/analytics";
 import { observability } from "./middleware/observability";
 import { readOnlyMode } from "./middleware/read-only-mode";
-import { sqlProvider } from "../orpc-sdk";
+import { sqlProvider } from "@rawr/hq-sdk";
 
 /**
  * Central implementer tree derived from the root contract.

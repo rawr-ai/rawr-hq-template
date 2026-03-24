@@ -13,7 +13,7 @@ import {
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
-import type { Sql } from "../../../orpc-sdk";
+import type { Sql } from "@rawr/hq-sdk";
 import { createRepository } from "./repository";
 
 export {

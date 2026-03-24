@@ -9,7 +9,7 @@
  * Keep this contract focused on caller-visible shape. Cross-module access
  * patterns belong in `router.ts`, not here.
  */
-import { schema } from "../../../orpc-sdk";
+import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
 import { ASSIGNMENT_LIMIT_REACHED, READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../shared/errors";

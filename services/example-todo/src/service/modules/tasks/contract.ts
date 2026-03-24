@@ -13,7 +13,7 @@
  * Extend task capability by updating this contract first, then implement handlers
  * in `router.ts`. Keep this file free of execution logic and dependencies.
  */
-import { schema } from "../../../orpc-sdk";
+import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
 import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../shared/errors";

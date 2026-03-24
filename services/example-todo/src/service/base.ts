@@ -14,8 +14,8 @@
  * extensions are authored in `src/service/middleware/*` and supplied at the
  * implementer seam.
  * Module- and procedure-local behavior still belongs in module `module.ts` /
- * `router.ts` files. Lower-level construction primitives remain in
- * `src/orpc-sdk.ts`.
+ * `router.ts` files. Lower-level construction primitives now come from
+ * `@rawr/hq-sdk`.
  *
  * @agents
  * Read this file to understand what the service is. Do not add runtime
@@ -26,7 +26,7 @@ import {
   defineService,
   type DbPool,
   type ServiceOf,
-} from "../orpc-sdk";
+} from "@rawr/hq-sdk";
 
 /**
  * Host-owned time source used by task/tag creation and similar flows.
