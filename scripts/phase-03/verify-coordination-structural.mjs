@@ -162,8 +162,8 @@ if (
   process.exit(1);
 }
 
-if (!serviceBaseSource.includes("runsRuntime: CoordinationRunsRuntime")) {
-  console.error("coordination structural failed: run dispatch capability must be declared in service deps.");
+if (!serviceBaseSource.includes("runsRuntime?: CoordinationRunsRuntime")) {
+  console.error("coordination structural failed: run dispatch capability must be optional at the service dep boundary.");
   process.exit(1);
 }
 
@@ -197,6 +197,11 @@ if (runsMiddlewareSource.includes("context.provided.runsRuntime")) {
   process.exit(1);
 }
 
+if (!runsMiddlewareSource.includes("if (!runExecution)")) {
+  console.error("coordination structural failed: queue runtime provider must guard missing optional runtime.");
+  process.exit(1);
+}
+
 if (
   !runsModuleSource.includes("export const readModule = baseModule") ||
   !runsModuleSource.includes("export const queueRunModule = baseModule")
@@ -212,6 +217,11 @@ if (!runsModuleSource.includes("queueRunModule = baseModule\n  .use(runExecution
 
 if (runsModuleSource.includes("readModule = baseModule\n  .use(runExecution)")) {
   console.error("coordination structural failed: read run composition must not require run execution.");
+  process.exit(1);
+}
+
+if (runsModuleSource.includes("queueRepository")) {
+  console.error("coordination structural failed: queue-specific repository residue must stay removed.");
   process.exit(1);
 }
 

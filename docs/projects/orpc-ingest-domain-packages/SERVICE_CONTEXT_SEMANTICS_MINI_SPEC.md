@@ -257,36 +257,30 @@ Instead:
 - keep provider output under `context.provided.*`
 - do **not** flatten provider-derived resources to top-level runtime lanes
 
-## Explicit Exception Note (2026-03-24)
+## Coordination Clarification (2026-03-24)
 
-The canonical servicepackage boundary is still:
+The coordination cleanup no longer needs a package-edge exception.
+
+The canonical servicepackage boundary remains:
 
 - `defineServicePackage(router)`
 - boundary inputs on `deps`, `scope`, and `config`
 - per-call input on `invocation`
 - execution-time provider/module outputs under `context.provided.*`
 
-One narrow local exception is currently accepted in
-[`services/coordination/src/client.ts`](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/services/coordination/src/client.ts):
+The coordination runs runtime now follows the default rule directly:
 
-- the coordination package seeds a package-specific runtime capability into
-  `context.provided.*` at the package edge
-- that seed exists only to bridge workflow/plugin runtime composition into the
-  coordination runs execution path
-- it is immediately normalized by local runs middleware rather than consumed as
-  a free-form top-level host bag
+- the stable host-owned prerequisite is declared on `deps.runsRuntime?`
+- queue-only middleware turns that optional dep into
+  `context.provided.runExecution`
+- workflow/read routes do not depend on that middleware and therefore do not
+  require the runtime at client construction
 
-This should be read as a **documented exception**, not as a new default rule.
+That is the intended teaching example for **optional stable capabilities**:
 
-The default classification still holds:
-
-- if a stable host-owned prerequisite is ordinary package input, declare it on
-  `deps`
-- if middleware/module setup derives an execution resource, put it under
-  `context.provided.*`
-- only keep a package-edge `provided` seed when the capability is truly
-  package-specific, runtime-specific, and not yet a proven cross-package SDK
-  abstraction
+- optional at the package boundary
+- normalized locally where execution actually needs them
+- absent from routes that do not need them
 
 ## Why This Slice Exists
 

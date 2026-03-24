@@ -40,12 +40,6 @@ describe("coordination observability", () => {
         deps: {
           logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logs }),
           analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analytics }),
-          runsRuntime: {
-            queueRun: async () => {
-              throw new Error("run dispatch should not execute during workflow observability tests");
-            },
-            createTraceLinks: () => [],
-          },
         },
         scope: { repoRoot },
         config: {},
