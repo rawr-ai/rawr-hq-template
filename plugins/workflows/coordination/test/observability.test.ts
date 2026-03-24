@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  createDeskEvent,
-  defaultTraceLinks,
   type CreateDeskEventInput,
-} from "@rawr/plugin-workflows-coordination";
+} from "../src/events";
+import {
+  createDeskEvent,
+} from "../src/events";
+import {
+  defaultTraceLinks,
+} from "../src/trace-links";
 import {
   REQUIRED_RUN_LIFECYCLE_EVENT_TYPES,
   REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT,

@@ -1,5 +1,5 @@
 import { createCoordinationApiClient } from "@rawr/plugin-api-coordination";
-import { createCoordinationWorkflowClient } from "@rawr/plugin-workflows-coordination";
+import { createCoordinationWorkflowClient } from "@rawr/plugin-workflows-coordination/client";
 import { createFirstPartyRpcLink } from "@rawr/orpc-client";
 import { createStateApiClient } from "@rawr/plugin-api-state";
 import { publicEnv } from "../config/publicEnv";

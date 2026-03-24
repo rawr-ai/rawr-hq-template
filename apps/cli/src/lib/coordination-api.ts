@@ -15,7 +15,7 @@ import { createCoordinationApiClient, type CoordinationApiClient } from "@rawr/p
 import {
   createCoordinationWorkflowClient,
   type CoordinationWorkflowClient,
-} from "@rawr/plugin-workflows-coordination";
+} from "@rawr/plugin-workflows-coordination/client";
 import { findWorkspaceRoot } from "./workspace-plugins";
 
 export type CoordinationProcedureResult<TPayload extends Record<string, unknown>> =
