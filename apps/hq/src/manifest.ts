@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { implement, type RouterClient, createRouterClient } from "@orpc/server";
+import { createAuthoringClient as createCoordinationAuthoringClient, type AuthoringClient as CoordinationAuthoringClient } from "@rawr/coordination/authoring";
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import {
   composeApiPlugins,
@@ -36,6 +37,7 @@ type SupportExampleServiceDeps = {
   generateWorkItemId: () => string;
 };
 type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
+type CoordinationAuthoringBoundary = Parameters<typeof createCoordinationAuthoringClient>[0];
 type StateBoundary = Parameters<typeof createStateClient>[0];
 export type HostServiceLogger = ExampleTodoBoundary["deps"]["logger"];
 export type CreateRawrHqManifestOptions = {
@@ -131,6 +133,22 @@ function createStateBoundary(repoRoot: string, hostLogger: HostServiceLogger): S
   } satisfies StateBoundary;
 }
 
+function createCoordinationAuthoringBoundary(
+  repoRoot: string,
+  hostLogger: HostServiceLogger,
+): CoordinationAuthoringBoundary {
+  return {
+    deps: {
+      logger: hostLogger,
+      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+    },
+    scope: {
+      repoRoot,
+    },
+    config: {},
+  } satisfies CoordinationAuthoringBoundary;
+}
+
 function isMergeableSurfaceNode(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value) && !("~orpc" in (value as Record<string, unknown>));
 }
@@ -165,6 +183,7 @@ function mergeDeclaredSurfaceTrees<TTree extends object>(
 }
 
 export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
+  const coordinationAuthoringClientsByRepoRoot = new Map<string, CoordinationAuthoringClient>();
   const exampleTodoClientsByRepoRoot = new Map<string, ExampleTodoClient>();
   const stateClientsByRepoRoot = new Map<string, StateClient>();
 
@@ -176,6 +195,19 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
 
     const client = createExampleTodoClient(createExampleTodoBoundary(options.hostLogger));
     exampleTodoClientsByRepoRoot.set(repoRoot, client);
+    return client;
+  }
+
+  function resolveCoordinationAuthoringClient(repoRoot: string): CoordinationAuthoringClient {
+    const existing = coordinationAuthoringClientsByRepoRoot.get(repoRoot);
+    if (existing) {
+      return existing;
+    }
+
+    const client = createCoordinationAuthoringClient(
+      createCoordinationAuthoringBoundary(repoRoot, options.hostLogger),
+    );
+    coordinationAuthoringClientsByRepoRoot.set(repoRoot, client);
     return client;
   }
 
@@ -192,7 +224,9 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
 
   // Host owns runtime realization. The app manifest only composes plugin registrations
   // and exposes the capability fixture/client resolvers the host can mount later.
-  const coordinationApiPlugin = registerCoordinationApiPlugin();
+  const coordinationApiPlugin = registerCoordinationApiPlugin({
+    resolveClient: resolveCoordinationAuthoringClient,
+  });
   const stateApiPlugin = registerStateApiPlugin({
     resolveClient: resolveStateClient,
   });

@@ -14,6 +14,10 @@
       "types": "./src/events.ts",
       "default": "./src/events.ts"
     },
+    "./authoring": {
+      "types": "./src/authoring/index.ts",
+      "default": "./src/authoring/index.ts"
+    },
     "./service/contract": {
       "types": "./src/service/contract.ts",
       "default": "./src/service/contract.ts"

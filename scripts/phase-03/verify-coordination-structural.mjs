@@ -9,15 +9,36 @@ const httpPath = path.join(serviceRoot, "src", "http.ts");
 const indexPath = path.join(serviceRoot, "src", "index.ts");
 const nodePath = path.join(serviceRoot, "src", "node.ts");
 const serviceRouterPath = path.join(serviceRoot, "src", "service", "router.ts");
+const serviceImplPath = path.join(serviceRoot, "src", "service", "impl.ts");
+const serviceObservabilityMiddlewarePath = path.join(serviceRoot, "src", "service", "middleware", "observability.ts");
+const serviceAnalyticsMiddlewarePath = path.join(serviceRoot, "src", "service", "middleware", "analytics.ts");
 const workflowsRouterPath = path.join(serviceRoot, "src", "service", "modules", "workflows", "router.ts");
 const runsRouterPath = path.join(serviceRoot, "src", "service", "modules", "runs", "router.ts");
+const authoringIndexPath = path.join(serviceRoot, "src", "authoring", "index.ts");
 const tsconfigBasePath = path.join(root, "tsconfig.base.json");
 
-const [pkgRaw, serviceRouterSource, workflowsRouterSource, runsRouterSource, indexSource, nodeSource, tsconfigBaseSource, httpWrapperExists] = await Promise.all([
+const [
+  pkgRaw,
+  serviceRouterSource,
+  serviceImplSource,
+  serviceObservabilityMiddlewareSource,
+  serviceAnalyticsMiddlewareSource,
+  workflowsRouterSource,
+  runsRouterSource,
+  authoringIndexSource,
+  indexSource,
+  nodeSource,
+  tsconfigBaseSource,
+  httpWrapperExists,
+] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(serviceRouterPath, "utf8"),
+  fs.readFile(serviceImplPath, "utf8"),
+  fs.readFile(serviceObservabilityMiddlewarePath, "utf8"),
+  fs.readFile(serviceAnalyticsMiddlewarePath, "utf8"),
   fs.readFile(workflowsRouterPath, "utf8"),
   fs.readFile(runsRouterPath, "utf8"),
+  fs.readFile(authoringIndexPath, "utf8"),
   fs.readFile(indexPath, "utf8"),
   fs.readFile(nodePath, "utf8"),
   fs.readFile(tsconfigBasePath, "utf8"),
@@ -68,6 +89,16 @@ if (
 }
 
 if (
+  !serviceImplSource.includes('from "./middleware/analytics"') ||
+  !serviceImplSource.includes('from "./middleware/observability"') ||
+  !serviceObservabilityMiddlewareSource.includes("createRequiredServiceObservabilityMiddleware") ||
+  !serviceAnalyticsMiddlewareSource.includes("createRequiredServiceAnalyticsMiddleware")
+) {
+  console.error("coordination structural failed: required service middleware must live in dedicated middleware files.");
+  process.exit(1);
+}
+
+if (
   workflowsRouterSource.includes("@rawr/core")
   || workflowsRouterSource.includes("apps/server/src")
   || runsRouterSource.includes("@rawr/core")
@@ -84,6 +115,11 @@ if (!runsRouterSource.includes("RUN_FINALIZATION_CONTRACT_V1")) {
 
 if (!indexSource.includes('export { createClient, type Client } from "./client";')) {
   console.error("coordination structural failed: package boundary client seam not exported.");
+  process.exit(1);
+}
+
+if (!authoringIndexSource.includes('export { createAuthoringClient, type AuthoringClient } from "./client";')) {
+  console.error("coordination structural failed: authoring sub-boundary client seam must be exported.");
   process.exit(1);
 }
 
