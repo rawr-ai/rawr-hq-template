@@ -104,7 +104,7 @@ const checks = [
     pass:
       /function parseCoordinationId\(value: unknown\): string \| null/u.test(inputsSource) &&
       /return normalizeCoordinationId\(value\);/u.test(inputsSource) &&
-      /return \{ state: currentState, authorityRepoRoot: context\.repoRoot \};/u.test(stateRouterSource) &&
+      /getRepoStateWithAuthority\(context\.scope\.repoRoot\)/u.test(stateRouterSource) &&
       manifestSource.includes("registerCoordinationApiPlugin") &&
       manifestSource.includes("registerStateApiPlugin") &&
       !manifestSource.includes("createHqRuntimeRouter"),
@@ -115,7 +115,7 @@ const checks = [
     pass:
       /keeps F2 ID input policy aligned with runtime normalization rules/u.test(hqDriftTestSource) &&
       /authorityRepoRoot/u.test(hqDriftTestSource) &&
-      /support-example capability paths/u.test(triggerDriftTestSource),
+      /workflow capability paths/u.test(triggerDriftTestSource),
   },
 ];
 

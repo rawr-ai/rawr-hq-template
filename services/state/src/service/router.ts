@@ -1,13 +1,12 @@
 /**
  * @fileoverview Service router composition for the state package.
  */
-import { getRepoState } from "../repo-state";
+import { getRepoStateWithAuthority } from "../repo-state";
 import { impl } from "./impl";
 
 export const router = impl.router({
   getState: impl.getState.handler(async ({ context }) => {
-    const authorityRepoRoot = context.scope.repoRoot;
-    const state = await getRepoState(authorityRepoRoot);
+    const { state, authorityRepoRoot } = await getRepoStateWithAuthority(context.scope.repoRoot);
 
     return {
       state,

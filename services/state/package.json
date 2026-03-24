@@ -24,6 +24,8 @@
     }
   },
   "devDependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/context-async-hooks": "^2.6.0",
     "typescript": "^5.9.3"
   },
   "scripts": {
