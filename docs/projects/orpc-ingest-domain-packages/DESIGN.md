@@ -333,7 +333,7 @@ This term is overloaded.
 It can mean:
 
 - a concrete capability client like PostHog / OpenTelemetry
-- the oRPC/router client used to call the domain package
+- the oRPC/router client used to call the servicepackage
 
 Those meanings must stay separate in docs and design decisions.
 
@@ -354,7 +354,7 @@ Who owns defaults and wiring?
 
 - host
 - plugin
-- service package
+- servicepackage
 
 ### Input-Form Axis
 

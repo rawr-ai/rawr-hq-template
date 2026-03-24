@@ -3,7 +3,7 @@
 ## What This Document Is
 
 - `guidance.md` is operational implementation guidance.
-- It captures current defaults and conventions for building/maintaining domain example packages.
+- It captures current defaults and conventions for building and maintaining example servicepackages.
 - Hard architectural locks belong in `DECISIONS.md`.
 - Example progression (invariants + axes) belongs in `examples.md`.
 
@@ -26,7 +26,7 @@ The active design direction captured in
 `DESIGN.md` is:
 
 - **service-declared deps** should mean only the caller requirements declared by
-  the service package itself
+  the servicepackage itself
 - **host/framework caller requirements** should likely move to their own
   top-level lane (`host`, `baseline`, or similar)
 - **execution-time derived values** remain separate under
@@ -59,7 +59,7 @@ Do not collapse these into one category.
 
 ## Telemetry Is Different
 
-Telemetry is not a normal service-package dependency seam.
+Telemetry is not a normal servicepackage dependency seam.
 
 Use this rule:
 
@@ -76,7 +76,7 @@ propagation:
 
 Therefore:
 
-- do not model telemetry as something callers pass through service package
+- do not model telemetry as something callers pass through servicepackage
   boundaries
 - do not treat `BaseDeps.telemetry` as a target pattern
 - do not redesign telemetry as a service-local provider seam by default
@@ -85,7 +85,7 @@ Therefore:
 - service/package observability should consume the active span from
   OpenTelemetry runtime context (directly or through a tiny shared helper)
 
-Service packages still own observability semantics:
+Servicepackages still own observability semantics:
 
 - span attributes
 - span events
@@ -94,7 +94,7 @@ Service packages still own observability semantics:
 Plugins and hosts still own ingress/request/network telemetry outside service
 packages.
 
-Inside a service package, use this layering rule:
+Inside a servicepackage, use this layering rule:
 
 - framework baseline observability wraps all procedures
 - one required service-wide observability middleware adds package-global
@@ -148,7 +148,7 @@ Always-on slots:
 - `src/orpc/baseline/{types,middleware,implementer}.ts` are the always-on baseline seams.
 - `src/orpc/context/types.ts` is the always-on execution-context type seam.
 - `src/orpc/factory/*` is the always-on internal helper layer for abstract oRPC builders.
-- `src/orpc/boundary/domain-package.ts` owns the package boundary wiring used by `src/client.ts`.
+- `src/orpc/boundary/servicepackage.ts` owns the servicepackage boundary wiring used by `src/client.ts`.
 - `src/orpc/middleware/*` is the always-on slot for kit-level middleware definitions.
 - `src/service/impl.ts` is the always-on oRPC composition surface (implement root contract + attach middleware).
 - `src/service/impl.ts` should supply required service middleware extensions (`observability`, `analytics`) to `createServiceImplementer(...)`, then compose package-wide providers/guards and any extra service middleware after that.
@@ -296,7 +296,7 @@ Stable points:
 - `config` should hold stable package behavior/configuration bound at `createClient(...)` time.
 - `invocation` should hold required per-call input passed through native oRPC client context.
 - Module composition injects module-local repos/services into execution context (`src/service/modules/<name>/module.ts`).
-- Kit-level middleware should be used for cross-cutting concerns that should be reusable across domain packages (analytics, import-fault classification, request scoping).
+- Kit-level middleware should be used for cross-cutting concerns that should be reusable across servicepackages (analytics, import-fault classification, request scoping).
 - Domain-wide middleware should be used for domain guards/semantics (read-only mode, authz policy, tenancy invariants) that need procedure metadata awareness.
 - Apply middleware at most once per concern: attach package-wide middleware in `src/service/impl.ts`, then attach module routers once in `src/service/router.ts`.
 
@@ -388,7 +388,7 @@ For this package architecture:
 
 - `src/orpc/ports/*` defines package-facing ports
 - `src/orpc/host-adapters/*` contains host-owned concrete adapters
-- plugins/packages consume ports
+- plugins and servicepackages consume ports
 - runtime host composition owns concrete adapter wiring
 
 Do not treat "plugin runtime adapter" as proof that plugins should own concrete
@@ -512,12 +512,12 @@ seams.
 
 Treat it as:
 
-- telemetry is not modeled as a service-package dependency
+- telemetry is not modeled as a servicepackage dependency
 - host/runtime OpenTelemetry SDK bootstrap in `packages/core/src/orpc/telemetry.ts`
 - host-specific bootstrap calls in runtime apps such as `apps/server/src/bootstrap.ts`
 - active-span access from OpenTelemetry runtime context inside service/package
   observability
-- not a package-facing telemetry port and not a service-package dependency bag
+- not a servicepackage-facing telemetry port and not a servicepackage dependency bag
 
 If a plugin later runs as its own standalone service, that standalone service
 is simply a new runtime host that bootstraps OpenTelemetry for itself and then
@@ -739,7 +739,7 @@ Examples:
 
 ### Kit-Level Middleware Pattern
 
-Use kit-level middleware for cross-cutting behavior that should be reusable across domain packages.
+Use kit-level middleware for cross-cutting behavior that should be reusable across servicepackages.
 
 - Define one concern per file in `src/orpc/middleware/` when the concern is still package-local middleware (for example `analytics.ts`).
 - Wire truly “applies everywhere” package middleware into `src/service/impl.ts` so it is consistent and obvious across packages.
@@ -753,9 +753,9 @@ official oRPC OpenTelemetry integration, not from package-local middleware.
 - The canonical host seam should be a shared bootstrap helper above domain
   packages (for example `installRawrOrpcTelemetry(...)`), called before app and
   route composition.
-- Treat package-local telemetry middleware as the wrong default for the golden
+- Treat servicepackage-local telemetry middleware as the wrong default for the golden
   example.
-- Keep domain packages compatible with required per-call invocation input, but
+- Keep servicepackages compatible with required per-call invocation input, but
   do not make custom tracing middleware the source of truth for baseline
   telemetry.
 - Use package/service middleware only for observability side effects or span

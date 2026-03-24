@@ -6,22 +6,22 @@ Operational guidance belongs in `guidance.md`; worked walk-throughs belong in `e
 ## Decision #1 (2026-02-25)
 
 ### Question
-Do we automatically expose/export a package-level contract derived from the domain router from day one?
+Do we automatically expose/export a servicepackage-level contract derived from the servicepackage router from day one?
 
 ### Decision
 No, not for now.
 
 ### Why
-For in-process usage, callers use the router client created from the router itself (`createRouterClient(router, { context })`). A package-level exported contract is not required for internal consumption.
+For in-process usage, callers use the router client created from the router itself (`createRouterClient(router, { context })`). A servicepackage-level exported contract is not required for internal consumption.
 
-This domain package is also not a public API surface. External/OpenAPI exposure is handled by the plugin boundary, not by exporting package contracts directly from domain packages.
+This servicepackage is also not a public API surface. External/OpenAPI exposure is handled by the plugin boundary, not by exporting servicepackage contracts directly from servicepackages.
 
-The remaining value of package-level contract extraction is drift/snapshot tooling, which is valid but intentionally deferred.
+The remaining value of servicepackage-level contract extraction is drift/snapshot tooling, which is valid but intentionally deferred.
 
 ## Decision #2 (2026-03-04)
 
 ### Question
-What is the canonical domain-package topology (and choke points) for agents?
+What is the canonical servicepackage topology (and choke points) for agents?
 
 ### Decision
 Use a two-layer structure with **explicit contract bubble-up** and **one router composition choke point**:
@@ -29,7 +29,7 @@ Use a two-layer structure with **explicit contract bubble-up** and **one router 
 - **Layer 1 — kit seam (`src/orpc-sdk.ts`, `src/orpc/*`)**: local proto-SDK kit primitives (no domain concretions)
 - **Layer 2 — service surface (`src/service/`)**: service definition + middleware + modules + root contract composition
 
-In addition, each domain package has one oRPC-native composition file (central implementer):
+In addition, each servicepackage has one oRPC-native composition file (central implementer):
 
 - `src/service/impl.ts`: root contract implementation + package-wide middleware stacking (the “official ORPC.ts pattern”, local-first)
 
@@ -64,7 +64,7 @@ Required service middleware extension is now part of that topology contract:
 ## Decision #3 (2026-02-26)
 
 ### Question
-For router-client-only domain packages, should we keep legacy catalog/unwrap translation layers?
+For router-client-only servicepackages, should we keep legacy catalog/unwrap translation layers?
 
 ### Decision
 No. Use ORPC-native boundary contracts and remove legacy indirection from active paths.
@@ -227,24 +227,24 @@ boundary rule:
 ## Decision #9 (2026-03-12)
 
 ### Question
-How should telemetry work across hosts, plugins, and service packages?
+How should telemetry work across hosts, plugins, and servicepackages?
 
 ### Decision
 Telemetry is a **host-owned OpenTelemetry bootstrap + oRPC/OTel context
-propagation seam**, not a service-package dependency seam.
+propagation seam**, not a servicepackage dependency seam.
 
 Concretely:
 
 - each host/runtime bootstraps its own OpenTelemetry SDK once
 - the canonical bootstrap helper lives in `packages/core/src/orpc/telemetry.ts`
 - hosts register oRPC instrumentation during bootstrap
-- service packages and plugins consume the active span from OpenTelemetry
+- servicepackages and plugins consume the active span from OpenTelemetry
   runtime context
-- service packages own telemetry semantics (attributes/events/log enrichment),
+- servicepackages own telemetry semantics (attributes/events/log enrichment),
   not SDK bootstrap
 - plugin and host request/network middleware own ingress/request telemetry
-  outside service-package boundaries
-- telemetry does **not** travel through service package boundaries as
+  outside servicepackage boundaries
+- telemetry does **not** travel through servicepackage boundaries as
   `BaseDeps.telemetry`
 
 ### Why
@@ -262,9 +262,9 @@ This supports:
 
 - one shared host runtime today
 - multiple future hosts later
-- stable downstream package shape across hosts
+- stable downstream servicepackage shape across hosts
 - plugin-specific ingress/request telemetry without forcing host bootstrap into
-  service packages
+  servicepackages
 
 ### Implication
 Telemetry is intentionally different from other seams such as SQL:

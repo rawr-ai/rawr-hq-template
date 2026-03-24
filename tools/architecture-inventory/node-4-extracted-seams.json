@@ -3,7 +3,8 @@
     "@rawr/coordination": {
       "config": "services/coordination/package.json",
       "tags": [
-        "type:package",
+        "type:service",
+        "role:servicepackage",
         "migration-slice:structural-tranche"
       ],
       "targets": [
@@ -17,7 +18,8 @@
     "@rawr/state": {
       "config": "services/state/package.json",
       "tags": [
-        "type:package",
+        "type:service",
+        "role:servicepackage",
         "migration-slice:structural-tranche"
       ],
       "targets": [

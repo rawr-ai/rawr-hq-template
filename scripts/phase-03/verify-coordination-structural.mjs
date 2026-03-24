@@ -46,13 +46,25 @@ const [
 ]);
 
 const pkg = JSON.parse(pkgRaw);
-if (!(pkg.nx?.tags ?? []).includes("migration-slice:structural-tranche")) {
+const tags = pkg.nx?.tags ?? [];
+
+if (!tags.includes("migration-slice:structural-tranche")) {
   console.error("coordination structural failed: missing tranche tag.");
   process.exit(1);
 }
 
-if (!(pkg.nx?.tags ?? []).includes("type:package")) {
-  console.error("coordination structural failed: missing package tag.");
+if (!tags.includes("type:service")) {
+  console.error("coordination structural failed: missing service tag.");
+  process.exit(1);
+}
+
+if (!tags.includes("role:servicepackage")) {
+  console.error("coordination structural failed: missing servicepackage role tag.");
+  process.exit(1);
+}
+
+if (tags.includes("type:package")) {
+  console.error("coordination structural failed: coordination must be tagged as a service, not a package.");
   process.exit(1);
 }
 

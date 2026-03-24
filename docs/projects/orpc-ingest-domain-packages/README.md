@@ -1,9 +1,15 @@
-# ORPC Ingest Domain Packages
+# ORPC Ingest Servicepackages
 
 This directory contains the current working docs for the `example-todo`
-golden-example / domain-package scaffolding thread.
+golden-example / servicepackage scaffolding thread.
 
 Role: packet router
+
+Directory-name note:
+
+- The packet directory name is retained for link stability.
+- The live architecture described inside this packet is the current
+  `servicepackage` model rooted in `services/*`.
 
 ## Start Here / Authority Map
 
@@ -32,7 +38,7 @@ for the current adapter/host/service-input design knot.
 
 Historical or superseded docs for this thread live under:
 
-- `../_archive/orpc-ingest-domain-packages/`
+- the corresponding packet under `../_archive/`
 
 Those files are kept for traceability only. They may describe earlier topology,
 context, or planning directions that are no longer authoritative.

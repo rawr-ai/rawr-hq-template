@@ -1,9 +1,9 @@
-# ORPC Domain Package Examples
+# ORPC Servicepackage Examples
 
 > Note:
 > We may still revisit how this document splits instructional guidance versus
 > straight example scaffold structure/code. That boundary is not fully locked
-> yet and may shift as we keep refining the example package.
+> yet and may shift as we keep refining the example servicepackage.
 
 ## Purpose
 
@@ -28,7 +28,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
   - `src/service/router.ts` composes module routers and performs a single final attach (no middleware authored here).
 - Module internals stay `contract.ts` + `module.ts` + `router.ts`.
 - Module-level hybrid contract-first: `contract.ts` is boundary shape; `router.ts` is handler behavior.
-- Transport-agnostic internals (no HTTP concerns inside package).
+- Transport-agnostic internals (no HTTP concerns inside the servicepackage).
 - Procedures declare explicit ORPC boundary errors for caller-actionable outcomes.
 - Expected business states are modeled as values inside the boundary.
 - Procedures carry shared metadata (`domain`, `audience`) plus explicit per-procedure `idempotent`.
@@ -36,17 +36,18 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 - `src/orpc/middleware/` is always present for kit-level cross-cutting concerns (analytics, providers, generic wrappers).
 - Host/runtime tracing bootstrap is required above the package and should be wired once before app/route composition.
 - `src/service/middleware/` is available for domain-wide cross-cutting concerns; ordering is authored in `src/service/impl.ts`.
-- Domain package deps include shared base deps (`BaseDeps`) for package-level
-  cross-cutting capabilities such as logger and analytics. Telemetry is
-  different: host/runtime tracing bootstrap lives above the package and package
-  observability reads the active span from OTel runtime context.
+- Servicepackage deps include shared base deps (`BaseDeps`) for
+  servicepackage-level cross-cutting capabilities such as logger and analytics.
+  Telemetry is different: host/runtime tracing bootstrap lives above the
+  servicepackage and servicepackage observability reads the active span from
+  OTel runtime context.
 - `context.deps` remains the single host-provided dependency bag; middleware/module setup may add `context.provided.*` execution values, but we do not split runtime dependencies into multiple bags.
-- One stable package entry surface (`router` + `createClient` in-process factory pattern).
+- One stable servicepackage entry surface (`router` + `createClient` in-process factory pattern).
 - `src/service/base.ts` binds the service-local authoring surfaces once (`Service`, `ocBase`, additive builders, required extension builders, `createServiceImplementer`) and stays declarative.
 - `src/service/base.ts` should prefer one canonical `defineService<{ initialContext, invocationContext, metadata }>(...)` call plus `ServiceOf<typeof service>` over hand-writing a separate `Service = ServiceTypesOf<...>` projection.
 - `initialContext` should group the construction-time `deps` / `scope` / `config` lanes; `invocationContext` should describe per-call invocation input; `metadata` remains static procedure metadata.
 - `src/service/base.ts` should contribute service metadata defaults and policy vocabulary; runtime observability/analytics behavior belongs in `src/service/middleware/*`.
-- `createServiceImplementer(contract, { observability, analytics })` enforces required service middleware extensions at the package-wide assembly seam; module/procedure-local observability and analytics stay additive and attach via the pre-bound `createServiceObservabilityMiddleware(...)` and `createServiceAnalyticsMiddleware(...)` builders.
+- `createServiceImplementer(contract, { observability, analytics })` enforces required service middleware extensions at the servicepackage-wide assembly seam; module/procedure-local observability and analytics stay additive and attach via the pre-bound `createServiceObservabilityMiddleware(...)` and `createServiceAnalyticsMiddleware(...)` builders.
 - `src/service/middleware/observability.ts` is the canonical required-extension example for service-global runtime behavior; `src/service/middleware/analytics.ts` is the contributor-style required-extension example.
 
 ## Real axes that should change
@@ -90,7 +91,7 @@ It is intentionally scaffold-oriented, not a full implementation spec.
 ### 1) Minimal
 
 ```text
-packages/example-minimal/src/
+services/example-minimal/src/
 ├── index.ts
 ├── client.ts
 ├── router.ts
@@ -101,7 +102,7 @@ packages/example-minimal/src/
 │   │   ├── middleware.ts
 │   │   └── types.ts
 │   ├── boundary/
-│   │   └── domain-package.ts
+│   │   └── servicepackage.ts
 │   ├── context/
 │   │   └── types.ts
 │   ├── factory/
@@ -164,7 +165,7 @@ services/example-todo/src/
 │   │   ├── middleware.ts
 │   │   └── types.ts
 │   ├── boundary/
-│   │   └── domain-package.ts
+│   │   └── servicepackage.ts
 │   ├── context/
 │   │   └── types.ts
 │   ├── factory/
@@ -237,7 +238,7 @@ Example change at this scale (medium): add a new module.
 ### 3) Golden Path
 
 ```text
-packages/example-golden/src/
+services/example-golden/src/
 ├── index.ts
 ├── client.ts
 ├── router.ts
@@ -248,7 +249,7 @@ packages/example-golden/src/
 │   │   ├── middleware.ts
 │   │   └── types.ts
 │   ├── boundary/
-│   │   └── domain-package.ts
+│   │   └── servicepackage.ts
 │   ├── context/
 │   │   └── types.ts
 │   ├── factory/
@@ -321,7 +322,7 @@ packages/example-golden/src/
 ```
 
 ```text
-packages/example-golden/test/
+services/example-golden/test/
 ├── contract-snapshot.test.ts
 ├── error-surface.test.ts
 └── module-boundary.test.ts
