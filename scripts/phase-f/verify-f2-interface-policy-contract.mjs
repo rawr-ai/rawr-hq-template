@@ -11,19 +11,33 @@ await Promise.all([
   mustExist("packages/coordination/src/ids.ts"),
   mustExist("packages/coordination/src/orpc/schemas.ts"),
   mustExist("packages/state/src/orpc/contract.ts"),
-  mustExist("packages/core/src/orpc/runtime-router.ts"),
-  mustExist("packages/core/test/orpc-contract-drift.test.ts"),
-  mustExist("packages/core/test/workflow-trigger-contract-drift.test.ts"),
+  mustExist("packages/state/src/orpc/router.ts"),
+  mustExist("packages/coordination/src/orpc/router.ts"),
+  mustExist("apps/hq/src/orpc.ts"),
+  mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
+  mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
-const [idsSource, schemasSource, stateContractSource, runtimeRouterSource, hqDriftTestSource, triggerDriftTestSource, scripts] =
+const [
+  idsSource,
+  schemasSource,
+  stateContractSource,
+  stateRouterSource,
+  coordinationRouterSource,
+  hqOrpcSource,
+  hqDriftTestSource,
+  triggerDriftTestSource,
+  scripts,
+] =
   await Promise.all([
     readFile("packages/coordination/src/ids.ts"),
     readFile("packages/coordination/src/orpc/schemas.ts"),
     readFile("packages/state/src/orpc/contract.ts"),
-    readFile("packages/core/src/orpc/runtime-router.ts"),
-    readFile("packages/core/test/orpc-contract-drift.test.ts"),
-    readFile("packages/core/test/workflow-trigger-contract-drift.test.ts"),
+    readFile("packages/state/src/orpc/router.ts"),
+    readFile("packages/coordination/src/orpc/router.ts"),
+    readFile("apps/hq/src/orpc.ts"),
+    readFile("apps/hq/test/orpc-contract-drift.test.ts"),
+    readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
     readPackageScripts(),
   ]);
 
@@ -35,7 +49,7 @@ assertScriptEquals(
 assertScriptEquals(
   scripts,
   "phase-f:gate:f2-interface-policy-runtime",
-  "bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts packages/core/test/workflow-trigger-contract-drift.test.ts && bunx vitest run --project core packages/core/test/runtime-router.test.ts",
+  "bunx vitest run --project hq-app apps/hq/test/orpc-contract-drift.test.ts apps/hq/test/workflow-trigger-contract-drift.test.ts && bunx vitest run --project hq-app apps/hq/test/runtime-router.test.ts",
 );
 assertScriptEquals(
   scripts,
@@ -86,11 +100,12 @@ const checks = [
   },
   {
     id: "runtime-router-policy-plumbing",
-    message: "runtime router must normalize IDs and return authorityRepoRoot",
+    message: "service/app routers must normalize IDs and return authorityRepoRoot",
     pass:
-      /function parseCoordinationId\(value: unknown\): string \| null/u.test(runtimeRouterSource) &&
-      /return normalizeCoordinationId\(value\);/u.test(runtimeRouterSource) &&
-      /return \{ state, authorityRepoRoot: context\.repoRoot \};/u.test(runtimeRouterSource),
+      /function parseCoordinationId\(value: unknown\): string \| null/u.test(coordinationRouterSource) &&
+      /return normalizeCoordinationId\(value\);/u.test(coordinationRouterSource) &&
+      /return \{ state: currentState, authorityRepoRoot: context\.repoRoot \};/u.test(stateRouterSource) &&
+      /export function createHqRuntimeRouter/u.test(hqOrpcSource),
   },
   {
     id: "f2-drift-tests",

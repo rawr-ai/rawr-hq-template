@@ -8,15 +8,15 @@ await Promise.all([
   mustExist("packages/coordination/src/types.ts"),
   mustExist("packages/coordination/src/orpc/schemas.ts"),
   mustExist("packages/coordination-inngest/src/adapter.ts"),
-  mustExist("packages/core/src/orpc/runtime-router.ts"),
+  mustExist("packages/coordination/src/orpc/router.ts"),
   mustExist("packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts"),
 ]);
 
-const [typesSource, schemasSource, adapterSource, runtimeRouterSource, guardrailsTestSource] = await Promise.all([
+const [typesSource, schemasSource, adapterSource, coordinationRouterSource, guardrailsTestSource] = await Promise.all([
   readFile("packages/coordination/src/types.ts"),
   readFile("packages/coordination/src/orpc/schemas.ts"),
   readFile("packages/coordination-inngest/src/adapter.ts"),
-  readFile("packages/core/src/orpc/runtime-router.ts"),
+  readFile("packages/coordination/src/orpc/router.ts"),
   readFile("packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts"),
 ]);
 
@@ -50,8 +50,8 @@ const checks = [
   },
   {
     id: "runtime-router-fallback-contract",
-    message: "runtime-router queue fallback includes explicit finalization contract",
-    pass: /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(runtimeRouterSource),
+    message: "coordination router queue fallback includes explicit finalization contract",
+    pass: /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(coordinationRouterSource),
   },
   {
     id: "guardrails-runtime-tests",

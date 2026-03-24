@@ -174,7 +174,8 @@ describe("rawr server routes", () => {
     expect(manifestSource).not.toContain("./plugins/api/support-example");
     expect(manifestSource).not.toContain("registerSupportExampleApiPlugin");
     expect(manifestSource).not.toContain("apps/server/src/logging");
-    expect(manifestSource).toMatch(/const composedOrpcRouter = \{\s*\.\.\.coreOrpcRouter,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s);
+    expect(manifestSource).toContain('import { createHqRuntimeRouter } from "./orpc";');
+    expect(manifestSource).toMatch(/const composedOrpcRouter = \{\s*\.\.\.hqOrpcRouter,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s);
   });
 
   it("host-composition-guard: serves capability-first workflow family paths", async () => {

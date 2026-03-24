@@ -36,6 +36,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("apps/hq"),
+        test: { name: "hq-app", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("apps/web"),
         test: {
           name: "web",

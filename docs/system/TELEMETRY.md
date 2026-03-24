@@ -43,7 +43,7 @@ Service packages must not bootstrap their own OpenTelemetry SDK, exporters, or m
 
 Canonical seams:
 
-- `packages/core/src/orpc/telemetry.ts`
+- `packages/core/src/telemetry.ts`
   - installs `NodeSDK`
   - registers `HttpInstrumentation` and `ORPCInstrumentation`
   - derives OTLP HTTP trace and metric endpoints from `OTEL_EXPORTER_OTLP_ENDPOINT` unless signal-specific endpoints are provided

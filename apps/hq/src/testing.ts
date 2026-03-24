@@ -10,3 +10,10 @@ export function createTestingRawrHqManifest() {
     exampleTodoLogger: noopLogger,
   });
 }
+
+export {
+  createHqRuntimeRouter,
+  createWorkflowTriggerRuntimeRouter,
+  hqContract,
+  workflowTriggerContract,
+} from "./orpc";

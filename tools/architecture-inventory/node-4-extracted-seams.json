@@ -1,0 +1,46 @@
+{
+  "projects": {
+    "@rawr/coordination": {
+      "config": "packages/coordination/package.json",
+      "tags": [
+        "type:package",
+        "migration-slice:structural-tranche"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/state": {
+      "config": "packages/state/package.json",
+      "tags": [
+        "type:package",
+        "migration-slice:structural-tranche"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/core": {
+      "config": "packages/core/package.json",
+      "tags": [
+        "type:package",
+        "migration-slice:structural-tranche"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    }
+  }
+}
