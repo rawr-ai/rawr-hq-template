@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { rawrHqManifest } from "../../../rawr.hq";
+import { createTestingRawrHqManifest } from "@rawr/hq-app/testing";
 import { createServerApp } from "../src/app";
 import { generateOrpcOpenApiSpec } from "../src/orpc";
 import { registerRawrRoutes } from "../src/rawr";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const rawrHqManifest = createTestingRawrHqManifest();
 
 describe("orpc openapi", () => {
   it("generates published openapi paths only for the public example-todo surface", async () => {

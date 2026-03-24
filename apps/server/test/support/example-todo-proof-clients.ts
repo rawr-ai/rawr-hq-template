@@ -1,5 +1,5 @@
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
-import { rawrHqManifest } from "../../../../rawr.hq";
+import { createTestingRawrHqManifest } from "@rawr/hq-app/testing";
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
@@ -15,6 +15,7 @@ const EXTERNAL_OPENAPI_HEADERS = {
 type RequestHandlerApp = {
   handle(request: Request): Promise<Response>;
 };
+const rawrHqManifest = createTestingRawrHqManifest();
 
 type ExampleTodoTask = {
   id: string;

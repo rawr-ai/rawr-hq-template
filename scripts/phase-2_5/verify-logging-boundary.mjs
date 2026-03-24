@@ -10,17 +10,19 @@ import {
 await Promise.all([
   mustExist("apps/server/src/logging.ts"),
   mustExist("apps/server/src/orpc.ts"),
+  mustExist("apps/server/src/rawr.ts"),
   mustExist("apps/server/test/logging-correlation.test.ts"),
   mustExist("scripts/phase-2_5/verify-logging-boundary.mjs"),
-  mustExist("rawr.hq.ts"),
+  mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/server/package.json"),
 ]);
 
-const [scripts, loggingSource, orpcSource, manifestSource, serverPackageRaw] = await Promise.all([
+const [scripts, loggingSource, orpcSource, rawrSource, manifestSource, serverPackageRaw] = await Promise.all([
   readPackageScripts(),
   readFile("apps/server/src/logging.ts"),
   readFile("apps/server/src/orpc.ts"),
-  readFile("rawr.hq.ts"),
+  readFile("apps/server/src/rawr.ts"),
+  readFile("apps/hq/src/manifest.ts"),
   readFile("apps/server/package.json"),
 ]);
 
@@ -58,10 +60,13 @@ assertCondition(
   "apps/server/src/orpc.ts must bind host logging correlation at both routed ingress surfaces",
 );
 assertCondition(
-  manifestSource.includes('from "./apps/server/src/logging"')
-    && manifestSource.includes("createHostLoggerAdapter")
+  rawrSource.includes('from "./logging"')
+    && rawrSource.includes("createRawrHqManifest")
+    && rawrSource.includes("createHostLoggerAdapter")
+    && manifestSource.includes("exampleTodoLogger")
+    && !manifestSource.includes("apps/server/src/logging")
     && !manifestSource.includes('host-adapters/logger/embedded-placeholder'),
-  "rawr.hq.ts must consume the host-owned logger adapter instead of the embedded placeholder logger",
+  "server host must inject the logger adapter into the app-owned manifest seam instead of keeping host logging inside apps/hq",
 );
 assertCondition(
   typeof serverPackage.dependencies?.pino === "string" && serverPackage.dependencies.pino.trim() !== "",

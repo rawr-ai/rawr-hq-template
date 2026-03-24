@@ -3,18 +3,43 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
-const inventoryPath = path.join(root, "tools", "architecture-inventory", "slice-0-first-cohort.json");
+const inventoryDir = path.join(root, "tools", "architecture-inventory");
 const projectArgIndex = process.argv.indexOf("--project");
 const projectFilter = projectArgIndex >= 0 ? process.argv[projectArgIndex + 1] : undefined;
 
-const inventory = JSON.parse(await fs.readFile(inventoryPath, "utf8"));
-const projectEntries = Object.entries(inventory.projects);
+const inventoryFiles = (await fs.readdir(inventoryDir))
+  .filter((fileName) => fileName.endsWith(".json"))
+  .sort();
+
+const inventories = await Promise.all(
+  inventoryFiles.map(async (fileName) => {
+    const fullPath = path.join(inventoryDir, fileName);
+    const parsed = JSON.parse(await fs.readFile(fullPath, "utf8"));
+    return {
+      fileName,
+      projects: parsed.projects ?? {},
+    };
+  }),
+);
+
+const combinedProjects = new Map();
+for (const inventory of inventories) {
+  for (const [projectName, projectSpec] of Object.entries(inventory.projects)) {
+    if (combinedProjects.has(projectName)) {
+      console.error(`sync:check failed: project ${projectName} is declared more than once in tools/architecture-inventory.`);
+      process.exit(1);
+    }
+    combinedProjects.set(projectName, projectSpec);
+  }
+}
+
+const projectEntries = [...combinedProjects.entries()];
 const selectedEntries = projectFilter
   ? projectEntries.filter(([name]) => name === projectFilter)
   : projectEntries;
 
 if (projectFilter && selectedEntries.length === 0) {
-  console.error(`sync:check failed: project ${projectFilter} is not declared in ${path.relative(root, inventoryPath)}.`);
+  console.error(`sync:check failed: project ${projectFilter} is not declared in ${path.relative(root, inventoryDir)}.`);
   process.exit(1);
 }
 
@@ -58,5 +83,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `sync:check passed for ${selectedEntries.length} project${selectedEntries.length === 1 ? "" : "s"} using ${path.relative(root, inventoryPath)}.`,
+  `sync:check passed for ${selectedEntries.length} project${selectedEntries.length === 1 ? "" : "s"} using ${path.relative(root, inventoryDir)}.`,
 );

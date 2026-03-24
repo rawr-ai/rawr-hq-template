@@ -9,7 +9,9 @@
         "@orpc/server": "^1.13.5",
         "@rawr/coordination-inngest": "workspace:*",
         "@rawr/core": "workspace:*",
+        "@rawr/hq-app": "workspace:*",
         "@rawr/hq-sdk": "workspace:*",
+        "@rawr/runtime-context": "workspace:*",
         "@rawr/support-example": "workspace:*",
         "inngest": "3.51.0",
         "typebox": "^1.0.81",
@@ -54,6 +56,22 @@
         "typescript": "^5.9.3",
       },
     },
+    "apps/hq": {
+      "name": "@rawr/hq-app",
+      "dependencies": {
+        "@orpc/server": "^1.13.5",
+        "@rawr/coordination-inngest": "workspace:*",
+        "@rawr/core": "workspace:*",
+        "@rawr/example-todo": "workspace:*",
+        "@rawr/hq-sdk": "workspace:*",
+        "@rawr/support-example": "workspace:*",
+        "inngest": "3.51.0",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.2.10",
+        "typescript": "^5.9.3",
+      },
+    },
     "apps/server": {
       "name": "@rawr/server",
       "dependencies": {
@@ -66,6 +84,8 @@
         "@rawr/coordination-inngest": "workspace:*",
         "@rawr/coordination-observability": "workspace:*",
         "@rawr/core": "workspace:*",
+        "@rawr/hq-app": "workspace:*",
+        "@rawr/runtime-context": "workspace:*",
         "@rawr/state": "workspace:*",
         "elysia": "^1.3.12",
         "inngest": "3.51.0",
@@ -123,6 +143,12 @@
         "@types/yazl": "^3.2.6",
         "typescript": "^5.9.3",
         "yauzl": "^3.2.0",
+      },
+    },
+    "packages/bootgraph": {
+      "name": "@rawr/bootgraph",
+      "devDependencies": {
+        "typescript": "^5.9.3",
       },
     },
     "packages/control-plane": {
@@ -184,6 +210,7 @@
         "@rawr/coordination": "workspace:*",
         "@rawr/coordination-inngest": "workspace:*",
         "@rawr/coordination-observability": "workspace:*",
+        "@rawr/runtime-context": "workspace:*",
         "@rawr/state": "workspace:*",
         "inngest": "3.51.0",
       },
@@ -228,6 +255,15 @@
       "name": "@rawr/orpc-client",
       "dependencies": {
         "@orpc/client": "^1.13.5",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/runtime-context": {
+      "name": "@rawr/runtime-context",
+      "dependencies": {
+        "inngest": "3.51.0",
       },
       "devDependencies": {
         "typescript": "^5.9.3",
@@ -994,6 +1030,8 @@
 
     "@rawr/agent-sync": ["@rawr/agent-sync@workspace:packages/agent-sync"],
 
+    "@rawr/bootgraph": ["@rawr/bootgraph@workspace:packages/bootgraph"],
+
     "@rawr/cli": ["@rawr/cli@workspace:apps/cli"],
 
     "@rawr/control-plane": ["@rawr/control-plane@workspace:packages/control-plane"],
@@ -1010,6 +1048,8 @@
 
     "@rawr/hq": ["@rawr/hq@workspace:packages/hq"],
 
+    "@rawr/hq-app": ["@rawr/hq-app@workspace:apps/hq"],
+
     "@rawr/hq-sdk": ["@rawr/hq-sdk@workspace:packages/hq-sdk"],
 
     "@rawr/journal": ["@rawr/journal@workspace:packages/journal"],
@@ -1025,6 +1065,8 @@
     "@rawr/plugin-plugins": ["@rawr/plugin-plugins@workspace:plugins/cli/plugins"],
 
     "@rawr/plugin-session-tools": ["@rawr/plugin-session-tools@workspace:plugins/cli/session-tools"],
+
+    "@rawr/runtime-context": ["@rawr/runtime-context@workspace:packages/runtime-context"],
 
     "@rawr/security": ["@rawr/security@workspace:packages/security"],
 

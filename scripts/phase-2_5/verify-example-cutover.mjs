@@ -8,7 +8,7 @@ import {
 } from "../phase-f/_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("rawr.hq.ts"),
+  mustExist("apps/hq/src/manifest.ts"),
   mustExist("plugins/api/example-todo/src/index.ts"),
   mustExist("plugins/api/example-todo/src/router.ts"),
   mustExist("apps/server/test/rawr.test.ts"),
@@ -18,7 +18,7 @@ await Promise.all([
 
 const [scripts, manifestSource, pluginSource, pluginRouterSource, rawrTestSource, apiSurfaceTestSource] = await Promise.all([
   readPackageScripts(),
-  readFile("rawr.hq.ts"),
+  readFile("apps/hq/src/manifest.ts"),
   readFile("plugins/api/example-todo/src/index.ts"),
   readFile("plugins/api/example-todo/src/router.ts"),
   readFile("apps/server/test/rawr.test.ts"),
@@ -27,15 +27,15 @@ const [scripts, manifestSource, pluginSource, pluginRouterSource, rawrTestSource
 
 assertCondition(
   manifestSource.includes("@rawr/example-todo") && manifestSource.includes("registerExampleTodoApiPlugin"),
-  "rawr.hq.ts must compose the canonical example-todo API plugin from the package seam",
+  "apps/hq/src/manifest.ts must compose the canonical example-todo API plugin from the package seam",
 );
 assertCondition(
   !manifestSource.includes("./plugins/api/support-example") && !manifestSource.includes("registerSupportExampleApiPlugin"),
-  "rawr.hq.ts must remove support-example from the canonical ORPC API surface",
+  "apps/hq/src/manifest.ts must remove support-example from the canonical ORPC API surface",
 );
 assertCondition(
-  manifestSource.includes("createClient as createExampleTodoClient"),
-  "rawr.hq.ts must build example-todo clients from the package-root client factory",
+  manifestSource.includes("createClient as createExampleTodoClient") && manifestSource.includes("exampleTodoLogger"),
+  "apps/hq/src/manifest.ts must build example-todo clients from the package-root client factory while accepting host-injected logging",
 );
 assertCondition(
   pluginSource.includes('namespace: "orpc"') && pluginSource.includes("exampleTodoApiContract"),
