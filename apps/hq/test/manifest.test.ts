@@ -7,6 +7,29 @@ describe("hq app manifest", () => {
 
     expect(Object.keys(manifest.orpc.router)).toContain("coordination");
     expect(Object.keys(manifest.orpc.router)).toContain("state");
-    expect(manifest.workflows.capabilities["support-example"]?.pathPrefix).toBe("/support-example/triage");
+    expect(Object.keys(manifest.orpc.router)).toContain("exampleTodo");
+    expect(Object.keys(manifest.orpc.published.router)).toEqual(["exampleTodo"]);
+    expect(Object.keys(manifest.orpc.published.router)).not.toContain("coordination");
+    expect(Object.keys(manifest.orpc.published.router)).not.toContain("state");
+    expect(Object.keys(manifest.orpc.published.router)).not.toContain("supportExample");
+    expect(manifest.workflows.surfaces).toEqual([
+      {
+        capability: "support-example",
+        routeBase: "/support-example/triage",
+        hasInternalRouter: true,
+        hasPublishedRouter: true,
+        hasRuntimeFunctions: true,
+      },
+      {
+        capability: "coordination",
+        routeBase: "/coordination",
+        hasInternalRouter: true,
+        hasPublishedRouter: true,
+        hasRuntimeFunctions: true,
+      },
+    ]);
+    expect(Object.keys(manifest.workflows.internal.router)).toEqual(["supportExample", "coordination"]);
+    expect(Object.keys(manifest.workflows.published.router)).toEqual(["supportExample", "coordination"]);
+    expect(typeof manifest.workflows.createInngestFunctions).toBe("function");
   });
 });

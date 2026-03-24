@@ -1,4 +1,4 @@
-import { COORDINATION_RUN_EVENT } from "@rawr/coordination-inngest/browser";
+import { COORDINATION_RUN_EVENT } from "@rawr/plugin-workflows-coordination";
 import type { RunActionState, WorkflowModel } from "../../types/workflow";
 import {
   ExternalLinkIcon,

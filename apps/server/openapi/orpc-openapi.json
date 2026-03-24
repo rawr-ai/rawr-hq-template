@@ -10,222 +10,12 @@
   ],
   "openapi": "3.1.1",
   "paths": {
-    "/coordination/workflows": {
-      "get": {
-        "operationId": "coordinationListWorkflows",
-        "summary": "List saved coordination workflows",
-        "tags": [
-          "coordination"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "workflows"
-                  ],
-                  "properties": {
-                    "workflows": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "workflowId",
-                          "version",
-                          "name",
-                          "entryDeskId",
-                          "desks",
-                          "handoffs"
-                        ],
-                        "properties": {
-                          "workflowId": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "version": {
-                            "type": "integer",
-                            "minimum": 1
-                          },
-                          "name": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "description": {
-                            "type": "string"
-                          },
-                          "entryDeskId": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "desks": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "required": [
-                                "deskId",
-                                "kind",
-                                "name",
-                                "responsibility",
-                                "domain",
-                                "inputSchema",
-                                "outputSchema",
-                                "memoryScope"
-                              ],
-                              "properties": {
-                                "deskId": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "kind": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "name": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "responsibility": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "domain": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "inputSchema": {
-                                  "type": "object",
-                                  "title": "JsonSchemaV1"
-                                },
-                                "outputSchema": {
-                                  "type": "object",
-                                  "title": "JsonSchemaV1"
-                                },
-                                "memoryScope": {
-                                  "type": "object",
-                                  "required": [
-                                    "persist"
-                                  ],
-                                  "properties": {
-                                    "persist": {
-                                      "type": "boolean"
-                                    },
-                                    "ttlSeconds": {
-                                      "type": "integer",
-                                      "minimum": 0
-                                    },
-                                    "namespace": {
-                                      "type": "string"
-                                    }
-                                  },
-                                  "additionalProperties": false
-                                },
-                                "runtimePolicy": {
-                                  "type": "object",
-                                  "properties": {
-                                    "retries": {
-                                      "type": "integer",
-                                      "minimum": 0
-                                    },
-                                    "timeoutSeconds": {
-                                      "type": "integer",
-                                      "minimum": 0
-                                    },
-                                    "priority": {
-                                      "anyOf": [
-                                        {
-                                          "type": "string",
-                                          "const": "low"
-                                        },
-                                        {
-                                          "type": "string",
-                                          "const": "normal"
-                                        },
-                                        {
-                                          "type": "string",
-                                          "const": "high"
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  "additionalProperties": false
-                                }
-                              },
-                              "additionalProperties": false
-                            }
-                          },
-                          "handoffs": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "required": [
-                                "handoffId",
-                                "fromDeskId",
-                                "toDeskId"
-                              ],
-                              "properties": {
-                                "handoffId": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "fromDeskId": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "toDeskId": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "condition": {
-                                  "type": "string"
-                                },
-                                "mappingRefs": {
-                                  "type": "object",
-                                  "patternProperties": {
-                                    "^.*$": {
-                                      "type": "string"
-                                    }
-                                  }
-                                }
-                              },
-                              "additionalProperties": false
-                            }
-                          },
-                          "observabilityProfile": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "const": "basic"
-                              },
-                              {
-                                "type": "string",
-                                "const": "full"
-                              }
-                            ]
-                          },
-                          "updatedAt": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      },
+    "/exampleTodo/tasks/create": {
       "post": {
-        "operationId": "coordinationSaveWorkflow",
-        "summary": "Create or update a coordination workflow",
+        "operationId": "exampleTodoCreateTask",
+        "summary": "Create a task in the example todo capability",
         "tags": [
-          "coordination"
+          "exampleTodo"
         ],
         "requestBody": {
           "required": true,
@@ -234,747 +24,23 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "workflow"
+                  "title"
                 ],
                 "properties": {
-                  "workflow": {
-                    "type": "object",
-                    "required": [
-                      "workflowId",
-                      "version",
-                      "name",
-                      "entryDeskId",
-                      "desks",
-                      "handoffs"
-                    ],
-                    "properties": {
-                      "workflowId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "version": {
-                        "type": "integer",
-                        "minimum": 1
-                      },
-                      "name": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "description": {
-                        "type": "string"
-                      },
-                      "entryDeskId": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "desks": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "required": [
-                            "deskId",
-                            "kind",
-                            "name",
-                            "responsibility",
-                            "domain",
-                            "inputSchema",
-                            "outputSchema",
-                            "memoryScope"
-                          ],
-                          "properties": {
-                            "deskId": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "kind": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "name": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "responsibility": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "domain": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "inputSchema": {
-                              "type": "object",
-                              "title": "JsonSchemaV1"
-                            },
-                            "outputSchema": {
-                              "type": "object",
-                              "title": "JsonSchemaV1"
-                            },
-                            "memoryScope": {
-                              "type": "object",
-                              "required": [
-                                "persist"
-                              ],
-                              "properties": {
-                                "persist": {
-                                  "type": "boolean"
-                                },
-                                "ttlSeconds": {
-                                  "type": "integer",
-                                  "minimum": 0
-                                },
-                                "namespace": {
-                                  "type": "string"
-                                }
-                              },
-                              "additionalProperties": false
-                            },
-                            "runtimePolicy": {
-                              "type": "object",
-                              "properties": {
-                                "retries": {
-                                  "type": "integer",
-                                  "minimum": 0
-                                },
-                                "timeoutSeconds": {
-                                  "type": "integer",
-                                  "minimum": 0
-                                },
-                                "priority": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string",
-                                      "const": "low"
-                                    },
-                                    {
-                                      "type": "string",
-                                      "const": "normal"
-                                    },
-                                    {
-                                      "type": "string",
-                                      "const": "high"
-                                    }
-                                  ]
-                                }
-                              },
-                              "additionalProperties": false
-                            }
-                          },
-                          "additionalProperties": false
-                        }
-                      },
-                      "handoffs": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "required": [
-                            "handoffId",
-                            "fromDeskId",
-                            "toDeskId"
-                          ],
-                          "properties": {
-                            "handoffId": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "fromDeskId": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "toDeskId": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "condition": {
-                              "type": "string"
-                            },
-                            "mappingRefs": {
-                              "type": "object",
-                              "patternProperties": {
-                                "^.*$": {
-                                  "type": "string"
-                                }
-                              }
-                            }
-                          },
-                          "additionalProperties": false
-                        }
-                      },
-                      "observabilityProfile": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "const": "basic"
-                          },
-                          {
-                            "type": "string",
-                            "const": "full"
-                          }
-                        ]
-                      },
-                      "updatedAt": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": false
-                  }
-                },
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "workflow"
-                  ],
-                  "properties": {
-                    "workflow": {
-                      "type": "object",
-                      "required": [
-                        "workflowId",
-                        "version",
-                        "name",
-                        "entryDeskId",
-                        "desks",
-                        "handoffs"
-                      ],
-                      "properties": {
-                        "workflowId": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "version": {
-                          "type": "integer",
-                          "minimum": 1
-                        },
-                        "name": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "description": {
-                          "type": "string"
-                        },
-                        "entryDeskId": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "desks": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "deskId",
-                              "kind",
-                              "name",
-                              "responsibility",
-                              "domain",
-                              "inputSchema",
-                              "outputSchema",
-                              "memoryScope"
-                            ],
-                            "properties": {
-                              "deskId": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "kind": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "name": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "responsibility": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "domain": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "inputSchema": {
-                                "type": "object",
-                                "title": "JsonSchemaV1"
-                              },
-                              "outputSchema": {
-                                "type": "object",
-                                "title": "JsonSchemaV1"
-                              },
-                              "memoryScope": {
-                                "type": "object",
-                                "required": [
-                                  "persist"
-                                ],
-                                "properties": {
-                                  "persist": {
-                                    "type": "boolean"
-                                  },
-                                  "ttlSeconds": {
-                                    "type": "integer",
-                                    "minimum": 0
-                                  },
-                                  "namespace": {
-                                    "type": "string"
-                                  }
-                                },
-                                "additionalProperties": false
-                              },
-                              "runtimePolicy": {
-                                "type": "object",
-                                "properties": {
-                                  "retries": {
-                                    "type": "integer",
-                                    "minimum": 0
-                                  },
-                                  "timeoutSeconds": {
-                                    "type": "integer",
-                                    "minimum": 0
-                                  },
-                                  "priority": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string",
-                                        "const": "low"
-                                      },
-                                      {
-                                        "type": "string",
-                                        "const": "normal"
-                                      },
-                                      {
-                                        "type": "string",
-                                        "const": "high"
-                                      }
-                                    ]
-                                  }
-                                },
-                                "additionalProperties": false
-                              }
-                            },
-                            "additionalProperties": false
-                          }
-                        },
-                        "handoffs": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "handoffId",
-                              "fromDeskId",
-                              "toDeskId"
-                            ],
-                            "properties": {
-                              "handoffId": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "fromDeskId": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "toDeskId": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "condition": {
-                                "type": "string"
-                              },
-                              "mappingRefs": {
-                                "type": "object",
-                                "patternProperties": {
-                                  "^.*$": {
-                                    "type": "string"
-                                  }
-                                }
-                              }
-                            },
-                            "additionalProperties": false
-                          }
-                        },
-                        "observabilityProfile": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "const": "basic"
-                            },
-                            {
-                              "type": "string",
-                              "const": "full"
-                            }
-                          ]
-                        },
-                        "updatedAt": {
-                          "type": "string"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/coordination/workflows/{workflowId}": {
-      "get": {
-        "operationId": "coordinationGetWorkflow",
-        "summary": "Get a coordination workflow by id",
-        "tags": [
-          "coordination"
-        ],
-        "parameters": [
-          {
-            "name": "workflowId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "workflow"
-                  ],
-                  "properties": {
-                    "workflow": {
-                      "type": "object",
-                      "required": [
-                        "workflowId",
-                        "version",
-                        "name",
-                        "entryDeskId",
-                        "desks",
-                        "handoffs"
-                      ],
-                      "properties": {
-                        "workflowId": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "version": {
-                          "type": "integer",
-                          "minimum": 1
-                        },
-                        "name": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "description": {
-                          "type": "string"
-                        },
-                        "entryDeskId": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "desks": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "deskId",
-                              "kind",
-                              "name",
-                              "responsibility",
-                              "domain",
-                              "inputSchema",
-                              "outputSchema",
-                              "memoryScope"
-                            ],
-                            "properties": {
-                              "deskId": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "kind": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "name": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "responsibility": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "domain": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "inputSchema": {
-                                "type": "object",
-                                "title": "JsonSchemaV1"
-                              },
-                              "outputSchema": {
-                                "type": "object",
-                                "title": "JsonSchemaV1"
-                              },
-                              "memoryScope": {
-                                "type": "object",
-                                "required": [
-                                  "persist"
-                                ],
-                                "properties": {
-                                  "persist": {
-                                    "type": "boolean"
-                                  },
-                                  "ttlSeconds": {
-                                    "type": "integer",
-                                    "minimum": 0
-                                  },
-                                  "namespace": {
-                                    "type": "string"
-                                  }
-                                },
-                                "additionalProperties": false
-                              },
-                              "runtimePolicy": {
-                                "type": "object",
-                                "properties": {
-                                  "retries": {
-                                    "type": "integer",
-                                    "minimum": 0
-                                  },
-                                  "timeoutSeconds": {
-                                    "type": "integer",
-                                    "minimum": 0
-                                  },
-                                  "priority": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string",
-                                        "const": "low"
-                                      },
-                                      {
-                                        "type": "string",
-                                        "const": "normal"
-                                      },
-                                      {
-                                        "type": "string",
-                                        "const": "high"
-                                      }
-                                    ]
-                                  }
-                                },
-                                "additionalProperties": false
-                              }
-                            },
-                            "additionalProperties": false
-                          }
-                        },
-                        "handoffs": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "handoffId",
-                              "fromDeskId",
-                              "toDeskId"
-                            ],
-                            "properties": {
-                              "handoffId": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "fromDeskId": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "toDeskId": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "condition": {
-                                "type": "string"
-                              },
-                              "mappingRefs": {
-                                "type": "object",
-                                "patternProperties": {
-                                  "^.*$": {
-                                    "type": "string"
-                                  }
-                                }
-                              }
-                            },
-                            "additionalProperties": false
-                          }
-                        },
-                        "observabilityProfile": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "const": "basic"
-                            },
-                            {
-                              "type": "string",
-                              "const": "full"
-                            }
-                          ]
-                        },
-                        "updatedAt": {
-                          "type": "string"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/coordination/workflows/{workflowId}/validate": {
-      "post": {
-        "operationId": "coordinationValidateWorkflow",
-        "summary": "Validate a coordination workflow",
-        "tags": [
-          "coordination"
-        ],
-        "parameters": [
-          {
-            "name": "workflowId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [],
-                "properties": {},
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "workflowId",
-                    "validation"
-                  ],
-                  "properties": {
-                    "workflowId": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "validation": {
-                      "type": "object",
-                      "required": [
-                        "ok",
-                        "errors"
-                      ],
-                      "properties": {
-                        "ok": {
-                          "type": "boolean"
-                        },
-                        "errors": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "code",
-                              "message"
-                            ],
-                            "properties": {
-                              "code": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "message": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "deskId": {
-                                "type": "string"
-                              },
-                              "handoffId": {
-                                "type": "string"
-                              }
-                            },
-                            "additionalProperties": false
-                          }
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/coordination/workflows/{workflowId}/run": {
-      "post": {
-        "operationId": "coordinationQueueRun",
-        "summary": "Queue a workflow run",
-        "tags": [
-          "coordination"
-        ],
-        "parameters": [
-          {
-            "name": "workflowId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [],
-                "properties": {
-                  "runId": {
+                  "title": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "maxLength": 500,
+                    "description": "Human-readable task title."
                   },
-                  "input": {
-                    "title": "JsonValue"
+                  "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "description": "Optional longer details for the task."
                   }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "description": "Input payload for creating a new task."
               }
             }
           }
@@ -987,377 +53,205 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "run",
-                    "eventIds"
+                    "id",
+                    "workspaceId",
+                    "title",
+                    "description",
+                    "completed",
+                    "createdAt",
+                    "updatedAt"
                   ],
                   "properties": {
-                    "run": {
-                      "type": "object",
-                      "required": [
-                        "runId",
-                        "workflowId",
-                        "workflowVersion",
-                        "status",
-                        "startedAt",
-                        "traceLinks"
-                      ],
-                      "properties": {
-                        "runId": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "workflowId": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "workflowVersion": {
-                          "type": "integer",
-                          "minimum": 1
-                        },
-                        "status": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "const": "queued"
-                            },
-                            {
-                              "type": "string",
-                              "const": "running"
-                            },
-                            {
-                              "type": "string",
-                              "const": "completed"
-                            },
-                            {
-                              "type": "string",
-                              "const": "failed"
-                            }
-                          ]
-                        },
-                        "startedAt": {
-                          "type": "string"
-                        },
-                        "finishedAt": {
-                          "type": "string"
-                        },
-                        "input": {
-                          "title": "JsonValue"
-                        },
-                        "output": {
-                          "title": "JsonValue"
-                        },
-                        "error": {
-                          "type": "string"
-                        },
-                        "traceLinks": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "provider",
-                              "label",
-                              "url"
-                            ],
-                            "properties": {
-                              "provider": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                    "const": "inngest"
-                                  },
-                                  {
-                                    "type": "string",
-                                    "const": "rawr"
-                                  }
-                                ]
-                              },
-                              "label": {
-                                "type": "string"
-                              },
-                              "url": {
-                                "type": "string"
-                              }
-                            },
-                            "additionalProperties": false
-                          }
-                        }
-                      },
-                      "additionalProperties": false
-                    },
-                    "eventIds": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/coordination/runs/{runId}": {
-      "get": {
-        "operationId": "coordinationGetRunStatus",
-        "summary": "Get workflow run status",
-        "tags": [
-          "coordination"
-        ],
-        "parameters": [
-          {
-            "name": "runId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "run"
-                  ],
-                  "properties": {
-                    "run": {
-                      "type": "object",
-                      "required": [
-                        "runId",
-                        "workflowId",
-                        "workflowVersion",
-                        "status",
-                        "startedAt",
-                        "traceLinks"
-                      ],
-                      "properties": {
-                        "runId": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "workflowId": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "workflowVersion": {
-                          "type": "integer",
-                          "minimum": 1
-                        },
-                        "status": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "const": "queued"
-                            },
-                            {
-                              "type": "string",
-                              "const": "running"
-                            },
-                            {
-                              "type": "string",
-                              "const": "completed"
-                            },
-                            {
-                              "type": "string",
-                              "const": "failed"
-                            }
-                          ]
-                        },
-                        "startedAt": {
-                          "type": "string"
-                        },
-                        "finishedAt": {
-                          "type": "string"
-                        },
-                        "input": {
-                          "title": "JsonValue"
-                        },
-                        "output": {
-                          "title": "JsonValue"
-                        },
-                        "error": {
-                          "type": "string"
-                        },
-                        "traceLinks": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "provider",
-                              "label",
-                              "url"
-                            ],
-                            "properties": {
-                              "provider": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                    "const": "inngest"
-                                  },
-                                  {
-                                    "type": "string",
-                                    "const": "rawr"
-                                  }
-                                ]
-                              },
-                              "label": {
-                                "type": "string"
-                              },
-                              "url": {
-                                "type": "string"
-                              }
-                            },
-                            "additionalProperties": false
-                          }
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/coordination/runs/{runId}/timeline": {
-      "get": {
-        "operationId": "coordinationGetRunTimeline",
-        "summary": "Get workflow run timeline",
-        "tags": [
-          "coordination"
-        ],
-        "parameters": [
-          {
-            "name": "runId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "runId",
-                    "timeline"
-                  ],
-                  "properties": {
-                    "runId": {
+                    "id": {
                       "type": "string",
-                      "minLength": 1
+                      "format": "uuid",
+                      "description": "Stable unique identifier for the task."
                     },
-                    "timeline": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "eventId",
-                          "runId",
-                          "workflowId",
-                          "type",
-                          "ts",
-                          "status"
-                        ],
-                        "properties": {
-                          "eventId": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "runId": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "workflowId": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "deskId": {
-                            "type": "string"
-                          },
-                          "type": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "const": "run.started"
-                              },
-                              {
-                                "type": "string",
-                                "const": "run.completed"
-                              },
-                              {
-                                "type": "string",
-                                "const": "run.failed"
-                              },
-                              {
-                                "type": "string",
-                                "const": "desk.started"
-                              },
-                              {
-                                "type": "string",
-                                "const": "desk.completed"
-                              },
-                              {
-                                "type": "string",
-                                "const": "desk.failed"
-                              }
-                            ]
-                          },
-                          "ts": {
-                            "type": "string"
-                          },
-                          "status": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "const": "queued"
-                              },
-                              {
-                                "type": "string",
-                                "const": "running"
-                              },
-                              {
-                                "type": "string",
-                                "const": "completed"
-                              },
-                              {
-                                "type": "string",
-                                "const": "failed"
-                              }
-                            ]
-                          },
-                          "detail": {
-                            "type": "string"
-                          },
-                          "input": {
-                            "title": "JsonValue"
-                          },
-                          "output": {
-                            "title": "JsonValue"
-                          }
+                    "workspaceId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace scope that owns this task record."
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "description": "Primary task title."
+                    },
+                    "description": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2000,
+                          "description": "Optional detailed notes for the task."
                         },
-                        "additionalProperties": false
-                      }
+                        {
+                          "type": "null",
+                          "description": "No description is set for this task."
+                        }
+                      ],
+                      "description": "Optional task description value."
+                    },
+                    "completed": {
+                      "type": "boolean",
+                      "description": "Completion status of the task."
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO timestamp when the task was created."
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO timestamp when the task was last updated."
                     }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "Canonical persisted task entity."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": true
+                        },
+                        "code": {
+                          "const": "INVALID_TASK_TITLE"
+                        },
+                        "status": {
+                          "const": 400
+                        },
+                        "message": {
+                          "type": "string",
+                          "default": "Invalid task title"
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "description": "Raw title value that failed validation or normalization."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "Context describing why the task title was rejected."
+                        }
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                        "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": false
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "number"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": true
+                        },
+                        "code": {
+                          "const": "READ_ONLY_MODE"
+                        },
+                        "status": {
+                          "const": 409
+                        },
+                        "message": {
+                          "type": "string",
+                          "default": "Write operations are blocked while read-only mode is enabled"
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "path": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Procedure path that was blocked while read-only mode was enabled."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "Context payload for READ_ONLY_MODE boundary errors."
+                        }
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                        "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": false
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "number"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    }
+                  ]
                 }
               }
             }
@@ -1365,14 +259,25 @@
         }
       }
     },
-    "/state/runtime": {
+    "/exampleTodo/tasks/{id}": {
       "get": {
-        "operationId": "stateGetRuntimeState",
-        "summary": "Read runtime plugin state",
+        "operationId": "exampleTodoGetTask",
+        "summary": "Get a task from the example todo capability",
         "tags": [
-          "state"
+          "exampleTodo"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Unique task identifier."
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1381,50 +286,139 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "state"
+                    "id",
+                    "workspaceId",
+                    "title",
+                    "description",
+                    "completed",
+                    "createdAt",
+                    "updatedAt"
                   ],
                   "properties": {
-                    "state": {
-                      "type": "object",
-                      "required": [
-                        "version",
-                        "plugins"
-                      ],
-                      "properties": {
-                        "version": {
-                          "type": "number",
-                          "const": 1
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Stable unique identifier for the task."
+                    },
+                    "workspaceId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Workspace scope that owns this task record."
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "description": "Primary task title."
+                    },
+                    "description": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2000,
+                          "description": "Optional detailed notes for the task."
                         },
-                        "plugins": {
-                          "type": "object",
-                          "required": [
-                            "enabled",
-                            "lastUpdatedAt"
-                          ],
-                          "properties": {
-                            "enabled": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "disabled": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            },
-                            "lastUpdatedAt": {
-                              "type": "string"
-                            }
-                          },
-                          "additionalProperties": false
+                        {
+                          "type": "null",
+                          "description": "No description is set for this task."
                         }
-                      },
-                      "additionalProperties": false
+                      ],
+                      "description": "Optional task description value."
+                    },
+                    "completed": {
+                      "type": "boolean",
+                      "description": "Completion status of the task."
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO timestamp when the task was created."
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO timestamp when the task was last updated."
                     }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "Canonical persisted task entity."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": true
+                        },
+                        "code": {
+                          "const": "RESOURCE_NOT_FOUND"
+                        },
+                        "status": {
+                          "const": 404
+                        },
+                        "message": {
+                          "type": "string",
+                          "default": "Resource not found"
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "entity": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Entity name that was not found (for example Task or Tag)."
+                            },
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Identifier associated with the missing entity."
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "Context payload for RESOURCE_NOT_FOUND boundary errors."
+                        }
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message",
+                        "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": false
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "number"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    }
+                  ]
                 }
               }
             }

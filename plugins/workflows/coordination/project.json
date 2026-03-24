@@ -1,0 +1,13 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "plugin-workflows-coordination",
+  "root": "plugins/workflows/coordination",
+  "sourceRoot": "plugins/workflows/coordination/src",
+  "tags": [
+    "type:plugin",
+    "migration-slice:structural-tranche",
+    "role:workflow",
+    "surface:async",
+    "capability:coordination"
+  ]
+}

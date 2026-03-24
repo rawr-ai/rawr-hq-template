@@ -19,7 +19,7 @@ async function main() {
   const outputPath = resolveOutputPath();
   const baseUrl = process.env.RAWR_ORPC_OPENAPI_BASE_URL?.trim() || "http://localhost:3000";
   const manifest = createTestingRawrHqManifest();
-  const spec = await generateOrpcOpenApiSpec(baseUrl, manifest.orpc.router);
+  const spec = await generateOrpcOpenApiSpec(baseUrl, manifest.orpc.published.router);
 
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(spec, null, 2)}\n`, "utf8");

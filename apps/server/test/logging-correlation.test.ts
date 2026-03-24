@@ -135,4 +135,42 @@ describe("host logging correlation", () => {
       await fs.rm(repoRoot, { recursive: true, force: true });
     }
   });
+
+  it("writes correlated published workflow host logs into .rawr/hq/runtime.log", async () => {
+    const { app, repoRoot } = await createTestApp();
+
+    try {
+      const response = await app.handle(
+        new Request("http://localhost/api/workflows/support-example/triage/status", {
+          headers: {
+            "x-request-id": "workflow-request-1",
+            "x-correlation-id": "workflow-correlation-1",
+          },
+        }),
+      );
+
+      expect(response.status).toBe(200);
+
+      __flushHostLoggerForTests();
+
+      const entries = await readRuntimeLogs(repoRoot);
+      expect(entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          event: "workflow.route",
+          requestId: "workflow-request-1",
+          correlationId: "workflow-correlation-1",
+          requestMethod: "GET",
+          requestPath: "/api/workflows/support-example/triage/status",
+          surface: "workflow",
+          outcome: "success",
+          statusCode: 200,
+        }),
+      ]));
+      const entry = entries.find((candidate) => candidate.event === "workflow.route" && candidate.requestId === "workflow-request-1");
+      expect(entry?.traceId).toEqual(expect.any(String));
+      expect(entry?.spanId).toEqual(expect.any(String));
+    } finally {
+      await fs.rm(repoRoot, { recursive: true, force: true });
+    }
+  });
 });

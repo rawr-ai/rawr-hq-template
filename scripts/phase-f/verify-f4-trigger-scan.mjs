@@ -12,17 +12,21 @@ const THRESHOLDS = {
 
 await Promise.all([
   mustExist("apps/hq/src/manifest.ts"),
-  mustExist("packages/coordination/src/orpc/router.ts"),
+  mustExist("services/coordination/src/service/modules/workflows/router.ts"),
+  mustExist("services/coordination/src/service/modules/runs/router.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
-const [manifestSource, coordinationRouterSource, hqDriftTestSource, triggerDriftTestSource] = await Promise.all([
+const [manifestSource, workflowsRouterSource, runsRouterSource, hqDriftTestSource, triggerDriftTestSource] = await Promise.all([
   readFile("apps/hq/src/manifest.ts"),
-  readFile("packages/coordination/src/orpc/router.ts"),
+  readFile("services/coordination/src/service/modules/workflows/router.ts"),
+  readFile("services/coordination/src/service/modules/runs/router.ts"),
   readFile("apps/hq/test/orpc-contract-drift.test.ts"),
   readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
+
+const coordinationRouterSource = `${workflowsRouterSource}\n${runsRouterSource}`;
 
 const capabilitiesBlockMatch = manifestSource.match(/workflows:\s*\{[\s\S]*?capabilities:\s*\{([\s\S]*?)\}\s*,\s*triggerRouter:/u);
 const capabilitiesBlock = capabilitiesBlockMatch?.[1] ?? "";
@@ -37,7 +41,7 @@ const boilerplateSignals = [
   },
   {
     id: "workflow-not-found",
-    pattern: /notFound\("WORKFLOW_NOT_FOUND"/g,
+    pattern: /errors\.WORKFLOW_NOT_FOUND\(/g,
   },
   {
     id: "run-id-validation",
@@ -45,7 +49,7 @@ const boilerplateSignals = [
   },
   {
     id: "invalid-id-errors",
-    pattern: /badRequest\("INVALID_(WORKFLOW|RUN)_ID"/g,
+    pattern: /errors\.INVALID_(WORKFLOW|RUN)_ID\(/g,
   },
 ];
 

@@ -6,12 +6,17 @@ exports[`workflow trigger contract drift > matches the minified trigger contract
     "getRunStatus": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "coordination",
+          "entity": "run",
+          "idempotent": true,
+        },
         "route": {
           "method": "GET",
-          "operationId": "coordinationGetRunStatus",
+          "operationId": "coordinationWorkflowGetRunStatus",
           "path": "/coordination/runs/{runId}",
-          "summary": "Get workflow run status",
+          "summary": "Get coordination workflow run status",
           "tags": [
             "coordination",
           ],
@@ -21,42 +26,17 @@ exports[`workflow trigger contract drift > matches the minified trigger contract
     "getRunTimeline": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "coordination",
+          "entity": "run",
+          "idempotent": true,
+        },
         "route": {
           "method": "GET",
-          "operationId": "coordinationGetRunTimeline",
+          "operationId": "coordinationWorkflowGetRunTimeline",
           "path": "/coordination/runs/{runId}/timeline",
-          "summary": "Get workflow run timeline",
-          "tags": [
-            "coordination",
-          ],
-        },
-      },
-    },
-    "getWorkflow": {
-      "~orpc": {
-        "errorMap": {},
-        "meta": {},
-        "route": {
-          "method": "GET",
-          "operationId": "coordinationGetWorkflow",
-          "path": "/coordination/workflows/{workflowId}",
-          "summary": "Get a coordination workflow by id",
-          "tags": [
-            "coordination",
-          ],
-        },
-      },
-    },
-    "listWorkflows": {
-      "~orpc": {
-        "errorMap": {},
-        "meta": {},
-        "route": {
-          "method": "GET",
-          "operationId": "coordinationListWorkflows",
-          "path": "/coordination/workflows",
-          "summary": "List saved coordination workflows",
+          "summary": "Get coordination workflow run timeline",
           "tags": [
             "coordination",
           ],
@@ -66,45 +46,56 @@ exports[`workflow trigger contract drift > matches the minified trigger contract
     "queueRun": {
       "~orpc": {
         "errorMap": {},
-        "meta": {},
+        "meta": {
+          "audience": "internal",
+          "domain": "coordination",
+          "entity": "run",
+          "idempotent": false,
+        },
         "route": {
           "method": "POST",
-          "operationId": "coordinationQueueRun",
+          "operationId": "coordinationWorkflowQueueRun",
           "path": "/coordination/workflows/{workflowId}/run",
-          "summary": "Queue a workflow run",
+          "summary": "Queue a coordination workflow run",
           "tags": [
             "coordination",
           ],
         },
       },
     },
-    "saveWorkflow": {
-      "~orpc": {
-        "errorMap": {},
-        "meta": {},
-        "route": {
-          "method": "POST",
-          "operationId": "coordinationSaveWorkflow",
-          "path": "/coordination/workflows",
-          "summary": "Create or update a coordination workflow",
-          "tags": [
-            "coordination",
-          ],
+  },
+  "supportExample": {
+    "triage": {
+      "getStatus": {
+        "~orpc": {
+          "errorMap": {},
+          "meta": {},
+          "route": {
+            "description": "Returns capability health plus optional status details for a specific support triage run.",
+            "method": "GET",
+            "operationId": "supportExampleGetStatus",
+            "path": "/support-example/triage/status",
+            "summary": "Get support triage capability status and optional run status",
+            "tags": [
+              "support-example",
+            ],
+          },
         },
       },
-    },
-    "validateWorkflow": {
-      "~orpc": {
-        "errorMap": {},
-        "meta": {},
-        "route": {
-          "method": "POST",
-          "operationId": "coordinationValidateWorkflow",
-          "path": "/coordination/workflows/{workflowId}/validate",
-          "summary": "Validate a coordination workflow",
-          "tags": [
-            "coordination",
-          ],
+      "triggerRun": {
+        "~orpc": {
+          "errorMap": {},
+          "meta": {},
+          "route": {
+            "description": "Queues a durable support triage run and dispatches the corresponding Inngest event.",
+            "method": "POST",
+            "operationId": "supportExampleTriggerRun",
+            "path": "/support-example/triage/runs",
+            "summary": "Trigger a support triage run",
+            "tags": [
+              "support-example",
+            ],
+          },
         },
       },
     },

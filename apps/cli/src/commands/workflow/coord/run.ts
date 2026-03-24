@@ -1,6 +1,7 @@
 import { Args, Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { coordinationErrorMessage, type JsonValue } from "@rawr/coordination";
+import type { JsonValue } from "@rawr/coordination";
+import { coordinationErrorMessage } from "@rawr/coordination/compat/http";
 import {
   coordinationProcedurePath,
   coordinationQueueRun,

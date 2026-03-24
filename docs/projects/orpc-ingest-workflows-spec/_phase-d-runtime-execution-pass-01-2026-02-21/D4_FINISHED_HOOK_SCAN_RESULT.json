@@ -16,17 +16,17 @@
     },
     {
       "id": "adapter-guardrails",
-      "message": "adapter.ts executes finished-hook side effects through guardrails",
+      "message": "workflow plugin inngest.ts executes finished-hook side effects through guardrails",
       "pass": true
     },
     {
       "id": "adapter-non-critical-failure",
-      "message": "adapter.ts captures failed finished-hook outcomes without escalating run failure",
+      "message": "workflow plugin inngest.ts captures failed finished-hook outcomes without escalating run failure",
       "pass": true
     },
     {
       "id": "runtime-router-fallback-contract",
-      "message": "runtime-router queue fallback includes explicit finalization contract",
+      "message": "coordination run module queue fallback includes explicit finalization contract",
       "pass": true
     },
     {

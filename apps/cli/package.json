@@ -8,7 +8,6 @@
     "@oclif/plugin-help": "^6.2.27",
     "@oclif/plugin-plugins": "^5.4.36",
     "@orpc/client": "^1.13.5",
-    "@orpc/contract": "^1.13.5",
     "@rawr/agent-sync": "workspace:*",
     "@rawr/coordination": "workspace:*",
     "@rawr/control-plane": "workspace:*",
@@ -16,7 +15,9 @@
     "@rawr/hq": "workspace:*",
     "@rawr/journal": "workspace:*",
     "@rawr/orpc-client": "workspace:*",
+    "@rawr/plugin-api-coordination": "workspace:*",
     "@rawr/plugin-plugins": "workspace:*",
+    "@rawr/plugin-workflows-coordination": "workspace:*",
     "@rawr/state": "workspace:*",
     "@rawr/security": "workspace:*",
     "zod": "^3.24.3"

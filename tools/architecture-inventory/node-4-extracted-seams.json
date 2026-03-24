@@ -1,7 +1,7 @@
 {
   "projects": {
     "@rawr/coordination": {
-      "config": "packages/coordination/package.json",
+      "config": "services/coordination/package.json",
       "tags": [
         "type:package",
         "migration-slice:structural-tranche"
@@ -15,7 +15,7 @@
       ]
     },
     "@rawr/state": {
-      "config": "packages/state/package.json",
+      "config": "services/state/package.json",
       "tags": [
         "type:package",
         "migration-slice:structural-tranche"

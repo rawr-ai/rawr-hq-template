@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
 import {
   assertHeavyMiddlewareDedupeMarkers,
   RAWR_MIDDLEWARE_DEDUPE_MARKERS,
@@ -9,7 +10,6 @@ import {
   type RawrBoundaryContextDeps,
 } from "../src/workflows/context";
 import { createServerApp } from "../src/app";
-import { createCoordinationRuntimeAdapter } from "../src/coordination";
 import { registerOrpcRoutes } from "../src/orpc";
 import type { Inngest } from "inngest";
 import fs from "node:fs/promises";
@@ -33,7 +33,7 @@ const RPC_AUTH_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISIO
 
 async function createRouteRuntimeDeps() {
   const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-d1-dedupe-"));
-  const runtime = createCoordinationRuntimeAdapter({
+  const runtime = createCoordinationWorkflowRuntimeAdapter({
     repoRoot,
     inngestBaseUrl: "http://localhost:8288",
   });

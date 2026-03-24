@@ -5,11 +5,11 @@ import {
   GetWorkflowInputSchema,
   QueueRunInputSchema,
   RunStatusSchema,
-  typeBoxStandardSchema,
-} from "@rawr/coordination/orpc";
+} from "@rawr/coordination/service/contract";
 import type { JsonValue } from "@rawr/coordination";
-import { GetRuntimeStateOutputSchema } from "@rawr/state/orpc";
-import { hqContract } from "../src/orpc";
+import { typeBoxStandardSchema } from "@rawr/hq-sdk";
+import { GetStateOutputSchema } from "@rawr/state/service/contract";
+import { createTestingRawrHqManifest } from "../src/testing";
 
 type RouteShape = {
   method?: string;
@@ -43,8 +43,10 @@ function schemaAccepts<TSchemaInput extends Parameters<typeof typeBoxStandardSch
 }
 
 describe("hq orpc contract drift", () => {
+  const manifest = createTestingRawrHqManifest();
+
   it("keeps canonical procedure routes stable", () => {
-    const minified = minifyContractRouter(hqContract);
+    const minified = minifyContractRouter(manifest.orpc.contract);
     const routes = collectProcedureRoutes(minified).sort();
 
     expect(routes).toEqual([
@@ -55,12 +57,16 @@ describe("hq orpc contract drift", () => {
       "coordination.queueRun POST /coordination/workflows/{workflowId}/run",
       "coordination.saveWorkflow POST /coordination/workflows",
       "coordination.validateWorkflow POST /coordination/workflows/{workflowId}/validate",
+      "exampleTodo.tasks.create POST /exampleTodo/tasks/create",
+      "exampleTodo.tasks.get GET /exampleTodo/tasks/{id}",
       "state.getRuntimeState GET /state/runtime",
+      "supportExample.triage.getStatus GET /support-example/triage/status",
+      "supportExample.triage.triggerRun POST /support-example/triage/runs",
     ]);
   });
 
   it("matches the minified contract snapshot", () => {
-    expect(minifyContractRouter(hqContract)).toMatchSnapshot();
+    expect(minifyContractRouter(manifest.orpc.contract)).toMatchSnapshot();
   });
 
   it("keeps D2 finalization semantics additive in run status schema", () => {
@@ -139,15 +145,15 @@ describe("hq orpc contract drift", () => {
       },
     };
 
-    expect(schemaAccepts(GetRuntimeStateOutputSchema, baseStateOutput)).toBe(true);
+    expect(schemaAccepts(GetStateOutputSchema, baseStateOutput)).toBe(true);
     expect(
-      schemaAccepts(GetRuntimeStateOutputSchema, {
+      schemaAccepts(GetStateOutputSchema, {
         ...baseStateOutput,
         authorityRepoRoot: "/Users/rawr/repo",
       }),
     ).toBe(true);
     expect(
-      schemaAccepts(GetRuntimeStateOutputSchema, {
+      schemaAccepts(GetStateOutputSchema, {
         ...baseStateOutput,
         authorityRepoRoot: "",
       }),

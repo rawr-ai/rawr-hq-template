@@ -5,13 +5,11 @@ import path from "node:path";
 const root = process.cwd();
 const packagePath = path.join(root, "apps", "hq", "package.json");
 const manifestPath = path.join(root, "apps", "hq", "src", "manifest.ts");
-const orpcPath = path.join(root, "apps", "hq", "src", "orpc.ts");
 const testingPath = path.join(root, "apps", "hq", "src", "testing.ts");
 
-const [pkgRaw, manifestSource, orpcSource, testingSource] = await Promise.all([
+const [pkgRaw, manifestSource, testingSource] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(manifestPath, "utf8"),
-  fs.readFile(orpcPath, "utf8"),
   fs.readFile(testingPath, "utf8"),
 ]);
 
@@ -29,13 +27,17 @@ if (!manifestSource.includes("export function createRawrHqManifest")) {
   process.exit(1);
 }
 
-if (!orpcSource.includes("export function createHqRuntimeRouter")) {
-  console.error("hq-app structural failed: app-owned oRPC seam missing.");
+if (
+  !manifestSource.includes("registerCoordinationApiPlugin") ||
+  !manifestSource.includes("registerStateApiPlugin") ||
+  !manifestSource.includes("registerExampleTodoApiPlugin")
+) {
+  console.error("hq-app structural failed: manifest must compose plugin-owned ORPC surfaces.");
   process.exit(1);
 }
 
-if (orpcSource.includes("@rawr/core/orpc") || manifestSource.includes("@rawr/core/orpc")) {
-  console.error("hq-app structural failed: app authority must not depend on core-owned oRPC seams.");
+if (manifestSource.includes("createHqRuntimeRouter") || manifestSource.includes("@rawr/core/orpc")) {
+  console.error("hq-app structural failed: app authority must not own or import a special HQ router seam.");
   process.exit(1);
 }
 

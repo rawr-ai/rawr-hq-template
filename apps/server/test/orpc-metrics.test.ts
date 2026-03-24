@@ -4,8 +4,8 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as otelApi from "@opentelemetry/api";
 import { createTestingRawrHqManifest } from "@rawr/hq-app/testing";
+import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
 import { createServerApp } from "../src/app";
-import { createCoordinationRuntimeAdapter } from "../src/coordination";
 import { __resetOrpcRouteTelemetryForTests, registerOrpcRoutes } from "../src/orpc";
 
 const FIRST_PARTY_RPC_HEADERS = {
@@ -28,7 +28,7 @@ async function createTestApp(args: {
   contextFactory?: (request: Request, deps: unknown) => unknown;
 }) {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-orpc-metrics-"));
-  const runtime = createCoordinationRuntimeAdapter({
+  const runtime = createCoordinationWorkflowRuntimeAdapter({
     repoRoot: tempRoot,
     inngestBaseUrl: "http://localhost:8288",
   });

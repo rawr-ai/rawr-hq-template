@@ -1,16 +1,14 @@
 import { implement } from "@orpc/server";
-import { router as exampleTodoRouter } from "@rawr/example-todo";
 import type { ExampleTodoApiContext, ExampleTodoClientResolver } from "./context";
+import { exampleTodoApiContract } from "./contract";
 
-const os = implement<typeof exampleTodoRouter, ExampleTodoApiContext>(
-  exampleTodoRouter as unknown as typeof exampleTodoRouter,
-);
+const os = implement<typeof exampleTodoApiContract, ExampleTodoApiContext>(exampleTodoApiContract);
 
 export function createExampleTodoApiRouter(resolveClient: ExampleTodoClientResolver) {
-  return {
+  return os.router({
     exampleTodo: {
       tasks: {
-        create: os.tasks.create.handler(async ({ context, input }) => {
+        create: os.exampleTodo.tasks.create.handler(async ({ context, input }) => {
           return resolveClient(context.repoRoot).tasks.create(input, {
             context: {
               invocation: {
@@ -19,7 +17,7 @@ export function createExampleTodoApiRouter(resolveClient: ExampleTodoClientResol
             },
           });
         }),
-        get: os.tasks.get.handler(async ({ context, input }) => {
+        get: os.exampleTodo.tasks.get.handler(async ({ context, input }) => {
           return resolveClient(context.repoRoot).tasks.get(input, {
             context: {
               invocation: {
@@ -30,7 +28,7 @@ export function createExampleTodoApiRouter(resolveClient: ExampleTodoClientResol
         }),
       },
     },
-  } as const;
+  });
 }
 
 export type ExampleTodoApiRouter = ReturnType<typeof createExampleTodoApiRouter>;

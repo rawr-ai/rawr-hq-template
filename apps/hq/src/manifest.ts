@@ -1,14 +1,26 @@
 import { randomUUID } from "node:crypto";
-import { createRouterClient, type RouterClient } from "@orpc/server";
-import { createInngestServeHandler } from "@rawr/coordination-inngest";
+import { implement, type RouterClient, createRouterClient } from "@orpc/server";
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
+import {
+  composeWorkflowPlugins,
+  type AnyContractRouterObject,
+  type AnyProcedureRouterObject,
+} from "@rawr/hq-sdk/workflows";
+import { createClient as createStateClient, type Client as StateClient } from "@rawr/state";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
+import { registerCoordinationApiPlugin } from "@rawr/plugin-api-coordination/server";
+import { registerExampleTodoApiPlugin } from "@rawr/plugin-api-example-todo/server";
+import { registerStateApiPlugin } from "@rawr/plugin-api-state/server";
+import {
+  registerCoordinationWorkflowPlugin,
+} from "@rawr/plugin-workflows-coordination/server";
+import {
+  registerSupportExampleWorkflowPlugin,
+} from "@rawr/plugin-workflows-support-example/server";
+import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
 import { supportExampleRouter } from "@rawr/support-example/router";
-import { Inngest } from "inngest";
-import { registerExampleTodoApiPlugin } from "../../../plugins/api/example-todo";
-import { createSupportExampleInngestFunctions, registerSupportExampleWorkflowPlugin } from "../../../plugins/workflows/support-example";
-import { createHqRuntimeRouter } from "./orpc";
+import { composeApiPlugins } from "./apis";
 
 type SupportExampleClient = RouterClient<typeof supportExampleRouter>;
 type SupportExampleWorkItem = Awaited<ReturnType<SupportExampleClient["triage"]["items"]["request"]>>["workItem"];
@@ -22,18 +34,14 @@ type SupportExampleServiceDeps = {
   generateWorkItemId: () => string;
 };
 type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
-export type ExampleTodoHostLogger = ExampleTodoBoundary["deps"]["logger"];
+type StateBoundary = Parameters<typeof createStateClient>[0];
+export type HostServiceLogger = ExampleTodoBoundary["deps"]["logger"];
 export type CreateRawrHqManifestOptions = {
-  exampleTodoLogger: ExampleTodoHostLogger;
+  hostLogger: HostServiceLogger;
 };
 
 // Keep capability fixture state stable per repo root across requests in local dev/test runs.
 const supportExampleDepsByRepoRoot = new Map<string, SupportExampleServiceDeps>();
-export const rawrHqWorkflowCapabilities = {
-  "support-example": {
-    pathPrefix: "/support-example/triage",
-  },
-} as const;
 
 function createInMemoryTriageWorkItemStore(): SupportExampleServiceDeps["store"] {
   const workItems = new Map<string, SupportExampleWorkItem>();
@@ -81,7 +89,7 @@ function resolveSupportExampleClient(repoRoot: string): SupportExampleClient {
   });
 }
 
-function createExampleTodoBoundary(exampleTodoLogger: ExampleTodoHostLogger): ExampleTodoBoundary {
+function createExampleTodoBoundary(hostLogger: HostServiceLogger): ExampleTodoBoundary {
   let tick = 0;
 
   return {
@@ -93,7 +101,7 @@ function createExampleTodoBoundary(exampleTodoLogger: ExampleTodoHostLogger): Ex
           return new Date(Date.UTC(2026, 1, 25, 0, 0, tick)).toISOString();
         },
       },
-      logger: exampleTodoLogger,
+      logger: hostLogger,
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     },
     scope: {
@@ -108,19 +116,55 @@ function createExampleTodoBoundary(exampleTodoLogger: ExampleTodoHostLogger): Ex
   } satisfies ExampleTodoBoundary;
 }
 
-function passthroughOrpcContext<T>(context: T) {
-  return context;
+function createStateBoundary(repoRoot: string, hostLogger: HostServiceLogger): StateBoundary {
+  return {
+    deps: {
+      logger: hostLogger,
+      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+    },
+    scope: {
+      repoRoot,
+    },
+    config: {},
+  } satisfies StateBoundary;
 }
 
-function enrichSupportExampleWorkflowContext<T extends { repoRoot: string }>(context: T) {
-  return {
-    ...context,
-    supportExample: resolveSupportExampleClient(context.repoRoot),
-  };
+function isMergeableSurfaceNode(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value) && !("~orpc" in (value as Record<string, unknown>));
+}
+
+function mergeDeclaredSurfaceTrees<TTree extends object>(
+  trees: readonly TTree[],
+  path: readonly string[] = [],
+): TTree {
+  const merged: Record<string, unknown> = {};
+
+  for (const tree of trees) {
+    for (const [key, value] of Object.entries(tree)) {
+      if (!(key in merged)) {
+        merged[key] = value;
+        continue;
+      }
+
+      const existing = merged[key];
+      if (isMergeableSurfaceNode(existing) && isMergeableSurfaceNode(value)) {
+        merged[key] = mergeDeclaredSurfaceTrees(
+          [existing, value] as readonly Record<string, unknown>[],
+          [...path, key],
+        );
+        continue;
+      }
+
+      throw new Error(`duplicate declared surface at ${[...path, key].join(".")}`);
+    }
+  }
+
+  return merged as TTree;
 }
 
 export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
   const exampleTodoClientsByRepoRoot = new Map<string, ExampleTodoClient>();
+  const stateClientsByRepoRoot = new Map<string, StateClient>();
 
   function resolveExampleTodoClient(repoRoot: string): ExampleTodoClient {
     const existing = exampleTodoClientsByRepoRoot.get(repoRoot);
@@ -128,27 +172,61 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
       return existing;
     }
 
-    const client = createExampleTodoClient(createExampleTodoBoundary(options.exampleTodoLogger));
+    const client = createExampleTodoClient(createExampleTodoBoundary(options.hostLogger));
     exampleTodoClientsByRepoRoot.set(repoRoot, client);
     return client;
   }
 
-  // Host owns the runtime wiring; app authority owns only the composition contract.
-  const supportExampleInngestClient = new Inngest({ id: "rawr-support-example" });
-  const hqOrpcRouter = createHqRuntimeRouter();
+  function resolveStateClient(repoRoot: string): StateClient {
+    const existing = stateClientsByRepoRoot.get(repoRoot);
+    if (existing) {
+      return existing;
+    }
+
+    const client = createStateClient(createStateBoundary(repoRoot, options.hostLogger));
+    stateClientsByRepoRoot.set(repoRoot, client);
+    return client;
+  }
+
+  // Host owns runtime realization. The app manifest only composes plugin registrations
+  // and exposes the capability fixture/client resolvers the host can mount later.
+  const coordinationApiPlugin = registerCoordinationApiPlugin();
+  const stateApiPlugin = registerStateApiPlugin({
+    resolveClient: resolveStateClient,
+  });
   const exampleTodoApiPlugin = registerExampleTodoApiPlugin({
     resolveClient: resolveExampleTodoClient,
   });
-  const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin();
-  const composedOrpcRouter = {
-    ...hqOrpcRouter,
-    ...exampleTodoApiPlugin.router,
-  };
-  const composedWorkflowTriggerRouter = supportExampleWorkflowPlugin.router;
-  const supportExampleInngestFunctions = createSupportExampleInngestFunctions({
-    client: supportExampleInngestClient,
+  const composedApiSurface = composeApiPlugins([
+    coordinationApiPlugin,
+    stateApiPlugin,
+    exampleTodoApiPlugin,
+  ] as const);
+  const coordinationWorkflowPlugin = registerCoordinationWorkflowPlugin();
+  const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin({
     resolveSupportExampleClient,
   });
+  const composedWorkflowSurface = composeWorkflowPlugins([
+    supportExampleWorkflowPlugin,
+    coordinationWorkflowPlugin,
+  ] as const);
+  const composedOrpcContract = mergeDeclaredSurfaceTrees<AnyContractRouterObject>([
+    composedApiSurface.internalContract,
+    composedWorkflowSurface.internalContract,
+  ] as const);
+  const requestScopedOrpc = implement(composedOrpcContract).$context<BoundaryRequestSupportContext>();
+  const requestScopedPublishedApi = implement(composedApiSurface.publishedContract).$context<BoundaryRequestSupportContext>();
+  const requestScopedPublishedWorkflow = implement(composedWorkflowSurface.publishedContract)
+    .$context<BoundaryRequestSupportContext>();
+  const requestScopedInternalWorkflow = implement(composedWorkflowSurface.internalContract)
+    .$context<BoundaryRequestSupportContext>();
+  const composedOrpcRouter = requestScopedOrpc.router(mergeDeclaredSurfaceTrees<AnyProcedureRouterObject>([
+    composedApiSurface.internalRouter,
+    composedWorkflowSurface.internalRouter,
+  ] as const));
+  const publishedWorkflowRouter = requestScopedPublishedWorkflow.router(composedWorkflowSurface.publishedRouter);
+  const internalWorkflowRouter = requestScopedInternalWorkflow.router(composedWorkflowSurface.internalRouter);
+  const publishedApiRouter = requestScopedPublishedApi.router(composedApiSurface.publishedRouter);
 
   return {
     fixtures: {
@@ -157,24 +235,28 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
       },
       supportExample: {
         resolveServiceDeps: resolveSupportExampleDeps,
+        resolveClient: resolveSupportExampleClient,
       },
     },
     orpc: {
+      contract: composedOrpcContract,
       router: composedOrpcRouter,
-      enrichContext: passthroughOrpcContext,
+      published: {
+        contract: composedApiSurface.publishedContract,
+        router: publishedApiRouter,
+      },
     },
     workflows: {
-      capabilities: rawrHqWorkflowCapabilities,
-      triggerRouter: composedWorkflowTriggerRouter,
-      enrichContext: enrichSupportExampleWorkflowContext,
-    },
-    inngest: {
-      client: supportExampleInngestClient,
-      functions: supportExampleInngestFunctions,
-      handler: createInngestServeHandler({
-        client: supportExampleInngestClient,
-        functions: supportExampleInngestFunctions,
-      }),
+      surfaces: composedWorkflowSurface.surfaces,
+      internal: {
+        contract: composedWorkflowSurface.internalContract,
+        router: internalWorkflowRouter,
+      },
+      published: {
+        contract: composedWorkflowSurface.publishedContract,
+        router: publishedWorkflowRouter,
+      },
+      createInngestFunctions: composedWorkflowSurface.createInngestFunctions,
     },
   } as const;
 }

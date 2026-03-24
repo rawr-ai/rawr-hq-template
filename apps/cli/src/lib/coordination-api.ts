@@ -1,19 +1,22 @@
-import { createORPCClient, ORPCError } from "@orpc/client";
-import type { ContractRouterClient } from "@orpc/contract";
+import { ORPCError } from "@orpc/client";
 import {
-  coordinationContract,
-  coordinationFailure,
-  type CoordinationFailure,
   type CoordinationWorkflowV1,
   type JsonValue,
   type RunStatusV1,
   type ValidationResultV1,
 } from "@rawr/coordination";
+import {
+  coordinationFailure,
+  type CoordinationFailure,
+} from "@rawr/coordination/compat/http";
 import { loadRawrConfig } from "@rawr/control-plane";
 import { createCliRpcLink } from "@rawr/orpc-client";
+import { createCoordinationApiClient, type CoordinationApiClient } from "@rawr/plugin-api-coordination";
+import {
+  createCoordinationWorkflowClient,
+  type CoordinationWorkflowClient,
+} from "@rawr/plugin-workflows-coordination";
 import { findWorkspaceRoot } from "./workspace-plugins";
-
-type CoordinationClient = ContractRouterClient<typeof coordinationContract>;
 
 export type CoordinationProcedureResult<TPayload extends Record<string, unknown>> =
   | { ok: true; data: TPayload }
@@ -23,22 +26,40 @@ function resolveRpcUrl(baseUrl: string): string {
   return `${baseUrl.replace(/\/$/, "")}/rpc`;
 }
 
-const clientCache = new Map<string, CoordinationClient>();
+const apiClientCache = new Map<string, CoordinationApiClient>();
+const workflowClientCache = new Map<string, CoordinationWorkflowClient>();
 
-function getCoordinationClient(baseUrl: string): CoordinationClient {
+function getCoordinationApiClient(baseUrl: string): CoordinationApiClient {
   const rpcUrl = resolveRpcUrl(baseUrl);
-  const cached = clientCache.get(rpcUrl);
+  const cached = apiClientCache.get(rpcUrl);
   if (cached) {
     return cached;
   }
 
-  const client = createORPCClient<CoordinationClient>(
+  const client = createCoordinationApiClient(
     createCliRpcLink({
       url: rpcUrl,
     }),
   );
 
-  clientCache.set(rpcUrl, client);
+  apiClientCache.set(rpcUrl, client);
+  return client;
+}
+
+function getCoordinationWorkflowClient(baseUrl: string): CoordinationWorkflowClient {
+  const rpcUrl = resolveRpcUrl(baseUrl);
+  const cached = workflowClientCache.get(rpcUrl);
+  if (cached) {
+    return cached;
+  }
+
+  const client = createCoordinationWorkflowClient(
+    createCliRpcLink({
+      url: rpcUrl,
+    }),
+  );
+
+  workflowClientCache.set(rpcUrl, client);
   return client;
 }
 
@@ -79,9 +100,27 @@ export function coordinationFailureFromError(error: unknown, fallback: string): 
 async function coordinationCall<TPayload extends Record<string, unknown>>(input: {
   baseUrl: string;
   fallback: string;
-  invoke: (client: CoordinationClient) => Promise<TPayload>;
+  invoke: (client: CoordinationApiClient) => Promise<TPayload>;
 }): Promise<CoordinationProcedureResult<TPayload>> {
-  const client = getCoordinationClient(input.baseUrl);
+  const client = getCoordinationApiClient(input.baseUrl);
+
+  try {
+    const data = await input.invoke(client);
+    return { ok: true, data };
+  } catch (error) {
+    return {
+      ok: false,
+      error: coordinationFailureFromError(error, input.fallback),
+    };
+  }
+}
+
+async function coordinationWorkflowCall<TPayload extends Record<string, unknown>>(input: {
+  baseUrl: string;
+  fallback: string;
+  invoke: (client: CoordinationWorkflowClient) => Promise<TPayload>;
+}): Promise<CoordinationProcedureResult<TPayload>> {
+  const client = getCoordinationWorkflowClient(input.baseUrl);
 
   try {
     const data = await input.invoke(client);
@@ -137,7 +176,7 @@ export function coordinationQueueRun(input: {
   workflowId: string;
   runInput: JsonValue;
 }) {
-  return coordinationCall<{ run: RunStatusV1; eventIds: string[] }>({
+  return coordinationWorkflowCall<{ run: RunStatusV1; eventIds: string[] }>({
     baseUrl: input.baseUrl,
     fallback: "Workflow run failed",
     invoke: (client) =>
@@ -149,7 +188,7 @@ export function coordinationQueueRun(input: {
 }
 
 export function coordinationGetRunStatus(input: { baseUrl: string; runId: string }) {
-  return coordinationCall<{ run: RunStatusV1 }>({
+  return coordinationWorkflowCall<{ run: RunStatusV1 }>({
     baseUrl: input.baseUrl,
     fallback: "Run not found",
     invoke: (client) =>
