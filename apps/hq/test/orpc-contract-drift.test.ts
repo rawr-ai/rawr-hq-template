@@ -134,7 +134,7 @@ describe("hq orpc contract drift", () => {
     expect(schemaAccepts(QueueRunInputSchema, { workflowId: "wf.alpha-1", runId: "run/alpha-1" })).toBe(false);
   });
 
-  it("keeps runtime state authority metadata additive for F1 seam observability", () => {
+  it("keeps runtime state authority metadata required for F1 seam observability", () => {
     const baseStateOutput = {
       state: {
         version: 1,
@@ -145,7 +145,7 @@ describe("hq orpc contract drift", () => {
       },
     };
 
-    expect(schemaAccepts(GetStateOutputSchema, baseStateOutput)).toBe(true);
+    expect(schemaAccepts(GetStateOutputSchema, baseStateOutput)).toBe(false);
     expect(
       schemaAccepts(GetStateOutputSchema, {
         ...baseStateOutput,

@@ -26,10 +26,10 @@ export const repository = createServiceProvider<{
     repoRoot: string;
   };
 }>().middleware<{
-  repository: ReturnType<typeof createRepository>;
+  repo: ReturnType<typeof createRepository>;
 }>(async ({ context, next }) => {
   return next({
-    repository: createRepository(context.scope.repoRoot),
+    repo: createRepository(context.scope.repoRoot),
   });
 });
 
