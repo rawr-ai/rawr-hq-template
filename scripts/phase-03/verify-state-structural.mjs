@@ -10,10 +10,12 @@ const observabilityMiddlewarePath = path.join(root, "services", "state", "src", 
 const analyticsMiddlewarePath = path.join(root, "services", "state", "src", "service", "middleware", "analytics.ts");
 const routerPath = path.join(root, "services", "state", "src", "service", "router.ts");
 const contractPath = path.join(root, "services", "state", "src", "service", "contract.ts");
+const moduleRouterPath = path.join(root, "services", "state", "src", "service", "modules", "state", "router.ts");
+const moduleContractPath = path.join(root, "services", "state", "src", "service", "modules", "state", "contract.ts");
 const indexPath = path.join(root, "services", "state", "src", "index.ts");
 const repoStateIndexPath = path.join(root, "services", "state", "src", "repo-state", "index.ts");
 
-const [pkgRaw, baseSource, implSource, observabilityMiddlewareSource, analyticsMiddlewareSource, routerSource, contractSource, indexSource, repoStateIndexSource] = await Promise.all([
+const [pkgRaw, baseSource, implSource, observabilityMiddlewareSource, analyticsMiddlewareSource, routerSource, contractSource, moduleRouterSource, moduleContractSource, indexSource, repoStateIndexSource] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(basePath, "utf8"),
   fs.readFile(implPath, "utf8"),
@@ -21,6 +23,8 @@ const [pkgRaw, baseSource, implSource, observabilityMiddlewareSource, analyticsM
   fs.readFile(analyticsMiddlewarePath, "utf8"),
   fs.readFile(routerPath, "utf8"),
   fs.readFile(contractPath, "utf8"),
+  fs.readFile(moduleRouterPath, "utf8"),
+  fs.readFile(moduleContractPath, "utf8"),
   fs.readFile(indexPath, "utf8"),
   fs.readFile(repoStateIndexPath, "utf8"),
 ]);
@@ -40,6 +44,11 @@ for (const scriptName of ["sync", "structural"]) {
 
 if (!routerSource.includes("export const router")) {
   console.error("state structural failed: service-owned router seam missing.");
+  process.exit(1);
+}
+
+if (!routerSource.includes('from "./modules/state/router"') || !routerSource.includes("...state")) {
+  console.error("state structural failed: root router seam must stay composition-only over the state module.");
   process.exit(1);
 }
 
@@ -63,12 +72,21 @@ if (
   process.exit(1);
 }
 
-if (!contractSource.includes("authorityRepoRoot")) {
+if (
+  !contractSource.includes('from "./modules/state/contract"')
+  || !contractSource.includes("GetStateOutputSchema")
+  || !moduleContractSource.includes("authorityRepoRoot")
+) {
   console.error("state structural failed: authority metadata contract missing.");
   process.exit(1);
 }
 
-if (routerSource.includes("@rawr/core") || routerSource.includes("apps/server/src")) {
+if (
+  routerSource.includes("@rawr/core")
+  || routerSource.includes("apps/server/src")
+  || moduleRouterSource.includes("@rawr/core")
+  || moduleRouterSource.includes("apps/server/src")
+) {
   console.error("state structural failed: router seam must not depend on core or host implementation.");
   process.exit(1);
 }
