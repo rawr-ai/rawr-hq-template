@@ -12,7 +12,8 @@ import {
 import * as coordination from "../src/index";
 import * as coordinationNode from "../src/node";
 import { contract as serviceContract } from "../src/service/contract";
-import { router as serviceRouter } from "../src/router";
+import { router as packageRouter } from "../src/router";
+import { router as serviceRouter } from "../src/service/router";
 import {
   coordinationErrorMessage,
   coordinationFailure,
@@ -65,7 +66,8 @@ const baseWorkflow: CoordinationWorkflowV1 = {
 describe("coordination public service shell", () => {
   it("keeps canonical service truth on the root and dedicated node surfaces", () => {
     expect(coordination.createClient).toBeTypeOf("function");
-    expect(coordination.router).toBe(serviceRouter);
+    expect(coordination.router).toBe(packageRouter);
+    expect(packageRouter).toBe(serviceRouter);
     expect("coordinationContract" in coordination).toBe(false);
     expect("ensureCoordinationStorage" in coordination).toBe(false);
     expect("createDeskEvent" in coordination).toBe(false);
@@ -73,15 +75,7 @@ describe("coordination public service shell", () => {
     expect("typeBoxStandardSchema" in coordination).toBe(false);
     expect("coordinationFailure" in coordinationNode).toBe(false);
     expect("validateWorkflow" in coordinationNode).toBe(false);
-    expect(Object.keys(serviceContract)).toEqual([
-      "listWorkflows",
-      "saveWorkflow",
-      "getWorkflow",
-      "validateWorkflow",
-      "queueRun",
-      "getRunStatus",
-      "getRunTimeline",
-    ]);
+    expect(Object.keys(serviceContract)).toEqual(["workflows", "runs"]);
   });
 
   it("exposes a narrow authoring boundary that does not require run-dispatch deps", async () => {
@@ -121,12 +115,8 @@ describe("coordination public service shell", () => {
       "getWorkflow",
       "validateWorkflow",
     ]);
-    expect(Object.keys(authoringRouter)).toEqual([
-      "listWorkflows",
-      "saveWorkflow",
-      "getWorkflow",
-      "validateWorkflow",
-    ]);
+    expect(authoringRouter).toBe(serviceRouter.workflows);
+    expect(Object.keys(authoringRouter)).toEqual(Object.keys(serviceRouter.workflows));
   });
 
   it("preserves the canonical client surface while routing storage through module providers", async () => {
@@ -165,7 +155,7 @@ describe("coordination public service shell", () => {
     });
 
     await expect(
-      client.listWorkflows(
+      client.workflows.listWorkflows(
         {},
         {
           context: {
@@ -180,7 +170,7 @@ describe("coordination public service shell", () => {
     });
 
     await expect(
-      client.queueRun(
+      client.runs.queueRun(
         {
           workflowId: "wf-a",
           runId: "run-queue-failure",

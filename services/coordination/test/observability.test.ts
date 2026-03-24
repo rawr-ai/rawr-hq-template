@@ -65,7 +65,7 @@ describe("coordination observability", () => {
           event: "coordination.procedure",
           payload: expect.objectContaining({
             outcome: "success",
-            path: "listWorkflows",
+            path: "workflows.listWorkflows",
             repoRoot,
             invocationTraceId: "trace-coordination-observability",
           }),
@@ -74,7 +74,7 @@ describe("coordination observability", () => {
           event: "orpc.procedure",
           payload: expect.objectContaining({
             outcome: "success",
-            path: "listWorkflows",
+            path: "workflows.listWorkflows",
             domain: "coordination",
           }),
         }),
@@ -83,7 +83,7 @@ describe("coordination observability", () => {
         expect.objectContaining({
           event: "orpc.procedure",
           payload: expect.objectContaining({
-            path: "listWorkflows",
+            path: "workflows.listWorkflows",
             analytics_repo_root: repoRoot,
             analytics_trace_id: "trace-coordination-observability",
           }),

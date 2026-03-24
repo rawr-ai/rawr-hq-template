@@ -1,11 +1,11 @@
-import { workflowsImpl } from "../../impl";
+import { impl } from "../../impl";
 import {
   analytics,
   observability,
   repository,
 } from "./middleware";
 
-export const module = workflowsImpl
+export const module = impl.workflows
   .use(observability)
   .use(analytics)
   .use(repository)

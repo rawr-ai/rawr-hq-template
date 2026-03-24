@@ -30,8 +30,8 @@ export {
 } from "../domain/schemas";
 
 export const contract = {
-  ...workflows,
-  ...runs,
+  workflows,
+  runs,
 };
 
 export type Contract = typeof contract;

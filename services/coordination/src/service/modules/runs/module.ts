@@ -1,11 +1,11 @@
-import { runsImpl } from "../../impl";
+import { impl } from "../../impl";
 import {
   analytics,
   observability,
   repository,
 } from "./middleware";
 
-export const module = runsImpl
+export const module = impl.runs
   .use(observability)
   .use(analytics)
   .use(repository)

@@ -1,56 +1,11 @@
-import type { BaseDeps } from "@rawr/hq-sdk";
-import { createApiRouterBuilder } from "@rawr/hq-sdk/apis";
-import { contract } from "./contract";
-import {
-  getStoredWorkflow,
-  listStoredWorkflows,
-  saveStoredWorkflow,
-  validateStoredWorkflow,
-} from "../service/modules/workflows/operations";
-import { createRepository } from "../service/modules/workflows/repository";
+/**
+ * @fileoverview Authoring convenience router for `@rawr/coordination/authoring`.
+ *
+ * @remarks
+ * This is a package-edge convenience only. The authoritative workflow
+ * procedures remain the canonical `workflows` subtree on `../service/router`.
+ */
+import { router as serviceRouter } from "../service/router";
 
-type AuthoringContext = {
-  deps: BaseDeps;
-  scope: {
-    repoRoot: string;
-  };
-  config: {};
-  invocation: {
-    traceId: string;
-  };
-  provided: {};
-};
-
-const oc = createApiRouterBuilder<typeof contract, AuthoringContext>(contract);
-
-function getRepository(context: AuthoringContext) {
-  return createRepository(context.scope.repoRoot);
-}
-
-const listWorkflows = oc.listWorkflows.handler(async ({ context }) => {
-  return {
-    workflows: await listStoredWorkflows(getRepository(context)),
-  };
-});
-
-const saveWorkflow = oc.saveWorkflow.handler(async ({ context, input, errors }) => {
-  return await saveStoredWorkflow(getRepository(context), input.workflow, errors);
-});
-
-const getWorkflow = oc.getWorkflow.handler(async ({ context, input, errors }) => {
-  const { workflow } = await getStoredWorkflow(getRepository(context), input.workflowId, errors);
-  return { workflow };
-});
-
-const validateWorkflowById = oc.validateWorkflow.handler(async ({ context, input, errors }) => {
-  return await validateStoredWorkflow(getRepository(context), input.workflowId, errors);
-});
-
-export const router = oc.router({
-  listWorkflows,
-  saveWorkflow,
-  getWorkflow,
-  validateWorkflow: validateWorkflowById,
-});
-
+export const router = serviceRouter.workflows;
 export type Router = typeof router;
