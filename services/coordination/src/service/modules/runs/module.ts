@@ -12,8 +12,6 @@ export const module = impl.runs
   .use(async ({ context, next }) => next({
     context: {
       repo: context.provided.repo,
-      queueRun: context.deps.queueRun,
-      createTraceLinks: context.deps.createTraceLinks,
-      createEvent: context.deps.createEvent,
+      runsRuntime: context.deps.runsRuntime,
     },
   }));

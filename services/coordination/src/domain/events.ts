@@ -51,6 +51,11 @@ export type CreateDeskEventInput = CreateDeskEventDraft & Readonly<{
   ts: string;
 }>;
 
+function createEventId(prefix: string): string {
+  const rand = Math.random().toString(36).slice(2, 10);
+  return `${prefix}-${Date.now()}-${rand}`;
+}
+
 function isRequiredRunLifecycleEventType(type: DeskRunEventTypeV1): type is RequiredRunLifecycleEventType {
   return REQUIRED_RUN_LIFECYCLE_EVENT_TYPES.includes(type as RequiredRunLifecycleEventType);
 }
@@ -76,4 +81,12 @@ export function createDeskEvent(input: CreateDeskEventInput): DeskRunEventV1 {
     detail: input.detail,
     output: input.payload,
   };
+}
+
+export function createStampedDeskEvent(input: CreateDeskEventDraft): DeskRunEventV1 {
+  return createDeskEvent({
+    ...input,
+    eventId: createEventId("evt"),
+    ts: new Date().toISOString(),
+  });
 }

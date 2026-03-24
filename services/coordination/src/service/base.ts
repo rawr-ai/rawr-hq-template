@@ -9,41 +9,11 @@
  * - bound service authoring surfaces used across `service/*`
  */
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
-import type {
-  CoordinationWorkflowV1,
-  DeskRunEventV1,
-  JsonValue,
-  RunStatusV1,
-  RunTraceLinkV1,
-} from "../domain/types";
-import type { CreateDeskEventDraft } from "../domain/events";
-
-export type QueueCoordinationRunRequest = Readonly<{
-  workflow: CoordinationWorkflowV1;
-  runId: string;
-  input: JsonValue;
-}>;
-
-export type QueueCoordinationRunResult = Readonly<{
-  run: RunStatusV1;
-  eventIds: string[];
-}>;
-
-export type CoordinationQueueRun = (input: QueueCoordinationRunRequest) => Promise<QueueCoordinationRunResult>;
-
-export type CoordinationTraceLinkFactory = (input: {
-  runId: string;
-  inngestRunId?: string;
-  inngestEventId?: string;
-}) => RunTraceLinkV1[];
-
-export type CoordinationDeskEventFactory = (input: CreateDeskEventDraft) => DeskRunEventV1;
+import type { CoordinationRunsRuntime } from "./modules/runs/runtime";
 
 type InitialContext = {
   deps: {
-    queueRun: CoordinationQueueRun;
-    createTraceLinks: CoordinationTraceLinkFactory;
-    createEvent: CoordinationDeskEventFactory;
+    runsRuntime?: CoordinationRunsRuntime;
   };
   scope: {
     repoRoot: string;

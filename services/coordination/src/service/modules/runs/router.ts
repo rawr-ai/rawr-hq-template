@@ -1,11 +1,11 @@
-import {
-  type DeskRunEventV1,
-} from "../../../domain/types";
+import { type DeskRunEventV1 } from "../../../domain/types";
 import { RUN_FINALIZATION_CONTRACT_V1, type RunStatusV1 } from "../../../domain/types";
+import { createStampedDeskEvent } from "../../../domain/events";
 import { parseCoordinationId } from "../../shared/inputs";
 import { parseRunId, toJsonValue } from "./inputs";
 import { module } from "./module";
 import type { RunRepository } from "./repository";
+import type { CoordinationRunsRuntime } from "./runtime";
 
 const queueRun = module.queueRun.handler(async ({ context, input, errors }) => {
   const workflowId = parseCoordinationId(input.workflowId);
@@ -40,11 +40,15 @@ const queueRun = module.queueRun.handler(async ({ context, input, errors }) => {
   const normalizedInput = toJsonValue(input.input ?? {});
 
   try {
-    return await context.queueRun({
+    const queuedRun = context.runsRuntime?.queueRun({
       workflow,
       runId,
       input: normalizedInput,
     });
+    if (!queuedRun) {
+      throw new Error("coordination runs runtime is not configured");
+    }
+    return await queuedRun;
   } catch (err) {
     const failedRun = createQueueFailureRun({
       runId,
@@ -52,13 +56,13 @@ const queueRun = module.queueRun.handler(async ({ context, input, errors }) => {
       workflowVersion: workflow.version,
       input: normalizedInput,
       error: err instanceof Error ? err.message : String(err),
-      createTraceLinks: context.createTraceLinks,
+      createTraceLinks: context.runsRuntime?.createTraceLinks,
     });
 
     try {
       await persistQueueFailure(context.repo, {
         run: failedRun,
-        event: context.createEvent({
+        event: createStampedDeskEvent({
           runId,
           workflowId,
           type: "run.failed",
@@ -129,7 +133,7 @@ function createQueueFailureRun(input: {
   workflowVersion: number;
   input: RunStatusV1["input"];
   error: string;
-  createTraceLinks: (args: { runId: string }) => RunStatusV1["traceLinks"];
+  createTraceLinks?: CoordinationRunsRuntime["createTraceLinks"];
 }): RunStatusV1 {
   const failedAt = new Date().toISOString();
   return {
@@ -141,7 +145,7 @@ function createQueueFailureRun(input: {
     finishedAt: failedAt,
     input: input.input,
     error: input.error,
-    traceLinks: input.createTraceLinks({ runId: input.runId }),
+    traceLinks: input.createTraceLinks?.({ runId: input.runId }) ?? [],
     finalization: {
       contract: RUN_FINALIZATION_CONTRACT_V1,
     },

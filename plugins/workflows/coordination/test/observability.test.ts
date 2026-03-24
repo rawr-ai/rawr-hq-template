@@ -1,21 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
-  type CreateDeskEventInput,
-} from "../src/events";
-import {
-  createDeskEvent,
-} from "../src/events";
-import {
-  defaultTraceLinks,
-} from "../src/trace-links";
-import {
+  createStampedDeskEvent,
+  type CreateDeskEventDraft,
   REQUIRED_RUN_LIFECYCLE_EVENT_TYPES,
   REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT,
 } from "@rawr/coordination/events";
+import {
+  defaultTraceLinks,
+} from "../src/trace-links";
 
 describe("coordination workflow observability helpers", () => {
   it("creates run events", () => {
-    const event = createDeskEvent({
+    const event = createStampedDeskEvent({
       runId: "run-1",
       workflowId: "wf-1",
       type: "run.started",
@@ -43,9 +39,9 @@ describe("coordination workflow observability helpers", () => {
       workflowId: "wf-1",
       type: "run.completed",
       status: "running",
-    } as unknown as CreateDeskEventInput;
+    } as unknown as CreateDeskEventDraft;
 
-    expect(() => createDeskEvent(invalidEvent)).toThrow("invalid lifecycle status");
+    expect(() => createStampedDeskEvent(invalidEvent)).toThrow("invalid lifecycle status");
   });
 
   it("builds default trace links", () => {

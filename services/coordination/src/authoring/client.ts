@@ -1,25 +1,25 @@
 import {
-  type CreateClientOptions as CoordinationCreateClientOptions,
-  createClient as createCoordinationClient,
-  type Client as CoordinationClient,
-} from "../client";
-import type { BaseDeps } from "@rawr/hq-sdk";
+  defineServicePackage,
+  type InferConfig,
+  type InferDeps,
+  type InferScope,
+  type ServicePackageBoundary,
+} from "@rawr/hq-sdk/boundary";
+import { router } from "./router";
 
-export type Deps = Pick<BaseDeps, "logger" | "analytics">;
-export type Scope = CoordinationCreateClientOptions["scope"];
-export type Config = CoordinationCreateClientOptions["config"];
-export type CreateAuthoringClientOptions = {
-  deps: Deps;
-  scope: Scope;
-  config: Config;
-};
+const servicePackage = defineServicePackage(router);
+
+export type Deps = InferDeps<typeof router>;
+export type Scope = InferScope<typeof router>;
+export type Config = InferConfig<typeof router>;
+export type CreateAuthoringClientOptions = ServicePackageBoundary<typeof router>;
 
 /**
- * Create a narrow in-process client for workflow authoring by projecting the
- * canonical coordination client to its `workflows` subtree.
+ * Create a narrow in-process client bound directly to the canonical workflow
+ * subtree.
  */
 export function createAuthoringClient(boundary: CreateAuthoringClientOptions) {
-  return createCoordinationClient(boundary as CoordinationCreateClientOptions).workflows;
+  return servicePackage.createClient(boundary);
 }
 
-export type AuthoringClient = CoordinationClient["workflows"];
+export type AuthoringClient = ReturnType<typeof createAuthoringClient>;

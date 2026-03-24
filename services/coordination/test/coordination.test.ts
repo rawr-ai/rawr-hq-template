@@ -132,27 +132,18 @@ describe("coordination public service shell", () => {
       deps: {
         logger: createEmbeddedPlaceholderLoggerAdapter(),
         analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-        queueRun: async () => {
-          throw new Error("queue exploded");
-        },
-        createTraceLinks: ({ runId }) => [
-          {
-            provider: "rawr" as const,
-            label: "coordination run",
-            url: `https://rawr.test/runs/${runId}`,
+        runsRuntime: {
+          queueRun: async () => {
+            throw new Error("queue exploded");
           },
-        ],
-        createEvent: ({ runId, workflowId, deskId, type, status, detail, payload }) => ({
-          eventId: `event-${runId}`,
-          runId,
-          workflowId,
-          deskId,
-          type,
-          ts: "2026-03-24T00:00:00.000Z",
-          status,
-          detail,
-          output: payload,
-        }),
+          createTraceLinks: ({ runId }) => [
+            {
+              provider: "rawr" as const,
+              label: "coordination run",
+              url: `https://rawr.test/runs/${runId}`,
+            },
+          ],
+        },
       },
       scope: { repoRoot },
       config: {},
