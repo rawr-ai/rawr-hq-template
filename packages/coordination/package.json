@@ -24,16 +24,23 @@
   },
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
+    "sync": "bun run --cwd ../.. sync:check --project @rawr/coordination",
+    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/coordination",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
     "test": "vitest run --project coordination"
   },
   "dependencies": {
     "@orpc/contract": "^1.13.5",
+    "@orpc/server": "^1.13.5",
+    "@rawr/coordination-inngest": "workspace:*",
+    "@rawr/coordination-observability": "workspace:*",
+    "inngest": "3.51.0",
     "typebox": "^1.0.81"
   },
   "nx": {
     "tags": [
-      "type:package"
+      "type:package",
+      "migration-slice:structural-tranche"
     ]
   }
 }

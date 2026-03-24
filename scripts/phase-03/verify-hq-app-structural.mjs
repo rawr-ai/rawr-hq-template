@@ -5,11 +5,13 @@ import path from "node:path";
 const root = process.cwd();
 const packagePath = path.join(root, "apps", "hq", "package.json");
 const manifestPath = path.join(root, "apps", "hq", "src", "manifest.ts");
+const orpcPath = path.join(root, "apps", "hq", "src", "orpc.ts");
 const testingPath = path.join(root, "apps", "hq", "src", "testing.ts");
 
-const [pkgRaw, manifestSource, testingSource] = await Promise.all([
+const [pkgRaw, manifestSource, orpcSource, testingSource] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(manifestPath, "utf8"),
+  fs.readFile(orpcPath, "utf8"),
   fs.readFile(testingPath, "utf8"),
 ]);
 
@@ -24,6 +26,16 @@ for (const tag of requiredTags) {
 
 if (!manifestSource.includes("export function createRawrHqManifest")) {
   console.error("hq-app structural failed: manifest factory export missing.");
+  process.exit(1);
+}
+
+if (!orpcSource.includes("export function createHqRuntimeRouter")) {
+  console.error("hq-app structural failed: app-owned oRPC seam missing.");
+  process.exit(1);
+}
+
+if (orpcSource.includes("@rawr/core/orpc") || manifestSource.includes("@rawr/core/orpc")) {
+  console.error("hq-app structural failed: app authority must not depend on core-owned oRPC seams.");
   process.exit(1);
 }
 

@@ -1,6 +1,7 @@
 import { createORPCClient, ORPCError } from "@orpc/client";
 import type { ContractRouterClient } from "@orpc/contract";
 import {
+  coordinationContract,
   coordinationFailure,
   type CoordinationFailure,
   type CoordinationWorkflowV1,
@@ -9,12 +10,10 @@ import {
   type ValidationResultV1,
 } from "@rawr/coordination";
 import { loadRawrConfig } from "@rawr/control-plane";
-import { hqContract } from "@rawr/core/orpc";
 import { createCliRpcLink } from "@rawr/orpc-client";
 import { findWorkspaceRoot } from "./workspace-plugins";
 
-type HqClient = ContractRouterClient<typeof hqContract>;
-type CoordinationClient = HqClient["coordination"];
+type CoordinationClient = ContractRouterClient<typeof coordinationContract>;
 
 export type CoordinationProcedureResult<TPayload extends Record<string, unknown>> =
   | { ok: true; data: TPayload }
@@ -33,14 +32,14 @@ function getCoordinationClient(baseUrl: string): CoordinationClient {
     return cached;
   }
 
-  const client = createORPCClient<HqClient>(
+  const client = createORPCClient<CoordinationClient>(
     createCliRpcLink({
       url: rpcUrl,
     }),
   );
 
-  clientCache.set(rpcUrl, client.coordination);
-  return client.coordination;
+  clientCache.set(rpcUrl, client);
+  return client;
 }
 
 function toJsonValue(value: unknown): JsonValue {

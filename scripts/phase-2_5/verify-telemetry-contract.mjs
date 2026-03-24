@@ -8,14 +8,14 @@ import {
 } from "../phase-f/_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("packages/core/src/orpc/telemetry.ts"),
+  mustExist("packages/core/src/telemetry.ts"),
   mustExist("packages/core/test/telemetry.test.ts"),
   mustExist("scripts/phase-2_5/verify-telemetry-contract.mjs"),
 ]);
 
 const [scripts, telemetrySource, telemetryTestSource, corePackageRaw] = await Promise.all([
   readPackageScripts(),
-  readFile("packages/core/src/orpc/telemetry.ts"),
+  readFile("packages/core/src/telemetry.ts"),
   readFile("packages/core/test/telemetry.test.ts"),
   readFile("packages/core/package.json"),
 ]);

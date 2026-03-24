@@ -10,14 +10,12 @@ import {
   validateWorkflow,
   type JsonValue,
   type RunStatusV1,
-} from "@rawr/coordination/node";
+} from "../node";
 import { queueCoordinationRunWithInngest, type CoordinationRuntimeAdapter } from "@rawr/coordination-inngest";
 import { createDeskEvent, defaultTraceLinks } from "@rawr/coordination-observability";
-import type { RuntimeRouterContext } from "@rawr/runtime-context";
-import { getRepoState } from "@rawr/state";
 import { ORPCError, implement } from "@orpc/server";
 import type { Inngest } from "inngest";
-import { hqContract, workflowTriggerContract } from "./hq-router";
+import { coordinationContract } from "./contract";
 
 type ParsedRunId =
   | {
@@ -30,9 +28,12 @@ type ParsedRunId =
       value: unknown;
     };
 
-type CoordinationContractImplementation<Context extends RuntimeRouterContext> = ReturnType<
-  typeof implement<typeof hqContract, Context>
->["coordination"];
+type CoordinationRouterContext = {
+  repoRoot: string;
+  baseUrl: string;
+  runtime: CoordinationRuntimeAdapter;
+  inngestClient: Inngest;
+};
 
 function toJsonValue(value: unknown): JsonValue {
   if (value === undefined) return null;
@@ -87,10 +88,10 @@ function internalError(code: string, message: string, data?: unknown): never {
   });
 }
 
-function createCoordinationProcedures<Context extends RuntimeRouterContext>(
-  coordination: CoordinationContractImplementation<Context>,
-) {
-  return {
+export function createCoordinationRouter<Context extends CoordinationRouterContext = CoordinationRouterContext>() {
+  const coordination = implement<typeof coordinationContract, Context>(coordinationContract);
+
+  return coordination.router({
     listWorkflows: coordination.listWorkflows.handler(async ({ context }) => {
       await ensureCoordinationStorage(context.repoRoot);
       const workflows = await listWorkflows(context.repoRoot);
@@ -256,28 +257,5 @@ function createCoordinationProcedures<Context extends RuntimeRouterContext>(
       const timeline = await getRunTimeline(context.repoRoot, runId);
       return { runId, timeline };
     }),
-  };
-}
-
-export function createHqRuntimeRouter<Context extends RuntimeRouterContext = RuntimeRouterContext>() {
-  const os = implement<typeof hqContract, Context>(hqContract);
-
-  return os.router({
-    coordination: os.coordination.router(createCoordinationProcedures(os.coordination)),
-
-    state: os.state.router({
-      getRuntimeState: os.state.getRuntimeState.handler(async ({ context }) => {
-        const state = await getRepoState(context.repoRoot);
-        return { state, authorityRepoRoot: context.repoRoot };
-      }),
-    }),
-  });
-}
-
-export function createWorkflowTriggerRuntimeRouter<Context extends RuntimeRouterContext = RuntimeRouterContext>() {
-  const os = implement<typeof workflowTriggerContract, Context>(workflowTriggerContract);
-
-  return os.router({
-    coordination: os.coordination.router(createCoordinationProcedures(os.coordination)),
   });
 }

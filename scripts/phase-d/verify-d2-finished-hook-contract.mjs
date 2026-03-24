@@ -5,19 +5,21 @@ await Promise.all([
   mustExist("packages/coordination/src/types.ts"),
   mustExist("packages/coordination/src/orpc/schemas.ts"),
   mustExist("packages/coordination/src/orpc/contract.ts"),
+  mustExist("packages/coordination/src/orpc/router.ts"),
   mustExist("packages/coordination-inngest/src/adapter.ts"),
-  mustExist("packages/core/src/orpc/runtime-router.ts"),
+  mustExist("apps/hq/src/orpc.ts"),
   mustExist("packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts"),
-  mustExist("packages/core/test/runtime-router.test.ts"),
-  mustExist("packages/core/test/orpc-contract-drift.test.ts"),
-  mustExist("packages/core/test/workflow-trigger-contract-drift.test.ts"),
+  mustExist("apps/hq/test/runtime-router.test.ts"),
+  mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
+  mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
 const [
   typesSource,
   schemasSource,
   adapterSource,
-  runtimeRouterSource,
+  coordinationRouterSource,
+  hqOrpcSource,
   guardrailsTestSource,
   runtimeRouterTestSource,
   contractDriftTestSource,
@@ -27,11 +29,12 @@ const [
   readFile("packages/coordination/src/types.ts"),
   readFile("packages/coordination/src/orpc/schemas.ts"),
   readFile("packages/coordination-inngest/src/adapter.ts"),
-  readFile("packages/core/src/orpc/runtime-router.ts"),
+  readFile("packages/coordination/src/orpc/router.ts"),
+  readFile("apps/hq/src/orpc.ts"),
   readFile("packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts"),
-  readFile("packages/core/test/runtime-router.test.ts"),
-  readFile("packages/core/test/orpc-contract-drift.test.ts"),
-  readFile("packages/core/test/workflow-trigger-contract-drift.test.ts"),
+  readFile("apps/hq/test/runtime-router.test.ts"),
+  readFile("apps/hq/test/orpc-contract-drift.test.ts"),
+  readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
   readPackageScripts(),
 ]);
 
@@ -83,8 +86,13 @@ assertCondition(
 );
 
 assertCondition(
-  /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(runtimeRouterSource),
-  "runtime-router.ts queue failure fallback must include explicit finalization contract",
+  /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(coordinationRouterSource),
+  "coordination router queue failure fallback must include explicit finalization contract",
+);
+assertCondition(
+  /export function createHqRuntimeRouter/.test(hqOrpcSource) &&
+    /export function createWorkflowTriggerRuntimeRouter/.test(hqOrpcSource),
+  "hq app oRPC seam must expose runtime router constructors",
 );
 
 assertCondition(
@@ -107,7 +115,7 @@ assertCondition(
 );
 assertCondition(
   scripts["phase-d:gate:d2-finished-hook-runtime"] ===
-    "bunx vitest run --project coordination-inngest packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts && bunx vitest run --project core packages/core/test/runtime-router.test.ts",
+    "bunx vitest run --project coordination-inngest packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts && bunx vitest run --project hq-app apps/hq/test/runtime-router.test.ts",
   "package.json must define phase-d:gate:d2-finished-hook-runtime",
 );
 assertCondition(
@@ -117,7 +125,7 @@ assertCondition(
 );
 assertCondition(
   scripts["phase-d:d2:full"] ===
-    "bun run phase-d:d2:quick && bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts && bunx vitest run --project core packages/core/test/workflow-trigger-contract-drift.test.ts",
+    "bun run phase-d:d2:quick && bunx vitest run --project hq-app apps/hq/test/orpc-contract-drift.test.ts && bunx vitest run --project hq-app apps/hq/test/workflow-trigger-contract-drift.test.ts",
   "package.json must define phase-d:d2:full chain",
 );
 

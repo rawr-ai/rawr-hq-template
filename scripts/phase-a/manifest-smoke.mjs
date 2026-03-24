@@ -129,23 +129,20 @@ if (mode === "completion") {
     ok: hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "triggerRouter"]),
   });
   requiredChecks.push({
-    label: "host consumes manifest inngest seams",
+    label: "host consumes manifest inngest seams and composes host runtime around them",
     ok:
       hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "client"]) &&
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "handler"]),
+      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "functions"]) &&
+      hasIdentifierCall(rawrAst, "createHostInngestBundle"),
   });
   requiredChecks.push({
     label: "host consumes manifest-owned ORPC router seam",
     ok: hasRegisterOrpcRoutesManifestRouter(rawrAst) && hasIdentifierCall(rawrAst, "createRawrHqManifest"),
   });
   requiredChecks.push({
-    label: "host avoids app-internal ad-hoc seam composition",
+    label: "host avoids bypassing manifest orpc authority while owning runtime ingress composition",
     ok:
-      !hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createCoordinationInngestFunction") &&
-      !hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createInngestServeHandler") &&
       !hasNamedImport(rawrAst, "./orpc", "createOrpcRouter") &&
-      !hasIdentifierCall(rawrAst, "createCoordinationInngestFunction") &&
-      !hasIdentifierCall(rawrAst, "createInngestServeHandler") &&
       !hasIdentifierCall(rawrAst, "createOrpcRouter"),
   });
   requiredChecks.push({

@@ -1,4 +1,4 @@
-import { installRawrOrpcTelemetry, type InstalledTelemetry } from "@rawr/core/orpc";
+import { installRawrOrpcTelemetry, type InstalledTelemetry } from "@rawr/core/telemetry";
 import { loadRawrConfig } from "@rawr/control-plane";
 import { getRepoState } from "@rawr/state";
 import path from "node:path";

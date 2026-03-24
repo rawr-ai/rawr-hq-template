@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createRouterClient, type RouterClient } from "@orpc/server";
 import { createInngestServeHandler } from "@rawr/coordination-inngest";
-import { createHqRuntimeRouter } from "@rawr/core/orpc";
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
@@ -9,6 +8,7 @@ import { supportExampleRouter } from "@rawr/support-example/router";
 import { Inngest } from "inngest";
 import { registerExampleTodoApiPlugin } from "../../../plugins/api/example-todo";
 import { createSupportExampleInngestFunctions, registerSupportExampleWorkflowPlugin } from "../../../plugins/workflows/support-example";
+import { createHqRuntimeRouter } from "./orpc";
 
 type SupportExampleClient = RouterClient<typeof supportExampleRouter>;
 type SupportExampleWorkItem = Awaited<ReturnType<SupportExampleClient["triage"]["items"]["request"]>>["workItem"];
@@ -135,13 +135,13 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
 
   // Host owns the runtime wiring; app authority owns only the composition contract.
   const supportExampleInngestClient = new Inngest({ id: "rawr-support-example" });
-  const coreOrpcRouter = createHqRuntimeRouter();
+  const hqOrpcRouter = createHqRuntimeRouter();
   const exampleTodoApiPlugin = registerExampleTodoApiPlugin({
     resolveClient: resolveExampleTodoClient,
   });
   const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin();
   const composedOrpcRouter = {
-    ...coreOrpcRouter,
+    ...hqOrpcRouter,
     ...exampleTodoApiPlugin.router,
   };
   const composedWorkflowTriggerRouter = supportExampleWorkflowPlugin.router;

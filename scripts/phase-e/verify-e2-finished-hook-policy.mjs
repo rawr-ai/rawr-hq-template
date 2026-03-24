@@ -79,7 +79,7 @@ assertCondition(
 );
 assertCondition(
   scripts["phase-e:e2:full"] ===
-    "bun run phase-e:e2:quick && bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts",
+    "bun run phase-e:e2:quick && bunx vitest run --project hq-app apps/hq/test/orpc-contract-drift.test.ts",
   "package.json must define phase-e:e2:full",
 );
 

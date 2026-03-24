@@ -11,17 +11,17 @@ const THRESHOLDS = {
 };
 
 await Promise.all([
-  mustExist("rawr.hq.ts"),
-  mustExist("packages/core/src/orpc/runtime-router.ts"),
-  mustExist("packages/core/test/orpc-contract-drift.test.ts"),
-  mustExist("packages/core/test/workflow-trigger-contract-drift.test.ts"),
+  mustExist("apps/hq/src/manifest.ts"),
+  mustExist("packages/coordination/src/orpc/router.ts"),
+  mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
+  mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
-const [manifestSource, runtimeRouterSource, hqDriftTestSource, triggerDriftTestSource] = await Promise.all([
-  readFile("rawr.hq.ts"),
-  readFile("packages/core/src/orpc/runtime-router.ts"),
-  readFile("packages/core/test/orpc-contract-drift.test.ts"),
-  readFile("packages/core/test/workflow-trigger-contract-drift.test.ts"),
+const [manifestSource, coordinationRouterSource, hqDriftTestSource, triggerDriftTestSource] = await Promise.all([
+  readFile("apps/hq/src/manifest.ts"),
+  readFile("packages/coordination/src/orpc/router.ts"),
+  readFile("apps/hq/test/orpc-contract-drift.test.ts"),
+  readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
 const capabilitiesBlockMatch = manifestSource.match(/workflows:\s*\{[\s\S]*?capabilities:\s*\{([\s\S]*?)\}\s*,\s*triggerRouter:/u);
@@ -51,7 +51,7 @@ const boilerplateSignals = [
 
 const repeatedBoilerplateSignals = boilerplateSignals
   .map((signal) => {
-    const occurrences = (runtimeRouterSource.match(signal.pattern) ?? []).length;
+    const occurrences = (coordinationRouterSource.match(signal.pattern) ?? []).length;
     return { ...signal, occurrences };
   })
   .filter((signal) => signal.occurrences >= 2);

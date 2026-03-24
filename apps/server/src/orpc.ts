@@ -1,6 +1,6 @@
 import {
   createHqRuntimeRouter,
-} from "@rawr/core/orpc";
+} from "@rawr/hq-app/orpc";
 import type { RuntimeRouterContext } from "@rawr/runtime-context";
 import { metrics, SpanStatusCode, trace, type Counter, type Histogram } from "@opentelemetry/api";
 import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
