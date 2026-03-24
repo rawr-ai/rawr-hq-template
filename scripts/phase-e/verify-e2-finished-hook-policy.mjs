@@ -7,15 +7,15 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("services/coordination/src/types.ts"),
-  mustExist("services/coordination/src/schemas.ts"),
+  mustExist("services/coordination/src/domain/types.ts"),
+  mustExist("services/coordination/src/domain/schemas.ts"),
   mustExist("plugins/workflows/coordination/src/inngest.ts"),
   mustExist("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
 ]);
 
 const [typesSource, schemasSource, inngestSource, guardrailsTestSource, scripts] = await Promise.all([
-  readFile("services/coordination/src/types.ts"),
-  readFile("services/coordination/src/schemas.ts"),
+  readFile("services/coordination/src/domain/types.ts"),
+  readFile("services/coordination/src/domain/schemas.ts"),
   readFile("plugins/workflows/coordination/src/inngest.ts"),
   readFile("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
   readPackageScripts(),

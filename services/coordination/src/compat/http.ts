@@ -6,7 +6,7 @@
  * only to keep older CLI/UI callers stable while the plugin/client projection
  * owns transport-facing error normalization.
  */
-import type { JsonValue, ValidationResultV1 } from "../types";
+import type { JsonValue, ValidationResultV1 } from "../domain/types";
 
 export type CoordinationErrorCode =
   | "BAD_REQUEST"

@@ -6,7 +6,7 @@ import {
   GetRunTimelineOutputSchema,
   QueueRunInputSchema,
   QueueRunOutputSchema,
-} from "../../../schemas";
+} from "../../../domain/schemas";
 import { ocBase } from "../../base";
 import {
   INVALID_WORKFLOW_ID,

@@ -251,7 +251,7 @@ async function verifyRouteNegativeAssertions() {
 }
 
 async function verifyObservabilityContract() {
-  await mustExist("services/coordination/src/events.ts");
+  await mustExist("services/coordination/src/domain/events.ts");
   await mustExist("services/coordination/test/run-lifecycle-telemetry.test.ts");
   await mustExist("plugins/workflows/coordination/test/observability.test.ts");
 }
@@ -259,7 +259,7 @@ async function verifyObservabilityContract() {
 async function verifyTelemetryContract() {
   await Promise.all([
     mustExist("scripts/phase-c/verify-telemetry-contract.mjs"),
-    mustExist("services/coordination/src/events.ts"),
+    mustExist("services/coordination/src/domain/events.ts"),
     mustExist("services/coordination/test/run-lifecycle-telemetry.test.ts"),
     mustExist("plugins/workflows/coordination/src/events.ts"),
     mustExist("plugins/workflows/coordination/src/trace-links.ts"),
@@ -269,7 +269,7 @@ async function verifyTelemetryContract() {
 
   const [serviceEventsSource, pluginEventsSource, traceLinksSource, phaseCTelemetryVerifierSource, packageJsonRaw] =
     await Promise.all([
-      fs.readFile(path.join(root, "services/coordination/src/events.ts"), "utf8"),
+      fs.readFile(path.join(root, "services/coordination/src/domain/events.ts"), "utf8"),
       fs.readFile(path.join(root, "plugins/workflows/coordination/src/events.ts"), "utf8"),
       fs.readFile(path.join(root, "plugins/workflows/coordination/src/trace-links.ts"), "utf8"),
       fs.readFile(path.join(root, "scripts/phase-c/verify-telemetry-contract.mjs"), "utf8"),

@@ -1,6 +1,6 @@
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { RunStatusSchema } from "../../../schemas";
+import { RunStatusSchema } from "../../../domain/schemas";
 
 const InvalidRunIdDataSchema = Type.Object(
   {

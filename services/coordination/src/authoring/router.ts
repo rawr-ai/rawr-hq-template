@@ -4,7 +4,7 @@ import {
   listWorkflows as readWorkflows,
   saveWorkflow as persistWorkflow,
 } from "../storage";
-import { validateWorkflow } from "../validation";
+import { validateWorkflow } from "../domain/validation";
 import { parseCoordinationId } from "../service/shared/inputs";
 import { impl } from "./impl";
 

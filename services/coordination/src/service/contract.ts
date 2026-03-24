@@ -21,7 +21,7 @@ export {
   ValidateWorkflowInputSchema,
   ValidateWorkflowOutputSchema,
   ValidationResultSchema,
-} from "../schemas";
+} from "../domain/schemas";
 
 export const contract = {
   ...workflows,

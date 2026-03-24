@@ -11,8 +11,8 @@
       "default": "./src/index.ts"
     },
     "./events": {
-      "types": "./src/events.ts",
-      "default": "./src/events.ts"
+      "types": "./src/domain/events.ts",
+      "default": "./src/domain/events.ts"
     },
     "./authoring": {
       "types": "./src/authoring/index.ts",
