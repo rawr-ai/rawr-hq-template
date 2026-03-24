@@ -5,9 +5,12 @@ import path from "node:path";
 const root = process.cwd();
 const serviceRoot = path.join(root, "services", "coordination");
 const packagePath = path.join(serviceRoot, "package.json");
-const httpPath = path.join(serviceRoot, "src", "http.ts");
+const authoringContractPath = path.join(serviceRoot, "src", "authoring", "contract.ts");
 const indexPath = path.join(serviceRoot, "src", "index.ts");
 const nodePath = path.join(serviceRoot, "src", "node.ts");
+const packageRouterPath = path.join(serviceRoot, "src", "router.ts");
+const httpPath = path.join(serviceRoot, "src", "http.ts");
+const serviceContractPath = path.join(serviceRoot, "src", "service", "contract.ts");
 const serviceRouterPath = path.join(serviceRoot, "src", "service", "router.ts");
 const serviceImplPath = path.join(serviceRoot, "src", "service", "impl.ts");
 const serviceObservabilityMiddlewarePath = path.join(serviceRoot, "src", "service", "middleware", "observability.ts");
@@ -15,10 +18,14 @@ const serviceAnalyticsMiddlewarePath = path.join(serviceRoot, "src", "service", 
 const workflowsRouterPath = path.join(serviceRoot, "src", "service", "modules", "workflows", "router.ts");
 const runsRouterPath = path.join(serviceRoot, "src", "service", "modules", "runs", "router.ts");
 const authoringIndexPath = path.join(serviceRoot, "src", "authoring", "index.ts");
+const authoringRouterPath = path.join(serviceRoot, "src", "authoring", "router.ts");
 const tsconfigBasePath = path.join(root, "tsconfig.base.json");
 
 const [
   pkgRaw,
+  authoringContractSource,
+  packageRouterSource,
+  serviceContractSource,
   serviceRouterSource,
   serviceImplSource,
   serviceObservabilityMiddlewareSource,
@@ -26,12 +33,16 @@ const [
   workflowsRouterSource,
   runsRouterSource,
   authoringIndexSource,
+  authoringRouterSource,
   indexSource,
   nodeSource,
   tsconfigBaseSource,
   httpWrapperExists,
 ] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
+  fs.readFile(authoringContractPath, "utf8"),
+  fs.readFile(packageRouterPath, "utf8"),
+  fs.readFile(serviceContractPath, "utf8"),
   fs.readFile(serviceRouterPath, "utf8"),
   fs.readFile(serviceImplPath, "utf8"),
   fs.readFile(serviceObservabilityMiddlewarePath, "utf8"),
@@ -39,6 +50,7 @@ const [
   fs.readFile(workflowsRouterPath, "utf8"),
   fs.readFile(runsRouterPath, "utf8"),
   fs.readFile(authoringIndexPath, "utf8"),
+  fs.readFile(authoringRouterPath, "utf8"),
   fs.readFile(indexPath, "utf8"),
   fs.readFile(nodePath, "utf8"),
   fs.readFile(tsconfigBasePath, "utf8"),
@@ -90,13 +102,18 @@ if (tsconfigBaseSource.includes("@rawr/coordination/orpc")) {
   process.exit(1);
 }
 
-if (
-  serviceRouterSource.includes("./modules/workflows/router") === false
-  || serviceRouterSource.includes("./modules/runs/router") === false
-  || serviceRouterSource.includes("...workflows") === false
-  || serviceRouterSource.includes("...runs") === false
-) {
-  console.error("coordination structural failed: service router must compose workflow/run module routers.");
+if (!/export const contract = \{\s*workflows,\s*runs,\s*\};/s.test(serviceContractSource)) {
+  console.error("coordination structural failed: service contract must keep canonical nested truth as { workflows, runs }.");
+  process.exit(1);
+}
+
+if (!/export const router = impl\.router\(\{\s*workflows,\s*runs,\s*\}\);/s.test(serviceRouterSource)) {
+  console.error("coordination structural failed: service router must compose the canonical nested { workflows, runs } tree.");
+  process.exit(1);
+}
+
+if (!packageRouterSource.includes('export { router, type Router } from "./service/router";')) {
+  console.error("coordination structural failed: package router seam must stay a thin re-export of the canonical service router.");
   process.exit(1);
 }
 
@@ -130,13 +147,33 @@ if (!indexSource.includes('export { createClient, type Client } from "./client";
   process.exit(1);
 }
 
+if (!indexSource.includes('export { router, type Router } from "./router";')) {
+  console.error("coordination structural failed: package boundary router seam not exported.");
+  process.exit(1);
+}
+
 if (!authoringIndexSource.includes('export { createAuthoringClient, type AuthoringClient } from "./client";')) {
   console.error("coordination structural failed: authoring sub-boundary client seam must be exported.");
   process.exit(1);
 }
 
-if (!indexSource.includes('export { router, type Router } from "./router";')) {
-  console.error("coordination structural failed: package boundary router seam not exported.");
+if (!authoringIndexSource.includes('export { contract, type Contract as AuthoringContract } from "./contract";')) {
+  console.error("coordination structural failed: authoring sub-boundary contract seam must be exported.");
+  process.exit(1);
+}
+
+if (!authoringIndexSource.includes('export { router, type Router as AuthoringRouter } from "./router";')) {
+  console.error("coordination structural failed: authoring sub-boundary router seam must be exported.");
+  process.exit(1);
+}
+
+if (!authoringContractSource.includes("export const contract = serviceContract.workflows;")) {
+  console.error("coordination structural failed: authoring contract must stay a workflows subtree convenience, not a second authority.");
+  process.exit(1);
+}
+
+if (!authoringRouterSource.includes("export const router = serviceRouter.workflows;")) {
+  console.error("coordination structural failed: authoring router must stay a workflows subtree convenience, not a second authority.");
   process.exit(1);
 }
 

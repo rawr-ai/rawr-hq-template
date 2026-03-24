@@ -40,7 +40,7 @@ const queueRun = module.queueRun.handler(async ({ context, input, errors }) => {
   const normalizedInput = toJsonValue(input.input ?? {});
 
   try {
-    return await context.deps.queueRun({
+    return await context.queueRun({
       workflow,
       runId,
       input: normalizedInput,
@@ -52,13 +52,13 @@ const queueRun = module.queueRun.handler(async ({ context, input, errors }) => {
       workflowVersion: workflow.version,
       input: normalizedInput,
       error: err instanceof Error ? err.message : String(err),
-      createTraceLinks: context.deps.createTraceLinks,
+      createTraceLinks: context.createTraceLinks,
     });
 
     try {
       await persistQueueFailure(context.repo, {
         run: failedRun,
-        event: context.deps.createEvent({
+        event: context.createEvent({
           runId,
           workflowId,
           type: "run.failed",
