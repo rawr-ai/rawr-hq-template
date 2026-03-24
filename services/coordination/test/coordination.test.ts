@@ -64,11 +64,13 @@ const baseWorkflow: CoordinationWorkflowV1 = {
 };
 
 describe("coordination public service shell", () => {
-  it("keeps canonical service truth on the root and dedicated node surfaces", () => {
+  it("keeps canonical authority in the nested service tree and exposes package edges as convenience only", () => {
     expect(coordination.createClient).toBeTypeOf("function");
     expect(coordination.router).toBe(packageRouter);
     expect(packageRouter).toBe(serviceRouter);
+    expect(Object.keys(coordination.router)).toEqual(["workflows", "runs"]);
     expect("coordinationContract" in coordination).toBe(false);
+    expect("contract" in coordination).toBe(false);
     expect("ensureCoordinationStorage" in coordination).toBe(false);
     expect("createDeskEvent" in coordination).toBe(false);
     expect("coordinationFailure" in coordination).toBe(false);
@@ -76,6 +78,7 @@ describe("coordination public service shell", () => {
     expect("coordinationFailure" in coordinationNode).toBe(false);
     expect("validateWorkflow" in coordinationNode).toBe(false);
     expect(Object.keys(serviceContract)).toEqual(["workflows", "runs"]);
+    expect(serviceContract.workflows).toBe(authoringContract);
   });
 
   it("exposes a narrow authoring boundary that does not require run-dispatch deps", async () => {
@@ -115,6 +118,7 @@ describe("coordination public service shell", () => {
       "getWorkflow",
       "validateWorkflow",
     ]);
+    expect(authoringContract).toBe(serviceContract.workflows);
     expect(authoringRouter).toBe(serviceRouter.workflows);
     expect(Object.keys(authoringRouter)).toEqual(Object.keys(serviceRouter.workflows));
   });

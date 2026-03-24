@@ -7,7 +7,7 @@ import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import { createAuthoringClient } from "../src/authoring/client";
+import { createAuthoringClient } from "../src/authoring";
 import { ensureCoordinationStorage, saveWorkflow } from "../src/storage";
 
 describe("coordination observability", () => {
