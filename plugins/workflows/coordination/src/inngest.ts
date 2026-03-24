@@ -16,7 +16,7 @@ import {
   type RunFinishedHookStateV1,
   type RunStatusV1,
 } from "@rawr/coordination";
-import { createDeskEvent } from "./events";
+import { createStampedDeskEvent } from "@rawr/coordination/events";
 import {
   COORDINATION_RUN_EVENT,
   DESK_KIND_META,
@@ -240,7 +240,7 @@ export async function queueCoordinationRunWithInngest(
     await options.runtime.saveRunStatus(queuedRun);
     await options.runtime.appendTimeline(
       queuedRun.runId,
-      createDeskEvent({
+      createStampedDeskEvent({
         runId: queuedRun.runId,
         workflowId: queuedRun.workflowId,
         type: "run.started",
@@ -350,7 +350,7 @@ export async function processCoordinationRunEvent(options: CoordinationRunProces
     await options.runtime.saveRunStatus(runningStatus);
     await options.runtime.appendTimeline(
       options.payload.runId,
-      createDeskEvent({
+      createStampedDeskEvent({
         runId: options.payload.runId,
         workflowId: options.payload.workflow.workflowId,
         type: "run.started",
@@ -409,7 +409,7 @@ export async function processCoordinationRunEvent(options: CoordinationRunProces
       await options.runtime.saveRunStatus(completedStatus);
       await options.runtime.appendTimeline(
         options.payload.runId,
-        createDeskEvent({
+        createStampedDeskEvent({
           runId: options.payload.runId,
           workflowId: options.payload.workflow.workflowId,
           type: "run.completed",
@@ -455,7 +455,7 @@ export async function processCoordinationRunEvent(options: CoordinationRunProces
       await options.runtime.saveRunStatus(failedStatus);
       await options.runtime.appendTimeline(
         options.payload.runId,
-        createDeskEvent({
+        createStampedDeskEvent({
           runId: options.payload.runId,
           workflowId: options.payload.workflow.workflowId,
           type: "run.failed",
@@ -507,7 +507,7 @@ function buildEngine(input: {
     await step.run(`desk/${desk.deskId}/started`, async () => {
       await input.runtime.appendTimeline(
         input.runId,
-        createDeskEvent({
+        createStampedDeskEvent({
           runId: input.runId,
           workflowId: input.workflow.workflowId,
           deskId: desk.deskId,
@@ -536,7 +536,7 @@ function buildEngine(input: {
     await step.run(`desk/${desk.deskId}/completed`, async () => {
       await input.runtime.appendTimeline(
         input.runId,
-        createDeskEvent({
+        createStampedDeskEvent({
           runId: input.runId,
           workflowId: input.workflow.workflowId,
           deskId: desk.deskId,
