@@ -1,4 +1,7 @@
-import { createApiRouterBuilder } from "@rawr/hq-sdk/apis";
+import {
+  createApiRouterBuilder,
+  createApiTraceForwardingOptions,
+} from "@rawr/hq-sdk/apis";
 import type { StateApiContext, StateClientResolver } from "./context";
 import { stateApiContract } from "./contract";
 
@@ -8,13 +11,7 @@ export function createStateRouter(resolveClient: StateClientResolver) {
   return os.router({
     state: {
       getRuntimeState: os.state.getRuntimeState.handler(async ({ context, input }) => {
-        return resolveClient(context.repoRoot).getState(input, {
-          context: {
-            invocation: {
-              traceId: context.correlationId,
-            },
-          },
-        });
+        return resolveClient(context.repoRoot).getState(input, createApiTraceForwardingOptions(context));
       }),
     },
   });

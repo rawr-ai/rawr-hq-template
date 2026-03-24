@@ -1,4 +1,7 @@
-import { createApiRouterBuilder } from "@rawr/hq-sdk/apis";
+import {
+  createApiRouterBuilder,
+  createApiTraceForwardingOptions,
+} from "@rawr/hq-sdk/apis";
 import { coordinationApiContract } from "./contract";
 import type { CoordinationApiContext, CoordinationAuthoringClientResolver } from "./context";
 
@@ -8,40 +11,16 @@ function createCoordinationRouter(resolveClient: CoordinationAuthoringClientReso
   return os.router({
     coordination: {
       listWorkflows: os.coordination.listWorkflows.handler(async ({ context, input }) => {
-        return resolveClient(context.repoRoot).listWorkflows(input, {
-          context: {
-            invocation: {
-              traceId: context.correlationId,
-            },
-          },
-        });
+        return resolveClient(context.repoRoot).listWorkflows(input, createApiTraceForwardingOptions(context));
       }),
       saveWorkflow: os.coordination.saveWorkflow.handler(async ({ context, input }) => {
-        return resolveClient(context.repoRoot).saveWorkflow(input, {
-          context: {
-            invocation: {
-              traceId: context.correlationId,
-            },
-          },
-        });
+        return resolveClient(context.repoRoot).saveWorkflow(input, createApiTraceForwardingOptions(context));
       }),
       getWorkflow: os.coordination.getWorkflow.handler(async ({ context, input }) => {
-        return resolveClient(context.repoRoot).getWorkflow(input, {
-          context: {
-            invocation: {
-              traceId: context.correlationId,
-            },
-          },
-        });
+        return resolveClient(context.repoRoot).getWorkflow(input, createApiTraceForwardingOptions(context));
       }),
       validateWorkflow: os.coordination.validateWorkflow.handler(async ({ context, input }) => {
-        return resolveClient(context.repoRoot).validateWorkflow(input, {
-          context: {
-            invocation: {
-              traceId: context.correlationId,
-            },
-          },
-        });
+        return resolveClient(context.repoRoot).validateWorkflow(input, createApiTraceForwardingOptions(context));
       }),
     },
   });

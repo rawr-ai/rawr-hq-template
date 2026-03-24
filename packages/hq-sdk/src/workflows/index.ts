@@ -1,7 +1,11 @@
 import type { Inngest } from "inngest";
 import type { AnyContractRouterObject, AnyProcedureRouterObject } from "../orpc/router-shapes";
 import { createContextualRouterBuilder } from "../orpc/factory/implementer";
+import { mergeNamedSurfaceTrees } from "../composition/merge-named-surface-trees";
 import type { Context } from "@orpc/server";
+export {
+  createInternalTraceForwardingOptions as createWorkflowTraceForwardingOptions,
+} from "../orpc/boundary/trace-forwarding";
 
 export type WorkflowSurfaceContribution<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
@@ -74,30 +78,12 @@ type ComposedWorkflowRuntimeInput<TPlugins extends readonly WorkflowPluginRegist
   WorkflowRuntimeInput & UnionToIntersection<Exclude<WorkflowRuntimeInputOf<TPlugins[number]>, never>>
 >;
 
-function mergeNamedSurfaceTrees<TTree extends object>(
-  trees: readonly TTree[],
-  input: { surface: "contract" | "router" },
-): TTree {
-  const result: Record<string, unknown> = {};
-
-  for (const tree of trees) {
-    for (const [key, value] of Object.entries(tree)) {
-      if (key in result) {
-        throw new Error(`duplicate workflow ${input.surface} namespace: ${key}`);
-      }
-      result[key] = value;
-    }
-  }
-
-  return result as TTree;
-}
-
 function mergeWorkflowInternalContracts(
   plugins: readonly WorkflowPluginRegistration[],
 ): AnyContractRouterObject {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.internal ? [plugin.internal.contract] : [])),
-    { surface: "contract" },
+    { kind: "workflow", surface: "contract" },
   );
 }
 
@@ -106,7 +92,7 @@ function mergeWorkflowInternalRouters(
 ): AnyProcedureRouterObject {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.internal ? [plugin.internal.router] : [])),
-    { surface: "router" },
+    { kind: "workflow", surface: "router" },
   );
 }
 
@@ -115,7 +101,7 @@ function mergeWorkflowPublishedContracts(
 ): AnyContractRouterObject {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.published ? [plugin.published.contract] : [])),
-    { surface: "contract" },
+    { kind: "workflow", surface: "contract" },
   );
 }
 
@@ -124,7 +110,7 @@ function mergeWorkflowPublishedRouters(
 ): AnyProcedureRouterObject {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.published ? [plugin.published.router] : [])),
-    { surface: "router" },
+    { kind: "workflow", surface: "router" },
   );
 }
 

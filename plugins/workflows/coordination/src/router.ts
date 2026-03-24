@@ -1,4 +1,7 @@
-import { createWorkflowRouterBuilder } from "@rawr/hq-sdk/workflows";
+import {
+  createWorkflowRouterBuilder,
+  createWorkflowTraceForwardingOptions,
+} from "@rawr/hq-sdk/workflows";
 import { coordinationWorkflowContract } from "./contract";
 import type { CoordinationWorkflowContext } from "./context";
 import {
@@ -15,37 +18,19 @@ export function createCoordinationWorkflowRouter() {
       queueRun: os.coordination.queueRun.handler(async ({ context, input }) => {
         return createCoordinationWorkflowProjectionClient(context).queueRun(
           input,
-          {
-            context: {
-              invocation: {
-                traceId: context.correlationId,
-              },
-            },
-          },
+          createWorkflowTraceForwardingOptions(context),
         );
       }),
       getRunStatus: os.coordination.getRunStatus.handler(async ({ context, input }) => {
         return createCoordinationWorkflowProjectionClient(context).getRunStatus(
           input,
-          {
-            context: {
-              invocation: {
-                traceId: context.correlationId,
-              },
-            },
-          },
+          createWorkflowTraceForwardingOptions(context),
         );
       }),
       getRunTimeline: os.coordination.getRunTimeline.handler(async ({ context, input }) => {
         return createCoordinationWorkflowProjectionClient(context).getRunTimeline(
           input,
-          {
-            context: {
-              invocation: {
-                traceId: context.correlationId,
-              },
-            },
-          },
+          createWorkflowTraceForwardingOptions(context),
         );
       }),
     },
