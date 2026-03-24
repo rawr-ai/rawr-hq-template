@@ -14,6 +14,10 @@ export type Scope = InferScope<typeof router>;
 export type Config = InferConfig<typeof router>;
 export type CreateAuthoringClientOptions = DomainBoundary<typeof router>;
 
+/**
+ * Create a narrow in-process client for workflow authoring over the canonical
+ * coordination workflow contract.
+ */
 export function createAuthoringClient(boundary: CreateAuthoringClientOptions) {
   return domain.createClient(boundary);
 }

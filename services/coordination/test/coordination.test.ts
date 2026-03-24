@@ -4,7 +4,11 @@ import os from "node:os";
 import path from "node:path";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import { createAuthoringClient } from "../src/authoring";
+import {
+  contract as authoringContract,
+  createAuthoringClient,
+  router as authoringRouter,
+} from "../src/authoring";
 import * as coordination from "../src/index";
 import * as coordinationNode from "../src/node";
 import { contract as serviceContract } from "../src/service/contract";
@@ -108,6 +112,21 @@ describe("coordination public service shell", () => {
     ).resolves.toMatchObject({
       workflows: [{ workflowId: "wf-a" }],
     });
+  });
+
+  it("keeps the authoring surface narrowed to canonical workflow procedures", () => {
+    expect(Object.keys(authoringContract)).toEqual([
+      "listWorkflows",
+      "saveWorkflow",
+      "getWorkflow",
+      "validateWorkflow",
+    ]);
+    expect(Object.keys(authoringRouter)).toEqual([
+      "listWorkflows",
+      "saveWorkflow",
+      "getWorkflow",
+      "validateWorkflow",
+    ]);
   });
 });
 

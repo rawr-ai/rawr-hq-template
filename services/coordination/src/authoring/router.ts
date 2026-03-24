@@ -1,4 +1,6 @@
-import { impl } from "./impl";
+import type { BaseDeps } from "@rawr/hq-sdk";
+import { createApiRouterBuilder } from "@rawr/hq-sdk/apis";
+import { contract } from "./contract";
 import {
   getStoredWorkflow,
   listStoredWorkflows,
@@ -6,26 +8,40 @@ import {
   validateStoredWorkflow,
 } from "../service/modules/workflows/module";
 
-const listWorkflows = impl.listWorkflows.handler(async ({ context }) => {
+type AuthoringContext = {
+  deps: BaseDeps;
+  scope: {
+    repoRoot: string;
+  };
+  config: {};
+  invocation: {
+    traceId: string;
+  };
+  provided: {};
+};
+
+const oc = createApiRouterBuilder<typeof contract, AuthoringContext>(contract);
+
+const listWorkflows = oc.listWorkflows.handler(async ({ context }) => {
   return {
     workflows: await listStoredWorkflows(context.scope.repoRoot),
   };
 });
 
-const saveWorkflow = impl.saveWorkflow.handler(async ({ context, input, errors }) => {
+const saveWorkflow = oc.saveWorkflow.handler(async ({ context, input, errors }) => {
   return await saveStoredWorkflow(context.scope.repoRoot, input.workflow, errors);
 });
 
-const getWorkflow = impl.getWorkflow.handler(async ({ context, input, errors }) => {
+const getWorkflow = oc.getWorkflow.handler(async ({ context, input, errors }) => {
   const { workflow } = await getStoredWorkflow(context.scope.repoRoot, input.workflowId, errors);
   return { workflow };
 });
 
-const validateWorkflowById = impl.validateWorkflow.handler(async ({ context, input, errors }) => {
+const validateWorkflowById = oc.validateWorkflow.handler(async ({ context, input, errors }) => {
   return await validateStoredWorkflow(context.scope.repoRoot, input.workflowId, errors);
 });
 
-export const router = impl.router({
+export const router = oc.router({
   listWorkflows,
   saveWorkflow,
   getWorkflow,
