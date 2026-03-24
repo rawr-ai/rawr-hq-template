@@ -6,15 +6,11 @@ import { createDeskEvent } from "./events";
 import { queueCoordinationRunWithInngest } from "./inngest";
 import { defaultTraceLinks } from "./trace-links";
 
-const sharedDeps = {
-  logger: createEmbeddedPlaceholderLoggerAdapter(),
-  analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-} as const;
-
 export function createCoordinationWorkflowProjectionClient(context: CoordinationWorkflowContext) {
   return createClient({
     deps: {
-      ...sharedDeps,
+      logger: context.hostLogger ?? createEmbeddedPlaceholderLoggerAdapter(),
+      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
       queueRun: ({ workflow, runId, input }) =>
         queueCoordinationRunWithInngest({
           client: context.inngestClient,

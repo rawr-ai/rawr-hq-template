@@ -222,6 +222,7 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
 
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
+  const hostLogger = createHostLoggerAdapter();
 
   app.get("/rawr/plugins/web/:dirName", async ({ params }) => {
     const dirName =
@@ -270,6 +271,7 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     baseUrl: opts.baseUrl ?? "http://localhost:3000",
     runtime: hostInngest.runtime,
     inngestClient: hostInngest.client,
+    hostLogger,
   };
   const workflowRoutes = createWorkflowRouteHarness({
     workflows: {

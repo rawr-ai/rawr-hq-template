@@ -3,6 +3,7 @@ import type {
   BoundaryRequestSupportContext,
   HostRuntimeSupportContext,
 } from "@rawr/runtime-context";
+import type { Logger } from "@rawr/hq-sdk";
 
 export const RAWR_MIDDLEWARE_DEDUPE_MARKERS = {
   RPC_AUTHORIZATION_DECISION: "rpc.authorization.decision",
@@ -17,12 +18,16 @@ export const RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY = {
 
 export type RawrBoundaryMiddlewareState = BoundaryMiddlewareSupportState<RawrMiddlewareDedupeMarker>;
 
-export type RawrBoundaryContextDeps<TRuntime = unknown> = HostRuntimeSupportContext<TRuntime>;
+export type RawrBoundaryContextDeps<TRuntime = unknown> = HostRuntimeSupportContext<TRuntime> & {
+  hostLogger?: Logger;
+};
 
 export type RawrBoundaryContext<TRuntime = unknown> = BoundaryRequestSupportContext<
   TRuntime,
   RawrMiddlewareDedupeMarker
->;
+> & {
+  hostLogger?: Logger;
+};
 
 const requestScopedMiddlewareStateCache = new WeakMap<Request, RawrBoundaryMiddlewareState>();
 

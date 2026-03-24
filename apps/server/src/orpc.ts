@@ -297,6 +297,7 @@ export function registerOrpcRoutes<
     baseUrl: options.baseUrl,
     runtime: options.runtime,
     inngestClient: options.inngestClient,
+    hostLogger: options.hostLogger,
   };
   const contextFactory: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext =
     options.contextFactory ??
