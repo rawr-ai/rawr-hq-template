@@ -6,7 +6,7 @@ import type {
 import {
   fromWorkflowKitWorkflow,
   toWorkflowKitWorkflow,
-} from "@rawr/plugin-workflows-coordination";
+} from "@rawr/plugin-workflows-coordination/browser";
 import type { Workflow as WorkflowKitWorkflow } from "@inngest/workflow-kit";
 import type {
   RunActionState,

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   fromWorkflowKitWorkflow,
   toWorkflowKitWorkflow,
-} from "@rawr/plugin-workflows-coordination";
+} from "@rawr/plugin-workflows-coordination/browser";
 import {
   compileWorkflowToInngest,
   processCoordinationRunEvent,

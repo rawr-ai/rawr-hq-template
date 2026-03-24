@@ -10,6 +10,14 @@
       "types": "./index.ts",
       "default": "./index.ts"
     },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
+    },
+    "./browser": {
+      "types": "./src/browser.ts",
+      "default": "./src/browser.ts"
+    },
     "./server": {
       "types": "./server.ts",
       "default": "./server.ts"
