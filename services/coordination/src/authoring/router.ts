@@ -1,84 +1,28 @@
-import {
-  ensureCoordinationStorage,
-  getWorkflow as readWorkflow,
-  listWorkflows as readWorkflows,
-  saveWorkflow as persistWorkflow,
-} from "../storage";
-import { validateWorkflow } from "../domain/validation";
-import { parseCoordinationId } from "../service/shared/inputs";
 import { impl } from "./impl";
+import {
+  getStoredWorkflow,
+  listStoredWorkflows,
+  saveStoredWorkflow,
+  validateStoredWorkflow,
+} from "../service/modules/workflows/module";
 
 const listWorkflows = impl.listWorkflows.handler(async ({ context }) => {
-  const repoRoot = context.scope.repoRoot;
-  await ensureCoordinationStorage(repoRoot);
-  const workflows = await readWorkflows(repoRoot);
-  return { workflows };
+  return {
+    workflows: await listStoredWorkflows(context.scope.repoRoot),
+  };
 });
 
 const saveWorkflow = impl.saveWorkflow.handler(async ({ context, input, errors }) => {
-  const repoRoot = context.scope.repoRoot;
-  await ensureCoordinationStorage(repoRoot);
-  const validation = validateWorkflow(input.workflow);
-  if (!validation.ok) {
-    throw errors.WORKFLOW_VALIDATION_FAILED({
-      message: "Workflow validation failed",
-      data: validation,
-    });
-  }
-
-  await persistWorkflow(repoRoot, input.workflow);
-  return { workflow: input.workflow };
+  return await saveStoredWorkflow(context.scope.repoRoot, input.workflow, errors);
 });
 
 const getWorkflow = impl.getWorkflow.handler(async ({ context, input, errors }) => {
-  const repoRoot = context.scope.repoRoot;
-  await ensureCoordinationStorage(repoRoot);
-  const workflowId = parseCoordinationId(input.workflowId);
-  if (!workflowId) {
-    throw errors.INVALID_WORKFLOW_ID({
-      message: "Invalid workflowId format",
-      data: {
-        workflowId: typeof input.workflowId === "string" ? input.workflowId : null,
-      },
-    });
-  }
-
-  const workflow = await readWorkflow(repoRoot, workflowId);
-  if (!workflow) {
-    throw errors.WORKFLOW_NOT_FOUND({
-      message: "workflow not found",
-      data: { workflowId },
-    });
-  }
-
+  const { workflow } = await getStoredWorkflow(context.scope.repoRoot, input.workflowId, errors);
   return { workflow };
 });
 
 const validateWorkflowById = impl.validateWorkflow.handler(async ({ context, input, errors }) => {
-  const repoRoot = context.scope.repoRoot;
-  await ensureCoordinationStorage(repoRoot);
-  const workflowId = parseCoordinationId(input.workflowId);
-  if (!workflowId) {
-    throw errors.INVALID_WORKFLOW_ID({
-      message: "Invalid workflowId format",
-      data: {
-        workflowId: typeof input.workflowId === "string" ? input.workflowId : null,
-      },
-    });
-  }
-
-  const workflow = await readWorkflow(repoRoot, workflowId);
-  if (!workflow) {
-    throw errors.WORKFLOW_NOT_FOUND({
-      message: "workflow not found",
-      data: { workflowId },
-    });
-  }
-
-  return {
-    workflowId,
-    validation: validateWorkflow(workflow),
-  };
+  return await validateStoredWorkflow(context.scope.repoRoot, input.workflowId, errors);
 });
 
 export const router = impl.router({
