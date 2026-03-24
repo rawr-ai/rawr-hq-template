@@ -132,7 +132,9 @@ describe("coordination public service shell", () => {
       deps: {
         logger: createEmbeddedPlaceholderLoggerAdapter(),
         analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-        runsRuntime: {
+      },
+      runs: {
+        runtime: {
           queueRun: async () => {
             throw new Error("queue exploded");
           },

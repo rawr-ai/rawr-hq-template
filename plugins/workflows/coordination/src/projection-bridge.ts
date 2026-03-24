@@ -10,7 +10,9 @@ export function createCoordinationWorkflowProjectionClient(context: Coordination
     deps: {
       logger: context.hostLogger ?? createEmbeddedPlaceholderLoggerAdapter(),
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-      runsRuntime: {
+    },
+    runs: {
+      runtime: {
         queueRun: ({ workflow, runId, input }) =>
           queueCoordinationRunWithInngest({
             client: context.inngestClient,
