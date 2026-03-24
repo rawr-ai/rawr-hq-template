@@ -1,4 +1,6 @@
 import type { AnyContractRouterObject, AnyProcedureRouterObject } from "../orpc/router-shapes";
+import { createContextualRouterBuilder } from "../orpc/factory/implementer";
+import type { Context } from "@orpc/server";
 
 export type ApiSurfaceContribution<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
@@ -16,6 +18,11 @@ export type ApiPluginRegistration<
   internal: ApiSurfaceContribution<TContract, TRouter>;
   published?: ApiSurfaceContribution<TContract, TRouter>;
 }>;
+
+type DefineApiPluginInput<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+> = Omit<ApiPluginRegistration<TContract, TRouter>, "namespace">;
 
 function mergeNamedSurfaceTrees<TTree extends object>(
   trees: readonly TTree[],
@@ -39,9 +46,19 @@ export function defineApiPlugin<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
   TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
 >(
-  input: ApiPluginRegistration<TContract, TRouter>,
+  input: DefineApiPluginInput<TContract, TRouter>,
 ): ApiPluginRegistration<TContract, TRouter> {
-  return input;
+  return {
+    namespace: "orpc",
+    ...input,
+  };
+}
+
+export function createApiRouterBuilder<
+  const TContract extends AnyContractRouterObject,
+  TContext extends Context,
+>(contract: TContract) {
+  return createContextualRouterBuilder<TContract, TContext>(contract);
 }
 
 export function composeApiPlugins<const TPlugins extends readonly ApiPluginRegistration[]>(plugins: TPlugins) {

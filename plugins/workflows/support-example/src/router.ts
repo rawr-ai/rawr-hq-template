@@ -1,4 +1,4 @@
-import { implement } from "@orpc/server";
+import { createWorkflowRouterBuilder } from "@rawr/hq-sdk/workflows";
 import type { SupportExampleClient } from "./context";
 import { supportExampleWorkflowContract } from "./contract";
 import type { SupportExampleWorkflowContext } from "./context";
@@ -16,7 +16,7 @@ const missingSupportExampleClientResolver = () => {
   throw new Error("support-example workflow router requires a support client resolver");
 };
 
-const os = implement<typeof supportExampleWorkflowContract, SupportExampleWorkflowContext>(
+const os = createWorkflowRouterBuilder<typeof supportExampleWorkflowContract, SupportExampleWorkflowContext>(
   supportExampleWorkflowContract,
 );
 

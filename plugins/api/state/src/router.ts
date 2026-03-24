@@ -1,8 +1,8 @@
-import { implement } from "@orpc/server";
+import { createApiRouterBuilder } from "@rawr/hq-sdk/apis";
 import type { StateApiContext, StateClientResolver } from "./context";
 import { stateApiContract } from "./contract";
 
-const os = implement<typeof stateApiContract, StateApiContext>(stateApiContract);
+const os = createApiRouterBuilder<typeof stateApiContract, StateApiContext>(stateApiContract);
 
 export function createStateRouter(resolveClient: StateClientResolver) {
   return os.router({
