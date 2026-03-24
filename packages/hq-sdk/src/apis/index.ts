@@ -1,6 +1,10 @@
 import type { AnyContractRouterObject, AnyProcedureRouterObject } from "../orpc/router-shapes";
 import { createContextualRouterBuilder } from "../orpc/factory/implementer";
+import { mergeNamedSurfaceTrees } from "../composition/merge-named-surface-trees";
 import type { Context } from "@orpc/server";
+export {
+  createInternalTraceForwardingOptions as createApiTraceForwardingOptions,
+} from "../orpc/boundary/trace-forwarding";
 
 export type ApiSurfaceContribution<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
@@ -23,24 +27,6 @@ type DefineApiPluginInput<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
   TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
 > = Omit<ApiPluginRegistration<TContract, TRouter>, "namespace">;
-
-function mergeNamedSurfaceTrees<TTree extends object>(
-  trees: readonly TTree[],
-  input: { surface: "contract" | "router" },
-): TTree {
-  const result: Record<string, unknown> = {};
-
-  for (const tree of trees) {
-    for (const [key, value] of Object.entries(tree)) {
-      if (key in result) {
-        throw new Error(`duplicate api ${input.surface} namespace: ${key}`);
-      }
-      result[key] = value;
-    }
-  }
-
-  return result as TTree;
-}
 
 export function defineApiPlugin<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
@@ -65,19 +51,19 @@ export function composeApiPlugins<const TPlugins extends readonly ApiPluginRegis
   return {
     internalContract: mergeNamedSurfaceTrees<AnyContractRouterObject>(
       plugins.map((plugin) => plugin.internal.contract),
-      { surface: "contract" },
+      { kind: "api", surface: "contract" },
     ),
     internalRouter: mergeNamedSurfaceTrees<AnyProcedureRouterObject>(
       plugins.map((plugin) => plugin.internal.router),
-      { surface: "router" },
+      { kind: "api", surface: "router" },
     ),
     publishedContract: mergeNamedSurfaceTrees<AnyContractRouterObject>(
       plugins.flatMap((plugin) => (plugin.published ? [plugin.published.contract] : [])),
-      { surface: "contract" },
+      { kind: "api", surface: "contract" },
     ),
     publishedRouter: mergeNamedSurfaceTrees<AnyProcedureRouterObject>(
       plugins.flatMap((plugin) => (plugin.published ? [plugin.published.router] : [])),
-      { surface: "router" },
+      { kind: "api", surface: "router" },
     ),
   } as const;
 }
