@@ -1,14 +1,5 @@
-import type { AnyContractRouter } from "@orpc/contract";
-import type { AnyRouter } from "@orpc/server";
 import type { Inngest } from "inngest";
-
-export type AnyContractRouterObject = {
-  [key: string]: AnyContractRouter;
-};
-
-export type AnyProcedureRouterObject = {
-  [key: string]: AnyRouter;
-};
+import type { AnyContractRouterObject, AnyProcedureRouterObject } from "../orpc/router-shapes";
 
 export type WorkflowSurfaceContribution<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
@@ -178,3 +169,8 @@ export function composeWorkflowPlugins<const TPlugins extends readonly WorkflowP
     },
   } as const;
 }
+
+export type {
+  AnyContractRouterObject,
+  AnyProcedureRouterObject,
+} from "../orpc/router-shapes";

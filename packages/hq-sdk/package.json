@@ -30,6 +30,10 @@
       "types": "./src/host-adapters/sql/embedded-in-memory.ts",
       "default": "./src/host-adapters/sql/embedded-in-memory.ts"
     },
+    "./apis": {
+      "types": "./src/apis.ts",
+      "default": "./src/apis.ts"
+    },
     "./workflows": {
       "types": "./src/workflows.ts",
       "default": "./src/workflows.ts"

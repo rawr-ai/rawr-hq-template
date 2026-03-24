@@ -1,6 +1,4 @@
-import type { AnyContractRouterObject, AnyProcedureRouterObject } from "./orpc-shapes";
-
-export type ApiContextEnricher = (context: any) => any;
+import type { AnyContractRouterObject, AnyProcedureRouterObject } from "../orpc/router-shapes";
 
 export type ApiSurfaceContribution<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
@@ -8,13 +6,15 @@ export type ApiSurfaceContribution<
 > = Readonly<{
   contract: TContract;
   router: TRouter;
-  enrichContext?: ApiContextEnricher;
 }>;
 
-export type ApiPluginRegistration = Readonly<{
+export type ApiPluginRegistration<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+> = Readonly<{
   namespace: "orpc";
-  internal: ApiSurfaceContribution;
-  published?: ApiSurfaceContribution;
+  internal: ApiSurfaceContribution<TContract, TRouter>;
+  published?: ApiSurfaceContribution<TContract, TRouter>;
 }>;
 
 function mergeNamedSurfaceTrees<TTree extends object>(
@@ -35,7 +35,16 @@ function mergeNamedSurfaceTrees<TTree extends object>(
   return result as TTree;
 }
 
-export function composeApiPlugins(plugins: readonly ApiPluginRegistration[]) {
+export function defineApiPlugin<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+>(
+  input: ApiPluginRegistration<TContract, TRouter>,
+): ApiPluginRegistration<TContract, TRouter> {
+  return input;
+}
+
+export function composeApiPlugins<const TPlugins extends readonly ApiPluginRegistration[]>(plugins: TPlugins) {
   return {
     internalContract: mergeNamedSurfaceTrees<AnyContractRouterObject>(
       plugins.map((plugin) => plugin.internal.contract),
@@ -53,11 +62,10 @@ export function composeApiPlugins(plugins: readonly ApiPluginRegistration[]) {
       plugins.flatMap((plugin) => (plugin.published ? [plugin.published.router] : [])),
       { surface: "router" },
     ),
-    enrichContext(context: any): any {
-      return plugins.reduce(
-        (current, plugin) => plugin.internal.enrichContext?.(current) ?? current,
-        context,
-      );
-    },
   } as const;
 }
+
+export type {
+  AnyContractRouterObject,
+  AnyProcedureRouterObject,
+} from "../orpc/router-shapes";

@@ -2,9 +2,12 @@ import { randomUUID } from "node:crypto";
 import { implement, type RouterClient, createRouterClient } from "@orpc/server";
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import {
-  composeWorkflowPlugins,
+  composeApiPlugins,
   type AnyContractRouterObject,
   type AnyProcedureRouterObject,
+} from "@rawr/hq-sdk/apis";
+import {
+  composeWorkflowPlugins,
 } from "@rawr/hq-sdk/workflows";
 import { createClient as createStateClient, type Client as StateClient } from "@rawr/state";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
@@ -20,7 +23,6 @@ import {
 } from "@rawr/plugin-workflows-support-example/server";
 import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
 import { supportExampleRouter } from "@rawr/support-example/router";
-import { composeApiPlugins } from "./apis";
 
 type SupportExampleClient = RouterClient<typeof supportExampleRouter>;
 type SupportExampleWorkItem = Awaited<ReturnType<SupportExampleClient["triage"]["items"]["request"]>>["workItem"];

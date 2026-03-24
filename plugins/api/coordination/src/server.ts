@@ -1,3 +1,4 @@
+import { defineApiPlugin } from "@rawr/hq-sdk/apis";
 import { coordinationApiContract } from "./contract";
 import { createCoordinationApiRouter } from "./router";
 
@@ -8,13 +9,13 @@ export {
 } from "./router";
 
 export function registerCoordinationApiPlugin() {
-  return {
+  return defineApiPlugin({
     namespace: "orpc" as const,
     internal: {
       contract: coordinationApiContract,
       router: createCoordinationApiRouter(),
     },
-  };
+  });
 }
 
 export type CoordinationApiPluginRegistration = ReturnType<typeof registerCoordinationApiPlugin>;
