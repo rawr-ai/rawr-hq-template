@@ -9,9 +9,12 @@
  * - bound service authoring surfaces used across `service/*`
  */
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
+import type { CoordinationRunsRuntime } from "./modules/runs/runtime";
 
 type InitialContext = {
-  deps: {};
+  deps: {
+    runsRuntime: CoordinationRunsRuntime;
+  };
   scope: {
     repoRoot: string;
   };

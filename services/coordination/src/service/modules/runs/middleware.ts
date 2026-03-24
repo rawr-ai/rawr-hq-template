@@ -15,21 +15,30 @@ export const observability = createServiceObservabilityMiddleware({});
 export const analytics = createServiceAnalyticsMiddleware({});
 
 export const runExecution = createServiceProvider<{
-  provided: {
-    runsRuntime?: CoordinationRunsRuntime;
+  deps: {
+    runsRuntime: CoordinationRunsRuntime;
   };
 }>().middleware<{
   runExecution: CoordinationRunsRuntime;
 }>(async ({ context, next }) => {
-  const runExecution = context.provided.runsRuntime;
-  if (!runExecution) {
-    throw new Error("coordination runs runtime is not configured");
-  }
-
-  return next({ runExecution });
+  return next({
+    runExecution: context.deps.runsRuntime,
+  });
 });
 
 export const repository = createServiceProvider<{
+  scope: {
+    repoRoot: string;
+  };
+}>().middleware<{
+  repo: ReturnType<typeof createRepository>;
+}>(async ({ context, next }) => {
+  return next({
+    repo: createRepository(context.scope.repoRoot),
+  });
+});
+
+export const queueRepository = createServiceProvider<{
   scope: {
     repoRoot: string;
   };

@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { minifyContractRouter } from "@orpc/contract";
 import {
   GetRunStatusInputSchema,
-  GetWorkflowInputSchema,
   QueueRunInputSchema,
-  RunStatusSchema,
-} from "@rawr/coordination/service/contract";
+} from "@rawr/coordination/service/modules/runs/schemas";
+import { GetWorkflowInputSchema } from "@rawr/coordination/service/modules/workflows/schemas";
+import { RunStatusSchema } from "@rawr/coordination/domain/schemas";
 import type { JsonValue } from "@rawr/coordination";
 import { typeBoxStandardSchema } from "@rawr/hq-sdk";
 import { GetStateOutputSchema } from "@rawr/state/service/modules/state/contract";

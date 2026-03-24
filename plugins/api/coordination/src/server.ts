@@ -1,17 +1,17 @@
 import { defineApiPlugin } from "@rawr/hq-sdk/apis";
-import type { CoordinationAuthoringClientResolver } from "./context";
+import type { CoordinationWorkflowClientResolver } from "./context";
 import { coordinationApiContract } from "./contract";
 import { createCoordinationApiRouter } from "./router";
 
 export {
   createCoordinationApiRouter,
   type CoordinationApiContext,
-  type CoordinationAuthoringClientResolver,
+  type CoordinationWorkflowClientResolver,
   type CoordinationApiRouter,
 } from "./router";
 
 export function registerCoordinationApiPlugin(input: {
-  resolveClient: CoordinationAuthoringClientResolver;
+  resolveClient: CoordinationWorkflowClientResolver;
 }) {
   return defineApiPlugin({
     internal: {

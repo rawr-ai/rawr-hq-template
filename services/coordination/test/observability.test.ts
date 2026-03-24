@@ -7,11 +7,11 @@ import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import { createAuthoringClient } from "../src/authoring";
+import { createClient } from "../src/client";
 import { ensureCoordinationStorage, saveWorkflow } from "../src/storage";
 
 describe("coordination observability", () => {
-  it("emits coordination and baseline procedure signals for authoring routes", async () => {
+  it("emits coordination and baseline procedure signals for workflow routes on the canonical client", async () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-coord-observability-"));
     const logs: EmbeddedPlaceholderLogEntry[] = [];
     const analytics: Array<{ event: string; payload: Record<string, unknown> }> = [];
@@ -36,14 +36,20 @@ describe("coordination observability", () => {
         handoffs: [],
       });
 
-      const client = createAuthoringClient({
+      const client = createClient({
         deps: {
           logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logs }),
           analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analytics }),
+          runsRuntime: {
+            queueRun: async () => {
+              throw new Error("run dispatch should not execute during workflow observability tests");
+            },
+            createTraceLinks: () => [],
+          },
         },
         scope: { repoRoot },
         config: {},
-      });
+      }).workflows;
 
       await expect(
         client.listWorkflows(
@@ -63,18 +69,20 @@ describe("coordination observability", () => {
       expect(logs).toEqual(expect.arrayContaining([
         expect.objectContaining({
           event: "coordination.procedure",
+          level: "info",
           payload: expect.objectContaining({
             outcome: "success",
-            path: "listWorkflows",
+            path: "workflows.listWorkflows",
             repoRoot,
             invocationTraceId: "trace-coordination-observability",
           }),
         }),
         expect.objectContaining({
           event: "orpc.procedure",
+          level: "info",
           payload: expect.objectContaining({
             outcome: "success",
-            path: "listWorkflows",
+            path: "workflows.listWorkflows",
             domain: "coordination",
           }),
         }),
@@ -83,7 +91,7 @@ describe("coordination observability", () => {
         expect.objectContaining({
           event: "orpc.procedure",
           payload: expect.objectContaining({
-            path: "listWorkflows",
+            path: "workflows.listWorkflows",
             analytics_repo_root: repoRoot,
             analytics_trace_id: "trace-coordination-observability",
           }),

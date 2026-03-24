@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { type RouterClient, createRouterClient } from "@orpc/server";
-import { createAuthoringClient as createCoordinationAuthoringClient, type AuthoringClient as CoordinationAuthoringClient } from "@rawr/coordination/authoring";
+import { createClient as createCoordinationClient, type Client as CoordinationClient } from "@rawr/coordination";
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import {
   composeApiPlugins,
@@ -36,7 +36,8 @@ type SupportExampleServiceDeps = {
   generateWorkItemId: () => string;
 };
 type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
-type CoordinationAuthoringBoundary = Parameters<typeof createCoordinationAuthoringClient>[0];
+type CoordinationBoundary = Parameters<typeof createCoordinationClient>[0];
+type CoordinationWorkflowClient = CoordinationClient["workflows"];
 type StateBoundary = Parameters<typeof createStateClient>[0];
 export type HostServiceLogger = ExampleTodoBoundary["deps"]["logger"];
 export type CreateRawrHqManifestOptions = {
@@ -132,24 +133,34 @@ function createStateBoundary(repoRoot: string, hostLogger: HostServiceLogger): S
   } satisfies StateBoundary;
 }
 
-function createCoordinationAuthoringBoundary(
+function createUnavailableCoordinationRunsRuntime(): CoordinationBoundary["deps"]["runsRuntime"] {
+  return {
+    queueRun: async () => {
+      throw new Error("coordination run dispatch is not available on the HQ workflow-authoring surface");
+    },
+    createTraceLinks: () => [],
+  };
+}
+
+function createCoordinationBoundary(
   repoRoot: string,
   hostLogger: HostServiceLogger,
-): CoordinationAuthoringBoundary {
+): CoordinationBoundary {
   return {
     deps: {
       logger: hostLogger,
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+      runsRuntime: createUnavailableCoordinationRunsRuntime(),
     },
     scope: {
       repoRoot,
     },
     config: {},
-  } satisfies CoordinationAuthoringBoundary;
+  } satisfies CoordinationBoundary;
 }
 
 export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
-  const coordinationAuthoringClientsByRepoRoot = new Map<string, CoordinationAuthoringClient>();
+  const coordinationWorkflowClientsByRepoRoot = new Map<string, CoordinationWorkflowClient>();
   const exampleTodoClientsByRepoRoot = new Map<string, ExampleTodoClient>();
   const stateClientsByRepoRoot = new Map<string, StateClient>();
 
@@ -164,16 +175,16 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
     return client;
   }
 
-  function resolveCoordinationAuthoringClient(repoRoot: string): CoordinationAuthoringClient {
-    const existing = coordinationAuthoringClientsByRepoRoot.get(repoRoot);
+  function resolveCoordinationWorkflowClient(repoRoot: string): CoordinationWorkflowClient {
+    const existing = coordinationWorkflowClientsByRepoRoot.get(repoRoot);
     if (existing) {
       return existing;
     }
 
-    const client = createCoordinationAuthoringClient(
-      createCoordinationAuthoringBoundary(repoRoot, options.hostLogger),
-    );
-    coordinationAuthoringClientsByRepoRoot.set(repoRoot, client);
+    const client = createCoordinationClient(
+      createCoordinationBoundary(repoRoot, options.hostLogger),
+    ).workflows;
+    coordinationWorkflowClientsByRepoRoot.set(repoRoot, client);
     return client;
   }
 
@@ -191,7 +202,7 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
   // Host owns runtime realization. The app manifest only composes plugin registrations
   // and exposes the capability fixture/client resolvers the host can mount later.
   const coordinationApiPlugin = registerCoordinationApiPlugin({
-    resolveClient: resolveCoordinationAuthoringClient,
+    resolveClient: resolveCoordinationWorkflowClient,
   });
   const stateApiPlugin = registerStateApiPlugin({
     resolveClient: resolveStateClient,
