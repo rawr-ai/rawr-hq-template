@@ -39,6 +39,8 @@
   },
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
+    "sync": "bun run --cwd ../../.. sync:check --project @rawr/plugin-plugins",
+    "structural": "bun ../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/plugin-plugins",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
     "test": "vitest run --project plugin-plugins",
     "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
@@ -49,7 +51,8 @@
   },
   "nx": {
     "tags": [
-      "type:plugin"
+      "type:plugin",
+      "migration-slice:structural-tranche"
     ]
   }
 }

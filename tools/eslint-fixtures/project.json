@@ -3,5 +3,22 @@
   "name": "eslint-fixtures",
   "root": "tools/eslint-fixtures",
   "sourceRoot": "tools/eslint-fixtures",
-  "tags": ["type:service", "type:plugin"]
+  "tags": [
+    "type:package",
+    "migration-slice:structural-tranche"
+  ],
+  "targets": {
+    "sync": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run sync:check --project eslint-fixtures"
+      }
+    },
+    "structural": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun scripts/phase-03/verify-eslint-fixtures-structural.mjs"
+      }
+    }
+  }
 }

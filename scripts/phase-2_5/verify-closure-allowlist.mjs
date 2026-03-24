@@ -85,12 +85,12 @@ assertScriptEquals(
 assertScriptEquals(
   scripts,
   "phase-2_5:gates:quick",
-  "bun run phase-2_5:gate:telemetry-core && bun run phase-2_5:gate:host-metrics && bun run phase-2_5:gate:example-cutover && bun run phase-2_5:gate:hq-runtime",
+  "bunx nx run @rawr/server:structural -- --suite=phase-2_5-quick && bunx nx run @rawr/cli:structural -- --suite=phase-2_5-quick",
 );
 assertScriptEquals(
   scripts,
   "phase-2_5:gates:exit",
-  "bun run phase-2_5:gates:quick && bun run phase-2_5:gate:logging && bun run phase-2_5:gate:closure",
+  "bun run phase-2_5:gates:quick && bunx nx run @rawr/server:structural -- --suite=phase-2_5-exit && bun run phase-2_5:gate:closure",
 );
 
 assertCondition(!("dev:up" in scripts), "package.json must not define bun run dev:up");

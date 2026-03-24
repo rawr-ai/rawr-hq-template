@@ -1,0 +1,61 @@
+const INVENTORY_PATH = "tools/architecture-inventory/slice-0-first-cohort.json";
+
+const INVENTORY = {
+  projects: {
+    "rawr-hq-template": {
+      config: "package.json",
+      tags: ["migration-slice:structural-tranche"],
+      targets: ["sync:check", "phase-a:gates:baseline", "phase-2_5:gates:quick", "phase-2_5:gates:exit"],
+    },
+    "@rawr/server": {
+      config: "apps/server/package.json",
+      tags: ["type:app", "app:hq", "migration-slice:structural-tranche"],
+      targets: ["sync", "structural"],
+    },
+    "@rawr/cli": {
+      config: "apps/cli/package.json",
+      tags: ["type:app", "app:hq", "migration-slice:structural-tranche"],
+      targets: ["sync", "structural"],
+    },
+    "@rawr/hq": {
+      config: "packages/hq/package.json",
+      tags: ["type:package", "migration-slice:structural-tranche"],
+      targets: ["sync", "structural"],
+    },
+    "@rawr/plugin-plugins": {
+      config: "plugins/cli/plugins/package.json",
+      tags: ["type:plugin", "migration-slice:structural-tranche"],
+      targets: ["sync", "structural"],
+    },
+    "plugin-api-example-todo": {
+      config: "plugins/api/example-todo/project.json",
+      tags: [
+        "type:plugin",
+        "migration-slice:structural-tranche",
+        "role:api",
+        "surface:orpc",
+        "capability:example-todo",
+      ],
+      targets: ["sync", "structural"],
+    },
+    "eslint-fixtures": {
+      config: "tools/eslint-fixtures/project.json",
+      tags: ["type:package", "migration-slice:structural-tranche"],
+      targets: ["sync", "structural"],
+    },
+  },
+};
+
+module.exports = async function syncSlice0Inventory(tree) {
+  const nextContents = `${JSON.stringify(INVENTORY, null, 2)}\n`;
+  const currentContents = tree.exists(INVENTORY_PATH) ? tree.read(INVENTORY_PATH).toString("utf8") : null;
+
+  if (currentContents !== nextContents) {
+    tree.write(INVENTORY_PATH, nextContents);
+  }
+
+  return {
+    outOfSyncMessage: "The Node 1 first-cohort inventory is out of sync.",
+    outOfSyncDetails: [`Expected ${INVENTORY_PATH} to match the checked-in Slice 0 ownership contract.`],
+  };
+};
