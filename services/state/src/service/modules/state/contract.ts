@@ -8,7 +8,7 @@ export const GetStateInputSchema = Type.Object({}, { additionalProperties: false
 export const GetStateOutputSchema = Type.Object(
   {
     state: RepoStateSchema,
-    authorityRepoRoot: Type.Optional(Type.String({ minLength: 1 })),
+    authorityRepoRoot: Type.String({ minLength: 1 }),
   },
   { additionalProperties: false },
 );

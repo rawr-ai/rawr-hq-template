@@ -24,6 +24,6 @@ export const module = impl
   .use(repository)
   .use(async ({ context, next }) => next({
     context: {
-      repository: context.provided.repository,
+      repo: context.provided.repo,
     },
   }));
