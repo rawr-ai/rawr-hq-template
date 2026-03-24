@@ -274,3 +274,58 @@ Telemetry is intentionally different from other seams such as SQL:
 
 Migration should move package observability code toward active-span access and
 remove telemetry from the package dependency model.
+
+## Decision #10 (2026-03-24)
+
+### Question
+Can a servicepackage bypass `defineServicePackage(router)` and seed
+`context.provided.*` directly at the package boundary?
+
+### Decision
+The canonical answer is **no**.
+
+`defineServicePackage(router)` remains the default and authoritative
+servicepackage client shell:
+
+- construction-time input stays on `deps`, `scope`, and `config`
+- per-call input still arrives on `invocation`
+- `provided` remains execution context, not a second public boundary bag
+
+There is one narrow allowed exception:
+
+- a package may locally seed `context.provided.*` at the package edge only for
+  a **package-specific runtime capability**
+- that capability must be consumed by a subset of procedures rather than the
+  whole servicepackage
+- it must be immediately normalized by local middleware or module setup
+- it must remain local to that package; do not promote it into HQ SDK or treat
+  it as a new general boundary pattern without a second real consumer and an
+  explicit SDK design slice
+
+Today, `services/coordination/src/client.ts` is the only accepted example of
+that exception.
+
+### Why
+The default servicepackage shell has to stay semantically stable across the
+repo so that in-kind packages share one recognizable boundary shape.
+
+At the same time, some runtime-facing packages may need to bridge a
+package-specific execution capability from plugin/host composition into a
+service-local execution lane without lying about the whole service boundary.
+That is a runtime exception, not a new default abstraction.
+
+This preserves both truths:
+
+- golden-example servicepackages still teach the canonical shell
+- a narrow runtime bridge can exist without forcing package-specific execution
+  concerns into HQ SDK prematurely
+
+### Guardrails
+If you hit this exception path:
+
+- document it explicitly in the package and in the front-door design docs
+- keep the seeded value package-specific and runtime-specific
+- normalize it under local middleware before handler consumption
+- do not cargo-cult the pattern into other servicepackages
+- do not use it to hide ordinary host dependencies that should just be
+  declared on `deps`

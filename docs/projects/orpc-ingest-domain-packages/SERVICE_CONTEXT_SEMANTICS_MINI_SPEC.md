@@ -257,6 +257,37 @@ Instead:
 - keep provider output under `context.provided.*`
 - do **not** flatten provider-derived resources to top-level runtime lanes
 
+## Explicit Exception Note (2026-03-24)
+
+The canonical servicepackage boundary is still:
+
+- `defineServicePackage(router)`
+- boundary inputs on `deps`, `scope`, and `config`
+- per-call input on `invocation`
+- execution-time provider/module outputs under `context.provided.*`
+
+One narrow local exception is currently accepted in
+[`services/coordination/src/client.ts`](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/services/coordination/src/client.ts):
+
+- the coordination package seeds a package-specific runtime capability into
+  `context.provided.*` at the package edge
+- that seed exists only to bridge workflow/plugin runtime composition into the
+  coordination runs execution path
+- it is immediately normalized by local runs middleware rather than consumed as
+  a free-form top-level host bag
+
+This should be read as a **documented exception**, not as a new default rule.
+
+The default classification still holds:
+
+- if a stable host-owned prerequisite is ordinary package input, declare it on
+  `deps`
+- if middleware/module setup derives an execution resource, put it under
+  `context.provided.*`
+- only keep a package-edge `provided` seed when the capability is truly
+  package-specific, runtime-specific, and not yet a proven cross-package SDK
+  abstraction
+
 ## Why This Slice Exists
 
 Today, the service authoring site is already close to the right mental model.
