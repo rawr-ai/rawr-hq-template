@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as otelApi from "@opentelemetry/api";
-import { rawrHqManifest } from "../../../rawr.hq";
+import { createTestingRawrHqManifest } from "@rawr/hq-app/testing";
 import { createServerApp } from "../src/app";
 import { createCoordinationRuntimeAdapter } from "../src/coordination";
 import { __resetOrpcRouteTelemetryForTests, registerOrpcRoutes } from "../src/orpc";
@@ -22,6 +22,7 @@ const spanRecordException = vi.fn();
 const spanEnd = vi.fn();
 const spanContext = vi.fn();
 const startActiveSpan = vi.fn();
+const rawrHqManifest = createTestingRawrHqManifest();
 
 async function createTestApp(args: {
   contextFactory?: (request: Request, deps: unknown) => unknown;

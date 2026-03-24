@@ -142,7 +142,9 @@
     "@orpc/server": "^1.13.5",
     "@rawr/coordination-inngest": "workspace:*",
     "@rawr/core": "workspace:*",
+    "@rawr/hq-app": "workspace:*",
     "@rawr/hq-sdk": "workspace:*",
+    "@rawr/runtime-context": "workspace:*",
     "@rawr/support-example": "workspace:*",
     "inngest": "3.51.0",
     "typebox": "^1.0.81"

@@ -39,6 +39,7 @@ const ignoredFiles = new Set(["bun.lock", "output.json"]);
 
 const legacySupportAllowlist = [
   "rawr.hq.ts",
+  "apps/hq/src/manifest.ts",
   "package.json",
   "vitest.config.ts",
   "apps/cli/src/commands/workflow/demo-mfe.ts",
@@ -55,7 +56,7 @@ const canonicalLegacySurfaceFiles = [
 ];
 
 await Promise.all([
-  mustExist("rawr.hq.ts"),
+  mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/cli/src/commands/tools/export.ts"),
   mustExist("apps/cli/src/commands/workflow/demo-mfe.ts"),
   mustExist("apps/server/test/api-plugin-example-surface.test.ts"),
@@ -66,10 +67,10 @@ await Promise.all([
   mustExist("scripts/phase-2_5/verify-closure-allowlist.mjs"),
 ]);
 
-const [scripts, rawrHqSource, toolsExportSource, demoMfeSource, runbookSource, apiProofSource, rawrTestSource] =
+const [scripts, manifestSource, toolsExportSource, demoMfeSource, runbookSource, apiProofSource, rawrTestSource] =
   await Promise.all([
     readPackageScripts(),
-    readFile("rawr.hq.ts"),
+    readFile("apps/hq/src/manifest.ts"),
     readFile("apps/cli/src/commands/tools/export.ts"),
     readFile("apps/cli/src/commands/workflow/demo-mfe.ts"),
     readFile("docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md"),
@@ -96,12 +97,12 @@ assertScriptEquals(
 assertCondition(!("dev:up" in scripts), "package.json must not define bun run dev:up");
 
 assertCondition(
-  !rawrHqSource.includes("./plugins/api/support-example") && !rawrHqSource.includes("registerSupportExampleApiPlugin"),
-  "rawr.hq.ts must not import or register the legacy support-example API plugin",
+  !manifestSource.includes("./plugins/api/support-example") && !manifestSource.includes("registerSupportExampleApiPlugin"),
+  "apps/hq/src/manifest.ts must not import or register the legacy support-example API plugin",
 );
 assertCondition(
-  /const composedOrpcRouter = \{\s*\.\.\.coreOrpcRouter,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s.test(rawrHqSource),
-  "rawr.hq.ts must keep example-todo as the only canonical API projection in the oRPC router",
+  /const composedOrpcRouter = \{\s*\.\.\.coreOrpcRouter,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s.test(manifestSource),
+  "apps/hq/src/manifest.ts must keep example-todo as the only canonical API projection in the oRPC router",
 );
 assertCondition(
   !toolsExportSource.includes("support-example") && !toolsExportSource.includes("supportExample"),

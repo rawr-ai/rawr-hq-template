@@ -13,6 +13,7 @@ import {
 } from "@rawr/coordination/node";
 import { queueCoordinationRunWithInngest, type CoordinationRuntimeAdapter } from "@rawr/coordination-inngest";
 import { createDeskEvent, defaultTraceLinks } from "@rawr/coordination-observability";
+import type { RuntimeRouterContext } from "@rawr/runtime-context";
 import { getRepoState } from "@rawr/state";
 import { ORPCError, implement } from "@orpc/server";
 import type { Inngest } from "inngest";
@@ -28,13 +29,6 @@ type ParsedRunId =
       message: string;
       value: unknown;
     };
-
-export type RuntimeRouterContext = {
-  repoRoot: string;
-  baseUrl: string;
-  runtime: CoordinationRuntimeAdapter;
-  inngestClient: Inngest;
-};
 
 type CoordinationContractImplementation<Context extends RuntimeRouterContext> = ReturnType<
   typeof implement<typeof hqContract, Context>
