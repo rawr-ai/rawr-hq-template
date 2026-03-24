@@ -10,7 +10,7 @@
     "types": ["node"],
     "paths": {
       "@rawr/coordination": ["services/coordination/src/index.ts"],
-      "@rawr/coordination/events": ["services/coordination/src/events.ts"],
+      "@rawr/coordination/events": ["services/coordination/src/domain/events.ts"],
       "@rawr/coordination/node": ["services/coordination/src/node.ts"],
       "@rawr/coordination/router": ["services/coordination/src/router.ts"],
       "@rawr/coordination/service/contract": ["services/coordination/src/service/contract.ts"],

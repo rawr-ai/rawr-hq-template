@@ -6,7 +6,7 @@ import {
   getWorkflow as readWorkflow,
   saveRunStatus,
 } from "../../../storage";
-import { RUN_FINALIZATION_CONTRACT_V1, type RunStatusV1 } from "../../../types";
+import { RUN_FINALIZATION_CONTRACT_V1, type RunStatusV1 } from "../../../domain/types";
 import { impl } from "../../impl";
 import { parseCoordinationId } from "../../shared/inputs";
 import { parseRunId, toJsonValue } from "./inputs";

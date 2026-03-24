@@ -1,5 +1,5 @@
 import { schema } from "@rawr/hq-sdk";
-import { ValidationResultSchema } from "../../../schemas";
+import { ValidationResultSchema } from "../../../domain/schemas";
 
 export const WORKFLOW_VALIDATION_FAILED = {
   status: 400,

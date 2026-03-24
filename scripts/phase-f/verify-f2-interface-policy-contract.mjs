@@ -8,11 +8,11 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("services/coordination/src/ids.ts"),
-  mustExist("services/coordination/src/schemas.ts"),
+  mustExist("services/coordination/src/domain/ids.ts"),
+  mustExist("services/coordination/src/domain/schemas.ts"),
   mustExist("services/coordination/src/service/shared/inputs.ts"),
-  mustExist("services/state/src/service/contract.ts"),
-  mustExist("services/state/src/service/router.ts"),
+  mustExist("services/state/src/service/modules/state/contract.ts"),
+  mustExist("services/state/src/service/modules/state/router.ts"),
   mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
@@ -30,11 +30,11 @@ const [
   scripts,
 ] =
   await Promise.all([
-    readFile("services/coordination/src/ids.ts"),
-    readFile("services/coordination/src/schemas.ts"),
+    readFile("services/coordination/src/domain/ids.ts"),
+    readFile("services/coordination/src/domain/schemas.ts"),
     readFile("services/coordination/src/service/shared/inputs.ts"),
-    readFile("services/state/src/service/contract.ts"),
-    readFile("services/state/src/service/router.ts"),
+    readFile("services/state/src/service/modules/state/contract.ts"),
+    readFile("services/state/src/service/modules/state/router.ts"),
     readFile("apps/hq/src/manifest.ts"),
     readFile("apps/hq/test/orpc-contract-drift.test.ts"),
     readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),

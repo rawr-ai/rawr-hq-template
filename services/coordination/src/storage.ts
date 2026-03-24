@@ -5,8 +5,8 @@ import type {
   DeskMemoryRecordV1,
   DeskRunEventV1,
   RunStatusV1,
-} from "./types";
-import { assertSafeCoordinationId } from "./ids";
+} from "./domain/types";
+import { assertSafeCoordinationId } from "./domain/ids";
 
 const RAWR_COORD_ROOT = [".rawr", "coordination"] as const;
 

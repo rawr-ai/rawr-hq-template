@@ -15,8 +15,8 @@ import type {
   JsonValue,
   RunStatusV1,
   RunTraceLinkV1,
-} from "../types";
-import type { CreateDeskEventDraft } from "../events";
+} from "../domain/types";
+import type { CreateDeskEventDraft } from "../domain/events";
 
 export type QueueCoordinationRunRequest = Readonly<{
   workflow: CoordinationWorkflowV1;

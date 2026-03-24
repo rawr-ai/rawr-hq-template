@@ -9,11 +9,11 @@
  */
 export { createClient, type Client } from "./client";
 export { router, type Router } from "./router";
-export * from "./types";
-export { topologicalDeskOrder } from "./graph";
+export * from "./domain/types";
+export { topologicalDeskOrder } from "./domain/graph";
 export {
   assertSafeCoordinationId,
   isSafeCoordinationId,
   normalizeCoordinationId,
-} from "./ids";
-export { validateWorkflow } from "./validation";
+} from "./domain/ids";
+export { validateWorkflow } from "./domain/validation";

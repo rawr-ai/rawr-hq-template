@@ -8,7 +8,7 @@ import {
   SaveWorkflowOutputSchema,
   ValidateWorkflowInputSchema,
   ValidateWorkflowOutputSchema,
-} from "../schemas";
+} from "../domain/schemas";
 import { INVALID_WORKFLOW_ID, WORKFLOW_NOT_FOUND } from "../service/shared/errors";
 import { WORKFLOW_VALIDATION_FAILED } from "../service/modules/workflows/errors";
 import { ocBase } from "./base";

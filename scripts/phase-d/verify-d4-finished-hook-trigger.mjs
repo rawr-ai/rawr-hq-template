@@ -5,16 +5,16 @@ const PASS_ROOT = "docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-exe
 const RESULT_PATH = `${PASS_ROOT}/D4_FINISHED_HOOK_SCAN_RESULT.json`;
 
 await Promise.all([
-  mustExist("services/coordination/src/types.ts"),
-  mustExist("services/coordination/src/schemas.ts"),
+  mustExist("services/coordination/src/domain/types.ts"),
+  mustExist("services/coordination/src/domain/schemas.ts"),
   mustExist("plugins/workflows/coordination/src/inngest.ts"),
   mustExist("services/coordination/src/service/modules/runs/router.ts"),
   mustExist("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
 ]);
 
 const [typesSource, schemasSource, inngestSource, coordinationRouterSource, guardrailsTestSource] = await Promise.all([
-  readFile("services/coordination/src/types.ts"),
-  readFile("services/coordination/src/schemas.ts"),
+  readFile("services/coordination/src/domain/types.ts"),
+  readFile("services/coordination/src/domain/schemas.ts"),
   readFile("plugins/workflows/coordination/src/inngest.ts"),
   readFile("services/coordination/src/service/modules/runs/router.ts"),
   readFile("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),

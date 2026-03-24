@@ -2,7 +2,7 @@
 import { assertCondition, mustExist, readFile, readPackageScripts } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("services/coordination/src/events.ts"),
+  mustExist("services/coordination/src/domain/events.ts"),
   mustExist("services/coordination/test/run-lifecycle-telemetry.test.ts"),
   mustExist("plugins/workflows/coordination/src/events.ts"),
   mustExist("plugins/workflows/coordination/src/trace-links.ts"),
@@ -21,7 +21,7 @@ const [
   scripts,
 ] =
   await Promise.all([
-    readFile("services/coordination/src/events.ts"),
+    readFile("services/coordination/src/domain/events.ts"),
     readFile("services/coordination/test/run-lifecycle-telemetry.test.ts"),
     readFile("plugins/workflows/coordination/src/events.ts"),
     readFile("plugins/workflows/coordination/src/trace-links.ts"),

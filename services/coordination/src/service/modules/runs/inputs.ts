@@ -1,5 +1,5 @@
-import { normalizeCoordinationId } from "../../../ids";
-import type { JsonValue } from "../../../types";
+import { normalizeCoordinationId } from "../../../domain/ids";
+import type { JsonValue } from "../../../domain/types";
 
 export type ParsedRunId =
   | {
