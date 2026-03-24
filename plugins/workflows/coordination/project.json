@@ -9,5 +9,13 @@
     "role:workflow",
     "surface:async",
     "capability:coordination"
-  ]
+  ],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx tsc -p plugins/workflows/coordination/tsconfig.json --noEmit"
+      }
+    }
+  }
 }
