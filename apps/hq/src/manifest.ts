@@ -133,15 +133,6 @@ function createStateBoundary(repoRoot: string, hostLogger: HostServiceLogger): S
   } satisfies StateBoundary;
 }
 
-function createUnavailableCoordinationRunsRuntime(): CoordinationBoundary["deps"]["runsRuntime"] {
-  return {
-    queueRun: async () => {
-      throw new Error("coordination run dispatch is not available on the HQ workflow-authoring surface");
-    },
-    createTraceLinks: () => [],
-  };
-}
-
 function createCoordinationBoundary(
   repoRoot: string,
   hostLogger: HostServiceLogger,
@@ -150,7 +141,6 @@ function createCoordinationBoundary(
     deps: {
       logger: hostLogger,
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-      runsRuntime: createUnavailableCoordinationRunsRuntime(),
     },
     scope: {
       repoRoot,

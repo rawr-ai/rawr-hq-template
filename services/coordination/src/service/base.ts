@@ -13,7 +13,7 @@ import type { CoordinationRunsRuntime } from "./modules/runs/runtime";
 
 type InitialContext = {
   deps: {
-    runsRuntime: CoordinationRunsRuntime;
+    runsRuntime?: CoordinationRunsRuntime;
   };
   scope: {
     repoRoot: string;

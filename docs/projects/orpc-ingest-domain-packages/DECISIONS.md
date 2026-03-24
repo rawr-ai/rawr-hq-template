@@ -145,6 +145,8 @@ Keep a single dedicated dependency bag at `context.deps` for host-provided, stab
 Concretely:
 
 - baseline deps and service deps are a type-authoring distinction only (`BaseDeps` extended by service deps),
+- service-declared deps may be **optional stable host capabilities** when only a
+  subset of procedures can execute without them,
 - capability contracts used by baseline deps should still live under
   `src/orpc/ports/*` when they are swappable package-facing contracts (for
   example logger and analytics),
@@ -165,6 +167,16 @@ It keeps runtime semantics legible:
 - `context.config.*` means “stable package behavior/configuration”,
 - `context.invocation.*` means “per-call input enforced by the package boundary”,
 - `context.provided.*` means “execution value attached during the pipeline”.
+
+Procedure-local narrowing is the expected way to turn an optional stable dep
+into a required execution capability for only the routes that need it. The
+coordination runs runtime is the canonical example:
+
+- `deps.runsRuntime?` stays optional at the package boundary so workflow-only
+  callers can use the canonical root client directly
+- queue-only middleware normalizes that optional dep to
+  `context.provided.runExecution`
+- read routes never depend on that provider
 
 ## Decision #8 (2026-03-10)
 

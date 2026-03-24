@@ -84,12 +84,6 @@ describe("coordination public service shell", () => {
       deps: {
         logger: createEmbeddedPlaceholderLoggerAdapter(),
         analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-        runsRuntime: {
-          queueRun: async () => {
-            throw new Error("workflow-only test should not dispatch runs");
-          },
-          createTraceLinks: () => [],
-        },
       },
       scope: { repoRoot },
       config: {},
