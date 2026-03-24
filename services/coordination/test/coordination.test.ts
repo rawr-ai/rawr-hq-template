@@ -4,11 +4,6 @@ import os from "node:os";
 import path from "node:path";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import {
-  contract as authoringContract,
-  createAuthoringClient,
-  router as authoringRouter,
-} from "../src/authoring";
 import * as coordination from "../src/index";
 import * as coordinationNode from "../src/node";
 import { contract as serviceContract } from "../src/service/contract";
@@ -78,22 +73,27 @@ describe("coordination public service shell", () => {
     expect("coordinationFailure" in coordinationNode).toBe(false);
     expect("validateWorkflow" in coordinationNode).toBe(false);
     expect(Object.keys(serviceContract)).toEqual(["workflows", "runs"]);
-    expect(serviceContract.workflows).toBe(authoringContract);
   });
 
-  it("exposes a narrow authoring boundary that does not require run-dispatch deps", async () => {
-    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-coord-authoring-"));
+  it("keeps workflow routes callable through local narrowing without touching run dispatch", async () => {
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-coord-workflows-"));
     await ensureCoordinationStorage(repoRoot);
     await saveWorkflow(repoRoot, baseWorkflow);
 
-    const client = createAuthoringClient({
+    const client = coordination.createClient({
       deps: {
         logger: createEmbeddedPlaceholderLoggerAdapter(),
         analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+        runsRuntime: {
+          queueRun: async () => {
+            throw new Error("workflow-only test should not dispatch runs");
+          },
+          createTraceLinks: () => [],
+        },
       },
       scope: { repoRoot },
       config: {},
-    });
+    }).workflows;
 
     await expect(
       client.listWorkflows(
@@ -101,7 +101,7 @@ describe("coordination public service shell", () => {
         {
           context: {
             invocation: {
-              traceId: "trace-coordination-authoring",
+              traceId: "trace-coordination-workflows",
             },
           },
         },
@@ -111,16 +111,14 @@ describe("coordination public service shell", () => {
     });
   });
 
-  it("keeps the authoring surface narrowed to canonical workflow procedures", () => {
-    expect(Object.keys(authoringContract)).toEqual([
+  it("keeps the workflow subtree narrowed to canonical workflow procedures", () => {
+    expect(Object.keys(serviceContract.workflows)).toEqual([
       "listWorkflows",
       "saveWorkflow",
       "getWorkflow",
       "validateWorkflow",
     ]);
-    expect(authoringContract).toBe(serviceContract.workflows);
-    expect(authoringRouter).toBe(serviceRouter.workflows);
-    expect(Object.keys(authoringRouter)).toEqual(Object.keys(serviceRouter.workflows));
+    expect(Object.keys(serviceRouter.workflows)).toEqual(Object.keys(serviceContract.workflows));
   });
 
   it("preserves the canonical client surface while routing storage through module providers", async () => {
@@ -132,9 +130,7 @@ describe("coordination public service shell", () => {
       deps: {
         logger: createEmbeddedPlaceholderLoggerAdapter(),
         analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-      },
-      runs: {
-        runtime: {
+        runsRuntime: {
           queueRun: async () => {
             throw new Error("queue exploded");
           },

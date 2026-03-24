@@ -3,11 +3,11 @@ import {
   createApiTraceForwardingOptions,
 } from "@rawr/hq-sdk/apis";
 import { coordinationApiContract } from "./contract";
-import type { CoordinationApiContext, CoordinationAuthoringClientResolver } from "./context";
+import type { CoordinationApiContext, CoordinationWorkflowClientResolver } from "./context";
 
 const os = createApiRouterBuilder<typeof coordinationApiContract, CoordinationApiContext>(coordinationApiContract);
 
-function createCoordinationRouter(resolveClient: CoordinationAuthoringClientResolver) {
+function createCoordinationRouter(resolveClient: CoordinationWorkflowClientResolver) {
   return os.router({
     coordination: {
       listWorkflows: os.coordination.listWorkflows.handler(async ({ context, input }) => {
@@ -26,9 +26,9 @@ function createCoordinationRouter(resolveClient: CoordinationAuthoringClientReso
   });
 }
 
-export function createCoordinationApiRouter(resolveClient: CoordinationAuthoringClientResolver) {
+export function createCoordinationApiRouter(resolveClient: CoordinationWorkflowClientResolver) {
   return createCoordinationRouter(resolveClient);
 }
 
-export type { CoordinationApiContext, CoordinationAuthoringClientResolver } from "./context";
+export type { CoordinationApiContext, CoordinationWorkflowClientResolver } from "./context";
 export type CoordinationApiRouter = ReturnType<typeof createCoordinationApiRouter>;

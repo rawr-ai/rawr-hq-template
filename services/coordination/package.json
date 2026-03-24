@@ -14,13 +14,21 @@
       "types": "./src/domain/events.ts",
       "default": "./src/domain/events.ts"
     },
-    "./authoring": {
-      "types": "./src/authoring/index.ts",
-      "default": "./src/authoring/index.ts"
+    "./domain/schemas": {
+      "types": "./src/domain/schemas.ts",
+      "default": "./src/domain/schemas.ts"
     },
     "./service/contract": {
       "types": "./src/service/contract.ts",
       "default": "./src/service/contract.ts"
+    },
+    "./service/modules/runs/schemas": {
+      "types": "./src/service/modules/runs/schemas.ts",
+      "default": "./src/service/modules/runs/schemas.ts"
+    },
+    "./service/modules/workflows/schemas": {
+      "types": "./src/service/modules/workflows/schemas.ts",
+      "default": "./src/service/modules/workflows/schemas.ts"
     },
     "./router": {
       "types": "./src/router.ts",

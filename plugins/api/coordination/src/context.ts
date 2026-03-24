@@ -1,6 +1,8 @@
 import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
-import type { AuthoringClient as CoordinationAuthoringClient } from "@rawr/coordination/authoring";
+import type { Client as CoordinationClient } from "@rawr/coordination";
 
 export type CoordinationApiContext = BoundaryRequestSupportContext;
 
-export type CoordinationAuthoringClientResolver = (repoRoot: string) => CoordinationAuthoringClient;
+export type CoordinationWorkflowClient = CoordinationClient["workflows"];
+
+export type CoordinationWorkflowClientResolver = (repoRoot: string) => CoordinationWorkflowClient;
