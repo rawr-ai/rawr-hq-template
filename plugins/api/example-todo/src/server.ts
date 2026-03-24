@@ -1,3 +1,4 @@
+import { defineApiPlugin } from "@rawr/hq-sdk/apis";
 import type { ExampleTodoClientResolver } from "./context";
 import { exampleTodoApiContract } from "./contract";
 import { createExampleTodoApiRouter } from "./router";
@@ -16,11 +17,11 @@ export function registerExampleTodoApiPlugin(input: {
     router: createExampleTodoApiRouter(input.resolveClient),
   } as const;
 
-  return {
+  return defineApiPlugin({
     namespace: "orpc" as const,
     internal,
     published: internal,
-  };
+  });
 }
 
 export type ExampleTodoApiPluginRegistration = ReturnType<typeof registerExampleTodoApiPlugin>;
