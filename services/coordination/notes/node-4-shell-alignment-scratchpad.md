@@ -146,3 +146,10 @@
 - **Choice:** repoint proofs and owned callers to `services/coordination` and `plugins/workflows/coordination`, then delete the residue packages entirely.
 - **Rationale:** this removes confusing package-level residue and keeps the architecture honest: service truth in the service package, runtime projection in plugins, no extra package shell pretending to matter.
 - **Risk:** downstream notes and any external stale references must be updated if they still mention the deleted package names.
+
+### Keep the coordination contract flat while restoring module composition
+- **Context:** `example-todo` gets clean `module.ts` composition from namespaced module branches, but coordination's caller-facing flat surface is locked and should not be casually renamed to `workflows.*` / `runs.*`.
+- **Options:** nest the service contract and change the public coordination client shape; keep the flat surface and compose module-local procedure branches individually; leave business helpers in `module.ts` and accept the shell drift.
+- **Choice:** keep the flat service contract stable, move procedure I/O wrappers into module-local `schemas.ts`, and restore module composition by applying workflow/run middleware to each procedure branch inside module-local `module.ts`.
+- **Rationale:** this aligns the internal bones with the golden pattern without destabilizing callers or reintroducing a fake compatibility shell.
+- **Risk:** the flat contract still cannot use a single `impl.workflows` subtree, so module composition remains slightly more repetitive than `example-todo`.

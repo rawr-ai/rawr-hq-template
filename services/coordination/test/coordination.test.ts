@@ -128,6 +128,94 @@ describe("coordination public service shell", () => {
       "validateWorkflow",
     ]);
   });
+
+  it("preserves the canonical client surface while routing storage through module providers", async () => {
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-coord-client-"));
+    await ensureCoordinationStorage(repoRoot);
+    await saveWorkflow(repoRoot, baseWorkflow);
+
+    const client = coordination.createClient({
+      deps: {
+        logger: createEmbeddedPlaceholderLoggerAdapter(),
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+        queueRun: async () => {
+          throw new Error("queue exploded");
+        },
+        createTraceLinks: ({ runId }) => [
+          {
+            provider: "rawr" as const,
+            label: "coordination run",
+            url: `https://rawr.test/runs/${runId}`,
+          },
+        ],
+        createEvent: ({ runId, workflowId, deskId, type, status, detail, payload }) => ({
+          eventId: `event-${runId}`,
+          runId,
+          workflowId,
+          deskId,
+          type,
+          ts: "2026-03-24T00:00:00.000Z",
+          status,
+          detail,
+          output: payload,
+        }),
+      },
+      scope: { repoRoot },
+      config: {},
+    });
+
+    await expect(
+      client.listWorkflows(
+        {},
+        {
+          context: {
+            invocation: {
+              traceId: "trace-coordination-client",
+            },
+          },
+        },
+      ),
+    ).resolves.toMatchObject({
+      workflows: [{ workflowId: "wf-a" }],
+    });
+
+    await expect(
+      client.queueRun(
+        {
+          workflowId: "wf-a",
+          runId: "run-queue-failure",
+          input: { ticket: "T-1" },
+        },
+        {
+          context: {
+            invocation: {
+              traceId: "trace-coordination-client-queue",
+            },
+          },
+        },
+      ),
+    ).rejects.toBeTruthy();
+
+    await expect(coordinationNode.getRunStatus(repoRoot, "run-queue-failure")).resolves.toMatchObject({
+      status: "failed",
+      workflowId: "wf-a",
+      finalization: {
+        contract: {
+          delivery: "at-least-once",
+          exactlyOnce: false,
+        },
+      },
+    });
+
+    await expect(coordinationNode.getRunTimeline(repoRoot, "run-queue-failure")).resolves.toMatchObject([
+      {
+        runId: "run-queue-failure",
+        workflowId: "wf-a",
+        type: "run.failed",
+        status: "failed",
+      },
+    ]);
+  });
 });
 
 describe("coordination validation", () => {

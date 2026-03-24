@@ -21,7 +21,7 @@ import type {
   ValidationResultV1,
 } from "./types";
 
-const JsonValueSchema = Type.Unsafe<JsonValue>({
+export const JsonValueSchema = Type.Unsafe<JsonValue>({
   title: "JsonValue",
 });
 
@@ -30,13 +30,13 @@ const JsonSchemaV1Schema = Type.Unsafe<JsonSchemaV1>({
   title: "JsonSchemaV1",
 });
 
-const CoordinationIdSchema = Type.String({
+export const CoordinationIdSchema = Type.String({
   minLength: 1,
   maxLength: COORDINATION_ID_MAX_LENGTH,
   pattern: `^${COORDINATION_ID_PATTERN_SOURCE}$`,
 });
 
-const CoordinationIdInputSchema = Type.String({
+export const CoordinationIdInputSchema = Type.String({
   minLength: 1,
   pattern: COORDINATION_ID_TRIMMED_PATTERN_SOURCE,
 });
@@ -229,79 +229,6 @@ export const ValidationResultSchema = Type.Unsafe<ValidationResultV1>(
     },
     { additionalProperties: false },
   ),
-);
-
-export const ListWorkflowsInputSchema = Type.Object({}, { additionalProperties: false });
-export const ListWorkflowsOutputSchema = Type.Object(
-  { workflows: Type.Array(CoordinationWorkflowSchema) },
-  { additionalProperties: false },
-);
-
-export const SaveWorkflowInputSchema = Type.Object(
-  { workflow: CoordinationWorkflowSchema },
-  { additionalProperties: false },
-);
-export const SaveWorkflowOutputSchema = Type.Object(
-  { workflow: CoordinationWorkflowSchema },
-  { additionalProperties: false },
-);
-
-export const GetWorkflowInputSchema = Type.Object(
-  { workflowId: CoordinationIdInputSchema },
-  { additionalProperties: false },
-);
-export const GetWorkflowOutputSchema = Type.Object(
-  { workflow: CoordinationWorkflowSchema },
-  { additionalProperties: false },
-);
-
-export const ValidateWorkflowInputSchema = Type.Object(
-  { workflowId: CoordinationIdInputSchema },
-  { additionalProperties: false },
-);
-export const ValidateWorkflowOutputSchema = Type.Object(
-  {
-    workflowId: CoordinationIdSchema,
-    validation: ValidationResultSchema,
-  },
-  { additionalProperties: false },
-);
-
-export const QueueRunInputSchema = Type.Object(
-  {
-    workflowId: CoordinationIdInputSchema,
-    runId: Type.Optional(CoordinationIdInputSchema),
-    input: Type.Optional(JsonValueSchema),
-  },
-  { additionalProperties: false },
-);
-export const QueueRunOutputSchema = Type.Object(
-  {
-    run: RunStatusSchema,
-    eventIds: Type.Array(Type.String()),
-  },
-  { additionalProperties: false },
-);
-
-export const GetRunStatusInputSchema = Type.Object(
-  { runId: CoordinationIdInputSchema },
-  { additionalProperties: false },
-);
-export const GetRunStatusOutputSchema = Type.Object(
-  { run: RunStatusSchema },
-  { additionalProperties: false },
-);
-
-export const GetRunTimelineInputSchema = Type.Object(
-  { runId: CoordinationIdInputSchema },
-  { additionalProperties: false },
-);
-export const GetRunTimelineOutputSchema = Type.Object(
-  {
-    runId: CoordinationIdSchema,
-    timeline: Type.Array(DeskRunEventSchema),
-  },
-  { additionalProperties: false },
 );
 
 export { typeBoxStandardSchema } from "@rawr/hq-sdk";
