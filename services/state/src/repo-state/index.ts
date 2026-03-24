@@ -9,6 +9,7 @@ export {
   disablePlugin,
   enablePlugin,
   getRepoState,
+  getRepoStateWithAuthority,
   mutateRepoStateAtomically,
   setRepoState,
   stateLockPath,

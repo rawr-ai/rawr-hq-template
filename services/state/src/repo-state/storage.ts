@@ -251,8 +251,19 @@ async function withLocalMutationQueue<T>(repoRoot: string, task: () => Promise<T
 }
 
 export async function getRepoState(repoRoot: string): Promise<RepoState> {
-  const authorityRoot = await resolveRepoStateAuthorityRoot(repoRoot);
-  return readStateFile(authorityRoot);
+  const { state } = await getRepoStateWithAuthority(repoRoot);
+  return state;
+}
+
+export async function getRepoStateWithAuthority(
+  repoRoot: string,
+): Promise<{ state: RepoState; authorityRepoRoot: string }> {
+  const authorityRepoRoot = await resolveRepoStateAuthorityRoot(repoRoot);
+
+  return {
+    state: await readStateFile(authorityRepoRoot),
+    authorityRepoRoot,
+  };
 }
 
 export async function mutateRepoStateAtomically(

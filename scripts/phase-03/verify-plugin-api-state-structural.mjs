@@ -31,7 +31,12 @@ if (!indexSource.includes("createStateApiClient") || !indexSource.includes("stat
   process.exit(1);
 }
 
-if (!serverSource.includes('namespace: "orpc"') || !serverSource.includes("stateApiContract")) {
+if (
+  !serverSource.includes("defineApiPlugin")
+  || !serverSource.includes("internal:")
+  || !serverSource.includes("stateApiContract")
+  || !serverSource.includes("createStateRouter(input.resolveClient)")
+) {
   console.error("plugin-api-state structural failed: plugin server surface must register the ORPC state surface.");
   process.exit(1);
 }

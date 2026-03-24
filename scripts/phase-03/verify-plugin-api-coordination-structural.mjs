@@ -33,7 +33,12 @@ if (
   process.exit(1);
 }
 
-if (!serverSource.includes('namespace: "orpc"') || !serverSource.includes("coordinationApiContract")) {
+if (
+  !serverSource.includes("defineApiPlugin")
+  || !serverSource.includes("internal:")
+  || !serverSource.includes("coordinationApiContract")
+  || !serverSource.includes("createCoordinationApiRouter(input.resolveClient)")
+) {
   console.error("plugin-api-coordination structural failed: plugin server surface must register the ORPC coordination surface.");
   process.exit(1);
 }
