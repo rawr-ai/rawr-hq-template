@@ -1,6 +1,5 @@
 import {
   composeApiPlugins,
-  type ApiPluginRegistration,
   type MaterializedApiPluginRegistration,
 } from "@rawr/hq-sdk/apis";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
@@ -26,58 +25,39 @@ import type { RawrHostSatisfiers } from "./host-satisfiers";
  *
  * Transitional:
  * - narrow consumption of `@rawr/hq-app/manifest` as composition input only
+ *
+ * Must stay strict:
+ * - every canonical plugin family binds through `contribute(bound)`
+ * - no fallback to pre-materialized or partially bound plugin shapes
  */
-function bindApiPluginRegistration<TPlugin extends ApiPluginRegistration>(
-  plugin: TPlugin,
-  bound?: unknown,
-): MaterializedApiPluginRegistration {
-  if (!plugin.contribute || bound === undefined) {
-    return plugin as MaterializedApiPluginRegistration;
-  }
-
-  return {
-    ...plugin,
-    ...plugin.contribute(bound as never),
-  } satisfies MaterializedApiPluginRegistration;
-}
-
-function bindWorkflowPluginRegistration<TPlugin extends WorkflowPluginRegistration>(
-  plugin: TPlugin,
-  bound?: unknown,
-): TPlugin {
-  if (!plugin.contribute || bound === undefined) {
-    return plugin;
-  }
-
-  return {
-    ...plugin,
-    ...plugin.contribute(bound as never),
-  };
-}
 
 function bindRawrHqApiPlugins(input: {
   manifest: RawrHqManifest;
   satisfiers: RawrHostSatisfiers;
 }) {
+  const coordination = input.manifest.plugins.api.coordination;
+  const state = input.manifest.plugins.api.state;
+  const exampleTodo = input.manifest.plugins.api.exampleTodo;
+
   return [
-    bindApiPluginRegistration(
-      input.manifest.plugins.api.coordination,
-      {
+    {
+      ...coordination,
+      ...coordination.contribute!({
         resolveClient: input.satisfiers.coordination.resolveWorkflowClient,
-      },
-    ),
-    bindApiPluginRegistration(
-      input.manifest.plugins.api.state,
-      {
+      }),
+    } satisfies MaterializedApiPluginRegistration,
+    {
+      ...state,
+      ...state.contribute!({
         resolveClient: input.satisfiers.state.resolveClient,
-      },
-    ),
-    bindApiPluginRegistration(
-      input.manifest.plugins.api.exampleTodo,
-      {
+      }),
+    } satisfies MaterializedApiPluginRegistration,
+    {
+      ...exampleTodo,
+      ...exampleTodo.contribute!({
         resolveClient: input.satisfiers.exampleTodo.resolveClient,
-      },
-    ),
+      }),
+    } satisfies MaterializedApiPluginRegistration,
   ] as const;
 }
 
@@ -85,19 +65,22 @@ function bindRawrHqWorkflowPlugins(input: {
   manifest: RawrHqManifest;
   satisfiers: RawrHostSatisfiers;
 }) {
+  const supportExample = input.manifest.plugins.workflows.supportExample;
+  const coordination = input.manifest.plugins.workflows.coordination;
+
   return [
-    bindWorkflowPluginRegistration(
-      input.manifest.plugins.workflows.supportExample,
-      {
+    {
+      ...supportExample,
+      ...supportExample.contribute!({
         resolveSupportExampleClient: input.satisfiers.supportExample.resolveClient,
-      },
-    ),
-    bindWorkflowPluginRegistration(
-      input.manifest.plugins.workflows.coordination,
-      {
+      }),
+    } satisfies WorkflowPluginRegistration,
+    {
+      ...coordination,
+      ...coordination.contribute!({
         resolveAuthoringClient: input.satisfiers.coordination.resolveWorkflowClient,
-      },
-    ),
+      }),
+    } satisfies WorkflowPluginRegistration,
   ] as const;
 }
 

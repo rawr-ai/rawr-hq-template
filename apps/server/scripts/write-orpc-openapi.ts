@@ -18,6 +18,8 @@ function resolveOutputPath(): string {
 async function main() {
   const outputPath = resolveOutputPath();
   const baseUrl = process.env.RAWR_ORPC_OPENAPI_BASE_URL?.trim() || "http://localhost:3000";
+  // Published OpenAPI proof must materialize through the same host-owned
+  // realization seam used by routed runtime helpers.
   const hostSeam = createTestingRawrHostSeam();
   const spec = await generateOrpcOpenApiSpec(baseUrl, hostSeam.realization.orpc.published.router);
 

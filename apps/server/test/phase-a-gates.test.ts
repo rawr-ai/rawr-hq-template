@@ -141,6 +141,13 @@ function findConstStringArray(sourceFile: ts.SourceFile, variableName: string): 
   return [];
 }
 
+function normalizeSemanticSource(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\s+/g, "");
+}
+
 describe("phase-a gate scaffold (server)", () => {
   it("host composition guard gate scaffold verifies manifest-owned runtime seams", async () => {
     const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
@@ -188,13 +195,48 @@ describe("phase-a gate scaffold (server)", () => {
     expect(orpcSource).not.toContain("@rawr/hq-app/testing");
     expect(openApiSource).not.toContain("@rawr/hq-app/testing");
     expect(testingHostSource).not.toContain("manifest.fixtures");
-    expect(hqTestingSource).not.toContain("createTestingRawrHqManifest");
-    expect(hqTestingSource).not.toContain("createRawrHqManifest(");
-    expect(rawrHqBridgeSource).not.toContain("@rawr/hq-app/testing");
-    expect(rawrHqBridgeSource).not.toContain("rawrHqManifest");
-    expect(supportProofSource).not.toContain("createTestingRawrHqManifest");
+    expect(normalizeSemanticSource(hqTestingSource)).toBe("export{};");
+    expect(normalizeSemanticSource(rawrHqBridgeSource)).toBe(
+      'export{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
+    );
     expect(supportProofSource).not.toContain("manifest.fixtures");
     expect(supportProofSource).toContain("createTestingExampleTodoServiceClient");
+  });
+
+  it("host composition guard keeps canonical plugin registrations on declaration-plus-contribute law only", async () => {
+    const [
+      stateServerSource,
+      coordinationApiServerSource,
+      exampleTodoApiServerSource,
+      supportExampleWorkflowServerSource,
+      coordinationWorkflowServerSource,
+    ] = await Promise.all([
+      fs.readFile(path.join(repoRoot, "plugins", "api", "state", "src", "server.ts"), "utf8"),
+      fs.readFile(path.join(repoRoot, "plugins", "api", "coordination", "src", "server.ts"), "utf8"),
+      fs.readFile(path.join(repoRoot, "plugins", "api", "example-todo", "src", "server.ts"), "utf8"),
+      fs.readFile(path.join(repoRoot, "plugins", "workflows", "support-example", "src", "server.ts"), "utf8"),
+      fs.readFile(path.join(repoRoot, "plugins", "workflows", "coordination", "src", "server.ts"), "utf8"),
+    ]);
+
+    expect(stateServerSource).toMatch(/export function registerStateApiPlugin\(\s*\)/);
+    expect(coordinationApiServerSource).toMatch(/export function registerCoordinationApiPlugin\(\s*\)/);
+    expect(exampleTodoApiServerSource).toMatch(/export function registerExampleTodoApiPlugin\(\s*\)/);
+    expect(supportExampleWorkflowServerSource).toMatch(/export function registerSupportExampleWorkflowPlugin\(\s*\)/);
+    expect(coordinationWorkflowServerSource).toMatch(/export function registerCoordinationWorkflowPlugin\(\s*\)/);
+
+    for (const source of [
+      stateServerSource,
+      coordinationApiServerSource,
+      exampleTodoApiServerSource,
+      supportExampleWorkflowServerSource,
+      coordinationWorkflowServerSource,
+    ]) {
+      expect(source).toContain("declaration:");
+      expect(source).toContain("contribute:");
+      expect(source).not.toContain("legacy");
+      expect(source).not.toContain("interop");
+      expect(source).not.toContain("manifest.fixtures");
+    }
   });
 
   it("route negative assertions gate scaffold keeps D-015 negatives explicit", async () => {
@@ -212,11 +254,14 @@ describe("phase-a gate scaffold (server)", () => {
   });
 
   it("observability contract gate scaffold keeps canonical coordination telemetry proofs present", async () => {
-    await expect(
-      fs.access(path.join(repoRoot, "services", "coordination", "test", "run-lifecycle-telemetry.test.ts")),
-    ).resolves.toBeUndefined();
-    await expect(
-      fs.access(path.join(repoRoot, "plugins", "workflows", "coordination", "test", "observability.test.ts")),
-    ).resolves.toBeUndefined();
+    const telemetryProbe = await fs.access(
+      path.join(repoRoot, "services", "coordination", "test", "run-lifecycle-telemetry.test.ts"),
+    );
+    const workflowProbe = await fs.access(
+      path.join(repoRoot, "plugins", "workflows", "coordination", "test", "observability.test.ts"),
+    );
+
+    expect(telemetryProbe == null).toBe(true);
+    expect(workflowProbe == null).toBe(true);
   });
 });

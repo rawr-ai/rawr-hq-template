@@ -15,6 +15,13 @@ const [pkgRaw, manifestSource, testingSource, rawrHqBridgeSource] = await Promis
   fs.readFile(rawrHqBridgePath, "utf8"),
 ]);
 
+function normalizeSemanticSource(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\s+/g, "");
+}
+
 const pkg = JSON.parse(pkgRaw);
 const requiredTags = ["type:app", "app:hq", "migration-slice:structural-tranche"];
 for (const tag of requiredTags) {
@@ -61,20 +68,17 @@ if (
   process.exit(1);
 }
 
-if (
-  testingSource.includes("createTestingRawrHqManifest") ||
-  testingSource.includes("createRawrHqManifest(") ||
-  testingSource.includes("@orpc/server")
-) {
-  console.error("hq-app structural failed: testing.ts must not preserve an executable app-owned bridge.");
+if (normalizeSemanticSource(testingSource) !== "export{};") {
+  console.error("hq-app structural failed: testing.ts must stay an inert marker module only.");
   process.exit(1);
 }
 
 if (
-  rawrHqBridgeSource.includes("@rawr/hq-app/testing") ||
-  rawrHqBridgeSource.includes("rawrHqManifest")
+  !/^export\{createRawrHqManifest,typeRawrHqManifest\}from["']@rawr\/hq-app\/manifest["'];?$/.test(
+    normalizeSemanticSource(rawrHqBridgeSource),
+  )
 ) {
-  console.error("hq-app structural failed: rawr.hq.ts must not preserve a compatibility runtime facade.");
+  console.error("hq-app structural failed: rawr.hq.ts may only re-export HQ manifest composition symbols.");
   process.exit(1);
 }
 

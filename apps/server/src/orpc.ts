@@ -43,10 +43,36 @@ export function __resetOrpcRouteTelemetryForTests() {
   routedRequestDurationHistogram = undefined;
 }
 
+/**
+ * @agents-style canonical realized-host proof helper
+ *
+ * Owns:
+ * - default test/proof access to the realized internal oRPC router
+ *
+ * Must not own:
+ * - alternate manifest-owned runtime assembly
+ * - app-side executable bridge restoration
+ *
+ * Canonical:
+ * - `testing-host -> host-seam -> host-realization`
+ */
 export function createOrpcRouter<TContext extends RuntimeRouterContext = RuntimeRouterContext>() {
   return createTestingRawrHostSeam().realization.orpc.router as unknown as Router<AnyContractRouter, TContext>;
 }
 
+/**
+ * @agents-style canonical realized-host proof helper
+ *
+ * Owns:
+ * - default test/proof access to the realized published OpenAPI router
+ *
+ * Must not own:
+ * - manifest-shaped published router fixtures
+ * - ad hoc published route assembly outside host realization
+ *
+ * Canonical:
+ * - `testing-host -> host-seam -> host-realization`
+ */
 export function createPublishedOpenApiRouter<TContext extends RuntimeRouterContext = RuntimeRouterContext>() {
   return createTestingRawrHostSeam().realization.orpc.published.router as unknown as Router<AnyContractRouter, TContext>;
 }
