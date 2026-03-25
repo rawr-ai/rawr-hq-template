@@ -15,11 +15,27 @@ export type WorkflowSurfaceContribution<
   router: TRouter;
 }>;
 
+export type WorkflowSurfaceDeclaration<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+> = Readonly<{
+  contract: TContract;
+}>;
+
 export type WorkflowPublishedContribution<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
   TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
 > = WorkflowSurfaceContribution<TContract, TRouter> & Readonly<{
   routeBase: `/${string}`;
+}>;
+
+export type WorkflowPublishedDeclaration<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+> = WorkflowSurfaceDeclaration<TContract> & Readonly<{
+  routeBase: `/${string}`;
+}>;
+
+export type WorkflowRuntimeDeclaration = Readonly<{
+  kind: "inngest-functions";
 }>;
 
 export type WorkflowRuntimeInput<TRuntime = unknown> = Readonly<{
@@ -38,18 +54,51 @@ export type WorkflowRuntimeContribution<
   createInngestFunctions: BivariantRuntimeFactory<TInput, readonly TFunction[]>;
 }>;
 
+export type WorkflowPluginDeclaration<
+  TCapability extends string = string,
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+> = Readonly<{
+  capability: TCapability;
+  namespace: "workflows";
+  internal?: WorkflowSurfaceDeclaration<TContract>;
+  published?: WorkflowPublishedDeclaration<TContract>;
+  runtime?: WorkflowRuntimeDeclaration;
+}>;
+
+export type WorkflowPluginContribution<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TRuntimeInput = WorkflowRuntimeInput,
+  TFunction = unknown,
+> = Readonly<{
+  internal?: WorkflowSurfaceContribution<TContract, TRouter>;
+  published?: WorkflowPublishedContribution<TContract, TRouter>;
+  runtime?: WorkflowRuntimeContribution<TRuntimeInput, TFunction>;
+}>;
+
+export type WorkflowPluginContributionBuilder<
+  TBound = never,
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TRuntimeInput = WorkflowRuntimeInput,
+  TFunction = unknown,
+> = BivariantRuntimeFactory<
+  TBound,
+  WorkflowPluginContribution<TContract, TRouter, TRuntimeInput, TFunction>
+>;
+
 export type WorkflowPluginRegistration<
   TCapability extends string = string,
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
   TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
   TRuntimeInput = WorkflowRuntimeInput,
   TFunction = unknown,
-> = Readonly<{
+  TBound = never,
+> = WorkflowPluginContribution<TContract, TRouter, TRuntimeInput, TFunction> & Readonly<{
   capability: TCapability;
   namespace: "workflows";
-  internal?: WorkflowSurfaceContribution<TContract, TRouter>;
-  published?: WorkflowPublishedContribution<TContract, TRouter>;
-  runtime?: WorkflowRuntimeContribution<TRuntimeInput, TFunction>;
+  declaration?: WorkflowPluginDeclaration<TCapability, TContract>;
+  contribute?: WorkflowPluginContributionBuilder<TBound, TContract, TRouter, TRuntimeInput, TFunction>;
 }>;
 
 export type WorkflowSurfaceMetadata = Readonly<{
@@ -120,12 +169,25 @@ export function defineWorkflowPlugin<
   TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
   TRuntimeInput = WorkflowRuntimeInput,
   TFunction = unknown,
+  TBound = never,
 >(
   input: Omit<
-    WorkflowPluginRegistration<TCapability, TContract, TRouter, TRuntimeInput, TFunction>,
+    WorkflowPluginRegistration<TCapability, TContract, TRouter, TRuntimeInput, TFunction, TBound>,
     "namespace"
   >,
-): WorkflowPluginRegistration<TCapability, TContract, TRouter, TRuntimeInput, TFunction> {
+): WorkflowPluginRegistration<TCapability, TContract, TRouter, TRuntimeInput, TFunction, TBound> {
+  return {
+    namespace: "workflows",
+    ...input,
+  };
+}
+
+export function defineWorkflowPluginDeclaration<
+  const TCapability extends string,
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+>(
+  input: Omit<WorkflowPluginDeclaration<TCapability, TContract>, "namespace">,
+): WorkflowPluginDeclaration<TCapability, TContract> {
   return {
     namespace: "workflows",
     ...input,
@@ -146,11 +208,11 @@ export function composeWorkflowPlugins<const TPlugins extends readonly WorkflowP
     surfaces: plugins.map(
       (plugin) =>
         ({
-          capability: plugin.capability,
-          routeBase: plugin.published?.routeBase ?? null,
-          hasInternalRouter: plugin.internal !== undefined,
-          hasPublishedRouter: plugin.published !== undefined,
-          hasRuntimeFunctions: plugin.runtime !== undefined,
+          capability: plugin.declaration?.capability ?? plugin.capability,
+          routeBase: plugin.declaration?.published?.routeBase ?? plugin.published?.routeBase ?? null,
+          hasInternalRouter: plugin.declaration?.internal !== undefined || plugin.internal !== undefined,
+          hasPublishedRouter: plugin.declaration?.published !== undefined || plugin.published !== undefined,
+          hasRuntimeFunctions: plugin.declaration?.runtime !== undefined || plugin.runtime !== undefined,
         }) satisfies WorkflowSurfaceMetadata,
     ),
     internalContract: mergeWorkflowInternalContracts(plugins),
