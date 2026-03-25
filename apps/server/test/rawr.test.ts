@@ -306,7 +306,7 @@ describe("rawr server routes", () => {
     const workflowRuntimeSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "workflows", "runtime.ts"), "utf8");
 
     expect(rawrSource).toContain('from "./host-composition"');
-    expect(hostCompositionSource).toContain('from "../../../rawr.hq"');
+    expect(hostCompositionSource).toContain('from "@rawr/hq-app/manifest"');
     expect(hostSeamSource).not.toContain('from "../../../rawr.hq"');
     expect(testingHostSource).not.toContain('from "../../../rawr.hq"');
     expect(hostSeamSource).not.toContain("@rawr/hq-app/manifest");
@@ -353,7 +353,7 @@ describe("rawr server routes", () => {
       "utf8",
     );
     const hqTestingSource = await readIfPresent(path.join(repoRoot, "apps", "hq", "src", "testing.ts"));
-    const rawrHqBridgeSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
+    const rawrHqBridgeSource = await readIfPresent(path.join(repoRoot, "rawr.hq.ts"));
     const proofClientSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "test", "support", "example-todo-proof-clients.ts"),
       "utf8",
@@ -374,9 +374,7 @@ describe("rawr server routes", () => {
     expect(hostCompositionSource).toContain("materializeRawrHostBoundRolePlan");
     expect(testingHostSource).not.toContain("manifest.fixtures");
     expect(hqTestingSource === null || normalizeSemanticSource(hqTestingSource) === "export{};").toBe(true);
-    expect(normalizeSemanticSource(rawrHqBridgeSource)).toBe(
-      'export{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
-    );
+    expect(rawrHqBridgeSource).toBeNull();
     expect(proofClientSource).not.toContain("manifest.fixtures");
     expect(proofClientSource).toContain("createTestingExampleTodoServiceClient");
   });
