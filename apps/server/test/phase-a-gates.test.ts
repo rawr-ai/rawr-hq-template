@@ -108,7 +108,7 @@ function hasIdentifierCall(sourceFile: ts.SourceFile, identifierName: string): b
   return matched;
 }
 
-function hasRegisterOrpcRoutesManifestRouter(sourceFile: ts.SourceFile): boolean {
+function hasRegisterOrpcRoutesHostSeamRouter(sourceFile: ts.SourceFile): boolean {
   let matched = false;
   visit(sourceFile, (node) => {
     if (matched || !ts.isCallExpression(node) || !ts.isIdentifier(node.expression)) return;
@@ -117,7 +117,7 @@ function hasRegisterOrpcRoutesManifestRouter(sourceFile: ts.SourceFile): boolean
     if (!ts.isObjectLiteralExpression(optionsArg)) return;
     for (const property of optionsArg.properties) {
       if (!ts.isPropertyAssignment(property) || propertyNameText(property.name) !== "router") continue;
-      if (matchesPropertyAccessChain(property.initializer, ["rawrHqManifest", "orpc", "router"])) {
+      if (matchesPropertyAccessChain(property.initializer, ["rawrHqHostSeam", "orpc", "router"])) {
         matched = true;
       }
     }
@@ -149,11 +149,13 @@ describe("phase-a gate scaffold (server)", () => {
     expect(hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/inngest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/workflows/*")).toBe(true);
-    expect(hasRegisterOrpcRoutesManifestRouter(rawrAst)).toBe(true);
+    expect(hasRegisterOrpcRoutesHostSeamRouter(rawrAst)).toBe(true);
     expect(hasIdentifierCall(rawrAst, "createRawrHqManifest")).toBe(true);
+    expect(hasIdentifierCall(rawrAst, "createRawrHostBoundRolePlan")).toBe(true);
+    expect(hasIdentifierCall(rawrAst, "materializeRawrHostBoundRolePlan")).toBe(true);
     expect(hasIdentifierCall(rawrAst, "createWorkflowRouteHarness")).toBe(true);
     expect(hasNamedImport(rawrAst, "inngest/bun", "serve")).toBe(true);
-    expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "createInngestFunctions"])).toBe(true);
+    expect(hasPropertyAccessChain(rawrAst, ["rawrHqHostSeam", "workflows", "createInngestFunctions"])).toBe(true);
     expect(hasIdentifierCall(rawrAst, "inngestServe")).toBe(true);
     expect(rawrSource).not.toContain("rawrHqManifest.inngest");
     expect(rawrSource).not.toContain("@rawr/plugin-api-coordination/server");

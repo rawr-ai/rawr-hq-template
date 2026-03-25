@@ -200,10 +200,15 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
   const exampleTodoApiPlugin = registerExampleTodoApiPlugin({
     resolveClient: resolveExampleTodoClient,
   });
+  const apiPlugins = {
+    coordination: coordinationApiPlugin,
+    state: stateApiPlugin,
+    exampleTodo: exampleTodoApiPlugin,
+  } as const;
   const composedApiSurface = composeApiPlugins([
-    coordinationApiPlugin,
-    stateApiPlugin,
-    exampleTodoApiPlugin,
+    apiPlugins.coordination,
+    apiPlugins.state,
+    apiPlugins.exampleTodo,
   ] as const);
   const coordinationWorkflowPlugin = registerCoordinationWorkflowPlugin({
     resolveAuthoringClient: resolveCoordinationWorkflowClient,
@@ -211,9 +216,13 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
   const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin({
     resolveSupportExampleClient,
   });
+  const workflowPlugins = {
+    supportExample: supportExampleWorkflowPlugin,
+    coordination: coordinationWorkflowPlugin,
+  } as const;
   const composedWorkflowSurface = composeWorkflowPlugins([
-    supportExampleWorkflowPlugin,
-    coordinationWorkflowPlugin,
+    workflowPlugins.supportExample,
+    workflowPlugins.coordination,
   ] as const);
   const materializedSurfaces = materializeRequestScopedPluginSurfaces<BoundaryRequestSupportContext, typeof composedWorkflowSurface.createInngestFunctions>({
     api: composedApiSurface,
@@ -221,6 +230,12 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
   });
 
   return {
+    // Transitional mixed-world bridge: keep legacy materialized surfaces available
+    // while the host begins consuming registration declarations directly.
+    plugins: {
+      api: apiPlugins,
+      workflows: workflowPlugins,
+    },
     fixtures: {
       exampleTodo: {
         resolveClient: resolveExampleTodoClient,
