@@ -252,7 +252,7 @@ describe("rawr server routes", () => {
     expect(testingHostSource).not.toContain("manifest.fixtures");
     expect(proofClientSource).not.toContain("createTestingRawrHqManifest");
     expect(proofClientSource).not.toContain("manifest.fixtures");
-    expect(proofClientSource).toContain("createTestingExampleTodoClient");
+    expect(proofClientSource).toContain("createTestingExampleTodoServiceClient");
   });
 
   it("host-composition-guard: serves capability-first workflow family paths", async () => {

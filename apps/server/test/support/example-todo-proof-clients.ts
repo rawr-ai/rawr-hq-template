@@ -1,6 +1,6 @@
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
 import {
-  createTestingExampleTodoClient,
+  createTestingExampleTodoServiceClient,
   createTestingRawrHostSeam,
 } from "../../src/testing-host";
 
@@ -58,7 +58,7 @@ export function createExampleTodoProofClients(args: {
   const baseUrl = args.baseUrl ?? "http://localhost:3000";
 
   return {
-    inProcess: createTestingExampleTodoClient(args.repoRoot),
+    inProcess: createTestingExampleTodoServiceClient(args.repoRoot),
     rpc: {
       async createTask(input) {
         const response = await args.app.handle(
