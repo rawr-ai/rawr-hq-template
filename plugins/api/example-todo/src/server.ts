@@ -40,13 +40,10 @@ function contributeExampleTodoApiPlugin(
   };
 }
 
-export function registerExampleTodoApiPlugin(input: ExampleTodoApiPluginBound) {
-  const contribution = contributeExampleTodoApiPlugin(input);
-
+export function registerExampleTodoApiPlugin() {
   return defineApiPlugin({
     declaration: exampleTodoApiDeclaration,
     contribute: contributeExampleTodoApiPlugin,
-    ...contribution,
   });
 }
 

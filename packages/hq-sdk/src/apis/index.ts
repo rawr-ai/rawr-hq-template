@@ -50,11 +50,17 @@ export type ApiPluginRegistration<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
   TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
   TBound = never,
-> = ApiPluginContribution<TContract, TRouter> & Readonly<{
+> = Partial<ApiPluginContribution<TContract, TRouter>> & Readonly<{
   namespace: "orpc";
   declaration?: ApiPluginDeclaration<TContract>;
   contribute?: ApiPluginContributionBuilder<TBound, TContract, TRouter>;
 }>;
+
+export type MaterializedApiPluginRegistration<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TBound = never,
+> = ApiPluginContribution<TContract, TRouter> & ApiPluginRegistration<TContract, TRouter, TBound>;
 
 type DefineApiPluginInput<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
@@ -93,7 +99,7 @@ export function createApiRouterBuilder<
   return createContextualRouterBuilder<TContract, TContext>(contract);
 }
 
-export function composeApiPlugins<const TPlugins extends readonly ApiPluginRegistration[]>(plugins: TPlugins) {
+export function composeApiPlugins<const TPlugins extends readonly MaterializedApiPluginRegistration[]>(plugins: TPlugins) {
   return {
     internalContract: mergeNamedSurfaceTrees<AnyContractRouterObject>(
       plugins.map((plugin) => plugin.internal.contract),
