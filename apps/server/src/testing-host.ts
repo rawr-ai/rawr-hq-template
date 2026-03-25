@@ -1,4 +1,4 @@
-import { createRawrHqManifest } from "../../../rawr.hq";
+import { createRawrHqManifest } from "@rawr/hq-app/manifest";
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
 import { createRawrHostBoundRolePlan } from "./host-seam";
 import { createRawrHostSatisfiers } from "./host-satisfiers";

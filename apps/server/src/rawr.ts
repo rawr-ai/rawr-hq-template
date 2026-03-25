@@ -5,7 +5,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
 import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
-import { createRawrHqManifest } from "../../../rawr.hq";
+import { createRawrHqManifest } from "@rawr/hq-app/manifest";
 import { materializeRawrHostBoundRolePlan } from "./host-realization";
 import { createRawrHostBoundRolePlan } from "./host-seam";
 import { createRawrHostSatisfiers } from "./host-satisfiers";
