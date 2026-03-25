@@ -1,7 +1,17 @@
 import type { Inngest } from "inngest";
 
-// Thin runtime support seams used by host/plugin wiring. These are not
-// semantic capability authority.
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-canonical type-only support seam package
+ * @agents-must-not semantic capability authority or compatibility alias sink
+ *
+ * Owns:
+ * - shared runtime support types used after host binding during request/process materialization
+ *
+ * Must not own:
+ * - declarations, satisfier binding, or executable assembly
+ * - long-lived alias exports once canonical names are adopted
+ */
 export type WorkflowRuntimeSupportSeam<
   TWorkflow,
   TDesk,
@@ -36,25 +46,3 @@ export type BoundaryRequestSupportContext<
   correlationId: string;
   middlewareState: BoundaryMiddlewareSupportState<TMarker>;
 };
-
-/** @deprecated Prefer `WorkflowRuntimeSupportSeam`. */
-export type WorkflowRuntimeAdapter<
-  TWorkflow,
-  TDesk,
-  TRun,
-  TEvent,
-  TValue = unknown,
-> = WorkflowRuntimeSupportSeam<TWorkflow, TDesk, TRun, TEvent, TValue>;
-
-/** @deprecated Prefer `BoundaryMiddlewareSupportState`. */
-export type BoundaryMiddlewareState<TMarker extends string = string> =
-  BoundaryMiddlewareSupportState<TMarker>;
-
-/** @deprecated Prefer `HostRuntimeSupportContext`. */
-export type RuntimeRouterContext<TRuntime = unknown> = HostRuntimeSupportContext<TRuntime>;
-
-/** @deprecated Prefer `BoundaryRequestSupportContext`. */
-export type RequestBoundaryContext<
-  TRuntime = unknown,
-  TMarker extends string = string,
-> = BoundaryRequestSupportContext<TRuntime, TMarker>;
