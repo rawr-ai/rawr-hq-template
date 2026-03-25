@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`hq orpc contract drift > matches the minified contract snapshot 1`] = `
+exports[`hq orpc contract drift > matches the minified declared contract snapshot 1`] = `
 {
   "coordination": {
     "getRunStatus": {

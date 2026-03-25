@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { minifyContractRouter } from "@orpc/contract";
-import { createTestingRawrHqManifest } from "../src/testing";
+import { mergeDeclaredSurfaceTrees } from "@rawr/hq-sdk/composition";
+import { createRawrHqManifest } from "../src/manifest";
 
 type RouteShape = {
   method?: string;
@@ -27,10 +28,14 @@ function collectProcedureRoutes(node: unknown, namespace: string[] = []): string
 }
 
 describe("workflow trigger contract drift", () => {
-  const manifest = createTestingRawrHqManifest();
+  const manifest = createRawrHqManifest();
+  const publishedWorkflowContract = mergeDeclaredSurfaceTrees([
+    manifest.plugins.workflows.supportExample.declaration!.published!.contract,
+    manifest.plugins.workflows.coordination.declaration!.published!.contract,
+  ]);
 
   it("keeps trigger/status procedure routes scoped", () => {
-    const minified = minifyContractRouter(manifest.workflows.published.contract);
+    const minified = minifyContractRouter(publishedWorkflowContract);
     const routes = collectProcedureRoutes(minified).sort();
 
     expect(routes).toEqual([
@@ -43,11 +48,11 @@ describe("workflow trigger contract drift", () => {
   });
 
   it("matches the minified trigger contract snapshot", () => {
-    expect(minifyContractRouter(manifest.workflows.published.contract)).toMatchSnapshot();
+    expect(minifyContractRouter(publishedWorkflowContract)).toMatchSnapshot();
   });
 
   it("keeps workflow trigger/status surfaces bound to workflow capability paths", () => {
-    const minified = minifyContractRouter(manifest.workflows.published.contract);
+    const minified = minifyContractRouter(publishedWorkflowContract);
     const routes = collectProcedureRoutes(minified);
 
     const coordinationRoutes = routes

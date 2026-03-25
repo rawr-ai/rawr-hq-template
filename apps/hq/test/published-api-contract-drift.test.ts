@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { minifyContractRouter } from "@orpc/contract";
-import { createTestingRawrHqManifest } from "../src/testing";
+import { mergeDeclaredSurfaceTrees } from "@rawr/hq-sdk/composition";
+import { createRawrHqManifest } from "../src/manifest";
 
 type RouteShape = {
   method?: string;
@@ -27,10 +28,13 @@ function collectProcedureRoutes(node: unknown, namespace: string[] = []): string
 }
 
 describe("published api contract drift", () => {
-  const manifest = createTestingRawrHqManifest();
+  const manifest = createRawrHqManifest();
+  const publishedApiContract = mergeDeclaredSurfaceTrees([
+    manifest.plugins.api.exampleTodo.declaration!.published!.contract,
+  ]);
 
   it("keeps published api procedure routes scoped to explicit published capabilities", () => {
-    const minified = minifyContractRouter(manifest.orpc.published.contract);
+    const minified = minifyContractRouter(publishedApiContract);
     const routes = collectProcedureRoutes(minified).sort();
 
     expect(routes).toEqual([
@@ -40,6 +44,6 @@ describe("published api contract drift", () => {
   });
 
   it("matches the minified published api contract snapshot", () => {
-    expect(minifyContractRouter(manifest.orpc.published.contract)).toMatchSnapshot();
+    expect(minifyContractRouter(publishedApiContract)).toMatchSnapshot();
   });
 });

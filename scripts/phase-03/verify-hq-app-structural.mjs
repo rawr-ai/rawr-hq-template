@@ -6,11 +6,13 @@ const root = process.cwd();
 const packagePath = path.join(root, "apps", "hq", "package.json");
 const manifestPath = path.join(root, "apps", "hq", "src", "manifest.ts");
 const testingPath = path.join(root, "apps", "hq", "src", "testing.ts");
+const rawrHqBridgePath = path.join(root, "rawr.hq.ts");
 
-const [pkgRaw, manifestSource, testingSource] = await Promise.all([
+const [pkgRaw, manifestSource, testingSource, rawrHqBridgeSource] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(manifestPath, "utf8"),
   fs.readFile(testingPath, "utf8"),
+  fs.readFile(rawrHqBridgePath, "utf8"),
 ]);
 
 const pkg = JSON.parse(pkgRaw);
@@ -46,8 +48,33 @@ if (manifestSource.includes("apps/server/src/logging") || manifestSource.include
   process.exit(1);
 }
 
-if (!testingSource.includes("createTestingRawrHqManifest")) {
-  console.error("hq-app structural failed: testing seam missing.");
+if (
+  manifestSource.includes("implement(") ||
+  manifestSource.includes("createRouterClient(") ||
+  manifestSource.includes("materializeManifestBridgeSurfaces") ||
+  manifestSource.includes("createCoordinationClient(") ||
+  manifestSource.includes("createStateClient(") ||
+  manifestSource.includes("createEmbeddedInMemoryDbPoolAdapter") ||
+  manifestSource.includes("hostLogger")
+) {
+  console.error("hq-app structural failed: manifest must stay composition-only and free of executable host authority.");
+  process.exit(1);
+}
+
+if (
+  testingSource.includes("createTestingRawrHqManifest") ||
+  testingSource.includes("createRawrHqManifest(") ||
+  testingSource.includes("@orpc/server")
+) {
+  console.error("hq-app structural failed: testing.ts must not preserve an executable app-owned bridge.");
+  process.exit(1);
+}
+
+if (
+  rawrHqBridgeSource.includes("@rawr/hq-app/testing") ||
+  rawrHqBridgeSource.includes("rawrHqManifest")
+) {
+  console.error("hq-app structural failed: rawr.hq.ts must not preserve a compatibility runtime facade.");
   process.exit(1);
 }
 

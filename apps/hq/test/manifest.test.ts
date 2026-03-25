@@ -1,35 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { createTestingRawrHqManifest } from "../src/testing";
+import { createRawrHqManifest } from "../src/manifest";
 
 describe("hq app manifest", () => {
-  it("keeps authority on the reserved app seam", () => {
-    const manifest = createTestingRawrHqManifest();
+  it("keeps authority on composition-only plugin selection", () => {
+    const manifest = createRawrHqManifest();
 
-    expect(Object.keys(manifest.orpc.router)).toContain("coordination");
-    expect(Object.keys(manifest.orpc.router)).toContain("state");
-    expect(Object.keys(manifest.orpc.router)).toContain("exampleTodo");
-    expect(Object.keys(manifest.orpc.published.router)).toEqual(["exampleTodo"]);
-    expect(Object.keys(manifest.orpc.published.router)).not.toContain("coordination");
-    expect(Object.keys(manifest.orpc.published.router)).not.toContain("state");
-    expect(Object.keys(manifest.orpc.published.router)).not.toContain("supportExample");
-    expect(manifest.workflows.surfaces).toEqual([
-      {
-        capability: "support-example",
-        routeBase: "/support-example/triage",
-        hasInternalRouter: true,
-        hasPublishedRouter: true,
-        hasRuntimeFunctions: true,
-      },
-      {
-        capability: "coordination",
-        routeBase: "/coordination",
-        hasInternalRouter: true,
-        hasPublishedRouter: true,
-        hasRuntimeFunctions: true,
-      },
-    ]);
-    expect(Object.keys(manifest.workflows.internal.router)).toEqual(["supportExample", "coordination"]);
-    expect(Object.keys(manifest.workflows.published.router)).toEqual(["supportExample", "coordination"]);
-    expect(typeof manifest.workflows.createInngestFunctions).toBe("function");
+    expect(Object.keys(manifest.plugins.api)).toEqual(["coordination", "state", "exampleTodo"]);
+    expect(Object.keys(manifest.plugins.workflows)).toEqual(["supportExample", "coordination"]);
+    expect(manifest.plugins.api.exampleTodo.declaration?.published).toBeDefined();
+    expect(manifest.plugins.api.coordination.declaration?.published).toBeUndefined();
+    expect(manifest.plugins.api.state.declaration?.published).toBeUndefined();
+    expect(manifest.plugins.workflows.supportExample.declaration?.published?.routeBase).toBe("/support-example/triage");
+    expect(manifest.plugins.workflows.coordination.declaration?.published?.routeBase).toBe("/coordination");
+    expect(manifest.plugins.workflows.supportExample.declaration?.runtime?.kind).toBe("inngest-functions");
+    expect(manifest.plugins.workflows.coordination.declaration?.runtime?.kind).toBe("inngest-functions");
+    expect("fixtures" in manifest).toBe(false);
+    expect("orpc" in manifest).toBe(false);
+    expect("workflows" in manifest).toBe(false);
   });
 });

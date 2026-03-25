@@ -178,6 +178,8 @@ describe("phase-a gate scaffold (server)", () => {
       path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
       "utf8",
     );
+    const hqTestingSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "testing.ts"), "utf8");
+    const rawrHqBridgeSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
     const supportProofSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "test", "support", "example-todo-proof-clients.ts"),
       "utf8",
@@ -186,6 +188,10 @@ describe("phase-a gate scaffold (server)", () => {
     expect(orpcSource).not.toContain("@rawr/hq-app/testing");
     expect(openApiSource).not.toContain("@rawr/hq-app/testing");
     expect(testingHostSource).not.toContain("manifest.fixtures");
+    expect(hqTestingSource).not.toContain("createTestingRawrHqManifest");
+    expect(hqTestingSource).not.toContain("createRawrHqManifest(");
+    expect(rawrHqBridgeSource).not.toContain("@rawr/hq-app/testing");
+    expect(rawrHqBridgeSource).not.toContain("rawrHqManifest");
     expect(supportProofSource).not.toContain("createTestingRawrHqManifest");
     expect(supportProofSource).not.toContain("manifest.fixtures");
     expect(supportProofSource).toContain("createTestingExampleTodoServiceClient");
