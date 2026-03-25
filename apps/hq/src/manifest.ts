@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { implement } from "@orpc/server";
 import { type RouterClient, createRouterClient } from "@orpc/server";
 import { createClient as createCoordinationClient, type Client as CoordinationClient } from "@rawr/coordination";
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
@@ -6,7 +7,9 @@ import {
   composeApiPlugins,
   type MaterializedApiPluginRegistration,
 } from "@rawr/hq-sdk/apis";
-import { materializeRequestScopedPluginSurfaces } from "@rawr/hq-sdk/composition";
+import {
+  mergeDeclaredSurfaceTrees,
+} from "@rawr/hq-sdk/composition";
 import {
   composeWorkflowPlugins,
 } from "@rawr/hq-sdk/workflows";
@@ -180,6 +183,47 @@ function createCoordinationBoundary(
   } satisfies CoordinationBoundary;
 }
 
+function materializeManifestBridgeSurfaces(input: {
+  api: ReturnType<typeof composeApiPlugins>;
+  workflows: ReturnType<typeof composeWorkflowPlugins>;
+}) {
+  const contract = mergeDeclaredSurfaceTrees([
+    input.api.internalContract,
+    input.workflows.internalContract,
+  ]);
+  const router = mergeDeclaredSurfaceTrees([
+    input.api.internalRouter,
+    input.workflows.internalRouter,
+  ]);
+  const requestScopedOrpc = implement(contract).$context<BoundaryRequestSupportContext>();
+  const requestScopedPublishedApi = implement(input.api.publishedContract).$context<BoundaryRequestSupportContext>();
+  const requestScopedPublishedWorkflow = implement(input.workflows.publishedContract).$context<BoundaryRequestSupportContext>();
+  const requestScopedInternalWorkflow = implement(input.workflows.internalContract).$context<BoundaryRequestSupportContext>();
+
+  return {
+    orpc: {
+      contract,
+      router: requestScopedOrpc.router(router),
+      published: {
+        contract: input.api.publishedContract,
+        router: requestScopedPublishedApi.router(input.api.publishedRouter),
+      },
+    },
+    workflows: {
+      surfaces: input.workflows.surfaces,
+      internal: {
+        contract: input.workflows.internalContract,
+        router: requestScopedInternalWorkflow.router(input.workflows.internalRouter),
+      },
+      published: {
+        contract: input.workflows.publishedContract,
+        router: requestScopedPublishedWorkflow.router(input.workflows.publishedRouter),
+      },
+      createInngestFunctions: input.workflows.createInngestFunctions,
+    },
+  } as const;
+}
+
 export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
   const coordinationWorkflowClientsByRepoRoot = new Map<string, CoordinationWorkflowClient>();
   const exampleTodoClientsByRepoRoot = new Map<string, ExampleTodoClient>();
@@ -261,7 +305,7 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
     ),
     workflowPlugins.coordination,
   ] as const);
-  const materializedSurfaces = materializeRequestScopedPluginSurfaces<BoundaryRequestSupportContext, typeof composedWorkflowSurface.createInngestFunctions>({
+  const materializedSurfaces = materializeManifestBridgeSurfaces({
     api: composedApiSurface,
     workflows: composedWorkflowSurface,
   });

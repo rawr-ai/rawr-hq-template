@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { processCoordinationRunEvent, createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
-import { createTestingRawrHqManifest } from "@rawr/hq-app/testing";
 import { createServerApp } from "../src/app";
-import { createRawrHostBoundRolePlan, materializeRawrHostBoundRolePlan } from "../src/host-seam";
+import { createTestingRawrHostSeam } from "../src/testing-host";
 import { registerOrpcRoutes } from "../src/orpc";
 import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
 import { enablePlugin } from "@rawr/state/repo-state";
@@ -121,9 +120,7 @@ describe("rawr server routes", () => {
   });
 
   it("host-composition-guard: host seam scaffold binds declaration plugins while preserving the mixed-world bridge", () => {
-    const manifest = createTestingRawrHqManifest();
-    const boundRolePlan = createRawrHostBoundRolePlan({ manifest });
-    const hostSeam = materializeRawrHostBoundRolePlan(boundRolePlan);
+    const hostSeam = createTestingRawrHostSeam().realization;
 
     expect(Object.keys(hostSeam.orpc.router)).toEqual(
       expect.arrayContaining(["coordination", "state", "exampleTodo", "supportExample"]),
@@ -206,15 +203,14 @@ describe("rawr server routes", () => {
     expect(manifestSource).toContain("workflows: workflowPlugins");
     expect(manifestSource).toContain("workflows: materializedSurfaces.workflows");
     expect(manifestSource).toContain("const composedApiSurface = composeApiPlugins");
-    expect(manifestSource).toContain("materializeRequestScopedPluginSurfaces");
+    expect(manifestSource).toContain("materializeManifestBridgeSurfaces");
+    expect(manifestSource).not.toContain("materializeRequestScopedPluginSurfaces");
     expect(manifestSource).toContain("orpc: materializedSurfaces.orpc");
     expect(manifestSource).not.toContain("new Inngest(");
-    expect(manifestSource).not.toContain("mergeDeclaredSurfaceTrees");
-    expect(manifestSource).not.toContain("published: {");
-    expect(manifestSource).not.toContain("contract: composedApiSurface.publishedContract");
-    expect(manifestSource).not.toContain("requestScopedPublishedApi.router");
-    expect(manifestSource).not.toContain("requestScopedPublishedWorkflow.router");
-    expect(manifestSource).not.toContain("requestScopedInternalWorkflow.router");
+    expect(manifestSource).toContain("mergeDeclaredSurfaceTrees");
+    expect(manifestSource).toContain("requestScopedPublishedApi.router");
+    expect(manifestSource).toContain("requestScopedPublishedWorkflow.router");
+    expect(manifestSource).toContain("requestScopedInternalWorkflow.router");
   });
 
   it("host-composition-guard: host realizes workflow runtime and keeps workflow context off canonical ORPC registration", async () => {
