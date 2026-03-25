@@ -1,3 +1,13 @@
+/**
+ * @agents-style canonical service-package boundary entrypoint
+ *
+ * Owns:
+ * - stable in-process service-package helper exports for service clients
+ *
+ * Must not own:
+ * - retired domain-package compatibility aliases
+ * - runtime projection or transport-specific helpers
+ */
 export type {
   ServicePackage,
   ServicePackageBoundary,
@@ -7,11 +17,3 @@ export type {
   InferScope,
 } from "./orpc/boundary/service-package";
 export { defineServicePackage } from "./orpc/boundary/service-package";
-
-// Deprecated compatibility shim for non-owned call sites that still import the
-// retired domain-package surface.
-export type {
-  DomainBoundary,
-  DomainPackage,
-} from "./orpc/boundary/domain-package";
-export { defineDomainPackage } from "./orpc/boundary/domain-package";
