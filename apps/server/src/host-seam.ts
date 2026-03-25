@@ -3,8 +3,24 @@ import {
   type MaterializedApiPluginRegistration,
 } from "@rawr/hq-sdk/apis";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
-import type { RawrHqManifest } from "../../../rawr.hq";
+import type { CoordinationApiPluginRegistration } from "@rawr/plugin-api-coordination/server";
+import type { ExampleTodoApiPluginRegistration } from "@rawr/plugin-api-example-todo/server";
+import type { StateApiPluginRegistration } from "@rawr/plugin-api-state/server";
+import type { CoordinationWorkflowPluginRegistration } from "@rawr/plugin-workflows-coordination/server";
+import type { SupportExampleWorkflowPluginRegistration } from "@rawr/plugin-workflows-support-example/server";
 import type { RawrHostSatisfiers } from "./host-satisfiers";
+
+export type RawrHostDeclarations = Readonly<{
+  api: Readonly<{
+    coordination: CoordinationApiPluginRegistration;
+    state: StateApiPluginRegistration;
+    exampleTodo: ExampleTodoApiPluginRegistration;
+  }>;
+  workflows: Readonly<{
+    supportExample: SupportExampleWorkflowPluginRegistration;
+    coordination: CoordinationWorkflowPluginRegistration;
+  }>;
+}>;
 
 /**
  * @agents-style seam-law declaration -> host binding -> request/process materialization
@@ -21,10 +37,10 @@ import type { RawrHostSatisfiers } from "./host-satisfiers";
  * - route mounting
  *
  * Canonical:
- * - `createRawrHostBoundRolePlan({ manifest, satisfiers })`
+ * - `createRawrHostBoundRolePlan({ declarations, satisfiers })`
  *
  * Transitional:
- * - narrow consumption of the explicit `rawr.hq.ts` bridge as composition input only
+ * - app-manifest intake is localized upstream in `host-composition.ts`
  *
  * Must stay strict:
  * - every canonical plugin family binds through `contribute(bound)`
@@ -32,12 +48,12 @@ import type { RawrHostSatisfiers } from "./host-satisfiers";
  */
 
 function bindRawrHqApiPlugins(input: {
-  manifest: RawrHqManifest;
+  declarations: RawrHostDeclarations;
   satisfiers: RawrHostSatisfiers;
 }) {
-  const coordination = input.manifest.plugins.api.coordination;
-  const state = input.manifest.plugins.api.state;
-  const exampleTodo = input.manifest.plugins.api.exampleTodo;
+  const coordination = input.declarations.api.coordination;
+  const state = input.declarations.api.state;
+  const exampleTodo = input.declarations.api.exampleTodo;
 
   return [
     {
@@ -62,11 +78,11 @@ function bindRawrHqApiPlugins(input: {
 }
 
 function bindRawrHqWorkflowPlugins(input: {
-  manifest: RawrHqManifest;
+  declarations: RawrHostDeclarations;
   satisfiers: RawrHostSatisfiers;
 }) {
-  const supportExample = input.manifest.plugins.workflows.supportExample;
-  const coordination = input.manifest.plugins.workflows.coordination;
+  const supportExample = input.declarations.workflows.supportExample;
+  const coordination = input.declarations.workflows.coordination;
 
   return [
     {
@@ -96,7 +112,7 @@ export type RawrHostBoundRolePlan = Readonly<{
  * role plan consumed by host realization.
  */
 export function createRawrHostBoundRolePlan(input: {
-  manifest: RawrHqManifest;
+  declarations: RawrHostDeclarations;
   satisfiers: RawrHostSatisfiers;
 }): RawrHostBoundRolePlan {
   const apiPlugins = bindRawrHqApiPlugins(input);

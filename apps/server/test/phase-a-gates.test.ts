@@ -117,7 +117,7 @@ function hasRegisterOrpcRoutesHostSeamRouter(sourceFile: ts.SourceFile): boolean
     if (!ts.isObjectLiteralExpression(optionsArg)) return;
     for (const property of optionsArg.properties) {
       if (!ts.isPropertyAssignment(property) || propertyNameText(property.name) !== "router") continue;
-      if (matchesPropertyAccessChain(property.initializer, ["rawrHqHostSeam", "orpc", "router"])) {
+      if (matchesPropertyAccessChain(property.initializer, ["rawrHostSeam", "orpc", "router"])) {
         matched = true;
       }
     }
@@ -161,6 +161,14 @@ describe("phase-a gate scaffold (server)", () => {
   it("host composition guard gate scaffold verifies the explicit HQ composition bridge and host-owned runtime seams", async () => {
     const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
     const rawrAst = parseTypeScript(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), rawrSource);
+    const hostCompositionSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "host-composition.ts"),
+      "utf8",
+    );
+    const hostCompositionAst = parseTypeScript(
+      path.join(repoRoot, "apps", "server", "src", "host-composition.ts"),
+      hostCompositionSource,
+    );
     const hostSeamSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-seam.ts"), "utf8");
     const hostSeamAst = parseTypeScript(path.join(repoRoot, "apps", "server", "src", "host-seam.ts"), hostSeamSource);
     const testingHostSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "testing-host.ts"), "utf8");
@@ -176,20 +184,30 @@ describe("phase-a gate scaffold (server)", () => {
       workflowRuntimeSource,
     );
 
-    expect(hasNamedImport(rawrAst, "../../../rawr.hq", "createRawrHqManifest")).toBe(true);
-    expect(hasNamedImport(hostSeamAst, "../../../rawr.hq", "RawrHqManifest")).toBe(true);
-    expect(hasNamedImport(testingHostAst, "../../../rawr.hq", "createRawrHqManifest")).toBe(true);
+    expect(hasNamedImport(rawrAst, "./host-composition", "createRawrHostComposition")).toBe(true);
+    expect(hasNamedImport(testingHostAst, "./host-composition", "createRawrHostComposition")).toBe(true);
+    expect(hasNamedImport(hostCompositionAst, "../../../rawr.hq", "createRawrHqManifest")).toBe(true);
+    expect(hasNamedImport(hostCompositionAst, "./host-satisfiers", "createRawrHostSatisfiers")).toBe(true);
+    expect(hasNamedImport(hostCompositionAst, "./host-seam", "createRawrHostBoundRolePlan")).toBe(true);
+    expect(hasNamedImport(hostCompositionAst, "./host-realization", "materializeRawrHostBoundRolePlan")).toBe(true);
+    expect(hasNamedImport(hostSeamAst, "../../../rawr.hq", "RawrHqManifest")).toBe(false);
+    expect(hostSeamSource).not.toContain('from "../../../rawr.hq"');
+    expect(testingHostSource).not.toContain('from "../../../rawr.hq"');
     expect(hostSeamSource).not.toContain("@rawr/hq-app/manifest");
     expect(testingHostSource).not.toContain("@rawr/hq-app/manifest");
     expect(hasRouteRegistration(rawrAst, "/api/inngest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/workflows/*")).toBe(true);
     expect(hasRegisterOrpcRoutesHostSeamRouter(rawrAst)).toBe(true);
-    expect(hasIdentifierCall(rawrAst, "createRawrHqManifest")).toBe(true);
-    expect(hasIdentifierCall(rawrAst, "createRawrHostBoundRolePlan")).toBe(true);
-    expect(hasIdentifierCall(rawrAst, "materializeRawrHostBoundRolePlan")).toBe(true);
+    expect(hasIdentifierCall(rawrAst, "createRawrHostComposition")).toBe(true);
+    expect(hasIdentifierCall(hostCompositionAst, "createRawrHqManifest")).toBe(true);
+    expect(hasIdentifierCall(hostCompositionAst, "createRawrHostSatisfiers")).toBe(true);
+    expect(hasIdentifierCall(hostCompositionAst, "createRawrHostBoundRolePlan")).toBe(true);
+    expect(hasIdentifierCall(hostCompositionAst, "materializeRawrHostBoundRolePlan")).toBe(true);
     expect(hasIdentifierCall(rawrAst, "createWorkflowRouteHarness")).toBe(true);
     expect(hasNamedImport(rawrAst, "inngest/bun", "serve")).toBe(true);
-    expect(hasPropertyAccessChain(rawrAst, ["rawrHqHostSeam", "workflows", "createInngestFunctions"])).toBe(true);
+    expect(hasPropertyAccessChain(rawrAst, ["rawrHostComposition", "realization", "workflows", "createInngestFunctions"])).toBe(
+      true,
+    );
     expect(hasIdentifierCall(rawrAst, "inngestServe")).toBe(true);
     expect(rawrSource).not.toContain("rawrHqManifest.inngest");
     expect(rawrSource).not.toContain("@rawr/plugin-api-coordination/server");
@@ -217,6 +235,10 @@ describe("phase-a gate scaffold (server)", () => {
       "utf8",
     );
     const testingHostSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "testing-host.ts"), "utf8");
+    const hostCompositionSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "host-composition.ts"),
+      "utf8",
+    );
     const hqTestingSource = await readIfPresent(path.join(repoRoot, "apps", "hq", "src", "testing.ts"));
     const rawrHqBridgeSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
     const supportProofSource = await fs.readFile(
@@ -227,6 +249,13 @@ describe("phase-a gate scaffold (server)", () => {
     expect(orpcSource).not.toContain("@rawr/hq-app/testing");
     expect(openApiSource).not.toContain("@rawr/hq-app/testing");
     expect(testingHostSource).not.toContain("manifest.fixtures");
+    expect(testingHostSource).toContain("createRawrHostComposition");
+    expect(testingHostSource).not.toContain("createRawrHostSatisfiers");
+    expect(testingHostSource).not.toContain("createRawrHostBoundRolePlan");
+    expect(testingHostSource).not.toContain("materializeRawrHostBoundRolePlan");
+    expect(normalizeSemanticSource(hostCompositionSource)).toContain(
+      'import{createRawrHqManifest,typeRawrHqManifest}from"../../../rawr.hq";',
+    );
     expect(hqTestingSource === null || normalizeSemanticSource(hqTestingSource) === "export{};").toBe(true);
     expect(normalizeSemanticSource(rawrHqBridgeSource)).toBe(
       'export{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
