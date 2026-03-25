@@ -7,9 +7,10 @@ import {
 import { GetWorkflowInputSchema } from "@rawr/coordination/service/modules/workflows/schemas";
 import { RunStatusSchema } from "@rawr/coordination/domain/schemas";
 import type { JsonValue } from "@rawr/coordination";
+import { mergeDeclaredSurfaceTrees } from "@rawr/hq-sdk/composition";
 import { typeBoxStandardSchema } from "@rawr/hq-sdk";
 import { GetStateOutputSchema } from "@rawr/state/service/modules/state/contract";
-import { createTestingRawrHqManifest } from "../src/testing";
+import { createRawrHqManifest } from "../src/manifest";
 
 type RouteShape = {
   method?: string;
@@ -43,10 +44,17 @@ function schemaAccepts<TSchemaInput extends Parameters<typeof typeBoxStandardSch
 }
 
 describe("hq orpc contract drift", () => {
-  const manifest = createTestingRawrHqManifest();
+  const manifest = createRawrHqManifest();
+  const internalContract = mergeDeclaredSurfaceTrees([
+    manifest.plugins.api.coordination.declaration!.internal.contract,
+    manifest.plugins.api.state.declaration!.internal.contract,
+    manifest.plugins.api.exampleTodo.declaration!.internal.contract,
+    manifest.plugins.workflows.supportExample.declaration!.internal!.contract,
+    manifest.plugins.workflows.coordination.declaration!.internal!.contract,
+  ]);
 
-  it("keeps canonical procedure routes stable", () => {
-    const minified = minifyContractRouter(manifest.orpc.contract);
+  it("keeps canonical declared procedure routes stable", () => {
+    const minified = minifyContractRouter(internalContract);
     const routes = collectProcedureRoutes(minified).sort();
 
     expect(routes).toEqual([
@@ -65,8 +73,8 @@ describe("hq orpc contract drift", () => {
     ]);
   });
 
-  it("matches the minified contract snapshot", () => {
-    expect(minifyContractRouter(manifest.orpc.contract)).toMatchSnapshot();
+  it("matches the minified declared contract snapshot", () => {
+    expect(minifyContractRouter(internalContract)).toMatchSnapshot();
   });
 
   it("keeps D2 finalization semantics additive in run status schema", () => {

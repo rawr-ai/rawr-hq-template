@@ -1,69 +1,33 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { createTestingRawrHqManifest } from "../src/testing";
 
-type RouteShape = {
-  method?: string;
-  path?: string;
-};
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
-function collectProcedureRoutes(node: unknown, namespace: string[] = []): string[] {
-  if (!node || typeof node !== "object") return [];
+describe("hq app runtime seam guard", () => {
+  it("keeps the manifest cold and free of executable materialization", async () => {
+    const manifestSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "manifest.ts"), "utf8");
 
-  const asRecord = node as Record<string, unknown>;
-  const maybeOrpc = asRecord["~orpc"];
-  if (maybeOrpc && typeof maybeOrpc === "object") {
-    const route = (maybeOrpc as { route?: RouteShape }).route ?? {};
-    const method = route.method ?? "UNKNOWN";
-    const path = route.path ?? "UNKNOWN";
-    return [`${namespace.join(".")} ${method} ${path}`];
-  }
-
-  const items: string[] = [];
-  for (const [key, value] of Object.entries(asRecord)) {
-    items.push(...collectProcedureRoutes(value, [...namespace, key]));
-  }
-  return items;
-}
-
-describe("runtime router seam", () => {
-  const manifest = createTestingRawrHqManifest();
-
-  it("keeps root runtime route families stable", () => {
-    const routes = collectProcedureRoutes(manifest.orpc.router).sort();
-
-    expect(routes).toEqual([
-      "coordination.getRunStatus GET /coordination/runs/{runId}",
-      "coordination.getRunTimeline GET /coordination/runs/{runId}/timeline",
-      "coordination.getWorkflow GET /coordination/workflows/{workflowId}",
-      "coordination.listWorkflows GET /coordination/workflows",
-      "coordination.queueRun POST /coordination/workflows/{workflowId}/run",
-      "coordination.saveWorkflow POST /coordination/workflows",
-      "coordination.validateWorkflow POST /coordination/workflows/{workflowId}/validate",
-      "exampleTodo.tasks.create POST /exampleTodo/tasks/create",
-      "exampleTodo.tasks.get GET /exampleTodo/tasks/{id}",
-      "state.getRuntimeState GET /state/runtime",
-      "supportExample.triage.getStatus GET /support-example/triage/status",
-      "supportExample.triage.triggerRun POST /support-example/triage/runs",
-    ]);
+    expect(manifestSource).not.toContain("implement(");
+    expect(manifestSource).not.toContain("createRouterClient(");
+    expect(manifestSource).not.toContain("materializeManifestBridgeSurfaces");
+    expect(manifestSource).not.toContain("createEmbeddedInMemoryDbPoolAdapter");
+    expect(manifestSource).not.toContain("createCoordinationClient(");
+    expect(manifestSource).not.toContain("createStateClient(");
+    expect(manifestSource).not.toContain("hostLogger");
   });
 
-  it("keeps workflow trigger runtime routes workflow-scoped", () => {
-    const routes = collectProcedureRoutes(manifest.workflows.published.router).sort();
-
-    expect(routes).toEqual([
-      "coordination.getRunStatus GET /coordination/runs/{runId}",
-      "coordination.getRunTimeline GET /coordination/runs/{runId}/timeline",
-      "coordination.queueRun POST /coordination/workflows/{workflowId}/run",
-      "supportExample.triage.getStatus GET /support-example/triage/status",
-      "supportExample.triage.triggerRun POST /support-example/triage/runs",
+  it("does not preserve the old executable bridge in testing or rawr.hq.ts", async () => {
+    const [testingSource, rawrHqSource] = await Promise.all([
+      fs.readFile(path.join(repoRoot, "apps", "hq", "src", "testing.ts"), "utf8"),
+      fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8"),
     ]);
-  });
 
-  it("does not introduce finished-hook route families while adding D2 guardrails", () => {
-    const rootRoutes = collectProcedureRoutes(manifest.orpc.router);
-    const triggerRoutes = collectProcedureRoutes(manifest.workflows.published.router);
-    const allRoutes = [...rootRoutes, ...triggerRoutes];
-
-    expect(allRoutes.some((route) => route.toLowerCase().includes("finished"))).toBe(false);
+    expect(testingSource).not.toContain("createTestingRawrHqManifest");
+    expect(testingSource).not.toContain("createRawrHqManifest(");
+    expect(testingSource).not.toContain("@orpc/server");
+    expect(rawrHqSource).not.toContain("@rawr/hq-app/testing");
+    expect(rawrHqSource).not.toContain("rawrHqManifest");
   });
 });

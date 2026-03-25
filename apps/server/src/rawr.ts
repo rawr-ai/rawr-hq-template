@@ -8,6 +8,7 @@ import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows
 import { createRawrHqManifest } from "@rawr/hq-app/manifest";
 import { materializeRawrHostBoundRolePlan } from "./host-realization";
 import { createRawrHostBoundRolePlan } from "./host-seam";
+import { createRawrHostSatisfiers } from "./host-satisfiers";
 import { createHostLoggerAdapter } from "./logging";
 import type { AnyElysia } from "./plugins";
 import { registerOrpcRoutes } from "./orpc";
@@ -26,11 +27,13 @@ export type RawrRoutesOptions = {
 
 export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"] as const;
 
-const rawrHqManifest = createRawrHqManifest({
+const rawrHqManifest = createRawrHqManifest();
+const rawrHostSatisfiers = createRawrHostSatisfiers({
   hostLogger: createHostLoggerAdapter(),
 });
 const rawrHqBoundRolePlan = createRawrHostBoundRolePlan({
   manifest: rawrHqManifest,
+  satisfiers: rawrHostSatisfiers,
 });
 
 type HostWorkflowRuntimeInput = Parameters<

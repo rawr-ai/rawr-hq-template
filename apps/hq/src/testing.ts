@@ -1,12 +1,3 @@
-import { createRawrHqManifest } from "./manifest";
-
-const noopLogger = {
-  info() {},
-  error() {},
-} as const;
-
-export function createTestingRawrHqManifest() {
-  return createRawrHqManifest({
-    hostLogger: noopLogger,
-  });
-}
+// Transitional entrypoint intentionally left empty. Executable testing seams
+// moved to the host-owned server path.
+export {};
