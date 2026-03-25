@@ -188,7 +188,7 @@ describe("phase-a gate scaffold (server)", () => {
     expect(testingHostSource).not.toContain("manifest.fixtures");
     expect(supportProofSource).not.toContain("createTestingRawrHqManifest");
     expect(supportProofSource).not.toContain("manifest.fixtures");
-    expect(supportProofSource).toContain("createTestingExampleTodoClient");
+    expect(supportProofSource).toContain("createTestingExampleTodoServiceClient");
   });
 
   it("route negative assertions gate scaffold keeps D-015 negatives explicit", async () => {

@@ -25,7 +25,7 @@ export function createTestingRawrHostSeam() {
   } as const;
 }
 
-export function createTestingExampleTodoClient(repoRoot: string): ExampleTodoClient {
+export function createTestingExampleTodoServiceClient(repoRoot: string): ExampleTodoClient {
   return createExampleTodoClient({
     deps: {
       dbPool: createEmbeddedInMemoryDbPoolAdapter(),
