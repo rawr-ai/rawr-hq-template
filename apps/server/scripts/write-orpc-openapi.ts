@@ -1,8 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createTestingRawrHqManifest } from "@rawr/hq-app/testing";
 import { generateOrpcOpenApiSpec } from "../src/orpc";
+import { createTestingRawrHostSeam } from "../src/testing-host";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const serverRoot = path.resolve(scriptDir, "..");
@@ -18,8 +18,8 @@ function resolveOutputPath(): string {
 async function main() {
   const outputPath = resolveOutputPath();
   const baseUrl = process.env.RAWR_ORPC_OPENAPI_BASE_URL?.trim() || "http://localhost:3000";
-  const manifest = createTestingRawrHqManifest();
-  const spec = await generateOrpcOpenApiSpec(baseUrl, manifest.orpc.published.router);
+  const hostSeam = createTestingRawrHostSeam();
+  const spec = await generateOrpcOpenApiSpec(baseUrl, hostSeam.realization.orpc.published.router);
 
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(spec, null, 2)}\n`, "utf8");

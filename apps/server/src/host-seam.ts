@@ -3,10 +3,8 @@ import {
   type ApiPluginRegistration,
   type MaterializedApiPluginRegistration,
 } from "@rawr/hq-sdk/apis";
-import { materializeRequestScopedPluginSurfaces } from "@rawr/hq-sdk/composition";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
 import type { RawrHqManifest } from "@rawr/hq-app/manifest";
-import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
 
 function bindApiPluginRegistration<TPlugin extends ApiPluginRegistration>(
   plugin: TPlugin,
@@ -80,20 +78,4 @@ export function createRawrHostBoundRolePlan(input: {
     api: composeApiPlugins(apiPlugins),
     workflows: composeWorkflowPlugins(workflowPlugins),
   };
-}
-
-export function materializeRawrHostBoundRolePlan(
-  boundRolePlan: RawrHostBoundRolePlan,
-) {
-  const materialized = materializeRequestScopedPluginSurfaces<
-    BoundaryRequestSupportContext,
-    typeof boundRolePlan.workflows.createInngestFunctions
-  >({
-    api: boundRolePlan.api,
-    workflows: boundRolePlan.workflows,
-  });
-
-  return {
-    ...materialized,
-  } as const;
 }

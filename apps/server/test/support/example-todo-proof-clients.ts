@@ -1,5 +1,5 @@
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
-import { createTestingRawrHqManifest } from "@rawr/hq-app/testing";
+import { createTestingRawrHostSeam } from "../../src/testing-host";
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
@@ -15,7 +15,7 @@ const EXTERNAL_OPENAPI_HEADERS = {
 type RequestHandlerApp = {
   handle(request: Request): Promise<Response>;
 };
-const rawrHqManifest = createTestingRawrHqManifest();
+const rawrHqHostSeam = createTestingRawrHostSeam();
 
 type ExampleTodoTask = {
   id: string;
@@ -55,7 +55,7 @@ export function createExampleTodoProofClients(args: {
   const baseUrl = args.baseUrl ?? "http://localhost:3000";
 
   return {
-    inProcess: rawrHqManifest.fixtures.exampleTodo.resolveClient(args.repoRoot),
+    inProcess: rawrHqHostSeam.manifest.fixtures.exampleTodo.resolveClient(args.repoRoot),
     rpc: {
       async createTask(input) {
         const response = await args.app.handle(
