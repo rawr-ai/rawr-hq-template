@@ -52,7 +52,7 @@ function hasRegisterOrpcRoutesHostSeamRouter(rawrSourceFile) {
     if (!optionsObject) return;
     const routerInitializer = getObjectPropertyInitializer(optionsObject, "router");
     if (!routerInitializer) return;
-    if (matchesPropertyAccessChain(routerInitializer, ["rawrHqHostSeam", "orpc", "router"])) {
+    if (matchesPropertyAccessChain(routerInitializer, ["rawrHostSeam", "orpc", "router"])) {
       matched = true;
     }
   });
@@ -85,8 +85,8 @@ if (mode === "completion") {
       !manifestSource.includes("createWorkflowRouteHarness"),
   });
   requiredChecks.push({
-    label: "host imports manifest authority seam",
-    ok: hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest"),
+    label: "host consumes server-owned executable composition entrypoint",
+    ok: hasNamedImport(rawrAst, "./host-composition", "createRawrHostComposition"),
   });
   requiredChecks.push({
     label: "host wires /api/workflows capability-family routing",
@@ -106,12 +106,12 @@ if (mode === "completion") {
     label: "host consumes host-owned workflow route seam",
     ok:
       hasIdentifierCall(rawrAst, "createWorkflowRouteHarness") &&
-      hasPropertyAccessChain(rawrAst, ["rawrHqHostSeam", "workflows", "published", "router"]),
+      hasPropertyAccessChain(rawrAst, ["rawrHostSeam", "workflows", "published", "router"]),
   });
   requiredChecks.push({
     label: "host composes workflow runtime from host-owned realization shells instead of host-local capability imports",
     ok:
-      hasPropertyAccessChain(rawrAst, ["rawrHqHostSeam", "workflows", "createInngestFunctions"]) &&
+      hasPropertyAccessChain(rawrAst, ["rawrHostComposition", "realization", "workflows", "createInngestFunctions"]) &&
       hasIdentifierCall(rawrAst, "createHostInngestBundle") &&
       !rawrSource.includes("rawrHqManifest.inngest"),
   });
@@ -119,9 +119,7 @@ if (mode === "completion") {
     label: "host consumes manifest-owned ORPC router seam",
     ok:
       hasRegisterOrpcRoutesHostSeamRouter(rawrAst) &&
-      hasIdentifierCall(rawrAst, "createRawrHqManifest") &&
-      hasIdentifierCall(rawrAst, "createRawrHostBoundRolePlan") &&
-      hasIdentifierCall(rawrAst, "materializeRawrHostBoundRolePlan"),
+      hasIdentifierCall(rawrAst, "createRawrHostComposition"),
   });
   requiredChecks.push({
     label: "host avoids bypassing manifest orpc authority while owning runtime ingress composition",

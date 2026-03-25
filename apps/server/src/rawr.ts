@@ -4,10 +4,7 @@ import path from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
-import { createRawrHqManifest } from "../../../rawr.hq";
-import { materializeRawrHostBoundRolePlan } from "./host-realization";
-import { createRawrHostBoundRolePlan } from "./host-seam";
-import { createRawrHostSatisfiers } from "./host-satisfiers";
+import { createRawrHostComposition } from "./host-composition";
 import { createHostLoggerAdapter } from "./logging";
 import type { AnyElysia } from "./plugins";
 import { registerOrpcRoutes } from "./orpc";
@@ -27,17 +24,11 @@ export type RawrRoutesOptions = {
 
 export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"] as const;
 
-const rawrHqManifest = createRawrHqManifest();
-const rawrHostSatisfiers = createRawrHostSatisfiers({
+const rawrHostComposition = createRawrHostComposition({
   hostLogger: createHostLoggerAdapter(),
 });
-const rawrHqBoundRolePlan = createRawrHostBoundRolePlan({
-  manifest: rawrHqManifest,
-  satisfiers: rawrHostSatisfiers,
-});
-
 type HostWorkflowRuntimeInput = Parameters<
-  ReturnType<typeof materializeRawrHostBoundRolePlan>["workflows"]["createInngestFunctions"]
+  typeof rawrHostComposition.realization.workflows.createInngestFunctions
 >[0];
 
 export type HostInngestBundle = Readonly<{
@@ -198,17 +189,16 @@ function resolveAuthorityRepoRoot(repoRoot: string): string {
  * Must not own:
  * - plugin declaration selection
  * - host satisfier construction outside the canonical host seam
- * - alternate composition input authority through `rawr.hq.ts`
+ * - alternate executable composition entrypoints outside `host-composition.ts`
  */
 export function createHostInngestBundle(input: { repoRoot: string }): HostInngestBundle {
-  const rawrHqHostSeam = materializeRawrHostBoundRolePlan(rawrHqBoundRolePlan);
   const client = new Inngest({ id: "rawr-hq" });
   const runtime = createRawrWorkflowRuntime({
     repoRoot: input.repoRoot,
   });
   // The app manifest owns which registrations exist. The host binds them into
   // an executable role plan, then materializes runtime surfaces explicitly.
-  const functions = rawrHqHostSeam.workflows.createInngestFunctions({
+  const functions = rawrHostComposition.realization.workflows.createInngestFunctions({
     client,
     runtime,
   });
@@ -237,12 +227,12 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
  * Must not own:
  * - capability-local client construction in the manifest
  * - request/process materialization outside host-owned server surfaces
- * - restart authority through `rawr.hq.ts`
+ * - restart authority outside `host-composition.ts`
  */
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
   const hostLogger = createHostLoggerAdapter();
-  const rawrHqHostSeam = materializeRawrHostBoundRolePlan(rawrHqBoundRolePlan);
+  const rawrHostSeam = rawrHostComposition.realization;
 
   app.get("/rawr/plugins/web/:dirName", async ({ params }) => {
     const dirName =
@@ -295,7 +285,7 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
   };
   const workflowRoutes = createWorkflowRouteHarness({
     workflows: {
-      publishedRouter: rawrHqHostSeam.workflows.published.router,
+      publishedRouter: rawrHostSeam.workflows.published.router,
     },
     contextFactory: (request, deps) => createWorkflowBoundaryContext(request, deps),
   });
@@ -322,8 +312,8 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
 
   registerOrpcRoutes(app, {
     ...boundaryContextDeps,
-    router: rawrHqHostSeam.orpc.router,
-    openApiRouter: rawrHqHostSeam.orpc.published.router,
+    router: rawrHostSeam.orpc.router,
+    openApiRouter: rawrHostSeam.orpc.published.router,
     contextFactory: (request, deps) => createRequestScopedBoundaryContext(request, deps),
   });
 
