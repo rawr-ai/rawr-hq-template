@@ -175,7 +175,7 @@ describe("rawr server routes", () => {
     expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"]);
   });
 
-  it("host-composition-guard: manifest composes routers from package seam, not app internals", async () => {
+  it("host-composition-guard: manifest keeps composition authority and transitional bridge local", async () => {
     const manifestSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "manifest.ts"), "utf8");
     expect(manifestSource).toContain("registerCoordinationApiPlugin");
     expect(manifestSource).toContain("registerStateApiPlugin");
@@ -201,16 +201,11 @@ describe("rawr server routes", () => {
     expect(manifestSource).toContain("plugins: {");
     expect(manifestSource).toContain("api: apiPlugins");
     expect(manifestSource).toContain("workflows: workflowPlugins");
-    expect(manifestSource).toContain("workflows: materializedSurfaces.workflows");
-    expect(manifestSource).toContain("const composedApiSurface = composeApiPlugins");
-    expect(manifestSource).toContain("materializeManifestBridgeSurfaces");
     expect(manifestSource).not.toContain("materializeRequestScopedPluginSurfaces");
-    expect(manifestSource).toContain("orpc: materializedSurfaces.orpc");
+    expect(manifestSource).not.toContain("registerOrpcRoutes");
+    expect(manifestSource).not.toContain("createWorkflowRouteHarness");
     expect(manifestSource).not.toContain("new Inngest(");
-    expect(manifestSource).toContain("mergeDeclaredSurfaceTrees");
-    expect(manifestSource).toContain("requestScopedPublishedApi.router");
-    expect(manifestSource).toContain("requestScopedPublishedWorkflow.router");
-    expect(manifestSource).toContain("requestScopedInternalWorkflow.router");
+    expect(manifestSource).not.toContain("createCoordinationWorkflowRuntimeAdapter");
   });
 
   it("host-composition-guard: host realizes workflow runtime and keeps workflow context off canonical ORPC registration", async () => {
@@ -243,6 +238,10 @@ describe("rawr server routes", () => {
       path.join(repoRoot, "apps", "server", "scripts", "write-orpc-openapi.ts"),
       "utf8",
     );
+    const testingHostSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
+      "utf8",
+    );
     const proofClientSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "test", "support", "example-todo-proof-clients.ts"),
       "utf8",
@@ -250,6 +249,7 @@ describe("rawr server routes", () => {
 
     expect(orpcSource).not.toContain("@rawr/hq-app/testing");
     expect(openApiScriptSource).not.toContain("@rawr/hq-app/testing");
+    expect(testingHostSource).not.toContain("manifest.fixtures");
     expect(proofClientSource).not.toContain("createTestingRawrHqManifest");
     expect(proofClientSource).not.toContain("manifest.fixtures");
     expect(proofClientSource).toContain("createTestingExampleTodoClient");

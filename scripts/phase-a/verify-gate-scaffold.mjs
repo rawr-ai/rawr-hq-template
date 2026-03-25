@@ -200,6 +200,7 @@ async function verifyHostCompositionGuard() {
   const { source, ast: rawrAst } = await readTypeScriptFile("apps/server/src/rawr.ts");
   const { source: orpcSource } = await readTypeScriptFile("apps/server/src/orpc.ts");
   const { source: openApiSource } = await readTypeScriptFile("apps/server/scripts/write-orpc-openapi.ts");
+  const { source: testingHostSource } = await readTypeScriptFile("apps/server/src/testing-host.ts");
   const { source: supportProofSource } = await readTypeScriptFile("apps/server/test/support/example-todo-proof-clients.ts");
 
   assertCondition(hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest"), "rawr host must import HQ app manifest authority");
@@ -244,6 +245,7 @@ async function verifyHostCompositionGuard() {
   assertCondition(
     !orpcSource.includes("@rawr/hq-app/testing") &&
       !openApiSource.includes("@rawr/hq-app/testing") &&
+      !testingHostSource.includes("manifest.fixtures") &&
       !supportProofSource.includes("createTestingRawrHqManifest") &&
       !supportProofSource.includes("manifest.fixtures"),
     "proof and openapi helpers must not bypass host realization through HQ testing or direct manifest fixtures",
