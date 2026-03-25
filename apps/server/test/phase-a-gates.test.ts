@@ -148,6 +148,15 @@ function normalizeSemanticSource(source: string): string {
     .replace(/\s+/g, "");
 }
 
+async function readIfPresent(filePath: string): Promise<string | null> {
+  try {
+    return await fs.readFile(filePath, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
 describe("phase-a gate scaffold (server)", () => {
   it("host composition guard gate scaffold verifies manifest-owned runtime seams", async () => {
     const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
@@ -185,7 +194,7 @@ describe("phase-a gate scaffold (server)", () => {
       path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
       "utf8",
     );
-    const hqTestingSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "testing.ts"), "utf8");
+    const hqTestingSource = await readIfPresent(path.join(repoRoot, "apps", "hq", "src", "testing.ts"));
     const rawrHqBridgeSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
     const supportProofSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "test", "support", "example-todo-proof-clients.ts"),
@@ -195,7 +204,7 @@ describe("phase-a gate scaffold (server)", () => {
     expect(orpcSource).not.toContain("@rawr/hq-app/testing");
     expect(openApiSource).not.toContain("@rawr/hq-app/testing");
     expect(testingHostSource).not.toContain("manifest.fixtures");
-    expect(normalizeSemanticSource(hqTestingSource)).toBe("export{};");
+    expect(hqTestingSource === null || normalizeSemanticSource(hqTestingSource) === "export{};").toBe(true);
     expect(normalizeSemanticSource(rawrHqBridgeSource)).toBe(
       'export{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
     );

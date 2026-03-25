@@ -8,10 +8,9 @@ const manifestPath = path.join(root, "apps", "hq", "src", "manifest.ts");
 const testingPath = path.join(root, "apps", "hq", "src", "testing.ts");
 const rawrHqBridgePath = path.join(root, "rawr.hq.ts");
 
-const [pkgRaw, manifestSource, testingSource, rawrHqBridgeSource] = await Promise.all([
+const [pkgRaw, manifestSource, rawrHqBridgeSource] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(manifestPath, "utf8"),
-  fs.readFile(testingPath, "utf8"),
   fs.readFile(rawrHqBridgePath, "utf8"),
 ]);
 
@@ -21,6 +20,19 @@ function normalizeSemanticSource(source) {
     .replace(/\/\/.*$/gm, "")
     .replace(/\s+/g, "");
 }
+
+async function readIfPresent(filePath) {
+  try {
+    return await fs.readFile(filePath, "utf8");
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+const testingSource = await readIfPresent(testingPath);
 
 const pkg = JSON.parse(pkgRaw);
 const requiredTags = ["type:app", "app:hq", "migration-slice:structural-tranche"];
@@ -33,6 +45,11 @@ for (const tag of requiredTags) {
 
 if (!manifestSource.includes("export function createRawrHqManifest")) {
   console.error("hq-app structural failed: manifest factory export missing.");
+  process.exit(1);
+}
+
+if (pkg.exports?.["./testing"] !== undefined) {
+  console.error("hq-app structural failed: @rawr/hq-app/testing export must remain removed.");
   process.exit(1);
 }
 
@@ -68,8 +85,8 @@ if (
   process.exit(1);
 }
 
-if (normalizeSemanticSource(testingSource) !== "export{};") {
-  console.error("hq-app structural failed: testing.ts must stay an inert marker module only.");
+if (testingSource !== null && normalizeSemanticSource(testingSource) !== "export{};") {
+  console.error("hq-app structural failed: testing.ts must be absent or stay an inert marker module only.");
   process.exit(1);
 }
 

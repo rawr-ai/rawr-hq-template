@@ -40,6 +40,20 @@ export function createTestingRawrHostSeam() {
   } as const;
 }
 
+/**
+ * @agents-style mixed-path proof helper
+ *
+ * Owns:
+ * - direct service-package access used by one legacy proof leg
+ *
+ * Must not own:
+ * - the decisive realized host-seam proof
+ * - canonical route/contract/publication drift authority
+ *
+ * Note:
+ * - this helper remains acceptable only as supporting evidence while
+ *   `proof.api.example-todo.surface` is explicitly marked mixed-path
+ */
 export function createTestingExampleTodoServiceClient(repoRoot: string): ExampleTodoClient {
   return testingRawrHostSatisfiers.exampleTodo.resolveClient(repoRoot);
 }
