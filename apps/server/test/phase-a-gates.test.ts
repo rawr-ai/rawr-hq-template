@@ -162,7 +162,7 @@ describe("phase-a gate scaffold (server)", () => {
     const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
     const rawrAst = parseTypeScript(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), rawrSource);
 
-    expect(hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest")).toBe(true);
+    expect(hasNamedImport(rawrAst, "../../../rawr.hq", "createRawrHqManifest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/inngest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/workflows/*")).toBe(true);
     expect(hasRegisterOrpcRoutesHostSeamRouter(rawrAst)).toBe(true);
@@ -178,6 +178,8 @@ describe("phase-a gate scaffold (server)", () => {
     expect(rawrSource).not.toContain("@rawr/plugin-workflows-support-example/server");
     expect(rawrSource).not.toContain("./coordination");
     expect(rawrSource).toContain("@rawr/plugin-workflows-coordination/server");
+    expect(rawrSource).toContain('from "../../../rawr.hq"');
+    expect(rawrSource).not.toContain("@rawr/hq-app/manifest");
     expect(rawrSource).toContain("createCoordinationWorkflowRuntimeAdapter");
     expect(rawrSource).not.toContain("resolveWorkflowCapability");
     expect(rawrSource).toContain("contextFactory: (request, deps) => createRequestScopedBoundaryContext(request, deps)");
@@ -190,6 +192,7 @@ describe("phase-a gate scaffold (server)", () => {
       path.join(repoRoot, "apps", "server", "scripts", "write-orpc-openapi.ts"),
       "utf8",
     );
+    const hostSeamSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-seam.ts"), "utf8");
     const testingHostSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
       "utf8",
@@ -203,6 +206,10 @@ describe("phase-a gate scaffold (server)", () => {
 
     expect(orpcSource).not.toContain("@rawr/hq-app/testing");
     expect(openApiSource).not.toContain("@rawr/hq-app/testing");
+    expect(hostSeamSource).toContain('from "../../../rawr.hq"');
+    expect(hostSeamSource).not.toContain("@rawr/hq-app/manifest");
+    expect(testingHostSource).toContain('from "../../../rawr.hq"');
+    expect(testingHostSource).not.toContain("@rawr/hq-app/manifest");
     expect(testingHostSource).not.toContain("manifest.fixtures");
     expect(hqTestingSource === null || normalizeSemanticSource(hqTestingSource) === "export{};").toBe(true);
     expect(normalizeSemanticSource(rawrHqBridgeSource)).toBe(

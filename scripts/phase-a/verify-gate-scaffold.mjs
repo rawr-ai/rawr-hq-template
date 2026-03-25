@@ -200,10 +200,14 @@ async function verifyHostCompositionGuard() {
   const { source, ast: rawrAst } = await readTypeScriptFile("apps/server/src/rawr.ts");
   const { source: orpcSource } = await readTypeScriptFile("apps/server/src/orpc.ts");
   const { source: openApiSource } = await readTypeScriptFile("apps/server/scripts/write-orpc-openapi.ts");
+  const { source: hostSeamSource } = await readTypeScriptFile("apps/server/src/host-seam.ts");
   const { source: testingHostSource } = await readTypeScriptFile("apps/server/src/testing-host.ts");
   const { source: supportProofSource } = await readTypeScriptFile("apps/server/test/support/example-todo-proof-clients.ts");
 
-  assertCondition(hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest"), "rawr host must import HQ app manifest authority");
+  assertCondition(
+    hasNamedImport(rawrAst, "../../../rawr.hq", "createRawrHqManifest") && !source.includes("@rawr/hq-app/manifest"),
+    "rawr host must import HQ declaration authority through the narrowed rawr.hq.ts bridge",
+  );
   assertCondition(hasRouteRegistration(rawrAst, "/api/inngest"), "rawr host must register /api/inngest route");
   assertCondition(hasRouteRegistration(rawrAst, "/api/workflows/*"), "rawr host must register /api/workflows/* route");
   assertCondition(hasIdentifierCall(rawrAst, "registerOrpcRoutes"), "rawr host must register ORPC routes through registerOrpcRoutes");
@@ -245,10 +249,14 @@ async function verifyHostCompositionGuard() {
   assertCondition(
     !orpcSource.includes("@rawr/hq-app/testing") &&
       !openApiSource.includes("@rawr/hq-app/testing") &&
+      hostSeamSource.includes('from "../../../rawr.hq"') &&
+      !hostSeamSource.includes("@rawr/hq-app/manifest") &&
+      testingHostSource.includes('from "../../../rawr.hq"') &&
+      !testingHostSource.includes("@rawr/hq-app/manifest") &&
       !testingHostSource.includes("manifest.fixtures") &&
       !supportProofSource.includes("createTestingRawrHqManifest") &&
       !supportProofSource.includes("manifest.fixtures"),
-    "proof and openapi helpers must not bypass host realization through HQ testing or direct manifest fixtures",
+    "host seam and proof/openapi helpers must not bypass host realization through HQ testing or direct manifest fixtures",
   );
 }
 
