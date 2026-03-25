@@ -108,7 +108,7 @@ function hasRegisterOrpcRoutesManifestRouter(sourceFile) {
     if (!optionsArg || !ts.isObjectLiteralExpression(optionsArg)) return;
     for (const property of optionsArg.properties) {
       if (!ts.isPropertyAssignment(property) || propertyNameText(property.name) !== "router") continue;
-      if (matchesPropertyAccessChain(property.initializer, ["rawrHqManifest", "orpc", "router"])) {
+      if (matchesPropertyAccessChain(property.initializer, ["rawrHqHostSeam", "orpc", "router"])) {
         matched = true;
       }
     }
@@ -203,26 +203,31 @@ async function verifyHostCompositionGuard() {
   assertCondition(hasRouteRegistration(rawrAst, "/api/inngest"), "rawr host must register /api/inngest route");
   assertCondition(hasRouteRegistration(rawrAst, "/api/workflows/*"), "rawr host must register /api/workflows/* route");
   assertCondition(hasIdentifierCall(rawrAst, "registerOrpcRoutes"), "rawr host must register ORPC routes through registerOrpcRoutes");
-  assertCondition(hasRegisterOrpcRoutesManifestRouter(rawrAst), "rawr host must pass manifest-owned ORPC router seam to registerOrpcRoutes");
+  assertCondition(hasRegisterOrpcRoutesManifestRouter(rawrAst), "rawr host must pass host-materialized ORPC seam to registerOrpcRoutes");
   assertCondition(hasIdentifierCall(rawrAst, "createRawrHqManifest"), "rawr host must instantiate the HQ app manifest seam");
   assertCondition(
-    hasIdentifierCall(rawrAst, "createWorkflowRouteHarness") &&
-      /publishedRouter:\s*rawrHqManifest\.workflows\.published\.router/s.test(source) &&
-      /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createWorkflowBoundaryContext\(request,\s*deps\)/s.test(source),
-    "rawr host must consume manifest-owned published workflow router seam through createWorkflowRouteHarness",
+    hasIdentifierCall(rawrAst, "createRawrHostBoundRolePlan") &&
+      hasIdentifierCall(rawrAst, "materializeRawrHostBoundRolePlan"),
+    "rawr host must bind manifest registrations and materialize them at the host seam",
   );
   assertCondition(
-    hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "createInngestFunctions"]) &&
+    hasIdentifierCall(rawrAst, "createWorkflowRouteHarness") &&
+      /publishedRouter:\s*rawrHqHostSeam\.workflows\.published\.router/s.test(source) &&
+      /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createWorkflowBoundaryContext\(request,\s*deps\)/s.test(source),
+    "rawr host must consume host-materialized published workflow router seam through createWorkflowRouteHarness",
+  );
+  assertCondition(
+    hasPropertyAccessChain(rawrAst, ["rawrHqHostSeam", "workflows", "createInngestFunctions"]) &&
       !source.includes("rawrHqManifest.inngest"),
-    "rawr host must compose runtime workflow functions from manifest-owned workflow shells instead of manifest-owned inngest seams",
+    "rawr host must compose runtime workflow functions from host-materialized workflow seams instead of manifest-owned inngest seams",
   );
   assertCondition(
     hasNamedImport(rawrAst, "inngest/bun", "serve") &&
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "createInngestFunctions"]) &&
+      hasPropertyAccessChain(rawrAst, ["rawrHqHostSeam", "workflows", "createInngestFunctions"]) &&
       hasIdentifierCall(rawrAst, "inngestServe") &&
       !hasImport(rawrAst, "@rawr/plugin-api-coordination/server") &&
       !hasImport(rawrAst, "@rawr/plugin-workflows-support-example/server"),
-    "rawr host must compose the runtime-owned inngest bundle through manifest-owned workflow seams",
+    "rawr host must compose the runtime-owned inngest bundle through host-materialized workflow seams",
   );
   assertCondition(
     /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createRequestScopedBoundaryContext\(request,\s*deps\)/s.test(source) &&
