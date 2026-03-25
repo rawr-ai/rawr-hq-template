@@ -4,7 +4,6 @@ import { assertCondition, mustExist, readFile, readPackageScripts } from "./_ver
 await Promise.all([
   mustExist("services/coordination/src/domain/events.ts"),
   mustExist("services/coordination/test/run-lifecycle-telemetry.test.ts"),
-  mustExist("plugins/workflows/coordination/src/events.ts"),
   mustExist("plugins/workflows/coordination/src/trace-links.ts"),
   mustExist("plugins/workflows/coordination/test/observability.test.ts"),
   mustExist("apps/server/test/ingress-signature-observability.test.ts"),
@@ -14,7 +13,6 @@ await Promise.all([
 const [
   serviceEventsSource,
   serviceTelemetryTestSource,
-  pluginEventsSource,
   traceLinksSource,
   observabilityTestSource,
   ingressTestSource,
@@ -23,7 +21,6 @@ const [
   await Promise.all([
     readFile("services/coordination/src/domain/events.ts"),
     readFile("services/coordination/test/run-lifecycle-telemetry.test.ts"),
-    readFile("plugins/workflows/coordination/src/events.ts"),
     readFile("plugins/workflows/coordination/src/trace-links.ts"),
     readFile("plugins/workflows/coordination/test/observability.test.ts"),
     readFile("apps/server/test/ingress-signature-observability.test.ts"),
@@ -43,8 +40,8 @@ assertCondition(
   "service createDeskEvent must enforce lifecycle status contract",
 );
 assertCondition(
-  /export\s+type\s+CreateDeskEventInput\s*=/.test(pluginEventsSource),
-  "workflow plugin events.ts must export CreateDeskEventInput",
+  /export\s+type\s+CreateDeskEventInput\s*=/.test(serviceEventsSource),
+  "service events.ts must export CreateDeskEventInput",
 );
 assertCondition(
   /export\s+type\s+TraceLinkOptions\s*=/.test(traceLinksSource) &&
