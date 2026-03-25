@@ -25,6 +25,13 @@ type RouteShape = {
   path?: string;
 };
 
+function normalizeSemanticSource(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\s+/g, "");
+}
+
 function collectProcedureRoutes(node: unknown, namespace: string[] = []): string[] {
   if (!node || typeof node !== "object") return [];
 
@@ -155,6 +162,24 @@ describe("rawr server routes", () => {
     expect(Object.keys(realization.orpc.published.router)).toEqual(["exampleTodo"]);
     expect(Object.keys(realization.workflows.published.router)).toEqual(["supportExample", "coordination"]);
     expect(typeof realization.workflows.createInngestFunctions).toBe("function");
+  });
+
+  it("host-composition-guard: canonical plugin families all use declaration-plus-contribute binding on the realized host path", () => {
+    const { manifest, boundRolePlan } = createTestingRawrHostSeam();
+    const declarationPlugins = [
+      ...Object.values(manifest.plugins.api),
+      ...Object.values(manifest.plugins.workflows),
+    ];
+
+    for (const plugin of declarationPlugins) {
+      expect(typeof plugin.contribute).toBe("function");
+    }
+
+    expect(boundRolePlan.apiPlugins.every((plugin) => plugin.internal?.router)).toBe(true);
+    expect(boundRolePlan.workflowPlugins.every((plugin) => plugin.internal?.router)).toBe(true);
+    expect(boundRolePlan.workflowPlugins.every((plugin) => typeof plugin.runtime?.createInngestFunctions === "function")).toBe(
+      true,
+    );
   });
 
   it("host-composition-guard: keeps canonical realized procedure routes stable", () => {
@@ -304,14 +329,20 @@ describe("rawr server routes", () => {
       "utf8",
     );
 
+    expect(orpcSource).toContain("createTestingRawrHostSeam().realization.orpc.router");
+    expect(orpcSource).toContain("createTestingRawrHostSeam().realization.orpc.published.router");
     expect(orpcSource).not.toContain("@rawr/hq-app/testing");
+    expect(openApiScriptSource).toContain("createTestingRawrHostSeam");
+    expect(openApiScriptSource).toContain("hostSeam.realization.orpc.published.router");
     expect(openApiScriptSource).not.toContain("@rawr/hq-app/testing");
+    expect(testingHostSource).toContain("createRawrHostSatisfiers");
+    expect(testingHostSource).toContain("createRawrHostBoundRolePlan");
+    expect(testingHostSource).toContain("materializeRawrHostBoundRolePlan");
     expect(testingHostSource).not.toContain("manifest.fixtures");
-    expect(hqTestingSource).not.toContain("createTestingRawrHqManifest");
-    expect(hqTestingSource).not.toContain("createRawrHqManifest(");
-    expect(rawrHqBridgeSource).not.toContain("@rawr/hq-app/testing");
-    expect(rawrHqBridgeSource).not.toContain("rawrHqManifest");
-    expect(proofClientSource).not.toContain("createTestingRawrHqManifest");
+    expect(normalizeSemanticSource(hqTestingSource)).toBe("export{};");
+    expect(normalizeSemanticSource(rawrHqBridgeSource)).toBe(
+      'export{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
+    );
     expect(proofClientSource).not.toContain("manifest.fixtures");
     expect(proofClientSource).toContain("createTestingExampleTodoServiceClient");
   });

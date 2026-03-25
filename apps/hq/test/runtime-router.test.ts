@@ -5,7 +5,14 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
-describe("hq app runtime seam guard", () => {
+function normalizeSemanticSource(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\s+/g, "");
+}
+
+describe("hq app declaration seam guard", () => {
   it("keeps the manifest cold and free of executable materialization", async () => {
     const manifestSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "manifest.ts"), "utf8");
 
@@ -24,10 +31,9 @@ describe("hq app runtime seam guard", () => {
       fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8"),
     ]);
 
-    expect(testingSource).not.toContain("createTestingRawrHqManifest");
-    expect(testingSource).not.toContain("createRawrHqManifest(");
-    expect(testingSource).not.toContain("@orpc/server");
-    expect(rawrHqSource).not.toContain("@rawr/hq-app/testing");
-    expect(rawrHqSource).not.toContain("rawrHqManifest");
+    expect(normalizeSemanticSource(testingSource)).toBe("export{};");
+    expect(normalizeSemanticSource(rawrHqSource)).toBe(
+      'export{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
+    );
   });
 });
