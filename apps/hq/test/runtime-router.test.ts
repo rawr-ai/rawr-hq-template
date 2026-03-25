@@ -27,18 +27,20 @@ describe("hq app declaration seam guard", () => {
 
   it("does not preserve the old executable bridge in testing or rawr.hq.ts", async () => {
     const testingPath = path.join(repoRoot, "apps", "hq", "src", "testing.ts");
+    const rawrHqPath = path.join(repoRoot, "rawr.hq.ts");
     const [testingSource, rawrHqSource] = await Promise.all([
       fs.readFile(testingPath, "utf8").catch((error: NodeJS.ErrnoException) => {
         if (error.code === "ENOENT") return null;
         throw error;
       }),
-      fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8"),
+      fs.readFile(rawrHqPath, "utf8").catch((error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") return null;
+        throw error;
+      }),
     ]);
 
     expect(testingSource === null || normalizeSemanticSource(testingSource) === "export{};").toBe(true);
-    expect(normalizeSemanticSource(rawrHqSource)).toBe(
-      'export{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
-    );
+    expect(rawrHqSource).toBeNull();
   });
 
   it("does not publish a testing export from the HQ app package", async () => {

@@ -213,7 +213,7 @@ async function verifyHostCompositionGuard() {
   );
   assertCondition(
     hasNamedImport(testingHostAst, "./host-composition", "createRawrHostComposition") &&
-      hasNamedImport(hostCompositionAst, "../../../rawr.hq", "createRawrHqManifest") &&
+      hasNamedImport(hostCompositionAst, "@rawr/hq-app/manifest", "createRawrHqManifest") &&
       hasNamedImport(hostCompositionAst, "./host-satisfiers", "createRawrHostSatisfiers") &&
       hasNamedImport(hostCompositionAst, "./host-seam", "createRawrHostBoundRolePlan") &&
       hasNamedImport(hostCompositionAst, "./host-realization", "materializeRawrHostBoundRolePlan") &&
@@ -221,7 +221,7 @@ async function verifyHostCompositionGuard() {
       !testingHostSource.includes('from "../../../rawr.hq"') &&
       !hostSeamSource.includes("@rawr/hq-app/manifest") &&
       !testingHostSource.includes("@rawr/hq-app/manifest"),
-    "host composition must localize the temporary rawr.hq bridge instead of letting rawr, host-seam, and testing-host each consume it directly",
+    "host composition must localize the narrow @rawr/hq-app/manifest input instead of letting rawr, host-seam, and testing-host each consume it directly",
   );
   assertCondition(hasRouteRegistration(rawrAst, "/api/inngest"), "rawr host must register /api/inngest route");
   assertCondition(hasRouteRegistration(rawrAst, "/api/workflows/*"), "rawr host must register /api/workflows/* route");

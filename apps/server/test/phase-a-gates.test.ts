@@ -186,7 +186,7 @@ describe("phase-a gate scaffold (server)", () => {
 
     expect(hasNamedImport(rawrAst, "./host-composition", "createRawrHostComposition")).toBe(true);
     expect(hasNamedImport(testingHostAst, "./host-composition", "createRawrHostComposition")).toBe(true);
-    expect(hasNamedImport(hostCompositionAst, "../../../rawr.hq", "createRawrHqManifest")).toBe(true);
+    expect(hasNamedImport(hostCompositionAst, "@rawr/hq-app/manifest", "createRawrHqManifest")).toBe(true);
     expect(hasNamedImport(hostCompositionAst, "./host-satisfiers", "createRawrHostSatisfiers")).toBe(true);
     expect(hasNamedImport(hostCompositionAst, "./host-seam", "createRawrHostBoundRolePlan")).toBe(true);
     expect(hasNamedImport(hostCompositionAst, "./host-realization", "materializeRawrHostBoundRolePlan")).toBe(true);
@@ -240,7 +240,7 @@ describe("phase-a gate scaffold (server)", () => {
       "utf8",
     );
     const hqTestingSource = await readIfPresent(path.join(repoRoot, "apps", "hq", "src", "testing.ts"));
-    const rawrHqBridgeSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
+    const rawrHqBridgeSource = await readIfPresent(path.join(repoRoot, "rawr.hq.ts"));
     const supportProofSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "test", "support", "example-todo-proof-clients.ts"),
       "utf8",
@@ -254,12 +254,10 @@ describe("phase-a gate scaffold (server)", () => {
     expect(testingHostSource).not.toContain("createRawrHostBoundRolePlan");
     expect(testingHostSource).not.toContain("materializeRawrHostBoundRolePlan");
     expect(normalizeSemanticSource(hostCompositionSource)).toContain(
-      'import{createRawrHqManifest,typeRawrHqManifest}from"../../../rawr.hq";',
+      'import{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
     );
     expect(hqTestingSource === null || normalizeSemanticSource(hqTestingSource) === "export{};").toBe(true);
-    expect(normalizeSemanticSource(rawrHqBridgeSource)).toBe(
-      'export{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
-    );
+    expect(rawrHqBridgeSource).toBeNull();
     expect(supportProofSource).not.toContain("manifest.fixtures");
     expect(supportProofSource).toContain("createTestingExampleTodoServiceClient");
   });

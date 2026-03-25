@@ -1,4 +1,4 @@
-import { createRawrHqManifest, type RawrHqManifest } from "../../../rawr.hq";
+import { createRawrHqManifest, type RawrHqManifest } from "@rawr/hq-app/manifest";
 import { materializeRawrHostBoundRolePlan } from "./host-realization";
 import {
   createRawrHostBoundRolePlan,
@@ -33,8 +33,8 @@ function selectRawrHostDeclarations(manifest: RawrHqManifest): RawrHostDeclarati
  * @agents-must-not distributed runtime/testing/OpenAPI bridge consumption
  *
  * Owns:
- * - the only sanctioned server-side intake of HQ app declarations while
- *   `rawr.hq.ts` still exists as a temporary composition bridge
+ * - the only sanctioned server-side intake of HQ app declaration authority
+ *   while split-project topology still exists
  * - host satisfier construction, bound role-plan creation, and realized host
  *   surface materialization as one executable composition story
  *
