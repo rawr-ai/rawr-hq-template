@@ -75,20 +75,18 @@ if (mode === "completion") {
     label: "manifest declares package-owned composition seams",
     ok:
       manifestSource.includes("export function createRawrHqManifest") &&
-      manifestSource.includes("plugins: {") &&
-      manifestSource.includes("api: apiPlugins") &&
-      manifestSource.includes("workflows: workflowPlugins") &&
+      manifestSource.includes("router: composedOrpcRouter") &&
+      manifestSource.includes("surfaces: composedWorkflowSurface.surfaces") &&
+      manifestSource.includes("triggerContract: composedWorkflowSurface.triggerContract") &&
+      manifestSource.includes("triggerRouter: composedWorkflowSurface.triggerRouter") &&
       manifestSource.includes("registerCoordinationWorkflowPlugin") &&
-      manifestSource.includes("registerSupportExampleWorkflowPlugin") &&
+      manifestSource.includes("composeWorkflowPlugins") &&
       !manifestSource.includes("createInngestServeHandler") &&
-      !manifestSource.includes("new Inngest(") &&
-      !manifestSource.includes("createWorkflowRouteHarness"),
+      !manifestSource.includes("new Inngest("),
   });
   requiredChecks.push({
     label: "host imports manifest authority seam",
-    ok:
-      hasNamedImport(rawrAst, "../../../rawr.hq", "createRawrHqManifest") &&
-      !rawrSource.includes("@rawr/hq-app/manifest"),
+    ok: hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest"),
   });
   requiredChecks.push({
     label: "host wires /api/workflows capability-family routing",
@@ -98,11 +96,10 @@ if (mode === "completion") {
       !hasIdentifierCall(rawrAst, "resolveWorkflowCapability"),
   });
   requiredChecks.push({
-    label: "manifest exposes declaration-only plugin groups instead of path-prefix authority",
+    label: "manifest exposes workflow surface metadata instead of path-prefix authority",
     ok:
       !manifestSource.includes("rawrHqWorkflowCapabilities") &&
-      manifestSource.includes("plugins: {") &&
-      manifestSource.includes("workflows: workflowPlugins"),
+      manifestSource.includes("surfaces: composedWorkflowSurface.surfaces"),
   });
   requiredChecks.push({
     label: "host consumes host-owned workflow route seam",
