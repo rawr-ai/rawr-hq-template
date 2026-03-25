@@ -4,8 +4,7 @@ import path from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
-import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
-import { createRawrHqManifest } from "@rawr/hq-app/manifest";
+import { createRawrHqManifest } from "../../../rawr.hq";
 import { materializeRawrHostBoundRolePlan } from "./host-realization";
 import { createRawrHostBoundRolePlan } from "./host-seam";
 import { createRawrHostSatisfiers } from "./host-satisfiers";
@@ -18,6 +17,7 @@ import {
   type RawrBoundaryContextDeps,
 } from "./workflows/context";
 import { createWorkflowRouteHarness } from "./workflows/harness";
+import { createRawrWorkflowRuntime } from "./workflows/runtime";
 
 export type RawrRoutesOptions = {
   repoRoot: string;
@@ -53,25 +53,6 @@ type ParsedInngestSignature = Readonly<{
   timestampSeconds: number;
   signature: string;
 }>;
-
-function asUrl(value: string | undefined): string | undefined {
-  if (!value) return undefined;
-  try {
-    const parsed = new URL(value);
-    return parsed.href;
-  } catch {
-    return undefined;
-  }
-}
-
-function resolveInngestBaseUrl(): string {
-  return (
-    asUrl(process.env.INNGEST_BASE_URL) ??
-    asUrl(process.env.INNGEST_EVENT_API_BASE_URL) ??
-    asUrl(process.env.INNGEST_DEV) ??
-    "http://localhost:8288"
-  );
-}
 
 function configuredIngressSigningKeys(): string[] {
   const signingKey = process.env.INNGEST_SIGNING_KEY?.trim() ?? "";
@@ -205,12 +186,25 @@ function resolveAuthorityRepoRoot(repoRoot: string): string {
   }
 }
 
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-canonical host-owned process materialization entrypoint
+ * @agents-must-not manifest-side executable bridge restoration
+ *
+ * Owns:
+ * - process-scoped Inngest client/runtime creation for the server role
+ * - materializing workflow durable functions from the already-bound host plan
+ *
+ * Must not own:
+ * - plugin declaration selection
+ * - host satisfier construction outside the canonical host seam
+ * - alternate composition input authority through `rawr.hq.ts`
+ */
 export function createHostInngestBundle(input: { repoRoot: string }): HostInngestBundle {
   const rawrHqHostSeam = materializeRawrHostBoundRolePlan(rawrHqBoundRolePlan);
   const client = new Inngest({ id: "rawr-hq" });
-  const runtime = createCoordinationWorkflowRuntimeAdapter({
+  const runtime = createRawrWorkflowRuntime({
     repoRoot: input.repoRoot,
-    inngestBaseUrl: resolveInngestBaseUrl(),
   });
   // The app manifest owns which registrations exist. The host binds them into
   // an executable role plan, then materializes runtime surfaces explicitly.
@@ -231,6 +225,20 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
   };
 }
 
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-canonical server-role route mount entrypoint
+ * @agents-must-not manifest-shaped runtime factory authority
+ *
+ * Owns:
+ * - process mount order for Inngest, workflow, and oRPC surfaces
+ * - routing host-owned realization outputs onto the live Elysia app
+ *
+ * Must not own:
+ * - capability-local client construction in the manifest
+ * - request/process materialization outside host-owned server surfaces
+ * - restart authority through `rawr.hq.ts`
+ */
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
   const hostLogger = createHostLoggerAdapter();

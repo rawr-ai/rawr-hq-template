@@ -198,12 +198,25 @@ async function verifyImportBoundary() {
 
 async function verifyHostCompositionGuard() {
   const { source, ast: rawrAst } = await readTypeScriptFile("apps/server/src/rawr.ts");
+  const { source: hostSeamSource, ast: hostSeamAst } = await readTypeScriptFile("apps/server/src/host-seam.ts");
+  const { source: testingHostSource, ast: testingHostAst } = await readTypeScriptFile("apps/server/src/testing-host.ts");
+  const { source: hostRealizationSource, ast: hostRealizationAst } = await readTypeScriptFile("apps/server/src/host-realization.ts");
+  const { source: workflowRuntimeSource, ast: workflowRuntimeAst } = await readTypeScriptFile("apps/server/src/workflows/runtime.ts");
   const { source: orpcSource } = await readTypeScriptFile("apps/server/src/orpc.ts");
   const { source: openApiSource } = await readTypeScriptFile("apps/server/scripts/write-orpc-openapi.ts");
-  const { source: testingHostSource } = await readTypeScriptFile("apps/server/src/testing-host.ts");
   const { source: supportProofSource } = await readTypeScriptFile("apps/server/test/support/example-todo-proof-clients.ts");
 
-  assertCondition(hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest"), "rawr host must import HQ app manifest authority");
+  assertCondition(
+    hasNamedImport(rawrAst, "../../../rawr.hq", "createRawrHqManifest"),
+    "rawr host must import HQ composition input through the explicit rawr.hq bridge",
+  );
+  assertCondition(
+    hasNamedImport(hostSeamAst, "../../../rawr.hq", "RawrHqManifest") &&
+      hasNamedImport(testingHostAst, "../../../rawr.hq", "createRawrHqManifest") &&
+      !hostSeamSource.includes("@rawr/hq-app/manifest") &&
+      !testingHostSource.includes("@rawr/hq-app/manifest"),
+    "host seam and testing host must share the same explicit HQ composition bridge instead of mixing direct manifest imports back in",
+  );
   assertCondition(hasRouteRegistration(rawrAst, "/api/inngest"), "rawr host must register /api/inngest route");
   assertCondition(hasRouteRegistration(rawrAst, "/api/workflows/*"), "rawr host must register /api/workflows/* route");
   assertCondition(hasIdentifierCall(rawrAst, "registerOrpcRoutes"), "rawr host must register ORPC routes through registerOrpcRoutes");
@@ -229,8 +242,10 @@ async function verifyHostCompositionGuard() {
     hasNamedImport(rawrAst, "inngest/bun", "serve") &&
       hasPropertyAccessChain(rawrAst, ["rawrHqHostSeam", "workflows", "createInngestFunctions"]) &&
       hasIdentifierCall(rawrAst, "inngestServe") &&
+      hasNamedImport(rawrAst, "./workflows/runtime", "createRawrWorkflowRuntime") &&
       !hasImport(rawrAst, "@rawr/plugin-api-coordination/server") &&
-      !hasImport(rawrAst, "@rawr/plugin-workflows-support-example/server"),
+      !hasImport(rawrAst, "@rawr/plugin-workflows-support-example/server") &&
+      !hasImport(rawrAst, "@rawr/plugin-workflows-coordination/server"),
     "rawr host must compose the runtime-owned inngest bundle through host-materialized workflow seams",
   );
   assertCondition(
@@ -249,6 +264,19 @@ async function verifyHostCompositionGuard() {
       !supportProofSource.includes("createTestingRawrHqManifest") &&
       !supportProofSource.includes("manifest.fixtures"),
     "proof and openapi helpers must not bypass host realization through HQ testing or direct manifest fixtures",
+  );
+  assertCondition(
+    hasNamedImport(hostRealizationAst, "./host-surface-merge", "mergeRawrHostSurfaceTrees") &&
+      !hasImport(hostRealizationAst, "@rawr/hq-sdk/composition") &&
+      hostRealizationSource.includes("implement(contract).$context<BoundaryRequestSupportContext>()"),
+    "host realization must own executable surface merging instead of reaching through @rawr/hq-sdk/composition",
+  );
+  assertCondition(
+    hasNamedImport(workflowRuntimeAst, "@rawr/plugin-workflows-coordination/server", "createCoordinationWorkflowRuntimeAdapter") &&
+      hasExportedFunction(workflowRuntimeAst, "createRawrWorkflowRuntime") &&
+      workflowRuntimeSource.includes("resolveRawrWorkflowInngestBaseUrl") &&
+      !source.includes("createCoordinationWorkflowRuntimeAdapter"),
+    "workflow runtime adapter construction must live in the host-owned workflow runtime home instead of inline in rawr.ts",
   );
 }
 

@@ -3,7 +3,7 @@ import {
   type MaterializedApiPluginRegistration,
 } from "@rawr/hq-sdk/apis";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
-import type { RawrHqManifest } from "@rawr/hq-app/manifest";
+import type { RawrHqManifest } from "../../../rawr.hq";
 import type { RawrHostSatisfiers } from "./host-satisfiers";
 
 /**
@@ -24,7 +24,7 @@ import type { RawrHostSatisfiers } from "./host-satisfiers";
  * - `createRawrHostBoundRolePlan({ manifest, satisfiers })`
  *
  * Transitional:
- * - narrow consumption of `@rawr/hq-app/manifest` as composition input only
+ * - narrow consumption of the explicit `rawr.hq.ts` bridge as composition input only
  *
  * Must stay strict:
  * - every canonical plugin family binds through `contribute(bound)`
