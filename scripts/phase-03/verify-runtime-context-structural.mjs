@@ -20,9 +20,28 @@ for (const tag of requiredTags) {
   }
 }
 
-if (!source.includes("export type RuntimeRouterContext")) {
-  console.error("runtime-context structural failed: RuntimeRouterContext export missing.");
-  process.exit(1);
+for (const requiredExport of [
+  "export type WorkflowRuntimeSupportSeam",
+  "export type BoundaryMiddlewareSupportState",
+  "export type HostRuntimeSupportContext",
+  "export type BoundaryRequestSupportContext",
+]) {
+  if (!source.includes(requiredExport)) {
+    console.error(`runtime-context structural failed: missing canonical export ${requiredExport}.`);
+    process.exit(1);
+  }
+}
+
+for (const deprecatedExport of [
+  "export type WorkflowRuntimeAdapter",
+  "export type BoundaryMiddlewareState",
+  "export type RuntimeRouterContext",
+  "export type RequestBoundaryContext",
+]) {
+  if (source.includes(deprecatedExport)) {
+    console.error(`runtime-context structural failed: deprecated alias survived ${deprecatedExport}.`);
+    process.exit(1);
+  }
 }
 
 if (source.includes("createHqRuntimeRouter") || source.includes("createWorkflowTriggerRuntimeRouter")) {

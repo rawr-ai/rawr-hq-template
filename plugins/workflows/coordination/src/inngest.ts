@@ -1,7 +1,7 @@
 import { Engine, type EngineAction } from "@inngest/workflow-kit";
 import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
-import type { WorkflowRuntimeAdapter } from "@rawr/runtime-context";
+import type { WorkflowRuntimeSupportSeam } from "@rawr/runtime-context";
 import {
   DESK_KINDS_V1,
   RUN_FINALIZATION_CONTRACT_V1,
@@ -62,7 +62,7 @@ export type CoordinationRunEventData = Readonly<{
   baseUrl: string;
 }>;
 
-export type CoordinationRuntimeAdapter = WorkflowRuntimeAdapter<
+export type CoordinationRuntimeAdapter = WorkflowRuntimeSupportSeam<
   CoordinationWorkflowV1,
   DeskDefinitionV1,
   RunStatusV1,
