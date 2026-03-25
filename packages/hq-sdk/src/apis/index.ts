@@ -14,26 +14,72 @@ export type ApiSurfaceContribution<
   router: TRouter;
 }>;
 
-export type ApiPluginRegistration<
+export type ApiSurfaceDeclaration<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+> = Readonly<{
+  contract: TContract;
+}>;
+
+export type ApiPluginDeclaration<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+> = Readonly<{
+  namespace: "orpc";
+  internal: ApiSurfaceDeclaration<TContract>;
+  published?: ApiSurfaceDeclaration<TContract>;
+}>;
+
+export type ApiPluginContribution<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
   TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
 > = Readonly<{
-  namespace: "orpc";
   internal: ApiSurfaceContribution<TContract, TRouter>;
   published?: ApiSurfaceContribution<TContract, TRouter>;
+}>;
+
+type BivariantContributionFactory<TInput, TResult> = {
+  bivarianceHack(input: TInput): TResult;
+}["bivarianceHack"];
+
+export type ApiPluginContributionBuilder<
+  TBound = never,
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+> = BivariantContributionFactory<TBound, ApiPluginContribution<TContract, TRouter>>;
+
+export type ApiPluginRegistration<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TBound = never,
+> = ApiPluginContribution<TContract, TRouter> & Readonly<{
+  namespace: "orpc";
+  declaration?: ApiPluginDeclaration<TContract>;
+  contribute?: ApiPluginContributionBuilder<TBound, TContract, TRouter>;
 }>;
 
 type DefineApiPluginInput<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
   TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
-> = Omit<ApiPluginRegistration<TContract, TRouter>, "namespace">;
+  TBound = never,
+> = Omit<ApiPluginRegistration<TContract, TRouter, TBound>, "namespace">;
+
+export function defineApiPluginDeclaration<
+  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+>(
+  input: Omit<ApiPluginDeclaration<TContract>, "namespace">,
+): ApiPluginDeclaration<TContract> {
+  return {
+    namespace: "orpc",
+    ...input,
+  };
+}
 
 export function defineApiPlugin<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
   TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TBound = never,
 >(
-  input: DefineApiPluginInput<TContract, TRouter>,
-): ApiPluginRegistration<TContract, TRouter> {
+  input: DefineApiPluginInput<TContract, TRouter, TBound>,
+): ApiPluginRegistration<TContract, TRouter, TBound> {
   return {
     namespace: "orpc",
     ...input,

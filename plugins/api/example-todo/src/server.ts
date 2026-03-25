@@ -1,4 +1,8 @@
-import { defineApiPlugin } from "@rawr/hq-sdk/apis";
+import {
+  defineApiPlugin,
+  defineApiPluginDeclaration,
+  type ApiPluginContribution,
+} from "@rawr/hq-sdk/apis";
 import type { ExampleTodoClientResolver } from "./context";
 import { exampleTodoApiContract } from "./contract";
 import { createExampleTodoApiRouter } from "./router";
@@ -9,17 +13,40 @@ export {
 } from "./context";
 export { createExampleTodoApiRouter, type ExampleTodoApiRouter } from "./router";
 
-export function registerExampleTodoApiPlugin(input: {
+export type ExampleTodoApiPluginBound = Readonly<{
   resolveClient: ExampleTodoClientResolver;
-}) {
-  const internal = {
+}>;
+
+const exampleTodoApiDeclaration = defineApiPluginDeclaration({
+  internal: {
     contract: exampleTodoApiContract,
-    router: createExampleTodoApiRouter(input.resolveClient),
+  },
+  published: {
+    contract: exampleTodoApiContract,
+  },
+});
+
+function contributeExampleTodoApiPlugin(
+  bound: ExampleTodoApiPluginBound,
+): ApiPluginContribution<typeof exampleTodoApiContract, ReturnType<typeof createExampleTodoApiRouter>> {
+  const internal = {
+    contract: exampleTodoApiDeclaration.internal.contract,
+    router: createExampleTodoApiRouter(bound.resolveClient),
   } as const;
 
-  return defineApiPlugin({
+  return {
     internal,
     published: internal,
+  };
+}
+
+export function registerExampleTodoApiPlugin(input: ExampleTodoApiPluginBound) {
+  const contribution = contributeExampleTodoApiPlugin(input);
+
+  return defineApiPlugin({
+    declaration: exampleTodoApiDeclaration,
+    contribute: contributeExampleTodoApiPlugin,
+    ...contribution,
   });
 }
 
