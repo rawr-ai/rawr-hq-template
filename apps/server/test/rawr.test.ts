@@ -305,6 +305,8 @@ describe("rawr server routes", () => {
     expect(rawrSource).not.toContain("./coordination");
     expect(rawrSource).not.toContain("createCoordinationInngestFunction");
     expect(rawrSource).not.toContain("createSupportExampleInngestFunctions");
+    expect(rawrSource).toContain('from "../../../rawr.hq"');
+    expect(rawrSource).not.toContain("@rawr/hq-app/manifest");
     expect(rawrSource).toContain("createRawrHostBoundRolePlan");
     expect(rawrSource).toContain("materializeRawrHostBoundRolePlan");
     expect(rawrSource).toContain('createCoordinationWorkflowRuntimeAdapter');
@@ -327,6 +329,7 @@ describe("rawr server routes", () => {
       path.join(repoRoot, "apps", "server", "scripts", "write-orpc-openapi.ts"),
       "utf8",
     );
+    const hostSeamSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-seam.ts"), "utf8");
     const testingHostSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
       "utf8",
@@ -344,9 +347,13 @@ describe("rawr server routes", () => {
     expect(openApiScriptSource).toContain("createTestingRawrHostSeam");
     expect(openApiScriptSource).toContain("hostSeam.realization.orpc.published.router");
     expect(openApiScriptSource).not.toContain("@rawr/hq-app/testing");
+    expect(hostSeamSource).toContain('from "../../../rawr.hq"');
+    expect(hostSeamSource).not.toContain("@rawr/hq-app/manifest");
     expect(testingHostSource).toContain("createRawrHostSatisfiers");
     expect(testingHostSource).toContain("createRawrHostBoundRolePlan");
     expect(testingHostSource).toContain("materializeRawrHostBoundRolePlan");
+    expect(testingHostSource).toContain('from "../../../rawr.hq"');
+    expect(testingHostSource).not.toContain("@rawr/hq-app/manifest");
     expect(testingHostSource).not.toContain("manifest.fixtures");
     expect(hqTestingSource === null || normalizeSemanticSource(hqTestingSource) === "export{};").toBe(true);
     expect(normalizeSemanticSource(rawrHqBridgeSource)).toBe(
