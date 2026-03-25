@@ -237,6 +237,24 @@ describe("rawr server routes", () => {
     expect(rawrSource).toContain("contextFactory: (request, deps) => createWorkflowBoundaryContext(request, deps)");
   });
 
+  it("host-composition-guard: proof and openapi helpers do not bypass host realization through HQ testing or manifest fixtures", async () => {
+    const orpcSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "orpc.ts"), "utf8");
+    const openApiScriptSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "scripts", "write-orpc-openapi.ts"),
+      "utf8",
+    );
+    const proofClientSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "test", "support", "example-todo-proof-clients.ts"),
+      "utf8",
+    );
+
+    expect(orpcSource).not.toContain("@rawr/hq-app/testing");
+    expect(openApiScriptSource).not.toContain("@rawr/hq-app/testing");
+    expect(proofClientSource).not.toContain("createTestingRawrHqManifest");
+    expect(proofClientSource).not.toContain("manifest.fixtures");
+    expect(proofClientSource).toContain("createTestingExampleTodoClient");
+  });
+
   it("host-composition-guard: serves capability-first workflow family paths", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
     const res = await app.handle(new Request("http://localhost/api/workflows/support-example/triage/status"));
