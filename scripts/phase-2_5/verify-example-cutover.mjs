@@ -48,8 +48,10 @@ assertCondition(
   "plugins/api/example-todo/src/index.ts must stay app-safe and must not register the host ORPC surface",
 );
 assertCondition(
-  pluginServerSource.includes('namespace: "orpc"') && pluginServerSource.includes("exampleTodoApiContract"),
-  "plugins/api/example-todo/src/server.ts must register an ORPC plugin over the example-todo contract",
+  pluginServerSource.includes("defineApiPlugin")
+    && pluginServerSource.includes("exampleTodoApiContract")
+    && pluginServerSource.includes("published: internal"),
+  "plugins/api/example-todo/src/server.ts must register the example-todo API plugin through defineApiPlugin over the canonical contract",
 );
 assertCondition(
   pluginRouterSource.includes("resolveClient(context.repoRoot).tasks.create")

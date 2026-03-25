@@ -5,10 +5,12 @@ import path from "node:path";
 const root = process.cwd();
 const projectPath = path.join(root, "plugins", "api", "example-todo", "project.json");
 const indexPath = path.join(root, "plugins", "api", "example-todo", "src", "index.ts");
+const serverPath = path.join(root, "plugins", "api", "example-todo", "src", "server.ts");
 const routerPath = path.join(root, "plugins", "api", "example-todo", "src", "router.ts");
 
 const project = JSON.parse(await fs.readFile(projectPath, "utf8"));
 const indexSource = await fs.readFile(indexPath, "utf8");
+const serverSource = await fs.readFile(serverPath, "utf8");
 const routerSource = await fs.readFile(routerPath, "utf8");
 
 const requiredTags = [
@@ -26,8 +28,13 @@ for (const tag of requiredTags) {
   }
 }
 
-if (!indexSource.includes('namespace: "orpc"') || !indexSource.includes("exampleTodoApiContract")) {
-  console.error("plugin-api-example-todo structural failed: plugin index must register the ORPC example-todo surface.");
+if (!indexSource.includes("exampleTodoApiContract") || indexSource.includes("registerExampleTodoApiPlugin")) {
+  console.error("plugin-api-example-todo structural failed: src/index.ts must stay app-safe and export the example-todo contract only.");
+  process.exit(1);
+}
+
+if (!serverSource.includes("defineApiPlugin") || !serverSource.includes("exampleTodoApiContract")) {
+  console.error("plugin-api-example-todo structural failed: src/server.ts must register the example-todo API plugin through defineApiPlugin.");
   process.exit(1);
 }
 

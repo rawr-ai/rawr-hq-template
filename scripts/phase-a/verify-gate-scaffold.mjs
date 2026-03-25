@@ -206,8 +206,10 @@ async function verifyHostCompositionGuard() {
   assertCondition(hasRegisterOrpcRoutesManifestRouter(rawrAst), "rawr host must pass manifest-owned ORPC router seam to registerOrpcRoutes");
   assertCondition(hasIdentifierCall(rawrAst, "createRawrHqManifest"), "rawr host must instantiate the HQ app manifest seam");
   assertCondition(
-    hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "triggerRouter"]),
-    "rawr host must consume manifest-owned workflow trigger router seam",
+    hasIdentifierCall(rawrAst, "createWorkflowRouteHarness") &&
+      /publishedRouter:\s*rawrHqManifest\.workflows\.published\.router/s.test(source) &&
+      /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createWorkflowBoundaryContext\(request,\s*deps\)/s.test(source),
+    "rawr host must consume manifest-owned published workflow router seam through createWorkflowRouteHarness",
   );
   assertCondition(
     hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "createInngestFunctions"]) &&
@@ -223,9 +225,8 @@ async function verifyHostCompositionGuard() {
     "rawr host must compose the runtime-owned inngest bundle through manifest-owned workflow seams",
   );
   assertCondition(
-    /contextFactory:\s*\(request,\s*deps\)\s*=>\s*rawrHqManifest\.orpc\.enrichContext\(createRequestScopedBoundaryContext\(request,\s*deps\)\)/s.test(
-      source,
-    ),
+    /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createRequestScopedBoundaryContext\(request,\s*deps\)/s.test(source) &&
+      !source.includes("rawrHqManifest.orpc.enrichContext"),
     "rawr host must keep workflow context enrichment out of canonical ORPC registration",
   );
   assertCondition(
@@ -261,20 +262,17 @@ async function verifyTelemetryContract() {
     mustExist("scripts/phase-c/verify-telemetry-contract.mjs"),
     mustExist("services/coordination/src/domain/events.ts"),
     mustExist("services/coordination/test/run-lifecycle-telemetry.test.ts"),
-    mustExist("plugins/workflows/coordination/src/events.ts"),
     mustExist("plugins/workflows/coordination/src/trace-links.ts"),
     mustExist("plugins/workflows/coordination/test/observability.test.ts"),
     mustExist("apps/server/test/ingress-signature-observability.test.ts"),
   ]);
 
-  const [serviceEventsSource, pluginEventsSource, traceLinksSource, phaseCTelemetryVerifierSource, packageJsonRaw] =
-    await Promise.all([
-      fs.readFile(path.join(root, "services/coordination/src/domain/events.ts"), "utf8"),
-      fs.readFile(path.join(root, "plugins/workflows/coordination/src/events.ts"), "utf8"),
-      fs.readFile(path.join(root, "plugins/workflows/coordination/src/trace-links.ts"), "utf8"),
-      fs.readFile(path.join(root, "scripts/phase-c/verify-telemetry-contract.mjs"), "utf8"),
-      fs.readFile(path.join(root, "package.json"), "utf8"),
-    ]);
+  const [serviceEventsSource, traceLinksSource, phaseCTelemetryVerifierSource, packageJsonRaw] = await Promise.all([
+    fs.readFile(path.join(root, "services/coordination/src/domain/events.ts"), "utf8"),
+    fs.readFile(path.join(root, "plugins/workflows/coordination/src/trace-links.ts"), "utf8"),
+    fs.readFile(path.join(root, "scripts/phase-c/verify-telemetry-contract.mjs"), "utf8"),
+    fs.readFile(path.join(root, "package.json"), "utf8"),
+  ]);
   const packageJson = JSON.parse(packageJsonRaw);
   const scripts = packageJson.scripts ?? {};
 
@@ -291,8 +289,8 @@ async function verifyTelemetryContract() {
     "service events.ts must enforce lifecycle status contract",
   );
   assertCondition(
-    /export\s+type\s+CreateDeskEventInput\s*=/.test(pluginEventsSource),
-    "workflow plugin events.ts must export CreateDeskEventInput",
+    /export\s+type\s+CreateDeskEventInput\s*=/.test(serviceEventsSource),
+    "service events.ts must export CreateDeskEventInput",
   );
   assertCondition(
     /export\s+type\s+TraceLinkOptions\s*=/.test(traceLinksSource),
