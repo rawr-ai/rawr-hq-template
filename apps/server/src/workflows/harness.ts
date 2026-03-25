@@ -80,6 +80,19 @@ async function withWorkflowRouteSpan(
   });
 }
 
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-canonical host-owned published workflow route harness
+ * @agents-must-not manifest-side workflow route fixtures
+ *
+ * Owns:
+ * - wrapping realized published workflow routers with host request context,
+ *   logging, and telemetry
+ *
+ * Must not own:
+ * - workflow declaration/binding
+ * - alternate published route assembly outside host realization
+ */
 export function createWorkflowRouteHarness<
   TContext extends {
     requestId: string;

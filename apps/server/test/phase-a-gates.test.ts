@@ -158,11 +158,29 @@ async function readIfPresent(filePath: string): Promise<string | null> {
 }
 
 describe("phase-a gate scaffold (server)", () => {
-  it("host composition guard gate scaffold verifies manifest-owned runtime seams", async () => {
+  it("host composition guard gate scaffold verifies the explicit HQ composition bridge and host-owned runtime seams", async () => {
     const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
     const rawrAst = parseTypeScript(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), rawrSource);
+    const hostSeamSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-seam.ts"), "utf8");
+    const hostSeamAst = parseTypeScript(path.join(repoRoot, "apps", "server", "src", "host-seam.ts"), hostSeamSource);
+    const testingHostSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "testing-host.ts"), "utf8");
+    const testingHostAst = parseTypeScript(path.join(repoRoot, "apps", "server", "src", "testing-host.ts"), testingHostSource);
+    const hostRealizationSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-realization.ts"), "utf8");
+    const hostRealizationAst = parseTypeScript(
+      path.join(repoRoot, "apps", "server", "src", "host-realization.ts"),
+      hostRealizationSource,
+    );
+    const workflowRuntimeSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "workflows", "runtime.ts"), "utf8");
+    const workflowRuntimeAst = parseTypeScript(
+      path.join(repoRoot, "apps", "server", "src", "workflows", "runtime.ts"),
+      workflowRuntimeSource,
+    );
 
-    expect(hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest")).toBe(true);
+    expect(hasNamedImport(rawrAst, "../../../rawr.hq", "createRawrHqManifest")).toBe(true);
+    expect(hasNamedImport(hostSeamAst, "../../../rawr.hq", "RawrHqManifest")).toBe(true);
+    expect(hasNamedImport(testingHostAst, "../../../rawr.hq", "createRawrHqManifest")).toBe(true);
+    expect(hostSeamSource).not.toContain("@rawr/hq-app/manifest");
+    expect(testingHostSource).not.toContain("@rawr/hq-app/manifest");
     expect(hasRouteRegistration(rawrAst, "/api/inngest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/workflows/*")).toBe(true);
     expect(hasRegisterOrpcRoutesHostSeamRouter(rawrAst)).toBe(true);
@@ -176,12 +194,20 @@ describe("phase-a gate scaffold (server)", () => {
     expect(rawrSource).not.toContain("rawrHqManifest.inngest");
     expect(rawrSource).not.toContain("@rawr/plugin-api-coordination/server");
     expect(rawrSource).not.toContain("@rawr/plugin-workflows-support-example/server");
+    expect(rawrSource).not.toContain("@rawr/plugin-workflows-coordination/server");
     expect(rawrSource).not.toContain("./coordination");
-    expect(rawrSource).toContain("@rawr/plugin-workflows-coordination/server");
-    expect(rawrSource).toContain("createCoordinationWorkflowRuntimeAdapter");
+    expect(rawrSource).toContain('from "./workflows/runtime"');
+    expect(rawrSource).toContain("createRawrWorkflowRuntime");
     expect(rawrSource).not.toContain("resolveWorkflowCapability");
     expect(rawrSource).toContain("contextFactory: (request, deps) => createRequestScopedBoundaryContext(request, deps)");
     expect(rawrSource).not.toContain("rawrHqManifest.orpc.enrichContext");
+    expect(hasNamedImport(hostRealizationAst, "./host-surface-merge", "mergeRawrHostSurfaceTrees")).toBe(true);
+    expect(hostRealizationSource).not.toContain("@rawr/hq-sdk/composition");
+    expect(hostRealizationSource).toContain("implement(contract).$context<BoundaryRequestSupportContext>()");
+    expect(hasNamedImport(workflowRuntimeAst, "@rawr/plugin-workflows-coordination/server", "createCoordinationWorkflowRuntimeAdapter")).toBe(
+      true,
+    );
+    expect(workflowRuntimeSource).toContain("resolveRawrWorkflowInngestBaseUrl");
   });
 
   it("host composition guard rejects proof-helper bypass through HQ testing and manifest fixtures", async () => {
@@ -190,10 +216,7 @@ describe("phase-a gate scaffold (server)", () => {
       path.join(repoRoot, "apps", "server", "scripts", "write-orpc-openapi.ts"),
       "utf8",
     );
-    const testingHostSource = await fs.readFile(
-      path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
-      "utf8",
-    );
+    const testingHostSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "testing-host.ts"), "utf8");
     const hqTestingSource = await readIfPresent(path.join(repoRoot, "apps", "hq", "src", "testing.ts"));
     const rawrHqBridgeSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
     const supportProofSource = await fs.readFile(

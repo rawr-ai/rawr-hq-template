@@ -305,6 +305,19 @@ export async function generateOrpcOpenApiSpec(
   return createOpenApiSpec(router, baseUrl);
 }
 
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-canonical host-owned API request materializer
+ * @agents-must-not manifest-owned route assembly or HQ testing fixtures
+ *
+ * Owns:
+ * - request-scoped context hydration for RPC and published OpenAPI routes
+ * - host auth/logging/telemetry wrappers around realized routers
+ *
+ * Must not own:
+ * - declaration inspection or satisfier resolution
+ * - alternate runtime/testing assembly paths outside the realized host seam
+ */
 export function registerOrpcRoutes<
   TApp extends AnyElysia,
   TContext extends RuntimeRouterContext = RuntimeRouterContext,

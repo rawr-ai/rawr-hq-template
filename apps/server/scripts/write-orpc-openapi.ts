@@ -15,6 +15,11 @@ function resolveOutputPath(): string {
   return path.join(serverRoot, "openapi", "orpc-openapi.json");
 }
 
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-canonical host-aware OpenAPI generation entrypoint
+ * @agents-must-not manifest-owned published router fixtures
+ */
 async function main() {
   const outputPath = resolveOutputPath();
   const baseUrl = process.env.RAWR_ORPC_OPENAPI_BASE_URL?.trim() || "http://localhost:3000";
