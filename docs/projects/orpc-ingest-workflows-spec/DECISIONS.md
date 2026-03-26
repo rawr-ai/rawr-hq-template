@@ -14,7 +14,7 @@ Implementation-state snapshots are tracked in phase execution artifacts, not in 
 
 ### D-005 — Workflow trigger route convergence
 - `status`: `closed`
-- `resolution`: The packet locks on a manifest-driven host spine: capability-first `/api/workflows/<capability>/*` mounts come from generated `rawr.hq.ts`; workflow routers live under `rawrHqManifest.workflows.triggerRouter`; the same manifest supplies `rawrHqManifest.inngest`; workflow boundary context helpers keep `/api/workflows/<capability>/*` caller-facing while `/api/inngest` remains runtime-only. `/rpc` remains first-party/internal transport, and no dedicated `/rpc/workflows` mount is added by default.
+- `resolution`: The packet locks on a manifest-driven host spine: capability-first `/api/workflows/<capability>/*` mounts come from generated `apps/hq/rawr.hq.ts`; workflow routers live under `rawrHqManifest.workflows.triggerRouter`; the same manifest supplies `rawrHqManifest.inngest`; workflow boundary context helpers keep `/api/workflows/<capability>/*` caller-facing while `/api/inngest` remains runtime-only. `/rpc` remains first-party/internal transport, and no dedicated `/rpc/workflows` mount is added by default.
 - `historical_question`: Should workflow trigger APIs remain first-class caller-facing routes (`/api/workflows/<capability>/*`) with explicit mount ownership distinct from runtime ingress?
 - `closure_scope`: spec-policy lock only.
 - `why_closed`: Packet docs now encode manifest-driven route composition, caller/runtime split semantics, and host mounting rules directly.
@@ -87,10 +87,10 @@ Implementation-state snapshots are tracked in phase execution artifacts, not in 
 ### D-013 — Legacy metadata hard deletion and lifecycle obligations
 - `status`: `locked`
 - `locked_decision`:
-  - Runtime behavior and composition semantics in this packet are derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`.
+  - Runtime behavior and composition semantics in this packet are derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `apps/hq/rawr.hq.ts`.
   - `templateRole`, `channel`, `publishTier`, and `published` are removed from target-state metadata contracts and MUST NOT appear in active plugin manifests, parser outputs, runtime wiring, or lifecycle tooling.
   - Validation/parsing/tooling MUST hard-fail when these legacy metadata fields are present in active plugin metadata surfaces.
-  - Manifest-first composition via generated `rawr.hq.ts` is the sole composition authority in packet target-state language.
+  - Manifest-first composition via generated `apps/hq/rawr.hq.ts` is the sole composition authority in packet target-state language.
   - D-005..D-012 semantics are unchanged by this lock.
 - `policy_obligations`:
   - Downstream docs/process/runbook/testing artifacts MUST align to hard deletion and remove all active metadata contract examples/claims tied to `templateRole`, `channel`, `publishTier`, or `published`.
@@ -151,7 +151,7 @@ Implementation-state snapshots are tracked in phase execution artifacts, not in 
   - `RAWR HQ-Template` remains upstream engineering truth.
   - Default consumer distribution path is instance-kit / no-fork-repeatability.
   - Long-lived fork posture is maintainer-only by default and is not the default consumer path.
-  - Manifest-first composition authority remains canonical in generated `rawr.hq.ts`.
+  - Manifest-first composition authority remains canonical in generated `apps/hq/rawr.hq.ts`.
   - Runtime lifecycle semantics remain derived from plugin surface root + `rawr.kind` + `rawr.capability` + manifest registration; legacy metadata fields are hard-deleted from non-archival runtime/tooling/scaffold metadata surfaces (D-013 unchanged).
   - Multi-owner invariant is required now: no new singleton-global assumptions; alias/instance seam is contract-required now, while full feature UX/packaging mechanics are deferred.
   - D-005..D-015 semantics remain unchanged.

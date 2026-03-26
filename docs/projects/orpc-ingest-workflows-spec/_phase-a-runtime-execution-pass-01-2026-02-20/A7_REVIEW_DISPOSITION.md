@@ -18,7 +18,7 @@ Disposition for A7 TypeScript + ORPC review closure, including targeted structur
    - Server tests now use explicit first-party caller headers for `/rpc` success paths.
 2. `/api/inngest` ingress guard pre-dispatch enforcement: **resolved**.
    - Host verifies ingress signature before runtime handler dispatch.
-3. Manifest composition seam correctness (`rawr.hq.ts` ownership usage in host): **resolved for Phase A lock scope**.
+3. Manifest composition seam correctness (`apps/hq/rawr.hq.ts` ownership usage in host): **resolved for Phase A lock scope**.
    - Host consumes manifest-owned ORPC, workflow trigger router, and Inngest bundle seams.
 4. Route-negative assertion coverage (D-015): **resolved**.
    - Matrix asserts caller/routing negatives and required suite IDs.

@@ -32,7 +32,7 @@ This document remains packet-only by design:
 7. Downstream checks must include: `manifest-smoke`, `metadata-contract`, `import-boundary`, and `host-composition-guard`.
 8. D-016 compatibility is mandatory at policy/seam level:
    - default consumer distribution posture is instance-kit/no-fork-repeatability; long-lived fork posture is maintainer-only by default,
-   - manifest-first composition authority remains `rawr.hq.ts` with runtime identity keyed by `rawr.kind` + `rawr.capability`,
+   - manifest-first composition authority remains `apps/hq/rawr.hq.ts` with runtime identity keyed by `rawr.kind` + `rawr.capability`,
    - downstream testing docs/runbooks MUST require alias/instance seam assertions and MUST require no-singleton-global negative assertions,
    - do not introduce deferred UX/packaging mechanics into downstream execution contract language.
 
@@ -48,7 +48,7 @@ Use this verbatim when validating D-015 language in `DECISIONS.md`:
 ## D-016 Compatibility Addendum (Policy/Seam Level)
 Downstream execution updates MUST include these D-016-compatible constraints:
 1. Treat instance-kit/no-fork-repeatability as the default consumer distribution posture and maintainer fork posture as non-default consumer path.
-2. Keep runtime authority manifest-first (`rawr.hq.ts`) and lifecycle identity keyed by `rawr.kind` + `rawr.capability`.
+2. Keep runtime authority manifest-first (`apps/hq/rawr.hq.ts`) and lifecycle identity keyed by `rawr.kind` + `rawr.capability`.
 3. Require alias/instance seam assertions in boundary/runtime verification documentation.
 4. Require explicit negative assertions against singleton-global assumptions in instance-aware composition.
 5. Keep deferred UX/packaging mechanics out of this implementation-adjacent execution contract.

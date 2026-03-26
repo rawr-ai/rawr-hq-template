@@ -1,6 +1,6 @@
 # RAWR HQ Manifest Composition
 
-Use this runbook when composing capability runtime surfaces in `rawr.hq.ts`.
+Use this runbook when composing capability runtime surfaces in `apps/hq/rawr.hq.ts`.
 
 ## Purpose
 Provide one deterministic workflow for composing:
@@ -21,7 +21,7 @@ Provide one deterministic workflow for composing:
 ## Composition Steps
 
 ### 1) Import plugin registrations
-In `rawr.hq.ts`, import each surface registration helper.
+In `apps/hq/rawr.hq.ts`, import each surface registration helper.
 
 ### 2) Register each surface
 Call registration helpers and store outputs in local constants.
@@ -52,7 +52,7 @@ Host apps must not compose capability logic directly.
 ## Guardrails
 1. No plugin-to-plugin runtime imports.
 2. Capability logic remains in `packages/*`.
-3. `rawr.hq.ts` is sole cross-surface composition authority.
+3. `apps/hq/rawr.hq.ts` is sole cross-surface composition authority.
 4. Keep naming stable per capability (`invoice-processing` style slugs).
 
 ## Validation
@@ -63,7 +63,7 @@ Host apps must not compose capability logic directly.
 
 ## Troubleshooting
 1. Symptom: capability routes not mounted.
-- Check plugin registration is present in `rawr.hq.ts`.
+- Check plugin registration is present in `apps/hq/rawr.hq.ts`.
 2. Symptom: workflow functions not firing.
 - Check workflow registration contributes functions to manifest Inngest bundle.
 3. Symptom: plugin metadata rejected.

@@ -27,7 +27,7 @@ No kickoff blockers.
 | --- | --- | --- | --- |
 | `B0` `/rpc` auth-source hardening | `@rawr-runtime-host` | `@rawr-platform-duty` | Replace header-only caller trust with host/session/service-auth-derived classification while preserving route policy. |
 | `B1` workflow trigger router seam isolation | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Isolate trigger/status router from broad ORPC coupling and keep plugin-owned boundary scope explicit. |
-| `B2` manifest/host seam hardening | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Reduce `rawr.hq.ts` host-internal coupling while preserving manifest-first authority and import-direction guarantees. |
+| `B2` manifest/host seam hardening | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Reduce `apps/hq/rawr.hq.ts` host-internal coupling while preserving manifest-first authority and import-direction guarantees. |
 | `B3` verification/gate structural hardening | `@rawr-verification-gates` | `@rawr-release-duty` | Promote string-shape checks to structural ownership assertions and add adapter-shim anti-regression checks. |
 
 ## Ordered Opening Sequence

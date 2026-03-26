@@ -14,7 +14,7 @@ Do not swap command families.
 ## Target Authoring Flow
 1. Author capability contracts/events/operations in `packages/<capability>/*`.
 2. Author one or more runtime adapters in `plugins/<surface>/<capability>-*`.
-3. Register adapters in `rawr.hq.ts` (explicit phase-1 registration).
+3. Register adapters in `apps/hq/rawr.hq.ts` (explicit phase-1 registration).
 4. Mount manifest outputs from `apps/*` hosts.
 5. Validate state/sync/lifecycle checks.
 
@@ -39,7 +39,7 @@ Contract:
 
 ### 3) Manifest registration
 Update:
-- `rawr.hq.ts`
+- `apps/hq/rawr.hq.ts`
 
 Add API plugin registration and ORPC root composition there.
 
@@ -77,7 +77,7 @@ Agent plugin dependency rule:
 
 ## Verification Checklist
 1. Composition path:
-- all cross-surface composition is in `rawr.hq.ts`.
+- all cross-surface composition is in `apps/hq/rawr.hq.ts`.
 2. Import boundaries:
 - no plugin-to-plugin runtime imports.
 3. Runtime mounts:

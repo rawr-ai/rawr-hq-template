@@ -50,7 +50,7 @@
 ## Mandatory Assertions
 1. Runtime identity invariant remains `rawr.kind + rawr.capability + manifest registration`.
 2. Route families stay unchanged (`/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*`, `/api/inngest`).
-3. `rawr.hq.ts` remains composition authority.
+3. `apps/hq/rawr.hq.ts` remains composition authority.
 4. Phase F gate chain does not depend on non-durable planning/runtime scratch docs.
 5. F4 disposition always declares explicit `triggered` or `deferred` state.
 6. Trigger evidence artifact exists when F4 state is `triggered`.

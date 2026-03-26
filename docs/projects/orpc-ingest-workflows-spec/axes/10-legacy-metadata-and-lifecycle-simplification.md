@@ -23,10 +23,10 @@
 - Changing D-005..D-012 route/ownership/caller/context/middleware/schema semantics.
 
 ## Canonical Policy
-1. Runtime composition behavior MUST be inferable from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`.
+1. Runtime composition behavior MUST be inferable from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `apps/hq/rawr.hq.ts`.
 2. `templateRole`, `channel`, `publishTier`, and `published` are hard-deleted from non-archival runtime/tooling/scaffold metadata surfaces and MUST NOT appear in active plugin manifests, parser outputs, runtime wiring, lifecycle tooling, or conformance fixtures.
 3. Metadata validation and parser contracts MUST hard-fail when any forbidden legacy key is present.
-4. Manifest-first composition via generated `rawr.hq.ts` is the sole runtime composition authority in target-state packet language.
+4. Manifest-first composition via generated `apps/hq/rawr.hq.ts` is the sole runtime composition authority in target-state packet language.
 5. This axis does not alter D-005..D-012 semantics; route split, ownership, caller transport boundaries, and context/middleware/schema policies remain unchanged.
 
 ## Retained vs Removed Metadata Semantics
@@ -35,7 +35,7 @@
 | `rawr.kind` | retained runtime semantic | required runtime surface typing |
 | `rawr.capability` | retained runtime semantic | required capability identity across routing/lifecycle |
 | plugin surface root (`plugins/api`, `plugins/workflows`, etc.) | retained runtime semantic | required composition boundary input |
-| `rawr.hq.ts` manifest registration | retained runtime semantic | sole runtime assembly authority |
+| `apps/hq/rawr.hq.ts` manifest registration | retained runtime semantic | sole runtime assembly authority |
 | `templateRole` | forbidden/removed | none |
 | `channel` | forbidden/removed | none |
 | `publishTier` | forbidden/removed | none |
@@ -46,7 +46,7 @@ These are required policy obligations for downstream artifacts; this packet does
 
 1. Documentation/process/runbook obligations:
    - Remove any active metadata contract examples or behavior claims using `templateRole`, `channel`, `publishTier`, or `published`.
-   - Keep runtime composition descriptions manifest-first (`rawr.hq.ts`) and surface/capability keyed.
+   - Keep runtime composition descriptions manifest-first (`apps/hq/rawr.hq.ts`) and surface/capability keyed.
 2. Testing/lint obligations:
    - Enforce `manifest-smoke` for expected manifest exports.
    - Enforce `metadata-contract` requiring `rawr.kind` + `rawr.capability` and forbidding legacy keys.

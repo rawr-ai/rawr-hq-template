@@ -106,7 +106,7 @@ Status note: this section is canonical D-014 language mapped to `DECISIONS.md`.
 | Shared infrastructure primitives (`packages/*` shared modules) | transport-neutral context/auth/db-ready ports, metadata types, pure helper/factory contracts | caller-facing workflow/API contracts, host mount wiring |
 | Capability servicepackage internals (`services/<capability>/src/*`) | domain/service/procedures/internal client using injected ports | boundary contract ownership, concrete host adapter creation |
 | Boundary plugins (`plugins/api/*`, `plugins/workflows/*`) | caller-facing contracts/operations/router wiring to servicepackage clients | servicepackage-domain ownership transfer, global singleton adapter construction |
-| Host composition (`apps/*`, `rawr.hq.ts`) | concrete adapter construction, dependency assembly, route registration/mount order | servicepackage domain logic, boundary contract ownership |
+| Host composition (`apps/*`, `apps/hq/rawr.hq.ts`) | concrete adapter construction, dependency assembly, route registration/mount order | servicepackage domain logic, boundary contract ownership |
 
 ### Deterministic guarantees
 1. Package-local servicepackage internal clients stay the server-internal default and consume infrastructure through typed context ports.

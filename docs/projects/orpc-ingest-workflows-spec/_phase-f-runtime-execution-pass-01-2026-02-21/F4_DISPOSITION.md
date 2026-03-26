@@ -19,7 +19,7 @@ F4 is deferred for this runtime pass. `bun run phase-f:gate:f4-assess` wrote `F4
 - `DECISIONS.md` is intentionally unchanged for this deferred posture.
 
 ## Carry-Forward Watchpoints
-1. Re-run `bun run phase-f:gate:f4-assess` after any expansion of workflow capability surfaces in `rawr.hq.ts`; only escalate when `capabilitySurfaceCount >= 3`.
+1. Re-run `bun run phase-f:gate:f4-assess` after any expansion of workflow capability surfaces in `apps/hq/rawr.hq.ts`; only escalate when `capabilitySurfaceCount >= 3`.
 2. Re-run `bun run phase-f:gate:f4-assess` after edits to `packages/core/src/orpc/runtime-router.ts` that can duplicate validation/not-found/error boilerplate across capabilities; only escalate when `duplicatedBoilerplateClusterCount >= 2`.
 3. Re-run `bun run phase-f:gate:f4-assess` after drift-test hard-fail additions tied to duplicated boilerplate behavior; only escalate when `correctnessSignalCount >= 1`.
 4. Transition F4 to triggered posture only when all three thresholds are simultaneously met in `F4_TRIGGER_SCAN_RESULT.json`; at that point publish `F4_TRIGGER_EVIDENCE.md`, apply explicit D-004 `locked -> closed` transition language in `DECISIONS.md`, and rerun touched-slice full gates.

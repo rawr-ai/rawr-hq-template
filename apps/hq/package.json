@@ -13,6 +13,10 @@
     "./manifest": {
       "types": "./src/manifest.ts",
       "default": "./src/manifest.ts"
+    },
+    "./rawr-hq": {
+      "types": "./rawr.hq.ts",
+      "default": "./rawr.hq.ts"
     }
   },
   "dependencies": {

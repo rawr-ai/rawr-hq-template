@@ -339,7 +339,7 @@ export function createInvoicingReconciliationFunction(inngest: Inngest, packageC
 ### 4.5 Host composition + mount glue (explicit, no black box)
 
 ```text
-rawr.hq.ts
+apps/hq/rawr.hq.ts
 apps/server/src/
   workflows/
     context.ts
@@ -349,7 +349,7 @@ plugins/workflows/invoicing/src/
 ```
 
 ```ts
-// rawr.hq.ts
+// apps/hq/rawr.hq.ts
 import { oc } from "@orpc/contract";
 import { implement } from "@orpc/server";
 import { Inngest } from "inngest";
@@ -537,7 +537,7 @@ Browser-safe vs server-only boundary in this implementation:
 2. Define workflow trigger/status boundary contract in `plugins/workflows/invoicing/src/contract.ts` (inline I/O by default).
 3. Implement explicit package/workflow/host context contracts in `context.ts`, then implement the workflow router using those contracts plus visibility/auth enforcement.
 4. Implement durable function(s) in workflow plugin, using package internal client for server-only orchestration.
-5. Compose workflows + functions in `rawr.hq.ts`.
+5. Compose workflows + functions in `apps/hq/rawr.hq.ts`.
 6. Mount `/rpc*` for first-party internal callers and mount `/api/workflows/*` for published workflow boundary routes.
 7. Mount runtime ingress at `/api/inngest` for Inngest runtime callbacks only.
 8. In web plugin, use `RPCLink` by default for first-party MFE workflow calls, and use `OpenAPILink` only for explicit external/public publication paths.
@@ -625,7 +625,7 @@ Browser-safe vs server-only boundary in this implementation:
 | Internal server calls use package internal client | Satisfied | Durable function calls package `client.ts` path server-side. |
 | No plugin-to-plugin runtime imports | Satisfied | Shared artifacts move through `packages/*`; workflow plugin owns boundary contract and may import package domain schemas only when transport-independent. |
 | Boundary auth/visibility in boundary layer | Satisfied | Router context enforces principal and visibility before enqueue/read operations. |
-| No glue black boxes | Satisfied | Composition and mount code shown explicitly in `rawr.hq.ts` and host route registration. |
+| No glue black boxes | Satisfied | Composition and mount code shown explicitly in `apps/hq/rawr.hq.ts` and host route registration. |
 | API plugin mandatory for workflow path | Not required by design | API plugin is optional and only included when capability-specific boundary concerns justify it. |
 
 ## 10) Bridge to E2E 04
@@ -670,7 +670,7 @@ plugins/api/invoicing/src/               # optional API boundary surface (also p
   router.ts
   index.ts
 
-rawr.hq.ts                               # composition authority
+apps/hq/rawr.hq.ts                               # composition authority
 apps/server/src/
   workflows/
     context.ts                           # host boundary context contract + principal resolution

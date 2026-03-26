@@ -186,15 +186,15 @@ describe("phase-a gate scaffold (server)", () => {
 
     expect(hasNamedImport(rawrAst, "./host-composition", "createRawrHostComposition")).toBe(true);
     expect(hasNamedImport(testingHostAst, "./host-composition", "createRawrHostComposition")).toBe(true);
-    expect(hasNamedImport(hostCompositionAst, "@rawr/hq-app/manifest", "createRawrHqManifest")).toBe(true);
+    expect(hasNamedImport(hostCompositionAst, "@rawr/hq-app/rawr-hq", "createRawrHqManifest")).toBe(true);
     expect(hasNamedImport(hostCompositionAst, "./host-satisfiers", "createRawrHostSatisfiers")).toBe(true);
     expect(hasNamedImport(hostCompositionAst, "./host-seam", "createRawrHostBoundRolePlan")).toBe(true);
     expect(hasNamedImport(hostCompositionAst, "./host-realization", "materializeRawrHostBoundRolePlan")).toBe(true);
     expect(hasNamedImport(hostSeamAst, "../../../rawr.hq", "RawrHqManifest")).toBe(false);
     expect(hostSeamSource).not.toContain('from "../../../rawr.hq"');
     expect(testingHostSource).not.toContain('from "../../../rawr.hq"');
-    expect(hostSeamSource).not.toContain("@rawr/hq-app/manifest");
-    expect(testingHostSource).not.toContain("@rawr/hq-app/manifest");
+    expect(hostSeamSource).not.toContain("@rawr/hq-app/rawr-hq");
+    expect(testingHostSource).not.toContain("@rawr/hq-app/rawr-hq");
     expect(hasRouteRegistration(rawrAst, "/api/inngest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/workflows/*")).toBe(true);
     expect(hasRegisterOrpcRoutesHostSeamRouter(rawrAst)).toBe(true);
@@ -254,7 +254,7 @@ describe("phase-a gate scaffold (server)", () => {
     expect(testingHostSource).not.toContain("createRawrHostBoundRolePlan");
     expect(testingHostSource).not.toContain("materializeRawrHostBoundRolePlan");
     expect(normalizeSemanticSource(hostCompositionSource)).toContain(
-      'import{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
+      'import{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/rawr-hq";',
     );
     expect(hqTestingSource === null || normalizeSemanticSource(hqTestingSource) === "export{};").toBe(true);
     expect(rawrHqBridgeSource).toBeNull();

@@ -1,4 +1,4 @@
-import { createRawrHqManifest, type RawrHqManifest } from "@rawr/hq-app/manifest";
+import { createRawrHqManifest, type RawrHqManifest } from "@rawr/hq-app/rawr-hq";
 import { materializeRawrHostBoundRolePlan } from "./host-realization";
 import {
   createRawrHostBoundRolePlan,
@@ -21,8 +21,8 @@ export type RawrHostComposition = Readonly<{
 
 function selectRawrHostDeclarations(manifest: RawrHqManifest): RawrHostDeclarations {
   return {
-    api: manifest.plugins.api,
-    workflows: manifest.plugins.workflows,
+    api: manifest.roles.server.api,
+    workflows: manifest.roles.async.workflows,
   } as const;
 }
 

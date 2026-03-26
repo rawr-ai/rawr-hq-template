@@ -22,7 +22,7 @@ Evidence-close D-009 and D-010 now by landing concrete middleware/finished-hook 
 ## Locked Constraints (No Re-open in Phase E)
 1. Runtime semantics: `rawr.kind + rawr.capability + manifest registration` only.
 2. Route-family semantics unchanged.
-3. `rawr.hq.ts` remains composition authority.
+3. `apps/hq/rawr.hq.ts` remains composition authority.
 4. D-013 hard deletion remains enforced.
 5. D-014/D-015/D-016 remain in force.
 

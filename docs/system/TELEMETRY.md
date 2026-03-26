@@ -54,7 +54,7 @@ Canonical seams:
 - `apps/server/src/logging.ts`
   - writes correlated runtime logs into `.rawr/hq/runtime.log`
   - preserves request, correlation, trace, and span identifiers across routed execution
-- `rawr.hq.ts`
+- `apps/hq/rawr.hq.ts`
   - composes the host-visible runtime surface
   - injects the `exampleTodo` client and host logger adapter
 - `plugins/api/example-todo/*`

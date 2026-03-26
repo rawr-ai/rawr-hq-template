@@ -34,6 +34,10 @@
 - Trunk must remain `main` (`gt trunk`).
 - Branch/stack workflow contract: `docs/process/GRAPHITE.md`.
 
+## Manifest Authority Note
+
+- Canonical HQ app manifest entrypoint is `apps/hq/rawr.hq.ts` (legacy `apps/hq/src/manifest.ts` is compatibility-only and should remain a thin re-export until consumers migrate).
+
 ## Routing
 
 - `AGENTS_SPLIT.md` for "where should this change land?" (template vs personal).

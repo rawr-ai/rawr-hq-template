@@ -25,7 +25,7 @@ Use-case: expose invoicing APIs to callers while keeping domain logic transport-
 | Hosting mount paths | `/rpc`, `/api/orpc`, `/api/workflows`, `/api/inngest` |
 | Internal package location | `packages/invoicing/src/*` |
 | API plugin location | `plugins/api/invoicing/src/*` |
-| Composition route | `rawr.hq.ts` -> `apps/server/src/rawr.ts` -> `apps/server/src/orpc.ts` -> `plugins/api/invoicing/src/router.ts` -> `packages/invoicing/src/client.ts` |
+| Composition route | `apps/hq/rawr.hq.ts` -> `apps/server/src/rawr.ts` -> `apps/server/src/orpc.ts` -> `plugins/api/invoicing/src/router.ts` -> `packages/invoicing/src/client.ts` |
 
 ### Endpoint divergences included in this basic example
 
@@ -65,7 +65,7 @@ flowchart LR
 
 ```text
 .
-├── rawr.hq.ts
+├── apps/hq/rawr.hq.ts
 ├── apps/server/src/
 │   ├── rawr.ts
 │   └── orpc.ts
@@ -431,13 +431,13 @@ export const invoicingApiSurface = {
 ### 4.4 Composition root and host mounting glue
 
 ```text
-rawr.hq.ts
+apps/hq/rawr.hq.ts
 apps/server/src/rawr.ts
 apps/server/src/orpc.ts
 ```
 
 ```ts
-// rawr.hq.ts
+// apps/hq/rawr.hq.ts
 import { oc } from "@orpc/contract";
 import { Inngest } from "inngest";
 import { invoicingApiSurface } from "./plugins/api/invoicing/src";
@@ -539,7 +539,7 @@ The same publication filter should be applied when generating `/api/orpc/openapi
    - shared boundary `context.ts` for operation/router contracts,
    - explicit `operations/*` mapping,
    - `router.ts` via `implement(contract)`.
-4. Compose boundary surfaces in `rawr.hq.ts` into one boundary contract/router namespace (`invoicing.api`).
+4. Compose boundary surfaces in `apps/hq/rawr.hq.ts` into one boundary contract/router namespace (`invoicing.api`).
 5. In host boot (`apps/server/src/rawr.ts`), create runtime adapter and mount `/api/inngest` for runtime ingress only.
 6. In host boot, call `registerOrpcRoutes(...)` to mount `/rpc*` and the filtered published `/api/orpc*` surface with `parse: "none"`.
 7. At request time, boundary handler delegates to operation; operation uses package internal client (`createRouterClient`) for in-process call.

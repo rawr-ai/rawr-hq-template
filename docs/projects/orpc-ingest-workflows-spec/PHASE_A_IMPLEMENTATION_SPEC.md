@@ -46,7 +46,7 @@ Use both together:
 - Host mount order is explicit and active: `/api/inngest` -> `/api/workflows/*` -> `/rpc` + `/api/orpc/*`.
 - `/api/inngest` enforces host-side signature verification before runtime dispatch and returns `403` on missing/invalid signatures.
 - `/rpc` route access is caller-surface-gated in runtime; missing caller-surface defaults to deny.
-- `rawr.hq.ts` is active manifest composition authority and is consumed by host runtime for:
+- `apps/hq/rawr.hq.ts` is active manifest composition authority and is consumed by host runtime for:
   - `rawrHqManifest.orpc.router`
   - `rawrHqManifest.workflows.capabilities` + `rawrHqManifest.workflows.triggerRouter`
   - `rawrHqManifest.inngest.bundleFactory` + `rawrHqManifest.inngest.serveHandlerFactory`
@@ -57,7 +57,7 @@ Use both together:
 - Phase A gate wiring is present and executable; landed exit chain is green via `bun run phase-a:gates:exit`.
 
 ### 3.2 Target Runtime Composition (Phase A)
-- Manifest-first composition via `rawr.hq.ts` (or generated equivalent) becomes runtime authority.
+- Manifest-first composition via `apps/hq/rawr.hq.ts` (or generated equivalent) becomes runtime authority.
 - Route families become explicit and policy-aligned:
   - `/api/inngest` runtime ingress (signed only)
   - `/api/workflows/<capability>/*` caller-facing workflow boundaries
@@ -74,7 +74,7 @@ flowchart TD
   Host --> Rpc["/rpc"]
   Host --> OpenApi["/api/orpc/*"]
 
-  Manifest["rawr.hq.ts / rawrHqManifest"] --> Host
+  Manifest["apps/hq/rawr.hq.ts / rawrHqManifest"] --> Host
   Manifest --> TriggerRouter["workflows.triggerRouter"]
   Manifest --> InngestBundle["inngest: client + functions"]
 
@@ -108,7 +108,7 @@ new_files:
   - path: "$ROOT/apps/server/src/workflows/context.ts"
     owner: "Runtime/Host Composition Owner"
     purpose: "Request/workflow boundary context factories"
-  - path: "$ROOT/rawr.hq.ts"
+  - path: "$ROOT/apps/hq/rawr.hq.ts"
     owner: "Runtime/Host Composition Owner"
     purpose: "Manifest-first composition authority"
   - path: "$ROOT/apps/server/test/route-boundary-matrix.test.ts"
@@ -177,7 +177,7 @@ optional_dirs:
 ### 4.3 Ownership Map
 | Role | Handle | Backup | Scope | Primary code areas |
 | --- | --- | --- | --- | --- |
-| Runtime/Host Composition Owner | `@rawr-runtime-host` | `@rawr-platform-duty` | Route family mounting, context seam, ingress verification, manifest integration | `$ROOT/apps/server/src/rawr.ts`, `$ROOT/apps/server/src/orpc.ts`, `$ROOT/apps/server/src/workflows/context.ts`, `$ROOT/rawr.hq.ts` |
+| Runtime/Host Composition Owner | `@rawr-runtime-host` | `@rawr-platform-duty` | Route family mounting, context seam, ingress verification, manifest integration | `$ROOT/apps/server/src/rawr.ts`, `$ROOT/apps/server/src/orpc.ts`, `$ROOT/apps/server/src/workflows/context.ts`, `$ROOT/apps/hq/rawr.hq.ts` |
 | Plugin Lifecycle Owner | `@rawr-plugin-lifecycle` | `@rawr-architecture-duty` | Metadata parser contract, workspace discovery roots, and package-owned workspace authority adapters | `$ROOT/packages/hq/src/workspace/plugins.ts`, `$ROOT/packages/hq/src/workspace/plugin-manifest-contract.ts`, `$ROOT/plugins/cli/plugins/src/lib/workspace-plugins.ts` |
 | Verification & Gates Owner | `@rawr-verification-gates` | `@rawr-release-duty` | Gate wiring, harness matrix, negative-route enforcement, observability checks | `$ROOT/apps/server/test/*`, `$ROOT/package.json`, `$ROOT/nx.json` |
 | Distribution/Lifecycle Contract Owner | `@rawr-distribution-lifecycle` | `@rawr-runtime-host` | Alias/instance seam assertions, no-singleton checks, legacy metadata hard-delete closure, and package-owned install authority adapters | `$ROOT/apps/server/test/*`, `$ROOT/packages/hq/src/install/state.ts`, `$ROOT/plugins/cli/plugins/src/lib/install-state.ts` |
@@ -305,7 +305,7 @@ Slices `A0`..`A8` are landed in current runtime pass; this section remains as bo
 
 ### Code changes
 1. Add manifest authority file:
-   - `$ROOT/rawr.hq.ts`
+   - `$ROOT/apps/hq/rawr.hq.ts`
 2. Extend composition for workflow trigger routers under capability namespaces.
 3. Mount `/api/workflows/*` in host from manifest-owned trigger router.
 4. Keep `/rpc` internal and `/api/orpc/*` publication behavior unchanged.
@@ -601,7 +601,7 @@ registerOrpcRoutes(app, {
 | question | default_now | owner_handle | decision_by_slice | fallback_if_unresolved |
 | --- | --- | --- | --- | --- |
 | Ingress signature source of truth | Environment-backed signing config is authoritative in Phase A; host verifies signature before runtime dispatch. | `@rawr-runtime-host` | `A3` | If config source integration is incomplete, keep env-only verification and deny unsigned/unverifiable ingress requests. |
-| Manifest generation mode | Checked-in `rawr.hq.ts` is the runtime composition authority in Phase A (no generated manifest artifact path). | `@rawr-runtime-host` | `A4` | If automation is not ready, continue with manual `rawr.hq.ts` updates gated by `manifest-smoke-completion`. |
+| Manifest generation mode | Checked-in `apps/hq/rawr.hq.ts` is the runtime composition authority in Phase A (no generated manifest artifact path). | `@rawr-runtime-host` | `A4` | If automation is not ready, continue with manual `apps/hq/rawr.hq.ts` updates gated by `manifest-smoke-completion`. |
 | Workflow route behavior with zero capabilities | `/api/workflows/*` returns canonical 404 with explicit policy headers for the workflow family. | `@rawr-runtime-host` | `A4` | If policy header implementation slips, keep canonical 404 and block Phase A exit until headers are added. |
 | Legacy metadata migration mode | Hard deletion in Phase A with no compatibility bridge for legacy metadata keys. | `@rawr-plugin-lifecycle` | `A1` | If any legacy key remains in active metadata surfaces, fail gate and block progression. |
 
@@ -620,7 +620,7 @@ The next execution packet pass should open Phase B in this order:
 | --- | --- | --- | --- |
 | `B0` | `/rpc` auth-source hardening: replace caller-surface header trust as the sole classifier with host/session/service-auth-derived classification, while preserving D-005 route boundaries. | `A9` complete | `@rawr-runtime-host` |
 | `B1` | Workflow trigger router seam isolation: make `workflows.triggerRouter` trigger/status-scoped and remove broad ORPC router coupling risk. | `B0` | `@rawr-plugin-lifecycle` |
-| `B2` | Manifest/host composition seam hardening: reduce `rawr.hq.ts` host-internal coupling while keeping manifest-first authority and D-014 import-direction guarantees. | `B1` | `@rawr-plugin-lifecycle` |
+| `B2` | Manifest/host composition seam hardening: reduce `apps/hq/rawr.hq.ts` host-internal coupling while keeping manifest-first authority and D-014 import-direction guarantees. | `B1` | `@rawr-plugin-lifecycle` |
 | `B3` | Verification hardening: promote manifest/gate checks to structural ownership assertions and add anti-regression checks for package-owned adapter shim surfaces. | `B2` | `@rawr-verification-gates` |
 
 Non-blocking carry-forward:

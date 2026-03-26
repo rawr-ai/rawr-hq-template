@@ -72,7 +72,7 @@ flowchart LR
   Host["apps/server/src/rawr.ts"] --> Api
   Host --> Workflows
   Host --> Ingress
-  Compose["rawr.hq.ts"] --> Host
+  Compose["apps/hq/rawr.hq.ts"] --> Host
 ```
 
 ## 4) File Tree Diff from E2E 03
@@ -786,7 +786,7 @@ export function createInvoicingReconciliationFunction(args: {
 ### 5.4 Host wiring: composition root and route mounts
 
 ```ts
-// rawr.hq.ts
+// apps/hq/rawr.hq.ts
 import { Inngest } from "inngest";
 import { createInvoicingApiRouter, invoicingApiContract } from "./plugins/api/invoicing/src";
 import {
@@ -1165,7 +1165,7 @@ The downstream docs/runbooks must track these suite IDs explicitly:
 
 ### Source-Parity Canonical File Tree (verbatim legacy tree block)
 ```text
-rawr.hq.ts
+apps/hq/rawr.hq.ts
 apps/server/src/
   rawr.ts
   workflows/
