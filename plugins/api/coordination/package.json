@@ -21,5 +21,9 @@
     "@orpc/server": "^1.13.5",
     "@rawr/coordination": "workspace:*",
     "@rawr/hq-sdk": "workspace:*"
+  },
+  "rawr": {
+    "kind": "api",
+    "capability": "coordination"
   }
 }

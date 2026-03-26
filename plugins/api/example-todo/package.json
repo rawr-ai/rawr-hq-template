@@ -20,5 +20,9 @@
     "@orpc/server": "^1.13.5",
     "@rawr/example-todo": "workspace:*",
     "@rawr/runtime-context": "workspace:*"
+  },
+  "rawr": {
+    "kind": "api",
+    "capability": "example-todo"
   }
 }

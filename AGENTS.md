@@ -50,6 +50,7 @@
 
 ## Process Runbooks
 
+- Run `bun install` before lint/typecheck/test sweeps; workspace package export resolution depends on installed workspace links.
 - CLI/plugin path index (start here): `docs/process/RUNBOOKS.md`.
 - Nx-first agent workflow: `docs/process/NX_AGENT_WORKFLOW.md`.
 - Graphite stack drain loop: `docs/process/runbooks/STACK_DRAIN_LOOP.md`.

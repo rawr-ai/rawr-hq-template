@@ -27,5 +27,9 @@
     "@rawr/support-example": "workspace:*",
     "inngest": "3.51.0",
     "typebox": "^1.0.81"
+  },
+  "rawr": {
+    "kind": "workflows",
+    "capability": "support-example"
   }
 }
