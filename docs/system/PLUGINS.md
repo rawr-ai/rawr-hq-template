@@ -41,13 +41,16 @@ Removed from runtime semantics:
 Deprecated for later removal:
 - `publishTier` / `published`
 
-## Surface Registration Contracts (Target)
-- `registerApiPlugin(...) -> { namespace, contract, router }`
-- `registerWorkflowPlugin(...) -> { functions }`
-- `registerWebPlugin(...) -> { mounts }`
-- `registerCliPlugin(...) -> { commands }`
-- `registerAgentPlugin(...) -> { capabilities, knowledgeRefs }`
-- `registerMcpPlugin(...) -> { actions }` (optional)
+## Surface Authoring Contracts (Target)
+- `defineServerApiPlugin(...) -> { exposure, resources, routes }`
+- `defineAsyncWorkflowPlugin(...) -> { exposure, resources, routes?, workflows }`
+- `defineWebAppPlugin(...) -> { resources, app }`
+- `defineCliCommandPlugin(...) -> { resources, command|commands }`
+- `defineAgentToolPlugin(...) -> { resources, tool|tools }`
+- `defineAsyncConsumerPlugin(...)` and `defineAsyncSchedulePlugin(...)` for async non-HTTP lanes
+
+Authoritative plugin entrypoint is `src/plugin.ts` (package export `./plugin`).
+`src/server.ts` may carry temporary compatibility wrappers during staged migration only.
 
 ## Composition Contract
 `apps/hq/rawr.hq.ts` is the single composition authority.

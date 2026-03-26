@@ -41,6 +41,10 @@
     "./workflows": {
       "types": "./src/workflows.ts",
       "default": "./src/workflows.ts"
+    },
+    "./plugins": {
+      "types": "./src/plugins.ts",
+      "default": "./src/plugins.ts"
     }
   },
   "scripts": {

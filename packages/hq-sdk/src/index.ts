@@ -36,3 +36,4 @@ export {
   sqlProvider,
   feedbackProvider,
 } from "./orpc/middleware";
+export * from "./plugins";

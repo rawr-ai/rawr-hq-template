@@ -1,12 +1,8 @@
-import { registerCoordinationApiPlugin } from "@rawr/plugin-api-coordination/server";
-import { registerExampleTodoApiPlugin } from "@rawr/plugin-api-example-todo/server";
-import { registerStateApiPlugin } from "@rawr/plugin-api-state/server";
-import {
-  registerCoordinationWorkflowPlugin,
-} from "@rawr/plugin-workflows-coordination/server";
-import {
-  registerSupportExampleWorkflowPlugin,
-} from "@rawr/plugin-workflows-support-example/server";
+import { coordinationApiPlugin } from "@rawr/plugin-api-coordination/plugin";
+import { exampleTodoApiPlugin } from "@rawr/plugin-api-example-todo/plugin";
+import { stateApiPlugin } from "@rawr/plugin-api-state/plugin";
+import { coordinationWorkflowPlugin } from "@rawr/plugin-workflows-coordination/plugin";
+import { supportExampleWorkflowPlugin } from "@rawr/plugin-workflows-support-example/plugin";
 
 /**
  * Canonical HQ app manifest composition authority.
@@ -18,14 +14,14 @@ import {
  */
 export function createRawrHqManifest() {
   const apiPlugins = {
-    coordination: registerCoordinationApiPlugin(),
-    state: registerStateApiPlugin(),
-    exampleTodo: registerExampleTodoApiPlugin(),
+    coordination: coordinationApiPlugin,
+    state: stateApiPlugin,
+    exampleTodo: exampleTodoApiPlugin,
   } as const;
 
   const workflowPlugins = {
-    supportExample: registerSupportExampleWorkflowPlugin(),
-    coordination: registerCoordinationWorkflowPlugin(),
+    supportExample: supportExampleWorkflowPlugin,
+    coordination: coordinationWorkflowPlugin,
   } as const;
 
   return {

@@ -1,10 +1,5 @@
-import type { Inngest } from "inngest";
-import {
-  defineWorkflowPlugin,
-  defineWorkflowPluginDeclaration,
-  type WorkflowPluginContribution,
-  type WorkflowRuntimeInput,
-} from "@rawr/hq-sdk/workflows";
+import { coordinationWorkflowPlugin } from "./plugin";
+import type { CoordinationRuntimeAdapter } from "./inngest";
 import {
   appendRunTimelineEvent,
   getRunStatus,
@@ -13,14 +8,6 @@ import {
   saveRunStatus,
   writeDeskMemory,
 } from "@rawr/coordination/node";
-import { coordinationWorkflowContract } from "./contract";
-import {
-  createCoordinationInngestFunction,
-  createInngestServeHandler,
-  type CoordinationRuntimeAdapter,
-} from "./inngest";
-import type { CoordinationWorkflowAuthoringClientResolver } from "./context";
-import { createCoordinationWorkflowRouter } from "./router";
 
 export {
   coordinationWorkflowContract,
@@ -54,36 +41,17 @@ export {
   type QueueCoordinationRunResult,
 } from "./inngest";
 export type { CoordinationWorkflowContext } from "./context";
-
-export type CoordinationWorkflowRuntimeInput = Readonly<{
-  client: Inngest;
-  runtime: CoordinationRuntimeAdapter;
-}>;
+export {
+  coordinationWorkflowPlugin,
+  type CoordinationWorkflowPluginBound,
+  type CoordinationWorkflowPluginRegistration,
+  type CoordinationWorkflowRuntimeInput,
+} from "./plugin";
 
 export type CoordinationWorkflowRuntimeAdapterInput = Readonly<{
   repoRoot: string;
   inngestBaseUrl?: string;
 }>;
-
-export type CoordinationWorkflowPluginBound = Readonly<{
-  resolveAuthoringClient: CoordinationWorkflowAuthoringClientResolver;
-}>;
-
-const coordinationWorkflowDeclaration = defineWorkflowPluginDeclaration({
-  capability: "coordination" as const,
-  internal: {
-    contract: coordinationWorkflowContract,
-  },
-  published: {
-    routeBase: "/coordination" as const,
-    contract: coordinationWorkflowContract,
-  },
-  runtime: {
-    kind: "inngest-functions" as const,
-  },
-});
-const coordinationWorkflowContractDeclaration = coordinationWorkflowContract;
-const coordinationWorkflowRouteBase = "/coordination" as const;
 
 export function createCoordinationWorkflowRuntimeAdapter(
   input: CoordinationWorkflowRuntimeAdapterInput,
@@ -116,45 +84,7 @@ export function createCoordinationWorkflowRuntimeAdapter(
   };
 }
 
-export function createCoordinationWorkflowInngestFunctions(input: CoordinationWorkflowRuntimeInput): readonly unknown[] {
-  return createCoordinationInngestFunction(input).functions;
-}
-
-function contributeCoordinationWorkflowPlugin(
-  bound: CoordinationWorkflowPluginBound,
-): WorkflowPluginContribution<
-  typeof coordinationWorkflowContract,
-  ReturnType<typeof createCoordinationWorkflowRouter>,
-  WorkflowRuntimeInput<CoordinationRuntimeAdapter>,
-  unknown
-> {
-  const surface = {
-    contract: coordinationWorkflowContractDeclaration,
-    router: createCoordinationWorkflowRouter(bound.resolveAuthoringClient),
-  } as const;
-
-  return {
-    internal: surface,
-    published: {
-      routeBase: coordinationWorkflowRouteBase,
-      ...surface,
-    },
-    runtime: {
-      createInngestFunctions(
-        input: WorkflowRuntimeInput<CoordinationRuntimeAdapter>,
-      ) {
-        return createCoordinationWorkflowInngestFunctions(input);
-      },
-    },
-  };
-}
-
+/** @deprecated Temporary compatibility shim; import `coordinationWorkflowPlugin` from `./plugin` instead. */
 export function registerCoordinationWorkflowPlugin() {
-  return defineWorkflowPlugin({
-    capability: coordinationWorkflowDeclaration.capability,
-    declaration: coordinationWorkflowDeclaration,
-    contribute: contributeCoordinationWorkflowPlugin,
-  });
+  return coordinationWorkflowPlugin;
 }
-
-export type CoordinationWorkflowPluginRegistration = ReturnType<typeof registerCoordinationWorkflowPlugin>;

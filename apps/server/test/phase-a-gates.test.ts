@@ -262,7 +262,7 @@ describe("phase-a gate scaffold (server)", () => {
     expect(supportProofSource).toContain("createTestingExampleTodoServiceClient");
   });
 
-  it("host composition guard keeps canonical plugin registrations on declaration-plus-contribute law only", async () => {
+  it("host composition guard keeps canonical plugin authoring on semantic plugin builders", async () => {
     const [
       stateServerSource,
       coordinationApiServerSource,
@@ -270,18 +270,12 @@ describe("phase-a gate scaffold (server)", () => {
       supportExampleWorkflowServerSource,
       coordinationWorkflowServerSource,
     ] = await Promise.all([
-      fs.readFile(path.join(repoRoot, "plugins", "api", "state", "src", "server.ts"), "utf8"),
-      fs.readFile(path.join(repoRoot, "plugins", "api", "coordination", "src", "server.ts"), "utf8"),
-      fs.readFile(path.join(repoRoot, "plugins", "api", "example-todo", "src", "server.ts"), "utf8"),
-      fs.readFile(path.join(repoRoot, "plugins", "workflows", "support-example", "src", "server.ts"), "utf8"),
-      fs.readFile(path.join(repoRoot, "plugins", "workflows", "coordination", "src", "server.ts"), "utf8"),
+      fs.readFile(path.join(repoRoot, "plugins", "api", "state", "src", "plugin.ts"), "utf8"),
+      fs.readFile(path.join(repoRoot, "plugins", "api", "coordination", "src", "plugin.ts"), "utf8"),
+      fs.readFile(path.join(repoRoot, "plugins", "api", "example-todo", "src", "plugin.ts"), "utf8"),
+      fs.readFile(path.join(repoRoot, "plugins", "workflows", "support-example", "src", "plugin.ts"), "utf8"),
+      fs.readFile(path.join(repoRoot, "plugins", "workflows", "coordination", "src", "plugin.ts"), "utf8"),
     ]);
-
-    expect(stateServerSource).toMatch(/export function registerStateApiPlugin\(\s*\)/);
-    expect(coordinationApiServerSource).toMatch(/export function registerCoordinationApiPlugin\(\s*\)/);
-    expect(exampleTodoApiServerSource).toMatch(/export function registerExampleTodoApiPlugin\(\s*\)/);
-    expect(supportExampleWorkflowServerSource).toMatch(/export function registerSupportExampleWorkflowPlugin\(\s*\)/);
-    expect(coordinationWorkflowServerSource).toMatch(/export function registerCoordinationWorkflowPlugin\(\s*\)/);
 
     for (const source of [
       stateServerSource,
@@ -290,10 +284,14 @@ describe("phase-a gate scaffold (server)", () => {
       supportExampleWorkflowServerSource,
       coordinationWorkflowServerSource,
     ]) {
-      expect(source).toContain("declaration:");
-      expect(source).toContain("contribute:");
-      expect(source).not.toContain("legacy");
-      expect(source).not.toContain("interop");
+      expect(source).toMatch(/export const [a-zA-Z]+Plugin = define(AsyncWorkflow|ServerApi)Plugin/);
+      expect(source).toContain("exposure:");
+      expect(source).toContain("resources(");
+      expect(source).toContain("routes(");
+      expect(source).not.toContain("defineApiPluginDeclaration");
+      expect(source).not.toContain("defineWorkflowPluginDeclaration");
+      expect(source).not.toContain("declaration:");
+      expect(source).not.toContain("contribute:");
       expect(source).not.toContain("manifest.fixtures");
     }
   });

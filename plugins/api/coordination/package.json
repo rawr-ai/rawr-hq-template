@@ -13,6 +13,10 @@
     "./server": {
       "types": "./server.ts",
       "default": "./server.ts"
+    },
+    "./plugin": {
+      "types": "./plugin.ts",
+      "default": "./plugin.ts"
     }
   },
   "dependencies": {

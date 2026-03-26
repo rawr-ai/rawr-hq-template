@@ -3,11 +3,11 @@ import {
   type MaterializedApiPluginRegistration,
 } from "@rawr/hq-sdk/apis";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
-import type { CoordinationApiPluginRegistration } from "@rawr/plugin-api-coordination/server";
-import type { ExampleTodoApiPluginRegistration } from "@rawr/plugin-api-example-todo/server";
-import type { StateApiPluginRegistration } from "@rawr/plugin-api-state/server";
-import type { CoordinationWorkflowPluginRegistration } from "@rawr/plugin-workflows-coordination/server";
-import type { SupportExampleWorkflowPluginRegistration } from "@rawr/plugin-workflows-support-example/server";
+import type { CoordinationApiPluginRegistration } from "@rawr/plugin-api-coordination/plugin";
+import type { ExampleTodoApiPluginRegistration } from "@rawr/plugin-api-example-todo/plugin";
+import type { StateApiPluginRegistration } from "@rawr/plugin-api-state/plugin";
+import type { CoordinationWorkflowPluginRegistration } from "@rawr/plugin-workflows-coordination/plugin";
+import type { SupportExampleWorkflowPluginRegistration } from "@rawr/plugin-workflows-support-example/plugin";
 import type { RawrHostSatisfiers } from "./host-satisfiers";
 
 export type RawrHostDeclarations = Readonly<{

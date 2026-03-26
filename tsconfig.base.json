@@ -63,6 +63,24 @@
       ],
       "@rawr/hq-app/rawr-hq": [
         "apps/hq/rawr.hq.ts"
+      ],
+      "@rawr/hq-sdk/plugins": [
+        "packages/hq-sdk/src/plugins.ts"
+      ],
+      "@rawr/plugin-api-coordination/plugin": [
+        "plugins/api/coordination/plugin.ts"
+      ],
+      "@rawr/plugin-api-example-todo/plugin": [
+        "plugins/api/example-todo/plugin.ts"
+      ],
+      "@rawr/plugin-api-state/plugin": [
+        "plugins/api/state/plugin.ts"
+      ],
+      "@rawr/plugin-workflows-coordination/plugin": [
+        "plugins/workflows/coordination/plugin.ts"
+      ],
+      "@rawr/plugin-workflows-support-example/plugin": [
+        "plugins/workflows/support-example/plugin.ts"
       ]
     }
   }
