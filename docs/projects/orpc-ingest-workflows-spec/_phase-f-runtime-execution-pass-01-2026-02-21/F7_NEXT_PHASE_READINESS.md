@@ -42,5 +42,5 @@ None.
 ## Drift Guards
 1. Preserve route-family semantics (`/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*`, `/api/inngest`).
 2. Preserve runtime identity contract (`rawr.kind + rawr.capability + manifest registration`).
-3. Keep `rawr.hq.ts` as composition authority.
+3. Keep `apps/hq/rawr.hq.ts` as composition authority.
 4. Preserve forward-only delivery posture (no rollback track).

@@ -31,18 +31,18 @@ This is a policy/spec artifact. It is not a migration checklist.
 2. oRPC is the primary boundary API harness.
 3. Inngest functions are the primary durability harness.
 4. Durable endpoints are additive ingress adapters only.
-5. Workflow trigger surfaces are manifest-driven and capability-first (`/api/workflows/<capability>/*`) via `rawr.hq.ts`, with explicit workflow context helpers and one runtime-owned Inngest bundle.
+5. Workflow trigger surfaces are manifest-driven and capability-first (`/api/workflows/<capability>/*`) via `apps/hq/rawr.hq.ts`, with explicit workflow context helpers and one runtime-owned Inngest bundle.
 6. Workflow/API boundary contracts are plugin-owned (`plugins/workflows/<capability>/src/contract.ts`, `plugins/api/<capability>/src/contract.ts`); servicepackages own shared domain logic/domain schemas only, and workflow trigger/status I/O schemas remain workflow boundary owned.
 7. Caller-mode transport semantics are fixed: first-party callers (including MFEs by default) use `RPCLink` on `/rpc` unless an explicit exception is documented; external/third-party callers use published OpenAPI clients on `/api/orpc/*` and `/api/workflows/<capability>/*`; server-internal callers use package-local servicepackage clients; `/api/inngest` is signed runtime ingress only.
 8. Host bootstrap initializes baseline `extendedTracesMiddleware()` before Inngest client/function composition or route registration, and host mount/control-plane ordering remains explicit (`/api/inngest` -> `/api/workflows/*` -> `/rpc` + `/api/orpc/*`).
 9. Plugin middleware may extend baseline instrumentation context but may not replace or reorder the baseline traces middleware.
-10. Runtime composition semantics are minimal and manifest-owned: runtime behavior is derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`; legacy fields (`templateRole`, `channel`, `publishTier`, `published`) are forbidden in non-archival runtime/tooling/scaffold metadata surfaces.
+10. Runtime composition semantics are minimal and manifest-owned: runtime behavior is derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `apps/hq/rawr.hq.ts`; legacy fields (`templateRole`, `channel`, `publishTier`, `published`) are forbidden in non-archival runtime/tooling/scaffold metadata surfaces.
 11. Distribution posture is explicit: upstream template remains engineering truth; default consumer path is instance-kit/no-fork-repeatability; long-lived fork is maintainer-only by default; no singleton-global assumptions are introduced and alias/instance seams are contract-required now (full UX/packaging mechanics deferred).
 12. These policies define canonical target-state behavior independent of implementation sequencing.
 
 > D-005 lock: workflow trigger APIs are caller-facing on manifest-driven `/api/workflows/<capability>/*`; `/rpc` remains first-party/internal transport only, and `/api/inngest` remains signed runtime ingress only.
 >
-> D-013 lock: runtime metadata semantics are reduced to canonical manifest composition keys (`rawr.kind`, `rawr.capability`, surface root + `rawr.hq.ts` registration). Legacy metadata fields are hard-deleted from non-archival runtime/tooling/scaffold metadata surfaces.
+> D-013 lock: runtime metadata semantics are reduced to canonical manifest composition keys (`rawr.kind`, `rawr.capability`, surface root + `apps/hq/rawr.hq.ts` registration). Legacy metadata fields are hard-deleted from non-archival runtime/tooling/scaffold metadata surfaces.
 >
 > D-016 lock: default consumer distribution is instance-kit/no-fork-repeatability, long-lived fork posture is maintainer-only by default, and multi-owner safety is enforced now via alias/instance seam contracts without adding singleton-global assumptions.
 
@@ -94,13 +94,13 @@ This is the canonical caller/auth matrix source. Any matrix renderings in axis/e
 29. Context envelopes remain split by runtime model: oRPC boundary request context and Inngest function runtime context are distinct.
 30. Middleware control planes remain split by runtime model: boundary enforcement in oRPC/Elysia, durable lifecycle control in Inngest middleware + `step.*`.
 31. oRPC middleware dedupe assumptions stay explicit: use context-cached markers for heavy checks; built-in dedupe remains constrained to leading-subset/same-order chains.
-32. Runtime composition decisions are derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`.
+32. Runtime composition decisions are derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `apps/hq/rawr.hq.ts`.
 33. `templateRole` and `channel` are forbidden in non-archival runtime/tooling/scaffold metadata surfaces and must not appear in manifests/parser outputs/tooling.
 34. `publishTier` and `published` are forbidden in non-archival runtime/tooling/scaffold metadata surfaces and must not appear in manifests/parser outputs/tooling.
 35. Downstream docs/runbook/testing artifacts are required to align with this metadata contract (`manifest-smoke`, `metadata-contract`, `import-boundary`, `host-composition-guard`) even when those artifacts live outside this packet.
 36. `RAWR HQ-Template` remains upstream engineering truth; consumer distribution defaults to instance-kit/no-fork-repeatability.
 37. Long-lived fork posture is a maintainer path and not the default consumer lifecycle path.
-38. Manifest-first composition authority remains `rawr.hq.ts`; distribution/lifecycle choices do not introduce alternate runtime authorities.
+38. Manifest-first composition authority remains `apps/hq/rawr.hq.ts`; distribution/lifecycle choices do not introduce alternate runtime authorities.
 39. No new singleton-global assumptions are introduced for runtime composition or lifecycle behavior.
 40. Alias/instance seam is required now by contract; full UX/packaging mechanics remain deferred and centralized in axis 13.
 
@@ -130,7 +130,7 @@ This is the canonical caller/auth matrix source. Any matrix renderings in axis/e
 23. Context modeling keeps two envelopes by design: oRPC boundary request context and Inngest runtime function context; packet policy rejects a forced universal context object.
 24. Middleware policy keeps two control planes by design: boundary controls in oRPC/Elysia and durable lifecycle controls in Inngest middleware + `step.*`.
 25. Heavy oRPC middleware SHOULD use explicit context-cached dedupe markers; built-in dedupe is constrained to leading-subset/same-order middleware chains.
-26. Runtime metadata semantics are minimal: runtime behavior is derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`.
+26. Runtime metadata semantics are minimal: runtime behavior is derived from plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `apps/hq/rawr.hq.ts`.
 27. Legacy metadata fields (`templateRole`, `channel`, `publishTier`, `published`) are hard-deleted from non-archival runtime/tooling/scaffold metadata surfaces and do not appear in host/runtime/lifecycle wiring.
 28. Downstream conformance checks include `manifest-smoke`, `metadata-contract` (`rawr.kind` + `rawr.capability` required), `import-boundary`, and `host-composition-guard`.
 29. Default consumer distribution remains instance-kit/no-fork-repeatability; long-lived fork posture is maintainer-only by default.
@@ -173,7 +173,7 @@ plugins/workflows/<capability>/src/contract.ts
 
 packages/core/src/orpc/hq-router.ts
 packages/coordination-inngest/src/adapter.ts
-rawr.hq.ts
+apps/hq/rawr.hq.ts
 apps/server/src/orpc.ts
 apps/server/src/rawr.ts
 ```
@@ -227,7 +227,7 @@ state: os.state.router({
 - **Host/route spine:** Capability-first `/api/workflows/<capability>/*` remains caller-facing and `/api/inngest` remains runtime-only ingress.
 - **Bootstrap order:** Hosts initialize baseline traces first, compose one runtime-owned Inngest bundle, mount `/api/inngest`, mount `/api/workflows/*`, then register `/rpc` + `/api/orpc/*`.
 - **Internal transport:** `/rpc` is first-party/internal only; no dedicated `/rpc/workflows` mount is required by default.
-- **Manifest composition:** `rawr.hq.ts` exposes canonical `orpc` and `workflows` namespaces plus the shared Inngest bundle; hosts mount `rawrHqManifest.workflows.triggerRouter` and `rawrHqManifest.inngest` explicitly.
+- **Manifest composition:** `apps/hq/rawr.hq.ts` exposes canonical `orpc` and `workflows` namespaces plus the shared Inngest bundle; hosts mount `rawrHqManifest.workflows.triggerRouter` and `rawrHqManifest.inngest` explicitly.
 - **Ownership split:** Workflow/API boundary contracts are plugin-owned; servicepackages remain transport-free and own shared domain logic/domain schemas plus internal client/service layers only.
 - **Caller-mode split:** First-party callers (including MFEs by default) use `RPCLink` on `/rpc`; external callers use published OpenAPI clients (`/api/orpc/*`, `/api/workflows/<capability>/*`); runtime ingress remains signed `/api/inngest`.
 - **File structure:** Host wiring remains explicit in `apps/server/src/rawr.ts` and workflow context helpers; capability servicepackages remain under `services/*`, shared infrastructure remains under `packages/*`, and boundary plugins remain under `plugins/*`.
@@ -237,7 +237,7 @@ state: os.state.router({
 - **What changes:**
   - `templateRole`, `channel`, `publishTier`, and `published` are removed from non-archival runtime/tooling/scaffold metadata surfaces.
   - Metadata validation/parsing/tooling hard-fails on any active legacy key presence.
-  - Runtime behavior derivation is constrained to plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `rawr.hq.ts`.
+  - Runtime behavior derivation is constrained to plugin surface root, `rawr.kind`, `rawr.capability`, and manifest registration in `apps/hq/rawr.hq.ts`.
   - Default consumer distribution posture is locked to instance-kit/no-fork-repeatability; long-lived fork posture is maintainer-only by default.
   - Multi-owner invariant is explicit now: alias/instance seam is required now and no singleton-global assumptions are allowed.
 - **What stays unchanged:**

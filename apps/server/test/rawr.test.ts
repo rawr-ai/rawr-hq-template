@@ -173,15 +173,16 @@ describe("rawr server routes", () => {
     expect(typeof realization.workflows.createInngestFunctions).toBe("function");
   });
 
-  it("host-composition-guard: canonical plugin families all use declaration-plus-contribute binding on the realized host path", () => {
+  it("host-composition-guard: canonical plugin families realize from semantic plugin builders on the realized host path", () => {
     const { manifest, boundRolePlan } = createTestingRawrHostSeam();
-    const declarationPlugins = [
-      ...Object.values(manifest.plugins.api),
-      ...Object.values(manifest.plugins.workflows),
+    const semanticPlugins = [
+      ...Object.values(manifest.roles.server.api),
+      ...Object.values(manifest.roles.async.workflows),
     ];
 
-    for (const plugin of declarationPlugins) {
+    for (const plugin of semanticPlugins) {
       expect(typeof plugin.contribute).toBe("function");
+      expect("exposure" in plugin).toBe(true);
     }
 
     expect(boundRolePlan.apiPlugins.every((plugin) => plugin.internal?.router)).toBe(true);
@@ -274,17 +275,18 @@ describe("rawr server routes", () => {
   });
 
   it("host-composition-guard: manifest stays composition-only and cold", async () => {
-    const manifestSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "manifest.ts"), "utf8");
-    expect(manifestSource).toContain("registerCoordinationApiPlugin");
-    expect(manifestSource).toContain("registerStateApiPlugin");
-    expect(manifestSource).toContain("registerExampleTodoApiPlugin");
-    expect(manifestSource).toContain("registerCoordinationWorkflowPlugin");
-    expect(manifestSource).toContain("registerSupportExampleWorkflowPlugin");
+    const manifestSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "rawr-hq.ts"), "utf8");
+    expect(manifestSource).toContain("coordinationApiPlugin");
+    expect(manifestSource).toContain("stateApiPlugin");
+    expect(manifestSource).toContain("exampleTodoApiPlugin");
+    expect(manifestSource).toContain("coordinationWorkflowPlugin");
+    expect(manifestSource).toContain("supportExampleWorkflowPlugin");
+    expect(manifestSource).not.toContain("registerCoordinationApiPlugin");
     expect(manifestSource).not.toContain("apps/server/src/logging");
     expect(manifestSource).not.toContain("createHqRuntimeRouter");
-    expect(manifestSource).toContain("plugins: {");
-    expect(manifestSource).toContain("api: apiPlugins");
-    expect(manifestSource).toContain("workflows: workflowPlugins");
+    expect(manifestSource).toContain("roles: {");
+    expect(manifestSource).toContain("server: {");
+    expect(manifestSource).toContain("async: {");
     expect(manifestSource).not.toContain("materializeManifestBridgeSurfaces");
     expect(manifestSource).not.toContain("createRouterClient(");
     expect(manifestSource).not.toContain("createCoordinationClient(");
@@ -306,7 +308,7 @@ describe("rawr server routes", () => {
     const workflowRuntimeSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "workflows", "runtime.ts"), "utf8");
 
     expect(rawrSource).toContain('from "./host-composition"');
-    expect(hostCompositionSource).toContain('from "@rawr/hq-app/manifest"');
+    expect(hostCompositionSource).toContain('from "@rawr/hq-app/rawr-hq"');
     expect(hostSeamSource).not.toContain('from "../../../rawr.hq"');
     expect(testingHostSource).not.toContain('from "../../../rawr.hq"');
     expect(hostSeamSource).not.toContain("@rawr/hq-app/manifest");

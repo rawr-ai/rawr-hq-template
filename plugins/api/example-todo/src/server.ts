@@ -1,50 +1,16 @@
-import {
-  defineApiPlugin,
-  defineApiPluginDeclaration,
-  type ApiPluginContribution,
-} from "@rawr/hq-sdk/apis";
-import type { ExampleTodoClientResolver } from "./context";
-import { exampleTodoApiContract } from "./contract";
-import { createExampleTodoApiRouter } from "./router";
-
+import { exampleTodoApiPlugin } from "./plugin";
 export {
   type ExampleTodoApiContext,
   type ExampleTodoClientResolver,
 } from "./context";
 export { createExampleTodoApiRouter, type ExampleTodoApiRouter } from "./router";
+export {
+  exampleTodoApiPlugin,
+  type ExampleTodoApiPluginBound,
+  type ExampleTodoApiPluginRegistration,
+} from "./plugin";
 
-export type ExampleTodoApiPluginBound = Readonly<{
-  resolveClient: ExampleTodoClientResolver;
-}>;
-
-const exampleTodoApiDeclaration = defineApiPluginDeclaration({
-  internal: {
-    contract: exampleTodoApiContract,
-  },
-  published: {
-    contract: exampleTodoApiContract,
-  },
-});
-
-function contributeExampleTodoApiPlugin(
-  bound: ExampleTodoApiPluginBound,
-): ApiPluginContribution<typeof exampleTodoApiContract, ReturnType<typeof createExampleTodoApiRouter>> {
-  const internal = {
-    contract: exampleTodoApiDeclaration.internal.contract,
-    router: createExampleTodoApiRouter(bound.resolveClient),
-  } as const;
-
-  return {
-    internal,
-    published: internal,
-  };
-}
-
+/** @deprecated Temporary compatibility shim; import `exampleTodoApiPlugin` from `./plugin` instead. */
 export function registerExampleTodoApiPlugin() {
-  return defineApiPlugin({
-    declaration: exampleTodoApiDeclaration,
-    contribute: contributeExampleTodoApiPlugin,
-  });
+  return exampleTodoApiPlugin;
 }
-
-export type ExampleTodoApiPluginRegistration = ReturnType<typeof registerExampleTodoApiPlugin>;

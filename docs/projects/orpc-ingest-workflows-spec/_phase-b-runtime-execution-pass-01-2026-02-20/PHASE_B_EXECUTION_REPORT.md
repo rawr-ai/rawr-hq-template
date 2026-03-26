@@ -16,7 +16,7 @@ Phase B is complete through slices `B0..B6` using forward-only slice execution w
 ## Key Contracts Preserved
 1. Runtime semantics remain `rawr.kind + rawr.capability + manifest registration`.
 2. Route-family boundaries remain unchanged (`/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*`, `/api/inngest`).
-3. `rawr.hq.ts` remains composition authority.
+3. `apps/hq/rawr.hq.ts` remains composition authority.
 4. Legacy metadata remains hard-deleted from runtime semantics.
 
 ## Review + Fix Closure

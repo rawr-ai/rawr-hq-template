@@ -1,44 +1,16 @@
-import {
-  defineApiPlugin,
-  defineApiPluginDeclaration,
-  type ApiPluginContribution,
-} from "@rawr/hq-sdk/apis";
-import type { StateClientResolver } from "./context";
-import { stateApiContract } from "./contract";
-import { createStateRouter } from "./router";
-
+import { stateApiPlugin } from "./plugin";
 export {
   type StateApiContext,
   type StateClientResolver,
 } from "./context";
 export { createStateRouter, type StateApiRouter } from "./router";
+export {
+  stateApiPlugin,
+  type StateApiPluginBound,
+  type StateApiPluginRegistration,
+} from "./plugin";
 
-export type StateApiPluginBound = Readonly<{
-  resolveClient: StateClientResolver;
-}>;
-
-const stateApiDeclaration = defineApiPluginDeclaration({
-  internal: {
-    contract: stateApiContract,
-  },
-});
-
-function contributeStateApiPlugin(
-  bound: StateApiPluginBound,
-): ApiPluginContribution<typeof stateApiContract, ReturnType<typeof createStateRouter>> {
-  return {
-    internal: {
-      contract: stateApiDeclaration.internal.contract,
-      router: createStateRouter(bound.resolveClient),
-    },
-  };
-}
-
+/** @deprecated Temporary compatibility shim; import `stateApiPlugin` from `./plugin` instead. */
 export function registerStateApiPlugin() {
-  return defineApiPlugin({
-    declaration: stateApiDeclaration,
-    contribute: contributeStateApiPlugin,
-  });
+  return stateApiPlugin;
 }
-
-export type StateApiPluginRegistration = ReturnType<typeof registerStateApiPlugin>;

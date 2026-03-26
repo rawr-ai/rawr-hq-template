@@ -30,7 +30,7 @@ Use this when you need exact commands for:
 | Lifecycle: skill quality gates | `docs/process/runbooks/LIFECYCLE_SKILL.md` |
 | Lifecycle: workflow quality gates | `docs/process/runbooks/LIFECYCLE_WORKFLOW.md` |
 | Lifecycle: composed multi-surface changes | `docs/process/runbooks/LIFECYCLE_COMPOSED_CHANGES.md` |
-| Compose runtime surfaces in `rawr.hq.ts` | `docs/process/runbooks/RAWR_HQ_MANIFEST_COMPOSITION.md` |
+| Compose runtime surfaces in `apps/hq/rawr.hq.ts` | `docs/process/runbooks/RAWR_HQ_MANIFEST_COMPOSITION.md` |
 | Operate the managed local HQ runtime | `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md` |
 | Operate coordination canvas workflows and run diagnostics | `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` |
 | Verify routed telemetry, logs, traces, and metrics | `docs/process/runbooks/TELEMETRY_VERIFICATION.md` |

@@ -27,7 +27,7 @@
 1. `RAWR HQ-Template` remains upstream engineering truth for shared behavior and architecture policy.
 2. Default consumer distribution path is **instance-kit / no-fork-repeatability**.
 3. Long-lived fork posture is a maintainer path and is NOT the default consumer path.
-4. Manifest-first authority remains explicit: generated `rawr.hq.ts` is canonical composition authority.
+4. Manifest-first authority remains explicit: generated `apps/hq/rawr.hq.ts` is canonical composition authority.
 5. Runtime lifecycle semantics remain constrained to plugin surface root + `rawr.kind` + `rawr.capability` + manifest registration; legacy metadata fields are hard-deleted from non-archival runtime/tooling/scaffold metadata surfaces (D-013 unchanged).
 6. Multi-owner invariant is required now: no new singleton-global assumptions may be introduced in composition/runtime contracts.
 7. Alias/instance seam is required now by contract; full feature UX/packaging mechanics are deferred.
@@ -48,7 +48,7 @@
 | --- | --- | --- |
 | Distribution default | Instance-kit/no-fork-repeatability is default consumer posture. | Broader distribution ergonomics and packaging UX workflows. |
 | Fork policy | Long-lived fork remains maintainer-only path by default. | Maintainer tooling/process optimization for long-lived fork operations. |
-| Runtime authority | `rawr.hq.ts` manifest composition authority is required. | Additional composition automation layers on top of manifest contract. |
+| Runtime authority | `apps/hq/rawr.hq.ts` manifest composition authority is required. | Additional composition automation layers on top of manifest contract. |
 | Lifecycle semantics | Runtime keyed by `rawr.kind` + `rawr.capability`; legacy metadata keys are forbidden in non-archival runtime/tooling/scaffold metadata surfaces. | Expanded lifecycle dashboards/UX beyond current contract surface. |
 | Multi-owner behavior | Alias/instance seam is contract-required; no singleton-global assumptions. | Full multi-instance control-plane product features and packaging details. |
 

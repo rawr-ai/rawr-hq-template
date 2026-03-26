@@ -15,7 +15,7 @@ Do not mix command families.
 ## Runtime Model (Target)
 1. Shared capability logic/contracts/events/schemas live in `packages/*`.
 2. Runtime adapters live in `plugins/*` split by surface.
-3. Final cross-surface composition lives in `rawr.hq.ts`.
+3. Final cross-surface composition lives in `apps/hq/rawr.hq.ts`.
 4. Host apps (`apps/*`) mount manifest exports and do not author per-capability wiring.
 
 ## Runtime Plugin Roots (Target)
@@ -41,16 +41,19 @@ Removed from runtime semantics:
 Deprecated for later removal:
 - `publishTier` / `published`
 
-## Surface Registration Contracts (Target)
-- `registerApiPlugin(...) -> { namespace, contract, router }`
-- `registerWorkflowPlugin(...) -> { functions }`
-- `registerWebPlugin(...) -> { mounts }`
-- `registerCliPlugin(...) -> { commands }`
-- `registerAgentPlugin(...) -> { capabilities, knowledgeRefs }`
-- `registerMcpPlugin(...) -> { actions }` (optional)
+## Surface Authoring Contracts (Target)
+- `defineServerApiPlugin(...) -> { exposure, resources, routes }`
+- `defineAsyncWorkflowPlugin(...) -> { exposure, resources, routes?, workflows }`
+- `defineWebAppPlugin(...) -> { resources, app }`
+- `defineCliCommandPlugin(...) -> { resources, command|commands }`
+- `defineAgentToolPlugin(...) -> { resources, tool|tools }`
+- `defineAsyncConsumerPlugin(...)` and `defineAsyncSchedulePlugin(...)` for async non-HTTP lanes
+
+Authoritative plugin entrypoint is `src/plugin.ts` (package export `./plugin`).
+`src/server.ts` may carry temporary compatibility wrappers during staged migration only.
 
 ## Composition Contract
-`rawr.hq.ts` is the single composition authority.
+`apps/hq/rawr.hq.ts` is the single composition authority.
 
 It aggregates and exports:
 - ORPC contract/router/context,

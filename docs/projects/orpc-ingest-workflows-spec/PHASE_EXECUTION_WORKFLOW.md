@@ -10,7 +10,7 @@ Reusable execution loop for remaining phases (D+), grounded in what worked acros
    - `/api/orpc/*` published OpenAPI
    - `/api/workflows/<capability>/*` capability-first caller boundary
    - `/api/inngest` signed runtime ingress only
-3. `rawr.hq.ts` is composition authority; host code consumes manifest-owned seams.
+3. `apps/hq/rawr.hq.ts` is composition authority; host code consumes manifest-owned seams.
 4. Shared authority belongs in package-owned seams; app/plugin-local code should be adapters and composition glue.
 5. Forward-only convergence: short compatibility bridges are allowed only with explicit retirement criteria.
 

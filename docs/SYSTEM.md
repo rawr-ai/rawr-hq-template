@@ -7,7 +7,7 @@
 Target-state runtime composition is manifest-first:
 - shared capability logic/contracts in `packages/*`,
 - runtime adapters by surface in `plugins/*`,
-- final multi-surface assembly in `rawr.hq.ts`,
+- final multi-surface assembly in `apps/hq/rawr.hq.ts`,
 - host mounting in `apps/*`.
 
 Canonical target packet:
@@ -50,7 +50,7 @@ Related runbooks:
 
 ## Manifest Composition Contract
 
-`rawr.hq.ts` is the single composition authority for runtime surfaces.
+`apps/hq/rawr.hq.ts` is the single composition authority for runtime surfaces.
 
 It exports:
 - ORPC contract/router/context bundle,

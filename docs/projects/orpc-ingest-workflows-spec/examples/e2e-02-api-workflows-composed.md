@@ -43,7 +43,7 @@ flowchart TD
   Host["apps/server/src/rawr.ts"] --> Api
   Host --> Trigger
   Host --> Ingress
-  Root["rawr.hq.ts"] --> Host
+  Root["apps/hq/rawr.hq.ts"] --> Host
 ```
 
 ## 3) File Tree Diff from E2E 01
@@ -453,15 +453,15 @@ export function createReconciliationFunction(inngest: Inngest, deps: InvoicingSe
 }
 ```
 
-### 4.4 `rawr.hq.ts`: compose API + workflow trigger + Inngest functions
+### 4.4 `apps/hq/rawr.hq.ts`: compose API + workflow trigger + Inngest functions
 ```text
-rawr.hq.ts
+apps/hq/rawr.hq.ts
 plugins/api/invoicing/src/index.ts
 plugins/workflows/invoicing/src/index.ts
 ```
 
 ```ts
-// rawr.hq.ts
+// apps/hq/rawr.hq.ts
 import { oc } from "@orpc/contract";
 import { Inngest } from "inngest";
 import { invoicingApiSurface } from "./plugins/api/invoicing/src";
@@ -559,7 +559,7 @@ export function registerOrpcRoutes(
 2. Build API plugin (`plugins/api/invoicing`) with TypeBox-first contract, shared context contract in `context.ts`, and explicit operations that call `context.invoicing.*`.
 3. Build workflow plugin (`plugins/workflows/invoicing`) with trigger contract/router/operations, shared context contract in `context.ts`, and Inngest functions.
 4. In workflow operation, call `context.invoicing.queueReconciliation(...)` before `context.inngest.send(...)`.
-5. Compose both plugin surfaces in `rawr.hq.ts` under one capability namespace (`invoicing.api`, `invoicing.workflows`) and merge workflow functions into the single Inngest bundle.
+5. Compose both plugin surfaces in `apps/hq/rawr.hq.ts` under one capability namespace (`invoicing.api`, `invoicing.workflows`) and merge workflow functions into the single Inngest bundle.
 6. In server host registration, mount:
    - `/api/orpc/*` for API boundary procedures.
    - `/api/workflows/*` for caller-trigger workflow procedures.
@@ -607,7 +607,7 @@ export function registerOrpcRoutes(
 | Plugin-to-plugin runtime coupling | API plugin imports workflow plugin (or reverse) | Import package surfaces only (`@rawr/invoicing`) in both plugins |
 | TypeBox drift to ad hoc schema styles (including Zod-authored contract/procedure snippets) | OpenAPI mismatch or validator mismatch | Keep object-root wrappers on `schema({...})`; keep explicit `std(...)` for non-object roots |
 | One-off extracted procedure/contract schemas | Local I/O ownership becomes harder to scan | Default to inline `.input(schema({...}))` / `.output(schema({...}))` for object-root wrappers; extract only when shared or very large, and pair as `const XSchema = { input, output }` |
-| Hidden glue in composition | Hard-to-debug route ownership | Keep `rawr.hq.ts` explicit with per-capability `api` and `workflows` nodes |
+| Hidden glue in composition | Hard-to-debug route ownership | Keep `apps/hq/rawr.hq.ts` explicit with per-capability `api` and `workflows` nodes |
 | Context mismatch between host and handlers | `undefined` runtime/inngest at runtime | Use one shared context object injected at mount registration |
 
 ## 9) Explicit Policy Consistency Checklist
@@ -627,7 +627,7 @@ export function registerOrpcRoutes(
 - [x] Inngest runtime ingress path is explicit and separate (`/api/inngest`).
 - [x] Both API and workflow trigger operations use the same internal package client.
 - [x] No plugin-to-plugin direct runtime coupling is introduced.
-- [x] Composition glue is concrete (`rawr.hq.ts` + host mount code), not implicit.
+- [x] Composition glue is concrete (`apps/hq/rawr.hq.ts` + host mount code), not implicit.
 
 ## 10) Bridge to E2E 03
 
@@ -635,7 +635,7 @@ Next step: continue with `e2e-03-microfrontend-integration.md` to add a first-pa
 
 ### Source-Parity Canonical File Tree (verbatim legacy tree block)
 ```text
-rawr.hq.ts
+apps/hq/rawr.hq.ts
 apps/server/src/
   rawr.ts
   orpc/register-routes.ts

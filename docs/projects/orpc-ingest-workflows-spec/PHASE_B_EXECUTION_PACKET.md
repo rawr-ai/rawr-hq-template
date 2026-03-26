@@ -18,7 +18,7 @@ Harden Phase A seams into implementation-safe interfaces with explicit ownership
 ## As-Landed Snapshot (through B6 on 2026-02-21)
 1. Runtime implementation slices `B0..B4A` are landed in the Phase B runtime execution branch/worktree.
 2. `B0` auth-source hardening is landed and the blocking review finding (`HIGH-01`) is closed in fix closure.
-3. `B1`/`B2` seam hardening is landed: host composition consumes package-owned runtime seams while `rawr.hq.ts` remains manifest authority.
+3. `B1`/`B2` seam hardening is landed: host composition consumes package-owned runtime seams while `apps/hq/rawr.hq.ts` remains manifest authority.
 4. `B3` anti-drift verification is structurally enforced through the canonical gate chain:
    - `bun run phase-a:gates:exit`
    - `scripts/phase-a/verify-gate-scaffold.mjs` (`metadata-contract`, `import-boundary`, `host-composition-guard`, `route-negative-assertions`)
@@ -36,7 +36,7 @@ Harden Phase A seams into implementation-safe interfaces with explicit ownership
    - `/api/orpc/*` published OpenAPI boundary
    - `/api/workflows/<capability>/*` caller-facing workflow boundary
    - `/api/inngest` signed runtime ingress only
-3. `rawr.hq.ts` remains composition authority.
+3. `apps/hq/rawr.hq.ts` remains composition authority.
 4. Package-owned shared seams + host-owned concrete wiring (D-014).
 5. Legacy metadata keys remain forbidden in non-archival runtime/tooling/scaffold paths.
 
@@ -75,7 +75,7 @@ Harden Phase A seams into implementation-safe interfaces with explicit ownership
   - `packages/core/src/orpc/hq-router.ts`
   - `packages/core/src/orpc/index.ts`
   - `apps/server/src/orpc.ts`
-  - `rawr.hq.ts`
+  - `apps/hq/rawr.hq.ts`
   - `apps/server/test/rawr.test.ts`
   - `apps/server/test/route-boundary-matrix.test.ts`
   - `packages/core/test/workflow-trigger-contract-drift.test.ts` (new)
@@ -98,11 +98,11 @@ Harden Phase A seams into implementation-safe interfaces with explicit ownership
   - `packages/core/src/orpc/index.ts`
   - `apps/server/src/orpc.ts`
   - `apps/server/src/workflows/context.ts`
-  - `rawr.hq.ts`
+  - `apps/hq/rawr.hq.ts`
   - `apps/server/test/orpc-openapi.test.ts`
   - `packages/core/test/runtime-router.test.ts` (new)
 - Acceptance:
-  1. `rawr.hq.ts` remains canonical authority.
+  1. `apps/hq/rawr.hq.ts` remains canonical authority.
   2. Host consumes package-owned seams instead of app-internal composition.
   3. No circular import/coupling regression.
 

@@ -81,7 +81,7 @@ Status note: this section maps host guarantees to D-014 candidate language and d
 
 | Determinant | Canonical owner | Guarantee |
 | --- | --- | --- |
-| Manifest surface map | `rawr.hq.ts` (generated composition authority) | API/workflow contracts and routers compose predictably by capability. |
+| Manifest surface map | `apps/hq/rawr.hq.ts` (generated composition authority) | API/workflow contracts and routers compose predictably by capability. |
 | Published OpenAPI filter | host oRPC seam (`apps/server/src/orpc.ts` or equivalent) | `/api/orpc/*` and `/api/orpc/openapi.json` expose only the published API-plugin subset of the composed router; the current host-owned filter is the transitional publication policy until metadata-driven publication lands. |
 | Context factories | host boundary modules (`apps/server/src/workflows/context.ts` or equivalent) | Principal/request/correlation/network metadata are derived once per request boundary and injected consistently. |
 | Infrastructure adapter assembly | host composition root (`apps/server/src/rawr.ts` or equivalent) | Concrete auth/db/runtime adapters are wired outside plugins/packages and passed as typed ports. |
@@ -125,7 +125,7 @@ apps/server/src/
   orpc.ts
   workflows/
     context.ts
-rawr.hq.ts
+apps/hq/rawr.hq.ts
 packages/core/src/orpc/
   hq-router.ts
 packages/hq-sdk/src/
@@ -193,7 +193,7 @@ export function typeBoxStandardSchema<T extends TSchema>(schema: T): Schema<Stat
 }
 ```
 
-### Composition root fixture (`rawr.hq.ts`)
+### Composition root fixture (`apps/hq/rawr.hq.ts`)
 ```ts
 initializeExtendedTracesBaseline();
 const inngest = createInngestClient("rawr-hq");
@@ -285,7 +285,7 @@ app.all("/api/inngest", async ({ request }) => inngestHandler(request));
 ```
 
 ### File-structure implications
-The manifest-driven spine adds one new fixture: `apps/server/src/workflows/context.ts` (principal resolution, workflow boundary metadata, and runtime helpers) while keeping `apps/server/src/rawr.ts` focused on mounting `/api/workflows/*` and `/api/inngest`. Capability metadata stays inside `packages/*` and `plugins/*`, and `rawr.hq.ts` is generated under the repo root so host owners do not edit it manually.
+The manifest-driven spine adds one new fixture: `apps/server/src/workflows/context.ts` (principal resolution, workflow boundary metadata, and runtime helpers) while keeping `apps/server/src/rawr.ts` focused on mounting `/api/workflows/*` and `/api/inngest`. Capability metadata stays inside `packages/*` and `plugins/*`, and `apps/hq/rawr.hq.ts` is generated under the repo root so host owners do not edit it manually.
 
 ### What changes vs what stays the same
 - **Changes:** Host bootstrap now initializes baseline traces first, keeps a single runtime-owned Inngest bundle, mounts `/api/inngest` then `/api/workflows/*`, and only then registers `/rpc` plus the filtered published `/api/orpc/*` surface. Generated manifest wiring and helper composition remain explicit, and host-owned infrastructure adapter injection guarantees are now explicit (D-014 language).

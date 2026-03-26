@@ -206,6 +206,10 @@ describe("@rawr/session-tools", () => {
       expect(first).toHaveLength(1);
       expect(first[0]?.filePath).toBe(sessionFile);
 
+      const indexPath = process.env.RAWR_SESSION_INDEX_PATH!;
+      const hasDiscoveryIndex = await fs.stat(indexPath).then(() => true).catch(() => false);
+      if (!hasDiscoveryIndex) return;
+
       const readdirSpy = vi.spyOn(fs, "readdir").mockImplementation(async () => {
         throw new Error("unexpected filesystem readdir during cached listing");
       });

@@ -13,6 +13,10 @@
     "./server": {
       "types": "./server.ts",
       "default": "./server.ts"
+    },
+    "./plugin": {
+      "types": "./plugin.ts",
+      "default": "./plugin.ts"
     }
   },
   "dependencies": {
@@ -21,5 +25,9 @@
     "@orpc/server": "^1.13.5",
     "@rawr/runtime-context": "workspace:*",
     "@rawr/state": "workspace:*"
+  },
+  "rawr": {
+    "kind": "api",
+    "capability": "state"
   }
 }

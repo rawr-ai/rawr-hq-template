@@ -55,7 +55,7 @@ Planned additions:
 2. Host wiring consumes package seam via manifest.
 
 Constraints:
-1. `rawr.hq.ts` remains composition authority.
+1. `apps/hq/rawr.hq.ts` remains composition authority.
 2. Import direction stays package-owned -> host composition, not reverse.
 
 ### 2.4 B3: Structural verification seam
@@ -91,7 +91,7 @@ Parallel lanes (non-overlap):
    - `packages/core/src/orpc/hq-router.ts`
    - `packages/core/src/orpc/index.ts`
 2. Manifest binding updates:
-   - `rawr.hq.ts`
+   - `apps/hq/rawr.hq.ts`
    - `apps/server/src/orpc.ts`
 3. Tests:
    - `packages/core/test/workflow-trigger-contract-drift.test.ts` (new)
@@ -101,7 +101,7 @@ Parallel lanes (non-overlap):
 
 Parallel lanes:
 1. Core contract lane (`packages/core/src`, `packages/core/test`)
-2. Host/manifest lane (`rawr.hq.ts`, `apps/server/src/orpc.ts`)
+2. Host/manifest lane (`apps/hq/rawr.hq.ts`, `apps/server/src/orpc.ts`)
 3. Boundary regression lane (`apps/server/test/*`)
 
 ### 3.3 B2 Implementation Units
@@ -111,7 +111,7 @@ Parallel lanes:
 2. Host seam consumers:
    - `apps/server/src/orpc.ts`
    - `apps/server/src/workflows/context.ts`
-   - `rawr.hq.ts`
+   - `apps/hq/rawr.hq.ts`
 3. Tests:
    - `packages/core/test/runtime-router.test.ts` (new)
    - `apps/server/test/orpc-openapi.test.ts`
@@ -119,7 +119,7 @@ Parallel lanes:
 
 Parallel lanes:
 1. Package extraction lane (`packages/core/src`, `packages/core/test`)
-2. Host adoption lane (`apps/server/src`, `rawr.hq.ts`)
+2. Host adoption lane (`apps/server/src`, `apps/hq/rawr.hq.ts`)
 
 ### 3.4 B3 Implementation Units
 1. Gate script hardening:
@@ -177,7 +177,7 @@ Parallel lanes:
 2. `B1`: trigger router overexposure.
    - First response: validate workflow scope contract; rerun workflow route regression tests.
 3. `B2`: coupling/import cycle.
-   - First response: inspect import graph of `rawr.hq.ts`, core seam exports, host consumers.
+   - First response: inspect import graph of `apps/hq/rawr.hq.ts`, core seam exports, host consumers.
 4. `B3`: false-green gates.
    - First response: ensure structural assertions cover ownership and not only text markers.
 

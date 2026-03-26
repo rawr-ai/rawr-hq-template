@@ -34,6 +34,10 @@
 - Trunk must remain `main` (`gt trunk`).
 - Branch/stack workflow contract: `docs/process/GRAPHITE.md`.
 
+## Manifest Authority Note
+
+- Canonical HQ app manifest entrypoint is `apps/hq/rawr.hq.ts` (legacy `apps/hq/src/manifest.ts` is compatibility-only and should remain a thin re-export until consumers migrate).
+
 ## Routing
 
 - `AGENTS_SPLIT.md` for "where should this change land?" (template vs personal).
@@ -46,6 +50,10 @@
 
 ## Process Runbooks
 
+- Plugin migration rule: canonical plugin authoring lives in `src/plugin.ts` using semantic builders (`defineServerApiPlugin`, `defineAsyncWorkflowPlugin`) and package `./plugin` exports. Keep `src/server.ts` compatibility wrappers temporary and marked deprecated.
+
+- Canonical architecture specification lives at `docs/system/RAWR_CANONICAL_ARCHITECTURE_AND_RUNTIME_SPECIFICATION.md`; track migration-phase harmonization work in sibling `docs/system/TODO.md`.
+- Run `bun install` before lint/typecheck/test sweeps; workspace package export resolution depends on installed workspace links.
 - CLI/plugin path index (start here): `docs/process/RUNBOOKS.md`.
 - Nx-first agent workflow: `docs/process/NX_AGENT_WORKFLOW.md`.
 - Graphite stack drain loop: `docs/process/runbooks/STACK_DRAIN_LOOP.md`.

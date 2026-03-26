@@ -112,12 +112,12 @@ Converge runtime behavior to locked D-013, D-015, and D-016 seam-now policy with
 - Owner: `Runtime/Host Composition Owner`
 - Depends on: `A2`, `A3`
 - Implement:
-  1. Add manifest authority file `rawr.hq.ts` as runtime composition source.
+  1. Add manifest authority file `apps/hq/rawr.hq.ts` as runtime composition source.
   2. Add workflow trigger contract/router composition in core ORPC layer under capability namespaces.
   3. Mount `/api/workflows/*` using manifest-owned trigger router (capability-first paths).
   4. Keep `/rpc` first-party/internal and `/api/orpc/*` published boundary behavior unchanged.
 - Primary paths:
-  - `rawr.hq.ts`
+  - `apps/hq/rawr.hq.ts`
   - `apps/server/src/rawr.ts`
   - `apps/server/src/orpc.ts`
   - `packages/core/src/orpc`
@@ -304,7 +304,7 @@ Ordered opening slices for the next execution packet pass:
 | --- | --- | --- | --- |
 | `B0` | `/rpc` auth-source hardening: move from caller-surface header trust to host/session/service-auth-derived classification while keeping route policy unchanged. | Phase A complete (`A0`..`A9`) | `@rawr-runtime-host` |
 | `B1` | Workflow trigger router seam isolation: make `workflows.triggerRouter` trigger/status-scoped and remove accidental coupling to broad ORPC router composition. | `B0` | `@rawr-plugin-lifecycle` |
-| `B2` | Manifest/host composition seam hardening: reduce `rawr.hq.ts` host-internal coupling while preserving manifest-first authority and D-014 import direction guarantees. | `B1` | `@rawr-plugin-lifecycle` |
+| `B2` | Manifest/host composition seam hardening: reduce `apps/hq/rawr.hq.ts` host-internal coupling while preserving manifest-first authority and D-014 import direction guarantees. | `B1` | `@rawr-plugin-lifecycle` |
 | `B3` | Verification hardening: upgrade manifest/gate checks from string-shape to structural ownership assertions and add anti-regression guards for package-owned adapter shims. | `B2` | `@rawr-verification-gates` |
 
 Non-blocking carry-forward during Phase B planning/execution:

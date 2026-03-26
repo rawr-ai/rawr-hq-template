@@ -17,6 +17,10 @@
     "./server": {
       "types": "./server.ts",
       "default": "./server.ts"
+    },
+    "./plugin": {
+      "types": "./plugin.ts",
+      "default": "./plugin.ts"
     }
   },
   "dependencies": {
@@ -27,5 +31,9 @@
     "@rawr/support-example": "workspace:*",
     "inngest": "3.51.0",
     "typebox": "^1.0.81"
+  },
+  "rawr": {
+    "kind": "workflows",
+    "capability": "support-example"
   }
 }

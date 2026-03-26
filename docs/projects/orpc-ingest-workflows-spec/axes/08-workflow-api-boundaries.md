@@ -277,7 +277,7 @@ Recommendation: keep capability prefixes explicit, emit them via the manifest he
 
 
 ### Manifest-driven composition note
-Hosts build the workflow handler from `rawrHqManifest.workflows.triggerRouter`, so capability-first `/api/workflows/<capability>/*` mounts, the `OpenAPIHandler`, and the Inngest function bundle stay in sync even when new capabilities land. Regenerate `rawr.hq.ts` through the packet’s manifest composition flow (see `ARCHITECTURE.md` and `07-host-composition.md`) instead of editing `apps/*` directly.
+Hosts build the workflow handler from `rawrHqManifest.workflows.triggerRouter`, so capability-first `/api/workflows/<capability>/*` mounts, the `OpenAPIHandler`, and the Inngest function bundle stay in sync even when new capabilities land. Regenerate `apps/hq/rawr.hq.ts` through the packet’s manifest composition flow (see `ARCHITECTURE.md` and `07-host-composition.md`) instead of editing `apps/*` directly.
 
 
 ### Workflow surface export

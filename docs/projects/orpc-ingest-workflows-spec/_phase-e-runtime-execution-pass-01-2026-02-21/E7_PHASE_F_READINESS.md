@@ -33,7 +33,7 @@ None.
 ## Drift Guards for Phase F
 1. Preserve route-family semantics (`/rpc`, `/api/orpc/*`, `/api/workflows/<capability>/*`, `/api/inngest`).
 2. Preserve runtime identity contract (`rawr.kind + rawr.capability + manifest registration`).
-3. Keep `rawr.hq.ts` as manifest composition authority.
+3. Keep `apps/hq/rawr.hq.ts` as manifest composition authority.
 4. Maintain forward-only posture with no rollback track.
 
 ## Stack / Submit Watchpoint

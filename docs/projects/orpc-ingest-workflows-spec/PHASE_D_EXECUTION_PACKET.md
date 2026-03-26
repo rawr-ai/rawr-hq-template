@@ -28,7 +28,7 @@ Land Phase D middleware and ingress hardening around dedupe safety, finished-hoo
    - `/api/orpc/*` published OpenAPI boundary
    - `/api/workflows/<capability>/*` caller-facing workflow boundary
    - `/api/inngest` signed runtime ingress only
-3. `rawr.hq.ts` remains composition authority.
+3. `apps/hq/rawr.hq.ts` remains composition authority.
 4. D-013 hard deletion remains enforced (legacy metadata keys forbidden in active runtime/tooling/scaffold surfaces).
 5. D-014/D-015/D-016 locks remain in force (package seams, verification posture, no singleton-global assumptions).
 
