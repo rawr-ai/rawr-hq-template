@@ -50,6 +50,7 @@
 
 ## Process Runbooks
 
+- Canonical architecture specification lives at `docs/system/RAWR_CANONICAL_ARCHITECTURE_AND_RUNTIME_SPECIFICATION.md`; track migration-phase harmonization work in sibling `docs/system/TODO.md`.
 - Run `bun install` before lint/typecheck/test sweeps; workspace package export resolution depends on installed workspace links.
 - CLI/plugin path index (start here): `docs/process/RUNBOOKS.md`.
 - Nx-first agent workflow: `docs/process/NX_AGENT_WORKFLOW.md`.
