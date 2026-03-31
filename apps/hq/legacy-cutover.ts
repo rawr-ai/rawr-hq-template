@@ -1,14 +1,15 @@
-import { bootstrapServer, type BootstrappedServer } from "../server/src/bootstrap";
+import { createRawrHostComposition } from "../server/src/host-composition";
+import { createHostLoggerAdapter } from "../server/src/logging";
 import type { RawrHqManifest } from "./rawr.hq";
 
 export type RawrHqLegacyServerDependencies = {
-  bootstrapServer?: typeof bootstrapServer;
+  bootstrapServer?: typeof import("../server/src/bootstrap").bootstrapServer;
 };
 
 export type RawrHqLegacyServerBoot = Readonly<{
   manifest: RawrHqManifest;
   role: "server";
-  bootstrapped: BootstrappedServer;
+  bootstrapped: import("../server/src/bootstrap").BootstrappedServer;
 }>;
 
 export type RawrHqAsyncReservation = Readonly<{
@@ -36,6 +37,30 @@ function describeRawrHqAsyncReservation(manifest: RawrHqManifest): RawrHqAsyncRe
   };
 }
 
+const testingHostLogger = {
+  info() {},
+  error() {},
+} as const;
+
+async function resolveBootstrapServer(
+  deps?: RawrHqLegacyServerDependencies,
+): Promise<typeof import("../server/src/bootstrap").bootstrapServer> {
+  if (deps?.bootstrapServer) return deps.bootstrapServer;
+  return (await import("../server/src/bootstrap")).bootstrapServer;
+}
+
+export function createRawrHqLegacyRouteAuthority() {
+  return createRawrHostComposition({
+    hostLogger: createHostLoggerAdapter(),
+  });
+}
+
+export function createTestingRawrHqLegacyHostSeam() {
+  return createRawrHostComposition({
+    hostLogger: testingHostLogger,
+  });
+}
+
 /**
  * The sole sanctioned Phase 1 executable bridge from the canonical HQ app shell
  * into the pre-cutover server runtime.
@@ -46,7 +71,8 @@ export async function bootstrapRawrHqServerViaLegacyCutover(input: {
 }): Promise<RawrHqLegacyServerBoot> {
   void input.manifest.roles.server;
 
-  const bootstrapped = await (input.deps?.bootstrapServer ?? bootstrapServer)();
+  const bootstrapServer = await resolveBootstrapServer(input.deps);
+  const bootstrapped = await bootstrapServer();
 
   return {
     manifest: input.manifest,

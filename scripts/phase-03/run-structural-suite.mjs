@@ -45,7 +45,7 @@ const suiteCommandsByProject = {
   "@rawr/server": {
     default: [
       "bun run phase-a:gate:manifest-smoke-baseline",
-      "bun run phase-a:gate:host-composition-guard",
+      "bun run phase-a:gate:no-legacy-composition-authority",
       "bun run phase-a:gate:route-negative-assertions",
       "bun run phase-a:gate:harness-matrix",
       "bun run phase-a:gate:observability-contract",
@@ -57,7 +57,7 @@ const suiteCommandsByProject = {
     ],
     "phase-a-baseline": [
       "bun run phase-a:gate:manifest-smoke-baseline",
-      "bun run phase-a:gate:host-composition-guard",
+      "bun run phase-a:gate:no-legacy-composition-authority",
       "bun run phase-a:gate:route-negative-assertions",
       "bun run phase-a:gate:harness-matrix",
       "bun run phase-a:gate:observability-contract",
@@ -65,7 +65,7 @@ const suiteCommandsByProject = {
     ],
     "phase-a-completion": [
       "bun run phase-a:gate:manifest-smoke-completion",
-      "bun run phase-a:gate:host-composition-guard",
+      "bun run phase-a:gate:no-legacy-composition-authority",
       "bun run phase-a:gate:route-negative-assertions",
       "bun run phase-a:gate:harness-matrix",
       "bun run phase-a:gate:observability-contract",

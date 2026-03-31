@@ -67,13 +67,13 @@ describe("rawr server routes", () => {
     expect(res.headers.get("content-type")).toContain("text/javascript");
   });
 
-  it("host-composition-guard: rejects unsigned ingress before runtime dispatch", async () => {
+  it("no-legacy-composition-authority: rejects unsigned ingress before runtime dispatch", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
     const res = await app.handle(new Request("http://localhost/api/inngest", { method: "GET", headers: { host: "localhost" } }));
     expect(res.status).toBe(403);
   });
 
-  it("host-composition-guard: rejects invalid ingress signatures before runtime dispatch", async () => {
+  it("no-legacy-composition-authority: rejects invalid ingress signatures before runtime dispatch", async () => {
     const previousSigningKey = process.env.INNGEST_SIGNING_KEY;
     process.env.INNGEST_SIGNING_KEY = "signkey-test-rawr-ingress";
     try {
@@ -95,7 +95,7 @@ describe("rawr server routes", () => {
     }
   });
 
-  it("host-composition-guard: host seam scaffold binds every plugin family through host-owned satisfiers", () => {
+  it("no-legacy-composition-authority: host seam scaffold binds every plugin family through HQ bridge-owned satisfiers", () => {
     const { boundRolePlan, realization } = createTestingRawrHostSeam();
     expect(boundRolePlan.apiPlugins).toHaveLength(2);
     expect(boundRolePlan.workflowPlugins).toHaveLength(0);
@@ -104,7 +104,7 @@ describe("rawr server routes", () => {
     expect(Object.keys(realization.workflows.published.router)).toEqual([]);
   });
 
-  it("host-composition-guard: keeps canonical realized procedure routes stable", () => {
+  it("no-legacy-composition-authority: keeps canonical realized procedure routes stable", () => {
     const routes = collectProcedureRoutes(minifyContractRouter(createTestingRawrHostSeam().realization.orpc.contract)).sort();
     expect(routes).toEqual([
       "exampleTodo.tasks.create POST /exampleTodo/tasks/create",
@@ -113,7 +113,7 @@ describe("rawr server routes", () => {
     ]);
   });
 
-  it("host-composition-guard: keeps runtime authority stable when initialized from alias repo roots", async () => {
+  it("no-legacy-composition-authority: keeps runtime authority stable when initialized from alias repo roots", async () => {
     const canonicalRepoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-alias-root-"));
     const aliasRepoRoot = `${canonicalRepoRoot}-alias`;
     await fs.symlink(canonicalRepoRoot, aliasRepoRoot);
@@ -139,7 +139,7 @@ describe("rawr server routes", () => {
     }
   });
 
-  it("host-composition-guard: request scoped context factory runs per ORPC request", async () => {
+  it("no-legacy-composition-authority: request scoped context factory runs per ORPC request", async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-context-"));
     const hostInngest = createHostInngestBundle({ repoRoot: tempRoot });
     const requestIds: string[] = [];
@@ -172,7 +172,7 @@ describe("rawr server routes", () => {
     expect(requestIds).toEqual(["req-a", "req-b"]);
   });
 
-  it("host-composition-guard: enforces ingress -> workflows -> rpc/openapi mount order contract", () => {
+  it("no-legacy-composition-authority: enforces ingress -> workflows -> rpc/openapi mount order contract", () => {
     expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"]);
   });
 });

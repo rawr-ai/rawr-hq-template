@@ -31,7 +31,7 @@ assertScriptEquals(
 assertScriptEquals(
   scripts,
   "phase-f:gate:f1-runtime-lifecycle-runtime",
-  "bunx vitest run --project hq-ops services/hq-ops/test/repo-state.concurrent.test.ts && bunx vitest run --project server apps/server/test/rawr.test.ts --testNamePattern='host-composition-guard: keeps runtime authority stable when initialized from alias repo roots' && bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts && bun run phase-c:gate:c1-storage-lock-runtime",
+  "bunx vitest run --project hq-ops services/hq-ops/test/repo-state.concurrent.test.ts && bunx vitest run --project server apps/server/test/rawr.test.ts --testNamePattern='no-legacy-composition-authority: keeps runtime authority stable when initialized from alias repo roots' && bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts && bun run phase-c:gate:c1-storage-lock-runtime",
 );
 assertScriptEquals(
   scripts,
@@ -41,7 +41,7 @@ assertScriptEquals(
 assertScriptEquals(
   scripts,
   "phase-f:f1:full",
-  "bun run phase-f:f1:quick && bun run phase-a:gate:host-composition-guard",
+  "bun run phase-f:f1:quick && bun run phase-a:gate:no-legacy-composition-authority",
 );
 
 const checks = [

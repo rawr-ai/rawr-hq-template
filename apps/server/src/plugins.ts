@@ -140,7 +140,6 @@ export async function loadWorkspaceServerPlugins(
       const plugin = normalizeServerPlugin(mod, packageName);
       if (plugin) plugins.push(plugin);
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.warn(`[server] failed to load plugin ${packageName}:`, err);
     }
   }

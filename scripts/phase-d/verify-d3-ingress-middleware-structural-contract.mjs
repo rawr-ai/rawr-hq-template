@@ -135,7 +135,7 @@ assertScriptEquals(
 assertScriptEquals(
   scripts,
   "phase-d:d3:full",
-  "bun run phase-d:d3:quick && bun run phase-a:gate:host-composition-guard && bun run phase-a:gate:route-negative-assertions",
+  "bun run phase-d:d3:quick && bun run phase-a:gate:no-legacy-composition-authority && bun run phase-a:gate:route-negative-assertions",
 );
 
 console.log("phase-d d3 ingress/middleware structural contract verified");
