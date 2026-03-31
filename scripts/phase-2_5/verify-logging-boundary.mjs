@@ -15,17 +15,19 @@ await Promise.all([
   mustExist("apps/server/src/rawr.ts"),
   mustExist("apps/server/test/logging-correlation.test.ts"),
   mustExist("scripts/phase-2_5/verify-logging-boundary.mjs"),
+  mustExist("apps/hq/rawr.hq.ts"),
   mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/server/package.json"),
 ]);
 
-const [scripts, loggingSource, hostCompositionSource, hostSatisfiersSource, orpcSource, rawrSource, manifestSource, serverPackageRaw] = await Promise.all([
+const [scripts, loggingSource, hostCompositionSource, hostSatisfiersSource, orpcSource, rawrSource, shellSource, manifestCompatSource, serverPackageRaw] = await Promise.all([
   readPackageScripts(),
   readFile("apps/server/src/logging.ts"),
   readFile("apps/server/src/host-composition.ts"),
   readFile("apps/server/src/host-satisfiers.ts"),
   readFile("apps/server/src/orpc.ts"),
   readFile("apps/server/src/rawr.ts"),
+  readFile("apps/hq/rawr.hq.ts"),
   readFile("apps/hq/src/manifest.ts"),
   readFile("apps/server/package.json"),
 ]);
@@ -72,9 +74,10 @@ assertCondition(
     && hostCompositionSource.includes("hostLogger: input.hostLogger")
     && hostSatisfiersSource.includes("createRawrHostSatisfiers")
     && hostSatisfiersSource.includes("hostLogger: HostServiceLogger")
-    && !manifestSource.includes("hostLogger")
-    && !manifestSource.includes("apps/server/src/logging")
-    && !manifestSource.includes('host-adapters/logger/embedded-placeholder'),
+    && !shellSource.includes("hostLogger")
+    && !shellSource.includes("apps/server/src/logging")
+    && !shellSource.includes('host-adapters/logger/embedded-placeholder')
+    && manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
   "server host must inject the logger adapter through host-composition/host-satisfiers while apps/hq manifest stays declaration-only",
 );
 assertCondition(

@@ -21,8 +21,8 @@ export type RawrHostComposition = Readonly<{
 
 function selectRawrHostDeclarations(manifest: RawrHqManifest): RawrHostDeclarations {
   return {
-    api: manifest.plugins.api,
-    workflows: manifest.plugins.workflows,
+    api: manifest.roles.server.api,
+    workflows: manifest.roles.async.workflows,
   } as const;
 }
 

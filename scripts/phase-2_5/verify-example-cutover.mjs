@@ -8,6 +8,7 @@ import {
 } from "../phase-f/_verify-utils.mjs";
 
 await Promise.all([
+  mustExist("apps/hq/rawr.hq.ts"),
   mustExist("apps/hq/src/manifest.ts"),
   mustExist("plugins/server/api/example-todo/src/index.ts"),
   mustExist("plugins/server/api/example-todo/src/server.ts"),
@@ -17,8 +18,9 @@ await Promise.all([
   mustExist("scripts/phase-2_5/verify-example-cutover.mjs"),
 ]);
 
-const [scripts, manifestSource, pluginSource, pluginServerSource, pluginRouterSource, rawrTestSource, apiSurfaceTestSource] = await Promise.all([
+const [scripts, shellSource, manifestCompatSource, pluginSource, pluginServerSource, pluginRouterSource, rawrTestSource, apiSurfaceTestSource] = await Promise.all([
   readPackageScripts(),
+  readFile("apps/hq/rawr.hq.ts"),
   readFile("apps/hq/src/manifest.ts"),
   readFile("plugins/server/api/example-todo/src/index.ts"),
   readFile("plugins/server/api/example-todo/src/server.ts"),
@@ -28,16 +30,20 @@ const [scripts, manifestSource, pluginSource, pluginServerSource, pluginRouterSo
 ]);
 
 assertCondition(
-  manifestSource.includes("registerExampleTodoApiPlugin"),
-  "apps/hq/src/manifest.ts must compose the canonical example-todo API plugin from the package seam",
+  shellSource.includes("registerExampleTodoApiPlugin"),
+  "apps/hq/rawr.hq.ts must compose the canonical example-todo API plugin from the package seam",
 );
 assertCondition(
-  manifestSource.includes("@rawr/plugin-server-api-example-todo/server"),
-  "apps/hq/src/manifest.ts must import the example-todo host registration from the plugin server surface",
+  shellSource.includes("@rawr/plugin-server-api-example-todo/server"),
+  "apps/hq/rawr.hq.ts must import the example-todo host registration from the plugin server surface",
 );
 assertCondition(
-  !manifestSource.includes("./plugins/api/support-example") && !manifestSource.includes("registerSupportExampleApiPlugin"),
-  "apps/hq/src/manifest.ts must remove support-example from the canonical ORPC API surface",
+  !shellSource.includes("./plugins/api/support-example") && !shellSource.includes("registerSupportExampleApiPlugin"),
+  "apps/hq/rawr.hq.ts must remove support-example from the canonical ORPC API surface",
+);
+assertCondition(
+  manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
+  "apps/hq/src/manifest.ts must remain a thin compatibility forwarder to rawr.hq.ts",
 );
 assertCondition(
   pluginSource.includes("exampleTodoApiContract") && !pluginSource.includes("registerExampleTodoApiPlugin"),

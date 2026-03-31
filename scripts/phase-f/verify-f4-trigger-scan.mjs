@@ -11,13 +11,13 @@ const THRESHOLDS = {
 };
 
 await Promise.all([
-  mustExist("apps/hq/src/manifest.ts"),
+  mustExist("apps/hq/rawr.hq.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
 const [manifestSource, hqDriftTestSource, triggerDriftTestSource] = await Promise.all([
-  readFile("apps/hq/src/manifest.ts"),
+  readFile("apps/hq/rawr.hq.ts"),
   readFile("apps/hq/test/orpc-contract-drift.test.ts"),
   readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);

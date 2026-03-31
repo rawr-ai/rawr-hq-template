@@ -2,6 +2,7 @@
 import { assertCondition, mustExist, readFile, readPackageScripts } from "./_verify-utils.mjs";
 
 await Promise.all([
+  mustExist("apps/hq/rawr.hq.ts"),
   mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/hq/test/runtime-router.test.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
@@ -11,7 +12,8 @@ await Promise.all([
 ]);
 
 const [
-  manifestSource,
+  shellSource,
+  manifestCompatSource,
   runtimeRouterTestSource,
   contractDriftTestSource,
   workflowDriftTestSource,
@@ -19,6 +21,7 @@ const [
   phase1NoLiveSupportExampleSource,
   scripts,
 ] = await Promise.all([
+  readFile("apps/hq/rawr.hq.ts"),
   readFile("apps/hq/src/manifest.ts"),
   readFile("apps/hq/test/runtime-router.test.ts"),
   readFile("apps/hq/test/orpc-contract-drift.test.ts"),
@@ -29,23 +32,25 @@ const [
 ]);
 
 assertCondition(
-  manifestSource.includes("workflows: {} as const") &&
-    !manifestSource.includes("registerCoordinationApiPlugin") &&
-    !manifestSource.includes("registerSupportExampleWorkflowPlugin") &&
-    !manifestSource.includes("createHqRuntimeRouter"),
-  "apps/hq/src/manifest.ts must keep the workflow publication lane empty after U01",
+  shellSource.includes("workflows: {} as const") &&
+    !shellSource.includes("registerCoordinationApiPlugin") &&
+    !shellSource.includes("registerSupportExampleWorkflowPlugin") &&
+    !shellSource.includes("createHqRuntimeRouter") &&
+    manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
+  "apps/hq/rawr.hq.ts must keep the workflow publication lane empty after U01 while src/manifest.ts stays a thin forwarder",
 );
 assertCondition(
-  runtimeRouterTestSource.includes("keeps the manifest cold and free of executable materialization") &&
-    runtimeRouterTestSource.includes("does not preserve the old executable bridge in testing or rawr.hq.ts") &&
+  runtimeRouterTestSource.includes("keeps the canonical app shell cold and explicit about role/surface membership") &&
+    runtimeRouterTestSource.includes("keeps src/manifest.ts as a thin compatibility forwarder") &&
+    runtimeRouterTestSource.includes("keeps entrypoints thin and shell-owned") &&
     runtimeRouterTestSource.includes('expect(packageJson.exports?.["./testing"]).toBeUndefined()'),
-  "runtime-router.test.ts must guard the frozen no-workflow HQ runtime seam",
+  "runtime-router.test.ts must guard the canonical shell seam and compatibility forwarder",
 );
 assertCondition(
-  contractDriftTestSource.includes('expect(Object.keys(manifest.plugins.api)).toEqual(["state", "exampleTodo"])') &&
-    contractDriftTestSource.includes("expect(Object.keys(manifest.plugins.workflows)).toEqual([])") &&
+  contractDriftTestSource.includes('expect(Object.keys(manifest.roles.server.api)).toEqual(["state", "exampleTodo"])') &&
+    contractDriftTestSource.includes("expect(Object.keys(manifest.roles.async.workflows)).toEqual([])") &&
     contractDriftTestSource.includes("declaration?.published?.contract"),
-  "orpc-contract-drift.test.ts must assert the post-U01 API selection and empty workflow publication",
+  "orpc-contract-drift.test.ts must assert the post-U01 role-first API selection and empty workflow publication",
 );
 assertCondition(
   workflowDriftTestSource.includes("keeps workflow publication empty once the false-future lane is archived"),

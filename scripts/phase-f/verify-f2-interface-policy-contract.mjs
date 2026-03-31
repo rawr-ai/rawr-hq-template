@@ -10,6 +10,7 @@ import {
 await Promise.all([
   mustExist("services/hq-ops/src/service/modules/repo-state/contract.ts"),
   mustExist("services/hq-ops/src/service/modules/repo-state/router.ts"),
+  mustExist("apps/hq/rawr.hq.ts"),
   mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
@@ -19,7 +20,8 @@ await Promise.all([
 const [
   repoStateContractSource,
   repoStateRouterSource,
-  manifestSource,
+  shellSource,
+  manifestCompatSource,
   hqDriftTestSource,
   triggerDriftTestSource,
   runtimeRouterTestSource,
@@ -28,6 +30,7 @@ const [
   await Promise.all([
     readFile("services/hq-ops/src/service/modules/repo-state/contract.ts"),
     readFile("services/hq-ops/src/service/modules/repo-state/router.ts"),
+    readFile("apps/hq/rawr.hq.ts"),
     readFile("apps/hq/src/manifest.ts"),
     readFile("apps/hq/test/orpc-contract-drift.test.ts"),
     readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
@@ -68,19 +71,20 @@ const checks = [
   },
   {
     id: "hq-manifest-selection",
-    message: "hq app manifest must publish state and exampleTodo while keeping workflows empty",
+    message: "hq app shell must publish state and exampleTodo while keeping workflows empty",
     pass:
-      manifestSource.includes("registerStateApiPlugin") &&
-      manifestSource.includes("registerExampleTodoApiPlugin") &&
-      manifestSource.includes("workflows: {} as const") &&
-      !manifestSource.includes("registerCoordinationApiPlugin") &&
-      !manifestSource.includes("createHqRuntimeRouter"),
+      shellSource.includes("registerStateApiPlugin") &&
+      shellSource.includes("registerExampleTodoApiPlugin") &&
+      shellSource.includes("workflows: {} as const") &&
+      !shellSource.includes("registerCoordinationApiPlugin") &&
+      !shellSource.includes("createHqRuntimeRouter") &&
+      manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
   },
   {
     id: "hq-manifest-runtime-coldness",
-    message: "hq app runtime proof must keep the manifest cold and free of executable materialization",
+    message: "hq app runtime proof must keep the shell cold and free of executable materialization",
     pass:
-      runtimeRouterTestSource.includes("keeps the manifest cold and free of executable materialization") &&
+      runtimeRouterTestSource.includes("keeps the canonical app shell cold and explicit about role/surface membership") &&
       !runtimeRouterTestSource.includes("finished-hook"),
   },
   {

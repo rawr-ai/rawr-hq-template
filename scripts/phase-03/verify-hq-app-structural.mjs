@@ -4,13 +4,22 @@ import path from "node:path";
 
 const root = process.cwd();
 const packagePath = path.join(root, "apps", "hq", "package.json");
-const manifestPath = path.join(root, "apps", "hq", "src", "manifest.ts");
+const manifestPath = path.join(root, "apps", "hq", "rawr.hq.ts");
+const manifestCompatPath = path.join(root, "apps", "hq", "src", "manifest.ts");
+const serverEntrypointPath = path.join(root, "apps", "hq", "server.ts");
+const asyncEntrypointPath = path.join(root, "apps", "hq", "async.ts");
+const devEntrypointPath = path.join(root, "apps", "hq", "dev.ts");
+const legacyCutoverPath = path.join(root, "apps", "hq", "legacy-cutover.ts");
 const testingPath = path.join(root, "apps", "hq", "src", "testing.ts");
-const rawrHqBridgePath = path.join(root, "rawr.hq.ts");
 
-const [pkgRaw, manifestSource] = await Promise.all([
+const [pkgRaw, manifestSource, manifestCompatSource, serverEntrypointSource, asyncEntrypointSource, devEntrypointSource, legacyCutoverSource] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(manifestPath, "utf8"),
+  fs.readFile(manifestCompatPath, "utf8"),
+  fs.readFile(serverEntrypointPath, "utf8"),
+  fs.readFile(asyncEntrypointPath, "utf8"),
+  fs.readFile(devEntrypointPath, "utf8"),
+  fs.readFile(legacyCutoverPath, "utf8"),
 ]);
 
 function normalizeSemanticSource(source) {
@@ -32,7 +41,6 @@ async function readIfPresent(filePath) {
 }
 
 const testingSource = await readIfPresent(testingPath);
-const rawrHqBridgeSource = await readIfPresent(rawrHqBridgePath);
 
 const pkg = JSON.parse(pkgRaw);
 const requiredTags = ["type:app", "app:hq", "migration-slice:structural-tranche"];
@@ -48,8 +56,28 @@ if (!manifestSource.includes("export function createRawrHqManifest")) {
   process.exit(1);
 }
 
+if (normalizeSemanticSource(manifestCompatSource) !== 'export{createRawrHqManifest}from"../rawr.hq";exporttype{RawrHqManifest}from"../rawr.hq";') {
+  console.error("hq-app structural failed: src/manifest.ts must remain a thin compatibility forwarder to rawr.hq.ts.");
+  process.exit(1);
+}
+
 if (pkg.exports?.["./testing"] !== undefined) {
   console.error("hq-app structural failed: @rawr/hq-app/testing export must remain removed.");
+  process.exit(1);
+}
+
+if (pkg.exports?.["./manifest"]?.default !== "./rawr.hq.ts") {
+  console.error("hq-app structural failed: @rawr/hq-app/manifest must resolve to rawr.hq.ts.");
+  process.exit(1);
+}
+
+if (
+  !manifestSource.includes('id: "hq"') ||
+  !manifestSource.includes("roles:") ||
+  !manifestSource.includes("server:") ||
+  !manifestSource.includes("async:")
+) {
+  console.error("hq-app structural failed: canonical shell must author explicit role and surface membership.");
   process.exit(1);
 }
 
@@ -91,13 +119,32 @@ if (
   process.exit(1);
 }
 
-if (testingSource !== null && normalizeSemanticSource(testingSource) !== "export{};") {
-  console.error("hq-app structural failed: testing.ts must be absent or stay an inert marker module only.");
+if (
+  !serverEntrypointSource.includes('from "./rawr.hq"') ||
+  !serverEntrypointSource.includes('from "./legacy-cutover"') ||
+  !asyncEntrypointSource.includes('from "./rawr.hq"') ||
+  !asyncEntrypointSource.includes('from "./legacy-cutover"') ||
+  !devEntrypointSource.includes('from "./rawr.hq"') ||
+  !devEntrypointSource.includes('from "./legacy-cutover"')
+) {
+  console.error("hq-app structural failed: entrypoints must import the canonical shell and the sanctioned legacy cutover seam.");
   process.exit(1);
 }
 
-if (rawrHqBridgeSource !== null) {
-  console.error("hq-app structural failed: rawr.hq.ts must be deleted once host composition localizes the narrow manifest import.");
+if (
+  serverEntrypointSource.includes("../server/src/host-composition") ||
+  asyncEntrypointSource.includes("../server/src/host-composition") ||
+  devEntrypointSource.includes("../server/src/host-composition") ||
+  legacyCutoverSource.includes("../server/src/host-composition") ||
+  legacyCutoverSource.includes("../server/src/host-seam") ||
+  legacyCutoverSource.includes("../server/src/host-realization")
+) {
+  console.error("hq-app structural failed: entrypoint bridge must not bypass through host-composition internals.");
+  process.exit(1);
+}
+
+if (testingSource !== null && normalizeSemanticSource(testingSource) !== "export{};") {
+  console.error("hq-app structural failed: testing.ts must be absent or stay an inert marker module only.");
   process.exit(1);
 }
 
