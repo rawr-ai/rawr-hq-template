@@ -1,12 +1,5 @@
-import { registerCoordinationApiPlugin } from "@rawr/plugin-api-coordination/server";
 import { registerExampleTodoApiPlugin } from "@rawr/plugin-api-example-todo/server";
 import { registerStateApiPlugin } from "@rawr/plugin-api-state/server";
-import {
-  registerCoordinationWorkflowPlugin,
-} from "@rawr/plugin-workflows-coordination/server";
-import {
-  registerSupportExampleWorkflowPlugin,
-} from "@rawr/plugin-workflows-support-example/server";
 
 /**
  * @agents-style seam-law declaration -> host binding -> request/process materialization
@@ -31,14 +24,8 @@ import {
  */
 export function createRawrHqManifest() {
   const apiPlugins = {
-    coordination: registerCoordinationApiPlugin(),
     state: registerStateApiPlugin(),
     exampleTodo: registerExampleTodoApiPlugin(),
-  } as const;
-
-  const workflowPlugins = {
-    supportExample: registerSupportExampleWorkflowPlugin(),
-    coordination: registerCoordinationWorkflowPlugin(),
   } as const;
 
   // The HQ app defines which plugin registrations exist. Binding and runtime
@@ -46,7 +33,7 @@ export function createRawrHqManifest() {
   return {
     plugins: {
       api: apiPlugins,
-      workflows: workflowPlugins,
+      workflows: {} as const,
     },
   } as const;
 }

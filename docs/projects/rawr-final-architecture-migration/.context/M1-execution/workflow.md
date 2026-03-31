@@ -164,6 +164,7 @@ This is the baseline `dev-loop-parallel` workflow adapted for a single existing 
 
 - run the issue’s required checks
 - run any adjacent proof that could easily regress because of the cut
+- before committing actual code changes, have a validation agent bring up the managed HQ stack with `bun run rawr hq up`, require observability when the slice touches runtime/host/app composition, inspect the managed logs, and confirm the stack is still healthy after the slice
 - do not treat a green typecheck alone as completion when the slice is fundamentally structural
 
 ### 8. Commit at Real Boundaries
@@ -244,6 +245,7 @@ Use agents carefully and only where they lower risk instead of increasing it.
 - for each issue, spin up a couple of peer/review agents by default once the implementation exists:
   - one focused on overall intent / architecture drift
   - one focused on concrete implementation and proof coverage
+- when a slice changes live runtime behavior, add a validation-only agent that exercises `bun run rawr hq up`, confirms observability status, and checks the managed HQ log stream before commit
 - review every agent contribution thoroughly before accepting it
 - if agent work changes meaning rather than mechanics, re-check the issue doc, milestone, and architecture spec before keeping it
 - when a slice archives or deletes a meaningful package/service/plugin and lessons need to survive, close any no-longer-needed agents first and then spin up a grounded 3-4 agent lesson-extraction team for that archive target:

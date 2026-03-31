@@ -3,7 +3,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-export const HQ_OPEN_POLICIES = ["none", "coordination", "app", "app+inngest", "all"] as const;
+export const HQ_OPEN_POLICIES = ["none", "app", "app+inngest", "all"] as const;
 export type HqOpenPolicy = (typeof HQ_OPEN_POLICIES)[number];
 
 export const HQ_OBSERVABILITY_MODES = ["auto", "required", "off"] as const;
@@ -152,7 +152,6 @@ const HQ_ARTIFACTS = {
 
 const HQ_URLS = {
   web: "http://localhost:5173/",
-  coordination: "http://localhost:5173/coordination",
   serverHealth: "http://localhost:3000/health",
   asyncRuns: "http://localhost:8288/runs",
   observabilityUi: "http://localhost:8080/",

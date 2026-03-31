@@ -1,26 +1,8 @@
-import { randomUUID } from "node:crypto";
-import { type RouterClient, createRouterClient } from "@orpc/server";
-import { createClient as createCoordinationClient, type Client as CoordinationClient } from "@rawr/coordination";
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
 import { createClient as createStateClient, type Client as StateClient } from "@rawr/state";
-import { supportExampleRouter } from "@rawr/support-example/router";
-
-type SupportExampleClient = RouterClient<typeof supportExampleRouter>;
-type SupportExampleWorkItem = Awaited<ReturnType<SupportExampleClient["triage"]["items"]["request"]>>["workItem"];
-type SupportExampleServiceDeps = {
-  store: {
-    save(workItem: SupportExampleWorkItem): Promise<void>;
-    get(workItemId: string): Promise<SupportExampleWorkItem | null>;
-    list(): Promise<SupportExampleWorkItem[]>;
-  };
-  now: () => string;
-  generateWorkItemId: () => string;
-};
 type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
-type CoordinationBoundary = Parameters<typeof createCoordinationClient>[0];
-type CoordinationWorkflowClient = CoordinationClient["workflows"];
 type StateBoundary = Parameters<typeof createStateClient>[0];
 
 export type HostServiceLogger = ExampleTodoBoundary["deps"]["logger"];
@@ -31,12 +13,6 @@ export type RawrHostSatisfiers = Readonly<{
   };
   state: {
     resolveClient(repoRoot: string): StateClient;
-  };
-  coordination: {
-    resolveWorkflowClient(repoRoot: string): CoordinationWorkflowClient;
-  };
-  supportExample: {
-    resolveClient(repoRoot: string): SupportExampleClient;
   };
 }>;
 
@@ -63,29 +39,6 @@ export type RawrHostSatisfiers = Readonly<{
  * - no provider registry
  * - no capability-keyed generic map API
  */
-function createInMemoryTriageWorkItemStore(): SupportExampleServiceDeps["store"] {
-  const workItems = new Map<string, SupportExampleWorkItem>();
-
-  return {
-    async save(workItem: SupportExampleWorkItem): Promise<void> {
-      workItems.set(workItem.workItemId, { ...workItem });
-    },
-
-    async get(workItemId: string): Promise<SupportExampleWorkItem | null> {
-      const workItem = workItems.get(workItemId);
-      return workItem ? { ...workItem } : null;
-    },
-
-    async list(): Promise<SupportExampleWorkItem[]> {
-      return [...workItems.values()].map((workItem) => ({ ...workItem }));
-    },
-  };
-}
-
-function createSupportExampleWorkItemId(): string {
-  return `support-example-${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`;
-}
-
 function createExampleTodoBoundary(hostLogger: HostServiceLogger): ExampleTodoBoundary {
   let tick = 0;
 
@@ -126,52 +79,11 @@ function createStateBoundary(repoRoot: string, hostLogger: HostServiceLogger): S
   } satisfies StateBoundary;
 }
 
-function createCoordinationBoundary(
-  repoRoot: string,
-  hostLogger: HostServiceLogger,
-): CoordinationBoundary {
-  return {
-    deps: {
-      logger: hostLogger,
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    },
-    scope: {
-      repoRoot,
-    },
-    config: {},
-  } satisfies CoordinationBoundary;
-}
-
 export function createRawrHostSatisfiers(input: {
   hostLogger: HostServiceLogger;
 }): RawrHostSatisfiers {
-  const supportExampleDepsByRepoRoot = new Map<string, SupportExampleServiceDeps>();
   const exampleTodoClientsByRepoRoot = new Map<string, ExampleTodoClient>();
-  const coordinationWorkflowClientsByRepoRoot = new Map<string, CoordinationWorkflowClient>();
   const stateClientsByRepoRoot = new Map<string, StateClient>();
-
-  function resolveSupportExampleDeps(repoRoot: string): SupportExampleServiceDeps {
-    const existing = supportExampleDepsByRepoRoot.get(repoRoot);
-    if (existing) {
-      return existing;
-    }
-
-    const deps: SupportExampleServiceDeps = {
-      store: createInMemoryTriageWorkItemStore(),
-      now: () => new Date().toISOString(),
-      generateWorkItemId: createSupportExampleWorkItemId,
-    };
-    supportExampleDepsByRepoRoot.set(repoRoot, deps);
-    return deps;
-  }
-
-  function resolveSupportExampleClient(repoRoot: string): SupportExampleClient {
-    return createRouterClient(supportExampleRouter, {
-      context: {
-        deps: resolveSupportExampleDeps(repoRoot),
-      },
-    });
-  }
 
   function resolveExampleTodoClient(repoRoot: string): ExampleTodoClient {
     const existing = exampleTodoClientsByRepoRoot.get(repoRoot);
@@ -181,19 +93,6 @@ export function createRawrHostSatisfiers(input: {
 
     const client = createExampleTodoClient(createExampleTodoBoundary(input.hostLogger));
     exampleTodoClientsByRepoRoot.set(repoRoot, client);
-    return client;
-  }
-
-  function resolveCoordinationWorkflowClient(repoRoot: string): CoordinationWorkflowClient {
-    const existing = coordinationWorkflowClientsByRepoRoot.get(repoRoot);
-    if (existing) {
-      return existing;
-    }
-
-    const client = createCoordinationClient(
-      createCoordinationBoundary(repoRoot, input.hostLogger),
-    ).workflows;
-    coordinationWorkflowClientsByRepoRoot.set(repoRoot, client);
     return client;
   }
 
@@ -214,12 +113,6 @@ export function createRawrHostSatisfiers(input: {
     },
     state: {
       resolveClient: resolveStateClient,
-    },
-    coordination: {
-      resolveWorkflowClient: resolveCoordinationWorkflowClient,
-    },
-    supportExample: {
-      resolveClient: resolveSupportExampleClient,
     },
   } as const;
 }

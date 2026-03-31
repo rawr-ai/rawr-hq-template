@@ -1,41 +1,13 @@
 import type { MountContext } from "@rawr/ui-sdk";
-import { createORPCClient } from "@orpc/client";
-import { createFirstPartyRpcLink } from "@rawr/orpc-client";
 
-export const name = "@rawr/plugin-mfe-demo";
-
-type TerminalRunStatus = "completed" | "failed";
-
-type SupportExampleRun = Readonly<{
-  runId: string;
-  status: string;
-}> &
-  Readonly<Record<string, unknown>>;
-
-type TriggerSupportExampleInput = Readonly<{
-  queueId: string;
-  requestedBy: string;
-  runId?: string;
-  dryRun?: boolean;
-}>;
-
-type TriggerSupportExampleOutput = Readonly<{
-  accepted: boolean;
-  run: SupportExampleRun;
-  eventIds: ReadonlyArray<string>;
-}>;
-
-type GetSupportExampleStatusInput = Readonly<{ runId?: string }>;
-
-type GetSupportExampleStatusOutput = Readonly<{
-  capability: string;
-  healthy: boolean;
-  run: SupportExampleRun | null;
-}>;
-
-type SupportExampleWorkflowRpcClient = Readonly<{
-  triggerSupportExample(input: TriggerSupportExampleInput): Promise<TriggerSupportExampleOutput>;
-  getSupportExampleStatus(input: GetSupportExampleStatusInput): Promise<GetSupportExampleStatusOutput>;
+type DemoStatusBody = Readonly<{
+  ok?: boolean;
+  plugin?: string;
+  capability?: string;
+  demo?: boolean;
+  mode?: string;
+  timestamp?: string;
+  routeHints?: Readonly<Record<string, unknown>>;
 }>;
 
 function normalizeBasePath(basePath: string | undefined): string {
@@ -45,8 +17,8 @@ function normalizeBasePath(basePath: string | undefined): string {
   return withLeadingSlash.replace(/\/+$/u, "");
 }
 
-function resolveRpcUrl(basePath: string): string {
-  const path = `${basePath}/rpc`;
+function resolveStatusUrl(basePath: string): string {
+  const path = `${basePath}/mfe-demo/status`;
   if (typeof window !== "undefined") {
     return new URL(path, window.location.href).toString();
   }
@@ -61,18 +33,16 @@ function prettyJson(value: unknown): string {
   }
 }
 
-function isTerminalStatus(status: string | null): status is TerminalRunStatus {
-  return status === "completed" || status === "failed";
+function normalizeBody(value: unknown): DemoStatusBody {
+  if (!value || typeof value !== "object") return {};
+  if ("json" in value && value.json && typeof value.json === "object") {
+    return value.json as DemoStatusBody;
+  }
+  return value as DemoStatusBody;
 }
 
 export function mount(el: HTMLElement, ctx: MountContext) {
   const basePath = normalizeBasePath(ctx.basePath);
-
-  const client = createORPCClient<SupportExampleWorkflowRpcClient>(
-    createFirstPartyRpcLink({
-      url: resolveRpcUrl(basePath),
-    }),
-  );
 
   const root = document.createElement("div");
   root.style.fontFamily = "ui-sans-serif, system-ui";
@@ -84,60 +54,17 @@ export function mount(el: HTMLElement, ctx: MountContext) {
 
   const title = document.createElement("div");
   title.style.fontWeight = "700";
-  title.textContent = "Support triage example micro-frontend";
+  title.textContent = "Generic micro-frontend demo";
 
   const hint = document.createElement("div");
   hint.style.marginTop = "4px";
   hint.style.color = "rgba(15, 23, 42, 0.7)";
-  hint.textContent = "First-party demo: calls workflow procedures over /rpc via oRPC RPCLink.";
+  hint.textContent = "Example-only plugin surface that fetches its own first-party status route.";
 
-  const form = document.createElement("div");
-  form.style.display = "grid";
-  form.style.gap = "8px";
-  form.style.marginTop = "10px";
-
-  const queueIdInput = document.createElement("input");
-  queueIdInput.value = "queue-demo";
-  queueIdInput.placeholder = "queueId";
-
-  const requestedByInput = document.createElement("input");
-  requestedByInput.value = "mfe-demo";
-  requestedByInput.placeholder = "requestedBy";
-
-  const runIdInput = document.createElement("input");
-  runIdInput.value = "";
-  runIdInput.placeholder = "runId (optional)";
-
-  const dryRunWrap = document.createElement("label");
-  dryRunWrap.style.display = "flex";
-  dryRunWrap.style.alignItems = "center";
-  dryRunWrap.style.gap = "6px";
-
-  const dryRunInput = document.createElement("input");
-  dryRunInput.type = "checkbox";
-  dryRunInput.checked = true;
-  dryRunWrap.append(dryRunInput, document.createTextNode("dryRun"));
-
-  const buttons = document.createElement("div");
-  buttons.style.display = "flex";
-  buttons.style.flexWrap = "wrap";
-  buttons.style.gap = "8px";
-
-  const triggerBtn = document.createElement("button");
-  triggerBtn.type = "button";
-  triggerBtn.textContent = "Trigger";
-
-  const fetchBtn = document.createElement("button");
-  fetchBtn.type = "button";
-  fetchBtn.textContent = "Fetch status";
-
-  const stopBtn = document.createElement("button");
-  stopBtn.type = "button";
-  stopBtn.textContent = "Stop polling";
-
-  buttons.append(triggerBtn, fetchBtn, stopBtn);
-
-  form.append(queueIdInput, requestedByInput, runIdInput, dryRunWrap, buttons);
+  const refreshBtn = document.createElement("button");
+  refreshBtn.type = "button";
+  refreshBtn.textContent = "Refresh demo status";
+  refreshBtn.style.marginTop = "10px";
 
   const state = document.createElement("div");
   state.style.marginTop = "10px";
@@ -145,180 +72,77 @@ export function mount(el: HTMLElement, ctx: MountContext) {
   state.style.gap = "4px";
 
   const statusEl = document.createElement("div");
-  const healthyEl = document.createElement("div");
-  const pollingEl = document.createElement("div");
-  const runIdEl = document.createElement("div");
+  const modeEl = document.createElement("div");
+  const capabilityEl = document.createElement("div");
+  const pluginEl = document.createElement("div");
   const errorEl = document.createElement("div");
   errorEl.style.whiteSpace = "pre-wrap";
 
-  state.append(statusEl, healthyEl, pollingEl, runIdEl, errorEl);
+  state.append(statusEl, modeEl, capabilityEl, pluginEl, errorEl);
 
-  const outWrap = document.createElement("div");
-  outWrap.style.marginTop = "10px";
-  outWrap.style.display = "grid";
-  outWrap.style.gap = "8px";
-
-  const triggerPre = document.createElement("pre");
   const statusPre = document.createElement("pre");
-  for (const pre of [triggerPre, statusPre]) {
-    pre.style.margin = "0";
-    pre.style.padding = "8px";
-    pre.style.border = "1px solid rgba(15, 23, 42, 0.12)";
-    pre.style.borderRadius = "8px";
-    pre.style.overflowX = "auto";
-    pre.style.fontSize = "12px";
-  }
+  statusPre.style.margin = "10px 0 0";
+  statusPre.style.padding = "8px";
+  statusPre.style.border = "1px solid rgba(15, 23, 42, 0.12)";
+  statusPre.style.borderRadius = "8px";
+  statusPre.style.overflowX = "auto";
+  statusPre.style.fontSize = "12px";
 
-  outWrap.append(triggerPre, statusPre);
-
-  root.append(title, hint, form, state, outWrap);
+  root.append(title, hint, refreshBtn, state, statusPre);
   el.appendChild(root);
 
-  let healthy: boolean | null = null;
-  let polling = false;
-  let runId: string | null = null;
-  let status: string | null = null;
+  let loading = true;
+  let body: DemoStatusBody | null = null;
   let lastError: string | null = null;
-  let lastTrigger: unknown | null = null;
-  let lastStatus: unknown | null = null;
-
-  let timer: number | null = null;
-  let inFlight = false;
-
-  function stopPolling() {
-    if (timer !== null) {
-      window.clearInterval(timer);
-      timer = null;
-    }
-    polling = false;
-  }
+  let disposed = false;
 
   function render() {
-    statusEl.textContent = `status: ${status ?? "idle"}`;
-    healthyEl.textContent = `healthy: ${healthy ?? "unknown"}`;
-    pollingEl.textContent = `polling: ${polling ? "on" : "off"}`;
-    runIdEl.textContent = `runId: ${runId ?? "none"}`;
+    const status = loading ? "loading" : lastError ? "error" : "ready";
+    statusEl.textContent = `status: ${status}`;
+    modeEl.textContent = `mode: ${body?.mode ?? (body?.demo ? "demo" : "unknown")}`;
+    capabilityEl.textContent = `capability: ${body?.capability ?? "unknown"}`;
+    pluginEl.textContent = `plugin: ${body?.plugin ?? name}`;
     errorEl.textContent = `error: ${lastError ?? "none"}`;
-    triggerPre.textContent = `last trigger:\n${lastTrigger ? prettyJson(lastTrigger) : "(none)"}`;
-    statusPre.textContent = `last status:\n${lastStatus ? prettyJson(lastStatus) : "(none)"}`;
+    statusPre.textContent = `last status:\n${body ? prettyJson(body) : "(none)"}`;
   }
 
-  function updateFromStatus(body: GetSupportExampleStatusOutput) {
-    healthy = body.healthy;
-    const r = body.run;
-    if (r && typeof r.runId === "string") {
-      runId = r.runId;
-      runIdInput.value = r.runId;
-    }
-    status = r && typeof r.status === "string" ? r.status : null;
-  }
-
-  async function fetchStatus(id: string | null) {
-    const body = await client.getSupportExampleStatus(id ? { runId: id } : {});
-    lastStatus = body;
-    updateFromStatus(body);
-  }
-
-  async function trigger() {
-    const input: TriggerSupportExampleInput = {
-      queueId: queueIdInput.value.trim(),
-      requestedBy: requestedByInput.value.trim(),
-      ...(runIdInput.value.trim() ? { runId: runIdInput.value.trim() } : {}),
-      dryRun: dryRunInput.checked,
-    };
-
-    const body = await client.triggerSupportExample(input);
-    lastTrigger = body;
-
-    const r = body.run;
-    if (r && typeof r.runId === "string") {
-      runId = r.runId;
-      runIdInput.value = r.runId;
-    }
-    status = r && typeof r.status === "string" ? r.status : "queued";
-  }
-
-  async function pollOnce() {
-    if (!runId || inFlight) return;
-    inFlight = true;
-    try {
-      await fetchStatus(runId);
-      if (isTerminalStatus(status)) stopPolling();
-    } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err);
-      stopPolling();
-    } finally {
-      inFlight = false;
-      render();
-    }
-  }
-
-  function startPolling() {
-    if (!runId) return;
-    stopPolling();
-    polling = true;
-    void pollOnce();
-    timer = window.setInterval(() => void pollOnce(), 1500);
-  }
-
-  triggerBtn.addEventListener("click", async () => {
-    triggerBtn.disabled = true;
-    fetchBtn.disabled = true;
-    stopBtn.disabled = true;
-
-    lastError = null;
-    stopPolling();
-    render();
-
-    try {
-      await trigger();
-      startPolling();
-    } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err);
-    } finally {
-      triggerBtn.disabled = false;
-      fetchBtn.disabled = false;
-      stopBtn.disabled = false;
-      render();
-    }
-  });
-
-  fetchBtn.addEventListener("click", async () => {
-    fetchBtn.disabled = true;
+  async function refresh() {
+    loading = true;
     lastError = null;
     render();
 
     try {
-      await fetchStatus(runIdInput.value.trim() || null);
+      const response = await fetch(resolveStatusUrl(basePath), {
+        headers: { accept: "application/json" },
+      });
+      if (!response.ok) {
+        throw new Error(`status request failed with ${response.status}`);
+      }
+
+      const raw = (await response.json()) as unknown;
+      body = normalizeBody(raw);
     } catch (err) {
+      body = null;
       lastError = err instanceof Error ? err.message : String(err);
     } finally {
-      fetchBtn.disabled = false;
-      render();
+      loading = false;
+      if (!disposed) render();
     }
-  });
+  }
 
-  stopBtn.addEventListener("click", () => {
-    stopPolling();
-    render();
+  refreshBtn.addEventListener("click", () => {
+    void refresh();
   });
-
-  void (async () => {
-    try {
-      await fetchStatus(null);
-    } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err);
-    } finally {
-      render();
-    }
-  })();
 
   render();
+  void refresh();
 
   return {
     unmount: () => {
-      stopPolling();
+      disposed = true;
       root.remove();
     },
   };
 }
+
+export const name = "@rawr/plugin-mfe-demo";

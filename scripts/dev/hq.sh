@@ -10,7 +10,6 @@ STATUS_FILE="${STATE_DIR}/status.json"
 LOG_FILE="${STATE_DIR}/runtime.log"
 
 HQ_WEB_URL="http://localhost:5173/"
-HQ_COORDINATION_URL="http://localhost:5173/coordination"
 HQ_INNGEST_RUNS_URL="http://localhost:8288/runs"
 HQ_SERVER_HEALTH_URL="http://localhost:3000/health"
 HQ_OBSERVABILITY_UI_URL="http://localhost:8080/"
@@ -63,12 +62,12 @@ run_status_writer() {
 
 validate_open_policy() {
   case "$1" in
-    none|coordination|app|app+inngest|all)
+    none|app|app+inngest|all)
       return 0
       ;;
   esac
 
-  err "invalid open policy '$1' (expected one of: none, coordination, app, app+inngest, all)"
+  err "invalid open policy '$1' (expected one of: none, app, app+inngest, all)"
   exit 2
 }
 
@@ -918,9 +917,6 @@ open_ui_surfaces() {
       log "open policy: none"
       return 0
       ;;
-    coordination)
-      urls+=("$HQ_COORDINATION_URL")
-      ;;
     app)
       urls+=("$HQ_WEB_URL")
       ;;
@@ -1125,7 +1121,7 @@ show_help() {
 Usage: scripts/dev/hq.sh <up|down|status|restart|attach> [--open <policy>] [--observability <mode>]
 
 Open policies:
-  none | coordination | app | app+inngest | all
+  none | app | app+inngest | all
 
 Observability modes:
   auto | required | off
@@ -1277,7 +1273,6 @@ run_status_writer
 
 log "managed HQ runtime ready"
 log "  home: ${HQ_WEB_URL}"
-log "  coordination: ${HQ_COORDINATION_URL}"
 log "  log file: ${LOG_FILE}"
 log "  status file: ${STATUS_FILE}"
 log "  open policy: ${open_policy}"

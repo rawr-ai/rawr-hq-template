@@ -1,20 +1,5 @@
 {
   "projects": {
-    "@rawr/coordination": {
-      "config": "services/coordination/package.json",
-      "tags": [
-        "type:service",
-        "role:servicepackage",
-        "migration-slice:structural-tranche"
-      ],
-      "targets": [
-        "build",
-        "sync",
-        "structural",
-        "typecheck",
-        "test"
-      ]
-    },
     "@rawr/state": {
       "config": "services/state/package.json",
       "tags": [

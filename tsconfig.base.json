@@ -12,22 +12,10 @@
       "@rawr/chatgpt-corpus": ["services/chatgpt-corpus/src/index.ts"],
       "@rawr/chatgpt-corpus/router": ["services/chatgpt-corpus/src/router.ts"],
       "@rawr/chatgpt-corpus/service/contract": ["services/chatgpt-corpus/src/service/contract.ts"],
-      "@rawr/coordination": ["services/coordination/src/index.ts"],
-      "@rawr/coordination/events": ["services/coordination/src/domain/events.ts"],
-      "@rawr/coordination/node": ["services/coordination/src/node.ts"],
-      "@rawr/coordination/router": ["services/coordination/src/router.ts"],
-      "@rawr/coordination/service/contract": ["services/coordination/src/service/contract.ts"],
-      "@rawr/plugin-api-coordination": ["plugins/api/coordination/index.ts"],
-      "@rawr/plugin-api-coordination/server": ["plugins/api/coordination/server.ts"],
       "@rawr/plugin-api-example-todo": ["plugins/api/example-todo/index.ts"],
       "@rawr/plugin-api-example-todo/server": ["plugins/api/example-todo/server.ts"],
       "@rawr/plugin-api-state": ["plugins/api/state/index.ts"],
-      "@rawr/plugin-api-state/server": ["plugins/api/state/server.ts"],
-      "@rawr/plugin-workflows-coordination": ["plugins/workflows/coordination/index.ts"],
-      "@rawr/plugin-workflows-coordination/server": ["plugins/workflows/coordination/server.ts"],
-      "@rawr/plugin-workflows-support-example": ["plugins/workflows/support-example/index.ts"],
-      "@rawr/plugin-workflows-support-example/testing": ["plugins/workflows/support-example/testing.ts"],
-      "@rawr/plugin-workflows-support-example/server": ["plugins/workflows/support-example/server.ts"]
+      "@rawr/plugin-api-state/server": ["plugins/api/state/server.ts"]
     }
   }
 }

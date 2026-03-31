@@ -5,7 +5,7 @@ export default mergeConfig(
   viteConfig,
   defineConfig({
     test: {
-      exclude: [...configDefaults.exclude, "test/coordination.visual.test.ts"],
+      exclude: [...configDefaults.exclude],
     },
   }),
 );

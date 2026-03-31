@@ -90,8 +90,8 @@ export function AppShell({
         <main className="min-w-0 lg:pl-2">
           <header className="surface-card sticky top-2 z-20 mb-2 flex flex-wrap items-center justify-between gap-3 px-4 py-3">
             <div>
-              <p className="kicker m-0">Coordination Host</p>
-              <p className="m-0 text-sm text-muted-foreground">Canvas-first shell with unified theming</p>
+              <p className="kicker m-0">HQ Shell</p>
+              <p className="m-0 text-sm text-muted-foreground">Unified shell with the active Phase 1 surfaces only</p>
             </div>
 
             <div className="flex items-center gap-2">

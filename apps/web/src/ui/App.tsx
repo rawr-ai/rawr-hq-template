@@ -4,7 +4,6 @@ import { Router } from "./routing/router";
 import { HomePage } from "./pages/HomePage";
 import { MountsPage } from "./pages/MountsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { CoordinationPage } from "./coordination/components/CoordinationPage";
 
 function HostRoutes() {
   return (
@@ -12,7 +11,6 @@ function HostRoutes() {
       routes={[
         { path: "/", element: <HomePage /> },
         { path: "/mounts", element: <MountsPage /> },
-        { path: "/coordination", element: <CoordinationPage /> },
       ]}
       fallback={<NotFoundPage />}
     />
@@ -27,7 +25,6 @@ export function App() {
           title="RAWR HQ-Template"
           items={[
             { label: "Home", to: "/" },
-            { label: "Coordination", to: "/coordination" },
             { label: "Mounts", to: "/mounts" },
           ]}
           utilityLinks={[

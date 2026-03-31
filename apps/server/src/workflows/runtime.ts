@@ -1,5 +1,3 @@
-import { createCoordinationWorkflowRuntimeAdapter, type CoordinationRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
-
 /**
  * @agents-style seam-law declaration -> host binding -> request/process materialization
  * @agents-style canonical host workflow runtime home
@@ -39,9 +37,9 @@ export function resolveRawrWorkflowInngestBaseUrl(): string {
 export function createRawrWorkflowRuntime(input: {
   repoRoot: string;
   inngestBaseUrl?: string;
-}): CoordinationRuntimeAdapter {
-  return createCoordinationWorkflowRuntimeAdapter({
+}) {
+  return {
     repoRoot: input.repoRoot,
     inngestBaseUrl: input.inngestBaseUrl ?? resolveRawrWorkflowInngestBaseUrl(),
-  });
+  } as const;
 }

@@ -44,37 +44,6 @@ type OpenApiErrorPayload = {
 };
 
 describe("api plugin example surface", () => {
-  it("keeps workflow plugin procedures off published /api/orpc while allowing first-party /rpc composition", async () => {
-    const app = createApp();
-
-    const rpcResponse = await app.handle(
-      new Request("http://localhost/rpc/supportExample/triage/getStatus", {
-        method: "POST",
-        headers: FIRST_PARTY_RPC_HEADERS,
-        body: JSON.stringify({ json: {} }),
-      }),
-    );
-    expect(rpcResponse.status).toBe(200);
-    const rpcPayload = (await rpcResponse.json()) as {
-      json?: {
-        capability?: string;
-        healthy?: boolean;
-        run?: unknown;
-      };
-    };
-    expect(rpcPayload.json?.capability).toBe("support-example");
-    expect(rpcPayload.json?.healthy).toBe(true);
-    expect(rpcPayload.json?.run).toBeNull();
-
-    const openApiResponse = await app.handle(
-      new Request("http://localhost/api/orpc/support-example/triage/status", {
-        method: "GET",
-        headers: EXTERNAL_API_HEADERS,
-      }),
-    );
-    expect(openApiResponse.status).toBe(404);
-  });
-
   it("serves example-todo procedures for first-party /rpc callers", async () => {
     const app = createApp();
 

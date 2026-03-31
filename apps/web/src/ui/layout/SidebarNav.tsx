@@ -6,7 +6,6 @@ import {
   HomeIcon,
   InboxIcon,
   LayersIcon,
-  NetworkIcon,
 } from "../components/icons";
 import type { SVGProps } from "react";
 
@@ -20,7 +19,6 @@ type IconComponent = (props: SVGProps<SVGSVGElement>) => ReturnType<typeof HomeI
 const ICONS: Record<string, IconComponent> = {
   Home: HomeIcon,
   Mounts: LayersIcon,
-  Coordination: NetworkIcon,
   "Inngest Runs": InboxIcon,
   HyperDX: CpuIcon,
   "Nx Graph": ExternalLinkIcon,
