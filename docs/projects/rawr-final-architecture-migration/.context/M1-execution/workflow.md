@@ -2,7 +2,11 @@
 
 This is the flight plan for completing Milestone 1 end to end in this single working checkout. It is not a generic process note. It is the execution workflow I will keep returning to while I move through the M1 slice stack.
 
-This document and [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md) are the two re-entry documents for the milestone. I return to both at the start of every slice, after every compact, and any time the repo state or architectural intent starts to blur.
+This document, [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md), and [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md) are the three re-entry documents for the milestone:
+
+- `grounding.md` = milestone-level truth
+- `workflow.md` = the reusable execution loop
+- `context.md` = the current-issue hot swap module
 
 ## Framing
 
@@ -53,6 +57,13 @@ Execution directory:
 
 - [M1-execution](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution)
 
+Current-issue context document:
+
+- [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md)
+- this file is canonical for the actively worked issue only
+- it is replaced or rewritten between issues instead of accumulating history
+- it is not a scratch pad, transcript, or dumping ground
+
 Execution worktree:
 
 - current checkout path: `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou`
@@ -75,10 +86,17 @@ Compact rule:
 - after any compact or comparable context loss, the first move is:
   1. reopen [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md)
   2. reopen [workflow.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/workflow.md)
-  3. identify the current slice branch and current Graphite stack state
-  4. read the active issue doc again
-  5. inspect `git status --short --branch`
-  6. inspect milestone and issue checkboxes before touching code
+  3. reopen and refresh [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md)
+  4. identify the current slice branch and current Graphite stack state
+  5. read the active issue doc again
+  6. inspect `git status --short --branch`
+  7. inspect milestone and issue checkboxes before touching code
+
+Between-issue rule:
+
+- when a slice is done and before the next slice starts, replace `context.md` with the new current-issue snapshot
+- do not preserve prior-issue context in `context.md`
+- if prior-issue knowledge matters later, promote it into `grounding.md`, `workflow.md`, the issue doc, or a durable migration/project doc instead
 
 ## Hard Rails
 
@@ -101,6 +119,7 @@ This is the baseline `dev-loop-parallel` workflow adapted for a single existing 
 
 - Read [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md)
 - Read this workflow
+- Read [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md)
 - Read the active issue doc in full
 - Re-read the milestone section that frames the slice and its dependency
 - State the exact slice goal, stop-gate, and proof bar before editing anything
@@ -163,6 +182,7 @@ This is the baseline `dev-loop-parallel` workflow adapted for a single existing 
 - update the milestone task tracking when the slice truly lands
 - add implementation decisions where ambiguity was resolved
 - update scratch notes in the execution directory if they help resume later
+- rewrite `context.md` so it accurately reflects the current issue state before stepping away
 
 ### 10. Submit and Restack Inside the Single Worktree
 
@@ -190,8 +210,42 @@ Operational rule:
 
 - confirm the slice is actually done
 - confirm no hidden cleanup was pushed forward
+- replace `context.md` with the next issue's canonical snapshot before starting the next slice
 - reopen the next issue doc
 - repeat the loop
+
+## Current-Issue Context Rules
+
+`context.md` is the bootstrapping document for the one issue that is actively in flight.
+
+It must contain:
+
+- the issue framing and stop-gate
+- the exact documents/resources that matter right now
+- the important invariants and user constraints that are easy to forget
+- the key insights already established for the current issue
+- the current status and next required move
+
+It must not become:
+
+- a scratch notebook
+- a running diary
+- a rationale dump
+- a cross-issue archive
+
+If `context.md` starts accumulating stale material, replace it instead of editing around the clutter.
+
+## Agent Usage Rules
+
+Use agents carefully and only where they lower risk instead of increasing it.
+
+- do not delegate semantic decisions or boundary-setting work
+- mechanical changes are acceptable only when easily reviewable and verifiable
+- for each issue, spin up a couple of peer/review agents by default once the implementation exists:
+  - one focused on overall intent / architecture drift
+  - one focused on concrete implementation and proof coverage
+- review every agent contribution thoroughly before accepting it
+- if agent work changes meaning rather than mechanics, re-check the issue doc, milestone, and architecture spec before keeping it
 
 ## High-Level Milestone Plan
 
@@ -461,11 +515,12 @@ When resuming after time away, compact, or interruption:
 
 1. Open [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md).
 2. Open [workflow.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/workflow.md).
-3. Run `git status --short --branch`.
-4. Run `git branch --show-current`.
-5. Run `gt ls`.
-6. Re-read the active issue doc.
-7. Re-check milestone progress and any issue checkboxes or local notes.
-8. Confirm whether the primary Narsil tree is indexing the latest commit needed for this slice.
+3. Open and refresh [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md).
+4. Run `git status --short --branch`.
+5. Run `git branch --show-current`.
+6. Run `gt ls`.
+7. Re-read the active issue doc.
+8. Re-check milestone progress and any issue checkboxes or local notes.
+9. Confirm whether the primary Narsil tree is indexing the latest commit needed for this slice.
 
 If any of those steps reveal ambiguity, stop and re-ground before editing code.
