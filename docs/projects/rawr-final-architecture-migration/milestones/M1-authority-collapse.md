@@ -139,11 +139,11 @@ issues:
     blocked_by: [M1-U01]
   - id: M1-U03
     title: "Move HQ operational truth into HQ Ops and rewire consumers"
-    status: planned
+    status: done
     blocked_by: [M1-U02]
   - id: M1-U04
     title: "Dissolve packages/hq and land purpose-named tooling boundaries"
-    status: planned
+    status: done
     blocked_by: [M1-U03]
   - id: M1-U05
     title: "Cut the canonical plugin topology"
@@ -214,6 +214,7 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 - Issue doc: [M1-U04](../issues/M1-U04-dissolve-legacy-hq-package.md)
 - Focus: split `packages/hq` by earned ownership, preserve only legitimate support/tooling surfaces, and delete the package.
 - Stop-gate: no live `@rawr/hq/*` imports remain and `packages/plugin-workspace` is support-only.
+- Traceability: branch `agent-FARGO-M1-U04-dissolve-legacy-hq-package`; `packages/hq` deleted; `packages/plugin-workspace` now owns shared workspace/plugin-manifest support while plugin CLI owns the surviving install-state and scratch-policy helpers; proofs passed across `sync:check`, `lint:boundaries`, `packages/plugin-workspace`, `apps/cli`, `plugins/cli/plugins`, `verify-no-legacy-hq-imports`, and the refreshed plugin-workspace structural suite; HQ managed-stack validation stayed healthy with first-party state RPC `200` and archived coordination/support-example route probes still `404`.
 
 ### M1-U05: Cut the canonical plugin topology
 

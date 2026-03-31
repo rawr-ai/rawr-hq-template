@@ -126,23 +126,23 @@ function hasFunctionDeclaration(sourceFile, functionName) {
 }
 
 async function verifyMetadataContract() {
-  const hqWorkspacePath = "packages/hq/src/workspace/plugins.ts";
+  const pluginWorkspaceOwnerPath = "packages/plugin-workspace/src/plugins.ts";
   const pluginWorkspacePath = "plugins/cli/plugins/src/lib/workspace-plugins.ts";
-  const [{ ast: hqAst }, { ast: pluginAst }] = await Promise.all([
-    readTypeScriptFile(hqWorkspacePath),
+  const [{ ast: ownerAst }, { ast: pluginAst }] = await Promise.all([
+    readTypeScriptFile(pluginWorkspaceOwnerPath),
     readTypeScriptFile(pluginWorkspacePath),
   ]);
 
   assertCondition(
-    hasNamedImport(hqAst, "./plugin-manifest-contract", "parseWorkspacePluginManifest"),
-    "hq workspace parser must import parseWorkspacePluginManifest from local contract owner",
+    hasNamedImport(ownerAst, "./plugin-manifest-contract", "parseWorkspacePluginManifest"),
+    "plugin-workspace owner must import parseWorkspacePluginManifest from local contract owner",
   );
 
   for (const functionName of ["findWorkspaceRoot", "listWorkspacePlugins", "filterPluginsByKind", "resolvePluginId"]) {
-    assertCondition(hasExportedFunction(hqAst, functionName), `hq workspace parser must export ${functionName}`);
+    assertCondition(hasExportedFunction(ownerAst, functionName), `plugin-workspace owner must export ${functionName}`);
   }
 
-  const pluginImportAliases = namedImportInfo(pluginAst, "@rawr/hq/workspace");
+  const pluginImportAliases = namedImportInfo(pluginAst, "@rawr/plugin-workspace");
   const requiredAliases = {
     findWorkspaceRoot: "findWorkspaceRootFromWorkspace",
     listWorkspacePlugins: "listWorkspacePluginsFromWorkspace",
@@ -153,7 +153,7 @@ async function verifyMetadataContract() {
   for (const [importedName, aliasName] of Object.entries(requiredAliases)) {
     assertCondition(
       pluginImportAliases.get(importedName) === aliasName,
-      `plugin workspace adapter must alias ${importedName} as ${aliasName} from @rawr/hq/workspace`,
+      `plugin workspace adapter must alias ${importedName} as ${aliasName} from @rawr/plugin-workspace`,
     );
   }
 
@@ -172,15 +172,18 @@ async function verifyMetadataContract() {
 }
 
 async function verifyImportBoundary() {
-  const hqWorkspacePath = "packages/hq/src/workspace/plugins.ts";
+  const pluginWorkspaceOwnerPath = "packages/plugin-workspace/src/plugins.ts";
   const pluginWorkspacePath = "plugins/cli/plugins/src/lib/workspace-plugins.ts";
-  const [{ ast: hqAst }, { ast: pluginAst }] = await Promise.all([
-    readTypeScriptFile(hqWorkspacePath),
+  const [{ ast: ownerAst }, { ast: pluginAst }] = await Promise.all([
+    readTypeScriptFile(pluginWorkspaceOwnerPath),
     readTypeScriptFile(pluginWorkspacePath),
   ]);
 
   const pluginImports = importModuleSet(pluginAst);
-  assertCondition(pluginImports.size === 1 && pluginImports.has("@rawr/hq/workspace"), "plugin workspace adapter must only import @rawr/hq/workspace");
+  assertCondition(
+    pluginImports.size === 1 && pluginImports.has("@rawr/plugin-workspace"),
+    "plugin workspace adapter must only import @rawr/plugin-workspace",
+  );
   assertCondition(!hasNamedImport(pluginAst, "./plugin-manifest-contract", "parseWorkspacePluginManifest"), "plugin workspace adapter must not import local parser contract");
   assertCondition(!hasImport(pluginAst, "node:fs"), "plugin workspace adapter must not import node:fs");
   assertCondition(!hasImport(pluginAst, "node:path"), "plugin workspace adapter must not import node:path");
@@ -190,9 +193,9 @@ async function verifyImportBoundary() {
     "plugin workspace adapter must not re-implement workspace directory traversal",
   );
   assertCondition(
-    !hasNamedImport(hqAst, "@rawr/plugin-plugins", "findWorkspaceRoot") &&
-      !hasImport(hqAst, "plugins/cli/plugins/src/lib/workspace-plugins"),
-    "hq workspace owner must not import plugin workspace adapter",
+    !hasNamedImport(ownerAst, "@rawr/plugin-plugins", "findWorkspaceRoot") &&
+      !hasImport(ownerAst, "plugins/cli/plugins/src/lib/workspace-plugins"),
+    "plugin-workspace owner must not import plugin workspace adapter",
   );
 }
 

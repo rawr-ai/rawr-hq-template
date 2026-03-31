@@ -36,11 +36,13 @@
         "structural"
       ]
     },
-    "@rawr/hq": {
-      "config": "packages/hq/package.json",
+    "@rawr/plugin-workspace": {
+      "config": "packages/plugin-workspace/package.json",
       "tags": [
         "type:package",
-        "migration-slice:structural-tranche"
+        "migration-slice:structural-tranche",
+        "role:support",
+        "surface:plugin-workspace"
       ],
       "targets": [
         "sync",

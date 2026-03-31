@@ -1,6 +1,6 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { checkScratchPolicy } from "@rawr/hq/lifecycle";
+import { checkScratchPolicy } from "../../lib/plugins-lifecycle/scratch-policy";
 
 import { buildFixSliceBranchName } from "../../lib/plugins-lifecycle/fix-slice";
 import {

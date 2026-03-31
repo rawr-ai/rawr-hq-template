@@ -1,1 +1,1 @@
-export * from "@rawr/hq/workspace";
+export * from "@rawr/plugin-workspace";

@@ -11,7 +11,7 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
   - `packages/agent-sync`
   - `packages/control-plane`
   - `packages/core`
-  - `packages/hq`
+  - `packages/plugin-workspace`
   - `packages/journal`
   - `packages/security`
   - `packages/session-tools`

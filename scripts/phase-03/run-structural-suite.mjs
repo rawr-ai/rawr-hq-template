@@ -83,7 +83,7 @@ const suiteCommandsByProject = {
     "phase-2_5-quick": ["bun run phase-2_5:gate:hq-runtime"],
     "phase-2_5-exit": ["bun run phase-2_5:gate:hq-runtime"],
   },
-  "@rawr/hq": {
+  "@rawr/plugin-workspace": {
     default: [
       "bun run phase-a:gate:metadata-contract",
       "bun run phase-a:gate:legacy-metadata-hard-delete-static-guard",

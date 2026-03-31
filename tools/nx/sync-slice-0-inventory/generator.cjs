@@ -17,9 +17,9 @@ const INVENTORY = {
       tags: ["type:app", "app:hq", "migration-slice:structural-tranche"],
       targets: ["sync", "structural"],
     },
-    "@rawr/hq": {
-      config: "packages/hq/package.json",
-      tags: ["type:package", "migration-slice:structural-tranche"],
+    "@rawr/plugin-workspace": {
+      config: "packages/plugin-workspace/package.json",
+      tags: ["type:package", "migration-slice:structural-tranche", "role:support", "surface:plugin-workspace"],
       targets: ["sync", "structural"],
     },
     "@rawr/plugin-plugins": {

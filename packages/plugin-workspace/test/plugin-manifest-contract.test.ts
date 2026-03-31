@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { parseWorkspacePluginManifest } from "../src/workspace/plugin-manifest-contract";
+import { parseWorkspacePluginManifest } from "../src/plugin-manifest-contract";
 
-describe("workspace plugin manifest contract", () => {
+describe("plugin workspace manifest contract", () => {
   it("parses required rawr.kind + rawr.capability", () => {
     const parsed = parseWorkspacePluginManifest({
       manifest: {

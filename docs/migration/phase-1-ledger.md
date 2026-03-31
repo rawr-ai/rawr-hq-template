@@ -16,6 +16,7 @@ These are the minimum concrete Phase 1 surfaces that remain live without being t
   "apps/web",
   "services/example-todo",
   "packages/agent-sync",
+  "packages/plugin-workspace",
   "plugins/cli/chatgpt-corpus",
   "plugins/cli/hello",
   "plugins/cli/plugins",
@@ -75,8 +76,8 @@ These are the Phase 1 rails that must not drift while the milestone is in flight
   "coordination stays archived and out of the live lane.",
   "support-example stays archived and out of the live lane.",
   "The plugins/agents/hq marketplace compatibility lane stays frozen in place during Phase 1.",
-  "Live code must not add new @rawr/hq/* imports outside the recorded residual allowlist.",
-  "Live code must not add new imports from the recorded old operational owners outside the recorded residual allowlist.",
+  "Live code must not import @rawr/hq/* from the live lane.",
+  "Live code must not add new imports from the recorded old operational owners while their authority is being dissolved.",
   "Parked-lane edits are limited to deletions, rewires, compile fixes, and explicit unblockers."
 ]
 ```
@@ -91,8 +92,8 @@ These checks are the root-owned Phase 1 proof band introduced by `M1-U00`.
   "bun scripts/phase-1/verify-no-live-coordination.mjs": "Keep coordination classified as archived only, absent from the live tree, and backed by archive lessons.",
   "bun scripts/phase-1/verify-no-live-support-example.mjs": "Keep support-example classified as archived only, absent from the live tree, and backed by archive lessons.",
   "bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs": "Freeze the current plugins/agents topology and keep plugins/agents/hq parked in place.",
-  "bun scripts/phase-1/verify-no-old-operational-packages.mjs": "Freeze the residual import surface for old operational owners until HQ Ops absorbs them.",
-  "bun scripts/phase-1/verify-no-legacy-hq-imports.mjs": "Freeze the residual @rawr/hq facade imports until M1-U04 removes them.",
+  "bun scripts/phase-1/verify-no-old-operational-packages.mjs": "Keep old operational owners from regaining live import authority while HQ Ops and purpose-named support boundaries absorb them.",
+  "bun scripts/phase-1/verify-no-legacy-hq-imports.mjs": "Prove the legacy @rawr/hq facade imports are absent from the live lane after M1-U04.",
   "bun run phase-1:gates:baseline": "Run the initial root-owned Phase 1 guardrail band."
 }
 ```

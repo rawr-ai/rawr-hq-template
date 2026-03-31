@@ -21,8 +21,8 @@
     "@oclif/core": "^4.8.0",
     "@rawr/agent-sync": "workspace:*",
     "@rawr/core": "workspace:*",
-    "@rawr/hq": "workspace:*",
-    "@rawr/hq-ops": "workspace:*"
+    "@rawr/hq-ops": "workspace:*",
+    "@rawr/plugin-workspace": "workspace:*"
   },
   "oclif": {
     "commands": "./src/commands",
