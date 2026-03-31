@@ -1,7 +1,7 @@
 ---
 id: M1-U05
 title: "[M1] Cut the canonical plugin topology"
-state: planned
+state: done
 priority: 1
 estimate: 4
 project: rawr-final-architecture-migration
@@ -26,10 +26,10 @@ related_to: []
 - Prove that the old plugin roots are gone from the live lane.
 
 ## Acceptance Criteria
-- [ ] Old plugin roots are gone from the live lane.
-- [ ] Canonical plugin topology proof passes.
-- [ ] Workspace/project inventory, tags, and imports align with the new topology.
-- [ ] There is no second live plugin tree left for implementers to treat as authoritative.
+- [x] Old plugin roots are gone from the live lane.
+- [x] Canonical plugin topology proof passes.
+- [x] Workspace/project inventory, tags, and imports align with the new topology.
+- [x] There is no second live plugin tree left for implementers to treat as authoritative.
 
 ## Testing / Verification
 - `bun run sync:check`
@@ -70,19 +70,49 @@ Out of scope:
 ### Implementation Guidance
 This slice is not just filesystem motion. Inventory, tags, and import truth need to move together so the old topology stops being a viable path.
 
+### Implementation Decisions
+
+#### Plugin identity after the root move
+
+- The canonical architecture spec is authoritative for on-disk topology:
+  - `plugins/server/api/*`
+  - `plugins/async/workflows/*`
+  - `plugins/async/schedules/*`
+- The spec's `@rawr/plugins/server/api/...` import examples are treated as conceptual topology examples rather than literal workspace package names. This repo still uses one package per plugin with normal package-manager naming constraints.
+- For the live Phase 1 cut, plugin identities therefore move to role-first flattened names instead of nested pseudo-package names:
+  - `@rawr/plugin-api-example-todo` -> `@rawr/plugin-server-api-example-todo`
+  - `@rawr/plugin-api-state` -> `@rawr/plugin-server-api-state`
+  - Nx project names follow the same shift: `plugin-api-*` -> `plugin-server-api-*`
+- This preserves a concrete, enforceable workspace identity model while still making the canonical role-first topology authoritative on disk.
+
 ### Files
-- `plugins/api/example-todo`
-- `plugins/api/state`
+- `plugins/server/api/example-todo`
+- `plugins/server/api/state`
 - `package.json`
 - `tools/architecture-inventory/slice-0-first-cohort.json`
 - `tools/nx/sync-slice-0-inventory/generator.cjs`
-- `plugins/api/example-todo/project.json`
-- `plugins/api/state/project.json`
+- `plugins/server/api/example-todo/project.json`
+- `plugins/server/api/state/project.json`
 - `apps/hq/src/manifest.ts`
 - `apps/server/src/host-seam.ts`
 - `apps/server/src/workflows/runtime.ts`
 - `apps/server/test/rawr.test.ts`
 - `apps/server/test/phase-a-gates.test.ts`
+
+### Implementation Results
+
+- Live server plugins now live only at:
+  - `plugins/server/api/example-todo`
+  - `plugins/server/api/state`
+- Old live roots `plugins/api` and `plugins/workflows` are removed from the live tree.
+- Workspace globs, TS path aliases, Nx inventory/project metadata, and live imports now point at the canonical role-first topology.
+- Role-first flattened plugin identities are now authoritative in code:
+  - `@rawr/plugin-server-api-example-todo`
+  - `@rawr/plugin-server-api-state`
+- Reserved empty async roots are installed at:
+  - `plugins/async/workflows`
+  - `plugins/async/schedules`
+- Branch: `agent-FARGO-M1-U05-cut-canonical-plugin-topology`
 
 ### Paper Trail
 - [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md)

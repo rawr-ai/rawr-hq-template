@@ -27,14 +27,25 @@ const INVENTORY = {
       tags: ["type:plugin", "migration-slice:structural-tranche"],
       targets: ["sync", "structural"],
     },
-    "plugin-api-example-todo": {
-      config: "plugins/api/example-todo/project.json",
+    "plugin-server-api-example-todo": {
+      config: "plugins/server/api/example-todo/project.json",
       tags: [
         "type:plugin",
         "migration-slice:structural-tranche",
-        "role:api",
-        "surface:orpc",
+        "role:server",
+        "surface:api",
         "capability:example-todo",
+      ],
+      targets: ["sync", "structural"],
+    },
+    "plugin-server-api-state": {
+      config: "plugins/server/api/state/project.json",
+      tags: [
+        "type:plugin",
+        "migration-slice:structural-tranche",
+        "role:server",
+        "surface:api",
+        "capability:state",
       ],
       targets: ["sync", "structural"],
     },

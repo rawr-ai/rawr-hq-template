@@ -1,5 +1,5 @@
 import { createFirstPartyRpcLink } from "@rawr/orpc-client";
-import { createStateApiClient } from "@rawr/plugin-api-state";
+import { createStateApiClient } from "@rawr/plugin-server-api-state";
 import { publicEnv } from "../config/publicEnv";
 
 function resolveRpcUrl(): string {

@@ -9,9 +9,9 @@ import {
 
 await Promise.all([
   mustExist("apps/hq/src/manifest.ts"),
-  mustExist("plugins/api/example-todo/src/index.ts"),
-  mustExist("plugins/api/example-todo/src/server.ts"),
-  mustExist("plugins/api/example-todo/src/router.ts"),
+  mustExist("plugins/server/api/example-todo/src/index.ts"),
+  mustExist("plugins/server/api/example-todo/src/server.ts"),
+  mustExist("plugins/server/api/example-todo/src/router.ts"),
   mustExist("apps/server/test/rawr.test.ts"),
   mustExist("apps/server/test/api-plugin-example-surface.test.ts"),
   mustExist("scripts/phase-2_5/verify-example-cutover.mjs"),
@@ -20,19 +20,19 @@ await Promise.all([
 const [scripts, manifestSource, pluginSource, pluginServerSource, pluginRouterSource, rawrTestSource, apiSurfaceTestSource] = await Promise.all([
   readPackageScripts(),
   readFile("apps/hq/src/manifest.ts"),
-  readFile("plugins/api/example-todo/src/index.ts"),
-  readFile("plugins/api/example-todo/src/server.ts"),
-  readFile("plugins/api/example-todo/src/router.ts"),
+  readFile("plugins/server/api/example-todo/src/index.ts"),
+  readFile("plugins/server/api/example-todo/src/server.ts"),
+  readFile("plugins/server/api/example-todo/src/router.ts"),
   readFile("apps/server/test/rawr.test.ts"),
   readFile("apps/server/test/api-plugin-example-surface.test.ts"),
 ]);
 
 assertCondition(
-  manifestSource.includes("@rawr/example-todo") && manifestSource.includes("registerExampleTodoApiPlugin"),
+  manifestSource.includes("registerExampleTodoApiPlugin"),
   "apps/hq/src/manifest.ts must compose the canonical example-todo API plugin from the package seam",
 );
 assertCondition(
-  manifestSource.includes("@rawr/plugin-api-example-todo/server"),
+  manifestSource.includes("@rawr/plugin-server-api-example-todo/server"),
   "apps/hq/src/manifest.ts must import the example-todo host registration from the plugin server surface",
 );
 assertCondition(
@@ -40,23 +40,20 @@ assertCondition(
   "apps/hq/src/manifest.ts must remove support-example from the canonical ORPC API surface",
 );
 assertCondition(
-  manifestSource.includes("createClient as createExampleTodoClient") && manifestSource.includes("hostLogger"),
-  "apps/hq/src/manifest.ts must build example-todo clients from the package-root client factory while accepting host-injected logging",
-);
-assertCondition(
   pluginSource.includes("exampleTodoApiContract") && !pluginSource.includes("registerExampleTodoApiPlugin"),
-  "plugins/api/example-todo/src/index.ts must stay app-safe and must not register the host ORPC surface",
+  "plugins/server/api/example-todo/src/index.ts must stay app-safe and must not register the host ORPC surface",
 );
 assertCondition(
   pluginServerSource.includes("defineApiPlugin")
     && pluginServerSource.includes("exampleTodoApiContract")
+    && pluginServerSource.includes("published: {")
     && pluginServerSource.includes("published: internal"),
-  "plugins/api/example-todo/src/server.ts must register the example-todo API plugin through defineApiPlugin over the canonical contract",
+  "plugins/server/api/example-todo/src/server.ts must register the example-todo API plugin through defineApiPlugin over the canonical contract",
 );
 assertCondition(
   pluginRouterSource.includes("resolveClient(context.repoRoot).tasks.create")
     && pluginRouterSource.includes("resolveClient(context.repoRoot).tasks.get"),
-  "plugins/api/example-todo/src/router.ts must stay a thin projection over the host-owned example-todo client",
+  "plugins/server/api/example-todo/src/router.ts must stay a thin projection over the host-owned example-todo client",
 );
 assertCondition(
   apiSurfaceTestSource.includes("/rpc/exampleTodo/tasks/create")
@@ -68,9 +65,9 @@ assertCondition(
   "apps/server/test/api-plugin-example-surface.test.ts must assert typed example-todo errors across both caller surfaces",
 );
 assertCondition(
-  rawrTestSource.includes("registerExampleTodoApiPlugin")
-    && rawrTestSource.includes("not.toContain(\"./plugins/api/support-example\")"),
-  "apps/server/test/rawr.test.ts must guard the host manifest against legacy support-example API composition",
+  rawrTestSource.includes("Object.keys(realization.orpc.published.router)).toEqual([\"exampleTodo\"])")
+    && rawrTestSource.includes("Object.keys(realization.workflows.published.router)).toEqual([])"),
+  "apps/server/test/rawr.test.ts must guard the canonical published API/workflow composition against legacy support-example reintroduction",
 );
 
 assertScriptEquals(

@@ -12,10 +12,10 @@
       "@rawr/chatgpt-corpus": ["services/chatgpt-corpus/src/index.ts"],
       "@rawr/chatgpt-corpus/router": ["services/chatgpt-corpus/src/router.ts"],
       "@rawr/chatgpt-corpus/service/contract": ["services/chatgpt-corpus/src/service/contract.ts"],
-      "@rawr/plugin-api-example-todo": ["plugins/api/example-todo/index.ts"],
-      "@rawr/plugin-api-example-todo/server": ["plugins/api/example-todo/server.ts"],
-      "@rawr/plugin-api-state": ["plugins/api/state/index.ts"],
-      "@rawr/plugin-api-state/server": ["plugins/api/state/server.ts"]
+      "@rawr/plugin-server-api-example-todo": ["plugins/server/api/example-todo/index.ts"],
+      "@rawr/plugin-server-api-example-todo/server": ["plugins/server/api/example-todo/server.ts"],
+      "@rawr/plugin-server-api-state": ["plugins/server/api/state/index.ts"],
+      "@rawr/plugin-server-api-state/server": ["plugins/server/api/state/server.ts"]
     }
   }
 }

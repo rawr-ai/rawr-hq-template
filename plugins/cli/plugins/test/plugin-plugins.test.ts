@@ -7,8 +7,9 @@ describe("@rawr/plugin-plugins", () => {
     expect(inferTypeFromPath("/repo/plugins/cli/demo")).toBe("cli");
     expect(inferTypeFromPath("/repo/plugins/web/demo")).toBe("web");
     expect(inferTypeFromPath("/repo/plugins/agents/demo")).toBe("agent");
-    expect(inferTypeFromPath("/repo/plugins/workflows/demo")).toBe("workflow");
-    expect(inferTypeFromPath("/repo/plugins/api/demo")).toBe("composed");
+    expect(inferTypeFromPath("/repo/plugins/async/workflows/demo")).toBe("workflow");
+    expect(inferTypeFromPath("/repo/plugins/async/schedules/demo")).toBe("workflow");
+    expect(inferTypeFromPath("/repo/plugins/server/api/demo")).toBe("composed");
     expect(inferTypeFromPath("/repo/plugins/other/demo")).toBe("composed");
   });
 });

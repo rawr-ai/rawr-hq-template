@@ -12,8 +12,9 @@ const KIND_BY_ROOT = {
   cli: "toolkit",
   agents: "agent",
   web: "web",
-  api: "api",
-  workflows: "workflows",
+  "server/api": "api",
+  "async/workflows": "workflows",
+  "async/schedules": "schedules",
 } as const;
 
 type DiscoveryRoot = keyof typeof KIND_BY_ROOT;
@@ -34,13 +35,13 @@ async function createWorkspaceWithRoots(roots: DiscoveryRoot[]): Promise<string>
   });
 
   for (const root of roots) {
-    const dirName = `sample-${root}`;
+    const dirName = `sample-${root.replaceAll("/", "-")}`;
     await writeJsonFile(path.join(workspaceRoot, "plugins", root, dirName, "package.json"), {
-      name: `@rawr/sample-${root}`,
+      name: `@rawr/sample-${root.replaceAll("/", "-")}`,
       private: true,
       rawr: {
         kind: KIND_BY_ROOT[root],
-        capability: `cap-${root}`,
+        capability: `cap-${root.replaceAll("/", "-")}`,
       },
     });
   }
@@ -56,18 +57,19 @@ afterEach(async () => {
 });
 
 describe("@rawr/plugin-plugins workspace discovery roots", () => {
-  it("discovers plugins under cli/agents/web/api/workflows roots", async () => {
-    const workspaceRoot = await createWorkspaceWithRoots(["cli", "agents", "web", "api", "workflows"]);
+  it("discovers plugins under cli/agents/web and canonical runtime roots", async () => {
+    const workspaceRoot = await createWorkspaceWithRoots(["cli", "agents", "web", "server/api", "async/workflows", "async/schedules"]);
 
     const plugins = await listWorkspacePlugins(workspaceRoot);
 
-    expect(plugins.map((plugin) => plugin.kind).sort()).toEqual(["agent", "api", "toolkit", "web", "workflows"]);
+    expect(plugins.map((plugin) => plugin.kind).sort()).toEqual(["agent", "api", "schedules", "toolkit", "web", "workflows"]);
     expect(plugins.map((plugin) => plugin.capability).sort()).toEqual([
       "cap-agents",
-      "cap-api",
+      "cap-async-schedules",
+      "cap-async-workflows",
       "cap-cli",
+      "cap-server-api",
       "cap-web",
-      "cap-workflows",
     ]);
   });
 
@@ -85,8 +87,8 @@ describe("@rawr/plugin-plugins workspace discovery roots", () => {
   it("ignores package roots that do not opt into the rawr plugin contract", async () => {
     const workspaceRoot = await createWorkspaceWithRoots(["web"]);
 
-    await writeJsonFile(path.join(workspaceRoot, "plugins", "api", "example-todo", "package.json"), {
-      name: "@rawr/plugin-api-example-todo",
+    await writeJsonFile(path.join(workspaceRoot, "plugins", "server", "api", "example-todo", "package.json"), {
+      name: "@rawr/plugin-server-api-example-todo",
       private: true,
     });
 

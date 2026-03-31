@@ -46,8 +46,8 @@ These surfaces remain present for continuity during Phase 1, but they are frozen
 ```json
 [
   "plugins/agents/hq",
-  "plugins/api/example-todo",
-  "plugins/api/state"
+  "plugins/server/api/example-todo",
+  "plugins/server/api/state"
 ]
 ```
 
@@ -94,6 +94,7 @@ These checks are the root-owned Phase 1 proof band introduced by `M1-U00`.
   "bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs": "Freeze the current plugins/agents topology and keep plugins/agents/hq parked in place.",
   "bun scripts/phase-1/verify-no-old-operational-packages.mjs": "Keep old operational owners from regaining live import authority while HQ Ops and purpose-named support boundaries absorb them.",
   "bun scripts/phase-1/verify-no-legacy-hq-imports.mjs": "Prove the legacy @rawr/hq facade imports are absent from the live lane after M1-U04.",
+  "bun scripts/phase-1/verify-canonical-plugin-topology.mjs": "Prove the canonical role-first plugin roots are authoritative and the old live roots are gone.",
   "bun run phase-1:gates:baseline": "Run the initial root-owned Phase 1 guardrail band."
 }
 ```

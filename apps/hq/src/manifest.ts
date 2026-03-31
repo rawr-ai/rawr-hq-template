@@ -1,5 +1,5 @@
-import { registerExampleTodoApiPlugin } from "@rawr/plugin-api-example-todo/server";
-import { registerStateApiPlugin } from "@rawr/plugin-api-state/server";
+import { registerExampleTodoApiPlugin } from "@rawr/plugin-server-api-example-todo/server";
+import { registerStateApiPlugin } from "@rawr/plugin-server-api-state/server";
 
 /**
  * @agents-style seam-law declaration -> host binding -> request/process materialization

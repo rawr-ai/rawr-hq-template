@@ -147,7 +147,7 @@ issues:
     blocked_by: [M1-U03]
   - id: M1-U05
     title: "Cut the canonical plugin topology"
-    status: planned
+    status: done
     blocked_by: [M1-U04]
   - id: M1-U06
     title: "Install the canonical HQ app shell"
@@ -221,6 +221,7 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 - Issue doc: [M1-U05](../issues/M1-U05-cut-canonical-plugin-topology.md)
 - Focus: move the live runtime-projection tree to the canonical `plugins/server/api/*` and `plugins/async/*` topology.
 - Stop-gate: the old plugin roots are gone and workspace, Nx, tag, and import truth all align with the new topology.
+- Traceability: branch `agent-FARGO-M1-U05-cut-canonical-plugin-topology`; canonical live server plugins now live only under `plugins/server/api/*`; reserved empty async roots landed at `plugins/async/workflows` and `plugins/async/schedules`; checks passed across `sync:check`, canonical topology proof, app typechecks, server/HQ/web tests, plugin-workspace and plugin-plugins tests, agent-sync tests, moved plugin structural/typecheck targets, `phase-2_5:gate:example-cutover`, and `phase-1:gates:baseline`; HQ managed-stack validation required a restart after the old server process held stale plugin module resolution, then returned healthy with first-party state RPC `200` and archived coordination/support-example route probes still `404`.
 
 ### M1-U06: Install the canonical HQ app shell
 

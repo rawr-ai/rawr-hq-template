@@ -10,18 +10,19 @@
 
 ## Scope
 - Applies to everything under `plugins/**`.
-- This repo uses **five plugin roots**:
+- This repo uses **six plugin roots**:
   - `plugins/cli/*` for CLI toolkits (`rawr.kind=toolkit`)
   - `plugins/agents/*` for agent offices (`rawr.kind=agent`)
   - `plugins/web/*` for runtime/web plugins (`rawr.kind=web`)
-  - `plugins/api/*` for API runtime adapters (`rawr.kind=api`)
-  - `plugins/workflows/*` for workflow runtime adapters (`rawr.kind=workflows`)
+  - `plugins/server/api/*` for server/API runtime adapters (`rawr.kind=api`)
+  - `plugins/async/workflows/*` for workflow runtime adapters (`rawr.kind=workflows`)
+  - `plugins/async/schedules/*` for recurring trigger runtime adapters (`rawr.kind=schedules`)
 - Each leaf directory is a workspace package (see root `package.json#workspaces`).
 
 ## Nx First Hop
 
 - Use Nx first to identify plugin project names, roots, tags, and runnable targets:
-  - `bunx nx show projects --projects "plugins/*"`
+  - `bunx nx show projects --projects "plugins/**"`
   - `bunx nx show project <project-name> --json`
 - Use the vendored Nx skills for plugin workspace navigation and task execution before falling back to manual repo exploration.
 
