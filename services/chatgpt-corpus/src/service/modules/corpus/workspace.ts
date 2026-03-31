@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { CorpusWorkspacePaths, InitWorkspaceResult } from "./types";
 
 export const WORKSPACE_README = `# ChatGPT Corpus Workspace
 
@@ -36,24 +37,16 @@ work/generated/
 work/README.md
 `;
 
-export type CorpusWorkspacePaths = {
-  workspaceRoot: string;
-  sourceJsonDir: string;
-  workDir: string;
-  sourceDocsDir: string;
-  generatedDir: string;
-  corpusDir: string;
-  reportsDir: string;
-  normalizedDir: string;
-  readmePath: string;
-  gitignorePath: string;
-};
+export function normalizeWorkspaceRoot(workspaceRoot: string): string {
+  return path.resolve(workspaceRoot);
+}
 
 export function getWorkspacePaths(workspaceRoot: string): CorpusWorkspacePaths {
-  const root = path.resolve(workspaceRoot);
+  const root = normalizeWorkspaceRoot(workspaceRoot);
   const workDir = path.join(root, "work");
   const generatedDir = path.join(workDir, "generated");
   const corpusDir = path.join(generatedDir, "corpus");
+
   return {
     workspaceRoot: root,
     sourceJsonDir: path.join(root, "source-material", "conversations", "raw-json"),
@@ -65,5 +58,21 @@ export function getWorkspacePaths(workspaceRoot: string): CorpusWorkspacePaths {
     normalizedDir: path.join(corpusDir, "normalized-threads"),
     readmePath: path.join(workDir, "README.md"),
     gitignorePath: path.join(root, ".gitignore"),
+  };
+}
+
+export function buildInitWorkspaceResult(
+  paths: CorpusWorkspacePaths,
+  createdPaths: string[],
+  existingPaths: string[],
+): InitWorkspaceResult {
+  return {
+    workspaceRoot: paths.workspaceRoot,
+    createdPaths: [...new Set(createdPaths)],
+    existingPaths: [...new Set(existingPaths)],
+    files: {
+      readmePath: paths.readmePath,
+      gitignorePath: paths.gitignorePath,
+    },
   };
 }
