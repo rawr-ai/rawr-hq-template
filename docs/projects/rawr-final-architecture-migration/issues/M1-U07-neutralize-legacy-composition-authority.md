@@ -37,7 +37,8 @@ related_to: []
 - `bun --cwd apps/hq run typecheck`
 - `bun --cwd apps/server run test`
 - `bun scripts/phase-1/verify-no-legacy-composition-authority.mjs`
-- `rg -n 'host-composition|host-seam|host-realization' apps/server/src apps/hq -g '!**/dist/**' -g '!**/node_modules/**'`
+- `rg -n 'from \"\\./host-composition\"|from \"\\./host-seam\"|from \"\\./host-realization\"' apps/server/src apps/hq -g '!**/dist/**' -g '!**/node_modules/**'`
+- `rg -n 'createRawrHostComposition' apps/server/src apps/hq -g '!**/dist/**' -g '!**/node_modules/**'`
 
 ## Dependencies / Notes
 - Blocked by: [M1-U06](./M1-U06-install-canonical-hq-app-shell.md).
@@ -78,20 +79,36 @@ The legacy authority is concentrated in `apps/server/src/host-composition.ts`, `
 - [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md)
 - [Phase 1 grounding note](../.context/grounding.md)
 
+### Prework Results (Resolved)
+
+### 1) Remaining live callers
+The direct source callers of legacy host authority are currently:
+- `apps/server/src/rawr.ts` -> imports `createRawrHostComposition` from `./host-composition`
+- `apps/server/src/testing-host.ts` -> imports `createRawrHostComposition` from `./host-composition`
+
+Within the legacy chain itself:
+- `apps/server/src/host-composition.ts` imports `./host-seam` and `./host-realization`
+
+`apps/server/src/orpc.ts` only references the chain in comments; it is not a direct import edge today.
+
+### 2) Proof-only and test-only surfaces
+The heavy proof surfaces that still assume the old chain are:
+- `apps/server/test/rawr.test.ts`
+- `apps/server/test/phase-a-gates.test.ts`
+
+Those tests do not just mention the old files; they explicitly assert import edges, file contents, and route composition around `host-composition`, `host-seam`, and `host-realization`. They will need to be rewritten as HQ-shell-authority proofs, not left behind as stale gate text.
+
+### 3) Neutralization proof conditions
+The practical neutralization bar is:
+- production boot no longer imports `createRawrHostComposition` from `apps/server/src/rawr.ts`
+- no non-test source imports of `host-composition`, `host-seam`, or `host-realization` remain, except through `apps/hq/legacy-cutover.ts` if that bridge still exists
+- `apps/hq/server.ts` becomes the smoke-tested server boot path
+- `apps/hq/async.ts` becomes the smoke-tested async boot path when that role is reserved/live
+- `apps/server/src/testing-host.ts` is either quarantined as explicit test-only scaffolding or replaced by an HQ-shell test harness so it is not mistaken for live authority
+
 ### Quick Navigation
 - [TL;DR](#tldr)
 - [Deliverables](#deliverables)
 - [Acceptance Criteria](#acceptance-criteria)
 - [Testing / Verification](#testing--verification)
 - [Dependencies / Notes](#dependencies--notes)
-
-## Prework Prompt (Agent Brief)
-**Purpose:** Audit every remaining live boot and testing path that still depends on `host-composition`, `host-seam`, or `host-realization`, and determine the exact proof conditions for declaring legacy executable authority neutralized.
-**Expected Output:** A path inventory naming every remaining caller, whether it must be deleted, rerouted, or quarantined, and the exact smoke/proof commands needed to show the new app shell is authoritative.
-**Sources to Check:**
-- `apps/server/src/rawr.ts`
-- `apps/server/src/testing-host.ts`
-- `apps/server/src/orpc.ts`
-- `apps/server/test/rawr.test.ts`
-- `apps/server/test/phase-a-gates.test.ts`
-- `rg -n 'host-composition|host-seam|host-realization' apps/hq apps/server -g '!**/dist/**' -g '!**/node_modules/**'`

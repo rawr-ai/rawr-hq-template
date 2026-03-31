@@ -84,19 +84,52 @@ This slice is not just filesystem motion. Inventory, tags, and import truth need
 - [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md)
 - [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec.md)
 
+### Prework Results (Resolved)
+
+### 1) Workspace and inventory files that must change
+The plugin-root cut is not self-contained. The current root and inventory truth lives in:
+- root `package.json` workspaces: currently `plugins/api/*` and `plugins/workflows/*`
+- `tools/architecture-inventory/slice-0-first-cohort.json`
+- `tools/nx/sync-slice-0-inventory/generator.cjs`
+
+Those files already encode `plugin-api-*` paths and must be updated when the canonical roots move.
+
+### 2) Nx project files and tag changes
+The current plugin project files are:
+- `plugins/api/{state,example-todo,coordination}/project.json`
+- `plugins/workflows/{coordination,support-example}/project.json`
+
+Current tag posture is still old:
+- API plugins: `role:api`, `surface:orpc`
+- Workflow plugins: `role:workflow`, `surface:async`
+
+Phase 1 target posture should instead align to the dedicated plan:
+- `type:plugin`
+- `role:server` / `role:async`
+- `surface:api` / `surface:workflows` / `surface:schedules`
+
+If `support-example` is archived in `M1-U01`, its workflow project should leave live inventory rather than migrate into the new async roots.
+
+### 3) Import and proof surfaces that must move with the topology
+The live import/proof surfaces tied to the old plugin roots are:
+- `apps/hq/src/manifest.ts`
+- `apps/server/src/host-seam.ts`
+- `apps/server/src/workflows/runtime.ts`
+- `apps/web/src/ui/lib/orpc-client.ts`
+- `apps/cli/src/lib/coordination-api.ts`
+- `apps/server/test/rawr.test.ts`
+- `apps/server/test/phase-a-gates.test.ts`
+
+Outside the migration project, these docs also reference the old roots and will become stale later:
+- `docs/SYSTEM.md`
+- `docs/system/PLUGINS.md`
+- `docs/process/HQ_OPERATIONS.md`
+
+That doc cleanup belongs to `M1-U08`, not this topology cut issue.
+
 ### Quick Navigation
 - [TL;DR](#tldr)
 - [Deliverables](#deliverables)
 - [Acceptance Criteria](#acceptance-criteria)
 - [Testing / Verification](#testing--verification)
 - [Dependencies / Notes](#dependencies--notes)
-
-## Prework Prompt (Agent Brief)
-**Purpose:** Determine the exact workspace, Nx inventory, tag, and import updates required when `plugins/api/*` becomes `plugins/server/api/*` and async roots become `plugins/async/*`.
-**Expected Output:** A short migration checklist naming every workspace/project/tag/config file that must change, plus the existing proof tests that need updates.
-**Sources to Check:**
-- `package.json`
-- `bunx nx show projects`
-- `plugins/`
-- `apps/server/test/rawr.test.ts`
-- `apps/server/test/phase-a-gates.test.ts`
