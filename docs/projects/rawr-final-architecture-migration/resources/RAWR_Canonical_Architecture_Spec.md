@@ -1274,11 +1274,8 @@ It does not collapse all composition into generic role-only `use` arrays.
 // apps/hq/rawr.hq.ts
 import { defineApp } from "@rawr/hq-sdk/app";
 import { configModule, telemetryModule, postgresPoolModule, workspaceModule, identityModule } from "./boot/modules";
-import { coordinationApi } from "@rawr/plugins/server/api/coordination";
 import { stateApi } from "@rawr/plugins/server/api/state";
 import { exampleTodoApi } from "@rawr/plugins/server/api/example-todo";
-import { coordinationWorkflow } from "@rawr/plugins/async/workflows/coordination";
-import { supportExampleWorkflow } from "@rawr/plugins/async/workflows/support-example";
 import { stewardActivationWorkflow } from "@rawr/plugins/async/workflows/steward/activation";
 import { stewardReviewWorkflow } from "@rawr/plugins/async/workflows/steward/review";
 import { shellResultCorrelationWorkflow } from "@rawr/plugins/async/workflows/shell/result-correlation";
@@ -1302,14 +1299,12 @@ export const rawrHq = defineApp({
 
   roles: {
     server: {
-      api: [coordinationApi, stateApi, exampleTodoApi],
+      api: [stateApi, exampleTodoApi],
       internal: [],
     },
 
     async: {
       workflows: [
-        coordinationWorkflow,
-        supportExampleWorkflow,
         stewardActivationWorkflow,
         stewardReviewWorkflow,
         shellResultCorrelationWorkflow,

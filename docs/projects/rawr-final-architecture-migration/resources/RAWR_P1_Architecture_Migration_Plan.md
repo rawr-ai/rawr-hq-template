@@ -71,7 +71,7 @@ That includes:
 - classifying the live repo and freezing the migration lane
 - archiving `coordination` out of the live architecture
 - archiving `support-example` out of the live architecture
-- moving agent content out of runtime plugin roots
+- freezing the current `plugins/agents/hq` marketplace compatibility lane in place and deferring its redesign
 - creating the canonical `services/hq-ops` service shell
 - consolidating HQ operational truth into `services/hq-ops` modules
 - rewiring active consumers to the new HQ Ops service boundary
@@ -111,8 +111,8 @@ By the end of Phase 1, the repo is “back on track” in a concrete and checkab
 - HQ operational truth lives in one service package: `services/hq-ops`
 - no semantic HQ truth remains under `packages/`
 - no live code depends on `coordination` or `support-example`
-- no non-runtime content remains under `plugins/`
-- the active plugin tree is canonical
+- `plugins/agents/hq` remains only as a frozen compatibility lane for current Cloud Code/Codex sync-install behavior
+- the active runtime plugin tree is canonical
 - the active app shell is canonical
 - old executable composition is no longer authoritative
 - every changed seam is covered by structural proof, module-boundary proof, typecheck, and targeted tests
@@ -214,17 +214,23 @@ What moves where:
 
 At Phase 1 exit, there are no `@rawr/hq/*` imports left anywhere in the live lane.
 
-### 4. One bridge is allowed, and only one
+### 4. One executable bridge is allowed, and only one
 
-Phase 1 may use one temporary bridge between the new app shell and the old runtime implementation if needed to keep behavior continuity while the substrate is still phase-2 work.
+Phase 1 designates exactly one permissible executable bridge path between the new app shell and the old runtime implementation:
 
-If it exists, it must obey all of these rules:
+- `apps/hq/legacy-cutover.ts`
 
-- it is a single file: `apps/hq/legacy-cutover.ts`
-- it is called only by `apps/hq/server.ts` and/or `apps/hq/async.ts`
-- it contains no semantic authority, only cutover wiring
-- it is the only surviving transitional seam at the end of Phase 1
-- Phase 2 Slice 0 deletes it explicitly
+Phase 1 exit must land in one of two states only:
+
+1. The bridge file does not exist.
+2. The bridge file exists and obeys all of these rules:
+   - it is a single file: `apps/hq/legacy-cutover.ts`
+   - it is called only by `apps/hq/server.ts` and/or `apps/hq/async.ts`
+   - it contains no semantic authority, only cutover wiring
+   - it is the only surviving transitional executable seam at the end of Phase 1
+   - Phase 2 Slice 0 deletes it explicitly
+
+Separate from that executable bridge, `plugins/agents/hq` may remain as the one explicitly recorded Phase 1 compatibility carryover for current Cloud Code/Codex sync-install continuity.
 
 No other shim, fallback registry, compatibility path, or alias bridge is allowed.
 
@@ -263,7 +269,7 @@ The team may **not** reopen:
 | `apps/cli` and `plugins/cli/plugins` imports | direct imports from old packages/facades | direct imports from HQ Ops or purpose-named tooling packages |
 | `plugins/api/*` | old runtime topology | replaced by `plugins/server/api/*` |
 | `plugins/workflows/*` | old runtime topology | replaced by `plugins/async/workflows/*` and `plugins/async/schedules/*` |
-| `plugins/agents/*` | non-runtime content inside runtime root | moved to `packages/agent-pack-hq` |
+| `plugins/agents/*` | Cloud Code / Codex marketplace content inside a runtime-named root, with path-coupled sync/install semantics | keep `plugins/agents/hq` frozen in place for Phase 1; defer redesign and future home |
 | `coordination` surfaces | false future still live | archived |
 | `support-example` surfaces | old-grammar async proof slice still live | archived |
 | `apps/hq/src/manifest.ts` and `apps/server/src/host-*` | split composition authority | replaced by canonical `apps/hq` app shell with old authority neutralized |
@@ -307,23 +313,24 @@ Phase 1 is done only when all of the following are true at the same time:
    - `@rawr/coordination`
 7. `coordination` is archived and absent from build, test, and runtime
 8. `support-example` is archived and absent from build, test, and runtime
-9. `plugins/agents/*` is gone from `plugins/`
-10. the live plugin tree is canonical:
+9. `plugins/agents/hq` remains only as a frozen compatibility lane for current Cloud Code/Codex sync-install behavior
+10. no new `plugins/agents/*` roots or topology churn land during Phase 1
+11. the live runtime plugin tree is canonical:
     - `plugins/server/api/*`
     - `plugins/async/workflows/*`
     - `plugins/async/schedules/*`
-11. the live app shell is canonical:
+12. the live app shell is canonical:
     - `apps/hq/rawr.hq.ts`
     - `apps/hq/server.ts`
     - `apps/hq/async.ts`
     - `apps/hq/dev.ts`
-12. old host composition is not authoritative anymore
-13. at most one bridge remains, and if it exists it is only `apps/hq/legacy-cutover.ts`
-14. all phase-1 structural checks pass
-15. all targeted typechecks pass
-16. all targeted tests pass
-17. parked lanes are explicitly frozen
-18. phase-1 docs and archive docs are landed and coherent
+13. old host composition is not authoritative anymore
+14. Phase 1 exits with either no executable bridge or exactly one explicitly recorded executable bridge at `apps/hq/legacy-cutover.ts`
+15. all phase-1 structural checks pass
+16. all targeted typechecks pass
+17. all targeted tests pass
+18. parked lanes are explicitly frozen
+19. phase-1 docs and archive docs are landed and coherent
 
 That is the Phase 1 exit gate.
 
@@ -349,7 +356,7 @@ The Phase 1 structural suite must include, at minimum:
 - `verify-phase1-ledger`
 - `verify-no-live-coordination`
 - `verify-no-live-support-example`
-- `verify-no-runtime-agent-content-under-plugins`
+- `verify-agent-marketplace-lane-frozen`
 - `verify-hq-ops-service-shape`
 - `verify-no-old-operational-packages`
 - `verify-no-legacy-hq-imports`
@@ -434,7 +441,7 @@ Create and land:
 - `scripts/phase-1/verify-phase1-ledger.mjs`
 - `scripts/phase-1/verify-no-live-coordination.mjs`
 - `scripts/phase-1/verify-no-live-support-example.mjs`
-- `scripts/phase-1/verify-no-runtime-agent-content-under-plugins.mjs`
+- `scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs`
 - `scripts/phase-1/verify-no-old-operational-packages.mjs`
 - `scripts/phase-1/verify-no-legacy-hq-imports.mjs`
 
@@ -444,6 +451,8 @@ Add explicit prohibitions to the ledger:
 - no new code in `plugins/workflows/*`
 - no new `coordination` code
 - no new `support-example` code
+- no move or rename of `plugins/agents/hq` during Phase 1
+- no new `plugins/agents/*` roots
 - no new `@rawr/hq/*` imports
 - no new imports from `@rawr/control-plane`, `@rawr/journal`, `@rawr/security`, or `@rawr/state`
 - parked lanes may receive only compile fixes, rewires, deletions, and explicit unblockers
@@ -486,11 +495,11 @@ There is no runtime smoke requirement here because no behavior changed yet.
 
 Remove the prototypes and misplaced content that would keep pulling the repo back toward the wrong architecture.
 
-This slice archives three things from the live lane:
+This slice archives two things from the live lane and freezes one compatibility lane:
 
 - `coordination`
 - `support-example`
-- agent content under `plugins/agents/*`
+- the current Cloud Code / Codex marketplace plugin lane rooted at `plugins/agents/hq`
 
 This slice does **not** build replacements.
 It only removes false futures from the live authority model and preserves their useful lessons.
@@ -544,13 +553,20 @@ Reserve the future replacement name in documentation only:
 
 Do **not** create `example-async` yet.
 
-#### Agent content under runtime plugin roots
+#### Current Cloud Code / Codex marketplace compatibility lane
 
-Move:
+Keep in place during Phase 1:
 
-- `plugins/agents/hq` -> `packages/agent-pack-hq`
+- `plugins/agents/hq`
 
-Update its package metadata so it is no longer tagged or treated as a runtime plugin.
+Do not:
+
+- move it into `packages/`
+- rename the `plugins/agents` root
+- add new plugin directories under `plugins/agents/*`
+- let this lane steer the canonical runtime plugin topology cut
+
+Record the redesign as an explicit next-stage question during the end-of-milestone readjustment review.
 
 ### Verification
 
@@ -558,9 +574,10 @@ This slice is done when all of these pass:
 
 - `verify-no-live-coordination`
 - `verify-no-live-support-example`
-- `verify-no-runtime-agent-content-under-plugins`
+- `verify-agent-marketplace-lane-frozen`
 - root `sync:check`
 - targeted typecheck for changed project inventory
+- `bun run rawr plugins sync @rawr/plugin-hq --dry-run`
 - static scans proving there are no live imports or registrations referencing archived coordination or support-example surfaces
 
 The live lane is allowed to have no async proof slice at the end of this slice.
@@ -922,7 +939,7 @@ This slice is done when all of these pass:
 - root `sync:check`
 - targeted typecheck for moved plugins, `@rawr/hq-app`, and `@rawr/server`
 
-At the end of this slice, there is only one live plugin topology.
+At the end of this slice, there is only one canonical runtime plugin topology for the live server/async lane. The frozen `plugins/agents/hq` compatibility lane remains in place and is explicitly out of scope for this topology cut.
 
 ---
 
@@ -986,7 +1003,7 @@ This slice:
 
 - stops `apps/server/src/host-composition.ts`, `host-seam.ts`, and `host-realization.ts` from being authoritative
 - routes execution through the new app shell
-- uses the one allowed bridge only if absolutely necessary
+- uses only the designated executable bridge path when a bridge is required at all
 
 This slice does **not** build the real runtime substrate.
 It only removes authority from the old path.
@@ -1032,7 +1049,7 @@ This slice is done when all of these pass:
 - targeted typecheck for `@rawr/server` and `@rawr/hq-app`
 - root `sync:check`
 
-If `apps/hq/legacy-cutover.ts` exists at the end of the slice, it must be listed explicitly in the docs as the sole phase boundary bridge and scheduled for deletion in Phase 2 Slice 0.
+If `apps/hq/legacy-cutover.ts` exists at the end of the slice, it must be listed explicitly in the docs as the sole phase-boundary executable bridge and scheduled for deletion in Phase 2 Slice 0. Otherwise, no executable bridge survives the slice.
 
 ---
 
@@ -1083,9 +1100,14 @@ Do **not** update Phase 2 or final architecture docs as if runtime substrate wer
 
 #### Phase boundary note
 
-If `apps/hq/legacy-cutover.ts` exists, record exactly one cleanup item:
+Record the executable bridge outcome explicitly:
 
-- Phase 2 Slice 0: delete `apps/hq/legacy-cutover.ts`
+- if `apps/hq/legacy-cutover.ts` exists, record exactly one executable-bridge cleanup item: `Phase 2 Slice 0: delete apps/hq/legacy-cutover.ts`
+- if `apps/hq/legacy-cutover.ts` does not exist, record that no executable bridge crosses the Phase 1 -> Phase 2 boundary
+
+Also record exactly one compatibility note:
+
+- `plugins/agents/hq` remains frozen in place for marketplace sync-install continuity and is the only allowed non-executable carryover into the next stage
 
 No other cleanup debt is allowed to leak across the boundary.
 
@@ -1109,9 +1131,13 @@ At the end of this slice, the plateau is frozen.
 
 Phase 1 allows transitional states only between slices.
 
-The only transitional state allowed across the Phase 1 -> Phase 2 boundary is the single optional bridge file:
+The only transitional executable state allowed across the Phase 1 -> Phase 2 boundary is the single designated bridge path:
 
 - `apps/hq/legacy-cutover.ts`
+
+The only non-executable compatibility carryover allowed across the boundary is the explicitly frozen marketplace lane:
+
+- `plugins/agents/hq`
 
 Everything else must be cleaned up before the Phase 1 plateau is declared done.
 
@@ -1156,13 +1182,14 @@ Phase 1 hands Phase 2 a clean starting surface.
 When Phase 1 is complete, Phase 2 starts from this exact condition:
 
 - one canonical app shell exists
-- one canonical plugin tree exists
+- one canonical runtime plugin tree exists
 - HQ Ops truth exists as one real service with modules
 - there are no false futures left in the live lane
-- the only allowed bridge, if any, is `apps/hq/legacy-cutover.ts`
+- the executable bridge outcome is explicit: either no executable bridge survives, or the only surviving executable bridge is `apps/hq/legacy-cutover.ts`
+- the only allowed non-executable compatibility carryover is the frozen `plugins/agents/hq` marketplace lane
 - `example-async` is the reserved next async proof slice name
 
-Phase 2 then begins by deleting the bridge if it exists and replacing it with the real runtime substrate.
+Phase 2 then begins by deleting the bridge when present and replacing it with the real runtime substrate.
 
 ---
 

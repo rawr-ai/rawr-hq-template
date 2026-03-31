@@ -17,14 +17,15 @@ That means:
 The semantic correction is explicit:
 
 ```text
-services/hq-ops/
-  config/
-  repo-state/
-  journal/
-  security/
+services/
+  hq-ops/
+    config/
+    repo-state/
+    journal/
+    security/
 ```
 
-Those four leaves are the canonical HQ operational service family for this migration.
+`services/hq-ops` is the canonical HQ operational service package for this migration.
 
 The three plateaus are:
 
@@ -222,7 +223,7 @@ If code owns durable semantic truth, canonical writes, or canonical validation/m
 - it currently lives in a package
 - it is still in-process only
 
-The corrected HQ operational service family is:
+The corrected HQ operational service package is:
 
 ```text
 services/
@@ -233,20 +234,18 @@ services/
     security/
 ```
 
-This is a service family namespace.
-
-`hq-ops` is **not** a parent service.
-
-The leaf services are the real owners:
+This is one service package with reserved internal modules:
 
 - `config` owns config schema, layered resolution, normalization, and validation
 - `repo-state` owns repo-local plugin state and locking
 - `journal` owns journal events/snippets/index/search semantics
 - `security` owns scan/gate/report semantics
 
-The family root may contain docs and family-level notes.
+`services/hq-ops` owns the HQ operational boundary.
 
-It may not own:
+The internal module directories may contain local implementation seams and notes.
+
+They may not independently own:
 
 - repositories
 - migrations
@@ -264,10 +263,10 @@ These are not support packages for this migration. They are semantic HQ capabili
 
 | Current home | Target home | Why it is a service |
 | --- | --- | --- |
-| `packages/control-plane` | `services/hq-ops/config` | owns config schema, validation, layered load/merge semantics, and HQ runtime policy inputs |
-| `services/state` | `services/hq-ops/repo-state` | already owns `.rawr/state/state.json`, locking, authority resolution, and canonical repo-state reads/writes |
-| `packages/journal` | `services/hq-ops/journal` | owns `.rawr/journal/*`, event/snippet writes, indexing, and retrieval/search semantics |
-| `packages/security` | `services/hq-ops/security` | owns security scan/gate/report truth and writes `.rawr/security/*` |
+| `packages/control-plane` | `services/hq-ops` (`config` module) | owns config schema, validation, layered load/merge semantics, and HQ runtime policy inputs |
+| `services/state` | `services/hq-ops` (`repo-state` module) | already owns `.rawr/state/state.json`, locking, authority resolution, and canonical repo-state reads/writes |
+| `packages/journal` | `services/hq-ops` (`journal` module) | owns `.rawr/journal/*`, event/snippet writes, indexing, and retrieval/search semantics |
+| `packages/security` | `services/hq-ops` (`security` module) | owns security scan/gate/report truth and writes `.rawr/security/*` |
 
 ### Keep and build on
 
@@ -282,12 +281,12 @@ These are already close enough to the target to be active inputs:
 - `packages/agent-sync` — keep as support/tooling matter for external agent sync, not service truth
 - `packages/ui-sdk` — keep as support matter
 
-### Keep, but normalize later in the active lane
+### Archive and replace later
 
 - `services/support-example`
-  - it should not stay in its current shape
-  - it is useful as the first async proof slice after coordination is removed
-  - phase 2 should either normalize it to the canonical service shell or replace it with a smaller async exemplar
+  - it does not survive the live lane in Phase 1
+  - archive it beside `coordination` instead of normalizing it forward
+  - if later work needs an async exemplar, introduce a new canonical example after the cleanup plateau instead of carrying `support-example` forward
 
 ### Narrow or split because the current home is wrong
 
@@ -340,9 +339,11 @@ The desk/workflow ontology does not survive.
 ### Reclassify because the current home is wrong
 
 - `plugins/agents/*`
-  - these are agent content packs and workflows, not runtime projection packages
-  - they do not belong under canonical `plugins/`
-  - move them to a non-runtime home such as `auto/agent-packs/*`, `packages/agent-packs/*`, or another explicit content/tooling root
+  - these are Cloud Code / Codex marketplace content packs and workflows, not canonical runtime projection packages
+  - they do not belong under the long-term canonical runtime plugin tree
+  - but the current sync/install/discovery system is path-coupled to `plugins/agents/*`
+  - therefore Phase 1 keeps `plugins/agents/hq` in place as a frozen compatibility lane for operational continuity
+  - the reclassification and future home are deferred to the next stage, once discovery, scope, install, and retirement semantics can change together
 
 ### Park so they stop steering the core migration
 
@@ -384,36 +385,26 @@ They are support, tooling, process-manager mechanics, or external sync scaffoldi
 
 ## HQ operational service-family rules
 
-The HQ operational family root is:
+The HQ operational service root is:
 
 ```text
 services/hq-ops/
 ```
 
-Its role is navigation and stewardship, not ownership.
+Its role is service ownership with internal module organization.
 
-The parent directory may contain:
+The service root may contain:
 
 - `README.md`
 - diagrams
 - family-level docs
 - optional tooling metadata
 
-The parent directory must not own:
+The internal modules must not be treated as independently owned services.
 
-- contracts
-- procedures
-- routers
-- repositories
-- migrations
-- canonical policies
-- canonical writes
+### `services/hq-ops` `config` module
 
-Each leaf service owns its own truth.
-
-### `services/hq-ops/config`
-
-This service owns:
+This module owns:
 
 - `rawr.config.ts` schema and normalization
 - `~/.rawr/config.json` schema and normalization
@@ -421,24 +412,22 @@ This service owns:
 - validation errors and policy vocabulary
 - the canonical resolved config model used by HQ runtime and tooling
 
-This service does **not** become a new top-level control plane.
+This module does **not** become a separate service or a new top-level control plane.
 
-It is one HQ operational capability.
+### `services/hq-ops` `repo-state` module
 
-### `services/hq-ops/repo-state`
-
-This service owns:
+This module owns:
 
 - `.rawr/state/state.json`
 - authority root resolution
 - locking and atomic mutation
 - plugin enabled/disabled state truth
 
-The generic leaf name `state` is too vague for the future repo. The service should be named for what it actually owns.
+The generic leaf name `state` is too vague for the future repo. The module should be named for what it actually owns.
 
-### `services/hq-ops/journal`
+### `services/hq-ops` `journal` module
 
-This service owns:
+This module owns:
 
 - `.rawr/journal/events/*.json`
 - `.rawr/journal/snippets/*.json`
@@ -446,11 +435,11 @@ This service owns:
 - journal indexing and search semantics
 - semantic search configuration inputs and behavior
 
-The SQLite index is an implementation detail of the service, not a reason to keep the capability in `packages/`.
+The SQLite index is an implementation detail of the service package, not a reason to keep the capability in `packages/`.
 
-### `services/hq-ops/security`
+### `services/hq-ops` `security` module
 
-This service owns:
+This module owns:
 
 - `.rawr/security/latest.json`
 - `.rawr/security/report-*.json`
@@ -485,12 +474,9 @@ Something belongs in `services/` when all or nearly all of the following are tru
 
 By that rubric:
 
-- `hq-ops/config` qualifies
-- `hq-ops/repo-state` qualifies
-- `hq-ops/journal` qualifies
-- `hq-ops/security` qualifies
+- `hq-ops` qualifies as one service package
+- its `config`, `repo-state`, `journal`, and `security` modules are internal seams, not separate services
 - `example-todo` qualifies
-- `support-example` can qualify after normalization
 - `coordination` fails because it mixes multiple truths
 - `agent-sync` does not qualify in this migration
 - `session-tools` does not qualify in this migration
@@ -515,10 +501,10 @@ It only needs to be semantic truth first.
 At the end of phase 1:
 
 - there is one canonical app shell
-- there is one live plugin topology
+- there is one canonical runtime plugin topology for the server/async live lane
 - coordination is not live
-- HQ operational truth is in `services/hq-ops/*`, not in packages
-- new code can only land in canonical places
+- HQ operational truth is in `services/hq-ops`, not in packages
+- new live-lane code can only land in canonical places, with `plugins/agents/hq` preserved only as a frozen compatibility lane
 - the repo is no longer semantically mixed
 
 The runtime may still use one temporary localized cutover seam internally, but there is no dual authority and no dual authoring model.
@@ -619,7 +605,7 @@ The only coordination learnings worth carrying forward are generic durable-run p
 
 Those are archived as lessons first and extracted only when a future async capability explicitly earns them.
 
-### 3. Create the HQ operational service family and move the four owning boundaries
+### 3. Create the HQ operational service package and move the four owning boundaries
 
 This cut happens in phase 1, not later.
 
@@ -784,11 +770,12 @@ Minimum proof stack for plateau 1:
 - Nx tag coherence for `type`, `app`, `family`, `role`, `surface`, `capability`
 - path/tag coherence for plugins
 - service/package/app dependency direction
-- HQ ops service-family shape and namespace-only parent rules
+- HQ ops service shape and internal-module rules
 - manifest ownership purity
 - entrypoint thinness
 - no live coordination
-- no non-runtime content under `plugins/`
+- no live support-example
+- agent marketplace compatibility lane is frozen and does not expand during plateau 1
 - no old plugin root families remaining in live code
 - no semantic HQ truth remaining under `packages/`
 - no legacy `@rawr/hq/journal` or `@rawr/hq/security` facades
@@ -797,22 +784,22 @@ Minimum proof stack for plateau 1:
 
 1. check in the classification ledger
 2. archive coordination and delete it from the live path
-3. create `services/hq-ops/*` and move `config`, `repo-state`, `journal`, and `security`
-4. strip journal/security facades from `packages/hq`
-5. rewire CLI/server/tooling consumers to the owning services
-6. reclassify `plugins/agents/*` out of the runtime root
-7. cut workspace/package metadata to canonical plugin roots
-8. create `apps/hq/rawr.hq.ts` and canonical entrypoints
-9. move active plugins/services into the canonical live lane
-10. replace tranche-specific proofs with invariant-based proofs
-11. freeze parked lanes
+3. archive `support-example` and delete it from the live path
+4. freeze the current `plugins/agents/hq` compatibility lane and defer its redesign
+5. create `services/hq-ops` and move `config`, `repo-state`, `journal`, and `security` into its internal modules
+6. strip journal/security facades from `packages/hq`
+7. rewire CLI/server/tooling consumers to the owning service
+8. cut workspace/package metadata to canonical plugin roots
+9. create `apps/hq/rawr.hq.ts` and canonical entrypoints
+10. move active plugins/services into the canonical live lane
+11. replace tranche-specific proofs with invariant-based proofs
+12. freeze parked lanes
 
 ## Phase 1 verification
 
 ### Structural proofs
 
-- `verify-hq-ops-family-shape`
-- `verify-service-family-namespace-only`
+- `verify-hq-ops-service-shape`
 - `verify-no-disguised-service-packages`
 - `verify-no-legacy-hq-facades`
 - `verify-repo-local-authority-ownership`
@@ -820,7 +807,8 @@ Minimum proof stack for plateau 1:
 - `verify-manifest-purity`
 - `verify-entrypoint-thinness`
 - `verify-no-live-coordination`
-- `verify-no-nonruntime-plugin-roots`
+- `verify-no-live-support-example`
+- `verify-agent-marketplace-lane-frozen`
 - `verify-service-package-direction`
 - `verify-parked-lane-frozen`
 
@@ -838,6 +826,7 @@ Only enough to prove the active lane still runs:
 - server role boots the kept server surfaces
 - async role boots the kept workflow surfaces
 - no runtime path depends on coordination
+- no runtime path depends on support-example
 - no active path imports `@rawr/control-plane`, `@rawr/journal`, or `@rawr/security`
 
 ## Plateau 1 done means
@@ -845,13 +834,14 @@ Only enough to prove the active lane still runs:
 You are done with phase 1 when all of this is true:
 
 - there is one canonical app shell
-- there is one live plugin topology
-- all active code lands only in canonical roots
+- there is one canonical runtime plugin topology for the server/async live lane
+- all newly migrated live-lane runtime code lands only in canonical roots
 - coordination is not part of build, test, or runtime
-- `plugins/agents/*` is gone from the runtime root
+- `plugins/agents/hq` remains only as a frozen compatibility lane for Cloud Code/Codex sync-install continuity
+- no new `plugins/agents/*` roots or topology churn land during phase 1
 - parked lanes are explicit and frozen
 - there is no dual authoring authority anywhere
-- `config`, `repo-state`, `journal`, and `security` live under `services/hq-ops/*`
+- `config`, `repo-state`, `journal`, and `security` live inside `services/hq-ops`
 - `packages/hq` no longer exports service facades
 - no semantic HQ truth remains under `packages/`
 
@@ -986,9 +976,9 @@ Current transitional builders such as generic API/workflow registration shapes m
 Use concrete slices to prove the runtime shell:
 
 - `example-todo` for canonical service + server/api
-- `hq-ops/repo-state` for HQ operational service ownership + process resources + service/client wiring
-- `support-example` (or a replacement async demo) for workflows and schedules
-- `hq-ops/config` for startup/runtime config loading through canonical seams
+- `hq-ops` (`repo-state` module) for HQ operational service ownership + process resources + service/client wiring
+- a dedicated async exemplar introduced after the cleanup plateau, not `support-example`, for workflows and schedules
+- `hq-ops` (`config` module) for startup/runtime config loading through canonical seams
 
 `journal` and `security` remain canonical services in phase 2 even if they are still surfaced mainly through parked CLI projections. They do **not** need forced server/async projections before the core runtime shell is ready.
 
@@ -1124,7 +1114,7 @@ Each generator should support:
 - project tag assignment
 - `sync` target creation
 - `structural` target creation
-- explicit support for `services/<family>/<service>`
+- explicit support for `services/<capability>` plus reserved internal-module scaffolding inside `services/hq-ops` when needed
 
 ### 3. Add graph and proof ratchets for generated code
 
@@ -1159,8 +1149,8 @@ It is the evidence that agents can now add real business capabilities.
 
 By the end of phase 3, the team should know exactly how new work expands:
 
-- new semantic truth -> `services/<capability>` or `services/<family>/<service>`
-- new HQ operational truth -> `services/hq-ops/<capability>` if and only if it owns durable HQ operational semantics
+- new semantic truth -> `services/<capability>`
+- new HQ operational truth -> `services/hq-ops` if and only if it belongs to the HQ operational service package; add or refine an internal module seam instead of creating a sibling service
 - new synchronous projection -> `plugins/server/api/<capability>`
 - new durable execution -> `plugins/async/workflows/<capability>`
 - new recurring trigger -> `plugins/async/schedules/<capability>`
@@ -1245,8 +1235,6 @@ Use these as the minimum enforced metadata:
   - `type:tool`
 - `app:*`
   - `app:hq`
-- `family:*`
-  - `family:hq-ops`
 - `role:*`
   - `role:server`
   - `role:async`
@@ -1296,7 +1284,7 @@ Transitional `migration-slice:*` tags are allowed only during phase 1 and should
 - allowed role/surface matrix
 - absence of forbidden roots
 - absence of archived capabilities in live inventories
-- presence and shape of `services/hq-ops/*`
+- presence and shape of `services/hq-ops`
 - absence of removed package facades
 
 ## Structural suites
@@ -1309,13 +1297,12 @@ Use invariant-labeled checks such as:
 - `verify-entrypoint-thinness`
 - `verify-canonical-plugin-topology`
 - `verify-service-shell-shape`
-- `verify-hq-ops-family-shape`
-- `verify-service-family-namespace-only`
+- `verify-hq-ops-service-shape`
 - `verify-no-disguised-service-packages`
 - `verify-no-legacy-hq-facades`
 - `verify-repo-local-authority-ownership`
 - `verify-no-live-coordination`
-- `verify-no-nonruntime-plugin-roots`
+- `verify-agent-marketplace-lane-frozen`
 - `verify-bootgraph-shell`
 - `verify-runtime-compiler-shell`
 - `verify-generator-idempotency`
@@ -1350,7 +1337,7 @@ Does this code own durable semantic truth, canonical writes, or authoritative va
 
 Is that truth HQ-only operational truth such as config, repo state, journal, or security?
 
-- yes -> `services/hq-ops/<capability>`
+- yes -> `services/hq-ops` with the appropriate internal module seam
 - no -> continue within ordinary service classification
 
 ### Question 3
@@ -1421,7 +1408,7 @@ After phase 3, the repo should feel like this:
 
 - there is one canonical app shell: `apps/hq`
 - there is one active runtime lane: `server` + `async`
-- there is one canonical HQ operational service family:
+- there is one canonical HQ operational service package:
 
 ```text
 services/

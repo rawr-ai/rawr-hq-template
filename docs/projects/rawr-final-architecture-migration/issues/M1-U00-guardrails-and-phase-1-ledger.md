@@ -21,7 +21,7 @@ related_to: []
 
 ## Deliverables
 - Land `docs/migration/phase-1-ledger.md` as the Phase 1 classifier for live, archived, parked, and reclassified surfaces.
-- Add the initial Phase 1 verification scripts that fail if `coordination`, `support-example`, runtime-misplaced agent content, old operational owners, or legacy HQ facades remain live.
+- Add the initial Phase 1 verification scripts that fail if `coordination`, `support-example`, the frozen agent-marketplace compatibility lane drifts, old operational owners, or legacy HQ facades remain live.
 - Wire the new checks into the normal repo verification flow so later slices inherit an enforced migration lane instead of a social contract.
 - Freeze parked-lane edits to deletions, rewires, compile fixes, and explicit unblockers only.
 
@@ -37,7 +37,7 @@ related_to: []
 - `bun scripts/phase-1/verify-phase1-ledger.mjs`
 - `bun scripts/phase-1/verify-no-live-coordination.mjs`
 - `bun scripts/phase-1/verify-no-live-support-example.mjs`
-- `bun scripts/phase-1/verify-no-runtime-agent-content-under-plugins.mjs`
+- `bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs`
 - `bun scripts/phase-1/verify-no-old-operational-packages.mjs`
 - `bun scripts/phase-1/verify-no-legacy-hq-imports.mjs`
 - `bunx nx show projects`
@@ -82,7 +82,7 @@ Use the current repo inventory as the evidence base:
 - `scripts/phase-1/verify-phase1-ledger.mjs`: ledger truth and inventory alignment.
 - `scripts/phase-1/verify-no-live-coordination.mjs`: prevent coordination from reappearing.
 - `scripts/phase-1/verify-no-live-support-example.mjs`: prevent support-example from reappearing.
-- `scripts/phase-1/verify-no-runtime-agent-content-under-plugins.mjs`: prevent non-runtime agent content from living under canonical plugin roots.
+- `scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs`: preserve the current `plugins/agents/hq` compatibility lane in place and prevent new `plugins/agents/*` topology drift during Phase 1.
 - `scripts/phase-1/verify-no-old-operational-packages.mjs`: reserve the hard cut against old operational owners.
 - `scripts/phase-1/verify-no-legacy-hq-imports.mjs`: reserve the hard cut against `@rawr/hq` facades.
 
