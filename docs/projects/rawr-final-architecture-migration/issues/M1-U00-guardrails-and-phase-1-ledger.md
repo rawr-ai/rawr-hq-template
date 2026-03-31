@@ -117,12 +117,3 @@ The current verification integration points are already centralized:
 - Existing per-project structural targets route through `scripts/phase-03/run-structural-suite.mjs` for `@rawr/server`, `@rawr/cli`, `@rawr/hq-app`, `@rawr/plugin-plugins`, `@rawr/state`, `@rawr/hq`, and `@rawr/coordination`.
 
 The least disruptive Phase 1 fit is to add a dedicated Phase 1 verifier fan-out under `scripts/phase-1/` and invoke it from root `sync:check`, while keeping `lint:boundaries` as the repo-wide import-boundary guard and reserving per-project `structural` targets for slices that actually touch those projects.
-
-## Prework Prompt (Agent Brief)
-**Purpose:** Determine the exact ledger section structure, the minimum canonical surface set to classify, and how the new phase-1 verification scripts should hook into the existing repo verification flow.
-**Expected Output:** A short implementation note naming the ledger headings, the concrete surface inventory to classify, the current structural runner integration points, and the exact package/root scripts that should invoke the new phase-1 checks.
-**Sources to Check:**
-- `package.json`
-- `scripts/phase-03/`
-- `docs/projects/rawr-final-architecture-migration/resources/RAWR_P1_Architecture_Migration_Plan.md`
-- current workspace inventory commands listed above
