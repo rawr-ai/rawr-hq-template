@@ -35,8 +35,10 @@ related_to: []
 ## Testing / Verification
 - `bun run sync:check`
 - `bun run lint:boundaries`
+- `bun --cwd packages/plugin-workspace run typecheck`
 - `bun --cwd apps/cli run typecheck`
 - `bun --cwd plugins/cli/plugins run typecheck`
+- `bun --cwd packages/plugin-workspace run test`
 - `bun --cwd plugins/cli/plugins run test`
 - `bun scripts/phase-1/verify-no-legacy-hq-imports.mjs`
 - `rg -n '@rawr/hq(/|\\b)' apps packages plugins services -g '!**/dist/**' -g '!**/node_modules/**'`

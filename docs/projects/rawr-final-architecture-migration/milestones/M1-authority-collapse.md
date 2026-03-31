@@ -62,13 +62,13 @@ At milestone exit, all of the following are true at the same time:
 
 ## Source-of-Truth Rule for This Milestone
 
-This milestone is governed by three documents, in this order:
+This milestone is grounded by three documents:
 
-1. [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec.md): architecture and invariant truth.
-2. [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md): operational truth for Phase 1 scope, sequencing, fixed decisions, and exit gate.
+1. [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md): the forward-locked decision set for Phase 1 scope, sequencing, fixed decisions, and exit gate.
+2. [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec.md): destination architecture and invariant truth.
 3. [Larger migration plan](../resources/RAWR_Architecture_Migration_Plan.md): overall migration framing and downstream handoff.
 
-For this milestone, the dedicated Phase 1 plan is the forward-locked decision set for Phase 1 execution. The larger migration plan provides overall framing and downstream handoff context, but it does not reopen or override Phase 1 decisions that P1 already fixed.
+For this milestone, the dedicated Phase 1 plan is the execution authority. The canonical architecture spec supplies destination invariants, and the larger migration plan supplies surrounding framing and downstream handoff context. Neither document reopens or overrides Phase 1 decisions that P1 already fixed.
 
 That means this milestone should execute, not renegotiate, the following Phase 1 decisions:
 

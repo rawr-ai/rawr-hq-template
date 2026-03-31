@@ -27,6 +27,8 @@ related_to: []
 
 ## Acceptance Criteria
 - [ ] All Phase 1 structural checks pass together.
+- [ ] Targeted typechecks pass for every changed live project carried across `M1-U03` through `M1-U07`.
+- [ ] Targeted tests pass for every changed live project carried across `M1-U03` through `M1-U07`.
 - [ ] Parked-lane freeze rules are verifiable.
 - [ ] Docs describe only settled post-Phase-1 reality and archived evidence.
 - [ ] The end-of-milestone review explicitly confirms Phase 2 entry conditions and records any Phase 2/3 readjustments without changing the Phase 1 plateau.
@@ -34,6 +36,17 @@ related_to: []
 ## Testing / Verification
 - `bun run sync:check`
 - `bun run lint:boundaries`
+- `bun --cwd apps/server run typecheck`
+- `bun --cwd apps/hq run typecheck`
+- `bun --cwd apps/cli run typecheck`
+- `bun --cwd plugins/cli/plugins run typecheck`
+- `bun --cwd packages/agent-sync run typecheck`
+- `bun --cwd services/hq-ops run typecheck`
+- `bun --cwd packages/plugin-workspace run typecheck`
+- `bun --cwd apps/server run test`
+- `bun --cwd apps/hq run test`
+- `bun --cwd apps/cli run test`
+- `bun --cwd plugins/cli/plugins run test`
 - `bun scripts/phase-1/verify-phase1-ledger.mjs`
 - `bun scripts/phase-1/verify-no-live-coordination.mjs`
 - `bun scripts/phase-1/verify-no-live-support-example.mjs`

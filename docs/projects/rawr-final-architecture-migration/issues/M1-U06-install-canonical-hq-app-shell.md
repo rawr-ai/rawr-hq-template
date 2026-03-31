@@ -73,8 +73,13 @@ Out of scope:
 The new app shell has to become real authority here, not a decorative wrapper around the current `apps/server` path.
 
 ### Files
+- `apps/hq/rawr.hq.ts`
+- `apps/hq/server.ts`
+- `apps/hq/async.ts`
+- `apps/hq/dev.ts`
 - `apps/hq/src/manifest.ts`
 - `apps/hq/package.json`
+- `apps/hq/src/runtime-router.ts`
 - `apps/server/src/host-composition.ts`
 - `apps/server/src/rawr.ts`
 - `apps/hq/test/runtime-router.test.ts`

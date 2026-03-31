@@ -73,10 +73,14 @@ This slice is not just filesystem motion. Inventory, tags, and import truth need
 ### Files
 - `plugins/api/example-todo`
 - `plugins/api/state`
-- `plugins/api/coordination`
-- `plugins/workflows/coordination`
-- `plugins/workflows/support-example`
 - `package.json`
+- `tools/architecture-inventory/slice-0-first-cohort.json`
+- `tools/nx/sync-slice-0-inventory/generator.cjs`
+- `plugins/api/example-todo/project.json`
+- `plugins/api/state/project.json`
+- `apps/hq/src/manifest.ts`
+- `apps/server/src/host-seam.ts`
+- `apps/server/src/workflows/runtime.ts`
 - `apps/server/test/rawr.test.ts`
 - `apps/server/test/phase-a-gates.test.ts`
 
