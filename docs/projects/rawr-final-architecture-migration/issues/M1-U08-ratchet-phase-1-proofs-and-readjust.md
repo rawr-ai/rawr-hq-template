@@ -1,0 +1,112 @@
+---
+id: M1-U08
+title: "[M1] Ratchet Phase 1 proofs, land durable docs, and readjust the migration"
+state: planned
+priority: 1
+estimate: 4
+project: rawr-final-architecture-migration
+milestone: M1
+assignees: [codex]
+labels: [migration, phase-1]
+parent: null
+children: []
+blocked_by: [M1-U07]
+blocked: []
+related_to: []
+---
+
+<!-- SECTION SCOPE [SYNC] -->
+## TL;DR
+- Ratchet the full Phase 1 proof band, land only the docs that are settled by the plateau, freeze the parked lanes, and run the end-of-milestone review before Phase 2 begins.
+
+## Deliverables
+- Promote the Phase 1 checks into the normal migration gate set and retire stale tranche or prototype-shaped checks.
+- Freeze parked-lane edits and verify the freeze rule.
+- Land only the durable docs that describe settled Phase 1 reality or archive evidence.
+- Run the structured end-of-milestone review and record the downstream readjustment point without reopening Phase 1.
+
+## Acceptance Criteria
+- [ ] All Phase 1 structural checks pass together.
+- [ ] Parked-lane freeze rules are verifiable.
+- [ ] Docs describe only settled post-Phase-1 reality and archived evidence.
+- [ ] The end-of-milestone review explicitly confirms Phase 2 entry conditions and records any Phase 2/3 readjustments without changing the Phase 1 plateau.
+
+## Testing / Verification
+- `bun run sync:check`
+- `bun run lint:boundaries`
+- `bun scripts/phase-1/verify-phase1-ledger.mjs`
+- `bun scripts/phase-1/verify-no-live-coordination.mjs`
+- `bun scripts/phase-1/verify-no-live-support-example.mjs`
+- `bun scripts/phase-1/verify-no-runtime-agent-content-under-plugins.mjs`
+- `bun scripts/phase-1/verify-hq-ops-service-shape.mjs`
+- `bun scripts/phase-1/verify-no-old-operational-packages.mjs`
+- `bun scripts/phase-1/verify-no-legacy-hq-imports.mjs`
+- `bun scripts/phase-1/verify-canonical-plugin-topology.mjs`
+- `bun scripts/phase-1/verify-manifest-purity.mjs`
+- `bun scripts/phase-1/verify-entrypoint-thinness.mjs`
+- `bun scripts/phase-1/verify-no-legacy-composition-authority.mjs`
+- `bun scripts/phase-1/verify-parked-lane-frozen.mjs`
+
+## Dependencies / Notes
+- Blocked by: [M1-U07](./M1-U07-neutralize-legacy-composition-authority.md).
+- Blocks: none.
+- Milestone: [M1: Collapse Authority onto the Canonical HQ Lane](../milestones/M1-authority-collapse.md).
+- This is the closure slice, not a license to defer cleanup from earlier slices.
+
+---
+
+<!-- SECTION IMPLEMENTATION [NOSYNC] -->
+## Implementation Details (Local Only)
+### Why This Slice Exists
+Proof ratchets, durable docs, and migration readjustment only make sense once the Phase 1 plateau is real. The point here is to freeze the plateau truthfully, not to reopen the milestone or sweep earlier misses under a final cleanup bucket.
+
+### Scope Boundaries
+In scope:
+- Promote the Phase 1 checks into the normal migration gate set.
+- Retire stale tranche or prototype-shaped checks.
+- Freeze parked lanes.
+- Land only the docs that are now settled:
+  - `docs/migration/phase-1-ledger.md`
+  - `docs/archive/coordination/lessons.md`
+  - `docs/archive/support-example/lessons.md`
+  - `docs/migration/phase-1-current-state.md`
+  - `docs/migration/phase-2-entry-conditions.md`
+- Run the end-of-milestone migration review and readjustment.
+
+Out of scope:
+- Treating this slice as the first time legacy cleanup happens.
+- Churning docs for runtime substrate, harnesses, generators, or later-phase surfaces that are still unsettled.
+- Reopening Phase 1 structural decisions during the review.
+
+### Implementation Guidance
+This is where the repo stops being “in motion” and becomes a stable plateau. The docs that land here need to be durably true, not speculative or ahead of the migration.
+
+### Files
+- `docs/migration/phase-1-ledger.md`
+- `docs/archive/coordination/lessons.md`
+- `docs/archive/support-example/lessons.md`
+- `docs/migration/phase-1-current-state.md`
+- `docs/migration/phase-2-entry-conditions.md`
+- `scripts/phase-1/`
+
+### Paper Trail
+- [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md)
+- [Phase 1 grounding note](../.context/grounding.md)
+- [Workflow scaffold](../.context/workflow.md)
+
+### Quick Navigation
+- [TL;DR](#tldr)
+- [Deliverables](#deliverables)
+- [Acceptance Criteria](#acceptance-criteria)
+- [Testing / Verification](#testing--verification)
+- [Dependencies / Notes](#dependencies--notes)
+
+## Prework Prompt (Agent Brief)
+**Purpose:** Define the exact Phase 1 close-out review checklist and identify which existing docs outside the migration project would become stale or misleading once the plateau lands.
+**Expected Output:** A short review checklist covering proof ratchet, durable docs, parked-lane freeze, and stale-doc audit, plus a list of docs that should be left untouched because they describe later phases.
+**Sources to Check:**
+- `docs/projects/rawr-final-architecture-migration/.context/grounding.md`
+- `docs/projects/rawr-final-architecture-migration/.context/workflow.md`
+- `docs/DOCS.md`
+- `docs/projects/DOCS.md`
+- `docs/projects/rawr-final-architecture-migration/resources/*.md`
