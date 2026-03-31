@@ -29,7 +29,10 @@ describe("@rawr/chatgpt-corpus", () => {
       "source-material/conversations/raw-json",
       "work/docs/source",
     ]);
-    expect(result.outputDirectories).toContain("work/generated/reports");
+    expect(result.outputDirectories).toContainEqual({
+      directoryId: "reports",
+      relativePath: "work/generated/reports",
+    });
     expect(result.managedFiles.map((file) => file.fileId)).toEqual([
       "workspace-readme",
       "workspace-gitignore",
@@ -94,6 +97,9 @@ describe("@rawr/chatgpt-corpus", () => {
     expect(result.familyCount).toBe(2);
     expect(result.normalizedThreadCount).toBe(2);
     expect(result.anomalyCount).toBeGreaterThanOrEqual(3);
+    const jsonInventoryItems = result.inventory.filter((item) => item.type === "json_conversation");
+    expect(jsonInventoryItems.every((item) => item.hash_sha256.length === 64)).toBe(true);
+    expect(jsonInventoryItems.every((item) => item.messages_hash_sha256.length === 64)).toBe(true);
     expect(result.manifest.corpus_summary).toMatchObject({
       source_count: 5,
       family_count: 2,
@@ -115,6 +121,10 @@ describe("@rawr/chatgpt-corpus", () => {
     );
 
     expect(result.familyCount).toBe(2);
+    expect(result.outputDirectories).toContainEqual({
+      directoryId: "reports",
+      relativePath: "work/generated/reports",
+    });
     expect(result.outputEntries.map((entry) => entry.fileId)).toContain("manifest");
     const manifestText = workspaceStore.getFileContents(workspaceRef, "work/generated/corpus/corpus-manifest.json");
     expect(manifestText).toBeTruthy();
@@ -142,6 +152,53 @@ describe("@rawr/chatgpt-corpus", () => {
     });
     expect(result.warnings).toContain("No conversation exports were found under source-material/conversations/raw-json.");
     expect(result.warnings).toContain("No curated Markdown source docs were found under work/docs/source.");
+  });
+
+  it("keeps source identities distinct even when basenames collide", async () => {
+    const workspaceRef = "workspace://duplicate-basenames";
+    const workspaceStore = createMemoryWorkspaceStore();
+    workspaceStore.seedSourceMaterials(workspaceRef, {
+      conversations: [
+        {
+          relativePath: "source-material/conversations/raw-json/team-a/Same.json",
+          contents: JSON.stringify({
+            metadata: { title: "Same" },
+            messages: [
+              { role: "Prompt", say: "alpha" },
+              { role: "Response", say: "one" },
+            ],
+          }),
+        },
+        {
+          relativePath: "source-material/conversations/raw-json/team-b/Same.json",
+          contents: JSON.stringify({
+            metadata: { title: "Same" },
+            messages: [
+              { role: "Prompt", say: "alpha" },
+              { role: "Response", say: "two" },
+            ],
+          }),
+        },
+      ],
+      documents: [],
+    });
+    const client = createClient(createClientOptions(workspaceStore, workspaceRef));
+
+    const snapshotResult = await client.sourceMaterials.readSnapshot(
+      {},
+      createInvocation("trace-duplicate-basenames"),
+    );
+
+    const sourceIds = snapshotResult.snapshot.jsonRecords.map((record) => record.sourceId);
+    expect(new Set(sourceIds).size).toBe(2);
+
+    const buildResult = await client.corpusArtifacts.build(
+      { snapshot: snapshotResult.snapshot },
+      createInvocation("trace-duplicate-basenames-build"),
+    );
+
+    expect(buildResult.familyGraphs).toHaveLength(1);
+    expect(buildResult.familyGraphs[0]?.member_source_ids).toHaveLength(2);
   });
 
   it("returns a typed invalid export error for malformed export shape", async () => {

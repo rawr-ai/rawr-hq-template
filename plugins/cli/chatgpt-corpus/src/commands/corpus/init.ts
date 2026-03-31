@@ -2,6 +2,7 @@ import path from "node:path";
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { createCorpusClient, createInvocation, describeServiceError } from "../../lib/client";
+import { projectInitResult } from "../../lib/projection";
 
 export default class CorpusInit extends RawrCommand {
   static description = "Initialize a ChatGPT corpus workspace";
@@ -25,16 +26,7 @@ export default class CorpusInit extends RawrCommand {
         {},
         createInvocation(`corpus-init-${Date.now()}`),
       );
-      const byFileId = new Map(data.managedFiles.map((file) => [file.fileId, file.relativePath]));
-      const resultData = {
-        workspaceRoot,
-        createdPaths: data.createdEntries.map((entry) => path.join(workspaceRoot, ...entry.split("/"))),
-        existingPaths: data.existingEntries.map((entry) => path.join(workspaceRoot, ...entry.split("/"))),
-        files: {
-          readmePath: path.join(workspaceRoot, ...(byFileId.get("workspace-readme") ?? "work/README.md").split("/")),
-          gitignorePath: path.join(workspaceRoot, ...(byFileId.get("workspace-gitignore") ?? ".gitignore").split("/")),
-        },
-      };
+      const resultData = projectInitResult(workspaceRoot, data);
       const result = this.ok(resultData);
       this.outputResult(result, {
         flags: baseFlags,

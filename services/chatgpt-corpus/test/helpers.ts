@@ -77,7 +77,14 @@ class MemoryWorkspaceStore implements WorkspaceStore {
     return { createdEntries, existingEntries };
   }
 
-  async readSourceMaterials(input: { workspaceRef: string }) {
+  async readSourceMaterials(input: {
+    workspaceRef: string;
+    sourceDirectories: {
+      conversations: string;
+      documents: string;
+    };
+  }) {
+    void input.sourceDirectories;
     return cloneSourceMaterials(this.getState(input.workspaceRef).sourceMaterials);
   }
 
@@ -92,6 +99,7 @@ class MemoryWorkspaceStore implements WorkspaceStore {
     }
 
     return {
+      outputDirectories: input.bundle.outputDirectories.map((directory) => ({ ...directory })),
       writtenEntries: input.bundle.files.map(({ fileId, relativePath }) => ({
         fileId,
         relativePath,

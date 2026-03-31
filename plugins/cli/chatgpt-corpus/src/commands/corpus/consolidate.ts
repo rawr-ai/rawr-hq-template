@@ -2,6 +2,7 @@ import path from "node:path";
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { createCorpusClient, createInvocation, describeServiceError } from "../../lib/client";
+import { projectConsolidateResult } from "../../lib/projection";
 
 export default class CorpusConsolidate extends RawrCommand {
   static description = "Consolidate a ChatGPT corpus workspace";
@@ -25,34 +26,7 @@ export default class CorpusConsolidate extends RawrCommand {
         {},
         createInvocation(`corpus-consolidate-${Date.now()}`),
       );
-      const byFileId = new Map(data.outputEntries.map((entry) => [entry.fileId, entry.relativePath]));
-      const outputDirs = new Set(data.outputDirectories);
-      const resolveRelative = (relativePath: string) => path.join(workspaceRoot, ...relativePath.split("/"));
-      const resultData = {
-        workspaceRoot,
-        sourceCounts: data.sourceCounts,
-        familyCount: data.familyCount,
-        normalizedThreadCount: data.normalizedThreadCount,
-        anomalyCount: data.anomalyCount,
-        warnings: data.warnings,
-        outputPaths: {
-          inventory: resolveRelative(byFileId.get("inventory") ?? "work/generated/corpus/inventory.json"),
-          familyGraphs: resolveRelative(byFileId.get("familyGraphs") ?? "work/generated/corpus/family-graphs.json"),
-          intermediateGraph: resolveRelative(byFileId.get("intermediateGraph") ?? "work/generated/corpus/intermediate-graph.json"),
-          manifest: resolveRelative(byFileId.get("manifest") ?? "work/generated/corpus/corpus-manifest.json"),
-          reportsDir: resolveRelative(
-            outputDirs.has("work/generated/reports") ? "work/generated/reports" : "work/generated/reports",
-          ),
-          normalizedThreadsDir: resolveRelative(
-            outputDirs.has("work/generated/corpus/normalized-threads")
-              ? "work/generated/corpus/normalized-threads"
-              : "work/generated/corpus/normalized-threads",
-          ),
-          validationReport: resolveRelative(
-            byFileId.get("validationReport") ?? "work/generated/reports/validation-report.json",
-          ),
-        },
-      };
+      const resultData = projectConsolidateResult(workspaceRoot, data);
       const result = this.ok(resultData, undefined, resultData.warnings.length > 0 ? resultData.warnings : undefined);
       this.outputResult(result, {
         flags: baseFlags,
