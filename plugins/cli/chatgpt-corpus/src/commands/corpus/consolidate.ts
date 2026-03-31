@@ -18,22 +18,50 @@ export default class CorpusConsolidate extends RawrCommand {
     const { args, flags } = await this.parseRawr(CorpusConsolidate);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     const workspaceRoot = path.resolve(args.path ? String(args.path) : process.cwd());
-    const client = createCorpusClient();
+    const client = createCorpusClient(workspaceRoot);
 
     try {
-      const data = await client.corpus.consolidateWorkspace(
-        { workspaceRoot },
+      const data = await client.corpusArtifacts.materialize(
+        {},
         createInvocation(`corpus-consolidate-${Date.now()}`),
       );
-      const result = this.ok(data, undefined, data.warnings.length > 0 ? data.warnings : undefined);
+      const byFileId = new Map(data.outputEntries.map((entry) => [entry.fileId, entry.relativePath]));
+      const outputDirs = new Set(data.outputDirectories);
+      const resolveRelative = (relativePath: string) => path.join(workspaceRoot, ...relativePath.split("/"));
+      const resultData = {
+        workspaceRoot,
+        sourceCounts: data.sourceCounts,
+        familyCount: data.familyCount,
+        normalizedThreadCount: data.normalizedThreadCount,
+        anomalyCount: data.anomalyCount,
+        warnings: data.warnings,
+        outputPaths: {
+          inventory: resolveRelative(byFileId.get("inventory") ?? "work/generated/corpus/inventory.json"),
+          familyGraphs: resolveRelative(byFileId.get("familyGraphs") ?? "work/generated/corpus/family-graphs.json"),
+          intermediateGraph: resolveRelative(byFileId.get("intermediateGraph") ?? "work/generated/corpus/intermediate-graph.json"),
+          manifest: resolveRelative(byFileId.get("manifest") ?? "work/generated/corpus/corpus-manifest.json"),
+          reportsDir: resolveRelative(
+            outputDirs.has("work/generated/reports") ? "work/generated/reports" : "work/generated/reports",
+          ),
+          normalizedThreadsDir: resolveRelative(
+            outputDirs.has("work/generated/corpus/normalized-threads")
+              ? "work/generated/corpus/normalized-threads"
+              : "work/generated/corpus/normalized-threads",
+          ),
+          validationReport: resolveRelative(
+            byFileId.get("validationReport") ?? "work/generated/reports/validation-report.json",
+          ),
+        },
+      };
+      const result = this.ok(resultData, undefined, resultData.warnings.length > 0 ? resultData.warnings : undefined);
       this.outputResult(result, {
         flags: baseFlags,
         human: () => {
-          for (const warning of data.warnings) this.warn(warning);
+          for (const warning of resultData.warnings) this.warn(warning);
           this.log(
-            `consolidated ${data.sourceCounts.jsonConversations} conversation export(s) into ${data.familyCount} family/families`,
+            `consolidated ${resultData.sourceCounts.jsonConversations} conversation export(s) into ${resultData.familyCount} family/families`,
           );
-          this.log(`wrote outputs to ${data.outputPaths.reportsDir}`);
+          this.log(`wrote outputs to ${resultData.outputPaths.reportsDir}`);
         },
       });
     } catch (error) {

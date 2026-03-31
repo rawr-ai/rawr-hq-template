@@ -1,14 +1,18 @@
 import { createClient } from "@rawr/chatgpt-corpus";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { createFilesystemWorkspaceStore } from "./workspace-store";
 
-export function createCorpusClient() {
+export function createCorpusClient(workspaceRef: string) {
   return createClient({
     deps: {
       logger: createEmbeddedPlaceholderLoggerAdapter(),
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+      workspaceStore: createFilesystemWorkspaceStore(),
     },
-    scope: {},
+    scope: {
+      workspaceRef,
+    },
     config: {},
   });
 }
