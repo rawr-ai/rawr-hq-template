@@ -4,7 +4,7 @@
 
 - Issue: `M1-U01`
 - Title: `Archive false futures and freeze the marketplace compatibility lane`
-- Status: verification complete, paper trail updated, ready to commit
+- Status: follow-up proof-band repair verified; waiting on peer review, then commit/submit
 - Dependency state: `M1-U00` is complete; this slice now gates all downstream M1 authority work
 - Current role of the slice: subtract dead futures from the live lane before `services/hq-ops` is reserved and before any new canonical seams are installed
 
@@ -88,6 +88,8 @@ Protected compatibility lane:
 - Archive artifacts are the only sanctioned memory of the removed lanes after the live cut lands. They need to preserve useful wiring/integration lessons without preserving the legacy system wholesale.
 - The archive proof band now enforces three things together: archived classification in the Phase 1 ledger, physical absence from the live tree, and presence of archive lesson docs.
 - `rawr plugins sync @rawr/plugin-hq --dry-run` resolves the preserved marketplace lane, but plain dry-run exits non-zero on existing downstream target conflicts; `--dry-run --force` is the conflict-tolerant verification form that proves the lane still resolves cleanly without mutating anything.
+- The initial U01 archive commit accidentally over-deleted generic server proof coverage and left several downstream verifier scripts stale. The current follow-up diff restores the generic server proof files and retargets the Phase A/C/D/E verifier stack to the archived U01 world instead of deleted coordination/support-example artifacts.
+- `bun run rawr hq up --observability required --open none`, `rawr hq status --json`, direct health probes, and `.rawr/hq/runtime.log` already validated the managed HQ stack after the archive cut; do not rerun that unless the runtime behavior changes again before commit.
 
 ## Invariants and User Constraints
 
@@ -128,9 +130,30 @@ Add adjacent checks if the host/manifest/runtime cut forces them.
 - `docs/archive/coordination/lessons.md` and `docs/archive/support-example/lessons.md` now exist and encode the preserved wiring/integration lessons.
 - `bun run sync:check`, `bun run phase-1:gates:baseline`, `bun scripts/phase-1/verify-no-live-coordination.mjs`, `bun scripts/phase-1/verify-no-live-support-example.mjs`, `bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs`, `test -d plugins/agents/hq`, and `bunx nx test @rawr/plugin-mfe-demo` are green.
 - Managed HQ runtime validation is complete: `rawr hq status --json` shows server/web/async plus HyperDX observability all running, the canonical state RPC returns `200` with first-party auth headers, and archived coordination/support-example workflow probes return `404`.
+- The recreated server proof files are back in place:
+  - `apps/server/test/rawr.test.ts`
+  - `apps/server/test/route-boundary-matrix.test.ts`
+  - `apps/server/test/ingress-signature-observability.test.ts`
+  - `apps/server/test/logging-correlation.test.ts`
+  - `apps/server/test/phase-a-gates.test.ts`
+- The proof-band follow-up is green locally:
+  - `bun scripts/phase-c/verify-telemetry-contract.mjs`
+  - `bun scripts/phase-d/verify-d2-finished-hook-contract.mjs`
+  - `bun scripts/phase-e/verify-e2-finished-hook-policy.mjs`
+  - `bun run phase-c:c2:quick`
+  - `bun run phase-d:d2:full`
+  - `bun run phase-e:e2:full`
+  - `bunx nx test @rawr/server`
+- The verifier retarget touched these live proof surfaces:
+  - `scripts/phase-a/manifest-smoke.mjs`
+  - `scripts/phase-c/verify-telemetry-contract.mjs`
+  - `scripts/phase-d/verify-d2-finished-hook-contract.mjs`
+  - `scripts/phase-e/verify-e2-finished-hook-policy.mjs`
+  - `apps/server/test/route-boundary-matrix.test.ts`
+  - `package.json`
 
 ## Immediate Next Actions
 
-1. Commit the stable U01 cut on `agent-FARGO-M1-U01-archive-false-futures`.
-2. Move the primary Narsil tree at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template` to the new commit so indexing catches up.
-3. Submit the updated stack with `gt ss --draft`, then replace `context.md` for `M1-U02`.
+1. Read the pending peer-review findings from the existing agents and fix anything real if they surface it.
+2. If peer review is clean, commit the stable U01 follow-up repair on `agent-FARGO-M1-U01-archive-false-futures`.
+3. Move the primary Narsil tree at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template` to the new commit so indexing catches up, then submit the updated stack with `gt ss --draft`.

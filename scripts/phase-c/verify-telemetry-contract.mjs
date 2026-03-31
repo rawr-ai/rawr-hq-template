@@ -2,66 +2,65 @@
 import { assertCondition, mustExist, readFile, readPackageScripts } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("services/coordination/src/domain/events.ts"),
-  mustExist("services/coordination/test/run-lifecycle-telemetry.test.ts"),
-  mustExist("plugins/workflows/coordination/src/trace-links.ts"),
-  mustExist("plugins/workflows/coordination/test/observability.test.ts"),
   mustExist("apps/server/test/ingress-signature-observability.test.ts"),
+  mustExist("apps/server/test/logging-correlation.test.ts"),
+  mustExist("apps/server/test/route-boundary-matrix.test.ts"),
   mustExist("scripts/phase-a/verify-gate-scaffold.mjs"),
+  mustExist("scripts/phase-1/verify-no-live-coordination.mjs"),
+  mustExist("scripts/phase-1/verify-no-live-support-example.mjs"),
 ]);
 
 const [
-  serviceEventsSource,
-  serviceTelemetryTestSource,
-  traceLinksSource,
-  observabilityTestSource,
   ingressTestSource,
+  loggingCorrelationTestSource,
+  routeBoundaryMatrixSource,
+  phaseAGateScaffoldSource,
+  phase1NoLiveCoordinationSource,
+  phase1NoLiveSupportExampleSource,
   scripts,
-] =
-  await Promise.all([
-    readFile("services/coordination/src/domain/events.ts"),
-    readFile("services/coordination/test/run-lifecycle-telemetry.test.ts"),
-    readFile("plugins/workflows/coordination/src/trace-links.ts"),
-    readFile("plugins/workflows/coordination/test/observability.test.ts"),
-    readFile("apps/server/test/ingress-signature-observability.test.ts"),
-    readPackageScripts(),
-  ]);
+] = await Promise.all([
+  readFile("apps/server/test/ingress-signature-observability.test.ts"),
+  readFile("apps/server/test/logging-correlation.test.ts"),
+  readFile("apps/server/test/route-boundary-matrix.test.ts"),
+  readFile("scripts/phase-a/verify-gate-scaffold.mjs"),
+  readFile("scripts/phase-1/verify-no-live-coordination.mjs"),
+  readFile("scripts/phase-1/verify-no-live-support-example.mjs"),
+  readPackageScripts(),
+]);
 
 assertCondition(
-  /export\s+const\s+REQUIRED_RUN_LIFECYCLE_EVENT_TYPES\s*=/.test(serviceEventsSource),
-  "service events.ts must export REQUIRED_RUN_LIFECYCLE_EVENT_TYPES",
+  ingressTestSource.includes("allows unsigned ingress in explicit dev mode") &&
+    ingressTestSource.includes("rejects invalid ingress signatures before host side effects") &&
+    ingressTestSource.includes("cannot be bypassed by spoofed caller-surface or auth headers"),
+  "ingress-signature-observability.test.ts must cover dev ingress, signature rejection, and spoofed-header rejection",
 );
 assertCondition(
-  /export\s+const\s+REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT\s*=/.test(serviceEventsSource),
-  "service events.ts must export REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT",
+  loggingCorrelationTestSource.includes("writes correlated rpc service logs into .rawr/hq/runtime.log") &&
+    loggingCorrelationTestSource.includes("writes correlated openapi service logs into .rawr/hq/runtime.log"),
+  "logging-correlation.test.ts must cover correlated RPC and OpenAPI logging",
 );
 assertCondition(
-  /assertRunLifecycleStatusContract\s*\(\s*input\.type\s*,\s*input\.status\s*\)/.test(serviceEventsSource),
-  "service createDeskEvent must enforce lifecycle status contract",
+  routeBoundaryMatrixSource.includes("assertion:reject-rpc-workflows-route-family") &&
+    routeBoundaryMatrixSource.includes('path: "/rpc/workflows/state/getRuntimeState"') &&
+    routeBoundaryMatrixSource.includes('path: "/api/workflows/state/runtime"') &&
+    routeBoundaryMatrixSource.includes('expectedStatus: 404'),
+  "route-boundary-matrix.test.ts must keep workflow route-family negatives explicit",
 );
 assertCondition(
-  /export\s+type\s+CreateDeskEventInput\s*=/.test(serviceEventsSource),
-  "service events.ts must export CreateDeskEventInput",
+  phaseAGateScaffoldSource.includes("apps/server/test/ingress-signature-observability.test.ts") &&
+    phaseAGateScaffoldSource.includes("apps/server/test/logging-correlation.test.ts") &&
+    phaseAGateScaffoldSource.includes("assertion:reject-rpc-workflows-route-family"),
+  "phase-a scaffold must ratchet the post-U01 telemetry and route-boundary proof band",
 );
 assertCondition(
-  /export\s+type\s+TraceLinkOptions\s*=/.test(traceLinksSource) &&
-    /export\s+function\s+defaultTraceLinks/.test(traceLinksSource),
-  "workflow plugin trace-links.ts must export TraceLinkOptions and defaultTraceLinks",
+  phase1NoLiveCoordinationSource.includes("plugins/workflows/coordination") &&
+    phase1NoLiveCoordinationSource.includes("must not exist in the live tree"),
+  "phase-1 coordination archive verifier must keep the workflow lane out of the live tree",
 );
 assertCondition(
-  serviceTelemetryTestSource.includes("REQUIRED_RUN_LIFECYCLE_EVENT_TYPES") &&
-    serviceTelemetryTestSource.includes("invalid lifecycle status"),
-  "run-lifecycle-telemetry.test.ts must assert lifecycle coverage and invalid status hard-fail",
-);
-assertCondition(
-  observabilityTestSource.includes("builds default trace links") &&
-    observabilityTestSource.includes("prefers explicit inngest run identifiers"),
-  "observability.test.ts must assert workflow trace link behavior",
-);
-assertCondition(
-  ingressTestSource.includes("/api/inngest") &&
-    ingressTestSource.includes("/api/workflows/support-example/triage/status"),
-  "ingress-signature-observability test must cover ingress rejection and workflow route-family preservation",
+  phase1NoLiveSupportExampleSource.includes("plugins/workflows/support-example") &&
+    phase1NoLiveSupportExampleSource.includes("must not exist in the live tree"),
+  "phase-1 support-example archive verifier must keep the workflow lane out of the live tree",
 );
 
 assertCondition(
@@ -78,7 +77,7 @@ assertCondition(
 );
 assertCondition(
   scripts["phase-c:gate:c2-telemetry-runtime"] ===
-    "bunx vitest run --project coordination services/coordination/test/run-lifecycle-telemetry.test.ts && bunx vitest run --project plugin-workflows-coordination plugins/workflows/coordination/test/observability.test.ts && bunx vitest run --project server apps/server/test/ingress-signature-observability.test.ts",
+    "bunx vitest run --project server apps/server/test/ingress-signature-observability.test.ts apps/server/test/logging-correlation.test.ts",
   "phase-c:gate:c2-telemetry-runtime must run required c2 telemetry runtime tests",
 );
 assertCondition(

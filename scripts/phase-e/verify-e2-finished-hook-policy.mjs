@@ -7,60 +7,50 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("services/coordination/src/domain/types.ts"),
-  mustExist("services/coordination/src/domain/schemas.ts"),
-  mustExist("plugins/workflows/coordination/src/inngest.ts"),
-  mustExist("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
+  mustExist("apps/hq/src/manifest.ts"),
+  mustExist("apps/hq/test/runtime-router.test.ts"),
+  mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
+  mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
+  mustExist("scripts/phase-1/verify-no-live-coordination.mjs"),
 ]);
 
-const [typesSource, schemasSource, inngestSource, guardrailsTestSource, scripts] = await Promise.all([
-  readFile("services/coordination/src/domain/types.ts"),
-  readFile("services/coordination/src/domain/schemas.ts"),
-  readFile("plugins/workflows/coordination/src/inngest.ts"),
-  readFile("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
+const [
+  manifestSource,
+  runtimeRouterTestSource,
+  contractDriftTestSource,
+  workflowDriftTestSource,
+  phase1NoLiveCoordinationSource,
+  scripts,
+] = await Promise.all([
+  readFile("apps/hq/src/manifest.ts"),
+  readFile("apps/hq/test/runtime-router.test.ts"),
+  readFile("apps/hq/test/orpc-contract-drift.test.ts"),
+  readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
+  readFile("scripts/phase-1/verify-no-live-coordination.mjs"),
   readPackageScripts(),
 ]);
 
 assertCondition(
-  /export type RunFinishedHookOutcomeV1 = "succeeded" \| "failed" \| "skipped";/.test(typesSource),
-  "types.ts must encode succeeded/failed/skipped finished-hook outcomes",
+  manifestSource.includes("workflows: {} as const") &&
+    !manifestSource.includes("registerCoordinationApiPlugin") &&
+    !manifestSource.includes("registerSupportExampleWorkflowPlugin"),
+  "apps/hq/src/manifest.ts must keep archived workflow families out of live publication",
 );
 assertCondition(
-  /nonCritical:\s*true;/.test(typesSource) &&
-    /idempotencyRequired:\s*true;/.test(typesSource) &&
-    /timeoutMs:\s*number;/.test(typesSource),
-  "RunFinishedHookStateV1 must encode non-critical/idempotency-required/timeout fields",
-);
-
-assertCondition(
-  /outcome:\s*Type\.Union\(\[Type\.Literal\("succeeded"\), Type\.Literal\("failed"\), Type\.Literal\("skipped"\)\]\)/.test(
-    schemasSource,
-  ),
-  "RunFinishedHookStateSchema must include skipped outcome",
+  !runtimeRouterTestSource.includes("finished-hook") &&
+    runtimeRouterTestSource.includes("keeps the manifest cold and free of executable materialization"),
+  "runtime-router.test.ts must prove the live HQ runtime seam does not regain finished-hook behavior",
 );
 assertCondition(
-  /nonCritical:\s*Type\.Literal\(true\)/.test(schemasSource) &&
-    /idempotencyRequired:\s*Type\.Literal\(true\)/.test(schemasSource) &&
-    /timeoutMs:\s*Type\.Integer\(\{ minimum: 1 \}\)/.test(schemasSource),
-  "RunFinishedHookStateSchema must include nonCritical/idempotencyRequired/timeoutMs fields",
-);
-
-assertCondition(
-  /const FINISHED_HOOK_TIMEOUT_MS = 5_000;/.test(inngestSource),
-  "workflow plugin inngest.ts must define canonical finished-hook timeout",
+  !contractDriftTestSource.includes("finalization") &&
+    contractDriftTestSource.includes('expect(Object.keys(manifest.plugins.workflows)).toEqual([])') &&
+    workflowDriftTestSource.includes("keeps workflow publication empty once the false-future lane is archived"),
+  "HQ drift tests must encode empty workflow publication rather than additive finished-hook policy",
 );
 assertCondition(
-  /async function runWithTimeout<[^>]+>\(/.test(inngestSource),
-  "workflow plugin inngest.ts must wrap finished-hook execution in timeout helper",
-);
-assertCondition(
-  /if \(!input\.hook\) \{[\s\S]*outcome: "skipped"/.test(inngestSource),
-  "workflow plugin inngest.ts must record skipped state when no finished hook is configured",
-);
-
-assertCondition(
-  guardrailsTestSource.includes("marks finished-hook state as skipped when no hook is configured"),
-  "finished-hook guardrail tests must cover skipped outcome behavior",
+  phase1NoLiveCoordinationSource.includes("plugins/workflows/coordination") &&
+    phase1NoLiveCoordinationSource.includes("must not exist in the live tree"),
+  "Phase 1 archive proof must keep coordination workflow roots out of the live tree",
 );
 
 assertCondition(
@@ -69,7 +59,7 @@ assertCondition(
 );
 assertCondition(
   scripts["phase-e:gate:e2-finished-hook-runtime"] ===
-    "bunx vitest run --project plugin-workflows-coordination plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts",
+    "bunx vitest run --project hq-app apps/hq/test/runtime-router.test.ts",
   "package.json must define phase-e:gate:e2-finished-hook-runtime",
 );
 assertCondition(
@@ -83,4 +73,4 @@ assertCondition(
   "package.json must define phase-e:e2:full",
 );
 
-console.log("phase-e e2 finished-hook policy verified");
+console.log("phase-e e2 archive-lane policy verified");

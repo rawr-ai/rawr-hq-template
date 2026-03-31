@@ -36,6 +36,9 @@ related_to: []
 ## Testing / Verification
 - `bun run sync:check`
 - `bun run phase-1:gates:baseline`
+- `bun run phase-c:c2:quick`
+- `bun run phase-d:d2:full`
+- `bun run phase-e:e2:full`
 - `bun run rawr plugins sync @rawr/plugin-hq --dry-run`
 - `bun run rawr plugins sync @rawr/plugin-hq --dry-run --force`
 - `bun scripts/phase-1/verify-no-live-coordination.mjs`
@@ -87,6 +90,8 @@ This slice is about subtraction with evidence retention. The archive artifacts m
   - `rawr plugins sync @rawr/plugin-hq --dry-run` still resolves the preserved `plugins/agents/hq` source lane, but plain dry-run exits non-zero when downstream Codex/Claude targets already contain local conflicts. For verification, `--dry-run --force` is the non-mutating way to prove the source lane still resolves cleanly without treating local install drift as an architecture regression.
 - **HQ stack validation is part of the slice proof band**
   - U01 now requires a managed-runtime bring-up before commit. `rawr hq up --observability required --open none`, `rawr hq status --json`, direct health probes, and `.rawr/hq/runtime.log` confirmed the local stack is healthy after the archive cut. Startup still emits an environment-side `hq:status not found` error from `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq`, but the managed runtime in this workspace reaches a healthy running state.
+- **Downstream proof bands must ratchet against archive absence, not archived workflow semantics**
+  - The Phase C/D/E verifier stack now treats U01 as a hard architectural cut. `verify-telemetry-contract`, `verify-d2-finished-hook-contract`, `verify-e2-finished-hook-policy`, the route-boundary harness matrix, and completion-mode manifest smoke all ratchet against the live post-U01 seams plus explicit archive absence instead of deleted `coordination` / `support-example` workflow artifacts.
 
 ### Files
 - `services/coordination`
