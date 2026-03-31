@@ -90,18 +90,43 @@ Use the current repo inventory as the evidence base:
 - [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md)
 - [Phase 1 grounding note](../.context/grounding.md)
 
+### Prework Results (Resolved)
+
+### 1) Ledger section structure
+Use a fixed ledger shape that matches the Phase 1 stop-gates instead of a narrative migration note:
+- Live lane
+- Archived lane
+- Parked lane
+- Reclassified / target homes
+- Prohibited directions
+- Verification map
+
+That keeps the ledger usable both as a human classifier and as the input contract for `verify-phase1-ledger`.
+
+### 2) Minimum concrete surface inventory to classify
+The minimum inventory should match the Phase 1 plan plus the repo’s current roots:
+- Apps: `apps/hq`, `apps/server`, `apps/cli`, `apps/web`
+- Services: `services/state`, `services/example-todo`, `services/support-example`, `services/coordination`
+- Packages: `packages/control-plane`, `packages/journal`, `packages/security`, `packages/hq`, `packages/agent-sync`
+- Plugins: `plugins/api/{coordination,example-todo,state}`, `plugins/workflows/{coordination,support-example}`, `plugins/agents/hq`, `plugins/web/*`, `plugins/cli/*`
+
+The current inventory is enforced from `tools/architecture-inventory/*.json`, with `tools/architecture-inventory/slice-0-first-cohort.json` already carrying the `plugin-api-*` entries that Phase 1 will eventually replace.
+
+### 3) Current verification integration points
+The existing repo truth is:
+- root `sync:check` -> `scripts/phase-03/verify-sync-check.mjs`
+- root `lint:boundaries` -> `eslint apps services packages plugins`
+- project-level `structural` targets already exist for `@rawr/server`, `@rawr/cli`, `@rawr/hq-app`, `@rawr/plugin-plugins`, `@rawr/state`, `@rawr/coordination`, `@rawr/hq`, `@rawr/runtime-context`, `@rawr/bootgraph`, and plugin API projects
+
+Phase 1 verification scripts should therefore live under `scripts/phase-1/` and be wired in two places:
+- as explicit root scripts / gate aggregators in `package.json`
+- as follow-on structural or exit-gate inputs once the live project inventory changes
+
+Do not hide the Phase 1 proof band inside a single project target. The migration lane is root-owned.
+
 ### Quick Navigation
 - [TL;DR](#tldr)
 - [Deliverables](#deliverables)
 - [Acceptance Criteria](#acceptance-criteria)
 - [Testing / Verification](#testing--verification)
 - [Dependencies / Notes](#dependencies--notes)
-
-## Prework Prompt (Agent Brief)
-**Purpose:** Determine the exact ledger section structure, the minimum canonical surface set to classify, and how the new phase-1 verification scripts should hook into the existing repo verification flow.
-**Expected Output:** A short implementation note naming the ledger headings, the concrete surface inventory to classify, the current structural runner integration points, and the exact package/root scripts that should invoke the new phase-1 checks.
-**Sources to Check:**
-- `package.json`
-- `scripts/phase-03/`
-- `docs/projects/rawr-final-architecture-migration/resources/RAWR_P1_Architecture_Migration_Plan.md`
-- current workspace inventory commands listed above

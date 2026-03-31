@@ -83,17 +83,49 @@ Partition `packages/hq` by earned ownership, not by directory nostalgia. Support
 - [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md)
 - [Phase 1 grounding note](../.context/grounding.md)
 
+### Prework Results (Resolved)
+
+### 1) Preserve as `packages/plugin-workspace`
+These files are genuine workspace/plugin-discovery support and should move together:
+- `packages/hq/src/workspace/index.ts`
+- `packages/hq/src/workspace/plugin-manifest-contract.ts`
+- `packages/hq/src/workspace/plugins.ts`
+
+Their matching tests should follow them:
+- `packages/hq/test/plugin-manifest-contract.test.ts`
+- `packages/hq/test/workspace-discovery.test.ts`
+- `packages/hq/test/workspace.test.ts`
+
+Reason: these files parse workspace plugin manifests, discover plugins, and provide neutral workspace support used by more than one owner.
+
+### 2) Move to plugin CLI ownership
+These files already map directly onto plugin CLI helpers and should move under `plugins/cli/plugins` ownership:
+- `packages/hq/src/install/{index,reconcile,state}.ts`
+- `packages/hq/src/lifecycle/{fix-slice,index,lifecycle,policy,process,scratch-policy,types}.ts`
+- `packages/hq/src/scaffold/{factory,index}.ts`
+
+The existing plugin CLI mirrors are already present and should become the destination seams:
+- `plugins/cli/plugins/src/lib/install-state.ts`
+- `plugins/cli/plugins/src/lib/install-reconcile.ts`
+- `plugins/cli/plugins/src/lib/plugins-lifecycle/lifecycle.ts`
+- `plugins/cli/plugins/src/lib/workspace-plugins.ts`
+
+The matching tests that need relocation or ownership review are:
+- `packages/hq/test/install-state.test.ts`
+- `packages/hq/test/instance-alias-isolation.test.ts`
+- `packages/hq/test/phase-a-gates.test.ts`
+
+### 3) Delete after direct cuts land
+These are semantic facades and should not survive once HQ Ops and direct consumer rewires are complete:
+- `packages/hq/src/journal/{context,index}.ts`
+- `packages/hq/src/security/{index,module}.ts`
+- `packages/hq/src/index.ts` once the surviving support/tooling exports have moved out
+
+Reason: they exist to repackage semantic HQ truth or HQ-specific facades, which Phase 1 explicitly forbids from surviving.
+
 ### Quick Navigation
 - [TL;DR](#tldr)
 - [Deliverables](#deliverables)
 - [Acceptance Criteria](#acceptance-criteria)
 - [Testing / Verification](#testing--verification)
 - [Dependencies / Notes](#dependencies--notes)
-
-## Prework Prompt (Agent Brief)
-**Purpose:** Partition `packages/hq` into three buckets: support/tooling to preserve, plugin-CLI-owned helpers to move, and semantic facades to delete.
-**Expected Output:** A file-by-file disposition table for `packages/hq/src` naming the target owner (`packages/plugin-workspace`, `plugins/cli/plugins`, delete) and the reasoning for each group.
-**Sources to Check:**
-- `packages/hq/src`
-- `plugins/cli/plugins/src`
-- current `@rawr/hq/*` imports discovered via ripgrep

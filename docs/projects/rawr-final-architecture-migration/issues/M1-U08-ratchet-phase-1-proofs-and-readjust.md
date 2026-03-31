@@ -94,19 +94,36 @@ This is where the repo stops being “in motion” and becomes a stable plateau.
 - [Phase 1 grounding note](../.context/grounding.md)
 - [Workflow scaffold](../.context/workflow.md)
 
+### Prework Results (Resolved)
+
+### 1) Phase 1 close-out review checklist
+The close-out review should explicitly confirm:
+- the full Phase 1 proof band passes together
+- parked-lane freeze rules are in force
+- the only surviving cross-phase seam, if any, is `apps/hq/legacy-cutover.ts`
+- the durable docs landed here describe settled Phase 1 reality only
+- Phase 2 entry conditions are explicit and no Phase 1 architectural decision is being reopened during the handoff
+
+### 2) Docs outside the migration project that will become stale
+These current-state docs already describe the old plugin roots or old runtime topology and should be audited once the plateau lands:
+- `docs/SYSTEM.md`
+- `docs/system/PLUGINS.md`
+- `docs/process/HQ_OPERATIONS.md`
+- `docs/system/TELEMETRY.md`
+- `docs/system/telemetry/orpc.md`
+
+Those should only be updated if they are meant to describe live current state. If they are historical or explanatory in a broader sense, preserve them and add narrower current-state docs instead.
+
+### 3) Docs that should be left untouched
+These are not part of the close-out update set and should stay untouched unless the user explicitly reopens them:
+- `docs/projects/orpc-ingest-workflows-spec/**`
+- `docs/projects/_archive/**`
+- `docs/projects/rawr-final-architecture-migration/resources/_archive/**`
+- the Phase 1 and larger migration source plans themselves, except for downstream readjustment notes that belong outside the frozen source packet
+
 ### Quick Navigation
 - [TL;DR](#tldr)
 - [Deliverables](#deliverables)
 - [Acceptance Criteria](#acceptance-criteria)
 - [Testing / Verification](#testing--verification)
 - [Dependencies / Notes](#dependencies--notes)
-
-## Prework Prompt (Agent Brief)
-**Purpose:** Define the exact Phase 1 close-out review checklist and identify which existing docs outside the migration project would become stale or misleading once the plateau lands.
-**Expected Output:** A short review checklist covering proof ratchet, durable docs, parked-lane freeze, and stale-doc audit, plus a list of docs that should be left untouched because they describe later phases.
-**Sources to Check:**
-- `docs/projects/rawr-final-architecture-migration/.context/grounding.md`
-- `docs/projects/rawr-final-architecture-migration/.context/workflow.md`
-- `docs/DOCS.md`
-- `docs/projects/DOCS.md`
-- `docs/projects/rawr-final-architecture-migration/resources/*.md`
