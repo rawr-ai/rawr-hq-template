@@ -53,11 +53,11 @@ ensure_artifact_dir() {
 }
 
 run_status_writer() {
-  bun --eval '
-    const [workspaceRoot, mode] = process.argv.slice(2);
-    const mod = await import("./apps/cli/src/lib/hq-status.ts");
-    await mod.collectAndWriteHqStatus({ workspaceRoot, mode });
-  ' -- "$ROOT_DIR" "$observability_mode"
+  bun ./apps/cli/src/lib/hq-status.ts \
+    --workspace-root "$ROOT_DIR" \
+    --mode "$observability_mode" \
+    --write \
+    --quiet
 }
 
 validate_open_policy() {
