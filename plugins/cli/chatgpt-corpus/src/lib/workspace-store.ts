@@ -1,9 +1,54 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type {
-  WorkspaceArtifactBundle,
-  WorkspaceStore,
-} from "@rawr/chatgpt-corpus";
+
+type WorkspaceTemplate = {
+  requiredDirectories: string[];
+  managedFiles: Array<{
+    fileId: string;
+    relativePath: string;
+    contents: string;
+  }>;
+};
+
+type WorkspaceArtifactBundle = {
+  outputDirectories: string[];
+  files: Array<{
+    fileId: string;
+    relativePath: string;
+    contents: string;
+  }>;
+};
+
+type FilesystemWorkspaceStore = {
+  scaffoldWorkspace(input: {
+    workspaceRef: string;
+    template: WorkspaceTemplate;
+  }): Promise<{
+    createdEntries: string[];
+    existingEntries: string[];
+  }>;
+  readSourceMaterials(input: {
+    workspaceRef: string;
+  }): Promise<{
+    conversations: Array<{
+      relativePath: string;
+      contents: string;
+    }>;
+    documents: Array<{
+      relativePath: string;
+      contents: string;
+    }>;
+  }>;
+  writeArtifactBundle(input: {
+    workspaceRef: string;
+    bundle: WorkspaceArtifactBundle;
+  }): Promise<{
+    writtenEntries: Array<{
+      fileId: string;
+      relativePath: string;
+    }>;
+  }>;
+};
 
 function toAbsolutePath(workspaceRef: string, relativePath: string): string {
   return path.join(workspaceRef, ...relativePath.split("/"));
@@ -53,7 +98,7 @@ async function writeManagedFile(filePath: string, contents: string): Promise<"cr
   return existed ? "existing" : "created";
 }
 
-export function createFilesystemWorkspaceStore(): WorkspaceStore {
+export function createFilesystemWorkspaceStore(): FilesystemWorkspaceStore {
   return {
     async scaffoldWorkspace({ workspaceRef, template }) {
       const createdEntries: string[] = [];
