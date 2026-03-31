@@ -23,6 +23,19 @@ async function makeTempWorkspace(prefix: string) {
 }
 
 describe("@rawr/chatgpt-corpus", () => {
+  it("keeps the package-root client entrypoint stable", async () => {
+    const workspaceRoot = await makeTempWorkspace("rawr-chatgpt-corpus-package-root-");
+    const pkg = await import("../src");
+    const client = pkg.createClient(createClientOptions());
+
+    const result = await client.corpus.initWorkspace(
+      { workspaceRoot },
+      createInvocation("trace-package-root"),
+    );
+
+    expect(result.workspaceRoot).toBe(workspaceRoot);
+  });
+
   it("initializes the canonical workspace layout", async () => {
     const workspaceRoot = await makeTempWorkspace("rawr-chatgpt-corpus-init-");
     const client = createClient(createClientOptions());

@@ -9,7 +9,7 @@ import { router } from "./router";
 import type {
   ConsolidateWorkspaceResult as ConsolidateWorkspaceResultValue,
   InitWorkspaceResult as InitWorkspaceResultValue,
-} from "./service/shared/engine";
+} from "./service/modules/corpus/types";
 
 const servicePackage = defineServicePackage(router);
 
