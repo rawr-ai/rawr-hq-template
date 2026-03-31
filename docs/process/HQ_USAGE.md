@@ -12,7 +12,7 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
 3. Maintain shared core/template contracts.
 4. Run tests for touched areas:
    - `bun run test` for the fast default gate.
-   - `bun run test:heavy` when touching the web-only lane.
+   - `bun run test:web` when touching the web-only lane (without the pretest build gate).
 5. Commit scoped changes.
 6. For stack drains or cross-repo integrations, follow canonical policy in `docs/process/HQ_OPERATIONS.md`:
    - repo boundary guard,
@@ -50,7 +50,7 @@ Mode contract:
 Before publishing a plugin:
 - Run `bun run build`
 - Run `bun run test`
-- Run `bun run test:heavy` if the change affects the web-only lane
+- Run `bun run test:web` if the change affects the web-only lane
 - Verify package metadata and docs.
 
 Note: full plugin sync commands (`rawr plugins sync all`) are personal-repo runtime actions, not template publishing actions.
