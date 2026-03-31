@@ -3,7 +3,7 @@ import {
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
-import type { WorkspaceStore } from "../../shared/workspace-store";
+import type { WorkspaceStore } from "../../../orpc/ports/workspace-store";
 import { createRepository } from "./repository";
 
 export {

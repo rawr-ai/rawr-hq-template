@@ -1,5 +1,5 @@
 import { CorpusWorkspaceError } from "../../../shared/errors";
-import type { RawSourceMaterials, WorkspaceTextEntry } from "../../../shared/workspace-store";
+import type { RawSourceMaterials, WorkspaceTextEntry } from "../../../../orpc/ports/workspace-store";
 import type {
   JsonConversationMessage,
   SourceRecord,

@@ -1,4 +1,4 @@
-import type { WorkspaceTemplate } from "../../../shared/workspace-store";
+import type { WorkspaceTemplate } from "../../../../orpc/ports/workspace-store";
 
 const WORKSPACE_README = `# ChatGPT Corpus Workspace
 

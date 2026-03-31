@@ -1,5 +1,5 @@
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
-import type { WorkspaceStore } from "./shared/workspace-store";
+import type { WorkspaceStore } from "../orpc/ports/workspace-store";
 
 type InitialContext = {
   deps: {
