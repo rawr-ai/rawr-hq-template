@@ -1,9 +1,10 @@
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import type { CreateClientOptions, WorkspaceStore } from "../src";
+import type { CreateClientOptions } from "../src/client";
 import type {
   RawSourceMaterials,
   WorkspaceArtifactBundle,
+  WorkspaceStore,
   WorkspaceTemplate,
 } from "../src/service/shared/workspace-store";
 import { FIXTURE_SOURCE_MATERIALS } from "./fixture-data";
