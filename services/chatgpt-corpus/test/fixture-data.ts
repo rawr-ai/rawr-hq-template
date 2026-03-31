@@ -1,4 +1,4 @@
-import type { RawSourceMaterials } from "../src/service/shared/workspace-store";
+import type { RawSourceMaterials } from "../src/orpc/ports/workspace-store";
 
 export const FIXTURE_SOURCE_MATERIALS: RawSourceMaterials = {
   conversations: [

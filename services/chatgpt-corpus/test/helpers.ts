@@ -6,7 +6,7 @@ import type {
   WorkspaceArtifactBundle,
   WorkspaceStore,
   WorkspaceTemplate,
-} from "../src/service/shared/workspace-store";
+} from "../src/orpc/ports/workspace-store";
 import { FIXTURE_SOURCE_MATERIALS } from "./fixture-data";
 
 type WorkspaceState = {

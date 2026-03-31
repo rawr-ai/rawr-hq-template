@@ -1,4 +1,4 @@
-import type { WorkspaceStore } from "../../shared/workspace-store";
+import type { WorkspaceStore } from "../../../orpc/ports/workspace-store";
 
 export function createRepository(workspaceStore: WorkspaceStore, workspaceRef: string) {
   return {

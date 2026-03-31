@@ -1,4 +1,4 @@
-import type { WorkspaceArtifactBundle } from "../../../shared/workspace-store";
+import type { WorkspaceArtifactBundle } from "../../../../orpc/ports/workspace-store";
 import { OUTPUT_DIRECTORIES } from "../../workspace/helpers/template";
 import type {
   JsonConversationMessage,
