@@ -1,7 +1,7 @@
 ---
 id: M1-U08
 title: "[M1] Ratchet Phase 1 proofs, land durable docs, and readjust the migration"
-state: planned
+state: done
 priority: 1
 estimate: 4
 project: rawr-final-architecture-migration
@@ -26,14 +26,14 @@ related_to: []
 - Run the structured end-of-milestone review and record the downstream readjustment point without reopening Phase 1.
 
 ## Acceptance Criteria
-- [ ] All Phase 1 structural checks pass together.
-- [ ] Targeted typechecks pass for every changed live project carried across `M1-U03` through `M1-U07`.
-- [ ] Targeted tests pass for every changed live project carried across `M1-U03` through `M1-U07`.
-- [ ] Parked-lane freeze rules are verifiable.
-- [ ] The preserved `plugins/agents/hq` marketplace compatibility lane still resolves through the current sync surface.
-- [ ] Docs describe only settled post-Phase-1 reality and archived evidence.
-- [ ] The end-of-milestone review explicitly confirms Phase 2 entry conditions and records any Phase 2/3 readjustments without changing the Phase 1 plateau.
-- [ ] The end-of-milestone review explicitly carries forward the deferred redesign of the Cloud Code/Codex marketplace plugin lane, while confirming that `plugins/agents/hq` remains frozen in place for continuity.
+- [x] All Phase 1 structural checks pass together.
+- [x] Targeted typechecks pass for every changed live project carried across `M1-U03` through `M1-U07`.
+- [x] Targeted tests pass for every changed live project carried across `M1-U03` through `M1-U07`.
+- [x] Parked-lane freeze rules are verifiable.
+- [x] The preserved `plugins/agents/hq` marketplace compatibility lane still resolves through the current sync surface.
+- [x] Docs describe only settled post-Phase-1 reality and archived evidence.
+- [x] The end-of-milestone review explicitly confirms Phase 2 entry conditions and records any Phase 2/3 readjustments without changing the Phase 1 plateau.
+- [x] The end-of-milestone review explicitly carries forward the deferred redesign of the Cloud Code/Codex marketplace plugin lane, while confirming that `plugins/agents/hq` remains frozen in place for continuity.
 
 ## Testing / Verification
 - `bun run sync:check`

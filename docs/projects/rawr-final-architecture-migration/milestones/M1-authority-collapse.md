@@ -2,7 +2,7 @@
 
 **Position in Migration:** Phase 1 of 3 in the final architecture migration.
 **Goal:** Re-establish one coherent semantic story in the repo so Phase 2 can build runtime substrate on canonical seams instead of transitional ones.
-**Status:** Planned
+**Status:** Done
 **Target Date:** TBD
 **Owner:** TBD
 
@@ -151,15 +151,15 @@ issues:
     blocked_by: [M1-U04]
   - id: M1-U06
     title: "Install the canonical HQ app shell"
-    status: planned
+    status: done
     blocked_by: [M1-U05]
   - id: M1-U07
     title: "Neutralize old executable composition authority"
-    status: planned
+    status: done
     blocked_by: [M1-U06]
   - id: M1-U08
     title: "Ratchet proofs, land durable docs, freeze the plateau, and review the rest of the migration"
-    status: planned
+    status: done
     blocked_by: [M1-U07]
 ```
 
@@ -228,30 +228,33 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 - Issue doc: [M1-U06](../issues/M1-U06-install-canonical-hq-app-shell.md)
 - Focus: install `apps/hq/rawr.hq.ts`, `server.ts`, `async.ts`, and `dev.ts` as the new composition front door.
 - Stop-gate: manifest-purity, entrypoint-thinness, and app-shell smoke proofs all pass before legacy executable authority is touched.
+- Traceability: canonical shell authority landed in commit `ff2cd42784081c7876455ffa3be39f7a54c135b1`; `apps/hq/rawr.hq.ts`, `server.ts`, `async.ts`, `dev.ts`, and `legacy-cutover.ts` now exist; `sync:check`, HQ/server typechecks, HQ app tests, manifest-purity, entrypoint-thinness, and direct runtime validation on `3000` passed.
 
 ### M1-U07: Neutralize legacy executable composition authority
 
 - Issue doc: [M1-U07](../issues/M1-U07-neutralize-legacy-composition-authority.md)
 - Focus: route execution through the new app shell and quarantine or delete the old host-composition path.
 - Stop-gate: no dual executable composition path remains; Phase 1 exits either with no executable bridge or with exactly one explicitly recorded executable bridge at `apps/hq/legacy-cutover.ts`.
+- Traceability: branch `agent-FARGO-M1-U07-neutralize-legacy-composition-authority`; commit `4cefc455`; `apps/server/src/rawr.ts` and `apps/server/src/testing-host.ts` now consume `@rawr/hq-app/legacy-cutover`; the new `verify-no-legacy-composition-authority` proof passed; root/server/HQ guard bands and direct `apps/hq/server.ts` smoke validation on `3000` passed, with archived support-example and coordination routes still returning `404`.
 
 ### M1-U08: Ratchet Phase 1 proofs, land durable docs, and readjust the migration
 
 - Issue doc: [M1-U08](../issues/M1-U08-ratchet-phase-1-proofs-and-readjust.md)
 - Focus: ratchet the full Phase 1 proof band, land only durable docs, freeze parked lanes, and run the structured milestone review.
 - Stop-gate: the plateau is explicit, verifiable, and ready to hand off into Phase 2 without reopening Phase 1.
+- Traceability: root Phase 1 baseline now includes HQ Ops service-shape and parked-lane freeze proofs; durable plateau docs live at [phase-1-current-state.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-1-current-state.md) and [phase-2-entry-conditions.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-2-entry-conditions.md); `sync:check`, `lint:boundaries`, targeted typechecks/tests across HQ/server/CLI/plugin-workspace/plugin-plugins/agent-sync/hq-ops, `phase-1:gates:baseline`, and `rawr plugins sync @rawr/plugin-hq --dry-run --force` all passed.
 
 ## Milestone-Wide Acceptance Criteria
 
-- [ ] The milestone preserves the dedicated Phase 1 plan’s slice order and fixed decisions.
-- [ ] Every slice lands as a forward-only slice with its own proof band before the next dependent slice begins.
-- [ ] Every slice closes its own cleanup loops; Phase 1 exits either with no executable bridge or with exactly one explicitly recorded executable bridge at `apps/hq/legacy-cutover.ts`.
-- [ ] The frozen `plugins/agents/hq` marketplace lane is recorded as the only allowed non-executable compatibility carryover into the next stage.
-- [ ] No dual authority survives for service truth, runtime projection, plugin topology, or app composition.
-- [ ] No Phase 2 or Phase 3 substrate work is smuggled into this milestone.
-- [ ] Legacy behavior, paths, imports, registrations, roots, and mentions that were supposed to die in Phase 1 are actually gone or archived by milestone end.
-- [ ] Documentation work is limited to settled outcomes and archive evidence.
-- [ ] The end-of-milestone review produces a concrete Phase 2 entry condition and a disciplined readjustment point for the rest of the migration.
+- [x] The milestone preserves the dedicated Phase 1 plan’s slice order and fixed decisions.
+- [x] Every slice lands as a forward-only slice with its own proof band before the next dependent slice begins.
+- [x] Every slice closes its own cleanup loops; Phase 1 exits either with no executable bridge or with exactly one explicitly recorded executable bridge at `apps/hq/legacy-cutover.ts`.
+- [x] The frozen `plugins/agents/hq` marketplace lane is recorded as the only allowed non-executable compatibility carryover into the next stage.
+- [x] No dual authority survives for service truth, runtime projection, plugin topology, or app composition.
+- [x] No Phase 2 or Phase 3 substrate work is smuggled into this milestone.
+- [x] Legacy behavior, paths, imports, registrations, roots, and mentions that were supposed to die in Phase 1 are actually gone or archived by milestone end.
+- [x] Documentation work is limited to settled outcomes and archive evidence.
+- [x] The end-of-milestone review produces a concrete Phase 2 entry condition and a disciplined readjustment point for the rest of the migration.
 
 ## Common Verification Band
 

@@ -95,9 +95,14 @@ for (const command of [
   "bun scripts/phase-1/verify-no-live-coordination.mjs",
   "bun scripts/phase-1/verify-no-live-support-example.mjs",
   "bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs",
+  "bun scripts/phase-1/verify-hq-ops-service-shape.mjs",
   "bun scripts/phase-1/verify-no-old-operational-packages.mjs",
   "bun scripts/phase-1/verify-no-legacy-hq-imports.mjs",
   "bun scripts/phase-1/verify-canonical-plugin-topology.mjs",
+  "bun scripts/phase-1/verify-manifest-purity.mjs",
+  "bun scripts/phase-1/verify-entrypoint-thinness.mjs",
+  "bun scripts/phase-1/verify-no-legacy-composition-authority.mjs",
+  "bun scripts/phase-1/verify-parked-lane-frozen.mjs",
   "bun run phase-1:gates:baseline",
 ]) {
   assertCondition(ledger.verification[command], `verification map must include ${command}`);
