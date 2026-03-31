@@ -451,6 +451,35 @@ How I will apply them:
 - use Narsil to trace the current app shell and old host-authority overlap
 - reserve only the seams needed for Phase 2; do not implement runtime compiler or bootgraph substrate here
 
+Sequencing sanity rule:
+
+- if the existing U06/U07 split creates an artificial complication that would make the app shell decorative instead of real, pull forward the minimum downstream work needed to make U06 truthful
+- acceptable pull-forward work:
+  - rebasing live app authority onto `apps/hq/rawr.hq.ts`
+  - introducing the one sanctioned executable bridge at `apps/hq/legacy-cutover.ts`
+  - updating proofs so U06 asserts real app-shell authority rather than old `src/manifest.ts` authority
+- forbidden pull-forward work:
+  - deleting or quarantining `apps/server/src/host-composition.ts`, `host-seam.ts`, or `host-realization.ts` as live authority surfaces
+  - removing the current runtime fallback before the new shell is proven by smoke checks and managed HQ validation
+  - rewriting U07 proof surfaces as if legacy host authority is already dead
+
+Phase-scoped workflow:
+
+1. create the next Graphite slice branch for `M1-U06` in this same worktree
+2. re-read the canonical spec sections on manifest posture and entrypoint posture, plus the Phase 1 bridge rule and the `M1-U06`/`M1-U07` issue docs
+3. move app composition authority to `apps/hq/rawr.hq.ts` and reduce `apps/hq/src/manifest.ts` to a compatibility forwarder or non-authoritative shim only
+4. create `apps/hq/server.ts`, `apps/hq/async.ts`, and `apps/hq/dev.ts` as thin entrypoints; if executable delegation is needed, route it only through `apps/hq/legacy-cutover.ts`
+5. keep current `apps/server` host-composition execution live during this slice; do not neutralize it here
+6. add `verify-manifest-purity` and `verify-entrypoint-thinness`, and rewrite HQ app proof surfaces so they ratchet the new shell truth
+7. run the slice verification band plus managed HQ validation with `rawr hq up --observability required --open none`, status/log inspection, first-party state RPC `200`, and archived coordination/support-example route probes still `404`
+8. commit only once the new shell is authoritative, the old runtime still works, and the new proof band is green
+
+Immediate continuation rule:
+
+- when `M1-U06` closes, do not stop
+- rewrite `context.md` for `M1-U07`, carry forward the exact bridge outcome, and continue the same closed loop through `M1-U07` and `M1-U08`
+- the milestone is not done until the U07 legacy-authority cut and the U08 plateau freeze both close with their own proof bands
+
 Closure bar:
 
 - `apps/hq/rawr.hq.ts`, `server.ts`, `async.ts`, and `dev.ts` are authoritative, thin, and smoke-tested
