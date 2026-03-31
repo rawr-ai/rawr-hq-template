@@ -34,7 +34,7 @@
     "phase-1:gates:baseline": "bun run phase-1:gate:ledger && bun run phase-1:gate:no-live-coordination && bun run phase-1:gate:no-live-support-example && bun run phase-1:gate:agent-marketplace-lane-frozen && bun run phase-1:gate:no-old-operational-packages && bun run phase-1:gate:no-legacy-hq-imports && bun run phase-1:gate:canonical-plugin-topology",
     "typecheck": "bunx nx run-many -t typecheck --projects=@rawr/agent-sync,@rawr/bootgraph,@rawr/chatgpt-corpus,@rawr/cli,@rawr/core,@rawr/example-todo,@rawr/hq-app,@rawr/hq-ops,@rawr/hq-sdk,@rawr/orpc-client,@rawr/plugin-chatgpt-corpus,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/plugin-workspace,@rawr/runtime-context,@rawr/server,@rawr/session-tools,@rawr/ui-sdk,@rawr/web",
     "pretest:vitest": "bunx nx run-many -t build --projects=@rawr/agent-sync,@rawr/bootgraph,@rawr/chatgpt-corpus,@rawr/cli,@rawr/core,@rawr/example-todo,@rawr/hq-app,@rawr/hq-ops,@rawr/hq-sdk,@rawr/orpc-client,@rawr/plugin-chatgpt-corpus,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/plugin-workspace,@rawr/runtime-context,@rawr/server,@rawr/session-tools,@rawr/ui-sdk,@rawr/web",
-    "test:vitest": "vitest run --config vitest.fast.config.ts",
+    "test:vitest": "vitest run --config vitest.config.ts",
     "test:heavy:visual": "bunx vitest run --project web",
     "test:heavy": "bun run test:heavy:visual",
     "test:all": "bun run test:vitest && bun run test:heavy",
