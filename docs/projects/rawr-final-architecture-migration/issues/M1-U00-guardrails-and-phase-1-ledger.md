@@ -47,7 +47,7 @@ related_to: []
 - Blocks: [M1-U01](./M1-U01-archive-false-futures.md).
 - Milestone: [M1: Collapse Authority onto the Canonical HQ Lane](../milestones/M1-authority-collapse.md).
 - This slice exists to make the repo tell the truth about the migration lane before semantic or runtime authority moves start.
-- Traceability: branch `agent-FARGO-M1-U00-guardrails-and-phase-1-ledger`.
+- Traceability: branch `agent-FARGO-M1-U00-guardrails-and-phase-1-ledger`; PR `#204` (`https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/204`).
 - Verification note: `bun run sync:check`, `bun run phase-1:gates:baseline`, and `bunx nx show projects` passed. `bun run lint:boundaries` still fails on the pre-existing `apps/server/src/host-composition.ts` module-boundary error plus two unused `eslint-disable` warnings in `apps/server/src/index.ts` and `apps/server/src/plugins.ts`.
 
 ---
