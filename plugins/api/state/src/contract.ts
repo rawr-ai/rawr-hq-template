@@ -1,10 +1,10 @@
-import { contract as stateContract } from "@rawr/state/service/contract";
+import { contract as stateContract } from "@rawr/hq-ops/service/contract";
 
 const stateTag = ["state"] as const;
 
 const router = {
   state: {
-    getRuntimeState: stateContract.state.getState.route({
+    getRuntimeState: stateContract.repoState.getState.route({
       method: "GET",
       path: "/state/runtime",
       tags: stateTag,

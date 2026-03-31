@@ -1,7 +1,7 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
 import path from "node:path";
-import { journalId, safePreview, writeSnippet, type JournalSnippet } from "@rawr/journal";
+import { journalId, safePreview, writeSnippet, type JournalSnippet } from "@rawr/hq-ops/journal";
 import { recordArtifact, recordStep } from "../../lib/journal-context";
 import { resolveCliEntrypoint, runStep, type StepResult } from "../../lib/subprocess";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";

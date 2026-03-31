@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { openJournalDb, tailSnippets } from "@rawr/journal";
+import { openJournalDb, tailSnippets } from "@rawr/hq-ops/journal";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class JournalTail extends RawrCommand {

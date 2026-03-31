@@ -1,29 +1,23 @@
-/**
- * @fileoverview Repo-state-module boundary contract.
- *
- * @remarks
- * U02 is reservation-only. This file reserves the module boundary anchor with a
- * single structural reservation procedure so the package keeps the canonical
- * contract-first service shell.
- */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
+import { RepoStateSchema, type RepoState } from "../../../repo-state/model";
 import { ocBase } from "../../base";
-import { RepoStateReservationSchema } from "./schemas";
 
-const ReservationInputSchema = schema(
-  Type.Object(
-    {},
-    {
-      additionalProperties: false,
-      description: "No caller input is required for the repo-state reservation placeholder.",
-    },
-  ),
+export const GetStateInputSchema = Type.Object({}, { additionalProperties: false });
+
+export const GetStateOutputSchema = Type.Object(
+  {
+    state: RepoStateSchema,
+    authorityRepoRoot: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
 );
 
 export const contract = {
-  reservation: ocBase
+  getState: ocBase
     .meta({ idempotent: true, entity: "repoState" })
-    .input(ReservationInputSchema)
-    .output(schema(RepoStateReservationSchema)),
+    .input(schema(GetStateInputSchema))
+    .output(schema(GetStateOutputSchema)),
 };
+
+export type RepoStateModuleContract = typeof contract;

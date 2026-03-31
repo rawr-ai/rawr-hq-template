@@ -1,16 +1,23 @@
 /**
- * @fileoverview Repo-state module repository seam (placeholder).
+ * @fileoverview Repo-state module repository seam over repo-state support helpers.
  *
  * @remarks
- * U02 is reservation-only, so this repository exposes only a structural
- * placeholder return shape. Real repo-state persistence logic arrives in later
- * slices.
+ * Keep boundary concerns out of this file. It translates the module's stable
+ * repo-root scope into a narrow repository interface that handlers can consume
+ * through module composition.
  */
-import type { RepoStateReservation } from "./schemas";
+import type { RepoState } from "../../../repo-state";
+import { getRepoStateWithAuthority } from "../../../repo-state";
 
-export function createRepository() {
-  const reservation: RepoStateReservation = {};
+export type RepoStateSnapshot = {
+  state: RepoState;
+  authorityRepoRoot: string;
+};
+
+export function createRepository(repoRoot: string) {
   return {
-    reservation,
+    async getStateWithAuthority(): Promise<RepoStateSnapshot> {
+      return await getRepoStateWithAuthority(repoRoot);
+    },
   };
 }

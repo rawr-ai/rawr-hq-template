@@ -1,7 +1,7 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { isSemanticConfigured, openJournalDb, searchSnippetsFts, searchSnippetsSemantic } from "@rawr/journal";
-import { loadRawrConfig } from "@rawr/control-plane";
+import { isSemanticConfigured, openJournalDb, searchSnippetsFts, searchSnippetsSemantic } from "@rawr/hq-ops/journal";
+import { loadRawrConfig } from "@rawr/hq-ops/config";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class JournalSearch extends RawrCommand {

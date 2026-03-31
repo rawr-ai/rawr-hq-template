@@ -10,6 +10,22 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./config": {
+      "types": "./src/config/index.ts",
+      "default": "./src/config/index.ts"
+    },
+    "./journal": {
+      "types": "./src/journal/index.ts",
+      "default": "./src/journal/index.ts"
+    },
+    "./repo-state": {
+      "types": "./src/repo-state/index.ts",
+      "default": "./src/repo-state/index.ts"
+    },
+    "./security": {
+      "types": "./src/security/index.ts",
+      "default": "./src/security/index.ts"
+    },
     "./service/contract": {
       "types": "./src/service/contract.ts",
       "default": "./src/service/contract.ts"
@@ -21,6 +37,7 @@
   },
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
+    "security:check": "bun src/bin/security-check.ts",
     "sync": "bun run --cwd ../.. sync:check --project @rawr/hq-ops",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-ops",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
@@ -34,6 +51,7 @@
     "typebox": "^1.0.81"
   },
   "devDependencies": {
+    "@types/bun": "^1.2.10",
     "@opentelemetry/context-async-hooks": "^2.6.0",
     "@opentelemetry/sdk-trace-base": "^2.6.0",
     "typescript": "^5.9.3"

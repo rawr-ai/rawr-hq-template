@@ -37,7 +37,7 @@ function runRawrWithRetry(args: string[], attempts = 2) {
 }
 
 describe("journal + reflect", () => {
-  it("journal search + show returns atomic snippets", () => {
+  it("journal search + tail + show returns atomic snippets", () => {
     const seed = runRawr(["doctor", "--json"]);
     expect(seed.status).toBe(0);
 
@@ -51,6 +51,16 @@ describe("journal + reflect", () => {
 
     const id = search.data.snippets[0].id as string;
     expect(typeof id).toBe("string");
+
+    const tailProc = runRawr(["journal", "tail", "--limit", "15", "--json"]);
+    expect(tailProc.status).toBe(0);
+    const tail = parseJson(tailProc);
+    expect(tail.ok).toBe(true);
+    expect(Array.isArray(tail.data.snippets)).toBe(true);
+    expect(tail.data.snippets.length).toBeGreaterThan(0);
+    expect(tail.data.snippets.every((snippet: any) => typeof snippet.id === "string" && typeof snippet.title === "string")).toBe(
+      true,
+    );
 
     const showProc = runRawr(["journal", "show", id, "--json"]);
     expect(showProc.status).toBe(0);

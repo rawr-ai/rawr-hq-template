@@ -1,7 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 
-import type { RawrConfig } from "@rawr/control-plane";
+import type { RawrConfig } from "@rawr/hq-ops/config";
 
 import type { SyncAgent } from "./types";
 

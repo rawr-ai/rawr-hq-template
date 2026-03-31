@@ -4,7 +4,16 @@ import tsParser from "@typescript-eslint/parser";
 const boundaryRule = [
   "error",
   {
-    allow: ["../../../rawr.hq"],
+    allow: [
+      "../../../rawr.hq",
+      "@rawr/hq-app/manifest",
+      "@rawr/hq-ops",
+      "@rawr/hq-ops/config",
+      "@rawr/hq-ops/repo-state",
+      "@rawr/hq-ops/journal",
+      "@rawr/hq-ops/security",
+      "@rawr/hq-ops/service/contract"
+    ],
     depConstraints: [
       {
         sourceTag: "app:hq",

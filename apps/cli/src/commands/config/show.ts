@@ -1,5 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { loadRawrConfig } from "@rawr/control-plane";
+import { loadRawrConfig } from "@rawr/hq-ops/config";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class ConfigShow extends RawrCommand {

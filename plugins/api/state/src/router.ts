@@ -11,7 +11,7 @@ export function createStateRouter(resolveClient: StateClientResolver) {
   return os.router({
     state: {
       getRuntimeState: os.state.getRuntimeState.handler(async ({ context, input }) => {
-        return resolveClient(context.repoRoot).state.getState(
+        return resolveClient(context.repoRoot).repoState.getState(
           input,
           createApiTraceForwardingOptions(context),
         );

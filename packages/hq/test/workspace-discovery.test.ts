@@ -81,4 +81,19 @@ describe("@rawr/hq workspace discovery roots", () => {
     expect(plugins.some((plugin) => plugin.kind === "api")).toBe(false);
     expect(plugins.some((plugin) => plugin.kind === "workflows")).toBe(false);
   });
+
+  it("ignores package roots that do not opt into the rawr plugin contract", async () => {
+    const workspaceRoot = await createWorkspaceWithRoots(["web"]);
+
+    await writeJsonFile(path.join(workspaceRoot, "plugins", "api", "example-todo", "package.json"), {
+      name: "@rawr/plugin-api-example-todo",
+      private: true,
+    });
+
+    const plugins = await listWorkspacePlugins(workspaceRoot);
+
+    expect(plugins).toHaveLength(1);
+    expect(plugins[0]?.kind).toBe("web");
+    expect(plugins.some((plugin) => plugin.dirName === "example-todo")).toBe(false);
+  });
 });

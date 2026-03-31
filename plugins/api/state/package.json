@@ -19,7 +19,7 @@
     "@orpc/client": "^1.13.5",
     "@orpc/contract": "^1.13.5",
     "@orpc/server": "^1.13.5",
-    "@rawr/runtime-context": "workspace:*",
-    "@rawr/state": "workspace:*"
+    "@rawr/hq-ops": "workspace:*",
+    "@rawr/runtime-context": "workspace:*"
   }
 }

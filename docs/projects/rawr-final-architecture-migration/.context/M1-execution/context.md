@@ -2,49 +2,38 @@
 
 ## Active Slice
 
-- Issue: `M1-U02`
-- Title: `Reserve the canonical HQ Ops seam`
-- Status: implementation in place, local verification green, review/HQ validation pending
-- Dependency state: `M1-U01` is complete on the stack; this slice now gates all HQ operational truth moves in `M1-U03`
-- Current role of the slice: create the one canonical Phase 1 service home before any config, repo-state, journal, or security truth migrates into it
+- Issue: `M1-U03`
+- Title: `Migrate HQ operational truth into HQ Ops and rewire consumers`
+- Status: implementation complete; commit/submit closeout on `agent-FARGO-M1-U03-migrate-hq-ops-and-rewire-consumers`
+- Dependency state: `M1-U02` is done and supplies the canonical HQ Ops shell; this slice now moves real authority into that shell and deletes the old owners from the live lane
+- Current role of the slice: collapse four operational owners (`control-plane`, `state`, `journal`, `security`) into one canonical service package without introducing new facade packages or leaving dual authority behind
 
 ## Why This Slice Matters
 
-This slice creates the destination before any semantic truth moves. Without a real `services/hq-ops` home, later Phase 1 work would either keep negotiating around legacy packages or silently smear logic across multiple temporary homes.
+This is the semantic heart of Phase 1. If operational truth still lives across four old owners, later plugin-topology and app-shell work would be resting on split meaning.
 
-The slice is deliberately narrow. It reserves canonical space and shape only:
+U03 therefore has to do three things at the same time:
 
-- one service package: `services/hq-ops`
-- one service shell: `base`, `contract`, `impl`, `router`
-- four internal modules: `config`, `repo-state`, `journal`, `security`
-- the same internal load-bearing anchors that `services/example-todo` already proves out:
-  - `service/shared/{README,errors,internal-errors}`
-  - per-module `contract.ts`, `middleware.ts`, `module.ts`, `repository.ts`, `router.ts`, `schemas.ts`
+- move the old owner logic into `services/hq-ops`
+- cut live consumers directly to `@rawr/hq-ops` root or thin HQ Ops module subpaths
+- delete the old owners honestly enough that the proof band can verify they are actually gone
 
-If this slice starts moving logic or rewiring consumers, it has failed its own boundary and is stealing work from `M1-U03`.
+This is not import cleanup. This is the authority collapse that makes later slices legitimate.
 
 ## Done Bar
 
 This slice is done only when all of the following are true:
 
-- `services/hq-ops` exists as one canonical service package, not four separate service roots
-- the package has the canonical Phase 1 service shell:
-  - `src/service/base.ts`
-  - `src/service/contract.ts`
-  - `src/service/impl.ts`
-  - `src/service/router.ts`
-  - thin `src/client.ts`, `src/router.ts`, `src/index.ts`
-- placeholder seams exist for:
-  - `src/service/modules/config/`
-  - `src/service/modules/repo-state/`
-  - `src/service/modules/journal/`
-  - `src/service/modules/security/`
-- the public package boundary still matches `services/example-todo`:
-  - `.`
-  - `./router`
-  - `./service/contract`
-- the package shape is structurally proven by `verify-hq-ops-service-shape`
-- no production logic has moved and no consumer has been rewired yet
+- no live imports remain from `@rawr/control-plane`, `@rawr/state`, `@rawr/journal`, or `@rawr/security`
+- `services/hq-ops` owns the migrated config, repo-state, journal, and security code
+- active CLI, server, plugin, and tooling consumers cut directly to `@rawr/hq-ops` root or explicit thin subpaths
+- the old owners are removed from the live lane instead of being preserved as wrappers
+- continuity proof exists for:
+  - config validation / layered config merge behavior
+  - repo-state locking and mutation behavior
+  - journal search / snippet write behavior
+  - security gate / report behavior
+- the HQ stack still comes up cleanly with observability required and the archived false-future routes still stay dead
 
 ## Canonical References
 
@@ -53,118 +42,116 @@ Read these before starting or resuming:
 1. [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md)
 2. [workflow.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/workflow.md)
 3. [M1-authority-collapse.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/milestones/M1-authority-collapse.md)
-4. [M1-U02-reserve-hq-ops-seam.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U02-reserve-hq-ops-seam.md)
+4. [M1-U03-migrate-hq-ops-and-rewire-consumers.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U03-migrate-hq-ops-and-rewire-consumers.md)
 5. [RAWR_Canonical_Architecture_Spec.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_Canonical_Architecture_Spec.md)
-6. [RAWR_P1_Architecture_Migration_Plan.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_P1_Architecture_Migration_Plan.md)
+6. [guidance.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/orpc-ingest-domain-packages/guidance.md)
+7. [DECISIONS.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/orpc-ingest-domain-packages/DECISIONS.md)
 
 ## Relevant Surfaces
 
-Primary target:
+Canonical destination:
 
 - `services/hq-ops/`
 
-Required shell files:
+Old owners being collapsed:
 
-- `services/hq-ops/package.json`
-- `services/hq-ops/src/service/base.ts`
-- `services/hq-ops/src/service/contract.ts`
-- `services/hq-ops/src/service/impl.ts`
-- `services/hq-ops/src/service/router.ts`
-- `services/hq-ops/src/client.ts`
-- `services/hq-ops/src/router.ts`
-- `services/hq-ops/src/index.ts`
-- `services/hq-ops/src/service/shared/README.md`
-- `services/hq-ops/src/service/shared/errors.ts`
-- `services/hq-ops/src/service/shared/internal-errors.ts`
+- `packages/control-plane/`
+- `services/state/`
+- `packages/journal/`
+- `packages/security/`
 
-Reserved module seams:
+Live consumer zones:
 
-- `services/hq-ops/src/service/modules/config/`
-- `services/hq-ops/src/service/modules/repo-state/`
-- `services/hq-ops/src/service/modules/journal/`
-- `services/hq-ops/src/service/modules/security/`
+- `apps/server/src/bootstrap.ts`
+- `apps/server/src/host-satisfiers.ts`
+- `apps/server/test/{rawr.test.ts,storage-lock-route-guard.test.ts}`
+- `apps/cli/src/index.ts`
+- `apps/cli/src/commands/config/*`
+- `apps/cli/src/commands/journal/*`
+- `apps/cli/src/commands/reflect.ts`
+- `apps/cli/src/commands/workflow/{forge-command,harden}.ts`
+- `plugins/api/state/src/*`
+- `plugins/cli/plugins/src/commands/plugins/sync/sources/*`
+- `plugins/cli/plugins/src/commands/plugins/web/*`
+- `plugins/cli/plugins/src/lib/{factory,security}.ts`
+- `packages/agent-sync/src/lib/{layered-config,targets}.ts`
+- `packages/hq/src/{scaffold/factory.ts,security/module.ts}`
 
-Expected proof surface:
+Proof / workspace wiring that must change with the cut:
 
-- `scripts/phase-1/verify-hq-ops-service-shape.mjs`
-
-Exact shell model:
-
-- `services/example-todo/package.json`
-- `services/example-todo/src/index.ts`
-- `services/example-todo/src/client.ts`
-- `services/example-todo/src/router.ts`
-- `services/example-todo/src/service/base.ts`
-- `services/example-todo/src/service/contract.ts`
-- `services/example-todo/src/service/impl.ts`
-- `services/example-todo/src/service/router.ts`
-- `services/example-todo/src/service/shared/`
-- `services/example-todo/src/service/modules/*`
+- `scripts/phase-1/verify-no-old-operational-packages.mjs`
 - `vitest.config.ts`
-
-Secondary workspace-target prior art only:
-
-- `services/state/package.json`
+- root `package.json`
 - `tools/architecture-inventory/node-4-extracted-seams.json`
 
 ## Key Insights Already Established
 
-- Phase 1 explicitly wants one service package with internal modules, not sibling services like `services/hq-ops-config` or `services/hq-ops-journal`.
-- `services/example-todo` is the exact shell model, including thin package exports, shared anchors, and per-module `repository.ts` / `schemas.ts` files.
-- `services/state` is not the shell model for U02. It is only useful for matching existing workspace targets like `sync`, `structural`, and structural-tranche inventory tagging.
-- U02 is a reservation slice. Placeholder module seams are required; real logic movement belongs to `M1-U03`.
-- Exact shell fidelity means no widened public exports in U02. The reserved modules stay internal for now.
-- Exact shell fidelity also means giving `hq-ops` a dedicated `vitest.config.ts` project entry, like `example-todo`.
-- The ledger already points the eventual moves here:
-  - `packages/control-plane` -> `services/hq-ops/config`
-  - `services/state` -> `services/hq-ops/repo-state`
-  - `packages/journal` -> `services/hq-ops/journal`
-  - `packages/security` -> `services/hq-ops/security`
-- Because U02 sits immediately after the U01 archive cut, it must not reintroduce any deleted topology or old authority while creating the new seam.
+- `services/example-todo` remains the exact shell model for the service package itself; U03 must not blow up the root boundary just because four old owners are being folded in.
+- The honest public boundary for U03 is:
+  - package root stays thin (`createClient`, `router`, `Client`, `Router`)
+  - service contract stays at `./service/contract`
+  - migrated operational support APIs land on thin subpaths only:
+    - `@rawr/hq-ops/config`
+    - `@rawr/hq-ops/repo-state`
+    - `@rawr/hq-ops/journal`
+    - `@rawr/hq-ops/security`
+- `repo-state` is the only currently live transport-facing service surface among the old owners. Its service contract/client move into HQ Ops while the other three owners move as support APIs inside the same package.
+- `packages/hq` is not deleted in this slice, but any of its live imports from old operational owners must still be rewired now so U03 can actually eliminate those owners.
+- No compatibility owner packages should survive this slice. If an API is still needed, it belongs in `services/hq-ops`, not behind a new alias package.
 
 ## Invariants and User Constraints
 
-- Stay in the single existing worktree only.
-- Work on `agent-FARGO-M1-U02-reserve-hq-ops-seam`.
-- Do not move production logic in this slice.
-- Do not rewire consumers in this slice.
-- Do not silently let seam reservation become partial migration.
-- Keep `context.md` current-issue-only and replace it again before U03.
-- Prefer Narsil for code-intel questions, but remember the indexed primary tree is `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template`.
-- After the next commit, move that primary tree to the new U02 commit and reindex if needed.
-- Use agents for review/verification only, not for semantic seam design.
+- Stay in this single worktree only.
+- Work on `agent-FARGO-M1-U03-migrate-hq-ops-and-rewire-consumers`.
+- Keep the milestone packet as execution authority and the architecture spec as canonical architecture truth.
+- Keep `context.md` current-issue-only and replace it again before U04.
+- Use Narsil for structural code-intel where helpful, but remember the indexed primary tree is `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template` and must be advanced after the next commit.
+- Use agents for review and bounded validation, not for semantic migration decisions.
+- Before committing code changes, have an agent validate the managed HQ stack with:
+  - `bun run rawr hq up --observability required --open none`
+  - status / health checks
+  - log inspection
+  - confirmation that first-party state still works
+  - confirmation that archived coordination/support-example routes still return `404`
 
 ## Verification Bar
 
 Run at minimum:
 
 - `bun run sync:check`
-- `bun --cwd services/hq-ops run typecheck`
-- `bun scripts/phase-1/verify-hq-ops-service-shape.mjs`
+- `bun run lint:boundaries`
+- `bun --cwd apps/server run typecheck`
+- `bun --cwd apps/cli run typecheck`
+- `bun --cwd plugins/cli/plugins run typecheck`
+- `bun --cwd packages/agent-sync run typecheck`
+- `bun --cwd apps/server run test`
+- `bun --cwd apps/cli run test`
+- `bun --cwd plugins/cli/plugins run test`
+- `bun scripts/phase-1/verify-no-old-operational-packages.mjs`
+- `rg -n '@rawr/(control-plane|state|journal|security)\\b' apps packages plugins services -g '!**/dist/**' -g '!**/node_modules/**'`
 
-Add adjacent checks only if the new package wiring forces them.
+Add targeted package-local HQ Ops tests as the migrated code lands.
 
 ## Current Status
 
-- The branch is `agent-FARGO-M1-U02-reserve-hq-ops-seam`.
-- It has been restacked on top of U01 after the `dab1b3d4` proof-band repair.
-- `context.md` has now been swapped from U01 to U02.
-- `services/hq-ops` does not exist yet.
-- `services/hq-ops` now exists with the canonical reservation shell, dedicated Vitest project, service-shape verifier, and structural-suite registration.
-- Local checks already passing:
-  - `bun run --cwd services/hq-ops typecheck`
-  - `bun run --cwd services/hq-ops test`
-  - `bun scripts/phase-1/verify-hq-ops-service-shape.mjs`
-  - `bun run sync:check --project @rawr/hq-ops`
-  - `bun run --cwd services/hq-ops structural`
-- Reservation shape now keeps the real `example-todo` assembly pattern:
-  - each module exposes one structural `reservation` procedure
-  - `module.ts` attaches `observability`, `analytics`, and `repository` through the canonical module-composition seam
-  - `src/client.ts` keeps the direct `defineServicePackage(router)` boundary with no cast workaround
-- Peer reviews are running on the implementation, and HQ stack validation has been delegated before commit.
+- Branch is `agent-FARGO-M1-U03-migrate-hq-ops-and-rewire-consumers`.
+- U03 code motion is complete:
+  - `services/hq-ops` owns config, repo-state, journal, and security
+  - live consumers cut to HQ Ops root or thin subpaths
+  - `packages/control-plane`, `services/state`, `packages/journal`, and `packages/security` are gone from the live tree
+- Proof upgrades also landed:
+  - direct HQ Ops security cwd propagation tests
+  - stronger CLI journal tail coverage
+  - hard delete verification for old owner roots
+  - stale Phase D/F proofs retargeted to the archived-coordination and HQ Ops reality
+- Review findings were incorporated:
+  - CLI security path no longer goes through `@rawr/hq/security`
+  - plugin/web security gating passes the discovered workspace root into HQ Ops
+  - the managed HQ stack came back healthy after one restart during validation
 
 ## Immediate Next Actions
 
-1. Consume the peer-review findings and fix any real fidelity or honesty issues they surface.
-2. Consume the HQ runtime-validation result and fix anything it finds before commit.
-3. If both are clean, update the milestone + issue checkboxes/traceability, run final verification once more, then commit the U02 slice and refresh `context.md` for the next issue.
+1. Commit the U03 slice with the completed paper trail.
+2. Run `gt ss --draft` to refresh the stack PR.
+3. Move the primary Narsil tree to the new U03 commit and let it reindex.
+4. Replace `context.md` for `M1-U04` before starting the next slice.

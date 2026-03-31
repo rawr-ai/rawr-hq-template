@@ -27,5 +27,5 @@ if bun run --silent rawr -- security check --staged >/dev/null 2>&1; then
   exit 0
 fi
 
-bun run --cwd packages/security security:check --quiet
+bun run --cwd services/hq-ops security:check --quiet
 echo "[rawr-pre-commit] rawr unavailable; skipped plugin status check"

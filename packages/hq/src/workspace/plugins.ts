@@ -84,6 +84,10 @@ async function listLeafPluginDirsUnder(root: string, discoveryRoot: WorkspacePlu
   return out;
 }
 
+function hasWorkspacePluginContract(manifest: unknown): boolean {
+  return typeof manifest === "object" && manifest !== null && !Array.isArray(manifest) && "rawr" in manifest;
+}
+
 async function listWorkspacePluginPackageDirs(workspaceRoot: string): Promise<WorkspacePluginDir[]> {
   const pluginsDir = path.join(workspaceRoot, "plugins");
 
@@ -122,6 +126,8 @@ export async function listWorkspacePlugins(workspaceRoot: string): Promise<Works
       const detail = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to parse plugin manifest ${pkgJsonPath}: ${detail}`);
     }
+
+    if (!hasWorkspacePluginContract(parsedPackageJson)) continue;
 
     const parsed = parseWorkspacePluginManifest({
       manifest: parsedPackageJson,

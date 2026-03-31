@@ -34,6 +34,15 @@ export async function mustExist(relPath) {
   }
 }
 
+export async function pathExists(relPath) {
+  try {
+    await fs.access(path.join(root, relPath));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function readFile(relPath) {
   const absPath = path.join(root, relPath);
   return fs.readFile(absPath, "utf8");

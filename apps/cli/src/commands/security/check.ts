@@ -1,6 +1,7 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
 import { loadSecurityModule, missingSecurityFn } from "../../lib/security";
+import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class SecurityCheck extends RawrCommand {
   static description = "Run security checks";
@@ -25,7 +26,8 @@ export default class SecurityCheck extends RawrCommand {
       return;
     }
 
-    const report = await securityCheck({ mode });
+    const workspaceRoot = await findWorkspaceRoot(process.cwd());
+    const report = await securityCheck({ mode, cwd: workspaceRoot ?? process.cwd() });
 
     const result = this.ok({ report });
     this.outputResult(result, {

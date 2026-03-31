@@ -20,17 +20,50 @@ export {
   createServiceObservabilityMiddleware as createProcedureObservability,
 } from "../../base";
 
-/** Intentional scaffold placeholder for the module's generic observability export. */
-export const observability = createServiceObservabilityMiddleware({});
-
-/** Intentional scaffold placeholder for the module's generic analytics export. */
-export const analytics = createServiceAnalyticsMiddleware({});
-
 /** Standalone repository provider attached at module scope in `module.ts`. */
-export const repository = createServiceProvider().middleware<{
+export const repository = createServiceProvider<{
+  scope: {
+    repoRoot: string;
+  };
+}>().middleware<{
   repo: ReturnType<typeof createRepository>;
-}>(async ({ next }) => {
+}>(async ({ context, next }) => {
   return next({
-    repo: createRepository(),
+    repo: createRepository(context.scope.repoRoot),
   });
+});
+
+/** Module-local observability middleware attached by `repo-state/module.ts`. */
+export const observability = createServiceObservabilityMiddleware({
+  spanAttributes: ({ context }) => ({
+    module: "repo-state",
+    repo_root: context.scope.repoRoot,
+    invocation_trace_id: context.invocation.traceId,
+  }),
+  onStart: ({ span, context, pathLabel }) => {
+    span?.addEvent("hq-ops.repo-state.module.observed", {
+      module: "repo-state",
+      path: pathLabel,
+      repo_root: context.scope.repoRoot,
+    });
+    context.deps.logger.info("hq-ops.repo-state.module", {
+      layer: "module",
+      module: "repo-state",
+      path: pathLabel,
+      repoRoot: context.scope.repoRoot,
+      invocationTraceId: context.invocation.traceId,
+    });
+  },
+});
+
+/** Module-local analytics middleware attached by `repo-state/module.ts`. */
+export const analytics = createServiceAnalyticsMiddleware({
+  payload: ({ context, pathLabel, outcome }) => ({
+    analytics_layer: "module",
+    analytics_module: "repo-state",
+    analytics_path: pathLabel,
+    analytics_outcome: outcome,
+    analytics_repo_root: context.scope.repoRoot,
+    analytics_trace_id: context.invocation.traceId,
+  }),
 });

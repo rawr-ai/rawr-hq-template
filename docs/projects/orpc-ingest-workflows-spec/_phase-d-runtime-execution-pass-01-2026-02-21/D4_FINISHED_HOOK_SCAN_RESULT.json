@@ -1,39 +1,24 @@
 {
   "criterion": "d4-finished-hook-scan",
-  "triggerRule": "state-mutating or external finished-hook side effects without explicit idempotent/non-critical contract",
+  "triggerRule": "archived finished-hook coordination lane must not reappear in the live tree",
   "triggered": false,
-  "summary": "No finished-hook guardrail drift detected in D2-owned contract/runtime assertions.",
+  "summary": "Archived coordination finished-hook surfaces remain absent from the live tree.",
   "checks": [
     {
-      "id": "types-finalization-contract",
-      "message": "types.ts encodes non-exactly-once + idempotent/non-critical finalization contract",
-      "pass": true
-    },
-    {
-      "id": "schemas-finalization-contract",
-      "message": "schemas.ts exposes additive optional finalization contract",
-      "pass": true
-    },
-    {
-      "id": "adapter-guardrails",
-      "message": "workflow plugin inngest.ts executes finished-hook side effects through guardrails",
-      "pass": true
-    },
-    {
-      "id": "adapter-non-critical-failure",
-      "message": "workflow plugin inngest.ts captures failed finished-hook outcomes without escalating run failure",
-      "pass": true
-    },
-    {
-      "id": "runtime-router-fallback-contract",
-      "message": "coordination run module queue fallback includes explicit finalization contract",
-      "pass": true
-    },
-    {
-      "id": "guardrails-runtime-tests",
-      "message": "runtime tests assert non-critical/idempotent finished-hook behavior",
+      "id": "archived-finished-hook-lane-removed",
+      "message": "archived coordination finished-hook sources must stay out of the live tree",
       "pass": true
     }
   ],
-  "failedCheckIds": []
+  "failedCheckIds": [],
+  "archivedPathStates": [
+    {
+      "relPath": "services/coordination",
+      "exists": false
+    },
+    {
+      "relPath": "plugins/workflows/coordination",
+      "exists": false
+    }
+  ]
 }

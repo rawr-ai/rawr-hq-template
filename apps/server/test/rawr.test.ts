@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { minifyContractRouter } from "@orpc/contract";
 import { describe, expect, it } from "vitest";
-import { enablePlugin } from "@rawr/state/repo-state";
+import { enablePlugin } from "@rawr/hq-ops/repo-state";
 import { createServerApp } from "../src/app";
 import { registerOrpcRoutes } from "../src/orpc";
 import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";

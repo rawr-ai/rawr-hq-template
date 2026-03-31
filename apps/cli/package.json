@@ -9,14 +9,11 @@
     "@oclif/plugin-plugins": "^5.4.36",
     "@orpc/client": "^1.13.5",
     "@rawr/agent-sync": "workspace:*",
-    "@rawr/control-plane": "workspace:*",
     "@rawr/core": "workspace:*",
     "@rawr/hq": "workspace:*",
-    "@rawr/journal": "workspace:*",
+    "@rawr/hq-ops": "workspace:*",
     "@rawr/orpc-client": "workspace:*",
     "@rawr/plugin-plugins": "workspace:*",
-    "@rawr/state": "workspace:*",
-    "@rawr/security": "workspace:*",
     "zod": "^3.24.3"
   },
   "devDependencies": {

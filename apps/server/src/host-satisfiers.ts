@@ -1,7 +1,7 @@
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
-import { createClient as createStateClient, type Client as StateClient } from "@rawr/state";
+import { createClient as createStateClient, type Client as StateClient } from "@rawr/hq-ops";
 type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
 type StateBoundary = Parameters<typeof createStateClient>[0];
 

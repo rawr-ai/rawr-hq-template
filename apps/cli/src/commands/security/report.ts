@@ -17,9 +17,10 @@ export default class SecurityReport extends RawrCommand {
 
     const security = await loadSecurityModule();
     const getSecurityReport = security.getSecurityReport;
+    const workspaceRoot = await findWorkspaceRoot(process.cwd());
     const report =
       typeof getSecurityReport === "function"
-        ? await getSecurityReport({ cwd: process.cwd() })
+        ? await getSecurityReport({ cwd: workspaceRoot ?? process.cwd() })
         : await readLatestReportFromDisk();
     const result = this.ok({ report });
     this.outputResult(result, {

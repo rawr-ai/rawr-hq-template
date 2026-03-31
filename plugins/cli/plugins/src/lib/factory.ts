@@ -100,7 +100,7 @@ export function renderWorkflowSource(input: { name: string; description: string 
   const className = toPascalCase(["workflow", input.name]);
   return `import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { journalId, safePreview, writeSnippet, type JournalSnippet } from "@rawr/journal";
+import { journalId, safePreview, writeSnippet, type JournalSnippet } from "@rawr/hq-ops/journal";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class ${className} extends RawrCommand {

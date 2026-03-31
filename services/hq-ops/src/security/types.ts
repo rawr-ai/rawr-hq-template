@@ -62,6 +62,7 @@ export type GateEnableInput = {
   pluginId: string;
   riskTolerance: RiskTolerance;
   mode: SecurityMode;
+  cwd?: string;
 };
 
 export type GateEnableResult = {
