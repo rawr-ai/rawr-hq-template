@@ -6,7 +6,7 @@ Phase 1 is an authority-collapse plateau, not a substrate-building plateau. This
 
 ## Live lane
 
-These are the surfaces that remain live in Phase 1 without being treated as parked or already reclassified. They may evolve, but they must evolve inside the M1 guardrails.
+These are the minimum concrete Phase 1 surfaces that remain live without being treated as parked or already reclassified. This ledger is intentionally narrow: it records the hardened M1 execution set, not the entire repo inventory.
 
 ```json
 [
@@ -14,18 +14,8 @@ These are the surfaces that remain live in Phase 1 without being treated as park
   "apps/hq",
   "apps/server",
   "apps/web",
-  "services/chatgpt-corpus",
   "services/example-todo",
   "packages/agent-sync",
-  "packages/bootgraph",
-  "packages/core",
-  "packages/hq-sdk",
-  "packages/orpc-client",
-  "packages/runtime-context",
-  "packages/session-tools",
-  "packages/test-utils",
-  "packages/ui-sdk",
-  "plugins/agents/nx",
   "plugins/cli/chatgpt-corpus",
   "plugins/cli/hello",
   "plugins/cli/plugins",
@@ -50,7 +40,7 @@ These are Phase 1 false-future or dead-lane surfaces. They still exist in the ha
 
 ## Parked lane
 
-These surfaces remain present for continuity during Phase 1, but they are frozen. Work here is limited to deletions, rewires, compile fixes, and explicit unblockers while later M1 slices replace them with canonical homes.
+These surfaces remain present for continuity during Phase 1, but they are frozen. Work here is limited to deletions, rewires, compile fixes, and explicit unblockers while later M1 slices replace or remove them.
 
 ```json
 [

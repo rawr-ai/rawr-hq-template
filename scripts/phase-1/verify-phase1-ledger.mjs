@@ -15,7 +15,6 @@ const classified = new Set([
 
 const requiredApps = ["apps/cli", "apps/hq", "apps/server", "apps/web"];
 const requiredServices = [
-  "services/chatgpt-corpus",
   "services/coordination",
   "services/example-todo",
   "services/state",
@@ -23,18 +22,10 @@ const requiredServices = [
 ];
 const requiredPackages = [
   "packages/agent-sync",
-  "packages/bootgraph",
   "packages/control-plane",
-  "packages/core",
   "packages/hq",
-  "packages/hq-sdk",
   "packages/journal",
-  "packages/orpc-client",
-  "packages/runtime-context",
   "packages/security",
-  "packages/session-tools",
-  "packages/test-utils",
-  "packages/ui-sdk",
 ];
 const requiredParked = ["plugins/agents/hq", "plugins/api/example-todo", "plugins/api/state"];
 const requiredArchived = [
@@ -112,23 +103,17 @@ for (const command of [
 }
 
 const actualApps = await listDirectChildDirs("apps");
-const actualServices = await listDirectChildDirs("services");
-const actualPackages = await listDirectChildDirs("packages");
 const actualPluginApi = await listDirectChildDirs("plugins/api");
 const actualPluginCli = await listDirectChildDirs("plugins/cli");
 const actualPluginWeb = await listDirectChildDirs("plugins/web");
 const actualPluginWorkflows = await listDirectChildDirs("plugins/workflows");
-const actualPluginAgents = await listDirectChildDirs("plugins/agents");
 
 for (const relPath of [
   ...actualApps,
-  ...actualServices,
-  ...actualPackages,
   ...actualPluginApi,
   ...actualPluginCli,
   ...actualPluginWeb,
   ...actualPluginWorkflows,
-  ...actualPluginAgents,
 ]) {
   assertCondition(classified.has(relPath), `ledger must classify inventory surface ${relPath}`);
 }
