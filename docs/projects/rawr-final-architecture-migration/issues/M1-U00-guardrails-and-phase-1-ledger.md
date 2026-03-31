@@ -97,27 +97,6 @@ Use the current repo inventory as the evidence base:
 - [Testing / Verification](#testing--verification)
 - [Dependencies / Notes](#dependencies--notes)
 
-### Prework Results (Resolved)
-The ledger should be structured around the exact Phase 1 control surface, not as a generic repo inventory. The minimum heading set that matches the current repo shape is:
-- `Source-of-truth order`
-- `Phase 1 lane rules`
-- `Surface classification`
-- `Verification map`
-- `Slice closure log`
-- `Parked-lane freeze`
-
-The minimum concrete surface inventory to classify comes directly from the current workspace and Nx project set:
-- Live/cutover surfaces: `apps/cli`, `apps/server`, `apps/hq`, `packages/control-plane`, `services/state`, `packages/journal`, `packages/security`, `packages/hq`, `packages/agent-sync`, `plugins/cli/plugins`, `plugins/api/example-todo`, `plugins/api/state`, `plugins/api/coordination`, `plugins/workflows/coordination`, `plugins/workflows/support-example`.
-- Explicit archive/removal targets: `services/coordination`, `services/support-example`, `plugins/agents/hq`, `plugins/api/coordination`, `plugins/workflows/coordination`, `plugins/workflows/support-example`.
-- Parked or later-phase-visible surfaces that need freeze treatment rather than redesign during Phase 1: `packages/bootgraph`, `packages/runtime-context`, `packages/hq-sdk`, `apps/web`, and unrelated plugin/app lanes that are not part of the authority-collapse plateau.
-
-The current verification integration points are already centralized:
-- Root `package.json` owns `sync:check` via `scripts/phase-03/verify-sync-check.mjs`.
-- Root `package.json` owns `lint:boundaries` across `apps services packages plugins`.
-- Existing per-project structural targets route through `scripts/phase-03/run-structural-suite.mjs` for `@rawr/server`, `@rawr/cli`, `@rawr/hq-app`, `@rawr/plugin-plugins`, `@rawr/state`, `@rawr/hq`, and `@rawr/coordination`.
-
-The least disruptive Phase 1 fit is to add a dedicated Phase 1 verifier fan-out under `scripts/phase-1/` and invoke it from root `sync:check`, while keeping `lint:boundaries` as the repo-wide import-boundary guard and reserving per-project `structural` targets for slices that actually touch those projects.
-
 ## Prework Prompt (Agent Brief)
 **Purpose:** Determine the exact ledger section structure, the minimum canonical surface set to classify, and how the new phase-1 verification scripts should hook into the existing repo verification flow.
 **Expected Output:** A short implementation note naming the ledger headings, the concrete surface inventory to classify, the current structural runner integration points, and the exact package/root scripts that should invoke the new phase-1 checks.
