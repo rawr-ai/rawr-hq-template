@@ -1,0 +1,108 @@
+# Phase 1 Ledger
+
+This ledger is the checked-in classifier for Milestone 1 of the final architecture migration. It records what is canonical and live, what is frozen in place, what is already treated as archived, and which current owners exist only as temporary residuals on the way to the canonical HQ lane.
+
+Phase 1 is an authority-collapse plateau, not a substrate-building plateau. This ledger exists so the repo can enforce that distinction mechanically instead of relying on memory or convention.
+
+## Live lane
+
+These are the surfaces that remain live in Phase 1 without being treated as parked or already reclassified. They may evolve, but they must evolve inside the M1 guardrails.
+
+```json
+[
+  "apps/cli",
+  "apps/hq",
+  "apps/server",
+  "apps/web",
+  "services/chatgpt-corpus",
+  "services/example-todo",
+  "packages/agent-sync",
+  "packages/bootgraph",
+  "packages/core",
+  "packages/hq-sdk",
+  "packages/orpc-client",
+  "packages/runtime-context",
+  "packages/session-tools",
+  "packages/test-utils",
+  "packages/ui-sdk",
+  "plugins/agents/nx",
+  "plugins/cli/chatgpt-corpus",
+  "plugins/cli/hello",
+  "plugins/cli/plugins",
+  "plugins/cli/session-tools",
+  "plugins/web/mfe-demo"
+]
+```
+
+## Archived lane
+
+These are Phase 1 false-future or dead-lane surfaces. They still exist in the hardened starting state, but they are already treated as archived and must be removed from the live lane rather than extended.
+
+```json
+[
+  "services/coordination",
+  "plugins/api/coordination",
+  "plugins/workflows/coordination",
+  "services/support-example",
+  "plugins/workflows/support-example"
+]
+```
+
+## Parked lane
+
+These surfaces remain present for continuity during Phase 1, but they are frozen. Work here is limited to deletions, rewires, compile fixes, and explicit unblockers while later M1 slices replace them with canonical homes.
+
+```json
+[
+  "plugins/agents/hq",
+  "plugins/api/example-todo",
+  "plugins/api/state"
+]
+```
+
+## Reclassified / target homes
+
+These current owners are still present, but they are no longer treated as canonical truth. Their Phase 1 meaning is "move this authority into the recorded target home and then delete the residual owner."
+
+```json
+{
+  "services/state": "services/hq-ops/repo-state",
+  "packages/control-plane": "services/hq-ops/config",
+  "packages/journal": "services/hq-ops/journal",
+  "packages/security": "services/hq-ops/security",
+  "packages/hq": "packages/plugin-workspace plus purpose-named tooling boundaries from M1-U04"
+}
+```
+
+## Prohibited directions
+
+These are the Phase 1 rails that must not drift while the milestone is in flight.
+
+```json
+[
+  "No new work lands under plugins/api/* during Phase 1.",
+  "No new work lands under plugins/workflows/* during Phase 1.",
+  "coordination stays archived and out of the live lane.",
+  "support-example stays archived and out of the live lane.",
+  "The plugins/agents/hq marketplace compatibility lane stays frozen in place during Phase 1.",
+  "Live code must not add new @rawr/hq/* imports outside the recorded residual allowlist.",
+  "Live code must not add new imports from the recorded old operational owners outside the recorded residual allowlist.",
+  "Parked-lane edits are limited to deletions, rewires, compile fixes, and explicit unblockers."
+]
+```
+
+## Verification map
+
+These checks are the root-owned Phase 1 proof band introduced by `M1-U00`.
+
+```json
+{
+  "bun scripts/phase-1/verify-phase1-ledger.mjs": "Validate the ledger shape, required classifications, and inventory alignment.",
+  "bun scripts/phase-1/verify-no-live-coordination.mjs": "Keep coordination classified as archived only and prevent new coordination roots.",
+  "bun scripts/phase-1/verify-no-live-support-example.mjs": "Keep support-example classified as archived only and prevent new support-example roots.",
+  "bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs": "Freeze the current plugins/agents topology and keep plugins/agents/hq parked in place.",
+  "bun scripts/phase-1/verify-no-old-operational-packages.mjs": "Freeze the residual import surface for old operational owners until HQ Ops absorbs them.",
+  "bun scripts/phase-1/verify-no-legacy-hq-imports.mjs": "Freeze the residual @rawr/hq facade imports until M1-U04 removes them.",
+  "bun run phase-1:gates:baseline": "Run the initial root-owned Phase 1 guardrail band."
+}
+```

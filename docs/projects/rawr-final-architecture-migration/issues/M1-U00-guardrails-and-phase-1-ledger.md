@@ -1,7 +1,7 @@
 ---
 id: M1-U00
 title: "[M1] Establish guardrails and the Phase 1 ledger"
-state: planned
+state: done
 priority: 1
 estimate: 4
 project: rawr-final-architecture-migration
@@ -26,10 +26,10 @@ related_to: []
 - Freeze parked-lane edits to deletions, rewires, compile fixes, and explicit unblockers only.
 
 ## Acceptance Criteria
-- [ ] The ledger forbids new work in `plugins/api/*`, `plugins/workflows/*`, `coordination`, `support-example`, and old HQ package imports.
-- [ ] The ledger explicitly limits parked-lane edits to deletions, rewires, compile fixes, and explicit unblockers.
-- [ ] The ledger classifies the minimum concrete Phase 1 surface set and that classification is proven against repo inventory.
-- [ ] The initial Phase 1 structural checks exist and are wired into the repo as runnable commands/scripts.
+- [x] The ledger forbids new work in `plugins/api/*`, `plugins/workflows/*`, `coordination`, `support-example`, and old HQ package imports.
+- [x] The ledger explicitly limits parked-lane edits to deletions, rewires, compile fixes, and explicit unblockers.
+- [x] The ledger classifies the minimum concrete Phase 1 surface set and that classification is proven against repo inventory.
+- [x] The initial Phase 1 structural checks exist and are wired into the repo as runnable commands/scripts.
 
 ## Testing / Verification
 - `bun run sync:check`
@@ -47,6 +47,8 @@ related_to: []
 - Blocks: [M1-U01](./M1-U01-archive-false-futures.md).
 - Milestone: [M1: Collapse Authority onto the Canonical HQ Lane](../milestones/M1-authority-collapse.md).
 - This slice exists to make the repo tell the truth about the migration lane before semantic or runtime authority moves start.
+- Traceability: branch `agent-FARGO-M1-U00-guardrails-and-phase-1-ledger`.
+- Verification note: `bun run sync:check`, `bun run phase-1:gates:baseline`, and `bunx nx show projects` passed. `bun run lint:boundaries` still fails on the pre-existing `apps/server/src/host-composition.ts` module-boundary error plus two unused `eslint-disable` warnings in `apps/server/src/index.ts` and `apps/server/src/plugins.ts`.
 
 ---
 
@@ -130,3 +132,12 @@ Do not hide the Phase 1 proof band inside a single project target. The migration
 - [Acceptance Criteria](#acceptance-criteria)
 - [Testing / Verification](#testing--verification)
 - [Dependencies / Notes](#dependencies--notes)
+
+## Implementation Decisions
+
+### Make U00 checks enforce current-lane drift, not future-slice completion
+- **Context:** `M1-U00` must land passing root-owned Phase 1 checks before `M1-U01` archives `coordination` and `support-example`, `M1-U03` removes old operational owners, and `M1-U04` removes `@rawr/hq` facades.
+- **Options:** Make the new scripts fail on any current residual surface immediately; treat the scripts as scaffolds with no real enforcement until later; enforce the current Phase 1 lane now by classifying residual surfaces explicitly and failing on drift outside those recorded bounds.
+- **Choice:** Enforce the current Phase 1 lane now through the ledger plus explicit residual/allowlist checks, so the scripts pass on the hardened M1 starting state but fail if new drift or expansion appears.
+- **Rationale:** This matches the packet's sequencing. U00 freezes the lane first, while later issues remove the classified residuals and can tighten the checks as those cuts land.
+- **Risk:** If the allowlists are too broad, later slices could hide drift behind them. Keep them narrow, explicit, and tied to issue-by-issue removal.
