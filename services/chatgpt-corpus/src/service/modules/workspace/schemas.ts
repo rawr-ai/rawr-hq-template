@@ -1,8 +1,28 @@
-import { type Static, Type } from "typebox";
+import { type Static, Type, type TSchema } from "typebox";
+import {
+  ARTIFACT_OUTPUT_DIRECTORIES,
+  WORKSPACE_MANAGED_FILE_REFS,
+} from "../../../shared/layout";
+
+function literalUnion(values: readonly string[]): TSchema {
+  if (values.length === 1) return Type.Literal(values[0]!);
+  return Type.Union(values.map((value) => Type.Literal(value)) as unknown as [TSchema, TSchema, ...TSchema[]]);
+}
+
+const WorkspaceManagedFileIdSchema = literalUnion(WORKSPACE_MANAGED_FILE_REFS.map((file) => file.fileId));
+const ArtifactDirectoryIdSchema = literalUnion(ARTIFACT_OUTPUT_DIRECTORIES.map((directory) => directory.directoryId));
+
+export const WorkspaceDirectoryEntrySchema = Type.Object(
+  {
+    directoryId: ArtifactDirectoryIdSchema,
+    relativePath: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
 
 export const WorkspaceManagedFileSchema = Type.Object(
   {
-    fileId: Type.String({ minLength: 1 }),
+    fileId: WorkspaceManagedFileIdSchema,
     relativePath: Type.String({ minLength: 1 }),
     contents: Type.String(),
   },
@@ -11,7 +31,7 @@ export const WorkspaceManagedFileSchema = Type.Object(
 
 export const WorkspaceManagedFileRefSchema = Type.Object(
   {
-    fileId: Type.String({ minLength: 1 }),
+    fileId: WorkspaceManagedFileIdSchema,
     relativePath: Type.String({ minLength: 1 }),
   },
   { additionalProperties: false },
@@ -21,8 +41,14 @@ export const WorkspaceTemplateSchema = Type.Object(
   {
     requiredDirectories: Type.Array(Type.String({ minLength: 1 })),
     managedFiles: Type.Array(WorkspaceManagedFileSchema),
-    outputDirectories: Type.Array(Type.String({ minLength: 1 })),
-    outputFiles: Type.Array(Type.String({ minLength: 1 })),
+    outputDirectories: Type.Array(WorkspaceDirectoryEntrySchema),
+    outputFiles: Type.Array(Type.Object(
+      {
+        fileId: Type.String({ minLength: 1 }),
+        relativePath: Type.String({ minLength: 1 }),
+      },
+      { additionalProperties: false },
+    )),
   },
   { additionalProperties: false },
 );

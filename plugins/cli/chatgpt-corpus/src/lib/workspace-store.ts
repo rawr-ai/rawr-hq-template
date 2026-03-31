@@ -76,9 +76,9 @@ export function createFilesystemWorkspaceStore(): WorkspaceStore {
       return { createdEntries, existingEntries };
     },
 
-    async readSourceMaterials({ workspaceRef }) {
-      const conversationsDir = toAbsolutePath(workspaceRef, "source-material/conversations/raw-json");
-      const docsDir = toAbsolutePath(workspaceRef, "work/docs/source");
+    async readSourceMaterials({ workspaceRef, sourceDirectories }) {
+      const conversationsDir = toAbsolutePath(workspaceRef, sourceDirectories.conversations);
+      const docsDir = toAbsolutePath(workspaceRef, sourceDirectories.documents);
       const conversationPaths = await listFiles(conversationsDir, ".json");
       const documentPaths = await listFiles(docsDir, ".md");
 
@@ -99,8 +99,8 @@ export function createFilesystemWorkspaceStore(): WorkspaceStore {
     },
 
     async writeArtifactBundle({ workspaceRef, bundle }) {
-      for (const relativeDir of bundle.outputDirectories) {
-        await fs.mkdir(toAbsolutePath(workspaceRef, relativeDir), { recursive: true });
+      for (const directory of bundle.outputDirectories) {
+        await fs.mkdir(toAbsolutePath(workspaceRef, directory.relativePath), { recursive: true });
       }
 
       for (const file of bundle.files) {
@@ -110,6 +110,10 @@ export function createFilesystemWorkspaceStore(): WorkspaceStore {
       }
 
       return {
+        outputDirectories: bundle.outputDirectories.map((directory) => ({
+          directoryId: directory.directoryId,
+          relativePath: directory.relativePath,
+        })),
         writtenEntries: bundle.files.map(({ fileId, relativePath }) => ({
           fileId,
           relativePath,

@@ -5,7 +5,7 @@ import { module } from "./module";
 const readSnapshot = module.readSnapshot.handler(async ({ context }) => {
   try {
     const materials = await context.repo.readSourceMaterials();
-    const snapshot = buildSourceSnapshot(context.workspaceRef, materials);
+    const snapshot = await buildSourceSnapshot(context.workspaceRef, materials);
 
     return {
       workspaceRef: context.workspaceRef,

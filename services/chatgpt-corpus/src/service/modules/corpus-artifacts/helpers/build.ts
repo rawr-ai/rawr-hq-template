@@ -1,18 +1,28 @@
 import type { WorkspaceArtifactBundle } from "../../../../orpc/ports/workspace-store";
-import { OUTPUT_DIRECTORIES } from "../../workspace/helpers/template";
+import {
+  ARTIFACT_OUTPUT_DIRECTORIES,
+  SOURCE_MATERIAL_DIRECTORIES,
+  STATIC_ARTIFACT_FILE_REFS,
+  createNormalizedThreadArtifactRef,
+} from "../../../../shared/layout";
 import type {
   JsonConversationMessage,
+  JsonConversationSourceRecord,
   SourceRecord,
   SourceSnapshot,
 } from "../../source-materials/schemas";
 import type {
+  AmbiguityFlag,
   Anomaly,
   BuildArtifactsResult,
   FamilyGraph,
+  IntermediateGraph,
+  InventoryItem,
+  Manifest,
+  NormalizedThread,
   Relationship,
+  ValidationReport,
 } from "../schemas";
-
-type NormalizedThread = Record<string, unknown>;
 
 type BuiltArtifacts = {
   result: BuildArtifactsResult;
@@ -96,67 +106,69 @@ function confidenceForEdge(input: {
 function buildWarnings(snapshot: SourceSnapshot): string[] {
   const warnings: string[] = [];
   if (snapshot.jsonRecords.length === 0) {
-    warnings.push("No conversation exports were found under source-material/conversations/raw-json.");
+    warnings.push(`No conversation exports were found under ${SOURCE_MATERIAL_DIRECTORIES.conversations}.`);
   }
   if (snapshot.markdownDocCount === 0) {
-    warnings.push("No curated Markdown source docs were found under work/docs/source.");
+    warnings.push(`No curated Markdown source docs were found under ${SOURCE_MATERIAL_DIRECTORIES.documents}.`);
   }
   return warnings;
 }
 
-function buildInventory(records: SourceRecord[]): Array<Record<string, unknown>> {
+function buildInventory(records: SourceRecord[]): InventoryItem[] {
   return records.map((record) => {
-    const base: Record<string, unknown> = {
+    if (record.type === "json_conversation") {
+      return {
+        source_id: record.sourceId,
+        type: "json_conversation",
+        path: record.relativePath,
+        filename: filename(record.relativePath),
+        hash_sha256: record.hash,
+        size_bytes: record.sizeBytes,
+        title: record.title,
+        summary: record.summary,
+        normalized_title: record.normalizedTitle,
+        branch_depth: record.branchDepth,
+        message_count: record.messages.length,
+        messages_hash_sha256: record.messagesHash,
+        created: record.created,
+        updated: record.updated,
+        exported: record.exported,
+        link: record.link,
+        first_prompt: record.messages.find((message) => message.role === "Prompt")?.say ?? "",
+        last_response: [...record.messages].reverse().find((message) => message.role === "Response")?.say ?? "",
+      };
+    }
+
+    return {
       source_id: record.sourceId,
-      type: record.type,
+      type: "markdown_document",
       path: record.relativePath,
       filename: filename(record.relativePath),
       hash_sha256: record.hash,
       size_bytes: record.sizeBytes,
       title: record.title,
       summary: record.summary,
-    };
-
-    if (record.type === "json_conversation") {
-      return {
-        ...base,
-        normalized_title: record.normalizedTitle,
-        branch_depth: record.branchDepth,
-        message_count: record.messages?.length ?? 0,
-        messages_hash: record.messagesHash,
-        created: record.created,
-        updated: record.updated,
-        exported: record.exported,
-        link: record.link,
-        first_prompt: record.messages?.find((message) => message.role === "Prompt")?.say ?? "",
-        last_response: [...(record.messages ?? [])].reverse().find((message) => message.role === "Response")?.say ?? "",
-      };
-    }
-
-    return {
-      ...base,
+      branch_depth: record.branchDepth,
       line_count: record.lineCount,
-      headings: record.headings ?? [],
+      headings: record.headings,
     };
   });
 }
 
-function detectAnomalies(jsonRecords: SourceRecord[]): Anomaly[] {
+function detectAnomalies(jsonRecords: JsonConversationSourceRecord[]): Anomaly[] {
   const anomalies: Anomaly[] = [];
-  const byHash = new Map<string, SourceRecord[]>();
-  const byMessagesHash = new Map<string, SourceRecord[]>();
-  const byLink = new Map<string, SourceRecord[]>();
+  const byHash = new Map<string, JsonConversationSourceRecord[]>();
+  const byMessagesHash = new Map<string, JsonConversationSourceRecord[]>();
+  const byLink = new Map<string, JsonConversationSourceRecord[]>();
 
   for (const record of jsonRecords) {
     const hashBucket = byHash.get(record.hash) ?? [];
     hashBucket.push(record);
     byHash.set(record.hash, hashBucket);
 
-    if (record.messagesHash) {
-      const messageBucket = byMessagesHash.get(record.messagesHash) ?? [];
-      messageBucket.push(record);
-      byMessagesHash.set(record.messagesHash, messageBucket);
-    }
+    const messageBucket = byMessagesHash.get(record.messagesHash) ?? [];
+    messageBucket.push(record);
+    byMessagesHash.set(record.messagesHash, messageBucket);
 
     if (record.link) {
       const linkBucket = byLink.get(record.link) ?? [];
@@ -164,7 +176,7 @@ function detectAnomalies(jsonRecords: SourceRecord[]): Anomaly[] {
       byLink.set(record.link, linkBucket);
     }
 
-    const messages = record.messages ?? [];
+    const messages = record.messages;
     if (messages.length === 0) {
       anomalies.push({
         anomaly_id: `anomaly-${slugify(filenameStem(record.relativePath))}-empty-conversation`,
@@ -237,7 +249,7 @@ function detectAnomalies(jsonRecords: SourceRecord[]): Anomaly[] {
   return anomalies;
 }
 
-function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
+function buildFamilyGraphs(jsonRecords: JsonConversationSourceRecord[]): FamilyGraph[] {
   const pairMetrics = new Map<string, {
     exactPrefixLen: number;
     fuzzyPrefixLen: number;
@@ -247,19 +259,17 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
     exactDuplicate: boolean;
   }>();
 
-  const keyForPair = (leftName: string, rightName: string) => [leftName, rightName].sort().join("::");
-  const namesToRecord = new Map(jsonRecords.map((record) => [filename(record.relativePath), record]));
+  const keyForPair = (leftId: string, rightId: string) => [leftId, rightId].sort().join("::");
+  const recordsById = new Map(jsonRecords.map((record) => [record.sourceId, record]));
 
   for (const left of jsonRecords) {
     for (const right of jsonRecords) {
-      const leftName = filename(left.relativePath);
-      const rightName = filename(right.relativePath);
-      if (leftName >= rightName) continue;
-      const leftMessages = left.messages ?? [];
-      const rightMessages = right.messages ?? [];
+      if (left.sourceId >= right.sourceId) continue;
+      const leftMessages = left.messages;
+      const rightMessages = right.messages;
       const leftFirstPrompt = leftMessages.find((message) => message.role === "Prompt")?.say ?? "";
       const rightFirstPrompt = rightMessages.find((message) => message.role === "Prompt")?.say ?? "";
-      pairMetrics.set(keyForPair(leftName, rightName), {
+      pairMetrics.set(keyForPair(left.sourceId, right.sourceId), {
         exactPrefixLen: sharedPrefix(leftMessages, rightMessages),
         fuzzyPrefixLen: sharedPrefix(leftMessages, rightMessages, true),
         sameLink: Boolean(left.link && left.link === right.link),
@@ -270,13 +280,13 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
     }
   }
 
-  const parent = new Map(jsonRecords.map((record) => [filename(record.relativePath), filename(record.relativePath)]));
+  const parent = new Map(jsonRecords.map((record) => [record.sourceId, record.sourceId]));
 
-  const find = (name: string): string => {
-    const current = parent.get(name);
-    if (!current || current === name) return name;
+  const find = (sourceId: string): string => {
+    const current = parent.get(sourceId);
+    if (!current || current === sourceId) return sourceId;
     const root = find(current);
-    parent.set(name, root);
+    parent.set(sourceId, root);
     return root;
   };
 
@@ -287,9 +297,9 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
   };
 
   for (const [pairKey, metrics] of pairMetrics.entries()) {
-    const [leftName, rightName] = pairKey.split("::");
+    const [leftSourceId, rightSourceId] = pairKey.split("::");
     if (metrics.sameNormalizedTitle || (metrics.sameFirstPrompt && metrics.exactPrefixLen >= 4)) {
-      union(leftName!, rightName!);
+      union(leftSourceId!, rightSourceId!);
     }
   }
 
@@ -303,31 +313,33 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
 
   const familyGraphs: FamilyGraph[] = [];
   const sortedGroups = [...groups.values()].sort((left, right) => left[0]!.localeCompare(right[0]!));
-  for (const memberNames of sortedGroups) {
-    const members = [...memberNames].sort((left, right) => left.localeCompare(right));
-    const memberRecords = members.map((name) => namesToRecord.get(name)!).filter(Boolean);
+  for (const memberSourceIds of sortedGroups) {
+    const memberRecords = [...memberSourceIds]
+      .sort((left, right) => left.localeCompare(right))
+      .map((sourceId) => recordsById.get(sourceId)!)
+      .filter(Boolean);
     const rootRecord = [...memberRecords].sort((left, right) => {
-      const leftTuple = [left.branchDepth, parseDate(left.created), left.messages?.length ?? 0, filename(left.relativePath)];
-      const rightTuple = [right.branchDepth, parseDate(right.created), right.messages?.length ?? 0, filename(right.relativePath)];
+      const leftTuple = [left.branchDepth, parseDate(left.created), left.messages.length, left.relativePath];
+      const rightTuple = [right.branchDepth, parseDate(right.created), right.messages.length, right.relativePath];
       return String(leftTuple).localeCompare(String(rightTuple));
     })[0]!;
 
-    const nonDuplicates: SourceRecord[] = [];
+    const nonDuplicates: JsonConversationSourceRecord[] = [];
     const duplicates = new Map<string, string>();
     for (const record of [...memberRecords].sort((left, right) => {
-      const leftTuple = [left.branchDepth, parseDate(left.created), left.messages?.length ?? 0, filename(left.relativePath)];
-      const rightTuple = [right.branchDepth, parseDate(right.created), right.messages?.length ?? 0, filename(right.relativePath)];
+      const leftTuple = [left.branchDepth, parseDate(left.created), left.messages.length, left.relativePath];
+      const rightTuple = [right.branchDepth, parseDate(right.created), right.messages.length, right.relativePath];
       return String(leftTuple).localeCompare(String(rightTuple));
     })) {
-      let duplicateTarget: SourceRecord | undefined;
+      let duplicateTarget: JsonConversationSourceRecord | undefined;
       for (const existing of nonDuplicates) {
-        const metrics = pairMetrics.get(keyForPair(filename(record.relativePath), filename(existing.relativePath)));
+        const metrics = pairMetrics.get(keyForPair(record.sourceId, existing.sourceId));
         if (metrics?.exactDuplicate) {
           duplicateTarget = existing;
           break;
         }
       }
-      if (duplicateTarget) duplicates.set(filename(record.relativePath), filename(duplicateTarget.relativePath));
+      if (duplicateTarget) duplicates.set(record.sourceId, duplicateTarget.sourceId);
       else nonDuplicates.push(record);
     }
 
@@ -347,10 +359,10 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
       classification[rootRecord.sourceId] = "root";
     }
 
-    const placed: SourceRecord[] = [rootRecord];
+    const placed: JsonConversationSourceRecord[] = [rootRecord];
     for (const record of nonDuplicates) {
       if (record.sourceId === rootRecord.sourceId) continue;
-      let bestParent: SourceRecord | undefined;
+      let bestParent: JsonConversationSourceRecord | undefined;
       let bestMetrics:
         | {
             exactPrefixLen: number;
@@ -364,7 +376,7 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
       let bestScore = -1;
 
       for (const candidate of placed) {
-        const metrics = pairMetrics.get(keyForPair(filename(record.relativePath), filename(candidate.relativePath)));
+        const metrics = pairMetrics.get(keyForPair(record.sourceId, candidate.sourceId));
         if (!metrics) continue;
         const score =
           metrics.exactPrefixLen * 100 +
@@ -397,8 +409,8 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
         confidence: confidenceForEdge({
           exactPrefixLen: fallbackMetrics.exactPrefixLen,
           fuzzyPrefixLen: fallbackMetrics.fuzzyPrefixLen,
-          childLen: record.messages?.length ?? 0,
-          parentLen: fallbackParent.messages?.length ?? 0,
+          childLen: record.messages.length,
+          parentLen: fallbackParent.messages.length,
           sameTitle: fallbackMetrics.sameNormalizedTitle,
           sameLink: fallbackMetrics.sameLink,
           sameFirstPrompt: fallbackMetrics.sameFirstPrompt,
@@ -415,13 +427,13 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
       });
     }
 
-    for (const [duplicateName, canonicalName] of duplicates.entries()) {
-      const duplicateRecord = namesToRecord.get(duplicateName)!;
+    for (const [duplicateSourceId, canonicalSourceId] of duplicates.entries()) {
+      const duplicateRecord = recordsById.get(duplicateSourceId)!;
       classification[duplicateRecord.sourceId] = "duplicate";
-      const metrics = pairMetrics.get(keyForPair(duplicateName, canonicalName))!;
+      const metrics = pairMetrics.get(keyForPair(duplicateSourceId, canonicalSourceId))!;
       edges.push({
         fromSourceId: duplicateRecord.sourceId,
-        toSourceId: namesToRecord.get(canonicalName)!.sourceId,
+        toSourceId: canonicalSourceId,
         type: "duplicate_of",
         confidence: 1,
         sharedPrefixLen: metrics.exactPrefixLen,
@@ -434,7 +446,7 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
       canonical_title: rootRecord.normalizedTitle ?? rootRecord.title,
       summary: rootRecord.summary,
       member_source_ids: memberRecords.map((record) => record.sourceId),
-      member_filenames: members,
+      member_filenames: memberRecords.map((record) => filename(record.relativePath)),
       root_source_id: rootRecord.sourceId,
       classification,
       edges: edges.map((edge) => ({
@@ -466,7 +478,7 @@ function buildRelationships(familyGraphs: FamilyGraph[]): Relationship[] {
 
 function buildUnifiedThread(
   family: FamilyGraph,
-  jsonRecordsById: Map<string, SourceRecord>,
+  jsonRecordsById: Map<string, JsonConversationSourceRecord>,
   anomalies: Anomaly[],
 ): NormalizedThread {
   const sourceLookup = new Map(family.member_source_ids.map((sourceId) => [sourceId, jsonRecordsById.get(sourceId)!]));
@@ -491,22 +503,22 @@ function buildUnifiedThread(
     if (!duplicateEdgesBySourceId.has(sourceId)) visit(sourceId);
   }
 
-  const nodes: Array<Record<string, unknown>> = [];
-  const graphEdges: Array<Record<string, unknown>> = [];
-  const branches: Array<Record<string, unknown>> = [];
-  const branchPoints: Array<Record<string, unknown>> = [];
+  const nodes: Array<NormalizedThread["nodes"][number]> = [];
+  const graphEdges: Array<NormalizedThread["edges"][number]> = [];
+  const branches: Array<NormalizedThread["branches"][number]> = [];
+  const branchPoints: Array<NormalizedThread["branch_points"][number]> = [];
   const representativeNodeId = new Map<string, string>();
   const sourcePathNodes = new Map<string, string[]>();
   const messageKey = (sourceId: string, index: number) => `${sourceId}:${index}`;
 
   const addMessageNodes = (
-    record: SourceRecord,
+    record: JsonConversationSourceRecord,
     divergenceIndex: number,
     parentSourceId?: string,
     branchPointId?: string,
   ) => {
     const branchNodes: string[] = [];
-    for (const [index, message] of (record.messages ?? []).entries()) {
+    for (const [index, message] of record.messages.entries()) {
       if (parentSourceId && index < divergenceIndex) {
         const inheritedNodeId = representativeNodeId.get(messageKey(parentSourceId, index))!;
         representativeNodeId.set(messageKey(record.sourceId, index), inheritedNodeId);
@@ -524,7 +536,7 @@ function buildUnifiedThread(
         source_file_id: record.sourceId,
         source_message_index: index,
         source_title: record.title,
-        source_link: record.link,
+        source_link: record.link ?? null,
       });
       if (parentSourceId && index === divergenceIndex && branchPointId) {
         graphEdges.push({
@@ -657,9 +669,13 @@ function buildUnifiedThread(
       title: record.title,
       classification: family.classification[record.sourceId],
       link: record.link ?? null,
-      message_count: record.messages?.length ?? 0,
+      message_count: record.messages.length,
     })),
-    source_links: [...new Set([...sourceLookup.values()].map((record) => record.link).filter(Boolean))].sort(),
+    source_links: [...new Set(
+      [...sourceLookup.values()]
+        .map((record) => record.link)
+        .filter((link): link is string => typeof link === "string" && link.length > 0),
+    )].sort(),
     summary: family.summary,
     nodes,
     edges: graphEdges,
@@ -670,11 +686,8 @@ function buildUnifiedThread(
       root_path_order: sourcePathNodes.get(family.root_source_id) ?? [],
       branch_orders: Object.fromEntries(
         branches
-          .filter((branch) => Array.isArray(branch.source_file_ids) && branch.source_file_ids.length > 0)
-          .map((branch) => {
-            const sourceId = (branch.source_file_ids as string[])[0]!;
-            return [branch.branch_id as string, sourcePathNodes.get(sourceId) ?? []];
-          }),
+          .filter((branch) => branch.source_file_ids.length > 0)
+          .map((branch) => [branch.branch_id, sourcePathNodes.get(branch.source_file_ids[0]!) ?? []]),
       ),
     },
     anomalies: familyAnomalies,
@@ -684,21 +697,19 @@ function buildUnifiedThread(
 function buildIntermediateGraph(
   normalizedThreads: NormalizedThread[],
   relationships: Relationship[],
-): Record<string, unknown> {
-  const nodes = normalizedThreads.flatMap((thread) => {
-    const threadId = String(thread.thread_id);
-    return ((thread.nodes as Array<Record<string, unknown>>) ?? []).map((node) => ({
-      thread_id: threadId,
+): IntermediateGraph {
+  const nodes = normalizedThreads.flatMap((thread) =>
+    thread.nodes.map((node) => ({
+      thread_id: thread.thread_id,
       ...node,
-    }));
-  });
-  const edges = normalizedThreads.flatMap((thread) => {
-    const threadId = String(thread.thread_id);
-    return ((thread.edges as Array<Record<string, unknown>>) ?? []).map((edge) => ({
-      thread_id: threadId,
+    })),
+  );
+  const edges = normalizedThreads.flatMap((thread) =>
+    thread.edges.map((edge) => ({
+      thread_id: thread.thread_id,
       ...edge,
-    }));
-  });
+    })),
+  );
   return {
     schema_version: "rawr.conversation-intermediate-graph.v1",
     generated_at: new Date().toISOString(),
@@ -709,12 +720,12 @@ function buildIntermediateGraph(
 }
 
 function buildManifest(input: {
-  inventory: Array<Record<string, unknown>>;
+  inventory: InventoryItem[];
   familyGraphs: FamilyGraph[];
   normalizedThreads: NormalizedThread[];
   relationships: Relationship[];
   anomalies: Anomaly[];
-}): Record<string, unknown> {
+}): Manifest {
   return {
     manifest_version: "rawr.conversation-corpus.v1",
     generated_at: new Date().toISOString(),
@@ -731,9 +742,9 @@ function buildManifest(input: {
     normalized_threads: input.normalizedThreads.map((thread) => ({
       thread_id: thread.thread_id,
       canonical_title: thread.canonical_title,
-      path: `work/generated/corpus/normalized-threads/${thread.thread_id}.json`,
-      branch_count: Array.isArray(thread.branches) ? thread.branches.length : 0,
-      anomaly_count: Array.isArray(thread.anomalies) ? thread.anomalies.length : 0,
+      path: createNormalizedThreadArtifactRef(thread.thread_id).relativePath,
+      branch_count: thread.branches.length,
+      anomaly_count: thread.anomalies.length,
     })),
     documents: input.inventory
       .filter((item) => item.type === "markdown_document")
@@ -752,8 +763,8 @@ function buildAmbiguityFlags(
   familyGraphs: FamilyGraph[],
   relationships: Relationship[],
   markdownDocCount: number,
-): Array<Record<string, unknown>> {
-  const flags: Array<Record<string, unknown>> = [];
+): AmbiguityFlag[] {
+  const flags: AmbiguityFlag[] = [];
   for (const relationship of relationships) {
     if (relationship.confidence < 0.85) {
       flags.push({
@@ -784,7 +795,7 @@ function buildAmbiguityFlags(
   if (markdownDocCount === 0) {
     flags.push({
       kind: "no_markdown_docs",
-      notes: "No curated Markdown source docs were present under work/docs/source.",
+      notes: `No curated Markdown source docs were present under ${SOURCE_MATERIAL_DIRECTORIES.documents}.`,
     });
   }
 
@@ -815,8 +826,8 @@ function buildDecisionLog(): string {
 
 ## Confirmed defaults
 
-- Raw conversation exports remain untouched in \`source-material/conversations/raw-json/\`.
-- Optional Markdown source docs live under \`work/docs/source/\`.
+- Raw conversation exports remain untouched in \`${SOURCE_MATERIAL_DIRECTORIES.conversations}/\`.
+- Optional Markdown source docs live under \`${SOURCE_MATERIAL_DIRECTORIES.documents}/\`.
 - All derived artifacts are written under \`work/generated/\`.
 - Conversation families are grouped by normalized title first, then by matching opening prompt plus shared prefix depth.
 - Root conversations are selected by shallower branch depth, earlier creation date when available, then shorter message history.
@@ -847,15 +858,15 @@ function buildMentalMap(familyGraphs: FamilyGraph[], anomalies: Anomaly[]): stri
 }
 
 function buildValidationReport(input: {
-  inventory: Array<Record<string, unknown>>;
+  inventory: InventoryItem[];
   familyGraphs: FamilyGraph[];
   normalizedThreads: NormalizedThread[];
-  manifest: Record<string, unknown>;
-}): Record<string, boolean> {
+  manifest: Manifest;
+}): ValidationReport {
   const jsonSourceIds = new Set(
     input.inventory
       .filter((item) => item.type === "json_conversation")
-      .map((item) => String(item.source_id)),
+      .map((item) => item.source_id),
   );
   const familySourceIds = new Set(input.familyGraphs.flatMap((family) => family.member_source_ids));
   const validation = {
@@ -872,78 +883,44 @@ function buildValidationReport(input: {
 }
 
 function createArtifactFiles(input: {
-  inventory: Array<Record<string, unknown>>;
+  inventory: InventoryItem[];
   familyGraphs: FamilyGraph[];
-  intermediateGraph: Record<string, unknown>;
-  manifest: Record<string, unknown>;
+  intermediateGraph: IntermediateGraph;
+  manifest: Manifest;
   anomalies: Anomaly[];
-  ambiguityFlags: Array<Record<string, unknown>>;
+  ambiguityFlags: AmbiguityFlag[];
   canonicalitySummary: string;
   decisionLog: string;
   mentalMap: string;
-  validationReport: Record<string, boolean>;
+  validationReport: ValidationReport;
   normalizedThreads: NormalizedThread[];
 }): WorkspaceArtifactBundle {
+  const staticFileContents = {
+    inventory: `${JSON.stringify(input.inventory, null, 2)}\n`,
+    familyGraphs: `${JSON.stringify(input.familyGraphs, null, 2)}\n`,
+    intermediateGraph: `${JSON.stringify(input.intermediateGraph, null, 2)}\n`,
+    manifest: `${JSON.stringify(input.manifest, null, 2)}\n`,
+    anomalies: `${JSON.stringify(input.anomalies, null, 2)}\n`,
+    ambiguityFlags: `${JSON.stringify(input.ambiguityFlags, null, 2)}\n`,
+    canonicalitySummary: `${input.canonicalitySummary.trimEnd()}\n`,
+    decisionLog: `${input.decisionLog.trimEnd()}\n`,
+    mentalMap: `${input.mentalMap.trimEnd()}\n`,
+    validationReport: `${JSON.stringify(input.validationReport, null, 2)}\n`,
+  } as const;
+
   const files = [
-    {
-      fileId: "inventory",
-      relativePath: "work/generated/corpus/inventory.json",
-      contents: `${JSON.stringify(input.inventory, null, 2)}\n`,
-    },
-    {
-      fileId: "familyGraphs",
-      relativePath: "work/generated/corpus/family-graphs.json",
-      contents: `${JSON.stringify(input.familyGraphs, null, 2)}\n`,
-    },
-    {
-      fileId: "intermediateGraph",
-      relativePath: "work/generated/corpus/intermediate-graph.json",
-      contents: `${JSON.stringify(input.intermediateGraph, null, 2)}\n`,
-    },
-    {
-      fileId: "manifest",
-      relativePath: "work/generated/corpus/corpus-manifest.json",
-      contents: `${JSON.stringify(input.manifest, null, 2)}\n`,
-    },
-    {
-      fileId: "anomalies",
-      relativePath: "work/generated/reports/anomalies.json",
-      contents: `${JSON.stringify(input.anomalies, null, 2)}\n`,
-    },
-    {
-      fileId: "ambiguityFlags",
-      relativePath: "work/generated/reports/ambiguity-flags.json",
-      contents: `${JSON.stringify(input.ambiguityFlags, null, 2)}\n`,
-    },
-    {
-      fileId: "canonicalitySummary",
-      relativePath: "work/generated/reports/canonicality-summary.md",
-      contents: `${input.canonicalitySummary.trimEnd()}\n`,
-    },
-    {
-      fileId: "decisionLog",
-      relativePath: "work/generated/reports/decision-log.md",
-      contents: `${input.decisionLog.trimEnd()}\n`,
-    },
-    {
-      fileId: "mentalMap",
-      relativePath: "work/generated/reports/mental-map.md",
-      contents: `${input.mentalMap.trimEnd()}\n`,
-    },
-    {
-      fileId: "validationReport",
-      relativePath: "work/generated/reports/validation-report.json",
-      contents: `${JSON.stringify(input.validationReport, null, 2)}\n`,
-    },
+    ...STATIC_ARTIFACT_FILE_REFS.map((file) => ({
+      ...file,
+      contents: staticFileContents[file.fileId],
+    })),
     ...input.normalizedThreads.map((thread) => ({
-      fileId: `normalizedThread:${String(thread.thread_id)}`,
-      relativePath: `work/generated/corpus/normalized-threads/${String(thread.thread_id)}.json`,
+      ...createNormalizedThreadArtifactRef(String(thread.thread_id)),
       contents: `${JSON.stringify(thread, null, 2)}\n`,
     })),
   ];
 
   return {
-    outputDirectories: [...OUTPUT_DIRECTORIES],
+    outputDirectories: [...ARTIFACT_OUTPUT_DIRECTORIES],
     files,
   };
 }

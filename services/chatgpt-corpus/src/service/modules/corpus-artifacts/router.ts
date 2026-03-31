@@ -10,7 +10,7 @@ const build = module.build.handler(async ({ input }) => {
 const materialize = module.materialize.handler(async ({ context }) => {
   try {
     const materials = await context.repo.readSourceMaterials();
-    const snapshot = buildSourceSnapshot(context.workspaceRef, materials);
+    const snapshot = await buildSourceSnapshot(context.workspaceRef, materials);
     const built = buildCorpusArtifacts(snapshot);
 
     if (!built.result.validationReport.all_passed) {
@@ -19,16 +19,16 @@ const materialize = module.materialize.handler(async ({ context }) => {
 
     const persisted = await context.repo.writeArtifacts(built.bundle);
 
-    return {
-      workspaceRef: context.workspaceRef,
-      sourceCounts: built.result.sourceCounts,
-      familyCount: built.result.familyCount,
-      normalizedThreadCount: built.result.normalizedThreadCount,
-      anomalyCount: built.result.anomalyCount,
-      warnings: built.result.warnings,
-      outputDirectories: built.bundle.outputDirectories,
-      outputEntries: persisted.writtenEntries,
-    };
+      return {
+        workspaceRef: context.workspaceRef,
+        sourceCounts: built.result.sourceCounts,
+        familyCount: built.result.familyCount,
+        normalizedThreadCount: built.result.normalizedThreadCount,
+        anomalyCount: built.result.anomalyCount,
+        warnings: built.result.warnings,
+        outputDirectories: persisted.outputDirectories,
+        outputEntries: persisted.writtenEntries,
+      };
   } catch (error) {
     rethrowAsOrpcError(error);
   }
