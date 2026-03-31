@@ -129,3 +129,27 @@ export type ConsolidateWorkspaceResult = {
     validationReport: string;
   };
 };
+
+export type LoadedWorkspaceInputs = {
+  workspaceRoot: string;
+  paths: CorpusWorkspacePaths;
+  records: SourceRecord[];
+  jsonRecords: Array<SourceRecord & { type: "json_conversation"; messages: JsonConversationMessage[] }>;
+  markdownDocCount: number;
+};
+
+export type StagedCorpusArtifacts = {
+  paths: CorpusWorkspacePaths;
+  inventory: Array<Record<string, unknown>>;
+  familyGraphs: FamilyGraph[];
+  relationships: Relationship[];
+  normalizedThreads: NormalizedThread[];
+  intermediateGraph: Record<string, unknown>;
+  manifest: Record<string, unknown>;
+  anomalies: Anomaly[];
+  ambiguityFlags: Array<Record<string, unknown>>;
+  validationReport: Record<string, boolean>;
+  canonicalitySummary: string;
+  decisionLog: string;
+  mentalMap: string;
+};

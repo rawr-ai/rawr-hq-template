@@ -8,8 +8,6 @@ export const module = impl
   .use(repository)
   .use(async ({ context, next }) => next({
     context: {
-      workspaceRoot: context.provided.workspaceRoot,
-      paths: context.provided.paths,
       repo: context.provided.repo,
     },
   }));
