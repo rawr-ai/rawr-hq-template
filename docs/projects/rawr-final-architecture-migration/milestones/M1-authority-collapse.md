@@ -135,7 +135,7 @@ issues:
     blocked_by: [M1-U00]
   - id: M1-U02
     title: "Reserve the canonical HQ Ops seam"
-    status: planned
+    status: done
     blocked_by: [M1-U01]
   - id: M1-U03
     title: "Move HQ operational truth into HQ Ops and rewire consumers"
@@ -200,6 +200,7 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 - Issue doc: [M1-U02](../issues/M1-U02-reserve-hq-ops-seam.md)
 - Focus: create `services/hq-ops` as one service package with reserved `config`, `repo-state`, `journal`, and `security` module seams.
 - Stop-gate: canonical HQ Ops space exists, but no logic move or consumer rewire has happened yet.
+- Traceability: branch `agent-FARGO-M1-U02-reserve-hq-ops-seam`; checks passed: `bun run --cwd services/hq-ops typecheck`, `bun run --cwd services/hq-ops test`, `bun scripts/phase-1/verify-hq-ops-service-shape.mjs`, `bun run sync:check --project @rawr/hq-ops`, `bun run --cwd services/hq-ops structural`, `bun run --cwd services/hq-ops build`; HQ managed-stack validation stayed healthy with first-party state RPC `200` and archived coordination/support-example route probes still `404`.
 
 ### M1-U03: Migrate HQ operational truth into HQ Ops and rewire consumers
 

@@ -82,6 +82,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("services/hq-ops"),
+        test: { name: "hq-ops", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("services/example-todo"),
         test: { name: "example-todo", environment: "node", include: [...includes] },
       },
