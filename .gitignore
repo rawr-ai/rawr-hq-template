@@ -6,5 +6,7 @@ dist/
 .tmp/
 .rawr/
 .context/
+!docs/projects/**/.context/
+!docs/projects/**/.context/**
 .scratch/
 *.log
