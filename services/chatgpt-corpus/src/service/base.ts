@@ -1,8 +1,13 @@
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
+import type { WorkspaceStore } from "./shared/workspace-store";
 
 type InitialContext = {
-  deps: {};
-  scope: {};
+  deps: {
+    workspaceStore: WorkspaceStore;
+  };
+  scope: {
+    workspaceRef: string;
+  };
   config: {};
 };
 

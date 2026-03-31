@@ -3,6 +3,7 @@ import {
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
+import type { WorkspaceStore } from "../../shared/workspace-store";
 import { createRepository } from "./repository";
 
 export {
@@ -13,10 +14,17 @@ export {
 export const observability = createServiceObservabilityMiddleware({});
 export const analytics = createServiceAnalyticsMiddleware({});
 
-export const repository = createServiceProvider().middleware<{
+export const repository = createServiceProvider<{
+  deps: {
+    workspaceStore: WorkspaceStore;
+  };
+  scope: {
+    workspaceRef: string;
+  };
+}>().middleware<{
   repo: ReturnType<typeof createRepository>;
-}>(async ({ next }) => {
+}>(async ({ context, next }) => {
   return next({
-    repo: createRepository(),
+    repo: createRepository(context.deps.workspaceStore, context.scope.workspaceRef),
   });
 });

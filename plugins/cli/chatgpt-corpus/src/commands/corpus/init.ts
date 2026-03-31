@@ -18,19 +18,29 @@ export default class CorpusInit extends RawrCommand {
     const { args, flags } = await this.parseRawr(CorpusInit);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     const workspaceRoot = path.resolve(args.path ? String(args.path) : process.cwd());
-    const client = createCorpusClient();
+    const client = createCorpusClient(workspaceRoot);
 
     try {
-      const data = await client.corpus.initWorkspace(
-        { workspaceRoot },
+      const data = await client.workspace.initialize(
+        {},
         createInvocation(`corpus-init-${Date.now()}`),
       );
-      const result = this.ok(data);
+      const byFileId = new Map(data.managedFiles.map((file) => [file.fileId, file.relativePath]));
+      const resultData = {
+        workspaceRoot,
+        createdPaths: data.createdEntries.map((entry) => path.join(workspaceRoot, ...entry.split("/"))),
+        existingPaths: data.existingEntries.map((entry) => path.join(workspaceRoot, ...entry.split("/"))),
+        files: {
+          readmePath: path.join(workspaceRoot, ...(byFileId.get("workspace-readme") ?? "work/README.md").split("/")),
+          gitignorePath: path.join(workspaceRoot, ...(byFileId.get("workspace-gitignore") ?? ".gitignore").split("/")),
+        },
+      };
+      const result = this.ok(resultData);
       this.outputResult(result, {
         flags: baseFlags,
         human: () => {
-          this.log(`initialized corpus workspace at ${data.workspaceRoot}`);
-          this.log(`created ${data.createdPaths.length} path(s), confirmed ${data.existingPaths.length} existing path(s)`);
+          this.log(`initialized corpus workspace at ${workspaceRoot}`);
+          this.log(`created ${resultData.createdPaths.length} path(s), confirmed ${resultData.existingPaths.length} existing path(s)`);
         },
       });
     } catch (error) {

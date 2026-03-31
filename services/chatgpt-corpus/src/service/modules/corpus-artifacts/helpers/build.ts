@@ -1,125 +1,39 @@
-import path from "node:path";
-import { rethrowAsOrpcError } from "../../shared/errors";
-import { module } from "./module";
+import type { WorkspaceArtifactBundle } from "../../../shared/workspace-store";
+import { OUTPUT_DIRECTORIES } from "../../workspace/helpers/template";
+import type {
+  JsonConversationMessage,
+  SourceRecord,
+  SourceSnapshot,
+} from "../../source-materials/schemas";
 import type {
   Anomaly,
-  FamilyEdge,
+  BuildArtifactsResult,
   FamilyGraph,
-  JsonConversationMessage,
-  LoadedWorkspaceInputs,
-  NormalizedThread,
   Relationship,
-  SourceRecord,
-  StagedCorpusArtifacts,
-} from "./schemas";
+} from "../schemas";
 
-const initWorkspace = module.initWorkspace.handler(async ({ context, input }) => {
-  return await context.repo.initWorkspace(input.workspaceRoot);
-});
+type NormalizedThread = Record<string, unknown>;
 
-const consolidateWorkspace = module.consolidateWorkspace.handler(async ({ context, input }) => {
-  try {
-    const loaded = await context.repo.loadWorkspaceInputs(input.workspaceRoot);
-    const warnings = buildWarnings(loaded);
-    const stagedArtifacts = buildStagedCorpusArtifacts(loaded);
-
-    if (!stagedArtifacts.validationReport.all_passed) {
-      throw new Error(`Validation failed; see ${path.join(stagedArtifacts.paths.reportsDir, "validation-report.json")}`);
-    }
-
-    await context.repo.writeCorpusArtifacts(input.workspaceRoot, stagedArtifacts);
-
-    return {
-      workspaceRoot: loaded.paths.workspaceRoot,
-      sourceCounts: {
-        jsonConversations: loaded.jsonRecords.length,
-        markdownDocuments: loaded.markdownDocCount,
-        totalSources: loaded.records.length,
-      },
-      familyCount: stagedArtifacts.familyGraphs.length,
-      normalizedThreadCount: stagedArtifacts.normalizedThreads.length,
-      anomalyCount: stagedArtifacts.anomalies.length,
-      warnings,
-      outputPaths: {
-        inventory: path.join(loaded.paths.corpusDir, "inventory.json"),
-        familyGraphs: path.join(loaded.paths.corpusDir, "family-graphs.json"),
-        intermediateGraph: path.join(loaded.paths.corpusDir, "intermediate-graph.json"),
-        manifest: path.join(loaded.paths.corpusDir, "corpus-manifest.json"),
-        reportsDir: loaded.paths.reportsDir,
-        normalizedThreadsDir: loaded.paths.normalizedDir,
-        validationReport: path.join(loaded.paths.reportsDir, "validation-report.json"),
-      },
-    };
-  } catch (error) {
-    rethrowAsOrpcError(error);
-  }
-});
-
-export const router = module.router({
-  initWorkspace,
-  consolidateWorkspace,
-});
-
-function buildWarnings(loaded: LoadedWorkspaceInputs): string[] {
-  const warnings: string[] = [];
-  if (loaded.jsonRecords.length === 0) {
-    warnings.push("No conversation exports were found under source-material/conversations/raw-json.");
-  }
-  if (loaded.markdownDocCount === 0) {
-    warnings.push("No curated Markdown source docs were found under work/docs/source.");
-  }
-  return warnings;
-}
-
-function buildStagedCorpusArtifacts(loaded: LoadedWorkspaceInputs): StagedCorpusArtifacts {
-  const inventory = buildInventory(loaded.records);
-  const anomalies = detectAnomalies(loaded.jsonRecords);
-  const familyGraphs = buildFamilyGraphs(loaded.jsonRecords);
-  const relationships = buildRelationships(familyGraphs);
-  const jsonRecordsById = new Map(loaded.jsonRecords.map((record) => [record.sourceId, record]));
-  const normalizedThreads = familyGraphs.map((family) => buildUnifiedThread(family, jsonRecordsById, anomalies));
-  const intermediateGraph = buildIntermediateGraph(normalizedThreads, relationships);
-  const manifest = buildManifest({
-    inventory,
-    familyGraphs,
-    normalizedThreads,
-    relationships,
-    anomalies,
-    paths: loaded.paths,
-  });
-  const ambiguityFlags = buildAmbiguityFlags(familyGraphs, relationships, loaded.markdownDocCount);
-  const canonicalitySummary = buildCanonicalitySummary(familyGraphs);
-  const decisionLog = buildDecisionLog();
-  const mentalMap = buildMentalMap(familyGraphs, anomalies);
-  const validationReport = buildValidationReport({
-    inventory,
-    familyGraphs,
-    normalizedThreads,
-    manifest,
-  });
-
-  return {
-    paths: loaded.paths,
-    inventory,
-    familyGraphs,
-    relationships,
-    normalizedThreads,
-    intermediateGraph,
-    manifest,
-    anomalies,
-    ambiguityFlags,
-    validationReport,
-    canonicalitySummary,
-    decisionLog,
-    mentalMap,
-  };
-}
+type BuiltArtifacts = {
+  result: BuildArtifactsResult;
+  bundle: WorkspaceArtifactBundle;
+};
 
 function slugify(value: string): string {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || "item";
+}
+
+function filename(relativePath: string): string {
+  return relativePath.split("/").at(-1) ?? relativePath;
+}
+
+function filenameStem(relativePath: string): string {
+  const name = filename(relativePath);
+  const dot = name.lastIndexOf(".");
+  return dot >= 0 ? name.slice(0, dot) : name;
 }
 
 function parseDate(value: string | undefined): number {
@@ -179,13 +93,24 @@ function confidenceForEdge(input: {
   return Number(Math.min(0.99, confidence).toFixed(2));
 }
 
+function buildWarnings(snapshot: SourceSnapshot): string[] {
+  const warnings: string[] = [];
+  if (snapshot.jsonRecords.length === 0) {
+    warnings.push("No conversation exports were found under source-material/conversations/raw-json.");
+  }
+  if (snapshot.markdownDocCount === 0) {
+    warnings.push("No curated Markdown source docs were found under work/docs/source.");
+  }
+  return warnings;
+}
+
 function buildInventory(records: SourceRecord[]): Array<Record<string, unknown>> {
   return records.map((record) => {
     const base: Record<string, unknown> = {
       source_id: record.sourceId,
       type: record.type,
-      path: path.resolve(record.path),
-      filename: path.basename(record.path),
+      path: record.relativePath,
+      filename: filename(record.relativePath),
       hash_sha256: record.hash,
       size_bytes: record.sizeBytes,
       title: record.title,
@@ -242,7 +167,7 @@ function detectAnomalies(jsonRecords: SourceRecord[]): Anomaly[] {
     const messages = record.messages ?? [];
     if (messages.length === 0) {
       anomalies.push({
-        anomaly_id: `anomaly-${slugify(path.parse(record.path).name)}-empty-conversation`,
+        anomaly_id: `anomaly-${slugify(filenameStem(record.relativePath))}-empty-conversation`,
         type: "empty_conversation",
         source_ids: [record.sourceId],
         severity: "high",
@@ -254,7 +179,7 @@ function detectAnomalies(jsonRecords: SourceRecord[]): Anomaly[] {
     const lastResponse = [...messages].reverse().find((message) => message.role === "Response")?.say ?? "";
     if (!lastResponse.trim()) {
       anomalies.push({
-        anomaly_id: `anomaly-${slugify(path.parse(record.path).name)}-blank-final-response`,
+        anomaly_id: `anomaly-${slugify(filenameStem(record.relativePath))}-blank-final-response`,
         type: "blank_final_response",
         source_ids: [record.sourceId],
         severity: "medium",
@@ -264,7 +189,7 @@ function detectAnomalies(jsonRecords: SourceRecord[]): Anomaly[] {
 
     if (messages.some((message) => message.say.toLowerCase().includes("tokens truncated"))) {
       anomalies.push({
-        anomaly_id: `anomaly-${slugify(path.parse(record.path).name)}-truncated-message`,
+        anomaly_id: `anomaly-${slugify(filenameStem(record.relativePath))}-truncated-message`,
         type: "truncated_message",
         source_ids: [record.sourceId],
         severity: "medium",
@@ -276,7 +201,7 @@ function detectAnomalies(jsonRecords: SourceRecord[]): Anomaly[] {
   for (const [hashValue, members] of byHash.entries()) {
     if (members.length > 1) {
       anomalies.push({
-        anomaly_id: `anomaly-duplicate-hash-${hashValue.slice(0, 12)}`,
+        anomaly_id: `anomaly-duplicate-hash-${hashValue.slice(0, 8)}`,
         type: "duplicate_hash",
         source_ids: members.map((member) => member.sourceId),
         severity: "low",
@@ -288,7 +213,7 @@ function detectAnomalies(jsonRecords: SourceRecord[]): Anomaly[] {
   for (const [hashValue, members] of byMessagesHash.entries()) {
     if (members.length > 1) {
       anomalies.push({
-        anomaly_id: `anomaly-duplicate-messages-${hashValue.slice(0, 12)}`,
+        anomaly_id: `anomaly-duplicate-messages-${hashValue.slice(0, 8)}`,
         type: "duplicate_messages",
         source_ids: members.map((member) => member.sourceId),
         severity: "low",
@@ -323,12 +248,12 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
   }>();
 
   const keyForPair = (leftName: string, rightName: string) => [leftName, rightName].sort().join("::");
-  const namesToRecord = new Map(jsonRecords.map((record) => [path.basename(record.path), record]));
+  const namesToRecord = new Map(jsonRecords.map((record) => [filename(record.relativePath), record]));
 
   for (const left of jsonRecords) {
     for (const right of jsonRecords) {
-      const leftName = path.basename(left.path);
-      const rightName = path.basename(right.path);
+      const leftName = filename(left.relativePath);
+      const rightName = filename(right.relativePath);
       if (leftName >= rightName) continue;
       const leftMessages = left.messages ?? [];
       const rightMessages = right.messages ?? [];
@@ -345,7 +270,7 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
     }
   }
 
-  const parent = new Map(jsonRecords.map((record) => [path.basename(record.path), path.basename(record.path)]));
+  const parent = new Map(jsonRecords.map((record) => [filename(record.relativePath), filename(record.relativePath)]));
 
   const find = (name: string): string => {
     const current = parent.get(name);
@@ -382,32 +307,40 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
     const members = [...memberNames].sort((left, right) => left.localeCompare(right));
     const memberRecords = members.map((name) => namesToRecord.get(name)!).filter(Boolean);
     const rootRecord = [...memberRecords].sort((left, right) => {
-      const leftTuple = [left.branchDepth, parseDate(left.created), left.messages?.length ?? 0, path.basename(left.path)];
-      const rightTuple = [right.branchDepth, parseDate(right.created), right.messages?.length ?? 0, path.basename(right.path)];
+      const leftTuple = [left.branchDepth, parseDate(left.created), left.messages?.length ?? 0, filename(left.relativePath)];
+      const rightTuple = [right.branchDepth, parseDate(right.created), right.messages?.length ?? 0, filename(right.relativePath)];
       return String(leftTuple).localeCompare(String(rightTuple));
     })[0]!;
 
     const nonDuplicates: SourceRecord[] = [];
     const duplicates = new Map<string, string>();
     for (const record of [...memberRecords].sort((left, right) => {
-      const leftTuple = [left.branchDepth, parseDate(left.created), left.messages?.length ?? 0, path.basename(left.path)];
-      const rightTuple = [right.branchDepth, parseDate(right.created), right.messages?.length ?? 0, path.basename(right.path)];
+      const leftTuple = [left.branchDepth, parseDate(left.created), left.messages?.length ?? 0, filename(left.relativePath)];
+      const rightTuple = [right.branchDepth, parseDate(right.created), right.messages?.length ?? 0, filename(right.relativePath)];
       return String(leftTuple).localeCompare(String(rightTuple));
     })) {
       let duplicateTarget: SourceRecord | undefined;
       for (const existing of nonDuplicates) {
-        const metrics = pairMetrics.get(keyForPair(path.basename(record.path), path.basename(existing.path)));
+        const metrics = pairMetrics.get(keyForPair(filename(record.relativePath), filename(existing.relativePath)));
         if (metrics?.exactDuplicate) {
           duplicateTarget = existing;
           break;
         }
       }
-      if (duplicateTarget) duplicates.set(path.basename(record.path), path.basename(duplicateTarget.path));
+      if (duplicateTarget) duplicates.set(filename(record.relativePath), filename(duplicateTarget.relativePath));
       else nonDuplicates.push(record);
     }
 
     const classification: Record<string, "standalone" | "root" | "branch" | "duplicate"> = {};
-    const edges: FamilyEdge[] = [];
+    const edges: Array<{
+      fromSourceId: string;
+      toSourceId: string;
+      type: "branches_from" | "duplicate_of";
+      confidence: number;
+      sharedPrefixLen: number;
+      evidence: string[];
+    }> = [];
+
     if (nonDuplicates.length === 1 && duplicates.size === 0) {
       classification[nonDuplicates[0]!.sourceId] = "standalone";
     } else {
@@ -431,7 +364,7 @@ function buildFamilyGraphs(jsonRecords: SourceRecord[]): FamilyGraph[] {
       let bestScore = -1;
 
       for (const candidate of placed) {
-        const metrics = pairMetrics.get(keyForPair(path.basename(record.path), path.basename(candidate.path)));
+        const metrics = pairMetrics.get(keyForPair(filename(record.relativePath), filename(candidate.relativePath)));
         if (!metrics) continue;
         const score =
           metrics.exactPrefixLen * 100 +
@@ -580,7 +513,7 @@ function buildUnifiedThread(
         branchNodes.push(inheritedNodeId);
         continue;
       }
-      const nodeId = `${family.family_id}__msg__${slugify(path.parse(record.path).name)}__${String(index).padStart(3, "0")}`;
+      const nodeId = `${family.family_id}__msg__${slugify(filenameStem(record.relativePath))}__${String(index).padStart(3, "0")}`;
       representativeNodeId.set(messageKey(record.sourceId, index), nodeId);
       branchNodes.push(nodeId);
       nodes.push({
@@ -621,9 +554,9 @@ function buildUnifiedThread(
   const rootRecord = sourceLookup.get(family.root_source_id)!;
   const rootNodes = addMessageNodes(rootRecord, 0);
   branches.push({
-    branch_id: `${family.family_id}__branch__${slugify(path.parse(rootRecord.path).name)}`,
+    branch_id: `${family.family_id}__branch__${slugify(filenameStem(rootRecord.relativePath))}`,
     parent_branch_point_id: null,
-    semantic_name: slugify(path.parse(rootRecord.path).name),
+    semantic_name: slugify(filenameStem(rootRecord.relativePath)),
     status: family.classification[rootRecord.sourceId],
     source_file_ids: [rootRecord.sourceId],
     start_node_id: rootNodes.startNodeId ?? null,
@@ -640,7 +573,7 @@ function buildUnifiedThread(
     const anchorNodeId = divergenceIndex > 0
       ? representativeNodeId.get(messageKey(edge.to_source_id, divergenceIndex - 1))
       : undefined;
-    const branchPointId = `${family.family_id}__branch-point__${slugify(path.parse(record.path).name)}`;
+    const branchPointId = `${family.family_id}__branch-point__${slugify(filenameStem(record.relativePath))}`;
     branchPoints.push({
       branch_point_id: branchPointId,
       parent_source_id: edge.to_source_id,
@@ -669,9 +602,9 @@ function buildUnifiedThread(
     }
     const childNodes = addMessageNodes(record, divergenceIndex, edge.to_source_id, branchPointId);
     branches.push({
-      branch_id: `${family.family_id}__branch__${slugify(path.parse(record.path).name)}`,
+      branch_id: `${family.family_id}__branch__${slugify(filenameStem(record.relativePath))}`,
       parent_branch_point_id: branchPointId,
-      semantic_name: slugify(path.parse(record.path).name),
+      semantic_name: slugify(filenameStem(record.relativePath)),
       status: family.classification[sourceId],
       source_file_ids: [sourceId],
       start_node_id: childNodes.startNodeId ?? null,
@@ -686,9 +619,9 @@ function buildUnifiedThread(
     const canonicalPathNodes = sourcePathNodes.get(edge.to_source_id) ?? [];
     sourcePathNodes.set(sourceId, [...canonicalPathNodes]);
     branches.push({
-      branch_id: `${family.family_id}__branch__${slugify(path.parse(record.path).name)}`,
+      branch_id: `${family.family_id}__branch__${slugify(filenameStem(record.relativePath))}`,
       parent_branch_point_id: null,
-      semantic_name: slugify(path.parse(record.path).name),
+      semantic_name: slugify(filenameStem(record.relativePath)),
       status: family.classification[sourceId],
       source_file_ids: [sourceId],
       start_node_id: canonicalPathNodes[0] ?? null,
@@ -719,8 +652,8 @@ function buildUnifiedThread(
     root_source_ids: [family.root_source_id],
     source_files: [...sourceLookup.values()].map((record) => ({
       source_id: record.sourceId,
-      filename: path.basename(record.path),
-      path: path.resolve(record.path),
+      filename: filename(record.relativePath),
+      path: record.relativePath,
       title: record.title,
       classification: family.classification[record.sourceId],
       link: record.link ?? null,
@@ -781,12 +714,10 @@ function buildManifest(input: {
   normalizedThreads: NormalizedThread[];
   relationships: Relationship[];
   anomalies: Anomaly[];
-  paths: LoadedWorkspaceInputs["paths"];
 }): Record<string, unknown> {
   return {
     manifest_version: "rawr.conversation-corpus.v1",
     generated_at: new Date().toISOString(),
-    workspace_root: input.paths.workspaceRoot,
     corpus_summary: {
       source_count: input.inventory.length,
       json_conversation_count: input.inventory.filter((item) => item.type === "json_conversation").length,
@@ -800,7 +731,7 @@ function buildManifest(input: {
     normalized_threads: input.normalizedThreads.map((thread) => ({
       thread_id: thread.thread_id,
       canonical_title: thread.canonical_title,
-      path: path.join(input.paths.normalizedDir, `${thread.thread_id}.json`),
+      path: `work/generated/corpus/normalized-threads/${thread.thread_id}.json`,
       branch_count: Array.isArray(thread.branches) ? thread.branches.length : 0,
       anomaly_count: Array.isArray(thread.anomalies) ? thread.anomalies.length : 0,
     })),
@@ -932,10 +863,159 @@ function buildValidationReport(input: {
     every_json_in_one_family: jsonSourceIds.size === familySourceIds.size &&
       [...jsonSourceIds].every((sourceId) => familySourceIds.has(sourceId)),
     one_normalized_thread_per_family: input.normalizedThreads.length === input.familyGraphs.length,
-    manifest_has_workspace_root: Boolean(input.manifest.workspace_root),
+    manifest_has_corpus_summary: Boolean(input.manifest.corpus_summary),
   };
   return {
     ...validation,
     all_passed: Object.values(validation).every(Boolean),
+  };
+}
+
+function createArtifactFiles(input: {
+  inventory: Array<Record<string, unknown>>;
+  familyGraphs: FamilyGraph[];
+  intermediateGraph: Record<string, unknown>;
+  manifest: Record<string, unknown>;
+  anomalies: Anomaly[];
+  ambiguityFlags: Array<Record<string, unknown>>;
+  canonicalitySummary: string;
+  decisionLog: string;
+  mentalMap: string;
+  validationReport: Record<string, boolean>;
+  normalizedThreads: NormalizedThread[];
+}): WorkspaceArtifactBundle {
+  const files = [
+    {
+      fileId: "inventory",
+      relativePath: "work/generated/corpus/inventory.json",
+      contents: `${JSON.stringify(input.inventory, null, 2)}\n`,
+    },
+    {
+      fileId: "familyGraphs",
+      relativePath: "work/generated/corpus/family-graphs.json",
+      contents: `${JSON.stringify(input.familyGraphs, null, 2)}\n`,
+    },
+    {
+      fileId: "intermediateGraph",
+      relativePath: "work/generated/corpus/intermediate-graph.json",
+      contents: `${JSON.stringify(input.intermediateGraph, null, 2)}\n`,
+    },
+    {
+      fileId: "manifest",
+      relativePath: "work/generated/corpus/corpus-manifest.json",
+      contents: `${JSON.stringify(input.manifest, null, 2)}\n`,
+    },
+    {
+      fileId: "anomalies",
+      relativePath: "work/generated/reports/anomalies.json",
+      contents: `${JSON.stringify(input.anomalies, null, 2)}\n`,
+    },
+    {
+      fileId: "ambiguityFlags",
+      relativePath: "work/generated/reports/ambiguity-flags.json",
+      contents: `${JSON.stringify(input.ambiguityFlags, null, 2)}\n`,
+    },
+    {
+      fileId: "canonicalitySummary",
+      relativePath: "work/generated/reports/canonicality-summary.md",
+      contents: `${input.canonicalitySummary.trimEnd()}\n`,
+    },
+    {
+      fileId: "decisionLog",
+      relativePath: "work/generated/reports/decision-log.md",
+      contents: `${input.decisionLog.trimEnd()}\n`,
+    },
+    {
+      fileId: "mentalMap",
+      relativePath: "work/generated/reports/mental-map.md",
+      contents: `${input.mentalMap.trimEnd()}\n`,
+    },
+    {
+      fileId: "validationReport",
+      relativePath: "work/generated/reports/validation-report.json",
+      contents: `${JSON.stringify(input.validationReport, null, 2)}\n`,
+    },
+    ...input.normalizedThreads.map((thread) => ({
+      fileId: `normalizedThread:${String(thread.thread_id)}`,
+      relativePath: `work/generated/corpus/normalized-threads/${String(thread.thread_id)}.json`,
+      contents: `${JSON.stringify(thread, null, 2)}\n`,
+    })),
+  ];
+
+  return {
+    outputDirectories: [...OUTPUT_DIRECTORIES],
+    files,
+  };
+}
+
+export function buildCorpusArtifacts(snapshot: SourceSnapshot): BuiltArtifacts {
+  const warnings = buildWarnings(snapshot);
+  const inventory = buildInventory(snapshot.records);
+  const anomalies = detectAnomalies(snapshot.jsonRecords);
+  const familyGraphs = buildFamilyGraphs(snapshot.jsonRecords);
+  const relationships = buildRelationships(familyGraphs);
+  const jsonRecordsById = new Map(snapshot.jsonRecords.map((record) => [record.sourceId, record]));
+  const normalizedThreads = familyGraphs.map((family) => buildUnifiedThread(family, jsonRecordsById, anomalies));
+  const intermediateGraph = buildIntermediateGraph(normalizedThreads, relationships);
+  const manifest = buildManifest({
+    inventory,
+    familyGraphs,
+    normalizedThreads,
+    relationships,
+    anomalies,
+  });
+  const ambiguityFlags = buildAmbiguityFlags(familyGraphs, relationships, snapshot.markdownDocCount);
+  const canonicalitySummary = buildCanonicalitySummary(familyGraphs);
+  const decisionLog = buildDecisionLog();
+  const mentalMap = buildMentalMap(familyGraphs, anomalies);
+  const validationReport = buildValidationReport({
+    inventory,
+    familyGraphs,
+    normalizedThreads,
+    manifest,
+  });
+
+  const bundle = createArtifactFiles({
+    inventory,
+    familyGraphs,
+    intermediateGraph,
+    manifest,
+    anomalies,
+    ambiguityFlags,
+    canonicalitySummary,
+    decisionLog,
+    mentalMap,
+    validationReport,
+    normalizedThreads,
+  });
+
+  return {
+    result: {
+      workspaceRef: snapshot.workspaceRef,
+      sourceCounts: {
+        jsonConversations: snapshot.jsonRecords.length,
+        markdownDocuments: snapshot.markdownDocCount,
+        totalSources: snapshot.records.length,
+      },
+      familyCount: familyGraphs.length,
+      normalizedThreadCount: normalizedThreads.length,
+      anomalyCount: anomalies.length,
+      warnings,
+      inventory,
+      familyGraphs,
+      relationships,
+      normalizedThreads,
+      intermediateGraph,
+      manifest,
+      anomalies,
+      ambiguityFlags,
+      validationReport,
+      canonicalitySummary,
+      decisionLog,
+      mentalMap,
+      outputDirectories: bundle.outputDirectories,
+      outputEntries: bundle.files.map(({ fileId, relativePath }) => ({ fileId, relativePath })),
+    },
+    bundle,
   };
 }
