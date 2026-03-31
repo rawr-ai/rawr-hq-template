@@ -131,6 +131,19 @@ Between-issue rule:
 - Do not silently reopen earlier slices while executing `M1-U06` through `M1-U08`; if earlier fallout blocks progress, record it explicitly as blocker fallout.
 - If the intended branch shows unexpected working tree changes, stop. Do not stash, reset, or improvise around them.
 
+## Carry-Forward Watch Item
+
+Phase 1 closed with one known architectural watch item that is intentionally deferred, not resolved:
+
+- `services/hq-ops` is externally shaped correctly for Phase 1, but its internal module structure still looks materially less canonical than `services/example-todo`.
+- Do not treat the passing Phase 1 proof band as proof that HQ Ops internals are clean. The current proofs ratchet the authority boundary, not the internal service-package ergonomics.
+- Before adding broader HQ Ops verification, especially runtime verification, re-audit:
+  - `services/hq-ops/src/service/modules/*`
+  - `services/example-todo/src/service/modules/*`
+  - `docs/projects/rawr-final-architecture-migration/.context/M1-execution/HQ-OPS-service-shape-followup.md`
+  - `docs/projects/orpc-ingest-domain-packages/guidance.md`
+- Assume that fake modules, shims, and helper-bucket workarounds inside HQ Ops may be the root cause until disproven.
+
 ## Adapted Dev-Parallel Loop
 
 This is the baseline `dev-loop-parallel` workflow adapted for a single existing worktree and one Graphite branch per issue.
