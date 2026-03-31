@@ -30,8 +30,10 @@ related_to: []
 - [ ] Targeted typechecks pass for every changed live project carried across `M1-U03` through `M1-U07`.
 - [ ] Targeted tests pass for every changed live project carried across `M1-U03` through `M1-U07`.
 - [ ] Parked-lane freeze rules are verifiable.
+- [ ] The preserved `plugins/agents/hq` marketplace compatibility lane still resolves through the current sync surface.
 - [ ] Docs describe only settled post-Phase-1 reality and archived evidence.
 - [ ] The end-of-milestone review explicitly confirms Phase 2 entry conditions and records any Phase 2/3 readjustments without changing the Phase 1 plateau.
+- [ ] The end-of-milestone review explicitly carries forward the deferred redesign of the Cloud Code/Codex marketplace plugin lane, while confirming that `plugins/agents/hq` remains frozen in place for continuity.
 
 ## Testing / Verification
 - `bun run sync:check`
@@ -50,7 +52,8 @@ related_to: []
 - `bun scripts/phase-1/verify-phase1-ledger.mjs`
 - `bun scripts/phase-1/verify-no-live-coordination.mjs`
 - `bun scripts/phase-1/verify-no-live-support-example.mjs`
-- `bun scripts/phase-1/verify-no-runtime-agent-content-under-plugins.mjs`
+- `bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs`
+- `bun run rawr plugins sync @rawr/plugin-hq --dry-run`
 - `bun scripts/phase-1/verify-hq-ops-service-shape.mjs`
 - `bun scripts/phase-1/verify-no-old-operational-packages.mjs`
 - `bun scripts/phase-1/verify-no-legacy-hq-imports.mjs`
@@ -113,8 +116,10 @@ This is where the repo stops being “in motion” and becomes a stable plateau.
 The close-out review should explicitly confirm:
 - the full Phase 1 proof band passes together
 - parked-lane freeze rules are in force
-- the only surviving cross-phase seam, if any, is `apps/hq/legacy-cutover.ts`
+- the executable bridge outcome is explicit: either no executable bridge survives, or the only surviving executable cross-phase seam is `apps/hq/legacy-cutover.ts`
+- the only surviving non-executable compatibility carryover is the frozen `plugins/agents/hq` marketplace lane
 - the durable docs landed here describe settled Phase 1 reality only
+- the deferred marketplace-plugin redesign is captured as next-stage work without reopening the Phase 1 plateau
 - Phase 2 entry conditions are explicit and no Phase 1 architectural decision is being reopened during the handoff
 
 ### 2) Docs outside the migration project that will become stale

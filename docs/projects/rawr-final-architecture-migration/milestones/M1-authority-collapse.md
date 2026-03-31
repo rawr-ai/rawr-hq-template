@@ -43,9 +43,9 @@ At milestone exit, all of the following are true at the same time:
 - HQ operational truth no longer lives under semantic-smuggling packages.
 - `coordination` is archived and removed from the live lane.
 - `support-example` is archived and removed from the live lane.
-- non-runtime agent content no longer lives under `plugins/`.
+- the current Cloud Code/Codex marketplace plugin lane remains operational but explicitly frozen in place for Phase 1.
 - `packages/hq` is dissolved.
-- the only live plugin topology is canonical:
+- the only live runtime plugin topology is canonical:
   - `plugins/server/api/*`
   - `plugins/async/workflows/*`
   - `plugins/async/schedules/*`
@@ -55,7 +55,7 @@ At milestone exit, all of the following are true at the same time:
   - `apps/hq/async.ts`
   - `apps/hq/dev.ts`
 - old executable composition is no longer authoritative.
-- at most one bridge remains across the Phase 1 -> Phase 2 boundary, and if it exists it is only `apps/hq/legacy-cutover.ts`.
+- Phase 1 exits with either no executable bridge or exactly one explicitly recorded executable bridge at `apps/hq/legacy-cutover.ts`.
 - Phase 1 structural checks, targeted typechecks, and targeted tests all pass.
 - parked lanes are explicitly frozen.
 - the end-of-milestone review leaves Phase 2 with a clean, explicit entry condition.
@@ -74,7 +74,7 @@ That means this milestone should execute, not renegotiate, the following Phase 1
 
 - treat `services/hq-ops` as the Phase 1 execution service package with internal modules, not as four separate services for milestone shaping
 - treat `support-example` as archived in Phase 1, with later async proof work reserved for a later slice
-- treat `packages/plugin-workspace` and `packages/agent-pack-hq` as Phase 1 execution outcomes, not as reopened design questions
+- treat `packages/plugin-workspace` as a Phase 1 execution outcome, and treat `plugins/agents/hq` as a frozen compatibility lane whose redesign is explicitly deferred past Phase 1
 
 ## Global Guardrails and Semantic Guidance
 
@@ -87,13 +87,16 @@ Implementation agents should continuously anchor on these rules:
 - runtime projection moves before app-shell authority
 - app-shell authority moves before legacy composition authority is neutralized
 - each slice closes its own loops; cleanup is not a final catch-all bucket
-- the only allowed cross-phase bridge is `apps/hq/legacy-cutover.ts`, and only if absolutely necessary
+- the designated cross-phase executable bridge path is `apps/hq/legacy-cutover.ts`
+- the only allowed non-executable compatibility carryover is the frozen `plugins/agents/hq` marketplace lane
 - no dual authority survives:
   - no dual manifests
   - no dual plugin registries
   - no dual executable composition paths
   - no long-lived fallback registries or shim trees
 - parked lanes may receive only deletions, rewires, compile fixes, or explicit unblockers
+- do not move, rename, or expand `plugins/agents/hq` during this milestone
+- preserve current Cloud Code/Codex sync-install behavior for `@rawr/plugin-hq`; future topology redesign belongs to the next stage
 - documentation updates must describe only settled outcomes or archived evidence; avoid doc churn for surfaces that are not done migrating
 - do not leak Phase 2 or Phase 3 work into this milestone:
   - no bootgraph implementation
@@ -169,7 +172,7 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 | ID | Issue Doc | Blocked By | Why This Slice Exists |
 | --- | --- | --- | --- |
 | `M1-U00` | [Guardrails and Phase 1 ledger](../issues/M1-U00-guardrails-and-phase-1-ledger.md) | none | Install the ledger and proof rails that freeze the migration lane before any authority moves begin. |
-| `M1-U01` | [Archive false futures](../issues/M1-U01-archive-false-futures.md) | `M1-U00` | Remove `coordination`, `support-example`, and runtime-misplaced agent content from the live lane before canonical seams are installed. |
+| `M1-U01` | [Archive false futures](../issues/M1-U01-archive-false-futures.md) | `M1-U00` | Remove `coordination` and `support-example`, then freeze the current Cloud Code/Codex marketplace plugin lane so it stops steering Phase 1 topology decisions. |
 | `M1-U02` | [Reserve the canonical HQ Ops seam](../issues/M1-U02-reserve-hq-ops-seam.md) | `M1-U01` | Create the one canonical service home for Phase 1 so semantic truth has a real destination before it moves. |
 | `M1-U03` | [Migrate HQ operational truth into HQ Ops and rewire consumers](../issues/M1-U03-migrate-hq-ops-and-rewire-consumers.md) | `M1-U02` | Collapse config, repo-state, journal, and security authority into HQ Ops before any runtime projection or app-shell work proceeds. |
 | `M1-U04` | [Dissolve the legacy HQ package and land purpose-named tooling boundaries](../issues/M1-U04-dissolve-legacy-hq-package.md) | `M1-U03` | Delete the ambiguous `packages/hq` layer once real semantic authority is installed elsewhere. |
@@ -187,7 +190,7 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 ### M1-U01: Archive false futures
 
 - Issue doc: [M1-U01](../issues/M1-U01-archive-false-futures.md)
-- Focus: remove live `coordination`, `support-example`, and runtime-misplaced agent content while preserving durable archive evidence.
+- Focus: remove live `coordination` and `support-example`, while freezing the current HQ marketplace plugin lane in place for operational continuity.
 - Stop-gate: false futures are no longer present in live inventory, runtime, or registration paths.
 
 ### M1-U02: Reserve the canonical HQ Ops seam
@@ -224,7 +227,7 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 
 - Issue doc: [M1-U07](../issues/M1-U07-neutralize-legacy-composition-authority.md)
 - Focus: route execution through the new app shell and quarantine or delete the old host-composition path.
-- Stop-gate: no dual executable composition path remains; `apps/hq/legacy-cutover.ts` is the only allowed bridge if one is still required.
+- Stop-gate: no dual executable composition path remains; Phase 1 exits either with no executable bridge or with exactly one explicitly recorded executable bridge at `apps/hq/legacy-cutover.ts`.
 
 ### M1-U08: Ratchet Phase 1 proofs, land durable docs, and readjust the migration
 
@@ -236,7 +239,8 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 
 - [ ] The milestone preserves the dedicated Phase 1 plan’s slice order and fixed decisions.
 - [ ] Every slice lands as a forward-only slice with its own proof band before the next dependent slice begins.
-- [ ] Every slice closes its own cleanup loops; only `apps/hq/legacy-cutover.ts` may survive across the Phase 1 -> Phase 2 boundary, and only if explicitly recorded.
+- [ ] Every slice closes its own cleanup loops; Phase 1 exits either with no executable bridge or with exactly one explicitly recorded executable bridge at `apps/hq/legacy-cutover.ts`.
+- [ ] The frozen `plugins/agents/hq` marketplace lane is recorded as the only allowed non-executable compatibility carryover into the next stage.
 - [ ] No dual authority survives for service truth, runtime projection, plugin topology, or app composition.
 - [ ] No Phase 2 or Phase 3 substrate work is smuggled into this milestone.
 - [ ] Legacy behavior, paths, imports, registrations, roots, and mentions that were supposed to die in Phase 1 are actually gone or archived by milestone end.
@@ -282,7 +286,8 @@ No cross-cutting design questions should be reopened in this milestone. Remainin
 When M1-U08 completes, perform one structured review before starting Phase 2:
 
 - confirm the Phase 1 plateau that actually landed matches the intended authority-collapse outcome
-- confirm the only surviving cross-phase debt, if any, is `apps/hq/legacy-cutover.ts`
+- confirm the executable bridge outcome is explicit: either no executable bridge survives, or the only surviving executable cross-phase debt is `apps/hq/legacy-cutover.ts`
+- confirm the only surviving non-executable compatibility carryover is the frozen `plugins/agents/hq` marketplace lane
 - confirm the larger migration plan still lines up with the frozen plateau
 - record any needed Phase 2 or Phase 3 readjustments as downstream planning updates, not as reopened Phase 1 scope
 
