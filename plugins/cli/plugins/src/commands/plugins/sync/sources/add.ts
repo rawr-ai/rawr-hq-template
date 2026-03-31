@@ -1,31 +1,14 @@
-import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import { Args } from "@oclif/core";
-import { rawrGlobalConfigPath, validateRawrConfig } from "@rawr/hq-ops/config";
 import { RawrCommand } from "@rawr/core";
+import { createHqOpsClient, createHqOpsInvocation } from "../../../../lib/hq-ops-client";
 
 function expandTilde(p: string): string {
   if (p === "~") return os.homedir();
   if (p.startsWith("~/")) return path.join(os.homedir(), p.slice(2));
   return p;
-}
-
-async function readGlobalConfig(): Promise<any> {
-  const p = rawrGlobalConfigPath();
-  try {
-    const raw = await fs.readFile(p, "utf8");
-    return JSON.parse(raw) as any;
-  } catch {
-    return { version: 1 };
-  }
-}
-
-async function writeGlobalConfig(cfg: any): Promise<void> {
-  const p = rawrGlobalConfigPath();
-  await fs.mkdir(path.dirname(p), { recursive: true });
-  await fs.writeFile(p, `${JSON.stringify(cfg, null, 2)}\n`, "utf8");
 }
 
 export default class PluginsSyncSourcesAdd extends RawrCommand {
@@ -46,27 +29,12 @@ export default class PluginsSyncSourcesAdd extends RawrCommand {
     const input = String(args.path);
     const resolved = path.resolve(process.cwd(), expandTilde(input));
 
-    const cfg = await readGlobalConfig();
-    const validated = validateRawrConfig(cfg);
-    if (!validated.ok) {
-      const result = this.fail("Invalid ~/.rawr/config.json", { details: { issues: validated.issues, path: rawrGlobalConfigPath() } });
-      this.outputResult(result, { flags: baseFlags });
-      this.exit(1);
-      return;
-    }
+    const response = await createHqOpsClient(process.cwd()).config.addGlobalSyncSource(
+      { path: resolved },
+      createHqOpsInvocation("plugin-plugins.sync-sources.add"),
+    );
 
-    const next: any = validated.config;
-    next.sync = next.sync ?? {};
-    next.sync.sources = next.sync.sources ?? {};
-
-    const existing: string[] = Array.isArray(next.sync.sources.paths) ? next.sync.sources.paths : [];
-    const set = new Set(existing);
-    set.add(resolved);
-    next.sync.sources.paths = [...set];
-
-    await writeGlobalConfig(next);
-
-    const result = this.ok({ path: rawrGlobalConfigPath(), added: resolved, sources: next.sync.sources.paths });
+    const result = this.ok({ path: response.path, added: resolved, sources: response.sources });
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {

@@ -1,29 +1,63 @@
-/**
- * @fileoverview Journal-module boundary contract.
- *
- * @remarks
- * U02 is reservation-only. This file reserves the module boundary anchor with a
- * single structural reservation procedure so the package keeps the canonical
- * contract-first service shell.
- */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
-import { JournalReservationSchema } from "./schemas";
+import {
+  JournalEventSchema,
+  JournalGetSnippetResultSchema,
+  JournalSearchResultSchema,
+  JournalSnippetSchema,
+  JournalTailResultSchema,
+  JournalWriteResultSchema,
+} from "./schemas";
 
-const ReservationInputSchema = schema(
+const SnippetIdInputSchema = schema(
   Type.Object(
-    {},
     {
-      additionalProperties: false,
-      description: "No caller input is required for the journal reservation placeholder.",
+      id: Type.String({ minLength: 1 }),
     },
+    { additionalProperties: false },
+  ),
+);
+
+const TailInputSchema = schema(
+  Type.Object(
+    {
+      limit: Type.Integer({ minimum: 1, maximum: 100 }),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const SearchInputSchema = schema(
+  Type.Object(
+    {
+      query: Type.String({ minLength: 1 }),
+      limit: Type.Integer({ minimum: 1, maximum: 100 }),
+      mode: Type.Union([Type.Literal("fts"), Type.Literal("semantic")]),
+    },
+    { additionalProperties: false },
   ),
 );
 
 export const contract = {
-  reservation: ocBase
+  writeEvent: ocBase
+    .meta({ idempotent: false, entity: "journal" })
+    .input(schema(JournalEventSchema))
+    .output(schema(JournalWriteResultSchema)),
+  writeSnippet: ocBase
+    .meta({ idempotent: false, entity: "journal" })
+    .input(schema(JournalSnippetSchema))
+    .output(schema(JournalWriteResultSchema)),
+  getSnippet: ocBase
     .meta({ idempotent: true, entity: "journal" })
-    .input(ReservationInputSchema)
-    .output(schema(JournalReservationSchema)),
+    .input(SnippetIdInputSchema)
+    .output(schema(JournalGetSnippetResultSchema)),
+  tailSnippets: ocBase
+    .meta({ idempotent: true, entity: "journal" })
+    .input(TailInputSchema)
+    .output(schema(JournalTailResultSchema)),
+  searchSnippets: ocBase
+    .meta({ idempotent: true, entity: "journal" })
+    .input(SearchInputSchema)
+    .output(schema(JournalSearchResultSchema)),
 };

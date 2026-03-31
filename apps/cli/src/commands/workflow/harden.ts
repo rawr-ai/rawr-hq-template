@@ -1,7 +1,12 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
 import path from "node:path";
-import { journalId, safePreview, writeSnippet, type JournalSnippet } from "@rawr/hq-ops/journal";
+import {
+  createHqOpsClient,
+  createHqOpsInvocation,
+  type HqOpsJournalSnippet,
+} from "../../lib/hq-ops-client";
+import { journalId, safePreview } from "../../lib/journal-projection";
 import { recordArtifact, recordStep } from "../../lib/journal-context";
 import { resolveCliEntrypoint, runStep, type StepResult } from "../../lib/subprocess";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
@@ -198,7 +203,7 @@ async function tryWriteWorkflowSnippet(input: {
     bodyLines.push(`- ${s.name}: ${s.status}${code}`);
   }
 
-  const snippet: JournalSnippet = {
+  const snippet: HqOpsJournalSnippet = {
     id: `${id}-workflow-harden`,
     ts,
     kind: "workflow",
@@ -209,9 +214,11 @@ async function tryWriteWorkflowSnippet(input: {
   };
 
   try {
-    await writeSnippet(input.repoRoot, snippet);
+    await createHqOpsClient(input.repoRoot).journal.writeSnippet(
+      snippet,
+      createHqOpsInvocation("cli.workflow.harden"),
+    );
   } catch {
     // best-effort
   }
 }
-

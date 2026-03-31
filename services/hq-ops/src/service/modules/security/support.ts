@@ -78,7 +78,7 @@ function sortFindings(findings: SecurityFinding[]): SecurityFinding[] {
 }
 
 export async function securityCheck(input: { mode: SecurityMode; cwd?: string }): Promise<
-  (Pick<SecurityReport, "ok" | "findings" | "summary" | "timestamp" | "meta"> & { reportPath?: string })
+  (Pick<SecurityReport, "ok" | "findings" | "summary" | "timestamp" | "mode" | "meta"> & { reportPath?: string })
 > {
   const startedCwd = input.cwd ?? process.cwd();
   const repoRoot = (await getRepoRoot(startedCwd)) ?? startedCwd;
@@ -105,7 +105,7 @@ export async function securityCheck(input: { mode: SecurityMode; cwd?: string })
   const report: SecurityReport = { ok, findings: sorted, summary, timestamp, mode: input.mode, meta: { repoRoot } };
   const { reportPath } = await writeSecurityReport({ repoRoot, report });
 
-  return { ok, findings: sorted, summary, timestamp, meta: { repoRoot }, reportPath };
+  return { ok, findings: sorted, summary, timestamp, mode: input.mode, meta: { repoRoot }, reportPath };
 }
 
 function toleranceToMaxSeverity(riskTolerance: RiskTolerance): SecurityFinding["severity"] | null {

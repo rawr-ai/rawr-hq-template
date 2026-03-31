@@ -2,148 +2,96 @@
 
 ## Active Slice
 
-- Issue: `M1-U05`
-- Title: `Cut the canonical plugin topology`
-- Status: implementation ready on `agent-FARGO-M1-U05-cut-canonical-plugin-topology`
-- Dependency state: `M1-U04` is complete, so the ambiguous `packages/hq` lane is already gone and plugin support is now cleanly partitioned
-- Current role of the slice: move the live runtime-projection tree onto the canonical role-first plugin roots so the old plugin roots stop being a viable authority path
+- Issue: `HQ Ops service-shape follow-up`
+- Branch: `agent-FARGO-M1-U02-followup-hq-ops-service-shape`
+- Status: re-grounded; implementation not started on this branch yet
+- Immediate mission: make `services/hq-ops` a real service package that matches `services/example-todo` all the way down, then rewire live consumers onto the actual service boundary
 
-## Why This Slice Matters
+## Problem Statement
 
-Phase 1 cannot leave two different live plugin topologies behind. If `plugins/api/*` and `plugins/workflows/*` remain while the canonical architecture says `plugins/server/api/*` and `plugins/async/*`, implementers still have two competing answers to the same question.
+`services/hq-ops` currently looks like a service shell from the outside, but it still leaks business capability ownership through package-style subpaths:
 
-U05 therefore has to make filesystem truth, workspace truth, Nx truth, import truth, and proof truth agree on one live topology:
+- `@rawr/hq-ops/config`
+- `@rawr/hq-ops/repo-state`
+- `@rawr/hq-ops/journal`
+- `@rawr/hq-ops/security`
 
-- live server plugins belong under `plugins/server/api/*`
-- live async plugins belong under `plugins/async/workflows/*` and `plugins/async/schedules/*`
-- the old live roots `plugins/api/*` and `plugins/workflows/*` must disappear from the live lane
+That means the repo is still treating HQ Ops as a package bucket with a decorative service shell wrapped around it, not as one service boundary with internal modules. This violates:
 
-## Done Bar
+- the canonical architecture spec
+- the U02 package-shape decision
+- the user’s explicit instruction to follow `services/example-todo` exactly
 
-This slice is done only when all of the following are true:
+## What “Right” Means Here
 
-- `plugins/api` and `plugins/workflows` are gone from the live lane
-- canonical roots exist and are authoritative:
-  - `plugins/server/api/*`
-  - `plugins/async/workflows/*`
-  - `plugins/async/schedules/*`
-- workspace globs, Nx inventory, project metadata, tags, and imports all point at the canonical roots
-- the live server plugins use role-first identities, not the old `plugin-api-*` naming
-- proof scripts pass and there is no second live plugin tree left for implementers to treat as authoritative
+The fix is not a one-layer cleanup. It is done only when all of these are true at the same time:
+
+- `services/hq-ops` keeps the same public package posture as `services/example-todo`
+  - package root only
+  - `./router`
+  - `./service/contract`
+- business capability ownership lives under `src/service/modules/*`, not top-level capability buckets
+- active consumers stop importing `@rawr/hq-ops/{config,repo-state,journal,security}`
+- in-process callers go through the canonical service client instead
+- tests and proofs are updated so the corrected boundary is enforced and doesn’t silently drift back
 
 ## Canonical References
 
-Read these before starting or resuming:
+Read these before editing:
 
 1. [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md)
 2. [workflow.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/workflow.md)
-3. [M1-authority-collapse.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/milestones/M1-authority-collapse.md)
-4. [M1-U05-cut-canonical-plugin-topology.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U05-cut-canonical-plugin-topology.md)
-5. [RAWR_Canonical_Architecture_Spec.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_Canonical_Architecture_Spec.md)
-6. [RAWR_P1_Architecture_Migration_Plan.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_P1_Architecture_Migration_Plan.md)
-7. [plugins/AGENTS.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/plugins/AGENTS.md)
+3. [RAWR_Canonical_Architecture_Spec.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_Canonical_Architecture_Spec.md)
+4. [guidance.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/orpc-ingest-domain-packages/guidance.md)
+5. [DECISIONS.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/orpc-ingest-domain-packages/DECISIONS.md)
+6. [M1-U02-reserve-hq-ops-seam.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U02-reserve-hq-ops-seam.md)
+7. [M1-U03-migrate-hq-ops-and-rewire-consumers.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U03-migrate-hq-ops-and-rewire-consumers.md)
+8. [services/example-todo/package.json](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/services/example-todo/package.json)
+9. [services/example-todo/src/service/base.ts](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/services/example-todo/src/service/base.ts)
+10. [services/example-todo/src/service/modules/tasks/module.ts](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/services/example-todo/src/service/modules/tasks/module.ts)
+11. Git tag `archive/pre-u01-last-live-coordination-support-example`
 
-## Relevant Surfaces
+## Findings That Must Not Be Forgotten
 
-Canonical roots being installed:
+- U02 explicitly decided that `@rawr/hq-ops` should keep the same narrow public export surface as `example-todo`. U03 broke that by adding `./config`, `./repo-state`, `./journal`, and `./security`.
+- `repo-state` is already partly service-shaped because live callers use `createClient(...).repoState.getState(...)` in some places.
+- `config`, `journal`, and `security` are still mostly direct library exports with no real service-boundary mediation.
+- There are still top-level business-capability directories under `services/hq-ops/src/`:
+  - `config`
+  - `repo-state`
+  - `journal`
+  - `security`
+- That top-level capability layout is itself evidence that the package is still acting like a bucket, not like `example-todo`.
 
-- `plugins/server/api/*`
-- `plugins/async/workflows/*`
-- `plugins/async/schedules/*`
+## Live Consumer Leak Inventory
 
-Old live roots being removed:
+Current public leak sites to eliminate:
 
-- `plugins/api/*`
-- `plugins/workflows/*`
-
-Live server plugins being moved:
-
-- `plugins/api/example-todo`
-- `plugins/api/state`
-
-Root/workspace/inventory truth that must move with the cut:
-
-- `package.json`
-- `tsconfig.base.json`
-- `tools/architecture-inventory/slice-0-first-cohort.json`
-- `tools/nx/sync-slice-0-inventory/generator.cjs`
-- `plugins/AGENTS.md`
-
-Live import sites already confirmed stale:
-
-- `apps/hq/src/manifest.ts`
-- `apps/server/src/host-seam.ts`
-- `apps/web/src/ui/lib/orpc-client.ts`
-- `apps/hq/package.json`
-- `apps/web/package.json`
-
-Tests / helpers already confirmed stale:
-
-- `packages/plugin-workspace/test/plugin-manifest-contract.test.ts`
-- `packages/plugin-workspace/test/workspace-discovery.test.ts`
-- `plugins/cli/plugins/src/commands/plugins/sweep.ts`
-- `plugins/cli/plugins/test/plugin-plugins.test.ts`
-- `plugins/cli/plugins/test/workspace-plugins-discovery.test.ts`
-
-## Key Insights Already Established
-
-- The topology cut is not just a directory move. The old roots are also embedded in workspaces, project names, tags, path aliases, imports, inventory sync, and plugin discovery tests.
-- The architecture spec's `@rawr/plugins/server/api/...` examples are conceptual topology examples, not directly usable workspace package names. This repo still operates on one package per plugin with normal package-manager constraints.
-- Because of that, the concrete live rename for this slice is role-first but still one-package-per-plugin:
-  - `@rawr/plugin-api-example-todo` -> `@rawr/plugin-server-api-example-todo`
-  - `@rawr/plugin-api-state` -> `@rawr/plugin-server-api-state`
-  - Nx project names follow the same shift: `plugin-api-*` -> `plugin-server-api-*`
-- `plugins/AGENTS.md` is active routing truth, so it must move with the topology cut rather than lag behind as stale doc debt.
-- The async live lane may stay reserved-empty after archiving. Do not invent fake async plugins just to populate `plugins/async/workflows` or `plugins/async/schedules`.
+- `apps/server/src/bootstrap.ts`
+- `apps/cli/src/index.ts`
+- `apps/cli/src/commands/config/*`
+- `apps/cli/src/commands/journal/*`
+- `apps/cli/src/commands/workflow/{forge-command,harden}.ts`
+- `apps/cli/src/lib/security.ts`
+- `plugins/cli/plugins/src/commands/plugins/web/*`
+- `plugins/cli/plugins/src/commands/plugins/sync/sources/*`
+- `plugins/cli/plugins/src/lib/security.ts`
+- `plugins/cli/plugins/src/lib/factory.ts`
+- `packages/agent-sync/src/lib/{layered-config,targets}.ts`
+- `apps/server/test/{rawr.test.ts,storage-lock-route-guard.test.ts}`
 
 ## Invariants and User Constraints
 
-- Stay in this single worktree only.
-- Work on `agent-FARGO-M1-U05-cut-canonical-plugin-topology`.
-- Keep the milestone packet as execution authority and the architecture spec as canonical architecture truth.
-- Do not reopen U04 and do not move to U06 until U05 is fully verified, HQ-validated, committed, submitted, and tracked.
-- Make one authoritative live plugin tree. Do not leave an old-root compatibility lane behind.
-- Keep the frozen `plugins/agents/hq` marketplace lane unchanged.
-- Before committing code changes, have an agent validate the managed HQ stack with:
-  - `bun run rawr hq up --observability required --open none`
-  - status / health checks
-  - log inspection
-  - confirmation that first-party state still works
-  - confirmation that archived coordination/support-example routes still return `404`
+- Do not compact yet.
+- Do not use explorer/worker agents for this repair.
+- If any agent is reused later, keep it on one clean context vector only and compact it before changing tasks.
+- Use the tagged pre-archive reference if it helps with wiring/projection understanding; do not claim to be grounded in it unless it was actually inspected.
+- Keep the single-worktree Graphite flow intact.
+- Before any eventual commit, run the HQ runtime validation gate again with observability required.
 
-## Verification Bar
+## Immediate Next Move
 
-Run at minimum:
-
-- `bun run sync:check`
-- `bun --cwd apps/server run typecheck`
-- `bun --cwd apps/hq run typecheck`
-- `bun --cwd apps/server run test`
-- `bun scripts/phase-1/verify-canonical-plugin-topology.mjs`
-- `rg -n 'plugins/(api|workflows)/' apps packages plugins services -g '!**/dist/**' -g '!**/node_modules/**'`
-- `test ! -d plugins/api && test ! -d plugins/workflows`
-
-## Current Status
-
-- Branch is `agent-FARGO-M1-U05-cut-canonical-plugin-topology`.
-- Working tree was clean before U05 edits started.
-- Old topology truth is still present in:
-  - root workspaces (`plugins/api/*`, `plugins/workflows/*`)
-  - `tsconfig.base.json` path aliases
-  - plugin package names and Nx project IDs (`plugin-api-*`)
-  - `tools/architecture-inventory/slice-0-first-cohort.json`
-  - `tools/nx/sync-slice-0-inventory/generator.cjs`
-  - `plugins/AGENTS.md`
-  - `apps/hq`, `apps/server`, and `apps/web` imports/dependencies
-  - plugin discovery tests and helper heuristics
-- Concrete naming decision for implementation:
-  - use canonical roots on disk
-  - use role-first flattened package identities in code and manifests
-  - do not attempt a fake nested package-name scheme that package managers cannot natively own
-
-## Immediate Next Actions
-
-1. Move `plugins/api/example-todo` and `plugins/api/state` into `plugins/server/api/*`.
-2. Rename package/project identities from `plugin-api-*` to `plugin-server-api-*`.
-3. Update workspace globs, path aliases, inventory sync, routing docs, imports, tests, and proof scripts to the new live topology.
-4. Add or update the canonical topology proof, run the U05 verification bar, run HQ validation via agent, then commit and submit.
+- Finish the repair design note, then start the implementation by collapsing the leaked HQ Ops public API back to the canonical service boundary:
+  - inventory every exported capability function still living outside `src/service/modules/*`
+  - decide the service-client replacement path for each consumer cluster
+  - then edit `services/hq-ops` itself before touching consumers

@@ -1,9 +1,7 @@
 import { RawrCommand } from "@rawr/core";
 import { Args } from "@oclif/core";
-import fs from "node:fs/promises";
-import path from "node:path";
+import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
-import type { JournalSnippet } from "@rawr/hq-ops/journal";
 
 export default class JournalShow extends RawrCommand {
   static description = "Show a single journal snippet by id";
@@ -29,21 +27,24 @@ export default class JournalShow extends RawrCommand {
     }
 
     const id = String(args.id);
-    const snippetPath = path.join(workspaceRoot, ".rawr", "journal", "snippets", `${id}.json`);
-
-    try {
-      const snippet = JSON.parse(await fs.readFile(snippetPath, "utf8")) as JournalSnippet;
-      const result = this.ok({ snippet });
-      this.outputResult(result, {
-        flags: baseFlags,
-        human: () => {
-          this.log(snippet.body);
-        },
-      });
-    } catch (err) {
-      const result = this.fail(`Snippet not found: ${id}`, { details: { path: snippetPath, err: String(err) } });
+    const response = await createHqOpsClient(workspaceRoot).journal.getSnippet(
+      { id },
+      createHqOpsInvocation("cli.journal.show"),
+    );
+    const snippet = response.snippet;
+    if (!snippet) {
+      const result = this.fail(`Snippet not found: ${id}`, { details: { id } });
       this.outputResult(result, { flags: baseFlags });
       this.exit(1);
+      return;
     }
+
+    const result = this.ok({ snippet });
+    this.outputResult(result, {
+      flags: baseFlags,
+      human: () => {
+        this.log(snippet.body);
+      },
+    });
   }
 }

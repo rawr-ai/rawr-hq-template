@@ -1,29 +1,53 @@
-/**
- * @fileoverview Config-module boundary contract.
- *
- * @remarks
- * U02 is reservation-only. This file reserves the module boundary anchor with a
- * single structural reservation procedure so the package keeps the canonical
- * contract-first service shell.
- */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
-import { ConfigReservationSchema } from "./schemas";
+import { ConfigLayeredResultSchema, ConfigLoadResultSchema, SyncSourcesSchema } from "./schemas";
 
-const ReservationInputSchema = schema(
+const EmptyInputSchema = schema(
   Type.Object(
     {},
     {
       additionalProperties: false,
-      description: "No caller input is required for the config reservation placeholder.",
+      description: "No caller input is required.",
+    },
+  ),
+);
+
+const SyncSourceMutationInputSchema = schema(
+  Type.Object(
+    {
+      path: Type.String({ minLength: 1 }),
+    },
+    {
+      additionalProperties: false,
+      description: "Absolute or already-resolved sync source path.",
     },
   ),
 );
 
 export const contract = {
-  reservation: ocBase
+  getWorkspaceConfig: ocBase
     .meta({ idempotent: true, entity: "config" })
-    .input(ReservationInputSchema)
-    .output(schema(ConfigReservationSchema)),
+    .input(EmptyInputSchema)
+    .output(schema(ConfigLoadResultSchema)),
+  getGlobalConfig: ocBase
+    .meta({ idempotent: true, entity: "config" })
+    .input(EmptyInputSchema)
+    .output(schema(ConfigLoadResultSchema)),
+  getLayeredConfig: ocBase
+    .meta({ idempotent: true, entity: "config" })
+    .input(EmptyInputSchema)
+    .output(schema(ConfigLayeredResultSchema)),
+  listGlobalSyncSources: ocBase
+    .meta({ idempotent: true, entity: "config" })
+    .input(EmptyInputSchema)
+    .output(schema(SyncSourcesSchema)),
+  addGlobalSyncSource: ocBase
+    .meta({ idempotent: false, entity: "config" })
+    .input(SyncSourceMutationInputSchema)
+    .output(schema(SyncSourcesSchema)),
+  removeGlobalSyncSource: ocBase
+    .meta({ idempotent: false, entity: "config" })
+    .input(SyncSourceMutationInputSchema)
+    .output(schema(SyncSourcesSchema)),
 };

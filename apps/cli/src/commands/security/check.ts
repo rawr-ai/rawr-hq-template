@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { loadSecurityModule, missingSecurityFn } from "../../lib/security";
+import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class SecurityCheck extends RawrCommand {
@@ -17,17 +17,11 @@ export default class SecurityCheck extends RawrCommand {
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     const mode: "staged" | "repo" = flags.staged ? "staged" : "repo";
 
-    const security = await loadSecurityModule();
-    const securityCheck = security.securityCheck;
-    if (typeof securityCheck !== "function") {
-      const result = this.fail(missingSecurityFn("securityCheck"), { code: "NOT_IMPLEMENTED" });
-      this.outputResult(result, { flags: baseFlags });
-      this.exit(2);
-      return;
-    }
-
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
-    const report = await securityCheck({ mode, cwd: workspaceRoot ?? process.cwd() });
+    const report = await createHqOpsClient(workspaceRoot ?? process.cwd()).security.securityCheck(
+      { mode },
+      createHqOpsInvocation("cli.security.check"),
+    );
 
     const result = this.ok({ report });
     this.outputResult(result, {

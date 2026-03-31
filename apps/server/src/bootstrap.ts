@@ -1,10 +1,10 @@
 import { installRawrOrpcTelemetry, type InstalledTelemetry } from "@rawr/core/telemetry";
-import { loadRawrConfig } from "@rawr/hq-ops/config";
-import { getRepoState } from "@rawr/hq-ops/repo-state";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServerApp } from "./app";
 import { getServerConfig } from "./config";
+import { createRawrHostSatisfiers } from "./host-satisfiers";
+import { createHostLoggerAdapter } from "./logging";
 import { loadWorkspaceServerPlugins, mountServerPlugins } from "./plugins";
 import { registerRawrRoutes } from "./rawr";
 
@@ -22,17 +22,39 @@ export type BootstrappedServer = {
   telemetry: InstalledTelemetry;
 };
 
+type LoadConfig = (repoRoot: string) => Promise<Awaited<ReturnType<typeof loadWorkspaceConfigFromHost>>>;
+type LoadState = (repoRoot: string) => Promise<Awaited<ReturnType<typeof loadRuntimeStateFromHost>>>;
+
 type BootstrapServerDependencies = {
   env: NodeJS.ProcessEnv;
   resolveRepoRoot(): string;
   installTelemetry: typeof installRawrOrpcTelemetry;
   createApp: typeof createServerApp;
-  loadConfig: typeof loadRawrConfig;
+  loadConfig: LoadConfig;
   loadPlugins: typeof loadWorkspaceServerPlugins;
-  loadState: typeof getRepoState;
+  loadState: LoadState;
   registerRoutes: typeof registerRawrRoutes;
   mountPlugins: typeof mountServerPlugins;
 };
+
+const bootstrapHostSatisfiers = createRawrHostSatisfiers({
+  hostLogger: createHostLoggerAdapter(),
+});
+
+async function loadWorkspaceConfigFromHost(repoRoot: string) {
+  return await bootstrapHostSatisfiers.state.resolveClient(repoRoot).config.getWorkspaceConfig(
+    {},
+    { context: { invocation: { traceId: "server.config.load" } } },
+  );
+}
+
+async function loadRuntimeStateFromHost(repoRoot: string) {
+  const response = await bootstrapHostSatisfiers.state.resolveClient(repoRoot).repoState.getState(
+    {},
+    { context: { invocation: { traceId: "server.repo-state.get" } } },
+  );
+  return response.state;
+}
 
 export async function bootstrapServer(
   overrides: Partial<BootstrapServerDependencies> = {},
@@ -42,9 +64,9 @@ export async function bootstrapServer(
     resolveRepoRoot: defaultRepoRoot,
     installTelemetry: installRawrOrpcTelemetry,
     createApp: createServerApp,
-    loadConfig: loadRawrConfig,
+    loadConfig: loadWorkspaceConfigFromHost,
     loadPlugins: loadWorkspaceServerPlugins,
-    loadState: getRepoState,
+    loadState: loadRuntimeStateFromHost,
     registerRoutes: registerRawrRoutes,
     mountPlugins: mountServerPlugins,
     ...overrides,
@@ -81,7 +103,7 @@ export async function bootstrapServer(
     deps.loadPlugins({ repoRoot }),
     deps.loadState(repoRoot),
   ]);
-  const enabledPlugins = new Set(state.plugins.enabled);
+  const enabledPlugins = new Set<string>(state.plugins.enabled);
 
   app = deps.registerRoutes(app, {
     repoRoot,

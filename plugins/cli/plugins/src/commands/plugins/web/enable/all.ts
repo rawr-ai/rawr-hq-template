@@ -2,11 +2,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { Flags } from "@oclif/core";
-import { loadRawrConfig } from "@rawr/hq-ops/config";
 import { RawrCommand } from "@rawr/core";
-import { enablePlugin as persistEnablePlugin } from "@rawr/hq-ops/repo-state";
-
-import { loadSecurityModule, missingSecurityFn } from "../../../../lib/security";
+import { createHqOpsClient, createHqOpsInvocation } from "../../../../lib/hq-ops-client";
 import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../../lib/workspace-plugins";
 
 type EnableAttempt = {
@@ -68,22 +65,16 @@ export default class PluginsWebEnableAll extends RawrCommand {
 
     // If user didn't explicitly choose --risk, prefer config default (if present).
     if (!this.hasExplicitRiskFlag(process.argv.slice(2))) {
-      const loaded = await loadRawrConfig(workspaceRoot);
+      const loaded = await createHqOpsClient(workspaceRoot).config.getWorkspaceConfig(
+        {},
+        createHqOpsInvocation("plugin-plugins.web.enable-all.config"),
+      );
       const configured = loaded.config?.plugins?.defaultRiskTolerance;
       if (configured) riskTolerance = configured;
     }
 
     const all = await listWorkspacePlugins(workspaceRoot);
     const visible = filterPluginsByKind(all, "web");
-
-    const security = await loadSecurityModule();
-    const gateEnable = security.gateEnable;
-    if (typeof gateEnable !== "function") {
-      const result = this.fail(missingSecurityFn("gateEnable"), { code: "NOT_IMPLEMENTED" });
-      this.outputResult(result, { flags: baseFlags });
-      this.exit(2);
-      return;
-    }
 
     const planned: { pluginId: string; reason?: string }[] = [];
     const skipped: { pluginId: string; reason: string }[] = [];
@@ -103,12 +94,14 @@ export default class PluginsWebEnableAll extends RawrCommand {
     let errorCount = 0;
 
     for (const p of planned) {
-      const evaluation = await gateEnable({
-        pluginId: p.pluginId,
-        riskTolerance,
-        mode,
-        cwd: workspaceRoot,
-      });
+      const evaluation = await createHqOpsClient(workspaceRoot).security.gateEnable(
+        {
+          pluginId: p.pluginId,
+          riskTolerance: riskTolerance as "strict" | "balanced" | "permissive" | "off",
+          mode,
+        },
+        createHqOpsInvocation(`plugin-plugins.web.enable-all.gate.${p.pluginId}`),
+      );
 
       const allowed = (evaluation as any)?.allowed !== false;
       const forced = (evaluation as any)?.allowed === false && force;
@@ -125,7 +118,10 @@ export default class PluginsWebEnableAll extends RawrCommand {
       }
 
       try {
-        await persistEnablePlugin(workspaceRoot, p.pluginId);
+          await createHqOpsClient(workspaceRoot).repoState.enablePlugin(
+            { pluginId: p.pluginId },
+            createHqOpsInvocation(`plugin-plugins.web.enable-all.persist.${p.pluginId}`),
+          );
         attempts.push({ pluginId: p.pluginId, allowed, forced, persisted: true });
       } catch (e) {
         errorCount++;

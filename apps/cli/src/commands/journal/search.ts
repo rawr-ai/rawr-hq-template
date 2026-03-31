@@ -1,7 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { isSemanticConfigured, openJournalDb, searchSnippetsFts, searchSnippetsSemantic } from "@rawr/hq-ops/journal";
-import { loadRawrConfig } from "@rawr/hq-ops/config";
+import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class JournalSearch extends RawrCommand {
@@ -32,41 +31,26 @@ export default class JournalSearch extends RawrCommand {
       return;
     }
 
-    const warnings: string[] = [];
-    const semanticConfigured = semantic && isSemanticConfigured();
-    if (semantic && !semanticConfigured)
-      warnings.push("semantic search not configured; falling back to keyword search");
+    const response = await createHqOpsClient(workspaceRoot).journal.searchSnippets(
+      {
+        query,
+        limit: Number.isFinite(limit) ? limit : 10,
+        mode: semantic ? "semantic" : "fts",
+      },
+      createHqOpsInvocation("cli.journal.search"),
+    );
 
-    let semanticCandidateLimit: number | undefined;
-    let semanticEnv: NodeJS.ProcessEnv | undefined;
-    if (semanticConfigured) {
-      const loaded = await loadRawrConfig(workspaceRoot);
-      semanticCandidateLimit = loaded.config?.journal?.semantic?.candidateLimit ?? 200;
-      const model = loaded.config?.journal?.semantic?.model;
-      if (model) semanticEnv = { ...process.env, RAWR_EMBEDDINGS_MODEL: model };
-    }
-
-    const db = openJournalDb(workspaceRoot);
-    try {
-      const snippets = semanticConfigured
-        ? await searchSnippetsSemantic(db, query, Number.isFinite(limit) ? limit : 10, {
-            candidateLimit: semanticCandidateLimit,
-            env: semanticEnv,
-          })
-        : searchSnippetsFts(db, query, Number.isFinite(limit) ? limit : 10);
-      const result = this.ok({ query, snippets }, undefined, warnings.length ? warnings : undefined);
-      this.outputResult(result, {
-        flags: baseFlags,
-        human: () => {
-          if (warnings.length) for (const w of warnings) this.warn(w);
-          for (const s of snippets) {
-            const score = typeof (s as any).score === "number" ? ` score=${(s as any).score.toFixed(3)}` : "";
-            this.log(`${s.id}  ${s.title}  (${s.preview})${score}`);
-          }
-        },
-      });
-    } finally {
-      db.close();
-    }
+    const warnings = response.warning ? [response.warning] : undefined;
+    const result = this.ok({ query, snippets: response.snippets }, undefined, warnings);
+    this.outputResult(result, {
+      flags: baseFlags,
+      human: () => {
+        if (warnings) for (const warning of warnings) this.warn(warning);
+        for (const snippet of response.snippets) {
+          const score = typeof (snippet as any).score === "number" ? ` score=${(snippet as any).score.toFixed(3)}` : "";
+          this.log(`${snippet.id}  ${snippet.title}  (${snippet.preview})${score}`);
+        }
+      },
+    });
   }
 }

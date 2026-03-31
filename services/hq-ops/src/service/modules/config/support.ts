@@ -273,7 +273,11 @@ export type LoadRawrConfigResult = {
   config: RawrConfig | null;
   path: string | null;
   warnings: string[];
-  error?: { message: string; cause?: string };
+  error?: {
+    message: string;
+    cause?: string;
+    issues?: Array<{ path: string; message: string }>;
+  };
 };
 
 function pickConfigExport(mod: any): unknown {
@@ -310,7 +314,11 @@ export async function loadRawrConfig(repoRoot: string): Promise<LoadRawrConfigRe
         config: null,
         path: configPath,
         warnings,
-        error: { message: "Invalid rawr.config.ts", cause: formatIssues(validated.issues) },
+        error: {
+          message: "Invalid rawr.config.ts",
+          cause: formatIssues(validated.issues),
+          issues: validated.issues,
+        },
       };
     }
 
@@ -349,7 +357,11 @@ export async function loadGlobalRawrConfig(): Promise<LoadRawrConfigResult> {
         config: null,
         path: configPath,
         warnings,
-        error: { message: "Invalid ~/.rawr/config.json", cause: formatIssues(validated.issues) },
+        error: {
+          message: "Invalid ~/.rawr/config.json",
+          cause: formatIssues(validated.issues),
+          issues: validated.issues,
+        },
       };
     }
     return { config: validated.config, path: configPath, warnings };

@@ -1,3 +1,5 @@
+/// <reference path="../shims/bun-sqlite.d.ts" />
+
 /**
  * @fileoverview Root HQ Ops contract composition.
  *

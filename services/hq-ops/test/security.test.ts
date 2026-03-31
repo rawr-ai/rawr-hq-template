@@ -12,39 +12,39 @@ vi.mock("node:fs/promises", async () => {
   };
 });
 
-vi.mock("../src/security/git.js", () => ({
+vi.mock("../src/service/modules/security/git.js", () => ({
   getRepoRoot: vi.fn(async (cwd: string) => `${cwd}/.git-root`),
 }));
 
-vi.mock("../src/security/audit.js", () => ({
+vi.mock("../src/service/modules/security/audit.js", () => ({
   runBunAudit: vi.fn(async () => ({ findings: [] })),
 }));
 
-vi.mock("../src/security/untrusted.js", () => ({
+vi.mock("../src/service/modules/security/untrusted.js", () => ({
   runBunPmUntrusted: vi.fn(async () => ({ finding: null })),
 }));
 
-vi.mock("../src/security/secrets.js", () => ({
+vi.mock("../src/service/modules/security/secrets.js", () => ({
   scanSecretsRepo: vi.fn(async () => []),
   scanSecretsStaged: vi.fn(async () => []),
 }));
 
-vi.mock("../src/security/report.js", () => ({
+vi.mock("../src/service/modules/security/report.js", () => ({
   writeSecurityReport: vi.fn(async ({ repoRoot }: { repoRoot: string }) => ({
     reportPath: `${repoRoot}/.rawr/security/latest.json`,
   })),
 }));
 
-import { gateEnable, getSecurityReport, securityCheck } from "../src/security/index.js";
-import type { SecurityReport } from "../src/security/index.js";
-import { getRepoRoot } from "../src/security/git.js";
+import { gateEnable, getSecurityReport, securityCheck } from "../src/service/modules/security/support.js";
+import type { SecurityReport } from "../src/service/modules/security/types.js";
+import { getRepoRoot } from "../src/service/modules/security/git.js";
 
 beforeEach(() => {
   vi.clearAllMocks();
   mockReadFile.mockReset();
 });
 
-describe("@rawr/hq-ops/security", () => {
+describe("hq-ops security support", () => {
   it("exports the public API", () => {
     expect(typeof securityCheck).toBe("function");
     expect(typeof gateEnable).toBe("function");

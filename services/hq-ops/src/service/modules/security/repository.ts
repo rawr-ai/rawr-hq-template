@@ -1,16 +1,16 @@
-/**
- * @fileoverview Security module repository seam (placeholder).
- *
- * @remarks
- * U02 is reservation-only, so this repository exposes only a structural
- * placeholder return shape. Real security persistence logic arrives in later
- * slices.
- */
-import type { SecurityReservation } from "./schemas";
+import { gateEnable, getSecurityReport, securityCheck } from "./support.js";
+import type { RiskTolerance } from "./types.js";
 
-export function createRepository() {
-  const reservation: SecurityReservation = {};
+export function createRepository(repoRoot: string) {
   return {
-    reservation,
+    async securityCheck(mode: "staged" | "repo") {
+      return await securityCheck({ mode, cwd: repoRoot });
+    },
+    async gateEnable(pluginId: string, riskTolerance: RiskTolerance, mode: "staged" | "repo") {
+      return await gateEnable({ pluginId, riskTolerance, mode, cwd: repoRoot });
+    },
+    async getSecurityReport() {
+      return await getSecurityReport({ cwd: repoRoot });
+    },
   };
 }

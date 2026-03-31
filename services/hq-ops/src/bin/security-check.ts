@@ -1,4 +1,6 @@
-import { securityCheck } from "../security/index.js";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { createClient } from "../client";
 
 const argv = process.argv.slice(2);
 
@@ -6,7 +8,21 @@ const has = (flag: string) => argv.includes(flag);
 const mode = has("--repo") ? "repo" : "staged";
 const quiet = has("--quiet");
 
-const report = await securityCheck({ mode });
+const client = createClient({
+  deps: {
+    logger: createEmbeddedPlaceholderLoggerAdapter(),
+    analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+  },
+  scope: {
+    repoRoot: process.cwd(),
+  },
+  config: {},
+});
+
+const report = await client.security.securityCheck(
+  { mode },
+  { context: { invocation: { traceId: "hq-ops.security-check.bin" } } },
+);
 
 if (!quiet) {
   // Keep output stable and short (pre-commit UX).

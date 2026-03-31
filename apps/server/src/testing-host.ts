@@ -1,4 +1,5 @@
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
+import type { Client as HqOpsClient } from "@rawr/hq-ops";
 import { createRawrHostComposition } from "./host-composition";
 
 const noopLogger = {
@@ -47,4 +48,8 @@ export function createTestingRawrHostSeam() {
  */
 export function createTestingExampleTodoServiceClient(repoRoot: string): ExampleTodoClient {
   return testingRawrHostComposition.satisfiers.exampleTodo.resolveClient(repoRoot);
+}
+
+export function createTestingHqOpsServiceClient(repoRoot: string): HqOpsClient {
+  return testingRawrHostComposition.satisfiers.state.resolveClient(repoRoot);
 }

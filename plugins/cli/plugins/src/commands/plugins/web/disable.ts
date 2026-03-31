@@ -1,7 +1,6 @@
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { disablePlugin as persistDisablePlugin } from "@rawr/hq-ops/repo-state";
-
+import { createHqOpsClient, createHqOpsInvocation } from "../../../lib/hq-ops-client";
 import { findWorkspaceRoot, listWorkspacePlugins, resolvePluginId } from "../../../lib/workspace-plugins";
 
 export default class PluginsWebDisable extends RawrCommand {
@@ -40,7 +39,10 @@ export default class PluginsWebDisable extends RawrCommand {
       return;
     }
 
-    const nextState = await persistDisablePlugin(workspaceRoot, plugin.id);
+    const nextState = await createHqOpsClient(workspaceRoot).repoState.disablePlugin(
+      { pluginId: plugin.id },
+      createHqOpsInvocation("plugin-plugins.web.disable"),
+    );
     const result = this.ok({ pluginId: plugin.id, state: nextState });
     this.outputResult(result, {
       flags: baseFlags,

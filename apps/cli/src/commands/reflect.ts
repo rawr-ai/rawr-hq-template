@@ -1,7 +1,6 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { openJournalDb, tailSnippets } from "@rawr/hq-ops/journal";
-
+import { createHqOpsClient, createHqOpsInvocation } from "../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../lib/workspace-plugins";
 
 type ReflectSuggestion = {
@@ -33,28 +32,26 @@ export default class Reflect extends RawrCommand {
       return;
     }
 
-    const db = openJournalDb(workspaceRoot);
-    try {
-      const snippets = tailSnippets(db, Number.isFinite(limit) ? limit : 50);
-      const suggestions = suggest(snippets);
-      const result = this.ok({ suggestions, considered: snippets.length });
-      this.outputResult(result, {
-        flags: baseFlags,
-        human: () => {
-          if (suggestions.length === 0) {
-            this.log("No suggestions yet. Keep journaling; then try `rawr journal search --query <q>`.");
-            return;
-          }
-          for (const s of suggestions) {
-            this.log(`- ${s.title}`);
-            this.log(`  ${s.rationale}`);
-            if (s.exampleCommand) this.log(`  e.g. ${s.exampleCommand}`);
-          }
-        },
-      });
-    } finally {
-      db.close();
-    }
+    const response = await createHqOpsClient(workspaceRoot).journal.tailSnippets(
+      { limit: Number.isFinite(limit) ? limit : 50 },
+      createHqOpsInvocation("cli.reflect"),
+    );
+    const suggestions = suggest(response.snippets);
+    const result = this.ok({ suggestions, considered: response.snippets.length });
+    this.outputResult(result, {
+      flags: baseFlags,
+      human: () => {
+        if (suggestions.length === 0) {
+          this.log("No suggestions yet. Keep journaling; then try `rawr journal search --query <q>`.");
+          return;
+        }
+        for (const suggestion of suggestions) {
+          this.log(`- ${suggestion.title}`);
+          this.log(`  ${suggestion.rationale}`);
+          if (suggestion.exampleCommand) this.log(`  e.g. ${suggestion.exampleCommand}`);
+        }
+      },
+    });
   }
 }
 

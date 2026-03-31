@@ -1,18 +1,95 @@
-/**
- * @fileoverview Reserved journal-module schema anchors.
- *
- * @remarks
- * This file reserves the canonical module-local schema slot without moving
- * journal truth into the package yet.
- */
 import { type Static, Type } from "typebox";
 
-export const JournalReservationSchema = Type.Object(
-  {},
+export const JournalSnippetKindSchema = Type.Union([
+  Type.Literal("command"),
+  Type.Literal("workflow"),
+  Type.Literal("security"),
+  Type.Literal("note"),
+]);
+
+export const JournalStepSchema = Type.Object(
   {
-    additionalProperties: false,
-    description: "Reserved placeholder schema for the HQ Ops journal module.",
+    name: Type.String({ minLength: 1 }),
+    status: Type.String({ minLength: 1 }),
+    durationMs: Type.Optional(Type.Number()),
+    exitCode: Type.Optional(Type.Number()),
   },
+  { additionalProperties: false },
 );
 
-export type JournalReservation = Static<typeof JournalReservationSchema>;
+export const JournalEventSchema = Type.Object(
+  {
+    id: Type.String({ minLength: 1 }),
+    ts: Type.String({ minLength: 1 }),
+    cwd: Type.String({ minLength: 1 }),
+    argv: Type.Array(Type.String()),
+    commandId: Type.Optional(Type.String({ minLength: 1 })),
+    exitCode: Type.Optional(Type.Number()),
+    durationMs: Type.Optional(Type.Number()),
+    artifacts: Type.Optional(Type.Array(Type.String())),
+    steps: Type.Optional(Type.Array(JournalStepSchema)),
+  },
+  { additionalProperties: false },
+);
+
+export const JournalSnippetSchema = Type.Object(
+  {
+    id: Type.String({ minLength: 1 }),
+    ts: Type.String({ minLength: 1 }),
+    kind: JournalSnippetKindSchema,
+    title: Type.String({ minLength: 1 }),
+    preview: Type.String(),
+    body: Type.String(),
+    tags: Type.Array(Type.String()),
+    sourceEventId: Type.Optional(Type.String({ minLength: 1 })),
+  },
+  { additionalProperties: false },
+);
+
+export const JournalSearchRowSchema = Type.Object(
+  {
+    id: Type.String({ minLength: 1 }),
+    ts: Type.String({ minLength: 1 }),
+    kind: JournalSnippetKindSchema,
+    title: Type.String({ minLength: 1 }),
+    preview: Type.String(),
+    tags: Type.Array(Type.String()),
+    sourceEventId: Type.Optional(Type.String({ minLength: 1 })),
+    score: Type.Optional(Type.Number()),
+  },
+  { additionalProperties: false },
+);
+
+export const JournalWriteResultSchema = Type.Object(
+  {
+    path: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+
+export const JournalSearchResultSchema = Type.Object(
+  {
+    mode: Type.Union([Type.Literal("fts"), Type.Literal("semantic")]),
+    warning: Type.Optional(Type.String({ minLength: 1 })),
+    snippets: Type.Array(JournalSearchRowSchema),
+  },
+  { additionalProperties: false },
+);
+
+export const JournalGetSnippetResultSchema = Type.Object(
+  {
+    snippet: Type.Union([JournalSnippetSchema, Type.Null()]),
+  },
+  { additionalProperties: false },
+);
+
+export const JournalTailResultSchema = Type.Object(
+  {
+    snippets: Type.Array(JournalSearchRowSchema),
+  },
+  { additionalProperties: false },
+);
+
+export type JournalEvent = Static<typeof JournalEventSchema>;
+export type JournalSnippet = Static<typeof JournalSnippetSchema>;
+export type JournalSearchRow = Static<typeof JournalSearchRowSchema>;

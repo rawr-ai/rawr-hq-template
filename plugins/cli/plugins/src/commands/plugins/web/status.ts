@@ -1,6 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { getRepoState } from "@rawr/hq-ops/repo-state";
-
+import { createHqOpsClient, createHqOpsInvocation } from "../../../lib/hq-ops-client";
 import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
 
 export default class PluginsWebStatus extends RawrCommand {
@@ -22,7 +21,14 @@ export default class PluginsWebStatus extends RawrCommand {
       return;
     }
 
-    const [plugins, state] = await Promise.all([listWorkspacePlugins(workspaceRoot), getRepoState(workspaceRoot)]);
+    const [plugins, stateResult] = await Promise.all([
+      listWorkspacePlugins(workspaceRoot),
+      createHqOpsClient(workspaceRoot).repoState.getState(
+        {},
+        createHqOpsInvocation("plugin-plugins.web.status"),
+      ),
+    ]);
+    const state = stateResult.state;
     const visiblePlugins = filterPluginsByKind(plugins, "web");
     const enabled = new Set(state.plugins.enabled);
 

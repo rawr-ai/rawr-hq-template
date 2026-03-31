@@ -1,3 +1,5 @@
+/// <reference path="./shims/bun-sqlite.d.ts" />
+
 /**
  * @fileoverview Package router export for `@rawr/hq-ops/router`.
  *

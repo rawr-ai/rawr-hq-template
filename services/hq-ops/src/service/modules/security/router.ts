@@ -1,18 +1,19 @@
-/**
- * @fileoverview Security module router implementation.
- *
- * @remarks
- * Module composition lives in `./module.ts`.
- * U02 is reservation-only, so this module exports one structural reservation
- * procedure rather than live security behavior.
- */
 import { module } from "./module";
 
-const reservation = module.reservation.handler(async ({ context }) => {
-  return context.repo.reservation;
+const securityCheck = module.securityCheck.handler(async ({ context, input }) => {
+  return await context.repo.securityCheck(input.mode);
 });
 
-/** Contract-enforced module router reserved for later security procedures. */
+const gateEnable = module.gateEnable.handler(async ({ context, input }) => {
+  return await context.repo.gateEnable(input.pluginId, input.riskTolerance, input.mode);
+});
+
+const getSecurityReport = module.getSecurityReport.handler(async ({ context }) => {
+  return await context.repo.getSecurityReport();
+});
+
 export const router = module.router({
-  reservation,
+  securityCheck,
+  gateEnable,
+  getSecurityReport,
 });

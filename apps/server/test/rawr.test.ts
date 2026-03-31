@@ -4,11 +4,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { minifyContractRouter } from "@orpc/contract";
 import { describe, expect, it } from "vitest";
-import { enablePlugin } from "@rawr/hq-ops/repo-state";
 import { createServerApp } from "../src/app";
 import { registerOrpcRoutes } from "../src/orpc";
 import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
-import { createTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingHqOpsServiceClient, createTestingRawrHostSeam } from "../src/testing-host";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const FIRST_PARTY_RPC_HEADERS = {
@@ -120,7 +119,10 @@ describe("rawr server routes", () => {
     await fs.symlink(canonicalRepoRoot, aliasRepoRoot);
 
     try {
-      await enablePlugin(canonicalRepoRoot, "@rawr/plugin-alias-root");
+      await createTestingHqOpsServiceClient(canonicalRepoRoot).repoState.enablePlugin(
+        { pluginId: "@rawr/plugin-alias-root" },
+        { context: { invocation: { traceId: "server.test.rawr.enable-plugin" } } },
+      );
       const app = registerRawrRoutes(createServerApp(), { repoRoot: aliasRepoRoot, enabledPluginIds: new Set() });
       await fs.rm(aliasRepoRoot, { force: true });
       const stateResponse = await app.handle(
