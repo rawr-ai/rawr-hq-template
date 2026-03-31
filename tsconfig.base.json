@@ -9,6 +9,9 @@
     "skipLibCheck": true,
     "types": ["node"],
     "paths": {
+      "@rawr/chatgpt-corpus": ["services/chatgpt-corpus/src/index.ts"],
+      "@rawr/chatgpt-corpus/router": ["services/chatgpt-corpus/src/router.ts"],
+      "@rawr/chatgpt-corpus/service/contract": ["services/chatgpt-corpus/src/service/contract.ts"],
       "@rawr/coordination": ["services/coordination/src/index.ts"],
       "@rawr/coordination/events": ["services/coordination/src/domain/events.ts"],
       "@rawr/coordination/node": ["services/coordination/src/node.ts"],

@@ -1,0 +1,37 @@
+{
+  "metadata": {
+    "title": "Branch · Alpha Architecture",
+    "link": "https://chatgpt.com/c/alpha-branch",
+    "dates": {
+      "created": "3/01/2026 09:30:00",
+      "updated": "3/01/2026 09:45:00",
+      "exported": "3/01/2026 10:05:00"
+    }
+  },
+  "messages": [
+    {
+      "role": "Prompt",
+      "say": "How should host shells work?"
+    },
+    {
+      "role": "Response",
+      "say": "Start with a small workspace and derive outputs carefully."
+    },
+    {
+      "role": "Prompt",
+      "say": "Should the flow be deterministic?"
+    },
+    {
+      "role": "Response",
+      "say": "Yes, and one exporter note says tokens truncated for a prior branch."
+    },
+    {
+      "role": "Prompt",
+      "say": "What should happen next?"
+    },
+    {
+      "role": "Response",
+      "say": "Group families and write normalized threads."
+    }
+  ]
+}
