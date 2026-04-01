@@ -37,7 +37,7 @@ Phase 2 should also begin with one explicit caution in mind:
 - Before treating HQ Ops verification failures as pure runtime-substrate problems, re-check:
   - `services/hq-ops/src/service/modules/*`
   - `services/example-todo/src/service/modules/*`
-  - `docs/projects/rawr-final-architecture-migration/.context/M1-execution/HQ-OPS-service-shape-followup.md`
+  - `docs/projects/rawr-final-architecture-migration/.context/M1-execution/notes/HQ-OPS-service-shape-followup.md`
   - `docs/projects/orpc-ingest-domain-packages/guidance.md`
 - No repo-local service-package `decisions.md` was located during the Phase 1 closeout pass; if a later slice depends on one, locate and ground on it explicitly instead of assuming it was already followed.
 
