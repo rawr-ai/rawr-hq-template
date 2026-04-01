@@ -3,11 +3,13 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { minifyContractRouter } from "@orpc/contract";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
 import { registerOrpcRoutes } from "../src/orpc";
 import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
-import { createTestingHqOpsServiceClient, createTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingHqOpsServiceClient, createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
+
+afterAll(() => resetTestingRawrHostSeam());
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const FIRST_PARTY_RPC_HEADERS = {

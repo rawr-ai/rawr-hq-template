@@ -59,4 +59,10 @@ for (const [name, source] of [
   );
 }
 
+const indexSource = await readFile("apps/hq/src/index.ts");
+assertCondition(
+  !indexSource.includes("legacy-cutover"),
+  "apps/hq/src/index.ts must not re-export legacy-cutover symbols from the barrel export",
+);
+
 console.log("no legacy composition authority verified");

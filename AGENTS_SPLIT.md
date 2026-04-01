@@ -9,15 +9,12 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - You are changing shared packages:
   - `apps/cli`
   - `packages/agent-sync`
-  - `packages/control-plane`
   - `packages/core`
   - `packages/plugin-workspace`
-  - `packages/journal`
-  - `packages/security`
   - `packages/session-tools`
-  - `packages/state`
   - `packages/test-utils`
   - `packages/ui-sdk`
+  - `services/hq-ops`
 - You are changing template-wide scaffolding, governance docs, or baseline workflows.
 - You are changing fixture/example plugin contracts used to validate template behavior.
 
@@ -36,11 +33,12 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - You are authoring or evolving operational plugins.
 - You are implementing operator-specific dev workflow mechanics (`packages/dev/**`, `plugins/cli/devops/**`).
 - You are authoring operational surface plugins under:
-  - `plugins/api/**`
-  - `plugins/workflows/**`
+  - `plugins/server/api/**`
+  - `plugins/async/workflows/**`
+  - `plugins/async/schedules/**`
   - `plugins/web/**`
   - `plugins/cli/**`
-  - `plugins/agents/**`
+  - `plugins/agents/**` (outside `plugins/agents/hq/**`)
   - `plugins/mcp/**`
 
 ## Promotion Path (Personal -> Template)
@@ -61,8 +59,9 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
   - `plugins/agents/hq/**` (full ownership)
   - `plugins/cli/plugins/**` (shared lifecycle/runtime command surface)
 - Operational plugin development in other plugin roots starts in personal `RAWR HQ`, including:
-  - `plugins/api/**`
-  - `plugins/workflows/**`
+  - `plugins/server/api/**`
+  - `plugins/async/workflows/**`
+  - `plugins/async/schedules/**`
   - `plugins/web/**`
   - `plugins/cli/**` (outside `plugins/cli/plugins/**`)
   - `plugins/agents/**` (outside `plugins/agents/hq/**`)

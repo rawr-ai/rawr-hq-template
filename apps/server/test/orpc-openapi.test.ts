@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServerApp } from "../src/app";
 import { generateOrpcOpenApiSpec } from "../src/orpc";
 import { registerRawrRoutes } from "../src/rawr";
-import { createTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
+
+afterAll(() => resetTestingRawrHostSeam());
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const rawrHqHostSeam = createTestingRawrHostSeam();

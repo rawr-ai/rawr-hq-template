@@ -1,11 +1,13 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as otelApi from "@opentelemetry/api";
 import { createServerApp } from "../src/app";
 import { __resetOrpcRouteTelemetryForTests, registerOrpcRoutes } from "../src/orpc";
-import { createTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
+
+afterAll(() => resetTestingRawrHostSeam());
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
