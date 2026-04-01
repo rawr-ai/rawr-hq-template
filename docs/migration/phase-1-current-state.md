@@ -33,12 +33,10 @@ Milestone 1 is the authority-collapse plateau for the final architecture migrati
   - `plugins/workflows/support-example`
 - Frozen compatibility carryover:
   - `plugins/agents/hq`
-- Frozen parked server API roots retained for Phase 1 continuity:
-  - `plugins/server/api/example-todo`
-  - `plugins/server/api/state`
 
 ## What Phase 1 Deliberately Does Not Claim
 
 - Phase 1 does not build the Phase 2 runtime substrate.
 - Phase 1 does not redesign the Cloud Code/Codex marketplace lane.
 - Phase 1 does not claim that the executable bridge is permanent; if `apps/hq/legacy-cutover.ts` exists, it is deletion debt scheduled immediately for Phase 2 Slice 0.
+- The Phase 1 closeout review is recorded at `docs/projects/rawr-final-architecture-migration/phase-1-closeout-review.md`.

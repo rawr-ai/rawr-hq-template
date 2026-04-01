@@ -24,12 +24,12 @@ related_to: []
 - Fold repo-state ownership into HQ Ops.
 - Fold journal ownership into HQ Ops.
 - Fold security ownership into HQ Ops.
-- Rewire active CLI, server, and tooling consumers directly to `@rawr/hq-ops` or approved thin module subpaths.
+- Rewire active CLI, server, and tooling consumers directly to `@rawr/hq-ops` or the approved contract/router seams that survive on the canonical package shell.
 - Remove the old owning packages and services from the live lane once their behavior continuity proofs are preserved.
 
 ## Acceptance Criteria
 - [x] No live imports remain from `@rawr/control-plane`, `@rawr/state`, `@rawr/journal`, or `@rawr/security`.
-- [x] Active CLI, server, and tooling consumers cut directly to `@rawr/hq-ops` or approved thin module subpaths.
+- [x] Active CLI, server, and tooling consumers cut directly to `@rawr/hq-ops` or the approved contract/router seams on the canonical package shell.
 - [x] Config merge/validation, repo-state locking/mutation, journal behavior, and security scan/gate/report behavior all retain continuity through targeted tests.
 - [x] Old-owner inventory and import cleanup lands in this slice rather than being deferred.
 
@@ -74,13 +74,13 @@ Out of scope:
 - Introducing new transitional package facades.
 
 ### Implementation Guidance
-Treat the live consumer inventory as the minimum direct-rewire set, not as optional cleanup. Follow the direct-consumer-cut rule: cut to `@rawr/hq-ops` or approved thin module subpaths, do not add a new facade package, and port or preserve the behavioral tests before deleting old owners.
+Treat the live consumer inventory as the minimum direct-rewire set, not as optional cleanup. Follow the direct-consumer-cut rule: cut to `@rawr/hq-ops` or the approved contract/router seams on the canonical package shell, do not add a new facade package, and port or preserve the behavioral tests before deleting old owners.
 
 ## Implementation Decisions
-- U03 keeps the `services/example-todo` package-shell discipline from U02: package root stays thin and the migrated operational support APIs land only on explicit HQ Ops subpaths (`./config`, `./repo-state`, `./journal`, `./security`), not on the package root.
+- U03 keeps the `services/example-todo` package-shell discipline from U02: package root stays thin, the operational domains remain internal execution modules, and the only public non-root seams that survive are the canonical contract/router exports.
 - `repo-state` is the only currently live transport-facing service boundary among the old owners, so its service contract/client move into the canonical HQ Ops package boundary while config, journal, and security move as thin support subpaths inside the same package.
 - `packages/hq` survives until U04, but any live `@rawr/control-plane`, `@rawr/state`, `@rawr/journal`, or `@rawr/security` imports inside it still have to be rewired in U03 so the old owners can actually die here.
-- U03 narrows the module-boundary exceptions instead of weakening the ontology globally: package-layer imports into HQ Ops are allowed only for the explicit sanctioned seams (`@rawr/hq-ops`, `@rawr/hq-ops/{config,repo-state,journal,security}`, `@rawr/hq-ops/service/contract`) and the temporary `@rawr/hq-app/manifest` bridge remains the only app-to-app lint exception until later slices remove it.
+- U03 narrows the module-boundary exceptions instead of weakening the ontology globally: package-layer imports into HQ Ops are allowed only for the explicit sanctioned seams (`@rawr/hq-ops`, `@rawr/hq-ops/service/contract`, `@rawr/hq-ops/router`) and the temporary `@rawr/hq-app/manifest` bridge remains the only app-to-app lint exception until later slices remove it.
 - Security gating/reporting must resolve against the discovered workspace root, not ambient `process.cwd()`. U03 therefore passes the canonical workspace root into HQ Ops security entrypoints and removes the live `@rawr/hq/security` compatibility hop from the CLI path instead of preserving it as a hidden alias.
 - U03 strengthens the owner-removal proof itself: `verify-no-old-operational-packages.mjs` now fails if `packages/control-plane`, `services/state`, `packages/journal`, or `packages/security` still exist on disk, even if imports are already gone.
 

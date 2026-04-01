@@ -242,7 +242,7 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 - Issue doc: [M1-U08](../issues/M1-U08-ratchet-phase-1-proofs-and-readjust.md)
 - Focus: ratchet the full Phase 1 proof band, land only durable docs, freeze parked lanes, and run the structured milestone review.
 - Stop-gate: the plateau is explicit, verifiable, and ready to hand off into Phase 2 without reopening Phase 1.
-- Traceability: root Phase 1 baseline now includes HQ Ops service-shape and parked-lane freeze proofs; durable plateau docs live at [phase-1-current-state.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-1-current-state.md) and [phase-2-entry-conditions.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-2-entry-conditions.md); `sync:check`, `lint:boundaries`, targeted typechecks/tests across HQ/server/CLI/plugin-workspace/plugin-plugins/agent-sync/hq-ops, `phase-1:gates:baseline`, and `rawr plugins sync @rawr/plugin-hq --dry-run --force` all passed.
+- Traceability: root Phase 1 baseline now includes HQ Ops service-shape and parked-lane freeze proofs; durable plateau docs live at [phase-1-current-state.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-1-current-state.md) and [phase-2-entry-conditions.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-2-entry-conditions.md); the structured closeout review is published at [phase-1-closeout-review.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/phase-1-closeout-review.md); `sync:check`, `lint:boundaries`, targeted typechecks/tests across HQ/server/CLI/plugin-workspace/plugin-plugins/agent-sync/hq-ops, `phase-1:gates:baseline`, and `rawr plugins sync @rawr/plugin-hq --dry-run --force` all passed.
 
 ## Milestone-Wide Acceptance Criteria
 
@@ -301,6 +301,10 @@ When M1-U08 completes, perform one structured review before starting Phase 2:
 - record any needed Phase 2 or Phase 3 readjustments as downstream planning updates, not as reopened Phase 1 scope
 
 This review is the formal handoff point from semantic recovery into runtime-substrate work.
+
+The published review artifact for this milestone is:
+
+- [Phase 1 Closeout Review](../phase-1-closeout-review.md)
 
 ## References
 
