@@ -34,7 +34,9 @@ Use these in this order while executing:
 2. [RAWR_Architecture_Migration_Plan.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_Architecture_Migration_Plan.md)
 3. [phase-2-entry-conditions.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-2-entry-conditions.md)
 4. [phase-1-closeout-review.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/phase-1-closeout-review.md)
-5. the active Phase 2 milestone and issue docs once they exist
+5. the active Phase 2 milestone and issue docs:
+   - [M2-minimal-canonical-runtime-shell.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/milestones/M2-minimal-canonical-runtime-shell.md)
+   - [M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md)
 
 ## Execution Context
 
@@ -153,8 +155,8 @@ If they already exist:
 
 ## Immediate Next Step
 
-The first Phase 2 execution step is:
+The first live Phase 2 execution step is:
 
-- shape the local Phase 2 milestone and Slice 0 issue around replacing and deleting `apps/hq/legacy-cutover.ts`
+- cut the `M2-U00` branch and implement the minimal canonical server runtime path that deletes `apps/hq/legacy-cutover.ts`
 
-Do not start implementation before that packet exists or an equivalent local slice contract is written down.
+Do not let that slice sprawl into full-platform generalization before the bridge is dead.

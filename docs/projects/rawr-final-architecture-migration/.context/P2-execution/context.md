@@ -8,18 +8,18 @@
   - Phase 1 is closed, review-closed, and frozen.
   - The repo is starting from the explicit Phase 2 entry conditions in `docs/migration/phase-2-entry-conditions.md`.
   - A dedicated Phase 2 execution packet now exists instead of reusing the M1 live lane.
-  - No Phase 2 milestone packet or issue stack has been cut yet in the local migration docs.
+  - A local Phase 2 milestone packet and issue stack now exist in the migration docs.
+  - The next live implementation slice is `M2-U00`.
 
 ## What This Packet Is For
 
 This packet exists to keep Phase 2 work from accreting into the frozen M1 packet.
 
-The next live move is not code implementation yet. It is Phase 2 execution setup:
+The next live move is the first implementation setup cut:
 
-- ground on the canonical Phase 2 sources
-- shape the local Phase 2 milestone and slice packet if needed
-- start with the explicit Slice 0 goal:
-  - replace and delete `apps/hq/legacy-cutover.ts`
+- cut the `M2-U00` branch
+- ground on the new local milestone and slice docs
+- replace and delete `apps/hq/legacy-cutover.ts`
 
 ## Canonical References
 
@@ -29,9 +29,11 @@ Use these as the Phase 2 first-hop packet:
 2. [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/grounding.md)
 3. [workflow.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/workflow.md)
 4. [frame.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/frame.md)
-5. [phase-2-entry-conditions.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-2-entry-conditions.md)
-6. [phase-1-closeout-review.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/phase-1-closeout-review.md)
-7. [RAWR_Architecture_Migration_Plan.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_Architecture_Migration_Plan.md)
+5. [M2-minimal-canonical-runtime-shell.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/milestones/M2-minimal-canonical-runtime-shell.md)
+6. [M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md)
+7. [phase-2-entry-conditions.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-2-entry-conditions.md)
+8. [phase-1-closeout-review.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/phase-1-closeout-review.md)
+9. [RAWR_Architecture_Migration_Plan.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_Architecture_Migration_Plan.md)
 
 ## Phase Invariants
 
