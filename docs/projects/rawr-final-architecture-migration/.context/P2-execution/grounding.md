@@ -18,7 +18,7 @@ This is the canonical entry point for Phase 2 work. Use it to keep runtime-subst
    Evidence for the entry condition and the limits of what Phase 1 already settled.
 
 Historical reference only (superseded by the integrated spec for runtime subsystem details):
-- [Original architecture spec](../../resources/RAWR_Canonical_Architecture_Spec_Final.md)
+- [Original architecture spec](../../resources/RAWR_Canonical_Architecture_Spec_V2.md
 
 Current repo code and docs are context only unless they align with the sources above.
 

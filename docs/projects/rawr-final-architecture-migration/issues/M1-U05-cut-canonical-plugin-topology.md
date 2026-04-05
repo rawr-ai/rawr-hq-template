@@ -116,7 +116,7 @@ This slice is not just filesystem motion. Inventory, tags, and import truth need
 
 ### Paper Trail
 - [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md)
-- [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec.md)
+- [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec_V1.md)
 
 ### Prework Results (Resolved)
 

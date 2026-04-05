@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "rawr-hq",
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": ["-l", "-c", "bash scripts/dev/hq.sh up --open none"],
+      "port": 3000
+    },
+    {
+      "name": "rawr-server",
+      "runtimeExecutable": "/Users/mateicanavra/.bun/bin/bun",
+      "runtimeArgs": ["--hot", "apps/server/src/index.ts"],
+      "port": 3000
+    },
+    {
+      "name": "rawr-web",
+      "runtimeExecutable": "/Users/mateicanavra/.bun/bin/bunx",
+      "runtimeArgs": ["vite", "--strictPort", "--port", "5173"],
+      "port": 5173
+    },
+    {
+      "name": "inngest-dev",
+      "runtimeExecutable": "/Users/mateicanavra/.volta/bin/npx",
+      "runtimeArgs": ["inngest-cli@latest", "dev", "-u", "http://localhost:3000/api/inngest", "--port", "8288"],
+      "port": 8288
+    }
+  ]
+}

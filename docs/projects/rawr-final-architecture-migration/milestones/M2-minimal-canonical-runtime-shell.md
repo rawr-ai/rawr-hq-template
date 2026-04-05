@@ -35,7 +35,7 @@ This milestone is grounded by six documents:
 3. [Effect runtime subsystem spec](../resources/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md): detailed specification for the Effect-backed runtime kernel, package topology, runtime-owned services, config/schema/error/observability models, and bootgraph lowering.
 4. [Phase 2 entry conditions](../../migration/phase-2-entry-conditions.md): the handoff contract from the frozen Phase 1 plateau.
 5. [Phase 1 closeout review](../phase-1-closeout-review.md): evidence for what Phase 1 settled and what it intentionally left to Phase 2.
-6. [Original architecture spec](../resources/RAWR_Canonical_Architecture_Spec_Final.md): historical reference (superseded by the integrated spec for runtime subsystem details).
+6. [Original architecture spec](../resources/RAWR_Canonical_Architecture_Spec_V2.md): historical reference (superseded by the integrated spec for runtime subsystem details).
 
 For this milestone, the migration plan is the execution authority. The two new specs are the design authority for the runtime subsystem. Narrower local issue docs may make intent more concrete without violating either.
 

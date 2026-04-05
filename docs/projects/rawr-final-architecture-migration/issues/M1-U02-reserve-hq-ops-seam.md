@@ -86,7 +86,7 @@ Use the current `services/state` package shape as structural prior art only. Do 
 
 ### Paper Trail
 - [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md)
-- [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec.md)
+- [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec_V1.md)
 
 ### Traceability
 - Branch: `agent-FARGO-M1-U02-reserve-hq-ops-seam`
@@ -105,3 +105,12 @@ Use the current `services/state` package shape as structural prior art only. Do 
 - [Acceptance Criteria](#acceptance-criteria)
 - [Testing / Verification](#testing--verification)
 - [Dependencies / Notes](#dependencies--notes)
+- [Implementation Details (Local Only)](#implementation-details-local-only)
+  - [Why This Slice Exists](#why-this-slice-exists)
+  - [Scope Boundaries](#scope-boundaries)
+  - [Implementation Guidance](#implementation-guidance)
+- [Implementation Decisions](#implementation-decisions)
+  - [Files](#files)
+  - [Paper Trail](#paper-trail)
+  - [Traceability](#traceability)
+  - [Quick Navigation](#quick-navigation)

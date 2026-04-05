@@ -65,7 +65,7 @@ At milestone exit, all of the following are true at the same time:
 This milestone is grounded by three documents:
 
 1. [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md): the forward-locked decision set for Phase 1 scope, sequencing, fixed decisions, and exit gate.
-2. [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec.md): destination architecture and invariant truth.
+2. [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec_V1.md): destination architecture and invariant truth.
 3. [Larger migration plan](../resources/RAWR_Architecture_Migration_Plan.md): overall migration framing and downstream handoff.
 
 For this milestone, the dedicated Phase 1 plan is the execution authority. The canonical architecture spec supplies destination invariants, and the larger migration plan supplies surrounding framing and downstream handoff context. Neither document reopens or overrides Phase 1 decisions that P1 already fixed.
@@ -308,7 +308,7 @@ The published review artifact for this milestone is:
 
 ## References
 
-- [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec.md)
+- [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec_V1.md)
 - [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md)
 - [Larger migration plan](../resources/RAWR_Architecture_Migration_Plan.md)
 - [Phase 1 grounding note](../.context/grounding.md)
