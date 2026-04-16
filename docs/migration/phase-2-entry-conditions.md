@@ -52,13 +52,21 @@ These define the canonical package topology for the runtime subsystem:
 
 ```text
 packages/runtime/
-  bootgraph/       PUBLIC - RAWR-shaped lifecycle shell
+  bootgraph/       execution-family lifecycle shell
   compiler/        HIDDEN - manifest -> compiled process plan
   substrate/       HIDDEN - Effect-backed kernel
   harnesses/
     elysia/        Server harness adapter
     inngest/       Async harness adapter
+
+packages/hq-sdk/
+  ...             PUBLIC - app-runtime and authoring seam
 ```
+
+Phase 2 implementation should read this topology as follows:
+
+- `packages/runtime/*` is the consolidated execution family for runtime modules, resources, harnesses, and adapters that belong together.
+- `packages/hq-sdk` remains the fast-path public app-runtime and authoring seam (`defineApp`, `startAppRole`, `bindService`, `define*Plugin`).
 
 The runtime substrate is Effect-backed internally. Effect enters the repo as a real dependency in M2-U00. Raw Effect types stay quarantined inside `packages/runtime/*` and do not appear in public authoring APIs.
 
@@ -69,4 +77,4 @@ The existing `packages/bootgraph` reservation and `packages/runtime-context` typ
 
 ## Practical Hand-Off
 
-Phase 2 starts from a repo where the canonical shell is already real. The first runtime-substrate work therefore builds on `apps/hq`, `services/hq-ops`, and the canonical plugin topology directly, while creating `packages/runtime/substrate` and `packages/runtime/bootgraph` in the first slice and removing the one remaining executable bridge as early as possible.
+Phase 2 starts from a repo where the canonical shell is already real. The first runtime-substrate work therefore builds on `apps/hq`, `services/hq-ops`, and the canonical plugin topology directly, while creating `packages/runtime/substrate` and `packages/runtime/bootgraph` in the first slice, extending `packages/hq-sdk` with the minimum server-only app-runtime/compiler cut needed to boot `server.api`, and removing the one remaining executable bridge as early as possible.

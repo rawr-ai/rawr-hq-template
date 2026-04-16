@@ -39,10 +39,13 @@ related_to: []
 - [ ] Transitional runtime proofs are retired or quarantined.
 
 ## Testing / Verification
-- targeted example-todo, HQ Ops, and async exemplar checks
-- `bun scripts/phase-2/verify-runtime-proof-slices.mjs`
-- managed HQ runtime validation with observability via `packages/runtime/substrate/` telemetry
-- type-level audit: confirm proof-slice plugin code imports only from `packages/hq-sdk`, never directly from `packages/runtime/substrate/` or Effect
+- Land and wire the slice-local verifier:
+  - `scripts/phase-2/verify-runtime-proof-slices.mjs`
+  - package-script / structural-suite wiring for the proof slices that become canonical in this slice
+- Run targeted example-todo, HQ Ops, and async exemplar checks.
+- Run managed HQ runtime validation with observability via `packages/runtime/substrate/` telemetry.
+- Run the type-level audit confirming proof-slice plugin code imports only from `packages/hq-sdk`, never directly from `packages/runtime/substrate/` or Effect.
+- Capture evidence that transitional proof slices were removed from authority, not merely left in place beside the new ones.
 
 ## Dependencies / Notes
 - Blocked by: [M2-U04](./M2-U04-replace-transitional-plugin-builders-with-canonical-builders.md).

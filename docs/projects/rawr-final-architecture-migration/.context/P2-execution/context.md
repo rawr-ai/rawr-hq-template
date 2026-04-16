@@ -10,6 +10,7 @@
   - The M2 milestone and all M2-U00 through M2-U06 issue docs have been rewritten to reflect the new runtime substrate package topology (`packages/runtime/*`).
   - **No prior grounding findings remain valid.** The existing `agent-FARGO-M2-U00-replace-legacy-cutover-with-canonical-server-runtime` branch must be regrounded against the updated issue docs.
   - The next live implementation slice is `M2-U00`.
+  - The Phase 2 proof surface is still mostly documentary: the docs reference a future `scripts/phase-2/` verifier family and `phase-2:*` gate chain that do not exist yet in the repo. Landing those verifiers slice-by-slice is part of hardened Phase 2 execution.
 
 ## What This Packet Is For
 
@@ -30,7 +31,7 @@ The next live move is the first implementation cut:
 Use these as the Phase 2 first-hop packet:
 
 1. [README.md](README.md)
-2. [grounding.md](grounding.md) **(needs regrounding against new spec)**
+2. [grounding.md](grounding.md)
 3. [workflow.md](workflow.md)
 4. [frame.md](frame.md)
 5. [M2-minimal-canonical-runtime-shell.md](../../milestones/M2-minimal-canonical-runtime-shell.md)

@@ -38,10 +38,15 @@ related_to: []
 - [ ] No raw Effect types (`Effect`, `Layer`, `ManagedRuntime`, `Effect.Service`) appear in the public builder API signatures exported from `packages/hq-sdk`.
 
 ## Testing / Verification
-- `bun run sync:check`
-- affected plugin typechecks/tests
-- `bun scripts/phase-2/verify-canonical-plugin-builders.mjs`
-- type-level audit: confirm `packages/hq-sdk` public exports contain zero raw Effect type references
+- Land and wire the slice-local verifier:
+  - `scripts/phase-2/verify-canonical-plugin-builders.mjs`
+  - package-script / structural-suite wiring for `packages/hq-sdk` and the affected plugin authoring surfaces
+- Run affected checks:
+  - `bun run sync:check`
+  - affected plugin typechecks/tests
+  - affected structural suites for `packages/hq-sdk` and touched plugin packages
+- Run the type-level audit confirming `packages/hq-sdk` public exports contain zero raw Effect type references.
+- Capture evidence that active plugins now author exclusively against canonical builders instead of transitional grammar.
 
 ## Dependencies / Notes
 - Blocked by: [M2-U03](./M2-U03-install-canonical-async-runtime-path.md).

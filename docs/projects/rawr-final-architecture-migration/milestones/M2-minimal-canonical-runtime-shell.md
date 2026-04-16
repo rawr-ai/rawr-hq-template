@@ -43,10 +43,10 @@ For this milestone, the migration plan is the execution authority. The two new s
 
 At milestone exit, all of the following are true at the same time:
 
-- `apps/hq/server.ts` boots through canonical app/runtime APIs.
-- `apps/hq/async.ts` boots through canonical app/runtime APIs.
-- `packages/runtime/bootgraph` is real, with Effect-backed lowering, dependency-first startup, rollback, and ordered shutdown.
-- `packages/runtime/compiler` is real for the active lane (`server.api`, `async.workflows`, `async.schedules`).
+- `apps/hq/server.ts` boots through canonical app/runtime APIs exposed from `packages/hq-sdk`.
+- `apps/hq/async.ts` boots through canonical app/runtime APIs exposed from `packages/hq-sdk`.
+- `packages/runtime/bootgraph` is real as part of the execution family, with Effect-backed lowering, dependency-first startup, rollback, and ordered shutdown.
+- `packages/runtime/compiler` is real for the active lane, with the minimum server-only compilation cut landing in `M2-U00` and broader lane generalization landing later (`server.api`, `async.workflows`, `async.schedules`).
 - `packages/runtime/substrate` is real: one root `ManagedRuntime` per process, runtime-owned Effect services (RuntimeConfig, ProcessIdentity, RuntimeTelemetry, DbPool, Clock, WorkspaceRoot, BoundaryCache), process-runtime (ProcessView, RoleView, SurfaceAssembler), and tagged runtime errors.
 - Elysia and Inngest harness adapters are real for the active lane under `packages/runtime/harnesses/`.
 - At least one canonical server slice and one canonical async slice run through the new runtime shell.
@@ -61,7 +61,7 @@ At milestone exit, all of the following are true at the same time:
 ```text
 packages/
   runtime/                      runtime subsystem family
-    bootgraph/                  PUBLIC - RAWR-shaped lifecycle shell
+    bootgraph/                  execution-family lifecycle shell consumed by app-runtime entrypoints
     compiler/                   HIDDEN - manifest -> compiled process plan
     substrate/                  HIDDEN - Effect-backed kernel
       src/
@@ -77,9 +77,11 @@ packages/
       inngest/                  Async harness adapter
     topology/                   Topology export shapes (if earned in P2)
 
-  hq-sdk/                       PUBLIC - authoring APIs
+  hq-sdk/                       PUBLIC - app-runtime and authoring APIs
     ... defineService, defineApp, startAppRole, define*Plugin, bindService ...
 ```
+
+Phase 2 uses the consolidated `packages/runtime/*` family for execution while keeping `packages/hq-sdk` as the public app-runtime and authoring seam. That is a package-consolidation decision, not an architecture change; authors should not need to reach into `packages/runtime/*` to boot or define apps.
 
 The canonical stance is:
 
@@ -117,7 +119,7 @@ These runtime-owned services land incrementally across the dominos:
 
 ## Sequencing Posture
 
-The canonical Phase 2 sequence lists the runtime seam deletion near the end of the phase. The local execution posture intentionally pulls forward the minimum server-runtime path needed to delete `apps/hq/legacy-cutover.ts` in the first live slice.
+The current Phase 2 execution authority already places bridge deletion first. This milestone makes that explicit by spelling out the minimum server-runtime path needed to delete `apps/hq/legacy-cutover.ts` in the first live slice.
 
 That is not a re-decision. It is a disciplined readjustment driven by the explicit Phase 2 entry condition:
 
@@ -126,6 +128,7 @@ That is not a re-decision. It is a disciplined readjustment driven by the explic
 The rule is:
 
 - pull forward only the minimum substrate needed to replace the live bridge
+- pull forward the minimum server-only app-runtime/compiler path needed to boot `server.api` through `packages/hq-sdk`
 - do not smuggle full-platform generalization or optional runtimes into that first cut
 - build `packages/runtime/substrate` from the first slice, not as a later generalization
 
@@ -147,13 +150,38 @@ Implementation agents should continuously anchor on these rules:
 - do not build a second lifecycle engine beneath bootgraph; Effect owns execution, bootgraph owns planning
 - do not surface a public generic DI-container vocabulary as a peer architecture
 
+## Verification Closure
+
+Phase 2 slices are not closed by "it boots on my machine" alone. Each slice closes only when it lands a full loop:
+
+- a slice-local contract verifier under `scripts/phase-2/`
+- the package-script or Nx structural-suite wiring needed to keep that verifier in the ratchet path
+- targeted typechecks and tests for the touched runtime packages, apps, or services
+- runtime smoke validation for any changed boot, harness, or registration path
+- doc/context ratchets that state what architectural authority was removed or proven
+
+Current repo reality matters here:
+
+- there is no `scripts/phase-2/` tree yet
+- there is no `phase-2:*` package gate chain yet
+- existing Nx structural suites stop at older migration bands and `phase-2_5`
+
+That means each M2 slice must land its own verification surface as part of the slice instead of assuming the proof band already exists.
+
+Tool posture for this milestone:
+
+- use Nx first for workspace and target truth when the checkout has working Nx modules
+- if execution happens in a secondary worktree, advance the primary checkout to the latest relevant commit before relying on Nx/Narsil indexing
+- if Nx modules are unavailable in the active checkout, note that explicitly and fall back to `nx.json`, `package.json`, the structural runner config, and Narsil-backed code search
+- use Narsil to trace runtime seams, proof-script references, imports, and call-path impact before broadening a slice
+
 ## Domino Order
 
 This milestone is deliberately sequenced to make each next move safer than the previous one:
 
 1. cut the first canonical server runtime path and delete the surviving executable bridge, introducing `packages/runtime/substrate` and `packages/runtime/bootgraph` with minimum viable kernel
 2. harden bootgraph with Effect lowering model, dependency ordering, rollback, tagged errors
-3. generalize runtime compiler and build process-runtime inside substrate (ProcessView, RoleView, SurfaceAssembler)
+3. generalize runtime compiler and build process-runtime inside substrate (ProcessView, RoleView, SurfaceAssembler) beyond the minimum server-only path already introduced in `M2-U00`
 4. install the canonical async runtime path with Inngest harness
 5. replace transitional plugin builders with canonical role and surface builders in `packages/hq-sdk`
 6. migrate the proof slices onto the new runtime shell
@@ -199,9 +227,9 @@ issues:
 
 | ID | Issue Doc | Blocked By | Why This Slice Exists |
 | --- | --- | --- | --- |
-| `M2-U00` | [Replace legacy cutover with the canonical server runtime path](../issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md) | none | Replace the one surviving executable bridge with a minimal canonical server runtime path, introducing `packages/runtime/substrate` and `packages/runtime/bootgraph` with the minimum viable Effect-backed kernel. This is the moment Effect enters the repo. |
+| `M2-U00` | [Replace legacy cutover with the canonical server runtime path](../issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md) | none | Replace the one surviving executable bridge with a minimal canonical server runtime path, introducing `packages/runtime/substrate` and `packages/runtime/bootgraph`, and the minimum server-only app-runtime/compiler cut exposed through `packages/hq-sdk`. This is the moment Effect enters the repo. |
 | `M2-U01` | [Harden bootgraph with Effect lowering and failure semantics](../issues/M2-U01-harden-bootgraph-lifetimes-and-failure-semantics.md) | `M2-U00` | Turn the minimal first cut into a real bootgraph with Effect-backed lowering, dependency ordering, rollback via scope finalization, tagged runtime errors, and the guarantees Phase 2 actually promises. |
-| `M2-U02` | [Generalize runtime compiler and build process-runtime inside substrate](../issues/M2-U02-generalize-runtime-compiler-and-process-runtime.md) | `M2-U01` | Create `packages/runtime/compiler` and build process-runtime inside `packages/runtime/substrate` with ProcessView, RoleView, SurfaceAssembler, and started-process handle with `stop()`. |
+| `M2-U02` | [Generalize runtime compiler and build process-runtime inside substrate](../issues/M2-U02-generalize-runtime-compiler-and-process-runtime.md) | `M2-U01` | Generalize the compiler beyond the minimum `M2-U00` server lane and build process-runtime inside `packages/runtime/substrate` with ProcessView, RoleView, SurfaceAssembler, and started-process handle with `stop()`. |
 | `M2-U03` | [Install the canonical async runtime path](../issues/M2-U03-install-canonical-async-runtime-path.md) | `M2-U02` | Make `apps/hq/async.ts` real through canonical async runtime seams, adding `packages/runtime/harnesses/inngest` and the AsyncActivation runtime service. |
 | `M2-U04` | [Replace transitional plugin builders with canonical role and surface builders](../issues/M2-U04-replace-transitional-plugin-builders-with-canonical-builders.md) | `M2-U03` | Remove transitional public builder grammar so the active authoring model in `packages/hq-sdk` matches the runtime shell that now exists. |
 | `M2-U05` | [Migrate the Phase 2 proof slices onto the canonical runtime shell](../issues/M2-U05-migrate-phase-2-proof-slices.md) | `M2-U04` | Prove the new runtime shell through `example-todo`, HQ Ops, and the new async exemplar instead of relying on transitional proofs. |
@@ -217,8 +245,11 @@ issues:
 - [ ] No live runtime path depends on the legacy host-composition chain.
 - [ ] Transitional public builder grammar is gone from the active lane.
 - [ ] Raw Effect types are not exposed in any public authoring API.
+- [ ] Each closed M2 slice lands a real verifier or structural ratchet for the architectural claim it makes.
 - [ ] Docs and proofs describe only settled Plateau 2 reality.
 
 ## Practical Hand-Off
 
-The next live slice is [M2-U00](../issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md). Its job is to cut the first real server runtime path and delete `apps/hq/legacy-cutover.ts`, introducing `packages/runtime/substrate` and `packages/runtime/bootgraph` with the minimum viable Effect-backed kernel.
+The next live slice is [M2-U00](../issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md). Its job is to cut the first real server runtime path and delete `apps/hq/legacy-cutover.ts`, introducing `packages/runtime/substrate` and `packages/runtime/bootgraph` with the minimum viable Effect-backed kernel while adding only the minimum server-only app-runtime/compiler cut needed in `packages/hq-sdk` to boot `server.api`.
+
+It also needs to start the Phase 2 proof band for real: the first slice should not only replace the bridge, it should land the first `scripts/phase-2/` verifiers and the first package-script / structural-ratchet wiring that later slices can extend.

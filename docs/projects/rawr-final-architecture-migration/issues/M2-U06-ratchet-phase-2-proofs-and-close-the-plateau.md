@@ -44,12 +44,16 @@ related_to: []
 - [ ] The end-of-milestone review produces explicit Phase 3 entry conditions.
 
 ## Testing / Verification
-- `bun run sync:check`
-- `bun run lint:boundaries`
-- targeted runtime, harness, and proof-slice checks
-- `bun scripts/phase-2/verify-phase2-plateau.mjs`
-- import-graph audit: confirm no module outside `packages/runtime/substrate/` imports directly from `effect` or `@effect/*`
-- dead-package check: confirm `packages/runtime-context` directory is removed or empty
+- Land and wire the plateau ratchet:
+  - `scripts/phase-2/verify-phase2-plateau.mjs`
+  - package-script and structural-suite wiring that composes the earlier Phase 2 verifiers into the milestone exit band
+- Run affected checks:
+  - `bun run sync:check`
+  - `bun run lint:boundaries` and separate known pre-existing baseline failures from new closure regressions
+  - targeted runtime, harness, and proof-slice checks
+- Run the import-graph audit confirming no module outside `packages/runtime/substrate/` imports directly from `effect` or `@effect/*`.
+- Run the dead-package check confirming `packages/runtime-context` is removed or empty.
+- Capture closeout evidence proving the plateau ratchet rejects architectural regression automatically instead of relying on a one-time manual review.
 
 ## Canonical References
 - [RAWR Canonical Architecture and Runtime Spec (Integrated Final)](../resources/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)

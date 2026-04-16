@@ -17,7 +17,7 @@ related_to: []
 
 <!-- SECTION SCOPE [SYNC] -->
 ## TL;DR
-- Delete `apps/hq/legacy-cutover.ts` by cutting the first minimal canonical server runtime path through the new `packages/runtime/` family. This is the moment Effect enters the repo as a real dependency. Create the minimum viable Effect-backed runtime substrate, the real bootgraph with `lowerModule()` bridge, and the Elysia server harness.
+- Delete `apps/hq/legacy-cutover.ts` by cutting the first minimal canonical server runtime path through the new `packages/runtime/` family while keeping `packages/hq-sdk` as the public app-runtime seam. This is the moment Effect enters the repo as a real dependency. Create the minimum viable Effect-backed runtime substrate, the real bootgraph with `lowerModule()` bridge, the minimum server-only app-runtime/compiler cut, and the Elysia server harness.
 
 ## Purpose
 Phase 2 cannot credibly start while the one sanctioned executable bridge remains live. The first cut must replace the bridge by standing up the canonical `packages/runtime/` package family with enough substrate, bootgraph, and harness surface to boot `server.api` without any legacy host-composition authority.
@@ -25,6 +25,11 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
 ## Scope
 
 ### In scope
+- Extend `packages/hq-sdk/` as the PUBLIC app-runtime seam for this slice:
+  - `defineApp(...)` public API
+  - `startAppRole(...)` public API
+  - minimum server-only app-runtime/compiler path needed to lower the active `server.api` lane into the execution family
+  - no broader generalization of authoring grammar beyond what server bridge deletion requires
 - Create `packages/runtime/substrate/` -- the minimum viable Effect-backed kernel:
   - RuntimeConfig service (environment, feature flags)
   - ProcessIdentity service (role, lane, instance id)
@@ -34,9 +39,7 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
   - WorkspaceRoot service (resolved repo/workspace path)
   - BoundaryCache service (per-process memoization boundary)
   - Effect is used internally (ManagedRuntime, Layer, Effect.Service, etc.) but is NOT exposed in public authoring APIs
-- Create `packages/runtime/bootgraph/` -- real RAWR-shaped lifecycle shell:
-  - `defineApp(...)` public API
-  - `startAppRole(...)` public API
+- Create `packages/runtime/bootgraph/` -- real RAWR-shaped lifecycle shell inside the execution family:
   - `lowerModule()` bridge that converts RAWR module declarations into Effect Layers for the substrate
   - Module registration, dependency ordering (topological), identity dedupe
 - Create `packages/runtime/harnesses/elysia/` -- server harness adapter:
@@ -49,6 +52,7 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
 ### Out of scope
 - Full async runtime support (M2-U03)
 - Generalizing every runtime primitive before the first server cut lands
+- Generalizing compiler/app-runtime support beyond the minimum `server.api` lane needed to delete the bridge
 - Replacing transitional plugin builders
 - Full bootgraph lifecycle hardening (rollback, shutdown ordering -- M2-U01)
 - Compiler generalization beyond what the first server cut needs (M2-U02)
@@ -56,7 +60,8 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
 
 ## Deliverables
 - `packages/runtime/substrate/` with minimum viable Effect services listed above.
-- `packages/runtime/bootgraph/` with `defineApp()`, `startAppRole()`, and `lowerModule()` bridge.
+- `packages/hq-sdk/` updated with `defineApp()`, `startAppRole()`, and the minimum server-only app-runtime/compiler entry path for this slice.
+- `packages/runtime/bootgraph/` with `lowerModule()` bridge and dependency-aware runtime planning for the execution family.
 - `packages/runtime/harnesses/elysia/` with thin server adapter.
 - `apps/hq/server.ts` rewired to the canonical runtime path.
 - `apps/hq/legacy-cutover.ts` deleted.
@@ -66,8 +71,10 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
 ## Acceptance Criteria
 - [ ] `packages/runtime/substrate/` exists with RuntimeConfig, ProcessIdentity, RuntimeTelemetry, DbPool, Clock, WorkspaceRoot, and BoundaryCache as Effect services.
 - [ ] Effect is used internally in substrate; no Effect types appear in public bootgraph or authoring APIs.
-- [ ] `packages/runtime/bootgraph/` exposes `defineApp()` and `startAppRole()` as RAWR-shaped public APIs.
+- [ ] `packages/hq-sdk/` exposes `defineApp()` and `startAppRole()` as the public app-runtime APIs for the active server lane.
+- [ ] `packages/runtime/bootgraph/` is an execution-family seam, not the public authoring entrypoint.
 - [ ] `lowerModule()` correctly bridges RAWR module declarations into Effect Layer composition.
+- [ ] `M2-U00` includes the minimum server-only compiler/app-runtime cut required to boot `server.api` and delete the bridge without pulling broader compiler generalization forward.
 - [ ] `packages/runtime/harnesses/elysia/` boots the server.api lane from the compiled plan.
 - [ ] `apps/hq/server.ts` no longer depends on `apps/hq/legacy-cutover.ts`.
 - [ ] `apps/hq/legacy-cutover.ts` is deleted.
@@ -76,21 +83,23 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
 - [ ] Legacy host-composition files are no longer live runtime authority for the server boot path.
 
 ## Testing / Verification
-- `bun run sync:check`
-- `bun run lint:boundaries`
-- `bun --cwd apps/hq run typecheck`
-- `bun --cwd apps/server run typecheck`
-- `bun --cwd packages/runtime/substrate run typecheck`
-- `bun --cwd packages/runtime/bootgraph run typecheck`
-- `bun --cwd packages/runtime/harnesses/elysia run typecheck`
-- `bun --cwd apps/hq run test`
-- `bun --cwd apps/server run test`
-- `bun --cwd packages/runtime/substrate run test`
-- `bun --cwd packages/runtime/bootgraph run test`
-- `bun scripts/phase-2/verify-no-legacy-cutover.mjs`
-- `bun scripts/phase-2/verify-server-role-runtime-path.mjs`
-- `bun scripts/phase-2/verify-effect-not-in-public-api.mjs`
-- direct server smoke validation through `apps/hq/server.ts`
+- Land the first slice-local Phase 2 verifier surface:
+  - `scripts/phase-2/verify-no-legacy-cutover.mjs`
+  - `scripts/phase-2/verify-server-role-runtime-path.mjs`
+  - `scripts/phase-2/verify-effect-not-in-public-api.mjs`
+  - package-script wiring for the U00 gate so later slices can ratchet it instead of re-inventing it
+- Add or refresh the affected structural ratchets for the touched runtime projects (`apps/hq`, `apps/server`, `packages/runtime/substrate`, `packages/runtime/bootgraph`, `packages/runtime/harnesses/elysia`).
+- Run affected checks:
+  - `bun run sync:check`
+  - `bun run lint:boundaries` and treat the known pre-slice baseline failures in `apps/server` separately from any new regression introduced by this slice
+  - `bun --cwd apps/hq run typecheck`
+  - `bun --cwd apps/server run typecheck`
+  - `bun --cwd packages/runtime/substrate run typecheck`
+  - `bun --cwd packages/runtime/bootgraph run typecheck`
+  - `bun --cwd packages/runtime/harnesses/elysia run typecheck`
+  - affected tests for `apps/hq`, `apps/server`, `packages/runtime/substrate`, and `packages/runtime/bootgraph`
+- Run direct runtime smoke validation through `apps/hq/server.ts`.
+- Capture evidence that the slice removed the bridge as authority rather than merely wrapping it.
 
 ## Dependencies / Notes
 - Blocked by: none.
@@ -109,8 +118,8 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
 ### Package Topology
 ```
 packages/runtime/
-  bootgraph/       - PUBLIC RAWR-shaped lifecycle shell
-  compiler/        - (reserved, built in M2-U02)
+  bootgraph/       - execution-family lifecycle shell consumed by hq-sdk/runtime entry
+  compiler/        - reserved for generalization in M2-U02; U00 only lands the minimum server-only cut
   substrate/       - HIDDEN Effect-backed kernel
     src/
       services/
@@ -124,12 +133,16 @@ packages/runtime/
       index.ts
   harnesses/
     elysia/        - Server harness adapter
+
+packages/hq-sdk/
+  ...             - PUBLIC authoring/app-runtime seam (`defineApp`, `startAppRole`, `bindService`, etc.)
 ```
 
 ### Scope Boundaries
 In scope:
-- the minimum public app/runtime API needed for `server`
+- the minimum public app/runtime API needed for `server`, exposed from `packages/hq-sdk`
 - the minimum hidden boot/runtime substrate needed for `server.api`
+- the minimum server-only compiler/app-runtime path needed to lower `server.api` into the runtime execution family
 - deleting `apps/hq/legacy-cutover.ts`
 - Effect as a real dependency in `packages/runtime/substrate`
 
@@ -150,6 +163,10 @@ Out of scope:
 ### Paper Trail
 - [RAWR_Architecture_Migration_Plan.md](../resources/RAWR_Architecture_Migration_Plan.md)
 - [phase-2-entry-conditions.md](../../migration/phase-2-entry-conditions.md)
+
+### Design Precedence
+- `packages/runtime/*` is the consolidated execution family for Phase 2.
+- `packages/hq-sdk` remains the public app-runtime and authoring seam.
 
 ### Prework Results (Live)
 

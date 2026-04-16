@@ -68,17 +68,22 @@ M2-U00 stands up the minimum bootgraph to delete the legacy bridge. This slice h
 - [ ] No Effect types leak into the public bootgraph API surface.
 
 ## Testing / Verification
-- `bun --cwd packages/runtime/bootgraph run typecheck`
-- `bun --cwd packages/runtime/bootgraph run test`
-- `bun --cwd packages/runtime/substrate run typecheck`
-- `bun scripts/phase-2/verify-bootgraph-public-api.mjs`
-- `bun scripts/phase-2/verify-effect-not-in-public-api.mjs`
+- Land and wire the slice-local verifiers:
+  - `scripts/phase-2/verify-bootgraph-public-api.mjs`
+  - update `scripts/phase-2/verify-effect-not-in-public-api.mjs` if the public-surface audit expanded in this slice
+  - package-script / structural-suite wiring so bootgraph contract checks stay in the ratchet path
+- Run affected checks:
+  - `bun --cwd packages/runtime/bootgraph run typecheck`
+  - `bun --cwd packages/runtime/bootgraph run test`
+  - `bun --cwd packages/runtime/substrate run typecheck`
+  - affected structural suites for `packages/runtime/bootgraph` and `packages/runtime/substrate`
 - Unit tests covering:
   - Happy path: modules start in dependency order, shutdown in reverse
   - Conflict: duplicate module identity raises `BootModuleConflictError`
   - Cycle: circular dependency raises `BootGraphCycleError`
   - Rollback: mid-startup failure finalizes already-started modules
   - Shutdown error: failure during teardown surfaces `BootShutdownError`
+- Capture evidence that lifecycle guarantees are enforced by the real bootgraph path, not by ad hoc test scaffolding.
 
 ## Dependencies / Notes
 - Blocked by: [M2-U00](./M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md).

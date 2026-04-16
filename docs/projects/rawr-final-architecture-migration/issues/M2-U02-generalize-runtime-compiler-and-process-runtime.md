@@ -70,18 +70,23 @@ M2-U00 and M2-U01 established the bootgraph and minimum substrate. This slice ge
 - [ ] TopologyRegistry is present only if earned by real compiler needs (not speculative).
 
 ## Testing / Verification
-- `bun --cwd packages/runtime/compiler run typecheck`
-- `bun --cwd packages/runtime/compiler run test`
-- `bun --cwd packages/runtime/substrate run typecheck`
-- `bun --cwd packages/runtime/substrate run test`
-- `bun scripts/phase-2/verify-runtime-plan-compilation.mjs`
-- `bun scripts/phase-2/verify-process-runtime-stop.mjs`
+- Land and wire the slice-local verifiers:
+  - `scripts/phase-2/verify-runtime-plan-compilation.mjs`
+  - `scripts/phase-2/verify-process-runtime-stop.mjs`
+  - package-script / structural-suite wiring for compiler and process-runtime ratchets
+- Run affected checks:
+  - `bun --cwd packages/runtime/compiler run typecheck`
+  - `bun --cwd packages/runtime/compiler run test`
+  - `bun --cwd packages/runtime/substrate run typecheck`
+  - `bun --cwd packages/runtime/substrate run test`
+  - affected structural suites for `packages/runtime/compiler` and `packages/runtime/substrate`
 - Unit tests covering:
   - Plan generation for each active lane (server.api, async.workflows, async.schedules)
   - ProcessView and RoleView read correctness
   - SurfaceAssembler output for server routes, async handlers, schedules
   - stop() triggers graceful teardown through ManagedRuntime disposal
   - Compiler rejects invalid/incomplete declarations with clear errors
+- Capture evidence that the broader multi-lane plan path now lives in compiler/process-runtime instead of silently remaining server-only.
 
 ## Dependencies / Notes
 - Blocked by: [M2-U01](./M2-U01-harden-bootgraph-lifetimes-and-failure-semantics.md).

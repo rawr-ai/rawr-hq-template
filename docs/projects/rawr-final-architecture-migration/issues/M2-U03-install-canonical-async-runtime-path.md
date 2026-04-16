@@ -71,19 +71,24 @@ M2-U00 through M2-U02 established the canonical server runtime path, hardened th
 - [ ] AsyncActivation service is hidden from public authoring APIs (Effect internal only).
 
 ## Testing / Verification
-- `bun --cwd packages/runtime/harnesses/inngest run typecheck`
-- `bun --cwd packages/runtime/harnesses/inngest run test`
-- `bun --cwd packages/runtime/substrate run typecheck`
-- `bun --cwd packages/runtime/substrate run test`
-- `bun --cwd apps/hq run typecheck`
-- `bun scripts/phase-2/verify-async-role-runtime-path.mjs`
-- `bun scripts/phase-2/verify-effect-not-in-public-api.mjs`
+- Land and wire the slice-local verifiers:
+  - `scripts/phase-2/verify-async-role-runtime-path.mjs`
+  - update `scripts/phase-2/verify-effect-not-in-public-api.mjs` if async harness exports widen the public audit surface
+  - package-script / structural-suite wiring for the async harness path
+- Run affected checks:
+  - `bun --cwd packages/runtime/harnesses/inngest run typecheck`
+  - `bun --cwd packages/runtime/harnesses/inngest run test`
+  - `bun --cwd packages/runtime/substrate run typecheck`
+  - `bun --cwd packages/runtime/substrate run test`
+  - `bun --cwd apps/hq run typecheck`
+  - affected structural suites for `apps/hq`, `packages/runtime/harnesses/inngest`, and touched async packages
 - Unit tests covering:
   - Inngest harness mounts workflows from compiled plan
   - Inngest harness mounts schedules from compiled plan
   - AsyncActivation service initializes and provides activation context
   - Async role boots through canonical path end-to-end
 - Async registration smoke validation through `apps/hq/async.ts`
+- Capture evidence that async registration now derives from compiled plans, not direct host glue.
 
 ## Dependencies / Notes
 - Blocked by: [M2-U02](./M2-U02-generalize-runtime-compiler-and-process-runtime.md).
