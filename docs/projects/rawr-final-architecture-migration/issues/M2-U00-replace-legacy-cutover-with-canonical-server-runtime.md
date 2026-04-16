@@ -1,0 +1,181 @@
+---
+id: M2-U00
+title: "[M2] Replace legacy cutover with the canonical server runtime path"
+state: planned
+priority: 1
+estimate: 8
+project: rawr-final-architecture-migration
+milestone: M2
+assignees: [codex]
+labels: [migration, phase-2]
+parent: null
+children: []
+blocked_by: []
+blocked: [M2-U01]
+related_to: []
+---
+
+<!-- SECTION SCOPE [SYNC] -->
+## TL;DR
+- Delete `apps/hq/legacy-cutover.ts` by cutting the first minimal canonical server runtime path through the new `packages/runtime/` family. This is the moment Effect enters the repo as a real dependency. Create the minimum viable Effect-backed runtime substrate, the real bootgraph with `lowerModule()` bridge, and the Elysia server harness.
+
+## Purpose
+Phase 2 cannot credibly start while the one sanctioned executable bridge remains live. The first cut must replace the bridge by standing up the canonical `packages/runtime/` package family with enough substrate, bootgraph, and harness surface to boot `server.api` without any legacy host-composition authority.
+
+## Scope
+
+### In scope
+- Create `packages/runtime/substrate/` -- the minimum viable Effect-backed kernel:
+  - RuntimeConfig service (environment, feature flags)
+  - ProcessIdentity service (role, lane, instance id)
+  - RuntimeTelemetry service (structured logging, spans, metrics sink)
+  - DbPool service (connection pool lifecycle)
+  - Clock service (wall/monotonic time abstraction)
+  - WorkspaceRoot service (resolved repo/workspace path)
+  - BoundaryCache service (per-process memoization boundary)
+  - Effect is used internally (ManagedRuntime, Layer, Effect.Service, etc.) but is NOT exposed in public authoring APIs
+- Create `packages/runtime/bootgraph/` -- real RAWR-shaped lifecycle shell:
+  - `defineApp(...)` public API
+  - `startAppRole(...)` public API
+  - `lowerModule()` bridge that converts RAWR module declarations into Effect Layers for the substrate
+  - Module registration, dependency ordering (topological), identity dedupe
+- Create `packages/runtime/harnesses/elysia/` -- server harness adapter:
+  - Thin adapter that mounts compiled server.api surfaces onto Elysia
+  - Receives the booted ManagedRuntime from bootgraph
+- Rewire `apps/hq/server.ts` to the canonical runtime path
+- Delete `apps/hq/legacy-cutover.ts`
+- Prove there is no longer a live executable bridge across the Phase 1 to Phase 2 boundary
+
+### Out of scope
+- Full async runtime support (M2-U03)
+- Generalizing every runtime primitive before the first server cut lands
+- Replacing transitional plugin builders
+- Full bootgraph lifecycle hardening (rollback, shutdown ordering -- M2-U01)
+- Compiler generalization beyond what the first server cut needs (M2-U02)
+- Inngest harness (M2-U03)
+
+## Deliverables
+- `packages/runtime/substrate/` with minimum viable Effect services listed above.
+- `packages/runtime/bootgraph/` with `defineApp()`, `startAppRole()`, and `lowerModule()` bridge.
+- `packages/runtime/harnesses/elysia/` with thin server adapter.
+- `apps/hq/server.ts` rewired to the canonical runtime path.
+- `apps/hq/legacy-cutover.ts` deleted.
+- Effect added as a real dependency in the runtime workspace.
+- Proof that no live executable bridge remains across the Phase 1/Phase 2 boundary.
+
+## Acceptance Criteria
+- [ ] `packages/runtime/substrate/` exists with RuntimeConfig, ProcessIdentity, RuntimeTelemetry, DbPool, Clock, WorkspaceRoot, and BoundaryCache as Effect services.
+- [ ] Effect is used internally in substrate; no Effect types appear in public bootgraph or authoring APIs.
+- [ ] `packages/runtime/bootgraph/` exposes `defineApp()` and `startAppRole()` as RAWR-shaped public APIs.
+- [ ] `lowerModule()` correctly bridges RAWR module declarations into Effect Layer composition.
+- [ ] `packages/runtime/harnesses/elysia/` boots the server.api lane from the compiled plan.
+- [ ] `apps/hq/server.ts` no longer depends on `apps/hq/legacy-cutover.ts`.
+- [ ] `apps/hq/legacy-cutover.ts` is deleted.
+- [ ] The server role boots through canonical app/runtime APIs.
+- [ ] The minimal server runtime path compiles only the active `server.api` lane.
+- [ ] Legacy host-composition files are no longer live runtime authority for the server boot path.
+
+## Testing / Verification
+- `bun run sync:check`
+- `bun run lint:boundaries`
+- `bun --cwd apps/hq run typecheck`
+- `bun --cwd apps/server run typecheck`
+- `bun --cwd packages/runtime/substrate run typecheck`
+- `bun --cwd packages/runtime/bootgraph run typecheck`
+- `bun --cwd packages/runtime/harnesses/elysia run typecheck`
+- `bun --cwd apps/hq run test`
+- `bun --cwd apps/server run test`
+- `bun --cwd packages/runtime/substrate run test`
+- `bun --cwd packages/runtime/bootgraph run test`
+- `bun scripts/phase-2/verify-no-legacy-cutover.mjs`
+- `bun scripts/phase-2/verify-server-role-runtime-path.mjs`
+- `bun scripts/phase-2/verify-effect-not-in-public-api.mjs`
+- direct server smoke validation through `apps/hq/server.ts`
+
+## Dependencies / Notes
+- Blocked by: none.
+- Blocks: [M2-U01](./M2-U01-harden-bootgraph-lifetimes-and-failure-semantics.md).
+- Milestone: [M2: Install the Minimal Canonical Runtime Shell](../milestones/M2-minimal-canonical-runtime-shell.md).
+- Pull forward only the minimum substrate needed to delete the bridge. Do not use this slice as an excuse to build the whole platform at once.
+- The substrate services created here must be sufficient to satisfy what example-todo and hq-ops require at boot time: DbPool, Clock, Logger (via RuntimeTelemetry), Analytics (via RuntimeTelemetry), workspaceId (via WorkspaceRoot), repoRoot (via WorkspaceRoot), RuntimeConfig, ProcessIdentity, RuntimeTelemetry, BoundaryCache.
+
+---
+
+<!-- SECTION IMPLEMENTATION [NOSYNC] -->
+## Implementation Details (Local Only)
+### Why This Slice Exists
+Phase 2 cannot credibly start while the one sanctioned executable bridge remains live. The first cut must therefore replace the bridge instead of treating it as harmless scaffolding. This is also the moment Effect enters the repo as a real dependency -- the substrate is the kernel that all subsequent runtime work builds on.
+
+### Package Topology
+```
+packages/runtime/
+  bootgraph/       - PUBLIC RAWR-shaped lifecycle shell
+  compiler/        - (reserved, built in M2-U02)
+  substrate/       - HIDDEN Effect-backed kernel
+    src/
+      services/
+        runtime-config.ts
+        process-identity.ts
+        runtime-telemetry.ts
+        db-pool.ts
+        clock.ts
+        workspace-root.ts
+        boundary-cache.ts
+      index.ts
+  harnesses/
+    elysia/        - Server harness adapter
+```
+
+### Scope Boundaries
+In scope:
+- the minimum public app/runtime API needed for `server`
+- the minimum hidden boot/runtime substrate needed for `server.api`
+- deleting `apps/hq/legacy-cutover.ts`
+- Effect as a real dependency in `packages/runtime/substrate`
+
+Out of scope:
+- full async runtime support
+- generalizing every runtime primitive before the first server cut lands
+- replacing transitional plugin builders
+
+### Files
+- `apps/hq/server.ts`
+- `apps/hq/rawr.hq.ts`
+- `apps/server/src/rawr.ts`
+- `apps/server/src/host-composition.ts`
+- `packages/runtime/bootgraph/**`
+- `packages/runtime/substrate/**`
+- `packages/runtime/harnesses/elysia/**`
+
+### Paper Trail
+- [RAWR_Architecture_Migration_Plan.md](../resources/RAWR_Architecture_Migration_Plan.md)
+- [phase-2-entry-conditions.md](../../migration/phase-2-entry-conditions.md)
+
+### Prework Results (Live)
+
+#### 1) The bridge is still the entire live app boot path
+- `apps/hq/server.ts` imports `bootstrapRawrHqServerViaLegacyCutover` and `startRawrHqServerViaLegacyCutover`
+- `apps/hq/async.ts` and `apps/hq/dev.ts` also still import from `./legacy-cutover`
+- `apps/hq/src/index.ts` re-exports `../legacy-cutover`
+- `apps/hq/package.json` still publishes `./legacy-cutover`
+
+#### 2) Server runtime materialization still depends on the bridge
+- `apps/server/src/rawr.ts` imports `createRawrHqLegacyRouteAuthority` from `@rawr/hq-app/legacy-cutover`
+- `createHostInngestBundle(...)` and `registerRawrRoutes(...)` still derive runtime surfaces from that legacy authority
+- `apps/server/src/bootstrap.ts` still boots directly through host-owned loading and route/plugin mounting
+
+#### 3) Existing runtime packages are not yet the canonical answer
+- The old `packages/bootgraph/src/index.ts` is only a reservation constant today (to be replaced by `packages/runtime/bootgraph/`)
+- There is no compiler package yet (to be created as `packages/runtime/compiler/` in M2-U02)
+- `packages/runtime-context/src/index.ts` is still a type-only support seam, not a canonical app/runtime boot path
+
+#### 4) Practical implication for implementation
+`M2-U00` cannot succeed by editing only `apps/hq/server.ts`. The minimum real cut likely needs coordinated changes across:
+- `apps/hq/server.ts`
+- `apps/hq/src/index.ts`
+- `apps/hq/package.json`
+- `apps/server/src/rawr.ts`
+- `apps/server/src/bootstrap.ts`
+- `packages/runtime/bootgraph/**`
+- `packages/runtime/substrate/**`
+- `packages/runtime/harnesses/elysia/**`
