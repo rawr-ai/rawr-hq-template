@@ -13,7 +13,7 @@ Phase 2 architecture remains:
 - `M2-U00` = minimum server-only compiler/app-runtime cut
 - `M2-U02` = broader compiler/process-runtime generalization
 
-Phase 2 verifier scaffold exists and is still in place:
+Phase 2 verifier scaffold still exists and is still in place:
 - `scripts/phase-2/_verify-utils.mjs`
 - `verify-no-legacy-cutover.mjs`
 - `verify-server-role-runtime-path.mjs`
@@ -22,133 +22,198 @@ Phase 2 verifier scaffold exists and is still in place:
 - root `phase-2:gate:u00:*` scripts
 - `phase-2-u00-scaffold` structural suites for `@rawr/hq-app`, `@rawr/server`, `@rawr/hq-sdk`
 
-Nx cache contract was already repaired before this pass:
+Nx cache posture remains fixed from the earlier pass:
 - `nx.json` excludes project-local `dist/` and `coverage/` from default inputs
 - `build`, `typecheck`, `lint` have explicit cache posture
 - `sync` and `structural` remain intentionally non-cacheable
-- repeated `@rawr/hq-sdk:build` and `@rawr/core:build` were verified to hit local cache on second run
 
-## What was implemented in the last pass
+## What is now implemented
 
-### 1. Immediate build break repair
+### 1. `hq-ops` stayed semantic-only
 
-The original red builds were:
-- `@rawr/server`: missing `@rawr/example-todo` dependency
-- `@rawr/hq-app`: failed only because it compiled through `../server/src/*`
-- `@rawr/web`: browser bundle reached `services/hq-ops/src/service/modules/config/support.ts` through `@rawr/plugin-server-api-state -> @rawr/hq-ops/service/contract`
+`services/hq-ops` still owns:
+- service-local ports
+- contracts
+- schemas/models/types
+- service/router/client seams
 
-Those were fixed by:
-- completing direct workspace deps in `apps/server/package.json`
-- splitting pure config schema/model material out of `services/hq-ops/src/service/modules/config/support.ts` into `services/hq-ops/src/service/modules/config/model.ts`
-- keeping `plugins/server/api/state/src/contract.ts` pointed at `@rawr/hq-ops/service/contract`
+`services/hq-ops` no longer owns:
+- concrete Node/Bun runtime helpers
+- a service-owned executable bin
 
-Result:
-- `@rawr/server:build` passes
-- `@rawr/hq-app:build` passes
-- `@rawr/web:build` passes
-- `build:affected` passes
+Removed:
+- `services/hq-ops/src/bin/security-check.ts`
+- `security:check` from `services/hq-ops/package.json`
 
-### 2. `hq-ops` re-grounding onto service runtime ports
+### 2. Shared host runtime package now exists
 
-Implemented:
-- `services/hq-ops/src/service/shared/ports/config-store.ts`
-- `services/hq-ops/src/service/shared/ports/repo-state-store.ts`
-- `services/hq-ops/src/service/shared/ports/journal-store.ts`
-- `services/hq-ops/src/service/shared/ports/security-runtime.ts`
+New package:
+- `packages/hq-ops-host`
 
-`services/hq-ops/src/service/base.ts` now declares service-specific runtime deps:
-- `configStore`
-- `repoStateStore`
-- `journalStore`
-- `securityRuntime`
+It now owns the shared concrete host runtime for `hq-ops`:
+- `createNodeHqOpsBoundary(...)`
+- `createNodeConfigStore()`
+- `createNodeRepoStateStore()`
+- `createNodeJournalStore()`
+- `createNodeSecurityRuntime()`
 
-Module repositories/middleware were rewired to consume those ports rather than service-owned Node helpers:
-- `config`
-- `repo-state`
-- `journal`
-- `security`
+Important shape:
+- this is support matter only
+- no service truth
+- no router/contract export surface
+- no host-local caching or app/plugin policy
 
-The following service-owned runtime helpers were removed from `services/hq-ops/src/service/**`:
-- `repo-state/storage.ts`
-- `repo-state/support.ts`
-- `journal/index-db.ts`
-- `journal/paths.ts`
-- `journal/semantic.ts`
-- `journal/sqlite.ts`
-- `journal/support.ts`
-- `journal/utils.ts`
-- `journal/writer.ts`
-- `security/audit.ts`
-- `security/exec.ts`
-- `security/git.ts`
-- `security/internal.ts`
-- `security/report.ts`
-- `security/secrets.ts`
-- `security/support.ts`
-- `security/untrusted.ts`
+The old server-local concrete adapter ownership was removed:
+- deleted `apps/server/src/host-adapters/hq-ops/config-store.ts`
+- deleted `apps/server/src/host-adapters/hq-ops/repo-state-store.ts`
 
-Concrete host-owned runtime now exists only for the live platform path that was implemented in this pass:
-- `apps/server/src/host-adapters/hq-ops/config-store.ts`
-- `apps/server/src/host-adapters/hq-ops/repo-state-store.ts`
+### 3. Real hosts were rebound
 
-And those are bound in:
-- `apps/server/src/host-satisfiers.ts`
+Server:
+- `apps/server/src/host-satisfiers.ts` now uses `@rawr/hq-ops-host`
+- server keeps local repo-root keyed client caching
 
-Important nuance:
-- only the live server runtime path is fully rebound so far
-- `configStore` and `repoStateStore` have concrete server host adapters
-- `journalStore` and `securityRuntime` are defined as service ports, but not yet concretely rebound across the whole consumer surface outside test helpers
+CLI host:
+- `apps/cli/src/lib/hq-ops-client.ts` was recreated as the real host wrapper
+- it now builds the service client through `createNodeHqOpsBoundary(...)`
 
-### 3. Verifier and gate ratchets updated
+Plugin host:
+- `plugins/cli/plugins/src/lib/hq-ops-client.ts` now builds through `createNodeHqOpsBoundary(...)`
+- new host-local layered config helper:
+  - `plugins/cli/plugins/src/lib/layered-config.ts`
 
-Verifier / lint changes now present:
-- `scripts/phase-03/verify-hq-ops-service-boundary-purity.mjs`
-- updated `scripts/phase-03/verify-plugin-server-api-state-structural.mjs`
-- updated `scripts/phase-1/verify-hq-ops-service-shape.mjs`
-- tightened `eslint.config.mjs`
+### 4. `agent-sync` host behavior was removed without promoting it
 
-What they now enforce:
-- `hq-ops` contract/schema/model/type files may not import runtime helpers or `node:*` / `bun:*`
-- the browser-facing `plugin-server-api-state` root export graph must remain runtime-safe
-- the cleaned `hq-ops` topology is ratcheted instead of the old runtime-heavy one
+`packages/agent-sync` no longer:
+- imports `@rawr/hq-ops`
+- constructs `@rawr/hq-ops` clients
+- loads layered config internally
 
-Additional gate updates:
-- `phase-c` and `phase-f` storage-lock / runtime-lifecycle gates now point at the server-host-owned repo-state store rather than the deleted `hq-ops` service runtime helper
-- repo-state concurrency runtime proof moved to:
-  - `apps/server/test/repo-state-store.concurrent.test.ts`
+Removed:
+- `packages/agent-sync/src/lib/layered-config.ts`
+- `packages/agent-sync/src/lib/sync-cli.ts`
+- `loadLayeredRawrConfigForCwd` export
+- `runSyncFromCli` export
+- runtime dependency on `@rawr/hq-ops`
+
+Added:
+- `packages/agent-sync/src/lib/sync-config.ts`
+  - exports `deriveSyncPolicy(...)`
+
+`resolveTargets(...)` now accepts a narrow sync-config shape rather than the old HQ Ops layered-config-derived type.
+
+Interpretation:
+- `agent-sync` is still package-scoped in this slice
+- but it is explicitly treated as a deferred service candidate, not as a forever-settled package
+
+### 5. Ratchets were tightened
+
+Added:
+- `scripts/phase-03/verify-hq-ops-host-placement.mjs`
+
+Updated:
+- `scripts/phase-1/verify-hq-ops-service-shape.mjs`
+- `scripts/phase-03/run-structural-suite.mjs`
+- `scripts/phase-c/verify-storage-lock-contract.mjs`
+- `scripts/phase-f/verify-f1-runtime-lifecycle-contract.mjs`
+- `eslint.config.mjs`
+
+What is now enforced:
+- `packages/agent-sync` may not import `@rawr/hq-ops`
+- `services/hq-ops` may not own `src/bin/*`
+- concrete `hq-ops` runtime helpers may not reappear under `services/hq-ops/src/service/**`
+- direct `createClient` composition from `@rawr/hq-ops` is only allowed in the sanctioned host roots and tests
+- `@rawr/hq-ops` structural suite now includes the host-placement verifier
+- `@rawr/hq-ops-host` has its own structural suite entry
+
+### 6. Docs updated
+
+Only non-canonical docs were adjusted for the slice:
+- `docs/migration/phase-2-entry-conditions.md`
+- `docs/projects/rawr-final-architecture-migration/.context/P2-execution/context.md`
+
+These now record:
+- `agent-sync` remains package-scoped in this slice
+- that classification is still a deferred service-promotion candidate
+- this slice removes illegal host behavior without taking on full service promotion
 
 ## Verification that passed
 
-Static / build / verifier proof:
+### Static / build / targeted tests
+
+Passed:
+- `bun install`
+- `bunx nx run @rawr/hq-ops-host:typecheck --skip-nx-cache`
+- `bunx nx run @rawr/server:typecheck --skip-nx-cache`
+- `bunx nx run @rawr/cli:typecheck --skip-nx-cache`
+- `bunx nx run @rawr/plugin-plugins:typecheck --skip-nx-cache`
 - `bunx nx run @rawr/hq-ops:typecheck --skip-nx-cache`
-- `bunx nx run @rawr/hq-ops:build --skip-nx-cache`
-- `bunx nx run @rawr/hq-ops:test --skip-nx-cache`
+- `bunx nx run @rawr/agent-sync:typecheck --skip-nx-cache`
+- `bunx nx run @rawr/hq-ops-host:build --skip-nx-cache`
 - `bunx nx run @rawr/server:build --skip-nx-cache`
-- `bunx nx run @rawr/hq-app:build --skip-nx-cache`
-- `bunx nx run @rawr/web:build --skip-nx-cache`
+- `bunx nx run @rawr/cli:build --skip-nx-cache`
+- `bunx nx run @rawr/plugin-plugins:build --skip-nx-cache`
+- `bunx nx run @rawr/hq-ops:build --skip-nx-cache`
+- `bunx nx run @rawr/agent-sync:build --skip-nx-cache`
+- `bunx nx run @rawr/hq-ops-host:test --skip-nx-cache`
+- `bunx nx run @rawr/agent-sync:test --skip-nx-cache`
+- `bunx nx run @rawr/cli:test --skip-nx-cache`
+- `bunx nx run @rawr/plugin-plugins:test --skip-nx-cache`
+- `bunx nx run @rawr/hq-ops:test --skip-nx-cache`
+- `bunx vitest run --project server apps/server/test/repo-state-store.concurrent.test.ts`
 - `bunx nx run plugin-server-api-state:typecheck --skip-nx-cache`
+
+### Structural / proof gates
+
+Passed:
+- `bun run sync:check --project @rawr/hq-ops`
+- `bun run lint:boundaries`
+- `bun scripts/phase-03/verify-hq-ops-host-placement.mjs`
 - `bun scripts/phase-03/verify-hq-ops-service-boundary-purity.mjs`
 - `bun scripts/phase-03/verify-plugin-server-api-state-structural.mjs`
 - `bun scripts/phase-1/verify-hq-ops-service-shape.mjs`
 - `bun scripts/phase-c/verify-storage-lock-contract.mjs`
+- `bun run phase-c:gate:c1-storage-lock-runtime`
 - `bun scripts/phase-f/verify-f1-runtime-lifecycle-contract.mjs`
-- `bun run sync:check --project @rawr/hq-ops`
-- `bun run lint:boundaries`
+- `bun run phase-f:gate:f1-runtime-lifecycle-runtime`
+- `bunx nx run @rawr/hq-ops:structural --skip-nx-cache`
 - `bun run build:affected`
-- `bunx vitest run --project server apps/server/test/repo-state-store.concurrent.test.ts`
 
-Managed runtime / observability proof that passed:
-- `bun run rawr hq up --observability required --open none`
-- `bun run rawr hq status --json`
+### Command-surface proof
+
+Using an isolated temp `HOME` / `CODEX_HOME`, these succeeded:
+- `rawr config show --json`
+- `rawr config validate --json`
+- `rawr journal tail --json`
+- `rawr journal search --query test --json`
+- `rawr security report --json`
+- `rawr plugins sync all --dry-run --json`
+- `rawr plugins sync sources list --json`
+- `rawr plugins sync sources add <temp-path> --json`
+- `rawr plugins sync sources remove <temp-path> --json`
+- `rawr plugins web status --json`
+
+Important nuance:
+- `rawr security check --json` returned a real non-zero failure because the repo currently has real vulnerability findings
+- that is expected behavior, not a regression in the host rebind
+- `rawr plugins status --json` also returned a real non-zero drift status in the isolated temp home, which is expected behavior for a clean unlinked temp environment
+
+### Managed runtime / observability proof
+
+Passed:
+- `bun run rawr -- hq up --observability required --open none`
+- `bun run rawr -- hq status --json`
   - reached `summary: "running"`
   - server/web/async all healthy
   - observability support state was `running`
 - `curl http://localhost:3000/health`
   - returned `{"ok":true}`
-- first-party proof request succeeded:
+- proof request:
   - `POST /rpc/exampleTodo/tasks/create`
-- published proof request succeeded:
+  - returned `200`
+- proof request:
   - `POST /api/orpc/exampleTodo/tasks/create`
+  - returned `200`
 - `.rawr/hq/runtime.log` contains correlated entries for:
   - `hq-ops.procedure`
   - `orpc.procedure`
@@ -160,68 +225,38 @@ Managed runtime / observability proof that passed:
   - `rawr.orpc.openapi.request`
   - `rawr.orpc.requests`
   - `rawr.orpc.request.duration`
+- `bun run rawr -- hq down`
+- final `bun run rawr -- hq status --json`
+  - returned `summary: "stopped"`
 
-Managed runtime was shut down afterward:
-- final `rawr hq status --json` returned `summary: "stopped"`
+## Remaining note
 
-## What remains
-
-The live platform path is green, but the **entire `hq-ops` consumer surface is not yet fully re-grounded**.
-
-What still remains to do:
-
-1. Rebind all non-server direct `@rawr/hq-ops` clients to concrete host runtimes
-- `packages/agent-sync/src/lib/layered-config.ts`
-- `plugins/cli/plugins/src/lib/hq-ops-client.ts`
-- `services/hq-ops/src/bin/security-check.ts`
-- any other direct `createClient()` callers for `@rawr/hq-ops`
-
-2. Provide concrete non-server host adapters for the remaining ports
-- `configStore`
-- `repoStateStore`
-- `journalStore`
-- `securityRuntime`
-
-3. Decide whether to keep those adapters duplicated by host or factor shared host-owned runtime support into a sanctioned package-level host adapter location without violating the architecture
-
-4. Re-run full static and runtime proof after those additional hosts are rebound
-
-## Important observed runtime issue
-
-`rawr hq up` still emits this unrelated operational error from the downstream CLI workspace:
+The known unrelated startup noise still appears:
 - `Error: command hq:status not found`
 
-But in this repo’s managed runtime path, it did **not** block startup or the proof loop:
-- server still booted
-- health passed
-- requests passed
-- logs/traces/metrics passed
+Important clarification:
+- the stack trace points at the separate checkout:
+  - `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq`
+- not this repo
+- despite that, this workspace still reached healthy `running` state and completed the full runtime proof loop
 
-That issue is real, but it is separate from the `hq-ops` runtime-port re-grounding work completed here.
+So this is still a real issue, but it is external to this repo’s successful `hq-ops` host-runtime re-grounding pass.
 
-## Relevant commits on this branch
+## Latest commit
 
-Already on this branch before this pass:
-- `498ea980` `build(phase-2): scaffold M2-U00 verifier ratchets`
-- `f5f023b2` `build(nx): restore local cache hits for build targets`
-- `99549868` `docs(handoff): refresh phase 2 scratchpad`
+This pass was committed on the current Graphite branch as:
+- `fe8637c1`
+- `refactor(hq-ops): move host runtime bindings into shared package`
 
-This pass:
-- `9bc00a2f` `refactor(hq-ops): route runtime through host ports`
+Branch state at handoff time:
+- branch is ahead of origin by 8 commits
+- worktree was clean after the handoff-note commit
 
-Notes:
-- a verifier-only worker produced `dc3d3014` in its own forked flow; the relevant verifier content is already integrated into the current branch state
-- an `hq-ops` service-slice worker produced `e3d983d6` in its own forked worktree; the relevant service content is already integrated into the current branch state
-
-## Repo state now
-
-- branch is ahead of origin by 6 commits
-- worktree was clean at the end of the last implementation pass
-- pre-existing intentionally untracked files should remain untracked:
-  - `.claude/`
-  - `docs/projects/rawr-final-architecture-migration/briefs/`
-  - `the-reactive-codebase.html`
-  - `the-reactive-codebase.md`
+Pre-existing intentionally untracked files should remain untracked:
+- `.claude/`
+- `docs/projects/rawr-final-architecture-migration/briefs/`
+- `the-reactive-codebase.html`
+- `the-reactive-codebase.md`
 
 ## Continuation snippet
 
@@ -232,90 +267,85 @@ Repo: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 Branch: docs/reground-p2-for-effect-runtime-substrate
 Graphite repo, trunk = main.
 
-Phase 2 architecture remains:
-- packages/runtime/* = execution family
-- packages/hq-sdk = public app-runtime / authoring seam
-- M2-U00 = minimum server-only compiler/app-runtime cut
-- M2-U02 = broader compiler/process-runtime generalization
+What is complete:
+- `hq-ops` is now re-grounded across the real host surface for this slice.
+- `services/hq-ops` kept service-local ports/contracts/models only.
+- concrete host-owned runtime moved into `packages/hq-ops-host`
+- `apps/server`, `apps/cli`, and `plugins/cli/plugins` now use that package
+- `services/hq-ops/src/bin/security-check.ts` is gone
+- `packages/agent-sync` no longer composes `@rawr/hq-ops` or loads layered config internally
+- plugin host owns layered config loading now via:
+  - `plugins/cli/plugins/src/lib/layered-config.ts`
 
-What is now complete:
-- The original build break trio is fixed:
-  - @rawr/server build passes
-  - @rawr/hq-app build passes
-  - @rawr/web build passes
-- hq-ops service boundary purity is now enforced:
-  - config model/schema split landed
-  - service/shared/ports/{config-store,repo-state-store,journal-store,security-runtime}.ts exist
-  - hq-ops module repositories/middleware consume deps-backed runtime ports
-  - old service-owned runtime helpers were removed from services/hq-ops/src/service/**
-- server host binding exists for the live platform path:
-  - apps/server/src/host-adapters/hq-ops/config-store.ts
-  - apps/server/src/host-adapters/hq-ops/repo-state-store.ts
-  - apps/server/src/host-satisfiers.ts binds configStore + repoStateStore
-- verifier/lint ratchets were updated and are green:
-  - scripts/phase-03/verify-hq-ops-service-boundary-purity.mjs
-  - scripts/phase-03/verify-plugin-server-api-state-structural.mjs
-  - scripts/phase-1/verify-hq-ops-service-shape.mjs
-  - scripts/phase-c/verify-storage-lock-contract.mjs
-  - scripts/phase-f/verify-f1-runtime-lifecycle-contract.mjs
-  - eslint.config.mjs tightened for hq-ops boundary purity
+Key new package:
+- `packages/hq-ops-host`
+  - `src/boundary.ts`
+  - `src/config-store.ts`
+  - `src/repo-state-store.ts`
+  - `src/journal/*`
+  - `src/security/*`
+  - `test/boundary.test.ts`
+
+Important enforcement now in place:
+- `scripts/phase-03/verify-hq-ops-host-placement.mjs`
+- updated `scripts/phase-1/verify-hq-ops-service-shape.mjs`
+- updated `scripts/phase-03/run-structural-suite.mjs`
+- updated `scripts/phase-c/verify-storage-lock-contract.mjs`
+- updated `scripts/phase-f/verify-f1-runtime-lifecycle-contract.mjs`
+- updated `eslint.config.mjs`
 
 Verification already passed:
-- bunx nx run @rawr/hq-ops:typecheck --skip-nx-cache
-- bunx nx run @rawr/hq-ops:build --skip-nx-cache
-- bunx nx run @rawr/hq-ops:test --skip-nx-cache
-- bunx nx run @rawr/server:build --skip-nx-cache
-- bunx nx run @rawr/hq-app:build --skip-nx-cache
-- bunx nx run @rawr/web:build --skip-nx-cache
-- bunx nx run plugin-server-api-state:typecheck --skip-nx-cache
-- bun scripts/phase-03/verify-hq-ops-service-boundary-purity.mjs
-- bun scripts/phase-03/verify-plugin-server-api-state-structural.mjs
-- bun scripts/phase-1/verify-hq-ops-service-shape.mjs
-- bun scripts/phase-c/verify-storage-lock-contract.mjs
-- bun scripts/phase-f/verify-f1-runtime-lifecycle-contract.mjs
-- bun run sync:check --project @rawr/hq-ops
-- bun run lint:boundaries
-- bun run build:affected
-- bunx vitest run --project server apps/server/test/repo-state-store.concurrent.test.ts
+- typecheck/build/test on:
+  - `@rawr/hq-ops-host`
+  - `@rawr/server`
+  - `@rawr/cli`
+  - `@rawr/plugin-plugins`
+  - `@rawr/hq-ops`
+  - `@rawr/agent-sync`
+- `plugin-server-api-state:typecheck`
+- `sync:check --project @rawr/hq-ops`
+- `lint:boundaries`
+- `verify-hq-ops-host-placement`
+- `verify-hq-ops-service-boundary-purity`
+- `verify-plugin-server-api-state-structural`
+- `verify-hq-ops-service-shape`
+- `phase-c` storage lock contract + runtime gate
+- `phase-f` runtime lifecycle contract + runtime gate
+- `@rawr/hq-ops:structural`
+- `build:affected`
+
+Command-surface proof already passed:
+- `rawr config show --json`
+- `rawr config validate --json`
+- `rawr journal tail --json`
+- `rawr journal search --query test --json`
+- `rawr security report --json`
+- `rawr plugins sync all --dry-run --json`
+- `rawr plugins sync sources list/add/remove --json`
+- `rawr plugins web status --json`
+
+Nuance:
+- `rawr security check --json` correctly returned non-zero because the repo currently has real vulnerabilities
+- `rawr plugins status --json` returned non-zero in the isolated temp home because it correctly detected drift in that fresh environment
 
 Managed runtime / observability proof already passed:
-- rawr hq up --observability required --open none
-- rawr hq status --json reached summary=running
-- curl http://localhost:3000/health returned {\"ok\":true}
-- both proof requests succeeded:
-  - POST /rpc/exampleTodo/tasks/create
-  - POST /api/orpc/exampleTodo/tasks/create
-- .rawr/hq/runtime.log contains correlated hq-ops + todo + orpc proof entries
-- HyperDX ClickHouse showed matching traces and rawr.orpc request metrics/histograms
-- runtime was shut down cleanly afterward
-- final rawr hq status --json returned summary=stopped
+- `rawr hq up --observability required --open none`
+- `rawr hq status --json` reached `summary=running`
+- `curl /health` returned `{\"ok\":true}`
+- `/rpc/exampleTodo/tasks/create` returned 200
+- `/api/orpc/exampleTodo/tasks/create` returned 200
+- `.rawr/hq/runtime.log` contains correlated `hq-ops`, `todo`, and `orpc` events
+- HyperDX ClickHouse showed matching traces and `rawr.orpc` metrics
+- `rawr hq down`
+- final `rawr hq status --json` returned `summary=stopped`
 
-What is NOT done yet:
-- the entire hq-ops consumer surface is not yet fully re-grounded
-- only the live server/platform path has concrete host runtime bindings so far
+Known residual note:
+- startup still emitted `Error: command hq:status not found`
+- stack trace points at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq`, not this repo
+- local proof here still completed successfully
 
-Remaining work to plan and implement next:
-1. Re-ground every other direct @rawr/hq-ops consumer, especially:
-   - packages/agent-sync/src/lib/layered-config.ts
-   - plugins/cli/plugins/src/lib/hq-ops-client.ts
-   - services/hq-ops/src/bin/security-check.ts
-   - any other direct createClient() callers for @rawr/hq-ops
-2. Provide concrete non-server host adapters for the remaining runtime ports:
-   - configStore
-   - repoStateStore
-   - journalStore
-   - securityRuntime
-3. Decide whether those adapters should stay host-local per consumer or be factored into a sanctioned shared host-owned adapter location without violating the architecture
-4. Re-run full static + runtime + observability proof after all consumers are rebound
+Latest commit on this branch:
+- `fe8637c1` `refactor(hq-ops): move host runtime bindings into shared package`
 
-Important runtime note:
-- rawr hq up still emits a separate downstream CLI error:
-  - Error: command hq:status not found
-- that did not block startup or the platform proof in this repo, but it is a real separate issue
-
-Current commit for the implementation pass:
-- 9bc00a2f refactor(hq-ops): route runtime through host ports
-
-Use nx-workspace, narsil-mcp, architecture, and team-design again where useful.
-Assume the goal is now to finish re-grounding the entire hq-ops consumer surface rigorously, not just the platform path.
+Next task is related but new; use this state as the baseline and do not reopen the just-closed `hq-ops` host-runtime ownership split unless the new task directly requires it.
 ```
