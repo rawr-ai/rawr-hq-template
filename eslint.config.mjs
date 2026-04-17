@@ -12,10 +12,6 @@ const boundaryRule = [
       "@rawr/hq-app/manifest",
       "@rawr/hq-app/legacy-cutover",
       "@rawr/hq-ops",
-      "@rawr/hq-ops/config",
-      "@rawr/hq-ops/repo-state",
-      "@rawr/hq-ops/journal",
-      "@rawr/hq-ops/security",
       "@rawr/hq-ops/service/contract"
     ],
     depConstraints: [
@@ -42,6 +38,47 @@ const boundaryRule = [
     ],
     enforceBuildableLibDependency: false
   }
+];
+
+const hqOpsBoundaryRestrictedImports = [
+  "node:*",
+  "bun:*",
+  "./support",
+  "./support.*",
+  "./repository",
+  "./repository.*",
+  "./storage",
+  "./storage.*",
+  "./exec",
+  "./exec.*",
+  "./sqlite",
+  "./sqlite.*",
+  "./writer",
+  "./writer.*",
+  "../support",
+  "../support.*",
+  "../repository",
+  "../repository.*",
+  "../storage",
+  "../storage.*",
+  "../exec",
+  "../exec.*",
+  "../sqlite",
+  "../sqlite.*",
+  "../writer",
+  "../writer.*",
+  "../../support",
+  "../../support.*",
+  "../../repository",
+  "../../repository.*",
+  "../../storage",
+  "../../storage.*",
+  "../../exec",
+  "../../exec.*",
+  "../../sqlite",
+  "../../sqlite.*",
+  "../../writer",
+  "../../writer.*"
 ];
 
 export default [
@@ -76,6 +113,28 @@ export default [
     },
     rules: {
       "@nx/enforce-module-boundaries": boundaryRule
+    }
+  },
+  {
+    files: [
+      "services/hq-ops/src/service/contract.ts",
+      "services/hq-ops/src/service/modules/**/contract.ts",
+      "services/hq-ops/src/service/modules/**/schemas.ts",
+      "services/hq-ops/src/service/modules/**/model.ts",
+      "services/hq-ops/src/service/modules/**/types.ts"
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: hqOpsBoundaryRestrictedImports,
+              message: "HQ Ops contract/schema/model/type files must stay runtime-agnostic."
+            }
+          ]
+        }
+      ]
     }
   }
 ];

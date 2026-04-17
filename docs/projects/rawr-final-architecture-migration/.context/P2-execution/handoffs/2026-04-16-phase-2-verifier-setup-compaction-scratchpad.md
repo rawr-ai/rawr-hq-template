@@ -1,4 +1,4 @@
-# Phase 2 Compaction Scratchpad
+# Phase 2 + Nx Cache Compaction Scratchpad
 
 Date: 2026-04-16
 Repo: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template`
@@ -6,120 +6,144 @@ Branch: `docs/reground-p2-for-effect-runtime-substrate`
 
 ## Current State
 
-- The repo-backed Phase 2 docs are the source of truth we care about right now, not live Linear workspace items.
+- Repo-backed Phase 2 docs remain the local source of truth.
 - The local Phase 2 packet is aligned on the hardened design:
   - `packages/runtime/*` is the consolidated execution family
-  - `packages/hq-sdk` is the public app-runtime and authoring seam
+  - `packages/hq-sdk` is the public app-runtime / authoring seam
   - `M2-U00` owns the minimum server-only compiler/app-runtime cut
   - broader compiler/process-runtime generalization stays in `M2-U02`
 
-## What Was Found
+## What Was Completed Before This Scratchpad Update
 
-- The main remaining gap is not architecture drift. It is verification and enforcement setup.
-- The M2 docs had been written as if a `scripts/phase-2/` verifier family and `phase-2:*` gate chain already existed.
-- In actual repo state, they do not exist yet.
+- The Phase 2 verifier surface was created for real:
+  - `scripts/phase-2/_verify-utils.mjs`
+  - `scripts/phase-2/verify-no-legacy-cutover.mjs`
+  - `scripts/phase-2/verify-server-role-runtime-path.mjs`
+  - `scripts/phase-2/verify-runtime-public-seams.mjs`
+  - `scripts/phase-2/verify-gate-scaffold.mjs`
+- Root `phase-2:gate:u00:*` scripts were added.
+- `scripts/phase-03/run-structural-suite.mjs` now exposes `phase-2-u00-scaffold` on:
+  - `@rawr/hq-app`
+  - `@rawr/server`
+  - `@rawr/hq-sdk`
+- `hq-sdk` got `sync` and `structural` targets.
+- Nx inventory / sync wiring was updated so the Phase 2 scaffold is part of workspace truth.
+- The M2 docs were updated to use `verify-runtime-public-seams` instead of the older narrower verifier name.
 
-## What Already Exists
+## What That Phase 2 Scaffold Means
 
-- `nx.json` already defines `sync` and `structural` target defaults.
-- `eslint.config.mjs` already uses `@nx/enforce-module-boundaries`.
-- `tools/architecture-inventory/*` and the sync generator infrastructure already exist.
-- `scripts/phase-03/run-structural-suite.mjs` already provides the pattern for project-owned structural ratchets.
-- Older migration gate families already exist: `phase-a`, `phase-03`, `phase-2_5`, `phase-c`, `phase-d`, `phase-e`, `phase-f`.
+- `bun run phase-2:gate:u00:scaffold` passes and prints the live U00 gap.
+- `bun run phase-2:gate:u00:contract` fails on the current codebase, which is intentional and desirable.
+- The current failing U00 contract findings are the real implementation target:
+  - `apps/hq/legacy-cutover.ts` still exists and is still exported/imported
+  - `apps/hq/server.ts` still boots through `./legacy-cutover`
+  - `packages/runtime/substrate`, `packages/runtime/bootgraph`, and `packages/runtime/harnesses/elysia` do not exist yet
+  - `packages/hq-sdk` does not yet expose `./app`, `./app-runtime`, `defineApp()`, or `startAppRole()`
 
-## What Does Not Yet Exist For Phase 2
+## Nx Cache Work Completed
 
-- `scripts/phase-2/`
-- `phase-2:*` package scripts
-- structural runner support for the planned `packages/runtime/*` family
-- full carry-over of the archived enforcement posture to the new runtime migration
-- cleanup of transitional lint boundary allowlist escapes
-- uniform `type:*`, `role:*`, `surface:*`, `capability:*` tag coverage across the relevant projects
+- Installed workspace dependencies so Nx could run in this checkout.
+- Investigated cache misses and confirmed the main root cause:
+  - `nx.json` had `namedInputs.default = ["{projectRoot}/**/*"]`, which hashed `dist/**`
+  - builds were self-invalidating their own cache keys
+- Implemented the cache fix:
+  - `nx.json` now excludes project-local `dist/**` and `coverage/**` from `default`
+  - `production` now excludes tests/specs
+  - `targetDefaults.build` now uses `["production", "^production"]` and `outputs: ["{projectRoot}/dist"]`
+  - `targetDefaults.typecheck` and `targetDefaults.lint` are now explicitly cacheable
+  - `sync` and `structural` remain `cache: false`
+- Added:
+  - `nx:reset`
+  - `nx:doctor`
+  - `build:affected`
+  - `typecheck:affected`
+  - `scripts/dev/nx-doctor.mjs`
+- Added explicit `nx.targets.build` metadata for key projects:
+  - `@rawr/web`
+  - `@rawr/server`
+  - `@rawr/hq-app`
+  - `@rawr/hq-sdk`
+  - `@rawr/core`
+- Added `tsconfig.build.json` and production-only build scripts across the planned plain-`tsc` projects.
 
-## Archived Enforcement Packet Reviewed
+## Nx Cache Verification Results
 
-- `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/_archive/enforcement_spec.md`
-- `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/_archive/guardrails.md`
+- `bun run nx:reset` passed
+- `bun run nx:doctor` passed
+- `bun run sync:check` passed
+- `bun run lint:boundaries` passed
+- Repeated `NX_DAEMON=false bunx nx run @rawr/hq-sdk:build` produced a local cache hit on run 2
+- Repeated `NX_DAEMON=false bunx nx run @rawr/core:build` produced a local cache hit on run 2
+- Adding a temporary file under `packages/core/test` did **not** bust the cached `@rawr/core:build`
+- Repeated `@rawr/core:sync` and `@rawr/core:structural` still reran instead of claiming cache hits
 
-## What Carried Over
+## Important Build-Failure Investigation Result
 
-- Nx as the intended control plane
-- `sync` and `structural` target posture
-- architecture inventory / sync-generator model
-- `@nx/enforce-module-boundaries`
-- partial tag model for `type:*`, `app:hq`, and some `role:*` / `surface:*` / `capability:*` usage
+The remaining red builds are **not** caused by the new lint or verification scripts.
+They are real pre-existing build-health / boundary problems that were surfaced more clearly once `build` became meaningful and cacheable.
 
-## What Did Not Fully Carry Over
+### `@rawr/server`
 
-- Phase 2 runtime-specific verifiers
-- Phase 2 package-script gate chain
-- runtime-family structural ratchets
-- fully updated boundary rules for the new runtime family
-- fully normalized tag coverage for the current migration target
+- [apps/server/src/host-satisfiers.ts](/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/src/host-satisfiers.ts) imports `@rawr/example-todo`
+- [apps/server/package.json](/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/server/package.json) does **not** declare `@rawr/example-todo`
+- This is a real missing workspace dependency / config oversight and should be fixed
 
-## Docs Updated In This Pass
+### `@rawr/hq-app`
 
-- `docs/projects/rawr-final-architecture-migration/.context/P2-execution/workflow.md`
-- `docs/projects/rawr-final-architecture-migration/.context/P2-execution/context.md`
-- `docs/projects/rawr-final-architecture-migration/milestones/M2-minimal-canonical-runtime-shell.md`
-- `docs/projects/rawr-final-architecture-migration/issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md`
-- `docs/projects/rawr-final-architecture-migration/issues/M2-U01-harden-bootgraph-lifetimes-and-failure-semantics.md`
-- `docs/projects/rawr-final-architecture-migration/issues/M2-U02-generalize-runtime-compiler-and-process-runtime.md`
-- `docs/projects/rawr-final-architecture-migration/issues/M2-U03-install-canonical-async-runtime-path.md`
-- `docs/projects/rawr-final-architecture-migration/issues/M2-U04-replace-transitional-plugin-builders-with-canonical-builders.md`
-- `docs/projects/rawr-final-architecture-migration/issues/M2-U05-migrate-phase-2-proof-slices.md`
-- `docs/projects/rawr-final-architecture-migration/issues/M2-U06-ratchet-phase-2-proofs-and-close-the-plateau.md`
+- `apps/hq/legacy-cutover.ts` imports server internals
+- that pulls in `apps/server/src/host-satisfiers.ts`
+- so `hq-app` fails because it flows through the same real `@rawr/example-todo` dependency bug above
 
-## What Those Doc Changes Did
+### `@rawr/web`
 
-- Fixed stale workflow/source-of-truth links.
-- Replaced the stale single-worktree rule with explicit worktree indexing posture for Nx and Narsil.
-- Made each M2 slice require a real closed-loop verifier and ratchet instead of assuming one already exists.
-- Explicitly said each slice must land:
-  - slice-local verifier(s)
-  - package-script or Nx structural wiring
-  - targeted typechecks and tests
-  - runtime smoke where relevant
-  - docs/context ratchet proving the architectural claim
+- [apps/web/src/ui/lib/orpc-client.ts](/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/apps/web/src/ui/lib/orpc-client.ts) imports `createStateApiClient` from `@rawr/plugin-server-api-state`
+- that package’s public contract path goes through `@rawr/hq-ops/service/contract`
+- that transitively reaches [services/hq-ops/src/service/modules/config/support.ts](/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template/services/hq-ops/src/service/modules/config/support.ts)
+- `support.ts` imports `node:fs/promises`, `node:os`, `node:path`, and `node:url`
+- so a browser-facing path is dragging in Node-only service internals
+- this is a real architectural boundary leak, not a verifier artifact and not an expected migration-state tolerance
 
-## Nx Reality In This Checkout
+## Interpretation Of Those Failures
 
-- `bunx nx show projects` failed because `node_modules/nx` is missing in this checkout.
-- That is not a conceptual blocker. It just means workspace dependencies are not installed here.
-- Going forward, install deps if they are missing instead of treating that as a stop.
+- `server`: should not be broken like this
+- `hq-app`: should not be broken like this
+- `web`: should not be broken like this
 
-## Working Conclusion
+These are not “expected because Phase 2 migration is incomplete.”
+They are actual issues that should be triaged and fixed.
 
-The repo already has the pattern for up-front enforcement. Phase 2 runtime has simply not been wired into that pattern yet.
+## Git / Commit State
 
-The minimal, non-obsessive way to drive development up front is:
+Relevant commits on this branch now include:
 
-- Add a small `scripts/phase-2/` verifier family slice-by-slice.
-- Wire each slice into package scripts and the structural runner immediately.
-- Use lint and static/structural checks for architectural claims.
-- Use targeted smoke tests only where runtime behavior changes.
+- `57e66b23` `docs(migration): align phase 2 runtime family and public seams`
+- `8bdb61ef` `docs(migration): harden phase 2 verification loop`
+- `c39c1c07` `chore(git): keep unrelated local files untracked`
+- `26f730ca` `docs(migration): add phase 2 verifier setup scratchpad`
+- `498ea980` `build(phase-2): scaffold M2-U00 verifier ratchets`
+- `f5f023b2` `build(nx): restore local cache hits for build targets`
 
-For `M2-U00`, the likely minimum is:
+Branch was ahead of origin by 4 at the time of writing this scratchpad update.
 
-- `scripts/phase-2/verify-no-legacy-cutover.mjs`
-- `scripts/phase-2/verify-server-role-runtime-path.mjs`
-- `scripts/phase-2/verify-runtime-public-seams.mjs`
-- one `phase-2:gate:u00` script in `package.json`
-- one structural-runner hook for affected projects
-- one focused server boot smoke test
+Pre-existing untracked local files that should remain untracked:
+
+- `.claude/`
+- `docs/projects/rawr-final-architecture-migration/briefs/`
+- `the-reactive-codebase.html`
+- `the-reactive-codebase.md`
 
 ## Next Topic After Compaction
 
-- install workspace deps if needed
-- run Nx properly
-- inspect current targets, tags, boundary rules, and structural runner
-- design the minimal Phase 2 verifier setup
-- likely create `scripts/phase-2/*`
-- add `phase-2:*` package scripts
-- update structural runner and target wiring
-- tighten `@nx/enforce-module-boundaries` where appropriate
-- decide what should be static/lint/structural vs smoke/runtime tests
-- use agents if useful, but do real research and repo-grounded work
+1. Make a focused plan to fix the immediate dependency/build issues:
+   - the missing `@rawr/example-todo` dependency problem in `server` / `hq-app`
+   - the browser/server boundary leak through `plugin-server-api-state` -> `hq-ops`
+2. Then devise a proper plan, likely with agents, to clean up the internal `hq-ops` implementation so it obeys the architecture:
+   - services should stay runtime-agnostic
+   - Node-only concerns should come in through dependencies/resources/ports, not leak across browser-facing import paths
+   - use `example-todo` as the internal golden reference
+   - use the existing architecture docs and:
+     - [guidance.md](../../../../orpc-ingest-domain-packages/guidance.md)
+     - [DECISIONS.md](../../../../orpc-ingest-domain-packages/DECISIONS.md)
 
 ## Context Continuation Snippet
 
@@ -132,71 +156,96 @@ Repo: /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
 Branch: docs/reground-p2-for-effect-runtime-substrate
 Graphite repo, trunk = main.
 
-We are focused on the repo-backed Phase 2 docs and enforcement posture, not the live Linear workspace.
+Phase 2 state:
+- The repo-backed Phase 2 packet is aligned on the hardened design:
+  - packages/runtime/* = execution family
+  - packages/hq-sdk = public app-runtime/authoring seam
+  - M2-U00 = minimum server-only compiler/app-runtime cut
+  - M2-U02 = broader compiler/process-runtime generalization
+- The Phase 2 verifier scaffold is now real:
+  - scripts/phase-2/_verify-utils.mjs
+  - verify-no-legacy-cutover.mjs
+  - verify-server-role-runtime-path.mjs
+  - verify-runtime-public-seams.mjs
+  - verify-gate-scaffold.mjs
+- Root phase-2:gate:u00:* scripts exist.
+- phase-2-u00-scaffold structural suites exist for @rawr/hq-app, @rawr/server, and @rawr/hq-sdk.
+- bun run phase-2:gate:u00:scaffold passes.
+- bun run phase-2:gate:u00:contract fails intentionally and now defines the real U00 implementation target.
 
-Settled design:
-- packages/runtime/* = execution family
-- packages/hq-sdk = public app-runtime/authoring seam
-- M2-U00 = minimum server-only compiler/app-runtime cut
-- M2-U02 = broader compiler/process-runtime generalization
+Nx cache state:
+- The local Nx cache contract was fixed.
+- nx.json now excludes dist/coverage from default inputs.
+- build now uses production-style inputs and {projectRoot}/dist outputs.
+- typecheck and lint are explicitly cacheable.
+- sync and structural remain non-cacheable.
+- nx:reset, nx:doctor, build:affected, and typecheck:affected were added.
+- scripts/dev/nx-doctor.mjs exists.
+- explicit nx.targets.build metadata exists for:
+  - @rawr/web
+  - @rawr/server
+  - @rawr/hq-app
+  - @rawr/hq-sdk
+  - @rawr/core
+- tsconfig.build.json and production-only build scripts were added across the planned plain-tsc projects.
 
-What we found:
-- Phase 2 docs are aligned on design.
-- The real remaining gap is verification/enforcement setup.
-- The docs had been assuming scripts/phase-2/* and phase-2:* gates already existed. They do not yet exist.
+Nx cache verification already proved:
+- bun run nx:reset ✅
+- bun run nx:doctor ✅
+- bun run sync:check ✅
+- bun run lint:boundaries ✅
+- repeated NX_DAEMON=false bunx nx run @rawr/hq-sdk:build -> second run local-cache-hit ✅
+- repeated NX_DAEMON=false bunx nx run @rawr/core:build -> second run local-cache-hit ✅
+- adding a temporary file under packages/core/test did not bust cached @rawr/core:build ✅
+- repeated @rawr/core:sync and @rawr/core:structural reran instead of claiming cache hits ✅
 
-What already exists in the repo:
-- nx.json sync/structural target defaults
-- eslint.config.mjs with @nx/enforce-module-boundaries
-- tools/architecture-inventory + sync generator
-- scripts/phase-03/run-structural-suite.mjs
-- older migration gates (phase-a, phase-03, phase-2_5, etc.)
+Important build-failure investigation result:
+- The remaining failing builds are NOT caused by the new lint/verification scripts.
+- They are real pre-existing build/boundary problems that were surfaced more clearly once build became meaningful and cacheable.
 
-What is missing for Phase 2 runtime:
-- scripts/phase-2/
-- phase-2:* package scripts
-- structural ratchets for the planned packages/runtime/* family
-- full carry-over of archived enforcement posture to the new runtime migration
-- cleanup of transitional boundary-rule allowlist escapes
-- uniform tag coverage
+Concrete failures:
+1. @rawr/server
+   - apps/server/src/host-satisfiers.ts imports @rawr/example-todo
+   - apps/server/package.json does not declare @rawr/example-todo
+   - this is a real missing workspace dependency / config oversight
 
-Archived enforcement docs already reviewed:
-- /Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/_archive/enforcement_spec.md
-- /Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/_archive/guardrails.md
+2. @rawr/hq-app
+   - apps/hq/legacy-cutover.ts imports server internals
+   - that pulls in apps/server/src/host-satisfiers.ts
+   - so hq-app fails because it flows through the same real dependency bug above
 
-Docs updated in the last pass:
-- docs/projects/rawr-final-architecture-migration/.context/P2-execution/workflow.md
-- docs/projects/rawr-final-architecture-migration/.context/P2-execution/context.md
-- docs/projects/rawr-final-architecture-migration/milestones/M2-minimal-canonical-runtime-shell.md
-- docs/projects/rawr-final-architecture-migration/issues/M2-U00..M2-U06
+3. @rawr/web
+   - apps/web/src/ui/lib/orpc-client.ts imports createStateApiClient from @rawr/plugin-server-api-state
+   - that path goes through @rawr/hq-ops/service/contract
+   - that transitively reaches services/hq-ops/src/service/modules/config/support.ts
+   - support.ts imports node:fs/promises, node:os, node:path, node:url
+   - so a browser-facing path is dragging in Node-only service internals
+   - this is a real architectural boundary leak, not a verifier artifact and not an expected migration-state tolerance
 
-Those doc changes established:
-- each M2 slice must land a real closed-loop verifier and ratchet
-- workflow now explicitly says to use Nx first for workspace truth, Narsil for code/proof tracing
-- workflow now explicitly handles worktrees: if using a secondary worktree and relying on Nx/Narsil indexing, advance the primary checkout to the latest relevant commit first
-
-Nx/tool reality:
-- bunx nx show projects previously failed because node_modules/nx was missing in this checkout
-- next step: if deps are missing, install them and continue; do not stop there
-
-Git state:
-- branch currently contains the prior Phase 2 alignment work plus the verification-loop hardening pass
-- pre-existing untracked local files should stay untracked:
-  - .claude/
-  - docs/projects/rawr-final-architecture-migration/briefs/
-  - the-reactive-codebase.html
-  - the-reactive-codebase.md
+Interpretation:
+- server: should not be broken like this
+- hq-app: should not be broken like this
+- web: should not be broken like this
 
 Next task:
-- actually research and implement the minimal up-front verification setup for Phase 2
-- install deps if needed
-- run Nx properly
-- inspect tags/targets/boundary rules/structural runner
-- design and likely add scripts/phase-2/*
-- add phase-2:* package scripts
-- update run-structural-suite / project scripts / target wiring as needed
-- improve @nx/enforce-module-boundaries for the runtime migration without overcomplicating it
-- decide what should be static/lint/structural vs smoke/runtime tests
-- use narsil-mcp and nx-workspace
-- use agents if useful, but do real research and concrete repo-grounded work
+1. Create a focused plan to fix the immediate dependency/build issues:
+   - missing @rawr/example-todo dependency in server / hq-app flow
+   - browser/server boundary leak through plugin-server-api-state -> hq-ops
+2. Then create a proper plan, likely with agents, to clean up internal hq-ops so it obeys the architecture:
+   - services stay runtime-agnostic
+   - Node-only concerns come in through dependencies/resources/ports instead of leaking through browser-facing import paths
+   - use services/example-todo as the internal golden reference
+   - use architecture docs plus:
+     - docs/projects/orpc-ingest-domain-packages/guidance.md
+     - docs/projects/orpc-ingest-domain-packages/DECISIONS.md
+
+Relevant recent commits on this branch:
+- 498ea980 build(phase-2): scaffold M2-U00 verifier ratchets
+- f5f023b2 build(nx): restore local cache hits for build targets
+
+Pre-existing untracked local files should remain untracked:
+- .claude/
+- docs/projects/rawr-final-architecture-migration/briefs/
+- the-reactive-codebase.html
+- the-reactive-codebase.md
 ```
