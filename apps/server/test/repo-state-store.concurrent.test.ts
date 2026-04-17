@@ -10,9 +10,16 @@ import {
   mutateRepoStateAtomically,
   stateLockPath,
   statePath,
-} from "../src/host-adapters/hq-ops/repo-state-store";
+} from "@rawr/hq-ops-host";
 
 const tempDirs: string[] = [];
+
+afterEach(async () => {
+  while (tempDirs.length > 0) {
+    const dir = tempDirs.pop();
+    if (dir) await fs.rm(dir, { recursive: true, force: true });
+  }
+});
 
 async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,13 +40,6 @@ function findNonRunningPid(): number {
 
   throw new Error("Unable to find a non-running PID for stale lock test.");
 }
-
-afterEach(async () => {
-  while (tempDirs.length > 0) {
-    const dir = tempDirs.pop();
-    if (dir) await fs.rm(dir, { recursive: true, force: true });
-  }
-});
 
 describe("server hq-ops repo-state store", () => {
   it("serializes concurrent atomic mutations without corrupting persisted state", async () => {
@@ -66,7 +66,6 @@ describe("server hq-ops repo-state store", () => {
 
     const state = await getRepoState(repoRoot);
     expect(state.plugins.enabled).toEqual([...pluginIds].sort());
-
     const persistedRaw = await fs.readFile(statePath(repoRoot), "utf8");
     expect(() => JSON.parse(persistedRaw)).not.toThrow();
     await expect(fs.stat(stateLockPath(repoRoot))).rejects.toMatchObject({ code: "ENOENT" });
@@ -148,8 +147,8 @@ describe("server hq-ops repo-state store", () => {
     tempDirs.push(repoRoot);
 
     const pluginIds = Array.from({ length: 24 }, (_, idx) => `@rawr/plugin-enable-${idx}`);
-    await Promise.all(pluginIds.map((pluginId) => enablePlugin(repoRoot, pluginId)));
 
+    await Promise.all(pluginIds.map((pluginId) => enablePlugin(repoRoot, pluginId)));
     const state = await getRepoState(repoRoot);
     expect(state.plugins.enabled).toEqual([...pluginIds].sort());
   });

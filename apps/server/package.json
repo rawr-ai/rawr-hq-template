@@ -11,6 +11,7 @@
     "@rawr/core": "workspace:*",
     "@rawr/example-todo": "workspace:*",
     "@rawr/hq-app": "workspace:*",
+    "@rawr/hq-ops-host": "workspace:*",
     "@rawr/hq-ops": "workspace:*",
     "@rawr/hq-sdk": "workspace:*",
     "@rawr/plugin-server-api-example-todo": "workspace:*",

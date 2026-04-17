@@ -15,13 +15,13 @@ function functionBodyCalls(source, fnName, calleeName) {
 }
 
 await Promise.all([
-  mustExist("apps/server/src/host-adapters/hq-ops/repo-state-store.ts"),
+  mustExist("packages/hq-ops-host/src/repo-state-store.ts"),
   mustExist("apps/server/test/repo-state-store.concurrent.test.ts"),
   mustExist("apps/server/test/storage-lock-route-guard.test.ts"),
 ]);
 
 const [repoStateStorageSource, repoStateTestSource] = await Promise.all([
-  readFile("apps/server/src/host-adapters/hq-ops/repo-state-store.ts"),
+  readFile("packages/hq-ops-host/src/repo-state-store.ts"),
   readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
 ]);
 

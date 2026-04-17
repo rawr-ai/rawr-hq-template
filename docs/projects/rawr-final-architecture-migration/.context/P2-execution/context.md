@@ -84,3 +84,8 @@ Before blaming Phase 2 runtime substrate for HQ Ops confusion, re-check:
 - [carry-forward-risks.md](notes/carry-forward-risks.md)
 - [HQ-OPS-service-shape-followup.md](../M1-execution/notes/HQ-OPS-service-shape-followup.md)
 - `docs/projects/orpc-ingest-domain-packages/guidance.md`
+
+## Current Slice Note
+
+- `packages/agent-sync` is still package-scoped in this slice, but only as a deferred service candidate.
+- The active cleanup removes its illegal HQ Ops host-composition behavior rather than treating the package classification as permanently settled.

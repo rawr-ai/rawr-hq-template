@@ -3,10 +3,10 @@ import path from "node:path";
 import { Args, Flags } from "@oclif/core";
 import {
   beginPluginsSyncUndoCapture,
+  deriveSyncPolicy,
   effectiveContentForProvider,
   findWorkspaceRoot,
   installAndEnableClaudePlugin,
-  loadLayeredRawrConfigForCwd,
   packageCoworkPlugin,
   PLUGINS_SYNC_UNDO_PROVIDER,
   resolveDefaultCoworkOutDir,
@@ -16,6 +16,7 @@ import {
   scanSourcePlugin,
 } from "@rawr/agent-sync";
 import { RawrCommand } from "@rawr/core";
+import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
 
 import { reconcileWorkspaceInstallLinks } from "../../lib/install-reconcile";
 
@@ -106,14 +107,15 @@ export default class PluginsSync extends RawrCommand {
           });
 
       const layered = await loadLayeredRawrConfigForCwd(cwd);
-      const includeAgentsInCodex = layered.config?.sync?.providers?.codex?.includeAgents ?? false;
-      const includeAgentsInClaude = layered.config?.sync?.providers?.claude?.includeAgents ?? true;
+      const syncPolicy = deriveSyncPolicy(layered.config ?? undefined);
+      const includeAgentsInCodex = syncPolicy.includeAgentsInCodex;
+      const includeAgentsInClaude = syncPolicy.includeAgentsInClaude;
 
       const targets = resolveTargets(
         String(flags.agent) as "codex" | "claude" | "all",
         (flags["codex-home"] as string[] | undefined) ?? [],
         (flags["claude-home"] as string[] | undefined) ?? [],
-        layered.config,
+        layered.config ?? undefined,
       );
 
       const syncResult = await runSync({

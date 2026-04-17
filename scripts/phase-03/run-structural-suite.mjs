@@ -116,7 +116,13 @@ const suiteCommandsByProject = {
     default: ["bun scripts/phase-03/verify-coordination-structural.mjs"],
   },
   "@rawr/hq-ops": {
-    default: ["bun scripts/phase-1/verify-hq-ops-service-shape.mjs"],
+    default: [
+      "bun scripts/phase-1/verify-hq-ops-service-shape.mjs",
+      "bun scripts/phase-03/verify-hq-ops-host-placement.mjs",
+    ],
+  },
+  "@rawr/hq-ops-host": {
+    default: ["bun scripts/phase-03/verify-hq-ops-host-placement.mjs"],
   },
   "@rawr/core": {
     default: ["bun scripts/phase-03/verify-core-support-structural.mjs"],

@@ -28,6 +28,7 @@ describe("phase-a gate scaffold (server)", () => {
     const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
     const legacyCutoverSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "legacy-cutover.ts"), "utf8");
     const hostCompositionSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-composition.ts"), "utf8");
+    const hostSatisfiersSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-satisfiers.ts"), "utf8");
     const hostSeamSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-seam.ts"), "utf8");
     const testingHostSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "testing-host.ts"), "utf8");
     const workflowRuntimeSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "workflows", "runtime.ts"), "utf8");
@@ -50,6 +51,9 @@ describe("phase-a gate scaffold (server)", () => {
     expect(hostCompositionSource).toContain("createRawrHqManifest");
     expect(hostCompositionSource).toContain("createRawrHostSatisfiers");
     expect(hostCompositionSource).toContain("createRawrHostBoundRolePlan");
+    expect(hostSatisfiersSource).toContain('@rawr/hq-ops-host');
+    expect(hostSatisfiersSource).not.toContain('./host-adapters/hq-ops/config-store');
+    expect(hostSatisfiersSource).not.toContain('./host-adapters/hq-ops/repo-state-store');
     expect(hostSeamSource).toContain("workflows: Readonly<Record<string, never>>");
     expect(testingHostSource).toContain('@rawr/hq-app/legacy-cutover');
     expect(testingHostSource).not.toContain("createRawrHostComposition");

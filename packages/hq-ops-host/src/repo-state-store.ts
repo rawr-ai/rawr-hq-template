@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-type RepoState = {
+export type RepoState = {
   version: 1;
   plugins: {
     enabled: string[];
@@ -10,21 +10,20 @@ type RepoState = {
   };
 };
 
-export interface RepoStateStore {
-  getStateWithAuthority(repoRoot: string): Promise<{ state: RepoState; authorityRepoRoot: string }>;
-  enablePlugin(repoRoot: string, pluginId: string): Promise<RepoState>;
-  disablePlugin(repoRoot: string, pluginId: string): Promise<RepoState>;
-}
+export type RepoStateSnapshot = {
+  state: RepoState;
+  authorityRepoRoot: string;
+};
 
-type RepoStateMutator = (current: RepoState) => RepoState | Promise<RepoState>;
+export type RepoStateMutator = (current: RepoState) => RepoState | Promise<RepoState>;
 
-type RepoStateMutationOptions = {
+export type RepoStateMutationOptions = {
   lockTimeoutMs?: number;
   retryDelayMs?: number;
   staleLockMs?: number;
 };
 
-type RepoStateMutationResult = {
+export type RepoStateMutationResult = {
   state: RepoState;
   statePath: string;
   lockPath: string;
@@ -192,7 +191,6 @@ async function acquireRepoStateLock(lockPath: string, options?: RepoStateMutatio
 
   while (true) {
     attempts += 1;
-
     try {
       const handle = await fs.open(lockPath, "wx");
       const metadata = {
@@ -220,7 +218,6 @@ async function acquireRepoStateLock(lockPath: string, options?: RepoStateMutatio
     } catch (error) {
       const err = error as NodeJS.ErrnoException;
       if (err.code !== "EEXIST") throw error;
-
       await cleanupStaleLock(lockPath, staleLockMs);
       const waitedMs = Date.now() - startedAt;
       if (waitedMs >= lockTimeoutMs) {
@@ -253,7 +250,6 @@ async function writeRepoStateAtomically(repoRoot: string, nextState: RepoState):
 async function withLocalMutationQueue<T>(repoRoot: string, task: () => Promise<T>): Promise<T> {
   const key = path.resolve(repoRoot);
   const previous = localMutationQueues.get(key) ?? Promise.resolve();
-
   let releaseQueue = () => {};
   const current = new Promise<void>((resolve) => {
     releaseQueue = resolve;
@@ -308,11 +304,8 @@ export async function setRepoState(repoRoot: string, nextState: RepoState): Prom
   await mutateRepoStateAtomically(repoRoot, async () => nextState);
 }
 
-export async function getRepoStateWithAuthority(
-  repoRoot: string,
-): Promise<{ state: RepoState; authorityRepoRoot: string }> {
+export async function getRepoStateWithAuthority(repoRoot: string): Promise<RepoStateSnapshot> {
   const authorityRepoRoot = await resolveRepoStateAuthorityRoot(repoRoot);
-
   return {
     state: await readStateFile(authorityRepoRoot),
     authorityRepoRoot,
@@ -333,7 +326,6 @@ export async function enablePlugin(repoRoot: string, pluginId: string): Promise<
       lastUpdatedAt: new Date().toISOString(),
     },
   }));
-
   return result.state;
 }
 
@@ -347,11 +339,10 @@ export async function disablePlugin(repoRoot: string, pluginId: string): Promise
       lastUpdatedAt: new Date().toISOString(),
     },
   }));
-
   return result.state;
 }
 
-export function createNodeRepoStateStore(): RepoStateStore {
+export function createNodeRepoStateStore() {
   return {
     getStateWithAuthority: getRepoStateWithAuthority,
     enablePlugin,

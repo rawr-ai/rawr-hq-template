@@ -10,6 +10,7 @@
     "@orpc/client": "^1.13.5",
     "@rawr/agent-sync": "workspace:*",
     "@rawr/core": "workspace:*",
+    "@rawr/hq-ops-host": "workspace:*",
     "@rawr/hq-ops": "workspace:*",
     "@rawr/plugin-workspace": "workspace:*",
     "@rawr/orpc-client": "workspace:*",

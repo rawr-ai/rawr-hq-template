@@ -8,14 +8,14 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("apps/server/src/host-adapters/hq-ops/repo-state-store.ts"),
+  mustExist("packages/hq-ops-host/src/repo-state-store.ts"),
   mustExist("apps/server/src/rawr.ts"),
   mustExist("apps/server/test/repo-state-store.concurrent.test.ts"),
   mustExist("apps/server/test/rawr.test.ts"),
 ]);
 
 const [repoStateSource, rawrSource, repoStateTestSource, rawrTestSource, scripts] = await Promise.all([
-  readFile("apps/server/src/host-adapters/hq-ops/repo-state-store.ts"),
+  readFile("packages/hq-ops-host/src/repo-state-store.ts"),
   readFile("apps/server/src/rawr.ts"),
   readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
   readFile("apps/server/test/rawr.test.ts"),

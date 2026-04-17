@@ -1,8 +1,5 @@
-import { createClient } from "@rawr/hq-ops";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-
-import { findWorkspaceRoot } from "./workspace";
+import { findWorkspaceRoot } from "./workspace-plugins";
+import { createHqOpsClient, createHqOpsInvocation } from "./hq-ops-client";
 
 export type LayeredRawrConfig = {
   config: HqOpsLayeredConfig;
@@ -10,36 +7,13 @@ export type LayeredRawrConfig = {
   workspacePath: string | null;
 };
 
-function createHqOpsClient(repoRoot: string) {
-  return createClient({
-    deps: {
-      logger: createEmbeddedPlaceholderLoggerAdapter(),
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    },
-    scope: {
-      repoRoot,
-    },
-    config: {},
-  });
-}
-
 type HqOpsLayeredConfig = Awaited<
   ReturnType<ReturnType<typeof createHqOpsClient>["config"]["getLayeredConfig"]>
 >["merged"];
 
-function invocation(traceId: string) {
-  return {
-    context: {
-      invocation: {
-        traceId,
-      },
-    },
-  } as const;
-}
-
 export async function loadLayeredRawrConfigForCwd(cwd: string): Promise<LayeredRawrConfig> {
   const client = createHqOpsClient(cwd);
-  const global = await client.config.getGlobalConfig({}, invocation("agent-sync.config.global"));
+  const global = await client.config.getGlobalConfig({}, createHqOpsInvocation("plugin-plugins.config.global"));
   if (global.error) {
     throw new Error(
       `${global.error.message}${global.error.cause ? `\n${global.error.cause}` : ""}`,
@@ -53,7 +27,7 @@ export async function loadLayeredRawrConfigForCwd(cwd: string): Promise<LayeredR
 
   const layered = await createHqOpsClient(workspaceRoot).config.getLayeredConfig(
     {},
-    invocation("agent-sync.config.layered"),
+    createHqOpsInvocation("plugin-plugins.config.layered"),
   );
 
   if (layered.workspace.error) {

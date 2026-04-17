@@ -11,7 +11,6 @@ const boundaryRule = [
       "../server/src/logging",
       "@rawr/hq-app/manifest",
       "@rawr/hq-app/legacy-cutover",
-      "@rawr/hq-ops",
       "@rawr/hq-ops/service/contract"
     ],
     depConstraints: [
@@ -113,6 +112,22 @@ export default [
     },
     rules: {
       "@nx/enforce-module-boundaries": boundaryRule
+    }
+  },
+  {
+    files: ["packages/agent-sync/src/**/*.{js,jsx,ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@rawr/hq-ops", "@rawr/hq-ops/*"],
+              message: "agent-sync must not compose or import HQ Ops directly; the true host must load config first."
+            }
+          ]
+        }
+      ]
     }
   },
   {

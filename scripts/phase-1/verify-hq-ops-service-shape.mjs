@@ -56,6 +56,7 @@ const REQUIRED_PATHS = [
 ];
 
 const RUNTIME_HELPER_PATHS = [
+  "services/hq-ops/src/bin/security-check.ts",
   "services/hq-ops/src/service/modules/repo-state/storage.ts",
   "services/hq-ops/src/service/modules/repo-state/support.ts",
   "services/hq-ops/src/service/modules/journal/sqlite.ts",
@@ -95,6 +96,7 @@ assertCondition(
   "hq-ops nx tags drifted",
 );
 assertCondition(pkg.scripts?.build === "tsc -p tsconfig.build.json", "hq-ops build script drifted");
+assertCondition(pkg.scripts?.["security:check"] === undefined, "hq-ops must not keep a service-owned security:check script");
 assertCondition(pkg.scripts?.sync === "bun run --cwd ../.. sync:check --project @rawr/hq-ops", "hq-ops sync script drifted");
 assertCondition(pkg.scripts?.structural === "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-ops", "hq-ops structural script drifted");
 assertCondition(pkg.scripts?.typecheck === "tsc -p tsconfig.json --noEmit", "hq-ops typecheck script drifted");

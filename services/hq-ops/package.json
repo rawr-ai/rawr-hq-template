@@ -21,7 +21,6 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "security:check": "bun src/bin/security-check.ts",
     "sync": "bun run --cwd ../.. sync:check --project @rawr/hq-ops",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-ops",
     "typecheck": "tsc -p tsconfig.json --noEmit",
