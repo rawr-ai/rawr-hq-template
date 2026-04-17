@@ -20,11 +20,11 @@
     }
   },
   "scripts": {
-    "build": "bunx tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "security:check": "bun src/bin/security-check.ts",
     "sync": "bun run --cwd ../.. sync:check --project @rawr/hq-ops",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-ops",
-    "typecheck": "bunx tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --project hq-ops"
   },
   "dependencies": {

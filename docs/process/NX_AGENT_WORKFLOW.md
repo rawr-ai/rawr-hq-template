@@ -32,6 +32,23 @@ bunx nx graph
 
 Use Nx generators and Nx task execution when the relevant official Nx skill indicates that a generator or task is the right workflow.
 
+## Cache And Daemon
+
+Use Nx cache by default.
+
+If unchanged builds keep reporting cache misses, suspect bad task `inputs` / `outputs` before assuming Nx cache is broken.
+
+If you see daemon `EPIPE` errors or a disabled-daemon marker, treat that as a local latency problem first, not proof that cache correctness is broken.
+
+The local recovery loop is:
+
+```bash
+bun run nx:reset
+bun run nx:doctor
+```
+
+If the behavior still looks wrong after that, rerun once with `NX_DAEMON=false` before assuming the workspace config is incorrect.
+
 ## Division Of Labor
 
 - **Nx CLI + official Nx skills**: workspace/project truth, targets, generators, task execution conventions

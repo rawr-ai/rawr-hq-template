@@ -14,8 +14,8 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "build": "bunx tsc -p tsconfig.json",
-    "typecheck": "bunx tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --project ui-sdk"
   },
   "nx": {
