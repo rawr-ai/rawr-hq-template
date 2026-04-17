@@ -70,7 +70,7 @@ M2-U00 stands up the minimum bootgraph to delete the legacy bridge. This slice h
 ## Testing / Verification
 - Land and wire the slice-local verifiers:
   - `scripts/phase-2/verify-bootgraph-public-api.mjs`
-  - update `scripts/phase-2/verify-effect-not-in-public-api.mjs` if the public-surface audit expanded in this slice
+  - update `scripts/phase-2/verify-runtime-public-seams.mjs` if the public-surface audit expanded in this slice
   - package-script / structural-suite wiring so bootgraph contract checks stay in the ratchet path
 - Run affected checks:
   - `bun --cwd packages/runtime/bootgraph run typecheck`

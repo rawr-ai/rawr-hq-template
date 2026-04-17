@@ -5,16 +5,16 @@ const INVENTORY = {
     "rawr-hq-template": {
       config: "package.json",
       tags: ["migration-slice:structural-tranche"],
-      targets: ["sync:check", "phase-a:gates:baseline", "phase-2_5:gates:quick", "phase-2_5:gates:exit"],
+      targets: ["sync:check", "phase-a:gates:baseline", "phase-2:gate:u00:scaffold", "phase-2_5:gates:quick", "phase-2_5:gates:exit"],
     },
     "@rawr/server": {
       config: "apps/server/package.json",
-      tags: ["type:app", "app:hq", "migration-slice:structural-tranche"],
+      tags: ["type:app", "app:hq", "role:server", "migration-slice:structural-tranche"],
       targets: ["sync", "structural"],
     },
     "@rawr/cli": {
       config: "apps/cli/package.json",
-      tags: ["type:app", "app:hq", "migration-slice:structural-tranche"],
+      tags: ["type:app", "app:hq", "role:cli", "migration-slice:structural-tranche"],
       targets: ["sync", "structural"],
     },
     "@rawr/plugin-workspace": {

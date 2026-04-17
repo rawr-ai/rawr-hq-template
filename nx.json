@@ -8,6 +8,7 @@
       "{workspaceRoot}/eslint.config.mjs",
       "{workspaceRoot}/package.json",
       "{workspaceRoot}/scripts/phase-a/**/*.mjs",
+      "{workspaceRoot}/scripts/phase-2/**/*.mjs",
       "{workspaceRoot}/scripts/phase-2_5/**/*.mjs",
       "{workspaceRoot}/scripts/phase-03/**/*.mjs",
       "{workspaceRoot}/tools/architecture-inventory/**/*.json"

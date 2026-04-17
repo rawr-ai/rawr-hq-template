@@ -86,7 +86,7 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
 - Land the first slice-local Phase 2 verifier surface:
   - `scripts/phase-2/verify-no-legacy-cutover.mjs`
   - `scripts/phase-2/verify-server-role-runtime-path.mjs`
-  - `scripts/phase-2/verify-effect-not-in-public-api.mjs`
+  - `scripts/phase-2/verify-runtime-public-seams.mjs`
   - package-script wiring for the U00 gate so later slices can ratchet it instead of re-inventing it
 - Add or refresh the affected structural ratchets for the touched runtime projects (`apps/hq`, `apps/server`, `packages/runtime/substrate`, `packages/runtime/bootgraph`, `packages/runtime/harnesses/elysia`).
 - Run affected checks:

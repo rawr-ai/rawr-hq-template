@@ -162,9 +162,9 @@ Phase 2 slices are not closed by "it boots on my machine" alone. Each slice clos
 
 Current repo reality matters here:
 
-- there is no `scripts/phase-2/` tree yet
-- there is no `phase-2:*` package gate chain yet
-- existing Nx structural suites stop at older migration bands and `phase-2_5`
+- the `scripts/phase-2/` tree now exists for U00 scaffolding, but the real U00 contract still remains red until the runtime cut lands
+- the first `phase-2:gate:u00:*` package gate chain now exists, with a scaffold target that snapshots current findings without claiming the bridge is already gone
+- existing Nx structural suites now expose `phase-2-u00-scaffold` on the active shell projects, but Phase 2 still does not have a fully closed proof band yet
 
 That means each M2 slice must land its own verification surface as part of the slice instead of assuming the proof band already exists.
 

@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "@rawr/hq-sdk": {
+      "config": "packages/hq-sdk/package.json",
+      "tags": [
+        "type:package"
+      ],
+      "targets": [
+        "sync",
+        "structural"
+      ]
+    }
+  }
+}

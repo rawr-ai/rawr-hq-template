@@ -103,7 +103,7 @@ For `M2-U00`, the likely minimum is:
 
 - `scripts/phase-2/verify-no-legacy-cutover.mjs`
 - `scripts/phase-2/verify-server-role-runtime-path.mjs`
-- `scripts/phase-2/verify-effect-not-in-public-api.mjs`
+- `scripts/phase-2/verify-runtime-public-seams.mjs`
 - one `phase-2:gate:u00` script in `package.json`
 - one structural-runner hook for affected projects
 - one focused server boot smoke test

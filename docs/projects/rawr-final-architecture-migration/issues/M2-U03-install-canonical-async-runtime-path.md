@@ -73,7 +73,7 @@ M2-U00 through M2-U02 established the canonical server runtime path, hardened th
 ## Testing / Verification
 - Land and wire the slice-local verifiers:
   - `scripts/phase-2/verify-async-role-runtime-path.mjs`
-  - update `scripts/phase-2/verify-effect-not-in-public-api.mjs` if async harness exports widen the public audit surface
+  - update `scripts/phase-2/verify-runtime-public-seams.mjs` if async harness exports widen the public audit surface
   - package-script / structural-suite wiring for the async harness path
 - Run affected checks:
   - `bun --cwd packages/runtime/harnesses/inngest run typecheck`

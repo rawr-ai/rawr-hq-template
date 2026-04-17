@@ -37,7 +37,9 @@
   },
   "nx": {
     "tags": [
-      "type:app"
+      "type:app",
+      "app:hq",
+      "role:web"
     ]
   }
 }

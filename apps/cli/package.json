@@ -51,6 +51,7 @@
     "tags": [
       "type:app",
       "app:hq",
+      "role:cli",
       "migration-slice:structural-tranche"
     ]
   }

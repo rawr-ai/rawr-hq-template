@@ -29,19 +29,15 @@ const boundaryRule = [
       },
       {
         sourceTag: "type:service",
-        notDependOnLibsWithTags: ["type:app", "type:plugin"]
-      },
-      {
-        sourceTag: "role:servicepackage",
-        notDependOnLibsWithTags: ["type:service"]
+        onlyDependOnLibsWithTags: ["type:package", "type:service"]
       },
       {
         sourceTag: "type:package",
-        notDependOnLibsWithTags: ["type:service"]
+        onlyDependOnLibsWithTags: ["type:package"]
       },
       {
         sourceTag: "type:plugin",
-        notDependOnLibsWithTags: ["type:plugin", "type:app"]
+        onlyDependOnLibsWithTags: ["type:package", "type:service"]
       }
     ],
     enforceBuildableLibDependency: false

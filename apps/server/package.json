@@ -39,6 +39,7 @@
     "tags": [
       "type:app",
       "app:hq",
+      "role:server",
       "migration-slice:structural-tranche"
     ]
   }
