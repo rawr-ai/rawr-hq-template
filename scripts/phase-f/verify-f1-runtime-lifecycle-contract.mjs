@@ -8,16 +8,16 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("services/hq-ops/src/repo-state/storage.ts"),
+  mustExist("apps/server/src/host-adapters/hq-ops/repo-state-store.ts"),
   mustExist("apps/server/src/rawr.ts"),
-  mustExist("services/hq-ops/test/repo-state.concurrent.test.ts"),
+  mustExist("apps/server/test/repo-state-store.concurrent.test.ts"),
   mustExist("apps/server/test/rawr.test.ts"),
 ]);
 
 const [repoStateSource, rawrSource, repoStateTestSource, rawrTestSource, scripts] = await Promise.all([
-  readFile("services/hq-ops/src/repo-state/storage.ts"),
+  readFile("apps/server/src/host-adapters/hq-ops/repo-state-store.ts"),
   readFile("apps/server/src/rawr.ts"),
-  readFile("services/hq-ops/test/repo-state.concurrent.test.ts"),
+  readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
   readFile("apps/server/test/rawr.test.ts"),
   readPackageScripts(),
 ]);
@@ -31,7 +31,7 @@ assertScriptEquals(
 assertScriptEquals(
   scripts,
   "phase-f:gate:f1-runtime-lifecycle-runtime",
-  "bunx vitest run --project hq-ops services/hq-ops/test/repo-state.concurrent.test.ts && bunx vitest run --project server apps/server/test/rawr.test.ts --testNamePattern='no-legacy-composition-authority: keeps runtime authority stable when initialized from alias repo roots' && bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts && bun run phase-c:gate:c1-storage-lock-runtime",
+  "bunx vitest run --project server apps/server/test/repo-state-store.concurrent.test.ts && bunx vitest run --project server apps/server/test/rawr.test.ts --testNamePattern='no-legacy-composition-authority: keeps runtime authority stable when initialized from alias repo roots' && bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts && bun run phase-c:gate:c1-storage-lock-runtime",
 );
 assertScriptEquals(
   scripts,

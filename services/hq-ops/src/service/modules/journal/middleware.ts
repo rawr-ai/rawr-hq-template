@@ -13,6 +13,8 @@ import {
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
+import { UnexpectedInternalError } from "../../shared/internal-errors";
+import type { JournalStore } from "../../shared/ports/journal-store";
 import { createRepository } from "./repository";
 
 export {
@@ -28,13 +30,21 @@ export const analytics = createServiceAnalyticsMiddleware({});
 
 /** Standalone repository provider attached at module scope in `module.ts`. */
 export const repository = createServiceProvider<{
+  deps: {
+    journalStore?: JournalStore;
+  };
   scope: {
     repoRoot: string;
   };
 }>().middleware<{
   repo: ReturnType<typeof createRepository>;
 }>(async ({ context, next }) => {
+  const journalStore = context.deps.journalStore;
+  if (!journalStore) {
+    throw new UnexpectedInternalError("HQ Ops journalStore host runtime is not installed.");
+  }
+
   return next({
-    repo: createRepository(context.scope.repoRoot),
+    repo: createRepository(journalStore, context.scope.repoRoot),
   });
 });

@@ -21,6 +21,10 @@
  * `src/service/middleware/*`.
  */
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
+import type { ConfigStore } from "./shared/ports/config-store";
+import type { JournalStore } from "./shared/ports/journal-store";
+import type { RepoStateStore } from "./shared/ports/repo-state-store";
+import type { SecurityRuntime } from "./shared/ports/security-runtime";
 
 /**
  * Construction-time context supplied when the in-process client is created.
@@ -36,7 +40,12 @@ import { defineService, type ServiceOf } from "@rawr/hq-sdk";
  * `context.provided.*`.
  */
 type InitialContext = {
-  deps: {};
+  deps: {
+    configStore?: ConfigStore;
+    repoStateStore?: RepoStateStore;
+    journalStore?: JournalStore;
+    securityRuntime?: SecurityRuntime;
+  };
   scope: {
     repoRoot: string;
   };

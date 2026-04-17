@@ -7,23 +7,23 @@
  * through module composition.
  */
 import type { RepoState } from "./model";
-import { disablePlugin, enablePlugin, getRepoStateWithAuthority } from "./support";
+import type { RepoStateStore } from "../../shared/ports/repo-state-store";
 
 export type RepoStateSnapshot = {
   state: RepoState;
   authorityRepoRoot: string;
 };
 
-export function createRepository(repoRoot: string) {
+export function createRepository(repoStateStore: RepoStateStore, repoRoot: string) {
   return {
     async getStateWithAuthority(): Promise<RepoStateSnapshot> {
-      return await getRepoStateWithAuthority(repoRoot);
+      return await repoStateStore.getStateWithAuthority(repoRoot);
     },
     async enablePlugin(pluginId: string): Promise<RepoState> {
-      return await enablePlugin(repoRoot, pluginId);
+      return await repoStateStore.enablePlugin(repoRoot, pluginId);
     },
     async disablePlugin(pluginId: string): Promise<RepoState> {
-      return await disablePlugin(repoRoot, pluginId);
+      return await repoStateStore.disablePlugin(repoRoot, pluginId);
     },
   };
 }

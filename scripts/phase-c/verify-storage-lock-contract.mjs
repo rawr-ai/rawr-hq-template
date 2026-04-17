@@ -15,19 +15,14 @@ function functionBodyCalls(source, fnName, calleeName) {
 }
 
 await Promise.all([
-  mustExist("services/hq-ops/src/repo-state/index.ts"),
-  mustExist("services/hq-ops/src/repo-state/model.ts"),
-  mustExist("services/hq-ops/src/repo-state/storage.ts"),
-  mustExist("services/hq-ops/src/index.ts"),
-  mustExist("services/hq-ops/test/repo-state.concurrent.test.ts"),
+  mustExist("apps/server/src/host-adapters/hq-ops/repo-state-store.ts"),
+  mustExist("apps/server/test/repo-state-store.concurrent.test.ts"),
   mustExist("apps/server/test/storage-lock-route-guard.test.ts"),
 ]);
 
-const [repoStateIndexSource, repoStateModelSource, repoStateStorageSource, indexSource] = await Promise.all([
-  readFile("services/hq-ops/src/repo-state/index.ts"),
-  readFile("services/hq-ops/src/repo-state/model.ts"),
-  readFile("services/hq-ops/src/repo-state/storage.ts"),
-  readFile("services/hq-ops/src/index.ts"),
+const [repoStateStorageSource, repoStateTestSource] = await Promise.all([
+  readFile("apps/server/src/host-adapters/hq-ops/repo-state-store.ts"),
+  readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
 ]);
 
 for (const fnName of [
@@ -50,22 +45,14 @@ for (const fnName of ["setRepoState", "enablePlugin", "disablePlugin"]) {
 
 for (const typeName of ["RepoStateMutationOptions", "RepoStateMutationResult", "RepoStateMutator"]) {
   assertCondition(
-    new RegExp(`export\\s+type\\s+${typeName}\\s*=`, "m").test(repoStateModelSource),
-    `repo-state model must export ${typeName}`,
+    new RegExp(`type\\s+${typeName}\\s*=`, "m").test(repoStateStorageSource),
+    `repo-state store must declare ${typeName}`,
   );
 }
 
-for (const typeName of ["RepoState", "RepoStateMutationOptions", "RepoStateMutationResult", "RepoStateMutator"]) {
-  assertCondition(repoStateIndexSource.includes(typeName), `repo-state index must re-export ${typeName}`);
-}
-
-for (const valueName of ["mutateRepoStateAtomically", "stateLockPath"]) {
-  assertCondition(repoStateIndexSource.includes(valueName), `repo-state index must re-export ${valueName}`);
-}
-
 assertCondition(
-  !indexSource.includes("getRepoState") && !indexSource.includes("RepoState"),
-  "package root must stay thin and not re-export repo-state support surface",
+  /uses one authority root across canonical and alias repo paths/u.test(repoStateTestSource),
+  "repo-state runtime test must cover canonical and alias repo paths",
 );
 
 console.log("phase-c storage-lock contract verified");

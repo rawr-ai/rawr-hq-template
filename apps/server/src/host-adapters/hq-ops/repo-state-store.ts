@@ -1,11 +1,36 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type {
-  RepoState,
-  RepoStateMutationOptions,
-  RepoStateMutationResult,
-  RepoStateMutator,
-} from "./model.js";
+
+type RepoState = {
+  version: 1;
+  plugins: {
+    enabled: string[];
+    disabled?: string[];
+    lastUpdatedAt: string;
+  };
+};
+
+export interface RepoStateStore {
+  getStateWithAuthority(repoRoot: string): Promise<{ state: RepoState; authorityRepoRoot: string }>;
+  enablePlugin(repoRoot: string, pluginId: string): Promise<RepoState>;
+  disablePlugin(repoRoot: string, pluginId: string): Promise<RepoState>;
+}
+
+type RepoStateMutator = (current: RepoState) => RepoState | Promise<RepoState>;
+
+type RepoStateMutationOptions = {
+  lockTimeoutMs?: number;
+  retryDelayMs?: number;
+  staleLockMs?: number;
+};
+
+type RepoStateMutationResult = {
+  state: RepoState;
+  statePath: string;
+  lockPath: string;
+  attempts: number;
+  waitedMs: number;
+};
 
 const DEFAULT_LOCK_TIMEOUT_MS = 5_000;
 const DEFAULT_LOCK_RETRY_DELAY_MS = 25;
@@ -93,7 +118,6 @@ async function readStateFile(repoRoot: string): Promise<RepoState> {
 }
 
 type LockHandle = {
-  lockPath: string;
   attempts: number;
   waitedMs: number;
   release: () => Promise<void>;
@@ -178,7 +202,6 @@ async function acquireRepoStateLock(lockPath: string, options?: RepoStateMutatio
       await handle.writeFile(`${JSON.stringify(metadata)}\n`, "utf8");
 
       return {
-        lockPath,
         attempts,
         waitedMs: Date.now() - startedAt,
         release: async () => {
@@ -250,22 +273,6 @@ async function withLocalMutationQueue<T>(repoRoot: string, task: () => Promise<T
   }
 }
 
-export async function getRepoState(repoRoot: string): Promise<RepoState> {
-  const { state } = await getRepoStateWithAuthority(repoRoot);
-  return state;
-}
-
-export async function getRepoStateWithAuthority(
-  repoRoot: string,
-): Promise<{ state: RepoState; authorityRepoRoot: string }> {
-  const authorityRepoRoot = await resolveRepoStateAuthorityRoot(repoRoot);
-
-  return {
-    state: await readStateFile(authorityRepoRoot),
-    authorityRepoRoot,
-  };
-}
-
 export async function mutateRepoStateAtomically(
   repoRoot: string,
   mutator: RepoStateMutator,
@@ -301,6 +308,22 @@ export async function setRepoState(repoRoot: string, nextState: RepoState): Prom
   await mutateRepoStateAtomically(repoRoot, async () => nextState);
 }
 
+export async function getRepoStateWithAuthority(
+  repoRoot: string,
+): Promise<{ state: RepoState; authorityRepoRoot: string }> {
+  const authorityRepoRoot = await resolveRepoStateAuthorityRoot(repoRoot);
+
+  return {
+    state: await readStateFile(authorityRepoRoot),
+    authorityRepoRoot,
+  };
+}
+
+export async function getRepoState(repoRoot: string): Promise<RepoState> {
+  const { state } = await getRepoStateWithAuthority(repoRoot);
+  return state;
+}
+
 export async function enablePlugin(repoRoot: string, pluginId: string): Promise<RepoState> {
   const result = await mutateRepoStateAtomically(repoRoot, async (current) => ({
     ...current,
@@ -319,10 +342,19 @@ export async function disablePlugin(repoRoot: string, pluginId: string): Promise
     ...current,
     plugins: {
       ...current.plugins,
-      enabled: current.plugins.enabled.filter((id) => id !== pluginId),
+      enabled: current.plugins.enabled.filter((value) => value !== pluginId),
+      disabled: Array.from(new Set([...(current.plugins.disabled ?? []), pluginId])).sort(),
       lastUpdatedAt: new Date().toISOString(),
     },
   }));
 
   return result.state;
+}
+
+export function createNodeRepoStateStore(): RepoStateStore {
+  return {
+    getStateWithAuthority: getRepoStateWithAuthority,
+    enablePlugin,
+    disablePlugin,
+  };
 }

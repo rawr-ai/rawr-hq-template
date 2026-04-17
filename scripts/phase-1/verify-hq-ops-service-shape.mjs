@@ -27,6 +27,7 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/modules/config/repository.ts",
   "services/hq-ops/src/service/modules/config/router.ts",
   "services/hq-ops/src/service/modules/config/schemas.ts",
+  "services/hq-ops/src/service/modules/config/support.ts",
   "services/hq-ops/src/service/modules/repo-state/contract.ts",
   "services/hq-ops/src/service/modules/repo-state/middleware.ts",
   "services/hq-ops/src/service/modules/repo-state/model.ts",
@@ -49,13 +50,12 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/modules/security/schemas.ts",
   "services/hq-ops/src/service/modules/security/types.ts",
   "services/hq-ops/test/config.test.ts",
-  "services/hq-ops/test/repo-state.concurrent.test.ts",
-  "services/hq-ops/test/security.test.ts",
+  "services/hq-ops/test/helpers.ts",
+  "services/hq-ops/test/ports-backed-service.test.ts",
   "services/hq-ops/test/service-shape.test.ts",
 ];
 
 const RUNTIME_HELPER_PATHS = [
-  "services/hq-ops/src/service/modules/config/support.ts",
   "services/hq-ops/src/service/modules/repo-state/storage.ts",
   "services/hq-ops/src/service/modules/repo-state/support.ts",
   "services/hq-ops/src/service/modules/journal/sqlite.ts",

@@ -10,7 +10,7 @@ import {
   mutateRepoStateAtomically,
   stateLockPath,
   statePath,
-} from "../src/service/modules/repo-state/storage.js";
+} from "../src/host-adapters/hq-ops/repo-state-store";
 
 const tempDirs: string[] = [];
 
@@ -41,7 +41,7 @@ afterEach(async () => {
   }
 });
 
-describe("hq-ops repo-state storage", () => {
+describe("server hq-ops repo-state store", () => {
   it("serializes concurrent atomic mutations without corrupting persisted state", async () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-state-concurrency-"));
     tempDirs.push(repoRoot);
