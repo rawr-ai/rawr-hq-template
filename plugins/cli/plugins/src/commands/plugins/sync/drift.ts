@@ -2,7 +2,6 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 import {
-  deriveSyncPolicy,
   planSyncAll,
   resolveSourcePlugin,
   resolveSourceScopeForPath,
@@ -12,9 +11,10 @@ import {
   scopeAllows,
   type SyncItemResult,
   type SyncScope,
-} from "@rawr/agent-sync";
+} from "../../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
+import { deriveSyncPolicy } from "../../../lib/sync-policy";
 
 type DriftItem = Pick<SyncItemResult, "action" | "kind" | "target" | "message">;
 
