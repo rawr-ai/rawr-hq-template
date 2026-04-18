@@ -15,13 +15,14 @@ const classified = new Set([
 
 const requiredApps = ["apps/cli", "apps/hq", "apps/server", "apps/web"];
 const requiredServices = [
+  "services/agent-config-sync",
   "services/coordination",
   "services/example-todo",
   "services/state",
   "services/support-example",
 ];
 const requiredPackages = [
-  "packages/agent-sync",
+  "packages/agent-config-sync-host",
   "packages/control-plane",
   "packages/hq",
   "packages/journal",

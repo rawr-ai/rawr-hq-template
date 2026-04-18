@@ -694,7 +694,7 @@ Update active consumers:
 - `apps/cli/src/commands/config/show.ts`
 - `apps/cli/src/commands/config/validate.ts`
 - `plugins/cli/plugins` sync/config commands
-- `packages/agent-sync` layered config usage
+- `plugins/cli/plugins` layered config usage via `@rawr/hq-ops` + `@rawr/agent-config-sync`
 
 #### 3B. `repo-state` module
 
@@ -783,7 +783,8 @@ This slice is done when all of these pass:
   - `@rawr/server`
   - `@rawr/cli`
   - `@rawr/plugin-plugins`
-  - `@rawr/agent-sync`
+  - `@rawr/agent-config-sync`
+  - `@rawr/agent-config-sync-host`
 - targeted tests covering:
   - config merge and validation determinism
   - repo-state locking and atomic mutation

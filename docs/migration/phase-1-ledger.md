@@ -14,8 +14,9 @@ These are the minimum concrete Phase 1 surfaces that remain live without being t
   "apps/hq",
   "apps/server",
   "apps/web",
+  "services/agent-config-sync",
   "services/example-todo",
-  "packages/agent-sync",
+  "packages/agent-config-sync-host",
   "packages/plugin-workspace",
   "plugins/cli/chatgpt-corpus",
   "plugins/cli/hello",
@@ -61,6 +62,7 @@ These current owners are still present, but they are no longer treated as canoni
   "packages/control-plane": "services/hq-ops/config",
   "packages/journal": "services/hq-ops/journal",
   "packages/security": "services/hq-ops/security",
+  "packages/agent-sync": "services/agent-config-sync plus packages/agent-config-sync-host",
   "packages/hq": "packages/plugin-workspace plus purpose-named tooling boundaries from M1-U04"
 }
 ```

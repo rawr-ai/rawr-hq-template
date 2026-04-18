@@ -1,5 +1,33 @@
 {
   "projects": {
+    "@rawr/agent-config-sync": {
+      "config": "services/agent-config-sync/package.json",
+      "tags": [
+        "type:service",
+        "role:servicepackage",
+        "migration-slice:structural-tranche"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/agent-config-sync-host": {
+      "config": "packages/agent-config-sync-host/package.json",
+      "tags": [
+        "type:package",
+        "migration-slice:structural-tranche"
+      ],
+      "targets": [
+        "build",
+        "typecheck",
+        "test",
+        "lint"
+      ]
+    },
     "@rawr/hq-ops": {
       "config": "services/hq-ops/package.json",
       "tags": [

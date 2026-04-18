@@ -11,7 +11,9 @@ const boundaryRule = [
       "../server/src/logging",
       "@rawr/hq-app/manifest",
       "@rawr/hq-app/legacy-cutover",
-      "@rawr/hq-ops/service/contract"
+      "@rawr/hq-ops/service/contract",
+      "@rawr/agent-config-sync",
+      "@rawr/agent-config-sync/*"
     ],
     depConstraints: [
       {
@@ -115,15 +117,16 @@ export default [
     }
   },
   {
-    files: ["packages/agent-sync/src/**/*.{js,jsx,ts,tsx}"],
+    files: ["apps/**/*.{js,jsx,ts,tsx}", "services/**/*.{js,jsx,ts,tsx}", "packages/**/*.{js,jsx,ts,tsx}", "plugins/**/*.{js,jsx,ts,tsx}"],
+    ignores: ["packages/agent-config-sync-host/src/**/*.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
         {
           patterns: [
             {
-              group: ["@rawr/hq-ops", "@rawr/hq-ops/*"],
-              message: "agent-sync must not compose or import HQ Ops directly; the true host must load config first."
+              group: ["@rawr/agent-sync", "@rawr/agent-sync/*"],
+              message: "The legacy @rawr/agent-sync package is removed; use @rawr/agent-config-sync and @rawr/agent-config-sync-host."
             }
           ]
         }

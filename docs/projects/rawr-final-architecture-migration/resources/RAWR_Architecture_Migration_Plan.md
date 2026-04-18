@@ -292,7 +292,8 @@ These are already close enough to the target to be active inputs:
 - `packages/bootgraph` — keep, but phase 2 moves it under `packages/runtime/bootgraph` and turns it from reservation into real lifecycle infrastructure backed by the Effect runtime substrate
 - `packages/orpc-client` — keep as support matter
 - `packages/session-tools` — keep as support/tooling matter
-- `packages/agent-sync` — keep as support/tooling matter for external agent sync, not service truth
+- `services/agent-config-sync` — keep as the canonical sync service truth
+- `packages/agent-config-sync-host` — keep as the temporary host-runtime adapter package for external agent sync execution
 - `packages/ui-sdk` — keep as support matter
 
 ### Archive and replace later
@@ -378,11 +379,11 @@ They may receive only:
 
 They do **not** get to influence the foundational runtime model.
 
-### Do not promote to services in phases 1–3
+### Transitional support matter after service promotion
 
 These remain support/tooling until they clearly earn a different home:
 
-- `packages/agent-sync`
+- `packages/agent-config-sync-host`
 - `packages/session-tools`
 - `packages/hq` workspace/install/lifecycle/scaffold support after semantic stripping
 - `apps/cli/src/lib/hq-status.ts`
@@ -492,7 +493,7 @@ By that rubric:
 - its `config`, `repo-state`, `journal`, and `security` modules are internal seams, not separate services
 - `example-todo` qualifies
 - `coordination` fails because it mixes multiple truths
-- `agent-sync` does not qualify in this migration
+- `agent-config-sync` qualifies and is promoted in this migration
 - `session-tools` does not qualify in this migration
 - workspace/install/lifecycle/scaffold tooling do not qualify in this migration
 

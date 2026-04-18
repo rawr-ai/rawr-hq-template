@@ -8,7 +8,8 @@
 AGENTS_SPLIT.md
 rawr.config.ts
 apps/cli/**
-packages/agent-sync/**
+packages/agent-config-sync-host/**
+services/agent-config-sync/**
 packages/control-plane/**
 packages/core/**
 packages/plugin-workspace/**

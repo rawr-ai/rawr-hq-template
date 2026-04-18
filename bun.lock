@@ -35,7 +35,6 @@
         "@oclif/plugin-help": "^6.2.27",
         "@oclif/plugin-plugins": "^5.4.36",
         "@orpc/client": "^1.13.5",
-        "@rawr/agent-sync": "workspace:*",
         "@rawr/core": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
         "@rawr/hq-ops-host": "workspace:*",
@@ -122,9 +121,11 @@
         "vitest": "^4.0.18",
       },
     },
-    "packages/agent-sync": {
-      "name": "@rawr/agent-sync",
+    "packages/agent-config-sync-host": {
+      "name": "@rawr/agent-config-sync-host",
       "dependencies": {
+        "@rawr/agent-config-sync": "workspace:*",
+        "@rawr/hq-sdk": "workspace:*",
         "typebox": "^1.0.81",
         "yaml": "^2.8.1",
         "yazl": "^3.3.1",
@@ -255,7 +256,8 @@
       "version": "0.1.0",
       "dependencies": {
         "@oclif/core": "^4.8.0",
-        "@rawr/agent-sync": "workspace:*",
+        "@rawr/agent-config-sync": "workspace:*",
+        "@rawr/agent-config-sync-host": "workspace:*",
         "@rawr/core": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
         "@rawr/hq-ops-host": "workspace:*",
@@ -305,6 +307,21 @@
       },
       "devDependencies": {
         "@types/node": "^22.14.0",
+        "typescript": "^5.9.3",
+      },
+    },
+    "services/agent-config-sync": {
+      "name": "@rawr/agent-config-sync",
+      "dependencies": {
+        "@opentelemetry/api": "^1.9.0",
+        "@orpc/contract": "^1.13.5",
+        "@orpc/server": "^1.13.5",
+        "@rawr/hq-sdk": "workspace:*",
+        "typebox": "^1.0.81",
+      },
+      "devDependencies": {
+        "@opentelemetry/context-async-hooks": "^2.6.0",
+        "@opentelemetry/sdk-trace-base": "^2.6.0",
         "typescript": "^5.9.3",
       },
     },
@@ -994,7 +1011,9 @@
 
     "@radix-ui/rect": ["@radix-ui/rect@1.1.1", "", {}, "sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw=="],
 
-    "@rawr/agent-sync": ["@rawr/agent-sync@workspace:packages/agent-sync"],
+    "@rawr/agent-config-sync": ["@rawr/agent-config-sync@workspace:services/agent-config-sync"],
+
+    "@rawr/agent-config-sync-host": ["@rawr/agent-config-sync-host@workspace:packages/agent-config-sync-host"],
 
     "@rawr/bootgraph": ["@rawr/bootgraph@workspace:packages/bootgraph"],
 
