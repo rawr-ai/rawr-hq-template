@@ -135,3 +135,108 @@ Platform and observability proof:
 | `packages/session-tools/src/shims/bun-sqlite.d.ts` | Concrete runtime shim | `packages/session-intelligence-host` |
 | `packages/session-tools/test/**` | Split tests | service, host, and plugin tests |
 | `plugins/cli/session-tools/src/**` | CLI projection | stays plugin-local, rebound to new client |
+
+## 2026-04-18 Implementation Stop / Critical Review Finding
+
+Implementation was underway on branch `codex/session-intelligence-migration` when this note was added.
+
+Current local state at stop:
+- Stack head: `codex/session-intelligence-migration`
+- Latest committed migration commit before the stop: `refactor(session-intelligence): promote session tooling service`
+- Dirty files at stop:
+  - `packages/session-intelligence-host/src/index-runtime.ts`
+  - `packages/session-intelligence-host/src/source-runtime.ts`
+  - `packages/session-intelligence-host/src/types.ts`
+- Those dirty files are partial, unverified fixes for the review finding below. Do not assume they are correct.
+
+What had passed before the review finding:
+- `bunx nx run-many -t typecheck --projects=@rawr/session-intelligence,@rawr/session-intelligence-host,@rawr/plugin-session-tools,@rawr/cli --skip-nx-cache`
+- `bunx nx run-many -t build --projects=@rawr/session-intelligence,@rawr/session-intelligence-host,@rawr/plugin-session-tools,@rawr/cli --skip-nx-cache`
+- `bunx nx run @rawr/session-intelligence:test --skip-nx-cache`
+- `bunx nx run @rawr/session-intelligence-host:test --skip-nx-cache`
+- `bunx nx run @rawr/plugin-session-tools:test --skip-nx-cache`
+- `bunx nx run @rawr/session-intelligence:structural --skip-nx-cache`
+- `bun run lint:boundaries`
+- `bun run build:affected`
+- direct plugin command-class proof for list/resolve/search/extract with real `@rawr/session-intelligence` + `@rawr/session-intelligence-host` and temp homes
+- platform smoke: `rawr hq up --observability required --open none`, `/health`, `rawr hq status --json`, `rawr hq down`, final stopped status
+
+Important caveats about that proof:
+- `rawr plugins link <plugin>` failed with the existing oclif error `TypeError: Attempted to assign to readonly property`, so the command-surface proof used direct command-class execution instead of linked CLI-plugin loading.
+- The known downstream `Error: command hq:status not found` still appeared during `hq up`; it points at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq`, not this checkout.
+- Failure-path command-class proof was attempted but direct `Command.run()` throws oclif `EEXIT`; the meaningful failure coverage currently lives in plugin tests.
+
+Critical architecture review finding:
+- A default review agent found a blocker: `packages/session-intelligence-host` still re-owned session semantic truth.
+- Specifically, host types/runtime exposed old `session-tools` operations such as:
+  - `listSessions`
+  - `resolveSession`
+  - `extractSession`
+  - metadata/content search helpers
+  - reindex helpers that operate at domain level
+- This violates the migration intent because `services/session-intelligence` must own those semantics; the host package should only own concrete runtime adapters.
+- The structural verifier passed despite this, so it is missing an important inverse ratchet: host packages must not expose service-level semantic operations.
+
+Partial fix that was started and then stopped:
+- I began narrowing `packages/session-intelligence-host/src/types.ts` to remove the service-level operations.
+- I began narrowing `packages/session-intelligence-host/src/source-runtime.ts` so the runtime provides `discoverSessions`, `statFile`, and `readJsonlObjects` rather than full list/resolve/extract behavior.
+- I began narrowing `packages/session-intelligence-host/src/index-runtime.ts` so the index runtime provides cache primitives (`getSearchText`, `setSearchText`, `clearSearchText`) rather than service-level search/reindex behavior.
+- This partial fix is dirty and not yet typechecked.
+
+The broader issue to investigate after compaction:
+- The same anti-pattern is likely present in prior service migrations, not only `session-intelligence`.
+- Suspect packages:
+  - `packages/agent-config-sync-host`
+  - `packages/hq-ops-host`
+  - possibly any `*-host` package that was created during service promotion
+- Pattern to investigate:
+  - Service owns contracts/model/modules/semantic policy.
+  - Host package is supposed to own only concrete runtime bindings and boundary assembly.
+  - But host packages may still export or implement domain operations that duplicate service semantics because old package code was moved there too broadly.
+- Do not resume by continuing edits immediately. First investigate and classify:
+  - Which host exports are concrete adapter primitives?
+  - Which host exports are semantic service operations?
+  - Which semantic operations are still duplicated in host packages?
+  - Which structural verifiers need inverse host-surface ratchets?
+
+Recommended next turn:
+1. Read this section first.
+2. Inspect the dirty diff in `packages/session-intelligence-host`.
+3. Investigate `packages/agent-config-sync-host` and `packages/hq-ops-host` for the same host-semantic leakage.
+4. Design a repair plan for the general pattern before patching this instance.
+5. Only then resume implementation.
+
+## Additional Review Findings Received After Stop
+
+A later review notification added these concrete blockers against the dirty working tree:
+
+1. `@rawr/session-intelligence-host` no longer typechecks in the dirty partial fix.
+   - `packages/session-intelligence-host/src/index.ts` still exports removed symbols such as `SessionFileCandidate` and `SessionFileStat`.
+   - host tests and runtime code still call removed semantic methods such as `listSessions`, `listCodexSessionFiles`, `reindexSessions`, `getSearchTextCached`, and `clearIndexFile`.
+   - `bunx nx run @rawr/session-intelligence-host:typecheck` fails.
+
+2. `packages/session-intelligence-host/src/boundary.ts` is not strongly typed against the service boundary.
+   - The host returns its own boundary type with `scope: {}`.
+   - `services/session-intelligence/src/service/base.ts` declares `scope.workspaceRef`.
+   - The plugin dynamically imports through `unknown`, so the mismatch can avoid compile-time detection.
+   - Repair should type the host boundary from `@rawr/session-intelligence/client` `CreateClientOptions` or use `satisfies` against the service boundary.
+
+3. `services/session-intelligence/src/service/shared/ports/session-index-runtime.ts` is not yet the single source of truth.
+   - Service procedures require `indexPath` for search/reindex/clear-index behavior.
+   - The service-owned `SessionIndexRuntime` port omits `indexPath` from `getSearchText`, `setSearchText`, and `clearSearchText`.
+   - The dirty host type currently relies on a wider duplicate shape.
+   - Repair should make the service port the single contract and include the caller-selected index path where required.
+
+4. Service module repository provider style needs review against `example-todo`.
+   - `catalog/module.ts`, `search/module.ts`, and `transcripts/module.ts` inject repositories via raw inline `.use(async ...)`.
+   - The reviewer says `example-todo` guidance prefers recurring repository providers in `middleware.ts` via provider-style middleware, writing under `context.provided`, then reshaping for handler ergonomics.
+   - This may be a style/architecture consistency issue rather than the main blocker, but it should be investigated before finalizing.
+
+5. The current structural verifier is insufficient even though it passes.
+   - It catches concrete runtime imports inside the service.
+   - It does not catch host packages exporting/implementing service-level semantics.
+   - It should add inverse ratchets for host packages: host may expose concrete runtime ports and boundary assembly only, not list/resolve/extract/search/reindex domain operations.
+
+These findings reinforce the broader anti-pattern concern:
+- The next pass should not simply fix `session-intelligence-host`.
+- It should first inspect `agent-config-sync-host` and `hq-ops-host` for the same “host re-owns service truth” failure mode and decide the correct repair pattern across all promoted services.
