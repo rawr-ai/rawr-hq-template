@@ -1,0 +1,66 @@
+{
+  "name": "@rawr/session-intelligence",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
+    },
+    "./service/contract": {
+      "types": "./src/service/contract.ts",
+      "default": "./src/service/contract.ts"
+    },
+    "./ports/session-source-runtime": {
+      "types": "./src/service/shared/ports/session-source-runtime.ts",
+      "default": "./src/service/shared/ports/session-source-runtime.ts"
+    },
+    "./ports/session-index-runtime": {
+      "types": "./src/service/shared/ports/session-index-runtime.ts",
+      "default": "./src/service/shared/ports/session-index-runtime.ts"
+    },
+    "./schemas": {
+      "types": "./src/service/shared/schemas.ts",
+      "default": "./src/service/shared/schemas.ts"
+    },
+    "./router": {
+      "types": "./src/router.ts",
+      "default": "./src/router.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "sync": "bun run --cwd ../.. sync:check --project @rawr/session-intelligence",
+    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/session-intelligence",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@rawr/hq-sdk": "workspace:*",
+    "@opentelemetry/api": "^1.9.0",
+    "@orpc/contract": "^1.13.5",
+    "@orpc/server": "^1.13.5",
+    "typebox": "^1.0.81"
+  },
+  "devDependencies": {
+    "@opentelemetry/context-async-hooks": "^2.6.0",
+    "@opentelemetry/sdk-trace-base": "^2.6.0",
+    "@types/node": "^22.14.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "nx": {
+    "tags": [
+      "type:service",
+      "role:servicepackage",
+      "migration-slice:structural-tranche"
+    ]
+  }
+}

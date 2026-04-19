@@ -1,7 +1,9 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { formatSessionTable, listSessions, type SessionSourceFilter } from "@rawr/session-tools";
+import { formatSessionTable } from "../../lib/format";
 import { ensureDir, writeJsonFile } from "../../lib/out-dir";
+import { createSessionIntelligenceClient } from "../../lib/session-intelligence-client";
+import type { SessionSourceFilter } from "../../lib/session-types";
 
 export default class SessionsList extends RawrCommand {
   static description = "List Claude/Codex sessions";
@@ -36,7 +38,8 @@ export default class SessionsList extends RawrCommand {
     const source = String(flags.source) as SessionSourceFilter;
     const limit = Number(flags.limit);
 
-    const sessions = await listSessions({
+    const client = await createSessionIntelligenceClient();
+    const sessions = await client.catalog.list({
       source,
       limit,
       filters: {

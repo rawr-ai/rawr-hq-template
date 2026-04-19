@@ -291,7 +291,8 @@ These are already close enough to the target to be active inputs:
 - `packages/core` — keep as support matter
 - `packages/bootgraph` — keep, but phase 2 moves it under `packages/runtime/bootgraph` and turns it from reservation into real lifecycle infrastructure backed by the Effect runtime substrate
 - `packages/orpc-client` — keep as support matter
-- `packages/session-tools` — keep as support/tooling matter
+- `services/session-intelligence` — promoted canonical session domain service for session catalog, resolution, transcript extraction, and search semantics
+- `packages/session-intelligence-host` — temporary host-runtime adapter package for local Claude/Codex session IO and SQLite cache/index adapters
 - `services/agent-config-sync` — keep as the canonical sync service truth
 - `packages/agent-config-sync-host` — keep as the temporary host-runtime adapter package for external agent sync execution
 - `packages/ui-sdk` — keep as support matter
@@ -384,7 +385,6 @@ They do **not** get to influence the foundational runtime model.
 These remain support/tooling until they clearly earn a different home:
 
 - `packages/agent-config-sync-host`
-- `packages/session-tools`
 - `packages/hq` workspace/install/lifecycle/scaffold support after semantic stripping
 - `apps/cli/src/lib/hq-status.ts`
 - `scripts/dev/hq.sh`
@@ -494,7 +494,7 @@ By that rubric:
 - `example-todo` qualifies
 - `coordination` fails because it mixes multiple truths
 - `agent-config-sync` qualifies and is promoted in this migration
-- `session-tools` does not qualify in this migration
+- `session-intelligence` qualifies and is promoted in this migration; the earlier `session-tools` support-package classification was superseded because the code owns session domain models, provider normalization, resolution, extraction, search ranking, and cache/index policy
 - workspace/install/lifecycle/scaffold tooling do not qualify in this migration
 
 A critical clarification:

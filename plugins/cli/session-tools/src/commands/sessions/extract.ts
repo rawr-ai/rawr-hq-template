@@ -1,17 +1,9 @@
 import { Args, Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import {
-  chunkMessages,
-  extractSession,
-  formatTranscript,
-  formatTranscriptMessagesOnly,
-  resolveSession,
-  writeTranscriptFileName,
-  type OutputFormat,
-  type RoleFilter,
-  type SessionSourceFilter,
-} from "@rawr/session-tools";
 import { ensureDir, writeJsonFile, writeTextFile } from "../../lib/out-dir";
+import { createSessionIntelligenceClient } from "../../lib/session-intelligence-client";
+import type { OutputFormat, RoleFilter, SessionSourceFilter } from "../../lib/session-types";
+import { buildTranscriptOutputs } from "../../lib/transcript-output";
 
 export default class SessionsExtract extends RawrCommand {
   static description = "Extract a session transcript";
@@ -76,7 +68,8 @@ export default class SessionsExtract extends RawrCommand {
       return;
     }
 
-    const resolved = await resolveSession(session, source);
+    const client = await createSessionIntelligenceClient();
+    const resolved = await client.catalog.resolve({ session, source });
     if ("error" in resolved) {
       const result = this.fail(resolved.error, { code: "SESSION_NOT_FOUND" });
       this.outputResult(result, { flags: baseFlags });
@@ -84,7 +77,8 @@ export default class SessionsExtract extends RawrCommand {
       return;
     }
 
-    const extracted = await extractSession(resolved.resolved.path, {
+    const extracted = await client.transcripts.extract({
+      path: resolved.resolved.path,
       roles,
       includeTools,
       dedupe,
@@ -99,35 +93,7 @@ export default class SessionsExtract extends RawrCommand {
       return;
     }
 
-    const chunks = chunkMessages(extracted.messages, chunkSize, chunkOverlap);
-
-    const outputs: Array<{ name: string; content: string }> = [];
-
-    if (chunkSize > 0 && chunkOutput === "split") {
-      for (let i = 0; i < chunks.length; i++) {
-        const chunkTitle = `Chunk ${i + 1}/${chunks.length}`;
-        const content = formatTranscriptMessagesOnly(
-          { ...extracted, messages: chunks[i]!, messageCount: chunks[i]!.length },
-          format,
-          { includeHeader: true, chunkTitle },
-        );
-        outputs.push({ name: writeTranscriptFileName(format, i + 1), content });
-      }
-    } else if (chunkSize > 0 && chunkOutput === "single") {
-      const parts: string[] = [];
-      for (let i = 0; i < chunks.length; i++) {
-        const chunkTitle = `Chunk ${i + 1}/${chunks.length}`;
-        const content = formatTranscriptMessagesOnly(
-          { ...extracted, messages: chunks[i]!, messageCount: chunks[i]!.length },
-          format,
-          { includeHeader: i === 0, chunkTitle },
-        );
-        parts.push(content.trimEnd());
-      }
-      outputs.push({ name: writeTranscriptFileName(format), content: parts.join("\n\n") + "\n" });
-    } else {
-      outputs.push({ name: writeTranscriptFileName(format), content: formatTranscript(extracted, format) + "\n" });
-    }
+    const outputs = buildTranscriptOutputs({ extracted, format, chunkSize, chunkOverlap, chunkOutput });
 
     let outFiles: string[] = [];
     if (outDir) {
