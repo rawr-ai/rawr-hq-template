@@ -48,9 +48,7 @@ export async function runCommand(
       });
     });
 
-    if (opts?.stdin && child.stdin) {
-      child.stdin.write(opts.stdin);
-    }
+    if (opts?.stdin && child.stdin) child.stdin.write(opts.stdin);
     child.stdin?.end();
   });
 }

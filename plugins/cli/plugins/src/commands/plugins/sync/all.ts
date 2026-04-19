@@ -3,27 +3,22 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 import {
   beginPluginsSyncUndoCapture,
+  collectWorkspaceSourcePaths,
+  createWorkspaceSyncPlanInput,
   effectiveContentForProvider,
   installAndEnableClaudePlugin,
   packageCoworkPlugin,
-  planSyncAll,
+  planWorkspaceSync,
   PLUGINS_SYNC_UNDO_PROVIDER,
   resolveDefaultCoworkOutDir,
-  resolveSourcePlugin,
-  resolveSourceScopeForPath,
-  resolveTargets,
   retireStaleManagedPlugins,
   runSync,
-  scanSourcePlugin,
-  scopeAllows,
   type SyncItemResult,
   type SyncScope,
 } from "../../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
-import { deriveSyncPolicy } from "../../../lib/sync-policy";
-
-import { reconcileWorkspaceInstallLinks } from "../../../lib/install-reconcile";
+import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "../../../lib/plugin-install-service";
 
 export default class PluginsSyncAll extends RawrCommand {
   static description = "Canonical full sync: source plugins -> Codex + Claude + Cowork + stale-plugin retirement";
@@ -102,27 +97,73 @@ export default class PluginsSyncAll extends RawrCommand {
     let undoCapture: Awaited<ReturnType<typeof beginPluginsSyncUndoCapture>> | undefined;
 
     try {
-      const { workspaceRoot, syncable, skipped } = await planSyncAll(process.cwd());
-
+      const cwd = process.cwd();
       const layered = await loadLayeredRawrConfigForCwd(process.cwd());
       const includeOclif = Boolean((flags as any)["include-oclif"]);
-      const syncPolicy = deriveSyncPolicy(layered.config ?? undefined);
-      const includeAgentsInCodex = syncPolicy.includeAgentsInCodex;
-      const includeAgentsInClaude = syncPolicy.includeAgentsInClaude;
       const scope = String((flags as any).scope) as SyncScope;
       const coworkEnabled = Boolean((flags as any).cowork);
       const claudeInstallEnabled = Boolean((flags as any)["claude-install"]);
       const claudeEnableEnabled = Boolean((flags as any)["claude-enable"]);
       const installReconcileEnabled = Boolean((flags as any)["install-reconcile"]);
-      const runtimePluginValues = this.config.plugins instanceof Map
-        ? [...this.config.plugins.values()]
-        : Array.isArray(this.config.plugins)
-          ? this.config.plugins
-          : [];
+      const runtimePlugins = runtimePluginSnapshot(this.config.plugins);
       const retireOrphansEnabled = Boolean((flags as any)["retire-orphans"]);
       const allowPartial = Boolean((flags as any)["allow-partial"]);
       const forceEnabled = Boolean(flags.force);
       const gcEnabled = Boolean(flags.gc);
+
+      const planRequest = createWorkspaceSyncPlanInput({
+        cwd,
+        sourcePaths: collectWorkspaceSourcePaths({
+          config: layered.config ?? undefined,
+          includeOclif,
+          configPlugins: this.config.plugins,
+        }),
+        includeMetadata: true,
+        scope,
+        agent: String(flags.agent) as "codex" | "claude" | "all",
+        codexHomes: (flags["codex-home"] as string[] | undefined) ?? [],
+        claudeHomes: (flags["claude-home"] as string[] | undefined) ?? [],
+        config: layered.config ?? undefined,
+        fullSyncPolicy: {
+          agent: String(flags.agent) as "codex" | "claude" | "all",
+          scope,
+          coworkEnabled,
+          claudeInstallEnabled,
+          claudeEnableEnabled,
+          installReconcileEnabled,
+          retireOrphansEnabled,
+          force: forceEnabled,
+          gc: gcEnabled,
+          allowPartial,
+        },
+      });
+      const plan = await planWorkspaceSync({
+        repoRoot: cwd,
+        request: planRequest,
+        traceId: "plugin-plugins.agent-config-sync.plan-workspace-sync-all",
+      });
+      const { workspaceRoot, syncable, skipped: mergedSkipped } = plan;
+      const partialReasons = plan.fullSyncPolicy.partialReasons;
+      const includeAgentsInCodex = plan.includeAgentsInCodex;
+      const includeAgentsInClaude = plan.includeAgentsInClaude;
+      const targets = {
+        agents: plan.agents,
+        homes: plan.targetHomes,
+      };
+
+      if (!plan.fullSyncPolicy.allowed) {
+        const result = this.fail(plan.fullSyncPolicy.failure?.message ?? "Partial sync mode is blocked by default", {
+          code: plan.fullSyncPolicy.failure?.code ?? "PARTIAL_MODE_REQUIRES_ALLOW_PARTIAL",
+          details: {
+            partialReasons,
+            canonical: plan.fullSyncPolicy.canonical,
+          },
+        });
+        this.outputResult(result, { flags: baseFlags });
+        this.exit(2);
+        return;
+      }
+
       undoCapture = baseFlags.dryRun
         ? undefined
         : await beginPluginsSyncUndoCapture({
@@ -131,104 +172,12 @@ export default class PluginsSyncAll extends RawrCommand {
             argv: process.argv.slice(2),
           });
 
-      const partialReasons: string[] = [];
-      if (String(flags.agent) !== "all") partialReasons.push(`agent=${String(flags.agent)}`);
-      if (scope !== "all") partialReasons.push(`scope=${scope}`);
-      if (!coworkEnabled) partialReasons.push("cowork disabled");
-      if (!claudeInstallEnabled) partialReasons.push("claude install disabled");
-      if (claudeInstallEnabled && !claudeEnableEnabled) partialReasons.push("claude enable disabled");
-      if (!installReconcileEnabled) partialReasons.push("install reconcile disabled");
-      if (!retireOrphansEnabled) partialReasons.push("stale managed plugin retirement disabled");
-      if (!forceEnabled) partialReasons.push("force disabled");
-      if (!gcEnabled) partialReasons.push("gc disabled");
-
-      if (partialReasons.length > 0 && !allowPartial) {
-        const result = this.fail("Partial sync mode is blocked by default; re-run with --allow-partial for advanced exceptions", {
-          code: "PARTIAL_MODE_REQUIRES_ALLOW_PARTIAL",
-          details: {
-            partialReasons,
-            canonical: "rawr plugins sync all",
-          },
-        });
-        this.outputResult(result, { flags: baseFlags });
-        this.exit(2);
-        return;
-      }
-
       const coworkOutDirAbs = (() => {
         const raw = (flags as any)["cowork-out"] as string | undefined;
         if (!raw || raw.trim().length === 0) return resolveDefaultCoworkOutDir(workspaceRoot);
         const candidate = raw.trim();
         return path.isAbsolute(candidate) ? candidate : path.resolve(workspaceRoot, candidate);
       })();
-
-      const extraSourcePaths: string[] = [];
-
-      // Explicit registry (global config).
-      for (const p of layered.config?.sync?.sources?.paths ?? []) extraSourcePaths.push(String(p));
-
-      // Oclif plugin manager registry.
-      if (includeOclif) {
-        for (const pl of this.config.plugins ?? []) {
-          const root = (pl as any).root as string | undefined;
-          if (!root) continue;
-          extraSourcePaths.push(root.endsWith("package.json") ? path.dirname(root) : root);
-        }
-      }
-
-      // De-dupe and exclude workspace plugins already planned.
-      const plannedWorkspaceDirs = new Set(syncable.map((s) => path.resolve(s.sourcePlugin.absPath)));
-      const seen = new Set<string>();
-
-      const additionalSyncable: typeof syncable = [];
-      const additionalSkipped: typeof skipped = [];
-
-      for (const candidate of extraSourcePaths) {
-        const abs = path.resolve(process.cwd(), candidate);
-        const absResolved = path.resolve(abs);
-        if (plannedWorkspaceDirs.has(absResolved)) continue;
-        if (seen.has(absResolved)) continue;
-        seen.add(absResolved);
-
-        try {
-          const sourcePlugin = await resolveSourcePlugin(absResolved, process.cwd());
-          const content = await scanSourcePlugin(sourcePlugin);
-          const hasAny =
-            content.workflowFiles.length > 0 ||
-            content.skills.length > 0 ||
-            content.scripts.length > 0 ||
-            content.agentFiles.length > 0;
-          if (!hasAny) {
-            additionalSkipped.push({ dirName: sourcePlugin.dirName, absPath: sourcePlugin.absPath, reason: "no canonical content directories" });
-            continue;
-          }
-          additionalSyncable.push({ sourcePlugin, content });
-        } catch (err) {
-          additionalSkipped.push({ dirName: path.basename(absResolved), absPath: absResolved, reason: `unresolvable: ${String(err)}` });
-        }
-      }
-
-      const mergedSyncableAll = [...syncable, ...additionalSyncable];
-      const mergedSkipped = [...skipped, ...additionalSkipped];
-
-      const mergedSyncable = mergedSyncableAll.filter(({ sourcePlugin }) =>
-        scopeAllows(scope, resolveSourceScopeForPath(sourcePlugin.absPath, workspaceRoot)),
-      );
-      for (const filtered of mergedSyncableAll) {
-        if (mergedSyncable.includes(filtered)) continue;
-        mergedSkipped.push({
-          dirName: filtered.sourcePlugin.dirName,
-          absPath: filtered.sourcePlugin.absPath,
-          reason: `out of scope (${scope})`,
-        });
-      }
-
-      const targets = resolveTargets(
-        String(flags.agent) as "codex" | "claude" | "all",
-        (flags["codex-home"] as string[] | undefined) ?? [],
-        (flags["claude-home"] as string[] | undefined) ?? [],
-        layered.config ?? undefined,
-      );
 
       const results: Array<{
         dirName: string;
@@ -254,11 +203,9 @@ export default class PluginsSyncAll extends RawrCommand {
       let installReconcile: Record<string, unknown> = { action: "skipped", reason: "not run" };
       let postStepFailed = false;
 
-      const activePluginNames = new Set<string>();
+      const activePluginNames = new Set(plan.activePluginNames);
 
-      for (const { sourcePlugin, content } of mergedSyncable) {
-        activePluginNames.add(sourcePlugin.dirName);
-
+      for (const { sourcePlugin, content } of syncable) {
         const run = await runSync({
           sourcePlugin,
           content,
@@ -389,12 +336,7 @@ export default class PluginsSyncAll extends RawrCommand {
         workspaceRoot,
         dryRun: baseFlags.dryRun,
         enabled: installReconcileEnabled,
-        runtimePlugins: runtimePluginValues.map((plugin: any) => ({
-          name: String(plugin.name ?? plugin.alias ?? ""),
-          alias: typeof plugin.alias === "string" ? plugin.alias : undefined,
-          type: typeof plugin.type === "string" ? plugin.type : undefined,
-          root: typeof plugin.root === "string" ? plugin.root : null,
-        })),
+        runtimePlugins,
         oclifDataDir: (this.config as any).dataDir as string | undefined,
       });
       if ((installReconcile as any).action === "failed") postStepFailed = true;

@@ -1,212 +1,22 @@
-import path from "node:path";
-
 import { Flags } from "@oclif/core";
 import {
-  planSyncAll,
-  resolveSourcePlugin,
-  resolveSourceScopeForPath,
-  resolveTargets,
-  runSync,
-  scanSourcePlugin,
-  scopeAllows,
-  type SyncItemResult,
+  assessWorkspaceSync,
+  collectWorkspaceSourcePaths,
+  createWorkspaceSyncAssessInput,
   type SyncScope,
 } from "../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
-import { deriveSyncPolicy } from "../../lib/sync-policy";
-
-import { reconcileWorkspaceInstallLinks } from "../../lib/install-reconcile";
-import { assessInstallState, type InstallStateStatus } from "../../lib/install-state";
+import {
+  assessPluginInstallState,
+  reconcileWorkspaceInstallLinks,
+  runtimePluginSnapshot,
+} from "../../lib/plugin-install-service";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import type { PluginInstallStateStatus } from "@rawr/hq-ops/types";
 
-type DriftItem = Pick<SyncItemResult, "action" | "kind" | "target" | "message">;
 type SyncStatus = "IN_SYNC" | "DRIFT_DETECTED" | "CONFLICTS";
 type OverallStatus = "HEALTHY" | "NEEDS_CONVERGENCE";
-
-type SyncAssessment = {
-  status: SyncStatus;
-  includeMetadata: boolean;
-  scope: string;
-  summary: {
-    totalPlugins: number;
-    totalTargets: number;
-    totalConflicts: number;
-    totalMaterialChanges: number;
-    totalMetadataChanges: number;
-    totalDriftItems: number;
-  };
-  skipped: Array<{ dirName: string; absPath: string; reason: string }>;
-  plugins: Array<{
-    dirName: string;
-    absPath: string;
-    conflicts: number;
-    materialChanges: number;
-    metadataChanges: number;
-    driftItems: DriftItem[];
-  }>;
-};
-
-async function assessSyncStatus(input: {
-  cwd: string;
-  includeOclif: boolean;
-  oclifSourceRoots: string[];
-  includeMetadata: boolean;
-  scope: SyncScope;
-  agent: "codex" | "claude" | "all";
-  codexHomes: string[];
-  claudeHomes: string[];
-}): Promise<SyncAssessment> {
-  const { workspaceRoot, syncable, skipped } = await planSyncAll(input.cwd);
-  const layered = await loadLayeredRawrConfigForCwd(input.cwd);
-  const syncPolicy = deriveSyncPolicy(layered.config ?? undefined);
-  const includeAgentsInCodex = syncPolicy.includeAgentsInCodex;
-  const includeAgentsInClaude = syncPolicy.includeAgentsInClaude;
-
-  const extraSourcePaths: string[] = [];
-  for (const p of layered.config?.sync?.sources?.paths ?? []) extraSourcePaths.push(String(p));
-
-  if (input.includeOclif) {
-    extraSourcePaths.push(
-      ...input.oclifSourceRoots.map((root) => (root.endsWith("package.json") ? path.dirname(root) : root)),
-    );
-  }
-
-  const plannedWorkspaceDirs = new Set(syncable.map((s) => path.resolve(s.sourcePlugin.absPath)));
-  const seen = new Set<string>();
-  const additionalSyncable: typeof syncable = [];
-  const additionalSkipped: typeof skipped = [];
-
-  // Additional sources from explicit config only. Oclif sources are handled by top-level command via config.plugins.
-  for (const candidate of extraSourcePaths) {
-    const abs = path.resolve(input.cwd, candidate);
-    const absResolved = path.resolve(abs);
-    if (plannedWorkspaceDirs.has(absResolved)) continue;
-    if (seen.has(absResolved)) continue;
-    seen.add(absResolved);
-
-    try {
-      const sourcePlugin = await resolveSourcePlugin(absResolved, input.cwd);
-      const content = await scanSourcePlugin(sourcePlugin);
-      const hasAny =
-        content.workflowFiles.length > 0 ||
-        content.skills.length > 0 ||
-        content.scripts.length > 0 ||
-        content.agentFiles.length > 0;
-      if (!hasAny) {
-        additionalSkipped.push({ dirName: sourcePlugin.dirName, absPath: sourcePlugin.absPath, reason: "no canonical content directories" });
-        continue;
-      }
-      additionalSyncable.push({ sourcePlugin, content });
-    } catch (err) {
-      additionalSkipped.push({ dirName: path.basename(absResolved), absPath: absResolved, reason: `unresolvable: ${String(err)}` });
-    }
-  }
-
-  const mergedSyncableAll = [...syncable, ...additionalSyncable];
-  const mergedSkipped = [...skipped, ...additionalSkipped];
-  const mergedSyncable = mergedSyncableAll.filter(({ sourcePlugin }) =>
-    scopeAllows(input.scope, resolveSourceScopeForPath(sourcePlugin.absPath, workspaceRoot)),
-  );
-
-  for (const filtered of mergedSyncableAll) {
-    if (mergedSyncable.includes(filtered)) continue;
-    mergedSkipped.push({
-      dirName: filtered.sourcePlugin.dirName,
-      absPath: filtered.sourcePlugin.absPath,
-      reason: `out of scope (${input.scope})`,
-    });
-  }
-
-  const targets = resolveTargets(
-    input.agent,
-    input.codexHomes,
-    input.claudeHomes,
-    layered.config ?? undefined,
-  );
-
-  const plugins: SyncAssessment["plugins"] = [];
-  let totalTargets = 0;
-  let totalConflicts = 0;
-  let totalMaterialChanges = 0;
-  let totalMetadataChanges = 0;
-  let totalDriftItems = 0;
-
-  for (const { sourcePlugin, content } of mergedSyncable) {
-    const run = await runSync({
-      sourcePlugin,
-      content,
-      options: {
-        dryRun: true,
-        force: true,
-        gc: true,
-        includeAgentsInCodex,
-        includeAgentsInClaude,
-      },
-      codexHomes: targets.homes.codexHomes,
-      claudeHomes: targets.homes.claudeHomes,
-      includeCodex: targets.agents.includes("codex"),
-      includeClaude: targets.agents.includes("claude"),
-    });
-
-    let conflicts = 0;
-    let materialChanges = 0;
-    let metadataChanges = 0;
-    const driftItems: DriftItem[] = [];
-
-    for (const target of run.targets) {
-      totalTargets += 1;
-      conflicts += target.conflicts.length;
-      totalConflicts += target.conflicts.length;
-
-      const nonSkipped = target.items.filter((item) => item.action !== "skipped");
-      const metadata = nonSkipped.filter((item) => item.kind === "metadata");
-      const material = nonSkipped.filter((item) => item.kind !== "metadata");
-      const drift = nonSkipped.filter((item) => input.includeMetadata || item.kind !== "metadata");
-
-      metadataChanges += metadata.length;
-      materialChanges += material.length;
-      totalMetadataChanges += metadata.length;
-      totalMaterialChanges += material.length;
-      totalDriftItems += drift.length;
-
-      driftItems.push(
-        ...drift.map((item) => ({
-          action: item.action,
-          kind: item.kind,
-          target: item.target,
-          message: item.message,
-        })),
-      );
-    }
-
-    plugins.push({
-      dirName: sourcePlugin.dirName,
-      absPath: sourcePlugin.absPath,
-      conflicts,
-      materialChanges,
-      metadataChanges,
-      driftItems,
-    });
-  }
-
-  const status: SyncStatus = totalConflicts > 0 ? "CONFLICTS" : totalDriftItems > 0 ? "DRIFT_DETECTED" : "IN_SYNC";
-  return {
-    status,
-    includeMetadata: input.includeMetadata,
-    scope: input.scope,
-    summary: {
-      totalPlugins: plugins.length,
-      totalTargets,
-      totalConflicts,
-      totalMaterialChanges,
-      totalMetadataChanges,
-      totalDriftItems,
-    },
-    skipped: mergedSkipped,
-    plugins,
-  };
-}
 
 export default class PluginsStatus extends RawrCommand {
   static description = "Unified plugin status (sync drift + install/link drift) with actionable next steps";
@@ -263,11 +73,7 @@ export default class PluginsStatus extends RawrCommand {
     const includeMetadata = !(flags as any)["material-only"];
     const repair = Boolean(flags.repair);
     const noFail = Boolean((flags as any)["no-fail"]);
-    const runtimePluginValues = this.config.plugins instanceof Map
-      ? [...this.config.plugins.values()]
-      : Array.isArray(this.config.plugins)
-        ? this.config.plugins
-        : [];
+    const runtimePlugins = runtimePluginSnapshot(this.config.plugins);
 
     try {
       const workspaceRoot = await findWorkspaceRoot(process.cwd());
@@ -279,30 +85,35 @@ export default class PluginsStatus extends RawrCommand {
       }
 
       const sync = includeSync
-        ? await assessSyncStatus({
-            cwd: workspaceRoot,
-            includeOclif: Boolean((flags as any)["include-oclif"]),
-            oclifSourceRoots: runtimePluginValues
-              .map((plugin: any) => (typeof plugin.root === "string" ? plugin.root : ""))
-              .filter((root: string) => root.length > 0),
-            includeMetadata,
-            scope: String((flags as any).scope) as SyncScope,
-            agent: String(flags.agent) as "codex" | "claude" | "all",
-            codexHomes: (flags["codex-home"] as string[] | undefined) ?? [],
-            claudeHomes: (flags["claude-home"] as string[] | undefined) ?? [],
-          })
+        ? await (async () => {
+            const layered = await loadLayeredRawrConfigForCwd(workspaceRoot);
+            return assessWorkspaceSync({
+              repoRoot: workspaceRoot,
+              request: createWorkspaceSyncAssessInput({
+                cwd: workspaceRoot,
+                sourcePaths: collectWorkspaceSourcePaths({
+                  config: layered.config ?? undefined,
+                  includeOclif: Boolean((flags as any)["include-oclif"]),
+                  configPlugins: this.config.plugins,
+                }),
+                includeMetadata,
+                scope: String((flags as any).scope) as SyncScope,
+                agent: String(flags.agent) as "codex" | "claude" | "all",
+                codexHomes: (flags["codex-home"] as string[] | undefined) ?? [],
+                claudeHomes: (flags["claude-home"] as string[] | undefined) ?? [],
+                config: layered.config ?? undefined,
+              }),
+              traceId: "plugin-plugins.agent-config-sync.assess-status",
+            });
+          })()
         : null;
 
       let install = includeInstall
-        ? await assessInstallState({
+        ? await assessPluginInstallState({
             workspaceRoot,
             oclifDataDir: (this.config as any).dataDir as string | undefined,
-            runtimePlugins: runtimePluginValues.map((plugin: any) => ({
-              name: String(plugin.name ?? plugin.alias ?? ""),
-              alias: typeof plugin.alias === "string" ? plugin.alias : undefined,
-              type: typeof plugin.type === "string" ? plugin.type : undefined,
-              root: typeof plugin.root === "string" ? plugin.root : null,
-            })),
+            runtimePlugins,
+            traceId: "plugin-plugins.plugin-install.status-assess",
           })
         : null;
       const repairAttempt = repair && includeInstall
@@ -311,29 +122,20 @@ export default class PluginsStatus extends RawrCommand {
             dryRun: baseFlags.dryRun,
             enabled: true,
             oclifDataDir: (this.config as any).dataDir as string | undefined,
-            runtimePlugins: runtimePluginValues.map((plugin: any) => ({
-              name: String(plugin.name ?? plugin.alias ?? ""),
-              alias: typeof plugin.alias === "string" ? plugin.alias : undefined,
-              type: typeof plugin.type === "string" ? plugin.type : undefined,
-              root: typeof plugin.root === "string" ? plugin.root : null,
-            })),
+            runtimePlugins,
           })
         : null;
       if (repairAttempt && repairAttempt.action !== "planned") {
-        install = await assessInstallState({
+        install = await assessPluginInstallState({
           workspaceRoot,
           oclifDataDir: (this.config as any).dataDir as string | undefined,
-          runtimePlugins: runtimePluginValues.map((plugin: any) => ({
-            name: String(plugin.name ?? plugin.alias ?? ""),
-            alias: typeof plugin.alias === "string" ? plugin.alias : undefined,
-            type: typeof plugin.type === "string" ? plugin.type : undefined,
-            root: typeof plugin.root === "string" ? plugin.root : null,
-          })),
+          runtimePlugins,
+          traceId: "plugin-plugins.plugin-install.status-assess-after-repair",
         });
       }
 
       const syncStatus = sync?.status ?? "IN_SYNC";
-      const installStatus = (install?.status ?? "IN_SYNC") as InstallStateStatus;
+      const installStatus = (install?.status ?? "IN_SYNC") as PluginInstallStateStatus;
       const overall: OverallStatus =
         (includeSync && syncStatus !== "IN_SYNC") || (includeInstall && installStatus !== "IN_SYNC")
           ? "NEEDS_CONVERGENCE"

@@ -26,6 +26,10 @@
       "types": "./src/service/shared/resources.ts",
       "default": "./src/service/shared/resources.ts"
     },
+    "./undo": {
+      "types": "./src/undo.ts",
+      "default": "./src/undo.ts"
+    },
     "./schemas": {
       "types": "./src/service/shared/schemas.ts",
       "default": "./src/service/shared/schemas.ts"

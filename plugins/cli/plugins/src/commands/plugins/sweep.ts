@@ -3,10 +3,9 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { checkScratchPolicy } from "../../lib/plugins-lifecycle/scratch-policy";
-
-import { runCommand } from "../../lib/plugins-lifecycle/process";
-import type { LifecycleType } from "../../lib/plugins-lifecycle/types";
+import { checkScratchPolicy } from "../../lib/plugin-lifecycle-service";
+import { runCommand } from "../../lib/process-execution";
+import type { LifecycleType } from "@rawr/hq-ops/types";
 import { findWorkspaceRoot, listWorkspacePlugins } from "../../lib/workspace-plugins";
 
 type SweepCandidate = {
