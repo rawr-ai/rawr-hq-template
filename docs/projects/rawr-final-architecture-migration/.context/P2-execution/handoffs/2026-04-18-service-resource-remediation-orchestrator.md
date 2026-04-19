@@ -40,9 +40,26 @@ Concrete resources move to plugin/app/runtime surfaces for now. Services own beh
 
 | Service | Agent | Branch | Worktree | Scratchpad | Status |
 | --- | --- | --- | --- | --- | --- |
-| `hq-ops` | `019da3ab-8e92-7762-b778-9cec747d23f9` | `agent-HQOPS-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-HQOPS-remove-host-package` | `.../agent-HQOPS-remove-host-package-mini-plan.md` | discovery / mini-plan |
-| `agent-config-sync` | `019da3ab-dfd3-79b3-99ba-c96f0f05577e` | `agent-AGENTSYNC-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-AGENTSYNC-remove-host-package` | `.../agent-AGENTSYNC-remove-host-package-mini-plan.md` | discovery / mini-plan |
-| `session-intelligence` | `019da3ac-3040-7a90-babb-54c67ec32269` | `agent-SESSIONS-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-SESSIONS-remove-host-package` | `.../agent-SESSIONS-remove-host-package-mini-plan.md` | discovery / mini-plan |
+| `hq-ops` | `019da3ab-8e92-7762-b778-9cec747d23f9` | `agent-HQOPS-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-HQOPS-remove-host-package` | `.../agent-HQOPS-remove-host-package-mini-plan.md` | implementation approved |
+| `agent-config-sync` | `019da3ab-dfd3-79b3-99ba-c96f0f05577e` | `agent-AGENTSYNC-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-AGENTSYNC-remove-host-package` | `.../agent-AGENTSYNC-remove-host-package-mini-plan.md` | implementation approved |
+| `session-intelligence` | `019da3ac-3040-7a90-babb-54c67ec32269` | `agent-SESSIONS-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-SESSIONS-remove-host-package` | `.../agent-SESSIONS-remove-host-package-mini-plan.md` | implementation approved |
+
+## Integration Ownership
+
+The service agents were approved with tightened write scopes.
+
+Orchestrator retains cross-service cleanup ownership for:
+
+- root `package.json`
+- `bun.lock`
+- `vitest.config.ts`
+- `AGENTS_SPLIT.md`
+- `scripts/githooks/template-managed-paths.txt`
+- architecture inventory
+- global eslint/no-host ratchets
+- active docs that mention multiple `*-host` packages
+
+Agents may call out required integration edits, but should not fight over these files.
 
 ## Shared Agent Prompt Notes
 
