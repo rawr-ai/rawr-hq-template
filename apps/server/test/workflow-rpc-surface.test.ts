@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
 
 import { beforeEach, describe, expect, it } from "vitest";
-import { __resetSupportExampleRunStoreForTests } from "../../../plugins/workflows/support-example";
+import { __resetSupportExampleRunStoreForTests } from "@rawr/plugin-workflows-support-example/testing";
 
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
@@ -17,12 +17,12 @@ const FIRST_PARTY_RPC_HEADERS = {
   "x-rawr-session-auth": "verified",
 } as const;
 
-describe("workflow trigger/status stays on /api/workflows and out of canonical /rpc surfaces", () => {
+describe("workflow trigger/status stays published on /api/workflows while remaining available to first-party /rpc callers", () => {
   beforeEach(() => {
     __resetSupportExampleRunStoreForTests();
   });
 
-  it("keeps workflow status off /rpc", async () => {
+  it("keeps workflow status available to first-party /rpc callers", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
 
     const res = await app.handle(
@@ -33,7 +33,11 @@ describe("workflow trigger/status stays on /api/workflows and out of canonical /
       }),
     );
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(200);
+    const payload = (await res.json()) as { json?: { capability?: string; healthy?: boolean; run?: unknown } };
+    expect(payload.json?.capability).toBe("support-example");
+    expect(payload.json?.healthy).toBe(true);
+    expect(payload.json?.run).toBeNull();
   });
 
   it("does not serve workflow routes through /api/orpc/*", async () => {

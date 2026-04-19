@@ -27,6 +27,20 @@ if (!manifestSource.includes("export function createRawrHqManifest")) {
   process.exit(1);
 }
 
+if (
+  !manifestSource.includes("registerCoordinationApiPlugin") ||
+  !manifestSource.includes("registerStateApiPlugin") ||
+  !manifestSource.includes("registerExampleTodoApiPlugin")
+) {
+  console.error("hq-app structural failed: manifest must compose plugin-owned ORPC surfaces.");
+  process.exit(1);
+}
+
+if (manifestSource.includes("createHqRuntimeRouter") || manifestSource.includes("@rawr/core/orpc")) {
+  console.error("hq-app structural failed: app authority must not own or import a special HQ router seam.");
+  process.exit(1);
+}
+
 if (manifestSource.includes("apps/server/src/logging") || manifestSource.includes('from "pino"') || manifestSource.includes("from 'pino'")) {
   console.error("hq-app structural failed: app authority seam must not import host logging implementation.");
   process.exit(1);

@@ -6,6 +6,7 @@ export type {
 } from "./orpc/baseline/types";
 export { createBaseProvider } from "./orpc/baseline/middleware";
 export { createContractBuilder } from "./orpc/factory/contract";
+export * from "./composition";
 export type {
   ServiceDeclaration,
   ServiceTypesOf,
@@ -24,6 +25,8 @@ export type { DbPool, Sql } from "./orpc/ports/db";
 export type { AnalyticsClient } from "./orpc/ports/analytics";
 export type { FeedbackClient } from "./orpc/ports/feedback";
 export type { Logger } from "./orpc/ports/logger";
+export * from "./apis";
+export * from "./workflows";
 export {
   defineService,
 } from "./orpc/service/define";

@@ -8,22 +8,36 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("packages/coordination/src/ids.ts"),
-  mustExist("packages/coordination/src/orpc/schemas.ts"),
-  mustExist("packages/state/src/orpc/contract.ts"),
-  mustExist("packages/core/src/orpc/runtime-router.ts"),
-  mustExist("packages/core/test/orpc-contract-drift.test.ts"),
-  mustExist("packages/core/test/workflow-trigger-contract-drift.test.ts"),
+  mustExist("services/coordination/src/domain/ids.ts"),
+  mustExist("services/coordination/src/domain/schemas.ts"),
+  mustExist("services/coordination/src/service/shared/inputs.ts"),
+  mustExist("services/state/src/service/modules/state/contract.ts"),
+  mustExist("services/state/src/service/modules/state/router.ts"),
+  mustExist("apps/hq/src/manifest.ts"),
+  mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
+  mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
-const [idsSource, schemasSource, stateContractSource, runtimeRouterSource, hqDriftTestSource, triggerDriftTestSource, scripts] =
+const [
+  idsSource,
+  schemasSource,
+  inputsSource,
+  stateContractSource,
+  stateRouterSource,
+  manifestSource,
+  hqDriftTestSource,
+  triggerDriftTestSource,
+  scripts,
+] =
   await Promise.all([
-    readFile("packages/coordination/src/ids.ts"),
-    readFile("packages/coordination/src/orpc/schemas.ts"),
-    readFile("packages/state/src/orpc/contract.ts"),
-    readFile("packages/core/src/orpc/runtime-router.ts"),
-    readFile("packages/core/test/orpc-contract-drift.test.ts"),
-    readFile("packages/core/test/workflow-trigger-contract-drift.test.ts"),
+    readFile("services/coordination/src/domain/ids.ts"),
+    readFile("services/coordination/src/domain/schemas.ts"),
+    readFile("services/coordination/src/service/shared/inputs.ts"),
+    readFile("services/state/src/service/modules/state/contract.ts"),
+    readFile("services/state/src/service/modules/state/router.ts"),
+    readFile("apps/hq/src/manifest.ts"),
+    readFile("apps/hq/test/orpc-contract-drift.test.ts"),
+    readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
     readPackageScripts(),
   ]);
 
@@ -35,7 +49,7 @@ assertScriptEquals(
 assertScriptEquals(
   scripts,
   "phase-f:gate:f2-interface-policy-runtime",
-  "bunx vitest run --project core packages/core/test/orpc-contract-drift.test.ts packages/core/test/workflow-trigger-contract-drift.test.ts && bunx vitest run --project core packages/core/test/runtime-router.test.ts",
+  "bunx vitest run --project hq-app apps/hq/test/orpc-contract-drift.test.ts apps/hq/test/workflow-trigger-contract-drift.test.ts && bunx vitest run --project hq-app apps/hq/test/runtime-router.test.ts",
 );
 assertScriptEquals(
   scripts,
@@ -86,19 +100,22 @@ const checks = [
   },
   {
     id: "runtime-router-policy-plumbing",
-    message: "runtime router must normalize IDs and return authorityRepoRoot",
+    message: "service/plugin/app seams must normalize IDs and return authorityRepoRoot without a special HQ router seam",
     pass:
-      /function parseCoordinationId\(value: unknown\): string \| null/u.test(runtimeRouterSource) &&
-      /return normalizeCoordinationId\(value\);/u.test(runtimeRouterSource) &&
-      /return \{ state, authorityRepoRoot: context\.repoRoot \};/u.test(runtimeRouterSource),
+      /function parseCoordinationId\(value: unknown\): string \| null/u.test(inputsSource) &&
+      /return normalizeCoordinationId\(value\);/u.test(inputsSource) &&
+      /getRepoStateWithAuthority\(context\.scope\.repoRoot\)/u.test(stateRouterSource) &&
+      manifestSource.includes("registerCoordinationApiPlugin") &&
+      manifestSource.includes("registerStateApiPlugin") &&
+      !manifestSource.includes("createHqRuntimeRouter"),
   },
   {
     id: "f2-drift-tests",
-    message: "core drift suites must assert F2 ID policy + additive authority metadata",
+    message: "hq app drift suites must assert F2 ID policy + additive authority metadata",
     pass:
       /keeps F2 ID input policy aligned with runtime normalization rules/u.test(hqDriftTestSource) &&
       /authorityRepoRoot/u.test(hqDriftTestSource) &&
-      /enforces F2 workflow trigger ID constraints at the contract edge/u.test(triggerDriftTestSource),
+      /workflow capability paths/u.test(triggerDriftTestSource),
   },
 ];
 

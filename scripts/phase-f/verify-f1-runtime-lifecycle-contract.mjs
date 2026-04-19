@@ -8,16 +8,16 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("packages/state/src/repo-state.ts"),
+  mustExist("services/state/src/repo-state/storage.ts"),
   mustExist("apps/server/src/rawr.ts"),
-  mustExist("packages/state/test/repo-state.concurrent.test.ts"),
+  mustExist("services/state/test/repo-state.concurrent.test.ts"),
   mustExist("apps/server/test/rawr.test.ts"),
 ]);
 
 const [repoStateSource, rawrSource, repoStateTestSource, rawrTestSource, scripts] = await Promise.all([
-  readFile("packages/state/src/repo-state.ts"),
+  readFile("services/state/src/repo-state/storage.ts"),
   readFile("apps/server/src/rawr.ts"),
-  readFile("packages/state/test/repo-state.concurrent.test.ts"),
+  readFile("services/state/test/repo-state.concurrent.test.ts"),
   readFile("apps/server/test/rawr.test.ts"),
   readPackageScripts(),
 ]);
@@ -31,7 +31,7 @@ assertScriptEquals(
 assertScriptEquals(
   scripts,
   "phase-f:gate:f1-runtime-lifecycle-runtime",
-  "bunx vitest run --project state packages/state/test/repo-state.concurrent.test.ts && bunx vitest run --project server apps/server/test/rawr.test.ts --testNamePattern='host-composition-guard: keeps runtime authority stable when initialized from alias repo roots' && bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts && bun run phase-c:gate:c1-storage-lock-runtime",
+  "bunx vitest run --project state services/state/test/repo-state.concurrent.test.ts && bunx vitest run --project server apps/server/test/rawr.test.ts --testNamePattern='host-composition-guard: keeps runtime authority stable when initialized from alias repo roots' && bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts && bun run phase-c:gate:c1-storage-lock-runtime",
 );
 assertScriptEquals(
   scripts,
@@ -84,7 +84,7 @@ const checks = [
     message: "rawr route registration must pass canonical authority root to runtime/context",
     pass:
       /const authorityRepoRoot = resolveAuthorityRepoRoot\(opts\.repoRoot\);/u.test(rawrSource) &&
-      /createCoordinationRuntimeAdapter\(\{[\s\S]*repoRoot: authorityRepoRoot,/u.test(rawrSource) &&
+      /createCoordinationWorkflowRuntimeAdapter\(\{[\s\S]*repoRoot: authorityRepoRoot,/u.test(rawrSource) &&
       /const boundaryContextDeps: RawrBoundaryContextDeps = \{[\s\S]*repoRoot: authorityRepoRoot,/u.test(rawrSource),
   },
   {

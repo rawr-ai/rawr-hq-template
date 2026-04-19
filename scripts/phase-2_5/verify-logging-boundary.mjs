@@ -63,7 +63,7 @@ assertCondition(
   rawrSource.includes('from "./logging"')
     && rawrSource.includes("createRawrHqManifest")
     && rawrSource.includes("createHostLoggerAdapter")
-    && manifestSource.includes("exampleTodoLogger")
+    && manifestSource.includes("hostLogger")
     && !manifestSource.includes("apps/server/src/logging")
     && !manifestSource.includes('host-adapters/logger/embedded-placeholder'),
   "server host must inject the logger adapter into the app-owned manifest seam instead of keeping host logging inside apps/hq",

@@ -1,6 +1,7 @@
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { coordinationErrorMessage, type RunTraceLinkV1 } from "@rawr/coordination";
+import type { RunTraceLinkV1 } from "@rawr/coordination";
+import { coordinationErrorMessage } from "@rawr/coordination/compat/http";
 import { coordinationGetRunStatus, resolveServerBaseUrl } from "../../../lib/coordination-api";
 
 export default class WorkflowCoordTrace extends RawrCommand {

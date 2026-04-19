@@ -9,7 +9,7 @@ type ServiceLogger = {
   error(message: string, meta?: Record<string, unknown>): void;
 };
 
-export type HostLoggingSurface = "rpc" | "openapi";
+export type HostLoggingSurface = "rpc" | "openapi" | "workflow";
 
 export type HostLoggingContext = {
   repoRoot: string;

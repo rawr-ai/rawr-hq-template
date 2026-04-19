@@ -4,15 +4,15 @@ Role: canonical telemetry architecture for oRPC + OpenTelemetry
 
 ## Status
 
-This document specifies the target telemetry model for domain packages built on
+This document specifies the target telemetry model for servicepackages built on
 the local oRPC stack.
 
 It defines:
 
 - where OpenTelemetry is bootstrapped
 - how oRPC instrumentation participates
-- how telemetry context reaches service packages and plugins
-- what service packages and plugins are allowed to own
+- how telemetry context reaches servicepackages and plugins
+- what servicepackages and plugins are allowed to own
 - which seams remain host-owned
 
 This document is telemetry-specific. It does not replace the broader
@@ -27,7 +27,7 @@ Telemetry is a host-owned runtime capability built from:
 - oRPC instrumentation registration
 - OpenTelemetry active-context propagation
 
-Service packages and plugins do not instantiate the OpenTelemetry SDK. They
+Servicepackages and plugins do not instantiate the OpenTelemetry SDK. They
 consume the active span created by the host-owned runtime.
 
 The canonical flow is:
@@ -48,7 +48,7 @@ flowchart TD
   B --> C["OpenTelemetry SDK + ORPCInstrumentation"]
   C --> D["Request / procedure execution"]
   D --> E["Plugin or host request middleware\ntransport / ingress semantics"]
-  D --> F["Service package observability middleware\ndomain semantics"]
+  D --> F["Servicepackage observability middleware\ndomain semantics"]
   E --> G["Active span in OTel context"]
   F --> G
 ```
@@ -82,14 +82,14 @@ Canonical files:
 
 ### 2. Plugin/host request middleware layer
 
-Lives in host/plugin request-routing code, not in service packages.
+Lives in host/plugin request-routing code, not in servicepackages.
 
 Responsibilities:
 
 - ingress/egress instrumentation
 - request-level or transport-level attributes
 - plugin-specific API/request telemetry that sits above any one composed
-  service package
+  servicepackage
 
 Canonical files:
 
@@ -97,9 +97,9 @@ Canonical files:
   `apps/server/src/rawr.ts`
 - future plugin/host request middleware surfaces
 
-### 3. Service-package observability semantics layer
+### 3. Servicepackage observability semantics layer
 
-Lives in service-package middleware and package-local observability helpers.
+Lives in servicepackage middleware and servicepackage-local observability helpers.
 
 Responsibilities:
 
@@ -116,7 +116,7 @@ These layers are intentionally different:
 
 - host bootstrap owns telemetry infrastructure
 - plugin/host request middleware owns request and ingress concerns
-- service packages own domain observability semantics
+- servicepackages own domain observability semantics
 
 ## Named Concepts
 
@@ -160,13 +160,13 @@ execution.
 It is registered by the host bootstrap through the core telemetry integration
 module.
 
-It is not a service-package concern.
+It is not a servicepackage concern.
 
 ### OpenTelemetry context propagation
 
 Service and plugin code read the active span from OpenTelemetry context.
 
-The active span is not passed through service package dependency bags.
+The active span is not passed through servicepackage dependency bags.
 
 Canonical access shape:
 
@@ -205,12 +205,12 @@ Automatic/runtime behavior after bootstrap:
 - active span availability during instrumented execution
 - oRPC span activation during request/procedure execution
 
-Service packages should rely on the active span only after host bootstrap is in
+Servicepackages should rely on the active span only after host bootstrap is in
 place.
 
-### Service package observability semantics
+### Servicepackage observability semantics
 
-Service packages own observability semantics, not telemetry bootstrap.
+Servicepackages own observability semantics, not telemetry bootstrap.
 
 Responsibilities:
 
@@ -225,7 +225,7 @@ Canonical files:
 
 ## In-Package Observability Layering
 
-Inside a service package, telemetry/observability normally layers like this:
+Inside a servicepackage, telemetry/observability normally layers like this:
 
 1. **Framework baseline observability**
    - owned by the local oRPC kit seam
@@ -234,7 +234,7 @@ Inside a service package, telemetry/observability normally layers like this:
    - should consume the active span from OTel runtime context
 
 2. **Required service-wide observability**
-   - owned by the service package
+   - owned by the servicepackage
    - attached once at the package-wide assembly seam
    - adds service-global semantics the framework baseline cannot infer on its own
 
@@ -313,7 +313,7 @@ Concrete `example-todo`-style example:
 - it may deserve a specific span event such as
   `todo.tasks.partial_tag_resolution`
 
-That kind of event belongs to the **domain service package**, not to the host,
+That kind of event belongs to the **servicepackage**, not to the host,
 because it describes package/domain behavior rather than transport or ingress
 behavior.
 
@@ -327,7 +327,7 @@ It is still the exception rather than the norm because:
 ### Plugin/host request and network instrumentation
 
 Plugin and host request/network middleware may author their own telemetry
-behavior outside service packages.
+behavior outside servicepackages.
 
 Responsibilities:
 
@@ -335,12 +335,12 @@ Responsibilities:
 - request attributes
 - plugin-specific network instrumentation
 
-This remains outside service package boundaries.
+This remains outside servicepackage boundaries.
 
 ## Single-Host Model
 
 In the single-host model, one host/runtime initializes OpenTelemetry once and
-all mounted plugins and service packages run within that runtime.
+all mounted plugins and servicepackages run within that runtime.
 
 Example:
 
@@ -384,7 +384,7 @@ Host-specific differences belong in host bootstrap options:
 - propagators
 - sampling
 
-Downstream service packages and plugins remain type-stable:
+Downstream servicepackages and plugins remain type-stable:
 
 - they continue to read the active span from runtime context
 - they do not change shape when hosts change
@@ -397,18 +397,18 @@ Downstream service packages and plugins remain type-stable:
 - hosts bootstrap OpenTelemetry
 - oRPC instrumentation is registered at host bootstrap
 - service/plugin code consumes active-span context
-- service packages add telemetry semantics
+- servicepackages add telemetry semantics
 - plugin/host middleware adds ingress/network telemetry semantics
 
 ### What does not happen
 
-- the OpenTelemetry SDK is not instantiated inside service packages
-- telemetry is not modeled as a service-package dependency
-- telemetry does not travel through service package boundaries as
+- the OpenTelemetry SDK is not instantiated inside servicepackages
+- telemetry is not modeled as a servicepackage dependency
+- telemetry does not travel through servicepackage boundaries as
   `BaseDeps.telemetry`
 - plugin call sites do not need to import and pass telemetry clients by
   default
-- service packages do not own ingress/request middleware telemetry for the host
+- servicepackages do not own ingress/request middleware telemetry for the host
   or plugin shell
 
 ## Wiring Points
@@ -431,7 +431,7 @@ Responsibilities:
 The host bootstrap is the single source of truth for telemetry infrastructure in
 that runtime.
 
-### Service package layer
+### Servicepackage layer
 
 Files:
 
@@ -455,7 +455,7 @@ Responsibilities:
 - plugin-specific ingress/request/network telemetry
 - plugin-specific attributes or naming
 - no host SDK bootstrap ownership
-- no service-package dependency injection seam for telemetry
+- no servicepackage dependency injection seam for telemetry
 
 ## Import Direction
 
@@ -464,11 +464,11 @@ Import direction is one-way:
 - hosts may import the core telemetry bootstrap helper
 - hosts and plugins may import OpenTelemetry runtime APIs where they own
   request/ingress instrumentation
-- service packages may import:
+- servicepackages may import:
   - OpenTelemetry API directly
   - or a tiny helper such as `packages/core/src/orpc/active-span.ts`
-- service packages must not import host bootstraps
-- service packages must not own SDK/provider/exporter setup
+- servicepackages must not import host bootstraps
+- servicepackages must not own SDK/provider/exporter setup
 
 This keeps telemetry infrastructure centralized while allowing domain
 instrumentation to remain local.
@@ -495,7 +495,7 @@ Belongs in plugin or host/plugin middleware:
 - plugin request attributes
 - plugin-specific network instrumentation
 
-### Service-package observability semantics
+### Servicepackage observability semantics
 
 Belongs in service/package middleware:
 
@@ -503,11 +503,11 @@ Belongs in service/package middleware:
 - service/package events
 - service/package log enrichment
 
-Service packages are not 1:1 with plugins. A plugin may compose multiple
-service packages into a higher-level API. That plugin may also own telemetry
+Servicepackages are not 1:1 with plugins. A plugin may compose multiple
+servicepackages into a higher-level API. That plugin may also own telemetry
 concerns that do not belong to any one composed package.
 
-For that reason, service packages should not own the host bootstrap seam.
+For that reason, servicepackages should not own the host bootstrap seam.
 
 ## File-Structure Example
 
@@ -537,17 +537,17 @@ Telemetry stacks across the three layers:
 
 - host bootstrap instrumentation creates the runtime foundation
 - plugin/host request middleware can add request and transport semantics
-- service packages can enrich spans with domain semantics
+- servicepackages can enrich spans with domain semantics
 
 That stacking is intentional.
 
-A plugin that composes multiple service packages should still be able to:
+A plugin that composes multiple servicepackages should still be able to:
 
 - own request/ingress telemetry once at the plugin/host layer
-- call into multiple service packages
-- let each service package contribute its own domain attributes/events
+- call into multiple servicepackages
+- let each servicepackage contribute its own domain attributes/events
 
-Service packages should not try to replace the plugin/host layer. They should
+Servicepackages should not try to replace the plugin/host layer. They should
 only enrich the execution already in progress.
 
 ## Testing Guidance

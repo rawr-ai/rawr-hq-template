@@ -15,18 +15,19 @@ function functionBodyCalls(source, fnName, calleeName) {
 }
 
 await Promise.all([
-  mustExist("packages/state/src/repo-state.ts"),
-  mustExist("packages/state/src/types.ts"),
-  mustExist("packages/state/src/index.ts"),
-  mustExist("packages/state/test/repo-state.concurrent.test.ts"),
-  mustExist("packages/coordination/test/storage-lock-cross-instance.test.ts"),
+  mustExist("services/state/src/repo-state/index.ts"),
+  mustExist("services/state/src/repo-state/model.ts"),
+  mustExist("services/state/src/repo-state/storage.ts"),
+  mustExist("services/state/src/index.ts"),
+  mustExist("services/state/test/repo-state.concurrent.test.ts"),
   mustExist("apps/server/test/storage-lock-route-guard.test.ts"),
 ]);
 
-const [repoStateSource, typesSource, indexSource] = await Promise.all([
-  readFile("packages/state/src/repo-state.ts"),
-  readFile("packages/state/src/types.ts"),
-  readFile("packages/state/src/index.ts"),
+const [repoStateIndexSource, repoStateModelSource, repoStateStorageSource, indexSource] = await Promise.all([
+  readFile("services/state/src/repo-state/index.ts"),
+  readFile("services/state/src/repo-state/model.ts"),
+  readFile("services/state/src/repo-state/storage.ts"),
+  readFile("services/state/src/index.ts"),
 ]);
 
 for (const fnName of [
@@ -37,29 +38,34 @@ for (const fnName of [
   "mutateRepoStateAtomically",
   "stateLockPath",
 ]) {
-  assertCondition(hasExportedFunction(repoStateSource, fnName), `repo-state must export ${fnName}`);
+  assertCondition(hasExportedFunction(repoStateStorageSource, fnName), `repo-state storage must export ${fnName}`);
 }
 
 for (const fnName of ["setRepoState", "enablePlugin", "disablePlugin"]) {
   assertCondition(
-    functionBodyCalls(repoStateSource, fnName, "mutateRepoStateAtomically"),
+    functionBodyCalls(repoStateStorageSource, fnName, "mutateRepoStateAtomically"),
     `${fnName} must call mutateRepoStateAtomically`,
   );
 }
 
 for (const typeName of ["RepoStateMutationOptions", "RepoStateMutationResult", "RepoStateMutator"]) {
   assertCondition(
-    new RegExp(`export\\s+type\\s+${typeName}\\s*=`, "m").test(typesSource),
-    `types.ts must export ${typeName}`,
+    new RegExp(`export\\s+type\\s+${typeName}\\s*=`, "m").test(repoStateModelSource),
+    `repo-state model must export ${typeName}`,
   );
 }
 
 for (const typeName of ["RepoState", "RepoStateMutationOptions", "RepoStateMutationResult", "RepoStateMutator"]) {
-  assertCondition(indexSource.includes(typeName), `index.ts must re-export ${typeName}`);
+  assertCondition(repoStateIndexSource.includes(typeName), `repo-state index must re-export ${typeName}`);
 }
 
 for (const valueName of ["mutateRepoStateAtomically", "stateLockPath"]) {
-  assertCondition(indexSource.includes(valueName), `index.ts must re-export ${valueName}`);
+  assertCondition(repoStateIndexSource.includes(valueName), `repo-state index must re-export ${valueName}`);
 }
+
+assertCondition(
+  !indexSource.includes("getRepoState") && !indexSource.includes("RepoState"),
+  "package root must stay thin and not re-export repo-state support surface",
+);
 
 console.log("phase-c storage-lock contract verified");

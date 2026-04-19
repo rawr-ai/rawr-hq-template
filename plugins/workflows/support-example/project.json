@@ -3,5 +3,11 @@
   "name": "plugin-workflows-support-example",
   "root": "plugins/workflows/support-example",
   "sourceRoot": "plugins/workflows/support-example/src",
-  "tags": ["type:plugin"]
+  "tags": [
+    "type:plugin",
+    "migration-slice:structural-tranche",
+    "role:workflow",
+    "surface:async",
+    "capability:support-example"
+  ]
 }

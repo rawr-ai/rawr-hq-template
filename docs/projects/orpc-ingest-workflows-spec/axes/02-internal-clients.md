@@ -6,17 +6,17 @@
 - This axis is a focused slice and does not override canonical core policy.
 
 ## Axis Opening
-- **What this axis is:** the canonical policy slice for server-internal calling and package-layer capability boundaries.
-- **What it covers:** internal client defaults, package layering/schema conventions, caller-mode transport boundaries, and D-014 seam guarantees.
-- **What this communicates:** server-internal behavior defaults to in-process package clients with explicit ownership and deterministic import direction.
-- **Who should read this:** package authors, plugin authors wiring internal calls, and host owners defining infrastructure seam boundaries.
+- **What this axis is:** the canonical policy slice for server-internal calling and servicepackage-layer capability boundaries.
+- **What it covers:** internal client defaults, servicepackage layering/schema conventions, caller-mode transport boundaries, and D-014 seam guarantees.
+- **What this communicates:** server-internal behavior defaults to package-local servicepackage clients with explicit ownership and deterministic import direction.
+- **Who should read this:** servicepackage authors, plugin authors wiring internal calls, and host owners defining infrastructure seam boundaries.
 - **Jump conditions:** for external publication rules, jump to [01-external-client-generation.md](./01-external-client-generation.md); for workflow boundary ownership, jump to [08-workflow-api-boundaries.md](./08-workflow-api-boundaries.md); for D-014 composition guarantees, jump to [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
 
 
 ## In Scope
 - Internal cross-boundary call defaults.
-- Internal package layered default shape.
-- Transport-neutral package constraints.
+- Internal servicepackage layered default shape.
+- Transport-free servicepackage constraints.
 
 ## Out of Scope
 - External SDK generation path ownership (see [01-external-client-generation.md](./01-external-client-generation.md)).
@@ -25,37 +25,37 @@
 ## Canonical Policy
 
 ### Core Internal-Calling Invariants
-1. Default internal cross-boundary calls MUST use domain package in-process internal clients (`packages/<domain>/src/client.ts`).
+1. Default internal cross-boundary calls MUST use package-local servicepackage in-process internal clients (`services/<capability>/src/client.ts`).
 2. Server runtime code MUST NOT self-call local HTTP (`/rpc`, `/api/orpc`) for in-process calls.
 3. Boundary handlers SHOULD NOT directly call `inngest.send` unless they are designated workflow trigger routers.
-4. Domain packages MUST remain transport-neutral.
-5. Packages MUST NOT own workflow trigger/status boundary contracts or workflow boundary I/O schemas; those stay in `plugins/workflows/<capability>/src/contract.ts`.
+4. Servicepackages MUST remain transport-free.
+5. Servicepackages MUST NOT own workflow trigger/status boundary contracts or workflow boundary I/O schemas; those stay in `plugins/workflows/<capability>/src/contract.ts`.
 
 ### Schema, Context, and Naming Conventions
 1. Domain schemas MUST be authored TypeBox-first and MUST export static types from the same file.
 2. Within one `domain/` folder, filenames MUST avoid redundant domain-prefix tokens.
-3. Package and plugin directory names SHOULD prefer concise domain names when unambiguous (for example `invoicing`).
+3. Servicepackage and plugin directory names SHOULD prefer concise capability names when unambiguous (for example `invoicing`).
 4. Shared procedure context contracts MUST live in explicit `context.ts` (or equivalent dedicated context module), and routers/clients MUST consume that contract.
 5. For object-root schema wrappers, docs should prefer `schema({...})`, where `schema({...})` means `std(Type.Object({...}))`.
 6. For non-`Type.Object` roots, docs/snippets should keep explicit `std(...)` (or `typeBoxStandardSchema(...)`) wrapping.
 
 ### Caller-Mode Route and Publication Rules
 1. First-party callers (including MFEs by default) use `RPCLink` on `/rpc` when they need HTTP transport.
-2. Server-internal callers MAY use in-process package internal clients with trusted service context.
+2. Server-internal callers MAY use package-local servicepackage internal clients with trusted service context.
 3. External/third-party callers use published OpenAPI routes (`/api/orpc/*`, `/api/workflows/<capability>/*`); RPC clients are not externally published.
 4. Caller traffic MUST NOT use `/api/inngest`; runtime ingress is runtime-only.
 
 ### D-014 Infrastructure and Composition Guarantees
-1. Shared auth/db-ready infrastructure seams SHOULD be expressed as typed ports/contracts in package-oriented shared modules by default (interfaces + factory shapes), so package contexts can consume them without binding to a concrete adapter.
-2. Concrete auth/db/runtime adapters MUST be composed and injected outside package internals (host/plugin composition), then consumed through package `context.ts` contracts.
-3. Package internals MUST NOT instantiate process-global auth/db singletons; package logic stays adapter-agnostic and testable through injected ports.
-4. Import direction MUST remain deterministic: packages MAY depend on shared infrastructure packages, plugins/hosts MAY depend on packages, and packages MUST NOT import plugins or host runtime modules.
+1. Shared auth/db-ready infrastructure seams SHOULD be expressed as typed ports/contracts in shared infrastructure packages by default (interfaces + factory shapes), so servicepackage contexts can consume them without binding to a concrete adapter.
+2. Concrete auth/db/runtime adapters MUST be composed and injected outside servicepackage internals (host/plugin composition), then consumed through servicepackage `context.ts` contracts.
+3. Servicepackage internals MUST NOT instantiate process-global auth/db singletons; servicepackage logic stays adapter-agnostic and testable through injected ports.
+4. Import direction MUST remain deterministic: servicepackages MAY depend on shared infrastructure packages, plugins/hosts MAY depend on servicepackages, and servicepackages MUST NOT import plugins or host runtime modules.
 5. D-014 composition guarantees for these seams are captured in [11-core-infrastructure-packaging-and-composition-guarantees.md](./11-core-infrastructure-packaging-and-composition-guarantees.md).
 
 ## Why
 - Prevents “four ways to call” drift.
 - Preserves deterministic call intent.
-- Keeps package semantics transport-neutral and reusable.
+- Keeps servicepackage semantics transport-free and reusable.
 
 ## Trade-Offs
 - Less flexibility for ad hoc shortcuts.
@@ -67,16 +67,16 @@ This table is an axis-local projection of the canonical caller/auth matrix in [A
 | Caller mode | Allowed routes | Default link/client | Publication boundary | Auth mode | Forbidden routes |
 | --- | --- | --- | --- | --- | --- |
 | First-party MFE/internal caller | `/rpc` | `RPCLink` | internal only (never published) | first-party session/auth or trusted service context | `/api/inngest` |
-| Server-internal in-process caller | in-process only | package internal client (`createRouterClient`) | internal only | trusted service context | local HTTP self-calls as default |
+| Server-internal in-process caller | in-process only | package-local servicepackage client (`createRouterClient`) | internal only | trusted service context | local HTTP self-calls as default |
 | External/third-party caller | `/api/orpc/*`, `/api/workflows/<capability>/*` | `OpenAPILink` | externally published OpenAPI clients | boundary auth/session/token | `/rpc`, `/api/inngest` |
 | Runtime ingress | `/api/inngest` | Inngest callback transport | runtime only | signed runtime ingress | browser/API caller traffic |
 
 ### Boundary ownership guardrail for internal calling
-Even when package internal clients power server-internal execution, caller-facing workflow trigger/status contracts and their I/O schemas remain workflow plugin boundary owned. Internal client reuse does not transfer boundary ownership to packages.
+Even when package-local servicepackage clients power server-internal execution, caller-facing workflow trigger/status contracts and their I/O schemas remain workflow plugin boundary owned. Internal client reuse does not transfer boundary ownership to servicepackages.
 
-## Internal Package Default (Pure Capability)
+## Internal Servicepackage Default (Pure Capability)
 ```text
-packages/<domain>/src/
+services/<capability>/src/
   domain/*
   service/*
   procedures/*
@@ -93,10 +93,10 @@ packages/<domain>/src/
 - `service/*`: pure use-case logic with injected dependencies.
 - `procedures/*`: internal procedure boundary (schema + handlers).
 - `context.ts`: shared context contract consumed by procedures/router/client.
-- `router.ts`: package-internal route composition that consumes shared context contracts.
+- `router.ts`: servicepackage-internal route composition that consumes shared context contracts.
 - `client.ts`: default internal invocation path.
-- `errors.ts`: package-level typed errors.
-- `index.ts`: package export surface.
+- `errors.ts`: servicepackage-level typed errors.
+- `index.ts`: servicepackage export surface.
 
 ## Core Infrastructure Layering Contract (D-014)
 Status note: this section is canonical D-014 language mapped to `DECISIONS.md`.
@@ -104,14 +104,14 @@ Status note: this section is canonical D-014 language mapped to `DECISIONS.md`.
 | Layer | Owns | Must not own |
 | --- | --- | --- |
 | Shared infrastructure primitives (`packages/*` shared modules) | transport-neutral context/auth/db-ready ports, metadata types, pure helper/factory contracts | caller-facing workflow/API contracts, host mount wiring |
-| Capability package internals (`packages/<domain>/src/*`) | domain/service/procedures/internal client using injected ports | boundary contract ownership, concrete host adapter creation |
-| Boundary plugins (`plugins/api/*`, `plugins/workflows/*`) | caller-facing contracts/operations/router wiring to package clients | package-domain ownership transfer, global singleton adapter construction |
-| Host composition (`apps/*`, `rawr.hq.ts`) | concrete adapter construction, dependency assembly, route registration/mount order | package-domain logic, boundary contract ownership |
+| Capability servicepackage internals (`services/<capability>/src/*`) | domain/service/procedures/internal client using injected ports | boundary contract ownership, concrete host adapter creation |
+| Boundary plugins (`plugins/api/*`, `plugins/workflows/*`) | caller-facing contracts/operations/router wiring to servicepackage clients | servicepackage-domain ownership transfer, global singleton adapter construction |
+| Host composition (`apps/*`, `rawr.hq.ts`) | concrete adapter construction, dependency assembly, route registration/mount order | servicepackage domain logic, boundary contract ownership |
 
 ### Deterministic guarantees
-1. Package internal clients stay the server-internal default and consume infrastructure through typed context ports.
-2. Plugin authors receive deterministic wiring expectations: boundary context + package client injection + no local HTTP self-call default.
-3. Concrete auth/db/runtime adapter selection remains a host/composition concern and can evolve without package contract churn.
+1. Package-local servicepackage internal clients stay the server-internal default and consume infrastructure through typed context ports.
+2. Plugin authors receive deterministic wiring expectations: boundary context + servicepackage client injection + no local HTTP self-call default.
+3. Concrete auth/db/runtime adapter selection remains a host/composition concern and can evolve without servicepackage contract churn.
 4. Shared infrastructure remains transport-neutral and reusable across API, workflow, and durable-runtime contexts.
 5. This contract does not alter D-005, D-006, D-007, D-011, or D-012 semantics.
 
@@ -119,7 +119,7 @@ Status note: this section is canonical D-014 language mapped to `DECISIONS.md`.
 
 ### Domain layer
 ```ts
-// packages/invoicing/src/domain/status.ts
+// services/invoicing/src/domain/status.ts
 import { Type, type Static } from "typebox";
 
 export const InvoiceStatusSchema = Type.Union([
@@ -138,7 +138,7 @@ export function canCancel(status: InvoiceStatus) {
 ```
 
 ```ts
-// packages/invoicing/src/domain/run.ts
+// services/invoicing/src/domain/run.ts
 import { Type, type Static } from "typebox";
 import { InvoiceStatusSchema } from "./status";
 
@@ -154,7 +154,7 @@ export type InvoiceRun = Static<typeof InvoiceRunSchema>;
 
 ### Service layer
 ```ts
-// packages/invoicing/src/service/lifecycle.ts
+// services/invoicing/src/service/lifecycle.ts
 import type { InvoiceRun } from "../domain/run";
 
 export type InvoiceServiceDeps = {
@@ -175,7 +175,7 @@ export async function startInvoice(
 ```
 
 ```ts
-// packages/invoicing/src/service/status.ts
+// services/invoicing/src/service/status.ts
 export async function getInvoiceStatus(deps: InvoiceServiceDeps, input: { runId: string }) {
   const run = await deps.getRun(input.runId);
   return run ? { runId: run.runId, status: run.status } : { runId: input.runId, status: "failed" as const };
@@ -183,7 +183,7 @@ export async function getInvoiceStatus(deps: InvoiceServiceDeps, input: { runId:
 ```
 
 ```ts
-// packages/invoicing/src/service/cancellation.ts
+// services/invoicing/src/service/cancellation.ts
 export async function cancelInvoice(deps: InvoiceServiceDeps, input: { runId: string }) {
   const run = await deps.getRun(input.runId);
   if (!run || !canCancel(run.status)) return { accepted: false as const };
@@ -194,7 +194,7 @@ export async function cancelInvoice(deps: InvoiceServiceDeps, input: { runId: st
 
 ### Internal procedure boundary
 ```ts
-// packages/invoicing/src/procedures/start.ts
+// services/invoicing/src/procedures/start.ts
 import { ORPCError, os } from "@orpc/server";
 import { Type } from "typebox";
 import { schema } from "@rawr/hq-sdk";
@@ -216,7 +216,7 @@ export const startProcedure = o
 ```
 
 ```ts
-// packages/invoicing/src/procedures/index.ts
+// services/invoicing/src/procedures/index.ts
 export const invoiceProcedures = {
   start: startProcedure,
   getStatus: getStatusProcedure,
@@ -225,7 +225,7 @@ export const invoiceProcedures = {
 ```
 
 ```ts
-// packages/invoicing/src/context.ts
+// services/invoicing/src/context.ts
 import type { InvoiceServiceDeps } from "./service/lifecycle";
 
 export type InvoiceProcedureContext = { deps: InvoiceServiceDeps };
@@ -233,14 +233,14 @@ export type InvoiceProcedureContext = { deps: InvoiceServiceDeps };
 
 ### Internal client default
 ```ts
-// packages/invoicing/src/router.ts
+// services/invoicing/src/router.ts
 import { invoiceProcedures } from "./procedures";
 
 export const invoiceInternalRouter = invoiceProcedures;
 ```
 
 ```ts
-// packages/invoicing/src/client.ts
+// services/invoicing/src/client.ts
 import { createRouterClient } from "@orpc/server";
 import { invoiceInternalRouter } from "./router";
 import type { InvoiceProcedureContext } from "./context";
@@ -251,7 +251,7 @@ export function createInvoiceInternalClient(context: InvoiceProcedureContext) {
 ```
 
 ```ts
-// packages/invoicing/src/errors.ts
+// services/invoicing/src/errors.ts
 export class InvoiceNotFoundError extends Error {
   constructor(public readonly runId: string) {
     super(`Invoice run not found: ${runId}`);
@@ -260,7 +260,7 @@ export class InvoiceNotFoundError extends Error {
 ```
 
 ```ts
-// packages/invoicing/src/index.ts
+// services/invoicing/src/index.ts
 export * from "./domain/run";
 export * from "./service";
 export { invoiceInternalRouter } from "./router";
@@ -285,7 +285,7 @@ export async function startInvoiceOperation(
 2. Internal layered defaults may include: `domain/*`, `service/*`, `procedures/*`, `errors.ts`.
 3. Domain filenames omit redundant domain prefixes when already scoped by folder (`domain/status.ts`, not `domain/invoice-status.ts` for `invoicing`).
 4. Domain schema modules co-locate TypeBox schema values and static type exports.
-5. Prefer concise domain naming for package/plugin directories when unambiguous (`packages/invoicing`, `plugins/api/invoicing`).
+5. Prefer concise capability naming for servicepackage/plugin directories when unambiguous (`services/invoicing`, `plugins/api/invoicing`).
 6. Shared context contract defaults to `context.ts` (or equivalent dedicated module), consumed by routers/clients.
 7. In docs, prefer `schema({...})` for object-root wrappers (`schema({...})` => `std(Type.Object({...}))`).
 8. Keep `std(...)` (or `typeBoxStandardSchema(...)`) explicit for non-`Type.Object` roots.

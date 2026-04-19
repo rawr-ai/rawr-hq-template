@@ -257,6 +257,31 @@ Instead:
 - keep provider output under `context.provided.*`
 - do **not** flatten provider-derived resources to top-level runtime lanes
 
+## Coordination Clarification (2026-03-24)
+
+The coordination cleanup no longer needs a package-edge exception.
+
+The canonical servicepackage boundary remains:
+
+- `defineServicePackage(router)`
+- boundary inputs on `deps`, `scope`, and `config`
+- per-call input on `invocation`
+- execution-time provider/module outputs under `context.provided.*`
+
+The coordination runs runtime now follows the default rule directly:
+
+- the stable host-owned prerequisite is declared on `deps.runsRuntime?`
+- queue-only middleware turns that optional dep into
+  `context.provided.runExecution`
+- workflow/read routes do not depend on that middleware and therefore do not
+  require the runtime at client construction
+
+That is the intended teaching example for **optional stable capabilities**:
+
+- optional at the package boundary
+- normalized locally where execution actually needs them
+- absent from routes that do not need them
+
 ## Why This Slice Exists
 
 Today, the service authoring site is already close to the right mental model.

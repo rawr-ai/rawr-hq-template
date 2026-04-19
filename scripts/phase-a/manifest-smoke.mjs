@@ -4,7 +4,6 @@ import path from "node:path";
 import ts from "typescript";
 import {
   asObjectLiteral,
-  findVariableObjectLiteral,
   getObjectPropertyInitializer,
   hasIdentifierCall,
   hasNamedImport,
@@ -59,37 +58,6 @@ function isFunctionLikeExpression(node) {
   return Boolean(unwrapped && (ts.isArrowFunction(unwrapped) || ts.isFunctionExpression(unwrapped)));
 }
 
-function capabilitiesAreStructured(manifestObject) {
-  const workflowsObject = asObjectLiteral(getObjectPropertyInitializer(manifestObject, "workflows"));
-  if (!workflowsObject) return false;
-  const capabilitiesObject = asObjectLiteral(getObjectPropertyInitializer(workflowsObject, "capabilities"));
-  if (!capabilitiesObject) return false;
-
-  const capabilityEntries = capabilitiesObject.properties.filter(ts.isPropertyAssignment);
-  if (capabilityEntries.length === 0) return false;
-
-  return capabilityEntries.every((entry) => {
-    const capabilityObject = asObjectLiteral(entry.initializer);
-    if (!capabilityObject) return false;
-    const pathPrefixInit = getObjectPropertyInitializer(capabilityObject, "pathPrefix");
-    return Boolean(pathPrefixInit && ts.isStringLiteral(pathPrefixInit) && pathPrefixInit.text.startsWith("/"));
-  });
-}
-
-function hasManifestCompositionSeams(manifestObject) {
-  const orpcObject = asObjectLiteral(getObjectPropertyInitializer(manifestObject, "orpc"));
-  const workflowsObject = asObjectLiteral(getObjectPropertyInitializer(manifestObject, "workflows"));
-  const inngestObject = asObjectLiteral(getObjectPropertyInitializer(manifestObject, "inngest"));
-  if (!orpcObject || !workflowsObject || !inngestObject) return false;
-
-  const hasOrpcRouter = Boolean(getObjectPropertyInitializer(orpcObject, "router"));
-  const hasTriggerRouter = Boolean(getObjectPropertyInitializer(workflowsObject, "triggerRouter"));
-  const hasInngestClient = Boolean(getObjectPropertyInitializer(inngestObject, "client"));
-  const hasInngestFunctions = Boolean(getObjectPropertyInitializer(inngestObject, "functions"));
-  const hasInngestHandler = Boolean(getObjectPropertyInitializer(inngestObject, "handler"));
-  return hasOrpcRouter && hasTriggerRouter && hasInngestClient && hasInngestFunctions && hasInngestHandler;
-}
-
 const requiredChecks = [
   { label: "/api/inngest mount registration", ok: hasRouteRegistration(rawrAst, "/api/inngest") },
   { label: "/rpc routing registration", ok: hasRouteRegistration(orpcAst, "/rpc") },
@@ -97,20 +65,18 @@ const requiredChecks = [
 ];
 
 if (mode === "completion") {
-  const workflowCapabilities = manifestAst ? findVariableObjectLiteral(manifestAst, "rawrHqWorkflowCapabilities") : undefined;
-
-  requiredChecks.push({
-    label: "manifest exports structured workflow capability mapping",
-    ok: Boolean(workflowCapabilities && capabilityMappingIsStructured(workflowCapabilities)),
-  });
   requiredChecks.push({
     label: "manifest declares package-owned composition seams",
     ok:
       manifestSource.includes("export function createRawrHqManifest") &&
       manifestSource.includes("router: composedOrpcRouter") &&
-      manifestSource.includes("triggerRouter: composedWorkflowTriggerRouter") &&
-      manifestSource.includes("functions: supportExampleInngestFunctions") &&
-      manifestSource.includes("handler: createInngestServeHandler"),
+      manifestSource.includes("surfaces: composedWorkflowSurface.surfaces") &&
+      manifestSource.includes("triggerContract: composedWorkflowSurface.triggerContract") &&
+      manifestSource.includes("triggerRouter: composedWorkflowSurface.triggerRouter") &&
+      manifestSource.includes("registerCoordinationWorkflowPlugin") &&
+      manifestSource.includes("composeWorkflowPlugins") &&
+      !manifestSource.includes("createInngestServeHandler") &&
+      !manifestSource.includes("new Inngest("),
   });
   requiredChecks.push({
     label: "host imports manifest authority seam",
@@ -118,34 +84,38 @@ if (mode === "completion") {
   });
   requiredChecks.push({
     label: "host wires /api/workflows capability-family routing",
-    ok: hasRouteRegistration(rawrAst, "/api/workflows/*") && hasIdentifierCall(rawrAst, "resolveWorkflowCapability"),
+    ok:
+      hasRouteRegistration(rawrAst, "/api/workflows/*") &&
+      hasIdentifierCall(rawrAst, "createWorkflowRouteHarness") &&
+      !hasIdentifierCall(rawrAst, "resolveWorkflowCapability"),
   });
   requiredChecks.push({
-    label: "host consumes manifest workflow capability map",
-    ok: hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "capabilities"]),
+    label: "manifest exposes workflow surface metadata instead of path-prefix authority",
+    ok:
+      !manifestSource.includes("rawrHqWorkflowCapabilities") &&
+      manifestSource.includes("surfaces: composedWorkflowSurface.surfaces"),
   });
   requiredChecks.push({
     label: "host consumes manifest workflow trigger router seam",
-    ok: hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "triggerRouter"]),
+    ok:
+      hasIdentifierCall(rawrAst, "createWorkflowRouteHarness") &&
+      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows"]),
   });
   requiredChecks.push({
-    label: "host consumes manifest inngest seams",
+    label: "host composes workflow runtime from manifest workflow shells instead of host-local capability imports",
     ok:
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "client"]) &&
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "handler"]),
+      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "createInngestFunctions"]) &&
+      hasIdentifierCall(rawrAst, "createHostInngestBundle") &&
+      !rawrSource.includes("rawrHqManifest.inngest"),
   });
   requiredChecks.push({
     label: "host consumes manifest-owned ORPC router seam",
     ok: hasRegisterOrpcRoutesManifestRouter(rawrAst) && hasIdentifierCall(rawrAst, "createRawrHqManifest"),
   });
   requiredChecks.push({
-    label: "host avoids app-internal ad-hoc seam composition",
+    label: "host avoids bypassing manifest orpc authority while owning runtime ingress composition",
     ok:
-      !hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createCoordinationInngestFunction") &&
-      !hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createInngestServeHandler") &&
       !hasNamedImport(rawrAst, "./orpc", "createOrpcRouter") &&
-      !hasIdentifierCall(rawrAst, "createCoordinationInngestFunction") &&
-      !hasIdentifierCall(rawrAst, "createInngestServeHandler") &&
       !hasIdentifierCall(rawrAst, "createOrpcRouter"),
   });
   requiredChecks.push({
@@ -153,18 +123,6 @@ if (mode === "completion") {
     ok:
       !hasStringLiteral(rawrAst, (value) => value.includes("/rpc/workflows")) &&
       !hasStringLiteral(orpcAst, (value) => value.includes("/rpc/workflows")),
-  });
-}
-
-function capabilityMappingIsStructured(capabilitiesObject) {
-  const capabilityEntries = capabilitiesObject.properties.filter(ts.isPropertyAssignment);
-  if (capabilityEntries.length === 0) return false;
-
-  return capabilityEntries.every((entry) => {
-    const capabilityObject = asObjectLiteral(entry.initializer);
-    if (!capabilityObject) return false;
-    const pathPrefixInit = getObjectPropertyInitializer(capabilityObject, "pathPrefix");
-    return Boolean(pathPrefixInit && ts.isStringLiteral(pathPrefixInit) && pathPrefixInit.text.startsWith("/"));
   });
 }
 

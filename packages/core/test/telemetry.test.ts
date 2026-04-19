@@ -5,7 +5,7 @@ import {
   __resetRawrOrpcTelemetryForTests,
   __resolveRawrOrpcTelemetryOptionsForTests,
   installRawrOrpcTelemetry,
-} from "../src/orpc/telemetry";
+} from "../src/telemetry";
 
 function createExporter(): SpanExporter {
   return {

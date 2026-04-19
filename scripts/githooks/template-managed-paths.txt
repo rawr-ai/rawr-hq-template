@@ -15,7 +15,7 @@ packages/hq/**
 packages/journal/**
 packages/security/**
 packages/session-tools/**
-packages/state/**
+services/state/**
 packages/test-utils/**
 packages/ui-sdk/**
 plugins/cli/plugins/**

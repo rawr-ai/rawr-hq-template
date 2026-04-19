@@ -26,5 +26,5 @@
 - `../../packages/core/AGENTS.md` for `RawrCommand` contract.
 - `../../packages/journal/AGENTS.md` for journal persistence/indexing.
 - `../../packages/security/AGENTS.md` for security gate/check surfaces.
-- `../../packages/state/AGENTS.md` for repo state persistence.
+- `../../services/state/AGENTS.md` for repo state persistence.
 - `../../docs/process/HQ_USAGE.md` for operator-facing command usage.

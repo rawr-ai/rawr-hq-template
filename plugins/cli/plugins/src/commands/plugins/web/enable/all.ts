@@ -4,7 +4,7 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 import { loadRawrConfig } from "@rawr/control-plane";
 import { RawrCommand } from "@rawr/core";
-import { enablePlugin as persistEnablePlugin } from "@rawr/state";
+import { enablePlugin as persistEnablePlugin } from "@rawr/state/repo-state";
 
 import { loadSecurityModule, missingSecurityFn } from "../../../../lib/security";
 import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../../lib/workspace-plugins";

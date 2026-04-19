@@ -1,0 +1,39 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "plugin-api-coordination",
+  "root": "plugins/api/coordination",
+  "sourceRoot": "plugins/api/coordination/src",
+  "tags": [
+    "type:plugin",
+    "migration-slice:structural-tranche",
+    "role:api",
+    "surface:orpc",
+    "capability:coordination"
+  ],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx tsc -p plugins/api/coordination/tsconfig.json --noEmit"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"plugins/api/coordination/**/*.{js,jsx,ts,tsx}\""
+      }
+    },
+    "sync": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run sync:check --project plugin-api-coordination"
+      }
+    },
+    "structural": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun scripts/phase-03/verify-plugin-api-coordination-structural.mjs"
+      }
+    }
+  }
+}

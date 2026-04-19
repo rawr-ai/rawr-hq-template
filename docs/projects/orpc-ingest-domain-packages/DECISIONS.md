@@ -6,22 +6,22 @@ Operational guidance belongs in `guidance.md`; worked walk-throughs belong in `e
 ## Decision #1 (2026-02-25)
 
 ### Question
-Do we automatically expose/export a package-level contract derived from the domain router from day one?
+Do we automatically expose/export a servicepackage-level contract derived from the servicepackage router from day one?
 
 ### Decision
 No, not for now.
 
 ### Why
-For in-process usage, callers use the router client created from the router itself (`createRouterClient(router, { context })`). A package-level exported contract is not required for internal consumption.
+For in-process usage, callers use the router client created from the router itself (`createRouterClient(router, { context })`). A servicepackage-level exported contract is not required for internal consumption.
 
-This domain package is also not a public API surface. External/OpenAPI exposure is handled by the plugin boundary, not by exporting package contracts directly from domain packages.
+This servicepackage is also not a public API surface. External/OpenAPI exposure is handled by the plugin boundary, not by exporting servicepackage contracts directly from servicepackages.
 
-The remaining value of package-level contract extraction is drift/snapshot tooling, which is valid but intentionally deferred.
+The remaining value of servicepackage-level contract extraction is drift/snapshot tooling, which is valid but intentionally deferred.
 
 ## Decision #2 (2026-03-04)
 
 ### Question
-What is the canonical domain-package topology (and choke points) for agents?
+What is the canonical servicepackage topology (and choke points) for agents?
 
 ### Decision
 Use a two-layer structure with **explicit contract bubble-up** and **one router composition choke point**:
@@ -29,7 +29,7 @@ Use a two-layer structure with **explicit contract bubble-up** and **one router 
 - **Layer 1 — kit seam (`src/orpc-sdk.ts`, `src/orpc/*`)**: local proto-SDK kit primitives (no domain concretions)
 - **Layer 2 — service surface (`src/service/`)**: service definition + middleware + modules + root contract composition
 
-In addition, each domain package has one oRPC-native composition file (central implementer):
+In addition, each servicepackage has one oRPC-native composition file (central implementer):
 
 - `src/service/impl.ts`: root contract implementation + package-wide middleware stacking (the “official ORPC.ts pattern”, local-first)
 
@@ -64,7 +64,7 @@ Required service middleware extension is now part of that topology contract:
 ## Decision #3 (2026-02-26)
 
 ### Question
-For router-client-only domain packages, should we keep legacy catalog/unwrap translation layers?
+For router-client-only servicepackages, should we keep legacy catalog/unwrap translation layers?
 
 ### Decision
 No. Use ORPC-native boundary contracts and remove legacy indirection from active paths.
@@ -145,6 +145,8 @@ Keep a single dedicated dependency bag at `context.deps` for host-provided, stab
 Concretely:
 
 - baseline deps and service deps are a type-authoring distinction only (`BaseDeps` extended by service deps),
+- service-declared deps may be **optional stable host capabilities** when only a
+  subset of procedures can execute without them,
 - capability contracts used by baseline deps should still live under
   `src/orpc/ports/*` when they are swappable package-facing contracts (for
   example logger and analytics),
@@ -165,6 +167,16 @@ It keeps runtime semantics legible:
 - `context.config.*` means “stable package behavior/configuration”,
 - `context.invocation.*` means “per-call input enforced by the package boundary”,
 - `context.provided.*` means “execution value attached during the pipeline”.
+
+Procedure-local narrowing is the expected way to turn an optional stable dep
+into a required execution capability for only the routes that need it. The
+coordination runs runtime is the canonical example:
+
+- `deps.runsRuntime?` stays optional at the package boundary so workflow-only
+  callers can use the canonical root client directly
+- queue-only middleware normalizes that optional dep to
+  `context.provided.runExecution`
+- read routes never depend on that provider
 
 ## Decision #8 (2026-03-10)
 
@@ -227,24 +239,24 @@ boundary rule:
 ## Decision #9 (2026-03-12)
 
 ### Question
-How should telemetry work across hosts, plugins, and service packages?
+How should telemetry work across hosts, plugins, and servicepackages?
 
 ### Decision
 Telemetry is a **host-owned OpenTelemetry bootstrap + oRPC/OTel context
-propagation seam**, not a service-package dependency seam.
+propagation seam**, not a servicepackage dependency seam.
 
 Concretely:
 
 - each host/runtime bootstraps its own OpenTelemetry SDK once
 - the canonical bootstrap helper lives in `packages/core/src/orpc/telemetry.ts`
 - hosts register oRPC instrumentation during bootstrap
-- service packages and plugins consume the active span from OpenTelemetry
+- servicepackages and plugins consume the active span from OpenTelemetry
   runtime context
-- service packages own telemetry semantics (attributes/events/log enrichment),
+- servicepackages own telemetry semantics (attributes/events/log enrichment),
   not SDK bootstrap
 - plugin and host request/network middleware own ingress/request telemetry
-  outside service-package boundaries
-- telemetry does **not** travel through service package boundaries as
+  outside servicepackage boundaries
+- telemetry does **not** travel through servicepackage boundaries as
   `BaseDeps.telemetry`
 
 ### Why
@@ -262,9 +274,9 @@ This supports:
 
 - one shared host runtime today
 - multiple future hosts later
-- stable downstream package shape across hosts
+- stable downstream servicepackage shape across hosts
 - plugin-specific ingress/request telemetry without forcing host bootstrap into
-  service packages
+  servicepackages
 
 ### Implication
 Telemetry is intentionally different from other seams such as SQL:
@@ -274,3 +286,58 @@ Telemetry is intentionally different from other seams such as SQL:
 
 Migration should move package observability code toward active-span access and
 remove telemetry from the package dependency model.
+
+## Decision #10 (2026-03-24)
+
+### Question
+Can a servicepackage bypass `defineServicePackage(router)` and seed
+`context.provided.*` directly at the package boundary?
+
+### Decision
+The canonical answer is **no**.
+
+`defineServicePackage(router)` remains the default and authoritative
+servicepackage client shell:
+
+- construction-time input stays on `deps`, `scope`, and `config`
+- per-call input still arrives on `invocation`
+- `provided` remains execution context, not a second public boundary bag
+
+There is one narrow allowed exception:
+
+- a package may locally seed `context.provided.*` at the package edge only for
+  a **package-specific runtime capability**
+- that capability must be consumed by a subset of procedures rather than the
+  whole servicepackage
+- it must be immediately normalized by local middleware or module setup
+- it must remain local to that package; do not promote it into HQ SDK or treat
+  it as a new general boundary pattern without a second real consumer and an
+  explicit SDK design slice
+
+Today, `services/coordination/src/client.ts` is the only accepted example of
+that exception.
+
+### Why
+The default servicepackage shell has to stay semantically stable across the
+repo so that in-kind packages share one recognizable boundary shape.
+
+At the same time, some runtime-facing packages may need to bridge a
+package-specific execution capability from plugin/host composition into a
+service-local execution lane without lying about the whole service boundary.
+That is a runtime exception, not a new default abstraction.
+
+This preserves both truths:
+
+- golden-example servicepackages still teach the canonical shell
+- a narrow runtime bridge can exist without forcing package-specific execution
+  concerns into HQ SDK prematurely
+
+### Guardrails
+If you hit this exception path:
+
+- document it explicitly in the package and in the front-door design docs
+- keep the seeded value package-specific and runtime-specific
+- normalize it under local middleware before handler consumption
+- do not cargo-cult the pattern into other servicepackages
+- do not use it to hide ordinary host dependencies that should just be
+  declared on `deps`

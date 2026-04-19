@@ -1,6 +1,6 @@
 # Telemetry Migration Implementation Plan
 
-Role: execution plan and checklist of record for migrating domain packages to the canonical telemetry model
+Role: execution plan and checklist of record for migrating servicepackages to the canonical telemetry model
 
 ```yaml
 role: telemetry-migration-plan
@@ -199,9 +199,9 @@ Slice 0 -> Slice 1 -> Slice 2 -> Slice 3 -> Slice 4
 
 At the end of this migration:
 
-- telemetry is no longer part of the service-package dependency model
+- telemetry is no longer part of the servicepackage dependency model
 - host/runtime bootstrap is the only canonical telemetry infrastructure seam
-- service/package observability consumes the active span from OpenTelemetry
+- servicepackage observability consumes the active span from OpenTelemetry
   runtime context
 - package tests and docs no longer teach package-local telemetry creation as
   the architectural seam
@@ -235,12 +235,12 @@ Acceptance criteria:
 Verification:
 
 - the following docs exist:
-  - `docs/projects/orpc-ingest-domain-packages/TELEMETRY_DESIGN.md`
-  - `docs/projects/orpc-ingest-domain-packages/TELEMETRY_MIGRATION_IMPLEMENTATION_PLAN.md`
-  - `docs/projects/orpc-ingest-domain-packages/DECISIONS.md`
-  - `docs/projects/orpc-ingest-domain-packages/guidance.md`
+  - `./TELEMETRY_DESIGN.md`
+  - `./TELEMETRY_MIGRATION_IMPLEMENTATION_PLAN.md`
+  - `./DECISIONS.md`
+  - `./guidance.md`
 - run from repo root:
-  - `rg -n "host-owned OpenTelemetry bootstrap|active span from OpenTelemetry context|not modeled as a service-package dependency" docs/projects/orpc-ingest-domain-packages/TELEMETRY_DESIGN.md docs/projects/orpc-ingest-domain-packages/DECISIONS.md docs/projects/orpc-ingest-domain-packages/guidance.md`
+  - `rg -n "host-owned OpenTelemetry bootstrap|active span from OpenTelemetry context|not modeled as a servicepackage dependency" ./TELEMETRY_DESIGN.md ./DECISIONS.md ./guidance.md`
 - the `rg` command above must return matches in:
   - `TELEMETRY_DESIGN.md`
   - `DECISIONS.md`
@@ -248,7 +248,7 @@ Verification:
 - the conflict inventory in this plan names all currently known telemetry seam
   conflict surfaces:
   - `services/example-todo/src/orpc/baseline/types.ts`
-  - `services/example-todo/src/orpc/boundary/domain-package.ts`
+  - `services/example-todo/src/orpc/boundary/servicepackage.ts`
   - `services/example-todo/src/orpc/service/define.ts`
   - `services/example-todo/src/orpc/middleware/observability/*`
   - `services/example-todo/test/helpers.ts`
@@ -271,7 +271,7 @@ Gate:
 
 Goal:
 
-- break the false architectural model that telemetry is part of package deps
+- break the false architectural model that telemetry is part of servicepackage deps
 
 Work:
 
@@ -283,7 +283,7 @@ Work:
 Primary targets:
 
 - `services/example-todo/src/orpc/baseline/types.ts`
-- `services/example-todo/src/orpc/boundary/domain-package.ts`
+- `services/example-todo/src/orpc/boundary/servicepackage.ts`
 - `services/example-todo/src/orpc/service/define.ts`
 - `services/example-todo/src/client.ts`
 
@@ -299,11 +299,11 @@ Verification:
   - `bun run typecheck`
 - static audit commands must satisfy all of the following:
   - `rg -n "telemetry: Telemetry" services/example-todo/src/orpc/baseline/types.ts services/example-todo/src/orpc/service/define.ts` returns no matches
-  - `rg -n "deps: BaseDeps" services/example-todo/src/orpc/boundary/domain-package.ts` returns no matches
+  - `rg -n "deps: BaseDeps" services/example-todo/src/orpc/boundary/servicepackage.ts` returns no matches
   - `rg -n "telemetry: createOpenTelemetryAdapter\\(|telemetry:\\s*createOpenTelemetryAdapter" services/example-todo/src/client.ts services/example-todo/test/helpers.ts` returns no matches in `src/client.ts`
 - code-state assertions:
   - `services/example-todo/src/orpc/baseline/types.ts` no longer declares `telemetry` on `BaseDeps`
-  - `services/example-todo/src/orpc/boundary/domain-package.ts` no longer requires `deps: BaseDeps` as the package-boundary contract
+  - `services/example-todo/src/orpc/boundary/servicepackage.ts` no longer requires `deps: BaseDeps` as the servicepackage-boundary contract
   - `services/example-todo/src/client.ts` / `CreateClientOptions["deps"]` no longer imply telemetry belongs in client construction input
   - `services/example-todo/test/context-typing.ts` contains a negative typing assertion proving telemetry is not part of `CreateClientOptions["deps"]`
 
@@ -311,7 +311,7 @@ Gate:
 
 - [x] Slice 1 gate sign-off recorded
 - do not migrate tests yet if code still supports both seams at once
-- do not start service-local observability cleanup until package boundary
+- do not start service-local observability cleanup until servicepackage boundary
   typing no longer admits telemetry-through-deps as the canonical model
 
 ### Slice 2 — Migrate observability middleware to active-span access
@@ -321,13 +321,13 @@ Gate:
 
 Goal:
 
-- move service/package observability to the canonical runtime seam
+- move servicepackage observability to the canonical runtime seam
 
 Work:
 
 - rewrite baseline and additive observability paths to read the active span
   from OpenTelemetry runtime context
-- keep service/package observability semantics intact:
+- keep servicepackage observability semantics intact:
   - attributes
   - events
   - log enrichment
@@ -342,7 +342,7 @@ Primary targets:
 Acceptance criteria:
 
 - [x] no observability path reads `context.deps.telemetry`
-- [x] service/package observability still enriches the active span correctly
+- [x] servicepackage observability still enriches the active span correctly
 - [x] required service observability middleware no longer relies on telemetry in the dependency-driven context shape
 - [x] behavior degrades safely when no active span exists
 
@@ -375,13 +375,13 @@ Gate:
 
 Goal:
 
-- eliminate the misleading local telemetry seam from tests and package docs
+- eliminate the misleading local telemetry seam from tests and servicepackage docs
 
 Work:
 
 - stop creating telemetry in package test helpers as if that were the
   architectural boundary
-- remove or demote package-local telemetry seam artifacts that still look
+- remove or demote servicepackage-local telemetry seam artifacts that still look
   canonical
 - align test setup with host bootstrap + active-span context
 
@@ -397,7 +397,7 @@ Acceptance criteria:
 
 - [x] tests no longer teach package-local telemetry creation as the main seam
 - [x] no package helper suggests callers should inject telemetry through deps
-- [x] package-local telemetry seam files are removed from the package boundary, proto SDK, and tests
+- [x] servicepackage-local telemetry seam files are removed from the servicepackage boundary, proto SDK, and tests
 
 Verification:
 
@@ -413,7 +413,7 @@ Verification:
   - `services/example-todo/test/helpers.ts` does not create or inject telemetry as part of package dependency composition
   - `services/example-todo/test/context-typing.ts` no longer teaches telemetry-through-deps
   - `services/example-todo/test/observability.test.ts` no longer seeds telemetry through `deps`
-  - no package-local telemetry seam files remain in the package boundary, proto SDK, or tests
+  - no servicepackage-local telemetry seam files remain in the servicepackage boundary, proto SDK, or tests
 
 Gate:
 
@@ -453,15 +453,15 @@ Verification:
 - static audit commands must satisfy all of the following:
   - `rg -n "context\\.deps\\.telemetry|deps:\\s*\\{[^}]*telemetry|BaseDeps.*telemetry|telemetry:\\s*Telemetry" services/example-todo/src services/example-todo/test` returns no matches
   - `rg -n "createOpenTelemetryAdapter\\(|host-adapters/telemetry/opentelemetry|ports/telemetry" services/example-todo/src services/example-todo/test` returns no matches
-  - `rg -n "telemetry is not modeled as a service-package dependency|host-owned OpenTelemetry bootstrap|active span from OpenTelemetry context|TELEMETRY_MIGRATION_IMPLEMENTATION_PLAN.md" docs/projects/orpc-ingest-domain-packages/TELEMETRY_DESIGN.md docs/projects/orpc-ingest-domain-packages/DECISIONS.md docs/projects/orpc-ingest-domain-packages/guidance.md` returns matches in all three docs
+  - `rg -n "telemetry is not modeled as a servicepackage dependency|host-owned OpenTelemetry bootstrap|active span from OpenTelemetry context|TELEMETRY_MIGRATION_IMPLEMENTATION_PLAN.md" ./TELEMETRY_DESIGN.md ./DECISIONS.md ./guidance.md` returns matches in all three docs
 - code-state assertions:
   - the canonical telemetry model is represented only by host bootstrap + active-span consumption
-  - no package boundary or package authoring surface implies telemetry belongs in service deps
+  - no servicepackage boundary or servicepackage authoring surface implies telemetry belongs in service deps
   - `services/example-todo/src/client.ts` no longer implies telemetry in `CreateClientOptions["deps"]`
   - `services/example-todo/src/orpc/service/define.ts` no longer constrains observability builders around `deps.telemetry`
   - `services/example-todo/src/orpc/middleware/observability/*` reads active span from runtime context
   - `services/example-todo/src/service/middleware/observability.ts` still contributes service semantics without reintroducing dependency injection
-  - no package-local telemetry seam artifacts remain in `services/example-todo/src` or `services/example-todo/test`
+  - no servicepackage-local telemetry seam artifacts remain in `services/example-todo/src` or `services/example-todo/test`
 
 Gate:
 
@@ -499,7 +499,7 @@ The `review` role must verify:
 The `design_check` role must verify:
 
 - resulting code still matches `TELEMETRY_DESIGN.md`
-- no local shortcut reintroduces telemetry as a service-package dependency seam
+- no local shortcut reintroduces telemetry as a servicepackage dependency seam
 - no implementation drift weakens the host-bootstrap ownership model
 
 ### Do not turn this into
@@ -513,7 +513,7 @@ The `design_check` role must verify:
 ### Conflict surfaces
 
 - `services/example-todo/src/orpc/baseline/types.ts`
-- `services/example-todo/src/orpc/boundary/domain-package.ts`
+- `services/example-todo/src/orpc/boundary/servicepackage.ts`
 - `services/example-todo/src/orpc/service/define.ts`
 - `services/example-todo/src/orpc/middleware/observability/*`
 - `services/example-todo/src/orpc/ports/telemetry.ts`
@@ -543,10 +543,10 @@ The `design_check` role must verify:
 
 This migration is complete when all of the following are true:
 
-- telemetry is not part of service-package dependency composition
+- telemetry is not part of servicepackage dependency composition
 - host bootstrap remains the single source of truth for telemetry
   infrastructure
-- service/package observability uses the active span from runtime context
+- servicepackage observability uses the active span from runtime context
 - package tests and examples no longer teach telemetry-through-deps
 - the docs packet describes only the canonical telemetry model plus explicit
   migration history where needed

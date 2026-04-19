@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { enablePlugin } from "@rawr/state";
+import { enablePlugin } from "@rawr/state/repo-state";
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
 

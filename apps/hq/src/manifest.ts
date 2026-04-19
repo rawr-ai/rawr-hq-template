@@ -1,14 +1,28 @@
 import { randomUUID } from "node:crypto";
-import { createRouterClient, type RouterClient } from "@orpc/server";
-import { createInngestServeHandler } from "@rawr/coordination-inngest";
-import { createHqRuntimeRouter } from "@rawr/core/orpc";
+import { type RouterClient, createRouterClient } from "@orpc/server";
+import { createClient as createCoordinationClient, type Client as CoordinationClient } from "@rawr/coordination";
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
+import {
+  composeApiPlugins,
+} from "@rawr/hq-sdk/apis";
+import { materializeRequestScopedPluginSurfaces } from "@rawr/hq-sdk/composition";
+import {
+  composeWorkflowPlugins,
+} from "@rawr/hq-sdk/workflows";
+import { createClient as createStateClient, type Client as StateClient } from "@rawr/state";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
+import { registerCoordinationApiPlugin } from "@rawr/plugin-api-coordination/server";
+import { registerExampleTodoApiPlugin } from "@rawr/plugin-api-example-todo/server";
+import { registerStateApiPlugin } from "@rawr/plugin-api-state/server";
+import {
+  registerCoordinationWorkflowPlugin,
+} from "@rawr/plugin-workflows-coordination/server";
+import {
+  registerSupportExampleWorkflowPlugin,
+} from "@rawr/plugin-workflows-support-example/server";
+import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
 import { supportExampleRouter } from "@rawr/support-example/router";
-import { Inngest } from "inngest";
-import { registerExampleTodoApiPlugin } from "../../../plugins/api/example-todo";
-import { createSupportExampleInngestFunctions, registerSupportExampleWorkflowPlugin } from "../../../plugins/workflows/support-example";
 
 type SupportExampleClient = RouterClient<typeof supportExampleRouter>;
 type SupportExampleWorkItem = Awaited<ReturnType<SupportExampleClient["triage"]["items"]["request"]>>["workItem"];
@@ -22,18 +36,16 @@ type SupportExampleServiceDeps = {
   generateWorkItemId: () => string;
 };
 type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
-export type ExampleTodoHostLogger = ExampleTodoBoundary["deps"]["logger"];
+type CoordinationBoundary = Parameters<typeof createCoordinationClient>[0];
+type CoordinationWorkflowClient = CoordinationClient["workflows"];
+type StateBoundary = Parameters<typeof createStateClient>[0];
+export type HostServiceLogger = ExampleTodoBoundary["deps"]["logger"];
 export type CreateRawrHqManifestOptions = {
-  exampleTodoLogger: ExampleTodoHostLogger;
+  hostLogger: HostServiceLogger;
 };
 
 // Keep capability fixture state stable per repo root across requests in local dev/test runs.
 const supportExampleDepsByRepoRoot = new Map<string, SupportExampleServiceDeps>();
-export const rawrHqWorkflowCapabilities = {
-  "support-example": {
-    pathPrefix: "/support-example/triage",
-  },
-} as const;
 
 function createInMemoryTriageWorkItemStore(): SupportExampleServiceDeps["store"] {
   const workItems = new Map<string, SupportExampleWorkItem>();
@@ -81,7 +93,7 @@ function resolveSupportExampleClient(repoRoot: string): SupportExampleClient {
   });
 }
 
-function createExampleTodoBoundary(exampleTodoLogger: ExampleTodoHostLogger): ExampleTodoBoundary {
+function createExampleTodoBoundary(hostLogger: HostServiceLogger): ExampleTodoBoundary {
   let tick = 0;
 
   return {
@@ -93,7 +105,7 @@ function createExampleTodoBoundary(exampleTodoLogger: ExampleTodoHostLogger): Ex
           return new Date(Date.UTC(2026, 1, 25, 0, 0, tick)).toISOString();
         },
       },
-      logger: exampleTodoLogger,
+      logger: hostLogger,
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     },
     scope: {
@@ -108,19 +120,39 @@ function createExampleTodoBoundary(exampleTodoLogger: ExampleTodoHostLogger): Ex
   } satisfies ExampleTodoBoundary;
 }
 
-function passthroughOrpcContext<T>(context: T) {
-  return context;
+function createStateBoundary(repoRoot: string, hostLogger: HostServiceLogger): StateBoundary {
+  return {
+    deps: {
+      logger: hostLogger,
+      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+    },
+    scope: {
+      repoRoot,
+    },
+    config: {},
+  } satisfies StateBoundary;
 }
 
-function enrichSupportExampleWorkflowContext<T extends { repoRoot: string }>(context: T) {
+function createCoordinationBoundary(
+  repoRoot: string,
+  hostLogger: HostServiceLogger,
+): CoordinationBoundary {
   return {
-    ...context,
-    supportExample: resolveSupportExampleClient(context.repoRoot),
-  };
+    deps: {
+      logger: hostLogger,
+      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+    },
+    scope: {
+      repoRoot,
+    },
+    config: {},
+  } satisfies CoordinationBoundary;
 }
 
 export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
+  const coordinationWorkflowClientsByRepoRoot = new Map<string, CoordinationWorkflowClient>();
   const exampleTodoClientsByRepoRoot = new Map<string, ExampleTodoClient>();
+  const stateClientsByRepoRoot = new Map<string, StateClient>();
 
   function resolveExampleTodoClient(repoRoot: string): ExampleTodoClient {
     const existing = exampleTodoClientsByRepoRoot.get(repoRoot);
@@ -128,26 +160,64 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
       return existing;
     }
 
-    const client = createExampleTodoClient(createExampleTodoBoundary(options.exampleTodoLogger));
+    const client = createExampleTodoClient(createExampleTodoBoundary(options.hostLogger));
     exampleTodoClientsByRepoRoot.set(repoRoot, client);
     return client;
   }
 
-  // Host owns the runtime wiring; app authority owns only the composition contract.
-  const supportExampleInngestClient = new Inngest({ id: "rawr-support-example" });
-  const coreOrpcRouter = createHqRuntimeRouter();
+  function resolveCoordinationWorkflowClient(repoRoot: string): CoordinationWorkflowClient {
+    const existing = coordinationWorkflowClientsByRepoRoot.get(repoRoot);
+    if (existing) {
+      return existing;
+    }
+
+    const client = createCoordinationClient(
+      createCoordinationBoundary(repoRoot, options.hostLogger),
+    ).workflows;
+    coordinationWorkflowClientsByRepoRoot.set(repoRoot, client);
+    return client;
+  }
+
+  function resolveStateClient(repoRoot: string): StateClient {
+    const existing = stateClientsByRepoRoot.get(repoRoot);
+    if (existing) {
+      return existing;
+    }
+
+    const client = createStateClient(createStateBoundary(repoRoot, options.hostLogger));
+    stateClientsByRepoRoot.set(repoRoot, client);
+    return client;
+  }
+
+  // Host owns runtime realization. The app manifest only composes plugin registrations
+  // and exposes the capability fixture/client resolvers the host can mount later.
+  const coordinationApiPlugin = registerCoordinationApiPlugin({
+    resolveClient: resolveCoordinationWorkflowClient,
+  });
+  const stateApiPlugin = registerStateApiPlugin({
+    resolveClient: resolveStateClient,
+  });
   const exampleTodoApiPlugin = registerExampleTodoApiPlugin({
     resolveClient: resolveExampleTodoClient,
   });
-  const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin();
-  const composedOrpcRouter = {
-    ...coreOrpcRouter,
-    ...exampleTodoApiPlugin.router,
-  };
-  const composedWorkflowTriggerRouter = supportExampleWorkflowPlugin.router;
-  const supportExampleInngestFunctions = createSupportExampleInngestFunctions({
-    client: supportExampleInngestClient,
+  const composedApiSurface = composeApiPlugins([
+    coordinationApiPlugin,
+    stateApiPlugin,
+    exampleTodoApiPlugin,
+  ] as const);
+  const coordinationWorkflowPlugin = registerCoordinationWorkflowPlugin({
+    resolveAuthoringClient: resolveCoordinationWorkflowClient,
+  });
+  const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin({
     resolveSupportExampleClient,
+  });
+  const composedWorkflowSurface = composeWorkflowPlugins([
+    supportExampleWorkflowPlugin,
+    coordinationWorkflowPlugin,
+  ] as const);
+  const materializedSurfaces = materializeRequestScopedPluginSurfaces<BoundaryRequestSupportContext, typeof composedWorkflowSurface.createInngestFunctions>({
+    api: composedApiSurface,
+    workflows: composedWorkflowSurface,
   });
 
   return {
@@ -157,25 +227,11 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
       },
       supportExample: {
         resolveServiceDeps: resolveSupportExampleDeps,
+        resolveClient: resolveSupportExampleClient,
       },
     },
-    orpc: {
-      router: composedOrpcRouter,
-      enrichContext: passthroughOrpcContext,
-    },
-    workflows: {
-      capabilities: rawrHqWorkflowCapabilities,
-      triggerRouter: composedWorkflowTriggerRouter,
-      enrichContext: enrichSupportExampleWorkflowContext,
-    },
-    inngest: {
-      client: supportExampleInngestClient,
-      functions: supportExampleInngestFunctions,
-      handler: createInngestServeHandler({
-        client: supportExampleInngestClient,
-        functions: supportExampleInngestFunctions,
-      }),
-    },
+    orpc: materializedSurfaces.orpc,
+    workflows: materializedSurfaces.workflows,
   } as const;
 }
 

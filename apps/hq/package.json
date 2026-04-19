@@ -20,11 +20,18 @@
     }
   },
   "dependencies": {
+    "@orpc/contract": "^1.13.5",
     "@orpc/server": "^1.13.5",
-    "@rawr/coordination-inngest": "workspace:*",
-    "@rawr/core": "workspace:*",
+    "@rawr/coordination": "workspace:*",
     "@rawr/example-todo": "workspace:*",
     "@rawr/hq-sdk": "workspace:*",
+    "@rawr/plugin-api-coordination": "workspace:*",
+    "@rawr/plugin-api-example-todo": "workspace:*",
+    "@rawr/plugin-api-state": "workspace:*",
+    "@rawr/plugin-workflows-coordination": "workspace:*",
+    "@rawr/plugin-workflows-support-example": "workspace:*",
+    "@rawr/runtime-context": "workspace:*",
+    "@rawr/state": "workspace:*",
     "@rawr/support-example": "workspace:*",
     "inngest": "3.51.0"
   },
@@ -34,10 +41,11 @@
   },
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
+    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\"",
     "sync": "bun run --cwd ../.. sync:check --project @rawr/hq-app",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-app",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests test/**/*.test.ts"
+    "test": "bunx vitest run --project hq-app"
   },
   "nx": {
     "tags": [

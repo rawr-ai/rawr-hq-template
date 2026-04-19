@@ -36,6 +36,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("apps/hq"),
+        test: { name: "hq-app", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("apps/web"),
         test: {
           name: "web",
@@ -56,18 +61,13 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/coordination"),
+        root: r("services/coordination"),
         test: { name: "coordination", environment: "node", include: [...includes] },
       },
       {
         extends: true,
-        root: r("packages/coordination-inngest"),
-        test: { name: "coordination-inngest", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("packages/coordination-observability"),
-        test: { name: "coordination-observability", environment: "node", include: [...includes] },
+        root: r("plugins/workflows/coordination"),
+        test: { name: "plugin-workflows-coordination", environment: "node", include: [...includes] },
       },
       {
         extends: true,
@@ -86,7 +86,7 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/state"),
+        root: r("services/state"),
         test: { name: "state", environment: "node", include: [...includes] },
       },
       {

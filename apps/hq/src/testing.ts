@@ -7,6 +7,6 @@ const noopLogger = {
 
 export function createTestingRawrHqManifest() {
   return createRawrHqManifest({
-    exampleTodoLogger: noopLogger,
+    hostLogger: noopLogger,
   });
 }

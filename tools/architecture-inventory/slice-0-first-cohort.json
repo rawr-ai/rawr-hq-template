@@ -72,6 +72,34 @@
         "structural"
       ]
     },
+    "plugin-api-coordination": {
+      "config": "plugins/api/coordination/project.json",
+      "tags": [
+        "type:plugin",
+        "migration-slice:structural-tranche",
+        "role:api",
+        "surface:orpc",
+        "capability:coordination"
+      ],
+      "targets": [
+        "sync",
+        "structural"
+      ]
+    },
+    "plugin-api-state": {
+      "config": "plugins/api/state/project.json",
+      "tags": [
+        "type:plugin",
+        "migration-slice:structural-tranche",
+        "role:api",
+        "surface:orpc",
+        "capability:state"
+      ],
+      "targets": [
+        "sync",
+        "structural"
+      ]
+    },
     "eslint-fixtures": {
       "config": "tools/eslint-fixtures/project.json",
       "tags": [

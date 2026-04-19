@@ -4,42 +4,7 @@
  */
 
 export interface paths {
-    "/coordination/workflows": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List saved coordination workflows */
-        get: operations["coordinationListWorkflows"];
-        put?: never;
-        /** Create or update a coordination workflow */
-        post: operations["coordinationSaveWorkflow"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/coordination/workflows/{workflowId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a coordination workflow by id */
-        get: operations["coordinationGetWorkflow"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/coordination/workflows/{workflowId}/validate": {
+    "/exampleTodo/tasks/create": {
         parameters: {
             query?: never;
             header?: never;
@@ -48,74 +13,23 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Validate a coordination workflow */
-        post: operations["coordinationValidateWorkflow"];
+        /** Create a task in the example todo capability */
+        post: operations["exampleTodoCreateTask"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/coordination/workflows/{workflowId}/run": {
+    "/exampleTodo/tasks/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        /** Queue a workflow run */
-        post: operations["coordinationQueueRun"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/coordination/runs/{runId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get workflow run status */
-        get: operations["coordinationGetRunStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/coordination/runs/{runId}/timeline": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get workflow run timeline */
-        get: operations["coordinationGetRunTimeline"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/state/runtime": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Read runtime plugin state */
-        get: operations["stateGetRuntimeState"];
+        /** Get a task from the example todo capability */
+        get: operations["exampleTodoGetTask"];
         put?: never;
         post?: never;
         delete?: never;
@@ -136,67 +50,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    coordinationListWorkflows: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        workflows: {
-                            workflowId: string;
-                            version: number;
-                            name: string;
-                            description?: string;
-                            entryDeskId: string;
-                            desks: {
-                                deskId: string;
-                                kind: string;
-                                name: string;
-                                responsibility: string;
-                                domain: string;
-                                /** JsonSchemaV1 */
-                                inputSchema: Record<string, never>;
-                                /** JsonSchemaV1 */
-                                outputSchema: Record<string, never>;
-                                memoryScope: {
-                                    persist: boolean;
-                                    ttlSeconds?: number;
-                                    namespace?: string;
-                                };
-                                runtimePolicy?: {
-                                    retries?: number;
-                                    timeoutSeconds?: number;
-                                    priority?: "low" | "normal" | "high";
-                                };
-                            }[];
-                            handoffs: {
-                                handoffId: string;
-                                fromDeskId: string;
-                                toDeskId: string;
-                                condition?: string;
-                                mappingRefs?: {
-                                    [key: string]: string;
-                                };
-                            }[];
-                            observabilityProfile?: "basic" | "full";
-                            updatedAt?: string;
-                        }[];
-                    };
-                };
-            };
-        };
-    };
-    coordinationSaveWorkflow: {
+    exampleTodoCreateTask: {
         parameters: {
             query?: never;
             header?: never;
@@ -206,45 +60,10 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    workflow: {
-                        workflowId: string;
-                        version: number;
-                        name: string;
-                        description?: string;
-                        entryDeskId: string;
-                        desks: {
-                            deskId: string;
-                            kind: string;
-                            name: string;
-                            responsibility: string;
-                            domain: string;
-                            /** JsonSchemaV1 */
-                            inputSchema: Record<string, never>;
-                            /** JsonSchemaV1 */
-                            outputSchema: Record<string, never>;
-                            memoryScope: {
-                                persist: boolean;
-                                ttlSeconds?: number;
-                                namespace?: string;
-                            };
-                            runtimePolicy?: {
-                                retries?: number;
-                                timeoutSeconds?: number;
-                                priority?: "low" | "normal" | "high";
-                            };
-                        }[];
-                        handoffs: {
-                            handoffId: string;
-                            fromDeskId: string;
-                            toDeskId: string;
-                            condition?: string;
-                            mappingRefs?: {
-                                [key: string]: string;
-                            };
-                        }[];
-                        observabilityProfile?: "basic" | "full";
-                        updatedAt?: string;
-                    };
+                    /** @description Human-readable task title. */
+                    title: string;
+                    /** @description Optional longer details for the task. */
+                    description?: string;
                 };
             };
         };
@@ -256,56 +75,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        workflow: {
-                            workflowId: string;
-                            version: number;
-                            name: string;
-                            description?: string;
-                            entryDeskId: string;
-                            desks: {
-                                deskId: string;
-                                kind: string;
-                                name: string;
-                                responsibility: string;
-                                domain: string;
-                                /** JsonSchemaV1 */
-                                inputSchema: Record<string, never>;
-                                /** JsonSchemaV1 */
-                                outputSchema: Record<string, never>;
-                                memoryScope: {
-                                    persist: boolean;
-                                    ttlSeconds?: number;
-                                    namespace?: string;
-                                };
-                                runtimePolicy?: {
-                                    retries?: number;
-                                    timeoutSeconds?: number;
-                                    priority?: "low" | "normal" | "high";
-                                };
-                            }[];
-                            handoffs: {
-                                handoffId: string;
-                                fromDeskId: string;
-                                toDeskId: string;
-                                condition?: string;
-                                mappingRefs?: {
-                                    [key: string]: string;
-                                };
-                            }[];
-                            observabilityProfile?: "basic" | "full";
-                            updatedAt?: string;
+                        /**
+                         * Format: uuid
+                         * @description Stable unique identifier for the task.
+                         */
+                        id: string;
+                        /** @description Workspace scope that owns this task record. */
+                        workspaceId: string;
+                        /** @description Primary task title. */
+                        title: string;
+                        /** @description Optional task description value. */
+                        description: string | null;
+                        /** @description Completion status of the task. */
+                        completed: boolean;
+                        /**
+                         * Format: date-time
+                         * @description ISO timestamp when the task was created.
+                         */
+                        createdAt: string;
+                        /**
+                         * Format: date-time
+                         * @description ISO timestamp when the task was last updated.
+                         */
+                        updatedAt: string;
+                    };
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        defined: true;
+                        /** @constant */
+                        code: "INVALID_TASK_TITLE";
+                        /** @constant */
+                        status: 400;
+                        /** @default Invalid task title */
+                        message: string;
+                        /** @description Context describing why the task title was rejected. */
+                        data: {
+                            /** @description Raw title value that failed validation or normalization. */
+                            title?: string;
                         };
+                    } | {
+                        /** @constant */
+                        defined: false;
+                        code: string;
+                        status: number;
+                        message: string;
+                        data?: unknown;
+                    };
+                };
+            };
+            /** @description 409 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        defined: true;
+                        /** @constant */
+                        code: "READ_ONLY_MODE";
+                        /** @constant */
+                        status: 409;
+                        /** @default Write operations are blocked while read-only mode is enabled */
+                        message: string;
+                        /** @description Context payload for READ_ONLY_MODE boundary errors. */
+                        data: {
+                            /** @description Procedure path that was blocked while read-only mode was enabled. */
+                            path?: string;
+                        };
+                    } | {
+                        /** @constant */
+                        defined: false;
+                        code: string;
+                        status: number;
+                        message: string;
+                        data?: unknown;
                     };
                 };
             };
         };
     };
-    coordinationGetWorkflow: {
+    exampleTodoGetTask: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                workflowId: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -318,241 +181,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        workflow: {
-                            workflowId: string;
-                            version: number;
-                            name: string;
-                            description?: string;
-                            entryDeskId: string;
-                            desks: {
-                                deskId: string;
-                                kind: string;
-                                name: string;
-                                responsibility: string;
-                                domain: string;
-                                /** JsonSchemaV1 */
-                                inputSchema: Record<string, never>;
-                                /** JsonSchemaV1 */
-                                outputSchema: Record<string, never>;
-                                memoryScope: {
-                                    persist: boolean;
-                                    ttlSeconds?: number;
-                                    namespace?: string;
-                                };
-                                runtimePolicy?: {
-                                    retries?: number;
-                                    timeoutSeconds?: number;
-                                    priority?: "low" | "normal" | "high";
-                                };
-                            }[];
-                            handoffs: {
-                                handoffId: string;
-                                fromDeskId: string;
-                                toDeskId: string;
-                                condition?: string;
-                                mappingRefs?: {
-                                    [key: string]: string;
-                                };
-                            }[];
-                            observabilityProfile?: "basic" | "full";
-                            updatedAt?: string;
-                        };
+                        /**
+                         * Format: uuid
+                         * @description Stable unique identifier for the task.
+                         */
+                        id: string;
+                        /** @description Workspace scope that owns this task record. */
+                        workspaceId: string;
+                        /** @description Primary task title. */
+                        title: string;
+                        /** @description Optional task description value. */
+                        description: string | null;
+                        /** @description Completion status of the task. */
+                        completed: boolean;
+                        /**
+                         * Format: date-time
+                         * @description ISO timestamp when the task was created.
+                         */
+                        createdAt: string;
+                        /**
+                         * Format: date-time
+                         * @description ISO timestamp when the task was last updated.
+                         */
+                        updatedAt: string;
                     };
                 };
             };
-        };
-    };
-    coordinationValidateWorkflow: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workflowId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": Record<string, never>;
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
+            /** @description 404 */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        workflowId: string;
-                        validation: {
-                            ok: boolean;
-                            errors: {
-                                code: string;
-                                message: string;
-                                deskId?: string;
-                                handoffId?: string;
-                            }[];
+                        /** @constant */
+                        defined: true;
+                        /** @constant */
+                        code: "RESOURCE_NOT_FOUND";
+                        /** @constant */
+                        status: 404;
+                        /** @default Resource not found */
+                        message: string;
+                        /** @description Context payload for RESOURCE_NOT_FOUND boundary errors. */
+                        data: {
+                            /** @description Entity name that was not found (for example Task or Tag). */
+                            entity?: string;
+                            /** @description Identifier associated with the missing entity. */
+                            id?: string;
                         };
-                    };
-                };
-            };
-        };
-    };
-    coordinationQueueRun: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                workflowId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": {
-                    runId?: string;
-                    /** JsonValue */
-                    input?: unknown;
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        run: {
-                            runId: string;
-                            workflowId: string;
-                            workflowVersion: number;
-                            status: "queued" | "running" | "completed" | "failed";
-                            startedAt: string;
-                            finishedAt?: string;
-                            /** JsonValue */
-                            input?: unknown;
-                            /** JsonValue */
-                            output?: unknown;
-                            error?: string;
-                            traceLinks: {
-                                provider: "inngest" | "rawr";
-                                label: string;
-                                url: string;
-                            }[];
-                        };
-                        eventIds: string[];
-                    };
-                };
-            };
-        };
-    };
-    coordinationGetRunStatus: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                runId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        run: {
-                            runId: string;
-                            workflowId: string;
-                            workflowVersion: number;
-                            status: "queued" | "running" | "completed" | "failed";
-                            startedAt: string;
-                            finishedAt?: string;
-                            /** JsonValue */
-                            input?: unknown;
-                            /** JsonValue */
-                            output?: unknown;
-                            error?: string;
-                            traceLinks: {
-                                provider: "inngest" | "rawr";
-                                label: string;
-                                url: string;
-                            }[];
-                        };
-                    };
-                };
-            };
-        };
-    };
-    coordinationGetRunTimeline: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                runId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        runId: string;
-                        timeline: {
-                            eventId: string;
-                            runId: string;
-                            workflowId: string;
-                            deskId?: string;
-                            type: "run.started" | "run.completed" | "run.failed" | "desk.started" | "desk.completed" | "desk.failed";
-                            ts: string;
-                            status: "queued" | "running" | "completed" | "failed";
-                            detail?: string;
-                            /** JsonValue */
-                            input?: unknown;
-                            /** JsonValue */
-                            output?: unknown;
-                        }[];
-                    };
-                };
-            };
-        };
-    };
-    stateGetRuntimeState: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        state: {
-                            /** @constant */
-                            version: 1;
-                            plugins: {
-                                enabled: string[];
-                                disabled?: string[];
-                                lastUpdatedAt: string;
-                            };
-                        };
+                    } | {
+                        /** @constant */
+                        defined: false;
+                        code: string;
+                        status: number;
+                        message: string;
+                        data?: unknown;
                     };
                 };
             };

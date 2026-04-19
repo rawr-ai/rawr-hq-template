@@ -1,0 +1,58 @@
+/**
+ * @fileoverview Single service definition seam for the coordination package.
+ *
+ * @remarks
+ * Author the coordination capability once in this file:
+ * - service-owned dependency ports
+ * - stable scope/config lanes
+ * - static policy vocabulary and metadata defaults
+ * - bound service authoring surfaces used across `service/*`
+ */
+import { defineService, type ServiceOf } from "@rawr/hq-sdk";
+
+type InitialContext = {
+  deps: {};
+  scope: {
+    repoRoot: string;
+  };
+  config: {};
+};
+
+type InvocationContext = {
+  traceId: string;
+};
+
+type ProcedureMetadata = {
+  entity?: "workflow" | "run";
+};
+
+export const policy = {
+  events: {},
+} as const;
+
+const service = defineService<{
+  initialContext: InitialContext;
+  invocationContext: InvocationContext;
+  metadata: ProcedureMetadata;
+}>({
+  metadataDefaults: {
+    idempotent: true,
+    domain: "coordination",
+    audience: "internal",
+    entity: "workflow",
+  },
+  baseline: {
+    policy,
+  },
+});
+
+export type Service = ServiceOf<typeof service>;
+
+export const ocBase = service.oc;
+export const createServiceMiddleware = service.createMiddleware;
+export const createServiceObservabilityMiddleware = service.createObservabilityMiddleware;
+export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddleware;
+export const createRequiredServiceObservabilityMiddleware = service.createRequiredObservabilityMiddleware;
+export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAnalyticsMiddleware;
+export const createServiceProvider = service.createProvider;
+export const createServiceImplementer = service.createImplementer;

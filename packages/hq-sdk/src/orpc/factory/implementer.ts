@@ -1,6 +1,7 @@
 import { isContractProcedure } from "@orpc/contract";
 import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
 import { implement } from "@orpc/server";
+import type { Context } from "@orpc/server";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
 
 import type { ExecutionContext } from "../context/types";
@@ -26,6 +27,16 @@ export function createBareProcedureImplementer<
 export function createBareRouterImplementer<
   const TContract extends AnyContractRouterObject,
   TContext extends ExecutionContext<BaseDeps, object, object, object>,
+>(contract: TContract) {
+  return implement(contract).$context<TContext>();
+}
+
+/**
+ * Create a typed router implementer for non-service plugin/app shells.
+ */
+export function createContextualRouterBuilder<
+  const TContract extends AnyContractRouterObject,
+  TContext extends Context,
 >(contract: TContract) {
   return implement(contract).$context<TContext>();
 }

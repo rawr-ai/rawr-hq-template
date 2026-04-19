@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRouterClient, type RouterClient } from "@orpc/server";
 import type { Inngest } from "inngest";
+import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
+import { __resetSupportExampleRunStoreForTests } from "@rawr/plugin-workflows-support-example/testing";
 import { supportExampleRouter } from "@rawr/support-example/router";
 import {
-  __resetSupportExampleRunStoreForTests,
   createSupportExampleWorkflowRouter,
   processSupportExampleRequestedEvent,
   type SupportExampleWorkflowContext,
-} from "../../../plugins/workflows/support-example";
-import { createCoordinationRuntimeAdapter } from "../src/coordination";
+} from "@rawr/plugin-workflows-support-example/server";
 
 type SupportExampleClient = RouterClient<typeof supportExampleRouter>;
 type SupportExampleWorkItem = Awaited<ReturnType<SupportExampleClient["triage"]["items"]["request"]>>["workItem"];
@@ -49,22 +49,22 @@ describe("support-example workflow plugin", () => {
       send: async () => ({ ids: ["evt-support-example-1"] }),
     } as unknown as Inngest;
 
-    const router = createSupportExampleWorkflowRouter();
     const store = createInMemoryTriageWorkItemStore();
     const deps = {
       store,
       now: () => "2026-02-23T00:00:00.000Z",
       generateWorkItemId: () => `work-item-${Math.random().toString(16).slice(2, 10)}`,
     } as const;
+    const supportExample = createRouterClient(supportExampleRouter, { context: { deps } });
+    const router = createSupportExampleWorkflowRouter(() => supportExample);
     const context: SupportExampleWorkflowContext = {
       baseUrl: "http://localhost:3000",
       repoRoot: "/tmp/rawr-test-repo",
-      runtime: createCoordinationRuntimeAdapter({
+      runtime: createCoordinationWorkflowRuntimeAdapter({
         repoRoot: "/tmp/rawr-test-repo",
         inngestBaseUrl: "http://localhost:8288",
       }),
       inngestClient: fakeInngest,
-      supportExample: createRouterClient(supportExampleRouter, { context: { deps } }),
       requestId: "req-1",
       correlationId: "corr-1",
       middlewareState: { markerCache: new Map() },
@@ -98,22 +98,22 @@ describe("support-example workflow plugin", () => {
       send: async () => ({ ids: ["evt-support-example-1"] }),
     } as unknown as Inngest;
 
-    const router = createSupportExampleWorkflowRouter();
     const store = createInMemoryTriageWorkItemStore();
     const deps = {
       store,
       now: () => "2026-02-23T00:00:00.000Z",
       generateWorkItemId: () => "work-item-001",
     } as const;
+    const supportExample = createRouterClient(supportExampleRouter, { context: { deps } });
+    const router = createSupportExampleWorkflowRouter(() => supportExample);
     const context: SupportExampleWorkflowContext = {
       baseUrl: "http://localhost:3000",
       repoRoot: "/tmp/rawr-test-repo",
-      runtime: createCoordinationRuntimeAdapter({
+      runtime: createCoordinationWorkflowRuntimeAdapter({
         repoRoot: "/tmp/rawr-test-repo",
         inngestBaseUrl: "http://localhost:8288",
       }),
       inngestClient: fakeInngest,
-      supportExample: createRouterClient(supportExampleRouter, { context: { deps } }),
       requestId: "req-1",
       correlationId: "corr-1",
       middlewareState: { markerCache: new Map() },
@@ -146,7 +146,7 @@ describe("support-example workflow plugin", () => {
           return value;
         },
       },
-      supportClient: context.supportExample,
+      supportClient: supportExample,
     });
 
     expect(summary.triagedTicketCount).toBe(42);
@@ -157,7 +157,7 @@ describe("support-example workflow plugin", () => {
     expect(finalStatus.run?.triagedTicketCount).toBe(42);
     expect(finalStatus.run?.escalatedTicketCount).toBe(6);
 
-    const workItemStatus = await context.supportExample.triage.items.get({ workItemId: triggered.run.workItemId });
+    const workItemStatus = await supportExample.triage.items.get({ workItemId: triggered.run.workItemId });
     expect(workItemStatus.workItem.status).toBe("completed");
   });
 });

@@ -1,5 +1,9 @@
-import type { CoordinationRuntimeAdapter } from "@rawr/coordination-inngest";
-import type { Inngest } from "inngest";
+import type {
+  BoundaryMiddlewareSupportState,
+  BoundaryRequestSupportContext,
+  HostRuntimeSupportContext,
+} from "@rawr/runtime-context";
+import type { Logger } from "@rawr/hq-sdk";
 
 export const RAWR_MIDDLEWARE_DEDUPE_MARKERS = {
   RPC_AUTHORIZATION_DECISION: "rpc.authorization.decision",
@@ -12,21 +16,17 @@ export const RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY = {
   requiredMarkers: [RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION] as const,
 } as const;
 
-export type RawrBoundaryMiddlewareState = {
-  markerCache: Map<RawrMiddlewareDedupeMarker, unknown>;
+export type RawrBoundaryMiddlewareState = BoundaryMiddlewareSupportState<RawrMiddlewareDedupeMarker>;
+
+export type RawrBoundaryContextDeps<TRuntime = unknown> = HostRuntimeSupportContext<TRuntime> & {
+  hostLogger?: Logger;
 };
 
-export type RawrBoundaryContextDeps = {
-  repoRoot: string;
-  baseUrl: string;
-  runtime: CoordinationRuntimeAdapter;
-  inngestClient: Inngest;
-};
-
-export type RawrBoundaryContext = RawrBoundaryContextDeps & {
-  requestId: string;
-  correlationId: string;
-  middlewareState: RawrBoundaryMiddlewareState;
+export type RawrBoundaryContext<TRuntime = unknown> = BoundaryRequestSupportContext<
+  TRuntime,
+  RawrMiddlewareDedupeMarker
+> & {
+  hostLogger?: Logger;
 };
 
 const requestScopedMiddlewareStateCache = new WeakMap<Request, RawrBoundaryMiddlewareState>();
@@ -103,10 +103,10 @@ export function assertHeavyMiddlewareDedupeMarkers(
   throw new Error(`missing required heavy middleware dedupe marker(s): ${missing.join(", ")}`);
 }
 
-export function createRequestScopedBoundaryContext(
+export function createRequestScopedBoundaryContext<TRuntime>(
   request: Request,
-  deps: RawrBoundaryContextDeps,
-): RawrBoundaryContext {
+  deps: RawrBoundaryContextDeps<TRuntime>,
+): RawrBoundaryContext<TRuntime> {
   const requestId = resolveRequestId(request);
   const correlationId = resolveCorrelationId(request, requestId);
 
@@ -118,6 +118,9 @@ export function createRequestScopedBoundaryContext(
   };
 }
 
-export function createWorkflowBoundaryContext(request: Request, deps: RawrBoundaryContextDeps): RawrBoundaryContext {
+export function createWorkflowBoundaryContext<TRuntime>(
+  request: Request,
+  deps: RawrBoundaryContextDeps<TRuntime>,
+): RawrBoundaryContext<TRuntime> {
   return createRequestScopedBoundaryContext(request, deps);
 }

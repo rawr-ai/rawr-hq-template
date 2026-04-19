@@ -2,7 +2,7 @@ import type { AnalyticsClient } from "../ports/analytics";
 import type { Logger } from "../ports/logger";
 
 /**
- * Minimum dependency contract expected by domain packages.
+ * Minimum dependency contract expected by service packages.
  *
  * @remarks
  * Baseline depends on these capability ports, but it does not own the port
@@ -19,7 +19,7 @@ export interface BaseDeps {
 export type ServiceDepsOf<T extends object> = BaseDeps & T;
 
 /**
- * Baseline procedure metadata shared across packages.
+ * Baseline procedure metadata shared across service packages.
  */
 export type BaseMetadata = {
   idempotent: boolean;

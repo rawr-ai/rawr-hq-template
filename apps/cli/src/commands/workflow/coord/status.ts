@@ -1,6 +1,6 @@
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { coordinationErrorMessage } from "@rawr/coordination";
+import { coordinationErrorMessage } from "@rawr/coordination/compat/http";
 import { coordinationGetRunStatus, resolveServerBaseUrl } from "../../../lib/coordination-api";
 
 export default class WorkflowCoordStatus extends RawrCommand {

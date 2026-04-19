@@ -2,19 +2,19 @@ import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
-
+import { Inngest } from "inngest";
+import { serve as inngestServe } from "inngest/bun";
+import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
 import { createRawrHqManifest } from "@rawr/hq-app/manifest";
-import { OpenAPIHandler } from "@orpc/openapi/fetch";
-import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
 import { createHostLoggerAdapter } from "./logging";
 import type { AnyElysia } from "./plugins";
-import { createCoordinationRuntimeAdapter } from "./coordination";
 import { registerOrpcRoutes } from "./orpc";
 import {
   createRequestScopedBoundaryContext,
   createWorkflowBoundaryContext,
   type RawrBoundaryContextDeps,
 } from "./workflows/context";
+import { createWorkflowRouteHarness } from "./workflows/harness";
 
 export type RawrRoutesOptions = {
   repoRoot: string;
@@ -22,25 +22,23 @@ export type RawrRoutesOptions = {
   baseUrl?: string;
 };
 
-export type HostInngestBundle = Readonly<{
-  runtime: ReturnType<typeof createCoordinationRuntimeAdapter>;
-  functions: readonly unknown[];
-  handler: ReturnType<typeof createInngestServeHandler>;
-}>;
-
 export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"] as const;
 
 const rawrHqManifest = createRawrHqManifest({
-  exampleTodoLogger: createHostLoggerAdapter(),
+  hostLogger: createHostLoggerAdapter(),
 });
+
+type HostWorkflowRuntimeInput = Parameters<typeof rawrHqManifest.workflows.createInngestFunctions>[0];
+
+export type HostInngestBundle = Readonly<{
+  client: HostWorkflowRuntimeInput["client"];
+  runtime: HostWorkflowRuntimeInput["runtime"];
+  functions: readonly unknown[];
+  handler: ReturnType<typeof inngestServe>;
+}>;
 
 const INNGEST_SIGNATURE_HEADERS = ["x-inngest-signature", "inngest-signature"] as const;
 const INNGEST_SIGNATURE_MAX_AGE_MS = 5 * 60 * 1000;
-const WORKFLOW_BASE_PATH = "/api/workflows";
-const WORKFLOW_CAPABILITY_PATHS = Object.entries(rawrHqManifest.workflows.capabilities).map(([capability, manifest]) => ({
-  capability,
-  pathPrefix: normalizeWorkflowPathPrefix(manifest.pathPrefix),
-}));
 type ParsedInngestSignature = Readonly<{
   timestampSeconds: number;
   signature: string;
@@ -155,23 +153,6 @@ export async function verifyInngestIngressRequest(request: Request): Promise<boo
   return false;
 }
 
-function normalizeWorkflowPathPrefix(pathPrefix: string): string {
-  const withLeadingSlash = pathPrefix.startsWith("/") ? pathPrefix : `/${pathPrefix}`;
-  const withoutTrailingSlash = withLeadingSlash.replace(/\/+$/u, "");
-  return withoutTrailingSlash === "" ? "/" : withoutTrailingSlash;
-}
-
-function resolveWorkflowCapability(pathname: string): string | null {
-  if (!pathname.startsWith(`${WORKFLOW_BASE_PATH}/`)) return null;
-  const workflowPathname = pathname.slice(WORKFLOW_BASE_PATH.length);
-  for (const entry of WORKFLOW_CAPABILITY_PATHS) {
-    if (workflowPathname === entry.pathPrefix || workflowPathname.startsWith(`${entry.pathPrefix}/`)) {
-      return entry.capability;
-    }
-  }
-  return null;
-}
-
 function isSafeDirName(input: string): boolean {
   return /^[a-z0-9][a-z0-9-]*$/.test(input);
 }
@@ -215,23 +196,24 @@ function resolveAuthorityRepoRoot(repoRoot: string): string {
 }
 
 export function createHostInngestBundle(input: { repoRoot: string }): HostInngestBundle {
-  const runtime = createCoordinationRuntimeAdapter({
+  const client = new Inngest({ id: "rawr-hq" });
+  const runtime = createCoordinationWorkflowRuntimeAdapter({
     repoRoot: input.repoRoot,
     inngestBaseUrl: resolveInngestBaseUrl(),
   });
-  // Coordination run-state transitions depend on a repo-root-aware runtime adapter,
-  // so the host composes that runner here alongside manifest-owned workflow functions.
-  const coordinationInngest = createCoordinationInngestFunction({
+  // The app manifest owns which workflow shells contribute durable functions.
+  // The host only instantiates the runtime resources and mounts ingress explicitly.
+  const functions = rawrHqManifest.workflows.createInngestFunctions({
+    client,
     runtime,
-    client: rawrHqManifest.inngest.client,
   });
-  const functions = [...rawrHqManifest.inngest.functions, ...coordinationInngest.functions];
-  const handler = createInngestServeHandler({
-    client: rawrHqManifest.inngest.client,
-    functions,
+  const handler = inngestServe({
+    client,
+    functions: functions as any,
   });
 
   return {
+    client,
     runtime,
     functions,
     handler,
@@ -240,6 +222,7 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
 
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
+  const hostLogger = createHostLoggerAdapter();
 
   app.get("/rawr/plugins/web/:dirName", async ({ params }) => {
     const dirName =
@@ -287,12 +270,15 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
     repoRoot: authorityRepoRoot,
     baseUrl: opts.baseUrl ?? "http://localhost:3000",
     runtime: hostInngest.runtime,
-    inngestClient: rawrHqManifest.inngest.client,
+    inngestClient: hostInngest.client,
+    hostLogger,
   };
-  // The manifest remains the authority for workflow function bundles and shared client
-  // identity, while the host composes runtime-owned coordination execution around them.
-  void hostInngest.functions;
-  const workflowOpenApiHandler = new OpenAPIHandler(rawrHqManifest.workflows.triggerRouter);
+  const workflowRoutes = createWorkflowRouteHarness({
+    workflows: {
+      publishedRouter: rawrHqManifest.workflows.published.router,
+    },
+    contextFactory: (request, deps) => createWorkflowBoundaryContext(request, deps),
+  });
 
   app.all(
     "/api/inngest",
@@ -309,20 +295,7 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
   app.all(
     "/api/workflows/*",
     async ({ request }) => {
-      const req = request as Request;
-      const capability = resolveWorkflowCapability(new URL(req.url).pathname);
-      if (!capability) {
-        return new Response("not found", { status: 404 });
-      }
-
-      const context = {
-        ...rawrHqManifest.workflows.enrichContext(createWorkflowBoundaryContext(req, boundaryContextDeps)),
-      };
-      const result = await workflowOpenApiHandler.handle(req, {
-        prefix: WORKFLOW_BASE_PATH,
-        context,
-      });
-      return result.matched ? result.response : new Response("not found", { status: 404 });
+      return workflowRoutes.handle(request as Request, boundaryContextDeps);
     },
     { parse: "none" },
   );
@@ -330,10 +303,8 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
   registerOrpcRoutes(app, {
     ...boundaryContextDeps,
     router: rawrHqManifest.orpc.router,
-    contextFactory: (request, deps) =>
-      rawrHqManifest.workflows.enrichContext(
-        rawrHqManifest.orpc.enrichContext(createRequestScopedBoundaryContext(request, deps)),
-      ),
+    openApiRouter: rawrHqManifest.orpc.published.router,
+    contextFactory: (request, deps) => createRequestScopedBoundaryContext(request, deps),
   });
 
   return app;

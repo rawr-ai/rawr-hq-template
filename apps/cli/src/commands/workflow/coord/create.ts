@@ -1,6 +1,7 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { coordinationErrorMessage, type CoordinationWorkflowV1 } from "@rawr/coordination";
+import type { CoordinationWorkflowV1 } from "@rawr/coordination";
+import { coordinationErrorMessage } from "@rawr/coordination/compat/http";
 import {
   coordinationProcedurePath,
   coordinationSaveWorkflow,

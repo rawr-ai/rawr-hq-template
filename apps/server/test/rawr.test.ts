@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { processCoordinationRunEvent, createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
 import { createServerApp } from "../src/app";
-import { createCoordinationRuntimeAdapter } from "../src/coordination";
 import { registerOrpcRoutes } from "../src/orpc";
 import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
-import { processCoordinationRunEvent } from "@rawr/coordination-inngest";
-import { enablePlugin } from "@rawr/state";
+import { enablePlugin } from "@rawr/state/repo-state";
 import type { Inngest } from "inngest";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -166,15 +165,60 @@ describe("rawr server routes", () => {
 
   it("host-composition-guard: manifest composes routers from package seam, not app internals", async () => {
     const manifestSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "manifest.ts"), "utf8");
+    expect(manifestSource).toContain("registerCoordinationApiPlugin");
+    expect(manifestSource).toContain("registerStateApiPlugin");
+    expect(manifestSource).toContain("@rawr/plugin-api-coordination/server");
+    expect(manifestSource).toContain("@rawr/plugin-api-state/server");
     expect(manifestSource).toContain("@rawr/example-todo");
     expect(manifestSource).toContain("registerExampleTodoApiPlugin");
-    expect(manifestSource).toContain("../../../plugins/api/example-todo");
-    expect(manifestSource).toContain("../../../plugins/workflows/support-example");
+    expect(manifestSource).toContain("@rawr/plugin-api-example-todo/server");
+    expect(manifestSource).toContain("@rawr/plugin-workflows-coordination/server");
+    expect(manifestSource).toContain("registerCoordinationWorkflowPlugin");
+    expect(manifestSource).toContain("@rawr/plugin-workflows-support-example/server");
     expect(manifestSource).toContain("registerSupportExampleWorkflowPlugin");
     expect(manifestSource).not.toContain("./plugins/api/support-example");
     expect(manifestSource).not.toContain("registerSupportExampleApiPlugin");
     expect(manifestSource).not.toContain("apps/server/src/logging");
-    expect(manifestSource).toMatch(/const composedOrpcRouter = \{\s*\.\.\.coreOrpcRouter,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s);
+    expect(manifestSource).not.toContain("createHqRuntimeRouter");
+    expect(manifestSource).not.toContain("from \"@rawr/plugin-api-coordination\"");
+    expect(manifestSource).not.toContain("from \"@rawr/plugin-api-state\"");
+    expect(manifestSource).not.toContain("from \"@rawr/plugin-api-example-todo\"");
+    expect(manifestSource).not.toContain("createInngestServeHandler");
+    expect(manifestSource).toContain("composeWorkflowPlugins");
+    expect(manifestSource).toContain("composeApiPlugins");
+    expect(manifestSource).toContain("workflows: materializedSurfaces.workflows");
+    expect(manifestSource).toContain("const composedApiSurface = composeApiPlugins");
+    expect(manifestSource).toContain("materializeRequestScopedPluginSurfaces");
+    expect(manifestSource).toContain("orpc: materializedSurfaces.orpc");
+    expect(manifestSource).not.toContain("new Inngest(");
+    expect(manifestSource).not.toContain("mergeDeclaredSurfaceTrees");
+    expect(manifestSource).not.toContain("published: {");
+    expect(manifestSource).not.toContain("contract: composedApiSurface.publishedContract");
+    expect(manifestSource).not.toContain("requestScopedPublishedApi.router");
+    expect(manifestSource).not.toContain("requestScopedPublishedWorkflow.router");
+    expect(manifestSource).not.toContain("requestScopedInternalWorkflow.router");
+  });
+
+  it("host-composition-guard: host realizes workflow runtime and keeps workflow context off canonical ORPC registration", async () => {
+    const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
+
+    expect(rawrSource).not.toContain("@rawr/plugin-api-coordination/server");
+    expect(rawrSource).not.toContain("@rawr/plugin-workflows-support-example/server");
+    expect(rawrSource).not.toContain("./coordination");
+    expect(rawrSource).not.toContain("createCoordinationInngestFunction");
+    expect(rawrSource).not.toContain("createSupportExampleInngestFunctions");
+    expect(rawrSource).toContain('createCoordinationWorkflowRuntimeAdapter');
+    expect(rawrSource).toContain('@rawr/plugin-workflows-coordination/server');
+    expect(rawrSource).toContain("rawrHqManifest.workflows.createInngestFunctions");
+    expect(rawrSource).toContain("new Inngest({ id: \"rawr-hq\" })");
+    expect(rawrSource).toContain("serve as inngestServe");
+    expect(rawrSource).not.toContain("rawrHqManifest.inngest");
+    expect(rawrSource).toContain("createWorkflowRouteHarness");
+    expect(rawrSource).not.toContain("resolveWorkflowCapability");
+    expect(rawrSource).not.toContain("rawrHqManifest.workflows.capabilities");
+    expect(rawrSource).toContain("openApiRouter: rawrHqManifest.orpc.published.router");
+    expect(rawrSource).toContain("publishedRouter: rawrHqManifest.workflows.published.router");
+    expect(rawrSource).toContain("contextFactory: (request, deps) => createWorkflowBoundaryContext(request, deps)");
   });
 
   it("host-composition-guard: serves capability-first workflow family paths", async () => {
@@ -211,7 +255,7 @@ describe("rawr server routes", () => {
     expect(res.status).toBe(404);
   });
 
-  it("host-composition-guard: keeps legacy support-example out of canonical /rpc and /api/orpc routes", async () => {
+  it("host-composition-guard: keeps workflow plugins on first-party /rpc while leaving /api/orpc unpublished", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
 
     const rpcResponse = await app.handle(
@@ -221,7 +265,11 @@ describe("rawr server routes", () => {
         body: JSON.stringify({ json: {} }),
       }),
     );
-    expect(rpcResponse.status).toBe(404);
+    expect(rpcResponse.status).toBe(200);
+    const rpcPayload = (await rpcResponse.json()) as { json?: { capability?: string; healthy?: boolean; run?: unknown } };
+    expect(rpcPayload.json?.capability).toBe("support-example");
+    expect(rpcPayload.json?.healthy).toBe(true);
+    expect(rpcPayload.json?.run).toBeNull();
 
     const openApiResponse = await app.handle(
       new Request("http://localhost/api/orpc/support-example/triage/status", {
@@ -273,7 +321,7 @@ describe("rawr server routes", () => {
 
   it("creates, validates, runs, and returns timeline through ORPC RPC handlers", async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-coord-"));
-    const runtime = createCoordinationRuntimeAdapter({
+    const runtime = createCoordinationWorkflowRuntimeAdapter({
       repoRoot: tempRoot,
       inngestBaseUrl: "http://localhost:8288",
     });
@@ -408,7 +456,7 @@ describe("rawr server routes", () => {
 
   it("returns ORPC-typed errors for invalid procedure requests", async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-coord-errors-"));
-    const runtime = createCoordinationRuntimeAdapter({
+    const runtime = createCoordinationWorkflowRuntimeAdapter({
       repoRoot: tempRoot,
       inngestBaseUrl: "http://localhost:8288",
     });
@@ -454,7 +502,7 @@ describe("rawr server routes", () => {
 
   it("host-composition-guard: request scoped context factory runs per ORPC request", async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-coord-context-"));
-    const runtime = createCoordinationRuntimeAdapter({
+    const runtime = createCoordinationWorkflowRuntimeAdapter({
       repoRoot: tempRoot,
       inngestBaseUrl: "http://localhost:8288",
     });

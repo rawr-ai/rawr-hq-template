@@ -5,19 +5,19 @@ const PASS_ROOT = "docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-exe
 const RESULT_PATH = `${PASS_ROOT}/D4_FINISHED_HOOK_SCAN_RESULT.json`;
 
 await Promise.all([
-  mustExist("packages/coordination/src/types.ts"),
-  mustExist("packages/coordination/src/orpc/schemas.ts"),
-  mustExist("packages/coordination-inngest/src/adapter.ts"),
-  mustExist("packages/core/src/orpc/runtime-router.ts"),
-  mustExist("packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts"),
+  mustExist("services/coordination/src/domain/types.ts"),
+  mustExist("services/coordination/src/domain/schemas.ts"),
+  mustExist("plugins/workflows/coordination/src/inngest.ts"),
+  mustExist("plugins/workflows/coordination/src/router.ts"),
+  mustExist("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
 ]);
 
-const [typesSource, schemasSource, adapterSource, runtimeRouterSource, guardrailsTestSource] = await Promise.all([
-  readFile("packages/coordination/src/types.ts"),
-  readFile("packages/coordination/src/orpc/schemas.ts"),
-  readFile("packages/coordination-inngest/src/adapter.ts"),
-  readFile("packages/core/src/orpc/runtime-router.ts"),
-  readFile("packages/coordination-inngest/test/inngest-finished-hook-guardrails.test.ts"),
+const [typesSource, schemasSource, inngestSource, coordinationWorkflowRouterSource, guardrailsTestSource] = await Promise.all([
+  readFile("services/coordination/src/domain/types.ts"),
+  readFile("services/coordination/src/domain/schemas.ts"),
+  readFile("plugins/workflows/coordination/src/inngest.ts"),
+  readFile("plugins/workflows/coordination/src/router.ts"),
+  readFile("plugins/workflows/coordination/test/inngest-finished-hook-guardrails.test.ts"),
 ]);
 
 const checks = [
@@ -38,20 +38,20 @@ const checks = [
   },
   {
     id: "adapter-guardrails",
-    message: "adapter.ts executes finished-hook side effects through guardrails",
-    pass: /executeFinishedHookWithGuardrails\(/.test(adapterSource),
+    message: "workflow plugin inngest.ts executes finished-hook side effects through guardrails",
+    pass: /executeFinishedHookWithGuardrails\(/.test(inngestSource),
   },
   {
     id: "adapter-non-critical-failure",
-    message: "adapter.ts captures failed finished-hook outcomes without escalating run failure",
+    message: "workflow plugin inngest.ts captures failed finished-hook outcomes without escalating run failure",
     pass:
-      /outcome:\s*"failed"/.test(adapterSource) &&
-      /finalization:\s*createRunFinalizationState\(finishedHookState\)/.test(adapterSource),
+      /outcome:\s*"failed"/.test(inngestSource) &&
+      /finalization:\s*createRunFinalizationState\(finishedHookState\)/.test(inngestSource),
   },
   {
     id: "runtime-router-fallback-contract",
-    message: "runtime-router queue fallback includes explicit finalization contract",
-    pass: /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(runtimeRouterSource),
+    message: "coordination workflow plugin queue fallback includes explicit finalization contract",
+    pass: /finalization:\s*\{\s*contract:\s*RUN_FINALIZATION_CONTRACT_V1,?\s*\}/m.test(coordinationWorkflowRouterSource),
   },
   {
     id: "guardrails-runtime-tests",
