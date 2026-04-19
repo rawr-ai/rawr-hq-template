@@ -1,4 +1,4 @@
-import { createClient, type CreateClientOptions } from "@rawr/session-intelligence/client";
+import { createClient, type Client, type CreateClientOptions } from "@rawr/session-intelligence/client";
 import type {
   ErrorResult,
   ExtractOptions,
@@ -88,14 +88,21 @@ function createSessionIntelligenceBoundary(): CreateClientOptions {
   } satisfies CreateClientOptions;
 }
 
-function adaptRawClient(rawClient: unknown): SessionIntelligenceClient {
-  const raw = rawClient as any;
+const invocation = {
+  context: {
+    invocation: {
+      traceId: "plugin-session-tools",
+    },
+  },
+} as const;
+
+function adaptRawClient(rawClient: Client): SessionIntelligenceClient {
   return {
     catalog: {
-      list: async (input) => pickArray(await callProcedure(raw?.catalog?.list, input), "sessions"),
+      list: async (input) => (await rawClient.catalog.list(input, invocation)).sessions,
       resolve: async (input) => {
         try {
-          return normalizeErrorResult<ResolveResult>(await callProcedure(raw?.catalog?.resolve, input));
+          return await rawClient.catalog.resolve(input, invocation);
         } catch (err) {
           return { error: errorMessage(err) };
         }
@@ -104,17 +111,17 @@ function adaptRawClient(rawClient: unknown): SessionIntelligenceClient {
     transcripts: {
       extract: async ({ path, ...options }) => {
         try {
-          return normalizeErrorResult<ExtractedSession>(await callProcedure(raw?.transcripts?.extract, { path, options }));
+          return await rawClient.transcripts.extract({ path, options }, invocation);
         } catch (err) {
           return { error: errorMessage(err) };
         }
       },
     },
     search: {
-      metadata: async (input) => pickArray(await callProcedure(raw?.search?.metadata, input), "hits"),
-      content: async (input) => pickArray(await callProcedure(raw?.search?.content, input), "hits"),
+      metadata: async (input) => (await rawClient.search.metadata(input, invocation)).hits,
+      content: async (input) => (await rawClient.search.content(input, invocation)).hits,
       clearIndex: async (input) => {
-        await callProcedure(raw?.search?.clearIndex, input);
+        await rawClient.search.clearIndex(input, invocation);
       },
       reindex: async (input) => {
         const serviceInput = {
@@ -124,45 +131,10 @@ function adaptRawClient(rawClient: unknown): SessionIntelligenceClient {
             source: session.source,
           })),
         };
-        return pickObject(await callProcedure(raw?.search?.reindex, serviceInput), "reindex") as ReindexResult;
+        return await rawClient.search.reindex(serviceInput, invocation);
       },
     },
   };
-}
-
-async function callProcedure(procedure: unknown, input: unknown): Promise<unknown> {
-  if (typeof procedure !== "function") {
-    throw new Error("Session intelligence client is missing an expected procedure");
-  }
-  return procedure(input, {
-    context: {
-      invocation: {
-        traceId: "plugin-session-tools",
-      },
-    },
-  });
-}
-
-function pickArray<T>(value: unknown, key: string): T[] {
-  if (Array.isArray(value)) return value as T[];
-  const record = value as Record<string, unknown> | null | undefined;
-  const nested = record?.[key];
-  if (Array.isArray(nested)) return nested as T[];
-  return [];
-}
-
-function pickObject(value: unknown, key: string): Record<string, unknown> {
-  const record = value as Record<string, unknown> | null | undefined;
-  const nested = record?.[key];
-  if (nested && typeof nested === "object" && !Array.isArray(nested)) return nested as Record<string, unknown>;
-  if (record && typeof record === "object" && !Array.isArray(record)) return record;
-  return {};
-}
-
-function normalizeErrorResult<T>(value: unknown): T | ErrorResult {
-  const record = value as Record<string, unknown> | null | undefined;
-  if (typeof record?.error === "string") return { error: record.error };
-  return value as T;
 }
 
 function errorMessage(err: unknown): string {

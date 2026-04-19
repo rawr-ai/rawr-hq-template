@@ -317,6 +317,11 @@ async function verifyPluginCutover(findings) {
     for (const forbidden of ["@rawr/session-intelligence-host", "createNodeSessionIntelligenceBoundary", "RawHostModule"]) {
       if (clientSource.includes(forbidden)) findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must not reference ${forbidden}`);
     }
+    for (const forbidden of ["callProcedure(", "rawClient: unknown", "rawClient as any", "raw?.catalog", "raw?.search", "raw?.transcripts"]) {
+      if (clientSource.includes(forbidden)) {
+        findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must use the typed @rawr/session-intelligence client directly, not an untyped procedure shim containing ${forbidden}`);
+      }
+    }
     for (const required of ["@rawr/session-intelligence/client", "CreateClientOptions", "satisfies CreateClientOptions"]) {
       if (!clientSource.includes(required)) findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must statically bind ${required}`);
     }
