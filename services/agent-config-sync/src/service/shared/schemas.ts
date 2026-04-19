@@ -141,6 +141,7 @@ export type RawrPluginKind = Static<typeof RawrPluginKindSchema>;
 export type SyncAgent = Static<typeof SyncAgentSchema>;
 export type SyncAgentSelection = Static<typeof SyncAgentSelectionSchema>;
 export type SyncScope = Static<typeof SyncScopeSchema>;
+export type SyncAction = Static<typeof SyncActionSchema>;
 export type SourcePlugin = Static<typeof SourcePluginSchema>;
 export type SourceContent = Static<typeof SourceContentSchema>;
 export type SyncPolicy = Static<typeof SyncPolicySchema>;

@@ -8,7 +8,9 @@ export const module = impl.retirement
   .use(async ({ context, next }) => next({
     context: {
       repoRoot: context.scope.repoRoot,
-      retirementRuntime: context.deps.retirementRuntime,
-      repo: createRepository(context.deps.retirementRuntime),
+      repo: createRepository({
+        resources: context.deps.resources,
+        undoCapture: context.deps.undoCapture,
+      }),
     },
   }));

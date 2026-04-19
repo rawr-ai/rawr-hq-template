@@ -1,7 +1,7 @@
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
-import { readJsonFile, writeJsonFile } from "./fs-utils";
+import type { AgentConfigSyncResources } from "../resources";
 import type {
   CodexRegistryClaims,
   HostSourceContent,
@@ -39,10 +39,11 @@ export type CodexRegistryContext = {
 
 export async function loadCodexRegistry(
   codexHome: string,
+  resources: AgentConfigSyncResources,
 ): Promise<CodexRegistryContext> {
   const filePath = path.join(codexHome, "plugins", "registry.json");
   const data =
-    (await readJsonFile<CodexRegistryFile>(filePath)) ??
+    (await resources.files.readJsonFile<CodexRegistryFile>(filePath)) ??
     {
       $schema: "https://claude.ai/schemas/codex-plugin-registry.json",
       description: "Declarative registry of plugins synced to Codex",
@@ -89,6 +90,7 @@ export async function upsertCodexRegistry(input: {
   content: HostSourceContent;
   dryRun: boolean;
   existingData: CodexRegistryFile;
+  resources: AgentConfigSyncResources;
 }): Promise<{ nextData: CodexRegistryFile; filePath: string; changed: boolean }> {
   const filePath = path.join(input.codexHome, "plugins", "registry.json");
   const pluginName = input.sourcePlugin.dirName;
@@ -151,7 +153,7 @@ export async function upsertCodexRegistry(input: {
     : input.existingData.last_synced ?? nowIso;
 
   if (!input.dryRun && changed) {
-    await writeJsonFile(filePath, nextData);
+    await input.resources.files.writeJsonFile(filePath, nextData);
   }
 
   return { nextData, filePath, changed };

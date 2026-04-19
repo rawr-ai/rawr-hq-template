@@ -1,9 +1,7 @@
 import path from "node:path";
 
-import { pathExists } from "./fs-utils";
-import { resolvePluginContentLayout } from "./plugin-content";
-import { scanCanonicalContentAtRoot } from "./scan-canonical-content";
 import type { SourceContent, SourcePlugin, SyncAgent } from "./types";
+import type { AgentConfigSyncResources } from "../resources";
 
 function mergeContent(base: SourceContent, overlay: SourceContent): SourceContent {
   const workflows = new Map(base.workflowFiles.map((w) => [w.name, w]));
@@ -30,16 +28,16 @@ export async function effectiveContentForProvider(input: {
   agent: SyncAgent;
   sourcePlugin: SourcePlugin;
   base: SourceContent;
+  resources: AgentConfigSyncResources;
 }): Promise<SourceContent> {
-  const layout = await resolvePluginContentLayout(input.sourcePlugin);
-  const overlayRoot = layout.overlayRootAbs[input.agent];
-  if (!(await pathExists(overlayRoot))) return input.base;
-
-  const overlay = await scanCanonicalContentAtRoot(overlayRoot, layout.includeByProvider[input.agent]);
+  const overlay = await input.resources.sources.readProviderOverlay({
+    agent: input.agent,
+    sourcePlugin: input.sourcePlugin,
+  });
+  if (!overlay) return input.base;
   return mergeContent(input.base, overlay);
 }
 
 export function resolveDefaultCoworkOutDir(workspaceRoot: string): string {
   return path.join(workspaceRoot, "dist", "cowork", "plugins");
 }
-

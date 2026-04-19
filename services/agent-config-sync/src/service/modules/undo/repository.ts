@@ -1,16 +1,11 @@
-import type { UndoRunResult, UndoRuntime } from "../../shared/ports/undo-runtime";
+import { runUndoForWorkspace } from "../../shared/internal/sync-undo";
+import type { AgentConfigSyncResources } from "../../shared/resources";
+import type { UndoRunResult } from "./schemas";
 
-export function createRepository(runtime: UndoRuntime | undefined) {
+export function createRepository(resources: AgentConfigSyncResources) {
   return {
     async runUndo(input: { workspaceRoot: string; dryRun: boolean }): Promise<UndoRunResult> {
-      if (!runtime) {
-        return {
-          ok: false,
-          code: "UNDO_PROVIDER_UNSUPPORTED",
-          message: "agent-config-sync undo runtime is not configured",
-        };
-      }
-      return runtime.runUndo(input);
+      return runUndoForWorkspace({ ...input, resources });
     },
   };
 }

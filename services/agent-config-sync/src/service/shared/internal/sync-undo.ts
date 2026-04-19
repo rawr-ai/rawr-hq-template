@@ -1,8 +1,6 @@
-import fs from "node:fs/promises";
 import path from "node:path";
 
-import { copyDirTree, ensureDir, pathExists, readJsonFile, writeJsonFile } from "./fs-utils";
-import { findWorkspaceRoot } from "./workspace";
+import type { AgentConfigSyncResources } from "../resources";
 
 export const PLUGINS_SYNC_UNDO_PROVIDER = "plugins.sync" as const;
 
@@ -83,67 +81,60 @@ function undoManifestPath(workspaceRoot: string): string {
   return path.join(undoCapsuleDir(workspaceRoot), "manifest.json");
 }
 
-async function statPathKind(target: string): Promise<UndoPathKind | null> {
-  try {
-    const stat = await fs.stat(target);
-    return stat.isDirectory() ? "dir" : "file";
-  } catch {
-    return null;
-  }
-}
-
-async function removePathIfPresent(target: string): Promise<boolean> {
-  const kind = await statPathKind(target);
+async function removePathIfPresent(resources: AgentConfigSyncResources, target: string): Promise<boolean> {
+  const kind = await resources.files.statPathKind(target);
   if (!kind) return false;
-  if (kind === "dir") await fs.rm(target, { recursive: true, force: true });
-  else await fs.rm(target, { force: true });
+  await resources.files.removePath(target, { recursive: kind === "dir" });
   return true;
 }
 
 async function copyPathSnapshot(input: {
+  resources: AgentConfigSyncResources;
   sourceAbs: string;
   backupAbs: string;
   pathKind: UndoPathKind;
 }): Promise<void> {
   if (input.pathKind === "file") {
-    await ensureDir(path.dirname(input.backupAbs));
-    await fs.copyFile(input.sourceAbs, input.backupAbs);
+    await input.resources.files.ensureDir(path.dirname(input.backupAbs));
+    await input.resources.files.copyFile(input.sourceAbs, input.backupAbs);
     return;
   }
 
-  await ensureDir(input.backupAbs);
-  await copyDirTree(input.sourceAbs, input.backupAbs);
+  await input.resources.files.ensureDir(input.backupAbs);
+  await input.resources.files.copyDirTree(input.sourceAbs, input.backupAbs);
 }
 
 async function restoreSnapshot(input: {
+  resources: AgentConfigSyncResources;
   backupAbs: string;
   targetAbs: string;
   pathKind: UndoPathKind;
 }): Promise<void> {
   if (input.pathKind === "file") {
-    await ensureDir(path.dirname(input.targetAbs));
-    await fs.copyFile(input.backupAbs, input.targetAbs);
+    await input.resources.files.ensureDir(path.dirname(input.targetAbs));
+    await input.resources.files.copyFile(input.backupAbs, input.targetAbs);
     return;
   }
 
-  await ensureDir(input.targetAbs);
-  await copyDirTree(input.backupAbs, input.targetAbs);
+  await input.resources.files.ensureDir(input.targetAbs);
+  await input.resources.files.copyDirTree(input.backupAbs, input.targetAbs);
 }
 
-export async function loadActiveUndoCapsule(workspaceRoot: string): Promise<UndoCapsule | null> {
-  const parsed = await readJsonFile<UndoCapsule>(undoManifestPath(workspaceRoot));
+export async function loadActiveUndoCapsule(workspaceRoot: string, resources: AgentConfigSyncResources): Promise<UndoCapsule | null> {
+  const parsed = await resources.files.readJsonFile<UndoCapsule>(undoManifestPath(workspaceRoot));
   if (!parsed) return null;
   if (parsed.version !== 1) return null;
   if (!Array.isArray(parsed.operations)) return null;
   return parsed;
 }
 
-export async function clearActiveUndoCapsule(workspaceRoot: string): Promise<void> {
-  await fs.rm(undoCapsuleDir(workspaceRoot), { recursive: true, force: true });
+export async function clearActiveUndoCapsule(workspaceRoot: string, resources: AgentConfigSyncResources): Promise<void> {
+  await resources.files.removePath(undoCapsuleDir(workspaceRoot), { recursive: true });
 }
 
 export class PluginsSyncUndoCapture {
   private readonly workspaceRoot: string;
+  private readonly resources: AgentConfigSyncResources;
 
   private readonly commandId: string;
 
@@ -161,8 +152,9 @@ export class PluginsSyncUndoCapture {
 
   private backupSeq = 0;
 
-  constructor(input: { workspaceRoot: string; commandId: string; argv: string[] }) {
+  constructor(input: { workspaceRoot: string; commandId: string; argv: string[]; resources: AgentConfigSyncResources }) {
     this.workspaceRoot = path.resolve(input.workspaceRoot);
+    this.resources = input.resources;
     this.commandId = input.commandId;
     this.argv = [...input.argv];
     this.startedAt = new Date().toISOString();
@@ -182,6 +174,7 @@ export class PluginsSyncUndoCapture {
     const backupAbs = path.join(undoCapsuleDir(this.workspaceRoot), backupRel);
 
     await copyPathSnapshot({
+      resources: this.resources,
       sourceAbs: targetAbs,
       backupAbs,
       pathKind,
@@ -193,8 +186,8 @@ export class PluginsSyncUndoCapture {
   }
 
   async prepare(): Promise<void> {
-    await clearActiveUndoCapsule(this.workspaceRoot);
-    await ensureDir(undoBackupsDir(this.workspaceRoot));
+    await clearActiveUndoCapsule(this.workspaceRoot, this.resources);
+    await this.resources.files.ensureDir(undoBackupsDir(this.workspaceRoot));
   }
 
   hasOperations(): boolean {
@@ -205,7 +198,7 @@ export class PluginsSyncUndoCapture {
     const targetAbs = path.resolve(target);
     if (this.handledTargets.has(targetAbs)) return;
 
-    const existingKind = await statPathKind(targetAbs);
+    const existingKind = await this.resources.files.statPathKind(targetAbs);
     if (!existingKind) {
       this.operations.push({
         seq: this.nextOperationSeq(),
@@ -231,7 +224,7 @@ export class PluginsSyncUndoCapture {
     const targetAbs = path.resolve(target);
     if (this.handledTargets.has(targetAbs)) return;
 
-    const existingKind = await statPathKind(targetAbs);
+    const existingKind = await this.resources.files.statPathKind(targetAbs);
     if (!existingKind) return;
 
     const snapshot = await this.ensureSnapshot(targetAbs, existingKind);
@@ -247,7 +240,7 @@ export class PluginsSyncUndoCapture {
 
   async finalize(input: { status: UndoCapsuleStatus }): Promise<UndoCapsule | null> {
     if (!this.hasOperations()) {
-      await clearActiveUndoCapsule(this.workspaceRoot);
+      await clearActiveUndoCapsule(this.workspaceRoot, this.resources);
       return null;
     }
 
@@ -266,7 +259,7 @@ export class PluginsSyncUndoCapture {
       operations: this.operations,
     };
 
-    await writeJsonFile(undoManifestPath(this.workspaceRoot), capsule);
+    await this.resources.files.writeJsonFile(undoManifestPath(this.workspaceRoot), capsule);
     return capsule;
   }
 }
@@ -275,6 +268,7 @@ export async function beginPluginsSyncUndoCapture(input: {
   workspaceRoot: string;
   commandId: string;
   argv: string[];
+  resources: AgentConfigSyncResources;
 }): Promise<PluginsSyncUndoCapture> {
   const capture = new PluginsSyncUndoCapture(input);
   await capture.prepare();
@@ -284,9 +278,10 @@ export async function beginPluginsSyncUndoCapture(input: {
 export async function runUndoForWorkspace(input: {
   workspaceRoot: string;
   dryRun: boolean;
+  resources: AgentConfigSyncResources;
 }): Promise<UndoRunResult> {
   const workspaceRoot = path.resolve(input.workspaceRoot);
-  const capsule = await loadActiveUndoCapsule(workspaceRoot);
+  const capsule = await loadActiveUndoCapsule(workspaceRoot, input.resources);
 
   if (!capsule) {
     return {
@@ -315,7 +310,7 @@ export async function runUndoForWorkspace(input: {
   const reversed = [...capsule.operations].sort((a, b) => b.seq - a.seq);
   for (const op of reversed) {
     if (op.type === "create-path") {
-      const exists = await pathExists(op.target);
+      const exists = await input.resources.files.pathExists(op.target);
       if (!exists) {
         skippedMissing += 1;
         operations.push({
@@ -335,7 +330,7 @@ export async function runUndoForWorkspace(input: {
       }
 
       try {
-        await removePathIfPresent(op.target);
+        await removePathIfPresent(input.resources, op.target);
         deleted += 1;
         operations.push({ seq: op.seq, type: op.type, target: op.target, status: "deleted", message: "removed created path" });
       } catch (err) {
@@ -352,7 +347,7 @@ export async function runUndoForWorkspace(input: {
     }
 
     const backupAbs = path.join(undoCapsuleDir(workspaceRoot), op.backupRel);
-    if (!(await pathExists(backupAbs))) {
+    if (!(await input.resources.files.pathExists(backupAbs))) {
       failed += 1;
       operations.push({
         seq: op.seq,
@@ -371,8 +366,8 @@ export async function runUndoForWorkspace(input: {
     }
 
     try {
-      await removePathIfPresent(op.target);
-      await restoreSnapshot({ backupAbs, targetAbs: op.target, pathKind: op.pathKind });
+      await removePathIfPresent(input.resources, op.target);
+      await restoreSnapshot({ resources: input.resources, backupAbs, targetAbs: op.target, pathKind: op.pathKind });
       restored += 1;
       operations.push({
         seq: op.seq,
@@ -394,7 +389,7 @@ export async function runUndoForWorkspace(input: {
 
   const ok = failed === 0;
   if (ok && !input.dryRun) {
-    await clearActiveUndoCapsule(workspaceRoot);
+    await clearActiveUndoCapsule(workspaceRoot, input.resources);
   }
 
   if (!ok) {
@@ -446,17 +441,19 @@ function isPluginsSyncRelatedArgv(argv: string[]): boolean {
 export async function expireUndoCapsuleOnUnrelatedCommand(input: {
   cwd: string;
   argv: string[];
+  workspaceRoot: string | null;
+  resources: AgentConfigSyncResources;
 }): Promise<{ workspaceRoot?: string; cleared: boolean; reason?: string }> {
-  const workspaceRoot = await findWorkspaceRoot(input.cwd);
+  const workspaceRoot = input.workspaceRoot;
   if (!workspaceRoot) return { cleared: false, reason: "workspace-root-missing" };
 
-  const capsule = await loadActiveUndoCapsule(workspaceRoot);
+  const capsule = await loadActiveUndoCapsule(workspaceRoot, input.resources);
   if (!capsule) return { workspaceRoot, cleared: false, reason: "no-capsule" };
 
   if (capsule.provider === PLUGINS_SYNC_UNDO_PROVIDER && isPluginsSyncRelatedArgv(input.argv)) {
     return { workspaceRoot, cleared: false, reason: "related-command" };
   }
 
-  await clearActiveUndoCapsule(workspaceRoot);
+  await clearActiveUndoCapsule(workspaceRoot, input.resources);
   return { workspaceRoot, cleared: true, reason: "unrelated-command" };
 }

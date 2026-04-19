@@ -1,16 +1,15 @@
-import { createClient } from "@rawr/agent-config-sync";
+import {
+  beginPluginsSyncUndoCapture as beginServicePluginsSyncUndoCapture,
+  createClient,
+  PLUGINS_SYNC_UNDO_PROVIDER,
+  type AgentConfigSyncUndoCapture,
+  type UndoRunResult,
+} from "@rawr/agent-config-sync";
 import type { CreateClientOptions } from "@rawr/agent-config-sync/client";
 import type { SyncItemResult, SyncRunResult, SyncScope } from "@rawr/agent-config-sync/schemas";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import {
-  type UndoRunResult,
-  PLUGINS_SYNC_UNDO_PROVIDER,
-  type UndoRuntime,
-} from "@rawr/agent-config-sync/ports/undo-runtime";
-import {
-  beginPluginsSyncUndoCapture,
-  createNodeAgentConfigSyncBoundary,
-  createNodeExecutionRuntime,
-  createNodeRetirementRuntime,
   effectiveContentForProvider,
   installAndEnableClaudePlugin,
   packageCoworkPlugin,
@@ -24,13 +23,22 @@ import {
   type HostSourceContent as SourceContent,
   type HostSourcePlugin as SourcePlugin,
   type TargetHomes,
-} from "@rawr/agent-config-sync-host";
+} from "./agent-config-sync-resources";
+import { createNodeAgentConfigSyncResources } from "./agent-config-sync-resources/resources";
 import { findWorkspaceRoot } from "./workspace-plugins";
 
-type UndoCaptureLike = {
-  captureWriteTarget(target: string): Promise<void>;
-  captureDeleteTarget(target: string): Promise<void>;
-};
+type UndoCaptureLike = AgentConfigSyncUndoCapture;
+
+export async function beginPluginsSyncUndoCapture(input: {
+  workspaceRoot: string;
+  commandId: string;
+  argv: string[];
+}) {
+  return beginServicePluginsSyncUndoCapture({
+    ...input,
+    resources: createNodeAgentConfigSyncResources(),
+  });
+}
 
 function createInvocation(traceId: string) {
   return {
@@ -42,42 +50,16 @@ function createInvocation(traceId: string) {
   } as const;
 }
 
-function createUndoCaptureRuntime(undoCapture: UndoCaptureLike | undefined): UndoRuntime {
-  return {
-    beginSession: async () => {},
-    finalizeSession: async () => null,
-    loadActiveCapsule: async () => null,
-    clearActiveCapsule: async () => {},
-    captureWriteTarget: async (target) => {
-      await undoCapture?.captureWriteTarget(target);
-    },
-    captureDeleteTarget: async (target) => {
-      await undoCapture?.captureDeleteTarget(target);
-    },
-    runUndo: async (): Promise<UndoRunResult> => ({
-      ok: false,
-      code: "UNDO_PROVIDER_UNSUPPORTED",
-      message: "Undo application remains host-owned for this cutover seam.",
-    }),
-  };
-}
-
 function createBoundary(repoRoot: string, undoCapture?: UndoCaptureLike): CreateClientOptions {
-  if (!undoCapture) {
-    return createNodeAgentConfigSyncBoundary({ repoRoot });
-  }
-
-  const base = createNodeAgentConfigSyncBoundary({ repoRoot });
-  const undoRuntime = createUndoCaptureRuntime(undoCapture);
-
   return {
-    ...base,
     deps: {
-      ...base.deps,
-      undoRuntime,
-      executionRuntime: createNodeExecutionRuntime(repoRoot, undoRuntime),
-      retirementRuntime: createNodeRetirementRuntime(repoRoot, undoRuntime),
+      logger: createEmbeddedPlaceholderLoggerAdapter(),
+      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+      resources: createNodeAgentConfigSyncResources(),
+      undoCapture,
     },
+    scope: { repoRoot },
+    config: {},
   };
 }
 
@@ -167,7 +149,6 @@ export async function retireStaleManagedPlugins(input: {
 }
 
 export {
-  beginPluginsSyncUndoCapture,
   effectiveContentForProvider,
   installAndEnableClaudePlugin,
   packageCoworkPlugin,
