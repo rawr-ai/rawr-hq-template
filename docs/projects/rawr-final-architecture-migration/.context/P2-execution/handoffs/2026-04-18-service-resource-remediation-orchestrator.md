@@ -40,9 +40,9 @@ Concrete resources move to plugin/app/runtime surfaces for now. Services own beh
 
 | Service | Agent | Branch | Worktree | Scratchpad | Status |
 | --- | --- | --- | --- | --- | --- |
-| `hq-ops` | pending | `agent-HQOPS-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-HQOPS-remove-host-package` | pending | pending |
-| `agent-config-sync` | pending | `agent-AGENTSYNC-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-AGENTSYNC-remove-host-package` | pending | pending |
-| `session-intelligence` | pending | `agent-SESSIONS-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-SESSIONS-remove-host-package` | pending | pending |
+| `hq-ops` | `019da3ab-8e92-7762-b778-9cec747d23f9` | `agent-HQOPS-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-HQOPS-remove-host-package` | `.../agent-HQOPS-remove-host-package-mini-plan.md` | discovery / mini-plan |
+| `agent-config-sync` | `019da3ab-dfd3-79b3-99ba-c96f0f05577e` | `agent-AGENTSYNC-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-AGENTSYNC-remove-host-package` | `.../agent-AGENTSYNC-remove-host-package-mini-plan.md` | discovery / mini-plan |
+| `session-intelligence` | `019da3ac-3040-7a90-babb-54c67ec32269` | `agent-SESSIONS-remove-host-package` | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-SESSIONS-remove-host-package` | `.../agent-SESSIONS-remove-host-package-mini-plan.md` | discovery / mini-plan |
 
 ## Shared Agent Prompt Notes
 
