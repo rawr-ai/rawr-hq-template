@@ -1,18 +1,21 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SessionsExtract from "../src/commands/sessions/extract";
 import SessionsList from "../src/commands/sessions/list";
 import SessionsResolve from "../src/commands/sessions/resolve";
 import SessionsSearch from "../src/commands/sessions/search";
 import {
+  createSessionIntelligenceClient,
   setSessionIntelligenceClientFactoryForTest,
   type SessionIntelligenceClient,
 } from "../src/lib/session-intelligence-client";
 import type { ExtractedSession, ResolveResult, SessionListItem } from "../src/lib/session-types";
 
 const tempPaths: string[] = [];
+const envKeys = ["HOME", "CODEX_HOME", "RAWR_SESSION_INDEX_PATH", "RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS"] as const;
+let envSnapshot: Record<string, string | undefined>;
 
 const session: SessionListItem = {
   path: "/tmp/codex-session.jsonl",
@@ -65,9 +68,18 @@ const extracted: ExtractedSession = {
   ],
 };
 
+beforeEach(() => {
+  envSnapshot = Object.fromEntries(envKeys.map((key) => [key, process.env[key]]));
+});
+
 afterEach(async () => {
   vi.restoreAllMocks();
   setSessionIntelligenceClientFactoryForTest(null);
+  for (const key of envKeys) {
+    const value = envSnapshot[key];
+    if (value == null) delete process.env[key];
+    else process.env[key] = value;
+  }
   while (tempPaths.length > 0) {
     const tempPath = tempPaths.pop();
     if (tempPath) await fs.rm(tempPath, { recursive: true, force: true });
@@ -78,6 +90,45 @@ async function makeTempDir(prefix: string): Promise<string> {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
   tempPaths.push(dir);
   return dir;
+}
+
+async function writeCodexSession(input: {
+  codexHome: string;
+  name: string;
+  id: string;
+  modified: string;
+  message: string;
+}): Promise<string> {
+  const sessionsDir = path.join(input.codexHome, "sessions", "2026", "02", "05");
+  await fs.mkdir(sessionsDir, { recursive: true });
+  const filePath = path.join(sessionsDir, input.name);
+  const rows = [
+    {
+      type: "session_meta",
+      timestamp: input.modified,
+      payload: {
+        id: input.id,
+        cwd: "/tmp/rawr-fixture-codex",
+        timestamp: input.modified,
+        git: { branch: "codex/session-intelligence-resource-test" },
+        model: "gpt-5",
+        model_provider: "openai",
+        info: { model_context_window: 128000 },
+      },
+    },
+    {
+      type: "event_msg",
+      timestamp: input.modified,
+      payload: {
+        type: "user_message",
+        message: input.message,
+      },
+    },
+  ];
+  await fs.writeFile(filePath, `${rows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
+  const date = new Date(input.modified);
+  await fs.utimes(filePath, date, date);
+  return filePath;
 }
 
 function createFakeClient(overrides: Partial<SessionIntelligenceClient> = {}): SessionIntelligenceClient {
@@ -265,5 +316,76 @@ describe("@rawr/plugin-session-tools", () => {
 
     expect(client.catalog.resolve).not.toHaveBeenCalled();
     expect(firstOutputError(outputSpy).code).toBe("MISSING_OUT_DIR");
+  });
+
+  it("binds plugin-local resources to the session-intelligence service", async () => {
+    const tmp = await makeTempDir("rawr-plugin-session-real-resources-");
+    const home = path.join(tmp, "home");
+    const codexHome = path.join(tmp, "codex");
+    const indexPath = path.join(tmp, "session-index.sqlite");
+    await fs.mkdir(home, { recursive: true });
+    process.env.HOME = home;
+    process.env.CODEX_HOME = codexHome;
+    process.env.RAWR_SESSION_INDEX_PATH = indexPath;
+    process.env.RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = "600000";
+
+    const filePath = await writeCodexSession({
+      codexHome,
+      name: "session-resource-test.jsonl",
+      id: "resource-test",
+      modified: "2026-02-05T00:00:00.000Z",
+      message: "findable plugin resource needle",
+    });
+
+    const client = await createSessionIntelligenceClient();
+    const listed = await client.catalog.list({ source: "codex", limit: 1, filters: {} });
+    expect(listed).toHaveLength(1);
+    expect(listed[0]).toMatchObject({
+      path: filePath,
+      source: "codex",
+      sessionId: "resource-test",
+      project: "rawr-fixture-codex",
+    });
+
+    const resolved = await client.catalog.resolve({ session: "resource-test", source: "codex" });
+    expect("error" in resolved).toBe(false);
+    if ("error" in resolved) throw new Error(resolved.error);
+    expect(resolved.resolved.path).toBe(filePath);
+
+    const reindex = await client.search.reindex({
+      sessions: listed,
+      roles: ["all"],
+      includeTools: false,
+      indexPath,
+      limit: 0,
+    });
+    expect(reindex).toEqual({ indexed: 1, total: 1 });
+
+    const hits = await client.search.content({
+      sessions: listed,
+      pattern: "resource needle",
+      ignoreCase: true,
+      maxMatches: 5,
+      snippetLen: 120,
+      roles: ["all"],
+      includeTools: false,
+      useIndex: true,
+      indexPath,
+    });
+    expect(hits).toHaveLength(1);
+    expect(hits[0]?.matchSnippet).toContain("resource needle");
+    await expect(fs.stat(indexPath)).resolves.toMatchObject({ size: expect.any(Number) });
+
+    const extracted = await client.transcripts.extract({
+      path: filePath,
+      roles: ["all"],
+      includeTools: false,
+      dedupe: true,
+      offset: 0,
+      maxMessages: 0,
+    });
+    expect("error" in extracted).toBe(false);
+    if ("error" in extracted) throw new Error(extracted.error);
+    expect(extracted.messages[0]?.content).toBe("findable plugin resource needle");
   });
 });

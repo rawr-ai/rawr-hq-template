@@ -1,12 +1,12 @@
 import { impl } from "../../impl";
-import { analytics, observability } from "./middleware";
-import { createRepository } from "./repository";
+import { analytics, observability, repository } from "./middleware";
 
 export const module = impl.search
   .use(observability)
   .use(analytics)
+  .use(repository)
   .use(async ({ context, next }) => next({
     context: {
-      repo: createRepository(context.deps.sessionSourceRuntime, context.deps.sessionIndexRuntime),
+      repo: context.provided.repo,
     },
   }));

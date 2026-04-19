@@ -46,18 +46,29 @@ export class MemorySessionIndexRuntime implements SessionIndexRuntime {
     this.entries.set(this.cacheKey(input), { ...input });
   }
 
-  async clearSearchText(input: { path?: string } = {}): Promise<void> {
+  async clearSearchText(input: { indexPath?: string; path?: string } = {}): Promise<void> {
     if (!input.path) {
-      this.entries.clear();
+      if (!input.indexPath) {
+        this.entries.clear();
+        return;
+      }
+      for (const key of [...this.entries.keys()]) {
+        if (key.startsWith(`${input.indexPath}\0`)) this.entries.delete(key);
+      }
       return;
     }
     for (const key of [...this.entries.keys()]) {
-      if (key.startsWith(`${input.path}\0`)) this.entries.delete(key);
+      if (key === this.cacheKey({ indexPath: input.indexPath ?? "", path: input.path, rolesKey: "", includeTools: false })) {
+        this.entries.delete(key);
+        continue;
+      }
+      const [, path] = key.split("\0");
+      if (path === input.path && (!input.indexPath || key.startsWith(`${input.indexPath}\0`))) this.entries.delete(key);
     }
   }
 
   private cacheKey(input: SessionSearchCacheKey): string {
-    return `${input.path}\0${input.rolesKey}\0${input.includeTools ? "1" : "0"}`;
+    return `${input.indexPath}\0${input.path}\0${input.rolesKey}\0${input.includeTools ? "1" : "0"}`;
   }
 }
 

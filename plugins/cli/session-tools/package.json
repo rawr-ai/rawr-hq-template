@@ -6,8 +6,7 @@
   "dependencies": {
     "@oclif/core": "^4.2.10",
     "@rawr/core": "workspace:*",
-    "@rawr/session-intelligence": "workspace:*",
-    "@rawr/session-intelligence-host": "workspace:*"
+    "@rawr/session-intelligence": "workspace:*"
   },
   "oclif": {
     "commands": "./dist/src/commands",
