@@ -8,14 +8,12 @@
 AGENTS_SPLIT.md
 rawr.config.ts
 apps/cli/**
-packages/agent-config-sync-host/**
 services/agent-config-sync/**
 packages/control-plane/**
 packages/core/**
 packages/plugin-workspace/**
 packages/journal/**
 packages/security/**
-packages/session-intelligence-host/**
 services/session-intelligence/**
 plugins/cli/session-tools/**
 services/state/**

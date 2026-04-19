@@ -22,7 +22,6 @@ const requiredServices = [
   "services/support-example",
 ];
 const requiredPackages = [
-  "packages/agent-config-sync-host",
   "packages/control-plane",
   "packages/hq",
   "packages/journal",
