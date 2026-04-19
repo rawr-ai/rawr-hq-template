@@ -1,14 +1,5 @@
-import fs from "node:fs/promises";
 import path from "node:path";
 
-import {
-  copyDirTree,
-  dirsIdentical,
-  ensureDir,
-  filesIdentical,
-  pathExists,
-  readJsonFile,
-} from "./fs-utils";
 import { effectiveContentForProvider } from "./effective-content";
 import {
   readClaudeSyncManifest,
@@ -31,6 +22,7 @@ import type {
   SyncRunResult,
   SyncTargetResult,
 } from "./types";
+import type { AgentConfigSyncResources } from "../resources";
 
 type ClaimedOthers = {
   prompts: Set<string>;
@@ -56,12 +48,13 @@ async function syncFileWithConflictPolicy(input: {
   result: SyncTargetResult;
   claimedByOtherPlugin?: boolean;
   undoCapture?: SyncOptions["undoCapture"];
+  resources: AgentConfigSyncResources;
 }): Promise<boolean> {
-  const { src, dest, kind, dryRun, force, result, claimedByOtherPlugin, undoCapture } = input;
-  const exists = await pathExists(dest);
+  const { src, dest, kind, dryRun, force, result, claimedByOtherPlugin, undoCapture, resources } = input;
+  const exists = await resources.files.pathExists(dest);
 
   if (exists) {
-    const same = await filesIdentical(src, dest);
+    const same = await resources.files.filesIdentical(src, dest);
     if (same) {
       pushItem(result, { action: "skipped", kind, source: src, target: dest, message: "identical" });
       return true;
@@ -80,8 +73,8 @@ async function syncFileWithConflictPolicy(input: {
 
     if (!dryRun) {
       await undoCapture?.captureWriteTarget(dest);
-      await ensureDir(path.dirname(dest));
-      await fs.copyFile(src, dest);
+      await resources.files.ensureDir(path.dirname(dest));
+      await resources.files.copyFile(src, dest);
     }
     pushItem(result, { action: dryRun ? "planned" : "updated", kind, source: src, target: dest, message: "overwrote" });
     return true;
@@ -100,8 +93,8 @@ async function syncFileWithConflictPolicy(input: {
 
   if (!dryRun) {
     await undoCapture?.captureWriteTarget(dest);
-    await ensureDir(path.dirname(dest));
-    await fs.copyFile(src, dest);
+    await resources.files.ensureDir(path.dirname(dest));
+    await resources.files.copyFile(src, dest);
   }
   pushItem(result, { action: dryRun ? "planned" : "copied", kind, source: src, target: dest });
   return true;
@@ -116,12 +109,13 @@ async function syncSkillDirWithConflictPolicy(input: {
   result: SyncTargetResult;
   claimedByOtherPlugin?: boolean;
   undoCapture?: SyncOptions["undoCapture"];
+  resources: AgentConfigSyncResources;
 }): Promise<boolean> {
-  const { srcDir, destDir, skillName, dryRun, force, result, claimedByOtherPlugin, undoCapture } = input;
-  const exists = await pathExists(destDir);
+  const { srcDir, destDir, skillName, dryRun, force, result, claimedByOtherPlugin, undoCapture, resources } = input;
+  const exists = await resources.files.pathExists(destDir);
 
   if (exists) {
-    const same = await dirsIdentical(srcDir, destDir);
+    const same = await resources.files.dirsIdentical(srcDir, destDir);
     if (same) {
       pushItem(result, { action: "skipped", kind: "skill", source: srcDir, target: destDir, message: "identical" });
       return true;
@@ -142,8 +136,8 @@ async function syncSkillDirWithConflictPolicy(input: {
 
     if (!dryRun) {
       await undoCapture?.captureWriteTarget(destDir);
-      await ensureDir(destDir);
-      await copyDirTree(srcDir, destDir);
+      await resources.files.ensureDir(destDir);
+      await resources.files.copyDirTree(srcDir, destDir);
     }
     pushItem(result, {
       action: dryRun ? "planned" : "updated",
@@ -168,8 +162,8 @@ async function syncSkillDirWithConflictPolicy(input: {
 
   if (!dryRun) {
     await undoCapture?.captureWriteTarget(destDir);
-    await ensureDir(destDir);
-    await copyDirTree(srcDir, destDir);
+    await resources.files.ensureDir(destDir);
+    await resources.files.copyDirTree(srcDir, destDir);
   }
   pushItem(result, { action: dryRun ? "planned" : "copied", kind: "skill", source: srcDir, target: destDir });
   return true;
@@ -181,15 +175,14 @@ async function deleteIfExists(input: {
   dryRun: boolean;
   result: SyncTargetResult;
   undoCapture?: SyncOptions["undoCapture"];
+  resources: AgentConfigSyncResources;
 }): Promise<void> {
-  const { target, kind, dryRun, result, undoCapture } = input;
-  if (!(await pathExists(target))) return;
+  const { target, kind, dryRun, result, undoCapture, resources } = input;
+  if (!(await resources.files.pathExists(target))) return;
 
   if (!dryRun) {
     await undoCapture?.captureDeleteTarget(target);
-    const stat = await fs.stat(target);
-    if (stat.isDirectory()) await fs.rm(target, { recursive: true, force: true });
-    else await fs.rm(target, { force: true });
+    await resources.files.removePath(target, { recursive: true });
   }
 
   pushItem(result, { action: dryRun ? "planned" : "deleted", kind, target, message: "gc orphan" });
@@ -214,10 +207,10 @@ async function syncCodexTarget(input: {
   const scriptsDir = path.join(codexHome, "scripts");
 
   if (!options.dryRun) {
-    await Promise.all([ensureDir(promptsDir), ensureDir(skillsDir), ensureDir(scriptsDir), ensureDir(path.join(codexHome, "plugins"))]);
+    await Promise.all([options.resources.files.ensureDir(promptsDir), options.resources.files.ensureDir(skillsDir), options.resources.files.ensureDir(scriptsDir), options.resources.files.ensureDir(path.join(codexHome, "plugins"))]);
   }
 
-  const registry = await loadCodexRegistry(codexHome);
+  const registry = await loadCodexRegistry(codexHome, options.resources);
   const claimedOthers: ClaimedOthers = {
     prompts: getClaimsFromOtherPlugins(sourcePlugin.dirName, registry.claimedSets.promptsByPlugin),
     skills: getClaimsFromOtherPlugins(sourcePlugin.dirName, registry.claimedSets.skillsByPlugin),
@@ -235,6 +228,7 @@ async function syncCodexTarget(input: {
       result,
       claimedByOtherPlugin: claimedOthers.prompts.has(workflow.name),
       undoCapture: options.undoCapture,
+      resources: options.resources,
     });
   }
 
@@ -249,6 +243,7 @@ async function syncCodexTarget(input: {
       result,
       claimedByOtherPlugin: claimedOthers.skills.has(skill.name),
       undoCapture: options.undoCapture,
+      resources: options.resources,
     });
   }
 
@@ -264,6 +259,7 @@ async function syncCodexTarget(input: {
       result,
       claimedByOtherPlugin: claimedOthers.scripts.has(scriptName),
       undoCapture: options.undoCapture,
+      resources: options.resources,
     });
   }
 
@@ -285,6 +281,7 @@ async function syncCodexTarget(input: {
         dryRun: options.dryRun,
         result,
         undoCapture: options.undoCapture,
+        resources: options.resources,
       });
     }
 
@@ -297,6 +294,7 @@ async function syncCodexTarget(input: {
         dryRun: options.dryRun,
         result,
         undoCapture: options.undoCapture,
+        resources: options.resources,
       });
     }
 
@@ -309,6 +307,7 @@ async function syncCodexTarget(input: {
         dryRun: options.dryRun,
         result,
         undoCapture: options.undoCapture,
+        resources: options.resources,
       });
     }
   }
@@ -322,6 +321,7 @@ async function syncCodexTarget(input: {
     content,
     dryRun: options.dryRun,
     existingData: registry.data,
+    resources: options.resources,
   });
   if (codexRegistry.changed) {
     pushItem(result, {
@@ -356,7 +356,7 @@ async function syncClaudeTarget(input: {
   const agentsDir = path.join(pluginDir, "agents");
 
   if (!options.dryRun) {
-    await Promise.all([ensureDir(commandsDir), ensureDir(skillsDir), ensureDir(scriptsDir), ensureDir(agentsDir)]);
+    await Promise.all([options.resources.files.ensureDir(commandsDir), options.resources.files.ensureDir(skillsDir), options.resources.files.ensureDir(scriptsDir), options.resources.files.ensureDir(agentsDir)]);
   }
 
   for (const workflow of content.workflowFiles) {
@@ -369,6 +369,7 @@ async function syncClaudeTarget(input: {
       force: options.force,
       result,
       undoCapture: options.undoCapture,
+      resources: options.resources,
     });
   }
 
@@ -382,6 +383,7 @@ async function syncClaudeTarget(input: {
       force: options.force,
       result,
       undoCapture: options.undoCapture,
+      resources: options.resources,
     });
   }
 
@@ -395,6 +397,7 @@ async function syncClaudeTarget(input: {
       force: options.force,
       result,
       undoCapture: options.undoCapture,
+      resources: options.resources,
     });
   }
 
@@ -409,12 +412,14 @@ async function syncClaudeTarget(input: {
         dryRun: options.dryRun,
         force: options.force,
         result,
+        undoCapture: options.undoCapture,
+        resources: options.resources,
       });
     }
   }
 
   if (options.gc) {
-    const previous = await readClaudeSyncManifest(claudeLocalHome, sourcePlugin.dirName);
+    const previous = await readClaudeSyncManifest(claudeLocalHome, sourcePlugin.dirName, options.resources);
     if (previous) {
       const currentWorkflow = new Set(content.workflowFiles.map((w) => w.name));
       const currentSkills = new Set(content.skills.map((s) => s.name));
@@ -425,33 +430,36 @@ async function syncClaudeTarget(input: {
         if (currentWorkflow.has(oldWorkflow)) continue;
         await deleteIfExists({
           target: path.join(commandsDir, `${oldWorkflow}.md`),
-        kind: "workflow",
-        dryRun: options.dryRun,
-        result,
-        undoCapture: options.undoCapture,
-      });
+          kind: "workflow",
+          dryRun: options.dryRun,
+          result,
+          undoCapture: options.undoCapture,
+          resources: options.resources,
+        });
       }
 
       for (const oldSkill of previous.skills) {
         if (currentSkills.has(oldSkill)) continue;
         await deleteIfExists({
           target: path.join(skillsDir, oldSkill),
-        kind: "skill",
-        dryRun: options.dryRun,
-        result,
-        undoCapture: options.undoCapture,
-      });
+          kind: "skill",
+          dryRun: options.dryRun,
+          result,
+          undoCapture: options.undoCapture,
+          resources: options.resources,
+        });
       }
 
       for (const oldScript of previous.scripts) {
         if (currentScripts.has(oldScript)) continue;
         await deleteIfExists({
           target: path.join(scriptsDir, oldScript),
-        kind: "script",
-        dryRun: options.dryRun,
-        result,
-        undoCapture: options.undoCapture,
-      });
+          kind: "script",
+          dryRun: options.dryRun,
+          result,
+          undoCapture: options.undoCapture,
+          resources: options.resources,
+        });
       }
 
       if (includeAgentsInClaude) {
@@ -463,6 +471,7 @@ async function syncClaudeTarget(input: {
             dryRun: options.dryRun,
             result,
             undoCapture: options.undoCapture,
+            resources: options.resources,
           });
         }
       }
@@ -478,6 +487,7 @@ async function syncClaudeTarget(input: {
     claudeLocalHome,
     sourcePlugin,
     dryRun: options.dryRun,
+    resources: options.resources,
   });
   if (pluginManifest.changed) {
     pushItem(result, {
@@ -495,6 +505,7 @@ async function syncClaudeTarget(input: {
     claudeLocalHome,
     sourcePlugin,
     dryRun: options.dryRun,
+    resources: options.resources,
   });
   if (marketplace.changed) {
     pushItem(result, {
@@ -515,6 +526,7 @@ async function syncClaudeTarget(input: {
     sourcePlugin,
     content,
     dryRun: options.dryRun,
+    resources: options.resources,
   });
   if (syncManifest.changed) {
     pushItem(result, {
@@ -541,14 +553,14 @@ export async function runSync(input: {
   const targets: SyncTargetResult[] = [];
 
   if (includeCodex) {
-    const codexContent = await effectiveContentForProvider({ agent: "codex", sourcePlugin, base: content });
+    const codexContent = await effectiveContentForProvider({ agent: "codex", sourcePlugin, base: content, resources: options.resources });
     for (const codexHome of codexHomes) {
       targets.push(await syncCodexTarget({ codexHome, sourcePlugin, content: codexContent, options }));
     }
   }
 
   if (includeClaude) {
-    const claudeContent = await effectiveContentForProvider({ agent: "claude", sourcePlugin, base: content });
+    const claudeContent = await effectiveContentForProvider({ agent: "claude", sourcePlugin, base: content, resources: options.resources });
     for (const claudeHome of claudeHomes) {
       targets.push(await syncClaudeTarget({ claudeLocalHome: claudeHome, sourcePlugin, content: claudeContent, options }));
     }
@@ -569,6 +581,6 @@ export async function runSync(input: {
   };
 }
 
-export async function loadCodexRegistryForTests(codexHome: string): Promise<unknown> {
-  return readJsonFile(path.join(codexHome, "plugins", "registry.json"));
+export async function loadCodexRegistryForTests(codexHome: string, resources: AgentConfigSyncResources): Promise<unknown> {
+  return resources.files.readJsonFile(path.join(codexHome, "plugins", "registry.json"));
 }

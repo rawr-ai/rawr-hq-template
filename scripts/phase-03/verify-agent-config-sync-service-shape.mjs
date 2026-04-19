@@ -15,11 +15,8 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/shared/README.md",
   "services/agent-config-sync/src/service/shared/errors.ts",
   "services/agent-config-sync/src/service/shared/internal-errors.ts",
+  "services/agent-config-sync/src/service/shared/resources.ts",
   "services/agent-config-sync/src/service/shared/schemas.ts",
-  "services/agent-config-sync/src/service/shared/ports/planning-runtime.ts",
-  "services/agent-config-sync/src/service/shared/ports/execution-runtime.ts",
-  "services/agent-config-sync/src/service/shared/ports/retirement-runtime.ts",
-  "services/agent-config-sync/src/service/shared/ports/undo-runtime.ts",
   "services/agent-config-sync/src/service/modules/planning/contract.ts",
   "services/agent-config-sync/src/service/modules/planning/middleware.ts",
   "services/agent-config-sync/src/service/modules/planning/module.ts",
@@ -62,12 +59,30 @@ for (const key of [".", "./client", "./service/contract", "./router"]) {
   assertCondition(exportsMap[key], `agent-config-sync package exports must include ${key}`);
 }
 
-const [contractSource, routerSource, clientSource, sharedReadme, serviceShapeTest] = await Promise.all([
+const [
+  contractSource,
+  routerSource,
+  clientSource,
+  sharedReadme,
+  serviceShapeTest,
+  baseSource,
+  executionRepository,
+  planningRepository,
+  retirementRepository,
+  undoRepository,
+  pluginPluginsPackageJson,
+] = await Promise.all([
   readFile("services/agent-config-sync/src/service/contract.ts"),
   readFile("services/agent-config-sync/src/service/router.ts"),
   readFile("services/agent-config-sync/src/client.ts"),
   readFile("services/agent-config-sync/src/service/shared/README.md"),
   readFile("services/agent-config-sync/test/service-shape.test.ts"),
+  readFile("services/agent-config-sync/src/service/base.ts"),
+  readFile("services/agent-config-sync/src/service/modules/execution/repository.ts"),
+  readFile("services/agent-config-sync/src/service/modules/planning/repository.ts"),
+  readFile("services/agent-config-sync/src/service/modules/retirement/repository.ts"),
+  readFile("services/agent-config-sync/src/service/modules/undo/repository.ts"),
+  readFile("plugins/cli/plugins/package.json"),
 ]);
 
 for (const key of ["planning", "execution", "retirement", "undo"]) {
@@ -76,9 +91,33 @@ for (const key of ["planning", "execution", "retirement", "undo"]) {
   assertCondition(serviceShapeTest.includes(`"${key}"`), `service-shape test must ratchet ${key}`);
 }
 
-for (const depKey of ["planningRuntime", "executionRuntime", "retirementRuntime", "undoRuntime"]) {
-  const baseSource = await readFile("services/agent-config-sync/src/service/base.ts");
-  assertCondition(baseSource.includes(depKey), `agent-config-sync base service deps must declare ${depKey}`);
+assertCondition(baseSource.includes("resources: AgentConfigSyncResources"), "agent-config-sync base deps must declare concrete resource deps");
+assertCondition(!baseSource.includes("planningRuntime"), "agent-config-sync base deps must not declare planningRuntime");
+assertCondition(!baseSource.includes("executionRuntime"), "agent-config-sync base deps must not declare executionRuntime");
+assertCondition(!baseSource.includes("retirementRuntime"), "agent-config-sync base deps must not declare retirementRuntime");
+assertCondition(!baseSource.includes("undoRuntime"), "agent-config-sync base deps must not declare undoRuntime");
+
+for (const [label, source] of Object.entries({
+  executionRepository,
+  planningRepository,
+  retirementRepository,
+  undoRepository,
+})) {
+  for (const forbidden of ["runtime.runSync", "runtime.previewSync", "runtime.retireStaleManaged", "runtime.runUndo"]) {
+    assertCondition(!source.includes(forbidden), `${label} must not forward to ${forbidden}`);
+  }
+}
+
+for (const relPath of [
+  "packages/agent-config-sync-host",
+  "services/agent-config-sync/src/service/shared/ports",
+]) {
+  assertCondition(!(await pathExists(relPath)), `${relPath} must not exist`);
+}
+
+for (const [label, source] of Object.entries({ pluginPluginsPackageJson })) {
+  assertCondition(!source.includes("@rawr/agent-config-sync-host"), `${label} must not reference @rawr/agent-config-sync-host`);
+  assertCondition(!source.includes("agent-config-sync-host"), `${label} must not reference agent-config-sync-host`);
 }
 
 assertCondition(sharedReadme.includes("example-todo"), "shared README must anchor the example-todo service shape");

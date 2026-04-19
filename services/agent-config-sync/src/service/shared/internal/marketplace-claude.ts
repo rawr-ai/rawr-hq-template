@@ -1,7 +1,7 @@
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
-import { readJsonFile, writeJsonFile } from "./fs-utils";
+import type { AgentConfigSyncResources } from "../resources";
 import type { HostSourceContent, HostSourcePlugin } from "./types";
 
 export type ClaudePluginManifest = {
@@ -44,10 +44,11 @@ export async function upsertClaudePluginManifest(input: {
   claudeLocalHome: string;
   sourcePlugin: HostSourcePlugin;
   dryRun: boolean;
+  resources: AgentConfigSyncResources;
 }): Promise<{ filePath: string; changed: boolean }> {
   const pluginDir = path.join(input.claudeLocalHome, "plugins", input.sourcePlugin.dirName);
   const filePath = path.join(pluginDir, ".claude-plugin", "plugin.json");
-  const existing = (await readJsonFile<ClaudePluginManifest>(filePath)) ?? {};
+  const existing = (await input.resources.files.readJsonFile<ClaudePluginManifest>(filePath)) ?? {};
 
   const next: ClaudePluginManifest = {
     ...existing,
@@ -61,7 +62,7 @@ export async function upsertClaudePluginManifest(input: {
   const changed = !isDeepStrictEqual(existing, next);
 
   if (!input.dryRun && changed) {
-    await writeJsonFile(filePath, next);
+    await input.resources.files.writeJsonFile(filePath, next);
   }
 
   return { filePath, changed };
@@ -71,10 +72,11 @@ export async function upsertClaudeMarketplace(input: {
   claudeLocalHome: string;
   sourcePlugin: HostSourcePlugin;
   dryRun: boolean;
+  resources: AgentConfigSyncResources;
 }): Promise<{ filePath: string; changed: boolean }> {
   const filePath = path.join(input.claudeLocalHome, ".claude-plugin", "marketplace.json");
   const existing =
-    (await readJsonFile<ClaudeMarketplaceFile>(filePath)) ??
+    (await input.resources.files.readJsonFile<ClaudeMarketplaceFile>(filePath)) ??
     {
       $schema: "https://anthropic.com/claude-code/marketplace.schema.json",
       name: "local",
@@ -107,7 +109,7 @@ export async function upsertClaudeMarketplace(input: {
   const changed = !isDeepStrictEqual(existing, next);
 
   if (!input.dryRun && changed) {
-    await writeJsonFile(filePath, next);
+    await input.resources.files.writeJsonFile(filePath, next);
   }
 
   return { filePath, changed };
@@ -118,6 +120,7 @@ export async function writeClaudeSyncManifest(input: {
   sourcePlugin: HostSourcePlugin;
   content: HostSourceContent;
   dryRun: boolean;
+  resources: AgentConfigSyncResources;
 }): Promise<{
   filePath: string;
   manifest: ClaudeManagedPluginManifest;
@@ -129,7 +132,7 @@ export async function writeClaudeSyncManifest(input: {
     input.sourcePlugin.dirName,
     ".rawr-sync-manifest.json",
   );
-  const existing = await readJsonFile<ClaudeManagedPluginManifest>(filePath);
+  const existing = await input.resources.files.readJsonFile<ClaudeManagedPluginManifest>(filePath);
   const nowIso = new Date().toISOString();
 
   const stableManifest: ClaudeManagedPluginManifest = {
@@ -152,7 +155,7 @@ export async function writeClaudeSyncManifest(input: {
   };
 
   if (!input.dryRun && changed) {
-    await writeJsonFile(filePath, manifest);
+    await input.resources.files.writeJsonFile(filePath, manifest);
   }
 
   return { filePath, manifest, changed };
@@ -161,6 +164,7 @@ export async function writeClaudeSyncManifest(input: {
 export async function readClaudeSyncManifest(
   claudeLocalHome: string,
   pluginName: string,
+  resources: AgentConfigSyncResources,
 ): Promise<ClaudeManagedPluginManifest | null> {
   const filePath = path.join(
     claudeLocalHome,
@@ -168,7 +172,7 @@ export async function readClaudeSyncManifest(
     pluginName,
     ".rawr-sync-manifest.json",
   );
-  return readJsonFile<ClaudeManagedPluginManifest>(filePath);
+  return resources.files.readJsonFile<ClaudeManagedPluginManifest>(filePath);
 }
 
 function normalizeSyncManifest(

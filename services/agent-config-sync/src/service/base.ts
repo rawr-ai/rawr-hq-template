@@ -6,17 +6,15 @@
  * authoring surfaces used everywhere else in the package.
  */
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
-import type { ExecutionRuntime } from "./shared/ports/execution-runtime";
-import type { PlanningRuntime } from "./shared/ports/planning-runtime";
-import type { RetirementRuntime } from "./shared/ports/retirement-runtime";
-import type { UndoRuntime } from "./shared/ports/undo-runtime";
+import type {
+  AgentConfigSyncResources,
+  AgentConfigSyncUndoCapture,
+} from "./shared/resources";
 
 type InitialContext = {
   deps: {
-    planningRuntime?: PlanningRuntime;
-    executionRuntime?: ExecutionRuntime;
-    retirementRuntime?: RetirementRuntime;
-    undoRuntime?: UndoRuntime;
+    resources: AgentConfigSyncResources;
+    undoCapture?: AgentConfigSyncUndoCapture;
   };
   scope: {
     repoRoot: string;

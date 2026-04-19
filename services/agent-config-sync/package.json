@@ -18,21 +18,9 @@
       "types": "./src/service/contract.ts",
       "default": "./src/service/contract.ts"
     },
-    "./ports/planning-runtime": {
-      "types": "./src/service/shared/ports/planning-runtime.ts",
-      "default": "./src/service/shared/ports/planning-runtime.ts"
-    },
-    "./ports/execution-runtime": {
-      "types": "./src/service/shared/ports/execution-runtime.ts",
-      "default": "./src/service/shared/ports/execution-runtime.ts"
-    },
-    "./ports/retirement-runtime": {
-      "types": "./src/service/shared/ports/retirement-runtime.ts",
-      "default": "./src/service/shared/ports/retirement-runtime.ts"
-    },
-    "./ports/undo-runtime": {
-      "types": "./src/service/shared/ports/undo-runtime.ts",
-      "default": "./src/service/shared/ports/undo-runtime.ts"
+    "./resources": {
+      "types": "./src/service/shared/resources.ts",
+      "default": "./src/service/shared/resources.ts"
     },
     "./schemas": {
       "types": "./src/service/shared/schemas.ts",

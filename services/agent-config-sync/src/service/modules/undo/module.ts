@@ -8,7 +8,6 @@ export const module = impl.undo
   .use(async ({ context, next }) => next({
     context: {
       repoRoot: context.scope.repoRoot,
-      undoRuntime: context.deps.undoRuntime,
-      repo: createRepository(context.deps.undoRuntime),
+      repo: createRepository(context.deps.resources),
     },
   }));

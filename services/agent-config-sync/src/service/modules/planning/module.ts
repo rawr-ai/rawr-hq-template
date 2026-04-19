@@ -8,7 +8,6 @@ export const module = impl.planning
   .use(async ({ context, next }) => next({
     context: {
       repoRoot: context.scope.repoRoot,
-      planningRuntime: context.deps.planningRuntime,
-      repo: createRepository(context.deps.planningRuntime),
+      repo: createRepository(context.deps.resources),
     },
   }));

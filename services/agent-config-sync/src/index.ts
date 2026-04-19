@@ -7,3 +7,21 @@
  */
 export { createClient, type Client, type CreateClientOptions } from "./client";
 export { router, type Router } from "./router";
+export {
+  beginPluginsSyncUndoCapture,
+  clearActiveUndoCapsule,
+  expireUndoCapsuleOnUnrelatedCommand,
+  loadActiveUndoCapsule,
+  PLUGINS_SYNC_UNDO_PROVIDER,
+  runUndoForWorkspace,
+  type PluginsSyncUndoCapture,
+} from "./service/shared/internal/sync-undo";
+export type {
+  AgentConfigSyncResources,
+  AgentConfigSyncUndoCapture,
+} from "./service/shared/resources";
+export type {
+  UndoCapsule,
+  UndoCapsuleStatus,
+  UndoRunResult,
+} from "./service/modules/undo/schemas";
