@@ -127,7 +127,7 @@ That order is load-bearing. If issue hardening later changes the issue count, it
 issues:
   - id: M1-U00
     title: "Guardrails and Phase 1 ledger"
-    status: planned
+    status: done
     blocked_by: []
   - id: M1-U01
     title: "Archive false futures"
@@ -186,6 +186,7 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 - Issue doc: [M1-U00](../issues/M1-U00-guardrails-and-phase-1-ledger.md)
 - Focus: establish the checked-in ledger, classify the minimum concrete Phase 1 surface set, and install the first proof rails.
 - Stop-gate: the repo enforces what is live, archived, parked, and forbidden before any semantic code moves start.
+- Traceability: branch `agent-FARGO-M1-U00-guardrails-and-phase-1-ledger`; PR `#204` (`https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/204`); `sync:check`, `phase-1:gates:baseline`, and `nx show projects` passed; `lint:boundaries` remains red on the pre-existing `apps/server` boundary issue and unused-disable warnings.
 
 ### M1-U01: Archive false futures
 

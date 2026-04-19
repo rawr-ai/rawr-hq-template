@@ -246,6 +246,12 @@ Use agents carefully and only where they lower risk instead of increasing it.
   - one focused on concrete implementation and proof coverage
 - review every agent contribution thoroughly before accepting it
 - if agent work changes meaning rather than mechanics, re-check the issue doc, milestone, and architecture spec before keeping it
+- when a slice archives or deletes a meaningful package/service/plugin and lessons need to survive, close any no-longer-needed agents first and then spin up a grounded 3-4 agent lesson-extraction team for that archive target:
+  - ground them in `grounding.md`, this workflow, the active issue doc, and the canonical architecture
+  - have them capture wiring, integration, technology-fit, and system-placement lessons without preserving legacy architecture or whole implementations
+  - assign one agent as integrator for the final lessons artifact
+  - keep the team asynchronous so mainline milestone execution keeps moving
+  - never exceed six active agents total at once
 
 ## High-Level Milestone Plan
 
