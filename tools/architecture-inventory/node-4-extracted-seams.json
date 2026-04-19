@@ -15,6 +15,21 @@
         "test"
       ]
     },
+    "@rawr/hq-ops": {
+      "config": "services/hq-ops/package.json",
+      "tags": [
+        "type:service",
+        "role:servicepackage",
+        "migration-slice:structural-tranche"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
     "@rawr/core": {
       "config": "packages/core/package.json",
       "tags": [

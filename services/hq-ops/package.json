@@ -1,0 +1,48 @@
+{
+  "name": "@rawr/hq-ops",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./service/contract": {
+      "types": "./src/service/contract.ts",
+      "default": "./src/service/contract.ts"
+    },
+    "./router": {
+      "types": "./src/router.ts",
+      "default": "./src/router.ts"
+    }
+  },
+  "scripts": {
+    "build": "bunx tsc -p tsconfig.json",
+    "sync": "bun run --cwd ../.. sync:check --project @rawr/hq-ops",
+    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-ops",
+    "typecheck": "bunx tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --project hq-ops"
+  },
+  "dependencies": {
+    "@rawr/hq-sdk": "workspace:*",
+    "@opentelemetry/api": "^1.9.0",
+    "@orpc/contract": "^1.13.5",
+    "@orpc/server": "^1.13.5",
+    "typebox": "^1.0.81"
+  },
+  "devDependencies": {
+    "@opentelemetry/context-async-hooks": "^2.6.0",
+    "@opentelemetry/sdk-trace-base": "^2.6.0",
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:service",
+      "role:servicepackage",
+      "migration-slice:structural-tranche"
+    ]
+  }
+}

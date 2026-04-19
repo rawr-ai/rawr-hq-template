@@ -112,6 +112,9 @@ const suiteCommandsByProject = {
   "@rawr/state": {
     default: ["bun scripts/phase-03/verify-state-structural.mjs"],
   },
+  "@rawr/hq-ops": {
+    default: ["bun scripts/phase-1/verify-hq-ops-service-shape.mjs"],
+  },
   "@rawr/core": {
     default: ["bun scripts/phase-03/verify-core-support-structural.mjs"],
   },

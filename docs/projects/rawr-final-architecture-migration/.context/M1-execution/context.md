@@ -2,35 +2,49 @@
 
 ## Active Slice
 
-- Issue: `M1-U01`
-- Title: `Archive false futures and freeze the marketplace compatibility lane`
-- Status: follow-up proof-band repair verified; waiting on peer review, then commit/submit
-- Dependency state: `M1-U00` is complete; this slice now gates all downstream M1 authority work
-- Current role of the slice: subtract dead futures from the live lane before `services/hq-ops` is reserved and before any new canonical seams are installed
+- Issue: `M1-U02`
+- Title: `Reserve the canonical HQ Ops seam`
+- Status: implementation in place, local verification green, review/HQ validation pending
+- Dependency state: `M1-U01` is complete on the stack; this slice now gates all HQ operational truth moves in `M1-U03`
+- Current role of the slice: create the one canonical Phase 1 service home before any config, repo-state, journal, or security truth migrates into it
 
 ## Why This Slice Matters
 
-This slice removes the two false futures that would otherwise keep exerting architectural pressure during the rest of Phase 1:
+This slice creates the destination before any semantic truth moves. Without a real `services/hq-ops` home, later Phase 1 work would either keep negotiating around legacy packages or silently smear logic across multiple temporary homes.
 
-- `coordination` as an active live service + plugin + host surface
-- `support-example` as a live service/workflow demo lane
+The slice is deliberately narrow. It reserves canonical space and shape only:
 
-If they remain live, later Phase 1 work will still be negotiating around dead authorities. The correct move here is not normalization. It is archive-with-evidence, then hard removal from live build, runtime, manifest, host, and proof participation.
+- one service package: `services/hq-ops`
+- one service shell: `base`, `contract`, `impl`, `router`
+- four internal modules: `config`, `repo-state`, `journal`, `security`
+- the same internal load-bearing anchors that `services/example-todo` already proves out:
+  - `service/shared/{README,errors,internal-errors}`
+  - per-module `contract.ts`, `middleware.ts`, `module.ts`, `repository.ts`, `router.ts`, `schemas.ts`
 
-This slice also freezes `plugins/agents/hq` in place as the only allowed non-executable compatibility carryover. That lane survives for operational continuity only; it must not be treated as unresolved topology authority.
+If this slice starts moving logic or rewiring consumers, it has failed its own boundary and is stealing work from `M1-U03`.
 
 ## Done Bar
 
 This slice is done only when all of the following are true:
 
-- `services/coordination`, `plugins/api/coordination`, and `plugins/workflows/coordination` are removed from live build, test, runtime, and inventory participation.
-- `services/support-example` and `plugins/workflows/support-example` are removed from live build, test, runtime, manifest/host registration, and live test inventory participation.
-- root workspace references are updated so removed surfaces no longer appear in root build/typecheck/test paths or TS path aliases.
-- the HQ app manifest and server host composition no longer register archived coordination/support-example plugin families.
-- static scans and Phase 1 proof scripts confirm there are no live imports or registrations pointing at archived coordination/support-example surfaces.
-- `plugins/agents/hq` remains exactly the sanctioned Phase 1 compatibility lane: preserved, not renamed, not expanded, and still usable by `rawr plugins sync @rawr/plugin-hq --dry-run`.
-- archive evidence exists for both removed lanes under `docs/archive/coordination/lessons.md` and `docs/archive/support-example/lessons.md`.
-- the support-example archive preserves useful fixtures and translation notes instead of dragging the live implementation forward.
+- `services/hq-ops` exists as one canonical service package, not four separate service roots
+- the package has the canonical Phase 1 service shell:
+  - `src/service/base.ts`
+  - `src/service/contract.ts`
+  - `src/service/impl.ts`
+  - `src/service/router.ts`
+  - thin `src/client.ts`, `src/router.ts`, `src/index.ts`
+- placeholder seams exist for:
+  - `src/service/modules/config/`
+  - `src/service/modules/repo-state/`
+  - `src/service/modules/journal/`
+  - `src/service/modules/security/`
+- the public package boundary still matches `services/example-todo`:
+  - `.`
+  - `./router`
+  - `./service/contract`
+- the package shape is structurally proven by `verify-hq-ops-service-shape`
+- no production logic has moved and no consumer has been rewired yet
 
 ## Canonical References
 
@@ -39,121 +53,118 @@ Read these before starting or resuming:
 1. [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md)
 2. [workflow.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/workflow.md)
 3. [M1-authority-collapse.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/milestones/M1-authority-collapse.md)
-4. [M1-U01-archive-false-futures.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U01-archive-false-futures.md)
+4. [M1-U02-reserve-hq-ops-seam.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U02-reserve-hq-ops-seam.md)
 5. [RAWR_Canonical_Architecture_Spec.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_Canonical_Architecture_Spec.md)
+6. [RAWR_P1_Architecture_Migration_Plan.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_P1_Architecture_Migration_Plan.md)
 
 ## Relevant Surfaces
 
-Archived roots removed from the live tree:
+Primary target:
 
-- `services/coordination`
-- `plugins/api/coordination`
-- `plugins/workflows/coordination`
-- `services/support-example`
-- `plugins/workflows/support-example`
+- `services/hq-ops/`
 
-Primary live consumers and registrations cut or rewritten in this slice:
+Required shell files:
 
-- `tsconfig.base.json`
-- root `package.json`
+- `services/hq-ops/package.json`
+- `services/hq-ops/src/service/base.ts`
+- `services/hq-ops/src/service/contract.ts`
+- `services/hq-ops/src/service/impl.ts`
+- `services/hq-ops/src/service/router.ts`
+- `services/hq-ops/src/client.ts`
+- `services/hq-ops/src/router.ts`
+- `services/hq-ops/src/index.ts`
+- `services/hq-ops/src/service/shared/README.md`
+- `services/hq-ops/src/service/shared/errors.ts`
+- `services/hq-ops/src/service/shared/internal-errors.ts`
+
+Reserved module seams:
+
+- `services/hq-ops/src/service/modules/config/`
+- `services/hq-ops/src/service/modules/repo-state/`
+- `services/hq-ops/src/service/modules/journal/`
+- `services/hq-ops/src/service/modules/security/`
+
+Expected proof surface:
+
+- `scripts/phase-1/verify-hq-ops-service-shape.mjs`
+
+Exact shell model:
+
+- `services/example-todo/package.json`
+- `services/example-todo/src/index.ts`
+- `services/example-todo/src/client.ts`
+- `services/example-todo/src/router.ts`
+- `services/example-todo/src/service/base.ts`
+- `services/example-todo/src/service/contract.ts`
+- `services/example-todo/src/service/impl.ts`
+- `services/example-todo/src/service/router.ts`
+- `services/example-todo/src/service/shared/`
+- `services/example-todo/src/service/modules/*`
 - `vitest.config.ts`
+
+Secondary workspace-target prior art only:
+
+- `services/state/package.json`
 - `tools/architecture-inventory/node-4-extracted-seams.json`
-- `tools/architecture-inventory/slice-0-first-cohort.json`
-- `apps/hq/src/manifest.ts`
-- `apps/server/src/host-seam.ts`
-- `apps/server/src/host-satisfiers.ts`
-- `apps/server/src/workflows/runtime.ts`
-- `apps/server/package.json`
-- `apps/web/package.json`
-- `apps/cli/package.json`
-- `apps/web/src/ui/lib/orpc-client.ts`
-- `plugins/web/mfe-demo/src/web.ts`
-- deleted coordination/support-example-specific CLI, web, server, and proof files
-
-Archive evidence targets:
-
-- `docs/archive/coordination/lessons.md`
-- `docs/archive/support-example/lessons.md`
-
-Protected compatibility lane:
-
-- `plugins/agents/hq`
 
 ## Key Insights Already Established
 
-- This slice is broader than deleting a few directories. `coordination` is currently wired into TS path aliases, root run-many scripts, the HQ manifest, server host seams/satisfiers/runtime, CLI coordination commands, web coordination clients, and multiple server/web tests.
-- `support-example` is currently wired into the HQ manifest, server host satisfiers, workflow proofs, and legacy demo/test surfaces.
-- The hardened packet treats both `coordination` and `support-example` as archive targets in Phase 1, not as live capabilities to be renamed or normalized forward.
-- `plugins/agents/hq` is the only sanctioned non-executable compatibility carryover in M1. It is frozen, not modernized.
-- Archive artifacts are the only sanctioned memory of the removed lanes after the live cut lands. They need to preserve useful wiring/integration lessons without preserving the legacy system wholesale.
-- The archive proof band now enforces three things together: archived classification in the Phase 1 ledger, physical absence from the live tree, and presence of archive lesson docs.
-- `rawr plugins sync @rawr/plugin-hq --dry-run` resolves the preserved marketplace lane, but plain dry-run exits non-zero on existing downstream target conflicts; `--dry-run --force` is the conflict-tolerant verification form that proves the lane still resolves cleanly without mutating anything.
-- The initial U01 archive commit accidentally over-deleted generic server proof coverage and left several downstream verifier scripts stale. The current follow-up diff restores the generic server proof files and retargets the Phase A/C/D/E verifier stack to the archived U01 world instead of deleted coordination/support-example artifacts.
-- `bun run rawr hq up --observability required --open none`, `rawr hq status --json`, direct health probes, and `.rawr/hq/runtime.log` already validated the managed HQ stack after the archive cut; do not rerun that unless the runtime behavior changes again before commit.
+- Phase 1 explicitly wants one service package with internal modules, not sibling services like `services/hq-ops-config` or `services/hq-ops-journal`.
+- `services/example-todo` is the exact shell model, including thin package exports, shared anchors, and per-module `repository.ts` / `schemas.ts` files.
+- `services/state` is not the shell model for U02. It is only useful for matching existing workspace targets like `sync`, `structural`, and structural-tranche inventory tagging.
+- U02 is a reservation slice. Placeholder module seams are required; real logic movement belongs to `M1-U03`.
+- Exact shell fidelity means no widened public exports in U02. The reserved modules stay internal for now.
+- Exact shell fidelity also means giving `hq-ops` a dedicated `vitest.config.ts` project entry, like `example-todo`.
+- The ledger already points the eventual moves here:
+  - `packages/control-plane` -> `services/hq-ops/config`
+  - `services/state` -> `services/hq-ops/repo-state`
+  - `packages/journal` -> `services/hq-ops/journal`
+  - `packages/security` -> `services/hq-ops/security`
+- Because U02 sits immediately after the U01 archive cut, it must not reintroduce any deleted topology or old authority while creating the new seam.
 
 ## Invariants and User Constraints
 
-- Use the single existing worktree only. Do not create more worktrees.
-- Use a distinct Graphite branch for this issue inside the same worktree.
-- `context.md` must be refreshed after compact and replaced when moving to a new issue.
-- `context.md` is current-issue-only. Do not turn it into a running log.
-- Prefer Narsil for symbol/reference/call-path work, but remember it indexes the primary tree at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template`.
-- After each commit that needs fresh code intel, update that primary tree to the latest commit so Narsil indexes the current slice.
-- Do not trust agents with semantic changes. Review/mechanical help only.
-- For archive lesson capture, spin up a grounded 3-4 agent team per archive target with one integrator, close stale agents first, and never exceed six active agents total.
-- Lesson capture should preserve wiring, integrations, and technology-fit insights; it should not preserve the whole implementation or carry forward clearly legacy architecture.
-- The milestone packet wins for M1 execution scope, sequencing, and stop-gates. The architecture spec remains canonical for architecture.
+- Stay in the single existing worktree only.
+- Work on `agent-FARGO-M1-U02-reserve-hq-ops-seam`.
+- Do not move production logic in this slice.
+- Do not rewire consumers in this slice.
+- Do not silently let seam reservation become partial migration.
+- Keep `context.md` current-issue-only and replace it again before U03.
+- Prefer Narsil for code-intel questions, but remember the indexed primary tree is `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template`.
+- After the next commit, move that primary tree to the new U02 commit and reindex if needed.
+- Use agents for review/verification only, not for semantic seam design.
 
 ## Verification Bar
 
 Run at minimum:
 
 - `bun run sync:check`
-- `bun run phase-1:gates:baseline`
-- `bun run rawr plugins sync @rawr/plugin-hq --dry-run`
-- `bun run rawr plugins sync @rawr/plugin-hq --dry-run --force`
-- `bun scripts/phase-1/verify-no-live-coordination.mjs`
-- `bun scripts/phase-1/verify-no-live-support-example.mjs`
-- `bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs`
-- `rg -n 'coordination|support-example' apps packages plugins services -g '!**/dist/**' -g '!**/node_modules/**'`
-- `test -d plugins/agents/hq`
-- `bunx nx test @rawr/plugin-mfe-demo`
-- HQ stack validation before commit:
-  `bun run rawr hq up`, confirm observability, inspect logs, restart if needed
+- `bun --cwd services/hq-ops run typecheck`
+- `bun scripts/phase-1/verify-hq-ops-service-shape.mjs`
 
-Add adjacent checks if the host/manifest/runtime cut forces them.
+Add adjacent checks only if the new package wiring forces them.
 
 ## Current Status
 
-- The archived roots are deleted from the live tree and no longer appear in `apps`, `packages`, `plugins`, or `services` scans.
-- The HQ manifest, server host seams, CLI/web surfaces, demo plugin, Vitest project list, architecture inventory, and Phase 1 scripts were updated to remove live coordination/support-example participation.
-- `docs/archive/coordination/lessons.md` and `docs/archive/support-example/lessons.md` now exist and encode the preserved wiring/integration lessons.
-- `bun run sync:check`, `bun run phase-1:gates:baseline`, `bun scripts/phase-1/verify-no-live-coordination.mjs`, `bun scripts/phase-1/verify-no-live-support-example.mjs`, `bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs`, `test -d plugins/agents/hq`, and `bunx nx test @rawr/plugin-mfe-demo` are green.
-- Managed HQ runtime validation is complete: `rawr hq status --json` shows server/web/async plus HyperDX observability all running, the canonical state RPC returns `200` with first-party auth headers, and archived coordination/support-example workflow probes return `404`.
-- The recreated server proof files are back in place:
-  - `apps/server/test/rawr.test.ts`
-  - `apps/server/test/route-boundary-matrix.test.ts`
-  - `apps/server/test/ingress-signature-observability.test.ts`
-  - `apps/server/test/logging-correlation.test.ts`
-  - `apps/server/test/phase-a-gates.test.ts`
-- The proof-band follow-up is green locally:
-  - `bun scripts/phase-c/verify-telemetry-contract.mjs`
-  - `bun scripts/phase-d/verify-d2-finished-hook-contract.mjs`
-  - `bun scripts/phase-e/verify-e2-finished-hook-policy.mjs`
-  - `bun run phase-c:c2:quick`
-  - `bun run phase-d:d2:full`
-  - `bun run phase-e:e2:full`
-  - `bunx nx test @rawr/server`
-- The verifier retarget touched these live proof surfaces:
-  - `scripts/phase-a/manifest-smoke.mjs`
-  - `scripts/phase-c/verify-telemetry-contract.mjs`
-  - `scripts/phase-d/verify-d2-finished-hook-contract.mjs`
-  - `scripts/phase-e/verify-e2-finished-hook-policy.mjs`
-  - `apps/server/test/route-boundary-matrix.test.ts`
-  - `package.json`
+- The branch is `agent-FARGO-M1-U02-reserve-hq-ops-seam`.
+- It has been restacked on top of U01 after the `dab1b3d4` proof-band repair.
+- `context.md` has now been swapped from U01 to U02.
+- `services/hq-ops` does not exist yet.
+- `services/hq-ops` now exists with the canonical reservation shell, dedicated Vitest project, service-shape verifier, and structural-suite registration.
+- Local checks already passing:
+  - `bun run --cwd services/hq-ops typecheck`
+  - `bun run --cwd services/hq-ops test`
+  - `bun scripts/phase-1/verify-hq-ops-service-shape.mjs`
+  - `bun run sync:check --project @rawr/hq-ops`
+  - `bun run --cwd services/hq-ops structural`
+- Reservation shape now keeps the real `example-todo` assembly pattern:
+  - each module exposes one structural `reservation` procedure
+  - `module.ts` attaches `observability`, `analytics`, and `repository` through the canonical module-composition seam
+  - `src/client.ts` keeps the direct `defineServicePackage(router)` boundary with no cast workaround
+- Peer reviews are running on the implementation, and HQ stack validation has been delegated before commit.
 
 ## Immediate Next Actions
 
-1. Read the pending peer-review findings from the existing agents and fix anything real if they surface it.
-2. If peer review is clean, commit the stable U01 follow-up repair on `agent-FARGO-M1-U01-archive-false-futures`.
-3. Move the primary Narsil tree at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template` to the new commit so indexing catches up, then submit the updated stack with `gt ss --draft`.
+1. Consume the peer-review findings and fix any real fidelity or honesty issues they surface.
+2. Consume the HQ runtime-validation result and fix anything it finds before commit.
+3. If both are clean, update the milestone + issue checkboxes/traceability, run final verification once more, then commit the U02 slice and refresh `context.md` for the next issue.
