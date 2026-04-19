@@ -6,10 +6,10 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
-describe("phase-a gate scaffold (hq)", () => {
+describe("phase-a gate scaffold (plugin-workspace)", () => {
   it("metadata contract gate scaffold keeps shared metadata surfaces reachable", async () => {
     await expect(
-      fs.access(path.join(repoRoot, "packages", "hq", "src", "workspace", "plugins.ts")),
+      fs.access(path.join(repoRoot, "packages", "plugin-workspace", "src", "plugins.ts")),
     ).resolves.toBeUndefined();
     await expect(
       fs.access(path.join(repoRoot, "plugins", "cli", "plugins", "src", "lib", "workspace-plugins.ts")),
@@ -17,7 +17,7 @@ describe("phase-a gate scaffold (hq)", () => {
   });
 
   it("import boundary gate scaffold keeps package/plugin roots discoverable", async () => {
-    await expect(fs.access(path.join(repoRoot, "packages", "hq", "src", "workspace"))).resolves.toBeUndefined();
+    await expect(fs.access(path.join(repoRoot, "packages", "plugin-workspace", "src"))).resolves.toBeUndefined();
     await expect(fs.access(path.join(repoRoot, "plugins", "cli", "plugins", "src", "lib"))).resolves.toBeUndefined();
   });
 

@@ -14,7 +14,9 @@ describe("phase-a gate scaffold (plugin-plugins)", () => {
   });
 
   it("import boundary gate scaffold keeps package boundary owner path visible", async () => {
-    await expect(fs.access(path.join(repoRoot, "packages", "hq", "src", "workspace", "plugins.ts"))).resolves.toBeUndefined();
+    await expect(
+      fs.access(path.join(repoRoot, "packages", "plugin-workspace", "src", "plugins.ts")),
+    ).resolves.toBeUndefined();
   });
 
   it("forbidden legacy metadata keys gate scaffold keeps scanner file available", async () => {

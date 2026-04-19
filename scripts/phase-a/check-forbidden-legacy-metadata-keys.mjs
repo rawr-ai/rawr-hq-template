@@ -11,7 +11,7 @@ function usage() {
       "  bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs [--allow-findings] <path> [<path> ...]",
       "",
       "Examples:",
-      "  bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs packages/hq/src/workspace/plugins.ts plugins/*/*/package.json",
+      "  bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs packages/plugin-workspace/src/plugins.ts plugins/*/*/package.json",
       "  bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs --allow-findings plugins/*/*/package.json",
     ].join("\n"),
   );

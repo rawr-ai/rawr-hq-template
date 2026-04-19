@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { filterPluginsByKind, resolvePluginId, type WorkspacePlugin } from "../src/workspace";
+import { filterPluginsByKind, resolvePluginId, type WorkspacePlugin } from "../src";
 
-describe("@rawr/hq workspace helpers", () => {
+describe("@rawr/plugin-workspace helpers", () => {
   const plugins: WorkspacePlugin[] = [
     {
       id: "@rawr/plugin-alpha",

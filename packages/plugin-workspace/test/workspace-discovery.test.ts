@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { listWorkspacePlugins } from "../src/workspace";
+import { listWorkspacePlugins } from "../src";
 
 const tempDirs: string[] = [];
 
@@ -24,12 +24,12 @@ async function writeJsonFile(filePath: string, data: unknown): Promise<void> {
 }
 
 async function createWorkspaceWithRoots(roots: DiscoveryRoot[]): Promise<string> {
-  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-hq-workspace-discovery-"));
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-plugin-workspace-discovery-"));
   tempDirs.push(tempRoot);
   const workspaceRoot = path.join(tempRoot, "repo");
 
   await writeJsonFile(path.join(workspaceRoot, "package.json"), {
-    name: "rawr-workspace-discovery-test",
+    name: "rawr-plugin-workspace-discovery-test",
     private: true,
   });
 
@@ -55,7 +55,7 @@ afterEach(async () => {
   }
 });
 
-describe("@rawr/hq workspace discovery roots", () => {
+describe("@rawr/plugin-workspace discovery roots", () => {
   it("discovers plugins under cli/agents/web/api/workflows roots", async () => {
     const workspaceRoot = await createWorkspaceWithRoots(["cli", "agents", "web", "api", "workflows"]);
 

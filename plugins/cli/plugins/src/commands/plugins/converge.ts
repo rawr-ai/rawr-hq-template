@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { checkScratchPolicy } from "@rawr/hq/lifecycle";
+import { checkScratchPolicy } from "../../lib/plugins-lifecycle/scratch-policy";
 
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 

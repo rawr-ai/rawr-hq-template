@@ -31,7 +31,7 @@ const REQUIRED_NEGATIVE_ASSERTION_KEYS = [
 
 const searchRoots = [
   path.join(process.cwd(), "apps", "server", "test"),
-  path.join(process.cwd(), "packages", "hq", "test"),
+  path.join(process.cwd(), "packages", "plugin-workspace", "test"),
   path.join(process.cwd(), "plugins", "cli", "plugins", "test"),
 ];
 

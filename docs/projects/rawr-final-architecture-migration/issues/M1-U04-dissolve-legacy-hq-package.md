@@ -1,7 +1,7 @@
 ---
 id: M1-U04
 title: "[M1] Dissolve the legacy HQ package and land purpose-named tooling boundaries"
-state: planned
+state: done
 priority: 1
 estimate: 4
 project: rawr-final-architecture-migration
@@ -26,11 +26,11 @@ related_to: []
 - Delete `packages/hq` entirely after its surviving support surfaces are rehoused.
 
 ## Acceptance Criteria
-- [ ] `packages/hq` is gone.
-- [ ] No live `@rawr/hq/*` imports remain in apps, packages, plugins, or services.
-- [ ] `packages/plugin-workspace` owns only real shared support, not semantic HQ truth.
-- [ ] Plugin-CLI-only helpers live with plugin CLI ownership.
-- [ ] Tests and typechecks previously carried by `packages/hq` pass in their new owners.
+- [x] `packages/hq` is gone.
+- [x] No live `@rawr/hq/*` imports remain in apps, packages, plugins, or services.
+- [x] `packages/plugin-workspace` owns only real shared support, not semantic HQ truth.
+- [x] Plugin-CLI-only helpers live with plugin CLI ownership.
+- [x] Tests and typechecks previously carried by `packages/hq` pass in their new owners.
 
 ## Testing / Verification
 - `bun run sync:check`
@@ -69,6 +69,29 @@ Out of scope:
 
 ### Implementation Guidance
 Partition `packages/hq` by earned ownership, not by directory nostalgia. Support surfaces survive only if they are support-only. Semantic facades die once direct HQ Ops cuts land.
+
+### Implementation Decisions
+- `packages/plugin-workspace` is the sole survivor package from the `packages/hq` split. It owns only workspace-root discovery, plugin manifest parsing, and workspace plugin listing/filtering helpers.
+- Plugin CLI owns the install drift engine, install reconcile logic, lifecycle scratch-policy gate, and scaffold factory. Those helpers move under `plugins/cli/plugins` instead of into another package.
+- `apps/cli/src/lib/journal-context.ts` stays CLI-owned as a local per-process journal accumulator. Semantic journal reads and writes still cut directly to `@rawr/hq-ops/journal`; the `@rawr/hq/journal` facade does not survive.
+- The `verify-no-legacy-hq-imports` proof flips in this slice from “frozen remaining import surface” to “no live `@rawr/hq` import surface remains.”
+- The checked-in ownership inventory keeps `@rawr/plugin-workspace` in the Slice 0 first-cohort contract only. It does not also appear in `node-4-extracted-seams.json`, because `sync:check` treats duplicated project declarations across inventory packets as an error.
+
+### Verification Notes
+- Branch: `agent-FARGO-M1-U04-dissolve-legacy-hq-package`
+- Structural / proof bar passed:
+  - `bun run sync:check`
+  - `bun run lint:boundaries` (only pre-existing unrelated server warnings)
+  - `bun run --cwd packages/plugin-workspace typecheck`
+  - `bun run --cwd apps/cli typecheck`
+  - `bun run --cwd plugins/cli/plugins typecheck`
+  - `bun run --cwd packages/plugin-workspace test`
+  - `bun run --cwd plugins/cli/plugins test`
+  - `bun run --cwd apps/cli test`
+  - `bun scripts/phase-1/verify-no-legacy-hq-imports.mjs`
+  - `bun run --cwd packages/plugin-workspace structural`
+  - `rg -n -P '@rawr/hq(?![-\\w])(?:/|\\b)' apps packages plugins services -g '!**/dist/**' -g '!**/node_modules/**'`
+- Managed HQ runtime validation passed with required observability, `/health` `200`, first-party state RPC `200`, and archived coordination/support-example route probes `404`.
 
 ### Files
 - `packages/hq/src/workspace/index.ts`

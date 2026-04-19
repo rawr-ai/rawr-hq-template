@@ -57,13 +57,13 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/hq"),
-        test: { name: "hq", environment: "node", include: [...includes] },
+        root: r("services/hq-ops"),
+        test: { name: "hq-ops", environment: "node", include: [...includes] },
       },
       {
         extends: true,
-        root: r("services/hq-ops"),
-        test: { name: "hq-ops", environment: "node", include: [...includes] },
+        root: r("packages/plugin-workspace"),
+        test: { name: "plugin-workspace", environment: "node", include: [...includes] },
       },
       {
         extends: true,

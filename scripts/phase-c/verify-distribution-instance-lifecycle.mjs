@@ -6,17 +6,17 @@ await Promise.all([
   mustExist("scripts/dev/activate-global-rawr.sh"),
   mustExist("apps/cli/src/commands/doctor/global.ts"),
   mustExist("apps/cli/test/doctor-global.test.ts"),
-  mustExist("packages/hq/test/instance-alias-isolation.test.ts"),
+  mustExist("plugins/cli/plugins/test/instance-alias-isolation.test.ts"),
   mustExist("plugins/cli/plugins/test/distribution-alias-lifecycle.test.ts"),
 ]);
 
-const [installSource, activateSource, doctorSource, doctorTestSource, hqTestSource, pluginTestSource, scripts] =
+const [installSource, activateSource, doctorSource, doctorTestSource, instanceAliasTestSource, pluginTestSource, scripts] =
   await Promise.all([
     readFile("scripts/dev/install-global-rawr.sh"),
     readFile("scripts/dev/activate-global-rawr.sh"),
     readFile("apps/cli/src/commands/doctor/global.ts"),
     readFile("apps/cli/test/doctor-global.test.ts"),
-    readFile("packages/hq/test/instance-alias-isolation.test.ts"),
+    readFile("plugins/cli/plugins/test/instance-alias-isolation.test.ts"),
     readFile("plugins/cli/plugins/test/distribution-alias-lifecycle.test.ts"),
     readPackageScripts(),
   ]);
@@ -60,9 +60,9 @@ assertCondition(
 );
 
 assertCondition(
-  hqTestSource.includes('canonicalWorkspaceSource).toBe("workspace-root")') &&
-    hqTestSource.includes('canonicalWorkspaceSource).toBe("global-owner")'),
-  "hq seam isolation test must cover instance-local default and explicit global-owner fallback",
+  instanceAliasTestSource.includes('canonicalWorkspaceSource).toBe("workspace-root")') &&
+    instanceAliasTestSource.includes('canonicalWorkspaceSource).toBe("global-owner")'),
+  "instance alias seam isolation test must cover instance-local default and explicit global-owner fallback",
 );
 assertCondition(
   pluginTestSource.includes('canonicalWorkspaceSource).toBe("workspace-root")') &&
@@ -76,7 +76,7 @@ assertCondition(
 );
 assertCondition(
   scripts["phase-c:gate:c3-distribution-runtime"] ===
-    "bunx vitest run --project hq packages/hq/test/instance-alias-isolation.test.ts && bunx vitest run --project plugin-plugins plugins/cli/plugins/test/distribution-alias-lifecycle.test.ts",
+    "bunx vitest run --project plugin-plugins plugins/cli/plugins/test/instance-alias-isolation.test.ts plugins/cli/plugins/test/distribution-alias-lifecycle.test.ts",
   "phase-c:gate:c3-distribution-runtime must run required C3 runtime tests",
 );
 assertCondition(

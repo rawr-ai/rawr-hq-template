@@ -42,19 +42,15 @@ async function findWorkspaceRootUpwards(startDir: string): Promise<string | null
 }
 
 export async function findWorkspaceRoot(startDir = process.cwd()): Promise<string | null> {
-  // Explicit override for cases where the CLI is invoked from outside the workspace.
-  // (e.g. you want to run `rawr journal tail` from another repo).
   const envRoot = process.env.RAWR_WORKSPACE_ROOT ?? process.env.RAWR_HQ_ROOT;
   if (typeof envRoot === "string" && envRoot.trim().length > 0) {
     const resolved = path.resolve(envRoot.trim());
     if (await isWorkspaceRoot(resolved)) return resolved;
   }
 
-  // Primary: search from the working directory.
   const fromCwd = await findWorkspaceRootUpwards(startDir);
   if (fromCwd) return fromCwd;
 
-  // Fallback: search from the installed CLI’s location (useful when invoked elsewhere).
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
   return findWorkspaceRootUpwards(moduleDir);
 }

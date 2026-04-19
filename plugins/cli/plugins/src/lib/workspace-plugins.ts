@@ -5,7 +5,7 @@ import {
   resolvePluginId as resolvePluginIdFromWorkspace,
   type WorkspacePlugin,
   type WorkspacePluginKind,
-} from "@rawr/hq/workspace";
+} from "@rawr/plugin-workspace";
 
 export type { WorkspacePlugin, WorkspacePluginKind };
 

@@ -37,10 +37,10 @@
         "@orpc/client": "^1.13.5",
         "@rawr/agent-sync": "workspace:*",
         "@rawr/core": "workspace:*",
-        "@rawr/hq": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
         "@rawr/orpc-client": "workspace:*",
         "@rawr/plugin-plugins": "workspace:*",
+        "@rawr/plugin-workspace": "workspace:*",
         "zod": "^3.24.3",
       },
       "devDependencies": {
@@ -157,18 +157,6 @@
         "typescript": "^5.9.3",
       },
     },
-    "packages/hq": {
-      "name": "@rawr/hq",
-      "dependencies": {
-        "@rawr/agent-sync": "workspace:*",
-        "@rawr/core": "workspace:*",
-        "@rawr/hq-ops": "workspace:*",
-      },
-      "devDependencies": {
-        "@types/bun": "^1.2.10",
-        "typescript": "^5.9.3",
-      },
-    },
     "packages/hq-sdk": {
       "name": "@rawr/hq-sdk",
       "dependencies": {
@@ -188,6 +176,13 @@
         "@orpc/client": "^1.13.5",
       },
       "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/plugin-workspace": {
+      "name": "@rawr/plugin-workspace",
+      "devDependencies": {
+        "@types/bun": "^1.2.10",
         "typescript": "^5.9.3",
       },
     },
@@ -269,8 +264,8 @@
         "@oclif/core": "^4.8.0",
         "@rawr/agent-sync": "workspace:*",
         "@rawr/core": "workspace:*",
-        "@rawr/hq": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
+        "@rawr/plugin-workspace": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^22.14.0",
@@ -998,8 +993,6 @@
 
     "@rawr/example-todo": ["@rawr/example-todo@workspace:services/example-todo"],
 
-    "@rawr/hq": ["@rawr/hq@workspace:packages/hq"],
-
     "@rawr/hq-app": ["@rawr/hq-app@workspace:apps/hq"],
 
     "@rawr/hq-ops": ["@rawr/hq-ops@workspace:services/hq-ops"],
@@ -1023,6 +1016,8 @@
     "@rawr/plugin-plugins": ["@rawr/plugin-plugins@workspace:plugins/cli/plugins"],
 
     "@rawr/plugin-session-tools": ["@rawr/plugin-session-tools@workspace:plugins/cli/session-tools"],
+
+    "@rawr/plugin-workspace": ["@rawr/plugin-workspace@workspace:packages/plugin-workspace"],
 
     "@rawr/runtime-context": ["@rawr/runtime-context@workspace:packages/runtime-context"],
 
