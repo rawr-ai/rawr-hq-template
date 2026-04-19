@@ -1,5 +1,10 @@
 import type { Inngest } from "inngest";
-import { defineWorkflowPlugin, type WorkflowRuntimeInput } from "@rawr/hq-sdk/workflows";
+import {
+  defineWorkflowPlugin,
+  defineWorkflowPluginDeclaration,
+  type WorkflowPluginContribution,
+  type WorkflowRuntimeInput,
+} from "@rawr/hq-sdk/workflows";
 import { supportExampleWorkflowContract } from "./contract";
 import type { SupportExampleClient } from "./context";
 import { createSupportExampleInngestFunctions, processSupportExampleRequestedEvent } from "./functions/support-example";
@@ -13,29 +18,63 @@ export type RegisterSupportExampleWorkflowPluginOptions = Readonly<{
   resolveSupportExampleClient: (repoRoot: string) => SupportExampleClient;
 }>;
 
-export function registerSupportExampleWorkflowPlugin(
-  options: RegisterSupportExampleWorkflowPluginOptions,
-) {
-  const surface = {
+const supportExampleWorkflowDeclaration = defineWorkflowPluginDeclaration({
+  capability: "support-example" as const,
+  internal: {
     contract: supportExampleWorkflowContract,
-    router: createSupportExampleWorkflowRouter(options.resolveSupportExampleClient),
+  },
+  published: {
+    routeBase: "/support-example/triage" as const,
+    contract: supportExampleWorkflowContract,
+  },
+  runtime: {
+    kind: "inngest-functions" as const,
+  },
+});
+
+const supportExampleWorkflowContractDeclaration = supportExampleWorkflowContract;
+const supportExampleWorkflowRouteBase = "/support-example/triage" as const;
+
+function contributeSupportExampleWorkflowPlugin(
+  bound: RegisterSupportExampleWorkflowPluginOptions,
+): WorkflowPluginContribution<
+  typeof supportExampleWorkflowContract,
+  ReturnType<typeof createSupportExampleWorkflowRouter>,
+  WorkflowRuntimeInput,
+  unknown
+> {
+  const surface = {
+    contract: supportExampleWorkflowContractDeclaration,
+    router: createSupportExampleWorkflowRouter(bound.resolveSupportExampleClient),
   } as const;
 
-  return defineWorkflowPlugin({
-    capability: "support-example" as const,
+  return {
     internal: surface,
     published: {
-      routeBase: "/support-example/triage" as const,
+      routeBase: supportExampleWorkflowRouteBase,
       ...surface,
     },
     runtime: {
       createInngestFunctions(input: WorkflowRuntimeInput) {
         return createSupportExampleInngestFunctions({
           client: input.client,
-          resolveSupportExampleClient: options.resolveSupportExampleClient,
+          resolveSupportExampleClient: bound.resolveSupportExampleClient,
         });
       },
     },
+  };
+}
+
+export function registerSupportExampleWorkflowPlugin(
+  options: RegisterSupportExampleWorkflowPluginOptions,
+) {
+  const contribution = contributeSupportExampleWorkflowPlugin(options);
+
+  return defineWorkflowPlugin({
+    capability: supportExampleWorkflowDeclaration.capability,
+    declaration: supportExampleWorkflowDeclaration,
+    contribute: contributeSupportExampleWorkflowPlugin,
+    ...contribution,
   });
 }
 
