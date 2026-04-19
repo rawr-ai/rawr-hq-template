@@ -8,7 +8,7 @@ Use this when you want a local personal plugin usable immediately in your worksp
 
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
-rawr factory plugin new demo-runtime --kind both
+rawr plugins scaffold web-plugin demo-runtime --kind both
 bunx nx run @rawr/plugin-demo-runtime:build
 rawr plugins web enable demo-runtime --allow-non-operational --risk off
 rawr plugins web status --json

@@ -20,7 +20,7 @@
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --project control-plane",
     "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
   },
   "nx": {

@@ -27,8 +27,13 @@ export function App() {
           title="RAWR HQ-Template"
           items={[
             { label: "Home", to: "/" },
-            { label: "Mounts", to: "/mounts" },
             { label: "Coordination", to: "/coordination" },
+            { label: "Mounts", to: "/mounts" },
+          ]}
+          utilityLinks={[
+            { label: "Inngest Runs", href: "http://localhost:8288/runs" },
+            { label: "HyperDX", href: "http://localhost:8080/" },
+            { label: "Nx Graph", href: "http://127.0.0.1:4211/projects" },
           ]}
         />
       }

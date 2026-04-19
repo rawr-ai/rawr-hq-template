@@ -18,7 +18,7 @@
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --project support-example"
   },
   "dependencies": {
     "@orpc/contract": "^1.13.5",

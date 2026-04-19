@@ -22,10 +22,12 @@
     "@orpc/server": "^1.13.5",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/core": "^2.6.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.213.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.213.0",
     "@opentelemetry/instrumentation-http": "^0.213.0",
     "@opentelemetry/resources": "^2.6.0",
     "@opentelemetry/sdk-node": "^0.213.0",
+    "@opentelemetry/sdk-metrics": "^2.6.0",
     "@opentelemetry/semantic-conventions": "^1.40.0",
     "@rawr/coordination": "workspace:*",
     "@rawr/coordination-inngest": "workspace:*",
@@ -40,7 +42,7 @@
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --project core"
   },
   "nx": {
     "tags": [

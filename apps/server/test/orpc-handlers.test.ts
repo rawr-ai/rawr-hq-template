@@ -20,7 +20,7 @@ function createApp() {
 }
 
 describe("orpc handlers", () => {
-  it("serves listWorkflows through rpc and openapi transports", async () => {
+  it("keeps coordination on first-party /rpc and off published /api/orpc", async () => {
     const app = createApp();
 
     const rpcRes = await app.handle(
@@ -35,9 +35,29 @@ describe("orpc handlers", () => {
     expect(Array.isArray(rpcJson.json?.workflows)).toBe(true);
 
     const openapiRes = await app.handle(new Request("http://localhost/api/orpc/coordination/workflows"));
-    expect(openapiRes.status).toBe(200);
-    const openapiJson = (await openapiRes.json()) as { workflows?: unknown[] };
-    expect(Array.isArray(openapiJson.workflows)).toBe(true);
+    expect(openapiRes.status).toBe(404);
+  });
+
+  it("serves example-todo through the published /api/orpc transport", async () => {
+    const app = createApp();
+
+    const createRes = await app.handle(
+      new Request("http://localhost/api/orpc/exampleTodo/tasks/create", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-rawr-caller-surface": "external",
+        },
+        body: JSON.stringify({
+          title: "Published example-todo proof surface",
+        }),
+      }),
+    );
+
+    expect(createRes.status).toBe(200);
+    const createJson = (await createRes.json()) as { id?: string; title?: string };
+    expect(createJson.id).toBeTruthy();
+    expect(createJson.title).toBe("Published example-todo proof surface");
   });
 
   it("returns typed ORPC error payloads on RPC validation failures", async () => {

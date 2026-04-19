@@ -59,22 +59,22 @@ Use when: consuming published CLI, not local source checkout.
 1. Local runtime plugin scaffold (Channel B-first, automated scaffold).
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
-rawr factory plugin new my-plugin --kind both
+rawr plugins scaffold web-plugin my-plugin --kind both
 bunx nx run @rawr/plugin-my-plugin:build
 bunx nx run @rawr/plugin-my-plugin:test
 ```
-Generated files live under `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/plugins/my-plugin/*`.  
+Generated files live under `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/plugins/web/my-plugin/*`.  
 Default manifest posture:
 - `private: true`
-- `rawr.templateRole: operational`
-- `rawr.publishTier: blocked`
+- `rawr.kind: web`
+- `rawr.capability: my-plugin`
 Use when: personal/local plugin development.
 
 2. Publish-ready runtime plugin scaffold.
 ```bash
-rawr factory plugin new my-plugin --kind both --publish-ready
+rawr plugins scaffold web-plugin my-plugin --kind both --publish-ready
 ```
-Difference vs local-only: scaffold sets publish-ready posture (`private: false`, `publishTier: candidate`).
+Difference vs local-only: scaffold sets publish-ready posture (`private: false`) while keeping the same runtime contract.
 
 3. Local oclif command plugin (Channel A, manual scaffold today).
 Use runbook at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/docs/process/PLUGIN_E2E_WORKFLOW.md`.  
@@ -86,8 +86,8 @@ Same as (3), plus proper package ownership/versioning and publish process.
 ## 3) All plugin install/wiring/discovery paths
 
 1. Channel B workspace discovery (no install).
-- Discovery source: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/plugins/*`.
-- Metadata contract: `package.json.rawr.{templateRole,channel,publishTier}`.
+- Discovery source: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/plugins/web/*`.
+- Metadata contract: `package.json.rawr.{kind,capability}`.
 - Enablement state persisted in `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/.rawr/state/state.json`.
 Commands:
 ```bash
@@ -119,12 +119,12 @@ Key point: here “publish” means package available from npm/GitHub source; in
 ### Path A: Local runtime plugin, no publish, usable immediately in workspace
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
-rawr factory plugin new demo-runtime --kind both
+rawr plugins scaffold web-plugin demo-runtime --kind both
 bunx nx run @rawr/plugin-demo-runtime:build
 rawr plugins web enable demo-runtime --risk off
 rawr plugins web status --json
 ```
-How CLI knows: scans `plugins/*` in workspace, then reads `.rawr/state/state.json`.  
+How CLI knows: scans `plugins/web/*` in workspace, then reads `.rawr/state/state.json`.  
 Caveat: run from inside workspace; outside repo it won’t find workspace root.
 
 ### Path B: Local command plugin, no publish, usable by CLI after link
@@ -132,7 +132,7 @@ Caveat: run from inside workspace; outside repo it won’t find workspace root.
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
 # scaffold command plugin package per runbook
 bunx nx run @rawr/plugin-demo-oclif:build
-rawr plugins link "$(pwd)/plugins/demo-oclif" --install
+rawr plugins link "$(pwd)/plugins/cli/demo-oclif" --install
 rawr plugins inspect @rawr/plugin-demo-oclif --json
 rawr demo-hello
 ```
@@ -152,7 +152,7 @@ Caveat: plugin must be correctly packaged for oclif.
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq
 ./scripts/dev/activate-global-rawr.sh
-rawr factory plugin new demo-global --kind both
+rawr plugins scaffold web-plugin demo-global --kind both
 bunx nx run @rawr/plugin-demo-global:build
 rawr plugins web enable demo-global --risk off
 ```

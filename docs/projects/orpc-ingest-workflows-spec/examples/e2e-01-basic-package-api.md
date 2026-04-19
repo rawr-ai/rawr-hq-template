@@ -507,7 +507,9 @@ import { RPCHandler } from "@orpc/server/fetch";
 export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOptions) {
   const router = createOrpcRouter();
   const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
-  const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router);
+  const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router, {
+    filter: isPublishedOpenApiProcedure,
+  });
 
   app.all("/rpc/*", async (ctx) => {
     const request = ctx.request as Request;
@@ -525,6 +527,8 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
 }
 ```
 
+The same publication filter should be applied when generating `/api/orpc/openapi.json` so the served spec matches the published route surface.
+
 ## 5) Wiring steps (host -> composition -> plugin/package -> runtime)
 
 1. Build TypeBox adapter once (`packages/hq-sdk/src/typebox-standard-schema.ts`) and reuse it across package and boundary contracts.
@@ -537,7 +541,7 @@ export function registerOrpcRoutes(app: AnyElysia, options: RegisterOrpcRoutesOp
    - `router.ts` via `implement(contract)`.
 4. Compose boundary surfaces in `rawr.hq.ts` into one boundary contract/router namespace (`invoicing.api`).
 5. In host boot (`apps/server/src/rawr.ts`), create runtime adapter and mount `/api/inngest` for runtime ingress only.
-6. In host boot, call `registerOrpcRoutes(...)` to mount `/rpc*` and `/api/orpc*` with `parse: "none"`.
+6. In host boot, call `registerOrpcRoutes(...)` to mount `/rpc*` and the filtered published `/api/orpc*` surface with `parse: "none"`.
 7. At request time, boundary handler delegates to operation; operation uses package internal client (`createRouterClient`) for in-process call.
 8. Package procedures execute service/domain logic and return typed output to boundary layer; boundary operation returns caller-facing shape.
 

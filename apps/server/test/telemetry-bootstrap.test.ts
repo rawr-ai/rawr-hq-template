@@ -17,6 +17,7 @@ describe("server telemetry bootstrap", () => {
         serviceVersion: undefined,
         exporter: { url: undefined, headers: undefined },
         traceExporter: undefined,
+        metrics: { url: undefined, headers: undefined, exportIntervalMillis: 1000 },
       },
       sdk: {} as never,
       shutdown: async () => {},

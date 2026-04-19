@@ -17,7 +17,7 @@
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --project security",
     "security:check": "bun src/bin/security-check.ts"
   },
   "nx": {

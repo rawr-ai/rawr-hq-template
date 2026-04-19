@@ -1,8 +1,10 @@
+import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { CompositePropagator, W3CBaggagePropagator, W3CTraceContextPropagator } from "@opentelemetry/core";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { NodeSDK } from "@opentelemetry/sdk-node";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import type { SpanExporter } from "@opentelemetry/sdk-trace-base";
 import { ORPCInstrumentation } from "@orpc/otel";
 
@@ -26,6 +28,11 @@ export type RawrOrpcTelemetryOptions = {
     headers?: Record<string, string>;
   };
   traceExporter?: SpanExporter;
+  metrics?: {
+    url?: string;
+    headers?: Record<string, string>;
+    exportIntervalMillis?: number;
+  };
 };
 
 export type InstalledTelemetry = {
@@ -48,16 +55,33 @@ function getTelemetryState(): TelemetryState {
 }
 
 function resolveTelemetryOptions(options: RawrOrpcTelemetryOptions) {
+  const otlpBaseUrl = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
+
   return {
     serviceName: options.serviceName,
     environment: options.environment ?? process.env.NODE_ENV,
     serviceVersion: options.serviceVersion,
     exporter: {
-      url: options.exporter?.url ?? process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ?? process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+      url:
+        options.exporter?.url
+        ?? process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+        ?? appendOtlpSignalPath(otlpBaseUrl, "/v1/traces"),
       headers: options.exporter?.headers,
     },
     traceExporter: options.traceExporter,
+    metrics: {
+      url:
+        options.metrics?.url
+        ?? process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+        ?? appendOtlpSignalPath(otlpBaseUrl, "/v1/metrics"),
+      headers: options.metrics?.headers,
+      exportIntervalMillis: options.metrics?.exportIntervalMillis ?? 1000,
+    },
   };
+}
+
+export function __resolveRawrOrpcTelemetryOptionsForTests(options: RawrOrpcTelemetryOptions) {
+  return resolveTelemetryOptions(options);
 }
 
 function createTraceExporter(options: ReturnType<typeof resolveTelemetryOptions>): SpanExporter {
@@ -69,6 +93,42 @@ function createTraceExporter(options: ReturnType<typeof resolveTelemetryOptions>
     url: options.exporter.url,
     headers: options.exporter.headers,
   });
+}
+
+function createMetricReader(options: ReturnType<typeof resolveTelemetryOptions>) {
+  if (!options.metrics.url) {
+    return undefined;
+  }
+
+  return new PeriodicExportingMetricReader({
+    exporter: new OTLPMetricExporter({
+      url: options.metrics.url,
+      headers: options.metrics.headers,
+    }),
+    exportIntervalMillis: options.metrics.exportIntervalMillis,
+  });
+}
+
+function appendOtlpSignalPath(baseUrl: string | undefined, signalPath: string): string | undefined {
+  if (!baseUrl) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(baseUrl);
+    if (url.pathname === "" || url.pathname === "/") {
+      url.pathname = signalPath;
+      return url.toString();
+    }
+
+    return baseUrl;
+  } catch {
+    return baseUrl;
+  }
+}
+
+export function __appendOtlpSignalPathForTests(baseUrl: string | undefined, signalPath: string) {
+  return appendOtlpSignalPath(baseUrl, signalPath);
 }
 
 function stringifyHeaders(headers?: Record<string, string>) {
@@ -92,6 +152,9 @@ function assertCompatibleInstall(
     && current.serviceVersion === next.serviceVersion
     && current.exporter.url === next.exporter.url
     && stringifyHeaders(current.exporter.headers) === stringifyHeaders(next.exporter.headers)
+    && current.metrics.url === next.metrics.url
+    && stringifyHeaders(current.metrics.headers) === stringifyHeaders(next.metrics.headers)
+    && current.metrics.exportIntervalMillis === next.metrics.exportIntervalMillis
     && current.traceExporter === next.traceExporter;
 
   if (isCompatible) {
@@ -165,6 +228,7 @@ export async function installRawrOrpcTelemetry(
         ...(resolvedOptions.environment ? { "deployment.environment.name": resolvedOptions.environment } : {}),
       }),
       traceExporter: createTraceExporter(resolvedOptions),
+      metricReader: createMetricReader(resolvedOptions),
       instrumentations,
       textMapPropagator: new CompositePropagator({
         propagators: [

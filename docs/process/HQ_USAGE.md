@@ -5,7 +5,10 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
 ## Daily Workflow
 
 1. Pull latest local branch.
-2. Run targeted dev tasks.
+2. Run the local HQ runtime and targeted dev tasks as needed:
+   - use `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md` for `rawr hq up|down|status|restart|attach`, browser behavior, and runtime checks
+   - use `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` for coordination-only workflow checks
+   - use `docs/process/runbooks/TELEMETRY_VERIFICATION.md` for trace/metric/log proof
 3. Maintain shared core/template contracts.
 4. Run tests for touched areas:
    - `bun run test` for the fast default gate.

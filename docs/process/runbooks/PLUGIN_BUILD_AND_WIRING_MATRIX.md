@@ -17,24 +17,24 @@ Do not mix command families.
 
 ```bash
 cd /Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template
-rawr factory plugin new my-plugin --kind both
+rawr plugins scaffold web-plugin my-plugin --kind both
 bunx nx run @rawr/plugin-my-plugin:build
 bunx nx run @rawr/plugin-my-plugin:test
 ```
 
 Defaults generated:
 - `private: true`
-- `rawr.templateRole: operational`
-- `rawr.publishTier: blocked`
+- `rawr.kind: web`
+- `rawr.capability: my-plugin`
 
 ### 2) Publish-ready runtime plugin scaffold
 
 ```bash
-rawr factory plugin new my-plugin --kind both --publish-ready
+rawr plugins scaffold web-plugin my-plugin --kind both --publish-ready
 ```
 
 Difference:
-- sets publish-ready posture (`private: false`, `publishTier: candidate`).
+- sets publish-ready posture (`private: false`) while keeping the same runtime contract.
 
 ### 3) Local oclif command plugin (Channel A)
 
@@ -50,7 +50,7 @@ Same as local oclif plugin, plus package ownership/versioning/release to npm or 
 
 Discovery:
 - scans `plugins/web/*` in workspace root
-- reads `package.json.rawr.{templateRole,channel,publishTier}`
+- reads `package.json.rawr.{kind,capability}`
 - persisted enablement state in `.rawr/state/state.json`
 
 Commands:

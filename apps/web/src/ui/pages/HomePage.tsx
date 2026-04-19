@@ -1,5 +1,5 @@
-import { publicEnv } from "../config/publicEnv";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from "../components/ui";
+import { publicEnv } from "../config/publicEnv";
 
 export function HomePage() {
   return (

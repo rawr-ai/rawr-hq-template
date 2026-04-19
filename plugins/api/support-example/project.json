@@ -1,7 +1,0 @@
-{
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "name": "plugin-api-support-example",
-  "root": "plugins/api/support-example",
-  "sourceRoot": "plugins/api/support-example/src",
-  "tags": ["type:plugin"]
-}

@@ -1,8 +1,10 @@
 # Runbooks Index
 
-This index is the canonical entrypoint for CLI/plugin workflow runbooks.
+This index is the canonical entrypoint for active process runbooks.
 
 Use this when you need exact commands for:
+- operating the managed local HQ runtime,
+- verifying telemetry and published API behavior,
 - building/using the CLI,
 - creating local personal plugins,
 - wiring plugins into `rawr`,
@@ -29,7 +31,9 @@ Use this when you need exact commands for:
 | Lifecycle: workflow quality gates | `docs/process/runbooks/LIFECYCLE_WORKFLOW.md` |
 | Lifecycle: composed multi-surface changes | `docs/process/runbooks/LIFECYCLE_COMPOSED_CHANGES.md` |
 | Compose runtime surfaces in `rawr.hq.ts` | `docs/process/runbooks/RAWR_HQ_MANIFEST_COMPOSITION.md` |
-| Operate coordination canvas + Inngest runtime | `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` |
+| Operate the managed local HQ runtime | `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md` |
+| Operate coordination canvas workflows and run diagnostics | `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` |
+| Verify routed telemetry, logs, traces, and metrics | `docs/process/runbooks/TELEMETRY_VERIFICATION.md` |
 | Drain Graphite stacks safely (publish/merge/prune loop) | `docs/process/runbooks/STACK_DRAIN_LOOP.md` |
 | Integrate template -> personal with sync-first sequencing | `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md` |
 | Canonical repo-boundary + transient retry + final acceptance policy | `docs/process/HQ_OPERATIONS.md` |

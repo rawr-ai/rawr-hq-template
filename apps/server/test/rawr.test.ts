@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
 import { createCoordinationRuntimeAdapter } from "../src/coordination";
 import { registerOrpcRoutes } from "../src/orpc";
-import { PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
+import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
 import { processCoordinationRunEvent } from "@rawr/coordination-inngest";
 import { enablePlugin } from "@rawr/state";
 import type { Inngest } from "inngest";
@@ -103,6 +103,22 @@ describe("rawr server routes", () => {
     }
   });
 
+  it("host-composition-guard: serves both legacy and coordination Inngest functions in explicit dev mode", async () => {
+    const previousInngestDev = process.env.INNGEST_DEV;
+    process.env.INNGEST_DEV = "http://localhost:8288";
+
+    try {
+      const bundle = createHostInngestBundle({ repoRoot });
+      expect(bundle.functions).toHaveLength(2);
+    } finally {
+      if (previousInngestDev === undefined) {
+        delete process.env.INNGEST_DEV;
+      } else {
+        process.env.INNGEST_DEV = previousInngestDev;
+      }
+    }
+  });
+
   it("host-composition-guard: rejects spoofed /rpc auth heuristics", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
 
@@ -150,11 +166,15 @@ describe("rawr server routes", () => {
 
   it("host-composition-guard: manifest composes routers from package seam, not app internals", async () => {
     const manifestSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
-    expect(manifestSource).toContain("./plugins/api/support-example");
-    expect(manifestSource).toContain("registerSupportExampleApiPlugin");
+    expect(manifestSource).toContain("@rawr/example-todo");
+    expect(manifestSource).toContain("registerExampleTodoApiPlugin");
+    expect(manifestSource).toContain("./plugins/api/example-todo");
     expect(manifestSource).toContain("./plugins/workflows/support-example");
     expect(manifestSource).toContain("registerSupportExampleWorkflowPlugin");
+    expect(manifestSource).not.toContain("./plugins/api/support-example");
+    expect(manifestSource).not.toContain("registerSupportExampleApiPlugin");
     expect(manifestSource).not.toContain("./apps/server/src/orpc");
+    expect(manifestSource).toMatch(/const composedOrpcRouter = \{\s*\.\.\.coreOrpcRouter,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s);
   });
 
   it("host-composition-guard: serves capability-first workflow family paths", async () => {
@@ -189,6 +209,26 @@ describe("rawr server routes", () => {
       }),
     );
     expect(res.status).toBe(404);
+  });
+
+  it("host-composition-guard: keeps legacy support-example out of canonical /rpc and /api/orpc routes", async () => {
+    const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+
+    const rpcResponse = await app.handle(
+      new Request("http://localhost/rpc/supportExample/triage/getStatus", {
+        method: "POST",
+        headers: FIRST_PARTY_RPC_HEADERS,
+        body: JSON.stringify({ json: {} }),
+      }),
+    );
+    expect(rpcResponse.status).toBe(404);
+
+    const openApiResponse = await app.handle(
+      new Request("http://localhost/api/orpc/support-example/triage/status", {
+        method: "GET",
+      }),
+    );
+    expect(openApiResponse.status).toBe(404);
   });
 
   it("host-composition-guard: keeps runtime authority stable when initialized from alias repo roots", async () => {

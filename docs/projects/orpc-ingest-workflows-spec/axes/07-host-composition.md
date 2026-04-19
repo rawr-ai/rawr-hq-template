@@ -31,10 +31,11 @@
 3. Host SHOULD keep parse-safe forwarding semantics for oRPC handler mounts.
 4. Host MUST keep one runtime-owned Inngest client bundle per process.
 5. Host MUST enforce caller-mode route boundaries: first-party callers (including MFEs by default) use `/rpc` via `RPCLink`, external callers use published OpenAPI surfaces (`/api/orpc/*`, `/api/workflows/<capability>/*`), and `/api/inngest` stays runtime-only signed ingress.
-6. Host MUST NOT add a dedicated `/rpc/workflows` mount by default; first-party workflow RPC procedures compose under the existing `/rpc` surface.
-7. Host bootstrap MUST initialize baseline `extendedTracesMiddleware()` before constructing the Inngest client, composing workflow functions, or registering routes.
-8. Host mount/control-plane order MUST be explicit: `/api/inngest` first, `/api/workflows/*` second, then `/rpc` and `/api/orpc/*`.
-9. Plugin middleware MAY add runtime context/instrumentation but MUST inherit baseline traces middleware and MUST NOT replace or reorder that baseline.
+6. Host MUST treat `/api/orpc/*` as a published subset of the composed HQ router, not as automatic publication of every internal HQ namespace.
+7. Host MUST NOT add a dedicated `/rpc/workflows` mount by default; first-party workflow RPC procedures compose under the existing `/rpc` surface.
+8. Host bootstrap MUST initialize baseline `extendedTracesMiddleware()` before constructing the Inngest client, composing workflow functions, or registering routes.
+9. Host mount/control-plane order MUST be explicit: `/api/inngest` first, `/api/workflows/*` second, then `/rpc` and `/api/orpc/*`.
+10. Plugin middleware MAY add runtime context/instrumentation but MUST inherit baseline traces middleware and MUST NOT replace or reorder that baseline.
 
 ### Ownership and Composition Determinants
 1. Host composition MUST consume plugin-owned boundary contracts/routers from the generated manifest; packages contribute shared logic/schema inputs, not boundary ownership.
@@ -81,6 +82,7 @@ Status note: this section maps host guarantees to D-014 candidate language and d
 | Determinant | Canonical owner | Guarantee |
 | --- | --- | --- |
 | Manifest surface map | `rawr.hq.ts` (generated composition authority) | API/workflow contracts and routers compose predictably by capability. |
+| Published OpenAPI filter | host oRPC seam (`apps/server/src/orpc.ts` or equivalent) | `/api/orpc/*` and `/api/orpc/openapi.json` expose only the published API-plugin subset of the composed router; the current host-owned filter is the transitional publication policy until metadata-driven publication lands. |
 | Context factories | host boundary modules (`apps/server/src/workflows/context.ts` or equivalent) | Principal/request/correlation/network metadata are derived once per request boundary and injected consistently. |
 | Infrastructure adapter assembly | host composition root (`apps/server/src/rawr.ts` or equivalent) | Concrete auth/db/runtime adapters are wired outside plugins/packages and passed as typed ports. |
 | Runtime bundle ownership | host runtime composition | One runtime-owned Inngest bundle per process is reused for enqueue + ingress execution. |
@@ -108,7 +110,7 @@ Status note: this section maps host guarantees to D-014 candidate language and d
 
 ## Canonical Runtime/Host Inventory
 1. `apps/server/src/orpc.ts`
-   - Builds router from `hqContract`, injects `RawrOrpcContext`, mounts `/rpc*` and `/api/orpc*`, generates OpenAPI with TypeBox converter.
+   - Builds the composed HQ router, injects `RawrOrpcContext`, mounts `/rpc*`, serves filtered `/api/orpc*`, and generates the filtered published OpenAPI spec with the TypeBox converter.
 2. `apps/server/src/rawr.ts`
    - Initializes baseline traces first, creates runtime adapter + Inngest bundle, mounts `/api/inngest` and `/api/workflows/*`, then registers `/rpc` and `/api/orpc/*`.
 3. `packages/core/src/orpc/hq-router.ts`
@@ -203,7 +205,7 @@ const capabilities = [
 export const rawrHqManifest = composeCapabilities(capabilities, inngest);
 ```
 
-The manifest emits separate `orpc` and `workflows` namespaces so host wiring can mount `/rpc*` + `/api/orpc*` from `rawrHqManifest.orpc` while `/api/workflows/*` uses `rawrHqManifest.workflows.triggerRouter` plus workflow-boundary context helpers and the same `inngest` bundle. `/rpc` remains first-party/internal transport only, and there is no separate `/rpc/workflows` mount by default. Plugin-generated capability metadata feeds the manifest so `apps/*` does not require manual capability route edits, while mount ownership remains explicit in packet composition docs.
+The manifest emits separate `orpc` and `workflows` namespaces so host wiring can mount `/rpc*` from the full composed HQ router while `/api/orpc*` publishes a host-filtered API-plugin subset from that same composition. `/api/workflows/*` uses `rawrHqManifest.workflows.triggerRouter` plus workflow-boundary context helpers and the same `inngest` bundle. `/rpc` remains first-party/internal transport only, and there is no separate `/rpc/workflows` mount by default. Plugin-generated capability metadata feeds the manifest so `apps/*` does not require manual capability route edits, while mount ownership remains explicit in packet composition docs.
 Host bootstrap order is explicit and stable: initialize baseline traces first, create the single runtime-owned Inngest bundle, mount `/api/inngest`, mount `/api/workflows/*`, then register `/rpc` and `/api/orpc/*`.
 
 ### Host fixture split mount contract
@@ -240,7 +242,9 @@ registerOrpcRoutes(app, {
 ### oRPC router + OpenAPI mount
 ```ts
 const rpcHandler = new RPCHandler<RawrOrpcContext>(router);
-const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router);
+const openapiHandler = new OpenAPIHandler<RawrOrpcContext>(router, {
+  filter: isPublishedOpenApiProcedure,
+});
 
 app.all("/rpc/*", async (ctx) =>
   (await rpcHandler.handle(ctx.request as Request, {
@@ -249,6 +253,8 @@ app.all("/rpc/*", async (ctx) =>
   })).response,
 { parse: "none" });
 ```
+
+The same publication filter is applied when generating `/api/orpc/openapi.json` so the served OpenAPI spec matches the published route surface.
 
 ### First-party vs external link setup
 ```ts
@@ -282,8 +288,8 @@ app.all("/api/inngest", async ({ request }) => inngestHandler(request));
 The manifest-driven spine adds one new fixture: `apps/server/src/workflows/context.ts` (principal resolution, workflow boundary metadata, and runtime helpers) while keeping `apps/server/src/rawr.ts` focused on mounting `/api/workflows/*` and `/api/inngest`. Capability metadata stays inside `packages/*` and `plugins/*`, and `rawr.hq.ts` is generated under the repo root so host owners do not edit it manually.
 
 ### What changes vs what stays the same
-- **Changes:** Host bootstrap now initializes baseline traces first, keeps a single runtime-owned Inngest bundle, mounts `/api/inngest` then `/api/workflows/*`, and only then registers `/rpc` + `/api/orpc/*`. Generated manifest wiring and helper composition remain explicit, and host-owned infrastructure adapter injection guarantees are now explicit (D-014 language).
-- **Unchanged:** D-005 route split semantics, D-006 plugin boundary ownership, and D-007 caller transport/publication boundaries are unchanged. `/rpc*` + `/api/orpc*` still go through `registerOrpcRoutes()`, and the same `CoordinationRuntimeAdapter`/`createCoordinationInngestFunction()` pairing still supports durability.
+- **Changes:** Host bootstrap now initializes baseline traces first, keeps a single runtime-owned Inngest bundle, mounts `/api/inngest` then `/api/workflows/*`, and only then registers `/rpc` plus the filtered published `/api/orpc/*` surface. Generated manifest wiring and helper composition remain explicit, and host-owned infrastructure adapter injection guarantees are now explicit (D-014 language).
+- **Unchanged:** D-005 route split semantics, D-006 plugin boundary ownership, and D-007 caller transport/publication boundaries are unchanged. `/rpc*` and `/api/orpc*` still go through `registerOrpcRoutes()`, and the same `CoordinationRuntimeAdapter`/`createCoordinationInngestFunction()` pairing still supports durability.
 
 ## Glue Boundaries and Ownership
 1. Host app owns mount boundaries and runtime wiring.

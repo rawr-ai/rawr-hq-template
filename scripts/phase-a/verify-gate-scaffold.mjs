@@ -210,17 +210,19 @@ async function verifyHostCompositionGuard() {
   );
   assertCondition(
     hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "client"]) &&
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "handler"]),
-    "rawr host must consume manifest-owned inngest seams",
+      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "functions"]),
+    "rawr host must consume manifest-owned inngest client and function seams",
   );
   assertCondition(
-    !hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createCoordinationInngestFunction") &&
-      !hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createInngestServeHandler") &&
-      !hasNamedImport(rawrAst, "./orpc", "createOrpcRouter") &&
-      !hasIdentifierCall(rawrAst, "createCoordinationInngestFunction") &&
-      !hasIdentifierCall(rawrAst, "createInngestServeHandler") &&
-      !hasIdentifierCall(rawrAst, "createOrpcRouter"),
-    "rawr host must not compose ad-hoc app-internal seams",
+    hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createCoordinationInngestFunction") &&
+      hasNamedImport(rawrAst, "@rawr/coordination-inngest", "createInngestServeHandler") &&
+      hasIdentifierCall(rawrAst, "createCoordinationInngestFunction") &&
+      hasIdentifierCall(rawrAst, "createInngestServeHandler"),
+    "rawr host must compose the runtime-owned inngest bundle through the coordination inngest seam",
+  );
+  assertCondition(
+    !hasNamedImport(rawrAst, "./orpc", "createOrpcRouter") && !hasIdentifierCall(rawrAst, "createOrpcRouter"),
+    "rawr host must not bypass the manifest-owned ORPC router seam",
   );
 }
 
