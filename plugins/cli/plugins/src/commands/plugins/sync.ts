@@ -3,9 +3,7 @@ import path from "node:path";
 import { Args, Flags } from "@oclif/core";
 import {
   beginPluginsSyncUndoCapture,
-  deriveSyncPolicy,
   effectiveContentForProvider,
-  findWorkspaceRoot,
   installAndEnableClaudePlugin,
   packageCoworkPlugin,
   PLUGINS_SYNC_UNDO_PROVIDER,
@@ -14,9 +12,11 @@ import {
   resolveTargets,
   runSync,
   scanSourcePlugin,
-} from "@rawr/agent-sync";
+} from "../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
+import { deriveSyncPolicy } from "../../lib/sync-policy";
+import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 import { reconcileWorkspaceInstallLinks } from "../../lib/install-reconcile";
 
