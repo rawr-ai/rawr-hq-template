@@ -53,12 +53,18 @@ if (pkg.exports?.["./testing"] !== undefined) {
   process.exit(1);
 }
 
-if (
-  !manifestSource.includes("registerCoordinationApiPlugin") ||
-  !manifestSource.includes("registerStateApiPlugin") ||
-  !manifestSource.includes("registerExampleTodoApiPlugin")
-) {
+if (!manifestSource.includes("registerStateApiPlugin") || !manifestSource.includes("registerExampleTodoApiPlugin")) {
   console.error("hq-app structural failed: manifest must compose plugin-owned ORPC surfaces.");
+  process.exit(1);
+}
+
+if (
+  manifestSource.includes("registerCoordinationApiPlugin") ||
+  manifestSource.includes("coordination") ||
+  manifestSource.includes("support-example") ||
+  manifestSource.includes("supportExample")
+) {
+  console.error("hq-app structural failed: archived coordination and support-example surfaces must stay out of the HQ app manifest.");
   process.exit(1);
 }
 

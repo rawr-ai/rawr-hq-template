@@ -4,9 +4,9 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { enablePlugin } from "@rawr/hq-ops/repo-state";
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
+import { createTestingHqOpsServiceClient } from "../src/testing-host";
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
@@ -30,7 +30,15 @@ describe("storage-lock route guard regression", () => {
     tempDirs.push(repoRoot);
 
     const pluginIds = Array.from({ length: 24 }, (_, idx) => `@rawr/plugin-route-${idx}`);
-    await Promise.all(pluginIds.map((pluginId) => enablePlugin(repoRoot, pluginId)));
+    const hqOpsClient = createTestingHqOpsServiceClient(repoRoot);
+    await Promise.all(
+      pluginIds.map((pluginId) =>
+        hqOpsClient.repoState.enablePlugin(
+          { pluginId },
+          { context: { invocation: { traceId: "server.test.storage-lock.enable-plugin" } } },
+        ),
+      ),
+    );
 
     const app = registerRawrRoutes(createServerApp(), {
       repoRoot,

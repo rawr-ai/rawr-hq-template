@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { openJournalDb, tailSnippets } from "@rawr/hq-ops/journal";
+import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class JournalTail extends RawrCommand {
@@ -24,18 +24,16 @@ export default class JournalTail extends RawrCommand {
       return;
     }
 
-    const db = openJournalDb(workspaceRoot);
-    try {
-      const snippets = tailSnippets(db, Number.isFinite(limit) ? limit : 20);
-      const result = this.ok({ snippets });
-      this.outputResult(result, {
-        flags: baseFlags,
-        human: () => {
-          for (const s of snippets) this.log(`${s.id}  ${s.title}  (${s.preview})`);
-        },
-      });
-    } finally {
-      db.close();
-    }
+    const response = await createHqOpsClient(workspaceRoot).journal.tailSnippets(
+      { limit: Number.isFinite(limit) ? limit : 20 },
+      createHqOpsInvocation("cli.journal.tail"),
+    );
+    const result = this.ok({ snippets: response.snippets });
+    this.outputResult(result, {
+      flags: baseFlags,
+      human: () => {
+        for (const snippet of response.snippets) this.log(`${snippet.id}  ${snippet.title}  (${snippet.preview})`);
+      },
+    });
   }
 }

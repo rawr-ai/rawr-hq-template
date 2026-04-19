@@ -1,3 +1,5 @@
+/// <reference path="./shims/bun-sqlite.d.ts" />
+
 /**
  * @fileoverview Public package surface for the HQ Ops service package.
  *

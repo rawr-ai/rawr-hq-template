@@ -100,7 +100,8 @@ export function renderWorkflowSource(input: { name: string; description: string 
   const className = toPascalCase(["workflow", input.name]);
   return `import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { journalId, safePreview, writeSnippet, type JournalSnippet } from "@rawr/hq-ops/journal";
+import { createHqOpsClient, createHqOpsInvocation, type HqOpsJournalSnippet } from "../../lib/hq-ops-client";
+import { journalId, safePreview } from "../../lib/journal-projection";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class ${className} extends RawrCommand {
@@ -136,7 +137,7 @@ export default class ${className} extends RawrCommand {
     }
 
     const ok = true;
-    const snippet: JournalSnippet = {
+    const snippet: HqOpsJournalSnippet = {
       id: \`\${journalId()}-workflow-${input.name}\`,
       ts: new Date().toISOString(),
       kind: "workflow",
@@ -145,7 +146,10 @@ export default class ${className} extends RawrCommand {
       body: ${JSON.stringify(`workflow: ${input.name}\\nok: true`)},
       tags: ["workflow", ${JSON.stringify(input.name)}],
     };
-    await writeSnippet(workspaceRoot, snippet);
+    await createHqOpsClient(workspaceRoot).journal.writeSnippet(
+      snippet,
+      createHqOpsInvocation("cli.workflow.${input.name}"),
+    );
 
     const result = this.ok({ ok });
     this.outputResult(result, { flags: baseFlags });

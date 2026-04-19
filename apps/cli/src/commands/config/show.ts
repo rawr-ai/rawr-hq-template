@@ -1,5 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { loadRawrConfig } from "@rawr/hq-ops/config";
+import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class ConfigShow extends RawrCommand {
@@ -21,7 +21,10 @@ export default class ConfigShow extends RawrCommand {
       return;
     }
 
-    const loaded = await loadRawrConfig(workspaceRoot);
+    const loaded = await createHqOpsClient(workspaceRoot).config.getWorkspaceConfig(
+      {},
+      createHqOpsInvocation("cli.config.show"),
+    );
     if (loaded.error) {
       const result = this.fail(loaded.error.message, { details: loaded.error });
       this.outputResult(result, {
@@ -49,4 +52,3 @@ export default class ConfigShow extends RawrCommand {
     });
   }
 }
-

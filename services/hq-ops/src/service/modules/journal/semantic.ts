@@ -1,6 +1,6 @@
-import type { Database } from "bun:sqlite";
 import { createHash } from "node:crypto";
 import { listRecentSnippetsFull, type JournalSearchRow } from "./index-db.js";
+import type { SqliteDatabase } from "./sqlite.js";
 
 export type SemanticProvider = "openai" | "voyage";
 
@@ -42,7 +42,7 @@ export function isSemanticConfigured(env: NodeJS.ProcessEnv = process.env): bool
 export type SemanticSearchRow = JournalSearchRow & { score: number };
 
 export async function searchSnippetsSemantic(
-  db: Database,
+  db: SqliteDatabase,
   query: string,
   limit: number,
   opts?: { candidateLimit?: number; env?: NodeJS.ProcessEnv },
@@ -94,7 +94,7 @@ function blobToFloat32(blob: Uint8Array): Float32Array {
 }
 
 async function ensureSnippetEmbedding(
-  db: Database,
+  db: SqliteDatabase,
   input: { id: string; provider: SemanticProvider; model: string; content: string; config: SemanticConfig },
 ): Promise<Float32Array> {
   const contentHash = sha256Hex(input.content);
@@ -203,4 +203,3 @@ function cosineSimilarity(a: Float32Array, b: Float32Array): number {
   if (a2 === 0 || b2 === 0) return 0;
   return dot / (Math.sqrt(a2) * Math.sqrt(b2));
 }
-

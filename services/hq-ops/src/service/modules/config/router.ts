@@ -1,18 +1,34 @@
-/**
- * @fileoverview Config module router implementation.
- *
- * @remarks
- * Module composition lives in `./module.ts`.
- * U02 is reservation-only, so this module exports one structural reservation
- * procedure rather than live config behavior.
- */
 import { module } from "./module";
 
-const reservation = module.reservation.handler(async ({ context }) => {
-  return context.repo.reservation;
+const getWorkspaceConfig = module.getWorkspaceConfig.handler(async ({ context }) => {
+  return await context.repo.getWorkspaceConfig();
 });
 
-/** Contract-enforced module router reserved for later config procedures. */
+const getGlobalConfig = module.getGlobalConfig.handler(async ({ context }) => {
+  return await context.repo.getGlobalConfig();
+});
+
+const getLayeredConfig = module.getLayeredConfig.handler(async ({ context }) => {
+  return await context.repo.getLayeredConfig();
+});
+
+const listGlobalSyncSources = module.listGlobalSyncSources.handler(async ({ context }) => {
+  return await context.repo.listGlobalSyncSources();
+});
+
+const addGlobalSyncSource = module.addGlobalSyncSource.handler(async ({ context, input }) => {
+  return await context.repo.addGlobalSyncSource(input.path);
+});
+
+const removeGlobalSyncSource = module.removeGlobalSyncSource.handler(async ({ context, input }) => {
+  return await context.repo.removeGlobalSyncSource(input.path);
+});
+
 export const router = module.router({
-  reservation,
+  getWorkspaceConfig,
+  getGlobalConfig,
+  getLayeredConfig,
+  listGlobalSyncSources,
+  addGlobalSyncSource,
+  removeGlobalSyncSource,
 });

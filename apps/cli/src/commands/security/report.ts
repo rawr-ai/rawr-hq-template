@@ -1,5 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { loadSecurityModule, missingSecurityFn } from "../../lib/security";
+import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
@@ -15,13 +15,12 @@ export default class SecurityReport extends RawrCommand {
     const { flags } = await this.parseRawr(SecurityReport);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
 
-    const security = await loadSecurityModule();
-    const getSecurityReport = security.getSecurityReport;
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     const report =
-      typeof getSecurityReport === "function"
-        ? await getSecurityReport({ cwd: workspaceRoot ?? process.cwd() })
-        : await readLatestReportFromDisk();
+      (await createHqOpsClient(workspaceRoot ?? process.cwd()).security.getSecurityReport(
+        {},
+        createHqOpsInvocation("cli.security.report"),
+      )) ?? (await readLatestReportFromDisk());
     const result = this.ok({ report });
     this.outputResult(result, {
       flags: baseFlags,
@@ -39,6 +38,6 @@ async function readLatestReportFromDisk(): Promise<unknown> {
   try {
     return JSON.parse(await fs.readFile(latestPath, "utf8"));
   } catch (err) {
-    return { ok: true, note: missingSecurityFn("getSecurityReport"), error: String(err) };
+    return { ok: true, note: "security report unavailable", error: String(err) };
   }
 }

@@ -11,8 +11,9 @@ This template is designed to be used in two roles:
 ```bash
 bun install
 bun run test
-# Optional deeper coverage (CLI-heavy + Playwright visual)
-bun run test:heavy
+# Optional quick lanes (skip pretest build)
+bun run test:quick
+bun run test:web
 ```
 
 ## Narsil Code Intel

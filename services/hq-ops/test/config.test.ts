@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { mergeRawrConfigLayers, validateRawrConfig } from "../src/config/index.js";
+import { mergeRawrConfigLayers, validateRawrConfig } from "../src/service/modules/config/support.js";
 
-describe("@rawr/hq-ops/config validateRawrConfig", () => {
+describe("hq-ops config support", () => {
   it("accepts a minimal v1 config", () => {
     const r = validateRawrConfig({ version: 1 });
     expect(r.ok).toBe(true);

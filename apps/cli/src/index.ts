@@ -1,6 +1,12 @@
 import { flush, handle, run } from "@oclif/core";
-import { journalId, safePreview, writeEvent, writeSnippet, type JournalEvent, type JournalSnippet } from "@rawr/hq-ops/journal";
+import {
+  createHqOpsClient,
+  createHqOpsInvocation,
+  type HqOpsJournalEvent,
+  type HqOpsJournalSnippet,
+} from "./lib/hq-ops-client";
 import { getJournalContext, resetJournalContext } from "./lib/journal-context";
+import { journalId, safePreview } from "./lib/journal-projection";
 import { findWorkspaceRoot } from "./lib/workspace-plugins";
 
 class InterceptedExit extends Error {
@@ -30,7 +36,7 @@ async function tryWriteJournal(opts: {
   const ctx = getJournalContext();
   const commandId = guessCommandId(opts.argv);
 
-  const event: JournalEvent = {
+  const event: HqOpsJournalEvent = {
     id,
     ts: nowIso,
     cwd: opts.cwd,
@@ -43,7 +49,7 @@ async function tryWriteJournal(opts: {
   };
 
   const cmd = ["rawr", ...opts.argv].join(" ").trim();
-  const snippet: JournalSnippet = {
+  const snippet: HqOpsJournalSnippet = {
     id: `${id}-cmd`,
     ts: nowIso,
     kind: "command",
@@ -63,8 +69,9 @@ async function tryWriteJournal(opts: {
   };
 
   try {
-    await writeEvent(workspaceRoot, event);
-    await writeSnippet(workspaceRoot, snippet);
+    const client = createHqOpsClient(workspaceRoot);
+    await client.journal.writeEvent(event, createHqOpsInvocation("cli.journal.write-event"));
+    await client.journal.writeSnippet(snippet, createHqOpsInvocation("cli.journal.write-snippet"));
   } catch {
     // Best-effort; never block command execution on journaling.
   }

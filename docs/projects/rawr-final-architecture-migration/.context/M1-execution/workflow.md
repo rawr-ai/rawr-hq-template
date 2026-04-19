@@ -2,9 +2,10 @@
 
 This is the flight plan for completing Milestone 1 end to end in this single working checkout. It is not a generic process note. It is the execution workflow I will keep returning to while I move through the M1 slice stack.
 
-This document, [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md), and [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md) are the three re-entry documents for the milestone:
+This document, [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md), [frame.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/frame.md), and [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md) are the re-entry documents for the milestone:
 
 - `grounding.md` = milestone-level truth
+- `frame.md` = remaining-runway posture and current Milestone 1 frame
 - `workflow.md` = the reusable execution loop
 - `context.md` = the current-issue hot swap module
 
@@ -29,6 +30,16 @@ Done looks like:
 - Phase 2 receives a clean entry condition instead of unresolved semantic debt
 
 Outcome quality is fully my responsibility. My job is not just to move files, make tests green, or submit Graphite branches. My job is to make sure each slice actually lands the intended architectural outcome, closes its own loops, and leaves the repo in a better and less ambiguous state than it found it.
+
+## Current Milestone Posture
+
+The milestone packet currently treats `M1-U00` through `M1-U05` as done. The active runway is therefore:
+
+- `M1-U06` canonical HQ app shell
+- `M1-U07` legacy executable authority neutralization
+- `M1-U08` proof ratchet, durable docs, and plateau freeze
+
+One important nuance: residual follow-up work may still land against a previously "done" slice if a real architectural miss is discovered later. That happened with the HQ Ops service-shape repair after `M1-U02`/`M1-U03`. When that kind of follow-up lands, close it cleanly, then immediately reset the hot context back to the next unfinished slice instead of leaving the workspace framed around already-closed fallout.
 
 ## Source-of-Truth Order
 
@@ -64,10 +75,16 @@ Current-issue context document:
 - it is replaced or rewritten between issues instead of accumulating history
 - it is not a scratch pad, transcript, or dumping ground
 
+Milestone frame document:
+
+- [frame.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/frame.md)
+- this file is the persistent high-level continuity packet for the remaining M1 runway
+- update it when the remaining-slices posture changes, not for issue-local churn
+
 Execution worktree:
 
 - current checkout path: `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou`
-- current branch when this workflow was written: `phase-04-r4-host-cutover-restart`
+- current branch when this workflow was last refreshed: `agent-FARGO-M1-U02-followup-hq-ops-service-shape`
 
 Single-worktree rule:
 
@@ -85,17 +102,19 @@ Compact rule:
 
 - after any compact or comparable context loss, the first move is:
   1. reopen [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md)
-  2. reopen [workflow.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/workflow.md)
-  3. reopen and refresh [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md)
-  4. identify the current slice branch and current Graphite stack state
-  5. read the active issue doc again
-  6. inspect `git status --short --branch`
-  7. inspect milestone and issue checkboxes before touching code
+  2. reopen [frame.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/frame.md)
+  3. reopen [workflow.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/workflow.md)
+  4. reopen and refresh [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md)
+  5. identify the current slice branch and current Graphite stack state
+  6. read the active issue doc again
+  7. inspect `git status --short --branch`
+  8. inspect milestone and issue checkboxes before touching code
 
 Between-issue rule:
 
 - when a slice is done and before the next slice starts, replace `context.md` with the new current-issue snapshot
 - do not preserve prior-issue context in `context.md`
+- if a residual follow-up lands against an earlier completed slice, close that follow-up and then reset `context.md` back to the next unfinished slice
 - if prior-issue knowledge matters later, promote it into `grounding.md`, `workflow.md`, the issue doc, or a durable migration/project doc instead
 
 ## Hard Rails
@@ -109,6 +128,7 @@ Between-issue rule:
 - Parked lanes only get deletions, rewires, compile fixes, and explicit unblockers.
 - The frozen Cloud Code/Codex marketplace lane at `plugins/agents/hq` stays in place during M1.
 - Each slice closes its own loops. M1-U08 is a ratchet and review slice, not a deferred cleanup dump.
+- Do not silently reopen earlier slices while executing `M1-U06` through `M1-U08`; if earlier fallout blocks progress, record it explicitly as blocker fallout.
 - If the intended branch shows unexpected working tree changes, stop. Do not stash, reset, or improvise around them.
 
 ## Adapted Dev-Parallel Loop
@@ -118,6 +138,7 @@ This is the baseline `dev-loop-parallel` workflow adapted for a single existing 
 ### 1. Re-ground Before Every Slice
 
 - Read [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md)
+- Read [frame.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/frame.md)
 - Read this workflow
 - Read [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md)
 - Read the active issue doc in full
@@ -429,6 +450,35 @@ How I will apply them:
 
 - use Narsil to trace the current app shell and old host-authority overlap
 - reserve only the seams needed for Phase 2; do not implement runtime compiler or bootgraph substrate here
+
+Sequencing sanity rule:
+
+- if the existing U06/U07 split creates an artificial complication that would make the app shell decorative instead of real, pull forward the minimum downstream work needed to make U06 truthful
+- acceptable pull-forward work:
+  - rebasing live app authority onto `apps/hq/rawr.hq.ts`
+  - introducing the one sanctioned executable bridge at `apps/hq/legacy-cutover.ts`
+  - updating proofs so U06 asserts real app-shell authority rather than old `src/manifest.ts` authority
+- forbidden pull-forward work:
+  - deleting or quarantining `apps/server/src/host-composition.ts`, `host-seam.ts`, or `host-realization.ts` as live authority surfaces
+  - removing the current runtime fallback before the new shell is proven by smoke checks and managed HQ validation
+  - rewriting U07 proof surfaces as if legacy host authority is already dead
+
+Phase-scoped workflow:
+
+1. create the next Graphite slice branch for `M1-U06` in this same worktree
+2. re-read the canonical spec sections on manifest posture and entrypoint posture, plus the Phase 1 bridge rule and the `M1-U06`/`M1-U07` issue docs
+3. move app composition authority to `apps/hq/rawr.hq.ts` and reduce `apps/hq/src/manifest.ts` to a compatibility forwarder or non-authoritative shim only
+4. create `apps/hq/server.ts`, `apps/hq/async.ts`, and `apps/hq/dev.ts` as thin entrypoints; if executable delegation is needed, route it only through `apps/hq/legacy-cutover.ts`
+5. keep current `apps/server` host-composition execution live during this slice; do not neutralize it here
+6. add `verify-manifest-purity` and `verify-entrypoint-thinness`, and rewrite HQ app proof surfaces so they ratchet the new shell truth
+7. run the slice verification band plus managed HQ validation with `rawr hq up --observability required --open none`, status/log inspection, first-party state RPC `200`, and archived coordination/support-example route probes still `404`
+8. commit only once the new shell is authoritative, the old runtime still works, and the new proof band is green
+
+Immediate continuation rule:
+
+- when `M1-U06` closes, do not stop
+- rewrite `context.md` for `M1-U07`, carry forward the exact bridge outcome, and continue the same closed loop through `M1-U07` and `M1-U08`
+- the milestone is not done until the U07 legacy-authority cut and the U08 plateau freeze both close with their own proof bands
 
 Closure bar:
 

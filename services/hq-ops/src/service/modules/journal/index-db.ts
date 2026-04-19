@@ -1,5 +1,5 @@
-import { Database } from "bun:sqlite";
 import { indexDbPath } from "./paths.js";
+import { openSqliteDatabase, type SqliteDatabase } from "./sqlite.js";
 import type { JournalSnippet } from "./types.js";
 
 export type JournalSearchRow = Pick<JournalSnippet, "id" | "ts" | "kind" | "title" | "preview" | "tags"> & {
@@ -36,8 +36,8 @@ function normalizeRowFull(row: any): JournalSnippetRowFull {
   return { ...normalizeRow(row), body: String(row.body) };
 }
 
-export function openJournalDb(repoRoot: string): Database {
-  const db = new Database(indexDbPath(repoRoot));
+export async function openJournalDb(repoRoot: string): Promise<SqliteDatabase> {
+  const db = await openSqliteDatabase(indexDbPath(repoRoot));
 
   db.exec(`
     PRAGMA journal_mode = WAL;
@@ -74,7 +74,7 @@ export function openJournalDb(repoRoot: string): Database {
   return db;
 }
 
-export function upsertSnippet(db: Database, snippet: JournalSnippet): void {
+export function upsertSnippet(db: SqliteDatabase, snippet: JournalSnippet): void {
   const tags = JSON.stringify(snippet.tags ?? []);
 
   db.prepare(
@@ -101,7 +101,7 @@ export function upsertSnippet(db: Database, snippet: JournalSnippet): void {
   });
 }
 
-export function tailSnippets(db: Database, limit: number): JournalSearchRow[] {
+export function tailSnippets(db: SqliteDatabase, limit: number): JournalSearchRow[] {
   const rows = db
     .prepare(
       `SELECT id, ts, kind, title, preview, tags, sourceEventId
@@ -113,7 +113,7 @@ export function tailSnippets(db: Database, limit: number): JournalSearchRow[] {
   return rows.map(normalizeRow);
 }
 
-export function searchSnippetsFts(db: Database, query: string, limit: number): JournalSearchRow[] {
+export function searchSnippetsFts(db: SqliteDatabase, query: string, limit: number): JournalSearchRow[] {
   const ids = db
     .prepare(
       `SELECT id
@@ -137,7 +137,7 @@ export function searchSnippetsFts(db: Database, query: string, limit: number): J
   return rows.map(normalizeRow);
 }
 
-export function listRecentSnippetsFull(db: Database, limit: number): JournalSnippetRowFull[] {
+export function listRecentSnippetsFull(db: SqliteDatabase, limit: number): JournalSnippetRowFull[] {
   const rows = db
     .prepare(
       `SELECT id, ts, kind, title, preview, body, tags, sourceEventId

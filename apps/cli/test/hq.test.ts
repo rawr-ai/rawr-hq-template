@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
@@ -143,5 +143,36 @@ describe("hq runtime commands", () => {
     expect(`${proc.stdout}\n${proc.stderr}`).toContain("invalid RAWR_HQ_OBSERVABILITY 'invalid'");
     expect(`${proc.stdout}\n${proc.stderr}`).not.toContain('"mode": "invalid"');
     expect(() => readFileSync(path.join(workspaceRoot, ".rawr", "hq", "status.json"), "utf8")).toThrow();
+  });
+
+  it("writes shell-managed status into the workspace root instead of creating mode-named directories", () => {
+    const fixtureRoot = mkdtempSync(path.join(os.tmpdir(), "rawr-hq-shell-status-"));
+    mkdirSync(path.join(fixtureRoot, "plugins"), { recursive: true });
+    mkdirSync(path.join(fixtureRoot, "scripts", "dev"), { recursive: true });
+    mkdirSync(path.join(fixtureRoot, "apps", "cli", "src", "lib"), { recursive: true });
+    writeFileSync(path.join(fixtureRoot, "package.json"), JSON.stringify({ name: "status-fixture", private: true }, null, 2));
+    writeFileSync(path.join(fixtureRoot, "scripts", "dev", "hq.sh"), readFileSync(path.join(cliRoot, "..", "..", "scripts", "dev", "hq.sh"), "utf8"));
+    writeFileSync(
+      path.join(fixtureRoot, "apps", "cli", "src", "lib", "hq-status.ts"),
+      readFileSync(path.join(cliRoot, "src", "lib", "hq-status.ts"), "utf8"),
+    );
+
+    const proc = spawnSync("bash", ["scripts/dev/hq.sh", "status", "--observability", "required"], {
+      cwd: fixtureRoot,
+      encoding: "utf8",
+      env: { ...process.env },
+    });
+
+    expect(proc.status).toBe(0);
+    expect(existsSync(path.join(fixtureRoot, ".rawr", "hq", "status.json"))).toBe(true);
+    expect(existsSync(path.join(fixtureRoot, "auto"))).toBe(false);
+    expect(existsSync(path.join(fixtureRoot, "required"))).toBe(false);
+
+    const written = JSON.parse(readFileSync(path.join(fixtureRoot, ".rawr", "hq", "status.json"), "utf8")) as {
+      workspaceRoot: string;
+      support: { observability: { mode: string } };
+    };
+    expect(realpathSync(written.workspaceRoot)).toBe(realpathSync(fixtureRoot));
+    expect(written.support.observability.mode).toBe("required");
   });
 });

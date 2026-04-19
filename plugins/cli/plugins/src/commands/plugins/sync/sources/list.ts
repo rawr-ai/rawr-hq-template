@@ -1,5 +1,5 @@
-import { loadGlobalRawrConfig, rawrGlobalConfigPath } from "@rawr/hq-ops/config";
 import { RawrCommand } from "@rawr/core";
+import { createHqOpsClient, createHqOpsInvocation } from "../../../../lib/hq-ops-client";
 
 export default class PluginsSyncSourcesList extends RawrCommand {
   static description = "List explicitly-registered sync sources from ~/.rawr/config.json";
@@ -12,21 +12,16 @@ export default class PluginsSyncSourcesList extends RawrCommand {
     const { flags } = await this.parseRawr(PluginsSyncSourcesList);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
 
-    const loaded = await loadGlobalRawrConfig();
-    if (loaded.error) {
-      const result = this.fail(loaded.error.message, { details: loaded.error });
-      this.outputResult(result, { flags: baseFlags });
-      this.exit(1);
-      return;
-    }
-
-    const paths = loaded.config?.sync?.sources?.paths ?? [];
-    const result = this.ok({ path: rawrGlobalConfigPath(), sources: paths });
+    const response = await createHqOpsClient(process.cwd()).config.listGlobalSyncSources(
+      {},
+      createHqOpsInvocation("plugin-plugins.sync-sources.list"),
+    );
+    const result = this.ok({ path: response.path, sources: response.sources });
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {
-        this.log(rawrGlobalConfigPath());
-        for (const p of paths) this.log(`- ${p}`);
+        if (response.path) this.log(response.path);
+        for (const source of response.sources) this.log(`- ${source}`);
       },
     });
   }

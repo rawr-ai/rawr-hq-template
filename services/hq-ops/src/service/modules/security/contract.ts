@@ -1,29 +1,47 @@
-/**
- * @fileoverview Security-module boundary contract.
- *
- * @remarks
- * U02 is reservation-only. This file reserves the module boundary anchor with a
- * single structural reservation procedure so the package keeps the canonical
- * contract-first service shell.
- */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
-import { SecurityReservationSchema } from "./schemas";
+import {
+  RiskToleranceSchema,
+  SecurityGateEnableResultSchema,
+  SecurityModeSchema,
+  SecurityReportSchema,
+  SecurityReportWithPathSchema,
+} from "./schemas";
 
-const ReservationInputSchema = schema(
+const SecurityCheckInputSchema = schema(
   Type.Object(
-    {},
     {
-      additionalProperties: false,
-      description: "No caller input is required for the security reservation placeholder.",
+      mode: SecurityModeSchema,
     },
+    { additionalProperties: false },
   ),
 );
 
+const GateEnableInputSchema = schema(
+  Type.Object(
+    {
+      pluginId: Type.String({ minLength: 1 }),
+      riskTolerance: RiskToleranceSchema,
+      mode: SecurityModeSchema,
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const EmptyInputSchema = schema(Type.Object({}, { additionalProperties: false }));
+
 export const contract = {
-  reservation: ocBase
+  securityCheck: ocBase
     .meta({ idempotent: true, entity: "security" })
-    .input(ReservationInputSchema)
-    .output(schema(SecurityReservationSchema)),
+    .input(SecurityCheckInputSchema)
+    .output(schema(SecurityReportWithPathSchema)),
+  gateEnable: ocBase
+    .meta({ idempotent: false, entity: "security" })
+    .input(GateEnableInputSchema)
+    .output(schema(SecurityGateEnableResultSchema)),
+  getSecurityReport: ocBase
+    .meta({ idempotent: true, entity: "security" })
+    .input(EmptyInputSchema)
+    .output(schema(Type.Union([SecurityReportSchema, Type.Null()]))),
 };

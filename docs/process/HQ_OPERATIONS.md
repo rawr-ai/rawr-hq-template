@@ -50,7 +50,7 @@ Manifest-first runtime composition contract:
 After significant merges or updates:
 - `bun run build`
 - `bun run test`
-- `bun run test:heavy` (CLI-heavy + Playwright visual)
+- `bun run test:web` (web-only lane)
 
 ## Transient Test Failure Policy
 

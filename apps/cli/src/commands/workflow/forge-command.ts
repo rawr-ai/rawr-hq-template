@@ -2,9 +2,13 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { journalId, type JournalSnippet,safePreview, writeSnippet } from "@rawr/hq-ops/journal";
-
+import {
+  createHqOpsClient,
+  createHqOpsInvocation,
+  type HqOpsJournalSnippet,
+} from "../../lib/hq-ops-client";
 import { recordArtifact, recordStep } from "../../lib/journal-context";
+import { journalId, safePreview } from "../../lib/journal-projection";
 import { resolveCliEntrypoint, runStep, type StepResult } from "../../lib/subprocess";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
@@ -180,7 +184,7 @@ async function tryWriteForgeSnippet(input: {
     `- run: rawr ${input.topic} ${input.name} --json`,
   ].join("\n");
 
-  const snippet: JournalSnippet = {
+  const snippet: HqOpsJournalSnippet = {
     id: `${id}-workflow-forge-command`,
     ts,
     kind: "workflow",
@@ -191,7 +195,10 @@ async function tryWriteForgeSnippet(input: {
   };
 
   try {
-    await writeSnippet(input.repoRoot, snippet);
+    await createHqOpsClient(input.repoRoot).journal.writeSnippet(
+      snippet,
+      createHqOpsInvocation("cli.workflow.forge-command"),
+    );
   } catch {
     // best-effort
   }

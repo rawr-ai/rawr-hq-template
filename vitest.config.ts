@@ -38,12 +38,7 @@ export default defineConfig({
       {
         extends: true,
         root: r("apps/web"),
-        test: {
-          name: "web",
-          environment: "jsdom",
-          include: [...includes],
-          exclude: ["test/coordination.visual.test.ts"],
-        },
+        test: { name: "web", environment: "jsdom", include: [...includes] },
       },
       {
         extends: true,

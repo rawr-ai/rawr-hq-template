@@ -1,9 +1,6 @@
 import { Args, Flags } from "@oclif/core";
-import { loadRawrConfig } from "@rawr/hq-ops/config";
 import { RawrCommand } from "@rawr/core";
-import { enablePlugin as persistEnablePlugin } from "@rawr/hq-ops/repo-state";
-
-import { loadSecurityModule, missingSecurityFn } from "../../../lib/security";
+import { createHqOpsClient, createHqOpsInvocation } from "../../../lib/hq-ops-client";
 import { findWorkspaceRoot, listWorkspacePlugins, resolvePluginId } from "../../../lib/workspace-plugins";
 
 export default class PluginsWebEnable extends RawrCommand {
@@ -46,7 +43,10 @@ export default class PluginsWebEnable extends RawrCommand {
 
     // If user didn't explicitly choose --risk, prefer config default (if present).
     if (!this.hasExplicitRiskFlag(process.argv.slice(2))) {
-      const loaded = await loadRawrConfig(workspaceRoot);
+      const loaded = await createHqOpsClient(workspaceRoot).config.getWorkspaceConfig(
+        {},
+        createHqOpsInvocation("plugin-plugins.web.enable.config"),
+      );
       const configured = loaded.config?.plugins?.defaultRiskTolerance;
       if (configured) riskTolerance = configured;
     }
@@ -79,21 +79,14 @@ export default class PluginsWebEnable extends RawrCommand {
       return;
     }
 
-    const security = await loadSecurityModule();
-    const gateEnable = security.gateEnable;
-    if (typeof gateEnable !== "function") {
-      const result = this.fail(missingSecurityFn("gateEnable"), { code: "NOT_IMPLEMENTED" });
-      this.outputResult(result, { flags: baseFlags });
-      this.exit(2);
-      return;
-    }
-
-    const evaluation = await gateEnable({
-      pluginId: plugin.id,
-      riskTolerance,
-      mode,
-      cwd: workspaceRoot,
-    });
+    const evaluation = await createHqOpsClient(workspaceRoot).security.gateEnable(
+      {
+        pluginId: plugin.id,
+        riskTolerance: riskTolerance as "strict" | "balanced" | "permissive" | "off",
+        mode,
+      },
+      createHqOpsInvocation("plugin-plugins.web.enable.gate"),
+    );
 
     if ((evaluation as any)?.allowed === false && !force) {
       const result = this.fail("Plugin enablement blocked by security gate", {
@@ -105,7 +98,10 @@ export default class PluginsWebEnable extends RawrCommand {
       return;
     }
 
-    const nextState = await persistEnablePlugin(workspaceRoot, plugin.id);
+    const nextState = await createHqOpsClient(workspaceRoot).repoState.enablePlugin(
+      { pluginId: plugin.id },
+      createHqOpsInvocation("plugin-plugins.web.enable.persist"),
+    );
 
     const result = this.ok({
       pluginId: plugin.id,

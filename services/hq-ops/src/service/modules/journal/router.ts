@@ -1,18 +1,29 @@
-/**
- * @fileoverview Journal module router implementation.
- *
- * @remarks
- * Module composition lives in `./module.ts`.
- * U02 is reservation-only, so this module exports one structural reservation
- * procedure rather than live journal behavior.
- */
 import { module } from "./module";
 
-const reservation = module.reservation.handler(async ({ context }) => {
-  return context.repo.reservation;
+const writeEvent = module.writeEvent.handler(async ({ context, input }) => {
+  return await context.repo.writeEvent(input);
 });
 
-/** Contract-enforced module router reserved for later journal procedures. */
+const writeSnippet = module.writeSnippet.handler(async ({ context, input }) => {
+  return await context.repo.writeSnippet(input);
+});
+
+const getSnippet = module.getSnippet.handler(async ({ context, input }) => {
+  return await context.repo.getSnippet(input.id);
+});
+
+const tailSnippets = module.tailSnippets.handler(async ({ context, input }) => {
+  return await context.repo.tailSnippets(input.limit);
+});
+
+const searchSnippets = module.searchSnippets.handler(async ({ context, input }) => {
+  return await context.repo.searchSnippets(input.query, input.limit, input.mode);
+});
+
 export const router = module.router({
-  reservation,
+  writeEvent,
+  writeSnippet,
+  getSnippet,
+  tailSnippets,
+  searchSnippets,
 });

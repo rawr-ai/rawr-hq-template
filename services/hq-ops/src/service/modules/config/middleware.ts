@@ -27,10 +27,14 @@ export const observability = createServiceObservabilityMiddleware({});
 export const analytics = createServiceAnalyticsMiddleware({});
 
 /** Standalone repository provider attached at module scope in `module.ts`. */
-export const repository = createServiceProvider().middleware<{
+export const repository = createServiceProvider<{
+  scope: {
+    repoRoot: string;
+  };
+}>().middleware<{
   repo: ReturnType<typeof createRepository>;
-}>(async ({ next }) => {
+}>(async ({ context, next }) => {
   return next({
-    repo: createRepository(),
+    repo: createRepository(context.scope.repoRoot),
   });
 });
