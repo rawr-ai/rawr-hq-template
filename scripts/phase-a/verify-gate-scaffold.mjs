@@ -199,11 +199,12 @@ async function verifyImportBoundary() {
 async function verifyHostCompositionGuard() {
   const { ast: rawrAst } = await readTypeScriptFile("apps/server/src/rawr.ts");
 
-  assertCondition(hasNamedImport(rawrAst, "../../../rawr.hq", "rawrHqManifest"), "rawr host must import rawrHqManifest authority");
+  assertCondition(hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest"), "rawr host must import HQ app manifest authority");
   assertCondition(hasRouteRegistration(rawrAst, "/api/inngest"), "rawr host must register /api/inngest route");
   assertCondition(hasRouteRegistration(rawrAst, "/api/workflows/*"), "rawr host must register /api/workflows/* route");
   assertCondition(hasIdentifierCall(rawrAst, "registerOrpcRoutes"), "rawr host must register ORPC routes through registerOrpcRoutes");
   assertCondition(hasRegisterOrpcRoutesManifestRouter(rawrAst), "rawr host must pass manifest-owned ORPC router seam to registerOrpcRoutes");
+  assertCondition(hasIdentifierCall(rawrAst, "createRawrHqManifest"), "rawr host must instantiate the HQ app manifest seam");
   assertCondition(
     hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "triggerRouter"]),
     "rawr host must consume manifest-owned workflow trigger router seam",

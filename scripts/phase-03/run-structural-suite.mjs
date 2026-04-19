@@ -97,6 +97,15 @@ const suiteCommandsByProject = {
     "phase-a-baseline": ["bun run phase-a:gate:import-boundary"],
     "phase-a-completion": ["bun run phase-a:gate:import-boundary"],
   },
+  "@rawr/hq-app": {
+    default: ["bun scripts/phase-03/verify-hq-app-structural.mjs"],
+  },
+  "@rawr/bootgraph": {
+    default: ["bun scripts/phase-03/verify-bootgraph-structural.mjs"],
+  },
+  "@rawr/runtime-context": {
+    default: ["bun scripts/phase-03/verify-runtime-context-structural.mjs"],
+  },
 };
 
 const suiteCommands = suiteCommandsByProject[project]?.[suite];

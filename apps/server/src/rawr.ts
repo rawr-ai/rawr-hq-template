@@ -3,9 +3,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-import { rawrHqManifest } from "../../../rawr.hq";
+import { createRawrHqManifest } from "@rawr/hq-app/manifest";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { createCoordinationInngestFunction, createInngestServeHandler } from "@rawr/coordination-inngest";
+import { createHostLoggerAdapter } from "./logging";
 import type { AnyElysia } from "./plugins";
 import { createCoordinationRuntimeAdapter } from "./coordination";
 import { registerOrpcRoutes } from "./orpc";
@@ -28,6 +29,10 @@ export type HostInngestBundle = Readonly<{
 }>;
 
 export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"] as const;
+
+const rawrHqManifest = createRawrHqManifest({
+  exampleTodoLogger: createHostLoggerAdapter(),
+});
 
 const INNGEST_SIGNATURE_HEADERS = ["x-inngest-signature", "inngest-signature"] as const;
 const INNGEST_SIGNATURE_MAX_AGE_MS = 5 * 60 * 1000;

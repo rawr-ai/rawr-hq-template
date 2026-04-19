@@ -1,4 +1,4 @@
-import type { RuntimeRouterContext } from "@rawr/core/orpc";
+import type { RuntimeRouterContext } from "@rawr/runtime-context";
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
 
 export type ExampleTodoApiContext = RuntimeRouterContext & {

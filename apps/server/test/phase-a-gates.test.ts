@@ -146,10 +146,11 @@ describe("phase-a gate scaffold (server)", () => {
     const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
     const rawrAst = parseTypeScript(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), rawrSource);
 
-    expect(hasNamedImport(rawrAst, "../../../rawr.hq", "rawrHqManifest")).toBe(true);
+    expect(hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/inngest")).toBe(true);
     expect(hasRouteRegistration(rawrAst, "/api/workflows/*")).toBe(true);
     expect(hasRegisterOrpcRoutesManifestRouter(rawrAst)).toBe(true);
+    expect(hasIdentifierCall(rawrAst, "createRawrHqManifest")).toBe(true);
     expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "triggerRouter"])).toBe(true);
     expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "client"])).toBe(true);
     expect(hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "inngest", "functions"])).toBe(true);

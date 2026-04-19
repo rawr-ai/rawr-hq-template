@@ -165,15 +165,15 @@ describe("rawr server routes", () => {
   });
 
   it("host-composition-guard: manifest composes routers from package seam, not app internals", async () => {
-    const manifestSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
+    const manifestSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "manifest.ts"), "utf8");
     expect(manifestSource).toContain("@rawr/example-todo");
     expect(manifestSource).toContain("registerExampleTodoApiPlugin");
-    expect(manifestSource).toContain("./plugins/api/example-todo");
-    expect(manifestSource).toContain("./plugins/workflows/support-example");
+    expect(manifestSource).toContain("../../../plugins/api/example-todo");
+    expect(manifestSource).toContain("../../../plugins/workflows/support-example");
     expect(manifestSource).toContain("registerSupportExampleWorkflowPlugin");
     expect(manifestSource).not.toContain("./plugins/api/support-example");
     expect(manifestSource).not.toContain("registerSupportExampleApiPlugin");
-    expect(manifestSource).not.toContain("./apps/server/src/orpc");
+    expect(manifestSource).not.toContain("apps/server/src/logging");
     expect(manifestSource).toMatch(/const composedOrpcRouter = \{\s*\.\.\.coreOrpcRouter,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s);
   });
 

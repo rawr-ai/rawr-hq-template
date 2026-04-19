@@ -28,7 +28,7 @@ if (mode !== "baseline" && mode !== "completion") {
 const root = process.cwd();
 const rawrFile = path.join(root, "apps", "server", "src", "rawr.ts");
 const orpcFile = path.join(root, "apps", "server", "src", "orpc.ts");
-const manifestFile = path.join(root, "rawr.hq.ts");
+const manifestFile = path.join(root, "apps", "hq", "src", "manifest.ts");
 
 const rawrSource = await fs.readFile(rawrFile, "utf8");
 const orpcSource = await fs.readFile(orpcFile, "utf8");
@@ -97,19 +97,24 @@ const requiredChecks = [
 ];
 
 if (mode === "completion") {
-  const manifestObject = manifestAst ? findVariableObjectLiteral(manifestAst, "rawrHqManifest") : undefined;
+  const workflowCapabilities = manifestAst ? findVariableObjectLiteral(manifestAst, "rawrHqWorkflowCapabilities") : undefined;
 
   requiredChecks.push({
     label: "manifest exports structured workflow capability mapping",
-    ok: Boolean(manifestObject && capabilitiesAreStructured(manifestObject)),
+    ok: Boolean(workflowCapabilities && capabilityMappingIsStructured(workflowCapabilities)),
   });
   requiredChecks.push({
     label: "manifest declares package-owned composition seams",
-    ok: Boolean(manifestObject && hasManifestCompositionSeams(manifestObject)),
+    ok:
+      manifestSource.includes("export function createRawrHqManifest") &&
+      manifestSource.includes("router: composedOrpcRouter") &&
+      manifestSource.includes("triggerRouter: composedWorkflowTriggerRouter") &&
+      manifestSource.includes("functions: supportExampleInngestFunctions") &&
+      manifestSource.includes("handler: createInngestServeHandler"),
   });
   requiredChecks.push({
     label: "host imports manifest authority seam",
-    ok: hasNamedImport(rawrAst, "../../../rawr.hq", "rawrHqManifest"),
+    ok: hasNamedImport(rawrAst, "@rawr/hq-app/manifest", "createRawrHqManifest"),
   });
   requiredChecks.push({
     label: "host wires /api/workflows capability-family routing",
@@ -131,7 +136,7 @@ if (mode === "completion") {
   });
   requiredChecks.push({
     label: "host consumes manifest-owned ORPC router seam",
-    ok: hasRegisterOrpcRoutesManifestRouter(rawrAst),
+    ok: hasRegisterOrpcRoutesManifestRouter(rawrAst) && hasIdentifierCall(rawrAst, "createRawrHqManifest"),
   });
   requiredChecks.push({
     label: "host avoids app-internal ad-hoc seam composition",
@@ -148,6 +153,18 @@ if (mode === "completion") {
     ok:
       !hasStringLiteral(rawrAst, (value) => value.includes("/rpc/workflows")) &&
       !hasStringLiteral(orpcAst, (value) => value.includes("/rpc/workflows")),
+  });
+}
+
+function capabilityMappingIsStructured(capabilitiesObject) {
+  const capabilityEntries = capabilitiesObject.properties.filter(ts.isPropertyAssignment);
+  if (capabilityEntries.length === 0) return false;
+
+  return capabilityEntries.every((entry) => {
+    const capabilityObject = asObjectLiteral(entry.initializer);
+    if (!capabilityObject) return false;
+    const pathPrefixInit = getObjectPropertyInitializer(capabilityObject, "pathPrefix");
+    return Boolean(pathPrefixInit && ts.isStringLiteral(pathPrefixInit) && pathPrefixInit.text.startsWith("/"));
   });
 }
 

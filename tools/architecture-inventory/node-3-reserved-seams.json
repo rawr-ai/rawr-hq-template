@@ -1,0 +1,42 @@
+{
+  "projects": {
+    "@rawr/hq-app": {
+      "config": "apps/hq/package.json",
+      "tags": [
+        "type:app",
+        "app:hq",
+        "migration-slice:structural-tranche"
+      ],
+      "targets": [
+        "sync",
+        "structural"
+      ]
+    },
+    "@rawr/bootgraph": {
+      "config": "packages/bootgraph/package.json",
+      "tags": [
+        "type:package",
+        "migration-slice:structural-tranche",
+        "role:support",
+        "surface:bootgraph"
+      ],
+      "targets": [
+        "sync",
+        "structural"
+      ]
+    },
+    "@rawr/runtime-context": {
+      "config": "packages/runtime-context/package.json",
+      "tags": [
+        "type:package",
+        "migration-slice:structural-tranche",
+        "role:support",
+        "surface:runtime-context"
+      ],
+      "targets": [
+        "sync",
+        "structural"
+      ]
+    }
+  }
+}
