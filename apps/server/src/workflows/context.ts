@@ -103,6 +103,19 @@ export function assertHeavyMiddlewareDedupeMarkers(
   throw new Error(`missing required heavy middleware dedupe marker(s): ${missing.join(", ")}`);
 }
 
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-canonical host-owned request boundary context materializer
+ * @agents-must-not plugin-owned request context construction
+ *
+ * Owns:
+ * - request-scoped correlation IDs and middleware dedupe state
+ * - hydration of request boundary context from already-bound host deps
+ *
+ * Must not own:
+ * - plugin declaration or host binding
+ * - app-manifest executable runtime assembly
+ */
 export function createRequestScopedBoundaryContext<TRuntime>(
   request: Request,
   deps: RawrBoundaryContextDeps<TRuntime>,
@@ -118,6 +131,11 @@ export function createRequestScopedBoundaryContext<TRuntime>(
   };
 }
 
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-canonical workflow request boundary alias
+ * @agents-must-not separate workflow-only context authority
+ */
 export function createWorkflowBoundaryContext<TRuntime>(
   request: Request,
   deps: RawrBoundaryContextDeps<TRuntime>,

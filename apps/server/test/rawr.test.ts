@@ -299,26 +299,46 @@ describe("rawr server routes", () => {
 
   it("host-composition-guard: host realizes workflow runtime and keeps workflow context off canonical ORPC registration", async () => {
     const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
+    const hostCompositionSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-composition.ts"), "utf8");
+    const hostSeamSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-seam.ts"), "utf8");
+    const testingHostSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "testing-host.ts"), "utf8");
+    const hostRealizationSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-realization.ts"), "utf8");
+    const workflowRuntimeSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "workflows", "runtime.ts"), "utf8");
 
+    expect(rawrSource).toContain('from "./host-composition"');
+    expect(hostCompositionSource).toContain('from "@rawr/hq-app/manifest"');
+    expect(hostSeamSource).not.toContain('from "../../../rawr.hq"');
+    expect(testingHostSource).not.toContain('from "../../../rawr.hq"');
+    expect(hostSeamSource).not.toContain("@rawr/hq-app/manifest");
+    expect(testingHostSource).not.toContain("@rawr/hq-app/manifest");
     expect(rawrSource).not.toContain("@rawr/plugin-api-coordination/server");
     expect(rawrSource).not.toContain("@rawr/plugin-workflows-support-example/server");
+    expect(rawrSource).not.toContain("@rawr/plugin-workflows-coordination/server");
     expect(rawrSource).not.toContain("./coordination");
     expect(rawrSource).not.toContain("createCoordinationInngestFunction");
     expect(rawrSource).not.toContain("createSupportExampleInngestFunctions");
-    expect(rawrSource).toContain("createRawrHostBoundRolePlan");
-    expect(rawrSource).toContain("materializeRawrHostBoundRolePlan");
-    expect(rawrSource).toContain('createCoordinationWorkflowRuntimeAdapter');
-    expect(rawrSource).toContain('@rawr/plugin-workflows-coordination/server');
-    expect(rawrSource).toContain("rawrHqHostSeam.workflows.createInngestFunctions");
+    expect(rawrSource).toContain("createRawrHostComposition");
+    expect(hostCompositionSource).toContain("createRawrHqManifest");
+    expect(hostCompositionSource).toContain("createRawrHostSatisfiers");
+    expect(hostCompositionSource).toContain("createRawrHostBoundRolePlan");
+    expect(hostCompositionSource).toContain("materializeRawrHostBoundRolePlan");
+    expect(rawrSource).toContain('createRawrWorkflowRuntime');
+    expect(rawrSource).toContain('from "./workflows/runtime"');
+    expect(rawrSource).toContain("rawrHostComposition.realization.workflows.createInngestFunctions");
     expect(rawrSource).toContain("new Inngest({ id: \"rawr-hq\" })");
     expect(rawrSource).toContain("serve as inngestServe");
     expect(rawrSource).not.toContain("rawrHqManifest.inngest");
     expect(rawrSource).toContain("createWorkflowRouteHarness");
     expect(rawrSource).not.toContain("resolveWorkflowCapability");
     expect(rawrSource).not.toContain("rawrHqManifest.workflows.capabilities");
-    expect(rawrSource).toContain("openApiRouter: rawrHqHostSeam.orpc.published.router");
-    expect(rawrSource).toContain("publishedRouter: rawrHqHostSeam.workflows.published.router");
+    expect(rawrSource).toContain("openApiRouter: rawrHostSeam.orpc.published.router");
+    expect(rawrSource).toContain("publishedRouter: rawrHostSeam.workflows.published.router");
     expect(rawrSource).toContain("contextFactory: (request, deps) => createWorkflowBoundaryContext(request, deps)");
+    expect(hostRealizationSource).toContain('from "./host-surface-merge"');
+    expect(hostRealizationSource).not.toContain("@rawr/hq-sdk/composition");
+    expect(hostRealizationSource).toContain("mergeRawrHostSurfaceTrees");
+    expect(workflowRuntimeSource).toContain("@rawr/plugin-workflows-coordination/server");
+    expect(workflowRuntimeSource).toContain("resolveRawrWorkflowInngestBaseUrl");
   });
 
   it("host-composition-guard: proof and openapi helpers do not bypass host realization through HQ testing or manifest fixtures", async () => {
@@ -327,12 +347,13 @@ describe("rawr server routes", () => {
       path.join(repoRoot, "apps", "server", "scripts", "write-orpc-openapi.ts"),
       "utf8",
     );
+    const hostCompositionSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-composition.ts"), "utf8");
     const testingHostSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
       "utf8",
     );
     const hqTestingSource = await readIfPresent(path.join(repoRoot, "apps", "hq", "src", "testing.ts"));
-    const rawrHqBridgeSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
+    const rawrHqBridgeSource = await readIfPresent(path.join(repoRoot, "rawr.hq.ts"));
     const proofClientSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "test", "support", "example-todo-proof-clients.ts"),
       "utf8",
@@ -344,14 +365,16 @@ describe("rawr server routes", () => {
     expect(openApiScriptSource).toContain("createTestingRawrHostSeam");
     expect(openApiScriptSource).toContain("hostSeam.realization.orpc.published.router");
     expect(openApiScriptSource).not.toContain("@rawr/hq-app/testing");
-    expect(testingHostSource).toContain("createRawrHostSatisfiers");
-    expect(testingHostSource).toContain("createRawrHostBoundRolePlan");
-    expect(testingHostSource).toContain("materializeRawrHostBoundRolePlan");
+    expect(testingHostSource).toContain("createRawrHostComposition");
+    expect(testingHostSource).not.toContain("createRawrHostSatisfiers");
+    expect(testingHostSource).not.toContain("createRawrHostBoundRolePlan");
+    expect(testingHostSource).not.toContain("materializeRawrHostBoundRolePlan");
+    expect(hostCompositionSource).toContain("createRawrHostSatisfiers");
+    expect(hostCompositionSource).toContain("createRawrHostBoundRolePlan");
+    expect(hostCompositionSource).toContain("materializeRawrHostBoundRolePlan");
     expect(testingHostSource).not.toContain("manifest.fixtures");
     expect(hqTestingSource === null || normalizeSemanticSource(hqTestingSource) === "export{};").toBe(true);
-    expect(normalizeSemanticSource(rawrHqBridgeSource)).toBe(
-      'export{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
-    );
+    expect(rawrHqBridgeSource).toBeNull();
     expect(proofClientSource).not.toContain("manifest.fixtures");
     expect(proofClientSource).toContain("createTestingExampleTodoServiceClient");
   });

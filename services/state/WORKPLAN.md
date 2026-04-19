@@ -5,7 +5,7 @@
 - Package root is thin and stable.
 - `src/index.ts` exports only package-boundary entry points plus boundary types.
 - `src/router.ts` is a stable export shim over `src/service/router.ts`.
-- `src/client.ts` owns in-process client creation through `defineDomainPackage(router)`.
+- `src/client.ts` owns in-process client creation through `defineServicePackage(router)`.
 - `src/service/base.ts` is the single declarative service seam.
 - `src/service/contract.ts` composes the service contract.
 - `src/service/impl.ts` creates one central implementer.

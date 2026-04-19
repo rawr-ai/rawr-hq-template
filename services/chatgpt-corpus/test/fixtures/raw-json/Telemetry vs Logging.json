@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "title": "Telemetry vs Logging",
+    "link": "https://chatgpt.com/c/telemetry-root",
+    "dates": {
+      "created": "3/02/2026 11:00:00",
+      "updated": "3/02/2026 11:15:00",
+      "exported": "3/02/2026 12:00:00"
+    }
+  },
+  "messages": [
+    {
+      "role": "Prompt",
+      "say": "What is the difference between telemetry and logging?"
+    },
+    {
+      "role": "Response",
+      "say": "Telemetry is broader than logs."
+    },
+    {
+      "role": "Prompt",
+      "say": "Can you summarize the practical implication?"
+    },
+    {
+      "role": "Response",
+      "say": ""
+    }
+  ]
+}

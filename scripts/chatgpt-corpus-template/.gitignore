@@ -1,0 +1,7 @@
+__pycache__/
+source-material/conversations/raw-json/*
+!source-material/conversations/raw-json/.gitkeep
+work/docs/source/*
+!work/docs/source/.gitkeep
+work/generated/
+work/README.md

@@ -371,6 +371,9 @@
         "typebox": "^1.0.81",
       },
     },
+    "services/chatgpt-corpus": {
+      "name": "@rawr/chatgpt-corpus",
+    },
     "services/coordination": {
       "name": "@rawr/coordination",
       "dependencies": {
@@ -1069,6 +1072,8 @@
     "@rawr/agent-sync": ["@rawr/agent-sync@workspace:packages/agent-sync"],
 
     "@rawr/bootgraph": ["@rawr/bootgraph@workspace:packages/bootgraph"],
+
+    "@rawr/chatgpt-corpus": ["@rawr/chatgpt-corpus@workspace:services/chatgpt-corpus"],
 
     "@rawr/cli": ["@rawr/cli@workspace:apps/cli"],
 

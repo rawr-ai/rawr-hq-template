@@ -1,4 +1,4 @@
-import type { RuntimeRouterContext } from "@rawr/runtime-context";
+import type { HostRuntimeSupportContext } from "@rawr/runtime-context";
 import { metrics, SpanStatusCode, trace, type Counter, type Histogram } from "@opentelemetry/api";
 import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
@@ -20,7 +20,7 @@ import {
   type RawrBoundaryContextDeps,
 } from "./workflows/context";
 
-type RawrOrpcContext = RuntimeRouterContext;
+type RawrOrpcContext = HostRuntimeSupportContext;
 type RawrOrpcRouter = Router<AnyContractRouter, RawrOrpcContext>;
 
 const RPC_AUTH_DEDUPE_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION;
@@ -28,7 +28,7 @@ let routedRequestsCounter: Counter | undefined;
 let routedRequestDurationHistogram: Histogram | undefined;
 
 export type RegisterOrpcRoutesOptions<
-  TContext extends RuntimeRouterContext = RuntimeRouterContext,
+  TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext,
   TRequestContext extends RawrBoundaryContext & TContext = RawrBoundaryContext & TContext,
 > = RawrBoundaryContextDeps & {
   router?: Router<AnyContractRouter, any>;
@@ -56,7 +56,7 @@ export function __resetOrpcRouteTelemetryForTests() {
  * Canonical:
  * - `testing-host -> host-seam -> host-realization`
  */
-export function createOrpcRouter<TContext extends RuntimeRouterContext = RuntimeRouterContext>() {
+export function createOrpcRouter<TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext>() {
   return createTestingRawrHostSeam().realization.orpc.router as unknown as Router<AnyContractRouter, TContext>;
 }
 
@@ -73,7 +73,7 @@ export function createOrpcRouter<TContext extends RuntimeRouterContext = Runtime
  * Canonical:
  * - `testing-host -> host-seam -> host-realization`
  */
-export function createPublishedOpenApiRouter<TContext extends RuntimeRouterContext = RuntimeRouterContext>() {
+export function createPublishedOpenApiRouter<TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext>() {
   return createTestingRawrHostSeam().realization.orpc.published.router as unknown as Router<AnyContractRouter, TContext>;
 }
 
@@ -154,7 +154,7 @@ async function withRouteSpan(
 }
 
 async function handleRpcRoute<
-  TContext extends RuntimeRouterContext,
+  TContext extends HostRuntimeSupportContext,
   TRequestContext extends RawrBoundaryContext & TContext,
 >(args: {
   request: Request;
@@ -219,7 +219,7 @@ async function handleRpcRoute<
 }
 
 async function handleOpenApiRoute<
-  TContext extends RuntimeRouterContext,
+  TContext extends HostRuntimeSupportContext,
   TRequestContext extends RawrBoundaryContext & TContext,
 >(args: {
   request: Request;
@@ -271,7 +271,7 @@ async function handleOpenApiRoute<
   });
 }
 
-async function createOpenApiSpec<TContext extends RuntimeRouterContext>(
+async function createOpenApiSpec<TContext extends HostRuntimeSupportContext>(
   router: Router<AnyContractRouter, TContext>,
   baseUrl: string,
 ) {
@@ -305,9 +305,22 @@ export async function generateOrpcOpenApiSpec(
   return createOpenApiSpec(router, baseUrl);
 }
 
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-canonical host-owned API request materializer
+ * @agents-must-not manifest-owned route assembly or HQ testing fixtures
+ *
+ * Owns:
+ * - request-scoped context hydration for RPC and published OpenAPI routes
+ * - host auth/logging/telemetry wrappers around realized routers
+ *
+ * Must not own:
+ * - declaration inspection or satisfier resolution
+ * - alternate runtime/testing assembly paths outside the realized host seam
+ */
 export function registerOrpcRoutes<
   TApp extends AnyElysia,
-  TContext extends RuntimeRouterContext = RuntimeRouterContext,
+  TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext,
   TRequestContext extends RawrBoundaryContext & TContext = RawrBoundaryContext & TContext,
 >(
   app: TApp,

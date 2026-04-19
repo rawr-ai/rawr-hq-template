@@ -8,10 +8,9 @@ const manifestPath = path.join(root, "apps", "hq", "src", "manifest.ts");
 const testingPath = path.join(root, "apps", "hq", "src", "testing.ts");
 const rawrHqBridgePath = path.join(root, "rawr.hq.ts");
 
-const [pkgRaw, manifestSource, rawrHqBridgeSource] = await Promise.all([
+const [pkgRaw, manifestSource] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(manifestPath, "utf8"),
-  fs.readFile(rawrHqBridgePath, "utf8"),
 ]);
 
 function normalizeSemanticSource(source) {
@@ -33,6 +32,7 @@ async function readIfPresent(filePath) {
 }
 
 const testingSource = await readIfPresent(testingPath);
+const rawrHqBridgeSource = await readIfPresent(rawrHqBridgePath);
 
 const pkg = JSON.parse(pkgRaw);
 const requiredTags = ["type:app", "app:hq", "migration-slice:structural-tranche"];
@@ -90,12 +90,8 @@ if (testingSource !== null && normalizeSemanticSource(testingSource) !== "export
   process.exit(1);
 }
 
-if (
-  !/^export\{createRawrHqManifest,typeRawrHqManifest\}from["']@rawr\/hq-app\/manifest["'];?$/.test(
-    normalizeSemanticSource(rawrHqBridgeSource),
-  )
-) {
-  console.error("hq-app structural failed: rawr.hq.ts may only re-export HQ manifest composition symbols.");
+if (rawrHqBridgeSource !== null) {
+  console.error("hq-app structural failed: rawr.hq.ts must be deleted once host composition localizes the narrow manifest import.");
   process.exit(1);
 }
 

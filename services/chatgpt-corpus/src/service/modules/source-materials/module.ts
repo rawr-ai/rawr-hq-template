@@ -1,0 +1,13 @@
+import { impl } from "../../impl";
+import { analytics, observability, repository } from "./middleware";
+
+export const module = impl.sourceMaterials
+  .use(observability)
+  .use(analytics)
+  .use(repository)
+  .use(async ({ context, next }) => next({
+    context: {
+      repo: context.provided.repo,
+      workspaceRef: context.scope.workspaceRef,
+    },
+  }));

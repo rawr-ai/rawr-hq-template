@@ -1,16 +1,27 @@
 import { implement } from "@orpc/server";
-import {
-  mergeDeclaredSurfaceTrees,
-} from "@rawr/hq-sdk/composition";
 import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
 import type { RawrHostBoundRolePlan } from "./host-seam";
+import { mergeRawrHostSurfaceTrees } from "./host-surface-merge";
+
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-style canonical host realization
+ *
+ * Owns:
+ * - turning one host-bound role plan into executable request/process surfaces
+ *
+ * Must not own:
+ * - declaration choice
+ * - host satisfier construction
+ * - fallback interop with shared-package materializers
+ */
 
 function materializeRawrHostOrpc(boundRolePlan: RawrHostBoundRolePlan) {
-  const contract = mergeDeclaredSurfaceTrees([
+  const contract = mergeRawrHostSurfaceTrees([
     boundRolePlan.api.internalContract,
     boundRolePlan.workflows.internalContract,
   ]);
-  const router = mergeDeclaredSurfaceTrees([
+  const router = mergeRawrHostSurfaceTrees([
     boundRolePlan.api.internalRouter,
     boundRolePlan.workflows.internalRouter,
   ]);
