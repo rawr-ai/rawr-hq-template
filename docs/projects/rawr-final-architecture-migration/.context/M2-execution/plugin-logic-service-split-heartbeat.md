@@ -18,10 +18,22 @@ Objective: make `plugins/cli/plugins` a projection again by moving durable sync 
 - Seeded the decision-complete execution plan into this worktree.
 - No implementation slices have been integrated yet.
 
+### 2026-04-19 - Service Worker Branches Created
+
+- Created `agent-SYNC-plugin-sync-service-ownership` at `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-SYNC-plugin-sync-service-ownership`.
+- Created `agent-HQOPS-plugin-install-lifecycle-service` at `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-HQOPS-plugin-install-lifecycle-service`.
+- Both worker branches are Graphite-tracked children of `agent-ORCH-plugin-logic-service-split`.
+
+### 2026-04-19 - Service Workers Running
+
+- Sync and HQ Ops workers are active.
+- Orchestrator mapped current plugin semantic files, command imports, service module structure, and structural verifier seams.
+- Projection and ratchet work remain gated on service API integration.
+
 ## Active Agents
 
-- Pending: Sync Service Agent
-- Pending: HQ Ops Agent
+- Active: Sync Service Agent `019da77e-9c1b-72c0-9b32-02228380906e` on `agent-SYNC-plugin-sync-service-ownership`
+- Active: HQ Ops Agent `019da77e-cab9-7593-91d8-afa1b94eb7a6` on `agent-HQOPS-plugin-install-lifecycle-service`
 - Pending: Projection Agent
 - Pending: Ratchet Agent
 - Pending: Proof Agent
