@@ -1,21 +1,18 @@
 import { type Static, Type } from "typebox";
 import {
   RoleFilterSchema,
-  SessionFiltersSchema,
   SessionListItemSchema,
   SessionSourceFilterSchema,
 } from "../../shared/schemas";
 
 export {
   RoleFilterSchema,
-  SessionFiltersSchema,
   SessionListItemSchema,
   SessionSourceFilterSchema,
 };
 
 export type RoleFilter = Static<typeof RoleFilterSchema>;
 export type SessionListItem = Static<typeof SessionListItemSchema>;
-export type SessionFilters = Static<typeof SessionFiltersSchema>;
 export type SessionSourceFilter = Static<typeof SessionSourceFilterSchema>;
 
 export const SearchHitSchema = Type.Object(

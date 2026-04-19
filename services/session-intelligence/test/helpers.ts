@@ -7,8 +7,7 @@ import {
 import type { CreateClientOptions } from "../src/client";
 import type {
   SessionIndexRuntime,
-  SessionSearchCacheEntry,
-  SessionSearchCacheKey,
+  SessionIndexStatement,
 } from "../src/service/shared/ports/session-index-runtime";
 import type {
   DiscoverSessionsInput,
@@ -32,42 +31,69 @@ type FixtureSession = {
 };
 
 export class MemorySessionIndexRuntime implements SessionIndexRuntime {
-  readonly entries = new Map<string, SessionSearchCacheEntry>();
+  readonly entries = new Map<string, { modifiedMs: number; sizeBytes: number; content: string }>();
   getCalls = 0;
   setCalls = 0;
 
-  async getSearchText(input: SessionSearchCacheKey): Promise<SessionSearchCacheEntry | null> {
-    this.getCalls += 1;
-    return this.entries.get(this.cacheKey(input)) ?? null;
+  defaultIndexPath(): string {
+    return "/tmp/session-index.sqlite";
   }
 
-  async setSearchText(input: SessionSearchCacheEntry): Promise<void> {
-    this.setCalls += 1;
-    this.entries.set(this.cacheKey(input), { ...input });
-  }
-
-  async clearSearchText(input: { indexPath?: string; path?: string } = {}): Promise<void> {
-    if (!input.path) {
-      if (!input.indexPath) {
-        this.entries.clear();
-        return;
-      }
-      for (const key of [...this.entries.keys()]) {
-        if (key.startsWith(`${input.indexPath}\0`)) this.entries.delete(key);
-      }
+  async execute(input: SessionIndexStatement & { indexPath: string }): Promise<void> {
+    const normalized = input.sql.replace(/\s+/g, " ").trim().toUpperCase();
+    if (normalized.startsWith("INSERT OR REPLACE INTO SESSION_CACHE")) {
+      this.setCalls += 1;
+      const [path, rolesKey, includeTools, modifiedMs, sizeBytes, content] = input.params ?? [];
+      this.entries.set(this.cacheKey({
+        indexPath: input.indexPath,
+        path: String(path ?? ""),
+        rolesKey: String(rolesKey ?? ""),
+        includeTools: Number(includeTools ?? 0) === 1,
+      }), {
+        modifiedMs: Number(modifiedMs ?? 0),
+        sizeBytes: Number(sizeBytes ?? 0),
+        content: String(content ?? ""),
+      });
       return;
     }
-    for (const key of [...this.entries.keys()]) {
-      if (key === this.cacheKey({ indexPath: input.indexPath ?? "", path: input.path, rolesKey: "", includeTools: false })) {
-        this.entries.delete(key);
-        continue;
+
+    if (normalized.startsWith("DELETE FROM SESSION_CACHE WHERE PATH=")) {
+      const [path] = input.params ?? [];
+      for (const key of [...this.entries.keys()]) {
+        const [indexPath, entryPath] = key.split("\0");
+        if (indexPath === input.indexPath && entryPath === path) this.entries.delete(key);
       }
-      const [, path] = key.split("\0");
-      if (path === input.path && (!input.indexPath || key.startsWith(`${input.indexPath}\0`))) this.entries.delete(key);
     }
   }
 
-  private cacheKey(input: SessionSearchCacheKey): string {
+  async query<Row extends Record<string, unknown> = Record<string, unknown>>(input: SessionIndexStatement & { indexPath: string }): Promise<Row[]> {
+    const normalized = input.sql.replace(/\s+/g, " ").trim().toUpperCase();
+    if (!normalized.startsWith("SELECT MTIME, SIZE, CONTENT FROM SESSION_CACHE")) return [];
+    this.getCalls += 1;
+    const [path, rolesKey, includeTools] = input.params ?? [];
+    const entry = this.entries.get(this.cacheKey({
+      indexPath: input.indexPath,
+      path: String(path ?? ""),
+      rolesKey: String(rolesKey ?? ""),
+      includeTools: Number(includeTools ?? 0) === 1,
+    }));
+    if (!entry) return [];
+    return [{ mtime: entry.modifiedMs, size: entry.sizeBytes, content: entry.content } as unknown as Row];
+  }
+
+  async transaction(input: { indexPath: string; statements: SessionIndexStatement[] }): Promise<void> {
+    for (const statement of input.statements) {
+      await this.execute({ ...statement, indexPath: input.indexPath });
+    }
+  }
+
+  async removeIndex(input: { indexPath: string }): Promise<void> {
+    for (const key of [...this.entries.keys()]) {
+      if (key.startsWith(`${input.indexPath}\0`)) this.entries.delete(key);
+    }
+  }
+
+  private cacheKey(input: { indexPath: string; path: string; rolesKey: string; includeTools: boolean }): string {
     return `${input.indexPath}\0${input.path}\0${input.rolesKey}\0${input.includeTools ? "1" : "0"}`;
   }
 }

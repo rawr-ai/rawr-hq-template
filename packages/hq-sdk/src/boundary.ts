@@ -17,3 +17,7 @@ export type {
   InferScope,
 } from "./orpc/boundary/service-package";
 export { defineServicePackage } from "./orpc/boundary/service-package";
+export {
+  createServiceInvocationOptions,
+  type ServiceInvocationOptions,
+} from "./orpc/boundary/trace-forwarding";

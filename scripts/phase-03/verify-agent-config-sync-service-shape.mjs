@@ -1,4 +1,6 @@
 #!/usr/bin/env bun
+import fs from "node:fs/promises";
+import path from "node:path";
 import { assertCondition, pathExists, readFile, readJson } from "../phase-1/_verify-utils.mjs";
 
 const REQUIRED_PATHS = [
@@ -17,6 +19,11 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/shared/internal-errors.ts",
   "services/agent-config-sync/src/service/shared/resources.ts",
   "services/agent-config-sync/src/service/shared/schemas.ts",
+  "services/agent-config-sync/src/service/shared/internal/source-scope.ts",
+  "services/agent-config-sync/src/service/modules/execution/effective-content.ts",
+  "services/agent-config-sync/src/service/modules/execution/marketplace-claude.ts",
+  "services/agent-config-sync/src/service/modules/execution/registry-codex.ts",
+  "services/agent-config-sync/src/service/modules/execution/sync-engine.ts",
   "services/agent-config-sync/src/service/modules/planning/contract.ts",
   "services/agent-config-sync/src/service/modules/planning/middleware.ts",
   "services/agent-config-sync/src/service/modules/planning/module.ts",
@@ -33,6 +40,7 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/modules/retirement/middleware.ts",
   "services/agent-config-sync/src/service/modules/retirement/module.ts",
   "services/agent-config-sync/src/service/modules/retirement/repository.ts",
+  "services/agent-config-sync/src/service/modules/retirement/retire-stale-managed.ts",
   "services/agent-config-sync/src/service/modules/retirement/router.ts",
   "services/agent-config-sync/src/service/modules/retirement/schemas.ts",
   "services/agent-config-sync/src/service/modules/undo/contract.ts",
@@ -41,6 +49,7 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/modules/undo/repository.ts",
   "services/agent-config-sync/src/service/modules/undo/router.ts",
   "services/agent-config-sync/src/service/modules/undo/schemas.ts",
+  "services/agent-config-sync/src/service/modules/undo/sync-undo.ts",
   "services/agent-config-sync/test/helpers.ts",
   "services/agent-config-sync/test/service-shape.test.ts",
 ];
@@ -67,9 +76,18 @@ const [
   serviceShapeTest,
   baseSource,
   executionRepository,
+  executionMiddleware,
+  executionModule,
   planningRepository,
+  planningMiddleware,
+  planningModule,
   retirementRepository,
+  retirementMiddleware,
+  retirementModule,
   undoRepository,
+  undoMiddleware,
+  undoModule,
+  sharedSchemas,
   pluginPluginsPackageJson,
 ] = await Promise.all([
   readFile("services/agent-config-sync/src/service/contract.ts"),
@@ -79,9 +97,18 @@ const [
   readFile("services/agent-config-sync/test/service-shape.test.ts"),
   readFile("services/agent-config-sync/src/service/base.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/repository.ts"),
+  readFile("services/agent-config-sync/src/service/modules/execution/middleware.ts"),
+  readFile("services/agent-config-sync/src/service/modules/execution/module.ts"),
   readFile("services/agent-config-sync/src/service/modules/planning/repository.ts"),
+  readFile("services/agent-config-sync/src/service/modules/planning/middleware.ts"),
+  readFile("services/agent-config-sync/src/service/modules/planning/module.ts"),
   readFile("services/agent-config-sync/src/service/modules/retirement/repository.ts"),
+  readFile("services/agent-config-sync/src/service/modules/retirement/middleware.ts"),
+  readFile("services/agent-config-sync/src/service/modules/retirement/module.ts"),
   readFile("services/agent-config-sync/src/service/modules/undo/repository.ts"),
+  readFile("services/agent-config-sync/src/service/modules/undo/middleware.ts"),
+  readFile("services/agent-config-sync/src/service/modules/undo/module.ts"),
+  readFile("services/agent-config-sync/src/service/shared/schemas.ts"),
   readFile("plugins/cli/plugins/package.json"),
 ]);
 
@@ -106,6 +133,45 @@ for (const [label, source] of Object.entries({
   for (const forbidden of ["runtime.runSync", "runtime.previewSync", "runtime.retireStaleManaged", "runtime.runUndo"]) {
     assertCondition(!source.includes(forbidden), `${label} must not forward to ${forbidden}`);
   }
+  assertCondition(
+    !source.includes("../../shared/internal/") || source.includes("../../shared/internal/source-scope"),
+    `${label} must not import behavior from shared/internal except source-scope`,
+  );
+}
+
+for (const [label, source] of Object.entries({
+  executionModule,
+  planningModule,
+  retirementModule,
+  undoModule,
+})) {
+  assertCondition(!source.includes('from "./repository"'), `${label} must not import repository directly`);
+  assertCondition(!source.includes("createRepository("), `${label} must not construct repositories inline`);
+  assertCondition(source.includes('repository } from "./middleware"') || source.includes('repository,') || source.includes('{ analytics, observability, repository }'), `${label} must import repository from middleware`);
+  assertCondition(source.includes(".use(repository)"), `${label} must compose repository middleware`);
+  assertCondition(source.includes("context.provided.repo"), `${label} must map the provided repository`);
+}
+
+for (const [label, source] of Object.entries({
+  executionMiddleware,
+  planningMiddleware,
+  retirementMiddleware,
+  undoMiddleware,
+})) {
+  assertCondition(source.includes("createServiceProvider"), `${label} must create repository provider via createServiceProvider`);
+  assertCondition(source.includes("export const repository"), `${label} must export repository provider`);
+}
+
+for (const forbidden of ["SyncAgentSelection", "TargetHomes", "WorkspaceSkip", "SyncPolicy"]) {
+  assertCondition(!sharedSchemas.includes(forbidden), `shared schemas must not contain planning-only ${forbidden}`);
+}
+
+const sharedInternalRoot = "services/agent-config-sync/src/service/shared/internal";
+const allowedSharedInternal = new Set([`${sharedInternalRoot}/source-scope.ts`]);
+for (const entry of await fs.readdir(sharedInternalRoot, { withFileTypes: true })) {
+  const relPath = path.posix.join(sharedInternalRoot, entry.name);
+  assertCondition(entry.isFile(), `${relPath} must not be a shared/internal directory`);
+  assertCondition(allowedSharedInternal.has(relPath), `${relPath} is shared/internal junk; move it to its owning module`);
 }
 
 for (const relPath of [

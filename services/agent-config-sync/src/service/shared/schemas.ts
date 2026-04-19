@@ -11,11 +11,6 @@ export const SyncAgentSchema = Type.Union([
   Type.Literal("claude"),
 ]);
 
-export const SyncAgentSelectionSchema = Type.Union([
-  SyncAgentSchema,
-  Type.Literal("all"),
-]);
-
 export const SyncScopeSchema = Type.Union([
   Type.Literal("all"),
   Type.Literal("agents"),
@@ -61,31 +56,6 @@ export const SourceContentSchema = Type.Object(
     skills: Type.Array(ContentFileSchema),
     scripts: Type.Array(ContentFileSchema),
     agentFiles: Type.Array(ContentFileSchema),
-  },
-  { additionalProperties: false },
-);
-
-export const SyncPolicySchema = Type.Object(
-  {
-    includeAgentsInCodex: Type.Boolean(),
-    includeAgentsInClaude: Type.Boolean(),
-  },
-  { additionalProperties: false },
-);
-
-export const TargetHomesSchema = Type.Object(
-  {
-    codexHomes: PathArraySchema,
-    claudeHomes: PathArraySchema,
-  },
-  { additionalProperties: false },
-);
-
-export const WorkspaceSkipSchema = Type.Object(
-  {
-    dirName: Type.String({ minLength: 1 }),
-    absPath: Type.String({ minLength: 1 }),
-    reason: Type.String({ minLength: 1 }),
   },
   { additionalProperties: false },
 );
@@ -139,14 +109,10 @@ export const SyncRunResultSchema = Type.Object(
 
 export type RawrPluginKind = Static<typeof RawrPluginKindSchema>;
 export type SyncAgent = Static<typeof SyncAgentSchema>;
-export type SyncAgentSelection = Static<typeof SyncAgentSelectionSchema>;
 export type SyncScope = Static<typeof SyncScopeSchema>;
 export type SyncAction = Static<typeof SyncActionSchema>;
 export type SourcePlugin = Static<typeof SourcePluginSchema>;
 export type SourceContent = Static<typeof SourceContentSchema>;
-export type SyncPolicy = Static<typeof SyncPolicySchema>;
-export type TargetHomes = Static<typeof TargetHomesSchema>;
-export type WorkspaceSkip = Static<typeof WorkspaceSkipSchema>;
 export type SyncScannedSummary = Static<typeof SyncScannedSummarySchema>;
 export type SyncItemResult = Static<typeof SyncItemResultSchema>;
 export type SyncTargetResult = Static<typeof SyncTargetResultSchema>;

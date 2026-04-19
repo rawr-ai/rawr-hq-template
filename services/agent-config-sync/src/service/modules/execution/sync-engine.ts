@@ -16,13 +16,24 @@ import {
 import type {
   SourceContent,
   SourcePlugin,
-  SyncAgent,
   SyncItemResult,
-  SyncOptions,
   SyncRunResult,
   SyncTargetResult,
-} from "./types";
-import type { AgentConfigSyncResources } from "../resources";
+} from "../../shared/schemas";
+import type {
+  AgentConfigSyncResources,
+  AgentConfigSyncUndoCapture,
+} from "../../shared/resources";
+
+export type SyncOptions = {
+  dryRun: boolean;
+  force: boolean;
+  gc: boolean;
+  includeAgentsInCodex?: boolean;
+  includeAgentsInClaude?: boolean;
+  undoCapture?: AgentConfigSyncUndoCapture;
+  resources: AgentConfigSyncResources;
+};
 
 type ClaimedOthers = {
   prompts: Set<string>;
@@ -100,6 +111,12 @@ async function syncFileWithConflictPolicy(input: {
   return true;
 }
 
+/**
+ * Directory sync follows the same ownership policy as file sync, but snapshots
+ * the entire target skill directory before force overwrites or GC deletes. That
+ * makes a skill rollback restore the previous directory atomically from the
+ * user's perspective instead of attempting per-file inverse operations.
+ */
 async function syncSkillDirWithConflictPolicy(input: {
   srcDir: string;
   destDir: string;
@@ -169,6 +186,11 @@ async function syncSkillDirWithConflictPolicy(input: {
   return true;
 }
 
+/**
+ * Deletes only previously managed targets discovered from registry or manifest
+ * state. In dry-run mode it reports the same GC plan but does not snapshot or
+ * mutate the destination, preserving the boundary between planning and apply.
+ */
 async function deleteIfExists(input: {
   target: string;
   kind: SyncItemResult["kind"];
@@ -188,6 +210,12 @@ async function deleteIfExists(input: {
   pushItem(result, { action: dryRun ? "planned" : "deleted", kind, target, message: "gc orphan" });
 }
 
+/**
+ * Codex sync writes into shared home-level prompts, skills, and scripts, so its
+ * conflict checks must consult the Codex registry claims before copying. The
+ * registry is also the source of truth for GC: only names previously claimed by
+ * this plugin are eligible for orphan deletion.
+ */
 async function syncCodexTarget(input: {
   codexHome: string;
   sourcePlugin: SourcePlugin;
@@ -335,6 +363,12 @@ async function syncCodexTarget(input: {
   return result;
 }
 
+/**
+ * Claude sync writes into a plugin-scoped directory, which makes per-plugin GC
+ * safe to derive from the local .rawr sync manifest rather than global claims.
+ * Agents remain gated because Codex and Claude have different defaults for
+ * whether agent files should be materialized.
+ */
 async function syncClaudeTarget(input: {
   claudeLocalHome: string;
   sourcePlugin: SourcePlugin;
@@ -540,6 +574,11 @@ async function syncClaudeTarget(input: {
   return result;
 }
 
+/**
+ * Runs provider-specific effective content through each selected target home.
+ * The same engine serves previews and applies; callers decide mutability through
+ * dryRun and by passing or withholding undoCapture in SyncOptions.
+ */
 export async function runSync(input: {
   sourcePlugin: SourcePlugin;
   content: SourceContent;

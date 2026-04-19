@@ -36,11 +36,3 @@ export async function openSqliteDb(indexPath: string): Promise<SqliteDb> {
     };
   }
 }
-
-export async function tryOpenSqliteDb(indexPath: string): Promise<SqliteDb | null> {
-  try {
-    return await openSqliteDb(indexPath);
-  } catch {
-    return null;
-  }
-}

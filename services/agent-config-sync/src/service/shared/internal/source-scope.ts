@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import type { SyncScope } from "./types";
+import type { SyncScope } from "../schemas";
 
 export type ResolvedSourceScope = "agents" | "cli" | "web" | "external";
 

@@ -1,12 +1,17 @@
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
-import type { AgentConfigSyncResources } from "../resources";
+import type { AgentConfigSyncResources } from "../../shared/resources";
 import type {
-  CodexRegistryClaims,
-  HostSourceContent,
-  HostSourcePlugin,
-} from "./types";
+  SourceContent,
+  SourcePlugin,
+} from "../../shared/schemas";
+
+export type CodexRegistryClaims = {
+  promptsByPlugin: Record<string, Set<string>>;
+  skillsByPlugin: Record<string, Set<string>>;
+  scriptsByPlugin: Record<string, Set<string>>;
+};
 
 export type CodexRegistryPlugin = {
   name: string;
@@ -86,8 +91,8 @@ export function buildCodexScriptName(
 
 export async function upsertCodexRegistry(input: {
   codexHome: string;
-  sourcePlugin: HostSourcePlugin;
-  content: HostSourceContent;
+  sourcePlugin: SourcePlugin;
+  content: SourceContent;
   dryRun: boolean;
   existingData: CodexRegistryFile;
   resources: AgentConfigSyncResources;

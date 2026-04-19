@@ -49,6 +49,41 @@ const FORBIDDEN_HOST_VERB_NAMES = [
   "reindexSessions",
   "getSearchTextCached",
 ];
+const MODULE_OWNED_SCHEMA_EXPORTS = new Set([
+  "OutputFormatSchema",
+  "OutputFormat",
+  "SessionFiltersSchema",
+  "SessionFilters",
+  "ResolveResultSchema",
+  "ResolveResult",
+  "ExtractOptionsSchema",
+  "ExtractOptions",
+  "ExtractedSessionSchema",
+  "ExtractedSession",
+  "SearchHitSchema",
+  "SearchHit",
+  "MetadataSearchHitSchema",
+  "MetadataSearchHit",
+  "ReindexResultSchema",
+  "ReindexResult",
+]);
+const FORBIDDEN_SHARED_LOGIC_FILES = [
+  `${SERVICE_ROOT}/src/service/shared/catalog-logic.ts`,
+  `${SERVICE_ROOT}/src/service/shared/transcript-logic.ts`,
+  `${SERVICE_ROOT}/src/service/shared/search-logic.ts`,
+];
+const FORBIDDEN_SHARED_LOGIC_IMPORTS = [
+  "../../shared/catalog-logic",
+  "../../shared/transcript-logic",
+  "../../shared/search-logic",
+];
+const FORBIDDEN_PLUGIN_DATABASE_QUERY_PATTERN = /\bdb\.query\s*\(\s*(?:`[^`]*(?:CREATE|SELECT|INSERT|UPDATE|DELETE)\b|["'][^"']*(?:CREATE|SELECT|INSERT|UPDATE|DELETE)\b)/iu;
+const FORBIDDEN_PLUGIN_DATABASE_SEMANTIC_TOKENS = [
+  "session_cache",
+  "codex_file_index",
+  "codex_root_scan_state",
+  "tryOpenSqliteDb",
+];
 
 async function readJsonIfExists(relPath, findings, label = relPath) {
   if (!(await pathExists(relPath))) {
@@ -143,7 +178,6 @@ async function verifyServiceShape(findings) {
     `${SERVICE_ROOT}/src/service/router.ts`,
     `${SERVICE_ROOT}/src/service/shared/README.md`,
     `${SERVICE_ROOT}/src/service/shared/errors.ts`,
-    `${SERVICE_ROOT}/src/service/shared/internal-errors.ts`,
     `${SERVICE_ROOT}/src/service/shared/schemas.ts`,
     `${SERVICE_ROOT}/src/service/shared/ports/session-source-runtime.ts`,
     `${SERVICE_ROOT}/src/service/shared/ports/session-index-runtime.ts`,
@@ -283,6 +317,11 @@ async function verifyPluginCutover(findings) {
     for (const forbidden of ["@rawr/session-intelligence-host", "createNodeSessionIntelligenceBoundary", "RawHostModule"]) {
       if (clientSource.includes(forbidden)) findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must not reference ${forbidden}`);
     }
+    for (const forbidden of ["callProcedure(", "rawClient: unknown", "rawClient as any", "raw?.catalog", "raw?.search", "raw?.transcripts"]) {
+      if (clientSource.includes(forbidden)) {
+        findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must use the typed @rawr/session-intelligence client directly, not an untyped procedure shim containing ${forbidden}`);
+      }
+    }
     for (const required of ["@rawr/session-intelligence/client", "CreateClientOptions", "satisfies CreateClientOptions"]) {
       if (!clientSource.includes(required)) findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must statically bind ${required}`);
     }
@@ -302,7 +341,35 @@ async function verifyPluginCutover(findings) {
   }
 }
 
+async function verifyPluginDoesNotOwnDatabaseSemantics(findings) {
+  const files = [];
+  await walkSourceFiles(`${PLUGIN_ROOT}/src`, files);
+
+  for (const relPath of files.sort()) {
+    const source = await readFile(relPath);
+    if (FORBIDDEN_PLUGIN_DATABASE_QUERY_PATTERN.test(source)) {
+      findings.push(`${relPath} must not run direct SQL statements that implement session catalog/search/index behavior`);
+    }
+    for (const token of FORBIDDEN_PLUGIN_DATABASE_SEMANTIC_TOKENS) {
+      if (source.includes(token)) {
+        findings.push(`${relPath} must not own session database/index semantic token ${token}`);
+      }
+    }
+  }
+}
+
 async function verifyModuleSchemaOwnership(findings) {
+  const sharedSchemasPath = `${SERVICE_ROOT}/src/service/shared/schemas.ts`;
+  const sharedSchemasSource = await readFileIfExists(sharedSchemasPath, findings, sharedSchemasPath, false);
+  if (sharedSchemasSource) {
+    for (const schemaName of MODULE_OWNED_SCHEMA_EXPORTS) {
+      const exportPattern = new RegExp(`\\bexport\\s+(?:const|type)\\s+${schemaName}\\b`, "u");
+      if (exportPattern.test(sharedSchemasSource)) {
+        findings.push(`${sharedSchemasPath} must not export module-owned schema ${schemaName}`);
+      }
+    }
+  }
+
   for (const moduleName of SERVICE_MODULES) {
     const relPath = `${SERVICE_ROOT}/src/service/modules/${moduleName}/schemas.ts`;
     const source = await readFileIfExists(relPath, findings, relPath, false);
@@ -310,6 +377,43 @@ async function verifyModuleSchemaOwnership(findings) {
     const withoutWhitespace = source.replace(/\s+/g, "");
     if (withoutWhitespace.startsWith("export{") && source.includes("../../shared/schemas")) {
       findings.push(`${relPath} must own module schemas instead of pure re-exporting shared schemas`);
+    }
+    if (source.includes("../../shared/schemas") && !/\bexport\s+const\s+\w+Schema\s*=\s*Type\./u.test(source)) {
+      findings.push(`${relPath} must define module-owned schemas instead of acting as a shared schema re-export shell`);
+    }
+
+    const sourceFile = ts.createSourceFile(relPath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    for (const statement of sourceFile.statements) {
+      if (!ts.isImportDeclaration(statement) || !statement.moduleSpecifier || !ts.isStringLiteralLike(statement.moduleSpecifier)) continue;
+      if (statement.moduleSpecifier.text !== "../../shared/schemas") continue;
+      const namedBindings = statement.importClause?.namedBindings;
+      if (!namedBindings || !ts.isNamedImports(namedBindings)) continue;
+      for (const element of namedBindings.elements) {
+        const importedName = element.propertyName?.text ?? element.name.text;
+        if (MODULE_OWNED_SCHEMA_EXPORTS.has(importedName)) {
+          findings.push(`${relPath} must define ${importedName} locally instead of importing it from shared schemas`);
+        }
+      }
+    }
+  }
+}
+
+async function verifyNoSameDomainSharedLogicDelegation(findings) {
+  for (const relPath of FORBIDDEN_SHARED_LOGIC_FILES) {
+    if (await pathExists(relPath)) {
+      findings.push(`${relPath} must not exist; move same-domain service logic into its owning module`);
+    }
+  }
+
+  for (const moduleName of SERVICE_MODULES) {
+    const relPath = `${SERVICE_ROOT}/src/service/modules/${moduleName}/repository.ts`;
+    const source = await readFileIfExists(relPath, findings, relPath, false);
+    if (!source) continue;
+    const specifiers = collectModuleSpecifiers(relPath, source);
+    for (const forbidden of FORBIDDEN_SHARED_LOGIC_IMPORTS) {
+      if (specifiers.includes(forbidden)) {
+        findings.push(`${relPath} must not delegate same-domain behavior to ${forbidden}`);
+      }
     }
   }
 }
@@ -321,7 +425,9 @@ await verifyServiceRuntimePurity(findings);
 await verifyNoHostPackage(findings);
 await verifyLegacyRemoval(findings);
 await verifyPluginCutover(findings);
+await verifyPluginDoesNotOwnDatabaseSemantics(findings);
 await verifyModuleSchemaOwnership(findings);
+await verifyNoSameDomainSharedLogicDelegation(findings);
 
 if (findings.length > 0) {
   console.error("verify-session-intelligence-structural failed:");

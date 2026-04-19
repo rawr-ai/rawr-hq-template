@@ -1,4 +1,4 @@
-import { retireStaleManagedPlugins } from "../../shared/internal/retire-stale-managed";
+import { retireStaleManagedPlugins } from "./retire-stale-managed";
 import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../shared/resources";
 import type { SyncScope } from "../../shared/schemas";
 import type { RetireStaleManagedResult } from "./schemas";
@@ -8,6 +8,11 @@ export function createRepository(deps: {
   undoCapture?: AgentConfigSyncUndoCapture;
 }) {
   return {
+    /**
+     * Retirement receives active plugin names from discovery and removes only
+     * managed entries absent from that set. Dry runs drop undo capture so stale
+     * cleanup can be previewed without refreshing the active capsule.
+     */
     async retireStaleManaged(input: {
       workspaceRoot: string;
       scope: SyncScope;

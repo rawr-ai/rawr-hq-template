@@ -15,7 +15,7 @@ export {
   PLUGINS_SYNC_UNDO_PROVIDER,
   runUndoForWorkspace,
   type PluginsSyncUndoCapture,
-} from "./service/shared/internal/sync-undo";
+} from "./service/modules/undo/sync-undo";
 export type {
   AgentConfigSyncResources,
   AgentConfigSyncUndoCapture,

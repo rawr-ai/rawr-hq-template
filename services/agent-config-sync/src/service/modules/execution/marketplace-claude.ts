@@ -1,8 +1,8 @@
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
-import type { AgentConfigSyncResources } from "../resources";
-import type { HostSourceContent, HostSourcePlugin } from "./types";
+import type { AgentConfigSyncResources } from "../../shared/resources";
+import type { SourceContent, SourcePlugin } from "../../shared/schemas";
 
 export type ClaudePluginManifest = {
   name?: string;
@@ -42,7 +42,7 @@ export type ClaudeManagedPluginManifest = {
 
 export async function upsertClaudePluginManifest(input: {
   claudeLocalHome: string;
-  sourcePlugin: HostSourcePlugin;
+  sourcePlugin: SourcePlugin;
   dryRun: boolean;
   resources: AgentConfigSyncResources;
 }): Promise<{ filePath: string; changed: boolean }> {
@@ -70,7 +70,7 @@ export async function upsertClaudePluginManifest(input: {
 
 export async function upsertClaudeMarketplace(input: {
   claudeLocalHome: string;
-  sourcePlugin: HostSourcePlugin;
+  sourcePlugin: SourcePlugin;
   dryRun: boolean;
   resources: AgentConfigSyncResources;
 }): Promise<{ filePath: string; changed: boolean }> {
@@ -117,8 +117,8 @@ export async function upsertClaudeMarketplace(input: {
 
 export async function writeClaudeSyncManifest(input: {
   claudeLocalHome: string;
-  sourcePlugin: HostSourcePlugin;
-  content: HostSourceContent;
+  sourcePlugin: SourcePlugin;
+  content: SourceContent;
   dryRun: boolean;
   resources: AgentConfigSyncResources;
 }): Promise<{

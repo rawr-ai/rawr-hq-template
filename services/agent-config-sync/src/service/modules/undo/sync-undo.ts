@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import type { AgentConfigSyncResources } from "../resources";
+import type { AgentConfigSyncResources } from "../../shared/resources";
 
 export const PLUGINS_SYNC_UNDO_PROVIDER = "plugins.sync" as const;
 
@@ -132,6 +132,13 @@ export async function clearActiveUndoCapsule(workspaceRoot: string, resources: A
   await resources.files.removePath(undoCapsuleDir(workspaceRoot), { recursive: true });
 }
 
+/**
+ * Captures the inverse of a sync/retirement apply run as one active capsule.
+ * Existing targets become restore-path operations backed by snapshots; missing
+ * targets become create-path operations whose undo is deletion. A target is
+ * captured once so later writes in the same run still roll back to the original
+ * pre-run state.
+ */
 export class PluginsSyncUndoCapture {
   private readonly workspaceRoot: string;
   private readonly resources: AgentConfigSyncResources;
@@ -275,6 +282,11 @@ export async function beginPluginsSyncUndoCapture(input: {
   return capture;
 }
 
+/**
+ * Replays the active capsule in reverse sequence order so dependent path changes
+ * unwind safely. Dry runs validate backups and report planned operations without
+ * clearing the capsule, while a successful apply consumes it.
+ */
 export async function runUndoForWorkspace(input: {
   workspaceRoot: string;
   dryRun: boolean;

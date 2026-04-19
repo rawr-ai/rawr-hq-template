@@ -4,13 +4,15 @@ import { ocBase } from "../../base";
 import {
   SourceContentSchema,
   SourcePluginSchema,
-  SyncAgentSelectionSchema,
   SyncItemResultSchema,
   SyncRunResultSchema,
   SyncScopeSchema,
+} from "../../shared/schemas";
+import {
+  SyncAgentSelectionSchema,
   TargetHomesSchema,
   WorkspaceSkipSchema,
-} from "../../shared/schemas";
+} from "./schemas";
 
 export const contract = {
   previewSync: ocBase
