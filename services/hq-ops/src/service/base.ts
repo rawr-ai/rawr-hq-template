@@ -21,10 +21,7 @@
  * `src/service/middleware/*`.
  */
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
-import type { ConfigStore } from "./shared/ports/config-store";
-import type { JournalStore } from "./shared/ports/journal-store";
-import type { RepoStateStore } from "./shared/ports/repo-state-store";
-import type { SecurityRuntime } from "./shared/ports/security-runtime";
+import type { HqOpsResources } from "./shared/ports/resources";
 
 /**
  * Construction-time context supplied when the in-process client is created.
@@ -41,10 +38,7 @@ import type { SecurityRuntime } from "./shared/ports/security-runtime";
  */
 type InitialContext = {
   deps: {
-    configStore?: ConfigStore;
-    repoStateStore?: RepoStateStore;
-    journalStore?: JournalStore;
-    securityRuntime?: SecurityRuntime;
+    resources: HqOpsResources;
   };
   scope: {
     repoRoot: string;

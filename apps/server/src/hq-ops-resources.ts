@@ -1,11 +1,9 @@
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
+import os from "node:os";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
-import { createClient } from "@rawr/hq-ops";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { createClient } from "@rawr/hq-ops";
 
 type HqOpsBoundary = Parameters<typeof createClient>[0];
 type HqOpsResources = HqOpsBoundary["deps"]["resources"];
@@ -13,24 +11,72 @@ type SqliteDatabase = Awaited<ReturnType<HqOpsResources["sqlite"]["open"]>>;
 
 async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
   await fs.mkdir(path.dirname(dbPath), { recursive: true });
-  const mod = await import("bun:sqlite");
-  const Database = (mod as { Database: new (dbPath: string) => SqliteDatabase }).Database;
-  return new Database(dbPath);
+  try {
+    const mod = await import("bun:sqlite");
+    const Database = (mod as { Database: new (dbPath: string) => SqliteDatabase }).Database;
+    return new Database(dbPath);
+  } catch {
+    const mod = await import("node:sqlite");
+    const DatabaseSync = (mod as {
+      DatabaseSync: new (dbPath: string) => {
+        exec(sql: string): unknown;
+        prepare(sql: string): {
+          get(...params: unknown[]): unknown;
+          run(...params: unknown[]): unknown;
+          all(...params: unknown[]): unknown[];
+        };
+        close(): void;
+      };
+    }).DatabaseSync;
+    const db = new DatabaseSync(dbPath);
+
+    return {
+      exec(sql: string) {
+        return db.exec(sql);
+      },
+      prepare(sql: string) {
+        const statement = db.prepare(sql);
+        return {
+          get(...params: unknown[]) {
+            return statement.get(...params);
+          },
+          run(...params: unknown[]) {
+            return statement.run(...params);
+          },
+          all(...params: unknown[]) {
+            return statement.all(...params);
+          },
+        };
+      },
+      close() {
+        db.close();
+      },
+    };
+  }
 }
 
 async function embedText(input: { text: string; config: { provider: "openai" | "voyage"; model: string } }): Promise<Float32Array> {
   const apiKey = input.config.provider === "openai" ? process.env.OPENAI_API_KEY : process.env.VOYAGE_API_KEY;
   if (!apiKey) throw new Error(`Missing ${input.config.provider} embeddings API key`);
+
   const url = input.config.provider === "openai" ? "https://api.openai.com/v1/embeddings" : "https://api.voyageai.com/v1/embeddings";
   const body = input.config.provider === "openai"
     ? { model: input.config.model, input: input.text }
     : { model: input.config.model, input: [input.text] };
   const res = await fetch(url, {
     method: "POST",
-    headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      "content-type": "application/json",
+    },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`${input.config.provider} embeddings failed: ${res.status} ${await res.text()}`.trim());
+
+  if (!res.ok) {
+    const raw = await res.text().catch(() => "");
+    throw new Error(`${input.config.provider} embeddings failed: ${res.status} ${raw}`.trim());
+  }
+
   const json = (await res.json()) as { data?: Array<{ embedding?: unknown }> };
   const embedding = json.data?.[0]?.embedding;
   if (!Array.isArray(embedding) || !embedding.every((value) => typeof value === "number")) {
@@ -39,7 +85,7 @@ async function embedText(input: { text: string; config: { provider: "openai" | "
   return Float32Array.from(embedding);
 }
 
-function createHqOpsResources(): HqOpsResources {
+export function createHqOpsResources(): HqOpsResources {
   return {
     fs: {
       async stat(filePath) {
@@ -147,10 +193,16 @@ function createHqOpsResources(): HqOpsResources {
     embeddings: {
       getConfig() {
         if (process.env.OPENAI_API_KEY) {
-          return { provider: "openai", model: (process.env.RAWR_EMBEDDINGS_MODEL ?? "text-embedding-3-small").trim() };
+          return {
+            provider: "openai",
+            model: (process.env.RAWR_EMBEDDINGS_MODEL ?? "text-embedding-3-small").trim(),
+          };
         }
         if (process.env.VOYAGE_API_KEY) {
-          return { provider: "voyage", model: (process.env.RAWR_EMBEDDINGS_MODEL ?? "voyage-3-lite").trim() };
+          return {
+            provider: "voyage",
+            model: (process.env.RAWR_EMBEDDINGS_MODEL ?? "voyage-3-lite").trim(),
+          };
         }
         return null;
       },
@@ -158,34 +210,3 @@ function createHqOpsResources(): HqOpsResources {
     },
   };
 }
-
-export function createHqOpsClient(repoRoot: string) {
-  const boundary = {
-    deps: {
-      logger: createEmbeddedPlaceholderLoggerAdapter(),
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-      resources: createHqOpsResources(),
-    },
-    scope: {
-      repoRoot,
-    },
-    config: {},
-  } satisfies HqOpsBoundary;
-
-  return createClient(boundary);
-}
-
-export function createHqOpsInvocation(traceId: string) {
-  return {
-    context: {
-      invocation: {
-        traceId,
-      },
-    },
-  } as const;
-}
-
-export type HqOpsClient = ReturnType<typeof createHqOpsClient>;
-export type HqOpsConfigLoadResult = Awaited<ReturnType<HqOpsClient["config"]["getWorkspaceConfig"]>>;
-export type HqOpsJournalEvent = Parameters<HqOpsClient["journal"]["writeEvent"]>[0];
-export type HqOpsJournalSnippet = Parameters<HqOpsClient["journal"]["writeSnippet"]>[0];

@@ -62,11 +62,6 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/hq-ops-host"),
-        test: { name: "hq-ops-host", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
         root: r("packages/agent-config-sync-host"),
         test: { name: "agent-config-sync-host", environment: "node", include: [...includes] },
       },

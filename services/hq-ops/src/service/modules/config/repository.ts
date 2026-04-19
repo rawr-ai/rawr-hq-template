@@ -1,24 +1,32 @@
-import type { ConfigStore } from "../../shared/ports/config-store";
+import type { HqOpsResources } from "../../shared/ports/resources";
+import {
+  addGlobalSyncSource,
+  listGlobalSyncSources,
+  loadGlobalRawrConfig,
+  loadRawrConfig,
+  loadRawrConfigLayered,
+  removeGlobalSyncSource,
+} from "./support";
 
-export function createRepository(configStore: ConfigStore, repoRoot: string) {
+export function createRepository(resources: HqOpsResources, repoRoot: string) {
   return {
     async getWorkspaceConfig() {
-      return await configStore.getWorkspaceConfig(repoRoot);
+      return await loadRawrConfig(resources, repoRoot);
     },
     async getGlobalConfig() {
-      return await configStore.getGlobalConfig();
+      return await loadGlobalRawrConfig(resources);
     },
     async getLayeredConfig() {
-      return await configStore.getLayeredConfig(repoRoot);
+      return await loadRawrConfigLayered(resources, repoRoot);
     },
     async listGlobalSyncSources() {
-      return await configStore.listGlobalSyncSources();
+      return await listGlobalSyncSources(resources);
     },
     async addGlobalSyncSource(sourcePath: string) {
-      return await configStore.addGlobalSyncSource(sourcePath);
+      return await addGlobalSyncSource(resources, sourcePath);
     },
     async removeGlobalSyncSource(sourcePath: string) {
-      return await configStore.removeGlobalSyncSource(sourcePath);
+      return await removeGlobalSyncSource(resources, sourcePath);
     },
   };
 }

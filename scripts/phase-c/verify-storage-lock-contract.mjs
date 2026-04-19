@@ -15,13 +15,14 @@ function functionBodyCalls(source, fnName, calleeName) {
 }
 
 await Promise.all([
-  mustExist("packages/hq-ops-host/src/repo-state-store.ts"),
+  mustExist("services/hq-ops/src/service/modules/repo-state/repository.ts"),
   mustExist("apps/server/test/repo-state-store.concurrent.test.ts"),
   mustExist("apps/server/test/storage-lock-route-guard.test.ts"),
 ]);
 
-const [repoStateStorageSource, repoStateTestSource] = await Promise.all([
-  readFile("packages/hq-ops-host/src/repo-state-store.ts"),
+const [repoStateStorageSource, repoStateModelSource, repoStateTestSource] = await Promise.all([
+  readFile("services/hq-ops/src/service/modules/repo-state/repository.ts"),
+  readFile("services/hq-ops/src/service/modules/repo-state/model.ts"),
   readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
 ]);
 
@@ -32,6 +33,7 @@ for (const fnName of [
   "disablePlugin",
   "mutateRepoStateAtomically",
   "stateLockPath",
+  "statePath",
 ]) {
   assertCondition(hasExportedFunction(repoStateStorageSource, fnName), `repo-state storage must export ${fnName}`);
 }
@@ -45,7 +47,7 @@ for (const fnName of ["setRepoState", "enablePlugin", "disablePlugin"]) {
 
 for (const typeName of ["RepoStateMutationOptions", "RepoStateMutationResult", "RepoStateMutator"]) {
   assertCondition(
-    new RegExp(`type\\s+${typeName}\\s*=`, "m").test(repoStateStorageSource),
+    new RegExp(`type\\s+${typeName}\\s*=`, "m").test(repoStateModelSource),
     `repo-state store must declare ${typeName}`,
   );
 }

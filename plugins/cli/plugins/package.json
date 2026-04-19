@@ -22,7 +22,6 @@
     "@rawr/agent-config-sync": "workspace:*",
     "@rawr/agent-config-sync-host": "workspace:*",
     "@rawr/core": "workspace:*",
-    "@rawr/hq-ops-host": "workspace:*",
     "@rawr/hq-ops": "workspace:*",
     "@rawr/plugin-workspace": "workspace:*"
   },

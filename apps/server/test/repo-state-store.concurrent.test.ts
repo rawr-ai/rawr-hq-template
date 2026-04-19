@@ -10,7 +10,8 @@ import {
   mutateRepoStateAtomically,
   stateLockPath,
   statePath,
-} from "@rawr/hq-ops-host";
+} from "../../../services/hq-ops/src/service/modules/repo-state/repository";
+import { createTestHqOpsResources } from "../../../services/hq-ops/test/helpers";
 
 const tempDirs: string[] = [];
 
@@ -45,12 +46,13 @@ describe("server hq-ops repo-state store", () => {
   it("serializes concurrent atomic mutations without corrupting persisted state", async () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-state-concurrency-"));
     tempDirs.push(repoRoot);
+    const resources = createTestHqOpsResources();
 
     const pluginIds = Array.from({ length: 40 }, (_, idx) => `@rawr/plugin-${String(idx).padStart(2, "0")}`);
 
     await Promise.all(
       pluginIds.map((pluginId, idx) =>
-        mutateRepoStateAtomically(repoRoot, async (current) => {
+        mutateRepoStateAtomically(resources, repoRoot, async (current) => {
           if (idx % 3 === 0) await sleep(5);
           return {
             ...current,
@@ -64,18 +66,19 @@ describe("server hq-ops repo-state store", () => {
       ),
     );
 
-    const state = await getRepoState(repoRoot);
+    const state = await getRepoState(resources, repoRoot);
     expect(state.plugins.enabled).toEqual([...pluginIds].sort());
-    const persistedRaw = await fs.readFile(statePath(repoRoot), "utf8");
+    const persistedRaw = await fs.readFile(statePath(resources, repoRoot), "utf8");
     expect(() => JSON.parse(persistedRaw)).not.toThrow();
-    await expect(fs.stat(stateLockPath(repoRoot))).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(fs.stat(stateLockPath(resources, repoRoot))).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("takes over stale lock files deterministically when lock-holder pid is no longer alive", async () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-state-stale-lock-"));
     tempDirs.push(repoRoot);
+    const resources = createTestHqOpsResources();
 
-    const lockPath = stateLockPath(repoRoot);
+    const lockPath = stateLockPath(resources, repoRoot);
     await fs.mkdir(path.dirname(lockPath), { recursive: true });
     const deadPid = findNonRunningPid();
     await fs.writeFile(lockPath, `${JSON.stringify({ pid: deadPid, acquiredAt: new Date().toISOString() })}\n`, "utf8");
@@ -83,6 +86,7 @@ describe("server hq-ops repo-state store", () => {
     await fs.utimes(lockPath, staleTime, staleTime);
 
     const result = await mutateRepoStateAtomically(
+      resources,
       repoRoot,
       async (current) => ({
         ...current,
@@ -100,15 +104,16 @@ describe("server hq-ops repo-state store", () => {
     );
 
     expect(result.state.plugins.enabled).toEqual(["@rawr/plugin-stale-lock"]);
-    const persisted = await getRepoState(repoRoot);
+    const persisted = await getRepoState(resources, repoRoot);
     expect(persisted.plugins.enabled).toEqual(["@rawr/plugin-stale-lock"]);
   });
 
   it("does not reclaim stale-aged lock files when the lock-holder pid is still alive", async () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-state-active-lock-"));
     tempDirs.push(repoRoot);
+    const resources = createTestHqOpsResources();
 
-    const lockPath = stateLockPath(repoRoot);
+    const lockPath = stateLockPath(resources, repoRoot);
     await fs.mkdir(path.dirname(lockPath), { recursive: true });
     await fs.writeFile(
       lockPath,
@@ -120,6 +125,7 @@ describe("server hq-ops repo-state store", () => {
 
     await expect(
       mutateRepoStateAtomically(
+        resources,
         repoRoot,
         async (current) => ({
           ...current,
@@ -139,17 +145,18 @@ describe("server hq-ops repo-state store", () => {
 
     const lockPayload = await fs.readFile(lockPath, "utf8");
     expect(lockPayload).toContain(`\"pid\":${process.pid}`);
-    await expect(fs.stat(statePath(repoRoot))).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(fs.stat(statePath(resources, repoRoot))).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("keeps the public enablePlugin API stable under high contention", async () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-state-enable-concurrent-"));
     tempDirs.push(repoRoot);
+    const resources = createTestHqOpsResources();
 
     const pluginIds = Array.from({ length: 24 }, (_, idx) => `@rawr/plugin-enable-${idx}`);
 
-    await Promise.all(pluginIds.map((pluginId) => enablePlugin(repoRoot, pluginId)));
-    const state = await getRepoState(repoRoot);
+    await Promise.all(pluginIds.map((pluginId) => enablePlugin(resources, repoRoot, pluginId)));
+    const state = await getRepoState(resources, repoRoot);
     expect(state.plugins.enabled).toEqual([...pluginIds].sort());
   });
 
@@ -160,8 +167,9 @@ describe("server hq-ops repo-state store", () => {
     tempDirs.push(aliasRoot);
 
     await fs.symlink(repoRoot, aliasRoot);
+    const resources = createTestHqOpsResources();
 
-    await mutateRepoStateAtomically(repoRoot, async (current) => ({
+    await mutateRepoStateAtomically(resources, repoRoot, async (current) => ({
       ...current,
       plugins: {
         ...current.plugins,
@@ -170,7 +178,7 @@ describe("server hq-ops repo-state store", () => {
       },
     }));
 
-    const aliasMutation = await mutateRepoStateAtomically(aliasRoot, async (current) => ({
+    const aliasMutation = await mutateRepoStateAtomically(resources, aliasRoot, async (current) => ({
       ...current,
       plugins: {
         ...current.plugins,
@@ -180,11 +188,11 @@ describe("server hq-ops repo-state store", () => {
     }));
 
     const authorityRoot = await fs.realpath(repoRoot);
-    expect(aliasMutation.statePath).toBe(statePath(authorityRoot));
-    expect(aliasMutation.lockPath).toBe(stateLockPath(authorityRoot));
+    expect(aliasMutation.statePath).toBe(statePath(resources, authorityRoot));
+    expect(aliasMutation.lockPath).toBe(stateLockPath(resources, authorityRoot));
 
-    const state = await getRepoState(repoRoot);
+    const state = await getRepoState(resources, repoRoot);
     expect(state.plugins.enabled).toEqual(["@rawr/plugin-alias", "@rawr/plugin-canonical"]);
-    await expect(fs.stat(stateLockPath(authorityRoot))).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(fs.stat(stateLockPath(resources, authorityRoot))).rejects.toMatchObject({ code: "ENOENT" });
   });
 });

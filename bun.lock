@@ -37,7 +37,6 @@
         "@orpc/client": "^1.13.5",
         "@rawr/core": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
-        "@rawr/hq-ops-host": "workspace:*",
         "@rawr/orpc-client": "workspace:*",
         "@rawr/plugin-plugins": "workspace:*",
         "@rawr/plugin-workspace": "workspace:*",
@@ -77,7 +76,6 @@
         "@rawr/example-todo": "workspace:*",
         "@rawr/hq-app": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
-        "@rawr/hq-ops-host": "workspace:*",
         "@rawr/hq-sdk": "workspace:*",
         "@rawr/plugin-server-api-example-todo": "workspace:*",
         "@rawr/plugin-server-api-state": "workspace:*",
@@ -161,13 +159,6 @@
       "devDependencies": {
         "@opentelemetry/sdk-trace-base": "^2.6.0",
         "typescript": "^5.9.3",
-      },
-    },
-    "packages/hq-ops-host": {
-      "name": "@rawr/hq-ops-host",
-      "dependencies": {
-        "@rawr/hq-sdk": "workspace:*",
-        "typebox": "^1.0.81",
       },
     },
     "packages/hq-sdk": {
@@ -263,7 +254,6 @@
         "@rawr/agent-config-sync-host": "workspace:*",
         "@rawr/core": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
-        "@rawr/hq-ops-host": "workspace:*",
         "@rawr/plugin-workspace": "workspace:*",
       },
       "devDependencies": {
@@ -1049,8 +1039,6 @@
     "@rawr/hq-app": ["@rawr/hq-app@workspace:apps/hq"],
 
     "@rawr/hq-ops": ["@rawr/hq-ops@workspace:services/hq-ops"],
-
-    "@rawr/hq-ops-host": ["@rawr/hq-ops-host@workspace:packages/hq-ops-host"],
 
     "@rawr/hq-sdk": ["@rawr/hq-sdk@workspace:packages/hq-sdk"],
 

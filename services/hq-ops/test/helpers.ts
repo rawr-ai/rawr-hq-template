@@ -1,3 +1,7 @@
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
@@ -7,19 +11,15 @@ import {
   type EmbeddedPlaceholderLogEntry,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
-import { mergeRawrConfigLayers } from "../src/service/modules/config/support";
 import type { RawrConfig } from "../src/service/modules/config/model";
-import type { JournalSearchRow } from "../src/service/modules/journal/schemas";
-import type { JournalEvent, JournalSnippet } from "../src/service/modules/journal/types";
-import type { RepoState } from "../src/service/modules/repo-state/model";
-import type { SecurityReport } from "../src/service/modules/security/types";
 import type { Service } from "../src/service/base";
+import type { ExecResult, HqOpsResources, SqliteDatabase } from "../src/service/shared/ports/resources";
 
 type ClientOptions = {
   deps?: Partial<Service["Deps"]>;
   repoRoot?: string;
-  globalConfig?: RawrConfig | null;
-  workspaceConfig?: RawrConfig | null;
+  homeDir?: string;
+  resources?: HqOpsResources;
   logs?: LogEntry[];
   analytics?: AnalyticsEntry[];
 };
@@ -27,194 +27,170 @@ type ClientOptions = {
 export type LogEntry = EmbeddedPlaceholderLogEntry;
 export type AnalyticsEntry = EmbeddedPlaceholderAnalyticsEntry;
 
-function createDefaultConfigStore(options: ClientOptions): NonNullable<Service["Deps"]["configStore"]> {
-  const globalConfig = options.globalConfig ?? { version: 1 };
-  const workspaceConfig = options.workspaceConfig ?? { version: 1 };
-  const globalPath = "/tmp/.rawr/config.json";
-  const syncSources = new Set(globalConfig?.sync?.sources?.paths ?? []);
-
-  return {
-    async getWorkspaceConfig(repoRoot: string) {
-      return {
-        config: workspaceConfig,
-        path: workspaceConfig ? `${repoRoot}/rawr.config.ts` : null,
-        warnings: [],
-      };
-    },
-    async getGlobalConfig() {
-      return {
-        config: globalConfig,
-        path: globalConfig ? globalPath : null,
-        warnings: [],
-      };
-    },
-    async getLayeredConfig(repoRoot: string) {
-      const global = await this.getGlobalConfig();
-      const workspace = await this.getWorkspaceConfig(repoRoot);
-      return {
-        global,
-        workspace,
-        merged: mergeRawrConfigLayers({ global: global.config, workspace: workspace.config }),
-      };
-    },
-    async listGlobalSyncSources() {
-      return {
-        path: globalPath,
-        sources: [...syncSources],
-      };
-    },
-    async addGlobalSyncSource(sourcePath: string) {
-      syncSources.add(sourcePath);
-      return {
-        path: globalPath,
-        sources: [...syncSources],
-      };
-    },
-    async removeGlobalSyncSource(sourcePath: string) {
-      syncSources.delete(sourcePath);
-      return {
-        path: globalPath,
-        sources: [...syncSources],
-      };
-    },
-  };
+export async function writeRawrConfig(repoRoot: string, config: RawrConfig): Promise<void> {
+  await fs.writeFile(path.join(repoRoot, "rawr.config.ts"), `export default ${JSON.stringify(config, null, 2)};\n`, "utf8");
 }
 
-function createDefaultRepoStateStore(): NonNullable<Service["Deps"]["repoStateStore"]> {
-  const stateByRepo = new Map<string, RepoState>();
+export async function writeGlobalRawrConfig(homeDir: string, config: RawrConfig): Promise<void> {
+  const configPath = path.join(homeDir, ".rawr", "config.json");
+  await fs.mkdir(path.dirname(configPath), { recursive: true });
+  await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+}
 
-  const getState = (repoRoot: string): RepoState =>
-    stateByRepo.get(repoRoot) ?? {
-      version: 1,
-      plugins: {
-        enabled: [],
-        lastUpdatedAt: "2026-04-16T00:00:00.000Z",
+async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
+  await fs.mkdir(path.dirname(dbPath), { recursive: true });
+  try {
+    const mod = await import("bun:sqlite");
+    const Database = (mod as { Database: new (dbPath: string) => SqliteDatabase }).Database;
+    return new Database(dbPath);
+  } catch {
+    const mod = await import("node:sqlite");
+    const DatabaseSync = (mod as {
+      DatabaseSync: new (dbPath: string) => {
+        exec(sql: string): unknown;
+        prepare(sql: string): {
+          get(...params: unknown[]): unknown;
+          run(...params: unknown[]): unknown;
+          all(...params: unknown[]): unknown[];
+        };
+        close(): void;
+      };
+    }).DatabaseSync;
+    const db = new DatabaseSync(dbPath);
+    return {
+      exec(sql: string) {
+        return db.exec(sql);
+      },
+      prepare(sql: string) {
+        const statement = db.prepare(sql);
+        return {
+          get(...params: unknown[]) {
+            return statement.get(...params);
+          },
+          run(...params: unknown[]) {
+            return statement.run(...params);
+          },
+          all(...params: unknown[]) {
+            return statement.all(...params);
+          },
+        };
+      },
+      close() {
+        db.close();
       },
     };
+  }
+}
 
-  const setState = (repoRoot: string, state: RepoState) => {
-    stateByRepo.set(repoRoot, state);
-    return state;
-  };
-
+function emptyExecResult(): ExecResult {
   return {
-    async getStateWithAuthority(repoRoot: string) {
-      return {
-        state: getState(repoRoot),
-        authorityRepoRoot: repoRoot,
-      };
-    },
-    async enablePlugin(repoRoot: string, pluginId: string) {
-      const current = getState(repoRoot);
-      return setState(repoRoot, {
-        ...current,
-        plugins: {
-          ...current.plugins,
-          enabled: [...new Set([...current.plugins.enabled, pluginId])].sort(),
-          lastUpdatedAt: "2026-04-16T00:00:01.000Z",
-        },
-      });
-    },
-    async disablePlugin(repoRoot: string, pluginId: string) {
-      const current = getState(repoRoot);
-      return setState(repoRoot, {
-        ...current,
-        plugins: {
-          ...current.plugins,
-          enabled: current.plugins.enabled.filter((id) => id !== pluginId),
-          lastUpdatedAt: "2026-04-16T00:00:02.000Z",
-        },
-      });
-    },
+    exitCode: 0,
+    signal: null,
+    stdout: new Uint8Array(),
+    stderr: new Uint8Array(),
+    durationMs: 0,
   };
 }
 
-function createDefaultJournalStore(): NonNullable<Service["Deps"]["journalStore"]> {
-  const snippetsByRepo = new Map<string, JournalSnippet[]>();
-  const eventsByRepo = new Map<string, JournalEvent[]>();
-
-  const listSnippets = (repoRoot: string) => snippetsByRepo.get(repoRoot) ?? [];
-  const toSearchRow = (snippet: JournalSnippet, score?: number): JournalSearchRow => ({
-    id: snippet.id,
-    ts: snippet.ts,
-    kind: snippet.kind,
-    title: snippet.title,
-    preview: snippet.preview,
-    tags: snippet.tags,
-    ...(snippet.sourceEventId ? { sourceEventId: snippet.sourceEventId } : {}),
-    ...(typeof score === "number" ? { score } : {}),
-  });
+export function createTestHqOpsResources(input: {
+  homeDir?: string;
+  exec?: HqOpsResources["process"]["exec"];
+} = {}): HqOpsResources {
+  const homeDir = input.homeDir ?? os.tmpdir();
 
   return {
-    async writeEvent(repoRoot: string, event: JournalEvent) {
-      eventsByRepo.set(repoRoot, [...(eventsByRepo.get(repoRoot) ?? []), event]);
-      return { path: `${repoRoot}/.rawr/journal/events/${event.id}.json` };
-    },
-    async writeSnippet(repoRoot: string, snippet: JournalSnippet) {
-      snippetsByRepo.set(repoRoot, [...listSnippets(repoRoot), snippet]);
-      return { path: `${repoRoot}/.rawr/journal/snippets/${snippet.id}.json` };
-    },
-    async getSnippet(repoRoot: string, id: string) {
-      return {
-        snippet: listSnippets(repoRoot).find((snippet) => snippet.id === id) ?? null,
-      };
-    },
-    async tailSnippets(repoRoot: string, limit: number) {
-      return {
-        snippets: listSnippets(repoRoot)
-          .slice()
-          .sort((a, b) => b.ts.localeCompare(a.ts))
-          .slice(0, limit)
-          .map((snippet) => toSearchRow(snippet)),
-      };
-    },
-    async searchSnippets(repoRoot: string, query: string, limit: number, mode: "fts" | "semantic") {
-      const hits = listSnippets(repoRoot)
-        .filter((snippet) => `${snippet.title}\n${snippet.body}`.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, limit)
-        .map((snippet, index) => toSearchRow(snippet, mode === "semantic" ? 1 - index * 0.1 : undefined));
-
-      return {
-        mode,
-        snippets: hits,
-      };
-    },
-  };
-}
-
-function createDefaultSecurityRuntime(): NonNullable<Service["Deps"]["securityRuntime"]> {
-  const emptyReport = (repoRoot: string, mode: SecurityReport["mode"]): SecurityReport => ({
-    ok: true,
-    findings: [],
-    summary: "vulns=0, untrusted=0, secrets=0",
-    timestamp: "2026-04-16T00:00:00.000Z",
-    mode,
-    meta: { repoRoot },
-  });
-
-  return {
-    async securityCheck(repoRoot: string, mode) {
-      return {
-        ...emptyReport(repoRoot, mode),
-        reportPath: `${repoRoot}/.rawr/security/latest.json`,
-      };
-    },
-    async gateEnable(repoRoot: string, pluginId: string, _riskTolerance, mode) {
-      return {
-        allowed: true,
-        requiresForce: false,
-        report: {
-          ...emptyReport(repoRoot, mode),
-          meta: {
-            pluginId,
-            repoRoot,
+    fs: {
+      async stat(filePath) {
+        try {
+          const st = await fs.stat(filePath);
+          return { isFile: st.isFile(), mtimeMs: st.mtimeMs };
+        } catch {
+          return null;
+        }
+      },
+      async readText(filePath) {
+        try {
+          return await fs.readFile(filePath, "utf8");
+        } catch {
+          return null;
+        }
+      },
+      async writeText(filePath, contents) {
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        await fs.writeFile(filePath, contents, "utf8");
+      },
+      async mkdir(dirPath) {
+        await fs.mkdir(dirPath, { recursive: true });
+      },
+      async rename(fromPath, toPath) {
+        await fs.rename(fromPath, toPath);
+      },
+      async rm(filePath) {
+        await fs.rm(filePath, { force: true });
+      },
+      async openExclusive(filePath) {
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        const handle = await fs.open(filePath, "wx");
+        return {
+          async writeText(contents) {
+            await handle.writeFile(contents, "utf8");
           },
-          reportPath: `${repoRoot}/.rawr/security/latest.json`,
-        },
-      };
+          async close() {
+            await handle.close();
+          },
+        };
+      },
     },
-    async getSecurityReport(repoRoot: string) {
-      return emptyReport(repoRoot, "repo");
+    path: {
+      join: path.join,
+      dirname: path.dirname,
+      resolve: path.resolve,
+      async realpath(filePath) {
+        try {
+          return await fs.realpath(filePath);
+        } catch {
+          return null;
+        }
+      },
+      toFileHref(filePath) {
+        return pathToFileURL(filePath).href;
+      },
+      homeDir() {
+        return homeDir;
+      },
+    },
+    process: {
+      pid: () => process.pid,
+      isAlive(pid) {
+        if (!Number.isInteger(pid) || pid <= 0) return false;
+        if (pid === process.pid) return true;
+        try {
+          process.kill(pid, 0);
+          return true;
+        } catch (error) {
+          const err = error as NodeJS.ErrnoException;
+          if (err.code === "ESRCH") return false;
+          if (err.code === "EPERM") return true;
+          return true;
+        }
+      },
+      async sleep(ms) {
+        await new Promise((resolve) => setTimeout(resolve, ms));
+      },
+      exec: input.exec ?? (async () => emptyExecResult()),
+    },
+    sqlite: {
+      open: openSqliteDatabase,
+    },
+    embeddings: {
+      getConfig() {
+        return { provider: "openai", model: "test-embeddings" };
+      },
+      async embedText({ text }) {
+        const vec = new Float32Array(4);
+        for (let i = 0; i < text.length; i += 1) vec[i % vec.length] += text.charCodeAt(i) / 1000;
+        return vec;
+      },
     },
   };
 }
@@ -223,10 +199,7 @@ export function createDeps(options: ClientOptions = {}): Service["Deps"] {
   return {
     logger: createEmbeddedPlaceholderLoggerAdapter({ sink: options.logs }),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: options.analytics }),
-    configStore: createDefaultConfigStore(options),
-    repoStateStore: createDefaultRepoStateStore(),
-    journalStore: createDefaultJournalStore(),
-    securityRuntime: createDefaultSecurityRuntime(),
+    resources: options.resources ?? createTestHqOpsResources({ homeDir: options.homeDir }),
     ...options.deps,
   };
 }
