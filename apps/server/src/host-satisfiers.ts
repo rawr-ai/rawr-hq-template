@@ -1,10 +1,25 @@
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
+import { bindService, type ProcessView, type RoleView, type ServiceBinding, type ServiceBindingContext } from "@rawr/hq-sdk/plugins";
 import { createClient as createStateClient, type Client as StateClient } from "@rawr/hq-ops";
 import { createHqOpsResources } from "./hq-ops-resources";
 type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
 type StateBoundary = Parameters<typeof createStateClient>[0];
+type HostProcess = ProcessView & {
+  processId: "server";
+  repoRoot: string;
+};
+type ExampleTodoRole = RoleView & {
+  roleId: "example-todo";
+  capability: "example-todo";
+};
+type StateRole = RoleView & {
+  roleId: "hq-ops";
+  capability: "state";
+};
+type ExampleTodoBindingContext = ServiceBindingContext<HostProcess, ExampleTodoRole>;
+type StateBindingContext = ServiceBindingContext<HostProcess, StateRole>;
 
 export type HostServiceLogger = ExampleTodoBoundary["deps"]["logger"];
 
@@ -40,73 +55,85 @@ export type RawrHostSatisfiers = Readonly<{
  * - no provider registry
  * - no capability-keyed generic map API
  */
-function createExampleTodoBoundary(hostLogger: HostServiceLogger): ExampleTodoBoundary {
+function createExampleTodoDeps(hostLogger: HostServiceLogger): ExampleTodoBoundary["deps"] {
   let tick = 0;
 
   return {
-    deps: {
-      dbPool: createEmbeddedInMemoryDbPoolAdapter(),
-      clock: {
-        now: () => {
-          tick += 1;
-          return new Date(Date.UTC(2026, 1, 25, 0, 0, tick)).toISOString();
-        },
+    dbPool: createEmbeddedInMemoryDbPoolAdapter(),
+    clock: {
+      now: () => {
+        tick += 1;
+        return new Date(Date.UTC(2026, 1, 25, 0, 0, tick)).toISOString();
       },
-      logger: hostLogger,
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     },
-    scope: {
+    logger: hostLogger,
+    analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+  };
+}
+
+function createExampleTodoBinding(hostLogger: HostServiceLogger) {
+  return bindService(createExampleTodoClient, {
+    bindingId: "server/example-todo",
+    deps: () => createExampleTodoDeps(hostLogger),
+    scope: () => ({
       workspaceId: "workspace-default",
-    },
+    }),
     config: {
       readOnly: false,
       limits: {
         maxAssignmentsPerTask: 2,
       },
     },
-  } satisfies ExampleTodoBoundary;
+    cacheKey: (context: ExampleTodoBindingContext) => `${context.process.processId}:${context.process.repoRoot}:${context.role.roleId}`,
+  } satisfies ServiceBinding<ExampleTodoBoundary, HostProcess, ExampleTodoRole>);
 }
 
-function createStateBoundary(repoRoot: string, hostLogger: HostServiceLogger): StateBoundary {
-  return {
-    deps: {
+function createStateBinding(hostLogger: HostServiceLogger) {
+  return bindService(createStateClient, {
+    bindingId: "server/hq-ops-state",
+    deps: () => ({
       logger: hostLogger,
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
       resources: createHqOpsResources(),
-    },
-    scope: {
-      repoRoot,
-    },
+    }),
+    scope: (context: StateBindingContext) => ({
+      repoRoot: context.process.repoRoot,
+    }),
     config: {},
-  } satisfies StateBoundary;
+    cacheKey: (context: StateBindingContext) => `${context.process.processId}:${context.process.repoRoot}:${context.role.roleId}`,
+  } satisfies ServiceBinding<StateBoundary, HostProcess, StateRole>);
 }
 
 export function createRawrHostSatisfiers(input: {
   hostLogger: HostServiceLogger;
 }): RawrHostSatisfiers {
-  const exampleTodoClientsByRepoRoot = new Map<string, ExampleTodoClient>();
-  const stateClientsByRepoRoot = new Map<string, StateClient>();
+  const exampleTodo = createExampleTodoBinding(input.hostLogger);
+  const state = createStateBinding(input.hostLogger);
 
   function resolveExampleTodoClient(repoRoot: string): ExampleTodoClient {
-    const existing = exampleTodoClientsByRepoRoot.get(repoRoot);
-    if (existing) {
-      return existing;
-    }
-
-    const client = createExampleTodoClient(createExampleTodoBoundary(input.hostLogger));
-    exampleTodoClientsByRepoRoot.set(repoRoot, client);
-    return client;
+    return exampleTodo.resolve({
+      process: {
+        processId: "server",
+        repoRoot,
+      },
+      role: {
+        roleId: "example-todo",
+        capability: "example-todo",
+      },
+    });
   }
 
   function resolveStateClient(repoRoot: string): StateClient {
-    const existing = stateClientsByRepoRoot.get(repoRoot);
-    if (existing) {
-      return existing;
-    }
-
-    const client = createStateClient(createStateBoundary(repoRoot, input.hostLogger));
-    stateClientsByRepoRoot.set(repoRoot, client);
-    return client;
+    return state.resolve({
+      process: {
+        processId: "server",
+        repoRoot,
+      },
+      role: {
+        roleId: "hq-ops",
+        capability: "state",
+      },
+    });
   }
 
   return {

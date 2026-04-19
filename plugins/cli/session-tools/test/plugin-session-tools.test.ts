@@ -132,29 +132,30 @@ async function writeCodexSession(input: {
 }
 
 function createFakeClient(overrides: Partial<SessionIntelligenceClient> = {}): SessionIntelligenceClient {
-  const client: SessionIntelligenceClient = {
+  const client = {
     catalog: {
-      list: vi.fn(async () => [session]),
+      list: vi.fn(async () => ({ sessions: [session] })),
       resolve: vi.fn(async () => resolved),
     },
     transcripts: {
+      detect: vi.fn(async () => ({ source: "codex" })),
       extract: vi.fn(async () => extracted),
     },
     search: {
-      metadata: vi.fn(async () => [{ ...session, matchScore: 3 }]),
-      content: vi.fn(async () => [{ ...session, matchCount: 1, matchSnippet: "A: The oclif command saw it." }]),
-      clearIndex: vi.fn(async () => {}),
+      metadata: vi.fn(async () => ({ hits: [{ ...session, matchScore: 3 }] })),
+      content: vi.fn(async () => ({ hits: [{ ...session, matchCount: 1, matchSnippet: "A: The oclif command saw it." }] })),
+      clearIndex: vi.fn(async () => ({ cleared: true })),
       reindex: vi.fn(async () => ({ indexed: 1, total: 1 })),
     },
   };
 
-  return {
+  return ({
     ...client,
     ...overrides,
     catalog: { ...client.catalog, ...overrides.catalog },
     transcripts: { ...client.transcripts, ...overrides.transcripts },
     search: { ...client.search, ...overrides.search },
-  };
+  } as unknown) as SessionIntelligenceClient;
 }
 
 function installFakeClient(client = createFakeClient()): SessionIntelligenceClient {
@@ -185,18 +186,21 @@ describe("@rawr/plugin-session-tools", () => {
 
     await SessionsList.run(["--source", "codex", "--limit", "1", "--cwd-contains", "rawr", "--json"]);
 
-    expect(client.catalog.list).toHaveBeenCalledWith({
-      source: "codex",
-      limit: 1,
-      filters: {
-        project: undefined,
-        cwdContains: "rawr",
-        branch: undefined,
-        model: undefined,
-        since: undefined,
-        until: undefined,
+    expect(client.catalog.list).toHaveBeenCalledWith(
+      {
+        source: "codex",
+        limit: 1,
+        filters: {
+          project: undefined,
+          cwdContains: "rawr",
+          branch: undefined,
+          model: undefined,
+          since: undefined,
+          until: undefined,
+        },
       },
-    });
+      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.catalog.list" } } }),
+    );
     const data = firstOutputData<{ sessions: SessionListItem[]; outDir: string | null }>(outputSpy);
     expect(data.sessions).toEqual([session]);
     expect(data.outDir).toBeNull();
@@ -218,7 +222,7 @@ describe("@rawr/plugin-session-tools", () => {
       createFakeClient({
         catalog: {
           resolve: vi.fn(async () => ({ error: "Session not found: missing" })),
-        } as Partial<SessionIntelligenceClient["catalog"]> as SessionIntelligenceClient["catalog"],
+        } as unknown as SessionIntelligenceClient["catalog"],
       }),
     );
     const outputSpy = spyOutput(SessionsResolve);
@@ -234,23 +238,29 @@ describe("@rawr/plugin-session-tools", () => {
 
     await SessionsSearch.run(["--query-metadata", "rawr-fixture", "--source", "all", "--limit", "5", "--json"]);
 
-    expect(client.catalog.list).toHaveBeenCalledWith({
-      source: "all",
-      limit: 5,
-      filters: {
-        project: undefined,
-        cwdContains: undefined,
-        branch: undefined,
-        model: undefined,
-        since: undefined,
-        until: undefined,
+    expect(client.catalog.list).toHaveBeenCalledWith(
+      {
+        source: "all",
+        limit: 5,
+        filters: {
+          project: undefined,
+          cwdContains: undefined,
+          branch: undefined,
+          model: undefined,
+          since: undefined,
+          until: undefined,
+        },
       },
-    });
-    expect(client.search.metadata).toHaveBeenCalledWith({
-      sessions: expect.any(Array),
-      needle: "rawr-fixture",
-      limit: 5,
-    });
+      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.catalog.list" } } }),
+    );
+    expect(client.search.metadata).toHaveBeenCalledWith(
+      {
+        sessions: expect.any(Array),
+        needle: "rawr-fixture",
+        limit: 5,
+      },
+      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.search.metadata" } } }),
+    );
     const data = firstOutputData<{ query: string; hits: Array<SessionListItem & { matchScore: number }>; outDir: string | null }>(
       outputSpy,
     );
@@ -338,7 +348,10 @@ describe("@rawr/plugin-session-tools", () => {
     });
 
     const client = await createSessionIntelligenceClient();
-    const listed = await client.catalog.list({ source: "codex", limit: 1, filters: {} });
+    const listedResponse = await client.catalog.list({ source: "codex", limit: 1, filters: {} }, {
+      context: { invocation: { traceId: "test.session.catalog.list" } },
+    });
+    const listed = listedResponse.sessions;
     expect(listed).toHaveLength(1);
     expect(listed[0]).toMatchObject({
       path: filePath,
@@ -348,45 +361,68 @@ describe("@rawr/plugin-session-tools", () => {
     });
     await expect(fs.stat(indexPath)).resolves.toMatchObject({ size: expect.any(Number) });
 
-    const resolved = await client.catalog.resolve({ session: "resource-test", source: "codex" });
+    const resolved = await client.catalog.resolve({ session: "resource-test", source: "codex" }, {
+      context: { invocation: { traceId: "test.session.catalog.resolve" } },
+    });
     expect("error" in resolved).toBe(false);
-    if ("error" in resolved) throw new Error(resolved.error);
+    if ("error" in resolved) throw new Error(String(resolved.error));
     expect(resolved.resolved.path).toBe(filePath);
 
-    const reindex = await client.search.reindex({
-      sessions: listed,
-      roles: ["all"],
-      includeTools: false,
-      indexPath,
-      limit: 0,
-    });
+    const reindex = await client.search.reindex(
+      {
+        sessions: listed.map((session) => ({
+          path: session.path,
+          source: session.source,
+        })),
+        roles: ["all"],
+        includeTools: false,
+        indexPath,
+        limit: 0,
+      },
+      {
+        context: { invocation: { traceId: "test.session.search.reindex" } },
+      },
+    );
     expect(reindex).toEqual({ indexed: 1, total: 1 });
 
-    const hits = await client.search.content({
-      sessions: listed,
-      pattern: "resource needle",
-      ignoreCase: true,
-      maxMatches: 5,
-      snippetLen: 120,
-      roles: ["all"],
-      includeTools: false,
-      useIndex: true,
-      indexPath,
-    });
+    const contentResponse = await client.search.content(
+      {
+        sessions: listed,
+        pattern: "resource needle",
+        ignoreCase: true,
+        maxMatches: 5,
+        snippetLen: 120,
+        roles: ["all"],
+        includeTools: false,
+        useIndex: true,
+        indexPath,
+      },
+      {
+        context: { invocation: { traceId: "test.session.search.content" } },
+      },
+    );
+    const hits = contentResponse.hits;
     expect(hits).toHaveLength(1);
     expect(hits[0]?.matchSnippet).toContain("resource needle");
     await expect(fs.stat(indexPath)).resolves.toMatchObject({ size: expect.any(Number) });
 
-    const extracted = await client.transcripts.extract({
-      path: filePath,
-      roles: ["all"],
-      includeTools: false,
-      dedupe: true,
-      offset: 0,
-      maxMessages: 0,
-    });
+    const extracted = await client.transcripts.extract(
+      {
+        path: filePath,
+        options: {
+          roles: ["all"],
+          includeTools: false,
+          dedupe: true,
+          offset: 0,
+          maxMessages: 0,
+        },
+      },
+      {
+        context: { invocation: { traceId: "test.session.transcripts.extract" } },
+      },
+    );
     expect("error" in extracted).toBe(false);
-    if ("error" in extracted) throw new Error(extracted.error);
+    if ("error" in extracted) throw new Error(String(extracted.error));
     expect(extracted.messages[0]?.content).toBe("findable plugin resource needle");
   });
 });

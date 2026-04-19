@@ -14,6 +14,10 @@
       "types": "./src/boundary.ts",
       "default": "./src/boundary.ts"
     },
+    "./plugins": {
+      "types": "./src/plugins.ts",
+      "default": "./src/plugins.ts"
+    },
     "./host-adapters/analytics/embedded-placeholder": {
       "types": "./src/host-adapters/analytics/embedded-placeholder.ts",
       "default": "./src/host-adapters/analytics/embedded-placeholder.ts"

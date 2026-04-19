@@ -1,15 +1,12 @@
 import {
   beginPluginsSyncUndoCapture as beginServicePluginsSyncUndoCapture,
   type Client,
-  createClient,
   PLUGINS_SYNC_UNDO_PROVIDER,
   type AgentConfigSyncUndoCapture,
   type UndoRunResult,
 } from "@rawr/agent-config-sync";
-import type { CreateClientOptions } from "@rawr/agent-config-sync/client";
-import type { SyncItemResult, SyncRunResult, SyncScope } from "@rawr/agent-config-sync/schemas";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { SyncItemResult, SyncRunResult, SyncScope } from "@rawr/agent-config-sync/types";
+import { createAgentConfigSyncClient } from "./agent-config-sync-binding";
 import {
   effectiveContentForProvider,
   installAndEnableClaudePlugin,
@@ -28,7 +25,7 @@ import {
 import { createNodeAgentConfigSyncResources } from "./agent-config-sync-resources/resources";
 import { findWorkspaceRoot } from "./workspace-plugins";
 
-type UndoCaptureLike = AgentConfigSyncUndoCapture;
+export type UndoCaptureLike = AgentConfigSyncUndoCapture;
 type PreviewSyncInput = Parameters<Client["planning"]["previewSync"]>[0];
 type PreviewSyncOptions = NonNullable<Parameters<Client["planning"]["previewSync"]>[1]>;
 type RunSyncInput = Parameters<Client["execution"]["runSync"]>[0];
@@ -45,19 +42,6 @@ export async function beginPluginsSyncUndoCapture(input: {
     ...input,
     resources: createNodeAgentConfigSyncResources(),
   });
-}
-
-function createBoundary(repoRoot: string, undoCapture?: UndoCaptureLike): CreateClientOptions {
-  return {
-    deps: {
-      logger: createEmbeddedPlaceholderLoggerAdapter(),
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-      resources: createNodeAgentConfigSyncResources(),
-      undoCapture,
-    },
-    scope: { repoRoot },
-    config: {},
-  };
 }
 
 async function repoRootForCall(sourcePlugin?: SourcePlugin): Promise<string> {
@@ -84,7 +68,7 @@ export async function runSync(input: {
   includeClaude: boolean;
 }): Promise<SyncRunResult> {
   const repoRoot = await repoRootForCall(input.sourcePlugin);
-  const client = createClient(createBoundary(repoRoot, input.options.undoCapture));
+  const client = createAgentConfigSyncClient({ repoRoot, undoCapture: input.options.undoCapture });
 
   if (input.options.dryRun) {
     const previewInput = {
@@ -133,7 +117,7 @@ export async function retireStaleManagedPlugins(input: {
   dryRun: boolean;
   undoCapture?: UndoCaptureLike;
 }) {
-  const client = createClient(createBoundary(input.workspaceRoot, input.undoCapture));
+  const client = createAgentConfigSyncClient({ repoRoot: input.workspaceRoot, undoCapture: input.undoCapture });
   const retireInput = {
     workspaceRoot: input.workspaceRoot,
     scope: input.scope,

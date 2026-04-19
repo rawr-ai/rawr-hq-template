@@ -1,9 +1,13 @@
 import { Args, Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
+import type { Client } from "@rawr/session-intelligence/client";
 import { ensureDir, writeJsonFile, writeTextFile } from "../../lib/out-dir";
 import { createSessionIntelligenceClient } from "../../lib/session-intelligence-client";
 import type { OutputFormat, RoleFilter, SessionSourceFilter } from "../../lib/session-types";
 import { buildTranscriptOutputs } from "../../lib/transcript-output";
+
+type CatalogResolveOptions = NonNullable<Parameters<Client["catalog"]["resolve"]>[1]>;
+type TranscriptsExtractOptions = NonNullable<Parameters<Client["transcripts"]["extract"]>[1]>;
 
 export default class SessionsExtract extends RawrCommand {
   static description = "Extract a session transcript";
@@ -69,25 +73,36 @@ export default class SessionsExtract extends RawrCommand {
     }
 
     const client = await createSessionIntelligenceClient();
-    const resolved = await client.catalog.resolve({ session, source });
+    const resolveOptions = {
+      context: { invocation: { traceId: "plugin-session-tools.catalog.resolve" } },
+    } satisfies CatalogResolveOptions;
+    const resolved = await client.catalog.resolve({ session, source }, resolveOptions);
     if ("error" in resolved) {
-      const result = this.fail(resolved.error, { code: "SESSION_NOT_FOUND" });
+      const result = this.fail(String(resolved.error), { code: "SESSION_NOT_FOUND" });
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
 
-    const extracted = await client.transcripts.extract({
-      path: resolved.resolved.path,
-      roles,
-      includeTools,
-      dedupe,
-      offset,
-      maxMessages,
-    });
+    const extractOptions = {
+      context: { invocation: { traceId: "plugin-session-tools.transcripts.extract" } },
+    } satisfies TranscriptsExtractOptions;
+    const extracted = await client.transcripts.extract(
+      {
+        path: resolved.resolved.path,
+        options: {
+          roles,
+          includeTools,
+          dedupe,
+          offset,
+          maxMessages,
+        },
+      },
+      extractOptions,
+    );
 
     if ("error" in extracted) {
-      const result = this.fail(extracted.error, { code: "EXTRACT_FAILED", meta: { path: resolved.resolved.path } });
+      const result = this.fail(String(extracted.error), { code: "EXTRACT_FAILED", meta: { path: resolved.resolved.path } });
       this.outputResult(result, { flags: baseFlags });
       this.exit(1);
       return;

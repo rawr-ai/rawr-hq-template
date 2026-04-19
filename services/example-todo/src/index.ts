@@ -14,5 +14,12 @@
  * Do not export module schemas, repository ports, or runtime dependency shapes
  * from package root by default.
  */
-export { createClient, type Client } from "./client";
+export {
+  createClient,
+  type Client,
+  type Config,
+  type CreateClientOptions,
+  type Deps,
+  type Scope,
+} from "./client";
 export { router, type Router } from "./router";

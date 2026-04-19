@@ -2,15 +2,13 @@ import type {
   RawrPluginKind,
   SourceContent as ServiceSourceContent,
   SourcePlugin as ServiceSourcePlugin,
-  SyncAction,
   SyncAgent,
   SyncScope,
-} from "@rawr/agent-config-sync/schemas";
+} from "@rawr/agent-config-sync/types";
 
 export type AgentConfigSyncProvider = SyncAgent;
 export type {
   RawrPluginKind,
-  SyncAction,
   SyncAgent,
   SyncScope,
 };
