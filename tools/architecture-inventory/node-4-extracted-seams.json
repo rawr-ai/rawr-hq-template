@@ -58,6 +58,20 @@
         "typecheck",
         "test"
       ]
+    },
+    "@rawr/plugin-session-tools": {
+      "config": "plugins/cli/session-tools/package.json",
+      "tags": [
+        "type:plugin",
+        "migration-slice:structural-tranche"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
     }
   }
 }

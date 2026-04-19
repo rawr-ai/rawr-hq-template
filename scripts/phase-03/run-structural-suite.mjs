@@ -127,6 +127,9 @@ const suiteCommandsByProject = {
   "@rawr/session-intelligence": {
     default: ["bun scripts/phase-03/verify-session-intelligence-structural.mjs"],
   },
+  "@rawr/plugin-session-tools": {
+    default: ["bun scripts/phase-03/verify-session-intelligence-structural.mjs"],
+  },
   "@rawr/core": {
     default: ["bun scripts/phase-03/verify-core-support-structural.mjs"],
   },
