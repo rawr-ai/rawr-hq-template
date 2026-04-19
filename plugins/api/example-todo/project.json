@@ -3,5 +3,25 @@
   "name": "plugin-api-example-todo",
   "root": "plugins/api/example-todo",
   "sourceRoot": "plugins/api/example-todo/src",
-  "tags": ["type:plugin"]
+  "tags": [
+    "type:plugin",
+    "migration-slice:structural-tranche",
+    "role:api",
+    "surface:orpc",
+    "capability:example-todo"
+  ],
+  "targets": {
+    "sync": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run sync:check --project plugin-api-example-todo"
+      }
+    },
+    "structural": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun scripts/phase-03/verify-plugin-api-example-todo-structural.mjs"
+      }
+    }
+  }
 }

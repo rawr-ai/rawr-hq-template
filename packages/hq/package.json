@@ -47,12 +47,15 @@
   },
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
+    "sync": "bun run --cwd ../.. sync:check --project @rawr/hq",
+    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq",
     "typecheck": "bunx tsc -p tsconfig.json --noEmit",
     "test": "vitest run --project hq"
   },
   "nx": {
     "tags": [
-      "type:package"
+      "type:package",
+      "migration-slice:structural-tranche"
     ]
   }
 }
