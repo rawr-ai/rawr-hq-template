@@ -2,27 +2,35 @@
 
 ## Active Slice
 
-- Issue: `M1-U00`
-- Title: `Establish guardrails and the Phase 1 ledger`
-- Status: ready to start implementation
-- Dependency state: no upstream issue blocker
-- Current role of the slice: freeze the migration lane before any authority-moving slice begins
+- Issue: `M1-U01`
+- Title: `Archive false futures and freeze the marketplace compatibility lane`
+- Status: follow-up proof-band repair verified; waiting on peer review, then commit/submit
+- Dependency state: `M1-U00` is complete; this slice now gates all downstream M1 authority work
+- Current role of the slice: subtract dead futures from the live lane before `services/hq-ops` is reserved and before any new canonical seams are installed
 
 ## Why This Slice Matters
 
-This slice makes the repo tell the truth about Phase 1 before any semantic or runtime authority changes land. If the ledger and first proof rails are weak, every later slice can drift, resurrect dead structures, or preserve ambiguity behind social convention.
+This slice removes the two false futures that would otherwise keep exerting architectural pressure during the rest of Phase 1:
 
-This is not a cleanup slice and not a runtime slice. It is the gate that forces the rest of M1 to happen inside an explicit, mechanically enforced lane.
+- `coordination` as an active live service + plugin + host surface
+- `support-example` as a live service/workflow demo lane
+
+If they remain live, later Phase 1 work will still be negotiating around dead authorities. The correct move here is not normalization. It is archive-with-evidence, then hard removal from live build, runtime, manifest, host, and proof participation.
+
+This slice also freezes `plugins/agents/hq` in place as the only allowed non-executable compatibility carryover. That lane survives for operational continuity only; it must not be treated as unresolved topology authority.
 
 ## Done Bar
 
 This slice is done only when all of the following are true:
 
-- `docs/migration/phase-1-ledger.md` exists and clearly classifies live, archived, parked, reclassified, and prohibited directions
-- the ledger forbids new work in `plugins/api/*`, `plugins/workflows/*`, `coordination`, `support-example`, and legacy HQ package facades
-- parked-lane edits are explicitly constrained to deletions, rewires, compile fixes, and explicit unblockers
-- the first Phase 1 verification scripts exist under `scripts/phase-1/`
-- those scripts are wired into normal repo verification flow and are not hidden inside one project target
+- `services/coordination`, `plugins/api/coordination`, and `plugins/workflows/coordination` are removed from live build, test, runtime, and inventory participation.
+- `services/support-example` and `plugins/workflows/support-example` are removed from live build, test, runtime, manifest/host registration, and live test inventory participation.
+- root workspace references are updated so removed surfaces no longer appear in root build/typecheck/test paths or TS path aliases.
+- the HQ app manifest and server host composition no longer register archived coordination/support-example plugin families.
+- static scans and Phase 1 proof scripts confirm there are no live imports or registrations pointing at archived coordination/support-example surfaces.
+- `plugins/agents/hq` remains exactly the sanctioned Phase 1 compatibility lane: preserved, not renamed, not expanded, and still usable by `rawr plugins sync @rawr/plugin-hq --dry-run`.
+- archive evidence exists for both removed lanes under `docs/archive/coordination/lessons.md` and `docs/archive/support-example/lessons.md`.
+- the support-example archive preserves useful fixtures and translation notes instead of dragging the live implementation forward.
 
 ## Canonical References
 
@@ -31,45 +39,57 @@ Read these before starting or resuming:
 1. [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/grounding.md)
 2. [workflow.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/workflow.md)
 3. [M1-authority-collapse.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/milestones/M1-authority-collapse.md)
-4. [M1-U00-guardrails-and-phase-1-ledger.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U00-guardrails-and-phase-1-ledger.md)
+4. [M1-U01-archive-false-futures.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U01-archive-false-futures.md)
 5. [RAWR_Canonical_Architecture_Spec.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_Canonical_Architecture_Spec.md)
 
 ## Relevant Surfaces
 
-Primary target files:
+Archived roots removed from the live tree:
 
-- `docs/migration/phase-1-ledger.md`
-- `scripts/phase-1/verify-phase1-ledger.mjs`
-- `scripts/phase-1/verify-no-live-coordination.mjs`
-- `scripts/phase-1/verify-no-live-support-example.mjs`
-- `scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs`
-- `scripts/phase-1/verify-no-old-operational-packages.mjs`
-- `scripts/phase-1/verify-no-legacy-hq-imports.mjs`
+- `services/coordination`
+- `plugins/api/coordination`
+- `plugins/workflows/coordination`
+- `services/support-example`
+- `plugins/workflows/support-example`
 
-Primary evidence sources:
+Primary live consumers and registrations cut or rewritten in this slice:
 
+- `tsconfig.base.json`
 - root `package.json`
+- `vitest.config.ts`
+- `tools/architecture-inventory/node-4-extracted-seams.json`
 - `tools/architecture-inventory/slice-0-first-cohort.json`
-- `scripts/phase-03/verify-sync-check.mjs`
-- workspace inventory from `bunx nx show projects`
-- repo root inventories under `apps/`, `services/`, `packages/`, and `plugins/`
+- `apps/hq/src/manifest.ts`
+- `apps/server/src/host-seam.ts`
+- `apps/server/src/host-satisfiers.ts`
+- `apps/server/src/workflows/runtime.ts`
+- `apps/server/package.json`
+- `apps/web/package.json`
+- `apps/cli/package.json`
+- `apps/web/src/ui/lib/orpc-client.ts`
+- `plugins/web/mfe-demo/src/web.ts`
+- deleted coordination/support-example-specific CLI, web, server, and proof files
+
+Archive evidence targets:
+
+- `docs/archive/coordination/lessons.md`
+- `docs/archive/support-example/lessons.md`
+
+Protected compatibility lane:
+
+- `plugins/agents/hq`
 
 ## Key Insights Already Established
 
-- The ledger should use a fixed operational shape:
-  - live lane
-  - archived lane
-  - parked lane
-  - reclassified / target homes
-  - prohibited directions
-  - verification map
-- The minimum Phase 1 inventory that must be classified includes:
-  - apps: `apps/hq`, `apps/server`, `apps/cli`, `apps/web`
-  - services: `services/state`, `services/example-todo`, `services/support-example`, `services/coordination`
-  - packages: `packages/control-plane`, `packages/journal`, `packages/security`, `packages/hq`, `packages/agent-sync`
-  - plugins: `plugins/api/{coordination,example-todo,state}`, `plugins/workflows/{coordination,support-example}`, `plugins/agents/hq`, `plugins/web/*`, `plugins/cli/*`
-- The Phase 1 proof band is root-owned. Do not hide it inside a single project target.
-- This slice should reserve hard cuts against old operational owners and legacy HQ facades before those owners actually die in later slices.
+- This slice is broader than deleting a few directories. `coordination` is currently wired into TS path aliases, root run-many scripts, the HQ manifest, server host seams/satisfiers/runtime, CLI coordination commands, web coordination clients, and multiple server/web tests.
+- `support-example` is currently wired into the HQ manifest, server host satisfiers, workflow proofs, and legacy demo/test surfaces.
+- The hardened packet treats both `coordination` and `support-example` as archive targets in Phase 1, not as live capabilities to be renamed or normalized forward.
+- `plugins/agents/hq` is the only sanctioned non-executable compatibility carryover in M1. It is frozen, not modernized.
+- Archive artifacts are the only sanctioned memory of the removed lanes after the live cut lands. They need to preserve useful wiring/integration lessons without preserving the legacy system wholesale.
+- The archive proof band now enforces three things together: archived classification in the Phase 1 ledger, physical absence from the live tree, and presence of archive lesson docs.
+- `rawr plugins sync @rawr/plugin-hq --dry-run` resolves the preserved marketplace lane, but plain dry-run exits non-zero on existing downstream target conflicts; `--dry-run --force` is the conflict-tolerant verification form that proves the lane still resolves cleanly without mutating anything.
+- The initial U01 archive commit accidentally over-deleted generic server proof coverage and left several downstream verifier scripts stale. The current follow-up diff restores the generic server proof files and retargets the Phase A/C/D/E verifier stack to the archived U01 world instead of deleted coordination/support-example artifacts.
+- `bun run rawr hq up --observability required --open none`, `rawr hq status --json`, direct health probes, and `.rawr/hq/runtime.log` already validated the managed HQ stack after the archive cut; do not rerun that unless the runtime behavior changes again before commit.
 
 ## Invariants and User Constraints
 
@@ -77,30 +97,63 @@ Primary evidence sources:
 - Use a distinct Graphite branch for this issue inside the same worktree.
 - `context.md` must be refreshed after compact and replaced when moving to a new issue.
 - `context.md` is current-issue-only. Do not turn it into a running log.
-- Prefer Narsil for symbol/reference/call-path work.
-- After each commit that needs fresh code intel, update the primary tree at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template` so Narsil indexes the latest commit.
-- Do not trust agents with semantic changes. Peer/review agents are for review and tightly scoped mechanical help only.
-- For this slice specifically, do not move semantic logic or change runtime behavior.
+- Prefer Narsil for symbol/reference/call-path work, but remember it indexes the primary tree at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template`.
+- After each commit that needs fresh code intel, update that primary tree to the latest commit so Narsil indexes the current slice.
+- Do not trust agents with semantic changes. Review/mechanical help only.
+- For archive lesson capture, spin up a grounded 3-4 agent team per archive target with one integrator, close stale agents first, and never exceed six active agents total.
+- Lesson capture should preserve wiring, integrations, and technology-fit insights; it should not preserve the whole implementation or carry forward clearly legacy architecture.
+- The milestone packet wins for M1 execution scope, sequencing, and stop-gates. The architecture spec remains canonical for architecture.
 
 ## Verification Bar
 
 Run at minimum:
 
 - `bun run sync:check`
-- `bun run lint:boundaries`
-- `bun scripts/phase-1/verify-phase1-ledger.mjs`
+- `bun run phase-1:gates:baseline`
+- `bun run rawr plugins sync @rawr/plugin-hq --dry-run`
+- `bun run rawr plugins sync @rawr/plugin-hq --dry-run --force`
 - `bun scripts/phase-1/verify-no-live-coordination.mjs`
 - `bun scripts/phase-1/verify-no-live-support-example.mjs`
 - `bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs`
-- `bun scripts/phase-1/verify-no-old-operational-packages.mjs`
-- `bun scripts/phase-1/verify-no-legacy-hq-imports.mjs`
-- `bunx nx show projects`
+- `rg -n 'coordination|support-example' apps packages plugins services -g '!**/dist/**' -g '!**/node_modules/**'`
+- `test -d plugins/agents/hq`
+- `bunx nx test @rawr/plugin-mfe-demo`
+- HQ stack validation before commit:
+  `bun run rawr hq up`, confirm observability, inspect logs, restart if needed
+
+Add adjacent checks if the host/manifest/runtime cut forces them.
+
+## Current Status
+
+- The archived roots are deleted from the live tree and no longer appear in `apps`, `packages`, `plugins`, or `services` scans.
+- The HQ manifest, server host seams, CLI/web surfaces, demo plugin, Vitest project list, architecture inventory, and Phase 1 scripts were updated to remove live coordination/support-example participation.
+- `docs/archive/coordination/lessons.md` and `docs/archive/support-example/lessons.md` now exist and encode the preserved wiring/integration lessons.
+- `bun run sync:check`, `bun run phase-1:gates:baseline`, `bun scripts/phase-1/verify-no-live-coordination.mjs`, `bun scripts/phase-1/verify-no-live-support-example.mjs`, `bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs`, `test -d plugins/agents/hq`, and `bunx nx test @rawr/plugin-mfe-demo` are green.
+- Managed HQ runtime validation is complete: `rawr hq status --json` shows server/web/async plus HyperDX observability all running, the canonical state RPC returns `200` with first-party auth headers, and archived coordination/support-example workflow probes return `404`.
+- The recreated server proof files are back in place:
+  - `apps/server/test/rawr.test.ts`
+  - `apps/server/test/route-boundary-matrix.test.ts`
+  - `apps/server/test/ingress-signature-observability.test.ts`
+  - `apps/server/test/logging-correlation.test.ts`
+  - `apps/server/test/phase-a-gates.test.ts`
+- The proof-band follow-up is green locally:
+  - `bun scripts/phase-c/verify-telemetry-contract.mjs`
+  - `bun scripts/phase-d/verify-d2-finished-hook-contract.mjs`
+  - `bun scripts/phase-e/verify-e2-finished-hook-policy.mjs`
+  - `bun run phase-c:c2:quick`
+  - `bun run phase-d:d2:full`
+  - `bun run phase-e:e2:full`
+  - `bunx nx test @rawr/server`
+- The verifier retarget touched these live proof surfaces:
+  - `scripts/phase-a/manifest-smoke.mjs`
+  - `scripts/phase-c/verify-telemetry-contract.mjs`
+  - `scripts/phase-d/verify-d2-finished-hook-contract.mjs`
+  - `scripts/phase-e/verify-e2-finished-hook-policy.mjs`
+  - `apps/server/test/route-boundary-matrix.test.ts`
+  - `package.json`
 
 ## Immediate Next Actions
 
-1. Confirm current branch/status/stack state and create the Graphite slice branch for `M1-U00`.
-2. Use Nx and native inventory commands to capture the concrete Phase 1 surface set.
-3. Use Narsil to map current proof/inventory integration points and legacy import surfaces.
-4. Write the ledger in the fixed Phase 1 classifier shape.
-5. Implement and wire the first `scripts/phase-1/*` verification band.
-6. Run the full slice verification set before committing.
+1. Read the pending peer-review findings from the existing agents and fix anything real if they surface it.
+2. If peer review is clean, commit the stable U01 follow-up repair on `agent-FARGO-M1-U01-archive-false-futures`.
+3. Move the primary Narsil tree at `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template` to the new commit so indexing catches up, then submit the updated stack with `gt ss --draft`.

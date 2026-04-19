@@ -16,7 +16,7 @@ Keep mid-work reflections short and provisional.
 Always reflect after a clearly concluded multi-step workflow, especially when:
 - objectives were complete
 - multiple tasks/plans were involved
-- coordination/handoff decisions mattered
+- handoff decisions mattered
 
 ## End-of-workflow checklist
 

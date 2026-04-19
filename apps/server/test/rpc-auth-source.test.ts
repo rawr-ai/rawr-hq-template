@@ -8,7 +8,7 @@ import {
 } from "../src/auth/rpc-auth";
 
 function createRpcRequest(input: { url?: string; headers?: Record<string, string> }): Request {
-  return new Request(input.url ?? "http://localhost/rpc/coordination/listWorkflows", {
+  return new Request(input.url ?? "http://localhost/rpc/state/getRuntimeState", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -141,7 +141,7 @@ describe("rpc auth source classification", () => {
   it("denies requests from untrusted hosts even when caller auth headers are present", () => {
     expect(
       classify({
-        url: "http://untrusted.example/rpc/coordination/listWorkflows",
+        url: "http://untrusted.example/rpc/state/getRuntimeState",
         headers: {
           "x-rawr-caller-surface": "first-party",
           "x-rawr-session-auth": "verified",

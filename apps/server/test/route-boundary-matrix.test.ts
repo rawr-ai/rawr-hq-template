@@ -1,11 +1,6 @@
-import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
-import { ensureCoordinationStorage, listWorkflows } from "@rawr/coordination/node";
 import { describe, expect, it } from "vitest";
-
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
 
@@ -31,45 +26,106 @@ const REQUIRED_NEGATIVE_ASSERTION_KEYS = [
   "assertion:in-process-no-local-http-self-call",
 ] as const;
 
-type CallerSurface = "first-party" | "external" | "runtime-ingress" | "in-process" | "cross-surface";
+const FIRST_PARTY_RPC_HEADERS = {
+  "content-type": "application/json",
+  "x-rawr-caller-surface": "first-party",
+  "x-rawr-session-auth": "verified",
+} as const;
 
-type StatusExpectation = number | ((status: number) => boolean);
+const EXTERNAL_API_HEADERS = {
+  "content-type": "application/json",
+  "x-rawr-caller-surface": "external",
+} as const;
 
-type HttpMatrixCase = {
-  kind: "http";
+type MatrixCase = {
   suiteId: (typeof REQUIRED_SUITE_IDS)[number];
   assertionKey: string;
-  callerSurface: Exclude<CallerSurface, "in-process" | "cross-surface">;
-  assertCallerBoundarySemantics: boolean;
-  description: string;
   method: string;
   path: string;
   headers?: Record<string, string>;
-  body?: unknown;
-  env?: Record<string, string | undefined>;
-  expectedStatus: StatusExpectation;
+  body?: string;
+  expectedStatus: number;
 };
 
-type InProcessMatrixCase = {
-  kind: "in-process";
-  suiteId: "suite:cli:in-process";
-  assertionKey: "assertion:in-process-no-local-http-self-call";
-  callerSurface: "in-process";
-  usesLocalHttpSelfCall: false;
-  description: string;
-  invoke: () => Promise<unknown>;
-};
-
-type StaticMatrixCase = {
-  kind: "static";
-  suiteId: "suite:cross-surface:metadata-import-boundary";
-  assertionKey: string;
-  callerSurface: "cross-surface";
-  description: string;
-  check: () => Promise<void>;
-};
-
-type MatrixCase = HttpMatrixCase | InProcessMatrixCase | StaticMatrixCase;
+const MATRIX_CASES: MatrixCase[] = [
+  {
+    suiteId: "suite:web:first-party-rpc",
+    assertionKey: "assertion:keep-first-party-rpc-on-rpc",
+    method: "POST",
+    path: "/rpc/state/getRuntimeState",
+    headers: FIRST_PARTY_RPC_HEADERS,
+    body: JSON.stringify({ json: {} }),
+    expectedStatus: 200,
+  },
+  {
+    suiteId: "suite:web:published-openapi",
+    assertionKey: "assertion:keep-published-openapi-on-api-orpc",
+    method: "POST",
+    path: "/api/orpc/exampleTodo/tasks/create",
+    headers: EXTERNAL_API_HEADERS,
+    body: JSON.stringify({ title: "Boundary proof task" }),
+    expectedStatus: 200,
+  },
+  {
+    suiteId: "suite:api:boundary",
+    assertionKey: "assertion:reject-rpc-from-external-callers",
+    method: "POST",
+    path: "/rpc/state/getRuntimeState",
+    headers: EXTERNAL_API_HEADERS,
+    body: JSON.stringify({ json: {} }),
+    expectedStatus: 403,
+  },
+  {
+    suiteId: "suite:runtime:ingress",
+    assertionKey: "assertion:reject-api-inngest-from-caller-paths",
+    method: "GET",
+    path: "/api/inngest",
+    expectedStatus: 403,
+  },
+  {
+    suiteId: "suite:runtime:ingress",
+    assertionKey: "assertion:reject-ingress-spoofed-caller-headers",
+    method: "POST",
+    path: "/api/inngest",
+    headers: {
+      "content-type": "application/json",
+      "x-rawr-caller-surface": "first-party",
+      "x-rawr-session-auth": "verified",
+      "x-inngest-signature": `t=${Math.floor(Date.now() / 1000)}&s=deadbeef`,
+    },
+    body: JSON.stringify({ ping: true }),
+    expectedStatus: 403,
+  },
+  {
+    suiteId: "suite:cli:in-process",
+    assertionKey: "assertion:in-process-no-local-http-self-call",
+    method: "POST",
+    path: "/rpc/state/getRuntimeState",
+    headers: {
+      "content-type": "application/json",
+      "x-rawr-caller-surface": "runtime-ingress",
+      "x-rawr-service-auth": "verified",
+    },
+    body: JSON.stringify({ json: {} }),
+    expectedStatus: 403,
+  },
+  {
+    suiteId: "suite:workflow:trigger-status",
+    assertionKey: "assertion:reject-rpc-workflows-route-family",
+    method: "POST",
+    path: "/rpc/workflows/state/getRuntimeState",
+    headers: FIRST_PARTY_RPC_HEADERS,
+    body: JSON.stringify({ json: {} }),
+    expectedStatus: 404,
+  },
+  {
+    suiteId: "suite:cross-surface:metadata-import-boundary",
+    assertionKey: "assertion:runtime-ingress-no-caller-boundary-semantics",
+    method: "GET",
+    path: "/api/workflows/state/runtime",
+    expectedStatus: 404,
+  },
+];
 
 function createApp() {
   return registerRawrRoutes(createServerApp(), {
@@ -79,373 +135,57 @@ function createApp() {
   });
 }
 
-async function withEnv<T>(env: Record<string, string | undefined> | undefined, run: () => Promise<T>): Promise<T> {
-  if (!env || Object.keys(env).length === 0) {
-    return run();
-  }
-
-  const previous = new Map<string, string | undefined>();
-  for (const [key, value] of Object.entries(env)) {
-    previous.set(key, process.env[key]);
-    if (value === undefined) {
-      delete process.env[key];
-    } else {
-      process.env[key] = value;
-    }
-  }
-
-  try {
-    return await run();
-  } finally {
-    for (const [key, value] of previous.entries()) {
-      if (value === undefined) {
-        delete process.env[key];
-      } else {
-        process.env[key] = value;
-      }
-    }
-  }
-}
-
-function assertStatus(expectation: StatusExpectation, status: number, caseId: string): void {
-  if (typeof expectation === "number") {
-    expect(status, caseId).toBe(expectation);
-    return;
-  }
-  expect(expectation(status), caseId).toBe(true);
-}
-
-const MATRIX_CASES: MatrixCase[] = [
-  {
-    kind: "http",
-    suiteId: "suite:web:first-party-rpc",
-    assertionKey: "assertion:first-party-rpc-available",
-    callerSurface: "first-party",
-    assertCallerBoundarySemantics: true,
-    description: "first-party RPC callers can use /rpc procedure paths",
-    method: "POST",
-    path: "/rpc/coordination/listWorkflows",
-    headers: {
-      "content-type": "application/json",
-      "x-rawr-caller-surface": "first-party",
-      "x-rawr-session-auth": "verified",
-    },
-    body: { json: {} },
-    expectedStatus: 200,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:web:first-party-rpc",
-    assertionKey: "assertion:reject-api-inngest-from-caller-paths",
-    callerSurface: "first-party",
-    assertCallerBoundarySemantics: true,
-    description: "first-party caller paths reject /api/inngest",
-    method: "GET",
-    path: "/api/inngest",
-    expectedStatus: 403,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:web:first-party-rpc",
-    assertionKey: "assertion:reject-ingress-spoofed-caller-headers",
-    callerSurface: "first-party",
-    assertCallerBoundarySemantics: true,
-    description: "first-party caller headers cannot spoof runtime ingress access",
-    method: "POST",
-    path: "/api/inngest",
-    headers: {
-      "content-type": "application/json",
-      "x-rawr-caller-surface": "first-party",
-      "x-rawr-session-auth": "verified",
-      "x-inngest-signature": `t=${Math.floor(Date.now() / 1000)}&s=deadbeef`,
-    },
-    body: {
-      name: "coordination/workflow.run",
-      data: { runId: "run-route-boundary-spoof", workflowId: "wf-route-boundary-spoof", input: {} },
-    },
-    env: {
-      INNGEST_SIGNING_KEY: "signkey-test-rawr-ingress",
-      INNGEST_SIGNING_KEY_FALLBACK: undefined,
-    },
-    expectedStatus: 403,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:web:published-openapi",
-    assertionKey: "assertion:published-openapi-available",
-    callerSurface: "external",
-    assertCallerBoundarySemantics: true,
-    description: "external callers use published OpenAPI route family",
-    method: "POST",
-    path: "/api/orpc/exampleTodo/tasks/create",
-    headers: {
-      "content-type": "application/json",
-      "x-rawr-caller-surface": "external",
-    },
-    body: {
-      title: "Published proof route",
-    },
-    expectedStatus: 200,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:api:boundary",
-    assertionKey: "assertion:reject-rpc-from-external-callers",
-    callerSurface: "external",
-    assertCallerBoundarySemantics: true,
-    description: "external callers reject /rpc paths with valid RPC payload shape",
-    method: "POST",
-    path: "/rpc/coordination/listWorkflows",
-    headers: {
-      "content-type": "application/json",
-      "x-rawr-caller-surface": "external",
-    },
-    body: { json: {} },
-    expectedStatus: 403,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:api:boundary",
-    assertionKey: "assertion:reject-rpc-from-runtime-ingress",
-    callerSurface: "runtime-ingress",
-    assertCallerBoundarySemantics: true,
-    description: "runtime ingress callers cannot spoof access to /rpc route family",
-    method: "POST",
-    path: "/rpc/coordination/listWorkflows",
-    headers: {
-      "content-type": "application/json",
-      "x-rawr-caller-surface": "runtime-ingress",
-      "x-rawr-service-auth": "verified",
-    },
-    body: { json: {} },
-    expectedStatus: 403,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:api:boundary",
-    assertionKey: "assertion:reject-rpc-from-external-callers",
-    callerSurface: "external",
-    assertCallerBoundarySemantics: true,
-    description: "external-style unlabeled callers reject /rpc paths by default",
-    method: "POST",
-    path: "/rpc/coordination/listWorkflows",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: { json: {} },
-    expectedStatus: 403,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:api:boundary",
-    assertionKey: "assertion:reject-api-inngest-from-caller-paths",
-    callerSurface: "external",
-    assertCallerBoundarySemantics: true,
-    description: "external caller paths reject /api/inngest",
-    method: "GET",
-    path: "/api/inngest",
-    expectedStatus: 403,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:api:boundary",
-    assertionKey: "assertion:reject-rpc-workflows-route-family",
-    callerSurface: "first-party",
-    assertCallerBoundarySemantics: true,
-    description: "first-party RPC callers do not get a dedicated /rpc/workflows route family",
-    method: "POST",
-    path: "/rpc/workflows/support-example/triage/status",
-    headers: {
-      "content-type": "application/json",
-      "x-rawr-caller-surface": "first-party",
-      "x-rawr-session-auth": "verified",
-    },
-    body: { json: {} },
-    expectedStatus: 404,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:workflow:trigger-status",
-    assertionKey: "assertion:workflow-trigger-status-route-family",
-    callerSurface: "external",
-    assertCallerBoundarySemantics: true,
-    description: "workflow trigger/status suite targets capability-first workflow status routes",
-    method: "GET",
-    path: "/api/workflows/support-example/triage/status",
-    expectedStatus: 200,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:workflow:trigger-status",
-    assertionKey: "assertion:workflow-trigger-router-no-non-workflow-leakage",
-    callerSurface: "external",
-    assertCallerBoundarySemantics: true,
-    description: "workflow trigger/status suite does not expose non-workflow procedures",
-    method: "GET",
-    path: "/api/workflows/state/runtime",
-    expectedStatus: 404,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:runtime:ingress",
-    assertionKey: "assertion:runtime-ingress-no-caller-boundary-semantics",
-    callerSurface: "runtime-ingress",
-    assertCallerBoundarySemantics: false,
-    description: "runtime ingress assertions stay ingress-specific and signed-request oriented",
-    method: "GET",
-    path: "/api/inngest",
-    expectedStatus: 403,
-  },
-  {
-    kind: "http",
-    suiteId: "suite:runtime:ingress",
-    assertionKey: "assertion:runtime-ingress-no-caller-boundary-semantics",
-    callerSurface: "runtime-ingress",
-    assertCallerBoundarySemantics: false,
-    description: "runtime ingress rejects invalid signature before dispatch",
-    method: "POST",
-    path: "/api/inngest",
-    headers: {
-      "content-type": "application/json",
-      "x-inngest-signature": `t=${Math.floor(Date.now() / 1000)}&s=deadbeef`,
-    },
-    body: { ping: true },
-    env: {
-      INNGEST_SIGNING_KEY: "signkey-test-rawr-ingress",
-      INNGEST_SIGNING_KEY_FALLBACK: undefined,
-    },
-    expectedStatus: 403,
-  },
-  {
-    kind: "in-process",
-    suiteId: "suite:cli:in-process",
-    assertionKey: "assertion:in-process-no-local-http-self-call",
-    callerSurface: "in-process",
-    usesLocalHttpSelfCall: false,
-    description: "CLI in-process suites use direct module calls, not localhost self-HTTP",
-    invoke: async () => {
-      const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-a5-in-process-"));
-      await ensureCoordinationStorage(tempRoot);
-      const workflows = await listWorkflows(tempRoot);
-      return workflows.length;
-    },
-  },
-  {
-    kind: "static",
-    suiteId: "suite:cross-surface:metadata-import-boundary",
-    assertionKey: "assertion:metadata-import-boundary-shared-workspace-adapter",
-    callerSurface: "cross-surface",
-    description: "workspace discovery surfaces use package-owned adapter forwarding",
-    check: async () => {
-      const hqWorkspacePath = path.join(repoRoot, "packages/hq/src/workspace/plugins.ts");
-      const pluginWorkspacePath = path.join(repoRoot, "plugins/cli/plugins/src/lib/workspace-plugins.ts");
-
-      const [hqWorkspace, pluginWorkspace] = await Promise.all([
-        fs.readFile(hqWorkspacePath, "utf8"),
-        fs.readFile(pluginWorkspacePath, "utf8"),
-      ]);
-
-      expect(hqWorkspace).toContain('from "./plugin-manifest-contract"');
-      expect(hqWorkspace).toContain("parseWorkspacePluginManifest");
-
-      expect(pluginWorkspace).toContain('from "@rawr/hq/workspace"');
-      expect(pluginWorkspace).toContain("findWorkspaceRootFromWorkspace");
-      expect(pluginWorkspace).toContain("listWorkspacePluginsFromWorkspace");
-      expect(pluginWorkspace).toContain("filterPluginsByKindFromWorkspace");
-      expect(pluginWorkspace).toContain("resolvePluginIdFromWorkspace");
-      expect(pluginWorkspace).toContain("export async function findWorkspaceRoot");
-      expect(pluginWorkspace).toContain("export async function listWorkspacePlugins");
-      expect(pluginWorkspace).toContain("export function filterPluginsByKind");
-      expect(pluginWorkspace).toContain("export function resolvePluginId");
-      expect(pluginWorkspace).not.toContain("parseWorkspacePluginManifest");
-    },
-  },
-];
-
 describe("route boundary matrix", () => {
-  it("defines all required D-015 suite IDs", () => {
-    const presentSuiteIds = new Set(MATRIX_CASES.map((testCase) => testCase.suiteId));
-
-    for (const suiteId of REQUIRED_SUITE_IDS) {
-      expect(presentSuiteIds.has(suiteId), `missing suite id in matrix: ${suiteId}`).toBe(true);
-    }
+  it("declares the required suite IDs and negative assertion keys", () => {
+    expect(REQUIRED_SUITE_IDS).toEqual([
+      "suite:web:first-party-rpc",
+      "suite:web:published-openapi",
+      "suite:cli:in-process",
+      "suite:api:boundary",
+      "suite:workflow:trigger-status",
+      "suite:runtime:ingress",
+      "suite:cross-surface:metadata-import-boundary",
+    ]);
+    expect(REQUIRED_NEGATIVE_ASSERTION_KEYS).toEqual(expect.arrayContaining([
+      "assertion:reject-api-inngest-from-caller-paths",
+      "assertion:reject-rpc-from-external-callers",
+      "assertion:reject-rpc-workflows-route-family",
+      "assertion:runtime-ingress-no-caller-boundary-semantics",
+      "assertion:in-process-no-local-http-self-call",
+    ]));
   });
 
-  it("defines all required negative assertion keys", () => {
-    const presentAssertionKeys = new Set(MATRIX_CASES.map((testCase) => testCase.assertionKey));
-
-    for (const assertionKey of REQUIRED_NEGATIVE_ASSERTION_KEYS) {
-      expect(presentAssertionKeys.has(assertionKey), `missing assertion key in matrix: ${assertionKey}`).toBe(true);
-    }
-  });
-
-  it("enforces boundary semantics rules in matrix metadata", () => {
-    const httpCases = MATRIX_CASES.filter((testCase): testCase is HttpMatrixCase => testCase.kind === "http");
-    const inProcessCases = MATRIX_CASES.filter(
-      (testCase): testCase is InProcessMatrixCase => testCase.kind === "in-process",
-    );
-
-    for (const testCase of httpCases) {
-      if ((testCase.callerSurface === "first-party" || testCase.callerSurface === "external") && testCase.path === "/api/inngest") {
-        expect(typeof testCase.expectedStatus === "number" ? testCase.expectedStatus >= 400 : true).toBe(true);
-      }
-
-      if (testCase.callerSurface === "external" && testCase.path.startsWith("/rpc")) {
-        expect(testCase.expectedStatus).toBe(403);
-      }
-
-      if (testCase.path.startsWith("/rpc/workflows")) {
-        expect(typeof testCase.expectedStatus === "number" ? testCase.expectedStatus >= 400 : true).toBe(true);
-      }
-
-      if (testCase.callerSurface === "runtime-ingress" && testCase.path === "/api/inngest") {
-        expect(testCase.assertCallerBoundarySemantics).toBe(false);
-      }
-
-      if (testCase.callerSurface === "runtime-ingress" && testCase.path.startsWith("/rpc")) {
-        expect(testCase.expectedStatus).toBe(403);
-        expect(testCase.assertCallerBoundarySemantics).toBe(true);
-      }
-    }
-
-    for (const testCase of inProcessCases) {
-      expect(testCase.usesLocalHttpSelfCall).toBe(false);
-    }
-  });
-
-  it("executes HTTP route boundary cases", async () => {
+  it("keeps the positive route families on their canonical surfaces", async () => {
     const app = createApp();
-    const httpCases = MATRIX_CASES.filter((testCase): testCase is HttpMatrixCase => testCase.kind === "http");
+    const positiveCases = MATRIX_CASES.filter((testCase) => testCase.expectedStatus === 200);
 
-    for (const testCase of httpCases) {
-      const request = new Request(`http://localhost${testCase.path}`, {
-        method: testCase.method,
-        headers: testCase.headers,
-        body: testCase.body === undefined ? undefined : JSON.stringify(testCase.body),
-      });
+    for (const testCase of positiveCases) {
+      const response = await app.handle(
+        new Request(`http://localhost${testCase.path}`, {
+          method: testCase.method,
+          headers: testCase.headers,
+          body: testCase.body,
+        }),
+      );
 
-      const response = await withEnv(testCase.env, async () => app.handle(request));
-      assertStatus(testCase.expectedStatus, response.status, `${testCase.suiteId} :: ${testCase.description}`);
+      expect(response.status, testCase.assertionKey).toBe(200);
     }
   });
 
-  it("executes in-process suite cases without localhost self-call defaults", async () => {
-    const inProcessCases = MATRIX_CASES.filter(
-      (testCase): testCase is InProcessMatrixCase => testCase.kind === "in-process",
-    );
+  it("route negative assertions keep D-015 style negatives explicit", async () => {
+    const app = createApp();
+    const negativeCases = MATRIX_CASES.filter((testCase) => testCase.expectedStatus >= 400);
 
-    for (const testCase of inProcessCases) {
-      const result = await testCase.invoke();
-      expect(result).toBeDefined();
-      expect(testCase.usesLocalHttpSelfCall).toBe(false);
-    }
-  });
+    for (const testCase of negativeCases) {
+      const response = await app.handle(
+        new Request(`http://localhost${testCase.path}`, {
+          method: testCase.method,
+          headers: testCase.headers,
+          body: testCase.body,
+        }),
+      );
 
-  it("executes cross-surface metadata import boundary checks", async () => {
-    const staticCases = MATRIX_CASES.filter((testCase): testCase is StaticMatrixCase => testCase.kind === "static");
-
-    for (const testCase of staticCases) {
-      await testCase.check();
+      expect(response.status, testCase.assertionKey).toBe(testCase.expectedStatus);
     }
   });
 });

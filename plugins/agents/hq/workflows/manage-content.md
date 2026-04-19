@@ -192,7 +192,7 @@ Helper scripts provide reusable logic invoked via bash execution.
 
 Provide a quick gut-check effort estimate using **complexity × parallelism**:
 
-- **Complexity:** coordination + uncertainty (dependencies, side-effects, ambiguity)
+- **Complexity:** cross-team uncertainty (dependencies, side-effects, ambiguity)
 - **Parallelism:** scheduling freedom (independent vs serial, blocking vs non-blocking)
 
 Low-complexity/high-parallelism = fast. High-complexity/low-parallelism = slower.

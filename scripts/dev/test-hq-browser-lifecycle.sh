@@ -60,7 +60,6 @@ readonly browser_app
 readonly HQ_HOME_URL="http://localhost:5173/"
 readonly HQ_INNGEST_URL="http://localhost:8288/runs"
 readonly HQ_HDX_URL="http://localhost:8080/"
-readonly HQ_COORDINATION_URL="http://localhost:5173/coordination"
 readonly HQ_URLS=("${HQ_HOME_URL}" "${HQ_INNGEST_URL}" "${HQ_HDX_URL}")
 readonly HQ_PREFIXES=(
   "http://localhost:3000"

@@ -26,7 +26,7 @@ These are the minimum concrete Phase 1 surfaces that remain live without being t
 
 ## Archived lane
 
-These are Phase 1 false-future or dead-lane surfaces. They still exist in the hardened starting state, but they are already treated as archived and must be removed from the live lane rather than extended.
+These are Phase 1 false-future or dead-lane surfaces. They are classified as archived for the milestone and, once their archive cut lands, they must stay absent from the live tree rather than being normalized forward.
 
 ```json
 [
@@ -88,8 +88,8 @@ These checks are the root-owned Phase 1 proof band introduced by `M1-U00`.
 ```json
 {
   "bun scripts/phase-1/verify-phase1-ledger.mjs": "Validate the ledger shape, required classifications, and inventory alignment.",
-  "bun scripts/phase-1/verify-no-live-coordination.mjs": "Keep coordination classified as archived only and prevent new coordination roots.",
-  "bun scripts/phase-1/verify-no-live-support-example.mjs": "Keep support-example classified as archived only and prevent new support-example roots.",
+  "bun scripts/phase-1/verify-no-live-coordination.mjs": "Keep coordination classified as archived only, absent from the live tree, and backed by archive lessons.",
+  "bun scripts/phase-1/verify-no-live-support-example.mjs": "Keep support-example classified as archived only, absent from the live tree, and backed by archive lessons.",
   "bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs": "Freeze the current plugins/agents topology and keep plugins/agents/hq parked in place.",
   "bun scripts/phase-1/verify-no-old-operational-packages.mjs": "Freeze the residual import surface for old operational owners until HQ Ops absorbs them.",
   "bun scripts/phase-1/verify-no-legacy-hq-imports.mjs": "Freeze the residual @rawr/hq facade imports until M1-U04 removes them.",

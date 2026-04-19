@@ -282,9 +282,9 @@ async function verifyHostCompositionGuard() {
     "host realization must own executable surface merging instead of reaching through @rawr/hq-sdk/composition",
   );
   assertCondition(
-    hasNamedImport(workflowRuntimeAst, "@rawr/plugin-workflows-coordination/server", "createCoordinationWorkflowRuntimeAdapter") &&
-      hasExportedFunction(workflowRuntimeAst, "createRawrWorkflowRuntime") &&
+    hasExportedFunction(workflowRuntimeAst, "createRawrWorkflowRuntime") &&
       workflowRuntimeSource.includes("resolveRawrWorkflowInngestBaseUrl") &&
+      !workflowRuntimeSource.includes("createCoordinationWorkflowRuntimeAdapter") &&
       !source.includes("createCoordinationWorkflowRuntimeAdapter"),
     "workflow runtime adapter construction must live in the host-owned workflow runtime home instead of inline in rawr.ts",
   );
@@ -301,56 +301,29 @@ async function verifyRouteNegativeAssertions() {
     "route boundary matrix must include /rpc/workflows route-family rejection assertion key",
   );
   assertCondition(
-    hasRouteRegistration(ast, "/rpc/workflows/coordination/workflows") || source.includes("/rpc/workflows/coordination/workflows"),
+    hasRouteRegistration(ast, "/rpc/workflows/state/getRuntimeState") || source.includes("/rpc/workflows/state/getRuntimeState"),
     "route boundary matrix must explicitly cover /rpc/workflows route family",
   );
 }
 
 async function verifyObservabilityContract() {
-  await mustExist("services/coordination/src/domain/events.ts");
-  await mustExist("services/coordination/test/run-lifecycle-telemetry.test.ts");
-  await mustExist("plugins/workflows/coordination/test/observability.test.ts");
+  await mustExist("apps/server/test/ingress-signature-observability.test.ts");
+  await mustExist("apps/server/test/logging-correlation.test.ts");
 }
 
 async function verifyTelemetryContract() {
   await Promise.all([
     mustExist("scripts/phase-c/verify-telemetry-contract.mjs"),
-    mustExist("services/coordination/src/domain/events.ts"),
-    mustExist("services/coordination/test/run-lifecycle-telemetry.test.ts"),
-    mustExist("plugins/workflows/coordination/src/trace-links.ts"),
-    mustExist("plugins/workflows/coordination/test/observability.test.ts"),
     mustExist("apps/server/test/ingress-signature-observability.test.ts"),
+    mustExist("apps/server/test/logging-correlation.test.ts"),
   ]);
 
-  const [serviceEventsSource, traceLinksSource, phaseCTelemetryVerifierSource, packageJsonRaw] = await Promise.all([
-    fs.readFile(path.join(root, "services/coordination/src/domain/events.ts"), "utf8"),
-    fs.readFile(path.join(root, "plugins/workflows/coordination/src/trace-links.ts"), "utf8"),
+  const [phaseCTelemetryVerifierSource, packageJsonRaw] = await Promise.all([
     fs.readFile(path.join(root, "scripts/phase-c/verify-telemetry-contract.mjs"), "utf8"),
     fs.readFile(path.join(root, "package.json"), "utf8"),
   ]);
   const packageJson = JSON.parse(packageJsonRaw);
   const scripts = packageJson.scripts ?? {};
-
-  assertCondition(
-    /export\s+const\s+REQUIRED_RUN_LIFECYCLE_EVENT_TYPES\s*=/.test(serviceEventsSource),
-    "service events.ts must export REQUIRED_RUN_LIFECYCLE_EVENT_TYPES",
-  );
-  assertCondition(
-    /export\s+const\s+REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT\s*=/.test(serviceEventsSource),
-    "service events.ts must export REQUIRED_RUN_LIFECYCLE_STATUS_BY_EVENT",
-  );
-  assertCondition(
-    /assertRunLifecycleStatusContract\s*\(\s*input\.type\s*,\s*input\.status\s*\)/.test(serviceEventsSource),
-    "service events.ts must enforce lifecycle status contract",
-  );
-  assertCondition(
-    /export\s+type\s+CreateDeskEventInput\s*=/.test(serviceEventsSource),
-    "service events.ts must export CreateDeskEventInput",
-  );
-  assertCondition(
-    /export\s+type\s+TraceLinkOptions\s*=/.test(traceLinksSource),
-    "workflow plugin trace-links.ts must export TraceLinkOptions",
-  );
   assertCondition(
     phaseCTelemetryVerifierSource.includes("phase-c telemetry contract verified"),
     "phase-c telemetry verifier must remain the source-of-truth structural gate",

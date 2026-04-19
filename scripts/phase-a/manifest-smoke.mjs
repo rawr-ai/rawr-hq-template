@@ -77,9 +77,7 @@ if (mode === "completion") {
       manifestSource.includes("export function createRawrHqManifest") &&
       manifestSource.includes("plugins: {") &&
       manifestSource.includes("api: apiPlugins") &&
-      manifestSource.includes("workflows: workflowPlugins") &&
-      manifestSource.includes("registerCoordinationWorkflowPlugin") &&
-      manifestSource.includes("registerSupportExampleWorkflowPlugin") &&
+      manifestSource.includes("workflows: {} as const") &&
       !manifestSource.includes("createInngestServeHandler") &&
       !manifestSource.includes("new Inngest(") &&
       !manifestSource.includes("createWorkflowRouteHarness"),
@@ -100,7 +98,8 @@ if (mode === "completion") {
     ok:
       !manifestSource.includes("rawrHqWorkflowCapabilities") &&
       manifestSource.includes("plugins: {") &&
-      manifestSource.includes("workflows: workflowPlugins"),
+      manifestSource.includes("api: apiPlugins") &&
+      manifestSource.includes("workflows: {} as const"),
   });
   requiredChecks.push({
     label: "host consumes host-owned workflow route seam",

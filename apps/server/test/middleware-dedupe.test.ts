@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
 import {
   assertHeavyMiddlewareDedupeMarkers,
   RAWR_MIDDLEWARE_DEDUPE_MARKERS,
@@ -33,10 +32,7 @@ const RPC_AUTH_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISIO
 
 async function createRouteRuntimeDeps() {
   const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-d1-dedupe-"));
-  const runtime = createCoordinationWorkflowRuntimeAdapter({
-    repoRoot,
-    inngestBaseUrl: "http://localhost:8288",
-  });
+  const runtime = { repoRoot, inngestBaseUrl: "http://localhost:8288" };
   const inngestClient = {
     send: async () => ({ ids: ["evt-d1-dedupe"] }),
   } as unknown as Inngest;
@@ -46,7 +42,7 @@ async function createRouteRuntimeDeps() {
 
 describe("middleware dedupe", () => {
   it("caches heavy middleware marker values per request", () => {
-    const request = new Request("http://localhost/rpc/coordination/listWorkflows");
+    const request = new Request("http://localhost/rpc/state/getRuntimeState");
     let evaluationCount = 0;
 
     const first = resolveRequestScopedMiddlewareValue(request, RPC_AUTH_MARKER, () => {
@@ -64,7 +60,7 @@ describe("middleware dedupe", () => {
   });
 
   it("shares marker cache across contexts for the same request", () => {
-    const request = new Request("http://localhost/rpc/coordination/listWorkflows");
+    const request = new Request("http://localhost/rpc/state/getRuntimeState");
     const contextA = createRequestScopedBoundaryContext(request, TEST_DEPS);
     const contextB = createRequestScopedBoundaryContext(request, TEST_DEPS);
 
@@ -76,7 +72,7 @@ describe("middleware dedupe", () => {
   });
 
   it("enforces heavy middleware marker policy for request contexts", () => {
-    const request = new Request("http://localhost/rpc/coordination/listWorkflows");
+    const request = new Request("http://localhost/rpc/state/getRuntimeState");
     const context = createRequestScopedBoundaryContext(request, TEST_DEPS);
 
     expect(() =>
@@ -101,7 +97,7 @@ describe("middleware dedupe", () => {
     });
 
     const res = await app.handle(
-      new Request("http://localhost/rpc/coordination/listWorkflows", {
+      new Request("http://localhost/rpc/state/getRuntimeState", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),
@@ -126,7 +122,7 @@ describe("middleware dedupe", () => {
     });
 
     const res = await app.handle(
-      new Request("http://localhost/rpc/coordination/listWorkflows", {
+      new Request("http://localhost/rpc/state/getRuntimeState", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: {} }),

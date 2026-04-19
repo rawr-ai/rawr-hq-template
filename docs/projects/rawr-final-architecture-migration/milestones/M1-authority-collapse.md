@@ -131,7 +131,7 @@ issues:
     blocked_by: []
   - id: M1-U01
     title: "Archive false futures"
-    status: planned
+    status: done
     blocked_by: [M1-U00]
   - id: M1-U02
     title: "Reserve the canonical HQ Ops seam"
@@ -193,6 +193,7 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 - Issue doc: [M1-U01](../issues/M1-U01-archive-false-futures.md)
 - Focus: remove live `coordination` and `support-example`, while freezing the current HQ marketplace plugin lane in place for operational continuity.
 - Stop-gate: false futures are no longer present in live inventory, runtime, or registration paths.
+- Traceability: branch `agent-FARGO-M1-U01-archive-false-futures`; archive lesson docs landed at `docs/archive/coordination/lessons.md` and `docs/archive/support-example/lessons.md`; `sync:check`, `phase-1:gates:baseline`, `nx test @rawr/plugin-mfe-demo`, HQ managed-stack status, and archive route probes passed; `rawr plugins sync @rawr/plugin-hq --dry-run` still resolves the preserved lane, with conflict-free verification via `--dry-run --force` because local Codex/Claude targets already have divergent installed content.
 
 ### M1-U02: Reserve the canonical HQ Ops seam
 

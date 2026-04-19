@@ -3,23 +3,16 @@ import {
   type MaterializedApiPluginRegistration,
 } from "@rawr/hq-sdk/apis";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
-import type { CoordinationApiPluginRegistration } from "@rawr/plugin-api-coordination/server";
 import type { ExampleTodoApiPluginRegistration } from "@rawr/plugin-api-example-todo/server";
 import type { StateApiPluginRegistration } from "@rawr/plugin-api-state/server";
-import type { CoordinationWorkflowPluginRegistration } from "@rawr/plugin-workflows-coordination/server";
-import type { SupportExampleWorkflowPluginRegistration } from "@rawr/plugin-workflows-support-example/server";
 import type { RawrHostSatisfiers } from "./host-satisfiers";
 
 export type RawrHostDeclarations = Readonly<{
   api: Readonly<{
-    coordination: CoordinationApiPluginRegistration;
     state: StateApiPluginRegistration;
     exampleTodo: ExampleTodoApiPluginRegistration;
   }>;
-  workflows: Readonly<{
-    supportExample: SupportExampleWorkflowPluginRegistration;
-    coordination: CoordinationWorkflowPluginRegistration;
-  }>;
+  workflows: Readonly<Record<string, never>>;
 }>;
 
 /**
@@ -51,17 +44,10 @@ function bindRawrHqApiPlugins(input: {
   declarations: RawrHostDeclarations;
   satisfiers: RawrHostSatisfiers;
 }) {
-  const coordination = input.declarations.api.coordination;
   const state = input.declarations.api.state;
   const exampleTodo = input.declarations.api.exampleTodo;
 
   return [
-    {
-      ...coordination,
-      ...coordination.contribute!({
-        resolveClient: input.satisfiers.coordination.resolveWorkflowClient,
-      }),
-    } satisfies MaterializedApiPluginRegistration,
     {
       ...state,
       ...state.contribute!({
@@ -81,23 +67,8 @@ function bindRawrHqWorkflowPlugins(input: {
   declarations: RawrHostDeclarations;
   satisfiers: RawrHostSatisfiers;
 }) {
-  const supportExample = input.declarations.workflows.supportExample;
-  const coordination = input.declarations.workflows.coordination;
-
-  return [
-    {
-      ...supportExample,
-      ...supportExample.contribute!({
-        resolveSupportExampleClient: input.satisfiers.supportExample.resolveClient,
-      }),
-    } satisfies WorkflowPluginRegistration,
-    {
-      ...coordination,
-      ...coordination.contribute!({
-        resolveAuthoringClient: input.satisfiers.coordination.resolveWorkflowClient,
-      }),
-    } satisfies WorkflowPluginRegistration,
-  ] as const;
+  void input;
+  return [] as const satisfies readonly WorkflowPluginRegistration[];
 }
 
 export type RawrHostBoundRolePlan = Readonly<{

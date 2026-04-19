@@ -4,20 +4,20 @@ export function registerServer(app: any, _ctx: { baseUrl: string }) {
   app.get("/mfe-demo/health", () => ({
     ok: true,
     plugin: name,
-    capability: "support-example",
-    exampleDomain: true,
+    capability: "demo-plugin",
+    demo: true,
   }));
 
-  app.get("/mfe-demo/support-example/status", () => ({
+  app.get("/mfe-demo/status", () => ({
     ok: true,
     plugin: name,
-    capability: "support-example",
-    exampleDomain: true,
+    capability: "demo-plugin",
+    demo: true,
     routeHints: {
       firstPartyDefault: {
         transport: "RPCLink",
-        triggerRun: "POST /rpc (procedure: triggerSupportExample)",
-        getStatus: "POST /rpc (procedure: getSupportExampleStatus; optional: { runId })",
+        status: "POST /rpc/state/getRuntimeState",
+        publication: "GET /api/orpc/exampleTodo/tasks/{id}",
       },
     },
   }));

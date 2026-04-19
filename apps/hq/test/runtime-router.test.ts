@@ -20,7 +20,6 @@ describe("hq app declaration seam guard", () => {
     expect(manifestSource).not.toContain("createRouterClient(");
     expect(manifestSource).not.toContain("materializeManifestBridgeSurfaces");
     expect(manifestSource).not.toContain("createEmbeddedInMemoryDbPoolAdapter");
-    expect(manifestSource).not.toContain("createCoordinationClient(");
     expect(manifestSource).not.toContain("createStateClient(");
     expect(manifestSource).not.toContain("hostLogger");
   });

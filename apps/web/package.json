@@ -8,18 +8,13 @@
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --project web",
-    "test:visual": "playwright test test/coordination.visual.test.ts",
-    "test:visual:update": "playwright test test/coordination.visual.test.ts --update-snapshots"
+    "test": "vitest run --project web"
   },
   "dependencies": {
     "@inngest/workflow-kit": "0.1.3",
     "@orpc/client": "^1.13.5",
-    "@rawr/coordination": "workspace:*",
     "@rawr/orpc-client": "workspace:*",
-    "@rawr/plugin-api-coordination": "workspace:*",
     "@rawr/plugin-api-state": "workspace:*",
-    "@rawr/plugin-workflows-coordination": "workspace:*",
     "@rawr/ui-sdk": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -31,7 +26,6 @@
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
-    "@playwright/test": "^1.56.1",
     "autoprefixer": "^10.4.21",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",

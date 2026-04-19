@@ -13,7 +13,7 @@ This file defines what belongs in reflection and what does not.
 ## Belongs
 
 - Repeated workflow patterns across tasks.
-- Collaboration norms that improve coordination.
+- Collaboration norms that improve joint execution.
 - Invariants that stayed true across a successful workflow.
 - Reusable trap warnings and sequencing guidance.
 - User preferences about *how* work should be done when repeatedly observed and explicitly framed as preference, not hidden policy.

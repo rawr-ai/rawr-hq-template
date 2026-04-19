@@ -12,11 +12,7 @@ const includes = [
 
 export default defineConfig({
   test: {
-    exclude: [
-      "**/dist/**",
-      "**/node_modules/**",
-      "**/apps/web/test/coordination.visual.test.ts",
-    ],
+    exclude: ["**/dist/**", "**/node_modules/**"],
     // Temporary alignment note:
     // Project package.json test scripts currently pin `vitest run --project <name>`
     // so `nx run <project>:test` stays project-scoped when Vitest resolves this
@@ -61,18 +57,8 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("services/coordination"),
-        test: { name: "coordination", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
         root: r("services/chatgpt-corpus"),
         test: { name: "chatgpt-corpus", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("plugins/workflows/coordination"),
-        test: { name: "plugin-workflows-coordination", environment: "node", include: [...includes] },
       },
       {
         extends: true,
@@ -93,11 +79,6 @@ export default defineConfig({
         extends: true,
         root: r("services/state"),
         test: { name: "state", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("services/support-example"),
-        test: { name: "support-example", environment: "node", include: [...includes] },
       },
       {
         extends: true,

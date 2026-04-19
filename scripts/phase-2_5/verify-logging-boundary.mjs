@@ -9,6 +9,8 @@ import {
 
 await Promise.all([
   mustExist("apps/server/src/logging.ts"),
+  mustExist("apps/server/src/host-composition.ts"),
+  mustExist("apps/server/src/host-satisfiers.ts"),
   mustExist("apps/server/src/orpc.ts"),
   mustExist("apps/server/src/rawr.ts"),
   mustExist("apps/server/test/logging-correlation.test.ts"),
@@ -17,9 +19,11 @@ await Promise.all([
   mustExist("apps/server/package.json"),
 ]);
 
-const [scripts, loggingSource, orpcSource, rawrSource, manifestSource, serverPackageRaw] = await Promise.all([
+const [scripts, loggingSource, hostCompositionSource, hostSatisfiersSource, orpcSource, rawrSource, manifestSource, serverPackageRaw] = await Promise.all([
   readPackageScripts(),
   readFile("apps/server/src/logging.ts"),
+  readFile("apps/server/src/host-composition.ts"),
+  readFile("apps/server/src/host-satisfiers.ts"),
   readFile("apps/server/src/orpc.ts"),
   readFile("apps/server/src/rawr.ts"),
   readFile("apps/hq/src/manifest.ts"),
@@ -31,7 +35,7 @@ const serverPackage = JSON.parse(serverPackageRaw);
 assertScriptEquals(
   scripts,
   "phase-2_5:gate:logging",
-  "bun scripts/phase-2_5/verify-logging-boundary.mjs && bunx vitest run --project server apps/server/test/logging-correlation.test.ts && ! rg -n \"from \\\"pino\\\"|from 'pino'\" services/example-todo services/support-example",
+  "bun scripts/phase-2_5/verify-logging-boundary.mjs && bunx vitest run --project server apps/server/test/logging-correlation.test.ts && ! rg -n \"from \\\"pino\\\"|from 'pino'\" services/example-todo",
 );
 
 assertCondition(
@@ -61,12 +65,17 @@ assertCondition(
 );
 assertCondition(
   rawrSource.includes('from "./logging"')
-    && rawrSource.includes("createRawrHqManifest")
     && rawrSource.includes("createHostLoggerAdapter")
-    && manifestSource.includes("hostLogger")
+    && rawrSource.includes("createRawrHostComposition")
+    && hostCompositionSource.includes("createRawrHqManifest")
+    && hostCompositionSource.includes("createRawrHostSatisfiers")
+    && hostCompositionSource.includes("hostLogger: input.hostLogger")
+    && hostSatisfiersSource.includes("createRawrHostSatisfiers")
+    && hostSatisfiersSource.includes("hostLogger: HostServiceLogger")
+    && !manifestSource.includes("hostLogger")
     && !manifestSource.includes("apps/server/src/logging")
     && !manifestSource.includes('host-adapters/logger/embedded-placeholder'),
-  "server host must inject the logger adapter into the app-owned manifest seam instead of keeping host logging inside apps/hq",
+  "server host must inject the logger adapter through host-composition/host-satisfiers while apps/hq manifest stays declaration-only",
 );
 assertCondition(
   typeof serverPackage.dependencies?.pino === "string" && serverPackage.dependencies.pino.trim() !== "",

@@ -26,6 +26,15 @@ export async function readJson(relPath) {
   return JSON.parse(await readFile(relPath));
 }
 
+export async function pathExists(relPath) {
+  try {
+    await fs.access(path.join(root, relPath));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function readPackageJson(relPath = "package.json") {
   return readJson(relPath);
 }

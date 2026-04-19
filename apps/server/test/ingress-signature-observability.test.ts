@@ -43,23 +43,22 @@ describe("ingress signature observability", () => {
         new Request("http://localhost/api/inngest", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name: "support-example/run.requested", data: {} }),
+          body: JSON.stringify({ name: "exampleTodo/task.created", data: {} }),
         }),
       );
       expect(ok).toBe(true);
     } finally {
       for (const [key, value] of Object.entries(prev)) {
-        if (value === undefined) delete (process.env as any)[key];
-        else (process.env as any)[key] = value;
+        if (value === undefined) delete (process.env as Record<string, string | undefined>)[key];
+        else (process.env as Record<string, string | undefined>)[key] = value;
       }
     }
   });
 
-  it("rejects invalid ingress signatures before telemetry side effects", async () => {
+  it("rejects invalid ingress signatures before host side effects", async () => {
     const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-ingress-observability-"));
     tempDirs.push(fixtureRoot);
-    const runId = "run-ingress-observability";
-    const timelinePath = path.join(fixtureRoot, ".rawr", "coordination", "timelines", `${runId}.json`);
+    const runtimeLogPath = path.join(fixtureRoot, ".rawr", "hq", "runtime.log");
 
     const previousSigningKey = process.env.INNGEST_SIGNING_KEY;
     const previousSigningKeyFallback = process.env.INNGEST_SIGNING_KEY_FALLBACK;
@@ -75,36 +74,26 @@ describe("ingress signature observability", () => {
             "content-type": "application/json",
             "x-inngest-signature": `t=${Math.floor(Date.now() / 1000)}&s=deadbeef`,
           },
-          body: JSON.stringify({
-            name: "coordination/workflow.run",
-            data: { runId, workflowId: "wf-ingress", input: {} },
-          }),
+          body: JSON.stringify({ name: "exampleTodo/task.created", data: { id: "t-1" } }),
         }),
       );
 
       expect(response.status).toBe(403);
       await expect(response.text()).resolves.toBe("forbidden");
-      await expect(pathExists(timelinePath)).resolves.toBe(false);
+      await expect(pathExists(runtimeLogPath)).resolves.toBe(false);
     } finally {
-      if (previousSigningKey === undefined) {
-        delete process.env.INNGEST_SIGNING_KEY;
-      } else {
-        process.env.INNGEST_SIGNING_KEY = previousSigningKey;
-      }
+      if (previousSigningKey === undefined) delete process.env.INNGEST_SIGNING_KEY;
+      else process.env.INNGEST_SIGNING_KEY = previousSigningKey;
 
-      if (previousSigningKeyFallback === undefined) {
-        delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
-      } else {
-        process.env.INNGEST_SIGNING_KEY_FALLBACK = previousSigningKeyFallback;
-      }
+      if (previousSigningKeyFallback === undefined) delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
+      else process.env.INNGEST_SIGNING_KEY_FALLBACK = previousSigningKeyFallback;
     }
   });
 
   it("cannot be bypassed by spoofed caller-surface or auth headers", async () => {
     const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-ingress-spoof-headers-"));
     tempDirs.push(fixtureRoot);
-    const runId = "run-ingress-spoof-headers";
-    const timelinePath = path.join(fixtureRoot, ".rawr", "coordination", "timelines", `${runId}.json`);
+    const runtimeLogPath = path.join(fixtureRoot, ".rawr", "hq", "runtime.log");
 
     const previousSigningKey = process.env.INNGEST_SIGNING_KEY;
     const previousSigningKeyFallback = process.env.INNGEST_SIGNING_KEY_FALLBACK;
@@ -124,40 +113,19 @@ describe("ingress signature observability", () => {
             "x-rawr-service-auth": "verified",
             "x-rawr-cli-auth": "verified",
           },
-          body: JSON.stringify({
-            name: "coordination/workflow.run",
-            data: { runId, workflowId: "wf-ingress-spoof", input: {} },
-          }),
+          body: JSON.stringify({ name: "exampleTodo/task.created", data: { id: "t-1" } }),
         }),
       );
 
       expect(response.status).toBe(403);
       await expect(response.text()).resolves.toBe("forbidden");
-      await expect(pathExists(timelinePath)).resolves.toBe(false);
+      await expect(pathExists(runtimeLogPath)).resolves.toBe(false);
     } finally {
-      if (previousSigningKey === undefined) {
-        delete process.env.INNGEST_SIGNING_KEY;
-      } else {
-        process.env.INNGEST_SIGNING_KEY = previousSigningKey;
-      }
+      if (previousSigningKey === undefined) delete process.env.INNGEST_SIGNING_KEY;
+      else process.env.INNGEST_SIGNING_KEY = previousSigningKey;
 
-      if (previousSigningKeyFallback === undefined) {
-        delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
-      } else {
-        process.env.INNGEST_SIGNING_KEY_FALLBACK = previousSigningKeyFallback;
-      }
+      if (previousSigningKeyFallback === undefined) delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
+      else process.env.INNGEST_SIGNING_KEY_FALLBACK = previousSigningKeyFallback;
     }
-  });
-
-  it("preserves caller route-family behavior while ingress checks are enforced", async () => {
-    const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-ingress-route-family-"));
-    tempDirs.push(fixtureRoot);
-    const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot, enabledPluginIds: new Set() });
-    const response = await app.handle(new Request("http://localhost/api/workflows/support-example/triage/status"));
-
-    expect(response.status).toBe(200);
-    const payload = (await response.json()) as { capability?: string; healthy?: boolean };
-    expect(payload.capability).toBe("support-example");
-    expect(payload.healthy).toBe(true);
   });
 });
