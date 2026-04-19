@@ -82,3 +82,32 @@ Out of scope:
 ### Paper Trail
 - [RAWR_Architecture_Migration_Plan.md](../resources/RAWR_Architecture_Migration_Plan.md)
 - [phase-2-entry-conditions.md](../../migration/phase-2-entry-conditions.md)
+
+### Prework Results (Live)
+
+#### 1) The bridge is still the entire live app boot path
+- `apps/hq/server.ts` imports `bootstrapRawrHqServerViaLegacyCutover` and `startRawrHqServerViaLegacyCutover`
+- `apps/hq/async.ts` and `apps/hq/dev.ts` also still import from `./legacy-cutover`
+- `apps/hq/src/index.ts` re-exports `../legacy-cutover`
+- `apps/hq/package.json` still publishes `./legacy-cutover`
+
+#### 2) Server runtime materialization still depends on the bridge
+- `apps/server/src/rawr.ts` imports `createRawrHqLegacyRouteAuthority` from `@rawr/hq-app/legacy-cutover`
+- `createHostInngestBundle(...)` and `registerRawrRoutes(...)` still derive runtime surfaces from that legacy authority
+- `apps/server/src/bootstrap.ts` still boots directly through host-owned loading and route/plugin mounting
+
+#### 3) Existing runtime packages are not yet the canonical answer
+- `packages/bootgraph/src/index.ts` is only a reservation constant today
+- there is no `packages/runtime-compiler` yet
+- `packages/runtime-context/src/index.ts` is still a type-only support seam, not a canonical app/runtime boot path
+
+#### 4) Practical implication for implementation
+`M2-U00` cannot succeed by editing only `apps/hq/server.ts`. The minimum real cut likely needs coordinated changes across:
+- `apps/hq/server.ts`
+- `apps/hq/src/index.ts`
+- `apps/hq/package.json`
+- `apps/server/src/rawr.ts`
+- `apps/server/src/bootstrap.ts`
+- `packages/bootgraph/**`
+- a new `packages/runtime-compiler/**`
+- the thin Elysia runtime harness seam
