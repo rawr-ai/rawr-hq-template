@@ -56,6 +56,7 @@ const canonicalLegacySurfaceFiles = [
 ];
 
 await Promise.all([
+  mustExist("apps/hq/rawr.hq.ts"),
   mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/cli/src/commands/tools/export.ts"),
   mustExist("apps/cli/src/commands/workflow/demo-mfe.ts"),
@@ -67,9 +68,10 @@ await Promise.all([
   mustExist("scripts/phase-2_5/verify-closure-allowlist.mjs"),
 ]);
 
-const [scripts, manifestSource, toolsExportSource, demoMfeSource, runbookSource, apiProofSource, rawrTestSource] =
+const [scripts, shellSource, manifestCompatSource, toolsExportSource, demoMfeSource, runbookSource, apiProofSource, rawrTestSource] =
   await Promise.all([
     readPackageScripts(),
+    readFile("apps/hq/rawr.hq.ts"),
     readFile("apps/hq/src/manifest.ts"),
     readFile("apps/cli/src/commands/tools/export.ts"),
     readFile("apps/cli/src/commands/workflow/demo-mfe.ts"),
@@ -97,12 +99,18 @@ assertScriptEquals(
 assertCondition(!("dev:up" in scripts), "package.json must not define bun run dev:up");
 
 assertCondition(
-  !manifestSource.includes("./plugins/api/support-example") && !manifestSource.includes("registerSupportExampleApiPlugin"),
-  "apps/hq/src/manifest.ts must not import or register the legacy support-example API plugin",
+  !shellSource.includes("./plugins/api/support-example") && !shellSource.includes("registerSupportExampleApiPlugin"),
+  "apps/hq/rawr.hq.ts must not import or register the legacy support-example API plugin",
 );
 assertCondition(
-  /const composedOrpcRouter = \{\s*\.\.\.coordinationApiPlugin\.router,\s*\.\.\.stateApiPlugin\.router,\s*\.\.\.exampleTodoApiPlugin\.router,\s*\};/s.test(manifestSource),
-  "apps/hq/src/manifest.ts must compose canonical API projections from coordination, state, and example-todo plugins",
+  shellSource.includes("registerStateApiPlugin") &&
+    shellSource.includes("registerExampleTodoApiPlugin") &&
+    !shellSource.includes("registerCoordinationApiPlugin"),
+  "apps/hq/rawr.hq.ts must compose canonical API projections from state and example-todo plugins only",
+);
+assertCondition(
+  manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
+  "apps/hq/src/manifest.ts must remain a thin compatibility forwarder to rawr.hq.ts",
 );
 assertCondition(
   !toolsExportSource.includes("support-example") && !toolsExportSource.includes("supportExample"),

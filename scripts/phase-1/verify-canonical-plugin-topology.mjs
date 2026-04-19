@@ -19,10 +19,11 @@ for (const removedRoot of ["plugins/api", "plugins/workflows"]) {
   assertCondition(!(await pathExists(removedRoot)), `${removedRoot} must be absent from the live tree`);
 }
 
-const [rootPackageSource, tsconfigSource, pluginAgentsSource, manifestSource, hostSeamSource, webClientSource] = await Promise.all([
+const [rootPackageSource, tsconfigSource, pluginAgentsSource, shellSource, manifestCompatSource, hostSeamSource, webClientSource] = await Promise.all([
   readFile("package.json"),
   readFile("tsconfig.base.json"),
   readFile("plugins/AGENTS.md"),
+  readFile("apps/hq/rawr.hq.ts"),
   readFile("apps/hq/src/manifest.ts"),
   readFile("apps/server/src/host-seam.ts"),
   readFile("apps/web/src/ui/lib/orpc-client.ts"),
@@ -71,9 +72,15 @@ for (const forbiddenRoot of ["plugins/api/*", "plugins/workflows/*"]) {
 }
 
 assertCondition(
-  manifestSource.includes("@rawr/plugin-server-api-example-todo/server") &&
-    manifestSource.includes("@rawr/plugin-server-api-state/server"),
-  "apps/hq/src/manifest.ts must import the canonical role-first server plugin packages",
+  shellSource.includes("@rawr/plugin-server-api-example-todo/server") &&
+    shellSource.includes("@rawr/plugin-server-api-state/server"),
+  "apps/hq/rawr.hq.ts must import the canonical role-first server plugin packages",
+);
+
+assertCondition(
+  manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";') &&
+    manifestCompatSource.includes('export type { RawrHqManifest } from "../rawr.hq";'),
+  "apps/hq/src/manifest.ts must remain a thin compatibility forwarder to rawr.hq.ts",
 );
 
 assertCondition(

@@ -6,6 +6,7 @@ const boundaryRule = [
   {
     allow: [
       "../../../rawr.hq",
+      "../server/src/bootstrap",
       "@rawr/hq-app/manifest",
       "@rawr/hq-ops",
       "@rawr/hq-ops/config",
