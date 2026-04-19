@@ -19,6 +19,12 @@ export const analytics = createServiceAnalyticsMiddleware({
   }),
 });
 
+/**
+ * Planning owns a read-only repository provider even though it delegates to the
+ * execution engine for drift calculation. Keeping the provider module-local
+ * prevents preview/assessment routes from depending on host-global repositories
+ * and makes the dry-run boundary explicit at construction time.
+ */
 export const repository = createServiceProvider<{
   deps: {
     resources: AgentConfigSyncResources;

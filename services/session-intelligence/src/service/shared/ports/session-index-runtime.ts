@@ -21,6 +21,13 @@ export type SessionIndexBatch = {
   statements: SessionIndexStatement[];
 };
 
+/**
+ * Generic SQL boundary for service-owned indexes.
+ *
+ * Session-intelligence modules own table shape, SQL, freshness rules, and prune
+ * behavior. The embedding plugin owns only concrete resource instantiation:
+ * where the index lives, how SQLite is opened, and how files are deleted.
+ */
 export interface SessionIndexRuntime {
   defaultIndexPath(): string;
   execute(input: SessionIndexStatement & { indexPath: string }): Promise<void>;

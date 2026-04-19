@@ -19,6 +19,12 @@ export const analytics = createServiceAnalyticsMiddleware({
   }),
 });
 
+/**
+ * Undo is intentionally repository-backed inside the undo module instead of
+ * calling shared filesystem helpers from the host. The module is the only place
+ * that knows how to interpret plugins.sync capsules and their reverse-order
+ * application semantics.
+ */
 export const repository = createServiceProvider<{
   deps: {
     resources: AgentConfigSyncResources;

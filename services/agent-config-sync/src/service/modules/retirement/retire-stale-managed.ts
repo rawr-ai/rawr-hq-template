@@ -88,6 +88,12 @@ function pluginMatchesScope(
   return scopeAllows(scope, resolved);
 }
 
+/**
+ * Retires Codex entries only when the registry proves RAWR managed them and the
+ * source plugin is no longer active in the requested scope. The registry claims
+ * provide the exact prompt, skill, and script names to delete, avoiding a broad
+ * filesystem sweep across the user's Codex home.
+ */
 async function retireCodexHome(input: {
   codexHome: string;
   workspaceRoot: string;
@@ -165,6 +171,11 @@ async function retireCodexHome(input: {
   return { ok: true, stalePlugins, actions };
 }
 
+/**
+ * Retires Claude plugins by trusting the per-plugin sync manifest rather than
+ * the marketplace alone. Marketplace entries are cleaned afterward only for
+ * stale plugin directories that were proven to be RAWR-managed.
+ */
 async function retireClaudeHome(input: {
   claudeHome: string;
   workspaceRoot: string;
@@ -237,6 +248,11 @@ async function retireClaudeHome(input: {
   return { ok: true, stalePlugins, actions };
 }
 
+/**
+ * Aggregates retirement across homes without failing the whole run on one bad
+ * target. A failed home is reported as an action while other homes still produce
+ * stale-plugin evidence and reversible delete/update operations.
+ */
 export async function retireStaleManagedPlugins(input: {
   workspaceRoot: string;
   scope: SyncScope;

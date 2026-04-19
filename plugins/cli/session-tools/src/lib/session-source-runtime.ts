@@ -82,6 +82,11 @@ async function* walkFiles(rootDir: string): AsyncGenerator<string> {
 }
 
 async function collectCodexSources(): Promise<CodexSource[]> {
+  /**
+   * The plugin owns concrete Codex home discovery because it depends on local
+   * CLI configuration and filesystem layout. The service receives normalized
+   * roots and decides how to index them.
+   */
   const out: CodexSource[] = [];
   for (const home of getCodexHomeDirs()) {
     const sources: CodexSource[] = [
@@ -96,6 +101,11 @@ async function collectCodexSources(): Promise<CodexSource[]> {
 }
 
 async function discoverCodexFromFilesystem(sources: CodexSource[], max: number): Promise<SessionFileCandidate[]> {
+  /**
+   * This remains the monolithic discovery path for callers that do not opt into
+   * the service-owned Codex index. It keeps the newest bounded set in memory
+   * without forcing the service cache contract onto every runtime.
+   */
   const out: SessionFileCandidate[] = [];
   const seen = new Set<string>();
   for (const src of sources) {
@@ -120,6 +130,11 @@ async function discoverCodexFromFilesystem(sources: CodexSource[], max: number):
 }
 
 async function discoverCodexFilesForSource(source: CodexSessionSource): Promise<CodexSessionFile[]> {
+  /**
+   * Root-scoped enumeration is intentionally dumb: return current files and
+   * stats only. Refresh cadence, stale-row pruning, and query limits belong to
+   * the service catalog repository.
+   */
   const files: CodexSessionFile[] = [];
   for await (const f of walkFiles(source.dir)) {
     if (!f.endsWith(".jsonl") && !f.endsWith(".json")) continue;
@@ -190,6 +205,11 @@ function candidateToDiscovered(candidate: SessionFileCandidate): DiscoveredSessi
   };
 }
 
+/**
+ * CLI source runtime: resolves local Claude/Codex resources and exposes them
+ * through service ports without leaking filesystem discovery policy into the
+ * service package.
+ */
 export function createSessionSourceRuntime(): SessionSourceRuntime {
   return {
     listCodexSources: collectCodexSources,

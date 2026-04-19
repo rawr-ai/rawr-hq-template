@@ -13,6 +13,14 @@ export type DiscoverSessionsInput = {
   project?: string;
 };
 
+/**
+ * Filesystem/session source boundary for the service.
+ *
+ * Concrete runtimes know where Claude and Codex data live. The service can opt
+ * into its own Codex indexing policy only when the runtime exposes roots plus
+ * root-scoped discovery; otherwise discoverSessions remains the compatibility
+ * path for runtimes that want to own discovery end to end.
+ */
 export interface SessionSourceRuntime {
   discoverSessions(input: DiscoverSessionsInput): Promise<DiscoveredSessionFile[]>;
   listCodexSources?(): Promise<CodexSessionSource[]>;

@@ -7,6 +7,11 @@ export function createRepository(deps: {
   undoCapture?: AgentConfigSyncUndoCapture;
 }) {
   return {
+    /**
+     * The execution repository is the apply boundary for plugin sync. Dry runs
+     * intentionally discard undo capture so preview requests cannot create or
+     * refresh capsules while still exercising the same conflict policy.
+     */
     async runSync(input: SyncExecutionInput) {
       return runServiceSync({
         sourcePlugin: input.sourcePlugin,

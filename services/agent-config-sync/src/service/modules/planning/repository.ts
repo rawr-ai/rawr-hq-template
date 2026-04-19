@@ -4,6 +4,11 @@ import type { AgentConfigSyncResources } from "../../shared/resources";
 import type { SyncScope } from "../../shared/schemas";
 import type { SyncAssessment, SyncPreviewInput, TargetHomes, WorkspaceSkip, WorkspaceSyncable } from "./schemas";
 
+/**
+ * Collapses per-target execution previews into the workspace assessment shape.
+ * Metadata-only drift is still counted separately so callers can suppress noisy
+ * registry/manifest churn without losing visibility into material file drift.
+ */
 function summarizeWorkspaceRun(input: {
   runs: Awaited<ReturnType<typeof runServiceSync>>[];
   skipped: WorkspaceSkip[];
@@ -77,6 +82,11 @@ function summarizeWorkspaceRun(input: {
 
 export function createRepository(resources: AgentConfigSyncResources) {
   return {
+    /**
+     * Uses the execution engine as a planner by forcing dryRun=true. This keeps
+     * preview conflict detection identical to apply behavior while withholding
+     * undo capture and any filesystem mutation from the planning module.
+     */
     async preview(input: SyncPreviewInput) {
       return runServiceSync({
         sourcePlugin: input.sourcePlugin,
@@ -95,6 +105,12 @@ export function createRepository(resources: AgentConfigSyncResources) {
         },
       });
     },
+    /**
+     * Workspace assessment is deliberately optimistic: force and gc are enabled
+     * to ask "what would the managed state become" instead of reporting normal
+     * apply-time conflicts. Scope filtering happens before the dry-run engine so
+     * out-of-scope plugins are represented as skipped inventory, not drift.
+     */
     async assessWorkspace(input: {
       workspaceRoot: string;
       syncable: WorkspaceSyncable[];

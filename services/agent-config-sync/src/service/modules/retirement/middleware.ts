@@ -22,6 +22,12 @@ export const analytics = createServiceAnalyticsMiddleware({
   }),
 });
 
+/**
+ * Retirement has its own repository provider because stale managed plugin
+ * cleanup is a destructive service behavior, not a shared host utility. The
+ * provider injects undo capture only into this module's apply path so
+ * retirement deletes remain reversible without widening repository ownership.
+ */
 export const repository = createServiceProvider<{
   deps: {
     resources: AgentConfigSyncResources;

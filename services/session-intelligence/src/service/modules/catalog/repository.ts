@@ -64,6 +64,12 @@ function shouldRefreshRoot(
   return nowMs - scannedAtMs >= maxAgeMs;
 }
 
+/**
+ * Creates the Codex discovery-cache schema owned by the catalog module.
+ *
+ * Roots, freshness, and ordering are catalog policy, so the runtime only
+ * provides generic SQL execution against the caller's concrete index resource.
+ */
 async function initializeDiscoveryIndex(indexRuntime: SessionIndexRuntime, indexPath: string): Promise<void> {
   await indexRuntime.execute({
     indexPath,
@@ -94,6 +100,12 @@ async function initializeDiscoveryIndex(indexRuntime: SessionIndexRuntime, index
   });
 }
 
+/**
+ * Refreshes a Codex root as one replace-all cache coherence unit.
+ *
+ * Root-scoped replacement prunes deleted or renamed session files without
+ * requiring per-file tombstones in the service model.
+ */
 async function refreshCodexRootIndex(input: {
   runtime: SessionSourceRuntime & { discoverCodexSessionFiles(input: CodexSessionSource): Promise<CodexSessionFile[]> };
   indexRuntime: SessionIndexRuntime;
@@ -119,6 +131,12 @@ async function refreshCodexRootIndex(input: {
   });
 }
 
+/**
+ * Reads candidate Codex rows from the service-owned discovery cache.
+ *
+ * Bounded queries intentionally over-fetch because stat validation can prune
+ * rows whose files disappeared or changed since the last root scan.
+ */
 async function queryIndexedCodexRows(indexRuntime: SessionIndexRuntime, indexPath: string, sources: CodexSessionSource[], max: number): Promise<CodexSessionFile[]> {
   if (!sources.length) return [];
   const placeholders = sources.map(() => "?").join(",");
@@ -176,6 +194,13 @@ async function validateIndexedCodexRows(
   return max > 0 ? out.slice(0, max) : out;
 }
 
+/**
+ * Discovers Codex sessions through the service-owned discovery index when the
+ * concrete source runtime exposes low-level roots and per-root file scans.
+ *
+ * Simpler runtimes can still fall back to their monolithic discoverSessions
+ * implementation without inheriting the catalog cache policy.
+ */
 async function discoverCodexFromIndex(
   runtime: SessionSourceRuntime,
   indexRuntime: SessionIndexRuntime,
@@ -194,6 +219,7 @@ async function discoverCodexFromIndex(
   for (const source of sources) {
     const rootStat = await runtime.statFile({ path: source.dir });
     if (!rootStat) {
+      // Missing roots evict file rows and freshness state so removed Codex homes do not leak stale sessions.
       await indexRuntime.transaction({
         indexPath,
         statements: [
@@ -224,6 +250,7 @@ async function discoverCodexFromIndex(
   let rows = await queryIndexedCodexRows(indexRuntime, indexPath, sources, max);
   let validated = await validateIndexedCodexRows(runtime, indexRuntime, indexPath, rows, max);
   if (max > 0 && validated.length < max && !fullRefreshDone) {
+    // Retry from a coherent index when stale rows exhaust the bounded over-fetch window.
     for (const source of sources) {
       const rootStat = await runtime.statFile({ path: source.dir });
       if (rootStat) {

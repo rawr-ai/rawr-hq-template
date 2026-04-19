@@ -22,6 +22,12 @@ export const analytics = createServiceAnalyticsMiddleware({
   }),
 });
 
+/**
+ * Binds the execution repository inside the execution module so write-capable
+ * sync behavior cannot be reached through host-level globals. The optional undo
+ * capture is part of this module's apply boundary: planning callers never
+ * receive it, and execution repositories drop it again for dry-run requests.
+ */
 export const repository = createServiceProvider<{
   deps: {
     resources: AgentConfigSyncResources;

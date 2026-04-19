@@ -3,6 +3,10 @@ import type { SessionIndexBatch, SessionIndexRuntime, SessionIndexStatement } fr
 import { defaultSessionIndexPathSync } from "./session-paths";
 import { openSqliteDb } from "./sqlite";
 
+/**
+ * Removes the SQLite database and WAL sidecars for pathless service-owned
+ * index clears. Leaving sidecars behind can resurrect stale pages on reopen.
+ */
 async function removeIndexFiles(indexPath: string): Promise<void> {
   await fs.unlink(indexPath).catch(() => undefined);
   await fs.rm(`${indexPath}-shm`, { force: true }).catch(() => undefined);
@@ -18,6 +22,13 @@ async function withDb<T>(input: { indexPath: string }, fn: (db: Awaited<ReturnTy
   }
 }
 
+/**
+ * CLI-owned concrete SQLite adapter for the service's generic SQL port.
+ *
+ * Keeping Bun/SQLite construction here prevents the service package from
+ * depending on a host runtime while still allowing the service to own its SQL
+ * schema and cache policy.
+ */
 export function createSessionIndexRuntime(): SessionIndexRuntime {
   return {
     defaultIndexPath(): string {

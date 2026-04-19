@@ -40,6 +40,12 @@ function rolesKey(roles: RoleFilter[]): string {
   return [...new Set(roles)].sort().join(",");
 }
 
+/**
+ * Creates the service-owned search text cache schema.
+ *
+ * Roles, tool-message inclusion, and invalidation keys are semantic search
+ * policy. The SQLite runtime stays generic and does not know what rows mean.
+ */
 async function initializeSearchIndex(indexRuntime: SessionIndexRuntime, indexPath: string): Promise<void> {
   await indexRuntime.execute({
     indexPath,
@@ -94,6 +100,12 @@ async function writeCachedSearchText(indexRuntime: SessionIndexRuntime, input: S
   });
 }
 
+/**
+ * Reads or materializes a role/tool-specific search-text projection.
+ *
+ * File stat metadata is the cache contract because JSONL sessions are
+ * append-heavy and extracted text depends on role/tool filters.
+ */
 async function getSearchTextCached(input: {
   sourceRuntime: SessionSourceRuntime;
   indexRuntime: SessionIndexRuntime;
@@ -209,6 +221,10 @@ export function createRepository(sourceRuntime: SessionSourceRuntime, indexRunti
         limit: input.limit,
       });
     },
+    /**
+     * Clears either the concrete index resource or all cached projections for a
+     * single session file, depending on whether a path is supplied.
+     */
     async clearIndex(input: { indexPath: string; path?: string }) {
       if (!input.path) {
         await indexRuntime.removeIndex({ indexPath: input.indexPath });
