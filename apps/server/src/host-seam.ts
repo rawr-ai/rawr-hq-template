@@ -3,8 +3,8 @@ import {
   type MaterializedApiPluginRegistration,
 } from "@rawr/hq-sdk/apis";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
-import type { ExampleTodoApiPluginRegistration } from "@rawr/plugin-api-example-todo/server";
-import type { StateApiPluginRegistration } from "@rawr/plugin-api-state/server";
+import type { ExampleTodoApiPluginRegistration } from "@rawr/plugin-server-api-example-todo/server";
+import type { StateApiPluginRegistration } from "@rawr/plugin-server-api-state/server";
 import type { RawrHostSatisfiers } from "./host-satisfiers";
 
 export type RawrHostDeclarations = Readonly<{

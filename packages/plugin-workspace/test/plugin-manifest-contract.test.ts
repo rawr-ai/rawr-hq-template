@@ -23,7 +23,7 @@ describe("plugin workspace manifest contract", () => {
     });
   });
 
-  it("parses api and workflows discovery roots when rawr.kind matches", () => {
+  it("parses canonical runtime discovery roots when rawr.kind matches", () => {
     const apiParsed = parseWorkspacePluginManifest({
       manifest: {
         name: "@rawr/support-api",
@@ -32,8 +32,8 @@ describe("plugin workspace manifest contract", () => {
           capability: "support",
         },
       },
-      pkgJsonPath: "/repo/plugins/api/support/package.json",
-      discoveryRoot: "api",
+      pkgJsonPath: "/repo/plugins/server/api/support/package.json",
+      discoveryRoot: "server/api",
     });
 
     const workflowsParsed = parseWorkspacePluginManifest({
@@ -44,8 +44,20 @@ describe("plugin workspace manifest contract", () => {
           capability: "support",
         },
       },
-      pkgJsonPath: "/repo/plugins/workflows/support/package.json",
-      discoveryRoot: "workflows",
+      pkgJsonPath: "/repo/plugins/async/workflows/support/package.json",
+      discoveryRoot: "async/workflows",
+    });
+
+    const schedulesParsed = parseWorkspacePluginManifest({
+      manifest: {
+        name: "@rawr/support-schedules",
+        rawr: {
+          kind: "schedules",
+          capability: "support",
+        },
+      },
+      pkgJsonPath: "/repo/plugins/async/schedules/support/package.json",
+      discoveryRoot: "async/schedules",
     });
 
     expect(apiParsed).toEqual({
@@ -57,6 +69,12 @@ describe("plugin workspace manifest contract", () => {
     expect(workflowsParsed).toEqual({
       name: "@rawr/support-workflows",
       kind: "workflows",
+      capability: "support",
+    });
+
+    expect(schedulesParsed).toEqual({
+      name: "@rawr/support-schedules",
+      kind: "schedules",
       capability: "support",
     });
   });

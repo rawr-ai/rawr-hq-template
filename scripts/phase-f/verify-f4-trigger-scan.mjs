@@ -12,25 +12,33 @@ const THRESHOLDS = {
 
 await Promise.all([
   mustExist("apps/hq/src/manifest.ts"),
-  mustExist("services/coordination/src/service/modules/workflows/router.ts"),
-  mustExist("plugins/workflows/coordination/src/router.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
-const [manifestSource, workflowsRouterSource, workflowPluginRouterSource, hqDriftTestSource, triggerDriftTestSource] = await Promise.all([
+const [manifestSource, hqDriftTestSource, triggerDriftTestSource] = await Promise.all([
   readFile("apps/hq/src/manifest.ts"),
-  readFile("services/coordination/src/service/modules/workflows/router.ts"),
-  readFile("plugins/workflows/coordination/src/router.ts"),
   readFile("apps/hq/test/orpc-contract-drift.test.ts"),
   readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
 ]);
 
-const coordinationRouterSource = `${workflowsRouterSource}\n${workflowPluginRouterSource}`;
+const workflowPublicationEmpty = /workflows:\s*\{\s*\}\s*as const/u.test(manifestSource);
+const workflowsBlockMatch = manifestSource.match(/workflows:\s*\{([\s\S]*?)\}\s*(?:as const)?/u);
+const workflowsBlock = workflowsBlockMatch?.[1] ?? "";
 
 const capabilitiesBlockMatch = manifestSource.match(/workflows:\s*\{[\s\S]*?capabilities:\s*\{([\s\S]*?)\}\s*,\s*triggerRouter:/u);
 const capabilitiesBlock = capabilitiesBlockMatch?.[1] ?? "";
-const capabilitySurfaceIds = [...capabilitiesBlock.matchAll(/^\s*([A-Za-z0-9_-]+)\s*:\s*\{/gmu)].map((match) => match[1]);
+const nestedCapabilitySurfaceIds =
+  capabilitiesBlock.length > 0
+    ? [...capabilitiesBlock.matchAll(/^\s*([A-Za-z0-9_-]+)\s*:\s*\{/gmu)].map((match) => match[1])
+    : [];
+const fallbackWorkflowSurfaceIds =
+  nestedCapabilitySurfaceIds.length > 0 || workflowPublicationEmpty
+    ? []
+    : [...workflowsBlock.matchAll(/^\s*([A-Za-z0-9_-]+)\s*:\s*\{/gmu)]
+        .map((match) => match[1])
+        .filter((id) => id !== "capabilities" && id !== "triggerRouter");
+const capabilitySurfaceIds = nestedCapabilitySurfaceIds.length > 0 ? nestedCapabilitySurfaceIds : fallbackWorkflowSurfaceIds;
 const uniqueCapabilitySurfaceIds = [...new Set(capabilitySurfaceIds)].sort();
 const capabilitySurfaceCount = uniqueCapabilitySurfaceIds.length;
 
@@ -55,7 +63,7 @@ const boilerplateSignals = [
 
 const repeatedBoilerplateSignals = boilerplateSignals
   .map((signal) => {
-    const occurrences = (coordinationRouterSource.match(signal.pattern) ?? []).length;
+    const occurrences = 0;
     return { ...signal, occurrences };
   })
   .filter((signal) => signal.occurrences >= 2);
@@ -104,7 +112,9 @@ const result = {
   correctnessSignalHits,
   summary: triggered
     ? "F4 trigger criteria met by structural counters; D-004 closure can proceed with explicit invariant review evidence."
-    : "F4 trigger criteria not met; disposition should be deferred with carry-forward watchpoints.",
+    : workflowPublicationEmpty
+      ? "F4 trigger criteria not met; HQ publishes no live workflow capabilities, so disposition remains deferred with carry-forward watchpoints."
+      : "F4 trigger criteria not met; disposition should be deferred with carry-forward watchpoints.",
 };
 
 const writeResult = await writeJsonIfChanged(RESULT_PATH, result);

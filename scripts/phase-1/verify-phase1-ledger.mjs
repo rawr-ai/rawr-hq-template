@@ -27,7 +27,7 @@ const requiredPackages = [
   "packages/journal",
   "packages/security",
 ];
-const requiredParked = ["plugins/agents/hq", "plugins/api/example-todo", "plugins/api/state"];
+const requiredParked = ["plugins/agents/hq", "plugins/server/api/example-todo", "plugins/server/api/state"];
 const requiredArchived = [
   "services/coordination",
   "plugins/api/coordination",
@@ -97,23 +97,26 @@ for (const command of [
   "bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs",
   "bun scripts/phase-1/verify-no-old-operational-packages.mjs",
   "bun scripts/phase-1/verify-no-legacy-hq-imports.mjs",
+  "bun scripts/phase-1/verify-canonical-plugin-topology.mjs",
   "bun run phase-1:gates:baseline",
 ]) {
   assertCondition(ledger.verification[command], `verification map must include ${command}`);
 }
 
 const actualApps = await listDirectChildDirs("apps");
-const actualPluginApi = await listDirectChildDirs("plugins/api");
 const actualPluginCli = await listDirectChildDirs("plugins/cli");
 const actualPluginWeb = await listDirectChildDirs("plugins/web");
-const actualPluginWorkflows = await listDirectChildDirs("plugins/workflows");
+const actualPluginServerApi = await listDirectChildDirs("plugins/server/api");
+const actualPluginAsyncWorkflows = await listDirectChildDirs("plugins/async/workflows");
+const actualPluginAsyncSchedules = await listDirectChildDirs("plugins/async/schedules");
 
 for (const relPath of [
   ...actualApps,
-  ...actualPluginApi,
   ...actualPluginCli,
   ...actualPluginWeb,
-  ...actualPluginWorkflows,
+  ...actualPluginServerApi,
+  ...actualPluginAsyncWorkflows,
+  ...actualPluginAsyncSchedules,
 ]) {
   assertCondition(classified.has(relPath), `ledger must classify inventory surface ${relPath}`);
 }

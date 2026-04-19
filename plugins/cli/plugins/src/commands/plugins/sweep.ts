@@ -29,8 +29,9 @@ export function inferTypeFromPath(absPath: string): LifecycleType {
   if (normalized.includes("/plugins/cli/")) return "cli";
   if (normalized.includes("/plugins/web/")) return "web";
   if (normalized.includes("/plugins/agents/")) return "agent";
-  if (normalized.includes("/plugins/workflows/")) return "workflow";
-  if (normalized.includes("/plugins/api/")) return "composed";
+  if (normalized.includes("/plugins/async/workflows/")) return "workflow";
+  if (normalized.includes("/plugins/async/schedules/")) return "workflow";
+  if (normalized.includes("/plugins/server/api/")) return "composed";
   return "composed";
 }
 

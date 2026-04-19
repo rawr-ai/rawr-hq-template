@@ -1,7 +1,14 @@
-export const WORKSPACE_PLUGIN_KINDS = ["toolkit", "agent", "web", "api", "workflows"] as const;
+export const WORKSPACE_PLUGIN_KINDS = ["toolkit", "agent", "web", "api", "workflows", "schedules"] as const;
 export type WorkspacePluginKind = (typeof WORKSPACE_PLUGIN_KINDS)[number];
 
-export const WORKSPACE_PLUGIN_DISCOVERY_ROOTS = ["cli", "agents", "web", "api", "workflows"] as const;
+export const WORKSPACE_PLUGIN_DISCOVERY_ROOTS = [
+  "cli",
+  "agents",
+  "web",
+  "server/api",
+  "async/workflows",
+  "async/schedules",
+] as const;
 export type WorkspacePluginDiscoveryRoot = (typeof WORKSPACE_PLUGIN_DISCOVERY_ROOTS)[number];
 
 export const FORBIDDEN_LEGACY_RAWR_KEYS = ["templateRole", "channel", "publishTier", "published"] as const;
@@ -17,8 +24,9 @@ const EXPECTED_KIND_BY_ROOT: Record<WorkspacePluginDiscoveryRoot, WorkspacePlugi
   cli: "toolkit",
   agents: "agent",
   web: "web",
-  api: "api",
-  workflows: "workflows",
+  "server/api": "api",
+  "async/workflows": "workflows",
+  "async/schedules": "schedules",
 };
 
 type ManifestParseInput = {

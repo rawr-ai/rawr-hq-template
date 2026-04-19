@@ -91,8 +91,9 @@ async function listWorkspacePluginPackageDirs(workspaceRoot: string): Promise<Wo
     { rootPath: path.join(pluginsDir, "cli"), discoveryRoot: "cli" },
     { rootPath: path.join(pluginsDir, "agents"), discoveryRoot: "agents" },
     { rootPath: path.join(pluginsDir, "web"), discoveryRoot: "web" },
-    { rootPath: path.join(pluginsDir, "api"), discoveryRoot: "api" },
-    { rootPath: path.join(pluginsDir, "workflows"), discoveryRoot: "workflows" },
+    { rootPath: path.join(pluginsDir, "server", "api"), discoveryRoot: "server/api" },
+    { rootPath: path.join(pluginsDir, "async", "workflows"), discoveryRoot: "async/workflows" },
+    { rootPath: path.join(pluginsDir, "async", "schedules"), discoveryRoot: "async/schedules" },
   ];
 
   const out: WorkspacePluginDir[] = [];

@@ -1,0 +1,39 @@
+{
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "name": "plugin-server-api-state",
+  "root": "plugins/server/api/state",
+  "sourceRoot": "plugins/server/api/state/src",
+  "tags": [
+    "type:plugin",
+    "migration-slice:structural-tranche",
+    "role:server",
+    "surface:api",
+    "capability:state"
+  ],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx tsc -p plugins/server/api/state/tsconfig.json --noEmit"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"plugins/server/api/state/**/*.{js,jsx,ts,tsx}\""
+      }
+    },
+    "sync": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run sync:check --project plugin-server-api-state"
+      }
+    },
+    "structural": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun scripts/phase-03/verify-plugin-server-api-state-structural.mjs"
+      }
+    }
+  }
+}
