@@ -132,7 +132,6 @@ export default [
   },
   {
     files: ["apps/**/*.{js,jsx,ts,tsx}", "services/**/*.{js,jsx,ts,tsx}", "packages/**/*.{js,jsx,ts,tsx}", "plugins/**/*.{js,jsx,ts,tsx}"],
-    ignores: ["packages/agent-config-sync-host/src/**/*.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -140,11 +139,15 @@ export default [
           patterns: [
             {
               group: ["@rawr/agent-sync", "@rawr/agent-sync/*"],
-              message: "The legacy @rawr/agent-sync package is removed; use @rawr/agent-config-sync and @rawr/agent-config-sync-host."
+              message: "The legacy @rawr/agent-sync package is removed; use @rawr/agent-config-sync and plugin/app-local concrete resources."
             },
             {
               group: ["@rawr/session-tools", "@rawr/session-tools/*"],
-              message: "The legacy @rawr/session-tools package is removed; use @rawr/session-intelligence and @rawr/session-intelligence-host."
+              message: "The legacy @rawr/session-tools package is removed; use @rawr/session-intelligence and plugin/app-local concrete resources."
+            },
+            {
+              group: ["@rawr/*-host", "@rawr/*-host/*"],
+              message: "Service-specific host packages are forbidden. Services own semantics; plugin/app/runtime surfaces provide concrete resources."
             }
           ]
         }
@@ -182,7 +185,7 @@ export default [
           patterns: [
             {
               group: concreteSessionIntelligenceRuntimeImports,
-              message: "Session Intelligence service files must stay runtime-agnostic; keep concrete filesystem, env, and SQLite access in @rawr/session-intelligence-host."
+              message: "Session Intelligence service files must stay runtime-agnostic; concrete filesystem, env, and SQLite access belongs in the plugin/app resource binding layer."
             }
           ]
         }

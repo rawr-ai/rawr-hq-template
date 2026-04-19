@@ -46,7 +46,7 @@ Phase 2 should also begin with one explicit caution in mind:
 This slice no longer treats agent sync as a deferred package-scoped candidate.
 
 - `services/agent-config-sync` is now the canonical sync service truth
-- `packages/agent-config-sync-host` is the temporary host-runtime adapter package for concrete filesystem/process/provider concerns
+- concrete filesystem/process/provider resources are supplied by plugin/app/runtime surfaces, not by a service-specific host package
 - `services/hq-ops` remains the authority for sync-source config and layered config reads
 - true hosts still load config through their own `@rawr/hq-ops` client seams and pass resolved sync config/policy into the sync surface
 

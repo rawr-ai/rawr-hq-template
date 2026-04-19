@@ -1,6 +1,6 @@
 # Plugin Lifecycle Contract
 
-> **Canonical scope**: plugin-system changes only (`plugins/cli/*`, `plugins/web/*`, `plugins/agents/*`, `services/agent-config-sync/*`, `packages/agent-config-sync-host/*`, `plugins/cli/plugins/*`, directly related docs/tests).
+> **Canonical scope**: plugin-system changes only (`plugins/cli/*`, `plugins/web/*`, `plugins/agents/*`, `services/agent-config-sync/*`, `plugins/cli/plugins/*`, directly related docs/tests).
 > **Related**: `policy-classification.md`, `judge-template-pass-a.md`, `judge-template-pass-b.md`, `plugins/agents/hq/workflows/merge-no-policy-stack.md`
 
 ## Purpose

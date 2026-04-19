@@ -62,11 +62,6 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/agent-config-sync-host"),
-        test: { name: "agent-config-sync-host", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
         root: r("packages/plugin-workspace"),
         test: { name: "plugin-workspace", environment: "node", include: [...includes] },
       },
@@ -79,11 +74,6 @@ export default defineConfig({
         extends: true,
         root: r("services/session-intelligence"),
         test: { name: "session-intelligence", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("packages/session-intelligence-host"),
-        test: { name: "session-intelligence-host", environment: "node", include: [...includes] },
       },
       {
         extends: true,

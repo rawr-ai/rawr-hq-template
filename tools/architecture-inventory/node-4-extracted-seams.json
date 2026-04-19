@@ -15,19 +15,6 @@
         "test"
       ]
     },
-    "@rawr/agent-config-sync-host": {
-      "config": "packages/agent-config-sync-host/package.json",
-      "tags": [
-        "type:package",
-        "migration-slice:structural-tranche"
-      ],
-      "targets": [
-        "build",
-        "typecheck",
-        "test",
-        "lint"
-      ]
-    },
     "@rawr/session-intelligence": {
       "config": "services/session-intelligence/package.json",
       "tags": [
@@ -39,17 +26,6 @@
         "build",
         "sync",
         "structural",
-        "typecheck",
-        "test"
-      ]
-    },
-    "@rawr/session-intelligence-host": {
-      "config": "packages/session-intelligence-host/package.json",
-      "tags": [
-        "type:package"
-      ],
-      "targets": [
-        "build",
         "typecheck",
         "test"
       ]

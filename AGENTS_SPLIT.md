@@ -8,13 +8,12 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - You are changing shared CLI contracts or command UX.
 - You are changing shared packages:
   - `apps/cli`
-  - `packages/agent-sync`
   - `packages/core`
   - `packages/plugin-workspace`
-  - `packages/session-intelligence-host`
   - `packages/test-utils`
   - `packages/ui-sdk`
   - `services/hq-ops`
+  - `services/agent-config-sync`
   - `services/session-intelligence`
 - You are changing shared CLI projection contracts:
   - `plugins/cli/session-tools`

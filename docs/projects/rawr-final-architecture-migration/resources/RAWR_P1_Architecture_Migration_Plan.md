@@ -784,7 +784,6 @@ This slice is done when all of these pass:
   - `@rawr/cli`
   - `@rawr/plugin-plugins`
   - `@rawr/agent-config-sync`
-  - `@rawr/agent-config-sync-host`
 - targeted tests covering:
   - config merge and validation determinism
   - repo-state locking and atomic mutation
