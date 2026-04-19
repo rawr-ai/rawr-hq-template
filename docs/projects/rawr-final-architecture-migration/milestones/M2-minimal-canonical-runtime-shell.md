@@ -132,6 +132,8 @@ The rule is:
 - do not smuggle full-platform generalization or optional runtimes into that first cut
 - build `packages/runtime/substrate` from the first slice, not as a later generalization
 
+Descriptor contracts are introduced only when a slice consumes them: M2-U00 may add the minimum server-runtime declaration shapes needed to delete the bridge, and M2-U02 generalizes them through compiler/process-runtime work. There is no separate pre-Effect descriptor-only interlude.
+
 ## Global Guardrails
 
 Implementation agents should continuously anchor on these rules:
