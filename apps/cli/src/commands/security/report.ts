@@ -1,5 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
@@ -19,7 +19,7 @@ export default class SecurityReport extends RawrCommand {
     const report =
       (await createHqOpsClient(workspaceRoot ?? process.cwd()).security.getSecurityReport(
         {},
-        createHqOpsInvocation("cli.security.report"),
+        createHqOpsCallOptions("cli.security.report"),
       )) ?? (await readLatestReportFromDisk());
     const result = this.ok({ report });
     this.outputResult(result, {

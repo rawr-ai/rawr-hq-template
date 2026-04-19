@@ -1,5 +1,4 @@
 import { createClient, type Client, type CreateClientOptions } from "@rawr/session-intelligence/client";
-import { createServiceInvocationOptions } from "@rawr/hq-sdk/boundary";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type {
@@ -56,6 +55,14 @@ export type SessionIntelligenceClientFactory = () => Promise<SessionIntelligence
 
 let clientFactoryOverride: SessionIntelligenceClientFactory | null = null;
 
+type CatalogListOptions = NonNullable<Parameters<Client["catalog"]["list"]>[1]>;
+type CatalogResolveOptions = NonNullable<Parameters<Client["catalog"]["resolve"]>[1]>;
+type TranscriptsExtractOptions = NonNullable<Parameters<Client["transcripts"]["extract"]>[1]>;
+type SearchMetadataOptions = NonNullable<Parameters<Client["search"]["metadata"]>[1]>;
+type SearchContentOptions = NonNullable<Parameters<Client["search"]["content"]>[1]>;
+type SearchClearIndexOptions = NonNullable<Parameters<Client["search"]["clearIndex"]>[1]>;
+type SearchReindexOptions = NonNullable<Parameters<Client["search"]["reindex"]>[1]>;
+
 export function setSessionIntelligenceClientFactoryForTest(factory: SessionIntelligenceClientFactory | null): void {
   clientFactoryOverride = factory;
 }
@@ -89,10 +96,18 @@ function createSessionIntelligenceBoundary(): CreateClientOptions {
 function adaptRawClient(rawClient: Client): SessionIntelligenceClient {
   return {
     catalog: {
-      list: async (input) => (await rawClient.catalog.list(input, createServiceInvocationOptions("plugin-session-tools.catalog.list"))).sessions,
+      list: async (input) => {
+        const options = {
+          context: { invocation: { traceId: "plugin-session-tools.catalog.list" } },
+        } satisfies CatalogListOptions;
+        return (await rawClient.catalog.list(input, options)).sessions;
+      },
       resolve: async (input) => {
         try {
-          return await rawClient.catalog.resolve(input, createServiceInvocationOptions("plugin-session-tools.catalog.resolve"));
+          const options = {
+            context: { invocation: { traceId: "plugin-session-tools.catalog.resolve" } },
+          } satisfies CatalogResolveOptions;
+          return await rawClient.catalog.resolve(input, options);
         } catch (err) {
           return { error: errorMessage(err) };
         }
@@ -101,17 +116,33 @@ function adaptRawClient(rawClient: Client): SessionIntelligenceClient {
     transcripts: {
       extract: async ({ path, ...options }) => {
         try {
-          return await rawClient.transcripts.extract({ path, options }, createServiceInvocationOptions("plugin-session-tools.transcripts.extract"));
+          const callOptions = {
+            context: { invocation: { traceId: "plugin-session-tools.transcripts.extract" } },
+          } satisfies TranscriptsExtractOptions;
+          return await rawClient.transcripts.extract({ path, options }, callOptions);
         } catch (err) {
           return { error: errorMessage(err) };
         }
       },
     },
     search: {
-      metadata: async (input) => (await rawClient.search.metadata(input, createServiceInvocationOptions("plugin-session-tools.search.metadata"))).hits,
-      content: async (input) => (await rawClient.search.content(input, createServiceInvocationOptions("plugin-session-tools.search.content"))).hits,
+      metadata: async (input) => {
+        const options = {
+          context: { invocation: { traceId: "plugin-session-tools.search.metadata" } },
+        } satisfies SearchMetadataOptions;
+        return (await rawClient.search.metadata(input, options)).hits;
+      },
+      content: async (input) => {
+        const options = {
+          context: { invocation: { traceId: "plugin-session-tools.search.content" } },
+        } satisfies SearchContentOptions;
+        return (await rawClient.search.content(input, options)).hits;
+      },
       clearIndex: async (input) => {
-        await rawClient.search.clearIndex(input, createServiceInvocationOptions("plugin-session-tools.search.clear-index"));
+        const options = {
+          context: { invocation: { traceId: "plugin-session-tools.search.clear-index" } },
+        } satisfies SearchClearIndexOptions;
+        await rawClient.search.clearIndex(input, options);
       },
       reindex: async (input) => {
         const serviceInput = {
@@ -121,7 +152,10 @@ function adaptRawClient(rawClient: Client): SessionIntelligenceClient {
             source: session.source,
           })),
         };
-        return await rawClient.search.reindex(serviceInput, createServiceInvocationOptions("plugin-session-tools.search.reindex"));
+        const options = {
+          context: { invocation: { traceId: "plugin-session-tools.search.reindex" } },
+        } satisfies SearchReindexOptions;
+        return await rawClient.search.reindex(serviceInput, options);
       },
     },
   };

@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class SecurityCheck extends RawrCommand {
@@ -20,7 +20,7 @@ export default class SecurityCheck extends RawrCommand {
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     const report = await createHqOpsClient(workspaceRoot ?? process.cwd()).security.securityCheck(
       { mode },
-      createHqOpsInvocation("cli.security.check"),
+      createHqOpsCallOptions("cli.security.check"),
     );
 
     const result = this.ok({ report });

@@ -1,5 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
 import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
 
 export default class PluginsWebStatus extends RawrCommand {
@@ -25,7 +25,7 @@ export default class PluginsWebStatus extends RawrCommand {
       listWorkspacePlugins(workspaceRoot),
       createHqOpsClient(workspaceRoot).repoState.getState(
         {},
-        createHqOpsInvocation("plugin-plugins.web.status"),
+        createHqOpsCallOptions("plugin-plugins.web.status"),
       ),
     ]);
     const state = stateResult.state;

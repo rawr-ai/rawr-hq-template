@@ -179,14 +179,18 @@ export function createHqOpsClient(repoRoot: string) {
   return createClient(boundary);
 }
 
-export function createHqOpsInvocation(traceId: string) {
-  return {
+type HqOpsCallOptions = NonNullable<Parameters<HqOpsClient["config"]["getWorkspaceConfig"]>[1]>;
+
+export function createHqOpsCallOptions(traceId: string) {
+  const options = {
     context: {
       invocation: {
         traceId,
       },
     },
-  } as const;
+  } satisfies HqOpsCallOptions;
+
+  return options;
 }
 
 export type HqOpsClient = ReturnType<typeof createHqOpsClient>;

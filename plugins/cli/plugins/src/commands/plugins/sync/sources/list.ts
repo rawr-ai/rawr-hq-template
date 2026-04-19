@@ -1,5 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
 
 export default class PluginsSyncSourcesList extends RawrCommand {
   static description = "List explicitly-registered sync sources from ~/.rawr/config.json";
@@ -14,7 +14,7 @@ export default class PluginsSyncSourcesList extends RawrCommand {
 
     const response = await createHqOpsClient(process.cwd()).config.listGlobalSyncSources(
       {},
-      createHqOpsInvocation("plugin-plugins.sync-sources.list"),
+      createHqOpsCallOptions("plugin-plugins.sync-sources.list"),
     );
     const result = this.ok({ path: response.path, sources: response.sources });
     this.outputResult(result, {

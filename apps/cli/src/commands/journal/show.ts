@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { Args } from "@oclif/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class JournalShow extends RawrCommand {
@@ -29,7 +29,7 @@ export default class JournalShow extends RawrCommand {
     const id = String(args.id);
     const response = await createHqOpsClient(workspaceRoot).journal.getSnippet(
       { id },
-      createHqOpsInvocation("cli.journal.show"),
+      createHqOpsCallOptions("cli.journal.show"),
     );
     const snippet = response.snippet;
     if (!snippet) {

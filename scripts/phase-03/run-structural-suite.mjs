@@ -44,6 +44,7 @@ if (!project) {
 const suiteCommandsByProject = {
   "@rawr/server": {
     default: [
+      "bun scripts/phase-03/verify-projection-boundary-invocation.mjs",
       "bun run phase-a:gate:manifest-smoke-baseline",
       "bun run phase-a:gate:no-legacy-composition-authority",
       "bun run phase-a:gate:route-negative-assertions",
@@ -94,9 +95,15 @@ const suiteCommandsByProject = {
     "phase-a-exit": ["bun run phase-a:gate:legacy-metadata-hard-delete-static-guard"],
   },
   "@rawr/plugin-plugins": {
-    default: ["bun run phase-a:gate:import-boundary"],
+    default: [
+      "bun scripts/phase-03/verify-projection-boundary-invocation.mjs",
+      "bun run phase-a:gate:import-boundary",
+    ],
     "phase-a-baseline": ["bun run phase-a:gate:import-boundary"],
     "phase-a-completion": ["bun run phase-a:gate:import-boundary"],
+  },
+  "@rawr/plugin-chatgpt-corpus": {
+    default: ["bun scripts/phase-03/verify-projection-boundary-invocation.mjs"],
   },
   "@rawr/hq-app": {
     default: ["bun scripts/phase-03/verify-hq-app-structural.mjs"],
@@ -128,7 +135,10 @@ const suiteCommandsByProject = {
     default: ["bun scripts/phase-03/verify-session-intelligence-structural.mjs"],
   },
   "@rawr/plugin-session-tools": {
-    default: ["bun scripts/phase-03/verify-session-intelligence-structural.mjs"],
+    default: [
+      "bun scripts/phase-03/verify-session-intelligence-structural.mjs",
+      "bun scripts/phase-03/verify-projection-boundary-invocation.mjs",
+    ],
   },
   "@rawr/core": {
     default: ["bun scripts/phase-03/verify-core-support-structural.mjs"],

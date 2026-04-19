@@ -3,7 +3,7 @@ import { Flags } from "@oclif/core";
 import path from "node:path";
 import {
   createHqOpsClient,
-  createHqOpsInvocation,
+  createHqOpsCallOptions,
   type HqOpsJournalSnippet,
 } from "../../lib/hq-ops-client";
 import { journalId, safePreview } from "../../lib/journal-projection";
@@ -216,7 +216,7 @@ async function tryWriteWorkflowSnippet(input: {
   try {
     await createHqOpsClient(input.repoRoot).journal.writeSnippet(
       snippet,
-      createHqOpsInvocation("cli.workflow.harden"),
+      createHqOpsCallOptions("cli.workflow.harden"),
     );
   } catch {
     // best-effort

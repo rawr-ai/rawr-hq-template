@@ -278,6 +278,31 @@ typedClient.tasks.get(
   { context: { invocation: { traceId: "trace-123" } } },
 );
 
+type TaskGetOptions = NonNullable<Parameters<typeof typedClient.tasks.get>[1]>;
+
+const typedTaskGetOptions = {
+  context: {
+    invocation: {
+      traceId: "trace-typed-options",
+    },
+  },
+} satisfies TaskGetOptions;
+
+typedClient.tasks.get(
+  { id: "00000000-0000-0000-0000-000000000001" },
+  typedTaskGetOptions,
+);
+
+const invalidTaskGetOptions = {
+  context: {
+    invocation: {
+      // @ts-expect-error service client call options are typed from the service's invocation context.
+      requestId: "request-not-trace",
+    },
+  },
+} satisfies TaskGetOptions;
+void invalidTaskGetOptions;
+
 const alternateInvocationService = defineService<{
   initialContext: {
     deps: CreateClientOptions["deps"];
