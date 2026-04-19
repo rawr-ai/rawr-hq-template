@@ -1,4 +1,6 @@
 import { createClient, type Client, type CreateClientOptions } from "@rawr/session-intelligence/client";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type {
   ErrorResult,
   ExtractOptions,
@@ -71,13 +73,8 @@ export async function defaultSessionIndexPath(): Promise<string> {
 function createSessionIntelligenceBoundary(): CreateClientOptions {
   return {
     deps: {
-      logger: {
-        info() {},
-        error() {},
-      },
-      analytics: {
-        track() {},
-      },
+      logger: createEmbeddedPlaceholderLoggerAdapter(),
+      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
       sessionSourceRuntime: createSessionSourceRuntime(),
       sessionIndexRuntime: createSessionIndexRuntime(),
     },
@@ -88,21 +85,23 @@ function createSessionIntelligenceBoundary(): CreateClientOptions {
   } satisfies CreateClientOptions;
 }
 
-const invocation = {
-  context: {
-    invocation: {
-      traceId: "plugin-session-tools",
+function createInvocation(traceId: string) {
+  return {
+    context: {
+      invocation: {
+        traceId,
+      },
     },
-  },
-} as const;
+  } as const;
+}
 
 function adaptRawClient(rawClient: Client): SessionIntelligenceClient {
   return {
     catalog: {
-      list: async (input) => (await rawClient.catalog.list(input, invocation)).sessions,
+      list: async (input) => (await rawClient.catalog.list(input, createInvocation("plugin-session-tools.catalog.list"))).sessions,
       resolve: async (input) => {
         try {
-          return await rawClient.catalog.resolve(input, invocation);
+          return await rawClient.catalog.resolve(input, createInvocation("plugin-session-tools.catalog.resolve"));
         } catch (err) {
           return { error: errorMessage(err) };
         }
@@ -111,17 +110,17 @@ function adaptRawClient(rawClient: Client): SessionIntelligenceClient {
     transcripts: {
       extract: async ({ path, ...options }) => {
         try {
-          return await rawClient.transcripts.extract({ path, options }, invocation);
+          return await rawClient.transcripts.extract({ path, options }, createInvocation("plugin-session-tools.transcripts.extract"));
         } catch (err) {
           return { error: errorMessage(err) };
         }
       },
     },
     search: {
-      metadata: async (input) => (await rawClient.search.metadata(input, invocation)).hits,
-      content: async (input) => (await rawClient.search.content(input, invocation)).hits,
+      metadata: async (input) => (await rawClient.search.metadata(input, createInvocation("plugin-session-tools.search.metadata"))).hits,
+      content: async (input) => (await rawClient.search.content(input, createInvocation("plugin-session-tools.search.content"))).hits,
       clearIndex: async (input) => {
-        await rawClient.search.clearIndex(input, invocation);
+        await rawClient.search.clearIndex(input, createInvocation("plugin-session-tools.search.clear-index"));
       },
       reindex: async (input) => {
         const serviceInput = {
@@ -131,7 +130,7 @@ function adaptRawClient(rawClient: Client): SessionIntelligenceClient {
             source: session.source,
           })),
         };
-        return await rawClient.search.reindex(serviceInput, invocation);
+        return await rawClient.search.reindex(serviceInput, createInvocation("plugin-session-tools.search.reindex"));
       },
     },
   };
