@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { Args } from "@oclif/core";
-import { rawrGlobalConfigPath, validateRawrConfig } from "@rawr/control-plane";
+import { rawrGlobalConfigPath, validateRawrConfig } from "@rawr/hq-ops/config";
 import { RawrCommand } from "@rawr/core";
 
 function expandTilde(p: string): string {

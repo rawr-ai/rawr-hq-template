@@ -12,7 +12,7 @@
     }
   },
   "dependencies": {
-    "@rawr/control-plane": "workspace:*",
+    "@rawr/hq-ops": "workspace:*",
     "typebox": "^1.0.81",
     "yaml": "^2.8.1",
     "yazl": "^3.3.1"

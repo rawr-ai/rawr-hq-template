@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { journalId, type JournalSnippet,safePreview, writeSnippet } from "@rawr/journal";
+import { journalId, type JournalSnippet,safePreview, writeSnippet } from "@rawr/hq-ops/journal";
 
 import { recordArtifact, recordStep } from "../../lib/journal-context";
 import { resolveCliEntrypoint, runStep, type StepResult } from "../../lib/subprocess";

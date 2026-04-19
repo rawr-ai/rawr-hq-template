@@ -41,7 +41,7 @@ afterEach(async () => {
   }
 });
 
-describe("@rawr/state repo-state concurrency", () => {
+describe("@rawr/hq-ops/repo-state concurrency", () => {
   it("serializes concurrent atomic mutations without corrupting persisted state", async () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-state-concurrency-"));
     tempDirs.push(repoRoot);

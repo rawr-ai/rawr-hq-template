@@ -1,4 +1,4 @@
-import { loadGlobalRawrConfig, rawrGlobalConfigPath } from "@rawr/control-plane";
+import { loadGlobalRawrConfig, rawrGlobalConfigPath } from "@rawr/hq-ops/config";
 import { RawrCommand } from "@rawr/core";
 
 export default class PluginsSyncSourcesList extends RawrCommand {

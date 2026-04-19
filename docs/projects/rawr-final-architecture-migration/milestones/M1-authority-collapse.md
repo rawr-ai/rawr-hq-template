@@ -207,6 +207,7 @@ The detailed slice bodies now live in local issue docs under `$ISSUES`. The mile
 - Issue doc: [M1-U03](../issues/M1-U03-migrate-hq-ops-and-rewire-consumers.md)
 - Focus: move operational truth into HQ Ops, cut active consumers directly to it, and delete the old operational owners.
 - Stop-gate: no live imports remain from `@rawr/control-plane`, `@rawr/state`, `@rawr/journal`, or `@rawr/security`.
+- Traceability: branch `agent-FARGO-M1-U03-migrate-hq-ops-and-rewire-consumers`; old owner roots deleted from the live tree; proofs passed across `services/hq-ops`, `apps/server`, `apps/cli`, `plugins/cli/plugins`, `phase-1:gates:baseline`, and the refreshed Phase D/F contract scans; HQ managed-stack validation required one restart from a degraded server role, then returned to healthy status with first-party state RPC `200` and archived coordination/support-example route probes still `404`.
 
 ### M1-U04: Dissolve the legacy HQ package and land purpose-named tooling boundaries
 

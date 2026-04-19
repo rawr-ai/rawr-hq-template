@@ -1,6 +1,6 @@
 import { installRawrOrpcTelemetry, type InstalledTelemetry } from "@rawr/core/telemetry";
-import { loadRawrConfig } from "@rawr/control-plane";
-import { getRepoState } from "@rawr/state/repo-state";
+import { loadRawrConfig } from "@rawr/hq-ops/config";
+import { getRepoState } from "@rawr/hq-ops/repo-state";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServerApp } from "./app";

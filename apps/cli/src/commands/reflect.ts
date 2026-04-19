@@ -1,6 +1,6 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { openJournalDb, tailSnippets } from "@rawr/journal";
+import { openJournalDb, tailSnippets } from "@rawr/hq-ops/journal";
 
 import { findWorkspaceRoot } from "../lib/workspace-plugins";
 

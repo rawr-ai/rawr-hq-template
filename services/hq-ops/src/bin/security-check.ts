@@ -1,4 +1,4 @@
-import { securityCheck } from "../index.js";
+import { securityCheck } from "../security/index.js";
 
 const argv = process.argv.slice(2);
 
@@ -32,4 +32,3 @@ if (!quiet) {
 }
 
 process.exit(report.ok ? 0 : 1);
-

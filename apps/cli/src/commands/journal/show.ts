@@ -3,7 +3,7 @@ import { Args } from "@oclif/core";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
-import type { JournalSnippet } from "@rawr/journal";
+import type { JournalSnippet } from "@rawr/hq-ops/journal";
 
 export default class JournalShow extends RawrCommand {
   static description = "Show a single journal snippet by id";

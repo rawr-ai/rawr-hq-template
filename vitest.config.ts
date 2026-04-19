@@ -52,33 +52,13 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/control-plane"),
-        test: { name: "control-plane", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
         root: r("services/chatgpt-corpus"),
         test: { name: "chatgpt-corpus", environment: "node", include: [...includes] },
       },
       {
         extends: true,
-        root: r("packages/journal"),
-        test: { name: "journal", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
         root: r("packages/hq"),
         test: { name: "hq", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("packages/security"),
-        test: { name: "security", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("services/state"),
-        test: { name: "state", environment: "node", include: [...includes] },
       },
       {
         extends: true,

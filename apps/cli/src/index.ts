@@ -1,5 +1,5 @@
 import { flush, handle, run } from "@oclif/core";
-import { journalId, safePreview, writeEvent, writeSnippet, type JournalEvent, type JournalSnippet } from "@rawr/journal";
+import { journalId, safePreview, writeEvent, writeSnippet, type JournalEvent, type JournalSnippet } from "@rawr/hq-ops/journal";
 import { getJournalContext, resetJournalContext } from "./lib/journal-context";
 import { findWorkspaceRoot } from "./lib/workspace-plugins";
 

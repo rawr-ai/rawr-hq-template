@@ -1,5 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { rawrConfigPath, validateRawrConfig } from "@rawr/control-plane";
+import { rawrConfigPath, validateRawrConfig } from "@rawr/hq-ops/config";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 import fs from "node:fs/promises";
 import { pathToFileURL } from "node:url";

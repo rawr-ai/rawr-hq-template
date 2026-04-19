@@ -1,6 +1,6 @@
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { disablePlugin as persistDisablePlugin } from "@rawr/state/repo-state";
+import { disablePlugin as persistDisablePlugin } from "@rawr/hq-ops/repo-state";
 
 import { findWorkspaceRoot, listWorkspacePlugins, resolvePluginId } from "../../../lib/workspace-plugins";
 

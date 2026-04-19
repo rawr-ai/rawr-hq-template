@@ -1,5 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { getRepoState } from "@rawr/state/repo-state";
+import { getRepoState } from "@rawr/hq-ops/repo-state";
 
 import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
 

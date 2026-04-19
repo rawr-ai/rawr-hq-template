@@ -109,9 +109,6 @@ const suiteCommandsByProject = {
   "@rawr/coordination": {
     default: ["bun scripts/phase-03/verify-coordination-structural.mjs"],
   },
-  "@rawr/state": {
-    default: ["bun scripts/phase-03/verify-state-structural.mjs"],
-  },
   "@rawr/hq-ops": {
     default: ["bun scripts/phase-1/verify-hq-ops-service-shape.mjs"],
   },

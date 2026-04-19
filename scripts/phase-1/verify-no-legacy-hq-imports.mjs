@@ -14,7 +14,6 @@ assertCondition(!ledger.parked.includes("packages/hq"), "packages/hq must not ap
 
 const expectedSites = [
   "apps/cli/src/lib/journal-context.ts::@rawr/hq/journal",
-  "apps/cli/src/lib/security.ts::@rawr/hq/security",
   "apps/cli/src/lib/workspace-plugins.ts::@rawr/hq/workspace",
   "plugins/cli/plugins/src/commands/plugins/converge.ts::@rawr/hq/lifecycle",
   "plugins/cli/plugins/src/commands/plugins/improve.ts::@rawr/hq/lifecycle",

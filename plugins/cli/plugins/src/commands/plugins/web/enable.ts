@@ -1,7 +1,7 @@
 import { Args, Flags } from "@oclif/core";
-import { loadRawrConfig } from "@rawr/control-plane";
+import { loadRawrConfig } from "@rawr/hq-ops/config";
 import { RawrCommand } from "@rawr/core";
-import { enablePlugin as persistEnablePlugin } from "@rawr/state/repo-state";
+import { enablePlugin as persistEnablePlugin } from "@rawr/hq-ops/repo-state";
 
 import { loadSecurityModule, missingSecurityFn } from "../../../lib/security";
 import { findWorkspaceRoot, listWorkspacePlugins, resolvePluginId } from "../../../lib/workspace-plugins";
@@ -92,6 +92,7 @@ export default class PluginsWebEnable extends RawrCommand {
       pluginId: plugin.id,
       riskTolerance,
       mode,
+      cwd: workspaceRoot,
     });
 
     if ((evaluation as any)?.allowed === false && !force) {

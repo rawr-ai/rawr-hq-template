@@ -1,7 +1,7 @@
 ---
 id: M1-U03
 title: "[M1] Migrate HQ operational truth into HQ Ops and rewire consumers"
-state: planned
+state: done
 priority: 1
 estimate: 8
 project: rawr-final-architecture-migration
@@ -28,10 +28,10 @@ related_to: []
 - Remove the old owning packages and services from the live lane once their behavior continuity proofs are preserved.
 
 ## Acceptance Criteria
-- [ ] No live imports remain from `@rawr/control-plane`, `@rawr/state`, `@rawr/journal`, or `@rawr/security`.
-- [ ] Active CLI, server, and tooling consumers cut directly to `@rawr/hq-ops` or approved thin module subpaths.
-- [ ] Config merge/validation, repo-state locking/mutation, journal behavior, and security scan/gate/report behavior all retain continuity through targeted tests.
-- [ ] Old-owner inventory and import cleanup lands in this slice rather than being deferred.
+- [x] No live imports remain from `@rawr/control-plane`, `@rawr/state`, `@rawr/journal`, or `@rawr/security`.
+- [x] Active CLI, server, and tooling consumers cut directly to `@rawr/hq-ops` or approved thin module subpaths.
+- [x] Config merge/validation, repo-state locking/mutation, journal behavior, and security scan/gate/report behavior all retain continuity through targeted tests.
+- [x] Old-owner inventory and import cleanup lands in this slice rather than being deferred.
 
 ## Testing / Verification
 - `bun run sync:check`
@@ -75,6 +75,14 @@ Out of scope:
 
 ### Implementation Guidance
 Treat the live consumer inventory as the minimum direct-rewire set, not as optional cleanup. Follow the direct-consumer-cut rule: cut to `@rawr/hq-ops` or approved thin module subpaths, do not add a new facade package, and port or preserve the behavioral tests before deleting old owners.
+
+## Implementation Decisions
+- U03 keeps the `services/example-todo` package-shell discipline from U02: package root stays thin and the migrated operational support APIs land only on explicit HQ Ops subpaths (`./config`, `./repo-state`, `./journal`, `./security`), not on the package root.
+- `repo-state` is the only currently live transport-facing service boundary among the old owners, so its service contract/client move into the canonical HQ Ops package boundary while config, journal, and security move as thin support subpaths inside the same package.
+- `packages/hq` survives until U04, but any live `@rawr/control-plane`, `@rawr/state`, `@rawr/journal`, or `@rawr/security` imports inside it still have to be rewired in U03 so the old owners can actually die here.
+- U03 narrows the module-boundary exceptions instead of weakening the ontology globally: package-layer imports into HQ Ops are allowed only for the explicit sanctioned seams (`@rawr/hq-ops`, `@rawr/hq-ops/{config,repo-state,journal,security}`, `@rawr/hq-ops/service/contract`) and the temporary `@rawr/hq-app/manifest` bridge remains the only app-to-app lint exception until later slices remove it.
+- Security gating/reporting must resolve against the discovered workspace root, not ambient `process.cwd()`. U03 therefore passes the canonical workspace root into HQ Ops security entrypoints and removes the live `@rawr/hq/security` compatibility hop from the CLI path instead of preserving it as a hidden alias.
+- U03 strengthens the owner-removal proof itself: `verify-no-old-operational-packages.mjs` now fails if `packages/control-plane`, `services/state`, `packages/journal`, or `packages/security` still exist on disk, even if imports are already gone.
 
 ### Files
 - `packages/control-plane/src`
@@ -154,3 +162,28 @@ This means `M1-U03` is not just import cleanup. It owns the proof migration for 
 - [Acceptance Criteria](#acceptance-criteria)
 - [Testing / Verification](#testing--verification)
 - [Dependencies / Notes](#dependencies--notes)
+
+## Completion Notes
+- Branch: `agent-FARGO-M1-U03-migrate-hq-ops-and-rewire-consumers`
+- Old owners removed from live tree: `packages/control-plane`, `services/state`, `packages/journal`, `packages/security`
+- Continuity proofs landed in:
+  - `services/hq-ops/test/{config.test.ts,repo-state.concurrent.test.ts,security.test.ts}`
+  - `apps/cli/test/journal.test.ts`
+  - `apps/server/test/{rawr.test.ts,storage-lock-route-guard.test.ts}`
+- Additional proof and guardrail updates landed in:
+  - `scripts/phase-1/verify-no-old-operational-packages.mjs`
+  - `scripts/phase-1/verify-no-legacy-hq-imports.mjs`
+  - `scripts/phase-d/verify-d4-finished-hook-trigger.mjs`
+  - `scripts/phase-f/{verify-f1-runtime-lifecycle-contract.mjs,verify-f2-interface-policy-contract.mjs}`
+- Verification closed with:
+  - `bun run sync:check`
+  - `bun run lint:boundaries`
+  - `bun run --cwd services/hq-ops test`
+  - `bun run --cwd apps/server test`
+  - `bun run --cwd apps/cli test`
+  - `bun run --cwd plugins/cli/plugins test`
+  - `bun run phase-1:gates:baseline`
+  - `bun scripts/phase-d/verify-d4-finished-hook-trigger.mjs`
+  - `bun scripts/phase-f/verify-f1-runtime-lifecycle-contract.mjs`
+  - `bun scripts/phase-f/verify-f2-interface-policy-contract.mjs`
+  - managed HQ stack validation with observability required, first-party state RPC `200`, and archived coordination/support-example routes `404`

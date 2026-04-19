@@ -15,19 +15,19 @@ function functionBodyCalls(source, fnName, calleeName) {
 }
 
 await Promise.all([
-  mustExist("services/state/src/repo-state/index.ts"),
-  mustExist("services/state/src/repo-state/model.ts"),
-  mustExist("services/state/src/repo-state/storage.ts"),
-  mustExist("services/state/src/index.ts"),
-  mustExist("services/state/test/repo-state.concurrent.test.ts"),
+  mustExist("services/hq-ops/src/repo-state/index.ts"),
+  mustExist("services/hq-ops/src/repo-state/model.ts"),
+  mustExist("services/hq-ops/src/repo-state/storage.ts"),
+  mustExist("services/hq-ops/src/index.ts"),
+  mustExist("services/hq-ops/test/repo-state.concurrent.test.ts"),
   mustExist("apps/server/test/storage-lock-route-guard.test.ts"),
 ]);
 
 const [repoStateIndexSource, repoStateModelSource, repoStateStorageSource, indexSource] = await Promise.all([
-  readFile("services/state/src/repo-state/index.ts"),
-  readFile("services/state/src/repo-state/model.ts"),
-  readFile("services/state/src/repo-state/storage.ts"),
-  readFile("services/state/src/index.ts"),
+  readFile("services/hq-ops/src/repo-state/index.ts"),
+  readFile("services/hq-ops/src/repo-state/model.ts"),
+  readFile("services/hq-ops/src/repo-state/storage.ts"),
+  readFile("services/hq-ops/src/index.ts"),
 ]);
 
 for (const fnName of [

@@ -3,7 +3,7 @@ import {
   loadRawrConfig,
   mergeRawrConfigLayers,
   type RawrConfig,
-} from "@rawr/control-plane";
+} from "@rawr/hq-ops/config";
 
 import { findWorkspaceRoot } from "./workspace";
 

@@ -5,9 +5,9 @@ export type SecurityModule = {
 };
 
 export async function loadSecurityModule(): Promise<SecurityModule> {
-  return (await import("@rawr/security")) as unknown as SecurityModule;
+  return (await import("@rawr/hq-ops/security")) as unknown as SecurityModule;
 }
 
 export function missingSecurityFn(name: keyof SecurityModule): string {
-  return `@rawr/security is missing export: ${String(name)}`;
+  return `@rawr/hq-ops/security is missing export: ${String(name)}`;
 }

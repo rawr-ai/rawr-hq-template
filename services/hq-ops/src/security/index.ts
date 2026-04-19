@@ -77,10 +77,10 @@ function sortFindings(findings: SecurityFinding[]): SecurityFinding[] {
   });
 }
 
-export async function securityCheck(input: { mode: SecurityMode }): Promise<
-  (Pick<SecurityReport, "ok" | "findings" | "summary" | "timestamp"> & { reportPath?: string })
+export async function securityCheck(input: { mode: SecurityMode; cwd?: string }): Promise<
+  (Pick<SecurityReport, "ok" | "findings" | "summary" | "timestamp" | "meta"> & { reportPath?: string })
 > {
-  const startedCwd = process.cwd();
+  const startedCwd = input.cwd ?? process.cwd();
   const repoRoot = (await getRepoRoot(startedCwd)) ?? startedCwd;
   const timestamp = new Date().toISOString();
 
@@ -105,7 +105,7 @@ export async function securityCheck(input: { mode: SecurityMode }): Promise<
   const report: SecurityReport = { ok, findings: sorted, summary, timestamp, mode: input.mode, meta: { repoRoot } };
   const { reportPath } = await writeSecurityReport({ repoRoot, report });
 
-  return { ok, findings: sorted, summary, timestamp, reportPath };
+  return { ok, findings: sorted, summary, timestamp, meta: { repoRoot }, reportPath };
 }
 
 function toleranceToMaxSeverity(riskTolerance: RiskTolerance): SecurityFinding["severity"] | null {
@@ -122,14 +122,14 @@ function toleranceToMaxSeverity(riskTolerance: RiskTolerance): SecurityFinding["
 }
 
 export async function gateEnable(input: GateEnableInput): Promise<GateEnableResult> {
-  const base = await securityCheck({ mode: input.mode });
+  const base = await securityCheck({ mode: input.mode, cwd: input.cwd });
   const report: GateEnableResult["report"] = {
     ok: base.ok,
     findings: base.findings,
     summary: base.summary,
     timestamp: base.timestamp,
     mode: input.mode,
-    meta: { pluginId: input.pluginId },
+    meta: { pluginId: input.pluginId, repoRoot: base.meta?.repoRoot },
     reportPath: base.reportPath,
   };
 
