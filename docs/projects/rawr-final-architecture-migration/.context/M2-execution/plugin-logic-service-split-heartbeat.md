@@ -50,12 +50,19 @@ Objective: make `plugins/cli/plugins` a projection again by moving durable sync 
 - Installed worktree dependencies with `bun install --frozen-lockfile`.
 - Launched Projection Agent `019da791-7255-74b3-b6b9-83c50b84b5f0` to thin `plugins/cli/plugins` against integrated service APIs.
 
+### 2026-04-19 - Projection Slice Integrated
+
+- Projection Agent stalled while running; orchestrator closed it and took over the projection worktree.
+- Integrated projection thinning branch tip `9a84a9a9` onto ORCH as `e68ae2e2`.
+- Removed projection-owned sync/install/lifecycle semantic files and rewired commands through service-facing adapters.
+- Beginning ratchet slice against the integrated service/projection shape.
+
 ## Active Agents
 
 - Complete: Sync Service Agent `019da77e-9c1b-72c0-9b32-02228380906e` on `agent-SYNC-plugin-sync-service-ownership`
 - Complete: HQ Ops Agent `019da77e-cab9-7593-91d8-afa1b94eb7a6` on `agent-HQOPS-plugin-install-lifecycle-service`
-- Active: Projection Agent `019da791-7255-74b3-b6b9-83c50b84b5f0` on `agent-PROJ-plugin-cli-thinning`
-- Pending: Ratchet Agent
+- Complete: Projection Agent `019da791-7255-74b3-b6b9-83c50b84b5f0` on `agent-PROJ-plugin-cli-thinning`
+- Active: Ratchet Agent
 - Pending: Proof Agent
 - Pending: Review Agents
 
@@ -63,12 +70,13 @@ Objective: make `plugins/cli/plugins` a projection again by moving durable sync 
 
 - Sync service ownership: integrated
 - HQ ops plugin install/lifecycle ownership: integrated
-- Plugin CLI projection thinning: active
-- Structural ratchets: pending
+- Plugin CLI projection thinning: integrated
+- Structural ratchets: active
 - Verification/proof: pending
 - Final architecture/style review: pending
 
 ## Verification State
 
 - Focused integrated service typechecks passed for `@rawr/agent-config-sync` and `@rawr/hq-ops`.
+- Projection worktree passed `@rawr/plugin-plugins:typecheck`, `@rawr/agent-config-sync:typecheck`, `@rawr/hq-ops:typecheck`, `@rawr/plugin-plugins:test`, `@rawr/hq-ops:test`, `@rawr/agent-config-sync:test`, `@rawr/plugin-plugins:structural`, `@rawr/agent-config-sync:structural`, `@rawr/hq-ops:structural`, focused run-many typecheck/build for the three touched projects, and `git diff --check`.
 - Final gates are defined in the execution plan and must be run after integration.
