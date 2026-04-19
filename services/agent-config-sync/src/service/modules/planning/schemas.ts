@@ -1,12 +1,38 @@
+import { type Static, Type } from "typebox";
 import type {
   SourceContent,
   SourcePlugin,
   SyncRunResult,
   SyncScope,
   SyncTargetResult,
-  TargetHomes,
-  WorkspaceSkip,
 } from "../../shared/schemas";
+import { SyncAgentSchema } from "../../shared/schemas";
+
+export const SyncAgentSelectionSchema = Type.Union([
+  SyncAgentSchema,
+  Type.Literal("all"),
+]);
+
+export const TargetHomesSchema = Type.Object(
+  {
+    codexHomes: Type.Array(Type.String({ minLength: 1 })),
+    claudeHomes: Type.Array(Type.String({ minLength: 1 })),
+  },
+  { additionalProperties: false },
+);
+
+export const WorkspaceSkipSchema = Type.Object(
+  {
+    dirName: Type.String({ minLength: 1 }),
+    absPath: Type.String({ minLength: 1 }),
+    reason: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+
+export type SyncAgentSelection = Static<typeof SyncAgentSelectionSchema>;
+export type TargetHomes = Static<typeof TargetHomesSchema>;
+export type WorkspaceSkip = Static<typeof WorkspaceSkipSchema>;
 
 export type SyncPreviewInput = {
   sourcePlugin: SourcePlugin;

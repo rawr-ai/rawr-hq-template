@@ -1,4 +1,4 @@
-import { runSync as runServiceSync } from "../../shared/internal/sync-engine";
+import { runSync as runServiceSync } from "./sync-engine";
 import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../shared/resources";
 import type { SyncExecutionInput } from "./schemas";
 

@@ -1,9 +1,9 @@
 import path from "node:path";
 
-import { readClaudeSyncManifest } from "./marketplace-claude";
-import { resolveSourceScopeForPath, scopeAllows } from "./source-scope";
-import type { SyncScope } from "./types";
-import type { AgentConfigSyncResources } from "../resources";
+import { resolveSourceScopeForPath, scopeAllows } from "../../shared/internal/source-scope";
+import type { AgentConfigSyncResources } from "../../shared/resources";
+import type { SyncScope } from "../../shared/schemas";
+import type { RetireAction, RetireStaleManagedResult } from "./schemas";
 
 const MANAGED_BY = "@rawr/plugin-plugins";
 
@@ -32,24 +32,31 @@ type ClaudeMarketplaceFile = {
   [key: string]: unknown;
 };
 
-export type RetireAction = {
-  agent: "codex" | "claude";
-  home: string;
-  plugin: string;
-  target: string;
-  action: "planned" | "deleted" | "updated" | "skipped" | "failed";
-  message?: string;
-};
-
-export type RetireStaleManagedResult = {
-  ok: boolean;
-  stalePlugins: Array<{ agent: "codex" | "claude"; home: string; plugin: string }>;
-  actions: RetireAction[];
-};
-
 function toStringSet(value: unknown): Set<string> {
   if (!Array.isArray(value)) return new Set();
   return new Set(value.filter((v): v is string => typeof v === "string" && v.length > 0));
+}
+
+type ClaudeManagedPluginManifest = {
+  plugin: string;
+  sourcePluginPath: string;
+  managedBy: string;
+};
+
+async function readClaudeSyncManifest(
+  claudeLocalHome: string,
+  pluginName: string,
+  resources: AgentConfigSyncResources,
+): Promise<ClaudeManagedPluginManifest | null> {
+  const filePath = path.join(
+    claudeLocalHome,
+    "plugins",
+    pluginName,
+    ".rawr-sync-manifest.json",
+  );
+  const parsed = await resources.files.readJsonFile<ClaudeManagedPluginManifest>(filePath);
+  if (!parsed || parsed.managedBy !== MANAGED_BY) return null;
+  return parsed;
 }
 
 async function deletePathIfPresent(input: {

@@ -1,4 +1,4 @@
-import { retireStaleManagedPlugins } from "../../shared/internal/retire-stale-managed";
+import { retireStaleManagedPlugins } from "./retire-stale-managed";
 import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../shared/resources";
 import type { SyncScope } from "../../shared/schemas";
 import type { RetireStaleManagedResult } from "./schemas";

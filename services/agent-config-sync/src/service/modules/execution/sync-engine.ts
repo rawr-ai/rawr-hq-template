@@ -16,13 +16,24 @@ import {
 import type {
   SourceContent,
   SourcePlugin,
-  SyncAgent,
   SyncItemResult,
-  SyncOptions,
   SyncRunResult,
   SyncTargetResult,
-} from "./types";
-import type { AgentConfigSyncResources } from "../resources";
+} from "../../shared/schemas";
+import type {
+  AgentConfigSyncResources,
+  AgentConfigSyncUndoCapture,
+} from "../../shared/resources";
+
+export type SyncOptions = {
+  dryRun: boolean;
+  force: boolean;
+  gc: boolean;
+  includeAgentsInCodex?: boolean;
+  includeAgentsInClaude?: boolean;
+  undoCapture?: AgentConfigSyncUndoCapture;
+  resources: AgentConfigSyncResources;
+};
 
 type ClaimedOthers = {
   prompts: Set<string>;

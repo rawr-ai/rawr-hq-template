@@ -1,8 +1,8 @@
-import { runSync as runServiceSync } from "../../shared/internal/sync-engine";
+import { runSync as runServiceSync } from "../execution/sync-engine";
 import { resolveSourceScopeForPath, scopeAllows } from "../../shared/internal/source-scope";
 import type { AgentConfigSyncResources } from "../../shared/resources";
-import type { SyncScope, TargetHomes, WorkspaceSkip } from "../../shared/schemas";
-import type { SyncAssessment, SyncPreviewInput, WorkspaceSyncable } from "./schemas";
+import type { SyncScope } from "../../shared/schemas";
+import type { SyncAssessment, SyncPreviewInput, TargetHomes, WorkspaceSkip, WorkspaceSyncable } from "./schemas";
 
 function summarizeWorkspaceRun(input: {
   runs: Awaited<ReturnType<typeof runServiceSync>>[];

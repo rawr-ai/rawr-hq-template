@@ -1,14 +1,18 @@
 # Agent Config Sync Shared Service Anchors
 
-`services/agent-config-sync` follows the `example-todo` service shell exactly
-and keeps its cross-module sync-domain anchors here.
+`services/agent-config-sync` follows the `example-todo` service shell, with a
+strict shared allowlist.
 
-This directory intentionally keeps only cross-module anchors:
+Allowed shared files:
 
-- `errors.ts` for reusable ORPC boundary errors once the service needs them.
+- `errors.ts` for reusable ORPC boundary errors once multiple modules need them.
 - `internal-errors.ts` for unexpected internal-only failures.
-- `schemas.ts` for shared sync-domain value objects used by multiple modules.
-- `ports/*` for host-owned runtime capability contracts.
+- `resources.ts` for the service-wide host resource contract.
+- `schemas.ts` for public/cross-module sync value objects used by multiple modules.
+- `internal/source-scope.ts` because planning and retirement both need identical
+  source-scope resolution semantics.
 
-Concrete source discovery, filesystem mutation, and destination-specific wiring
-remain host-owned and must arrive through these ports.
+Module-owned behavior does not live here. Planning assessment types belong in
+`modules/planning`, execution apply semantics belong in `modules/execution`,
+retirement stale-managed behavior belongs in `modules/retirement`, and undo
+capsule/apply behavior belongs in `modules/undo`.

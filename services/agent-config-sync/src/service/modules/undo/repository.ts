@@ -1,4 +1,4 @@
-import { runUndoForWorkspace } from "../../shared/internal/sync-undo";
+import { runUndoForWorkspace } from "./sync-undo";
 import type { AgentConfigSyncResources } from "../../shared/resources";
 import type { UndoRunResult } from "./schemas";
 

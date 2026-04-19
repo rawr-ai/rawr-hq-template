@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import type { AgentConfigSyncResources } from "../resources";
+import type { AgentConfigSyncResources } from "../../shared/resources";
 
 export const PLUGINS_SYNC_UNDO_PROVIDER = "plugins.sync" as const;
 

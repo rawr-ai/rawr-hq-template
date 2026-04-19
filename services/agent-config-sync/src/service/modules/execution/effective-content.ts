@@ -1,7 +1,7 @@
 import path from "node:path";
 
-import type { SourceContent, SourcePlugin, SyncAgent } from "./types";
-import type { AgentConfigSyncResources } from "../resources";
+import type { AgentConfigSyncResources } from "../../shared/resources";
+import type { SourceContent, SourcePlugin, SyncAgent } from "../../shared/schemas";
 
 function mergeContent(base: SourceContent, overlay: SourceContent): SourceContent {
   const workflows = new Map(base.workflowFiles.map((w) => [w.name, w]));
