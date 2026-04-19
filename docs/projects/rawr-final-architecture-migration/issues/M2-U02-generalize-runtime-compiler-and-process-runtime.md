@@ -38,6 +38,7 @@ M2-U00 and M2-U01 established the bootgraph and minimum substrate. This slice ge
   - Process-runtime is an internal substrate component, not a separate package
 - TopologyRegistry: if the compiler needs a registry to track which lanes exist and their relationships, introduce it here. Only if earned by real need -- do not speculatively build.
 - Resource lowering from canonical declarations must be tested end-to-end
+- This is the first slice that may generalize process/resource declaration shapes beyond the minimum M2-U00 server path, because those shapes are consumed here by compiler and process-runtime work rather than existing as standalone inventory.
 
 ### Out of scope
 - Optional role families and rich topology catalog work beyond what active lanes require
@@ -68,6 +69,7 @@ M2-U00 and M2-U01 established the bootgraph and minimum substrate. This slice ge
 - [ ] No hidden fallback to host-composition remains in the compiler/runtime path.
 - [ ] SurfaceAssembler correctly assembles routes/handlers/schedules from compiled plans.
 - [ ] TopologyRegistry is present only if earned by real compiler needs (not speculative).
+- [ ] Broader process/resource declaration generalization is consumed by compiler/process-runtime tests and does not create a standalone pre-Effect descriptor layer or public compiler API.
 
 ## Testing / Verification
 - Land and wire the slice-local verifiers:

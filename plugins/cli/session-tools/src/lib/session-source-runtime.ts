@@ -2,7 +2,7 @@ import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { DiscoverSessionsInput, SessionSourceRuntime } from "@rawr/session-intelligence/ports/session-source-runtime";
-import type { CodexSessionFile, CodexSessionSource, DiscoveredSessionFile, SessionSource, SessionStatus } from "@rawr/session-intelligence/schemas";
+import type { CodexSessionFile, CodexSessionSource, DiscoveredSessionFile, SessionSource, SessionStatus } from "@rawr/session-intelligence/types";
 import { readJsonlObjects } from "./jsonl";
 import {
   codexDiscoveryMaxAgeMs,

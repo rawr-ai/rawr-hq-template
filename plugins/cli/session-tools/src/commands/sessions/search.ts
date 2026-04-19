@@ -1,5 +1,6 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
+import type { Client } from "@rawr/session-intelligence/client";
 import { ensureDir, writeJsonFile } from "../../lib/out-dir";
 import {
   createSessionIntelligenceClient,
@@ -7,6 +8,12 @@ import {
   defaultSessionIndexPathSync,
 } from "../../lib/session-intelligence-client";
 import type { MetadataSearchHit, RoleFilter, SearchHit, SessionSourceFilter } from "../../lib/session-types";
+
+type CatalogListOptions = NonNullable<Parameters<Client["catalog"]["list"]>[1]>;
+type SearchMetadataOptions = NonNullable<Parameters<Client["search"]["metadata"]>[1]>;
+type SearchContentOptions = NonNullable<Parameters<Client["search"]["content"]>[1]>;
+type SearchClearIndexOptions = NonNullable<Parameters<Client["search"]["clearIndex"]>[1]>;
+type SearchReindexOptions = NonNullable<Parameters<Client["search"]["reindex"]>[1]>;
 
 export default class SessionsSearch extends RawrCommand {
   static description = "Search sessions by metadata or transcript content";
@@ -105,29 +112,51 @@ export default class SessionsSearch extends RawrCommand {
     })();
 
     const client = await createSessionIntelligenceClient();
-    const sessions = await client.catalog.list({
-      source,
-      limit: sessionFetchLimit,
-      filters,
-    });
+    const listOptions = {
+      context: { invocation: { traceId: "plugin-session-tools.catalog.list" } },
+    } satisfies CatalogListOptions;
+    const { sessions } = await client.catalog.list(
+      {
+        source,
+        limit: sessionFetchLimit,
+        filters,
+      },
+      listOptions,
+    );
 
     let hits: Array<SearchHit | MetadataSearchHit> = [];
     if (metadataQuery) {
-      hits = await client.search.metadata({ sessions, needle: metadataQuery, limit });
+      const metadataOptions = {
+        context: { invocation: { traceId: "plugin-session-tools.search.metadata" } },
+      } satisfies SearchMetadataOptions;
+      const response = await client.search.metadata({ sessions, needle: metadataQuery, limit }, metadataOptions);
+      hits = response.hits;
     } else {
       const indexPath = flags["index-path"] ? String(flags["index-path"]) : await defaultSessionIndexPath();
       const roles = (flags.roles as unknown as string[]).map(String) as RoleFilter[];
       const includeTools = Boolean(flags["include-tools"]);
 
       if (flags.reindex) {
-        await client.search.clearIndex({ indexPath });
-        const reindexResult = await client.search.reindex({
-          sessions,
-          roles,
-          includeTools,
-          indexPath,
-          limit: reindexLimit,
-        });
+        const clearIndexOptions = {
+          context: { invocation: { traceId: "plugin-session-tools.search.clear-index" } },
+        } satisfies SearchClearIndexOptions;
+        await client.search.clearIndex({ indexPath }, clearIndexOptions);
+        const reindexOptions = {
+          context: { invocation: { traceId: "plugin-session-tools.search.reindex" } },
+        } satisfies SearchReindexOptions;
+        const reindexResult = await client.search.reindex(
+          {
+            sessions: sessions.map((session) => ({
+              path: session.path,
+              source: session.source,
+            })),
+            roles,
+            includeTools,
+            indexPath,
+            limit: reindexLimit,
+          },
+          reindexOptions,
+        );
         if (!contentQuery) {
           if (outDir) {
             await ensureDir(outDir);
@@ -146,17 +175,24 @@ export default class SessionsSearch extends RawrCommand {
         }
       }
 
-      hits = await client.search.content({
-        sessions,
-        pattern: contentQuery!,
-        ignoreCase: Boolean(flags["ignore-case"]),
-        maxMatches,
-        snippetLen: Number(flags.snippet),
-        roles,
-        includeTools,
-        useIndex: Boolean(flags["use-index"] || flags.reindex),
-        indexPath,
-      });
+      const contentOptions = {
+        context: { invocation: { traceId: "plugin-session-tools.search.content" } },
+      } satisfies SearchContentOptions;
+      const response = await client.search.content(
+        {
+          sessions,
+          pattern: contentQuery!,
+          ignoreCase: Boolean(flags["ignore-case"]),
+          maxMatches,
+          snippetLen: Number(flags.snippet),
+          roles,
+          includeTools,
+          useIndex: Boolean(flags["use-index"] || flags.reindex),
+          indexPath,
+        },
+        contentOptions,
+      );
+      hits = response.hits;
     }
 
     if (outDir) {

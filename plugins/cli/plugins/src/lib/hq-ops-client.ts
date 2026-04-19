@@ -3,13 +3,23 @@ import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
-import { createClient } from "@rawr/hq-ops";
+import { createClient, type CreateClientOptions } from "@rawr/hq-ops";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { bindService, type ProcessView, type RoleView, type ServiceBinding, type ServiceBindingContext } from "@rawr/hq-sdk/plugins";
 
-type HqOpsBoundary = Parameters<typeof createClient>[0];
+type HqOpsBoundary = CreateClientOptions;
 type HqOpsResources = HqOpsBoundary["deps"]["resources"];
 type SqliteDatabase = Awaited<ReturnType<HqOpsResources["sqlite"]["open"]>>;
+type HqOpsProcess = ProcessView & {
+  processId: "plugin-plugins";
+  repoRoot: string;
+};
+type HqOpsRole = RoleView & {
+  roleId: "hq-ops";
+  capability: "plugins-hq-ops";
+};
+type BindingContext = ServiceBindingContext<HqOpsProcess, HqOpsRole>;
 
 async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
   await fs.mkdir(path.dirname(dbPath), { recursive: true });
@@ -159,20 +169,31 @@ function createHqOpsResources(): HqOpsResources {
   };
 }
 
+const hqOpsService = bindService(createClient, {
+  bindingId: "plugin-plugins/hq-ops",
+  deps: () => ({
+    logger: createEmbeddedPlaceholderLoggerAdapter(),
+    analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+    resources: createHqOpsResources(),
+  }),
+  scope: (context: BindingContext) => ({
+    repoRoot: context.process.repoRoot,
+  }),
+  config: {},
+  cacheKey: (context: BindingContext) => `${context.process.processId}:${context.process.repoRoot}:${context.role.roleId}`,
+} satisfies ServiceBinding<HqOpsBoundary, HqOpsProcess, HqOpsRole>);
+
 export function createHqOpsClient(repoRoot: string) {
-  const boundary = {
-    deps: {
-      logger: createEmbeddedPlaceholderLoggerAdapter(),
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-      resources: createHqOpsResources(),
-    },
-    scope: {
+  return hqOpsService.resolve({
+    process: {
+      processId: "plugin-plugins",
       repoRoot,
     },
-    config: {},
-  } satisfies HqOpsBoundary;
-
-  return createClient(boundary);
+    role: {
+      roleId: "hq-ops",
+      capability: "plugins-hq-ops",
+    },
+  });
 }
 
 type HqOpsCallOptions = NonNullable<Parameters<HqOpsClient["config"]["getWorkspaceConfig"]>[1]>;

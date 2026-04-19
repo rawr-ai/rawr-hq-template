@@ -1,9 +1,12 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
+import type { Client } from "@rawr/session-intelligence/client";
 import { formatSessionTable } from "../../lib/format";
 import { ensureDir, writeJsonFile } from "../../lib/out-dir";
 import { createSessionIntelligenceClient } from "../../lib/session-intelligence-client";
 import type { SessionSourceFilter } from "../../lib/session-types";
+
+type CatalogListOptions = NonNullable<Parameters<Client["catalog"]["list"]>[1]>;
 
 export default class SessionsList extends RawrCommand {
   static description = "List Claude/Codex sessions";
@@ -39,18 +42,25 @@ export default class SessionsList extends RawrCommand {
     const limit = Number(flags.limit);
 
     const client = await createSessionIntelligenceClient();
-    const sessions = await client.catalog.list({
-      source,
-      limit,
-      filters: {
-        project: flags.project ? String(flags.project) : undefined,
-        cwdContains: flags["cwd-contains"] ? String(flags["cwd-contains"]) : undefined,
-        branch: flags.branch ? String(flags.branch) : undefined,
-        model: flags.model ? String(flags.model) : undefined,
-        since: flags.since ? String(flags.since) : undefined,
-        until: flags.until ? String(flags.until) : undefined,
+    const options = {
+      context: { invocation: { traceId: "plugin-session-tools.catalog.list" } },
+    } satisfies CatalogListOptions;
+    const response = await client.catalog.list(
+      {
+        source,
+        limit,
+        filters: {
+          project: flags.project ? String(flags.project) : undefined,
+          cwdContains: flags["cwd-contains"] ? String(flags["cwd-contains"]) : undefined,
+          branch: flags.branch ? String(flags.branch) : undefined,
+          model: flags.model ? String(flags.model) : undefined,
+          since: flags.since ? String(flags.since) : undefined,
+          until: flags.until ? String(flags.until) : undefined,
+        },
       },
-    });
+      options,
+    );
+    const { sessions } = response;
 
     const outDir = flags["out-dir"] ? String(flags["out-dir"]) : null;
     if (outDir) {

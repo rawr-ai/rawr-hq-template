@@ -322,7 +322,7 @@ async function verifyPluginCutover(findings) {
         findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must use the typed @rawr/session-intelligence client directly, not an untyped procedure shim containing ${forbidden}`);
       }
     }
-    for (const required of ["@rawr/session-intelligence/client", "CreateClientOptions", "satisfies CreateClientOptions"]) {
+    for (const required of ["@rawr/session-intelligence/client", "@rawr/hq-sdk/plugins", "CreateClientOptions", "bindService("]) {
       if (!clientSource.includes(required)) findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must statically bind ${required}`);
     }
   }

@@ -44,6 +44,18 @@ const FORBIDDEN_PATTERNS = [
     pattern: /\braw\?\.(?:catalog|search|transcripts|planning|execution|retirement|workspace|corpusArtifacts)\b/u,
     message: "production projections must not optional-probe raw service procedure trees",
   },
+  {
+    pattern: /\b(?:export\s+)?function\s+create[A-Za-z0-9]*Boundary\s*\(/u,
+    message: "production projections must not define service boundary factory helpers; use bindService",
+  },
+  {
+    pattern: /\btype\s+\w*Client\s*=\s*\{/u,
+    message: "production projections must not define plugin-local service client mirror types",
+  },
+  {
+    pattern: /\bprovided\s*:/u,
+    message: "production projections must not seed construction-time provided bags",
+  },
 ];
 
 const FORBIDDEN_AGENT_CONFIG_SYNC_CASTS = [
@@ -52,6 +64,11 @@ const FORBIDDEN_AGENT_CONFIG_SYNC_CASTS = [
   "scope: input.scope as any",
   "as Promise<SyncRunResult>",
 ];
+
+const SERVICE_IMPORT_PATTERN =
+  /import\s+\{[^}]*\bcreateClient\b[^}]*\}\s+from\s+["']@rawr\/(?:hq-ops|agent-config-sync|session-intelligence|chatgpt-corpus|example-todo)(?:\/client)?["']/u;
+const SERVICE_IMPORTS_PATTERN =
+  /import\s+\{(?<specifiers>[^}]*)\}\s+from\s+["']@rawr\/(?:hq-ops|agent-config-sync|session-intelligence|chatgpt-corpus|example-todo)(?:\/client)?["']/gu;
 
 async function pathExists(relPath) {
   try {
@@ -92,6 +109,27 @@ function findUntypedInlineInvocation(relPath, source) {
   return findings;
 }
 
+function findDirectServiceCreateClientCalls(relPath, source) {
+  const findings = [];
+  for (const match of source.matchAll(SERVICE_IMPORTS_PATTERN)) {
+    const specifiers = match.groups?.specifiers ?? "";
+    const names = specifiers
+      .split(",")
+      .map((specifier) => specifier.trim())
+      .filter((specifier) => /\bcreateClient\b/u.test(specifier))
+      .map((specifier) => {
+        const alias = /\bas\s+(?<alias>[A-Za-z_$][\w$]*)/u.exec(specifier)?.groups?.alias;
+        return alias ?? "createClient";
+      });
+
+    for (const name of names) {
+      const pattern = new RegExp(`\\b${name}\\s*\\(`, "u");
+      if (pattern.test(source)) findings.push(`${relPath}: projection code must not call service ${name} directly`);
+    }
+  }
+  return findings;
+}
+
 const files = [];
 for (const relPath of SCANNED_ROOTS) {
   await walk(relPath, files);
@@ -109,6 +147,16 @@ for (const relPath of files.sort()) {
     for (const forbidden of FORBIDDEN_AGENT_CONFIG_SYNC_CASTS) {
       if (source.includes(forbidden)) findings.push(`${relPath}: forbidden weak service input cast remains: ${forbidden}`);
     }
+  }
+
+  if (SERVICE_IMPORT_PATTERN.test(source) && !source.includes("bindService(")) {
+    findings.push(`${relPath}: service createClient imports in projections must be lowered through bindService`);
+  }
+
+  findings.push(...findDirectServiceCreateClientCalls(relPath, source));
+
+  if (relPath === "plugins/cli/session-tools/src/lib/session-types.ts" && /\bexport\s+type\s+(?:Session|Resolve|Search|Metadata|Reindex|Extract)/u.test(source)) {
+    findings.push(`${relPath}: session DTOs must be re-exported from @rawr/session-intelligence/types, not redeclared locally`);
   }
 
   findings.push(...findUntypedInlineInvocation(relPath, source));

@@ -29,6 +29,7 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
   - `defineApp(...)` public API
   - `startAppRole(...)` public API
   - minimum server-only app-runtime/compiler path needed to lower the active `server.api` lane into the execution family
+  - any resource, process, or declaration helper introduced here must be consumed immediately by the minimum server runtime path; do not add descriptor-only inventory ahead of runtime use
   - no broader generalization of authoring grammar beyond what server bridge deletion requires
 - Create `packages/runtime/substrate/` -- the minimum viable Effect-backed kernel:
   - RuntimeConfig service (environment, feature flags)
@@ -57,6 +58,8 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
 - Full bootgraph lifecycle hardening (rollback, shutdown ordering -- M2-U01)
 - Compiler generalization beyond what the first server cut needs (M2-U02)
 - Inngest harness (M2-U03)
+- Standalone `infra/resources`, `infra/processes`, or `infra/provisioning` descriptor layers that are not consumed by the U00 server runtime path
+- Railway or other platform-provisioning descriptors; operational placement remains downstream unless a concrete runtime/deployment proof needs it
 
 ## Deliverables
 - `packages/runtime/substrate/` with minimum viable Effect services listed above.
@@ -106,6 +109,7 @@ Phase 2 cannot credibly start while the one sanctioned executable bridge remains
 - Blocks: [M2-U01](./M2-U01-harden-bootgraph-lifetimes-and-failure-semantics.md).
 - Milestone: [M2: Install the Minimal Canonical Runtime Shell](../milestones/M2-minimal-canonical-runtime-shell.md).
 - Pull forward only the minimum substrate needed to delete the bridge. Do not use this slice as an excuse to build the whole platform at once.
+- Pull forward only declaration shapes that the first server runtime cut actually lowers or consumes. Broader process/resource declaration generalization belongs in M2-U02 with the compiler/process-runtime work, not in a pre-Effect alignment slice.
 - The substrate services created here must be sufficient to satisfy what example-todo and hq-ops require at boot time: DbPool, Clock, Logger (via RuntimeTelemetry), Analytics (via RuntimeTelemetry), workspaceId (via WorkspaceRoot), repoRoot (via WorkspaceRoot), RuntimeConfig, ProcessIdentity, RuntimeTelemetry, BoundaryCache.
 
 ---
