@@ -59,7 +59,7 @@ Host/plugin/app:
 7. Delete the old package.
 8. Update root scripts, Vitest projects, architecture inventory, lint boundaries, and structural suites.
 9. Update live architecture docs and migration notes.
-10. Run static, command-surface, and live runtime proof.
+10. Run static proof, service behavioral proof, and platform smoke as separate gates.
 
 ## Repeatable Proof Loop
 
@@ -77,15 +77,42 @@ bun run lint:boundaries
 bun run build:affected
 ```
 
-Minimum command/live proof:
+Minimum service behavioral proof:
+
+Run the real consumer surface that exercises the promoted service's domain behavior. These commands must assert domain outputs and side effects, not just process liveness.
+
+For each promoted service, define at least one proof in each applicable category:
+
+- read/list/query path
+- resolve/detail path
+- write/apply/mutation path, against a temp workspace or temp home
+- cache/index/rebuild path, if the service owns cache/index semantics
+- undo/rollback path, if the service owns reversal semantics
+- failure-path oracle for one expected invalid input or conflict
+
+Example shape:
 
 ```bash
-bun run rawr -- <affected command> --json
+tmp_home="$(mktemp -d)"
+HOME="$tmp_home" CODEX_HOME="$tmp_home/.codex" bun run rawr -- <service command> --json
+```
+
+The pass condition must name the expected JSON fields, changed files, cache/index files, or error code. A command that only exits `0` is not enough.
+
+Minimum platform smoke:
+
+This proves the platform still boots after the migration. It does not prove the promoted service works unless the service is actually exercised through the live platform path.
+
+```bash
 bun run rawr -- hq up --observability required --open none
 curl -sS http://localhost:3000/health
 bun run rawr -- hq down
 bun run rawr -- hq status --json
 ```
+
+Observability proof:
+
+Only claim observability coverage for paths that are instrumented and actually executed. For server-hosted services, verify logs/traces/metrics for a request that reaches the promoted service. For CLI-local service clients, either verify their available telemetry path explicitly or state that the proof is command-surface only.
 
 ## Review Checklist
 
