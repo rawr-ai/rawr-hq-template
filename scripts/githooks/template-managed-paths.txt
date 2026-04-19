@@ -15,7 +15,9 @@ packages/core/**
 packages/plugin-workspace/**
 packages/journal/**
 packages/security/**
-packages/session-tools/**
+packages/session-intelligence-host/**
+services/session-intelligence/**
+plugins/cli/session-tools/**
 services/state/**
 packages/test-utils/**
 packages/ui-sdk/**

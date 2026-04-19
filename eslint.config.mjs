@@ -82,6 +82,20 @@ const hqOpsBoundaryRestrictedImports = [
   "../../writer.*"
 ];
 
+const concreteSessionIntelligenceRuntimeImports = [
+  "node:*",
+  "bun:*",
+  "fs",
+  "fs/*",
+  "path",
+  "os",
+  "readline",
+  "readline/*",
+  "sqlite",
+  "sqlite3",
+  "better-sqlite3"
+];
+
 export default [
   {
     ignores: [
@@ -127,6 +141,10 @@ export default [
             {
               group: ["@rawr/agent-sync", "@rawr/agent-sync/*"],
               message: "The legacy @rawr/agent-sync package is removed; use @rawr/agent-config-sync and @rawr/agent-config-sync-host."
+            },
+            {
+              group: ["@rawr/session-tools", "@rawr/session-tools/*"],
+              message: "The legacy @rawr/session-tools package is removed; use @rawr/session-intelligence and @rawr/session-intelligence-host."
             }
           ]
         }
@@ -149,6 +167,22 @@ export default [
             {
               group: hqOpsBoundaryRestrictedImports,
               message: "HQ Ops contract/schema/model/type files must stay runtime-agnostic."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    files: ["services/session-intelligence/src/service/**/*.{js,jsx,ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: concreteSessionIntelligenceRuntimeImports,
+              message: "Session Intelligence service files must stay runtime-agnostic; keep concrete filesystem, env, and SQLite access in @rawr/session-intelligence-host."
             }
           ]
         }

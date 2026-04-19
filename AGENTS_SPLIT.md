@@ -11,10 +11,13 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
   - `packages/agent-sync`
   - `packages/core`
   - `packages/plugin-workspace`
-  - `packages/session-tools`
+  - `packages/session-intelligence-host`
   - `packages/test-utils`
   - `packages/ui-sdk`
   - `services/hq-ops`
+  - `services/session-intelligence`
+- You are changing shared CLI projection contracts:
+  - `plugins/cli/session-tools`
 - You are changing template-wide scaffolding, governance docs, or baseline workflows.
 - You are changing fixture/example plugin contracts used to validate template behavior.
 

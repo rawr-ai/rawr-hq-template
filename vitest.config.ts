@@ -82,8 +82,13 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/session-tools"),
-        test: { name: "session-tools", environment: "node", include: [...includes] },
+        root: r("services/session-intelligence"),
+        test: { name: "session-intelligence", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/session-intelligence-host"),
+        test: { name: "session-intelligence-host", environment: "node", include: [...includes] },
       },
       {
         extends: true,
