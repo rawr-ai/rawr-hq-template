@@ -1,0 +1,72 @@
+{
+  "name": "@rawr/agent-config-sync",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
+    },
+    "./service/contract": {
+      "types": "./src/service/contract.ts",
+      "default": "./src/service/contract.ts"
+    },
+    "./ports/planning-runtime": {
+      "types": "./src/service/shared/ports/planning-runtime.ts",
+      "default": "./src/service/shared/ports/planning-runtime.ts"
+    },
+    "./ports/execution-runtime": {
+      "types": "./src/service/shared/ports/execution-runtime.ts",
+      "default": "./src/service/shared/ports/execution-runtime.ts"
+    },
+    "./ports/retirement-runtime": {
+      "types": "./src/service/shared/ports/retirement-runtime.ts",
+      "default": "./src/service/shared/ports/retirement-runtime.ts"
+    },
+    "./ports/undo-runtime": {
+      "types": "./src/service/shared/ports/undo-runtime.ts",
+      "default": "./src/service/shared/ports/undo-runtime.ts"
+    },
+    "./schemas": {
+      "types": "./src/service/shared/schemas.ts",
+      "default": "./src/service/shared/schemas.ts"
+    },
+    "./router": {
+      "types": "./src/router.ts",
+      "default": "./src/router.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "sync": "bun run --cwd ../.. sync:check --project @rawr/agent-config-sync",
+    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/agent-config-sync",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --project agent-config-sync"
+  },
+  "dependencies": {
+    "@rawr/hq-sdk": "workspace:*",
+    "@opentelemetry/api": "^1.9.0",
+    "@orpc/contract": "^1.13.5",
+    "@orpc/server": "^1.13.5",
+    "typebox": "^1.0.81"
+  },
+  "devDependencies": {
+    "@opentelemetry/context-async-hooks": "^2.6.0",
+    "@opentelemetry/sdk-trace-base": "^2.6.0",
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:service",
+      "role:servicepackage",
+      "migration-slice:structural-tranche"
+    ]
+  }
+}

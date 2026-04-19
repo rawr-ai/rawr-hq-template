@@ -87,5 +87,6 @@ Before blaming Phase 2 runtime substrate for HQ Ops confusion, re-check:
 
 ## Current Slice Note
 
-- `packages/agent-sync` is still package-scoped in this slice, but only as a deferred service candidate.
-- The active cleanup removes its illegal HQ Ops host-composition behavior rather than treating the package classification as permanently settled.
+- `services/agent-config-sync` is now the canonical sync service.
+- `packages/agent-config-sync-host` is the temporary host-runtime adapter package for the service.
+- `packages/agent-sync` has been removed.

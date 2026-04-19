@@ -337,6 +337,64 @@ The final implementation pass must include a dedicated service-shape review agai
 - `docs/projects/orpc-ingest-domain-packages/guidance.md`
 - `docs/projects/orpc-ingest-domain-packages/DECISIONS.md`
 
+## Current state after the `agent-config-sync` migration
+
+The migration is now implemented.
+
+- `services/agent-config-sync` is the canonical sync service package.
+- `packages/agent-config-sync-host` is the host-runtime adapter package for the sync domain.
+- `packages/agent-sync` has been removed.
+- `plugins/cli/plugins` now consumes the new service/host seam through:
+  - `plugins/cli/plugins/src/lib/agent-config-sync.ts`
+- `apps/cli/package.json` no longer carries the stale `@rawr/agent-sync` dependency.
+
+Implemented service shape:
+
+- thin package boundary:
+  - `src/index.ts`
+  - `src/client.ts`
+  - `src/router.ts`
+- explicit service choke points:
+  - `src/service/base.ts`
+  - `src/service/contract.ts`
+  - `src/service/impl.ts`
+  - `src/service/router.ts`
+- modules:
+  - `planning`
+  - `execution`
+  - `retirement`
+  - `undo`
+- shared ports:
+  - `planning-runtime`
+  - `execution-runtime`
+  - `retirement-runtime`
+  - `undo-runtime`
+
+Key verification that passed for the migration:
+
+- `bunx nx run-many -t typecheck --projects=@rawr/agent-config-sync,@rawr/agent-config-sync-host,@rawr/plugin-plugins,@rawr/cli --skip-nx-cache`
+- `bunx nx run-many -t build --projects=@rawr/agent-config-sync,@rawr/agent-config-sync-host,@rawr/plugin-plugins,@rawr/cli --skip-nx-cache`
+- `bunx nx run @rawr/agent-config-sync:test --skip-nx-cache`
+- `bunx nx run @rawr/agent-config-sync-host:test --skip-nx-cache`
+- `bunx nx run @rawr/plugin-plugins:test --skip-nx-cache`
+- `bun run lint:boundaries`
+- `bun run sync:check --project @rawr/agent-config-sync`
+- `bunx nx run @rawr/agent-config-sync:structural --skip-nx-cache`
+- `bun run build:affected`
+
+Command-surface smoke:
+
+- `rawr plugins status --json` still returns the expected non-zero drift status in a clean temp home
+- `rawr plugins sync all --dry-run --json` passes through the new service/host seam
+- `rawr plugins sync sources list --json` remains green through `hq-ops`
+
+Managed runtime / observability smoke:
+
+- `rawr hq up --observability required --open none` succeeded after restarting the external HyperDX container
+- the known external `hq:status` noise from the separate `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq` checkout still appeared during startup
+- `curl http://localhost:3000/health` returned `{"ok":true}` while the runtime was up
+- `rawr hq down` returned the workspace to `summary: "stopped"`
+
 ## Continuation snippet
 
 ```text

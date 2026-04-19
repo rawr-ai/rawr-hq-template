@@ -57,8 +57,18 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("services/agent-config-sync"),
+        test: { name: "agent-config-sync", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/hq-ops-host"),
         test: { name: "hq-ops-host", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/agent-config-sync-host"),
+        test: { name: "agent-config-sync-host", environment: "node", include: [...includes] },
       },
       {
         extends: true,
@@ -74,11 +84,6 @@ export default defineConfig({
         extends: true,
         root: r("packages/session-tools"),
         test: { name: "session-tools", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("packages/agent-sync"),
-        test: { name: "agent-sync", environment: "node", include: [...includes] },
       },
       {
         extends: true,

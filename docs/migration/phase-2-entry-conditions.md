@@ -41,15 +41,16 @@ Phase 2 should also begin with one explicit caution in mind:
   - `docs/projects/orpc-ingest-domain-packages/guidance.md`
 - No repo-local service-package `decisions.md` was located during the Phase 1 closeout pass; if a later slice depends on one, locate and ground on it explicitly instead of assuming it was already followed.
 
-## Deferred Agent Sync Classification
+## Agent Config Sync Promotion
 
-For this slice, treat `packages/agent-sync` as package-scoped support/tooling matter with one explicit caution:
+This slice no longer treats agent sync as a deferred package-scoped candidate.
 
-- it remains a deferred service-promotion candidate, not a forever-settled support package
-- do not let it act like a runtime host while that larger classification remains unresolved
-- true hosts must load HQ Ops config through their own `@rawr/hq-ops` client seams and pass resolved sync config/policy into `agent-sync`
+- `services/agent-config-sync` is now the canonical sync service truth
+- `packages/agent-config-sync-host` is the temporary host-runtime adapter package for concrete filesystem/process/provider concerns
+- `services/hq-ops` remains the authority for sync-source config and layered config reads
+- true hosts still load config through their own `@rawr/hq-ops` client seams and pass resolved sync config/policy into the sync surface
 
-This slice therefore removes `agent-sync` host-composition behavior without taking on full `agent-config-sync` service promotion.
+The legacy `@rawr/agent-sync` package has been removed.
 
 ## Runtime Substrate Specification
 

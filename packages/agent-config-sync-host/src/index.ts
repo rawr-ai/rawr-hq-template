@@ -22,6 +22,7 @@ export {
   type ExecFn,
 } from "./claude-cli";
 export { packageCoworkPlugin, type CoworkPackageResult } from "./cowork-package";
+export { effectiveContentForProvider, resolveDefaultCoworkOutDir } from "./effective-content";
 export {
   copyDirTree,
   dirsIdentical,
@@ -66,6 +67,15 @@ export {
   type ToolsComposeConfig,
 } from "./scan-tools-composed";
 export { scanSourcePlugin } from "./scan-source-plugin";
+export {
+  beginPluginsSyncUndoCapture,
+  clearActiveUndoCapsule,
+  expireUndoCapsuleOnUnrelatedCommand,
+  loadActiveUndoCapsule,
+  runUndoForWorkspace,
+} from "./sync-undo";
+export { resolveSourceScopeForPath, scopeAllows } from "./source-scope";
+export { planSyncAll } from "./sync-all";
 export { resolveTargets, type TargetHomes } from "./targets";
 export type {
   AgentConfigSyncDestinationConfig,

@@ -121,6 +121,9 @@ const suiteCommandsByProject = {
       "bun scripts/phase-03/verify-hq-ops-host-placement.mjs",
     ],
   },
+  "@rawr/agent-config-sync": {
+    default: ["bun scripts/phase-03/verify-agent-config-sync-service-shape.mjs"],
+  },
   "@rawr/hq-ops-host": {
     default: ["bun scripts/phase-03/verify-hq-ops-host-placement.mjs"],
   },

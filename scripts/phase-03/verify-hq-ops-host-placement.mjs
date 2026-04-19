@@ -66,7 +66,7 @@ for (const absPath of files.sort()) {
   const imports = parseImports(relPath, source);
 
   for (const imp of imports) {
-    if (relPath.startsWith("packages/agent-sync/") && imp.specifier.startsWith("@rawr/hq-ops")) {
+    if (relPath.startsWith("packages/agent-config-sync-host/") && imp.specifier.startsWith("@rawr/hq-ops")) {
       findings.push(`${relPath} must not import ${imp.specifier}`);
     }
 

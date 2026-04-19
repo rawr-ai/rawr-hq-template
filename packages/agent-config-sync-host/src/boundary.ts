@@ -60,15 +60,15 @@ import { resolveSourcePlugin } from "./resolve-source-plugin";
 import { scanCanonicalContentAtRoot } from "./scan-canonical-content";
 import { scanComposedToolsContent, type ToolsComposeConfig } from "./scan-tools-composed";
 import { scanSourcePlugin } from "./scan-source-plugin";
-import { retireStaleManagedPlugins } from "./lib/retire-stale-managed";
-import { runSync } from "./lib/sync-engine";
+import { retireStaleManagedPlugins } from "./retire-stale-managed";
+import { runSync } from "./sync-engine";
 import {
   beginPluginsSyncUndoCapture,
   clearActiveUndoCapsule,
   loadActiveUndoCapsule,
   runUndoForWorkspace,
-} from "./lib/sync-undo";
-import { resolveSourceScopeForPath, scopeAllows } from "./lib/source-scope";
+} from "./sync-undo";
+import { resolveSourceScopeForPath, scopeAllows } from "./source-scope";
 import { resolveTargets, type TargetHomes as HostTargetHomes } from "./targets";
 import {
   findWorkspaceRoot,
@@ -229,10 +229,10 @@ function summarizeWorkspaceRun(input: {
       conflicts += target.conflicts.length;
       totalConflicts += target.conflicts.length;
 
-      const nonSkipped = target.items.filter((item) => item.action !== "skipped");
-      const metadata = nonSkipped.filter((item) => item.kind === "metadata");
-      const material = nonSkipped.filter((item) => item.kind !== "metadata");
-      const drift = nonSkipped.filter((item) => input.includeMetadata || item.kind !== "metadata");
+      const nonSkipped = target.items.filter((item: any) => item.action !== "skipped");
+      const metadata = nonSkipped.filter((item: any) => item.kind === "metadata");
+      const material = nonSkipped.filter((item: any) => item.kind !== "metadata");
+      const drift = nonSkipped.filter((item: any) => input.includeMetadata || item.kind !== "metadata");
 
       metadataChanges += metadata.length;
       materialChanges += material.length;
@@ -241,7 +241,7 @@ function summarizeWorkspaceRun(input: {
       totalDriftItems += drift.length;
 
       driftItems.push(
-        ...drift.map((item) => ({
+        ...drift.map((item: any) => ({
           action: item.action,
           kind: item.kind,
           target: item.target,
@@ -353,8 +353,8 @@ export function createNodeExecutionRuntime(repoRoot: string, undoRuntime: UndoRu
           includeAgentsInCodex: input.includeAgentsInCodex,
           includeAgentsInClaude: input.includeAgentsInClaude,
           undoCapture: {
-            captureWriteTarget: (target) => undoRuntime.captureWriteTarget(target),
-            captureDeleteTarget: (target) => undoRuntime.captureDeleteTarget(target),
+            captureWriteTarget: (target: string) => undoRuntime.captureWriteTarget(target),
+            captureDeleteTarget: (target: string) => undoRuntime.captureDeleteTarget(target),
           },
         },
         codexHomes: input.codexHomes,
@@ -377,8 +377,8 @@ export function createNodeRetirementRuntime(repoRoot: string, undoRuntime: UndoR
         activePluginNames: input.activePluginNames,
         dryRun: input.dryRun,
         undoCapture: {
-          captureWriteTarget: (target) => undoRuntime.captureWriteTarget(target),
-          captureDeleteTarget: (target) => undoRuntime.captureDeleteTarget(target),
+          captureWriteTarget: (target: string) => undoRuntime.captureWriteTarget(target),
+          captureDeleteTarget: (target: string) => undoRuntime.captureDeleteTarget(target),
         },
       });
     },
