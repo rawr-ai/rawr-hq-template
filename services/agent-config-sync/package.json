@@ -43,11 +43,12 @@
     "test": "vitest run --project agent-config-sync"
   },
   "dependencies": {
-    "@rawr/hq-sdk": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@orpc/contract": "^1.13.5",
     "@orpc/server": "^1.13.5",
-    "typebox": "^1.0.81"
+    "@rawr/hq-sdk": "workspace:*",
+    "typebox": "^1.0.81",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@opentelemetry/context-async-hooks": "^2.6.0",

@@ -1,13 +1,16 @@
 import path from "node:path";
 
-import type { SyncScope } from "../schemas";
+import type { RawrPluginKind, SyncScope } from "../schemas";
 
-export type ResolvedSourceScope = "agents" | "cli" | "web" | "external";
+export type ResolvedSourceScope = RawrPluginKind | "external";
 
-const PLUGIN_SCOPE_ROOTS: Record<Exclude<ResolvedSourceScope, "external">, string[]> = {
-  agents: ["plugins", "agents"],
-  cli: ["plugins", "cli"],
+const PLUGIN_SCOPE_ROOTS: Record<RawrPluginKind, string[]> = {
+  toolkit: ["plugins", "cli"],
+  agent: ["plugins", "agents"],
   web: ["plugins", "web"],
+  api: ["plugins", "server", "api"],
+  workflows: ["plugins", "async", "workflows"],
+  schedules: ["plugins", "async", "schedules"],
 };
 
 function hasPrefix(parts: string[], prefix: string[]): boolean {
@@ -24,9 +27,9 @@ export function resolveSourceScopeForPath(absPath: string, workspaceRoot: string
 
   const relParts = rel.split(path.sep).filter(Boolean);
 
-  if (hasPrefix(relParts, PLUGIN_SCOPE_ROOTS.agents)) return "agents";
-  if (hasPrefix(relParts, PLUGIN_SCOPE_ROOTS.cli)) return "cli";
-  if (hasPrefix(relParts, PLUGIN_SCOPE_ROOTS.web)) return "web";
+  for (const [scope, root] of Object.entries(PLUGIN_SCOPE_ROOTS) as Array<[RawrPluginKind, string[]]>) {
+    if (hasPrefix(relParts, root)) return scope;
+  }
 
   return "external";
 }
