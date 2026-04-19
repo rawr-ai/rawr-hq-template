@@ -168,6 +168,29 @@ describe("phase-a gate scaffold (server)", () => {
     expect(rawrSource).not.toContain("rawrHqManifest.orpc.enrichContext");
   });
 
+  it("host composition guard rejects proof-helper bypass through HQ testing and manifest fixtures", async () => {
+    const orpcSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "orpc.ts"), "utf8");
+    const openApiSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "scripts", "write-orpc-openapi.ts"),
+      "utf8",
+    );
+    const testingHostSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
+      "utf8",
+    );
+    const supportProofSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "test", "support", "example-todo-proof-clients.ts"),
+      "utf8",
+    );
+
+    expect(orpcSource).not.toContain("@rawr/hq-app/testing");
+    expect(openApiSource).not.toContain("@rawr/hq-app/testing");
+    expect(testingHostSource).not.toContain("manifest.fixtures");
+    expect(supportProofSource).not.toContain("createTestingRawrHqManifest");
+    expect(supportProofSource).not.toContain("manifest.fixtures");
+    expect(supportProofSource).toContain("createTestingExampleTodoServiceClient");
+  });
+
   it("route negative assertions gate scaffold keeps D-015 negatives explicit", async () => {
     const routeMatrixPath = path.join(repoRoot, "apps", "server", "test", "route-boundary-matrix.test.ts");
     const routeMatrixSource = await fs.readFile(routeMatrixPath, "utf8");

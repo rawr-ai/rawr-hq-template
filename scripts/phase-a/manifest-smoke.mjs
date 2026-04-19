@@ -27,10 +27,16 @@ if (mode !== "baseline" && mode !== "completion") {
 const root = process.cwd();
 const rawrFile = path.join(root, "apps", "server", "src", "rawr.ts");
 const orpcFile = path.join(root, "apps", "server", "src", "orpc.ts");
+const openApiFile = path.join(root, "apps", "server", "scripts", "write-orpc-openapi.ts");
+const testingHostFile = path.join(root, "apps", "server", "src", "testing-host.ts");
+const supportProofFile = path.join(root, "apps", "server", "test", "support", "example-todo-proof-clients.ts");
 const manifestFile = path.join(root, "apps", "hq", "src", "manifest.ts");
 
 const rawrSource = await fs.readFile(rawrFile, "utf8");
 const orpcSource = await fs.readFile(orpcFile, "utf8");
+const openApiSource = await fs.readFile(openApiFile, "utf8");
+const testingHostSource = await fs.readFile(testingHostFile, "utf8");
+const supportProofSource = await fs.readFile(supportProofFile, "utf8");
 const manifestSource = mode === "completion" ? await fs.readFile(manifestFile, "utf8") : "";
 const rawrAst = parseTypeScript(rawrFile, rawrSource);
 const orpcAst = parseTypeScript(orpcFile, orpcSource);
@@ -96,15 +102,15 @@ if (mode === "completion") {
       manifestSource.includes("surfaces: composedWorkflowSurface.surfaces"),
   });
   requiredChecks.push({
-    label: "host consumes manifest workflow trigger router seam",
+    label: "host consumes host-owned workflow route seam",
     ok:
       hasIdentifierCall(rawrAst, "createWorkflowRouteHarness") &&
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows"]),
+      hasPropertyAccessChain(rawrAst, ["rawrHqHostSeam", "workflows", "published", "router"]),
   });
   requiredChecks.push({
-    label: "host composes workflow runtime from manifest workflow shells instead of host-local capability imports",
+    label: "host composes workflow runtime from host-owned realization shells instead of host-local capability imports",
     ok:
-      hasPropertyAccessChain(rawrAst, ["rawrHqManifest", "workflows", "createInngestFunctions"]) &&
+      hasPropertyAccessChain(rawrAst, ["rawrHqHostSeam", "workflows", "createInngestFunctions"]) &&
       hasIdentifierCall(rawrAst, "createHostInngestBundle") &&
       !rawrSource.includes("rawrHqManifest.inngest"),
   });
@@ -121,6 +127,15 @@ if (mode === "completion") {
     ok:
       !hasNamedImport(rawrAst, "./orpc", "createOrpcRouter") &&
       !hasIdentifierCall(rawrAst, "createOrpcRouter"),
+  });
+  requiredChecks.push({
+    label: "proof and openapi helpers avoid HQ testing and direct manifest fixture bypass",
+    ok:
+      !orpcSource.includes("@rawr/hq-app/testing") &&
+      !openApiSource.includes("@rawr/hq-app/testing") &&
+      !testingHostSource.includes("manifest.fixtures") &&
+      !supportProofSource.includes("createTestingRawrHqManifest") &&
+      !supportProofSource.includes("manifest.fixtures"),
   });
   requiredChecks.push({
     label: "no dedicated /rpc/workflows route leakage",

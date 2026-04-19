@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { processCoordinationRunEvent, createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
-import { createTestingRawrHqManifest } from "@rawr/hq-app/testing";
 import { createServerApp } from "../src/app";
-import { createRawrHostBoundRolePlan, materializeRawrHostBoundRolePlan } from "../src/host-seam";
+import { createTestingRawrHostSeam } from "../src/testing-host";
 import { registerOrpcRoutes } from "../src/orpc";
 import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
 import { enablePlugin } from "@rawr/state/repo-state";
@@ -121,9 +120,7 @@ describe("rawr server routes", () => {
   });
 
   it("host-composition-guard: host seam scaffold binds declaration plugins while preserving the mixed-world bridge", () => {
-    const manifest = createTestingRawrHqManifest();
-    const boundRolePlan = createRawrHostBoundRolePlan({ manifest });
-    const hostSeam = materializeRawrHostBoundRolePlan(boundRolePlan);
+    const hostSeam = createTestingRawrHostSeam().realization;
 
     expect(Object.keys(hostSeam.orpc.router)).toEqual(
       expect.arrayContaining(["coordination", "state", "exampleTodo", "supportExample"]),
@@ -178,7 +175,7 @@ describe("rawr server routes", () => {
     expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"]);
   });
 
-  it("host-composition-guard: manifest composes routers from package seam, not app internals", async () => {
+  it("host-composition-guard: manifest keeps composition authority and transitional bridge local", async () => {
     const manifestSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "manifest.ts"), "utf8");
     expect(manifestSource).toContain("registerCoordinationApiPlugin");
     expect(manifestSource).toContain("registerStateApiPlugin");
@@ -204,17 +201,11 @@ describe("rawr server routes", () => {
     expect(manifestSource).toContain("plugins: {");
     expect(manifestSource).toContain("api: apiPlugins");
     expect(manifestSource).toContain("workflows: workflowPlugins");
-    expect(manifestSource).toContain("workflows: materializedSurfaces.workflows");
-    expect(manifestSource).toContain("const composedApiSurface = composeApiPlugins");
-    expect(manifestSource).toContain("materializeRequestScopedPluginSurfaces");
-    expect(manifestSource).toContain("orpc: materializedSurfaces.orpc");
+    expect(manifestSource).not.toContain("materializeRequestScopedPluginSurfaces");
+    expect(manifestSource).not.toContain("registerOrpcRoutes");
+    expect(manifestSource).not.toContain("createWorkflowRouteHarness");
     expect(manifestSource).not.toContain("new Inngest(");
-    expect(manifestSource).not.toContain("mergeDeclaredSurfaceTrees");
-    expect(manifestSource).not.toContain("published: {");
-    expect(manifestSource).not.toContain("contract: composedApiSurface.publishedContract");
-    expect(manifestSource).not.toContain("requestScopedPublishedApi.router");
-    expect(manifestSource).not.toContain("requestScopedPublishedWorkflow.router");
-    expect(manifestSource).not.toContain("requestScopedInternalWorkflow.router");
+    expect(manifestSource).not.toContain("createCoordinationWorkflowRuntimeAdapter");
   });
 
   it("host-composition-guard: host realizes workflow runtime and keeps workflow context off canonical ORPC registration", async () => {
@@ -239,6 +230,29 @@ describe("rawr server routes", () => {
     expect(rawrSource).toContain("openApiRouter: rawrHqHostSeam.orpc.published.router");
     expect(rawrSource).toContain("publishedRouter: rawrHqHostSeam.workflows.published.router");
     expect(rawrSource).toContain("contextFactory: (request, deps) => createWorkflowBoundaryContext(request, deps)");
+  });
+
+  it("host-composition-guard: proof and openapi helpers do not bypass host realization through HQ testing or manifest fixtures", async () => {
+    const orpcSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "orpc.ts"), "utf8");
+    const openApiScriptSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "scripts", "write-orpc-openapi.ts"),
+      "utf8",
+    );
+    const testingHostSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
+      "utf8",
+    );
+    const proofClientSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "test", "support", "example-todo-proof-clients.ts"),
+      "utf8",
+    );
+
+    expect(orpcSource).not.toContain("@rawr/hq-app/testing");
+    expect(openApiScriptSource).not.toContain("@rawr/hq-app/testing");
+    expect(testingHostSource).not.toContain("manifest.fixtures");
+    expect(proofClientSource).not.toContain("createTestingRawrHqManifest");
+    expect(proofClientSource).not.toContain("manifest.fixtures");
+    expect(proofClientSource).toContain("createTestingExampleTodoServiceClient");
   });
 
   it("host-composition-guard: serves capability-first workflow family paths", async () => {

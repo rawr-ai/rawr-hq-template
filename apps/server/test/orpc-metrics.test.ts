@@ -3,10 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as otelApi from "@opentelemetry/api";
-import { createTestingRawrHqManifest } from "@rawr/hq-app/testing";
 import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
 import { createServerApp } from "../src/app";
 import { __resetOrpcRouteTelemetryForTests, registerOrpcRoutes } from "../src/orpc";
+import { createTestingRawrHostSeam } from "../src/testing-host";
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
@@ -22,7 +22,7 @@ const spanRecordException = vi.fn();
 const spanEnd = vi.fn();
 const spanContext = vi.fn();
 const startActiveSpan = vi.fn();
-const rawrHqManifest = createTestingRawrHqManifest();
+const rawrHqHostSeam = createTestingRawrHostSeam();
 
 async function createTestApp(args: {
   contextFactory?: (request: Request, deps: unknown) => unknown;
@@ -38,7 +38,7 @@ async function createTestApp(args: {
     baseUrl: "http://localhost:3100",
     runtime,
     inngestClient: { send: vi.fn() } as never,
-    router: rawrHqManifest.orpc.router as never,
+    router: rawrHqHostSeam.realization.orpc.router as never,
     ...(args.contextFactory ? { contextFactory: args.contextFactory as never } : {}),
   });
 
