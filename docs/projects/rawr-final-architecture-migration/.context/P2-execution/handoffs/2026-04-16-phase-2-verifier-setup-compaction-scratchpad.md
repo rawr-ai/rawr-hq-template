@@ -258,6 +258,85 @@ Pre-existing intentionally untracked files should remain untracked:
 - `the-reactive-codebase.html`
 - `the-reactive-codebase.md`
 
+## Next migration: `agent-config-sync`
+
+The next planned migration is to promote `packages/agent-sync` into:
+
+- `services/agent-config-sync`
+- `packages/agent-config-sync-host`
+
+Frozen architectural decisions for this cut:
+
+- canonical service name: `services/agent-config-sync`
+- canonical host runtime package: `packages/agent-config-sync-host`
+- `services/hq-ops` remains the authority for sync-source config and layered config reads
+- all current `agent-sync` capabilities move in this migration
+- only semantic truth moves into the service core
+- concrete filesystem / process / destination runtime stays in the host package
+- final state removes `packages/agent-sync`
+
+Implementation posture:
+
+- implement as a small Graphite stack layered on top of `docs/reground-p2-for-effect-runtime-substrate`
+- first land scratch/docs + boundary freeze
+- then scaffold service + host package
+- then migrate read/status paths
+- then migrate apply/retirement/undo
+- then remove the old package and canonize docs
+
+### Current `packages/agent-sync` classification matrix
+
+| File | Classification | Target |
+| --- | --- | --- |
+| `claude-cli.ts` | host runtime | `packages/agent-config-sync-host` |
+| `cowork-package.ts` | host runtime | `packages/agent-config-sync-host` |
+| `effective-content.ts` | service truth | `services/agent-config-sync` |
+| `fs-utils.ts` | host runtime helper | `packages/agent-config-sync-host` |
+| `marketplace-claude.ts` | split: manifest semantics + Claude IO | service models + host runtime |
+| `plugin-content.ts` | host source discovery/layout | `packages/agent-config-sync-host` |
+| `plugin-yaml.ts` | host source parsing | `packages/agent-config-sync-host` |
+| `registry-codex.ts` | split: claim/registry semantics + Codex IO | service models + host runtime |
+| `resolve-source-plugin.ts` | host source discovery | `packages/agent-config-sync-host` |
+| `retire-stale-managed.ts` | service truth | `services/agent-config-sync` |
+| `scan-canonical-content.ts` | host source scanning | `packages/agent-config-sync-host` |
+| `scan-source-plugin.ts` | host source scanning | `packages/agent-config-sync-host` |
+| `scan-tools-composed.ts` | host source scanning | `packages/agent-config-sync-host` |
+| `source-scope.ts` | service truth | `services/agent-config-sync` |
+| `sync-all.ts` | split: plan semantics + source discovery | service + host runtime |
+| `sync-config.ts` | host/plugin config shaping | plugin host layer |
+| `sync-engine.ts` | service truth with host-backed IO ports | `services/agent-config-sync` |
+| `sync-undo.ts` | service truth with host-backed persistence ports | `services/agent-config-sync` |
+| `targets.ts` | host runtime | `packages/agent-config-sync-host` |
+| `types.ts` | split: service models vs host helper types | service + host runtime |
+| `workspace.ts` | host runtime | `packages/agent-config-sync-host` |
+
+### Required internal service shape
+
+`services/agent-config-sync` must follow the `services/example-todo` internal topology, not a looser service-shaped approximation:
+
+- `src/index.ts`
+- `src/client.ts`
+- `src/router.ts`
+- `src/service/base.ts`
+- `src/service/contract.ts`
+- `src/service/impl.ts`
+- `src/service/router.ts`
+- `src/service/modules/<module>/{contract,module,router,schemas,repository}.ts`
+- `src/service/shared/*`
+
+Recommended initial module decomposition:
+
+- `planning`
+- `execution`
+- `retirement`
+- `undo`
+
+The final implementation pass must include a dedicated service-shape review against:
+
+- `services/example-todo/src/service/**`
+- `docs/projects/orpc-ingest-domain-packages/guidance.md`
+- `docs/projects/orpc-ingest-domain-packages/DECISIONS.md`
+
 ## Continuation snippet
 
 ```text
