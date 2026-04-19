@@ -30,10 +30,23 @@ Objective: make `plugins/cli/plugins` a projection again by moving durable sync 
 - Orchestrator mapped current plugin semantic files, command imports, service module structure, and structural verifier seams.
 - Projection and ratchet work remain gated on service API integration.
 
+### 2026-04-19 - Service Slices Integrated
+
+- Integrated Sync Service commit `dab27df1` by fast-forwarding the orchestrator branch.
+- Integrated HQ Ops commit `bddc2c0f` by cherry-picking onto the orchestrator branch as `ae9d0f30`.
+- Beginning focused integrated service checks before projection thinning.
+
+### 2026-04-19 - Service Integration Typechecks Passed
+
+- Installed worktree dependencies with `bun install --frozen-lockfile` after Nx modules were missing in the fresh orchestrator worktree.
+- Passed `bunx nx run @rawr/agent-config-sync:typecheck --skip-nx-cache`.
+- Passed `bunx nx run @rawr/hq-ops:typecheck --skip-nx-cache`.
+- Projection thinning is now unblocked against real integrated service APIs.
+
 ## Active Agents
 
-- Active: Sync Service Agent `019da77e-9c1b-72c0-9b32-02228380906e` on `agent-SYNC-plugin-sync-service-ownership`
-- Active: HQ Ops Agent `019da77e-cab9-7593-91d8-afa1b94eb7a6` on `agent-HQOPS-plugin-install-lifecycle-service`
+- Complete: Sync Service Agent `019da77e-9c1b-72c0-9b32-02228380906e` on `agent-SYNC-plugin-sync-service-ownership`
+- Complete: HQ Ops Agent `019da77e-cab9-7593-91d8-afa1b94eb7a6` on `agent-HQOPS-plugin-install-lifecycle-service`
 - Pending: Projection Agent
 - Pending: Ratchet Agent
 - Pending: Proof Agent
@@ -41,8 +54,8 @@ Objective: make `plugins/cli/plugins` a projection again by moving durable sync 
 
 ## Slice Status
 
-- Sync service ownership: pending
-- HQ ops plugin install/lifecycle ownership: pending
+- Sync service ownership: integrated
+- HQ ops plugin install/lifecycle ownership: integrated
 - Plugin CLI projection thinning: pending
 - Structural ratchets: pending
 - Verification/proof: pending
@@ -50,5 +63,5 @@ Objective: make `plugins/cli/plugins` a projection again by moving durable sync 
 
 ## Verification State
 
-- Baseline not yet run in orchestrator worktree.
+- Focused integrated service typechecks passed for `@rawr/agent-config-sync` and `@rawr/hq-ops`.
 - Final gates are defined in the execution plan and must be run after integration.
