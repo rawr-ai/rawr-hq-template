@@ -9,7 +9,6 @@
     "@oclif/plugin-plugins": "^5.4.36",
     "@orpc/client": "^1.13.5",
     "@rawr/core": "workspace:*",
-    "@rawr/hq-ops-host": "workspace:*",
     "@rawr/hq-ops": "workspace:*",
     "@rawr/plugin-workspace": "workspace:*",
     "@rawr/orpc-client": "workspace:*",

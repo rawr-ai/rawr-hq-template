@@ -1,10 +1,5 @@
-import fs from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
-import { pathToFileURL } from "node:url";
-
-import { Type } from "typebox";
 import { Value } from "typebox/value";
+import type { HqOpsResources } from "../../shared/ports/resources";
 import {
   clampJournalCandidateLimit,
   RawrConfigV1Schema,
@@ -19,8 +14,10 @@ import {
 const clampInt = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, Math.trunc(value)));
 
-export function rawrConfigPath(repoRoot: string): string {
-  return path.join(repoRoot, "rawr.config.ts");
+type ConfigResources = Pick<HqOpsResources, "fs" | "path">;
+
+export function rawrConfigPath(resources: ConfigResources, repoRoot: string): string {
+  return resources.path.join(repoRoot, "rawr.config.ts");
 }
 
 function formatTypeBoxIssues(maybeConfig: unknown): ConfigValidationIssue[] {
@@ -158,7 +155,7 @@ export function validateRawrConfig(
   return { ok: true, config: normalized };
 }
 
-function pickConfigExport(mod: any): unknown {
+function pickConfigExport(mod: unknown): unknown {
   if (mod && typeof mod === "object" && "default" in mod) return (mod as any).default;
   return mod;
 }
@@ -167,23 +164,32 @@ function formatIssues(issues: ConfigValidationIssue[]): string {
   return issues.map((i) => `${i.path}: ${i.message}`).join("\n");
 }
 
-export async function loadRawrConfig(repoRoot: string): Promise<LoadRawrConfigResult> {
-  const configPath = rawrConfigPath(repoRoot);
+function parseStaticDefaultConfig(source: string): unknown | null {
+  const match = source.match(/^\s*export\s+default\s+([\s\S]*?);?\s*$/);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[1]!);
+  } catch {
+    return null;
+  }
+}
+
+export async function loadRawrConfig(resources: ConfigResources, repoRoot: string): Promise<LoadRawrConfigResult> {
+  const configPath = rawrConfigPath(resources, repoRoot);
 
   let st: { mtimeMs: number } | null = null;
-  try {
-    const stat = await fs.stat(configPath);
-    if (!stat.isFile()) return { config: null, path: null, warnings: [] };
-    st = { mtimeMs: stat.mtimeMs };
-  } catch {
+  const stat = await resources.fs.stat(configPath);
+  if (!stat) {
     return { config: null, path: null, warnings: [] };
   }
+  if (!stat.isFile) return { config: null, path: null, warnings: [] };
+  st = { mtimeMs: stat.mtimeMs };
 
   const warnings: string[] = [];
   try {
-    const baseHref = pathToFileURL(configPath).href;
+    const baseHref = resources.path.toFileHref(configPath);
     const href = `${baseHref}?mtime=${encodeURIComponent(String(st?.mtimeMs ?? Date.now()))}`;
-    const mod = (await import(href)) as any;
+    const mod = await import(href);
     const exported = pickConfigExport(mod);
 
     const validated = validateRawrConfig(exported);
@@ -202,6 +208,26 @@ export async function loadRawrConfig(repoRoot: string): Promise<LoadRawrConfigRe
 
     return { config: validated.config, path: configPath, warnings };
   } catch (err) {
+    const raw = await resources.fs.readText(configPath);
+    const staticConfig = raw === null ? null : parseStaticDefaultConfig(raw);
+    if (staticConfig !== null) {
+      const validated = validateRawrConfig(staticConfig);
+      if (!validated.ok) {
+        return {
+          config: null,
+          path: configPath,
+          warnings,
+          error: {
+            message: "Invalid rawr.config.ts",
+            cause: formatIssues(validated.issues),
+            issues: validated.issues,
+          },
+        };
+      }
+
+      return { config: validated.config, path: configPath, warnings };
+    }
+
     return {
       config: null,
       path: configPath,
@@ -211,23 +237,23 @@ export async function loadRawrConfig(repoRoot: string): Promise<LoadRawrConfigRe
   }
 }
 
-export function rawrGlobalConfigPath(): string {
-  return path.join(os.homedir(), ".rawr", "config.json");
+export function rawrGlobalConfigPath(resources: ConfigResources): string {
+  return resources.path.join(resources.path.homeDir(), ".rawr", "config.json");
 }
 
-export async function loadGlobalRawrConfig(): Promise<LoadRawrConfigResult> {
-  const configPath = rawrGlobalConfigPath();
+export async function loadGlobalRawrConfig(resources: ConfigResources): Promise<LoadRawrConfigResult> {
+  const configPath = rawrGlobalConfigPath(resources);
 
-  try {
-    const stat = await fs.stat(configPath);
-    if (!stat.isFile()) return { config: null, path: null, warnings: [] };
-  } catch {
+  const stat = await resources.fs.stat(configPath);
+  if (!stat) {
     return { config: null, path: null, warnings: [] };
   }
+  if (!stat.isFile) return { config: null, path: null, warnings: [] };
 
   const warnings: string[] = [];
   try {
-    const raw = await fs.readFile(configPath, "utf8");
+    const raw = await resources.fs.readText(configPath);
+    if (raw === null) return { config: null, path: null, warnings: [] };
     const parsedJson = JSON.parse(raw) as unknown;
     const validated = validateRawrConfig(parsedJson);
     if (!validated.ok) {
@@ -328,8 +354,89 @@ export type LoadRawrConfigLayeredResult = {
   merged: RawrConfig | null;
 };
 
-export async function loadRawrConfigLayered(repoRoot: string): Promise<LoadRawrConfigLayeredResult> {
-  const [global, workspace] = await Promise.all([loadGlobalRawrConfig(), loadRawrConfig(repoRoot)]);
+export async function loadRawrConfigLayered(
+  resources: ConfigResources,
+  repoRoot: string,
+): Promise<LoadRawrConfigLayeredResult> {
+  const [global, workspace] = await Promise.all([loadGlobalRawrConfig(resources), loadRawrConfig(resources, repoRoot)]);
   const merged = mergeRawrConfigLayers({ global: global.config, workspace: workspace.config });
   return { global, workspace, merged };
+}
+
+async function readGlobalConfig(resources: ConfigResources): Promise<unknown> {
+  const configPath = rawrGlobalConfigPath(resources);
+  const raw = await resources.fs.readText(configPath);
+  if (raw === null) return { version: 1 };
+
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return { version: 1 };
+  }
+}
+
+async function writeGlobalConfig(resources: ConfigResources, config: RawrConfig): Promise<void> {
+  const configPath = rawrGlobalConfigPath(resources);
+  await resources.fs.mkdir(resources.path.dirname(configPath));
+  await resources.fs.writeText(configPath, `${JSON.stringify(config, null, 2)}\n`);
+}
+
+export async function listGlobalSyncSources(resources: ConfigResources): Promise<{ path: string | null; sources: string[] }> {
+  const loaded = await loadGlobalRawrConfig(resources);
+  return {
+    path: rawrGlobalConfigPath(resources),
+    sources: loaded.config?.sync?.sources?.paths ?? [],
+  };
+}
+
+export async function addGlobalSyncSource(
+  resources: ConfigResources,
+  sourcePath: string,
+): Promise<{ path: string | null; sources: string[] }> {
+  const rawConfig = await readGlobalConfig(resources);
+  const validated = validateRawrConfig(rawConfig);
+  if (!validated.ok) {
+    throw new Error(
+      `Invalid ~/.rawr/config.json: ${validated.issues.map((issue) => `${issue.path}: ${issue.message}`).join("; ")}`,
+    );
+  }
+
+  const next = validated.config;
+  next.sync = next.sync ?? {};
+  next.sync.sources = next.sync.sources ?? {};
+
+  const existing = Array.isArray(next.sync.sources.paths) ? next.sync.sources.paths : [];
+  next.sync.sources.paths = [...new Set([...existing, sourcePath])];
+
+  await writeGlobalConfig(resources, next);
+  return {
+    path: rawrGlobalConfigPath(resources),
+    sources: next.sync.sources.paths,
+  };
+}
+
+export async function removeGlobalSyncSource(
+  resources: ConfigResources,
+  sourcePath: string,
+): Promise<{ path: string | null; sources: string[] }> {
+  const rawConfig = await readGlobalConfig(resources);
+  const validated = validateRawrConfig(rawConfig);
+  if (!validated.ok) {
+    throw new Error(
+      `Invalid ~/.rawr/config.json: ${validated.issues.map((issue) => `${issue.path}: ${issue.message}`).join("; ")}`,
+    );
+  }
+
+  const next = validated.config;
+  next.sync = next.sync ?? {};
+  next.sync.sources = next.sync.sources ?? {};
+
+  const existing = Array.isArray(next.sync.sources.paths) ? next.sync.sources.paths : [];
+  next.sync.sources.paths = existing.filter((entry) => entry !== sourcePath);
+
+  await writeGlobalConfig(resources, next);
+  return {
+    path: rawrGlobalConfigPath(resources),
+    sources: next.sync.sources.paths,
+  };
 }

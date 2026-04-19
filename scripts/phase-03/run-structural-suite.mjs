@@ -118,7 +118,7 @@ const suiteCommandsByProject = {
   "@rawr/hq-ops": {
     default: [
       "bun scripts/phase-1/verify-hq-ops-service-shape.mjs",
-      "bun scripts/phase-03/verify-hq-ops-host-placement.mjs",
+      "bun scripts/phase-03/verify-hq-ops-resource-binding.mjs",
     ],
   },
   "@rawr/agent-config-sync": {
@@ -126,9 +126,6 @@ const suiteCommandsByProject = {
   },
   "@rawr/session-intelligence": {
     default: ["bun scripts/phase-03/verify-session-intelligence-structural.mjs"],
-  },
-  "@rawr/hq-ops-host": {
-    default: ["bun scripts/phase-03/verify-hq-ops-host-placement.mjs"],
   },
   "@rawr/core": {
     default: ["bun scripts/phase-03/verify-core-support-structural.mjs"],

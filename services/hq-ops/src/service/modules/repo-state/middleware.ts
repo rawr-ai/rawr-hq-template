@@ -13,8 +13,7 @@ import {
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
-import { UnexpectedInternalError } from "../../shared/internal-errors";
-import type { RepoStateStore } from "../../shared/ports/repo-state-store";
+import type { HqOpsResources } from "../../shared/ports/resources";
 import { createRepository } from "./repository";
 
 export {
@@ -25,7 +24,7 @@ export {
 /** Standalone repository provider attached at module scope in `module.ts`. */
 export const repository = createServiceProvider<{
   deps: {
-    repoStateStore?: RepoStateStore;
+    resources: HqOpsResources;
   };
   scope: {
     repoRoot: string;
@@ -33,13 +32,8 @@ export const repository = createServiceProvider<{
 }>().middleware<{
   repo: ReturnType<typeof createRepository>;
 }>(async ({ context, next }) => {
-  const repoStateStore = context.deps.repoStateStore;
-  if (!repoStateStore) {
-    throw new UnexpectedInternalError("HQ Ops repoStateStore host runtime is not installed.");
-  }
-
   return next({
-    repo: createRepository(repoStateStore, context.scope.repoRoot),
+    repo: createRepository(context.deps.resources, context.scope.repoRoot),
   });
 });
 

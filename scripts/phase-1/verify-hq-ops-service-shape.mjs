@@ -16,10 +16,7 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/shared/README.md",
   "services/hq-ops/src/service/shared/errors.ts",
   "services/hq-ops/src/service/shared/internal-errors.ts",
-  "services/hq-ops/src/service/shared/ports/config-store.ts",
-  "services/hq-ops/src/service/shared/ports/repo-state-store.ts",
-  "services/hq-ops/src/service/shared/ports/journal-store.ts",
-  "services/hq-ops/src/service/shared/ports/security-runtime.ts",
+  "services/hq-ops/src/service/shared/ports/resources.ts",
   "services/hq-ops/src/service/modules/config/contract.ts",
   "services/hq-ops/src/service/modules/config/middleware.ts",
   "services/hq-ops/src/service/modules/config/model.ts",
@@ -124,8 +121,9 @@ for (const key of ["config", "repoState", "journal", "security"]) {
   assertCondition(routerSource.includes(`  ${key},`) || routerSource.includes(`\n  ${key},`), `root router is missing ${key}`);
 }
 
-for (const depKey of ["configStore", "repoStateStore", "journalStore", "securityRuntime"]) {
-  assertCondition(baseSource.includes(depKey), `hq-ops base service deps must declare ${depKey}`);
+assertCondition(baseSource.includes("resources: HqOpsResources"), "hq-ops base service deps must declare primitive resources");
+for (const forbiddenDep of ["configStore", "repoStateStore", "journalStore", "securityRuntime"]) {
+  assertCondition(!baseSource.includes(forbiddenDep), `hq-ops base service deps must not declare ${forbiddenDep}`);
 }
 
 assertCondition(clientSource.includes("defineServicePackage(router)"), "hq-ops client must keep defineServicePackage(router)");
@@ -174,6 +172,27 @@ for (const relPath of REQUIRED_PATHS.filter((path) => path.startsWith("services/
   const source = await readFile(relPath);
   for (const fragment of bannedFragments) {
     assertCondition(!source.includes(fragment), `${relPath} illegally references ${fragment}`);
+  }
+}
+
+for (const relPath of [
+  "services/hq-ops/src/service/shared/ports/config-store.ts",
+  "services/hq-ops/src/service/shared/ports/repo-state-store.ts",
+  "services/hq-ops/src/service/shared/ports/journal-store.ts",
+  "services/hq-ops/src/service/shared/ports/security-runtime.ts",
+]) {
+  assertCondition(!(await pathExists(relPath)), `obsolete high-level HQ Ops behavior port must not survive: ${relPath}`);
+}
+
+for (const relPath of [
+  "services/hq-ops/src/service/modules/config/repository.ts",
+  "services/hq-ops/src/service/modules/repo-state/repository.ts",
+  "services/hq-ops/src/service/modules/journal/repository.ts",
+  "services/hq-ops/src/service/modules/security/repository.ts",
+]) {
+  const source = await readFile(relPath);
+  for (const fragment of ["configStore.", "repoStateStore.", "journalStore.", "securityRuntime."]) {
+    assertCondition(!source.includes(fragment), `${relPath} must not forward to ${fragment}`);
   }
 }
 

@@ -8,14 +8,14 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("packages/hq-ops-host/src/repo-state-store.ts"),
+  mustExist("services/hq-ops/src/service/modules/repo-state/repository.ts"),
   mustExist("apps/server/src/rawr.ts"),
   mustExist("apps/server/test/repo-state-store.concurrent.test.ts"),
   mustExist("apps/server/test/rawr.test.ts"),
 ]);
 
 const [repoStateSource, rawrSource, repoStateTestSource, rawrTestSource, scripts] = await Promise.all([
-  readFile("packages/hq-ops-host/src/repo-state-store.ts"),
+  readFile("services/hq-ops/src/service/modules/repo-state/repository.ts"),
   readFile("apps/server/src/rawr.ts"),
   readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
   readFile("apps/server/test/rawr.test.ts"),
@@ -48,7 +48,7 @@ const checks = [
   {
     id: "repo-state-authority-root-helper",
     message: "repo-state must canonicalize authority root with realpath fallback",
-    pass: /async function resolveRepoStateAuthorityRoot\(repoRoot: string\): Promise<string>[\s\S]*await fs\.realpath\(resolvedRoot\)[\s\S]*return resolvedRoot;/u.test(
+    pass: /async function resolveRepoStateAuthorityRoot\(resources: HqOpsResources, repoRoot: string\): Promise<string>[\s\S]*return \(await resources\.path\.realpath\(resolvedRoot\)\) \?\? resolvedRoot;/u.test(
       repoStateSource,
     ),
   },
@@ -56,16 +56,16 @@ const checks = [
     id: "repo-state-read-authority-root",
     message: "getRepoState must read from canonical authority root",
     pass:
-      /const \{ state \} = await getRepoStateWithAuthority\(repoRoot\);/u.test(repoStateSource) &&
+      /const \{ state \} = await getRepoStateWithAuthority\(resources, repoRoot\);/u.test(repoStateSource) &&
       /return state;/u.test(repoStateSource),
   },
   {
     id: "repo-state-mutate-authority-root",
     message: "mutateRepoStateAtomically must lock/write through canonical authority root",
     pass:
-      /const lockPath = stateLockPath\(authorityRoot\);/u.test(repoStateSource) &&
-      /const resolvedStatePath = statePath\(authorityRoot\);/u.test(repoStateSource) &&
-      /return withLocalMutationQueue\(authorityRoot, async \(\) =>/u.test(repoStateSource),
+      /const lockPath = stateLockPath\(resources, authorityRoot\);/u.test(repoStateSource) &&
+      /const resolvedStatePath = statePath\(resources, authorityRoot\);/u.test(repoStateSource) &&
+      /return withLocalMutationQueue\(resources, authorityRoot, async \(\) =>/u.test(repoStateSource),
   },
   {
     id: "rawr-fs-import",
