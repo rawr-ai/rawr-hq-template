@@ -15,8 +15,15 @@ import { createTestingRawrHqLegacyHostSeam } from "@rawr/hq-app/legacy-cutover";
  * Canonical:
  * - `legacy-cutover -> host-composition -> host-seam -> host-realization`
  */
+let cachedSeam: ReturnType<typeof createTestingRawrHqLegacyHostSeam> | null = null;
+
 export function createTestingRawrHostSeam() {
-  return createTestingRawrHqLegacyHostSeam();
+  if (!cachedSeam) cachedSeam = createTestingRawrHqLegacyHostSeam();
+  return cachedSeam;
+}
+
+export function resetTestingRawrHostSeam() {
+  cachedSeam = null;
 }
 
 /**

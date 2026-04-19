@@ -2,11 +2,13 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
-import { createTestingHqOpsServiceClient } from "../src/testing-host";
+import { createTestingHqOpsServiceClient, resetTestingRawrHostSeam } from "../src/testing-host";
+
+afterAll(() => resetTestingRawrHostSeam());
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",

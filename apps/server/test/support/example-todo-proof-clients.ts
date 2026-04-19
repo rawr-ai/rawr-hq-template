@@ -1,7 +1,6 @@
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
 import {
   createTestingExampleTodoServiceClient,
-  createTestingRawrHostSeam,
 } from "../../src/testing-host";
 
 const FIRST_PARTY_RPC_HEADERS = {
@@ -18,7 +17,6 @@ const EXTERNAL_OPENAPI_HEADERS = {
 type RequestHandlerApp = {
   handle(request: Request): Promise<Response>;
 };
-const rawrHqHostSeam = createTestingRawrHostSeam();
 
 type ExampleTodoTask = {
   id: string;

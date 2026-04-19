@@ -264,7 +264,15 @@ export async function assessInstallState(input: {
         message: `${pluginName} is present but not linked`,
         expectedRoot,
         actualRoot: actual.root,
-        autoFixable: false,
+        autoFixable: true,
+      });
+      actions.push({
+        command: `rawr plugins uninstall ${pluginName}`,
+        reason: `Remove non-link entry for ${pluginName}`,
+      });
+      actions.push({
+        command: `rawr plugins link ${JSON.stringify(expectedRoot)} --install`,
+        reason: `Relink ${pluginName} to canonical workspace source`,
       });
       continue;
     }
@@ -276,7 +284,15 @@ export async function assessInstallState(input: {
         message: `${pluginName} link is missing root path`,
         expectedRoot,
         actualRoot: null,
-        autoFixable: false,
+        autoFixable: true,
+      });
+      actions.push({
+        command: `rawr plugins uninstall ${pluginName}`,
+        reason: `Remove rootless link entry for ${pluginName}`,
+      });
+      actions.push({
+        command: `rawr plugins link ${JSON.stringify(expectedRoot)} --install`,
+        reason: `Relink ${pluginName} to canonical workspace source`,
       });
       continue;
     }
@@ -319,15 +335,18 @@ export async function assessInstallState(input: {
     });
   }
 
-  const runtimePlugins = input.runtimePlugins ?? [];
-  const hasCanonicalRuntimePlugin = runtimePlugins.some((plugin) => plugin.name === CANONICAL_SYNC_PLUGIN_NAME);
-  if (!hasCanonicalRuntimePlugin) {
-    issues.push({
-      kind: "missing_core_plugin",
-      pluginName: CANONICAL_SYNC_PLUGIN_NAME,
-      message: `${CANONICAL_SYNC_PLUGIN_NAME} is missing from runtime plugin snapshot`,
-      autoFixable: false,
-    });
+  if (input.runtimePlugins) {
+    const hasCanonicalRuntimePlugin = input.runtimePlugins.some(
+      (plugin) => plugin.name === CANONICAL_SYNC_PLUGIN_NAME,
+    );
+    if (!hasCanonicalRuntimePlugin) {
+      issues.push({
+        kind: "missing_core_plugin",
+        pluginName: CANONICAL_SYNC_PLUGIN_NAME,
+        message: `${CANONICAL_SYNC_PLUGIN_NAME} is missing from runtime plugin snapshot`,
+        autoFixable: false,
+      });
+    }
   }
 
   const expectedLinksArray = [...expectedLinks.entries()].map(([pluginName, root]) => ({ pluginName, root }));

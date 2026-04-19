@@ -77,9 +77,14 @@ function safeParseJson(input: string): unknown {
 function buildReconcileCommands(beforeIssues: Array<{ kind: string; pluginName?: string }>): ReconcileCommand[] {
   const commands: ReconcileCommand[] = [];
   const legacyToUninstall = new Set<string>();
+  const malformedToUninstall = new Set<string>();
   for (const issue of beforeIssues) {
-    if ((issue.kind !== "legacy_present" && issue.kind !== "legacy_overlap") || !issue.pluginName) continue;
-    legacyToUninstall.add(issue.pluginName);
+    if (!issue.pluginName) continue;
+    if (issue.kind === "legacy_present" || issue.kind === "legacy_overlap") {
+      legacyToUninstall.add(issue.pluginName);
+    } else if (issue.kind === "not_linked" || (issue.kind === "path_mismatch")) {
+      malformedToUninstall.add(issue.pluginName);
+    }
   }
 
   for (const legacyName of LEGACY_SYNC_PLUGIN_NAMES) {
@@ -87,6 +92,13 @@ function buildReconcileCommands(beforeIssues: Array<{ kind: string; pluginName?:
     commands.push({
       args: ["plugins", "uninstall", legacyName],
       reason: `remove legacy provider ${legacyName}`,
+    });
+  }
+
+  for (const pluginName of malformedToUninstall) {
+    commands.push({
+      args: ["plugins", "uninstall", pluginName],
+      reason: `remove malformed entry for ${pluginName} before relink`,
     });
   }
 

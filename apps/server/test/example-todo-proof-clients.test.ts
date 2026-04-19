@@ -1,14 +1,17 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
+import { resetTestingRawrHostSeam } from "../src/testing-host";
 import {
   createExampleTodoInvocation,
   createExampleTodoProofClients,
 } from "./support/example-todo-proof-clients";
+
+afterAll(() => resetTestingRawrHostSeam());
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
