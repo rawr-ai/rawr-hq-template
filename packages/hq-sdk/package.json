@@ -9,6 +9,26 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./boundary": {
+      "types": "./src/boundary.ts",
+      "default": "./src/boundary.ts"
+    },
+    "./host-adapters/analytics/embedded-placeholder": {
+      "types": "./src/host-adapters/analytics/embedded-placeholder.ts",
+      "default": "./src/host-adapters/analytics/embedded-placeholder.ts"
+    },
+    "./host-adapters/feedback/embedded-placeholder": {
+      "types": "./src/host-adapters/feedback/embedded-placeholder.ts",
+      "default": "./src/host-adapters/feedback/embedded-placeholder.ts"
+    },
+    "./host-adapters/logger/embedded-placeholder": {
+      "types": "./src/host-adapters/logger/embedded-placeholder.ts",
+      "default": "./src/host-adapters/logger/embedded-placeholder.ts"
+    },
+    "./host-adapters/sql/embedded-in-memory": {
+      "types": "./src/host-adapters/sql/embedded-in-memory.ts",
+      "default": "./src/host-adapters/sql/embedded-in-memory.ts"
     }
   },
   "scripts": {
@@ -16,6 +36,7 @@
     "typecheck": "bunx tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
     "@orpc/contract": "^1.13.5",
     "@orpc/server": "^1.13.5",
     "typebox": "^1.0.81"

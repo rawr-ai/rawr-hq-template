@@ -12,7 +12,7 @@
  * Keep boundary concerns out of this file. Procedure routers decide caller
  * actionable errors from returned values.
  */
-import type { Sql } from "../../../orpc-sdk";
+import type { Sql } from "@rawr/hq-sdk";
 import { UnexpectedInternalError } from "../../shared/internal-errors";
 import type { Task } from "./schemas";
 

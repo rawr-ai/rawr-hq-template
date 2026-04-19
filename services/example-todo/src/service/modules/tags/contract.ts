@@ -9,7 +9,7 @@
  * Add/modify procedures here first. Module composition lives in `module.ts`, and
  * handler behavior lives in `router.ts`.
  */
-import { schema } from "../../../orpc-sdk";
+import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
 import { READ_ONLY_MODE } from "../../shared/errors";

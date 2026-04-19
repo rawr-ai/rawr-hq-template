@@ -1,13 +1,16 @@
-import type { DbPool } from "../src/orpc/ports/db";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
-} from "../src/orpc/host-adapters/analytics/embedded-placeholder";
+} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
-} from "../src/orpc/host-adapters/logger/embedded-placeholder";
-import { createEmbeddedInMemoryDbPoolAdapter, type EmbeddedInMemorySqlOptions } from "../src/orpc/host-adapters/sql/embedded-in-memory";
+} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import {
+  createEmbeddedInMemoryDbPoolAdapter,
+  type EmbeddedInMemorySqlOptions,
+} from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
+import type { DbPool } from "@rawr/hq-sdk";
 import type { CreateClientOptions } from "../src/client";
 import type { Service } from "../src/service/base";
 

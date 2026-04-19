@@ -5,7 +5,7 @@
  * Expected duplicate checks are returned as values (`exists`) so procedure
  * handlers can decide caller-actionable boundary errors explicitly.
  */
-import type { Sql } from "../../../orpc-sdk";
+import type { Sql } from "@rawr/hq-sdk";
 import { UnexpectedInternalError } from "../../shared/internal-errors";
 import type { Assignment } from "./schemas";
 
