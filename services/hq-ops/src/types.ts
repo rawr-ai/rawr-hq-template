@@ -32,4 +32,5 @@ export type {
   ResolveLifecycleTargetResult,
   ScratchPolicyCheck,
   ScratchPolicyCheckInput,
+  ScratchPolicyMode,
 } from "./service/modules/plugin-lifecycle/model";

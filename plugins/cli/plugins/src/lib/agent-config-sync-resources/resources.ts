@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import type { AgentConfigSyncResources } from "@rawr/agent-config-sync";
+import type { AgentConfigSyncResources } from "@rawr/agent-config-sync/resources";
 import { resolvePluginContentLayout } from "./plugin-content";
 import { scanCanonicalContentAtRoot } from "./scan-canonical-content";
 import {

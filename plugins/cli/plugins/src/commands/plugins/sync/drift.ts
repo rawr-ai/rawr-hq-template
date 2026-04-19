@@ -1,22 +1,13 @@
-import path from "node:path";
-
 import { Flags } from "@oclif/core";
 import {
-  planSyncAll,
-  resolveSourcePlugin,
-  resolveSourceScopeForPath,
-  resolveTargets,
-  runSync,
-  scanSourcePlugin,
-  scopeAllows,
-  type SyncItemResult,
+  assessWorkspaceSync,
+  collectWorkspaceSourcePaths,
+  createWorkspaceSyncAssessInput,
   type SyncScope,
 } from "../../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
-import { deriveSyncPolicy } from "../../../lib/sync-policy";
-
-type DriftItem = Pick<SyncItemResult, "action" | "kind" | "target" | "message">;
+import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
 
 export default class PluginsSyncDrift extends RawrCommand {
   static description =
@@ -67,192 +58,50 @@ export default class PluginsSyncDrift extends RawrCommand {
     const baseFlags = RawrCommand.extractBaseFlags(flags);
 
     try {
-      const { workspaceRoot, syncable, skipped } = await planSyncAll(process.cwd());
+      const cwd = process.cwd();
       const layered = await loadLayeredRawrConfigForCwd(process.cwd());
       const includeOclif = Boolean((flags as any)["include-oclif"]);
       const includeMetadata = Boolean((flags as any)["include-metadata"]);
       const includeItems = Boolean((flags as any)["include-items"]);
       const failOnDrift = Boolean((flags as any)["fail-on-drift"]);
       const scope = String((flags as any).scope) as SyncScope;
-      const syncPolicy = deriveSyncPolicy(layered.config ?? undefined);
-      const includeAgentsInCodex = syncPolicy.includeAgentsInCodex;
-      const includeAgentsInClaude = syncPolicy.includeAgentsInClaude;
-
-      const extraSourcePaths: string[] = [];
-      for (const p of layered.config?.sync?.sources?.paths ?? []) extraSourcePaths.push(String(p));
-
-      if (includeOclif) {
-        for (const pl of this.config.plugins ?? []) {
-          const root = (pl as any).root as string | undefined;
-          if (!root) continue;
-          extraSourcePaths.push(root.endsWith("package.json") ? path.dirname(root) : root);
-        }
+      const workspaceRoot = await findWorkspaceRoot(cwd);
+      if (!workspaceRoot) {
+        const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)", { code: "WORKSPACE_ROOT_MISSING" });
+        this.outputResult(result, { flags: baseFlags });
+        this.exit(2);
+        return;
       }
-
-      const plannedWorkspaceDirs = new Set(syncable.map((s) => path.resolve(s.sourcePlugin.absPath)));
-      const seen = new Set<string>();
-      const additionalSyncable: typeof syncable = [];
-      const additionalSkipped: typeof skipped = [];
-
-      for (const candidate of extraSourcePaths) {
-        const abs = path.resolve(process.cwd(), candidate);
-        const absResolved = path.resolve(abs);
-        if (plannedWorkspaceDirs.has(absResolved)) continue;
-        if (seen.has(absResolved)) continue;
-        seen.add(absResolved);
-
-        try {
-          const sourcePlugin = await resolveSourcePlugin(absResolved, process.cwd());
-          const content = await scanSourcePlugin(sourcePlugin);
-          const hasAny =
-            content.workflowFiles.length > 0 ||
-            content.skills.length > 0 ||
-            content.scripts.length > 0 ||
-            content.agentFiles.length > 0;
-          if (!hasAny) {
-            additionalSkipped.push({ dirName: sourcePlugin.dirName, absPath: sourcePlugin.absPath, reason: "no canonical content directories" });
-            continue;
-          }
-          additionalSyncable.push({ sourcePlugin, content });
-        } catch (err) {
-          additionalSkipped.push({ dirName: path.basename(absResolved), absPath: absResolved, reason: `unresolvable: ${String(err)}` });
-        }
-      }
-
-      const mergedSyncableAll = [...syncable, ...additionalSyncable];
-      const mergedSkipped = [...skipped, ...additionalSkipped];
-      const mergedSyncable = mergedSyncableAll.filter(({ sourcePlugin }) =>
-        scopeAllows(scope, resolveSourceScopeForPath(sourcePlugin.absPath, workspaceRoot)),
-      );
-      for (const filtered of mergedSyncableAll) {
-        if (mergedSyncable.includes(filtered)) continue;
-        mergedSkipped.push({
-          dirName: filtered.sourcePlugin.dirName,
-          absPath: filtered.sourcePlugin.absPath,
-          reason: `out of scope (${scope})`,
-        });
-      }
-
-      const targets = resolveTargets(
-        String(flags.agent) as "codex" | "claude" | "all",
-        (flags["codex-home"] as string[] | undefined) ?? [],
-        (flags["claude-home"] as string[] | undefined) ?? [],
-        layered.config ?? undefined,
-      );
-
-      const plugins: Array<{
-        dirName: string;
-        absPath: string;
-        conflicts: number;
-        materialChanges: number;
-        metadataChanges: number;
-        driftItems: DriftItem[];
-        targets: Array<{
-          agent: string;
-          home: string;
-          conflicts: number;
-          materialChanges: number;
-          metadataChanges: number;
-          driftItems: DriftItem[];
-        }>;
-      }> = [];
-
-      let totalTargets = 0;
-      let totalConflicts = 0;
-      let totalMaterialChanges = 0;
-      let totalMetadataChanges = 0;
-      let totalDriftItems = 0;
-
-      for (const { sourcePlugin, content } of mergedSyncable) {
-        const run = await runSync({
-          sourcePlugin,
-          content,
-          options: {
-            dryRun: true,
-            force: true,
-            gc: true,
-            includeAgentsInCodex,
-            includeAgentsInClaude,
-          },
-          codexHomes: targets.homes.codexHomes,
-          claudeHomes: targets.homes.claudeHomes,
-          includeCodex: targets.agents.includes("codex"),
-          includeClaude: targets.agents.includes("claude"),
-        });
-
-        const pluginEntry = {
-          dirName: sourcePlugin.dirName,
-          absPath: sourcePlugin.absPath,
-          conflicts: 0,
-          materialChanges: 0,
-          metadataChanges: 0,
-          driftItems: [] as DriftItem[],
-          targets: [] as Array<{
-            agent: string;
-            home: string;
-            conflicts: number;
-            materialChanges: number;
-            metadataChanges: number;
-            driftItems: DriftItem[];
-          }>,
-        };
-
-        for (const target of run.targets) {
-          totalTargets += 1;
-          const conflicts = target.conflicts.length;
-          const nonSkipped = target.items.filter((item) => item.action !== "skipped");
-          const metadataChanges = nonSkipped.filter((item) => item.kind === "metadata").length;
-          const materialItems = nonSkipped.filter((item) => item.kind !== "metadata");
-          const driftItems = nonSkipped.filter((item) => includeMetadata || item.kind !== "metadata");
-          const renderedDriftItems = includeItems
-            ? driftItems.map((item) => ({
-                action: item.action,
-                kind: item.kind,
-                target: item.target,
-                message: item.message,
-              }))
-            : [];
-
-          pluginEntry.conflicts += conflicts;
-          pluginEntry.materialChanges += materialItems.length;
-          pluginEntry.metadataChanges += metadataChanges;
-          pluginEntry.driftItems.push(...renderedDriftItems);
-
-          totalConflicts += conflicts;
-          totalMaterialChanges += materialItems.length;
-          totalMetadataChanges += metadataChanges;
-          totalDriftItems += driftItems.length;
-
-          pluginEntry.targets.push({
-            agent: target.agent,
-            home: target.home,
-            conflicts,
-            materialChanges: materialItems.length,
-            metadataChanges,
-            driftItems: renderedDriftItems,
-          });
-        }
-
-        plugins.push(pluginEntry);
-      }
-
-      const inSync = totalConflicts === 0 && totalDriftItems === 0;
+      const assessment = await assessWorkspaceSync({
+        repoRoot: workspaceRoot,
+        request: createWorkspaceSyncAssessInput({
+          cwd,
+          sourcePaths: collectWorkspaceSourcePaths({
+            config: layered.config ?? undefined,
+            includeOclif,
+            configPlugins: this.config.plugins,
+          }),
+          includeMetadata,
+          scope,
+          agent: String(flags.agent) as "codex" | "claude" | "all",
+          codexHomes: (flags["codex-home"] as string[] | undefined) ?? [],
+          claudeHomes: (flags["claude-home"] as string[] | undefined) ?? [],
+          config: layered.config ?? undefined,
+        }),
+        traceId: "plugin-plugins.agent-config-sync.assess-workspace-drift",
+      });
+      const plugins = includeItems
+        ? assessment.plugins
+        : assessment.plugins.map((plugin) => ({ ...plugin, driftItems: [] }));
+      const inSync = assessment.status === "IN_SYNC";
       const payload = this.ok({
         workspaceRoot,
         scope,
         includeMetadata,
         includeItems,
         includeOclif,
-        skipped: mergedSkipped,
-        summary: {
-          inSync,
-          totalPlugins: plugins.length,
-          totalTargets,
-          totalConflicts,
-          totalMaterialChanges,
-          totalMetadataChanges,
-          totalDriftItems,
-        },
+        skipped: assessment.skipped,
+        summary: { inSync, ...assessment.summary },
         plugins,
       });
 
@@ -261,9 +110,9 @@ export default class PluginsSyncDrift extends RawrCommand {
         human: () => {
           this.log(`workspace: ${workspaceRoot}`);
           this.log(`scope: ${scope}`);
-          this.log(`status: ${inSync ? "IN_SYNC" : "DRIFT_DETECTED"}`);
+          this.log(`status: ${assessment.status}`);
           this.log(
-            `summary: plugins=${plugins.length} targets=${totalTargets} materialChanges=${totalMaterialChanges} metadataChanges=${totalMetadataChanges} conflicts=${totalConflicts}`,
+            `summary: plugins=${plugins.length} targets=${assessment.summary.totalTargets} materialChanges=${assessment.summary.totalMaterialChanges} metadataChanges=${assessment.summary.totalMetadataChanges} conflicts=${assessment.summary.totalConflicts}`,
           );
           if (!inSync) {
             this.log("drift:");
@@ -272,12 +121,6 @@ export default class PluginsSyncDrift extends RawrCommand {
               this.log(
                 `- ${plugin.dirName}: material=${plugin.materialChanges} metadata=${plugin.metadataChanges} conflicts=${plugin.conflicts}`,
               );
-              for (const target of plugin.targets) {
-                if (target.conflicts === 0 && target.driftItems.length === 0) continue;
-                this.log(
-                  `  - ${target.agent}@${target.home}: material=${target.materialChanges} metadata=${target.metadataChanges} conflicts=${target.conflicts}`,
-                );
-              }
             }
           }
         },
