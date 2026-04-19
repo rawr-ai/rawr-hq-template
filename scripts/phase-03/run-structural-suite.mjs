@@ -46,15 +46,13 @@ const suiteCommandsByProject = {
     default: [
       "bun scripts/phase-03/verify-projection-boundary-invocation.mjs",
       "bun run phase-a:gate:manifest-smoke-baseline",
-      "bun run phase-a:gate:no-legacy-composition-authority",
       "bun run phase-a:gate:route-negative-assertions",
       "bun run phase-a:gate:harness-matrix",
       "bun run phase-a:gate:observability-contract",
       "bun run phase-a:gate:telemetry-contract",
-      "bun run phase-2_5:gate:telemetry-core",
-      "bun run phase-2_5:gate:host-metrics",
-      "bun run phase-2_5:gate:example-cutover",
-      "bun run phase-2_5:gate:logging",
+      "bun run observability:gate:telemetry-core",
+      "bun run observability:gate:host-metrics",
+      "bun run observability:gate:logging",
     ],
     "phase-a-baseline": [
       "bun run phase-a:gate:manifest-smoke-baseline",
@@ -72,18 +70,16 @@ const suiteCommandsByProject = {
       "bun run phase-a:gate:observability-contract",
       "bun run phase-a:gate:telemetry-contract",
     ],
-    "phase-2_5-quick": [
-      "bun run phase-2_5:gate:telemetry-core",
-      "bun run phase-2_5:gate:host-metrics",
-      "bun run phase-2_5:gate:example-cutover",
+    observability: [
+      "bun run observability:gate:telemetry-core",
+      "bun run observability:gate:host-metrics",
+      "bun run observability:gate:logging",
     ],
-    "phase-2_5-exit": ["bun run phase-2_5:gate:logging"],
-    "phase-2-u00-scaffold": ["bun run phase-2:gate:u00:server-role-runtime-path -- --allow-findings"],
+    "m2-u00-current-findings": ["bun run phase-2:gate:u00:server-role-runtime-path -- --allow-findings"],
   },
   "@rawr/cli": {
-    default: ["bun run phase-2_5:gate:hq-runtime"],
-    "phase-2_5-quick": ["bun run phase-2_5:gate:hq-runtime"],
-    "phase-2_5-exit": ["bun run phase-2_5:gate:hq-runtime"],
+    default: ["bun run runtime:gate:hq-lifecycle"],
+    runtime: ["bun run runtime:gate:hq-lifecycle"],
   },
   "@rawr/plugin-workspace": {
     default: [
@@ -107,11 +103,11 @@ const suiteCommandsByProject = {
   },
   "@rawr/hq-app": {
     default: ["bun scripts/phase-03/verify-hq-app-structural.mjs"],
-    "phase-2-u00-scaffold": ["bun run phase-2:gate:u00:no-legacy-cutover -- --allow-findings"],
+    "m2-u00-current-findings": ["bun run phase-2:gate:u00:no-legacy-cutover -- --allow-findings"],
   },
   "@rawr/hq-sdk": {
-    default: ["bun run phase-2:gate:u00:runtime-public-seams"],
-    "phase-2-u00-scaffold": ["bun run phase-2:gate:u00:runtime-public-seams -- --allow-findings"],
+    default: ["bun run architecture:gate:projection-boundaries"],
+    "m2-u00-current-findings": ["bun run phase-2:gate:u00:runtime-public-seams -- --allow-findings"],
   },
   "@rawr/bootgraph": {
     default: ["bun scripts/phase-03/verify-bootgraph-structural.mjs"],

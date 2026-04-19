@@ -1,4 +1,4 @@
-# P2 Runtime Frame
+# M2 Runtime Frame
 
 Phase 2 is where the repo stops being merely arranged correctly and starts booting correctly through canonical seams.
 

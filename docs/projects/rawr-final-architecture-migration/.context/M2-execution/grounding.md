@@ -12,13 +12,15 @@ This is the canonical entry point for Phase 2 work. Use it to keep runtime-subst
    Detailed specification for the Effect-backed runtime kernel, package topology, runtime-owned services, config/schema/error/observability models, and bootgraph lowering.
 3. [Migration plan](../../resources/RAWR_Architecture_Migration_Plan.md)
    Canonical source for Phase 2 purpose, sequence, and exit gate.
-4. [Phase 2 entry conditions](../../../migration/phase-2-entry-conditions.md)
+4. [Phase 2 entry conditions](./phase-2-entry-conditions.md)
    The actual handoff contract from the frozen Phase 1 plateau into Phase 2.
 5. [Phase 1 closeout review](../M1-execution/phase-1-closeout-review.md)
    Evidence for the entry condition and the limits of what Phase 1 already settled.
+6. [M2 guardrails and enforcement](../../resources/spec/m2-guardrails-and-enforcement.md)
+   Active M2 gate classification, proof model, and ratchet rules.
 
 Historical reference only (superseded by the integrated spec for runtime subsystem details):
-- [Original architecture spec](../../resources/RAWR_Canonical_Architecture_Spec_V2.md
+- [Original architecture spec](../../resources/_archive/RAWR_Canonical_Architecture_Spec_V2.md)
 
 Current repo code and docs are context only unless they align with the sources above.
 
@@ -109,16 +111,17 @@ One known risk crosses the boundary intentionally:
 
 The retained carry-forward note lives at:
 
-- [notes/carry-forward-risks.md](./notes/carry-forward-risks.md)
+- [notes/carry-forward-risks.md](handoffs/_archive/carry-forward-risks.md)
 
 ## Relevant Grounding Documents
 
 - [RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md](../../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
 - [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../../resources/spec/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
+- [m2-guardrails-and-enforcement.md](../../resources/spec/m2-guardrails-and-enforcement.md)
 - [RAWR_Architecture_Migration_Plan.md](../../resources/RAWR_Architecture_Migration_Plan.md)
-- [phase-2-entry-conditions.md](../../../migration/phase-2-entry-conditions.md)
+- [phase-2-entry-conditions.md](./phase-2-entry-conditions.md)
 - [phase-1-closeout-review.md](../M1-execution/phase-1-closeout-review.md)
-- [phase-1-current-state.md](../../../migration/phase-1-current-state.md)
+- [phase-1-current-state.md](../M1-execution/phase-1-current-state.md)
 
 ## Working Reminder
 

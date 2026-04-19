@@ -1,6 +1,6 @@
-# P2 Execution Workflow
+# M2 Execution Workflow
 
-This is the flight plan for Phase 2. It exists so the phase can be executed as its own closed loop instead of turning the frozen M1 packet into an all-purpose migration notebook.
+This is the flight plan for M2 / Phase 2. It exists so the milestone can be executed as its own closed loop instead of turning the frozen M1 packet into an all-purpose migration notebook.
 
 This document, [grounding.md](./grounding.md), [frame.md](./frame.md), and [context.md](./context.md) are the Phase 2 re-entry documents.
 
@@ -33,9 +33,10 @@ Use these in this order while executing:
 1. [RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md](../../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
 2. [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../../resources/spec/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
 3. [RAWR_Architecture_Migration_Plan.md](../../resources/RAWR_Architecture_Migration_Plan.md)
-4. [phase-2-entry-conditions.md](../../../migration/phase-2-entry-conditions.md)
+4. [phase-2-entry-conditions.md](./phase-2-entry-conditions.md)
 5. [phase-1-closeout-review.md](../M1-execution/phase-1-closeout-review.md)
-6. the active Phase 2 milestone and issue docs:
+6. [m2-guardrails-and-enforcement.md](../../resources/spec/m2-guardrails-and-enforcement.md)
+7. the active M2 milestone and issue docs:
    - [M2-minimal-canonical-runtime-shell.md](../../milestones/M2-minimal-canonical-runtime-shell.md)
    - [M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md](../../issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md)
 
@@ -43,7 +44,7 @@ Use these in this order while executing:
 
 Execution directory:
 
-- [P2-execution](.)
+- [M2-execution](.)
 
 Packet layout:
 

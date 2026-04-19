@@ -9,26 +9,18 @@ import {
 
 await Promise.all([
   mustExist("apps/server/src/logging.ts"),
-  mustExist("apps/server/src/host-composition.ts"),
-  mustExist("apps/server/src/host-satisfiers.ts"),
   mustExist("apps/server/src/orpc.ts"),
-  mustExist("apps/server/src/rawr.ts"),
-  mustExist("apps/hq/legacy-cutover.ts"),
   mustExist("apps/server/test/logging-correlation.test.ts"),
-  mustExist("scripts/phase-2_5/verify-logging-boundary.mjs"),
+  mustExist("scripts/observability/verify-logging-boundary.mjs"),
   mustExist("apps/hq/rawr.hq.ts"),
   mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/server/package.json"),
 ]);
 
-const [scripts, loggingSource, hostCompositionSource, hostSatisfiersSource, orpcSource, rawrSource, legacyCutoverSource, shellSource, manifestCompatSource, serverPackageRaw] = await Promise.all([
+const [scripts, loggingSource, orpcSource, shellSource, manifestCompatSource, serverPackageRaw] = await Promise.all([
   readPackageScripts(),
   readFile("apps/server/src/logging.ts"),
-  readFile("apps/server/src/host-composition.ts"),
-  readFile("apps/server/src/host-satisfiers.ts"),
   readFile("apps/server/src/orpc.ts"),
-  readFile("apps/server/src/rawr.ts"),
-  readFile("apps/hq/legacy-cutover.ts"),
   readFile("apps/hq/rawr.hq.ts"),
   readFile("apps/hq/src/manifest.ts"),
   readFile("apps/server/package.json"),
@@ -38,8 +30,8 @@ const serverPackage = JSON.parse(serverPackageRaw);
 
 assertScriptEquals(
   scripts,
-  "phase-2_5:gate:logging",
-  "bun scripts/phase-2_5/verify-logging-boundary.mjs && bunx vitest run --project server apps/server/test/logging-correlation.test.ts && ! rg -n \"from \\\"pino\\\"|from 'pino'\" services/example-todo",
+  "observability:gate:logging",
+  "bun scripts/observability/verify-logging-boundary.mjs && bunx vitest run --project server apps/server/test/logging-correlation.test.ts && ! rg -n \"from \\\"pino\\\"|from 'pino'\" services/example-todo",
 );
 
 assertCondition(
@@ -68,25 +60,15 @@ assertCondition(
   "apps/server/src/orpc.ts must bind host logging correlation at both routed ingress surfaces",
 );
 assertCondition(
-  rawrSource.includes('from "./logging"')
-    && rawrSource.includes("createHostLoggerAdapter")
-    && rawrSource.includes("@rawr/hq-app/legacy-cutover")
-    && rawrSource.includes("createRawrHqLegacyRouteAuthority")
-    && legacyCutoverSource.includes("createRawrHostComposition")
-    && hostCompositionSource.includes("createRawrHqManifest")
-    && hostCompositionSource.includes("createRawrHostSatisfiers")
-    && hostCompositionSource.includes("hostLogger: input.hostLogger")
-    && hostSatisfiersSource.includes("createRawrHostSatisfiers")
-    && hostSatisfiersSource.includes("hostLogger: HostServiceLogger")
-    && !shellSource.includes("hostLogger")
+  !shellSource.includes("hostLogger")
     && !shellSource.includes("apps/server/src/logging")
     && !shellSource.includes('host-adapters/logger/embedded-placeholder')
     && manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
-  "server host must inject the logger adapter through host-composition/host-satisfiers while apps/hq manifest stays declaration-only",
+  "apps/hq manifest must stay declaration-only and avoid server logging adapter construction",
 );
 assertCondition(
   typeof serverPackage.dependencies?.pino === "string" && serverPackage.dependencies.pino.trim() !== "",
   "apps/server/package.json must declare pino at the real server package boundary",
 );
 
-console.log("phase-2_5 logging boundary verified");
+console.log("logging boundary verified");

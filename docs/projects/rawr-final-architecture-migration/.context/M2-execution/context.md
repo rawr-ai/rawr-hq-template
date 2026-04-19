@@ -2,10 +2,10 @@
 
 ## Current State
 
-- Phase: `P2` — `Minimal Canonical Runtime Shell`
+- Milestone: `M2` / Phase 2 — `Minimal Canonical Runtime Shell`
 - Current status:
   - Phase 1 is closed, review-closed, and frozen.
-  - The repo is starting from the explicit Phase 2 entry conditions in `docs/migration/phase-2-entry-conditions.md`.
+  - The repo is starting from the explicit Phase 2 entry conditions in `.context/M2-execution/phase-2-entry-conditions.md`.
   - Phase 2 has been **regrounded** against two new canonical specs: the integrated architecture/runtime spec and the dedicated Effect runtime subsystem spec.
   - The M2 milestone and all M2-U00 through M2-U06 issue docs have been rewritten to reflect the new runtime substrate package topology (`packages/runtime/*`).
   - **No prior grounding findings remain valid.** The existing `agent-FARGO-M2-U00-replace-legacy-cutover-with-canonical-server-runtime` branch must be regrounded against the updated issue docs.
@@ -36,11 +36,12 @@ Use these as the Phase 2 first-hop packet:
 4. [frame.md](frame.md)
 5. [M2-minimal-canonical-runtime-shell.md](../../milestones/M2-minimal-canonical-runtime-shell.md)
 6. [M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md](../../issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md)
-7. [phase-2-entry-conditions.md](../../../migration/phase-2-entry-conditions.md)
+7. [phase-2-entry-conditions.md](./phase-2-entry-conditions.md)
 8. [phase-1-closeout-review.md](../M1-execution/phase-1-closeout-review.md)
 9. [RAWR_Architecture_Migration_Plan.md](../../resources/RAWR_Architecture_Migration_Plan.md)
 10. [RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md](../../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md) **(NEW)**
 11. [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../../resources/spec/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md) **(NEW)**
+12. [m2-guardrails-and-enforcement.md](../../resources/spec/m2-guardrails-and-enforcement.md) **(NEW)**
 
 ## Phase Invariants
 
@@ -81,12 +82,13 @@ Before blaming Phase 2 runtime substrate for HQ Ops confusion, re-check:
 
 - `services/hq-ops/src/service/modules/*`
 - `services/example-todo/src/service/modules/*`
-- [carry-forward-risks.md](notes/carry-forward-risks.md)
+- [carry-forward-risks.md](handoffs/_archive/carry-forward-risks.md)
 - [HQ-OPS-service-shape-followup.md](../M1-execution/notes/HQ-OPS-service-shape-followup.md)
 - `docs/projects/orpc-ingest-domain-packages/guidance.md`
 
 ## Current Slice Note
 
 - `services/agent-config-sync` is now the canonical sync service.
-- `packages/agent-config-sync-host` is the temporary host-runtime adapter package for the service.
-- `packages/agent-sync` has been removed.
+- `services/session-intelligence` and `services/hq-ops` now own their service behavior.
+- `packages/*-host` and `@rawr/*-host` are not active architecture.
+- Concrete filesystem, SQLite, and JSONL resources remain projection-bound until Effect process resources own acquisition.

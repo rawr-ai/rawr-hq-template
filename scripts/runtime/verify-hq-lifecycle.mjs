@@ -20,7 +20,7 @@ await Promise.all([
   mustExist("scripts/dev/hq.sh"),
   mustExist("docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md"),
   mustExist("docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md"),
-  mustExist("scripts/phase-2_5/verify-hq-runtime-cutover.mjs"),
+  mustExist("scripts/runtime/verify-hq-lifecycle.mjs"),
 ]);
 
 const [scripts, rootPackageRaw, toolsExportSource, hqStatusSource, hqShellSource, runtimeRunbookSource, coordinationRunbookSource] = await Promise.all([
@@ -54,12 +54,12 @@ assertCondition(
   "tools export must omit legacy dev up and routine start surfaces",
 );
 assertCondition(
-  !hqShellSource.includes('${WEB_URL:-')
-    && !hqShellSource.includes('${COORDINATION_URL:-')
-    && !hqShellSource.includes('${INNGEST_RUNS_URL:-')
-    && !hqShellSource.includes('${SERVER_HEALTH_URL:-')
-    && !hqShellSource.includes('${OBSERVABILITY_UI_URL:-')
-    && !hqShellSource.includes('${OBSERVABILITY_OTLP_URL:-'),
+  !hqShellSource.includes("${WEB_URL:-")
+    && !hqShellSource.includes("${COORDINATION_URL:-")
+    && !hqShellSource.includes("${INNGEST_RUNS_URL:-")
+    && !hqShellSource.includes("${SERVER_HEALTH_URL:-")
+    && !hqShellSource.includes("${OBSERVABILITY_UI_URL:-")
+    && !hqShellSource.includes("${OBSERVABILITY_OTLP_URL:-"),
   "hq.sh must not expose unblessed URL/config environment overrides",
 );
 assertCondition(
@@ -79,7 +79,7 @@ assertCondition(
   "hq-status.ts must write the canonical HQ artifact contract",
 );
 assertCondition(
-  hqStatusSource.includes('support: {') && hqStatusSource.includes("observability"),
+  hqStatusSource.includes("support: {") && hqStatusSource.includes("observability"),
   "hq-status.ts must report observability under support infrastructure rather than as a peer runtime role",
 );
 assertCondition(
@@ -108,8 +108,8 @@ assertCondition(
 
 assertScriptEquals(
   scripts,
-  "phase-2_5:gate:hq-runtime",
-  "bun scripts/phase-2_5/verify-hq-runtime-cutover.mjs && bunx vitest run --project cli apps/cli/test/hq.test.ts apps/cli/test/hq-legacy-surface.test.ts",
+  "runtime:gate:hq-lifecycle",
+  "bun scripts/runtime/verify-hq-lifecycle.mjs && bunx vitest run --project cli apps/cli/test/hq.test.ts apps/cli/test/hq-legacy-surface.test.ts",
 );
 
-console.log("phase-2_5 hq runtime cutover verified");
+console.log("HQ runtime lifecycle verified");

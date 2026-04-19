@@ -10,7 +10,7 @@ import {
 await Promise.all([
   mustExist("packages/core/src/telemetry.ts"),
   mustExist("packages/core/test/telemetry.test.ts"),
-  mustExist("scripts/phase-2_5/verify-telemetry-contract.mjs"),
+  mustExist("scripts/observability/verify-telemetry-contract.mjs"),
 ]);
 
 const [scripts, telemetrySource, telemetryTestSource, corePackageRaw] = await Promise.all([
@@ -54,18 +54,8 @@ assertCondition(
 
 assertScriptEquals(
   scripts,
-  "phase-2_5:gate:telemetry-core",
-  "bun scripts/phase-2_5/verify-telemetry-contract.mjs && bunx vitest run --project core packages/core/test/telemetry.test.ts",
-);
-assertScriptEquals(
-  scripts,
-  "phase-2_5:gates:quick",
-  "bunx nx run @rawr/server:structural -- --suite=phase-2_5-quick && bunx nx run @rawr/cli:structural -- --suite=phase-2_5-quick",
-);
-assertScriptEquals(
-  scripts,
-  "phase-2_5:gates:exit",
-  "bun run phase-2_5:gates:quick && bunx nx run @rawr/server:structural -- --suite=phase-2_5-exit && bun run phase-2_5:gate:closure",
+  "observability:gate:telemetry-core",
+  "bun scripts/observability/verify-telemetry-contract.mjs && bunx vitest run --project core packages/core/test/telemetry.test.ts",
 );
 
-console.log("phase-2_5 telemetry contract verified");
+console.log("telemetry contract verified");

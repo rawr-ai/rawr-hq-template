@@ -11,7 +11,7 @@ await Promise.all([
   mustExist("apps/server/src/orpc.ts"),
   mustExist("apps/server/test/orpc-metrics.test.ts"),
   mustExist("apps/server/test/telemetry-bootstrap.test.ts"),
-  mustExist("scripts/phase-2_5/verify-host-metrics-contract.mjs"),
+  mustExist("scripts/observability/verify-host-metrics-contract.mjs"),
 ]);
 
 const [scripts, orpcSource, metricsTestSource, bootstrapTestSource, serverPackageRaw] = await Promise.all([
@@ -45,7 +45,7 @@ assertCondition(
   "apps/server/test/orpc-metrics.test.ts must assert rpc and openapi route spans",
 );
 assertCondition(
-  metricsTestSource.includes("expect(attributes).not.toHaveProperty(\"url.full\")"),
+  metricsTestSource.includes('expect(attributes).not.toHaveProperty("url.full")'),
   "apps/server/test/orpc-metrics.test.ts must prove url.full is excluded from metric labels",
 );
 assertCondition(
@@ -55,8 +55,8 @@ assertCondition(
 
 assertScriptEquals(
   scripts,
-  "phase-2_5:gate:host-metrics",
-  "bun scripts/phase-2_5/verify-host-metrics-contract.mjs && bunx vitest run --project server apps/server/test/orpc-metrics.test.ts apps/server/test/telemetry-bootstrap.test.ts",
+  "observability:gate:host-metrics",
+  "bun scripts/observability/verify-host-metrics-contract.mjs && bunx vitest run --project server apps/server/test/orpc-metrics.test.ts apps/server/test/telemetry-bootstrap.test.ts",
 );
 
-console.log("phase-2_5 host metrics contract verified");
+console.log("host metrics contract verified");
