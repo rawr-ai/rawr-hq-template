@@ -174,6 +174,16 @@ That does **not** forbid HQ operational services.
 
 It means the correct home for HQ configuration, state, journal, and security truth is still under `services/`, not under a new top-level noun and not under ambiguous support packages.
 
+### Runtime subsystem stance
+
+- `RAWR owns semantic meaning. Effect owns execution mechanics. Boundary frameworks keep their jobs.`
+- the runtime subsystem is hidden beneath the public RAWR shell
+- `packages/runtime/` is the canonical home for the runtime subsystem family
+- the runtime subsystem is implemented on Effect; that is canonical inside the subsystem and hidden outside it
+- one started process owns one root `ManagedRuntime`
+- oRPC remains the canonical service boundary; Inngest remains the canonical durable async harness; Elysia remains the default server harness
+- raw Effect vocabulary (`Layer`, `Context.Tag`, `ManagedRuntime`, `Effect.Service`, etc.) stays quarantined inside `packages/runtime/*`
+
 ### Enforcement direction
 
 - `canon -> graph -> proof -> ratchet`
@@ -191,10 +201,14 @@ These details are important, but they are not load-bearing and should not block 
 - exact helper filenames inside runtime packages
 - whether generators are exposed through Nx, CLI, or both
 - exact decomposition of runtime compiler internals
+- exact internal structure of `packages/runtime/substrate` subdirectories
+- exact internal shape of runtime-owned Effect services and low-level tags
 - exact runtime harness wrapper shapes around Elysia and Inngest
 - whether `web` and `cli` builders land during phase 3 or immediately after
 - when parked lanes receive their canonical rebuilds
 - exact internal subpath structure inside each HQ ops service
+- exact schema module decomposition inside the runtime substrate
+- exact Effect-level internal service dependency graph (the illustrative graph in the runtime subsystem spec is illustrative, not normative)
 
 The team on the ground is allowed to fill these in.
 
@@ -275,7 +289,7 @@ These are already close enough to the target to be active inputs:
 - `services/example-todo` — keep as the golden service shell
 - `packages/hq-sdk` — keep, but refactor its public API toward the canonical SDK family
 - `packages/core` — keep as support matter
-- `packages/bootgraph` — keep, but phase 2 turns it from reservation into real lifecycle infrastructure
+- `packages/bootgraph` — keep, but phase 2 moves it under `packages/runtime/bootgraph` and turns it from reservation into real lifecycle infrastructure backed by the Effect runtime substrate
 - `packages/orpc-client` — keep as support matter
 - `packages/session-tools` — keep as support/tooling matter
 - `packages/agent-sync` — keep as support/tooling matter for external agent sync, not service truth
@@ -861,21 +875,63 @@ This is the phase that turns the shell from “correctly arranged” into “cor
 
 This phase ends with a platform that can run real capabilities through canonical seams.
 
+## Canonical reference documents
+
+Phase 2 is grounded on two canonical specs in addition to this plan:
+
+- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md` — the integrated architecture and runtime specification
+- `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md` — the dedicated runtime subsystem specification
+
+Those specs are authoritative for the runtime subsystem design. This plan governs scope, sequence, and gates.
+
 ## Non-negotiable phase rules
 
 1. build only what phases 2 and 3 need
 2. `server` and `async` are mandatory; `web`, `cli`, and `agent` are optional/reserved
 3. bootgraph remains narrow and process-local
-4. process runtime remains a hidden realization seam, not a second business plane
+4. the runtime subsystem remains a hidden realization seam, not a second business plane
 5. harnesses remain downstream of semantics
 6. delete the phase-1 cutover seam before claiming plateau 2
 7. not every service needs a new runtime projection in phase 2; only earned/needed projections get built
+8. Effect stays hidden beneath RAWR-shaped public seams; ordinary plugin and service authors do not write raw `Layer`, `Context.Tag`, `ManagedRuntime`, or `Effect.Service`
+9. the runtime subsystem does not become a generic DI container or a second public architecture
+
+## Phase 2 package topology
+
+The runtime subsystem is one subsystem with multiple packages, consolidated under `packages/runtime/`:
+
+```text
+packages/
+  runtime/
+    bootgraph/              PUBLIC - RAWR-shaped lifecycle shell
+    compiler/               HIDDEN - manifest -> compiled process plan
+    substrate/              HIDDEN - Effect-backed kernel
+      src/
+        effect/             Effect service definitions, layer construction
+        services/           Runtime-owned services
+        config/             Config loading, validation, redaction
+        schema/             Runtime-owned Effect schemas
+        errors/             Tagged runtime errors
+        observability/      Logger/tracer/metrics roots
+        process-runtime/    ProcessView, RoleView, surface assembly
+    harnesses/
+      elysia/               Server harness adapter
+      inngest/              Async harness adapter
+    topology/               Topology export shapes (if earned in P2)
+```
+
+`packages/hq-sdk` remains the authoring API home. All public author-facing APIs (`defineApp`, `startAppRole`, `defineServerApiPlugin`, `bindService`, etc.) live there. `packages/runtime/*` is the execution home.
+
+The existing `packages/bootgraph` reservation and `packages/runtime-context` type seam are both superseded by this topology:
+
+- `packages/bootgraph` becomes `packages/runtime/bootgraph`
+- `packages/runtime-context` is absorbed into `packages/runtime/substrate`
 
 ## What phase 2 must accomplish
 
 ### 1. Implement the public bootgraph shell
 
-`packages/bootgraph` becomes real.
+`packages/runtime/bootgraph` becomes real.
 
 It must expose, at minimum:
 
@@ -888,10 +944,13 @@ It must guarantee:
 - dependency-first startup
 - identity dedupe
 - fatal startup on failure
-- rollback on startup failure
+- rollback on startup failure via Effect scope finalization
 - reverse shutdown ordering
 - process and role lifetimes only
 - typed boot context assembly
+- lowering of RAWR-shaped modules into the hidden Effect-backed plan via `lowerModule()`
+
+The bootgraph produces one root `ManagedRuntime` per started process.
 
 It must **not** own:
 
@@ -900,9 +959,52 @@ It must **not** own:
 - surface composition
 - harness semantics
 
-### 2. Implement a thin runtime compiler
+### 2. Implement the runtime substrate (Effect-backed kernel)
 
-Create `packages/runtime-compiler` as the hidden compiler that turns:
+Create `packages/runtime/substrate` as the hidden Effect-backed kernel beneath bootgraph.
+
+This is the canonical home for:
+
+- Effect service definitions for runtime-owned concerns
+- layer construction and memoization
+- managed-runtime creation and disposal
+- scope creation and child-scope management
+- tagged runtime errors
+- runtime-owned config loading and validation
+- process-local resource stores
+- process-runtime assembly (ProcessView, RoleView, surface assembly, started-process handle)
+
+The runtime substrate grows incrementally across the Phase 2 dominos. The minimum viable runtime-owned services for the P2 active lane are:
+
+| Service | Lifetime | Lands in | Needed by |
+| --- | --- | --- | --- |
+| `RuntimeConfig` | process | M2-U00 | all entrypoints |
+| `ProcessIdentity` | process | M2-U00 | all entrypoints |
+| `RuntimeTelemetry` (logger, analytics) | process | M2-U00 | both services (baseline) |
+| `DbPool` | process | M2-U00 | example-todo |
+| `Clock` | process | M2-U00 | example-todo |
+| `WorkspaceRoot` / `RepoRoot` | process | M2-U00 | hq-ops (scope.repoRoot) |
+| `BoundaryCache` | process | M2-U00 | service binding memoization |
+| `ProcessView` | process | M2-U02 | plugin binding, harness handoff |
+| `RoleView` | role | M2-U02 | plugin binding |
+| `SurfaceAssembler` | role | M2-U02 | surface construction |
+| `AsyncActivation` | process | M2-U03 | async workflows |
+| `TopologyRegistry` | process | M2-U02 if earned | debug/inspection |
+
+Deferred beyond Phase 2: `FileSystemRuntime`, `CommandRuntime`, `AgentRuntimeHandle`, `RoleQueueHub`, `RolePubSubHub`.
+
+This is the moment Effect enters the repo as a real dependency.
+
+The canonical internal stance is:
+
+```text
+RAWR plans identity, lifetime, and ordering.
+Effect executes acquisition, scoping, finalization, and runtime ownership.
+```
+
+### 3. Implement a thin runtime compiler
+
+Create `packages/runtime/compiler` as the hidden compiler that turns:
 
 - app manifest
 - selected roles
@@ -922,42 +1024,23 @@ Only compile what the active lane needs:
 
 You do **not** need `agent`, `channels`, `shell`, `tools`, or a rich topology catalog here.
 
-### 3. Implement a thin process runtime
-
-Create the hidden process runtime seam that receives:
-
-- compiled process plan
-- started bootgraph context
-
-and exposes:
-
-- mounted server surface runtime
-- mounted async surface runtime
-- role-local/process-local resource access for harnesses
-- stable `stop()` semantics
-
-This layer stays small.
-
-It is not a task plane, not a workflow engine replacement, and not a control plane.
-
 ### 4. Implement the harness adapters you actually need
 
 Make these real:
 
-- `packages/runtime-harnesses/elysia`
-- `packages/runtime-harnesses/inngest`
+- `packages/runtime/harnesses/elysia`
+- `packages/runtime/harnesses/inngest`
 
 Optional and deferred:
 
-- `packages/runtime-harnesses/web`
-- `packages/runtime-harnesses/cli`
+- web and cli harnesses
 - `packages/agent-runtime/*`
 
 ### 5. Cut the public SDK to the canonical authoring model
 
 Phase 2 needs the actual author-facing surface that future generators will target.
 
-That means implementing or reshaping the public SDK around:
+`packages/hq-sdk` is the canonical home. That means implementing or reshaping the public SDK around:
 
 - `defineService(...)`
 - `defineServicePackage(...)`
@@ -967,7 +1050,7 @@ That means implementing or reshaping the public SDK around:
 - `defineServerApiPlugin(...)`
 - `defineAsyncWorkflowPlugin(...)`
 - `defineAsyncSchedulePlugin(...)`
-- `useService(...)`
+- `bindService(...)`
 
 Current transitional builders such as generic API/workflow registration shapes must be deleted or quarantined from the active lane once migration is complete.
 
@@ -986,10 +1069,10 @@ The point of the proof slices is not their business meaning.
 
 The point is proving:
 
-- service binding
+- service binding through `bindService(...)` backed by `BoundaryCache` and the runtime substrate
 - runtime projection
 - manifest composition
-- booted process resources
+- booted process resources through the Effect-backed bootgraph
 - async execution via Inngest
 
 ### 7. Delete the transitional runtime seam
@@ -1001,37 +1084,45 @@ That includes:
 - old app-local composition seams
 - old registration/contribution grammar as the public authoring model
 - old manual route-family merging as runtime truth
-- old transitional support seams that are now subsumed by bootgraph/compiler/process runtime
-
-`packages/runtime-context` should either be absorbed into the new internal runtime packages or reduced to a purely internal helper if it still earns a home.
+- old transitional support seams that are now subsumed by the runtime subsystem
+- `apps/hq/legacy-cutover.ts`
+- `packages/runtime-context` (absorbed into runtime substrate)
 
 ## Phase 2 sequence
 
-1. implement `defineApp` / app-runtime surfaces
-2. implement bootgraph
-3. implement runtime compiler plan generation
-4. implement process runtime
-5. implement Elysia and Inngest harness adapters
-6. replace plugin builders with canonical role/surface builders
-7. migrate the proof slices
-8. delete the transitional runtime seam
+1. replace legacy cutover with first canonical server runtime path, introducing `packages/runtime/substrate` and `packages/runtime/bootgraph` with minimum viable kernel
+2. harden bootgraph with Effect lowering model, dependency ordering, rollback, tagged errors
+3. generalize runtime compiler and build process-runtime inside substrate (ProcessView, RoleView, SurfaceAssembler)
+4. install canonical async runtime path with Inngest harness
+5. replace plugin builders with canonical role/surface builders in `packages/hq-sdk`
+6. migrate the proof slices
+7. ratchet proofs and delete remaining transitional seams
 
 ## Phase 2 verification
+
+### Runtime substrate proofs
+
+- `packages/runtime/substrate` exists with canonical internal topology
+- Effect is a workspace dependency
+- runtime-owned services (RuntimeConfig, ProcessIdentity, RuntimeTelemetry, DbPool, BoundaryCache) are implemented as `Effect.Service` definitions
+- one started process owns one root `ManagedRuntime`
+- raw Effect types do not leak into public bootgraph, plugin, or service authoring APIs
 
 ### Bootgraph proofs
 
 - module identity dedupe
 - startup order
-- rollback on failure
+- rollback on failure via Effect scope finalization
 - shutdown order
 - process vs role lifetime behavior
+- `lowerModule(...)` bridge from ResourceModule to Effect Layer
 
 ### Compiler proofs
 
 - manifest to plan compilation for `server` and `async`
 - explicit role selection
 - role/surface plan correctness
-- resource lowering from `resources(...)`
+- resource lowering from plugin `bind(...)`
 
 ### Harness proofs
 
@@ -1042,9 +1133,9 @@ That includes:
 
 ### End-to-end proofs
 
-- `apps/hq/server.ts` boots through `startAppRole({ app, role: "server" ... })`
-- `apps/hq/async.ts` boots through `startAppRole({ app, role: "async" ... })`
-- example-todo server path works
+- `apps/hq/server.ts` boots through `startAppRole({ app, role: “server” ... })`
+- `apps/hq/async.ts` boots through `startAppRole({ app, role: “async” ... })`
+- example-todo server path works through the Effect-backed runtime substrate
 - async proof slice works
 - config service is used through canonical startup/runtime seams
 - no live runtime path depends on old host-composition seams
@@ -1054,13 +1145,14 @@ That includes:
 You are done with phase 2 when all of this is true:
 
 - the app boots through canonical app/runtime APIs
-- bootgraph is functional
+- bootgraph is functional with Effect lowering
 - runtime compiler is functional
-- process runtime is functional
+- runtime substrate is functional with process-runtime, runtime-owned services, and `ManagedRuntime`
 - Elysia and Inngest harnesses are functional
 - at least one server and one async slice run canonically
 - there is no legacy composition seam left in the live path
 - HQ operational services are still cleanly classified and not reburied into runtime packages
+- raw Effect types are not exposed in any public authoring API
 
 At that point the platform is manually authorable and stable.
 
@@ -1305,6 +1397,8 @@ Use invariant-labeled checks such as:
 - `verify-agent-marketplace-lane-frozen`
 - `verify-bootgraph-shell`
 - `verify-runtime-compiler-shell`
+- `verify-runtime-substrate-shape`
+- `verify-effect-quarantine` (raw Effect types do not leak into public APIs)
 - `verify-generator-idempotency`
 
 ## Runtime proofs
@@ -1313,7 +1407,8 @@ Keep runtime tests seam-focused:
 
 - server surface projection tests
 - async workflow/schedule tests
-- bootgraph lifecycle tests
+- bootgraph lifecycle tests (including Effect lowering)
+- runtime substrate service tests (RuntimeConfig, DbPool, BoundaryCache, etc.)
 - app runtime smoke tests
 - generated-slice smoke tests
 - HQ ops service behavior tests where those services participate in startup/runtime behavior
@@ -1358,7 +1453,7 @@ Does it only compose roles/surfaces into one product/runtime identity?
 
 Does it only boot, lower, mount, or host already-composed runtime contributions?
 
-- yes -> runtime compiler / bootgraph / process runtime / harness
+- yes -> `packages/runtime/*` (runtime compiler, bootgraph, substrate, harness)
 - no -> continue
 
 ### Question 6
@@ -1376,8 +1471,10 @@ This rubric exists so agents can fill gaps without inventing new ontology.
 - security scan/gate/report = service
 - HQ config load/merge/validate = service
 - repo-state locking and plugin enablement = service
-- bootgraph = package
-- runtime compiler = package
+- bootgraph = `packages/runtime/bootgraph`
+- runtime compiler = `packages/runtime/compiler`
+- runtime substrate = `packages/runtime/substrate`
+- runtime-owned Effect services = internal to `packages/runtime/substrate`
 - agent sync to Codex/Claude homes = package/tooling
 - workspace discovery = package/tooling
 - local HQ process manager status = app/tooling support
@@ -1397,6 +1494,11 @@ These are the places where the team should stop rather than improvise new struct
 - do not add `web` or `cli` generators until server/async foundry output is stable
 - do not build rich topology catalog features before the core runtime shell is real
 - do not promote install/workspace/lifecycle tooling to services without a fresh explicit decision after plateau 3
+- do not expose raw `Layer`, `Context.Tag`, `ManagedRuntime`, or `Effect.Service` as ordinary public authoring primitives
+- do not build a second lifecycle engine beneath bootgraph; Effect owns execution, bootgraph owns planning
+- do not replace oRPC with runtime-subsystem service binding
+- do not replace Inngest with in-process queues or schedules
+- do not surface a public generic DI-container vocabulary as a peer architecture
 
 If a task wants one of those, it belongs after plateau 3.
 
@@ -1424,9 +1526,11 @@ services/
 - plugins project truth into server and async surfaces
 - the manifest selects which projections belong to HQ
 - entrypoints choose process shape
-- bootgraph handles lifecycle
-- runtime compiler and process runtime stay hidden
+- `packages/runtime/bootgraph` handles lifecycle
+- `packages/runtime/compiler` and `packages/runtime/substrate` (including process-runtime) stay hidden
+- the Effect-backed runtime substrate provides typed resource acquisition, service binding memoization, and deterministic lifecycle beneath the public shell
 - harnesses stay downstream
+- raw Effect vocabulary stays quarantined inside `packages/runtime/*`
 - new capabilities are generated, not hand-invented
 - the team can ask an AI agent for an `email-filter` capability and expect a canonical slice, not architectural improvisation
 

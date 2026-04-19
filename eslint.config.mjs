@@ -11,11 +11,6 @@ const boundaryRule = [
       "../server/src/logging",
       "@rawr/hq-app/manifest",
       "@rawr/hq-app/legacy-cutover",
-      "@rawr/hq-ops",
-      "@rawr/hq-ops/config",
-      "@rawr/hq-ops/repo-state",
-      "@rawr/hq-ops/journal",
-      "@rawr/hq-ops/security",
       "@rawr/hq-ops/service/contract"
     ],
     depConstraints: [
@@ -29,23 +24,60 @@ const boundaryRule = [
       },
       {
         sourceTag: "type:service",
-        notDependOnLibsWithTags: ["type:app", "type:plugin"]
-      },
-      {
-        sourceTag: "role:servicepackage",
-        notDependOnLibsWithTags: ["type:service"]
+        onlyDependOnLibsWithTags: ["type:package", "type:service"]
       },
       {
         sourceTag: "type:package",
-        notDependOnLibsWithTags: ["type:service"]
+        onlyDependOnLibsWithTags: ["type:package"]
       },
       {
         sourceTag: "type:plugin",
-        notDependOnLibsWithTags: ["type:plugin", "type:app"]
+        onlyDependOnLibsWithTags: ["type:package", "type:service"]
       }
     ],
     enforceBuildableLibDependency: false
   }
+];
+
+const hqOpsBoundaryRestrictedImports = [
+  "node:*",
+  "bun:*",
+  "./support",
+  "./support.*",
+  "./repository",
+  "./repository.*",
+  "./storage",
+  "./storage.*",
+  "./exec",
+  "./exec.*",
+  "./sqlite",
+  "./sqlite.*",
+  "./writer",
+  "./writer.*",
+  "../support",
+  "../support.*",
+  "../repository",
+  "../repository.*",
+  "../storage",
+  "../storage.*",
+  "../exec",
+  "../exec.*",
+  "../sqlite",
+  "../sqlite.*",
+  "../writer",
+  "../writer.*",
+  "../../support",
+  "../../support.*",
+  "../../repository",
+  "../../repository.*",
+  "../../storage",
+  "../../storage.*",
+  "../../exec",
+  "../../exec.*",
+  "../../sqlite",
+  "../../sqlite.*",
+  "../../writer",
+  "../../writer.*"
 ];
 
 export default [
@@ -80,6 +112,44 @@ export default [
     },
     rules: {
       "@nx/enforce-module-boundaries": boundaryRule
+    }
+  },
+  {
+    files: ["packages/agent-sync/src/**/*.{js,jsx,ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@rawr/hq-ops", "@rawr/hq-ops/*"],
+              message: "agent-sync must not compose or import HQ Ops directly; the true host must load config first."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    files: [
+      "services/hq-ops/src/service/contract.ts",
+      "services/hq-ops/src/service/modules/**/contract.ts",
+      "services/hq-ops/src/service/modules/**/schemas.ts",
+      "services/hq-ops/src/service/modules/**/model.ts",
+      "services/hq-ops/src/service/modules/**/types.ts"
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: hqOpsBoundaryRestrictedImports,
+              message: "HQ Ops contract/schema/model/type files must stay runtime-agnostic."
+            }
+          ]
+        }
+      ]
     }
   }
 ];

@@ -236,7 +236,7 @@ They may contain:
 - adapters and utilities
 - lower-level primitives
 - reusable support logic that does not itself define a first-class service boundary
-- process-local lifecycle infrastructure such as `packages/bootgraph`
+- process-local lifecycle infrastructure such as `packages/runtime/bootgraph`
 - hidden runtime compiler and harness infrastructure
 - generic persistence support such as SQL helpers, codecs, migration utilities, or repository primitives
 - agent runtime infrastructure such as OpenShell adapters, shell gateways, shell policy layers, and channel adapters
@@ -296,7 +296,7 @@ The manifest and entrypoints are app-internal. They are not additional top-level
 
 #### `bootgraph`
 
-`packages/bootgraph` is RAWR-owned process-local resource lifecycle infrastructure.
+`packages/runtime/bootgraph` is RAWR-owned process-local resource lifecycle infrastructure.
 
 It owns:
 
@@ -529,15 +529,16 @@ The canonical target-state topology is:
 
 ```text
 packages/
-  bootgraph/
-  runtime-compiler/
-  runtime-substrate/
-  runtime-harnesses/
-    elysia/
-    inngest/
-    web/
-    cli/
-  topology-catalog/
+  runtime/
+    bootgraph/
+    compiler/
+    substrate/
+    harnesses/
+      elysia/
+      inngest/
+      web/
+      cli/
+    topology/
   agent-runtime/
     openshell/
     gateway/
@@ -695,14 +696,15 @@ That `agent` split is earned because the host composes those contribution classe
 
 The following are infrastructure packages, not new ontology kinds:
 
-- `packages/bootgraph`
-- `packages/runtime-compiler`
-- `packages/runtime-substrate`
-- `packages/runtime-harnesses/*`
-- `packages/topology-catalog`
+- `packages/runtime/bootgraph`
+- `packages/runtime/compiler`
+- `packages/runtime/substrate`
+- `packages/runtime/harnesses/*`
+- `packages/runtime/topology`
 - `packages/agent-runtime/*`
 
 The hidden Effect-backed implementation beneath bootgraph and process runtime remains inside those support layers. It does not become a peer semantic root.
+The fast public authoring and app-runtime seam remains `packages/hq-sdk`; `packages/runtime/*` is the consolidated execution family beneath it.
 
 ### 5.6 No file-tree encoding of operational topology
 
@@ -1518,7 +1520,7 @@ The canonical entrypoint shape is:
 // apps/hq/server.ts
 import { startAppRole } from "@rawr/hq-sdk/app-runtime";
 import { rawrHq } from "./rawr.hq";
-import { createServerHarness } from "@rawr/runtime-harnesses/elysia";
+import { createServerHarness } from "@rawr/runtime/harnesses/elysia";
 
 await startAppRole({
   app: rawrHq,
@@ -1531,7 +1533,7 @@ await startAppRole({
 // apps/hq/async.ts
 import { startAppRole } from "@rawr/hq-sdk/app-runtime";
 import { rawrHq } from "./rawr.hq";
-import { createAsyncHarness } from "@rawr/runtime-harnesses/inngest";
+import { createAsyncHarness } from "@rawr/runtime/harnesses/inngest";
 
 await startAppRole({
   app: rawrHq,
@@ -1626,7 +1628,7 @@ manifest (cold, declarative)
 
 ### 9.4 Bootgraph
 
-`packages/bootgraph` is the RAWR-owned process-local resource lifecycle engine.
+`packages/runtime/bootgraph` is the RAWR-owned process-local resource lifecycle engine.
 
 It owns:
 
@@ -1941,7 +1943,7 @@ It must not become a generalized second execution plane.
 
 ### 9.8 Hidden Effect-backed substrate
 
-The hidden process-local substrate is implemented in `packages/runtime-substrate`.
+The hidden process-local substrate is implemented in `packages/runtime/substrate`.
 
 It owns:
 
@@ -2349,7 +2351,7 @@ The runtime stack is downstream of the semantic shell.
 
 The canonical stack is:
 
-- `packages/runtime-substrate` as the hidden Effect-backed runtime kernel beneath bootgraph and process runtime
+- `packages/runtime/substrate` as the hidden Effect-backed runtime kernel beneath bootgraph and process runtime
 - oRPC as the local-first callable boundary for services and synchronous callable surfaces
 - Elysia as the default HTTP harness for server runtime composition
 - Inngest as the default durability harness for async workflow execution and steward activation
@@ -2743,7 +2745,7 @@ These details may vary without reopening the architecture:
 - exact helper filenames under `apps/hq/*`
 - exact internal structure of individual service packages
 - exact internal structure of individual plugin packages
-- exact internal structure of `packages/runtime-substrate` and its subfolders
+- exact internal structure of `packages/runtime/substrate` and its subfolders
 - exact internal shape of runtime-owned Effect services and low-level tags
 - exact runtime harness wrappers around Elysia, Inngest, OpenShell, or web tooling
 - exact shell gateway implementation

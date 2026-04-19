@@ -4,7 +4,7 @@ This is the canonical entry point for the upcoming conversation about turning Ph
 
 ## Source-of-truth order
 
-1. [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec.md): target-state architecture and invariant source of truth.
+1. [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec_V1.md): target-state architecture and invariant source of truth.
 2. [Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md): operational source of truth for Phase 1 scope, sequence, fixed decisions, and exit gate.
 3. [Larger migration plan](../resources/RAWR_Architecture_Migration_Plan.md): multi-phase context, plateau model, and downstream handoff.
 
@@ -142,7 +142,7 @@ For milestone and issue shaping, follow the dedicated Phase 1 plan. Do not accid
 
 ## Relevant grounding documents
 
-- [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec.md)
+- [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec_V1.md)
   - Use for ontology, invariants, ownership laws, manifest/entrypoint rules, and what belongs in later phases.
 - [Larger migration plan](../resources/RAWR_Architecture_Migration_Plan.md)
   - Use for the three-plateau framing, overall migration problem, and Phase 2/3 handoff context.

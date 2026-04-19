@@ -77,6 +77,7 @@ const suiteCommandsByProject = {
       "bun run phase-2_5:gate:example-cutover",
     ],
     "phase-2_5-exit": ["bun run phase-2_5:gate:logging"],
+    "phase-2-u00-scaffold": ["bun run phase-2:gate:u00:server-role-runtime-path -- --allow-findings"],
   },
   "@rawr/cli": {
     default: ["bun run phase-2_5:gate:hq-runtime"],
@@ -99,6 +100,11 @@ const suiteCommandsByProject = {
   },
   "@rawr/hq-app": {
     default: ["bun scripts/phase-03/verify-hq-app-structural.mjs"],
+    "phase-2-u00-scaffold": ["bun run phase-2:gate:u00:no-legacy-cutover -- --allow-findings"],
+  },
+  "@rawr/hq-sdk": {
+    default: ["bun run phase-2:gate:u00:runtime-public-seams"],
+    "phase-2-u00-scaffold": ["bun run phase-2:gate:u00:runtime-public-seams -- --allow-findings"],
   },
   "@rawr/bootgraph": {
     default: ["bun scripts/phase-03/verify-bootgraph-structural.mjs"],
@@ -110,7 +116,13 @@ const suiteCommandsByProject = {
     default: ["bun scripts/phase-03/verify-coordination-structural.mjs"],
   },
   "@rawr/hq-ops": {
-    default: ["bun scripts/phase-1/verify-hq-ops-service-shape.mjs"],
+    default: [
+      "bun scripts/phase-1/verify-hq-ops-service-shape.mjs",
+      "bun scripts/phase-03/verify-hq-ops-host-placement.mjs",
+    ],
+  },
+  "@rawr/hq-ops-host": {
+    default: ["bun scripts/phase-03/verify-hq-ops-host-placement.mjs"],
   },
   "@rawr/core": {
     default: ["bun scripts/phase-03/verify-core-support-structural.mjs"],

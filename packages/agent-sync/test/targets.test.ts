@@ -3,7 +3,9 @@ import path from "node:path";
 
 import { afterEach,describe, expect, it } from "vitest";
 
+import { deriveSyncPolicy } from "../src/lib/sync-config";
 import { resolveTargets } from "../src/lib/targets";
+import type { AgentSyncResolvedConfig } from "../src/lib/types";
 
 const ENV_KEYS = [
   "RAWR_AGENT_SYNC_CODEX_HOMES",
@@ -37,7 +39,7 @@ describe("resolveTargets", () => {
     const fakeHome = path.join(os.tmpdir(), "agent-sync-home");
     process.env.HOME = fakeHome;
 
-    const r = resolveTargets("all", [], [], null);
+    const r = resolveTargets("all", [], [], undefined);
     expect(r.homes.codexHomes).toEqual([
       path.resolve(path.join(fakeHome, ".codex-rawr")),
       path.resolve(path.join(fakeHome, ".codex")),
@@ -59,12 +61,11 @@ describe("resolveTargets", () => {
     const fakeHome = path.join(os.tmpdir(), "agent-sync-home3");
     process.env.HOME = fakeHome;
 
-    const cfg: any = {
-      version: 1,
+    const cfg: AgentSyncResolvedConfig = {
       sync: {
         providers: {
-          codex: { destinations: [{ id: "c1", rootPath: "~/codex-a" }] },
-          claude: { destinations: [{ id: "cl1", rootPath: "/tmp/claude-a" }] },
+          codex: { destinations: [{ rootPath: "~/codex-a" }] },
+          claude: { destinations: [{ rootPath: "/tmp/claude-a" }] },
         },
       },
     };
@@ -79,15 +80,40 @@ describe("resolveTargets", () => {
     process.env.RAWR_AGENT_SYNC_CODEX_HOMES = "~/one, /tmp/two";
     process.env.RAWR_AGENT_SYNC_CLAUDE_HOMES = "/tmp/claude";
 
-    const envResolved = resolveTargets("all", [], [], null);
+    const envResolved = resolveTargets("all", [], [], undefined);
     expect(envResolved.homes.codexHomes).toEqual([
       path.resolve(path.join(process.env.HOME!, "one")),
       path.resolve("/tmp/two"),
     ]);
     expect(envResolved.homes.claudeHomes).toEqual([path.resolve("/tmp/claude")]);
 
-    const flagsResolved = resolveTargets("all", ["/x"], ["/y"], null);
+    const flagsResolved = resolveTargets("all", ["/x"], ["/y"], undefined);
     expect(flagsResolved.homes.codexHomes).toEqual([path.resolve("/x")]);
     expect(flagsResolved.homes.claudeHomes).toEqual([path.resolve("/y")]);
+  });
+});
+
+describe("deriveSyncPolicy", () => {
+  it("defaults codex agents off and claude agents on", () => {
+    expect(deriveSyncPolicy()).toEqual({
+      includeAgentsInCodex: false,
+      includeAgentsInClaude: true,
+    });
+  });
+
+  it("derives sync policy from already-loaded config", () => {
+    const cfg: AgentSyncResolvedConfig = {
+      sync: {
+        providers: {
+          codex: { includeAgents: true },
+          claude: { includeAgents: false },
+        },
+      },
+    };
+
+    expect(deriveSyncPolicy(cfg)).toEqual({
+      includeAgentsInCodex: true,
+      includeAgentsInClaude: false,
+    });
   });
 });

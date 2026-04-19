@@ -1,16 +1,16 @@
-import { gateEnable, getSecurityReport, securityCheck } from "./support.js";
+import type { SecurityRuntime } from "../../shared/ports/security-runtime";
 import type { RiskTolerance } from "./types.js";
 
-export function createRepository(repoRoot: string) {
+export function createRepository(securityRuntime: SecurityRuntime, repoRoot: string) {
   return {
     async securityCheck(mode: "staged" | "repo") {
-      return await securityCheck({ mode, cwd: repoRoot });
+      return await securityRuntime.securityCheck(repoRoot, mode);
     },
     async gateEnable(pluginId: string, riskTolerance: RiskTolerance, mode: "staged" | "repo") {
-      return await gateEnable({ pluginId, riskTolerance, mode, cwd: repoRoot });
+      return await securityRuntime.gateEnable(repoRoot, pluginId, riskTolerance, mode);
     },
     async getSecurityReport() {
-      return await getSecurityReport({ cwd: repoRoot });
+      return await securityRuntime.getSecurityReport(repoRoot);
     },
   };
 }

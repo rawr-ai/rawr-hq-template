@@ -87,7 +87,7 @@ The new app shell has to become real authority here, not a decorative wrapper ar
 
 ### Paper Trail
 - [Dedicated Phase 1 migration plan](../resources/RAWR_P1_Architecture_Migration_Plan.md)
-- [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec.md)
+- [Canonical architecture spec](../resources/RAWR_Canonical_Architecture_Spec_V1.md)
 
 ### Quick Navigation
 - [TL;DR](#tldr)
@@ -95,3 +95,10 @@ The new app shell has to become real authority here, not a decorative wrapper ar
 - [Acceptance Criteria](#acceptance-criteria)
 - [Testing / Verification](#testing--verification)
 - [Dependencies / Notes](#dependencies--notes)
+- [Implementation Details (Local Only)](#implementation-details-local-only)
+  - [Why This Slice Exists](#why-this-slice-exists)
+  - [Scope Boundaries](#scope-boundaries)
+  - [Implementation Guidance](#implementation-guidance)
+  - [Files](#files)
+  - [Paper Trail](#paper-trail)
+  - [Quick Navigation](#quick-navigation)

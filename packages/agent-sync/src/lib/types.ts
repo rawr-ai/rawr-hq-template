@@ -1,5 +1,28 @@
 export type SyncAgent = "codex" | "claude";
 export type SyncScope = "all" | "agents" | "cli" | "web";
+export type SyncPolicy = {
+  includeAgentsInCodex: boolean;
+  includeAgentsInClaude: boolean;
+};
+
+export type SyncDestinationConfig = {
+  enabled?: boolean;
+  rootPath?: string | null;
+};
+
+export type SyncProviderConfig = {
+  includeAgents?: boolean;
+  destinations?: SyncDestinationConfig[];
+};
+
+export type AgentSyncResolvedConfig = {
+  sync?: {
+    providers?: {
+      codex?: SyncProviderConfig;
+      claude?: SyncProviderConfig;
+    };
+  };
+};
 
 export type RawrPluginKind = "toolkit" | "agent" | "web";
 

@@ -8,6 +8,7 @@
       "targets": [
         "sync:check",
         "phase-a:gates:baseline",
+        "phase-2:gate:u00:scaffold",
         "phase-2_5:gates:quick",
         "phase-2_5:gates:exit"
       ]
@@ -17,6 +18,7 @@
       "tags": [
         "type:app",
         "app:hq",
+        "role:server",
         "migration-slice:structural-tranche"
       ],
       "targets": [
@@ -29,6 +31,7 @@
       "tags": [
         "type:app",
         "app:hq",
+        "role:cli",
         "migration-slice:structural-tranche"
       ],
       "targets": [

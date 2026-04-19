@@ -41,6 +41,50 @@ Phase 2 should also begin with one explicit caution in mind:
   - `docs/projects/orpc-ingest-domain-packages/guidance.md`
 - No repo-local service-package `decisions.md` was located during the Phase 1 closeout pass; if a later slice depends on one, locate and ground on it explicitly instead of assuming it was already followed.
 
+## Deferred Agent Sync Classification
+
+For this slice, treat `packages/agent-sync` as package-scoped support/tooling matter with one explicit caution:
+
+- it remains a deferred service-promotion candidate, not a forever-settled support package
+- do not let it act like a runtime host while that larger classification remains unresolved
+- true hosts must load HQ Ops config through their own `@rawr/hq-ops` client seams and pass resolved sync config/policy into `agent-sync`
+
+This slice therefore removes `agent-sync` host-composition behavior without taking on full `agent-config-sync` service promotion.
+
+## Runtime Substrate Specification
+
+Phase 2 is now grounded by two additional canonical specs (checked in under `docs/projects/rawr-final-architecture-migration/resources/`):
+
+- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md` — the integrated architecture and runtime specification
+- `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md` — the dedicated runtime subsystem specification
+
+These define the canonical package topology for the runtime subsystem:
+
+```text
+packages/runtime/
+  bootgraph/       execution-family lifecycle shell
+  compiler/        HIDDEN - manifest -> compiled process plan
+  substrate/       HIDDEN - Effect-backed kernel
+  harnesses/
+    elysia/        Server harness adapter
+    inngest/       Async harness adapter
+
+packages/hq-sdk/
+  ...             PUBLIC - app-runtime and authoring seam
+```
+
+Phase 2 implementation should read this topology as follows:
+
+- `packages/runtime/*` is the consolidated execution family for runtime modules, resources, harnesses, and adapters that belong together.
+- `packages/hq-sdk` remains the fast-path public app-runtime and authoring seam (`defineApp`, `startAppRole`, `bindService`, `define*Plugin`).
+
+The runtime substrate is Effect-backed internally. Effect enters the repo as a real dependency in M2-U00. Raw Effect types stay quarantined inside `packages/runtime/*` and do not appear in public authoring APIs.
+
+The existing `packages/bootgraph` reservation and `packages/runtime-context` type seam are both superseded:
+
+- `packages/bootgraph` becomes `packages/runtime/bootgraph`
+- `packages/runtime-context` is absorbed into `packages/runtime/substrate`
+
 ## Practical Hand-Off
 
-Phase 2 starts from a repo where the canonical shell is already real. The first runtime-substrate work therefore builds on `apps/hq`, `services/hq-ops`, and the canonical plugin topology directly, while removing the one remaining executable bridge as early as possible.
+Phase 2 starts from a repo where the canonical shell is already real. The first runtime-substrate work therefore builds on `apps/hq`, `services/hq-ops`, and the canonical plugin topology directly, while creating `packages/runtime/substrate` and `packages/runtime/bootgraph` in the first slice, extending `packages/hq-sdk` with the minimum server-only app-runtime/compiler cut needed to boot `server.api`, and removing the one remaining executable bridge as early as possible.

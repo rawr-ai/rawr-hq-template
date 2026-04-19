@@ -13,6 +13,8 @@ import {
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
+import { UnexpectedInternalError } from "../../shared/internal-errors";
+import type { SecurityRuntime } from "../../shared/ports/security-runtime";
 import { createRepository } from "./repository";
 
 export {
@@ -28,13 +30,21 @@ export const analytics = createServiceAnalyticsMiddleware({});
 
 /** Standalone repository provider attached at module scope in `module.ts`. */
 export const repository = createServiceProvider<{
+  deps: {
+    securityRuntime?: SecurityRuntime;
+  };
   scope: {
     repoRoot: string;
   };
 }>().middleware<{
   repo: ReturnType<typeof createRepository>;
 }>(async ({ context, next }) => {
+  const securityRuntime = context.deps.securityRuntime;
+  if (!securityRuntime) {
+    throw new UnexpectedInternalError("HQ Ops securityRuntime host runtime is not installed.");
+  }
+
   return next({
-    repo: createRepository(context.scope.repoRoot),
+    repo: createRepository(securityRuntime, context.scope.repoRoot),
   });
 });

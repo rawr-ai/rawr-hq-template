@@ -1,8 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 
-import type { LayeredRawrConfig } from "./layered-config";
-import type { SyncAgent } from "./types";
+import type { AgentSyncResolvedConfig, SyncAgent } from "./types";
 
 export type TargetHomes = {
   codexHomes: string[];
@@ -39,7 +38,7 @@ export function resolveTargets(
   agent: "codex" | "claude" | "all",
   codexHomesFromFlags: string[],
   claudeHomesFromFlags: string[],
-  cfg?: LayeredRawrConfig["config"],
+  cfg?: AgentSyncResolvedConfig,
 ): { agents: SyncAgent[]; homes: TargetHomes } {
   const codexHomesFromEnv = parseEnvHomes("RAWR_AGENT_SYNC_CODEX_HOMES");
   const claudeHomesFromEnv = parseEnvHomes("RAWR_AGENT_SYNC_CLAUDE_HOMES");

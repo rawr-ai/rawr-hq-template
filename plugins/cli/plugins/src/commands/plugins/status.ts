@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 import {
-  loadLayeredRawrConfigForCwd,
+  deriveSyncPolicy,
   planSyncAll,
   resolveSourcePlugin,
   resolveSourceScopeForPath,
@@ -14,6 +14,7 @@ import {
   type SyncScope,
 } from "@rawr/agent-sync";
 import { RawrCommand } from "@rawr/core";
+import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
 
 import { reconcileWorkspaceInstallLinks } from "../../lib/install-reconcile";
 import { assessInstallState, type InstallStateStatus } from "../../lib/install-state";
@@ -58,8 +59,9 @@ async function assessSyncStatus(input: {
 }): Promise<SyncAssessment> {
   const { workspaceRoot, syncable, skipped } = await planSyncAll(input.cwd);
   const layered = await loadLayeredRawrConfigForCwd(input.cwd);
-  const includeAgentsInCodex = layered.config?.sync?.providers?.codex?.includeAgents ?? false;
-  const includeAgentsInClaude = layered.config?.sync?.providers?.claude?.includeAgents ?? true;
+  const syncPolicy = deriveSyncPolicy(layered.config ?? undefined);
+  const includeAgentsInCodex = syncPolicy.includeAgentsInCodex;
+  const includeAgentsInClaude = syncPolicy.includeAgentsInClaude;
 
   const extraSourcePaths: string[] = [];
   for (const p of layered.config?.sync?.sources?.paths ?? []) extraSourcePaths.push(String(p));
@@ -120,7 +122,7 @@ async function assessSyncStatus(input: {
     input.agent,
     input.codexHomes,
     input.claudeHomes,
-    layered.config,
+    layered.config ?? undefined,
   );
 
   const plugins: SyncAssessment["plugins"] = [];

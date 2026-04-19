@@ -1,4 +1,5 @@
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
+import { createNodeHqOpsBoundary } from "@rawr/hq-ops-host";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
 import { createClient as createStateClient, type Client as StateClient } from "@rawr/hq-ops";
@@ -67,16 +68,10 @@ function createExampleTodoBoundary(hostLogger: HostServiceLogger): ExampleTodoBo
 }
 
 function createStateBoundary(repoRoot: string, hostLogger: HostServiceLogger): StateBoundary {
-  return {
-    deps: {
-      logger: hostLogger,
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    },
-    scope: {
-      repoRoot,
-    },
-    config: {},
-  } satisfies StateBoundary;
+  return createNodeHqOpsBoundary({
+    repoRoot,
+    hostLogger,
+  }) satisfies StateBoundary;
 }
 
 export function createRawrHostSatisfiers(input: {

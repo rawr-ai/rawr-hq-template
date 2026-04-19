@@ -2,7 +2,7 @@
 
 This is the flight plan for Phase 2. It exists so the phase can be executed as its own closed loop instead of turning the frozen M1 packet into an all-purpose migration notebook.
 
-This document, [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/grounding.md), [frame.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/frame.md), and [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/context.md) are the Phase 2 re-entry documents.
+This document, [grounding.md](./grounding.md), [frame.md](./frame.md), and [context.md](./context.md) are the Phase 2 re-entry documents.
 
 ## Framing
 
@@ -30,33 +30,36 @@ Done looks like:
 
 Use these in this order while executing:
 
-1. [RAWR_Canonical_Architecture_Spec.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_Canonical_Architecture_Spec.md)
-2. [RAWR_Architecture_Migration_Plan.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/resources/RAWR_Architecture_Migration_Plan.md)
-3. [phase-2-entry-conditions.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-2-entry-conditions.md)
-4. [phase-1-closeout-review.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/phase-1-closeout-review.md)
-5. the active Phase 2 milestone and issue docs:
-   - [M2-minimal-canonical-runtime-shell.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/milestones/M2-minimal-canonical-runtime-shell.md)
-   - [M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md)
+1. [RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md](../../resources/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
+2. [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../../resources/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
+3. [RAWR_Architecture_Migration_Plan.md](../../resources/RAWR_Architecture_Migration_Plan.md)
+4. [phase-2-entry-conditions.md](../../../migration/phase-2-entry-conditions.md)
+5. [phase-1-closeout-review.md](../../phase-1-closeout-review.md)
+6. the active Phase 2 milestone and issue docs:
+   - [M2-minimal-canonical-runtime-shell.md](../../milestones/M2-minimal-canonical-runtime-shell.md)
+   - [M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md](../../issues/M2-U00-replace-legacy-cutover-with-canonical-server-runtime.md)
 
 ## Execution Context
 
 Execution directory:
 
-- [P2-execution](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution)
+- [P2-execution](.)
 
 Packet layout:
 
-- [README.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/README.md) explains the live packet vs `handoffs/` vs `notes/`
+- [README.md](./README.md) explains the live packet vs `handoffs/` vs `notes/`
 - only `grounding.md`, `workflow.md`, `frame.md`, and `context.md` are live packet files
 
-Single-worktree rule:
+Worktree posture:
 
-- stay in this checkout unless the repo process explicitly demands otherwise
+- execution may happen in the primary checkout or in a dedicated worktree, depending on the slice workflow
+- if you rely on Nx or Narsil indexing while working from a secondary worktree, first make sure the primary checkout is advanced to the latest commit you need indexed
 - keep branch-specific hot state in `context.md`, not in this workflow
+- if the active worktree and primary checkout diverge, record which checkout owns implementation and which one is only there to keep indexers current
 
 Scratch-note rule:
 
-- keep Phase 2-specific investigations under [notes/](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/notes)
+- keep Phase 2-specific investigations under [notes/](./notes)
 - promote durable truth into the live packet or migration docs instead of leaving it buried in note files
 
 ## Hard Rails
@@ -74,10 +77,10 @@ Scratch-note rule:
 
 ### 1. Re-ground Before Every Slice
 
-- Read [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/grounding.md)
-- Read [frame.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/frame.md)
+- Read [grounding.md](./grounding.md)
+- Read [frame.md](./frame.md)
 - Read this workflow
-- Read [context.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/P2-execution/context.md)
+- Read [context.md](./context.md)
 - Read the active Phase 2 slice doc if one exists
 - State the exact slice goal, stop-gate, and proof bar before editing anything
 
@@ -104,15 +107,23 @@ If they already exist:
 ### 4. Acquire Slice-Specific Context
 
 - identify the files, runtime seams, proofs, and harnesses that matter
-- use Nx for workspace truth and target discovery
-- use Narsil for symbols, references, call paths, and related implementations
+- use Nx for workspace truth and target discovery:
+  - first hop: `bunx nx show projects`
+  - then: `bunx nx show project <project> --json`
+  - if Nx modules are unavailable in the checkout, record that failure explicitly and fall back to `nx.json`, `package.json`, structural runner config, and Narsil instead of inventing targets
+- use Narsil for symbols, references, imports, call paths, and proof-surface discovery
 - explicitly compare active code to the canonical phase rules before designing a workaround
 
 ### 5. Plan the Slice Before Editing
 
 - define which transitional runtime authority is being removed or installed
 - define what would count as dual authority for this slice
-- define the minimum proof and runtime-validation band
+- define the minimum closed-loop verification band:
+  - slice-local contract verifier under `scripts/phase-2/`
+  - affected-project structural suite or equivalent Nx-wired ratchet
+  - targeted typechecks and tests
+  - runtime smoke or boot-path validation for touched entrypoints/harnesses
+  - docs/context ratchet proving the architecture claim, not only the happy path
 - record explicit decisions when the plan leaves room for multiple plausible cuts
 
 ### 6. Implement in Stable Steps
@@ -124,6 +135,7 @@ If they already exist:
 
 ### 7. Verify Before Committing
 
+- land or update the slice-local verifier script and any package-script wiring it depends on
 - run the slice proof band
 - run affected typechecks and tests
 - run runtime validation when the slice touches boot/runtime behavior:
@@ -131,7 +143,9 @@ If they already exist:
   - health path
   - canonical server surface behavior
   - canonical async registration behavior
+- if the slice relies on Nx structural targets, confirm the structural suite definition changed along with the code
 - confirm the slice removed the intended authority instead of merely wrapping it
+- confirm the verifier proves architectural intent as well as behavior
 
 ### 8. Commit at Real Boundaries
 

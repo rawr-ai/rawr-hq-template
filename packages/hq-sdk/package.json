@@ -44,8 +44,10 @@
     }
   },
   "scripts": {
-    "build": "bunx tsc -p tsconfig.json",
-    "typecheck": "bunx tsc -p tsconfig.json --noEmit"
+    "build": "tsc -p tsconfig.json",
+    "sync": "bun run --cwd ../.. sync:check --project @rawr/hq-sdk",
+    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-sdk",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
@@ -60,6 +62,23 @@
   "nx": {
     "tags": [
       "type:package"
-    ]
+    ],
+    "targets": {
+      "build": {
+        "cache": true,
+        "inputs": [
+          "production",
+          "^production",
+          "!{projectRoot}/test/**",
+          "!{projectRoot}/**/*.test.ts",
+          "!{projectRoot}/**/*.test.tsx",
+          "!{projectRoot}/**/*.spec.ts",
+          "!{projectRoot}/**/*.spec.tsx"
+        ],
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      }
+    }
   }
 }

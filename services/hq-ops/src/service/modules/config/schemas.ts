@@ -1,5 +1,5 @@
 import { type Static, Type } from "typebox";
-import { RawrConfigV1Schema } from "./support";
+import { RawrConfigV1Schema } from "./model";
 
 export const ConfigLoadErrorSchema = Type.Object(
   {

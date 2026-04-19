@@ -270,34 +270,37 @@ The runtime subsystem begins at the runtime compiler input and ends at harness h
 ## 5. Package topology
 
 The runtime subsystem is one subsystem with multiple packages.
+Its execution family is consolidated under `packages/runtime/*`.
+Public authoring and app-runtime APIs remain in `packages/hq-sdk` above that execution family.
 
 The canonical topology is:
 
 ```text
 packages/
-  bootgraph/                 public RAWR lifecycle shell
-  runtime-compiler/          manifest -> compiled process plan
-  runtime-substrate/         hidden Effect-backed kernel
-    src/
-      effect/
-      services/
-      config/
-      schema/
-      errors/
-      observability/
-      coordination/
-      process-runtime/
-  runtime-harnesses/
-    elysia/
-    inngest/
-    web/
-    cli/
-  topology-catalog/          runtime topology and export shapes
+  runtime/
+    bootgraph/               public RAWR lifecycle shell
+    compiler/                manifest -> compiled process plan
+    substrate/               hidden Effect-backed kernel
+      src/
+        effect/
+        services/
+        config/
+        schema/
+        errors/
+        observability/
+        coordination/
+        process-runtime/
+    harnesses/
+      elysia/
+      inngest/
+      web/
+      cli/
+    topology/                runtime topology and export shapes
 ```
 
-### 5.1 `packages/bootgraph`
+### 5.1 `packages/runtime/bootgraph`
 
-`packages/bootgraph` is the public lifecycle shell.
+`packages/runtime/bootgraph` is the public lifecycle shell.
 
 It owns:
 
@@ -312,9 +315,9 @@ It owns:
 
 It does not expose raw Effect types in its public shell.
 
-### 5.2 `packages/runtime-compiler`
+### 5.2 `packages/runtime/compiler`
 
-`packages/runtime-compiler` is the hidden compiler from semantic composition to runtime plan.
+`packages/runtime/compiler` is the hidden compiler from semantic composition to runtime plan.
 
 It owns:
 
@@ -328,9 +331,9 @@ It owns:
 
 It does not own acquisition, resource cleanup, or runtime disposal.
 
-### 5.3 `packages/runtime-substrate`
+### 5.3 `packages/runtime/substrate`
 
-`packages/runtime-substrate` is the hidden Effect-backed kernel.
+`packages/runtime/substrate` is the hidden Effect-backed kernel.
 
 It owns:
 
@@ -346,7 +349,7 @@ It owns:
 
 This package is the deepest runtime package.
 
-### 5.4 `packages/runtime-harnesses/*`
+### 5.4 `packages/runtime/harnesses/*`
 
 The harness packages are adapters that consume booted runtime views and mounted surface runtimes.
 
@@ -359,7 +362,7 @@ They own:
 
 They do not own runtime semantics or process resource acquisition.
 
-### 5.5 `packages/topology-catalog`
+### 5.5 `packages/runtime/topology`
 
 The topology package owns:
 
@@ -775,7 +778,7 @@ That export is especially useful for:
 The runtime subsystem should maintain explicit schema modules such as:
 
 ```text
-packages/runtime-substrate/src/schema/
+packages/runtime/substrate/src/schema/
   runtime-config.ts
   harness-config.ts
   bootgraph.ts
@@ -1520,27 +1523,28 @@ export const defineProcessModule = ...
 export const defineRoleModule = ...
 export const startBootGraph = ...
 
-// app-runtime seam
+// packages/hq-sdk app-runtime seam
 export const startAppRole = ...
 export const startAppRoles = ...
 
-// runtime-facing plugin helpers
+// packages/hq-sdk runtime-facing plugin helpers
 export const bindService = ...
 ```
 
 These APIs remain RAWR-shaped.
+`packages/hq-sdk` is the public authoring and app-runtime seam; `packages/runtime/*` remains the execution family beneath it.
 
 ### 18.2 Internal APIs owned by the subsystem
 
 The subsystem may expose internal-only APIs such as:
 
 ```ts
-// runtime-compiler
+// packages/runtime/compiler
 compileAppToProcessPlan(...)
 compileRoleBindings(...)
 compileSurfacePlans(...)
 
-// runtime-substrate
+// packages/runtime/substrate
 createManagedRuntime(...)
 createProcessScope(...)
 createRoleScope(...)

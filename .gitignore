@@ -10,4 +10,5 @@ dist/
 !docs/projects/**/.context/**
 .scratch/
 .claude/settings.local.json
+.claude/launch.json
 *.log

@@ -3,9 +3,9 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 import {
   beginPluginsSyncUndoCapture,
+  deriveSyncPolicy,
   effectiveContentForProvider,
   installAndEnableClaudePlugin,
-  loadLayeredRawrConfigForCwd,
   packageCoworkPlugin,
   planSyncAll,
   PLUGINS_SYNC_UNDO_PROVIDER,
@@ -21,6 +21,7 @@ import {
   type SyncScope,
 } from "@rawr/agent-sync";
 import { RawrCommand } from "@rawr/core";
+import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
 
 import { reconcileWorkspaceInstallLinks } from "../../../lib/install-reconcile";
 
@@ -105,8 +106,9 @@ export default class PluginsSyncAll extends RawrCommand {
 
       const layered = await loadLayeredRawrConfigForCwd(process.cwd());
       const includeOclif = Boolean((flags as any)["include-oclif"]);
-      const includeAgentsInCodex = layered.config?.sync?.providers?.codex?.includeAgents ?? false;
-      const includeAgentsInClaude = layered.config?.sync?.providers?.claude?.includeAgents ?? true;
+      const syncPolicy = deriveSyncPolicy(layered.config ?? undefined);
+      const includeAgentsInCodex = syncPolicy.includeAgentsInCodex;
+      const includeAgentsInClaude = syncPolicy.includeAgentsInClaude;
       const scope = String((flags as any).scope) as SyncScope;
       const coworkEnabled = Boolean((flags as any).cowork);
       const claudeInstallEnabled = Boolean((flags as any)["claude-install"]);
@@ -225,7 +227,7 @@ export default class PluginsSyncAll extends RawrCommand {
         String(flags.agent) as "codex" | "claude" | "all",
         (flags["codex-home"] as string[] | undefined) ?? [],
         (flags["claude-home"] as string[] | undefined) ?? [],
-        layered.config,
+        layered.config ?? undefined,
       );
 
       const results: Array<{
