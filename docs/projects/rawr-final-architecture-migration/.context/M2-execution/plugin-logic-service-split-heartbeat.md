@@ -43,11 +43,18 @@ Objective: make `plugins/cli/plugins` a projection again by moving durable sync 
 - Passed `bunx nx run @rawr/hq-ops:typecheck --skip-nx-cache`.
 - Projection thinning is now unblocked against real integrated service APIs.
 
+### 2026-04-19 - Projection Agent Started
+
+- Created Graphite-tracked child branch `agent-PROJ-plugin-cli-thinning`.
+- Created worktree `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-PROJ-plugin-cli-thinning`.
+- Installed worktree dependencies with `bun install --frozen-lockfile`.
+- Launched Projection Agent `019da791-7255-74b3-b6b9-83c50b84b5f0` to thin `plugins/cli/plugins` against integrated service APIs.
+
 ## Active Agents
 
 - Complete: Sync Service Agent `019da77e-9c1b-72c0-9b32-02228380906e` on `agent-SYNC-plugin-sync-service-ownership`
 - Complete: HQ Ops Agent `019da77e-cab9-7593-91d8-afa1b94eb7a6` on `agent-HQOPS-plugin-install-lifecycle-service`
-- Pending: Projection Agent
+- Active: Projection Agent `019da791-7255-74b3-b6b9-83c50b84b5f0` on `agent-PROJ-plugin-cli-thinning`
 - Pending: Ratchet Agent
 - Pending: Proof Agent
 - Pending: Review Agents
@@ -56,7 +63,7 @@ Objective: make `plugins/cli/plugins` a projection again by moving durable sync 
 
 - Sync service ownership: integrated
 - HQ ops plugin install/lifecycle ownership: integrated
-- Plugin CLI projection thinning: pending
+- Plugin CLI projection thinning: active
 - Structural ratchets: pending
 - Verification/proof: pending
 - Final architecture/style review: pending
