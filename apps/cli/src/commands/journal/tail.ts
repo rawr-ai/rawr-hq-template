@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class JournalTail extends RawrCommand {
@@ -26,7 +26,7 @@ export default class JournalTail extends RawrCommand {
 
     const response = await createHqOpsClient(workspaceRoot).journal.tailSnippets(
       { limit: Number.isFinite(limit) ? limit : 20 },
-      createHqOpsInvocation("cli.journal.tail"),
+      createHqOpsCallOptions("cli.journal.tail"),
     );
     const result = this.ok({ snippets: response.snippets });
     this.outputResult(result, {

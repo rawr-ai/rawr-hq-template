@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 export default class JournalSearch extends RawrCommand {
@@ -37,7 +37,7 @@ export default class JournalSearch extends RawrCommand {
         limit: Number.isFinite(limit) ? limit : 10,
         mode: semantic ? "semantic" : "fts",
       },
-      createHqOpsInvocation("cli.journal.search"),
+      createHqOpsCallOptions("cli.journal.search"),
     );
 
     const warnings = response.warning ? [response.warning] : undefined;

@@ -1,6 +1,6 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../lib/workspace-plugins";
 
 type ReflectSuggestion = {
@@ -34,7 +34,7 @@ export default class Reflect extends RawrCommand {
 
     const response = await createHqOpsClient(workspaceRoot).journal.tailSnippets(
       { limit: Number.isFinite(limit) ? limit : 50 },
-      createHqOpsInvocation("cli.reflect"),
+      createHqOpsCallOptions("cli.reflect"),
     );
     const suggestions = suggest(response.snippets);
     const result = this.ok({ suggestions, considered: response.snippets.length });

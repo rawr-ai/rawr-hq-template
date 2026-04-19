@@ -1,6 +1,6 @@
 import { Args, Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
 import { findWorkspaceRoot, listWorkspacePlugins, resolvePluginId } from "../../../lib/workspace-plugins";
 
 export default class PluginsWebEnable extends RawrCommand {
@@ -45,7 +45,7 @@ export default class PluginsWebEnable extends RawrCommand {
     if (!this.hasExplicitRiskFlag(process.argv.slice(2))) {
       const loaded = await createHqOpsClient(workspaceRoot).config.getWorkspaceConfig(
         {},
-        createHqOpsInvocation("plugin-plugins.web.enable.config"),
+        createHqOpsCallOptions("plugin-plugins.web.enable.config"),
       );
       const configured = loaded.config?.plugins?.defaultRiskTolerance;
       if (configured) riskTolerance = configured;
@@ -85,7 +85,7 @@ export default class PluginsWebEnable extends RawrCommand {
         riskTolerance: riskTolerance as "strict" | "balanced" | "permissive" | "off",
         mode,
       },
-      createHqOpsInvocation("plugin-plugins.web.enable.gate"),
+      createHqOpsCallOptions("plugin-plugins.web.enable.gate"),
     );
 
     if ((evaluation as any)?.allowed === false && !force) {
@@ -100,7 +100,7 @@ export default class PluginsWebEnable extends RawrCommand {
 
     const nextState = await createHqOpsClient(workspaceRoot).repoState.enablePlugin(
       { pluginId: plugin.id },
-      createHqOpsInvocation("plugin-plugins.web.enable.persist"),
+      createHqOpsCallOptions("plugin-plugins.web.enable.persist"),
     );
 
     const result = this.ok({

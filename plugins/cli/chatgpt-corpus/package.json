@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "bun@1.3.7",
   "oclif": {
-    "commands": "./dist/src/commands",
+    "commands": "./dist/plugins/cli/chatgpt-corpus/src/commands",
     "topicSeparator": " ",
     "typescript": {
       "commands": "./src/commands"
@@ -22,6 +22,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "structural": "bun ../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/plugin-chatgpt-corpus",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --project plugin-chatgpt-corpus"
   },

@@ -1,5 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
 type ValidationResult =
@@ -27,7 +27,7 @@ export default class ConfigValidate extends RawrCommand {
 
     const loaded = await createHqOpsClient(workspaceRoot).config.getWorkspaceConfig(
       {},
-      createHqOpsInvocation("cli.config.validate"),
+      createHqOpsCallOptions("cli.config.validate"),
     );
 
     if (!loaded.path) {

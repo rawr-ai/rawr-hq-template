@@ -100,7 +100,7 @@ export function renderWorkflowSource(input: { name: string; description: string 
   const className = toPascalCase(["workflow", input.name]);
   return `import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
-import { createHqOpsClient, createHqOpsInvocation, type HqOpsJournalSnippet } from "../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient, type HqOpsJournalSnippet } from "../../lib/hq-ops-client";
 import { journalId, safePreview } from "../../lib/journal-projection";
 import { findWorkspaceRoot } from "../../lib/workspace-plugins";
 
@@ -148,7 +148,7 @@ export default class ${className} extends RawrCommand {
     };
     await createHqOpsClient(workspaceRoot).journal.writeSnippet(
       snippet,
-      createHqOpsInvocation("cli.workflow.${input.name}"),
+      createHqOpsCallOptions("cli.workflow.${input.name}"),
     );
 
     const result = this.ok({ ok });

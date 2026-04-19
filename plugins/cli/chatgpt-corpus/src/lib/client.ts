@@ -1,10 +1,13 @@
-import { createClient } from "@rawr/chatgpt-corpus";
+import { createClient, type Client, type CreateClientOptions } from "@rawr/chatgpt-corpus";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import { createFilesystemWorkspaceStore } from "./workspace-store";
 
-export function createCorpusClient(workspaceRef: string) {
-  return createClient({
+export type CorpusInitializeOptions = NonNullable<Parameters<Client["workspace"]["initialize"]>[1]>;
+export type CorpusMaterializeOptions = NonNullable<Parameters<Client["corpusArtifacts"]["materialize"]>[1]>;
+
+export function createCorpusClient(workspaceRef: string): Client {
+  const boundary = {
     deps: {
       logger: createEmbeddedPlaceholderLoggerAdapter(),
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
@@ -14,17 +17,9 @@ export function createCorpusClient(workspaceRef: string) {
       workspaceRef,
     },
     config: {},
-  });
-}
+  } satisfies CreateClientOptions;
 
-export function createInvocation(traceId: string) {
-  return {
-    context: {
-      invocation: {
-        traceId,
-      },
-    },
-  } as const;
+  return createClient(boundary);
 }
 
 export function describeServiceError(error: unknown): {

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { createCorpusClient, createInvocation, describeServiceError } from "../../lib/client";
+import { createCorpusClient, describeServiceError, type CorpusMaterializeOptions } from "../../lib/client";
 import { projectConsolidateResult } from "../../lib/projection";
 
 export default class CorpusConsolidate extends RawrCommand {
@@ -22,9 +22,12 @@ export default class CorpusConsolidate extends RawrCommand {
     const client = createCorpusClient(workspaceRoot);
 
     try {
+      const options = {
+        context: { invocation: { traceId: `corpus-consolidate-${Date.now()}` } },
+      } satisfies CorpusMaterializeOptions;
       const data = await client.corpusArtifacts.materialize(
         {},
-        createInvocation(`corpus-consolidate-${Date.now()}`),
+        options,
       );
       const resultData = projectConsolidateResult(workspaceRoot, data);
       const result = this.ok(resultData, undefined, resultData.warnings.length > 0 ? resultData.warnings : undefined);

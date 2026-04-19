@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
 import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../../lib/workspace-plugins";
 
 type EnableAttempt = {
@@ -67,7 +67,7 @@ export default class PluginsWebEnableAll extends RawrCommand {
     if (!this.hasExplicitRiskFlag(process.argv.slice(2))) {
       const loaded = await createHqOpsClient(workspaceRoot).config.getWorkspaceConfig(
         {},
-        createHqOpsInvocation("plugin-plugins.web.enable-all.config"),
+        createHqOpsCallOptions("plugin-plugins.web.enable-all.config"),
       );
       const configured = loaded.config?.plugins?.defaultRiskTolerance;
       if (configured) riskTolerance = configured;
@@ -100,7 +100,7 @@ export default class PluginsWebEnableAll extends RawrCommand {
           riskTolerance: riskTolerance as "strict" | "balanced" | "permissive" | "off",
           mode,
         },
-        createHqOpsInvocation(`plugin-plugins.web.enable-all.gate.${p.pluginId}`),
+        createHqOpsCallOptions(`plugin-plugins.web.enable-all.gate.${p.pluginId}`),
       );
 
       const allowed = (evaluation as any)?.allowed !== false;
@@ -120,7 +120,7 @@ export default class PluginsWebEnableAll extends RawrCommand {
       try {
           await createHqOpsClient(workspaceRoot).repoState.enablePlugin(
             { pluginId: p.pluginId },
-            createHqOpsInvocation(`plugin-plugins.web.enable-all.persist.${p.pluginId}`),
+            createHqOpsCallOptions(`plugin-plugins.web.enable-all.persist.${p.pluginId}`),
           );
         attempts.push({ pluginId: p.pluginId, allowed, forced, persisted: true });
       } catch (e) {

@@ -1,5 +1,6 @@
 import {
   beginPluginsSyncUndoCapture as beginServicePluginsSyncUndoCapture,
+  type Client,
   createClient,
   PLUGINS_SYNC_UNDO_PROVIDER,
   type AgentConfigSyncUndoCapture,
@@ -28,6 +29,12 @@ import { createNodeAgentConfigSyncResources } from "./agent-config-sync-resource
 import { findWorkspaceRoot } from "./workspace-plugins";
 
 type UndoCaptureLike = AgentConfigSyncUndoCapture;
+type PreviewSyncInput = Parameters<Client["planning"]["previewSync"]>[0];
+type PreviewSyncOptions = NonNullable<Parameters<Client["planning"]["previewSync"]>[1]>;
+type RunSyncInput = Parameters<Client["execution"]["runSync"]>[0];
+type RunSyncOptions = NonNullable<Parameters<Client["execution"]["runSync"]>[1]>;
+type RetireStaleManagedInput = Parameters<Client["retirement"]["retireStaleManaged"]>[0];
+type RetireStaleManagedOptions = NonNullable<Parameters<Client["retirement"]["retireStaleManaged"]>[1]>;
 
 export async function beginPluginsSyncUndoCapture(input: {
   workspaceRoot: string;
@@ -38,16 +45,6 @@ export async function beginPluginsSyncUndoCapture(input: {
     ...input,
     resources: createNodeAgentConfigSyncResources(),
   });
-}
-
-function createInvocation(traceId: string) {
-  return {
-    context: {
-      invocation: {
-        traceId,
-      },
-    },
-  } as const;
 }
 
 function createBoundary(repoRoot: string, undoCapture?: UndoCaptureLike): CreateClientOptions {
@@ -90,27 +87,9 @@ export async function runSync(input: {
   const client = createClient(createBoundary(repoRoot, input.options.undoCapture));
 
   if (input.options.dryRun) {
-    return client.planning.previewSync(
-      {
-        sourcePlugin: input.sourcePlugin as any,
-        content: input.content as any,
-        codexHomes: input.codexHomes,
-        claudeHomes: input.claudeHomes,
-        includeCodex: input.includeCodex,
-        includeClaude: input.includeClaude,
-        includeAgentsInCodex: input.options.includeAgentsInCodex,
-        includeAgentsInClaude: input.options.includeAgentsInClaude,
-        force: input.options.force,
-        gc: input.options.gc,
-      },
-      createInvocation("plugin-plugins.agent-config-sync.preview"),
-    ) as Promise<SyncRunResult>;
-  }
-
-  return client.execution.runSync(
-    {
-      sourcePlugin: input.sourcePlugin as any,
-      content: input.content as any,
+    const previewInput = {
+      sourcePlugin: input.sourcePlugin,
+      content: input.content,
       codexHomes: input.codexHomes,
       claudeHomes: input.claudeHomes,
       includeCodex: input.includeCodex,
@@ -119,10 +98,30 @@ export async function runSync(input: {
       includeAgentsInClaude: input.options.includeAgentsInClaude,
       force: input.options.force,
       gc: input.options.gc,
-      dryRun: input.options.dryRun,
-    },
-    createInvocation("plugin-plugins.agent-config-sync.apply"),
-  ) as Promise<SyncRunResult>;
+    } satisfies PreviewSyncInput;
+    const options = {
+      context: { invocation: { traceId: "plugin-plugins.agent-config-sync.preview" } },
+    } satisfies PreviewSyncOptions;
+    return client.planning.previewSync(previewInput, options);
+  }
+
+  const runInput = {
+    sourcePlugin: input.sourcePlugin,
+    content: input.content,
+    codexHomes: input.codexHomes,
+    claudeHomes: input.claudeHomes,
+    includeCodex: input.includeCodex,
+    includeClaude: input.includeClaude,
+    includeAgentsInCodex: input.options.includeAgentsInCodex,
+    includeAgentsInClaude: input.options.includeAgentsInClaude,
+    force: input.options.force,
+    gc: input.options.gc,
+    dryRun: input.options.dryRun,
+  } satisfies RunSyncInput;
+  const options = {
+    context: { invocation: { traceId: "plugin-plugins.agent-config-sync.apply" } },
+  } satisfies RunSyncOptions;
+  return client.execution.runSync(runInput, options);
 }
 
 export async function retireStaleManagedPlugins(input: {
@@ -135,17 +134,18 @@ export async function retireStaleManagedPlugins(input: {
   undoCapture?: UndoCaptureLike;
 }) {
   const client = createClient(createBoundary(input.workspaceRoot, input.undoCapture));
-  return client.retirement.retireStaleManaged(
-    {
-      workspaceRoot: input.workspaceRoot,
-      scope: input.scope as any,
-      codexHomes: input.codexHomes,
-      claudeHomes: input.claudeHomes,
-      activePluginNames: [...input.activePluginNames],
-      dryRun: input.dryRun,
-    },
-    createInvocation("plugin-plugins.agent-config-sync.retirement"),
-  );
+  const retireInput = {
+    workspaceRoot: input.workspaceRoot,
+    scope: input.scope,
+    codexHomes: input.codexHomes,
+    claudeHomes: input.claudeHomes,
+    activePluginNames: [...input.activePluginNames],
+    dryRun: input.dryRun,
+  } satisfies RetireStaleManagedInput;
+  const options = {
+    context: { invocation: { traceId: "plugin-plugins.agent-config-sync.retirement" } },
+  } satisfies RetireStaleManagedOptions;
+  return client.retirement.retireStaleManaged(retireInput, options);
 }
 
 export {

@@ -4,7 +4,7 @@ import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import {
   createHqOpsClient,
-  createHqOpsInvocation,
+  createHqOpsCallOptions,
   type HqOpsJournalSnippet,
 } from "../../lib/hq-ops-client";
 import { recordArtifact, recordStep } from "../../lib/journal-context";
@@ -197,7 +197,7 @@ async function tryWriteForgeSnippet(input: {
   try {
     await createHqOpsClient(input.repoRoot).journal.writeSnippet(
       snippet,
-      createHqOpsInvocation("cli.workflow.forge-command"),
+      createHqOpsCallOptions("cli.workflow.forge-command"),
     );
   } catch {
     // best-effort

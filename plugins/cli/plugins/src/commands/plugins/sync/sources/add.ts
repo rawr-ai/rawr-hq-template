@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { createHqOpsClient, createHqOpsInvocation } from "../../../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
 
 function expandTilde(p: string): string {
   if (p === "~") return os.homedir();
@@ -31,7 +31,7 @@ export default class PluginsSyncSourcesAdd extends RawrCommand {
 
     const response = await createHqOpsClient(process.cwd()).config.addGlobalSyncSource(
       { path: resolved },
-      createHqOpsInvocation("plugin-plugins.sync-sources.add"),
+      createHqOpsCallOptions("plugin-plugins.sync-sources.add"),
     );
 
     const result = this.ok({ path: response.path, added: resolved, sources: response.sources });

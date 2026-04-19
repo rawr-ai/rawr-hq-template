@@ -1,5 +1,5 @@
 import { findWorkspaceRoot } from "./workspace-plugins";
-import { createHqOpsClient, createHqOpsInvocation } from "./hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "./hq-ops-client";
 
 export type LayeredRawrConfig = {
   config: HqOpsLayeredConfig;
@@ -13,7 +13,7 @@ type HqOpsLayeredConfig = Awaited<
 
 export async function loadLayeredRawrConfigForCwd(cwd: string): Promise<LayeredRawrConfig> {
   const client = createHqOpsClient(cwd);
-  const global = await client.config.getGlobalConfig({}, createHqOpsInvocation("plugin-plugins.config.global"));
+  const global = await client.config.getGlobalConfig({}, createHqOpsCallOptions("plugin-plugins.config.global"));
   if (global.error) {
     throw new Error(
       `${global.error.message}${global.error.cause ? `\n${global.error.cause}` : ""}`,
@@ -27,7 +27,7 @@ export async function loadLayeredRawrConfigForCwd(cwd: string): Promise<LayeredR
 
   const layered = await createHqOpsClient(workspaceRoot).config.getLayeredConfig(
     {},
-    createHqOpsInvocation("plugin-plugins.config.layered"),
+    createHqOpsCallOptions("plugin-plugins.config.layered"),
   );
 
   if (layered.workspace.error) {

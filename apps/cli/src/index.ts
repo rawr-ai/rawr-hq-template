@@ -1,7 +1,7 @@
 import { flush, handle, run } from "@oclif/core";
 import {
   createHqOpsClient,
-  createHqOpsInvocation,
+  createHqOpsCallOptions,
   type HqOpsJournalEvent,
   type HqOpsJournalSnippet,
 } from "./lib/hq-ops-client";
@@ -70,8 +70,8 @@ async function tryWriteJournal(opts: {
 
   try {
     const client = createHqOpsClient(workspaceRoot);
-    await client.journal.writeEvent(event, createHqOpsInvocation("cli.journal.write-event"));
-    await client.journal.writeSnippet(snippet, createHqOpsInvocation("cli.journal.write-snippet"));
+    await client.journal.writeEvent(event, createHqOpsCallOptions("cli.journal.write-event"));
+    await client.journal.writeSnippet(snippet, createHqOpsCallOptions("cli.journal.write-snippet"));
   } catch {
     // Best-effort; never block command execution on journaling.
   }

@@ -1,4 +1,5 @@
 import { installRawrOrpcTelemetry, type InstalledTelemetry } from "@rawr/core/telemetry";
+import type { Client as HqOpsClient } from "@rawr/hq-ops";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServerApp } from "./app";
@@ -41,17 +42,26 @@ const bootstrapHostSatisfiers = createRawrHostSatisfiers({
   hostLogger: createHostLoggerAdapter(),
 });
 
+type LoadWorkspaceConfigOptions = NonNullable<Parameters<HqOpsClient["config"]["getWorkspaceConfig"]>[1]>;
+type LoadRepoStateOptions = NonNullable<Parameters<HqOpsClient["repoState"]["getState"]>[1]>;
+
 async function loadWorkspaceConfigFromHost(repoRoot: string) {
+  const options = {
+    context: { invocation: { traceId: "server.config.load" } },
+  } satisfies LoadWorkspaceConfigOptions;
   return await bootstrapHostSatisfiers.state.resolveClient(repoRoot).config.getWorkspaceConfig(
     {},
-    { context: { invocation: { traceId: "server.config.load" } } },
+    options,
   );
 }
 
 async function loadRuntimeStateFromHost(repoRoot: string) {
+  const options = {
+    context: { invocation: { traceId: "server.repo-state.get" } },
+  } satisfies LoadRepoStateOptions;
   const response = await bootstrapHostSatisfiers.state.resolveClient(repoRoot).repoState.getState(
     {},
-    { context: { invocation: { traceId: "server.repo-state.get" } } },
+    options,
   );
   return response.state;
 }
