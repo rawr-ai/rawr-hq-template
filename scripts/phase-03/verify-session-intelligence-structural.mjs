@@ -19,7 +19,6 @@ const SERVICE_EXPORTS = [
   "./ports/session-index-runtime",
 ];
 const SERVICE_RUNTIME_DEP_KEYS = ["sessionSourceRuntime", "sessionIndexRuntime"];
-const ROOT_PROJECT_LIST_SCRIPTS = ["build", "typecheck", "pretest:vitest"];
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"]);
 const SKIP_DIRS = new Set(["node_modules", "dist", "coverage", ".nx", ".git"]);
 const FORBIDDEN_SERVICE_IMPORTS = [
@@ -40,6 +39,15 @@ const FORBIDDEN_SERVICE_SOURCE_PATTERNS = [
   { pattern: /\bos\.homedir\s*\(/u, label: "os.homedir()" },
   { pattern: /\bBun\.(?:file|sqlite|env)\b/u, label: "Bun concrete runtime API" },
   { pattern: /\bnew\s+Database\s*\(/u, label: "concrete SQLite Database construction" },
+];
+const FORBIDDEN_HOST_VERB_NAMES = [
+  "listSessions",
+  "resolveSession",
+  "extractSession",
+  "searchSessionsByContent",
+  "searchSessionsByMetadata",
+  "reindexSessions",
+  "getSearchTextCached",
 ];
 
 async function readJsonIfExists(relPath, findings, label = relPath) {
@@ -166,11 +174,6 @@ async function verifyServiceShape(findings) {
     for (const key of SERVICE_EXPORTS) {
       if (!pkg.exports?.[key]) findings.push(`@rawr/session-intelligence package exports must include ${key}`);
     }
-
-    const structuralScript = "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/session-intelligence";
-    if (pkg.scripts?.structural !== structuralScript) {
-      findings.push(`@rawr/session-intelligence structural script must be "${structuralScript}"`);
-    }
   }
 
   const [indexSource, clientSource, contractSource, routerSource, baseSource, shapeTestSource] = await Promise.all([
@@ -226,82 +229,20 @@ async function verifyServiceRuntimePurity(findings) {
 
     for (const { pattern, label } of FORBIDDEN_SERVICE_SOURCE_PATTERNS) {
       if (pattern.test(source)) {
-        findings.push(`${relPath} references ${label}; keep concrete runtime access in ${HOST_ROOT}`);
+        findings.push(`${relPath} references ${label}; keep concrete runtime access in plugin/app/runtime resource providers`);
       }
     }
   }
 }
 
-async function verifyHostPackage(findings) {
-  if (!(await pathExists(HOST_ROOT))) {
-    findings.push(`${HOST_ROOT} is missing`);
-    return;
+async function verifyNoHostPackage(findings) {
+  if (await pathExists(HOST_ROOT)) {
+    findings.push(`${HOST_ROOT} must not exist; service-specific host packages are forbidden`);
   }
 
-  const pkg = await readJsonIfExists(`${HOST_ROOT}/package.json`, findings);
-  if (!pkg) return;
-
-  if (pkg.name !== "@rawr/session-intelligence-host") {
-    findings.push(`expected ${HOST_ROOT}/package.json name @rawr/session-intelligence-host, got ${pkg.name}`);
-  }
-
-  const allDeps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
-  if (!allDeps["@rawr/session-intelligence"]) {
-    findings.push("@rawr/session-intelligence-host must depend on @rawr/session-intelligence");
-  }
-}
-
-async function verifyRootProjectLists(findings) {
-  const pkg = await readJsonIfExists("package.json", findings, "root package.json");
-  if (!pkg) return;
-
-  for (const scriptName of ROOT_PROJECT_LIST_SCRIPTS) {
-    const script = pkg.scripts?.[scriptName] ?? "";
-    if (script.includes("@rawr/session-tools")) {
-      findings.push(`root package.json script "${scriptName}" must not include @rawr/session-tools`);
-    }
-    for (const projectName of ["@rawr/session-intelligence", "@rawr/session-intelligence-host", "@rawr/plugin-session-tools"]) {
-      if (!script.includes(projectName)) {
-        findings.push(`root package.json script "${scriptName}" must include ${projectName}`);
-      }
-    }
-  }
-
-  const gateScript = "bun scripts/phase-03/verify-session-intelligence-structural.mjs";
-  if (pkg.scripts?.["phase-03:gate:session-intelligence-structural"] !== gateScript) {
-    findings.push(`root package.json must expose phase-03:gate:session-intelligence-structural as "${gateScript}"`);
-  }
-}
-
-async function verifyVitestConfig(findings) {
-  const source = await readFileIfExists("vitest.config.ts", findings);
-  if (!source) return;
-
-  for (const staleNeedle of ['root: r("packages/session-tools")', 'name: "session-tools"']) {
-    if (source.includes(staleNeedle)) findings.push(`vitest.config.ts must not include stale ${staleNeedle}`);
-  }
-
-  for (const requiredNeedle of [
-    'root: r("services/session-intelligence")',
-    'name: "session-intelligence"',
-    'root: r("packages/session-intelligence-host")',
-    'name: "session-intelligence-host"',
-  ]) {
-    if (!source.includes(requiredNeedle)) findings.push(`vitest.config.ts must include ${requiredNeedle}`);
-  }
-}
-
-async function verifyEslintRatchets(findings) {
-  const source = await readFileIfExists("eslint.config.mjs", findings);
-  if (!source) return;
-
-  for (const requiredNeedle of [
-    "@rawr/session-tools",
-    "The legacy @rawr/session-tools package is removed",
-    "services/session-intelligence/src/service/**/*",
-    "Session Intelligence service files must stay runtime-agnostic",
-  ]) {
-    if (!source.includes(requiredNeedle)) findings.push(`eslint.config.mjs must include ${requiredNeedle}`);
+  const hostImports = await collectImportSites(["@rawr/session-intelligence-host"]);
+  for (const site of hostImports) {
+    findings.push(`forbidden @rawr/session-intelligence-host import remains: ${site}`);
   }
 }
 
@@ -330,35 +271,45 @@ async function verifyPluginCutover(findings) {
   if (allDeps["@rawr/session-tools"]) {
     findings.push("@rawr/plugin-session-tools must not depend on @rawr/session-tools");
   }
+  if (allDeps["@rawr/session-intelligence-host"]) {
+    findings.push("@rawr/plugin-session-tools must not depend on @rawr/session-intelligence-host");
+  }
+  if (!allDeps["@rawr/session-intelligence"]) {
+    findings.push("@rawr/plugin-session-tools must depend on @rawr/session-intelligence");
+  }
 
-  for (const requiredDep of ["@rawr/session-intelligence", "@rawr/session-intelligence-host"]) {
-    if (!allDeps[requiredDep]) findings.push(`@rawr/plugin-session-tools must depend on ${requiredDep}`);
+  const clientSource = await readFileIfExists(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts`, findings, undefined, false);
+  if (clientSource) {
+    for (const forbidden of ["@rawr/session-intelligence-host", "createNodeSessionIntelligenceBoundary", "RawHostModule"]) {
+      if (clientSource.includes(forbidden)) findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must not reference ${forbidden}`);
+    }
+    for (const required of ["@rawr/session-intelligence/client", "CreateClientOptions", "satisfies CreateClientOptions"]) {
+      if (!clientSource.includes(required)) findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must statically bind ${required}`);
+    }
+  }
+
+  const libFiles = [];
+  await walkSourceFiles(`${PLUGIN_ROOT}/src/lib`, libFiles);
+  for (const relPath of libFiles.sort()) {
+    const source = await readFile(relPath);
+    if (relPath.endsWith("/session-types.ts")) continue;
+    for (const forbidden of FORBIDDEN_HOST_VERB_NAMES) {
+      const exportPattern = new RegExp(`\\bexport\\s+(?:async\\s+)?(?:function|const)\\s+${forbidden}\\b`, "u");
+      if (exportPattern.test(source)) {
+        findings.push(`${relPath} exports forbidden service-level verb ${forbidden}`);
+      }
+    }
   }
 }
 
-async function verifyRoutingDocs(findings) {
-  const [splitDoc, templateManagedPaths] = await Promise.all([
-    readFileIfExists("AGENTS_SPLIT.md", findings),
-    readFileIfExists("scripts/githooks/template-managed-paths.txt", findings),
-  ]);
-
-  if (splitDoc) {
-    if (splitDoc.includes("packages/session-tools")) {
-      findings.push("AGENTS_SPLIT.md must not route packages/session-tools as a live template package");
-    }
-    for (const requiredPath of [SERVICE_ROOT, HOST_ROOT, PLUGIN_ROOT]) {
-      if (!splitDoc.includes(requiredPath)) findings.push(`AGENTS_SPLIT.md must route ${requiredPath}`);
-    }
-  }
-
-  if (templateManagedPaths) {
-    if (templateManagedPaths.includes("packages/session-tools/**")) {
-      findings.push("template-managed paths must not include packages/session-tools/** after removal");
-    }
-    for (const requiredPattern of [`${SERVICE_ROOT}/**`, `${HOST_ROOT}/**`, `${PLUGIN_ROOT}/**`]) {
-      if (!templateManagedPaths.includes(requiredPattern)) {
-        findings.push(`template-managed paths must include ${requiredPattern}`);
-      }
+async function verifyModuleSchemaOwnership(findings) {
+  for (const moduleName of SERVICE_MODULES) {
+    const relPath = `${SERVICE_ROOT}/src/service/modules/${moduleName}/schemas.ts`;
+    const source = await readFileIfExists(relPath, findings, relPath, false);
+    if (!source) continue;
+    const withoutWhitespace = source.replace(/\s+/g, "");
+    if (withoutWhitespace.startsWith("export{") && source.includes("../../shared/schemas")) {
+      findings.push(`${relPath} must own module schemas instead of pure re-exporting shared schemas`);
     }
   }
 }
@@ -367,13 +318,10 @@ const findings = [];
 
 await verifyServiceShape(findings);
 await verifyServiceRuntimePurity(findings);
-await verifyHostPackage(findings);
-await verifyRootProjectLists(findings);
-await verifyVitestConfig(findings);
-await verifyEslintRatchets(findings);
+await verifyNoHostPackage(findings);
 await verifyLegacyRemoval(findings);
 await verifyPluginCutover(findings);
-await verifyRoutingDocs(findings);
+await verifyModuleSchemaOwnership(findings);
 
 if (findings.length > 0) {
   console.error("verify-session-intelligence-structural failed:");

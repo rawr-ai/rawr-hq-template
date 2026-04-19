@@ -1,5 +1,4 @@
-import os from "node:os";
-import path from "node:path";
+import { createClient, type CreateClientOptions } from "@rawr/session-intelligence/client";
 import type {
   ErrorResult,
   ExtractOptions,
@@ -13,6 +12,10 @@ import type {
   SessionListItem,
   SessionSourceFilter,
 } from "./session-types";
+import { createSessionIndexRuntime, defaultSessionIndexPathSync } from "./session-index-runtime";
+import { createSessionSourceRuntime } from "./session-source-runtime";
+
+export { defaultSessionIndexPathSync };
 
 export type SessionIntelligenceClient = {
   catalog: {
@@ -48,17 +51,6 @@ export type SessionIntelligenceClient = {
 
 export type SessionIntelligenceClientFactory = () => Promise<SessionIntelligenceClient>;
 
-type RawServiceModule = {
-  createClient?: (boundary: unknown) => unknown;
-};
-
-type RawHostModule = {
-  createNodeSessionIntelligenceBoundary?: (input?: unknown) => unknown;
-  createNodeSessionIndexRuntime?: () => { defaultIndexPath?: () => string };
-  defaultIndexPath?: () => string;
-  defaultSessionIndexPath?: () => string;
-};
-
 let clientFactoryOverride: SessionIntelligenceClientFactory | null = null;
 
 export function setSessionIntelligenceClientFactoryForTest(factory: SessionIntelligenceClientFactory | null): void {
@@ -68,43 +60,32 @@ export function setSessionIntelligenceClientFactoryForTest(factory: SessionIntel
 export async function createSessionIntelligenceClient(): Promise<SessionIntelligenceClient> {
   if (clientFactoryOverride) return clientFactoryOverride();
 
-  const serviceModuleName = "@rawr/session-intelligence";
-  const hostModuleName = "@rawr/session-intelligence-host";
-  const [service, host] = await Promise.all([
-    import(serviceModuleName) as Promise<RawServiceModule>,
-    import(hostModuleName) as Promise<RawHostModule>,
-  ]);
-
-  if (typeof service.createClient !== "function") {
-    throw new Error(`${serviceModuleName} does not export createClient`);
-  }
-  if (typeof host.createNodeSessionIntelligenceBoundary !== "function") {
-    throw new Error(`${hostModuleName} does not export createNodeSessionIntelligenceBoundary`);
-  }
-
-  const boundary = host.createNodeSessionIntelligenceBoundary({});
-  const rawClient = service.createClient(boundary);
+  const rawClient = createClient(createSessionIntelligenceBoundary());
   return adaptRawClient(rawClient);
 }
 
 export async function defaultSessionIndexPath(): Promise<string> {
-  const hostModuleName = "@rawr/session-intelligence-host";
-  try {
-    const host = (await import(hostModuleName)) as RawHostModule;
-    if (typeof host.defaultIndexPath === "function") return host.defaultIndexPath();
-    if (typeof host.defaultSessionIndexPath === "function") return host.defaultSessionIndexPath();
-    const indexRuntime = host.createNodeSessionIndexRuntime?.();
-    if (typeof indexRuntime?.defaultIndexPath === "function") return indexRuntime.defaultIndexPath();
-  } catch {
-    // Keep CLI defaults usable in tests and early stack branches before the host package lands.
-  }
   return defaultSessionIndexPathSync();
 }
 
-export function defaultSessionIndexPathSync(): string {
-  const override = process.env.RAWR_SESSION_INDEX_PATH;
-  if (override && override.trim()) return override.trim();
-  return path.join(os.homedir(), ".cache", "rawr-session-index.sqlite");
+function createSessionIntelligenceBoundary(): CreateClientOptions {
+  return {
+    deps: {
+      logger: {
+        info() {},
+        error() {},
+      },
+      analytics: {
+        track() {},
+      },
+      sessionSourceRuntime: createSessionSourceRuntime(),
+      sessionIndexRuntime: createSessionIndexRuntime(),
+    },
+    scope: {
+      workspaceRef: "plugin://session-tools",
+    },
+    config: {},
+  } satisfies CreateClientOptions;
 }
 
 function adaptRawClient(rawClient: unknown): SessionIntelligenceClient {
@@ -135,7 +116,16 @@ function adaptRawClient(rawClient: unknown): SessionIntelligenceClient {
       clearIndex: async (input) => {
         await callProcedure(raw?.search?.clearIndex, input);
       },
-      reindex: async (input) => pickObject(await callProcedure(raw?.search?.reindex, input), "reindex") as ReindexResult,
+      reindex: async (input) => {
+        const serviceInput = {
+          ...input,
+          sessions: input.sessions.map((session) => ({
+            path: session.path,
+            source: session.source,
+          })),
+        };
+        return pickObject(await callProcedure(raw?.search?.reindex, serviceInput), "reindex") as ReindexResult;
+      },
     },
   };
 }

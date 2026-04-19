@@ -11,16 +11,11 @@ export async function* readJsonlObjects(filePath: string): AsyncGenerator<unknow
       try {
         yield JSON.parse(trimmed) as unknown;
       } catch {
-        // Ignore malformed JSONL rows; session logs are append-only and may contain partial lines.
+        // Session logs are append-only and may contain partial lines.
       }
     }
   } finally {
     rl.close();
     stream.close();
   }
-}
-
-export async function readFirstJsonlObject(filePath: string): Promise<unknown | null> {
-  for await (const obj of readJsonlObjects(filePath)) return obj;
-  return null;
 }
