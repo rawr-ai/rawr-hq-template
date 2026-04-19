@@ -1,48 +1,59 @@
 import { createRawrHqManifest } from "@rawr/hq-app/manifest";
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
-import { createClient as createExampleTodoClient } from "@rawr/example-todo";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
 import { createRawrHostBoundRolePlan } from "./host-seam";
+import { createRawrHostSatisfiers } from "./host-satisfiers";
 import { materializeRawrHostBoundRolePlan } from "./host-realization";
 
 const noopLogger = {
   info() {},
   error() {},
 } as const;
+const testingRawrHqManifest = createRawrHqManifest();
+const testingRawrHostSatisfiers = createRawrHostSatisfiers({
+  hostLogger: noopLogger,
+});
 
+/**
+ * @agents-style canonical host-owned proof seam
+ *
+ * Owns:
+ * - test-only realization of the canonical host seam
+ *
+ * Must not own:
+ * - app-side executable bridge compatibility
+ * - alternate binding rules
+ *
+ * Canonical:
+ * - `manifest -> host-seam -> host-realization`
+ */
 export function createTestingRawrHostSeam() {
-  const manifest = createRawrHqManifest({
-    hostLogger: noopLogger,
+  const boundRolePlan = createRawrHostBoundRolePlan({
+    manifest: testingRawrHqManifest,
+    satisfiers: testingRawrHostSatisfiers,
   });
-  const boundRolePlan = createRawrHostBoundRolePlan({ manifest });
   const realization = materializeRawrHostBoundRolePlan(boundRolePlan);
 
   return {
-    manifest,
+    manifest: testingRawrHqManifest,
     boundRolePlan,
     realization,
   } as const;
 }
 
+/**
+ * @agents-style mixed-path proof helper
+ *
+ * Owns:
+ * - direct service-package access used by one legacy proof leg
+ *
+ * Must not own:
+ * - the decisive realized host-seam proof
+ * - canonical route/contract/publication drift authority
+ *
+ * Note:
+ * - this helper remains acceptable only as supporting evidence while
+ *   `proof.api.example-todo.surface` is explicitly marked mixed-path
+ */
 export function createTestingExampleTodoServiceClient(repoRoot: string): ExampleTodoClient {
-  return createExampleTodoClient({
-    deps: {
-      dbPool: createEmbeddedInMemoryDbPoolAdapter(),
-      clock: {
-        now: () => new Date(Date.UTC(2026, 1, 25, 0, 0, 0)).toISOString(),
-      },
-      logger: noopLogger,
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    },
-    scope: {
-      workspaceId: "workspace-default",
-    },
-    config: {
-      readOnly: false,
-      limits: {
-        maxAssignmentsPerTask: 2,
-      },
-    },
-  });
+  return testingRawrHostSatisfiers.exampleTodo.resolveClient(repoRoot);
 }

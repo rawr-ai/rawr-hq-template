@@ -1,61 +1,86 @@
 import {
   composeApiPlugins,
-  type ApiPluginRegistration,
   type MaterializedApiPluginRegistration,
 } from "@rawr/hq-sdk/apis";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
 import type { RawrHqManifest } from "@rawr/hq-app/manifest";
+import type { RawrHostSatisfiers } from "./host-satisfiers";
 
-function bindApiPluginRegistration<TPlugin extends ApiPluginRegistration>(
-  plugin: TPlugin,
-  bound?: unknown,
-): MaterializedApiPluginRegistration {
-  if (!plugin.contribute || bound === undefined) {
-    return plugin as MaterializedApiPluginRegistration;
-  }
+/**
+ * @agents-style seam-law declaration -> host binding -> request/process materialization
+ * @agents-style canonical host binding seam
+ *
+ * Owns:
+ * - binding app-selected plugin declarations against host-owned satisfiers
+ * - composing bound API/workflow contributions into one bound role plan
+ *
+ * Must not own:
+ * - satisfier construction
+ * - request context creation
+ * - ORPC/OpenAPI/Inngest handler materialization
+ * - route mounting
+ *
+ * Canonical:
+ * - `createRawrHostBoundRolePlan({ manifest, satisfiers })`
+ *
+ * Transitional:
+ * - narrow consumption of `@rawr/hq-app/manifest` as composition input only
+ *
+ * Must stay strict:
+ * - every canonical plugin family binds through `contribute(bound)`
+ * - no fallback to pre-materialized or partially bound plugin shapes
+ */
 
-  return {
-    ...plugin,
-    ...plugin.contribute(bound as never),
-  } satisfies MaterializedApiPluginRegistration;
-}
+function bindRawrHqApiPlugins(input: {
+  manifest: RawrHqManifest;
+  satisfiers: RawrHostSatisfiers;
+}) {
+  const coordination = input.manifest.plugins.api.coordination;
+  const state = input.manifest.plugins.api.state;
+  const exampleTodo = input.manifest.plugins.api.exampleTodo;
 
-function bindWorkflowPluginRegistration<TPlugin extends WorkflowPluginRegistration>(
-  plugin: TPlugin,
-  bound?: unknown,
-): TPlugin {
-  if (!plugin.contribute || bound === undefined) {
-    return plugin;
-  }
-
-  return {
-    ...plugin,
-    ...plugin.contribute(bound as never),
-  };
-}
-
-function bindRawrHqApiPlugins(manifest: RawrHqManifest) {
   return [
-    manifest.plugins.api.coordination as MaterializedApiPluginRegistration,
-    manifest.plugins.api.state as MaterializedApiPluginRegistration,
-    bindApiPluginRegistration(
-      manifest.plugins.api.exampleTodo,
-      {
-        resolveClient: manifest.fixtures.exampleTodo.resolveClient,
-      },
-    ),
+    {
+      ...coordination,
+      ...coordination.contribute!({
+        resolveClient: input.satisfiers.coordination.resolveWorkflowClient,
+      }),
+    } satisfies MaterializedApiPluginRegistration,
+    {
+      ...state,
+      ...state.contribute!({
+        resolveClient: input.satisfiers.state.resolveClient,
+      }),
+    } satisfies MaterializedApiPluginRegistration,
+    {
+      ...exampleTodo,
+      ...exampleTodo.contribute!({
+        resolveClient: input.satisfiers.exampleTodo.resolveClient,
+      }),
+    } satisfies MaterializedApiPluginRegistration,
   ] as const;
 }
 
-function bindRawrHqWorkflowPlugins(manifest: RawrHqManifest) {
+function bindRawrHqWorkflowPlugins(input: {
+  manifest: RawrHqManifest;
+  satisfiers: RawrHostSatisfiers;
+}) {
+  const supportExample = input.manifest.plugins.workflows.supportExample;
+  const coordination = input.manifest.plugins.workflows.coordination;
+
   return [
-    bindWorkflowPluginRegistration(
-      manifest.plugins.workflows.supportExample,
-      {
-        resolveSupportExampleClient: manifest.fixtures.supportExample.resolveClient,
-      },
-    ),
-    manifest.plugins.workflows.coordination,
+    {
+      ...supportExample,
+      ...supportExample.contribute!({
+        resolveSupportExampleClient: input.satisfiers.supportExample.resolveClient,
+      }),
+    } satisfies WorkflowPluginRegistration,
+    {
+      ...coordination,
+      ...coordination.contribute!({
+        resolveAuthoringClient: input.satisfiers.coordination.resolveWorkflowClient,
+      }),
+    } satisfies WorkflowPluginRegistration,
   ] as const;
 }
 
@@ -66,11 +91,16 @@ export type RawrHostBoundRolePlan = Readonly<{
   workflows: ReturnType<typeof composeWorkflowPlugins>;
 }>;
 
+/**
+ * Converts HQ app composition input plus host-owned satisfiers into the bound
+ * role plan consumed by host realization.
+ */
 export function createRawrHostBoundRolePlan(input: {
   manifest: RawrHqManifest;
+  satisfiers: RawrHostSatisfiers;
 }): RawrHostBoundRolePlan {
-  const apiPlugins = bindRawrHqApiPlugins(input.manifest);
-  const workflowPlugins = bindRawrHqWorkflowPlugins(input.manifest);
+  const apiPlugins = bindRawrHqApiPlugins(input);
+  const workflowPlugins = bindRawrHqWorkflowPlugins(input);
 
   return {
     apiPlugins,

@@ -6,12 +6,33 @@ const root = process.cwd();
 const packagePath = path.join(root, "apps", "hq", "package.json");
 const manifestPath = path.join(root, "apps", "hq", "src", "manifest.ts");
 const testingPath = path.join(root, "apps", "hq", "src", "testing.ts");
+const rawrHqBridgePath = path.join(root, "rawr.hq.ts");
 
-const [pkgRaw, manifestSource, testingSource] = await Promise.all([
+const [pkgRaw, manifestSource, rawrHqBridgeSource] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(manifestPath, "utf8"),
-  fs.readFile(testingPath, "utf8"),
+  fs.readFile(rawrHqBridgePath, "utf8"),
 ]);
+
+function normalizeSemanticSource(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\s+/g, "");
+}
+
+async function readIfPresent(filePath) {
+  try {
+    return await fs.readFile(filePath, "utf8");
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+const testingSource = await readIfPresent(testingPath);
 
 const pkg = JSON.parse(pkgRaw);
 const requiredTags = ["type:app", "app:hq", "migration-slice:structural-tranche"];
@@ -24,6 +45,11 @@ for (const tag of requiredTags) {
 
 if (!manifestSource.includes("export function createRawrHqManifest")) {
   console.error("hq-app structural failed: manifest factory export missing.");
+  process.exit(1);
+}
+
+if (pkg.exports?.["./testing"] !== undefined) {
+  console.error("hq-app structural failed: @rawr/hq-app/testing export must remain removed.");
   process.exit(1);
 }
 
@@ -46,8 +72,30 @@ if (manifestSource.includes("apps/server/src/logging") || manifestSource.include
   process.exit(1);
 }
 
-if (!testingSource.includes("createTestingRawrHqManifest")) {
-  console.error("hq-app structural failed: testing seam missing.");
+if (
+  manifestSource.includes("implement(") ||
+  manifestSource.includes("createRouterClient(") ||
+  manifestSource.includes("materializeManifestBridgeSurfaces") ||
+  manifestSource.includes("createCoordinationClient(") ||
+  manifestSource.includes("createStateClient(") ||
+  manifestSource.includes("createEmbeddedInMemoryDbPoolAdapter") ||
+  manifestSource.includes("hostLogger")
+) {
+  console.error("hq-app structural failed: manifest must stay composition-only and free of executable host authority.");
+  process.exit(1);
+}
+
+if (testingSource !== null && normalizeSemanticSource(testingSource) !== "export{};") {
+  console.error("hq-app structural failed: testing.ts must be absent or stay an inert marker module only.");
+  process.exit(1);
+}
+
+if (
+  !/^export\{createRawrHqManifest,typeRawrHqManifest\}from["']@rawr\/hq-app\/manifest["'];?$/.test(
+    normalizeSemanticSource(rawrHqBridgeSource),
+  )
+) {
+  console.error("hq-app structural failed: rawr.hq.ts may only re-export HQ manifest composition symbols.");
   process.exit(1);
 }
 

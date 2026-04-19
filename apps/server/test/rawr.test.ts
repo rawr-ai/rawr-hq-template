@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { minifyContractRouter } from "@orpc/contract";
 import { processCoordinationRunEvent, createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
 import { createServerApp } from "../src/app";
 import { createTestingRawrHostSeam } from "../src/testing-host";
@@ -18,6 +19,46 @@ const FIRST_PARTY_RPC_HEADERS = {
   "x-rawr-caller-surface": "first-party",
   "x-rawr-session-auth": "verified",
 } as const;
+
+type RouteShape = {
+  method?: string;
+  path?: string;
+};
+
+function normalizeSemanticSource(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\s+/g, "");
+}
+
+async function readIfPresent(filePath: string): Promise<string | null> {
+  try {
+    return await fs.readFile(filePath, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+function collectProcedureRoutes(node: unknown, namespace: string[] = []): string[] {
+  if (!node || typeof node !== "object") return [];
+
+  const asRecord = node as Record<string, unknown>;
+  const maybeOrpc = asRecord["~orpc"];
+  if (maybeOrpc && typeof maybeOrpc === "object") {
+    const route = (maybeOrpc as { route?: RouteShape }).route ?? {};
+    const method = route.method ?? "UNKNOWN";
+    const path = route.path ?? "UNKNOWN";
+    return [`${namespace.join(".")} ${method} ${path}`];
+  }
+
+  const items: string[] = [];
+  for (const [key, value] of Object.entries(asRecord)) {
+    items.push(...collectProcedureRoutes(value, [...namespace, key]));
+  }
+  return items;
+}
 
 async function createPluginFixture(input: { dirName: string; pluginId: string }) {
   const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-plugin-"));
@@ -119,15 +160,72 @@ describe("rawr server routes", () => {
     }
   });
 
-  it("host-composition-guard: host seam scaffold binds declaration plugins while preserving the mixed-world bridge", () => {
-    const hostSeam = createTestingRawrHostSeam().realization;
+  it("host-composition-guard: host seam scaffold binds every plugin family through host-owned satisfiers", () => {
+    const { boundRolePlan, realization } = createTestingRawrHostSeam();
 
-    expect(Object.keys(hostSeam.orpc.router)).toEqual(
+    expect(boundRolePlan.apiPlugins).toHaveLength(3);
+    expect(boundRolePlan.workflowPlugins).toHaveLength(2);
+    expect(Object.keys(realization.orpc.router)).toEqual(
       expect.arrayContaining(["coordination", "state", "exampleTodo", "supportExample"]),
     );
-    expect(Object.keys(hostSeam.orpc.published.router)).toEqual(["exampleTodo"]);
-    expect(Object.keys(hostSeam.workflows.published.router)).toEqual(["supportExample", "coordination"]);
-    expect(typeof hostSeam.workflows.createInngestFunctions).toBe("function");
+    expect(Object.keys(realization.orpc.published.router)).toEqual(["exampleTodo"]);
+    expect(Object.keys(realization.workflows.published.router)).toEqual(["supportExample", "coordination"]);
+    expect(typeof realization.workflows.createInngestFunctions).toBe("function");
+  });
+
+  it("host-composition-guard: canonical plugin families all use declaration-plus-contribute binding on the realized host path", () => {
+    const { manifest, boundRolePlan } = createTestingRawrHostSeam();
+    const declarationPlugins = [
+      ...Object.values(manifest.plugins.api),
+      ...Object.values(manifest.plugins.workflows),
+    ];
+
+    for (const plugin of declarationPlugins) {
+      expect(typeof plugin.contribute).toBe("function");
+    }
+
+    expect(boundRolePlan.apiPlugins.every((plugin) => plugin.internal?.router)).toBe(true);
+    expect(boundRolePlan.workflowPlugins.every((plugin) => plugin.internal?.router)).toBe(true);
+    expect(boundRolePlan.workflowPlugins.every((plugin) => typeof plugin.runtime?.createInngestFunctions === "function")).toBe(
+      true,
+    );
+  });
+
+  it("host-composition-guard: keeps canonical realized procedure routes stable", () => {
+    const routes = collectProcedureRoutes(
+      minifyContractRouter(createTestingRawrHostSeam().realization.orpc.contract),
+    ).sort();
+
+    expect(routes).toEqual([
+      "coordination.getRunStatus GET /coordination/runs/{runId}",
+      "coordination.getRunTimeline GET /coordination/runs/{runId}/timeline",
+      "coordination.getWorkflow GET /coordination/workflows/{workflowId}",
+      "coordination.listWorkflows GET /coordination/workflows",
+      "coordination.queueRun POST /coordination/workflows/{workflowId}/run",
+      "coordination.saveWorkflow POST /coordination/workflows",
+      "coordination.validateWorkflow POST /coordination/workflows/{workflowId}/validate",
+      "exampleTodo.tasks.create POST /exampleTodo/tasks/create",
+      "exampleTodo.tasks.get GET /exampleTodo/tasks/{id}",
+      "state.getRuntimeState GET /state/runtime",
+      "supportExample.triage.getStatus GET /support-example/triage/status",
+      "supportExample.triage.triggerRun POST /support-example/triage/runs",
+    ]);
+  });
+
+  it("host-composition-guard: keeps realized published contracts scoped", () => {
+    const hostSeam = createTestingRawrHostSeam().realization;
+
+    expect(collectProcedureRoutes(minifyContractRouter(hostSeam.orpc.published.contract)).sort()).toEqual([
+      "exampleTodo.tasks.create POST /exampleTodo/tasks/create",
+      "exampleTodo.tasks.get GET /exampleTodo/tasks/{id}",
+    ]);
+    expect(collectProcedureRoutes(minifyContractRouter(hostSeam.workflows.published.contract)).sort()).toEqual([
+      "coordination.getRunStatus GET /coordination/runs/{runId}",
+      "coordination.getRunTimeline GET /coordination/runs/{runId}/timeline",
+      "coordination.queueRun POST /coordination/workflows/{workflowId}/run",
+      "supportExample.triage.getStatus GET /support-example/triage/status",
+      "supportExample.triage.triggerRun POST /support-example/triage/runs",
+    ]);
   });
 
   it("host-composition-guard: rejects spoofed /rpc auth heuristics", async () => {
@@ -175,33 +273,24 @@ describe("rawr server routes", () => {
     expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"]);
   });
 
-  it("host-composition-guard: manifest keeps composition authority and transitional bridge local", async () => {
+  it("host-composition-guard: manifest stays composition-only and cold", async () => {
     const manifestSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "src", "manifest.ts"), "utf8");
     expect(manifestSource).toContain("registerCoordinationApiPlugin");
     expect(manifestSource).toContain("registerStateApiPlugin");
-    expect(manifestSource).toContain("@rawr/plugin-api-coordination/server");
-    expect(manifestSource).toContain("@rawr/plugin-api-state/server");
-    expect(manifestSource).toContain("@rawr/example-todo");
     expect(manifestSource).toContain("registerExampleTodoApiPlugin");
-    expect(manifestSource).toContain("@rawr/plugin-api-example-todo/server");
-    expect(manifestSource).toContain("@rawr/plugin-workflows-coordination/server");
     expect(manifestSource).toContain("registerCoordinationWorkflowPlugin");
-    expect(manifestSource).toContain("@rawr/plugin-workflows-support-example/server");
     expect(manifestSource).toContain("registerSupportExampleWorkflowPlugin");
-    expect(manifestSource).not.toContain("./plugins/api/support-example");
-    expect(manifestSource).not.toContain("registerSupportExampleApiPlugin");
     expect(manifestSource).not.toContain("apps/server/src/logging");
     expect(manifestSource).not.toContain("createHqRuntimeRouter");
-    expect(manifestSource).not.toContain("from \"@rawr/plugin-api-coordination\"");
-    expect(manifestSource).not.toContain("from \"@rawr/plugin-api-state\"");
-    expect(manifestSource).not.toContain("from \"@rawr/plugin-api-example-todo\"");
-    expect(manifestSource).not.toContain("createInngestServeHandler");
-    expect(manifestSource).toContain("composeWorkflowPlugins");
-    expect(manifestSource).toContain("composeApiPlugins");
     expect(manifestSource).toContain("plugins: {");
     expect(manifestSource).toContain("api: apiPlugins");
     expect(manifestSource).toContain("workflows: workflowPlugins");
-    expect(manifestSource).not.toContain("materializeRequestScopedPluginSurfaces");
+    expect(manifestSource).not.toContain("materializeManifestBridgeSurfaces");
+    expect(manifestSource).not.toContain("createRouterClient(");
+    expect(manifestSource).not.toContain("createCoordinationClient(");
+    expect(manifestSource).not.toContain("createStateClient(");
+    expect(manifestSource).not.toContain("createEmbeddedInMemoryDbPoolAdapter");
+    expect(manifestSource).not.toContain("hostLogger");
     expect(manifestSource).not.toContain("registerOrpcRoutes");
     expect(manifestSource).not.toContain("createWorkflowRouteHarness");
     expect(manifestSource).not.toContain("new Inngest(");
@@ -242,15 +331,27 @@ describe("rawr server routes", () => {
       path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
       "utf8",
     );
+    const hqTestingSource = await readIfPresent(path.join(repoRoot, "apps", "hq", "src", "testing.ts"));
+    const rawrHqBridgeSource = await fs.readFile(path.join(repoRoot, "rawr.hq.ts"), "utf8");
     const proofClientSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "test", "support", "example-todo-proof-clients.ts"),
       "utf8",
     );
 
+    expect(orpcSource).toContain("createTestingRawrHostSeam().realization.orpc.router");
+    expect(orpcSource).toContain("createTestingRawrHostSeam().realization.orpc.published.router");
     expect(orpcSource).not.toContain("@rawr/hq-app/testing");
+    expect(openApiScriptSource).toContain("createTestingRawrHostSeam");
+    expect(openApiScriptSource).toContain("hostSeam.realization.orpc.published.router");
     expect(openApiScriptSource).not.toContain("@rawr/hq-app/testing");
+    expect(testingHostSource).toContain("createRawrHostSatisfiers");
+    expect(testingHostSource).toContain("createRawrHostBoundRolePlan");
+    expect(testingHostSource).toContain("materializeRawrHostBoundRolePlan");
     expect(testingHostSource).not.toContain("manifest.fixtures");
-    expect(proofClientSource).not.toContain("createTestingRawrHqManifest");
+    expect(hqTestingSource === null || normalizeSemanticSource(hqTestingSource) === "export{};").toBe(true);
+    expect(normalizeSemanticSource(rawrHqBridgeSource)).toBe(
+      'export{createRawrHqManifest,typeRawrHqManifest}from"@rawr/hq-app/manifest";',
+    );
     expect(proofClientSource).not.toContain("manifest.fixtures");
     expect(proofClientSource).toContain("createTestingExampleTodoServiceClient");
   });

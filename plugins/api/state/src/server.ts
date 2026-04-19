@@ -1,4 +1,8 @@
-import { defineApiPlugin } from "@rawr/hq-sdk/apis";
+import {
+  defineApiPlugin,
+  defineApiPluginDeclaration,
+  type ApiPluginContribution,
+} from "@rawr/hq-sdk/apis";
 import type { StateClientResolver } from "./context";
 import { stateApiContract } from "./contract";
 import { createStateRouter } from "./router";
@@ -9,14 +13,31 @@ export {
 } from "./context";
 export { createStateRouter, type StateApiRouter } from "./router";
 
-export function registerStateApiPlugin(input: {
+export type StateApiPluginBound = Readonly<{
   resolveClient: StateClientResolver;
-}) {
-  return defineApiPlugin({
+}>;
+
+const stateApiDeclaration = defineApiPluginDeclaration({
+  internal: {
+    contract: stateApiContract,
+  },
+});
+
+function contributeStateApiPlugin(
+  bound: StateApiPluginBound,
+): ApiPluginContribution<typeof stateApiContract, ReturnType<typeof createStateRouter>> {
+  return {
     internal: {
-      contract: stateApiContract,
-      router: createStateRouter(input.resolveClient),
+      contract: stateApiDeclaration.internal.contract,
+      router: createStateRouter(bound.resolveClient),
     },
+  };
+}
+
+export function registerStateApiPlugin() {
+  return defineApiPlugin({
+    declaration: stateApiDeclaration,
+    contribute: contributeStateApiPlugin,
   });
 }
 
