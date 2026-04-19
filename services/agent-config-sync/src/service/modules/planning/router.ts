@@ -1,14 +1,19 @@
 import { module } from "./module";
 
-const previewSync = module.previewSync.handler(async ({ context, input }) => {
-  return context.repo.preview(input);
+const planWorkspaceSync = module.planWorkspaceSync.handler(async ({ context, input }) => {
+  return context.repo.planWorkspaceSync(input);
 });
 
-const assessWorkspace = module.assessWorkspace.handler(async ({ context, input }) => {
-  return context.repo.assessWorkspace(input);
+const assessWorkspaceSync = module.assessWorkspaceSync.handler(async ({ context, input }) => {
+  return context.repo.assessWorkspaceSync(input);
+});
+
+const evaluateFullSyncPolicy = module.evaluateFullSyncPolicy.handler(async ({ context, input }) => {
+  return context.repo.evaluateFullSyncPolicy(input);
 });
 
 export const router = module.router({
-  previewSync,
-  assessWorkspace,
+  planWorkspaceSync,
+  assessWorkspaceSync,
+  evaluateFullSyncPolicy,
 });

@@ -42,7 +42,7 @@ describe("agent-config-sync service behavior", () => {
 
     const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
 
-    const preview = await client.planning.previewSync({
+    const preview = await client.execution.runSync({
       sourcePlugin,
       content,
       codexHomes: [codexHome],
@@ -51,6 +51,7 @@ describe("agent-config-sync service behavior", () => {
       includeClaude: false,
       force: true,
       gc: true,
+      dryRun: true,
     }, { context: { invocation: { traceId: "test-preview" } } });
 
     expect(preview.targets[0]?.items.map((item) => item.action)).toContain("planned");

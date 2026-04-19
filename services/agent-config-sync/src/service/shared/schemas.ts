@@ -4,6 +4,9 @@ export const RawrPluginKindSchema = Type.Union([
   Type.Literal("toolkit"),
   Type.Literal("agent"),
   Type.Literal("web"),
+  Type.Literal("api"),
+  Type.Literal("workflows"),
+  Type.Literal("schedules"),
 ]);
 
 export const SyncAgentSchema = Type.Union([
@@ -13,9 +16,12 @@ export const SyncAgentSchema = Type.Union([
 
 export const SyncScopeSchema = Type.Union([
   Type.Literal("all"),
-  Type.Literal("agents"),
-  Type.Literal("cli"),
+  Type.Literal("toolkit"),
+  Type.Literal("agent"),
   Type.Literal("web"),
+  Type.Literal("api"),
+  Type.Literal("workflows"),
+  Type.Literal("schedules"),
 ]);
 
 export const SyncActionSchema = Type.Union([

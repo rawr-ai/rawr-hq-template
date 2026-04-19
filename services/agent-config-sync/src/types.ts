@@ -10,4 +10,12 @@ export type {
   SyncRunResult,
   SyncScope,
 } from "./service/shared/schemas";
+export type {
+  AssessWorkspaceSyncInput,
+  FullSyncPolicyInput,
+  FullSyncPolicyResult,
+  PlanWorkspaceSyncInput,
+  SyncAssessment,
+  WorkspaceSyncPlan,
+} from "./service/modules/planning/contract";
 export type { UndoRunResult } from "./service/modules/undo/schemas";

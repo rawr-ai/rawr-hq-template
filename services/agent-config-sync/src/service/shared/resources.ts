@@ -13,6 +13,7 @@ export type AgentConfigSyncDirEntry = {
 
 export interface AgentConfigSyncFileResources {
   pathExists(filePath: string): Promise<boolean>;
+  readTextFile(filePath: string): Promise<string | null>;
   readJsonFile<T>(filePath: string): Promise<T | null>;
   writeJsonFile(filePath: string, data: unknown): Promise<void>;
   ensureDir(dirPath: string): Promise<void>;
