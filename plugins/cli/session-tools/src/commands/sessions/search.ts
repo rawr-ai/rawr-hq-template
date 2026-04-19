@@ -1,18 +1,12 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import {
-  clearIndexFile,
-  defaultIndexPath,
-  listSessions,
-  reindexSessions,
-  searchSessionsByContent,
-  searchSessionsByMetadata,
-  type MetadataSearchHit,
-  type SearchHit,
-  type RoleFilter,
-  type SessionSourceFilter,
-} from "@rawr/session-tools";
 import { ensureDir, writeJsonFile } from "../../lib/out-dir";
+import {
+  createSessionIntelligenceClient,
+  defaultSessionIndexPath,
+  defaultSessionIndexPathSync,
+} from "../../lib/session-intelligence-client";
+import type { MetadataSearchHit, RoleFilter, SearchHit, SessionSourceFilter } from "../../lib/session-types";
 
 export default class SessionsSearch extends RawrCommand {
   static description = "Search sessions by metadata or transcript content";
@@ -37,7 +31,7 @@ export default class SessionsSearch extends RawrCommand {
     }),
     snippet: Flags.integer({ description: "Snippet length for content search", default: 300, min: 50, max: 5_000 }),
     "use-index": Flags.boolean({ description: "Use sqlite cache for transcript text", default: false }),
-    "index-path": Flags.string({ description: "Sqlite index file path", default: defaultIndexPath() }),
+    "index-path": Flags.string({ description: "Sqlite index file path", default: defaultSessionIndexPathSync() }),
     reindex: Flags.boolean({ description: "Rebuild sqlite cache for matching sessions (runs before search)", default: false }),
     "reindex-limit": Flags.integer({
       description: "Limit sessions to reindex (0 = all matches)",
@@ -73,6 +67,14 @@ export default class SessionsSearch extends RawrCommand {
     const limit = Number(flags.limit);
     const maxMatches = Number(flags["max-matches"]);
     const reindexLimit = Number(flags["reindex-limit"]);
+    const filters = {
+      project: flags.project ? String(flags.project) : undefined,
+      cwdContains: flags["cwd-contains"] ? String(flags["cwd-contains"]) : undefined,
+      branch: flags.branch ? String(flags.branch) : undefined,
+      model: flags.model ? String(flags.model) : undefined,
+      since: flags.since ? String(flags.since) : undefined,
+      until: flags.until ? String(flags.until) : undefined,
+    };
 
     if (metadataQuery && flags.reindex) {
       const result = this.fail("--reindex is only supported for content search (use --query)", { code: "REINDEX_WITH_METADATA_QUERY" });
@@ -102,30 +104,24 @@ export default class SessionsSearch extends RawrCommand {
       return limit;
     })();
 
-    const sessions = await listSessions({
+    const client = await createSessionIntelligenceClient();
+    const sessions = await client.catalog.list({
       source,
       limit: sessionFetchLimit,
-      filters: {
-        project: flags.project ? String(flags.project) : undefined,
-        cwdContains: flags["cwd-contains"] ? String(flags["cwd-contains"]) : undefined,
-        branch: flags.branch ? String(flags.branch) : undefined,
-        model: flags.model ? String(flags.model) : undefined,
-        since: flags.since ? String(flags.since) : undefined,
-        until: flags.until ? String(flags.until) : undefined,
-      },
+      filters,
     });
 
     let hits: Array<SearchHit | MetadataSearchHit> = [];
     if (metadataQuery) {
-      hits = searchSessionsByMetadata(sessions, metadataQuery, limit);
+      hits = await client.search.metadata({ sessions, needle: metadataQuery, limit });
     } else {
-      const indexPath = String(flags["index-path"] ?? defaultIndexPath());
+      const indexPath = flags["index-path"] ? String(flags["index-path"]) : await defaultSessionIndexPath();
       const roles = (flags.roles as unknown as string[]).map(String) as RoleFilter[];
       const includeTools = Boolean(flags["include-tools"]);
 
       if (flags.reindex) {
-        await clearIndexFile(indexPath);
-        const reindexResult = await reindexSessions({
+        await client.search.clearIndex({ indexPath });
+        const reindexResult = await client.search.reindex({
           sessions,
           roles,
           includeTools,
@@ -150,7 +146,7 @@ export default class SessionsSearch extends RawrCommand {
         }
       }
 
-      hits = await searchSessionsByContent({
+      hits = await client.search.content({
         sessions,
         pattern: contentQuery!,
         ignoreCase: Boolean(flags["ignore-case"]),

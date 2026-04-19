@@ -208,10 +208,13 @@
         "typescript": "^5.9.3",
       },
     },
-    "packages/session-tools": {
-      "name": "@rawr/session-tools",
+    "packages/session-intelligence-host": {
+      "name": "@rawr/session-intelligence-host",
+      "dependencies": {
+        "@rawr/hq-sdk": "workspace:*",
+        "@rawr/session-intelligence": "workspace:*",
+      },
       "devDependencies": {
-        "@types/bun": "^1.2.10",
         "typescript": "^5.9.3",
       },
     },
@@ -273,7 +276,8 @@
       "dependencies": {
         "@oclif/core": "^4.2.10",
         "@rawr/core": "workspace:*",
-        "@rawr/session-tools": "workspace:*",
+        "@rawr/session-intelligence": "workspace:*",
+        "@rawr/session-intelligence-host": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^22.14.0",
@@ -367,6 +371,23 @@
         "@opentelemetry/sdk-trace-base": "^2.6.0",
         "@types/bun": "^1.2.10",
         "typescript": "^5.9.3",
+      },
+    },
+    "services/session-intelligence": {
+      "name": "@rawr/session-intelligence",
+      "dependencies": {
+        "@opentelemetry/api": "^1.9.0",
+        "@orpc/contract": "^1.13.5",
+        "@orpc/server": "^1.13.5",
+        "@rawr/hq-sdk": "workspace:*",
+        "typebox": "^1.0.81",
+      },
+      "devDependencies": {
+        "@opentelemetry/context-async-hooks": "^2.6.0",
+        "@opentelemetry/sdk-trace-base": "^2.6.0",
+        "@types/node": "^22.14.0",
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.18",
       },
     },
   },
@@ -1057,7 +1078,9 @@
 
     "@rawr/server": ["@rawr/server@workspace:apps/server"],
 
-    "@rawr/session-tools": ["@rawr/session-tools@workspace:packages/session-tools"],
+    "@rawr/session-intelligence": ["@rawr/session-intelligence@workspace:services/session-intelligence"],
+
+    "@rawr/session-intelligence-host": ["@rawr/session-intelligence-host@workspace:packages/session-intelligence-host"],
 
     "@rawr/test-utils": ["@rawr/test-utils@workspace:packages/test-utils"],
 

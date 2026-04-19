@@ -28,6 +28,32 @@
         "lint"
       ]
     },
+    "@rawr/session-intelligence": {
+      "config": "services/session-intelligence/package.json",
+      "tags": [
+        "type:service",
+        "role:servicepackage",
+        "migration-slice:structural-tranche"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/session-intelligence-host": {
+      "config": "packages/session-intelligence-host/package.json",
+      "tags": [
+        "type:package"
+      ],
+      "targets": [
+        "build",
+        "typecheck",
+        "test"
+      ]
+    },
     "@rawr/hq-ops": {
       "config": "services/hq-ops/package.json",
       "tags": [

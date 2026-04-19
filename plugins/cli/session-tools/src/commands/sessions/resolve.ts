@@ -1,7 +1,8 @@
 import { Args, Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { resolveSession, type OutputFormat, type SessionSourceFilter } from "@rawr/session-tools";
 import { ensureDir, writeJsonFile } from "../../lib/out-dir";
+import { createSessionIntelligenceClient } from "../../lib/session-intelligence-client";
+import type { OutputFormat, SessionSourceFilter } from "../../lib/session-types";
 
 function formatResolveHuman(input: unknown, format: OutputFormat): string {
   if (format === "json") return JSON.stringify(input, null, 2);
@@ -43,7 +44,8 @@ export default class SessionsResolve extends RawrCommand {
     const session = String(args.session);
     const format = String(flags.format) as OutputFormat;
 
-    const resolved = await resolveSession(session, source);
+    const client = await createSessionIntelligenceClient();
+    const resolved = await client.catalog.resolve({ session, source });
     if ("error" in resolved) {
       const result = this.fail(resolved.error, { code: "SESSION_NOT_FOUND" });
       this.outputResult(result, { flags: baseFlags });
