@@ -66,15 +66,11 @@ function contributeSupportExampleWorkflowPlugin(
 }
 
 export function registerSupportExampleWorkflowPlugin(
-  options: RegisterSupportExampleWorkflowPluginOptions,
 ) {
-  const contribution = contributeSupportExampleWorkflowPlugin(options);
-
   return defineWorkflowPlugin({
     capability: supportExampleWorkflowDeclaration.capability,
     declaration: supportExampleWorkflowDeclaration,
     contribute: contributeSupportExampleWorkflowPlugin,
-    ...contribution,
   });
 }
 

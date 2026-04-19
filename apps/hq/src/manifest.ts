@@ -4,6 +4,7 @@ import { createClient as createCoordinationClient, type Client as CoordinationCl
 import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
 import {
   composeApiPlugins,
+  type MaterializedApiPluginRegistration,
 } from "@rawr/hq-sdk/apis";
 import { materializeRequestScopedPluginSurfaces } from "@rawr/hq-sdk/composition";
 import {
@@ -23,6 +24,8 @@ import {
 } from "@rawr/plugin-workflows-support-example/server";
 import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
 import { supportExampleRouter } from "@rawr/support-example/router";
+import type { ApiPluginRegistration } from "@rawr/hq-sdk/apis";
+import type { WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
 
 type SupportExampleClient = RouterClient<typeof supportExampleRouter>;
 type SupportExampleWorkItem = Awaited<ReturnType<SupportExampleClient["triage"]["items"]["request"]>>["workItem"];
@@ -43,6 +46,34 @@ export type HostServiceLogger = ExampleTodoBoundary["deps"]["logger"];
 export type CreateRawrHqManifestOptions = {
   hostLogger: HostServiceLogger;
 };
+
+function bindApiPluginRegistration<TPlugin extends ApiPluginRegistration>(
+  plugin: TPlugin,
+  bound?: unknown,
+): MaterializedApiPluginRegistration {
+  if (!plugin.contribute || bound === undefined) {
+    return plugin as MaterializedApiPluginRegistration;
+  }
+
+  return {
+    ...plugin,
+    ...plugin.contribute(bound as never),
+  } satisfies MaterializedApiPluginRegistration;
+}
+
+function bindWorkflowPluginRegistration<TPlugin extends WorkflowPluginRegistration>(
+  plugin: TPlugin,
+  bound?: unknown,
+): TPlugin {
+  if (!plugin.contribute || bound === undefined) {
+    return plugin;
+  }
+
+  return {
+    ...plugin,
+    ...plugin.contribute(bound as never),
+  };
+}
 
 // Keep capability fixture state stable per repo root across requests in local dev/test runs.
 const supportExampleDepsByRepoRoot = new Map<string, SupportExampleServiceDeps>();
@@ -197,31 +228,37 @@ export function createRawrHqManifest(options: CreateRawrHqManifestOptions) {
   const stateApiPlugin = registerStateApiPlugin({
     resolveClient: resolveStateClient,
   });
-  const exampleTodoApiPlugin = registerExampleTodoApiPlugin({
-    resolveClient: resolveExampleTodoClient,
-  });
+  const exampleTodoApiPlugin = registerExampleTodoApiPlugin();
   const apiPlugins = {
     coordination: coordinationApiPlugin,
     state: stateApiPlugin,
     exampleTodo: exampleTodoApiPlugin,
   } as const;
   const composedApiSurface = composeApiPlugins([
-    apiPlugins.coordination,
-    apiPlugins.state,
-    apiPlugins.exampleTodo,
+    apiPlugins.coordination as MaterializedApiPluginRegistration,
+    apiPlugins.state as MaterializedApiPluginRegistration,
+    bindApiPluginRegistration(
+      apiPlugins.exampleTodo,
+      {
+        resolveClient: resolveExampleTodoClient,
+      },
+    ),
   ] as const);
   const coordinationWorkflowPlugin = registerCoordinationWorkflowPlugin({
     resolveAuthoringClient: resolveCoordinationWorkflowClient,
   });
-  const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin({
-    resolveSupportExampleClient,
-  });
+  const supportExampleWorkflowPlugin = registerSupportExampleWorkflowPlugin();
   const workflowPlugins = {
     supportExample: supportExampleWorkflowPlugin,
     coordination: coordinationWorkflowPlugin,
   } as const;
   const composedWorkflowSurface = composeWorkflowPlugins([
-    workflowPlugins.supportExample,
+    bindWorkflowPluginRegistration(
+      workflowPlugins.supportExample,
+      {
+        resolveSupportExampleClient,
+      },
+    ),
     workflowPlugins.coordination,
   ] as const);
   const materializedSurfaces = materializeRequestScopedPluginSurfaces<BoundaryRequestSupportContext, typeof composedWorkflowSurface.createInngestFunctions>({

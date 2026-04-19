@@ -1,4 +1,8 @@
-import { composeApiPlugins, type ApiPluginRegistration } from "@rawr/hq-sdk/apis";
+import {
+  composeApiPlugins,
+  type ApiPluginRegistration,
+  type MaterializedApiPluginRegistration,
+} from "@rawr/hq-sdk/apis";
 import { materializeRequestScopedPluginSurfaces } from "@rawr/hq-sdk/composition";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
 import type { RawrHqManifest } from "@rawr/hq-app/manifest";
@@ -7,15 +11,15 @@ import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
 function bindApiPluginRegistration<TPlugin extends ApiPluginRegistration>(
   plugin: TPlugin,
   bound?: unknown,
-): TPlugin {
+): MaterializedApiPluginRegistration {
   if (!plugin.contribute || bound === undefined) {
-    return plugin;
+    return plugin as MaterializedApiPluginRegistration;
   }
 
   return {
     ...plugin,
     ...plugin.contribute(bound as never),
-  };
+  } satisfies MaterializedApiPluginRegistration;
 }
 
 function bindWorkflowPluginRegistration<TPlugin extends WorkflowPluginRegistration>(
@@ -34,8 +38,8 @@ function bindWorkflowPluginRegistration<TPlugin extends WorkflowPluginRegistrati
 
 function bindRawrHqApiPlugins(manifest: RawrHqManifest) {
   return [
-    manifest.plugins.api.coordination,
-    manifest.plugins.api.state,
+    manifest.plugins.api.coordination as MaterializedApiPluginRegistration,
+    manifest.plugins.api.state as MaterializedApiPluginRegistration,
     bindApiPluginRegistration(
       manifest.plugins.api.exampleTodo,
       {
@@ -58,7 +62,7 @@ function bindRawrHqWorkflowPlugins(manifest: RawrHqManifest) {
 }
 
 export type RawrHostBoundRolePlan = Readonly<{
-  apiPlugins: readonly ApiPluginRegistration[];
+  apiPlugins: readonly MaterializedApiPluginRegistration[];
   workflowPlugins: readonly WorkflowPluginRegistration[];
   api: ReturnType<typeof composeApiPlugins>;
   workflows: ReturnType<typeof composeWorkflowPlugins>;
