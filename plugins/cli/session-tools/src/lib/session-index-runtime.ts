@@ -1,26 +1,7 @@
 import fs from "node:fs/promises";
-import type {
-  SessionIndexRuntime,
-  SessionSearchCacheEntry,
-  SessionSearchCacheKey,
-} from "@rawr/session-intelligence/ports/session-index-runtime";
+import type { SessionIndexBatch, SessionIndexRuntime, SessionIndexStatement } from "@rawr/session-intelligence/ports/session-index-runtime";
 import { defaultSessionIndexPathSync } from "./session-paths";
 import { openSqliteDb } from "./sqlite";
-
-function initializeSearchDb(db: Awaited<ReturnType<typeof openSqliteDb>>): void {
-  db.query(`
-    CREATE TABLE IF NOT EXISTS session_cache (
-      path TEXT NOT NULL,
-      roles TEXT NOT NULL,
-      include_tools INTEGER NOT NULL,
-      mtime REAL NOT NULL,
-      size INTEGER NOT NULL,
-      content TEXT NOT NULL,
-      PRIMARY KEY (path, roles, include_tools)
-    )
-  `).run();
-  db.query("CREATE INDEX IF NOT EXISTS idx_session_cache_path ON session_cache(path)").run();
-}
 
 async function removeIndexFiles(indexPath: string): Promise<void> {
   await fs.unlink(indexPath).catch(() => undefined);
@@ -28,57 +9,48 @@ async function removeIndexFiles(indexPath: string): Promise<void> {
   await fs.rm(`${indexPath}-wal`, { force: true }).catch(() => undefined);
 }
 
+async function withDb<T>(input: { indexPath: string }, fn: (db: Awaited<ReturnType<typeof openSqliteDb>>) => T): Promise<T> {
+  const db = await openSqliteDb(input.indexPath);
+  try {
+    return fn(db);
+  } finally {
+    db.close();
+  }
+}
+
 export function createSessionIndexRuntime(): SessionIndexRuntime {
   return {
-    async getSearchText(input: SessionSearchCacheKey): Promise<SessionSearchCacheEntry | null> {
-      const db = await openSqliteDb(input.indexPath);
-      initializeSearchDb(db);
-      try {
-        const row = db
-          .query("SELECT mtime, size, content FROM session_cache WHERE path=? AND roles=? AND include_tools=?")
-          .get([input.path, input.rolesKey, input.includeTools ? 1 : 0]);
-        if (!row) return null;
-        return {
-          ...input,
-          modifiedMs: Number(row.mtime ?? 0),
-          sizeBytes: Number(row.size ?? 0),
-          content: String(row.content ?? ""),
-        };
-      } finally {
-        db.close();
-      }
+    defaultIndexPath(): string {
+      return defaultSessionIndexPathSync();
     },
 
-    async setSearchText(input: SessionSearchCacheEntry): Promise<void> {
-      const db = await openSqliteDb(input.indexPath);
-      initializeSearchDb(db);
-      try {
-        db.query("INSERT OR REPLACE INTO session_cache(path, roles, include_tools, mtime, size, content) VALUES (?,?,?,?,?,?)").run([
-          input.path,
-          input.rolesKey,
-          input.includeTools ? 1 : 0,
-          input.modifiedMs,
-          input.sizeBytes,
-          input.content,
-        ]);
-      } finally {
-        db.close();
-      }
+    async execute(input: SessionIndexStatement & { indexPath: string }): Promise<void> {
+      await withDb(input, (db) => {
+        db.query(input.sql).run(input.params);
+      });
     },
 
-    async clearSearchText(input = {}): Promise<void> {
-      const indexPath = input.indexPath ?? defaultSessionIndexPathSync();
-      if (!input.path) {
-        await removeIndexFiles(indexPath);
-        return;
-      }
-      const db = await openSqliteDb(indexPath);
-      initializeSearchDb(db);
-      try {
-        db.query("DELETE FROM session_cache WHERE path=?").run([input.path]);
-      } finally {
-        db.close();
-      }
+    async query<Row extends Record<string, unknown> = Record<string, unknown>>(input: SessionIndexStatement & { indexPath: string }): Promise<Row[]> {
+      return await withDb(input, (db) => (db.query(input.sql).all?.(input.params) ?? []) as Row[]);
+    },
+
+    async transaction(input: SessionIndexBatch): Promise<void> {
+      await withDb(input, (db) => {
+        db.query("BEGIN IMMEDIATE").run();
+        try {
+          for (const statement of input.statements) {
+            db.query(statement.sql).run(statement.params);
+          }
+          db.query("COMMIT").run();
+        } catch (err) {
+          db.query("ROLLBACK").run();
+          throw err;
+        }
+      });
+    },
+
+    async removeIndex(input: { indexPath: string }): Promise<void> {
+      await removeIndexFiles(input.indexPath);
     },
   };
 }

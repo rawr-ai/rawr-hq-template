@@ -77,6 +77,13 @@ const FORBIDDEN_SHARED_LOGIC_IMPORTS = [
   "../../shared/transcript-logic",
   "../../shared/search-logic",
 ];
+const FORBIDDEN_PLUGIN_DATABASE_QUERY_PATTERN = /\bdb\.query\s*\(\s*(?:`[^`]*(?:CREATE|SELECT|INSERT|UPDATE|DELETE)\b|["'][^"']*(?:CREATE|SELECT|INSERT|UPDATE|DELETE)\b)/iu;
+const FORBIDDEN_PLUGIN_DATABASE_SEMANTIC_TOKENS = [
+  "session_cache",
+  "codex_file_index",
+  "codex_root_scan_state",
+  "tryOpenSqliteDb",
+];
 
 async function readJsonIfExists(relPath, findings, label = relPath) {
   if (!(await pathExists(relPath))) {
@@ -329,6 +336,23 @@ async function verifyPluginCutover(findings) {
   }
 }
 
+async function verifyPluginDoesNotOwnDatabaseSemantics(findings) {
+  const files = [];
+  await walkSourceFiles(`${PLUGIN_ROOT}/src`, files);
+
+  for (const relPath of files.sort()) {
+    const source = await readFile(relPath);
+    if (FORBIDDEN_PLUGIN_DATABASE_QUERY_PATTERN.test(source)) {
+      findings.push(`${relPath} must not run direct SQL statements that implement session catalog/search/index behavior`);
+    }
+    for (const token of FORBIDDEN_PLUGIN_DATABASE_SEMANTIC_TOKENS) {
+      if (source.includes(token)) {
+        findings.push(`${relPath} must not own session database/index semantic token ${token}`);
+      }
+    }
+  }
+}
+
 async function verifyModuleSchemaOwnership(findings) {
   const sharedSchemasPath = `${SERVICE_ROOT}/src/service/shared/schemas.ts`;
   const sharedSchemasSource = await readFileIfExists(sharedSchemasPath, findings, sharedSchemasPath, false);
@@ -396,6 +420,7 @@ await verifyServiceRuntimePurity(findings);
 await verifyNoHostPackage(findings);
 await verifyLegacyRemoval(findings);
 await verifyPluginCutover(findings);
+await verifyPluginDoesNotOwnDatabaseSemantics(findings);
 await verifyModuleSchemaOwnership(findings);
 await verifyNoSameDomainSharedLogicDelegation(findings);
 

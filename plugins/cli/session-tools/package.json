@@ -9,7 +9,7 @@
     "@rawr/session-intelligence": "workspace:*"
   },
   "oclif": {
-    "commands": "./dist/src/commands",
+    "commands": "./dist/commands",
     "topicSeparator": " ",
     "typescript": {
       "commands": "./src/commands"

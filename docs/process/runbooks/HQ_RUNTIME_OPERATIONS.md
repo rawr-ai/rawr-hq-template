@@ -83,6 +83,28 @@ The managed runtime contract is backed by:
 
 `rawr hq status --json` writes `.rawr/hq/status.json`.
 
+## External Plugin-Manager Noise
+
+If `rawr hq up` emits `Error: command hq:status not found`, first inspect the stack trace before treating it as a repo-owned runtime failure.
+
+Classification rule:
+- If every stack frame points at the current workspace, search and fix the local colon-form invocation.
+- If stack frames point at another checkout, classify it as external oclif/plugin-manager noise.
+
+Useful checks:
+```bash
+rg -n "hq:status|command hq:status" .rawr/hq/runtime.log
+node -e 'const fs=require("fs"), os=require("os"), path=require("path"); const p=path.join(os.homedir(), ".local/share/@rawr/cli/package.json"); console.log(p); console.log(fs.readFileSync(p, "utf8"))'
+```
+
+Known observed external case:
+- current workspace command: `rawr hq up`
+- emitted stack path: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/apps/cli/src/index.ts`
+- local status path still wrote this workspace's `.rawr/hq/status.json`
+- the user oclif manager manifest linked `@rawr/cli` and workspace CLI plugins to `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq`
+
+In that case, fix or relink the external user plugin-manager state; do not patch this template checkout unless a local `hq:status` caller is found.
+
 ## Browser Behavior
 
 Canonical shell surfaces:

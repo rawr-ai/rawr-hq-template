@@ -346,6 +346,7 @@ describe("@rawr/plugin-session-tools", () => {
       sessionId: "resource-test",
       project: "rawr-fixture-codex",
     });
+    await expect(fs.stat(indexPath)).resolves.toMatchObject({ size: expect.any(Number) });
 
     const resolved = await client.catalog.resolve({ session: "resource-test", source: "codex" });
     expect("error" in resolved).toBe(false);

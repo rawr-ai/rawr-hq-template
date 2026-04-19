@@ -1,4 +1,4 @@
-import type { SessionIndexRuntime } from "../../shared/ports/session-index-runtime";
+import type { SessionIndexRuntime, SessionSearchCacheEntry, SessionSearchCacheKey } from "../../shared/ports/session-index-runtime";
 import type { SessionSourceRuntime } from "../../shared/ports/session-source-runtime";
 import { detectSessionFormat, extractClaudeMessages, extractCodexMessages } from "../../shared/normalization";
 import type { SessionMessage, SessionSource } from "../../shared/schemas";
@@ -40,6 +40,60 @@ function rolesKey(roles: RoleFilter[]): string {
   return [...new Set(roles)].sort().join(",");
 }
 
+async function initializeSearchIndex(indexRuntime: SessionIndexRuntime, indexPath: string): Promise<void> {
+  await indexRuntime.execute({
+    indexPath,
+    sql: `
+      CREATE TABLE IF NOT EXISTS session_cache (
+        path TEXT NOT NULL,
+        roles TEXT NOT NULL,
+        include_tools INTEGER NOT NULL,
+        mtime REAL NOT NULL,
+        size INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        PRIMARY KEY (path, roles, include_tools)
+      )
+    `,
+  });
+  await indexRuntime.execute({
+    indexPath,
+    sql: "CREATE INDEX IF NOT EXISTS idx_session_cache_path ON session_cache(path)",
+  });
+}
+
+async function readCachedSearchText(indexRuntime: SessionIndexRuntime, input: SessionSearchCacheKey): Promise<SessionSearchCacheEntry | null> {
+  await initializeSearchIndex(indexRuntime, input.indexPath);
+  const rows = await indexRuntime.query<{ mtime?: unknown; size?: unknown; content?: unknown }>({
+    indexPath: input.indexPath,
+    sql: "SELECT mtime, size, content FROM session_cache WHERE path=? AND roles=? AND include_tools=?",
+    params: [input.path, input.rolesKey, input.includeTools ? 1 : 0],
+  });
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    ...input,
+    modifiedMs: Number(row.mtime ?? 0),
+    sizeBytes: Number(row.size ?? 0),
+    content: String(row.content ?? ""),
+  };
+}
+
+async function writeCachedSearchText(indexRuntime: SessionIndexRuntime, input: SessionSearchCacheEntry): Promise<void> {
+  await initializeSearchIndex(indexRuntime, input.indexPath);
+  await indexRuntime.execute({
+    indexPath: input.indexPath,
+    sql: "INSERT OR REPLACE INTO session_cache(path, roles, include_tools, mtime, size, content) VALUES (?,?,?,?,?,?)",
+    params: [
+      input.path,
+      input.rolesKey,
+      input.includeTools ? 1 : 0,
+      input.modifiedMs,
+      input.sizeBytes,
+      input.content,
+    ],
+  });
+}
+
 async function getSearchTextCached(input: {
   sourceRuntime: SessionSourceRuntime;
   indexRuntime: SessionIndexRuntime;
@@ -52,10 +106,10 @@ async function getSearchTextCached(input: {
   const stat = await input.sourceRuntime.statFile({ path: input.filePath });
   if (!stat) return "";
   const key = { indexPath: input.indexPath, path: input.filePath, rolesKey: rolesKey(input.roles), includeTools: input.includeTools };
-  const cached = await input.indexRuntime.getSearchText(key);
+  const cached = await readCachedSearchText(input.indexRuntime, key);
   if (cached && cached.modifiedMs === stat.modifiedMs && cached.sizeBytes === stat.sizeBytes) return cached.content;
   const content = await getSearchTextUncached(input.sourceRuntime, input.filePath, input.source, input.roles, input.includeTools);
-  await input.indexRuntime.setSearchText({ ...key, modifiedMs: stat.modifiedMs, sizeBytes: stat.sizeBytes, content });
+  await writeCachedSearchText(input.indexRuntime, { ...key, modifiedMs: stat.modifiedMs, sizeBytes: stat.sizeBytes, content });
   return content;
 }
 
@@ -156,7 +210,16 @@ export function createRepository(sourceRuntime: SessionSourceRuntime, indexRunti
       });
     },
     async clearIndex(input: { indexPath: string; path?: string }) {
-      await indexRuntime.clearSearchText(input);
+      if (!input.path) {
+        await indexRuntime.removeIndex({ indexPath: input.indexPath });
+        return;
+      }
+      await initializeSearchIndex(indexRuntime, input.indexPath);
+      await indexRuntime.execute({
+        indexPath: input.indexPath,
+        sql: "DELETE FROM session_cache WHERE path=?",
+        params: [input.path],
+      });
     },
   };
 }

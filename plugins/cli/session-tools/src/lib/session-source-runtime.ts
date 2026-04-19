@@ -2,17 +2,15 @@ import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { DiscoverSessionsInput, SessionSourceRuntime } from "@rawr/session-intelligence/ports/session-source-runtime";
-import type { DiscoveredSessionFile, SessionSource, SessionStatus } from "@rawr/session-intelligence/schemas";
+import type { CodexSessionFile, CodexSessionSource, DiscoveredSessionFile, SessionSource, SessionStatus } from "@rawr/session-intelligence/schemas";
 import { readJsonlObjects } from "./jsonl";
 import {
   codexDiscoveryMaxAgeMs,
-  defaultSessionIndexPathSync,
   expandHomePath,
   getClaudeProjectsDir,
   getCodexHomeDirs,
   pathExists,
 } from "./session-paths";
-import { tryOpenSqliteDb, type SqliteDb } from "./sqlite";
 
 type CodexSource = {
   dir: string;
@@ -121,167 +119,26 @@ async function discoverCodexFromFilesystem(sources: CodexSource[], max: number):
   return out.sort((a, b) => b.modifiedMs - a.modifiedMs);
 }
 
-function initializeDiscoveryDb(db: SqliteDb): void {
-  db.query(`
-    CREATE TABLE IF NOT EXISTS codex_file_index (
-      file_path TEXT PRIMARY KEY,
-      root_dir TEXT NOT NULL,
-      status TEXT NOT NULL,
-      modified_ms REAL NOT NULL,
-      size_bytes INTEGER NOT NULL
-    )
-  `).run();
-  db.query("CREATE INDEX IF NOT EXISTS idx_codex_file_index_root_modified ON codex_file_index(root_dir, modified_ms DESC)").run();
-  db.query(`
-    CREATE TABLE IF NOT EXISTS codex_root_scan_state (
-      root_dir TEXT PRIMARY KEY,
-      status TEXT NOT NULL,
-      root_mtime_ms REAL NOT NULL,
-      scanned_at_ms REAL NOT NULL
-    )
-  `).run();
-}
-
-function shouldRefreshRoot(
-  row: { root_mtime_ms?: number; scanned_at_ms?: number } | null,
-  rootMtimeMs: number,
-  nowMs: number,
-  status: SessionStatus,
-): boolean {
-  if (!row) return true;
-  if (Number(row.root_mtime_ms) !== Number(rootMtimeMs)) return true;
-  const scannedAtMs = Number(row.scanned_at_ms);
-  if (!Number.isFinite(scannedAtMs)) return true;
-  return nowMs - scannedAtMs >= codexDiscoveryMaxAgeMs(status);
-}
-
-async function refreshRootIndex(db: SqliteDb, src: CodexSource, rootMtimeMs: number, nowMs: number): Promise<void> {
-  const rows: SessionFileCandidate[] = [];
-  for await (const f of walkFiles(src.dir)) {
+async function discoverCodexFilesForSource(source: CodexSessionSource): Promise<CodexSessionFile[]> {
+  const files: CodexSessionFile[] = [];
+  for await (const f of walkFiles(source.dir)) {
     if (!f.endsWith(".jsonl") && !f.endsWith(".json")) continue;
     const stat = await fs.stat(f).catch(() => null);
     if (!stat) continue;
-    rows.push({
-      filePath: f,
-      source: "codex",
-      status: src.status,
+    files.push({
+      path: f,
+      status: source.status,
       modifiedMs: stat.mtimeMs,
       sizeBytes: stat.size,
     });
   }
-
-  db.query("BEGIN IMMEDIATE").run();
-  try {
-    db.query("DELETE FROM codex_file_index WHERE root_dir=?").run([src.dir]);
-    const insertRow = db.query(
-      "INSERT OR REPLACE INTO codex_file_index(file_path, root_dir, status, modified_ms, size_bytes) VALUES (?,?,?,?,?)",
-    );
-    for (const row of rows) {
-      insertRow.run([row.filePath, src.dir, row.status, row.modifiedMs, row.sizeBytes]);
-    }
-    db.query("INSERT OR REPLACE INTO codex_root_scan_state(root_dir, status, root_mtime_ms, scanned_at_ms) VALUES (?,?,?,?)").run([
-      src.dir,
-      src.status,
-      rootMtimeMs,
-      nowMs,
-    ]);
-    db.query("COMMIT").run();
-  } catch (err) {
-    db.query("ROLLBACK").run();
-    throw err;
-  }
-}
-
-function queryIndexedRows(db: SqliteDb, sources: CodexSource[], max: number): SessionFileCandidate[] {
-  if (!sources.length) return [];
-  const placeholders = sources.map(() => "?").join(",");
-  const queryLimit = max > 0 ? max * 8 + 32 : 0;
-  const sql =
-    queryLimit > 0
-      ? `SELECT file_path, status, modified_ms, size_bytes FROM codex_file_index WHERE root_dir IN (${placeholders}) ORDER BY modified_ms DESC LIMIT ?`
-      : `SELECT file_path, status, modified_ms, size_bytes FROM codex_file_index WHERE root_dir IN (${placeholders}) ORDER BY modified_ms DESC`;
-  const params: unknown[] = sources.map((src) => src.dir);
-  if (queryLimit > 0) params.push(queryLimit);
-  const rows = db.query(sql).all?.(params) ?? [];
-  return rows.map((row: any) => ({
-    filePath: String(row.file_path ?? ""),
-    source: "codex",
-    status: row.status === "archived" ? "archived" : "live",
-    modifiedMs: Number(row.modified_ms ?? 0),
-    sizeBytes: Number(row.size_bytes ?? 0),
-  }));
-}
-
-async function validateIndexedRows(db: SqliteDb, rows: SessionFileCandidate[], max: number): Promise<SessionFileCandidate[]> {
-  const out: SessionFileCandidate[] = [];
-  for (const row of rows) {
-    const stat = await fs.stat(row.filePath).catch(() => null);
-    if (!stat) {
-      db.query("DELETE FROM codex_file_index WHERE file_path=?").run([row.filePath]);
-      continue;
-    }
-    if (Number(stat.mtimeMs) !== Number(row.modifiedMs) || Number(stat.size) !== Number(row.sizeBytes)) {
-      row.modifiedMs = stat.mtimeMs;
-      row.sizeBytes = stat.size;
-      db.query("UPDATE codex_file_index SET modified_ms=?, size_bytes=? WHERE file_path=?").run([row.modifiedMs, row.sizeBytes, row.filePath]);
-    }
-    out.push(row);
-  }
-  out.sort((a, b) => b.modifiedMs - a.modifiedMs);
-  return max > 0 ? out.slice(0, max) : out;
-}
-
-async function discoverCodexFromIndex(sources: CodexSource[], max: number): Promise<SessionFileCandidate[] | null> {
-  const db = await tryOpenSqliteDb(defaultSessionIndexPathSync());
-  if (!db) return null;
-  initializeDiscoveryDb(db);
-
-  const nowMs = Date.now();
-  let fullRefreshDone = false;
-
-  try {
-    for (const src of sources) {
-      const rootStat = await fs.stat(src.dir).catch(() => null);
-      if (!rootStat) {
-        db.query("DELETE FROM codex_file_index WHERE root_dir=?").run([src.dir]);
-        db.query("DELETE FROM codex_root_scan_state WHERE root_dir=?").run([src.dir]);
-        continue;
-      }
-      if (!max) {
-        await refreshRootIndex(db, src, rootStat.mtimeMs, nowMs);
-        fullRefreshDone = true;
-        continue;
-      }
-      const rootRow = db
-        .query("SELECT root_mtime_ms, scanned_at_ms FROM codex_root_scan_state WHERE root_dir=?")
-        .get([src.dir]) as { root_mtime_ms?: number; scanned_at_ms?: number } | null;
-      if (shouldRefreshRoot(rootRow, rootStat.mtimeMs, nowMs, src.status)) {
-        await refreshRootIndex(db, src, rootStat.mtimeMs, nowMs);
-      }
-    }
-
-    let rows = queryIndexedRows(db, sources, max);
-    let validated = await validateIndexedRows(db, rows, max);
-    if (max > 0 && validated.length < max && !fullRefreshDone) {
-      for (const src of sources) {
-        const rootStat = await fs.stat(src.dir).catch(() => null);
-        if (rootStat) await refreshRootIndex(db, src, rootStat.mtimeMs, Date.now());
-      }
-      rows = queryIndexedRows(db, sources, max);
-      validated = await validateIndexedRows(db, rows, max);
-    }
-    return validated;
-  } finally {
-    db.close();
-  }
+  return files.sort((a, b) => b.modifiedMs - a.modifiedMs);
 }
 
 async function discoverCodexCandidates(limit?: number): Promise<SessionFileCandidate[]> {
   const max = typeof limit === "number" && limit > 0 ? limit : 0;
   const sources = await collectCodexSources();
   if (!sources.length) return [];
-  const indexed = await discoverCodexFromIndex(sources, max);
-  if (indexed) return indexed;
   return discoverCodexFromFilesystem(sources, max);
 }
 
@@ -335,6 +192,10 @@ function candidateToDiscovered(candidate: SessionFileCandidate): DiscoveredSessi
 
 export function createSessionSourceRuntime(): SessionSourceRuntime {
   return {
+    listCodexSources: collectCodexSources,
+    discoverCodexSessionFiles: discoverCodexFilesForSource,
+    codexDiscoveryMaxAgeMs: ({ status }) => codexDiscoveryMaxAgeMs(status),
+
     async discoverSessions(input: DiscoverSessionsInput): Promise<DiscoveredSessionFile[]> {
       const out: DiscoveredSessionFile[] = [];
       if (input.source === "claude" || input.source === "all") {

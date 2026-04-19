@@ -112,6 +112,18 @@ export const DiscoveredSessionFileSchema = Type.Object(
 );
 export type DiscoveredSessionFile = Static<typeof DiscoveredSessionFileSchema>;
 
+export type CodexSessionSource = {
+  dir: string;
+  status: SessionStatus;
+};
+
+export type CodexSessionFile = {
+  path: string;
+  status: SessionStatus;
+  modifiedMs: number;
+  sizeBytes: number;
+};
+
 export const SessionFileStatSchema = Type.Object(
   {
     modifiedMs: Type.Number(),
