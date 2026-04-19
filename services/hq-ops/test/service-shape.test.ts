@@ -7,7 +7,14 @@ describe("hq-ops service shell", () => {
   it("keeps the public boundary and root contract intact", () => {
     expect(typeof createClient).toBe("function");
     expect(router).toBeDefined();
-    expect(Object.keys(contract)).toEqual(["config", "repoState", "journal", "security"]);
+    expect(Object.keys(contract)).toEqual([
+      "config",
+      "repoState",
+      "journal",
+      "security",
+      "pluginInstall",
+      "pluginLifecycle",
+    ]);
     expect(Object.keys(contract.config)).toEqual([
       "getWorkspaceConfig",
       "getGlobalConfig",
@@ -25,5 +32,12 @@ describe("hq-ops service shell", () => {
       "searchSnippets",
     ]);
     expect(Object.keys(contract.security)).toEqual(["securityCheck", "gateEnable", "getSecurityReport"]);
+    expect(Object.keys(contract.pluginInstall)).toEqual(["assessInstallState", "planInstallRepair"]);
+    expect(Object.keys(contract.pluginLifecycle)).toEqual([
+      "resolveLifecycleTarget",
+      "evaluateLifecycleCompleteness",
+      "checkScratchPolicy",
+      "decideMergePolicy",
+    ]);
   });
 });

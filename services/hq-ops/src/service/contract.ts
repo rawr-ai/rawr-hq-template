@@ -10,6 +10,8 @@
  */
 import { contract as config } from "./modules/config/contract";
 import { contract as journal } from "./modules/journal/contract";
+import { contract as pluginInstall } from "./modules/plugin-install/contract";
+import { contract as pluginLifecycle } from "./modules/plugin-lifecycle/contract";
 import { contract as repoState } from "./modules/repo-state/contract";
 import { contract as security } from "./modules/security/contract";
 
@@ -18,6 +20,8 @@ export const contract = {
   repoState,
   journal,
   security,
+  pluginInstall,
+  pluginLifecycle,
 };
 
 export type Contract = typeof contract;
