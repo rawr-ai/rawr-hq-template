@@ -1,7 +1,7 @@
 ---
 id: M1-U07
 title: "[M1] Neutralize legacy executable composition authority"
-state: planned
+state: done
 priority: 1
 estimate: 8
 project: rawr-final-architecture-migration
@@ -26,10 +26,10 @@ related_to: []
 - Prove that the legacy host authority path is no longer live.
 
 ## Acceptance Criteria
-- [ ] Old host files are deleted or fully quarantined from live authority.
-- [ ] `apps/hq/server.ts` is a smoke-tested boot path.
-- [ ] `apps/hq/async.ts` is a smoke-tested boot path if the async role is reserved/live in Phase 1.
-- [ ] If `apps/hq/legacy-cutover.ts` exists, it is the only surviving transitional seam and is explicitly recorded as a Phase 2 Slice 0 deletion.
+- [x] Old host files are deleted or fully quarantined from live authority.
+- [x] `apps/hq/server.ts` is a smoke-tested boot path.
+- [x] `apps/hq/async.ts` is a smoke-tested boot path if the async role is reserved/live in Phase 1.
+- [x] If `apps/hq/legacy-cutover.ts` exists, it is the only surviving transitional seam and is explicitly recorded as a Phase 2 Slice 0 deletion.
 
 ## Testing / Verification
 - `bun run sync:check`

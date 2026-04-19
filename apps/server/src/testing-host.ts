@@ -1,35 +1,22 @@
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
 import type { Client as HqOpsClient } from "@rawr/hq-ops";
-import { createRawrHostComposition } from "./host-composition";
-
-const noopLogger = {
-  info() {},
-  error() {},
-} as const;
-const testingRawrHostComposition = createRawrHostComposition({
-  hostLogger: noopLogger,
-});
+import { createTestingRawrHqLegacyHostSeam } from "@rawr/hq-app/legacy-cutover";
 
 /**
- * @agents-style canonical host-owned proof seam
+ * @agents-style canonical HQ-shell-owned proof seam
  *
  * Owns:
- * - test-only realization of the canonical host seam
+ * - test-only realization of the sanctioned HQ legacy bridge seam
  *
  * Must not own:
  * - app-side executable bridge compatibility
  * - alternate binding rules
  *
  * Canonical:
- * - `host-composition -> host-seam -> host-realization`
+ * - `legacy-cutover -> host-composition -> host-seam -> host-realization`
  */
 export function createTestingRawrHostSeam() {
-  return {
-    manifest: testingRawrHostComposition.manifest,
-    declarations: testingRawrHostComposition.declarations,
-    boundRolePlan: testingRawrHostComposition.boundRolePlan,
-    realization: testingRawrHostComposition.realization,
-  } as const;
+  return createTestingRawrHqLegacyHostSeam();
 }
 
 /**
@@ -47,9 +34,9 @@ export function createTestingRawrHostSeam() {
  *   `proof.api.example-todo.surface` is explicitly marked mixed-path
  */
 export function createTestingExampleTodoServiceClient(repoRoot: string): ExampleTodoClient {
-  return testingRawrHostComposition.satisfiers.exampleTodo.resolveClient(repoRoot);
+  return createTestingRawrHostSeam().satisfiers.exampleTodo.resolveClient(repoRoot);
 }
 
 export function createTestingHqOpsServiceClient(repoRoot: string): HqOpsClient {
-  return testingRawrHostComposition.satisfiers.state.resolveClient(repoRoot);
+  return createTestingRawrHostSeam().satisfiers.state.resolveClient(repoRoot);
 }

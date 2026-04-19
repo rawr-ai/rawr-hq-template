@@ -4,7 +4,7 @@ import path from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
-import { createRawrHostComposition } from "./host-composition";
+import { createRawrHqLegacyRouteAuthority } from "@rawr/hq-app/legacy-cutover";
 import { createHostLoggerAdapter } from "./logging";
 import type { AnyElysia } from "./plugins";
 import { registerOrpcRoutes } from "./orpc";
@@ -24,11 +24,9 @@ export type RawrRoutesOptions = {
 
 export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"] as const;
 
-const rawrHostComposition = createRawrHostComposition({
-  hostLogger: createHostLoggerAdapter(),
-});
+const rawrHostAuthority = createRawrHqLegacyRouteAuthority();
 type HostWorkflowRuntimeInput = Parameters<
-  typeof rawrHostComposition.realization.workflows.createInngestFunctions
+  typeof rawrHostAuthority.realization.workflows.createInngestFunctions
 >[0];
 
 export type HostInngestBundle = Readonly<{
@@ -184,12 +182,12 @@ function resolveAuthorityRepoRoot(repoRoot: string): string {
  *
  * Owns:
  * - process-scoped Inngest client/runtime creation for the server role
- * - materializing workflow durable functions from the already-bound host plan
+ * - materializing workflow durable functions from the HQ-shell-owned legacy bridge plan
  *
  * Must not own:
  * - plugin declaration selection
- * - host satisfier construction outside the canonical host seam
- * - alternate executable composition entrypoints outside `host-composition.ts`
+ * - host satisfier construction outside the sanctioned HQ bridge
+ * - alternate executable composition entrypoints outside `@rawr/hq-app/legacy-cutover`
  */
 export function createHostInngestBundle(input: { repoRoot: string }): HostInngestBundle {
   const client = new Inngest({ id: "rawr-hq" });
@@ -198,7 +196,7 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
   });
   // The app manifest owns which registrations exist. The host binds them into
   // an executable role plan, then materializes runtime surfaces explicitly.
-  const functions = rawrHostComposition.realization.workflows.createInngestFunctions({
+  const functions = rawrHostAuthority.realization.workflows.createInngestFunctions({
     client,
     runtime,
   });
@@ -222,17 +220,17 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
  *
  * Owns:
  * - process mount order for Inngest, workflow, and oRPC surfaces
- * - routing host-owned realization outputs onto the live Elysia app
+ * - routing HQ-bridge-owned realization outputs onto the live Elysia app
  *
  * Must not own:
  * - capability-local client construction in the manifest
  * - request/process materialization outside host-owned server surfaces
- * - restart authority outside `host-composition.ts`
+ * - restart authority outside `@rawr/hq-app/legacy-cutover`
  */
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
   const hostLogger = createHostLoggerAdapter();
-  const rawrHostSeam = rawrHostComposition.realization;
+  const rawrHostSeam = rawrHostAuthority.realization;
 
   app.get("/rawr/plugins/web/:dirName", async ({ params }) => {
     const dirName =

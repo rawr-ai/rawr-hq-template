@@ -71,6 +71,11 @@ if (pkg.exports?.["./manifest"]?.default !== "./rawr.hq.ts") {
   process.exit(1);
 }
 
+if (pkg.exports?.["./legacy-cutover"]?.default !== "./legacy-cutover.ts") {
+  console.error("hq-app structural failed: @rawr/hq-app/legacy-cutover must resolve to legacy-cutover.ts.");
+  process.exit(1);
+}
+
 if (
   !manifestSource.includes('id: "hq"') ||
   !manifestSource.includes("roles:") ||
@@ -135,11 +140,15 @@ if (
   serverEntrypointSource.includes("../server/src/host-composition") ||
   asyncEntrypointSource.includes("../server/src/host-composition") ||
   devEntrypointSource.includes("../server/src/host-composition") ||
-  legacyCutoverSource.includes("../server/src/host-composition") ||
   legacyCutoverSource.includes("../server/src/host-seam") ||
   legacyCutoverSource.includes("../server/src/host-realization")
 ) {
   console.error("hq-app structural failed: entrypoint bridge must not bypass through host-composition internals.");
+  process.exit(1);
+}
+
+if (!legacyCutoverSource.includes("../server/src/host-composition")) {
+  console.error("hq-app structural failed: legacy-cutover.ts must be the sole surviving importer of host-composition.");
   process.exit(1);
 }
 

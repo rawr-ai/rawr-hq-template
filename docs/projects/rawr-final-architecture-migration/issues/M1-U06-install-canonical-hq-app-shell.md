@@ -1,7 +1,7 @@
 ---
 id: M1-U06
 title: "[M1] Install the canonical HQ app shell"
-state: planned
+state: done
 priority: 1
 estimate: 4
 project: rawr-final-architecture-migration
@@ -26,10 +26,10 @@ related_to: []
 - Reserve the later seams that Phase 2 will realize without smuggling in Phase 2 substrate work.
 
 ## Acceptance Criteria
-- [ ] The canonical HQ app shell files exist and are authoritative.
-- [ ] Manifest-purity and entrypoint-thinness proof passes.
-- [ ] The Phase 1 app shell only needs `server`, `async`, and `dev`.
-- [ ] App-shell smoke tests prove the new front door is real before old host authority is dismantled.
+- [x] The canonical HQ app shell files exist and are authoritative.
+- [x] Manifest-purity and entrypoint-thinness proof passes.
+- [x] The Phase 1 app shell only needs `server`, `async`, and `dev`.
+- [x] App-shell smoke tests prove the new front door is real before old host authority is dismantled.
 
 ## Testing / Verification
 - `bun run sync:check`

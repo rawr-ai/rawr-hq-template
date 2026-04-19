@@ -92,9 +92,14 @@ These checks are the root-owned Phase 1 proof band introduced by `M1-U00`.
   "bun scripts/phase-1/verify-no-live-coordination.mjs": "Keep coordination classified as archived only, absent from the live tree, and backed by archive lessons.",
   "bun scripts/phase-1/verify-no-live-support-example.mjs": "Keep support-example classified as archived only, absent from the live tree, and backed by archive lessons.",
   "bun scripts/phase-1/verify-agent-marketplace-lane-frozen.mjs": "Freeze the current plugins/agents topology and keep plugins/agents/hq parked in place.",
+  "bun scripts/phase-1/verify-hq-ops-service-shape.mjs": "Keep HQ operational truth collapsed into the canonical services/hq-ops service shape.",
   "bun scripts/phase-1/verify-no-old-operational-packages.mjs": "Keep old operational owners from regaining live import authority while HQ Ops and purpose-named support boundaries absorb them.",
   "bun scripts/phase-1/verify-no-legacy-hq-imports.mjs": "Prove the legacy @rawr/hq facade imports are absent from the live lane after M1-U04.",
   "bun scripts/phase-1/verify-canonical-plugin-topology.mjs": "Prove the canonical role-first plugin roots are authoritative and the old live roots are gone.",
-  "bun run phase-1:gates:baseline": "Run the initial root-owned Phase 1 guardrail band."
+  "bun scripts/phase-1/verify-manifest-purity.mjs": "Keep the canonical HQ shell declaration-only and anchored at apps/hq/rawr.hq.ts.",
+  "bun scripts/phase-1/verify-entrypoint-thinness.mjs": "Keep the HQ app entrypoints thin, app-owned, and bridged only through apps/hq/legacy-cutover.ts.",
+  "bun scripts/phase-1/verify-no-legacy-composition-authority.mjs": "Prove legacy host-composition authority is quarantined behind the one sanctioned HQ bridge.",
+  "bun scripts/phase-1/verify-parked-lane-frozen.mjs": "Prove the parked compatibility lanes remain present but frozen in place.",
+  "bun run phase-1:gates:baseline": "Run the full root-owned Phase 1 guardrail band."
 }
 ```

@@ -19,7 +19,7 @@ I am not supposed to resume independent implementation unless the takeover agent
 - Takeover agent nickname: `Russell`
 - Takeover agent id: `019d439e-f42f-7c80-9cee-b64eeffee2ca`
 - Authoritative handoff doc:
-  - `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/orchestrator-handoff.md`
+  - `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/handoffs/orchestrator-handoff.md`
 
 ## Mission I Am Supporting
 

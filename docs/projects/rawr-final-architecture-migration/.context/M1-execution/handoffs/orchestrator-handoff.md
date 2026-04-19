@@ -81,7 +81,7 @@ Read these in order before making decisions:
 6. `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U02-reserve-hq-ops-seam.md`
 7. `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/issues/M1-U03-migrate-hq-ops-and-rewire-consumers.md`
 8. `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md`
-9. `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/HQ-OPS-service-shape-followup.md`
+9. `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/notes/HQ-OPS-service-shape-followup.md`
 
 Read the next group as the direct reference model:
 
@@ -296,7 +296,7 @@ Do not assume those rewires should survive as-is just because they typechecked.
 These files were written from the wrong repair frame and should be updated or treated as historical only:
 
 - `docs/projects/rawr-final-architecture-migration/.context/M1-execution/context.md`
-- `docs/projects/rawr-final-architecture-migration/.context/M1-execution/HQ-OPS-service-shape-followup.md`
+- `docs/projects/rawr-final-architecture-migration/.context/M1-execution/notes/HQ-OPS-service-shape-followup.md`
 
 ## Exact Reference Patterns You Should Copy
 

@@ -39,7 +39,7 @@ for (const [name, source] of [
 }
 
 assertCondition(legacyCutoverSource.includes("../server/src/bootstrap"), "legacy-cutover.ts must localize the one sanctioned runtime bridge");
-assertCondition(!legacyCutoverSource.includes("../server/src/host-composition"), "legacy-cutover.ts must not bypass through host-composition");
+assertCondition(legacyCutoverSource.includes("../server/src/host-composition"), "legacy-cutover.ts must localize the one sanctioned legacy host-composition bridge");
 assertCondition(!legacyCutoverSource.includes("../server/src/host-seam"), "legacy-cutover.ts must not bypass through host-seam");
 assertCondition(!legacyCutoverSource.includes("../server/src/host-realization"), "legacy-cutover.ts must not bypass through host-realization");
 assertCondition(!legacyCutoverSource.includes("registerStateApiPlugin"), "legacy-cutover.ts must not own plugin declaration selection");

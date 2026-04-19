@@ -1,27 +1,20 @@
-# M1 Remaining Frame
+# M1 Closure Frame
 
-Milestone 1 is now in its final three-slice runway.
+Milestone 1 is complete. The repo has one coherent Phase 1 story again:
 
-`M1-U00` through `M1-U05` are treated as done in the milestone packet, and the residual HQ Ops service-shape repair from the `M1-U02`/`M1-U03` area was closed by commit `cee43327` on `agent-FARGO-M1-U02-followup-hq-ops-service-shape`.
+- HQ operational truth lives in `services/hq-ops`
+- the live plugin tree uses the canonical role-first topology
+- the HQ app shell is real and authoritative
+- old executable authority is quarantined behind exactly one explicit bridge at `apps/hq/legacy-cutover.ts`
+- the frozen marketplace compatibility lane is exactly `plugins/agents/hq`
 
-The remaining job is not another semantic cleanup sweep. It is the executable-authority closeout chain:
+The immediate follow-on is not more M1 cleanup. It is Phase 2 entry from the frozen plateau described in:
 
-1. `M1-U06` makes `apps/hq` the real canonical app shell.
-2. `M1-U07` removes or quarantines old host-composition authority.
-3. `M1-U08` freezes the plateau with proofs, durable docs, and the formal Phase 2 entry packet.
+- [phase-1-current-state.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-1-current-state.md)
+- [phase-2-entry-conditions.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/migration/phase-2-entry-conditions.md)
 
-The key invariant is sequencing:
+The key handoff invariant is:
 
-- do not neutralize old host authority before the new app shell is proven
-- do not freeze proofs/docs before the plateau is actually real
-- do not reopen earlier slices casually; if earlier work blocks `M1-U06` through `M1-U08`, record that as explicit blocker fallout
+- do not reopen settled Phase 1 authority decisions while starting Phase 2 substrate work
 
-The main live files to keep in view are:
-
-- [apps/hq/src/manifest.ts](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/apps/hq/src/manifest.ts)
-- [apps/server/src/rawr.ts](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/apps/server/src/rawr.ts)
-- [apps/server/src/host-composition.ts](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/apps/server/src/host-composition.ts)
-- [apps/server/src/host-seam.ts](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/apps/server/src/host-seam.ts)
-- [apps/server/src/testing-host.ts](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/apps/server/src/testing-host.ts)
-
-Context is still in good shape for continuing without a handoff.
+Context remains in good shape for continuing without a handoff.

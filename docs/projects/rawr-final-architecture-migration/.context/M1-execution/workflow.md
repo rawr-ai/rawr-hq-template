@@ -9,6 +9,12 @@ This document, [grounding.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-t
 - `workflow.md` = the reusable execution loop
 - `context.md` = the current-issue hot swap module
 
+Packet layout:
+
+- [README.md](/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou/docs/projects/rawr-final-architecture-migration/.context/M1-execution/README.md) explains the live packet vs historical `handoffs/` vs retained `notes/`
+- only `grounding.md`, `workflow.md`, `frame.md`, and `context.md` are live packet files
+- historical coordination and slice notes stay preserved, but they are not first-hop re-entry documents
+
 ## Framing
 
 M1 is the authority-collapse milestone. The job is to force the repo into one coherent, canonical Phase 1 lane before any later runtime-substrate or generator work exists to muddy the picture again.
@@ -31,15 +37,16 @@ Done looks like:
 
 Outcome quality is fully my responsibility. My job is not just to move files, make tests green, or submit Graphite branches. My job is to make sure each slice actually lands the intended architectural outcome, closes its own loops, and leaves the repo in a better and less ambiguous state than it found it.
 
-## Current Milestone Posture
+## Milestone Closure Posture
 
-The milestone packet currently treats `M1-U00` through `M1-U05` as done. The active runway is therefore:
+Milestone 1 is now closed and frozen. This workflow remains in the packet because it captures the execution loop and the load-bearing sequencing logic that produced the plateau.
 
-- `M1-U06` canonical HQ app shell
-- `M1-U07` legacy executable authority neutralization
-- `M1-U08` proof ratchet, durable docs, and plateau freeze
+That means:
 
-One important nuance: residual follow-up work may still land against a previously "done" slice if a real architectural miss is discovered later. That happened with the HQ Ops service-shape repair after `M1-U02`/`M1-U03`. When that kind of follow-up lands, close it cleanly, then immediately reset the hot context back to the next unfinished slice instead of leaving the workspace framed around already-closed fallout.
+- `context.md` carries the current closure or handoff state
+- `frame.md` records the stable closure frame
+- this workflow is still the right reference for how the phase was executed and how a future phase packet should be structured
+- historical slice-specific notes remain preserved under `notes/` and `handoffs/` instead of staying mixed into the live packet
 
 ## Source-of-Truth Order
 
@@ -84,7 +91,7 @@ Milestone frame document:
 Execution worktree:
 
 - current checkout path: `/Users/mateicanavra/conductor/workspaces/rawr-hq-template/guangzhou`
-- current branch when this workflow was last refreshed: `agent-FARGO-M1-U02-followup-hq-ops-service-shape`
+- branch-specific state belongs in `context.md`, not here
 
 Single-worktree rule:
 
@@ -130,6 +137,19 @@ Between-issue rule:
 - Each slice closes its own loops. M1-U08 is a ratchet and review slice, not a deferred cleanup dump.
 - Do not silently reopen earlier slices while executing `M1-U06` through `M1-U08`; if earlier fallout blocks progress, record it explicitly as blocker fallout.
 - If the intended branch shows unexpected working tree changes, stop. Do not stash, reset, or improvise around them.
+
+## Carry-Forward Watch Item
+
+Phase 1 closed with one known architectural watch item that is intentionally deferred, not resolved:
+
+- `services/hq-ops` is externally shaped correctly for Phase 1, but its internal module structure still looks materially less canonical than `services/example-todo`.
+- Do not treat the passing Phase 1 proof band as proof that HQ Ops internals are clean. The current proofs ratchet the authority boundary, not the internal service-package ergonomics.
+- Before adding broader HQ Ops verification, especially runtime verification, re-audit:
+  - `services/hq-ops/src/service/modules/*`
+  - `services/example-todo/src/service/modules/*`
+  - `docs/projects/rawr-final-architecture-migration/.context/M1-execution/notes/HQ-OPS-service-shape-followup.md`
+  - `docs/projects/orpc-ingest-domain-packages/guidance.md`
+- Assume that fake modules, shims, and helper-bucket workarounds inside HQ Ops may be the root cause until disproven.
 
 ## Adapted Dev-Parallel Loop
 

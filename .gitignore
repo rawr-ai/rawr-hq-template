@@ -9,4 +9,5 @@ dist/
 !docs/projects/**/.context/
 !docs/projects/**/.context/**
 .scratch/
+.claude/settings.local.json
 *.log

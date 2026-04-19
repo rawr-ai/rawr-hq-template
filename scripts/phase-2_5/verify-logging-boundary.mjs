@@ -13,6 +13,7 @@ await Promise.all([
   mustExist("apps/server/src/host-satisfiers.ts"),
   mustExist("apps/server/src/orpc.ts"),
   mustExist("apps/server/src/rawr.ts"),
+  mustExist("apps/hq/legacy-cutover.ts"),
   mustExist("apps/server/test/logging-correlation.test.ts"),
   mustExist("scripts/phase-2_5/verify-logging-boundary.mjs"),
   mustExist("apps/hq/rawr.hq.ts"),
@@ -20,13 +21,14 @@ await Promise.all([
   mustExist("apps/server/package.json"),
 ]);
 
-const [scripts, loggingSource, hostCompositionSource, hostSatisfiersSource, orpcSource, rawrSource, shellSource, manifestCompatSource, serverPackageRaw] = await Promise.all([
+const [scripts, loggingSource, hostCompositionSource, hostSatisfiersSource, orpcSource, rawrSource, legacyCutoverSource, shellSource, manifestCompatSource, serverPackageRaw] = await Promise.all([
   readPackageScripts(),
   readFile("apps/server/src/logging.ts"),
   readFile("apps/server/src/host-composition.ts"),
   readFile("apps/server/src/host-satisfiers.ts"),
   readFile("apps/server/src/orpc.ts"),
   readFile("apps/server/src/rawr.ts"),
+  readFile("apps/hq/legacy-cutover.ts"),
   readFile("apps/hq/rawr.hq.ts"),
   readFile("apps/hq/src/manifest.ts"),
   readFile("apps/server/package.json"),
@@ -68,7 +70,9 @@ assertCondition(
 assertCondition(
   rawrSource.includes('from "./logging"')
     && rawrSource.includes("createHostLoggerAdapter")
-    && rawrSource.includes("createRawrHostComposition")
+    && rawrSource.includes("@rawr/hq-app/legacy-cutover")
+    && rawrSource.includes("createRawrHqLegacyRouteAuthority")
+    && legacyCutoverSource.includes("createRawrHostComposition")
     && hostCompositionSource.includes("createRawrHqManifest")
     && hostCompositionSource.includes("createRawrHostSatisfiers")
     && hostCompositionSource.includes("hostLogger: input.hostLogger")

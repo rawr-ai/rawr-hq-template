@@ -66,7 +66,7 @@ describe("hq app declaration seam guard", () => {
     expect(asyncSource).not.toContain("../server/src/host-composition");
     expect(devSource).not.toContain("../server/src/host-composition");
     expect(legacyCutoverSource).toContain('../server/src/bootstrap');
-    expect(legacyCutoverSource).not.toContain("../server/src/host-composition");
+    expect(legacyCutoverSource).toContain("../server/src/host-composition");
     expect(legacyCutoverSource).not.toContain("../server/src/host-seam");
     expect(legacyCutoverSource).not.toContain("../server/src/host-realization");
   });
@@ -112,6 +112,10 @@ describe("hq app declaration seam guard", () => {
     expect(packageJson.exports?.["./manifest"]).toEqual({
       types: "./rawr.hq.ts",
       default: "./rawr.hq.ts",
+    });
+    expect(packageJson.exports?.["./legacy-cutover"]).toEqual({
+      types: "./legacy-cutover.ts",
+      default: "./legacy-cutover.ts",
     });
   });
 });

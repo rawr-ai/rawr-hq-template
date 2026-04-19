@@ -13,6 +13,10 @@
     "./manifest": {
       "types": "./rawr.hq.ts",
       "default": "./rawr.hq.ts"
+    },
+    "./legacy-cutover": {
+      "types": "./legacy-cutover.ts",
+      "default": "./legacy-cutover.ts"
     }
   },
   "dependencies": {
