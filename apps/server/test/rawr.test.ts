@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { processCoordinationRunEvent, createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
+import { createTestingRawrHqManifest } from "@rawr/hq-app/testing";
 import { createServerApp } from "../src/app";
+import { createRawrHostBoundRolePlan, materializeRawrHostBoundRolePlan } from "../src/host-seam";
 import { registerOrpcRoutes } from "../src/orpc";
 import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
 import { enablePlugin } from "@rawr/state/repo-state";
@@ -118,6 +120,19 @@ describe("rawr server routes", () => {
     }
   });
 
+  it("host-composition-guard: host seam scaffold binds declaration plugins while preserving the mixed-world bridge", () => {
+    const manifest = createTestingRawrHqManifest();
+    const boundRolePlan = createRawrHostBoundRolePlan({ manifest });
+    const hostSeam = materializeRawrHostBoundRolePlan(boundRolePlan);
+
+    expect(Object.keys(hostSeam.orpc.router)).toEqual(
+      expect.arrayContaining(["coordination", "state", "exampleTodo", "supportExample"]),
+    );
+    expect(Object.keys(hostSeam.orpc.published.router)).toEqual(["exampleTodo"]);
+    expect(Object.keys(hostSeam.workflows.published.router)).toEqual(["supportExample", "coordination"]);
+    expect(typeof hostSeam.workflows.createInngestFunctions).toBe("function");
+  });
+
   it("host-composition-guard: rejects spoofed /rpc auth heuristics", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
 
@@ -186,6 +201,9 @@ describe("rawr server routes", () => {
     expect(manifestSource).not.toContain("createInngestServeHandler");
     expect(manifestSource).toContain("composeWorkflowPlugins");
     expect(manifestSource).toContain("composeApiPlugins");
+    expect(manifestSource).toContain("plugins: {");
+    expect(manifestSource).toContain("api: apiPlugins");
+    expect(manifestSource).toContain("workflows: workflowPlugins");
     expect(manifestSource).toContain("workflows: materializedSurfaces.workflows");
     expect(manifestSource).toContain("const composedApiSurface = composeApiPlugins");
     expect(manifestSource).toContain("materializeRequestScopedPluginSurfaces");
@@ -207,17 +225,19 @@ describe("rawr server routes", () => {
     expect(rawrSource).not.toContain("./coordination");
     expect(rawrSource).not.toContain("createCoordinationInngestFunction");
     expect(rawrSource).not.toContain("createSupportExampleInngestFunctions");
+    expect(rawrSource).toContain("createRawrHostBoundRolePlan");
+    expect(rawrSource).toContain("materializeRawrHostBoundRolePlan");
     expect(rawrSource).toContain('createCoordinationWorkflowRuntimeAdapter');
     expect(rawrSource).toContain('@rawr/plugin-workflows-coordination/server');
-    expect(rawrSource).toContain("rawrHqManifest.workflows.createInngestFunctions");
+    expect(rawrSource).toContain("rawrHqHostSeam.workflows.createInngestFunctions");
     expect(rawrSource).toContain("new Inngest({ id: \"rawr-hq\" })");
     expect(rawrSource).toContain("serve as inngestServe");
     expect(rawrSource).not.toContain("rawrHqManifest.inngest");
     expect(rawrSource).toContain("createWorkflowRouteHarness");
     expect(rawrSource).not.toContain("resolveWorkflowCapability");
     expect(rawrSource).not.toContain("rawrHqManifest.workflows.capabilities");
-    expect(rawrSource).toContain("openApiRouter: rawrHqManifest.orpc.published.router");
-    expect(rawrSource).toContain("publishedRouter: rawrHqManifest.workflows.published.router");
+    expect(rawrSource).toContain("openApiRouter: rawrHqHostSeam.orpc.published.router");
+    expect(rawrSource).toContain("publishedRouter: rawrHqHostSeam.workflows.published.router");
     expect(rawrSource).toContain("contextFactory: (request, deps) => createWorkflowBoundaryContext(request, deps)");
   });
 

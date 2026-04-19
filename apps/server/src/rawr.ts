@@ -6,6 +6,7 @@ import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
 import { createCoordinationWorkflowRuntimeAdapter } from "@rawr/plugin-workflows-coordination/server";
 import { createRawrHqManifest } from "@rawr/hq-app/manifest";
+import { createRawrHostBoundRolePlan, materializeRawrHostBoundRolePlan } from "./host-seam";
 import { createHostLoggerAdapter } from "./logging";
 import type { AnyElysia } from "./plugins";
 import { registerOrpcRoutes } from "./orpc";
@@ -27,8 +28,13 @@ export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capabi
 const rawrHqManifest = createRawrHqManifest({
   hostLogger: createHostLoggerAdapter(),
 });
+const rawrHqBoundRolePlan = createRawrHostBoundRolePlan({
+  manifest: rawrHqManifest,
+});
 
-type HostWorkflowRuntimeInput = Parameters<typeof rawrHqManifest.workflows.createInngestFunctions>[0];
+type HostWorkflowRuntimeInput = Parameters<
+  ReturnType<typeof materializeRawrHostBoundRolePlan>["workflows"]["createInngestFunctions"]
+>[0];
 
 export type HostInngestBundle = Readonly<{
   client: HostWorkflowRuntimeInput["client"];
@@ -196,14 +202,15 @@ function resolveAuthorityRepoRoot(repoRoot: string): string {
 }
 
 export function createHostInngestBundle(input: { repoRoot: string }): HostInngestBundle {
+  const rawrHqHostSeam = materializeRawrHostBoundRolePlan(rawrHqBoundRolePlan);
   const client = new Inngest({ id: "rawr-hq" });
   const runtime = createCoordinationWorkflowRuntimeAdapter({
     repoRoot: input.repoRoot,
     inngestBaseUrl: resolveInngestBaseUrl(),
   });
-  // The app manifest owns which workflow shells contribute durable functions.
-  // The host only instantiates the runtime resources and mounts ingress explicitly.
-  const functions = rawrHqManifest.workflows.createInngestFunctions({
+  // The app manifest owns which registrations exist. The host binds them into
+  // an executable role plan, then materializes runtime surfaces explicitly.
+  const functions = rawrHqHostSeam.workflows.createInngestFunctions({
     client,
     runtime,
   });
@@ -223,6 +230,7 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
   const hostLogger = createHostLoggerAdapter();
+  const rawrHqHostSeam = materializeRawrHostBoundRolePlan(rawrHqBoundRolePlan);
 
   app.get("/rawr/plugins/web/:dirName", async ({ params }) => {
     const dirName =
@@ -275,7 +283,7 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
   };
   const workflowRoutes = createWorkflowRouteHarness({
     workflows: {
-      publishedRouter: rawrHqManifest.workflows.published.router,
+      publishedRouter: rawrHqHostSeam.workflows.published.router,
     },
     contextFactory: (request, deps) => createWorkflowBoundaryContext(request, deps),
   });
@@ -302,8 +310,8 @@ export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: Rawr
 
   registerOrpcRoutes(app, {
     ...boundaryContextDeps,
-    router: rawrHqManifest.orpc.router,
-    openApiRouter: rawrHqManifest.orpc.published.router,
+    router: rawrHqHostSeam.orpc.router,
+    openApiRouter: rawrHqHostSeam.orpc.published.router,
     contextFactory: (request, deps) => createRequestScopedBoundaryContext(request, deps),
   });
 

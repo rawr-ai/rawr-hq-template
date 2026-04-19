@@ -36,7 +36,7 @@ const rawrAst = parseTypeScript(rawrFile, rawrSource);
 const orpcAst = parseTypeScript(orpcFile, orpcSource);
 const manifestAst = mode === "completion" ? parseTypeScript(manifestFile, manifestSource) : null;
 
-function hasRegisterOrpcRoutesManifestRouter(rawrSourceFile) {
+function hasRegisterOrpcRoutesHostSeamRouter(rawrSourceFile) {
   let matched = false;
   visit(rawrSourceFile, (node) => {
     if (matched || !ts.isCallExpression(node)) return;
@@ -46,7 +46,7 @@ function hasRegisterOrpcRoutesManifestRouter(rawrSourceFile) {
     if (!optionsObject) return;
     const routerInitializer = getObjectPropertyInitializer(optionsObject, "router");
     if (!routerInitializer) return;
-    if (matchesPropertyAccessChain(routerInitializer, ["rawrHqManifest", "orpc", "router"])) {
+    if (matchesPropertyAccessChain(routerInitializer, ["rawrHqHostSeam", "orpc", "router"])) {
       matched = true;
     }
   });
@@ -110,7 +110,11 @@ if (mode === "completion") {
   });
   requiredChecks.push({
     label: "host consumes manifest-owned ORPC router seam",
-    ok: hasRegisterOrpcRoutesManifestRouter(rawrAst) && hasIdentifierCall(rawrAst, "createRawrHqManifest"),
+    ok:
+      hasRegisterOrpcRoutesHostSeamRouter(rawrAst) &&
+      hasIdentifierCall(rawrAst, "createRawrHqManifest") &&
+      hasIdentifierCall(rawrAst, "createRawrHostBoundRolePlan") &&
+      hasIdentifierCall(rawrAst, "materializeRawrHostBoundRolePlan"),
   });
   requiredChecks.push({
     label: "host avoids bypassing manifest orpc authority while owning runtime ingress composition",
