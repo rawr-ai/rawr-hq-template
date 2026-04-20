@@ -6,8 +6,8 @@
  * contract boundary so projections can present actionable diagnostics without
  * duplicating parsing rules.
  */
-import { buildSourceSnapshot } from "./helpers/normalize";
 import { SOURCE_MATERIAL_DIRECTORIES } from "../../../shared/layout";
+import { buildSnapshotRecords } from "../../shared/helpers/source-records";
 import { module } from "./module";
 
 const readSnapshot = module.readSnapshot.handler(async ({ context, errors }) => {
@@ -15,27 +15,21 @@ const readSnapshot = module.readSnapshot.handler(async ({ context, errors }) => 
     workspaceRef: context.workspaceRef,
     sourceDirectories: SOURCE_MATERIAL_DIRECTORIES,
   });
-  const snapshotResult = await buildSourceSnapshot(context.workspaceRef, materials);
-  if (!snapshotResult.ok) {
-    if (snapshotResult.error.code === "INVALID_CONVERSATION_JSON") {
-      throw errors.INVALID_CONVERSATION_JSON({
-        message: snapshotResult.error.reason,
-        data: {
-          path: snapshotResult.error.sourcePath,
-          reason: snapshotResult.error.reason,
-        },
-      });
+  const recordsResult = await buildSnapshotRecords(materials);
+  if (!recordsResult.ok) {
+    const message = recordsResult.error.reason;
+    if (recordsResult.error.kind === "invalid-json") {
+      throw errors.INVALID_CONVERSATION_JSON({ message, data: { path: recordsResult.error.sourcePath, reason: message } });
     }
-
-    throw errors.INVALID_CONVERSATION_EXPORT({
-      message: snapshotResult.error.reason,
-      data: {
-        path: snapshotResult.error.sourcePath,
-        reason: snapshotResult.error.reason,
-      },
-    });
+    throw errors.INVALID_CONVERSATION_EXPORT({ message, data: { path: recordsResult.error.sourcePath, reason: message } });
   }
-  const snapshot = snapshotResult.snapshot;
+
+  const snapshot = {
+    workspaceRef: context.workspaceRef,
+    records: recordsResult.records,
+    jsonRecords: recordsResult.conversationRecords,
+    markdownDocCount: recordsResult.documentRecords.length,
+  };
 
   return {
     workspaceRef: context.workspaceRef,
