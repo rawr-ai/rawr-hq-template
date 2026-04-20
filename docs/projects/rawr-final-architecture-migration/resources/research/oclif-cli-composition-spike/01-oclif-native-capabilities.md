@@ -6,6 +6,17 @@ OCLIF already has the core concept RAWR needs: a CLI can be extended by plugin p
 
 The RAWR architecture should instead compile app-level CLI composition into native OCLIF plugin membership and use RAWR runtime binding only for process/role resources and service-client construction.
 
+## What RAWR Should Take From OCLIF
+
+The target should use OCLIF's native membership planes rather than create a RAWR command registry:
+
+1. core/app-selected plugins materialized into the intended CLI's OCLIF config;
+2. proposed dev-local plugins materialized through OCLIF `devPlugins` or a generated local OCLIF config;
+3. external user-installed or linked plugins through `@oclif/plugin-plugins`;
+4. optional JIT plugins later for package-size and distribution optimization.
+
+`@oclif/plugin-plugins` gives RAWR install/link mechanics. It does not decide which command plugins belong to a RAWR app. That decision should come from `rawr.hq.ts` and the compiled CLI surface topology.
+
 ## Native Plugin Unit
 
 OCLIF describes plugins as a way to:
@@ -33,7 +44,7 @@ Its command surface includes:
 - `plugins uninstall`
 - `plugins update`
 
-This maps directly to RAWR Channel A.
+These commands are native OCLIF plugin-manager mechanics. They should be preserved for external user installs, cloned plugin links, and low-level inspection, but they should not become RAWR's app composition authority.
 
 Source: [`@oclif/plugin-plugins`](https://github.com/oclif/plugin-plugins).
 
@@ -45,7 +56,7 @@ OCLIF resolves plugins in this order:
 2. dev plugins listed under `devPlugins`,
 3. core plugins listed under `plugins`.
 
-That order is architecturally important for RAWR. Core/app-composed CLI plugins should be deterministic app membership. User-installed plugins are extension overlays and can override core commands. Dev plugins are a native local-development seam that RAWR should consider for first-class local composition.
+That order is architecturally important for RAWR. Core/app-composed CLI plugins should be deterministic app membership. User-installed plugins are extension overlays and can override core commands. Dev plugins are a native local-development mechanism that RAWR should consider for first-class local composition.
 
 Source: [OCLIF plugin loading](https://oclif.io/docs/plugin_loading/).
 
@@ -65,7 +76,7 @@ Source: [OCLIF command discovery strategies](https://oclif.io/docs/command_disco
 
 OCLIF can generate and use `oclif.manifest.json`. Without a manifest, OCLIF may need to require command files to read static command properties. With a manifest, OCLIF can load cached command metadata instead.
 
-RAWR's shipped CLI command plugins should therefore treat `oclif.manifest.json` as a production artifact. Local development can tolerate slower discovery or use generated manifests as part of the build/link convergence command.
+The manifest is a per-plugin performance/cache artifact for plugins OCLIF has already selected. It is not the mechanism that selects plugin membership. RAWR's shipped CLI command plugins should usually include generated manifests for performance, while local development can tolerate slower discovery or generate manifests as part of a convergence/build step.
 
 Source: [OCLIF plugin loading](https://oclif.io/docs/plugin_loading/).
 
@@ -108,7 +119,7 @@ Source: [OCLIF JIT plugins](https://oclif.io/docs/jit_plugins/).
 For local development, RAWR should prefer native OCLIF mechanisms in this order:
 
 1. Core/app-selected plugins materialized into the CLI's OCLIF config.
-2. Dev-local plugins materialized into `devPlugins` or linked with one convergence command.
+2. Dev-local plugins materialized into `devPlugins`, a generated local OCLIF config, or linked with one convergence command.
 3. User-installed plugins through `@oclif/plugin-plugins`.
 4. JIT plugins for later distribution and package-size optimization.
 

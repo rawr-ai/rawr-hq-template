@@ -8,42 +8,6 @@ The target runtime architecture can support OCLIF-native CLI plugins, but it nee
 
 The runtime subsystem should not become a CLI command discovery or dispatch engine. OCLIF already owns that.
 
-## Canonical Architecture Commitments
-
-The integrated spec defines plugins as runtime projection, not services, bootgraphs, app manifests, process runtimes, or mini-frameworks. It names role-first plugin roots, including `plugins/cli/commands/*`, and names `defineCliCommandPlugin`.
-
-Evidence:
-
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:960-978`
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:1013-1028`
-
-The same spec says a manifest authors app identity, process modules, role membership, and explicit surface membership. Its canonical shape is `role -> surface -> plugin membership`.
-
-Evidence:
-
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:1293-1320`
-
-The Effect runtime subsystem spec says the key binding seam is between booted resources, role-local bound service clients, and mounted surface code. It also states:
-
-```text
-plugins describe binding
-runtime subsystem performs binding
-services receive canonical boundary bags
-```
-
-Evidence: `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1064-1080`.
-
-The started process shape includes `cli?: CliSurfaceRuntime`, and the process runtime owns surface assembly while not owning command semantics.
-
-Evidence:
-
-- `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1257-1272`
-- `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1275-1296`
-
-The spec also says web and CLI harnesses follow the same runtime-subsystem contract: runtime boots resources, builds surface runtime, and harness mounts/provides invocation input.
-
-Evidence: `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1374-1380`.
-
 ## Correct Integration Boundary
 
 The boundary should be:
@@ -81,10 +45,46 @@ It should be the RAWR runtime view for the selected CLI surface, containing enou
 - determine core/dev/user install posture,
 - expose process and role runtime views to command code,
 - report topology/catalog state,
-- validate that selected plugins have valid OCLIF manifests,
+- validate that selected plugins have valid OCLIF metadata and optional manifests,
 - materialize or verify OCLIF plugin config for the intended CLI.
 
 The actual command classes remain OCLIF command classes.
+
+## Canonical Architecture Commitments
+
+The integrated spec defines plugins as runtime projection, not services, bootgraphs, app manifests, process runtimes, or mini-frameworks. It names role-first plugin roots, including `plugins/cli/commands/*`, and names `defineCliCommandPlugin`.
+
+Evidence:
+
+- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:960-978`
+- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:1013-1028`
+
+The same spec says a manifest authors app identity, process modules, role membership, and explicit surface membership. Its canonical shape is `role -> surface -> plugin membership`.
+
+Evidence:
+
+- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:1293-1320`
+
+The Effect runtime subsystem spec says the key binding seam is between booted resources, role-local bound service clients, and mounted surface code. It also states:
+
+```text
+plugins describe binding
+runtime subsystem performs binding
+services receive canonical boundary bags
+```
+
+Evidence: `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1064-1080`.
+
+The started process shape includes `cli?: CliSurfaceRuntime`, and the process runtime owns surface assembly while not owning command semantics.
+
+Evidence:
+
+- `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1257-1272`
+- `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1275-1296`
+
+The spec also says web and CLI harnesses follow the same runtime-subsystem contract: runtime boots resources, builds surface runtime, and harness mounts/provides invocation input.
+
+Evidence: `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1374-1380`.
 
 ## Binding Shape For CLI Commands
 
@@ -114,12 +114,12 @@ Current implementation fits the model in these ways:
 - OCLIF remains the command runtime: `apps/cli/src/index.ts` calls `@oclif/core` `run`.
 - OCLIF plugin packages exist under `plugins/cli/*`.
 - Commands use public service clients and binding helpers rather than direct app internals in several places.
-- OCLIF install/link is correctly treated as Channel A.
+- OCLIF install/link is already kept at the OCLIF plugin-manager boundary rather than hidden inside app code.
 
 Current implementation does not yet fit the model in these ways:
 
 - `apps/hq/rawr.hq.ts` does not express CLI role/surface membership.
-- The root CLI package statically lists plugins rather than consuming manifest-selected CLI plugin membership.
+- The root CLI package statically lists plugins rather than consuming app-manifest-selected CLI plugin membership.
 - `toolkit` is doing two jobs: command-plugin eligibility and agent-runtime package/toolkit distribution intent.
 - `rawr plugins cli install all` is the convergence mechanism, not yet a projection of app manifest composition.
 
@@ -167,3 +167,9 @@ Target shape:
 - A single package may provide both an OCLIF command plugin and an agent toolkit artifact when that is intentional.
 
 That lets RAWR keep the intended agent-runtime path without making local CLI composition depend on historical naming.
+
+## Public Naming Fit
+
+The target architecture should avoid making "plugin" mean both native OCLIF command plugin and RAWR runtime capability. OCLIF already owns a real, user-facing plugin concept, including `plugins install` and `plugins link`. RAWR should not create another public "plugin" channel beside it.
+
+If RAWR later needs enable/disable/toggle behavior for workspace capabilities, that should be modeled as HQ Ops capability or topology state. It can still be implemented by packages that participate in app composition, but the public vocabulary should not be `rawr plugins web`.
