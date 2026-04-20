@@ -59,9 +59,9 @@ Severity scale:
 
 ## `@rawr/hq-ops`
 
-Summary: P0=0, P1=1, P2=2, P3=0
+Summary: P0=0, P1=0, P2=0, P3=0
 
-### HQO-CFG-001 (OPEN)
+### HQO-CFG-001 (RESOLVED)
 - Service: `@rawr/hq-ops`
 - Tags: `RULE:no-contract-import` `RULE:schema-first-types-derived` `MOD:config` `KIND:type-import-from-contract`
 - Severity: P1
@@ -72,8 +72,9 @@ Summary: P0=0, P1=1, P2=2, P3=0
   - Make helpers depend only on reusable entity/DTO shapes (or module-local internal types), not on `contract.ts`.
   - Preferred direction: move reusable config DTO schemas/types (e.g. load result + validation issue) into `services/hq-ops/src/service/modules/config/entities.ts` (contract consumes entities; helpers consume entities).
 - Suggested owner: `agent:hq-ops`
+- Resolution: `d9559ce1213f7ec0781def9cc5f1428114a4d70a` — move config DTO schemas/types into `entities.ts`; `contract.ts` reuses them; helpers depend on entities (not contract)
 
-### HQO-PLC-001 (OPEN)
+### HQO-PLC-001 (RESOLVED)
 - Service: `@rawr/hq-ops`
 - Tags: `RULE:router-not-dumping-ground` `MOD:plugin-lifecycle` `KIND:router-godfile`
 - Severity: P2
@@ -82,8 +83,9 @@ Summary: P0=0, P1=1, P2=2, P3=0
 - Fix intent:
   - Keep procedure handlers readable and structured; if logic is mechanical, keep it in focused helpers; if it’s persistence/query/index mechanics, keep it in repositories; avoid turning the router into the only place where meaning lives.
 - Suggested owner: `agent:hq-ops`
+- Resolution: `d9559ce1213f7ec0781def9cc5f1428114a4d70a` — split procedure handlers into module-local `procedures/*`; keep router as thin composition/export
 
-### HQO-PLI-001 (OPEN)
+### HQO-PLI-001 (RESOLVED)
 - Service: `@rawr/hq-ops`
 - Tags: `RULE:router-not-dumping-ground` `MOD:plugin-install` `KIND:router-godfile`
 - Severity: P2
@@ -92,6 +94,7 @@ Summary: P0=0, P1=1, P2=2, P3=0
 - Fix intent:
   - Same as HQO-PLC-001; keep the capability flow legible, split where needed.
 - Suggested owner: `agent:hq-ops`
+- Resolution: `d9559ce1213f7ec0781def9cc5f1428114a4d70a` — split install assessment/repair procedures into module-local `procedures/*`; keep router as thin composition/export
 
 ## `@rawr/agent-config-sync`
 
@@ -152,4 +155,3 @@ Summary: P0=0, P1=0, P2=2, P3=0
   - Same as SINT-SCH-001.
 - Suggested owner: `agent:session-intelligence`
 - Resolution: `cb9023b125c17bca32469ea2bffc2fcfda0306cf` — split mechanical filtering/date-window logic into a focused module-local helper; keep capability flow in `router.ts`
-
