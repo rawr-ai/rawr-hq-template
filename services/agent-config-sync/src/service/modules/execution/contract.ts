@@ -5,68 +5,13 @@ import {
   SourceContentSchema,
   SourcePluginSchema,
   SyncAgentSchema,
-  SyncActionSchema,
 } from "../../shared/entities";
-
-/**
- * Summary entity for what source content was available before provider-specific
- * overlays were applied to each destination.
- */
-const SyncScannedSummarySchema = Type.Object(
-  {
-    workflows: Type.Array(Type.String({ minLength: 1 })),
-    skills: Type.Array(Type.String({ minLength: 1 })),
-    scripts: Type.Array(Type.String({ minLength: 1 })),
-    agents: Type.Array(Type.String({ minLength: 1 })),
-  },
-  { additionalProperties: false },
-);
-
-/**
- * Per-target sync result entry shared by Codex and Claude destination writers.
- */
-const SyncItemResultSchema = Type.Object(
-  {
-    action: SyncActionSchema,
-    kind: Type.Union([
-      Type.Literal("workflow"),
-      Type.Literal("skill"),
-      Type.Literal("script"),
-      Type.Literal("agent"),
-      Type.Literal("metadata"),
-    ]),
-    source: Type.Optional(Type.String({ minLength: 1 })),
-    target: Type.String({ minLength: 1 }),
-    message: Type.Optional(Type.String({ minLength: 1 })),
-  },
-  { additionalProperties: false },
-);
-
-/**
- * Destination-level sync result that keeps conflicts beside all attempted work.
- */
-const SyncTargetResultSchema = Type.Object(
-  {
-    agent: SyncAgentSchema,
-    home: Type.String({ minLength: 1 }),
-    items: Type.Array(SyncItemResultSchema),
-    conflicts: Type.Array(SyncItemResultSchema),
-  },
-  { additionalProperties: false },
-);
-
-/**
- * Top-level execution result for one source plugin sync run.
- */
-const SyncRunResultSchema = Type.Object(
-  {
-    ok: Type.Boolean(),
-    sourcePlugin: SourcePluginSchema,
-    scanned: SyncScannedSummarySchema,
-    targets: Type.Array(SyncTargetResultSchema),
-  },
-  { additionalProperties: false },
-);
+import {
+  SyncItemResultSchema,
+  SyncRunResultSchema,
+  SyncScannedSummarySchema,
+  SyncTargetResultSchema,
+} from "../../shared/entities/sync-results";
 
 /**
  * Execution input for applying or previewing destination sync.

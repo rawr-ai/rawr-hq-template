@@ -1,4 +1,4 @@
-import type { SyncAgentSelection, TargetHomeCandidates, TargetHomes } from "../contract";
+import type { SyncAgentSelection, TargetHomeCandidates, TargetHomes } from "../entities";
 import type { AgentConfigSyncPathResources } from "../../../shared/resources";
 
 function dedupePaths(paths: string[], pathOps: AgentConfigSyncPathResources): string[] {

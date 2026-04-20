@@ -12,21 +12,21 @@
  */
 import { module } from "./module";
 import { resolveProviderContent } from "../../shared/source-content/helpers/provider-content";
-import { deleteIfExists, syncFileWithConflictPolicy, syncSkillDirWithConflictPolicy } from "../execution/helpers/destination-files";
+import { deleteIfExists, syncFileWithConflictPolicy, syncSkillDirWithConflictPolicy } from "../../shared/repositories/destination-sync-repository";
 import {
   buildCodexScriptName,
   getClaimsFromOtherPlugins,
   loadCodexRegistry,
   upsertCodexRegistry,
-} from "../execution/helpers/registry-codex";
+} from "../../shared/repositories/codex-registry-repository";
 import {
   readClaudeSyncManifest,
   upsertClaudeMarketplace,
   upsertClaudePluginManifest,
   writeClaudeSyncManifest,
-} from "../execution/helpers/marketplace-claude";
-import { pushItem, summarizeScannedContent } from "../execution/helpers/sync-results";
-import type { SyncRunResult, SyncTargetResult } from "../execution/contract";
+} from "../../shared/repositories/claude-marketplace-repository";
+import { pushItem, summarizeScannedContent } from "../../shared/helpers/sync-results";
+import type { SyncRunResult, SyncTargetResult } from "../../shared/entities/sync-results";
 import type { SourceContent, SourcePlugin } from "../../shared/entities";
 import type { AgentConfigSyncResources } from "../../shared/resources";
 import { summarizeWorkspaceRun } from "./helpers/assessment-summary";

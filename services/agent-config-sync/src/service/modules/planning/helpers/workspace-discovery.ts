@@ -1,7 +1,7 @@
 import { resolveSourceScopeForPath, scopeAllows } from "../../../shared/internal/source-scope";
 import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type { SyncScope } from "../../../shared/entities";
-import type { WorkspaceSkip, WorkspaceSyncable } from "../contract";
+import type { WorkspaceSkip, WorkspaceSyncable } from "../entities";
 import {
   hasAnyContent,
   loadWorkspaceSourcePlugins,

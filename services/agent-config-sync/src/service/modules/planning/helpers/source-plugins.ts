@@ -5,7 +5,7 @@ import type {
   SourceContent,
   SourcePlugin,
 } from "../../../shared/entities";
-import type { WorkspaceSkip, WorkspaceSyncable } from "../contract";
+import type { WorkspaceSkip, WorkspaceSyncable } from "../entities";
 import { listWorkspacePluginDirs } from "./workspace-roots";
 
 type PackageJson = {

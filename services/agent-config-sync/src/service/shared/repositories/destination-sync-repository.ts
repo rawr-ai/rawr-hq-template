@@ -1,9 +1,16 @@
-import type {
-  AgentConfigSyncResources,
-  AgentConfigSyncUndoCapture,
-} from "../../../shared/resources";
-import type { SyncItemResult, SyncTargetResult } from "../contract";
-import { pushItem } from "./sync-results";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../resources";
+import type { SyncItemResult, SyncTargetResult } from "../entities/sync-results";
+import { pushItem } from "../helpers/sync-results";
+
+/**
+ * agent-config-sync: destination sync repository.
+ *
+ * @remarks
+ * This repository owns the filesystem mechanics of applying the service's
+ * conflict policy when writing to destination homes (Codex/Claude). Routers own
+ * the capability flow; this repository owns how individual files/dirs are
+ * synchronized and how deletions are recorded in results.
+ */
 
 export type SyncFileOptions = {
   dryRun: boolean;
@@ -152,3 +159,4 @@ export async function deleteIfExists(input: {
 
   pushItem(result, { action: options.dryRun ? "planned" : "deleted", kind, target, message: "gc orphan" });
 }
+

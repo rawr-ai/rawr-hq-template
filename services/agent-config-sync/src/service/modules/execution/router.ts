@@ -14,21 +14,21 @@
  */
 import { module } from "./module";
 import { resolveProviderContent as resolveServiceProviderContent } from "../../shared/source-content/helpers/provider-content";
-import { deleteIfExists, syncFileWithConflictPolicy, syncSkillDirWithConflictPolicy } from "./helpers/destination-files";
 import {
   buildCodexScriptName,
   getClaimsFromOtherPlugins,
   loadCodexRegistry,
   upsertCodexRegistry,
-} from "./helpers/registry-codex";
+} from "../../shared/repositories/codex-registry-repository";
 import {
   readClaudeSyncManifest,
   upsertClaudeMarketplace,
   upsertClaudePluginManifest,
   writeClaudeSyncManifest,
-} from "./helpers/marketplace-claude";
-import { pushItem, summarizeScannedContent } from "./helpers/sync-results";
-import type { SyncTargetResult } from "./contract";
+} from "../../shared/repositories/claude-marketplace-repository";
+import { deleteIfExists, syncFileWithConflictPolicy, syncSkillDirWithConflictPolicy } from "../../shared/repositories/destination-sync-repository";
+import { pushItem, summarizeScannedContent } from "../../shared/helpers/sync-results";
+import type { SyncTargetResult } from "../../shared/entities/sync-results";
 
 /**
  * Execution procedure for running provider-specific effective content through
