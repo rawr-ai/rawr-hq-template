@@ -3,23 +3,9 @@ import { Type } from "typebox";
 import { ocBase } from "../../base";
 import {
   JournalEventSchema,
-  JournalSnippetKindSchema,
+  JournalSearchRowSchema,
   JournalSnippetSchema,
 } from "./entities";
-
-const JournalSearchRowSchema = Type.Object(
-  {
-    id: Type.String({ minLength: 1 }),
-    ts: Type.String({ minLength: 1 }),
-    kind: JournalSnippetKindSchema,
-    title: Type.String({ minLength: 1 }),
-    preview: Type.String(),
-    tags: Type.Array(Type.String()),
-    sourceEventId: Type.Optional(Type.String({ minLength: 1 })),
-    score: Type.Optional(Type.Number()),
-  },
-  { additionalProperties: false },
-);
 
 const JournalWriteResultSchema = Type.Object(
   {

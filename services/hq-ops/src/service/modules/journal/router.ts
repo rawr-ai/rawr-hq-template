@@ -59,18 +59,19 @@ const searchSnippets = module.searchSnippets.handler(async ({ context, input }) 
   const db = await openJournalDb(context.deps.resources, context.scope.repoRoot);
   try {
     if (input.mode === "semantic") {
-      try {
+      const config = context.deps.resources.embeddings.getConfig();
+      if (!config) {
         return {
           mode: input.mode,
-          snippets: await searchSnippetsSemantic(context.deps.resources, db, input.query, input.limit),
-        };
-      } catch (error) {
-        return {
-          mode: input.mode,
-          warning: error instanceof Error ? error.message : String(error),
+          warning: "Semantic search not configured (missing embedding provider configuration)",
           snippets: [],
         };
       }
+
+      return {
+        mode: input.mode,
+        snippets: await searchSnippetsSemantic(context.deps.resources, db, config, input.query, input.limit),
+      };
     }
 
     return { mode: input.mode, snippets: searchSnippetsFts(db, input.query, input.limit) };

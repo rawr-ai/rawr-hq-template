@@ -10,14 +10,12 @@ import type { HqOpsResources } from "../../shared/ports/resources";
 import { runBunAudit, runBunPmUntrusted } from "./helpers/audit";
 import { getRepoRoot } from "./helpers/process";
 import {
-  maxFindingSeverity,
-  readLatestSecurityReport,
   securityReport,
   severityRank,
   sortFindings,
-  toleranceToMaxSeverity,
-  writeSecurityReport,
-} from "./helpers/reporting";
+} from "./helpers/report-format";
+import { readLatestSecurityReport, writeSecurityReport } from "./helpers/report-io";
+import { maxFindingSeverity, toleranceToMaxSeverity } from "./helpers/report-risk";
 import { scanSecretsRepo, scanSecretsStaged } from "./helpers/secrets";
 import { module } from "./module";
 import type { SecurityFinding, SecurityMode } from "./entities";
