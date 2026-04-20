@@ -1,51 +1,12 @@
 import { schema } from "@rawr/hq-sdk";
-import { type Static, Type } from "typebox";
+import { Type } from "typebox";
 import { ocBase } from "../../base";
-import { RawrConfigV1Schema } from "./entities";
-
-const ConfigValidationIssueSchema = Type.Object(
-  {
-    path: Type.String({ minLength: 1 }),
-    message: Type.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
-
-const ConfigLoadErrorSchema = Type.Object(
-  {
-    message: Type.String({ minLength: 1 }),
-    cause: Type.Optional(Type.String({ minLength: 1 })),
-    issues: Type.Optional(Type.Array(ConfigValidationIssueSchema)),
-  },
-  { additionalProperties: false },
-);
-
-const ConfigLoadResultSchema = Type.Object(
-  {
-    config: Type.Union([RawrConfigV1Schema, Type.Null()]),
-    path: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
-    warnings: Type.Array(Type.String()),
-    error: Type.Optional(ConfigLoadErrorSchema),
-  },
-  { additionalProperties: false },
-);
-
-const ConfigLayeredResultSchema = Type.Object(
-  {
-    global: ConfigLoadResultSchema,
-    workspace: ConfigLoadResultSchema,
-    merged: Type.Union([RawrConfigV1Schema, Type.Null()]),
-  },
-  { additionalProperties: false },
-);
-
-const SyncSourcesResultSchema = Type.Object(
-  {
-    path: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
-    sources: Type.Array(Type.String({ minLength: 1 })),
-  },
-  { additionalProperties: false },
-);
+import {
+  ConfigLayeredResultSchema,
+  ConfigLoadResultSchema,
+  ConfigValidationIssueSchema,
+  SyncSourcesResultSchema,
+} from "./entities";
 
 const InvalidGlobalConfigDataSchema = schema(
   Type.Object(
@@ -65,9 +26,7 @@ const INVALID_GLOBAL_CONFIG = {
   data: InvalidGlobalConfigDataSchema,
 } as const;
 
-export type ConfigValidationIssue = Static<typeof ConfigValidationIssueSchema>;
-export type LoadRawrConfigResult = Static<typeof ConfigLoadResultSchema>;
-export type LoadRawrConfigLayeredResult = Static<typeof ConfigLayeredResultSchema>;
+export type { ConfigValidationIssue, LoadRawrConfigLayeredResult, LoadRawrConfigResult } from "./entities";
 
 const EmptyInputSchema = schema(
   Type.Object(
