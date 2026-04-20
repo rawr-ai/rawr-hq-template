@@ -6,7 +6,9 @@
  * - observation of local manager state (CLI/projection responsibility)
  * - from definition of "healthy" install state (service responsibility).
  */
-import { discoverWorkspacePluginCatalog } from "../plugin-catalog/helpers/discovery";
+import { assertUniqueCatalogIdentity, listWorkspacePluginPackageDirs, parsePluginPackage } from "../plugin-catalog/helpers/discovery";
+import type { HqOpsResources } from "../../shared/ports/resources";
+import type { WorkspacePluginCatalogEntry } from "../plugin-catalog/entities";
 import {
   CANONICAL_SYNC_PLUGIN_NAME,
   LEGACY_SYNC_PLUGIN_NAMES,
@@ -24,6 +26,19 @@ import {
 } from "./helpers/install-utils";
 import { module } from "./module";
 
+async function loadWorkspacePluginCatalog(input: {
+  workspaceRoot: string;
+  resources: Pick<HqOpsResources, "fs" | "path">;
+}): Promise<WorkspacePluginCatalogEntry[]> {
+  const pluginDirs = await listWorkspacePluginPackageDirs(input.workspaceRoot, input.resources.fs, input.resources.path);
+  const parsed = await Promise.all(pluginDirs.map((pluginDir) => parsePluginPackage(pluginDir, input.workspaceRoot, input.resources.fs, input.resources.path)));
+  const plugins = parsed
+    .filter((p): p is WorkspacePluginCatalogEntry => Boolean(p))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  assertUniqueCatalogIdentity(plugins);
+  return plugins;
+}
+
 /**
  * Install assessment procedure.
  *
@@ -34,8 +49,8 @@ import { module } from "./module";
 const assessInstallState = module.assessInstallState.handler(async ({ context, input }) => {
   const resources = context.deps.resources;
   const workspaceRoot = resources.path.resolve(input.workspaceRoot ?? context.scope.repoRoot);
-  const catalog = await discoverWorkspacePluginCatalog({ workspaceRoot }, resources, context.scope.repoRoot);
-  const expectedLinks: PluginInstallExpectedLink[] = catalog.plugins
+  const plugins = await loadWorkspacePluginCatalog({ workspaceRoot, resources });
+  const expectedLinks: PluginInstallExpectedLink[] = plugins
     .filter((plugin) => plugin.commandPlugin.eligible)
     .map((plugin) => ({ pluginName: plugin.id, root: plugin.absPath }));
   const canonicalWorkspaceRoot = resources.path.resolve(input.canonicalWorkspaceRoot ?? workspaceRoot);

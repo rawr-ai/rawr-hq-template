@@ -144,19 +144,4 @@ function assertUniqueCatalogIdentity(plugins: WorkspacePluginCatalogEntry[]): vo
  * This is the shared service routine behind catalog, install, and lifecycle
  * procedures so those capabilities agree on the same plugin inventory.
  */
-export async function discoverWorkspacePluginCatalog(input: {
-  workspaceRoot?: string;
-}, resources: CatalogResources, defaultWorkspaceRoot: string): Promise<{
-  workspaceRoot: string;
-  plugins: WorkspacePluginCatalogEntry[];
-}> {
-  const workspaceRoot = resources.path.resolve(input.workspaceRoot ?? defaultWorkspaceRoot);
-  const pluginDirs = await listWorkspacePluginPackageDirs(workspaceRoot, resources.fs, resources.path);
-  const plugins: WorkspacePluginCatalogEntry[] = [];
-  for (const pluginDir of pluginDirs) {
-    const plugin = await parsePluginPackage(pluginDir, workspaceRoot, resources.fs, resources.path);
-    if (plugin) plugins.push(plugin);
-  }
-  assertUniqueCatalogIdentity(plugins);
-  return { workspaceRoot, plugins: plugins.sort((a, b) => a.id.localeCompare(b.id)) };
-}
+export { listWorkspacePluginPackageDirs, parsePluginPackage, assertUniqueCatalogIdentity };
