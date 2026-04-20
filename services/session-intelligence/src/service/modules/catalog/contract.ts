@@ -1,13 +1,45 @@
 import { schema } from "@rawr/hq-sdk";
-import { Type } from "typebox";
+import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
 import { SESSION_NOT_FOUND } from "../../shared/errors";
 import {
-  ResolveResultSchema,
-  SessionFiltersSchema,
+  SessionMetadataSchema,
   SessionListItemSchema,
   SessionSourceFilterSchema,
-} from "./schemas";
+  SessionSourceSchema,
+  SessionStatusSchema,
+} from "../../shared/entities";
+
+const SessionFiltersSchema = Type.Object(
+  {
+    project: Type.Optional(Type.String()),
+    cwdContains: Type.Optional(Type.String()),
+    branch: Type.Optional(Type.String()),
+    model: Type.Optional(Type.String()),
+    since: Type.Optional(Type.String()),
+    until: Type.Optional(Type.String()),
+  },
+  { additionalProperties: false },
+);
+export type SessionFilters = Static<typeof SessionFiltersSchema>;
+
+const ResolveResultSchema = Type.Object(
+  {
+    resolved: Type.Object(
+      {
+        path: Type.String(),
+        source: SessionSourceSchema,
+        status: Type.Optional(SessionStatusSchema),
+        modified: Type.String(),
+        sizeBytes: Type.Number(),
+      },
+      { additionalProperties: false },
+    ),
+    metadata: SessionMetadataSchema,
+  },
+  { additionalProperties: false },
+);
+export type ResolveResult = Static<typeof ResolveResultSchema>;
 
 export const contract = {
   list: ocBase

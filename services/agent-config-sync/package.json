@@ -30,9 +30,9 @@
       "types": "./src/undo.ts",
       "default": "./src/undo.ts"
     },
-    "./schemas": {
-      "types": "./src/service/shared/schemas.ts",
-      "default": "./src/service/shared/schemas.ts"
+    "./entities": {
+      "types": "./src/service/shared/entities.ts",
+      "default": "./src/service/shared/entities.ts"
     },
     "./router": {
       "types": "./src/router.ts",

@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type { SourceContent } from "../../../shared/schemas";
+import type { SourceContent } from "../../../shared/entities";
 import type { NormalizedPluginContentInclude } from "../entities";
 
 /**

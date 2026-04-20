@@ -18,7 +18,7 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/shared/errors.ts",
   "services/agent-config-sync/src/service/shared/internal-errors.ts",
   "services/agent-config-sync/src/service/shared/resources.ts",
-  "services/agent-config-sync/src/service/shared/schemas.ts",
+  "services/agent-config-sync/src/service/shared/entities.ts",
   "services/agent-config-sync/src/service/shared/internal/source-scope.ts",
   "services/agent-config-sync/src/service/modules/source-content/entities.ts",
   "services/agent-config-sync/src/service/modules/source-content/helpers/composed-tools.ts",
@@ -27,11 +27,9 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/modules/source-content/helpers/provider-content.ts",
   "services/agent-config-sync/src/service/modules/source-content/helpers/scan-content.ts",
   "services/agent-config-sync/src/service/modules/source-content/helpers/source-plugin-content.ts",
-  "services/agent-config-sync/src/service/modules/execution/marketplace-claude.ts",
-  "services/agent-config-sync/src/service/modules/execution/registry-codex.ts",
-  "services/agent-config-sync/src/service/modules/execution/helpers/claude-target.ts",
-  "services/agent-config-sync/src/service/modules/execution/helpers/codex-target.ts",
   "services/agent-config-sync/src/service/modules/execution/helpers/destination-files.ts",
+  "services/agent-config-sync/src/service/modules/execution/helpers/marketplace-claude.ts",
+  "services/agent-config-sync/src/service/modules/execution/helpers/registry-codex.ts",
   "services/agent-config-sync/src/service/modules/execution/helpers/sync-results.ts",
   "services/agent-config-sync/src/service/modules/planning/contract.ts",
   "services/agent-config-sync/src/service/modules/planning/helpers/assessment-summary.ts",
@@ -48,8 +46,6 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/modules/execution/module.ts",
   "services/agent-config-sync/src/service/modules/execution/router.ts",
   "services/agent-config-sync/src/service/modules/retirement/contract.ts",
-  "services/agent-config-sync/src/service/modules/retirement/helpers/claude-stale-managed.ts",
-  "services/agent-config-sync/src/service/modules/retirement/helpers/codex-stale-managed.ts",
   "services/agent-config-sync/src/service/modules/retirement/helpers/filesystem-actions.ts",
   "services/agent-config-sync/src/service/modules/retirement/helpers/managed-source.ts",
   "services/agent-config-sync/src/service/modules/retirement/middleware.ts",
@@ -83,6 +79,8 @@ const exportsMap = pkg.exports ?? {};
 for (const key of [".", "./client", "./service/contract", "./router"]) {
   assertCondition(exportsMap[key], `agent-config-sync package exports must include ${key}`);
 }
+assertCondition(exportsMap["./entities"], "agent-config-sync package exports must include ./entities");
+assertCondition(!exportsMap["./schemas"], "agent-config-sync package exports must not expose ./schemas");
 
 const [
   contractSource,
@@ -122,7 +120,7 @@ const [
   readFile("services/agent-config-sync/src/service/modules/retirement/module.ts"),
   readFile("services/agent-config-sync/src/service/modules/undo/middleware.ts"),
   readFile("services/agent-config-sync/src/service/modules/undo/module.ts"),
-  readFile("services/agent-config-sync/src/service/shared/schemas.ts"),
+  readFile("services/agent-config-sync/src/service/shared/entities.ts"),
   readFile("plugins/cli/plugins/package.json"),
 ]);
 
@@ -168,6 +166,19 @@ for (const forbidden of ["SyncAgentSelection", "TargetHomes", "WorkspaceSkip", "
   assertCondition(!sharedSchemas.includes(forbidden), `shared schemas must not contain planning-only ${forbidden}`);
 }
 
+const modulesRoot = "services/agent-config-sync/src/service/modules";
+for (const moduleDir of await fs.readdir(modulesRoot, { withFileTypes: true })) {
+  if (!moduleDir.isDirectory()) continue;
+  const moduleRoot = path.posix.join(modulesRoot, moduleDir.name);
+  for (const entry of await fs.readdir(moduleRoot, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".ts")) continue;
+    assertCondition(
+      /^(contract|router|errors|entities|module|middleware)\.ts$/u.test(entry.name),
+      `${path.posix.join(moduleRoot, entry.name)} must not exist as a module-root behavior bucket; put precise reusable helpers under helpers/ or keep procedure flow in router.ts`,
+    );
+  }
+}
+
 const sharedInternalRoot = "services/agent-config-sync/src/service/shared/internal";
 const allowedSharedInternal = new Set([`${sharedInternalRoot}/source-scope.ts`]);
 for (const entry of await fs.readdir(sharedInternalRoot, { withFileTypes: true })) {
@@ -186,8 +197,13 @@ for (const relPath of [
   "services/agent-config-sync/src/service/modules/planning/workspace-planning.ts",
   "services/agent-config-sync/src/service/modules/retirement/repository.ts",
   "services/agent-config-sync/src/service/modules/retirement/retire-stale-managed.ts",
+  "services/agent-config-sync/src/service/modules/execution/helpers/claude-target.ts",
+  "services/agent-config-sync/src/service/modules/execution/helpers/codex-target.ts",
+  "services/agent-config-sync/src/service/modules/retirement/helpers/claude-stale-managed.ts",
+  "services/agent-config-sync/src/service/modules/retirement/helpers/codex-stale-managed.ts",
   "services/agent-config-sync/src/service/modules/undo/repository.ts",
   "services/agent-config-sync/src/service/modules/undo/sync-undo.ts",
+  "services/agent-config-sync/src/service/shared/schemas.ts",
   "services/agent-config-sync/src/service/modules/planning/schemas.ts",
   "services/agent-config-sync/src/service/modules/execution/schemas.ts",
   "services/agent-config-sync/src/service/modules/retirement/schemas.ts",

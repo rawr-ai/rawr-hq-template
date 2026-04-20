@@ -1,11 +1,11 @@
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
-import type { AgentConfigSyncResources } from "../../shared/resources";
+import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type {
   SourceContent,
   SourcePlugin,
-} from "../../shared/schemas";
+} from "../../../shared/entities";
 
 /**
  * Codex registry ownership sets grouped by destination content type.

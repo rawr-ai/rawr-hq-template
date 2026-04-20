@@ -8,7 +8,7 @@ Allowed shared files:
 - `errors.ts` for reusable ORPC boundary errors once multiple modules need them.
 - `internal-errors.ts` for unexpected internal-only failures.
 - `resources.ts` for the service-wide host resource contract.
-- `schemas.ts` for public/cross-module sync value objects used by multiple modules.
+- `entities.ts` for public/cross-module sync value objects used by multiple modules.
 - `internal/source-scope.ts` because planning and retirement both need identical
   source-scope resolution semantics.
 

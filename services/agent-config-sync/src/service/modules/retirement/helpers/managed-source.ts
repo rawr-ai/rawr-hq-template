@@ -1,5 +1,5 @@
 import { resolveSourceScopeForPath, scopeAllows } from "../../../shared/internal/source-scope";
-import type { SyncScope } from "../../../shared/schemas";
+import type { SyncScope } from "../../../shared/entities";
 
 export const MANAGED_BY = "@rawr/plugin-plugins";
 

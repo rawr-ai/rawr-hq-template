@@ -7,14 +7,14 @@ import {
   SyncActionSchema,
   SyncAgentSchema,
   SyncScopeSchema,
-} from "../../shared/schemas";
+} from "../../shared/entities";
 
-export const SyncAgentSelectionSchema = Type.Union([
+const SyncAgentSelectionSchema = Type.Union([
   SyncAgentSchema,
   Type.Literal("all"),
 ]);
 
-export const DestinationConfigSchema = Type.Object(
+const DestinationConfigSchema = Type.Object(
   {
     rootPath: Type.Optional(Type.String({ minLength: 1 })),
     enabled: Type.Optional(Type.Boolean()),
@@ -22,7 +22,7 @@ export const DestinationConfigSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const TargetHomeCandidatesSchema = Type.Object(
+const TargetHomeCandidatesSchema = Type.Object(
   {
     codexHomesFromFlags: Type.Array(Type.String({ minLength: 1 })),
     claudeHomesFromFlags: Type.Array(Type.String({ minLength: 1 })),
@@ -36,7 +36,7 @@ export const TargetHomeCandidatesSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const TargetHomesSchema = Type.Object(
+const TargetHomesSchema = Type.Object(
   {
     codexHomes: Type.Array(Type.String({ minLength: 1 })),
     claudeHomes: Type.Array(Type.String({ minLength: 1 })),
@@ -44,7 +44,7 @@ export const TargetHomesSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const WorkspaceSkipSchema = Type.Object(
+const WorkspaceSkipSchema = Type.Object(
   {
     dirName: Type.String({ minLength: 1 }),
     absPath: Type.String({ minLength: 1 }),
@@ -53,7 +53,7 @@ export const WorkspaceSkipSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const WorkspaceSyncableSchema = Type.Object(
+const WorkspaceSyncableSchema = Type.Object(
   {
     sourcePlugin: SourcePluginSchema,
     content: SourceContentSchema,
@@ -61,7 +61,7 @@ export const WorkspaceSyncableSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const FullSyncPolicyInputSchema = Type.Object(
+const FullSyncPolicyInputSchema = Type.Object(
   {
     agent: SyncAgentSelectionSchema,
     scope: SyncScopeSchema,
@@ -77,7 +77,7 @@ export const FullSyncPolicyInputSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const FullSyncPolicyResultSchema = Type.Object(
+const FullSyncPolicyResultSchema = Type.Object(
   {
     allowed: Type.Boolean(),
     partialReasons: Type.Array(Type.String({ minLength: 1 })),
@@ -118,7 +118,7 @@ const WORKSPACE_ROOT_NOT_FOUND = {
   data: WorkspaceRootErrorDataSchema,
 } as const;
 
-export const WorkspacePlanningBaseInputSchema = Type.Object(
+const WorkspacePlanningBaseInputSchema = Type.Object(
   {
     cwd: Type.String({ minLength: 1 }),
     workspaceRoot: Type.Optional(Type.String({ minLength: 1 })),
@@ -133,7 +133,7 @@ export const WorkspacePlanningBaseInputSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const PlanWorkspaceSyncInputSchema = Type.Object(
+const PlanWorkspaceSyncInputSchema = Type.Object(
   {
     cwd: Type.String({ minLength: 1 }),
     workspaceRoot: Type.Optional(Type.String({ minLength: 1 })),
@@ -149,9 +149,9 @@ export const PlanWorkspaceSyncInputSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const AssessWorkspaceSyncInputSchema = WorkspacePlanningBaseInputSchema;
+const AssessWorkspaceSyncInputSchema = WorkspacePlanningBaseInputSchema;
 
-export const DriftItemSchema = Type.Object(
+const DriftItemSchema = Type.Object(
   {
     action: SyncActionSchema,
     kind: Type.Union([
@@ -167,7 +167,7 @@ export const DriftItemSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const SyncAssessmentSchema = Type.Object(
+const SyncAssessmentSchema = Type.Object(
   {
     status: Type.Union([
       Type.Literal("IN_SYNC"),
@@ -205,7 +205,7 @@ export const SyncAssessmentSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const WorkspaceSyncPlanSchema = Type.Object(
+const WorkspaceSyncPlanSchema = Type.Object(
   {
     workspaceRoot: Type.String({ minLength: 1 }),
     syncable: Type.Array(WorkspaceSyncableSchema),

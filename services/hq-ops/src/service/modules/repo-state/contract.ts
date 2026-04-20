@@ -3,15 +3,15 @@ import { Type } from "typebox";
 import { RepoStateSchema, type RepoState } from "./entities";
 import { ocBase } from "../../base";
 
-export const GetStateInputSchema = Type.Object({}, { additionalProperties: false });
-export const UpdatePluginInputSchema = Type.Object(
+const GetStateInputSchema = Type.Object({}, { additionalProperties: false });
+const UpdatePluginInputSchema = Type.Object(
   {
     pluginId: Type.String({ minLength: 1 }),
   },
   { additionalProperties: false },
 );
 
-export const GetStateOutputSchema = Type.Object(
+const GetStateOutputSchema = Type.Object(
   {
     state: RepoStateSchema,
     authorityRepoRoot: Type.String({ minLength: 1 }),
@@ -53,5 +53,3 @@ export const contract = {
     .output(schema(RepoStateSchema))
     .errors({ REPO_STATE_LOCK_TIMEOUT }),
 };
-
-export type RepoStateModuleContract = typeof contract;

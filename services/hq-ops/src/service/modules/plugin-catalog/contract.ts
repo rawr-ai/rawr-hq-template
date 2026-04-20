@@ -61,5 +61,3 @@ export const contract = {
       { additionalProperties: false },
     ))),
 };
-
-export type PluginCatalogModuleContract = typeof contract;

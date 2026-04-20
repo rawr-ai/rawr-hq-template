@@ -1,7 +1,7 @@
 import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
-import { SyncScopeSchema } from "../../shared/schemas";
+import { SyncScopeSchema } from "../../shared/entities";
 
 const RetireActionSchema = Type.Object(
   {

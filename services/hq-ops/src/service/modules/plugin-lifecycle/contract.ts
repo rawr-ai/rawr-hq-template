@@ -253,5 +253,3 @@ export const contract = {
       { additionalProperties: false },
     ))),
 };
-
-export type PluginLifecycleModuleContract = typeof contract;

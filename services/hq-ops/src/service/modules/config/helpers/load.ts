@@ -1,6 +1,6 @@
 import type { ConfigResources } from "./paths";
 import { rawrConfigPath, rawrGlobalConfigPath } from "./paths";
-import type { LoadRawrConfigResult } from "../contract";
+import type { LoadRawrConfigResult } from "../entities";
 import { formatIssues, validateRawrConfig } from "./validation";
 
 function pickConfigExport(mod: unknown): unknown {

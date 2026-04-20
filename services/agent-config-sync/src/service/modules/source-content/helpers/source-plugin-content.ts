@@ -1,5 +1,5 @@
 import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type { SourceContent, SourcePlugin } from "../../../shared/schemas";
+import type { SourceContent, SourcePlugin } from "../../../shared/entities";
 import { scanComposedToolkitContent } from "./composed-tools";
 import { resolvePluginContentLayout } from "./manifest";
 import { scanCanonicalContentAtRoot } from "./scan-content";

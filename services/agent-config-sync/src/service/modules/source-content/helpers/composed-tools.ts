@@ -1,7 +1,7 @@
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type { SourceContent, SourcePlugin } from "../../../shared/schemas";
+import type { SourceContent, SourcePlugin } from "../../../shared/entities";
 import type { NormalizedPluginContentInclude } from "../entities";
 import { scanCanonicalContentAtRoot } from "./scan-content";
 

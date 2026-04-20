@@ -41,26 +41,3 @@ export type UndoApplyItem = {
   status: UndoApplyStatus;
   message?: string;
 };
-
-export type UndoRunResult =
-  | {
-      ok: true;
-      capsuleId: string;
-      provider: UndoProvider;
-      dryRun: boolean;
-      status: UndoCapsuleStatus;
-      operations: UndoApplyItem[];
-      summary: {
-        planned: number;
-        restored: number;
-        deleted: number;
-        skippedMissing: number;
-        failed: number;
-      };
-    }
-  | {
-      ok: false;
-      code: "UNDO_NOT_AVAILABLE" | "UNDO_PROVIDER_UNSUPPORTED" | "UNDO_FAILED";
-      message: string;
-      details?: unknown;
-    };

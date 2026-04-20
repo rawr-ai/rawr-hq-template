@@ -1,7 +1,7 @@
 import path from "node:path";
 import { Value } from "typebox/value";
 import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type { SourcePlugin, SyncAgent } from "../../../shared/schemas";
+import type { SourcePlugin, SyncAgent } from "../../../shared/entities";
 import {
   PluginContentManifestV1Schema,
   type NormalizedPluginContentInclude,

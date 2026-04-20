@@ -1,14 +1,39 @@
 import { schema } from "@rawr/hq-sdk";
-import { Type } from "typebox";
+import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
 import { INVALID_REGEX } from "../../shared/errors";
 import {
-  MetadataSearchHitSchema,
-  ReindexResultSchema,
   RoleFilterSchema,
-  SearchHitSchema,
   SessionListItemSchema,
-} from "./schemas";
+} from "../../shared/entities";
+
+const MetadataSearchHitSchema = Type.Object(
+  {
+    ...SessionListItemSchema.properties,
+    matchScore: Type.Number(),
+  },
+  { additionalProperties: false },
+);
+export type MetadataSearchHit = Static<typeof MetadataSearchHitSchema>;
+
+const SearchHitSchema = Type.Object(
+  {
+    ...SessionListItemSchema.properties,
+    matchCount: Type.Number(),
+    matchSnippet: Type.String(),
+  },
+  { additionalProperties: false },
+);
+export type SearchHit = Static<typeof SearchHitSchema>;
+
+const ReindexResultSchema = Type.Object(
+  {
+    indexed: Type.Number(),
+    total: Type.Number(),
+  },
+  { additionalProperties: false },
+);
+export type ReindexResult = Static<typeof ReindexResultSchema>;
 
 export const contract = {
   metadata: ocBase

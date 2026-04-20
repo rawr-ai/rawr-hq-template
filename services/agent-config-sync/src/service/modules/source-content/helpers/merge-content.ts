@@ -1,4 +1,4 @@
-import type { SourceContent } from "../../../shared/schemas";
+import type { SourceContent } from "../../../shared/entities";
 
 /**
  * Merges provider overlays onto canonical source content by logical name.

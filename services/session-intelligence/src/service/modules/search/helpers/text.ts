@@ -1,5 +1,4 @@
-import type { SessionMessage } from "../../shared/schemas";
-import type { RoleFilter } from "./schemas";
+import type { RoleFilter, SessionMessage } from "../../../shared/entities";
 
 export function buildSearchText(messages: Array<Pick<SessionMessage, "role" | "content">>): string {
   return messages.map((message) => `${message.role === "user" ? "U" : message.role === "assistant" ? "A" : "T"}: ${message.content}`).join("\n\n");

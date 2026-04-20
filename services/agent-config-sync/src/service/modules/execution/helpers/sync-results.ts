@@ -1,4 +1,4 @@
-import type { SourceContent } from "../../../shared/schemas";
+import type { SourceContent } from "../../../shared/entities";
 import type { SyncItemResult, SyncScannedSummary, SyncTargetResult } from "../contract";
 
 export function pushItem(
