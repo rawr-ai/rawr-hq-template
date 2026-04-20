@@ -1,9 +1,9 @@
 import { buildSourceSnapshot } from "../source-materials/helpers/normalize";
 import { SOURCE_MATERIAL_DIRECTORIES } from "../../../shared/layout";
-import { createArtifactFiles } from "./lib/artifact-bundle";
-import { detectAnomalies } from "./lib/anomalies";
-import { buildFamilyGraphs, buildRelationships } from "./lib/families";
-import { buildInventory, buildWarnings } from "./lib/inventory";
+import { createArtifactFiles } from "./helpers/artifact-bundle";
+import { detectAnomalies } from "./helpers/anomalies";
+import { buildFamilyGraphs, buildRelationships } from "./helpers/families";
+import { buildInventory, buildWarnings } from "./helpers/inventory";
 import {
   buildAmbiguityFlags,
   buildCanonicalitySummary,
@@ -11,8 +11,8 @@ import {
   buildManifest,
   buildMentalMap,
   buildValidationReport,
-} from "./lib/reports";
-import { buildIntermediateGraph, buildUnifiedThread } from "./lib/threads";
+} from "./helpers/reports";
+import { buildIntermediateGraph, buildUnifiedThread } from "./helpers/threads";
 import { module } from "./module";
 
 const build = module.build.handler(async ({ input }) => {

@@ -1,14 +1,14 @@
 import { module } from "./module";
-import { resolveProviderContent } from "../source-content/lib/provider-content";
-import { syncClaudeTarget } from "../execution/lib/claude-target";
-import { syncCodexTarget } from "../execution/lib/codex-target";
-import { summarizeScannedContent } from "../execution/lib/sync-results";
+import { resolveProviderContent } from "../source-content/helpers/provider-content";
+import { syncClaudeTarget } from "../execution/helpers/claude-target";
+import { syncCodexTarget } from "../execution/helpers/codex-target";
+import { summarizeScannedContent } from "../execution/helpers/sync-results";
 import type { SyncRunResult, SyncTargetResult } from "../execution/contract";
-import { summarizeWorkspaceRun } from "./lib/assessment-summary";
-import { evaluateFullSyncPolicy as evaluatePolicy } from "./lib/full-sync-policy";
-import { resolveTargetHomes } from "./lib/target-homes";
-import { discoverWorkspaceSources, filterByScope } from "./lib/workspace-discovery";
-import { resolveWorkspaceRoot } from "./lib/workspace-roots";
+import { summarizeWorkspaceRun } from "./helpers/assessment-summary";
+import { evaluateFullSyncPolicy as evaluatePolicy } from "./helpers/full-sync-policy";
+import { resolveTargetHomes } from "./helpers/target-homes";
+import { discoverWorkspaceSources, filterByScope } from "./helpers/workspace-discovery";
+import { resolveWorkspaceRoot } from "./helpers/workspace-roots";
 
 const planWorkspaceSync = module.planWorkspaceSync.handler(async ({ context, input, errors }) => {
   const workspaceRoot = await resolveWorkspaceRoot({

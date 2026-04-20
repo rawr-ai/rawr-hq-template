@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { createClient } from "../src";
 import type { RawrConfig } from "../src/service/modules/config/entities";
-import { validateRawrConfig } from "../src/service/modules/config/support.js";
+import { validateRawrConfig } from "../src/service/modules/config/helpers/validation.js";
 import { createClientOptions, invocation, writeGlobalRawrConfig, writeRawrConfig } from "./helpers";
 
 describe("hq-ops config support", () => {

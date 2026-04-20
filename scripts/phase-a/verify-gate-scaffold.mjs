@@ -162,8 +162,8 @@ async function verifyMetadataContract() {
   const requiredPaths = [
     "services/hq-ops/src/service/modules/plugin-catalog/contract.ts",
     "services/hq-ops/src/service/modules/plugin-catalog/entities.ts",
-    "services/hq-ops/src/service/modules/plugin-catalog/lib/discovery.ts",
-    "services/hq-ops/src/service/modules/plugin-catalog/lib/manifest.ts",
+    "services/hq-ops/src/service/modules/plugin-catalog/helpers/discovery.ts",
+    "services/hq-ops/src/service/modules/plugin-catalog/helpers/manifest.ts",
     "services/hq-ops/src/service/modules/plugin-catalog/router.ts",
     "services/hq-ops/src/service/contract.ts",
     "services/hq-ops/src/service/router.ts",
@@ -185,8 +185,8 @@ async function verifyMetadataContract() {
   ] = await Promise.all([
     readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/contract.ts"),
     readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/entities.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/lib/discovery.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/lib/manifest.ts"),
+    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/helpers/discovery.ts"),
+    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/helpers/manifest.ts"),
     readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/router.ts"),
     readTypeScriptFile("services/hq-ops/src/service/contract.ts"),
     readTypeScriptFile("services/hq-ops/src/service/router.ts"),
@@ -244,7 +244,7 @@ async function verifyImportBoundary() {
     if (source.includes("services/hq-ops/src/service/modules/plugin-catalog")) {
       findings.push(`${relPath} imports hq-ops plugin-catalog internals`);
     }
-    if (source.includes("plugin-catalog/lib/")) findings.push(`${relPath} imports hq-ops plugin-catalog helper internals`);
+    if (source.includes("plugin-catalog/helpers/")) findings.push(`${relPath} imports hq-ops plugin-catalog helper internals`);
   }
   assertCondition(findings.length === 0, `plugin projection import boundary failed:\n${findings.map((finding) => `- ${finding}`).join("\n")}`);
 

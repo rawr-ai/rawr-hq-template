@@ -1,4 +1,4 @@
-import { discoverWorkspacePluginCatalog } from "./lib/discovery";
+import { discoverWorkspacePluginCatalog } from "./helpers/discovery";
 import { module } from "./module";
 
 /**
