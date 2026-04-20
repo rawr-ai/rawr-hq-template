@@ -15,14 +15,10 @@
 import { module } from "./module";
 import {
   detectSessionFormat,
-  extractClaudeMessages,
-  extractCodexMessages,
   getClaudeSessionMetadata,
   getCodexSessionMetadata,
   inferProjectFromCwd,
-  inferStatusFromPath,
 } from "../../shared/normalization";
-import { looksLikePath } from "../../shared/path-utils";
 import type {
   DiscoveredSessionFile,
   RoleFilter,
@@ -32,20 +28,21 @@ import type {
   SessionStatus,
 } from "../../shared/entities";
 import { discoverCodexSessionsFromIndexOrNull } from "../../shared/repositories/codex-indexed-discovery-repository";
-import { clearCachedSearchText, readCachedSearchText, writeCachedSearchText } from "./repositories/search-cache-repository";
-import { buildSearchText, rolesKey } from "./helpers/search-text";
 import type { SessionIndexRuntime } from "../../shared/ports/session-index-runtime";
 import type { SessionSourceRuntime } from "../../shared/ports/session-source-runtime";
 import type { MetadataSearchHit, SearchHit } from "./entities";
-
-type SearchSessionFilters = {
-  project?: string;
-  cwdContains?: string;
-  branch?: string;
-  model?: string;
-  since?: string;
-  until?: string;
-};
+import { clearCachedSearchText } from "./repositories/search-cache-repository";
+import {
+  hasMetadataFilters,
+  matchesSearchFilters,
+  toModifiedIso,
+  type SearchSessionFilters,
+} from "./helpers/session-filters";
+import { searchSessionsByMetadata } from "./helpers/metadata-search";
+import {
+  getSearchTextCached,
+  getSearchTextUncached,
+} from "./helpers/search-text-cache";
 
 type SearchSessionSelection = {
   source: SessionSourceFilter;
@@ -55,93 +52,6 @@ type SearchSessionSelection = {
 
 function asSearchSource(source: SessionSource | "unknown"): SessionSource {
   return source === "claude" ? "claude" : "codex";
-}
-
-function parseDatetimeBestEffort(value?: string): Date | null {
-  if (!value) return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? `${trimmed}T00:00:00` : trimmed;
-  const dt = new Date(normalized);
-  return Number.isNaN(dt.getTime()) ? null : dt;
-}
-
-function containsFilter(value: string | undefined, needle: string | undefined): boolean {
-  return !needle || Boolean(value?.toLowerCase().includes(needle.toLowerCase()));
-}
-
-function sessionWithinWindow(modifiedIso: string, since?: string, until?: string): boolean {
-  const dt = parseDatetimeBestEffort(modifiedIso);
-  if (!dt) return false;
-  const sinceDt = since ? parseDatetimeBestEffort(since) : null;
-  const untilDt = until ? parseDatetimeBestEffort(until) : null;
-  if (sinceDt && dt < sinceDt) return false;
-  if (untilDt && dt > untilDt) return false;
-  return true;
-}
-
-function hasMetadataFilters(filters: SearchSessionFilters): boolean {
-  return Boolean(filters.project || filters.cwdContains || filters.branch || filters.model || filters.since || filters.until);
-}
-
-function toModifiedIso(candidate: Pick<DiscoveredSessionFile, "modifiedMs">): string {
-  return new Date(candidate.modifiedMs).toISOString();
-}
-
-function matchesSearchFilters(session: SessionListItem, filters: SearchSessionFilters): boolean {
-  if (filters.project) {
-    const projectFilter = filters.project.trim();
-    if (projectFilter && looksLikePath(projectFilter) && session.source !== "claude") return false;
-    if (projectFilter && !looksLikePath(projectFilter) && !containsFilter(session.project, projectFilter)) return false;
-  }
-  if (!containsFilter(session.cwd, filters.cwdContains)) return false;
-  if (!containsFilter(session.gitBranch, filters.branch)) return false;
-  if (!containsFilter(session.model, filters.model)) return false;
-  if ((filters.since || filters.until) && !sessionWithinWindow(session.modified, filters.since, filters.until)) return false;
-  return true;
-}
-
-function metadataMatchScore(session: SessionListItem, needle: string): number {
-  const normalizedNeedle = needle.toLowerCase();
-  const fields: Array<keyof SessionListItem | "status"> = [
-    "title",
-    "cwd",
-    "project",
-    "gitBranch",
-    "model",
-    "path",
-    "sessionId",
-    "status",
-    "modelProvider",
-  ];
-  let score = 0;
-  for (const field of fields) {
-    const raw = session[field as keyof SessionListItem];
-    if (raw != null && String(raw).toLowerCase().includes(normalizedNeedle)) {
-      score += field === "title" || field === "cwd" || field === "path" || field === "sessionId" ? 2 : 1;
-    }
-  }
-  return score;
-}
-
-/**
- * Ranks sessions by how well their metadata matches a human-provided needle.
- *
- * @remarks
- * This is a first-pass "find the right session" affordance for projections. It
- * intentionally stays metadata-only: full transcript search is handled by the
- * `content` procedure.
- */
-function searchSessionsByMetadata(sessions: SessionListItem[], needle: string, limit: number): MetadataSearchHit[] {
-  const trimmed = needle.trim();
-  if (!trimmed) return [];
-  const ranked = sessions
-    .map((session) => ({ ...session, matchScore: metadataMatchScore(session, trimmed) }))
-    .filter((session) => session.matchScore > 0);
-  ranked.sort((a, b) =>
-    a.matchScore === b.matchScore ? (a.modified < b.modified ? 1 : -1) : b.matchScore - a.matchScore,
-  );
-  return limit > 0 ? ranked.slice(0, limit) : ranked;
 }
 
 async function loadSearchSessions(
@@ -165,17 +75,30 @@ async function loadSearchSessions(
 
     const out: DiscoveredSessionFile[] = [];
     if (input.source === "all") {
-      out.push(...await runtime.discoverSessions({
-        source: "claude",
-        limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
-        project: filters.project,
-      }));
+      out.push(
+        ...await runtime.discoverSessions({
+          source: "claude",
+          limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
+          project: filters.project,
+        }),
+      );
     }
 
     const codexLimit = limit > 0 && !hasMetadataFilters(filters) ? limit : 0;
-    const indexed = await discoverCodexSessionsFromIndexOrNull(runtime, indexRuntime, codexLimit);
+    const indexed = await discoverCodexSessionsFromIndexOrNull(
+      runtime,
+      indexRuntime,
+      codexLimit,
+    );
     if (indexed) out.push(...indexed);
-    else out.push(...await runtime.discoverSessions({ source: "codex", limit: codexLimit || undefined }));
+    else {
+      out.push(
+        ...await runtime.discoverSessions({
+          source: "codex",
+          limit: codexLimit || undefined,
+        }),
+      );
+    }
 
     out.sort((a, b) => b.modifiedMs - a.modifiedMs);
     return limit ? out.slice(0, limit) : out;
@@ -220,35 +143,11 @@ async function loadSearchSessions(
     }
   }
 
-  sessions.sort((a, b) => (a.modified < b.modified ? 1 : a.modified > b.modified ? -1 : 0));
+  sessions.sort((a, b) =>
+    a.modified < b.modified ? 1 : a.modified > b.modified ? -1 : 0,
+  );
   const filtered = sessions.filter((session) => matchesSearchFilters(session, filters));
   return limit ? filtered.slice(0, limit) : filtered;
-}
-
-async function getSearchTextUncached(runtime: SessionSourceRuntime, filePath: string, source: SessionSource, roles: RoleFilter[], includeTools: boolean): Promise<string> {
-  const messages = source === "claude"
-    ? await extractClaudeMessages(runtime, filePath, roles, includeTools)
-    : await extractCodexMessages(runtime, filePath, roles, includeTools);
-  return buildSearchText(messages);
-}
-
-async function getSearchTextCached(input: {
-  sourceRuntime: SessionSourceRuntime;
-  indexRuntime: SessionIndexRuntime;
-  filePath: string;
-  source: SessionSource;
-  roles: RoleFilter[];
-  includeTools: boolean;
-  indexPath: string;
-}): Promise<string> {
-  const stat = await input.sourceRuntime.statFile({ path: input.filePath });
-  if (!stat) return "";
-  const key = { indexPath: input.indexPath, path: input.filePath, rolesKey: rolesKey(input.roles), includeTools: input.includeTools };
-  const cached = await readCachedSearchText(input.indexRuntime, key);
-  if (cached && cached.modifiedMs === stat.modifiedMs && cached.sizeBytes === stat.sizeBytes) return cached.content;
-  const content = await getSearchTextUncached(input.sourceRuntime, input.filePath, input.source, input.roles, input.includeTools);
-  await writeCachedSearchText(input.indexRuntime, { ...key, modifiedMs: stat.modifiedMs, sizeBytes: stat.sizeBytes, content });
-  return content;
 }
 
 const metadata = module.metadata.handler(async ({ context, input }) => {
@@ -262,8 +161,11 @@ const content = module.content.handler(async ({ context, input, errors }) => {
     const hits: SearchHit[] = [];
     const sessions = await loadSearchSessions(context.sourceRuntime, context.indexRuntime, input);
     const indexPath = context.indexRuntime.defaultIndexPath();
+
     for (const session of sessions) {
-      const source = asSearchSource(await detectSessionFormat(context.sourceRuntime, session.path));
+      const source = asSearchSource(
+        await detectSessionFormat(context.sourceRuntime, session.path),
+      );
       const text = input.useIndex
         ? await getSearchTextCached({
             sourceRuntime: context.sourceRuntime,
@@ -274,17 +176,38 @@ const content = module.content.handler(async ({ context, input, errors }) => {
             includeTools: input.includeTools,
             indexPath,
           })
-        : await getSearchTextUncached(context.sourceRuntime, session.path, source, input.roles, input.includeTools);
+        : await getSearchTextUncached(
+            context.sourceRuntime,
+            session.path,
+            source,
+            input.roles,
+            input.includeTools,
+          );
+
       const matches = [...text.matchAll(rx)];
       if (!matches.length) continue;
-      const start = Math.max(0, matches[0]!.index! - Math.floor(input.snippetLen / 2));
+
+      const start = Math.max(
+        0,
+        matches[0]!.index! - Math.floor(input.snippetLen / 2),
+      );
       hits.push({
         ...session,
         matchCount: matches.length,
-        matchSnippet: text.slice(start, start + input.snippetLen).replaceAll("\n", "\\n"),
+        matchSnippet: text
+          .slice(start, start + input.snippetLen)
+          .replaceAll("\n", "\\n"),
       });
     }
-    hits.sort((a, b) => (a.matchCount === b.matchCount ? (a.modified < b.modified ? 1 : -1) : b.matchCount - a.matchCount));
+
+    hits.sort((a, b) =>
+      a.matchCount === b.matchCount
+        ? a.modified < b.modified
+          ? 1
+          : -1
+        : b.matchCount - a.matchCount,
+    );
+
     return { hits: input.maxMatches > 0 ? hits.slice(0, input.maxMatches) : hits };
   } catch (err) {
     if (err instanceof SyntaxError) {
@@ -302,9 +225,14 @@ const reindex = module.reindex.handler(async ({ context, input }) => {
   const total = sessions.length;
   const limit = input.limit > 0 ? Math.min(input.limit, total) : total;
   const indexPath = context.indexRuntime.defaultIndexPath();
+
   let indexed = 0;
   for (const session of sessions.slice(0, limit)) {
-    const source = session.source ?? asSearchSource(await detectSessionFormat(context.sourceRuntime, session.path));
+    const source =
+      session.source ??
+      asSearchSource(
+        await detectSessionFormat(context.sourceRuntime, session.path),
+      );
     await getSearchTextCached({
       sourceRuntime: context.sourceRuntime,
       indexRuntime: context.indexRuntime,
@@ -316,13 +244,17 @@ const reindex = module.reindex.handler(async ({ context, input }) => {
     });
     indexed += 1;
   }
+
   return { indexed, total };
 });
 
 const clearIndex = module.clearIndex.handler(async ({ context, input }) => {
   const indexPath = context.indexRuntime.defaultIndexPath();
-  if (input.path) await clearCachedSearchText(context.indexRuntime, { indexPath, path: input.path });
-  else await context.indexRuntime.removeIndex({ indexPath });
+  if (input.path) {
+    await clearCachedSearchText(context.indexRuntime, { indexPath, path: input.path });
+  } else {
+    await context.indexRuntime.removeIndex({ indexPath });
+  }
   return { cleared: true };
 });
 
