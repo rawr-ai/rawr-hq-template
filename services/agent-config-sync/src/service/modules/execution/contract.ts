@@ -8,6 +8,10 @@ import {
   SyncActionSchema,
 } from "../../shared/schemas";
 
+/**
+ * Summary entity for what source content was available before provider-specific
+ * overlays were applied to each destination.
+ */
 const SyncScannedSummarySchema = Type.Object(
   {
     workflows: Type.Array(Type.String({ minLength: 1 })),
@@ -18,6 +22,9 @@ const SyncScannedSummarySchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Per-target sync result entry shared by Codex and Claude destination writers.
+ */
 const SyncItemResultSchema = Type.Object(
   {
     action: SyncActionSchema,
@@ -35,6 +42,9 @@ const SyncItemResultSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Destination-level sync result that keeps conflicts beside all attempted work.
+ */
 const SyncTargetResultSchema = Type.Object(
   {
     agent: SyncAgentSchema,
@@ -45,6 +55,9 @@ const SyncTargetResultSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Top-level execution result for one source plugin sync run.
+ */
 const SyncRunResultSchema = Type.Object(
   {
     ok: Type.Boolean(),
@@ -55,6 +68,12 @@ const SyncRunResultSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Execution input for applying or previewing destination sync.
+ *
+ * Planning decides which plugins should sync; execution owns destination writes,
+ * conflict policy, garbage collection, and provider-specific effective content.
+ */
 const RunSyncInputSchema = Type.Object(
   {
     sourcePlugin: SourcePluginSchema,
@@ -78,11 +97,24 @@ export type SyncItemResult = Static<typeof SyncItemResultSchema>;
 export type SyncTargetResult = Static<typeof SyncTargetResultSchema>;
 export type SyncRunResult = Static<typeof SyncRunResultSchema>;
 
+/**
+ * Public agent-config-sync execution API.
+ *
+ * This remains a standalone service because destination sync can be recomposed
+ * outside HQ Ops; HQ plugin-management code should not import this module.
+ */
 export const contract = {
+  /**
+   * Applies or previews a sync run into Codex and/or Claude homes.
+   */
   runSync: ocBase
     .meta({ idempotent: false, entity: "execution" })
     .input(schema(RunSyncInputSchema))
     .output(schema(SyncRunResultSchema)),
+  /**
+   * Resolves provider-effective content for callers that need the same overlay
+   * semantics without performing destination writes, such as Cowork packaging.
+   */
   resolveProviderContent: ocBase
     .meta({ idempotent: true, entity: "execution" })
     .input(

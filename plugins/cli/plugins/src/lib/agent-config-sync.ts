@@ -57,6 +57,9 @@ type LayeredSyncConfig = {
   };
 };
 
+/**
+ * Extracts provider include-agent policy from layered RAWR config.
+ */
 function syncProviderPolicy(config?: LayeredSyncConfig): {
   includeAgentsInCodex: boolean;
   includeAgentsInClaude: boolean;
@@ -67,16 +70,25 @@ function syncProviderPolicy(config?: LayeredSyncConfig): {
   };
 }
 
+/**
+ * Finds the user's home directory for destination defaults.
+ */
 function homeDir(): string {
   return process.env.HOME ? String(process.env.HOME) : os.homedir();
 }
 
+/**
+ * Expands shell-style home paths before passing destinations to the service.
+ */
 function expandTilde(inputPath: string): string {
   if (inputPath === "~") return homeDir();
   if (inputPath.startsWith("~/")) return path.join(homeDir(), inputPath.slice(2));
   return inputPath;
 }
 
+/**
+ * Reads comma-separated destination homes from environment variables.
+ */
 function parseEnvHomes(key: string): string[] {
   const rawValue = process.env[key];
   if (!rawValue) return [];
@@ -87,6 +99,9 @@ function parseEnvHomes(key: string): string[] {
     .map(expandTilde);
 }
 
+/**
+ * Normalizes config destinations while preserving enabled flags for planning.
+ */
 function mapDestinations(destinations: SyncDestinationConfig[] | undefined): Array<{ rootPath?: string; enabled?: boolean }> {
   return (destinations ?? []).map((destination) => ({
     ...(typeof destination.rootPath === "string" && destination.rootPath.length > 0
@@ -96,6 +111,9 @@ function mapDestinations(destinations: SyncDestinationConfig[] | undefined): Arr
   }));
 }
 
+/**
+ * Builds all destination-home candidates from flags, env, config, and defaults.
+ */
 function buildTargetHomeCandidates(input: {
   codexHomesFromFlags: string[];
   claudeHomesFromFlags: string[];
@@ -134,6 +152,9 @@ function isOclifRuntimePlugin(value: unknown): value is OclifRuntimePlugin {
   return Boolean(value) && typeof value === "object";
 }
 
+/**
+ * Observes source plugin roots from oclif runtime plugin state.
+ */
 function collectOclifSourceRoots(configPlugins: unknown): string[] {
   const runtimePluginValues: unknown[] = configPlugins instanceof Map
     ? [...configPlugins.values()]
@@ -147,6 +168,9 @@ function collectOclifSourceRoots(configPlugins: unknown): string[] {
     .map((root: string) => (root.endsWith("package.json") ? path.dirname(root) : root));
 }
 
+/**
+ * Collects source plugin paths from config, oclif runtime, and explicit flags.
+ */
 export function collectWorkspaceSourcePaths(input: {
   config?: LayeredSyncConfig;
   includeOclif: boolean;
@@ -160,6 +184,9 @@ export function collectWorkspaceSourcePaths(input: {
   return [...new Set(paths)];
 }
 
+/**
+ * Builds the service planning request from CLI flags and local config.
+ */
 export function createWorkspaceSyncPlanInput(input: {
   cwd: string;
   sourcePaths: string[];
@@ -189,6 +216,9 @@ export function createWorkspaceSyncPlanInput(input: {
   };
 }
 
+/**
+ * Builds the service assessment request from CLI flags and local config.
+ */
 export function createWorkspaceSyncAssessInput(input: {
   cwd: string;
   sourcePaths: string[];
@@ -216,6 +246,9 @@ export function createWorkspaceSyncAssessInput(input: {
   };
 }
 
+/**
+ * Calls agent-config-sync planning from the CLI projection.
+ */
 export async function planWorkspaceSync(input: {
   repoRoot: string;
   request: PlanWorkspaceSyncInput;
@@ -229,6 +262,9 @@ export async function planWorkspaceSync(input: {
   return client.planning.planWorkspaceSync(input.request, options);
 }
 
+/**
+ * Calls agent-config-sync assessment from the CLI projection.
+ */
 export async function assessWorkspaceSync(input: {
   repoRoot: string;
   request: AssessWorkspaceSyncInput;
@@ -241,6 +277,9 @@ export async function assessWorkspaceSync(input: {
   return client.planning.assessWorkspaceSync(input.request, options);
 }
 
+/**
+ * Resolves a user plugin reference against a service-produced sync plan.
+ */
 export function findPlannedSyncable(input: {
   plan: WorkspaceSyncPlan;
   pluginRef: string;
@@ -255,6 +294,9 @@ export function findPlannedSyncable(input: {
   ) ?? null;
 }
 
+/**
+ * Starts undo capture for mutating sync commands using service-owned undo logic.
+ */
 export async function beginPluginsSyncUndoCapture(input: {
   workspaceRoot: string;
   commandId: string;
@@ -266,6 +308,9 @@ export async function beginPluginsSyncUndoCapture(input: {
   });
 }
 
+/**
+ * Determines the repo root used to bind agent-config-sync for a source plugin.
+ */
 async function repoRootForCall(sourcePlugin?: SourcePlugin): Promise<string> {
   const cwdRoot = await findWorkspaceRoot(process.cwd());
   if (cwdRoot) return cwdRoot;
@@ -273,6 +318,9 @@ async function repoRootForCall(sourcePlugin?: SourcePlugin): Promise<string> {
   return process.cwd();
 }
 
+/**
+ * Runs destination sync through the standalone agent-config-sync service.
+ */
 export async function runSync(input: {
   sourcePlugin: SourcePlugin;
   content: SourceContent;
@@ -317,6 +365,9 @@ export async function runSync(input: {
   return client.execution.runSync(runInput, options);
 }
 
+/**
+ * Requests provider-effective content from the service for CLI-owned packaging.
+ */
 export async function resolveProviderContent(input: {
   agent: "codex" | "claude";
   sourcePlugin: SourcePlugin;
@@ -336,6 +387,9 @@ export async function resolveProviderContent(input: {
   return client.execution.resolveProviderContent(request, options);
 }
 
+/**
+ * Calls service retirement for managed destination plugins no longer active.
+ */
 export async function retireStaleManagedPlugins(input: {
   workspaceRoot: string;
   scope: SyncScope;
@@ -360,6 +414,9 @@ export async function retireStaleManagedPlugins(input: {
   return client.retirement.retireStaleManaged(retireInput, options);
 }
 
+/**
+ * Default archive output directory for projection-owned Cowork packaging.
+ */
 export function resolveDefaultCoworkOutDir(workspaceRoot: string): string {
   return path.join(workspaceRoot, "dist", "cowork", "plugins");
 }

@@ -20,6 +20,10 @@ type Skipped = {
   reason: string;
 };
 
+/**
+ * Executes the source CLI from the workspace when oclif link operations must go
+ * through the command surface rather than a service call.
+ */
 function runRawrFromSource(workspaceRoot: string, args: string[]): { ok: boolean; exitCode: number; stdout: string; stderr: string } {
   const cwd = path.join(workspaceRoot, "apps", "cli");
   const proc = spawnSync("bun", ["src/index.ts", ...args], { cwd, encoding: "utf8", env: { ...process.env } });
@@ -31,6 +35,9 @@ function runRawrFromSource(workspaceRoot: string, args: string[]): { ok: boolean
   };
 }
 
+/**
+ * Builds a command plugin before linking so oclif resolves compiled commands.
+ */
 function runPluginBuild(pluginRoot: string): { ok: boolean; exitCode: number; stdout: string; stderr: string } {
   const proc = spawnSync("bun", ["run", "build"], { cwd: pluginRoot, encoding: "utf8", env: { ...process.env } });
   return {
@@ -41,6 +48,12 @@ function runPluginBuild(pluginRoot: string): { ok: boolean; exitCode: number; st
   };
 }
 
+/**
+ * Links every HQ-catalog eligible toolkit plugin into the local oclif manager.
+ *
+ * Eligibility comes from HQ Ops pluginCatalog; this command only performs the
+ * local build/link side effects required by the user's CLI installation.
+ */
 export default class PluginsInstallAll extends RawrCommand {
   static description = "Link all workspace command plugins into the local oclif plugin manager (Channel A)";
 

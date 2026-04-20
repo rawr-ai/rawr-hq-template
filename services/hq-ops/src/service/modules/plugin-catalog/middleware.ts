@@ -8,6 +8,9 @@ export {
   createServiceObservabilityMiddleware as createProcedureObservability,
 } from "../../base";
 
+/**
+ * Observability middleware for HQ plugin catalog procedures.
+ */
 export const observability = createServiceObservabilityMiddleware({
   spanAttributes: ({ context }) => ({
     module: "plugin-catalog",
@@ -30,6 +33,10 @@ export const observability = createServiceObservabilityMiddleware({
   },
 });
 
+/**
+ * Analytics middleware for catalog calls that identify which plugin-management
+ * procedure was used without leaking catalog internals to projections.
+ */
 export const analytics = createServiceAnalyticsMiddleware({
   payload: ({ context, pathLabel, outcome }) => ({
     analytics_layer: "module",

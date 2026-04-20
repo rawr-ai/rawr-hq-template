@@ -11,6 +11,12 @@ import {
 import type { LifecycleType } from "@rawr/hq-ops/types";
 import { findWorkspaceRoot } from "@rawr/core";
 
+/**
+ * Runs the projection half of a plugin lifecycle check.
+ *
+ * The command gathers git/sync/drift observations, then asks HQ Ops to evaluate
+ * whether the lifecycle evidence is complete for the target.
+ */
 export default class PluginsLifecycleCheck extends RawrCommand {
   static description = "Validate plugin lifecycle completeness (artifacts/tests/docs/dependents + sync/drift verification)";
 

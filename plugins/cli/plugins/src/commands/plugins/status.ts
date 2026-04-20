@@ -19,6 +19,12 @@ import type { PluginInstallStateStatus } from "@rawr/hq-ops/types";
 type SyncStatus = "IN_SYNC" | "DRIFT_DETECTED" | "CONFLICTS";
 type OverallStatus = "HEALTHY" | "NEEDS_CONVERGENCE";
 
+/**
+ * Aggregates sync drift and command-plugin install drift into one projection.
+ *
+ * The command collects local observations and delegates policy to
+ * agent-config-sync and HQ Ops before rendering next actions.
+ */
 export default class PluginsStatus extends RawrCommand {
   static description = "Unified plugin status (sync drift + install/link drift) with actionable next steps";
 

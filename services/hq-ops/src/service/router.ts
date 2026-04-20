@@ -16,6 +16,10 @@ import { router as repoState } from "./modules/repo-state/router";
 import { router as security } from "./modules/security/router";
 import { impl } from "./impl";
 
+/**
+ * Root HQ Ops router, including the plugin-management modules that own
+ * catalog, install, and lifecycle semantics for headquarters.
+ */
 export const router = impl.router({
   config,
   repoState,

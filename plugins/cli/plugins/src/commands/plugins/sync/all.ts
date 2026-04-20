@@ -20,6 +20,13 @@ import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
 import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "../../../lib/plugin-install-service";
 
+/**
+ * Runs the canonical full plugin sync across all active sources.
+ *
+ * The command orchestrates across agent-config-sync and HQ Ops without merging
+ * the two service domains: destination sync stays standalone, while install
+ * reconciliation stays HQ-owned.
+ */
 export default class PluginsSyncAll extends RawrCommand {
   static description = "Canonical full sync: source plugins -> Codex + Claude + Cowork + stale-plugin retirement";
 

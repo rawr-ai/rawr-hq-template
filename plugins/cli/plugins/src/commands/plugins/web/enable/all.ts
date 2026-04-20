@@ -10,6 +10,9 @@ type EnableAttempt = {
   error?: { message: string; code?: string };
 };
 
+/**
+ * Enables all HQ-catalog runtime web plugins that expose runtime web entrypoints.
+ */
 export default class PluginsWebEnableAll extends RawrCommand {
   static description = "Enable all workspace runtime web plugins (gated)";
 
@@ -24,6 +27,9 @@ export default class PluginsWebEnableAll extends RawrCommand {
     force: Flags.boolean({ description: "Override gating failure (recorded later)", default: false }),
   } as const;
 
+  /**
+   * Detects whether config should supply the risk default.
+   */
   private hasExplicitRiskFlag(argv: string[]): boolean {
     return argv.some((a) => a === "--risk" || a.startsWith("--risk="));
   }

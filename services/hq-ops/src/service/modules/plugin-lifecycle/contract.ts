@@ -3,6 +3,11 @@ import { Type } from "typebox";
 import { ocBase } from "../../base";
 import { LifecycleCheckDataSchema, LifecycleTargetSchema, LifecycleTypeSchema } from "./entities";
 
+/**
+ * Lightweight plugin target shape accepted during migration from older CLI
+ * callers. Service handlers now prefer the catalog, but this keeps typed
+ * projections from needing catalog internals.
+ */
 const LifecycleWorkspacePluginSchema = Type.Object(
   {
     id: Type.String({ minLength: 1 }),
@@ -99,7 +104,19 @@ const MergeDecisionSchema = Type.Union([
   Type.Literal("hold"),
 ]);
 
+/**
+ * Public HQ plugin lifecycle API.
+ *
+ * These procedures hold target resolution, lifecycle evidence requirements,
+ * sweep candidate policy, and merge-safety decisions for plugin work. The CLI
+ * gathers git/process observations and renders results, but HQ Ops decides how
+ * those observations relate to lifecycle health.
+ */
 export const contract = {
+  /**
+   * Resolves a user target against the HQ plugin catalog first, then against
+   * concrete observed paths supplied by a projection.
+   */
   resolveLifecycleTarget: ocBase
     .meta({ idempotent: true, entity: "pluginLifecycle" })
     .input(schema(Type.Object(
@@ -122,6 +139,10 @@ export const contract = {
       },
       { additionalProperties: false },
     ))),
+  /**
+   * Evaluates whether the changed unit has the expected tests, docs, dependent
+   * touch points, and sync/drift evidence for lifecycle completion.
+   */
   evaluateLifecycleCompleteness: ocBase
     .meta({ idempotent: true, entity: "pluginLifecycle" })
     .input(schema(Type.Object(
@@ -140,6 +161,9 @@ export const contract = {
       { additionalProperties: false },
     )))
     .output(schema(LifecycleCheckDataSchema)),
+  /**
+   * Interprets projection-collected scratch files according to lifecycle policy.
+   */
   checkScratchPolicy: ocBase
     .meta({ idempotent: true, entity: "pluginLifecycle" })
     .input(schema(Type.Object(
@@ -152,6 +176,10 @@ export const contract = {
       { additionalProperties: false },
     )))
     .output(schema(ScratchPolicyCheckSchema)),
+  /**
+   * Plans plugin directories that need lifecycle remediation based on catalog
+   * inventory and service-owned quality checks.
+   */
   planSweepCandidates: ocBase
     .meta({ idempotent: true, entity: "pluginLifecycle" })
     .input(schema(Type.Object(
@@ -184,6 +212,10 @@ export const contract = {
       },
       { additionalProperties: false },
     ))),
+  /**
+   * Turns lifecycle evidence, PR context, and reviewer judgments into a merge
+   * policy decision for automation.
+   */
   decideMergePolicy: ocBase
     .meta({ idempotent: true, entity: "pluginLifecycle" })
     .input(schema(Type.Object(

@@ -2,6 +2,9 @@ import { Args, Flags } from "@oclif/core";
 import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
 
+/**
+ * Enables one catalog-resolved runtime web plugin after HQ security gating.
+ */
 export default class PluginsWebEnable extends RawrCommand {
   static description = "Enable a workspace runtime web plugin (gated)";
 
@@ -20,6 +23,9 @@ export default class PluginsWebEnable extends RawrCommand {
     force: Flags.boolean({ description: "Override gating failure (recorded later)", default: false }),
   } as const;
 
+  /**
+   * Detects whether config should supply the risk default.
+   */
   private hasExplicitRiskFlag(argv: string[]): boolean {
     return argv.some((a) => a === "--risk" || a.startsWith("--risk="));
   }

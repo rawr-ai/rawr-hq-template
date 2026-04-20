@@ -9,6 +9,10 @@ import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
 import { findWorkspaceRoot } from "@rawr/core";
 
+/**
+ * Reports destination drift by asking agent-config-sync to assess source plugins
+ * against configured Codex/Claude homes.
+ */
 export default class PluginsSyncDrift extends RawrCommand {
   static description =
     "Check whether plugin targets are out of sync (includes metadata drift by default)";

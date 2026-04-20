@@ -16,6 +16,9 @@ import { contract as pluginLifecycle } from "./modules/plugin-lifecycle/contract
 import { contract as repoState } from "./modules/repo-state/contract";
 import { contract as security } from "./modules/security/contract";
 
+/**
+ * Root HQ Ops contract, including plugin-management module contracts.
+ */
 export const contract = {
   config,
   repoState,

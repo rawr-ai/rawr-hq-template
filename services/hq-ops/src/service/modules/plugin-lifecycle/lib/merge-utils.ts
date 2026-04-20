@@ -1,5 +1,9 @@
 export type JudgeOutcome = "auto_merge" | "fix_first" | "policy_escalation" | "insufficient_confidence";
 
+/**
+ * Normalizes arbitrary reviewer/agent output into the closed merge-policy
+ * outcome set understood by HQ Ops.
+ */
 export function normalizeOutcome(raw: unknown): JudgeOutcome {
   if (raw === "auto_merge") return "auto_merge";
   if (raw === "fix_first") return "fix_first";
@@ -7,6 +11,9 @@ export function normalizeOutcome(raw: unknown): JudgeOutcome {
   return "insufficient_confidence";
 }
 
+/**
+ * Bounds reviewer confidence to the range used for policy aggregation.
+ */
 export function confidenceOrDefault(raw: unknown): number {
   if (typeof raw !== "number") return 0;
   if (!Number.isFinite(raw)) return 0;
@@ -15,6 +22,9 @@ export function confidenceOrDefault(raw: unknown): number {
   return raw;
 }
 
+/**
+ * Produces branch-safe tokens for planned follow-up fix slices.
+ */
 export function toBranchToken(input: string): string {
   const token = input
     .toLowerCase()
@@ -24,6 +34,9 @@ export function toBranchToken(input: string): string {
   return token.length > 0 ? token : "change";
 }
 
+/**
+ * Uses UTC so generated automation branch names are stable across machines.
+ */
 export function utcTimestamp(now: Date): string {
   const y = String(now.getUTCFullYear()).padStart(4, "0");
   const m = String(now.getUTCMonth() + 1).padStart(2, "0");

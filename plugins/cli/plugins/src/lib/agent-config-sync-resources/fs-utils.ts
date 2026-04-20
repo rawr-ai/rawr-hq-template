@@ -1,6 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+/**
+ * Primitive existence check for projection resource adapters.
+ */
 export async function pathExists(filePath: string): Promise<boolean> {
   try {
     await fs.stat(filePath);
@@ -10,6 +13,9 @@ export async function pathExists(filePath: string): Promise<boolean> {
   }
 }
 
+/**
+ * Reads JSON files used by local resource adapters.
+ */
 export async function readJsonFile<T>(filePath: string): Promise<T | null> {
   try {
     const raw = await fs.readFile(filePath, "utf8");
@@ -19,15 +25,24 @@ export async function readJsonFile<T>(filePath: string): Promise<T | null> {
   }
 }
 
+/**
+ * Writes stable pretty JSON for local registries/manifests.
+ */
 export async function writeJsonFile(filePath: string, data: unknown): Promise<void> {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 }
 
+/**
+ * Ensures a directory exists before local resource writes.
+ */
 export async function ensureDir(dirPath: string): Promise<void> {
   await fs.mkdir(dirPath, { recursive: true });
 }
 
+/**
+ * Compares files byte-for-byte for destination conflict policy.
+ */
 export async function filesIdentical(leftPath: string, rightPath: string): Promise<boolean> {
   const [leftExists, rightExists] = await Promise.all([
     pathExists(leftPath),
@@ -46,6 +61,10 @@ const DEFAULT_SKIP_DIRS = new Set(["__pycache__"]);
 const DEFAULT_SKIP_FILES = new Set([".DS_Store"]);
 const DEFAULT_SKIP_SUFFIXES = new Set([".pyc"]);
 
+/**
+ * Lists content files while ignoring local cache artifacts that should not be
+ * synced or compared as plugin source content.
+ */
 export async function listFilesRecursive(rootPath: string): Promise<string[]> {
   const files: string[] = [];
 
@@ -71,6 +90,9 @@ export async function listFilesRecursive(rootPath: string): Promise<string[]> {
   return files;
 }
 
+/**
+ * Compares directory trees for sync conflict detection.
+ */
 export async function dirsIdentical(leftPath: string, rightPath: string): Promise<boolean> {
   const [leftExists, rightExists] = await Promise.all([
     pathExists(leftPath),
@@ -97,6 +119,9 @@ export async function dirsIdentical(leftPath: string, rightPath: string): Promis
   return true;
 }
 
+/**
+ * Copies a normalized directory tree into a destination home.
+ */
 export async function copyDirTree(sourceDir: string, destinationDir: string): Promise<void> {
   const files = await listFilesRecursive(sourceDir);
   for (const sourceFile of files) {

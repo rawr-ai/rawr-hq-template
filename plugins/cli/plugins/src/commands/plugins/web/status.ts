@@ -1,6 +1,9 @@
 import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
 
+/**
+ * Shows web-plugin catalog entries enriched with persisted repo-state enablement.
+ */
 export default class PluginsWebStatus extends RawrCommand {
   static description = "Show workspace runtime web plugins and whether they are enabled";
 

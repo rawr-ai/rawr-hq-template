@@ -15,6 +15,9 @@ import {
 import { recordArtifact } from "../../../lib/journal-context";
 import { findWorkspaceRoot } from "@rawr/core";
 
+/**
+ * Scaffolds a workflow command projection and matching smoke test.
+ */
 export default class PluginsScaffoldWorkflow extends RawrCommand {
   static description = "Scaffold a new workflow command (`rawr workflow <name>`) with a matching Vitest test";
 

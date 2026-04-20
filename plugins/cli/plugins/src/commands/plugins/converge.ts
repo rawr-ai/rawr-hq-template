@@ -15,6 +15,9 @@ type StepRun = {
   json?: unknown;
 };
 
+/**
+ * Parses JSON emitted by nested rawr commands during convergence.
+ */
 function parseJsonMaybe(input: string): unknown {
   try {
     return JSON.parse(input);
@@ -23,11 +26,17 @@ function parseJsonMaybe(input: string): unknown {
   }
 }
 
+/**
+ * Reads the final overall status from a nested status command result.
+ */
 function statusFromResult(parsed: unknown): string | null {
   const candidate = (parsed as any)?.data?.statuses?.overall;
   return typeof candidate === "string" ? candidate : null;
 }
 
+/**
+ * Collapses nested command output into a stable convergence summary.
+ */
 function stepSummary(step: StepRun): Record<string, unknown> {
   const parsed = step.json as any;
   if (!parsed || typeof parsed !== "object") {
@@ -61,6 +70,9 @@ function stepSummary(step: StepRun): Record<string, unknown> {
   };
 }
 
+/**
+ * Runs the deterministic convergence loop for plugin-system health.
+ */
 export default class PluginsConverge extends RawrCommand {
   static description = "Deterministic convergence loop: install repair -> sync all -> final health status";
 

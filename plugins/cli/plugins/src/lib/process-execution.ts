@@ -8,6 +8,9 @@ export type CommandRunResult = {
   stderr: string;
 };
 
+/**
+ * Runs local process checks for CLI orchestration and captures stdout/stderr.
+ */
 export async function runCommand(
   command: string,
   args: string[],
@@ -53,6 +56,9 @@ export async function runCommand(
   });
 }
 
+/**
+ * Parses JSON command output while leaving callers in control of fallback logic.
+ */
 export function tryParseJson<T>(input: string): T | null {
   const trimmed = input.trim();
   if (!trimmed) return null;

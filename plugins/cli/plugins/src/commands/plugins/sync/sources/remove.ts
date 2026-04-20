@@ -5,12 +5,18 @@ import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
 
+/**
+ * Expands user-facing home paths before removing explicit sync sources.
+ */
 function expandTilde(p: string): string {
   if (p === "~") return os.homedir();
   if (p.startsWith("~/")) return path.join(os.homedir(), p.slice(2));
   return p;
 }
 
+/**
+ * Removes a global explicit sync source through HQ Ops config procedures.
+ */
 export default class PluginsSyncSourcesRemove extends RawrCommand {
   static description = "Remove an explicit sync source path from ~/.rawr/config.json";
 

@@ -5,12 +5,18 @@ import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
 
+/**
+ * Expands user-facing home paths before saving explicit sync sources.
+ */
 function expandTilde(p: string): string {
   if (p === "~") return os.homedir();
   if (p.startsWith("~/")) return path.join(os.homedir(), p.slice(2));
   return p;
 }
 
+/**
+ * Adds a global explicit sync source through HQ Ops config procedures.
+ */
 export default class PluginsSyncSourcesAdd extends RawrCommand {
   static description = "Add an explicit sync source path to ~/.rawr/config.json";
 

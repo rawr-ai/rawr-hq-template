@@ -20,6 +20,13 @@ import { findWorkspaceRoot } from "@rawr/core";
 
 import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "../../lib/plugin-install-service";
 
+/**
+ * Syncs one source plugin into selected agent destinations.
+ *
+ * Planning and destination sync semantics come from agent-config-sync; this
+ * command handles user flags, Cowork archive creation, Claude CLI install, and
+ * optional local command-plugin link reconciliation.
+ */
 export default class PluginsSync extends RawrCommand {
   static description = "Sync plugin skills/workflows/scripts from RAWR HQ to Codex and Claude targets";
 

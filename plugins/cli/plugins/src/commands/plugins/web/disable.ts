@@ -2,6 +2,9 @@ import { Args } from "@oclif/core";
 import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
 
+/**
+ * Disables one catalog-resolved runtime web plugin in persisted repo state.
+ */
 export default class PluginsWebDisable extends RawrCommand {
   static description = "Disable a workspace runtime web plugin (persisted)";
 

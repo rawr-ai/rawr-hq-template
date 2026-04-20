@@ -12,6 +12,12 @@ import {
   writeJsonFile,
 } from "./fs-utils";
 
+/**
+ * Node filesystem adapter for agent-config-sync.
+ *
+ * These are primitive file operations only; source-content layout and merge
+ * semantics live in the service modules.
+ */
 export function createNodeAgentConfigSyncResources(): AgentConfigSyncResources {
   return {
     files: {

@@ -15,12 +15,18 @@ const EXPECTED_KIND_BY_ROOT: Record<WorkspacePluginDiscoveryRoot, WorkspacePlugi
   "async/schedules": "schedules",
 };
 
+/**
+ * Normalized subset of package.json that HQ plugin-management policy needs.
+ */
 export type ParsedWorkspacePluginManifest = {
   name?: string;
   kind: WorkspacePluginKind;
   capability: string;
 };
 
+/**
+ * Narrows unknown JSON values before manifest policy reads nested rawr fields.
+ */
 export function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -39,10 +45,20 @@ function assertNoForbiddenLegacyKeys(rawr: Record<string, unknown>, pkgJsonPath:
   }
 }
 
+/**
+ * Identifies package.json files that claim to participate in the HQ plugin
+ * contract; plain packages under plugin roots are ignored by catalog discovery.
+ */
 export function hasWorkspacePluginContract(manifest: unknown): boolean {
   return isObjectRecord(manifest) && "rawr" in manifest;
 }
 
+/**
+ * Enforces the HQ plugin manifest contract and root-to-kind mapping.
+ *
+ * The catalog treats invalid rawr metadata as a repository health problem
+ * rather than trying to guess intent at projection time.
+ */
 export function parseWorkspacePluginManifest(input: {
   manifest: unknown;
   pkgJsonPath: string;
@@ -82,12 +98,18 @@ function hasRuntimeExports(pkgJson: unknown): boolean {
   return Boolean(exportsField?.["./server"] || exportsField?.["./web"]);
 }
 
+/**
+ * Determines whether a toolkit plugin can be linked as an oclif command plugin.
+ */
 export function commandPluginEligibility(kind: WorkspacePluginKind, pkgJson: unknown): PluginCapabilityEligibility {
   if (kind !== "toolkit") return { eligible: false, reason: "not a toolkit plugin" };
   if (!hasOclifCommandWiring(pkgJson)) return { eligible: false, reason: "toolkit plugin missing package.json#oclif command wiring" };
   return { eligible: true, reason: "has package.json#oclif command wiring" };
 }
 
+/**
+ * Determines whether a web plugin exposes runtime entrypoints HQ can enable.
+ */
 export function runtimeWebEligibility(kind: WorkspacePluginKind, pkgJson: unknown): PluginCapabilityEligibility {
   if (kind !== "web") return { eligible: false, reason: "not a web plugin" };
   if (!hasRuntimeExports(pkgJson)) return { eligible: false, reason: "plugin package has no runtime exports (./server or ./web)" };

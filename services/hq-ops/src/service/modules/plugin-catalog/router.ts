@@ -1,6 +1,13 @@
 import { discoverWorkspacePluginCatalog } from "./lib/discovery";
 import { module } from "./module";
 
+/**
+ * Catalog listing procedure.
+ *
+ * The procedure owns workspace plugin inventory filtering so CLI commands and
+ * app surfaces do not need to know the canonical root layout or rawr manifest
+ * rules.
+ */
 const listWorkspacePlugins = module.listWorkspacePlugins.handler(async ({ context, input }) => {
   const catalog = await discoverWorkspacePluginCatalog(
     { workspaceRoot: input.workspaceRoot },
@@ -17,6 +24,12 @@ const listWorkspacePlugins = module.listWorkspacePlugins.handler(async ({ contex
   };
 });
 
+/**
+ * Catalog resolution procedure.
+ *
+ * It centralizes plugin id/name/dir matching and kind guardrails so web,
+ * lifecycle, and install flows all interpret user targets the same way.
+ */
 const resolveWorkspacePlugin = module.resolveWorkspacePlugin.handler(async ({ context, input }) => {
   const catalog = await discoverWorkspacePluginCatalog(
     { workspaceRoot: input.workspaceRoot },
@@ -51,6 +64,9 @@ const resolveWorkspacePlugin = module.resolveWorkspacePlugin.handler(async ({ co
   };
 });
 
+/**
+ * Router export for the HQ plugin catalog capability.
+ */
 export const router = module.router({
   listWorkspacePlugins,
   resolveWorkspacePlugin,

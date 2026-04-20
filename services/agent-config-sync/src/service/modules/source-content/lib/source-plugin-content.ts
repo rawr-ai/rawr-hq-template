@@ -4,6 +4,9 @@ import { scanComposedToolkitContent } from "./composed-tools";
 import { resolvePluginContentLayout } from "./manifest";
 import { scanCanonicalContentAtRoot } from "./scan-content";
 
+/**
+ * Identifies the composed tools plugin names that aggregate toolkit content.
+ */
 function isComposedToolsPlugin(sourcePlugin: SourcePlugin): boolean {
   return (
     sourcePlugin.dirName === "plugins" ||
@@ -14,6 +17,10 @@ function isComposedToolsPlugin(sourcePlugin: SourcePlugin): boolean {
   );
 }
 
+/**
+ * Scans the canonical source content for one plugin, including the composed
+ * toolkit path for the tools plugin.
+ */
 export async function scanSourcePluginContent(input: {
   sourcePlugin: SourcePlugin;
   workspacePlugins: SourcePlugin[];
@@ -37,4 +44,3 @@ export async function scanSourcePluginContent(input: {
     resources: input.resources,
   });
 }
-

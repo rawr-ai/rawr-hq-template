@@ -16,6 +16,13 @@ import {
 } from "./lib/install-utils";
 import { module } from "./module";
 
+/**
+ * Install assessment procedure.
+ *
+ * This is where HQ Ops turns the plugin catalog into expected oclif command
+ * links and compares that policy against concrete manager state supplied by the
+ * CLI. The CLI observes local files; the service decides what "healthy" means.
+ */
 const assessInstallState = module.assessInstallState.handler(async ({ context, input }) => {
   const resources = context.deps.resources;
   const workspaceRoot = resources.path.resolve(input.workspaceRoot ?? context.scope.repoRoot);
@@ -156,6 +163,12 @@ const assessInstallState = module.assessInstallState.handler(async ({ context, i
   };
 });
 
+/**
+ * Repair planning procedure.
+ *
+ * It intentionally returns semantic actions instead of argv so service policy
+ * remains testable and projections stay responsible for local process execution.
+ */
 const planInstallRepair = module.planInstallRepair.handler(async ({ input }) => {
   const report = input.report;
   if (report.inSync) {
@@ -217,6 +230,9 @@ const planInstallRepair = module.planInstallRepair.handler(async ({ input }) => 
   };
 });
 
+/**
+ * Router export for command-plugin install health and repair planning.
+ */
 export const router = module.router({
   assessInstallState,
   planInstallRepair,

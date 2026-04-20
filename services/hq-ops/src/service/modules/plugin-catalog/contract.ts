@@ -6,7 +6,19 @@ import {
   WorkspacePluginKindSchema,
 } from "./entities";
 
+/**
+ * Public HQ plugin catalog API.
+ *
+ * This contract is the service boundary for headquarters-owned plugin discovery:
+ * projections can ask what plugins exist or resolve a user-facing id, but the
+ * root layout, manifest interpretation, and capability eligibility rules stay
+ * inside HQ Ops.
+ */
 export const contract = {
+  /**
+   * Lists canonical workspace plugins, optionally narrowed by kind, so command
+   * surfaces can render or orchestrate without reimplementing catalog policy.
+   */
   listWorkspacePlugins: ocBase
     .meta({ idempotent: true, entity: "pluginCatalog" })
     .input(schema(Type.Object(
@@ -24,6 +36,10 @@ export const contract = {
       },
       { additionalProperties: false },
     ))),
+  /**
+   * Resolves package name, directory name, or catalog id to one canonical plugin
+   * entry and reports kind mismatches as service data instead of CLI exceptions.
+   */
   resolveWorkspacePlugin: ocBase
     .meta({ idempotent: true, entity: "pluginCatalog" })
     .input(schema(Type.Object(

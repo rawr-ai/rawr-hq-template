@@ -5,11 +5,19 @@ import type { SourceContent, SourcePlugin } from "../../../shared/schemas";
 import type { NormalizedPluginContentInclude } from "../entities";
 import { scanCanonicalContentAtRoot } from "./scan-content";
 
+/**
+ * Narrows parsed YAML so tool composition can read plugin.yaml defensively.
+ */
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   return value as Record<string, unknown>;
 }
 
+/**
+ * Reads the optional plugin.yaml toolkit import list for the composed tools
+ * plugin. Undefined means "use the default composition policy"; "all" imports
+ * every toolkit plugin.
+ */
 async function readPluginYamlToolkits(input: {
   pluginAbsPath: string;
   resources: AgentConfigSyncResources;
@@ -32,6 +40,9 @@ async function readPluginYamlToolkits(input: {
   throw new Error(`Invalid plugin.yaml imports.toolkits in ${filePath}`);
 }
 
+/**
+ * Fails closed when composed content would produce ambiguous destination names.
+ */
 function assertUnique(kind: string, names: string[]): void {
   const seen = new Set<string>();
   for (const name of names) {
@@ -40,6 +51,11 @@ function assertUnique(kind: string, names: string[]): void {
   }
 }
 
+/**
+ * Builds effective source content for the composed tools plugin from selected
+ * toolkit plugins. This is agent-config-sync policy because it determines what
+ * gets mirrored into Codex/Claude homes.
+ */
 export async function scanComposedToolkitContent(input: {
   toolsPlugin: SourcePlugin;
   workspacePlugins: SourcePlugin[];
