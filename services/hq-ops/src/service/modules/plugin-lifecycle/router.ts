@@ -1,3 +1,11 @@
+/**
+ * hq-ops: plugin-lifecycle module.
+ *
+ * This router owns plugin lifecycle checks (and their judgement semantics) for
+ * workspace plugins. The module exists so lifecycle policy is service-owned and
+ * consistent across projections, while host adapters are still injected via
+ * ports (`HqOpsResources`).
+ */
 import type { HqOpsResources } from "../../shared/ports/resources";
 import { discoverWorkspacePluginCatalog } from "../plugin-catalog/helpers/discovery";
 import type { WorkspacePluginCatalogEntry, WorkspacePluginKind } from "../plugin-catalog/entities";

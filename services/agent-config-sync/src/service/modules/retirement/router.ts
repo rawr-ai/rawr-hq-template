@@ -1,3 +1,14 @@
+/**
+ * agent-config-sync: retirement module.
+ *
+ * This router owns "garbage collect stale managed plugins" for destination
+ * homes. The service only deletes what it can prove it previously managed
+ * (Codex registry entries and Claude per-plugin sync manifests) and never
+ * guesses from arbitrary filesystem state.
+ *
+ * Scope is enforced here because retirement is a destructive capability: we
+ * only retire managed artifacts that match the requested sync scope.
+ */
 import { module } from "./module";
 import type { RetireAction, RetireStaleManagedResult } from "./contract";
 import type { SyncScope } from "../../shared/entities";

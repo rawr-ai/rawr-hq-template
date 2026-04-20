@@ -1,3 +1,13 @@
+/**
+ * hq-ops: config module.
+ *
+ * This router owns the HQ "configuration as data" capability: reading workspace
+ * and global config, validating it at the service boundary, and producing a
+ * layered/merged view for callers.
+ *
+ * Projections should not re-implement merge/validation rules; those rules are
+ * part of the service contract.
+ */
 import type { RawrConfig } from "./entities";
 import { loadGlobalRawrConfig, loadRawrConfig } from "./helpers/load";
 import { rawrGlobalConfigPath } from "./helpers/paths";

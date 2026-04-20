@@ -1,3 +1,10 @@
+/**
+ * session-intelligence: discovery-index repository.
+ *
+ * This repository owns the SQL schema and query mechanics used to index Codex
+ * session roots. The catalog discovery flow uses it so that persistence
+ * details remain behind a module-owned boundary.
+ */
 import type { CodexSessionFile, CodexSessionSource } from "../../../shared/entities";
 import type { SessionIndexRuntime } from "../../../shared/ports/session-index-runtime";
 

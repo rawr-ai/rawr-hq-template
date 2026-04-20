@@ -1,3 +1,11 @@
+/**
+ * chatgpt-corpus: source-materials module.
+ *
+ * This router owns ingestion-normalization of raw exports into a stable
+ * `SourceSnapshot` shape. Validation errors are intentionally surfaced at the
+ * contract boundary so projections can present actionable diagnostics without
+ * duplicating parsing rules.
+ */
 import { buildSourceSnapshot } from "./helpers/normalize";
 import { SOURCE_MATERIAL_DIRECTORIES } from "../../../shared/layout";
 import { module } from "./module";

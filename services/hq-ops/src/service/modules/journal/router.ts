@@ -1,3 +1,12 @@
+/**
+ * hq-ops: journal module.
+ *
+ * This router implements HQ journaling as a service capability: durable JSON
+ * write paths are the source of truth, while the sqlite index is a best-effort
+ * acceleration for tail/search operations.
+ *
+ * Keeping this here prevents projections from owning storage/index policy.
+ */
 import { searchSnippetsSemantic } from "./helpers/semantic";
 import {
   openJournalDb,

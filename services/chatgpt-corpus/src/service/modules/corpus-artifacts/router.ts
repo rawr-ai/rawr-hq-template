@@ -1,3 +1,11 @@
+/**
+ * chatgpt-corpus: corpus-artifacts module.
+ *
+ * This router builds derived artifacts (inventory/manifest/threads/graphs/etc.)
+ * from a normalized `SourceSnapshot`. The procedure body intentionally owns the
+ * authored build flow so callers can treat this as a single capability, while
+ * helper files remain narrow utilities for individual transforms.
+ */
 import { buildSourceSnapshot } from "../source-materials/helpers/normalize";
 import { SOURCE_MATERIAL_DIRECTORIES } from "../../../shared/layout";
 import { createArtifactFiles } from "./helpers/artifact-bundle";

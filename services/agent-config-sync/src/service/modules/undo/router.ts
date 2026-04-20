@@ -1,3 +1,14 @@
+/**
+ * agent-config-sync: undo module.
+ *
+ * This router replays the last captured undo capsule produced by sync execution.
+ * It exists so CLI/web can offer a safe "undo last sync" without embedding any
+ * filesystem logic or capsule format semantics in projections.
+ *
+ * The capability is intentionally narrow:
+ * - It only supports the plugin-sync provider capsule format.
+ * - It uses injected path/FS ports so the module remains host-agnostic.
+ */
 import { module } from "./module";
 import { PLUGINS_SYNC_UNDO_PROVIDER, type UndoApplyItem } from "./entities";
 import { applyUndoOperation } from "./helpers/apply-operation";

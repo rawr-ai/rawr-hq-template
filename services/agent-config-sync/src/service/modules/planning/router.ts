@@ -1,3 +1,15 @@
+/**
+ * agent-config-sync: planning module.
+ *
+ * This router owns "decide what would happen" for sync, without mutating any
+ * destination homes: it resolves the workspace root, discovers syncable source
+ * plugins, computes the target homes, and produces a dry-run assessment of the
+ * execution policy (conflicts, GC candidates, registry diffs).
+ *
+ * The intent is to keep projections (CLI/web) thin: they orchestrate inputs and
+ * rendering, while the service defines the planning semantics and the exact
+ * preview behavior.
+ */
 import { module } from "./module";
 import { resolveProviderContent } from "../../shared/source-content/helpers/provider-content";
 import { deleteIfExists, syncFileWithConflictPolicy, syncSkillDirWithConflictPolicy } from "../execution/helpers/destination-files";

@@ -1,3 +1,10 @@
+/**
+ * hq-ops: plugin-catalog module.
+ *
+ * This router owns plugin inventory and identity resolution for a workspace.
+ * It is intentionally "catalog only": install/lifecycle side effects live in
+ * sibling modules so callers can choose read vs write capabilities explicitly.
+ */
 import { discoverWorkspacePluginCatalog } from "./helpers/discovery";
 import { module } from "./module";
 

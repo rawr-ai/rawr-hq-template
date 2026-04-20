@@ -1,3 +1,10 @@
+/**
+ * session-intelligence: transcripts module.
+ *
+ * This router provides a narrow, capability-shaped interface over session files:
+ * detecting format and extracting normalized message transcripts. It exists so
+ * projections can request transcripts without coupling to on-disk formats.
+ */
 import { module } from "./module";
 import {
   detectSessionFormat,
