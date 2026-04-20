@@ -131,7 +131,7 @@ Summary: P0=0, P1=0, P2=3, P3=0
 
 Summary: P0=0, P1=0, P2=2, P3=0
 
-### SINT-SCH-001 (OPEN)
+### SINT-SCH-001 (RESOLVED)
 - Service: `@rawr/session-intelligence`
 - Tags: `RULE:router-not-dumping-ground` `MOD:search` `KIND:router-godfile`
 - Severity: P2
@@ -140,8 +140,9 @@ Summary: P0=0, P1=0, P2=2, P3=0
 - Fix intent:
   - Keep core flow authored in procedures, but avoid a monolithic dumping ground; push mechanics behind repositories and keep helpers narrow.
 - Suggested owner: `agent:session-intelligence`
+- Resolution: `cb9023b125c17bca32469ea2bffc2fcfda0306cf` — split mechanical filtering/metadata/search-text caching into module-local helpers; keep capability flow in `router.ts`
 
-### SINT-CAT-001 (OPEN)
+### SINT-CAT-001 (RESOLVED)
 - Service: `@rawr/session-intelligence`
 - Tags: `RULE:router-not-dumping-ground` `MOD:catalog` `KIND:router-godfile`
 - Severity: P2
@@ -150,4 +151,5 @@ Summary: P0=0, P1=0, P2=2, P3=0
 - Fix intent:
   - Same as SINT-SCH-001.
 - Suggested owner: `agent:session-intelligence`
+- Resolution: `cb9023b125c17bca32469ea2bffc2fcfda0306cf` — split mechanical filtering/date-window logic into a focused module-local helper; keep capability flow in `router.ts`
 
