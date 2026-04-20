@@ -7,7 +7,7 @@
  * ports (`HqOpsResources`).
  */
 import type { HqOpsResources } from "../../shared/ports/resources";
-import { discoverWorkspacePluginCatalog } from "../plugin-catalog/helpers/discovery";
+import { assertUniqueCatalogIdentity, listWorkspacePluginPackageDirs, parsePluginPackage } from "../plugin-catalog/helpers/discovery";
 import type { WorkspacePluginCatalogEntry, WorkspacePluginKind } from "../plugin-catalog/entities";
 import type { LifecycleCheckData, LifecycleTarget, LifecycleType } from "./entities";
 import { module } from "./module";
@@ -39,6 +39,19 @@ type JudgeResult = {
 };
 
 type MergeDecision = "auto_merge" | "fix_first" | "policy_escalation" | "hold";
+
+async function loadWorkspacePluginCatalogEntries(input: {
+  workspaceRoot: string;
+  resources: Pick<HqOpsResources, "fs" | "path">;
+}): Promise<WorkspacePluginCatalogEntry[]> {
+  const pluginDirs = await listWorkspacePluginPackageDirs(input.workspaceRoot, input.resources.fs, input.resources.path);
+  const parsed = await Promise.all(pluginDirs.map((pluginDir) => parsePluginPackage(pluginDir, input.workspaceRoot, input.resources.fs, input.resources.path)));
+  const plugins = parsed
+    .filter((p): p is WorkspacePluginCatalogEntry => Boolean(p))
+    .sort((a, b) => a.id.localeCompare(b.id));
+  assertUniqueCatalogIdentity(plugins);
+  return plugins;
+}
 
 /**
  * Builds the canonical resolved-target payload after a target path is known.
@@ -75,8 +88,7 @@ const resolveLifecycleTarget = module.resolveLifecycleTarget.handler(async ({ co
   const resources = context.deps.resources;
   const workspaceRoot = resources.path.resolve(input.workspaceRoot ?? context.scope.repoRoot);
   const cwd = resources.path.resolve(input.currentWorkingDirectory ?? workspaceRoot);
-  const catalog = await discoverWorkspacePluginCatalog({ workspaceRoot }, resources, context.scope.repoRoot);
-  const workspacePlugins = input.workspacePlugins ?? catalog.plugins;
+  const workspacePlugins = input.workspacePlugins ?? await loadWorkspacePluginCatalogEntries({ workspaceRoot, resources });
   const byPlugin = workspacePlugins.find(
     (plugin) => plugin.id === input.target || plugin.dirName === input.target || plugin.name === input.target,
   );
@@ -290,20 +302,20 @@ function resolveExplicitSweepTarget(
 const planSweepCandidates = module.planSweepCandidates.handler(async ({ context, input }) => {
   const resources = context.deps.resources;
   const workspaceRoot = resources.path.resolve(input.workspaceRoot ?? context.scope.repoRoot);
-  const catalog = await discoverWorkspacePluginCatalog({ workspaceRoot }, resources, context.scope.repoRoot);
+  const catalogPlugins = await loadWorkspacePluginCatalogEntries({ workspaceRoot, resources });
   const explicitTargets = input.explicitTargets ?? [];
   const candidates: Array<{ target: string; type: LifecycleType; issues: string[] }> = [];
 
   if (explicitTargets.length > 0) {
     for (const target of explicitTargets) {
-      const resolved = resolveExplicitSweepTarget(target, workspaceRoot, catalog.plugins, resources.path);
+      const resolved = resolveExplicitSweepTarget(target, workspaceRoot, catalogPlugins, resources.path);
       if (!(await pathExists(resources.fs, resolved.absPath))) continue;
       const issues = await collectSweepCandidateIssues(resolved.absPath, resources.fs, resources.path);
       if (issues.length === 0) continue;
       candidates.push({ target: resolved.absPath, type: resolved.type, issues });
     }
   } else {
-    for (const plugin of catalog.plugins) {
+    for (const plugin of catalogPlugins) {
       const issues = await collectSweepCandidateIssues(plugin.absPath, resources.fs, resources.path);
       if (issues.length === 0) continue;
       candidates.push({ target: plugin.absPath, type: inferTypeFromPluginKind(plugin.kind), issues });

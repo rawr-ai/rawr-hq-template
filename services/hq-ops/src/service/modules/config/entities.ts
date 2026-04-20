@@ -127,19 +127,3 @@ export type RawrConfigV1 = Static<typeof RawrConfigV1Schema>;
 export type RawrConfig = RawrConfigV1;
 export type SyncDestination = Static<typeof SyncDestinationSchema>;
 export type SyncProvider = Static<typeof SyncProviderSchema>;
-
-export type ConfigValidationIssue = {
-  path: string;
-  message: string;
-};
-
-export type LoadRawrConfigResult = {
-  config: RawrConfigV1 | null;
-  path: string | null;
-  warnings: string[];
-  error?: {
-    message: string;
-    cause?: string;
-    issues?: ConfigValidationIssue[];
-  };
-};
