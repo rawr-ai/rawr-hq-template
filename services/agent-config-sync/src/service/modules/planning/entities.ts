@@ -173,4 +173,3 @@ export const WorkspaceSyncPlanSchema = Type.Object(
   { additionalProperties: false },
 );
 export type WorkspaceSyncPlan = Static<typeof WorkspaceSyncPlanSchema>;
-

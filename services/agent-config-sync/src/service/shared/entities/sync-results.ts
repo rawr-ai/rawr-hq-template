@@ -77,4 +77,3 @@ export const SyncRunResultSchema = Type.Object(
 );
 
 export type SyncRunResult = Static<typeof SyncRunResultSchema>;
-
