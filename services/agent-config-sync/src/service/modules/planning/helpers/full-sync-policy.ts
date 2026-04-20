@@ -1,4 +1,4 @@
-import type { FullSyncPolicyInput, FullSyncPolicyResult } from "../contract";
+import type { FullSyncPolicyInput, FullSyncPolicyResult } from "../entities";
 
 export function evaluateFullSyncPolicy(input: FullSyncPolicyInput): FullSyncPolicyResult {
   const partialReasons: string[] = [];

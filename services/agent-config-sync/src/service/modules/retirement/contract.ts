@@ -2,24 +2,7 @@ import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
 import { SyncScopeSchema } from "../../shared/entities";
-
-const RetireActionSchema = Type.Object(
-  {
-    agent: Type.Union([Type.Literal("codex"), Type.Literal("claude")]),
-    home: Type.String({ minLength: 1 }),
-    plugin: Type.String({ minLength: 1 }),
-    target: Type.String({ minLength: 1 }),
-    action: Type.Union([
-      Type.Literal("planned"),
-      Type.Literal("deleted"),
-      Type.Literal("updated"),
-      Type.Literal("skipped"),
-      Type.Literal("failed"),
-    ]),
-    message: Type.Optional(Type.String({ minLength: 1 })),
-  },
-  { additionalProperties: false },
-);
+import { RetireActionSchema, RetiredPluginRefSchema } from "./entities";
 
 const RetireStaleManagedInputSchema = Type.Object(
   {
@@ -36,22 +19,12 @@ const RetireStaleManagedInputSchema = Type.Object(
 const RetireStaleManagedResultSchema = Type.Object(
   {
     ok: Type.Boolean(),
-    stalePlugins: Type.Array(
-      Type.Object(
-        {
-          agent: Type.Union([Type.Literal("codex"), Type.Literal("claude")]),
-          home: Type.String({ minLength: 1 }),
-          plugin: Type.String({ minLength: 1 }),
-        },
-        { additionalProperties: false },
-      ),
-    ),
+    stalePlugins: Type.Array(RetiredPluginRefSchema),
     actions: Type.Array(RetireActionSchema),
   },
   { additionalProperties: false },
 );
 
-export type RetireAction = Static<typeof RetireActionSchema>;
 export type RetireStaleManagedInput = Static<typeof RetireStaleManagedInputSchema>;
 export type RetireStaleManagedResult = Static<typeof RetireStaleManagedResultSchema>;
 

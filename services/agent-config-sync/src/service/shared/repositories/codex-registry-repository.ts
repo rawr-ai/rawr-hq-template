@@ -1,22 +1,23 @@
-import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type {
-  SourceContent,
-  SourcePlugin,
-} from "../../../shared/entities";
-import { stableJsonEqual } from "../../../shared/helpers/stable-json";
+import type { AgentConfigSyncResources } from "../resources";
+import type { SourceContent, SourcePlugin } from "../entities";
+import { stableJsonEqual } from "../helpers/stable-json";
 
 /**
- * Codex registry ownership sets grouped by destination content type.
+ * agent-config-sync: Codex registry repository.
+ *
+ * @remarks
+ * Codex stores synced plugin ownership claims in `plugins/registry.json`.
+ * This repository owns the read/derive/write mechanics for that file so routers
+ * can focus on capability flow (what to sync, to which homes) without becoming
+ * a dumping ground for JSON normalization and drift rules.
  */
+
 export type CodexRegistryClaims = {
   promptsByPlugin: Record<string, Set<string>>;
   skillsByPlugin: Record<string, Set<string>>;
   scriptsByPlugin: Record<string, Set<string>>;
 };
 
-/**
- * Registry entry for one RAWR-managed plugin in a Codex home.
- */
 export type CodexRegistryPlugin = {
   name: string;
   description?: string;
@@ -30,9 +31,6 @@ export type CodexRegistryPlugin = {
   [key: string]: unknown;
 };
 
-/**
- * Codex plugin registry file stored in the destination home.
- */
 export type CodexRegistryFile = {
   $schema?: string;
   description?: string;
@@ -43,18 +41,12 @@ export type CodexRegistryFile = {
   [key: string]: unknown;
 };
 
-/**
- * Loaded registry plus derived ownership claims used by conflict checks.
- */
 export type CodexRegistryContext = {
   filePath: string;
   data: CodexRegistryFile;
   claimedSets: CodexRegistryClaims;
 };
 
-/**
- * Loads the Codex registry and expands plugin claims for conflict detection.
- */
 export async function loadCodexRegistry(
   codexHome: string,
   resources: AgentConfigSyncResources,
@@ -83,9 +75,6 @@ export async function loadCodexRegistry(
   return { filePath, data, claimedSets };
 }
 
-/**
- * Computes names already claimed by plugins other than the current source.
- */
 export function getClaimsFromOtherPlugins(
   pluginName: string,
   claimed: Record<string, Set<string>>,
@@ -109,10 +98,6 @@ export function buildCodexScriptName(
   return `${pluginName}--${sourceScriptName}`;
 }
 
-/**
- * Upserts the current plugin's Codex registry entry and records stable claims
- * used by future conflict detection and GC.
- */
 export async function upsertCodexRegistry(input: {
   codexHome: string;
   sourcePlugin: SourcePlugin;
@@ -129,18 +114,12 @@ export async function upsertCodexRegistry(input: {
     name: pluginName,
     prompts: input.content.workflowFiles.map((workflow) => workflow.name),
     skills: input.content.skills.map((skill) => skill.name),
-    scripts: input.content.scripts.map((script) =>
-      buildCodexScriptName(pluginName, script.name),
-    ),
+    scripts: input.content.scripts.map((script) => buildCodexScriptName(pluginName, script.name)),
     source_plugin_path: input.sourcePlugin.absPath,
     managed_by: "@rawr/plugin-plugins",
   };
-  if (input.sourcePlugin.description) {
-    nextPluginEntry.description = input.sourcePlugin.description;
-  }
-  if (input.sourcePlugin.version) {
-    nextPluginEntry.version = input.sourcePlugin.version;
-  }
+  if (input.sourcePlugin.description) nextPluginEntry.description = input.sourcePlugin.description;
+  if (input.sourcePlugin.version) nextPluginEntry.version = input.sourcePlugin.version;
 
   const plugins = [...(input.existingData.plugins ?? [])];
   const existingIndex = plugins.findIndex((plugin) => plugin.name === pluginName);
@@ -167,19 +146,15 @@ export async function upsertCodexRegistry(input: {
 
   const nextData: CodexRegistryFile = {
     ...input.existingData,
-    canonical_source:
-      input.existingData.canonical_source ?? input.sourcePlugin.absPath,
-    sync_direction:
-      input.existingData.sync_direction ?? "rawr-hq plugin → codex/claude",
+    canonical_source: input.existingData.canonical_source ?? input.sourcePlugin.absPath,
+    sync_direction: input.existingData.sync_direction ?? "rawr-hq plugin → codex/claude",
     plugins: [...plugins].sort((a, b) => a.name.localeCompare(b.name)),
   };
   const changed = !stableJsonEqual(
     normalizeRegistryForDrift(input.existingData),
     normalizeRegistryForDrift(nextData),
   );
-  nextData.last_synced = changed
-    ? nowIso
-    : input.existingData.last_synced ?? nowIso;
+  nextData.last_synced = changed ? nowIso : input.existingData.last_synced ?? nowIso;
 
   if (!input.dryRun && changed) {
     await input.resources.files.writeJsonFile(filePath, nextData);
@@ -188,12 +163,7 @@ export async function upsertCodexRegistry(input: {
   return { nextData, filePath, changed };
 }
 
-/**
- * Strips volatile fields before comparing one plugin registry entry.
- */
-function normalizeRegistryPluginForDrift(
-  plugin: CodexRegistryPlugin | undefined,
-): CodexRegistryPlugin | null {
+function normalizeRegistryPluginForDrift(plugin: CodexRegistryPlugin | undefined): CodexRegistryPlugin | null {
   if (!plugin) return null;
   const normalized: CodexRegistryPlugin = { ...plugin };
   delete normalized.synced_at;
@@ -203,9 +173,6 @@ function normalizeRegistryPluginForDrift(
   return normalized;
 }
 
-/**
- * Strips volatile registry fields before determining whether a write is needed.
- */
 function normalizeRegistryForDrift(data: CodexRegistryFile): CodexRegistryFile {
   const normalized: CodexRegistryFile = {
     ...data,
@@ -216,3 +183,4 @@ function normalizeRegistryForDrift(data: CodexRegistryFile): CodexRegistryFile {
   delete normalized.last_synced;
   return normalized;
 }
+

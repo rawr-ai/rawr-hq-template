@@ -16,61 +16,21 @@
  * Helpers remain mechanical (delete-if-present, write-json-with-undo).
  */
 import { module } from "./module";
-import type { RetireAction, RetireStaleManagedResult } from "./contract";
+import type { RetireAction, RetiredPluginRef } from "./entities";
 import type { SyncScope } from "../../shared/entities";
 import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../shared/resources";
+import { loadCodexRegistry, type CodexRegistryFile } from "../../shared/repositories/codex-registry-repository";
+import {
+  readClaudeSyncManifest,
+  type ClaudeMarketplaceFile,
+  type ClaudeManagedPluginManifest,
+} from "../../shared/repositories/claude-marketplace-repository";
 import { deletePathIfPresent, writeJsonWithUndoCapture } from "./helpers/filesystem-actions";
 import { MANAGED_BY, pluginMatchesScope } from "./helpers/managed-source";
-
-type ClaudeMarketplacePlugin = { name?: unknown; [key: string]: unknown };
-type ClaudeMarketplaceFile = { plugins?: ClaudeMarketplacePlugin[]; [key: string]: unknown };
-
-type ClaudeManagedPluginManifest = {
-  plugin?: unknown;
-  sourcePluginPath?: unknown;
-  managedBy?: unknown;
-};
-
-type CodexRegistryPlugin = {
-  name?: unknown;
-  prompts?: unknown;
-  skills?: unknown;
-  scripts?: unknown;
-  source_plugin_path?: unknown;
-  managed_by?: unknown;
-  [key: string]: unknown;
-};
-
-type CodexRegistryFile = {
-  plugins?: CodexRegistryPlugin[];
-  [key: string]: unknown;
-};
 
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string" && item.length > 0);
-}
-
-function pushRetireAction(bucket: RetireAction[], action: RetireAction): void {
-  bucket.push(action);
-}
-
-async function readManagedClaudeSyncManifest(input: {
-  claudeHome: string;
-  dirName: string;
-  resources: AgentConfigSyncResources;
-}): Promise<{ pluginName: string; sourcePluginPath: string } | null> {
-  const filePath = input.resources.path.join(
-    input.claudeHome,
-    "plugins",
-    input.dirName,
-    ".rawr-sync-manifest.json",
-  );
-  const raw = await input.resources.files.readJsonFile<ClaudeManagedPluginManifest>(filePath);
-  if (!raw || raw.managedBy !== MANAGED_BY) return null;
-  if (typeof raw.sourcePluginPath !== "string" || raw.sourcePluginPath.length === 0) return null;
-  const pluginName = typeof raw.plugin === "string" && raw.plugin.length > 0 ? raw.plugin : input.dirName;
-  return { pluginName, sourcePluginPath: raw.sourcePluginPath };
 }
 
 const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, input }) => {
@@ -81,15 +41,15 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
   const undoCapture = input.dryRun ? undefined : context.undoCapture;
 
   const actions: RetireAction[] = [];
-  const stalePlugins: RetireStaleManagedResult["stalePlugins"] = [];
+  const stalePlugins: RetiredPluginRef[] = [];
   let ok = true;
 
   for (const codexHome of input.codexHomes) {
     const registryPath = resources.path.join(codexHome, "plugins", "registry.json");
 
     try {
-      const registry = await resources.files.readJsonFile<CodexRegistryFile>(registryPath);
-      if (!registry || !Array.isArray(registry.plugins)) continue;
+      const registry = await loadCodexRegistry(codexHome, resources);
+      if (!Array.isArray(registry.data.plugins)) continue;
 
       const stale: Array<{
         pluginName: string;
@@ -99,7 +59,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
         sourcePluginPath?: string;
       }> = [];
 
-      for (const plugin of registry.plugins) {
+      for (const plugin of registry.data.plugins) {
         if (!plugin || plugin.managed_by !== MANAGED_BY) continue;
         if (typeof plugin.name !== "string" || plugin.name.length === 0) continue;
         if (activePluginNames.has(plugin.name)) continue;
@@ -125,8 +85,8 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
       const staleNames = stale.map((entry) => entry.pluginName);
       const staleSet = new Set(staleNames);
       const nextRegistry: CodexRegistryFile = {
-        ...registry,
-        plugins: registry.plugins.filter(
+        ...registry.data,
+        plugins: registry.data.plugins.filter(
           (plugin) => !(typeof plugin?.name === "string" && staleSet.has(plugin.name)),
         ),
         last_synced: new Date().toISOString(),
@@ -143,7 +103,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
             undoCapture,
             resources,
           });
-          pushRetireAction(actions, {
+          actions.push({
             agent: "codex",
             home: codexHome,
             plugin: entry.pluginName,
@@ -162,7 +122,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
             undoCapture,
             resources,
           });
-          pushRetireAction(actions, {
+          actions.push({
             agent: "codex",
             home: codexHome,
             plugin: entry.pluginName,
@@ -180,7 +140,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
             undoCapture,
             resources,
           });
-          pushRetireAction(actions, {
+          actions.push({
             agent: "codex",
             home: codexHome,
             plugin: entry.pluginName,
@@ -198,7 +158,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
         undoCapture,
         resources,
       });
-      pushRetireAction(actions, {
+      actions.push({
         agent: "codex",
         home: codexHome,
         plugin: "*",
@@ -208,7 +168,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
       });
     } catch (err) {
       ok = false;
-      pushRetireAction(actions, {
+      actions.push({
         agent: "codex",
         home: codexHome,
         plugin: "*",
@@ -231,24 +191,23 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
       for (const dirent of dirents) {
         if (!dirent.isDirectory) continue;
 
-        const managed = await readManagedClaudeSyncManifest({
-          claudeHome,
-          dirName: dirent.name,
-          resources,
-        });
-        if (!managed) continue;
-        if (activePluginNames.has(managed.pluginName)) continue;
+        const manifest = await readClaudeSyncManifest(claudeHome, dirent.name, resources);
+        if (!manifest || manifest.managedBy !== MANAGED_BY) continue;
+        if (typeof manifest.sourcePluginPath !== "string" || manifest.sourcePluginPath.length === 0) continue;
+        const pluginName =
+          typeof manifest.plugin === "string" && manifest.plugin.length > 0 ? manifest.plugin : dirent.name;
+        if (activePluginNames.has(pluginName)) continue;
 
         if (!pluginMatchesScope({
           pathOps: resources.path,
-          sourcePluginPath: managed.sourcePluginPath,
+          sourcePluginPath: manifest.sourcePluginPath,
           workspaceRoot,
           scope,
         })) continue;
 
-        staleNames.add(managed.pluginName);
+        staleNames.add(pluginName);
         stale.push({
-          pluginName: managed.pluginName,
+          pluginName,
           dirName: dirent.name,
           target: resources.path.join(pluginsRoot, dirent.name),
         });
@@ -263,7 +222,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
           undoCapture,
           resources,
         });
-        pushRetireAction(actions, {
+        actions.push({
           agent: "claude",
           home: claudeHome,
           plugin: entry.pluginName,
@@ -290,7 +249,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
         undoCapture,
         resources,
       });
-      pushRetireAction(actions, {
+      actions.push({
         agent: "claude",
         home: claudeHome,
         plugin: "*",
@@ -300,7 +259,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
       });
     } catch (err) {
       ok = false;
-      pushRetireAction(actions, {
+      actions.push({
         agent: "claude",
         home: claudeHome,
         plugin: "*",
@@ -315,4 +274,3 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
 });
 
 export const router = module.router({ retireStaleManaged });
-

@@ -1,5 +1,5 @@
-import type { SyncRunResult } from "../../execution/contract";
-import type { SyncAssessment, WorkspaceSkip } from "../contract";
+import type { SyncRunResult } from "../../../shared/entities/sync-results";
+import type { SyncAssessment, WorkspaceSkip } from "../entities";
 import type { SyncScope } from "../../../shared/entities";
 
 export function summarizeWorkspaceRun(input: {

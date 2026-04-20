@@ -1,5 +1,13 @@
-import type { SourceContent } from "../../../shared/entities";
-import type { SyncItemResult, SyncScannedSummary, SyncTargetResult } from "../contract";
+import type { SourceContent } from "../entities";
+import type { SyncItemResult, SyncScannedSummary, SyncTargetResult } from "../entities/sync-results";
+
+/**
+ * agent-config-sync: sync result helpers.
+ *
+ * @remarks
+ * These helpers are intentionally mechanical: they help routers and repositories
+ * build result payloads consistently without hiding capability policy.
+ */
 
 export function pushItem(
   bucket: SyncTargetResult,
@@ -18,3 +26,4 @@ export function summarizeScannedContent(content: SourceContent): SyncScannedSumm
     agents: content.agentFiles.map((agent) => agent.name),
   };
 }
+

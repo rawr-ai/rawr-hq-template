@@ -1,5 +1,5 @@
 import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../../shared/resources";
-import type { RetireAction } from "../contract";
+import type { RetireAction } from "../entities";
 
 export async function deletePathIfPresent(input: {
   dryRun: boolean;
