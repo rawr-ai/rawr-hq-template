@@ -5,17 +5,20 @@ Sweep date: 2026-04-20 (America/New_York)
 ## Grounding (exact SHAs)
 
 - Graphite stack top branch: `agent-ORCH-plugin-logic-service-split`
-- Stack tip SHA (local): `b90329c22a727eaaef39ba8fe720fa573efd79fc`
-- `origin/agent-ORCH-plugin-logic-service-split` SHA: `a31e1ef9c3ec05bcf270ddc560463f8650467fc3`
+- Sweep start SHA (baseline + initial findings): `b90329c22a727eaaef39ba8fe720fa573efd79fc`
+- Violations closeout SHA (all bag items resolved): `aff8693ce75d7f41b79f5713ec3cd4d82ace23f3`
+- Current branch tip (at time of this doc update): `60ab3bde2c289d3cd5628e8c7e0d5198778648e0`
+- `origin/agent-ORCH-plugin-logic-service-split` SHA (at time of this doc update): `2d2d2a5f8666ead3f3690d3a90cb9d921d8c30f3`
 
 ### Worktrees
 
 - Indexing worktree (Narsil-aligned): `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template`
-  - State: clean, detached at `b90329c22a727eaaef39ba8fe720fa573efd79fc`
+  - State: clean, detached at `aff8693ce75d7f41b79f5713ec3cd4d82ace23f3`
   - Note: local edits on `matei/reorganize-project-docs` were stashed as `WIP: exec plan edits` to keep this checkout clean for indexing.
 - Primary edit worktree: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-plugin-plugins-service-migration`
   - Branch: `agent-ORCH-plugin-logic-service-split`
-  - State: clean (before remediation), HEAD `b90329c22a727eaaef39ba8fe720fa573efd79fc`
+  - State: clean at sweep start, HEAD `b90329c22a727eaaef39ba8fe720fa573efd79fc`
+  - State: clean after closeout, HEAD `aff8693ce75d7f41b79f5713ec3cd4d82ace23f3`
 
 ## Scope (Nx-truth)
 

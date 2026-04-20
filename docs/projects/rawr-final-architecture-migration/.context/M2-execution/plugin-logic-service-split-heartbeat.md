@@ -4,7 +4,7 @@
 
 Orchestrator branch: `agent-ORCH-plugin-logic-service-split`
 
-Worktree: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-ORCH-plugin-logic-service-split`
+Worktree: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-plugin-plugins-service-migration`
 
 Source plan: `docs/projects/rawr-final-architecture-migration/.context/M2-execution/plugin-logic-service-split-execution-plan.md`
 
@@ -57,26 +57,32 @@ Objective: make `plugins/cli/plugins` a projection again by keeping agent destin
 - Removed projection-owned sync/install/lifecycle semantic files and rewired commands through service-facing adapters.
 - Beginning ratchet slice against the integrated service/projection shape.
 
+### 2026-04-20 - Boundary Hardening + Violations Sweep Closed
+
+- Completed structural hardening across the migrated services and closed out the violations sweep loop.
+- Canonical bag of evidence + resolutions: `docs/projects/rawr-final-architecture-migration/.context/M2-execution/service-migration-violations-bag.md`
+- Plan preserved verbatim for repeatability: `docs/projects/rawr-final-architecture-migration/.context/M2-execution/sweep-delegate-plan-verbatim.md`
+
 ## Active Agents
 
 - Complete: Sync Service Agent `019da77e-9c1b-72c0-9b32-02228380906e` on `agent-SYNC-plugin-sync-service-ownership`
 - Complete: HQ Ops Agent `019da77e-cab9-7593-91d8-afa1b94eb7a6` on `agent-HQOPS-plugin-install-lifecycle-service`
 - Complete: Projection Agent `019da791-7255-74b3-b6b9-83c50b84b5f0` on `agent-PROJ-plugin-cli-thinning`
-- Active: Ratchet Agent
-- Pending: Proof Agent
-- Pending: Review Agents
+- Complete: Ratchet/verification follow-through recorded in the violations bag
+- Complete: Architecture/style follow-up recorded in the violations bag
 
 ## Slice Status
 
 - Sync service ownership: integrated
 - HQ ops plugin install/lifecycle ownership: integrated
 - Plugin CLI projection thinning: integrated
-- Structural ratchets: active
-- Verification/proof: pending
-- Final architecture/style review: pending
+- Structural ratchets: integrated
+- Verification/proof: complete (see violations bag)
+- Final architecture/style review: complete (see violations bag)
 
 ## Verification State
 
 - Focused integrated service typechecks passed for `@rawr/agent-config-sync` and `@rawr/hq-ops`.
 - Projection worktree passed `@rawr/plugin-plugins:typecheck`, `@rawr/agent-config-sync:typecheck`, `@rawr/hq-ops:typecheck`, `@rawr/plugin-plugins:test`, `@rawr/hq-ops:test`, `@rawr/agent-config-sync:test`, `@rawr/plugin-plugins:structural`, `@rawr/agent-config-sync:structural`, `@rawr/hq-ops:structural`, focused run-many typecheck/build for the three touched projects, and `git diff --check`.
 - Final gates are defined in the execution plan and must be run after integration.
+- Nx baseline + remediation validation across the migrated services is captured in `docs/projects/rawr-final-architecture-migration/.context/M2-execution/service-migration-violations-bag.md`.
