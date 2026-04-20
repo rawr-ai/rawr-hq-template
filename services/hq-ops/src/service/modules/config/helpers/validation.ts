@@ -1,5 +1,4 @@
 import { Value } from "typebox/value";
-import type { ConfigValidationIssue } from "../contract";
 import {
   clampJournalCandidateLimit,
   RawrConfigV1Schema,
@@ -8,6 +7,11 @@ import {
   type SyncDestination,
   type SyncProvider,
 } from "../entities";
+
+export type ConfigValidationIssue = {
+  path: string;
+  message: string;
+};
 
 const clampInt = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, Math.trunc(value)));
