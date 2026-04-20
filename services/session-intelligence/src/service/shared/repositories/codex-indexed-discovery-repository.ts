@@ -1,6 +1,6 @@
-import type { SessionIndexRuntime } from "../../../shared/ports/session-index-runtime";
-import type { DiscoverSessionsInput, SessionSourceRuntime } from "../../../shared/ports/session-source-runtime";
-import type { CodexSessionFile, CodexSessionSource, DiscoveredSessionFile, SessionStatus } from "../../../shared/entities";
+import type { SessionIndexRuntime } from "../ports/session-index-runtime";
+import type { SessionSourceRuntime } from "../ports/session-source-runtime";
+import type { CodexSessionFile, CodexSessionSource, DiscoveredSessionFile, SessionStatus } from "../entities";
 import {
   deleteCodexFileIndexEntry,
   deleteCodexRootIndex,
@@ -9,7 +9,7 @@ import {
   readCodexRootState,
   replaceCodexRootIndex,
   updateCodexFileIndexEntry,
-} from "../repositories/discovery-index-repository";
+} from "./codex-discovery-index-repository";
 
 const DEFAULT_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = 15_000;
 const DEFAULT_CODEX_DISCOVERY_ARCHIVED_MAX_AGE_MS = 5 * 60_000;
