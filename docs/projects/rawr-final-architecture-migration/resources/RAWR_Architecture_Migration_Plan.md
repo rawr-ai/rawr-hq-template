@@ -249,6 +249,9 @@ services/
     repo-state/
     journal/
     security/
+    plugin-catalog/
+    plugin-install/
+    plugin-lifecycle/
 ```
 
 This is one service package with reserved internal modules:
@@ -257,6 +260,9 @@ This is one service package with reserved internal modules:
 - `repo-state` owns repo-local plugin state and locking
 - `journal` owns journal events/snippets/index/search semantics
 - `security` owns scan/gate/report semantics
+- `plugin-catalog` owns workspace plugin discovery and classification semantics
+- `plugin-install` owns install/link drift policy and semantic repair planning
+- `plugin-lifecycle` owns lifecycle policy, scratch policy evaluation, and sweep planning
 
 `services/hq-ops` owns the HQ operational boundary.
 
