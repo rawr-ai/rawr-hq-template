@@ -1,4 +1,5 @@
 import { schema } from "@rawr/hq-sdk";
+import type { ErrorMapItem } from "@orpc/server";
 import { Type } from "typebox";
 import {
   INVALID_CONVERSATION_EXPORT,
@@ -6,7 +7,6 @@ import {
 } from "../../shared/errors";
 import { ocBase } from "../../base";
 import { SourceSnapshotSchema } from "../source-materials/entities";
-import { CORPUS_ARTIFACT_VALIDATION_FAILED } from "./errors";
 import {
   AmbiguityFlagSchema,
   AnomalySchema,
@@ -21,6 +21,21 @@ import {
   SourceCountsSchema,
   ValidationReportSchema,
 } from "./entities";
+
+const ValidationFailedData = schema(
+  Type.Object(
+    {
+      reason: Type.String({ minLength: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const CORPUS_ARTIFACT_VALIDATION_FAILED: ErrorMapItem<typeof ValidationFailedData> = {
+  status: 422,
+  message: "Corpus artifact validation failed",
+  data: ValidationFailedData,
+} as const;
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 const BuildArtifactsInputSchema = Type.Object(

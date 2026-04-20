@@ -118,6 +118,9 @@ const suiteCommandsByProject = {
   "@rawr/agent-config-sync": {
     default: ["bun scripts/phase-03/verify-agent-config-sync-service-shape.mjs"],
   },
+  "@rawr/chatgpt-corpus": {
+    default: ["bun scripts/phase-03/verify-chatgpt-corpus-service-shape.mjs"],
+  },
   "@rawr/session-intelligence": {
     default: ["bun scripts/phase-03/verify-session-intelligence-structural.mjs"],
   },

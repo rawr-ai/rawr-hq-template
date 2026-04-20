@@ -1,6 +1,5 @@
-import path from "node:path";
-
 import type { RawrPluginKind, SyncScope } from "../entities";
+import type { AgentConfigSyncPathResources } from "../resources";
 
 export type ResolvedSourceScope = RawrPluginKind | "external";
 
@@ -21,11 +20,15 @@ function hasPrefix(parts: string[], prefix: string[]): boolean {
   return true;
 }
 
-export function resolveSourceScopeForPath(absPath: string, workspaceRoot: string): ResolvedSourceScope {
-  const rel = path.relative(path.resolve(workspaceRoot), path.resolve(absPath));
+export function resolveSourceScopeForPath(
+  pathOps: AgentConfigSyncPathResources,
+  absPath: string,
+  workspaceRoot: string,
+): ResolvedSourceScope {
+  const rel = pathOps.relative(pathOps.resolve(workspaceRoot), pathOps.resolve(absPath));
   if (rel.startsWith("..")) return "external";
 
-  const relParts = rel.split(path.sep).filter(Boolean);
+  const relParts = rel.split(pathOps.sep).filter(Boolean);
 
   for (const [scope, root] of Object.entries(PLUGIN_SCOPE_ROOTS) as Array<[RawrPluginKind, string[]]>) {
     if (hasPrefix(relParts, root)) return scope;

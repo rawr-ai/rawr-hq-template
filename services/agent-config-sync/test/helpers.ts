@@ -26,6 +26,15 @@ export function createFakeResources(): AgentConfigSyncResources {
       statPathKind: async () => null,
       readDir: async () => [],
     },
+    path: {
+      join: (...parts) => path.join(...parts),
+      resolve: (...parts) => path.resolve(...parts),
+      dirname: (targetPath) => path.dirname(targetPath),
+      basename: (targetPath) => path.basename(targetPath),
+      relative: (from, to) => path.relative(from, to),
+      isAbsolute: (targetPath) => path.isAbsolute(targetPath),
+      sep: path.sep,
+    },
   };
 }
 
@@ -136,6 +145,15 @@ export function createNodeTestResources(): AgentConfigSyncResources {
           return [];
         }
       },
+    },
+    path: {
+      join: (...parts) => path.join(...parts),
+      resolve: (...parts) => path.resolve(...parts),
+      dirname: (targetPath) => path.dirname(targetPath),
+      basename: (targetPath) => path.basename(targetPath),
+      relative: (from, to) => path.relative(from, to),
+      isAbsolute: (targetPath) => path.isAbsolute(targetPath),
+      sep: path.sep,
     },
   };
 }

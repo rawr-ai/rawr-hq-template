@@ -294,6 +294,16 @@ for (const { contractPath, expected } of moduleExpectations) {
   }
 }
 
+const securityEntitiesSource = await readFile("services/hq-ops/src/service/modules/security/entities.ts");
+for (const forbidden of ["rawOutput", "match: Type.String"]) {
+  assertCondition(!securityEntitiesSource.includes(forbidden), `security public entities must not expose ${forbidden}`);
+}
+
+const pluginLifecycleContractSource = await readFile("services/hq-ops/src/service/modules/plugin-lifecycle/contract.ts");
+for (const forbidden of ["Type.Any()", "raw: Type.Optional"]) {
+  assertCondition(!pluginLifecycleContractSource.includes(forbidden), `plugin lifecycle contract must not expose untyped judge payloads via ${forbidden}`);
+}
+
 const bannedFragments = [
   "packages/control-plane",
   "packages/journal",

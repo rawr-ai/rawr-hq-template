@@ -253,6 +253,20 @@ async function verifyServiceShape(findings) {
       findings.push(`session-intelligence base service deps must declare ${depKey}`);
     }
   }
+
+  const searchContract = await readFileIfExists(`${SERVICE_ROOT}/src/service/modules/search/contract.ts`, findings, undefined, false);
+  const searchRouter = await readFileIfExists(`${SERVICE_ROOT}/src/service/modules/search/router.ts`, findings, undefined, false);
+  if (searchContract) {
+    if (searchContract.includes("sessions: Type.Array")) {
+      findings.push("session-intelligence search contract must not require caller-provided catalog sessions");
+    }
+    if (searchContract.includes("indexPath: Type.String")) {
+      findings.push("session-intelligence search contract must not expose index storage paths");
+    }
+  }
+  if (searchRouter && !searchRouter.includes("context.indexRuntime.defaultIndexPath()")) {
+    findings.push("session-intelligence search router must resolve index storage from the service runtime");
+  }
 }
 
 async function verifyServiceRuntimePurity(findings) {

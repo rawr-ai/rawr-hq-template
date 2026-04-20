@@ -6,7 +6,7 @@ export async function loadActiveUndoCapsule(
   workspaceRoot: string,
   resources: AgentConfigSyncResources,
 ): Promise<UndoCapsule | null> {
-  const parsed = await resources.files.readJsonFile<UndoCapsule>(undoManifestPath(workspaceRoot));
+  const parsed = await resources.files.readJsonFile<UndoCapsule>(undoManifestPath(workspaceRoot, resources.path));
   if (!parsed) return null;
   if (parsed.version !== 1) return null;
   if (!Array.isArray(parsed.operations)) return null;
@@ -17,5 +17,5 @@ export async function clearActiveUndoCapsule(
   workspaceRoot: string,
   resources: AgentConfigSyncResources,
 ): Promise<void> {
-  await resources.files.removePath(undoCapsuleDir(workspaceRoot), { recursive: true });
+  await resources.files.removePath(undoCapsuleDir(workspaceRoot, resources.path), { recursive: true });
 }

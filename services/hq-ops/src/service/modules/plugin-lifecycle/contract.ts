@@ -54,7 +54,6 @@ const RawJudgeResultInputSchema = Type.Object(
     outcome: Type.Optional(Type.String()),
     confidence: Type.Optional(Type.Number()),
     reason: Type.Optional(Type.String()),
-    raw: Type.Optional(Type.Any()),
   },
   { additionalProperties: false },
 );
@@ -81,7 +80,6 @@ const JudgeResultSchema = Type.Object(
     ]),
     confidence: Type.Number(),
     reason: Type.String(),
-    raw: Type.Optional(Type.Any()),
   },
   { additionalProperties: false },
 );

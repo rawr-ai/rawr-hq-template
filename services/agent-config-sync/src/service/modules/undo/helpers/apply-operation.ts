@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type { UndoApplyItem, UndoOperation } from "../entities";
 import { undoCapsuleDir } from "./capsule-paths";
@@ -43,7 +41,7 @@ export async function applyUndoOperation(input: {
     }
   }
 
-  const backupAbs = path.join(undoCapsuleDir(input.workspaceRoot), op.backupRel);
+  const backupAbs = input.resources.path.join(undoCapsuleDir(input.workspaceRoot, input.resources.path), op.backupRel);
   if (!(await input.resources.files.pathExists(backupAbs))) {
     return {
       seq: op.seq,

@@ -1,6 +1,5 @@
-import path from "node:path";
-import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type { SourceContent } from "../../../shared/entities";
+import type { AgentConfigSyncResources } from "../../resources";
+import type { SourceContent } from "../../entities";
 import type { NormalizedPluginContentInclude } from "../entities";
 
 /**
@@ -13,10 +12,10 @@ export async function scanCanonicalContentAtRoot(input: {
   include: NormalizedPluginContentInclude;
   resources: AgentConfigSyncResources;
 }): Promise<SourceContent> {
-  const workflowsDir = path.join(input.rootAbsPath, "workflows");
-  const skillsDir = path.join(input.rootAbsPath, "skills");
-  const scriptsDir = path.join(input.rootAbsPath, "scripts");
-  const agentsDir = path.join(input.rootAbsPath, "agents");
+  const workflowsDir = input.resources.path.join(input.rootAbsPath, "workflows");
+  const skillsDir = input.resources.path.join(input.rootAbsPath, "skills");
+  const scriptsDir = input.resources.path.join(input.rootAbsPath, "scripts");
+  const agentsDir = input.resources.path.join(input.rootAbsPath, "agents");
 
   const content: SourceContent = {
     workflowFiles: [],
@@ -30,7 +29,7 @@ export async function scanCanonicalContentAtRoot(input: {
       if (dirent.isDirectory || !dirent.name.endsWith(".md")) continue;
       content.workflowFiles.push({
         name: dirent.name.slice(0, -3),
-        absPath: path.join(workflowsDir, dirent.name),
+        absPath: input.resources.path.join(workflowsDir, dirent.name),
       });
     }
   }
@@ -38,8 +37,8 @@ export async function scanCanonicalContentAtRoot(input: {
   if (input.include.skills && (await input.resources.files.pathExists(skillsDir))) {
     for (const dirent of await input.resources.files.readDir(skillsDir)) {
       if (!dirent.isDirectory) continue;
-      const skillDir = path.join(skillsDir, dirent.name);
-      if (!(await input.resources.files.pathExists(path.join(skillDir, "SKILL.md")))) continue;
+      const skillDir = input.resources.path.join(skillsDir, dirent.name);
+      if (!(await input.resources.files.pathExists(input.resources.path.join(skillDir, "SKILL.md")))) continue;
       content.skills.push({ name: dirent.name, absPath: skillDir });
     }
   }
@@ -49,7 +48,7 @@ export async function scanCanonicalContentAtRoot(input: {
       if (dirent.isDirectory) continue;
       content.scripts.push({
         name: dirent.name,
-        absPath: path.join(scriptsDir, dirent.name),
+        absPath: input.resources.path.join(scriptsDir, dirent.name),
       });
     }
   }
@@ -59,7 +58,7 @@ export async function scanCanonicalContentAtRoot(input: {
       if (dirent.isDirectory || !dirent.name.endsWith(".md")) continue;
       content.agentFiles.push({
         name: dirent.name.slice(0, -3),
-        absPath: path.join(agentsDir, dirent.name),
+        absPath: input.resources.path.join(agentsDir, dirent.name),
       });
     }
   }

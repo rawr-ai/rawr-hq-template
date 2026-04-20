@@ -1,4 +1,3 @@
-import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
 import type { AgentConfigSyncResources } from "../../../shared/resources";
@@ -62,8 +61,8 @@ export async function upsertClaudePluginManifest(input: {
   dryRun: boolean;
   resources: AgentConfigSyncResources;
 }): Promise<{ filePath: string; changed: boolean }> {
-  const pluginDir = path.join(input.claudeLocalHome, "plugins", input.sourcePlugin.dirName);
-  const filePath = path.join(pluginDir, ".claude-plugin", "plugin.json");
+  const pluginDir = input.resources.path.join(input.claudeLocalHome, "plugins", input.sourcePlugin.dirName);
+  const filePath = input.resources.path.join(pluginDir, ".claude-plugin", "plugin.json");
   const existing = (await input.resources.files.readJsonFile<ClaudePluginManifest>(filePath)) ?? {};
 
   const next: ClaudePluginManifest = {
@@ -93,7 +92,7 @@ export async function upsertClaudeMarketplace(input: {
   dryRun: boolean;
   resources: AgentConfigSyncResources;
 }): Promise<{ filePath: string; changed: boolean }> {
-  const filePath = path.join(input.claudeLocalHome, ".claude-plugin", "marketplace.json");
+  const filePath = input.resources.path.join(input.claudeLocalHome, ".claude-plugin", "marketplace.json");
   const existing =
     (await input.resources.files.readJsonFile<ClaudeMarketplaceFile>(filePath)) ??
     {
@@ -148,7 +147,7 @@ export async function writeClaudeSyncManifest(input: {
   manifest: ClaudeManagedPluginManifest;
   changed: boolean;
 }> {
-  const filePath = path.join(
+  const filePath = input.resources.path.join(
     input.claudeLocalHome,
     "plugins",
     input.sourcePlugin.dirName,
@@ -191,7 +190,7 @@ export async function readClaudeSyncManifest(
   pluginName: string,
   resources: AgentConfigSyncResources,
 ): Promise<ClaudeManagedPluginManifest | null> {
-  const filePath = path.join(
+  const filePath = resources.path.join(
     claudeLocalHome,
     "plugins",
     pluginName,

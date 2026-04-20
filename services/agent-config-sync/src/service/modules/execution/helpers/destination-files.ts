@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import type {
   AgentConfigSyncResources,
   AgentConfigSyncUndoCapture,
@@ -45,7 +43,7 @@ export async function syncFileWithConflictPolicy(input: {
 
     if (!options.dryRun) {
       await options.undoCapture?.captureWriteTarget(dest);
-      await options.resources.files.ensureDir(path.dirname(dest));
+      await options.resources.files.ensureDir(options.resources.path.dirname(dest));
       await options.resources.files.copyFile(src, dest);
     }
     pushItem(result, { action: options.dryRun ? "planned" : "updated", kind, source: src, target: dest, message: "overwrote" });
@@ -65,7 +63,7 @@ export async function syncFileWithConflictPolicy(input: {
 
   if (!options.dryRun) {
     await options.undoCapture?.captureWriteTarget(dest);
-    await options.resources.files.ensureDir(path.dirname(dest));
+    await options.resources.files.ensureDir(options.resources.path.dirname(dest));
     await options.resources.files.copyFile(src, dest);
   }
   pushItem(result, { action: options.dryRun ? "planned" : "copied", kind, source: src, target: dest });

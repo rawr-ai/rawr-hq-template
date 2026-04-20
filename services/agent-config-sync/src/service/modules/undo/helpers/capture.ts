@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import type { AgentConfigSyncResources } from "../../../shared/resources";
 import {
   PLUGINS_SYNC_UNDO_PROVIDER,
@@ -25,7 +23,7 @@ export class PluginsSyncUndoCapture {
   private backupSeq = 0;
 
   constructor(input: { workspaceRoot: string; commandId: string; argv: string[]; resources: AgentConfigSyncResources }) {
-    this.workspaceRoot = path.resolve(input.workspaceRoot);
+    this.workspaceRoot = input.resources.path.resolve(input.workspaceRoot);
     this.resources = input.resources;
     this.commandId = input.commandId;
     this.argv = [...input.argv];
@@ -42,8 +40,8 @@ export class PluginsSyncUndoCapture {
     if (cached) return cached;
 
     this.backupSeq += 1;
-    const backupRel = path.join("backups", `${String(this.backupSeq).padStart(4, "0")}-prev`);
-    const backupAbs = path.join(undoCapsuleDir(this.workspaceRoot), backupRel);
+    const backupRel = this.resources.path.join("backups", `${String(this.backupSeq).padStart(4, "0")}-prev`);
+    const backupAbs = this.resources.path.join(undoCapsuleDir(this.workspaceRoot, this.resources.path), backupRel);
 
     await copyPathSnapshot({
       resources: this.resources,
@@ -59,7 +57,7 @@ export class PluginsSyncUndoCapture {
 
   async prepare(): Promise<void> {
     await clearActiveUndoCapsule(this.workspaceRoot, this.resources);
-    await this.resources.files.ensureDir(undoBackupsDir(this.workspaceRoot));
+    await this.resources.files.ensureDir(undoBackupsDir(this.workspaceRoot, this.resources.path));
   }
 
   hasOperations(): boolean {
@@ -67,7 +65,7 @@ export class PluginsSyncUndoCapture {
   }
 
   async captureWriteTarget(target: string): Promise<void> {
-    const targetAbs = path.resolve(target);
+    const targetAbs = this.resources.path.resolve(target);
     if (this.handledTargets.has(targetAbs)) return;
 
     const existingKind = await this.resources.files.statPathKind(targetAbs);
@@ -93,7 +91,7 @@ export class PluginsSyncUndoCapture {
   }
 
   async captureDeleteTarget(target: string): Promise<void> {
-    const targetAbs = path.resolve(target);
+    const targetAbs = this.resources.path.resolve(target);
     if (this.handledTargets.has(targetAbs)) return;
 
     const existingKind = await this.resources.files.statPathKind(targetAbs);
@@ -131,7 +129,7 @@ export class PluginsSyncUndoCapture {
       operations: this.operations,
     };
 
-    await this.resources.files.writeJsonFile(undoManifestPath(this.workspaceRoot), capsule);
+    await this.resources.files.writeJsonFile(undoManifestPath(this.workspaceRoot, this.resources.path), capsule);
     return capsule;
   }
 }

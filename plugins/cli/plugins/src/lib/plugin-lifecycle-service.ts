@@ -437,7 +437,6 @@ export async function runJudge(
       outcome: "insufficient_confidence",
       confidence: 0,
       reason: `judge ${judge} command failed (${exec.exitCode})`,
-      raw: { stderr: exec.stderr, stdout: exec.stdout },
     };
   }
 
@@ -448,7 +447,6 @@ export async function runJudge(
     outcome: normalizeJudgeOutcome(parsedRecord?.outcome),
     confidence: normalizeConfidence(parsedRecord?.confidence),
     reason: typeof parsedRecord?.reason === "string" ? parsedRecord.reason : `judge ${judge} returned no reason`,
-    raw: parsed ?? exec.stdout,
   };
 }
 
@@ -520,13 +518,11 @@ export async function decideMergePolicy(input: {
         outcome: input.judgeA.outcome,
         confidence: input.judgeA.confidence,
         reason: input.judgeA.reason,
-        raw: input.judgeA.raw,
       },
       judgeB: {
         outcome: input.judgeB.outcome,
         confidence: input.judgeB.confidence,
         reason: input.judgeB.reason,
-        raw: input.judgeB.raw,
       },
       baseBranch: input.baseBranch ?? input.prContext.branch,
       changeUnitId: input.changeUnitId,

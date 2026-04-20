@@ -93,16 +93,6 @@ function capFindings(report: SecurityReport, maxBytes: number): SecurityReport {
     summary: `${report.summary} (truncated)`,
   };
 
-  capped.findings = capped.findings.map((finding) => {
-    if (finding.kind === "untrustedDependencyScripts") {
-      return { ...finding, rawOutput: finding.rawOutput?.slice(0, 2_000) };
-    }
-    if (finding.kind === "secret") {
-      return { ...finding, match: finding.match.slice(0, 32) };
-    }
-    return finding;
-  });
-
   if (estimateSizeBytes(capped) <= maxBytes) return capped;
 
   let n = Math.min(capped.findings.length, 50);

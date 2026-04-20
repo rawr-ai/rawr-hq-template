@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type { RawrPluginKind } from "../../../shared/entities";
 
@@ -13,8 +11,8 @@ const WORKSPACE_PLUGIN_ROOTS: Array<{ scope: RawrPluginKind; relPath: string[] }
 ];
 
 async function isWorkspaceRoot(candidateDir: string, resources: AgentConfigSyncResources): Promise<boolean> {
-  const packageJsonPath = path.join(candidateDir, "package.json");
-  const pluginsDir = path.join(candidateDir, "plugins");
+  const packageJsonPath = resources.path.join(candidateDir, "package.json");
+  const pluginsDir = resources.path.join(candidateDir, "plugins");
   return (await resources.files.pathExists(packageJsonPath)) && (await resources.files.pathExists(pluginsDir));
 }
 
@@ -22,7 +20,7 @@ async function listLeafPluginDirsUnder(rootPath: string, resources: AgentConfigS
   const dirents = await resources.files.readDir(rootPath);
   return dirents
     .filter((dirent) => dirent.isDirectory && !dirent.name.startsWith("."))
-    .map((dirent) => path.join(rootPath, dirent.name));
+    .map((dirent) => resources.path.join(rootPath, dirent.name));
 }
 
 export type WorkspaceRootResolution =
@@ -41,7 +39,7 @@ export async function resolveWorkspaceRoot(input: {
   resources: AgentConfigSyncResources;
 }): Promise<WorkspaceRootResolution> {
   if (input.workspaceRoot) {
-    const explicit = path.resolve(input.cwd, input.workspaceRoot);
+    const explicit = input.resources.path.resolve(input.cwd, input.workspaceRoot);
     if (await isWorkspaceRoot(explicit, input.resources)) return { ok: true, workspaceRoot: explicit };
     return {
       ok: false,
@@ -52,10 +50,10 @@ export async function resolveWorkspaceRoot(input: {
     };
   }
 
-  let currentDir = path.resolve(input.cwd);
+  let currentDir = input.resources.path.resolve(input.cwd);
   for (let depth = 0; depth < 20; depth += 1) {
     if (await isWorkspaceRoot(currentDir, input.resources)) return { ok: true, workspaceRoot: currentDir };
-    const parentDir = path.dirname(currentDir);
+    const parentDir = input.resources.path.dirname(currentDir);
     if (parentDir === currentDir) break;
     currentDir = parentDir;
   }
@@ -74,7 +72,7 @@ export async function listWorkspacePluginDirs(
 ): Promise<string[]> {
   const pluginDirs: string[] = [];
   for (const root of WORKSPACE_PLUGIN_ROOTS) {
-    pluginDirs.push(...(await listLeafPluginDirsUnder(path.join(workspaceRoot, ...root.relPath), resources)));
+    pluginDirs.push(...(await listLeafPluginDirsUnder(resources.path.join(workspaceRoot, ...root.relPath), resources)));
   }
   return pluginDirs.sort((a, b) => a.localeCompare(b));
 }
