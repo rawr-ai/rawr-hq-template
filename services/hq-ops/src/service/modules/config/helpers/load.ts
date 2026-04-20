@@ -1,20 +1,7 @@
 import type { ConfigResources } from "./paths";
 import { rawrConfigPath, rawrGlobalConfigPath } from "./paths";
-import type { RawrConfig } from "../entities";
-import { formatIssues, validateRawrConfig, type ConfigValidationIssue } from "./validation";
-
-type ConfigLoadError = {
-  message: string;
-  cause?: string;
-  issues?: ConfigValidationIssue[];
-};
-
-type LoadRawrConfigResult = {
-  config: RawrConfig | null;
-  path: string | null;
-  warnings: string[];
-  error?: ConfigLoadError;
-};
+import type { LoadRawrConfigResult } from "../entities";
+import { formatIssues, validateRawrConfig } from "./validation";
 
 function pickConfigExport(mod: unknown): unknown {
   if (mod && typeof mod === "object" && "default" in mod) return (mod as any).default;
