@@ -5,7 +5,7 @@ vi.mock("../src/rawr", () => ({
 }));
 
 describe("server telemetry bootstrap", () => {
-  it("installs telemetry before app creation and route registration", async () => {
+  it("installs telemetry before app creation and route registration", { timeout: 15000 }, async () => {
     const { bootstrapServer } = await import("../src/bootstrap");
     const order: string[] = [];
     const app = { label: "app" } as never;

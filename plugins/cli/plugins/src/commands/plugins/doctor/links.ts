@@ -3,10 +3,11 @@ import { RawrCommand } from "@rawr/core";
 
 import {
   assessPluginInstallState,
+  pluginInstallActionCommandText,
   reconcileWorkspaceInstallLinks,
   runtimePluginSnapshot,
 } from "../../../lib/plugin-install-service";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export default class PluginsDoctorLinks extends RawrCommand {
   static description = "Diagnose plugin install/link drift and optionally repair stale or legacy link state";
@@ -88,7 +89,7 @@ export default class PluginsDoctorLinks extends RawrCommand {
           if (repair) this.log(`repair: ${repairResult?.action ?? "skipped"}`);
           if (report.actions.length > 0) {
             this.log("actions:");
-            for (const action of report.actions) this.log(`- ${action.command} (${action.reason})`);
+            for (const action of report.actions) this.log(`- ${pluginInstallActionCommandText(action)} (${action.reason})`);
           }
         },
       });

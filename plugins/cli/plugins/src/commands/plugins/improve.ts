@@ -13,7 +13,7 @@ import {
 } from "../../lib/plugin-lifecycle-service";
 import { runCommand } from "../../lib/process-execution";
 import type { DecideMergePolicyResult, LifecycleCheckData, LifecycleType, PrContext } from "@rawr/hq-ops/types";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

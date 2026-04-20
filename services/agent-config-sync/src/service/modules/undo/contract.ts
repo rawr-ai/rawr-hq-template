@@ -1,5 +1,5 @@
 import { schema } from "@rawr/hq-sdk";
-import { Type } from "typebox";
+import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
 
 const UndoApplyItemSchema = Type.Object(
@@ -55,6 +55,8 @@ const UndoRunResultSchema = Type.Union([
     { additionalProperties: false },
   ),
 ]);
+
+export type UndoRunResult = Static<typeof UndoRunResultSchema>;
 
 export const contract = {
   runUndo: ocBase

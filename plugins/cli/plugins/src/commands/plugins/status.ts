@@ -9,10 +9,11 @@ import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
 import {
   assessPluginInstallState,
+  pluginInstallActionCommandText,
   reconcileWorkspaceInstallLinks,
   runtimePluginSnapshot,
 } from "../../lib/plugin-install-service";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 import type { PluginInstallStateStatus } from "@rawr/hq-ops/types";
 
 type SyncStatus = "IN_SYNC" | "DRIFT_DETECTED" | "CONFLICTS";
@@ -149,7 +150,7 @@ export default class PluginsStatus extends RawrCommand {
         });
       }
       if (install) {
-        actions.push(...install.actions);
+        actions.push(...install.actions.map((action) => ({ command: pluginInstallActionCommandText(action), reason: action.reason })));
         if (install.status !== "IN_SYNC") {
           actions.push({
             command: "rawr plugins cli install all --json",

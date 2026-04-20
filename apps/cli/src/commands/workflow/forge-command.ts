@@ -10,7 +10,7 @@ import {
 import { recordArtifact, recordStep } from "../../lib/journal-context";
 import { journalId, safePreview } from "../../lib/journal-projection";
 import { resolveCliEntrypoint, runStep, type StepResult } from "../../lib/subprocess";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 type ForgeStep = StepResult & { stdoutJson?: any };
 

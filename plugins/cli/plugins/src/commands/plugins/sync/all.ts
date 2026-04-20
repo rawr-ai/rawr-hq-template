@@ -5,12 +5,12 @@ import {
   beginPluginsSyncUndoCapture,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
-  effectiveContentForProvider,
   installAndEnableClaudePlugin,
   packageCoworkPlugin,
   planWorkspaceSync,
   PLUGINS_SYNC_UNDO_PROVIDER,
   resolveDefaultCoworkOutDir,
+  resolveProviderContent,
   retireStaleManagedPlugins,
   runSync,
   type SyncItemResult,
@@ -235,7 +235,12 @@ export default class PluginsSyncAll extends RawrCommand {
             });
           } else {
             try {
-              const claudeContent = await effectiveContentForProvider({ agent: "claude", sourcePlugin: run.sourcePlugin, base: content });
+              const claudeContent = await resolveProviderContent({
+                agent: "claude",
+                sourcePlugin: run.sourcePlugin,
+                base: content,
+                repoRoot: workspaceRoot,
+              });
               const pkg = await packageCoworkPlugin({
                 sourcePlugin: run.sourcePlugin,
                 content: claudeContent,

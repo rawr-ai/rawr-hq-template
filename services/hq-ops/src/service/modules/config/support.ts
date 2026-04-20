@@ -3,13 +3,12 @@ import type { HqOpsResources } from "../../shared/ports/resources";
 import {
   clampJournalCandidateLimit,
   RawrConfigV1Schema,
-  type ConfigValidationIssue,
-  type LoadRawrConfigResult,
   type RawrConfig,
   type RawrConfigV1,
   type SyncDestination,
   type SyncProvider,
-} from "./model";
+} from "./entities";
+import type { ConfigValidationIssue, LoadRawrConfigLayeredResult, LoadRawrConfigResult } from "./contract";
 
 const clampInt = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, Math.trunc(value)));
@@ -347,12 +346,6 @@ export function mergeRawrConfigLayers(input: { global: RawrConfig | null; worksp
   if (validated.ok) return validated.config;
   return null;
 }
-
-export type LoadRawrConfigLayeredResult = {
-  global: LoadRawrConfigResult;
-  workspace: LoadRawrConfigResult;
-  merged: RawrConfig | null;
-};
 
 export async function loadRawrConfigLayered(
   resources: ConfigResources,

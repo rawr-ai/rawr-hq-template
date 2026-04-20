@@ -13,7 +13,7 @@ import {
   renderWorkflowTestSource,
 } from "../../../lib/factory";
 import { recordArtifact } from "../../../lib/journal-context";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export default class PluginsScaffoldWorkflow extends RawrCommand {
   static description = "Scaffold a new workflow command (`rawr workflow <name>`) with a matching Vitest test";

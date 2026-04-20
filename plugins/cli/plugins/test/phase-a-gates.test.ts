@@ -7,15 +7,15 @@ import { describe, expect, it } from "vitest";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 
 describe("phase-a gate scaffold (plugin-plugins)", () => {
-  it("metadata contract gate scaffold keeps workspace parser files in scope", async () => {
+  it("metadata contract gate scaffold keeps hq-ops catalog ownership in scope", async () => {
     await expect(
-      fs.access(path.join(repoRoot, "plugins", "cli", "plugins", "src", "lib", "workspace-plugins.ts")),
+      fs.access(path.join(repoRoot, "services", "hq-ops", "src", "service", "modules", "plugin-catalog", "lib", "manifest.ts")),
     ).resolves.toBeUndefined();
   });
 
-  it("import boundary gate scaffold keeps package boundary owner path visible", async () => {
+  it("import boundary gate scaffold keeps projection service binding visible", async () => {
     await expect(
-      fs.access(path.join(repoRoot, "packages", "plugin-workspace", "src", "plugins.ts")),
+      fs.access(path.join(repoRoot, "plugins", "cli", "plugins", "src", "lib", "hq-ops-client.ts")),
     ).resolves.toBeUndefined();
   });
 

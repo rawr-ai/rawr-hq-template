@@ -2,7 +2,7 @@ import { RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export default class SecurityReport extends RawrCommand {
   static description = "Show the last security report";

@@ -11,7 +11,7 @@ import {
   type EmbeddedPlaceholderLogEntry,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
-import type { RawrConfig } from "../src/service/modules/config/model";
+import type { RawrConfig } from "../src/service/modules/config/entities";
 import type { Service } from "../src/service/base";
 import type { ExecResult, HqOpsResources, SqliteDatabase } from "../src/service/shared/ports/resources";
 
@@ -104,6 +104,14 @@ export function createTestHqOpsResources(input: {
         try {
           const st = await fs.stat(filePath);
           return { isFile: st.isFile(), mtimeMs: st.mtimeMs };
+        } catch {
+          return null;
+        }
+      },
+      async readDir(dirPath) {
+        try {
+          const entries = await fs.readdir(dirPath, { withFileTypes: true });
+          return entries.map((entry) => ({ name: entry.name, isDirectory: entry.isDirectory() }));
         } catch {
           return null;
         }

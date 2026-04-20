@@ -1,9 +1,3 @@
-import type {
-  SourceContent,
-  SourcePlugin,
-  SyncAgent,
-} from "./schemas";
-
 export type AgentConfigSyncPathKind = "file" | "dir";
 
 export type AgentConfigSyncDirEntry = {
@@ -26,16 +20,8 @@ export interface AgentConfigSyncFileResources {
   readDir(targetPath: string): Promise<AgentConfigSyncDirEntry[]>;
 }
 
-export interface AgentConfigSyncSourceResources {
-  readProviderOverlay(input: {
-    agent: SyncAgent;
-    sourcePlugin: SourcePlugin;
-  }): Promise<SourceContent | null>;
-}
-
 export interface AgentConfigSyncResources {
   files: AgentConfigSyncFileResources;
-  sources: AgentConfigSyncSourceResources;
 }
 
 export interface AgentConfigSyncUndoCapture {

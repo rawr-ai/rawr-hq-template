@@ -1,6 +1,6 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 import { resolveCliEntrypoint, runStep, type StepResult } from "../../lib/subprocess";
 
 export default class RoutineCheck extends RawrCommand {

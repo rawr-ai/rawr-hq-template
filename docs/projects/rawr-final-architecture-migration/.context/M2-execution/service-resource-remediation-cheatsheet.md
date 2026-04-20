@@ -8,7 +8,7 @@ Use this for the remediation pass that removes service-specific `*-host` package
 
 The correct split is:
 
-- **Service**: owns semantic behavior, module schemas, contracts, validation, policies, orchestration, ranking, merge/conflict rules, undo/retirement semantics, and domain algorithms.
+- **Service**: owns semantic behavior, contracts, validation, policies, orchestration, ranking, merge/conflict rules, undo/retirement semantics, domain algorithms, and reusable entity schemas/types.
 - **Plugin/app/runtime surface**: constructs concrete resources and passes them to service clients.
 - **Package**: owns only genuinely reusable primitives shared by multiple services.
 
@@ -75,7 +75,8 @@ The mini plan must list violations, moves, concrete resource seams, deleted host
 Implementation rules:
 - Do not create any new `*-host`, runtime, adapters, or dumping-ground package.
 - Do not move single-service helper logic into packages.
-- Service modules own module schemas.
+- Procedure input/output schemas live inline in the owning module contract.
+- Reusable non-IO entity schemas/types may be extracted into intentional entity files.
 - `shared/schemas.ts` is only for real cross-module primitives.
 - Service repositories must implement service behavior, not forward to same-named runtime methods.
 - Concrete resources may be declared as typed service deps and supplied by plugin/app code.
@@ -135,7 +136,7 @@ Add or update checks so they fail on:
 - `packages/*-host`
 - `@rawr/*-host`
 - docs that bless `*-host` packages as current architecture
-- module schemas that only re-export shared schemas
+- extracted IO-schema buckets and module schema files that only re-export shared schemas
 - service repositories that only forward to same-named runtime methods
 - service-specific helper packages with only one service consumer
 

@@ -1,3 +1,5 @@
+import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { createClient } from "../src/client";
@@ -131,5 +133,36 @@ describe("hq-ops pluginLifecycle", () => {
 
     expect(decision.decision).toBe("fix_first");
     expect(decision.fixSlicePlan?.branchName).toBe("agent-demo-fix-cli-demo-20260419120000");
+  });
+
+  it("plans sweep candidates from the service-owned plugin catalog", async () => {
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-hq-lifecycle-sweep-"));
+    await fs.mkdir(path.join(repoRoot, "plugins", "cli", "demo"), { recursive: true });
+    await fs.writeFile(
+      path.join(repoRoot, "plugins", "cli", "demo", "package.json"),
+      JSON.stringify({
+        name: "@rawr/plugin-demo",
+        rawr: { kind: "toolkit", capability: "demo" },
+        oclif: { commands: "./dist/commands", typescript: { commands: "./src/commands" } },
+      }),
+      "utf8",
+    );
+
+    const client = createClient(createClientOptions({ repoRoot }));
+    const result = await client.pluginLifecycle.planSweepCandidates(
+      {
+        workspaceRoot: repoRoot,
+        limit: 10,
+      },
+      invocation("trace-lifecycle-sweep"),
+    );
+
+    expect(result.queued).toEqual([
+      {
+        target: path.join(repoRoot, "plugins", "cli", "demo"),
+        type: "cli",
+        issues: ["missing README.md", "missing test/ directory"],
+      },
+    ]);
   });
 });

@@ -2,7 +2,7 @@ import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 type SecurityFinding = {
   kind: string;

@@ -7,7 +7,7 @@ import {
 } from "../../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export default class PluginsSyncDrift extends RawrCommand {
   static description =

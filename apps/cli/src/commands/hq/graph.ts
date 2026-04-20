@@ -1,7 +1,7 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { buildHqGraphPlan, runHqGraph } from "../../lib/hq-graph";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export default class HqGraph extends RawrCommand {
   static description = "Launch the local Nx graph explorer on demand";

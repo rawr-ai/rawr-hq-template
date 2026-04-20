@@ -1,15 +1,18 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { inferTypeFromPath } from "../src/commands/plugins/sweep";
+const testDir = path.dirname(fileURLToPath(import.meta.url));
 
 describe("@rawr/plugin-plugins", () => {
-  it("infers lifecycle type from plugin root path", () => {
-    expect(inferTypeFromPath("/repo/plugins/cli/demo")).toBe("cli");
-    expect(inferTypeFromPath("/repo/plugins/web/demo")).toBe("web");
-    expect(inferTypeFromPath("/repo/plugins/agents/demo")).toBe("agent");
-    expect(inferTypeFromPath("/repo/plugins/async/workflows/demo")).toBe("workflow");
-    expect(inferTypeFromPath("/repo/plugins/async/schedules/demo")).toBe("workflow");
-    expect(inferTypeFromPath("/repo/plugins/server/api/demo")).toBe("composed");
-    expect(inferTypeFromPath("/repo/plugins/other/demo")).toBe("composed");
+  it("keeps sweep candidate classification out of the projection command", async () => {
+    const commandSource = await fs.readFile(
+      path.join(testDir, "..", "src", "commands", "plugins", "sweep.ts"),
+      "utf8",
+    );
+
+    expect(commandSource).toContain("planSweepCandidates");
+    expect(commandSource).not.toContain("inferTypeFromPath");
   });
 });

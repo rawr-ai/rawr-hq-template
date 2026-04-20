@@ -36,5 +36,7 @@ export function resolveSourceScopeForPath(absPath: string, workspaceRoot: string
 
 export function scopeAllows(scope: SyncScope, resolved: ResolvedSourceScope): boolean {
   if (scope === "all") return true;
+  if (scope === "cli") return resolved === "toolkit";
+  if (scope === "agents") return resolved === "agent";
   return resolved === scope;
 }

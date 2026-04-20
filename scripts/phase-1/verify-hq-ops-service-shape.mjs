@@ -20,16 +20,15 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/shared/internal-errors.ts",
   "services/hq-ops/src/service/shared/ports/resources.ts",
   "services/hq-ops/src/service/modules/config/contract.ts",
+  "services/hq-ops/src/service/modules/config/entities.ts",
   "services/hq-ops/src/service/modules/config/middleware.ts",
-  "services/hq-ops/src/service/modules/config/model.ts",
   "services/hq-ops/src/service/modules/config/module.ts",
   "services/hq-ops/src/service/modules/config/repository.ts",
   "services/hq-ops/src/service/modules/config/router.ts",
-  "services/hq-ops/src/service/modules/config/schemas.ts",
   "services/hq-ops/src/service/modules/config/support.ts",
   "services/hq-ops/src/service/modules/repo-state/contract.ts",
+  "services/hq-ops/src/service/modules/repo-state/entities.ts",
   "services/hq-ops/src/service/modules/repo-state/middleware.ts",
-  "services/hq-ops/src/service/modules/repo-state/model.ts",
   "services/hq-ops/src/service/modules/repo-state/module.ts",
   "services/hq-ops/src/service/modules/repo-state/repository.ts",
   "services/hq-ops/src/service/modules/repo-state/router.ts",
@@ -48,8 +47,32 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/modules/security/router.ts",
   "services/hq-ops/src/service/modules/security/schemas.ts",
   "services/hq-ops/src/service/modules/security/types.ts",
+  "services/hq-ops/src/service/modules/plugin-catalog/contract.ts",
+  "services/hq-ops/src/service/modules/plugin-catalog/entities.ts",
+  "services/hq-ops/src/service/modules/plugin-catalog/lib/discovery.ts",
+  "services/hq-ops/src/service/modules/plugin-catalog/lib/manifest.ts",
+  "services/hq-ops/src/service/modules/plugin-catalog/lib/path-utils.ts",
+  "services/hq-ops/src/service/modules/plugin-catalog/middleware.ts",
+  "services/hq-ops/src/service/modules/plugin-catalog/module.ts",
+  "services/hq-ops/src/service/modules/plugin-catalog/router.ts",
+  "services/hq-ops/src/service/modules/plugin-install/contract.ts",
+  "services/hq-ops/src/service/modules/plugin-install/entities.ts",
+  "services/hq-ops/src/service/modules/plugin-install/lib/install-utils.ts",
+  "services/hq-ops/src/service/modules/plugin-install/middleware.ts",
+  "services/hq-ops/src/service/modules/plugin-install/module.ts",
+  "services/hq-ops/src/service/modules/plugin-install/router.ts",
+  "services/hq-ops/src/service/modules/plugin-lifecycle/contract.ts",
+  "services/hq-ops/src/service/modules/plugin-lifecycle/entities.ts",
+  "services/hq-ops/src/service/modules/plugin-lifecycle/lib/merge-utils.ts",
+  "services/hq-ops/src/service/modules/plugin-lifecycle/lib/path-utils.ts",
+  "services/hq-ops/src/service/modules/plugin-lifecycle/middleware.ts",
+  "services/hq-ops/src/service/modules/plugin-lifecycle/module.ts",
+  "services/hq-ops/src/service/modules/plugin-lifecycle/router.ts",
   "services/hq-ops/test/config.test.ts",
   "services/hq-ops/test/helpers.ts",
+  "services/hq-ops/test/plugin-catalog.test.ts",
+  "services/hq-ops/test/plugin-install.test.ts",
+  "services/hq-ops/test/plugin-lifecycle.test.ts",
   "services/hq-ops/test/ports-backed-service.test.ts",
   "services/hq-ops/test/service-shape.test.ts",
 ];
@@ -167,7 +190,7 @@ const [contractSource, routerSource, clientSource, serviceShapeSource, baseSourc
   readFile("services/hq-ops/src/service/shared/README.md"),
 ]);
 
-for (const key of ["config", "repoState", "journal", "security"]) {
+for (const key of ["config", "repoState", "journal", "security", "pluginCatalog", "pluginInstall", "pluginLifecycle"]) {
   assertCondition(contractSource.includes(`  ${key},`) || contractSource.includes(`\n  ${key},`), `root contract is missing ${key}`);
   assertCondition(routerSource.includes(`  ${key},`) || routerSource.includes(`\n  ${key},`), `root router is missing ${key}`);
 }
@@ -240,6 +263,24 @@ const moduleExpectations = [
     contractPath: "services/hq-ops/src/service/modules/security/contract.ts",
     expected: ["securityCheck", "gateEnable", "getSecurityReport"],
   },
+  {
+    contractPath: "services/hq-ops/src/service/modules/plugin-catalog/contract.ts",
+    expected: ["listWorkspacePlugins", "resolveWorkspacePlugin"],
+  },
+  {
+    contractPath: "services/hq-ops/src/service/modules/plugin-install/contract.ts",
+    expected: ["assessInstallState", "planInstallRepair"],
+  },
+  {
+    contractPath: "services/hq-ops/src/service/modules/plugin-lifecycle/contract.ts",
+    expected: [
+      "resolveLifecycleTarget",
+      "evaluateLifecycleCompleteness",
+      "checkScratchPolicy",
+      "planSweepCandidates",
+      "decideMergePolicy",
+    ],
+  },
 ];
 
 for (const { contractPath, expected } of moduleExpectations) {
@@ -270,6 +311,14 @@ for (const relPath of REQUIRED_PATHS.filter((path) => path.startsWith("services/
 }
 
 for (const relPath of [
+  "services/hq-ops/src/service/modules/config/model.ts",
+  "services/hq-ops/src/service/modules/repo-state/model.ts",
+  "services/hq-ops/src/service/modules/plugin-install/model.ts",
+  "services/hq-ops/src/service/modules/plugin-install/repository.ts",
+  "services/hq-ops/src/service/modules/plugin-install/schemas.ts",
+  "services/hq-ops/src/service/modules/plugin-lifecycle/model.ts",
+  "services/hq-ops/src/service/modules/plugin-lifecycle/repository.ts",
+  "services/hq-ops/src/service/modules/plugin-lifecycle/schemas.ts",
   "services/hq-ops/src/service/shared/ports/config-store.ts",
   "services/hq-ops/src/service/shared/ports/repo-state-store.ts",
   "services/hq-ops/src/service/shared/ports/journal-store.ts",

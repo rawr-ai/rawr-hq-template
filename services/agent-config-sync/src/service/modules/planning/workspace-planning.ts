@@ -1,15 +1,15 @@
 import path from "node:path";
-import { parse as parseYaml } from "yaml";
 import { runSync as runServiceSync } from "../execution/sync-engine";
+import { scanSourcePluginContent } from "../source-content/lib/source-plugin-content";
 import { resolveSourceScopeForPath, scopeAllows } from "../../shared/internal/source-scope";
 import type { AgentConfigSyncResources } from "../../shared/resources";
 import type {
   RawrPluginKind,
   SourceContent,
   SourcePlugin,
-  SyncRunResult,
   SyncScope,
 } from "../../shared/schemas";
+import type { SyncRunResult } from "../execution/contract";
 import type {
   AssessWorkspaceSyncInput,
   FullSyncPolicyInput,
@@ -31,20 +31,6 @@ type PackageJson = {
   rawr?: unknown;
 };
 
-type Include = {
-  workflows: boolean;
-  skills: boolean;
-  scripts: boolean;
-  agents: boolean;
-};
-
-type PluginContentLayout = {
-  baseRootAbs: string;
-  baseInclude: Include;
-  overlayRootAbs: Record<"codex" | "claude", string>;
-  includeByProvider: Record<"codex" | "claude", Include>;
-};
-
 const WORKSPACE_PLUGIN_ROOTS: Array<{ scope: RawrPluginKind; relPath: string[] }> = [
   { scope: "toolkit", relPath: ["plugins", "cli"] },
   { scope: "agent", relPath: ["plugins", "agents"] },
@@ -55,9 +41,8 @@ const WORKSPACE_PLUGIN_ROOTS: Array<{ scope: RawrPluginKind; relPath: string[] }
 ];
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  return value as Record<string, unknown>;
 }
 
 function normalizeRawrKind(input: unknown): RawrPluginKind | undefined {
@@ -271,250 +256,12 @@ export async function resolveSourcePlugin(input: {
   );
 }
 
-function normalizeInclude(input: unknown): Include {
-  const record = asRecord(input) ?? {};
-  return {
-    workflows: typeof record.workflows === "boolean" ? record.workflows : true,
-    skills: typeof record.skills === "boolean" ? record.skills : true,
-    scripts: typeof record.scripts === "boolean" ? record.scripts : true,
-    agents: typeof record.agents === "boolean" ? record.agents : true,
-  };
-}
-
-function resolveRelativePath(pluginAbsPath: string, relOrAbsPath: string): string {
-  return path.isAbsolute(relOrAbsPath) ? relOrAbsPath : path.resolve(pluginAbsPath, relOrAbsPath);
-}
-
-async function resolvePluginContentLayout(
-  sourcePlugin: SourcePlugin,
-  resources: AgentConfigSyncResources,
-): Promise<PluginContentLayout> {
-  const packageJson = await resources.files.readJsonFile<PackageJson>(path.join(sourcePlugin.absPath, "package.json"));
-  const rawr = asRecord(packageJson?.rawr);
-  const manifest = asRecord(rawr?.pluginContent);
-  const providers = asRecord(manifest?.providers);
-  const codexProvider = asRecord(providers?.codex);
-  const claudeProvider = asRecord(providers?.claude);
-  const baseRoot =
-    typeof manifest?.contentRoot === "string" && manifest.contentRoot.length > 0
-      ? manifest.contentRoot
-      : ".";
-  const baseInclude = normalizeInclude(manifest?.include);
-
-  return {
-    baseRootAbs: resolveRelativePath(sourcePlugin.absPath, baseRoot),
-    baseInclude,
-    overlayRootAbs: {
-      codex: resolveRelativePath(
-        sourcePlugin.absPath,
-        typeof codexProvider?.overlayRoot === "string" ? codexProvider.overlayRoot : path.join("providers", "codex"),
-      ),
-      claude: resolveRelativePath(
-        sourcePlugin.absPath,
-        typeof claudeProvider?.overlayRoot === "string" ? claudeProvider.overlayRoot : path.join("providers", "claude"),
-      ),
-    },
-    includeByProvider: {
-      codex: { ...baseInclude, ...normalizeInclude(codexProvider?.include) },
-      claude: { ...baseInclude, ...normalizeInclude(claudeProvider?.include) },
-    },
-  };
-}
-
-async function scanCanonicalContentAtRoot(input: {
-  rootAbsPath: string;
-  include: Include;
-  resources: AgentConfigSyncResources;
-}): Promise<SourceContent> {
-  const workflowsDir = path.join(input.rootAbsPath, "workflows");
-  const skillsDir = path.join(input.rootAbsPath, "skills");
-  const scriptsDir = path.join(input.rootAbsPath, "scripts");
-  const agentsDir = path.join(input.rootAbsPath, "agents");
-
-  const content: SourceContent = {
-    workflowFiles: [],
-    skills: [],
-    scripts: [],
-    agentFiles: [],
-  };
-
-  if (input.include.workflows && (await input.resources.files.pathExists(workflowsDir))) {
-    for (const dirent of await input.resources.files.readDir(workflowsDir)) {
-      if (dirent.isDirectory || !dirent.name.endsWith(".md")) continue;
-      content.workflowFiles.push({
-        name: dirent.name.slice(0, -3),
-        absPath: path.join(workflowsDir, dirent.name),
-      });
-    }
-  }
-
-  if (input.include.skills && (await input.resources.files.pathExists(skillsDir))) {
-    for (const dirent of await input.resources.files.readDir(skillsDir)) {
-      if (!dirent.isDirectory) continue;
-      const skillDir = path.join(skillsDir, dirent.name);
-      if (!(await input.resources.files.pathExists(path.join(skillDir, "SKILL.md")))) continue;
-      content.skills.push({ name: dirent.name, absPath: skillDir });
-    }
-  }
-
-  if (input.include.scripts && (await input.resources.files.pathExists(scriptsDir))) {
-    for (const dirent of await input.resources.files.readDir(scriptsDir)) {
-      if (dirent.isDirectory) continue;
-      content.scripts.push({
-        name: dirent.name,
-        absPath: path.join(scriptsDir, dirent.name),
-      });
-    }
-  }
-
-  if (input.include.agents && (await input.resources.files.pathExists(agentsDir))) {
-    for (const dirent of await input.resources.files.readDir(agentsDir)) {
-      if (dirent.isDirectory || !dirent.name.endsWith(".md")) continue;
-      content.agentFiles.push({
-        name: dirent.name.slice(0, -3),
-        absPath: path.join(agentsDir, dirent.name),
-      });
-    }
-  }
-
-  content.workflowFiles.sort((a, b) => a.name.localeCompare(b.name));
-  content.skills.sort((a, b) => a.name.localeCompare(b.name));
-  content.scripts.sort((a, b) => a.name.localeCompare(b.name));
-  content.agentFiles.sort((a, b) => a.name.localeCompare(b.name));
-
-  return content;
-}
-
-async function readPluginYamlToolkits(input: {
-  pluginAbsPath: string;
-  resources: AgentConfigSyncResources;
-}): Promise<"all" | string[] | undefined> {
-  const filePath = path.join(input.pluginAbsPath, "plugin.yaml");
-  const raw = await input.resources.files.readTextFile(filePath);
-  if (raw === null) return undefined;
-  const parsed = parseYaml(raw);
-  const config = asRecord(parsed);
-  if (config?.version !== 1) {
-    throw new Error(`Invalid plugin.yaml in ${filePath}: expected version: 1`);
-  }
-  const imports = asRecord(config.imports);
-  const toolkits = imports?.toolkits;
-  if (toolkits === "all") return "all";
-  if (Array.isArray(toolkits) && toolkits.every((item) => typeof item === "string" && item.length > 0)) {
-    return [...toolkits];
-  }
-  if (toolkits === undefined) return undefined;
-  throw new Error(`Invalid plugin.yaml imports.toolkits in ${filePath}`);
-}
-
-function assertUnique(kind: string, names: string[]): void {
-  const seen = new Set<string>();
-  for (const name of names) {
-    if (seen.has(name)) throw new Error(`tools composition produced duplicate ${kind}: ${name}`);
-    seen.add(name);
-  }
-}
-
-async function scanComposedToolsContent(input: {
-  toolsPlugin: SourcePlugin;
-  workspaceRoot: string;
-  resources: AgentConfigSyncResources;
-}): Promise<SourceContent> {
-  const yamlImports = await readPluginYamlToolkits({
-    pluginAbsPath: input.toolsPlugin.absPath,
-    resources: input.resources,
-  });
-  const pluginDirs = await listWorkspacePluginDirs(input.workspaceRoot, input.resources);
-  const toolkits: SourcePlugin[] = [];
-
-  for (const pluginDir of pluginDirs) {
-    const dirName = path.basename(pluginDir);
-    const sourcePlugin = await loadSourcePluginFromPath({
-      ref: dirName,
-      absPath: pluginDir,
-      resources: input.resources,
-    });
-    if (sourcePlugin.rawrKind !== "toolkit") continue;
-    toolkits.push(sourcePlugin);
-  }
-
-  toolkits.sort((a, b) => a.dirName.localeCompare(b.dirName));
-
-  const selectedToolkits =
-    yamlImports === undefined || yamlImports === "all"
-      ? toolkits
-      : toolkits.filter((toolkit) =>
-          yamlImports.includes(toolkit.dirName) ||
-          (toolkit.packageName ? yamlImports.includes(toolkit.packageName) : false),
-        );
-
-  const content: SourceContent = {
-    workflowFiles: [],
-    skills: [],
-    scripts: [],
-    agentFiles: [],
-  };
-  const includeAll: Include = { workflows: true, skills: true, scripts: true, agents: true };
-
-  for (const toolkit of selectedToolkits) {
-    const toolkitContent = await scanCanonicalContentAtRoot({
-      rootAbsPath: path.join(toolkit.absPath, "agent-pack"),
-      include: includeAll,
-      resources: input.resources,
-    });
-
-    for (const workflow of toolkitContent.workflowFiles) {
-      content.workflowFiles.push({ name: `${toolkit.dirName}--${workflow.name}`, absPath: workflow.absPath });
-    }
-    for (const skill of toolkitContent.skills) {
-      content.skills.push({ name: `toolkit-${toolkit.dirName}-${skill.name}`, absPath: skill.absPath });
-    }
-    for (const agent of toolkitContent.agentFiles) {
-      content.agentFiles.push({ name: `${toolkit.dirName}--${agent.name}`, absPath: agent.absPath });
-    }
-    for (const script of toolkitContent.scripts) {
-      content.scripts.push({ name: `${toolkit.dirName}--${script.name}`, absPath: script.absPath });
-    }
-  }
-
-  content.workflowFiles.sort((a, b) => a.name.localeCompare(b.name));
-  content.skills.sort((a, b) => a.name.localeCompare(b.name));
-  content.agentFiles.sort((a, b) => a.name.localeCompare(b.name));
-  content.scripts.sort((a, b) => a.name.localeCompare(b.name));
-
-  assertUnique("workflow", content.workflowFiles.map((workflow) => workflow.name));
-  assertUnique("skill", content.skills.map((skill) => skill.name));
-  assertUnique("agent", content.agentFiles.map((agent) => agent.name));
-  assertUnique("script", content.scripts.map((script) => script.name));
-
-  return content;
-}
-
-export async function scanSourcePlugin(input: {
+async function scanSourcePlugin(input: {
   sourcePlugin: SourcePlugin;
-  workspaceRoot: string;
+  workspacePlugins: SourcePlugin[];
   resources: AgentConfigSyncResources;
 }): Promise<SourceContent> {
-  if (
-    input.sourcePlugin.dirName === "plugins" ||
-    input.sourcePlugin.dirName === "tools" ||
-    input.sourcePlugin.packageName === "@rawr/plugin-plugins" ||
-    input.sourcePlugin.packageName === "@rawr/plugin-tools" ||
-    input.sourcePlugin.packageName === "@rawr/plugin-agent-sync"
-  ) {
-    return scanComposedToolsContent({
-      toolsPlugin: input.sourcePlugin,
-      workspaceRoot: input.workspaceRoot,
-      resources: input.resources,
-    });
-  }
-
-  const layout = await resolvePluginContentLayout(input.sourcePlugin, input.resources);
-  return scanCanonicalContentAtRoot({
-    rootAbsPath: layout.baseRootAbs,
-    include: layout.baseInclude,
-    resources: input.resources,
-  });
+  return scanSourcePluginContent(input);
 }
 
 function hasAnyContent(content: SourceContent): boolean {
@@ -533,12 +280,37 @@ export async function resolveAndScanSourcePlugin(input: {
   resources: AgentConfigSyncResources;
 }): Promise<WorkspaceSyncable> {
   const sourcePlugin = await resolveSourcePlugin(input);
+  const workspacePlugins = await loadWorkspaceSourcePlugins(input.workspaceRoot, input.resources);
   const content = await scanSourcePlugin({
     sourcePlugin,
-    workspaceRoot: input.workspaceRoot,
+    workspacePlugins: workspacePlugins.plugins,
     resources: input.resources,
   });
   return { sourcePlugin, content };
+}
+
+async function loadWorkspaceSourcePlugins(
+  workspaceRoot: string,
+  resources: AgentConfigSyncResources,
+): Promise<{ plugins: SourcePlugin[]; skipped: WorkspaceSkip[] }> {
+  const pluginDirs = await listWorkspacePluginDirs(workspaceRoot, resources);
+  const plugins: SourcePlugin[] = [];
+  const skipped: WorkspaceSkip[] = [];
+
+  for (const absPath of pluginDirs) {
+    const dirName = path.basename(absPath);
+    try {
+      plugins.push(await loadSourcePluginFromPath({ ref: dirName, absPath, resources }));
+    } catch (error) {
+      skipped.push({
+        dirName,
+        absPath,
+        reason: `scan failed: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
+  }
+
+  return { plugins, skipped };
 }
 
 async function discoverWorkspaceSources(input: {
@@ -548,15 +320,17 @@ async function discoverWorkspaceSources(input: {
   resources: AgentConfigSyncResources;
 }): Promise<{ workspaceRoot: string; syncable: WorkspaceSyncable[]; skipped: WorkspaceSkip[] }> {
   const workspaceRoot = await findWorkspaceRoot(input);
-  const pluginDirs = await listWorkspacePluginDirs(workspaceRoot, input.resources);
+  const workspacePlugins = await loadWorkspaceSourcePlugins(workspaceRoot, input.resources);
   const syncable: WorkspaceSyncable[] = [];
-  const skipped: WorkspaceSkip[] = [];
+  const skipped: WorkspaceSkip[] = [...workspacePlugins.skipped];
 
-  for (const absPath of pluginDirs) {
-    const dirName = path.basename(absPath);
+  for (const sourcePlugin of workspacePlugins.plugins) {
     try {
-      const sourcePlugin = await loadSourcePluginFromPath({ ref: dirName, absPath, resources: input.resources });
-      const content = await scanSourcePlugin({ sourcePlugin, workspaceRoot, resources: input.resources });
+      const content = await scanSourcePlugin({
+        sourcePlugin,
+        workspacePlugins: workspacePlugins.plugins,
+        resources: input.resources,
+      });
       if (!hasAnyContent(content)) {
         skipped.push({ dirName: sourcePlugin.dirName, absPath: sourcePlugin.absPath, reason: "no canonical content directories" });
         continue;
@@ -564,8 +338,8 @@ async function discoverWorkspaceSources(input: {
       syncable.push({ sourcePlugin, content });
     } catch (error) {
       skipped.push({
-        dirName,
-        absPath,
+        dirName: sourcePlugin.dirName,
+        absPath: sourcePlugin.absPath,
         reason: `scan failed: ${error instanceof Error ? error.message : String(error)}`,
       });
     }
@@ -586,7 +360,11 @@ async function discoverWorkspaceSources(input: {
         workspaceRoot,
         resources: input.resources,
       });
-      const content = await scanSourcePlugin({ sourcePlugin, workspaceRoot, resources: input.resources });
+      const content = await scanSourcePlugin({
+        sourcePlugin,
+        workspacePlugins: workspacePlugins.plugins,
+        resources: input.resources,
+      });
       if (!hasAnyContent(content)) {
         skipped.push({ dirName: sourcePlugin.dirName, absPath: sourcePlugin.absPath, reason: "no canonical content directories" });
         continue;

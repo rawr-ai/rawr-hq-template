@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { effectiveContentForProvider } from "./effective-content";
+import { resolveProviderContent } from "../source-content/lib/provider-content";
 import {
   readClaudeSyncManifest,
   upsertClaudeMarketplace,
@@ -16,10 +16,8 @@ import {
 import type {
   SourceContent,
   SourcePlugin,
-  SyncItemResult,
-  SyncRunResult,
-  SyncTargetResult,
 } from "../../shared/schemas";
+import type { SyncItemResult, SyncRunResult, SyncTargetResult } from "./contract";
 import type {
   AgentConfigSyncResources,
   AgentConfigSyncUndoCapture,
@@ -592,14 +590,14 @@ export async function runSync(input: {
   const targets: SyncTargetResult[] = [];
 
   if (includeCodex) {
-    const codexContent = await effectiveContentForProvider({ agent: "codex", sourcePlugin, base: content, resources: options.resources });
+    const codexContent = await resolveProviderContent({ agent: "codex", sourcePlugin, base: content, resources: options.resources });
     for (const codexHome of codexHomes) {
       targets.push(await syncCodexTarget({ codexHome, sourcePlugin, content: codexContent, options }));
     }
   }
 
   if (includeClaude) {
-    const claudeContent = await effectiveContentForProvider({ agent: "claude", sourcePlugin, base: content, resources: options.resources });
+    const claudeContent = await resolveProviderContent({ agent: "claude", sourcePlugin, base: content, resources: options.resources });
     for (const claudeHome of claudeHomes) {
       targets.push(await syncClaudeTarget({ claudeLocalHome: claudeHome, sourcePlugin, content: claudeContent, options }));
     }

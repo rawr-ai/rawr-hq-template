@@ -9,7 +9,7 @@ import {
   verifySyncAndDrift,
 } from "../../../lib/plugin-lifecycle-service";
 import type { LifecycleType } from "@rawr/hq-ops/types";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export default class PluginsLifecycleCheck extends RawrCommand {
   static description = "Validate plugin lifecycle completeness (artifacts/tests/docs/dependents + sync/drift verification)";

@@ -7,12 +7,23 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const cliRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const testHome = mkdtempSync(path.join(os.tmpdir(), "rawr-cli-hq-home-"));
 
 function runRawr(args: string[], options?: { cwd?: string; env?: Record<string, string | undefined> }) {
   return spawnSync("bun", ["src/index.ts", ...args], {
     cwd: options?.cwd ?? cliRoot,
     encoding: "utf8",
-    env: { ...process.env, ...(options?.env ?? {}) },
+    env: {
+      ...process.env,
+      HOME: testHome,
+      XDG_CACHE_HOME: path.join(testHome, ".cache"),
+      XDG_CONFIG_HOME: path.join(testHome, ".config"),
+      XDG_DATA_HOME: path.join(testHome, ".local", "share"),
+      RAWR_CACHE_DIR: path.join(testHome, ".cache", "@rawr", "cli"),
+      RAWR_CONFIG_DIR: path.join(testHome, ".config", "@rawr", "cli"),
+      RAWR_DATA_DIR: path.join(testHome, ".local", "share", "@rawr", "cli"),
+      ...(options?.env ?? {}),
+    },
   });
 }
 

@@ -2,8 +2,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import type { AgentConfigSyncResources } from "@rawr/agent-config-sync/resources";
-import { resolvePluginContentLayout } from "./plugin-content";
-import { scanCanonicalContentAtRoot } from "./scan-canonical-content";
 import {
   copyDirTree,
   dirsIdentical,
@@ -56,14 +54,6 @@ export function createNodeAgentConfigSyncResources(): AgentConfigSyncResources {
         } catch {
           return [];
         }
-      },
-    },
-    sources: {
-      readProviderOverlay: async ({ agent, sourcePlugin }) => {
-        const layout = await resolvePluginContentLayout(sourcePlugin);
-        const overlayRoot = layout.overlayRootAbs[agent];
-        if (!(await pathExists(overlayRoot))) return null;
-        return scanCanonicalContentAtRoot(overlayRoot, layout.includeByProvider[agent]);
       },
     },
   };

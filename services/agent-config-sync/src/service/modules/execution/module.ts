@@ -8,6 +8,7 @@ export const module = impl.execution
   .use(async ({ context, next }) => next({
     context: {
       repoRoot: context.scope.repoRoot,
+      resources: context.deps.resources,
       repo: context.provided.repo,
     },
   }));

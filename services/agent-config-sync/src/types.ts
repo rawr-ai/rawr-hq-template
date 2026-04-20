@@ -6,10 +6,12 @@ export type {
   SourceContent,
   SourcePlugin,
   SyncAgent,
-  SyncItemResult,
-  SyncRunResult,
   SyncScope,
 } from "./service/shared/schemas";
+export type {
+  SyncItemResult,
+  SyncRunResult,
+} from "./service/modules/execution/contract";
 export type {
   AssessWorkspaceSyncInput,
   FullSyncPolicyInput,
@@ -18,4 +20,4 @@ export type {
   SyncAssessment,
   WorkspaceSyncPlan,
 } from "./service/modules/planning/contract";
-export type { UndoRunResult } from "./service/modules/undo/schemas";
+export type { UndoRunResult } from "./service/modules/undo/contract";

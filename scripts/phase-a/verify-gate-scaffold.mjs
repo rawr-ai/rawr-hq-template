@@ -36,6 +36,16 @@ async function mustExist(relPath) {
   }
 }
 
+async function mustNotExist(relPath) {
+  const abs = path.join(root, relPath);
+  try {
+    await fs.stat(abs);
+  } catch {
+    return;
+  }
+  throw new Error(`obsolete file must not exist: ${relPath}`);
+}
+
 function assertCondition(condition, message) {
   if (!condition) {
     throw new Error(message);
@@ -49,6 +59,29 @@ async function readTypeScriptFile(relPath) {
     source,
     ast: parseTypeScript(abs, source),
   };
+}
+
+async function listSourceFilesUnder(relPath) {
+  const files = [];
+  const absRoot = path.join(root, relPath);
+
+  async function walk(absPath) {
+    const entries = await fs.readdir(absPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const childAbs = path.join(absPath, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === "dist" || entry.name === "node_modules" || entry.name === "coverage") continue;
+        await walk(childAbs);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      if (!/\.(?:ts|tsx|js|jsx|mjs|cjs)$/u.test(entry.name)) continue;
+      files.push(path.relative(root, childAbs).split(path.sep).join("/"));
+    }
+  }
+
+  await walk(absRoot);
+  return files.sort();
 }
 
 function findExportedFunction(sourceFile, functionName) {
@@ -126,77 +159,105 @@ function hasFunctionDeclaration(sourceFile, functionName) {
 }
 
 async function verifyMetadataContract() {
-  const pluginWorkspaceOwnerPath = "packages/plugin-workspace/src/plugins.ts";
-  const pluginWorkspacePath = "plugins/cli/plugins/src/lib/workspace-plugins.ts";
-  const [{ ast: ownerAst }, { ast: pluginAst }] = await Promise.all([
-    readTypeScriptFile(pluginWorkspaceOwnerPath),
-    readTypeScriptFile(pluginWorkspacePath),
+  const requiredPaths = [
+    "services/hq-ops/src/service/modules/plugin-catalog/contract.ts",
+    "services/hq-ops/src/service/modules/plugin-catalog/entities.ts",
+    "services/hq-ops/src/service/modules/plugin-catalog/lib/discovery.ts",
+    "services/hq-ops/src/service/modules/plugin-catalog/lib/manifest.ts",
+    "services/hq-ops/src/service/modules/plugin-catalog/router.ts",
+    "services/hq-ops/src/service/contract.ts",
+    "services/hq-ops/src/service/router.ts",
+    "services/hq-ops/test/plugin-catalog.test.ts",
+  ];
+  await Promise.all(requiredPaths.map(mustExist));
+  await mustNotExist("packages/plugin-workspace/src/plugins.ts");
+  await mustNotExist("plugins/cli/plugins/src/lib/workspace-plugins.ts");
+
+  const [
+    { source: contractSource },
+    { source: entitiesSource },
+    { source: discoverySource },
+    { source: manifestSource },
+    { source: routerSource },
+    { source: rootContractSource },
+    { source: rootRouterSource },
+    pluginPluginsPackageJson,
+  ] = await Promise.all([
+    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/contract.ts"),
+    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/entities.ts"),
+    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/lib/discovery.ts"),
+    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/lib/manifest.ts"),
+    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/router.ts"),
+    readTypeScriptFile("services/hq-ops/src/service/contract.ts"),
+    readTypeScriptFile("services/hq-ops/src/service/router.ts"),
+    fs.readFile(path.join(root, "plugins/cli/plugins/package.json"), "utf8"),
   ]);
 
   assertCondition(
-    hasNamedImport(ownerAst, "./plugin-manifest-contract", "parseWorkspacePluginManifest"),
-    "plugin-workspace owner must import parseWorkspacePluginManifest from local contract owner",
+    rootContractSource.includes('from "./modules/plugin-catalog/contract"') &&
+      rootContractSource.includes("pluginCatalog,"),
+    "hq-ops root contract must own pluginCatalog",
   );
-
-  for (const functionName of ["findWorkspaceRoot", "listWorkspacePlugins", "filterPluginsByKind", "resolvePluginId"]) {
-    assertCondition(hasExportedFunction(ownerAst, functionName), `plugin-workspace owner must export ${functionName}`);
-  }
-
-  const pluginImportAliases = namedImportInfo(pluginAst, "@rawr/plugin-workspace");
-  const requiredAliases = {
-    findWorkspaceRoot: "findWorkspaceRootFromWorkspace",
-    listWorkspacePlugins: "listWorkspacePluginsFromWorkspace",
-    filterPluginsByKind: "filterPluginsByKindFromWorkspace",
-    resolvePluginId: "resolvePluginIdFromWorkspace",
-  };
-
-  for (const [importedName, aliasName] of Object.entries(requiredAliases)) {
+  assertCondition(
+    rootRouterSource.includes('from "./modules/plugin-catalog/router"') &&
+      rootRouterSource.includes("pluginCatalog,"),
+    "hq-ops root router must own pluginCatalog",
+  );
+  for (const procedureName of ["listWorkspacePlugins", "resolveWorkspacePlugin"]) {
+    assertCondition(contractSource.includes(`${procedureName}:`), `plugin-catalog contract must define ${procedureName}`);
     assertCondition(
-      pluginImportAliases.get(importedName) === aliasName,
-      `plugin workspace adapter must alias ${importedName} as ${aliasName} from @rawr/plugin-workspace`,
+      routerSource.includes(`const ${procedureName} = module.${procedureName}.handler`),
+      `plugin-catalog router must implement ${procedureName} directly`,
     );
   }
-
-  const exportedTypeNames = findExportedTypeNames(pluginAst);
-  assertCondition(exportedTypeNames.has("WorkspacePlugin"), "plugin workspace adapter must re-export WorkspacePlugin type");
-  assertCondition(exportedTypeNames.has("WorkspacePluginKind"), "plugin workspace adapter must re-export WorkspacePluginKind type");
-
-  for (const [functionName, aliasName] of Object.entries(requiredAliases)) {
-    const functionDecl = findExportedFunction(pluginAst, functionName);
-    assertCondition(Boolean(functionDecl), `plugin workspace adapter must export ${functionName}`);
-    assertCondition(
-      Boolean(functionDecl && functionReturnsCallTo(functionDecl, aliasName)),
-      `plugin workspace adapter ${functionName} must forward to ${aliasName}`,
-    );
+  for (const catalogFragment of [
+    "WORKSPACE_PLUGIN_DISCOVERY_ROOTS",
+    "FORBIDDEN_LEGACY_RAWR_KEYS",
+    "WorkspacePluginCatalogEntrySchema",
+    "WorkspacePluginKindSchema",
+  ]) {
+    assertCondition(entitiesSource.includes(catalogFragment), `plugin-catalog entities must include ${catalogFragment}`);
   }
+  for (const manifestFragment of [
+    "parseWorkspacePluginManifest",
+    "commandPluginEligibility",
+    "runtimeWebEligibility",
+    "forbidden rawr.",
+    "rawr.kind must be",
+  ]) {
+    assertCondition(manifestSource.includes(manifestFragment), `plugin-catalog manifest helper must include ${manifestFragment}`);
+  }
+  assertCondition(discoverySource.includes("discoverWorkspacePluginCatalog"), "plugin-catalog discovery helper must expose catalog discovery");
+  assertCondition(!pluginPluginsPackageJson.includes("@rawr/plugin-workspace"), "plugin-plugins must not depend on @rawr/plugin-workspace");
 }
 
 async function verifyImportBoundary() {
-  const pluginWorkspaceOwnerPath = "packages/plugin-workspace/src/plugins.ts";
-  const pluginWorkspacePath = "plugins/cli/plugins/src/lib/workspace-plugins.ts";
-  const [{ ast: ownerAst }, { ast: pluginAst }] = await Promise.all([
-    readTypeScriptFile(pluginWorkspaceOwnerPath),
-    readTypeScriptFile(pluginWorkspacePath),
-  ]);
+  await mustNotExist("packages/plugin-workspace/package.json");
+  await mustNotExist("plugins/cli/plugins/src/lib/workspace-plugins.ts");
 
-  const pluginImports = importModuleSet(pluginAst);
-  assertCondition(
-    pluginImports.size === 1 && pluginImports.has("@rawr/plugin-workspace"),
-    "plugin workspace adapter must only import @rawr/plugin-workspace",
-  );
-  assertCondition(!hasNamedImport(pluginAst, "./plugin-manifest-contract", "parseWorkspacePluginManifest"), "plugin workspace adapter must not import local parser contract");
-  assertCondition(!hasImport(pluginAst, "node:fs"), "plugin workspace adapter must not import node:fs");
-  assertCondition(!hasImport(pluginAst, "node:path"), "plugin workspace adapter must not import node:path");
-  assertCondition(!hasImport(pluginAst, "node:url"), "plugin workspace adapter must not import node:url");
-  assertCondition(
-    !hasFunctionDeclaration(pluginAst, "listWorkspacePluginPackageDirs") && !hasFunctionDeclaration(pluginAst, "listLeafPluginDirsUnder"),
-    "plugin workspace adapter must not re-implement workspace directory traversal",
-  );
-  assertCondition(
-    !hasNamedImport(ownerAst, "@rawr/plugin-plugins", "findWorkspaceRoot") &&
-      !hasImport(ownerAst, "plugins/cli/plugins/src/lib/workspace-plugins"),
-    "plugin-workspace owner must not import plugin workspace adapter",
-  );
+  const projectionFiles = await listSourceFilesUnder("plugins/cli/plugins/src");
+  const findings = [];
+  for (const relPath of projectionFiles) {
+    const source = await fs.readFile(path.join(root, relPath), "utf8");
+    if (source.includes("@rawr/plugin-workspace")) findings.push(`${relPath} imports @rawr/plugin-workspace`);
+    if (source.includes("workspace-plugins")) findings.push(`${relPath} references obsolete workspace-plugins adapter`);
+    if (source.includes("services/hq-ops/src/service/modules/plugin-catalog")) {
+      findings.push(`${relPath} imports hq-ops plugin-catalog internals`);
+    }
+    if (source.includes("plugin-catalog/lib/")) findings.push(`${relPath} imports hq-ops plugin-catalog helper internals`);
+  }
+  assertCondition(findings.length === 0, `plugin projection import boundary failed:\n${findings.map((finding) => `- ${finding}`).join("\n")}`);
+
+  const [webList, webEnableAll, installAll, sweep] = await Promise.all([
+    fs.readFile(path.join(root, "plugins/cli/plugins/src/commands/plugins/web/list.ts"), "utf8"),
+    fs.readFile(path.join(root, "plugins/cli/plugins/src/commands/plugins/web/enable/all.ts"), "utf8"),
+    fs.readFile(path.join(root, "plugins/cli/plugins/src/commands/plugins/cli/install/all.ts"), "utf8"),
+    fs.readFile(path.join(root, "plugins/cli/plugins/src/commands/plugins/sweep.ts"), "utf8"),
+  ]);
+  assertCondition(webList.includes(".pluginCatalog.listWorkspacePlugins"), "web list must call hq-ops pluginCatalog");
+  assertCondition(webEnableAll.includes(".pluginCatalog.listWorkspacePlugins"), "web enable all must call hq-ops pluginCatalog");
+  assertCondition(installAll.includes(".pluginCatalog.listWorkspacePlugins"), "cli install all must call hq-ops pluginCatalog");
+  assertCondition(sweep.includes("planSweepCandidates"), "sweep must get lifecycle candidates from hq-ops pluginLifecycle");
 }
 
 async function verifyHostCompositionGuard() {

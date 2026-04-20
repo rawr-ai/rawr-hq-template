@@ -10,7 +10,6 @@
     "@orpc/client": "^1.13.5",
     "@rawr/core": "workspace:*",
     "@rawr/hq-ops": "workspace:*",
-    "@rawr/plugin-workspace": "workspace:*",
     "@rawr/orpc-client": "workspace:*",
     "@rawr/plugin-plugins": "workspace:*",
     "zod": "^3.24.3"

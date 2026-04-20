@@ -1,6 +1,6 @@
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
-import { RepoStateSchema, type RepoState } from "./model";
+import { RepoStateSchema, type RepoState } from "./entities";
 import { ocBase } from "../../base";
 
 export const GetStateInputSchema = Type.Object({}, { additionalProperties: false });

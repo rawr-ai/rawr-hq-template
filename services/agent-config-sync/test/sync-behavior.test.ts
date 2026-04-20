@@ -75,6 +75,63 @@ describe("agent-config-sync service behavior", () => {
     expect(registry.plugins[0]).toMatchObject({ name: "demo", prompts: ["hello"], managed_by: "@rawr/plugin-plugins" });
   });
 
+  it("resolves provider overlay content through the service with primitive file resources", async () => {
+    const sourceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-provider-content-"));
+    tempDirs.push(sourceRoot);
+    await fs.mkdir(path.join(sourceRoot, "base", "workflows"), { recursive: true });
+    await fs.mkdir(path.join(sourceRoot, "providers", "claude", "workflows"), { recursive: true });
+    await fs.mkdir(path.join(sourceRoot, "providers", "claude", "scripts"), { recursive: true });
+    await fs.writeFile(
+      path.join(sourceRoot, "package.json"),
+      JSON.stringify({
+        name: "@rawr/plugin-provider-content",
+        rawr: {
+          pluginContent: {
+            version: 1,
+            contentRoot: "base",
+            providers: {
+              claude: {
+                overlayRoot: "providers/claude",
+              },
+            },
+          },
+        },
+      }),
+      "utf8",
+    );
+    await fs.writeFile(path.join(sourceRoot, "base", "workflows", "shared.md"), "# base\n", "utf8");
+    await fs.writeFile(path.join(sourceRoot, "providers", "claude", "workflows", "shared.md"), "# claude\n", "utf8");
+    await fs.writeFile(path.join(sourceRoot, "providers", "claude", "scripts", "claude.sh"), "echo claude\n", "utf8");
+
+    const resources = createNodeTestResources();
+    expect("sources" in resources).toBe(false);
+    const client = createClient(createClientOptions({ resources }));
+    const sourcePlugin = {
+      ref: "provider-content",
+      absPath: sourceRoot,
+      dirName: "provider-content",
+      packageName: "@rawr/plugin-provider-content",
+    };
+
+    const resolved = await client.execution.resolveProviderContent({
+      agent: "claude",
+      sourcePlugin,
+      base: {
+        workflowFiles: [{ name: "shared", absPath: path.join(sourceRoot, "base", "workflows", "shared.md") }],
+        skills: [],
+        scripts: [],
+        agentFiles: [],
+      },
+    }, { context: { invocation: { traceId: "test-provider-content" } } });
+
+    expect(resolved.workflowFiles).toEqual([
+      { name: "shared", absPath: path.join(sourceRoot, "providers", "claude", "workflows", "shared.md") },
+    ]);
+    expect(resolved.scripts).toEqual([
+      { name: "claude.sh", absPath: path.join(sourceRoot, "providers", "claude", "scripts", "claude.sh") },
+    ]);
+  });
+
   it("retires stale managed Codex entries through service-owned retirement behavior", async () => {
     const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-service-ws-"));
     const codexHome = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-service-codex-"));

@@ -1,7 +1,6 @@
 import { retireStaleManagedPlugins } from "./retire-stale-managed";
 import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../shared/resources";
-import type { SyncScope } from "../../shared/schemas";
-import type { RetireStaleManagedResult } from "./schemas";
+import type { RetireStaleManagedInput, RetireStaleManagedResult } from "./contract";
 
 export function createRepository(deps: {
   resources: AgentConfigSyncResources;
@@ -13,14 +12,7 @@ export function createRepository(deps: {
      * managed entries absent from that set. Dry runs drop undo capture so stale
      * cleanup can be previewed without refreshing the active capsule.
      */
-    async retireStaleManaged(input: {
-      workspaceRoot: string;
-      scope: SyncScope;
-      codexHomes: string[];
-      claudeHomes: string[];
-      activePluginNames: string[];
-      dryRun: boolean;
-    }): Promise<RetireStaleManagedResult> {
+    async retireStaleManaged(input: RetireStaleManagedInput): Promise<RetireStaleManagedResult> {
       return retireStaleManagedPlugins({
         ...input,
         activePluginNames: new Set(input.activePluginNames),

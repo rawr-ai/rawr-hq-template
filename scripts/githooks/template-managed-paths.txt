@@ -11,7 +11,6 @@ apps/cli/**
 services/agent-config-sync/**
 packages/control-plane/**
 packages/core/**
-packages/plugin-workspace/**
 packages/journal/**
 packages/security/**
 services/session-intelligence/**

@@ -4,8 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 import type {
-  PluginInstallAssessInput,
-  PluginInstallExpectedLink,
+  PluginInstallAction,
   PluginInstallManagerEntry,
   PluginInstallRepairPlan,
   PluginInstallRuntimeSnapshot,
@@ -13,7 +12,6 @@ import type {
   PluginInstallStateStatus,
 } from "@rawr/hq-ops/types";
 import { createHqOpsClient, type HqOpsClient } from "./hq-ops-client";
-import { listWorkspacePlugins } from "./workspace-plugins";
 import { runRawrFromSource } from "./rawr-source-runner";
 
 export type InstallReconcileResult =
@@ -26,7 +24,7 @@ export type InstallReconcileResult =
   | {
       action: "planned";
       beforeStatus: PluginInstallStateStatus;
-      commands: PluginInstallRepairPlan["commands"];
+      actions: PluginInstallRepairPlan["actions"];
     }
   | {
       action: "applied";
@@ -77,36 +75,6 @@ function defaultOclifDataDir(): string {
     ? process.env.XDG_DATA_HOME
     : path.join(homeDir(), ".local", "share");
   return path.join(path.resolve(xdgDataHome), "@rawr", "cli");
-}
-
-async function hasOclifCommands(absPath: string): Promise<boolean> {
-  const packageJsonPath = path.join(absPath, "package.json");
-  try {
-    const parsed = JSON.parse(await fs.readFile(packageJsonPath, "utf8")) as {
-      oclif?: {
-        commands?: unknown;
-        typescript?: {
-          commands?: unknown;
-        };
-      };
-    };
-    const commands = parsed.oclif?.commands;
-    const tsCommands = parsed.oclif?.typescript?.commands;
-    return typeof commands === "string" && commands.length > 0 && typeof tsCommands === "string" && tsCommands.length > 0;
-  } catch {
-    return false;
-  }
-}
-
-async function listExpectedWorkspaceLinks(workspaceRoot: string): Promise<PluginInstallExpectedLink[]> {
-  const plugins = await listWorkspacePlugins(workspaceRoot);
-  const expected: PluginInstallExpectedLink[] = [];
-  for (const plugin of plugins) {
-    if (plugin.kind !== "toolkit") continue;
-    if (!(await hasOclifCommands(plugin.absPath))) continue;
-    expected.push({ pluginName: plugin.id, root: path.resolve(plugin.absPath) });
-  }
-  return expected.sort((a, b) => a.pluginName.localeCompare(b.pluginName));
 }
 
 async function loadPluginManagerEntries(input?: {
@@ -171,21 +139,29 @@ async function buildAssessInput(input: {
   workspaceRoot: string;
   runtimePlugins?: PluginInstallRuntimeSnapshot[];
   oclifDataDir?: string;
-}): Promise<PluginInstallAssessInput> {
+}) {
   const workspaceRoot = path.resolve(input.workspaceRoot);
   const manager = await loadPluginManagerEntries({ oclifDataDir: input.oclifDataDir });
   return {
     workspaceRoot,
     canonicalWorkspaceRoot: workspaceRoot,
-    canonicalWorkspaceSource: "workspace-root",
+    canonicalWorkspaceSource: "workspace-root" as const,
     pluginManagerManifestPath: manager.manifestPath,
-    expectedLinks: await listExpectedWorkspaceLinks(workspaceRoot),
     actualLinks: manager.links.map((link) => ({
       ...link,
       root: link.root ? normalizeAbsPathMaybeReal(link.root) : null,
     })),
     runtimePlugins: input.runtimePlugins,
   };
+}
+
+export function pluginInstallActionCommand(action: PluginInstallAction): string[] {
+  if (action.kind === "uninstall-plugin") return ["plugins", "uninstall", action.pluginName];
+  return ["plugins", "cli", "install", "all", "--json"];
+}
+
+export function pluginInstallActionCommandText(action: PluginInstallAction): string {
+  return `rawr ${pluginInstallActionCommand(action).join(" ")}`;
 }
 
 function normalizeAbsPathMaybeReal(p: string): string {
@@ -264,7 +240,7 @@ export async function reconcileWorkspaceInstallLinks(input: {
     return {
       action: "planned",
       beforeStatus: before.status,
-      commands: plan.commands,
+      actions: plan.actions,
     };
   }
 
@@ -276,10 +252,11 @@ export async function reconcileWorkspaceInstallLinks(input: {
     stderr: string;
   }> = [];
 
-  for (const command of plan.commands) {
-    const run = runRawrFromSource(input.workspaceRoot, command.args);
+  for (const action of plan.actions) {
+    const args = pluginInstallActionCommand(action);
+    const run = runRawrFromSource(input.workspaceRoot, args);
     executions.push({
-      args: command.args,
+      args,
       exitCode: run.exitCode,
       ok: run.ok,
       stdout: run.stdout,
@@ -289,7 +266,7 @@ export async function reconcileWorkspaceInstallLinks(input: {
     return {
       action: "failed",
       beforeStatus: before.status,
-      command: command.args,
+      command: args,
       commands: executions,
       exitCode: run.exitCode,
       error: "install reconcile failed",

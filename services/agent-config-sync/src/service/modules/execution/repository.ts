@@ -1,6 +1,6 @@
 import { runSync as runServiceSync } from "./sync-engine";
 import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../shared/resources";
-import type { SyncExecutionInput } from "./schemas";
+import type { RunSyncInput } from "./contract";
 
 export function createRepository(deps: {
   resources: AgentConfigSyncResources;
@@ -12,7 +12,7 @@ export function createRepository(deps: {
      * intentionally discard undo capture so preview requests cannot create or
      * refresh capsules while still exercising the same conflict policy.
      */
-    async runSync(input: SyncExecutionInput) {
+    async runSync(input: RunSyncInput) {
       return runServiceSync({
         sourcePlugin: input.sourcePlugin,
         content: input.content,

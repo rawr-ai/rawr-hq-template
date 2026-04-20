@@ -20,9 +20,9 @@ await Promise.all([
   mustExist("apps/server/test/storage-lock-route-guard.test.ts"),
 ]);
 
-const [repoStateStorageSource, repoStateModelSource, repoStateTestSource] = await Promise.all([
+const [repoStateStorageSource, repoStateEntitiesSource, repoStateTestSource] = await Promise.all([
   readFile("services/hq-ops/src/service/modules/repo-state/repository.ts"),
-  readFile("services/hq-ops/src/service/modules/repo-state/model.ts"),
+  readFile("services/hq-ops/src/service/modules/repo-state/entities.ts"),
   readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
 ]);
 
@@ -47,7 +47,7 @@ for (const fnName of ["setRepoState", "enablePlugin", "disablePlugin"]) {
 
 for (const typeName of ["RepoStateMutationOptions", "RepoStateMutationResult", "RepoStateMutator"]) {
   assertCondition(
-    new RegExp(`type\\s+${typeName}\\s*=`, "m").test(repoStateModelSource),
+    new RegExp(`type\\s+${typeName}\\s*=`, "m").test(repoStateEntitiesSource),
     `repo-state store must declare ${typeName}`,
   );
 }

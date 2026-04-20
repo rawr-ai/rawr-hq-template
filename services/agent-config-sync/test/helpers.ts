@@ -26,9 +26,6 @@ export function createFakeResources(): AgentConfigSyncResources {
       statPathKind: async () => null,
       readDir: async () => [],
     },
-    sources: {
-      readProviderOverlay: async () => null,
-    },
   };
 }
 
@@ -139,9 +136,6 @@ export function createNodeTestResources(): AgentConfigSyncResources {
           return [];
         }
       },
-    },
-    sources: {
-      readProviderOverlay: async () => null,
     },
   };
 }

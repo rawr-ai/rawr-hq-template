@@ -60,6 +60,14 @@ function createHqOpsResources(): HqOpsResources {
           return null;
         }
       },
+      async readDir(dirPath) {
+        try {
+          const entries = await fs.readdir(dirPath, { withFileTypes: true });
+          return entries.map((entry) => ({ name: entry.name, isDirectory: entry.isDirectory() }));
+        } catch {
+          return null;
+        }
+      },
       async readText(filePath) {
         try {
           return await fs.readFile(filePath, "utf8");
