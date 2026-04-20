@@ -23,6 +23,9 @@ services/
     repo-state/
     journal/
     security/
+    plugin-catalog/
+    plugin-install/
+    plugin-lifecycle/
 ```
 
 `services/hq-ops` is the canonical HQ operational service package for this migration.
@@ -382,14 +385,14 @@ They do **not** get to influence the foundational runtime model.
 
 These remain support/tooling until they clearly earn a different home:
 
-- `packages/hq` workspace/install/lifecycle/scaffold support after semantic stripping
+- `packages/hq` remaining workspace/scaffold mechanics after semantic stripping (no HQ plugin catalog/install/lifecycle semantics)
 - `apps/cli/src/lib/hq-status.ts`
 - `scripts/dev/hq.sh`
 - runtime compiler / bootgraph / harness packages
 
 The reason is not “they are internal.”
 
-The reason is that they do **not** currently own durable semantic HQ truth in the same way config, repo-state, journal, and security do.
+The reason is that they do **not** currently own durable semantic HQ truth in the same way the `services/hq-ops` internal modules do.
 
 They are support, tooling, process-manager mechanics, or external sync scaffolding.
 
@@ -462,11 +465,48 @@ This module owns:
 
 The Bun and Git wrappers remain service-internal implementation details.
 
+### `services/hq-ops` `plugin-catalog` module
+
+This module owns:
+
+- canonical workspace plugin discovery and classification policy
+- user-facing plugin id/name resolution policy
+- the service boundary for "what plugins exist" (across projections)
+
+This module does **not**:
+
+- turn filesystem discovery primitives into a shared semantic package (discovery mechanics may be service-internal or projection-provided via ports)
+- export projection-facing helpers that let projections reimplement catalog policy
+
+### `services/hq-ops` `plugin-install` module
+
+This module owns:
+
+- semantic intent for HQ command-plugin install health (what "expected links" should exist)
+- drift assessment semantics between catalog-derived expectation and projection-observed manager state
+- repair planning as service-owned intent (projections execute the concrete actions with local process privileges)
+
+This module does **not**:
+
+- directly execute local installs/links/unlinks (those are projection-side process mechanics until the runtime substrate owns process resources)
+
+### `services/hq-ops` `plugin-lifecycle` module
+
+This module owns:
+
+- lifecycle completion semantics for plugins (evidence requirements, dependent touch points)
+- sweep-candidate planning policy for lifecycle remediation
+- merge-safety policy decisions derived from lifecycle evidence and reviewer judgments
+
+This module does **not**:
+
+- absorb git/process discovery mechanics (projections gather observations; HQ Ops interprets them)
+
 ### Future candidates, explicitly deferred
 
 The following are **not** promoted now, but may be reconsidered later if they become true multi-surface HQ capabilities with stable truth and invariants:
 
-- install/link state
+- global install/link state (outside HQ command-plugin install semantics)
 - richer HQ runtime admin state
 - remote HQ observability/admin capabilities
 
@@ -487,12 +527,12 @@ Something belongs in `services/` when all or nearly all of the following are tru
 By that rubric:
 
 - `hq-ops` qualifies as one service package
-- its `config`, `repo-state`, `journal`, and `security` modules are internal seams, not separate services
+- its `config`, `repo-state`, `journal`, `security`, `plugin-catalog`, `plugin-install`, and `plugin-lifecycle` modules are internal seams, not separate services
 - `example-todo` qualifies
 - `coordination` fails because it mixes multiple truths
 - `agent-config-sync` qualifies and is promoted in this migration
 - `session-intelligence` qualifies and is promoted in this migration; the earlier `session-tools` support-package classification was superseded because the code owns session domain models, provider normalization, resolution, extraction, search ranking, and cache/index policy
-- workspace/install/lifecycle/scaffold tooling do not qualify in this migration
+- generic workspace/scaffold tooling does not qualify in this migration (but HQ plugin catalog/install/lifecycle semantics do)
 
 A critical clarification:
 
