@@ -2,6 +2,9 @@ import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
 
+/**
+ * Lists runtime web plugins from the HQ-owned catalog.
+ */
 export default class PluginsWebList extends RawrCommand {
   static description = "List workspace runtime web plugins";
 

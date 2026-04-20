@@ -2,6 +2,13 @@ import { runSync as runServiceSync } from "./sync-engine";
 import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../shared/resources";
 import type { RunSyncInput } from "./contract";
 
+/**
+ * Builds the execution repository for sync runs.
+ *
+ * The repository is intentionally thin: procedure handlers expose service
+ * operations, while the repository supplies write-capable resources and undo
+ * capture to the sync engine at the service boundary.
+ */
 export function createRepository(deps: {
   resources: AgentConfigSyncResources;
   undoCapture?: AgentConfigSyncUndoCapture;

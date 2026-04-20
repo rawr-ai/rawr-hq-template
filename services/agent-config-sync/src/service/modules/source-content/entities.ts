@@ -1,5 +1,11 @@
 import { type Static, Type } from "typebox";
 
+/**
+ * Reusable source-content include mask.
+ *
+ * This is an entity-level schema because canonical content scanning, provider
+ * overlays, and composed toolkit content all share the same include semantics.
+ */
 export const PluginContentIncludeSchema = Type.Object(
   {
     workflows: Type.Optional(Type.Boolean()),
@@ -10,6 +16,9 @@ export const PluginContentIncludeSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Provider-specific source-content override in package.json#rawr.pluginContent.
+ */
 export const PluginContentProviderSchema = Type.Object(
   {
     overlayRoot: Type.Optional(Type.String({ minLength: 1 })),
@@ -18,6 +27,9 @@ export const PluginContentProviderSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Versioned source-content manifest embedded in plugin package metadata.
+ */
 export const PluginContentManifestV1Schema = Type.Object(
   {
     version: Type.Literal(1),
@@ -39,4 +51,3 @@ export const PluginContentManifestV1Schema = Type.Object(
 export type PluginContentInclude = Static<typeof PluginContentIncludeSchema>;
 export type NormalizedPluginContentInclude = Required<PluginContentInclude>;
 export type PluginContentManifestV1 = Static<typeof PluginContentManifestV1Schema>;
-

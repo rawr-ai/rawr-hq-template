@@ -24,6 +24,12 @@ type AgentConfigSyncRole = RoleView & {
 
 type BindingContext = ServiceBindingContext<AgentConfigSyncProcess, AgentConfigSyncRole>;
 
+/**
+ * Typed service binding for standalone agent destination sync.
+ *
+ * The CLI supplies local resources and optional undo capture, while destination
+ * planning/execution semantics remain inside agent-config-sync.
+ */
 const agentConfigSyncService = bindService(createClient, {
   bindingId: "plugin-plugins/agent-config-sync",
   deps: (context: BindingContext) => ({
@@ -38,6 +44,10 @@ const agentConfigSyncService = bindService(createClient, {
   config: {},
 } satisfies ServiceBinding<CreateClientOptions, AgentConfigSyncProcess, AgentConfigSyncRole>);
 
+/**
+ * Creates an agent-config-sync client scoped to one repo root and optional undo
+ * capture for mutating sync runs.
+ */
 export function createAgentConfigSyncClient(input: {
   repoRoot: string;
   undoCapture?: UndoCaptureLike;

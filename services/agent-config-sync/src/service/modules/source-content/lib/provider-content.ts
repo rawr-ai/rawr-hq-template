@@ -4,6 +4,10 @@ import { resolvePluginContentLayout } from "./manifest";
 import { mergeSourceContent } from "./merge-content";
 import { scanCanonicalContentAtRoot } from "./scan-content";
 
+/**
+ * Produces effective content for one destination provider by applying that
+ * provider's overlay root and include mask to the canonical source content.
+ */
 export async function resolveProviderContent(input: {
   agent: SyncAgent;
   sourcePlugin: SourcePlugin;
@@ -24,4 +28,3 @@ export async function resolveProviderContent(input: {
   });
   return mergeSourceContent(input.base, overlay);
 }
-

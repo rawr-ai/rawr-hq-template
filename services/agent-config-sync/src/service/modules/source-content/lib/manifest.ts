@@ -20,11 +20,17 @@ export type PluginContentLayout = {
   manifest: PluginContentManifestV1 | null;
 };
 
+/**
+ * Narrows manifest JSON before resolving optional plugin-content fields.
+ */
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   return value as Record<string, unknown>;
 }
 
+/**
+ * Applies default inclusion semantics for canonical and provider content roots.
+ */
 function normalizeInclude(input: unknown): NormalizedPluginContentInclude {
   const record = asRecord(input) ?? {};
   return {
@@ -35,10 +41,16 @@ function normalizeInclude(input: unknown): NormalizedPluginContentInclude {
   };
 }
 
+/**
+ * Resolves plugin-content paths relative to the source plugin package.
+ */
 function resolveRelativePath(pluginAbsPath: string, relOrAbsPath: string): string {
   return path.isAbsolute(relOrAbsPath) ? relOrAbsPath : path.resolve(pluginAbsPath, relOrAbsPath);
 }
 
+/**
+ * Parses the versioned package.json#rawr.pluginContent manifest with TypeBox.
+ */
 function parsePluginContentManifest(input: {
   candidate: unknown;
   packageJsonPath: string;
@@ -51,6 +63,9 @@ function parsePluginContentManifest(input: {
   }
 }
 
+/**
+ * Resolves canonical and provider overlay roots for one source plugin.
+ */
 export async function resolvePluginContentLayout(input: {
   sourcePlugin: SourcePlugin;
   resources: AgentConfigSyncResources;

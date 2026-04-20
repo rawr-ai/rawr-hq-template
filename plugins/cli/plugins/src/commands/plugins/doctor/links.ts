@@ -9,6 +9,12 @@ import {
 } from "../../../lib/plugin-install-service";
 import { findWorkspaceRoot } from "@rawr/core";
 
+/**
+ * Diagnoses and optionally repairs local oclif command-plugin link drift.
+ *
+ * HQ Ops owns expected-link policy; this command observes the local plugin
+ * manager and executes approved repair actions.
+ */
 export default class PluginsDoctorLinks extends RawrCommand {
   static description = "Diagnose plugin install/link drift and optionally repair stale or legacy link state";
 

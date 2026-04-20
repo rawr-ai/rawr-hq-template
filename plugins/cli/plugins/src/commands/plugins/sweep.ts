@@ -3,6 +3,12 @@ import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { checkScratchPolicy, planSweepCandidates } from "../../lib/plugin-lifecycle-service";
 import { runCommand } from "../../lib/process-execution";
 
+/**
+ * Queues lifecycle remediation work for plugin-system hygiene.
+ *
+ * HQ Ops plans sweep candidates and quality issues; this command enforces run
+ * mode, scratch policy, and optional local publish execution.
+ */
 export default class PluginsSweep extends RawrCommand {
   static description = "Run scheduled/manual plugin-system sweep and queue scoped no-policy improvement actions";
 

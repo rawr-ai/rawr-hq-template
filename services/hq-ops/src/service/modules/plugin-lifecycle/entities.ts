@@ -1,5 +1,9 @@
 import { type Static, Type } from "typebox";
 
+/**
+ * Reusable lifecycle target kinds used across target resolution, checks, and
+ * sweep planning. Procedure-specific IO schemas stay in the contract.
+ */
 export const LifecycleTypeSchema = Type.Union([
   Type.Literal("cli"),
   Type.Literal("web"),
@@ -9,6 +13,9 @@ export const LifecycleTypeSchema = Type.Union([
   Type.Literal("composed"),
 ]);
 
+/**
+ * Canonical resolved target entity for lifecycle procedures.
+ */
 export const LifecycleTargetSchema = Type.Object(
   {
     input: Type.String({ minLength: 1 }),
@@ -19,6 +26,9 @@ export const LifecycleTargetSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Durable lifecycle assessment entity consumed by merge-policy decisions.
+ */
 export const LifecycleCheckDataSchema = Type.Object(
   {
     status: Type.Union([Type.Literal("pass"), Type.Literal("fail")]),

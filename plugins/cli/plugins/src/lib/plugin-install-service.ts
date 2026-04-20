@@ -14,6 +14,12 @@ import type {
 import { createHqOpsClient, type HqOpsClient } from "./hq-ops-client";
 import { runRawrFromSource } from "./rawr-source-runner";
 
+/**
+ * Projection result for command-plugin install reconciliation.
+ *
+ * HQ Ops returns semantic repair actions; this union records how the CLI mapped
+ * those actions to local rawr process execution.
+ */
 export type InstallReconcileResult =
   | {
       action: "skipped";
@@ -66,10 +72,16 @@ type PluginManagerManifest = {
   };
 };
 
+/**
+ * Finds the user's home directory for locating oclif's data store.
+ */
 function homeDir(): string {
   return process.env.HOME ? String(process.env.HOME) : os.homedir();
 }
 
+/**
+ * Mirrors oclif's default plugin manager data directory for local observation.
+ */
 function defaultOclifDataDir(): string {
   const xdgDataHome = process.env.XDG_DATA_HOME && process.env.XDG_DATA_HOME.length > 0
     ? process.env.XDG_DATA_HOME
@@ -77,6 +89,12 @@ function defaultOclifDataDir(): string {
   return path.join(path.resolve(xdgDataHome), "@rawr", "cli");
 }
 
+/**
+ * Reads concrete oclif manager state from disk.
+ *
+ * This remains projection-side because it observes the host installation; the
+ * service receives normalized links and decides whether they are healthy.
+ */
 async function loadPluginManagerEntries(input?: {
   oclifDataDir?: string;
 }): Promise<{ manifestPath: string; links: PluginInstallManagerEntry[] }> {
@@ -117,6 +135,9 @@ function isRuntimePluginValue(value: unknown): value is RuntimePluginValue {
   return Boolean(value) && typeof value === "object";
 }
 
+/**
+ * Converts oclif runtime plugin objects into the snapshot HQ Ops can assess.
+ */
 export function runtimePluginSnapshot(configPlugins: unknown): PluginInstallRuntimeSnapshot[] {
   const runtimePluginValues: unknown[] = configPlugins instanceof Map
     ? [...configPlugins.values()]
@@ -135,6 +156,10 @@ export function runtimePluginSnapshot(configPlugins: unknown): PluginInstallRunt
   });
 }
 
+/**
+ * Builds the concrete install assessment input by combining service scope with
+ * observed oclif manager state.
+ */
 async function buildAssessInput(input: {
   workspaceRoot: string;
   runtimePlugins?: PluginInstallRuntimeSnapshot[];
@@ -155,15 +180,24 @@ async function buildAssessInput(input: {
   };
 }
 
+/**
+ * Maps HQ semantic repair actions to rawr CLI argv executed by this projection.
+ */
 export function pluginInstallActionCommand(action: PluginInstallAction): string[] {
   if (action.kind === "uninstall-plugin") return ["plugins", "uninstall", action.pluginName];
   return ["plugins", "cli", "install", "all", "--json"];
 }
 
+/**
+ * Renders semantic repair actions for human status output.
+ */
 export function pluginInstallActionCommandText(action: PluginInstallAction): string {
   return `rawr ${pluginInstallActionCommand(action).join(" ")}`;
 }
 
+/**
+ * Realpath helper used before passing observed links to HQ Ops.
+ */
 function normalizeAbsPathMaybeReal(p: string): string {
   const resolved = path.resolve(p);
   try {
@@ -176,6 +210,9 @@ function normalizeAbsPathMaybeReal(p: string): string {
 type AssessOptions = NonNullable<Parameters<HqOpsClient["pluginInstall"]["assessInstallState"]>[1]>;
 type RepairOptions = NonNullable<Parameters<HqOpsClient["pluginInstall"]["planInstallRepair"]>[1]>;
 
+/**
+ * Calls HQ Ops to assess command-plugin install health.
+ */
 export async function assessPluginInstallState(input: {
   workspaceRoot: string;
   runtimePlugins?: PluginInstallRuntimeSnapshot[];
@@ -190,6 +227,9 @@ export async function assessPluginInstallState(input: {
   return client.pluginInstall.assessInstallState(assessInput, options);
 }
 
+/**
+ * Calls HQ Ops to plan semantic install repair actions.
+ */
 export async function planPluginInstallRepair(input: {
   workspaceRoot: string;
   report: PluginInstallStateReport;
@@ -202,6 +242,9 @@ export async function planPluginInstallRepair(input: {
   return client.pluginInstall.planInstallRepair({ report: input.report }, options);
 }
 
+/**
+ * Parses rawr command output when a repair action emitted JSON.
+ */
 function safeParseJson(input: string): unknown {
   try {
     return JSON.parse(input);
@@ -210,6 +253,13 @@ function safeParseJson(input: string): unknown {
   }
 }
 
+/**
+ * Performs the projection-owned apply loop for install repair.
+ *
+ * The loop deliberately reassesses through HQ Ops before and after local command
+ * execution so policy stays in the service while process orchestration remains
+ * in the CLI.
+ */
 export async function reconcileWorkspaceInstallLinks(input: {
   workspaceRoot: string;
   dryRun: boolean;

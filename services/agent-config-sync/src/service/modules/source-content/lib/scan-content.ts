@@ -3,6 +3,11 @@ import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type { SourceContent } from "../../../shared/schemas";
 import type { NormalizedPluginContentInclude } from "../entities";
 
+/**
+ * Scans a canonical source-content root into the service's normalized content
+ * model. This owns layout interpretation for workflows, skills, scripts, and
+ * agents instead of leaving CLI resources to duplicate directory policy.
+ */
 export async function scanCanonicalContentAtRoot(input: {
   rootAbsPath: string;
   include: NormalizedPluginContentInclude;
@@ -66,4 +71,3 @@ export async function scanCanonicalContentAtRoot(input: {
 
   return content;
 }
-

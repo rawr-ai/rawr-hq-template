@@ -15,10 +15,16 @@ import { runCommand } from "../../lib/process-execution";
 import type { DecideMergePolicyResult, LifecycleCheckData, LifecycleType, PrContext } from "@rawr/hq-ops/types";
 import { findWorkspaceRoot } from "@rawr/core";
 
+/**
+ * Wait helper used when a publish flow allows time for PR comments.
+ */
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Command payload for a no-policy plugin improvement run.
+ */
 type ImprovementResult = {
   changeUnitId: string;
   scope: "plugin-system";
@@ -29,6 +35,11 @@ type ImprovementResult = {
   actions: Array<{ action: string; status: "planned" | "done" | "skipped" | "failed"; notes?: string }>;
 };
 
+/**
+ * Drives a plugin improvement workflow from lifecycle check through merge
+ * policy. Local git/Graphite commands stay in the projection; lifecycle and
+ * policy decisions are delegated to HQ Ops.
+ */
 export default class PluginsImprove extends RawrCommand {
   static description = "Propose/apply no-policy plugin quality improvements with two-pass policy judgment";
 

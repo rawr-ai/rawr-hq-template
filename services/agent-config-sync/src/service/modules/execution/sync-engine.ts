@@ -39,6 +39,10 @@ type ClaimedOthers = {
   scripts: Set<string>;
 };
 
+/**
+ * Appends a destination result item and mirrors conflicts into the conflict
+ * bucket used by command projections and tests.
+ */
 function pushItem(
   bucket: SyncTargetResult,
   item: Omit<SyncItemResult, "action"> & { action: SyncItemResult["action"] },
@@ -48,6 +52,12 @@ function pushItem(
   if (full.action === "conflict") bucket.conflicts.push(full);
 }
 
+/**
+ * Applies the service's destination file conflict policy.
+ *
+ * The engine compares existing files, respects registry/manifest ownership
+ * claims, and records undo snapshots only when an actual apply run mutates disk.
+ */
 async function syncFileWithConflictPolicy(input: {
   src: string;
   dest: string;
@@ -618,6 +628,10 @@ export async function runSync(input: {
   };
 }
 
+/**
+ * Test-only registry loader that verifies service writes without exposing the
+ * registry as a production procedure.
+ */
 export async function loadCodexRegistryForTests(codexHome: string, resources: AgentConfigSyncResources): Promise<unknown> {
   return resources.files.readJsonFile(path.join(codexHome, "plugins", "registry.json"));
 }

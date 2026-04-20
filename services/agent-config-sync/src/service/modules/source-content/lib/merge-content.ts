@@ -1,5 +1,11 @@
 import type { SourceContent } from "../../../shared/schemas";
 
+/**
+ * Merges provider overlays onto canonical source content by logical name.
+ *
+ * Overlay entries replace base entries with the same destination name, which
+ * lets Codex and Claude customize content without duplicating scan logic.
+ */
 export function mergeSourceContent(base: SourceContent, overlay: SourceContent): SourceContent {
   const workflows = new Map(base.workflowFiles.map((workflow) => [workflow.name, workflow]));
   for (const workflow of overlay.workflowFiles) workflows.set(workflow.name, workflow);
@@ -20,4 +26,3 @@ export function mergeSourceContent(base: SourceContent, overlay: SourceContent):
     agentFiles: [...agents.values()].sort((a, b) => a.name.localeCompare(b.name)),
   };
 }
-

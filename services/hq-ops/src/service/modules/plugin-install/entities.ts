@@ -1,8 +1,20 @@
 import { type Static, Type } from "typebox";
 
+/**
+ * Canonical CLI plugin package name for command-plugin management.
+ */
 export const CANONICAL_SYNC_PLUGIN_NAME = "@rawr/plugin-plugins";
+
+/**
+ * Previously installed providers that HQ install policy should retire.
+ */
 export const LEGACY_SYNC_PLUGIN_NAMES = ["@rawr/plugin-agent-sync"] as const;
 
+/**
+ * Reusable install-state entities shared by install assessment and repair
+ * contracts. Contract IO shapes remain in the contract; these entities describe
+ * durable domain concepts that multiple procedures compose.
+ */
 export const PluginInstallWorkspaceSourceSchema = Type.Union([
   Type.Literal("global-owner"),
   Type.Literal("workspace-root"),

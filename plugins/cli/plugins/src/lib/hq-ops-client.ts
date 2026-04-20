@@ -21,6 +21,9 @@ type HqOpsRole = RoleView & {
 };
 type BindingContext = ServiceBindingContext<HqOpsProcess, HqOpsRole>;
 
+/**
+ * Opens the local SQLite database required by HQ Ops resources.
+ */
 async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
   await fs.mkdir(path.dirname(dbPath), { recursive: true });
   const mod = await import("bun:sqlite");
@@ -28,6 +31,9 @@ async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
   return new Database(dbPath);
 }
 
+/**
+ * Projection resource adapter for embedding calls used by HQ Ops procedures.
+ */
 async function embedText(input: { text: string; config: { provider: "openai" | "voyage"; model: string } }): Promise<Float32Array> {
   const apiKey = input.config.provider === "openai" ? process.env.OPENAI_API_KEY : process.env.VOYAGE_API_KEY;
   if (!apiKey) throw new Error(`Missing ${input.config.provider} embeddings API key`);
@@ -49,6 +55,12 @@ async function embedText(input: { text: string; config: { provider: "openai" | "
   return Float32Array.from(embedding);
 }
 
+/**
+ * Binds HQ Ops to concrete Node/Bun resources for this CLI plugin.
+ *
+ * The service owns semantics; this projection supplies filesystem, process,
+ * sqlite, and embedding resources that only exist on the local host.
+ */
 function createHqOpsResources(): HqOpsResources {
   return {
     fs: {
@@ -177,6 +189,9 @@ function createHqOpsResources(): HqOpsResources {
   };
 }
 
+/**
+ * Typed service binding for the plugin CLI projection.
+ */
 const hqOpsService = bindService(createClient, {
   bindingId: "plugin-plugins/hq-ops",
   deps: () => ({
@@ -191,6 +206,9 @@ const hqOpsService = bindService(createClient, {
   cacheKey: (context: BindingContext) => `${context.process.processId}:${context.process.repoRoot}:${context.role.roleId}`,
 } satisfies ServiceBinding<HqOpsBoundary, HqOpsProcess, HqOpsRole>);
 
+/**
+ * Creates an HQ Ops client scoped to the workspace backing the current command.
+ */
 export function createHqOpsClient(repoRoot: string) {
   return hqOpsService.resolve({
     process: {
@@ -206,6 +224,9 @@ export function createHqOpsClient(repoRoot: string) {
 
 type HqOpsCallOptions = NonNullable<Parameters<HqOpsClient["config"]["getWorkspaceConfig"]>[1]>;
 
+/**
+ * Builds trace context for service calls made from this projection.
+ */
 export function createHqOpsCallOptions(traceId: string) {
   const options = {
     context: {

@@ -20,14 +20,24 @@ type ScratchOptions = NonNullable<Parameters<HqOpsClient["pluginLifecycle"]["che
 type SweepOptions = NonNullable<Parameters<HqOpsClient["pluginLifecycle"]["planSweepCandidates"]>[1]>;
 type DecisionOptions = NonNullable<Parameters<HqOpsClient["pluginLifecycle"]["decideMergePolicy"]>[1]>;
 
+/**
+ * Normalizes git paths before sending lifecycle evidence to HQ Ops.
+ */
 function toPosix(p: string): string {
   return p.split(path.sep).join("/");
 }
 
+/**
+ * Deduplicates local evidence lists for deterministic service requests.
+ */
 function uniqSorted(items: string[]): string[] {
   return [...new Set(items)].sort((a, b) => a.localeCompare(b));
 }
 
+/**
+ * Observes whether a path exists before target resolution asks the service to
+ * choose among candidates.
+ */
 async function exists(p: string): Promise<boolean> {
   try {
     await fs.stat(p);
@@ -37,6 +47,9 @@ async function exists(p: string): Promise<boolean> {
   }
 }
 
+/**
+ * Reads a package name only as a local search hint for dependent scanning.
+ */
 async function readPackageName(targetAbs: string): Promise<string | null> {
   const pkgPath = path.join(targetAbs, "package.json");
   if (!(await exists(pkgPath))) return null;
@@ -49,6 +62,10 @@ async function readPackageName(targetAbs: string): Promise<string | null> {
   }
 }
 
+/**
+ * Resolves lifecycle targets through HQ Ops while supplying concrete path
+ * candidates observed by the CLI.
+ */
 export async function resolveLifecycleTarget(input: {
   workspaceRoot: string;
   target: string;
@@ -82,6 +99,9 @@ export async function resolveLifecycleTarget(input: {
   return result.target ?? null;
 }
 
+/**
+ * Collects the repo file universe used by service lifecycle evidence checks.
+ */
 export async function gitTrackedFiles(workspaceRoot: string): Promise<string[]> {
   const r = await runCommand("git", ["ls-files"], { cwd: workspaceRoot });
   if (r.exitCode !== 0) return [];
@@ -94,6 +114,9 @@ export async function gitTrackedFiles(workspaceRoot: string): Promise<string[]> 
   );
 }
 
+/**
+ * Collects local git changes from working tree, index, and recent commits.
+ */
 export async function collectChangedFiles(workspaceRoot: string, baseRef?: string): Promise<string[]> {
   const out: string[] = [];
   const add = (raw: string) => {
@@ -116,6 +139,10 @@ export async function collectChangedFiles(workspaceRoot: string, baseRef?: strin
   return uniqSorted(out);
 }
 
+/**
+ * Runs projection-owned smoke checks for sync and drift, then reports only the
+ * evidence booleans to HQ Ops lifecycle policy.
+ */
 export async function verifySyncAndDrift(workspaceRoot: string): Promise<{
   syncVerified: boolean;
   driftVerified: boolean;
@@ -151,12 +178,18 @@ export async function verifySyncAndDrift(workspaceRoot: string): Promise<{
   };
 }
 
+/**
+ * Narrows external JSON from judge/gh commands before projection normalization.
+ */
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
     : null;
 }
 
+/**
+ * Normalizes external judge output into the closed service outcome set.
+ */
 function normalizeJudgeOutcome(input: unknown): JudgeResult["outcome"] {
   if (input === "auto_merge") return "auto_merge";
   if (input === "fix_first") return "fix_first";
@@ -164,6 +197,9 @@ function normalizeJudgeOutcome(input: unknown): JudgeResult["outcome"] {
   return "insufficient_confidence";
 }
 
+/**
+ * Bounds external judge confidence before sending it to HQ Ops.
+ */
 function normalizeConfidence(input: unknown): number {
   if (typeof input !== "number" || !Number.isFinite(input)) return 0;
   if (input < 0) return 0;
@@ -171,6 +207,9 @@ function normalizeConfidence(input: unknown): number {
   return input;
 }
 
+/**
+ * Uses ripgrep to find downstream references to the lifecycle target.
+ */
 export async function scanDependents(
   workspaceRoot: string,
   targetAbs: string,
@@ -214,6 +253,9 @@ export async function scanDependents(
   return uniqSorted([...dependentSet]);
 }
 
+/**
+ * Calls HQ Ops to evaluate lifecycle completeness from local evidence.
+ */
 export async function evaluateLifecycleCompleteness(input: {
   workspaceRoot: string;
   targetInput: string;
@@ -247,6 +289,9 @@ export async function evaluateLifecycleCompleteness(input: {
   );
 }
 
+/**
+ * Normalizes scratch policy configuration from environment or git config.
+ */
 function normalizeMode(input: string | null | undefined): ScratchPolicyMode {
   const value = (input ?? "").trim().toLowerCase();
   if (value === "off") return "off";
@@ -254,6 +299,9 @@ function normalizeMode(input: string | null | undefined): ScratchPolicyMode {
   return "warn";
 }
 
+/**
+ * Reads optional scratch policy configuration from the repo.
+ */
 function readModeFromGitConfig(workspaceRoot: string): ScratchPolicyMode | null {
   const run = spawnSync("git", ["config", "--get", "rawr.scratchPolicyMode"], {
     cwd: workspaceRoot,
@@ -266,6 +314,9 @@ function readModeFromGitConfig(workspaceRoot: string): ScratchPolicyMode | null 
   return normalizeMode(raw);
 }
 
+/**
+ * Finds scratch documents that satisfy lifecycle planning hygiene.
+ */
 async function collectScratchFiles(root: string, depth: number): Promise<{ planScratch: string[]; workingPad: string[] }> {
   const out = {
     planScratch: [] as string[],
@@ -297,6 +348,9 @@ async function collectScratchFiles(root: string, depth: number): Promise<{ planS
   return out;
 }
 
+/**
+ * Collects scratch-policy observations and asks HQ Ops to interpret them.
+ */
 export async function checkScratchPolicy(workspaceRoot: string): Promise<ScratchPolicyCheck> {
   const client = createHqOpsClient(workspaceRoot);
   const options = {
@@ -330,6 +384,9 @@ export async function checkScratchPolicy(workspaceRoot: string): Promise<Scratch
   );
 }
 
+/**
+ * Calls HQ Ops to plan lifecycle sweep candidates.
+ */
 export async function planSweepCandidates(input: {
   workspaceRoot: string;
   explicitTargets?: string[];
@@ -350,6 +407,9 @@ export async function planSweepCandidates(input: {
   );
 }
 
+/**
+ * Executes an external judge command and normalizes its JSON output.
+ */
 export async function runJudge(
   judge: "A" | "B",
   commandLine: string | undefined,
@@ -392,6 +452,9 @@ export async function runJudge(
   };
 }
 
+/**
+ * Reads lightweight PR context for merge-policy decisions.
+ */
 export async function readPrContext(cwd: string): Promise<PrContext> {
   const branchRun = await runCommand("git", ["branch", "--show-current"], { cwd });
   const branch = branchRun.stdout.trim();
@@ -432,6 +495,9 @@ export async function readPrContext(cwd: string): Promise<PrContext> {
   };
 }
 
+/**
+ * Calls HQ Ops to decide merge policy from lifecycle, PR, and judge evidence.
+ */
 export async function decideMergePolicy(input: {
   workspaceRoot: string;
   lifecycle: LifecycleCheckData;

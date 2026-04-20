@@ -1,6 +1,20 @@
 import { type Static, Type } from "typebox";
 
+/**
+ * Plugin kinds that HQ recognizes as first-class workspace inventory.
+ *
+ * These are domain entities, not command inputs: contracts compose the schemas
+ * when they need validation, while catalog and lifecycle code use the inferred
+ * TypeScript types from the same TypeBox source of truth.
+ */
 export const WORKSPACE_PLUGIN_KINDS = ["toolkit", "agent", "web", "api", "workflows", "schedules"] as const;
+
+/**
+ * Canonical plugin inventory roots owned by HQ Ops.
+ *
+ * Keeping this beside the entity schemas makes the catalog's root-to-kind
+ * authority explicit and avoids reviving a shared plugin-workspace package.
+ */
 export const WORKSPACE_PLUGIN_DISCOVERY_ROOTS = [
   "cli",
   "agents",
@@ -9,6 +23,11 @@ export const WORKSPACE_PLUGIN_DISCOVERY_ROOTS = [
   "async/workflows",
   "async/schedules",
 ] as const;
+
+/**
+ * Legacy rawr metadata keys that would reintroduce old publication/channel
+ * semantics into plugin manifests if accepted by the catalog.
+ */
 export const FORBIDDEN_LEGACY_RAWR_KEYS = ["templateRole", "channel", "publishTier", "published"] as const;
 
 export const WorkspacePluginKindSchema = Type.Union([
@@ -37,6 +56,10 @@ export const PluginCapabilityEligibilitySchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Reusable catalog entity returned by HQ Ops procedures and consumed by
+ * projections that need to render inventory or execute local resource work.
+ */
 export const WorkspacePluginCatalogEntrySchema = Type.Object(
   {
     id: Type.String({ minLength: 1 }),

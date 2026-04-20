@@ -4,6 +4,9 @@ import { isDeepStrictEqual } from "node:util";
 import type { AgentConfigSyncResources } from "../../shared/resources";
 import type { SourceContent, SourcePlugin } from "../../shared/schemas";
 
+/**
+ * Minimal Claude plugin manifest shape preserved and upserted by sync.
+ */
 export type ClaudePluginManifest = {
   name?: string;
   version?: string;
@@ -11,6 +14,9 @@ export type ClaudePluginManifest = {
   [key: string]: unknown;
 };
 
+/**
+ * Marketplace entry registered for a synced local Claude plugin.
+ */
 export type ClaudeMarketplacePlugin = {
   name: string;
   description?: string;
@@ -19,6 +25,9 @@ export type ClaudeMarketplacePlugin = {
   [key: string]: unknown;
 };
 
+/**
+ * Local Claude marketplace file owned by the destination home.
+ */
 export type ClaudeMarketplaceFile = {
   $schema?: string;
   name?: string;
@@ -29,6 +38,10 @@ export type ClaudeMarketplaceFile = {
   [key: string]: unknown;
 };
 
+/**
+ * RAWR-owned manifest that records what this service last managed for a Claude
+ * plugin so GC never guesses from arbitrary filesystem contents.
+ */
 export type ClaudeManagedPluginManifest = {
   plugin: string;
   sourcePluginPath: string;
@@ -40,6 +53,9 @@ export type ClaudeManagedPluginManifest = {
   managedBy: string;
 };
 
+/**
+ * Creates or updates the Claude plugin.json while preserving unrelated fields.
+ */
 export async function upsertClaudePluginManifest(input: {
   claudeLocalHome: string;
   sourcePlugin: SourcePlugin;
@@ -68,6 +84,9 @@ export async function upsertClaudePluginManifest(input: {
   return { filePath, changed };
 }
 
+/**
+ * Registers the plugin in Claude's local marketplace file.
+ */
 export async function upsertClaudeMarketplace(input: {
   claudeLocalHome: string;
   sourcePlugin: SourcePlugin;
@@ -115,6 +134,9 @@ export async function upsertClaudeMarketplace(input: {
   return { filePath, changed };
 }
 
+/**
+ * Writes the per-plugin sync manifest used for future Claude GC decisions.
+ */
 export async function writeClaudeSyncManifest(input: {
   claudeLocalHome: string;
   sourcePlugin: SourcePlugin;
@@ -161,6 +183,9 @@ export async function writeClaudeSyncManifest(input: {
   return { filePath, manifest, changed };
 }
 
+/**
+ * Reads the last RAWR-managed Claude sync manifest for a plugin.
+ */
 export async function readClaudeSyncManifest(
   claudeLocalHome: string,
   pluginName: string,
@@ -175,6 +200,9 @@ export async function readClaudeSyncManifest(
   return resources.files.readJsonFile<ClaudeManagedPluginManifest>(filePath);
 }
 
+/**
+ * Removes timestamps before drift checks so idempotent runs do not churn files.
+ */
 function normalizeSyncManifest(
   manifest: ClaudeManagedPluginManifest | null | undefined,
 ): Omit<ClaudeManagedPluginManifest, "syncedAt"> | null {

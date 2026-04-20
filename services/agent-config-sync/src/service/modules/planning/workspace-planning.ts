@@ -31,6 +31,12 @@ type PackageJson = {
   rawr?: unknown;
 };
 
+/**
+ * Workspace plugin roots considered as source candidates for agent sync.
+ *
+ * This is not the HQ plugin-management catalog; it is the sync service's source
+ * discovery pass for deciding what can be mirrored into Codex/Claude homes.
+ */
 const WORKSPACE_PLUGIN_ROOTS: Array<{ scope: RawrPluginKind; relPath: string[] }> = [
   { scope: "toolkit", relPath: ["plugins", "cli"] },
   { scope: "agent", relPath: ["plugins", "agents"] },
@@ -40,11 +46,17 @@ const WORKSPACE_PLUGIN_ROOTS: Array<{ scope: RawrPluginKind; relPath: string[] }
   { scope: "schedules", relPath: ["plugins", "async", "schedules"] },
 ];
 
+/**
+ * Narrows package.json values before reading sync source metadata.
+ */
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   return value as Record<string, unknown>;
 }
 
+/**
+ * Normalizes rawr.kind into the sync service's source-scope model.
+ */
 function normalizeRawrKind(input: unknown): RawrPluginKind | undefined {
   if (
     input === "toolkit" ||
@@ -59,10 +71,16 @@ function normalizeRawrKind(input: unknown): RawrPluginKind | undefined {
   return undefined;
 }
 
+/**
+ * Deduplicates target homes after flags, env, config, and defaults are merged.
+ */
 function dedupePaths(paths: string[]): string[] {
   return [...new Set(paths.map((entry) => path.resolve(entry)))];
 }
 
+/**
+ * Selects enabled destination roots from layered sync config.
+ */
 function enabledDestinationRoots(destinations: TargetHomeCandidates["codexHomesFromConfig"]): string[] {
   return destinations
     .filter((destination) => destination.enabled !== false && typeof destination.rootPath === "string")
@@ -70,6 +88,9 @@ function enabledDestinationRoots(destinations: TargetHomeCandidates["codexHomesF
     .filter((rootPath): rootPath is string => Boolean(rootPath));
 }
 
+/**
+ * Resolves final Codex/Claude homes for a sync or drift assessment.
+ */
 export function resolveTargetHomes(input: {
   agent: SyncAgentSelection;
   candidates: TargetHomeCandidates;
@@ -108,6 +129,10 @@ export function resolveTargetHomes(input: {
   };
 }
 
+/**
+ * Enforces the canonical full-sync posture unless the projection explicitly
+ * allows partial sync mode.
+ */
 export function evaluateFullSyncPolicy(input: FullSyncPolicyInput): FullSyncPolicyResult {
   const partialReasons: string[] = [];
   if (input.agent !== "all") partialReasons.push(`agent=${input.agent}`);
@@ -136,12 +161,18 @@ export function evaluateFullSyncPolicy(input: FullSyncPolicyInput): FullSyncPoli
   };
 }
 
+/**
+ * Minimal workspace-root check used before source discovery.
+ */
 async function isWorkspaceRoot(candidateDir: string, resources: AgentConfigSyncResources): Promise<boolean> {
   const packageJsonPath = path.join(candidateDir, "package.json");
   const pluginsDir = path.join(candidateDir, "plugins");
   return (await resources.files.pathExists(packageJsonPath)) && (await resources.files.pathExists(pluginsDir));
 }
 
+/**
+ * Resolves the workspace root for sync planning.
+ */
 export async function findWorkspaceRoot(input: {
   cwd: string;
   workspaceRoot?: string;
@@ -164,6 +195,9 @@ export async function findWorkspaceRoot(input: {
   throw new Error("Unable to locate workspace root (expected a ./plugins directory)");
 }
 
+/**
+ * Lists immediate plugin directories under one source root.
+ */
 async function listLeafPluginDirsUnder(
   rootPath: string,
   resources: AgentConfigSyncResources,
@@ -174,6 +208,9 @@ async function listLeafPluginDirsUnder(
     .map((dirent) => path.join(rootPath, dirent.name));
 }
 
+/**
+ * Lists candidate source plugin directories for agent sync.
+ */
 async function listWorkspacePluginDirs(
   workspaceRoot: string,
   resources: AgentConfigSyncResources,
@@ -185,6 +222,9 @@ async function listWorkspacePluginDirs(
   return pluginDirs.sort((a, b) => a.localeCompare(b));
 }
 
+/**
+ * Loads source plugin metadata needed by sync planning and execution.
+ */
 async function loadSourcePluginFromPath(input: {
   ref: string;
   absPath: string;
@@ -211,6 +251,9 @@ async function loadSourcePluginFromPath(input: {
   };
 }
 
+/**
+ * Resolves a user plugin reference into a sync source plugin.
+ */
 export async function resolveSourcePlugin(input: {
   pluginRef: string;
   cwd: string;
@@ -256,6 +299,9 @@ export async function resolveSourcePlugin(input: {
   );
 }
 
+/**
+ * Scans service-owned source content for one resolved plugin.
+ */
 async function scanSourcePlugin(input: {
   sourcePlugin: SourcePlugin;
   workspacePlugins: SourcePlugin[];
@@ -264,6 +310,9 @@ async function scanSourcePlugin(input: {
   return scanSourcePluginContent(input);
 }
 
+/**
+ * Determines whether a source plugin has anything material to sync.
+ */
 function hasAnyContent(content: SourceContent): boolean {
   return (
     content.workflowFiles.length > 0 ||
@@ -273,6 +322,9 @@ function hasAnyContent(content: SourceContent): boolean {
   );
 }
 
+/**
+ * Resolves one plugin reference and scans its effective canonical source content.
+ */
 export async function resolveAndScanSourcePlugin(input: {
   pluginRef: string;
   cwd: string;
@@ -289,6 +341,9 @@ export async function resolveAndScanSourcePlugin(input: {
   return { sourcePlugin, content };
 }
 
+/**
+ * Loads all workspace source plugins while preserving per-plugin scan failures.
+ */
 async function loadWorkspaceSourcePlugins(
   workspaceRoot: string,
   resources: AgentConfigSyncResources,
@@ -313,6 +368,9 @@ async function loadWorkspaceSourcePlugins(
   return { plugins, skipped };
 }
 
+/**
+ * Discovers syncable workspace sources and explicit extra source paths.
+ */
 async function discoverWorkspaceSources(input: {
   cwd: string;
   workspaceRoot?: string;
@@ -382,6 +440,9 @@ async function discoverWorkspaceSources(input: {
   return { workspaceRoot, syncable, skipped };
 }
 
+/**
+ * Applies the requested sync scope to discovered source plugins.
+ */
 function filterByScope(input: {
   workspaceRoot: string;
   syncable: WorkspaceSyncable[];
@@ -405,6 +466,9 @@ function filterByScope(input: {
   return { syncable: filteredSyncable, skipped };
 }
 
+/**
+ * Summarizes dry-run sync output into a drift assessment.
+ */
 function summarizeWorkspaceRun(input: {
   runs: SyncRunResult[];
   skipped: WorkspaceSkip[];
@@ -476,6 +540,9 @@ function summarizeWorkspaceRun(input: {
   };
 }
 
+/**
+ * Assesses discovered sources by running the execution engine in dry-run mode.
+ */
 async function assessDiscoveredWorkspace(input: {
   workspaceRoot: string;
   syncable: WorkspaceSyncable[];
@@ -531,6 +598,9 @@ async function assessDiscoveredWorkspace(input: {
   };
 }
 
+/**
+ * Public planning helper for drift/status procedures.
+ */
 export async function assessWorkspaceSync(input: {
   request: AssessWorkspaceSyncInput;
   resources: AgentConfigSyncResources;
@@ -554,6 +624,9 @@ export async function assessWorkspaceSync(input: {
   return assessment;
 }
 
+/**
+ * Public planning helper for sync procedures.
+ */
 export async function planWorkspaceSync(input: {
   request: PlanWorkspaceSyncInput;
   resources: AgentConfigSyncResources;

@@ -15,6 +15,13 @@ type CatalogResources = Pick<HqOpsResources, "fs" | "path">;
 type FsOps = Pick<HqOpsResources["fs"], "readDir" | "readText" | "stat">;
 type PathOps = Pick<HqOpsResources["path"], "join" | "resolve">;
 
+/**
+ * The HQ workspace plugin layout.
+ *
+ * This is deliberately service-local domain knowledge: discovery roots imply
+ * plugin kind and capability interpretation, so they cannot live in a neutral
+ * shared package without leaking plugin-management behavior back out of HQ Ops.
+ */
 const SPLIT_ROOTS: Array<{ discoveryRoot: WorkspacePluginDiscoveryRoot; parts: string[] }> = [
   { discoveryRoot: "cli", parts: ["plugins", "cli"] },
   { discoveryRoot: "agents", parts: ["plugins", "agents"] },
@@ -29,6 +36,10 @@ type WorkspacePluginDir = {
   discoveryRoot: WorkspacePluginDiscoveryRoot;
 };
 
+/**
+ * Reads one configured plugin root and returns only immediate package
+ * directories; nested interpretation belongs to each plugin package manifest.
+ */
 async function listLeafPluginDirsUnder(root: string, discoveryRoot: WorkspacePluginDiscoveryRoot, fsOps: FsOps): Promise<WorkspacePluginDir[]> {
   const dirents = await fsOps.readDir(root);
   if (!dirents) return [];
@@ -38,6 +49,9 @@ async function listLeafPluginDirsUnder(root: string, discoveryRoot: WorkspacePlu
     .map((dirent) => ({ absPath: `${root}/${dirent.name}`, discoveryRoot }));
 }
 
+/**
+ * Expands the canonical HQ plugin layout into concrete package directories.
+ */
 async function listWorkspacePluginPackageDirs(workspaceRoot: string, fsOps: FsOps, pathOps: PathOps): Promise<WorkspacePluginDir[]> {
   const out: WorkspacePluginDir[] = [];
   for (const root of SPLIT_ROOTS) {
@@ -46,6 +60,10 @@ async function listWorkspacePluginPackageDirs(workspaceRoot: string, fsOps: FsOp
   return out.sort((a, b) => a.absPath.localeCompare(b.absPath));
 }
 
+/**
+ * Turns one package.json into a catalog entry after enforcing the workspace
+ * plugin manifest contract and deriving command/web eligibility.
+ */
 async function parsePluginPackage(
   pluginDir: WorkspacePluginDir,
   workspaceRoot: string,
@@ -90,6 +108,13 @@ async function parsePluginPackage(
   };
 }
 
+/**
+ * Fails closed when two packages could resolve to the same user-facing target.
+ *
+ * Lifecycle and web commands depend on catalog resolution being unambiguous; a
+ * duplicate id or directory name would otherwise make CLI behavior depend on
+ * traversal order.
+ */
 function assertUniqueCatalogIdentity(plugins: WorkspacePluginCatalogEntry[]): void {
   const seenIds = new Map<string, WorkspacePluginCatalogEntry>();
   const seenDirNames = new Map<string, WorkspacePluginCatalogEntry>();
@@ -113,6 +138,12 @@ function assertUniqueCatalogIdentity(plugins: WorkspacePluginCatalogEntry[]): vo
   }
 }
 
+/**
+ * Discovers the authoritative HQ plugin catalog for a workspace.
+ *
+ * This is the shared service routine behind catalog, install, and lifecycle
+ * procedures so those capabilities agree on the same plugin inventory.
+ */
 export async function discoverWorkspacePluginCatalog(input: {
   workspaceRoot?: string;
 }, resources: CatalogResources, defaultWorkspaceRoot: string): Promise<{

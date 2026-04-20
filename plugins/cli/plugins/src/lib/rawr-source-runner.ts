@@ -1,6 +1,10 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
+/**
+ * Runs the workspace source CLI for repair actions that must execute as rawr
+ * commands rather than direct service calls.
+ */
 export function runRawrFromSource(workspaceRoot: string, args: string[]): {
   ok: boolean;
   exitCode: number;

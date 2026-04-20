@@ -33,6 +33,9 @@ type JudgeResult = {
 
 type MergeDecision = "auto_merge" | "fix_first" | "policy_escalation" | "hold";
 
+/**
+ * Builds the canonical resolved-target payload after a target path is known.
+ */
 function targetResult(input: { target: string; type: LifecycleType }, workspaceRoot: string, absPath: string): {
   found: true;
   target: LifecycleTarget;
@@ -50,10 +53,17 @@ function targetResult(input: { target: string; type: LifecycleType }, workspaceR
   };
 }
 
+/**
+ * Canonicalizes projection-observed paths before target matching.
+ */
 function normalizeExistingPathSet(pathOps: PathOps, paths: string[] | undefined): Set<string> {
   return new Set((paths ?? []).map((p) => pathOps.resolve(p)));
 }
 
+/**
+ * Resolves lifecycle targets through the HQ catalog before falling back to
+ * observed filesystem candidates supplied by the CLI.
+ */
 const resolveLifecycleTarget = module.resolveLifecycleTarget.handler(async ({ context, input }) => {
   const resources = context.deps.resources;
   const workspaceRoot = resources.path.resolve(input.workspaceRoot ?? context.scope.repoRoot);
@@ -84,6 +94,9 @@ const resolveLifecycleTarget = module.resolveLifecycleTarget.handler(async ({ co
   };
 });
 
+/**
+ * Evaluates lifecycle completeness from projection-collected git/sync evidence.
+ */
 const evaluateLifecycleCompleteness = module.evaluateLifecycleCompleteness.handler(async ({ context, input }) => {
   const workspaceRoot = context.deps.resources.path.resolve(input.workspaceRoot ?? context.scope.repoRoot);
   const targetAbs = context.deps.resources.path.resolve(input.targetAbs);
@@ -144,6 +157,9 @@ const evaluateLifecycleCompleteness = module.evaluateLifecycleCompleteness.handl
   };
 });
 
+/**
+ * Applies HQ lifecycle scratch policy to concrete scratch files found by the CLI.
+ */
 const checkScratchPolicy = module.checkScratchPolicy.handler(async ({ input }) => {
   if (input.bypassed) {
     return {
@@ -176,6 +192,9 @@ const checkScratchPolicy = module.checkScratchPolicy.handler(async ({ input }) =
   };
 });
 
+/**
+ * Maps catalog plugin kind to the lifecycle category used by sweep/check flows.
+ */
 function inferTypeFromPluginKind(kind: WorkspacePluginKind): LifecycleType {
   if (kind === "toolkit") return "cli";
   if (kind === "web") return "web";
@@ -184,6 +203,9 @@ function inferTypeFromPluginKind(kind: WorkspacePluginKind): LifecycleType {
   return "composed";
 }
 
+/**
+ * Infers lifecycle category from explicit paths that are not catalog plugins.
+ */
 function inferTypeFromPath(absPath: string): LifecycleType {
   const normalized = toPosix(absPath);
   if (normalized.includes("/plugins/cli/")) return "cli";
@@ -194,10 +216,16 @@ function inferTypeFromPath(absPath: string): LifecycleType {
   return "composed";
 }
 
+/**
+ * Small filesystem existence helper used by sweep planning.
+ */
 async function pathExists(fsOps: FsOps, p: string): Promise<boolean> {
   return Boolean(await fsOps.stat(p));
 }
 
+/**
+ * Computes service-owned quality issues for sweep candidates.
+ */
 async function collectSweepCandidateIssues(absPath: string, fsOps: FsOps, pathOps: PathOps): Promise<string[]> {
   const issues: string[] = [];
   if (!(await pathExists(fsOps, pathOps.join(absPath, "README.md")))) issues.push("missing README.md");
@@ -227,6 +255,9 @@ async function collectSweepCandidateIssues(absPath: string, fsOps: FsOps, pathOp
   return issues;
 }
 
+/**
+ * Resolves explicit sweep targets against catalog identity before path fallback.
+ */
 function resolveExplicitSweepTarget(
   target: string,
   workspaceRoot: string,
@@ -246,6 +277,9 @@ function resolveExplicitSweepTarget(
   return { absPath, type: inferTypeFromPath(absPath) };
 }
 
+/**
+ * Plans lifecycle sweep work from catalog inventory or explicit user targets.
+ */
 const planSweepCandidates = module.planSweepCandidates.handler(async ({ context, input }) => {
   const resources = context.deps.resources;
   const workspaceRoot = resources.path.resolve(input.workspaceRoot ?? context.scope.repoRoot);
@@ -278,6 +312,9 @@ const planSweepCandidates = module.planSweepCandidates.handler(async ({ context,
   };
 });
 
+/**
+ * Normalizes reviewer judgment inputs into the service's merge-policy model.
+ */
 function normalizeJudgeResult(
   judge: "A" | "B",
   input: { outcome?: string; confidence?: number; reason?: string; raw?: unknown } | undefined,
@@ -293,6 +330,10 @@ function normalizeJudgeResult(
   };
 }
 
+/**
+ * Normalizes optional PR context so merge policy can reason over missing data
+ * without leaking nullish branching into the procedure body.
+ */
 function normalizePrContext(input: {
   branch?: string;
   prNumber?: number | null;
@@ -311,6 +352,9 @@ function normalizePrContext(input: {
   };
 }
 
+/**
+ * Encodes HQ's conservative merge decision order for plugin lifecycle work.
+ */
 function decideMergeAction(args: {
   lifecycle: LifecycleCheckData;
   commentsCount: number;
@@ -327,6 +371,9 @@ function decideMergeAction(args: {
   return "hold";
 }
 
+/**
+ * Generates a deterministic branch name for a follow-up fix slice.
+ */
 function buildFixSliceBranchName(args: { baseBranch: string; changeUnitId: string; nowIso?: string }): string {
   const baseBranch = args.baseBranch.trim().length > 0 ? args.baseBranch.trim() : "branch";
   const changeToken = toBranchToken(args.changeUnitId).slice(0, 48);
@@ -335,6 +382,9 @@ function buildFixSliceBranchName(args: { baseBranch: string; changeUnitId: strin
   return `${baseBranch}-fix-${changeToken}-${utcTimestamp(now)}`;
 }
 
+/**
+ * Applies lifecycle evidence and reviewer signals to produce merge policy.
+ */
 const decideMergePolicy = module.decideMergePolicy.handler(async ({ input }) => {
   const prContext = normalizePrContext(input.prContext);
   const judge1 = normalizeJudgeResult("A", input.judgeA);
@@ -371,6 +421,9 @@ const decideMergePolicy = module.decideMergePolicy.handler(async ({ input }) => 
   };
 });
 
+/**
+ * Router export for plugin lifecycle checks, sweep planning, and merge policy.
+ */
 export const router = module.router({
   resolveLifecycleTarget,
   evaluateLifecycleCompleteness,
