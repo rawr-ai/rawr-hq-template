@@ -47,6 +47,24 @@ const SyncSourcesResultSchema = Type.Object(
   { additionalProperties: false },
 );
 
+const InvalidGlobalConfigDataSchema = schema(
+  Type.Object(
+    {
+      issues: Type.Array(ConfigValidationIssueSchema),
+    },
+    {
+      additionalProperties: false,
+      description: "Validation issues from ~/.rawr/config.json.",
+    },
+  ),
+);
+
+const INVALID_GLOBAL_CONFIG = {
+  status: 400,
+  message: "Invalid global RAWR config",
+  data: InvalidGlobalConfigDataSchema,
+} as const;
+
 export type ConfigValidationIssue = Static<typeof ConfigValidationIssueSchema>;
 export type LoadRawrConfigResult = Static<typeof ConfigLoadResultSchema>;
 export type LoadRawrConfigLayeredResult = Static<typeof ConfigLayeredResultSchema>;
@@ -93,9 +111,11 @@ export const contract = {
   addGlobalSyncSource: ocBase
     .meta({ idempotent: false, entity: "config" })
     .input(SyncSourceMutationInputSchema)
-    .output(schema(SyncSourcesResultSchema)),
+    .output(schema(SyncSourcesResultSchema))
+    .errors({ INVALID_GLOBAL_CONFIG }),
   removeGlobalSyncSource: ocBase
     .meta({ idempotent: false, entity: "config" })
     .input(SyncSourceMutationInputSchema)
-    .output(schema(SyncSourcesResultSchema)),
+    .output(schema(SyncSourcesResultSchema))
+    .errors({ INVALID_GLOBAL_CONFIG }),
 };

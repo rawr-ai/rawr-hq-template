@@ -6,43 +6,25 @@ function hasExportedFunction(source, fnName) {
     new RegExp(`export\\s+function\\s+${fnName}\\s*\\(`, "m").test(source);
 }
 
-function functionBodyCalls(source, fnName, calleeName) {
-  const pattern = new RegExp(
-    `export\\s+(?:async\\s+)?function\\s+${fnName}\\s*\\([^)]*\\)\\s*(?::[^\\{]+)?\\{[\\s\\S]*?\\b${calleeName}\\s*\\(`,
-    "m",
-  );
-  return pattern.test(source);
-}
-
 await Promise.all([
-  mustExist("services/hq-ops/src/service/modules/repo-state/repository.ts"),
+  mustExist("services/hq-ops/src/service/modules/repo-state/lib/storage.ts"),
   mustExist("apps/server/test/repo-state-store.concurrent.test.ts"),
   mustExist("apps/server/test/storage-lock-route-guard.test.ts"),
 ]);
 
 const [repoStateStorageSource, repoStateEntitiesSource, repoStateTestSource] = await Promise.all([
-  readFile("services/hq-ops/src/service/modules/repo-state/repository.ts"),
+  readFile("services/hq-ops/src/service/modules/repo-state/lib/storage.ts"),
   readFile("services/hq-ops/src/service/modules/repo-state/entities.ts"),
   readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
 ]);
 
 for (const fnName of [
-  "getRepoState",
-  "setRepoState",
-  "enablePlugin",
-  "disablePlugin",
+  "getRepoStateWithAuthority",
   "mutateRepoStateAtomically",
   "stateLockPath",
   "statePath",
 ]) {
-  assertCondition(hasExportedFunction(repoStateStorageSource, fnName), `repo-state storage must export ${fnName}`);
-}
-
-for (const fnName of ["setRepoState", "enablePlugin", "disablePlugin"]) {
-  assertCondition(
-    functionBodyCalls(repoStateStorageSource, fnName, "mutateRepoStateAtomically"),
-    `${fnName} must call mutateRepoStateAtomically`,
-  );
+  assertCondition(hasExportedFunction(repoStateStorageSource, fnName), `repo-state storage helper must export ${fnName}`);
 }
 
 for (const typeName of ["RepoStateMutationOptions", "RepoStateMutationResult", "RepoStateMutator"]) {

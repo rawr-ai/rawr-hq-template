@@ -1,4 +1,11 @@
 import { module } from "./module";
+import {
+  detectSessionFormat,
+  extractClaudeMessages,
+  extractCodexMessages,
+  getClaudeSessionMetadata,
+  getCodexSessionMetadata,
+} from "../../shared/normalization";
 import type { SessionMessage } from "../../shared/schemas";
 
 function dedupeMessages(messages: SessionMessage[]): SessionMessage[] {
@@ -12,11 +19,11 @@ function dedupeMessages(messages: SessionMessage[]): SessionMessage[] {
 }
 
 const detect = module.detect.handler(async ({ context, input }) => {
-  return { source: await context.repo.detect(input.path) };
+  return { source: await detectSessionFormat(context.sourceRuntime, input.path) };
 });
 
 const extract = module.extract.handler(async ({ context, input, errors }) => {
-  const format = await context.repo.detect(input.path);
+  const format = await detectSessionFormat(context.sourceRuntime, input.path);
   if (format !== "claude" && format !== "codex") {
     const message = `Unknown session format: ${input.path}`;
     throw errors.UNKNOWN_SESSION_FORMAT({
@@ -25,13 +32,15 @@ const extract = module.extract.handler(async ({ context, input, errors }) => {
     });
   }
 
-  let messages = await context.repo.extractMessages(input.path, format, input.options.roles, input.options.includeTools);
+  let messages = format === "claude"
+    ? await extractClaudeMessages(context.sourceRuntime, input.path, input.options.roles, input.options.includeTools)
+    : await extractCodexMessages(context.sourceRuntime, input.path, input.options.roles, input.options.includeTools);
   if (input.options.dedupe) messages = dedupeMessages(messages);
   if (input.options.offset > 0) messages = messages.slice(input.options.offset);
   if (input.options.maxMessages > 0) messages = messages.slice(0, input.options.maxMessages);
 
   if (format === "claude") {
-    const meta = await context.repo.readClaudeMetadata(input.path);
+    const meta = await getClaudeSessionMetadata(context.sourceRuntime, input.path);
     return {
       source: "claude" as const,
       sessionId: meta.sessionId,
@@ -46,7 +55,7 @@ const extract = module.extract.handler(async ({ context, input, errors }) => {
     };
   }
 
-  const meta = await context.repo.readCodexMetadata(input.path);
+  const meta = await getCodexSessionMetadata(context.sourceRuntime, input.path);
   return {
     source: "codex" as const,
     sessionId: meta.sessionId,

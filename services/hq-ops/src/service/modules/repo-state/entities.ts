@@ -25,10 +25,20 @@ export type RepoStateMutationOptions = {
   staleLockMs?: number;
 };
 
-export type RepoStateMutationResult = {
-  state: RepoState;
-  statePath: string;
-  lockPath: string;
-  attempts: number;
-  waitedMs: number;
-};
+export type RepoStateMutationResult =
+  | {
+      ok: true;
+      state: RepoState;
+      statePath: string;
+      lockPath: string;
+      attempts: number;
+      waitedMs: number;
+    }
+  | {
+      ok: false;
+      code: "REPO_STATE_LOCK_TIMEOUT";
+      lockPath: string;
+    };
+
+export type RepoStateMutationSuccess = Extract<RepoStateMutationResult, { ok: true }>;
+export type RepoStateMutationFailure = Extract<RepoStateMutationResult, { ok: false }>;

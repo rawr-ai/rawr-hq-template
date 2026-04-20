@@ -185,7 +185,7 @@ async function verifyServiceShape(findings) {
   ];
 
   for (const moduleName of SERVICE_MODULES) {
-    for (const fileName of ["contract", "middleware", "module", "repository", "router", "schemas"]) {
+    for (const fileName of ["contract", "middleware", "module", "router", "schemas"]) {
       requiredPaths.push(`${SERVICE_ROOT}/src/service/modules/${moduleName}/${fileName}.ts`);
     }
   }
@@ -407,6 +407,10 @@ async function verifyNoSameDomainSharedLogicDelegation(findings) {
 
   for (const moduleName of SERVICE_MODULES) {
     const relPath = `${SERVICE_ROOT}/src/service/modules/${moduleName}/repository.ts`;
+    if (await pathExists(relPath)) {
+      findings.push(`${relPath} must not exist; routers should bind primitive runtimes and precise helpers directly`);
+      continue;
+    }
     const source = await readFileIfExists(relPath, findings, relPath, false);
     if (!source) continue;
     const specifiers = collectModuleSpecifiers(relPath, source);

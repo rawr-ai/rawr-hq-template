@@ -1,6 +1,12 @@
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { mergeRawrConfigLayers, validateRawrConfig } from "../src/service/modules/config/support.js";
+import { createClient } from "../src";
+import type { RawrConfig } from "../src/service/modules/config/entities";
+import { validateRawrConfig } from "../src/service/modules/config/support.js";
+import { createClientOptions, invocation, writeGlobalRawrConfig, writeRawrConfig } from "./helpers";
 
 describe("hq-ops config support", () => {
   it("accepts a minimal v1 config", () => {
@@ -75,8 +81,8 @@ describe("hq-ops config support", () => {
     expect(r.config.sync?.providers?.claude?.destinations?.[0]?.enabled).toBe(false);
   });
 
-  it("merges layered sync config (destinations merged by id; sources deduped)", () => {
-    const g0 = validateRawrConfig({
+  it("merges layered sync config through the config service", async () => {
+    const globalConfig = {
       version: 1,
       sync: {
         sources: { paths: ["/a", "/b"] },
@@ -84,8 +90,8 @@ describe("hq-ops config support", () => {
           codex: { destinations: [{ id: "codex", rootPath: "/g/codex", enabled: false }] },
         },
       },
-    });
-    const w0 = validateRawrConfig({
+    } satisfies RawrConfig;
+    const workspaceConfig = {
       version: 1,
       sync: {
         sources: { paths: ["/b", "/c"] },
@@ -93,12 +99,15 @@ describe("hq-ops config support", () => {
           codex: { destinations: [{ id: "codex", enabled: true }, { id: "codex2", rootPath: "/w/codex2" }] },
         },
       },
-    });
-    expect(g0.ok).toBe(true);
-    expect(w0.ok).toBe(true);
-    if (!g0.ok || !w0.ok) return;
+    } satisfies RawrConfig;
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-hq-ops-config-"));
+    const homeDir = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-hq-ops-home-"));
+    await writeGlobalRawrConfig(homeDir, globalConfig);
+    await writeRawrConfig(repoRoot, workspaceConfig);
+    const client = createClient(createClientOptions({ repoRoot, homeDir }));
 
-    const merged = mergeRawrConfigLayers({ global: g0.config, workspace: w0.config });
+    const result = await client.config.getLayeredConfig({}, invocation("trace-config-layered"));
+    const merged = result.merged;
     expect(merged).not.toBeNull();
     expect(merged?.sync?.sources?.paths).toEqual(["/a", "/b", "/c"]);
 

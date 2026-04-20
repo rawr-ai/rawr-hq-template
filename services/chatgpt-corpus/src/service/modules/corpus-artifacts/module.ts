@@ -1,13 +1,12 @@
 import { impl } from "../../impl";
-import { analytics, observability, repository } from "./middleware";
+import { analytics, observability } from "./middleware";
 
 export const module = impl.corpusArtifacts
   .use(observability)
   .use(analytics)
-  .use(repository)
   .use(async ({ context, next }) => next({
     context: {
-      repo: context.provided.repo,
+      workspaceStore: context.deps.workspaceStore,
       workspaceRef: context.scope.workspaceRef,
     },
   }));

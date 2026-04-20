@@ -1,6 +1,4 @@
-import { createServiceAnalyticsMiddleware, createServiceObservabilityMiddleware, createServiceProvider } from "../../base";
-import type { SessionSourceRuntime } from "../../shared/ports/session-source-runtime";
-import { createRepository } from "./repository";
+import { createServiceAnalyticsMiddleware, createServiceObservabilityMiddleware } from "../../base";
 
 export const observability = createServiceObservabilityMiddleware({
   spanAttributes: ({ context }) => ({
@@ -12,16 +10,4 @@ export const analytics = createServiceAnalyticsMiddleware({
   payload: ({ context }) => ({
     analytics_trace_id: context.invocation.traceId,
   }),
-});
-
-export const repository = createServiceProvider<{
-  deps: {
-    sessionSourceRuntime: SessionSourceRuntime;
-  };
-}>().middleware<{
-  repo: ReturnType<typeof createRepository>;
-}>(async ({ context, next }) => {
-  return next({
-    repo: createRepository(context.deps.sessionSourceRuntime),
-  });
 });

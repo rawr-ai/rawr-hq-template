@@ -1,24 +1,43 @@
-import { rethrowAsOrpcError } from "../../shared/errors";
 import { buildSourceSnapshot } from "./helpers/normalize";
+import { SOURCE_MATERIAL_DIRECTORIES } from "../../../shared/layout";
 import { module } from "./module";
 
-const readSnapshot = module.readSnapshot.handler(async ({ context }) => {
-  try {
-    const materials = await context.repo.readSourceMaterials();
-    const snapshot = await buildSourceSnapshot(context.workspaceRef, materials);
+const readSnapshot = module.readSnapshot.handler(async ({ context, errors }) => {
+  const materials = await context.workspaceStore.readSourceMaterials({
+    workspaceRef: context.workspaceRef,
+    sourceDirectories: SOURCE_MATERIAL_DIRECTORIES,
+  });
+  const snapshotResult = await buildSourceSnapshot(context.workspaceRef, materials);
+  if (!snapshotResult.ok) {
+    if (snapshotResult.error.code === "INVALID_CONVERSATION_JSON") {
+      throw errors.INVALID_CONVERSATION_JSON({
+        message: snapshotResult.error.reason,
+        data: {
+          path: snapshotResult.error.sourcePath,
+          reason: snapshotResult.error.reason,
+        },
+      });
+    }
 
-    return {
-      workspaceRef: context.workspaceRef,
-      sourceCounts: {
-        jsonConversations: snapshot.jsonRecords.length,
-        markdownDocuments: snapshot.markdownDocCount,
-        totalSources: snapshot.records.length,
+    throw errors.INVALID_CONVERSATION_EXPORT({
+      message: snapshotResult.error.reason,
+      data: {
+        path: snapshotResult.error.sourcePath,
+        reason: snapshotResult.error.reason,
       },
-      snapshot,
-    };
-  } catch (error) {
-    rethrowAsOrpcError(error);
+    });
   }
+  const snapshot = snapshotResult.snapshot;
+
+  return {
+    workspaceRef: context.workspaceRef,
+    sourceCounts: {
+      jsonConversations: snapshot.jsonRecords.length,
+      markdownDocuments: snapshot.markdownDocCount,
+      totalSources: snapshot.records.length,
+    },
+    snapshot,
+  };
 });
 
 export const router = module.router({

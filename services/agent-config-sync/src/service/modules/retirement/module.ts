@@ -1,13 +1,13 @@
 import { impl } from "../../impl";
-import { analytics, observability, repository } from "./middleware";
+import { analytics, observability } from "./middleware";
 
 export const module = impl.retirement
   .use(observability)
   .use(analytics)
-  .use(repository)
   .use(async ({ context, next }) => next({
     context: {
       repoRoot: context.scope.repoRoot,
-      repo: context.provided.repo,
+      resources: context.deps.resources,
+      undoCapture: context.deps.undoCapture,
     },
   }));
