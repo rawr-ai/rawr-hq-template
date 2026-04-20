@@ -46,15 +46,20 @@ export const JournalSnippetSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const JournalSearchRowSchema = Type.Object(
+  {
+    id: Type.String({ minLength: 1 }),
+    ts: Type.String({ minLength: 1 }),
+    kind: JournalSnippetKindSchema,
+    title: Type.String({ minLength: 1 }),
+    preview: Type.String(),
+    tags: Type.Array(Type.String()),
+    sourceEventId: Type.Optional(Type.String({ minLength: 1 })),
+    score: Type.Optional(Type.Number()),
+  },
+  { additionalProperties: false },
+);
+
 export type JournalEvent = Static<typeof JournalEventSchema>;
 export type JournalSnippet = Static<typeof JournalSnippetSchema>;
-export type JournalSearchRow = {
-  id: string;
-  ts: string;
-  kind: Static<typeof JournalSnippetKindSchema>;
-  title: string;
-  preview: string;
-  tags: string[];
-  sourceEventId?: string;
-  score?: number;
-};
+export type JournalSearchRow = Static<typeof JournalSearchRowSchema>;

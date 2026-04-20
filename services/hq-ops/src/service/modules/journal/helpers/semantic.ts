@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import type {
   HqOpsResources,
   SemanticEmbeddingConfig,
@@ -7,20 +6,21 @@ import type {
 import type { JournalSearchRow } from "../entities";
 import { listRecentSnippetsFull } from "./storage";
 
-export class SemanticSearchUnavailableError extends Error {
-  constructor() {
-    super("Semantic search not configured (missing embedding provider configuration)");
-    this.name = "SemanticSearchUnavailableError";
-  }
-}
-
 function semanticContent(snippet: { title: string; body: string; tags: string[] }): string {
   const tags = snippet.tags.length > 0 ? `tags: ${snippet.tags.join(",")}\n` : "";
   return `${snippet.title}\n${tags}\n${snippet.body}`.trim();
 }
 
-function sha256Hex(input: string): string {
-  return createHash("sha256").update(input).digest("hex");
+function bytesToHex(bytes: ArrayBuffer): string {
+  const view = new Uint8Array(bytes);
+  let out = "";
+  for (const byte of view) out += byte.toString(16).padStart(2, "0");
+  return out;
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return bytesToHex(digest);
 }
 
 function float32ToBlob(vec: Float32Array): Uint8Array {
@@ -37,7 +37,7 @@ async function ensureSnippetEmbedding(
   db: SqliteDatabase,
   input: { id: string; model: string; content: string; config: SemanticEmbeddingConfig },
 ): Promise<Float32Array> {
-  const contentHash = sha256Hex(input.content);
+  const contentHash = await sha256Hex(input.content);
   const row = db.prepare(
     `SELECT provider, model, dims, contentHash, vector
      FROM snippet_embeddings
@@ -94,13 +94,11 @@ function cosineSimilarity(a: Float32Array, b: Float32Array): number {
 export async function searchSnippetsSemantic(
   resources: HqOpsResources,
   db: SqliteDatabase,
+  config: SemanticEmbeddingConfig,
   query: string,
   limit: number,
   opts?: { candidateLimit?: number },
 ): Promise<Array<JournalSearchRow & { score: number }>> {
-  const config = resources.embeddings.getConfig();
-  if (!config) throw new SemanticSearchUnavailableError();
-
   const candidateLimit = Math.max(1, Math.min(opts?.candidateLimit ?? 200, 500));
   const candidates = listRecentSnippetsFull(db, candidateLimit);
   if (candidates.length === 0) return [];
