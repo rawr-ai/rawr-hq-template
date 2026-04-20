@@ -5,10 +5,15 @@ export type AgentConfigSyncDirEntry = {
   isDirectory: boolean;
 };
 
-export type AgentConfigSyncPathResources = Pick<
-  typeof import("node:path"),
-  "join" | "resolve" | "dirname" | "basename" | "relative" | "isAbsolute" | "sep"
->;
+/**
+ * Port type for path operations required by the agent-config-sync service.
+ *
+ * @remarks
+ * This is intentionally typed as the full Node path module surface, but the
+ * service never imports `node:path` directly at runtime. The composition root
+ * provides this dependency, keeping adapters outside the service package.
+ */
+export type AgentConfigSyncPathResources = typeof import("node:path");
 
 export interface AgentConfigSyncFileResources {
   pathExists(filePath: string): Promise<boolean>;
