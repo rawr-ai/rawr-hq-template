@@ -1,7 +1,7 @@
 import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
-import { SESSION_NOT_FOUND } from "../../shared/errors";
+import { SESSION_NOT_FOUND, UNKNOWN_SESSION_FORMAT } from "../../shared/errors";
 import {
   SessionMetadataSchema,
   SessionListItemSchema,
@@ -71,5 +71,5 @@ export const contract = {
       ),
     )
     .output(schema(ResolveResultSchema))
-    .errors({ SESSION_NOT_FOUND }),
+    .errors({ SESSION_NOT_FOUND, UNKNOWN_SESSION_FORMAT }),
 };

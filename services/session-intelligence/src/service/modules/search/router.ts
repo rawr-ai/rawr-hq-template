@@ -31,7 +31,7 @@ import type {
   SessionSourceFilter,
   SessionStatus,
 } from "../../shared/entities";
-import { discoverSessions } from "../catalog/helpers/discovery";
+import { discoverCodexSessionsFromIndexOrNull } from "../catalog/helpers/discovery";
 import { searchSessionsByMetadata } from "./helpers/metadata-search";
 import { clearCachedSearchText, readCachedSearchText, writeCachedSearchText } from "./repositories/search-cache-repository";
 import { buildSearchText, rolesKey } from "./helpers/text";
@@ -113,11 +113,35 @@ async function loadSearchSessions(
 ): Promise<SessionListItem[]> {
   const limit = input.limit > 0 ? input.limit : 0;
   const filters = input.filters ?? {};
-  const discovered = await discoverSessions(runtime, indexRuntime, {
-    source: input.source,
-    limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
-    project: filters.project,
-  });
+  const discovered = await (async () => {
+    // Search owns its own discovery semantics so callers can search without
+    // round-tripping through catalog procedures, while still benefiting from
+    // indexed Codex discovery when available.
+    if (input.source === "claude") {
+      return runtime.discoverSessions({
+        source: "claude",
+        limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
+        project: filters.project,
+      });
+    }
+
+    const out: DiscoveredSessionFile[] = [];
+    if (input.source === "all") {
+      out.push(...await runtime.discoverSessions({
+        source: "claude",
+        limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
+        project: filters.project,
+      }));
+    }
+
+    const codexLimit = limit > 0 && !hasMetadataFilters(filters) ? limit : 0;
+    const indexed = await discoverCodexSessionsFromIndexOrNull(runtime, indexRuntime, codexLimit);
+    if (indexed) out.push(...indexed);
+    else out.push(...await runtime.discoverSessions({ source: "codex", limit: codexLimit || undefined }));
+
+    out.sort((a, b) => b.modifiedMs - a.modifiedMs);
+    return limit ? out.slice(0, limit) : out;
+  })();
 
   const sessions: SessionListItem[] = [];
   for (const candidate of discovered) {
