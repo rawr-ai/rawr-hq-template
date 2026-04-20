@@ -191,8 +191,8 @@ async function verifyServiceShape(findings) {
   }
   requiredPaths.push(
     `${SERVICE_ROOT}/src/service/modules/catalog/helpers/discovery.ts`,
-    `${SERVICE_ROOT}/src/service/modules/catalog/helpers/discovery-index.ts`,
-    `${SERVICE_ROOT}/src/service/modules/search/helpers/cache.ts`,
+    `${SERVICE_ROOT}/src/service/modules/catalog/repositories/discovery-index-repository.ts`,
+    `${SERVICE_ROOT}/src/service/modules/search/repositories/search-cache-repository.ts`,
     `${SERVICE_ROOT}/src/service/modules/search/helpers/metadata-search.ts`,
     `${SERVICE_ROOT}/src/service/modules/search/helpers/text.ts`,
   );
