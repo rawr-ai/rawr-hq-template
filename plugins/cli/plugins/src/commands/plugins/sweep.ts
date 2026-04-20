@@ -1,54 +1,7 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import { Flags } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
-import { checkScratchPolicy } from "../../lib/plugin-lifecycle-service";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
+import { checkScratchPolicy, planSweepCandidates } from "../../lib/plugin-lifecycle-service";
 import { runCommand } from "../../lib/process-execution";
-import type { LifecycleType } from "@rawr/hq-ops/types";
-import { findWorkspaceRoot, listWorkspacePlugins } from "../../lib/workspace-plugins";
-
-type SweepCandidate = {
-  target: string;
-  type: LifecycleType;
-  issues: string[];
-};
-
-async function pathExists(p: string): Promise<boolean> {
-  try {
-    await fs.stat(p);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function inferTypeFromPath(absPath: string): LifecycleType {
-  const normalized = absPath.split(path.sep).join("/");
-  if (normalized.includes("/plugins/cli/")) return "cli";
-  if (normalized.includes("/plugins/web/")) return "web";
-  if (normalized.includes("/plugins/agents/")) return "agent";
-  if (normalized.includes("/plugins/async/workflows/")) return "workflow";
-  if (normalized.includes("/plugins/async/schedules/")) return "workflow";
-  if (normalized.includes("/plugins/server/api/")) return "composed";
-  return "composed";
-}
-
-async function collectCandidateIssues(absPath: string): Promise<string[]> {
-  const issues: string[] = [];
-  if (!(await pathExists(path.join(absPath, "README.md")))) issues.push("missing README.md");
-
-  const testDir = path.join(absPath, "test");
-  if (!(await pathExists(testDir))) {
-    issues.push("missing test/ directory");
-  } else {
-    const entries = await fs.readdir(testDir, { withFileTypes: true });
-    const hasTests = entries.some((e) => e.isFile() && /\.(test|spec)\.[cm]?[jt]sx?$/.test(e.name));
-    if (!hasTests) issues.push("missing test files in test/");
-  }
-
-  return issues;
-}
 
 export default class PluginsSweep extends RawrCommand {
   static description = "Run scheduled/manual plugin-system sweep and queue scoped no-policy improvement actions";
@@ -123,33 +76,13 @@ export default class PluginsSweep extends RawrCommand {
 
     const explicitTargets = ((flags as Record<string, unknown>).target as string[] | undefined) ?? [];
 
-    const candidates: SweepCandidate[] = [];
-    if (explicitTargets.length > 0) {
-      for (const t of explicitTargets) {
-        const abs = path.isAbsolute(t) ? t : path.resolve(workspaceRoot, t);
-        if (!(await pathExists(abs))) continue;
-        const issues = await collectCandidateIssues(abs);
-        if (issues.length === 0) continue;
-        candidates.push({
-          target: abs,
-          type: inferTypeFromPath(abs),
-          issues,
-        });
-      }
-    } else {
-      const plugins = await listWorkspacePlugins(workspaceRoot);
-      for (const plugin of plugins) {
-        const issues = await collectCandidateIssues(plugin.absPath);
-        if (issues.length === 0) continue;
-        candidates.push({
-          target: plugin.absPath,
-          type: inferTypeFromPath(plugin.absPath),
-          issues,
-        });
-      }
-    }
-
-    const limited = candidates.slice(0, Number(flags.limit));
+    const plan = await planSweepCandidates({
+      workspaceRoot,
+      explicitTargets,
+      limit: Number(flags.limit),
+      traceId: "plugin-plugins.sweep.plan-candidates",
+    });
+    const limited = plan.queued;
     const actions: Array<{ action: string; status: "planned" | "done" | "failed"; notes?: string }> = [];
     const warnings: string[] = [];
 

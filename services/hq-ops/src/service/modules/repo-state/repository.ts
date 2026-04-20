@@ -4,7 +4,7 @@ import type {
   RepoStateMutationOptions,
   RepoStateMutationResult,
   RepoStateMutator,
-} from "./model";
+} from "./entities";
 
 export type RepoStateSnapshot = {
   state: RepoState;

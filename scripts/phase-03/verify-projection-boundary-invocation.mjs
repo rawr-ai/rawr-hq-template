@@ -65,6 +65,13 @@ const FORBIDDEN_AGENT_CONFIG_SYNC_CASTS = [
   "as Promise<SyncRunResult>",
 ];
 
+const FORBIDDEN_PLUGIN_PROJECTION_IMPORTS = [
+  "agent-config-sync-resources/plugin-content",
+  "agent-config-sync-resources/scan-canonical-content",
+  "agent-config-sync-resources/effective-content",
+  "@rawr/plugin-workspace",
+];
+
 const SERVICE_IMPORT_PATTERN =
   /import\s+\{[^}]*\bcreateClient\b[^}]*\}\s+from\s+["']@rawr\/(?:hq-ops|agent-config-sync|session-intelligence|chatgpt-corpus|example-todo)(?:\/client)?["']/u;
 const SERVICE_IMPORTS_PATTERN =
@@ -146,6 +153,12 @@ for (const relPath of files.sort()) {
   if (relPath === "plugins/cli/plugins/src/lib/agent-config-sync.ts") {
     for (const forbidden of FORBIDDEN_AGENT_CONFIG_SYNC_CASTS) {
       if (source.includes(forbidden)) findings.push(`${relPath}: forbidden weak service input cast remains: ${forbidden}`);
+    }
+  }
+
+  if (relPath.startsWith("plugins/cli/plugins/src/")) {
+    for (const forbidden of FORBIDDEN_PLUGIN_PROJECTION_IMPORTS) {
+      if (source.includes(forbidden)) findings.push(`${relPath}: plugin projection must not import ${forbidden}`);
     }
   }
 

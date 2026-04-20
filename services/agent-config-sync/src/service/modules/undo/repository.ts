@@ -1,6 +1,6 @@
 import { runUndoForWorkspace } from "./sync-undo";
 import type { AgentConfigSyncResources } from "../../shared/resources";
-import type { UndoRunResult } from "./schemas";
+import type { UndoRunResult } from "./contract";
 
 export function createRepository(resources: AgentConfigSyncResources) {
   return {

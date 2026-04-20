@@ -5,18 +5,18 @@ import {
   beginPluginsSyncUndoCapture,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
-  effectiveContentForProvider,
   findPlannedSyncable,
   installAndEnableClaudePlugin,
   packageCoworkPlugin,
   planWorkspaceSync,
   PLUGINS_SYNC_UNDO_PROVIDER,
   resolveDefaultCoworkOutDir,
+  resolveProviderContent,
   runSync,
 } from "../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "../../lib/plugin-install-service";
 
@@ -201,7 +201,12 @@ export default class PluginsSync extends RawrCommand {
               reason: "not a workspace plugin (skip cowork packaging)",
             });
           } else {
-            const claudeContent = await effectiveContentForProvider({ agent: "claude", sourcePlugin, base: content });
+            const claudeContent = await resolveProviderContent({
+              agent: "claude",
+              sourcePlugin,
+              base: content,
+              repoRoot: workspaceRoot,
+            });
             const pkg = await packageCoworkPlugin({
               sourcePlugin,
               content: claudeContent,

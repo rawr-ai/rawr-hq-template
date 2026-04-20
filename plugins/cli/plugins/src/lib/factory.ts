@@ -102,7 +102,7 @@ export function renderWorkflowSource(input: { name: string; description: string 
 import { Flags } from "@oclif/core";
 import { createHqOpsCallOptions, createHqOpsClient, type HqOpsJournalSnippet } from "../../lib/hq-ops-client";
 import { journalId, safePreview } from "../../lib/journal-projection";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export default class ${className} extends RawrCommand {
   static description = ${JSON.stringify(input.description)};

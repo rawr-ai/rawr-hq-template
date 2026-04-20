@@ -1,4 +1,4 @@
-import { findWorkspaceRoot } from "./workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "./hq-ops-client";
 
 export type LayeredRawrConfig = {

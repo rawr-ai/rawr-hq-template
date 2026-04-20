@@ -8,7 +8,7 @@ Use this when deciding whether package-scoped code should become a service and w
 
 The current rule is simpler:
 
-- services own capability truth: behavior, module schemas, contracts, validation, policy, orchestration, and semantic algorithms
+- services own capability truth: behavior, contracts, validation, policy, orchestration, semantic algorithms, and reusable entities
 - packages contain genuinely reusable cross-service primitives only: SDKs, common ports, common adapters, runtime substrate, or utilities with multiple real consumers
 - plugins/apps/runtime surfaces provide concrete resources to service clients for now
 - future Effect resource provisioning may centralize process/role resources, but that is not a reason to create transitional host packages now
@@ -38,7 +38,8 @@ Do not reject service status because:
 Service package:
 
 - follows the `services/example-todo` topology
-- keeps module schemas in `src/service/modules/<module>/schemas.ts`
+- keeps procedure input/output schemas inline in the owning `contract.ts`
+- extracts only reusable non-IO entity schemas/types into intentional module entity files
 - uses `src/service/shared/*` only for real cross-module primitives/errors
 - declares concrete resource needs as typed `initialContext.deps` where needed
 - owns semantic behavior in repositories/routers/shared internals
@@ -80,7 +81,7 @@ Keep Node compatibility APIs where Bun itself routes to Node-compatible semantic
 4. Replace service-specific `*-host` imports with plugin/app-local resource provision.
 5. Delete service-specific host packages completely.
 6. Remove stale dependencies, Nx/Vitest/root-script/inventory/doc references.
-7. Add ratchets that fail on `packages/*-host`, `@rawr/*-host`, single-service helpers in packages, shared-schema dumps, and forwarding-only repositories.
+7. Add ratchets that fail on `packages/*-host`, `@rawr/*-host`, single-service helpers in packages, shared-schema dumps, extracted IO-schema buckets, and forwarding-only repositories.
 8. Run static proof, service behavioral proof, command-surface proof, and platform smoke as separate gates.
 
 ## Proof Loop
@@ -116,7 +117,7 @@ Do not claim platform smoke as service behavioral proof unless the smoke path ac
 ## Review Checklist
 
 - Does the service own its behavior rather than forwarding to a same-named runtime method?
-- Do module schemas live with modules instead of top-level shared dumps?
+- Do procedure IO schemas live at the contract boundary, with only reusable entities extracted?
 - Are concrete resources absent from `src/service/**` except typed resource contracts?
 - Are service-specific host packages gone?
 - Are plugin/app layers only provisioning resources and projecting UX?

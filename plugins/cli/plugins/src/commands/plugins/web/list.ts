@@ -1,6 +1,6 @@
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 
-import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
 
 export default class PluginsWebList extends RawrCommand {
   static description = "List workspace runtime web plugins";
@@ -21,17 +21,19 @@ export default class PluginsWebList extends RawrCommand {
       return;
     }
 
-    const plugins = await listWorkspacePlugins(workspaceRoot);
-    const visiblePlugins = filterPluginsByKind(plugins, "web");
-    const result = this.ok({ workspaceRoot, plugins: visiblePlugins, excludedCount: plugins.length - visiblePlugins.length });
+    const catalog = await createHqOpsClient(workspaceRoot).pluginCatalog.listWorkspacePlugins(
+      { workspaceRoot, kind: "web" },
+      createHqOpsCallOptions("plugin-plugins.web.list.catalog"),
+    );
+    const result = this.ok({ workspaceRoot, plugins: catalog.plugins, excludedCount: catalog.excludedCount });
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {
-        if (visiblePlugins.length === 0) {
+        if (catalog.plugins.length === 0) {
           this.log("no plugins found");
           return;
         }
-        for (const plugin of visiblePlugins) this.log(plugin.id);
+        for (const plugin of catalog.plugins) this.log(plugin.id);
       },
     });
   }

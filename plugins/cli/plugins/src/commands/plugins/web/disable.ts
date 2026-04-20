@@ -1,7 +1,6 @@
 import { Args } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
-import { findWorkspaceRoot, listWorkspacePlugins, resolvePluginId } from "../../../lib/workspace-plugins";
 
 export default class PluginsWebDisable extends RawrCommand {
   static description = "Disable a workspace runtime web plugin (persisted)";
@@ -27,19 +26,32 @@ export default class PluginsWebDisable extends RawrCommand {
       return;
     }
 
-    const plugins = await listWorkspacePlugins(workspaceRoot);
-    const plugin = resolvePluginId(plugins, inputId);
-    if (!plugin) {
+    const client = createHqOpsClient(workspaceRoot);
+    const resolved = await client.pluginCatalog.resolveWorkspacePlugin(
+      { workspaceRoot, inputId, requiredKind: "web" },
+      createHqOpsCallOptions("plugin-plugins.web.disable.resolve"),
+    );
+    if (resolved.status === "not_found") {
       const result = this.fail(`Unknown plugin: ${inputId}`, {
         code: "PLUGIN_NOT_FOUND",
-        meta: { knownPluginIds: plugins.map((p) => p.id) },
+        meta: { knownPluginIds: resolved.knownPluginIds },
       });
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
+    if (resolved.status === "kind_mismatch" || !resolved.plugin) {
+      const result = this.fail(`Plugin ${inputId} is rawr.kind=${resolved.actualKind}; rawr plugins web disable requires rawr.kind=web.`, {
+        code: "PLUGIN_KIND_MISMATCH",
+        details: { inputId, kind: resolved.actualKind },
+      });
+      this.outputResult(result, { flags: baseFlags });
+      this.exit(2);
+      return;
+    }
+    const plugin = resolved.plugin;
 
-    const nextState = await createHqOpsClient(workspaceRoot).repoState.disablePlugin(
+    const nextState = await client.repoState.disablePlugin(
       { pluginId: plugin.id },
       createHqOpsCallOptions("plugin-plugins.web.disable"),
     );

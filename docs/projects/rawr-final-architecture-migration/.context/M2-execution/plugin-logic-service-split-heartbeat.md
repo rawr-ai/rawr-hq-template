@@ -8,7 +8,7 @@ Worktree: `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-ORCH-plu
 
 Source plan: `docs/projects/rawr-final-architecture-migration/.context/M2-execution/plugin-logic-service-split-execution-plan.md`
 
-Objective: make `plugins/cli/plugins` a projection again by moving durable sync planning to `agent-config-sync`, install/lifecycle semantics to `hq-ops`, reusable discovery to `plugin-workspace`, and enforcement into structural ratchets.
+Objective: make `plugins/cli/plugins` a projection again by keeping agent destination sync in `agent-config-sync`, moving HQ-specific catalog/install/lifecycle semantics into `hq-ops`, deleting `@rawr/plugin-workspace` as an active domain package, and enforcing the service/projection boundary with structural ratchets.
 
 ## Checkpoints
 

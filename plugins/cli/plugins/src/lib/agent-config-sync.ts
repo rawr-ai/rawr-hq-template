@@ -18,16 +18,17 @@ import {
   PLUGINS_SYNC_UNDO_PROVIDER,
 } from "@rawr/agent-config-sync/undo";
 import { createAgentConfigSyncClient } from "./agent-config-sync-binding";
-import { effectiveContentForProvider, resolveDefaultCoworkOutDir } from "./agent-config-sync-resources/effective-content";
 import { installAndEnableClaudePlugin } from "./agent-config-sync-resources/claude-cli";
 import { packageCoworkPlugin } from "./agent-config-sync-resources/cowork-package";
 import { createNodeAgentConfigSyncResources } from "./agent-config-sync-resources/resources";
 import type { HostSourceContent as SourceContent, HostSourcePlugin as SourcePlugin } from "./agent-config-sync-resources/types";
-import { findWorkspaceRoot } from "./workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export type UndoCaptureLike = AgentConfigSyncUndoCapture;
 type RunSyncInput = Parameters<Client["execution"]["runSync"]>[0];
 type RunSyncOptions = NonNullable<Parameters<Client["execution"]["runSync"]>[1]>;
+type ResolveProviderContentInput = Parameters<Client["execution"]["resolveProviderContent"]>[0];
+type ResolveProviderContentOptions = NonNullable<Parameters<Client["execution"]["resolveProviderContent"]>[1]>;
 type RetireStaleManagedInput = Parameters<Client["retirement"]["retireStaleManaged"]>[0];
 type RetireStaleManagedOptions = NonNullable<Parameters<Client["retirement"]["retireStaleManaged"]>[1]>;
 type PlanWorkspaceSyncOptions = NonNullable<Parameters<Client["planning"]["planWorkspaceSync"]>[1]>;
@@ -316,6 +317,25 @@ export async function runSync(input: {
   return client.execution.runSync(runInput, options);
 }
 
+export async function resolveProviderContent(input: {
+  agent: "codex" | "claude";
+  sourcePlugin: SourcePlugin;
+  base: SourceContent;
+  repoRoot?: string;
+}): Promise<SourceContent> {
+  const repoRoot = input.repoRoot ?? await repoRootForCall(input.sourcePlugin);
+  const client = createAgentConfigSyncClient({ repoRoot });
+  const request = {
+    agent: input.agent,
+    sourcePlugin: input.sourcePlugin,
+    base: input.base,
+  } satisfies ResolveProviderContentInput;
+  const options = {
+    context: { invocation: { traceId: `plugin-plugins.agent-config-sync.provider-content.${input.agent}` } },
+  } satisfies ResolveProviderContentOptions;
+  return client.execution.resolveProviderContent(request, options);
+}
+
 export async function retireStaleManagedPlugins(input: {
   workspaceRoot: string;
   scope: SyncScope;
@@ -340,12 +360,14 @@ export async function retireStaleManagedPlugins(input: {
   return client.retirement.retireStaleManaged(retireInput, options);
 }
 
+export function resolveDefaultCoworkOutDir(workspaceRoot: string): string {
+  return path.join(workspaceRoot, "dist", "cowork", "plugins");
+}
+
 export {
-  effectiveContentForProvider,
   installAndEnableClaudePlugin,
   packageCoworkPlugin,
   PLUGINS_SYNC_UNDO_PROVIDER,
-  resolveDefaultCoworkOutDir,
 };
 
 export type {

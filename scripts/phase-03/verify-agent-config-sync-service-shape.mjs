@@ -20,7 +20,13 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/shared/resources.ts",
   "services/agent-config-sync/src/service/shared/schemas.ts",
   "services/agent-config-sync/src/service/shared/internal/source-scope.ts",
-  "services/agent-config-sync/src/service/modules/execution/effective-content.ts",
+  "services/agent-config-sync/src/service/modules/source-content/entities.ts",
+  "services/agent-config-sync/src/service/modules/source-content/lib/composed-tools.ts",
+  "services/agent-config-sync/src/service/modules/source-content/lib/manifest.ts",
+  "services/agent-config-sync/src/service/modules/source-content/lib/merge-content.ts",
+  "services/agent-config-sync/src/service/modules/source-content/lib/provider-content.ts",
+  "services/agent-config-sync/src/service/modules/source-content/lib/scan-content.ts",
+  "services/agent-config-sync/src/service/modules/source-content/lib/source-plugin-content.ts",
   "services/agent-config-sync/src/service/modules/execution/marketplace-claude.ts",
   "services/agent-config-sync/src/service/modules/execution/registry-codex.ts",
   "services/agent-config-sync/src/service/modules/execution/sync-engine.ts",
@@ -29,26 +35,22 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/modules/planning/module.ts",
   "services/agent-config-sync/src/service/modules/planning/repository.ts",
   "services/agent-config-sync/src/service/modules/planning/router.ts",
-  "services/agent-config-sync/src/service/modules/planning/schemas.ts",
   "services/agent-config-sync/src/service/modules/execution/contract.ts",
   "services/agent-config-sync/src/service/modules/execution/middleware.ts",
   "services/agent-config-sync/src/service/modules/execution/module.ts",
   "services/agent-config-sync/src/service/modules/execution/repository.ts",
   "services/agent-config-sync/src/service/modules/execution/router.ts",
-  "services/agent-config-sync/src/service/modules/execution/schemas.ts",
   "services/agent-config-sync/src/service/modules/retirement/contract.ts",
   "services/agent-config-sync/src/service/modules/retirement/middleware.ts",
   "services/agent-config-sync/src/service/modules/retirement/module.ts",
   "services/agent-config-sync/src/service/modules/retirement/repository.ts",
   "services/agent-config-sync/src/service/modules/retirement/retire-stale-managed.ts",
   "services/agent-config-sync/src/service/modules/retirement/router.ts",
-  "services/agent-config-sync/src/service/modules/retirement/schemas.ts",
   "services/agent-config-sync/src/service/modules/undo/contract.ts",
   "services/agent-config-sync/src/service/modules/undo/middleware.ts",
   "services/agent-config-sync/src/service/modules/undo/module.ts",
   "services/agent-config-sync/src/service/modules/undo/repository.ts",
   "services/agent-config-sync/src/service/modules/undo/router.ts",
-  "services/agent-config-sync/src/service/modules/undo/schemas.ts",
   "services/agent-config-sync/src/service/modules/undo/sync-undo.ts",
   "services/agent-config-sync/test/helpers.ts",
   "services/agent-config-sync/test/service-shape.test.ts",
@@ -75,6 +77,9 @@ const [
   sharedReadme,
   serviceShapeTest,
   baseSource,
+  sharedResources,
+  executionContract,
+  executionRouter,
   executionRepository,
   executionMiddleware,
   executionModule,
@@ -96,6 +101,9 @@ const [
   readFile("services/agent-config-sync/src/service/shared/README.md"),
   readFile("services/agent-config-sync/test/service-shape.test.ts"),
   readFile("services/agent-config-sync/src/service/base.ts"),
+  readFile("services/agent-config-sync/src/service/shared/resources.ts"),
+  readFile("services/agent-config-sync/src/service/modules/execution/contract.ts"),
+  readFile("services/agent-config-sync/src/service/modules/execution/router.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/repository.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/middleware.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/module.ts"),
@@ -119,6 +127,10 @@ for (const key of ["planning", "execution", "retirement", "undo"]) {
 }
 
 assertCondition(baseSource.includes("resources: AgentConfigSyncResources"), "agent-config-sync base deps must declare concrete resource deps");
+assertCondition(!sharedResources.includes("sources:"), "agent-config-sync resources must not expose semantic sources ports");
+assertCondition(!sharedResources.includes("readProviderOverlay"), "agent-config-sync resources must not expose provider overlay readers");
+assertCondition(executionContract.includes("resolveProviderContent"), "execution contract must expose service-owned provider content resolution");
+assertCondition(executionRouter.includes("resolveProviderContent"), "execution router must implement provider content resolution");
 assertCondition(!baseSource.includes("planningRuntime"), "agent-config-sync base deps must not declare planningRuntime");
 assertCondition(!baseSource.includes("executionRuntime"), "agent-config-sync base deps must not declare executionRuntime");
 assertCondition(!baseSource.includes("retirementRuntime"), "agent-config-sync base deps must not declare retirementRuntime");
@@ -177,6 +189,14 @@ for (const entry of await fs.readdir(sharedInternalRoot, { withFileTypes: true }
 for (const relPath of [
   "packages/agent-config-sync-host",
   "services/agent-config-sync/src/service/shared/ports",
+  "services/agent-config-sync/src/service/modules/execution/effective-content.ts",
+  "services/agent-config-sync/src/service/modules/planning/schemas.ts",
+  "services/agent-config-sync/src/service/modules/execution/schemas.ts",
+  "services/agent-config-sync/src/service/modules/retirement/schemas.ts",
+  "services/agent-config-sync/src/service/modules/undo/schemas.ts",
+  "plugins/cli/plugins/src/lib/agent-config-sync-resources/plugin-content.ts",
+  "plugins/cli/plugins/src/lib/agent-config-sync-resources/scan-canonical-content.ts",
+  "plugins/cli/plugins/src/lib/agent-config-sync-resources/effective-content.ts",
 ]) {
   assertCondition(!(await pathExists(relPath)), `${relPath} must not exist`);
 }

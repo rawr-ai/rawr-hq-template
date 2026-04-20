@@ -12,6 +12,7 @@ describe("hq-ops service shell", () => {
       "repoState",
       "journal",
       "security",
+      "pluginCatalog",
       "pluginInstall",
       "pluginLifecycle",
     ]);
@@ -32,11 +33,13 @@ describe("hq-ops service shell", () => {
       "searchSnippets",
     ]);
     expect(Object.keys(contract.security)).toEqual(["securityCheck", "gateEnable", "getSecurityReport"]);
+    expect(Object.keys(contract.pluginCatalog)).toEqual(["listWorkspacePlugins", "resolveWorkspacePlugin"]);
     expect(Object.keys(contract.pluginInstall)).toEqual(["assessInstallState", "planInstallRepair"]);
     expect(Object.keys(contract.pluginLifecycle)).toEqual([
       "resolveLifecycleTarget",
       "evaluateLifecycleCompleteness",
       "checkScratchPolicy",
+      "planSweepCandidates",
       "decideMergePolicy",
     ]);
   });

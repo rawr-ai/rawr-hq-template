@@ -1,7 +1,6 @@
 import { Args, Flags } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
-import { findWorkspaceRoot, listWorkspacePlugins, resolvePluginId } from "../../../lib/workspace-plugins";
 
 export default class PluginsWebEnable extends RawrCommand {
   static description = "Enable a workspace runtime web plugin (gated)";
@@ -41,9 +40,11 @@ export default class PluginsWebEnable extends RawrCommand {
       return;
     }
 
+    const client = createHqOpsClient(workspaceRoot);
+
     // If user didn't explicitly choose --risk, prefer config default (if present).
     if (!this.hasExplicitRiskFlag(process.argv.slice(2))) {
-      const loaded = await createHqOpsClient(workspaceRoot).config.getWorkspaceConfig(
+      const loaded = await client.config.getWorkspaceConfig(
         {},
         createHqOpsCallOptions("plugin-plugins.web.enable.config"),
       );
@@ -51,26 +52,28 @@ export default class PluginsWebEnable extends RawrCommand {
       if (configured) riskTolerance = configured;
     }
 
-    const plugins = await listWorkspacePlugins(workspaceRoot);
-    const plugin = resolvePluginId(plugins, inputId);
-    if (!plugin) {
+    const resolved = await client.pluginCatalog.resolveWorkspacePlugin(
+      { workspaceRoot, inputId, requiredKind: "web" },
+      createHqOpsCallOptions("plugin-plugins.web.enable.resolve"),
+    );
+    if (resolved.status === "not_found") {
       const result = this.fail(`Unknown plugin: ${inputId}`, {
         code: "PLUGIN_NOT_FOUND",
-        meta: { knownPluginIds: plugins.map((p) => p.id) },
+        meta: { knownPluginIds: resolved.knownPluginIds },
       });
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
 
-    if (plugin.kind !== "web") {
+    if (resolved.status === "kind_mismatch" || !resolved.plugin) {
       const result = this.fail(
-        `Plugin ${plugin.id} is rawr.kind=${plugin.kind}; rawr plugins web enable requires rawr.kind=web.`,
+        `Plugin ${inputId} is rawr.kind=${resolved.actualKind}; rawr plugins web enable requires rawr.kind=web.`,
         {
           code: "PLUGIN_KIND_MISMATCH",
           details: {
-            pluginId: plugin.id,
-            kind: plugin.kind,
+            inputId,
+            kind: resolved.actualKind,
           },
         },
       );
@@ -78,8 +81,9 @@ export default class PluginsWebEnable extends RawrCommand {
       this.exit(2);
       return;
     }
+    const plugin = resolved.plugin;
 
-    const evaluation = await createHqOpsClient(workspaceRoot).security.gateEnable(
+    const evaluation = await client.security.gateEnable(
       {
         pluginId: plugin.id,
         riskTolerance: riskTolerance as "strict" | "balanced" | "permissive" | "off",
@@ -98,7 +102,7 @@ export default class PluginsWebEnable extends RawrCommand {
       return;
     }
 
-    const nextState = await createHqOpsClient(workspaceRoot).repoState.enablePlugin(
+    const nextState = await client.repoState.enablePlugin(
       { pluginId: plugin.id },
       createHqOpsCallOptions("plugin-plugins.web.enable.persist"),
     );

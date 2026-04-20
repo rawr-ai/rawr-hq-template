@@ -1,6 +1,5 @@
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
-import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../lib/workspace-plugins";
 
 export default class PluginsWebStatus extends RawrCommand {
   static description = "Show workspace runtime web plugins and whether they are enabled";
@@ -21,18 +20,21 @@ export default class PluginsWebStatus extends RawrCommand {
       return;
     }
 
-    const [plugins, stateResult] = await Promise.all([
-      listWorkspacePlugins(workspaceRoot),
-      createHqOpsClient(workspaceRoot).repoState.getState(
+    const client = createHqOpsClient(workspaceRoot);
+    const [catalog, stateResult] = await Promise.all([
+      client.pluginCatalog.listWorkspacePlugins(
+        { workspaceRoot, kind: "web" },
+        createHqOpsCallOptions("plugin-plugins.web.status.catalog"),
+      ),
+      client.repoState.getState(
         {},
         createHqOpsCallOptions("plugin-plugins.web.status"),
       ),
     ]);
     const state = stateResult.state;
-    const visiblePlugins = filterPluginsByKind(plugins, "web");
     const enabled = new Set(state.plugins.enabled);
 
-    const enriched = visiblePlugins.map((p) => ({
+    const enriched = catalog.plugins.map((p) => ({
       ...p,
       enabled: enabled.has(p.id),
     }));
@@ -41,7 +43,6 @@ export default class PluginsWebStatus extends RawrCommand {
       workspaceRoot,
       state,
       plugins: enriched,
-      excludedCount: plugins.length - visiblePlugins.length,
     });
     this.outputResult(result, {
       flags: baseFlags,

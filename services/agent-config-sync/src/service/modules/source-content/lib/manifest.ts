@@ -1,0 +1,86 @@
+import path from "node:path";
+import { Value } from "typebox/value";
+import type { AgentConfigSyncResources } from "../../../shared/resources";
+import type { SourcePlugin, SyncAgent } from "../../../shared/schemas";
+import {
+  PluginContentManifestV1Schema,
+  type NormalizedPluginContentInclude,
+  type PluginContentManifestV1,
+} from "../entities";
+
+type PackageJson = {
+  rawr?: unknown;
+};
+
+export type PluginContentLayout = {
+  baseRootAbs: string;
+  baseInclude: NormalizedPluginContentInclude;
+  overlayRootAbs: Record<SyncAgent, string>;
+  includeByProvider: Record<SyncAgent, NormalizedPluginContentInclude>;
+  manifest: PluginContentManifestV1 | null;
+};
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  return value as Record<string, unknown>;
+}
+
+function normalizeInclude(input: unknown): NormalizedPluginContentInclude {
+  const record = asRecord(input) ?? {};
+  return {
+    workflows: typeof record.workflows === "boolean" ? record.workflows : true,
+    skills: typeof record.skills === "boolean" ? record.skills : true,
+    scripts: typeof record.scripts === "boolean" ? record.scripts : true,
+    agents: typeof record.agents === "boolean" ? record.agents : true,
+  };
+}
+
+function resolveRelativePath(pluginAbsPath: string, relOrAbsPath: string): string {
+  return path.isAbsolute(relOrAbsPath) ? relOrAbsPath : path.resolve(pluginAbsPath, relOrAbsPath);
+}
+
+function parsePluginContentManifest(input: {
+  candidate: unknown;
+  packageJsonPath: string;
+}): PluginContentManifestV1 | null {
+  if (input.candidate === undefined) return null;
+  try {
+    return Value.Parse(PluginContentManifestV1Schema, input.candidate);
+  } catch {
+    throw new Error(`Invalid package.json#rawr.pluginContent in ${input.packageJsonPath}`);
+  }
+}
+
+export async function resolvePluginContentLayout(input: {
+  sourcePlugin: SourcePlugin;
+  resources: AgentConfigSyncResources;
+}): Promise<PluginContentLayout> {
+  const packageJsonPath = path.join(input.sourcePlugin.absPath, "package.json");
+  const packageJson = (await input.resources.files.readJsonFile<PackageJson>(packageJsonPath)) ?? {};
+  const rawr = asRecord(packageJson.rawr);
+  const manifest = parsePluginContentManifest({
+    candidate: rawr?.pluginContent,
+    packageJsonPath,
+  });
+  const baseInclude = normalizeInclude(manifest?.include);
+
+  return {
+    baseRootAbs: resolveRelativePath(input.sourcePlugin.absPath, manifest?.contentRoot ?? "."),
+    baseInclude,
+    overlayRootAbs: {
+      codex: resolveRelativePath(
+        input.sourcePlugin.absPath,
+        manifest?.providers?.codex?.overlayRoot ?? path.join("providers", "codex"),
+      ),
+      claude: resolveRelativePath(
+        input.sourcePlugin.absPath,
+        manifest?.providers?.claude?.overlayRoot ?? path.join("providers", "claude"),
+      ),
+    },
+    includeByProvider: {
+      codex: { ...baseInclude, ...normalizeInclude(manifest?.providers?.codex?.include) },
+      claude: { ...baseInclude, ...normalizeInclude(manifest?.providers?.claude?.include) },
+    },
+    manifest,
+  };
+}

@@ -39,7 +39,6 @@
         "@rawr/hq-ops": "workspace:*",
         "@rawr/orpc-client": "workspace:*",
         "@rawr/plugin-plugins": "workspace:*",
-        "@rawr/plugin-workspace": "workspace:*",
         "zod": "^3.24.3",
       },
       "devDependencies": {
@@ -167,13 +166,6 @@
         "typescript": "^5.9.3",
       },
     },
-    "packages/plugin-workspace": {
-      "name": "@rawr/plugin-workspace",
-      "devDependencies": {
-        "@types/bun": "^1.2.10",
-        "typescript": "^5.9.3",
-      },
-    },
     "packages/runtime-context": {
       "name": "@rawr/runtime-context",
       "dependencies": {
@@ -227,7 +219,6 @@
         "@rawr/agent-config-sync": "workspace:*",
         "@rawr/core": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
-        "@rawr/plugin-workspace": "workspace:*",
         "yaml": "^2.8.1",
         "yazl": "^3.3.1",
       },
@@ -1033,8 +1024,6 @@
     "@rawr/plugin-server-api-state": ["@rawr/plugin-server-api-state@workspace:plugins/server/api/state"],
 
     "@rawr/plugin-session-tools": ["@rawr/plugin-session-tools@workspace:plugins/cli/session-tools"],
-
-    "@rawr/plugin-workspace": ["@rawr/plugin-workspace@workspace:packages/plugin-workspace"],
 
     "@rawr/runtime-context": ["@rawr/runtime-context@workspace:packages/runtime-context"],
 
@@ -2353,8 +2342,6 @@
     "@opentelemetry/sql-common/@opentelemetry/core": ["@opentelemetry/core@2.5.0", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-ka4H8OM6+DlUhSAZpONu0cPBtPPTQKxbxVzC4CzVx5+K4JnroJVBtDzLAMx4/3CDTJXRvVFhpFjtl4SaiTNoyQ=="],
 
     "@orpc/otel/@orpc/shared": ["@orpc/shared@1.13.6", "", { "dependencies": { "radash": "^12.1.1", "type-fest": "^5.4.4" }, "peerDependencies": { "@opentelemetry/api": ">=1.9.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-XqpXPgmtkg2tviDXZC13Y4a3B0D5r1yuG4Q2qPG3gM1dargxob6/aSIeKE6rs1tNXOoI+IpJaGV53EWWB+x+iA=="],
-
-    "@rawr/plugin-plugins/yaml": ["yaml@2.8.2", "", { "bin": { "yaml": "bin.mjs" } }, "sha512-mplynKqc1C2hTVYxd0PU2xQAc22TI1vShAYGksCCfxbn/dFwnHTNi1bvYsBTkhdUNtGIf5xNOg938rrSSYvS9A=="],
 
     "@traceloop/instrumentation-anthropic/@opentelemetry/core": ["@opentelemetry/core@2.5.0", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-ka4H8OM6+DlUhSAZpONu0cPBtPPTQKxbxVzC4CzVx5+K4JnroJVBtDzLAMx4/3CDTJXRvVFhpFjtl4SaiTNoyQ=="],
 

@@ -10,7 +10,7 @@ import {
   planWriteFile,
 } from "../../../lib/factory";
 import { recordArtifact } from "../../../lib/journal-context";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 type PluginKind = "server" | "web" | "both";
 

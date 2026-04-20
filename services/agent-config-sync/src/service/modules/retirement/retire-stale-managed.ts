@@ -3,7 +3,7 @@ import path from "node:path";
 import { resolveSourceScopeForPath, scopeAllows } from "../../shared/internal/source-scope";
 import type { AgentConfigSyncResources } from "../../shared/resources";
 import type { SyncScope } from "../../shared/schemas";
-import type { RetireAction, RetireStaleManagedResult } from "./schemas";
+import type { RetireAction, RetireStaleManagedResult } from "./contract";
 
 const MANAGED_BY = "@rawr/plugin-plugins";
 

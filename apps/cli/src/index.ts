@@ -7,7 +7,7 @@ import {
 } from "./lib/hq-ops-client";
 import { getJournalContext, resetJournalContext } from "./lib/journal-context";
 import { journalId, safePreview } from "./lib/journal-projection";
-import { findWorkspaceRoot } from "./lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 class InterceptedExit extends Error {
   code: number;

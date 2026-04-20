@@ -13,11 +13,11 @@ import type {
 } from "@rawr/hq-ops/types";
 import { createHqOpsClient, type HqOpsClient } from "./hq-ops-client";
 import { runCommand, tryParseJson } from "./process-execution";
-import { listWorkspacePlugins } from "./workspace-plugins";
 
 type ResolveOptions = NonNullable<Parameters<HqOpsClient["pluginLifecycle"]["resolveLifecycleTarget"]>[1]>;
 type EvaluateOptions = NonNullable<Parameters<HqOpsClient["pluginLifecycle"]["evaluateLifecycleCompleteness"]>[1]>;
 type ScratchOptions = NonNullable<Parameters<HqOpsClient["pluginLifecycle"]["checkScratchPolicy"]>[1]>;
+type SweepOptions = NonNullable<Parameters<HqOpsClient["pluginLifecycle"]["planSweepCandidates"]>[1]>;
 type DecisionOptions = NonNullable<Parameters<HqOpsClient["pluginLifecycle"]["decideMergePolicy"]>[1]>;
 
 function toPosix(p: string): string {
@@ -74,14 +74,6 @@ export async function resolveLifecycleTarget(input: {
       currentWorkingDirectory: process.cwd(),
       target: input.target,
       type: input.type,
-      workspacePlugins: (await listWorkspacePlugins(input.workspaceRoot)).map((plugin) => ({
-        id: plugin.id,
-        name: plugin.name,
-        dirName: plugin.dirName,
-        absPath: plugin.absPath,
-        kind: plugin.kind,
-        capability: plugin.capability,
-      })),
       existingPaths,
     },
     options,
@@ -338,6 +330,26 @@ export async function checkScratchPolicy(workspaceRoot: string): Promise<Scratch
   );
 }
 
+export async function planSweepCandidates(input: {
+  workspaceRoot: string;
+  explicitTargets?: string[];
+  limit: number;
+  traceId: string;
+}): Promise<Awaited<ReturnType<HqOpsClient["pluginLifecycle"]["planSweepCandidates"]>>> {
+  const client = createHqOpsClient(input.workspaceRoot);
+  const options = {
+    context: { invocation: { traceId: input.traceId } },
+  } satisfies SweepOptions;
+  return client.pluginLifecycle.planSweepCandidates(
+    {
+      workspaceRoot: input.workspaceRoot,
+      explicitTargets: input.explicitTargets,
+      limit: input.limit,
+    },
+    options,
+  );
+}
+
 export async function runJudge(
   judge: "A" | "B",
   commandLine: string | undefined,
@@ -438,8 +450,18 @@ export async function decideMergePolicy(input: {
     {
       lifecycle: input.lifecycle,
       prContext: input.prContext,
-      judgeA: input.judgeA,
-      judgeB: input.judgeB,
+      judgeA: {
+        outcome: input.judgeA.outcome,
+        confidence: input.judgeA.confidence,
+        reason: input.judgeA.reason,
+        raw: input.judgeA.raw,
+      },
+      judgeB: {
+        outcome: input.judgeB.outcome,
+        confidence: input.judgeB.confidence,
+        reason: input.judgeB.reason,
+        raw: input.judgeB.raw,
+      },
       baseBranch: input.baseBranch ?? input.prContext.branch,
       changeUnitId: input.changeUnitId,
     },

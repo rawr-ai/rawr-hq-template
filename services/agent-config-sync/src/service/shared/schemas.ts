@@ -16,6 +16,8 @@ export const SyncAgentSchema = Type.Union([
 
 export const SyncScopeSchema = Type.Union([
   Type.Literal("all"),
+  Type.Literal("cli"),
+  Type.Literal("agents"),
   Type.Literal("toolkit"),
   Type.Literal("agent"),
   Type.Literal("web"),
@@ -32,8 +34,6 @@ export const SyncActionSchema = Type.Union([
   Type.Literal("conflict"),
   Type.Literal("planned"),
 ]);
-
-export const PathArraySchema = Type.Array(Type.String({ minLength: 1 }));
 
 export const ContentFileSchema = Type.Object(
   {
@@ -66,60 +66,9 @@ export const SourceContentSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const SyncScannedSummarySchema = Type.Object(
-  {
-    workflows: PathArraySchema,
-    skills: PathArraySchema,
-    scripts: PathArraySchema,
-    agents: PathArraySchema,
-  },
-  { additionalProperties: false },
-);
-
-export const SyncItemResultSchema = Type.Object(
-  {
-    action: SyncActionSchema,
-    kind: Type.Union([
-      Type.Literal("workflow"),
-      Type.Literal("skill"),
-      Type.Literal("script"),
-      Type.Literal("agent"),
-      Type.Literal("metadata"),
-    ]),
-    source: Type.Optional(Type.String({ minLength: 1 })),
-    target: Type.String({ minLength: 1 }),
-    message: Type.Optional(Type.String({ minLength: 1 })),
-  },
-  { additionalProperties: false },
-);
-
-export const SyncTargetResultSchema = Type.Object(
-  {
-    agent: SyncAgentSchema,
-    home: Type.String({ minLength: 1 }),
-    items: Type.Array(SyncItemResultSchema),
-    conflicts: Type.Array(SyncItemResultSchema),
-  },
-  { additionalProperties: false },
-);
-
-export const SyncRunResultSchema = Type.Object(
-  {
-    ok: Type.Boolean(),
-    sourcePlugin: SourcePluginSchema,
-    scanned: SyncScannedSummarySchema,
-    targets: Type.Array(SyncTargetResultSchema),
-  },
-  { additionalProperties: false },
-);
-
 export type RawrPluginKind = Static<typeof RawrPluginKindSchema>;
 export type SyncAgent = Static<typeof SyncAgentSchema>;
 export type SyncScope = Static<typeof SyncScopeSchema>;
 export type SyncAction = Static<typeof SyncActionSchema>;
 export type SourcePlugin = Static<typeof SourcePluginSchema>;
 export type SourceContent = Static<typeof SourceContentSchema>;
-export type SyncScannedSummary = Static<typeof SyncScannedSummarySchema>;
-export type SyncItemResult = Static<typeof SyncItemResultSchema>;
-export type SyncTargetResult = Static<typeof SyncTargetResultSchema>;
-export type SyncRunResult = Static<typeof SyncRunResultSchema>;

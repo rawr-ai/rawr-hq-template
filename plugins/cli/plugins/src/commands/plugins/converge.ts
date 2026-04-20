@@ -3,7 +3,7 @@ import { RawrCommand } from "@rawr/core";
 import { checkScratchPolicy } from "../../lib/plugin-lifecycle-service";
 import { runRawrFromSource } from "../../lib/rawr-source-runner";
 
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 type StepRun = {
   step: "install-repair" | "sync-all" | "final-status";

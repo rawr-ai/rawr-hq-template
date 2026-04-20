@@ -1,10 +1,6 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import { Flags } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
-import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../../lib/workspace-plugins";
 
 type EnableAttempt = {
   pluginId: string;
@@ -13,21 +9,6 @@ type EnableAttempt = {
   persisted: boolean;
   error?: { message: string; code?: string };
 };
-
-async function readJsonFile(p: string): Promise<unknown | null> {
-  try {
-    return JSON.parse(await fs.readFile(p, "utf8")) as unknown;
-  } catch {
-    return null;
-  }
-}
-
-function hasRuntimeExports(pkgJson: unknown): boolean {
-  if (!pkgJson || typeof pkgJson !== "object") return false;
-  const exportsField = (pkgJson as any).exports;
-  if (!exportsField || typeof exportsField !== "object") return false;
-  return Boolean((exportsField as any)["./server"] || (exportsField as any)["./web"]);
-}
 
 export default class PluginsWebEnableAll extends RawrCommand {
   static description = "Enable all workspace runtime web plugins (gated)";
@@ -63,9 +44,11 @@ export default class PluginsWebEnableAll extends RawrCommand {
       return;
     }
 
+    const client = createHqOpsClient(workspaceRoot);
+
     // If user didn't explicitly choose --risk, prefer config default (if present).
     if (!this.hasExplicitRiskFlag(process.argv.slice(2))) {
-      const loaded = await createHqOpsClient(workspaceRoot).config.getWorkspaceConfig(
+      const loaded = await client.config.getWorkspaceConfig(
         {},
         createHqOpsCallOptions("plugin-plugins.web.enable-all.config"),
       );
@@ -73,20 +56,21 @@ export default class PluginsWebEnableAll extends RawrCommand {
       if (configured) riskTolerance = configured;
     }
 
-    const all = await listWorkspacePlugins(workspaceRoot);
-    const visible = filterPluginsByKind(all, "web");
+    const catalog = await client.pluginCatalog.listWorkspacePlugins(
+      { workspaceRoot, kind: "web" },
+      createHqOpsCallOptions("plugin-plugins.web.enable-all.catalog"),
+    );
 
     const planned: { pluginId: string; reason?: string }[] = [];
     const skipped: { pluginId: string; reason: string }[] = [];
 
-    for (const plugin of visible) {
-      const pkgJson = await readJsonFile(path.join(plugin.absPath, "package.json"));
-      if (hasRuntimeExports(pkgJson)) {
-        planned.push({ pluginId: plugin.id, reason: "has runtime exports" });
+    for (const plugin of catalog.plugins) {
+      if (plugin.runtimeWeb.eligible) {
+        planned.push({ pluginId: plugin.id, reason: plugin.runtimeWeb.reason });
         continue;
       }
 
-      skipped.push({ pluginId: plugin.id, reason: "plugin package has no runtime exports (./server or ./web)" });
+      skipped.push({ pluginId: plugin.id, reason: plugin.runtimeWeb.reason });
     }
 
     const attempts: EnableAttempt[] = [];
@@ -94,7 +78,7 @@ export default class PluginsWebEnableAll extends RawrCommand {
     let errorCount = 0;
 
     for (const p of planned) {
-      const evaluation = await createHqOpsClient(workspaceRoot).security.gateEnable(
+      const evaluation = await client.security.gateEnable(
         {
           pluginId: p.pluginId,
           riskTolerance: riskTolerance as "strict" | "balanced" | "permissive" | "off",
@@ -118,7 +102,7 @@ export default class PluginsWebEnableAll extends RawrCommand {
       }
 
       try {
-          await createHqOpsClient(workspaceRoot).repoState.enablePlugin(
+          await client.repoState.enablePlugin(
             { pluginId: p.pluginId },
             createHqOpsCallOptions(`plugin-plugins.web.enable-all.persist.${p.pluginId}`),
           );

@@ -71,8 +71,9 @@ for (const [source, target] of Object.entries(requiredReclassified)) {
 
 assertCondition(
   typeof ledger.reclassified["packages/hq"] === "string" &&
-    ledger.reclassified["packages/hq"].includes("packages/plugin-workspace"),
-  "reclassified target for packages/hq must point at packages/plugin-workspace and purpose-named tooling boundaries",
+    ledger.reclassified["packages/hq"].includes("services/hq-ops/plugin-catalog") &&
+    ledger.reclassified["packages/hq"].includes("packages/core workspace-root"),
+  "reclassified target for packages/hq must point at hq-ops plugin-catalog and core workspace-root bootstrap support",
 );
 
 const prohibitedJoined = ledger.prohibited.join("\n");
