@@ -88,8 +88,8 @@ The runtime subsystem solves the following platform problems:
 
 The runtime subsystem does not solve:
 
-- business capability truth
-- plugin meaning
+- business capability truth (owned by services)
+- plugin meaning (plugins are projections over service-owned semantics)
 - manifest authority
 - public API semantics
 - durable workflow semantics
@@ -1079,13 +1079,16 @@ runtime subsystem performs binding
 services receive canonical boundary bags
 ```
 
+In the target architecture, services own capability semantics and define the boundary bag shapes.
+Plugins project those service-owned capabilities into app roles and surfaces without becoming a second semantic authority layer.
+
 ### 13.2 Canonical lane ownership
 
 | Lane | Owner | Lifetime |
 | --- | --- | --- |
 | `deps` | runtime subsystem | process or role |
 | `scope` | runtime subsystem | process or role |
-| `config` | runtime subsystem + app/plugin decisions | process or role |
+| `config` | runtime subsystem + app/plugin decisions (services own schema/defaults) | process or role |
 | `invocation` | harness adapter | invocation |
 | `provided` | service middleware and providers | execution only |
 
