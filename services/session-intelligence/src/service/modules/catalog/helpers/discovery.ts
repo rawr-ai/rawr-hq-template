@@ -142,22 +142,18 @@ function codexFileToDiscovered(file: CodexSessionFile): DiscoveredSessionFile {
   };
 }
 
-export async function discoverSessions(
+/**
+ * Attempts to discover Codex sessions using the service-owned index.
+ *
+ * Returns `null` when the runtime does not support indexed discovery so callers
+ * can fall back to runtime-native discovery.
+ */
+export async function discoverCodexSessionsFromIndexOrNull(
   runtime: SessionSourceRuntime,
   indexRuntime: SessionIndexRuntime,
-  input: DiscoverSessionsInput,
-): Promise<DiscoveredSessionFile[]> {
-  if (!hasServiceOwnedCodexDiscovery(runtime)) return runtime.discoverSessions(input);
-
-  const out: DiscoveredSessionFile[] = [];
-  if (input.source === "claude" || input.source === "all") {
-    out.push(...await runtime.discoverSessions({ source: "claude", limit: input.limit, project: input.project }));
-  }
-  if (input.source === "codex" || input.source === "all") {
-    const indexed = await discoverCodexFromIndex(runtime, indexRuntime, typeof input.limit === "number" && input.limit > 0 ? input.limit : 0);
-    if (indexed) out.push(...indexed.map(codexFileToDiscovered));
-    else out.push(...await runtime.discoverSessions({ source: "codex", limit: input.limit }));
-  }
-  out.sort((a, b) => b.modifiedMs - a.modifiedMs);
-  return input.limit && input.limit > 0 ? out.slice(0, input.limit) : out;
+  max: number,
+): Promise<DiscoveredSessionFile[] | null> {
+  if (!hasServiceOwnedCodexDiscovery(runtime)) return null;
+  const indexed = await discoverCodexFromIndex(runtime, indexRuntime, max);
+  return indexed ? indexed.map(codexFileToDiscovered) : [];
 }

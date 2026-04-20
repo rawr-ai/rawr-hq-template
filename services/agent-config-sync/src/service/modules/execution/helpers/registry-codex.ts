@@ -1,10 +1,9 @@
-import { isDeepStrictEqual } from "node:util";
-
 import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type {
   SourceContent,
   SourcePlugin,
 } from "../../../shared/entities";
+import { stableJsonEqual } from "../../../shared/helpers/stable-json";
 
 /**
  * Codex registry ownership sets grouped by destination content type.
@@ -151,7 +150,7 @@ export async function upsertCodexRegistry(input: {
     ...(priorPlugin ?? {}),
     ...nextPluginEntry,
   });
-  const pluginStableChanged = !isDeepStrictEqual(priorStable, nextStable);
+  const pluginStableChanged = !stableJsonEqual(priorStable, nextStable);
 
   if (existingIndex >= 0) {
     plugins[existingIndex] = {
@@ -174,7 +173,7 @@ export async function upsertCodexRegistry(input: {
       input.existingData.sync_direction ?? "rawr-hq plugin → codex/claude",
     plugins: [...plugins].sort((a, b) => a.name.localeCompare(b.name)),
   };
-  const changed = !isDeepStrictEqual(
+  const changed = !stableJsonEqual(
     normalizeRegistryForDrift(input.existingData),
     normalizeRegistryForDrift(nextData),
   );

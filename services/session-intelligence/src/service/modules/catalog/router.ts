@@ -10,7 +10,7 @@ import { inferProjectFromCwd, inferStatusFromPath } from "../../shared/normaliza
 import { detectSessionFormat, getClaudeSessionMetadata, getCodexSessionMetadata } from "../../shared/normalization";
 import { looksLikePath, stem } from "../../shared/path-utils";
 import type { DiscoveredSessionFile, SessionListItem, SessionStatus } from "../../shared/entities";
-import { discoverSessions } from "./helpers/discovery";
+import { discoverCodexSessionsFromIndexOrNull } from "./helpers/discovery";
 
 type SessionFilters = {
   project?: string;
@@ -68,11 +68,34 @@ function matchesListFilters(session: SessionListItem, filters: SessionFilters): 
 const list = module.list.handler(async ({ context, input }) => {
   const limit = input.limit > 0 ? input.limit : 0;
   const filters = input.filters ?? {};
-  const discovered = await discoverSessions(context.sourceRuntime, context.indexRuntime, {
-    source: input.source,
-    limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
-    project: filters.project,
-  });
+  const discovered = await (async () => {
+    // Catalog owns discovery policy: merge sources deterministically, with Codex
+    // optionally accelerated by a service-owned index.
+    if (input.source === "claude") {
+      return context.sourceRuntime.discoverSessions({
+        source: "claude",
+        limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
+        project: filters.project,
+      });
+    }
+
+    const out: DiscoveredSessionFile[] = [];
+    if (input.source === "all") {
+      out.push(...await context.sourceRuntime.discoverSessions({
+        source: "claude",
+        limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
+        project: filters.project,
+      }));
+    }
+
+    const codexLimit = limit > 0 && !hasMetadataFilters(filters) ? limit : 0;
+    const indexed = await discoverCodexSessionsFromIndexOrNull(context.sourceRuntime, context.indexRuntime, codexLimit);
+    if (indexed) out.push(...indexed);
+    else out.push(...await context.sourceRuntime.discoverSessions({ source: "codex", limit: codexLimit || undefined }));
+
+    out.sort((a, b) => b.modifiedMs - a.modifiedMs);
+    return limit ? out.slice(0, limit) : out;
+  })();
 
   const sessions: SessionListItem[] = [];
   for (const candidate of discovered) {
@@ -126,9 +149,24 @@ const resolve = module.resolve.handler(async ({ context, input, errors }) => {
   if (looksLikePath(clean)) {
     if (await context.sourceRuntime.statFile({ path: clean })) resolvedPath = clean;
   } else {
-    const candidates = await discoverSessions(context.sourceRuntime, context.indexRuntime, { source: input.source });
+    const candidates = await (async (): Promise<DiscoveredSessionFile[]> => {
+      if (input.source === "claude") return context.sourceRuntime.discoverSessions({ source: "claude" });
+
+      const out: DiscoveredSessionFile[] = [];
+      if (input.source === "all") out.push(...await context.sourceRuntime.discoverSessions({ source: "claude" }));
+
+      const indexed = await discoverCodexSessionsFromIndexOrNull(context.sourceRuntime, context.indexRuntime, 0);
+      if (indexed) out.push(...indexed);
+      else out.push(...await context.sourceRuntime.discoverSessions({ source: "codex" }));
+
+      out.sort((a, b) => b.modifiedMs - a.modifiedMs);
+      return out;
+    })();
+
     const claude = candidates.find((candidate) => candidate.source === "claude" && stem(candidate.path) === clean);
-    const codex = candidates.find((candidate) => candidate.source === "codex" && stem(candidate.path).toLowerCase().includes(clean.toLowerCase()));
+    const codex = candidates.find((candidate) =>
+      candidate.source === "codex" && stem(candidate.path).toLowerCase().includes(clean.toLowerCase()),
+    );
     const candidate = claude ?? codex;
     if (candidate) {
       resolvedPath = candidate.path;
@@ -168,7 +206,7 @@ const resolve = module.resolve.handler(async ({ context, input, errors }) => {
   }
 
   const message = `Unknown session format: ${resolvedPath}`;
-  throw errors.SESSION_NOT_FOUND({
+  throw errors.UNKNOWN_SESSION_FORMAT({
     message,
     data: { message },
   });

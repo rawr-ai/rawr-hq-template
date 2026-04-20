@@ -1,7 +1,6 @@
-import { isDeepStrictEqual } from "node:util";
-
 import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type { SourceContent, SourcePlugin } from "../../../shared/entities";
+import { stableJsonEqual } from "../../../shared/helpers/stable-json";
 
 /**
  * Minimal Claude plugin manifest shape preserved and upserted by sync.
@@ -74,7 +73,7 @@ export async function upsertClaudePluginManifest(input: {
       existing.description ??
       "Synced from RAWR HQ plugin",
   };
-  const changed = !isDeepStrictEqual(existing, next);
+  const changed = !stableJsonEqual(existing, next);
 
   if (!input.dryRun && changed) {
     await input.resources.files.writeJsonFile(filePath, next);
@@ -124,7 +123,7 @@ export async function upsertClaudeMarketplace(input: {
     ...existing,
     plugins: [...plugins].sort((a, b) => a.name.localeCompare(b.name)),
   };
-  const changed = !isDeepStrictEqual(existing, next);
+  const changed = !stableJsonEqual(existing, next);
 
   if (!input.dryRun && changed) {
     await input.resources.files.writeJsonFile(filePath, next);
@@ -166,7 +165,7 @@ export async function writeClaudeSyncManifest(input: {
     managedBy: "@rawr/plugin-plugins",
     syncedAt: nowIso,
   };
-  const changed = !isDeepStrictEqual(
+  const changed = !stableJsonEqual(
     normalizeSyncManifest(existing),
     normalizeSyncManifest(stableManifest),
   );
