@@ -26,4 +26,3 @@ export function summarizeScannedContent(content: SourceContent): SyncScannedSumm
     agents: content.agentFiles.map((agent) => agent.name),
   };
 }
-

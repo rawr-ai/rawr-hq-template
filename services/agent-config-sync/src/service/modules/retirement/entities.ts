@@ -43,4 +43,3 @@ export const RetiredPluginRefSchema = Type.Object(
 );
 
 export type RetiredPluginRef = Static<typeof RetiredPluginRefSchema>;
-

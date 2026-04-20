@@ -159,4 +159,3 @@ export async function deleteIfExists(input: {
 
   pushItem(result, { action: options.dryRun ? "planned" : "deleted", kind, target, message: "gc orphan" });
 }
-

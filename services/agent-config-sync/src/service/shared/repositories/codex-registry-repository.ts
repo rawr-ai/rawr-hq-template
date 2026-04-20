@@ -183,4 +183,3 @@ function normalizeRegistryForDrift(data: CodexRegistryFile): CodexRegistryFile {
   delete normalized.last_synced;
   return normalized;
 }
-

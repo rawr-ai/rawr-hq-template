@@ -40,4 +40,3 @@ export const ReindexResultSchema = Type.Object(
 );
 
 export type ReindexResult = Static<typeof ReindexResultSchema>;
-

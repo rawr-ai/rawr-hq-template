@@ -184,4 +184,3 @@ function normalizeSyncManifest(
     managedBy: manifest.managedBy,
   };
 }
-
