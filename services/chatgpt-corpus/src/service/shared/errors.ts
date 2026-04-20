@@ -2,10 +2,6 @@ import { schema } from "@rawr/hq-sdk";
 import type { ErrorMapItem } from "@orpc/server";
 import { Type } from "typebox";
 
-export type CorpusSourceErrorCode =
-  | "INVALID_CONVERSATION_JSON"
-  | "INVALID_CONVERSATION_EXPORT";
-
 const CorpusErrorData = schema(
   Type.Object(
     {

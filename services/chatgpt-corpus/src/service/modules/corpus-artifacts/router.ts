@@ -6,8 +6,9 @@
  * authored build flow so callers can treat this as a single capability, while
  * helper files remain narrow utilities for individual transforms.
  */
-import { buildSourceSnapshot } from "../source-materials/helpers/normalize";
 import { SOURCE_MATERIAL_DIRECTORIES } from "../../../shared/layout";
+import type { SourceSnapshot } from "../source-materials/entities";
+import { buildSnapshotRecords } from "../../shared/helpers/source-records";
 import { createArtifactFiles } from "./helpers/artifact-bundle";
 import { detectAnomalies } from "./helpers/anomalies";
 import { buildFamilyGraphs, buildRelationships } from "./helpers/families";
@@ -97,27 +98,21 @@ const materialize = module.materialize.handler(async ({ context, errors }) => {
     workspaceRef: context.workspaceRef,
     sourceDirectories: SOURCE_MATERIAL_DIRECTORIES,
   });
-  const snapshotResult = await buildSourceSnapshot(context.workspaceRef, materials);
-  if (!snapshotResult.ok) {
-    if (snapshotResult.error.code === "INVALID_CONVERSATION_JSON") {
-      throw errors.INVALID_CONVERSATION_JSON({
-        message: snapshotResult.error.reason,
-        data: {
-          path: snapshotResult.error.sourcePath,
-          reason: snapshotResult.error.reason,
-        },
-      });
+  const recordsResult = await buildSnapshotRecords(materials);
+  if (!recordsResult.ok) {
+    const message = recordsResult.error.reason;
+    if (recordsResult.error.kind === "invalid-json") {
+      throw errors.INVALID_CONVERSATION_JSON({ message, data: { path: recordsResult.error.sourcePath, reason: message } });
     }
-
-    throw errors.INVALID_CONVERSATION_EXPORT({
-      message: snapshotResult.error.reason,
-      data: {
-        path: snapshotResult.error.sourcePath,
-        reason: snapshotResult.error.reason,
-      },
-    });
+    throw errors.INVALID_CONVERSATION_EXPORT({ message, data: { path: recordsResult.error.sourcePath, reason: message } });
   }
-  const snapshot = snapshotResult.snapshot;
+  const snapshot: SourceSnapshot = {
+    workspaceRef: context.workspaceRef,
+    records: recordsResult.records,
+    jsonRecords: recordsResult.conversationRecords,
+    markdownDocCount: recordsResult.documentRecords.length,
+  };
+
   const warnings = buildWarnings(snapshot);
   const inventory = buildInventory(snapshot.records);
   const anomalies = detectAnomalies(snapshot.jsonRecords);
