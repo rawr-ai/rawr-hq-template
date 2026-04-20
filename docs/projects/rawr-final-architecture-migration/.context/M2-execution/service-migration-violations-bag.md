@@ -100,7 +100,7 @@ Summary: P0=0, P1=0, P2=0, P3=0
 
 Summary: P0=0, P1=0, P2=3, P3=0
 
-### ACS-PLN-001 (OPEN)
+### ACS-PLN-001 (RESOLVED)
 - Service: `@rawr/agent-config-sync`
 - Tags: `RULE:router-not-dumping-ground` `MOD:planning` `KIND:router-godfile`
 - Severity: P2
@@ -109,8 +109,9 @@ Summary: P0=0, P1=0, P2=3, P3=0
 - Fix intent:
   - Split into clearer procedures and/or module structure so this doesn’t become a single “plan everything” blob.
 - Suggested owner: `agent:agent-config-sync`
+- Resolution: `c93117bb371fcbaad60c5f1f54cea3977a25c51a` — extract mechanical per-destination sync planning work into module-local helpers; keep procedure flow explicit
 
-### ACS-EXE-001 (OPEN)
+### ACS-EXE-001 (RESOLVED)
 - Service: `@rawr/agent-config-sync`
 - Tags: `RULE:router-not-dumping-ground` `MOD:execution` `KIND:router-godfile`
 - Severity: P2
@@ -119,8 +120,9 @@ Summary: P0=0, P1=0, P2=3, P3=0
 - Fix intent:
   - Keep the execution capability flow legible; move mechanics into repositories/helpers without hiding authored meaning.
 - Suggested owner: `agent:agent-config-sync`
+- Resolution: `c93117bb371fcbaad60c5f1f54cea3977a25c51a` — factor Codex/Claude sync mechanics into focused helpers; keep handler logic readable in the router
 
-### ACS-RET-001 (OPEN)
+### ACS-RET-001 (RESOLVED)
 - Service: `@rawr/agent-config-sync`
 - Tags: `RULE:router-not-dumping-ground` `MOD:retirement` `KIND:router-godfile`
 - Severity: P2
@@ -129,6 +131,7 @@ Summary: P0=0, P1=0, P2=3, P3=0
 - Fix intent:
   - Reduce the “single handler owns everything” feel by structuring the procedure; keep helpers mechanical.
 - Suggested owner: `agent:agent-config-sync`
+- Resolution: `c93117bb371fcbaad60c5f1f54cea3977a25c51a` — move per-agent retirement application into helpers; keep retirement procedure flow explicit
 
 ## `@rawr/session-intelligence`
 
