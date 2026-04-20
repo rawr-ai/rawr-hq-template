@@ -14,6 +14,18 @@ RAWR app composition decides which CLI command plugins belong to an app or CLI. 
 
 RAWR must not build a second command discovery or dispatch plane beside OCLIF.
 
+## Terms
+
+| Term | Meaning |
+| --- | --- |
+| OCLIF command plugin | A native OCLIF plugin package that contributes CLI commands, hooks, or nested OCLIF plugins. |
+| App-selected CLI plugin | An OCLIF command plugin selected by `rawr.hq.ts` for a specific CLI role/surface. |
+| OCLIF plugin manager | The native `@oclif/plugin-plugins` install/link/inspect/reset/update surface. |
+| Agent toolkit | Claude Code/Codex-style artifact set, such as skills, workflows, scripts, command banks, or generated agent plugin bundles. |
+| HQ Ops capability/topology state | Any RAWR-owned enablement, catalog, or membership state that is not native OCLIF plugin installation. |
+
+Use "plugin" without a qualifier only when the surrounding framework already defines it. Target RAWR docs should not preserve a second public "RAWR plugin" meaning beside OCLIF plugins.
+
 ## Target Topology
 
 Canonical command plugin root:
@@ -30,6 +42,17 @@ plugins/cli/<plugin-name>
 
 The current root may remain during migration, but target docs and generators should converge on the role-first shape from the integrated architecture spec.
 
+## Repo Touchpoints
+
+| Area | Target responsibility | Current-state note |
+| --- | --- | --- |
+| `apps/hq/rawr.hq.ts` | Select CLI command plugins under `roles.cli.commands`. | Currently has `server` and `async`, no `cli` role. |
+| `apps/cli/package.json` | Remain the OCLIF root CLI config; receive generated or materialized plugin membership in dev/build flows. | Currently hand-lists OCLIF plugins in `oclif.plugins`. |
+| `plugins/cli/commands/*` | Target root for official OCLIF command plugins. | Current packages live under `plugins/cli/*`. |
+| `packages/hq-sdk` | Expose `defineCliCommandPlugin(...)` and binding helpers without raw Effect leakage. | Current `plugins.ts` is pre-Effect binding substrate. |
+| `services/hq-ops` | Own catalog/topology diagnostics and OCLIF link/install health assessment. | Current catalog maps `cli` root to `toolkit`. |
+| `plugins/AGENTS.md` and docs | Define target vocabulary: OCLIF command plugin, agent toolkit, HQ Ops capability/topology. | Current docs preserve `toolkit` and two `plugins` command families. |
+
 ## Package Contract
 
 Each CLI command plugin package must own:
@@ -41,7 +64,7 @@ Each CLI command plugin package must own:
 - command classes extending OCLIF `Command` or RAWR's approved command base
 - optional OCLIF hooks declared through native OCLIF config
 - build output aligned with `oclif.commands`
-- generated `oclif.manifest.json` for production/shipped builds when performance matters
+- generated `oclif.manifest.json` for production/shipped builds when command metadata caching matters
 
 Each package may also own:
 
@@ -156,26 +179,26 @@ Dev bootstrap should:
 5. materialize native OCLIF dev/core plugin membership for the intended CLI;
 6. run OCLIF normally.
 
-Native OCLIF `devPlugins` or generated local OCLIF config should be considered first because OCLIF already distinguishes dev plugins from core and user plugins.
+Native OCLIF `devPlugins` or generated local OCLIF config should be considered first because OCLIF already distinguishes dev plugins from core and user plugins. This is proposed target behavior; the current repo does not yet configure `devPlugins`.
 
 ### Acceptable path: one convergence command
 
 Provide a single command:
 
 ```bash
-rawr plugins cli converge
+rawr cli converge
 ```
 
 It should:
 
 - read app/CLI composition, not scan every possible toolkit package by default;
 - build selected local plugins;
-- generate manifests where needed;
+- generate per-plugin OCLIF manifests when useful for selected packages;
 - link/materialize selected packages through native OCLIF mechanisms;
-- remove or warn on stale links for deselected packages;
+- warn on stale OCLIF links that conflict with the selected CLI surface;
 - print the final selected plugin set and command source.
 
-The existing `rawr plugins cli install all` can evolve into this, but its semantics should shift from "install all eligible toolkit packages" to "converge this CLI's selected command plugin surface."
+The existing `rawr plugins cli install all` can evolve into or be replaced by this, but its semantics should shift from "install all eligible toolkit packages" to "materialize this CLI's selected command plugin surface."
 
 ## External User Distribution
 
@@ -191,23 +214,21 @@ rawr plugins link /absolute/path/to/cloned/plugin --install
 
 Published plugins should include built output and OCLIF manifests. Cloned plugins should support the same build/link convergence path used locally.
 
-## Channel Separation
+## Public Command Vocabulary
 
-Channel A:
+The target architecture should not preserve `Channel A` and `Channel B` as public concepts.
 
-- `rawr plugins ...`
-- native OCLIF plugin manager
-- command plugin install/link/inspect/reset/update
-- user-installed and linked command plugin overlays
+Native OCLIF plugin-manager commands remain available because they are OCLIF's user-install and link surface:
 
-Channel B:
+```bash
+rawr plugins install @scope/plugin-name
+rawr plugins link /absolute/path/to/cloned/plugin --install
+rawr plugins inspect @scope/plugin-name
+```
 
-- `rawr plugins web ...`
-- workspace runtime plugin enablement
-- security gating and `.rawr/state/state.json`
-- web/server runtime module surfaces
+Those commands are not RAWR app composition authority. They are plugin-manager mechanics.
 
-Do not merge these command families.
+Runtime capability enablement should not be another `rawr plugins ...` channel in the target model. If RAWR needs enable/disable/toggle behavior later, place it under HQ Ops capability or topology commands with distinct vocabulary, for example `rawr hq capabilities ...` or `rawr hq topology ...`.
 
 ## `toolkit` Facet
 
@@ -257,7 +278,7 @@ Any implementation slice promoting this spec must prove:
 - deselected plugins are not silently included through global scan behavior;
 - temporary or deleted worktree links are diagnosed clearly;
 - published/cloned install docs match OCLIF behavior;
-- Channel A and Channel B commands remain separate;
+- RAWR does not introduce a second public plugin channel for runtime capability toggles;
 - raw Effect types do not leak into plugin authoring APIs.
 
 ## Migration Notes
@@ -266,5 +287,5 @@ Any implementation slice promoting this spec must prove:
 2. Add target docs/generators for `plugins/cli/commands/*`.
 3. Introduce `defineCliCommandPlugin(...)` in `@rawr/hq-sdk` only when a slice consumes it.
 4. Change catalog/convergence language from `toolkit`-only to facet-aware classification.
-5. Make `rawr plugins cli install all` either legacy/deprecated or an alias for composition-driven `rawr plugins cli converge`.
+5. Make `rawr plugins cli install all` either legacy/deprecated or an alias for composition-driven `rawr cli converge`.
 6. Do not make CLI runtime work block the M2-U00 server bridge deletion; schedule it before CLI/generalized surface runtime work.

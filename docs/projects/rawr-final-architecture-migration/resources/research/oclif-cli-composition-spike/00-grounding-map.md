@@ -1,5 +1,15 @@
 # Grounding Map
 
+## What This Grounding Proves
+
+The repo has real OCLIF command-plugin packages today, but app composition is not yet the authority for selecting them. Current eligibility still comes from a workspace catalog rule around `rawr.kind=toolkit` plus OCLIF metadata. Current local development still depends on link/install state and stale-link health, not on a clean app-manifest-selected CLI surface.
+
+The follow-up review tightened the spike around three points:
+
+- `plugin` should mean native OCLIF plugin when discussing CLI composition; RAWR should avoid a second user-facing "plugin" channel.
+- `toolkit` should survive only as an agent-runtime artifact facet, not as command-plugin selection authority.
+- OCLIF manifests cache command metadata for selected plugins; they do not select plugin membership.
+
 ## Repo State
 
 Preflight was run from `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-template`.
@@ -10,18 +20,24 @@ Preflight was run from `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq-templa
 - Created branch: `codex/spike-oclif-cli-composition-20260420`.
 - Graphite tracking: `codex/spike-oclif-cli-composition-20260420` tracked with parent `agent-ORCH-plugin-logic-service-split`.
 
-The spike worktree had no `node_modules`, so `bunx nx ...` failed there with missing Nx modules. The same Nx commands were then run from the primary checkout, whose dependency install was already present. This matters only for command execution location; the source tree and commit were the same.
+The spike worktree initially had no `node_modules`, so `bunx nx ...` failed there with missing Nx modules. The same Nx commands were initially run from the primary checkout, whose dependency install was already present. A follow-up pass then ran `bun install` and the full workspace build from the spike worktree itself.
 
 ## Skills And Method
 
-Applied:
+Initial pass:
 
 - `deep-search`: multi-angle repo search, breadcrumbs, source map.
 - `spike-methodology`: layered orient/explore/deepen structure and evidence-backed claims.
 - `team-design`: four-lane investigation shape with one synthesis owner.
 - `nx-workspace`: Nx-first project inventory and target discovery.
 
-No subagents were spawned. The team design was used as a coordination structure, not as parallel delegated execution.
+The first committed packet did not spawn subagents. That was a process miss relative to the requested multi-agent review. A follow-up review used three delegated read-only review lanes:
+
+| Review lane | Focus | Result |
+| --- | --- | --- |
+| OCLIF accuracy | native plugin loading, `devPlugins`, manifests, `@oclif/plugin-plugins` | corrected manifest and dev-plugin claims |
+| RAWR runtime/naming | app composition, HQ Ops ownership, dual `plugin` semantics | removed target Channel A/B framing |
+| information design | reader navigation, answer-first packet structure | front-loaded the answer and clarified artifact map |
 
 ## Team Lanes
 
@@ -32,7 +48,7 @@ No subagents were spawned. The team design was used as a coordination structure,
 | Runtime lane | How should this fit app manifest, runtime binding, and Effect substrate? | `03-runtime-binding-fit-gap.md` |
 | Adversarial lane | Where can current docs/code create dual authority or bad ergonomics? | `04-synthesis.md` plus proposed spec |
 
-## Commands Run
+## Evidence Commands
 
 Preflight:
 
@@ -87,6 +103,23 @@ Results:
 
 Those failures were not caused by the spike packet, which is docs-only. They are useful evidence for the spike because they show the current local OCLIF link/install ergonomics are fragile.
 
+Follow-up dependency/build verification from the spike worktree:
+
+```bash
+bun install
+bunx nx run-many -t build --all
+```
+
+`bun install` completed successfully in the spike worktree. The full build ran 20 build targets and failed only on `@rawr/plugin-plugins:build`:
+
+```text
+src/lib/agent-config-sync-resources/resources.ts(65,5): error TS2740:
+Type '{ join; resolve; dirname; basename; relative; isAbsolute; sep; }'
+is missing PlatformPath properties including normalize, matchesGlob, extname, delimiter, and 5 more.
+```
+
+This build failure is outside the docs-only spike, but it is relevant evidence: the same package that owns current OCLIF plugin-management helpers is already failing at build time in the branch's current transient migration state.
+
 ## Breadcrumbs
 
 - `apps/cli/package.json:22` defines the root OCLIF config, including `bin`, `commands`, `topicSeparator`, `plugins`, and `typescript.commands`.
@@ -114,3 +147,4 @@ Those failures were not caused by the spike packet, which is docs-only. They are
 - The current `toolkit` term is not accidental legacy noise. It appears to encode an intended agent-runtime distribution path where a RAWR plugin can also provide Claude Code/Codex-style plugin artifacts, skills, workflows, or command banks.
 - Native OCLIF command-plugin identity should still be separate from that `toolkit` distribution facet.
 - The target architecture should optimize local development and CLI composition first, then support published npm or cloned-repo installation as a second-order distribution path.
+- Target architecture should avoid a second public "RAWR plugins" vocabulary. If runtime capability enablement exists later, it belongs under HQ Ops topology/capability management and needs distinct names.

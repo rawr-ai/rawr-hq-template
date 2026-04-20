@@ -6,6 +6,14 @@ Current RAWR CLI plugins are real OCLIF plugins when they expose `package.json#o
 
 However, the current system still treats these packages as `toolkit` plugins in RAWR metadata and links them through a local convergence helper. That is workable during migration, but it does not yet express the target app-manifest composition model for `roles.cli.commands`.
 
+## Current Gaps
+
+1. `rawr.hq.ts` does not currently express `roles.cli.commands`; it has `server` and `async` only. Evidence: `apps/hq/rawr.hq.ts:25-36`.
+2. `@rawr/cli` directly lists OCLIF plugins in `apps/cli/package.json`, rather than consuming app-manifest-selected CLI plugin membership.
+3. Current command-plugin eligibility is anchored on `toolkit`, not on an explicit native OCLIF command-plugin facet.
+4. Local development works through a helper and OCLIF link/install state, but the app composition model does not yet make local command-plugin membership automatic or obviously first-class.
+5. Current docs distinguish two public `plugins` command families. The target architecture should not preserve that overload; runtime capability enablement, if needed, should be named as HQ Ops capability/topology state rather than a second "RAWR plugin" channel.
+
 ## Root CLI
 
 `apps/cli/package.json` defines `@rawr/cli` as the OCLIF root CLI:
@@ -49,7 +57,7 @@ These are workspace packages and Nx projects:
 
 - `plugins/cli/plugins/package.json:28-33`
 
-## Current Metadata Naming
+## Vocabulary Mismatch
 
 Current plugin routing says:
 
@@ -69,7 +77,7 @@ This conflicts with target docs that say `rawr.kind` should include `cli` and th
 
 Evidence: `docs/system/PLUGINS.md:21-32`, `docs/SYSTEM.md:91-103`.
 
-The user's clarification matters here: `toolkit` should not be treated as accidental. It likely comes from agent-runtime plugin packaging, where a RAWR plugin may also ship Claude Code/Codex plugin content such as skills and workflows. The target should preserve that path as a facet while separating native OCLIF command-plugin classification from agent toolkit packaging.
+The user's clarification matters here: `toolkit` should not be treated as accidental. It likely comes from agent-runtime plugin packaging, where a package may also ship Claude Code/Codex plugin content such as skills and workflows. The target should preserve that path as an `agent-toolkit` facet while separating native OCLIF command-plugin classification from agent toolkit packaging.
 
 ## Current Local Link/Install Workflow
 
@@ -107,12 +115,12 @@ Evidence:
 - manager state read: `plugins/cli/plugins/src/lib/plugin-install-service.ts:92-124`
 - runtime plugin snapshot: `plugins/cli/plugins/src/lib/plugin-install-service.ts:138-157`
 
-## Current Docs
+## Current Docs And Naming Debt
 
-The repo already distinguishes the two command families:
+The repo currently distinguishes two command families:
 
-- Channel A: `rawr plugins ...` for OCLIF plugin manager.
-- Channel B: `rawr plugins web ...` for workspace runtime plugins.
+- `rawr plugins ...` for the native OCLIF plugin manager.
+- `rawr plugins web ...` for workspace runtime plugin enablement.
 
 Evidence:
 
@@ -125,6 +133,8 @@ The build/wiring matrix says a local OCLIF command plugin must be built and link
 
 Evidence: `docs/process/runbooks/PLUGIN_BUILD_AND_WIRING_MATRIX.md:39-45`, `docs/process/runbooks/PLUGIN_BUILD_AND_WIRING_MATRIX.md:63-86`.
 
+This split is useful as a current-state observation, but it should not be promoted as target vocabulary. The target should reserve "OCLIF plugin" for native CLI command packages and move any workspace enable/disable behavior under HQ Ops capability or topology language.
+
 ## Current State Check
 
 From the primary checkout, `bun run rawr -- plugins cli install all --json --dry-run` with temporary home/data/config/cache directories planned four eligible command plugins and skipped none:
@@ -136,9 +146,8 @@ From the primary checkout, `bun run rawr -- plugins cli install all --json --dry
 
 The command returned `ok: true`, but OCLIF emitted `MODULE_NOT_FOUND` warnings while loading plugin state. That warning is a local plugin-manager health signal, not evidence that the planned plugins are not OCLIF-shaped.
 
-## Current Gaps
+## Build Signal From Spike Worktree
 
-1. `rawr.hq.ts` does not currently express `roles.cli.commands`; it has `server` and `async` only. Evidence: `apps/hq/rawr.hq.ts:25-36`.
-2. `@rawr/cli` directly lists OCLIF plugins in `apps/cli/package.json`, rather than consuming manifest-selected CLI plugin membership.
-3. Current command-plugin eligibility is anchored on `toolkit`, not on a native CLI command plugin kind or facet.
-4. Local development works through a helper, but the app composition model does not yet make local command-plugin membership automatic or obviously first-class.
+After `bun install` in the spike worktree, `bunx nx run-many -t build --all` ran the real build surface from this checkout. It failed only on `@rawr/plugin-plugins:build` with a `PlatformPath` type mismatch in `src/lib/agent-config-sync-resources/resources.ts`.
+
+That does not invalidate the docs-only spike, but it does confirm that the current package owning OCLIF plugin management helpers is in a transient, failing build state.
