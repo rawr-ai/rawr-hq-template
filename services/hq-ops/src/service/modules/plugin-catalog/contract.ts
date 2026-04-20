@@ -4,7 +4,7 @@ import { ocBase } from "../../base";
 import {
   WorkspacePluginCatalogEntrySchema,
   WorkspacePluginKindSchema,
-} from "./entities";
+} from "../../shared/entities/workspace-plugin-catalog";
 
 /**
  * Public HQ plugin catalog API.

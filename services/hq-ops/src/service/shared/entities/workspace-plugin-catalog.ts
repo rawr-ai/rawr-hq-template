@@ -1,10 +1,19 @@
 import { type Static, Type } from "typebox";
 
 /**
+ * HQ Ops workspace plugin catalog entities.
+ *
+ * @remarks
+ * These entities are shared across multiple HQ Ops modules (catalog, install,
+ * lifecycle). Keeping them service-owned (not module-owned) prevents cross-module
+ * imports from reaching into another module's internals.
+ */
+
+/**
  * Plugin kinds that HQ recognizes as first-class workspace inventory.
  *
  * These are domain entities, not command inputs: contracts compose the schemas
- * when they need validation, while catalog and lifecycle code use the inferred
+ * when they need validation, while routers and repositories use the inferred
  * TypeScript types from the same TypeBox source of truth.
  */
 export const WORKSPACE_PLUGIN_KINDS = ["toolkit", "agent", "web", "api", "workflows", "schedules"] as const;
@@ -82,3 +91,4 @@ export type WorkspacePluginDiscoveryRoot = Static<typeof WorkspacePluginDiscover
 export type ForbiddenLegacyRawrKey = (typeof FORBIDDEN_LEGACY_RAWR_KEYS)[number];
 export type PluginCapabilityEligibility = Static<typeof PluginCapabilityEligibilitySchema>;
 export type WorkspacePluginCatalogEntry = Static<typeof WorkspacePluginCatalogEntrySchema>;
+

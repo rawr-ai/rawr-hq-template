@@ -7,8 +7,8 @@
  * ports (`HqOpsResources`).
  */
 import type { HqOpsResources } from "../../shared/ports/resources";
-import { assertUniqueCatalogIdentity, listWorkspacePluginPackageDirs, parsePluginPackage } from "../plugin-catalog/helpers/discovery";
-import type { WorkspacePluginCatalogEntry, WorkspacePluginKind } from "../plugin-catalog/entities";
+import type { WorkspacePluginCatalogEntry, WorkspacePluginKind } from "../../shared/entities/workspace-plugin-catalog";
+import { discoverWorkspacePluginCatalog } from "../../shared/repositories/workspace-plugin-catalog-repository";
 import type { LifecycleCheckData, LifecycleTarget, LifecycleType } from "./entities";
 import { module } from "./module";
 import {
@@ -44,13 +44,7 @@ async function loadWorkspacePluginCatalogEntries(input: {
   workspaceRoot: string;
   resources: Pick<HqOpsResources, "fs" | "path">;
 }): Promise<WorkspacePluginCatalogEntry[]> {
-  const pluginDirs = await listWorkspacePluginPackageDirs(input.workspaceRoot, input.resources.fs, input.resources.path);
-  const parsed = await Promise.all(pluginDirs.map((pluginDir) => parsePluginPackage(pluginDir, input.workspaceRoot, input.resources.fs, input.resources.path)));
-  const plugins = parsed
-    .filter((p): p is WorkspacePluginCatalogEntry => Boolean(p))
-    .sort((a, b) => a.id.localeCompare(b.id));
-  assertUniqueCatalogIdentity(plugins);
-  return plugins;
+  return discoverWorkspacePluginCatalog({ workspaceRoot: input.workspaceRoot, resources: input.resources });
 }
 
 /**
