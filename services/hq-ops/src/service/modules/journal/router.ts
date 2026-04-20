@@ -1,4 +1,4 @@
-import { searchSnippetsSemantic } from "./lib/semantic";
+import { searchSnippetsSemantic } from "./helpers/semantic";
 import {
   openJournalDb,
   readSnippetJson,
@@ -7,7 +7,7 @@ import {
   upsertSnippet,
   writeEventJson,
   writeSnippetJson,
-} from "./lib/storage";
+} from "./helpers/storage";
 import { module } from "./module";
 
 const writeEvent = module.writeEvent.handler(async ({ context, input }) => {

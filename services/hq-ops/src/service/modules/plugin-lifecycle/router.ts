@@ -1,5 +1,5 @@
 import type { HqOpsResources } from "../../shared/ports/resources";
-import { discoverWorkspacePluginCatalog } from "../plugin-catalog/lib/discovery";
+import { discoverWorkspacePluginCatalog } from "../plugin-catalog/helpers/discovery";
 import type { WorkspacePluginCatalogEntry, WorkspacePluginKind } from "../plugin-catalog/entities";
 import type { LifecycleCheckData, LifecycleTarget, LifecycleType } from "./entities";
 import { module } from "./module";
@@ -9,7 +9,7 @@ import {
   toBranchToken,
   utcTimestamp,
   type JudgeOutcome,
-} from "./lib/merge-utils";
+} from "./helpers/merge-utils";
 import {
   isAbsolutePath,
   isCodeFile,
@@ -18,7 +18,7 @@ import {
   relativePath,
   toPosix,
   uniqSorted,
-} from "./lib/path-utils";
+} from "./helpers/path-utils";
 
 type PathOps = Pick<HqOpsResources["path"], "join" | "resolve">;
 type FsOps = Pick<HqOpsResources["fs"], "readDir" | "stat">;

@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { scanSourcePluginContent } from "../../source-content/lib/source-plugin-content";
+import { scanSourcePluginContent } from "../../source-content/helpers/source-plugin-content";
 import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type {
   RawrPluginKind,

@@ -9,7 +9,7 @@ import {
   mutateRepoStateAtomically,
   stateLockPath,
   statePath,
-} from "../../../services/hq-ops/src/service/modules/repo-state/lib/storage";
+} from "../../../services/hq-ops/src/service/modules/repo-state/helpers/storage";
 import { createTestHqOpsResources } from "../../../services/hq-ops/test/helpers";
 
 const tempDirs: string[] = [];

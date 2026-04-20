@@ -1,4 +1,4 @@
-import { discoverWorkspacePluginCatalog } from "../plugin-catalog/lib/discovery";
+import { discoverWorkspacePluginCatalog } from "../plugin-catalog/helpers/discovery";
 import {
   CANONICAL_SYNC_PLUGIN_NAME,
   LEGACY_SYNC_PLUGIN_NAMES,
@@ -13,7 +13,7 @@ import {
   sortedActualLinks,
   sortedExpectedLinks,
   uniqueActions,
-} from "./lib/install-utils";
+} from "./helpers/install-utils";
 import { module } from "./module";
 
 /**

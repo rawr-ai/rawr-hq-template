@@ -1,7 +1,7 @@
 import type { RawrConfig } from "./entities";
-import { loadGlobalRawrConfig, loadRawrConfig } from "./lib/load";
-import { rawrGlobalConfigPath } from "./lib/paths";
-import { validateRawrConfig } from "./lib/validation";
+import { loadGlobalRawrConfig, loadRawrConfig } from "./helpers/load";
+import { rawrGlobalConfigPath } from "./helpers/paths";
+import { validateRawrConfig } from "./helpers/validation";
 import { module } from "./module";
 
 const getWorkspaceConfig = module.getWorkspaceConfig.handler(async ({ context }) => {

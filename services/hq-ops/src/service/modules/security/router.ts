@@ -1,6 +1,6 @@
 import type { HqOpsResources } from "../../shared/ports/resources";
-import { runBunAudit, runBunPmUntrusted } from "./lib/audit";
-import { getRepoRoot } from "./lib/process";
+import { runBunAudit, runBunPmUntrusted } from "./helpers/audit";
+import { getRepoRoot } from "./helpers/process";
 import {
   maxFindingSeverity,
   readLatestSecurityReport,
@@ -9,8 +9,8 @@ import {
   sortFindings,
   toleranceToMaxSeverity,
   writeSecurityReport,
-} from "./lib/reporting";
-import { scanSecretsRepo, scanSecretsStaged } from "./lib/secrets";
+} from "./helpers/reporting";
+import { scanSecretsRepo, scanSecretsStaged } from "./helpers/secrets";
 import { module } from "./module";
 import type { SecurityFinding, SecurityMode } from "./types";
 

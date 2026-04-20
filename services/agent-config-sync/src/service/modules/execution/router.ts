@@ -1,8 +1,8 @@
 import { module } from "./module";
-import { resolveProviderContent as resolveServiceProviderContent } from "../source-content/lib/provider-content";
-import { syncClaudeTarget } from "./lib/claude-target";
-import { syncCodexTarget } from "./lib/codex-target";
-import { summarizeScannedContent } from "./lib/sync-results";
+import { resolveProviderContent as resolveServiceProviderContent } from "../source-content/helpers/provider-content";
+import { syncClaudeTarget } from "./helpers/claude-target";
+import { syncCodexTarget } from "./helpers/codex-target";
+import { summarizeScannedContent } from "./helpers/sync-results";
 import type { SyncTargetResult } from "./contract";
 
 /**

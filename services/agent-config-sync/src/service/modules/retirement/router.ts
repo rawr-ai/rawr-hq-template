@@ -3,15 +3,15 @@ import type { RetireAction, RetireStaleManagedResult } from "./contract";
 import {
   claudeMarketplacePath,
   planClaudeHomeRetirement,
-} from "./lib/claude-stale-managed";
+} from "./helpers/claude-stale-managed";
 import {
   codexPromptTarget,
   codexRegistryPath,
   codexScriptTarget,
   codexSkillTarget,
   planCodexHomeRetirement,
-} from "./lib/codex-stale-managed";
-import { deletePathIfPresent } from "./lib/filesystem-actions";
+} from "./helpers/codex-stale-managed";
+import { deletePathIfPresent } from "./helpers/filesystem-actions";
 
 const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, input }) => {
   const activePluginNames = new Set(input.activePluginNames);

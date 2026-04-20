@@ -1,7 +1,7 @@
 import {
   getRepoStateWithAuthority,
   mutateRepoStateAtomically,
-} from "./lib/storage";
+} from "./helpers/storage";
 import { module } from "./module";
 
 const getState = module.getState.handler(async ({ context }) => {
