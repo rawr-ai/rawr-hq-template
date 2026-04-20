@@ -1,5 +1,5 @@
 import { Value } from "typebox/value";
-import { CorpusWorkspaceError } from "../../../shared/errors";
+import type { CorpusSourceErrorCode } from "../../../shared/errors";
 import type { RawSourceMaterials, WorkspaceTextEntry } from "../../../../orpc/ports/workspace-store";
 import type {
   JsonConversationSourceRecord,
@@ -7,8 +7,18 @@ import type {
   RawConversationExport,
   SourceRecord,
   SourceSnapshot,
-} from "../schemas";
-import { RawConversationExportSchema } from "../schemas";
+} from "../entities";
+import { RawConversationExportSchema } from "../entities";
+
+type SourceSnapshotError = {
+  code: CorpusSourceErrorCode;
+  sourcePath: string;
+  reason: string;
+};
+
+export type SourceSnapshotResult =
+  | { ok: true; snapshot: SourceSnapshot }
+  | { ok: false; error: SourceSnapshotError };
 
 function slugify(value: string): string {
   return value
@@ -58,16 +68,16 @@ function buildSourceId(prefix: "json" | "md", relativePath: string, hash: string
   return `src-${prefix}-${slugify(relativePath)}-${hash.slice(0, 12)}`;
 }
 
-function parseConversationExport(source: WorkspaceTextEntry): RawConversationExport {
+function parseConversationExport(source: WorkspaceTextEntry): RawConversationExport | SourceSnapshotError {
   let parsed: unknown;
   try {
     parsed = JSON.parse(source.contents) as unknown;
   } catch (error) {
-    throw new CorpusWorkspaceError(
-      "INVALID_CONVERSATION_JSON",
-      source.relativePath,
-      error instanceof Error ? error.message : String(error),
-    );
+    return {
+      code: "INVALID_CONVERSATION_JSON",
+      sourcePath: source.relativePath,
+      reason: error instanceof Error ? error.message : String(error),
+    };
   }
 
   if (Value.Check(RawConversationExportSchema, parsed)) {
@@ -75,15 +85,19 @@ function parseConversationExport(source: WorkspaceTextEntry): RawConversationExp
   }
 
   const [issue] = [...Value.Errors(RawConversationExportSchema, parsed)];
-  throw new CorpusWorkspaceError(
-    "INVALID_CONVERSATION_EXPORT",
-    source.relativePath,
-    issue?.message ?? "Conversation export does not match the expected shape.",
-  );
+  return {
+    code: "INVALID_CONVERSATION_EXPORT",
+    sourcePath: source.relativePath,
+    reason: issue?.message ?? "Conversation export does not match the expected shape.",
+  };
 }
 
-async function createConversationRecord(source: WorkspaceTextEntry): Promise<JsonConversationSourceRecord> {
+async function createConversationRecord(source: WorkspaceTextEntry): Promise<
+  | { ok: true; record: JsonConversationSourceRecord }
+  | { ok: false; error: SourceSnapshotError }
+> {
   const parsed = parseConversationExport(source);
+  if ("code" in parsed) return { ok: false, error: parsed };
   const metadata = parsed.metadata ?? {};
   const title = typeof metadata.title === "string" && metadata.title.trim() !== ""
     ? metadata.title
@@ -95,21 +109,24 @@ async function createConversationRecord(source: WorkspaceTextEntry): Promise<Jso
   const hash = await sha256Hex(normalizedContents);
 
   return {
-    sourceId: buildSourceId("json", source.relativePath, hash),
-    relativePath: source.relativePath,
-    type: "json_conversation",
-    hash,
-    sizeBytes: textSizeBytes(source.contents),
-    title,
-    summary: shortSummary(firstPrompt || lastResponse || title),
-    created: typeof dates.created === "string" ? dates.created : undefined,
-    updated: typeof dates.updated === "string" ? dates.updated : undefined,
-    exported: typeof dates.exported === "string" ? dates.exported : undefined,
-    link: typeof metadata.link === "string" ? metadata.link : undefined,
-    messages: parsed.messages,
-    messagesHash: await sha256Hex(JSON.stringify(parsed.messages)),
-    normalizedTitle: normalizeTitle(title),
-    branchDepth: branchDepthFromTitle(title),
+    ok: true,
+    record: {
+      sourceId: buildSourceId("json", source.relativePath, hash),
+      relativePath: source.relativePath,
+      type: "json_conversation",
+      hash,
+      sizeBytes: textSizeBytes(source.contents),
+      title,
+      summary: shortSummary(firstPrompt || lastResponse || title),
+      created: typeof dates.created === "string" ? dates.created : undefined,
+      updated: typeof dates.updated === "string" ? dates.updated : undefined,
+      exported: typeof dates.exported === "string" ? dates.exported : undefined,
+      link: typeof metadata.link === "string" ? metadata.link : undefined,
+      messages: parsed.messages,
+      messagesHash: await sha256Hex(JSON.stringify(parsed.messages)),
+      normalizedTitle: normalizeTitle(title),
+      branchDepth: branchDepthFromTitle(title),
+    },
   };
 }
 
@@ -142,12 +159,17 @@ async function createDocumentRecord(source: WorkspaceTextEntry): Promise<Markdow
   };
 }
 
-export async function buildSourceSnapshot(workspaceRef: string, materials: RawSourceMaterials): Promise<SourceSnapshot> {
-  const conversationRecords = await Promise.all(
+export async function buildSourceSnapshot(workspaceRef: string, materials: RawSourceMaterials): Promise<SourceSnapshotResult> {
+  const conversationResults = await Promise.all(
     [...materials.conversations]
       .sort((left, right) => left.relativePath.localeCompare(right.relativePath))
       .map(createConversationRecord),
   );
+  const failedConversation = conversationResults.find((result) => !result.ok);
+  if (failedConversation && !failedConversation.ok) return { ok: false, error: failedConversation.error };
+  const conversationRecords = conversationResults
+    .filter((result): result is { ok: true; record: JsonConversationSourceRecord } => result.ok)
+    .map((result) => result.record);
   const documentRecords = await Promise.all(
     [...materials.documents]
       .sort((left, right) => left.relativePath.localeCompare(right.relativePath))
@@ -158,9 +180,12 @@ export async function buildSourceSnapshot(workspaceRef: string, materials: RawSo
   );
 
   return {
-    workspaceRef,
-    records,
-    jsonRecords: conversationRecords,
-    markdownDocCount: documentRecords.length,
+    ok: true,
+    snapshot: {
+      workspaceRef,
+      records,
+      jsonRecords: conversationRecords,
+      markdownDocCount: documentRecords.length,
+    },
   };
 }

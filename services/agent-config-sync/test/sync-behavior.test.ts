@@ -172,4 +172,56 @@ describe("agent-config-sync service behavior", () => {
     expect(result.stalePlugins).toEqual([{ agent: "codex", home: codexHome, plugin: "stale" }]);
     await expect(fs.readFile(path.join(codexHome, "prompts", "stale.md"), "utf8")).rejects.toThrow();
   });
+
+  it("retires stale managed Claude entries through service-owned retirement behavior", async () => {
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-service-ws-"));
+    const claudeHome = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-service-claude-"));
+    tempDirs.push(workspaceRoot, claudeHome);
+
+    const pluginDir = path.join(claudeHome, "plugins", "stale");
+    await fs.mkdir(pluginDir, { recursive: true });
+    await fs.writeFile(path.join(pluginDir, "plugin.json"), JSON.stringify({ name: "stale" }), "utf8");
+    await fs.writeFile(
+      path.join(pluginDir, ".rawr-sync-manifest.json"),
+      JSON.stringify({
+        plugin: "stale",
+        sourcePluginPath: path.join(workspaceRoot, "plugins", "agents", "stale"),
+        managedBy: "@rawr/plugin-plugins",
+      }, null, 2),
+      "utf8",
+    );
+    await fs.mkdir(path.join(claudeHome, ".claude-plugin"), { recursive: true });
+    await fs.writeFile(
+      path.join(claudeHome, ".claude-plugin", "marketplace.json"),
+      JSON.stringify({
+        plugins: [
+          { name: "stale" },
+          { name: "active" },
+        ],
+      }, null, 2),
+      "utf8",
+    );
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+
+    const result = await client.retirement.retireStaleManaged({
+      workspaceRoot,
+      scope: "all",
+      codexHomes: [],
+      claudeHomes: [claudeHome],
+      activePluginNames: ["active"],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-retire-claude" } } });
+
+    expect(result.ok).toBe(true);
+    expect(result.stalePlugins).toEqual([{ agent: "claude", home: claudeHome, plugin: "stale" }]);
+    await expect(fs.stat(pluginDir)).rejects.toThrow();
+    const marketplace = JSON.parse(
+      await fs.readFile(path.join(claudeHome, ".claude-plugin", "marketplace.json"), "utf8"),
+    ) as { plugins: Array<{ name: string }> };
+    expect(marketplace.plugins).toEqual([{ name: "active" }]);
+  });
 });

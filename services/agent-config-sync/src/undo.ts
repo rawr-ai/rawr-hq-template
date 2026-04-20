@@ -3,8 +3,10 @@
  */
 export {
   beginPluginsSyncUndoCapture,
+} from "./service/modules/undo/lib/capture";
+export {
   PLUGINS_SYNC_UNDO_PROVIDER,
   type UndoCapsule,
   type UndoProvider,
   type UndoRunResult,
-} from "./service/modules/undo/sync-undo";
+} from "./service/modules/undo/entities";

@@ -19,6 +19,24 @@ export const GetStateOutputSchema = Type.Object(
   { additionalProperties: false },
 );
 
+const RepoStateLockTimeoutDataSchema = schema(
+  Type.Object(
+    {
+      lockPath: Type.String({ minLength: 1 }),
+    },
+    {
+      additionalProperties: false,
+      description: "Repo state lock path that could not be acquired.",
+    },
+  ),
+);
+
+const REPO_STATE_LOCK_TIMEOUT = {
+  status: 409,
+  message: "Timed out waiting for repo state lock",
+  data: RepoStateLockTimeoutDataSchema,
+} as const;
+
 export const contract = {
   getState: ocBase
     .meta({ idempotent: true, entity: "repoState" })
@@ -27,11 +45,13 @@ export const contract = {
   enablePlugin: ocBase
     .meta({ idempotent: false, entity: "repoState" })
     .input(schema(UpdatePluginInputSchema))
-    .output(schema(RepoStateSchema)),
+    .output(schema(RepoStateSchema))
+    .errors({ REPO_STATE_LOCK_TIMEOUT }),
   disablePlugin: ocBase
     .meta({ idempotent: false, entity: "repoState" })
     .input(schema(UpdatePluginInputSchema))
-    .output(schema(RepoStateSchema)),
+    .output(schema(RepoStateSchema))
+    .errors({ REPO_STATE_LOCK_TIMEOUT }),
 };
 
 export type RepoStateModuleContract = typeof contract;

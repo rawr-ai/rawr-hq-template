@@ -5,14 +5,68 @@ import {
   INVALID_CONVERSATION_JSON,
 } from "../../shared/errors";
 import { ocBase } from "../../base";
-import { SourceSnapshotSchema } from "../source-materials/schemas";
+import { SourceSnapshotSchema } from "../source-materials/entities";
+import { CORPUS_ARTIFACT_VALIDATION_FAILED } from "./errors";
 import {
-  BuildArtifactsInputSchema,
-  BuildArtifactsOutputSchema,
-  MaterializeArtifactsOutputSchema,
-} from "./schemas";
+  AmbiguityFlagSchema,
+  AnomalySchema,
+  FamilyGraphSchema,
+  IntermediateGraphSchema,
+  InventoryItemSchema,
+  ManifestSchema,
+  NormalizedThreadSchema,
+  OutputDirectoryEntrySchema,
+  OutputEntrySchema,
+  RelationshipSchema,
+  SourceCountsSchema,
+  ValidationReportSchema,
+} from "./entities";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
+const BuildArtifactsInputSchema = Type.Object(
+  {
+    snapshot: SourceSnapshotSchema,
+  },
+  { additionalProperties: false },
+);
+const BuildArtifactsOutputSchema = Type.Object(
+  {
+    workspaceRef: Type.String({ minLength: 1 }),
+    sourceCounts: SourceCountsSchema,
+    familyCount: Type.Number({ minimum: 0 }),
+    normalizedThreadCount: Type.Number({ minimum: 0 }),
+    anomalyCount: Type.Number({ minimum: 0 }),
+    warnings: Type.Array(Type.String()),
+    inventory: Type.Array(InventoryItemSchema),
+    familyGraphs: Type.Array(FamilyGraphSchema),
+    relationships: Type.Array(RelationshipSchema),
+    normalizedThreads: Type.Array(NormalizedThreadSchema),
+    intermediateGraph: IntermediateGraphSchema,
+    manifest: ManifestSchema,
+    anomalies: Type.Array(AnomalySchema),
+    ambiguityFlags: Type.Array(AmbiguityFlagSchema),
+    validationReport: ValidationReportSchema,
+    canonicalitySummary: Type.String(),
+    decisionLog: Type.String(),
+    mentalMap: Type.String(),
+    outputDirectories: Type.Array(OutputDirectoryEntrySchema),
+    outputEntries: Type.Array(OutputEntrySchema),
+  },
+  { additionalProperties: false },
+);
+const MaterializeArtifactsOutputSchema = Type.Object(
+  {
+    workspaceRef: Type.String({ minLength: 1 }),
+    sourceCounts: SourceCountsSchema,
+    familyCount: Type.Number({ minimum: 0 }),
+    normalizedThreadCount: Type.Number({ minimum: 0 }),
+    anomalyCount: Type.Number({ minimum: 0 }),
+    warnings: Type.Array(Type.String()),
+    outputDirectories: Type.Array(OutputDirectoryEntrySchema),
+    outputEntries: Type.Array(OutputEntrySchema),
+  },
+  { additionalProperties: false },
+);
 
 export const contract = {
   build: ocBase
@@ -24,6 +78,7 @@ export const contract = {
     .input(schema(EmptyInputSchema))
     .output(schema(MaterializeArtifactsOutputSchema))
     .errors({
+      CORPUS_ARTIFACT_VALIDATION_FAILED,
       INVALID_CONVERSATION_JSON,
       INVALID_CONVERSATION_EXPORT,
     }),

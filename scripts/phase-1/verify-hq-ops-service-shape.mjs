@@ -21,31 +21,36 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/shared/ports/resources.ts",
   "services/hq-ops/src/service/modules/config/contract.ts",
   "services/hq-ops/src/service/modules/config/entities.ts",
+  "services/hq-ops/src/service/modules/config/lib/load.ts",
+  "services/hq-ops/src/service/modules/config/lib/paths.ts",
+  "services/hq-ops/src/service/modules/config/lib/validation.ts",
   "services/hq-ops/src/service/modules/config/middleware.ts",
   "services/hq-ops/src/service/modules/config/module.ts",
-  "services/hq-ops/src/service/modules/config/repository.ts",
   "services/hq-ops/src/service/modules/config/router.ts",
   "services/hq-ops/src/service/modules/config/support.ts",
   "services/hq-ops/src/service/modules/repo-state/contract.ts",
   "services/hq-ops/src/service/modules/repo-state/entities.ts",
+  "services/hq-ops/src/service/modules/repo-state/lib/storage.ts",
   "services/hq-ops/src/service/modules/repo-state/middleware.ts",
   "services/hq-ops/src/service/modules/repo-state/module.ts",
-  "services/hq-ops/src/service/modules/repo-state/repository.ts",
   "services/hq-ops/src/service/modules/repo-state/router.ts",
-  "services/hq-ops/src/service/modules/repo-state/schemas.ts",
   "services/hq-ops/src/service/modules/journal/contract.ts",
+  "services/hq-ops/src/service/modules/journal/entities.ts",
+  "services/hq-ops/src/service/modules/journal/lib/paths.ts",
+  "services/hq-ops/src/service/modules/journal/lib/semantic.ts",
+  "services/hq-ops/src/service/modules/journal/lib/storage.ts",
   "services/hq-ops/src/service/modules/journal/middleware.ts",
   "services/hq-ops/src/service/modules/journal/module.ts",
-  "services/hq-ops/src/service/modules/journal/repository.ts",
   "services/hq-ops/src/service/modules/journal/router.ts",
-  "services/hq-ops/src/service/modules/journal/schemas.ts",
   "services/hq-ops/src/service/modules/journal/types.ts",
   "services/hq-ops/src/service/modules/security/contract.ts",
+  "services/hq-ops/src/service/modules/security/lib/audit.ts",
+  "services/hq-ops/src/service/modules/security/lib/process.ts",
+  "services/hq-ops/src/service/modules/security/lib/reporting.ts",
+  "services/hq-ops/src/service/modules/security/lib/secrets.ts",
   "services/hq-ops/src/service/modules/security/middleware.ts",
   "services/hq-ops/src/service/modules/security/module.ts",
-  "services/hq-ops/src/service/modules/security/repository.ts",
   "services/hq-ops/src/service/modules/security/router.ts",
-  "services/hq-ops/src/service/modules/security/schemas.ts",
   "services/hq-ops/src/service/modules/security/types.ts",
   "services/hq-ops/src/service/modules/plugin-catalog/contract.ts",
   "services/hq-ops/src/service/modules/plugin-catalog/entities.ts",
@@ -99,15 +104,15 @@ const ALLOWED_SHARED_PATHS = [
 
 const REQUIRED_RESOURCE_PORT_CONSUMERS = [
   "services/hq-ops/src/service/base.ts",
-  "services/hq-ops/src/service/modules/config/middleware.ts",
-  "services/hq-ops/src/service/modules/config/repository.ts",
-  "services/hq-ops/src/service/modules/config/support.ts",
-  "services/hq-ops/src/service/modules/journal/middleware.ts",
-  "services/hq-ops/src/service/modules/journal/repository.ts",
-  "services/hq-ops/src/service/modules/repo-state/middleware.ts",
-  "services/hq-ops/src/service/modules/repo-state/repository.ts",
-  "services/hq-ops/src/service/modules/security/middleware.ts",
-  "services/hq-ops/src/service/modules/security/repository.ts",
+  "services/hq-ops/src/service/modules/config/lib/paths.ts",
+  "services/hq-ops/src/service/modules/journal/lib/paths.ts",
+  "services/hq-ops/src/service/modules/journal/lib/storage.ts",
+  "services/hq-ops/src/service/modules/repo-state/lib/storage.ts",
+  "services/hq-ops/src/service/modules/security/router.ts",
+  "services/hq-ops/src/service/modules/security/lib/audit.ts",
+  "services/hq-ops/src/service/modules/security/lib/process.ts",
+  "services/hq-ops/src/service/modules/security/lib/reporting.ts",
+  "services/hq-ops/src/service/modules/security/lib/secrets.ts",
 ];
 
 async function listFilesUnder(relRoot) {
@@ -312,7 +317,16 @@ for (const relPath of REQUIRED_PATHS.filter((path) => path.startsWith("services/
 
 for (const relPath of [
   "services/hq-ops/src/service/modules/config/model.ts",
+  "services/hq-ops/src/service/modules/config/repository.ts",
+  "services/hq-ops/src/service/modules/config/lib/global-sources.ts",
+  "services/hq-ops/src/service/modules/config/lib/layers.ts",
   "services/hq-ops/src/service/modules/repo-state/model.ts",
+  "services/hq-ops/src/service/modules/repo-state/repository.ts",
+  "services/hq-ops/src/service/modules/repo-state/schemas.ts",
+  "services/hq-ops/src/service/modules/journal/repository.ts",
+  "services/hq-ops/src/service/modules/journal/schemas.ts",
+  "services/hq-ops/src/service/modules/security/repository.ts",
+  "services/hq-ops/src/service/modules/security/schemas.ts",
   "services/hq-ops/src/service/modules/plugin-install/model.ts",
   "services/hq-ops/src/service/modules/plugin-install/repository.ts",
   "services/hq-ops/src/service/modules/plugin-install/schemas.ts",
@@ -325,18 +339,6 @@ for (const relPath of [
   "services/hq-ops/src/service/shared/ports/security-runtime.ts",
 ]) {
   assertCondition(!(await pathExists(relPath)), `obsolete high-level HQ Ops behavior port must not survive: ${relPath}`);
-}
-
-for (const relPath of [
-  "services/hq-ops/src/service/modules/config/repository.ts",
-  "services/hq-ops/src/service/modules/repo-state/repository.ts",
-  "services/hq-ops/src/service/modules/journal/repository.ts",
-  "services/hq-ops/src/service/modules/security/repository.ts",
-]) {
-  const source = await readFile(relPath);
-  for (const fragment of ["configStore.", "repoStateStore.", "journalStore.", "securityRuntime."]) {
-    assertCondition(!source.includes(fragment), `${relPath} must not forward to ${fragment}`);
-  }
 }
 
 const purityFindings = await findHqOpsServiceBoundaryPurityFindings();

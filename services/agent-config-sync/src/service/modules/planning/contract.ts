@@ -95,6 +95,29 @@ export const FullSyncPolicyResultSchema = Type.Object(
   { additionalProperties: false },
 );
 
+const WorkspaceRootErrorDataSchema = schema(
+  Type.Object(
+    {
+      cwd: Type.String({ minLength: 1 }),
+      workspaceRoot: Type.Optional(Type.String({ minLength: 1 })),
+      resolvedPath: Type.Optional(Type.String({ minLength: 1 })),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const INVALID_WORKSPACE_ROOT = {
+  status: 400,
+  message: "Configured workspace root is not a RAWR workspace",
+  data: WorkspaceRootErrorDataSchema,
+} as const;
+
+const WORKSPACE_ROOT_NOT_FOUND = {
+  status: 404,
+  message: "Unable to locate workspace root",
+  data: WorkspaceRootErrorDataSchema,
+} as const;
+
 export const WorkspacePlanningBaseInputSchema = Type.Object(
   {
     cwd: Type.String({ minLength: 1 }),
@@ -214,11 +237,13 @@ export const contract = {
   planWorkspaceSync: ocBase
     .meta({ idempotent: true, entity: "planning" })
     .input(schema(PlanWorkspaceSyncInputSchema))
-    .output(schema(WorkspaceSyncPlanSchema)),
+    .output(schema(WorkspaceSyncPlanSchema))
+    .errors({ INVALID_WORKSPACE_ROOT, WORKSPACE_ROOT_NOT_FOUND }),
   assessWorkspaceSync: ocBase
     .meta({ idempotent: true, entity: "planning" })
     .input(schema(AssessWorkspaceSyncInputSchema))
-    .output(schema(SyncAssessmentSchema)),
+    .output(schema(SyncAssessmentSchema))
+    .errors({ INVALID_WORKSPACE_ROOT, WORKSPACE_ROOT_NOT_FOUND }),
   evaluateFullSyncPolicy: ocBase
     .meta({ idempotent: true, entity: "planning" })
     .input(schema(FullSyncPolicyInputSchema))

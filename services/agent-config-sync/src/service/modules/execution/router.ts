@@ -1,11 +1,66 @@
 import { module } from "./module";
 import { resolveProviderContent as resolveServiceProviderContent } from "../source-content/lib/provider-content";
+import { syncClaudeTarget } from "./lib/claude-target";
+import { syncCodexTarget } from "./lib/codex-target";
+import { summarizeScannedContent } from "./lib/sync-results";
+import type { SyncTargetResult } from "./contract";
 
 /**
- * Execution procedure for running the sync engine through the module repository.
+ * Execution procedure for running provider-specific effective content through
+ * each selected destination home.
  */
 const runSync = module.runSync.handler(async ({ context, input }) => {
-  return context.repo.runSync(input);
+  const targets: SyncTargetResult[] = [];
+  const options = {
+    dryRun: input.dryRun,
+    force: input.force,
+    gc: input.gc,
+    includeAgentsInCodex: input.includeAgentsInCodex,
+    includeAgentsInClaude: input.includeAgentsInClaude,
+    undoCapture: input.dryRun ? undefined : context.undoCapture,
+    resources: context.resources,
+  };
+
+  if (input.includeCodex) {
+    const codexContent = await resolveServiceProviderContent({
+      agent: "codex",
+      sourcePlugin: input.sourcePlugin,
+      base: input.content,
+      resources: context.resources,
+    });
+    for (const codexHome of input.codexHomes) {
+      targets.push(await syncCodexTarget({
+        codexHome,
+        sourcePlugin: input.sourcePlugin,
+        content: codexContent,
+        options,
+      }));
+    }
+  }
+
+  if (input.includeClaude) {
+    const claudeContent = await resolveServiceProviderContent({
+      agent: "claude",
+      sourcePlugin: input.sourcePlugin,
+      base: input.content,
+      resources: context.resources,
+    });
+    for (const claudeHome of input.claudeHomes) {
+      targets.push(await syncClaudeTarget({
+        claudeLocalHome: claudeHome,
+        sourcePlugin: input.sourcePlugin,
+        content: claudeContent,
+        options,
+      }));
+    }
+  }
+
+  return {
+    ok: targets.every((target) => target.conflicts.length === 0),
+    sourcePlugin: input.sourcePlugin,
+    scanned: summarizeScannedContent(input.content),
+    targets,
+  };
 });
 
 /**

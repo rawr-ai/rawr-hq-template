@@ -7,7 +7,10 @@ const describeTemplate = module.describeTemplate.handler(async () => {
 
 const initialize = module.initialize.handler(async ({ context }) => {
   const template = createWorkspaceTemplate();
-  const scaffold = await context.repo.initialize(template);
+  const scaffold = await context.workspaceStore.scaffoldWorkspace({
+    workspaceRef: context.workspaceRef,
+    template,
+  });
 
   return {
     workspaceRef: context.workspaceRef,

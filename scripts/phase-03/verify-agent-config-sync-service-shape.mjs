@@ -29,29 +29,43 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/modules/source-content/lib/source-plugin-content.ts",
   "services/agent-config-sync/src/service/modules/execution/marketplace-claude.ts",
   "services/agent-config-sync/src/service/modules/execution/registry-codex.ts",
-  "services/agent-config-sync/src/service/modules/execution/sync-engine.ts",
+  "services/agent-config-sync/src/service/modules/execution/lib/claude-target.ts",
+  "services/agent-config-sync/src/service/modules/execution/lib/codex-target.ts",
+  "services/agent-config-sync/src/service/modules/execution/lib/destination-files.ts",
+  "services/agent-config-sync/src/service/modules/execution/lib/sync-results.ts",
   "services/agent-config-sync/src/service/modules/planning/contract.ts",
+  "services/agent-config-sync/src/service/modules/planning/lib/assessment-summary.ts",
+  "services/agent-config-sync/src/service/modules/planning/lib/full-sync-policy.ts",
+  "services/agent-config-sync/src/service/modules/planning/lib/source-plugins.ts",
+  "services/agent-config-sync/src/service/modules/planning/lib/target-homes.ts",
+  "services/agent-config-sync/src/service/modules/planning/lib/workspace-discovery.ts",
+  "services/agent-config-sync/src/service/modules/planning/lib/workspace-roots.ts",
   "services/agent-config-sync/src/service/modules/planning/middleware.ts",
   "services/agent-config-sync/src/service/modules/planning/module.ts",
-  "services/agent-config-sync/src/service/modules/planning/repository.ts",
   "services/agent-config-sync/src/service/modules/planning/router.ts",
   "services/agent-config-sync/src/service/modules/execution/contract.ts",
   "services/agent-config-sync/src/service/modules/execution/middleware.ts",
   "services/agent-config-sync/src/service/modules/execution/module.ts",
-  "services/agent-config-sync/src/service/modules/execution/repository.ts",
   "services/agent-config-sync/src/service/modules/execution/router.ts",
   "services/agent-config-sync/src/service/modules/retirement/contract.ts",
+  "services/agent-config-sync/src/service/modules/retirement/lib/claude-stale-managed.ts",
+  "services/agent-config-sync/src/service/modules/retirement/lib/codex-stale-managed.ts",
+  "services/agent-config-sync/src/service/modules/retirement/lib/filesystem-actions.ts",
+  "services/agent-config-sync/src/service/modules/retirement/lib/managed-source.ts",
   "services/agent-config-sync/src/service/modules/retirement/middleware.ts",
   "services/agent-config-sync/src/service/modules/retirement/module.ts",
-  "services/agent-config-sync/src/service/modules/retirement/repository.ts",
-  "services/agent-config-sync/src/service/modules/retirement/retire-stale-managed.ts",
   "services/agent-config-sync/src/service/modules/retirement/router.ts",
   "services/agent-config-sync/src/service/modules/undo/contract.ts",
+  "services/agent-config-sync/src/service/modules/undo/entities.ts",
+  "services/agent-config-sync/src/service/modules/undo/lib/apply-operation.ts",
+  "services/agent-config-sync/src/service/modules/undo/lib/capsule-paths.ts",
+  "services/agent-config-sync/src/service/modules/undo/lib/capsule-store.ts",
+  "services/agent-config-sync/src/service/modules/undo/lib/capture.ts",
+  "services/agent-config-sync/src/service/modules/undo/lib/command-expiration.ts",
+  "services/agent-config-sync/src/service/modules/undo/lib/path-snapshots.ts",
   "services/agent-config-sync/src/service/modules/undo/middleware.ts",
   "services/agent-config-sync/src/service/modules/undo/module.ts",
-  "services/agent-config-sync/src/service/modules/undo/repository.ts",
   "services/agent-config-sync/src/service/modules/undo/router.ts",
-  "services/agent-config-sync/src/service/modules/undo/sync-undo.ts",
   "services/agent-config-sync/test/helpers.ts",
   "services/agent-config-sync/test/service-shape.test.ts",
 ];
@@ -80,16 +94,12 @@ const [
   sharedResources,
   executionContract,
   executionRouter,
-  executionRepository,
   executionMiddleware,
   executionModule,
-  planningRepository,
   planningMiddleware,
   planningModule,
-  retirementRepository,
   retirementMiddleware,
   retirementModule,
-  undoRepository,
   undoMiddleware,
   undoModule,
   sharedSchemas,
@@ -104,16 +114,12 @@ const [
   readFile("services/agent-config-sync/src/service/shared/resources.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/contract.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/router.ts"),
-  readFile("services/agent-config-sync/src/service/modules/execution/repository.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/middleware.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/module.ts"),
-  readFile("services/agent-config-sync/src/service/modules/planning/repository.ts"),
   readFile("services/agent-config-sync/src/service/modules/planning/middleware.ts"),
   readFile("services/agent-config-sync/src/service/modules/planning/module.ts"),
-  readFile("services/agent-config-sync/src/service/modules/retirement/repository.ts"),
   readFile("services/agent-config-sync/src/service/modules/retirement/middleware.ts"),
   readFile("services/agent-config-sync/src/service/modules/retirement/module.ts"),
-  readFile("services/agent-config-sync/src/service/modules/undo/repository.ts"),
   readFile("services/agent-config-sync/src/service/modules/undo/middleware.ts"),
   readFile("services/agent-config-sync/src/service/modules/undo/module.ts"),
   readFile("services/agent-config-sync/src/service/shared/schemas.ts"),
@@ -137,21 +143,6 @@ assertCondition(!baseSource.includes("retirementRuntime"), "agent-config-sync ba
 assertCondition(!baseSource.includes("undoRuntime"), "agent-config-sync base deps must not declare undoRuntime");
 
 for (const [label, source] of Object.entries({
-  executionRepository,
-  planningRepository,
-  retirementRepository,
-  undoRepository,
-})) {
-  for (const forbidden of ["runtime.runSync", "runtime.previewSync", "runtime.retireStaleManaged", "runtime.runUndo"]) {
-    assertCondition(!source.includes(forbidden), `${label} must not forward to ${forbidden}`);
-  }
-  assertCondition(
-    !source.includes("../../shared/internal/") || source.includes("../../shared/internal/source-scope"),
-    `${label} must not import behavior from shared/internal except source-scope`,
-  );
-}
-
-for (const [label, source] of Object.entries({
   executionModule,
   planningModule,
   retirementModule,
@@ -159,9 +150,8 @@ for (const [label, source] of Object.entries({
 })) {
   assertCondition(!source.includes('from "./repository"'), `${label} must not import repository directly`);
   assertCondition(!source.includes("createRepository("), `${label} must not construct repositories inline`);
-  assertCondition(source.includes('repository } from "./middleware"') || source.includes('repository,') || source.includes('{ analytics, observability, repository }'), `${label} must import repository from middleware`);
-  assertCondition(source.includes(".use(repository)"), `${label} must compose repository middleware`);
-  assertCondition(source.includes("context.provided.repo"), `${label} must map the provided repository`);
+  assertCondition(!source.includes(".use(repository)"), `${label} must not compose repository middleware`);
+  assertCondition(!source.includes("context.provided.repo"), `${label} must not map a repository into handler context`);
 }
 
 for (const [label, source] of Object.entries({
@@ -170,8 +160,8 @@ for (const [label, source] of Object.entries({
   retirementMiddleware,
   undoMiddleware,
 })) {
-  assertCondition(source.includes("createServiceProvider"), `${label} must create repository provider via createServiceProvider`);
-  assertCondition(source.includes("export const repository"), `${label} must export repository provider`);
+  assertCondition(!source.includes("createServiceProvider"), `${label} must not create repository providers`);
+  assertCondition(!source.includes("export const repository"), `${label} must not export repository providers`);
 }
 
 for (const forbidden of ["SyncAgentSelection", "TargetHomes", "WorkspaceSkip", "SyncPolicy"]) {
@@ -190,6 +180,14 @@ for (const relPath of [
   "packages/agent-config-sync-host",
   "services/agent-config-sync/src/service/shared/ports",
   "services/agent-config-sync/src/service/modules/execution/effective-content.ts",
+  "services/agent-config-sync/src/service/modules/execution/repository.ts",
+  "services/agent-config-sync/src/service/modules/execution/sync-engine.ts",
+  "services/agent-config-sync/src/service/modules/planning/repository.ts",
+  "services/agent-config-sync/src/service/modules/planning/workspace-planning.ts",
+  "services/agent-config-sync/src/service/modules/retirement/repository.ts",
+  "services/agent-config-sync/src/service/modules/retirement/retire-stale-managed.ts",
+  "services/agent-config-sync/src/service/modules/undo/repository.ts",
+  "services/agent-config-sync/src/service/modules/undo/sync-undo.ts",
   "services/agent-config-sync/src/service/modules/planning/schemas.ts",
   "services/agent-config-sync/src/service/modules/execution/schemas.ts",
   "services/agent-config-sync/src/service/modules/retirement/schemas.ts",

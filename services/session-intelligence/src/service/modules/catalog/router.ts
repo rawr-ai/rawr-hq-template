@@ -1,8 +1,10 @@
 import { module } from "./module";
 import { inferProjectFromCwd, inferStatusFromPath } from "../../shared/normalization";
+import { detectSessionFormat, getClaudeSessionMetadata, getCodexSessionMetadata } from "../../shared/normalization";
 import { looksLikePath, stem } from "../../shared/path-utils";
 import type { DiscoveredSessionFile } from "../../shared/schemas";
 import type { ResolveResult, SessionFilters, SessionListItem } from "./schemas";
+import { discoverSessions } from "./discovery";
 
 function parseDatetimeBestEffort(value?: string): Date | null {
   if (!value) return null;
@@ -51,7 +53,7 @@ function matchesListFilters(session: SessionListItem, filters: SessionFilters): 
 const list = module.list.handler(async ({ context, input }) => {
   const limit = input.limit > 0 ? input.limit : 0;
   const filters = input.filters ?? {};
-  const discovered = await context.repo.discoverSessions({
+  const discovered = await discoverSessions(context.sourceRuntime, context.indexRuntime, {
     source: input.source,
     limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
     project: filters.project,
@@ -60,7 +62,7 @@ const list = module.list.handler(async ({ context, input }) => {
   const sessions: SessionListItem[] = [];
   for (const candidate of discovered) {
     if (candidate.source === "claude") {
-      const meta = await context.repo.readClaudeMetadata(candidate.path);
+      const meta = await getClaudeSessionMetadata(context.sourceRuntime, candidate.path);
       sessions.push({
         path: candidate.path,
         sessionId: meta.sessionId,
@@ -76,7 +78,7 @@ const list = module.list.handler(async ({ context, input }) => {
         sizeKb: Math.floor(candidate.sizeBytes / 1024),
       });
     } else {
-      const meta = await context.repo.readCodexMetadata(candidate.path);
+      const meta = await getCodexSessionMetadata(context.sourceRuntime, candidate.path);
       sessions.push({
         path: candidate.path,
         sessionId: meta.sessionId,
@@ -107,9 +109,9 @@ const resolve = module.resolve.handler(async ({ context, input, errors }) => {
   let status: ResolveResult["resolved"]["status"] | undefined;
 
   if (looksLikePath(clean)) {
-    if (await context.repo.statFile(clean)) resolvedPath = clean;
+    if (await context.sourceRuntime.statFile({ path: clean })) resolvedPath = clean;
   } else {
-    const candidates = await context.repo.discoverSessions({ source: input.source });
+    const candidates = await discoverSessions(context.sourceRuntime, context.indexRuntime, { source: input.source });
     const claude = candidates.find((candidate) => candidate.source === "claude" && stem(candidate.path) === clean);
     const codex = candidates.find((candidate) => candidate.source === "codex" && stem(candidate.path).toLowerCase().includes(clean.toLowerCase()));
     const candidate = claude ?? codex;
@@ -127,8 +129,8 @@ const resolve = module.resolve.handler(async ({ context, input, errors }) => {
     });
   }
 
-  const format = await context.repo.detectFormat(resolvedPath);
-  const stat = await context.repo.statFile(resolvedPath);
+  const format = await detectSessionFormat(context.sourceRuntime, resolvedPath);
+  const stat = await context.sourceRuntime.statFile({ path: resolvedPath });
   if (!stat) {
     const message = `Session not found: ${input.session}`;
     throw errors.SESSION_NOT_FOUND({
@@ -140,13 +142,13 @@ const resolve = module.resolve.handler(async ({ context, input, errors }) => {
   if (format === "claude") {
     return {
       resolved: { path: resolvedPath, source: "claude" as const, modified: new Date(stat.modifiedMs).toISOString(), sizeBytes: stat.sizeBytes },
-      metadata: await context.repo.readClaudeMetadata(resolvedPath),
+      metadata: await getClaudeSessionMetadata(context.sourceRuntime, resolvedPath),
     };
   }
   if (format === "codex") {
     return {
       resolved: { path: resolvedPath, source: "codex" as const, status: status ?? inferStatusFromPath(resolvedPath), modified: new Date(stat.modifiedMs).toISOString(), sizeBytes: stat.sizeBytes },
-      metadata: await context.repo.readCodexMetadata(resolvedPath),
+      metadata: await getCodexSessionMetadata(context.sourceRuntime, resolvedPath),
     };
   }
 
