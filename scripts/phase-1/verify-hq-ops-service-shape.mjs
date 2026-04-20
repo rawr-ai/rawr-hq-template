@@ -19,6 +19,8 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/shared/errors.ts",
   "services/hq-ops/src/service/shared/internal-errors.ts",
   "services/hq-ops/src/service/shared/ports/resources.ts",
+  "services/hq-ops/src/service/shared/entities/workspace-plugin-catalog.ts",
+  "services/hq-ops/src/service/shared/repositories/workspace-plugin-catalog-repository.ts",
   "services/hq-ops/src/service/modules/config/contract.ts",
   "services/hq-ops/src/service/modules/config/entities.ts",
   "services/hq-ops/src/service/modules/config/helpers/load.ts",
@@ -51,10 +53,6 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/modules/security/module.ts",
   "services/hq-ops/src/service/modules/security/router.ts",
   "services/hq-ops/src/service/modules/plugin-catalog/contract.ts",
-  "services/hq-ops/src/service/modules/plugin-catalog/entities.ts",
-  "services/hq-ops/src/service/modules/plugin-catalog/helpers/discovery.ts",
-  "services/hq-ops/src/service/modules/plugin-catalog/helpers/manifest.ts",
-  "services/hq-ops/src/service/modules/plugin-catalog/helpers/path-utils.ts",
   "services/hq-ops/src/service/modules/plugin-catalog/middleware.ts",
   "services/hq-ops/src/service/modules/plugin-catalog/module.ts",
   "services/hq-ops/src/service/modules/plugin-catalog/router.ts",
@@ -98,10 +96,13 @@ const ALLOWED_SHARED_PATHS = [
   "services/hq-ops/src/service/shared/errors.ts",
   "services/hq-ops/src/service/shared/internal-errors.ts",
   "services/hq-ops/src/service/shared/ports/resources.ts",
+  "services/hq-ops/src/service/shared/entities/workspace-plugin-catalog.ts",
+  "services/hq-ops/src/service/shared/repositories/workspace-plugin-catalog-repository.ts",
 ];
 
 const REQUIRED_RESOURCE_PORT_CONSUMERS = [
   "services/hq-ops/src/service/base.ts",
+  "services/hq-ops/src/service/shared/repositories/workspace-plugin-catalog-repository.ts",
   "services/hq-ops/src/service/modules/config/helpers/paths.ts",
   "services/hq-ops/src/service/modules/journal/helpers/paths.ts",
   "services/hq-ops/src/service/modules/journal/helpers/storage.ts",
@@ -236,8 +237,8 @@ for (const forbiddenResourceFragment of [
 for (const relPath of REQUIRED_RESOURCE_PORT_CONSUMERS) {
   const source = await readFile(relPath);
   assertCondition(
-    source.includes("shared/ports/resources"),
-    `${relPath} must consume the shared primitive HQ Ops resources port`,
+    source.includes("ports/resources"),
+    `${relPath} must consume the shared primitive HQ Ops resources port (services/hq-ops/src/service/shared/ports/resources.ts)`,
   );
 }
 

@@ -5,24 +5,21 @@
  * It is intentionally "catalog only": install/lifecycle side effects live in
  * sibling modules so callers can choose read vs write capabilities explicitly.
  */
-import { assertUniqueCatalogIdentity, listWorkspacePluginPackageDirs, parsePluginPackage } from "./helpers/discovery";
 import { module } from "./module";
+import { discoverWorkspacePluginCatalog } from "../../shared/repositories/workspace-plugin-catalog-repository";
 import type { HqOpsResources } from "../../shared/ports/resources";
-import type { WorkspacePluginCatalogEntry } from "./entities";
+import type { WorkspacePluginCatalogEntry } from "../../shared/entities/workspace-plugin-catalog";
 
 async function loadWorkspacePluginCatalog(input: {
   workspaceRoot?: string;
   defaultWorkspaceRoot: string;
   resources: Pick<HqOpsResources, "fs" | "path">;
 }): Promise<{ workspaceRoot: string; plugins: WorkspacePluginCatalogEntry[] }> {
-  const resources = input.resources;
-  const workspaceRoot = resources.path.resolve(input.workspaceRoot ?? input.defaultWorkspaceRoot);
-  const pluginDirs = await listWorkspacePluginPackageDirs(workspaceRoot, resources.fs, resources.path);
-  const parsed = await Promise.all(pluginDirs.map((pluginDir) => parsePluginPackage(pluginDir, workspaceRoot, resources.fs, resources.path)));
-  const plugins = parsed
-    .filter((p): p is WorkspacePluginCatalogEntry => Boolean(p))
-    .sort((a, b) => a.id.localeCompare(b.id));
-  assertUniqueCatalogIdentity(plugins);
+  const workspaceRoot = input.resources.path.resolve(input.workspaceRoot ?? input.defaultWorkspaceRoot);
+  const plugins = await discoverWorkspacePluginCatalog({
+    workspaceRoot,
+    resources: input.resources,
+  });
   return { workspaceRoot, plugins };
 }
 
