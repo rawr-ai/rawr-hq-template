@@ -1,7 +1,6 @@
-import path from "node:path";
 import { Value } from "typebox/value";
-import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type { SourcePlugin, SyncAgent } from "../../../shared/entities";
+import type { AgentConfigSyncResources } from "../../resources";
+import type { SourcePlugin, SyncAgent } from "../../entities";
 import {
   PluginContentManifestV1Schema,
   type NormalizedPluginContentInclude,
@@ -44,8 +43,14 @@ function normalizeInclude(input: unknown): NormalizedPluginContentInclude {
 /**
  * Resolves plugin-content paths relative to the source plugin package.
  */
-function resolveRelativePath(pluginAbsPath: string, relOrAbsPath: string): string {
-  return path.isAbsolute(relOrAbsPath) ? relOrAbsPath : path.resolve(pluginAbsPath, relOrAbsPath);
+function resolveRelativePath(input: {
+  pathOps: AgentConfigSyncResources["path"];
+  pluginAbsPath: string;
+  relOrAbsPath: string;
+}): string {
+  return input.pathOps.isAbsolute(input.relOrAbsPath)
+    ? input.relOrAbsPath
+    : input.pathOps.resolve(input.pluginAbsPath, input.relOrAbsPath);
 }
 
 /**
@@ -70,7 +75,7 @@ export async function resolvePluginContentLayout(input: {
   sourcePlugin: SourcePlugin;
   resources: AgentConfigSyncResources;
 }): Promise<PluginContentLayout> {
-  const packageJsonPath = path.join(input.sourcePlugin.absPath, "package.json");
+  const packageJsonPath = input.resources.path.join(input.sourcePlugin.absPath, "package.json");
   const packageJson = (await input.resources.files.readJsonFile<PackageJson>(packageJsonPath)) ?? {};
   const rawr = asRecord(packageJson.rawr);
   const manifest = parsePluginContentManifest({
@@ -80,17 +85,23 @@ export async function resolvePluginContentLayout(input: {
   const baseInclude = normalizeInclude(manifest?.include);
 
   return {
-    baseRootAbs: resolveRelativePath(input.sourcePlugin.absPath, manifest?.contentRoot ?? "."),
+    baseRootAbs: resolveRelativePath({
+      pathOps: input.resources.path,
+      pluginAbsPath: input.sourcePlugin.absPath,
+      relOrAbsPath: manifest?.contentRoot ?? ".",
+    }),
     baseInclude,
     overlayRootAbs: {
-      codex: resolveRelativePath(
-        input.sourcePlugin.absPath,
-        manifest?.providers?.codex?.overlayRoot ?? path.join("providers", "codex"),
-      ),
-      claude: resolveRelativePath(
-        input.sourcePlugin.absPath,
-        manifest?.providers?.claude?.overlayRoot ?? path.join("providers", "claude"),
-      ),
+      codex: resolveRelativePath({
+        pathOps: input.resources.path,
+        pluginAbsPath: input.sourcePlugin.absPath,
+        relOrAbsPath: manifest?.providers?.codex?.overlayRoot ?? input.resources.path.join("providers", "codex"),
+      }),
+      claude: resolveRelativePath({
+        pathOps: input.resources.path,
+        pluginAbsPath: input.sourcePlugin.absPath,
+        relOrAbsPath: manifest?.providers?.claude?.overlayRoot ?? input.resources.path.join("providers", "claude"),
+      }),
     },
     includeByProvider: {
       codex: { ...baseInclude, ...normalizeInclude(manifest?.providers?.codex?.include) },

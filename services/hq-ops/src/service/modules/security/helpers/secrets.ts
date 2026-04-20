@@ -23,15 +23,15 @@ function looksBinary(buf: Uint8Array): boolean {
   return sample.includes(0);
 }
 
-function findMatches(text: string, pattern: SecretPattern): Array<{ match: string; index: number }> {
-  const matches: Array<{ match: string; index: number }> = [];
+function findMatches(text: string, pattern: SecretPattern): Array<{ value: string; index: number }> {
+  const matches: Array<{ value: string; index: number }> = [];
   const flags = pattern.re.flags.includes("g") ? pattern.re.flags : `${pattern.re.flags}g`;
   const re = new RegExp(pattern.re.source, flags);
 
   for (;;) {
     const match = re.exec(text);
     if (!match) break;
-    matches.push({ match: match[0], index: match.index });
+    matches.push({ value: match[0], index: match.index });
     if (match.index === re.lastIndex) re.lastIndex += 1;
   }
 
@@ -47,7 +47,6 @@ function scanTextForSecrets(text: string, filePath: string): SecurityFinding[] {
         severity: pattern.severity ?? "critical",
         path: filePath,
         patternId: pattern.id,
-        match: match.match,
         index: match.index,
       });
     }

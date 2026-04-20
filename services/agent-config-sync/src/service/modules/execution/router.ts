@@ -1,7 +1,5 @@
-import path from "node:path";
-
 import { module } from "./module";
-import { resolveProviderContent as resolveServiceProviderContent } from "../source-content/helpers/provider-content";
+import { resolveProviderContent as resolveServiceProviderContent } from "../../shared/source-content/helpers/provider-content";
 import { deleteIfExists, syncFileWithConflictPolicy, syncSkillDirWithConflictPolicy } from "./helpers/destination-files";
 import {
   buildCodexScriptName,
@@ -23,6 +21,7 @@ import type { SyncTargetResult } from "./contract";
  * each selected destination home.
  */
 const runSync = module.runSync.handler(async ({ context, input }) => {
+  const pathOps = context.resources.path;
   const targets: SyncTargetResult[] = [];
   const options = {
     dryRun: input.dryRun,
@@ -44,16 +43,16 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
 
     for (const codexHome of input.codexHomes) {
       const result: SyncTargetResult = { agent: "codex", home: codexHome, items: [], conflicts: [] };
-      const promptsDir = path.join(codexHome, "prompts");
-      const skillsDir = path.join(codexHome, "skills");
-      const scriptsDir = path.join(codexHome, "scripts");
+      const promptsDir = pathOps.join(codexHome, "prompts");
+      const skillsDir = pathOps.join(codexHome, "skills");
+      const scriptsDir = pathOps.join(codexHome, "scripts");
 
       if (!options.dryRun) {
         await Promise.all([
           context.resources.files.ensureDir(promptsDir),
           context.resources.files.ensureDir(skillsDir),
           context.resources.files.ensureDir(scriptsDir),
-          context.resources.files.ensureDir(path.join(codexHome, "plugins")),
+          context.resources.files.ensureDir(pathOps.join(codexHome, "plugins")),
         ]);
       }
 
@@ -67,7 +66,7 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
       for (const workflow of codexContent.workflowFiles) {
         await syncFileWithConflictPolicy({
           src: workflow.absPath,
-          dest: path.join(promptsDir, `${workflow.name}.md`),
+          dest: pathOps.join(promptsDir, `${workflow.name}.md`),
           kind: "workflow",
           options,
           result,
@@ -78,7 +77,7 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
       for (const skill of codexContent.skills) {
         await syncSkillDirWithConflictPolicy({
           srcDir: skill.absPath,
-          destDir: path.join(skillsDir, skill.name),
+          destDir: pathOps.join(skillsDir, skill.name),
           skillName: skill.name,
           options,
           result,
@@ -90,7 +89,7 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
         const scriptName = buildCodexScriptName(input.sourcePlugin.dirName, script.name);
         await syncFileWithConflictPolicy({
           src: script.absPath,
-          dest: path.join(scriptsDir, scriptName),
+          dest: pathOps.join(scriptsDir, scriptName),
           kind: "script",
           options,
           result,
@@ -105,17 +104,17 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
 
         for (const oldPrompt of registry.claimedSets.promptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
           if (newPrompts.has(oldPrompt) || claimedOthers.prompts.has(oldPrompt)) continue;
-          await deleteIfExists({ target: path.join(promptsDir, `${oldPrompt}.md`), kind: "workflow", options, result });
+          await deleteIfExists({ target: pathOps.join(promptsDir, `${oldPrompt}.md`), kind: "workflow", options, result });
         }
 
         for (const oldSkill of registry.claimedSets.skillsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
           if (newSkills.has(oldSkill) || claimedOthers.skills.has(oldSkill)) continue;
-          await deleteIfExists({ target: path.join(skillsDir, oldSkill), kind: "skill", options, result });
+          await deleteIfExists({ target: pathOps.join(skillsDir, oldSkill), kind: "skill", options, result });
         }
 
         for (const oldScript of registry.claimedSets.scriptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
           if (newScripts.has(oldScript) || claimedOthers.scripts.has(oldScript)) continue;
-          await deleteIfExists({ target: path.join(scriptsDir, oldScript), kind: "script", options, result });
+          await deleteIfExists({ target: pathOps.join(scriptsDir, oldScript), kind: "script", options, result });
         }
       }
 
@@ -153,11 +152,11 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
 
     for (const claudeHome of input.claudeHomes) {
       const result: SyncTargetResult = { agent: "claude", home: claudeHome, items: [], conflicts: [] };
-      const pluginDir = path.join(claudeHome, "plugins", input.sourcePlugin.dirName);
-      const commandsDir = path.join(pluginDir, "commands");
-      const skillsDir = path.join(pluginDir, "skills");
-      const scriptsDir = path.join(pluginDir, "scripts");
-      const agentsDir = path.join(pluginDir, "agents");
+      const pluginDir = pathOps.join(claudeHome, "plugins", input.sourcePlugin.dirName);
+      const commandsDir = pathOps.join(pluginDir, "commands");
+      const skillsDir = pathOps.join(pluginDir, "skills");
+      const scriptsDir = pathOps.join(pluginDir, "scripts");
+      const agentsDir = pathOps.join(pluginDir, "agents");
 
       if (!options.dryRun) {
         await Promise.all([
@@ -171,7 +170,7 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
       for (const workflow of claudeContent.workflowFiles) {
         await syncFileWithConflictPolicy({
           src: workflow.absPath,
-          dest: path.join(commandsDir, `${workflow.name}.md`),
+          dest: pathOps.join(commandsDir, `${workflow.name}.md`),
           kind: "workflow",
           options,
           result,
@@ -181,7 +180,7 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
       for (const skill of claudeContent.skills) {
         await syncSkillDirWithConflictPolicy({
           srcDir: skill.absPath,
-          destDir: path.join(skillsDir, skill.name),
+          destDir: pathOps.join(skillsDir, skill.name),
           skillName: skill.name,
           options,
           result,
@@ -191,7 +190,7 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
       for (const script of claudeContent.scripts) {
         await syncFileWithConflictPolicy({
           src: script.absPath,
-          dest: path.join(scriptsDir, script.name),
+          dest: pathOps.join(scriptsDir, script.name),
           kind: "script",
           options,
           result,
@@ -203,7 +202,7 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
         for (const agent of claudeContent.agentFiles) {
           await syncFileWithConflictPolicy({
             src: agent.absPath,
-            dest: path.join(agentsDir, `${agent.name}.md`),
+            dest: pathOps.join(agentsDir, `${agent.name}.md`),
             kind: "agent",
             options,
             result,
@@ -221,29 +220,29 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
 
           for (const oldWorkflow of previous.workflows) {
             if (currentWorkflow.has(oldWorkflow)) continue;
-            await deleteIfExists({ target: path.join(commandsDir, `${oldWorkflow}.md`), kind: "workflow", options, result });
+            await deleteIfExists({ target: pathOps.join(commandsDir, `${oldWorkflow}.md`), kind: "workflow", options, result });
           }
 
           for (const oldSkill of previous.skills) {
             if (currentSkills.has(oldSkill)) continue;
-            await deleteIfExists({ target: path.join(skillsDir, oldSkill), kind: "skill", options, result });
+            await deleteIfExists({ target: pathOps.join(skillsDir, oldSkill), kind: "skill", options, result });
           }
 
           for (const oldScript of previous.scripts) {
             if (currentScripts.has(oldScript)) continue;
-            await deleteIfExists({ target: path.join(scriptsDir, oldScript), kind: "script", options, result });
+            await deleteIfExists({ target: pathOps.join(scriptsDir, oldScript), kind: "script", options, result });
           }
 
           if (includeAgentsInClaude) {
             for (const oldAgent of previous.agents ?? []) {
               if (currentAgents.has(oldAgent)) continue;
-              await deleteIfExists({ target: path.join(agentsDir, `${oldAgent}.md`), kind: "agent", options, result });
+              await deleteIfExists({ target: pathOps.join(agentsDir, `${oldAgent}.md`), kind: "agent", options, result });
             }
           }
         }
       }
 
-      const pluginManifestPath = path.join(claudeHome, "plugins", input.sourcePlugin.dirName, ".claude-plugin", "plugin.json");
+      const pluginManifestPath = pathOps.join(claudeHome, "plugins", input.sourcePlugin.dirName, ".claude-plugin", "plugin.json");
       if (!options.dryRun) {
         await options.undoCapture?.captureWriteTarget(pluginManifestPath);
       }
@@ -262,7 +261,7 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
         });
       }
 
-      const marketplacePath = path.join(claudeHome, ".claude-plugin", "marketplace.json");
+      const marketplacePath = pathOps.join(claudeHome, ".claude-plugin", "marketplace.json");
       if (!options.dryRun) {
         await options.undoCapture?.captureWriteTarget(marketplacePath);
       }
@@ -281,7 +280,7 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
         });
       }
 
-      const syncManifestPath = path.join(claudeHome, "plugins", input.sourcePlugin.dirName, ".rawr-sync-manifest.json");
+      const syncManifestPath = pathOps.join(claudeHome, "plugins", input.sourcePlugin.dirName, ".rawr-sync-manifest.json");
       if (!options.dryRun) {
         await options.undoCapture?.captureWriteTarget(syncManifestPath);
       }

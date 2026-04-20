@@ -1,4 +1,3 @@
-import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
 import type { AgentConfigSyncResources } from "../../../shared/resources";
@@ -61,7 +60,7 @@ export async function loadCodexRegistry(
   codexHome: string,
   resources: AgentConfigSyncResources,
 ): Promise<CodexRegistryContext> {
-  const filePath = path.join(codexHome, "plugins", "registry.json");
+  const filePath = resources.path.join(codexHome, "plugins", "registry.json");
   const data =
     (await resources.files.readJsonFile<CodexRegistryFile>(filePath)) ??
     {
@@ -123,7 +122,7 @@ export async function upsertCodexRegistry(input: {
   existingData: CodexRegistryFile;
   resources: AgentConfigSyncResources;
 }): Promise<{ nextData: CodexRegistryFile; filePath: string; changed: boolean }> {
-  const filePath = path.join(input.codexHome, "plugins", "registry.json");
+  const filePath = input.resources.path.join(input.codexHome, "plugins", "registry.json");
   const pluginName = input.sourcePlugin.dirName;
   const nowIso = new Date().toISOString();
 

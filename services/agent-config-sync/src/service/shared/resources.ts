@@ -5,6 +5,11 @@ export type AgentConfigSyncDirEntry = {
   isDirectory: boolean;
 };
 
+export type AgentConfigSyncPathResources = Pick<
+  typeof import("node:path"),
+  "join" | "resolve" | "dirname" | "basename" | "relative" | "isAbsolute" | "sep"
+>;
+
 export interface AgentConfigSyncFileResources {
   pathExists(filePath: string): Promise<boolean>;
   readTextFile(filePath: string): Promise<string | null>;
@@ -22,6 +27,7 @@ export interface AgentConfigSyncFileResources {
 
 export interface AgentConfigSyncResources {
   files: AgentConfigSyncFileResources;
+  path: AgentConfigSyncPathResources;
 }
 
 export interface AgentConfigSyncUndoCapture {

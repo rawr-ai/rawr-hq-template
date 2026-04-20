@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import { resolveSourceScopeForPath, scopeAllows } from "../../../shared/internal/source-scope";
 import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type { SyncScope } from "../../../shared/entities";
@@ -43,11 +41,11 @@ export async function discoverWorkspaceSources(input: {
     }
   }
 
-  const plannedWorkspaceDirs = new Set(syncable.map((item) => path.resolve(item.sourcePlugin.absPath)));
+  const plannedWorkspaceDirs = new Set(syncable.map((item) => input.resources.path.resolve(item.sourcePlugin.absPath)));
   const seen = new Set<string>();
 
   for (const candidate of input.sourcePaths) {
-    const absPath = path.resolve(input.cwd, candidate);
+    const absPath = input.resources.path.resolve(input.cwd, candidate);
     if (plannedWorkspaceDirs.has(absPath) || seen.has(absPath)) continue;
     seen.add(absPath);
 
@@ -70,7 +68,7 @@ export async function discoverWorkspaceSources(input: {
       syncable.push({ sourcePlugin, content });
     } catch (error) {
       skipped.push({
-        dirName: path.basename(absPath),
+        dirName: input.resources.path.basename(absPath),
         absPath,
         reason: `unresolvable: ${error instanceof Error ? error.message : String(error)}`,
       });
@@ -85,9 +83,10 @@ export function filterByScope(input: {
   syncable: WorkspaceSyncable[];
   skipped: WorkspaceSkip[];
   scope: SyncScope;
+  resources: AgentConfigSyncResources;
 }): { syncable: WorkspaceSyncable[]; skipped: WorkspaceSkip[] } {
   const filteredSyncable = input.syncable.filter(({ sourcePlugin }) =>
-    scopeAllows(input.scope, resolveSourceScopeForPath(sourcePlugin.absPath, input.workspaceRoot)),
+    scopeAllows(input.scope, resolveSourceScopeForPath(input.resources.path, sourcePlugin.absPath, input.workspaceRoot)),
   );
   const skipped = [...input.skipped];
 

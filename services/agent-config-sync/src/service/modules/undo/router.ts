@@ -1,12 +1,10 @@
-import path from "node:path";
-
 import { module } from "./module";
 import { PLUGINS_SYNC_UNDO_PROVIDER, type UndoApplyItem } from "./entities";
 import { applyUndoOperation } from "./helpers/apply-operation";
 import { clearActiveUndoCapsule, loadActiveUndoCapsule } from "./helpers/capsule-store";
 
 const runUndo = module.runUndo.handler(async ({ context, input }) => {
-  const workspaceRoot = path.resolve(context.repoRoot);
+  const workspaceRoot = context.resources.path.resolve(context.repoRoot);
   const capsule = await loadActiveUndoCapsule(workspaceRoot, context.resources);
 
   if (!capsule) {

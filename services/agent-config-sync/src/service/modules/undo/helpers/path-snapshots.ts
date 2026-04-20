@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type { UndoPathKind } from "../entities";
 
@@ -20,7 +18,7 @@ export async function copyPathSnapshot(input: {
   pathKind: UndoPathKind;
 }): Promise<void> {
   if (input.pathKind === "file") {
-    await input.resources.files.ensureDir(path.dirname(input.backupAbs));
+    await input.resources.files.ensureDir(input.resources.path.dirname(input.backupAbs));
     await input.resources.files.copyFile(input.sourceAbs, input.backupAbs);
     return;
   }
@@ -36,7 +34,7 @@ export async function restoreSnapshot(input: {
   pathKind: UndoPathKind;
 }): Promise<void> {
   if (input.pathKind === "file") {
-    await input.resources.files.ensureDir(path.dirname(input.targetAbs));
+    await input.resources.files.ensureDir(input.resources.path.dirname(input.targetAbs));
     await input.resources.files.copyFile(input.backupAbs, input.targetAbs);
     return;
   }

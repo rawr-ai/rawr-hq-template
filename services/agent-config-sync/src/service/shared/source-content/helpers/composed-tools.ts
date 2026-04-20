@@ -1,7 +1,6 @@
-import path from "node:path";
 import { parse as parseYaml } from "yaml";
-import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type { SourceContent, SourcePlugin } from "../../../shared/entities";
+import type { AgentConfigSyncResources } from "../../resources";
+import type { SourceContent, SourcePlugin } from "../../entities";
 import type { NormalizedPluginContentInclude } from "../entities";
 import { scanCanonicalContentAtRoot } from "./scan-content";
 
@@ -22,7 +21,7 @@ async function readPluginYamlToolkits(input: {
   pluginAbsPath: string;
   resources: AgentConfigSyncResources;
 }): Promise<"all" | string[] | undefined> {
-  const filePath = path.join(input.pluginAbsPath, "plugin.yaml");
+  const filePath = input.resources.path.join(input.pluginAbsPath, "plugin.yaml");
   const raw = await input.resources.files.readTextFile(filePath);
   if (raw === null) return undefined;
   const parsed = parseYaml(raw);
@@ -91,7 +90,7 @@ export async function scanComposedToolkitContent(input: {
 
   for (const toolkit of selectedToolkits) {
     const toolkitContent = await scanCanonicalContentAtRoot({
-      rootAbsPath: path.join(toolkit.absPath, "agent-pack"),
+      rootAbsPath: input.resources.path.join(toolkit.absPath, "agent-pack"),
       include: includeAll,
       resources: input.resources,
     });

@@ -1,7 +1,5 @@
-import path from "node:path";
-
 import { module } from "./module";
-import { resolveProviderContent } from "../source-content/helpers/provider-content";
+import { resolveProviderContent } from "../../shared/source-content/helpers/provider-content";
 import { deleteIfExists, syncFileWithConflictPolicy, syncSkillDirWithConflictPolicy } from "../execution/helpers/destination-files";
 import {
   buildCodexScriptName,
@@ -35,6 +33,7 @@ async function previewSyncRun(input: {
   includeAgentsInClaude?: boolean;
   resources: AgentConfigSyncResources;
 }): Promise<SyncRunResult> {
+  const pathOps = input.resources.path;
   const targets: SyncTargetResult[] = [];
   const options = {
     dryRun: true,
@@ -55,9 +54,9 @@ async function previewSyncRun(input: {
 
     for (const codexHome of input.codexHomes) {
       const result: SyncTargetResult = { agent: "codex", home: codexHome, items: [], conflicts: [] };
-      const promptsDir = path.join(codexHome, "prompts");
-      const skillsDir = path.join(codexHome, "skills");
-      const scriptsDir = path.join(codexHome, "scripts");
+      const promptsDir = pathOps.join(codexHome, "prompts");
+      const skillsDir = pathOps.join(codexHome, "skills");
+      const scriptsDir = pathOps.join(codexHome, "scripts");
       const registry = await loadCodexRegistry(codexHome, input.resources);
       const claimedOthers = {
         prompts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.promptsByPlugin),
@@ -68,7 +67,7 @@ async function previewSyncRun(input: {
       for (const workflow of codexContent.workflowFiles) {
         await syncFileWithConflictPolicy({
           src: workflow.absPath,
-          dest: path.join(promptsDir, `${workflow.name}.md`),
+          dest: pathOps.join(promptsDir, `${workflow.name}.md`),
           kind: "workflow",
           options,
           result,
@@ -79,7 +78,7 @@ async function previewSyncRun(input: {
       for (const skill of codexContent.skills) {
         await syncSkillDirWithConflictPolicy({
           srcDir: skill.absPath,
-          destDir: path.join(skillsDir, skill.name),
+          destDir: pathOps.join(skillsDir, skill.name),
           skillName: skill.name,
           options,
           result,
@@ -91,7 +90,7 @@ async function previewSyncRun(input: {
         const scriptName = buildCodexScriptName(input.sourcePlugin.dirName, script.name);
         await syncFileWithConflictPolicy({
           src: script.absPath,
-          dest: path.join(scriptsDir, scriptName),
+          dest: pathOps.join(scriptsDir, scriptName),
           kind: "script",
           options,
           result,
@@ -105,17 +104,17 @@ async function previewSyncRun(input: {
 
       for (const oldPrompt of registry.claimedSets.promptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
         if (newPrompts.has(oldPrompt) || claimedOthers.prompts.has(oldPrompt)) continue;
-        await deleteIfExists({ target: path.join(promptsDir, `${oldPrompt}.md`), kind: "workflow", options, result });
+        await deleteIfExists({ target: pathOps.join(promptsDir, `${oldPrompt}.md`), kind: "workflow", options, result });
       }
 
       for (const oldSkill of registry.claimedSets.skillsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
         if (newSkills.has(oldSkill) || claimedOthers.skills.has(oldSkill)) continue;
-        await deleteIfExists({ target: path.join(skillsDir, oldSkill), kind: "skill", options, result });
+        await deleteIfExists({ target: pathOps.join(skillsDir, oldSkill), kind: "skill", options, result });
       }
 
       for (const oldScript of registry.claimedSets.scriptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
         if (newScripts.has(oldScript) || claimedOthers.scripts.has(oldScript)) continue;
-        await deleteIfExists({ target: path.join(scriptsDir, oldScript), kind: "script", options, result });
+        await deleteIfExists({ target: pathOps.join(scriptsDir, oldScript), kind: "script", options, result });
       }
 
       const codexRegistry = await upsertCodexRegistry({
@@ -149,16 +148,16 @@ async function previewSyncRun(input: {
 
     for (const claudeHome of input.claudeHomes) {
       const result: SyncTargetResult = { agent: "claude", home: claudeHome, items: [], conflicts: [] };
-      const pluginDir = path.join(claudeHome, "plugins", input.sourcePlugin.dirName);
-      const commandsDir = path.join(pluginDir, "commands");
-      const skillsDir = path.join(pluginDir, "skills");
-      const scriptsDir = path.join(pluginDir, "scripts");
-      const agentsDir = path.join(pluginDir, "agents");
+      const pluginDir = pathOps.join(claudeHome, "plugins", input.sourcePlugin.dirName);
+      const commandsDir = pathOps.join(pluginDir, "commands");
+      const skillsDir = pathOps.join(pluginDir, "skills");
+      const scriptsDir = pathOps.join(pluginDir, "scripts");
+      const agentsDir = pathOps.join(pluginDir, "agents");
 
       for (const workflow of claudeContent.workflowFiles) {
         await syncFileWithConflictPolicy({
           src: workflow.absPath,
-          dest: path.join(commandsDir, `${workflow.name}.md`),
+          dest: pathOps.join(commandsDir, `${workflow.name}.md`),
           kind: "workflow",
           options,
           result,
@@ -168,7 +167,7 @@ async function previewSyncRun(input: {
       for (const skill of claudeContent.skills) {
         await syncSkillDirWithConflictPolicy({
           srcDir: skill.absPath,
-          destDir: path.join(skillsDir, skill.name),
+          destDir: pathOps.join(skillsDir, skill.name),
           skillName: skill.name,
           options,
           result,
@@ -178,7 +177,7 @@ async function previewSyncRun(input: {
       for (const script of claudeContent.scripts) {
         await syncFileWithConflictPolicy({
           src: script.absPath,
-          dest: path.join(scriptsDir, script.name),
+          dest: pathOps.join(scriptsDir, script.name),
           kind: "script",
           options,
           result,
@@ -190,7 +189,7 @@ async function previewSyncRun(input: {
         for (const agent of claudeContent.agentFiles) {
           await syncFileWithConflictPolicy({
             src: agent.absPath,
-            dest: path.join(agentsDir, `${agent.name}.md`),
+            dest: pathOps.join(agentsDir, `${agent.name}.md`),
             kind: "agent",
             options,
             result,
@@ -207,23 +206,23 @@ async function previewSyncRun(input: {
 
         for (const oldWorkflow of previous.workflows) {
           if (currentWorkflow.has(oldWorkflow)) continue;
-          await deleteIfExists({ target: path.join(commandsDir, `${oldWorkflow}.md`), kind: "workflow", options, result });
+          await deleteIfExists({ target: pathOps.join(commandsDir, `${oldWorkflow}.md`), kind: "workflow", options, result });
         }
 
         for (const oldSkill of previous.skills) {
           if (currentSkills.has(oldSkill)) continue;
-          await deleteIfExists({ target: path.join(skillsDir, oldSkill), kind: "skill", options, result });
+          await deleteIfExists({ target: pathOps.join(skillsDir, oldSkill), kind: "skill", options, result });
         }
 
         for (const oldScript of previous.scripts) {
           if (currentScripts.has(oldScript)) continue;
-          await deleteIfExists({ target: path.join(scriptsDir, oldScript), kind: "script", options, result });
+          await deleteIfExists({ target: pathOps.join(scriptsDir, oldScript), kind: "script", options, result });
         }
 
         if (includeAgentsInClaude) {
           for (const oldAgent of previous.agents ?? []) {
             if (currentAgents.has(oldAgent)) continue;
-            await deleteIfExists({ target: path.join(agentsDir, `${oldAgent}.md`), kind: "agent", options, result });
+            await deleteIfExists({ target: pathOps.join(agentsDir, `${oldAgent}.md`), kind: "agent", options, result });
           }
         }
       }
@@ -324,10 +323,12 @@ const planWorkspaceSync = module.planWorkspaceSync.handler(async ({ context, inp
     syncable: discovered.syncable,
     skipped: discovered.skipped,
     scope: input.scope,
+    resources: context.resources,
   });
   const targetSelection = resolveTargetHomes({
     agent: input.agent,
     candidates: input.targetHomeCandidates,
+    pathOps: context.resources.path,
   });
   const runs: SyncRunResult[] = [];
   for (const syncable of scoped.syncable) {
@@ -401,10 +402,12 @@ const assessWorkspaceSync = module.assessWorkspaceSync.handler(async ({ context,
     syncable: discovered.syncable,
     skipped: discovered.skipped,
     scope: input.scope,
+    resources: context.resources,
   });
   const targetSelection = resolveTargetHomes({
     agent: input.agent,
     candidates: input.targetHomeCandidates,
+    pathOps: context.resources.path,
   });
   const runs: SyncRunResult[] = [];
   for (const syncable of scoped.syncable) {

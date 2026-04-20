@@ -28,7 +28,6 @@ type JudgeResult = {
   outcome: JudgeOutcome;
   confidence: number;
   reason: string;
-  raw?: unknown;
 };
 
 type MergeDecision = "auto_merge" | "fix_first" | "policy_escalation" | "hold";
@@ -317,7 +316,7 @@ const planSweepCandidates = module.planSweepCandidates.handler(async ({ context,
  */
 function normalizeJudgeResult(
   judge: "A" | "B",
-  input: { outcome?: string; confidence?: number; reason?: string; raw?: unknown } | undefined,
+  input: { outcome?: string; confidence?: number; reason?: string } | undefined,
 ): JudgeResult {
   return {
     judge,
@@ -326,7 +325,6 @@ function normalizeJudgeResult(
     reason: typeof input?.reason === "string" && input.reason.trim().length > 0
       ? input.reason
       : `judge ${judge} returned no reason`,
-    ...(input && "raw" in input ? { raw: input.raw } : {}),
   };
 }
 

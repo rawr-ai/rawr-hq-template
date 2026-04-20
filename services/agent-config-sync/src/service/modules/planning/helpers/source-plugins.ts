@@ -1,6 +1,4 @@
-import path from "node:path";
-
-import { scanSourcePluginContent } from "../../source-content/helpers/source-plugin-content";
+import { scanSourcePluginContent } from "../../../shared/source-content/helpers/source-plugin-content";
 import type { AgentConfigSyncResources } from "../../../shared/resources";
 import type {
   RawrPluginKind,
@@ -50,19 +48,21 @@ export async function loadSourcePluginFromPath(input: {
   absPath: string;
   resources: AgentConfigSyncResources;
 }): Promise<SourcePlugin> {
-  const absPath = path.resolve(input.absPath);
+  const absPath = input.resources.path.resolve(input.absPath);
   const kind = await input.resources.files.statPathKind(absPath);
   if (kind !== "dir") {
     throw new Error(`Resolved path is not a plugin directory: ${absPath}`);
   }
 
-  const packageJson = await input.resources.files.readJsonFile<PackageJson>(path.join(absPath, "package.json"));
+  const packageJson = await input.resources.files.readJsonFile<PackageJson>(
+    input.resources.path.join(absPath, "package.json"),
+  );
   const rawr = asRecord(packageJson?.rawr);
 
   return {
     ref: input.ref,
     absPath,
-    dirName: path.basename(absPath),
+    dirName: input.resources.path.basename(absPath),
     packageName: typeof packageJson?.name === "string" ? packageJson.name : undefined,
     version: typeof packageJson?.version === "string" ? packageJson.version : undefined,
     description: typeof packageJson?.description === "string" ? packageJson.description : undefined,
@@ -79,7 +79,7 @@ export async function loadWorkspaceSourcePlugins(
   const skipped: WorkspaceSkip[] = [];
 
   for (const absPath of pluginDirs) {
-    const dirName = path.basename(absPath);
+    const dirName = resources.path.basename(absPath);
     try {
       plugins.push(await loadSourcePluginFromPath({ ref: dirName, absPath, resources }));
     } catch (error) {
@@ -100,7 +100,7 @@ export async function resolveSourcePlugin(input: {
   workspaceRoot: string;
   resources: AgentConfigSyncResources;
 }): Promise<SourcePlugin> {
-  const pathCandidate = path.resolve(input.cwd, input.pluginRef);
+  const pathCandidate = input.resources.path.resolve(input.cwd, input.pluginRef);
   if (await input.resources.files.pathExists(pathCandidate)) {
     return loadSourcePluginFromPath({
       ref: input.pluginRef,
@@ -113,10 +113,12 @@ export async function resolveSourcePlugin(input: {
   let pluginDirMatch: string | null = null;
 
   for (const pluginDir of pluginDirs) {
-    const dirName = path.basename(pluginDir);
+    const dirName = input.resources.path.basename(pluginDir);
     if (dirName === input.pluginRef) pluginDirMatch = pluginDir;
 
-    const packageJson = await input.resources.files.readJsonFile<PackageJson>(path.join(pluginDir, "package.json"));
+    const packageJson = await input.resources.files.readJsonFile<PackageJson>(
+      input.resources.path.join(pluginDir, "package.json"),
+    );
     if (typeof packageJson?.name === "string" && packageJson.name === input.pluginRef) {
       return loadSourcePluginFromPath({
         ref: input.pluginRef,

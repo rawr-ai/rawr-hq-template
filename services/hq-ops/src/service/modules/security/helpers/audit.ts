@@ -67,8 +67,8 @@ function bunAuditJsonToFindings(json: BunAuditJson): SecurityFinding[] {
 
 export async function runBunAudit(resources: HqOpsResources, repoRoot: string): Promise<SecurityFinding[]> {
   const result = await resources.process.exec("bun", ["audit", "--json"], { cwd: repoRoot, timeoutMs: 60_000 });
-  const rawOutput = `${bytesToText(result.stdout)}${bytesToText(result.stderr)}`;
-  const json = parseBunAuditJsonOutput(rawOutput);
+  const auditOutput = `${bytesToText(result.stdout)}${bytesToText(result.stderr)}`;
+  const json = parseBunAuditJsonOutput(auditOutput);
   return bunAuditJsonToFindings(json);
 }
 
@@ -80,15 +80,14 @@ function parseUntrustedCount(output: string): number | null {
 
 export async function runBunPmUntrusted(resources: HqOpsResources, repoRoot: string): Promise<SecurityFinding | null> {
   const result = await resources.process.exec("bun", ["pm", "untrusted"], { cwd: repoRoot, timeoutMs: 60_000 });
-  const rawOutput = `${bytesToText(result.stdout)}${bytesToText(result.stderr)}`.trim();
-  const count = parseUntrustedCount(rawOutput);
+  const untrustedOutput = `${bytesToText(result.stdout)}${bytesToText(result.stderr)}`.trim();
+  const count = parseUntrustedCount(untrustedOutput);
 
   if (result.exitCode !== 0) {
     return {
       kind: "untrustedDependencyScripts",
       severity: "high",
       count: count ?? -1,
-      rawOutput: rawOutput.slice(0, 10_000),
     };
   }
 
@@ -97,7 +96,6 @@ export async function runBunPmUntrusted(resources: HqOpsResources, repoRoot: str
       kind: "untrustedDependencyScripts",
       severity: "high",
       count,
-      rawOutput: rawOutput.slice(0, 10_000),
     };
   }
 

@@ -5,7 +5,20 @@ import { INVALID_REGEX } from "../../shared/errors";
 import {
   RoleFilterSchema,
   SessionListItemSchema,
+  SessionSourceFilterSchema,
 } from "../../shared/entities";
+
+const SearchSessionFiltersSchema = Type.Object(
+  {
+    project: Type.Optional(Type.String()),
+    cwdContains: Type.Optional(Type.String()),
+    branch: Type.Optional(Type.String()),
+    model: Type.Optional(Type.String()),
+    since: Type.Optional(Type.String()),
+    until: Type.Optional(Type.String()),
+  },
+  { additionalProperties: false },
+);
 
 const MetadataSearchHitSchema = Type.Object(
   {
@@ -42,7 +55,8 @@ export const contract = {
       schema(
         Type.Object(
           {
-            sessions: Type.Array(SessionListItemSchema),
+            source: SessionSourceFilterSchema,
+            filters: Type.Optional(SearchSessionFiltersSchema),
             needle: Type.String(),
             limit: Type.Number(),
           },
@@ -57,7 +71,9 @@ export const contract = {
       schema(
         Type.Object(
           {
-            sessions: Type.Array(SessionListItemSchema),
+            source: SessionSourceFilterSchema,
+            filters: Type.Optional(SearchSessionFiltersSchema),
+            limit: Type.Number(),
             pattern: Type.String({ minLength: 1 }),
             ignoreCase: Type.Boolean(),
             maxMatches: Type.Number(),
@@ -65,7 +81,6 @@ export const contract = {
             roles: Type.Array(RoleFilterSchema),
             includeTools: Type.Boolean(),
             useIndex: Type.Boolean(),
-            indexPath: Type.String({ minLength: 1 }),
           },
           { additionalProperties: false },
         ),
@@ -79,18 +94,10 @@ export const contract = {
       schema(
         Type.Object(
           {
-            sessions: Type.Array(
-              Type.Object(
-                {
-                  path: Type.String({ minLength: 1 }),
-                  source: Type.Optional(Type.Union([Type.Literal("claude"), Type.Literal("codex")])),
-                },
-                { additionalProperties: false },
-              ),
-            ),
+            source: SessionSourceFilterSchema,
+            filters: Type.Optional(SearchSessionFiltersSchema),
             roles: Type.Array(RoleFilterSchema),
             includeTools: Type.Boolean(),
-            indexPath: Type.String({ minLength: 1 }),
             limit: Type.Number(),
           },
           { additionalProperties: false },
@@ -100,6 +107,6 @@ export const contract = {
     .output(schema(ReindexResultSchema)),
   clearIndex: ocBase
     .meta({ idempotent: false, entity: "search" })
-    .input(schema(Type.Object({ indexPath: Type.String({ minLength: 1 }), path: Type.Optional(Type.String({ minLength: 1 })) }, { additionalProperties: false })))
+    .input(schema(Type.Object({ path: Type.Optional(Type.String({ minLength: 1 })) }, { additionalProperties: false })))
     .output(schema(Type.Object({ cleared: Type.Boolean() }, { additionalProperties: false }))),
 };
