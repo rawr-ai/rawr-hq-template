@@ -1,8 +1,8 @@
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
-import type { AgentConfigSyncResources } from "../../shared/resources";
-import type { SourceContent, SourcePlugin } from "../../shared/schemas";
+import type { AgentConfigSyncResources } from "../../../shared/resources";
+import type { SourceContent, SourcePlugin } from "../../../shared/entities";
 
 /**
  * Minimal Claude plugin manifest shape preserved and upserted by sync.

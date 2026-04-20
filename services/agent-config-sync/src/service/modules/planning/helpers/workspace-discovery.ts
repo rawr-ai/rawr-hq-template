@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { resolveSourceScopeForPath, scopeAllows } from "../../../shared/internal/source-scope";
 import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type { SyncScope } from "../../../shared/schemas";
+import type { SyncScope } from "../../../shared/entities";
 import type { WorkspaceSkip, WorkspaceSyncable } from "../contract";
 import {
   hasAnyContent,

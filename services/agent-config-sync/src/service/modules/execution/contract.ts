@@ -6,7 +6,7 @@ import {
   SourcePluginSchema,
   SyncAgentSchema,
   SyncActionSchema,
-} from "../../shared/schemas";
+} from "../../shared/entities";
 
 /**
  * Summary entity for what source content was available before provider-specific

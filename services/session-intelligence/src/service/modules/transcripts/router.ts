@@ -6,7 +6,7 @@ import {
   getClaudeSessionMetadata,
   getCodexSessionMetadata,
 } from "../../shared/normalization";
-import type { SessionMessage } from "../../shared/schemas";
+import type { SessionMessage } from "../../shared/entities";
 
 function dedupeMessages(messages: SessionMessage[]): SessionMessage[] {
   const seen = new Set<string>();

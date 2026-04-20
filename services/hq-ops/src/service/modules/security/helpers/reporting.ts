@@ -1,5 +1,5 @@
 import type { HqOpsResources } from "../../../shared/ports/resources";
-import type { RiskTolerance, SecurityFinding, SecurityMode, SecurityReport } from "../types";
+import type { RiskTolerance, SecurityFinding, SecurityMode, SecurityReport } from "../entities";
 
 const DEFAULT_MAX_REPORT_BYTES = 250_000;
 

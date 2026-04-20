@@ -41,8 +41,8 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/modules/journal/middleware.ts",
   "services/hq-ops/src/service/modules/journal/module.ts",
   "services/hq-ops/src/service/modules/journal/router.ts",
-  "services/hq-ops/src/service/modules/journal/types.ts",
   "services/hq-ops/src/service/modules/security/contract.ts",
+  "services/hq-ops/src/service/modules/security/entities.ts",
   "services/hq-ops/src/service/modules/security/helpers/audit.ts",
   "services/hq-ops/src/service/modules/security/helpers/process.ts",
   "services/hq-ops/src/service/modules/security/helpers/reporting.ts",
@@ -50,7 +50,6 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/modules/security/middleware.ts",
   "services/hq-ops/src/service/modules/security/module.ts",
   "services/hq-ops/src/service/modules/security/router.ts",
-  "services/hq-ops/src/service/modules/security/types.ts",
   "services/hq-ops/src/service/modules/plugin-catalog/contract.ts",
   "services/hq-ops/src/service/modules/plugin-catalog/entities.ts",
   "services/hq-ops/src/service/modules/plugin-catalog/helpers/discovery.ts",
@@ -325,8 +324,10 @@ for (const relPath of [
   "services/hq-ops/src/service/modules/repo-state/schemas.ts",
   "services/hq-ops/src/service/modules/journal/repository.ts",
   "services/hq-ops/src/service/modules/journal/schemas.ts",
+  "services/hq-ops/src/service/modules/journal/types.ts",
   "services/hq-ops/src/service/modules/security/repository.ts",
   "services/hq-ops/src/service/modules/security/schemas.ts",
+  "services/hq-ops/src/service/modules/security/types.ts",
   "services/hq-ops/src/service/modules/plugin-install/model.ts",
   "services/hq-ops/src/service/modules/plugin-install/repository.ts",
   "services/hq-ops/src/service/modules/plugin-install/schemas.ts",
@@ -339,6 +340,19 @@ for (const relPath of [
   "services/hq-ops/src/service/shared/ports/security-runtime.ts",
 ]) {
   assertCondition(!(await pathExists(relPath)), `obsolete high-level HQ Ops behavior port must not survive: ${relPath}`);
+}
+
+for (const relPath of await listFilesUnder("services/hq-ops/src/service/modules")) {
+  if (!relPath.endsWith(".ts")) continue;
+  const segments = relPath.split("/");
+  const modulesIndex = segments.indexOf("modules");
+  const moduleRelative = segments.slice(modulesIndex + 2);
+  if (moduleRelative.length !== 1) continue;
+  const fileName = moduleRelative[0];
+  assertCondition(
+    /^(contract|router|errors|entities|module|middleware)\.ts$/u.test(fileName),
+    `${relPath} must not exist as a module-root behavior bucket; put precise reusable helpers under helpers/ or keep procedure flow in router.ts`,
+  );
 }
 
 const purityFindings = await findHqOpsServiceBoundaryPurityFindings();

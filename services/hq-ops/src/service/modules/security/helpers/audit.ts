@@ -1,5 +1,5 @@
 import type { HqOpsResources } from "../../../shared/ports/resources";
-import type { SecurityFinding } from "../types";
+import type { SecurityFinding } from "../entities";
 import { bytesToText } from "./process";
 
 type BunAuditAdvisory = {

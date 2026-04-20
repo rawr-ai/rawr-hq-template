@@ -12,7 +12,7 @@ import {
 } from "./helpers/reporting";
 import { scanSecretsRepo, scanSecretsStaged } from "./helpers/secrets";
 import { module } from "./module";
-import type { SecurityFinding, SecurityMode } from "./types";
+import type { SecurityFinding, SecurityMode } from "./entities";
 
 async function collectSecurityFindings(
   resources: HqOpsResources,

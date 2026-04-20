@@ -104,5 +104,3 @@ export const contract = {
     )))
     .output(schema(PluginInstallRepairPlanSchema)),
 };
-
-export type PluginInstallModuleContract = typeof contract;

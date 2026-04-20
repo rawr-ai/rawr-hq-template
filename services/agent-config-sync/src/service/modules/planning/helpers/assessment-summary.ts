@@ -1,6 +1,6 @@
 import type { SyncRunResult } from "../../execution/contract";
 import type { SyncAssessment, WorkspaceSkip } from "../contract";
-import type { SyncScope } from "../../../shared/schemas";
+import type { SyncScope } from "../../../shared/entities";
 
 export function summarizeWorkspaceRun(input: {
   runs: SyncRunResult[];

@@ -1,4 +1,5 @@
-import type { MetadataSearchHit, SessionListItem } from "./schemas";
+import type { SessionListItem } from "../../../shared/entities";
+import type { MetadataSearchHit } from "../contract";
 
 function metadataMatchScore(session: SessionListItem, needle: string): number {
   const normalizedNeedle = needle.toLowerCase();

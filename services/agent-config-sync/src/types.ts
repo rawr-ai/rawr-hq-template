@@ -7,7 +7,7 @@ export type {
   SourcePlugin,
   SyncAgent,
   SyncScope,
-} from "./service/shared/schemas";
+} from "./service/shared/entities";
 export type {
   SyncItemResult,
   SyncRunResult,

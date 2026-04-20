@@ -6,7 +6,7 @@ import type {
   RawrPluginKind,
   SourceContent,
   SourcePlugin,
-} from "../../../shared/schemas";
+} from "../../../shared/entities";
 import type { WorkspaceSkip, WorkspaceSyncable } from "../contract";
 import { listWorkspacePluginDirs } from "./workspace-roots";
 

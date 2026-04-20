@@ -1,8 +1,21 @@
+import path from "node:path";
+
 import { module } from "./module";
 import { resolveProviderContent as resolveServiceProviderContent } from "../source-content/helpers/provider-content";
-import { syncClaudeTarget } from "./helpers/claude-target";
-import { syncCodexTarget } from "./helpers/codex-target";
-import { summarizeScannedContent } from "./helpers/sync-results";
+import { deleteIfExists, syncFileWithConflictPolicy, syncSkillDirWithConflictPolicy } from "./helpers/destination-files";
+import {
+  buildCodexScriptName,
+  getClaimsFromOtherPlugins,
+  loadCodexRegistry,
+  upsertCodexRegistry,
+} from "./helpers/registry-codex";
+import {
+  readClaudeSyncManifest,
+  upsertClaudeMarketplace,
+  upsertClaudePluginManifest,
+  writeClaudeSyncManifest,
+} from "./helpers/marketplace-claude";
+import { pushItem, summarizeScannedContent } from "./helpers/sync-results";
 import type { SyncTargetResult } from "./contract";
 
 /**
@@ -28,13 +41,105 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
       base: input.content,
       resources: context.resources,
     });
+
     for (const codexHome of input.codexHomes) {
-      targets.push(await syncCodexTarget({
+      const result: SyncTargetResult = { agent: "codex", home: codexHome, items: [], conflicts: [] };
+      const promptsDir = path.join(codexHome, "prompts");
+      const skillsDir = path.join(codexHome, "skills");
+      const scriptsDir = path.join(codexHome, "scripts");
+
+      if (!options.dryRun) {
+        await Promise.all([
+          context.resources.files.ensureDir(promptsDir),
+          context.resources.files.ensureDir(skillsDir),
+          context.resources.files.ensureDir(scriptsDir),
+          context.resources.files.ensureDir(path.join(codexHome, "plugins")),
+        ]);
+      }
+
+      const registry = await loadCodexRegistry(codexHome, context.resources);
+      const claimedOthers = {
+        prompts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.promptsByPlugin),
+        skills: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.skillsByPlugin),
+        scripts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.scriptsByPlugin),
+      };
+
+      for (const workflow of codexContent.workflowFiles) {
+        await syncFileWithConflictPolicy({
+          src: workflow.absPath,
+          dest: path.join(promptsDir, `${workflow.name}.md`),
+          kind: "workflow",
+          options,
+          result,
+          claimedByOtherPlugin: claimedOthers.prompts.has(workflow.name),
+        });
+      }
+
+      for (const skill of codexContent.skills) {
+        await syncSkillDirWithConflictPolicy({
+          srcDir: skill.absPath,
+          destDir: path.join(skillsDir, skill.name),
+          skillName: skill.name,
+          options,
+          result,
+          claimedByOtherPlugin: claimedOthers.skills.has(skill.name),
+        });
+      }
+
+      for (const script of codexContent.scripts) {
+        const scriptName = buildCodexScriptName(input.sourcePlugin.dirName, script.name);
+        await syncFileWithConflictPolicy({
+          src: script.absPath,
+          dest: path.join(scriptsDir, scriptName),
+          kind: "script",
+          options,
+          result,
+          claimedByOtherPlugin: claimedOthers.scripts.has(scriptName),
+        });
+      }
+
+      if (options.gc) {
+        const newPrompts = new Set(codexContent.workflowFiles.map((workflow) => workflow.name));
+        const newSkills = new Set(codexContent.skills.map((skill) => skill.name));
+        const newScripts = new Set(codexContent.scripts.map((script) => buildCodexScriptName(input.sourcePlugin.dirName, script.name)));
+
+        for (const oldPrompt of registry.claimedSets.promptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
+          if (newPrompts.has(oldPrompt) || claimedOthers.prompts.has(oldPrompt)) continue;
+          await deleteIfExists({ target: path.join(promptsDir, `${oldPrompt}.md`), kind: "workflow", options, result });
+        }
+
+        for (const oldSkill of registry.claimedSets.skillsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
+          if (newSkills.has(oldSkill) || claimedOthers.skills.has(oldSkill)) continue;
+          await deleteIfExists({ target: path.join(skillsDir, oldSkill), kind: "skill", options, result });
+        }
+
+        for (const oldScript of registry.claimedSets.scriptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
+          if (newScripts.has(oldScript) || claimedOthers.scripts.has(oldScript)) continue;
+          await deleteIfExists({ target: path.join(scriptsDir, oldScript), kind: "script", options, result });
+        }
+      }
+
+      if (!options.dryRun) {
+        await options.undoCapture?.captureWriteTarget(registry.filePath);
+      }
+      const codexRegistry = await upsertCodexRegistry({
         codexHome,
         sourcePlugin: input.sourcePlugin,
         content: codexContent,
-        options,
-      }));
+        dryRun: options.dryRun,
+        existingData: registry.data,
+        resources: context.resources,
+      });
+      if (codexRegistry.changed) {
+        pushItem(result, {
+          action: options.dryRun ? "planned" : "updated",
+          kind: "metadata",
+          target: codexRegistry.filePath,
+          message: "registry upsert",
+        });
+      }
+
+      targets.push(result);
     }
   }
 
@@ -45,13 +150,158 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
       base: input.content,
       resources: context.resources,
     });
+
     for (const claudeHome of input.claudeHomes) {
-      targets.push(await syncClaudeTarget({
+      const result: SyncTargetResult = { agent: "claude", home: claudeHome, items: [], conflicts: [] };
+      const pluginDir = path.join(claudeHome, "plugins", input.sourcePlugin.dirName);
+      const commandsDir = path.join(pluginDir, "commands");
+      const skillsDir = path.join(pluginDir, "skills");
+      const scriptsDir = path.join(pluginDir, "scripts");
+      const agentsDir = path.join(pluginDir, "agents");
+
+      if (!options.dryRun) {
+        await Promise.all([
+          context.resources.files.ensureDir(commandsDir),
+          context.resources.files.ensureDir(skillsDir),
+          context.resources.files.ensureDir(scriptsDir),
+          context.resources.files.ensureDir(agentsDir),
+        ]);
+      }
+
+      for (const workflow of claudeContent.workflowFiles) {
+        await syncFileWithConflictPolicy({
+          src: workflow.absPath,
+          dest: path.join(commandsDir, `${workflow.name}.md`),
+          kind: "workflow",
+          options,
+          result,
+        });
+      }
+
+      for (const skill of claudeContent.skills) {
+        await syncSkillDirWithConflictPolicy({
+          srcDir: skill.absPath,
+          destDir: path.join(skillsDir, skill.name),
+          skillName: skill.name,
+          options,
+          result,
+        });
+      }
+
+      for (const script of claudeContent.scripts) {
+        await syncFileWithConflictPolicy({
+          src: script.absPath,
+          dest: path.join(scriptsDir, script.name),
+          kind: "script",
+          options,
+          result,
+        });
+      }
+
+      const includeAgentsInClaude = options.includeAgentsInClaude ?? true;
+      if (includeAgentsInClaude) {
+        for (const agent of claudeContent.agentFiles) {
+          await syncFileWithConflictPolicy({
+            src: agent.absPath,
+            dest: path.join(agentsDir, `${agent.name}.md`),
+            kind: "agent",
+            options,
+            result,
+          });
+        }
+      }
+
+      if (options.gc) {
+        const previous = await readClaudeSyncManifest(claudeHome, input.sourcePlugin.dirName, context.resources);
+        if (previous) {
+          const currentWorkflow = new Set(claudeContent.workflowFiles.map((workflow) => workflow.name));
+          const currentSkills = new Set(claudeContent.skills.map((skill) => skill.name));
+          const currentScripts = new Set(claudeContent.scripts.map((script) => script.name));
+          const currentAgents = new Set(claudeContent.agentFiles.map((agent) => agent.name));
+
+          for (const oldWorkflow of previous.workflows) {
+            if (currentWorkflow.has(oldWorkflow)) continue;
+            await deleteIfExists({ target: path.join(commandsDir, `${oldWorkflow}.md`), kind: "workflow", options, result });
+          }
+
+          for (const oldSkill of previous.skills) {
+            if (currentSkills.has(oldSkill)) continue;
+            await deleteIfExists({ target: path.join(skillsDir, oldSkill), kind: "skill", options, result });
+          }
+
+          for (const oldScript of previous.scripts) {
+            if (currentScripts.has(oldScript)) continue;
+            await deleteIfExists({ target: path.join(scriptsDir, oldScript), kind: "script", options, result });
+          }
+
+          if (includeAgentsInClaude) {
+            for (const oldAgent of previous.agents ?? []) {
+              if (currentAgents.has(oldAgent)) continue;
+              await deleteIfExists({ target: path.join(agentsDir, `${oldAgent}.md`), kind: "agent", options, result });
+            }
+          }
+        }
+      }
+
+      const pluginManifestPath = path.join(claudeHome, "plugins", input.sourcePlugin.dirName, ".claude-plugin", "plugin.json");
+      if (!options.dryRun) {
+        await options.undoCapture?.captureWriteTarget(pluginManifestPath);
+      }
+      const pluginManifest = await upsertClaudePluginManifest({
+        claudeLocalHome: claudeHome,
+        sourcePlugin: input.sourcePlugin,
+        dryRun: options.dryRun,
+        resources: context.resources,
+      });
+      if (pluginManifest.changed) {
+        pushItem(result, {
+          action: options.dryRun ? "planned" : "updated",
+          kind: "metadata",
+          target: pluginManifest.filePath,
+          message: "plugin.json upsert",
+        });
+      }
+
+      const marketplacePath = path.join(claudeHome, ".claude-plugin", "marketplace.json");
+      if (!options.dryRun) {
+        await options.undoCapture?.captureWriteTarget(marketplacePath);
+      }
+      const marketplace = await upsertClaudeMarketplace({
+        claudeLocalHome: claudeHome,
+        sourcePlugin: input.sourcePlugin,
+        dryRun: options.dryRun,
+        resources: context.resources,
+      });
+      if (marketplace.changed) {
+        pushItem(result, {
+          action: options.dryRun ? "planned" : "updated",
+          kind: "metadata",
+          target: marketplace.filePath,
+          message: "marketplace upsert",
+        });
+      }
+
+      const syncManifestPath = path.join(claudeHome, "plugins", input.sourcePlugin.dirName, ".rawr-sync-manifest.json");
+      if (!options.dryRun) {
+        await options.undoCapture?.captureWriteTarget(syncManifestPath);
+      }
+      const syncManifest = await writeClaudeSyncManifest({
         claudeLocalHome: claudeHome,
         sourcePlugin: input.sourcePlugin,
         content: claudeContent,
-        options,
-      }));
+        dryRun: options.dryRun,
+        resources: context.resources,
+      });
+      if (syncManifest.changed) {
+        pushItem(result, {
+          action: options.dryRun ? "planned" : "updated",
+          kind: "metadata",
+          target: syncManifest.filePath,
+          message: "sync manifest upsert",
+        });
+      }
+
+      targets.push(result);
     }
   }
 

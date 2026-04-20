@@ -1,12 +1,16 @@
 import { module } from "./module";
 import { detectSessionFormat, extractClaudeMessages, extractCodexMessages } from "../../shared/normalization";
-import type { SessionSource } from "../../shared/schemas";
-import { searchSessionsByMetadata } from "./metadata-search";
-import type { RoleFilter, SearchHit } from "./schemas";
-import { clearCachedSearchText, readCachedSearchText, writeCachedSearchText } from "./cache";
-import { buildSearchText, rolesKey } from "./text";
+import type { RoleFilter, SessionListItem, SessionSource } from "../../shared/entities";
+import { searchSessionsByMetadata } from "./helpers/metadata-search";
+import { clearCachedSearchText, readCachedSearchText, writeCachedSearchText } from "./helpers/cache";
+import { buildSearchText, rolesKey } from "./helpers/text";
 import type { SessionIndexRuntime } from "../../shared/ports/session-index-runtime";
 import type { SessionSourceRuntime } from "../../shared/ports/session-source-runtime";
+
+type SearchHit = SessionListItem & {
+  matchCount: number;
+  matchSnippet: string;
+};
 
 function asSearchSource(source: SessionSource | "unknown"): SessionSource {
   return source === "claude" ? "claude" : "codex";

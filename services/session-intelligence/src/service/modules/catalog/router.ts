@@ -2,9 +2,17 @@ import { module } from "./module";
 import { inferProjectFromCwd, inferStatusFromPath } from "../../shared/normalization";
 import { detectSessionFormat, getClaudeSessionMetadata, getCodexSessionMetadata } from "../../shared/normalization";
 import { looksLikePath, stem } from "../../shared/path-utils";
-import type { DiscoveredSessionFile } from "../../shared/schemas";
-import type { ResolveResult, SessionFilters, SessionListItem } from "./schemas";
-import { discoverSessions } from "./discovery";
+import type { DiscoveredSessionFile, SessionListItem, SessionStatus } from "../../shared/entities";
+import { discoverSessions } from "./helpers/discovery";
+
+type SessionFilters = {
+  project?: string;
+  cwdContains?: string;
+  branch?: string;
+  model?: string;
+  since?: string;
+  until?: string;
+};
 
 function parseDatetimeBestEffort(value?: string): Date | null {
   if (!value) return null;
@@ -106,7 +114,7 @@ const list = module.list.handler(async ({ context, input }) => {
 const resolve = module.resolve.handler(async ({ context, input, errors }) => {
   const clean = input.session.trim();
   let resolvedPath: string | null = null;
-  let status: ResolveResult["resolved"]["status"] | undefined;
+  let status: SessionStatus | undefined;
 
   if (looksLikePath(clean)) {
     if (await context.sourceRuntime.statFile({ path: clean })) resolvedPath = clean;

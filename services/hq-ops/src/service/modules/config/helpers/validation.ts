@@ -6,8 +6,8 @@ import {
   type RawrConfigV1,
   type SyncDestination,
   type SyncProvider,
+  type ConfigValidationIssue,
 } from "../entities";
-import type { ConfigValidationIssue } from "../contract";
 
 const clampInt = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, Math.trunc(value)));

@@ -1,5 +1,5 @@
 import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type { SourceContent, SourcePlugin, SyncAgent } from "../../../shared/schemas";
+import type { SourceContent, SourcePlugin, SyncAgent } from "../../../shared/entities";
 import { resolvePluginContentLayout } from "./manifest";
 import { mergeSourceContent } from "./merge-content";
 import { scanCanonicalContentAtRoot } from "./scan-content";

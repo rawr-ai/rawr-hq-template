@@ -1,7 +1,7 @@
 import path from "node:path";
 
 import type { AgentConfigSyncResources } from "../../../shared/resources";
-import type { RawrPluginKind } from "../../../shared/schemas";
+import type { RawrPluginKind } from "../../../shared/entities";
 
 const WORKSPACE_PLUGIN_ROOTS: Array<{ scope: RawrPluginKind; relPath: string[] }> = [
   { scope: "toolkit", relPath: ["plugins", "cli"] },

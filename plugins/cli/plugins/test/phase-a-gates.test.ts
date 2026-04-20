@@ -9,7 +9,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 describe("phase-a gate scaffold (plugin-plugins)", () => {
   it("metadata contract gate scaffold keeps hq-ops catalog ownership in scope", async () => {
     await expect(
-      fs.access(path.join(repoRoot, "services", "hq-ops", "src", "service", "modules", "plugin-catalog", "lib", "manifest.ts")),
+      fs.access(path.join(repoRoot, "services", "hq-ops", "src", "service", "modules", "plugin-catalog", "helpers", "manifest.ts")),
     ).resolves.toBeUndefined();
   });
 

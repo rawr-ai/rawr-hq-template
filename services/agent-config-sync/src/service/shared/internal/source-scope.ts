@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import type { RawrPluginKind, SyncScope } from "../schemas";
+import type { RawrPluginKind, SyncScope } from "../entities";
 
 export type ResolvedSourceScope = RawrPluginKind | "external";
 
