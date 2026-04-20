@@ -4,9 +4,9 @@ import { ocBase } from "../../base";
 import { INVALID_REGEX } from "../../shared/errors";
 import {
   RoleFilterSchema,
-  SessionListItemSchema,
   SessionSourceFilterSchema,
 } from "../../shared/entities";
+import { MetadataSearchHitSchema, ReindexResultSchema, SearchHitSchema } from "./entities";
 
 const SearchSessionFiltersSchema = Type.Object(
   {
@@ -20,32 +20,8 @@ const SearchSessionFiltersSchema = Type.Object(
   { additionalProperties: false },
 );
 
-const MetadataSearchHitSchema = Type.Object(
-  {
-    ...SessionListItemSchema.properties,
-    matchScore: Type.Number(),
-  },
-  { additionalProperties: false },
-);
 export type MetadataSearchHit = Static<typeof MetadataSearchHitSchema>;
-
-const SearchHitSchema = Type.Object(
-  {
-    ...SessionListItemSchema.properties,
-    matchCount: Type.Number(),
-    matchSnippet: Type.String(),
-  },
-  { additionalProperties: false },
-);
 export type SearchHit = Static<typeof SearchHitSchema>;
-
-const ReindexResultSchema = Type.Object(
-  {
-    indexed: Type.Number(),
-    total: Type.Number(),
-  },
-  { additionalProperties: false },
-);
 export type ReindexResult = Static<typeof ReindexResultSchema>;
 
 export const contract = {

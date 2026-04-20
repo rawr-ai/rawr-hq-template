@@ -190,11 +190,10 @@ async function verifyServiceShape(findings) {
     }
   }
   requiredPaths.push(
-    `${SERVICE_ROOT}/src/service/modules/catalog/helpers/discovery.ts`,
-    `${SERVICE_ROOT}/src/service/modules/catalog/repositories/discovery-index-repository.ts`,
+    `${SERVICE_ROOT}/src/service/shared/repositories/codex-indexed-discovery-repository.ts`,
+    `${SERVICE_ROOT}/src/service/shared/repositories/codex-discovery-index-repository.ts`,
     `${SERVICE_ROOT}/src/service/modules/search/repositories/search-cache-repository.ts`,
-    `${SERVICE_ROOT}/src/service/modules/search/helpers/metadata-search.ts`,
-    `${SERVICE_ROOT}/src/service/modules/search/helpers/text.ts`,
+    `${SERVICE_ROOT}/src/service/modules/search/helpers/search-text.ts`,
   );
 
   for (const relPath of requiredPaths) {

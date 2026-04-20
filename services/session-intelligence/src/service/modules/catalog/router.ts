@@ -10,7 +10,7 @@ import { inferProjectFromCwd, inferStatusFromPath } from "../../shared/normaliza
 import { detectSessionFormat, getClaudeSessionMetadata, getCodexSessionMetadata } from "../../shared/normalization";
 import { looksLikePath, stem } from "../../shared/path-utils";
 import type { DiscoveredSessionFile, SessionListItem, SessionStatus } from "../../shared/entities";
-import { discoverCodexSessionsFromIndexOrNull } from "./helpers/discovery";
+import { discoverCodexSessionsFromIndexOrNull } from "../../shared/repositories/codex-indexed-discovery-repository";
 
 type SessionFilters = {
   project?: string;
