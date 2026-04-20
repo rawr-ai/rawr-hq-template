@@ -1,3 +1,10 @@
+/**
+ * session-intelligence: search-cache repository.
+ *
+ * This repository owns the SQL schema and query mechanics for the session
+ * search text cache. The search router uses it as a persistence boundary so
+ * query strings and table shapes do not leak into procedures.
+ */
 import type { SessionIndexRuntime, SessionSearchCacheEntry, SessionSearchCacheKey } from "../../../shared/ports/session-index-runtime";
 
 async function initializeSearchIndex(indexRuntime: SessionIndexRuntime, indexPath: string): Promise<void> {

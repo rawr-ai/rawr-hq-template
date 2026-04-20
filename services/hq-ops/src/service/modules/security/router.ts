@@ -1,3 +1,11 @@
+/**
+ * hq-ops: security module.
+ *
+ * This router owns security scanning and reporting as a service capability:
+ * running dependency audits, scanning for secrets, and producing a stable
+ * report format with tolerance gates. Projections should not shell out or
+ * decide severity policy independently.
+ */
 import type { HqOpsResources } from "../../shared/ports/resources";
 import { runBunAudit, runBunPmUntrusted } from "./helpers/audit";
 import { getRepoRoot } from "./helpers/process";

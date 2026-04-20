@@ -1,3 +1,17 @@
+/**
+ * session-intelligence: search module.
+ *
+ * This router implements session discovery + search as a first-class service
+ * capability. Projections (CLI/web) can request filtered results without
+ * knowing anything about file formats, session metadata extraction, or index
+ * storage mechanics.
+ *
+ * Boundary notes:
+ * - Format parsing and metadata normalization live in `shared/normalization`.
+ * - Index persistence/query mechanics are behind repositories (module-owned),
+ *   not embedded directly in router/procedure bodies.
+ * - Errors are thrown via contract-attached module errors (example-todo style).
+ */
 import { module } from "./module";
 import {
   detectSessionFormat,

@@ -1,3 +1,11 @@
+/**
+ * hq-ops: plugin-install module.
+ *
+ * This router owns installation intent and drift assessment for plugin command
+ * surfaces (e.g., expected links/targets). It intentionally separates:
+ * - observation of local manager state (CLI/projection responsibility)
+ * - from definition of "healthy" install state (service responsibility).
+ */
 import { discoverWorkspacePluginCatalog } from "../plugin-catalog/helpers/discovery";
 import {
   CANONICAL_SYNC_PLUGIN_NAME,

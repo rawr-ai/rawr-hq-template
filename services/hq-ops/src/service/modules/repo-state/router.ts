@@ -1,3 +1,10 @@
+/**
+ * hq-ops: repo-state module.
+ *
+ * This router owns repo-local state that must be mutated with explicit
+ * concurrency control (lock + atomic updates). The purpose is to keep
+ * authoritative state writes inside the service boundary, not in projections.
+ */
 import {
   getRepoStateWithAuthority,
   mutateRepoStateAtomically,

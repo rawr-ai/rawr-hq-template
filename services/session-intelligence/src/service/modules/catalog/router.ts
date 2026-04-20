@@ -1,3 +1,10 @@
+/**
+ * session-intelligence: catalog module.
+ *
+ * This router owns "enumerate sessions" as a service capability. The service,
+ * not projections, defines discovery policy (sources, refresh strategy, and
+ * filtering semantics) so that the CLI/web remain orchestration and rendering.
+ */
 import { module } from "./module";
 import { inferProjectFromCwd, inferStatusFromPath } from "../../shared/normalization";
 import { detectSessionFormat, getClaudeSessionMetadata, getCodexSessionMetadata } from "../../shared/normalization";

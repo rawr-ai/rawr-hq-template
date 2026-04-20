@@ -1,3 +1,17 @@
+/**
+ * agent-config-sync: execution module.
+ *
+ * This router owns the "do the sync" capability: given normalized source-content
+ * (canonical + provider overlay policy) and destination homes (Codex/Claude),
+ * it applies the service's conflict/GC policy and performs the filesystem writes
+ * through the service ports (`context.resources` + `context.undoCapture`).
+ *
+ * Boundary notes:
+ * - Path/FS are injected ports; this module must not import host adapters.
+ * - Content layout/merge policy lives in `shared/source-content`, not in the CLI.
+ * - Registry/manifest writes are treated as part of the capability, not as
+ *   incidental "metadata" helpers.
+ */
 import { module } from "./module";
 import { resolveProviderContent as resolveServiceProviderContent } from "../../shared/source-content/helpers/provider-content";
 import { deleteIfExists, syncFileWithConflictPolicy, syncSkillDirWithConflictPolicy } from "./helpers/destination-files";
