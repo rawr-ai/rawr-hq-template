@@ -9,7 +9,7 @@ import {
   readCodexRootState,
   replaceCodexRootIndex,
   updateCodexFileIndexEntry,
-} from "./discovery-index";
+} from "../repositories/discovery-index-repository";
 
 const DEFAULT_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = 15_000;
 const DEFAULT_CODEX_DISCOVERY_ARCHIVED_MAX_AGE_MS = 5 * 60_000;

@@ -19,7 +19,7 @@ import type {
 } from "../../shared/entities";
 import { discoverSessions } from "../catalog/helpers/discovery";
 import { searchSessionsByMetadata } from "./helpers/metadata-search";
-import { clearCachedSearchText, readCachedSearchText, writeCachedSearchText } from "./helpers/cache";
+import { clearCachedSearchText, readCachedSearchText, writeCachedSearchText } from "./repositories/search-cache-repository";
 import { buildSearchText, rolesKey } from "./helpers/text";
 import type { SessionIndexRuntime } from "../../shared/ports/session-index-runtime";
 import type { SessionSourceRuntime } from "../../shared/ports/session-source-runtime";
