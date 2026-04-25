@@ -7,7 +7,7 @@ This document is normative for M2 execution. It supersedes the archived Phase 1 
 Use this order when sources disagree:
 
 1. [RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md](./RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
-2. [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](./RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
+2. [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../_archive/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
 3. [RAWR_Canonical_Testing_Plan.md](./RAWR_Canonical_Testing_Plan.md)
 4. [RAWR_Architecture_Migration_Plan.md](../RAWR_Architecture_Migration_Plan.md)
 5. [M2-minimal-canonical-runtime-shell.md](../../milestones/M2-minimal-canonical-runtime-shell.md)
