@@ -43,7 +43,7 @@ Use these as the Phase 2 first-hop packet:
 8. [phase-1-closeout-review.md](../M1-execution/phase-1-closeout-review.md)
 9. [RAWR_Architecture_Migration_Plan.md](../../resources/RAWR_Architecture_Migration_Plan.md)
 10. [RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md](../../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md) **(NEW)**
-11. [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../../resources/spec/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md) **(NEW)**
+11. [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../../resources/_archive/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md) **(NEW)**
 12. [m2-guardrails-and-enforcement.md](../../resources/spec/m2-guardrails-and-enforcement.md) **(NEW)**
 
 ## Phase Invariants
