@@ -14,6 +14,7 @@ HQ_INNGEST_RUNS_URL="http://localhost:8288/runs"
 HQ_SERVER_HEALTH_URL="http://localhost:3000/health"
 HQ_OBSERVABILITY_UI_URL="http://localhost:8080/"
 HQ_OBSERVABILITY_OTLP_URL="http://127.0.0.1:4318"
+HQ_INNGEST_NPM_CACHE="${RAWR_HQ_NPM_CACHE:-${STATE_DIR}/npm-cache}"
 
 SERVER_PORT=3000
 WEB_PORT=5173
@@ -33,6 +34,7 @@ hq_server_pid=""
 hq_web_pid=""
 hq_async_pid=""
 hq_started_at=""
+hq_async_enabled=1
 
 stack_started_here=0
 shutting_down=0
@@ -97,6 +99,7 @@ load_state() {
   hq_web_pid=""
   hq_async_pid=""
   hq_started_at=""
+  hq_async_enabled=1
   hq_open_policy=""
   hq_observability_mode=""
 
@@ -138,11 +141,55 @@ hq_server_pid=${hq_server_pid}
 hq_web_pid=${hq_web_pid}
 hq_async_pid=${hq_async_pid}
 hq_started_at=${hq_started_at}
+hq_async_enabled=${hq_async_enabled}
 # Persist the chosen posture so later `rawr hq status` calls can report the
 # active HQ mode even when no explicit flags are passed.
 hq_open_policy=${open_policy}
 hq_observability_mode=${observability_mode}
 STATE
+}
+
+resolve_hq_async_enabled() {
+  local enabled
+  if ! enabled="$(bun --silent --eval '
+import { createRawrHqManifest } from "./apps/hq/rawr.hq.ts";
+
+const manifest = createRawrHqManifest();
+const asyncRole = manifest.roles?.async;
+const workflowCount = Object.keys(asyncRole?.workflows ?? {}).length;
+const scheduleCount = Object.keys(asyncRole?.schedules ?? {}).length;
+
+console.log(workflowCount + scheduleCount > 0 ? "1" : "0");
+' 2>/dev/null)"; then
+    err "failed to inspect HQ async manifest"
+    log "remediation: ensure apps/hq/rawr.hq.ts exports createRawrHqManifest"
+    exit 1
+  fi
+
+  case "$enabled" in
+    0|1)
+      printf '%s\n' "$enabled"
+      ;;
+    *)
+      err "failed to inspect HQ async manifest"
+      log "remediation: expected async manifest probe to return 0 or 1, got '${enabled}'"
+      exit 1
+      ;;
+  esac
+}
+
+resolve_inngest_cli_package_spec() {
+  bun --silent --eval '
+import pkg from "./apps/server/package.json" with { type: "json" };
+
+const version = pkg.devDependencies?.["inngest-cli"];
+if (!version || !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(version)) {
+  console.error("apps/server devDependency inngest-cli must be pinned to an exact version");
+  process.exit(1);
+}
+
+console.log(`inngest-cli@${version}`);
+'
 }
 
 listener_pids_for_port() {
@@ -191,14 +238,18 @@ port_has_unmanaged_listener() {
 }
 
 assert_lifecycle_ports_available() {
+  local ports=("$SERVER_PORT" "$WEB_PORT")
+  if [[ "$hq_async_enabled" == "1" ]]; then
+    ports+=(
+      "$INNGEST_PORT"
+      "$INNGEST_CONNECT_GATEWAY_PORT"
+      "$INNGEST_CONNECT_GATEWAY_GRPC_PORT"
+      "$INNGEST_CONNECT_EXECUTOR_GRPC_PORT"
+    )
+  fi
+
   local port
-  for port in \
-    "$SERVER_PORT" \
-    "$WEB_PORT" \
-    "$INNGEST_PORT" \
-    "$INNGEST_CONNECT_GATEWAY_PORT" \
-    "$INNGEST_CONNECT_GATEWAY_GRPC_PORT" \
-    "$INNGEST_CONNECT_EXECUTOR_GRPC_PORT"; do
+  for port in "${ports[@]}"; do
     if port_has_unmanaged_listener "$port"; then
       err "lifecycle port ${port} is already in use"
       log "remediation:"
@@ -921,10 +972,20 @@ open_ui_surfaces() {
       urls+=("$HQ_WEB_URL")
       ;;
     app+inngest)
-      urls+=("$HQ_WEB_URL" "$HQ_INNGEST_RUNS_URL")
+      urls+=("$HQ_WEB_URL")
+      if [[ "$hq_async_enabled" == "1" ]]; then
+        urls+=("$HQ_INNGEST_RUNS_URL")
+      else
+        log "open policy: skipping Inngest UI because async workflows are not configured"
+      fi
       ;;
     all)
-      urls+=("$HQ_WEB_URL" "$HQ_INNGEST_RUNS_URL")
+      urls+=("$HQ_WEB_URL")
+      if [[ "$hq_async_enabled" == "1" ]]; then
+        urls+=("$HQ_INNGEST_RUNS_URL")
+      else
+        log "open policy: skipping Inngest UI because async workflows are not configured"
+      fi
       ;;
   esac
 
@@ -1210,6 +1271,7 @@ if state_has_live_processes; then
   exit 1
 fi
 
+hq_async_enabled="$(resolve_hq_async_enabled)"
 assert_lifecycle_ports_available
 ensure_observability_posture
 
@@ -1218,7 +1280,11 @@ ensure_observability_posture
 log "starting managed HQ runtime"
 log "  server: ${HQ_SERVER_HEALTH_URL}"
 log "  web: ${HQ_WEB_URL}"
-log "  async: ${HQ_INNGEST_RUNS_URL}"
+if [[ "$hq_async_enabled" == "1" ]]; then
+  log "  async: ${HQ_INNGEST_RUNS_URL}"
+else
+  log "  async: disabled (no HQ workflows or schedules configured)"
+fi
 log "  observability mode: ${observability_mode}"
 if [[ -n "$otlp_endpoint" ]]; then
   log "  otlp http: ${otlp_endpoint}"
@@ -1227,16 +1293,17 @@ fi
 
 (
   cd apps/server
+  server_env=(env)
   if [[ -n "$otlp_endpoint" ]]; then
-    exec env \
-      OTEL_EXPORTER_OTLP_ENDPOINT="$otlp_endpoint" \
-      INNGEST_DEV="http://localhost:${INNGEST_PORT}" \
-      bun --hot src/index.ts > >(tee -a "$LOG_FILE") 2>&1
+    server_env+=(OTEL_EXPORTER_OTLP_ENDPOINT="$otlp_endpoint")
   fi
-  # Tell the host server it is running against the local Inngest Dev Server so
-  # `/api/inngest` accepts unsigned dev sync/serve handshakes without weakening
-  # production ingress verification.
-  exec env INNGEST_DEV="http://localhost:${INNGEST_PORT}" bun --hot src/index.ts > >(tee -a "$LOG_FILE") 2>&1
+  if [[ "$hq_async_enabled" == "1" ]]; then
+    # Tell the host server it is running against the local Inngest Dev Server so
+    # `/api/inngest` accepts unsigned dev sync/serve handshakes without weakening
+    # production ingress verification.
+    server_env+=(INNGEST_DEV="http://localhost:${INNGEST_PORT}")
+  fi
+  exec "${server_env[@]}" bun --hot src/index.ts > >(tee -a "$LOG_FILE") 2>&1
 ) &
 hq_server_pid="$!"
 
@@ -1246,17 +1313,25 @@ hq_server_pid="$!"
 ) &
 hq_web_pid="$!"
 
-(
-  cd apps/server
-  exec env npm_config_ignore_scripts=false npm exec --yes --package=inngest-cli@latest -- \
-    inngest dev \
-      -u "http://localhost:${SERVER_PORT}/api/inngest" \
-      --port "${INNGEST_PORT}" \
-      --connect-gateway-port "${INNGEST_CONNECT_GATEWAY_PORT}" \
-      --connect-gateway-grpc-port "${INNGEST_CONNECT_GATEWAY_GRPC_PORT}" \
-      --connect-executor-grpc-port "${INNGEST_CONNECT_EXECUTOR_GRPC_PORT}" > >(tee -a "$LOG_FILE") 2>&1
-) &
-hq_async_pid="$!"
+if [[ "$hq_async_enabled" == "1" ]]; then
+  inngest_cli_package_spec="$(resolve_inngest_cli_package_spec)"
+  (
+    cd apps/server
+    exec env \
+      npm_config_cache="$HQ_INNGEST_NPM_CACHE" \
+      npm_config_ignore_scripts=false \
+      npm exec --yes --package="$inngest_cli_package_spec" -- \
+        inngest dev \
+          -u "http://localhost:${SERVER_PORT}/api/inngest" \
+          --port "${INNGEST_PORT}" \
+          --connect-gateway-port "${INNGEST_CONNECT_GATEWAY_PORT}" \
+          --connect-gateway-grpc-port "${INNGEST_CONNECT_GATEWAY_GRPC_PORT}" \
+          --connect-executor-grpc-port "${INNGEST_CONNECT_EXECUTOR_GRPC_PORT}" > >(tee -a "$LOG_FILE") 2>&1
+  ) &
+  hq_async_pid="$!"
+else
+  hq_async_pid=""
+fi
 
 hq_started_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 stack_started_here=1
@@ -1265,7 +1340,11 @@ run_status_writer
 
 wait_for_http "$HQ_SERVER_HEALTH_URL" "server health" || true
 wait_for_http "$HQ_WEB_URL" "web app" || true
-wait_for_http "$HQ_INNGEST_RUNS_URL" "async runs" || true
+if [[ "$hq_async_enabled" == "1" ]]; then
+  wait_for_http "$HQ_INNGEST_RUNS_URL" "async runs" || true
+else
+  log "ready: async skipped (no HQ workflows or schedules configured)"
+fi
 if [[ -n "$otlp_endpoint" ]]; then
   wait_for_http "$HQ_OBSERVABILITY_UI_URL" "observability ui" || true
 fi

@@ -138,6 +138,7 @@ type HqStateFile = {
   serverPid: number | null;
   webPid: number | null;
   asyncPid: number | null;
+  asyncEnabled: boolean | null;
   startedAt: string | null;
   openPolicy: HqOpenPolicy | null;
   observabilityMode: HqObservabilityMode | null;
@@ -199,6 +200,12 @@ function parseObservabilityMode(value: string | undefined): HqObservabilityMode 
   return isHqObservabilityMode(value) ? value : null;
 }
 
+function parseBooleanFlag(value: string | undefined): boolean | null {
+  if (value === "1") return true;
+  if (value === "0") return false;
+  return null;
+}
+
 async function ensureArtifactDir(workspaceRoot: string): Promise<void> {
   await fs.mkdir(path.join(workspaceRoot, HQ_ARTIFACT_DIR), { recursive: true });
 }
@@ -234,6 +241,7 @@ async function readStateFile(workspaceRoot: string): Promise<HqStateFile | null>
     serverPid: parsePid(parsed.get("hq_server_pid")),
     webPid: parsePid(parsed.get("hq_web_pid")),
     asyncPid: parsePid(parsed.get("hq_async_pid")),
+    asyncEnabled: parseBooleanFlag(parsed.get("hq_async_enabled")),
     startedAt: parsed.get("hq_started_at") ?? null,
     openPolicy: parseOpenPolicy(parsed.get("hq_open_policy")),
     observabilityMode: parseObservabilityMode(parsed.get("hq_observability_mode")),
@@ -349,10 +357,13 @@ async function probeHealth(url: string): Promise<HqHealthStatus> {
 }
 
 function deriveRoleState(args: {
+  expected: boolean;
   pid: number | null;
   portStatus: HqPortStatus;
   health: HqHealthStatus | null;
 }): HqRoleState {
+  if (!args.expected) return "stopped";
+
   const pidLive = isPidRunning(args.pid);
   const listening = args.portStatus.listening;
   const ownership = args.portStatus.ownership;
@@ -383,7 +394,7 @@ async function collectRoleStatus(args: {
   const health = args.healthUrl ? await probeHealth(args.healthUrl) : null;
 
   return {
-    state: deriveRoleState({ pid: args.pid, portStatus, health }),
+    state: deriveRoleState({ expected: args.expected, pid: args.pid, portStatus, health }),
     expected: args.expected,
     pid: isPidRunning(args.pid) ? args.pid : null,
     implementation: args.implementation,
@@ -519,7 +530,8 @@ function deriveSummary(args: {
   roles: Array<HqRoleStatus>;
   observability: HqObservabilityStatus;
 }): HqSummary {
-  const roleStates = args.roles.map((role) => role.state);
+  const roleStates = args.roles.filter((role) => role.expected).map((role) => role.state);
+  if (roleStates.length === 0) return "stopped";
   if (roleStates.every((state) => state === "stopped")) return "stopped";
   if (roleStates.some((state) => state === "degraded")) return "degraded";
   if (roleStates.every((state) => state === "running")) {
@@ -553,6 +565,7 @@ export async function collectHqStatus(args: {
 
   const effectiveState = stale ? null : state;
   const effectiveManagedPids = collectManagedPids(effectiveState);
+  const asyncExpected = effectiveState?.asyncEnabled ?? true;
 
   const roles = {
     server: await collectRoleStatus({
@@ -563,10 +576,10 @@ export async function collectHqStatus(args: {
       managedPids: effectiveManagedPids,
     }),
     async: await collectRoleStatus({
-      expected: true,
-      pid: effectiveState?.asyncPid ?? null,
+      expected: asyncExpected,
+      pid: asyncExpected ? effectiveState?.asyncPid ?? null : null,
       port: HQ_PORTS.async,
-      healthUrl: HQ_URLS.asyncRuns,
+      healthUrl: asyncExpected ? HQ_URLS.asyncRuns : null,
       implementation: "inngest",
       managedPids: effectiveManagedPids,
     }),
