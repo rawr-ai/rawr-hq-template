@@ -1,0 +1,25 @@
+{
+  "id": "authority-overlay-v1",
+  "description": "Minimal authority metadata for reconciling packet-scoped partially superseded architecture documents.",
+  "authority_statuses": [
+    { "id": "canonical", "description": "Current source-of-truth target behavior." },
+    { "id": "superseded", "description": "Previously authoritative content displaced by newer authority." },
+    { "id": "transitional", "description": "Valid only during migration or as a bridge mechanism." },
+    { "id": "legacy", "description": "Current or historical behavior that should not define the target state." },
+    { "id": "forbidden", "description": "Behavior or structure that must not be reintroduced." },
+    { "id": "observed", "description": "Extracted fact without explicit authority classification." },
+    { "id": "candidate", "description": "Potential alignment target requiring human review." }
+  ],
+  "fields": [
+    "source_id",
+    "path",
+    "line_start",
+    "line_end",
+    "heading_path",
+    "authority_rank",
+    "authority_scope",
+    "source_authority",
+    "authority_status",
+    "confidence"
+  ]
+}
