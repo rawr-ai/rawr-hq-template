@@ -1,0 +1,17 @@
+version: 1
+project: semantica-workbench-fixture
+notes:
+  - Fixture manifest for deterministic setup verification.
+sources:
+  - id: fixture-runtime-target
+    title: Fixture Runtime Target
+    path: tools/semantica-workbench/fixtures/docs/runtime-target.md
+    authority: target
+    status: canonical
+    role: runtime-target
+  - id: fixture-migration-plan
+    title: Fixture Migration Plan
+    path: tools/semantica-workbench/fixtures/docs/migration-plan.md
+    authority: migration
+    status: transitional
+    role: migration-plan
