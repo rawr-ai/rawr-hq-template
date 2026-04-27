@@ -7,5 +7,5 @@ These files are retained as internal provenance only. They are not the active re
 The active workflow for reviewing the returned final Runtime Realization specification is:
 
 ```text
-../runtime-realization-final-spec-readiness-review-workflow.md
+../runtime-realization-finalization/decision-record/runtime-realization-final-spec-readiness-review-workflow.md
 ```

@@ -19,7 +19,7 @@ Each agent writes scratch while working, then a report. Scratch is deleted after
 ## Key Changes
 Execution should create a new sibling doc under the existing spike context directory, tentatively:
 
-`docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integration-runtime-realization-target-authority-reframe.md`
+`docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/target-authority-reframe/target-authority-reframe.md`
 
 Before any agent work, write the accepted plan verbatim to a sibling workflow doc for this pass.
 

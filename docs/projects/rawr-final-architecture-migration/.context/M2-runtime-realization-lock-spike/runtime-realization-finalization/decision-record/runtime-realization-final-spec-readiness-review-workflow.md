@@ -43,7 +43,7 @@ The returned specification is the review subject. It is not accepted as canonica
 The review uses the final cloud-Pro packet as evidence for what the returned specification was supposed to accomplish:
 
 ```text
-docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/final-cloud-pro-inputs/
+docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/runtime-realization-finalization/cloud-pro-inputs/
   00-cloud-pro-task-prompt.md
   01-finalization-authority.md
   02-runtime-realization-architecture-authority.md

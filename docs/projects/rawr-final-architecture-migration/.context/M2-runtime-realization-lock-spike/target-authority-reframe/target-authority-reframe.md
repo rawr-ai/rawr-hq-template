@@ -1,6 +1,6 @@
 # Runtime Realization Target-Authority Reframe
 
-This document is a sibling refinement of `integration-runtime-realization-forward-evaluation.md`. It does not replace the first spike's evidence. It corrects the first spike's conservative posture under the target-authority frame:
+This document is a sibling refinement of `forward-evaluation.md`. It does not replace the first spike's evidence. It corrects the first spike's conservative posture under the target-authority frame:
 
 - Alt-X-1 and Alt-X-2 are target architecture inputs.
 - Current repo reality is migration substrate, not architecture authority.
@@ -283,11 +283,11 @@ These are not generic future tasks. They are named spaces in the target architec
 
 The target-reframe reports are worth keeping as standalone provenance:
 
-- `reports/target-reframe/agent-target-authority.report.md`
-- `reports/target-reframe/agent-migration-domino.report.md`
-- `reports/target-reframe/agent-terminology-layer.report.md`
-- `reports/target-reframe/agent-component-map.report.md`
-- `reports/target-reframe/agent-transition-offramps.report.md`
+- `reports/agent-target-authority.report.md`
+- `reports/agent-migration-domino.report.md`
+- `reports/agent-terminology-layer.report.md`
+- `reports/agent-component-map.report.md`
+- `reports/agent-transition-offramps.report.md`
 
 Scratch files were only working notes and should be deleted after this integration is committed.
 

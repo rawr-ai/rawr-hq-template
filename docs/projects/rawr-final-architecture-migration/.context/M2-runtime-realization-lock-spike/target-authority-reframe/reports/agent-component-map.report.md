@@ -7,7 +7,7 @@ Inputs read:
 - `/Users/mateicanavra/Downloads/RAWR_Runtime_Realization_System-Alt-X-1.md`
 - `/Users/mateicanavra/Downloads/RAWR_Runtime_Realization_System-Alt-X-2.md`
 - `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
-- `docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integration-runtime-realization-forward-evaluation.md`
+- `docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/target-authority-reframe/forward-evaluation.md`
 - `docs/system/TELEMETRY.md`
 - `docs/system/telemetry/orpc.md`
 - `docs/system/telemetry/hq-runtime.md`

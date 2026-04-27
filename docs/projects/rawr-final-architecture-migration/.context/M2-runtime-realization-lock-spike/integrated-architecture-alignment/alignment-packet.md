@@ -11,12 +11,12 @@ The goal is not another runtime specification synthesis. The Runtime Realization
 
 ## Documents To Provide
 
-Use `integrated-architecture-alignment-cloud-pro-inputs/00-cloud-pro-task-prompt.md` as the cloud Pro task prompt.
+Use `cloud-pro-inputs/00-cloud-pro-task-prompt.md` as the cloud Pro task prompt.
 
 The cloud-input folder is self-contained. Provide these files together as one packet:
 
 ```text
-integrated-architecture-alignment-cloud-pro-inputs/
+cloud-pro-inputs/
   00-cloud-pro-task-prompt.md
   01-integrated-architecture-alignment-authority.md
   02-runtime-realization-system-specification.md

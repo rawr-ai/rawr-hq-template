@@ -21,6 +21,8 @@ Current phase-scoped execution packets:
 
 - `M1-execution/`: the frozen Phase 1 packet
 - `M2-execution/`: the live M2 packet bootstrap
+- `M2-runtime-realization-lock-spike/`: specialized M2 lock-spike context.
+  Its first-hop active handoff is `M2-runtime-realization-lock-spike/integrated-canonical-architecture-finalization/cloud-pro-inputs/`; older runtime/alignment packets inside it are completed provenance, not active handoff inputs.
 
 Each phase packet should keep the same shape:
 

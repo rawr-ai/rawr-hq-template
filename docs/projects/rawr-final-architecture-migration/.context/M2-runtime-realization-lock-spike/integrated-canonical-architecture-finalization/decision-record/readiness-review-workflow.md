@@ -31,7 +31,7 @@ The returned candidates are review subjects. Neither candidate is accepted as re
 The review uses the integrated-architecture alignment packet as evidence for what the cloud pass was supposed to accomplish:
 
 ```text
-docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-architecture-alignment-cloud-pro-inputs/
+docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-architecture-alignment/cloud-pro-inputs/
   00-cloud-pro-task-prompt.md
   01-integrated-architecture-alignment-authority.md
   02-runtime-realization-system-specification.md
@@ -505,8 +505,8 @@ The DRI verifies the map before writing the final evaluation.
 The DRI writes:
 
 ```text
-docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-canonical-architecture-comparative-evaluation.md
-docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-canonical-architecture-final-modification-packet.md
+docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-canonical-architecture-finalization/decision-record/comparative-evaluation.md
+docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-canonical-architecture-finalization/decision-record/final-modification-packet.md
 ```
 
 The final evaluation must include:
