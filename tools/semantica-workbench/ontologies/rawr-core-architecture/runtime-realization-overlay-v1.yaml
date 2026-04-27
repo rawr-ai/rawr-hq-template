@@ -835,6 +835,14 @@ entities:
   layer: runtime-realization-overlay
   status: forbidden
   definition: No component acquires live runtime values before provisioning.
+  constraint:
+    kind: prohibited-construction
+    prohibited_action: acquire-live-runtime-value-before-provisioning
+    terms:
+    - pre-provisioning live value acquisition
+    - import-time acquisition
+    - cold declaration violation
+    replacement: provisioning phase acquisition
   aliases:
   - import-time acquisition
   - cold declaration violation
@@ -859,6 +867,13 @@ entities:
   status: forbidden
   definition: Local HTTP self-calls are not the canonical path for trusted same-process callers; same-process trusted callers
     use service clients.
+  constraint:
+    kind: prohibited-construction
+    prohibited_action: use-local-http-self-call-for-same-process-trusted-caller
+    terms:
+    - local HTTP self-call for same-process trusted caller
+    - same-process HTTP self-call
+    replacement: service clients
   aliases:
   - same-process HTTP self-call
   source_refs:

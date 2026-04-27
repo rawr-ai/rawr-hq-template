@@ -90,6 +90,8 @@ def build_cytoscape_payload(
             "summary": diff.get("summary", {}),
             "review_needed": diff.get("review_needed", []),
             "underrepresented_gates": diff.get("underrepresented_gates", []),
+            "semantic_findings": diff.get("findings", []),
+            "claims": diff.get("claims", []),
         },
     }
 
@@ -108,6 +110,9 @@ def build_diff_overlay(diff: dict[str, Any]) -> dict[str, set[str]]:
     for item in diff.get("underrepresented_gates", []):
         if item.get("entity_id"):
             overlay[item["entity_id"]].add("underrepresented_gate")
+    for item in diff.get("findings", []):
+        if item.get("entity_id"):
+            overlay[item["entity_id"]].add(item.get("kind", "semantic_finding").replace("-", "_"))
     return overlay
 
 

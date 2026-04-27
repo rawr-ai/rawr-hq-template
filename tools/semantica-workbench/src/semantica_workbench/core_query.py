@@ -20,8 +20,10 @@ def run_named_query(run: str | None, name: str) -> dict[str, Any]:
     run_dir = resolve_run(run)
     graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     diff_path = run_dir / CORE_GRAPH_FILENAMES["document_diff"]
+    semantic_path = run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]
     candidate_queue_path = run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]
     diff = read_json(diff_path) if diff_path.exists() else {"summary": {}}
+    semantic = read_json(semantic_path) if semantic_path.exists() else {"summary": {}, "findings": []}
     candidate_queue = read_json(candidate_queue_path) if candidate_queue_path.exists() else {}
     if name == "summary":
         return {
@@ -29,6 +31,7 @@ def run_named_query(run: str | None, name: str) -> dict[str, Any]:
             "run": str(run_dir.relative_to(REPO_ROOT)),
             "summary": graph["summary"],
             "diff_summary": diff.get("summary", {}),
+            "semantic_summary": semantic.get("summary", {}),
             "candidate_count": len(candidate_queue.get("candidates", [])),
         }
     if name == "forbidden-terms":
@@ -56,6 +59,21 @@ def run_named_query(run: str | None, name: str) -> dict[str, Any]:
         }
     if name == "testing-plan-review-needed":
         return {"query": name, "items": diff.get("review_needed", []), "summary": diff.get("summary", {})}
+    if name == "semantic-conflicts":
+        return {"query": name, "items": semantic.get("conflicts", []), "summary": semantic.get("summary", {})}
+    if name == "aligned-rejections":
+        items = [
+            item
+            for item in semantic.get("aligned", [])
+            if item.get("rule") == "negative_or_prohibitive_claim_rejects_prohibited_construction"
+        ]
+        return {"query": name, "items": items, "summary": semantic.get("summary", {})}
+    if name == "deprecated-uses":
+        return {"query": name, "items": semantic.get("deprecated_uses", []), "summary": semantic.get("summary", {})}
+    if name == "ambiguous-claims":
+        return {"query": name, "items": semantic.get("ambiguous", []), "summary": semantic.get("summary", {})}
+    if name == "candidate-new":
+        return {"query": name, "items": semantic.get("candidate_new", []), "summary": semantic.get("summary", {})}
     raise ValueError(f"Unknown named query `{name}`. Use --list to see available queries.")
 
 
@@ -92,6 +110,9 @@ def run_sparql_query(run: str | None, sparql_path: Path) -> dict[str, Any]:
     query = sparql_path.read_text(encoding="utf-8")
     graph = Graph()
     graph.parse(ttl_path, format="turtle")
+    evidence_ttl = run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]
+    if evidence_ttl.exists():
+        graph.parse(evidence_ttl, format="turtle")
     result = graph.query(query)
     variables = [str(variable) for variable in result.vars]
     rows = []
@@ -100,6 +121,7 @@ def run_sparql_query(run: str | None, sparql_path: Path) -> dict[str, Any]:
     return {
         "query": str(sparql_path.relative_to(REPO_ROOT)),
         "data_graph": str(ttl_path.relative_to(REPO_ROOT)),
+        "evidence_graph": str(evidence_ttl.relative_to(REPO_ROOT)) if evidence_ttl.exists() else None,
         "row_count": len(rows),
         "variables": variables,
         "rows": rows,

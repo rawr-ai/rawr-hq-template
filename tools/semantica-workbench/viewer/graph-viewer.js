@@ -62,9 +62,9 @@ const presets = {
     matchEdge: (data) => ["forbids", "replaces"].includes(data.predicate),
   },
   "testing-plan-diff": {
-    label: "Testing Plan Diff",
+    label: "Semantic Evidence",
     layout: "concentric",
-    description: "Testing-plan alignment, review-needed items, and underrepresented validation gates.",
+    description: "Semantic comparison findings from parsed evidence claims, plus legacy diff overlays when present.",
     matchNode: (data) => data.diffKinds.length > 0 || data.type === "ValidationGate",
     matchEdge: (data) => data.diffKinds.length > 0 || ["requires", "validated_by", "observes", "supports"].includes(data.predicate),
   },
@@ -229,8 +229,20 @@ function applyFilters() {
     node.toggleClass("hidden", !visible);
     if (visible) visibleNodeIds.add(data.id);
     node.toggleClass("diffAligned", data.diffKinds.includes("aligned"));
-    node.toggleClass("diffReview", data.diffKinds.includes("review_needed") || data.diffKinds.includes("underrepresented_gate"));
-    node.toggleClass("diffStale", data.diffKinds.includes("stale") || data.diffKinds.includes("forbidden"));
+    node.toggleClass(
+      "diffReview",
+      data.diffKinds.includes("review_needed") ||
+        data.diffKinds.includes("underrepresented_gate") ||
+        data.diffKinds.includes("ambiguous") ||
+        data.diffKinds.includes("candidate_new"),
+    );
+    node.toggleClass(
+      "diffStale",
+      data.diffKinds.includes("stale") ||
+        data.diffKinds.includes("forbidden") ||
+        data.diffKinds.includes("conflict") ||
+        data.diffKinds.includes("deprecated_use"),
+    );
   });
 
   cy.edges().forEach((edge) => {
@@ -312,6 +324,7 @@ function renderDetails(element) {
   const refs = data.source_refs || [];
   const consequences = data.operational_consequence || [];
   const diffKinds = data.diffKinds || [];
+  const relatedFindings = (payload.diff?.semantic_findings || []).filter((finding) => finding.entity_id === data.id).slice(0, 12);
   document.getElementById("details").innerHTML = `
     <div class="detail-block">
       <h2>${esc(data.label || data.id)}</h2>
@@ -329,9 +342,18 @@ function renderDetails(element) {
     <div class="detail-block"><h3>Source References</h3>${
       refs.length ? refs.map(renderSourceRef).join("") : '<p class="muted">No source refs recorded.</p>'
     }</div>
+    ${relatedFindings.length ? `<div class="detail-block"><h3>Semantic Findings</h3>${relatedFindings.map(renderSemanticFinding).join("")}</div>` : ""}
     <div class="detail-block"><h3>Connected Relations</h3>${renderConnected(element)}</div>
     <div class="detail-block"><h3>Raw Data</h3><pre>${esc(JSON.stringify(data, null, 2))}</pre></div>
   `;
+}
+
+function renderSemanticFinding(finding) {
+  return `<div class="source-ref">
+    <strong>${esc(finding.kind)} · ${esc(finding.rule || "")}</strong><br>
+    <span>${esc(finding.document_path)}:${esc(finding.line_start)} (${esc(finding.polarity)}/${esc(finding.modality)}/${esc(finding.assertion_scope)})</span><br>
+    <span>${esc(finding.text)}</span>
+  </div>`;
 }
 
 function renderSourceRef(ref) {
