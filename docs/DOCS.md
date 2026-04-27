@@ -16,7 +16,7 @@ Current architecture authority for M2 migration planning lives in:
 - `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
 - `docs/projects/rawr-final-architecture-migration/.context/M2-migration-planning-packet/`
 
-The previous `docs/SYSTEM.md` is preserved at `docs/quarantine/SYSTEM.md` pending a post-migration rewrite.
+The previous `docs/SYSTEM.md` is preserved at `docs/quarantine/SYSTEM.md` and is not active system authority.
 
 ## Directory Roles
 

@@ -4,13 +4,11 @@ This index is the canonical entrypoint for active process runbooks.
 
 Use this when you need exact commands for:
 - operating the managed local HQ runtime,
-- verifying published API behavior,
 - containing migration-doc drift with path-obvious quarantine,
 - draining Graphite stacks,
-- syncing template/personal work,
-- generating ORPC OpenAPI compatibility artifacts.
+- syncing template/personal work.
 
-Plugin/CLI lifecycle runbooks that predate the final architecture migration have been moved to `docs/process/runbooks/quarantine/`.
+Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks that predate or cross the final architecture migration have been moved to `docs/process/runbooks/quarantine/`.
 
 ## Quick Chooser
 
@@ -22,7 +20,6 @@ Plugin/CLI lifecycle runbooks that predate the final architecture migration have
 | Drain Graphite stacks safely (publish/merge/prune loop) | `docs/process/runbooks/STACK_DRAIN_LOOP.md` |
 | Integrate template -> personal with sync-first sequencing | `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md` |
 | Canonical repo-boundary + transient retry + final acceptance policy | `docs/process/HQ_OPERATIONS.md` |
-| Generate ORPC OpenAPI compatibility artifacts | `docs/process/runbooks/ORPC_OPENAPI_COMPATIBILITY.md` |
 
 ## Command Surface Invariant
 
