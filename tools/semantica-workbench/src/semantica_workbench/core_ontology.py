@@ -159,6 +159,7 @@ def extract_document_evidence(document: Path | None, run: str | None = "latest",
 
     write_jsonl(run_dir / CORE_GRAPH_FILENAMES["document_chunks"], chunks)
     write_jsonl(run_dir / CORE_GRAPH_FILENAMES["evidence_claims"], evidence["claims"])
+    write_json(run_dir / CORE_GRAPH_FILENAMES["suppressed_lines"], {"document": evidence["document"], "items": evidence.get("suppressed_lines", [])})
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
 
@@ -190,6 +191,7 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
     allowed_types = {item["id"] for item in contract["entity_types"]}
     allowed_predicates = {item["id"] for item in contract["predicates"]}
     canonical_statuses = set(contract["canonical_view_statuses"])
+    canonical_excluded_types = set(contract.get("canonical_graph_excluded_types", []))
     candidate_statuses = set(contract["candidate_statuses"])
 
     validate_contract_shape(contract, errors, warnings)
@@ -361,7 +363,12 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
             )
         )
 
-    canonical_entities = [entity for entity in entities if entity.get("status") in canonical_statuses]
+    canonical_entities = [
+        entity
+        for entity in entities
+        if entity.get("status") in canonical_statuses
+        and entity.get("type") not in canonical_excluded_types
+    ]
     canonical_entity_ids = {entity["id"] for entity in canonical_entities}
     canonical_relations = [
         relation
@@ -604,12 +611,18 @@ def section_end(lines: list[str], line_start: int) -> int:
 def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) -> dict[str, Any]:
     contract = ontology["contract"]
     canonical_statuses = set(contract["canonical_view_statuses"])
+    canonical_excluded_types = set(contract.get("canonical_graph_excluded_types", []))
     target_statuses = set(contract.get("target_architecture_view_statuses", ["locked"]))
     target_excluded_types = set(contract.get("target_architecture_excluded_types", []))
     entities = [enrich_item_source_refs(entity) for entity in ontology["entities"]]
     relations = [enrich_item_source_refs(relation) for relation in ontology["relations"]]
     entities_by_id = {entity["id"]: entity for entity in entities}
-    canonical_entities = [entity for entity in entities if entity["status"] in canonical_statuses]
+    canonical_entities = [
+        entity
+        for entity in entities
+        if entity["status"] in canonical_statuses
+        and entity.get("type") not in canonical_excluded_types
+    ]
     canonical_entity_ids = {entity["id"] for entity in canonical_entities}
     canonical_relations = [
         relation

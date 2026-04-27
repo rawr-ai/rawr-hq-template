@@ -15,13 +15,13 @@ from semantica_workbench.core_ontology import (
     load_core_ontology,
     validate_loaded_core_ontology,
 )
-from semantica_workbench.core_config import CORE_GRAPH_FILENAMES
+from semantica_workbench.core_config import CORE_GRAPH_FILENAMES, NAMED_QUERY_DESCRIPTIONS
 from semantica_workbench.core_viewer import build_cytoscape_payload, write_html_viewer
-from semantica_workbench.core_query import run_named_query
+from semantica_workbench.core_query import render_query_text, run_named_query
 from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import rel
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST
+from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantic_evidence import (
     compare_evidence_to_ontology,
@@ -126,6 +126,29 @@ class WorkbenchTests(unittest.TestCase):
         self.assertTrue(target_entities)
         self.assertFalse(any(entity["type"] in excluded_types for entity in target_entities))
 
+    def test_verification_policy_stays_out_of_canonical_views(self) -> None:
+        ontology = deepcopy(load_core_ontology())
+        verification_entity = next(entity for entity in ontology["entities"] if entity["type"] == "VerificationPolicyConcept")
+        verification_entity["status"] = "locked"
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        for view_name in ["canonical_graph"]:
+            self.assertFalse(any(entity["type"] == "VerificationPolicyConcept" for entity in graph[view_name]["entities"]))
+        self.assertFalse(any(entity["type"] == "VerificationPolicyConcept" for entity in graph["layered_graph"]["canonical_view"]["entities"]))
+        self.assertFalse(any(entity["type"] == "VerificationPolicyConcept" for entity in graph["layered_graph"]["target_architecture_view"]["entities"]))
+
+    def test_testing_plan_authority_only_targets_verification_policy(self) -> None:
+        ontology = load_core_ontology()
+        testing_authority_edges = [
+            relation
+            for relation in ontology["relations"]
+            if relation["subject"] == "authority.doc.canonical-testing-plan"
+            and relation["predicate"] == "is_authority_for"
+        ]
+        self.assertGreaterEqual(len(testing_authority_edges), 1)
+        targets = {entity["id"]: entity for entity in ontology["entities"]}
+        self.assertTrue(all(targets[relation["object"]]["type"] == "VerificationPolicyConcept" for relation in testing_authority_edges))
+
     def test_forbidden_patterns_have_structured_constraints(self) -> None:
         ontology = load_core_ontology()
         forbidden = [entity for entity in ontology["entities"] if entity["type"] == "ForbiddenPattern"]
@@ -217,6 +240,8 @@ class WorkbenchTests(unittest.TestCase):
                 self.assertEqual(case["expected_modality"], finding["modality"])
             if case.get("expected_scope"):
                 self.assertEqual(case["expected_scope"], finding["assertion_scope"])
+            if case.get("expected_ambiguity_bucket"):
+                self.assertEqual(case["expected_ambiguity_bucket"], finding["ambiguity_bucket"])
 
     def test_semantic_opposite_claims_do_not_collapse(self) -> None:
         ontology = load_core_ontology()
@@ -228,6 +253,38 @@ class WorkbenchTests(unittest.TestCase):
         line7 = [finding for finding in compare["findings"] if finding["line_start"] == 7 and finding["entity_id"] == "forbidden.pattern.root-core-authoring-root"]
         self.assertTrue(any(finding["kind"] == "aligned" and finding["polarity"] == "negative" for finding in line3))
         self.assertTrue(any(finding["kind"] == "conflict" and finding["polarity"] == "positive" for finding in line7))
+
+    def test_bare_match_heading_context_does_not_create_conflict(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        temp_root = REPO_ROOT / ".semantica" / "test-docs"
+        temp_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=temp_root) as directory:
+            document = Path(directory) / "bare-match.md"
+            document.write_text("# Target Architecture\n\nroot-level `core/` authoring root.\n", encoding="utf-8")
+            evidence = extract_evidence_claims(document, graph["layered_graph"], graph["candidate_queue"], fixture=True)
+        compare = compare_evidence_to_ontology(evidence, graph["layered_graph"], graph["candidate_queue"])
+        findings = [item for item in compare["findings"] if item.get("entity_id") == "forbidden.pattern.root-core-authoring-root"]
+        self.assertTrue(findings)
+        self.assertFalse(any(item["kind"] == "conflict" for item in findings))
+        self.assertTrue(any(item["kind"] == "ambiguous" and item["assertion_scope"] == "unknown" for item in findings))
+
+    def test_verification_policy_negation_is_not_aligned(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        temp_root = REPO_ROOT / ".semantica" / "test-docs"
+        temp_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=temp_root) as directory:
+            document = Path(directory) / "policy-negation.md"
+            document.write_text("Testing MUST NOT preserve graph law.\n", encoding="utf-8")
+            evidence = extract_evidence_claims(document, graph["layered_graph"], graph["candidate_queue"], fixture=True)
+        compare = compare_evidence_to_ontology(evidence, graph["layered_graph"], graph["candidate_queue"])
+        policy_findings = [item for item in compare["findings"] if item.get("claim_kind") == "verification-policy"]
+        self.assertTrue(policy_findings)
+        self.assertFalse(any(item["kind"] == "aligned" for item in policy_findings))
+        self.assertTrue(any(item.get("ambiguity_bucket") == "subordinate-policy-negation" for item in policy_findings))
 
     def test_decision_grade_semantic_findings_have_claim_semantics(self) -> None:
         ontology = load_core_ontology()
@@ -245,6 +302,54 @@ class WorkbenchTests(unittest.TestCase):
             self.assertNotEqual("unknown", finding["modality"])
             self.assertNotEqual("unknown", finding["assertion_scope"])
             self.assertTrue(finding.get("entity_id"))
+
+    def test_semantic_extraction_suppresses_scaffold_and_records_ledger(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        evidence = extract_evidence_claims(fixture_document_path(), graph["layered_graph"], graph["candidate_queue"], fixture=True)
+        suppressed = evidence["suppressed_lines"]
+        suppressed_by_line = {item["line_start"]: item for item in suppressed}
+        self.assertIn(28, suppressed_by_line)
+        self.assertIn(31, suppressed_by_line)
+        self.assertIn(33, suppressed_by_line)
+        self.assertIn(35, suppressed_by_line)
+        self.assertIn(36, suppressed_by_line)
+        claims_by_line = {claim["line_start"]: claim for claim in evidence["claims"]}
+        self.assertNotIn(33, claims_by_line)
+        self.assertGreater(evidence["summary"]["claim_retention"]["suppressed_line_count"], 0)
+
+    def test_semantic_query_names_execute(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        evidence = extract_evidence_claims(fixture_document_path(), graph["layered_graph"], graph["candidate_queue"], fixture=True)
+        compare = compare_evidence_to_ontology(evidence, graph["layered_graph"], graph["candidate_queue"])
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            (run_dir / CORE_GRAPH_FILENAMES["layered_graph"]).write_text(json.dumps(graph["layered_graph"]), encoding="utf-8")
+            (run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]).write_text(json.dumps(graph["candidate_queue"]), encoding="utf-8")
+            (run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]).write_text(json.dumps(compare), encoding="utf-8")
+            for query_name in NAMED_QUERY_DESCRIPTIONS:
+                result = run_named_query(str(run_dir), query_name)
+                self.assertEqual(query_name, result["query"])
+            ambiguity = run_named_query(str(run_dir), "ambiguity-summary")
+            self.assertEqual(compare["summary"]["ambiguous_by_bucket"], {row["bucket"]: row["count"] for row in ambiguity["buckets"]})
+            decision_queue = run_named_query(str(run_dir), "decision-review-queue")
+            text = render_query_text(decision_queue)
+            self.assertIn("artifact:", text)
+            self.assertIn("document:", text)
+
+    def test_semantic_query_requires_semantic_artifact(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            (run_dir / CORE_GRAPH_FILENAMES["layered_graph"]).write_text(json.dumps(graph["layered_graph"]), encoding="utf-8")
+            (run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]).write_text(json.dumps(graph["candidate_queue"]), encoding="utf-8")
+            with self.assertRaises(FileNotFoundError):
+                run_named_query(str(run_dir), "decision-review-queue")
 
 
 if __name__ == "__main__":

@@ -29,6 +29,7 @@ RAWR_CORE_ONTOLOGY_LAYERS = [
     RAWR_CORE_ONTOLOGY_ROOT / "core-architecture-ontology-v1.yaml",
     RAWR_CORE_ONTOLOGY_ROOT / "runtime-realization-overlay-v1.yaml",
     RAWR_CORE_ONTOLOGY_ROOT / "authority-document-overlay-v1.yaml",
+    RAWR_CORE_ONTOLOGY_ROOT / "verification-policy-overlay-v1.yaml",
     RAWR_CORE_ONTOLOGY_ROOT / "classifier-readiness-overlay-v1.yaml",
 ]
 RAWR_CORE_CANDIDATE_QUEUE = RAWR_CORE_ONTOLOGY_ROOT / "candidate-queue-v1.yaml"
