@@ -20,10 +20,12 @@ Treat them as background context. When a phase has its own execution packet, tha
 Current phase-scoped execution packets:
 
 - `M1-execution/`: the frozen Phase 1 packet
-- `M2-execution/`: the live M2 packet bootstrap
-- `M2-runtime-realization-lock-spike/`: specialized M2 lock-spike context.
-  Its first-hop active handoff is `M2-runtime-realization-lock-spike/integrated-canonical-architecture-finalization/cloud-pro-inputs/`; older runtime/alignment packets inside it are completed provenance, not active handoff inputs.
-- `M2-migration-planning-packet/`: initial preview packet for migration-planning authority, scope, and reference boundaries. Keep it separate from spec review/finalization work until migration planning resumes.
+- `M2-migration-planning-packet/`: active first-hop packet for M2 migration planning authority, scope, and reference boundaries.
+
+Quarantined phase packets:
+
+- `quarantine/M2-execution/`: pre-final M2 execution packet, preserved for provenance only.
+- `quarantine/M2-runtime-realization-lock-spike/`: finalization/lock-spike packet, preserved for provenance only.
 
 Each phase packet should keep the same shape:
 
@@ -44,3 +46,10 @@ The invariants are:
 - historical handoffs stay preserved, but out of the first-hop lane
 - retained notes stay available without becoming hidden authority
 - when a phase closes, its packet freezes instead of being reused as the next phase's live context
+
+For M2 migration planning, start from:
+
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
+- `docs/projects/rawr-final-architecture-migration/.context/M2-migration-planning-packet/`
+- a fresh current-repo audit

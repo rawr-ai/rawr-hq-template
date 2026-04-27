@@ -30,7 +30,7 @@ Treat these as customization zones:
 Manifest-first runtime composition contract:
 - cross-surface composition is authored in `rawr.hq.ts`,
 - `apps/*` host fixtures mount manifest outputs and do not author per-capability composition logic,
-- see `docs/process/runbooks/RAWR_HQ_MANIFEST_COMPOSITION.md`.
+- the previous manifest-composition runbook is preserved at `docs/process/runbooks/quarantine/RAWR_HQ_MANIFEST_COMPOSITION.md` for later rewrite.
 
 ## Pre-Change Impact Checklist
 

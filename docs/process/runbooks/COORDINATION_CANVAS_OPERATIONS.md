@@ -3,9 +3,9 @@
 Use this runbook when you need to operate or validate the coordination canvas and its workflow-control surfaces.
 
 Related docs:
-- `docs/SYSTEM.md`
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
 - `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md`
-- `docs/process/runbooks/TELEMETRY_VERIFICATION.md`
+- `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md`
 
 ## Scope
 
@@ -54,7 +54,7 @@ bun run rawr workflow coord run wf-smoke --json
 bun run rawr hq attach
 ```
 
-For telemetry proof-path verification across `/rpc/exampleTodo/*` and `/api/orpc/exampleTodo/*`, use `docs/process/runbooks/TELEMETRY_VERIFICATION.md`.
+Telemetry proof-path runbooks are quarantined. Mine them through `docs/process/runbooks/quarantine/AGENTS.md` only when needed.
 
 ## Hosted Coordination Notes
 

@@ -1,9 +1,9 @@
 # M2 Migration Planning Packet
 
-Status: initial preview packet
-Purpose: prepare the authority model and working spine for migration planning after the final integrated canonical architecture document is accepted.
+Status: ready for migration planning.
+Purpose: prepare the authority model and working spine for migration planning after the final architecture and runtime realization specs landed.
 
-This packet is separate from the spec construction and review work under `M2-runtime-realization-lock-spike/`. It can be paused while the final canonical architecture document is reviewed, then resumed as the first-hop context for migration planning.
+This packet is separate from quarantined spec construction and review work under `.context/quarantine/`. It is the first-hop context for migration planning, not the migration plan.
 
 ## First-Hop Files
 
@@ -16,14 +16,11 @@ Read in this order:
 
 ## Current State
 
-The migration-planning authority model is not final until the returned integrated canonical architecture document has been reviewed and promoted into the canonical spec path.
-
-For now:
-
-- the Runtime Realization System spec is a primary target authority;
-- the final integrated canonical architecture spec slot is pending final review/update;
-- current repo reality is migration substrate only;
-- auth and deployment companion specs are look-ahead references only and must not expand the immediate runtime migration scope.
+- The final canonical architecture spec has landed.
+- The final runtime realization spec has landed.
+- Current repo reality is migration substrate only.
+- Pre-final M2 execution, plan, milestone, issue, guardrail, and finalization packets have been moved into visible `quarantine/` directories.
+- Auth and deployment companion specs are look-ahead references only and must not expand the immediate runtime migration scope.
 
 ## Operating Stance
 
@@ -31,7 +28,7 @@ Migration planning should be target-authority work:
 
 - target specs define the destination;
 - current code defines the starting material and proof burden;
-- M2 docs define the migration container and verification expectations;
+- regenerated M2 docs define the migration container and verification expectations;
 - secondary references may inform hooks and future slices, but they do not create scope;
 - every bridge, shim, fallback, alias, or compatibility wrapper needs an owner, expiration, and cleanup gate.
 
@@ -39,7 +36,6 @@ Migration planning should be target-authority work:
 
 Update this packet when:
 
-- the final integrated canonical architecture document is accepted;
-- the broader documentation cleanup produces a curated authority/disposition result;
 - the current repo audit for runtime realization migration is complete;
+- the M2 migration plan, milestone, and issues are regenerated;
 - auth or deployment companion specs are explicitly promoted from reference material into planned migration scope.

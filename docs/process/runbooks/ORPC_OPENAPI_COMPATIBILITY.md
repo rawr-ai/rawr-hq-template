@@ -3,8 +3,8 @@
 Use this when a consumer cannot use the internal RPC client and needs OpenAPI artifacts.
 
 Related docs:
-- `docs/SYSTEM.md`
-- `docs/system/TELEMETRY.md`
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
+- `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md`
 
 ## Policy
 

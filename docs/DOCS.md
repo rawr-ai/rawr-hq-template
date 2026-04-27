@@ -6,10 +6,17 @@ This file is the documentation architecture contract for `RAWR HQ-Template`.
 
 Canonical gateway docs at `docs/` root:
 - `PRODUCT.md`
-- `SYSTEM.md`
 - `PROCESS.md`
 - `ROADMAP.md`
 - `DOCS.md`
+
+Current architecture authority for M2 migration planning lives in:
+
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
+- `docs/projects/rawr-final-architecture-migration/.context/M2-migration-planning-packet/`
+
+The previous `docs/SYSTEM.md` is preserved at `docs/quarantine/SYSTEM.md` pending a post-migration rewrite.
 
 ## Directory Roles
 
@@ -25,12 +32,16 @@ Canonical gateway docs at `docs/` root:
 - `docs/projects/spikes/`: retained spike investigations and feasibility notes. Promote lasting decisions into `docs/system/`, `docs/process/`, or the owning project `resources/spec/`.
 - `docs/_templates/`: document scaffolds.
 - `docs/_archive/`: archived historical docs not part of active template guidance.
+- `quarantine/` directories: path-obvious quarantine for docs preserved intact but removed from active authority.
+- `quarantine/AGENTS.md`: transient migration ledgers marked with `<!-- quarantine-ledger: true -->`.
 
 ## Canonicality Rules
 
 - ALL-CAPS files are canonical at their scope.
 - Prefer links to canonical docs over duplicating guidance.
 - Time-bound execution notes belong in `docs/projects/` or `docs/_archive/`, not canonical docs.
+- Files under any `quarantine/` directory are not active authority, even if their names look canonical.
+- Quarantine-first migration sweeps use `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md`.
 
 ## Authority and Intent Vocabulary
 

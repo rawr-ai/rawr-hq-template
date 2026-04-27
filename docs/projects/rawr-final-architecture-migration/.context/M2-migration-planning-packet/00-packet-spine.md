@@ -1,6 +1,6 @@
 # Migration Planning Packet Spine
 
-Status: initial preview
+Status: ready for migration planning.
 Intent: define what the migration planning packet should contain before the actual migration plan is written.
 
 ## Purpose
@@ -9,9 +9,9 @@ This packet prepares the planning surface for the M2 runtime realization migrati
 
 It is not the migration plan yet. It is the authority model, context boundary, and working spine that should keep the migration plan aligned to the finalized architecture instead of drifting toward old docs, current repo layout, or useful-but-scope-expanding companion specs.
 
-## Planned Packet Shape
+## Planning Packet Shape
 
-The eventual migration planning packet should contain:
+The migration planning packet should contain:
 
 | Section | Purpose |
 | --- | --- |
@@ -48,6 +48,6 @@ This packet should not:
 - fold auth or deployment companion specs into immediate runtime scope;
 - duplicate the broader documentation cleanup inventory.
 
-## Pause Point
+## Entry Point
 
-After this preview exists, pause the packet until the final integrated canonical architecture document is reviewed and accepted. Then update `01-primary-authorities.md` with the final canonical architecture path and any corrected authority order.
+Begin migration planning by producing the current-state audit, then regenerate the migration plan, milestone, and issue sequence from the final architecture/runtime specs.

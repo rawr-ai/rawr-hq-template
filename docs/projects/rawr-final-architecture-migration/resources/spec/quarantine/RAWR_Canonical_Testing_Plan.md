@@ -1,7 +1,15 @@
 # RAWR Canonical Testing Plan
 
+Status: supporting testing guidance, subordinate to the final architecture and runtime realization specs.
+
 This document defines the canonical testing system for RAWR HQ and later apps built on the same shell.
-It is normative. Use it to decide what tests exist, where they live, what they are allowed to assert, and what blocks merges.
+It is normative only for test/proof design after the target architecture has been established by:
+
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
+- `docs/projects/rawr-final-architecture-migration/.context/M2-migration-planning-packet/`
+
+This testing plan does not define target architecture, package layout, migration scope, or M2 sequencing. If it conflicts with the final architecture/runtime specs or the regenerated M2 migration plan, those documents win.
 
 ## 1. Objectives and Invariants
 
@@ -191,7 +199,7 @@ The canonical suite is a portfolio of lanes. Not everything is “unit tests”,
 
 **Lane C: Behavioral Guarantees (gating for support/runtime layers)**
 - bootgraph/process runtime fault-injection tests proving lifecycle guarantees (rollback, reverse shutdown, dedupe).
-- These tests are expected to be deterministic and fast enough to gate merges for `packages/bootgraph`, runtime compiler/process runtime packages, and any harness adapters they power.
+- These tests are expected to be deterministic and fast enough to gate merges for runtime realization packages, runtime compiler/process runtime packages, and any harness adapters they power.
 
 **Lane D: Boundary/Network (selective gating)**
 - Only for claims that are boundary-defined (auth/publication/route-prefix semantics).
@@ -309,4 +317,3 @@ A seam change is not complete until it is mechanically verifiable.
 - at least one proof-band check (structural or executable) that would fail if the seam regressed
 - the proof is wired into the relevant structural suite and/or gating lane
 - the proof is deterministic and not dependent on exploratory tooling
-

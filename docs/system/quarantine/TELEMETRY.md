@@ -67,7 +67,7 @@ Canonical seams:
 The canonical proof lane uses one capability through three paths:
 
 1. In-process:
-   - `rawrHqManifest.fixtures.exampleTodo.resolveClient(repoRoot)`
+   - current example-todo proof-client fixture
 2. First-party RPC:
    - `/rpc/exampleTodo/*`
    - requires first-party headers such as `x-rawr-caller-surface: first-party` and `x-rawr-session-auth: verified`
@@ -82,13 +82,7 @@ The proof harness lives in:
 
 ## Route-Family Implications
 
-The route-family publication policy is defined in `docs/SYSTEM.md`.
-
-For telemetry, that policy means:
-
-- first-party proof requests compare `/rpc/exampleTodo/*` against `/api/orpc/exampleTodo/*`
-- `coordination.*` and `state.*` stay off the published OpenAPI proof lane
-- workflow publication remains a separate route family under `/api/workflows/<capability>/*`
+The old route-family publication policy is preserved in `docs/quarantine/SYSTEM.md`. During M2 migration planning, regenerate active route-family policy from the final architecture/runtime specs.
 
 ## Signals
 
