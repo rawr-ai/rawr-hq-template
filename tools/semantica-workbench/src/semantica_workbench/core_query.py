@@ -4,31 +4,25 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
+from .core_config import CORE_GRAPH_FILENAMES, NAMED_QUERY_DESCRIPTIONS
 from .io import read_json, resolve_run
 from .paths import QUERIES_ROOT, REPO_ROOT
-
-NAMED_QUERIES = {
-    "summary": "Graph summary, status counts, layer counts, and predicate counts.",
-    "forbidden-terms": "Forbidden canonical terms and replacement/prohibition relations.",
-    "underrepresented-gates": "Validation gates that the latest document diff did not sufficiently cover.",
-    "relations-by-predicate": "Relation counts and samples grouped by controlled predicate.",
-    "source-coverage": "Canonical entities and relations with source-reference counts.",
-    "testing-plan-review-needed": "Review-needed findings from the latest testing-plan diff.",
-}
 
 
 def list_queries() -> dict[str, Any]:
     sparql_examples = []
     if QUERIES_ROOT.exists():
         sparql_examples = sorted(str(path.relative_to(REPO_ROOT)) for path in QUERIES_ROOT.glob("*.rq"))
-    return {"named_queries": NAMED_QUERIES, "sparql_examples": sparql_examples}
+    return {"named_queries": NAMED_QUERY_DESCRIPTIONS, "sparql_examples": sparql_examples}
 
 
 def run_named_query(run: str | None, name: str) -> dict[str, Any]:
     run_dir = resolve_run(run)
-    graph = read_json(run_dir / "layered-graph.json")
-    diff = read_json(run_dir / "document-diff.json") if (run_dir / "document-diff.json").exists() else {"summary": {}}
-    candidate_queue = read_json(run_dir / "candidate-queue.json") if (run_dir / "candidate-queue.json").exists() else {}
+    graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
+    diff_path = run_dir / CORE_GRAPH_FILENAMES["document_diff"]
+    candidate_queue_path = run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]
+    diff = read_json(diff_path) if diff_path.exists() else {"summary": {}}
+    candidate_queue = read_json(candidate_queue_path) if candidate_queue_path.exists() else {}
     if name == "summary":
         return {
             "query": name,
@@ -90,7 +84,7 @@ def run_sparql_query(run: str | None, sparql_path: Path) -> dict[str, Any]:
         raise RuntimeError("RDFLib is required for SPARQL queries. Run `bun run semantica:setup` first.") from exc
 
     run_dir = resolve_run(run)
-    ttl_path = run_dir / "semantica-data-graph.ttl"
+    ttl_path = run_dir / CORE_GRAPH_FILENAMES["semantica_data_graph"]
     if not ttl_path.exists():
         raise FileNotFoundError(f"No RDF data graph exists at {ttl_path}. Run `bun run semantica:core:export` first.")
     if not sparql_path.is_absolute():
@@ -121,6 +115,14 @@ def stringify_sparql_value(value: Any) -> str | None:
 def render_query_text(result: dict[str, Any]) -> str:
     if "rows" in result and "variables" in result:
         return render_sparql_table(result)
+    if "named_queries" in result:
+        lines = ["Named queries"]
+        for name, description in sorted(result["named_queries"].items()):
+            lines.append(f"- {name}: {description}")
+        if result.get("sparql_examples"):
+            lines.extend(["", "SPARQL examples"])
+            lines.extend(f"- {path}" for path in result["sparql_examples"])
+        return "\n".join(lines)
     if result.get("query") == "relations-by-predicate":
         return "\n".join(f"{row['predicate']}: {row['count']}" for row in result["predicates"])
     if result.get("query") == "summary":
@@ -128,7 +130,8 @@ def render_query_text(result: dict[str, Any]) -> str:
         for key, value in result["summary"].items():
             if isinstance(value, (str, int, float, bool)):
                 lines.append(f"- {key}: {value}")
-        lines.append(f"- candidate_count: {result['candidate_count']}")
+        if "candidate_count" not in result["summary"]:
+            lines.append(f"- candidate_count: {result['candidate_count']}")
         return "\n".join(lines)
     counts = Counter()
     for key, value in result.items():

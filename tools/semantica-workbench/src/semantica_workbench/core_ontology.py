@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 import xml.sax.saxutils
 from collections import Counter, defaultdict
@@ -11,42 +10,17 @@ from typing import Any
 import yaml
 
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json
+from .core_config import CORE_CURRENT_FILES, CORE_GRAPH_FILENAMES, DIFF_SUMMARY, default_testing_plan
+from .core_viewer import write_html_viewer
 from .paths import (
     RAWR_CORE_CANDIDATE_QUEUE,
     RAWR_CORE_ONTOLOGY_CONTRACT,
     RAWR_CORE_ONTOLOGY_LAYERS,
     REPO_ROOT,
-    VIEWER_ROOT,
 )
 from .semantica_adapter import export_semantica_ontology, semantica_status
 
-TESTING_PLAN_PRIMARY = REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md"
-TESTING_PLAN_QUARANTINE = (
-    REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md"
-)
-TESTING_PLAN = TESTING_PLAN_PRIMARY if TESTING_PLAN_PRIMARY.exists() else TESTING_PLAN_QUARANTINE
-DIFF_SUMMARY = (
-    REPO_ROOT
-    / "docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/phase-4-testing-plan-diff-verification.md"
-)
-CORE_CURRENT_FILES = [
-    "metadata.json",
-    "validation-report.json",
-    "canonical-graph.json",
-    "layered-graph.json",
-    "candidate-queue.json",
-    "core-ontology-summary.json",
-    "report.md",
-    "semantica-export.json",
-    "semantica-ontology.json",
-    "semantica-ontology.owl",
-    "semantica-ontology.shacl.ttl",
-    "semantica-data-graph.ttl",
-    "core-ontology.graphml",
-    "graph-viewer.html",
-    "document-diff.json",
-    "document-diff-report.md",
-]
+TESTING_PLAN = default_testing_plan()
 
 
 def load_core_ontology() -> dict[str, Any]:
@@ -77,8 +51,8 @@ def build_core_ontology_run() -> Path:
     validation = validate_loaded_core_ontology(ontology)
     if validation["errors"]:
         run_dir = new_run_dir("core-invalid")
-        write_json(run_dir / "validation-report.json", validation)
-        mark_current(run_dir, ["validation-report.json"])
+        write_json(run_dir / CORE_GRAPH_FILENAMES["validation_report"], validation)
+        mark_current(run_dir, [CORE_GRAPH_FILENAMES["validation_report"]])
         raise RuntimeError(f"Core ontology validation failed with {len(validation['errors'])} errors")
 
     graph = build_graph_payload(ontology, validation)
@@ -90,12 +64,12 @@ def build_core_ontology_run() -> Path:
         "source": rel(RAWR_CORE_ONTOLOGY_CONTRACT.parent),
         "semantica": semantica_status(),
     }
-    write_json(run_dir / "metadata.json", metadata)
-    write_json(run_dir / "validation-report.json", validation)
-    write_json(run_dir / "canonical-graph.json", graph["canonical_graph"])
-    write_json(run_dir / "layered-graph.json", graph["layered_graph"])
-    write_json(run_dir / "candidate-queue.json", graph["candidate_queue"])
-    write_json(run_dir / "core-ontology-summary.json", graph["summary"])
+    write_json(run_dir / CORE_GRAPH_FILENAMES["metadata"], metadata)
+    write_json(run_dir / CORE_GRAPH_FILENAMES["validation_report"], validation)
+    write_json(run_dir / CORE_GRAPH_FILENAMES["canonical_graph"], graph["canonical_graph"])
+    write_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+    write_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+    write_json(run_dir / CORE_GRAPH_FILENAMES["summary"], graph["summary"])
     render_core_report(run_dir, graph, validation)
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
@@ -103,32 +77,34 @@ def build_core_ontology_run() -> Path:
 
 def export_core_ontology(run: str | None = "latest") -> Path:
     run_dir = resolve_run(run)
-    graph = read_json(run_dir / "layered-graph.json")
+    graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     export_result = export_semantica_ontology(graph["entities"], graph["relations"], run_dir)
-    write_json(run_dir / "semantica-export.json", export_result)
-    write_graphml(run_dir / "core-ontology.graphml", graph["canonical_view"]["entities"], graph["canonical_view"]["relations"])
+    write_json(run_dir / CORE_GRAPH_FILENAMES["semantica_export"], export_result)
+    write_graphml(run_dir / CORE_GRAPH_FILENAMES["graphml"], graph["canonical_view"]["entities"], graph["canonical_view"]["relations"])
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
 
 
 def visualize_core_ontology(run: str | None = "latest") -> Path:
     run_dir = resolve_run(run)
-    graph = read_json(run_dir / "layered-graph.json")
-    candidate_queue = read_json(run_dir / "candidate-queue.json") if (run_dir / "candidate-queue.json").exists() else {}
-    diff = read_json(run_dir / "document-diff.json") if (run_dir / "document-diff.json").exists() else {}
-    write_html_viewer(run_dir / "graph-viewer.html", graph, candidate_queue, diff)
+    graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
+    candidate_queue_path = run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]
+    document_diff_path = run_dir / CORE_GRAPH_FILENAMES["document_diff"]
+    candidate_queue = read_json(candidate_queue_path) if candidate_queue_path.exists() else {}
+    diff = read_json(document_diff_path) if document_diff_path.exists() else {}
+    write_html_viewer(run_dir / CORE_GRAPH_FILENAMES["viewer"], graph, candidate_queue, diff)
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
 
 
 def diff_document_against_core_ontology(document: Path, run: str | None = "latest") -> Path:
     run_dir = resolve_run(run)
-    graph = read_json(run_dir / "layered-graph.json")
-    candidate_queue = read_json(run_dir / "candidate-queue.json")
+    graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
+    candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
     diff = build_document_diff(document, graph, candidate_queue)
-    write_json(run_dir / "document-diff.json", diff)
+    write_json(run_dir / CORE_GRAPH_FILENAMES["document_diff"], diff)
     report = render_document_diff_report(diff)
-    (run_dir / "document-diff-report.md").write_text(report, encoding="utf-8")
+    (run_dir / CORE_GRAPH_FILENAMES["document_diff_report"]).write_text(report, encoding="utf-8")
     DIFF_SUMMARY.write_text(report, encoding="utf-8")
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
@@ -227,7 +203,7 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
         if predicate not in allowed_predicates:
             errors.append({"kind": "unknown_relation_predicate", "id": relation_id, "predicate": predicate})
         else:
-            validate_relation_signature(relation, entity_ids, contract["predicates"], warnings)
+            validate_relation_signature(relation, entity_ids, contract["predicates"], errors)
         subject = entity_ids.get(relation.get("subject"))
         object_ = entity_ids.get(relation.get("object"))
         if subject is None:
@@ -712,221 +688,6 @@ def write_graphml(path: Path, entities: list[dict[str, Any]], relations: list[di
         )
     lines.extend(["  </graph>", "</graphml>"])
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
-def build_cytoscape_payload(
-    graph: dict[str, Any],
-    candidate_queue: dict[str, Any] | None = None,
-    diff: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    candidate_queue = candidate_queue or {}
-    diff = diff or {}
-    canonical_entity_ids = {entity["id"] for entity in graph["canonical_view"]["entities"]}
-    canonical_relation_ids = {relation["id"] for relation in graph["canonical_view"]["relations"]}
-    diff_overlay = build_diff_overlay(diff)
-    elements: list[dict[str, Any]] = []
-    for entity in graph["entities"]:
-        data = {
-            **entity,
-            "id": entity["id"],
-            "label": entity.get("label") or entity["id"],
-            "isCanonical": entity["id"] in canonical_entity_ids,
-            "diffKinds": sorted(diff_overlay.get(entity["id"], set())),
-            "color": layer_color(entity.get("layer")),
-            "statusColor": status_color(entity.get("status")),
-        }
-        elements.append({"group": "nodes", "data": data})
-    for candidate in candidate_queue.get("candidates", []):
-        candidate_id = candidate["id"]
-        elements.append(
-            {
-                "group": "nodes",
-                "data": {
-                    **candidate,
-                    "id": candidate_id,
-                    "label": candidate.get("label") or candidate_id,
-                    "type": "Candidate",
-                    "layer": "candidate-queue",
-                    "status": "candidate",
-                    "source_refs": candidate.get("source_span_suggests_it", []),
-                    "operational_consequence": [candidate.get("why_it_might_matter", "")],
-                    "classifier_readiness": {"status": "candidate"},
-                    "isCanonical": False,
-                    "diffKinds": [],
-                    "color": layer_color("candidate-queue"),
-                    "statusColor": status_color("candidate"),
-                },
-            }
-        )
-    for relation in graph["relations"]:
-        overlay = sorted(diff_overlay.get(relation["subject"], set()) | diff_overlay.get(relation["object"], set()))
-        elements.append(
-            {
-                "group": "edges",
-                "data": {
-                    **relation,
-                    "id": relation["id"],
-                    "source": relation["subject"],
-                    "target": relation["object"],
-                    "label": relation["predicate"],
-                    "isCanonical": relation["id"] in canonical_relation_ids,
-                    "diffKinds": overlay,
-                    "color": status_color(relation.get("status")),
-                },
-            }
-        )
-    return {
-        "id": graph["id"],
-        "summary": graph["summary"],
-        "elements": elements,
-        "canonicalEntityCount": len(canonical_entity_ids),
-        "canonicalRelationCount": len(canonical_relation_ids),
-        "candidateCount": len(candidate_queue.get("candidates", [])),
-        "diff": {
-            "summary": diff.get("summary", {}),
-            "review_needed": diff.get("review_needed", []),
-            "underrepresented_gates": diff.get("underrepresented_gates", []),
-        },
-    }
-
-
-def build_diff_overlay(diff: dict[str, Any]) -> dict[str, set[str]]:
-    overlay: dict[str, set[str]] = defaultdict(set)
-    for item in diff.get("aligned", []):
-        if item.get("entity_id"):
-            overlay[item["entity_id"]].add("aligned")
-    for item in diff.get("stale", []):
-        if item.get("entity_id"):
-            overlay[item["entity_id"]].add("stale")
-    for item in diff.get("candidate_new", []):
-        if item.get("entity_id"):
-            overlay[item["entity_id"]].add("candidate_new")
-    for item in diff.get("underrepresented_gates", []):
-        if item.get("entity_id"):
-            overlay[item["entity_id"]].add("underrepresented_gate")
-    return overlay
-
-
-def layer_color(layer: str | None) -> str:
-    return {
-        "core": "#2f6fed",
-        "runtime-realization-overlay": "#00856f",
-        "authority-and-document-overlay": "#b54708",
-        "classifier-readiness-overlay": "#7a5af8",
-        "candidate-queue": "#667085",
-    }.get(str(layer), "#667085")
-
-
-def status_color(status: str | None) -> str:
-    return {
-        "locked": "#12b76a",
-        "forbidden": "#f04438",
-        "deprecated": "#f79009",
-        "tbd": "#7a5af8",
-        "candidate": "#667085",
-    }.get(str(status), "#98a2b3")
-
-
-def write_html_viewer(
-    path: Path,
-    graph: dict[str, Any],
-    candidate_queue: dict[str, Any] | None = None,
-    diff: dict[str, Any] | None = None,
-) -> None:
-    payload = build_cytoscape_payload(graph, candidate_queue, diff)
-    data = json.dumps(payload).replace("</", "<\\/")
-    cytoscape = read_cytoscape_bundle().replace("</script", "<\\/script")
-    css = (VIEWER_ROOT / "graph-viewer.css").read_text(encoding="utf-8")
-    app_js = (VIEWER_ROOT / "graph-viewer.js").read_text(encoding="utf-8").replace("</script", "<\\/script")
-    html = f"""<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RAWR Core Ontology Graph</title>
-<style>
-{css}
-</style>
-</head>
-<body>
-<div class="app">
-  <header class="topbar">
-    <div class="title">
-      <strong>RAWR Core Ontology Graph</strong>
-      <small>Derived inspection surface. Reviewed YAML ontology remains authoritative.</small>
-    </div>
-    <div class="toolbar" id="summary"></div>
-  </header>
-  <aside class="panel">
-    <div class="control-group">
-      <h2>Throughline</h2>
-      <div class="stack">
-        <select id="preset"></select>
-        <div class="notice" id="presetDescription"></div>
-      </div>
-    </div>
-    <div class="control-group">
-      <h2>Search</h2>
-      <div class="stack">
-        <input id="search" type="search" placeholder="Find entity, relation, type, source...">
-        <div class="search-results" id="searchResults"></div>
-      </div>
-    </div>
-    <div class="control-group">
-      <h2>Layout</h2>
-      <div class="row">
-        <select id="layout">
-          <option value="preset">Preset default</option>
-          <option value="cose">CoSE</option>
-          <option value="breadthfirst">Breadthfirst</option>
-          <option value="concentric">Concentric</option>
-          <option value="grid">Grid</option>
-        </select>
-      </div>
-    </div>
-    <div class="control-group">
-      <h2>Actions</h2>
-      <div class="button-grid">
-        <button id="fit">Fit</button>
-        <button id="reset">Reset</button>
-        <button id="neighborhood">Neighborhood</button>
-        <button id="path">Path</button>
-        <button id="copyJson">Copy JSON</button>
-        <button id="exportPng">Export PNG</button>
-      </div>
-    </div>
-    <div class="control-group"><h2>Layers</h2><div class="checks" id="layerFilters"></div></div>
-    <div class="control-group"><h2>Status</h2><div class="checks" id="statusFilters"></div></div>
-    <div class="control-group"><h2>Types</h2><div class="checks" id="typeFilters"></div></div>
-    <div class="control-group"><h2>Predicates</h2><div class="checks" id="predicateFilters"></div></div>
-  </aside>
-  <main class="graph-wrap"><div id="cy"></div></main>
-  <aside class="panel details" id="details"></aside>
-  <footer class="statusbar">
-    <span id="counts"></span>
-    <span>Generated from `.semantica` run artifacts; browser state is not persisted.</span>
-  </footer>
-</div>
-<script id="graph-data" type="application/json">{data}</script>
-<script>
-{cytoscape}
-</script>
-<script>
-{app_js}
-</script>
-</body>
-</html>
-"""
-    path.write_text(html, encoding="utf-8")
-
-
-def read_cytoscape_bundle() -> str:
-    bundle = REPO_ROOT / "node_modules/cytoscape/dist/cytoscape.min.js"
-    if not bundle.exists():
-        raise FileNotFoundError(
-            f"Cytoscape bundle not found at {bundle}. Run `bun install` or `bun add -D cytoscape` from the repository root."
-        )
-    return bundle.read_text(encoding="utf-8")
 
 
 def build_document_diff(document: Path, graph: dict[str, Any], candidate_queue: dict[str, Any]) -> dict[str, Any]:

@@ -10,13 +10,13 @@ from pathlib import Path
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
     TESTING_PLAN,
-    build_cytoscape_payload,
     build_document_diff,
     build_graph_payload,
     load_core_ontology,
     validate_loaded_core_ontology,
-    write_html_viewer,
 )
+from semantica_workbench.core_config import CORE_GRAPH_FILENAMES
+from semantica_workbench.core_viewer import build_cytoscape_payload, write_html_viewer
 from semantica_workbench.core_query import run_named_query
 from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import rel
@@ -62,6 +62,26 @@ class WorkbenchTests(unittest.TestCase):
         ontology["relations"][0]["object"] = "missing.entity"
         report = validate_loaded_core_ontology(ontology)
         self.assertIn("unresolved_relation_object", {error["kind"] for error in report["errors"]})
+
+    def test_core_ontology_rejects_relation_signature_drift(self) -> None:
+        ontology = deepcopy(load_core_ontology())
+        relation = next(item for item in ontology["relations"] if item["predicate"] == "owns_truth")
+        ontology["entities"].append(
+            {
+                "id": "test.runtime.artifact",
+                "label": "Test Runtime Artifact",
+                "type": "RuntimeArtifact",
+                "layer": "runtime-realization-overlay",
+                "status": "locked",
+                "definition": "Test-only entity used to prove relation signature validation rejects type drift.",
+                "source_refs": relation["source_refs"],
+                "operational_consequence": ["Test-only operational consequence."],
+                "classifier_readiness": {"status": "locked"},
+            }
+        )
+        relation["subject"] = "test.runtime.artifact"
+        report = validate_loaded_core_ontology(ontology)
+        self.assertIn("relation_subject_type_outside_domain", {error["kind"] for error in report["errors"]})
 
     def test_core_ontology_rejects_locked_candidate_leakage(self) -> None:
         ontology = deepcopy(load_core_ontology())
@@ -113,6 +133,7 @@ class WorkbenchTests(unittest.TestCase):
         payload = json.loads(match.group(1))
         self.assertIn("cytoscape", text)
         self.assertIn('id="cy"', text)
+        self.assertIn("viewerConfig", payload)
         self.assertGreater(len(payload["elements"]), 0)
 
     def test_cytoscape_payload_resolves_edges_and_hides_candidates_by_default(self) -> None:
@@ -134,8 +155,8 @@ class WorkbenchTests(unittest.TestCase):
         graph = build_graph_payload(ontology, validation)
         with tempfile.TemporaryDirectory() as directory:
             run_dir = Path(directory)
-            (run_dir / "layered-graph.json").write_text(json.dumps(graph["layered_graph"]), encoding="utf-8")
-            (run_dir / "candidate-queue.json").write_text(json.dumps(graph["candidate_queue"]), encoding="utf-8")
+            (run_dir / CORE_GRAPH_FILENAMES["layered_graph"]).write_text(json.dumps(graph["layered_graph"]), encoding="utf-8")
+            (run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]).write_text(json.dumps(graph["candidate_queue"]), encoding="utf-8")
             result = run_named_query(str(run_dir), "forbidden-terms")
         self.assertEqual("forbidden-terms", result["query"])
         self.assertGreater(len(result["entities"]), 0)
