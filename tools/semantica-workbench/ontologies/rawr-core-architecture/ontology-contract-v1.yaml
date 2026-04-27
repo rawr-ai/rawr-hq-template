@@ -7,6 +7,8 @@ layers:
   description: Runtime realization details subordinate to core architecture.
 - id: authority-and-document-overlay
   description: Minimal source authority, provenance, supersession, and review metadata.
+- id: verification-policy-overlay
+  description: Supporting testing and verification policy subordinate to architecture/runtime source truth.
 - id: classifier-readiness-overlay
   description: Future-facing operational/classifier annotations that do not override core truth.
 statuses:
@@ -88,6 +90,10 @@ entity_types:
   layer: runtime-realization-overlay
   promotion_rule: Promote when it checks source refs, relation signatures, import boundaries, provider coverage, runtime compiler
     expectations, or forbidden patterns.
+- id: VerificationPolicyConcept
+  description: A supporting testing or proof-policy concept used to review testing-plan alignment without promoting it into core architecture truth.
+  layer: verification-policy-overlay
+  promotion_rule: Keep subordinate unless a finalized architecture/runtime spec makes the concept a core construction law or validation gate.
 - id: DocumentAuthority
   description: A source document with authority rank, scope, and supersession posture.
   layer: authority-and-document-overlay
@@ -169,8 +175,8 @@ predicates:
   operational_meaning: Determines app composition, runtime profile, provider selection, and entrypoint process selection.
   allowed_in: canonical_graph
 - id: supports
-  domain: ArchitectureKind|ArchitectureRoot
-  range: ArchitectureKind|RuntimeMachinery
+  domain: ArchitectureKind|ArchitectureRoot|VerificationPolicyConcept
+  range: ArchitectureKind|RuntimeMachinery|VerificationPolicyConcept|ValidationGate
   direction: supporting kind -> supported kind
   operational_meaning: Allows packages/support matter to aid other kinds without owning truth.
   allowed_in: canonical_graph
@@ -181,8 +187,8 @@ predicates:
   operational_meaning: Constrains legal dependency direction and import boundaries.
   allowed_in: canonical_graph
 - id: requires
-  domain: ArchitectureKind|ProjectionLane|RuntimeArtifact|ServiceBoundaryLane|ValidationGate
-  range: ResourceProviderProfileConcept|RuntimePhase|ValidationGate|RuntimeArtifact
+  domain: ArchitectureKind|ProjectionLane|RuntimeArtifact|ServiceBoundaryLane|ValidationGate|VerificationPolicyConcept
+  range: ResourceProviderProfileConcept|RuntimePhase|ValidationGate|RuntimeArtifact|VerificationPolicyConcept
   direction: requiring thing -> requirement
   operational_meaning: Triggers provider coverage, schema, gate, lifecycle, or runtime compiler expectations.
   allowed_in: canonical_graph
@@ -193,8 +199,8 @@ predicates:
   operational_meaning: Prevents false ownership, semantic drift, and construction-path collapse.
   allowed_in: canonical_graph
 - id: separate_from
-  domain: ArchitectureKind|AppStructure|DocumentAuthority|ProjectionLane|RuntimeMachinery|ServiceBoundaryLane
-  range: ArchitectureKind|AppStructure|DocumentAuthority|RuntimeArtifact|RuntimeMachinery
+  domain: ArchitectureKind|AppStructure|DocumentAuthority|ProjectionLane|RuntimeMachinery|ServiceBoundaryLane|VerificationPolicyConcept
+  range: ArchitectureKind|AppStructure|DocumentAuthority|RuntimeArtifact|RuntimeMachinery|VerificationPolicyConcept
   direction: concept A -> concept B
   operational_meaning: Preserves architectural distinctions where conflation causes invalid construction.
   allowed_in: canonical_graph
@@ -265,13 +271,13 @@ predicates:
   operational_meaning: Determines lifecycle handoff and artifact compatibility checks.
   allowed_in: canonical_graph
 - id: validated_by
-  domain: ArchitectureKind|RuntimeArtifact|RuntimeMachinery|ProjectionLane|ResourceProviderProfileConcept
+  domain: ArchitectureKind|RuntimeArtifact|RuntimeMachinery|ProjectionLane|ResourceProviderProfileConcept|VerificationPolicyConcept
   range: ValidationGate
   direction: thing -> gate
   operational_meaning: Defines deterministic validation or diagnostic coverage.
   allowed_in: canonical_graph
 - id: checked_by_gate
-  domain: ArchitectureKind|RuntimeArtifact|ForbiddenPattern|ClassifierReadinessAnnotation
+  domain: ArchitectureKind|RuntimeArtifact|ForbiddenPattern|ClassifierReadinessAnnotation|VerificationPolicyConcept
   range: ValidationGate
   direction: claim/path -> gate
   operational_meaning: Connects law, artifact, or classifier move to enforcement.
@@ -290,7 +296,7 @@ predicates:
   allowed_in: canonical_graph
 - id: is_authority_for
   domain: DocumentAuthority
-  range: ArchitectureKind|ArchitectureRoot|RuntimeMachinery|RuntimePhase|ConstructionLaw
+  range: ArchitectureKind|ArchitectureRoot|RuntimeMachinery|RuntimePhase|ConstructionLaw|VerificationPolicyConcept
   direction: document -> governed scope
   operational_meaning: Determines source-of-truth baseline for semantic diff.
   allowed_in: authority_overlay
@@ -349,14 +355,14 @@ predicates:
   operational_meaning: Reduces legal construction paths during pre-classification.
   allowed_in: classifier_overlay
 - id: requires_gate
-  domain: ClassifierReadinessAnnotation|ArchitectureKind|ProjectionLane
+  domain: ClassifierReadinessAnnotation|ArchitectureKind|ProjectionLane|VerificationPolicyConcept
   range: ValidationGate
   direction: move/category -> gate
   operational_meaning: Connects classifier category to validation requirement.
   allowed_in: classifier_overlay
 - id: has_operational_consequence
-  domain: ArchitectureKind|ConstructionLaw|ClassifierReadinessAnnotation|ForbiddenPattern
-  range: ValidationGate|RuntimeArtifact|AppStructure|ResourceProviderProfileConcept
+  domain: ArchitectureKind|ConstructionLaw|ClassifierReadinessAnnotation|ForbiddenPattern|VerificationPolicyConcept
+  range: ValidationGate|RuntimeArtifact|AppStructure|ResourceProviderProfileConcept|VerificationPolicyConcept
   direction: fact -> consequence
   operational_meaning: Prevents labels without enforcement consequences from entering classifier rule packs.
   allowed_in: canonical_graph_or_classifier_overlay
@@ -462,10 +468,16 @@ canonical_view_statuses:
 - locked
 - forbidden
 - deprecated
+canonical_graph_excluded_types:
+- VerificationPolicyConcept
+- EvidenceClaim
+- ReviewFinding
+- CandidateEntity
 target_architecture_view_statuses:
 - locked
 target_architecture_excluded_types:
 - DeprecatedTerm
+- VerificationPolicyConcept
 - EvidenceClaim
 - ForbiddenPattern
 - ReviewFinding

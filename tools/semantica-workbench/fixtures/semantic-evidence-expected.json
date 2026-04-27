@@ -97,6 +97,46 @@
       "expected_kind": "outside-scope",
       "expected_decision_grade": false,
       "expected_scope": "outside-scope"
+    },
+    {
+      "line": 29,
+      "text": "Create a root-level `core/` authoring root.",
+      "expected_kind": "informational",
+      "expected_decision_grade": false,
+      "expected_modality": "illustrative",
+      "expected_scope": "example",
+      "expected_entity_id": "forbidden.pattern.root-core-authoring-root"
+    },
+    {
+      "line": 30,
+      "text": "Use `startServer(...)`.",
+      "expected_kind": "informational",
+      "expected_decision_grade": false,
+      "expected_modality": "illustrative",
+      "expected_scope": "example",
+      "expected_entity_id": "forbidden.pattern.role-specific-public-start-verb"
+    },
+    {
+      "line": 37,
+      "text": "| In-process (`createRouterClient`) | Deterministic server-internal behavior | semantic correctness under trusted context |",
+      "expected_kind": "ambiguous",
+      "expected_decision_grade": false,
+      "expected_entity_id": "verification.policy.harness-selection",
+      "expected_ambiguity_bucket": "weak-modality"
+    },
+    {
+      "line": 39,
+      "text": "Testing MUST preserve graph law and proof-band ratchets.",
+      "expected_kind": "aligned",
+      "expected_decision_grade": false,
+      "expected_entity_id": "verification.policy.merge-gating-lane"
+    },
+    {
+      "line": 41,
+      "text": "The architecture MUST preserve meaning when placement changes.",
+      "expected_kind": "ambiguous",
+      "expected_decision_grade": false,
+      "expected_ambiguity_bucket": "weak-modality"
     }
   ]
 }

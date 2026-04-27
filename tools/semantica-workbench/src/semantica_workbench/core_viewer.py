@@ -91,7 +91,9 @@ def build_cytoscape_payload(
             "review_needed": diff.get("review_needed", []),
             "underrepresented_gates": diff.get("underrepresented_gates", []),
             "semantic_findings": diff.get("findings", []),
+            "entityless_findings": [item for item in diff.get("findings", []) if not item.get("entity_id")],
             "claims": diff.get("claims", []),
+            "suppressed_lines": diff.get("suppressed_lines", []),
         },
     }
 

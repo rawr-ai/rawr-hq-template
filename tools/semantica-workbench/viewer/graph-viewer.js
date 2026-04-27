@@ -352,6 +352,8 @@ function renderSemanticFinding(finding) {
   return `<div class="source-ref">
     <strong>${esc(finding.kind)} · ${esc(finding.rule || "")}</strong><br>
     <span>${esc(finding.document_path)}:${esc(finding.line_start)} (${esc(finding.polarity)}/${esc(finding.modality)}/${esc(finding.assertion_scope)})</span><br>
+    ${finding.ambiguity_bucket ? `<span class="pill warn">${esc(finding.ambiguity_bucket)}</span>` : ""}
+    ${finding.review_action ? `<span>${esc(finding.review_action)}</span><br>` : ""}
     <span>${esc(finding.text)}</span>
   </div>`;
 }
@@ -409,11 +411,15 @@ function exportPng() {
 
 function renderSummary() {
   const summary = payload.summary || {};
+  const diffSummary = payload.diff?.summary || {};
   document.getElementById("summary").innerHTML = `
     <span class="pill">${esc(summary.canonical_entity_count || payload.canonicalEntityCount || 0)} canonical entities</span>
     <span class="pill">${esc(summary.canonical_relation_count || payload.canonicalRelationCount || 0)} canonical relations</span>
     <span class="pill warn">${esc(payload.candidateCount || 0)} candidates hidden by default</span>
-    <span class="pill">${esc(payload.diff?.summary?.review_needed_count || 0)} review-needed diff items</span>
+    <span class="pill">${esc(diffSummary.review_needed_count || 0)} review-needed diff items</span>
+    <span class="pill warn">${esc(diffSummary.findings_by_kind?.ambiguous || 0)} ambiguous semantic findings</span>
+    <span class="pill">${esc(payload.diff?.entityless_findings?.length || 0)} entityless findings</span>
+    <span class="pill">${esc(payload.diff?.suppressed_lines?.length || 0)} suppressed scaffold lines</span>
   `;
 }
 

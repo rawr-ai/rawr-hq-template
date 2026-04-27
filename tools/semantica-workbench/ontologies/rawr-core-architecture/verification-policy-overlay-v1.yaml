@@ -1,0 +1,294 @@
+id: rawr-verification-policy-overlay-v1
+kind: ontology-layer
+layer: verification-policy-overlay
+entities:
+- id: verification.policy.mechanical-enforcement
+  label: mechanical enforcement
+  type: VerificationPolicyConcept
+  layer: verification-policy-overlay
+  status: evidence-only
+  definition: Testing policy that turns architecture meaning into graph, proof, and ratchet checks.
+  aliases:
+  - architecture mechanically enforceable
+  - canon -> graph -> proof -> ratchet
+  - canon graph proof ratchet
+  - proof ratchet
+  - ratchet
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 1.1 Mechanical enforcement direction
+  operational_consequence:
+  - doc-update-review
+  - verification-policy-alignment
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+- id: verification.policy.placement-invariant-harness
+  label: placement-invariant harness
+  type: VerificationPolicyConcept
+  layer: verification-policy-overlay
+  status: evidence-only
+  definition: Harness selection should preserve semantic meaning across placement changes and avoid proving the wrong boundary.
+  aliases:
+  - placement-invariant harness
+  - placement-invariant harnesses
+  - in-process and contract-driven tests
+  - boundary-defined behavior
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 1.2 Placement invariance
+  operational_consequence:
+  - harness-selection-review
+  - boundary-proof-selection
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+- id: verification.policy.proof-obligation
+  label: proof obligation
+  type: VerificationPolicyConcept
+  layer: verification-policy-overlay
+  status: evidence-only
+  definition: A test layer must prove only the architecture claims it owns and avoid claiming unrelated guarantees.
+  aliases:
+  - must prove
+  - must not prove
+  - proof obligation
+  - ownership of tests
+  - who owns what tests
+  - prove what the graph cannot
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 2. Test Taxonomy Mapped to the Ontology
+  operational_consequence:
+  - proof-scope-review
+  - false-confidence-prevention
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+- id: verification.policy.harness-selection
+  label: harness selection
+  type: VerificationPolicyConcept
+  layer: verification-policy-overlay
+  status: evidence-only
+  definition: Each claim must use the boundary/harness that actually owns the behavior being tested.
+  aliases:
+  - harness selection
+  - caller mode
+  - caller planes
+  - correct boundary per claim
+  - in-process
+  - createRouterClient
+  - first-party boundary
+  - published boundary
+  - runtime ingress
+  - exploratory automation
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 3. Harness Selection Matrix
+  operational_consequence:
+  - caller-boundary-review
+  - route-family-policy-review
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+- id: verification.policy.route-family-negative-assertion
+  label: route-family negative assertion
+  type: VerificationPolicyConcept
+  layer: verification-policy-overlay
+  status: evidence-only
+  definition: Tests must assert forbidden caller and ingress plane crossings, not only happy-path route behavior.
+  aliases:
+  - route-family behavior
+  - route-family policy
+  - forbidden routes
+  - negative assertions
+  - negative-route assertions
+  - runtime-ingress routes
+  - internal-only routes
+  - caller-boundary guarantees
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 3.2 Mandatory negative assertions
+  operational_consequence:
+  - negative-route-review
+  - ingress-boundary-review
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+- id: verification.policy.runner-boundary
+  label: runner boundary
+  type: VerificationPolicyConcept
+  layer: verification-policy-overlay
+  status: evidence-only
+  definition: Test runners and directories have separate roles so exploratory, browser, unit, and structural checks do not blur pass/fail authority.
+  aliases:
+  - runner boundary
+  - runner boundaries
+  - vitest
+  - playwright
+  - stagehand
+  - bun scripts
+  - directory conventions
+  - automation/evals
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 4. Runner Boundary Contract
+  operational_consequence:
+  - runner-scope-review
+  - merge-gate-authority-review
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+- id: verification.policy.merge-gating-lane
+  label: merge-gating lane
+  type: VerificationPolicyConcept
+  layer: verification-policy-overlay
+  status: evidence-only
+  definition: Fast graph-law, proof-band, behavioral, boundary, and browser lanes determine what blocks merges versus what runs later.
+  aliases:
+  - lane a
+  - lane b
+  - lane c
+  - lane d
+  - lane e
+  - lane f
+  - graph law
+  - proof band
+  - behavioral guarantees
+  - boundary/network
+  - browser e2e
+  - fast gating
+  - merge gating
+  - blocks merges
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 5.1 Lane definitions
+  operational_consequence:
+  - gating-policy-review
+  - migration-readiness-review
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+- id: verification.policy.nightly-manual-lane
+  label: nightly/manual lane
+  type: VerificationPolicyConcept
+  layer: verification-policy-overlay
+  status: evidence-only
+  definition: Broader E2E, Stagehand, exploratory, and optional visual-diff evidence is non-blocking unless separately promoted.
+  aliases:
+  - nightly
+  - manual
+  - non-gating
+  - non-blocking signals
+  - exploratory runs
+  - stagehand evals
+  - optional visual diffs
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 5.1 Lane definitions
+  operational_consequence:
+  - nonblocking-evidence-review
+  - gating-scope-review
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+- id: verification.policy.structural-proof
+  label: structural proof
+  type: VerificationPolicyConcept
+  layer: verification-policy-overlay
+  status: evidence-only
+  definition: AST, graph, and structural proofs are preferred for architecture-law claims such as import direction and manifest purity.
+  aliases:
+  - structural proofs
+  - ast proofs
+  - graph proofs
+  - import boundary
+  - import direction
+  - ownership direction
+  - manifest purity
+  - entrypoint thinness
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 6.1 Prefer structural proofs
+  operational_consequence:
+  - structural-ratchet-review
+  - graph-law-review
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+- id: verification.policy.executable-behavior-proof
+  label: executable behavior proof
+  type: VerificationPolicyConcept
+  layer: verification-policy-overlay
+  status: evidence-only
+  definition: Runtime behavior such as signature verification, middleware, rollback, shutdown, and ingress hardening must be exercised at runtime.
+  aliases:
+  - executable tests
+  - behavioral guarantee
+  - signature verification
+  - ingress hardening
+  - middleware behavior
+  - bootgraph lifecycle behavior
+  - rollback
+  - shutdown ordering
+  - reverse-order shutdown
+  - canonical identity dedupe
+  - fatal startup
+  - dependency-first startup
+  - raw effect vocabulary
+  - raw effect primitives
+  - public author-facing surfaces
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 6.2 Prefer executable tests
+  operational_consequence:
+  - runtime-behavior-review
+  - ingress-hardening-review
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+relations:
+- id: rel.mechanical-enforcement-requires-proof-obligation
+  subject: verification.policy.mechanical-enforcement
+  predicate: requires
+  object: verification.policy.proof-obligation
+  layer: verification-policy-overlay
+  status: evidence-only
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 1.1 Mechanical enforcement direction
+  operational_consequence:
+  - verification-policy-review
+- id: rel.harness-selection-supports-route-negative-assertion
+  subject: verification.policy.harness-selection
+  predicate: supports
+  object: verification.policy.route-family-negative-assertion
+  layer: verification-policy-overlay
+  status: evidence-only
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 3. Harness Selection Matrix
+  operational_consequence:
+  - caller-boundary-review
+- id: rel.merge-gating-lane-requires-structural-proof
+  subject: verification.policy.merge-gating-lane
+  predicate: requires
+  object: verification.policy.structural-proof
+  layer: verification-policy-overlay
+  status: evidence-only
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 5. Canonical Lanes
+  operational_consequence:
+  - gating-policy-review
+- id: rel.runner-boundary-separates-nightly-manual
+  subject: verification.policy.runner-boundary
+  predicate: separate_from
+  object: verification.policy.nightly-manual-lane
+  layer: verification-policy-overlay
+  status: evidence-only
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 4. Runner Boundary Contract
+  operational_consequence:
+  - runner-scope-review
