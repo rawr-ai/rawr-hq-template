@@ -30,7 +30,7 @@ Done looks like:
 
 Use these in this order while executing:
 
-1. [RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md](../../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
+1. [RAWR_Canonical_Architecture_Spec.md](../../resources/spec/RAWR_Canonical_Architecture_Spec.md)
 2. [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../../resources/_archive/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
 3. [RAWR_Architecture_Migration_Plan.md](../../resources/RAWR_Architecture_Migration_Plan.md)
 4. [phase-2-entry-conditions.md](./phase-2-entry-conditions.md)

@@ -923,7 +923,7 @@ This phase ends with a platform that can run real capabilities through canonical
 
 Phase 2 is grounded on two canonical specs in addition to this plan:
 
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md` — the integrated architecture and runtime specification
+- `RAWR_Canonical_Architecture_Spec.md` — the canonical architecture specification
 - `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md` — the dedicated runtime subsystem specification
 
 Those specs are authoritative for the runtime subsystem design. This plan governs scope, sequence, and gates.

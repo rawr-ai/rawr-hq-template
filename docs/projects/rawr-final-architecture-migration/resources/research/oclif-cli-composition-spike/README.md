@@ -62,7 +62,7 @@ Repo sources:
 - `docs/system/PLUGINS.md`
 - `docs/process/AGENT_LOOPS.md`
 - `docs/process/runbooks/PLUGIN_BUILD_AND_WIRING_MATRIX.md`
-- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md`
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
 - `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md`
 
 ## Terminology And Ergonomics Call

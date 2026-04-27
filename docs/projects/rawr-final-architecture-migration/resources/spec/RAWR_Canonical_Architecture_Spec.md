@@ -1,4 +1,4 @@
-# RAWR Integrated Canonical Architecture Specification
+# RAWR Canonical Architecture Specification
 
 Status: Canonical
 

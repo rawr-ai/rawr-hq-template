@@ -56,14 +56,14 @@ The integrated spec defines plugins as runtime projection, not services, bootgra
 
 Evidence:
 
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:960-978`
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:1013-1028`
+- `RAWR_Canonical_Architecture_Spec.md:960-978`
+- `RAWR_Canonical_Architecture_Spec.md:1013-1028`
 
 The same spec says a manifest authors app identity, process modules, role membership, and explicit surface membership. Its canonical shape is `role -> surface -> plugin membership`.
 
 Evidence:
 
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:1293-1320`
+- `RAWR_Canonical_Architecture_Spec.md:1293-1320`
 
 The Effect runtime subsystem spec says the key binding seam is between booted resources, role-local bound service clients, and mounted surface code. It also states:
 

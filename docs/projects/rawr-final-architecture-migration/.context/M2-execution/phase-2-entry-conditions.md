@@ -54,9 +54,9 @@ The legacy `@rawr/agent-sync` package has been removed.
 
 ## Runtime Substrate Specification
 
-Phase 2 is now grounded by two additional canonical specs (checked in under `docs/projects/rawr-final-architecture-migration/resources/`):
+Phase 2 is now grounded by two additional canonical specs:
 
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md` — the integrated architecture and runtime specification
+- `RAWR_Canonical_Architecture_Spec.md` — the canonical architecture specification
 - `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md` — the dedicated runtime subsystem specification
 
 These define the canonical package topology for the runtime subsystem:

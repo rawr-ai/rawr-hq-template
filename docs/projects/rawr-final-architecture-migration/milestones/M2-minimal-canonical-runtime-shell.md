@@ -31,7 +31,7 @@ This milestone exists to replace that seam with the real runtime path and to lea
 This milestone is grounded by seven documents:
 
 1. [Migration plan](../resources/RAWR_Architecture_Migration_Plan.md): canonical source for Phase 2 purpose, sequence, and exit gate.
-2. [Integrated architecture and runtime spec](../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md): destination architecture, runtime subsystem stance, and invariant truth.
+2. [RAWR canonical architecture spec](../resources/spec/RAWR_Canonical_Architecture_Spec.md): destination architecture, runtime subsystem stance, and invariant truth.
 3. [Effect runtime subsystem spec](../resources/_archive/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md): detailed specification for the Effect-backed runtime kernel, package topology, runtime-owned services, config/schema/error/observability models, and bootgraph lowering.
 4. [Phase 2 entry conditions](../.context/M2-execution/phase-2-entry-conditions.md): the handoff contract from the frozen Phase 1 plateau.
 5. [Phase 1 closeout review](../.context/M1-execution/phase-1-closeout-review.md): evidence for what Phase 1 settled and what it intentionally left to Phase 2.

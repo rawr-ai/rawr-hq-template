@@ -9,7 +9,7 @@ Primary authority does not mean every document is authoritative in the same way.
 
 | Order | Source | Authority Lane | Current Status |
 | ---: | --- | --- | --- |
-| 1 | Final integrated canonical architecture specification | Top-level ontology, ownership laws, system geometry, terminology, subsystem boundaries, and integration points | Pending final returned-document review. Current repo path to confirm/update: `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md`. |
+| 1 | RAWR canonical architecture spec | Top-level ontology, ownership laws, system geometry, terminology, subsystem boundaries, and integration points | Final repo path: `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`. |
 | 2 | `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md` | Runtime realization topology, lifecycle, SDK/runtime split, resource/provider/profile model, runtime compiler/provisioning/process runtime, live access, diagnostics, and finalization | Accepted runtime authority. |
 | 3 | Current repo audit for M2 runtime realization migration | Starting-state truth: what exists, what imports what, what tests/gates exist, what must be moved, mined, replaced, or deleted | To be produced during planning. Current repo reality is not target authority. |
 | 4 | `docs/projects/rawr-final-architecture-migration/milestones/M2-minimal-canonical-runtime-shell.md` | Migration container, sequencing expectations, milestone vocabulary, and slice boundaries | Use only after checking for drift against the final specs. |

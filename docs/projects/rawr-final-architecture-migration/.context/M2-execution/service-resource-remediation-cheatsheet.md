@@ -61,7 +61,7 @@ Required reading:
 - services/example-todo/src/service/**
 - docs/projects/orpc-ingest-domain-packages/guidance.md
 - docs/projects/orpc-ingest-domain-packages/DECISIONS.md
-- docs/projects/rawr-final-architecture-migration/resources/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md
+- docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
 - docs/projects/rawr-final-architecture-migration/resources/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md
 
 Use skills/methods:
