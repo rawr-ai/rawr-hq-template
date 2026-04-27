@@ -34,13 +34,13 @@ Frozen metadata:
 Review workflow:
 
 ```text
-docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/runtime-realization-final-spec-readiness-review-workflow.md
+docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/runtime-realization-finalization/decision-record/runtime-realization-final-spec-readiness-review-workflow.md
 ```
 
 Reference packet used as review evidence:
 
 ```text
-docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/final-cloud-pro-inputs/
+docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/runtime-realization-finalization/cloud-pro-inputs/
 ```
 
 ## Review Team Results

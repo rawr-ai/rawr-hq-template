@@ -212,10 +212,10 @@ M2-U05 and M2-U06 remain proof and ratchet work. They should absorb `runtime-con
 
 The four reports are worth keeping as provenance because they contain distinct evidence:
 
-- `reports/agent-alt-x-1.report.md`: confirms the engineering core is stable and flags manifest grammar plus `core/*`/`@rawr/sdk` as normalization needs.
-- `reports/agent-alt-x-2.report.md`: confirms Alt-X-2 is the best synthesis source while identifying topology, entrypoint API, runtime access naming, service dependency semantics, and resource helper DX as locks.
-- `reports/agent-m2-repo-reality.report.md`: grounds the conclusion in current repo state: `legacy-cutover` is still live authority, `packages/runtime/*` does not exist, `bootgraph` is only a reservation, `runtime-context` is support debt, and Effect is not yet live.
-- `reports/agent-terminology-dx.report.md`: recommends Alt-X-2 as terminology spine, `RuntimeAccess` for live access, `RuntimeCatalog` for diagnostics, and cleaner author-facing service/resource vocabulary.
+- `initial-forward-evaluation-reports/agent-alt-x-1.report.md`: confirms the engineering core is stable and flags manifest grammar plus `core/*`/`@rawr/sdk` as normalization needs.
+- `initial-forward-evaluation-reports/agent-alt-x-2.report.md`: confirms Alt-X-2 is the best synthesis source while identifying topology, entrypoint API, runtime access naming, service dependency semantics, and resource helper DX as locks.
+- `initial-forward-evaluation-reports/agent-m2-repo-reality.report.md`: grounds the conclusion in current repo state: `legacy-cutover` is still live authority, `packages/runtime/*` does not exist, `bootgraph` is only a reservation, `runtime-context` is support debt, and Effect is not yet live.
+- `initial-forward-evaluation-reports/agent-terminology-dx.report.md`: recommends Alt-X-2 as terminology spine, `RuntimeAccess` for live access, `RuntimeCatalog` for diagnostics, and cleaner author-facing service/resource vocabulary.
 
 Scratch documents were intermediate working notes and should be deleted after this synthesis.
 

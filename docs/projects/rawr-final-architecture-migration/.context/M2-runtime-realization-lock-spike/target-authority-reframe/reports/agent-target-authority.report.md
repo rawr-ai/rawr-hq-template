@@ -33,7 +33,7 @@ That is not a compromise between the specs and repo reality. It preserves the sp
 
 ### 1. Physical Topology
 
-Alt-X-1 and Alt-X-2 both correctly separate RAWR system machinery from authored services/plugins/apps/resources, but both put platform machinery under top-level `core/` (`Alt-X-1:361-478`; `Alt-X-2:218-346`). The current intermediate spec chooses top-level `runtime/` and explicitly labels it load-bearing (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md:240-329`, `:3799-3831`). The prior spike chose current M2's `packages/runtime/*` and `@rawr/hq-sdk` (`integration-runtime-realization-forward-evaluation.md:75-95`).
+Alt-X-1 and Alt-X-2 both correctly separate RAWR system machinery from authored services/plugins/apps/resources, but both put platform machinery under top-level `core/` (`Alt-X-1:361-478`; `Alt-X-2:218-346`). The current intermediate spec chooses top-level `runtime/` and explicitly labels it load-bearing (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md:240-329`, `:3799-3831`). The prior spike chose current M2's `packages/runtime/*` and `@rawr/hq-sdk` (`forward-evaluation.md:75-95`).
 
 Target correction:
 

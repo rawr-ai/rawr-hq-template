@@ -18,7 +18,7 @@ Create branch/worktree after acceptance:
 
 Create spike docs:
 - `docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/workflow.md`
-- `docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integration-runtime-realization-forward-evaluation.md`
+- `docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/target-authority-reframe/forward-evaluation.md`
 - Temporary scratch: `.../scratch/agent-*.scratch.md`
 - Temporary reports: `.../reports/agent-*.report.md`
 
