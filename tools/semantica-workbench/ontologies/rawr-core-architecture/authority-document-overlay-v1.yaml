@@ -1,0 +1,201 @@
+id: rawr-authority-and-document-overlay-v1
+kind: ontology-layer
+layer: authority-and-document-overlay
+entities:
+- id: gate.source-ref-required
+  label: source reference required gate
+  type: ValidationGate
+  layer: authority-and-document-overlay
+  status: locked
+  definition: Canonical facts must have source references.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Validation Rules
+  operational_consequence:
+  - source-backed-review
+  - semantic-diff-baseline
+  classifier_readiness:
+    status: not-applicable
+    consequence:
+    - none
+  notes: ''
+- id: gate.relation-endpoint-resolution
+  label: relation endpoint resolution gate
+  type: ValidationGate
+  layer: authority-and-document-overlay
+  status: locked
+  definition: Canonical relations must connect canonical entities or explicit overlay entities.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Validation Rules
+  operational_consequence:
+  - graph-validation
+  - semantic-diff-baseline
+  classifier_readiness:
+    status: not-applicable
+    consequence:
+    - none
+  notes: ''
+- id: gate.controlled-predicate
+  label: controlled predicate gate
+  type: ValidationGate
+  layer: authority-and-document-overlay
+  status: locked
+  definition: Canonical relations must use predicates from the approved registry.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Validation Rules
+  operational_consequence:
+  - predicate-validation
+  - graph-query-stability
+  classifier_readiness:
+    status: not-applicable
+    consequence:
+    - none
+  notes: ''
+- id: gate.forbidden-term-not-canonical
+  label: forbidden term not canonical gate
+  type: ValidationGate
+  layer: authority-and-document-overlay
+  status: locked
+  definition: Forbidden or deprecated terms must not appear as accepted target architecture without replacement or review.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Validation Rules
+  operational_consequence:
+  - document-drift-detection
+  - target-architecture-rejection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - forbidden-move
+    - verification-gate
+  notes: ''
+- id: gate.review-promotion-required
+  label: review promotion required gate
+  type: ValidationGate
+  layer: authority-and-document-overlay
+  status: locked
+  definition: Evidence-only and candidate facts cannot appear in canonical views without promotion.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Validation Rules
+  operational_consequence:
+  - evidence-truth-separation
+  - semantic-diff-baseline
+  classifier_readiness:
+    status: not-applicable
+    consequence:
+    - none
+  notes: ''
+- id: authority.doc.canonical-architecture-spec
+  label: RAWR_Canonical_Architecture_Spec.md
+  type: DocumentAuthority
+  layer: authority-and-document-overlay
+  status: locked
+  definition: Primary authority for durable core ontology, repository roots, semantic nouns, ownership laws, semantic direction,
+    and stable architecture versus runtime realization.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Source Map
+  operational_consequence:
+  - source-of-truth-baseline
+  - semantic-diff
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+  notes: ''
+- id: authority.doc.effect-runtime-realization-spec
+  label: RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  type: DocumentAuthority
+  layer: authority-and-document-overlay
+  status: locked
+  definition: Primary authority for runtime realization ownership, lifecycle, runtime artifacts, producer/consumer handoffs,
+    and forbidden runtime patterns.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Source Map
+  operational_consequence:
+  - source-of-truth-baseline
+  - runtime-diff
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+  notes: ''
+- id: authority.doc.authoring-classifier-spec
+  label: RAWR_Authoring_Classifier_System_Canonical_Spec.md
+  type: DocumentAuthority
+  layer: authority-and-document-overlay
+  status: locked
+  definition: Future-goal reference for operational/classifier pressure, not a current source-of-truth authority for core
+    architecture.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Source Map
+  operational_consequence:
+  - classifier-readiness
+  - rule-pack-design-pressure
+  classifier_readiness:
+    status: candidate
+    consequence:
+    - operational-consequence
+    - rule-pack-candidate
+  notes: Must not override finalized architecture/runtime specs.
+relations:
+- id: rel.app-composition-alias-manifest
+  subject: core.kind.app-composition
+  predicate: replaces
+  object: core.kind.manifest
+  layer: authority-and-document-overlay
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 1 Scope; 3.2 Stable semantic nouns
+  operational_consequence:
+  - alias-resolution
+  - document-drift-detection
+  - semantic-diff
+- id: rel.canonical-spec-authority-core
+  subject: authority.doc.canonical-architecture-spec
+  predicate: is_authority_for
+  object: core.root.services
+  layer: authority-and-document-overlay
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Source Map
+  operational_consequence:
+  - source-of-truth-baseline
+  - semantic-diff
+- id: rel.runtime-spec-authority-runtime-overlay
+  subject: authority.doc.effect-runtime-realization-spec
+  predicate: is_authority_for
+  object: runtime.phase.compilation
+  layer: authority-and-document-overlay
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Source Map
+  operational_consequence:
+  - source-of-truth-baseline
+  - runtime-diff
+- id: rel.classifier-spec-not-core-authority
+  subject: authority.doc.authoring-classifier-spec
+  predicate: separate_from
+  object: authority.doc.canonical-architecture-spec
+  layer: authority-and-document-overlay
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Source Map
+  operational_consequence:
+  - authority-scope
+  - classifier-readiness-conservatism

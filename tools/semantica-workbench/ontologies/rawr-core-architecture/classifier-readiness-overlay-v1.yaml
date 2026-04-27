@@ -1,0 +1,37 @@
+id: rawr-classifier-readiness-overlay-v1
+kind: ontology-layer
+layer: classifier-readiness-overlay
+entities:
+- id: gate.classifier-operational-consequence
+  label: classifier operational consequence gate
+  type: ValidationGate
+  layer: classifier-readiness-overlay
+  status: locked
+  definition: A classifier category must change enforcement consequences or remain a label, not a classifier category.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-system-design.md
+    section: Future Classifier Link
+  operational_consequence:
+  - classifier-readiness
+  - rule-pack-rejection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - required-gate
+    - forbidden-move
+    - generator-output
+  notes: ''
+relations:
+- id: rel.classifier-readiness-consequence-required
+  subject: gate.classifier-operational-consequence
+  predicate: requires
+  object: gate.review-promotion-required
+  layer: classifier-readiness-overlay
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-system-design.md
+    section: Future Classifier Link
+  operational_consequence:
+  - classifier-rule-pack-safety
+  - no-label-only-category

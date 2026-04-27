@@ -1,0 +1,320 @@
+id: rawr-candidate-queue-v1
+kind: candidate-queue
+layer: candidate-review
+candidates:
+- id: candidate.reserved.auth-posture
+  label: auth posture
+  owner: Dedicated auth subsystem or app/runtime profile policy once specified.
+  hook: Classifier operational classification may need trust boundary, caller kind, actor kind, credential kind, verifier
+    requirement, and service authorization owner.
+  required_input_output: 'Input: intent/surface/caller/trust facts. Output: required verifier/resource/profile/plugin policy
+    and service authorization owner.'
+  diagnostic_expectation: Missing verifier, mismatched public ingress, ambiguous actor, or service authorization owner unclear.
+  enforcement_placeholder: classifier_readiness.status=tbd; require auth-specific spec before locked rule-pack emission.
+  promotion_trigger: Canonical auth subsystem spec defines ownership, schema, gates, and runtime compiler expectations.
+  why_it_might_matter: Classifier spec makes auth posture operationally relevant, but the core architecture/runtime specs
+    do not fully settle auth rules.
+  source_span_suggests_it:
+  - path: /Users/mateicanavra/Documents/projects/RAWR/RAWR_Authoring_Classifier_System_Canonical_Spec.md
+    section: Operational classification nouns and failure modes
+  classifier_relevance: true
+- id: candidate.reserved.semantic-dep-adapter
+  label: semanticDep adapter plan
+  owner: SDK service derivation and process runtime binding.
+  hook: semanticDep(...)
+  required_input_output: 'Input: adapter declaration, service boundary refs, runtime access. Output: bound semantic adapter
+    value.'
+  diagnostic_expectation: Adapter missing, cycle, incompatible scope.
+  enforcement_placeholder: Allow explicit placeholder adapters only; deeper adapter support requires dedicated spec.
+  promotion_trigger: Dedicated semantic dependency adapter spec defines supported adapter semantics and validation.
+  why_it_might_matter: semanticDep is named in service helper rules, but deeper support is reserved.
+  source_span_suggests_it:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: Reserved boundaries table; 10.4 Dependency helper rules
+  classifier_relevance: true
+- id: candidate.reserved.agent-governance
+  label: Agent/OpenShell governance
+  owner: Agent harness, OpenShell resource boundary, app policy hooks.
+  hook: Agent harness policy hook and runtime resource access.
+  required_input_output: 'Input: agent surfaces, shell policy, process access. Output: mounted shell/channel/tool payloads.'
+  diagnostic_expectation: Policy violation, tool denied, governance handoff failure.
+  enforcement_placeholder: Agent plugins do not bypass services or own runtime access broadly.
+  promotion_trigger: Dedicated agent governance spec defines policy primitives beyond diagnostics.
+  why_it_might_matter: Agent role is locked, but governance details are operational and not fully settled in the requested
+    source pair.
+  source_span_suggests_it:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: Reserved boundaries table
+  classifier_relevance: true
+- id: candidate.reserved.key-kms-resources
+  label: Key/KMS resources
+  owner: Resource catalog and providers.
+  hook: resources/key-* or resources/kms-* descriptors.
+  required_input_output: 'Input: Key/KMS provider config and resource requirement. Output: provisioned key-management client/value.'
+  diagnostic_expectation: Secret exposure, provider mismatch, key policy failure.
+  enforcement_placeholder: KMS provider does not own domain truth.
+  promotion_trigger: Dedicated key rotation or crypto policy spec.
+  why_it_might_matter: Security-sensitive runtime resources need strong schema/diagnostic boundaries.
+  source_span_suggests_it:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: Reserved boundaries table
+  classifier_relevance: true
+- id: candidate.reserved.multi-process-placement-policy
+  label: multi-process placement policy
+  owner: Deployment/control-plane architecture.
+  hook: Runtime catalog/control-plane touchpoints.
+  required_input_output: 'Input: process plan metadata, topology records, health records. Output: placement decision outside
+    runtime realization.'
+  diagnostic_expectation: Placement mismatch or unsupported topology.
+  enforcement_placeholder: Runtime realization owns one process only.
+  promotion_trigger: Deployment/control-plane policy spec is accepted for placement.
+  why_it_might_matter: Core/runtime specs separate process shape from placement; deployment is downstream and not in this
+    core ontology except as separation.
+  source_span_suggests_it:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: Reserved boundaries table
+  classifier_relevance: true
+- id: candidate.reserved.desktop-native-interiors
+  label: desktop native interiors
+  owner: Desktop harness.
+  hook: Desktop surface adapter payloads.
+  required_input_output: 'Input: menubar/window/background compiled plans. Output: native desktop mount payloads.'
+  diagnostic_expectation: IPC, bridge, lifecycle, or permission diagnostics.
+  enforcement_placeholder: Desktop native internals do not become RAWR roles.
+  promotion_trigger: Desktop native APIs, IPC, or security policy are standardized.
+  why_it_might_matter: Desktop role/surfaces are locked, but detailed native interior policy is reserved.
+  source_span_suggests_it:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: Reserved boundaries table
+  classifier_relevance: true
+- id: candidate.reserved.lane-native-implementation-details
+  label: lane-specific native implementation details
+  owner: Owning plugin package and harness.
+  hook: Lane-specific adapter interface.
+  required_input_output: 'Input: compiled surface plan and bound clients. Output: native route/function/command/window/tool
+    payload.'
+  diagnostic_expectation: Adapter-specific lowering diagnostics.
+  enforcement_placeholder: Native details do not classify projection status.
+  promotion_trigger: A lane needs deeper public authoring rules.
+  why_it_might_matter: Projection lanes are locked; native builder detail may become operational but should not reclassify
+    projection identity.
+  source_span_suggests_it:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: Reserved boundaries table
+  classifier_relevance: true
+- id: candidate.classifier.ontology-rule-pack
+  label: ontology rule pack
+  why_it_might_matter: Future classifier uses deterministic rules derived from canonical specs.
+  source_span_suggests_it:
+  - path: /Users/mateicanavra/Documents/projects/RAWR/RAWR_Authoring_Classifier_System_Canonical_Spec.md
+    section: Classifier lifecycle and rule-pack posture
+  decision_required_before_promotion: Define concrete rule-pack schema, derivation source, gate linkage, and rejection trace
+    format.
+  classifier_relevance: true
+  status: candidate
+- id: candidate.classifier.constraint-graph
+  label: constraint graph
+  why_it_might_matter: Future classifier needs a legal-space graph derived from canonical ontology, intent, repo facts, and
+    rule packs.
+  source_span_suggests_it:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-system-design.md
+    section: Future Classifier Link
+  decision_required_before_promotion: Define graph inputs, narrowing semantics, rejected alternative trace, and reclassification
+    rules.
+  classifier_relevance: true
+  status: candidate
+- id: candidate.deployment.platform-service
+  label: platform service
+  why_it_might_matter: Canonical architecture names platform service as service-centric operational unit, but deployment realization
+    is downstream and not part of current core source pair.
+  source_span_suggests_it:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.3 Runtime realization nouns; operational mapping
+  decision_required_before_promotion: Deployment ontology overlay accepted; otherwise keep as runtime/placement separation
+    evidence.
+  classifier_relevance: true
+  status: candidate
+- id: candidate.workstream.workstream
+  label: workstream
+  why_it_might_matter: Workstreams are durable coordination objects in adjacent RAWR specs but not core architecture truth
+    for this draft.
+  source_span_suggests_it:
+  - path: /Users/mateicanavra/Documents/projects/RAWR/RAWR_Workstream_System_Canonical_Spec.md
+    section: Canonical claim
+  decision_required_before_promotion: Decide if workstream belongs to a separate subsystem ontology or authority overlay,
+    not core architecture.
+  classifier_relevance: possible
+  status: candidate
+- id: candidate.term.dashboard-service
+  label: dashboard-service
+  why_it_might_matter: A dashboard request may imply a service, but dashboard UI code alone is not service truth.
+  source_span_suggests_it:
+  - path: /Users/mateicanavra/Documents/projects/RAWR/RAWR_Authoring_Classifier_System_Canonical_Spec.md
+    section: Failure modes
+  decision_required_before_promotion: Only promote if it owns durable semantic truth, contracts, schemas, invariants, and
+    write authority.
+  classifier_relevance: true
+  status: candidate
+- id: candidate.term.workflow-service
+  label: workflow-service
+  why_it_might_matter: A workflow projection may need service truth, but workflow registration alone is an async projection,
+    not a service.
+  source_span_suggests_it:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 2.1 Universal shape
+  decision_required_before_promotion: Promote only if it identifies a real semantic service boundary, not a durable execution
+    projection.
+  classifier_relevance: true
+  status: candidate
+exclusions:
+- id: exclusion.dashboard-service-ui-only
+  example: dashboard-service when it only means UI code
+  reason: Dashboard UI is a web projection unless it owns service truth, schemas, invariants, and write authority. A dashboard
+    request may imply a service, but does not automatically create one.
+  replacement_or_review_path: Classify service truth first, then project into web/server/agent/etc. lanes as needed.
+  source_refs:
+  - path: /Users/mateicanavra/Documents/projects/RAWR/RAWR_Authoring_Classifier_System_Canonical_Spec.md
+    section: Failure modes
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 2.2 Truth, surfaces, and selection
+- id: exclusion.workflow-service-projection-only
+  example: workflow-service when it only registers a durable execution projection
+  reason: Durable workflows are async projections. Service truth remains in services. Workflow, schedule, and consumer plugins
+    do not expose public product APIs directly.
+  replacement_or_review_path: Use service + async workflow projection; server API/internal projection handles callable ingress
+    where needed.
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 2.1 Universal shape; 4.10 Ingress and execution law
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.7 Async violations
+- id: exclusion.shared-repository-root
+  example: shared-repository across unrelated services
+  reason: Repositories are service-internal persistence mechanics. Shared infrastructure is allowed; shared semantic write
+    authority, migration authority, and repository ownership by accident are not.
+  replacement_or_review_path: Use service-owned repositories/migrations; extract lower-level SQL utilities to packages/ if
+    they are support matter.
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 4.7 Shared infrastructure is not shared semantic ownership
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.3 Service boundary violations
+- id: exclusion.plugin-exposure-visibility-reclassification
+  example: plugin exposure/visibility/public/internal fields that reclassify projection status
+  reason: Plugin projection identity is classified by topology plus lane-specific builder. App selection and harness publication
+    policy may select or publish already-classified projections, not reclassify them.
+  replacement_or_review_path: 'Use correct topology and lane builder: e.g. plugins/server/api/* or plugins/server/internal/*.'
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.2 Projection classification violations
+- id: exclusion.role-specific-public-start-verbs
+  example: startServer(...), startAsync(...), startWeb(...), startAgent(...), startDesktop(...)
+  reason: startApp(...) is the canonical app start operation. Role-specific public start verbs are invalid because the entrypoint
+    selects role slices through one app start operation.
+  replacement_or_review_path: Use startApp(appDefinition, { entrypointId, profile, roles }).
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.1 Topology and naming violations
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 9.5 Entrypoints
+- id: exclusion.root-core-runtime-roots
+  example: root-level core/ or runtime/ authoring roots
+  reason: The current locked physical topology places platform machinery under packages/core/* and authored provisionable
+    capability contracts under resources/*.
+  replacement_or_review_path: Use packages/core/runtime/* and resources/*.
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.1 Topology and naming violations
+- id: exclusion.app-composition-as-bootgraph
+  example: rawr.<app>.ts treated as bootgraph, process, provider acquisition plan, or second runtime artifact
+  reason: The app composition file declares app identity and selected plugin membership. It is not bootgraph, process, platform
+    service definition, provider acquisition plan, control plane, or second runtime artifact above AppDefinition.
+  replacement_or_review_path: Keep app composition as AppDefinition source; runtime compiler/bootgraph/provisioning/process
+    runtime handle realization.
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 9.2 App composition posture; 9.3 App authoring law
+- id: exclusion.service-client-as-runtime-resource
+  example: service-to-service client selected through RuntimeProfile
+  reason: Service-to-service clients are not runtime resources. They are service dependencies materialized by service binding.
+  replacement_or_review_path: Use serviceDep(...) and process runtime service binding.
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.3 Service boundary violations
+- id: exclusion.runtime-schema-transfers-service-truth
+  example: RuntimeSchema treated as owner of service procedure payload semantics
+  reason: RuntimeSchema is for runtime-owned and runtime-carried boundary schema declarations; service procedure payloads
+    and plugin contracts remain owned by their service or plugin boundary.
+  replacement_or_review_path: Use RuntimeSchema for resource/provider/profile/service lanes and diagnostics; use service/plugin-owned
+    schemas for callable payloads.
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 8 Schema ownership and RuntimeSchema
+- id: exclusion.native-framework-as-semantic-owner
+  example: Effect, oRPC, Elysia, Inngest, OCLIF, OpenShell, web host, or desktop host modeled as peer semantic owner
+  reason: Harness and substrate choices are downstream of semantic meaning. Native interiors own native execution semantics
+    after RAWR handoff, not RAWR ontology.
+  replacement_or_review_path: Model as harness/substrate/boundary machinery only where needed.
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.9 Harness and substrate choice are downstream
+- id: exclusion.generated-implementation-details
+  example: every generated file, every import alias, every example capability
+  reason: Ontology design requires curated canonical entities, not every extracted noun phrase, file path, package import,
+    or example capability.
+  replacement_or_review_path: Store in evidence ledger or generator metadata unless it changes ownership, construction, validation,
+    or realization.
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
+    section: Entity Design Rules
+review_checks:
+- check: Canonical graph has roughly 50-150 entities.
+  expected: true
+  notes: Canonical graph size is computed from the normalized YAML during validation; prose counts from the draft are not
+    authoritative.
+- check: Every canonical entity has source refs.
+  expected: true
+  notes: Each entity seed includes path and section.
+- check: Every canonical relation uses a controlled predicate.
+  expected: true
+  notes: Non-controlled predicates are rejected during validation and never downgraded into canonical decision edges.
+- check: Every relation direction matters.
+  expected: true
+  notes: Direction encodes owner -> owned, producer -> artifact, selector -> selected item, or law/gate -> forbidden pattern.
+- check: Uncertainty is marked as candidate/tbd/evidence-only.
+  expected: true
+  notes: semanticDep deeper support, auth posture, agent governance, and reserved operational seams are not locked classifier
+    facts.
+- check: Classifier-readiness annotations have operational consequences.
+  expected: true
+  notes: Each classifier-ready entity uses consequences such as file placement, import boundary, generator target, provider
+    coverage, runtime compiler, diagnostic, or verification gate.
+- check: No source-authority claim is confused with certainty.
+  expected: true
+  notes: Authority overlay separates document authority from locked/candidate/tbd status.
+- check: No evidence-only term is silently promoted.
+  expected: true
+  notes: Workstream, export, deployment, dashboard-service, and workflow-service are candidate/exclusion items, not core truth.
+- check: Every classifier-relevant category has an enforcement consequence.
+  expected: true
+  notes: Architecture kinds, projection lanes, resource/profile/provider concepts, forbidden patterns, and gates all list
+    consequences.
+- check: Any unresolved classifier implication is labeled candidate, tbd, or reserved, not locked.
+  expected: true
+  notes: Auth posture, detailed agent governance, semanticDep adapter depth, deployment placement, and desktop native internals
+    remain reserved or candidate.
+- check: Runtime realization is overlay, not peer public architecture.
+  expected: true
+  notes: Runtime phases/artifacts/machinery are subordinate to core architecture and modeled under runtime-realization-overlay.
+- check: Document overlay remains minimal.
+  expected: true
+  notes: Only source document identity, authority scope, source refs, supersession/replacement, and review findings are modeled.
+- check: Forbidden/deprecated patterns have replacement or rejection path.
+  expected: true
+  notes: Each forbidden pattern includes replacement/review route or operational rejection consequence.
+- check: No `mentions` predicate appears in decision graph.
+  expected: true
+  notes: Mentions belong only in evidence metadata.
+- check: No deployment/control-plane ontology is silently merged into core.
+  expected: true
+  notes: Platform service and multi-process placement remain candidate/downstream unless deployment overlay is approved.
