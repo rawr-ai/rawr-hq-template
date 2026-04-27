@@ -6,7 +6,7 @@ This is the canonical entry point for Phase 2 work. Use it to keep runtime-subst
 
 ## Source-of-Truth Order
 
-1. [Integrated architecture and runtime spec](../../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
+1. [RAWR canonical architecture spec](../../resources/spec/RAWR_Canonical_Architecture_Spec.md)
    Target-state ontology, runtime subsystem stance, and invariant source of truth.
 2. [Effect runtime subsystem spec](../../resources/_archive/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
    Detailed specification for the Effect-backed runtime kernel, package topology, runtime-owned services, config/schema/error/observability models, and bootgraph lowering.
@@ -115,7 +115,7 @@ The retained carry-forward note lives at:
 
 ## Relevant Grounding Documents
 
-- [RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md](../../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
+- [RAWR_Canonical_Architecture_Spec.md](../../resources/spec/RAWR_Canonical_Architecture_Spec.md)
 - [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../../resources/_archive/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
 - [m2-guardrails-and-enforcement.md](../../resources/spec/m2-guardrails-and-enforcement.md)
 - [RAWR_Architecture_Migration_Plan.md](../../resources/RAWR_Architecture_Migration_Plan.md)

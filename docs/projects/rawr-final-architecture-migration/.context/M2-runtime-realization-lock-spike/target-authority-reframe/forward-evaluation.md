@@ -206,7 +206,7 @@ M2-U05 and M2-U06 remain proof and ratchet work. They should absorb `runtime-con
    - `scripts/phase-2/verify-*.mjs` only after doc names/topology are locked.
 
 5. Defer the integrated final spec hardening until the runtime realization authority is locked:
-   - `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md`
+   - `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
 
 ## Agent Report Synthesis
 

@@ -56,7 +56,7 @@ related_to: []
 - Capture closeout evidence proving the plateau ratchet rejects architectural regression automatically instead of relying on a one-time manual review.
 
 ## Canonical References
-- [RAWR Canonical Architecture and Runtime Spec (Integrated Final)](../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
+- [RAWR canonical architecture spec](../resources/spec/RAWR_Canonical_Architecture_Spec.md)
 - [RAWR Effect Runtime Subsystem Canonical Spec](../resources/_archive/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
 - [RAWR Canonical Testing Plan](../resources/spec/RAWR_Canonical_Testing_Plan.md)
 

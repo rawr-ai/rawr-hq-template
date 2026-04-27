@@ -135,9 +135,9 @@ This build failure is outside the docs-only spike, but it is relevant evidence: 
 - `services/hq-ops/src/service/shared/repositories/workspace-plugin-catalog-repository.ts:103` makes command-plugin eligibility depend on `kind === "toolkit"` plus `package.json#oclif` command wiring.
 - `plugins/cli/plugins/src/commands/plugins/cli/install/all.ts:57` defines the local helper that links every eligible toolkit plugin into the OCLIF manager.
 - `packages/hq-sdk/src/plugins.ts:1` is explicitly a pre-Effect binding seam for plugin and app projections.
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:968` lists target role-first root `plugins/cli/commands/*`.
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:1024` names `defineCliCommandPlugin`.
-- `RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md:1314` requires manifest shape `role -> surface -> plugin membership`.
+- `RAWR_Canonical_Architecture_Spec.md:968` lists target role-first root `plugins/cli/commands/*`.
+- `RAWR_Canonical_Architecture_Spec.md:1024` names `defineCliCommandPlugin`.
+- `RAWR_Canonical_Architecture_Spec.md:1314` requires manifest shape `role -> surface -> plugin membership`.
 - `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1076` states that plugins describe binding, runtime performs binding, and services receive canonical boundary bags.
 - `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1262` includes `cli?: CliSurfaceRuntime` in the canonical started process shape.
 - `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md:1374` says web and CLI harnesses follow the same runtime-subsystem contract.
