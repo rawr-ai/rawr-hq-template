@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import http.server
+import json
 import os
+import socketserver
 import subprocess
+import threading
+import urllib.request
 from pathlib import Path
 
 from .chunking import chunk_markdown
@@ -15,6 +20,7 @@ from .core_ontology import (
     validate_core_ontology,
     visualize_core_ontology,
 )
+from .core_query import list_queries, render_query_text, run_named_query, run_sparql_query
 from .diffing import build_diff
 from .extraction import extract_chunk, request_params_for_model, schema_hash
 from .io import git_sha, mark_current, new_run_dir, rel, resolve_run, write_json, write_jsonl
@@ -64,6 +70,21 @@ def build_parser() -> argparse.ArgumentParser:
     core_visualize = sub.add_parser("core:visualize")
     core_visualize.add_argument("--run", default="latest")
     core_visualize.set_defaults(func=cmd_core_visualize)
+
+    core_serve = sub.add_parser("core:serve")
+    core_serve.add_argument("--run", default="latest")
+    core_serve.add_argument("--host", default="127.0.0.1")
+    core_serve.add_argument("--port", type=int, default=8765)
+    core_serve.add_argument("--smoke", action="store_true")
+    core_serve.set_defaults(func=cmd_core_serve)
+
+    core_query = sub.add_parser("core:query")
+    core_query.add_argument("--run", default="latest")
+    core_query.add_argument("--list", action="store_true")
+    core_query.add_argument("--named", default="summary")
+    core_query.add_argument("--sparql", default=None)
+    core_query.add_argument("--format", choices=["json", "text"], default="json")
+    core_query.set_defaults(func=cmd_core_query)
 
     doc_diff = sub.add_parser("doc:diff")
     doc_diff.add_argument("--run", default="latest")
@@ -148,6 +169,51 @@ def cmd_core_export(args) -> int:
 def cmd_core_visualize(args) -> int:
     run_dir = visualize_core_ontology(args.run)
     print(f"core_visualization={rel(run_dir / 'graph-viewer.html')}")
+    return 0
+
+
+def cmd_core_serve(args) -> int:
+    run_dir = resolve_run(args.run)
+    viewer = run_dir / "graph-viewer.html"
+    if not viewer.exists():
+        run_dir = visualize_core_ontology(args.run)
+    handler = lambda *handler_args, **handler_kwargs: http.server.SimpleHTTPRequestHandler(
+        *handler_args,
+        directory=str(run_dir),
+        **handler_kwargs,
+    )
+    with socketserver.ThreadingTCPServer((args.host, args.port), handler) as server:
+        host, port = server.server_address
+        url = f"http://{host}:{port}/graph-viewer.html"
+        print(f"core_viewer_url={url}")
+        if args.smoke:
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            with urllib.request.urlopen(url, timeout=5) as response:
+                body = response.read().decode("utf-8", errors="replace")
+            server.shutdown()
+            thread.join(timeout=5)
+            if "cytoscape" not in body.lower() and "graph-data" not in body:
+                raise RuntimeError("Viewer smoke check did not find expected HTML markers")
+            print("core_viewer_smoke=ok")
+            return 0
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            return 0
+
+
+def cmd_core_query(args) -> int:
+    if args.list:
+        result = list_queries()
+    elif args.sparql:
+        result = run_sparql_query(args.run, Path(args.sparql))
+    else:
+        result = run_named_query(args.run, args.named)
+    if args.format == "json":
+        print(json.dumps(result, indent=2, sort_keys=True))
+    else:
+        print(render_query_text(result))
     return 0
 
 
