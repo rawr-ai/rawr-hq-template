@@ -1,0 +1,102 @@
+{
+  "cases": [
+    {
+      "line": 3,
+      "text": "There is no root-level `core/` authoring root.",
+      "expected_kind": "aligned",
+      "expected_decision_grade": true,
+      "expected_polarity": "negative",
+      "expected_modality": "rejected",
+      "expected_scope": "target-architecture",
+      "expected_entity_id": "forbidden.pattern.root-core-authoring-root"
+    },
+    {
+      "line": 5,
+      "text": "Do not create a root-level `runtime/` authoring root.",
+      "expected_kind": "aligned",
+      "expected_decision_grade": true,
+      "expected_polarity": "prohibitive",
+      "expected_modality": "rejected",
+      "expected_scope": "target-architecture",
+      "expected_entity_id": "forbidden.pattern.root-runtime-authoring-root"
+    },
+    {
+      "line": 7,
+      "text": "Create a root-level `core/` authoring root for shared platform machinery.",
+      "expected_kind": "conflict",
+      "expected_decision_grade": true,
+      "expected_polarity": "positive",
+      "expected_scope": "target-architecture",
+      "expected_entity_id": "forbidden.pattern.root-core-authoring-root"
+    },
+    {
+      "line": 9,
+      "text": "Previously, the repo considered a root-level `core/` authoring root during migration planning.",
+      "expected_kind": "informational",
+      "expected_decision_grade": false,
+      "expected_modality": "historical",
+      "expected_scope": "migration-note",
+      "expected_entity_id": "forbidden.pattern.root-core-authoring-root"
+    },
+    {
+      "line": 13,
+      "text": "| root-level `core/` authoring root | packages/core/* | Replace |",
+      "expected_kind": "aligned",
+      "expected_decision_grade": true,
+      "expected_scope": "migration-note",
+      "expected_entity_id": "forbidden.pattern.root-core-authoring-root"
+    },
+    {
+      "line": 14,
+      "text": "| packages/core/* | root-level `core/` authoring root | Replace |",
+      "expected_kind": "conflict",
+      "expected_decision_grade": true,
+      "expected_entity_id": "forbidden.pattern.root-core-authoring-root"
+    },
+    {
+      "line": 16,
+      "text": "The app should use `startServer(...)` as the public start verb.",
+      "expected_kind": "conflict",
+      "expected_decision_grade": true,
+      "expected_polarity": "positive",
+      "expected_entity_id": "forbidden.pattern.role-specific-public-start-verb"
+    },
+    {
+      "line": 18,
+      "text": "Do not use `startServer(...)`; use `startApp(...)` instead.",
+      "expected_kind": "aligned",
+      "expected_decision_grade": true,
+      "expected_polarity": "prohibitive",
+      "expected_entity_id": "forbidden.pattern.role-specific-public-start-verb"
+    },
+    {
+      "line": 20,
+      "text": "Root-level `core/` authoring root.",
+      "expected_kind": "ambiguous",
+      "expected_decision_grade": false,
+      "expected_polarity": "unknown",
+      "expected_entity_id": "forbidden.pattern.root-core-authoring-root"
+    },
+    {
+      "line": 22,
+      "text": "Should we keep a root-level `runtime/` authoring root?",
+      "expected_kind": "ambiguous",
+      "expected_decision_grade": false,
+      "expected_entity_id": "forbidden.pattern.root-runtime-authoring-root"
+    },
+    {
+      "line": 24,
+      "text": "The classifier rule pack should emit a constraint graph artifact.",
+      "expected_kind": "candidate-new",
+      "expected_decision_grade": false,
+      "expected_entity_id": "candidate.classifier.constraint-graph"
+    },
+    {
+      "line": 26,
+      "text": "TODO: The project website should use a brighter hero image.",
+      "expected_kind": "outside-scope",
+      "expected_decision_grade": false,
+      "expected_scope": "outside-scope"
+    }
+  ]
+}

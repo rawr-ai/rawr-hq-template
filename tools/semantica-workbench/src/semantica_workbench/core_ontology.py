@@ -10,7 +10,7 @@ from typing import Any
 import yaml
 
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json
-from .core_config import CORE_CURRENT_FILES, CORE_GRAPH_FILENAMES, DIFF_SUMMARY, default_testing_plan
+from .core_config import CORE_CURRENT_FILES, CORE_GRAPH_FILENAMES, default_testing_plan
 from .core_viewer import write_html_viewer
 from .paths import (
     RAWR_CORE_CANDIDATE_QUEUE,
@@ -19,6 +19,15 @@ from .paths import (
     REPO_ROOT,
 )
 from .semantica_adapter import export_semantica_ontology, semantica_status
+from .semantic_evidence import (
+    compare_evidence_to_ontology,
+    extract_evidence_claims,
+    fixture_document_path,
+    render_semantic_compare_report,
+    render_semantica_capability_report,
+    semantic_capability_probe,
+    semantic_compare_turtle,
+)
 
 TESTING_PLAN = default_testing_plan()
 
@@ -90,8 +99,9 @@ def visualize_core_ontology(run: str | None = "latest") -> Path:
     graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     candidate_queue_path = run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]
     document_diff_path = run_dir / CORE_GRAPH_FILENAMES["document_diff"]
+    semantic_compare_path = run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]
     candidate_queue = read_json(candidate_queue_path) if candidate_queue_path.exists() else {}
-    diff = read_json(document_diff_path) if document_diff_path.exists() else {}
+    diff = read_json(semantic_compare_path) if semantic_compare_path.exists() else read_json(document_diff_path) if document_diff_path.exists() else {}
     write_html_viewer(run_dir / CORE_GRAPH_FILENAMES["viewer"], graph, candidate_queue, diff)
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
@@ -105,7 +115,64 @@ def diff_document_against_core_ontology(document: Path, run: str | None = "lates
     write_json(run_dir / CORE_GRAPH_FILENAMES["document_diff"], diff)
     report = render_document_diff_report(diff)
     (run_dir / CORE_GRAPH_FILENAMES["document_diff_report"]).write_text(report, encoding="utf-8")
-    DIFF_SUMMARY.write_text(report, encoding="utf-8")
+    mark_current(run_dir, CORE_CURRENT_FILES)
+    return run_dir
+
+
+def write_semantica_capability_report(run: str | None = "latest") -> Path:
+    run_dir = resolve_run(run)
+    report = semantic_capability_probe()
+    write_json(run_dir / CORE_GRAPH_FILENAMES["semantic_capability"], report)
+    (run_dir / CORE_GRAPH_FILENAMES["semantic_capability_report"]).write_text(
+        render_semantica_capability_report(report),
+        encoding="utf-8",
+    )
+    mark_current(run_dir, CORE_CURRENT_FILES)
+    return run_dir
+
+
+def extract_document_evidence(document: Path | None, run: str | None = "latest", *, fixture: bool = False) -> Path:
+    run_dir = resolve_run(run)
+    graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
+    candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
+    document_path = fixture_document_path() if fixture else document
+    if document_path is None:
+        document_path = TESTING_PLAN
+    if not document_path.is_absolute():
+        document_path = REPO_ROOT / document_path
+    if not document_path.exists() and document_path.name == TESTING_PLAN.name and TESTING_PLAN.exists():
+        document_path = TESTING_PLAN
+    evidence = extract_evidence_claims(document_path, graph, candidate_queue, fixture=fixture)
+    write_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"], evidence)
+    chunks = [
+        {
+            "document": evidence["document"],
+            "line_start": claim["line_start"],
+            "line_end": claim["line_end"],
+            "heading_path": claim["heading_path"],
+            "text": claim["text"],
+            "claim_id": claim["id"],
+        }
+        for claim in evidence["claims"]
+    ]
+    from .io import write_jsonl
+
+    write_jsonl(run_dir / CORE_GRAPH_FILENAMES["document_chunks"], chunks)
+    write_jsonl(run_dir / CORE_GRAPH_FILENAMES["evidence_claims"], evidence["claims"])
+    mark_current(run_dir, CORE_CURRENT_FILES)
+    return run_dir
+
+
+def compare_document_evidence(document: Path | None, run: str | None = "latest", *, fixture: bool = False) -> Path:
+    run_dir = extract_document_evidence(document, run, fixture=fixture)
+    graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
+    candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
+    evidence = read_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"])
+    compare = compare_evidence_to_ontology(evidence, graph, candidate_queue)
+    write_json(run_dir / CORE_GRAPH_FILENAMES["resolved_evidence"], {"claims": compare["claims"], "findings": compare["findings"]})
+    write_json(run_dir / CORE_GRAPH_FILENAMES["semantic_compare"], compare)
+    (run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(render_semantic_compare_report(compare), encoding="utf-8")
+    (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(semantic_compare_turtle(compare), encoding="utf-8")
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
 
@@ -168,6 +235,12 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
             errors.append({"kind": "authority_document_wrong_type", "id": entity_id, "type": entity.get("type")})
         if entity.get("type") == "DocumentAuthority" and entity.get("layer") != "authority-and-document-overlay":
             errors.append({"kind": "authority_document_wrong_layer", "id": entity_id, "layer": entity.get("layer")})
+        if entity.get("type") == "ForbiddenPattern":
+            constraint = entity.get("constraint")
+            if not isinstance(constraint, dict) or not constraint.get("kind") or not constraint.get("prohibited_action"):
+                errors.append({"kind": "forbidden_pattern_missing_structured_constraint", "id": entity_id})
+            elif not (constraint.get("terms") or constraint.get("semantic_keys")):
+                errors.append({"kind": "forbidden_pattern_missing_constraint_terms", "id": entity_id})
         refs = entity.get("source_refs", [])
         if entity.get("status") in canonical_statuses and not refs:
             errors.append({"kind": "canonical_entity_missing_source_refs", "id": entity_id})
@@ -531,6 +604,8 @@ def section_end(lines: list[str], line_start: int) -> int:
 def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) -> dict[str, Any]:
     contract = ontology["contract"]
     canonical_statuses = set(contract["canonical_view_statuses"])
+    target_statuses = set(contract.get("target_architecture_view_statuses", ["locked"]))
+    target_excluded_types = set(contract.get("target_architecture_excluded_types", []))
     entities = [enrich_item_source_refs(entity) for entity in ontology["entities"]]
     relations = [enrich_item_source_refs(relation) for relation in ontology["relations"]]
     entities_by_id = {entity["id"]: entity for entity in entities}
@@ -542,6 +617,20 @@ def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) ->
         if relation["status"] in canonical_statuses
         and relation["subject"] in canonical_entity_ids
         and relation["object"] in canonical_entity_ids
+    ]
+    target_entities = [
+        entity
+        for entity in entities
+        if entity["status"] in target_statuses
+        and entity.get("type") not in target_excluded_types
+    ]
+    target_entity_ids = {entity["id"] for entity in target_entities}
+    target_relations = [
+        relation
+        for relation in relations
+        if relation["status"] in target_statuses
+        and relation["subject"] in target_entity_ids
+        and relation["object"] in target_entity_ids
     ]
     by_layer = defaultdict(lambda: {"entities": [], "relations": []})
     for entity in entities:
@@ -580,6 +669,30 @@ def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) ->
             "canonical_view": {
                 "entities": sorted(canonical_entities, key=lambda item: item["id"]),
                 "relations": sorted(canonical_relations, key=lambda item: item["id"]),
+            },
+            "target_architecture_view": {
+                "entities": sorted(target_entities, key=lambda item: item["id"]),
+                "relations": sorted(target_relations, key=lambda item: item["id"]),
+            },
+            "constraint_overlay": {
+                "entities": sorted(
+                    [entity for entity in entities if entity.get("type") == "ForbiddenPattern"],
+                    key=lambda item: item["id"],
+                ),
+                "relations": sorted(
+                    [relation for relation in relations if relation.get("predicate") in {"forbids", "forbids_move"}],
+                    key=lambda item: item["id"],
+                ),
+            },
+            "vocabulary_overlay": {
+                "entities": sorted(
+                    [entity for entity in entities if entity.get("type") == "DeprecatedTerm" or entity.get("status") == "deprecated"],
+                    key=lambda item: item["id"],
+                ),
+                "relations": sorted(
+                    [relation for relation in relations if relation.get("predicate") in {"deprecates", "replaces"}],
+                    key=lambda item: item["id"],
+                ),
             },
             "layers": {layer: value for layer, value in sorted(by_layer.items())},
             "summary": summary,

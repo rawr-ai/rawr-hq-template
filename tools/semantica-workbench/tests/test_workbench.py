@@ -23,6 +23,13 @@ from semantica_workbench.io import rel
 from semantica_workbench.manifest import load_manifest
 from semantica_workbench.paths import FIXTURE_MANIFEST
 from semantica_workbench.seeding import build_seed_graph
+from semantica_workbench.semantic_evidence import (
+    compare_evidence_to_ontology,
+    extract_evidence_claims,
+    fixture_document_path,
+    load_fixture_expectations,
+    semantic_capability_probe,
+)
 
 
 class WorkbenchTests(unittest.TestCase):
@@ -110,6 +117,22 @@ class WorkbenchTests(unittest.TestCase):
         for item in graph["canonical_graph"]["entities"] + graph["canonical_graph"]["relations"]:
             self.assertNotIn(item["status"], candidate_statuses)
 
+    def test_target_architecture_view_excludes_constraints_and_candidates(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        target_entities = graph["layered_graph"]["target_architecture_view"]["entities"]
+        excluded_types = {"DeprecatedTerm", "EvidenceClaim", "ForbiddenPattern", "ReviewFinding", "CandidateEntity"}
+        self.assertTrue(target_entities)
+        self.assertFalse(any(entity["type"] in excluded_types for entity in target_entities))
+
+    def test_forbidden_patterns_have_structured_constraints(self) -> None:
+        ontology = load_core_ontology()
+        forbidden = [entity for entity in ontology["entities"] if entity["type"] == "ForbiddenPattern"]
+        self.assertGreater(len(forbidden), 0)
+        self.assertTrue(all(isinstance(entity.get("constraint"), dict) for entity in forbidden))
+        self.assertTrue(all(entity["constraint"].get("prohibited_action") for entity in forbidden))
+
     def test_testing_plan_diff_has_review_signal(self) -> None:
         ontology = load_core_ontology()
         validation = validate_loaded_core_ontology(ontology)
@@ -161,6 +184,67 @@ class WorkbenchTests(unittest.TestCase):
         self.assertEqual("forbidden-terms", result["query"])
         self.assertGreater(len(result["entities"]), 0)
         self.assertTrue(all(item["status"] == "forbidden" or item["type"] == "ForbiddenPattern" for item in result["entities"]))
+
+    def test_semantic_capability_probe_records_semantica_surface(self) -> None:
+        report = semantic_capability_probe()
+        self.assertTrue(report["checked_modules"]["semantica.semantic_extract"]["available"])
+        self.assertIn("triplet_extractor_pattern", report["proofs"])
+
+    def test_semantic_evidence_fixture_verdicts(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        evidence = extract_evidence_claims(fixture_document_path(), graph["layered_graph"], graph["candidate_queue"], fixture=True)
+        compare = compare_evidence_to_ontology(evidence, graph["layered_graph"], graph["candidate_queue"])
+        expectations = load_fixture_expectations()["cases"]
+        findings_by_line: dict[int, list[dict]] = {}
+        for finding in compare["findings"]:
+            findings_by_line.setdefault(finding["line_start"], []).append(finding)
+        for case in expectations:
+            findings = findings_by_line.get(case["line"], [])
+            matching = [
+                finding
+                for finding in findings
+                if finding["kind"] == case["expected_kind"]
+                and finding["decision_grade"] == case["expected_decision_grade"]
+                and (not case.get("expected_entity_id") or finding.get("entity_id") == case["expected_entity_id"])
+            ]
+            self.assertTrue(matching, f"missing expected finding for line {case['line']}: {findings}")
+            finding = matching[0]
+            if case.get("expected_polarity"):
+                self.assertEqual(case["expected_polarity"], finding["polarity"])
+            if case.get("expected_modality"):
+                self.assertEqual(case["expected_modality"], finding["modality"])
+            if case.get("expected_scope"):
+                self.assertEqual(case["expected_scope"], finding["assertion_scope"])
+
+    def test_semantic_opposite_claims_do_not_collapse(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        evidence = extract_evidence_claims(fixture_document_path(), graph["layered_graph"], graph["candidate_queue"], fixture=True)
+        compare = compare_evidence_to_ontology(evidence, graph["layered_graph"], graph["candidate_queue"])
+        line3 = [finding for finding in compare["findings"] if finding["line_start"] == 3 and finding["entity_id"] == "forbidden.pattern.root-core-authoring-root"]
+        line7 = [finding for finding in compare["findings"] if finding["line_start"] == 7 and finding["entity_id"] == "forbidden.pattern.root-core-authoring-root"]
+        self.assertTrue(any(finding["kind"] == "aligned" and finding["polarity"] == "negative" for finding in line3))
+        self.assertTrue(any(finding["kind"] == "conflict" and finding["polarity"] == "positive" for finding in line7))
+
+    def test_decision_grade_semantic_findings_have_claim_semantics(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        evidence = extract_evidence_claims(fixture_document_path(), graph["layered_graph"], graph["candidate_queue"], fixture=True)
+        compare = compare_evidence_to_ontology(evidence, graph["layered_graph"], graph["candidate_queue"])
+        decision_grade = [finding for finding in compare["findings"] if finding["decision_grade"]]
+        self.assertGreater(len(decision_grade), 0)
+        for finding in decision_grade:
+            self.assertTrue(finding["document_path"])
+            self.assertGreaterEqual(finding["line_start"], 1)
+            self.assertTrue(finding["text"])
+            self.assertIn(finding["polarity"], {"positive", "negative", "prohibitive", "conditional"})
+            self.assertNotEqual("unknown", finding["modality"])
+            self.assertNotEqual("unknown", finding["assertion_scope"])
+            self.assertTrue(finding.get("entity_id"))
 
 
 if __name__ == "__main__":

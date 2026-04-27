@@ -1,0 +1,12 @@
+PREFIX rawr: <https://rawr.dev/ontology/>
+PREFIX evidence: <https://rawr.dev/evidence/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?finding ?kind ?claim ?target ?rule WHERE {
+  ?finding a rawr:ReviewFinding ;
+    rawr:findingKind ?kind ;
+    rawr:derivedFrom ?claim ;
+    rawr:rule ?rule .
+  OPTIONAL { ?finding rawr:resolvedTarget ?target . }
+}
+ORDER BY ?kind ?finding
