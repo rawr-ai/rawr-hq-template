@@ -10,13 +10,16 @@ from pathlib import Path
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
     TESTING_PLAN,
+    build_cytoscape_payload,
     build_document_diff,
     build_graph_payload,
     load_core_ontology,
     validate_loaded_core_ontology,
     write_html_viewer,
 )
+from semantica_workbench.core_query import run_named_query
 from semantica_workbench.extraction import heuristic_extract
+from semantica_workbench.io import rel
 from semantica_workbench.manifest import load_manifest
 from semantica_workbench.paths import FIXTURE_MANIFEST
 from semantica_workbench.seeding import build_seed_graph
@@ -92,26 +95,51 @@ class WorkbenchTests(unittest.TestCase):
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         diff = build_document_diff(TESTING_PLAN, graph["layered_graph"], graph["candidate_queue"])
-        self.assertEqual(
-            "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md",
-            diff["document"],
-        )
+        self.assertEqual(rel(TESTING_PLAN), diff["document"])
         self.assertGreater(diff["summary"]["aligned_count"], 0)
 
     def test_graph_viewer_embeds_parseable_json(self) -> None:
         ontology = load_core_ontology()
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
+        diff = build_document_diff(TESTING_PLAN, graph["layered_graph"], graph["candidate_queue"])
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "graph-viewer.html"
-            write_html_viewer(path, graph["layered_graph"])
+            write_html_viewer(path, graph["layered_graph"], graph["candidate_queue"], diff)
             text = path.read_text(encoding="utf-8")
         match = re.search(r'<script id="graph-data" type="application/json">(.*?)</script>', text, re.S)
         self.assertIsNotNone(match)
         self.assertNotIn("&quot;", match.group(1))
         payload = json.loads(match.group(1))
-        self.assertGreater(len(payload["entities"]), 0)
-        self.assertGreater(len(payload["relations"]), 0)
+        self.assertIn("cytoscape", text)
+        self.assertIn('id="cy"', text)
+        self.assertGreater(len(payload["elements"]), 0)
+
+    def test_cytoscape_payload_resolves_edges_and_hides_candidates_by_default(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        payload = build_cytoscape_payload(graph["layered_graph"], graph["candidate_queue"])
+        nodes = [element for element in payload["elements"] if element["group"] == "nodes"]
+        edges = [element for element in payload["elements"] if element["group"] == "edges"]
+        node_ids = {node["data"]["id"] for node in nodes}
+        self.assertTrue(all(edge["data"]["source"] in node_ids and edge["data"]["target"] in node_ids for edge in edges))
+        candidate_nodes = [node for node in nodes if node["data"]["status"] == "candidate"]
+        self.assertGreater(len(candidate_nodes), 0)
+        self.assertTrue(all(not node["data"]["isCanonical"] for node in candidate_nodes))
+
+    def test_named_query_forbidden_terms(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            (run_dir / "layered-graph.json").write_text(json.dumps(graph["layered_graph"]), encoding="utf-8")
+            (run_dir / "candidate-queue.json").write_text(json.dumps(graph["candidate_queue"]), encoding="utf-8")
+            result = run_named_query(str(run_dir), "forbidden-terms")
+        self.assertEqual("forbidden-terms", result["query"])
+        self.assertGreater(len(result["entities"]), 0)
+        self.assertTrue(all(item["status"] == "forbidden" or item["type"] == "ForbiddenPattern" for item in result["entities"]))
 
 
 if __name__ == "__main__":

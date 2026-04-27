@@ -16,10 +16,15 @@ from .paths import (
     RAWR_CORE_ONTOLOGY_CONTRACT,
     RAWR_CORE_ONTOLOGY_LAYERS,
     REPO_ROOT,
+    VIEWER_ROOT,
 )
 from .semantica_adapter import export_semantica_ontology, semantica_status
 
-TESTING_PLAN = REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md"
+TESTING_PLAN_PRIMARY = REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md"
+TESTING_PLAN_QUARANTINE = (
+    REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md"
+)
+TESTING_PLAN = TESTING_PLAN_PRIMARY if TESTING_PLAN_PRIMARY.exists() else TESTING_PLAN_QUARANTINE
 DIFF_SUMMARY = (
     REPO_ROOT
     / "docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/phase-4-testing-plan-diff-verification.md"
@@ -109,7 +114,9 @@ def export_core_ontology(run: str | None = "latest") -> Path:
 def visualize_core_ontology(run: str | None = "latest") -> Path:
     run_dir = resolve_run(run)
     graph = read_json(run_dir / "layered-graph.json")
-    write_html_viewer(run_dir / "graph-viewer.html", graph)
+    candidate_queue = read_json(run_dir / "candidate-queue.json") if (run_dir / "candidate-queue.json").exists() else {}
+    diff = read_json(run_dir / "document-diff.json") if (run_dir / "document-diff.json").exists() else {}
+    write_html_viewer(run_dir / "graph-viewer.html", graph, candidate_queue, diff)
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
 
@@ -707,49 +714,219 @@ def write_graphml(path: Path, entities: list[dict[str, Any]], relations: list[di
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def write_html_viewer(path: Path, graph: dict[str, Any]) -> None:
-    payload = {
+def build_cytoscape_payload(
+    graph: dict[str, Any],
+    candidate_queue: dict[str, Any] | None = None,
+    diff: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    candidate_queue = candidate_queue or {}
+    diff = diff or {}
+    canonical_entity_ids = {entity["id"] for entity in graph["canonical_view"]["entities"]}
+    canonical_relation_ids = {relation["id"] for relation in graph["canonical_view"]["relations"]}
+    diff_overlay = build_diff_overlay(diff)
+    elements: list[dict[str, Any]] = []
+    for entity in graph["entities"]:
+        data = {
+            **entity,
+            "id": entity["id"],
+            "label": entity.get("label") or entity["id"],
+            "isCanonical": entity["id"] in canonical_entity_ids,
+            "diffKinds": sorted(diff_overlay.get(entity["id"], set())),
+            "color": layer_color(entity.get("layer")),
+            "statusColor": status_color(entity.get("status")),
+        }
+        elements.append({"group": "nodes", "data": data})
+    for candidate in candidate_queue.get("candidates", []):
+        candidate_id = candidate["id"]
+        elements.append(
+            {
+                "group": "nodes",
+                "data": {
+                    **candidate,
+                    "id": candidate_id,
+                    "label": candidate.get("label") or candidate_id,
+                    "type": "Candidate",
+                    "layer": "candidate-queue",
+                    "status": "candidate",
+                    "source_refs": candidate.get("source_span_suggests_it", []),
+                    "operational_consequence": [candidate.get("why_it_might_matter", "")],
+                    "classifier_readiness": {"status": "candidate"},
+                    "isCanonical": False,
+                    "diffKinds": [],
+                    "color": layer_color("candidate-queue"),
+                    "statusColor": status_color("candidate"),
+                },
+            }
+        )
+    for relation in graph["relations"]:
+        overlay = sorted(diff_overlay.get(relation["subject"], set()) | diff_overlay.get(relation["object"], set()))
+        elements.append(
+            {
+                "group": "edges",
+                "data": {
+                    **relation,
+                    "id": relation["id"],
+                    "source": relation["subject"],
+                    "target": relation["object"],
+                    "label": relation["predicate"],
+                    "isCanonical": relation["id"] in canonical_relation_ids,
+                    "diffKinds": overlay,
+                    "color": status_color(relation.get("status")),
+                },
+            }
+        )
+    return {
+        "id": graph["id"],
         "summary": graph["summary"],
-        "entities": graph["canonical_view"]["entities"],
-        "relations": graph["canonical_view"]["relations"],
+        "elements": elements,
+        "canonicalEntityCount": len(canonical_entity_ids),
+        "canonicalRelationCount": len(canonical_relation_ids),
+        "candidateCount": len(candidate_queue.get("candidates", [])),
+        "diff": {
+            "summary": diff.get("summary", {}),
+            "review_needed": diff.get("review_needed", []),
+            "underrepresented_gates": diff.get("underrepresented_gates", []),
+        },
     }
+
+
+def build_diff_overlay(diff: dict[str, Any]) -> dict[str, set[str]]:
+    overlay: dict[str, set[str]] = defaultdict(set)
+    for item in diff.get("aligned", []):
+        if item.get("entity_id"):
+            overlay[item["entity_id"]].add("aligned")
+    for item in diff.get("stale", []):
+        if item.get("entity_id"):
+            overlay[item["entity_id"]].add("stale")
+    for item in diff.get("candidate_new", []):
+        if item.get("entity_id"):
+            overlay[item["entity_id"]].add("candidate_new")
+    for item in diff.get("underrepresented_gates", []):
+        if item.get("entity_id"):
+            overlay[item["entity_id"]].add("underrepresented_gate")
+    return overlay
+
+
+def layer_color(layer: str | None) -> str:
+    return {
+        "core": "#2f6fed",
+        "runtime-realization-overlay": "#00856f",
+        "authority-and-document-overlay": "#b54708",
+        "classifier-readiness-overlay": "#7a5af8",
+        "candidate-queue": "#667085",
+    }.get(str(layer), "#667085")
+
+
+def status_color(status: str | None) -> str:
+    return {
+        "locked": "#12b76a",
+        "forbidden": "#f04438",
+        "deprecated": "#f79009",
+        "tbd": "#7a5af8",
+        "candidate": "#667085",
+    }.get(str(status), "#98a2b3")
+
+
+def write_html_viewer(
+    path: Path,
+    graph: dict[str, Any],
+    candidate_queue: dict[str, Any] | None = None,
+    diff: dict[str, Any] | None = None,
+) -> None:
+    payload = build_cytoscape_payload(graph, candidate_queue, diff)
     data = json.dumps(payload).replace("</", "<\\/")
-    lines = [
-        "<!doctype html>",
-        "<html>",
-        "<head>",
-        '<meta charset="utf-8">',
-        "<title>RAWR Core Ontology Graph</title>",
-        "<style>",
-        "body{font-family:system-ui,sans-serif;margin:24px;color:#202124;background:#fafafa}",
-        ".wrap{display:grid;grid-template-columns:360px 1fr;gap:20px}",
-        "section{background:white;border:1px solid #ddd;border-radius:8px;padding:16px}",
-        "table{width:100%;border-collapse:collapse;font-size:13px}",
-        "td,th{border-bottom:1px solid #eee;padding:6px;text-align:left;vertical-align:top}",
-        ".edge{font-family:ui-monospace,monospace;font-size:12px}",
-        ".pill{display:inline-block;background:#eef3ff;border-radius:999px;padding:2px 8px;margin:2px;font-size:12px}",
-        "</style>",
-        "</head>",
-        "<body>",
-        "<h1>RAWR Core Ontology Graph</h1>",
-        f'<script id="graph-data" type="application/json">{data}</script>',
-        '<div id="app"></div>',
-        "<script>",
-        "const graph=JSON.parse(document.getElementById('graph-data').textContent);",
-        "const esc=(value)=>String(value??'').replace(/[&<>\"']/g,(ch)=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[ch]));",
-        "let html='<section><h2>Summary</h2>';",
-        "html+=`<p><span class=pill>${graph.entities.length} entities</span><span class=pill>${graph.relations.length} relations</span></p>`;",
-        "html+='</section><div class=wrap><section><h2>Entities</h2><table><tr><th>ID</th><th>Type</th><th>Status</th></tr>';",
-        "for(const e of graph.entities){html+=`<tr><td>${esc(e.id)}<br><small>${esc(e.label)}</small></td><td>${esc(e.type)}</td><td>${esc(e.status)}</td></tr>`}",
-        "html+='</table></section><section><h2>Relations</h2><table><tr><th>Relation</th><th>Consequence</th></tr>';",
-        "for(const r of graph.relations){html+=`<tr><td class=edge>${esc(r.subject)} --${esc(r.predicate)}--&gt; ${esc(r.object)}</td><td>${esc((r.operational_consequence||[]).join(', '))}</td></tr>`}",
-        "html+='</table></section></div>';",
-        "document.getElementById('app').innerHTML=html;",
-        "</script>",
-        "</body>",
-        "</html>",
-    ]
-    path.write_text("\n".join(lines), encoding="utf-8")
+    cytoscape = read_cytoscape_bundle().replace("</script", "<\\/script")
+    css = (VIEWER_ROOT / "graph-viewer.css").read_text(encoding="utf-8")
+    app_js = (VIEWER_ROOT / "graph-viewer.js").read_text(encoding="utf-8").replace("</script", "<\\/script")
+    html = f"""<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAWR Core Ontology Graph</title>
+<style>
+{css}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="title">
+      <strong>RAWR Core Ontology Graph</strong>
+      <small>Derived inspection surface. Reviewed YAML ontology remains authoritative.</small>
+    </div>
+    <div class="toolbar" id="summary"></div>
+  </header>
+  <aside class="panel">
+    <div class="control-group">
+      <h2>Throughline</h2>
+      <div class="stack">
+        <select id="preset"></select>
+        <div class="notice" id="presetDescription"></div>
+      </div>
+    </div>
+    <div class="control-group">
+      <h2>Search</h2>
+      <div class="stack">
+        <input id="search" type="search" placeholder="Find entity, relation, type, source...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+    </div>
+    <div class="control-group">
+      <h2>Layout</h2>
+      <div class="row">
+        <select id="layout">
+          <option value="preset">Preset default</option>
+          <option value="cose">CoSE</option>
+          <option value="breadthfirst">Breadthfirst</option>
+          <option value="concentric">Concentric</option>
+          <option value="grid">Grid</option>
+        </select>
+      </div>
+    </div>
+    <div class="control-group">
+      <h2>Actions</h2>
+      <div class="button-grid">
+        <button id="fit">Fit</button>
+        <button id="reset">Reset</button>
+        <button id="neighborhood">Neighborhood</button>
+        <button id="path">Path</button>
+        <button id="copyJson">Copy JSON</button>
+        <button id="exportPng">Export PNG</button>
+      </div>
+    </div>
+    <div class="control-group"><h2>Layers</h2><div class="checks" id="layerFilters"></div></div>
+    <div class="control-group"><h2>Status</h2><div class="checks" id="statusFilters"></div></div>
+    <div class="control-group"><h2>Types</h2><div class="checks" id="typeFilters"></div></div>
+    <div class="control-group"><h2>Predicates</h2><div class="checks" id="predicateFilters"></div></div>
+  </aside>
+  <main class="graph-wrap"><div id="cy"></div></main>
+  <aside class="panel details" id="details"></aside>
+  <footer class="statusbar">
+    <span id="counts"></span>
+    <span>Generated from `.semantica` run artifacts; browser state is not persisted.</span>
+  </footer>
+</div>
+<script id="graph-data" type="application/json">{data}</script>
+<script>
+{cytoscape}
+</script>
+<script>
+{app_js}
+</script>
+</body>
+</html>
+"""
+    path.write_text(html, encoding="utf-8")
+
+
+def read_cytoscape_bundle() -> str:
+    bundle = REPO_ROOT / "node_modules/cytoscape/dist/cytoscape.min.js"
+    if not bundle.exists():
+        raise FileNotFoundError(
+            f"Cytoscape bundle not found at {bundle}. Run `bun install` or `bun add -D cytoscape` from the repository root."
+        )
+    return bundle.read_text(encoding="utf-8")
 
 
 def build_document_diff(document: Path, graph: dict[str, Any], candidate_queue: dict[str, Any]) -> dict[str, Any]:

@@ -1,0 +1,11 @@
+PREFIX rawr: <https://rawr.dev/ontology/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?subjectLabel ?predicate ?objectLabel
+WHERE {
+  ?subject ?predicate ?object .
+  FILTER(STRSTARTS(STR(?predicate), STR(rawr:)))
+  OPTIONAL { ?subject rdfs:label ?subjectLabel . }
+  OPTIONAL { ?object rdfs:label ?objectLabel . }
+}
+LIMIT 50
