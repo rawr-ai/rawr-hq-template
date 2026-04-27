@@ -4,7 +4,13 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-from .core_config import CORE_GRAPH_FILENAMES, NAMED_QUERY_DESCRIPTIONS
+from .core_config import (
+    CORE_GRAPH_FILENAMES,
+    NAMED_QUERY_DESCRIPTIONS,
+    SWEEP_HIGH_AMBIGUITY_MIN,
+    SWEEP_HIGH_AMBIGUITY_RATIO,
+    SWEEP_REVIEW_RECOMMENDATIONS,
+)
 from .io import read_json, resolve_run
 from .paths import QUERIES_ROOT, REPO_ROOT
 
@@ -18,6 +24,15 @@ SEMANTIC_NAMED_QUERIES = {
     "entityless-findings",
     "verification-policy-gaps",
     "decision-review-queue",
+}
+
+SWEEP_NAMED_QUERIES = {
+    "sweep-summary",
+    "sweep-review-queue",
+    "sweep-quarantine-candidates",
+    "sweep-update-candidates",
+    "sweep-no-signal-documents",
+    "sweep-high-ambiguity-docs",
 }
 
 
@@ -73,6 +88,50 @@ def run_named_query(run: str | None, name: str) -> dict[str, Any]:
         return {"query": name, "items": diff.get("review_needed", []), "summary": diff.get("summary", {})}
     if name in SEMANTIC_NAMED_QUERIES:
         semantic = require_semantic_compare(run_dir, semantic_path, semantic)
+    if name in SWEEP_NAMED_QUERIES:
+        sweep_path = run_dir / CORE_GRAPH_FILENAMES["doc_sweep"]
+        sweep = require_doc_sweep(run_dir, sweep_path)
+    if name == "sweep-summary":
+        return sweep_query_result(run_dir, sweep_path, name, sweep, sweep.get("documents", []), item_key="documents")
+    if name == "sweep-review-queue":
+        queue_path = run_dir / CORE_GRAPH_FILENAMES["doc_sweep_review_queue"]
+        queue = read_json(queue_path) if queue_path.exists() else {"documents": sweep_review_queue(sweep)}
+        return sweep_query_result(run_dir, queue_path if queue_path.exists() else sweep_path, name, sweep, queue.get("documents", []))
+    if name == "sweep-quarantine-candidates":
+        return sweep_query_result(
+            run_dir,
+            run_dir / CORE_GRAPH_FILENAMES["sweep_quarantine_candidates"],
+            name,
+            sweep,
+            [record for record in sweep.get("documents", []) if record.get("recommendation") == "quarantine-candidate"],
+        )
+    if name == "sweep-update-candidates":
+        return sweep_query_result(
+            run_dir,
+            run_dir / CORE_GRAPH_FILENAMES["sweep_update_candidates"],
+            name,
+            sweep,
+            [record for record in sweep.get("documents", []) if record.get("recommendation") == "update-needed"],
+        )
+    if name == "sweep-no-signal-documents":
+        return sweep_query_result(
+            run_dir,
+            run_dir / CORE_GRAPH_FILENAMES["sweep_no_signal_documents"],
+            name,
+            sweep,
+            [record for record in sweep.get("documents", []) if record.get("recommendation") == "outside-scope"],
+        )
+    if name == "sweep-high-ambiguity-docs":
+        items = [
+            record
+            for record in sweep.get("documents", [])
+            if record.get("counts", {}).get("ambiguous", 0) >= SWEEP_HIGH_AMBIGUITY_MIN
+            or (
+                record.get("counts", {}).get("claims", 0)
+                and record.get("counts", {}).get("ambiguous", 0) / record.get("counts", {}).get("claims", 1) >= SWEEP_HIGH_AMBIGUITY_RATIO
+            )
+        ]
+        return sweep_query_result(run_dir, sweep_path, name, sweep, items)
     if name == "semantic-conflicts":
         return semantic_query_result(run_dir, semantic_path, name, semantic.get("conflicts", []), semantic)
     if name == "aligned-rejections":
@@ -134,6 +193,46 @@ def require_semantic_compare(run_dir: Path, semantic_path: Path, semantic: dict[
     return semantic
 
 
+def require_doc_sweep(run_dir: Path, sweep_path: Path) -> dict[str, Any]:
+    if not sweep_path.exists():
+        raise FileNotFoundError(
+            "Sweep named query requires document sweep output. "
+            f"No artifact exists at {display_path(sweep_path)} for run {display_path(run_dir)}. "
+            "Run `bun run semantica:doc:sweep -- --root docs` first."
+        )
+    return read_json(sweep_path)
+
+
+def sweep_query_result(
+    run_dir: Path,
+    artifact_path: Path,
+    name: str,
+    sweep: dict[str, Any],
+    items: list[dict[str, Any]],
+    *,
+    item_key: str = "items",
+) -> dict[str, Any]:
+    return {
+        "query": name,
+        "run": display_path(run_dir),
+        "artifact": display_path(artifact_path),
+        "summary": sweep.get("summary", {}),
+        item_key: items,
+    }
+
+
+def sweep_review_queue(sweep: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        record
+        for record in sweep.get("documents", [])
+        if record.get("recommendation") in SWEEP_REVIEW_RECOMMENDATIONS
+        or (
+            record.get("recommendation") == "source-authority"
+            and record.get("counts", {}).get("decision_grade", 0) > 0
+        )
+    ]
+
+
 def semantic_query_result(
     run_dir: Path,
     semantic_path: Path,
@@ -189,6 +288,9 @@ def run_sparql_query(run: str | None, sparql_path: Path) -> dict[str, Any]:
     evidence_ttl = run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]
     if evidence_ttl.exists():
         graph.parse(evidence_ttl, format="turtle")
+    sweep_ttl = run_dir / CORE_GRAPH_FILENAMES["doc_sweep_ttl"]
+    if sweep_ttl.exists():
+        graph.parse(sweep_ttl, format="turtle")
     result = graph.query(query)
     variables = [str(variable) for variable in result.vars]
     rows = []
@@ -198,6 +300,7 @@ def run_sparql_query(run: str | None, sparql_path: Path) -> dict[str, Any]:
         "query": str(sparql_path.relative_to(REPO_ROOT)),
         "data_graph": display_path(ttl_path),
         "evidence_graph": display_path(evidence_ttl) if evidence_ttl.exists() else None,
+        "sweep_graph": display_path(sweep_ttl) if sweep_ttl.exists() else None,
         "row_count": len(rows),
         "variables": variables,
         "rows": rows,
@@ -251,6 +354,30 @@ def render_query_text(result: dict[str, Any]) -> str:
         for key in ["finding_count", "decision_grade_finding_count", "suppressed_line_count"]:
             if key in summary:
                 lines.append(f"- {key}: {summary[key]}")
+        return "\n".join(lines)
+    if result.get("query") in SWEEP_NAMED_QUERIES:
+        items = result.get("items", result.get("documents", []))
+        item_count = len(items)
+        lines = [
+            result["query"],
+            f"- run: {result.get('run')}",
+            f"- artifact: {result.get('artifact')}",
+            f"- items: {item_count}",
+        ]
+        summary = result.get("summary", {})
+        lines.append(f"- documents_analyzed: {summary.get('documents_analyzed', 0)}")
+        lines.append(f"- decision_grade_findings: {summary.get('decision_grade_findings', 0)}")
+        lines.append(f"- recommendations: {summary.get('recommendations', {})}")
+        for item in items[:10]:
+            lines.append(
+                "- "
+                f"{item.get('document_path', 'unknown document')} "
+                f"[{item.get('recommendation', 'unknown')}/{item.get('confidence', 'unknown')}] "
+                f"reasons={','.join(item.get('reason_codes', [])) or 'none'} "
+                f"report={item.get('artifact_paths', {}).get('report', 'none')}"
+            )
+        if len(items) > 10:
+            lines.append(f"- ... {len(items) - 10} additional items omitted; use --format json for full records")
         return "\n".join(lines)
     counts = Counter()
     for key, value in result.items():

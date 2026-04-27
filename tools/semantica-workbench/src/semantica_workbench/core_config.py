@@ -32,9 +32,46 @@ CORE_GRAPH_FILENAMES = {
     "semantic_compare": "semantic-compare.json",
     "semantic_compare_report": "semantic-compare-report.md",
     "semantic_evidence_ttl": "semantic-evidence.ttl",
+    "doc_sweep": "doc-sweep.json",
+    "doc_sweep_report": "doc-sweep-report.md",
+    "doc_sweep_review_queue": "doc-sweep-review-queue.json",
+    "doc_sweep_csv": "doc-sweep.csv",
+    "doc_sweep_ttl": "doc-sweep.ttl",
+    "sweep_quarantine_candidates": "quarantine-candidates.json",
+    "sweep_update_candidates": "update-candidates.json",
+    "sweep_no_signal_documents": "no-signal-documents.json",
 }
 
 CORE_CURRENT_FILES = list(CORE_GRAPH_FILENAMES.values())
+
+CORE_SWEEP_BASE_FILES = [
+    CORE_GRAPH_FILENAMES["metadata"],
+    CORE_GRAPH_FILENAMES["validation_report"],
+    CORE_GRAPH_FILENAMES["canonical_graph"],
+    CORE_GRAPH_FILENAMES["layered_graph"],
+    CORE_GRAPH_FILENAMES["candidate_queue"],
+    CORE_GRAPH_FILENAMES["summary"],
+    CORE_GRAPH_FILENAMES["report"],
+    CORE_GRAPH_FILENAMES["semantica_export"],
+    CORE_GRAPH_FILENAMES["semantica_ontology"],
+    CORE_GRAPH_FILENAMES["semantica_owl"],
+    CORE_GRAPH_FILENAMES["semantica_shacl"],
+    CORE_GRAPH_FILENAMES["semantica_data_graph"],
+    CORE_GRAPH_FILENAMES["graphml"],
+    CORE_GRAPH_FILENAMES["viewer"],
+]
+
+SWEEP_CURRENT_FILES = [
+    *CORE_SWEEP_BASE_FILES,
+    CORE_GRAPH_FILENAMES["doc_sweep"],
+    CORE_GRAPH_FILENAMES["doc_sweep_report"],
+    CORE_GRAPH_FILENAMES["doc_sweep_review_queue"],
+    CORE_GRAPH_FILENAMES["doc_sweep_csv"],
+    CORE_GRAPH_FILENAMES["doc_sweep_ttl"],
+    CORE_GRAPH_FILENAMES["sweep_quarantine_candidates"],
+    CORE_GRAPH_FILENAMES["sweep_update_candidates"],
+    CORE_GRAPH_FILENAMES["sweep_no_signal_documents"],
+]
 
 DEFAULT_TESTING_PLAN_CANDIDATES = [
     REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md",
@@ -85,7 +122,38 @@ NAMED_QUERY_DESCRIPTIONS = {
     "entityless-findings": "Semantic findings that have no resolved ontology entity and need review or suppression.",
     "verification-policy-gaps": "Subordinate testing/verification-policy claims that still need ontology or document review.",
     "decision-review-queue": "Actionable semantic findings for document update and migration-planning review.",
+    "sweep-summary": "Aggregate recommendation counts from the latest document sweep.",
+    "sweep-review-queue": "Documents and findings that need human review after a document sweep.",
+    "sweep-quarantine-candidates": "Advisory quarantine candidates from the latest document sweep.",
+    "sweep-update-candidates": "Documents likely to need updates based on semantic evidence.",
+    "sweep-no-signal-documents": "Documents with no claims or only outside-scope evidence in the latest sweep.",
+    "sweep-high-ambiguity-docs": "Documents whose sweep result is dominated by unresolved or weak-modality findings.",
 }
+
+DEFAULT_SWEEP_ROOTS = ["docs"]
+DEFAULT_SWEEP_INCLUDE_GLOBS = ["**/*.md"]
+DEFAULT_SWEEP_EXCLUDE_SEGMENTS = [
+    "quarantine",
+    "archive",
+    "_archive",
+    ".semantica",
+    ".git",
+    "node_modules",
+    "dist",
+    "build",
+]
+
+SWEEP_RECOMMENDATIONS = [
+    "source-authority",
+    "aligned-active",
+    "update-needed",
+    "review-needed",
+    "quarantine-candidate",
+    "outside-scope",
+]
+SWEEP_REVIEW_RECOMMENDATIONS = {"quarantine-candidate", "update-needed", "review-needed"}
+SWEEP_HIGH_AMBIGUITY_MIN = 10
+SWEEP_HIGH_AMBIGUITY_RATIO = 0.75
 
 
 def default_testing_plan() -> Path:
