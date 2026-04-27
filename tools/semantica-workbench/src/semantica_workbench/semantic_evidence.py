@@ -6,6 +6,7 @@ import importlib.metadata
 import json
 import re
 from collections import Counter, defaultdict
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -50,6 +51,7 @@ def fixture_document_path() -> Path:
     return FIXTURE_DOCUMENT
 
 
+@lru_cache(maxsize=1)
 def semantic_capability_probe() -> dict[str, Any]:
     status = semantica_status()
     modules = {

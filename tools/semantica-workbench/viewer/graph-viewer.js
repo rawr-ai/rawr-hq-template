@@ -412,10 +412,14 @@ function exportPng() {
 function renderSummary() {
   const summary = payload.summary || {};
   const diffSummary = payload.diff?.summary || {};
+  const sweepSummary = payload.sweep?.summary || {};
   document.getElementById("summary").innerHTML = `
     <span class="pill">${esc(summary.canonical_entity_count || payload.canonicalEntityCount || 0)} canonical entities</span>
     <span class="pill">${esc(summary.canonical_relation_count || payload.canonicalRelationCount || 0)} canonical relations</span>
     <span class="pill warn">${esc(payload.candidateCount || 0)} candidates hidden by default</span>
+    <span class="pill">${esc(sweepSummary.documents_analyzed || 0)} swept docs</span>
+    <span class="pill warn">${esc(sweepSummary.recommendations?.["review-needed"] || 0)} sweep review-needed</span>
+    <span class="pill bad">${esc(sweepSummary.recommendations?.["quarantine-candidate"] || 0)} sweep quarantine candidates</span>
     <span class="pill">${esc(diffSummary.review_needed_count || 0)} review-needed diff items</span>
     <span class="pill warn">${esc(diffSummary.findings_by_kind?.ambiguous || 0)} ambiguous semantic findings</span>
     <span class="pill">${esc(payload.diff?.entityless_findings?.length || 0)} entityless findings</span>
