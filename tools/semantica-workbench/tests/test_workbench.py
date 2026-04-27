@@ -213,6 +213,42 @@ class WorkbenchTests(unittest.TestCase):
         report = semantic_capability_probe()
         self.assertTrue(report["checked_modules"]["semantica.semantic_extract"]["available"])
         self.assertIn("triplet_extractor_pattern", report["proofs"])
+        self.assertEqual("rawr-semantica-capability-v2", report["schema_version"])
+
+    def test_semantic_capability_probe_records_feature_gates(self) -> None:
+        report = semantic_capability_probe()
+        gates = report["feature_gates"]
+        self.assertIn("semantic_extraction_llm", gates)
+        self.assertIn("mcp_agent_interface", gates)
+        self.assertIn(gates["semantic_extraction_llm"]["status"], {"probe-ready", "blocked-missing-extra"})
+        self.assertIn(gates["document_ingest_parse_split"]["status"], {"probe-ready", "partial", "blocked"})
+        self.assertTrue(gates["semantic_extraction_llm"]["rawr_adapter_required"])
+        self.assertTrue(report["optional_dependencies"]["openai"]["enables"])
+        if not report["checked_modules"]["semantica.parse"]["classes"].get("MarkdownParser"):
+            self.assertEqual("partial", gates["document_ingest_parse_split"]["status"])
+        if not any(report["optional_dependencies"][name]["available"] for name in ["openai", "anthropic", "litellm", "ollama"]):
+            self.assertEqual("blocked-missing-extra", gates["semantic_extraction_llm"]["status"])
+        if not (report["optional_dependencies"]["fastapi"]["available"] and report["optional_dependencies"]["uvicorn"]["available"]):
+            self.assertEqual("blocked-missing-extra", gates["rest_explorer_interface"]["status"])
+        if report["checked_modules"]["semantica.export"]["available"] and not report["optional_dependencies"]["pyshacl"]["available"]:
+            self.assertEqual("partial", gates["export_validation"]["status"])
+
+    def test_semantic_capability_probe_records_mcp_inventory(self) -> None:
+        report = semantic_capability_probe()
+        mcp = report["mcp_server"]
+        self.assertTrue(mcp["available"])
+        self.assertIn("extract_entities", mcp["tool_names"])
+        self.assertIn("run_reasoning", mcp["tool_names"])
+        self.assertIn("semantica://graph/summary", mcp["resource_uris"])
+
+    def test_semantic_capability_probe_records_replacement_matrix_and_fixtures(self) -> None:
+        report = semantic_capability_probe()
+        matrix = report["replacement_matrix"]
+        fixture_ids = {item["id"] for item in report["adversarial_fixtures"]}
+        self.assertGreaterEqual(len(matrix), 5)
+        self.assertTrue(all(item["target"] and item["keep"] for item in matrix))
+        self.assertIn("negated-prohibited-pattern", fixture_ids)
+        self.assertIn("positive-prohibited-pattern", fixture_ids)
 
     def test_semantic_evidence_fixture_verdicts(self) -> None:
         ontology = load_core_ontology()
