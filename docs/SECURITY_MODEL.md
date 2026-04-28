@@ -29,13 +29,12 @@ Reports are written to:
 - `.rawr/security/latest.json`
 - `.rawr/security/report-<timestamp>.json`
 
-## Git hook (pre-commit)
+## Git hook boundary
 
-The repo ships a `scripts/githooks/pre-commit` hook that runs:
+The repo does not run dependency or staged security checks from `scripts/githooks/pre-commit`.
+Security checks remain explicit command and plugin-enablement gates.
 
-`rawr security check --staged`
-
-This prevents accidental secret leakage from being committed.
+The pre-commit hook is reserved for repository hygiene checks such as template-managed path routing and plugin install drift.
 
 ## What this is not
 
