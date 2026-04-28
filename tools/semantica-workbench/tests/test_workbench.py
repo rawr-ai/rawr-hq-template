@@ -7,6 +7,13 @@ import re
 import tempfile
 from pathlib import Path
 
+from semantica_workbench.architecture_change_frame import (
+    FRAME_SCHEMA_VERSION,
+    REQUIRED_EVIDENCE_REF_FIELDS,
+    frame_schema_summary,
+    load_architecture_change_frame_schema,
+    validate_frame_policy_shape,
+)
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
     TESTING_PLAN,
@@ -34,6 +41,84 @@ from semantica_workbench.semantic_evidence import (
     load_fixture_expectations,
     semantic_capability_probe,
 )
+
+
+def frame_evidence_ref() -> dict:
+    return {
+        "id": "evidence-claim-1",
+        "source_path": "tools/semantica-workbench/fixtures/docs/semantic-evidence-cases.md",
+        "heading_path": ["Target Architecture"],
+        "context": "Target Architecture",
+        "line_start": 7,
+        "line_end": 7,
+        "char_start": 0,
+        "char_end": 54,
+        "char_span_kind": "line-offset",
+        "text": "Create a root-level `core/` authoring root.",
+        "extraction_method": "semantica-llm-pilot",
+        "confidence": 0.82,
+        "review_state": "evidence-only",
+        "promotion_allowed": False,
+    }
+
+
+def minimal_architecture_change_frame() -> dict:
+    return {
+        "schema_version": FRAME_SCHEMA_VERSION,
+        "frame_id": "fixture-frame",
+        "document": {
+            "source_path": "tools/semantica-workbench/fixtures/docs/semantic-evidence-cases.md",
+            "title": "Semantic Evidence Cases",
+            "authority_context": "fixture",
+            "authority_rank": 99,
+            "source_scope": "fixture",
+        },
+        "proposal_summary": "Fixture frame for a proposed root-level core authoring root.",
+        "extraction": {
+            "method": "semantica-llm-pilot",
+            "extractor": "architecture-change-frame-pilot",
+            "status": "pilot",
+            "llm_provider_status": "available",
+            "semantica_version": "0.4.0",
+            "deterministic_oracle": "rawr-semantic-heuristic-v1",
+            "promotion_allowed": False,
+        },
+        "governance": {
+            "truth_authority": "rawr-reviewed-ontology",
+            "semantica_output_authoritative": False,
+            "reference_geometry_status": "comparison-only",
+            "requires_human_promotion": True,
+            "promotion_allowed": False,
+        },
+        "claims": [
+            {
+                "id": "claim-root-core-authoring-root",
+                "claim_type": "forbidden-risk",
+                "subject": "root-level core authoring root",
+                "predicate": "introduces",
+                "object": "core authoring surface",
+                "polarity": "positive",
+                "modality": "proposed",
+                "assertion_scope": "target-architecture",
+                "authority_context": "fixture",
+                "mapping_state": "resolved",
+                "evidence_refs": [frame_evidence_ref()],
+                "confidence": 0.78,
+                "review_state": "evidence-only",
+                "verdict": "not-evaluated",
+                "review_action": "none",
+                "promotion_allowed": False,
+            }
+        ],
+        "noun_mappings": [],
+        "comparison": {
+            "status": "extraction-only",
+            "overall_verdict": "not-evaluated",
+            "recommended_next_action": "none",
+            "ruleset": "rawr-frame-pilot-unresolved",
+            "explanation_chain_complete": False,
+        },
+    }
 
 
 class WorkbenchTests(unittest.TestCase):
@@ -287,6 +372,48 @@ class WorkbenchTests(unittest.TestCase):
         self.assertTrue(all(item["target"] and item["keep"] for item in matrix))
         self.assertIn("negated-prohibited-pattern", fixture_ids)
         self.assertIn("positive-prohibited-pattern", fixture_ids)
+
+    def test_architecture_change_frame_schema_requires_structured_evidence_refs(self) -> None:
+        schema = load_architecture_change_frame_schema()
+        summary = frame_schema_summary()
+        self.assertEqual(FRAME_SCHEMA_VERSION, summary["schema_version"])
+        self.assertIn("ownership", summary["claim_types"])
+        self.assertIn("compatible-extension", summary["verdicts"])
+        self.assertIn("not-evaluated", summary["verdicts"])
+        self.assertTrue(REQUIRED_EVIDENCE_REF_FIELDS.issubset(set(summary["evidence_ref_required"])))
+        self.assertEqual(1, schema["$defs"]["claim"]["properties"]["evidence_refs"]["minItems"])
+        self.assertEqual(1, schema["$defs"]["noun_mapping"]["properties"]["evidence_refs"]["minItems"])
+        self.assertFalse(schema["$defs"]["governance"]["properties"]["semantica_output_authoritative"]["const"])
+        self.assertFalse(schema["$defs"]["governance"]["properties"]["promotion_allowed"]["const"])
+
+    def test_architecture_change_frame_policy_accepts_evidence_only_frame(self) -> None:
+        frame = minimal_architecture_change_frame()
+        self.assertEqual([], validate_frame_policy_shape(frame))
+
+    def test_architecture_change_frame_policy_rejects_truth_and_evidence_leaks(self) -> None:
+        frame = minimal_architecture_change_frame()
+        frame["governance"]["semantica_output_authoritative"] = True
+        frame["comparison"]["overall_verdict"] = "compatible"
+        frame["claims"][0]["evidence_refs"] = []
+        frame["noun_mappings"] = [
+            {
+                "id": "mapping-plugin",
+                "proposed_noun": "Plugin Truth",
+                "mapping_state": "candidate",
+                "evidence_refs": [deepcopy(frame_evidence_ref())],
+                "confidence": 0.7,
+                "review_state": "candidate",
+                "promotion_allowed": True,
+            }
+        ]
+        frame["noun_mappings"][0]["evidence_refs"][0].pop("char_end")
+        errors = validate_frame_policy_shape(frame)
+        kinds = {error["kind"] for error in errors}
+        self.assertIn("frame_governance_violation", kinds)
+        self.assertIn("extraction_only_frame_has_verdict", kinds)
+        self.assertIn("missing_structured_evidence_ref", kinds)
+        self.assertIn("frame_item_promotion_allowed", kinds)
+        self.assertIn("evidence_ref_missing_required_fields", kinds)
 
     def test_semantica_intake_probe_preserves_source_authority_and_spans(self) -> None:
         manifest = load_manifest(FIXTURE_MANIFEST)

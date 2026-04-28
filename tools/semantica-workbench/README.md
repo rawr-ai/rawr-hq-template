@@ -114,6 +114,18 @@ document
 
 A phrase match alone must not create a decision-grade finding. For example, `There is no root-level core/ authoring root` is an aligned rejection of a prohibited construction, not a conflict.
 
+## Architecture Change Frame Pilot
+
+The frame pilot schema lives at:
+
+```text
+tools/semantica-workbench/schemas/architecture-change-frame.schema.json
+```
+
+It adapts the external `ArchitectureChangeFrame` vocabulary as an intermediate extraction target for semantica/LLM pilots. The schema keeps RAWR ownership explicit: semantica output is evidence, the reviewed ontology remains truth authority, reference geometry is comparison-only unless separately promoted, and every claim or noun mapping must carry structured evidence refs with source path, heading context, line span, char span, extraction method, confidence, review state, and `promotion_allowed: false`.
+
+The schema is not yet the decision-grade comparison engine. It is the contract the next extraction step should target before deterministic RAWR comparison and verdict/repair logic consume the frame.
+
 ## Source Scope
 
 The default manifest is packet-scoped to:
