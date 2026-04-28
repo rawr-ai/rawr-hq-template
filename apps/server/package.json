@@ -23,12 +23,12 @@
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "inngest-cli": "^1.16.1",
+    "inngest-cli": "1.16.1",
     "typescript": "^5.9.3"
   },
   "scripts": {
     "dev": "bun --hot src/index.ts",
-    "dev:inngest": "env npm_config_ignore_scripts=false npm exec --yes --package=inngest-cli@latest -- inngest dev -u http://localhost:3000/api/inngest",
+    "dev:inngest": "env npm_config_ignore_scripts=false npm exec --yes --package=inngest-cli@1.16.1 -- inngest dev -u http://localhost:3000/api/inngest",
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\"",
     "sync": "bun run --cwd ../.. sync:check --project @rawr/server",

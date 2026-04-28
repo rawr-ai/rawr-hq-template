@@ -77,6 +77,21 @@ describe("hq runtime commands", () => {
     expect(parsed.data.args).toEqual(["./scripts/dev/hq.sh", "restart", "--open", "all", "--observability", "off"]);
   });
 
+  it("keeps HQ async startup gated and Inngest CLI pinned", () => {
+    const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+    const hqScript = readFileSync(path.join(workspaceRoot, "scripts", "dev", "hq.sh"), "utf8");
+    const serverPackage = JSON.parse(readFileSync(path.join(workspaceRoot, "apps", "server", "package.json"), "utf8")) as {
+      devDependencies: Record<string, string>;
+      scripts: Record<string, string>;
+    };
+
+    expect(serverPackage.devDependencies["inngest-cli"]).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(serverPackage.scripts["dev:inngest"]).toContain(`inngest-cli@${serverPackage.devDependencies["inngest-cli"]}`);
+    expect(hqScript).not.toContain("inngest-cli@latest");
+    expect(hqScript).toContain("resolve_hq_async_enabled");
+    expect(hqScript).toContain("async: disabled (no HQ workflows or schedules configured)");
+  });
+
   it("plans hq graph as an on-demand Nx graph launch", () => {
     const proc = runRawr(["hq", "graph", "--focus", "@rawr/web", "--view", "projects", "--json"]);
     expect(proc.status).toBe(0);
@@ -136,6 +151,38 @@ describe("hq runtime commands", () => {
     );
     expect(readFileSync(path.join(workspaceRoot, ".rawr", "hq", "status.json"), "utf8")).toContain('"schemaVersion": 1');
     expect(() => readFileSync(path.join(workspaceRoot, ".rawr", "hq", "state.env"), "utf8")).toThrow();
+  });
+
+  it("reports async as not expected when the managed HQ state disables it", () => {
+    const workspaceRoot = mkdtempSync(path.join(os.tmpdir(), "rawr-hq-async-disabled-"));
+    mkdirSync(path.join(workspaceRoot, "plugins"), { recursive: true });
+    mkdirSync(path.join(workspaceRoot, ".rawr", "hq"), { recursive: true });
+    writeFileSync(path.join(workspaceRoot, "package.json"), JSON.stringify({ name: "status-fixture", private: true }, null, 2));
+    writeFileSync(
+      path.join(workspaceRoot, ".rawr", "hq", "state.env"),
+      [
+        `hq_manager_pid=${process.pid}`,
+        "hq_server_pid=",
+        "hq_web_pid=",
+        "hq_async_pid=",
+        "hq_async_enabled=0",
+        "hq_started_at=2026-03-19T00:00:00.000Z",
+        "hq_observability_mode=off",
+      ].join("\n"),
+    );
+
+    const proc = runRawr(["hq", "status", "--json"], {
+      env: {
+        RAWR_WORKSPACE_ROOT: workspaceRoot,
+      },
+    });
+
+    expect(proc.status).toBe(0);
+    const parsed = JSON.parse(proc.stdout) as any;
+    expect(parsed.ok).toBe(true);
+    expect(parsed.data.roles.async.expected).toBe(false);
+    expect(parsed.data.roles.async.state).toBe("stopped");
+    expect(parsed.data.roles.async.health).toBeNull();
   });
 
   it("rejects invalid RAWR_HQ_OBSERVABILITY values before writing status", () => {
