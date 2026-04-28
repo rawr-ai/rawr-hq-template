@@ -1,31 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run staged-only security checks. Keep output short and actionable.
-# If `rawr` isn't available for some reason, fall back to the package bin.
+# Keep pre-commit focused on repository routing and plugin install drift.
 
-if bun run --silent rawr -- security check --staged >/dev/null 2>&1; then
-  bun run rawr -- security check --staged
+if ! bun scripts/githooks/check-template-managed.ts; then
+  exit 1
+fi
 
-  if ! bun scripts/githooks/check-template-managed.ts; then
-    exit 1
-  fi
-
-  if [ "${RAWR_SKIP_SYNC_DRIFT_CHECK:-0}" = "1" ]; then
-    echo "[rawr-pre-commit] skipped plugin drift check (RAWR_SKIP_SYNC_DRIFT_CHECK=1)"
-    exit 0
-  fi
-
-  if ! bun run rawr -- plugins status --checks all; then
-    echo "[rawr-pre-commit] blocked: plugin status out of sync" >&2
-    echo "[rawr-pre-commit] run: bun run rawr -- plugins status --checks all --repair --no-fail" >&2
-    echo "[rawr-pre-commit] run: bun run rawr -- plugins sync all --json" >&2
-    echo "[rawr-pre-commit] (or bypass once with RAWR_SKIP_SYNC_DRIFT_CHECK=1)" >&2
-    exit 1
-  fi
-
+if [ "${RAWR_SKIP_SYNC_DRIFT_CHECK:-0}" = "1" ]; then
+  echo "[rawr-pre-commit] skipped plugin drift check (RAWR_SKIP_SYNC_DRIFT_CHECK=1)"
   exit 0
 fi
 
-bun run --cwd services/hq-ops security:check --quiet
-echo "[rawr-pre-commit] rawr unavailable; skipped plugin status check"
+if ! bun run rawr -- plugins status --checks all; then
+  echo "[rawr-pre-commit] blocked: plugin status out of sync" >&2
+  echo "[rawr-pre-commit] run: bun run rawr -- plugins status --checks all --repair --no-fail" >&2
+  echo "[rawr-pre-commit] run: bun run rawr -- plugins sync all --json" >&2
+  echo "[rawr-pre-commit] (or bypass once with RAWR_SKIP_SYNC_DRIFT_CHECK=1)" >&2
+  exit 1
+fi

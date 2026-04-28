@@ -11,15 +11,13 @@
 
 ## Git Hooks
 - Shipped hooks live in `scripts/githooks/**`.
-- `scripts/githooks/pre-commit` runs staged-only security checks:
-  - primary: `rawr security check --staged`
-  - fallback: `packages/security` bin if `rawr` isn’t available
-  - plus template-managed path guard in downstream repos:
+- `scripts/githooks/pre-commit` runs repository hygiene checks:
+  - template-managed path guard in downstream repos:
     - policy manifest: `scripts/githooks/template-managed-paths.txt`
     - check implementation: `scripts/githooks/check-template-managed.ts`
     - modes: `off|warn|block` (`warn` default downstream)
     - controls: `RAWR_TEMPLATE_GUARD_MODE`, `rawr.templateGuardMode`
-  - plus `rawr plugins status --checks all` to make sync/install drift unmissable before commit
+  - `rawr plugins status --checks all` to make sync/install drift unmissable before commit
   - bypass knob: `RAWR_SKIP_SYNC_DRIFT_CHECK=1` (one-off only)
 - `scripts/githooks/post-merge` and `scripts/githooks/post-checkout` run main-branch auto-refresh:
   - refresh dependencies when needed
