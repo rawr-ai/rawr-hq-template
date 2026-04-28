@@ -18,8 +18,9 @@ from semantica_workbench.core_ontology import (
 from semantica_workbench.core_config import CORE_GRAPH_FILENAMES, NAMED_QUERY_DESCRIPTIONS
 from semantica_workbench.core_viewer import build_cytoscape_payload, write_html_viewer
 from semantica_workbench.core_query import render_query_text, run_named_query
+from semantica_workbench.document_sweep import discover_documents, effective_exclude_segments, review_queue_records, run_document_sweep
 from semantica_workbench.extraction import heuristic_extract
-from semantica_workbench.io import rel
+from semantica_workbench.io import read_json, rel, write_json
 from semantica_workbench.manifest import load_manifest
 from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
@@ -331,6 +332,8 @@ class WorkbenchTests(unittest.TestCase):
             (run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]).write_text(json.dumps(graph["candidate_queue"]), encoding="utf-8")
             (run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]).write_text(json.dumps(compare), encoding="utf-8")
             for query_name in NAMED_QUERY_DESCRIPTIONS:
+                if query_name.startswith("sweep-"):
+                    continue
                 result = run_named_query(str(run_dir), query_name)
                 self.assertEqual(query_name, result["query"])
             ambiguity = run_named_query(str(run_dir), "ambiguity-summary")
@@ -350,6 +353,135 @@ class WorkbenchTests(unittest.TestCase):
             (run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]).write_text(json.dumps(graph["candidate_queue"]), encoding="utf-8")
             with self.assertRaises(FileNotFoundError):
                 run_named_query(str(run_dir), "decision-review-queue")
+
+    def test_document_sweep_discovery_excludes_quarantine_and_archive(self) -> None:
+        root = REPO_ROOT / "tools/semantica-workbench/fixtures/docs/sweep"
+        discovered, skipped = discover_documents([str(root)], ["**/*.md"], ["quarantine", "archive"])
+        discovered_paths = {rel(item["path"]) for item in discovered}
+        skipped_paths = {item["path"] for item in skipped}
+        self.assertIn("tools/semantica-workbench/fixtures/docs/sweep/active.md", discovered_paths)
+        self.assertIn("tools/semantica-workbench/fixtures/docs/sweep/no-signal.md", discovered_paths)
+        self.assertIn("tools/semantica-workbench/fixtures/docs/sweep/quarantine/skipped.md", skipped_paths)
+        self.assertIn("tools/semantica-workbench/fixtures/docs/sweep/archive/skipped.md", skipped_paths)
+
+    def test_document_sweep_custom_excludes_extend_defaults(self) -> None:
+        excludes = effective_exclude_segments(["custom-skip"])
+        self.assertIn("custom-skip", excludes)
+        self.assertIn("quarantine", excludes)
+        self.assertIn("archive", excludes)
+        self.assertIn("node_modules", excludes)
+
+    def test_document_sweep_missing_explicit_document_fails(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            base_run = Path(directory)
+            write_json(base_run / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            with self.assertRaises(FileNotFoundError):
+                run_document_sweep(documents=["missing-doc.md"], run=str(base_run))
+
+    def test_document_sweep_generates_aggregate_outputs(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            base_run = Path(directory)
+            write_json(base_run / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["metadata"], {"kind": "test-core", "source": "test"})
+            run_dir = run_document_sweep(
+                roots=["tools/semantica-workbench/fixtures/docs/sweep"],
+                run=str(base_run),
+            )
+        sweep = read_json(run_dir / CORE_GRAPH_FILENAMES["doc_sweep"])
+        self.assertEqual(2, sweep["summary"]["documents_analyzed"])
+        self.assertEqual(2, sweep["summary"]["documents_skipped"])
+        by_path = {record["document_path"]: record for record in sweep["documents"]}
+        self.assertEqual("aligned-active", by_path["tools/semantica-workbench/fixtures/docs/sweep/active.md"]["recommendation"])
+        self.assertEqual("outside-scope", by_path["tools/semantica-workbench/fixtures/docs/sweep/no-signal.md"]["recommendation"])
+        self.assertEqual(sum(record["counts"]["claims"] for record in sweep["documents"]), sweep["summary"]["total_claims"])
+        self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report"]).exists())
+        self.assertTrue((run_dir / "documents").exists())
+        viewer_text = (run_dir / CORE_GRAPH_FILENAMES["viewer"]).read_text(encoding="utf-8")
+        match = re.search(r'<script id="graph-data" type="application/json">(.*?)</script>', viewer_text, re.S)
+        self.assertIsNotNone(match)
+        payload = json.loads(match.group(1))
+        self.assertEqual(2, payload["sweep"]["summary"]["documents_analyzed"])
+
+    def test_document_sweep_explicit_excluded_doc_is_tagged_and_compared(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            base_run = Path(directory)
+            write_json(base_run / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["metadata"], {"kind": "test-core", "source": "test"})
+            run_dir = run_document_sweep(
+                documents=["tools/semantica-workbench/fixtures/docs/sweep/quarantine/skipped.md"],
+                run=str(base_run),
+            )
+        sweep = read_json(run_dir / CORE_GRAPH_FILENAMES["doc_sweep"])
+        self.assertEqual(1, sweep["summary"]["documents_analyzed"])
+        record = sweep["documents"][0]
+        self.assertEqual("explicit-excluded-path", record["path_class"])
+        self.assertEqual("quarantine-candidate", record["recommendation"])
+        self.assertGreater(record["counts"]["conflict"], 0)
+
+    def test_document_sweep_review_queue_includes_source_authority_regressions(self) -> None:
+        sweep = {
+            "documents": [
+                {
+                    "document_path": "source.md",
+                    "recommendation": "source-authority",
+                    "counts": {"decision_grade": 2},
+                },
+                {
+                    "document_path": "aligned.md",
+                    "recommendation": "source-authority",
+                    "counts": {"decision_grade": 0},
+                },
+            ]
+        }
+        queue = review_queue_records(sweep)
+        self.assertEqual(["source.md"], [item["document_path"] for item in queue])
+
+    def test_sweep_named_queries_execute(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            base_run = Path(directory)
+            write_json(base_run / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["metadata"], {"kind": "test-core", "source": "test"})
+            run_dir = run_document_sweep(
+                roots=[],
+                documents=["tools/semantica-workbench/fixtures/docs/sweep/quarantine/skipped.md"],
+                run=str(base_run),
+            )
+        for query_name in [
+            "sweep-summary",
+            "sweep-review-queue",
+            "sweep-quarantine-candidates",
+            "sweep-update-candidates",
+            "sweep-no-signal-documents",
+            "sweep-high-ambiguity-docs",
+        ]:
+            result = run_named_query(str(run_dir), query_name)
+            self.assertEqual(query_name, result["query"])
+            text = render_query_text(result)
+            self.assertIn("artifact:", text)
 
 
 if __name__ == "__main__":

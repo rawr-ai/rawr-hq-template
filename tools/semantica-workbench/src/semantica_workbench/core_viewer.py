@@ -95,6 +95,7 @@ def build_cytoscape_payload(
             "claims": diff.get("claims", []),
             "suppressed_lines": diff.get("suppressed_lines", []),
         },
+        "sweep": diff.get("sweep", {}),
     }
 
 
