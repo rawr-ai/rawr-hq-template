@@ -24,6 +24,7 @@ from semantica_workbench.io import read_json, rel, write_json
 from semantica_workbench.manifest import load_manifest
 from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
+from semantica_workbench.semantica_intake import map_semantica_chunk_to_span, semantica_intake_probe
 from semantica_workbench.semantic_evidence import (
     compare_evidence_to_ontology,
     extract_evidence_claims,
@@ -249,6 +250,45 @@ class WorkbenchTests(unittest.TestCase):
         self.assertTrue(all(item["target"] and item["keep"] for item in matrix))
         self.assertIn("negated-prohibited-pattern", fixture_ids)
         self.assertIn("positive-prohibited-pattern", fixture_ids)
+
+    def test_semantica_intake_probe_preserves_source_authority_and_spans(self) -> None:
+        manifest = load_manifest(FIXTURE_MANIFEST)
+        source = manifest.sources[0]
+        probe = semantica_intake_probe(source)
+        self.assertEqual("rawr-semantica-intake-v1", probe["schema_version"])
+        self.assertEqual(source.rel_path, probe["source"]["path"])
+        self.assertTrue(probe["fallback"]["chunk_markdown_retained"])
+        self.assertIn(probe["fallback"]["decision_grade_source"], {"chunk_markdown", "semantica-intake"})
+        self.assertGreaterEqual(probe["parity"]["local_chunk_count"], 1)
+        self.assertTrue(probe["parity"]["source_identity_preserved"])
+        self.assertTrue(probe["parity"]["authority_preserved"])
+        for chunk in probe["chunks"]:
+            self.assertEqual(source.rel_path, chunk["source_path"])
+            self.assertEqual(source.authority_rank, chunk["authority_rank"])
+            self.assertEqual(source.authority_scope, chunk["authority_scope"])
+            self.assertGreaterEqual(chunk["line_start"], 1)
+            self.assertGreaterEqual(chunk["line_end"], chunk["line_start"])
+            self.assertEqual(source.rel_path, chunk["provenance"]["document"])
+            self.assertEqual(chunk["line_start"], chunk["provenance"]["line"])
+
+    def test_semantica_intake_marks_markdown_parser_gap_as_partial(self) -> None:
+        manifest = load_manifest(FIXTURE_MANIFEST)
+        probe = semantica_intake_probe(manifest.sources[0])
+        if not probe["status"]["markdown_parser_available"]:
+            self.assertEqual("partial", probe["status"]["classification"])
+            self.assertEqual("chunk_markdown", probe["fallback"]["decision_grade_source"])
+            self.assertIn("MarkdownParser", probe["status"]["limitation"])
+
+    def test_semantica_span_adapter_rejects_unmapped_offsets(self) -> None:
+        text = "# Heading\n\nBody\n"
+        self.assertIsNone(map_semantica_chunk_to_span(text, None, 5))
+        self.assertIsNone(map_semantica_chunk_to_span(text, 8, 2))
+        self.assertIsNone(map_semantica_chunk_to_span(text, 0, len(text) + 1))
+        mapping = map_semantica_chunk_to_span(text, 0, len(text))
+        self.assertIsNotNone(mapping)
+        assert mapping is not None
+        self.assertEqual(1, mapping.line_start)
+        self.assertEqual(3, mapping.line_end)
 
     def test_semantic_evidence_fixture_verdicts(self) -> None:
         ontology = load_core_ontology()
