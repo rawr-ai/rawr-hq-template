@@ -131,3 +131,37 @@ Residual uncertainty:
 
 - Semantica conflict detector output is not yet mapped to RAWR-specific prohibited/deprecated/candidate review semantics.
 - Explanation chains are deterministic RAWR-authored chains with semantica proof metadata attached.
+
+## Phase 6: MCP, Query, Export, And Review Surfaces
+
+Branch: `codex/semantica-first-pipeline-implementation`
+
+Changed files:
+
+- `tools/semantica-workbench/src/semantica_workbench/semantica_review_surface.py`
+- `tools/semantica-workbench/src/semantica_workbench/core_query.py`
+- `tools/semantica-workbench/src/semantica_workbench/core_config.py`
+- `tools/semantica-workbench/tests/test_workbench.py`
+
+Implementation:
+
+- Added a stable `semantica-review-surface` named query rather than requiring agents or developers to scrape `.semantica/current`.
+- Added a semantica MCP/export/visualization review-surface probe that records MCP tools/resources, export modules, visualization modules, local output presence, and RAWR separation guarantees.
+- Kept the existing RAWR CLI as the wrapper and kept Cytoscape as the static portable artifact while semantica visualization remains an evaluated-but-not-adopted surface.
+- Recorded explicitly that semantica output is not RAWR truth and that candidate/evidence/review findings remain separate from the target architecture view.
+- Fixed review-steward findings by distinguishing missing semantic compare artifacts from zero findings, reporting export preservation as validated only when local outputs exist, and strengthening candidate-like target leakage checks.
+
+Capability status:
+
+- `semantica.mcp_server` exposes the required review tools/resources for extraction, reasoning, export, and graph summary smoke use.
+- `semantica.export` and `semantica.visualization` are importable and inventoried, but not yet used to replace the existing GraphML/Turtle/Cytoscape outputs.
+
+Fallback and removal trigger:
+
+- RAWR keeps named review affordances, CLI wrapping, export contracts, and static Cytoscape output.
+- Removal trigger: reduce or replace Cytoscape/custom export surfaces only after semantica visualization/export preserve RAWR IDs, source lineage, candidate separation, and review-finding context.
+
+Residual uncertainty:
+
+- Semantica MCP exposes generic graph resources; RAWR-specific graph/evidence loading still needs an adapter before it can answer decision-grade review questions directly.
+- Semantica visualization maturity has only been inventoried in this phase, not behaviorally accepted as a replacement for the static review artifact.
