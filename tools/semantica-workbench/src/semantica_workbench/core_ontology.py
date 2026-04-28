@@ -134,7 +134,7 @@ def write_semantica_capability_report(run: str | None = "latest") -> Path:
     return run_dir
 
 
-def extract_document_evidence(document: Path | None, run: str | None = "latest", *, fixture: bool = False) -> Path:
+def extract_document_evidence(document: Path | None, run: str | None = "latest", *, fixture: bool = False, semantica_pilot: bool = False) -> Path:
     run_dir = resolve_run(run)
     graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
@@ -145,7 +145,7 @@ def extract_document_evidence(document: Path | None, run: str | None = "latest",
         document_path = REPO_ROOT / document_path
     if not document_path.exists() and document_path.name == TESTING_PLAN.name and TESTING_PLAN.exists():
         document_path = TESTING_PLAN
-    evidence = extract_evidence_claims(document_path, graph, candidate_queue, fixture=fixture)
+    evidence = extract_evidence_claims(document_path, graph, candidate_queue, fixture=fixture, semantica_pilot_enabled=semantica_pilot)
     write_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"], evidence)
     chunks = [
         {
@@ -167,8 +167,8 @@ def extract_document_evidence(document: Path | None, run: str | None = "latest",
     return run_dir
 
 
-def compare_document_evidence(document: Path | None, run: str | None = "latest", *, fixture: bool = False) -> Path:
-    run_dir = extract_document_evidence(document, run, fixture=fixture)
+def compare_document_evidence(document: Path | None, run: str | None = "latest", *, fixture: bool = False, semantica_pilot: bool = False) -> Path:
+    run_dir = extract_document_evidence(document, run, fixture=fixture, semantica_pilot=semantica_pilot)
     graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
     evidence = read_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"])

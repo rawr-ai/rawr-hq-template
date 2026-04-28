@@ -33,3 +33,37 @@ Residual uncertainty:
 
 - Structural chunking segmentation does not intentionally match current RAWR chunk boundaries.
 - The current proof maps character offsets back to line spans but does not yet feed production extraction.
+
+## Phase 3: semantica Extraction Pilot
+
+Branch: `codex/semantica-first-pipeline-implementation`
+
+Changed files:
+
+- `tools/semantica-workbench/src/semantica_workbench/semantica_extraction.py`
+- `tools/semantica-workbench/src/semantica_workbench/semantic_evidence.py`
+- `tools/semantica-workbench/tests/test_workbench.py`
+
+Implementation:
+
+- Added an explicit semantica extraction pilot using pinned `semantica.semantic_extract.TripletExtractor`.
+- Attached pilot output to semantic evidence artifacts under `semantica_pilot` only when pilot mode is explicitly enabled.
+- Labeled the first slice as `semantica-triplet-proof-with-rawr-evidence-line-adapter` so it is not mistaken for direct semantica-derived claim extraction.
+- Kept deterministic `rawr-semantic-heuristic-v1` extraction as the decision-grade source and regression oracle.
+- Marked semantica pilot claims as `evidence-only` with `promotion_allowed: false`.
+
+Capability status:
+
+- Non-LLM semantica pattern extraction is available but low-confidence and evidence-only.
+- LLM/provider extraction remains blocked unless OpenAI, Anthropic, LiteLLM, or Ollama dependencies are installed and proven.
+
+Fallback and removal trigger:
+
+- Decision-grade comparison remains on `rawr-semantic-heuristic-v1`.
+- Removal trigger: use semantica extraction for decision-grade comparison only after fixture parity, provider gates, and span/source guarantees pass.
+
+Residual uncertainty:
+
+- Pattern triplets do not preserve RAWR claim semantics by themselves.
+- Pilot evidence claims are still produced by RAWR line resolution and claim classification, not directly from semantica triplets.
+- Default document extraction keeps semantica pilot disabled to avoid slow or noisy extraction in sweeps.

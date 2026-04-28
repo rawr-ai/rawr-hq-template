@@ -107,12 +107,14 @@ def build_parser() -> argparse.ArgumentParser:
     doc_extract.add_argument("--run", default="latest")
     doc_extract.add_argument("--document", default=str(TESTING_PLAN))
     doc_extract.add_argument("--fixture", action="store_true")
+    doc_extract.add_argument("--semantica-pilot", action="store_true")
     doc_extract.set_defaults(func=cmd_doc_extract)
 
     doc_compare = sub.add_parser("doc:compare")
     doc_compare.add_argument("--run", default="latest")
     doc_compare.add_argument("--document", default=str(TESTING_PLAN))
     doc_compare.add_argument("--fixture", action="store_true")
+    doc_compare.add_argument("--semantica-pilot", action="store_true")
     doc_compare.set_defaults(func=cmd_doc_compare)
 
     doc_sweep = sub.add_parser("doc:sweep")
@@ -272,13 +274,13 @@ def cmd_doc_triage(args) -> int:
 
 
 def cmd_doc_extract(args) -> int:
-    run_dir = extract_document_evidence(Path(args.document), args.run, fixture=args.fixture)
+    run_dir = extract_document_evidence(Path(args.document), args.run, fixture=args.fixture, semantica_pilot=args.semantica_pilot)
     print(f"evidence_claims={rel(run_dir / CORE_GRAPH_FILENAMES['evidence_claims_json'])}")
     return 0
 
 
 def cmd_doc_compare(args) -> int:
-    run_dir = compare_document_evidence(Path(args.document), args.run, fixture=args.fixture)
+    run_dir = compare_document_evidence(Path(args.document), args.run, fixture=args.fixture, semantica_pilot=args.semantica_pilot)
     print(f"semantic_compare={rel(run_dir / CORE_GRAPH_FILENAMES['semantic_compare_report'])}")
     return 0
 

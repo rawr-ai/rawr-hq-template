@@ -24,6 +24,7 @@ from semantica_workbench.io import read_json, rel, write_json
 from semantica_workbench.manifest import load_manifest
 from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
+from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 from semantica_workbench.semantica_intake import map_semantica_chunk_to_span, semantica_intake_probe
 from semantica_workbench.semantic_evidence import (
     compare_evidence_to_ontology,
@@ -319,6 +320,50 @@ class WorkbenchTests(unittest.TestCase):
                 self.assertEqual(case["expected_scope"], finding["assertion_scope"])
             if case.get("expected_ambiguity_bucket"):
                 self.assertEqual(case["expected_ambiguity_bucket"], finding["ambiguity_bucket"])
+
+    def test_semantica_extraction_pilot_is_evidence_only(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        pilot = semantica_extraction_pilot(fixture_document_path(), graph["layered_graph"], graph["candidate_queue"])
+        self.assertEqual("rawr-semantica-extraction-pilot-v1", pilot["schema_version"])
+        self.assertEqual("rawr-semantic-heuristic-v1", pilot["summary"]["decision_grade_source"])
+        self.assertEqual("semantica-triplet-proof-with-rawr-evidence-line-adapter", pilot["summary"]["adapter_mode"])
+        self.assertTrue(pilot["limitations"])
+        self.assertFalse(pilot["summary"]["promotion_allowed"])
+        self.assertEqual("rawr-semantic-heuristic-v1", pilot["fallback"]["deterministic_oracle"])
+        self.assertGreaterEqual(pilot["summary"]["raw_item_count"], 0)
+        for claim in pilot["evidence_claims"]:
+            self.assertEqual("semantica-pilot-pattern-v1", claim["extractor"])
+            self.assertEqual("evidence-only", claim["review_state"])
+            self.assertFalse(claim["promotion_allowed"])
+            self.assertTrue(claim["source_path"])
+            self.assertGreaterEqual(claim["line_start"], 1)
+
+    def test_semantic_evidence_records_semantica_pilot_without_changing_oracle(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        evidence = extract_evidence_claims(
+            fixture_document_path(),
+            graph["layered_graph"],
+            graph["candidate_queue"],
+            fixture=True,
+            semantica_pilot_enabled=True,
+        )
+        self.assertIn("semantica_pilot", evidence)
+        self.assertEqual("rawr-semantic-heuristic-v1", evidence["semantica_pilot"]["summary"]["decision_grade_source"])
+        self.assertEqual("semantica-triplet-proof-with-rawr-evidence-line-adapter", evidence["semantica_pilot"]["summary"]["adapter_mode"])
+        self.assertFalse(evidence["semantica_pilot"]["summary"]["promotion_allowed"])
+        self.assertTrue(all(claim["extractor"] == "rawr-semantic-heuristic-v1" for claim in evidence["claims"]))
+
+    def test_semantic_evidence_defaults_semantica_pilot_off(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        evidence = extract_evidence_claims(fixture_document_path(), graph["layered_graph"], graph["candidate_queue"], fixture=True)
+        self.assertEqual("disabled", evidence["semantica_pilot"]["status"]["classification"])
+        self.assertFalse(evidence["semantica_pilot"]["summary"]["promotion_allowed"])
 
     def test_semantic_opposite_claims_do_not_collapse(self) -> None:
         ontology = load_core_ontology()
