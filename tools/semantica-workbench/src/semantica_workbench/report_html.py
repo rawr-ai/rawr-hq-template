@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 
 def write_sweep_report_html(path: Path, sweep: dict[str, Any]) -> None:
@@ -77,6 +78,44 @@ def write_proposal_review_html(path: Path, package: dict[str, Any]) -> None:
         authority_panel(frame),
     ]
     write_page(path, "Architecture Proposal Review", "".join(body))
+
+
+def write_semantic_compare_report_html(path: Path, compare: dict[str, Any]) -> None:
+    summary = compare["summary"]
+    by_kind = summary.get("findings_by_kind", {})
+    retention = summary.get("claim_retention", {})
+    body = [
+        hero(
+            "Semantic Compare Report",
+            "Per-document evidence review with source claims, resolved targets, rules, and review actions.",
+            [
+                ("Document", compare["document"]),
+                ("Claims", str(summary["claim_count"])),
+                ("Findings", str(summary["finding_count"])),
+                ("Decision Grade", str(summary["decision_grade_finding_count"])),
+            ],
+        ),
+        metric_grid(
+            [
+                ("Aligned", by_kind.get("aligned", 0), "resolved canonical evidence"),
+                ("Conflicts", by_kind.get("conflict", 0), "decision-grade repairs"),
+                ("Deprecated", by_kind.get("deprecated-use", 0), "old target vocabulary"),
+                ("Ambiguous", by_kind.get("ambiguous", 0), "needs mapping or clearer scope"),
+            ]
+        ),
+        semantic_verdict_panel(summary),
+        compare_breakdowns_panel(summary, retention),
+        semantic_finding_section("Conflicts", compare.get("conflicts", []), priority=True),
+        semantic_finding_section("Deprecated Uses", compare.get("deprecated_uses", []), priority=True),
+        semantic_finding_section("Decision Review Queue", decision_review_items(compare), priority=True),
+        semantic_finding_section("Candidate New", compare.get("candidate_new", [])),
+        semantic_finding_section("Ambiguous", compare.get("ambiguous", [])),
+        semantic_finding_section("Aligned Evidence", compare.get("aligned", []), limit=40),
+        suppressed_scaffold_panel(compare.get("suppressed_lines", [])),
+        semantic_finding_section("Informational", compare.get("informational", [])),
+        semantic_finding_section("Outside Scope", compare.get("outside_scope", [])),
+    ]
+    write_page(path, "Semantic Compare Report", "".join(body))
 
 
 def write_page(path: Path, title: str, body: str) -> None:
@@ -166,7 +205,7 @@ def queue_section(title: str, records: list[dict[str, Any]], *, priority: bool =
 
 def record_card(record: dict[str, Any], *, priority: bool = False, quiet: bool = False) -> str:
     counts = record["counts"]
-    report = record.get("artifact_paths", {}).get("report")
+    report = record.get("artifact_paths", {}).get("report_html") or record.get("artifact_paths", {}).get("report")
     reasons = "".join(f"<span class=\"chip\">{escape(reason)}</span>" for reason in record.get("reason_codes", []))
     top = "".join(finding_line(item) for item in record.get("top_findings", [])[:3])
     return f"""
@@ -217,6 +256,7 @@ def document_table(records: list[dict[str, Any]]) -> str:
     rows = []
     for record in records:
         counts = record["counts"]
+        report = record.get("artifact_paths", {}).get("report_html") or record["artifact_paths"]["report"]
         rows.append(
             "<tr>"
             f"<td><span class=\"pathline table-path\">{escape(record['document_path'])}</span></td>"
@@ -225,7 +265,7 @@ def document_table(records: list[dict[str, Any]]) -> str:
             f"<td>{counts['claims']}</td>"
             f"<td>{counts['findings']}</td>"
             f"<td>{counts['decision_grade']}</td>"
-            f"<td>{artifact_link(record['artifact_paths']['report'], 'Report')}</td>"
+            f"<td>{artifact_link(report, 'Report')}</td>"
             "</tr>"
         )
     return f"""
@@ -331,6 +371,146 @@ def authority_panel(frame: dict[str, Any]) -> str:
 """
 
 
+def semantic_verdict_panel(summary: dict[str, Any]) -> str:
+    by_kind = summary.get("findings_by_kind", {})
+    if by_kind.get("conflict", 0):
+        verdict = "Decision-grade conflicts are present. Review cited claims and ontology constraints before treating this document as aligned target architecture."
+        tone = "priority"
+    elif by_kind.get("deprecated-use", 0):
+        verdict = "No construction conflicts were found, but deprecated target vocabulary needs review."
+        tone = "warning"
+    elif by_kind.get("ambiguous", 0):
+        verdict = "No decision-grade conflicts were found. Ambiguous claims need mapping, scope, or wording review before full alignment."
+        tone = "review"
+    else:
+        verdict = "No decision-grade semantic conflicts were found."
+        tone = "ok"
+    return f"""
+<section class="meaning verdict-panel {tone}">
+  <h2>Verdict</h2>
+  <p>{escape(verdict)}</p>
+</section>
+"""
+
+
+def compare_breakdowns_panel(summary: dict[str, Any], retention: dict[str, Any]) -> str:
+    ambiguity = summary.get("ambiguous_by_bucket", {})
+    rules = summary.get("findings_by_rule", {})
+    return f"""
+<section class="panel">
+  <h2>Evidence Shape</h2>
+  <div class="split-panels">
+    {count_list('Claim Retention', retention, [('Input nonblank lines', 'input_nonblank_line_count'), ('Emitted claims', 'emitted_claim_count'), ('Suppressed lines', 'suppressed_line_count')])}
+    {mapping_list('Ambiguity Breakdown', ambiguity)}
+    {mapping_list('Rule Breakdown', rules)}
+  </div>
+</section>
+"""
+
+
+def count_list(title: str, data: dict[str, Any], rows: list[tuple[str, str]]) -> str:
+    if not data:
+        return f"<article class=\"mini-panel\"><h3>{escape(title)}</h3><p class=\"muted\">None.</p></article>"
+    items = "".join(f"<li><span>{escape(label)}</span><strong>{escape(str(data.get(key, 0)))}</strong></li>" for label, key in rows)
+    return f"<article class=\"mini-panel\"><h3>{escape(title)}</h3><ul class=\"count-list\">{items}</ul></article>"
+
+
+def mapping_list(title: str, data: dict[str, Any]) -> str:
+    if not data:
+        return f"<article class=\"mini-panel\"><h3>{escape(title)}</h3><p class=\"muted\">None.</p></article>"
+    items = "".join(f"<li><span>{escape(key)}</span><strong>{escape(str(value))}</strong></li>" for key, value in sorted(data.items()))
+    return f"<article class=\"mini-panel\"><h3>{escape(title)}</h3><ul class=\"count-list\">{items}</ul></article>"
+
+
+def semantic_finding_section(title: str, findings: list[dict[str, Any]], *, priority: bool = False, limit: int = 25) -> str:
+    if not findings:
+        return f"<section class=\"panel\"><h2>{escape(title)}</h2><p class=\"muted\">None.</p></section>"
+    cards = "".join(semantic_finding_card(item, priority=priority) for item in findings[:limit])
+    more = ""
+    if len(findings) > limit:
+        more = f"<p class=\"muted\">{len(findings) - limit} additional findings omitted here. Use semantic-compare.json for the complete set.</p>"
+    return f"""
+<section class="panel">
+  <div class="section-title"><h2>{escape(title)}</h2><span>{len(findings)} findings</span></div>
+  <div class="finding-grid">{cards}</div>
+  {more}
+</section>
+"""
+
+
+def semantic_finding_card(item: dict[str, Any], *, priority: bool) -> str:
+    line = line_ref(item)
+    target = item.get("entity_id") or item.get("label") or "unresolved target"
+    heading_path = " / ".join(item.get("heading_path") or [])
+    action = item.get("review_action") or "Review source evidence."
+    text = item.get("text") or item.get("explanation_chain", {}).get("source_claim", {}).get("text") or ""
+    return f"""
+<article class="finding-card {'priority' if priority else ''}">
+  <div class="finding-head">
+    <span class="badge {badge_class(str(item.get('kind') or 'finding'))}">{escape(str(item.get('kind') or 'finding'))}</span>
+    <span class="line-ref">{escape(line)}</span>
+  </div>
+  <h3>{escape(str(target))}</h3>
+  <p>{escape(item.get('reason') or 'Review source claim.')}</p>
+  <div class="chips">
+    <span class="chip">{escape(str(item.get('rule') or 'no-rule'))}</span>
+    <span class="chip">{escape(str(item.get('polarity') or 'unknown'))}</span>
+    <span class="chip">{escape(str(item.get('modality') or 'unknown'))}</span>
+    <span class="chip">{escape(str(item.get('assertion_scope') or 'unknown'))}</span>
+  </div>
+  {f'<p class="muted">Heading: {escape(heading_path)}</p>' if heading_path else ''}
+  <p class="action"><strong>Action:</strong> {escape(action)}</p>
+  {f'<blockquote>{escape(text)}</blockquote>' if text else ''}
+</article>
+"""
+
+
+def suppressed_scaffold_panel(items: list[dict[str, Any]], limit: int = 25) -> str:
+    if not items:
+        return "<section class=\"panel\"><h2>Suppressed Scaffold</h2><p class=\"muted\">None.</p></section>"
+    counts: dict[str, int] = {}
+    for item in items:
+        reason = str(item.get("reason") or "unknown")
+        counts[reason] = counts.get(reason, 0) + 1
+    examples = "".join(suppressed_line(item) for item in items[:limit])
+    more = ""
+    if len(items) > limit:
+        more = f"<p class=\"muted\">{len(items) - limit} additional suppressed lines omitted here.</p>"
+    return f"""
+<section class="panel">
+  <div class="section-title"><h2>Suppressed Scaffold</h2><span>{len(items)} lines</span></div>
+  <div class="split-panels">{mapping_list('Suppression Reasons', counts)}</div>
+  <div class="suppressed-list">{examples}</div>
+  {more}
+</section>
+"""
+
+
+def suppressed_line(item: dict[str, Any]) -> str:
+    return (
+        "<p class=\"suppressed-line\">"
+        f"<span class=\"line-ref\">{escape(line_ref(item, path_key='source_path'))}</span> "
+        f"<span class=\"chip\">{escape(str(item.get('reason') or 'unknown'))}</span> "
+        f"{escape(str(item.get('text') or ''))}</p>"
+    )
+
+
+def line_ref(item: dict[str, Any], *, path_key: str = "document_path") -> str:
+    path = item.get(path_key) or item.get("source_path") or "source"
+    start = item.get("line_start") or "?"
+    end = item.get("line_end")
+    if end and end != start:
+        return f"{path}:{start}-{end}"
+    return f"{path}:{start}"
+
+
+def decision_review_items(compare: dict[str, Any]) -> list[dict[str, Any]]:
+    decision_grade = [item for item in compare.get("findings", []) if item.get("decision_grade")]
+    if decision_grade:
+        return decision_grade
+    return [*compare.get("conflicts", []), *compare.get("deprecated_uses", [])]
+
+
 def finding_line(item: dict[str, Any]) -> str:
     return (
         f"<p><span class=\"badge {badge_class(str(item.get('verdict') or 'finding'))}\">{escape(str(item.get('verdict') or 'finding'))}</span> "
@@ -350,10 +530,10 @@ def artifact_link(path: str | None, label: str) -> str:
 
 def artifact_href(path: str) -> str:
     if path.startswith(".semantica/runs/"):
-        return "../runs/" + path.removeprefix(".semantica/runs/")
+        return quote("../runs/" + path.removeprefix(".semantica/runs/"), safe="/._~-")
     if path.startswith(".semantica/current/"):
-        return path.removeprefix(".semantica/current/")
-    return path
+        return quote(path.removeprefix(".semantica/current/"), safe="/._~-")
+    return quote(path, safe="/._~-")
 
 
 def badge_class(value: str) -> str:
@@ -638,6 +818,114 @@ h2 {
   text-decoration: none;
   font-weight: 700;
 }
+.report-link:hover {
+  background: #101828;
+}
+.verdict-panel.priority {
+  background: #fff7f5;
+  border-color: rgba(180, 35, 24, .24);
+}
+.verdict-panel.warning {
+  background: #fffbeb;
+  border-color: rgba(161, 98, 7, .24);
+}
+.verdict-panel.review {
+  background: #f7f5ff;
+  border-color: rgba(104, 69, 189, .22);
+}
+.verdict-panel.ok {
+  background: #f2fbf7;
+}
+.split-panels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.mini-panel {
+  min-width: 0;
+  padding: 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.mini-panel h3, .finding-card h3 {
+  margin-bottom: 8px;
+  font-size: 15px;
+  line-height: 1.25;
+}
+.count-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.count-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  color: var(--muted);
+}
+.count-list strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.finding-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.finding-card {
+  min-width: 0;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--strong-line);
+  border-radius: 8px;
+}
+.finding-card.priority {
+  border-left-color: var(--red);
+}
+.finding-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.line-ref {
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.action {
+  margin: 12px 0 0;
+  color: #344054;
+}
+blockquote {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-left: 3px solid var(--blue);
+  border-radius: 6px;
+  color: #344054;
+  overflow-wrap: anywhere;
+}
+.suppressed-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.suppressed-line {
+  margin: 0;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -672,7 +960,7 @@ td:nth-child(4), td:nth-child(5), td:nth-child(6) {
 @media (max-width: 860px) {
   .shell { width: min(100vw - 24px, 1320px); padding-top: 12px; }
   .hero, .record { grid-template-columns: 1fr; }
-  .facts, .metric-grid, .kv { grid-template-columns: 1fr; }
+  .facts, .metric-grid, .kv, .split-panels, .finding-grid { grid-template-columns: 1fr; }
   .bar-row { grid-template-columns: 1fr; }
   .record-side { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 12px; }
 }

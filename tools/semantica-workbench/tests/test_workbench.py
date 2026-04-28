@@ -29,7 +29,7 @@ from semantica_workbench.core_ontology import (
 from semantica_workbench.core_config import CORE_GRAPH_FILENAMES, NAMED_QUERY_DESCRIPTIONS
 from semantica_workbench.core_viewer import build_cytoscape_payload, write_html_viewer
 from semantica_workbench.core_query import render_query_text, run_named_query
-from semantica_workbench.document_sweep import discover_documents, effective_exclude_segments, review_queue_records, run_document_sweep
+from semantica_workbench.document_sweep import discover_documents, document_slug, effective_exclude_segments, review_queue_records, run_document_sweep
 from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 from semantica_workbench.manifest import load_manifest
@@ -589,6 +589,9 @@ class WorkbenchTests(unittest.TestCase):
             proposal_html = run_dir / CORE_GRAPH_FILENAMES["proposal_review_report_html"]
             self.assertTrue(proposal_html.exists())
             self.assertIn("Architecture Proposal Review", proposal_html.read_text(encoding="utf-8"))
+            semantic_html = run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report_html"]
+            self.assertTrue(semantic_html.exists())
+            self.assertIn("Semantic Compare Report", semantic_html.read_text(encoding="utf-8"))
             self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["verdict_repair"]).exists())
             summary = run_named_query(str(run_dir), "proposal-review-summary")
             self.assertEqual("proposal-review-summary", summary["query"])
@@ -1091,6 +1094,10 @@ class WorkbenchTests(unittest.TestCase):
         html_text = sweep_html.read_text(encoding="utf-8")
         self.assertIn("Semantic Evidence Sweep", html_text)
         self.assertIn("Per-Document Detail", html_text)
+        active_record = by_path["tools/semantica-workbench/fixtures/docs/sweep/active.md"]
+        self.assertTrue(active_record["artifact_paths"]["report_html"].endswith("/semantic-compare-report.html"))
+        self.assertTrue((run_dir / "documents" / document_slug(Path(active_record["document_path"])) / CORE_GRAPH_FILENAMES["semantic_compare_report_html"]).exists())
+        self.assertIn("semantic-compare-report.html", html_text)
         self.assertTrue((run_dir / "documents").exists())
         viewer_text = (run_dir / CORE_GRAPH_FILENAMES["viewer"]).read_text(encoding="utf-8")
         match = re.search(r'<script id="graph-data" type="application/json">(.*?)</script>', viewer_text, re.S)

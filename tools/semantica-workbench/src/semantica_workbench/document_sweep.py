@@ -25,7 +25,7 @@ from .core_config import (
 from .core_viewer import write_html_viewer
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json, write_jsonl
 from .paths import REPO_ROOT
-from .report_html import write_sweep_report_html
+from .report_html import write_semantic_compare_report_html, write_sweep_report_html
 from .semantic_evidence import (
     compare_evidence_to_ontology,
     extract_evidence_claims,
@@ -179,6 +179,7 @@ def analyze_document(
         "artifact_paths": {
             "semantic_compare": rel(document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]),
             "report": rel(document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]),
+            "report_html": rel(document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report_html"]),
         },
     }
 
@@ -202,6 +203,7 @@ def write_document_artifacts(document_run_dir: Path, evidence: dict[str, Any], c
     write_json(document_run_dir / CORE_GRAPH_FILENAMES["resolved_evidence"], {"claims": compare.get("claims", []), "findings": compare.get("findings", [])})
     write_json(document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare"], compare)
     (document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(render_semantic_compare_report(compare), encoding="utf-8")
+    write_semantic_compare_report_html(document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report_html"], compare)
     (document_run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(semantic_compare_turtle(compare), encoding="utf-8")
 
 
