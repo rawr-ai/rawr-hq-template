@@ -25,6 +25,7 @@ from semantica_workbench.manifest import load_manifest
 from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
+from semantica_workbench.semantica_graph import semantica_graph_probe
 from semantica_workbench.semantica_intake import map_semantica_chunk_to_span, semantica_intake_probe
 from semantica_workbench.semantic_evidence import (
     compare_evidence_to_ontology,
@@ -128,6 +129,41 @@ class WorkbenchTests(unittest.TestCase):
         excluded_types = {"DeprecatedTerm", "EvidenceClaim", "ForbiddenPattern", "ReviewFinding", "CandidateEntity"}
         self.assertTrue(target_entities)
         self.assertFalse(any(entity["type"] in excluded_types for entity in target_entities))
+
+    def test_semantica_graph_probe_preserves_rawr_target_boundaries(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        proof = graph["semantica_graph"]
+        self.assertEqual("rawr-semantica-graph-proof-v1", proof["schema_version"])
+        self.assertFalse(proof["candidate_handling"]["promotion_allowed"])
+        self.assertTrue(proof["fallback"]["rawr_id_authority"])
+        self.assertTrue(proof["fallback"]["rawr_predicate_authority"])
+        guards = proof["rawr_guards"]
+        self.assertTrue(guards["stable_ids_preserved"])
+        self.assertTrue(guards["candidate_ids_excluded_from_target"])
+        self.assertTrue(guards["evidence_types_excluded_from_target"])
+        self.assertTrue(guards["target_relations_resolve_inside_target"])
+
+    def test_semantica_graph_probe_does_not_promote_candidates(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        target_ids = {entity["id"] for entity in graph["layered_graph"]["target_architecture_view"]["entities"]}
+        candidate_ids = set(graph["semantica_graph"]["candidate_handling"]["candidate_ids"])
+        self.assertTrue(candidate_ids)
+        self.assertFalse(target_ids & candidate_ids)
+
+    def test_semantica_graph_probe_uses_contract_predicate_allow_list(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        allowed = {predicate["id"] for predicate in ontology["contract"]["predicates"]}
+        mutated = deepcopy(graph["layered_graph"])
+        mutated["relations"] = deepcopy(mutated["relations"])
+        mutated["relations"][0]["predicate"] = "mentions"
+        proof = semantica_graph_probe(mutated, graph["candidate_queue"], allowed)
+        self.assertFalse(proof["rawr_guards"]["controlled_predicates_preserved"])
 
     def test_verification_policy_stays_out_of_canonical_views(self) -> None:
         ontology = deepcopy(load_core_ontology())
