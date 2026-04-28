@@ -20,6 +20,7 @@ from .core_ontology import (
     validate_core_ontology,
     visualize_core_ontology,
 )
+from .core_config import CORE_GRAPH_FILENAMES, DEFAULT_CORE_VIEWER_HOST, DEFAULT_CORE_VIEWER_PORT
 from .core_query import list_queries, render_query_text, run_named_query, run_sparql_query
 from .diffing import build_diff
 from .extraction import extract_chunk, request_params_for_model, schema_hash
@@ -73,8 +74,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     core_serve = sub.add_parser("core:serve")
     core_serve.add_argument("--run", default="latest")
-    core_serve.add_argument("--host", default="127.0.0.1")
-    core_serve.add_argument("--port", type=int, default=8765)
+    core_serve.add_argument("--host", default=DEFAULT_CORE_VIEWER_HOST)
+    core_serve.add_argument("--port", type=int, default=DEFAULT_CORE_VIEWER_PORT)
     core_serve.add_argument("--smoke", action="store_true")
     core_serve.set_defaults(func=cmd_core_serve)
 
@@ -168,13 +169,13 @@ def cmd_core_export(args) -> int:
 
 def cmd_core_visualize(args) -> int:
     run_dir = visualize_core_ontology(args.run)
-    print(f"core_visualization={rel(run_dir / 'graph-viewer.html')}")
+    print(f"core_visualization={rel(run_dir / CORE_GRAPH_FILENAMES['viewer'])}")
     return 0
 
 
 def cmd_core_serve(args) -> int:
     run_dir = resolve_run(args.run)
-    viewer = run_dir / "graph-viewer.html"
+    viewer = run_dir / CORE_GRAPH_FILENAMES["viewer"]
     if not viewer.exists():
         run_dir = visualize_core_ontology(args.run)
     handler = lambda *handler_args, **handler_kwargs: http.server.SimpleHTTPRequestHandler(
@@ -184,7 +185,7 @@ def cmd_core_serve(args) -> int:
     )
     with socketserver.ThreadingTCPServer((args.host, args.port), handler) as server:
         host, port = server.server_address
-        url = f"http://{host}:{port}/graph-viewer.html"
+        url = f"http://{host}:{port}/{CORE_GRAPH_FILENAMES['viewer']}"
         print(f"core_viewer_url={url}")
         if args.smoke:
             thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -220,7 +221,7 @@ def cmd_core_query(args) -> int:
 def cmd_doc_diff(args) -> int:
     document = Path(args.document)
     run_dir = diff_document_against_core_ontology(document, args.run)
-    print(f"document_diff={rel(run_dir / 'document-diff-report.md')}")
+    print(f"document_diff={rel(run_dir / CORE_GRAPH_FILENAMES['document_diff_report'])}")
     return 0
 
 

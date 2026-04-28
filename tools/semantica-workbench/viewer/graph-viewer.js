@@ -4,22 +4,9 @@ const allNodes = allElements.filter((element) => !element.data.source);
 const allEdges = allElements.filter((element) => element.data.source);
 const selectedNodeIds = [];
 let selectedItem = null;
-
-const layerColors = {
-  core: "#2f6fed",
-  "runtime-realization-overlay": "#00856f",
-  "authority-and-document-overlay": "#b54708",
-  "classifier-readiness-overlay": "#7a5af8",
-  "candidate-queue": "#667085",
-};
-
-const statusColors = {
-  locked: "#12b76a",
-  forbidden: "#f04438",
-  deprecated: "#f79009",
-  tbd: "#7a5af8",
-  candidate: "#667085",
-};
+const viewerConfig = payload.viewerConfig || {};
+const layerColors = viewerConfig.layerColors || {};
+const statusColors = viewerConfig.statusColors || {};
 
 const presets = {
   canonical: {

@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .core_config import CORE_GRAPH_FILENAMES
+
 
 def semantica_status() -> dict[str, Any]:
     try:
@@ -102,7 +104,7 @@ def export_semantica_ontology(entities: list[dict[str, Any]], relations: list[di
         with contextlib.redirect_stdout(stream):
             generated = engine.from_data(payload)
         result["operations"]["from_data"] = {"ok": True}
-        ontology_path = run_dir / "semantica-ontology.json"
+        ontology_path = run_dir / CORE_GRAPH_FILENAMES["semantica_ontology"]
         ontology_path.write_text(json.dumps(jsonable(generated), indent=2, sort_keys=True) + "\n", encoding="utf-8")
         result["outputs"]["ontology_json"] = str(ontology_path)
     except Exception as exc:
@@ -115,7 +117,7 @@ def export_semantica_ontology(entities: list[dict[str, Any]], relations: list[di
     result["operations"]["validate"] = call_engine(engine, "validate", generated)
     result["operations"]["evaluate"] = call_engine(engine, "evaluate", generated)
     data_graph = to_data_graph_turtle(entities, relations)
-    data_graph_path = run_dir / "semantica-data-graph.ttl"
+    data_graph_path = run_dir / CORE_GRAPH_FILENAMES["semantica_data_graph"]
     data_graph_path.write_text(data_graph, encoding="utf-8")
     result["outputs"]["data_graph_ttl"] = str(data_graph_path)
     result["operations"]["validate_graph"] = call_engine_kwargs(
@@ -129,14 +131,14 @@ def export_semantica_ontology(entities: list[dict[str, Any]], relations: list[di
     owl = call_engine(engine, "to_owl", generated)
     result["operations"]["to_owl"] = owl
     if owl.get("ok") and isinstance(owl.get("value"), str):
-        owl_path = run_dir / "semantica-ontology.owl"
+        owl_path = run_dir / CORE_GRAPH_FILENAMES["semantica_owl"]
         owl_path.write_text(owl["value"], encoding="utf-8")
         result["outputs"]["owl"] = str(owl_path)
 
     shacl = call_engine(engine, "to_shacl", generated)
     result["operations"]["to_shacl"] = shacl
     if shacl.get("ok") and isinstance(shacl.get("value"), str):
-        shacl_path = run_dir / "semantica-ontology.shacl.ttl"
+        shacl_path = run_dir / CORE_GRAPH_FILENAMES["semantica_shacl"]
         shacl_path.write_text(shacl["value"], encoding="utf-8")
         result["outputs"]["shacl"] = str(shacl_path)
 
