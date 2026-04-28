@@ -27,6 +27,7 @@ CORE_GRAPH_FILENAMES = {
     "document_chunks": "document-chunks.jsonl",
     "evidence_claims": "evidence-claims.jsonl",
     "evidence_claims_json": "evidence-claims.json",
+    "suppressed_lines": "suppressed-lines.json",
     "resolved_evidence": "resolved-evidence.json",
     "semantic_compare": "semantic-compare.json",
     "semantic_compare_report": "semantic-compare-report.md",
@@ -52,6 +53,7 @@ LAYER_COLORS = {
     "core": "#2f6fed",
     "runtime-realization-overlay": "#00856f",
     "authority-and-document-overlay": "#b54708",
+    "verification-policy-overlay": "#2563eb",
     "classifier-readiness-overlay": "#7a5af8",
     "candidate-queue": "#667085",
 }
@@ -79,6 +81,10 @@ NAMED_QUERY_DESCRIPTIONS = {
     "deprecated-uses": "Deprecated vocabulary used as target architecture.",
     "ambiguous-claims": "Claims that need review because polarity, scope, or resolution is incomplete.",
     "candidate-new": "In-scope candidate concepts found by semantic evidence comparison.",
+    "ambiguity-summary": "Ambiguous semantic evidence grouped by reason bucket and review action.",
+    "entityless-findings": "Semantic findings that have no resolved ontology entity and need review or suppression.",
+    "verification-policy-gaps": "Subordinate testing/verification-policy claims that still need ontology or document review.",
+    "decision-review-queue": "Actionable semantic findings for document update and migration-planning review.",
 }
 
 
