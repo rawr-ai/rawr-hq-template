@@ -61,6 +61,15 @@ def run_named_query(run: str | None, name: str) -> dict[str, Any]:
             "semantic_summary": (semantic or {}).get("summary", {}),
             "candidate_count": len(candidate_queue.get("candidates", [])),
         }
+    if name == "semantica-review-surface":
+        from .semantica_review_surface import semantica_review_surface_probe
+
+        return {
+            "query": name,
+            "run": display_path(run_dir),
+            "artifact": None,
+            "surface": semantica_review_surface_probe(run_dir, graph, candidate_queue),
+        }
     if name == "forbidden-terms":
         forbidden = [entity for entity in graph["entities"] if entity.get("status") == "forbidden" or entity.get("type") == "ForbiddenPattern"]
         edges = [relation for relation in graph["relations"] if relation.get("predicate") in {"forbids", "replaces"}]
@@ -341,6 +350,30 @@ def render_query_text(result: dict[str, Any]) -> str:
         if "candidate_count" not in result["summary"]:
             lines.append(f"- candidate_count: {result['candidate_count']}")
         return "\n".join(lines)
+    if result.get("query") == "semantica-review-surface":
+        surface = result["surface"]
+        mcp = surface["mcp"]
+        separation = surface["separation"]
+        export = surface["export"]
+        visualization = surface["visualization"]
+        return "\n".join(
+            [
+                "semantica review surface",
+                f"- run: {result.get('run')}",
+                f"- mcp_available: {mcp.get('available')}",
+                f"- mcp_tools_present: {', '.join(mcp.get('required_review_tools_present', []))}",
+                f"- mcp_missing_tools: {', '.join(mcp.get('missing_review_tools', [])) or 'none'}",
+                f"- canonical_entities: {separation.get('canonical_entity_count', 0)}",
+                f"- candidates: {separation.get('candidate_count', 0)}",
+                f"- semantic_compare_status: {separation.get('semantic_compare_status')}",
+                f"- findings: {separation.get('finding_count', 0)}",
+                f"- target_view_excludes_candidates: {separation.get('target_view_excludes_candidates')}",
+                f"- export_available: {export.get('available')}",
+                f"- export_preservation_validated: {export.get('rawr_export_contract', {}).get('preservation_validated')}",
+                f"- visualization_available: {visualization.get('available')}",
+                f"- static_viewer_present: {visualization.get('static_viewer_present')}",
+            ]
+        )
     if result.get("query") == "ambiguity-summary":
         lines = semantic_query_header(result, "Ambiguity summary")
         for row in result.get("buckets", []):

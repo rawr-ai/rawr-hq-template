@@ -519,6 +519,67 @@ class WorkbenchTests(unittest.TestCase):
             self.assertIn("artifact:", text)
             self.assertIn("document:", text)
 
+    def test_semantica_review_surface_query_reports_mcp_export_and_boundaries(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        evidence = extract_evidence_claims(fixture_document_path(), graph["layered_graph"], graph["candidate_queue"], fixture=True)
+        compare = compare_evidence_to_ontology(evidence, graph["layered_graph"], graph["candidate_queue"])
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            write_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            write_json(run_dir / CORE_GRAPH_FILENAMES["semantic_compare"], compare)
+            result = run_named_query(str(run_dir), "semantica-review-surface")
+        self.assertEqual("semantica-review-surface", result["query"])
+        surface = result["surface"]
+        self.assertEqual("rawr-semantica-review-surface-v1", surface["schema_version"])
+        self.assertTrue(surface["mcp"]["available"])
+        self.assertIn("run_reasoning", surface["mcp"]["required_review_tools_present"])
+        self.assertIn("semantica://graph/summary", surface["mcp"]["required_review_resources_present"])
+        self.assertFalse(surface["review_affordances"]["scrape_semantica_current_required"])
+        self.assertFalse(surface["review_affordances"]["semantica_output_authoritative"])
+        self.assertEqual("present", surface["separation"]["semantic_compare_status"])
+        self.assertIsNotNone(surface["separation"]["finding_count"])
+        self.assertTrue(surface["separation"]["target_view_excludes_candidates"])
+        self.assertFalse(surface["export"]["rawr_export_contract"]["preservation_validated"])
+        text = render_query_text(result)
+        self.assertIn("semantica review surface", text)
+        self.assertIn("mcp_available: True", text)
+
+    def test_semantica_review_surface_marks_missing_semantic_artifact(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            write_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            result = run_named_query(str(run_dir), "semantica-review-surface")
+        separation = result["surface"]["separation"]
+        self.assertFalse(separation["semantic_compare_artifact_present"])
+        self.assertEqual("missing-run-doc-compare-first", separation["semantic_compare_status"])
+        self.assertIsNone(separation["finding_count"])
+        self.assertIsNone(separation["decision_grade_finding_count"])
+
+    def test_semantica_review_surface_detects_candidate_like_target_leakage(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        mutated = deepcopy(graph["layered_graph"])
+        mutated["target_architecture_view"] = deepcopy(mutated["target_architecture_view"])
+        mutated["target_architecture_view"]["entities"] = deepcopy(mutated["target_architecture_view"]["entities"])
+        leaked = deepcopy(mutated["target_architecture_view"]["entities"][0])
+        leaked["id"] = "leaked.candidate.not.in.queue"
+        leaked["status"] = "candidate"
+        mutated["target_architecture_view"]["entities"].append(leaked)
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            write_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"], mutated)
+            write_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            result = run_named_query(str(run_dir), "semantica-review-surface")
+        self.assertFalse(result["surface"]["separation"]["target_view_excludes_candidates"])
+
     def test_semantic_query_requires_semantic_artifact(self) -> None:
         ontology = load_core_ontology()
         validation = validate_loaded_core_ontology(ontology)

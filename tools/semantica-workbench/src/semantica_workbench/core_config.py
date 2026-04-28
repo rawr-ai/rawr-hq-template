@@ -122,6 +122,7 @@ NAMED_QUERY_DESCRIPTIONS = {
     "entityless-findings": "Semantic findings that have no resolved ontology entity and need review or suppression.",
     "verification-policy-gaps": "Subordinate testing/verification-policy claims that still need ontology or document review.",
     "decision-review-queue": "Actionable semantic findings for document update and migration-planning review.",
+    "semantica-review-surface": "semantica MCP, export, visualization, and RAWR review-surface capability proof.",
     "sweep-summary": "Aggregate recommendation counts from the latest document sweep.",
     "sweep-review-queue": "Documents and findings that need human review after a document sweep.",
     "sweep-quarantine-candidates": "Advisory quarantine candidates from the latest document sweep.",
