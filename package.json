@@ -78,6 +78,8 @@
     "semantica:doc:triage": "bun tools/semantica-workbench/bin/workbench.mjs doc:triage",
     "semantica:doc:extract": "bun tools/semantica-workbench/bin/workbench.mjs doc:extract",
     "semantica:doc:compare": "bun tools/semantica-workbench/bin/workbench.mjs doc:compare",
+    "semantica:doc:frame": "bun tools/semantica-workbench/bin/workbench.mjs doc:frame",
+    "semantica:doc:proposal-compare": "bun tools/semantica-workbench/bin/workbench.mjs doc:proposal-compare",
     "semantica:doc:sweep": "bun tools/semantica-workbench/bin/workbench.mjs doc:sweep",
     "semantica:semantic:capability": "bun tools/semantica-workbench/bin/workbench.mjs semantic:capability",
     "semantica:extract": "bun tools/semantica-workbench/bin/workbench.mjs extract",

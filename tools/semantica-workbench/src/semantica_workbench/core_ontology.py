@@ -10,6 +10,7 @@ from typing import Any
 import yaml
 
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json
+from .architecture_change_frame import build_architecture_change_frame_package, fixture_frame_document_path
 from .core_config import CORE_CURRENT_FILES, CORE_GRAPH_FILENAMES, default_testing_plan
 from .core_viewer import write_html_viewer
 from .paths import (
@@ -178,6 +179,84 @@ def compare_document_evidence(document: Path | None, run: str | None = "latest",
     write_json(run_dir / CORE_GRAPH_FILENAMES["semantic_compare"], compare)
     (run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(render_semantic_compare_report(compare), encoding="utf-8")
     (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(semantic_compare_turtle(compare), encoding="utf-8")
+    mark_current(run_dir, CORE_CURRENT_FILES)
+    return run_dir
+
+
+def write_architecture_change_frame(
+    document: Path | None,
+    run: str | None = "latest",
+    *,
+    fixture: bool = False,
+    semantica_pilot: bool = False,
+    reference_bundle: Path | None = None,
+) -> Path:
+    return write_architecture_proposal_package(
+        document,
+        run,
+        fixture=fixture,
+        semantica_pilot=semantica_pilot,
+        reference_bundle=reference_bundle,
+        evaluate=False,
+    )
+
+
+def compare_architecture_proposal(
+    document: Path | None,
+    run: str | None = "latest",
+    *,
+    fixture: bool = False,
+    semantica_pilot: bool = False,
+    reference_bundle: Path | None = None,
+) -> Path:
+    return write_architecture_proposal_package(
+        document,
+        run,
+        fixture=fixture,
+        semantica_pilot=semantica_pilot,
+        reference_bundle=reference_bundle,
+        evaluate=True,
+    )
+
+
+def write_architecture_proposal_package(
+    document: Path | None,
+    run: str | None,
+    *,
+    fixture: bool,
+    semantica_pilot: bool,
+    reference_bundle: Path | None,
+    evaluate: bool,
+) -> Path:
+    run_dir = resolve_run(run)
+    graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
+    candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
+    document_path = fixture_frame_document_path() if fixture else document
+    if document_path is None:
+        document_path = TESTING_PLAN
+    if not document_path.is_absolute():
+        document_path = REPO_ROOT / document_path
+    package = build_architecture_change_frame_package(
+        document_path,
+        graph,
+        candidate_queue,
+        fixture=fixture,
+        semantica_pilot_enabled=semantica_pilot,
+        evaluate=evaluate,
+        reference_bundle=reference_bundle,
+    )
+    write_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"], package["evidence"])
+    write_json(run_dir / CORE_GRAPH_FILENAMES["semantic_compare"], package["semantic_compare"])
+    (run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(render_semantic_compare_report(package["semantic_compare"]), encoding="utf-8")
+    (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(semantic_compare_turtle(package["semantic_compare"]), encoding="utf-8")
+    write_json(run_dir / CORE_GRAPH_FILENAMES["architecture_change_frame"], package["frame"])
+    write_json(run_dir / CORE_GRAPH_FILENAMES["architecture_change_frame_validation"], package["validation"])
+    write_json(run_dir / CORE_GRAPH_FILENAMES["noun_mappings"], package["noun_mappings"])
+    (run_dir / CORE_GRAPH_FILENAMES["proposal_graph_ttl"]).write_text(package["proposal_graph_ttl"], encoding="utf-8")
+    write_json(run_dir / CORE_GRAPH_FILENAMES["claim_comparisons"], package["claim_comparisons"])
+    write_json(run_dir / CORE_GRAPH_FILENAMES["verdict_repair"], package["verdict_repair"])
+    (run_dir / CORE_GRAPH_FILENAMES["proposal_review_report"]).write_text(package["review_report"], encoding="utf-8")
+    write_json(run_dir / CORE_GRAPH_FILENAMES["proposal_provenance"], package["provenance"])
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
 

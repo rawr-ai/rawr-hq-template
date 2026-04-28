@@ -335,7 +335,6 @@
           "type": "string",
           "enum": [
             "comparison-only",
-            "candidate-input",
             "not-used"
           ]
         },
@@ -450,7 +449,6 @@
         "candidate",
         "tbd",
         "review-needed",
-        "accepted",
         "rejected",
         "suppressed"
       ]

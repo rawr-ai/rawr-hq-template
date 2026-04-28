@@ -26,7 +26,11 @@ bun run semantica:semantic:capability
 bun run semantica:doc:triage -- --document docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
 bun run semantica:doc:extract -- --fixture
 bun run semantica:doc:compare -- --fixture
+bun run semantica:doc:frame -- --fixture
+bun run semantica:doc:proposal-compare -- --fixture
 bun run semantica:doc:diff -- --mode semantic --document docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+bun run semantica:core:query -- --named proposal-review-summary
+bun run semantica:core:query -- --named proposal-repair-queue
 bun run semantica:run -- --fixture
 bun run semantica:extract -- --manifest docs/projects/rawr-final-architecture-migration/semantic-source-manifest.yaml --limit-chunks 2
 bun run semantica:ontology -- --run latest
@@ -50,6 +54,8 @@ The core ontology commands are seed-first and treat reviewed YAML as the authori
 - `semantica:doc:triage` runs the legacy lexical term matcher. It is useful for hints, but it is not decision-grade semantic validation.
 - `semantica:doc:extract` parses a comparison document into source-backed evidence claims with polarity, modality, assertion scope, resolved IDs, and review state.
 - `semantica:doc:compare` resolves those evidence claims against the ontology baseline and emits `aligned`, `conflict`, `deprecated-use`, `candidate-new`, `ambiguous`, `outside-scope`, and `informational` findings.
+- `semantica:doc:frame` maps source-backed evidence into an evidence-only `ArchitectureChangeFrame` and validation artifact. Extraction-only frames carry `not-evaluated` claim verdicts and no review actions.
+- `semantica:doc:proposal-compare` runs RAWR-owned deterministic comparison over the frame and writes noun mappings, proposal graph TTL, claim comparisons, verdict/repair JSON, provenance, and a review report.
 - `semantica:doc:diff -- --mode semantic` is the compatibility command for the semantic evidence path. The default mode remains lexical for compatibility.
 
 The reviewed source files live under:
@@ -116,15 +122,27 @@ A phrase match alone must not create a decision-grade finding. For example, `The
 
 ## Architecture Change Frame Pilot
 
-The frame pilot schema lives at:
+The frame pipeline schema lives at:
 
 ```text
 tools/semantica-workbench/schemas/architecture-change-frame.schema.json
 ```
 
-It adapts the external `ArchitectureChangeFrame` vocabulary as an intermediate extraction target for semantica/LLM pilots. The schema keeps RAWR ownership explicit: semantica output is evidence, the reviewed ontology remains truth authority, reference geometry is comparison-only unless separately promoted, and every claim or noun mapping must carry structured evidence refs with source path, heading context, line span, char span, extraction method, confidence, review state, and `promotion_allowed: false`.
+It adapts the external `ArchitectureChangeFrame` vocabulary as an intermediate extraction target for semantica/LLM pilots. The schema keeps RAWR ownership explicit: semantica output is evidence, the reviewed ontology remains truth authority, reference geometry is comparison-only, and every claim or noun mapping must carry structured evidence refs with source path, heading context, line span, char span, extraction method, confidence, review state, and `promotion_allowed: false`.
 
-The schema is not yet the decision-grade comparison engine. It is the contract the next extraction step should target before deterministic RAWR comparison and verdict/repair logic consume the frame.
+The first executable path is deterministic and evidence-backed:
+
+```text
+RAWR evidence claims
+  -> ArchitectureChangeFrame
+  -> noun mappings
+  -> proposal graph TTL
+  -> claim comparisons
+  -> verdict/repair package
+  -> review report
+```
+
+`doc:frame` stops at an extraction-only frame. `doc:proposal-compare` applies RAWR-owned verdict policy and review-action generation. Generated artifacts are review aids; they do not promote ontology truth.
 
 ## Source Scope
 

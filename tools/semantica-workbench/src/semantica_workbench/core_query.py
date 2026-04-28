@@ -35,6 +35,11 @@ SWEEP_NAMED_QUERIES = {
     "sweep-high-ambiguity-docs",
 }
 
+PROPOSAL_NAMED_QUERIES = {
+    "proposal-review-summary",
+    "proposal-repair-queue",
+}
+
 
 def list_queries() -> dict[str, Any]:
     sparql_examples = []
@@ -48,6 +53,9 @@ def run_named_query(run: str | None, name: str) -> dict[str, Any]:
     graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     diff_path = run_dir / CORE_GRAPH_FILENAMES["document_diff"]
     semantic_path = run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]
+    frame_path = run_dir / CORE_GRAPH_FILENAMES["architecture_change_frame"]
+    comparisons_path = run_dir / CORE_GRAPH_FILENAMES["claim_comparisons"]
+    verdict_path = run_dir / CORE_GRAPH_FILENAMES["verdict_repair"]
     candidate_queue_path = run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]
     diff = read_json(diff_path) if diff_path.exists() else {"summary": {}}
     semantic = read_json(semantic_path) if semantic_path.exists() else None
@@ -97,9 +105,33 @@ def run_named_query(run: str | None, name: str) -> dict[str, Any]:
         return {"query": name, "items": diff.get("review_needed", []), "summary": diff.get("summary", {})}
     if name in SEMANTIC_NAMED_QUERIES:
         semantic = require_semantic_compare(run_dir, semantic_path, semantic)
+    if name in PROPOSAL_NAMED_QUERIES:
+        proposal = require_proposal_package(run_dir, frame_path, comparisons_path, verdict_path)
     if name in SWEEP_NAMED_QUERIES:
         sweep_path = run_dir / CORE_GRAPH_FILENAMES["doc_sweep"]
         sweep = require_doc_sweep(run_dir, sweep_path)
+    if name == "proposal-review-summary":
+        return {
+            "query": name,
+            "run": display_path(run_dir),
+            "artifact": display_path(verdict_path),
+            "frame": proposal["frame"],
+            "summary": proposal["verdict"].get("summary", {}),
+            "overall_verdict": proposal["verdict"].get("overall_verdict"),
+            "recommended_next_action": proposal["verdict"].get("recommended_next_action"),
+            "claim_comparisons": proposal["comparisons"].get("comparisons", []),
+        }
+    if name == "proposal-repair-queue":
+        repair_steps = proposal["verdict"].get("repair_steps", [])
+        return {
+            "query": name,
+            "run": display_path(run_dir),
+            "artifact": display_path(verdict_path),
+            "frame_id": proposal["frame"].get("frame_id"),
+            "document": proposal["frame"].get("document", {}).get("source_path"),
+            "summary": proposal["verdict"].get("summary", {}),
+            "items": repair_steps,
+        }
     if name == "sweep-summary":
         return sweep_query_result(run_dir, sweep_path, name, sweep, sweep.get("documents", []), item_key="documents")
     if name == "sweep-review-queue":
@@ -210,6 +242,22 @@ def require_doc_sweep(run_dir: Path, sweep_path: Path) -> dict[str, Any]:
             "Run `bun run semantica:doc:sweep -- --root docs` first."
         )
     return read_json(sweep_path)
+
+
+def require_proposal_package(run_dir: Path, frame_path: Path, comparisons_path: Path, verdict_path: Path) -> dict[str, Any]:
+    missing = [path for path in [frame_path, comparisons_path, verdict_path] if not path.exists()]
+    if missing:
+        missing_text = ", ".join(display_path(path) for path in missing)
+        raise FileNotFoundError(
+            "Proposal named query requires architecture proposal comparison output. "
+            f"Missing {missing_text} for run {display_path(run_dir)}. "
+            "Run `bun run semantica:doc:proposal-compare -- --fixture` first."
+        )
+    return {
+        "frame": read_json(frame_path),
+        "comparisons": read_json(comparisons_path),
+        "verdict": read_json(verdict_path),
+    }
 
 
 def sweep_query_result(
@@ -387,6 +435,44 @@ def render_query_text(result: dict[str, Any]) -> str:
         for key in ["finding_count", "decision_grade_finding_count", "suppressed_line_count"]:
             if key in summary:
                 lines.append(f"- {key}: {summary[key]}")
+        return "\n".join(lines)
+    if result.get("query") == "proposal-review-summary":
+        lines = [
+            "Proposal review summary",
+            f"- run: {result.get('run')}",
+            f"- artifact: {result.get('artifact')}",
+            f"- frame: {result.get('frame', {}).get('frame_id')}",
+            f"- document: {result.get('frame', {}).get('document', {}).get('source_path')}",
+            f"- overall_verdict: {result.get('overall_verdict')}",
+            f"- recommended_next_action: {result.get('recommended_next_action')}",
+            f"- repair_steps: {result.get('summary', {}).get('repair_step_count', 0)}",
+        ]
+        for item in result.get("claim_comparisons", [])[:10]:
+            source = item.get("source_claim", {})
+            lines.append(
+                "- "
+                f"{item.get('verdict')} / {item.get('review_action')} "
+                f"{source.get('document_path')}:{source.get('line_start')} "
+                f"{source.get('text')}"
+            )
+        return "\n".join(lines)
+    if result.get("query") == "proposal-repair-queue":
+        lines = [
+            "Proposal repair queue",
+            f"- run: {result.get('run')}",
+            f"- artifact: {result.get('artifact')}",
+            f"- frame: {result.get('frame_id')}",
+            f"- document: {result.get('document')}",
+            f"- items: {len(result.get('items', []))}",
+        ]
+        for item in result.get("items", [])[:10]:
+            source = item.get("source_claim", {})
+            lines.append(
+                "- "
+                f"{item.get('id')} {item.get('verdict')} / {item.get('review_action')} "
+                f"{source.get('document_path')}:{source.get('line_start')} "
+                f"{item.get('repair_hint')}"
+            )
         return "\n".join(lines)
     if result.get("query") in SWEEP_NAMED_QUERIES:
         items = result.get("items", result.get("documents", []))
