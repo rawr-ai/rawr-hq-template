@@ -1651,6 +1651,15 @@ entities:
   layer: core
   status: forbidden
   definition: A root-level core/ authoring root is invalid; platform machinery lives under packages/core/*.
+  constraint:
+    kind: prohibited-construction
+    prohibited_action: create-authoring-root
+    prohibited_location: repo-root
+    prohibited_name: core/
+    terms:
+    - root-level core/ authoring root
+    - core/ root
+    replacement: packages/core/*
   aliases:
   - core/ root
   source_refs:
@@ -1673,6 +1682,15 @@ entities:
   status: forbidden
   definition: A root-level runtime/ authoring root is invalid; runtime machinery lives under packages/core/runtime/* and authored
     resource contracts live under resources/*.
+  constraint:
+    kind: prohibited-construction
+    prohibited_action: create-authoring-root
+    prohibited_location: repo-root
+    prohibited_name: runtime/
+    terms:
+    - root-level runtime/ authoring root
+    - runtime/ root
+    replacement: packages/core/runtime/* and resources/*
   aliases:
   - runtime/ root
   source_refs:
@@ -1694,6 +1712,12 @@ entities:
   layer: core
   status: forbidden
   definition: Superseded SDK package names are invalid target names; @rawr/sdk is the public SDK.
+  constraint:
+    kind: deprecated-or-prohibited-target-name
+    prohibited_action: use-target-package-name
+    terms:
+    - superseded SDK package name
+    replacement: '@rawr/sdk'
   aliases: []
   source_refs:
   - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
@@ -1713,6 +1737,16 @@ entities:
   layer: core
   status: forbidden
   definition: Role-specific public start verbs are invalid; startApp(...) is the canonical start verb.
+  constraint:
+    kind: prohibited-construction
+    prohibited_action: use-role-specific-public-start-verb
+    terms:
+    - startServer(...)
+    - startAsync(...)
+    - startWeb(...)
+    - startAgent(...)
+    - startDesktop(...)
+    replacement: startApp(...)
   aliases:
   - startServer(...)
   - startAsync(...)
@@ -1739,6 +1773,16 @@ entities:
   status: forbidden
   definition: Plugin fields named exposure, visibility, publication, public, internal, kind, or adapter.kind are invalid when
     used to declare or reclassify projection status.
+  constraint:
+    kind: prohibited-construction
+    prohibited_action: reclassify-projection-status-with-field
+    terms:
+    - exposure field
+    - visibility field
+    - publication field
+    - adapter.kind projection field
+    - public/internal projection fields
+    replacement: topology plus builder classification
   aliases:
   - exposure field
   - visibility field
@@ -1765,6 +1809,14 @@ entities:
   status: forbidden
   definition: Plugins and apps must not import service repositories, migrations, module routers, module schemas, service-private
     middleware, or service-private providers.
+  constraint:
+    kind: prohibited-construction
+    prohibited_action: import-service-internals-from-plugin-or-app
+    terms:
+    - service-private import
+    - service repositories
+    - service-private providers
+    replacement: public SDK/import surface
   aliases:
   - service-private import
   source_refs:
@@ -1788,6 +1840,14 @@ entities:
   status: forbidden
   definition: Multiple services may share a database instance or pool, but they do not share table write authority or migration
     authority by accident.
+  constraint:
+    kind: prohibited-construction
+    prohibited_action: share-write-or-migration-authority-by-accident
+    terms:
+    - shared table write authority by accident
+    - shared repository across unrelated services
+    - shared migration authority
+    replacement: service-owned table and migration authority
   aliases:
   - shared repository across unrelated services
   - shared migration authority
@@ -1813,6 +1873,13 @@ entities:
   layer: core
   status: forbidden
   definition: A runtime profile field named resources is not the provider-selection field.
+  constraint:
+    kind: prohibited-construction
+    prohibited_action: use-resources-field-for-provider-selection
+    terms:
+    - resources profile field
+    - profile field resources
+    replacement: providers or providerSelections
   aliases:
   - resources profile field
   source_refs:
@@ -1835,6 +1902,13 @@ entities:
   layer: core
   status: forbidden
   definition: Workflow, schedule, and consumer plugins do not expose public product APIs directly.
+  constraint:
+    kind: prohibited-construction
+    prohibited_action: expose-public-product-api-from-async-plugin
+    terms:
+    - workflow as public API
+    - async plugin exposing public product API directly
+    replacement: ingress role or service-owned public API
   aliases:
   - workflow as public API
   source_refs:

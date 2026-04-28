@@ -310,7 +310,7 @@ predicates:
   domain: ConstructionLaw|ForbiddenPattern|DocumentAuthority|ResourceProviderProfileConcept|ValidationGate
   range: ForbiddenPattern|ArchitectureKind|ProjectionLane
   direction: law/source -> forbidden path
-  operational_meaning: Rejects invalid construction paths and stale terminology.
+  operational_meaning: Rejects invalid construction paths. Deprecated vocabulary is modeled through deprecates/replaces, not through raw phrase hits.
   allowed_in: canonical_graph
 - id: deprecates
   domain: DocumentAuthority|ConstructionLaw
@@ -462,6 +462,14 @@ canonical_view_statuses:
 - locked
 - forbidden
 - deprecated
+target_architecture_view_statuses:
+- locked
+target_architecture_excluded_types:
+- DeprecatedTerm
+- EvidenceClaim
+- ForbiddenPattern
+- ReviewFinding
+- CandidateEntity
 candidate_statuses:
 - candidate
 - tbd

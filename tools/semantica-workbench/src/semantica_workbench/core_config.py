@@ -22,6 +22,15 @@ CORE_GRAPH_FILENAMES = {
     "viewer": "graph-viewer.html",
     "document_diff": "document-diff.json",
     "document_diff_report": "document-diff-report.md",
+    "semantic_capability": "semantic-capability-report.json",
+    "semantic_capability_report": "semantic-capability-report.md",
+    "document_chunks": "document-chunks.jsonl",
+    "evidence_claims": "evidence-claims.jsonl",
+    "evidence_claims_json": "evidence-claims.json",
+    "resolved_evidence": "resolved-evidence.json",
+    "semantic_compare": "semantic-compare.json",
+    "semantic_compare_report": "semantic-compare-report.md",
+    "semantic_evidence_ttl": "semantic-evidence.ttl",
 }
 
 CORE_CURRENT_FILES = list(CORE_GRAPH_FILENAMES.values())
@@ -30,11 +39,6 @@ DEFAULT_TESTING_PLAN_CANDIDATES = [
     REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md",
     REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md",
 ]
-
-DIFF_SUMMARY = (
-    REPO_ROOT
-    / "docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/phase-4-testing-plan-diff-verification.md"
-)
 
 DEFAULT_CORE_VIEWER_HOST = "127.0.0.1"
 DEFAULT_CORE_VIEWER_PORT = 8765
@@ -70,6 +74,11 @@ NAMED_QUERY_DESCRIPTIONS = {
     "relations-by-predicate": "Relation counts and samples grouped by controlled predicate.",
     "source-coverage": "Canonical entities and relations with source-reference counts.",
     "testing-plan-review-needed": "Review-needed findings from the latest testing-plan diff.",
+    "semantic-conflicts": "Decision-grade conflicts from the latest semantic evidence comparison.",
+    "aligned-rejections": "Aligned claims that reject prohibited construction patterns.",
+    "deprecated-uses": "Deprecated vocabulary used as target architecture.",
+    "ambiguous-claims": "Claims that need review because polarity, scope, or resolution is incomplete.",
+    "candidate-new": "In-scope candidate concepts found by semantic evidence comparison.",
 }
 
 

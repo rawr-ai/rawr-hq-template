@@ -22,7 +22,11 @@ bun run semantica:core:visualize
 bun run semantica:core:serve
 bun run semantica:core:query -- --named forbidden-terms
 bun run semantica:core:query -- --sparql tools/semantica-workbench/queries/runtime-artifacts.rq
-bun run semantica:doc:diff -- --document docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md
+bun run semantica:semantic:capability
+bun run semantica:doc:triage -- --document docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+bun run semantica:doc:extract -- --fixture
+bun run semantica:doc:compare -- --fixture
+bun run semantica:doc:diff -- --mode semantic --document docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
 bun run semantica:run -- --fixture
 bun run semantica:extract -- --manifest docs/projects/rawr-final-architecture-migration/semantic-source-manifest.yaml --limit-chunks 2
 bun run semantica:ontology -- --run latest
@@ -39,10 +43,14 @@ The core ontology commands are seed-first and treat reviewed YAML as the authori
 - `semantica:core:validate` checks the layered ontology contract, source refs, relation signatures, controlled predicates, and canonical-view leakage.
 - `semantica:core:build` writes canonical/layered graph JSON, candidate queue JSON, validation report, and a Markdown graph report under ignored `.semantica/runs/...`.
 - `semantica:core:export` runs the Semantica adapter and writes Semantica status, GraphML, and available OWL/SHACL-style outputs for the current graph.
-- `semantica:core:visualize` writes a self-contained Cytoscape HTML graph viewer for canonical entities, overlays, throughline presets, and the latest document diff.
+- `semantica:core:visualize` writes a self-contained Cytoscape HTML graph viewer for canonical entities, overlays, throughline presets, and the latest lexical triage or semantic evidence comparison.
 - `semantica:core:serve` serves the current graph viewer locally for browser inspection.
 - `semantica:core:query` gives agents a stable query surface for named JSON graph questions and SPARQL files over the generated Turtle data graph.
-- `semantica:doc:diff` compares a document against the canonical graph and writes both ignored run outputs and the tracked Phase 4 verification summary.
+- `semantica:semantic:capability` records which pinned Semantica surfaces are available locally and which are only substrate-level helpers.
+- `semantica:doc:triage` runs the legacy lexical term matcher. It is useful for hints, but it is not decision-grade semantic validation.
+- `semantica:doc:extract` parses a comparison document into source-backed evidence claims with polarity, modality, assertion scope, resolved IDs, and review state.
+- `semantica:doc:compare` resolves those evidence claims against the ontology baseline and emits `aligned`, `conflict`, `deprecated-use`, `candidate-new`, `ambiguous`, `outside-scope`, and `informational` findings.
+- `semantica:doc:diff -- --mode semantic` is the compatibility command for the semantic evidence path. The default mode remains lexical for compatibility.
 
 The reviewed source files live under:
 
@@ -68,6 +76,8 @@ For agent-facing semantic questions:
 ```bash
 bun run semantica:core:query -- --list
 bun run semantica:core:query -- --named underrepresented-gates
+bun run semantica:core:query -- --named semantic-conflicts
+bun run semantica:core:query -- --named aligned-rejections
 bun run semantica:core:query -- --sparql tools/semantica-workbench/queries/relation-samples.rq
 ```
 
@@ -91,7 +101,18 @@ Prompts live under `tools/semantica-workbench/prompts/`:
 - `relation-edge-extraction.md`
 - `quality-review.md`
 
-The current pipeline uses the claim extraction prompt with schema-backed JSON, then resolves seeded entities and controlled relation edges deterministically.
+The architecture-source extraction pipeline uses the claim extraction prompt with schema-backed JSON, then resolves seeded entities and controlled relation edges deterministically.
+
+The document-comparison pipeline is separate. It treats comparison documents as evidence sources, not ontology truth:
+
+```text
+document
+  -> evidence claims with source spans, polarity, modality, and assertion scope
+  -> resolution against canonical entities, deprecated vocabulary, prohibited construction patterns, and candidates
+  -> claim-aware constraint findings
+```
+
+A phrase match alone must not create a decision-grade finding. For example, `There is no root-level core/ authoring root` is an aligned rejection of a prohibited construction, not a conflict.
 
 ## Source Scope
 
