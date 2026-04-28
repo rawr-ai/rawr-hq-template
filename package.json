@@ -72,6 +72,8 @@
     "semantica:core:build": "bun tools/semantica-workbench/bin/workbench.mjs core:build",
     "semantica:core:export": "bun tools/semantica-workbench/bin/workbench.mjs core:export",
     "semantica:core:visualize": "bun tools/semantica-workbench/bin/workbench.mjs core:visualize",
+    "semantica:core:serve": "bun tools/semantica-workbench/bin/workbench.mjs core:serve",
+    "semantica:core:query": "bun tools/semantica-workbench/bin/workbench.mjs core:query",
     "semantica:doc:diff": "bun tools/semantica-workbench/bin/workbench.mjs doc:diff",
     "semantica:extract": "bun tools/semantica-workbench/bin/workbench.mjs extract",
     "semantica:ontology": "bun tools/semantica-workbench/bin/workbench.mjs ontology",
@@ -193,12 +195,13 @@
   },
   "devDependencies": {
     "@nx/eslint-plugin": "^22.5.4",
-    "@typescript-eslint/parser": "^8.57.1",
     "@types/node": "^22.14.0",
+    "@typescript-eslint/parser": "^8.57.1",
     "@vitest/ui": "^4.0.18",
+    "cytoscape": "^3.33.2",
     "eslint": "^10.0.3",
+    "nx": "22.5.4",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18",
-    "nx": "22.5.4"
+    "vitest": "^4.0.18"
   }
 }

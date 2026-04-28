@@ -19,6 +19,9 @@ bun run semantica:core:validate
 bun run semantica:core:build
 bun run semantica:core:export
 bun run semantica:core:visualize
+bun run semantica:core:serve
+bun run semantica:core:query -- --named forbidden-terms
+bun run semantica:core:query -- --sparql tools/semantica-workbench/queries/runtime-artifacts.rq
 bun run semantica:doc:diff -- --document docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md
 bun run semantica:run -- --fixture
 bun run semantica:extract -- --manifest docs/projects/rawr-final-architecture-migration/semantic-source-manifest.yaml --limit-chunks 2
@@ -36,7 +39,9 @@ The core ontology commands are seed-first and treat reviewed YAML as the authori
 - `semantica:core:validate` checks the layered ontology contract, source refs, relation signatures, controlled predicates, and canonical-view leakage.
 - `semantica:core:build` writes canonical/layered graph JSON, candidate queue JSON, validation report, and a Markdown graph report under ignored `.semantica/runs/...`.
 - `semantica:core:export` runs the Semantica adapter and writes Semantica status, GraphML, and available OWL/SHACL-style outputs for the current graph.
-- `semantica:core:visualize` writes a simple local HTML graph viewer for canonical entities and decision relations.
+- `semantica:core:visualize` writes a self-contained Cytoscape HTML graph viewer for canonical entities, overlays, throughline presets, and the latest document diff.
+- `semantica:core:serve` serves the current graph viewer locally for browser inspection.
+- `semantica:core:query` gives agents a stable query surface for named JSON graph questions and SPARQL files over the generated Turtle data graph.
 - `semantica:doc:diff` compares a document against the canonical graph and writes both ignored run outputs and the tracked Phase 4 verification summary.
 
 The reviewed source files live under:
@@ -46,6 +51,27 @@ tools/semantica-workbench/ontologies/rawr-core-architecture/
 ```
 
 The CloudPro draft is snapshotted in the ontology workflow context packet for provenance, but the machine-readable YAML files are the normalized ingestion source.
+
+## Graph Inspection And Agent Queries
+
+The graph viewer is an inspection surface, not a source of truth. It is generated from the reviewed YAML ontology and ignored run artifacts.
+
+For human review:
+
+```bash
+bun run semantica:core:visualize
+bun run semantica:core:serve
+```
+
+For agent-facing semantic questions:
+
+```bash
+bun run semantica:core:query -- --list
+bun run semantica:core:query -- --named underrepresented-gates
+bun run semantica:core:query -- --sparql tools/semantica-workbench/queries/relation-samples.rq
+```
+
+Named queries use the richer JSON graph and diff outputs. SPARQL queries run against `semantica-data-graph.ttl`, which is produced by `semantica:core:export`.
 
 ## Extraction Modes
 

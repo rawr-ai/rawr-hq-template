@@ -1,0 +1,9 @@
+PREFIX sem: <https://semantica.dev/ontology/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?artifact ?label
+WHERE {
+  ?artifact a sem:RuntimeArtifact .
+  OPTIONAL { ?artifact rdfs:label ?label . }
+}
+ORDER BY ?label

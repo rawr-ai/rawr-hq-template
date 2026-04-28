@@ -5,6 +5,7 @@ description = "Repository-local Semantica workbench for RAWR architecture migrat
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "PyYAML>=6.0.3",
+  "rdflib>=7.6.0",
   "semantica @ git+https://github.com/Hawksight-AI/semantica.git@ca5f08179374dcb8326046249d919717f2769a04",
 ]
 
