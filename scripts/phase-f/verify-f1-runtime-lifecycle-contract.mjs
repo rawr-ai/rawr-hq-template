@@ -8,14 +8,14 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("services/hq-ops/src/service/modules/repo-state/repository.ts"),
+  mustExist("services/hq-ops/src/service/modules/repo-state/helpers/storage.ts"),
   mustExist("apps/server/src/rawr.ts"),
   mustExist("apps/server/test/repo-state-store.concurrent.test.ts"),
   mustExist("apps/server/test/rawr.test.ts"),
 ]);
 
 const [repoStateSource, rawrSource, repoStateTestSource, rawrTestSource, scripts] = await Promise.all([
-  readFile("services/hq-ops/src/service/modules/repo-state/repository.ts"),
+  readFile("services/hq-ops/src/service/modules/repo-state/helpers/storage.ts"),
   readFile("apps/server/src/rawr.ts"),
   readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
   readFile("apps/server/test/rawr.test.ts"),
@@ -56,8 +56,8 @@ const checks = [
     id: "repo-state-read-authority-root",
     message: "getRepoState must read from canonical authority root",
     pass:
-      /const \{ state \} = await getRepoStateWithAuthority\(resources, repoRoot\);/u.test(repoStateSource) &&
-      /return state;/u.test(repoStateSource),
+      /export async function getRepoStateWithAuthority\(/u.test(repoStateSource) &&
+      /state: await readStateFile\(resources, authorityRepoRoot\)/u.test(repoStateSource),
   },
   {
     id: "repo-state-mutate-authority-root",

@@ -264,7 +264,7 @@ A service is semantic first. It may be called in-process when caller and callee 
 
 `plugins` hold runtime projection.
 
-A plugin exists to mount, expose, adapt, orchestrate, or otherwise project capability into a runtime surface. It owns:
+A plugin exists to mount, expose, adapt, and otherwise project service capability into a runtime surface. It may orchestrate surface wiring, but it must not become a second owner of the capability's semantic flow. It owns:
 
 - role-specific integration
 - transport and surface adaptation
@@ -881,6 +881,7 @@ Service-internal structure follows these rules:
 - `service/shared` is an earned exception
 - repositories live under the owning module unless sharing has been earned
 - policy engines live under the owning module or service, not in generic support packages unless truly infrastructural
+- procedure handlers are the semantic locus; do not hide authored capability flow inside repositories or generic helpers
 
 Two small services that deeply share entities, policies, and write invariants are often one service with multiple modules, not two services.
 
@@ -971,11 +972,12 @@ plugins/server/internal/*     # optional, only if earned
 plugins/async/workflows/*
 plugins/async/consumers/*
 plugins/async/schedules/*
-plugins/web/app/*
-plugins/cli/commands/*
-plugins/agent/channels/*
-plugins/agent/shell/*
-plugins/agent/tools/*
+plugins/web/*
+plugins/cli/*
+plugins/agents/*             # agent content plugins (skills/workflows/scripts), managed by agent-config-sync
+plugins/agent/channels/*     # reserved for runtime agent projection
+plugins/agent/shell/*        # reserved for runtime agent projection
+plugins/agent/tools/*        # reserved for runtime agent projection
 ```
 
 ### 7.3 Plugin authoring law
@@ -1002,13 +1004,15 @@ A normal plugin author should not need to think in:
 
 ### 7.4 Authoritative plugin seam
 
-Every plugin has one authoritative file:
+Most runtime plugins have one authoritative file:
 
 ```text
 src/plugin.ts
 ```
 
 That file is the plugin equivalent of `service/base.ts`.
+
+CLI projection plugins (`plugins/cli/*`) are typically oclif plugins; their authoritative seam is their `src/commands/**` tree plus their oclif manifest in `package.json`. They are still projections: keep semantic capability flow inside services and call through the owning service boundary.
 
 ### 7.5 Public builder families
 
@@ -1295,7 +1299,6 @@ It is not:
 The manifest must author:
 
 - app identity
-- shared process modules
 - role membership
 - explicit surface membership within each role
 
@@ -1323,68 +1326,28 @@ It does not collapse all composition into generic role-only `use` arrays.
 
 ```ts
 // apps/hq/rawr.hq.ts
-import { defineApp } from "@rawr/hq-sdk/app";
-import {
-  configModule,
-  telemetryModule,
-  postgresPoolModule,
-  workspaceModule,
-  identityModule,
-} from "./boot/modules";
-import { stateApi } from "@rawr/plugins/server/api/state";
-import { exampleTodoApi } from "@rawr/plugins/server/api/example-todo";
-import { stateProjectionRefreshWorkflow } from "@rawr/plugins/async/workflows/state/projection-refresh";
-import { stewardActivationWorkflow } from "@rawr/plugins/async/workflows/steward/activation";
-import { stewardReviewWorkflow } from "@rawr/plugins/async/workflows/steward/review";
-import { shellResultCorrelationWorkflow } from "@rawr/plugins/async/workflows/shell/result-correlation";
-import { controlUiChannel } from "@rawr/plugins/agent/channels/control-ui";
-import { mainShell } from "@rawr/plugins/agent/shell/main";
-import { machineReadTools } from "@rawr/plugins/agent/tools/machine-read";
-import { specialActionTools } from "@rawr/plugins/agent/tools/special-actions";
+import { registerExampleTodoApiPlugin } from "@rawr/plugin-server-api-example-todo/server";
+import { registerStateApiPlugin } from "@rawr/plugin-server-api-state/server";
 
-export const rawrHq = defineApp({
-  id: "hq",
+export function createRawrHqManifest() {
+  const api = {
+    state: registerStateApiPlugin(),
+    exampleTodo: registerExampleTodoApiPlugin(),
+  } as const;
 
-  process: [
-    configModule,
-    telemetryModule,
-    postgresPoolModule,
-    workspaceModule,
-    identityModule,
-  ],
-
-  roles: {
-    server: {
-      api: [stateApi, exampleTodoApi],
-      internal: [],
+  return {
+    id: "hq",
+    roles: {
+      server: {
+        api: api,
+      },
+      async: {
+        workflows: {} as const,
+        schedules: {} as const,
+      },
     },
-
-    async: {
-      workflows: [
-        stateProjectionRefreshWorkflow,
-        stewardActivationWorkflow,
-        stewardReviewWorkflow,
-        shellResultCorrelationWorkflow,
-      ],
-      consumers: [],
-      schedules: [],
-    },
-
-    web: {
-      app: [],
-    },
-
-    cli: {
-      commands: [],
-    },
-
-    agent: {
-      channels: [controlUiChannel],
-      shell: [mainShell],
-      tools: [machineReadTools, specialActionTools],
-    },
-  },
-});
+  } as const;
+}
 ```
 
 ### 8.6 Why `surface` stays explicit

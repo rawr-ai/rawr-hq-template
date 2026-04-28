@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { buildHqLifecyclePlan, runHqLifecycle } from "../../lib/hq";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export default class HqAttach extends RawrCommand {
   static description = "Attach to the managed RAWR HQ runtime log stream";

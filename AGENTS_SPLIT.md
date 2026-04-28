@@ -9,7 +9,6 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - You are changing shared packages:
   - `apps/cli`
   - `packages/core`
-  - `packages/plugin-workspace`
   - `packages/test-utils`
   - `packages/ui-sdk`
   - `services/hq-ops`

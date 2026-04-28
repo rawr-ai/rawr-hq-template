@@ -3,12 +3,39 @@ import { Type } from "typebox";
 import { ocBase } from "../../base";
 import {
   JournalEventSchema,
-  JournalGetSnippetResultSchema,
-  JournalSearchResultSchema,
+  JournalSearchRowSchema,
   JournalSnippetSchema,
-  JournalTailResultSchema,
-  JournalWriteResultSchema,
-} from "./schemas";
+} from "./entities";
+
+const JournalWriteResultSchema = Type.Object(
+  {
+    path: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+
+const JournalSearchResultSchema = Type.Object(
+  {
+    mode: Type.Union([Type.Literal("fts"), Type.Literal("semantic")]),
+    warning: Type.Optional(Type.String({ minLength: 1 })),
+    snippets: Type.Array(JournalSearchRowSchema),
+  },
+  { additionalProperties: false },
+);
+
+const JournalGetSnippetResultSchema = Type.Object(
+  {
+    snippet: Type.Union([JournalSnippetSchema, Type.Null()]),
+  },
+  { additionalProperties: false },
+);
+
+const JournalTailResultSchema = Type.Object(
+  {
+    snippets: Type.Array(JournalSearchRowSchema),
+  },
+  { additionalProperties: false },
+);
 
 const SnippetIdInputSchema = schema(
   Type.Object(

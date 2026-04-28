@@ -1,6 +1,9 @@
 import { RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
 
+/**
+ * Lists explicit sync sources persisted in global RAWR config.
+ */
 export default class PluginsSyncSourcesList extends RawrCommand {
   static description = "List explicitly-registered sync sources from ~/.rawr/config.json";
 

@@ -10,6 +10,10 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./workspace-root": {
+      "types": "./src/workspace-root.ts",
+      "default": "./src/workspace-root.ts"
+    },
     "./telemetry": {
       "types": "./src/telemetry.ts",
       "default": "./src/telemetry.ts"

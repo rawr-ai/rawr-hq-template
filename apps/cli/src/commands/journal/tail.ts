@@ -1,7 +1,7 @@
 import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export default class JournalTail extends RawrCommand {
   static description = "Show the most recent journal snippets";

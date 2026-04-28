@@ -6,8 +6,18 @@ export type {
   SourceContent,
   SourcePlugin,
   SyncAgent,
+  SyncScope,
+} from "./service/shared/entities";
+export type {
   SyncItemResult,
   SyncRunResult,
-  SyncScope,
-} from "./service/shared/schemas";
-export type { UndoRunResult } from "./service/modules/undo/schemas";
+} from "./service/modules/execution/contract";
+export type {
+  AssessWorkspaceSyncInput,
+  FullSyncPolicyInput,
+  FullSyncPolicyResult,
+  PlanWorkspaceSyncInput,
+  SyncAssessment,
+  WorkspaceSyncPlan,
+} from "./service/modules/planning/contract";
+export type { UndoRunResult } from "./service/modules/undo/contract";

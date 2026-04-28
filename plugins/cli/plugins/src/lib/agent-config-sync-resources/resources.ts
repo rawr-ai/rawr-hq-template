@@ -1,9 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import type { AgentConfigSyncResources } from "@rawr/agent-config-sync";
-import { resolvePluginContentLayout } from "./plugin-content";
-import { scanCanonicalContentAtRoot } from "./scan-canonical-content";
+import type { AgentConfigSyncResources } from "@rawr/agent-config-sync/resources";
 import {
   copyDirTree,
   dirsIdentical,
@@ -14,10 +12,23 @@ import {
   writeJsonFile,
 } from "./fs-utils";
 
+/**
+ * Node filesystem adapter for agent-config-sync.
+ *
+ * These are primitive file operations only; source-content layout and merge
+ * semantics live in the service modules.
+ */
 export function createNodeAgentConfigSyncResources(): AgentConfigSyncResources {
   return {
     files: {
       pathExists,
+      readTextFile: async (filePath) => {
+        try {
+          return await fs.readFile(filePath, "utf8");
+        } catch {
+          return null;
+        }
+      },
       readJsonFile,
       writeJsonFile,
       ensureDir,
@@ -51,13 +62,14 @@ export function createNodeAgentConfigSyncResources(): AgentConfigSyncResources {
         }
       },
     },
-    sources: {
-      readProviderOverlay: async ({ agent, sourcePlugin }) => {
-        const layout = await resolvePluginContentLayout(sourcePlugin);
-        const overlayRoot = layout.overlayRootAbs[agent];
-        if (!(await pathExists(overlayRoot))) return null;
-        return scanCanonicalContentAtRoot(overlayRoot, layout.includeByProvider[agent]);
-      },
+    path: {
+      join: (...parts) => path.join(...parts),
+      resolve: (...parts) => path.resolve(...parts),
+      dirname: (targetPath) => path.dirname(targetPath),
+      basename: (targetPath) => path.basename(targetPath),
+      relative: (from, to) => path.relative(from, to),
+      isAbsolute: (targetPath) => path.isAbsolute(targetPath),
+      sep: path.sep,
     },
   };
 }

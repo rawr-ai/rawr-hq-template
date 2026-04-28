@@ -34,6 +34,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/chatgpt-corpus",
     "test": "vitest run --project chatgpt-corpus"
   },
   "dependencies": {

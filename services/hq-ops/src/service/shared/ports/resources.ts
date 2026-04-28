@@ -3,6 +3,11 @@ export type FileStat = {
   mtimeMs: number;
 };
 
+export type FileSystemDirEntry = {
+  name: string;
+  isDirectory: boolean;
+};
+
 export type ExclusiveFileHandle = {
   writeText(contents: string): Promise<void>;
   close(): Promise<void>;
@@ -10,6 +15,7 @@ export type ExclusiveFileHandle = {
 
 export type FileSystemResource = {
   stat(filePath: string): Promise<FileStat | null>;
+  readDir(dirPath: string): Promise<FileSystemDirEntry[] | null>;
   readText(filePath: string): Promise<string | null>;
   writeText(filePath: string, contents: string): Promise<void>;
   mkdir(dirPath: string): Promise<void>;

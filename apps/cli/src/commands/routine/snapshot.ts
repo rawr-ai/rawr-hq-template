@@ -3,7 +3,7 @@ import { RawrCommand } from "@rawr/core";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 import { resolveCliEntrypoint } from "../../lib/subprocess";
 
 type Snapshot = {

@@ -5,12 +5,18 @@ import {
   collectChangedFiles,
   evaluateLifecycleCompleteness,
   gitTrackedFiles,
-  resolveTargetPath,
+  resolveLifecycleTarget,
   verifySyncAndDrift,
-} from "../../../lib/plugins-lifecycle/lifecycle";
-import type { LifecycleType } from "../../../lib/plugins-lifecycle/types";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+} from "../../../lib/plugin-lifecycle-service";
+import type { LifecycleType } from "@rawr/hq-ops/types";
+import { findWorkspaceRoot } from "@rawr/core";
 
+/**
+ * Runs the projection half of a plugin lifecycle check.
+ *
+ * The command gathers git/sync/drift observations, then asks HQ Ops to evaluate
+ * whether the lifecycle evidence is complete for the target.
+ */
 export default class PluginsLifecycleCheck extends RawrCommand {
   static description = "Validate plugin lifecycle completeness (artifacts/tests/docs/dependents + sync/drift verification)";
 
@@ -59,8 +65,13 @@ export default class PluginsLifecycleCheck extends RawrCommand {
     }
 
     const targetInput = String(flags.target);
-    const targetAbs = await resolveTargetPath(workspaceRoot, targetInput);
-    if (!targetAbs) {
+    const target = await resolveLifecycleTarget({
+      workspaceRoot,
+      target: targetInput,
+      type: String(flags.type) as LifecycleType,
+      traceId: "plugin-plugins.plugin-lifecycle.check-resolve-target",
+    });
+    if (!target) {
       const result = this.fail("Unable to resolve lifecycle target path/id", {
         code: "TARGET_NOT_FOUND",
         details: { target: targetInput },
@@ -86,13 +97,14 @@ export default class PluginsLifecycleCheck extends RawrCommand {
     const lifecycle = await evaluateLifecycleCompleteness({
       workspaceRoot,
       targetInput,
-      targetAbs,
+      targetAbs: target.absPath,
       type: String(flags.type) as LifecycleType,
       changedFiles: derivedChanged,
       repoFiles,
       syncVerified: sync.syncVerified,
       driftVerified: sync.driftVerified,
       driftDetected: sync.driftDetected,
+      traceId: "plugin-plugins.plugin-lifecycle.check-evaluate-completeness",
     });
 
     const payload = {

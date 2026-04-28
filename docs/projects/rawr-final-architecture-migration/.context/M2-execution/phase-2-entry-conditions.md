@@ -79,12 +79,16 @@ Phase 2 implementation should read this topology as follows:
 - `packages/runtime/*` is the consolidated execution family for runtime modules, resources, harnesses, and adapters that belong together.
 - `packages/hq-sdk` remains the fast-path public app-runtime and authoring seam (`defineApp`, `startAppRole`, `bindService`, `define*Plugin`).
 
+Current repo reality: `packages/runtime/*` does not exist yet; it becomes real in `M2-U00`.
+
 The runtime substrate is Effect-backed internally. Effect enters the repo as a real dependency in M2-U00. Raw Effect types stay quarantined inside `packages/runtime/*` and do not appear in public authoring APIs.
 
-The existing `packages/bootgraph` reservation and `packages/runtime-context` type seam are both superseded:
+The existing `packages/bootgraph` reservation and `packages/runtime-context` type seam are both superseded by the `M2-U00` runtime cut:
 
 - `packages/bootgraph` becomes `packages/runtime/bootgraph`
 - `packages/runtime-context` is absorbed into `packages/runtime/substrate`
+
+Until `M2-U00` lands, `packages/bootgraph` and `packages/runtime-context` remain the live in-repo seams.
 
 ## Practical Hand-Off
 

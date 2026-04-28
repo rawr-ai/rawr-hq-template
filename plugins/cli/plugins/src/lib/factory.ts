@@ -1,14 +1,24 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+/**
+ * Write mode for scaffold helpers that can either materialize files or report a
+ * plan without mutating the workspace.
+ */
 export type FactoryWriteMode = "write" | "dry-run";
 
+/**
+ * Planned file operation returned by scaffold commands.
+ */
 export type FactoryPlannedWrite = {
   path: string;
   action: "create" | "update" | "skip";
   reason?: string;
 };
 
+/**
+ * Validates user-provided path segments before scaffold commands build files.
+ */
 export function assertSafeSegment(input: string, label: string): string {
   const value = input.trim();
   if (!value) throw new Error(`${label} is required`);
@@ -18,6 +28,9 @@ export function assertSafeSegment(input: string, label: string): string {
   return value;
 }
 
+/**
+ * Converts command or workflow name segments into generated class names.
+ */
 export function toPascalCase(parts: string[]): string {
   return parts
     .flatMap((p) => p.split(/[-_\\s]+/g))
@@ -26,6 +39,9 @@ export function toPascalCase(parts: string[]): string {
     .join("");
 }
 
+/**
+ * Checks whether a scaffold output file already exists.
+ */
 export async function fileExists(p: string): Promise<boolean> {
   try {
     await fs.stat(p);
@@ -35,6 +51,9 @@ export async function fileExists(p: string): Promise<boolean> {
   }
 }
 
+/**
+ * Applies one scaffold file write according to dry-run/write mode.
+ */
 export async function planWriteFile(
   p: string,
   mode: FactoryWriteMode,
@@ -47,6 +66,9 @@ export async function planWriteFile(
   return { path: p, action: "create" };
 }
 
+/**
+ * Renders the default source for a generated command projection.
+ */
 export function renderCommandSource(input: { topic: string; name: string; description: string }): string {
   const className = toPascalCase([input.topic, input.name]);
   return `import { RawrCommand } from "@rawr/core";
@@ -69,6 +91,9 @@ export default class ${className} extends RawrCommand {
 `;
 }
 
+/**
+ * Renders a smoke test for a generated command projection.
+ */
 export function renderCommandTestSource(input: { topic: string; name: string }): string {
   const commandArgs = JSON.stringify([input.topic, input.name, "--json"]);
   return `import { describe, expect, it } from "vitest";
@@ -96,13 +121,16 @@ describe("${input.topic} ${input.name}", () => {
 `;
 }
 
+/**
+ * Renders the default source for a generated workflow command.
+ */
 export function renderWorkflowSource(input: { name: string; description: string }): string {
   const className = toPascalCase(["workflow", input.name]);
   return `import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
 import { createHqOpsCallOptions, createHqOpsClient, type HqOpsJournalSnippet } from "../../lib/hq-ops-client";
 import { journalId, safePreview } from "../../lib/journal-projection";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 export default class ${className} extends RawrCommand {
   static description = ${JSON.stringify(input.description)};
@@ -159,6 +187,9 @@ export default class ${className} extends RawrCommand {
 `;
 }
 
+/**
+ * Renders a dry-run smoke test for a generated workflow command.
+ */
 export function renderWorkflowTestSource(input: { name: string }): string {
   const args = JSON.stringify(["workflow", input.name, "--json", "--dry-run"]);
   return `import { describe, expect, it } from "vitest";
@@ -187,6 +218,9 @@ describe("workflow ${input.name}", () => {
 `;
 }
 
+/**
+ * Adds a generated command to the tool export list without duplicating entries.
+ */
 export async function appendToolExport(
   toolsExportPath: string,
   tool: { command: string; description: string },

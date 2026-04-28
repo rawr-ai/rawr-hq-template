@@ -1,1 +1,1 @@
-import "../../plugins/cli/plugins/src/lib/workspace-plugins.ts";
+import "../../services/hq-ops/src/service/modules/plugin-catalog/lib/discovery.ts";

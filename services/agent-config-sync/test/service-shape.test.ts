@@ -10,8 +10,12 @@ describe("agent-config-sync service shell", () => {
     expect(createClient(createClientOptions())).toBeDefined();
     expect(router).toBeDefined();
     expect(Object.keys(contract)).toEqual(["planning", "execution", "retirement", "undo"]);
-    expect(Object.keys(contract.planning)).toEqual(["previewSync", "assessWorkspace"]);
-    expect(Object.keys(contract.execution)).toEqual(["runSync"]);
+    expect(Object.keys(contract.planning)).toEqual([
+      "planWorkspaceSync",
+      "assessWorkspaceSync",
+      "evaluateFullSyncPolicy",
+    ]);
+    expect(Object.keys(contract.execution)).toEqual(["runSync", "resolveProviderContent"]);
     expect(Object.keys(contract.retirement)).toEqual(["retireStaleManaged"]);
     expect(Object.keys(contract.undo)).toEqual(["runUndo"]);
   });

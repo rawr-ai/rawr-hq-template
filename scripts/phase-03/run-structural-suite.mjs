@@ -81,15 +81,6 @@ const suiteCommandsByProject = {
     default: ["bun run runtime:gate:hq-lifecycle"],
     runtime: ["bun run runtime:gate:hq-lifecycle"],
   },
-  "@rawr/plugin-workspace": {
-    default: [
-      "bun run phase-a:gate:metadata-contract",
-      "bun run phase-a:gate:legacy-metadata-hard-delete-static-guard",
-    ],
-    "phase-a-baseline": ["bun run phase-a:gate:metadata-contract"],
-    "phase-a-completion": ["bun run phase-a:gate:metadata-contract"],
-    "phase-a-exit": ["bun run phase-a:gate:legacy-metadata-hard-delete-static-guard"],
-  },
   "@rawr/plugin-plugins": {
     default: [
       "bun scripts/phase-03/verify-projection-boundary-invocation.mjs",
@@ -126,6 +117,9 @@ const suiteCommandsByProject = {
   },
   "@rawr/agent-config-sync": {
     default: ["bun scripts/phase-03/verify-agent-config-sync-service-shape.mjs"],
+  },
+  "@rawr/chatgpt-corpus": {
+    default: ["bun scripts/phase-03/verify-chatgpt-corpus-service-shape.mjs"],
   },
   "@rawr/session-intelligence": {
     default: ["bun scripts/phase-03/verify-session-intelligence-structural.mjs"],

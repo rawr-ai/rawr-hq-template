@@ -29,10 +29,10 @@ async function withDb<T>(input: { indexPath: string }, fn: (db: Awaited<ReturnTy
  * depending on a host runtime while still allowing the service to own its SQL
  * schema and cache policy.
  */
-export function createSessionIndexRuntime(): SessionIndexRuntime {
+export function createSessionIndexRuntime(indexPath?: string): SessionIndexRuntime {
   return {
     defaultIndexPath(): string {
-      return defaultSessionIndexPathSync();
+      return indexPath ?? defaultSessionIndexPathSync();
     },
 
     async execute(input: SessionIndexStatement & { indexPath: string }): Promise<void> {

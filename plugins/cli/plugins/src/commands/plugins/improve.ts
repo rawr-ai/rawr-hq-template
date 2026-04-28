@@ -1,28 +1,45 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { checkScratchPolicy } from "../../lib/plugins-lifecycle/scratch-policy";
-
-import { buildFixSliceBranchName } from "../../lib/plugins-lifecycle/fix-slice";
 import {
+  checkScratchPolicy,
   collectChangedFiles,
+  decideMergePolicy,
   evaluateLifecycleCompleteness,
   gitTrackedFiles,
-  resolveTargetPath,
-  verifySyncAndDrift,
-} from "../../lib/plugins-lifecycle/lifecycle";
-import {
-  makePolicyAssessment,
   readPrContext,
+  resolveLifecycleTarget,
   runJudge,
-} from "../../lib/plugins-lifecycle/policy";
-import { runCommand } from "../../lib/plugins-lifecycle/process";
-import type { ImprovementResult, LifecycleType } from "../../lib/plugins-lifecycle/types";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+  verifySyncAndDrift,
+} from "../../lib/plugin-lifecycle-service";
+import { runCommand } from "../../lib/process-execution";
+import type { DecideMergePolicyResult, LifecycleCheckData, LifecycleType, PrContext } from "@rawr/hq-ops/types";
+import { findWorkspaceRoot } from "@rawr/core";
 
+/**
+ * Wait helper used when a publish flow allows time for PR comments.
+ */
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Command payload for a no-policy plugin improvement run.
+ */
+type ImprovementResult = {
+  changeUnitId: string;
+  scope: "plugin-system";
+  lifecycleCheck: LifecycleCheckData;
+  policyAssessment: DecideMergePolicyResult["policyAssessment"];
+  prContext: PrContext;
+  decision: DecideMergePolicyResult["decision"];
+  actions: Array<{ action: string; status: "planned" | "done" | "skipped" | "failed"; notes?: string }>;
+};
+
+/**
+ * Drives a plugin improvement workflow from lifecycle check through merge
+ * policy. Local git/Graphite commands stay in the projection; lifecycle and
+ * policy decisions are delegated to HQ Ops.
+ */
 export default class PluginsImprove extends RawrCommand {
   static description = "Propose/apply no-policy plugin quality improvements with two-pass policy judgment";
 
@@ -91,8 +108,13 @@ export default class PluginsImprove extends RawrCommand {
     }
 
     const targetInput = String(flags.target);
-    const targetAbs = await resolveTargetPath(workspaceRoot, targetInput);
-    if (!targetAbs) {
+    const target = await resolveLifecycleTarget({
+      workspaceRoot,
+      target: targetInput,
+      type: String(flags.type) as LifecycleType,
+      traceId: "plugin-plugins.plugin-lifecycle.improve-resolve-target",
+    });
+    if (!target) {
       const result = this.fail("Unable to resolve lifecycle target path/id", {
         code: "TARGET_NOT_FOUND",
         details: { target: targetInput },
@@ -117,13 +139,14 @@ export default class PluginsImprove extends RawrCommand {
     const lifecycle = await evaluateLifecycleCompleteness({
       workspaceRoot,
       targetInput,
-      targetAbs,
+      targetAbs: target.absPath,
       type: String(flags.type) as LifecycleType,
       changedFiles: derivedChanged,
       repoFiles,
       syncVerified: sync.syncVerified,
       driftVerified: sync.driftVerified,
       driftDetected: sync.driftDetected,
+      traceId: "plugin-plugins.plugin-lifecycle.improve-evaluate-completeness",
     });
 
     const actions: ImprovementResult["actions"] = [];
@@ -198,9 +221,18 @@ export default class PluginsImprove extends RawrCommand {
 
     const judge1 = await runJudge("A", judge1Cmd, judgeInput, workspaceRoot);
     const judge2 = await runJudge("B", judge2Cmd, judgeInput, workspaceRoot);
-    const policy = makePolicyAssessment(lifecycle, prContext, judge1, judge2);
+    const mergePolicy = await decideMergePolicy({
+      workspaceRoot,
+      lifecycle,
+      prContext,
+      judgeA: judge1,
+      judgeB: judge2,
+      baseBranch: prContext.branch,
+      changeUnitId: `${String(flags.type)}:${targetInput}`,
+      traceId: "plugin-plugins.plugin-lifecycle.improve-merge-policy",
+    });
 
-    if (policy.consensus === "auto_merge" && publish) {
+    if (mergePolicy.decision === "auto_merge" && publish) {
       if (baseFlags.dryRun) {
         actions.push({ action: "gt merge", status: "planned" });
         actions.push({ action: "gt sync --no-restack", status: "planned" });
@@ -221,36 +253,35 @@ export default class PluginsImprove extends RawrCommand {
           });
         }
       }
-    } else if (policy.consensus === "fix_first") {
-      const fixBranch = buildFixSliceBranchName({
-        baseBranch: prContext.branch,
-        changeUnitId: `${String(flags.type)}:${targetInput}`,
-      });
+    } else if (mergePolicy.decision === "fix_first") {
+      const fixBranch = mergePolicy.fixSlicePlan?.branchName;
 
       if (!publish) {
         actions.push({
           action: "create follow-up fix slice",
           status: "planned",
-          notes: `fix lifecycle blockers and/or PR feedback before merge (rerun with --publish to auto-create: ${fixBranch})`,
+          notes: fixBranch
+            ? `fix lifecycle blockers and/or PR feedback before merge (rerun with --publish to auto-create: ${fixBranch})`
+            : "fix lifecycle blockers and/or PR feedback before merge",
         });
       } else if (baseFlags.dryRun) {
         actions.push({
-          action: `gt create --insert ${fixBranch}`,
+          action: `gt create --insert ${fixBranch ?? "<fix-slice>"}`,
           status: "planned",
           notes: "create follow-up fix slice for lifecycle blockers and/or PR feedback",
         });
       } else {
-        const createFixRun = await runCommand("gt", ["create", "--insert", fixBranch], {
+        const createFixRun = await runCommand("gt", ["create", "--insert", fixBranch ?? `${prContext.branch}-fix`], {
           cwd: workspaceRoot,
           timeoutMs: 120_000,
         });
         actions.push({
-          action: `gt create --insert ${fixBranch}`,
+          action: `gt create --insert ${fixBranch ?? "<fix-slice>"}`,
           status: createFixRun.exitCode === 0 ? "done" : "failed",
           notes: createFixRun.exitCode === 0 ? "created follow-up fix slice" : createFixRun.stderr || createFixRun.stdout,
         });
       }
-    } else if (policy.consensus === "policy_escalation") {
+    } else if (mergePolicy.decision === "policy_escalation") {
       actions.push({
         action: "escalate for human or human+agent review",
         status: "planned",
@@ -267,9 +298,9 @@ export default class PluginsImprove extends RawrCommand {
       changeUnitId: `${String(flags.type)}:${targetInput}`,
       scope: "plugin-system",
       lifecycleCheck: lifecycle,
-      policyAssessment: policy,
-      prContext,
-      decision: policy.consensus,
+      policyAssessment: mergePolicy.policyAssessment,
+      prContext: mergePolicy.prContext,
+      decision: mergePolicy.decision,
       actions,
     };
 

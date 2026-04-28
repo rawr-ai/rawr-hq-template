@@ -13,8 +13,11 @@ import {
   renderCommandTestSource,
 } from "../../../lib/factory";
 import { recordArtifact } from "../../../lib/journal-context";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
+/**
+ * Scaffolds a new CLI command projection file and smoke test.
+ */
 export default class PluginsScaffoldCommand extends RawrCommand {
   static description = "Scaffold a new CLI command (topic + name) with a matching Vitest test";
 

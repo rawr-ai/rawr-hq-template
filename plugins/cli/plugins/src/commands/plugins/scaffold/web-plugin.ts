@@ -10,10 +10,13 @@ import {
   planWriteFile,
 } from "../../../lib/factory";
 import { recordArtifact } from "../../../lib/journal-context";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 type PluginKind = "server" | "web" | "both";
 
+/**
+ * Scaffolds a web plugin package with the runtime exports HQ catalog expects.
+ */
 export default class PluginsScaffoldWebPlugin extends RawrCommand {
   static description = "Scaffold a new runtime web plugin package under ./plugins/web/";
 

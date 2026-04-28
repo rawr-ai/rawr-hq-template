@@ -11,7 +11,7 @@ function usage() {
       "  bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs [--allow-findings] <path> [<path> ...]",
       "",
       "Examples:",
-      "  bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs packages/plugin-workspace/src/plugins.ts plugins/*/*/package.json",
+      "  bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs services/hq-ops/src/service/modules/plugin-catalog plugins/*/*/package.json",
       "  bun scripts/phase-a/check-forbidden-legacy-metadata-keys.mjs --allow-findings plugins/*/*/package.json",
     ].join("\n"),
   );
@@ -31,6 +31,16 @@ function findLineCol(text, index) {
   const line = lines.length;
   const column = lines.at(-1)?.length ?? 0;
   return { line, column: column + 1 };
+}
+
+function isCanonicalDenylistDeclaration(filePath, text, index) {
+  const rel = toPosix(path.relative(process.cwd(), filePath));
+  if (rel !== "services/hq-ops/src/service/modules/plugin-catalog/entities.ts") return false;
+
+  const lineStart = text.lastIndexOf("\n", index) + 1;
+  const nextNewline = text.indexOf("\n", index);
+  const lineEnd = nextNewline === -1 ? text.length : nextNewline;
+  return text.slice(lineStart, lineEnd).includes("FORBIDDEN_LEGACY_RAWR_KEYS");
 }
 
 async function expandInput(rawInput) {
@@ -61,6 +71,7 @@ async function scanFile(filePath) {
     const re = keyRegex(key);
     let match;
     while ((match = re.exec(text)) !== null) {
+      if (isCanonicalDenylistDeclaration(filePath, text, match.index)) continue;
       const pos = findLineCol(text, match.index);
       findings.push({ file: filePath, key, line: pos.line, column: pos.column });
     }

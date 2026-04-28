@@ -7,6 +7,9 @@ import { router as retirement } from "./modules/retirement/router";
 import { router as undo } from "./modules/undo/router";
 import { impl } from "./impl";
 
+/**
+ * Root router for standalone agent destination sync capabilities.
+ */
 export const router = impl.router({
   planning,
   execution,

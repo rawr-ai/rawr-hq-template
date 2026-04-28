@@ -1,11 +1,10 @@
 import { spawnSync } from "node:child_process";
-import fs from "node:fs/promises";
 import path from "node:path";
 
 import { Flags } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 
-import { filterPluginsByKind, findWorkspaceRoot, listWorkspacePlugins } from "../../../../lib/workspace-plugins";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
 
 type PlannedLink = {
   pluginId: string;
@@ -21,23 +20,10 @@ type Skipped = {
   reason: string;
 };
 
-async function readJsonFile(p: string): Promise<unknown | null> {
-  try {
-    return JSON.parse(await fs.readFile(p, "utf8")) as unknown;
-  } catch {
-    return null;
-  }
-}
-
-function isOclifPluginPackage(pkgJson: unknown): boolean {
-  if (!pkgJson || typeof pkgJson !== "object") return false;
-  const oclif = (pkgJson as any).oclif;
-  if (!oclif || typeof oclif !== "object") return false;
-  const commands = oclif.commands;
-  const tsCommands = oclif.typescript?.commands;
-  return typeof commands === "string" && commands.length > 0 && typeof tsCommands === "string" && tsCommands.length > 0;
-}
-
+/**
+ * Executes the source CLI from the workspace when oclif link operations must go
+ * through the command surface rather than a service call.
+ */
 function runRawrFromSource(workspaceRoot: string, args: string[]): { ok: boolean; exitCode: number; stdout: string; stderr: string } {
   const cwd = path.join(workspaceRoot, "apps", "cli");
   const proc = spawnSync("bun", ["src/index.ts", ...args], { cwd, encoding: "utf8", env: { ...process.env } });
@@ -49,6 +35,25 @@ function runRawrFromSource(workspaceRoot: string, args: string[]): { ok: boolean
   };
 }
 
+/**
+ * Builds a command plugin before linking so oclif resolves compiled commands.
+ */
+function runPluginBuild(pluginRoot: string): { ok: boolean; exitCode: number; stdout: string; stderr: string } {
+  const proc = spawnSync("bun", ["run", "build"], { cwd: pluginRoot, encoding: "utf8", env: { ...process.env } });
+  return {
+    ok: (proc.status ?? 1) === 0,
+    exitCode: proc.status ?? 1,
+    stdout: proc.stdout ?? "",
+    stderr: proc.stderr ?? "",
+  };
+}
+
+/**
+ * Links every HQ-catalog eligible toolkit plugin into the local oclif manager.
+ *
+ * Eligibility comes from HQ Ops pluginCatalog; this command only performs the
+ * local build/link side effects required by the user's CLI installation.
+ */
 export default class PluginsInstallAll extends RawrCommand {
   static description = "Link all workspace command plugins into the local oclif plugin manager (Channel A)";
 
@@ -74,28 +79,22 @@ export default class PluginsInstallAll extends RawrCommand {
       return;
     }
 
-    const allPlugins = await listWorkspacePlugins(workspaceRoot);
-    const visible = filterPluginsByKind(allPlugins, "toolkit");
+    const catalog = await createHqOpsClient(workspaceRoot).pluginCatalog.listWorkspacePlugins(
+      { workspaceRoot, kind: "toolkit" },
+      createHqOpsCallOptions("plugin-plugins.cli.install-all.catalog"),
+    );
+    const visible = catalog.plugins;
 
     const planned: PlannedLink[] = [];
     const skipped: Skipped[] = [];
 
     for (const plugin of visible) {
-      const pkgJsonPath = path.join(plugin.absPath, "package.json");
-      const pkgJson = await readJsonFile(pkgJsonPath);
-
-      if (!pkgJson) {
-        skipped.push({ pluginId: plugin.id, dirName: plugin.dirName, absPath: plugin.absPath, reason: "missing package.json" });
-        continue;
-      }
-
-      // Channel A wiring only makes sense for oclif command plugins.
-      if (!isOclifPluginPackage(pkgJson)) {
+      if (!plugin.commandPlugin.eligible) {
         skipped.push({
           pluginId: plugin.id,
           dirName: plugin.dirName,
           absPath: plugin.absPath,
-          reason: "toolkit plugin missing/invalid package.json#oclif command wiring",
+          reason: plugin.commandPlugin.reason,
         });
         continue;
       }
@@ -121,16 +120,23 @@ export default class PluginsInstallAll extends RawrCommand {
       return;
     }
 
-    const linked: { pluginId: string; exitCode: number; ok: boolean }[] = [];
-    const failures: { pluginId: string; exitCode: number; stderr: string }[] = [];
+    const linked: { pluginId: string; buildExitCode: number; linkExitCode: number; ok: boolean }[] = [];
+    const failures: { pluginId: string; step: "build" | "link"; exitCode: number; stderr: string }[] = [];
 
     for (const p of planned) {
+      const build = runPluginBuild(p.absPath);
+      if (!build.ok) {
+        linked.push({ pluginId: p.pluginId, buildExitCode: build.exitCode, linkExitCode: 0, ok: false });
+        failures.push({ pluginId: p.pluginId, step: "build", exitCode: build.exitCode, stderr: build.stderr.trim() });
+        continue;
+      }
+
       const args = ["plugins", "link", p.absPath];
       if (p.willInstall) args.push("--install");
 
       const r = runRawrFromSource(workspaceRoot, args);
-      linked.push({ pluginId: p.pluginId, exitCode: r.exitCode, ok: r.ok });
-      if (!r.ok) failures.push({ pluginId: p.pluginId, exitCode: r.exitCode, stderr: r.stderr.trim() });
+      linked.push({ pluginId: p.pluginId, buildExitCode: build.exitCode, linkExitCode: r.exitCode, ok: r.ok });
+      if (!r.ok) failures.push({ pluginId: p.pluginId, step: "link", exitCode: r.exitCode, stderr: r.stderr.trim() });
     }
 
     if (failures.length > 0) {
