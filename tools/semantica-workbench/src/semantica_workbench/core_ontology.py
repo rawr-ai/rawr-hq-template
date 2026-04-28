@@ -19,6 +19,7 @@ from .paths import (
     RAWR_CORE_ONTOLOGY_LAYERS,
     REPO_ROOT,
 )
+from .report_html import write_proposal_review_html
 from .semantica_adapter import export_semantica_ontology, semantica_status
 from .semantica_graph import semantica_graph_probe
 from .text_normalization import normalize_match_text, normalize_section_text, term_in_normalized_text
@@ -310,6 +311,7 @@ def write_architecture_proposal_package(
     write_json(run_dir / CORE_GRAPH_FILENAMES["claim_comparisons"], package["claim_comparisons"])
     write_json(run_dir / CORE_GRAPH_FILENAMES["verdict_repair"], package["verdict_repair"])
     (run_dir / CORE_GRAPH_FILENAMES["proposal_review_report"]).write_text(package["review_report"], encoding="utf-8")
+    write_proposal_review_html(run_dir / CORE_GRAPH_FILENAMES["proposal_review_report_html"], package)
     write_json(run_dir / CORE_GRAPH_FILENAMES["proposal_provenance"], package["provenance"])
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir

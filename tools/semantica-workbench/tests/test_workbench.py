@@ -586,6 +586,9 @@ class WorkbenchTests(unittest.TestCase):
                 reference_bundle=reference_bundle,
             )
             self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["proposal_review_report"]).exists())
+            proposal_html = run_dir / CORE_GRAPH_FILENAMES["proposal_review_report_html"]
+            self.assertTrue(proposal_html.exists())
+            self.assertIn("Architecture Proposal Review", proposal_html.read_text(encoding="utf-8"))
             self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["verdict_repair"]).exists())
             summary = run_named_query(str(run_dir), "proposal-review-summary")
             self.assertEqual("proposal-review-summary", summary["query"])
@@ -1083,6 +1086,11 @@ class WorkbenchTests(unittest.TestCase):
         self.assertEqual(5, pipeline["execution"]["steps_executed"])
         self.assertIn("PipelineStatus.", pipeline["execution"]["pipeline_status"])
         self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report"]).exists())
+        sweep_html = run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report_html"]
+        self.assertTrue(sweep_html.exists())
+        html_text = sweep_html.read_text(encoding="utf-8")
+        self.assertIn("Semantic Evidence Sweep", html_text)
+        self.assertIn("Per-Document Detail", html_text)
         self.assertTrue((run_dir / "documents").exists())
         viewer_text = (run_dir / CORE_GRAPH_FILENAMES["viewer"]).read_text(encoding="utf-8")
         match = re.search(r'<script id="graph-data" type="application/json">(.*?)</script>', viewer_text, re.S)

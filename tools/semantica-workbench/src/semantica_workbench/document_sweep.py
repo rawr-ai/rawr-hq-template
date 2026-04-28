@@ -25,6 +25,7 @@ from .core_config import (
 from .core_viewer import write_html_viewer
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json, write_jsonl
 from .paths import REPO_ROOT
+from .report_html import write_sweep_report_html
 from .semantic_evidence import (
     compare_evidence_to_ontology,
     extract_evidence_claims,
@@ -258,6 +259,7 @@ def write_sweep_outputs(run_dir: Path, sweep: dict[str, Any]) -> None:
     write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_update_candidates"], {"run_id": sweep["run_id"], "documents": update_candidates})
     write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_no_signal_documents"], {"run_id": sweep["run_id"], "documents": no_signal})
     (run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report"]).write_text(render_sweep_report(sweep), encoding="utf-8")
+    write_sweep_report_html(run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report_html"], sweep)
     write_sweep_csv(run_dir / CORE_GRAPH_FILENAMES["doc_sweep_csv"], sweep)
     (run_dir / CORE_GRAPH_FILENAMES["doc_sweep_ttl"]).write_text(sweep_turtle(sweep), encoding="utf-8")
 
