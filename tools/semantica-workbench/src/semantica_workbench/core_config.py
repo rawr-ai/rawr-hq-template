@@ -31,6 +31,7 @@ CORE_GRAPH_FILENAMES = {
     "resolved_evidence": "resolved-evidence.json",
     "semantic_compare": "semantic-compare.json",
     "semantic_compare_report": "semantic-compare-report.md",
+    "semantic_compare_report_html": "semantic-compare-report.html",
     "semantic_evidence_ttl": "semantic-evidence.ttl",
     "architecture_change_frame": "architecture-change-frame.json",
     "architecture_change_frame_validation": "architecture-change-frame-validation.json",

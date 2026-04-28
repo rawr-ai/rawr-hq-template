@@ -19,7 +19,7 @@ from .paths import (
     RAWR_CORE_ONTOLOGY_LAYERS,
     REPO_ROOT,
 )
-from .report_html import write_proposal_review_html
+from .report_html import write_proposal_review_html, write_semantic_compare_report_html
 from .semantica_adapter import export_semantica_ontology, semantica_status
 from .semantica_graph import semantica_graph_probe
 from .text_normalization import normalize_match_text, normalize_section_text, term_in_normalized_text
@@ -215,6 +215,7 @@ def compare_document_evidence(
     write_json(run_dir / CORE_GRAPH_FILENAMES["resolved_evidence"], {"claims": compare["claims"], "findings": compare["findings"]})
     write_json(run_dir / CORE_GRAPH_FILENAMES["semantic_compare"], compare)
     (run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(render_semantic_compare_report(compare), encoding="utf-8")
+    write_semantic_compare_report_html(run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report_html"], compare)
     (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(semantic_compare_turtle(compare), encoding="utf-8")
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
@@ -303,6 +304,7 @@ def write_architecture_proposal_package(
     write_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"], package["evidence"])
     write_json(run_dir / CORE_GRAPH_FILENAMES["semantic_compare"], package["semantic_compare"])
     (run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(render_semantic_compare_report(package["semantic_compare"]), encoding="utf-8")
+    write_semantic_compare_report_html(run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report_html"], package["semantic_compare"])
     (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(semantic_compare_turtle(package["semantic_compare"]), encoding="utf-8")
     write_json(run_dir / CORE_GRAPH_FILENAMES["architecture_change_frame"], package["frame"])
     write_json(run_dir / CORE_GRAPH_FILENAMES["architecture_change_frame_validation"], package["validation"])
