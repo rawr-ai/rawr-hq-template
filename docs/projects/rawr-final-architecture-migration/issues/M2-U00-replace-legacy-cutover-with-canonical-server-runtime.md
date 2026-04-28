@@ -166,7 +166,7 @@ Out of scope:
 
 ### Paper Trail
 - [RAWR_Architecture_Migration_Plan.md](../resources/RAWR_Architecture_Migration_Plan.md)
-- [phase-2-entry-conditions.md](../../migration/phase-2-entry-conditions.md)
+- [phase-2-entry-conditions.md](../.context/M2-execution/phase-2-entry-conditions.md)
 
 ### Design Precedence
 - `packages/runtime/*` is the consolidated execution family for Phase 2.

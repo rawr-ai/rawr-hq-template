@@ -5,7 +5,14 @@ const INVENTORY = {
     "rawr-hq-template": {
       config: "package.json",
       tags: ["migration-slice:structural-tranche"],
-      targets: ["sync:check", "phase-a:gates:baseline", "phase-2:gate:u00:scaffold", "phase-2_5:gates:quick", "phase-2_5:gates:exit"],
+      targets: [
+        "sync:check",
+        "architecture:gates:permanent",
+        "observability:gate:telemetry-core",
+        "observability:gate:host-metrics",
+        "observability:gate:logging",
+        "runtime:gate:hq-lifecycle",
+      ],
     },
     "@rawr/server": {
       config: "apps/server/package.json",

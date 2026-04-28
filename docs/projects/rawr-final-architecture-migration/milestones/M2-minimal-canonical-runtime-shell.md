@@ -28,14 +28,15 @@ This milestone exists to replace that seam with the real runtime path and to lea
 
 ## Canonical Reference Documents
 
-This milestone is grounded by six documents:
+This milestone is grounded by seven documents:
 
 1. [Migration plan](../resources/RAWR_Architecture_Migration_Plan.md): canonical source for Phase 2 purpose, sequence, and exit gate.
-2. [Integrated architecture and runtime spec](../resources/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md): destination architecture, runtime subsystem stance, and invariant truth.
-3. [Effect runtime subsystem spec](../resources/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md): detailed specification for the Effect-backed runtime kernel, package topology, runtime-owned services, config/schema/error/observability models, and bootgraph lowering.
-4. [Phase 2 entry conditions](../../migration/phase-2-entry-conditions.md): the handoff contract from the frozen Phase 1 plateau.
-5. [Phase 1 closeout review](../phase-1-closeout-review.md): evidence for what Phase 1 settled and what it intentionally left to Phase 2.
-6. [Original architecture spec](../resources/RAWR_Canonical_Architecture_Spec_V2.md): historical reference (superseded by the integrated spec for runtime subsystem details).
+2. [Integrated architecture and runtime spec](../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md): destination architecture, runtime subsystem stance, and invariant truth.
+3. [Effect runtime subsystem spec](../resources/spec/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md): detailed specification for the Effect-backed runtime kernel, package topology, runtime-owned services, config/schema/error/observability models, and bootgraph lowering.
+4. [Phase 2 entry conditions](../.context/M2-execution/phase-2-entry-conditions.md): the handoff contract from the frozen Phase 1 plateau.
+5. [Phase 1 closeout review](../.context/M1-execution/phase-1-closeout-review.md): evidence for what Phase 1 settled and what it intentionally left to Phase 2.
+6. [M2 guardrails and enforcement](../resources/spec/m2-guardrails-and-enforcement.md): current M2 gate classification, proof model, and ratchet rules.
+7. [Original architecture spec](../resources/_archive/RAWR_Canonical_Architecture_Spec_V2.md): historical reference (superseded by the integrated spec for runtime subsystem details).
 
 For this milestone, the migration plan is the execution authority. The two new specs are the design authority for the runtime subsystem. Narrower local issue docs may make intent more concrete without violating either.
 
@@ -164,9 +165,9 @@ Phase 2 slices are not closed by "it boots on my machine" alone. Each slice clos
 
 Current repo reality matters here:
 
-- the `scripts/phase-2/` tree now exists for U00 scaffolding, but the real U00 contract still remains red until the runtime cut lands
-- the first `phase-2:gate:u00:*` package gate chain now exists, with a scaffold target that snapshots current findings without claiming the bridge is already gone
-- existing Nx structural suites now expose `phase-2-u00-scaffold` on the active shell projects, but Phase 2 still does not have a fully closed proof band yet
+- the `scripts/phase-2/` tree now exists for U00 current-findings diagnostics, but the real U00 contract still remains red until the runtime cut lands
+- the first `phase-2:gate:u00:*` package gate chain now exists; current-findings helpers may be run manually with `--allow-findings`, but they are not active validation
+- existing Nx structural suites expose `m2-u00-current-findings` on the active shell projects for explicit diagnostics, but Phase 2 still does not have a fully closed proof band yet
 
 That means each M2 slice must land its own verification surface as part of the slice instead of assuming the proof band already exists.
 
