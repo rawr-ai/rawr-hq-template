@@ -368,6 +368,7 @@ def cmd_doc_proposal_compare(args) -> int:
         reference_bundle=reference_bundle,
     )
     print(f"proposal_review={rel(run_dir / CORE_GRAPH_FILENAMES['proposal_review_report'])}")
+    print(f"proposal_review_html={rel(run_dir / CORE_GRAPH_FILENAMES['proposal_review_report_html'])}")
     print(f"verdict_repair={rel(run_dir / CORE_GRAPH_FILENAMES['verdict_repair'])}")
     return 0
 
@@ -392,6 +393,7 @@ def cmd_doc_sweep(args) -> int:
         sweep = read_json(sweep_path)
         summary = sweep["summary"]
         print(f"doc_sweep={rel(report_path)}")
+        print(f"doc_sweep_html={rel(run_dir / CORE_GRAPH_FILENAMES['doc_sweep_report_html'])}")
         print(f"documents_analyzed={summary['documents_analyzed']} skipped={summary['documents_skipped']}")
         print(f"recommendations={summary['recommendations']}")
         print(
