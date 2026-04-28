@@ -4,10 +4,8 @@ Use this runbook when you need to start, stop, inspect, or debug the managed loc
 
 Related docs:
 - `docs/process/HQ_USAGE.md`
-- `docs/system/TELEMETRY.md`
-- `docs/system/telemetry/hyperdx.md`
 - `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md`
-- `docs/process/runbooks/TELEMETRY_VERIFICATION.md`
+- `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md`
 
 ## Scope
 
@@ -40,6 +38,8 @@ The current local support contract is:
 - container name: `rawr-hq-hyperdx`
 - UI: `http://localhost:8080/`
 - OTLP HTTP ingest: `http://127.0.0.1:4318`
+
+Telemetry subsystem docs and proof-lane runbooks are quarantined. Mine them through `docs/system/quarantine/AGENTS.md` and `docs/process/runbooks/quarantine/AGENTS.md`; do not treat them as current authority.
 
 ## Managed Lifecycle
 
