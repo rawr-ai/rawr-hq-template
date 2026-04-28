@@ -10,7 +10,9 @@ from pathlib import Path
 from semantica_workbench.architecture_change_frame import (
     FRAME_SCHEMA_VERSION,
     REQUIRED_EVIDENCE_REF_FIELDS,
+    build_architecture_change_frame_package,
     frame_schema_summary,
+    fixture_frame_document_path,
     load_architecture_change_frame_schema,
     validate_frame_policy_shape,
 )
@@ -19,8 +21,10 @@ from semantica_workbench.core_ontology import (
     TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
+    compare_architecture_proposal,
     load_core_ontology,
     validate_loaded_core_ontology,
+    write_architecture_change_frame,
 )
 from semantica_workbench.core_config import CORE_GRAPH_FILENAMES, NAMED_QUERY_DESCRIPTIONS
 from semantica_workbench.core_viewer import build_cytoscape_payload, write_html_viewer
@@ -119,6 +123,36 @@ def minimal_architecture_change_frame() -> dict:
             "explanation_chain_complete": False,
         },
     }
+
+
+def write_reference_geometry_bundle(directory: Path) -> Path:
+    bundle_path = directory / "reference-geometry.zip"
+    ttl = """@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rawr: <https://rawr.dev/ontology/instances#> .
+@prefix rg: <https://rawr.dev/ontology/reference-geometry#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+rawr:diagnosticsExtensionSlot a rg:ExtensionSlot ;
+  dct:description "New read model, catalog, topology, or telemetry concern attaches under diagnostics/observation." ;
+  skos:prefLabel "diagnostics extension slot" .
+
+rawr:comparisonVocabularyExtensionSlot a rg:ExtensionSlot ;
+  dct:description "New analysis vocabulary attaches as comparison/change-frame layer, not as product architecture kind." ;
+  skos:prefLabel "comparison vocabulary extension slot" .
+
+rawr:laneAgentTools a rg:ProjectionLane ;
+  skos:prefLabel "agent/tools" ;
+  rg:pathPattern "plugins/agent/tools/<capability>" .
+
+rawr:bindPhase a rg:RuntimePhase ;
+  skos:prefLabel "bind" .
+"""
+    import zipfile
+
+    with zipfile.ZipFile(bundle_path, "w") as archive:
+        archive.writestr("rawr-reference-geometry-v0.2/README.md", "# RAWR Reference Geometry v0.2\n")
+        archive.writestr("rawr-reference-geometry-v0.2/rawr-reference-geometry-core.ttl", ttl)
+    return bundle_path
 
 
 class WorkbenchTests(unittest.TestCase):
@@ -393,7 +427,11 @@ class WorkbenchTests(unittest.TestCase):
     def test_architecture_change_frame_policy_rejects_truth_and_evidence_leaks(self) -> None:
         frame = minimal_architecture_change_frame()
         frame["governance"]["semantica_output_authoritative"] = True
+        frame["governance"]["reference_geometry_status"] = "candidate-input"
         frame["comparison"]["overall_verdict"] = "compatible"
+        frame["claims"][0]["verdict"] = "compatible"
+        frame["claims"][0]["review_action"] = "accept"
+        frame["claims"][0]["review_state"] = "accepted"
         frame["claims"][0]["evidence_refs"] = []
         frame["noun_mappings"] = [
             {
@@ -410,10 +448,127 @@ class WorkbenchTests(unittest.TestCase):
         errors = validate_frame_policy_shape(frame)
         kinds = {error["kind"] for error in errors}
         self.assertIn("frame_governance_violation", kinds)
+        self.assertIn("reference_geometry_candidate_input_not_allowed", kinds)
         self.assertIn("extraction_only_frame_has_verdict", kinds)
+        self.assertIn("extraction_only_claim_has_verdict", kinds)
+        self.assertIn("extraction_only_claim_has_review_action", kinds)
+        self.assertIn("machine_frame_review_state_accepted", kinds)
         self.assertIn("missing_structured_evidence_ref", kinds)
         self.assertIn("frame_item_promotion_allowed", kinds)
         self.assertIn("evidence_ref_missing_required_fields", kinds)
+
+    def test_architecture_change_frame_schema_keeps_geometry_and_review_state_non_authoritative(self) -> None:
+        schema = load_architecture_change_frame_schema()
+        self.assertEqual(["comparison-only", "not-used"], schema["$defs"]["governance"]["properties"]["reference_geometry_status"]["enum"])
+        self.assertNotIn("accepted", schema["$defs"]["review_state"]["enum"])
+
+    def test_architecture_change_frame_package_produces_evidence_only_fixture_frame(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        with tempfile.TemporaryDirectory() as directory:
+            reference_bundle = write_reference_geometry_bundle(Path(directory))
+            package = build_architecture_change_frame_package(
+                fixture_frame_document_path(),
+                graph["layered_graph"],
+                graph["candidate_queue"],
+                fixture=True,
+                reference_bundle=reference_bundle,
+            )
+        frame = package["frame"]
+        self.assertTrue(package["validation"]["valid"], package["validation"]["errors"])
+        self.assertEqual("extraction-only", frame["comparison"]["status"])
+        self.assertEqual("not-evaluated", frame["comparison"]["overall_verdict"])
+        self.assertEqual("comparison-only", frame["governance"]["reference_geometry_status"])
+        self.assertFalse(frame["governance"]["semantica_output_authoritative"])
+        self.assertTrue(all(claim["verdict"] == "not-evaluated" for claim in frame["claims"]))
+        self.assertTrue(all(claim["review_action"] == "none" for claim in frame["claims"]))
+        claim_types = {claim["claim_type"] for claim in frame["claims"]}
+        self.assertIn("ownership", claim_types)
+        self.assertIn("projection", claim_types)
+        self.assertIn("runtime-realization", claim_types)
+        self.assertIn("resource-provider", claim_types)
+        self.assertIn("forbidden-risk", claim_types)
+        self.assertIn("verification", claim_types)
+        mapping_categories = {item["mapping_category"] for item in package["noun_mappings"]["mappings"]}
+        self.assertIn("accepted", mapping_categories)
+        self.assertIn("candidate", mapping_categories)
+        self.assertIn("external-reference-geometry-only", mapping_categories)
+        self.assertIn("rejected", mapping_categories)
+        for claim in frame["claims"]:
+            ref = claim["evidence_refs"][0]
+            self.assertEqual(claim["evidence_refs"][0]["source_path"], frame["document"]["source_path"])
+            self.assertGreaterEqual(ref["line_start"], 1)
+            self.assertGreaterEqual(ref["char_end"], ref["char_start"])
+            self.assertFalse(ref["promotion_allowed"])
+
+    def test_architecture_proposal_compare_generates_verdict_repair_package(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        with tempfile.TemporaryDirectory() as directory:
+            reference_bundle = write_reference_geometry_bundle(Path(directory))
+            package = build_architecture_change_frame_package(
+                fixture_frame_document_path(),
+                graph["layered_graph"],
+                graph["candidate_queue"],
+                fixture=True,
+                reference_bundle=reference_bundle,
+                evaluate=True,
+            )
+        frame = package["frame"]
+        verdict_repair = package["verdict_repair"]
+        comparisons = package["claim_comparisons"]["comparisons"]
+        self.assertTrue(package["validation"]["valid"], package["validation"]["errors"])
+        self.assertEqual("evaluated", frame["comparison"]["status"])
+        self.assertEqual(verdict_repair["overall_verdict"], frame["comparison"]["overall_verdict"])
+        verdicts = {item["verdict"] for item in comparisons}
+        self.assertIn("conflicts", verdicts)
+        self.assertIn("needs-canonical-addendum", verdicts)
+        self.assertIn("unclear", verdicts)
+        self.assertTrue(verdicts & {"compatible", "compatible-extension"})
+        external_slot = next(item for item in comparisons if "comparison vocabulary extension slot" in item["source_claim"]["text"])
+        self.assertEqual("compatible-extension", external_slot["verdict"])
+        self.assertEqual("accept-with-mapping", external_slot["review_action"])
+        self.assertGreaterEqual(len(verdict_repair["repair_steps"]), 1)
+        for item in comparisons:
+            self.assertFalse(item["promotion_allowed"])
+            self.assertTrue(item["source_claim"]["document_path"])
+        self.assertIn("rawr:ArchitectureChangeFrame", package["proposal_graph_ttl"])
+        self.assertIn("RAWR reviewed ontology remains truth authority", package["review_report"])
+
+    def test_architecture_change_frame_commands_write_expected_outputs(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            base_run = Path(directory)
+            write_json(base_run / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            reference_bundle = write_reference_geometry_bundle(base_run)
+            run_dir = write_architecture_change_frame(
+                fixture_frame_document_path(),
+                run=str(base_run),
+                fixture=True,
+                reference_bundle=reference_bundle,
+            )
+            self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["architecture_change_frame"]).exists())
+            frame = read_json(run_dir / CORE_GRAPH_FILENAMES["architecture_change_frame"])
+            self.assertEqual("extraction-only", frame["comparison"]["status"])
+            run_dir = compare_architecture_proposal(
+                fixture_frame_document_path(),
+                run=str(base_run),
+                fixture=True,
+                reference_bundle=reference_bundle,
+            )
+            self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["proposal_review_report"]).exists())
+            self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["verdict_repair"]).exists())
+            summary = run_named_query(str(run_dir), "proposal-review-summary")
+            self.assertEqual("proposal-review-summary", summary["query"])
+            repair_queue = run_named_query(str(run_dir), "proposal-repair-queue")
+            self.assertGreaterEqual(len(repair_queue["items"]), 1)
 
     def test_semantica_intake_probe_preserves_source_authority_and_spans(self) -> None:
         manifest = load_manifest(FIXTURE_MANIFEST)
@@ -635,7 +790,7 @@ class WorkbenchTests(unittest.TestCase):
             (run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]).write_text(json.dumps(graph["candidate_queue"]), encoding="utf-8")
             (run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]).write_text(json.dumps(compare), encoding="utf-8")
             for query_name in NAMED_QUERY_DESCRIPTIONS:
-                if query_name.startswith("sweep-"):
+                if query_name.startswith("sweep-") or query_name.startswith("proposal-"):
                     continue
                 result = run_named_query(str(run_dir), query_name)
                 self.assertEqual(query_name, result["query"])

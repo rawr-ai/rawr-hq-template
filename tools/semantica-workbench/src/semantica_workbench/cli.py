@@ -15,12 +15,14 @@ from .chunking import chunk_markdown
 from .core_ontology import (
     TESTING_PLAN,
     build_core_ontology_run,
+    compare_architecture_proposal,
     compare_document_evidence,
     diff_document_against_core_ontology,
     extract_document_evidence,
     export_core_ontology,
     validate_core_ontology,
     visualize_core_ontology,
+    write_architecture_change_frame,
     write_semantica_capability_report,
 )
 from .core_config import CORE_GRAPH_FILENAMES, DEFAULT_CORE_VIEWER_HOST, DEFAULT_CORE_VIEWER_PORT
@@ -116,6 +118,22 @@ def build_parser() -> argparse.ArgumentParser:
     doc_compare.add_argument("--fixture", action="store_true")
     doc_compare.add_argument("--semantica-pilot", action="store_true")
     doc_compare.set_defaults(func=cmd_doc_compare)
+
+    doc_frame = sub.add_parser("doc:frame")
+    doc_frame.add_argument("--run", default="latest")
+    doc_frame.add_argument("--document", default=str(TESTING_PLAN))
+    doc_frame.add_argument("--fixture", action="store_true")
+    doc_frame.add_argument("--semantica-pilot", action="store_true")
+    doc_frame.add_argument("--reference-bundle", default=None)
+    doc_frame.set_defaults(func=cmd_doc_frame)
+
+    doc_proposal_compare = sub.add_parser("doc:proposal-compare")
+    doc_proposal_compare.add_argument("--run", default="latest")
+    doc_proposal_compare.add_argument("--document", default=str(TESTING_PLAN))
+    doc_proposal_compare.add_argument("--fixture", action="store_true")
+    doc_proposal_compare.add_argument("--semantica-pilot", action="store_true")
+    doc_proposal_compare.add_argument("--reference-bundle", default=None)
+    doc_proposal_compare.set_defaults(func=cmd_doc_proposal_compare)
 
     doc_sweep = sub.add_parser("doc:sweep")
     doc_sweep.add_argument("--run", default="latest")
@@ -282,6 +300,34 @@ def cmd_doc_extract(args) -> int:
 def cmd_doc_compare(args) -> int:
     run_dir = compare_document_evidence(Path(args.document), args.run, fixture=args.fixture, semantica_pilot=args.semantica_pilot)
     print(f"semantic_compare={rel(run_dir / CORE_GRAPH_FILENAMES['semantic_compare_report'])}")
+    return 0
+
+
+def cmd_doc_frame(args) -> int:
+    reference_bundle = Path(args.reference_bundle) if args.reference_bundle else None
+    run_dir = write_architecture_change_frame(
+        Path(args.document),
+        args.run,
+        fixture=args.fixture,
+        semantica_pilot=args.semantica_pilot,
+        reference_bundle=reference_bundle,
+    )
+    print(f"architecture_change_frame={rel(run_dir / CORE_GRAPH_FILENAMES['architecture_change_frame'])}")
+    print(f"frame_validation={rel(run_dir / CORE_GRAPH_FILENAMES['architecture_change_frame_validation'])}")
+    return 0
+
+
+def cmd_doc_proposal_compare(args) -> int:
+    reference_bundle = Path(args.reference_bundle) if args.reference_bundle else None
+    run_dir = compare_architecture_proposal(
+        Path(args.document),
+        args.run,
+        fixture=args.fixture,
+        semantica_pilot=args.semantica_pilot,
+        reference_bundle=reference_bundle,
+    )
+    print(f"proposal_review={rel(run_dir / CORE_GRAPH_FILENAMES['proposal_review_report'])}")
+    print(f"verdict_repair={rel(run_dir / CORE_GRAPH_FILENAMES['verdict_repair'])}")
     return 0
 
 
