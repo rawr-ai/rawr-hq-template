@@ -100,3 +100,34 @@ Residual uncertainty:
 
 - Semantica duplicate/normalization classes expose limited directly verified behavior in this pinned package.
 - Graph analyzer output is treated as metadata and not as target architecture truth.
+
+## Phase 5: Conflict, Reasoning, And Explanation
+
+Branch: `codex/semantica-first-pipeline-implementation`
+
+Changed files:
+
+- `tools/semantica-workbench/src/semantica_workbench/semantica_reasoning.py`
+- `tools/semantica-workbench/src/semantica_workbench/semantic_evidence.py`
+- `tools/semantica-workbench/tests/test_workbench.py`
+
+Implementation:
+
+- Added a semantica conflict/reasoning proof around current findings.
+- Added explicit explanation chains to every finding: source claim, resolved target, authority context, rule result, finding kind, and review action.
+- Kept RAWR verdict rules and review-action meanings authoritative.
+
+Capability status:
+
+- `semantica.conflicts.ConflictDetector` and `semantica.reasoning.GraphReasoner` are importable and probed.
+- Semantica reasoning output is metadata/proof, not the verdict authority.
+
+Fallback and removal trigger:
+
+- RAWR rules remain authoritative for decision-grade finding semantics.
+- Removal trigger: move verdict execution only after semantica reasoning preserves RAWR source claim, target, authority, rule, finding kind, and review action chain.
+
+Residual uncertainty:
+
+- Semantica conflict detector output is not yet mapped to RAWR-specific prohibited/deprecated/candidate review semantics.
+- Explanation chains are deterministic RAWR-authored chains with semantica proof metadata attached.

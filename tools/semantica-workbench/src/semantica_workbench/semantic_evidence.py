@@ -742,6 +742,8 @@ def build_claim(
 
 
 def compare_evidence_to_ontology(evidence: dict[str, Any], graph: dict[str, Any], candidate_queue: dict[str, Any]) -> dict[str, Any]:
+    from .semantica_reasoning import semantica_reasoning_probe
+
     entities = {entity["id"]: entity for entity in graph["entities"]}
     candidates = {candidate["id"]: candidate for candidate in candidate_queue.get("candidates", [])}
     findings: list[dict[str, Any]] = []
@@ -756,6 +758,7 @@ def compare_evidence_to_ontology(evidence: dict[str, Any], graph: dict[str, Any]
     findings_by_rule = Counter(finding.get("rule") or "unknown" for finding in findings)
     ambiguous_by_bucket = Counter(finding.get("ambiguity_bucket") or "none" for finding in grouped.get("ambiguous", []))
 
+    reasoning = semantica_reasoning_probe(findings)
     return {
         "schema_version": "rawr-semantic-compare-v1",
         "document": evidence["document"],
@@ -769,7 +772,9 @@ def compare_evidence_to_ontology(evidence: dict[str, Any], graph: dict[str, Any]
             "decision_grade_finding_count": sum(1 for finding in findings if finding.get("decision_grade")),
             "claim_retention": evidence.get("summary", {}).get("claim_retention", {}),
             "suppressed_line_count": len(evidence.get("suppressed_lines", [])),
+            "semantica_reasoning": reasoning.get("summary", {}),
         },
+        "semantica_reasoning": reasoning,
         "claims": evidence.get("claims", []),
         "suppressed_lines": evidence.get("suppressed_lines", []),
         "findings": findings,
@@ -997,6 +1002,35 @@ def finding(
     review_action: str | None = None,
 ) -> dict[str, Any]:
     target_id = entity.get("id") if entity else None
+    review_action_value = review_action or default_review_action(kind)
+    explanation_chain = {
+        "source_claim": {
+            "claim_id": claim["id"],
+            "document_path": claim["source_path"],
+            "line_start": claim["line_start"],
+            "line_end": claim["line_end"],
+            "text": claim["text"],
+        },
+        "resolved_target": {
+            "entity_id": target_id,
+            "label": entity.get("label") if entity else None,
+        },
+        "authority_context": {
+            "authority_context": claim.get("authority_context"),
+            "assertion_scope": claim.get("assertion_scope"),
+            "modality": claim.get("modality"),
+            "polarity": claim.get("polarity"),
+        },
+        "rule_result": {
+            "rule": rule,
+            "reason": reason,
+        },
+        "finding": {
+            "kind": kind,
+            "decision_grade": decision_grade,
+            "review_action": review_action_value,
+        },
+    }
     return {
         "id": stable_id("finding", kind, claim["id"], target_id or "none", rule),
         "kind": kind,
@@ -1012,7 +1046,8 @@ def finding(
         "claim_kind": claim.get("claim_kind"),
         "resolution_state": claim.get("resolution_state"),
         "ambiguity_bucket": ambiguity_bucket,
-        "review_action": review_action or default_review_action(kind),
+        "review_action": review_action_value,
+        "explanation_chain": explanation_chain,
         "heading_path": claim.get("heading_path", []),
         "decision_grade": decision_grade,
         "confidence": claim.get("confidence"),
