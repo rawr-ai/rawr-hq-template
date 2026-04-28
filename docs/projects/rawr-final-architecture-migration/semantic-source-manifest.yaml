@@ -1,0 +1,32 @@
+version: 1
+project: rawr-runtime-realization-authority-core
+notes:
+  - Packet-scoped authority-core extraction for integrated architecture alignment.
+  - Source packet root is docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-architecture-alignment-cloud-pro-inputs.
+  - 00-cloud-pro-task-prompt.md is intentionally excluded because it is task scaffolding, not graph source truth.
+  - Migration plans, milestone plans, and issue slices are intentionally excluded from this phase.
+sources:
+  - id: alignment-authority
+    title: Integrated Architecture Alignment Authority
+    path: docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-architecture-alignment-cloud-pro-inputs/01-integrated-architecture-alignment-authority.md
+    authority: binding-alignment-authority
+    status: canonical
+    role: authority-order-and-reconciliation-rules
+    authority_rank: 1
+    authority_scope: alignment-authority
+  - id: runtime-realization-spec
+    title: Runtime Realization System Specification
+    path: docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-architecture-alignment-cloud-pro-inputs/02-runtime-realization-system-specification.md
+    authority: canonical-subsystem-spec
+    status: canonical
+    role: runtime-realization-source-of-truth
+    authority_rank: 2
+    authority_scope: runtime-realization-overlap
+  - id: integrated-architecture-under-revision
+    title: Integrated Canonical Architecture Document Under Revision
+    path: docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-architecture-alignment-cloud-pro-inputs/03-integrated-canonical-architecture-document-under-revision.md
+    authority: under-revision-canonical-architecture
+    status: candidate
+    role: broad-architecture-context-and-stale-comparison-source
+    authority_rank: 3
+    authority_scope: broad-architecture-non-overlap

@@ -5,6 +5,9 @@ dist/
 .nx/
 .tmp/
 .rawr/
+.semantica/
+__pycache__/
+*.py[cod]
 .context/
 !docs/projects/**/.context/
 !docs/projects/**/.context/**
