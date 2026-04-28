@@ -57,7 +57,7 @@ related_to: []
 
 ## Canonical References
 - [RAWR Canonical Architecture and Runtime Spec (Integrated Final)](../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
-- [RAWR Effect Runtime Subsystem Canonical Spec](../resources/spec/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
+- [RAWR Effect Runtime Subsystem Canonical Spec](../resources/_archive/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
 - [RAWR Canonical Testing Plan](../resources/spec/RAWR_Canonical_Testing_Plan.md)
 
 ## Dependencies / Notes

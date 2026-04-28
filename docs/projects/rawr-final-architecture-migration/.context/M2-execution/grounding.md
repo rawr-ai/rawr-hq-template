@@ -8,7 +8,7 @@ This is the canonical entry point for Phase 2 work. Use it to keep runtime-subst
 
 1. [Integrated architecture and runtime spec](../../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
    Target-state ontology, runtime subsystem stance, and invariant source of truth.
-2. [Effect runtime subsystem spec](../../resources/spec/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
+2. [Effect runtime subsystem spec](../../resources/_archive/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
    Detailed specification for the Effect-backed runtime kernel, package topology, runtime-owned services, config/schema/error/observability models, and bootgraph lowering.
 3. [Migration plan](../../resources/RAWR_Architecture_Migration_Plan.md)
    Canonical source for Phase 2 purpose, sequence, and exit gate.
@@ -116,7 +116,7 @@ The retained carry-forward note lives at:
 ## Relevant Grounding Documents
 
 - [RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md](../../resources/spec/RAWR_Canonical_Architecture_and_Runtime_Spec_Integrated_Final.md)
-- [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../../resources/spec/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
+- [RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md](../../resources/_archive/RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md)
 - [m2-guardrails-and-enforcement.md](../../resources/spec/m2-guardrails-and-enforcement.md)
 - [RAWR_Architecture_Migration_Plan.md](../../resources/RAWR_Architecture_Migration_Plan.md)
 - [phase-2-entry-conditions.md](./phase-2-entry-conditions.md)
