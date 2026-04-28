@@ -419,17 +419,51 @@ def render_semantica_capability_report(report: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def extract_evidence_claims(document: Path, graph: dict[str, Any], candidate_queue: dict[str, Any], *, fixture: bool = False) -> dict[str, Any]:
+def extract_evidence_claims(
+    document: Path,
+    graph: dict[str, Any],
+    candidate_queue: dict[str, Any],
+    *,
+    fixture: bool = False,
+    semantica_pilot_enabled: bool = False,
+) -> dict[str, Any]:
     if not document.is_absolute():
         document = REPO_ROOT / document
     lines = document.read_text(encoding="utf-8").splitlines()
     indexes = build_semantic_indexes(graph, candidate_queue)
     claims: list[dict[str, Any]] = []
     suppressed_lines: list[dict[str, Any]] = []
+    semantica_pilot: dict[str, Any] | None = None
     heading_path: list[str] = []
     in_code_fence = False
     active_table_kind: str | None = None
     nonblank_line_count = 0
+
+    if semantica_pilot_enabled:
+        try:
+            from .semantica_extraction import semantica_extraction_pilot
+
+            semantica_pilot = semantica_extraction_pilot(document, graph, candidate_queue)
+        except Exception as exc:
+            semantica_pilot = {
+                "schema_version": "rawr-semantica-extraction-pilot-v1",
+                "document": rel(document),
+                "status": {"available": False, "classification": "blocked"},
+                "summary": {
+                    "raw_item_count": 0,
+                    "evidence_claim_count": 0,
+                    "decision_grade_source": "rawr-semantic-heuristic-v1",
+                    "promotion_allowed": False,
+                    "adapter_mode": "blocked",
+                },
+                "raw_items": [],
+                "evidence_claims": [],
+                "diagnostics": [{"kind": "semantica_pilot_failed", "error": str(exc)}],
+                "fallback": {
+                    "deterministic_oracle": "rawr-semantic-heuristic-v1",
+                    "removal_trigger": "Fix pilot execution and prove fixture parity before use.",
+                },
+            }
 
     for line_number, line in enumerate(lines, start=1):
         stripped = line.strip()
@@ -523,6 +557,26 @@ def extract_evidence_claims(document: Path, graph: dict[str, Any], candidate_que
             "claims_by_scope": dict(Counter(claim["assertion_scope"] for claim in claims)),
             "claims_by_kind": dict(Counter(claim["claim_kind"] for claim in claims)),
             "claims_by_resolution_state": dict(Counter(claim["resolution_state"] for claim in claims)),
+            "semantica_pilot": semantica_pilot.get("summary", {"enabled": False}) if semantica_pilot else {"enabled": False},
+        },
+        "semantica_pilot": semantica_pilot
+        or {
+            "schema_version": "rawr-semantica-extraction-pilot-v1",
+            "document": rel(document),
+            "status": {"available": True, "classification": "disabled"},
+            "summary": {
+                "enabled": False,
+                "decision_grade_source": "rawr-semantic-heuristic-v1",
+                "promotion_allowed": False,
+                "adapter_mode": "disabled",
+            },
+            "raw_items": [],
+            "evidence_claims": [],
+            "diagnostics": [],
+            "fallback": {
+                "deterministic_oracle": "rawr-semantic-heuristic-v1",
+                "removal_trigger": "Enable pilot mode and prove fixture parity before use.",
+            },
         },
         "claims": claims,
         "suppressed_lines": suppressed_lines,
