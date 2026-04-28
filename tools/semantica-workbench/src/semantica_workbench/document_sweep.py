@@ -32,6 +32,7 @@ from .semantic_evidence import (
     semantic_compare_turtle,
 )
 from .semantica_adapter import iri_fragment, turtle_literal
+from .semantica_pipeline import semantica_pipeline_probe
 
 SWEEP_SCHEMA_VERSION = "rawr-semantic-doc-sweep-v1"
 
@@ -215,6 +216,7 @@ def build_sweep_payload(
 ) -> dict[str, Any]:
     summary_counter = Counter(record["recommendation"] for record in records)
     counts = aggregate_counts(records)
+    recommendations = {name: summary_counter.get(name, 0) for name in SWEEP_RECOMMENDATIONS}
     return {
         "schema_version": SWEEP_SCHEMA_VERSION,
         "run_id": run_dir.name,
@@ -229,7 +231,7 @@ def build_sweep_payload(
             "documents_discovered": documents_discovered_count,
             "documents_analyzed": len(records),
             "documents_skipped": len(skipped),
-            "recommendations": {name: summary_counter.get(name, 0) for name in SWEEP_RECOMMENDATIONS},
+            "recommendations": recommendations,
             "total_claims": counts["claims"],
             "total_findings": counts["findings"],
             "decision_grade_findings": counts["decision_grade"],
@@ -239,6 +241,7 @@ def build_sweep_payload(
             "candidate_new": counts["candidate_new"],
             "suppressed_lines": counts["suppressed_lines"],
         },
+        "semantica_pipeline": semantica_pipeline_probe(len(records), len(skipped), recommendations),
         "skipped_documents": skipped,
         "documents": records,
     }
