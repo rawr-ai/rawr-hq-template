@@ -67,3 +67,36 @@ Residual uncertainty:
 - Pattern triplets do not preserve RAWR claim semantics by themselves.
 - Pilot evidence claims are still produced by RAWR line resolution and claim classification, not directly from semantica triplets.
 - Default document extraction keeps semantica pilot disabled to avoid slow or noisy extraction in sweeps.
+
+## Phase 4: Graph, Normalization, And Candidate Handling
+
+Branch: `codex/semantica-first-pipeline-implementation`
+
+Changed files:
+
+- `tools/semantica-workbench/src/semantica_workbench/semantica_graph.py`
+- `tools/semantica-workbench/src/semantica_workbench/core_ontology.py`
+- `tools/semantica-workbench/tests/test_workbench.py`
+
+Implementation:
+
+- Added a semantica graph proof around pinned KG, graph analyzer, normalization, and dedup surfaces.
+- Attached `semantica_graph` proof metadata to graph payloads.
+- Preserved RAWR-owned stable IDs, controlled predicates, target architecture view, and candidate queue boundaries.
+- Added tests proving semantica graph proof does not promote candidates or leak evidence-like types into target architecture views.
+- Fixed the predicate guard to use the ontology contract predicate allow-list rather than deriving allowed predicates from the graph under test.
+
+Capability status:
+
+- `semantica.kg.KnowledgeGraph` is constructible over reviewed RAWR graph data.
+- `semantica.normalize` and `semantica.deduplication` surfaces are importable, but this phase uses them only as proof/metadata surfaces.
+
+Fallback and removal trigger:
+
+- RAWR remains authority for ID stability, predicate control, target view construction, candidate queue, and promotion gates.
+- Removal trigger: allow semantica normalization/dedup to mutate graph outputs only after stable ID, controlled predicate, and target leakage tests pass.
+
+Residual uncertainty:
+
+- Semantica duplicate/normalization classes expose limited directly verified behavior in this pinned package.
+- Graph analyzer output is treated as metadata and not as target architecture truth.

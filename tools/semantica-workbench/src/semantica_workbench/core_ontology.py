@@ -19,6 +19,7 @@ from .paths import (
     REPO_ROOT,
 )
 from .semantica_adapter import export_semantica_ontology, semantica_status
+from .semantica_graph import semantica_graph_probe
 from .semantic_evidence import (
     compare_evidence_to_ontology,
     extract_evidence_claims,
@@ -714,6 +715,18 @@ def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) ->
             "summary": summary,
         },
         "candidate_queue": candidate_queue,
+        "semantica_graph": semantica_graph_probe(
+            {
+                "entities": sorted(entities, key=lambda item: item["id"]),
+                "relations": sorted(relations, key=lambda item: item["id"]),
+                "target_architecture_view": {
+                    "entities": sorted(target_entities, key=lambda item: item["id"]),
+                    "relations": sorted(target_relations, key=lambda item: item["id"]),
+                },
+            },
+            candidate_queue,
+            {predicate["id"] for predicate in contract.get("predicates", [])},
+        ),
         "entities_by_id": entities_by_id,
     }
 
