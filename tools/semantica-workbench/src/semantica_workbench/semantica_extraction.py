@@ -5,6 +5,7 @@ from typing import Any
 
 from .io import rel
 from .semantic_evidence import build_semantic_indexes, classify_claim_text, resolve_line_terms
+from .source_model import stripped_line_span
 
 
 def semantica_extraction_pilot(document: Path, graph: dict[str, Any], candidate_queue: dict[str, Any]) -> dict[str, Any]:
@@ -34,6 +35,7 @@ def semantica_extraction_pilot(document: Path, graph: dict[str, Any], candidate_
         stripped = line.strip()
         if not stripped:
             continue
+        stripped_span = stripped_line_span(line)
         matches = resolve_line_terms(stripped, indexes)
         if not any(matches.values()):
             continue
@@ -43,6 +45,9 @@ def semantica_extraction_pilot(document: Path, graph: dict[str, Any], candidate_
                 "source_path": rel(document),
                 "line_start": index,
                 "line_end": index,
+                "char_start": stripped_span.char_start,
+                "char_end": stripped_span.char_end,
+                "char_span_kind": "line-offset",
                 "heading_path": heading_path_at_line(text, index),
                 "text": stripped,
                 "polarity": classification["polarity"],
