@@ -199,3 +199,36 @@ Residual uncertainty:
 
 - Semantica pipeline support is partial for this use case because checkpoint persistence was not accepted.
 - The proof intentionally does not move RAWR recommendation semantics into semantica generic pipeline state.
+
+## Phase 8: Developer Capability Acceptance
+
+Branch: `codex/semantica-first-pipeline-implementation`
+
+Changed files:
+
+- `docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/semantica-first-developer-capability-acceptance.md`
+- `docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/semantica-first-phase-handoffs.md`
+
+Implementation:
+
+- Ran the full unit, fixture, smoke, query, visualization, and real-document acceptance gate.
+- Added a tracked developer-capability acceptance handoff.
+- Recorded which semantica surfaces are proven, which remain fallback, and which are blocked by missing extras or unproven behavior.
+
+Capability status:
+
+- Developers can compare docs, inspect explanation chains, query review surfaces, and see candidate/evidence separation through stable CLI wrappers.
+- Real-doc compares completed over the active canonical architecture and runtime realization specs.
+- The testing-policy compare completed over `resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md`; this is a quarantine/provenance smoke because no active testing-plan spec exists in `resources/spec/`.
+- Final query smoke reported a present semantic compare artifact, `157` findings, `131` decision-review items, and `0` decision-grade findings for the quarantined testing-policy provenance compare.
+
+Fallback and removal trigger:
+
+- Fallbacks remain for deterministic extraction, local Markdown span handling, RAWR verdict rules, static Cytoscape, and local sweep orchestration.
+- Each fallback has a removal trigger in the acceptance report.
+
+Residual uncertainty:
+
+- LLM/provider extraction remains blocked by missing extras.
+- Multi-document compare UX still writes the latest semantic compare artifact into the active run; direct per-document addressing should be improved later.
+- The locked-core ontology strategy remains accepted for governance, not proven as the only viable ontology model.
