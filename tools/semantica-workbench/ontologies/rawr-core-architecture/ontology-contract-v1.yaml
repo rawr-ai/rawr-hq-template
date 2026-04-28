@@ -1,0 +1,468 @@
+id: rawr-core-architecture-ontology-contract-v1
+description: Strict contract for reviewed RAWR core architecture ontology inputs.
+layers:
+- id: core
+  description: Primary source-of-truth architecture ontology.
+- id: runtime-realization-overlay
+  description: Runtime realization details subordinate to core architecture.
+- id: authority-and-document-overlay
+  description: Minimal source authority, provenance, supersession, and review metadata.
+- id: classifier-readiness-overlay
+  description: Future-facing operational/classifier annotations that do not override core truth.
+statuses:
+- id: locked
+  canonical_view: true
+- id: forbidden
+  canonical_view: true
+- id: deprecated
+  canonical_view: true
+- id: candidate
+  canonical_view: false
+- id: tbd
+  canonical_view: false
+- id: evidence-only
+  canonical_view: false
+- id: not-applicable
+  canonical_view: false
+entity_types:
+- id: ArchitectureRoot
+  description: A top-level repository root with architectural meaning.
+  layer: core
+  promotion_rule: Promote only when the canonical architecture spec defines the root and assigns ownership or dependency consequences.
+- id: ArchitectureKind
+  description: A first-class RAWR kind such as package, resource, provider, service, plugin, app, role, surface, or entrypoint.
+  layer: core
+  promotion_rule: Promote only when the kind is stable across source wording and affects ownership, legal dependency direction,
+    construction, or semantic drift.
+- id: SemanticBoundary
+  description: A boundary that owns or constrains semantic capability truth, projection, selection, or support.
+  layer: core
+  promotion_rule: Promote only when the boundary changes owner, import legality, file placement, or runtime construction.
+- id: AppStructure
+  description: App-owned selection, profile, membership, and process-shape concepts.
+  layer: core
+  promotion_rule: Promote when the concept constrains app composition, selected plugin membership, runtime profile selection,
+    or entrypoint behavior.
+- id: ServiceBoundaryLane
+  description: A canonical service context lane used by service binding and runtime realization.
+  layer: core
+  promotion_rule: Promote only when lane participation changes binding, caching, invocation, schema ownership, or caller/harness
+    behavior.
+- id: ProjectionLane
+  description: A role/surface/capability lane where a plugin projects service truth or host capability.
+  layer: core
+  promotion_rule: Promote when topology plus builder classification changes legal plugin placement, app membership, surface
+    mounting, or diagnostics.
+- id: ResourceProviderProfileConcept
+  description: A resource, provider, requirement, lifetime, provider selection, or runtime profile concept.
+  layer: core
+  promotion_rule: Promote when it constrains resource contract declaration, provider implementation, profile selection, provider
+    coverage, or provisioning.
+- id: ConstructionLaw
+  description: A locked architecture law that constrains ownership, dependency direction, assembly, or construction order.
+  layer: core
+  promotion_rule: Promote when directly stated or directly entailed by finalized architecture/runtime specs and enforceable
+    through drift review or gates.
+- id: ForbiddenPattern
+  description: A construction path, name, field, import, or ownership collapse that must not survive as target architecture.
+  layer: core
+  promotion_rule: Promote when a finalized spec explicitly forbids the pattern or directly defines a replacement.
+- id: DeprecatedTerm
+  description: Old or broad language that should be replaced by a canonical term.
+  layer: authority-and-document-overlay
+  promotion_rule: Promote only with a replacement edge and source-backed reason.
+- id: RuntimePhase
+  description: A phase in runtime realization from definition through observation.
+  layer: runtime-realization-overlay
+  promotion_rule: Promote when phase order, producer, consumer, or validation gate is defined by runtime sources.
+- id: RuntimeMachinery
+  description: Runtime component that participates in derivation, compilation, provisioning, mounting, observation, or finalization.
+  layer: runtime-realization-overlay
+  promotion_rule: Promote when it has a named owner, producer/consumer boundary, diagnostic, or validation gate.
+- id: RuntimeArtifact
+  description: Derived or compiled artifact used in runtime realization handoffs.
+  layer: runtime-realization-overlay
+  promotion_rule: Promote when the artifact is produced and consumed by named lifecycle machinery.
+- id: ValidationGate
+  description: A deterministic gate, diagnostic, or shape validation needed to keep architecture facts legal.
+  layer: runtime-realization-overlay
+  promotion_rule: Promote when it checks source refs, relation signatures, import boundaries, provider coverage, runtime compiler
+    expectations, or forbidden patterns.
+- id: DocumentAuthority
+  description: A source document with authority rank, scope, and supersession posture.
+  layer: authority-and-document-overlay
+  promotion_rule: Promote only for documents that affect source-of-truth baseline, semantic diff, or review decisions.
+- id: SourceSpan
+  description: A source-backed evidence pointer to a document section or span.
+  layer: authority-and-document-overlay
+  promotion_rule: Promote when needed to trace a canonical entity/relation or resolve drift.
+- id: ReviewFinding
+  description: A semantic diff or review finding such as aligned, stale, conflict, candidate-new, forbidden, ambiguous, or
+    outside-scope.
+  layer: authority-and-document-overlay
+  promotion_rule: Promote only as review metadata, not core architecture truth.
+- id: EvidenceClaim
+  description: A source-backed document claim used as semantic-diff evidence, not canonical architecture truth.
+  layer: authority-and-document-overlay
+  promotion_rule: Promote only into the evidence ledger; never into canonical core without reviewed normalization.
+- id: CandidateEntity
+  description: A possible future entity from the candidate queue or document diff.
+  layer: authority-and-document-overlay
+  promotion_rule: Promote only after source authority, operational consequence, status, and source refs are reviewed.
+- id: ClassifierReadinessAnnotation
+  description: Future-facing annotation describing allowed/forbidden moves, gates, operational consequences, or rule-pack
+    candidacy.
+  layer: classifier-readiness-overlay
+  promotion_rule: Promote to locked only when derived from finalized specs and tied to enforcement consequence.
+- id: ReservedBoundary
+  description: A named unresolved operational boundary with owner, hook, I/O, diagnostic expectation, enforcement placeholder,
+    and promotion trigger.
+  layer: classifier-readiness-overlay
+  promotion_rule: Promote when a dedicated spec or canonical decision resolves the boundary.
+predicates:
+- id: owns_truth
+  domain: ArchitectureKind|SemanticBoundary
+  range: SemanticBoundary
+  direction: owner -> truth
+  operational_meaning: Determines semantic truth owner, write authority, schema/repository ownership, and drift baseline.
+  allowed_in: canonical_graph
+- id: owns_schema
+  domain: ArchitectureKind|SemanticBoundary
+  range: ArchitectureKind|SemanticBoundary|RuntimeArtifact
+  direction: owner -> schema-bearing boundary
+  operational_meaning: Determines who owns schema changes, migrations, runtime-carried schema, and validation.
+  allowed_in: canonical_graph
+- id: owns_selection
+  domain: ArchitectureKind|AppStructure
+  range: AppStructure|ResourceProviderProfileConcept|ProjectionLane
+  direction: selection owner -> selected thing
+  operational_meaning: Determines app membership, provider/profile selection, process shape, and entrypoint constraints.
+  allowed_in: canonical_graph
+- id: owns_projection
+  domain: ArchitectureKind|ProjectionLane
+  range: ProjectionLane
+  direction: projection owner -> projected lane
+  operational_meaning: Determines plugin lane ownership and prevents projections from becoming truth owners.
+  allowed_in: canonical_graph
+- id: declares
+  domain: ArchitectureKind|ServiceBoundaryLane|ResourceProviderProfileConcept|ProjectionLane
+  range: ProjectionLane|ResourceProviderProfileConcept|RuntimeArtifact|ServiceBoundaryLane
+  direction: declarer -> declared requirement/schema/fact
+  operational_meaning: Creates import-safe declarations without acquiring live runtime values.
+  allowed_in: canonical_graph
+- id: implements
+  domain: ArchitectureKind|ResourceProviderProfileConcept
+  range: ArchitectureKind|ResourceProviderProfileConcept
+  direction: implementation -> contract
+  operational_meaning: Separates provider implementation from resource identity and semantic truth.
+  allowed_in: canonical_graph
+- id: projects
+  domain: ProjectionLane|ArchitectureKind
+  range: ArchitectureKind|SemanticBoundary
+  direction: projection -> projected truth/capability
+  operational_meaning: Determines plugin projection path and forbids ownership transfer.
+  allowed_in: canonical_graph
+- id: selects
+  domain: AppStructure|ArchitectureKind|ResourceProviderProfileConcept
+  range: AppStructure|ArchitectureKind|ProjectionLane|ResourceProviderProfileConcept
+  direction: selector -> selected artifact
+  operational_meaning: Determines app composition, runtime profile, provider selection, and entrypoint process selection.
+  allowed_in: canonical_graph
+- id: supports
+  domain: ArchitectureKind|ArchitectureRoot
+  range: ArchitectureKind|RuntimeMachinery
+  direction: supporting kind -> supported kind
+  operational_meaning: Allows packages/support matter to aid other kinds without owning truth.
+  allowed_in: canonical_graph
+- id: depends_on
+  domain: ArchitectureKind|ProjectionLane|RuntimeArtifact|RuntimeMachinery
+  range: ArchitectureKind|ResourceProviderProfileConcept|RuntimeArtifact
+  direction: consumer -> dependency
+  operational_meaning: Constrains legal dependency direction and import boundaries.
+  allowed_in: canonical_graph
+- id: requires
+  domain: ArchitectureKind|ProjectionLane|RuntimeArtifact|ServiceBoundaryLane|ValidationGate
+  range: ResourceProviderProfileConcept|RuntimePhase|ValidationGate|RuntimeArtifact
+  direction: requiring thing -> requirement
+  operational_meaning: Triggers provider coverage, schema, gate, lifecycle, or runtime compiler expectations.
+  allowed_in: canonical_graph
+- id: does_not_own
+  domain: AppStructure|ArchitectureKind|RuntimeMachinery|ProjectionLane
+  range: AppStructure|ResourceProviderProfileConcept|RuntimeArtifact|RuntimePhase|SemanticBoundary|ServiceBoundaryLane
+  direction: non-owner -> prohibited ownership target
+  operational_meaning: Prevents false ownership, semantic drift, and construction-path collapse.
+  allowed_in: canonical_graph
+- id: separate_from
+  domain: ArchitectureKind|AppStructure|DocumentAuthority|ProjectionLane|RuntimeMachinery|ServiceBoundaryLane
+  range: ArchitectureKind|AppStructure|DocumentAuthority|RuntimeArtifact|RuntimeMachinery
+  direction: concept A -> concept B
+  operational_meaning: Preserves architectural distinctions where conflation causes invalid construction.
+  allowed_in: canonical_graph
+- id: derives
+  domain: RuntimeMachinery
+  range: RuntimeArtifact
+  direction: producer -> derived artifact
+  operational_meaning: Defines SDK derivation outputs and downstream runtime compiler inputs.
+  allowed_in: canonical_graph
+- id: compiles_to
+  domain: RuntimeMachinery|RuntimeArtifact
+  range: RuntimeArtifact
+  direction: compiler/input -> compiled artifact
+  operational_meaning: Defines runtime compiler handoff to bootgraph/process runtime/adapters.
+  allowed_in: canonical_graph
+- id: orders
+  domain: RuntimeMachinery
+  range: RuntimeArtifact|RuntimePhase
+  direction: ordering mechanism -> ordered plan/phase
+  operational_meaning: Constrains bootgraph lifecycle ordering, rollback, and finalization.
+  allowed_in: canonical_graph
+- id: provisions
+  domain: RuntimeMachinery|ResourceProviderProfileConcept
+  range: ResourceProviderProfileConcept|RuntimeArtifact
+  direction: provisioner -> provisioned resource/access
+  operational_meaning: Determines who may acquire providers/resources and when.
+  allowed_in: canonical_graph
+- id: binds
+  domain: RuntimeMachinery
+  range: ArchitectureKind|RuntimeArtifact
+  direction: binder -> bound service/access
+  operational_meaning: Constrains service binding, cache key participation, and live client creation.
+  allowed_in: canonical_graph
+- id: lowers_to
+  domain: RuntimeMachinery|RuntimeArtifact
+  range: RuntimeArtifact
+  direction: adapter/plan -> harness-facing payload
+  operational_meaning: Defines adapter lowering and native payload boundaries.
+  allowed_in: canonical_graph
+- id: mounts
+  domain: RuntimeMachinery
+  range: RuntimeArtifact|ProjectionLane
+  direction: harness -> mounted surface/payload
+  operational_meaning: Defines harness mounting without giving harnesses semantic ownership.
+  allowed_in: canonical_graph
+- id: observes
+  domain: RuntimeArtifact|RuntimeMachinery|ValidationGate
+  range: RuntimeArtifact|RuntimePhase
+  direction: observer -> observed state
+  operational_meaning: Produces diagnostics, catalogs, telemetry, topology records, and drift signals.
+  allowed_in: canonical_graph
+- id: finalizes
+  domain: RuntimeMachinery
+  range: RuntimeArtifact|RuntimePhase
+  direction: finalizer -> finalized runtime state
+  operational_meaning: Constrains deterministic shutdown, provider release, final records, and reverse ordering.
+  allowed_in: canonical_graph
+- id: produces
+  domain: AppStructure|ArchitectureKind|ProjectionLane|RuntimeMachinery|ValidationGate
+  range: AppStructure|ReviewFinding|RuntimeArtifact|RuntimeMachinery|ServiceBoundaryLane
+  direction: producer -> output
+  operational_meaning: Records operational handoff artifacts.
+  allowed_in: canonical_graph
+- id: consumes
+  domain: RuntimeMachinery|ValidationGate
+  range: RuntimeArtifact
+  direction: consumer -> input artifact
+  operational_meaning: Determines lifecycle handoff and artifact compatibility checks.
+  allowed_in: canonical_graph
+- id: validated_by
+  domain: ArchitectureKind|RuntimeArtifact|RuntimeMachinery|ProjectionLane|ResourceProviderProfileConcept
+  range: ValidationGate
+  direction: thing -> gate
+  operational_meaning: Defines deterministic validation or diagnostic coverage.
+  allowed_in: canonical_graph
+- id: checked_by_gate
+  domain: ArchitectureKind|RuntimeArtifact|ForbiddenPattern|ClassifierReadinessAnnotation
+  range: ValidationGate
+  direction: claim/path -> gate
+  operational_meaning: Connects law, artifact, or classifier move to enforcement.
+  allowed_in: canonical_graph
+- id: emits_diagnostic
+  domain: RuntimeMachinery|ValidationGate
+  range: RuntimeArtifact|ReviewFinding
+  direction: emitter -> diagnostic/finding
+  operational_meaning: Makes invalid construction paths observable.
+  allowed_in: canonical_graph
+- id: requires_schema
+  domain: ArchitectureKind|ResourceProviderProfileConcept|ServiceBoundaryLane|RuntimeArtifact
+  range: ResourceProviderProfileConcept|RuntimeArtifact
+  direction: schema-bearing boundary -> required schema
+  operational_meaning: Determines runtime-carried schema, config decoding, redaction, diagnostics, and harness payload validation.
+  allowed_in: canonical_graph
+- id: is_authority_for
+  domain: DocumentAuthority
+  range: ArchitectureKind|ArchitectureRoot|RuntimeMachinery|RuntimePhase|ConstructionLaw
+  direction: document -> governed scope
+  operational_meaning: Determines source-of-truth baseline for semantic diff.
+  allowed_in: authority_overlay
+- id: supersedes
+  domain: DocumentAuthority|DeprecatedTerm
+  range: DocumentAuthority|DeprecatedTerm
+  direction: newer authority -> older authority
+  operational_meaning: Resolves stale source claims and replacement status.
+  allowed_in: authority_overlay
+- id: replaces
+  domain: AppStructure|ArchitectureKind|ConstructionLaw|ForbiddenPattern|RuntimeMachinery|DeprecatedTerm
+  range: AppStructure|DeprecatedTerm|ForbiddenPattern
+  direction: canonical replacement -> old/invalid term
+  operational_meaning: Provides rewrite target for drift repair.
+  allowed_in: authority_overlay
+- id: forbids
+  domain: ConstructionLaw|ForbiddenPattern|DocumentAuthority|ResourceProviderProfileConcept|ValidationGate
+  range: ForbiddenPattern|ArchitectureKind|ProjectionLane
+  direction: law/source -> forbidden path
+  operational_meaning: Rejects invalid construction paths and stale terminology.
+  allowed_in: canonical_graph
+- id: deprecates
+  domain: DocumentAuthority|ConstructionLaw
+  range: DeprecatedTerm
+  direction: authority/law -> deprecated term
+  operational_meaning: Marks stale terms for review and document repair.
+  allowed_in: authority_overlay
+- id: conflicts_with
+  domain: ReviewFinding|EvidenceClaim
+  range: ArchitectureKind|ConstructionLaw|RuntimeArtifact
+  direction: finding -> conflicted canonical fact
+  operational_meaning: Drives semantic diff and review.
+  allowed_in: evidence_or_authority_review
+- id: needs_review
+  domain: ReviewFinding|CandidateEntity|ReservedBoundary
+  range: DocumentAuthority|ArchitectureKind|ConstructionLaw
+  direction: unresolved item -> review target
+  operational_meaning: Prevents silent promotion of uncertain claims.
+  allowed_in: evidence_or_candidate_review
+- id: allows_move
+  domain: ClassifierReadinessAnnotation
+  range: ArchitectureKind|ProjectionLane|AppStructure
+  direction: annotation -> allowed construction move
+  operational_meaning: Future classifier narrowing; must have enforcement consequence.
+  allowed_in: classifier_overlay
+- id: forbids_move
+  domain: ClassifierReadinessAnnotation
+  range: ForbiddenPattern|ArchitectureKind|ProjectionLane
+  direction: annotation -> rejected construction move
+  operational_meaning: Future classifier rejection with traceable rationale.
+  allowed_in: classifier_overlay
+- id: narrows
+  domain: ClassifierReadinessAnnotation
+  range: ArchitectureKind|ProjectionLane|ResourceProviderProfileConcept|ValidationGate
+  direction: classification fact -> narrowed legal space
+  operational_meaning: Reduces legal construction paths during pre-classification.
+  allowed_in: classifier_overlay
+- id: requires_gate
+  domain: ClassifierReadinessAnnotation|ArchitectureKind|ProjectionLane
+  range: ValidationGate
+  direction: move/category -> gate
+  operational_meaning: Connects classifier category to validation requirement.
+  allowed_in: classifier_overlay
+- id: has_operational_consequence
+  domain: ArchitectureKind|ConstructionLaw|ClassifierReadinessAnnotation|ForbiddenPattern
+  range: ValidationGate|RuntimeArtifact|AppStructure|ResourceProviderProfileConcept
+  direction: fact -> consequence
+  operational_meaning: Prevents labels without enforcement consequences from entering classifier rule packs.
+  allowed_in: canonical_graph_or_classifier_overlay
+operational_consequence_matrix:
+- category: ArchitectureKind
+  required_consequence:
+  - ownership
+  - legal-dependency-direction
+  - file-placement
+  - semantic-drift-detection
+  classifier_use: Narrows legal owner and allowed construction path.
+- category: ArchitectureRoot
+  required_consequence:
+  - file-placement
+  - import-boundary
+  - authority-scope
+  classifier_use: Determines legal target root before generation.
+- category: ServiceBoundaryLane
+  required_consequence:
+  - binding-participation
+  - schema-requirement
+  - cache-key-participation
+  - per-call-vs-construction-time-separation
+  classifier_use: Prevents invocation/config/deps/provided confusion.
+- category: ProjectionLane
+  required_consequence:
+  - plugin-topology
+  - lane-builder-selection
+  - surface-mounting
+  - app-membership-selection
+  classifier_use: Maps a capability need to legal plugin lane without reclassifying by fields.
+- category: AppStructure
+  required_consequence:
+  - app-membership
+  - runtime-profile-selection
+  - entrypoint-process-shape
+  - provider-selection
+  classifier_use: Separates app composition from process shape and deployment placement.
+- category: ResourceProviderProfileConcept
+  required_consequence:
+  - resource-contract
+  - provider-implementation
+  - provider-selection
+  - provider-coverage
+  - provisioning-lifetime
+  classifier_use: Forces resource/provider/profile separation and compiler coverage expectations.
+- category: RuntimePhase
+  required_consequence:
+  - producer
+  - consumer
+  - phase-order
+  - required-output
+  classifier_use: Predicts downstream preflight and diagnostics without making runtime a semantic owner.
+- category: RuntimeMachinery
+  required_consequence:
+  - producer-consumer-handoff
+  - ownership-boundary
+  - import-boundary
+  - diagnostic
+  classifier_use: Selects expected runtime compiler, bootgraph, provisioning, adapter, harness, or diagnostic role.
+- category: RuntimeArtifact
+  required_consequence:
+  - producer
+  - consumer
+  - validation-gate
+  - diagnostic-read-model
+  classifier_use: Lets classifier predict what must be emitted or checked after generation.
+- category: ConstructionLaw
+  required_consequence:
+  - semantic-drift-detection
+  - allowed-dependency-direction
+  - forbidden-path-rejection
+  classifier_use: Turns architecture law into narrowing and rejection rules.
+- category: ForbiddenPattern
+  required_consequence:
+  - rejected-construction-path
+  - replacement-target
+  - diagnostic
+  - document-repair
+  classifier_use: Blocks invalid targets before generator output.
+- category: ValidationGate
+  required_consequence:
+  - static-check
+  - runtime-compiler-check
+  - diagnostic
+  - review-blocker
+  classifier_use: Requires an enforcement step for each classifier-relevant category.
+- category: DocumentAuthority
+  required_consequence:
+  - source-of-truth-scope
+  - source-span-provenance
+  - supersession-review
+  classifier_use: Prevents stale source claims from becoming classifier rules.
+- category: ClassifierReadinessAnnotation
+  required_consequence:
+  - allowed-move
+  - forbidden-move
+  - required-gate
+  - generator-output
+  - runtime-compiler-expectation
+  classifier_use: Encodes future rule-pack pressure while leaving unresolved implications candidate or tbd.
+canonical_view_statuses:
+- locked
+- forbidden
+- deprecated
+candidate_statuses:
+- candidate
+- tbd
+- evidence-only

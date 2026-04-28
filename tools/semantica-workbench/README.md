@@ -15,6 +15,11 @@ Run from the repository root:
 ```bash
 bun run semantica:setup
 bun run semantica:check
+bun run semantica:core:validate
+bun run semantica:core:build
+bun run semantica:core:export
+bun run semantica:core:visualize
+bun run semantica:doc:diff -- --document docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md
 bun run semantica:run -- --fixture
 bun run semantica:extract -- --manifest docs/projects/rawr-final-architecture-migration/semantic-source-manifest.yaml --limit-chunks 2
 bun run semantica:ontology -- --run latest
@@ -23,6 +28,24 @@ bun run semantica:report -- --run latest
 ```
 
 `semantica:setup` creates `.semantica/venv` using `uv` and Python 3.12. Other commands run through that environment.
+
+## Core Ontology Path
+
+The core ontology commands are seed-first and treat reviewed YAML as the authority:
+
+- `semantica:core:validate` checks the layered ontology contract, source refs, relation signatures, controlled predicates, and canonical-view leakage.
+- `semantica:core:build` writes canonical/layered graph JSON, candidate queue JSON, validation report, and a Markdown graph report under ignored `.semantica/runs/...`.
+- `semantica:core:export` runs the Semantica adapter and writes Semantica status, GraphML, and available OWL/SHACL-style outputs for the current graph.
+- `semantica:core:visualize` writes a simple local HTML graph viewer for canonical entities and decision relations.
+- `semantica:doc:diff` compares a document against the canonical graph and writes both ignored run outputs and the tracked Phase 4 verification summary.
+
+The reviewed source files live under:
+
+```text
+tools/semantica-workbench/ontologies/rawr-core-architecture/
+```
+
+The CloudPro draft is snapshotted in the ontology workflow context packet for provenance, but the machine-readable YAML files are the normalized ingestion source.
 
 ## Extraction Modes
 

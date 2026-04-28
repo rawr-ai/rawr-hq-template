@@ -7,6 +7,14 @@ import subprocess
 from pathlib import Path
 
 from .chunking import chunk_markdown
+from .core_ontology import (
+    TESTING_PLAN,
+    build_core_ontology_run,
+    diff_document_against_core_ontology,
+    export_core_ontology,
+    validate_core_ontology,
+    visualize_core_ontology,
+)
 from .diffing import build_diff
 from .extraction import extract_chunk, request_params_for_model, schema_hash
 from .io import git_sha, mark_current, new_run_dir, rel, resolve_run, write_json, write_jsonl
@@ -42,6 +50,25 @@ def build_parser() -> argparse.ArgumentParser:
 
     check = sub.add_parser("check")
     check.set_defaults(func=cmd_check)
+
+    core_validate = sub.add_parser("core:validate")
+    core_validate.set_defaults(func=cmd_core_validate)
+
+    core_build = sub.add_parser("core:build")
+    core_build.set_defaults(func=cmd_core_build)
+
+    core_export = sub.add_parser("core:export")
+    core_export.add_argument("--run", default="latest")
+    core_export.set_defaults(func=cmd_core_export)
+
+    core_visualize = sub.add_parser("core:visualize")
+    core_visualize.add_argument("--run", default="latest")
+    core_visualize.set_defaults(func=cmd_core_visualize)
+
+    doc_diff = sub.add_parser("doc:diff")
+    doc_diff.add_argument("--run", default="latest")
+    doc_diff.add_argument("--document", default=str(TESTING_PLAN))
+    doc_diff.set_defaults(func=cmd_doc_diff)
 
     extract = sub.add_parser("extract")
     add_extract_args(extract)
@@ -88,6 +115,46 @@ def cmd_check(_args) -> int:
     print(f"content_ontology={content['id']}")
     print(f"authority_overlay={authority['id']}")
     print(f"fixture_sources={len(fixture_manifest.sources)} fixture_chunks={len(fixture_chunks)}")
+    return 0
+
+
+def cmd_core_validate(_args) -> int:
+    report = validate_core_ontology()
+    print(
+        "core_ontology_valid="
+        f"{report['valid']} entities={report['summary']['entity_count']} "
+        f"relations={report['summary']['relation_count']} "
+        f"errors={report['summary']['error_count']} warnings={report['summary']['warning_count']}"
+    )
+    if report["errors"]:
+        for error in report["errors"][:10]:
+            print(f"error={error}")
+        raise RuntimeError(f"Core ontology validation failed with {len(report['errors'])} errors")
+    return 0
+
+
+def cmd_core_build(_args) -> int:
+    run_dir = build_core_ontology_run()
+    print(f"core_graph={rel(run_dir)}")
+    return 0
+
+
+def cmd_core_export(args) -> int:
+    run_dir = export_core_ontology(args.run)
+    print(f"core_export={rel(run_dir)}")
+    return 0
+
+
+def cmd_core_visualize(args) -> int:
+    run_dir = visualize_core_ontology(args.run)
+    print(f"core_visualization={rel(run_dir / 'graph-viewer.html')}")
+    return 0
+
+
+def cmd_doc_diff(args) -> int:
+    document = Path(args.document)
+    run_dir = diff_document_against_core_ontology(document, args.run)
+    print(f"document_diff={rel(run_dir / 'document-diff-report.md')}")
     return 0
 
 

@@ -69,8 +69,15 @@ def resolve_run(run: str | None) -> Path:
 
 def mark_current(run_dir: Path, files: list[str] | None = None) -> None:
     CURRENT_ROOT.mkdir(parents=True, exist_ok=True)
+    for child in CURRENT_ROOT.iterdir():
+        if child.name != "run.json":
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
     write_json(CURRENT_ROOT / "run.json", {"run_dir": rel(run_dir), "git_sha": git_sha()})
     for name in files or []:
         src = run_dir / name
         if src.exists():
+            (CURRENT_ROOT / name).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(src, CURRENT_ROOT / name)
