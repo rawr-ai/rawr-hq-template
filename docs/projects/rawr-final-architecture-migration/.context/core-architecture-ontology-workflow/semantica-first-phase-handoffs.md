@@ -165,3 +165,37 @@ Residual uncertainty:
 
 - Semantica MCP exposes generic graph resources; RAWR-specific graph/evidence loading still needs an adapter before it can answer decision-grade review questions directly.
 - Semantica visualization maturity has only been inventoried in this phase, not behaviorally accepted as a replacement for the static review artifact.
+
+## Phase 7: Pipeline And Sweep Orchestration
+
+Branch: `codex/semantica-first-pipeline-implementation`
+
+Changed files:
+
+- `tools/semantica-workbench/src/semantica_workbench/semantica_pipeline.py`
+- `tools/semantica-workbench/src/semantica_workbench/document_sweep.py`
+- `tools/semantica-workbench/tests/test_workbench.py`
+
+Implementation:
+
+- Added a semantica pipeline proof for document sweep orchestration shape.
+- Attached `semantica_pipeline` metadata to sweep outputs.
+- Proved pinned semantica can construct and execute a simple DAG-like sweep skeleton while preserving the current RAWR loop as the operational orchestrator.
+- Fixed review-steward findings by labeling this as a DAG execution proof rather than behavioral run-state proof and requiring semantica pipeline availability in tests.
+- Kept recommendation categories, review queues, source-authority handling, and document policy as RAWR-owned semantics.
+
+Capability status:
+
+- `semantica.pipeline.PipelineBuilder` and `ExecutionEngine` are importable and can execute a no-op sweep skeleton.
+- Run-state methods are present and sampled; retry API presence is recorded but retry behavior is not accepted.
+- Durable checkpoint/resume persistence was not proven.
+
+Fallback and removal trigger:
+
+- Current `run_document_sweep` remains the operational sweep loop and parity oracle.
+- Removal trigger: move orchestration mechanics only after semantica pipeline proves checkpoint/retry/run-state behavior without changing RAWR recommendation semantics.
+
+Residual uncertainty:
+
+- Semantica pipeline support is partial for this use case because checkpoint persistence was not accepted.
+- The proof intentionally does not move RAWR recommendation semantics into semantica generic pipeline state.
