@@ -289,6 +289,10 @@
             "available",
             "blocked-missing-extra",
             "blocked-no-api-key",
+            "blocked-requires-model",
+            "blocked-provider-unavailable",
+            "blocked-provider-error",
+            "blocked-llm-call-failed",
             "not-required",
             "unproven"
           ]

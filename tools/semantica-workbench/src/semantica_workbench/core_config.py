@@ -144,6 +144,7 @@ NAMED_QUERY_DESCRIPTIONS = {
 DEFAULT_SWEEP_ROOTS = ["docs"]
 DEFAULT_SWEEP_INCLUDE_GLOBS = ["**/*.md"]
 DEFAULT_SWEEP_EXCLUDE_SEGMENTS = [
+    ".context",
     "quarantine",
     "archive",
     "_archive",

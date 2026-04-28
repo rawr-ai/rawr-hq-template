@@ -91,14 +91,26 @@ Named queries use the richer JSON graph and diff outputs. SPARQL queries run aga
 
 ## Extraction Modes
 
-The default extraction mode is `auto`.
+The legacy manifest command family (`semantica:extract`, `semantica:run`) keeps its existing `--mode auto|heuristic|llm` behavior for packet-source ontology extraction.
 
-- With `OPENAI_API_KEY` set, real document extraction attempts a schema-backed LLM claim extraction pass first and records any fallback.
-- Without `OPENAI_API_KEY`, or with `--fixture`, extraction uses the deterministic heuristic extractor.
-- Use `--mode heuristic` to force deterministic extraction.
-- Use `SEMANTICA_WORKBENCH_MODEL` to override the default LLM model.
+The architecture proposal/document comparison commands default to deterministic RAWR evidence extraction:
 
-The default model is `gpt-5.4-mini`. `gpt-5.5` can be used with `--model gpt-5.5`.
+```bash
+bun run semantica:doc:extract -- --fixture
+bun run semantica:doc:proposal-compare -- --fixture
+```
+
+They also expose explicit Semantica modes:
+
+```bash
+bun run semantica:doc:extract -- --fixture --extraction-mode semantica-pattern
+bun run semantica:doc:extract -- --fixture --extraction-mode semantica-llm --llm-provider openai --llm-model <model>
+```
+
+- `deterministic` is the safe default and produces decision-grade evidence for RAWR-owned comparison policy.
+- `semantica-pattern` records Semantica non-LLM extraction as an evidence sidecar while deterministic RAWR extraction remains the oracle.
+- `semantica-llm` is explicit and fail-closed. It requires the provider dependency, credentials, and `--llm-model`; blocked LLM output is recorded separately and deterministic evidence is not relabeled as LLM evidence.
+- Any Semantica/LLM output remains evidence-only with exact source re-anchoring, confidence, review state, and `promotion_allowed: false`.
 
 Prompts live under `tools/semantica-workbench/prompts/`:
 

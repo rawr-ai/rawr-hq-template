@@ -36,6 +36,7 @@ from semantica_workbench.manifest import load_manifest
 from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
+import semantica_workbench.semantica_llm_extraction as llm_module
 from semantica_workbench.semantica_graph import semantica_graph_probe
 from semantica_workbench.semantica_intake import map_semantica_chunk_to_span, semantica_intake_probe
 from semantica_workbench.semantic_evidence import (
@@ -45,6 +46,8 @@ from semantica_workbench.semantic_evidence import (
     load_fixture_expectations,
     semantic_capability_probe,
 )
+from semantica_workbench.source_model import span_text_for_ref
+from semantica_workbench.text_normalization import normalize_match_text, normalize_text, term_in_normalized_text
 
 
 def frame_evidence_ref() -> dict:
@@ -56,9 +59,9 @@ def frame_evidence_ref() -> dict:
         "line_start": 7,
         "line_end": 7,
         "char_start": 0,
-        "char_end": 54,
+        "char_end": 73,
         "char_span_kind": "line-offset",
-        "text": "Create a root-level `core/` authoring root.",
+        "text": "Create a root-level `core/` authoring root for shared platform machinery.",
         "extraction_method": "semantica-llm-pilot",
         "confidence": 0.82,
         "review_state": "evidence-only",
@@ -153,6 +156,25 @@ rawr:bindPhase a rg:RuntimePhase ;
         archive.writestr("rawr-reference-geometry-v0.2/README.md", "# RAWR Reference Geometry v0.2\n")
         archive.writestr("rawr-reference-geometry-v0.2/rawr-reference-geometry-core.ttl", ttl)
     return bundle_path
+
+
+class FakeEntity:
+    def __init__(self, text: str, label: str, start_char: int, end_char: int, confidence: float = 0.9):
+        self.text = text
+        self.label = label
+        self.start_char = start_char
+        self.end_char = end_char
+        self.confidence = confidence
+        self.metadata = {}
+
+
+class FakeTriplet:
+    def __init__(self, subject: str, predicate: str, object_: str, source_sentence: str, confidence: float = 0.8):
+        self.subject = subject
+        self.predicate = predicate
+        self.object = object_
+        self.confidence = confidence
+        self.metadata = {"source_sentence": source_sentence}
 
 
 class WorkbenchTests(unittest.TestCase):
@@ -609,6 +631,129 @@ class WorkbenchTests(unittest.TestCase):
         self.assertEqual(1, mapping.line_start)
         self.assertEqual(3, mapping.line_end)
 
+    def test_shared_normalization_handles_unicode_quotes_spaces_and_dashes(self) -> None:
+        self.assertEqual("a b-c 'd' \"e\"", normalize_text("A\u00a0B\u2014C \u2018D\u2019 \u201cE\u201d"))
+        normalized = normalize_match_text("Use a root\u2011level `core/` authoring root.")
+        self.assertTrue(term_in_normalized_text("root-level core/", normalized))
+
+    def test_external_document_paths_and_exact_line_spans_are_first_class(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        with tempfile.TemporaryDirectory() as directory:
+            document = Path(directory) / "external-proposal.md"
+            line = "  Create a root-level `core/` authoring root for shared platform machinery."
+            document.write_text(f"# Target Architecture\n\n{line}\n", encoding="utf-8")
+            evidence = extract_evidence_claims(document, graph["layered_graph"], graph["candidate_queue"])
+            self.assertEqual(str(document.resolve()), evidence["document"])
+            claim = next(item for item in evidence["claims"] if "root-level" in item["text"])
+            self.assertEqual(3, claim["line_start"])
+            self.assertEqual(2, claim["char_start"])
+            self.assertEqual(len(line), claim["char_end"])
+            self.assertEqual(claim["text"], span_text_for_ref(claim["source_path"], claim["line_start"], claim["line_end"], claim["char_start"], claim["char_end"]))
+            package = build_architecture_change_frame_package(document, graph["layered_graph"], graph["candidate_queue"])
+            self.assertTrue(package["validation"]["valid"], package["validation"]["errors"])
+            self.assertEqual("external", package["frame"]["document"]["source_scope"])
+
+    def test_manual_frame_validation_rejects_impossible_source_span(self) -> None:
+        frame = minimal_architecture_change_frame()
+        frame["claims"][0]["evidence_refs"][0]["char_start"] = 900
+        frame["claims"][0]["evidence_refs"][0]["char_end"] = 901
+        errors = validate_frame_policy_shape(frame)
+        self.assertIn("evidence_ref_source_span_unmapped", {error["kind"] for error in errors})
+
+    def test_manual_frame_validation_rejects_zero_length_real_evidence_ref(self) -> None:
+        frame = minimal_architecture_change_frame()
+        frame["claims"][0]["evidence_refs"][0]["char_start"] = 0
+        frame["claims"][0]["evidence_refs"][0]["char_end"] = 0
+        errors = validate_frame_policy_shape(frame)
+        self.assertIn("evidence_ref_zero_length_nonempty_text", {error["kind"] for error in errors})
+
+    def test_semantica_llm_mode_blocks_without_provider_and_no_fallback_claims(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        evidence = extract_evidence_claims(
+            fixture_document_path(),
+            graph["layered_graph"],
+            graph["candidate_queue"],
+            fixture=True,
+            extraction_mode="semantica-llm",
+            llm_provider="openai",
+        )
+        self.assertEqual("semantica-llm", evidence["extraction_mode"]["requested"])
+        self.assertEqual("deterministic-with-blocked-semantica-llm-sidecar", evidence["extraction_mode"]["actual"])
+        self.assertFalse(evidence["extraction_mode"]["deterministic_fallback_used"])
+        self.assertIn(evidence["semantica_llm"]["status"]["blocked_reason"], {"blocked-missing-extra", "blocked-no-api-key", "blocked-provider-unavailable", "blocked-requires-model"})
+        self.assertGreater(len(evidence["claims"]), 0)
+        self.assertTrue(all(claim["extractor"] == "rawr-semantic-heuristic-v1" for claim in evidence["claims"]))
+
+    def test_semantica_llm_fake_provider_outputs_evidence_only_source_anchored_claims(self) -> None:
+        old_status = llm_module.semantica_llm_status
+        old_call = llm_module.call_semantica_llm_methods
+
+        def fake_status(provider: str = "openai", model: str | None = None) -> dict:
+            return {
+                "available": True,
+                "classification": "ready",
+                "provider": provider,
+                "model": model,
+                "provider_available": True,
+                "llm_call_attempted": False,
+                "fallback_used": False,
+                "blocked_reason": None,
+                "optional_dependency": {"package": "openai", "available": True, "version": "test"},
+            }
+
+        def fake_call(text: str, *, provider: str, model: str | None, max_text_length: int | None):
+            entity_text = "root-level `core/` authoring root"
+            if entity_text not in text:
+                return [], []
+            start = text.index(entity_text)
+            sentence = "Create a root-level `core/` authoring root for shared platform machinery."
+            return [FakeEntity(entity_text, "ARCHITECTURE_CONCEPT", start, start + len(entity_text))], [
+                FakeTriplet("root-level `core/` authoring root", "forbids", "shared platform machinery", sentence)
+            ]
+
+        llm_module.semantica_llm_status = fake_status
+        llm_module.call_semantica_llm_methods = fake_call
+        try:
+            result = llm_module.semantica_llm_extraction(fixture_document_path(), provider="openai", model="test-model")
+        finally:
+            llm_module.semantica_llm_status = old_status
+            llm_module.call_semantica_llm_methods = old_call
+
+        self.assertEqual("semantica-llm", result["actual_mode"])
+        self.assertFalse(result["summary"]["fallback_used"])
+        self.assertGreaterEqual(len(result["evidence_claims"]), 2)
+        for claim in result["evidence_claims"]:
+            self.assertEqual("semantica-llm-openai-v1", claim["extractor"])
+            self.assertEqual("evidence-only", claim["review_state"])
+            self.assertFalse(claim["promotion_allowed"])
+            self.assertTrue(claim["heading_path"])
+            self.assertEqual(claim["text"], span_text_for_ref(claim["source_path"], claim["line_start"], claim["line_end"], claim["char_start"], claim["char_end"]))
+
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        llm_module.semantica_llm_status = fake_status
+        llm_module.call_semantica_llm_methods = fake_call
+        try:
+            package = build_architecture_change_frame_package(
+                fixture_frame_document_path(),
+                graph["layered_graph"],
+                graph["candidate_queue"],
+                fixture=True,
+                extraction_mode="semantica-llm",
+                llm_model="test-model",
+            )
+        finally:
+            llm_module.semantica_llm_status = old_status
+            llm_module.call_semantica_llm_methods = old_call
+        self.assertEqual("semantica-llm-pilot", package["frame"]["extraction"]["method"])
+        self.assertEqual("pilot", package["frame"]["extraction"]["status"])
+        self.assertEqual("available", package["frame"]["extraction"]["llm_provider_status"])
+
     def test_semantic_evidence_fixture_verdicts(self) -> None:
         ontology = load_core_ontology()
         validation = validate_loaded_core_ontology(ontology)
@@ -888,6 +1033,7 @@ class WorkbenchTests(unittest.TestCase):
         self.assertIn("custom-skip", excludes)
         self.assertIn("quarantine", excludes)
         self.assertIn("archive", excludes)
+        self.assertIn(".context", excludes)
         self.assertIn("node_modules", excludes)
 
     def test_document_sweep_missing_explicit_document_fails(self) -> None:

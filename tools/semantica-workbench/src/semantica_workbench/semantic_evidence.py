@@ -13,6 +13,8 @@ from typing import Any
 from .io import rel
 from .paths import REPO_ROOT, WORKBENCH_ROOT
 from .semantica_adapter import iri_fragment, semantica_status, turtle_literal
+from .source_model import stripped_line_span
+from .text_normalization import normalize_match_text, normalize_text, term_in_normalized_text
 
 POLARITIES = ["positive", "negative", "prohibitive", "conditional", "unknown"]
 MODALITIES = ["normative", "descriptive", "proposed", "rejected", "historical", "illustrative", "unknown"]
@@ -426,6 +428,9 @@ def extract_evidence_claims(
     *,
     fixture: bool = False,
     semantica_pilot_enabled: bool = False,
+    extraction_mode: str = "deterministic",
+    llm_provider: str = "openai",
+    llm_model: str | None = None,
 ) -> dict[str, Any]:
     if not document.is_absolute():
         document = REPO_ROOT / document
@@ -434,12 +439,21 @@ def extract_evidence_claims(
     claims: list[dict[str, Any]] = []
     suppressed_lines: list[dict[str, Any]] = []
     semantica_pilot: dict[str, Any] | None = None
+    semantica_llm: dict[str, Any] | None = None
     heading_path: list[str] = []
     in_code_fence = False
     active_table_kind: str | None = None
     nonblank_line_count = 0
 
-    if semantica_pilot_enabled:
+    if semantica_pilot_enabled and extraction_mode == "deterministic":
+        extraction_mode = "semantica-pattern"
+
+    if extraction_mode == "semantica-llm":
+        from .semantica_llm_extraction import semantica_llm_extraction
+
+        semantica_llm = semantica_llm_extraction(document, provider=llm_provider, model=llm_model)
+
+    if extraction_mode == "semantica-pattern":
         try:
             from .semantica_extraction import semantica_extraction_pilot
 
@@ -469,6 +483,7 @@ def extract_evidence_claims(
         stripped = line.strip()
         if not stripped:
             continue
+        stripped_span = stripped_line_span(line)
         nonblank_line_count += 1
         if CODE_FENCE_RE.match(stripped):
             in_code_fence = not in_code_fence
@@ -509,6 +524,8 @@ def extract_evidence_claims(
                         },
                         confidence=0.58,
                         claim_kind="code-example",
+                        char_start=stripped_span.char_start,
+                        char_end=stripped_span.char_end,
                     )
                 )
             else:
@@ -522,26 +539,87 @@ def extract_evidence_claims(
 
         classification = classify_claim_text(stripped, heading_path, matched=matched)
         if classification["assertion_scope"] == "outside-scope":
-            claims.append(build_claim(document, line_number, stripped, heading_path, matches, classification, confidence=0.65, claim_kind="outside-scope"))
+            claims.append(
+                build_claim(
+                    document,
+                    line_number,
+                    stripped,
+                    heading_path,
+                    matches,
+                    classification,
+                    confidence=0.65,
+                    claim_kind="outside-scope",
+                    char_start=stripped_span.char_start,
+                    char_end=stripped_span.char_end,
+                )
+            )
             continue
         if not matched and not is_review_relevant_line(stripped):
             suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, "no-claim-signal"))
             continue
         if is_table_row(stripped) and active_table_kind == "replacement" and (matches.get("prohibited_patterns") or matches.get("deprecated_terms")):
-            claims.extend(build_table_claims(document, line_number, stripped, heading_path, matches, indexes))
+            claims.extend(
+                build_table_claims(
+                    document,
+                    line_number,
+                    stripped,
+                    heading_path,
+                    matches,
+                    indexes,
+                    char_start=stripped_span.char_start,
+                    char_end=stripped_span.char_end,
+                )
+            )
             continue
         if is_table_row(stripped) and not matched:
             suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, "table-row-no-match"))
             continue
         if is_table_row(stripped):
-            claims.append(build_claim(document, line_number, stripped, heading_path, matches, classification, claim_kind="table-evidence"))
+            claims.append(
+                build_claim(
+                    document,
+                    line_number,
+                    stripped,
+                    heading_path,
+                    matches,
+                    classification,
+                    claim_kind="table-evidence",
+                    char_start=stripped_span.char_start,
+                    char_end=stripped_span.char_end,
+                )
+            )
             continue
-        claims.append(build_claim(document, line_number, stripped, heading_path, matches, classification))
+        claims.append(
+            build_claim(
+                document,
+                line_number,
+                stripped,
+                heading_path,
+                matches,
+                classification,
+                char_start=stripped_span.char_start,
+                char_end=stripped_span.char_end,
+            )
+        )
 
+    actual_mode = "semantica-pattern" if extraction_mode == "semantica-pattern" else "deterministic"
+    if semantica_llm:
+        actual_mode = (
+            "deterministic-with-semantica-llm-sidecar"
+            if semantica_llm.get("actual_mode") == "semantica-llm"
+            else "deterministic-with-blocked-semantica-llm-sidecar"
+        )
     return {
         "schema_version": "rawr-semantic-evidence-v1",
         "document": rel(document),
         "fixture": fixture,
+        "extraction_mode": {
+            "requested": extraction_mode,
+            "actual": actual_mode,
+            "deterministic_fallback_used": extraction_mode == "semantica-pattern",
+            "provider": llm_provider if semantica_llm else None,
+            "model": llm_model if semantica_llm else None,
+        },
         "semantica": semantic_capability_probe(),
         "summary": {
             "claim_count": len(claims),
@@ -558,28 +636,33 @@ def extract_evidence_claims(
             "claims_by_kind": dict(Counter(claim["claim_kind"] for claim in claims)),
             "claims_by_resolution_state": dict(Counter(claim["resolution_state"] for claim in claims)),
             "semantica_pilot": semantica_pilot.get("summary", {"enabled": False}) if semantica_pilot else {"enabled": False},
+            "semantica_llm": semantica_llm.get("summary", {"enabled": False}) if semantica_llm else {"enabled": False},
         },
-        "semantica_pilot": semantica_pilot
-        or {
-            "schema_version": "rawr-semantica-extraction-pilot-v1",
-            "document": rel(document),
-            "status": {"available": True, "classification": "disabled"},
-            "summary": {
-                "enabled": False,
-                "decision_grade_source": "rawr-semantic-heuristic-v1",
-                "promotion_allowed": False,
-                "adapter_mode": "disabled",
-            },
-            "raw_items": [],
-            "evidence_claims": [],
-            "diagnostics": [],
-            "fallback": {
-                "deterministic_oracle": "rawr-semantic-heuristic-v1",
-                "removal_trigger": "Enable pilot mode and prove fixture parity before use.",
-            },
-        },
+        "semantica_pilot": semantica_pilot or disabled_semantica_pilot(document),
+        "semantica_llm": semantica_llm,
         "claims": claims,
         "suppressed_lines": suppressed_lines,
+    }
+
+
+def disabled_semantica_pilot(document: Path) -> dict[str, Any]:
+    return {
+        "schema_version": "rawr-semantica-extraction-pilot-v1",
+        "document": rel(document),
+        "status": {"available": True, "classification": "disabled"},
+        "summary": {
+            "enabled": False,
+            "decision_grade_source": "rawr-semantic-heuristic-v1",
+            "promotion_allowed": False,
+            "adapter_mode": "disabled",
+        },
+        "raw_items": [],
+        "evidence_claims": [],
+        "diagnostics": [],
+        "fallback": {
+            "deterministic_oracle": "rawr-semantic-heuristic-v1",
+            "removal_trigger": "Enable pilot mode and prove fixture parity before use.",
+        },
     }
 
 
@@ -647,6 +730,9 @@ def build_table_claims(
     heading_path: list[str],
     matches: dict[str, list[dict[str, Any]]],
     indexes: dict[str, list[dict[str, Any]]],
+    *,
+    char_start: int = 0,
+    char_end: int | None = None,
 ) -> list[dict[str, Any]]:
     cells = [cell.strip() for cell in text.strip("|").split("|")]
     if len(cells) < 2 or all(set(cell) <= {"-", " "} for cell in cells):
@@ -671,6 +757,8 @@ def build_table_claims(
                 confidence=0.86,
                 claim_suffix="old-side",
                 claim_kind="table-old-side",
+                char_start=char_start,
+                char_end=char_end,
             )
         )
     if replacement_matches.get("prohibited_patterns") or replacement_matches.get("deprecated_terms"):
@@ -690,9 +778,24 @@ def build_table_claims(
                 confidence=0.9,
                 claim_suffix="replacement-side",
                 claim_kind="table-replacement-side",
+                char_start=char_start,
+                char_end=char_end,
             )
         )
-    return claims or [build_claim(document, line_number, text, heading_path, matches, classify_claim_text(text, heading_path, matched=has_resolved_matches(matches)), claim_suffix="table-row", claim_kind="table-row")]
+    return claims or [
+        build_claim(
+            document,
+            line_number,
+            text,
+            heading_path,
+            matches,
+            classify_claim_text(text, heading_path, matched=has_resolved_matches(matches)),
+            claim_suffix="table-row",
+            claim_kind="table-row",
+            char_start=char_start,
+            char_end=char_end,
+        )
+    ]
 
 
 def build_claim(
@@ -706,6 +809,8 @@ def build_claim(
     confidence: float = 0.82,
     claim_suffix: str | None = None,
     claim_kind: str | None = None,
+    char_start: int = 0,
+    char_end: int | None = None,
 ) -> dict[str, Any]:
     resolved_ids = {
         "canonical": [item["id"] for item in matches.get("canonical", [])],
@@ -714,6 +819,8 @@ def build_claim(
         "verification_policy": [item["id"] for item in matches.get("verification_policy", [])],
         "candidates": [item["id"] for item in matches.get("candidates", [])],
     }
+    if char_end is None:
+        char_end = char_start + len(text)
     claim_id = stable_id("claim", rel(document), str(line_number), text, claim_suffix or "")
     subject = first_label(matches) or text[:80]
     predicate = infer_claim_predicate(classification, matches)
@@ -722,6 +829,9 @@ def build_claim(
         "source_path": rel(document),
         "line_start": line_number,
         "line_end": line_number,
+        "char_start": char_start,
+        "char_end": char_end,
+        "char_span_kind": "line-offset",
         "heading_path": heading_path,
         "text": text,
         "claim_kind": claim_kind or infer_claim_kind(classification, matches),
@@ -1211,7 +1321,7 @@ def build_semantic_indexes(graph: dict[str, Any], candidate_queue: dict[str, Any
 
 
 def resolve_line_terms(text: str, indexes: dict[str, list[dict[str, Any]]]) -> dict[str, list[dict[str, Any]]]:
-    normalized = normalize_text(text)
+    normalized = normalize_match_text(text)
     matches: dict[str, list[dict[str, Any]]] = {key: [] for key in indexes}
     for bucket, items in indexes.items():
         for item in items:
@@ -1352,17 +1462,17 @@ def item_terms(item: dict[str, Any]) -> list[str]:
         values.extend(constraint.get("semantic_keys") or [])
     terms = []
     for value in values:
-        text = normalize_text(str(value or ""))
+        text = normalize_match_text(str(value or ""))
         if text:
             terms.append(text)
         if value and "." in str(value):
-            terms.append(normalize_text(str(value).split(".")[-1].replace("-", " ")))
+            terms.append(normalize_match_text(str(value).split(".")[-1].replace("-", " ")))
     return sorted({term for term in terms if len(term) >= 4}, key=len, reverse=True)
 
 
 def candidate_terms(item: dict[str, Any]) -> list[str]:
     values = [item.get("id"), item.get("label"), item.get("hook")]
-    return sorted({normalize_text(str(value or "")) for value in values if len(normalize_text(str(value or ""))) >= 4}, key=len, reverse=True)
+    return sorted({normalize_match_text(str(value or "")) for value in values if len(normalize_match_text(str(value or ""))) >= 4}, key=len, reverse=True)
 
 
 def first_label(matches: dict[str, list[dict[str, Any]]]) -> str | None:
@@ -1394,14 +1504,8 @@ def infer_claim_predicate(classification: dict[str, str], matches: dict[str, lis
     return "mentions"
 
 
-def normalize_text(value: str) -> str:
-    return re.sub(r"\s+", " ", value.replace("`", "").strip().lower())
-
-
 def term_in_line(term: str, normalized_line: str) -> bool:
-    if not term or len(term) < 4:
-        return False
-    return re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", normalized_line) is not None
+    return term_in_normalized_text(term, normalized_line)
 
 
 def unique_by_id(items: list[dict[str, Any]]) -> list[dict[str, Any]]:

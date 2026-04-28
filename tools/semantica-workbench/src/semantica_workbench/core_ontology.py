@@ -21,6 +21,7 @@ from .paths import (
 )
 from .semantica_adapter import export_semantica_ontology, semantica_status
 from .semantica_graph import semantica_graph_probe
+from .text_normalization import normalize_match_text, normalize_section_text, term_in_normalized_text
 from .semantic_evidence import (
     compare_evidence_to_ontology,
     extract_evidence_claims,
@@ -136,7 +137,16 @@ def write_semantica_capability_report(run: str | None = "latest") -> Path:
     return run_dir
 
 
-def extract_document_evidence(document: Path | None, run: str | None = "latest", *, fixture: bool = False, semantica_pilot: bool = False) -> Path:
+def extract_document_evidence(
+    document: Path | None,
+    run: str | None = "latest",
+    *,
+    fixture: bool = False,
+    semantica_pilot: bool = False,
+    extraction_mode: str = "deterministic",
+    llm_provider: str = "openai",
+    llm_model: str | None = None,
+) -> Path:
     run_dir = resolve_run(run)
     graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
@@ -147,7 +157,16 @@ def extract_document_evidence(document: Path | None, run: str | None = "latest",
         document_path = REPO_ROOT / document_path
     if not document_path.exists() and document_path.name == TESTING_PLAN.name and TESTING_PLAN.exists():
         document_path = TESTING_PLAN
-    evidence = extract_evidence_claims(document_path, graph, candidate_queue, fixture=fixture, semantica_pilot_enabled=semantica_pilot)
+    evidence = extract_evidence_claims(
+        document_path,
+        graph,
+        candidate_queue,
+        fixture=fixture,
+        semantica_pilot_enabled=semantica_pilot,
+        extraction_mode=extraction_mode,
+        llm_provider=llm_provider,
+        llm_model=llm_model,
+    )
     write_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"], evidence)
     chunks = [
         {
@@ -169,8 +188,25 @@ def extract_document_evidence(document: Path | None, run: str | None = "latest",
     return run_dir
 
 
-def compare_document_evidence(document: Path | None, run: str | None = "latest", *, fixture: bool = False, semantica_pilot: bool = False) -> Path:
-    run_dir = extract_document_evidence(document, run, fixture=fixture, semantica_pilot=semantica_pilot)
+def compare_document_evidence(
+    document: Path | None,
+    run: str | None = "latest",
+    *,
+    fixture: bool = False,
+    semantica_pilot: bool = False,
+    extraction_mode: str = "deterministic",
+    llm_provider: str = "openai",
+    llm_model: str | None = None,
+) -> Path:
+    run_dir = extract_document_evidence(
+        document,
+        run,
+        fixture=fixture,
+        semantica_pilot=semantica_pilot,
+        extraction_mode=extraction_mode,
+        llm_provider=llm_provider,
+        llm_model=llm_model,
+    )
     graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
     evidence = read_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"])
@@ -189,6 +225,9 @@ def write_architecture_change_frame(
     *,
     fixture: bool = False,
     semantica_pilot: bool = False,
+    extraction_mode: str = "deterministic",
+    llm_provider: str = "openai",
+    llm_model: str | None = None,
     reference_bundle: Path | None = None,
 ) -> Path:
     return write_architecture_proposal_package(
@@ -196,6 +235,9 @@ def write_architecture_change_frame(
         run,
         fixture=fixture,
         semantica_pilot=semantica_pilot,
+        extraction_mode=extraction_mode,
+        llm_provider=llm_provider,
+        llm_model=llm_model,
         reference_bundle=reference_bundle,
         evaluate=False,
     )
@@ -207,6 +249,9 @@ def compare_architecture_proposal(
     *,
     fixture: bool = False,
     semantica_pilot: bool = False,
+    extraction_mode: str = "deterministic",
+    llm_provider: str = "openai",
+    llm_model: str | None = None,
     reference_bundle: Path | None = None,
 ) -> Path:
     return write_architecture_proposal_package(
@@ -214,6 +259,9 @@ def compare_architecture_proposal(
         run,
         fixture=fixture,
         semantica_pilot=semantica_pilot,
+        extraction_mode=extraction_mode,
+        llm_provider=llm_provider,
+        llm_model=llm_model,
         reference_bundle=reference_bundle,
         evaluate=True,
     )
@@ -225,6 +273,9 @@ def write_architecture_proposal_package(
     *,
     fixture: bool,
     semantica_pilot: bool,
+    extraction_mode: str,
+    llm_provider: str,
+    llm_model: str | None,
     reference_bundle: Path | None,
     evaluate: bool,
 ) -> Path:
@@ -242,6 +293,9 @@ def write_architecture_proposal_package(
         candidate_queue,
         fixture=fixture,
         semantica_pilot_enabled=semantica_pilot,
+        extraction_mode=extraction_mode,
+        llm_provider=llm_provider,
+        llm_model=llm_model,
         evaluate=evaluate,
         reference_bundle=reference_bundle,
     )
@@ -1031,9 +1085,7 @@ def unique_by_id(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def term_in_line(term: str, normalized_line: str) -> bool:
-    if len(term) < 4:
-        return False
-    return re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", normalized_line) is not None
+    return term_in_normalized_text(term, normalized_line)
 
 
 def document_finding(kind: str, document: Path, line: int, text: str, **extra: Any) -> dict[str, Any]:
@@ -1101,8 +1153,4 @@ def append_findings(lines: list[str], title: str, findings: list[dict[str, Any]]
 
 
 def normalize_text(value: str) -> str:
-    return re.sub(r"[^a-z0-9/_.()-]+", " ", value.lower().replace("`", "")).strip()
-
-
-def normalize_section_text(value: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", value.lower().replace("`", "")).strip()
+    return normalize_match_text(value)

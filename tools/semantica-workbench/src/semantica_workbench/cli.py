@@ -110,6 +110,7 @@ def build_parser() -> argparse.ArgumentParser:
     doc_extract.add_argument("--document", default=str(TESTING_PLAN))
     doc_extract.add_argument("--fixture", action="store_true")
     doc_extract.add_argument("--semantica-pilot", action="store_true")
+    add_evidence_mode_args(doc_extract)
     doc_extract.set_defaults(func=cmd_doc_extract)
 
     doc_compare = sub.add_parser("doc:compare")
@@ -117,6 +118,7 @@ def build_parser() -> argparse.ArgumentParser:
     doc_compare.add_argument("--document", default=str(TESTING_PLAN))
     doc_compare.add_argument("--fixture", action="store_true")
     doc_compare.add_argument("--semantica-pilot", action="store_true")
+    add_evidence_mode_args(doc_compare)
     doc_compare.set_defaults(func=cmd_doc_compare)
 
     doc_frame = sub.add_parser("doc:frame")
@@ -124,6 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
     doc_frame.add_argument("--document", default=str(TESTING_PLAN))
     doc_frame.add_argument("--fixture", action="store_true")
     doc_frame.add_argument("--semantica-pilot", action="store_true")
+    add_evidence_mode_args(doc_frame)
     doc_frame.add_argument("--reference-bundle", default=None)
     doc_frame.set_defaults(func=cmd_doc_frame)
 
@@ -132,6 +135,7 @@ def build_parser() -> argparse.ArgumentParser:
     doc_proposal_compare.add_argument("--document", default=str(TESTING_PLAN))
     doc_proposal_compare.add_argument("--fixture", action="store_true")
     doc_proposal_compare.add_argument("--semantica-pilot", action="store_true")
+    add_evidence_mode_args(doc_proposal_compare)
     doc_proposal_compare.add_argument("--reference-bundle", default=None)
     doc_proposal_compare.set_defaults(func=cmd_doc_proposal_compare)
 
@@ -179,6 +183,12 @@ def add_extract_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--limit-chunks", type=int, default=None)
     parser.add_argument("--mode", choices=["auto", "heuristic", "llm"], default="auto")
     parser.add_argument("--model", default=DEFAULT_MODEL)
+
+
+def add_evidence_mode_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--extraction-mode", choices=["deterministic", "semantica-pattern", "semantica-llm"], default="deterministic")
+    parser.add_argument("--llm-provider", default="openai")
+    parser.add_argument("--llm-model", default=None)
 
 
 def cmd_check(_args) -> int:
@@ -292,13 +302,38 @@ def cmd_doc_triage(args) -> int:
 
 
 def cmd_doc_extract(args) -> int:
-    run_dir = extract_document_evidence(Path(args.document), args.run, fixture=args.fixture, semantica_pilot=args.semantica_pilot)
+    run_dir = extract_document_evidence(
+        Path(args.document),
+        args.run,
+        fixture=args.fixture,
+        semantica_pilot=args.semantica_pilot,
+        extraction_mode=args.extraction_mode,
+        llm_provider=args.llm_provider,
+        llm_model=args.llm_model,
+    )
     print(f"evidence_claims={rel(run_dir / CORE_GRAPH_FILENAMES['evidence_claims_json'])}")
+    evidence = read_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"])
+    if evidence.get("semantica_llm"):
+        status = evidence["semantica_llm"].get("status", {})
+        print(
+            "semantica_llm="
+            f"{evidence['semantica_llm'].get('actual_mode')} "
+            f"provider={status.get('provider')} model={status.get('model') or 'not-set'} "
+            f"blocked={status.get('blocked_reason') or 'none'}"
+        )
     return 0
 
 
 def cmd_doc_compare(args) -> int:
-    run_dir = compare_document_evidence(Path(args.document), args.run, fixture=args.fixture, semantica_pilot=args.semantica_pilot)
+    run_dir = compare_document_evidence(
+        Path(args.document),
+        args.run,
+        fixture=args.fixture,
+        semantica_pilot=args.semantica_pilot,
+        extraction_mode=args.extraction_mode,
+        llm_provider=args.llm_provider,
+        llm_model=args.llm_model,
+    )
     print(f"semantic_compare={rel(run_dir / CORE_GRAPH_FILENAMES['semantic_compare_report'])}")
     return 0
 
@@ -310,6 +345,9 @@ def cmd_doc_frame(args) -> int:
         args.run,
         fixture=args.fixture,
         semantica_pilot=args.semantica_pilot,
+        extraction_mode=args.extraction_mode,
+        llm_provider=args.llm_provider,
+        llm_model=args.llm_model,
         reference_bundle=reference_bundle,
     )
     print(f"architecture_change_frame={rel(run_dir / CORE_GRAPH_FILENAMES['architecture_change_frame'])}")
@@ -324,6 +362,9 @@ def cmd_doc_proposal_compare(args) -> int:
         args.run,
         fixture=args.fixture,
         semantica_pilot=args.semantica_pilot,
+        extraction_mode=args.extraction_mode,
+        llm_provider=args.llm_provider,
+        llm_model=args.llm_model,
         reference_bundle=reference_bundle,
     )
     print(f"proposal_review={rel(run_dir / CORE_GRAPH_FILENAMES['proposal_review_report'])}")

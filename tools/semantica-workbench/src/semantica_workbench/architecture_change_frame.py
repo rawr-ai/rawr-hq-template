@@ -12,6 +12,7 @@ from typing import Any
 from .io import git_sha, read_json, rel
 from .paths import ARCHITECTURE_CHANGE_FRAME_SCHEMA, REPO_ROOT, WORKBENCH_ROOT
 from .semantica_adapter import iri_fragment, semantica_status, turtle_literal
+from .source_model import source_ref_to_path, source_scope_for_path, span_text_for_ref
 from .semantic_evidence import (
     compare_evidence_to_ontology,
     extract_evidence_claims,
@@ -47,6 +48,18 @@ REQUIRED_EVIDENCE_REF_FIELDS = {
     "confidence",
     "review_state",
     "promotion_allowed",
+}
+
+CLAIM_ENUM_FIELDS = {
+    "claim_type": "claim_type",
+    "polarity": "polarity",
+    "modality": "modality",
+    "assertion_scope": "assertion_scope",
+    "authority_context": "authority_context",
+    "mapping_state": "mapping_state",
+    "review_state": "review_state",
+    "verdict": "verdict",
+    "review_action": "review_action",
 }
 
 CLAIM_VERDICT_PRIORITY = {
@@ -110,6 +123,9 @@ def build_architecture_change_frame_package(
     *,
     fixture: bool = False,
     semantica_pilot_enabled: bool = False,
+    extraction_mode: str = "deterministic",
+    llm_provider: str = "openai",
+    llm_model: str | None = None,
     evaluate: bool = False,
     reference_bundle: Path | None = None,
 ) -> dict[str, Any]:
@@ -122,6 +138,9 @@ def build_architecture_change_frame_package(
         candidate_queue,
         fixture=fixture,
         semantica_pilot_enabled=semantica_pilot_enabled,
+        extraction_mode=extraction_mode,
+        llm_provider=llm_provider,
+        llm_model=llm_model,
     )
     semantic_compare = compare_evidence_to_ontology(evidence, graph, candidate_queue)
     reference_geometry = load_reference_geometry(reference_bundle)
@@ -185,31 +204,46 @@ def evidence_to_architecture_change_frame(
         for claim in evidence.get("claims", [])
     ]
     if not claims:
-        claims = [no_evidence_claim(document)]
+        claims = [no_evidence_claim(document, evidence)]
     noun_mappings = [frame_noun_mapping_from_claim(claim, reference_geometry) for claim in claims]
     frame_id = stable_id("frame", evidence["document"], hashlib.sha256("\n".join(claim["id"] for claim in claims).encode("utf-8")).hexdigest()[:16])
     semantica = evidence.get("semantica") or {}
     semantica_version = str(semantica.get("version") or semantica_status().get("version") or "unknown")
     pilot_summary = evidence.get("semantica_pilot", {}).get("summary", {})
-    method = "semantica-pattern-pilot" if pilot_summary.get("enabled") or pilot_summary.get("adapter_mode", "").startswith("semantica") else "rawr-deterministic-oracle"
-    status = "pilot" if method.startswith("semantica") else "fallback"
+    llm_summary = evidence.get("semantica_llm", {}).get("summary", {}) if evidence.get("semantica_llm") else {}
+    extraction_mode = evidence.get("extraction_mode", {})
+    semantica_llm = evidence.get("semantica_llm") or {}
+    if extraction_mode.get("requested") == "semantica-llm":
+        method = "semantica-llm-pilot"
+        status = "pilot" if semantica_llm.get("actual_mode") == "semantica-llm" else "blocked"
+    else:
+        method = "semantica-pattern-pilot" if pilot_summary.get("enabled") or pilot_summary.get("adapter_mode", "").startswith("semantica") else "rawr-deterministic-oracle"
+        status = "pilot" if method.startswith("semantica") else "fallback"
     llm_provider_status = llm_provider_status_from_capability(semantica)
+    if evidence.get("semantica_llm"):
+        llm_provider_status = evidence["semantica_llm"].get("status", {}).get("blocked_reason") or "available"
+        if llm_provider_status not in set(load_architecture_change_frame_schema()["$defs"]["extraction_run"]["properties"]["llm_provider_status"]["enum"]):
+            llm_provider_status = "unproven"
+    extraction_run = {
+        "method": method,
+        "extractor": llm_summary.get("extractor") or pilot_summary.get("adapter_mode") or "rawr-architecture-change-frame-deterministic-v1",
+        "status": status,
+        "llm_provider_status": llm_provider_status,
+        "semantica_version": semantica_version,
+        "deterministic_oracle": "rawr-semantic-heuristic-v1",
+        "promotion_allowed": False,
+        "diagnostics": frame_diagnostics(evidence, semantic_compare, reference_geometry),
+    }
+    model = extraction_mode.get("model") or (evidence.get("semantica_llm", {}).get("status", {}).get("model") if evidence.get("semantica_llm") else None)
+    if model:
+        extraction_run["model"] = model
     return {
         "schema_version": FRAME_SCHEMA_VERSION,
         "frame_id": frame_id,
         "document": document_ref(document, evidence),
         "proposal_summary": proposal_summary(claims),
         "target_app": infer_target_app(claims),
-        "extraction": {
-            "method": method,
-            "extractor": pilot_summary.get("adapter_mode") or "rawr-architecture-change-frame-deterministic-v1",
-            "status": status,
-            "llm_provider_status": llm_provider_status,
-            "semantica_version": semantica_version,
-            "deterministic_oracle": "rawr-semantic-heuristic-v1",
-            "promotion_allowed": False,
-            "diagnostics": frame_diagnostics(evidence, semantic_compare, reference_geometry),
-        },
+        "extraction": extraction_run,
         "governance": {
             "truth_authority": "rawr-reviewed-ontology",
             "semantica_output_authoritative": False,
@@ -292,8 +326,15 @@ def evidence_claim_to_frame_claim(
     return frame_claim
 
 
-def no_evidence_claim(document: Path) -> dict[str, Any]:
+def no_evidence_claim(document: Path, evidence: dict[str, Any] | None = None) -> dict[str, Any]:
     source_path = display_path(document)
+    llm = (evidence or {}).get("semantica_llm") or {}
+    requested_mode = (evidence or {}).get("extraction_mode", {}).get("requested")
+    extraction_method = "semantica-llm-pilot" if requested_mode == "semantica-llm" else "rawr-deterministic-oracle"
+    blocked_reason = llm.get("status", {}).get("blocked_reason")
+    issue = "The document did not produce source-backed architecture claims."
+    if blocked_reason:
+        issue = f"The requested semantica LLM extraction was blocked ({blocked_reason}) and no source-backed architecture claims were produced."
     return {
         "id": stable_id("frame-claim", source_path, "no-evidence"),
         "claim_type": "support-matter",
@@ -317,7 +358,7 @@ def no_evidence_claim(document: Path) -> dict[str, Any]:
                 "char_end": 0,
                 "char_span_kind": "line-offset",
                 "text": "No extracted architecture claim.",
-                "extraction_method": "rawr-deterministic-oracle",
+                "extraction_method": extraction_method,
                 "confidence": 0,
                 "review_state": "review-needed",
                 "promotion_allowed": False,
@@ -327,7 +368,7 @@ def no_evidence_claim(document: Path) -> dict[str, Any]:
         "review_state": "review-needed",
         "verdict": "unclear",
         "review_action": "needs-evidence",
-        "issue": "The document did not produce source-backed architecture claims.",
+        "issue": issue,
         "resolution_hint": "Add explicit architecture proposal claims with source evidence before comparison.",
         "promotion_allowed": False,
     }
@@ -342,9 +383,9 @@ def evidence_ref_from_claim(claim: dict[str, Any]) -> dict[str, Any]:
         "context": " / ".join(claim.get("heading_path", []) or ["Document"]),
         "line_start": claim["line_start"],
         "line_end": claim["line_end"],
-        "char_start": 0,
-        "char_end": len(text),
-        "char_span_kind": "line-offset",
+        "char_start": int(claim.get("char_start", 0) or 0),
+        "char_end": int(claim.get("char_end", len(text)) or len(text)),
+        "char_span_kind": claim.get("char_span_kind") or "line-offset",
         "text": text,
         "extraction_method": extraction_method_for_claim(claim),
         "confidence": bounded_confidence(claim.get("confidence", 0.5)),
@@ -684,14 +725,23 @@ def validate_frame_contract_shape(frame: dict[str, Any]) -> list[dict[str, Any]]
         for field in schema["$defs"]["claim"]["required"]:
             if field not in claim:
                 errors.append({"kind": "claim_missing_required_field", "path": f"claims[{index}].{field}"})
-        if claim.get("verdict") not in schema["$defs"]["verdict"]["enum"]:
-            errors.append({"kind": "claim_invalid_verdict", "path": f"claims[{index}].verdict"})
-        if claim.get("review_action") not in schema["$defs"]["review_action"]["enum"]:
-            errors.append({"kind": "claim_invalid_review_action", "path": f"claims[{index}].review_action"})
+        errors.extend(_validate_enum_fields(claim, f"claims[{index}]", schema, CLAIM_ENUM_FIELDS))
     for index, mapping in enumerate(frame.get("noun_mappings") or []):
         for field in schema["$defs"]["noun_mapping"]["required"]:
             if field not in mapping:
                 errors.append({"kind": "noun_mapping_missing_required_field", "path": f"noun_mappings[{index}].{field}"})
+        errors.extend(_validate_enum_fields(mapping, f"noun_mappings[{index}]", schema, {"mapping_state": "mapping_state", "review_state": "review_state"}))
+    return errors
+
+
+def _validate_enum_fields(item: dict[str, Any], path: str, schema: dict[str, Any], fields: dict[str, str]) -> list[dict[str, Any]]:
+    errors: list[dict[str, Any]] = []
+    for field, definition_name in fields.items():
+        if field not in item:
+            continue
+        allowed = schema["$defs"][definition_name].get("enum")
+        if allowed and item.get(field) not in allowed:
+            errors.append({"kind": f"{field}_invalid_enum", "path": f"{path}.{field}", "value": item.get(field), "allowed": allowed})
     return errors
 
 
@@ -754,9 +804,28 @@ def validate_frame_policy_shape(frame: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _validate_evidence_ref(evidence_ref: dict[str, Any], path: str) -> list[dict[str, Any]]:
     errors: list[dict[str, Any]] = []
+    schema = load_architecture_change_frame_schema()
     missing = sorted(REQUIRED_EVIDENCE_REF_FIELDS - set(evidence_ref))
     if missing:
         errors.append({"kind": "evidence_ref_missing_required_fields", "path": path, "missing": missing})
+    errors.extend(
+        _validate_enum_fields(
+            evidence_ref,
+            path,
+            schema,
+            {"review_state": "review_state"},
+        )
+    )
+    extraction_methods = schema["$defs"]["evidence_ref"]["properties"]["extraction_method"].get("enum", [])
+    if evidence_ref.get("extraction_method") not in extraction_methods:
+        errors.append(
+            {
+                "kind": "evidence_ref_extraction_method_invalid_enum",
+                "path": f"{path}.extraction_method",
+                "value": evidence_ref.get("extraction_method"),
+                "allowed": extraction_methods,
+            }
+        )
     if evidence_ref.get("promotion_allowed") is not False:
         errors.append({"kind": "evidence_ref_promotion_allowed", "path": f"{path}.promotion_allowed"})
     line_start = evidence_ref.get("line_start")
@@ -770,6 +839,20 @@ def _validate_evidence_ref(evidence_ref: dict[str, Any], path: str) -> list[dict
     confidence = evidence_ref.get("confidence")
     if not isinstance(confidence, int | float) or confidence < 0 or confidence > 1:
         errors.append({"kind": "evidence_ref_invalid_confidence", "path": f"{path}.confidence"})
+    source_path = evidence_ref.get("source_path")
+    if isinstance(source_path, str) and isinstance(line_start, int) and isinstance(line_end, int) and isinstance(char_start, int) and isinstance(char_end, int):
+        is_no_evidence_sentinel = evidence_ref.get("text") == "No extracted architecture claim." and char_start == 0 and char_end == 0
+        if char_start == char_end and evidence_ref.get("text") and not is_no_evidence_sentinel:
+            errors.append({"kind": "evidence_ref_zero_length_nonempty_text", "path": path})
+        source_file = source_ref_to_path(source_path)
+        if not source_file.exists():
+            errors.append({"kind": "evidence_ref_source_missing", "path": f"{path}.source_path", "source_path": source_path})
+        elif not is_no_evidence_sentinel:
+            span_text = span_text_for_ref(source_path, line_start, line_end, char_start, char_end)
+            if span_text is None:
+                errors.append({"kind": "evidence_ref_source_span_unmapped", "path": path})
+            elif span_text != evidence_ref.get("text"):
+                errors.append({"kind": "evidence_ref_source_span_text_mismatch", "path": f"{path}.text"})
     return errors
 
 
@@ -1011,20 +1094,55 @@ def render_proposal_review_report(
         f"- Frame valid: `{validation['valid']}`",
         f"- Reference geometry: `{reference_geometry.get('status')}`",
         f"- Reference geometry hash: `{reference_geometry.get('sha256') or 'not-loaded'}`",
+        f"- Extraction method: `{frame['extraction']['method']}`",
+        f"- Extraction status: `{frame['extraction']['status']}`",
+        f"- LLM provider status: `{frame['extraction']['llm_provider_status']}`",
+        f"- LLM model: `{frame['extraction'].get('model') or 'not-used'}`",
         f"- semantica output authoritative: `{frame['governance']['semantica_output_authoritative']}`",
         f"- Promotion allowed: `{frame['governance']['promotion_allowed']}`",
         "",
-        "## Claim Verdicts",
+        "## Verdict Summary",
         "",
     ]
-    for item in claim_comparisons.get("comparisons", []):
-        source = item["source_claim"]
-        lines.append(
-            f"- `{item['verdict']}` / `{item['review_action']}` "
-            f"{source['document_path']}:{source['line_start']}: {source['text']}"
-        )
-        if item.get("resolution_hint"):
-            lines.append(f"  - Repair: {item['resolution_hint']}")
+    verdict_counts = claim_comparisons.get("summary", {}).get("verdicts", {})
+    for verdict in ["conflicts", "needs-canonical-addendum", "unclear", "compatible-extension", "compatible", "not-evaluated"]:
+        lines.append(f"- `{verdict}`: `{verdict_counts.get(verdict, 0)}`")
+    llm_diagnostics = [item for item in frame.get("extraction", {}).get("diagnostics", []) if item.get("kind") == "semantica_llm"]
+    if llm_diagnostics:
+        lines.extend(["", "## LLM Extraction Status", ""])
+        for item in llm_diagnostics:
+            lines.append(
+                f"- requested=`{item.get('requested_mode')}` actual=`{item.get('actual_mode')}` "
+                f"provider=`{item.get('provider')}` model=`{item.get('model') or 'not-set'}` "
+                f"blocked=`{item.get('blocked_reason') or 'none'}` "
+                f"claims=`{item.get('evidence_claim_count', 0)}`"
+            )
+    lines.extend(
+        [
+            "",
+            "## Review Queue",
+            "",
+        ]
+    )
+    review_queue = [
+        item
+        for item in claim_comparisons.get("comparisons", [])
+        if item.get("review_action") not in {"none", "accept"} or item.get("verdict") in {"conflicts", "needs-canonical-addendum", "unclear"}
+    ]
+    append_claim_comparison_examples(lines, review_queue, limit=75)
+    lines.extend(
+        [
+            "",
+            "## Claim Verdicts",
+            "",
+        ]
+    )
+    for verdict in ["conflicts", "needs-canonical-addendum", "unclear", "compatible-extension", "compatible", "not-evaluated"]:
+        group = [item for item in claim_comparisons.get("comparisons", []) if item.get("verdict") == verdict]
+        if not group:
+            continue
+        lines.extend(["", f"### {verdict}", ""])
+        append_claim_comparison_examples(lines, group, limit=50)
     lines.extend(["", "## Noun Mappings", ""])
     for mapping in noun_mappings.get("mappings", []):
         target = mapping.get("maps_to_entity_id") or mapping.get("maps_to_extension_slot") or mapping.get("maps_to_kind") or "unresolved"
@@ -1051,6 +1169,22 @@ def render_proposal_review_report(
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def append_claim_comparison_examples(lines: list[str], comparisons: list[dict[str, Any]], *, limit: int) -> None:
+    if not comparisons:
+        lines.append("None.")
+        return
+    for item in comparisons[:limit]:
+        source = item["source_claim"]
+        lines.append(
+            f"- `{item['verdict']}` / `{item['review_action']}` "
+            f"{source['document_path']}:{source['line_start']}: {source['text']}"
+        )
+        if item.get("resolution_hint"):
+            lines.append(f"  - Repair: {item['resolution_hint']}")
+    if len(comparisons) > limit:
+        lines.append(f"- ... {len(comparisons) - limit} more omitted from this summary; see `claim-comparisons.json` in the run output.")
 
 
 def group_findings_by_claim(semantic_compare: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
@@ -1231,7 +1365,7 @@ def llm_provider_status_from_capability(capability: dict[str, Any]) -> str:
 def document_ref(document: Path, evidence: dict[str, Any]) -> dict[str, Any]:
     title = document_title(document)
     source_path = evidence.get("document") or display_path(document)
-    source_scope = "fixture" if evidence.get("fixture") else "comparison-source"
+    source_scope = source_scope_for_path(document, fixture=bool(evidence.get("fixture")))
     return {
         "source_path": source_path,
         "title": title,
@@ -1291,6 +1425,23 @@ def frame_diagnostics(evidence: dict[str, Any], semantic_compare: dict[str, Any]
     pilot = evidence.get("semantica_pilot", {})
     if pilot.get("diagnostics"):
         diagnostics.extend({"kind": "semantica_pilot", **item} for item in pilot.get("diagnostics", []))
+    llm = evidence.get("semantica_llm") or {}
+    if llm:
+        status = llm.get("status", {})
+        diagnostics.append(
+            {
+                "kind": "semantica_llm",
+                "requested_mode": llm.get("requested_mode"),
+                "actual_mode": llm.get("actual_mode"),
+                "provider": status.get("provider"),
+                "model": status.get("model"),
+                "blocked_reason": status.get("blocked_reason"),
+                "provider_available": status.get("provider_available"),
+                "llm_call_attempted": status.get("llm_call_attempted"),
+                "evidence_claim_count": llm.get("summary", {}).get("evidence_claim_count", 0),
+            }
+        )
+        diagnostics.extend({"kind": "semantica_llm", **item} for item in llm.get("diagnostics", []))
     return diagnostics
 
 

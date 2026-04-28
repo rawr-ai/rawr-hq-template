@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .paths import CURRENT_ROOT, REPO_ROOT, RUNS_ROOT
+from .source_model import source_path_id
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -29,7 +30,7 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def rel(path: Path) -> str:
-    return str(path.resolve().relative_to(REPO_ROOT))
+    return source_path_id(path)
 
 
 def git_sha(short: bool = False) -> str:
