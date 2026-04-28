@@ -461,6 +461,25 @@ class WorkbenchTests(unittest.TestCase):
             self.assertNotEqual("unknown", finding["assertion_scope"])
             self.assertTrue(finding.get("entity_id"))
 
+    def test_semantic_findings_have_explanation_chain(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        evidence = extract_evidence_claims(fixture_document_path(), graph["layered_graph"], graph["candidate_queue"], fixture=True)
+        compare = compare_evidence_to_ontology(evidence, graph["layered_graph"], graph["candidate_queue"])
+        self.assertEqual("rawr-semantica-reasoning-proof-v1", compare["semantica_reasoning"]["schema_version"])
+        self.assertTrue(compare["semantica_reasoning"]["rawr_policy"]["review_actions_owned_by_rawr"])
+        self.assertTrue(compare["semantica_reasoning"]["summary"]["explanation_chain_complete"])
+        decision_grade = [finding for finding in compare["findings"] if finding["decision_grade"]]
+        self.assertTrue(decision_grade)
+        for finding in decision_grade:
+            chain = finding["explanation_chain"]
+            self.assertEqual(finding["claim_id"], chain["source_claim"]["claim_id"])
+            self.assertEqual(finding["entity_id"], chain["resolved_target"]["entity_id"])
+            self.assertEqual(finding["rule"], chain["rule_result"]["rule"])
+            self.assertEqual(finding["kind"], chain["finding"]["kind"])
+            self.assertEqual(finding["review_action"], chain["finding"]["review_action"])
+
     def test_semantic_extraction_suppresses_scaffold_and_records_ledger(self) -> None:
         ontology = load_core_ontology()
         validation = validate_loaded_core_ontology(ontology)
