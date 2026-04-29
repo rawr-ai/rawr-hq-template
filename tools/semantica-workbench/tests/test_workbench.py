@@ -1099,9 +1099,73 @@ class WorkbenchTests(unittest.TestCase):
         self.assertEqual(sum(record["counts"]["findings"] for record in sweep["documents"]), index["summary"]["finding_count"])
         self.assertEqual(sweep["summary"]["decision_grade_findings"], index["summary"]["decision_grade_finding_count"])
         self.assertEqual(0, index["summary"]["warning_count"])
+        self.assertFalse(index["authority_boundary"]["generated_evidence_is_truth"])
+        self.assertTrue(index["authority_boundary"]["reviewed_rawr_ontology_remains_authority"])
+        self.assertTrue(index["authority_boundary"]["promotion_requires_human_review"])
+        self.assertTrue(index["authority_boundary"]["llm_output_is_evidence_only"])
+        self.assertEqual(index["authority_boundary"], read_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_summary"])["authority_boundary"])
+        document = index["documents"][0]
+        for key in (
+            "run_id",
+            "document_path",
+            "artifact_paths",
+            "semantic_compare_artifact",
+            "report_html_artifact",
+            "index_status",
+            "semantic_summary",
+        ):
+            self.assertIn(key, document)
+        claim = index["claims"][0]
+        for key in (
+            "index_id",
+            "run_id",
+            "document_path",
+            "source_path",
+            "line_start",
+            "line_end",
+            "char_start",
+            "char_end",
+            "char_span_kind",
+            "heading_path",
+            "text",
+            "source_span",
+            "confidence",
+            "review_state",
+            "promotion_allowed",
+            "report_html_artifact",
+        ):
+            self.assertIn(key, claim)
+        self.assertFalse(claim["promotion_allowed"])
+        self.assertEqual(claim["source_path"], claim["source_span"]["source_path"])
+        self.assertEqual(claim["char_start"], claim["source_span"]["char_start"])
         claim_index_ids = {claim["index_id"] for claim in index["claims"]}
         self.assertTrue(index["findings"])
-        self.assertTrue(all(finding["claim_index_id"] in claim_index_ids for finding in index["findings"]))
+        finding = index["findings"][0]
+        for key in (
+            "index_id",
+            "finding_id",
+            "claim_id",
+            "claim_index_id",
+            "source_path",
+            "line_start",
+            "line_end",
+            "char_start",
+            "char_end",
+            "char_span_kind",
+            "heading_path",
+            "text",
+            "source_span",
+            "kind",
+            "rule",
+            "review_action",
+            "confidence",
+            "promotion_allowed",
+            "report_html_artifact",
+        ):
+            self.assertIn(key, finding)
+        self.assertFalse(finding["promotion_allowed"])
+        self.assertEqual(finding["source_path"], finding["source_span"]["source_path"])
+        self.assertTrue(all(row["claim_index_id"] in claim_index_ids for row in index["findings"]))
         self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_summary"]).exists())
         jsonl_rows = (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_jsonl"]).read_text(encoding="utf-8").splitlines()
         self.assertEqual(1 + len(index["documents"]) + len(index["claims"]) + len(index["findings"]), len(jsonl_rows))
@@ -1146,6 +1210,63 @@ class WorkbenchTests(unittest.TestCase):
         self.assertEqual(1, index["summary"]["documents_with_missing_artifacts"])
         self.assertEqual(1, index["summary"]["warning_count"])
         self.assertEqual("missing-semantic-compare-artifact", index["warnings"][0]["kind"])
+
+    def test_document_sweep_evidence_index_rejects_dangling_finding_claims(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            base_run = Path(directory)
+            write_json(base_run / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["metadata"], {"kind": "test-core", "source": "test"})
+            run_dir = run_document_sweep(
+                documents=["tools/semantica-workbench/fixtures/docs/sweep/active.md"],
+                run=str(base_run),
+            )
+        sweep = read_json(run_dir / CORE_GRAPH_FILENAMES["doc_sweep"])
+        semantic_path = REPO_ROOT / sweep["documents"][0]["artifact_paths"]["semantic_compare"]
+        compare = read_json(semantic_path)
+        self.assertTrue(compare["findings"])
+        compare["findings"][0]["claim_id"] = "claim.missing"
+        write_json(semantic_path, compare)
+        with self.assertRaisesRegex(RuntimeError, "integrity validation failed"):
+            build_sweep_evidence_index(run_dir)
+        index = write_sweep_evidence_index(run_dir, strict=False)
+        self.assertEqual(1, index["summary"]["warning_count"])
+        self.assertEqual("finding-references-missing-claim", index["warnings"][0]["kind"])
+        self.assertIsNotNone(index["findings"][0]["source_span"])
+
+    def test_document_sweep_evidence_index_rejects_malformed_claim_ids(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            base_run = Path(directory)
+            write_json(base_run / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["metadata"], {"kind": "test-core", "source": "test"})
+            run_dir = run_document_sweep(
+                documents=["tools/semantica-workbench/fixtures/docs/sweep/active.md"],
+                run=str(base_run),
+            )
+        sweep = read_json(run_dir / CORE_GRAPH_FILENAMES["doc_sweep"])
+        semantic_path = REPO_ROOT / sweep["documents"][0]["artifact_paths"]["semantic_compare"]
+        compare = read_json(semantic_path)
+        self.assertTrue(compare["claims"])
+        compare["claims"].append(deepcopy(compare["claims"][0]))
+        compare["findings"][0]["claim_id"] = ""
+        write_json(semantic_path, compare)
+        with self.assertRaisesRegex(RuntimeError, "integrity validation failed"):
+            build_sweep_evidence_index(run_dir)
+        index = write_sweep_evidence_index(run_dir, strict=False)
+        warning_kinds = {warning["kind"] for warning in index["warnings"]}
+        self.assertIn("duplicate-claim-index-id", warning_kinds)
+        self.assertIn("finding-missing-claim-id", warning_kinds)
 
     def test_document_sweep_explicit_excluded_doc_is_tagged_and_compared(self) -> None:
         ontology = load_core_ontology()
