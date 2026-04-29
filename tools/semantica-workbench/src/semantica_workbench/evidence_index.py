@@ -184,6 +184,7 @@ def build_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
 
 
 def write_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[str, Any]:
+    from .evidence_agent_manifest import write_evidence_agent_manifest
     from .report_html import write_sweep_evidence_index_html
 
     index = build_sweep_evidence_index(run_dir, strict=strict)
@@ -192,6 +193,7 @@ def write_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
     write_jsonl(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_jsonl"], evidence_index_jsonl_rows(index))
     write_sweep_evidence_index_html(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_html"], index)
     (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_ttl"]).write_text(evidence_index_turtle(index), encoding="utf-8")
+    write_evidence_agent_manifest(run_dir, index)
     return index
 
 

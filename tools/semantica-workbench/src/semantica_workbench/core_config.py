@@ -53,6 +53,7 @@ CORE_GRAPH_FILENAMES = {
     "sweep_evidence_index_summary": "sweep-evidence-index-summary.json",
     "sweep_evidence_index_html": "sweep-evidence-index.html",
     "sweep_evidence_index_ttl": "sweep-evidence-index.ttl",
+    "sweep_evidence_agent_manifest": "sweep-evidence-agent-manifest.json",
     "sweep_quarantine_candidates": "quarantine-candidates.json",
     "sweep_update_candidates": "update-candidates.json",
     "sweep_no_signal_documents": "no-signal-documents.json",
@@ -90,6 +91,7 @@ SWEEP_CURRENT_FILES = [
     CORE_GRAPH_FILENAMES["sweep_evidence_index_summary"],
     CORE_GRAPH_FILENAMES["sweep_evidence_index_html"],
     CORE_GRAPH_FILENAMES["sweep_evidence_index_ttl"],
+    CORE_GRAPH_FILENAMES["sweep_evidence_agent_manifest"],
     CORE_GRAPH_FILENAMES["sweep_quarantine_candidates"],
     CORE_GRAPH_FILENAMES["sweep_update_candidates"],
     CORE_GRAPH_FILENAMES["sweep_no_signal_documents"],
@@ -162,6 +164,7 @@ NAMED_QUERY_DESCRIPTIONS = {
     "evidence-weak-modality-hotspots": "Documents with high weak-modality ambiguous evidence counts.",
     "evidence-by-document": "Per-document evidence counts and examples from the corpus evidence index.",
     "evidence-by-entity": "Per-entity evidence counts and examples from the corpus evidence index.",
+    "evidence-agent-manifest": "Stable agent-facing commands, artifacts, MCP status, and authority guardrails for corpus evidence queries.",
 }
 
 DEFAULT_SWEEP_ROOTS = ["docs"]

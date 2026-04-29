@@ -1206,6 +1206,27 @@ class WorkbenchTests(unittest.TestCase):
         self.assertIn("Candidate New", evidence_html_text)
         self.assertIn("Per-Document Evidence", evidence_html_text)
         self.assertIn("Open report", evidence_html_text)
+        agent_manifest_path = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_agent_manifest"]
+        self.assertTrue(agent_manifest_path.exists())
+        agent_manifest = read_json(agent_manifest_path)
+        self.assertEqual("rawr-sweep-evidence-agent-manifest-v1", agent_manifest["schema_version"])
+        self.assertFalse(agent_manifest["authority_boundary"]["generated_evidence_is_truth"])
+        self.assertTrue(agent_manifest["authority_boundary"]["agent_outputs_are_review_aids"])
+        self.assertIn("evidence-review-queue", [item["name"] for item in agent_manifest["stable_interfaces"]["named_queries"]])
+        self.assertIn("tools/semantica-workbench/queries/evidence-candidate-new.rq", [item["path"] for item in agent_manifest["stable_interfaces"]["sparql_examples"]])
+        self.assertEqual("evidence-index", agent_manifest["stable_interfaces"]["sparql_examples"][0]["graph_mode"])
+        self.assertTrue(agent_manifest["stable_interfaces"]["sparql_examples"][0]["preserves_review_context"])
+        aggregate_examples = [
+            item
+            for item in agent_manifest["stable_interfaces"]["sparql_examples"]
+            if item["usage"] == "aggregate_only"
+        ]
+        self.assertTrue(aggregate_examples)
+        self.assertFalse(aggregate_examples[0]["preserves_review_context"])
+        self.assertIn("mcp", agent_manifest)
+        self.assertIn(agent_manifest["mcp"]["generic_semantica_mcp_status"], {"available", "blocked"})
+        self.assertEqual("not-wired", agent_manifest["mcp"]["rawr_evidence_access_status"])
+        self.assertNotIn(".semantica/current", json.dumps(agent_manifest["stable_interfaces"]["named_queries"]))
         for document in index["documents"]:
             report_html = document.get("report_html_artifact")
             if report_html:
@@ -1541,6 +1562,7 @@ class WorkbenchTests(unittest.TestCase):
             "evidence-weak-modality-hotspots",
             "evidence-by-document",
             "evidence-by-entity",
+            "evidence-agent-manifest",
         ]
         for query_name in query_names:
             result = run_named_query(str(run_dir), query_name)
@@ -1599,6 +1621,22 @@ class WorkbenchTests(unittest.TestCase):
         by_entity = run_named_query(str(run_dir), "evidence-by-entity")
         self.assertTrue(by_entity["entities"])
         self.assertTrue(all("kind_counts" in entity for entity in by_entity["entities"]))
+        agent_manifest = run_named_query(str(run_dir), "evidence-agent-manifest")
+        self.assertEqual("rawr-sweep-evidence-agent-manifest-v1", agent_manifest["manifest"]["schema_version"])
+        self.assertIn("stable_interfaces", agent_manifest["manifest"])
+        self.assertEqual(
+            ["evidence-review-queue", "evidence-candidate-new", "evidence-by-entity"],
+            [
+                item["query"]
+                for item in agent_manifest["manifest"]["question_map"][:3]
+            ],
+        )
+        entity_question = agent_manifest["manifest"]["question_map"][2]
+        self.assertIn("resolved target concepts", entity_question["question"])
+        self.assertIn("candidate", entity_question["authority_note"])
+        self.assertEqual("not-wired", agent_manifest["manifest"]["mcp"]["rawr_evidence_access_status"])
+        listed = run_named_query(str(run_dir), "evidence-summary")
+        self.assertEqual(agent_manifest["summary"]["claim_count"], listed["summary"]["claim_count"])
 
     def test_evidence_named_query_requires_index(self) -> None:
         ontology = load_core_ontology()
