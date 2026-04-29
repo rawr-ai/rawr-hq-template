@@ -23,6 +23,7 @@ from .core_config import (
     SWEEP_REVIEW_RECOMMENDATIONS,
 )
 from .core_viewer import write_html_viewer
+from .evidence_index import write_sweep_evidence_index
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json, write_jsonl
 from .paths import REPO_ROOT
 from .report_html import write_semantic_compare_report_html, write_sweep_report_html
@@ -264,6 +265,7 @@ def write_sweep_outputs(run_dir: Path, sweep: dict[str, Any]) -> None:
     write_sweep_report_html(run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report_html"], sweep)
     write_sweep_csv(run_dir / CORE_GRAPH_FILENAMES["doc_sweep_csv"], sweep)
     (run_dir / CORE_GRAPH_FILENAMES["doc_sweep_ttl"]).write_text(sweep_turtle(sweep), encoding="utf-8")
+    write_sweep_evidence_index(run_dir)
 
 
 def recommend_document(compare: dict[str, Any], path_class: str) -> dict[str, Any]:

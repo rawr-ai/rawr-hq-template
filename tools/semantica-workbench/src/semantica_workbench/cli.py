@@ -25,10 +25,11 @@ from .core_ontology import (
     write_architecture_change_frame,
     write_semantica_capability_report,
 )
-from .core_config import CORE_GRAPH_FILENAMES, DEFAULT_CORE_VIEWER_HOST, DEFAULT_CORE_VIEWER_PORT
+from .core_config import CORE_GRAPH_FILENAMES, DEFAULT_CORE_VIEWER_HOST, DEFAULT_CORE_VIEWER_PORT, SWEEP_CURRENT_FILES
 from .core_query import list_queries, render_query_text, run_named_query, run_sparql_query
 from .diffing import build_diff
 from .document_sweep import run_document_sweep
+from .evidence_index import write_sweep_evidence_index
 from .extraction import extract_chunk, request_params_for_model, schema_hash
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json, write_jsonl
 from .manifest import load_manifest
@@ -149,6 +150,10 @@ def build_parser() -> argparse.ArgumentParser:
     doc_sweep.add_argument("--format", choices=["text", "markdown", "json"], default="text")
     doc_sweep.add_argument("--fail-on", choices=["none", "decision-grade"], default="none")
     doc_sweep.set_defaults(func=cmd_doc_sweep)
+
+    doc_index = sub.add_parser("doc:index")
+    doc_index.add_argument("--run", default="latest")
+    doc_index.set_defaults(func=cmd_doc_index)
 
     semantic_capability = sub.add_parser("semantic:capability")
     semantic_capability.add_argument("--run", default="latest")
@@ -402,6 +407,20 @@ def cmd_doc_sweep(args) -> int:
             f"conflicts={summary['conflicts']} deprecated_uses={summary['deprecated_uses']} "
             f"ambiguous={summary['ambiguous']}"
         )
+    return 0
+
+
+def cmd_doc_index(args) -> int:
+    run_dir = resolve_run(args.run)
+    index = write_sweep_evidence_index(run_dir)
+    mark_current(run_dir, SWEEP_CURRENT_FILES)
+    summary = index["summary"]
+    print(f"sweep_evidence_index={rel(run_dir / CORE_GRAPH_FILENAMES['sweep_evidence_index'])}")
+    print(
+        "indexed="
+        f"documents={summary['documents_indexed']} claims={summary['claim_count']} "
+        f"findings={summary['finding_count']} warnings={summary['warning_count']}"
+    )
     return 0
 
 
