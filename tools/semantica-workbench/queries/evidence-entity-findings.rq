@@ -1,0 +1,12 @@
+PREFIX rawr: <https://rawr.dev/ontology/>
+PREFIX evidence: <https://rawr.dev/evidence/>
+
+# Aggregate-only target pressure query. Use named evidence queries for source
+# spans and review actions before making reviewer decisions.
+SELECT ?target (COUNT(?finding) AS ?findingCount) WHERE {
+  ?finding a rawr:ReviewFinding ;
+    rawr:partOfEvidenceIndex ?evidenceIndex ;
+    rawr:resolvedTarget ?target .
+}
+GROUP BY ?target
+ORDER BY DESC(?findingCount) ?target

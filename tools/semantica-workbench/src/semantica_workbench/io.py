@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .paths import CURRENT_ROOT, REPO_ROOT, RUNS_ROOT
+from .source_model import source_path_id
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -29,7 +30,7 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def rel(path: Path) -> str:
-    return str(path.resolve().relative_to(REPO_ROOT))
+    return source_path_id(path)
 
 
 def git_sha(short: bool = False) -> str:
@@ -48,7 +49,13 @@ def new_run_dir(prefix: str = "run") -> Path:
     while candidate.exists():
         index += 1
         candidate = RUNS_ROOT / f"{base.name}-{index}"
-    candidate.mkdir(parents=True, exist_ok=False)
+    while True:
+        try:
+            candidate.mkdir(parents=True, exist_ok=False)
+            break
+        except FileExistsError:
+            index += 1
+            candidate = RUNS_ROOT / f"{base.name}-{index}"
     return candidate
 
 
@@ -71,10 +78,13 @@ def mark_current(run_dir: Path, files: list[str] | None = None) -> None:
     CURRENT_ROOT.mkdir(parents=True, exist_ok=True)
     for child in CURRENT_ROOT.iterdir():
         if child.name != "run.json":
-            if child.is_dir():
-                shutil.rmtree(child)
-            else:
-                child.unlink()
+            try:
+                if child.is_dir():
+                    shutil.rmtree(child)
+                else:
+                    child.unlink()
+            except FileNotFoundError:
+                pass
     write_json(CURRENT_ROOT / "run.json", {"run_dir": rel(run_dir), "git_sha": git_sha()})
     for name in files or []:
         src = run_dir / name
