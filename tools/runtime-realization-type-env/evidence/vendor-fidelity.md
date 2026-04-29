@@ -15,6 +15,11 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 - `@rawr/sdk/effect` is a RAWR pseudo-SDK facade for type-shape checks.
 - `TaggedError("Tag")<{ ... }>` is intentionally aligned with Effect's `Data.TaggedError` spelling, but this lab models only a narrow sentinel: `_tag`, fields, and `Error` inheritance.
 - `Effect.succeed`, `Effect.fail`, and `Effect.tryPromise` are inert/lazy test sentinels. They are not a ManagedRuntime, fiber, scheduler, dependency environment, or promise interpreter.
+- Vendor inspection for the Effect integration TODO pass used official docs plus temporary package metadata/source inspection, not a repo dependency install.
+- Inspected package: `effect@3.21.2`.
+- The inspected package exports root/subpath surfaces for `Effect`, `Layer`, `Scope`, `ManagedRuntime`, `Queue`, `PubSub`, `Ref`, `Deferred`, `Schedule`, `Stream`, `Fiber`, `FiberRef`, `Config`, `Logger`, `Tracer`, `Metric`, and `Data`.
+- Current vendor spelling supports root `pipe` or value `.pipe(...)`; `Effect.pipe` is not the verified namespace spelling.
+- Do not install `effect` into this repo for TODO-only evidence. Install it later only when production runtime substrate or a deliberate vendor compile probe needs real package types through the repo's normal dependency workflow.
 
 ## oRPC
 

@@ -4,15 +4,20 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "review.runtime-simulation-and-lab-instrumentation",
-    "focus": "Harden the lab against false runtime confidence without turning it into the real runtime.",
+    "id": "review.effect-native-integration-todo-coverage",
+    "focus": "Make remaining Effect-native integration categories visible as fenced TODO/xfail evidence without turning the lab into the runtime substrate.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
-      "accepted.invocation-bound-clients",
-      "accepted.provider-not-execution-plan",
-      "accepted.provider-profile-closure",
+      "accepted.curated-effect-public-surface",
+      "audit.p1.effect-managed-runtime-substrate",
+      "audit.p1.process-local-coordination-resources",
       "audit.p1.provider-effect-plan-shape",
-      "audit.p2.server-route-derivation"
+      "audit.p1.provider-effect-plan-lowering",
+      "audit.p1.effect-boundary-policy-matrix",
+      "audit.p1.safe-effect-composition-surface",
+      "audit.p2.adapter-effect-callback-lowering",
+      "audit.p2.async-effect-bridge-lowering",
+      "audit.p2.runtime-profile-config-redaction"
     ]
   },
   "entries": [
@@ -35,6 +40,15 @@
         "fixtures/positive/work-items-service.ts",
         "fixtures/positive/server-api-plugin.ts",
         "fixtures/inline-negative/authoring-contracts.ts"
+      ]
+    },
+    {
+      "id": "accepted.curated-effect-public-surface",
+      "status": "proof",
+      "source": "Runtime spec sections 5, 9, and 25",
+      "oracle": "The public @rawr/sdk/effect facade rejects raw runtime constructors, raw Effect public type leaks, and the unverified Effect.pipe spelling.",
+      "fixtures": [
+        "fixtures/inline-negative/effect-public-surface.ts"
       ]
     },
     {
@@ -98,6 +112,51 @@
       ]
     },
     {
+      "id": "audit.p1.effect-managed-runtime-substrate",
+      "status": "xfail",
+      "source": "Runtime spec sections 9 and 24; Effect-native addendum sections 12, 38, and 45.3",
+      "oracle": "One process-owned Effect managed runtime, internal EffectRuntimeAccess, Layer/Scope construction, and disposal/finalization remain runtime-substrate work, not public authoring.",
+      "fixtures": [
+        "fixtures/todo/effect-managed-runtime-substrate.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p1.process-local-coordination-resources",
+      "status": "xfail",
+      "source": "Runtime spec section 14; Effect-native addendum sections 32-35 and 45.7",
+      "oracle": "Process queue, pubsub, cache, and concurrency resources must be local runtime resource contracts and must not imply durable async or domain truth semantics.",
+      "fixtures": [
+        "fixtures/todo/process-local-coordination-resources.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p1.provider-effect-plan-lowering",
+      "status": "xfail",
+      "source": "Runtime spec sections 13 and 24; Effect-native addendum sections 15, 37, and 42",
+      "oracle": "Provider acquire/release plans lower through bootgraph/provisioning, not ProcessExecutionRuntime or CompiledExecutionPlan.",
+      "fixtures": [
+        "fixtures/todo/provider-effect-plan-lowering.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p1.effect-boundary-policy-matrix",
+      "status": "xfail",
+      "source": "Runtime spec sections 9, 24, and 25; Effect-native addendum sections 40-42",
+      "oracle": "Executable and provider boundaries need explicit timeout, retry, interruption, telemetry, redaction, and error/exit metadata before this can become proof.",
+      "fixtures": [
+        "fixtures/todo/effect-boundary-policy-matrix.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p1.safe-effect-composition-surface",
+      "status": "xfail",
+      "source": "Runtime spec sections 5, 9, and 25; Effect-native addendum sections 8, 10, and 45.6",
+      "oracle": "Curated Effect composition helpers must be selected deliberately, with root pipe or value .pipe(...) spelling and no public raw runtime constructors.",
+      "fixtures": [
+        "fixtures/todo/safe-effect-composition-surface.todo.ts"
+      ]
+    },
+    {
       "id": "audit.p1.dispatcher-access",
       "status": "xfail",
       "source": "M2 core-spine audit P1",
@@ -125,12 +184,39 @@
       ]
     },
     {
+      "id": "audit.p2.adapter-effect-callback-lowering",
+      "status": "xfail",
+      "source": "Runtime spec sections 12 and 24; Effect-native addendum section 39",
+      "oracle": "Native host callbacks must resolve registry boundaries and delegate to ProcessExecutionRuntime instead of running RawrEffect in adapters.",
+      "fixtures": [
+        "fixtures/todo/adapter-effect-callback-lowering.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p2.async-effect-bridge-lowering",
+      "status": "xfail",
+      "source": "Runtime spec sections 12, 19, and 24; Effect-native addendum section 28",
+      "oracle": "Async host step invocation must run pre-derived step descriptors through ProcessExecutionRuntime while durable semantics stay with the async host.",
+      "fixtures": [
+        "fixtures/todo/async-effect-bridge-lowering.todo.ts"
+      ]
+    },
+    {
       "id": "audit.p2.first-resource-provider-cut",
       "status": "todo",
       "source": "M2 core-spine audit P2",
       "oracle": "Initial resource/provider catalog is planning input only and does not assert final ids.",
       "fixtures": [
         "fixtures/todo/provider-effect-plan-shape.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p2.runtime-profile-config-redaction",
+      "status": "todo",
+      "source": "Runtime spec sections 13, 24, and 25; deployment spec runtime handoff sections",
+      "oracle": "Runtime profile config and redaction proof remains planning input until config binding and diagnostic-safe secret emission are locked.",
+      "fixtures": [
+        "fixtures/todo/runtime-profile-config-redaction.todo.ts"
       ]
     },
     {
