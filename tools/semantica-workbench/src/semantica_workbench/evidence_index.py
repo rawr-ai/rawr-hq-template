@@ -10,6 +10,18 @@ from .io import git_sha, read_json, rel, write_json, write_jsonl
 from .paths import REPO_ROOT
 
 SWEEP_EVIDENCE_INDEX_SCHEMA_VERSION = "rawr-sweep-evidence-index-v1"
+STRICT_WARNING_KINDS = {
+    "claim-missing-id",
+    "duplicate-claim-index-id",
+    "finding-missing-claim-id",
+    "finding-references-missing-claim",
+}
+AUTHORITY_BOUNDARY = {
+    "generated_evidence_is_truth": False,
+    "reviewed_rawr_ontology_remains_authority": True,
+    "promotion_requires_human_review": True,
+    "llm_output_is_evidence_only": True,
+}
 
 
 def build_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[str, Any]:
@@ -33,6 +45,7 @@ def build_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
         by_path_class[str(record.get("path_class") or "unknown")] += 1
         semantic_path = semantic_compare_path(run_dir, record)
         document_row = document_index_row(record, semantic_path)
+        document_row["run_id"] = sweep.get("run_id", run_dir.name)
         if not semantic_path.exists():
             warning = {
                 "kind": "missing-semantic-compare-artifact",
@@ -55,15 +68,38 @@ def build_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
         document_row["semantic_summary"] = compare.get("summary", {})
         documents.append(document_row)
 
-        claim_ids_for_document: set[str] = set()
+        claims_by_claim_id: dict[str, dict[str, Any]] = {}
+        claim_index_ids_for_document: set[str] = set()
         for claim in compare.get("claims", []):
             row = claim_index_row(sweep, record, semantic_path, claim)
             claims.append(row)
-            claim_ids_for_document.add(row["claim_id"])
+            if not row.get("claim_id"):
+                warnings.append(
+                    {
+                        "kind": "claim-missing-id",
+                        "document_path": record.get("document_path"),
+                        "claim_index_id": row.get("index_id"),
+                        "semantic_compare": display_path(semantic_path),
+                    }
+                )
+            if row["index_id"] in claim_index_ids_for_document:
+                warnings.append(
+                    {
+                        "kind": "duplicate-claim-index-id",
+                        "document_path": record.get("document_path"),
+                        "claim_id": row.get("claim_id"),
+                        "claim_index_id": row.get("index_id"),
+                        "semantic_compare": display_path(semantic_path),
+                    }
+                )
+            if row.get("claim_id"):
+                claims_by_claim_id.setdefault(str(row["claim_id"]), row)
+            claim_index_ids_for_document.add(row["index_id"])
             by_resolution_state[str(row.get("resolution_state") or "unknown")] += 1
 
         for finding in compare.get("findings", []):
-            row = finding_index_row(sweep, record, semantic_path, finding)
+            claim_row = claims_by_claim_id.get(str(finding.get("claim_id") or ""))
+            row = finding_index_row(sweep, record, semantic_path, finding, claim_row)
             findings.append(row)
             by_kind[str(row.get("kind") or "unknown")] += 1
             by_rule[str(row.get("rule") or "unknown")] += 1
@@ -73,13 +109,23 @@ def build_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
                 by_review_action[str(row["review_action"])] += 1
             if row.get("decision_grade"):
                 decision_grade += 1
-            if row.get("claim_id") and row["claim_id"] not in claim_ids_for_document:
+            if not row.get("claim_id") or not row.get("claim_index_id"):
+                warnings.append(
+                    {
+                        "kind": "finding-missing-claim-id",
+                        "document_path": record.get("document_path"),
+                        "finding_id": row.get("finding_id"),
+                        "semantic_compare": display_path(semantic_path),
+                    }
+                )
+            elif row["claim_index_id"] not in claim_index_ids_for_document:
                 warnings.append(
                     {
                         "kind": "finding-references-missing-claim",
                         "document_path": record.get("document_path"),
                         "finding_id": row.get("finding_id"),
                         "claim_id": row.get("claim_id"),
+                        "claim_index_id": row.get("claim_index_id"),
                         "semantic_compare": display_path(semantic_path),
                     }
                 )
@@ -99,11 +145,17 @@ def build_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
         "document_count_by_path_class": dict(sorted(by_path_class.items())),
         "warning_count": len(warnings),
     }
+    strict_warnings = [warning for warning in warnings if warning.get("kind") in STRICT_WARNING_KINDS]
+    if strict and strict_warnings:
+        kinds = ", ".join(sorted({str(warning.get("kind")) for warning in strict_warnings}))
+        raise RuntimeError(f"Sweep evidence index integrity validation failed: {kinds}")
+
     return {
         "schema_version": SWEEP_EVIDENCE_INDEX_SCHEMA_VERSION,
         "run_id": sweep.get("run_id", run_dir.name),
         "git_sha": sweep.get("git_sha") or git_sha(),
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "authority_boundary": dict(AUTHORITY_BOUNDARY),
         "source_sweep": {
             "artifact": display_path(sweep_path),
             "schema_version": sweep.get("schema_version"),
@@ -143,6 +195,7 @@ def evidence_index_summary(index: dict[str, Any]) -> dict[str, Any]:
         "run_id": index["run_id"],
         "git_sha": index["git_sha"],
         "created_at": index["created_at"],
+        "authority_boundary": dict(index.get("authority_boundary", AUTHORITY_BOUNDARY)),
         "source_sweep": index["source_sweep"],
         "summary": index["summary"],
         "warnings": index.get("warnings", []),
@@ -155,6 +208,7 @@ def evidence_index_jsonl_rows(index: dict[str, Any]) -> list[dict[str, Any]]:
             "record_type": "summary",
             "run_id": index["run_id"],
             "schema_version": index["schema_version"],
+            "authority_boundary": dict(index.get("authority_boundary", AUTHORITY_BOUNDARY)),
             "summary": index["summary"],
         }
     ]
@@ -182,6 +236,7 @@ def semantic_compare_path(run_dir: Path, record: dict[str, Any]) -> Path:
 
 def document_index_row(record: dict[str, Any], semantic_path: Path) -> dict[str, Any]:
     return {
+        "run_id": record.get("run_id"),
         "document_path": record.get("document_path"),
         "path_class": record.get("path_class"),
         "recommendation": record.get("recommendation"),
@@ -190,12 +245,15 @@ def document_index_row(record: dict[str, Any], semantic_path: Path) -> dict[str,
         "counts": record.get("counts", {}),
         "artifact_paths": record.get("artifact_paths", {}),
         "semantic_compare_artifact": display_path(semantic_path),
+        "report_artifact": record.get("artifact_paths", {}).get("report"),
+        "report_html_artifact": record.get("artifact_paths", {}).get("report_html"),
     }
 
 
 def claim_index_row(sweep: dict[str, Any], record: dict[str, Any], semantic_path: Path, claim: dict[str, Any]) -> dict[str, Any]:
     document_path = claim.get("source_path") or record.get("document_path")
     claim_id = str(claim.get("id") or "")
+    span = source_span_from_claim(claim, record)
     return {
         "index_id": scoped_id(document_path, claim_id),
         "run_id": sweep.get("run_id"),
@@ -213,6 +271,7 @@ def claim_index_row(sweep: dict[str, Any], record: dict[str, Any], semantic_path
         "char_span_kind": claim.get("char_span_kind"),
         "heading_path": claim.get("heading_path", []),
         "text": claim.get("text"),
+        "source_span": span,
         "subject": claim.get("subject"),
         "predicate": claim.get("predicate"),
         "object": claim.get("object"),
@@ -227,13 +286,22 @@ def claim_index_row(sweep: dict[str, Any], record: dict[str, Any], semantic_path
         "extractor": claim.get("extractor"),
         "model": claim.get("model"),
         "confidence": claim.get("confidence"),
+        "promotion_allowed": False,
     }
 
 
-def finding_index_row(sweep: dict[str, Any], record: dict[str, Any], semantic_path: Path, finding: dict[str, Any]) -> dict[str, Any]:
+def finding_index_row(
+    sweep: dict[str, Any],
+    record: dict[str, Any],
+    semantic_path: Path,
+    finding: dict[str, Any],
+    claim_row: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     document_path = finding.get("document_path") or record.get("document_path")
     finding_id = str(finding.get("id") or "")
     claim_id = str(finding.get("claim_id") or "")
+    claim_index_id = claim_row.get("index_id") if claim_row else scoped_id(document_path, claim_id) if claim_id else None
+    span = source_span_from_finding(finding, record, claim_row)
     return {
         "index_id": scoped_id(document_path, finding_id),
         "run_id": sweep.get("run_id"),
@@ -244,14 +312,18 @@ def finding_index_row(sweep: dict[str, Any], record: dict[str, Any], semantic_pa
         "report_html_artifact": record.get("artifact_paths", {}).get("report_html"),
         "finding_id": finding_id,
         "claim_id": claim_id,
-        "claim_index_id": scoped_id(document_path, claim_id) if claim_id else None,
-        "source_path": finding.get("document_path") or record.get("document_path"),
-        "line_start": finding.get("line_start"),
-        "line_end": finding.get("line_end"),
-        "heading_path": finding.get("heading_path", []),
-        "text": finding.get("text"),
+        "claim_index_id": claim_index_id,
+        "source_path": span["source_path"],
+        "line_start": span["line_start"],
+        "line_end": span["line_end"],
+        "char_start": span["char_start"],
+        "char_end": span["char_end"],
+        "char_span_kind": span["char_span_kind"],
+        "heading_path": span["heading_path"],
+        "text": span["text"],
+        "source_span": span,
         "kind": finding.get("kind"),
-        "rule": finding.get("rule"),
+        "rule": finding.get("rule") or "unknown",
         "decision_grade": bool(finding.get("decision_grade")),
         "review_action": finding.get("review_action"),
         "reason": finding.get("reason"),
@@ -265,6 +337,39 @@ def finding_index_row(sweep: dict[str, Any], record: dict[str, Any], semantic_pa
         "resolution_state": finding.get("resolution_state"),
         "confidence": finding.get("confidence"),
         "explanation_chain": finding.get("explanation_chain", {}),
+        "promotion_allowed": False,
+    }
+
+
+def source_span_from_claim(claim: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "source_path": claim.get("source_path") or record.get("document_path"),
+        "line_start": claim.get("line_start"),
+        "line_end": claim.get("line_end"),
+        "char_start": claim.get("char_start"),
+        "char_end": claim.get("char_end"),
+        "char_span_kind": claim.get("char_span_kind"),
+        "heading_path": claim.get("heading_path", []),
+        "text": claim.get("text"),
+    }
+
+
+def source_span_from_finding(
+    finding: dict[str, Any],
+    record: dict[str, Any],
+    claim_row: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if claim_row and isinstance(claim_row.get("source_span"), dict):
+        return dict(claim_row["source_span"])
+    return {
+        "source_path": finding.get("document_path") or record.get("document_path"),
+        "line_start": finding.get("line_start"),
+        "line_end": finding.get("line_end"),
+        "char_start": None,
+        "char_end": None,
+        "char_span_kind": None,
+        "heading_path": finding.get("heading_path", []),
+        "text": finding.get("text"),
     }
 
 
