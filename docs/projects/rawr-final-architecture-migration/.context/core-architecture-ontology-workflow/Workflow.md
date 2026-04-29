@@ -10,6 +10,12 @@ Manage the semantica-first migration as a controlled, phase-by-phase workflow. T
 
 The workflow goal is not to declare the workbench semantica-native early. It is to prove pinned semantica capabilities, move substrate responsibilities over only when proven, and keep RAWR authority, review semantics, source spans, and promotion gates explicit.
 
+## Current Modernization Extension
+
+The active workbench modernization baseline is `semantica-workbench-modernization-baseline.md`. Read it before Python cleanup work. It freezes the current command surface, generated artifact names, fixture/schema inputs, verification gates, high-risk modules, and RAWR authority boundaries that later tooling, test, typing, and module-decomposition phases must preserve.
+
+This modernization track is a contract-preserving cleanup of `tools/semantica-workbench`, not a replacement for the semantica-first pipeline or a change to RAWR architecture truth. It should be used alongside the existing semantica-first workflow when implementation work touches Python code quality, tests, types, module boundaries, rendering, or Semantica/LLM integration boundaries.
+
 ## Active Branch And Current Phase
 
 - Base branch: `codex/semantica-underutilization-review`.
