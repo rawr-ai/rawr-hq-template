@@ -1,0 +1,55 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "runtime-realization-type-env",
+  "root": "tools/runtime-realization-type-env",
+  "sourceRoot": "tools/runtime-realization-type-env/src",
+  "tags": [
+    "type:tool",
+    "migration-slice:runtime-realization",
+    "spec-conformance"
+  ],
+  "targets": {
+    "sync": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run sync:check --project runtime-realization-type-env"
+      }
+    },
+    "structural": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun tools/runtime-realization-type-env/scripts/verify-structure.ts"
+      }
+    },
+    "report": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun tools/runtime-realization-type-env/scripts/report-results.ts"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p tools/runtime-realization-type-env/tsconfig.json --noEmit"
+      }
+    },
+    "negative": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun tools/runtime-realization-type-env/scripts/assert-negative-types.ts"
+      }
+    },
+    "simulate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test ./tools/runtime-realization-type-env/test/spine-simulation.test.ts"
+      }
+    },
+    "gate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx nx run runtime-realization-type-env:sync && bunx nx run runtime-realization-type-env:structural && bunx nx run runtime-realization-type-env:report && bunx nx run runtime-realization-type-env:typecheck && bunx nx run runtime-realization-type-env:negative && bunx nx run runtime-realization-type-env:simulate"
+      }
+    }
+  }
+}
