@@ -55,6 +55,25 @@ class EvidenceFindingRow(TypedDict, total=False):
     decision_grade: bool
 
 
+class EvidenceClaimRow(TypedDict, total=False):
+    index_id: str
+    claim_id: str
+    source_path: str
+    document_path: str
+    sweep_document_path: str
+    line_start: int
+    line_end: int
+    char_start: int
+    char_end: int
+    char_span_kind: str
+    heading_path: list[str]
+    text: str
+    source_span: SourceSpan
+    confidence: float
+    review_state: str
+    promotion_allowed: Literal[False]
+
+
 class SweepEvidenceIndex(TypedDict, total=False):
     schema_version: str
     run_id: str
@@ -64,7 +83,7 @@ class SweepEvidenceIndex(TypedDict, total=False):
     source_sweep: JsonObject
     summary: JsonObject
     documents: list[JsonObject]
-    claims: list[JsonObject]
+    claims: list[EvidenceClaimRow]
     findings: list[EvidenceFindingRow]
     warnings: list[JsonObject]
     provenance: JsonObject
@@ -171,6 +190,7 @@ def validate_evidence_authority_boundary(payload: JsonObject) -> list[JsonObject
                 {"kind": "authority_boundary_mismatch", "path": ["authority_boundary", key], "expected": False}
             )
     errors.extend(validate_generated_rows_are_not_promotable(payload, "findings"))
+    errors.extend(validate_generated_rows_are_not_promotable(payload, "claims"))
     errors.extend(validate_generated_rows_are_not_promotable(payload, "suggestions"))
     return errors
 

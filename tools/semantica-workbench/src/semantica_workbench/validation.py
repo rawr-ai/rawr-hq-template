@@ -35,7 +35,9 @@ def validate_graph(ontology: dict[str, Any]) -> dict[str, Any]:
             issues.append({"kind": "unresolved_relation_endpoint", "relation_id": relation["id"]})
         if relation.get("claim_id") and relation["claim_id"] not in claims_by_id:
             # Seeded edges are allowed to omit claim ids; generated edges must resolve.
-            issues.append({"kind": "missing_relation_claim", "relation_id": relation["id"], "claim_id": relation["claim_id"]})
+            issues.append(
+                {"kind": "missing_relation_claim", "relation_id": relation["id"], "claim_id": relation["claim_id"]}
+            )
         prov = relation.get("provenance", {})
         if not prov.get("path") or not prov.get("line_start") or not relation.get("authority_rank"):
             issues.append({"kind": "relation_missing_provenance", "relation_id": relation["id"]})
@@ -54,7 +56,9 @@ def validate_graph(ontology: dict[str, Any]) -> dict[str, Any]:
         issues.append({"kind": "forbidden_pattern_marked_canonical", "entity_id": entity["id"], "name": entity["name"]})
 
     predicate_counts = Counter(relation["predicate"] for relation in ontology["relations"])
-    source_counts = Counter(prov["source_id"] for entity in ontology["entities"] for prov in entity.get("provenance", []))
+    source_counts = Counter(
+        prov["source_id"] for entity in ontology["entities"] for prov in entity.get("provenance", [])
+    )
     replacement_rules = [relation for relation in ontology["relations"] if relation["predicate"] == "replaces"]
     forbidden_edges = [relation for relation in ontology["relations"] if relation["predicate"] == "forbids"]
     component_contract_entities = [

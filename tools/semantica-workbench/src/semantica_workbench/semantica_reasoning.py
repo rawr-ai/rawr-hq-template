@@ -77,7 +77,9 @@ def semantica_reasoning_status() -> dict[str, Any]:
     try:
         from semantica import conflicts, reasoning
 
-        provider_dependency_available = any(importlib.util.find_spec(name) is not None for name in ["openai", "anthropic", "litellm", "ollama"])
+        provider_dependency_available = any(
+            importlib.util.find_spec(name) is not None for name in ["openai", "anthropic", "litellm", "ollama"]
+        )
         provider_env_available = any(
             os.environ.get(name)
             for name in [
@@ -90,7 +92,11 @@ def semantica_reasoning_status() -> dict[str, Any]:
         graph_reasoner_execution_status = (
             "disabled-env-gated"
             if os.environ.get("SEMANTICA_ENABLE_LLM_REASONING_PROBE") != "1"
-            else ("probe-ready" if provider_dependency_available and provider_env_available else "blocked-missing-provider")
+            else (
+                "probe-ready"
+                if provider_dependency_available and provider_env_available
+                else "blocked-missing-provider"
+            )
         )
         return {
             "available": True,

@@ -8,7 +8,9 @@ from .semantic_evidence import build_semantic_indexes, classify_claim_text, reso
 from .source_model import stripped_line_span
 
 
-def semantica_extraction_pilot(document: Path, graph: dict[str, Any], candidate_queue: dict[str, Any]) -> dict[str, Any]:
+def semantica_extraction_pilot(
+    document: Path, graph: dict[str, Any], candidate_queue: dict[str, Any]
+) -> dict[str, Any]:
     if not document.is_absolute():
         from .paths import REPO_ROOT
 
@@ -102,7 +104,8 @@ def semantica_extraction_status() -> dict[str, Any]:
             "available": True,
             "classification": "pilot",
             "non_llm_available": hasattr(semantic_extract, "TripletExtractor"),
-            "llm_available": hasattr(semantic_extract, "LLMExtraction") and any(optional[name]["available"] for name in ["openai", "anthropic", "litellm", "ollama"]),
+            "llm_available": hasattr(semantic_extract, "LLMExtraction")
+            and any(optional[name]["available"] for name in ["openai", "anthropic", "litellm", "ollama"]),
             "optional_dependencies": optional,
             "limitation": "Pattern extraction is evidence-only and does not preserve RAWR claim semantics without the adapter.",
         }

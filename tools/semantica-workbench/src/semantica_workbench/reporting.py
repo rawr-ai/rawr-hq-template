@@ -54,7 +54,9 @@ def render_report(run_dir) -> str:
     append_entity_section(lines, "Forbidden Target Terms", diff.get("forbidden_terms", []), limit=25)
     append_relation_section(lines, "Ownership Edges", diff.get("ownership_edges", []), limit=20)
     append_claim_section(lines, "Stale Overlap Candidates", diff.get("stale_overlap_candidates", []), limit=20)
-    append_entity_section(lines, "Preserved Broad Architecture Concepts", diff.get("preserved_broad_concepts", []), limit=20)
+    append_entity_section(
+        lines, "Preserved Broad Architecture Concepts", diff.get("preserved_broad_concepts", []), limit=20
+    )
 
     lines.extend(["", "## Recommended Next Actions", ""])
     for action in diff.get("recommended_next_actions", []):

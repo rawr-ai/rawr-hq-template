@@ -89,6 +89,38 @@ class EvidenceIndexTests(WorkbenchTestCase):
         self.assertTrue(validate_artifact_schema(index, "sweep-evidence-index"))
         self.assertEqual("generated_row_promotable", validate_evidence_authority_boundary(index)[0]["kind"])
         index = synthetic_evidence_index()
+        index["claims"] = [
+            {
+                "index_id": "docs/proposal.md#claim-promotable",
+                "claim_id": "claim-promotable",
+                "source_path": "docs/proposal.md",
+                "document_path": "docs/proposal.md",
+                "sweep_document_path": "docs/proposal.md",
+                "line_start": 10,
+                "line_end": 10,
+                "char_start": 0,
+                "char_end": 42,
+                "char_span_kind": "line-offset",
+                "heading_path": ["Proposal"],
+                "text": "Introduce an architecture proposal graph.",
+                "source_span": {
+                    "source_path": "docs/proposal.md",
+                    "line_start": 10,
+                    "line_end": 10,
+                    "char_start": 0,
+                    "char_end": 42,
+                    "char_span_kind": "line-offset",
+                    "heading_path": ["Proposal"],
+                    "text": "Introduce an architecture proposal graph.",
+                },
+                "confidence": 0.8,
+                "review_state": "evidence-only",
+                "promotion_allowed": True,
+            }
+        ]
+        self.assertTrue(validate_artifact_schema(index, "sweep-evidence-index"))
+        self.assertEqual("generated_row_promotable", validate_evidence_authority_boundary(index)[0]["kind"])
+        index = synthetic_evidence_index()
         index["findings"][0]["claim_index_id"] = None
         index["findings"][0]["char_start"] = None
         index["findings"][0]["char_end"] = None

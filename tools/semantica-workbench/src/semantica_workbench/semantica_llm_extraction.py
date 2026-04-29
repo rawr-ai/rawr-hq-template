@@ -97,7 +97,9 @@ def semantica_llm_extraction(
     block_results: list[tuple[SourceBlock, list[Any], list[Any]]] = []
     try:
         for block in source_blocks(text):
-            entities, triplets = call_semantica_llm_methods(block.text, provider=provider, model=model, max_text_length=max_text_length)
+            entities, triplets = call_semantica_llm_methods(
+                block.text, provider=provider, model=model, max_text_length=max_text_length
+            )
             block_results.append((block, entities, triplets))
         status["llm_call_attempted"] = True
     except Exception as exc:
@@ -107,15 +109,30 @@ def semantica_llm_extraction(
         status["llm_call_attempted"] = True
         status["error"] = str(exc)
         diagnostics.append({"kind": "semantica_llm_call_failed", "error": str(exc)})
-        return llm_result(document, status, raw_entities=[], raw_triplets=[], evidence_claims=[], diagnostics=diagnostics)
+        return llm_result(
+            document, status, raw_entities=[], raw_triplets=[], evidence_claims=[], diagnostics=diagnostics
+        )
 
-    raw_entities = [entity_to_dict(entity, block) for block, entities, _triplets in block_results for entity in entities]
-    raw_triplets = [triplet_to_dict(triplet, block) for block, _entities, triplets in block_results for triplet in triplets]
+    raw_entities = [
+        entity_to_dict(entity, block) for block, entities, _triplets in block_results for entity in entities
+    ]
+    raw_triplets = [
+        triplet_to_dict(triplet, block) for block, _entities, triplets in block_results for triplet in triplets
+    ]
     claims = llm_evidence_claims(document, block_results, provider=provider, model=model, diagnostics=diagnostics)
-    return llm_result(document, status, raw_entities=raw_entities, raw_triplets=raw_triplets, evidence_claims=claims, diagnostics=diagnostics)
+    return llm_result(
+        document,
+        status,
+        raw_entities=raw_entities,
+        raw_triplets=raw_triplets,
+        evidence_claims=claims,
+        diagnostics=diagnostics,
+    )
 
 
-def call_semantica_llm_methods(text: str, *, provider: str, model: str | None, max_text_length: int | None) -> tuple[list[Any], list[Any]]:
+def call_semantica_llm_methods(
+    text: str, *, provider: str, model: str | None, max_text_length: int | None
+) -> tuple[list[Any], list[Any]]:
     from semantica.semantic_extract.methods import extract_entities_llm, extract_triplets_llm
 
     entities = extract_entities_llm(
@@ -171,7 +188,16 @@ def llm_evidence_claims(
             quote = triplet_source_quote(triplet) or subject or obj
             anchored = translate_block_span(block, anchor_quote_to_source(block.text, quote))
             if anchored is None:
-                diagnostics.append({"kind": "span-unresolved", "item": "triplet", "block": block.index, "subject": subject, "predicate": predicate, "object": obj})
+                diagnostics.append(
+                    {
+                        "kind": "span-unresolved",
+                        "item": "triplet",
+                        "block": block.index,
+                        "subject": subject,
+                        "predicate": predicate,
+                        "object": obj,
+                    }
+                )
                 continue
             claims.append(
                 llm_claim(
@@ -195,9 +221,16 @@ def llm_evidence_claims(
             end_value = getattr(entity, "end_char", None)
             start_char = int(start_value) if start_value is not None else -1
             end_char = int(end_value) if end_value is not None else -1
-            anchored = translate_block_span(block, span_from_offsets(block.text, start_char, end_char) if start_char >= 0 and end_char >= start_char else anchor_quote_to_source(block.text, entity_text))
+            anchored = translate_block_span(
+                block,
+                span_from_offsets(block.text, start_char, end_char)
+                if start_char >= 0 and end_char >= start_char
+                else anchor_quote_to_source(block.text, entity_text),
+            )
             if anchored is None:
-                diagnostics.append({"kind": "span-unresolved", "item": "entity", "block": block.index, "text": entity_text})
+                diagnostics.append(
+                    {"kind": "span-unresolved", "item": "entity", "block": block.index, "text": entity_text}
+                )
                 continue
             claims.append(
                 llm_claim(

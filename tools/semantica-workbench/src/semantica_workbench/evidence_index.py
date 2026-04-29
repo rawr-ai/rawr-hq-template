@@ -134,7 +134,9 @@ def build_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
 
     summary = {
         "documents_indexed": sum(1 for document in documents if document.get("index_status") == "indexed"),
-        "documents_with_missing_artifacts": sum(1 for document in documents if document.get("index_status") != "indexed"),
+        "documents_with_missing_artifacts": sum(
+            1 for document in documents if document.get("index_status") != "indexed"
+        ),
         "claim_count": len(claims),
         "finding_count": len(findings),
         "decision_grade_finding_count": decision_grade,
@@ -178,7 +180,9 @@ def build_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
         "provenance": {
             "generated_by": "semantica-workbench evidence_index.build_sweep_evidence_index",
             "authority_model": "Generated sweep evidence is review evidence only; reviewed RAWR ontology sources remain authoritative.",
-            "source_artifacts": [display_path(semantic_compare_path(run_dir, record)) for record in sweep.get("documents", [])],
+            "source_artifacts": [
+                display_path(semantic_compare_path(run_dir, record)) for record in sweep.get("documents", [])
+            ],
         },
     }
 
@@ -192,7 +196,9 @@ def write_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
     write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_summary"], evidence_index_summary(index))
     write_jsonl(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_jsonl"], evidence_index_jsonl_rows(index))
     write_sweep_evidence_index_html(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_html"], index)
-    (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_ttl"]).write_text(evidence_index_turtle(index), encoding="utf-8")
+    (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_ttl"]).write_text(
+        evidence_index_turtle(index), encoding="utf-8"
+    )
     write_evidence_agent_manifest(run_dir, index)
     return index
 
@@ -247,7 +253,7 @@ def evidence_index_turtle(index: dict[str, Any]) -> str:
     lines.append(f"  rawr:documentsIndexed {turtle_literal(str(summary.get('documents_indexed', 0)))} ;")
     lines.append(f"  rawr:claimCount {turtle_literal(str(summary.get('claim_count', 0)))} ;")
     lines.append(f"  rawr:findingCount {turtle_literal(str(summary.get('finding_count', 0)))} ;")
-    lines.append("  rawr:generatedEvidenceIsTruth \"false\" .")
+    lines.append('  rawr:generatedEvidenceIsTruth "false" .')
     lines.append("")
 
     document_nodes: dict[str, str] = {}
@@ -279,7 +285,7 @@ def evidence_index_turtle(index: dict[str, Any]) -> str:
         lines.append(f"  rawr:charEnd {turtle_literal(str(claim.get('char_end') or ''))} ;")
         lines.append(f"  rawr:resolutionState {turtle_literal(str(claim.get('resolution_state') or ''))} ;")
         lines.append(f"  rawr:reviewState {turtle_literal(str(claim.get('review_state') or ''))} ;")
-        lines.append("  rawr:promotionAllowed \"false\" .")
+        lines.append('  rawr:promotionAllowed "false" .')
         lines.append("")
 
     for finding in index.get("findings", []):
@@ -306,7 +312,7 @@ def evidence_index_turtle(index: dict[str, Any]) -> str:
             lines.append(f"  rawr:ambiguityBucket {turtle_literal(str(finding['ambiguity_bucket']))} ;")
         if finding.get("review_action"):
             lines.append(f"  rawr:reviewAction {turtle_literal(str(finding['review_action']))} ;")
-        lines.append("  rawr:promotionAllowed \"false\" .")
+        lines.append('  rawr:promotionAllowed "false" .')
         lines.append("")
     return "\n".join(lines)
 
@@ -343,7 +349,9 @@ def document_index_row(record: dict[str, Any], semantic_path: Path) -> dict[str,
     }
 
 
-def claim_index_row(sweep: dict[str, Any], record: dict[str, Any], semantic_path: Path, claim: dict[str, Any]) -> dict[str, Any]:
+def claim_index_row(
+    sweep: dict[str, Any], record: dict[str, Any], semantic_path: Path, claim: dict[str, Any]
+) -> dict[str, Any]:
     document_path = claim.get("source_path") or record.get("document_path")
     claim_id = str(claim.get("id") or "")
     span = source_span_from_claim(claim, record)
@@ -393,7 +401,9 @@ def finding_index_row(
     document_path = finding.get("document_path") or record.get("document_path")
     finding_id = str(finding.get("id") or "")
     claim_id = str(finding.get("claim_id") or "")
-    claim_index_id = claim_row.get("index_id") if claim_row else scoped_id(document_path, claim_id) if claim_id else None
+    claim_index_id = (
+        claim_row.get("index_id") if claim_row else scoped_id(document_path, claim_id) if claim_id else None
+    )
     span = source_span_from_finding(finding, record, claim_row)
     return {
         "index_id": scoped_id(document_path, finding_id),

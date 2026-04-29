@@ -20,7 +20,9 @@ REQUIRED_REVIEW_RESOURCES = {
 }
 
 
-def semantica_review_surface_probe(run_dir: Path, graph: dict[str, Any], candidate_queue: dict[str, Any]) -> dict[str, Any]:
+def semantica_review_surface_probe(
+    run_dir: Path, graph: dict[str, Any], candidate_queue: dict[str, Any]
+) -> dict[str, Any]:
     semantic_path = run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]
     semantic_exists = semantic_path.exists()
     semantic = read_json(semantic_path) if semantic_exists else {}
@@ -53,7 +55,9 @@ def semantica_review_surface_probe(run_dir: Path, graph: dict[str, Any], candida
             "semantic_compare_artifact_present": semantic_exists,
             "semantic_compare_status": "present" if semantic_exists else "missing-run-doc-compare-first",
             "finding_count": len(semantic.get("findings", [])) if semantic_exists else None,
-            "decision_grade_finding_count": semantic.get("summary", {}).get("decision_grade_finding_count") if semantic_exists else None,
+            "decision_grade_finding_count": semantic.get("summary", {}).get("decision_grade_finding_count")
+            if semantic_exists
+            else None,
             "target_view_excludes_candidates": target_view_excludes_candidates(graph, candidate_queue),
             "evidence_is_not_target_truth": True,
         },
@@ -114,7 +118,9 @@ def export_inventory(run_dir: Path, semantica_export: dict[str, Any]) -> dict[st
         "graphml": (run_dir / CORE_GRAPH_FILENAMES["graphml"]).exists(),
         "semantic_evidence_ttl": (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).exists(),
     }
-    preservation_validated = bool(local_outputs["semantica_export_json"] and (local_outputs["data_graph_ttl"] or local_outputs["graphml"]))
+    preservation_validated = bool(
+        local_outputs["semantica_export_json"] and (local_outputs["data_graph_ttl"] or local_outputs["graphml"])
+    )
     return {
         "available": available,
         "error": error,
@@ -125,7 +131,9 @@ def export_inventory(run_dir: Path, semantica_export: dict[str, Any]) -> dict[st
             "source_lineage_required": True,
             "candidate_separation_required": True,
             "preservation_validated": preservation_validated,
-            "validation_status": "validated-from-local-outputs" if preservation_validated else "not-validated-run-core-export-first",
+            "validation_status": "validated-from-local-outputs"
+            if preservation_validated
+            else "not-validated-run-core-export-first",
         },
     }
 
@@ -169,6 +177,7 @@ def target_view_excludes_candidates(graph: dict[str, Any], candidate_queue: dict
     candidate_like_target_entities = [
         entity
         for entity in target_entities
-        if entity.get("status") in {"candidate", "tbd", "evidence-only"} or entity.get("type") in {"CandidateEntity", "EvidenceClaim", "ReviewFinding"}
+        if entity.get("status") in {"candidate", "tbd", "evidence-only"}
+        or entity.get("type") in {"CandidateEntity", "EvidenceClaim", "ReviewFinding"}
     ]
     return not bool(target_ids & candidate_ids) and not candidate_like_target_entities

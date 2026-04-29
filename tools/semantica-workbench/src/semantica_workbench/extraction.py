@@ -312,7 +312,9 @@ def resolve_entity_mentions(
 ) -> list[dict[str, Any]]:
     index = seed_index(seeds)
     mentions: dict[str, dict[str, Any]] = {}
-    candidate_names = {str(item.get("name") or "").strip(): item for item in candidate_entities if str(item.get("name") or "").strip()}
+    candidate_names = {
+        str(item.get("name") or "").strip(): item for item in candidate_entities if str(item.get("name") or "").strip()
+    }
     for claim in claims:
         names = set(claim.get("entity_names", []))
         names.update(CODE_RE.findall(claim["text"]))
@@ -384,12 +386,13 @@ def build_relations(
             for entity_id in ids:
                 mention = mention_by_id.get(entity_id, {})
                 mention_name = normalize_name(mention.get("name", ""))
-                is_forbidden_target = (
-                    mention.get("type") == "ForbiddenPattern"
-                    or (fragment and mention_name and mention_name in normalize_name(fragment))
+                is_forbidden_target = mention.get("type") == "ForbiddenPattern" or (
+                    fragment and mention_name and mention_name in normalize_name(fragment)
                 )
                 if authority and entity_id != authority and is_forbidden_target:
-                    add_relation(relations, authority, "forbids", entity_id, claim, chunk, confidence=claim["confidence"])
+                    add_relation(
+                        relations, authority, "forbids", entity_id, claim, chunk, confidence=claim["confidence"]
+                    )
 
         if claim["claim_type"] == "ownership" or " owns " in lower or " own " in lower:
             predicate = "does_not_own" if "does not own" in lower or "do not own" in lower else "owns"
@@ -398,7 +401,15 @@ def build_relations(
 
         lifecycle_ids = [
             seed_value_id(name_to_id.get(phase))
-            for phase in ["definition", "selection", "derivation", "compilation", "provisioning", "mounting", "observation"]
+            for phase in [
+                "definition",
+                "selection",
+                "derivation",
+                "compilation",
+                "provisioning",
+                "mounting",
+                "observation",
+            ]
         ]
         lifecycle_ids = [entity_id for entity_id in lifecycle_ids if entity_id]
         if claim["claim_type"] == "lifecycle" or "definition -> selection" in lower:
@@ -450,7 +461,9 @@ def add_relation(
     }
 
 
-def extract_chunk(chunk: Chunk, prompts: dict[str, str], mode: str, model: str, seeds: dict[str, Any]) -> dict[str, Any]:
+def extract_chunk(
+    chunk: Chunk, prompts: dict[str, str], mode: str, model: str, seeds: dict[str, Any]
+) -> dict[str, Any]:
     if mode == "heuristic":
         return heuristic_extract(chunk, seeds)
     if mode == "llm":

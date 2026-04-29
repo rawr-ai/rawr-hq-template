@@ -93,7 +93,11 @@ def export_core_ontology(run: str | None = "latest") -> Path:
     graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     export_result = export_semantica_ontology(graph["entities"], graph["relations"], run_dir)
     write_json(run_dir / CORE_GRAPH_FILENAMES["semantica_export"], export_result)
-    write_graphml(run_dir / CORE_GRAPH_FILENAMES["graphml"], graph["canonical_view"]["entities"], graph["canonical_view"]["relations"])
+    write_graphml(
+        run_dir / CORE_GRAPH_FILENAMES["graphml"],
+        graph["canonical_view"]["entities"],
+        graph["canonical_view"]["relations"],
+    )
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
 
@@ -106,7 +110,13 @@ def visualize_core_ontology(run: str | None = "latest") -> Path:
     semantic_compare_path = run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]
     doc_sweep_path = run_dir / CORE_GRAPH_FILENAMES["doc_sweep"]
     candidate_queue = read_json(candidate_queue_path) if candidate_queue_path.exists() else {}
-    diff = read_json(semantic_compare_path) if semantic_compare_path.exists() else read_json(document_diff_path) if document_diff_path.exists() else {}
+    diff = (
+        read_json(semantic_compare_path)
+        if semantic_compare_path.exists()
+        else read_json(document_diff_path)
+        if document_diff_path.exists()
+        else {}
+    )
     if doc_sweep_path.exists():
         diff = {**diff, "sweep": read_json(doc_sweep_path)}
     write_html_viewer(run_dir / CORE_GRAPH_FILENAMES["viewer"], graph, candidate_queue, diff)
@@ -184,7 +194,10 @@ def extract_document_evidence(
 
     write_jsonl(run_dir / CORE_GRAPH_FILENAMES["document_chunks"], chunks)
     write_jsonl(run_dir / CORE_GRAPH_FILENAMES["evidence_claims"], evidence["claims"])
-    write_json(run_dir / CORE_GRAPH_FILENAMES["suppressed_lines"], {"document": evidence["document"], "items": evidence.get("suppressed_lines", [])})
+    write_json(
+        run_dir / CORE_GRAPH_FILENAMES["suppressed_lines"],
+        {"document": evidence["document"], "items": evidence.get("suppressed_lines", [])},
+    )
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
 
@@ -212,11 +225,18 @@ def compare_document_evidence(
     candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
     evidence = read_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"])
     compare = compare_evidence_to_ontology(evidence, graph, candidate_queue)
-    write_json(run_dir / CORE_GRAPH_FILENAMES["resolved_evidence"], {"claims": compare["claims"], "findings": compare["findings"]})
+    write_json(
+        run_dir / CORE_GRAPH_FILENAMES["resolved_evidence"],
+        {"claims": compare["claims"], "findings": compare["findings"]},
+    )
     write_json(run_dir / CORE_GRAPH_FILENAMES["semantic_compare"], compare)
-    (run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(render_semantic_compare_report(compare), encoding="utf-8")
+    (run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(
+        render_semantic_compare_report(compare), encoding="utf-8"
+    )
     write_semantic_compare_report_html(run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report_html"], compare)
-    (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(semantic_compare_turtle(compare), encoding="utf-8")
+    (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(
+        semantic_compare_turtle(compare), encoding="utf-8"
+    )
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir
 
@@ -303,9 +323,15 @@ def write_architecture_proposal_package(
     )
     write_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"], package["evidence"])
     write_json(run_dir / CORE_GRAPH_FILENAMES["semantic_compare"], package["semantic_compare"])
-    (run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(render_semantic_compare_report(package["semantic_compare"]), encoding="utf-8")
-    write_semantic_compare_report_html(run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report_html"], package["semantic_compare"])
-    (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(semantic_compare_turtle(package["semantic_compare"]), encoding="utf-8")
+    (run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(
+        render_semantic_compare_report(package["semantic_compare"]), encoding="utf-8"
+    )
+    write_semantic_compare_report_html(
+        run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report_html"], package["semantic_compare"]
+    )
+    (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(
+        semantic_compare_turtle(package["semantic_compare"]), encoding="utf-8"
+    )
     write_json(run_dir / CORE_GRAPH_FILENAMES["architecture_change_frame"], package["frame"])
     write_json(run_dir / CORE_GRAPH_FILENAMES["architecture_change_frame_validation"], package["validation"])
     write_json(run_dir / CORE_GRAPH_FILENAMES["noun_mappings"], package["noun_mappings"])
@@ -342,7 +368,9 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
     relations = ontology["relations"]
     entity_ids: dict[str, dict[str, Any]] = {}
     source_refs: list[dict[str, Any]] = []
-    candidate_queue_ids = {item.get("id") for item in ontology["candidate_queue"].get("candidates", []) if item.get("id")}
+    candidate_queue_ids = {
+        item.get("id") for item in ontology["candidate_queue"].get("candidates", []) if item.get("id")
+    }
     exclusion_ids = {item.get("id") for item in ontology["candidate_queue"].get("exclusions", []) if item.get("id")}
 
     for layer in ontology["layers"]:
@@ -351,10 +379,24 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
             errors.append({"kind": "unknown_layer_file", "layer": declared_layer, "layer_id": layer.get("id")})
         for entity in layer.get("entities", []):
             if entity.get("layer") != declared_layer:
-                errors.append({"kind": "entity_layer_mismatch", "id": entity.get("id"), "layer": entity.get("layer"), "file_layer": declared_layer})
+                errors.append(
+                    {
+                        "kind": "entity_layer_mismatch",
+                        "id": entity.get("id"),
+                        "layer": entity.get("layer"),
+                        "file_layer": declared_layer,
+                    }
+                )
         for relation in layer.get("relations", []):
             if relation.get("layer") != declared_layer:
-                errors.append({"kind": "relation_layer_mismatch", "id": relation.get("id"), "layer": relation.get("layer"), "file_layer": declared_layer})
+                errors.append(
+                    {
+                        "kind": "relation_layer_mismatch",
+                        "id": relation.get("id"),
+                        "layer": relation.get("layer"),
+                        "file_layer": declared_layer,
+                    }
+                )
 
     for entity in entities:
         entity_id = entity.get("id")
@@ -380,7 +422,11 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
             errors.append({"kind": "authority_document_wrong_layer", "id": entity_id, "layer": entity.get("layer")})
         if entity.get("type") == "ForbiddenPattern":
             constraint = entity.get("constraint")
-            if not isinstance(constraint, dict) or not constraint.get("kind") or not constraint.get("prohibited_action"):
+            if (
+                not isinstance(constraint, dict)
+                or not constraint.get("kind")
+                or not constraint.get("prohibited_action")
+            ):
                 errors.append({"kind": "forbidden_pattern_missing_structured_constraint", "id": entity_id})
             elif not (constraint.get("terms") or constraint.get("semantic_keys")):
                 errors.append({"kind": "forbidden_pattern_missing_constraint_terms", "id": entity_id})
@@ -393,7 +439,9 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
         if classifier_readiness:
             readiness_status = classifier_readiness.get("status")
             if readiness_status not in allowed_statuses:
-                errors.append({"kind": "unknown_classifier_readiness_status", "id": entity_id, "status": readiness_status})
+                errors.append(
+                    {"kind": "unknown_classifier_readiness_status", "id": entity_id, "status": readiness_status}
+                )
         source_refs.extend(
             validate_source_refs(
                 refs,
@@ -423,7 +471,9 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
         subject = entity_ids.get(relation.get("subject"))
         object_ = entity_ids.get(relation.get("object"))
         if subject is None:
-            errors.append({"kind": "unresolved_relation_subject", "id": relation_id, "subject": relation.get("subject")})
+            errors.append(
+                {"kind": "unresolved_relation_subject", "id": relation_id, "subject": relation.get("subject")}
+            )
         if object_ is None:
             errors.append({"kind": "unresolved_relation_object", "id": relation_id, "object": relation.get("object")})
         if relation.get("status") in canonical_statuses:
@@ -507,8 +557,7 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
     canonical_entities = [
         entity
         for entity in entities
-        if entity.get("status") in canonical_statuses
-        and entity.get("type") not in canonical_excluded_types
+        if entity.get("status") in canonical_statuses and entity.get("type") not in canonical_excluded_types
     ]
     canonical_entity_ids = {entity["id"] for entity in canonical_entities}
     canonical_relations = [
@@ -519,9 +568,7 @@ def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
         and relation.get("object") in canonical_entity_ids
     ]
     leaked = [
-        item["id"]
-        for item in canonical_entities + canonical_relations
-        if item.get("status") in candidate_statuses
+        item["id"] for item in canonical_entities + canonical_relations if item.get("status") in candidate_statuses
     ]
     if leaked:
         errors.append({"kind": "candidate_status_in_canonical_view", "ids": leaked})
@@ -552,7 +599,9 @@ def predicate_tokens(value: str) -> list[str]:
     return [token.strip() for token in str(value).split("|") if token.strip()]
 
 
-def validate_contract_shape(contract: dict[str, Any], errors: list[dict[str, Any]], warnings: list[dict[str, Any]]) -> None:
+def validate_contract_shape(
+    contract: dict[str, Any], errors: list[dict[str, Any]], warnings: list[dict[str, Any]]
+) -> None:
     allowed_types = {item["id"] for item in contract.get("entity_types", [])}
     allowed_layers = {item["id"] for item in contract.get("layers", [])}
     allowed_statuses = {item["id"] for item in contract.get("statuses", [])}
@@ -574,7 +623,13 @@ def validate_contract_shape(contract: dict[str, Any], errors: list[dict[str, Any
             errors.append({"kind": "contract_unknown_candidate_status", "status": status})
     for entity_type in contract.get("entity_types", []):
         if entity_type.get("layer") not in allowed_layers:
-            errors.append({"kind": "contract_unknown_entity_type_layer", "id": entity_type.get("id"), "layer": entity_type.get("layer")})
+            errors.append(
+                {
+                    "kind": "contract_unknown_entity_type_layer",
+                    "id": entity_type.get("id"),
+                    "layer": entity_type.get("layer"),
+                }
+            )
     for predicate in contract.get("predicates", []):
         predicate_id = predicate.get("id")
         predicate_ids.add(str(predicate_id))
@@ -614,7 +669,10 @@ def walk_values(value: Any, prefix: str = "$") -> list[tuple[str, Any]]:
 
 
 def validate_relation_signature(
-    relation: dict[str, Any], entities_by_id: dict[str, dict[str, Any]], predicates: list[dict[str, Any]], errors: list[dict[str, Any]]
+    relation: dict[str, Any],
+    entities_by_id: dict[str, dict[str, Any]],
+    predicates: list[dict[str, Any]],
+    errors: list[dict[str, Any]],
 ) -> None:
     predicate = next((item for item in predicates if item["id"] == relation.get("predicate")), None)
     if predicate is None:
@@ -663,7 +721,9 @@ def validate_source_refs(
         return resolved_refs
     for ref in refs or []:
         if not isinstance(ref, dict):
-            errors.append({"kind": "source_ref_not_mapping", "owner_kind": owner_kind, "owner_id": owner_id, "ref": ref})
+            errors.append(
+                {"kind": "source_ref_not_mapping", "owner_kind": owner_kind, "owner_id": owner_id, "ref": ref}
+            )
             continue
         enriched = resolve_source_ref(ref)
         enriched.update({"owner_kind": owner_kind, "owner_id": owner_id})
@@ -671,15 +731,32 @@ def validate_source_refs(
         if not path_value:
             errors.append({"kind": "source_ref_missing_path", "owner_kind": owner_kind, "owner_id": owner_id})
         elif Path(path_value).is_absolute():
-            issue = {"kind": "source_ref_not_repo_relative", "owner_kind": owner_kind, "owner_id": owner_id, "path": path_value}
+            issue = {
+                "kind": "source_ref_not_repo_relative",
+                "owner_kind": owner_kind,
+                "owner_id": owner_id,
+                "path": path_value,
+            }
             if strict:
                 errors.append(issue)
             else:
                 warnings.append(issue)
         if strict and not ref.get("section"):
-            errors.append({"kind": "locked_source_ref_missing_section", "owner_kind": owner_kind, "owner_id": owner_id, "path": path_value})
+            errors.append(
+                {
+                    "kind": "locked_source_ref_missing_section",
+                    "owner_kind": owner_kind,
+                    "owner_id": owner_id,
+                    "path": path_value,
+                }
+            )
         if not enriched["exists"]:
-            issue = {"kind": "source_ref_missing_file", "owner_kind": owner_kind, "owner_id": owner_id, "path": ref.get("path")}
+            issue = {
+                "kind": "source_ref_missing_file",
+                "owner_kind": owner_kind,
+                "owner_id": owner_id,
+                "path": ref.get("path"),
+            }
             if strict:
                 errors.append(issue)
             else:
@@ -761,8 +838,7 @@ def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) ->
     canonical_entities = [
         entity
         for entity in entities
-        if entity["status"] in canonical_statuses
-        and entity.get("type") not in canonical_excluded_types
+        if entity["status"] in canonical_statuses and entity.get("type") not in canonical_excluded_types
     ]
     canonical_entity_ids = {entity["id"] for entity in canonical_entities}
     canonical_relations = [
@@ -775,8 +851,7 @@ def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) ->
     target_entities = [
         entity
         for entity in entities
-        if entity["status"] in target_statuses
-        and entity.get("type") not in target_excluded_types
+        if entity["status"] in target_statuses and entity.get("type") not in target_excluded_types
     ]
     target_entity_ids = {entity["id"] for entity in target_entities}
     target_relations = [
@@ -802,7 +877,9 @@ def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) ->
     }
     candidate_queue = {
         **ontology["candidate_queue"],
-        "candidates": [enrich_candidate_source_refs(item) for item in ontology["candidate_queue"].get("candidates", [])],
+        "candidates": [
+            enrich_candidate_source_refs(item) for item in ontology["candidate_queue"].get("candidates", [])
+        ],
         "exclusions": [enrich_item_source_refs(item) for item in ontology["candidate_queue"].get("exclusions", [])],
     }
     return {
@@ -840,7 +917,11 @@ def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) ->
             },
             "vocabulary_overlay": {
                 "entities": sorted(
-                    [entity for entity in entities if entity.get("type") == "DeprecatedTerm" or entity.get("status") == "deprecated"],
+                    [
+                        entity
+                        for entity in entities
+                        if entity.get("type") == "DeprecatedTerm" or entity.get("status") == "deprecated"
+                    ],
                     key=lambda item: item["id"],
                 ),
                 "relations": sorted(
@@ -878,7 +959,9 @@ def enrich_item_source_refs(item: dict[str, Any]) -> dict[str, Any]:
 def enrich_candidate_source_refs(item: dict[str, Any]) -> dict[str, Any]:
     enriched = deepcopy(item)
     if "source_span_suggests_it" in enriched:
-        enriched["source_span_suggests_it"] = [resolve_source_ref(ref) for ref in enriched.get("source_span_suggests_it", [])]
+        enriched["source_span_suggests_it"] = [
+            resolve_source_ref(ref) for ref in enriched.get("source_span_suggests_it", [])
+        ]
     return enriched
 
 
@@ -995,24 +1078,52 @@ def build_document_diff(document: Path, graph: dict[str, Any], candidate_queue: 
             if term_in_line(term, normalized):
                 matched_entities.append(entity)
         for entity in unique_by_id(matched_entities):
-            finding = document_finding("aligned", document, number, line, entity_id=entity["id"], label=entity.get("label", entity["id"]))
+            finding = document_finding(
+                "aligned", document, number, line, entity_id=entity["id"], label=entity.get("label", entity["id"])
+            )
             aligned.append(finding)
             if entity.get("type") == "ValidationGate":
                 mentioned_gate_ids.add(entity["id"])
         for entity in forbidden_terms:
             for term in entity_terms(entity):
                 if term_in_line(term, normalized):
-                    stale.append(document_finding("stale", document, number, line, entity_id=entity["id"], label=entity.get("label", entity["id"])))
+                    stale.append(
+                        document_finding(
+                            "stale",
+                            document,
+                            number,
+                            line,
+                            entity_id=entity["id"],
+                            label=entity.get("label", entity["id"]),
+                        )
+                    )
                     break
         for term, candidate in candidate_index.items():
             if term_in_line(term, normalized):
-                candidate_new.append(document_finding("candidate-new", document, number, line, entity_id=candidate["id"], label=candidate.get("label", candidate["id"])))
+                candidate_new.append(
+                    document_finding(
+                        "candidate-new",
+                        document,
+                        number,
+                        line,
+                        entity_id=candidate["id"],
+                        label=candidate.get("label", candidate["id"]),
+                    )
+                )
         if (
             re.search(r"\b(MUST|must|SHOULD|should|canonical|invariant|prove|proof|gate|ratchet)\b", line)
             and not matched_entities
             and not is_generic_normative_scaffold(line)
         ):
-            review_needed.append(document_finding("review-needed", document, number, line, reason="normative testing claim did not resolve to ontology entity"))
+            review_needed.append(
+                document_finding(
+                    "review-needed",
+                    document,
+                    number,
+                    line,
+                    reason="normative testing claim did not resolve to ontology entity",
+                )
+            )
 
     underrepresented_gates = [
         {
@@ -1125,11 +1236,17 @@ def render_document_diff_report(diff: dict[str, Any]) -> str:
         "",
     ]
     if summary["stale_count"]:
-        lines.append("The testing plan has stale or forbidden target-language findings that should be reviewed before Phase 5.")
+        lines.append(
+            "The testing plan has stale or forbidden target-language findings that should be reviewed before Phase 5."
+        )
     elif summary["underrepresented_gate_count"]:
-        lines.append("The testing plan aligns with core ontology language, but several validation gates are underrepresented and should be reviewed before migration planning.")
+        lines.append(
+            "The testing plan aligns with core ontology language, but several validation gates are underrepresented and should be reviewed before migration planning."
+        )
     else:
-        lines.append("The testing plan is aligned enough for this verification pass; no immediate ontology-driven edits are required.")
+        lines.append(
+            "The testing plan is aligned enough for this verification pass; no immediate ontology-driven edits are required."
+        )
     append_findings(lines, "Stale Or Forbidden Findings", diff["stale"], limit=25)
     append_findings(lines, "Candidate-New Findings", diff["candidate_new"], limit=25)
     append_findings(lines, "Review-Needed Normative Claims", diff["review_needed"], limit=25)
@@ -1153,7 +1270,9 @@ def append_findings(lines: list[str], title: str, findings: list[dict[str, Any]]
         text = finding.get("text", "")
         lines.append(f"- `{finding['document_path']}:{finding['line_start']}` `{entity}` - {text}")
     if len(findings) > limit:
-        lines.append(f"- ... {len(findings) - limit} more omitted from this summary; see `document-diff.json` in the run output.")
+        lines.append(
+            f"- ... {len(findings) - limit} more omitted from this summary; see `document-diff.json` in the run output."
+        )
 
 
 def normalize_text(value: str) -> str:
