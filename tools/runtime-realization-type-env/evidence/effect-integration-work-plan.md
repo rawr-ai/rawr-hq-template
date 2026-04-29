@@ -1,5 +1,10 @@
 # Effect Integration TODO Lab Work Plan
 
+Historical note: this file is the completed TODO-only pass that preceded Lab V2.
+Lab V2 supersedes the dependency rule below by installing `effect@3.21.2` as a
+root dev dependency and proving narrow vendor/runtime behavior in dedicated
+gates.
+
 This is the progress anchor for the Effect-native TODO/xfail extension. If the session compacts, resume from the first unchecked item below.
 
 ## Goal

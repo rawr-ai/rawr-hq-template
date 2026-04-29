@@ -4,13 +4,21 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `review.effect-native-integration-todo-coverage`
-- Focus: make remaining Effect-native integration categories visible as fenced TODO/xfail evidence without turning the lab into the runtime substrate.
+- ID: `lab-v2.effect-native-runtime-proof`
+- Focus: use real `effect@3.21.2` and a miniature process runtime to separate proven vendor/runtime behavior from still-open runtime-spine experiments.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
   - `audit.p1.effect-managed-runtime-substrate`
   - `audit.p1.process-local-coordination-resources`
+  - `vendor.effect.runtime-substrate`
+  - `vendor.effect.process-local-coordination`
+  - `vendor.boundary.typebox-runtime-schema`
+  - `vendor.boundary.orpc-native-shape`
+  - `vendor.boundary.inngest-handoff-shape`
+  - `simulation.mini-runtime-registry-invocation`
+  - `simulation.adapter-callback-delegation`
+  - `simulation.deployment-handoff`
   - `audit.p1.provider-effect-plan-shape`
   - `audit.p1.provider-effect-plan-lowering`
   - `audit.p1.effect-boundary-policy-matrix`
@@ -21,7 +29,9 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Status Meanings
 
-- `proof`: checked by the current type, negative, structural, or simulation gate.
+- `proof`: checked by the current type, negative, structural, or report gate.
+- `vendor-proof`: checked against installed vendor package behavior or types.
+- `simulation-proof`: checked by the miniature runtime or compatibility simulation.
 - `xfail`: architecture gap is known and intentionally fenced. It is not automatically a TypeScript failure.
 - `todo`: planning input or future fixture not yet part of the gate.
 - `out-of-scope`: relevant to migration safety, but not a type-spine proof.
