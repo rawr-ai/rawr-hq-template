@@ -1,34 +1,51 @@
 from __future__ import annotations
 
 import hashlib
-import importlib
-import importlib.metadata
 import json
 import re
 from collections import Counter, defaultdict
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 from .io import rel
 from .paths import REPO_ROOT, WORKBENCH_ROOT
-from .semantica_adapter import iri_fragment, semantica_status, turtle_literal
+from .semantica_adapter import iri_fragment, turtle_literal
+from .semantic_capability import (
+    capability_feature_gates as capability_feature_gates,
+    capability_replacement_matrix as capability_replacement_matrix,
+    render_semantica_capability_report as render_semantica_capability_report,
+    semantic_capability_probe as semantic_capability_probe,
+)
 from .source_model import stripped_line_span
 from .text_normalization import normalize_match_text, normalize_text, term_in_normalized_text
 
 POLARITIES = ["positive", "negative", "prohibitive", "conditional", "unknown"]
 MODALITIES = ["normative", "descriptive", "proposed", "rejected", "historical", "illustrative", "unknown"]
 ASSERTION_SCOPES = ["target-architecture", "current-state", "migration-note", "example", "outside-scope", "unknown"]
-FINDING_KINDS = ["aligned", "conflict", "deprecated-use", "candidate-new", "ambiguous", "outside-scope", "informational"]
+FINDING_KINDS = [
+    "aligned",
+    "conflict",
+    "deprecated-use",
+    "candidate-new",
+    "ambiguous",
+    "outside-scope",
+    "informational",
+]
 MATCH_BUCKETS = ["prohibited_patterns", "deprecated_terms", "verification_policy", "canonical", "candidates"]
 
 FIXTURE_DOCUMENT = WORKBENCH_ROOT / "fixtures/docs/semantic-evidence-cases.md"
 FIXTURE_EXPECTED = WORKBENCH_ROOT / "fixtures/semantic-evidence-expected.json"
 
 NEGATIVE_RE = re.compile(r"\b(there is no|there are no|no\s+[a-z0-9_./` -]+|not\b|never\b|without\b)\b", re.I)
-PROHIBITIVE_RE = re.compile(r"\b(do not|must not|should not|must never|shall not|forbid|forbids|forbidden|invalid)\b", re.I)
-PROPOSED_RE = re.compile(r"\b(create|add|introduce|use|adopt|preserve|restore|target architecture should|should use|must use)\b", re.I)
-NORMATIVE_RE = re.compile(r"\b(must|should|shall|required|canonical|target architecture|valid|invalid|forbidden)\b", re.I)
+PROHIBITIVE_RE = re.compile(
+    r"\b(do not|must not|should not|must never|shall not|forbid|forbids|forbidden|invalid)\b", re.I
+)
+PROPOSED_RE = re.compile(
+    r"\b(create|add|introduce|use|adopt|preserve|restore|target architecture should|should use|must use)\b", re.I
+)
+NORMATIVE_RE = re.compile(
+    r"\b(must|should|shall|required|canonical|target architecture|valid|invalid|forbidden)\b", re.I
+)
 HISTORICAL_RE = re.compile(r"\b(old|legacy|previous|previously|historical|before|superseded|used to)\b", re.I)
 ILLUSTRATIVE_RE = re.compile(r"\b(example|for example|e\.g\.|sample)\b", re.I)
 REPLACEMENT_RE = re.compile(r"(->|\breplace[sd]?\b|\breplacement\b|\binstead\b|\buse .+ not .+)", re.I)
@@ -41,7 +58,9 @@ SCAFFOLD_LABEL_RE = re.compile(
     r"^(?:[-*]\s*)?(where|primary tests|must prove|must not prove|you must|you must not|caller planes|stagehand|root vitest suite|web-specific|proof-band / ratchet suites):$",
     re.I,
 )
-SCAFFOLD_PREFIX_RE = re.compile(r"^(?:[-*]\s*)?(where|primary tests|must prove|must not prove|you must|you must not):\s+", re.I)
+SCAFFOLD_PREFIX_RE = re.compile(
+    r"^(?:[-*]\s*)?(where|primary tests|must prove|must not prove|you must|you must not):\s+", re.I
+)
 STRUCTURAL_MARKER_RE = re.compile(r"^\s*(?:[-*]\s*)?(?:\|?\s*)?$")
 VERIFICATION_POLICY_RE = re.compile(
     r"\b(test|tests|testing|proof|ratchet|harness|runner|runners|lane|gating|gate|nightly|manual|stagehand|playwright|vitest|route-family|ingress|boundary|negative assertions?|merge|structural|e2e)\b",
@@ -51,374 +70,6 @@ VERIFICATION_POLICY_RE = re.compile(
 
 def fixture_document_path() -> Path:
     return FIXTURE_DOCUMENT
-
-
-@lru_cache(maxsize=1)
-def semantic_capability_probe() -> dict[str, Any]:
-    status = semantica_status()
-    modules = {
-        "semantic_extract": [
-            "NERExtractor",
-            "RelationExtractor",
-            "TripletExtractor",
-            "SemanticNetworkExtractor",
-            "LLMExtraction",
-            "CoreferenceResolver",
-            "EventDetector",
-            "ExtractionValidator",
-        ],
-        "ingest": ["FileIngestor", "RepoIngestor", "MCPIngestor", "OntologyIngestor"],
-        "parse": ["DocumentParser", "MarkdownParser", "DoclingParser", "CodeParser"],
-        "split": ["StructuralChunker", "SemanticChunker", "EntityAwareChunker", "RelationAwareChunker", "OntologyAwareChunker"],
-        "ontology": ["OntologyEngine", "OntologyValidator", "OntologyIngestor"],
-        "provenance": ["ProvenanceManager", "SourceReference", "SQLiteStorage", "InMemoryStorage"],
-        "kg": ["KnowledgeGraph", "GraphBuilder", "EntityResolver", "GraphAnalyzer"],
-        "conflicts": ["ConflictDetector", "ConflictResolver", "ConflictAnalyzer", "InvestigationGuideGenerator"],
-        "reasoning": ["Reasoner", "GraphReasoner", "DatalogReasoner", "ExplanationGenerator"],
-        "pipeline": ["Pipeline", "PipelineBuilder", "ExecutionEngine", "ParallelExecutor"],
-        "mcp_server": ["TOOLS", "RESOURCES", "CAPABILITIES", "SERVER_INFO"],
-        "explorer": ["main"],
-        "export": ["RDFExporter", "JSONExporter", "GraphExporter", "OWLExporter", "CSVExporter"],
-        "visualization": ["KGVisualizer", "OntologyVisualizer", "SemanticNetworkVisualizer", "AnalyticsVisualizer"],
-        "change_management": ["OntologyVersionManager", "ChangeLogEntry", "TemporalVersionManager"],
-        "normalize": ["EntityNormalizer", "AliasResolver", "DuplicateDetector", "EntityDisambiguator"],
-        "deduplication": ["DuplicateDetector", "EntityMerger", "ClusterBuilder"],
-        "vector_store": ["HybridSearch", "MetadataFilter", "DecisionEmbeddingPipeline"],
-        "graph_store": ["GraphStore", "GraphManager", "Neo4jStore", "FalkorDBStore"],
-        "triplet_store": ["TripletStore", "QueryEngine", "BulkLoader"],
-        "context": ["DecisionRecorder", "DecisionQuery", "CausalChainAnalyzer", "ContextGraph"],
-    }
-    optional_dependencies = {
-        "openai": ["semantica LLM extraction through OpenAI providers"],
-        "anthropic": ["semantica LLM extraction through Anthropic providers"],
-        "litellm": ["OpenAI-compatible or local provider routing"],
-        "ollama": ["local model provider routing"],
-        "fastapi": ["semantica REST/server surfaces"],
-        "uvicorn": ["semantica REST/server runtime"],
-        "pyshacl": ["SHACL validation"],
-        "rdflib": ["RDF/SPARQL compatibility"],
-        "spacy": ["non-LLM NLP extraction helpers"],
-        "networkx": ["graph analytics"],
-    }
-    adversarial_fixtures = [
-        {
-            "id": "negated-prohibited-pattern",
-            "text": "There is no root-level `core/` authoring root.",
-            "expected_policy_bucket": "aligned-rejection",
-        },
-        {
-            "id": "positive-prohibited-pattern",
-            "text": "Create a root-level `core/` authoring root.",
-            "expected_policy_bucket": "conflict",
-        },
-        {
-            "id": "historical-prohibited-mention",
-            "text": "Historically, old drafts mentioned a root-level `core/` authoring root.",
-            "expected_policy_bucket": "informational",
-        },
-        {
-            "id": "deprecated-replacement-table",
-            "text": "| Old pattern | Replacement |\n| --- | --- |\n| `@rawr/hq-sdk` | `@rawr/hq` |",
-            "expected_policy_bucket": "replacement-context",
-        },
-        {
-            "id": "ambiguous-scope",
-            "text": "The runtime package appears in this section without saying whether it is target architecture.",
-            "expected_policy_bucket": "ambiguous",
-        },
-        {
-            "id": "candidate-concept",
-            "text": "The plan may need a provenance query service for architecture evidence review.",
-            "expected_policy_bucket": "candidate-review",
-        },
-    ]
-    report: dict[str, Any] = {
-        **status,
-        "schema_version": "rawr-semantica-capability-v2",
-        "checked_modules": {},
-        "optional_dependencies": {},
-        "feature_gates": {},
-        "mcp_server": {},
-        "adversarial_fixtures": adversarial_fixtures,
-        "proofs": {},
-        "replacement_matrix": capability_replacement_matrix(),
-        "limitations": [
-            "semantica extraction does not define RAWR architecture truth.",
-            "Decision-grade findings still require RAWR claim polarity, modality, assertion scope, and authority rules.",
-            "Any semantica extraction that loses line spans is evidence-only until resolved back to local spans.",
-            "Missing optional extras are blockers for that semantica feature, not permission to rebuild a parallel semantic platform.",
-        ],
-    }
-    try:
-        report["version"] = importlib.metadata.version("semantica")
-    except Exception:
-        pass
-
-    for module_name, expected in modules.items():
-        fqmn = f"semantica.{module_name}"
-        try:
-            module = importlib.import_module(fqmn)
-            report["checked_modules"][fqmn] = {
-                "available": True,
-                "module_file": getattr(module, "__file__", None),
-                "classes": {name: hasattr(module, name) for name in expected},
-            }
-        except Exception as exc:
-            report["checked_modules"][fqmn] = {"available": False, "error": str(exc)}
-
-    for dependency, enables in optional_dependencies.items():
-        try:
-            report["optional_dependencies"][dependency] = {
-                "available": True,
-                "version": importlib.metadata.version(dependency),
-                "enables": enables,
-            }
-        except Exception as exc:
-            report["optional_dependencies"][dependency] = {
-                "available": False,
-                "error": str(exc),
-                "enables": enables,
-            }
-
-    report["feature_gates"] = capability_feature_gates(report)
-
-    try:
-        from semantica import mcp_server
-
-        tools = getattr(mcp_server, "TOOLS", [])
-        resources = getattr(mcp_server, "RESOURCES", [])
-        report["mcp_server"] = {
-            "available": True,
-            "server_info": getattr(mcp_server, "SERVER_INFO", {}),
-            "tool_names": [item.get("name") for item in tools if isinstance(item, dict)],
-            "resource_uris": [item.get("uri") for item in resources if isinstance(item, dict)],
-        }
-    except Exception as exc:
-        report["mcp_server"] = {"available": False, "error": str(exc)}
-
-    proof_text = "There is no root-level core/ authoring root. Create a root-level core/ authoring root."
-    try:
-        from semantica.semantic_extract import TripletExtractor
-
-        triplets = TripletExtractor(method="pattern", include_provenance=True).extract_triplets(proof_text)
-        report["proofs"]["triplet_extractor_pattern"] = {
-            "ok": True,
-            "triplet_count": len(triplets),
-            "preserves_line_spans": False,
-        }
-    except Exception as exc:
-        report["proofs"]["triplet_extractor_pattern"] = {"ok": False, "error": str(exc)}
-
-    try:
-        from semantica.ontology import OntologyEngine
-
-        ontology = OntologyEngine().from_data({"classes": [{"name": "EvidenceClaim"}], "properties": [{"name": "conflicts_with"}]})
-        report["proofs"]["ontology_from_data"] = {
-            "ok": True,
-            "class_count": len(ontology.get("classes", [])),
-            "property_count": len(ontology.get("properties", [])),
-        }
-    except Exception as exc:
-        report["proofs"]["ontology_from_data"] = {"ok": False, "error": str(exc)}
-
-    try:
-        from semantica.provenance import ProvenanceManager
-
-        manager = ProvenanceManager()
-        report["proofs"]["provenance_manager_constructible"] = {
-            "ok": True,
-            "class": f"{manager.__class__.__module__}.{manager.__class__.__name__}",
-        }
-    except Exception as exc:
-        report["proofs"]["provenance_manager_constructible"] = {"ok": False, "error": str(exc)}
-
-    return report
-
-
-def capability_feature_gates(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    modules = report.get("checked_modules", {})
-    optional = report.get("optional_dependencies", {})
-
-    def module_available(name: str) -> bool:
-        return bool(modules.get(f"semantica.{name}", {}).get("available"))
-
-    def class_available(module_name: str, class_name: str) -> bool:
-        module = modules.get(f"semantica.{module_name}", {})
-        classes = module.get("classes", {})
-        return bool(classes.get(class_name))
-
-    def dependency_available(name: str) -> bool:
-        return bool(optional.get(name, {}).get("available"))
-
-    ingest_parse_split_modules = module_available("ingest") and module_available("parse") and module_available("split")
-    markdown_intake_classes = (
-        class_available("ingest", "FileIngestor")
-        and class_available("parse", "MarkdownParser")
-        and class_available("split", "StructuralChunker")
-    )
-    provider_dependency_available = any(dependency_available(name) for name in ["openai", "anthropic", "litellm", "ollama"])
-    export_module_available = module_available("export")
-    export_dependencies_available = dependency_available("rdflib") and dependency_available("pyshacl")
-
-    return {
-        "document_ingest_parse_split": {
-            "status": "probe-ready" if ingest_parse_split_modules and markdown_intake_classes else ("partial" if ingest_parse_split_modules else "blocked"),
-            "requires": ["semantica.ingest", "semantica.parse", "semantica.split"],
-            "note": "MarkdownParser is required before semantica intake can replace local Markdown chunking." if ingest_parse_split_modules and not markdown_intake_classes else "",
-            "rawr_adapter_required": "Exact Markdown line-span mapping and source-authority metadata.",
-        },
-        "semantic_extraction_non_llm": {
-            "status": "probe-ready" if module_available("semantic_extract") else "blocked",
-            "requires": ["semantica.semantic_extract"],
-            "rawr_adapter_required": "Polarity, modality, assertion scope, authority context, and stable ID resolution.",
-        },
-        "semantic_extraction_llm": {
-            "status": "probe-ready" if provider_dependency_available else "blocked-missing-extra",
-            "requires": ["semantica.semantic_extract.LLMExtraction", "openai or equivalent provider extra"],
-            "rawr_adapter_required": "LLM output remains evidence-only until reviewed.",
-        },
-        "provenance_lineage": {
-            "status": "probe-ready" if module_available("provenance") else "blocked",
-            "requires": ["semantica.provenance"],
-            "rawr_adapter_required": "Line-span and checksum fields must be queryable.",
-        },
-        "kg_normalize_dedup": {
-            "status": "probe-ready" if module_available("kg") and module_available("normalize") and module_available("deduplication") else "blocked",
-            "requires": ["semantica.kg", "semantica.normalize", "semantica.deduplication"],
-            "rawr_adapter_required": "Candidates and evidence cannot leak into locked target views.",
-        },
-        "conflict_reasoning_explanations": {
-            "status": "probe-ready" if module_available("conflicts") and module_available("reasoning") else "blocked",
-            "requires": ["semantica.conflicts", "semantica.reasoning"],
-            "rawr_adapter_required": "RAWR owns decision-grade verdict meanings and review actions.",
-        },
-        "mcp_agent_interface": {
-            "status": "probe-ready" if module_available("mcp_server") else "blocked",
-            "requires": ["semantica.mcp_server"],
-            "rawr_adapter_required": "Graph questions are review aids, not architecture promotion.",
-        },
-        "rest_explorer_interface": {
-            "status": "blocked-missing-extra" if not (dependency_available("fastapi") and dependency_available("uvicorn")) else "probe-ready",
-            "requires": ["fastapi", "uvicorn"],
-            "rawr_adapter_required": "Explorer must preserve canonical/evidence/candidate separation.",
-        },
-        "export_validation": {
-            "status": "probe-ready" if export_module_available and export_dependencies_available else ("partial" if export_module_available and dependency_available("rdflib") else "blocked"),
-            "requires": ["semantica.export", "rdflib", "pyshacl for SHACL validation"],
-            "rawr_adapter_required": "Generated exports are derived artifacts.",
-        },
-        "pipeline_orchestration": {
-            "status": "probe-ready" if module_available("pipeline") else "blocked",
-            "requires": ["semantica.pipeline"],
-            "rawr_adapter_required": "RAWR keeps recommendation policy and source scope.",
-        },
-    }
-
-
-def capability_replacement_matrix() -> list[dict[str, str]]:
-    return [
-        {
-            "surface": "document intake and chunking",
-            "target": "replace mechanics with semantica ingest/parse/split where span parity holds",
-            "keep": "RAWR manifest scope, authority ranks, quarantine/archive policy",
-        },
-        {
-            "surface": "comparison document parsing",
-            "target": "replace primary parser with semantica semantic extraction after fixture parity",
-            "keep": "deterministic heuristic extractor as fallback and regression oracle",
-        },
-        {
-            "surface": "provenance",
-            "target": "replace local provenance-like JSON as the primary lineage substrate",
-            "keep": "exact source path, line span, heading path, and review evidence requirements",
-        },
-        {
-            "surface": "graph construction and candidate discovery",
-            "target": "reduce local alias/dedup logic in favor of semantica KG/normalize/dedup",
-            "keep": "stable RAWR IDs, locked target view, candidate queue, and promotion rules",
-        },
-        {
-            "surface": "conflict and reasoning",
-            "target": "wrap or move verdict explanations into semantica conflict/reasoning surfaces",
-            "keep": "RAWR decision-grade policy and review-action semantics",
-        },
-        {
-            "surface": "agent and review access",
-            "target": "use semantica MCP/export surfaces where proven",
-            "keep": "RAWR CLI commands and portable static review artifacts",
-        },
-        {
-            "surface": "batch sweep orchestration",
-            "target": "use semantica pipeline primitives for DAG/checkpoint/retry where proven",
-            "keep": "RAWR recommendation categories and source-authority regression policy",
-        },
-    ]
-
-
-def render_semantica_capability_report(report: dict[str, Any]) -> str:
-    lines = [
-        "# semantica Capability Report",
-        "",
-        "This report records the pinned semantica surfaces available to the RAWR semantic evidence pipeline. It is a capability proof, not an ontology authority document.",
-        "",
-        "## Status",
-        "",
-        f"- Available: `{report.get('available')}`",
-        f"- Schema: `{report.get('schema_version', 'unknown')}`",
-        f"- Version: `{report.get('version', 'unknown')}`",
-        f"- Module: `{report.get('module', 'unknown')}`",
-        "",
-        "## Modules",
-        "",
-    ]
-    for module_name, module_report in sorted(report.get("checked_modules", {}).items()):
-        lines.append(f"- `{module_name}`: `{module_report.get('available')}`")
-        classes = module_report.get("classes") or {}
-        for class_name, available in sorted(classes.items()):
-            lines.append(f"  - `{class_name}`: `{available}`")
-    lines.extend(["", "## Optional Dependencies", ""])
-    for dependency, dependency_report in sorted(report.get("optional_dependencies", {}).items()):
-        available = dependency_report.get("available")
-        version = dependency_report.get("version", "unavailable")
-        enables = ", ".join(dependency_report.get("enables", []))
-        lines.append(f"- `{dependency}`: `{available}` ({version})")
-        if enables:
-            lines.append(f"  - Enables: {enables}")
-    lines.extend(["", "## Feature Gates", ""])
-    for feature, gate in sorted(report.get("feature_gates", {}).items()):
-        lines.append(f"- `{feature}`: `{gate.get('status')}`")
-        if gate.get("note"):
-            lines.append(f"  - Note: {gate['note']}")
-        lines.append(f"  - RAWR adapter: {gate.get('rawr_adapter_required')}")
-    mcp = report.get("mcp_server", {})
-    lines.extend(["", "## MCP Server", ""])
-    lines.append(f"- Available: `{mcp.get('available')}`")
-    if mcp.get("server_info"):
-        lines.append(f"- Server info: `{mcp['server_info']}`")
-    if mcp.get("tool_names"):
-        lines.append(f"- Tools: `{', '.join(mcp['tool_names'])}`")
-    if mcp.get("resource_uris"):
-        lines.append(f"- Resources: `{', '.join(mcp['resource_uris'])}`")
-    lines.extend(["", "## Proofs", ""])
-    for proof_name, proof in sorted(report.get("proofs", {}).items()):
-        lines.append(f"- `{proof_name}`: `{proof.get('ok')}`")
-        if proof.get("error"):
-            lines.append(f"  - Error: `{proof['error']}`")
-        if "preserves_line_spans" in proof:
-            lines.append(f"  - Preserves line spans: `{proof['preserves_line_spans']}`")
-    lines.extend(["", "## Adversarial Fixtures", ""])
-    for fixture in report.get("adversarial_fixtures", []):
-        lines.append(f"- `{fixture['id']}` -> `{fixture['expected_policy_bucket']}`: {fixture['text']}")
-    lines.extend(["", "## Replace / Reduce / Retain Matrix", ""])
-    for item in report.get("replacement_matrix", []):
-        lines.append(f"- `{item['surface']}`")
-        lines.append(f"  - Target: {item['target']}")
-        lines.append(f"  - Keep: {item['keep']}")
-    lines.extend(["", "## Decision", ""])
-    lines.append(
-        "semantica has enough local surface area to be the intended substrate, but each surface must pass pinned-package probes before local workbench logic is replaced. RAWR-specific claim semantics, authority rules, promotion policy, and exact source-span guarantees remain explicit adapters and review gates."
-    )
-    return "\n".join(lines) + "\n"
 
 
 def extract_evidence_claims(
@@ -487,7 +138,9 @@ def extract_evidence_claims(
         nonblank_line_count += 1
         if CODE_FENCE_RE.match(stripped):
             in_code_fence = not in_code_fence
-            suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, "code-fence-delimiter"))
+            suppressed_lines.append(
+                suppressed_line(document, line_number, stripped, heading_path, "code-fence-delimiter")
+            )
             continue
         heading = re.match(r"^(#{1,6})\s+(.+)$", stripped)
         if heading:
@@ -529,11 +182,15 @@ def extract_evidence_claims(
                     )
                 )
             else:
-                suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, "code-fence-content"))
+                suppressed_lines.append(
+                    suppressed_line(document, line_number, stripped, heading_path, "code-fence-content")
+                )
             continue
 
         suppression_reason = suppressible_line_reason(stripped)
-        if suppression_reason and (not matched or suppression_reason in {"scaffold-label", "path-only", "structural-marker"}):
+        if suppression_reason and (
+            not matched or suppression_reason in {"scaffold-label", "path-only", "structural-marker"}
+        ):
             suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, suppression_reason))
             continue
 
@@ -557,7 +214,11 @@ def extract_evidence_claims(
         if not matched and not is_review_relevant_line(stripped):
             suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, "no-claim-signal"))
             continue
-        if is_table_row(stripped) and active_table_kind == "replacement" and (matches.get("prohibited_patterns") or matches.get("deprecated_terms")):
+        if (
+            is_table_row(stripped)
+            and active_table_kind == "replacement"
+            and (matches.get("prohibited_patterns") or matches.get("deprecated_terms"))
+        ):
             claims.extend(
                 build_table_claims(
                     document,
@@ -572,7 +233,9 @@ def extract_evidence_claims(
             )
             continue
         if is_table_row(stripped) and not matched:
-            suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, "table-row-no-match"))
+            suppressed_lines.append(
+                suppressed_line(document, line_number, stripped, heading_path, "table-row-no-match")
+            )
             continue
         if is_table_row(stripped):
             claims.append(
@@ -635,7 +298,9 @@ def extract_evidence_claims(
             "claims_by_scope": dict(Counter(claim["assertion_scope"] for claim in claims)),
             "claims_by_kind": dict(Counter(claim["claim_kind"] for claim in claims)),
             "claims_by_resolution_state": dict(Counter(claim["resolution_state"] for claim in claims)),
-            "semantica_pilot": semantica_pilot.get("summary", {"enabled": False}) if semantica_pilot else {"enabled": False},
+            "semantica_pilot": semantica_pilot.get("summary", {"enabled": False})
+            if semantica_pilot
+            else {"enabled": False},
             "semantica_llm": semantica_llm.get("summary", {"enabled": False}) if semantica_llm else {"enabled": False},
         },
         "semantica_pilot": semantica_pilot or disabled_semantica_pilot(document),
@@ -701,7 +366,9 @@ def match_count(matches: dict[str, list[dict[str, Any]]]) -> int:
     return sum(len(matches.get(bucket, [])) for bucket in MATCH_BUCKETS)
 
 
-def suppressed_line(document: Path, line_number: int, text: str, heading_path: list[str], reason: str) -> dict[str, Any]:
+def suppressed_line(
+    document: Path, line_number: int, text: str, heading_path: list[str], reason: str
+) -> dict[str, Any]:
     return {
         "source_path": rel(document),
         "line_start": line_number,
@@ -851,7 +518,9 @@ def build_claim(
     }
 
 
-def compare_evidence_to_ontology(evidence: dict[str, Any], graph: dict[str, Any], candidate_queue: dict[str, Any]) -> dict[str, Any]:
+def compare_evidence_to_ontology(
+    evidence: dict[str, Any], graph: dict[str, Any], candidate_queue: dict[str, Any]
+) -> dict[str, Any]:
     from .semantica_reasoning import semantica_reasoning_probe
 
     entities = {entity["id"]: entity for entity in graph["entities"]}
@@ -915,7 +584,14 @@ def classify_claim_against_constraints(
     scope = claim.get("assertion_scope")
 
     if scope == "outside-scope":
-        return [finding("outside-scope", claim, reason="Claim is outside the active architecture comparison scope.", decision_grade=False)]
+        return [
+            finding(
+                "outside-scope",
+                claim,
+                reason="Claim is outside the active architecture comparison scope.",
+                decision_grade=False,
+            )
+        ]
 
     for entity_id in prohibited:
         entity = entities.get(entity_id, {"id": entity_id, "label": entity_id})
@@ -1206,11 +882,15 @@ def render_semantic_compare_report(compare: dict[str, Any]) -> str:
             lines.append(f"- `{rule}`: `{count}`")
     lines.extend(["", "## Verdict", ""])
     if by_kind.get("conflict", 0):
-        lines.append("Decision-grade conflicts are present. Review the cited claims and ontology constraints before using this document as aligned target architecture.")
+        lines.append(
+            "Decision-grade conflicts are present. Review the cited claims and ontology constraints before using this document as aligned target architecture."
+        )
     elif by_kind.get("deprecated-use", 0):
         lines.append("No construction conflicts were found, but deprecated target vocabulary needs review.")
     elif by_kind.get("ambiguous", 0):
-        lines.append("No decision-grade conflicts were found. Ambiguous claims need review before declaring full alignment.")
+        lines.append(
+            "No decision-grade conflicts were found. Ambiguous claims need review before declaring full alignment."
+        )
     else:
         lines.append("No decision-grade semantic conflicts were found.")
 
@@ -1371,7 +1051,11 @@ def classify_claim_text(text: str, heading_path: list[str], *, matched: bool = F
         assertion_scope = "migration-note"
     elif modality in {"historical", "illustrative"}:
         assertion_scope = "migration-note" if modality == "historical" else "example"
-    elif re.search(r"\b(target architecture|create|add|introduce|adopt|should|must|canonical|do not|must not|there is no)\b", combined, re.I):
+    elif re.search(
+        r"\b(target architecture|create|add|introduce|adopt|should|must|canonical|do not|must not|there is no)\b",
+        combined,
+        re.I,
+    ):
         assertion_scope = "target-architecture"
     elif polarity == "positive":
         assertion_scope = "current-state"
@@ -1385,7 +1069,9 @@ def classify_claim_text(text: str, heading_path: list[str], *, matched: bool = F
 
 
 def is_review_relevant_line(text: str) -> bool:
-    return bool(NORMATIVE_RE.search(text) or PROPOSED_RE.search(text) or PROHIBITIVE_RE.search(text) or NEGATIVE_RE.search(text))
+    return bool(
+        NORMATIVE_RE.search(text) or PROPOSED_RE.search(text) or PROHIBITIVE_RE.search(text) or NEGATIVE_RE.search(text)
+    )
 
 
 def infer_claim_kind(classification: dict[str, str], matches: dict[str, list[dict[str, Any]]]) -> str:
@@ -1472,7 +1158,15 @@ def item_terms(item: dict[str, Any]) -> list[str]:
 
 def candidate_terms(item: dict[str, Any]) -> list[str]:
     values = [item.get("id"), item.get("label"), item.get("hook")]
-    return sorted({normalize_match_text(str(value or "")) for value in values if len(normalize_match_text(str(value or ""))) >= 4}, key=len, reverse=True)
+    return sorted(
+        {
+            normalize_match_text(str(value or ""))
+            for value in values
+            if len(normalize_match_text(str(value or ""))) >= 4
+        },
+        key=len,
+        reverse=True,
+    )
 
 
 def first_label(matches: dict[str, list[dict[str, Any]]]) -> str | None:
