@@ -61,6 +61,7 @@
     "observability:gate:host-metrics": "bun scripts/observability/verify-host-metrics-contract.mjs && bunx vitest run --project server apps/server/test/orpc-metrics.test.ts apps/server/test/telemetry-bootstrap.test.ts",
     "observability:gate:logging": "bun scripts/observability/verify-logging-boundary.mjs && bunx vitest run --project server apps/server/test/logging-correlation.test.ts && ! rg -n \"from \\\"pino\\\"|from 'pino'\" services/example-todo",
     "runtime:gate:hq-lifecycle": "bun scripts/runtime/verify-hq-lifecycle.mjs && bunx vitest run --project cli apps/cli/test/hq.test.ts apps/cli/test/hq-legacy-surface.test.ts",
+    "runtime-realization:type-env": "bunx nx run runtime-realization-type-env:gate",
     "phase-2:gate:u00:no-legacy-cutover": "bun scripts/phase-2/verify-no-legacy-cutover.mjs",
     "phase-2:gate:u00:server-role-runtime-path": "bun scripts/phase-2/verify-server-role-runtime-path.mjs",
     "phase-2:gate:u00:runtime-public-seams": "bun scripts/phase-2/verify-runtime-public-seams.mjs",
