@@ -9,7 +9,7 @@ from typing import Any
 
 from .io import rel
 from .paths import REPO_ROOT, WORKBENCH_ROOT
-from .semantica_adapter import iri_fragment, turtle_literal
+from .semantic_evidence_export import semantic_compare_turtle as semantic_compare_turtle
 from .semantic_evidence_report import (
     append_finding_section as append_finding_section,
     append_suppressed_section as append_suppressed_section,
@@ -847,38 +847,6 @@ def finding(
         "modality": claim.get("modality"),
         "assertion_scope": claim.get("assertion_scope"),
     }
-
-
-def semantic_compare_turtle(compare: dict[str, Any]) -> str:
-    lines = [
-        "@prefix rawr: <https://rawr.dev/ontology/> .",
-        "@prefix evidence: <https://rawr.dev/evidence/> .",
-        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
-        "",
-    ]
-    for claim in compare.get("claims", []):
-        node = iri_fragment(claim["id"])
-        lines.append(f"evidence:{node} a rawr:EvidenceClaim ;")
-        lines.append(f"  rdfs:label {turtle_literal(claim['text'])} ;")
-        lines.append(f"  rawr:polarity {turtle_literal(claim['polarity'])} ;")
-        lines.append(f"  rawr:modality {turtle_literal(claim['modality'])} ;")
-        lines.append(f"  rawr:assertionScope {turtle_literal(claim['assertion_scope'])} .")
-        lines.append("")
-    for item in compare.get("findings", []):
-        node = iri_fragment(item["id"])
-        claim = iri_fragment(item["claim_id"])
-        lines.append(f"evidence:{node} a rawr:ReviewFinding ;")
-        lines.append(f"  rawr:findingKind {turtle_literal(item['kind'])} ;")
-        lines.append(f"  rawr:derivedFrom evidence:{claim} ;")
-        if item.get("entity_id"):
-            lines.append(f"  rawr:resolvedTarget rawr:{iri_fragment(item['entity_id'])} ;")
-        if item.get("ambiguity_bucket"):
-            lines.append(f"  rawr:ambiguityBucket {turtle_literal(item['ambiguity_bucket'])} ;")
-        if item.get("review_action"):
-            lines.append(f"  rawr:reviewAction {turtle_literal(item['review_action'])} ;")
-        lines.append(f"  rawr:rule {turtle_literal(item.get('rule') or '')} .")
-        lines.append("")
-    return "\n".join(lines)
 
 
 def build_semantic_indexes(graph: dict[str, Any], candidate_queue: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
