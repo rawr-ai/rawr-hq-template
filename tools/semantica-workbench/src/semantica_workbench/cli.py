@@ -32,6 +32,7 @@ from .document_sweep import run_document_sweep
 from .evidence_index import write_sweep_evidence_index
 from .extraction import extract_chunk, request_params_for_model, schema_hash
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json, write_jsonl
+from .llm_augmentation import write_llm_evidence_augmentation
 from .manifest import load_manifest
 from .ontology import load_definitions, normalize_run
 from .paths import (
@@ -154,6 +155,14 @@ def build_parser() -> argparse.ArgumentParser:
     doc_index = sub.add_parser("doc:index")
     doc_index.add_argument("--run", default="latest")
     doc_index.set_defaults(func=cmd_doc_index)
+
+    doc_augment_llm = sub.add_parser("doc:augment-llm")
+    doc_augment_llm.add_argument("--run", default="latest")
+    doc_augment_llm.add_argument("--llm-provider", default="openai")
+    doc_augment_llm.add_argument("--llm-model", default=None)
+    doc_augment_llm.add_argument("--limit", type=int, default=20)
+    doc_augment_llm.add_argument("--max-text-length", type=int, default=None)
+    doc_augment_llm.set_defaults(func=cmd_doc_augment_llm)
 
     semantic_capability = sub.add_parser("semantic:capability")
     semantic_capability.add_argument("--run", default="latest")
@@ -420,6 +429,27 @@ def cmd_doc_index(args) -> int:
         "indexed="
         f"documents={summary['documents_indexed']} claims={summary['claim_count']} "
         f"findings={summary['finding_count']} warnings={summary['warning_count']}"
+    )
+    return 0
+
+
+def cmd_doc_augment_llm(args) -> int:
+    run_dir = resolve_run(args.run)
+    augmentation = write_llm_evidence_augmentation(
+        run_dir,
+        provider=args.llm_provider,
+        model=args.llm_model,
+        limit=args.limit,
+        max_text_length=args.max_text_length,
+    )
+    mark_current(run_dir, SWEEP_CURRENT_FILES)
+    print(f"llm_evidence_augmentation={rel(run_dir / CORE_GRAPH_FILENAMES['sweep_llm_evidence_augmentation'])}")
+    print(
+        "llm_augmentation="
+        f"{augmentation['status'].get('actual_mode')} provider={augmentation['status'].get('provider')} "
+        f"model={augmentation['status'].get('model') or 'not-set'} "
+        f"selected={augmentation['selection']['selected_count']} suggestions={augmentation['summary']['suggestion_count']} "
+        f"blocked={augmentation['summary'].get('blocked_reason') or 'none'}"
     )
     return 0
 

@@ -30,6 +30,7 @@ bun run semantica:doc:frame -- --fixture
 bun run semantica:doc:proposal-compare -- --fixture
 bun run semantica:doc:sweep
 bun run semantica:doc:index -- --run latest
+bun run semantica:doc:augment-llm -- --run latest
 bun run semantica:doc:diff -- --mode semantic --document docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
 bun run semantica:core:query -- --named proposal-review-summary
 bun run semantica:core:query -- --named proposal-repair-queue
@@ -60,6 +61,7 @@ The core ontology commands are seed-first and treat reviewed YAML as the authori
 - `semantica:doc:proposal-compare` runs RAWR-owned deterministic comparison over the frame and writes noun mappings, proposal graph TTL, claim comparisons, verdict/repair JSON, provenance, and a review report.
 - `semantica:doc:sweep` analyzes active Markdown docs, writes per-document semantic comparison artifacts, and emits a corpus-level sweep evidence index plus an agent-facing query manifest.
 - `semantica:doc:index` rebuilds the corpus-level `sweep-evidence-index.json`, JSONL, HTML, TTL, summary, and agent manifest artifacts for an existing sweep run.
+- `semantica:doc:augment-llm` writes an optional `sweep-llm-evidence-augmentation.json` sidecar over selected ambiguous, unresolved, and candidate evidence rows. It is fail-closed without provider/model availability, and it never changes deterministic verdicts, index rows, ontology facts, or candidate promotion state.
 - `semantica:doc:diff -- --mode semantic` is the compatibility command for the semantic evidence path. The default mode remains lexical for compatibility.
 
 The reviewed source files live under:
