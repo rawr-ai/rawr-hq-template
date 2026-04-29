@@ -40,6 +40,18 @@ PROPOSAL_NAMED_QUERIES = {
     "proposal-repair-queue",
 }
 
+EVIDENCE_NAMED_QUERIES = {
+    "evidence-summary",
+    "evidence-review-queue",
+    "evidence-candidate-new",
+    "evidence-unresolved-targets",
+    "evidence-source-authority-signals",
+    "evidence-prohibited-pattern-mentions",
+    "evidence-weak-modality-hotspots",
+    "evidence-by-document",
+    "evidence-by-entity",
+}
+
 
 def list_queries() -> dict[str, Any]:
     sparql_examples = []
@@ -107,6 +119,9 @@ def run_named_query(run: str | None, name: str) -> dict[str, Any]:
         semantic = require_semantic_compare(run_dir, semantic_path, semantic)
     if name in PROPOSAL_NAMED_QUERIES:
         proposal = require_proposal_package(run_dir, frame_path, comparisons_path, verdict_path)
+    if name in EVIDENCE_NAMED_QUERIES:
+        evidence_path = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"]
+        evidence_index = require_evidence_index(run_dir, evidence_path)
     if name in SWEEP_NAMED_QUERIES:
         sweep_path = run_dir / CORE_GRAPH_FILENAMES["doc_sweep"]
         sweep = require_doc_sweep(run_dir, sweep_path)
@@ -173,6 +188,66 @@ def run_named_query(run: str | None, name: str) -> dict[str, Any]:
             )
         ]
         return sweep_query_result(run_dir, sweep_path, name, sweep, items)
+    if name == "evidence-summary":
+        return evidence_summary_query_result(run_dir, evidence_path, evidence_index)
+    if name == "evidence-review-queue":
+        items = sorted(
+            [finding for finding in evidence_index.get("findings", []) if evidence_review_queue_finding(finding)],
+            key=evidence_sort_key,
+        )
+        return evidence_query_result(run_dir, evidence_path, name, evidence_index, items)
+    if name == "evidence-candidate-new":
+        items = sorted(
+            [finding for finding in evidence_index.get("findings", []) if finding.get("kind") == "candidate-new"],
+            key=evidence_sort_key,
+        )
+        return evidence_query_result(run_dir, evidence_path, name, evidence_index, items)
+    if name == "evidence-unresolved-targets":
+        items = sorted(
+            [
+                finding
+                for finding in evidence_index.get("findings", [])
+                if finding.get("resolution_state") == "unresolved"
+                or finding.get("ambiguity_bucket") == "unresolved-target"
+                or finding.get("rule") == "no_resolved_decision_target"
+            ],
+            key=evidence_sort_key,
+        )
+        return evidence_query_result(run_dir, evidence_path, name, evidence_index, items)
+    if name == "evidence-source-authority-signals":
+        source_documents = [document for document in evidence_index.get("documents", []) if document.get("path_class") == "source-authority"]
+        source_paths = {document.get("document_path") for document in source_documents}
+        source_findings = sorted(
+            [
+                finding
+                for finding in evidence_index.get("findings", [])
+                if finding.get("sweep_document_path") in source_paths or finding.get("document_path") in source_paths
+            ],
+            key=evidence_sort_key,
+        )
+        return evidence_query_result(
+            run_dir,
+            evidence_path,
+            name,
+            evidence_index,
+            source_findings,
+            documents=source_documents,
+        )
+    if name == "evidence-prohibited-pattern-mentions":
+        items = sorted(
+            [finding for finding in evidence_index.get("findings", []) if prohibited_pattern_finding(finding)],
+            key=evidence_sort_key,
+        )
+        return evidence_query_result(run_dir, evidence_path, name, evidence_index, items)
+    if name == "evidence-weak-modality-hotspots":
+        hotspots = weak_modality_hotspots(evidence_index)
+        return evidence_query_result(run_dir, evidence_path, name, evidence_index, hotspots, item_key="hotspots")
+    if name == "evidence-by-document":
+        documents = evidence_by_document(evidence_index)
+        return evidence_query_result(run_dir, evidence_path, name, evidence_index, documents, item_key="documents")
+    if name == "evidence-by-entity":
+        entities = evidence_by_entity(evidence_index)
+        return evidence_query_result(run_dir, evidence_path, name, evidence_index, entities, item_key="entities")
     if name == "semantic-conflicts":
         return semantic_query_result(run_dir, semantic_path, name, semantic.get("conflicts", []), semantic)
     if name == "aligned-rejections":
@@ -244,6 +319,16 @@ def require_doc_sweep(run_dir: Path, sweep_path: Path) -> dict[str, Any]:
     return read_json(sweep_path)
 
 
+def require_evidence_index(run_dir: Path, evidence_path: Path) -> dict[str, Any]:
+    if not evidence_path.exists():
+        raise FileNotFoundError(
+            "Evidence named query requires a corpus sweep evidence index. "
+            f"No artifact exists at {display_path(evidence_path)} for run {display_path(run_dir)}. "
+            "Run `bun run semantica:doc:sweep` or `bun run semantica:doc:index -- --run <run>` first."
+        )
+    return read_json(evidence_path)
+
+
 def require_proposal_package(run_dir: Path, frame_path: Path, comparisons_path: Path, verdict_path: Path) -> dict[str, Any]:
     missing = [path for path in [frame_path, comparisons_path, verdict_path] if not path.exists()]
     if missing:
@@ -258,6 +343,154 @@ def require_proposal_package(run_dir: Path, frame_path: Path, comparisons_path: 
         "comparisons": read_json(comparisons_path),
         "verdict": read_json(verdict_path),
     }
+
+
+def evidence_summary_query_result(run_dir: Path, artifact_path: Path, index: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "query": "evidence-summary",
+        "run": display_path(run_dir),
+        "artifact": display_path(artifact_path),
+        "schema_version": index.get("schema_version"),
+        "run_id": index.get("run_id"),
+        "git_sha": index.get("git_sha"),
+        "created_at": index.get("created_at"),
+        "authority_boundary": index.get("authority_boundary", {}),
+        "summary": index.get("summary", {}),
+        "source_sweep": index.get("source_sweep", {}),
+        "warnings": index.get("warnings", []),
+    }
+
+
+def evidence_query_result(
+    run_dir: Path,
+    artifact_path: Path,
+    name: str,
+    index: dict[str, Any],
+    items: list[dict[str, Any]],
+    *,
+    item_key: str = "items",
+    documents: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "query": name,
+        "run": display_path(run_dir),
+        "artifact": display_path(artifact_path),
+        "schema_version": index.get("schema_version"),
+        "run_id": index.get("run_id"),
+        "authority_boundary": index.get("authority_boundary", {}),
+        "summary": index.get("summary", {}),
+        item_key: items,
+    }
+    if documents is not None:
+        result["documents"] = documents
+    return result
+
+
+def evidence_review_queue_finding(finding: dict[str, Any]) -> bool:
+    review_action = str(finding.get("review_action") or "")
+    if review_action.startswith("No action required") or review_action.startswith("No architecture action"):
+        return False
+    if finding.get("kind") == "outside-scope":
+        return False
+    if finding.get("decision_grade"):
+        return True
+    if finding.get("kind") in {"ambiguous", "candidate-new"}:
+        return True
+    if review_action and not review_action.startswith("No action required"):
+        return True
+    return False
+
+
+def prohibited_pattern_finding(finding: dict[str, Any]) -> bool:
+    entity_id = str(finding.get("entity_id") or "")
+    rule = str(finding.get("rule") or "")
+    return (
+        finding.get("resolution_state") == "resolved-prohibited-construction"
+        or entity_id.startswith("forbidden.pattern.")
+        or "prohibited" in rule
+    )
+
+
+def weak_modality_hotspots(index: dict[str, Any]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for finding in index.get("findings", []):
+        if finding.get("ambiguity_bucket") == "weak-modality":
+            grouped[str(finding.get("sweep_document_path") or finding.get("document_path") or "unknown-document")].append(finding)
+    rows = []
+    for document_path, findings in grouped.items():
+        rows.append(
+            {
+                "document_path": document_path,
+                "weak_modality_count": len(findings),
+                "examples": sorted(findings, key=evidence_sort_key)[:5],
+            }
+        )
+    return sorted(rows, key=lambda row: (-row["weak_modality_count"], row["document_path"]))
+
+
+def evidence_by_document(index: dict[str, Any]) -> list[dict[str, Any]]:
+    findings_by_document: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    claims_by_document: Counter[str] = Counter()
+    for claim in index.get("claims", []):
+        claims_by_document[str(claim.get("sweep_document_path") or claim.get("document_path") or "unknown-document")] += 1
+    for finding in index.get("findings", []):
+        findings_by_document[str(finding.get("sweep_document_path") or finding.get("document_path") or "unknown-document")].append(finding)
+    rows = []
+    for document in index.get("documents", []):
+        document_path = str(document.get("document_path") or "unknown-document")
+        findings = findings_by_document.get(document_path, [])
+        rows.append(
+            {
+                "document_path": document_path,
+                "path_class": document.get("path_class"),
+                "recommendation": document.get("recommendation"),
+                "confidence": document.get("confidence"),
+                "claim_count": claims_by_document.get(document_path, 0),
+                "finding_count": len(findings),
+                "decision_grade_count": sum(1 for finding in findings if finding.get("decision_grade")),
+                "candidate_new_count": sum(1 for finding in findings if finding.get("kind") == "candidate-new"),
+                "ambiguous_count": sum(1 for finding in findings if finding.get("kind") == "ambiguous"),
+                "unresolved_target_count": sum(
+                    1
+                    for finding in findings
+                    if finding.get("resolution_state") == "unresolved" or finding.get("ambiguity_bucket") == "unresolved-target"
+                ),
+                "artifact_paths": document.get("artifact_paths", {}),
+                "report_html_artifact": document.get("report_html_artifact"),
+                "examples": sorted(findings, key=evidence_sort_key)[:5],
+            }
+        )
+    return sorted(rows, key=lambda row: (-row["decision_grade_count"], -row["candidate_new_count"], -row["finding_count"], row["document_path"]))
+
+
+def evidence_by_entity(index: dict[str, Any]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for finding in index.get("findings", []):
+        entity_id = finding.get("entity_id")
+        if entity_id:
+            grouped[str(entity_id)].append(finding)
+    rows = []
+    for entity_id, findings in grouped.items():
+        rows.append(
+            {
+                "entity_id": entity_id,
+                "label": next((finding.get("label") for finding in findings if finding.get("label")), None),
+                "finding_count": len(findings),
+                "decision_grade_count": sum(1 for finding in findings if finding.get("decision_grade")),
+                "kind_counts": dict(sorted(Counter(str(finding.get("kind") or "unknown") for finding in findings).items())),
+                "document_count": len({finding.get("sweep_document_path") or finding.get("document_path") for finding in findings}),
+                "examples": sorted(findings, key=evidence_sort_key)[:5],
+            }
+        )
+    return sorted(rows, key=lambda row: (-row["decision_grade_count"], -row["finding_count"], row["entity_id"]))
+
+
+def evidence_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        str(row.get("sweep_document_path") or row.get("document_path") or ""),
+        row.get("line_start") or 0,
+        str(row.get("finding_id") or row.get("index_id") or ""),
+    )
 
 
 def sweep_query_result(
@@ -498,6 +731,28 @@ def render_query_text(result: dict[str, Any]) -> str:
         if len(items) > 10:
             lines.append(f"- ... {len(items) - 10} additional items omitted; use --format json for full records")
         return "\n".join(lines)
+    if result.get("query") in EVIDENCE_NAMED_QUERIES:
+        lines = [
+            result["query"],
+            f"- run: {result.get('run')}",
+            f"- artifact: {result.get('artifact')}",
+        ]
+        summary = result.get("summary", {})
+        if summary:
+            lines.append(f"- documents_indexed: {summary.get('documents_indexed', 0)}")
+            lines.append(f"- claim_count: {summary.get('claim_count', 0)}")
+            lines.append(f"- finding_count: {summary.get('finding_count', 0)}")
+            lines.append(f"- decision_grade_finding_count: {summary.get('decision_grade_finding_count', 0)}")
+            lines.append(f"- warning_count: {summary.get('warning_count', 0)}")
+        for key in ["items", "documents", "hotspots", "entities"]:
+            if key in result:
+                rows = result.get(key, [])
+                lines.append(f"- {key}: {len(rows)}")
+                for row in rows[:10]:
+                    lines.append(evidence_text_row(row))
+                if len(rows) > 10:
+                    lines.append(f"- ... {len(rows) - 10} additional {key} omitted; use --format json for full records")
+        return "\n".join(lines)
     counts = Counter()
     for key, value in result.items():
         if isinstance(value, list):
@@ -514,6 +769,33 @@ def semantic_query_header(result: dict[str, Any], title: str) -> list[str]:
         f"- run: {result.get('run')}",
         f"- artifact: {result.get('artifact')}",
     ]
+
+
+def evidence_text_row(row: dict[str, Any]) -> str:
+    if "kind_counts" in row:
+        return (
+            "- "
+            f"{row.get('entity_id')} findings={row.get('finding_count', 0)} "
+            f"decision={row.get('decision_grade_count', 0)} docs={row.get('document_count', 0)}"
+        )
+    if "weak_modality_count" in row:
+        return f"- {row.get('document_path')} weak-modality={row.get('weak_modality_count', 0)}"
+    if "claim_count" in row:
+        return (
+            "- "
+            f"{row.get('document_path')} [{row.get('recommendation')}/{row.get('confidence')}] "
+            f"claims={row.get('claim_count', 0)} findings={row.get('finding_count', 0)} "
+            f"decision={row.get('decision_grade_count', 0)} candidates={row.get('candidate_new_count', 0)} "
+            f"report={row.get('report_html_artifact') or row.get('artifact_paths', {}).get('report_html') or 'none'}"
+        )
+    return (
+        "- "
+        f"{row.get('kind', 'finding')} / {row.get('rule', 'unknown')} "
+        f"{row.get('document_path', row.get('sweep_document_path', 'unknown-document'))}:{row.get('line_start', '?')} "
+        f"{row.get('entity_id') or row.get('label') or ''} "
+        f"{row.get('review_action') or 'review'} "
+        f"report={row.get('report_html_artifact') or 'none'}"
+    )
 
 
 def render_sparql_table(result: dict[str, Any]) -> str:

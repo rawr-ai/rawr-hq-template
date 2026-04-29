@@ -149,6 +149,15 @@ NAMED_QUERY_DESCRIPTIONS = {
     "sweep-update-candidates": "Documents likely to need updates based on semantic evidence.",
     "sweep-no-signal-documents": "Documents with no claims or only outside-scope evidence in the latest sweep.",
     "sweep-high-ambiguity-docs": "Documents whose sweep result is dominated by unresolved or weak-modality findings.",
+    "evidence-summary": "Corpus-level evidence index counts, provenance, and authority boundary.",
+    "evidence-review-queue": "Cross-document evidence findings that need reviewer attention.",
+    "evidence-candidate-new": "Candidate-new evidence rows found across the corpus index.",
+    "evidence-unresolved-targets": "Evidence rows whose targets could not be resolved to reviewed ontology concepts.",
+    "evidence-source-authority-signals": "Source-authority documents and findings from the corpus evidence index.",
+    "evidence-prohibited-pattern-mentions": "Prohibited-pattern evidence mentions with source spans and review actions.",
+    "evidence-weak-modality-hotspots": "Documents with high weak-modality ambiguous evidence counts.",
+    "evidence-by-document": "Per-document evidence counts and examples from the corpus evidence index.",
+    "evidence-by-entity": "Per-entity evidence counts and examples from the corpus evidence index.",
 }
 
 DEFAULT_SWEEP_ROOTS = ["docs"]
