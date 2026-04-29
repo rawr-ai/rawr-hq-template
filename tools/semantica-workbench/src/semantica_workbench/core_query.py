@@ -567,20 +567,33 @@ def run_sparql_query(run: str | None, sparql_path: Path) -> dict[str, Any]:
         raise RuntimeError("RDFLib is required for SPARQL queries. Run `bun run semantica:setup` first.") from exc
 
     run_dir = resolve_run(run)
-    ttl_path = run_dir / CORE_GRAPH_FILENAMES["semantica_data_graph"]
-    if not ttl_path.exists():
-        raise FileNotFoundError(f"No RDF data graph exists at {ttl_path}. Run `bun run semantica:core:export` first.")
     if not sparql_path.is_absolute():
         sparql_path = REPO_ROOT / sparql_path
     query = sparql_path.read_text(encoding="utf-8")
     graph = Graph()
-    graph.parse(ttl_path, format="turtle")
     evidence_ttl = run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]
-    if evidence_ttl.exists():
-        graph.parse(evidence_ttl, format="turtle")
     sweep_ttl = run_dir / CORE_GRAPH_FILENAMES["doc_sweep_ttl"]
-    if sweep_ttl.exists():
-        graph.parse(sweep_ttl, format="turtle")
+    ttl_path = run_dir / CORE_GRAPH_FILENAMES["semantica_data_graph"]
+    evidence_index_ttl = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_ttl"]
+    graph_mode = sparql_graph_mode(sparql_path)
+    if graph_mode == "evidence-index":
+        if not evidence_index_ttl.exists():
+            raise FileNotFoundError(
+                f"No evidence index graph exists at {evidence_index_ttl}. "
+                "Run `bun run semantica:doc:sweep` or `bun run semantica:doc:index -- --run <run>` first."
+            )
+        graph.parse(evidence_index_ttl, format="turtle")
+    elif graph_mode == "semantic-evidence":
+        if not evidence_ttl.exists():
+            raise FileNotFoundError(
+                f"No semantic evidence graph exists at {evidence_ttl}. "
+                "Run `bun run semantica:doc:compare` or another document evidence command first."
+            )
+        graph.parse(evidence_ttl, format="turtle")
+    else:
+        if not ttl_path.exists():
+            raise FileNotFoundError(f"No RDF data graph exists at {ttl_path}. Run `bun run semantica:core:export` first.")
+        graph.parse(ttl_path, format="turtle")
     result = graph.query(query)
     variables = [str(variable) for variable in result.vars]
     rows = []
@@ -588,13 +601,24 @@ def run_sparql_query(run: str | None, sparql_path: Path) -> dict[str, Any]:
         rows.append({variable: stringify_sparql_value(value) for variable, value in zip(variables, row, strict=False)})
     return {
         "query": str(sparql_path.relative_to(REPO_ROOT)),
-        "data_graph": display_path(ttl_path),
-        "evidence_graph": display_path(evidence_ttl) if evidence_ttl.exists() else None,
-        "sweep_graph": display_path(sweep_ttl) if sweep_ttl.exists() else None,
+        "graph_mode": graph_mode,
+        "data_graph": display_path(ttl_path) if ttl_path.exists() else None,
+        "evidence_graph": display_path(evidence_ttl) if graph_mode == "semantic-evidence" and evidence_ttl.exists() else None,
+        "sweep_graph": display_path(sweep_ttl) if graph_mode == "doc-sweep" and sweep_ttl.exists() else None,
+        "evidence_index_graph": display_path(evidence_index_ttl) if graph_mode == "evidence-index" and evidence_index_ttl.exists() else None,
         "row_count": len(rows),
         "variables": variables,
         "rows": rows,
     }
+
+
+def sparql_graph_mode(sparql_path: Path) -> str:
+    name = sparql_path.name
+    if name.startswith("evidence-"):
+        return "evidence-index"
+    if name == "semantic-findings.rq":
+        return "semantic-evidence"
+    return "core"
 
 
 def stringify_sparql_value(value: Any) -> str | None:

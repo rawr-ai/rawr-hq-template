@@ -91,7 +91,7 @@ bun run semantica:core:query -- --named aligned-rejections
 bun run semantica:core:query -- --sparql tools/semantica-workbench/queries/relation-samples.rq
 ```
 
-Named queries use the richer JSON graph and diff outputs. SPARQL queries run against `semantica-data-graph.ttl`, which is produced by `semantica:core:export`.
+Named queries use the richer JSON graph and diff outputs. Core SPARQL examples run against `semantica-data-graph.ttl`, which is produced by `semantica:core:export`. Evidence-specific SPARQL examples named `evidence-*.rq` run against the generated `sweep-evidence-index.ttl` projection from `semantica:doc:sweep` / `semantica:doc:index`; that projection is review evidence, not canonical RAWR truth.
 
 ## Extraction Modes
 

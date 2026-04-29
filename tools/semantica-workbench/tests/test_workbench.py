@@ -29,9 +29,9 @@ from semantica_workbench.core_ontology import (
 )
 from semantica_workbench.core_config import CORE_GRAPH_FILENAMES, NAMED_QUERY_DESCRIPTIONS
 from semantica_workbench.core_viewer import build_cytoscape_payload, write_html_viewer
-from semantica_workbench.core_query import render_query_text, run_named_query
+from semantica_workbench.core_query import render_query_text, run_named_query, run_sparql_query
 from semantica_workbench.document_sweep import discover_documents, document_slug, effective_exclude_segments, review_queue_records, run_document_sweep
-from semantica_workbench.evidence_index import build_sweep_evidence_index, write_sweep_evidence_index
+from semantica_workbench.evidence_index import build_sweep_evidence_index, evidence_index_turtle, write_sweep_evidence_index
 from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 from semantica_workbench.manifest import load_manifest
@@ -1170,6 +1170,34 @@ class WorkbenchTests(unittest.TestCase):
         self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_summary"]).exists())
         jsonl_rows = (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_jsonl"]).read_text(encoding="utf-8").splitlines()
         self.assertEqual(1 + len(index["documents"]) + len(index["claims"]) + len(index["findings"]), len(jsonl_rows))
+        evidence_ttl = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_ttl"]
+        self.assertTrue(evidence_ttl.exists())
+        from rdflib import Graph, Namespace, RDF
+
+        rdf_graph = Graph()
+        rdf_graph.parse(evidence_ttl, format="turtle")
+        rawr = Namespace("https://rawr.dev/ontology/")
+        self.assertEqual(len(index["documents"]), len(list(rdf_graph.subjects(RDF.type, rawr.IndexedDocument))))
+        self.assertEqual(len(index["claims"]), len(list(rdf_graph.subjects(RDF.type, rawr.EvidenceClaim))))
+        self.assertEqual(len(index["findings"]), len(list(rdf_graph.subjects(RDF.type, rawr.ReviewFinding))))
+        self.assertEqual(
+            len(index["documents"]) + len(index["claims"]) + len(index["findings"]),
+            len(list(rdf_graph.subjects(rawr.partOfEvidenceIndex, None))),
+        )
+        sparql = run_sparql_query(str(run_dir), Path("tools/semantica-workbench/queries/evidence-prohibited-patterns.rq"))
+        self.assertEqual(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_ttl"], REPO_ROOT / sparql["evidence_index_graph"])
+        prohibited_count = sum(
+            1
+            for row in index["findings"]
+            if "forbidden_pattern" in str(row.get("entity_id") or "") or "prohibited" in str(row.get("rule") or "")
+        )
+        self.assertEqual(prohibited_count, sparql["row_count"])
+        candidate_rows = run_sparql_query(str(run_dir), Path("tools/semantica-workbench/queries/evidence-candidate-new.rq"))
+        candidate_count = sum(1 for row in index["findings"] if row.get("kind") == "candidate-new")
+        self.assertEqual(candidate_count, candidate_rows["row_count"])
+        self.assertTrue(all(row.get("reviewAction") for row in candidate_rows["rows"]))
+        with self.assertRaises(FileNotFoundError):
+            run_sparql_query(str(run_dir), Path("tools/semantica-workbench/queries/relation-samples.rq"))
         evidence_html = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_html"]
         self.assertTrue(evidence_html.exists())
         evidence_html_text = evidence_html.read_text(encoding="utf-8")
@@ -1215,6 +1243,122 @@ class WorkbenchTests(unittest.TestCase):
             else:
                 target = (html_path.parent / unquote(href)).resolve()
             self.assertTrue(target.exists(), f"{href} from {html_path} resolved to missing {target}")
+
+    def test_evidence_index_sparql_is_scoped_to_projection(self) -> None:
+        from rdflib import Graph, Namespace, RDF
+
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            run_dir = Path(directory)
+            index = {
+                "schema_version": "rawr-sweep-evidence-index-v1",
+                "run_id": "synthetic-evidence-index",
+                "git_sha": "test",
+                "summary": {"documents_indexed": 2, "claim_count": 1, "finding_count": 1},
+                "documents": [
+                    {
+                        "document_path": "docs/a-b.md",
+                        "path_class": "high",
+                        "recommendation": "review-needed",
+                        "confidence": "medium",
+                    },
+                    {
+                        "document_path": "docs/a_b.md",
+                        "path_class": "high",
+                        "recommendation": "review-needed",
+                        "confidence": "medium",
+                    },
+                ],
+                "claims": [
+                    {
+                        "index_id": "docs/a-b.md#claim-1",
+                        "claim_id": "claim-1",
+                        "sweep_document_path": "docs/a-b.md",
+                        "document_path": "docs/a-b.md",
+                        "source_path": "docs/a-b.md",
+                        "line_start": 10,
+                        "line_end": 10,
+                        "char_start": 0,
+                        "char_end": 28,
+                        "text": "Introduce a candidate concept.",
+                        "resolution_state": "candidate-new",
+                        "review_state": "evidence-only",
+                    }
+                ],
+                "findings": [
+                    {
+                        "index_id": "docs/a-b.md#finding-1",
+                        "finding_id": "finding-1",
+                        "claim_id": "claim-1",
+                        "claim_index_id": "docs/a-b.md#claim-1",
+                        "sweep_document_path": "docs/a-b.md",
+                        "document_path": "docs/a-b.md",
+                        "source_path": "docs/a-b.md",
+                        "line_start": 10,
+                        "line_end": 10,
+                        "char_start": 0,
+                        "char_end": 28,
+                        "kind": "candidate-new",
+                        "rule": "candidate_concept_requires_review",
+                        "review_action": "Review as candidate; do not promote.",
+                        "resolution_state": "candidate-new",
+                    }
+                ],
+            }
+            evidence_ttl = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_ttl"]
+            evidence_ttl.write_text(evidence_index_turtle(index), encoding="utf-8")
+            (run_dir / CORE_GRAPH_FILENAMES["doc_sweep_ttl"]).write_text(
+                "\n".join(
+                    [
+                        "@prefix rawr: <https://rawr.dev/ontology/> .",
+                        "@prefix evidence: <https://rawr.dev/evidence/> .",
+                        "",
+                        "evidence:legacy-finding a rawr:ReviewFinding ;",
+                        "  rawr:findingKind \"candidate-new\" ;",
+                        "  rawr:partOfSweepRecord evidence:legacy-sweep ;",
+                        "  rawr:derivedFrom evidence:legacy-claim ;",
+                        "  rawr:sourcePath \"docs/a-b.md\" ;",
+                        "  rawr:lineStart \"10\" .",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            graph = Graph()
+            graph.parse(evidence_ttl, format="turtle")
+            rawr = Namespace("https://rawr.dev/ontology/")
+            self.assertEqual(2, len(list(graph.subjects(RDF.type, rawr.IndexedDocument))))
+            candidate_rows = run_sparql_query(str(run_dir), Path("tools/semantica-workbench/queries/evidence-candidate-new.rq"))
+            self.assertEqual("evidence-index", candidate_rows["graph_mode"])
+            self.assertEqual(1, candidate_rows["row_count"])
+            self.assertEqual("Review as candidate; do not promote.", candidate_rows["rows"][0]["reviewAction"])
+
+    def test_semantic_evidence_sparql_does_not_require_core_graph(self) -> None:
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            run_dir = Path(directory)
+            (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(
+                "\n".join(
+                    [
+                        "@prefix rawr: <https://rawr.dev/ontology/> .",
+                        "@prefix evidence: <https://rawr.dev/evidence/> .",
+                        "",
+                        "evidence:finding-1 a rawr:ReviewFinding ;",
+                        "  rawr:findingKind \"aligned\" ;",
+                        "  rawr:derivedFrom evidence:claim-1 ;",
+                        "  rawr:rule \"synthetic_rule\" .",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            result = run_sparql_query(str(run_dir), Path("tools/semantica-workbench/queries/semantic-findings.rq"))
+            self.assertEqual("semantic-evidence", result["graph_mode"])
+            self.assertEqual(1, result["row_count"])
+            with self.assertRaises(FileNotFoundError):
+                run_sparql_query(str(run_dir), Path("tools/semantica-workbench/queries/relation-samples.rq"))
 
     def test_document_sweep_evidence_index_reports_missing_artifacts(self) -> None:
         ontology = load_core_ontology()
