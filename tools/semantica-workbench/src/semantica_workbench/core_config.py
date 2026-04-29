@@ -101,7 +101,8 @@ SWEEP_CURRENT_FILES = [
 
 DEFAULT_TESTING_PLAN_CANDIDATES = [
     REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md",
-    REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md",
+    REPO_ROOT
+    / "docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md",
 ]
 
 DEFAULT_CORE_VIEWER_HOST = "127.0.0.1"

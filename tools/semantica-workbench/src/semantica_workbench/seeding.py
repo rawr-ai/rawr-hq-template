@@ -176,14 +176,18 @@ def seed_alignment_authority(
             if name in KNOWN_TYPES:
                 seed_entity(seeds, source, name, KNOWN_TYPES[name], "canonical", "authority-lock", number, number)
             elif any(hint in name for hint in FORBIDDEN_TYPE_HINTS):
-                entity = seed_entity(seeds, source, name, "ForbiddenPattern", "forbidden", "forbidden-target", number, number)
+                entity = seed_entity(
+                    seeds, source, name, "ForbiddenPattern", "forbidden", "forbidden-target", number, number
+                )
                 seed_relation(relations, authority_id, "forbids", entity, source, None, number, number, confidence=1.0)
 
         if line.startswith("| `") and " | `" in line and " --- " not in line:
             cells = [cell.strip().strip("`") for cell in line.strip("|").split("|")]
             if len(cells) >= 2 and cells[0] and cells[1]:
                 stale, replacement = cells[0], cells[1]
-                stale_id = seed_entity(seeds, source, stale, "ForbiddenPattern", "forbidden", "replacement-rule", number, number)
+                stale_id = seed_entity(
+                    seeds, source, stale, "ForbiddenPattern", "forbidden", "replacement-rule", number, number
+                )
                 replacement_id = seed_entity(
                     seeds,
                     source,
@@ -263,22 +267,54 @@ def seed_runtime_spec(
                     number,
                     summary=f"{component} runtime component contract row.",
                 )
-                owner_id = seed_entity(seeds, source, owner, infer_entity_type(owner), "canonical", "component-contract", number, number)
+                owner_id = seed_entity(
+                    seeds, source, owner, infer_entity_type(owner), "canonical", "component-contract", number, number
+                )
                 placement_id = seed_entity(
                     seeds, source, placement, "ComponentArtifact", "canonical", "component-contract", number, number
                 )
-                producer_id = seed_entity(seeds, source, producer, "RuntimeArtifact", "canonical", "component-contract", number, number)
-                consumer_id = seed_entity(seeds, source, consumer, "RuntimeArtifact", "canonical", "component-contract", number, number)
-                phase_id = seed_entity(seeds, source, phase, "LifecyclePhase", "canonical", "component-contract", number, number)
-                diagnostic_id = seed_entity(seeds, source, diagnostic, "Diagnostic", "canonical", "component-contract", number, number)
-                gate_id = seed_entity(seeds, source, gate, "ValidationGate", "canonical", "component-contract", number, number)
+                producer_id = seed_entity(
+                    seeds, source, producer, "RuntimeArtifact", "canonical", "component-contract", number, number
+                )
+                consumer_id = seed_entity(
+                    seeds, source, consumer, "RuntimeArtifact", "canonical", "component-contract", number, number
+                )
+                phase_id = seed_entity(
+                    seeds, source, phase, "LifecyclePhase", "canonical", "component-contract", number, number
+                )
+                diagnostic_id = seed_entity(
+                    seeds, source, diagnostic, "Diagnostic", "canonical", "component-contract", number, number
+                )
+                gate_id = seed_entity(
+                    seeds, source, gate, "ValidationGate", "canonical", "component-contract", number, number
+                )
                 seed_relation(relations, owner_id, "owns", component_id, source, None, number, number, confidence=1.0)
-                seed_relation(relations, component_id, "located_at", placement_id, source, None, number, number, confidence=1.0)
-                seed_relation(relations, producer_id, "produces", component_id, source, None, number, number, confidence=1.0)
-                seed_relation(relations, component_id, "consumes", consumer_id, source, None, number, number, confidence=1.0)
-                seed_relation(relations, component_id, "requires", phase_id, source, None, number, number, confidence=1.0)
-                seed_relation(relations, component_id, "emits_diagnostic", diagnostic_id, source, None, number, number, confidence=1.0)
-                seed_relation(relations, gate_id, "validates", component_id, source, None, number, number, confidence=1.0)
+                seed_relation(
+                    relations, component_id, "located_at", placement_id, source, None, number, number, confidence=1.0
+                )
+                seed_relation(
+                    relations, producer_id, "produces", component_id, source, None, number, number, confidence=1.0
+                )
+                seed_relation(
+                    relations, component_id, "consumes", consumer_id, source, None, number, number, confidence=1.0
+                )
+                seed_relation(
+                    relations, component_id, "requires", phase_id, source, None, number, number, confidence=1.0
+                )
+                seed_relation(
+                    relations,
+                    component_id,
+                    "emits_diagnostic",
+                    diagnostic_id,
+                    source,
+                    None,
+                    number,
+                    number,
+                    confidence=1.0,
+                )
+                seed_relation(
+                    relations, gate_id, "validates", component_id, source, None, number, number, confidence=1.0
+                )
 
 
 def seed_under_revision_architecture(
@@ -310,11 +346,19 @@ def seed_under_revision_architecture(
 
 
 def seed_lifecycle(
-    seeds: dict[str, dict[str, Any]], relations: dict[str, dict[str, Any]], source: Source, line_start: int, line_end: int
+    seeds: dict[str, dict[str, Any]],
+    relations: dict[str, dict[str, Any]],
+    source: Source,
+    line_start: int,
+    line_end: int,
 ) -> None:
     for left, right in zip(LIFECYCLE, LIFECYCLE[1:]):
-        left_id = seed_entity(seeds, source, left, "LifecyclePhase", "canonical", "runtime-lifecycle", line_start, line_end)
-        right_id = seed_entity(seeds, source, right, "LifecyclePhase", "canonical", "runtime-lifecycle", line_start, line_end)
+        left_id = seed_entity(
+            seeds, source, left, "LifecyclePhase", "canonical", "runtime-lifecycle", line_start, line_end
+        )
+        right_id = seed_entity(
+            seeds, source, right, "LifecyclePhase", "canonical", "runtime-lifecycle", line_start, line_end
+        )
         seed_relation(relations, left_id, "precedes", right_id, source, None, line_start, line_end, confidence=1.0)
 
 

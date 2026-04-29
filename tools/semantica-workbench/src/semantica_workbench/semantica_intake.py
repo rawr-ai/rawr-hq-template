@@ -76,14 +76,19 @@ def semantica_intake_probe(source: Source, max_chars: int = 6000) -> dict[str, A
             "local_chunk_count": len(local_chunks),
             "semantica_chunk_count": len(chunks),
             "exact_line_spans": exact_spans,
-            "source_identity_preserved": all(chunk["source_path"] == source.rel_path and chunk["source_id"] == source.id for chunk in chunks),
+            "source_identity_preserved": all(
+                chunk["source_path"] == source.rel_path and chunk["source_id"] == source.id for chunk in chunks
+            ),
             "authority_preserved": all(
-                chunk["authority_rank"] == source.authority_rank and chunk["authority_scope"] == source.authority_scope for chunk in chunks
+                chunk["authority_rank"] == source.authority_rank and chunk["authority_scope"] == source.authority_scope
+                for chunk in chunks
             ),
         },
         "fallback": {
             "chunk_markdown_retained": True,
-            "decision_grade_source": "semantica-intake" if exact_spans and status["markdown_parser_available"] else "chunk_markdown",
+            "decision_grade_source": "semantica-intake"
+            if exact_spans and status["markdown_parser_available"]
+            else "chunk_markdown",
             "removal_trigger": "Switch decision-grade intake only after semantica Markdown parsing and span parity are both proven.",
         },
     }
@@ -101,7 +106,9 @@ def semantica_intake_status() -> dict[str, Any]:
             "split_available": hasattr(split, "StructuralChunker"),
             "provenance_available": hasattr(provenance, "SourceReference"),
             "markdown_parser_available": markdown_parser_available,
-            "limitation": "" if markdown_parser_available else "Pinned semantica package lacks MarkdownParser; RAWR span adapter and chunk_markdown remain required.",
+            "limitation": ""
+            if markdown_parser_available
+            else "Pinned semantica package lacks MarkdownParser; RAWR span adapter and chunk_markdown remain required.",
         }
     except Exception as exc:
         return {

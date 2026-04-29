@@ -71,7 +71,9 @@ def normalize_run(run_dir) -> dict[str, Any]:
                     "provenance": [],
                     "sources": [],
                 }
-            entities[entity_id]["confidence"] = max(entities[entity_id]["confidence"], float(raw.get("confidence") or 0.0))
+            entities[entity_id]["confidence"] = max(
+                entities[entity_id]["confidence"], float(raw.get("confidence") or 0.0)
+            )
             entities[entity_id]["provenance"].append(prov)
             source_index[entity_id].add(chunk["source_id"])
 
@@ -201,7 +203,10 @@ def add_relation(
             }
         )
         return
-    key = str(raw.get("id") or stable_id("normalized-relation", subject_id, predicate, object_id, str(raw.get("claim_id") or "")))
+    key = str(
+        raw.get("id")
+        or stable_id("normalized-relation", subject_id, predicate, object_id, str(raw.get("claim_id") or ""))
+    )
     relations[key] = {
         "id": key,
         "subject_id": subject_id,

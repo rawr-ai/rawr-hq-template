@@ -83,7 +83,9 @@ def build_llm_evidence_augmentation(
             if not entities and not triplets:
                 diagnostics.append({"kind": "llm-empty-output", "row": row_ref(row)})
                 continue
-            suggestions.append(llm_suggestion(index, row, provider=provider, model=model, entities=entities, triplets=triplets))
+            suggestions.append(
+                llm_suggestion(index, row, provider=provider, model=model, entities=entities, triplets=triplets)
+            )
 
     return {
         "schema_version": LLM_AUGMENTATION_SCHEMA_VERSION,
@@ -166,11 +168,18 @@ def selection_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
 def mock_suggestion(index: dict[str, Any], row: dict[str, Any], *, provider: str, model: str | None) -> dict[str, Any]:
     suggestion_kind = "candidate-mapping" if row.get("kind") == "candidate-new" else "ambiguity-clarification"
     return {
-        "id": stable_id("llm-augmentation", str(index.get("run_id") or "run"), str(row.get("index_id") or row.get("finding_id") or ""), provider),
+        "id": stable_id(
+            "llm-augmentation",
+            str(index.get("run_id") or "run"),
+            str(row.get("index_id") or row.get("finding_id") or ""),
+            provider,
+        ),
         "source_row": row_ref(row),
         "suggestion_kind": suggestion_kind,
         "suggested_label": row.get("label") or row.get("entity_id") or row.get("subject") or "unresolved concept",
-        "suggested_action": "review-candidate-mapping" if suggestion_kind == "candidate-mapping" else "review-assertion-scope",
+        "suggested_action": "review-candidate-mapping"
+        if suggestion_kind == "candidate-mapping"
+        else "review-assertion-scope",
         "rationale": "Mock LLM augmentation for deterministic schema validation; not model evidence.",
         "confidence": bounded_confidence(float(row.get("confidence") or 0.5) * 0.8),
         "extraction": {
@@ -196,7 +205,13 @@ def llm_suggestion(
     raw_entities = [entity_to_dict(entity) for entity in entities]
     raw_triplets = [triplet_to_dict(triplet) for triplet in triplets]
     return {
-        "id": stable_id("llm-augmentation", str(index.get("run_id") or "run"), str(row.get("index_id") or row.get("finding_id") or ""), provider, model or ""),
+        "id": stable_id(
+            "llm-augmentation",
+            str(index.get("run_id") or "run"),
+            str(row.get("index_id") or row.get("finding_id") or ""),
+            provider,
+            model or "",
+        ),
         "source_row": row_ref(row),
         "suggestion_kind": "semantic-expansion",
         "suggested_label": first_label(raw_entities, row),
@@ -242,10 +257,14 @@ def row_ref(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def first_label(raw_entities: list[dict[str, Any]], row: dict[str, Any]) -> str:
-    return next((item.get("text") for item in raw_entities if item.get("text")), None) or str(row.get("label") or row.get("entity_id") or "llm evidence")
+    return next((item.get("text") for item in raw_entities if item.get("text")), None) or str(
+        row.get("label") or row.get("entity_id") or "llm evidence"
+    )
 
 
-def aggregate_confidence(raw_entities: list[dict[str, Any]], raw_triplets: list[dict[str, Any]], row: dict[str, Any]) -> float:
+def aggregate_confidence(
+    raw_entities: list[dict[str, Any]], raw_triplets: list[dict[str, Any]], row: dict[str, Any]
+) -> float:
     values = [item.get("confidence") for item in [*raw_entities, *raw_triplets] if item.get("confidence") is not None]
     if not values:
         return bounded_confidence(row.get("confidence") or 0.5)

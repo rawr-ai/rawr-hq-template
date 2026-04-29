@@ -4,7 +4,9 @@ from collections import Counter
 from typing import Any
 
 
-def semantica_graph_probe(graph: dict[str, Any], candidate_queue: dict[str, Any], allowed_predicates: set[str] | None = None) -> dict[str, Any]:
+def semantica_graph_probe(
+    graph: dict[str, Any], candidate_queue: dict[str, Any], allowed_predicates: set[str] | None = None
+) -> dict[str, Any]:
     status = semantica_graph_status()
     target_ids = {entity["id"] for entity in graph.get("target_architecture_view", {}).get("entities", [])}
     candidate_ids = {candidate["id"] for candidate in candidate_queue.get("candidates", []) if candidate.get("id")}
@@ -27,11 +29,16 @@ def semantica_graph_probe(graph: dict[str, Any], candidate_queue: dict[str, Any]
         },
         "rawr_guards": {
             "stable_ids_preserved": all(entity.get("id") for entity in graph.get("entities", [])),
-            "controlled_predicates_preserved": all(relation.get("predicate") in controlled_predicates for relation in graph.get("relations", [])),
+            "controlled_predicates_preserved": all(
+                relation.get("predicate") in controlled_predicates for relation in graph.get("relations", [])
+            ),
             "candidate_ids_excluded_from_target": not bool(target_ids & candidate_ids),
-            "evidence_types_excluded_from_target": not any(entity.get("type") in evidence_like_types for entity in target_entities),
+            "evidence_types_excluded_from_target": not any(
+                entity.get("type") in evidence_like_types for entity in target_entities
+            ),
             "target_relations_resolve_inside_target": all(
-                relation.get("subject") in target_ids and relation.get("object") in target_ids for relation in target_relations
+                relation.get("subject") in target_ids and relation.get("object") in target_ids
+                for relation in target_relations
             ),
         },
         "candidate_handling": {
@@ -53,7 +60,10 @@ def semantica_graph_probe(graph: dict[str, Any], candidate_queue: dict[str, Any]
         from semantica.kg import GraphAnalyzer, KnowledgeGraph
 
         kg = KnowledgeGraph(
-            entities=[{"id": entity["id"], "type": entity.get("type"), "label": entity.get("label")} for entity in graph.get("entities", [])],
+            entities=[
+                {"id": entity["id"], "type": entity.get("type"), "label": entity.get("label")}
+                for entity in graph.get("entities", [])
+            ],
             relationships=[
                 {
                     "id": relation["id"],
@@ -102,14 +112,18 @@ def semantica_graph_status() -> dict[str, Any]:
 
 
 def duplicate_label_groups(entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    labels = Counter(str(entity.get("label") or "").strip().lower() for entity in entities if str(entity.get("label") or "").strip())
+    labels = Counter(
+        str(entity.get("label") or "").strip().lower() for entity in entities if str(entity.get("label") or "").strip()
+    )
     duplicate_labels = {label for label, count in labels.items() if count > 1}
     rows = []
     for label in sorted(duplicate_labels):
         rows.append(
             {
                 "label": label,
-                "ids": sorted(entity["id"] for entity in entities if str(entity.get("label") or "").strip().lower() == label),
+                "ids": sorted(
+                    entity["id"] for entity in entities if str(entity.get("label") or "").strip().lower() == label
+                ),
             }
         )
     return rows

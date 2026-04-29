@@ -57,7 +57,10 @@ def build_diff(run_dir) -> dict[str, Any]:
         claim
         for claim in claims
         if claim["authority_status"] in {"superseded", "legacy", "forbidden"}
-        or (claim["authority_scope"] == "broad-architecture-non-overlap" and claim["claim_type"] in {"candidate", "placement"})
+        or (
+            claim["authority_scope"] == "broad-architecture-non-overlap"
+            and claim["claim_type"] in {"candidate", "placement"}
+        )
     ]
     preserved_broad_concepts = [
         entity

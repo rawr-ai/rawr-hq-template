@@ -13,7 +13,9 @@ SWEEP_PIPELINE_STEPS = [
 ]
 
 
-def semantica_pipeline_probe(document_count: int, skipped_count: int, recommendations: dict[str, int]) -> dict[str, Any]:
+def semantica_pipeline_probe(
+    document_count: int, skipped_count: int, recommendations: dict[str, int]
+) -> dict[str, Any]:
     proof: dict[str, Any] = {
         "schema_version": "rawr-semantica-pipeline-proof-v1",
         "status": {

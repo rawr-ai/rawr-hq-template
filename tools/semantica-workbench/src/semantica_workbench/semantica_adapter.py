@@ -53,7 +53,9 @@ def generate_semantica_ontology(classes: list[str], properties: list[str]) -> di
         return {**status, "from_data_error": str(exc), "stdout": stream.getvalue().strip()[:1000]}
 
 
-def export_semantica_ontology(entities: list[dict[str, Any]], relations: list[dict[str, Any]], run_dir: Path) -> dict[str, Any]:
+def export_semantica_ontology(
+    entities: list[dict[str, Any]], relations: list[dict[str, Any]], run_dir: Path
+) -> dict[str, Any]:
     status = semantica_status()
     result: dict[str, Any] = {
         **status,
