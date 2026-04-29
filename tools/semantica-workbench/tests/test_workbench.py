@@ -30,6 +30,7 @@ from semantica_workbench.core_config import CORE_GRAPH_FILENAMES, NAMED_QUERY_DE
 from semantica_workbench.core_viewer import build_cytoscape_payload, write_html_viewer
 from semantica_workbench.core_query import render_query_text, run_named_query
 from semantica_workbench.document_sweep import discover_documents, document_slug, effective_exclude_segments, review_queue_records, run_document_sweep
+from semantica_workbench.evidence_index import build_sweep_evidence_index, write_sweep_evidence_index
 from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 from semantica_workbench.manifest import load_manifest
@@ -1089,6 +1090,21 @@ class WorkbenchTests(unittest.TestCase):
         self.assertEqual(5, pipeline["execution"]["steps_executed"])
         self.assertIn("PipelineStatus.", pipeline["execution"]["pipeline_status"])
         self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report"]).exists())
+        index_path = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"]
+        self.assertTrue(index_path.exists())
+        index = read_json(index_path)
+        self.assertEqual("rawr-sweep-evidence-index-v1", index["schema_version"])
+        self.assertEqual(2, index["summary"]["documents_indexed"])
+        self.assertEqual(sum(record["counts"]["claims"] for record in sweep["documents"]), index["summary"]["claim_count"])
+        self.assertEqual(sum(record["counts"]["findings"] for record in sweep["documents"]), index["summary"]["finding_count"])
+        self.assertEqual(sweep["summary"]["decision_grade_findings"], index["summary"]["decision_grade_finding_count"])
+        self.assertEqual(0, index["summary"]["warning_count"])
+        claim_index_ids = {claim["index_id"] for claim in index["claims"]}
+        self.assertTrue(index["findings"])
+        self.assertTrue(all(finding["claim_index_id"] in claim_index_ids for finding in index["findings"]))
+        self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_summary"]).exists())
+        jsonl_rows = (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_jsonl"]).read_text(encoding="utf-8").splitlines()
+        self.assertEqual(1 + len(index["documents"]) + len(index["claims"]) + len(index["findings"]), len(jsonl_rows))
         sweep_html = run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report_html"]
         self.assertTrue(sweep_html.exists())
         html_text = sweep_html.read_text(encoding="utf-8")
@@ -1104,6 +1120,32 @@ class WorkbenchTests(unittest.TestCase):
         self.assertIsNotNone(match)
         payload = json.loads(match.group(1))
         self.assertEqual(2, payload["sweep"]["summary"]["documents_analyzed"])
+
+    def test_document_sweep_evidence_index_reports_missing_artifacts(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            base_run = Path(directory)
+            write_json(base_run / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["metadata"], {"kind": "test-core", "source": "test"})
+            run_dir = run_document_sweep(
+                documents=["tools/semantica-workbench/fixtures/docs/sweep/active.md"],
+                run=str(base_run),
+            )
+        sweep = read_json(run_dir / CORE_GRAPH_FILENAMES["doc_sweep"])
+        semantic_path = REPO_ROOT / sweep["documents"][0]["artifact_paths"]["semantic_compare"]
+        semantic_path.unlink()
+        with self.assertRaises(FileNotFoundError):
+            build_sweep_evidence_index(run_dir)
+        index = write_sweep_evidence_index(run_dir, strict=False)
+        self.assertEqual(0, index["summary"]["documents_indexed"])
+        self.assertEqual(1, index["summary"]["documents_with_missing_artifacts"])
+        self.assertEqual(1, index["summary"]["warning_count"])
+        self.assertEqual("missing-semantic-compare-artifact", index["warnings"][0]["kind"])
 
     def test_document_sweep_explicit_excluded_doc_is_tagged_and_compared(self) -> None:
         ontology = load_core_ontology()
