@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -8,6 +9,7 @@ from typing import Any
 from .core_config import CORE_GRAPH_FILENAMES
 from .io import git_sha, read_json, rel, write_json, write_jsonl
 from .paths import REPO_ROOT
+from .semantica_adapter import iri_fragment, turtle_literal
 
 SWEEP_EVIDENCE_INDEX_SCHEMA_VERSION = "rawr-sweep-evidence-index-v1"
 STRICT_WARNING_KINDS = {
@@ -189,6 +191,7 @@ def write_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
     write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_summary"], evidence_index_summary(index))
     write_jsonl(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_jsonl"], evidence_index_jsonl_rows(index))
     write_sweep_evidence_index_html(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_html"], index)
+    (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_ttl"]).write_text(evidence_index_turtle(index), encoding="utf-8")
     return index
 
 
@@ -224,6 +227,91 @@ def evidence_index_jsonl_rows(index: dict[str, Any]) -> list[dict[str, Any]]:
     for warning in index.get("warnings", []):
         rows.append({"record_type": "warning", "run_id": index["run_id"], **warning})
     return rows
+
+
+def evidence_index_turtle(index: dict[str, Any]) -> str:
+    lines = [
+        "@prefix rawr: <https://rawr.dev/ontology/> .",
+        "@prefix evidence: <https://rawr.dev/evidence/> .",
+        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
+        "",
+    ]
+    run_node = evidence_node_id("index", str(index.get("run_id") or "sweep-evidence-index"))
+    summary = index.get("summary", {})
+    lines.append(f"evidence:{run_node} a rawr:SweepEvidenceIndex ;")
+    lines.append(f"  rawr:schemaVersion {turtle_literal(str(index.get('schema_version') or ''))} ;")
+    lines.append(f"  rawr:sourceArtifact {turtle_literal(CORE_GRAPH_FILENAMES['sweep_evidence_index'])} ;")
+    lines.append(f"  rawr:gitSha {turtle_literal(str(index.get('git_sha') or ''))} ;")
+    lines.append(f"  rawr:documentsIndexed {turtle_literal(str(summary.get('documents_indexed', 0)))} ;")
+    lines.append(f"  rawr:claimCount {turtle_literal(str(summary.get('claim_count', 0)))} ;")
+    lines.append(f"  rawr:findingCount {turtle_literal(str(summary.get('finding_count', 0)))} ;")
+    lines.append("  rawr:generatedEvidenceIsTruth \"false\" .")
+    lines.append("")
+
+    document_nodes: dict[str, str] = {}
+    for document in index.get("documents", []):
+        document_path = str(document.get("document_path") or "unknown-document")
+        node = evidence_node_id("document", document_path)
+        document_nodes[document_path] = node
+        lines.append(f"evidence:{node} a rawr:IndexedDocument ;")
+        lines.append(f"  rdfs:label {turtle_literal(document_path)} ;")
+        lines.append(f"  rawr:partOfEvidenceIndex evidence:{run_node} ;")
+        lines.append(f"  rawr:pathClass {turtle_literal(str(document.get('path_class') or ''))} ;")
+        lines.append(f"  rawr:recommendation {turtle_literal(str(document.get('recommendation') or ''))} ;")
+        lines.append(f"  rawr:confidence {turtle_literal(str(document.get('confidence') or ''))} .")
+        lines.append("")
+
+    for claim in index.get("claims", []):
+        node = evidence_node_id("claim", str(claim.get("index_id") or claim.get("claim_id") or "claim"))
+        document_path = str(claim.get("sweep_document_path") or claim.get("document_path") or "unknown-document")
+        lines.append(f"evidence:{node} a rawr:EvidenceClaim ;")
+        lines.append(f"  rdfs:label {turtle_literal(str(claim.get('text') or ''))} ;")
+        lines.append(f"  rawr:partOfEvidenceIndex evidence:{run_node} ;")
+        if document_path in document_nodes:
+            lines.append(f"  rawr:partOfDocument evidence:{document_nodes[document_path]} ;")
+        lines.append(f"  rawr:claimId {turtle_literal(str(claim.get('claim_id') or ''))} ;")
+        lines.append(f"  rawr:sourcePath {turtle_literal(str(claim.get('source_path') or ''))} ;")
+        lines.append(f"  rawr:lineStart {turtle_literal(str(claim.get('line_start') or ''))} ;")
+        lines.append(f"  rawr:lineEnd {turtle_literal(str(claim.get('line_end') or ''))} ;")
+        lines.append(f"  rawr:charStart {turtle_literal(str(claim.get('char_start') or ''))} ;")
+        lines.append(f"  rawr:charEnd {turtle_literal(str(claim.get('char_end') or ''))} ;")
+        lines.append(f"  rawr:resolutionState {turtle_literal(str(claim.get('resolution_state') or ''))} ;")
+        lines.append(f"  rawr:reviewState {turtle_literal(str(claim.get('review_state') or ''))} ;")
+        lines.append("  rawr:promotionAllowed \"false\" .")
+        lines.append("")
+
+    for finding in index.get("findings", []):
+        node = evidence_node_id("finding", str(finding.get("index_id") or finding.get("finding_id") or "finding"))
+        claim_node = evidence_node_id("claim", str(finding.get("claim_index_id") or finding.get("claim_id") or "claim"))
+        document_path = str(finding.get("sweep_document_path") or finding.get("document_path") or "unknown-document")
+        lines.append(f"evidence:{node} a rawr:ReviewFinding ;")
+        lines.append(f"  rawr:findingKind {turtle_literal(str(finding.get('kind') or ''))} ;")
+        lines.append(f"  rawr:partOfEvidenceIndex evidence:{run_node} ;")
+        lines.append(f"  rawr:derivedFrom evidence:{claim_node} ;")
+        if document_path in document_nodes:
+            lines.append(f"  rawr:partOfDocument evidence:{document_nodes[document_path]} ;")
+        lines.append(f"  rawr:sourcePath {turtle_literal(str(finding.get('source_path') or ''))} ;")
+        lines.append(f"  rawr:lineStart {turtle_literal(str(finding.get('line_start') or ''))} ;")
+        lines.append(f"  rawr:lineEnd {turtle_literal(str(finding.get('line_end') or ''))} ;")
+        lines.append(f"  rawr:charStart {turtle_literal(str(finding.get('char_start') or ''))} ;")
+        lines.append(f"  rawr:charEnd {turtle_literal(str(finding.get('char_end') or ''))} ;")
+        lines.append(f"  rawr:decisionGrade {turtle_literal(str(bool(finding.get('decision_grade'))).lower())} ;")
+        lines.append(f"  rawr:rule {turtle_literal(str(finding.get('rule') or ''))} ;")
+        lines.append(f"  rawr:resolutionState {turtle_literal(str(finding.get('resolution_state') or ''))} ;")
+        if finding.get("entity_id"):
+            lines.append(f"  rawr:resolvedTarget rawr:{iri_fragment(str(finding['entity_id']))} ;")
+        if finding.get("ambiguity_bucket"):
+            lines.append(f"  rawr:ambiguityBucket {turtle_literal(str(finding['ambiguity_bucket']))} ;")
+        if finding.get("review_action"):
+            lines.append(f"  rawr:reviewAction {turtle_literal(str(finding['review_action']))} ;")
+        lines.append("  rawr:promotionAllowed \"false\" .")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def evidence_node_id(kind: str, identity: str) -> str:
+    digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+    return iri_fragment(f"{kind}-{identity}") + f"_{digest}"
 
 
 def semantic_compare_path(run_dir: Path, record: dict[str, Any]) -> Path:

@@ -1,0 +1,10 @@
+PREFIX rawr: <https://rawr.dev/ontology/>
+PREFIX evidence: <https://rawr.dev/evidence/>
+
+SELECT ?target (COUNT(?finding) AS ?findingCount) WHERE {
+  ?finding a rawr:ReviewFinding ;
+    rawr:partOfEvidenceIndex ?evidenceIndex ;
+    rawr:resolvedTarget ?target .
+}
+GROUP BY ?target
+ORDER BY DESC(?findingCount) ?target

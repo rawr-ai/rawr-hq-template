@@ -1,0 +1,13 @@
+PREFIX rawr: <https://rawr.dev/ontology/>
+PREFIX evidence: <https://rawr.dev/evidence/>
+
+SELECT ?finding ?kind ?sourcePath ?lineStart ?rule WHERE {
+  ?finding a rawr:ReviewFinding ;
+    rawr:partOfEvidenceIndex ?evidenceIndex ;
+    rawr:findingKind ?kind ;
+    rawr:decisionGrade "true" ;
+    rawr:sourcePath ?sourcePath ;
+    rawr:lineStart ?lineStart ;
+    rawr:rule ?rule .
+}
+ORDER BY ?sourcePath ?lineStart
