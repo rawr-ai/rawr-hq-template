@@ -18,6 +18,7 @@ from semantica_workbench.architecture_change_frame import (
     load_architecture_change_frame_schema,
     validate_frame_policy_shape,
 )
+from semantica_workbench.artifact_models import validate_artifact_schema, validate_evidence_authority_boundary
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
     TESTING_PLAN,
@@ -122,6 +123,27 @@ class LlmAugmentationTests(WorkbenchTestCase):
             self.assertFalse(first["decision_grade"])
             self.assertIn("source_span", first["source_row"])
             self.assertEqual("mock-llm-evidence-augmentation-v1", first["extraction"]["method"])
+            self.assertEqual([], validate_artifact_schema(augmentation, "sweep-llm-evidence-augmentation"))
+            self.assertEqual([], validate_evidence_authority_boundary(augmentation))
+            augmentation["authority_boundary"]["augmentation_is_truth"] = True
+            augmentation["authority_boundary"]["alters_deterministic_verdicts"] = True
+            augmentation["suggestions"][0]["promotion_allowed"] = True
+            augmentation["suggestions"][0]["decision_grade"] = True
+            self.assertTrue(validate_artifact_schema(augmentation, "sweep-llm-evidence-augmentation"))
+            authority_errors = validate_evidence_authority_boundary(augmentation)
+            self.assertIn("authority_boundary_mismatch", {error["kind"] for error in authority_errors})
+            self.assertIn("generated_row_promotable", {error["kind"] for error in authority_errors})
+            self.assertIn("generated_row_decision_grade", {error["kind"] for error in authority_errors})
+            del augmentation["suggestions"][0]["source_row"]["source_span"]
+            self.assertTrue(validate_artifact_schema(augmentation, "sweep-llm-evidence-augmentation"))
+            augmentation = write_llm_evidence_augmentation(
+                run_dir,
+                provider="mock",
+                model="mock-model",
+                limit=1,
+            )
+            del augmentation["suggestions"][0]["extraction"]["method"]
+            self.assertTrue(validate_artifact_schema(augmentation, "sweep-llm-evidence-augmentation"))
 
     def test_llm_evidence_augmentation_real_provider_failure_records_attempt(self) -> None:
         original_status = augmentation_module.semantica_llm_status

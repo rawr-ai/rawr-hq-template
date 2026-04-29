@@ -18,6 +18,7 @@ from semantica_workbench.architecture_change_frame import (
     load_architecture_change_frame_schema,
     validate_frame_policy_shape,
 )
+from semantica_workbench.artifact_models import validate_artifact_schema, validate_evidence_authority_boundary
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
     TESTING_PLAN,
@@ -70,11 +71,39 @@ from support import (
     WorkbenchTestCase,
     frame_evidence_ref,
     minimal_architecture_change_frame,
+    synthetic_evidence_index,
     write_reference_geometry_bundle,
 )
 
 
 class EvidenceIndexTests(WorkbenchTestCase):
+    def test_evidence_index_artifact_schema_validates_authority_boundary(self) -> None:
+        index = synthetic_evidence_index()
+        self.assertEqual([], validate_artifact_schema(index, "sweep-evidence-index"))
+        self.assertEqual([], validate_evidence_authority_boundary(index))
+        index["authority_boundary"]["generated_evidence_is_truth"] = True
+        self.assertTrue(validate_artifact_schema(index, "sweep-evidence-index"))
+        self.assertEqual("authority_boundary_mismatch", validate_evidence_authority_boundary(index)[0]["kind"])
+        index = synthetic_evidence_index()
+        index["findings"][0]["promotion_allowed"] = True
+        self.assertTrue(validate_artifact_schema(index, "sweep-evidence-index"))
+        self.assertEqual("generated_row_promotable", validate_evidence_authority_boundary(index)[0]["kind"])
+        index = synthetic_evidence_index()
+        index["findings"][0]["claim_index_id"] = None
+        index["findings"][0]["char_start"] = None
+        index["findings"][0]["char_end"] = None
+        index["findings"][0]["char_span_kind"] = None
+        index["findings"][0]["source_span"]["char_start"] = None
+        index["findings"][0]["source_span"]["char_end"] = None
+        index["findings"][0]["source_span"]["char_span_kind"] = None
+        self.assertEqual([], validate_artifact_schema(index, "sweep-evidence-index"))
+        index = synthetic_evidence_index()
+        del index["findings"][0]["source_span"]
+        self.assertTrue(validate_artifact_schema(index, "sweep-evidence-index"))
+        index = synthetic_evidence_index()
+        del index["findings"][0]["review_action"]
+        self.assertTrue(validate_artifact_schema(index, "sweep-evidence-index"))
+
     def test_evidence_index_sparql_is_scoped_to_projection(self) -> None:
         from rdflib import Graph, Namespace, RDF
 
