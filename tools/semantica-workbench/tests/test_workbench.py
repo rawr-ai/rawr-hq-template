@@ -6,6 +6,7 @@ import json
 import re
 import tempfile
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 from semantica_workbench.architecture_change_frame import (
     FRAME_SCHEMA_VERSION,
@@ -1169,6 +1170,22 @@ class WorkbenchTests(unittest.TestCase):
         self.assertTrue((run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_summary"]).exists())
         jsonl_rows = (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_jsonl"]).read_text(encoding="utf-8").splitlines()
         self.assertEqual(1 + len(index["documents"]) + len(index["claims"]) + len(index["findings"]), len(jsonl_rows))
+        evidence_html = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_html"]
+        self.assertTrue(evidence_html.exists())
+        evidence_html_text = evidence_html.read_text(encoding="utf-8")
+        self.assertIn("Corpus Evidence Index", evidence_html_text)
+        self.assertIn("Review Queue", evidence_html_text)
+        self.assertIn("Candidate New", evidence_html_text)
+        self.assertIn("Per-Document Evidence", evidence_html_text)
+        self.assertIn("Open report", evidence_html_text)
+        for document in index["documents"]:
+            report_html = document.get("report_html_artifact")
+            if report_html:
+                self.assertTrue((REPO_ROOT / report_html).exists(), report_html)
+        self.assert_report_links_resolve(evidence_html)
+        current_evidence_html = REPO_ROOT / ".semantica/current" / CORE_GRAPH_FILENAMES["sweep_evidence_index_html"]
+        self.assertTrue(current_evidence_html.exists())
+        self.assert_report_links_resolve(current_evidence_html)
         sweep_html = run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report_html"]
         self.assertTrue(sweep_html.exists())
         html_text = sweep_html.read_text(encoding="utf-8")
@@ -1184,6 +1201,20 @@ class WorkbenchTests(unittest.TestCase):
         self.assertIsNotNone(match)
         payload = json.loads(match.group(1))
         self.assertEqual(2, payload["sweep"]["summary"]["documents_analyzed"])
+
+    def assert_report_links_resolve(self, html_path: Path) -> None:
+        html_text = html_path.read_text(encoding="utf-8")
+        hrefs = re.findall(r'<a class="report-link" href="([^"]+)"', html_text)
+        self.assertTrue(hrefs)
+        for href in hrefs:
+            parsed = urlparse(href)
+            if parsed.scheme == "file":
+                target = Path(unquote(parsed.path))
+            elif Path(unquote(href)).is_absolute():
+                target = Path(unquote(href))
+            else:
+                target = (html_path.parent / unquote(href)).resolve()
+            self.assertTrue(target.exists(), f"{href} from {html_path} resolved to missing {target}")
 
     def test_document_sweep_evidence_index_reports_missing_artifacts(self) -> None:
         ontology = load_core_ontology()
