@@ -1,6 +1,6 @@
 # Architecture Document Intelligence Next Stage Draft
 
-Status: active work-to-be-done draft
+Status: implemented through developer-capability acceptance
 Date: 2026-04-29
 Branch: `codex/semantica-first-pipeline-implementation`
 
@@ -10,11 +10,17 @@ Read this document first for the work-to-be-done plan. Then read `architecture-d
 
 ## Current Execution Baseline
 
-Latest submitted implementation baseline:
+Latest submitted implementation baseline before final acceptance:
 
-- Commit: `767d1b6c feat(semantica): add sweep evidence index`
+- Commit sequence through Phase 6:
+  - `767d1b6c feat(semantica): add sweep evidence index`
+  - `9de38e6d feat(semantica): add corpus evidence queries`
+  - `50e43d6a feat(semantica): add corpus evidence html report`
+  - `008fe235 feat(semantica): project corpus evidence index to rdf`
+  - `493fcd6e feat(semantica): add agent evidence query manifest`
+  - `2fea15f2 feat(semantica): add llm evidence augmentation sidecar`
 - PR: `https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/251`
-- Current generated sweep run: `.semantica/runs/20260429T014150Z-ebad0be0adf8-doc-sweep`
+- Acceptance generated sweep run: `.semantica/runs/20260429T042659Z-2fea15f29143-doc-sweep`
 - Current index artifacts:
   - `.semantica/current/sweep-evidence-index.json`
   - `.semantica/current/sweep-evidence-index.jsonl`
@@ -30,9 +36,15 @@ These counts are a snapshot from the named generated sweep run, not durable corp
 | Status | Work |
 | --- | --- |
 | Implemented | Global JSON/JSONL sweep evidence index |
-| Validate | Index contract, counts, source spans, and claim/finding links |
-| Next | Index-backed `core:query` evidence queries |
-| Later | Evidence HTML, RDF projection, agent/MCP access, optional LLM sidecar |
+| Implemented | Index contract, counts, source spans, and claim/finding links |
+| Implemented | Index-backed `core:query` evidence queries |
+| Implemented | Evidence HTML audit view |
+| Implemented | RDF projection and evidence SPARQL examples |
+| Implemented | Agent-facing evidence query manifest |
+| Implemented | Optional fail-closed LLM evidence augmentation sidecar |
+| Finalized | Developer capability acceptance handoff |
+
+Final acceptance is recorded in `architecture-document-intelligence-acceptance-handoff.md`.
 
 ## Thesis
 
@@ -123,7 +135,7 @@ Reliability:
 
 Decision:
 
-This is now the implemented substrate. The next implementation target is stable review queries over this index.
+This is now the implemented substrate. Stable review queries over this index are implemented.
 
 ### Layer 3: Stable Review Queries
 
@@ -146,7 +158,7 @@ Reliability:
 
 Decision:
 
-Add a small query vocabulary for durable reviewer workflows, not a long tail of hard-coded report cases.
+Implemented as a small query vocabulary for durable reviewer workflows, not a long tail of hard-coded report cases.
 
 ### Layer 4: Human Evidence Navigation
 
@@ -161,7 +173,7 @@ Reliability:
 
 Decision:
 
-Add an "Evidence Index" HTML view separate from the sweep dashboard. The sweep dashboard answers "where should I look?" The evidence index answers "what exactly was found?"
+Implemented as an "Evidence Index" HTML view separate from the sweep dashboard. The sweep dashboard answers "where should I look?" The evidence index answers "what exactly was found?"
 
 ### Layer 5: RDF, Semantica KG, MCP, And Graph Projection
 
@@ -176,7 +188,7 @@ Reliability:
 
 Decision:
 
-Treat RDF/Semantica KG/MCP as projections from the evidence index, not as the primary next-stage substrate.
+Implemented RDF and SPARQL as projections from the evidence index, not as the primary generated-evidence substrate. MCP-facing RAWR evidence access remains honestly recorded as not wired in the agent manifest.
 
 ### Layer 6: LLM-Assisted Expansion
 
@@ -191,7 +203,7 @@ Reliability:
 
 Decision:
 
-Admit LLM-derived evidence only after exact source anchoring, confidence recording, extractor/model provenance, review-state marking, and deterministic RAWR policy evaluation.
+Implemented as an optional sidecar over selected ambiguous, unresolved, and candidate evidence rows. LLM-derived output is evidence-only, fail-closed, source-row anchored, non-promotional, and does not alter deterministic RAWR policy output.
 
 ## Proposed Implementation Phases
 
@@ -232,22 +244,22 @@ Acceptance:
 
 ### Phase 2: Index-Backed Query Layer
 
-Status: next implementation phase.
+Status: implemented in `9de38e6d`.
 
-Extend `core:query` with index-backed named queries.
+Extended `core:query` with index-backed named queries.
 
-Initial named queries:
+Implemented named queries:
 
 - `evidence-summary`
 - `evidence-review-queue`
-- `evidence-all-findings`
-- `evidence-by-document`
-- `evidence-by-entity`
 - `evidence-candidate-new`
 - `evidence-unresolved-targets`
 - `evidence-source-authority-signals`
 - `evidence-prohibited-pattern-mentions`
 - `evidence-weak-modality-hotspots`
+- `evidence-by-document`
+- `evidence-by-entity`
+- `evidence-agent-manifest`
 
 Acceptance:
 
@@ -257,7 +269,9 @@ Acceptance:
 
 ### Phase 3: Evidence Index HTML View
 
-Add a human-readable `sweep-evidence-index.html` generated from the same index.
+Status: implemented in `50e43d6a`.
+
+Added a human-readable `sweep-evidence-index.html` generated from the same index.
 
 Recommended structure:
 
@@ -277,7 +291,9 @@ Acceptance:
 
 ### Phase 4: RDF And Semantica Projection
 
-Generate `sweep-evidence-index.ttl` from the index after the JSON contract is stable.
+Status: implemented in `008fe235`.
+
+Generated `sweep-evidence-index.ttl` from the index after the JSON contract stabilized.
 
 Changes:
 
@@ -293,7 +309,9 @@ Acceptance:
 
 ### Phase 5: MCP And Agent-Facing Access
 
-Expose the same stable index through an agent-facing interface.
+Status: implemented as agent-facing manifest in `493fcd6e`; live RAWR evidence MCP access remains not wired.
+
+Exposes the same stable index through an agent-facing manifest.
 
 Preferred posture:
 
@@ -308,7 +326,9 @@ Acceptance:
 
 ### Phase 6: LLM-Assisted Evidence Augmentation
 
-Add optional LLM evidence sidecars to the index after deterministic indexing and query behavior are stable.
+Status: implemented in `2fea15f2`.
+
+Added optional LLM evidence sidecars to the index after deterministic indexing and query behavior stabilized.
 
 Scope:
 
@@ -328,6 +348,26 @@ Acceptance:
 - Blocked provider/model/credential states are explicit.
 - LLM evidence rows carry extractor, model, prompt/config reference, confidence, source span, review state, and `promotion_allowed: false`.
 - LLM-derived evidence cannot become decision-grade without RAWR deterministic policy.
+
+### Phase 7: Developer Capability Acceptance
+
+Status: recorded in `architecture-document-intelligence-acceptance-handoff.md`.
+
+Accepted the end-to-end corpus evidence workflow over a fresh full sweep:
+
+- `doc:sweep`
+- `doc:index`
+- evidence named queries
+- evidence HTML
+- RDF/SPARQL projection
+- agent manifest
+- optional LLM sidecar blocked/mock modes
+
+Acceptance:
+
+- A developer can start from structured evidence queries rather than direct source reading.
+- Every review path still points back to source spans and per-document reports.
+- Generated evidence remains non-authoritative.
 
 ## Data Contract Draft
 
@@ -459,7 +499,8 @@ bun run semantica:core:query -- --named evidence-summary --format text
 After Phase 4, add:
 
 ```bash
-bun run semantica:core:query -- --sparql tools/semantica-workbench/queries/evidence-findings.rq --format json
+bun run semantica:core:query -- --sparql tools/semantica-workbench/queries/evidence-candidate-new.rq --format json
+bun run semantica:core:query -- --sparql tools/semantica-workbench/queries/evidence-prohibited-patterns.rq --format json
 ```
 
 ## Definition Of Done
