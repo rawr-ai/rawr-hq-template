@@ -182,10 +182,13 @@ def build_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[st
 
 
 def write_sweep_evidence_index(run_dir: Path, *, strict: bool = True) -> dict[str, Any]:
+    from .report_html import write_sweep_evidence_index_html
+
     index = build_sweep_evidence_index(run_dir, strict=strict)
     write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"], index)
     write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_summary"], evidence_index_summary(index))
     write_jsonl(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_jsonl"], evidence_index_jsonl_rows(index))
+    write_sweep_evidence_index_html(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index_html"], index)
     return index
 
 

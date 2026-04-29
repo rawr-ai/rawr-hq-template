@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import html
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
+
+from .paths import REPO_ROOT
 
 
 def write_sweep_report_html(path: Path, sweep: dict[str, Any]) -> None:
@@ -116,6 +119,48 @@ def write_semantic_compare_report_html(path: Path, compare: dict[str, Any]) -> N
         semantic_finding_section("Outside Scope", compare.get("outside_scope", [])),
     ]
     write_page(path, "Semantic Compare Report", "".join(body))
+
+
+def write_sweep_evidence_index_html(path: Path, index: dict[str, Any]) -> None:
+    summary = index["summary"]
+    findings = index.get("findings", [])
+    documents = index.get("documents", [])
+    body = [
+        hero(
+            "Corpus Evidence Index",
+            "Structured cross-document evidence navigation generated from sweep JSON. This is a discovery and review surface, not RAWR truth.",
+            [
+                ("Run", index["run_id"]),
+                ("Git", str(index.get("git_sha", ""))[:12]),
+                ("Documents", str(summary.get("documents_indexed", 0))),
+                ("Warnings", str(summary.get("warning_count", 0))),
+            ],
+        ),
+        metric_grid(
+            [
+                ("Claims", summary.get("claim_count", 0), "indexed source-backed claims"),
+                ("Findings", summary.get("finding_count", 0), "review evidence rows"),
+                ("Decision Grade", summary.get("decision_grade_finding_count", 0), "deterministic policy signals"),
+                ("Ambiguous", summary.get("finding_count_by_kind", {}).get("ambiguous", 0), "needs wording or mapping review"),
+            ]
+        ),
+        meaning_block(
+            [
+                "Use this page to decide where to inspect next. The JSON index remains the source artifact for generated evidence.",
+                "Rows preserve source spans and links to per-document reports so reviewers can verify findings without scanning every document first.",
+                "Generated evidence, candidates, and LLM output remain non-authoritative until reviewed promotion changes RAWR sources.",
+            ]
+        ),
+        evidence_breakdown_panel(summary),
+        evidence_finding_section("Review Queue", evidence_review_queue(findings), priority=True, limit=35, base_dir=path.parent),
+        evidence_finding_section("Candidate New", [item for item in findings if item.get("kind") == "candidate-new"], limit=25, base_dir=path.parent),
+        evidence_source_authority_panel(documents, findings, base_dir=path.parent),
+        evidence_ambiguity_panel(summary, findings),
+        evidence_finding_section("Unresolved Targets", evidence_unresolved_targets(findings), limit=35, base_dir=path.parent),
+        evidence_entity_table(findings),
+        evidence_document_table(documents, base_dir=path.parent),
+    ]
+    write_page(path, "Corpus Evidence Index", "".join(body))
 
 
 def write_page(path: Path, title: str, body: str) -> None:
@@ -272,7 +317,7 @@ def document_table(records: list[dict[str, Any]]) -> str:
 <section class="panel">
   <h2>Per-Document Detail</h2>
   <div class="table-wrap">
-    <table>
+    <table class="numeric-table">
       <thead><tr><th>Document</th><th>Recommendation</th><th>Class</th><th>Claims</th><th>Findings</th><th>Decision</th><th>Report</th></tr></thead>
       <tbody>{''.join(rows)}</tbody>
     </table>
@@ -511,6 +556,192 @@ def decision_review_items(compare: dict[str, Any]) -> list[dict[str, Any]]:
     return [*compare.get("conflicts", []), *compare.get("deprecated_uses", [])]
 
 
+def evidence_review_queue(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return sorted(
+        [item for item in findings if evidence_needs_review(item)],
+        key=lambda item: (str(item.get("sweep_document_path") or item.get("document_path") or ""), item.get("line_start") or 0),
+    )
+
+
+def evidence_needs_review(item: dict[str, Any]) -> bool:
+    action = str(item.get("review_action") or "")
+    if action.startswith("No action required") or action.startswith("No architecture action"):
+        return False
+    if item.get("kind") == "outside-scope":
+        return False
+    return bool(item.get("decision_grade") or item.get("kind") in {"ambiguous", "candidate-new"} or action)
+
+
+def evidence_unresolved_targets(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        item
+        for item in findings
+        if item.get("resolution_state") == "unresolved"
+        or item.get("ambiguity_bucket") == "unresolved-target"
+        or item.get("rule") == "no_resolved_decision_target"
+    ]
+
+
+def evidence_breakdown_panel(summary: dict[str, Any]) -> str:
+    return f"""
+<section class="panel">
+  <h2>Evidence Breakdown</h2>
+  <div class="split-panels">
+    {mapping_list('Findings By Kind', summary.get('finding_count_by_kind', {}))}
+    {mapping_list('Review Actions', summary.get('review_action_count', {}))}
+    {mapping_list('Resolution States', summary.get('claim_count_by_resolution_state', {}))}
+  </div>
+</section>
+"""
+
+
+def evidence_finding_section(
+    title: str,
+    findings: list[dict[str, Any]],
+    *,
+    priority: bool = False,
+    limit: int = 25,
+    base_dir: Path,
+) -> str:
+    if not findings:
+        return f"<section class=\"panel\"><h2>{escape(title)}</h2><p class=\"muted\">None.</p></section>"
+    cards = "".join(evidence_finding_card(item, priority=priority, base_dir=base_dir) for item in findings[:limit])
+    more = ""
+    if len(findings) > limit:
+        more = f"<p class=\"muted\">{len(findings) - limit} additional findings omitted here. Use sweep-evidence-index.json for the complete set.</p>"
+    return f"""
+<section class="panel">
+  <div class="section-title"><h2>{escape(title)}</h2><span>{len(findings)} findings</span></div>
+  <div class="finding-grid">{cards}</div>
+  {more}
+</section>
+"""
+
+
+def evidence_finding_card(item: dict[str, Any], *, priority: bool = False, base_dir: Path) -> str:
+    target = item.get("entity_id") or item.get("label") or "unresolved target"
+    text = item.get("text") or ""
+    report = item.get("report_html_artifact") or item.get("report_artifact")
+    return f"""
+<article class="finding-card {'priority' if priority else ''}">
+  <div class="finding-head">
+    <span class="badge {badge_class(str(item.get('kind') or 'finding'))}">{escape(str(item.get('kind') or 'finding'))}</span>
+    <span class="line-ref">{escape(line_ref(item))}</span>
+  </div>
+  <h3>{escape(str(target))}</h3>
+  <p>{escape(item.get('reason') or item.get('review_action') or 'Review source claim.')}</p>
+  <div class="chips">
+    <span class="chip">{escape(str(item.get('rule') or 'unknown'))}</span>
+    <span class="chip">{escape(str(item.get('resolution_state') or 'unknown'))}</span>
+    <span class="chip">{escape(str(item.get('ambiguity_bucket') or 'no-bucket'))}</span>
+  </div>
+  <p class="action"><strong>Action:</strong> {escape(item.get('review_action') or 'Review source evidence.')}</p>
+  {f'<blockquote>{escape(text)}</blockquote>' if text else ''}
+  {artifact_link_for_base(report, 'Open report', base_dir) if report else ''}
+</article>
+"""
+
+
+def evidence_source_authority_panel(documents: list[dict[str, Any]], findings: list[dict[str, Any]], *, base_dir: Path) -> str:
+    source_docs = [document for document in documents if document.get("path_class") == "source-authority"]
+    source_paths = {document.get("document_path") for document in source_docs}
+    source_findings = [
+        finding
+        for finding in findings
+        if finding.get("sweep_document_path") in source_paths or finding.get("document_path") in source_paths
+    ]
+    doc_cards = "".join(evidence_document_compact(document, base_dir=base_dir) for document in source_docs)
+    finding_cards = "".join(evidence_finding_card(item, priority=True, base_dir=base_dir) for item in source_findings[:12])
+    return f"""
+<section class="panel">
+  <div class="section-title"><h2>Source Authority Signals</h2><span>{len(source_findings)} findings</span></div>
+  <div class="record-list">{doc_cards or '<p class="muted">No source-authority documents indexed.</p>'}</div>
+  {f'<div class="finding-grid">{finding_cards}</div>' if finding_cards else ''}
+</section>
+"""
+
+
+def evidence_ambiguity_panel(summary: dict[str, Any], findings: list[dict[str, Any]]) -> str:
+    buckets = summary.get("ambiguous_count_by_bucket", {})
+    weak_docs: dict[str, int] = defaultdict(int)
+    for item in findings:
+        if item.get("ambiguity_bucket") == "weak-modality":
+            weak_docs[str(item.get("sweep_document_path") or item.get("document_path") or "unknown-document")] += 1
+    weak_items = "".join(
+        f"<li><span>{escape(path)}</span><strong>{count}</strong></li>"
+        for path, count in sorted(weak_docs.items(), key=lambda pair: (-pair[1], pair[0]))[:12]
+    )
+    return f"""
+<section class="panel">
+  <h2>Ambiguity Buckets</h2>
+  <div class="split-panels">
+    {mapping_list('Bucket Counts', buckets)}
+    <article class="mini-panel"><h3>Weak-Modality Hotspots</h3><ul class="count-list">{weak_items or '<li><span>None</span><strong>0</strong></li>'}</ul></article>
+  </div>
+</section>
+"""
+
+
+def evidence_entity_table(findings: list[dict[str, Any]], limit: int = 50) -> str:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for item in findings:
+        if item.get("entity_id"):
+            grouped[str(item["entity_id"])].append(item)
+    rows = []
+    for entity_id, items in sorted(grouped.items(), key=lambda pair: (-len(pair[1]), pair[0]))[:limit]:
+        kinds = Counter(str(item.get("kind") or "unknown") for item in items)
+        rows.append(
+            "<tr>"
+            f"<td><span class=\"pathline table-path\">{escape(entity_id)}</span></td>"
+            f"<td>{escape(next((str(item.get('label')) for item in items if item.get('label')), ''))}</td>"
+            f"<td>{len(items)}</td>"
+            f"<td>{len({item.get('sweep_document_path') or item.get('document_path') for item in items})}</td>"
+            f"<td>{escape(', '.join(f'{key}: {value}' for key, value in sorted(kinds.items())))}</td>"
+            "</tr>"
+        )
+    return f"<section class=\"panel\"><h2>Entity And Candidate Mentions</h2><div class=\"table-wrap\"><table><thead><tr><th>Entity</th><th>Label</th><th>Findings</th><th>Docs</th><th>Kinds</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div></section>"
+
+
+def evidence_document_table(documents: list[dict[str, Any]], *, base_dir: Path) -> str:
+    rows = []
+    for document in documents:
+        counts = document.get("counts", {})
+        report = document.get("report_html_artifact") or document.get("artifact_paths", {}).get("report_html")
+        rows.append(
+            "<tr>"
+            f"<td><span class=\"pathline table-path\">{escape(document.get('document_path'))}</span></td>"
+            f"<td><span class=\"badge {badge_class(str(document.get('recommendation') or 'unknown'))}\">{escape(document.get('recommendation'))}</span></td>"
+            f"<td>{escape(document.get('path_class'))}</td>"
+            f"<td>{counts.get('claims', 0)}</td>"
+            f"<td>{counts.get('findings', 0)}</td>"
+            f"<td>{counts.get('decision_grade', 0)}</td>"
+            f"<td>{artifact_link_for_base(report, 'Open report', base_dir)}</td>"
+            "</tr>"
+        )
+    return f"<section class=\"panel\"><h2>Per-Document Evidence</h2><div class=\"table-wrap\"><table class=\"numeric-table\"><thead><tr><th>Document</th><th>Recommendation</th><th>Class</th><th>Claims</th><th>Findings</th><th>Decision</th><th>Report</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div></section>"
+
+
+def evidence_document_compact(document: dict[str, Any], *, base_dir: Path) -> str:
+    counts = document.get("counts", {})
+    report = document.get("report_html_artifact") or document.get("artifact_paths", {}).get("report_html")
+    return f"""
+<article class="record priority">
+  <div class="record-main">
+    <div class="pathline">{escape(document.get('document_path'))}</div>
+    <div class="meta-row">
+      <span class="badge {badge_class(str(document.get('recommendation') or 'unknown'))}">{escape(document.get('recommendation'))}</span>
+      <span>{escape(document.get('path_class'))}</span>
+    </div>
+  </div>
+  <div class="record-side">
+    <strong>{counts.get('findings', 0)}</strong><span>findings</span>
+    <strong>{counts.get('decision_grade', 0)}</strong><span>decision-grade</span>
+    {artifact_link_for_base(report, 'Open report', base_dir) if report else ''}
+  </div>
+</article>
+"""
+
+
 def finding_line(item: dict[str, Any]) -> str:
     return (
         f"<p><span class=\"badge {badge_class(str(item.get('verdict') or 'finding'))}\">{escape(str(item.get('verdict') or 'finding'))}</span> "
@@ -534,6 +765,19 @@ def artifact_href(path: str) -> str:
     if path.startswith(".semantica/current/"):
         return quote(path.removeprefix(".semantica/current/"), safe="/._~-")
     return quote(path, safe="/._~-")
+
+
+def artifact_link_for_base(path: str | None, label: str, base_dir: Path) -> str:
+    if not path:
+        return ""
+    return f"<a class=\"report-link\" href=\"{escape(artifact_href_for_base(path, base_dir))}\">{escape(label)}</a>"
+
+
+def artifact_href_for_base(path: str, base_dir: Path) -> str:
+    artifact = Path(path)
+    if not artifact.is_absolute():
+        artifact = REPO_ROOT / artifact
+    return artifact.resolve().as_uri()
 
 
 def badge_class(value: str) -> str:
@@ -950,7 +1194,7 @@ th {
   font-size: 12px;
   text-transform: uppercase;
 }
-td:nth-child(4), td:nth-child(5), td:nth-child(6) {
+.numeric-table td:nth-child(4), .numeric-table td:nth-child(5), .numeric-table td:nth-child(6) {
   width: 72px;
   font-variant-numeric: tabular-nums;
 }
