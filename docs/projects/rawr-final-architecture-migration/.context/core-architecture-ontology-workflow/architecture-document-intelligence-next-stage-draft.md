@@ -1,8 +1,38 @@
 # Architecture Document Intelligence Next Stage Draft
 
-Status: draft for takeover and implementation planning
-Date: 2026-04-28
+Status: active work-to-be-done draft
+Date: 2026-04-29
 Branch: `codex/semantica-first-pipeline-implementation`
+
+## Artifact Roles And Reading Order
+
+Read this document first for the work-to-be-done plan. Then read `architecture-document-intelligence-execution-workflow.md` for the phase control loop, review teams, verification gates, and handoff expectations.
+
+## Current Execution Baseline
+
+Latest submitted implementation baseline:
+
+- Commit: `767d1b6c feat(semantica): add sweep evidence index`
+- PR: `https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/251`
+- Current generated sweep run: `.semantica/runs/20260429T014150Z-ebad0be0adf8-doc-sweep`
+- Current index artifacts:
+  - `.semantica/current/sweep-evidence-index.json`
+  - `.semantica/current/sweep-evidence-index.jsonl`
+  - `.semantica/current/sweep-evidence-index-summary.json`
+- Current index counts: `46` indexed documents, `4247` claims, `4795` findings, `0` warnings
+
+These counts are a snapshot from the named generated sweep run, not durable corpus facts. Regenerate with `bun run semantica:doc:sweep` and `bun run semantica:doc:index -- --run latest`.
+
+`sweep-evidence-index.json` is now the generated evidence substrate for this next stage. It is not RAWR truth; reviewed RAWR ontology/source-authority inputs remain authoritative.
+
+## Current Status
+
+| Status | Work |
+| --- | --- |
+| Implemented | Global JSON/JSONL sweep evidence index |
+| Validate | Index contract, counts, source spans, and claim/finding links |
+| Next | Index-backed `core:query` evidence queries |
+| Later | Evidence HTML, RDF projection, agent/MCP access, optional LLM sidecar |
 
 ## Thesis
 
@@ -93,7 +123,7 @@ Reliability:
 
 Decision:
 
-This is the next implementation target.
+This is now the implemented substrate. The next implementation target is stable review queries over this index.
 
 ### Layer 3: Stable Review Queries
 
@@ -167,9 +197,11 @@ Admit LLM-derived evidence only after exact source anchoring, confidence recordi
 
 ### Phase 1: Global Evidence Index
 
-Implement `tools/semantica-workbench/src/semantica_workbench/evidence_index.py`.
+Status: implemented and submitted in `767d1b6c`.
 
-Responsibilities:
+Implemented `tools/semantica-workbench/src/semantica_workbench/evidence_index.py`.
+
+Implemented responsibilities:
 
 - Read `doc-sweep.json`.
 - Resolve each document's `artifact_paths.semantic_compare`.
@@ -178,14 +210,8 @@ Responsibilities:
   - `documents`
   - `claims`
   - `findings`
-  - `claim_findings`
-  - `entity_mentions`
-  - `candidate_mentions`
-  - `review_queue`
-  - `source_spans`
-  - `facets`
 - Preserve per-document artifact links.
-- Validate missing, corrupt, or schema-incompatible artifacts explicitly.
+- Validate missing artifacts explicitly.
 
 Generated artifacts:
 
@@ -193,7 +219,7 @@ Generated artifacts:
 - `sweep-evidence-index.jsonl`
 - `sweep-evidence-index-summary.json`
 
-Recommended behavior:
+Implemented behavior:
 
 - `doc:sweep` writes the index automatically after successful sweep generation.
 - `doc:index` rebuilds the index for an existing run.
@@ -205,6 +231,8 @@ Acceptance:
 - Every indexed row preserves source path, line span, heading path, rule/verdict, confidence, and review action where available.
 
 ### Phase 2: Index-Backed Query Layer
+
+Status: next implementation phase.
 
 Extend `core:query` with index-backed named queries.
 
@@ -420,6 +448,11 @@ After Phase 1, add:
 
 ```bash
 bun run semantica:doc:index -- --run latest
+```
+
+After Phase 2, add:
+
+```bash
 bun run semantica:core:query -- --named evidence-summary --format text
 ```
 
