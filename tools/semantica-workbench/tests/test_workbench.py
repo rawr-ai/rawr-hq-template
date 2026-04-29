@@ -942,7 +942,7 @@ class WorkbenchTests(unittest.TestCase):
             (run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]).write_text(json.dumps(graph["candidate_queue"]), encoding="utf-8")
             (run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]).write_text(json.dumps(compare), encoding="utf-8")
             for query_name in NAMED_QUERY_DESCRIPTIONS:
-                if query_name.startswith("sweep-") or query_name.startswith("proposal-"):
+                if query_name.startswith("sweep-") or query_name.startswith("proposal-") or query_name.startswith("evidence-"):
                     continue
                 result = run_named_query(str(run_dir), query_name)
                 self.assertEqual(query_name, result["query"])
@@ -1336,6 +1336,105 @@ class WorkbenchTests(unittest.TestCase):
             self.assertEqual(query_name, result["query"])
             text = render_query_text(result)
             self.assertIn("artifact:", text)
+
+    def test_evidence_index_named_queries_execute(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        base_root = REPO_ROOT / ".semantica" / "test-runs"
+        base_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base_root) as directory:
+            base_run = Path(directory)
+            write_json(base_run / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            write_json(base_run / CORE_GRAPH_FILENAMES["metadata"], {"kind": "test-core", "source": "test"})
+            run_dir = run_document_sweep(
+                roots=["tools/semantica-workbench/fixtures/docs/sweep"],
+                run=str(base_run),
+            )
+        index = read_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"])
+        report_html = REPO_ROOT / index["documents"][0]["report_html_artifact"]
+        if report_html.exists():
+            report_html.unlink()
+        query_names = [
+            "evidence-summary",
+            "evidence-review-queue",
+            "evidence-candidate-new",
+            "evidence-unresolved-targets",
+            "evidence-source-authority-signals",
+            "evidence-prohibited-pattern-mentions",
+            "evidence-weak-modality-hotspots",
+            "evidence-by-document",
+            "evidence-by-entity",
+        ]
+        for query_name in query_names:
+            result = run_named_query(str(run_dir), query_name)
+            self.assertEqual(query_name, result["query"])
+            self.assertIn("artifact", result)
+            self.assertFalse(result["authority_boundary"]["generated_evidence_is_truth"])
+            text = render_query_text(result)
+            self.assertIn("artifact:", text)
+        summary = run_named_query(str(run_dir), "evidence-summary")
+        self.assertEqual(0, summary["summary"]["warning_count"])
+        review_queue = run_named_query(str(run_dir), "evidence-review-queue")
+        self.assertTrue(
+            all(
+                not str(item.get("review_action") or "").startswith("No action required")
+                and not str(item.get("review_action") or "").startswith("No architecture action")
+                for item in review_queue["items"]
+            )
+        )
+        self.assertTrue(all("source_span" in item for item in review_queue["items"]))
+        if review_queue["items"]:
+            review_text = render_query_text(review_queue)
+            self.assertIn("report=", review_text)
+        candidates = run_named_query(str(run_dir), "evidence-candidate-new")
+        self.assertTrue(all(item["kind"] == "candidate-new" for item in candidates["items"]))
+        unresolved = run_named_query(str(run_dir), "evidence-unresolved-targets")
+        self.assertTrue(
+            all(
+                item["resolution_state"] == "unresolved"
+                or item.get("ambiguity_bucket") == "unresolved-target"
+                or item["rule"] == "no_resolved_decision_target"
+                for item in unresolved["items"]
+            )
+        )
+        source_authority = run_named_query(str(run_dir), "evidence-source-authority-signals")
+        self.assertTrue(all(document["path_class"] == "source-authority" for document in source_authority["documents"]))
+        prohibited = run_named_query(str(run_dir), "evidence-prohibited-pattern-mentions")
+        self.assertTrue(prohibited["items"])
+        self.assertTrue(
+            all(
+                item["resolution_state"] == "resolved-prohibited-construction"
+                or str(item.get("entity_id") or "").startswith("forbidden.pattern.")
+                or "prohibited" in item["rule"]
+                for item in prohibited["items"]
+            )
+        )
+        self.assertIn("source_span", prohibited["items"][0])
+        prohibited_text = render_query_text(prohibited)
+        self.assertIn("negative_or_prohibitive_claim_rejects_prohibited_construction", prohibited_text)
+        self.assertIn("forbidden.pattern", prohibited_text)
+        self.assertIn("report=", prohibited_text)
+        by_document = run_named_query(str(run_dir), "evidence-by-document")
+        self.assertEqual(2, len(by_document["documents"]))
+        self.assertIn("examples", by_document["documents"][0])
+        weak_modality = run_named_query(str(run_dir), "evidence-weak-modality-hotspots")
+        self.assertEqual([], weak_modality["hotspots"])
+        by_entity = run_named_query(str(run_dir), "evidence-by-entity")
+        self.assertTrue(by_entity["entities"])
+        self.assertTrue(all("kind_counts" in entity for entity in by_entity["entities"]))
+
+    def test_evidence_named_query_requires_index(self) -> None:
+        ontology = load_core_ontology()
+        validation = validate_loaded_core_ontology(ontology)
+        graph = build_graph_payload(ontology, validation)
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            write_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"], graph["layered_graph"])
+            write_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
+            with self.assertRaises(FileNotFoundError):
+                run_named_query(str(run_dir), "evidence-summary")
 
 
 if __name__ == "__main__":
