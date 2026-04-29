@@ -5,15 +5,19 @@ This map keeps the type environment honest about what it proves now and what it 
 | Issue | Harness status | Treatment |
 | --- | --- | --- |
 | Accepted descriptor refs | Proof | `ExecutionDescriptorRef` is boundary-discriminated and rejects impossible async owner shapes. |
-| Accepted Effect authoring | Proof | RAWR `.effect(...)` is the runtime-realization authoring terminal; `.handler(...)`, Promise bodies, and raw generator yields fail type checks in this pseudo-SDK. This is not an oRPC-native API claim. |
-| Accepted curated Effect public surface | Proof | `@rawr/sdk/effect` rejects raw runtime constructors, raw Effect public type leaks, and unverified `Effect.pipe` spelling in the current pseudo-SDK. |
-| Accepted invocation clients | Proof | Process runtime simulation resolves a registry boundary and supplies runtime-bound values through invocation context; service procedure calls still require `.withInvocation(...)`. |
+| Accepted Effect authoring | Proof | RAWR `.effect(...)` is the runtime-realization authoring terminal; `.handler(...)`, Promise bodies, and raw generator yields fail type checks. This is not an oRPC-native API claim. |
+| Accepted curated Effect public surface | Vendor proof | `@rawr/sdk/effect` is backed by real `effect@3.21.2` while curated authoring still rejects raw runtime constructors and unverified `Effect.pipe` spelling. |
+| Accepted invocation clients | Simulation proof | The mini runtime resolves a registry boundary and supplies runtime-bound values through invocation context; service procedure calls still require `.withInvocation(...)`. |
 | Accepted portable refs only | Proof | Portable artifacts reject descriptor tables and executable closures. |
-| Accepted provider profile closure | Proof | Selected providers must cover non-optional provider resource requirements before boot. |
+| Accepted provider profile closure | Simulation proof | Selected providers must cover non-optional provider resource requirements before boot. |
+| Effect runtime substrate vendor behavior | Vendor proof | Real Effect execution, `ManagedRuntime`, `Exit`/`Cause`, scope/finalizers, interruption, and composition spelling are tested against the installed package. |
+| Process-local coordination vendor behavior | Vendor proof | Real `Queue`, `PubSub`, `Ref`, `Deferred`, `Schedule`, and `Stream` are tested as process-local primitives only. |
+| Boundary vendor shapes | Vendor proof | TypeBox, oRPC, and Inngest probes prove narrow package shapes without claiming production host semantics. |
+| Mini runtime registry/invocation | Simulation proof | Descriptor table, registry, full ref identity checks, runtime-owned Effect access, adapter delegation, and deployment handoff are tested in the contained miniature. |
 | P0 async step membership | Expected fail | Current fixture shows the accepted step body shape, but declarative workflow-to-step ownership remains unresolved. |
 | P1 ProviderEffectPlan shape | Expected fail | The plan is intentionally opaque until the spec locks the producer/consumer fields. |
-| P1 Effect managed runtime substrate | Expected fail | The lab records the one-process-runtime owner rule but does not model real `ManagedRuntime`, `Layer`, `Scope`, finalization, or disposal semantics. |
-| P1 process-local coordination resources | Expected fail | Queue, pubsub, cache, and concurrency resources are marked as local runtime infrastructure and not durable async/domain truth. |
+| P1 Effect managed runtime substrate | Expected fail | Vendor primitives are now proven, but the final RAWR-owned substrate public/internal contract remains open. |
+| P1 process-local coordination resources | Expected fail | Vendor primitives are now proven as local infrastructure, but final RAWR resource contracts and method law remain open. |
 | P1 provider plan lowering | Expected fail | Provider acquire/release lowering remains bootgraph/provisioning work, separate from compiled execution plans and invocation runtime. |
 | P1 Effect boundary policy matrix | Expected fail | Timeout, retry, interruption, telemetry, redaction, and error/exit mapping need locked metadata before positive proof. |
 | P1 safe Effect composition surface | Expected fail | The curated helper list and vendor-aligned names remain open; raw runtime constructors stay forbidden. |

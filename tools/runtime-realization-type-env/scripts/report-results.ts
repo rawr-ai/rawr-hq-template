@@ -2,7 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-type ManifestStatus = "proof" | "xfail" | "todo" | "out-of-scope";
+type ManifestStatus =
+  | "proof"
+  | "vendor-proof"
+  | "simulation-proof"
+  | "xfail"
+  | "todo"
+  | "out-of-scope";
 
 interface ManifestEntry {
   readonly id: string;
@@ -10,6 +16,7 @@ interface ManifestEntry {
   readonly source: string;
   readonly oracle: string;
   readonly fixtures: readonly string[];
+  readonly gates?: readonly string[];
 }
 
 interface Manifest {
@@ -31,7 +38,14 @@ const manifest = JSON.parse(
 ) as Manifest;
 
 const byStatus = new Map<ManifestStatus, ManifestEntry[]>();
-for (const status of ["proof", "xfail", "todo", "out-of-scope"] as const) {
+for (const status of [
+  "proof",
+  "vendor-proof",
+  "simulation-proof",
+  "xfail",
+  "todo",
+  "out-of-scope",
+] as const) {
   byStatus.set(status, []);
 }
 for (const entry of manifest.entries) {
@@ -57,9 +71,14 @@ for (const [status, entries] of byStatus) {
   for (const entry of entries) {
     console.log(`  - ${entry.id}`);
     console.log(`    oracle: ${entry.oracle}`);
+    if (entry.gates?.length) {
+      console.log(`    gates: ${entry.gates.join(", ")}`);
+    }
   }
 }
 
 console.log("");
-console.log("green gate means proof entries passed and open entries stayed fenced.");
+console.log(
+  "green gate means proof, vendor-proof, and simulation-proof entries passed their named gates while open entries stayed fenced.",
+);
 console.log("xfail means architecture unresolved, not necessarily TypeScript failure.");

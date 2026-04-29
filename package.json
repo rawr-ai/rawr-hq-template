@@ -182,12 +182,13 @@
   },
   "devDependencies": {
     "@nx/eslint-plugin": "^22.5.4",
-    "@typescript-eslint/parser": "^8.57.1",
     "@types/node": "^22.14.0",
+    "@typescript-eslint/parser": "^8.57.1",
     "@vitest/ui": "^4.0.18",
+    "effect": "3.21.2",
     "eslint": "^10.0.3",
+    "nx": "22.5.4",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18",
-    "nx": "22.5.4"
+    "vitest": "^4.0.18"
   }
 }
