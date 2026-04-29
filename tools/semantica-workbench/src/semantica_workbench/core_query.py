@@ -50,6 +50,7 @@ EVIDENCE_NAMED_QUERIES = {
     "evidence-weak-modality-hotspots",
     "evidence-by-document",
     "evidence-by-entity",
+    "evidence-agent-manifest",
 }
 
 
@@ -248,6 +249,22 @@ def run_named_query(run: str | None, name: str) -> dict[str, Any]:
     if name == "evidence-by-entity":
         entities = evidence_by_entity(evidence_index)
         return evidence_query_result(run_dir, evidence_path, name, evidence_index, entities, item_key="entities")
+    if name == "evidence-agent-manifest":
+        manifest_path = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_agent_manifest"]
+        if not manifest_path.exists():
+            raise FileNotFoundError(
+                "Evidence agent manifest does not exist for this run. "
+                "Run `bun run semantica:doc:sweep` or `bun run semantica:doc:index -- --run <run>` first."
+            )
+        manifest = read_json(manifest_path)
+        return {
+            "query": name,
+            "run": display_path(run_dir),
+            "artifact": display_path(manifest_path),
+            "authority_boundary": manifest.get("authority_boundary", {}),
+            "summary": manifest.get("generated_from", {}).get("summary", {}),
+            "manifest": manifest,
+        }
     if name == "semantic-conflicts":
         return semantic_query_result(run_dir, semantic_path, name, semantic.get("conflicts", []), semantic)
     if name == "aligned-rejections":

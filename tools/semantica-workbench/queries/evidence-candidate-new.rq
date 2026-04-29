@@ -1,13 +1,16 @@
 PREFIX rawr: <https://rawr.dev/ontology/>
 PREFIX evidence: <https://rawr.dev/evidence/>
 
-SELECT ?finding ?claim ?sourcePath ?lineStart ?reviewAction WHERE {
+SELECT ?finding ?claim ?sourcePath ?lineStart ?lineEnd ?charStart ?charEnd ?reviewAction WHERE {
   ?finding a rawr:ReviewFinding ;
     rawr:partOfEvidenceIndex ?evidenceIndex ;
     rawr:findingKind "candidate-new" ;
     rawr:derivedFrom ?claim ;
     rawr:sourcePath ?sourcePath ;
-    rawr:lineStart ?lineStart .
+    rawr:lineStart ?lineStart ;
+    rawr:lineEnd ?lineEnd ;
+    rawr:charStart ?charStart ;
+    rawr:charEnd ?charEnd .
   ?claim rawr:partOfEvidenceIndex ?evidenceIndex .
   OPTIONAL { ?finding rawr:reviewAction ?reviewAction . }
 }

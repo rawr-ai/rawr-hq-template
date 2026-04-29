@@ -1,13 +1,17 @@
 PREFIX rawr: <https://rawr.dev/ontology/>
 PREFIX evidence: <https://rawr.dev/evidence/>
 
-SELECT ?finding ?target ?sourcePath ?lineStart ?rule WHERE {
+SELECT ?finding ?target ?sourcePath ?lineStart ?lineEnd ?charStart ?charEnd ?rule ?reviewAction WHERE {
   ?finding a rawr:ReviewFinding ;
     rawr:partOfEvidenceIndex ?evidenceIndex ;
     rawr:resolvedTarget ?target ;
     rawr:sourcePath ?sourcePath ;
     rawr:lineStart ?lineStart ;
+    rawr:lineEnd ?lineEnd ;
+    rawr:charStart ?charStart ;
+    rawr:charEnd ?charEnd ;
     rawr:rule ?rule .
+  OPTIONAL { ?finding rawr:reviewAction ?reviewAction . }
   FILTER(CONTAINS(STR(?target), "forbidden_pattern") || CONTAINS(?rule, "prohibited"))
 }
 ORDER BY ?sourcePath ?lineStart

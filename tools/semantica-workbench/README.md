@@ -58,8 +58,8 @@ The core ontology commands are seed-first and treat reviewed YAML as the authori
 - `semantica:doc:compare` resolves those evidence claims against the ontology baseline and emits `aligned`, `conflict`, `deprecated-use`, `candidate-new`, `ambiguous`, `outside-scope`, and `informational` findings.
 - `semantica:doc:frame` maps source-backed evidence into an evidence-only `ArchitectureChangeFrame` and validation artifact. Extraction-only frames carry `not-evaluated` claim verdicts and no review actions.
 - `semantica:doc:proposal-compare` runs RAWR-owned deterministic comparison over the frame and writes noun mappings, proposal graph TTL, claim comparisons, verdict/repair JSON, provenance, and a review report.
-- `semantica:doc:sweep` analyzes active Markdown docs, writes per-document semantic comparison artifacts, and emits a corpus-level sweep evidence index.
-- `semantica:doc:index` rebuilds the corpus-level `sweep-evidence-index.json`, JSONL, and summary artifacts for an existing sweep run.
+- `semantica:doc:sweep` analyzes active Markdown docs, writes per-document semantic comparison artifacts, and emits a corpus-level sweep evidence index plus an agent-facing query manifest.
+- `semantica:doc:index` rebuilds the corpus-level `sweep-evidence-index.json`, JSONL, HTML, TTL, summary, and agent manifest artifacts for an existing sweep run.
 - `semantica:doc:diff -- --mode semantic` is the compatibility command for the semantic evidence path. The default mode remains lexical for compatibility.
 
 The reviewed source files live under:
