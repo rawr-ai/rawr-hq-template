@@ -62,6 +62,10 @@ Primary generated artifacts:
 
 Generated artifacts remain local ignored state under `.semantica/`.
 
+Usage guide:
+
+- `semantica-corpus-evidence-usage-guide.md` explains the human and agent workflows for using the sweep dashboard, corpus evidence index, named queries, RDF projection, and optional LLM sidecar without weakening RAWR authority boundaries.
+
 ## What This Lets A Developer Do
 
 A developer can now answer corpus-level architecture review questions from structured artifacts:
