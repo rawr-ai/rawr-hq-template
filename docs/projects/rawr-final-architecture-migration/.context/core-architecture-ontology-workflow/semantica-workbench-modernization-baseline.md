@@ -16,6 +16,7 @@ The repo-level Bun scripts are the stable public command surface:
 
 - `semantica:setup`
 - `semantica:check`
+- `semantica:quality`
 - `semantica:core:validate`
 - `semantica:core:build`
 - `semantica:core:export`
@@ -151,6 +152,7 @@ Core smoke commands for later phases:
 
 ```bash
 bun run semantica:semantic:capability
+bun run semantica:quality
 bun run semantica:core:validate
 bun run semantica:core:build
 bun run semantica:core:export

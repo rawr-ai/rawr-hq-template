@@ -200,7 +200,9 @@ def add_extract_args(parser: argparse.ArgumentParser) -> None:
 
 
 def add_evidence_mode_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--extraction-mode", choices=["deterministic", "semantica-pattern", "semantica-llm"], default="deterministic")
+    parser.add_argument(
+        "--extraction-mode", choices=["deterministic", "semantica-pattern", "semantica-llm"], default="deterministic"
+    )
     parser.add_argument("--llm-provider", default="openai")
     parser.add_argument("--llm-model", default=None)
 
@@ -260,11 +262,14 @@ def cmd_core_serve(args) -> int:
     viewer = run_dir / CORE_GRAPH_FILENAMES["viewer"]
     if not viewer.exists():
         run_dir = visualize_core_ontology(args.run)
-    handler = lambda *handler_args, **handler_kwargs: http.server.SimpleHTTPRequestHandler(
-        *handler_args,
-        directory=str(run_dir),
-        **handler_kwargs,
-    )
+
+    def handler(*handler_args, **handler_kwargs):
+        return http.server.SimpleHTTPRequestHandler(
+            *handler_args,
+            directory=str(run_dir),
+            **handler_kwargs,
+        )
+
     with socketserver.ThreadingTCPServer((args.host, args.port), handler) as server:
         host, port = server.server_address
         url = f"http://{host}:{port}/{CORE_GRAPH_FILENAMES['viewer']}"
@@ -472,7 +477,9 @@ def cmd_extract(args) -> int:
         chunks = chunks[: args.limit_chunks]
     seeds = build_seed_graph(manifest)
 
-    rows = [extract_chunk(chunk, prompts, "heuristic" if args.fixture else args.mode, args.model, seeds) for chunk in chunks]
+    rows = [
+        extract_chunk(chunk, prompts, "heuristic" if args.fixture else args.mode, args.model, seeds) for chunk in chunks
+    ]
     metadata = {
         "run_id": run_dir.name,
         "git_sha": git_sha(),
@@ -519,7 +526,18 @@ def cmd_report(args) -> int:
     run_dir = resolve_run(args.run)
     report = render_report(run_dir)
     (run_dir / "report.md").write_text(report, encoding="utf-8")
-    mark_current(run_dir, ["metadata.json", "seeds.json", "chunks.jsonl", "extraction.jsonl", "ontology.json", "semantic-diff.json", "report.md"])
+    mark_current(
+        run_dir,
+        [
+            "metadata.json",
+            "seeds.json",
+            "chunks.jsonl",
+            "extraction.jsonl",
+            "ontology.json",
+            "semantic-diff.json",
+            "report.md",
+        ],
+    )
     print(f"report={rel(run_dir / 'report.md')}")
     return 0
 
@@ -531,7 +549,18 @@ def cmd_run(args) -> int:
     build_diff(run_dir)
     report = render_report(run_dir)
     (run_dir / "report.md").write_text(report, encoding="utf-8")
-    mark_current(run_dir, ["metadata.json", "seeds.json", "chunks.jsonl", "extraction.jsonl", "ontology.json", "semantic-diff.json", "report.md"])
+    mark_current(
+        run_dir,
+        [
+            "metadata.json",
+            "seeds.json",
+            "chunks.jsonl",
+            "extraction.jsonl",
+            "ontology.json",
+            "semantic-diff.json",
+            "report.md",
+        ],
+    )
     print(f"complete={rel(run_dir)}")
     return 0
 
@@ -550,7 +579,4 @@ def load_prompts() -> dict[str, str]:
 
 
 def prompt_hashes(prompts: dict[str, str]) -> dict[str, str]:
-    return {
-        name: hashlib.sha256(value.encode("utf-8")).hexdigest()
-        for name, value in sorted(prompts.items())
-    }
+    return {name: hashlib.sha256(value.encode("utf-8")).hexdigest() for name, value in sorted(prompts.items())}

@@ -15,6 +15,7 @@ Run from the repository root:
 ```bash
 bun run semantica:setup
 bun run semantica:check
+bun run semantica:quality
 bun run semantica:core:validate
 bun run semantica:core:build
 bun run semantica:core:export
@@ -41,7 +42,7 @@ bun run semantica:diff -- --run latest
 bun run semantica:report -- --run latest
 ```
 
-`semantica:setup` creates `.semantica/venv` using `uv` and Python 3.12. Other commands run through that environment.
+`semantica:setup` creates `.semantica/venv` using `uv` and Python 3.12. Other commands run through that environment. `semantica:quality` runs the Python quality gate: Ruff lint, Pyright type analysis, and the pytest workbench suite.
 
 ## Core Ontology Path
 

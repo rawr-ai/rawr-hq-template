@@ -86,9 +86,7 @@ GEOMETRY_TYPES = {
 }
 
 DEFAULT_REFERENCE_BUNDLE_CANDIDATES = [
-    Path(os.environ[REFERENCE_BUNDLE_ENV]).expanduser()
-    for _ in [None]
-    if os.environ.get(REFERENCE_BUNDLE_ENV)
+    Path(os.environ[REFERENCE_BUNDLE_ENV]).expanduser() for _ in [None] if os.environ.get(REFERENCE_BUNDLE_ENV)
 ] + [
     Path.home() / "Documents/projects/RAWR/companion/RAWR_Ontology_Packet_Draft_v0.2.zip",
 ]
@@ -174,8 +172,12 @@ def build_architecture_change_frame_package(
         evaluate=evaluate,
         semantica_pilot_enabled=semantica_pilot_enabled,
     )
-    proposal_graph_ttl = proposal_graph_turtle(frame, noun_mappings, claim_comparisons, verdict_repair, reference_geometry)
-    review_report = render_proposal_review_report(frame, noun_mappings, claim_comparisons, verdict_repair, validation, reference_geometry)
+    proposal_graph_ttl = proposal_graph_turtle(
+        frame, noun_mappings, claim_comparisons, verdict_repair, reference_geometry
+    )
+    review_report = render_proposal_review_report(
+        frame, noun_mappings, claim_comparisons, verdict_repair, validation, reference_geometry
+    )
     return {
         "schema_version": PROPOSAL_PACKAGE_SCHEMA_VERSION,
         "frame": frame,
@@ -206,7 +208,11 @@ def evidence_to_architecture_change_frame(
     if not claims:
         claims = [no_evidence_claim(document, evidence)]
     noun_mappings = [frame_noun_mapping_from_claim(claim, reference_geometry) for claim in claims]
-    frame_id = stable_id("frame", evidence["document"], hashlib.sha256("\n".join(claim["id"] for claim in claims).encode("utf-8")).hexdigest()[:16])
+    frame_id = stable_id(
+        "frame",
+        evidence["document"],
+        hashlib.sha256("\n".join(claim["id"] for claim in claims).encode("utf-8")).hexdigest()[:16],
+    )
     semantica = evidence.get("semantica") or {}
     semantica_version = str(semantica.get("version") or semantica_status().get("version") or "unknown")
     pilot_summary = evidence.get("semantica_pilot", {}).get("summary", {})
@@ -217,16 +223,26 @@ def evidence_to_architecture_change_frame(
         method = "semantica-llm-pilot"
         status = "pilot" if semantica_llm.get("actual_mode") == "semantica-llm" else "blocked"
     else:
-        method = "semantica-pattern-pilot" if pilot_summary.get("enabled") or pilot_summary.get("adapter_mode", "").startswith("semantica") else "rawr-deterministic-oracle"
+        method = (
+            "semantica-pattern-pilot"
+            if pilot_summary.get("enabled") or pilot_summary.get("adapter_mode", "").startswith("semantica")
+            else "rawr-deterministic-oracle"
+        )
         status = "pilot" if method.startswith("semantica") else "fallback"
     llm_provider_status = llm_provider_status_from_capability(semantica)
     if evidence.get("semantica_llm"):
         llm_provider_status = evidence["semantica_llm"].get("status", {}).get("blocked_reason") or "available"
-        if llm_provider_status not in set(load_architecture_change_frame_schema()["$defs"]["extraction_run"]["properties"]["llm_provider_status"]["enum"]):
+        if llm_provider_status not in set(
+            load_architecture_change_frame_schema()["$defs"]["extraction_run"]["properties"]["llm_provider_status"][
+                "enum"
+            ]
+        ):
             llm_provider_status = "unproven"
     extraction_run = {
         "method": method,
-        "extractor": llm_summary.get("extractor") or pilot_summary.get("adapter_mode") or "rawr-architecture-change-frame-deterministic-v1",
+        "extractor": llm_summary.get("extractor")
+        or pilot_summary.get("adapter_mode")
+        or "rawr-architecture-change-frame-deterministic-v1",
         "status": status,
         "llm_provider_status": llm_provider_status,
         "semantica_version": semantica_version,
@@ -234,15 +250,16 @@ def evidence_to_architecture_change_frame(
         "promotion_allowed": False,
         "diagnostics": frame_diagnostics(evidence, semantic_compare, reference_geometry),
     }
-    model = extraction_mode.get("model") or (evidence.get("semantica_llm", {}).get("status", {}).get("model") if evidence.get("semantica_llm") else None)
+    model = extraction_mode.get("model") or (
+        evidence.get("semantica_llm", {}).get("status", {}).get("model") if evidence.get("semantica_llm") else None
+    )
     if model:
         extraction_run["model"] = model
-    return {
+    frame = {
         "schema_version": FRAME_SCHEMA_VERSION,
         "frame_id": frame_id,
         "document": document_ref(document, evidence),
         "proposal_summary": proposal_summary(claims),
-        "target_app": infer_target_app(claims),
         "extraction": extraction_run,
         "governance": {
             "truth_authority": "rawr-reviewed-ontology",
@@ -262,6 +279,10 @@ def evidence_to_architecture_change_frame(
         },
         "unresolved_questions": unresolved_questions_for_compare(semantic_compare),
     }
+    target_app = infer_target_app(claims)
+    if target_app:
+        frame["target_app"] = target_app
+    return frame
 
 
 def evidence_claim_to_frame_claim(
@@ -280,7 +301,7 @@ def evidence_claim_to_frame_claim(
         "claim_type": claim_type,
         "subject": claim.get("subject") or claim.get("text", "")[:80],
         "predicate": claim.get("predicate") or "mentions",
-        "object": claim.get("object") or geometry_object_label(geometry_matches),
+        "object": claim.get("object") or geometry_object_label(geometry_matches) or "proposal-claim",
         "polarity": claim.get("polarity", "unknown"),
         "modality": claim.get("modality", "unknown"),
         "assertion_scope": claim.get("assertion_scope", "unknown"),
@@ -311,7 +332,9 @@ def evidence_claim_to_frame_claim(
         frame_claim["resource"] = "resource-contract"
         frame_claim["provider"] = "provider-boundary"
     if claim_type == "forbidden-risk":
-        frame_claim["risk_patterns"] = resolved_ids or [item["id"] for item in geometry_matches if item.get("type") == "ForbiddenPattern"]
+        frame_claim["risk_patterns"] = resolved_ids or [
+            item["id"] for item in geometry_matches if item.get("type") == "ForbiddenPattern"
+        ]
     if claim_type == "verification":
         frame_claim["required_gates"] = resolved_ids or ["review-required"]
     if evaluate:
@@ -403,7 +426,11 @@ def frame_noun_mapping_from_claim(claim: dict[str, Any], reference_geometry: dic
         "mapping_state": mapping_state,
         "evidence_refs": claim.get("evidence_refs", []),
         "confidence": bounded_confidence(claim.get("confidence", 0.5)),
-        "review_state": "candidate" if mapping_state == "candidate" else "evidence-only" if mapping_state in {"resolved", "extension-slot"} else "review-needed",
+        "review_state": "candidate"
+        if mapping_state == "candidate"
+        else "evidence-only"
+        if mapping_state in {"resolved", "extension-slot"}
+        else "review-needed",
         "promotion_allowed": False,
     }
     resolved_ids = claim.get("resolved_entity_ids") or []
@@ -556,7 +583,8 @@ def selected_comparison_for_frame_claim(
             "modality": frame_claim.get("modality"),
             "assertion_scope": frame_claim.get("assertion_scope"),
         },
-        "rule_results": rule_results or [
+        "rule_results": rule_results
+        or [
             {
                 "finding_kind": "none",
                 "rule": "reference_geometry_or_unresolved_frame_claim",
@@ -608,7 +636,9 @@ def build_verdict_repair_payload(frame: dict[str, Any], claim_comparisons: dict[
             "claim_count": len(comparisons),
             "repair_step_count": len(repair_steps),
             "verdicts": dict(Counter(item["verdict"] for item in comparisons)),
-            "explanation_chain_complete": all(item.get("explanation_chain_complete") for item in comparisons) if comparisons else False,
+            "explanation_chain_complete": all(item.get("explanation_chain_complete") for item in comparisons)
+            if comparisons
+            else False,
             "semantica_output_authoritative": False,
             "promotion_allowed": False,
         },
@@ -652,7 +682,9 @@ def build_provenance_payload(
         "evidence_source": {
             "schema_version": evidence.get("schema_version"),
             "claim_count": len(evidence.get("claims", [])),
-            "decision_grade_source": evidence.get("semantica_pilot", {}).get("summary", {}).get("decision_grade_source", "rawr-semantic-heuristic-v1"),
+            "decision_grade_source": evidence.get("semantica_pilot", {})
+            .get("summary", {})
+            .get("decision_grade_source", "rawr-semantic-heuristic-v1"),
         },
         "comparison_source": {
             "schema_version": semantic_compare.get("schema_version"),
@@ -729,19 +761,37 @@ def validate_frame_contract_shape(frame: dict[str, Any]) -> list[dict[str, Any]]
     for index, mapping in enumerate(frame.get("noun_mappings") or []):
         for field in schema["$defs"]["noun_mapping"]["required"]:
             if field not in mapping:
-                errors.append({"kind": "noun_mapping_missing_required_field", "path": f"noun_mappings[{index}].{field}"})
-        errors.extend(_validate_enum_fields(mapping, f"noun_mappings[{index}]", schema, {"mapping_state": "mapping_state", "review_state": "review_state"}))
+                errors.append(
+                    {"kind": "noun_mapping_missing_required_field", "path": f"noun_mappings[{index}].{field}"}
+                )
+        errors.extend(
+            _validate_enum_fields(
+                mapping,
+                f"noun_mappings[{index}]",
+                schema,
+                {"mapping_state": "mapping_state", "review_state": "review_state"},
+            )
+        )
     return errors
 
 
-def _validate_enum_fields(item: dict[str, Any], path: str, schema: dict[str, Any], fields: dict[str, str]) -> list[dict[str, Any]]:
+def _validate_enum_fields(
+    item: dict[str, Any], path: str, schema: dict[str, Any], fields: dict[str, str]
+) -> list[dict[str, Any]]:
     errors: list[dict[str, Any]] = []
     for field, definition_name in fields.items():
         if field not in item:
             continue
         allowed = schema["$defs"][definition_name].get("enum")
         if allowed and item.get(field) not in allowed:
-            errors.append({"kind": f"{field}_invalid_enum", "path": f"{path}.{field}", "value": item.get(field), "allowed": allowed})
+            errors.append(
+                {
+                    "kind": f"{field}_invalid_enum",
+                    "path": f"{path}.{field}",
+                    "value": item.get(field),
+                    "allowed": allowed,
+                }
+            )
     return errors
 
 
@@ -770,12 +820,16 @@ def validate_frame_policy_shape(frame: dict[str, Any]) -> list[dict[str, Any]]:
         if comparison.get("overall_verdict") != "not-evaluated":
             errors.append({"kind": "extraction_only_frame_has_verdict", "path": "comparison.overall_verdict"})
         if comparison.get("recommended_next_action") != "none":
-            errors.append({"kind": "extraction_only_frame_has_review_action", "path": "comparison.recommended_next_action"})
+            errors.append(
+                {"kind": "extraction_only_frame_has_review_action", "path": "comparison.recommended_next_action"}
+            )
         for index, claim in enumerate(frame.get("claims") or []):
             if claim.get("verdict") != "not-evaluated":
                 errors.append({"kind": "extraction_only_claim_has_verdict", "path": f"claims[{index}].verdict"})
             if claim.get("review_action") != "none":
-                errors.append({"kind": "extraction_only_claim_has_review_action", "path": f"claims[{index}].review_action"})
+                errors.append(
+                    {"kind": "extraction_only_claim_has_review_action", "path": f"claims[{index}].review_action"}
+                )
 
     if governance.get("reference_geometry_status") == "candidate-input":
         errors.append(
@@ -789,15 +843,23 @@ def validate_frame_policy_shape(frame: dict[str, Any]) -> list[dict[str, Any]]:
     for collection_name in ["claims", "noun_mappings"]:
         for index, item in enumerate(frame.get(collection_name) or []):
             if item.get("promotion_allowed") is not False:
-                errors.append({"kind": "frame_item_promotion_allowed", "path": f"{collection_name}[{index}].promotion_allowed"})
+                errors.append(
+                    {"kind": "frame_item_promotion_allowed", "path": f"{collection_name}[{index}].promotion_allowed"}
+                )
             if item.get("review_state") == "accepted":
-                errors.append({"kind": "machine_frame_review_state_accepted", "path": f"{collection_name}[{index}].review_state"})
+                errors.append(
+                    {"kind": "machine_frame_review_state_accepted", "path": f"{collection_name}[{index}].review_state"}
+                )
             evidence_refs = item.get("evidence_refs") or []
             if not evidence_refs:
-                errors.append({"kind": "missing_structured_evidence_ref", "path": f"{collection_name}[{index}].evidence_refs"})
+                errors.append(
+                    {"kind": "missing_structured_evidence_ref", "path": f"{collection_name}[{index}].evidence_refs"}
+                )
                 continue
             for evidence_index, evidence_ref in enumerate(evidence_refs):
-                errors.extend(_validate_evidence_ref(evidence_ref, f"{collection_name}[{index}].evidence_refs[{evidence_index}]"))
+                errors.extend(
+                    _validate_evidence_ref(evidence_ref, f"{collection_name}[{index}].evidence_refs[{evidence_index}]")
+                )
 
     return errors
 
@@ -840,13 +902,23 @@ def _validate_evidence_ref(evidence_ref: dict[str, Any], path: str) -> list[dict
     if not isinstance(confidence, int | float) or confidence < 0 or confidence > 1:
         errors.append({"kind": "evidence_ref_invalid_confidence", "path": f"{path}.confidence"})
     source_path = evidence_ref.get("source_path")
-    if isinstance(source_path, str) and isinstance(line_start, int) and isinstance(line_end, int) and isinstance(char_start, int) and isinstance(char_end, int):
-        is_no_evidence_sentinel = evidence_ref.get("text") == "No extracted architecture claim." and char_start == 0 and char_end == 0
+    if (
+        isinstance(source_path, str)
+        and isinstance(line_start, int)
+        and isinstance(line_end, int)
+        and isinstance(char_start, int)
+        and isinstance(char_end, int)
+    ):
+        is_no_evidence_sentinel = (
+            evidence_ref.get("text") == "No extracted architecture claim." and char_start == 0 and char_end == 0
+        )
         if char_start == char_end and evidence_ref.get("text") and not is_no_evidence_sentinel:
             errors.append({"kind": "evidence_ref_zero_length_nonempty_text", "path": path})
         source_file = source_ref_to_path(source_path)
         if not source_file.exists():
-            errors.append({"kind": "evidence_ref_source_missing", "path": f"{path}.source_path", "source_path": source_path})
+            errors.append(
+                {"kind": "evidence_ref_source_missing", "path": f"{path}.source_path", "source_path": source_path}
+            )
         elif not is_no_evidence_sentinel:
             span_text = span_text_for_ref(source_path, line_start, line_end, char_start, char_end)
             if span_text is None:
@@ -1071,7 +1143,9 @@ def proposal_graph_turtle(
         lines.append(f"  rawr:reviewAction {turtle_literal(comparison['review_action'])} .")
         lines.append("")
     if reference_geometry.get("loaded"):
-        lines.append(f"proposal:{frame_node} rawr:usesReferenceGeometryHash {turtle_literal(reference_geometry.get('sha256'))} .")
+        lines.append(
+            f"proposal:{frame_node} rawr:usesReferenceGeometryHash {turtle_literal(reference_geometry.get('sha256'))} ."
+        )
         lines.append("")
     return "\n".join(lines)
 
@@ -1105,9 +1179,18 @@ def render_proposal_review_report(
         "",
     ]
     verdict_counts = claim_comparisons.get("summary", {}).get("verdicts", {})
-    for verdict in ["conflicts", "needs-canonical-addendum", "unclear", "compatible-extension", "compatible", "not-evaluated"]:
+    for verdict in [
+        "conflicts",
+        "needs-canonical-addendum",
+        "unclear",
+        "compatible-extension",
+        "compatible",
+        "not-evaluated",
+    ]:
         lines.append(f"- `{verdict}`: `{verdict_counts.get(verdict, 0)}`")
-    llm_diagnostics = [item for item in frame.get("extraction", {}).get("diagnostics", []) if item.get("kind") == "semantica_llm"]
+    llm_diagnostics = [
+        item for item in frame.get("extraction", {}).get("diagnostics", []) if item.get("kind") == "semantica_llm"
+    ]
     if llm_diagnostics:
         lines.extend(["", "## LLM Extraction Status", ""])
         for item in llm_diagnostics:
@@ -1127,7 +1210,8 @@ def render_proposal_review_report(
     review_queue = [
         item
         for item in claim_comparisons.get("comparisons", [])
-        if item.get("review_action") not in {"none", "accept"} or item.get("verdict") in {"conflicts", "needs-canonical-addendum", "unclear"}
+        if item.get("review_action") not in {"none", "accept"}
+        or item.get("verdict") in {"conflicts", "needs-canonical-addendum", "unclear"}
     ]
     append_claim_comparison_examples(lines, review_queue, limit=75)
     lines.extend(
@@ -1137,7 +1221,14 @@ def render_proposal_review_report(
             "",
         ]
     )
-    for verdict in ["conflicts", "needs-canonical-addendum", "unclear", "compatible-extension", "compatible", "not-evaluated"]:
+    for verdict in [
+        "conflicts",
+        "needs-canonical-addendum",
+        "unclear",
+        "compatible-extension",
+        "compatible",
+        "not-evaluated",
+    ]:
         group = [item for item in claim_comparisons.get("comparisons", []) if item.get("verdict") == verdict]
         if not group:
             continue
@@ -1145,7 +1236,12 @@ def render_proposal_review_report(
         append_claim_comparison_examples(lines, group, limit=50)
     lines.extend(["", "## Noun Mappings", ""])
     for mapping in noun_mappings.get("mappings", []):
-        target = mapping.get("maps_to_entity_id") or mapping.get("maps_to_extension_slot") or mapping.get("maps_to_kind") or "unresolved"
+        target = (
+            mapping.get("maps_to_entity_id")
+            or mapping.get("maps_to_extension_slot")
+            or mapping.get("maps_to_kind")
+            or "unresolved"
+        )
         lines.append(f"- `{mapping['mapping_category']}` `{mapping['proposed_noun']}` -> `{target}`")
     lines.extend(["", "## Repair Steps", ""])
     if not verdict_repair.get("repair_steps"):
@@ -1153,8 +1249,7 @@ def render_proposal_review_report(
     for step in verdict_repair.get("repair_steps", []):
         source = step["source_claim"]
         lines.append(
-            f"- `{step['id']}` `{step['verdict']}` {source['document_path']}:{source['line_start']}: "
-            f"{step.get('repair_hint') or 'Review source claim.'}"
+            f"- `{step['id']}` `{step['verdict']}` {source['document_path']}:{source['line_start']}: {step.get('repair_hint') or 'Review source claim.'}"
         )
     if validation.get("errors"):
         lines.extend(["", "## Validation Errors", ""])
@@ -1178,13 +1273,14 @@ def append_claim_comparison_examples(lines: list[str], comparisons: list[dict[st
     for item in comparisons[:limit]:
         source = item["source_claim"]
         lines.append(
-            f"- `{item['verdict']}` / `{item['review_action']}` "
-            f"{source['document_path']}:{source['line_start']}: {source['text']}"
+            f"- `{item['verdict']}` / `{item['review_action']}` {source['document_path']}:{source['line_start']}: {source['text']}"
         )
         if item.get("resolution_hint"):
             lines.append(f"  - Repair: {item['resolution_hint']}")
     if len(comparisons) > limit:
-        lines.append(f"- ... {len(comparisons) - limit} more omitted from this summary; see `claim-comparisons.json` in the run output.")
+        lines.append(
+            f"- ... {len(comparisons) - limit} more omitted from this summary; see `claim-comparisons.json` in the run output."
+        )
 
 
 def group_findings_by_claim(semantic_compare: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
@@ -1207,7 +1303,9 @@ def verdict_action_for_findings(
     if (
         first_geometry_by_type(geometry_matches, "ExtensionSlot")
         and findings
-        and all(item.get("kind") == "ambiguous" and item.get("rule") == "no_resolved_decision_target" for item in findings)
+        and all(
+            item.get("kind") == "ambiguous" and item.get("rule") == "no_resolved_decision_target" for item in findings
+        )
     ):
         return "compatible-extension", "accept-with-mapping"
     if "ambiguous" in kinds:
@@ -1372,7 +1470,9 @@ def document_ref(document: Path, evidence: dict[str, Any]) -> dict[str, Any]:
         "authority_context": "fixture" if evidence.get("fixture") else "comparison-document",
         "authority_rank": 99 if evidence.get("fixture") else 50,
         "source_scope": source_scope,
-        "content_sha256": hashlib.sha256(document.read_bytes()).hexdigest() if document.exists() else hashlib.sha256(b"").hexdigest(),
+        "content_sha256": hashlib.sha256(document.read_bytes()).hexdigest()
+        if document.exists()
+        else hashlib.sha256(b"").hexdigest(),
     }
 
 
@@ -1403,12 +1503,16 @@ def infer_target_app(claims: list[dict[str, Any]]) -> str | None:
     return None
 
 
-def frame_diagnostics(evidence: dict[str, Any], semantic_compare: dict[str, Any], reference_geometry: dict[str, Any]) -> list[dict[str, Any]]:
+def frame_diagnostics(
+    evidence: dict[str, Any], semantic_compare: dict[str, Any], reference_geometry: dict[str, Any]
+) -> list[dict[str, Any]]:
     diagnostics = [
         {
             "kind": "deterministic_evidence_claims",
             "claim_count": len(evidence.get("claims", [])),
-            "decision_grade_source": evidence.get("semantica_pilot", {}).get("summary", {}).get("decision_grade_source", "rawr-semantic-heuristic-v1"),
+            "decision_grade_source": evidence.get("semantica_pilot", {})
+            .get("summary", {})
+            .get("decision_grade_source", "rawr-semantic-heuristic-v1"),
         },
         {
             "kind": "semantic_compare_findings",
