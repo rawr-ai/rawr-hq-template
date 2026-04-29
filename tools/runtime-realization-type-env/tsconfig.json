@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "noEmit": true,
+    "paths": {
+      "@rawr/sdk": ["src/sdk/index.ts"],
+      "@rawr/sdk/app": ["src/sdk/app.ts"],
+      "@rawr/sdk/effect": ["src/sdk/effect.ts"],
+      "@rawr/sdk/runtime/schema": ["src/sdk/runtime/schema.ts"],
+      "@rawr/sdk/runtime/resources": ["src/sdk/runtime/resources.ts"],
+      "@rawr/sdk/runtime/providers": ["src/sdk/runtime/providers.ts"],
+      "@rawr/sdk/runtime/profiles": ["src/sdk/runtime/profiles.ts"],
+      "@rawr/sdk/service": ["src/sdk/service.ts"],
+      "@rawr/sdk/plugins/server": ["src/sdk/plugins/server.ts"],
+      "@rawr/sdk/plugins/async": ["src/sdk/plugins/async.ts"],
+      "@rawr/sdk/spine": ["src/spine/artifacts.ts"],
+      "@rawr/spec-env/spine/simulate": ["src/spine/simulate.ts"],
+      "@rawr/spec-env/fixtures/*": ["fixtures/positive/*"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "fixtures/positive/**/*.ts",
+    "fixtures/inline-negative/**/*.ts"
+  ],
+  "exclude": [
+    "fixtures/fail/**",
+    "fixtures/todo/**",
+    "test/**"
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "spec": {
+    "path": "/Users/mateicanavra/Downloads/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md",
+    "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
+  },
+  "currentExperiment": {
+    "id": "review.runtime-simulation-and-lab-instrumentation",
+    "focus": "Harden the lab against false runtime confidence without turning it into the real runtime.",
+    "relatedEntries": [
+      "accepted.effect-only-authoring",
+      "accepted.invocation-bound-clients",
+      "accepted.provider-not-execution-plan",
+      "accepted.provider-profile-closure",
+      "audit.p1.provider-effect-plan-shape",
+      "audit.p2.server-route-derivation"
+    ]
+  },
+  "entries": [
+    {
+      "id": "accepted.descriptor-ref.discriminated",
+      "status": "proof",
+      "source": "Runtime spec section 9.2",
+      "oracle": "ExecutionDescriptorRef rejects optional-field bags and under-identified async step refs.",
+      "fixtures": [
+        "fixtures/positive/app-and-plan-artifacts.ts",
+        "fixtures/inline-negative/descriptor-refs.ts"
+      ]
+    },
+    {
+      "id": "accepted.effect-only-authoring",
+      "status": "proof",
+      "source": "Runtime spec sections 9 and 12",
+      "oracle": "RAWR service/plugin executable terminals expose .effect(...) only, reject .handler(...) or Promise bodies, and reject raw generator yields outside the RAWR Effect facade.",
+      "fixtures": [
+        "fixtures/positive/work-items-service.ts",
+        "fixtures/positive/server-api-plugin.ts",
+        "fixtures/inline-negative/authoring-contracts.ts"
+      ]
+    },
+    {
+      "id": "accepted.invocation-bound-clients",
+      "status": "proof",
+      "source": "Runtime spec sections 11.8 and 12.5",
+      "oracle": "Process runtime simulation resolves a registry boundary and supplies runtime-bound clients through invocation context; service calls still require .withInvocation(...).",
+      "fixtures": [
+        "fixtures/positive/server-api-plugin.ts",
+        "fixtures/inline-negative/service-client-boundaries.ts",
+        "test/spine-simulation.test.ts"
+      ]
+    },
+    {
+      "id": "accepted.portable-artifacts.refs-only",
+      "status": "proof",
+      "source": "Runtime spec sections 9.3 and 15.7",
+      "oracle": "Portable artifacts carry descriptor refs and not executable closures or descriptor tables.",
+      "fixtures": [
+        "fixtures/positive/app-and-plan-artifacts.ts",
+        "fixtures/fail/portable-closure.fail.ts"
+      ]
+    },
+    {
+      "id": "accepted.provider-not-execution-plan",
+      "status": "proof",
+      "source": "Runtime spec section 13.4",
+      "oracle": "Provider build returns ProviderEffectPlan, not Promise or CompiledExecutionPlan.",
+      "fixtures": [
+        "fixtures/positive/resource-provider-profile.ts",
+        "fixtures/inline-negative/authoring-contracts.ts"
+      ]
+    },
+    {
+      "id": "accepted.provider-profile-closure",
+      "status": "proof",
+      "source": "Runtime spec sections 13 and 24",
+      "oracle": "Profile-selected providers must cover non-optional provider resource requirements before boot.",
+      "fixtures": [
+        "fixtures/positive/resource-provider-profile.ts",
+        "test/spine-simulation.test.ts"
+      ]
+    },
+    {
+      "id": "audit.p0.async-step-membership",
+      "status": "xfail",
+      "source": "M2 core-spine audit P0",
+      "oracle": "Workflow/schedule/consumer-to-step membership must become declarative before this can be proof.",
+      "fixtures": [
+        "fixtures/positive/async-workflow.ts",
+        "fixtures/todo/async-step-membership.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p1.provider-effect-plan-shape",
+      "status": "xfail",
+      "source": "M2 core-spine audit P1",
+      "oracle": "ProviderEffectPlan remains opaque until acquire/release, telemetry, error, and lowering fields are locked.",
+      "fixtures": [
+        "fixtures/todo/provider-effect-plan-shape.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p1.dispatcher-access",
+      "status": "xfail",
+      "source": "M2 core-spine audit P1",
+      "oracle": "Dispatcher access declaration must be decided before operation descriptors can be proven.",
+      "fixtures": [
+        "fixtures/todo/dispatcher-access.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p1.runtime-resource-access",
+      "status": "xfail",
+      "source": "M2 core-spine audit P1",
+      "oracle": "RuntimeResourceAccess remains an opaque narrow facade until method law is locked.",
+      "fixtures": [
+        "fixtures/todo/runtime-resource-access.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p2.server-route-derivation",
+      "status": "xfail",
+      "source": "M2 core-spine audit P2",
+      "oracle": "Cold route factory derivation mechanics must be stated before a positive derivation proof is accepted.",
+      "fixtures": [
+        "fixtures/todo/server-route-derivation.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p2.first-resource-provider-cut",
+      "status": "todo",
+      "source": "M2 core-spine audit P2",
+      "oracle": "Initial resource/provider catalog is planning input only and does not assert final ids.",
+      "fixtures": [
+        "fixtures/todo/provider-effect-plan-shape.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.source-hygiene",
+      "status": "out-of-scope",
+      "source": "M2 core-spine audit P1",
+      "oracle": "Repo-local stale authority drift is source hygiene, not a type-spine proof.",
+      "fixtures": []
+    }
+  ]
+}
