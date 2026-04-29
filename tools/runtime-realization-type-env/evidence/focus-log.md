@@ -4,14 +4,20 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `review.runtime-simulation-and-lab-instrumentation`
-- Focus: harden the lab against false confidence by making registry/runtime simulation, provider closure checks, vendor-facade limits, and proof status visible.
+- ID: `review.effect-native-integration-todo-coverage`
+- Focus: make remaining Effect-native integration categories visible as fenced TODO/xfail evidence without turning the lab into the runtime substrate.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
-  - `accepted.invocation-bound-clients`
-  - `accepted.provider-not-execution-plan`
+  - `accepted.curated-effect-public-surface`
+  - `audit.p1.effect-managed-runtime-substrate`
+  - `audit.p1.process-local-coordination-resources`
   - `audit.p1.provider-effect-plan-shape`
-  - `audit.p2.server-route-derivation`
+  - `audit.p1.provider-effect-plan-lowering`
+  - `audit.p1.effect-boundary-policy-matrix`
+  - `audit.p1.safe-effect-composition-surface`
+  - `audit.p2.adapter-effect-callback-lowering`
+  - `audit.p2.async-effect-bridge-lowering`
+  - `audit.p2.runtime-profile-config-redaction`
 
 ## Status Meanings
 
