@@ -2,19 +2,21 @@
 
 This project is a contained spec conformance lab for the Runtime Realization spine. It is not the SDK, not the runtime, and not migration implementation.
 
-Pinned authority for v1:
+Pinned authority for the current lab:
 
-- `/Users/mateicanavra/Downloads/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
-- SHA-256: `483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b`
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
+- The SHA-256 is recorded in `evidence/proof-manifest.json` and verified by the structural guard.
 
-The pseudo-SDK in `src/sdk/**` exists only to make the spec authoring model executable by TypeScript. Canonical-looking imports such as `@rawr/sdk/effect` are local `tsconfig` aliases and must not be treated as production package exports.
+The SDK facade in `src/sdk/**` exists only to make the spec authoring model executable by TypeScript. Canonical-looking imports such as `@rawr/sdk/effect` are local `tsconfig` aliases and must not be treated as production package exports.
 
-The lab has two proof strengths:
+The lab has four proof strengths:
 
 - Type/shape proof: authoring signatures, descriptor refs, portable artifacts, and negative misuse cases compile or fail as expected.
-- Minimal simulation proof: registry assembly, invocation-time context binding, and provider profile closure are exercised by a tiny process-runtime simulator.
+- Vendor proof: real `effect@3.21.2`, TypeBox, oRPC, Inngest, and Bun boundary behavior is exercised only in narrow lab lanes.
+- Mini-runtime proof: descriptor table/registry assembly, runtime-owned Effect execution, adapter delegation, deployment handoff, and invocation-time context binding run through a contained miniature runtime.
+- Compatibility simulation proof: the original simulation lane remains as a compatibility check while the mini-runtime lane grows.
 
-It does not prove real Effect runtime semantics, actual oRPC adapter behavior, provider lowering, durable workflow scheduling, telemetry export, persistence, network transport, or bootgraph execution. Open architecture gaps stay marked as `xfail` or `todo` in `evidence/proof-manifest.json`.
+It does not prove production oRPC adapter behavior, provider plan final shape, durable workflow scheduling, telemetry export, persistence, network transport, or bootgraph execution. Open architecture gaps stay marked as `xfail` or `todo` in `evidence/proof-manifest.json`.
 
 ## Commands
 
@@ -22,6 +24,9 @@ It does not prove real Effect runtime semantics, actual oRPC adapter behavior, p
 bunx nx run runtime-realization-type-env:report
 bunx nx run runtime-realization-type-env:typecheck
 bunx nx run runtime-realization-type-env:negative
+bunx nx run runtime-realization-type-env:vendor-effect
+bunx nx run runtime-realization-type-env:vendor-boundaries
+bunx nx run runtime-realization-type-env:mini-runtime
 bunx nx run runtime-realization-type-env:simulate
 bunx nx run runtime-realization-type-env:structural
 bunx nx run runtime-realization-type-env:gate
@@ -29,7 +34,7 @@ bunx nx run runtime-realization-type-env:gate
 
 ## Iteration Rule
 
-When the spec changes, update the smallest pseudo-SDK surface and fixture set needed to prove the new spine rule. Move the related proof manifest entry from `todo` or `xfail` to `proof` only when the type or simulation evidence is green.
+When the spec changes, update the smallest SDK facade, mini-runtime behavior, and fixture set needed to prove the new spine rule. Move the related proof manifest entry from `todo` or `xfail` to `proof`, `vendor-proof`, or `simulation-proof` only when its named gate is green.
 
 If a change requires production code, split it into migration work. This tool may reveal a spec gap; it must not resolve architecture silently.
 

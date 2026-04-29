@@ -1,21 +1,15 @@
-const RAW_EFFECT: unique symbol = Symbol("rawr.effect");
-const RAW_EFFECT_YIELD: unique symbol = Symbol("rawr.effect-yield");
+import {
+  Data,
+  Effect as VendorEffect,
+  pipe,
+} from "effect";
+import type { YieldWrap } from "effect/Utils";
 
-export interface RawrEffectYield<TError = never, TRequirements = never> {
-  readonly [RAW_EFFECT_YIELD]: {
-    readonly error: TError;
-    readonly requirements: TRequirements;
-  };
-}
+export type RawrEffect<TSuccess, TError = never, TRequirements = never> =
+  VendorEffect.Effect<TSuccess, TError, TRequirements>;
 
-export interface RawrEffect<TSuccess, TError = never, TRequirements = never> {
-  readonly [RAW_EFFECT]: {
-    readonly success: TSuccess;
-    readonly error: TError;
-    readonly requirements: TRequirements;
-  };
-  [Symbol.iterator](): Generator<RawrEffectYield<TError, TRequirements>, TSuccess, unknown>;
-}
+export type RawrEffectYield<TError = never, TRequirements = never> =
+  YieldWrap<RawrEffect<unknown, TError, TRequirements>>;
 
 export type RawrEffectSuccess<TEffect> =
   TEffect extends RawrEffect<infer TSuccess, unknown, unknown>
@@ -42,53 +36,28 @@ export type EffectBody<TContext, TOutput, TError = never, TRequirements = never>
 export function makeRawrEffect<TSuccess, TError = never, TRequirements = never>(
   value: TSuccess,
 ): RawrEffect<TSuccess, TError, TRequirements> {
-  return {
-    [RAW_EFFECT]: undefined as unknown as RawrEffect<
-      TSuccess,
-      TError,
-      TRequirements
-    >[typeof RAW_EFFECT],
-    *[Symbol.iterator](): Generator<
-      RawrEffectYield<TError, TRequirements>,
-      TSuccess,
-      unknown
-    > {
-      return value;
-    },
-  };
+  return VendorEffect.succeed(value);
 }
 
 export function makeRawrFailure<TError>(
   error: TError,
 ): RawrEffect<never, TError> {
-  return {
-    [RAW_EFFECT]: undefined as unknown as RawrEffect<
-      never,
-      TError
-    >[typeof RAW_EFFECT],
-    *[Symbol.iterator](): Generator<RawrEffectYield<TError>, never, unknown> {
-      throw error;
-    },
-  };
+  return VendorEffect.fail(error);
 }
 
 export const Effect = {
-  succeed<TSuccess>(value: TSuccess): RawrEffect<TSuccess> {
-    return makeRawrEffect(value);
-  },
+  succeed: VendorEffect.succeed,
+  fail: VendorEffect.fail,
+  sync: VendorEffect.sync,
+  try: VendorEffect.try,
+  tryPromise: VendorEffect.tryPromise,
+  map: VendorEffect.map,
+  flatMap: VendorEffect.flatMap,
+  catchTag: VendorEffect.catchTag,
+  catchAll: VendorEffect.catchAll,
+} as const;
 
-  fail<TError>(error: TError): RawrEffect<never, TError> {
-    return makeRawrFailure(error);
-  },
-
-  tryPromise<TSuccess, TError>(input: {
-    readonly try: () => Promise<TSuccess>;
-    readonly catch: (cause: unknown) => TError;
-  }): RawrEffect<TSuccess, TError> {
-    void input;
-    return makeRawrEffect(undefined as unknown as TSuccess);
-  },
-};
+export { pipe };
 
 export interface RawrRetryPolicy {
   readonly kind: "rawr.retry-policy";
@@ -105,25 +74,4 @@ export interface RawrConcurrencyPolicy {
   readonly limit: number;
 }
 
-type ErrorFields = Record<string, unknown>;
-
-export type TaggedErrorConstructor<TTag extends string> =
-  new <const TFields extends ErrorFields = {}>(
-    fields: keyof TFields extends never ? void | undefined : TFields,
-  ) => Error & TFields & { readonly _tag: TTag };
-
-export function TaggedError<const TTag extends string>(
-  tag: TTag,
-): TaggedErrorConstructor<TTag> {
-  class RawrTaggedError extends Error {
-    readonly _tag = tag;
-
-    constructor(fields?: ErrorFields) {
-      super(tag);
-      this.name = tag;
-      if (fields) Object.assign(this, fields);
-    }
-  }
-
-  return RawrTaggedError as unknown as TaggedErrorConstructor<TTag>;
-}
+export const TaggedError = Data.TaggedError;
