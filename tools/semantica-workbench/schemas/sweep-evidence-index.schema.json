@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rawr.dev/schemas/sweep-evidence-index.schema.json",
+  "title": "RAWR Sweep Evidence Index",
+  "type": "object",
+  "required": ["schema_version", "run_id", "git_sha", "authority_boundary", "summary", "findings"],
+  "properties": {
+    "schema_version": { "const": "rawr-sweep-evidence-index-v1" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "git_sha": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string" },
+    "authority_boundary": { "$ref": "#/$defs/authorityBoundary" },
+    "source_sweep": { "type": "object" },
+    "summary": {
+      "type": "object",
+      "required": ["claim_count", "finding_count", "warning_count"],
+      "properties": {
+        "documents_indexed": { "type": "integer", "minimum": 0 },
+        "claim_count": { "type": "integer", "minimum": 0 },
+        "finding_count": { "type": "integer", "minimum": 0 },
+        "warning_count": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "documents": { "type": "array", "items": { "type": "object" } },
+    "claims": { "type": "array", "items": { "type": "object" } },
+    "findings": { "type": "array", "items": { "$ref": "#/$defs/findingRow" } },
+    "warnings": { "type": "array", "items": { "type": "object" } },
+    "provenance": { "type": "object" }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "authorityBoundary": {
+      "type": "object",
+      "required": [
+        "generated_evidence_is_truth",
+        "reviewed_rawr_ontology_remains_authority",
+        "promotion_requires_human_review",
+        "llm_output_is_evidence_only"
+      ],
+      "properties": {
+        "generated_evidence_is_truth": { "const": false },
+        "reviewed_rawr_ontology_remains_authority": { "const": true },
+        "promotion_requires_human_review": { "const": true },
+        "llm_output_is_evidence_only": { "const": true },
+        "promotion_allowed": { "const": false }
+      },
+      "additionalProperties": true
+    },
+    "sourceSpan": {
+      "type": "object",
+      "required": ["source_path", "line_start", "line_end", "char_start", "char_end", "char_span_kind", "text"],
+      "properties": {
+        "source_path": { "type": "string", "minLength": 1 },
+        "line_start": { "type": "integer", "minimum": 1 },
+        "line_end": { "type": "integer", "minimum": 1 },
+        "char_start": { "type": ["integer", "null"], "minimum": 0 },
+        "char_end": { "type": ["integer", "null"], "minimum": 0 },
+        "char_span_kind": { "type": ["string", "null"], "minLength": 1 },
+        "heading_path": { "type": "array", "items": { "type": "string" } },
+        "text": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "findingRow": {
+      "type": "object",
+      "required": ["index_id", "kind", "source_path", "line_start", "line_end", "source_span", "review_action", "confidence"],
+      "properties": {
+        "index_id": { "type": "string", "minLength": 1 },
+        "finding_id": { "type": "string" },
+        "claim_id": { "type": ["string", "null"] },
+        "claim_index_id": { "type": ["string", "null"] },
+        "kind": { "type": "string", "minLength": 1 },
+        "rule": { "type": "string" },
+        "source_path": { "type": "string", "minLength": 1 },
+        "document_path": { "type": "string" },
+        "sweep_document_path": { "type": "string" },
+        "line_start": { "type": "integer", "minimum": 1 },
+        "line_end": { "type": "integer", "minimum": 1 },
+        "char_start": { "type": ["integer", "null"], "minimum": 0 },
+        "char_end": { "type": ["integer", "null"], "minimum": 0 },
+        "char_span_kind": { "type": ["string", "null"] },
+        "heading_path": { "type": "array", "items": { "type": "string" } },
+        "text": { "type": "string" },
+        "source_span": { "$ref": "#/$defs/sourceSpan" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "review_action": { "type": "string" },
+        "review_state": { "type": "string" },
+        "resolution_state": { "type": "string" },
+        "decision_grade": { "type": "boolean" },
+        "promotion_allowed": { "const": false }
+      },
+      "additionalProperties": true
+    }
+  }
+}
