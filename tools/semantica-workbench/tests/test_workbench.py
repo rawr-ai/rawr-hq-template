@@ -34,11 +34,13 @@ from semantica_workbench.document_sweep import discover_documents, document_slug
 from semantica_workbench.evidence_index import build_sweep_evidence_index, evidence_index_turtle, write_sweep_evidence_index
 from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
+import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
 from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
+from semantica_workbench.llm_augmentation import write_llm_evidence_augmentation
 from semantica_workbench.semantica_graph import semantica_graph_probe
 from semantica_workbench.semantica_intake import map_semantica_chunk_to_span, semantica_intake_probe
 from semantica_workbench.semantic_evidence import (
@@ -1648,6 +1650,274 @@ class WorkbenchTests(unittest.TestCase):
             write_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"], graph["candidate_queue"])
             with self.assertRaises(FileNotFoundError):
                 run_named_query(str(run_dir), "evidence-summary")
+
+    def test_llm_evidence_augmentation_blocks_without_provider(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            index = synthetic_evidence_index()
+            write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"], index)
+            original_index_text = (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"]).read_text(encoding="utf-8")
+            augmentation = write_llm_evidence_augmentation(
+                run_dir,
+                provider="openai",
+                model=None,
+                limit=2,
+            )
+            self.assertEqual("rawr-sweep-llm-evidence-augmentation-v1", augmentation["schema_version"])
+            self.assertEqual("blocked", augmentation["status"]["actual_mode"])
+            self.assertIn(augmentation["status"]["blocked_reason"], {"blocked-missing-extra", "blocked-requires-model"})
+            self.assertEqual(2, augmentation["selection"]["selected_count"])
+            self.assertEqual([], augmentation["suggestions"])
+            self.assertFalse(augmentation["authority_boundary"]["augmentation_is_truth"])
+            self.assertFalse(augmentation["authority_boundary"]["alters_deterministic_index"])
+            self.assertEqual(original_index_text, (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"]).read_text(encoding="utf-8"))
+
+    def test_llm_evidence_augmentation_mock_provider_writes_evidence_only_sidecar(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            index = synthetic_evidence_index()
+            write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"], index)
+            augmentation = write_llm_evidence_augmentation(
+                run_dir,
+                provider="mock",
+                model="mock-model",
+                limit=3,
+            )
+            path = run_dir / CORE_GRAPH_FILENAMES["sweep_llm_evidence_augmentation"]
+            self.assertTrue(path.exists())
+            self.assertEqual("mock", augmentation["status"]["actual_mode"])
+            self.assertEqual(3, augmentation["selection"]["selected_count"])
+            self.assertEqual(3, augmentation["summary"]["suggestion_count"])
+            first = augmentation["suggestions"][0]
+            self.assertEqual("evidence-only", first["review_state"])
+            self.assertFalse(first["promotion_allowed"])
+            self.assertFalse(first["decision_grade"])
+            self.assertIn("source_span", first["source_row"])
+            self.assertEqual("mock-llm-evidence-augmentation-v1", first["extraction"]["method"])
+
+    def test_llm_evidence_augmentation_real_provider_failure_records_attempt(self) -> None:
+        original_status = augmentation_module.semantica_llm_status
+        original_call = augmentation_module.call_semantica_llm_methods
+
+        def ready_status(provider: str, model: str | None) -> dict:
+            return {
+                "available": True,
+                "classification": "ready",
+                "provider": provider,
+                "model": model,
+                "provider_available": True,
+                "llm_call_attempted": False,
+                "fallback_used": False,
+                "blocked_reason": None,
+                "optional_dependency": {"package": "openai", "available": True, "version": "test"},
+            }
+
+        def failing_call(*_args, **_kwargs):
+            raise RuntimeError("boom")
+
+        augmentation_module.semantica_llm_status = ready_status
+        augmentation_module.call_semantica_llm_methods = failing_call
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                run_dir = Path(directory)
+                write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"], synthetic_evidence_index())
+                augmentation = write_llm_evidence_augmentation(
+                    run_dir,
+                    provider="openai",
+                    model="test-model",
+                    limit=1,
+                )
+        finally:
+            augmentation_module.semantica_llm_status = original_status
+            augmentation_module.call_semantica_llm_methods = original_call
+
+        self.assertEqual("blocked", augmentation["status"]["actual_mode"])
+        self.assertEqual("blocked-llm-call-failed", augmentation["status"]["blocked_reason"])
+        self.assertTrue(augmentation["status"]["llm_call_attempted"])
+        self.assertEqual([], augmentation["suggestions"])
+        self.assertEqual("llm-call-failed", augmentation["diagnostics"][0]["kind"])
+
+    def test_llm_evidence_augmentation_empty_real_output_records_diagnostic(self) -> None:
+        original_status = augmentation_module.semantica_llm_status
+        original_call = augmentation_module.call_semantica_llm_methods
+
+        def ready_status(provider: str, model: str | None) -> dict:
+            return {
+                "available": True,
+                "classification": "ready",
+                "provider": provider,
+                "model": model,
+                "provider_available": True,
+                "llm_call_attempted": False,
+                "fallback_used": False,
+                "blocked_reason": None,
+                "optional_dependency": {"package": "openai", "available": True, "version": "test"},
+            }
+
+        augmentation_module.semantica_llm_status = ready_status
+        augmentation_module.call_semantica_llm_methods = lambda *_args, **_kwargs: ([], [])
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                run_dir = Path(directory)
+                write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"], synthetic_evidence_index())
+                augmentation = write_llm_evidence_augmentation(
+                    run_dir,
+                    provider="openai",
+                    model="test-model",
+                    limit=1,
+                )
+        finally:
+            augmentation_module.semantica_llm_status = original_status
+            augmentation_module.call_semantica_llm_methods = original_call
+
+        self.assertEqual("semantica-llm-augmentation", augmentation["status"]["actual_mode"])
+        self.assertTrue(augmentation["status"]["llm_call_attempted"])
+        self.assertEqual(0, augmentation["summary"]["suggestion_count"])
+        self.assertEqual([], augmentation["suggestions"])
+        self.assertEqual("llm-empty-output", augmentation["diagnostics"][0]["kind"])
+
+    def test_llm_evidence_augmentation_cli_keeps_deterministic_queries_unchanged(self) -> None:
+        from semantica_workbench.cli import main as workbench_main
+
+        with tempfile.TemporaryDirectory() as directory:
+            run_dir = Path(directory)
+            write_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"], {"summary": {}})
+            write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"], synthetic_evidence_index())
+            before = run_named_query(str(run_dir), "evidence-summary")
+            original_index_text = (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"]).read_text(encoding="utf-8")
+
+            exit_code = workbench_main(
+                [
+                    "doc:augment-llm",
+                    "--run",
+                    str(run_dir),
+                    "--llm-provider",
+                    "mock",
+                    "--llm-model",
+                    "mock-model",
+                    "--limit",
+                    "2",
+                ]
+            )
+
+            after = run_named_query(str(run_dir), "evidence-summary")
+            sidecar = run_dir / CORE_GRAPH_FILENAMES["sweep_llm_evidence_augmentation"]
+            self.assertEqual(0, exit_code)
+            self.assertTrue(sidecar.exists())
+            self.assertEqual(before, after)
+            self.assertEqual(original_index_text, (run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"]).read_text(encoding="utf-8"))
+            self.assertTrue((REPO_ROOT / ".semantica/current" / CORE_GRAPH_FILENAMES["sweep_llm_evidence_augmentation"]).exists())
+
+
+def synthetic_evidence_index() -> dict:
+    rows = [
+        {
+            "index_id": "docs/proposal.md#finding-candidate",
+            "finding_id": "finding-candidate",
+            "claim_id": "claim-candidate",
+            "kind": "candidate-new",
+            "rule": "in_scope_unresolved_operational_concept",
+            "source_path": "docs/proposal.md",
+            "document_path": "docs/proposal.md",
+            "sweep_document_path": "docs/proposal.md",
+            "line_start": 10,
+            "line_end": 10,
+            "char_start": 0,
+            "char_end": 42,
+            "char_span_kind": "line-offset",
+            "heading_path": ["Proposal"],
+            "text": "Introduce an architecture proposal graph.",
+            "confidence": 0.8,
+            "review_action": "Review as candidate; do not promote.",
+            "resolution_state": "resolved-candidate",
+        },
+        {
+            "index_id": "docs/proposal.md#finding-unresolved",
+            "finding_id": "finding-unresolved",
+            "claim_id": "claim-unresolved",
+            "kind": "ambiguous",
+            "rule": "no_resolved_decision_target",
+            "source_path": "docs/proposal.md",
+            "document_path": "docs/proposal.md",
+            "sweep_document_path": "docs/proposal.md",
+            "line_start": 20,
+            "line_end": 20,
+            "char_start": 0,
+            "char_end": 37,
+            "char_span_kind": "line-offset",
+            "heading_path": ["Proposal"],
+            "text": "The proposal may add an adapter.",
+            "confidence": 0.6,
+            "review_action": "Map to an existing ontology entity.",
+            "resolution_state": "unresolved",
+            "ambiguity_bucket": "unresolved-target",
+        },
+        {
+            "index_id": "docs/proposal.md#finding-weak",
+            "finding_id": "finding-weak",
+            "claim_id": "claim-weak",
+            "kind": "ambiguous",
+            "rule": "no_resolved_decision_target",
+            "source_path": "docs/proposal.md",
+            "document_path": "docs/proposal.md",
+            "sweep_document_path": "docs/proposal.md",
+            "line_start": 30,
+            "line_end": 30,
+            "char_start": 0,
+            "char_end": 32,
+            "char_span_kind": "line-offset",
+            "heading_path": ["Proposal"],
+            "text": "This could improve review flow.",
+            "confidence": 0.5,
+            "review_action": "Clarify assertion scope.",
+            "resolution_state": "resolved-canonical",
+            "ambiguity_bucket": "weak-modality",
+        },
+        {
+            "index_id": "docs/proposal.md#finding-aligned",
+            "finding_id": "finding-aligned",
+            "claim_id": "claim-aligned",
+            "kind": "aligned",
+            "rule": "claim_resolves_to_canonical_ontology_entity",
+            "source_path": "docs/proposal.md",
+            "document_path": "docs/proposal.md",
+            "sweep_document_path": "docs/proposal.md",
+            "line_start": 40,
+            "line_end": 40,
+            "char_start": 0,
+            "char_end": 20,
+            "char_span_kind": "line-offset",
+            "heading_path": ["Proposal"],
+            "text": "Use reviewed ontology.",
+            "confidence": 0.9,
+            "review_action": "No action required.",
+            "resolution_state": "resolved-canonical",
+        },
+    ]
+    for row in rows:
+        row["source_span"] = {
+            "source_path": row["source_path"],
+            "line_start": row["line_start"],
+            "line_end": row["line_end"],
+            "char_start": row["char_start"],
+            "char_end": row["char_end"],
+            "char_span_kind": row["char_span_kind"],
+            "heading_path": row["heading_path"],
+            "text": row["text"],
+        }
+    return {
+        "schema_version": "rawr-sweep-evidence-index-v1",
+        "run_id": "synthetic-run",
+        "git_sha": "test",
+        "authority_boundary": {
+            "generated_evidence_is_truth": False,
+            "reviewed_rawr_ontology_remains_authority": True,
+            "promotion_requires_human_review": True,
+            "llm_output_is_evidence_only": True,
+        },
+        "summary": {"documents_indexed": 1, "claim_count": 4, "finding_count": 4, "warning_count": 0},
+        "findings": rows,
+    }
 
 
 if __name__ == "__main__":

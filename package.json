@@ -82,6 +82,7 @@
     "semantica:doc:proposal-compare": "bun tools/semantica-workbench/bin/workbench.mjs doc:proposal-compare",
     "semantica:doc:sweep": "bun tools/semantica-workbench/bin/workbench.mjs doc:sweep",
     "semantica:doc:index": "bun tools/semantica-workbench/bin/workbench.mjs doc:index",
+    "semantica:doc:augment-llm": "bun tools/semantica-workbench/bin/workbench.mjs doc:augment-llm",
     "semantica:semantic:capability": "bun tools/semantica-workbench/bin/workbench.mjs semantic:capability",
     "semantica:extract": "bun tools/semantica-workbench/bin/workbench.mjs extract",
     "semantica:ontology": "bun tools/semantica-workbench/bin/workbench.mjs ontology",
