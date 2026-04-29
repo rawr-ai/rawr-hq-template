@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-import html
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
 from .paths import REPO_ROOT
+from .report_html_layout import escape as escape
+from .report_html_layout import hero as hero
+from .report_html_layout import metric_grid as metric_grid
 
 
 def write_sweep_report_html(path: Path, sweep: dict[str, Any]) -> None:
@@ -141,7 +143,11 @@ def write_sweep_evidence_index_html(path: Path, index: dict[str, Any]) -> None:
                 ("Claims", summary.get("claim_count", 0), "indexed source-backed claims"),
                 ("Findings", summary.get("finding_count", 0), "review evidence rows"),
                 ("Decision Grade", summary.get("decision_grade_finding_count", 0), "deterministic policy signals"),
-                ("Ambiguous", summary.get("finding_count_by_kind", {}).get("ambiguous", 0), "needs wording or mapping review"),
+                (
+                    "Ambiguous",
+                    summary.get("finding_count_by_kind", {}).get("ambiguous", 0),
+                    "needs wording or mapping review",
+                ),
             ]
         ),
         meaning_block(
@@ -152,11 +158,20 @@ def write_sweep_evidence_index_html(path: Path, index: dict[str, Any]) -> None:
             ]
         ),
         evidence_breakdown_panel(summary),
-        evidence_finding_section("Review Queue", evidence_review_queue(findings), priority=True, limit=35, base_dir=path.parent),
-        evidence_finding_section("Candidate New", [item for item in findings if item.get("kind") == "candidate-new"], limit=25, base_dir=path.parent),
+        evidence_finding_section(
+            "Review Queue", evidence_review_queue(findings), priority=True, limit=35, base_dir=path.parent
+        ),
+        evidence_finding_section(
+            "Candidate New",
+            [item for item in findings if item.get("kind") == "candidate-new"],
+            limit=25,
+            base_dir=path.parent,
+        ),
         evidence_source_authority_panel(documents, findings, base_dir=path.parent),
         evidence_ambiguity_panel(summary, findings),
-        evidence_finding_section("Unresolved Targets", evidence_unresolved_targets(findings), limit=35, base_dir=path.parent),
+        evidence_finding_section(
+            "Unresolved Targets", evidence_unresolved_targets(findings), limit=35, base_dir=path.parent
+        ),
         evidence_entity_table(findings),
         evidence_document_table(documents, base_dir=path.parent),
     ]
@@ -187,37 +202,6 @@ def write_page(path: Path, title: str, body: str) -> None:
     )
 
 
-def hero(title: str, subtitle: str, facts: list[tuple[str, str]]) -> str:
-    fact_html = "".join(
-        f"<div class=\"fact\"><span>{escape(label)}</span><strong>{escape(value)}</strong></div>"
-        for label, value in facts
-    )
-    return f"""
-<header class="hero">
-  <div>
-    <p class="eyebrow">RAWR document intelligence</p>
-    <h1>{escape(title)}</h1>
-    <p class="lede">{escape(subtitle)}</p>
-  </div>
-  <div class="facts">{fact_html}</div>
-</header>
-"""
-
-
-def metric_grid(metrics: list[tuple[str, Any, str]]) -> str:
-    cards = "".join(
-        f"""
-<article class="metric">
-  <span>{escape(label)}</span>
-  <strong>{escape(str(value))}</strong>
-  <small>{escape(help_text)}</small>
-</article>
-"""
-        for label, value, help_text in metrics
-    )
-    return f"<section class=\"metric-grid\">{cards}</section>"
-
-
 def recommendation_bars(recommendations: dict[str, int]) -> str:
     total = max(sum(int(value) for value in recommendations.values()), 1)
     rows = []
@@ -231,45 +215,49 @@ def recommendation_bars(recommendations: dict[str, int]) -> str:
 </div>
 """
         )
-    return f"<section class=\"panel\"><h2>Recommendation Summary</h2>{''.join(rows)}</section>"
+    return f'<section class="panel"><h2>Recommendation Summary</h2>{"".join(rows)}</section>'
 
 
 def meaning_block(items: list[str]) -> str:
-    return "<section class=\"meaning\"><h2>How To Read This</h2>" + "".join(f"<p>{escape(item)}</p>" for item in items) + "</section>"
+    return (
+        '<section class="meaning"><h2>How To Read This</h2>'
+        + "".join(f"<p>{escape(item)}</p>" for item in items)
+        + "</section>"
+    )
 
 
 def queue_section(title: str, records: list[dict[str, Any]], *, priority: bool = False, quiet: bool = False) -> str:
     if not records:
-        return f"<section class=\"panel\"><h2>{escape(title)}</h2><p class=\"muted\">None.</p></section>"
+        return f'<section class="panel"><h2>{escape(title)}</h2><p class="muted">None.</p></section>'
     cards = "".join(record_card(record, priority=priority, quiet=quiet) for record in records[:30])
     more = ""
     if len(records) > 30:
-        more = f"<p class=\"muted\">{len(records) - 30} additional records omitted here. Use doc-sweep.json or doc-sweep.csv for the complete queue.</p>"
-    return f"<section class=\"panel\"><div class=\"section-title\"><h2>{escape(title)}</h2><span>{len(records)} records</span></div><div class=\"record-list\">{cards}</div>{more}</section>"
+        more = f'<p class="muted">{len(records) - 30} additional records omitted here. Use doc-sweep.json or doc-sweep.csv for the complete queue.</p>'
+    return f'<section class="panel"><div class="section-title"><h2>{escape(title)}</h2><span>{len(records)} records</span></div><div class="record-list">{cards}</div>{more}</section>'
 
 
 def record_card(record: dict[str, Any], *, priority: bool = False, quiet: bool = False) -> str:
     counts = record["counts"]
     report = record.get("artifact_paths", {}).get("report_html") or record.get("artifact_paths", {}).get("report")
-    reasons = "".join(f"<span class=\"chip\">{escape(reason)}</span>" for reason in record.get("reason_codes", []))
+    reasons = "".join(f'<span class="chip">{escape(reason)}</span>' for reason in record.get("reason_codes", []))
     top = "".join(finding_line(item) for item in record.get("top_findings", [])[:3])
     return f"""
-<article class="record {'priority' if priority else ''} {'quiet' if quiet else ''}">
+<article class="record {"priority" if priority else ""} {"quiet" if quiet else ""}">
   <div class="record-main">
-    <div class="pathline">{escape(record['document_path'])}</div>
+    <div class="pathline">{escape(record["document_path"])}</div>
     <div class="meta-row">
-      <span class="badge {badge_class(record['recommendation'])}">{escape(record['recommendation'])}</span>
-      <span class="badge confidence">{escape(record['confidence'])}</span>
-      <span>{escape(record['path_class'])}</span>
+      <span class="badge {badge_class(record["recommendation"])}">{escape(record["recommendation"])}</span>
+      <span class="badge confidence">{escape(record["confidence"])}</span>
+      <span>{escape(record["path_class"])}</span>
     </div>
     <div class="chips">{reasons}</div>
-    {f'<div class="findings">{top}</div>' if top else ''}
+    {f'<div class="findings">{top}</div>' if top else ""}
   </div>
   <div class="record-side">
-    <strong>{counts['findings']}</strong><span>findings</span>
-    <strong>{counts['ambiguous']}</strong><span>ambiguous</span>
-    <strong>{counts['decision_grade']}</strong><span>decision-grade</span>
-    {artifact_link(report, 'Open report') if report else ''}
+    <strong>{counts["findings"]}</strong><span>findings</span>
+    <strong>{counts["ambiguous"]}</strong><span>ambiguous</span>
+    <strong>{counts["decision_grade"]}</strong><span>decision-grade</span>
+    {artifact_link(report, "Open report") if report else ""}
   </div>
 </article>
 """
@@ -283,18 +271,18 @@ def high_ambiguity_section(records: list[dict[str, Any]]) -> str:
         or (record["counts"]["claims"] and record["counts"]["ambiguous"] / record["counts"]["claims"] >= 0.75)
     ]
     if not selected:
-        return "<section class=\"panel\"><h2>High Ambiguity Documents</h2><p class=\"muted\">None.</p></section>"
+        return '<section class="panel"><h2>High Ambiguity Documents</h2><p class="muted">None.</p></section>'
     cards = "".join(
         f"""
 <article class="compact-record">
-  <span class="pathline">{escape(record['document_path'])}</span>
-  <strong>{record['counts']['ambiguous']} ambiguous</strong>
-  <span class="badge {badge_class(record['recommendation'])}">{escape(record['recommendation'])}</span>
+  <span class="pathline">{escape(record["document_path"])}</span>
+  <strong>{record["counts"]["ambiguous"]} ambiguous</strong>
+  <span class="badge {badge_class(record["recommendation"])}">{escape(record["recommendation"])}</span>
 </article>
 """
         for record in selected[:35]
     )
-    return f"<section class=\"panel\"><div class=\"section-title\"><h2>High Ambiguity Documents</h2><span>{len(selected)} records</span></div>{cards}</section>"
+    return f'<section class="panel"><div class="section-title"><h2>High Ambiguity Documents</h2><span>{len(selected)} records</span></div>{cards}</section>'
 
 
 def document_table(records: list[dict[str, Any]]) -> str:
@@ -304,8 +292,8 @@ def document_table(records: list[dict[str, Any]]) -> str:
         report = record.get("artifact_paths", {}).get("report_html") or record["artifact_paths"]["report"]
         rows.append(
             "<tr>"
-            f"<td><span class=\"pathline table-path\">{escape(record['document_path'])}</span></td>"
-            f"<td><span class=\"badge {badge_class(record['recommendation'])}\">{escape(record['recommendation'])}</span></td>"
+            f'<td><span class="pathline table-path">{escape(record["document_path"])}</span></td>'
+            f'<td><span class="badge {badge_class(record["recommendation"])}">{escape(record["recommendation"])}</span></td>'
             f"<td>{escape(record['path_class'])}</td>"
             f"<td>{counts['claims']}</td>"
             f"<td>{counts['findings']}</td>"
@@ -319,7 +307,7 @@ def document_table(records: list[dict[str, Any]]) -> str:
   <div class="table-wrap">
     <table class="numeric-table">
       <thead><tr><th>Document</th><th>Recommendation</th><th>Class</th><th>Claims</th><th>Findings</th><th>Decision</th><th>Report</th></tr></thead>
-      <tbody>{''.join(rows)}</tbody>
+      <tbody>{"".join(rows)}</tbody>
     </table>
   </div>
 </section>
@@ -330,17 +318,17 @@ def extraction_panel(frame: dict[str, Any]) -> str:
     extraction = frame["extraction"]
     diagnostics = [item for item in extraction.get("diagnostics", []) if item.get("kind") == "semantica_llm"]
     diagnostic_html = "".join(
-        f"<p class=\"muted\">LLM requested <strong>{escape(str(item.get('requested_mode')))}</strong>, actual <strong>{escape(str(item.get('actual_mode')))}</strong>, blocked <strong>{escape(str(item.get('blocked_reason') or 'none'))}</strong>, claims <strong>{escape(str(item.get('evidence_claim_count', 0)))}</strong>.</p>"
+        f'<p class="muted">LLM requested <strong>{escape(str(item.get("requested_mode")))}</strong>, actual <strong>{escape(str(item.get("actual_mode")))}</strong>, blocked <strong>{escape(str(item.get("blocked_reason") or "none"))}</strong>, claims <strong>{escape(str(item.get("evidence_claim_count", 0)))}</strong>.</p>'
         for item in diagnostics
     )
     return f"""
 <section class="panel">
   <h2>Extraction Boundary</h2>
   <div class="kv">
-    <div><span>Method</span><strong>{escape(extraction['method'])}</strong></div>
-    <div><span>Status</span><strong>{escape(extraction['status'])}</strong></div>
-    <div><span>LLM Provider</span><strong>{escape(extraction['llm_provider_status'])}</strong></div>
-    <div><span>Promotion</span><strong>{escape(str(extraction['promotion_allowed']))}</strong></div>
+    <div><span>Method</span><strong>{escape(extraction["method"])}</strong></div>
+    <div><span>Status</span><strong>{escape(extraction["status"])}</strong></div>
+    <div><span>LLM Provider</span><strong>{escape(extraction["llm_provider_status"])}</strong></div>
+    <div><span>Promotion</span><strong>{escape(str(extraction["promotion_allowed"]))}</strong></div>
   </div>
   {diagnostic_html}
 </section>
@@ -355,9 +343,9 @@ def proposal_review_queue(comparisons: list[dict[str, Any]]) -> str:
         or item.get("verdict") in {"conflicts", "needs-canonical-addendum", "unclear"}
     ]
     if not queue:
-        return "<section class=\"panel\"><h2>Review Queue</h2><p class=\"muted\">None.</p></section>"
+        return '<section class="panel"><h2>Review Queue</h2><p class="muted">None.</p></section>'
     cards = "".join(comparison_card(item) for item in queue)
-    return f"<section class=\"panel\"><div class=\"section-title\"><h2>Review Queue</h2><span>{len(queue)} claims</span></div>{cards}</section>"
+    return f'<section class="panel"><div class="section-title"><h2>Review Queue</h2><span>{len(queue)} claims</span></div>{cards}</section>'
 
 
 def comparison_card(item: dict[str, Any]) -> str:
@@ -365,13 +353,13 @@ def comparison_card(item: dict[str, Any]) -> str:
     return f"""
 <article class="record">
   <div class="record-main">
-    <div class="pathline">{escape(source['document_path'])}:{escape(str(source['line_start']))}</div>
-    <p>{escape(source['text'])}</p>
+    <div class="pathline">{escape(source["document_path"])}:{escape(str(source["line_start"]))}</div>
+    <p>{escape(source["text"])}</p>
     <div class="meta-row">
-      <span class="badge {badge_class(item['verdict'])}">{escape(item['verdict'])}</span>
-      <span class="badge action">{escape(item['review_action'])}</span>
+      <span class="badge {badge_class(item["verdict"])}">{escape(item["verdict"])}</span>
+      <span class="badge action">{escape(item["review_action"])}</span>
     </div>
-    {f"<p class=\"repair\">{escape(item['resolution_hint'])}</p>" if item.get('resolution_hint') else ''}
+    {f'<p class="repair">{escape(item["resolution_hint"])}</p>' if item.get("resolution_hint") else ""}
   </div>
 </article>
 """
@@ -380,25 +368,30 @@ def comparison_card(item: dict[str, Any]) -> str:
 def noun_mapping_panel(mappings: list[dict[str, Any]]) -> str:
     rows = []
     for mapping in mappings:
-        target = mapping.get("maps_to_entity_id") or mapping.get("maps_to_extension_slot") or mapping.get("maps_to_kind") or "unresolved"
+        target = (
+            mapping.get("maps_to_entity_id")
+            or mapping.get("maps_to_extension_slot")
+            or mapping.get("maps_to_kind")
+            or "unresolved"
+        )
         rows.append(
             "<tr>"
             f"<td>{escape(mapping['proposed_noun'])}</td>"
-            f"<td><span class=\"badge {badge_class(mapping['mapping_category'])}\">{escape(mapping['mapping_category'])}</span></td>"
+            f'<td><span class="badge {badge_class(mapping["mapping_category"])}">{escape(mapping["mapping_category"])}</span></td>'
             f"<td>{escape(target)}</td>"
             "</tr>"
         )
-    return f"<section class=\"panel\"><h2>Noun Mappings</h2><div class=\"table-wrap\"><table><thead><tr><th>Noun</th><th>Mapping</th><th>Target</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div></section>"
+    return f'<section class="panel"><h2>Noun Mappings</h2><div class="table-wrap"><table><thead><tr><th>Noun</th><th>Mapping</th><th>Target</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div></section>'
 
 
 def repair_panel(steps: list[dict[str, Any]]) -> str:
     if not steps:
-        return "<section class=\"panel\"><h2>Repair Steps</h2><p class=\"muted\">None.</p></section>"
+        return '<section class="panel"><h2>Repair Steps</h2><p class="muted">None.</p></section>'
     items = "".join(
-        f"<article class=\"compact-record\"><span class=\"badge {badge_class(step['verdict'])}\">{escape(step['verdict'])}</span><p>{escape(step.get('repair_hint') or 'Review source claim.')}</p></article>"
+        f'<article class="compact-record"><span class="badge {badge_class(step["verdict"])}">{escape(step["verdict"])}</span><p>{escape(step.get("repair_hint") or "Review source claim.")}</p></article>'
         for step in steps
     )
-    return f"<section class=\"panel\"><h2>Repair Steps</h2>{items}</section>"
+    return f'<section class="panel"><h2>Repair Steps</h2>{items}</section>'
 
 
 def authority_panel(frame: dict[str, Any]) -> str:
@@ -408,9 +401,9 @@ def authority_panel(frame: dict[str, Any]) -> str:
   <h2>Authority Boundary</h2>
   <p>RAWR reviewed ontology remains truth authority. Semantica, LLM, frame, and reference geometry outputs remain evidence until human-governed promotion.</p>
   <div class="kv">
-    <div><span>Semantica authoritative</span><strong>{escape(str(governance['semantica_output_authoritative']))}</strong></div>
-    <div><span>Reference geometry</span><strong>{escape(governance['reference_geometry_status'])}</strong></div>
-    <div><span>Human promotion</span><strong>{escape(str(governance['requires_human_promotion']))}</strong></div>
+    <div><span>Semantica authoritative</span><strong>{escape(str(governance["semantica_output_authoritative"]))}</strong></div>
+    <div><span>Reference geometry</span><strong>{escape(governance["reference_geometry_status"])}</strong></div>
+    <div><span>Human promotion</span><strong>{escape(str(governance["requires_human_promotion"]))}</strong></div>
   </div>
 </section>
 """
@@ -445,9 +438,9 @@ def compare_breakdowns_panel(summary: dict[str, Any], retention: dict[str, Any])
 <section class="panel">
   <h2>Evidence Shape</h2>
   <div class="split-panels">
-    {count_list('Claim Retention', retention, [('Input nonblank lines', 'input_nonblank_line_count'), ('Emitted claims', 'emitted_claim_count'), ('Suppressed lines', 'suppressed_line_count')])}
-    {mapping_list('Ambiguity Breakdown', ambiguity)}
-    {mapping_list('Rule Breakdown', rules)}
+    {count_list("Claim Retention", retention, [("Input nonblank lines", "input_nonblank_line_count"), ("Emitted claims", "emitted_claim_count"), ("Suppressed lines", "suppressed_line_count")])}
+    {mapping_list("Ambiguity Breakdown", ambiguity)}
+    {mapping_list("Rule Breakdown", rules)}
   </div>
 </section>
 """
@@ -455,25 +448,32 @@ def compare_breakdowns_panel(summary: dict[str, Any], retention: dict[str, Any])
 
 def count_list(title: str, data: dict[str, Any], rows: list[tuple[str, str]]) -> str:
     if not data:
-        return f"<article class=\"mini-panel\"><h3>{escape(title)}</h3><p class=\"muted\">None.</p></article>"
-    items = "".join(f"<li><span>{escape(label)}</span><strong>{escape(str(data.get(key, 0)))}</strong></li>" for label, key in rows)
-    return f"<article class=\"mini-panel\"><h3>{escape(title)}</h3><ul class=\"count-list\">{items}</ul></article>"
+        return f'<article class="mini-panel"><h3>{escape(title)}</h3><p class="muted">None.</p></article>'
+    items = "".join(
+        f"<li><span>{escape(label)}</span><strong>{escape(str(data.get(key, 0)))}</strong></li>" for label, key in rows
+    )
+    return f'<article class="mini-panel"><h3>{escape(title)}</h3><ul class="count-list">{items}</ul></article>'
 
 
 def mapping_list(title: str, data: dict[str, Any]) -> str:
     if not data:
-        return f"<article class=\"mini-panel\"><h3>{escape(title)}</h3><p class=\"muted\">None.</p></article>"
-    items = "".join(f"<li><span>{escape(key)}</span><strong>{escape(str(value))}</strong></li>" for key, value in sorted(data.items()))
-    return f"<article class=\"mini-panel\"><h3>{escape(title)}</h3><ul class=\"count-list\">{items}</ul></article>"
+        return f'<article class="mini-panel"><h3>{escape(title)}</h3><p class="muted">None.</p></article>'
+    items = "".join(
+        f"<li><span>{escape(key)}</span><strong>{escape(str(value))}</strong></li>"
+        for key, value in sorted(data.items())
+    )
+    return f'<article class="mini-panel"><h3>{escape(title)}</h3><ul class="count-list">{items}</ul></article>'
 
 
-def semantic_finding_section(title: str, findings: list[dict[str, Any]], *, priority: bool = False, limit: int = 25) -> str:
+def semantic_finding_section(
+    title: str, findings: list[dict[str, Any]], *, priority: bool = False, limit: int = 25
+) -> str:
     if not findings:
-        return f"<section class=\"panel\"><h2>{escape(title)}</h2><p class=\"muted\">None.</p></section>"
+        return f'<section class="panel"><h2>{escape(title)}</h2><p class="muted">None.</p></section>'
     cards = "".join(semantic_finding_card(item, priority=priority) for item in findings[:limit])
     more = ""
     if len(findings) > limit:
-        more = f"<p class=\"muted\">{len(findings) - limit} additional findings omitted here. Use semantic-compare.json for the complete set.</p>"
+        more = f'<p class="muted">{len(findings) - limit} additional findings omitted here. Use semantic-compare.json for the complete set.</p>'
     return f"""
 <section class="panel">
   <div class="section-title"><h2>{escape(title)}</h2><span>{len(findings)} findings</span></div>
@@ -490,29 +490,29 @@ def semantic_finding_card(item: dict[str, Any], *, priority: bool) -> str:
     action = item.get("review_action") or "Review source evidence."
     text = item.get("text") or item.get("explanation_chain", {}).get("source_claim", {}).get("text") or ""
     return f"""
-<article class="finding-card {'priority' if priority else ''}">
+<article class="finding-card {"priority" if priority else ""}">
   <div class="finding-head">
-    <span class="badge {badge_class(str(item.get('kind') or 'finding'))}">{escape(str(item.get('kind') or 'finding'))}</span>
+    <span class="badge {badge_class(str(item.get("kind") or "finding"))}">{escape(str(item.get("kind") or "finding"))}</span>
     <span class="line-ref">{escape(line)}</span>
   </div>
   <h3>{escape(str(target))}</h3>
-  <p>{escape(item.get('reason') or 'Review source claim.')}</p>
+  <p>{escape(item.get("reason") or "Review source claim.")}</p>
   <div class="chips">
-    <span class="chip">{escape(str(item.get('rule') or 'no-rule'))}</span>
-    <span class="chip">{escape(str(item.get('polarity') or 'unknown'))}</span>
-    <span class="chip">{escape(str(item.get('modality') or 'unknown'))}</span>
-    <span class="chip">{escape(str(item.get('assertion_scope') or 'unknown'))}</span>
+    <span class="chip">{escape(str(item.get("rule") or "no-rule"))}</span>
+    <span class="chip">{escape(str(item.get("polarity") or "unknown"))}</span>
+    <span class="chip">{escape(str(item.get("modality") or "unknown"))}</span>
+    <span class="chip">{escape(str(item.get("assertion_scope") or "unknown"))}</span>
   </div>
-  {f'<p class="muted">Heading: {escape(heading_path)}</p>' if heading_path else ''}
+  {f'<p class="muted">Heading: {escape(heading_path)}</p>' if heading_path else ""}
   <p class="action"><strong>Action:</strong> {escape(action)}</p>
-  {f'<blockquote>{escape(text)}</blockquote>' if text else ''}
+  {f"<blockquote>{escape(text)}</blockquote>" if text else ""}
 </article>
 """
 
 
 def suppressed_scaffold_panel(items: list[dict[str, Any]], limit: int = 25) -> str:
     if not items:
-        return "<section class=\"panel\"><h2>Suppressed Scaffold</h2><p class=\"muted\">None.</p></section>"
+        return '<section class="panel"><h2>Suppressed Scaffold</h2><p class="muted">None.</p></section>'
     counts: dict[str, int] = {}
     for item in items:
         reason = str(item.get("reason") or "unknown")
@@ -520,11 +520,11 @@ def suppressed_scaffold_panel(items: list[dict[str, Any]], limit: int = 25) -> s
     examples = "".join(suppressed_line(item) for item in items[:limit])
     more = ""
     if len(items) > limit:
-        more = f"<p class=\"muted\">{len(items) - limit} additional suppressed lines omitted here.</p>"
+        more = f'<p class="muted">{len(items) - limit} additional suppressed lines omitted here.</p>'
     return f"""
 <section class="panel">
   <div class="section-title"><h2>Suppressed Scaffold</h2><span>{len(items)} lines</span></div>
-  <div class="split-panels">{mapping_list('Suppression Reasons', counts)}</div>
+  <div class="split-panels">{mapping_list("Suppression Reasons", counts)}</div>
   <div class="suppressed-list">{examples}</div>
   {more}
 </section>
@@ -533,9 +533,9 @@ def suppressed_scaffold_panel(items: list[dict[str, Any]], limit: int = 25) -> s
 
 def suppressed_line(item: dict[str, Any]) -> str:
     return (
-        "<p class=\"suppressed-line\">"
-        f"<span class=\"line-ref\">{escape(line_ref(item, path_key='source_path'))}</span> "
-        f"<span class=\"chip\">{escape(str(item.get('reason') or 'unknown'))}</span> "
+        '<p class="suppressed-line">'
+        f'<span class="line-ref">{escape(line_ref(item, path_key="source_path"))}</span> '
+        f'<span class="chip">{escape(str(item.get("reason") or "unknown"))}</span> '
         f"{escape(str(item.get('text') or ''))}</p>"
     )
 
@@ -559,7 +559,10 @@ def decision_review_items(compare: dict[str, Any]) -> list[dict[str, Any]]:
 def evidence_review_queue(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(
         [item for item in findings if evidence_needs_review(item)],
-        key=lambda item: (str(item.get("sweep_document_path") or item.get("document_path") or ""), item.get("line_start") or 0),
+        key=lambda item: (
+            str(item.get("sweep_document_path") or item.get("document_path") or ""),
+            item.get("line_start") or 0,
+        ),
     )
 
 
@@ -587,9 +590,9 @@ def evidence_breakdown_panel(summary: dict[str, Any]) -> str:
 <section class="panel">
   <h2>Evidence Breakdown</h2>
   <div class="split-panels">
-    {mapping_list('Findings By Kind', summary.get('finding_count_by_kind', {}))}
-    {mapping_list('Review Actions', summary.get('review_action_count', {}))}
-    {mapping_list('Resolution States', summary.get('claim_count_by_resolution_state', {}))}
+    {mapping_list("Findings By Kind", summary.get("finding_count_by_kind", {}))}
+    {mapping_list("Review Actions", summary.get("review_action_count", {}))}
+    {mapping_list("Resolution States", summary.get("claim_count_by_resolution_state", {}))}
   </div>
 </section>
 """
@@ -604,11 +607,11 @@ def evidence_finding_section(
     base_dir: Path,
 ) -> str:
     if not findings:
-        return f"<section class=\"panel\"><h2>{escape(title)}</h2><p class=\"muted\">None.</p></section>"
+        return f'<section class="panel"><h2>{escape(title)}</h2><p class="muted">None.</p></section>'
     cards = "".join(evidence_finding_card(item, priority=priority, base_dir=base_dir) for item in findings[:limit])
     more = ""
     if len(findings) > limit:
-        more = f"<p class=\"muted\">{len(findings) - limit} additional findings omitted here. Use sweep-evidence-index.json for the complete set.</p>"
+        more = f'<p class="muted">{len(findings) - limit} additional findings omitted here. Use sweep-evidence-index.json for the complete set.</p>'
     return f"""
 <section class="panel">
   <div class="section-title"><h2>{escape(title)}</h2><span>{len(findings)} findings</span></div>
@@ -623,26 +626,28 @@ def evidence_finding_card(item: dict[str, Any], *, priority: bool = False, base_
     text = item.get("text") or ""
     report = item.get("report_html_artifact") or item.get("report_artifact")
     return f"""
-<article class="finding-card {'priority' if priority else ''}">
+<article class="finding-card {"priority" if priority else ""}">
   <div class="finding-head">
-    <span class="badge {badge_class(str(item.get('kind') or 'finding'))}">{escape(str(item.get('kind') or 'finding'))}</span>
+    <span class="badge {badge_class(str(item.get("kind") or "finding"))}">{escape(str(item.get("kind") or "finding"))}</span>
     <span class="line-ref">{escape(line_ref(item))}</span>
   </div>
   <h3>{escape(str(target))}</h3>
-  <p>{escape(item.get('reason') or item.get('review_action') or 'Review source claim.')}</p>
+  <p>{escape(item.get("reason") or item.get("review_action") or "Review source claim.")}</p>
   <div class="chips">
-    <span class="chip">{escape(str(item.get('rule') or 'unknown'))}</span>
-    <span class="chip">{escape(str(item.get('resolution_state') or 'unknown'))}</span>
-    <span class="chip">{escape(str(item.get('ambiguity_bucket') or 'no-bucket'))}</span>
+    <span class="chip">{escape(str(item.get("rule") or "unknown"))}</span>
+    <span class="chip">{escape(str(item.get("resolution_state") or "unknown"))}</span>
+    <span class="chip">{escape(str(item.get("ambiguity_bucket") or "no-bucket"))}</span>
   </div>
-  <p class="action"><strong>Action:</strong> {escape(item.get('review_action') or 'Review source evidence.')}</p>
-  {f'<blockquote>{escape(text)}</blockquote>' if text else ''}
-  {artifact_link_for_base(report, 'Open report', base_dir) if report else ''}
+  <p class="action"><strong>Action:</strong> {escape(item.get("review_action") or "Review source evidence.")}</p>
+  {f"<blockquote>{escape(text)}</blockquote>" if text else ""}
+  {artifact_link_for_base(report, "Open report", base_dir) if report else ""}
 </article>
 """
 
 
-def evidence_source_authority_panel(documents: list[dict[str, Any]], findings: list[dict[str, Any]], *, base_dir: Path) -> str:
+def evidence_source_authority_panel(
+    documents: list[dict[str, Any]], findings: list[dict[str, Any]], *, base_dir: Path
+) -> str:
     source_docs = [document for document in documents if document.get("path_class") == "source-authority"]
     source_paths = {document.get("document_path") for document in source_docs}
     source_findings = [
@@ -651,12 +656,14 @@ def evidence_source_authority_panel(documents: list[dict[str, Any]], findings: l
         if finding.get("sweep_document_path") in source_paths or finding.get("document_path") in source_paths
     ]
     doc_cards = "".join(evidence_document_compact(document, base_dir=base_dir) for document in source_docs)
-    finding_cards = "".join(evidence_finding_card(item, priority=True, base_dir=base_dir) for item in source_findings[:12])
+    finding_cards = "".join(
+        evidence_finding_card(item, priority=True, base_dir=base_dir) for item in source_findings[:12]
+    )
     return f"""
 <section class="panel">
   <div class="section-title"><h2>Source Authority Signals</h2><span>{len(source_findings)} findings</span></div>
   <div class="record-list">{doc_cards or '<p class="muted">No source-authority documents indexed.</p>'}</div>
-  {f'<div class="finding-grid">{finding_cards}</div>' if finding_cards else ''}
+  {f'<div class="finding-grid">{finding_cards}</div>' if finding_cards else ""}
 </section>
 """
 
@@ -675,8 +682,8 @@ def evidence_ambiguity_panel(summary: dict[str, Any], findings: list[dict[str, A
 <section class="panel">
   <h2>Ambiguity Buckets</h2>
   <div class="split-panels">
-    {mapping_list('Bucket Counts', buckets)}
-    <article class="mini-panel"><h3>Weak-Modality Hotspots</h3><ul class="count-list">{weak_items or '<li><span>None</span><strong>0</strong></li>'}</ul></article>
+    {mapping_list("Bucket Counts", buckets)}
+    <article class="mini-panel"><h3>Weak-Modality Hotspots</h3><ul class="count-list">{weak_items or "<li><span>None</span><strong>0</strong></li>"}</ul></article>
   </div>
 </section>
 """
@@ -692,14 +699,14 @@ def evidence_entity_table(findings: list[dict[str, Any]], limit: int = 50) -> st
         kinds = Counter(str(item.get("kind") or "unknown") for item in items)
         rows.append(
             "<tr>"
-            f"<td><span class=\"pathline table-path\">{escape(entity_id)}</span></td>"
+            f'<td><span class="pathline table-path">{escape(entity_id)}</span></td>'
             f"<td>{escape(next((str(item.get('label')) for item in items if item.get('label')), ''))}</td>"
             f"<td>{len(items)}</td>"
             f"<td>{len({item.get('sweep_document_path') or item.get('document_path') for item in items})}</td>"
             f"<td>{escape(', '.join(f'{key}: {value}' for key, value in sorted(kinds.items())))}</td>"
             "</tr>"
         )
-    return f"<section class=\"panel\"><h2>Entity And Candidate Mentions</h2><div class=\"table-wrap\"><table><thead><tr><th>Entity</th><th>Label</th><th>Findings</th><th>Docs</th><th>Kinds</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div></section>"
+    return f'<section class="panel"><h2>Entity And Candidate Mentions</h2><div class="table-wrap"><table><thead><tr><th>Entity</th><th>Label</th><th>Findings</th><th>Docs</th><th>Kinds</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div></section>'
 
 
 def evidence_document_table(documents: list[dict[str, Any]], *, base_dir: Path) -> str:
@@ -709,8 +716,8 @@ def evidence_document_table(documents: list[dict[str, Any]], *, base_dir: Path) 
         report = document.get("report_html_artifact") or document.get("artifact_paths", {}).get("report_html")
         rows.append(
             "<tr>"
-            f"<td><span class=\"pathline table-path\">{escape(document.get('document_path'))}</span></td>"
-            f"<td><span class=\"badge {badge_class(str(document.get('recommendation') or 'unknown'))}\">{escape(document.get('recommendation'))}</span></td>"
+            f'<td><span class="pathline table-path">{escape(document.get("document_path"))}</span></td>'
+            f'<td><span class="badge {badge_class(str(document.get("recommendation") or "unknown"))}">{escape(document.get("recommendation"))}</span></td>'
             f"<td>{escape(document.get('path_class'))}</td>"
             f"<td>{counts.get('claims', 0)}</td>"
             f"<td>{counts.get('findings', 0)}</td>"
@@ -718,7 +725,7 @@ def evidence_document_table(documents: list[dict[str, Any]], *, base_dir: Path) 
             f"<td>{artifact_link_for_base(report, 'Open report', base_dir)}</td>"
             "</tr>"
         )
-    return f"<section class=\"panel\"><h2>Per-Document Evidence</h2><div class=\"table-wrap\"><table class=\"numeric-table\"><thead><tr><th>Document</th><th>Recommendation</th><th>Class</th><th>Claims</th><th>Findings</th><th>Decision</th><th>Report</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div></section>"
+    return f'<section class="panel"><h2>Per-Document Evidence</h2><div class="table-wrap"><table class="numeric-table"><thead><tr><th>Document</th><th>Recommendation</th><th>Class</th><th>Claims</th><th>Findings</th><th>Decision</th><th>Report</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div></section>'
 
 
 def evidence_document_compact(document: dict[str, Any], *, base_dir: Path) -> str:
@@ -727,16 +734,16 @@ def evidence_document_compact(document: dict[str, Any], *, base_dir: Path) -> st
     return f"""
 <article class="record priority">
   <div class="record-main">
-    <div class="pathline">{escape(document.get('document_path'))}</div>
+    <div class="pathline">{escape(document.get("document_path"))}</div>
     <div class="meta-row">
-      <span class="badge {badge_class(str(document.get('recommendation') or 'unknown'))}">{escape(document.get('recommendation'))}</span>
-      <span>{escape(document.get('path_class'))}</span>
+      <span class="badge {badge_class(str(document.get("recommendation") or "unknown"))}">{escape(document.get("recommendation"))}</span>
+      <span>{escape(document.get("path_class"))}</span>
     </div>
   </div>
   <div class="record-side">
-    <strong>{counts.get('findings', 0)}</strong><span>findings</span>
-    <strong>{counts.get('decision_grade', 0)}</strong><span>decision-grade</span>
-    {artifact_link_for_base(report, 'Open report', base_dir) if report else ''}
+    <strong>{counts.get("findings", 0)}</strong><span>findings</span>
+    <strong>{counts.get("decision_grade", 0)}</strong><span>decision-grade</span>
+    {artifact_link_for_base(report, "Open report", base_dir) if report else ""}
   </div>
 </article>
 """
@@ -744,7 +751,7 @@ def evidence_document_compact(document: dict[str, Any], *, base_dir: Path) -> st
 
 def finding_line(item: dict[str, Any]) -> str:
     return (
-        f"<p><span class=\"badge {badge_class(str(item.get('verdict') or 'finding'))}\">{escape(str(item.get('verdict') or 'finding'))}</span> "
+        f'<p><span class="badge {badge_class(str(item.get("verdict") or "finding"))}">{escape(str(item.get("verdict") or "finding"))}</span> '
         f"line {escape(str(item.get('line_start') or '?'))}: {escape(str(item.get('summary') or 'Review source claim.'))}</p>"
     )
 
@@ -756,7 +763,7 @@ def records_for(sweep: dict[str, Any], recommendation: str) -> list[dict[str, An
 def artifact_link(path: str | None, label: str) -> str:
     if not path:
         return ""
-    return f"<a class=\"report-link\" href=\"{escape(artifact_href(path))}\">{escape(label)}</a>"
+    return f'<a class="report-link" href="{escape(artifact_href(path))}">{escape(label)}</a>'
 
 
 def artifact_href(path: str) -> str:
@@ -770,7 +777,7 @@ def artifact_href(path: str) -> str:
 def artifact_link_for_base(path: str | None, label: str, base_dir: Path) -> str:
     if not path:
         return ""
-    return f"<a class=\"report-link\" href=\"{escape(artifact_href_for_base(path, base_dir))}\">{escape(label)}</a>"
+    return f'<a class="report-link" href="{escape(artifact_href_for_base(path, base_dir))}">{escape(label)}</a>'
 
 
 def artifact_href_for_base(path: str, base_dir: Path) -> str:
@@ -783,10 +790,6 @@ def artifact_href_for_base(path: str, base_dir: Path) -> str:
 def badge_class(value: str) -> str:
     safe = "".join(char if char.isalnum() else "-" for char in value.lower()).strip("-")
     return f"badge-{safe or 'default'}"
-
-
-def escape(value: Any) -> str:
-    return html.escape(str(value), quote=True)
 
 
 REPORT_CSS = """
