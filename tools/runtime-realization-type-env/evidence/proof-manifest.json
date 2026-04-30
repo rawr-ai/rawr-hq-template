@@ -4,16 +4,15 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "lab-v2.runtime-telemetry-hyperdx-observation",
-    "focus": "Prove contained telemetry projection/export for already-redacted mini-runtime records, including local OTLP/HyperDX ingest smoke, without promoting product observability, query policy, catalog persistence, or durable async semantics.",
+    "id": "lab-v2.migration-control-plane-observation",
+    "focus": "Prove a contained, non-persistent migration/control-plane observation packet can summarize already-safe deployment handoff, in-memory catalog, redacted telemetry records, export status, and placement candidates without promoting storage, placement, query policy, or production migration readiness.",
     "relatedEntries": [
+      "audit.migration.control-plane-observation",
+      "audit.migration.control-plane-observation.residual",
+      "simulation.deployment-handoff",
       "audit.telemetry.hyperdx-observation",
       "audit.telemetry.hyperdx-observation.residual",
-      "audit.p1.effect-boundary-policy-matrix",
-      "simulation.first-server-async-harness-mounts",
-      "simulation.service-binding-cache-runtime-access",
-      "audit.p2.runtime-profile-config-redaction",
-      "audit.canonical-spec-authority-refresh"
+      "audit.source-hygiene"
     ]
   },
   "entries": [
@@ -584,6 +583,30 @@
       "oracle": "Product observability policy, dashboard/query policy, retention, alerting, correlation naming, production OpenTelemetry bootstrap, persisted RuntimeCatalog storage, deployment/control-plane placement, native Elysia/oRPC/Inngest host telemetry, durable async run history, platform secret-store precedence, and arbitrary free-form diagnostic string redaction remain unresolved beyond the contained telemetry projection/export proof.",
       "fixtures": [
         "evidence/workstreams/2026-04-30-runtime-telemetry-hyperdx-observation.md"
+      ]
+    },
+    {
+      "id": "audit.migration.control-plane-observation",
+      "status": "simulation-proof",
+      "source": "Runtime spec sections 15.7, 22.2, 22.3, 23.5, 24.2, and 27; DRA research program workflow Migration/Control-Plane Observation cycle",
+      "oracle": "A lab-contained, non-persistent migration/control-plane observation packet can summarize an already-safe deployment handoff, in-memory runtime catalog snapshot, redacted telemetry records, and export status for migration review; preserve app/run/trace/correlation identity; record placement candidates only as candidate facts; reject widened descriptor tables, executable closures, live handles, runtime access objects, provider values, app id drift, and telemetry run id drift; strip raw keyed secrets from reportable attributes; and avoid copying OTLP payload bodies or export response bodies. This does not prove RuntimeCatalog persistence, control-plane storage, placement policy, deployment orchestration, production telemetry/queryability, dashboard semantics, durable async history, arbitrary DLP, or production migration readiness.",
+      "fixtures": [
+        "src/mini-runtime/migration-control-plane-observation.ts",
+        "test/mini-runtime/migration-control-plane-observation.test.ts",
+        "evidence/workstreams/2026-04-30-migration-control-plane-observation.md"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime"
+      ]
+    },
+    {
+      "id": "audit.migration.control-plane-observation.residual",
+      "status": "xfail",
+      "source": "Runtime spec sections 22.3, 23.5, 24.2, and 27; residual from audit.migration.control-plane-observation",
+      "oracle": "Production RuntimeCatalog storage backend, indexing, retention, rehydration, exact persistence format, control-plane service/package topology, deployment placement policy, orchestration, product observability/query/dashboard/alerting semantics, production OpenTelemetry bootstrap, native host telemetry, durable async run history, platform secret-store precedence, production config source order, and arbitrary free-form diagnostic string DLP remain unresolved beyond the contained observation packet proof.",
+      "fixtures": [
+        "evidence/workstreams/2026-04-30-migration-control-plane-observation.md"
       ]
     },
     {
