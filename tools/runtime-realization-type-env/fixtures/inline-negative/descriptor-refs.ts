@@ -12,6 +12,18 @@ export const MissingStepId = {
   // @ts-expect-error async step refs require stepId.
 } as const satisfies ExecutionDescriptorRef;
 
+export const MissingAsyncOwner = {
+  kind: "execution.descriptor-ref",
+  boundary: "plugin.async-step",
+  executionId: "bad:missing-owner",
+  appId: "hq",
+  role: "async",
+  surface: "workflow",
+  capability: "work-items",
+  stepId: "sync-work-item",
+  // @ts-expect-error async step refs require exactly one async owner identity.
+} as const satisfies ExecutionDescriptorRef;
+
 export const MultipleAsyncOwners = {
   kind: "execution.descriptor-ref",
   boundary: "plugin.async-step",

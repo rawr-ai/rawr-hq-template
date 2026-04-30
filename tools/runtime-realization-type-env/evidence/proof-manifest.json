@@ -4,13 +4,15 @@
     "sha256": "4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654"
   },
   "currentExperiment": {
-    "id": "lab-v2.runtime-resource-access-service-binding-dag",
-    "focus": "Use the contained runtime realization lab to verify explicit service binding dependency graph validation and dependency-first binding construction while preserving the sanctioned mini-runtime access facade and leaving final RuntimeResourceAccess law fenced.",
+    "id": "lab-v2.dispatcher-access-async-step-membership",
+    "focus": "Use the contained runtime realization lab to verify explicit dispatcher operation inventory and async owner-to-step membership artifacts without defaulting access, executing bodies, deciding public dispatcher API, or claiming durable async semantics.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.curated-effect-public-surface",
+      "audit.p0.async-step-membership",
       "audit.p1.effect-managed-runtime-substrate",
       "audit.p1.process-local-coordination-resources",
+      "audit.p1.dispatcher-access",
       "audit.p1.runtime-resource-access",
       "vendor.effect.runtime-substrate",
       "vendor.effect.process-local-coordination",
@@ -21,6 +23,8 @@
       "simulation.bootgraph-catalog-finalization",
       "simulation.service-binding-cache-runtime-access",
       "simulation.mini-runtime-registry-invocation",
+      "simulation.dispatcher-descriptor-operation-inventory",
+      "simulation.async-step-owner-membership-artifacts",
       "simulation.adapter-callback-delegation",
       "simulation.deployment-handoff",
       "audit.p1.provider-effect-plan-shape",
@@ -218,7 +222,7 @@
       "id": "simulation.middle-spine-derivation-compiler",
       "status": "simulation-proof",
       "source": "Runtime spec sections 9, 12, 13, 15, and 24",
-      "oracle": "Explicit lab declarations, including explicit async descriptors, derive normalized graph artifacts, descriptor refs/table inputs, service binding plans, surface plans, dispatcher descriptor inventory without defaulting access operations, refs-only portable artifacts, compiled process plan, provider dependency graph, registry input, harness placeholders, scoped bootgraph module input, diagnostics, and bootgraph input without executing descriptors or lowering providers.",
+      "oracle": "Explicit lab declarations, including explicit async descriptors, derive normalized graph artifacts, descriptor refs/table inputs, service binding plans, surface plans, dispatcher descriptor inventory, refs-only portable artifacts, compiled process plan, provider dependency graph, registry input, harness placeholders, scoped bootgraph module input, diagnostics, and bootgraph input without executing descriptors or lowering providers.",
       "fixtures": [
         "src/spine/derive.ts",
         "src/spine/compiler.ts",
@@ -227,6 +231,38 @@
       ],
       "gates": [
         "typecheck",
+        "middle-spine"
+      ]
+    },
+    {
+      "id": "simulation.dispatcher-descriptor-operation-inventory",
+      "status": "simulation-proof",
+      "source": "Runtime spec WorkflowDispatcherDescriptor and dispatcher integration requirements",
+      "oracle": "Explicit lab dispatcher derivation inputs preserve workflow refs and declared operation inventory, keep workflow refs inert when operations are absent, and diagnose operations that target undeclared workflows without deciding public dispatcher API, explicit-vs-ambient access policy, live WorkflowDispatcher materialization, or async provider acquisition.",
+      "fixtures": [
+        "src/spine/derive.ts",
+        "src/spine/artifacts.ts",
+        "test/middle-spine-derivation.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "middle-spine"
+      ]
+    },
+    {
+      "id": "simulation.async-step-owner-membership-artifacts",
+      "status": "simulation-proof",
+      "source": "Runtime spec async workflow/schedule/consumer metadata and FunctionBundle lowering prerequisites",
+      "oracle": "Explicit lab async step refs declare exactly one workflow, schedule, or consumer owner plus a step id; widened invalid owners and duplicate owner/step memberships are diagnosed; derivation preserves membership artifacts without executing descriptor bodies, deciding public membership authoring syntax, durable scheduling, retry/idempotency, or native Inngest lowering.",
+      "fixtures": [
+        "src/spine/derive.ts",
+        "src/spine/artifacts.ts",
+        "fixtures/inline-negative/descriptor-refs.ts",
+        "test/middle-spine-derivation.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
         "middle-spine"
       ]
     },
@@ -314,7 +350,7 @@
       "id": "audit.p0.async-step-membership",
       "status": "xfail",
       "source": "M2 core-spine audit P0",
-      "oracle": "Workflow/schedule/consumer-to-step membership must become declarative before this can be proof.",
+      "oracle": "Final workflow/schedule/consumer membership metadata channel remains unresolved; the lab proves explicit owner-to-step artifacts only, not public authoring syntax or durable async semantics.",
       "fixtures": [
         "fixtures/positive/async-workflow.ts",
         "fixtures/todo/async-step-membership.todo.ts"
@@ -386,7 +422,7 @@
       "id": "audit.p1.dispatcher-access",
       "status": "xfail",
       "source": "M2 core-spine audit P1",
-      "oracle": "Dispatcher access declaration must be decided before operation descriptors can be proven.",
+      "oracle": "Final dispatcher access policy remains unresolved; the lab proves explicit operation inventory on dispatcher descriptors only, not whether public routes opt in, receive an ambient facade, or use a final SDK/DX shape.",
       "fixtures": [
         "fixtures/todo/dispatcher-access.todo.ts"
       ]
