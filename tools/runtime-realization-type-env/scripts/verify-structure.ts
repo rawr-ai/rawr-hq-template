@@ -127,10 +127,27 @@ assert(
   "effect must not be added as a production dependency for the lab",
 );
 
-const tsconfigBase = read("tsconfig.base.json");
+const tsconfigBase = readJson<{
+  compilerOptions?: {
+    paths?: Record<string, string[]>;
+  };
+}>("tsconfig.base.json");
+const rootPathAliases = tsconfigBase.compilerOptions?.paths ?? {};
 assert(
-  !tsconfigBase.includes("@rawr/sdk"),
-  "pseudo-SDK aliases must stay local to the type env tsconfig",
+  rootPathAliases["@rawr/sdk"]?.[0] === "packages/core/sdk/src/index.ts" &&
+    rootPathAliases["@rawr/sdk/*"]?.[0] === "packages/core/sdk/src/*",
+  "production @rawr/sdk aliases must point at packages/core/sdk",
+);
+for (const [alias, targets] of Object.entries(rootPathAliases)) {
+  assert(
+    !alias.startsWith("@rawr/sdk/spine") &&
+      !targets.some((target) => target.includes("tools/runtime-realization-type-env")),
+    "pseudo-SDK aliases must stay local to the type env tsconfig",
+  );
+}
+assert(
+  read("tools/runtime-realization-type-env/tsconfig.json").includes('"@rawr/sdk/spine"'),
+  "lab-only @rawr/sdk/spine alias must remain local to the type env tsconfig",
 );
 
 const vitestConfig = read("vitest.config.ts");

@@ -10,6 +10,7 @@
       ],
       "targets": [
         "build",
+        "negative",
         "sync",
         "structural",
         "typecheck",
