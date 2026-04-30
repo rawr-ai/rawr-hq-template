@@ -30,5 +30,5 @@ This map keeps the type environment honest about what it proves now and what it 
 | P2 adapter Effect callback lowering | Expected fail | Instrumented fake callbacks prove the delegation rule, but real native callback lowering and harness integration remain out of scope. |
 | P2 async Effect bridge lowering | Expected fail | Typed fake async callbacks prove delegation into `ProcessExecutionRuntime`; step membership, lowering mechanics, and host durable semantics remain distinct open work. |
 | P2 initial resource/provider cut | TODO | Catalog candidates are planning input, not canonical ids. |
-| P2 runtime profile config redaction | TODO | Typed config binding and diagnostic-safe secret emission remain planning input until the runtime/deployment handoff is locked. |
+| P2 runtime profile config redaction | Simulation proof | Lab-contained provider provisioning validates config through `RuntimeSchema`, fails closed before provider build/acquire on invalid config, records diagnostic-safe validation failures and redacted config snapshots, and keeps secrets/live handles out of catalog and provisioning trace records. Production config precedence, platform secret stores, telemetry export, and catalog persistence remain open. |
 | Source-hygiene drift | Out of scope | The stale repo-local spec copy must be handled elsewhere before migration planning. |
