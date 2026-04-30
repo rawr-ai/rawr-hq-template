@@ -4,8 +4,8 @@
     "sha256": "4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654"
   },
   "currentExperiment": {
-    "id": "lab-v2.provider-effect-plan-bootgraph-provisioning-lowering",
-    "focus": "Use the contained runtime realization lab to verify provider acquire/release lowering through the mini bootgraph/provisioning path without deciding final public ProviderEffectPlan shape or claiming production runtime readiness.",
+    "id": "lab-v2.provider-diagnostics-runtime-profile-config-redaction",
+    "focus": "Use the contained runtime realization lab to verify provider config validation, diagnostic-safe validation failures, redacted config snapshots, and no secret/live-handle leakage without deciding production config source precedence or secret-store strategy.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.curated-effect-public-surface",
@@ -437,11 +437,15 @@
     },
     {
       "id": "audit.p2.runtime-profile-config-redaction",
-      "status": "todo",
+      "status": "simulation-proof",
       "source": "Runtime spec sections 13, 24, and 25; deployment spec runtime handoff sections",
-      "oracle": "Runtime profile config and redaction proof remains planning input until config binding and diagnostic-safe secret emission are locked.",
+      "oracle": "Lab-contained provider config validates through RuntimeSchema before provider build/acquire, invalid config fails closed with diagnostic-safe errors, module/provider-id config snapshots and provisioning trace attributes are redacted, acquire/release failure records do not leak config secrets or live handles, and production config precedence/secret stores stay fenced.",
       "fixtures": [
-        "fixtures/todo/runtime-profile-config-redaction.todo.ts"
+        "test/mini-runtime/provider-provisioning.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime"
       ]
     },
     {
