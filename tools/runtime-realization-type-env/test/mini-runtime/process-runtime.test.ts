@@ -4,6 +4,7 @@ import { Effect as VendorEffect } from "../../src/vendor/effect/runtime";
 import type {
   CompiledProcessPlan,
   PortableRuntimePlanArtifact,
+  ServiceBindingPlan,
   WorkflowDispatcher,
 } from "@rawr/sdk/spine";
 import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
@@ -140,6 +141,32 @@ function createRuntime() {
 
 function parseConstructionIdentity(identity: string): Record<string, unknown> {
   return JSON.parse(identity) as Record<string, unknown>;
+}
+
+function createTestServiceBindingPlan(input: {
+  readonly serviceId: string;
+  readonly serviceInstance?: string;
+  readonly surface?: string;
+  readonly capability?: string;
+  readonly dependencyInstances?: readonly string[];
+  readonly scopeHash?: string;
+  readonly configHash?: string;
+}): ServiceBindingPlan {
+  const surface = input.surface ?? "api";
+  const capability = input.capability ?? input.serviceId;
+  const identity = input.serviceInstance ?? input.serviceId;
+
+  return {
+    kind: "service.binding-plan",
+    serviceId: input.serviceId,
+    serviceInstance: input.serviceInstance,
+    role: "server",
+    surface,
+    capability,
+    dependencyInstances: input.dependencyInstances ?? [],
+    scopeHash: input.scopeHash ?? `scope:${identity}`,
+    configHash: input.configHash ?? `config:${identity}`,
+  };
 }
 
 function assertNoLiveHandles(value: unknown): void {
@@ -770,6 +797,171 @@ describe("runtime realization mini runtime", () => {
         surface: "a",
       },
     ]);
+  });
+
+  test("creates service binding dependencies before dependents", () => {
+    const factoryCalls: {
+      readonly instanceId: string;
+      readonly constructionIdentity: string;
+    }[] = [];
+    const secretsPlan = createTestServiceBindingPlan({
+      serviceId: "secrets",
+      serviceInstance: "secret:primary",
+    });
+    const databasePlan = createTestServiceBindingPlan({
+      serviceId: "database",
+      serviceInstance: "db:main",
+      dependencyInstances: ["secret:primary"],
+    });
+    const workItemsPlan = createTestServiceBindingPlan({
+      serviceId: "work-items",
+      serviceInstance: "api:work-items",
+      dependencyInstances: ["db:main"],
+    });
+    const cache = createMiniServiceBindingCache<{ readonly id: string }>({
+      processId: "process-1",
+      plans: [workItemsPlan, databasePlan, secretsPlan],
+      createClient({ plan, constructionIdentity }) {
+        factoryCalls.push({
+          instanceId: plan.serviceInstance ?? plan.serviceId,
+          constructionIdentity,
+        });
+        return { id: constructionIdentity };
+      },
+    });
+
+    const first = cache.getOrCreate(workItemsPlan);
+    const second = cache.getOrCreate({ ...workItemsPlan });
+
+    expect(second).toBe(first);
+    expect(factoryCalls.map((call) => call.instanceId)).toEqual([
+      "secret:primary",
+      "db:main",
+      "api:work-items",
+    ]);
+    expect(factoryCalls.map((call) => parseConstructionIdentity(call.constructionIdentity))).toEqual([
+      {
+        capability: "secrets",
+        configHash: "config:secret:primary",
+        dependencyInstances: [],
+        kind: "service.binding-construction",
+        processId: "process-1",
+        role: "server",
+        scopeHash: "scope:secret:primary",
+        serviceId: "secrets",
+        serviceInstance: "secret:primary",
+        surface: "api",
+      },
+      {
+        capability: "database",
+        configHash: "config:db:main",
+        dependencyInstances: ["secret:primary"],
+        kind: "service.binding-construction",
+        processId: "process-1",
+        role: "server",
+        scopeHash: "scope:db:main",
+        serviceId: "database",
+        serviceInstance: "db:main",
+        surface: "api",
+      },
+      {
+        capability: "work-items",
+        configHash: "config:api:work-items",
+        dependencyInstances: ["db:main"],
+        kind: "service.binding-construction",
+        processId: "process-1",
+        role: "server",
+        scopeHash: "scope:api:work-items",
+        serviceId: "work-items",
+        serviceInstance: "api:work-items",
+        surface: "api",
+      },
+    ]);
+    expect(cache.records().map((record) => record.serviceId)).toEqual([
+      "secrets",
+      "database",
+      "work-items",
+    ]);
+  });
+
+  test("rejects service binding plans with missing dependencies before construction", () => {
+    let factoryCalls = 0;
+    const workItemsPlan = createTestServiceBindingPlan({
+      serviceId: "work-items",
+      dependencyInstances: ["database"],
+    });
+
+    expect(() =>
+      createMiniServiceBindingCache<{ readonly id: string }>({
+        processId: "process-1",
+        plans: [workItemsPlan],
+        createClient() {
+          factoryCalls += 1;
+          return { id: "should-not-construct" };
+        },
+      }),
+    ).toThrow("runtime.service-binding.dependency.missing: work-items -> database");
+    expect(factoryCalls).toBe(0);
+  });
+
+  test("rejects service binding dependency cycles before construction", () => {
+    let factoryCalls = 0;
+    const billingPlan = createTestServiceBindingPlan({
+      serviceId: "billing",
+      dependencyInstances: ["entitlements"],
+    });
+    const entitlementsPlan = createTestServiceBindingPlan({
+      serviceId: "entitlements",
+      dependencyInstances: ["workspace"],
+    });
+    const workspacePlan = createTestServiceBindingPlan({
+      serviceId: "workspace",
+      dependencyInstances: ["billing"],
+    });
+
+    expect(() =>
+      createMiniServiceBindingCache<{ readonly id: string }>({
+        processId: "process-1",
+        plans: [billingPlan, entitlementsPlan, workspacePlan],
+        createClient() {
+          factoryCalls += 1;
+          return { id: "should-not-construct" };
+        },
+      }),
+    ).toThrow(
+      "runtime.service-binding.dependency.cycle: billing -> entitlements -> workspace -> billing",
+    );
+    expect(factoryCalls).toBe(0);
+  });
+
+  test("rejects ambiguous service binding dependency instances before construction", () => {
+    let factoryCalls = 0;
+    const publicBillingPlan = createTestServiceBindingPlan({
+      serviceId: "billing",
+      surface: "api",
+      capability: "billing-public",
+    });
+    const internalBillingPlan = createTestServiceBindingPlan({
+      serviceId: "billing",
+      surface: "internal",
+      capability: "billing-internal",
+    });
+    const workItemsPlan = createTestServiceBindingPlan({
+      serviceId: "work-items",
+      dependencyInstances: ["billing"],
+    });
+
+    expect(() =>
+      createMiniServiceBindingCache<{ readonly id: string }>({
+        processId: "process-1",
+        plans: [workItemsPlan, publicBillingPlan, internalBillingPlan],
+        createClient() {
+          factoryCalls += 1;
+          return { id: "should-not-construct" };
+        },
+      }),
+    ).toThrow("runtime.service-binding.dependency.ambiguous: work-items -> billing");
+    expect(factoryCalls).toBe(0);
   });
 
   test("narrows runtime resource access to sanctioned lookup and redacted records", () => {
