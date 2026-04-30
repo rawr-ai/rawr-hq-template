@@ -4,13 +4,17 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.provider-diagnostics-runtime-profile-config-redaction`
-- Focus: use the contained runtime realization lab to verify provider config validation, diagnostic-safe validation failures, redacted config snapshots, and no secret/live-handle leakage without deciding production config source precedence or secret-store strategy.
+- ID: `lab-v2.runtime-resource-access-service-binding-dag`
+- Focus: use the contained runtime realization lab to verify explicit service
+  binding dependency graph validation and dependency-first binding construction
+  while preserving the sanctioned mini-runtime access facade and leaving final
+  `RuntimeResourceAccess` law fenced.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
   - `audit.p1.effect-managed-runtime-substrate`
   - `audit.p1.process-local-coordination-resources`
+  - `audit.p1.runtime-resource-access`
   - `vendor.effect.runtime-substrate`
   - `vendor.effect.process-local-coordination`
   - `vendor.boundary.typebox-runtime-schema`

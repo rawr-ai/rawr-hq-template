@@ -4,13 +4,14 @@
     "sha256": "4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654"
   },
   "currentExperiment": {
-    "id": "lab-v2.provider-diagnostics-runtime-profile-config-redaction",
-    "focus": "Use the contained runtime realization lab to verify provider config validation, diagnostic-safe validation failures, redacted config snapshots, and no secret/live-handle leakage without deciding production config source precedence or secret-store strategy.",
+    "id": "lab-v2.runtime-resource-access-service-binding-dag",
+    "focus": "Use the contained runtime realization lab to verify explicit service binding dependency graph validation and dependency-first binding construction while preserving the sanctioned mini-runtime access facade and leaving final RuntimeResourceAccess law fenced.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.curated-effect-public-surface",
       "audit.p1.effect-managed-runtime-substrate",
       "audit.p1.process-local-coordination-resources",
+      "audit.p1.runtime-resource-access",
       "vendor.effect.runtime-substrate",
       "vendor.effect.process-local-coordination",
       "vendor.boundary.typebox-runtime-schema",
@@ -248,7 +249,7 @@
       "id": "simulation.service-binding-cache-runtime-access",
       "status": "simulation-proof",
       "source": "Runtime spec service binding cache and RuntimeResourceAccess boundary requirements",
-      "oracle": "The mini-runtime cache lazily reuses bindings for identical construction-time process/role/surface/capability/service/config/dependency inputs, excludes invocation from cache identity, and exposes only sanctioned runtime resource/optional resource/telemetry/diagnostic/topology access methods.",
+      "oracle": "The mini-runtime cache validates explicit lab ServiceBindingPlan dependency inputs as an acyclic graph before cache construction, rejects missing, ambiguous, and cyclic dependency refs before client construction, materializes dependencies before dependents, lazily reuses bindings for identical construction-time process/role/surface/capability/service/config/dependency inputs, excludes invocation from cache identity, and exposes only sanctioned runtime resource/optional resource/telemetry/diagnostic/topology access methods.",
       "fixtures": [
         "src/mini-runtime/runtime-access.ts",
         "src/mini-runtime/service-binding-cache.ts",
@@ -394,7 +395,7 @@
       "id": "audit.p1.runtime-resource-access",
       "status": "xfail",
       "source": "M2 core-spine audit P1",
-      "oracle": "RuntimeResourceAccess remains an opaque narrow facade until method law is locked.",
+      "oracle": "The lab proves a narrow sanctioned access facade only; final public RuntimeResourceAccess method law remains unaccepted architecture.",
       "fixtures": [
         "fixtures/todo/runtime-resource-access.todo.ts"
       ]
