@@ -4,26 +4,22 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-two.provider-config-effect-spine`
-- Focus: prove the contained provider/config/secret/Effect spine can provision
-  representative resources into runtime-owned process invocation access without
-  promoting production provider policy.
+- ID: `phase-two.server-orpc-elysia-boundary`
+- Focus: prove a contained oRPC Fetch request boundary can delegate through the
+  server harness into `ProcessExecutionRuntime` while keeping Elysia and
+  production server mounting fenced.
 - Related manifest entries:
-  - `accepted.provider-profile-closure`
-  - `vendor.effect.runtime-substrate`
-  - `audit.p1.provider-effect-plan-shape`
-  - `audit.p1.provider-effect-plan-lowering`
+  - `accepted.effect-only-authoring`
+  - `accepted.invocation-bound-clients`
+  - `vendor.boundary.orpc-native-shape`
   - `audit.p1.effect-boundary-policy-matrix`
   - `audit.p1.effect-boundary-policy-matrix.residual`
   - `audit.p1.runtime-resource-access`
-  - `audit.p2.runtime-profile-config-redaction`
-  - `audit.p2.provider-effect-process-spine`
   - `audit.p2.server-route-derivation`
   - `audit.p2.adapter-effect-callback-lowering`
-  - `audit.p2.async-effect-bridge-lowering`
   - `audit.p2.production-harness-mounting`
-  - `audit.p2.first-resource-provider-cut`
-  - `simulation.service-binding-cache-runtime-access`
+  - `audit.p2.provider-effect-process-spine`
+  - `audit.p2.server-orpc-fetch-boundary`
   - `simulation.mini-runtime-registry-invocation`
 
 ## Status Meanings

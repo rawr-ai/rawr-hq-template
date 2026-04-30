@@ -435,16 +435,17 @@ future compaction recovery. I do not expand this workflow into a session log.
 Update this block only at Level Zero boundaries or after compaction recovery.
 
 ```text
-Current level: Level 2 boundary after child workstream 3 closeout; Phase Two program is open.
-Current branch at latest checkpoint: codex/runtime-phase-two-provider-config-effect-spine.
-Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-provider-config-effect-spine.md.
+Current level: Level 2 boundary after child workstream 4 closeout; Phase Two program is open.
+Current branch at latest checkpoint: codex/runtime-phase-two-server-orpc-elysia-boundary.
+Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-server-orpc-elysia-boundary.md.
 Prelaunch cleanup report: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-prelaunch-workspace-preparation.md.
 Scenario and claim ledger: tools/runtime-realization-type-env/evidence/phase-two-production-critical-claim-ledger.md.
 Provider/config/Effect proof: tools/runtime-realization-type-env/test/mini-runtime/provider-effect-spine-scenario.test.ts and manifest entry `audit.p2.provider-effect-process-spine`.
-Next required action after this checkpoint: open child workstream 4, Server oRPC/Elysia Live Boundary, through the full Program-Wide Loop.
-Next required gates before child workstream 4: repo/Graphite clean, Nx project truth, manifest spec hash check, child 3 next packet consumed.
-Stop condition currently active: keep production route topology, final route import-safety law, product API publication policy, and Elysia proof fenced unless the server workstream installs/exercises a real mount/request lifecycle and updates vendor fidelity honestly.
-Focus-log/manifest note: they mark `phase-two.provider-config-effect-spine`; child workstream 4 owns the next currentExperiment update when it opens.
+Server/oRPC proof: tools/runtime-realization-type-env/test/mini-runtime/server-orpc-boundary.test.ts and manifest entry `audit.p2.server-orpc-fetch-boundary`.
+Next required action after this checkpoint: open child workstream 5, Async/Inngest Live Boundary, through the full Program-Wide Loop.
+Next required gates before child workstream 5: repo/Graphite clean, Nx project truth, manifest spec hash check, child 4 next packet consumed.
+Stop condition currently active: keep final async membership syntax, dispatcher public DX, durable Inngest semantics, production worker/serve topology, and product async policy fenced unless the async workstream exercises and labels a real contained Inngest-facing boundary honestly.
+Focus-log/manifest note: they mark `phase-two.server-orpc-elysia-boundary`; child workstream 5 owns the next currentExperiment update when it opens.
 ```
 
 ## Verification For This Document

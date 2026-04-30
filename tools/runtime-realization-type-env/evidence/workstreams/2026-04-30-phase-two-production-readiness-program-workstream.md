@@ -2,7 +2,7 @@
 
 Status: `active sequence anchor; Phase Two opened and continuing through child workstreams`.
 Branch: `codex/runtime-phase-two-program-workstream`.
-Latest active branch checkpoint: `codex/runtime-phase-two-provider-config-effect-spine`.
+Latest active branch checkpoint: `codex/runtime-phase-two-server-orpc-elysia-boundary`.
 PR: `none`.
 
 This document defines the top-level Phase Two program workstream. It is a
