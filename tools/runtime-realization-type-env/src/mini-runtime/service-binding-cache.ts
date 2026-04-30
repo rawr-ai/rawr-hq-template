@@ -26,6 +26,8 @@ interface MiniServiceBindingCacheEntry<TClient> {
 
 type ServiceBindingVisitState = "visiting" | "visited";
 
+// Stable structural encoding keeps cache identity tied to declared fields, not
+// lossy string joins that could collapse distinct service binding plans.
 function stableJson(value: unknown): string {
   if (Array.isArray(value)) {
     return `[${value.map((item) => stableJson(item)).join(",")}]`;
@@ -61,6 +63,14 @@ function serviceBindingInstanceId(plan: ServiceBindingPlan): string {
   return plan.serviceInstance ?? plan.serviceId;
 }
 
+/**
+ * Process-scoped construction identity for a service binding client.
+ *
+ * Invocation state is intentionally absent: this is the lab boundary between
+ * process-lifetime service construction and per-request/per-step invocation
+ * context. It is an evidence-friendly identity snapshot, not a production cache
+ * key format or final service ownership contract.
+ */
 export function serviceBindingConstructionIdentity(
   plan: ServiceBindingPlan,
   processId = "process",
@@ -167,6 +177,14 @@ function validateServiceBindingDependencyGraph(input: {
   }
 }
 
+/**
+ * Creates the contained service binding cache used by the mini runtime.
+ *
+ * The cache accepts only predeclared ServiceBindingPlan values, validates their
+ * dependency graph before construction, and materializes dependencies before
+ * dependents. That records lifecycle ordering inside this lab without choosing
+ * the production service compiler, container, or cross-process cache semantics.
+ */
 export function createMiniServiceBindingCache<TClient>(input: {
   readonly processId?: string;
   readonly plans: readonly ServiceBindingPlan[];
@@ -201,8 +219,8 @@ export function createMiniServiceBindingCache<TClient>(input: {
     };
   }
 
-  // The mini cache is the lab proof point for binding lifecycle order: a
-  // dependent is materialized only after its declared service-instance
+  // The mini cache is the contained simulation-proof point for binding lifecycle
+  // order: a dependent is materialized only after its declared service-instance
   // prerequisites have construction identities in this process.
   function getOrCreateAllowedPlan(plan: ServiceBindingPlan): TClient {
     const key = serviceBindingKey(plan);

@@ -16,6 +16,11 @@ export interface AsyncHostStepCallbackInput
 export interface AsyncStepBridgeInvocationInput
   extends Omit<AdapterDelegationInput, "ref"> {}
 
+/**
+ * Reads the already-derived async owner marker from a widened execution ref.
+ * This lab accepts exactly one owner to keep runtime delegation unambiguous; it
+ * does not choose final workflow/schedule/consumer membership syntax.
+ */
 function asyncOwnerEntries(ref: AsyncHostStepCallbackInput["ref"]) {
   const widened = ref as {
     readonly consumerId?: unknown;
@@ -66,6 +71,11 @@ function assertAsyncStepBridgePayload(payload: AsyncStepBridgePayload): void {
   }
 }
 
+/**
+ * Creates the bridge payload that async harnesses can invoke through the
+ * process runtime. The payload carries owner and step identity only; queues,
+ * retries, idempotency, and durable workflow status stay outside this seam.
+ */
 export function createAsyncStepBridgePayload(input: {
   readonly ref: AsyncHostStepCallbackInput["ref"];
 }): AsyncStepBridgePayload {

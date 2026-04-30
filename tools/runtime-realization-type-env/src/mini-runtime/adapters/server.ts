@@ -55,6 +55,13 @@ function assertServerRoutePayload(
   }
 }
 
+/**
+ * Creates the server adapter payload that a host harness may mount.
+ *
+ * The descriptor/ref equality check preserves cold route derivation identity
+ * across the adapter boundary. It does not make this payload shape the public
+ * routing API, nor does it prove real Elysia/oRPC mounting.
+ */
 export function createServerAdapterCallbackPayload(input: {
   readonly routeDescriptor: ServerRouteDescriptor;
   readonly ref: ServerCallbackInput["ref"];

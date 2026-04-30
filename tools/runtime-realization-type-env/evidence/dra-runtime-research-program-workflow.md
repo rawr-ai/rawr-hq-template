@@ -167,6 +167,8 @@ Every nested workstream follows this loop:
 10. Semantic JSDoc/comment pass: when TypeScript/runtime edits introduce new
     concepts, exported helpers, lifecycle boundaries, or proof-only seams, run a
     trailing semantic JSDoc/comment reviewer before verification and closeout.
+    Treat the result as review evidence only; proof promotion still requires
+    manifest/diagnostic agreement and a named gate.
 11. Verification: run focused gates before composed gates.
 12. Layered review: leaf loops first, parent loops second.
 13. Evidence promotion: update manifest, diagnostic, focus log, and report only
@@ -211,7 +213,8 @@ mechanics, bless a temporary API as final architecture, hide weak naming, or
 document unstable public contracts that still belong in `xfail`/decision space.
 The workstream report records whether the lane ran, which files were reviewed,
 which comments were added or deliberately skipped, and whether any comment gap
-blocked closeout.
+blocked closeout. A comment that overclaims proof, final API/DX, or production
+readiness becomes a repair demand, not evidence to promote.
 
 ## Verification And Review
 

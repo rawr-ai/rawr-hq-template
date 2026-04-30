@@ -53,8 +53,8 @@ type ServerDescriptorRef = Extract<
 >;
 
 // Membership validation intentionally accepts widened refs so negative fixtures can
-// prove the one-owner lifecycle boundary after type erasure, without executing or
-// interpreting the async step body.
+// exercise the one-owner lifecycle boundary after type erasure, without executing
+// or interpreting the async step body.
 function asyncOwnerEntries(ref: AsyncDescriptorRef): readonly {
   readonly kind: "workflow" | "schedule" | "consumer";
   readonly id: string;
@@ -77,6 +77,11 @@ function asyncOwnerEntries(ref: AsyncDescriptorRef): readonly {
   );
 }
 
+/**
+ * Deterministic lab identity policy for portable descriptor refs. Production may
+ * replace this naming scheme, but the semantic boundary should stay the same:
+ * refs identify executable boundaries without carrying executable bodies.
+ */
 export const defaultRuntimeSpineIdentityPolicy = {
   executionDescriptorId(input) {
     switch (input.boundary) {
@@ -196,6 +201,9 @@ function deriveServiceBindingPlans(
   const plans: ServiceBindingPlan[] = [];
   const seen = new Set<string>();
 
+  // Service binding inputs are explicit lab materialization requests. This pass
+  // dedupes construction-time identity only; it does not infer production
+  // service topology or invocation-time cache membership.
   for (const serviceBinding of input.serviceBindings ?? []) {
     const key = stableJson({
       capability: serviceBinding.capability,
@@ -703,6 +711,10 @@ export function deriveProviderDependencyGraph(
   const nodes: ProviderDependencyGraphNode[] = [];
   const edges: ProviderDependencyGraphEdge[] = [];
 
+  // This graph is a profile-closure diagnostic boundary. It records selected
+  // provider coverage and dependency edges before provisioning; acquisition,
+  // release ordering, config precedence, and provider refresh policy belong to
+  // later runtime/provisioning layers.
   for (const selection of profile.providerSelections) {
     const key = providerSelectionKey(selection);
     const existingProviderId = seenSelections.get(key);
@@ -767,9 +779,9 @@ function deriveNegativeSpaceDiagnostics(
   refs: readonly ExecutionDescriptorRef[],
 ): readonly RuntimeDiagnostic[] {
   const diagnostics: RuntimeDiagnostic[] = [];
-  // This is a proof-only membership check: it verifies that each async step
-  // belongs to exactly one lifecycle owner, but does not lower, schedule, or run
-  // the step.
+  // This is a lab-only membership diagnostic: it verifies that each async step
+  // belongs to exactly one lifecycle owner, but does not lower, schedule, or
+  // run the step.
   const seenAsyncMemberships = new Map<string, AsyncDescriptorRef>();
 
   for (const ref of refs) {
@@ -809,6 +821,10 @@ function deriveNegativeSpaceDiagnostics(
 export function deriveRuntimeSpine(
   input: RuntimeSpineDerivationInput,
 ): RuntimeSpineDerivation {
+  // Derivation is the contained SDK-extraction substitute for this lab. It
+  // accepts explicit declarations and cold route factories, then emits refs,
+  // inventories, and table inputs without treating descriptor bodies as portable
+  // or deciding final production authoring syntax.
   const identityPolicy = input.identityPolicy ?? defaultRuntimeSpineIdentityPolicy;
   const diagnostics: RuntimeDiagnostic[] = [];
   const executionDescriptorRefs: ExecutionDescriptorRef[] = [];
