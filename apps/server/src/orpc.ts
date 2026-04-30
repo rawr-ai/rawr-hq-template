@@ -1,4 +1,4 @@
-import type { HostRuntimeSupportContext } from "@rawr/runtime-context";
+import type { HostRuntimeSupportContext } from "@rawr/sdk/execution";
 import { metrics, SpanStatusCode, trace, type Counter, type Histogram } from "@opentelemetry/api";
 import { OpenAPIGenerator, type ConditionalSchemaConverter, type JSONSchema } from "@orpc/openapi";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";

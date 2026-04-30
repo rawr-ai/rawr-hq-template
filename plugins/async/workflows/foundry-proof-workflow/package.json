@@ -16,7 +16,7 @@
     }
   },
   "rawr": {
-    "kind": "workflow",
+    "kind": "workflows",
     "capability": "foundry-proof",
     "generatedBy": "capability-foundry"
   },

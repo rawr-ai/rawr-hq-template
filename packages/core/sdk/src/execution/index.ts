@@ -61,6 +61,45 @@ export interface PublicServerRequestContext {
   requireActor(): Promise<{ readonly id: string }>;
 }
 
+export type WorkflowRuntimeSupportSeam<
+  TWorkflow,
+  TDesk,
+  TRun,
+  TEvent,
+  TValue = unknown,
+> = Readonly<{
+  readMemory: (workflow: TWorkflow, deskId: string) => Promise<TValue>;
+  writeMemory: (workflow: TWorkflow, desk: TDesk, value: TValue) => Promise<void>;
+  getRunStatus: (runId: string) => Promise<TRun | null>;
+  saveRunStatus: (run: TRun) => Promise<void>;
+  appendTimeline: (runId: string, event: TEvent) => Promise<void>;
+  inngestBaseUrl?: string;
+}>;
+
+export type BoundaryMiddlewareSupportState<TMarker extends string = string> = {
+  markerCache: Map<TMarker, unknown>;
+};
+
+export type HostRuntimeSupportContext<
+  TRuntime = unknown,
+  TInngestClient = unknown,
+> = {
+  repoRoot: string;
+  baseUrl: string;
+  runtime: TRuntime;
+  inngestClient: TInngestClient;
+};
+
+export type BoundaryRequestSupportContext<
+  TRuntime = unknown,
+  TMarker extends string = string,
+  TInngestClient = unknown,
+> = HostRuntimeSupportContext<TRuntime, TInngestClient> & {
+  requestId: string;
+  correlationId: string;
+  middlewareState: BoundaryMiddlewareSupportState<TMarker>;
+};
+
 export interface ExecutionDescriptorRefBase {
   readonly kind: "execution.descriptor-ref";
   readonly boundary: ExecutionBoundaryKind;

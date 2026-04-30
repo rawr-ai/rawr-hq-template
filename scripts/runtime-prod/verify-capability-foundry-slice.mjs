@@ -45,7 +45,7 @@ const pascal = pascalCase(capability);
 const paths = {
   serviceRoot: `services/${capability}`,
   serverPluginRoot: `plugins/server/api/${capability}`,
-  asyncPluginRoot: `plugins/async/workflows/${capability}`,
+  asyncPluginRoot: `plugins/async/workflows/${capability}-workflow`,
 };
 
 for (const relPath of [
@@ -65,13 +65,14 @@ for (const relPath of [
   await assertFile(relPath);
 }
 
-const [serviceSource, serverSource, asyncSource, generatorSource, generatorsJson, inventory] = await Promise.all([
+const [serviceSource, serverSource, asyncSource, generatorSource, generatorsJson, inventory, asyncPackageJson] = await Promise.all([
   readFile(`${paths.serviceRoot}/src/index.ts`),
   readFile(`${paths.serverPluginRoot}/src/server.ts`),
   readFile(`${paths.asyncPluginRoot}/src/workflow.ts`),
   readFile("tools/nx/capability-foundry/generator.cjs"),
   readJson("tools/nx/generators.json"),
   readJson("tools/architecture-inventory/runtime-capability-foundry.json"),
+  readJson(`${paths.asyncPluginRoot}/package.json`),
 ]);
 
 const generatedSources = [serviceSource, serverSource, asyncSource].join("\n");
@@ -82,6 +83,7 @@ assert(serverSource.includes("defineServerApiPlugin"), "server plugin must use @
 assert(serverSource.includes("useService"), "server plugin must declare service use");
 assert(asyncSource.includes("defineAsyncWorkflowPlugin"), "async plugin must use @rawr/sdk async workflow declaration");
 assert(asyncSource.includes("defineWorkflow"), "async plugin must declare a workflow step");
+assert(asyncPackageJson.rawr?.kind === "workflows", "async workflow plugin package must use catalog rawr.kind workflows");
 assert(generatorSource.includes("runtime-capability-foundry.json"), "generator must maintain runtime capability inventory");
 assert(generatorsJson.generators?.["capability-foundry"]?.implementation === "./capability-foundry/generator.cjs", "generator must be registered");
 

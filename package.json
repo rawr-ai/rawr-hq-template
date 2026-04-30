@@ -28,7 +28,7 @@
     "dev:web": "bunx nx run @rawr/web:dev",
     "dev:workflows": "bun run --cwd apps/server dev:inngest",
     "dev:inngest": "bun run dev:workflows",
-    "build": "bunx nx run-many -t build --projects=@rawr/agent-config-sync,@rawr/bootgraph,@rawr/chatgpt-corpus,@rawr/cli,@rawr/core,@rawr/core-runtime-bootgraph,@rawr/core-runtime-compiler,@rawr/core-runtime-harness-elysia,@rawr/core-runtime-harness-inngest,@rawr/core-runtime-process,@rawr/core-runtime-standard,@rawr/core-runtime-substrate,@rawr/core-runtime-topology,@rawr/example-todo,@rawr/hq-app,@rawr/hq-ops,@rawr/hq-sdk,@rawr/orpc-client,@rawr/plugin-chatgpt-corpus,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/resource-clock,@rawr/runtime-context,@rawr/sdk,@rawr/server,@rawr/session-intelligence,@rawr/ui-sdk,@rawr/web",
+    "build": "bunx nx run-many -t build --projects=@rawr/agent-config-sync,@rawr/chatgpt-corpus,@rawr/cli,@rawr/core,@rawr/core-runtime-bootgraph,@rawr/core-runtime-compiler,@rawr/core-runtime-harness-elysia,@rawr/core-runtime-harness-inngest,@rawr/core-runtime-process,@rawr/core-runtime-standard,@rawr/core-runtime-substrate,@rawr/core-runtime-topology,@rawr/example-todo,@rawr/hq-app,@rawr/hq-ops,@rawr/hq-sdk,@rawr/orpc-client,@rawr/plugin-chatgpt-corpus,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/resource-clock,@rawr/sdk,@rawr/server,@rawr/session-intelligence,@rawr/ui-sdk,@rawr/web",
     "build:affected": "bunx nx affected -t build",
     "lint": "bunx nx run-many -t lint --projects=@rawr/cli,@rawr/plugin-hq,@rawr/plugin-plugins",
     "lint:boundaries": "eslint apps services packages plugins resources",
@@ -48,9 +48,9 @@
     "phase-1:gate:entrypoint-thinness": "bun scripts/phase-1/verify-entrypoint-thinness.mjs",
     "phase-1:gate:no-legacy-composition-authority": "bun scripts/phase-1/verify-no-legacy-composition-authority.mjs",
     "phase-1:gate:parked-lane-frozen": "bun scripts/phase-1/verify-parked-lane-frozen.mjs",
-    "typecheck": "bunx nx run-many -t typecheck --projects=@rawr/agent-config-sync,@rawr/bootgraph,@rawr/chatgpt-corpus,@rawr/cli,@rawr/core,@rawr/core-runtime-bootgraph,@rawr/core-runtime-compiler,@rawr/core-runtime-harness-elysia,@rawr/core-runtime-harness-inngest,@rawr/core-runtime-process,@rawr/core-runtime-standard,@rawr/core-runtime-substrate,@rawr/core-runtime-topology,@rawr/example-todo,@rawr/hq-app,@rawr/hq-ops,@rawr/hq-sdk,@rawr/orpc-client,@rawr/plugin-chatgpt-corpus,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/resource-clock,@rawr/runtime-context,@rawr/sdk,@rawr/server,@rawr/session-intelligence,@rawr/ui-sdk,@rawr/web",
+    "typecheck": "bunx nx run-many -t typecheck --projects=@rawr/agent-config-sync,@rawr/chatgpt-corpus,@rawr/cli,@rawr/core,@rawr/core-runtime-bootgraph,@rawr/core-runtime-compiler,@rawr/core-runtime-harness-elysia,@rawr/core-runtime-harness-inngest,@rawr/core-runtime-process,@rawr/core-runtime-standard,@rawr/core-runtime-substrate,@rawr/core-runtime-topology,@rawr/example-todo,@rawr/hq-app,@rawr/hq-ops,@rawr/hq-sdk,@rawr/orpc-client,@rawr/plugin-chatgpt-corpus,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/resource-clock,@rawr/sdk,@rawr/server,@rawr/session-intelligence,@rawr/ui-sdk,@rawr/web",
     "typecheck:affected": "bunx nx affected -t typecheck",
-    "pretest:vitest": "bunx nx run-many -t build --projects=@rawr/agent-config-sync,@rawr/bootgraph,@rawr/chatgpt-corpus,@rawr/cli,@rawr/core,@rawr/core-runtime-bootgraph,@rawr/core-runtime-compiler,@rawr/core-runtime-harness-elysia,@rawr/core-runtime-harness-inngest,@rawr/core-runtime-process,@rawr/core-runtime-standard,@rawr/core-runtime-substrate,@rawr/core-runtime-topology,@rawr/example-todo,@rawr/hq-app,@rawr/hq-ops,@rawr/hq-sdk,@rawr/orpc-client,@rawr/plugin-chatgpt-corpus,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/resource-clock,@rawr/runtime-context,@rawr/sdk,@rawr/server,@rawr/session-intelligence,@rawr/ui-sdk,@rawr/web",
+    "pretest:vitest": "bunx nx run-many -t build --projects=@rawr/agent-config-sync,@rawr/chatgpt-corpus,@rawr/cli,@rawr/core,@rawr/core-runtime-bootgraph,@rawr/core-runtime-compiler,@rawr/core-runtime-harness-elysia,@rawr/core-runtime-harness-inngest,@rawr/core-runtime-process,@rawr/core-runtime-standard,@rawr/core-runtime-substrate,@rawr/core-runtime-topology,@rawr/example-todo,@rawr/hq-app,@rawr/hq-ops,@rawr/hq-sdk,@rawr/orpc-client,@rawr/plugin-chatgpt-corpus,@rawr/plugin-hello,@rawr/plugin-mfe-demo,@rawr/plugin-plugins,@rawr/plugin-session-tools,@rawr/resource-clock,@rawr/sdk,@rawr/server,@rawr/session-intelligence,@rawr/ui-sdk,@rawr/web",
     "test:vitest": "vitest run --config vitest.config.ts",
     "test:quick": "bunx vitest run --config vitest.config.ts",
     "test:web": "bunx vitest run --project web",
@@ -154,7 +154,9 @@
     "phase-f:gates:full": "bun run phase-f:f1:full && bun run phase-f:f2:full && bun run phase-f:f3:full && bun run phase-f:gate:f4-assess && bun run phase-f:gate:f4-disposition",
     "phase-f:gates:closure": "bun run phase-f:gate:f5-review-closure && bun run phase-f:gate:f5a-structural-closure && bun run phase-f:gate:f6-cleanup-manifest && bun run phase-f:gate:f6-cleanup-integrity && bun run phase-f:gate:f7-readiness",
     "phase-f:gates:exit": "bun run phase-f:gates:full && bun run phase-f:gates:closure && bun run phase-a:gates:exit",
-    "runtime-prod:gate:capability-foundry": "bun scripts/runtime-prod/verify-capability-foundry-slice.mjs --name foundry-proof"
+    "runtime-prod:gate:capability-foundry": "bun scripts/runtime-prod/verify-capability-foundry-slice.mjs --name foundry-proof",
+    "runtime-prod:gate:effect4-runtime": "bun scripts/runtime-prod/verify-effect4-runtime.mjs",
+    "runtime-prod:gates:exit": "bun run phase-2:gate:u00:contract && bun run phase-a:gate:no-legacy-composition-authority && bun run runtime-prod:gate:effect4-runtime && bun run runtime-prod:gate:capability-foundry && bun run sync:check"
   },
   "nx": {
     "tags": [
@@ -183,7 +185,6 @@
     "@rawr/core": "workspace:*",
     "@rawr/hq-app": "workspace:*",
     "@rawr/hq-sdk": "workspace:*",
-    "@rawr/runtime-context": "workspace:*",
     "inngest": "3.51.0",
     "typebox": "^1.0.81"
   },

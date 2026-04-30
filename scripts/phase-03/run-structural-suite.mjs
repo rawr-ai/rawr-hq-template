@@ -138,12 +138,6 @@ const suiteCommandsByProject = {
   "@rawr/resource-clock": {
     default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/resource-clock"],
   },
-  "@rawr/bootgraph": {
-    default: ["bun scripts/phase-03/verify-bootgraph-structural.mjs"],
-  },
-  "@rawr/runtime-context": {
-    default: ["bun scripts/phase-03/verify-runtime-context-structural.mjs"],
-  },
   "@rawr/coordination": {
     default: ["bun scripts/phase-03/verify-coordination-structural.mjs"],
   },
