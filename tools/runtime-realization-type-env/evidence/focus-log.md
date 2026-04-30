@@ -4,12 +4,12 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.semantic-runtime-documentation-harvest`
-- Focus: harvest high-signal semantic JSDoc/comments from contained runtime
-  realization seams for future production migration copy/paste guidance without
-  treating comments as proof, runtime authority, final public API/DX, or
-  production readiness.
+- ID: `lab-v2.canonical-spec-authority-refresh`
+- Focus: replace the stale repo-pinned runtime realization spec with the
+  external canonical spec snapshot, refresh the manifest hash, and record that
+  this authority rebaseline is not proof promotion.
 - Related manifest entries:
+  - `audit.canonical-spec-authority-refresh`
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
   - `audit.p1.effect-managed-runtime-substrate`
