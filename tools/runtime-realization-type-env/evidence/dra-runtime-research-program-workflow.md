@@ -115,8 +115,9 @@ Default domino sequence:
 | 6 | Real Adapter Callback + Async Bridge Lowering | Promote fake callback delegation into native callback and async bridge lowering through `ProcessExecutionRuntime`. |
 | 7 | First Real Harness Mounts | Mount server and async harnesses first. |
 | 8 | Boundary Policy Matrix | Lock timeout, retry, interruption, Exit/Cause, telemetry, redaction, and error mapping before migration-ready claims. |
-| 9 | Runtime Telemetry + HyperDX Observation | Use the available Docker HyperDX stack as a contained telemetry/query observation cycle for runtime-emitted records after boundary policy is explicit. |
-| 10 | Migration/Control-Plane Observation | Carry runtime-emitted records into telemetry export, catalog persistence, and deployment placement slices. |
+| 9 | Semantic Runtime Documentation Harvest | Review lab TypeScript/runtime seams for high-signal JSDoc that is likely to be copied into production implementation or useful as partial migration guidance. |
+| 10 | Runtime Telemetry + HyperDX Observation | Use the available Docker HyperDX stack as a contained telemetry/query observation cycle for runtime-emitted records after boundary policy is explicit. |
+| 11 | Migration/Control-Plane Observation | Carry runtime-emitted records into telemetry export, catalog persistence, and deployment placement slices. |
 
 The sequence changes only through an explicit control input:
 
@@ -133,6 +134,15 @@ verify that redacted runtime events, diagnostics, traces, and lifecycle records
 can be emitted into the usual telemetry store/query engine, but it must not
 choose product observability policy, persisted catalog semantics, deployment
 placement, or durable async semantics ahead of their authority workstreams.
+
+The semantic documentation harvest is intentionally placed after boundary
+policy and before HyperDX. By then the lab contains enough runtime spine shape
+to mine useful migration comments without pretending comments are proof. Its
+target is high-signal JSDoc on semantic seams likely to survive copy/paste into
+the real implementation: lifecycle authority, lab-only proof boundaries,
+record-only telemetry, exact boundary kinds, redaction, interruption, provider
+and harness lifecycle, and negative-space decisions. It must not add mechanical
+comments or bless unresolved public API/DX.
 
 ## Operating Loop
 

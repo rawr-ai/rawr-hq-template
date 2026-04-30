@@ -4,12 +4,13 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.first-server-async-harness-mounts`
-- Focus: use the contained runtime realization lab to verify first server and
-  async started harness artifacts that consume adapter lowering payloads, expose
-  invocation callbacks, preserve full ref identity, and delegate through
-  `ProcessExecutionRuntime` without claiming production Elysia/oRPC/Inngest
-  readiness or durable async semantics.
+- ID: `lab-v2.boundary-policy-matrix`
+- Focus: use the contained runtime realization lab to verify executable and
+  provider boundary policy records for exact boundary kind, timeout metadata,
+  retry-attempt declaration, interruption propagation/classification,
+  Exit/Cause classification, record-only telemetry metadata, and redacted
+  attributes without claiming final public policy API/DX, production retry
+  scheduling, HyperDX export, or durable async semantics.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
@@ -43,6 +44,7 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `audit.p2.async-effect-bridge-lowering`
   - `audit.p2.production-harness-mounting`
   - `audit.p2.runtime-profile-config-redaction`
+  - `audit.semantic-runtime-jsdoc-harvest`
 
 ## Status Meanings
 

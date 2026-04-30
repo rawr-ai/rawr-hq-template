@@ -11,6 +11,7 @@ import {
 } from "@rawr/sdk/runtime/profiles";
 import { defineRuntimeSchema, type RuntimeSchema } from "@rawr/sdk/runtime/schema";
 import {
+  createRuntimeBoundaryPolicy,
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
   executeMiniBootgraph,
@@ -521,11 +522,21 @@ describe("provider provisioning lowering", () => {
     const emailProvider = createEmailProvider({ events, acquireFails: true });
     const profile = createProfile({ clockProvider, emailProvider });
     const graph = deriveProviderDependencyGraph(profile);
+    const trace = createProviderProvisioningTrace();
     const modules = createProviderProvisioningModules({
       profileId: profile.id,
       providerSelections: profile.providerSelections,
       providerDependencyGraph: graph,
       processId: "process-1",
+      trace,
+      boundaryPolicy({ phase, key }) {
+        return createRuntimeBoundaryPolicy({
+          policyId: `policy:${phase}:${key.providerId}`,
+          boundary: phase === "acquire" ? "provider.acquire" : "provider.release",
+          subjectId: providerBootResourceModuleId(key),
+          retry: { maxAttempts: 1, attempt: 1 },
+        });
+      },
       configs: {
         [emailProvider.id]: {
           from: "lab@example.com",
@@ -555,6 +566,19 @@ describe("provider provisioning lowering", () => {
     expect(providerIdsFor(modules, phasesFor(result.catalog, "boot.rollback.finished"))).toEqual([
       "test.clock.system",
     ]);
+    expect(
+      trace.events.find(
+        (event) =>
+          event.name === "boundary.policy.exit" &&
+          event.attributes?.boundaryPolicy === "provider.acquire" &&
+          event.attributes?.subjectId === emailProviderModuleId(),
+      )?.attributes,
+    ).toMatchObject({
+      exit: {
+        exit: "failure",
+        cause: "failure",
+      },
+    });
     expect(JSON.stringify(result.catalog)).not.toContain("rollback-secret");
     assertNoLiveHandles(result.catalog);
   });
@@ -565,11 +589,21 @@ describe("provider provisioning lowering", () => {
     const emailProvider = createEmailProvider({ events, releaseFails: true });
     const profile = createProfile({ clockProvider, emailProvider });
     const graph = deriveProviderDependencyGraph(profile);
+    const trace = createProviderProvisioningTrace();
     const modules = createProviderProvisioningModules({
       profileId: profile.id,
       providerSelections: profile.providerSelections,
       providerDependencyGraph: graph,
       processId: "process-1",
+      trace,
+      boundaryPolicy({ phase, key }) {
+        return createRuntimeBoundaryPolicy({
+          policyId: `policy:${phase}:${key.providerId}`,
+          boundary: phase === "acquire" ? "provider.acquire" : "provider.release",
+          subjectId: providerBootResourceModuleId(key),
+          retry: { maxAttempts: 1, attempt: 1 },
+        });
+      },
       configs: {
         [emailProvider.id]: {
           from: "lab@example.com",
@@ -596,8 +630,91 @@ describe("provider provisioning lowering", () => {
     expect(providerIdsFor(modules, phasesFor(finalizedCatalog, "boot.finalize.finished"))).toEqual([
       "test.clock.system",
     ]);
+    expect(
+      trace.events.find(
+        (event) =>
+          event.name === "boundary.policy.exit" &&
+          event.attributes?.boundaryPolicy === "provider.release" &&
+          event.attributes?.subjectId === emailProviderModuleId(),
+      )?.attributes,
+    ).toMatchObject({
+      exit: {
+        exit: "failure",
+        cause: "failure",
+      },
+    });
     expect(JSON.stringify(finalizedCatalog)).not.toContain("release-secret");
     assertNoLiveHandles(finalizedCatalog);
+  });
+
+  test("records provider boundary policies with redacted metadata", async () => {
+    const clockProvider = createClockProvider();
+    const emailProvider = createEmailProvider();
+    const profile = createProfile({ clockProvider, emailProvider });
+    const trace = createProviderProvisioningTrace();
+    const modules = createProviderProvisioningModules({
+      profileId: profile.id,
+      providerSelections: profile.providerSelections,
+      providerDependencyGraph: deriveProviderDependencyGraph(profile),
+      processId: "process-1",
+      trace,
+      boundaryPolicy({ phase, key }) {
+        return createRuntimeBoundaryPolicy({
+          policyId: `policy:${phase}:${key.providerId}`,
+          boundary: phase === "acquire" ? "provider.acquire" : "provider.release",
+          subjectId: providerBootResourceModuleId(key),
+          timeoutMs: 500,
+          retry: { maxAttempts: 2, attempt: 1 },
+          metadata: {
+            providerId: key.providerId,
+            secretToken: "provider-policy-secret",
+          },
+        });
+      },
+      configs: {
+        [emailProvider.id]: {
+          from: "lab@example.com",
+          apiKey: "provider-secret",
+        },
+      },
+    });
+
+    const result = await executeMiniBootgraph({ modules });
+
+    expect(result.status).toBe("started");
+    if (result.status !== "started") throw result.error;
+
+    await result.finalize();
+
+    const policyEvents = trace.events.filter((event) =>
+      event.name.startsWith("boundary.policy."),
+    );
+    expect(policyEvents.map((event) => event.name)).toEqual([
+      "boundary.policy.enter",
+      "boundary.policy.exit",
+      "boundary.policy.enter",
+      "boundary.policy.exit",
+      "boundary.policy.enter",
+      "boundary.policy.exit",
+      "boundary.policy.enter",
+      "boundary.policy.exit",
+    ]);
+    expect(
+      policyEvents.map((event) => event.attributes?.boundaryPolicy),
+    ).toContain("provider.acquire");
+    expect(
+      policyEvents.map((event) => event.attributes?.boundaryPolicy),
+    ).toContain("provider.release");
+    expect(policyEvents.at(1)?.attributes).toMatchObject({
+      timeoutMs: 500,
+      retry: { maxAttempts: 2, attempt: 1 },
+      exit: {
+        exit: "success",
+        cause: "none",
+      },
+    });
+    expect(providerTraceJson(trace)).not.toContain("provider-policy-secret");
+    expect(providerTraceJson(trace)).not.toContain("provider-secret");
   });
 
   test("fails closed when a provider returns an unlowerable plan", async () => {

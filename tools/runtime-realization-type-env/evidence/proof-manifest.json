@@ -4,8 +4,8 @@
     "sha256": "4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654"
   },
   "currentExperiment": {
-    "id": "lab-v2.first-server-async-harness-mounts",
-    "focus": "Use the contained runtime realization lab to verify first server and async started harness artifacts that consume adapter lowering payloads, expose invocation callbacks, preserve full ref identity, and delegate through ProcessExecutionRuntime without claiming production Elysia/oRPC/Inngest readiness or durable async semantics.",
+    "id": "lab-v2.boundary-policy-matrix",
+    "focus": "Use the contained runtime realization lab to verify executable and provider boundary policy records for exact boundary kind, timeout metadata, retry-attempt declaration, interruption propagation/classification, Exit/Cause classification, record-only telemetry metadata, and redacted attributes without claiming final public policy API/DX, production retry scheduling, HyperDX export, or durable async semantics.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.curated-effect-public-surface",
@@ -33,6 +33,9 @@
       "audit.p1.provider-effect-plan-shape",
       "audit.p1.provider-effect-plan-lowering",
       "audit.p1.effect-boundary-policy-matrix",
+      "audit.p1.effect-boundary-policy-matrix.residual",
+      "audit.semantic-runtime-jsdoc-harvest",
+      "audit.telemetry.hyperdx-observation",
       "audit.p1.safe-effect-composition-surface",
       "audit.p2.server-route-derivation",
       "audit.p2.adapter-effect-callback-lowering",
@@ -466,9 +469,29 @@
     },
     {
       "id": "audit.p1.effect-boundary-policy-matrix",
-      "status": "xfail",
+      "status": "simulation-proof",
       "source": "Runtime spec sections 9, 24, and 25; Effect-native addendum sections 40-42",
-      "oracle": "Executable and provider boundaries need explicit timeout, retry, interruption, telemetry, redaction, and error/exit metadata before this can become proof.",
+      "oracle": "Contained executable/provider boundary policy records preserve exact execution/provider boundary kind, timeout metadata, retry-attempt declaration without retry scheduling, AbortSignal interruption propagation and classification, Effect Exit/Cause success/failure/defect/interruption classification, record-only telemetry metadata, redacted attributes, adapter-inherited runtime policy records, and provider acquire/release policy records. Final public policy API/DX, production retry/backoff, durable async semantics, HyperDX export/query, production host mapping, and catalog persistence remain fenced.",
+      "fixtures": [
+        "src/mini-runtime/boundary-policy.ts",
+        "src/mini-runtime/managed-runtime.ts",
+        "src/mini-runtime/process-runtime.ts",
+        "src/mini-runtime/provider-lowering.ts",
+        "fixtures/inline-negative/runtime-access-boundaries.ts",
+        "test/mini-runtime/process-runtime.test.ts",
+        "test/mini-runtime/provider-provisioning.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
+        "mini-runtime"
+      ]
+    },
+    {
+      "id": "audit.p1.effect-boundary-policy-matrix.residual",
+      "status": "xfail",
+      "source": "Runtime spec sections 9, 24, and 25; Effect-native addendum sections 40-42; residual from audit.p1.effect-boundary-policy-matrix",
+      "oracle": "Final public boundary policy API/DX, production retry/backoff, timeout enforcement, durable async policy, native host error mapping, HyperDX export/query, product observability policy, catalog persistence, provider refresh policy, config precedence, platform secret stores, and arbitrary free-form diagnostic string redaction remain unresolved beyond the contained record-only policy proof.",
       "fixtures": [
         "fixtures/todo/effect-boundary-policy-matrix.todo.ts"
       ]
@@ -556,6 +579,25 @@
       "gates": [
         "typecheck",
         "mini-runtime"
+      ]
+    },
+    {
+      "id": "audit.semantic-runtime-jsdoc-harvest",
+      "status": "todo",
+      "source": "DRA research program workflow semantic documentation harvest",
+      "oracle": "High-signal runtime JSDoc should be harvested from lab TypeScript seams for production copy/paste guidance without treating comments as proof or final public API authority.",
+      "fixtures": [
+        "evidence/workstreams/2026-04-30-boundary-policy-matrix.md"
+      ]
+    },
+    {
+      "id": "audit.telemetry.hyperdx-observation",
+      "status": "todo",
+      "source": "DRA research program workflow Runtime Telemetry + HyperDX Observation cycle",
+      "oracle": "Docker HyperDX may be used by a later contained observation workstream to prove runtime-emitted records are exportable/queryable without promoting product observability policy, catalog persistence, deployment placement, or durable async semantics.",
+      "fixtures": [
+        "evidence/runtime-realization-research-program.md",
+        "evidence/dra-runtime-research-program-workflow.md"
       ]
     },
     {
