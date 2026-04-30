@@ -52,12 +52,22 @@ Then read, in order:
 1. `tools/runtime-realization-type-env/AGENTS.md`
 2. `tools/runtime-realization-type-env/RUNBOOK.md`
 3. `tools/runtime-realization-type-env/evidence/design-guardrails.md`
-4. `tools/runtime-realization-type-env/evidence/proof-manifest.json`
-5. `tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md`
-6. `tools/runtime-realization-type-env/evidence/focus-log.md`
-7. The fixtures/tests for the active focus only.
+4. `tools/runtime-realization-type-env/evidence/runtime-realization-research-program.md`
+5. `tools/runtime-realization-type-env/evidence/phased-agent-verification-workflow.md`
+6. `tools/runtime-realization-type-env/evidence/proof-manifest.json`
+7. `tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md`
+8. `tools/runtime-realization-type-env/evidence/focus-log.md`
+9. The latest relevant report under `tools/runtime-realization-type-env/evidence/workstreams/`.
+10. The fixtures/tests for the active focus only.
 
 Use Nx for project and target truth. Use source files for local authority. Use Narsil or other code intelligence as evidence discovery when useful, not as architecture authority.
+
+Before opening a new workstream, after context compaction, after a long
+interruption, or when resuming from a handoff, refresh
+`evidence/runtime-realization-research-program.md` and
+`evidence/phased-agent-verification-workflow.md` unless you are fully confident
+the active state is already loaded. If you skip the refresh, make the opening
+packet and current authority inputs explicit in the report anyway.
 
 ## Evidence Model
 
@@ -137,6 +147,24 @@ manifest, focus log, diagnostic, or this runbook.
 Do not turn `evidence/focus-log.md` into a transcript or live status tracker.
 Keep session detail in workstream reports and keep authority deltas in the
 manifest and diagnostic.
+
+Use `evidence/workstreams/TEMPLATE.md` for new reports. A workstream is closed
+only when required outputs are present, proof deltas and diagnostic deltas are
+recorded, deferred items have authority homes, unblock conditions, and re-entry
+triggers, review loops are recorded, verification is recorded, repo/Graphite
+state is recorded, and the next workstream packet is usable by a zero-context
+agent.
+
+Closeout also needs a workstream lifecycle/process review: confirm the
+workstream was opened, run, reviewed, closed, and handed off according to the
+workflow. Record process-tension notes when the coordination loop itself caused
+friction, ambiguity, skipped checks, or repeatable failure, and turn actionable
+process findings into workflow/template repairs before the next workstream.
+
+Every deferred item must also appear in the manifest, diagnostic, todo fixture,
+research program, spec patch proposal, migration-only note, or out-of-scope
+note. A report may summarize deferred work, but it must not be the only place
+that deferred work exists.
 
 ## Handoff Template
 
