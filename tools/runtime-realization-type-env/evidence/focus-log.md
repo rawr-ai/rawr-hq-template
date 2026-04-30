@@ -4,12 +4,12 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.adapter-callback-async-bridge-lowering`
-- Focus: use the contained runtime realization lab to verify native-shaped
-  server callback payloads and async step bridge payloads that consume
-  pre-derived refs/artifacts and delegate through `ProcessExecutionRuntime`
-  without mounting native hosts, deciding durable async semantics, or claiming
-  production adapter readiness.
+- ID: `lab-v2.first-server-async-harness-mounts`
+- Focus: use the contained runtime realization lab to verify first server and
+  async started harness artifacts that consume adapter lowering payloads, expose
+  invocation callbacks, preserve full ref identity, and delegate through
+  `ProcessExecutionRuntime` without claiming production Elysia/oRPC/Inngest
+  readiness or durable async semantics.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
@@ -32,6 +32,7 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `simulation.server-route-derivation-import-safety`
   - `simulation.adapter-callback-delegation`
   - `simulation.adapter-callback-bridge-lowering`
+  - `simulation.first-server-async-harness-mounts`
   - `simulation.deployment-handoff`
   - `audit.p1.provider-effect-plan-shape`
   - `audit.p1.provider-effect-plan-lowering`
@@ -40,6 +41,7 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `audit.p2.server-route-derivation`
   - `audit.p2.adapter-effect-callback-lowering`
   - `audit.p2.async-effect-bridge-lowering`
+  - `audit.p2.production-harness-mounting`
   - `audit.p2.runtime-profile-config-redaction`
 
 ## Status Meanings
