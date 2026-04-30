@@ -31,8 +31,10 @@ Before adding or changing tests, fixtures, manifest entries, or evidence docs, r
 - `RUNBOOK.md`
 - `evidence/design-guardrails.md`
 - `evidence/focus-log.md`
+- `evidence/runtime-realization-research-program.md`
 - `evidence/middle-spine-verification-work-plan.md`
 - `evidence/workstreams/README.md`
+- `evidence/workstreams/TEMPLATE.md`
 - `evidence/proof-manifest.json`
 - `evidence/vendor-fidelity.md`
 - `evidence/runtime-spine-verification-diagnostic.md`

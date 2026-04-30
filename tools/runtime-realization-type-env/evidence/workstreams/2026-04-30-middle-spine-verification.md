@@ -2,7 +2,7 @@
 
 Status: closed and submitted as PR #258.
 Branch: `codex/runtime-middle-spine-verification`.
-Commit: `f9ee1eaf`.
+Commit: `6cef86bc`.
 PR: https://github.com/rawr-ai/rawr-hq-template/pull/258
 
 This report is informative. It captures the completed lab workstream so the next
@@ -33,9 +33,9 @@ Non-goals:
 - Do not prove durable scheduling, telemetry export, catalog persistence, or
   deployment placement.
 
-## Input Packet
+## Opening Packet
 
-Authority and operating inputs:
+Runtime/proof authority inputs:
 
 - `../../RUNBOOK.md`
 - `../design-guardrails.md`
@@ -43,10 +43,14 @@ Authority and operating inputs:
 - `../runtime-spine-verification-diagnostic.md`
 - `../spine-audit-map.md`
 - `../focus-log.md`
-- `../middle-spine-verification-work-plan.md`
-- `../phased-agent-verification-workflow.md`
 - canonical runtime spec pinned by `../proof-manifest.json`:
   `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
+
+Coordination inputs:
+
+- `../runtime-realization-research-program.md`
+- `../middle-spine-verification-work-plan.md`
+- `../phased-agent-verification-workflow.md`
 
 Inputs treated as non-authority or limited evidence:
 
@@ -54,6 +58,96 @@ Inputs treated as non-authority or limited evidence:
 - simulation proof: contained mini-runtime evidence, not production readiness;
 - quarantined migration plans: directional provenance only;
 - positive fixtures: proof only when backed by gates and manifest entries.
+
+Control inputs:
+
+- User-approved implementation plan for the middle-spine verification
+  burn-down.
+- User correction that default peer agents should be used for judgment/review
+  and that host review must reason about agent output rather than accepting
+  shape-only work.
+
+Selected skill lenses:
+
+- `architecture`: lifecycle separation, authority order, and negative-space
+  preservation.
+- `testing-design`: falsifiable oracles and test-theater checks.
+- `team-design`: peer-agent review roles and host accountability.
+- `nx-workspace` and `graphite`: project truth and branch/stack hygiene.
+
+## Prior Workstream Assimilation
+
+Previous report consumed: none. This was the first durable workstream report
+for the runtime-realization lab.
+
+Prior final output accepted or rejected: none.
+
+Deferred items consumed: none.
+
+Deferred items explicitly left fenced: the negative-space items listed below in
+the deferred inventory.
+
+Repair demands consumed: none from a prior durable report.
+
+Next packet changes: none from a prior durable report.
+
+Invalidations from prior assumptions: none from a prior durable report.
+
+## Output Contract
+
+Required outputs:
+
+- persisted middle-spine work plan;
+- contained SDK derivation/compiler simulation;
+- bootgraph/catalog/finalization simulation;
+- runtime access and service binding cache proof;
+- adapter delegation proof;
+- deployment handoff boundary proof;
+- evidence docs updated only to earned proof strength;
+- focused tests and full lab gate passing;
+- PR submitted through Graphite.
+
+Optional outputs:
+
+- review findings and accepted residual risks captured for the next workstream.
+
+Target proof strength:
+
+- `simulation-proof` for middle-spine derivation/compiler, bootgraph/catalog,
+  runtime access/cache, adapter delegation, and deployment handoff;
+- no production runtime readiness claim.
+
+Expected gates:
+
+- `bunx nx show project runtime-realization-type-env --json`
+- `bun test tools/runtime-realization-type-env/test/middle-spine-derivation.test.ts`
+- `bun test tools/runtime-realization-type-env/test/mini-runtime/process-runtime.test.ts`
+- `bun tools/runtime-realization-type-env/scripts/assert-negative-types.ts`
+- `bunx nx run runtime-realization-type-env:typecheck --skip-nx-cache`
+- `bunx nx run runtime-realization-type-env:structural`
+- `bunx nx run runtime-realization-type-env:middle-spine`
+- `bunx nx run runtime-realization-type-env:mini-runtime`
+- `bunx nx run runtime-realization-type-env:negative`
+- `bunx nx run runtime-realization-type-env:report`
+- `bunx nx run runtime-realization-type-env:gate`
+- `bun run runtime-realization:type-env`
+- `git diff --check`
+- `git status --short --branch`
+- `gt status --short`
+
+## Acceptance / Closure Criteria
+
+The workstream could close only when:
+
+- required outputs existed inside `tools/runtime-realization-type-env/**`;
+- no production imports, workspace promotion, or root gate drift were introduced;
+- proof entries named gates and matched diagnostic language;
+- negative space remained fenced in the manifest/diagnostic/todo fixtures with
+  authority homes, unblock conditions, and re-entry triggers;
+- focused gates and the composed lab gate passed;
+- peer review findings were addressed or recorded as residual risk;
+- PR and Graphite state were recorded;
+- the next workstream packet identified one highest-leverage next action.
 
 ## Workflow
 
@@ -137,13 +231,71 @@ Files changed by the PR included:
 - `project.json`, structural guard, manifest, focus log, diagnostic, and spine
   map updates.
 
+## Deferred Inventory
+
+| Item | Status | Why deferred | Authority home | Unblock condition | Re-entry trigger | Next eligible workstream | Lane |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `ProviderEffectPlan` shape | `xfail` | Acquire/release payload, diagnostics, telemetry, error, and lowering fields were intentionally not decided. | `proof-manifest.json`, diagnostic, todo fixture, research program. | Minimal lab acquire/release shape can be locked without changing public architecture. | Provider lowering needs to replace fake boot modules. | ProviderEffectPlan -> Bootgraph/Provisioning Lowering | lab/spec |
+| Provider plan lowering | `xfail` | Provider acquisition must lower through bootgraph/provisioning, not process runtime. | `proof-manifest.json`, diagnostic, todo fixture, research program. | Minimal provider plan shape exists. | Bootgraph proof needs real provider acquire/release. | ProviderEffectPlan -> Bootgraph/Provisioning Lowering | lab/spec |
+| Async step membership | `xfail` | Step ownership must be declarative before proof. | `proof-manifest.json`, diagnostic, todo fixture, research program. | Dispatcher/access work reaches async bridge. | Async bridge proof would otherwise infer membership. | Dispatcher Access + Async Step Membership | spec |
+| Dispatcher access declaration | `xfail` | The lab must not invent ambient or explicit dispatcher policy. | `proof-manifest.json`, diagnostic, todo fixture, research program. | Workflow dispatcher operations become necessary for runtime proof. | Async/server work needs dispatcher operation descriptors. | Dispatcher Access + Async Step Membership | spec |
+| Runtime access method law | `xfail` | Mini-runtime sanctioned access exists, but final method law is not locked. | `proof-manifest.json`, diagnostic, todo fixture, research program. | Provider/resource acquisition has real lab values. | Service binding or adapters need final access semantics. | RuntimeResourceAccess Law + Service Binding DAG | spec |
+| Server route derivation | `xfail` | Cold route derivation/import-safety mechanics are unresolved. | `proof-manifest.json`, diagnostic, todo fixture, research program. | Server workstream targets real route callback lowering. | Fake server adapter proof becomes insufficient. | Server Route Derivation | spec |
+| Real adapter callback lowering | `xfail` | Fake callbacks prove delegation only. | `proof-manifest.json`, diagnostic, todo fixture, research program. | Route derivation and runtime access are stable enough. | Native callbacks are needed for real harness proof. | Real Adapter Callback + Async Bridge Lowering | lab/spec |
+| Async bridge lowering | `xfail` | Needs async step membership and dispatcher access decisions first. | `proof-manifest.json`, diagnostic, todo fixture, research program. | Async membership/access accepted. | Async host proof would otherwise be theater. | Real Adapter Callback + Async Bridge Lowering | lab/spec |
+| Runtime profile config redaction | `todo` | Config binding and diagnostic-safe secret emission are not locked. | `proof-manifest.json`, diagnostic, spine map, research program. | Provider acquisition emits diagnostics/config snapshots. | Provider lowering exposes secret-bearing config flow. | Provider Diagnostics + Runtime Profile Config Redaction | lab/spec |
+| Telemetry export/catalog persistence/deployment placement | migration-only | Requires production/control-plane choices beyond lab proof. | Diagnostic and research program. | Runtime emits stable records worth exporting or placing. | Migration plan needs production observation/control-plane behavior. | Migration/Control-Plane Observation | migration-only |
+
+## Review Result
+
+Leaf loops:
+
+- Containment: passed; work stayed in `tools/runtime-realization-type-env/**`.
+- Mechanical: passed after path/import/Nx/structural review.
+- Type/negative: passed through typecheck and negative fixtures.
+- Vendor: no new vendor production-readiness claim was made.
+- Mini-runtime: passed focused derivation and mini-runtime tests.
+- Manifest/report: passed after manifest, diagnostic, spine map, focus log, and
+  report language were aligned.
+
+Parent loops:
+
+- Architecture: passed for contained simulation; lifecycle phases remained
+  separated.
+- Migration derivability: passed only as migration-risk reduction, not
+  production runtime readiness.
+- DX/API/TypeScript: no public API was promoted; dispatcher/runtime/provider
+  method laws stayed fenced.
+- Adversarial evidence honesty: peer review found and host addressed provider
+  identity, dispatcher defaulting, runtime access overclaim, cache identity,
+  deployment validation, and fake callback proof weaknesses.
+
+Waivers:
+
+| Waiver | Accepted risk | Authority | Rationale | Scope | Follow-up |
+| --- | --- | --- | --- | --- | --- |
+| Deployment handoff validation returns the validated input by reference. | The proof does not establish immutability, clone safety, or serialization safety. | Simulation proof only; manifest/diagnostic remain below production readiness. | Runtime validation now rejects widened unsafe values, which is enough for this contained handoff boundary. | `simulation.deployment-handoff` only. | Boundary Policy Matrix or deployment/control-plane workstream if serialization or persistence becomes a claim. |
+
+Invalidations:
+
+- Dispatcher descriptor proof was narrowed after review invalidated the prior
+  default-access implication.
+- Runtime access proof was narrowed after review invalidated probe/readback
+  exposure through the runtime facade.
+
+Repair demands:
+
+- Provider identity must retain resource, lifetime, role, and instance.
+- Adapter delegation must consume compiled/runtime artifacts.
+- Deployment handoff must include runtime validation for widened values.
+
 ## Final Output
 
 Submitted output:
 
 - PR #258: https://github.com/rawr-ai/rawr-hq-template/pull/258
 - Branch: `codex/runtime-middle-spine-verification`
-- Commit: `f9ee1eaf`
+- Commit: `6cef86bc`
 
 Verification run during the workstream:
 
@@ -171,7 +323,7 @@ PR follow-up status after submission:
 - GitHub status checks: none reported.
 - Repo Actions workflows: none present.
 
-## Continuity
+## Next Workstream Packet
 
 Recommended next workstream:
 
@@ -192,8 +344,8 @@ Next workstream proof target:
 - Lock a minimal lab `ProviderEffectPlan` shape for acquire/release only.
 - Lower provider build output into bootgraph/provisioning modules.
 - Use real Effect execution/scope/finalizer behavior where possible.
-- Prove dependency order, rollback, reverse release, provider diagnostics, and
-  redacted config snapshots.
+- Prove dependency order, rollback, reverse release, and provider lifecycle
+  diagnostics that do not decide runtime profile config binding.
 - Promote `audit.p1.provider-effect-plan-shape` only as far as the type shape is
   truly locked.
 - Promote `audit.p1.provider-effect-plan-lowering` only to contained
@@ -204,7 +356,8 @@ Negative space to preserve next:
 - provider retry/refresh policy;
 - full Effect boundary policy matrix;
 - production provider integrations;
-- real platform config source precedence;
+- typed config binding, redacted config snapshots, and real platform config
+  source precedence;
 - telemetry export and catalog persistence;
 - process/runtime access method law beyond the provider lowering seam;
 - real harness mounting.
