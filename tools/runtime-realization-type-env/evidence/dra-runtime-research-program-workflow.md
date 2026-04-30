@@ -73,13 +73,16 @@ When sources conflict, use this order:
    quarantined docs, stale migration inputs, prior reports when they conflict
    with current authority, vendor probes outside their claim, and agent output.
 
-The pinned canonical spec hash at workflow creation was:
+The pinned canonical spec hash was refreshed by control input on 2026-04-30:
 
 ```text
-4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654
+483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b
 ```
 
-Verify this hash at session startup and before proof promotion.
+The older repo hash
+`4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654`
+was stale. Do not promote future proof against that old snapshot. Verify the
+current manifest hash at session startup and before proof promotion.
 
 ## Proof Boundaries
 
