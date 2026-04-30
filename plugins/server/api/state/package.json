@@ -24,6 +24,6 @@
     "@orpc/contract": "^1.13.5",
     "@orpc/server": "^1.13.5",
     "@rawr/hq-ops": "workspace:*",
-    "@rawr/runtime-context": "workspace:*"
+    "@rawr/sdk": "workspace:*"
   }
 }

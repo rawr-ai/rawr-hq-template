@@ -1,8 +1,8 @@
 {
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "name": "plugin-async-workflow-foundry-proof",
-  "root": "plugins/async/workflows/foundry-proof",
-  "sourceRoot": "plugins/async/workflows/foundry-proof/src",
+  "root": "plugins/async/workflows/foundry-proof-workflow",
+  "sourceRoot": "plugins/async/workflows/foundry-proof-workflow/src",
   "tags": [
     "type:plugin",
     "migration-slice:runtime-production",
@@ -14,25 +14,25 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "tsc -p plugins/async/workflows/foundry-proof/tsconfig.json"
+        "command": "tsc -p plugins/async/workflows/foundry-proof-workflow/tsconfig.json"
       }
     },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "tsc -p plugins/async/workflows/foundry-proof/tsconfig.json --noEmit"
+        "command": "tsc -p plugins/async/workflows/foundry-proof-workflow/tsconfig.json --noEmit"
       }
     },
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"plugins/async/workflows/foundry-proof/**/*.{js,jsx,ts,tsx}\""
+        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"plugins/async/workflows/foundry-proof-workflow/**/*.{js,jsx,ts,tsx}\""
       }
     },
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun test plugins/async/workflows/foundry-proof/test"
+        "command": "bun test plugins/async/workflows/foundry-proof-workflow/test"
       }
     },
     "sync": {

@@ -298,7 +298,7 @@ describe("@rawr/plugin-server-api-${model.kebab}", () => {
 }
 
 function writeAsyncPlugin(tree, model) {
-  const root = `plugins/async/workflows/${model.kebab}`;
+  const root = `plugins/async/workflows/${model.kebab}-workflow`;
   writeJson(tree, `${root}/package.json`, {
     name: `@rawr/plugin-async-workflow-${model.kebab}`,
     private: true,
@@ -317,7 +317,7 @@ function writeAsyncPlugin(tree, model) {
       },
     },
     rawr: {
-      kind: "workflow",
+      kind: "workflows",
       capability: model.kebab,
       generatedBy: "capability-foundry",
     },
@@ -435,7 +435,7 @@ function updateInventory(tree, model) {
     targets: ["sync", "structural", "typecheck", "test"],
   };
   inventory.projects[`plugin-async-workflow-${model.kebab}`] = {
-    config: `plugins/async/workflows/${model.kebab}/project.json`,
+    config: `plugins/async/workflows/${model.kebab}-workflow/project.json`,
     tags: [
       "type:plugin",
       "migration-slice:runtime-production",

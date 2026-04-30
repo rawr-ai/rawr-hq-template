@@ -1,5 +1,5 @@
 import { implement } from "@orpc/server";
-import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
+import type { BoundaryRequestSupportContext } from "@rawr/sdk/execution";
 import type { RawrHostBoundRolePlan } from "./host-seam";
 import { mergeRawrHostSurfaceTrees } from "./host-surface-merge";
 

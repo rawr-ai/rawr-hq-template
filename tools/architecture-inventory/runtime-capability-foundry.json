@@ -33,7 +33,7 @@
       ]
     },
     "plugin-async-workflow-foundry-proof": {
-      "config": "plugins/async/workflows/foundry-proof/project.json",
+      "config": "plugins/async/workflows/foundry-proof-workflow/project.json",
       "tags": [
         "type:plugin",
         "migration-slice:runtime-production",

@@ -62,10 +62,11 @@ The pinned runtime spec hash verified at workstream open is:
   `4.0.0-beta.59` on the beta dist-tag while the repo still pins `3.21.2`;
   the dependency and lockfile move belongs in the runtime substrate slice with
   API fallout proven there.
-- Current public/runtime topology is stale relative to the canonical specs:
-  `@rawr/hq-sdk`, `@rawr/core`, `@rawr/bootgraph`,
-  `@rawr/runtime-context`, `apps/hq/legacy-cutover.ts`, and
-  `apps/server/src/host-*` remain live migration substrate.
+- Closure state: the production SDK and runtime substrate pin
+  `effect@4.0.0-beta.59`; the closed lab remains explicit Effect 3 evidence.
+  `@rawr/bootgraph`, `@rawr/runtime-context`, `apps/hq/legacy-cutover.ts`, and
+  `apps/server/src/host-composition.ts` are retired from active source. The
+  remaining live migration substrate is named below and is not claimed away.
 
 ## DRA Operating Rules
 
@@ -130,11 +131,70 @@ on the drained tip, or an explicitly documented Graphite-safe alternative.
   concrete server app owns the production `startApp(...)` host adapter; legacy
   cutover and `host-composition` are deleted from live source; hard gates
   reject their return.
-- `codex/runtime-prod-06-capability-foundry`: in progress. Scope is intentionally
+- `codex/runtime-prod-06-capability-foundry`: complete. Scope is intentionally
   generator-owned scaffolding plus one generated declaration-cold exemplar
   (`foundry-proof`). It proves service/server/async projection generation,
-  inventory, idempotency, and gates. It does not claim generated async durable
+  inventory, idempotency, and gates. The generated async workflow projection
+  uses the catalog-valid `foundry-proof-workflow` directory while preserving the
+  `foundry-proof` capability id. It does not claim generated async durable
   execution or full `@rawr/hq-sdk` adapter retirement.
+- `codex/runtime-prod-07-cleanup-closure`: complete before Graphite submission.
+  Retired the old `@rawr/bootgraph` and `@rawr/runtime-context` support
+  packages, moved host/request context support types into `@rawr/sdk/execution`,
+  added a production Effect 4 and retired-support gate, hardened the capability
+  foundry exemplar against active plugin catalog law, and refreshed stale
+  phase-a scaffold checks.
+
+## Closure Outcome
+
+This stack reaches production migration readiness for the runtime realization
+arc, not a claim that every historical package name in the template is gone.
+The defensible closure line is:
+
+- `@rawr/sdk` is the public runtime-law surface and resolves Effect 4.
+- `packages/core/runtime/**` owns the private runtime packages and the runtime
+  substrate resolves Effect 4.
+- real app/server host entrypoints flow through `startApp(...)`; the legacy app
+  cutover and `host-composition` authority are deleted and hard-gated.
+- first resource/provider/config/catalog cuts are present and verified.
+- capability foundry generation is idempotent, catalog-valid, and proven by the
+  `foundry-proof` service, server API projection, and async workflow projection.
+- the closed `tools/runtime-realization-type-env` lab still passes, but remains
+  evidence only and is not counted as production runtime proof.
+
+The named residuals after closure are:
+
+- `@rawr/hq-sdk` remains live for the older oRPC service helpers, schema
+  adapters, host adapters, and plugin service-binding utilities. It is
+  transition substrate, not target public runtime law.
+- `@rawr/core` remains live for CLI/OCLIF command support, workspace-root, and
+  telemetry support.
+- `apps/server/src/host-seam.ts`, `host-realization.ts`,
+  `host-satisfiers.ts`, and `rawr.ts` remain the host-local production adapter
+  path. They no longer route through `host-composition`, but further harness
+  extraction can still mine them.
+- generated async workflow declarations are cold/catalog-valid; durable async
+  execution, retry/idempotency, and native Inngest durability are not claimed by
+  the foundry exemplar.
+- root `devDependencies.effect` remains Effect 3 for the closed lab lane.
+  Production runtime proof is package-scoped to `@rawr/sdk` and
+  `@rawr/core-runtime-substrate`.
+
+Closure gates run:
+
+```sh
+bun run runtime-prod:gates:exit
+bun run lint:boundaries
+bun run architecture:gates:permanent
+bun run runtime-realization:type-env
+bun run typecheck
+bun run build
+bun run test
+```
+
+The first full `bun run test` rerun exposed a single suite-load timeout in
+`apps/cli/test/journal.test.ts`; the isolated journal test passed, and the next
+full `bun run test` passed all 83 files and 266 tests.
 
 ## Source-Mine Ledger
 
@@ -359,15 +419,22 @@ hygiene, or focused gate choice.
 
 ## Closeout Criteria
 
-The program closes only when:
+This stack closes the template-side production migration readiness hop when:
 
-- active docs point at this workflow or its completed successor, not stale
-  quarantined plans;
-- the source-mine ledger has no unretired live authority rows;
-- `@rawr/sdk` and `packages/core/runtime/**` own the production runtime path;
-- old runtime authority packages/imports are gone from active source;
-- server and async host mounting are production-backed;
+- active docs point at this workflow, not stale quarantined plans;
+- `@rawr/sdk` and `packages/core/runtime/**` own the production runtime law and
+  Effect 4 substrate;
+- legacy app cutover, `host-composition`, `@rawr/bootgraph`, and
+  `@rawr/runtime-context` are deleted or made non-live with hard gates;
+- server host mounting is production-backed through `startApp(...)`;
 - first resource/provider/config/catalog/telemetry cuts are verified;
-- capability foundry generation is idempotent and proven by a real exemplar;
+- capability foundry generation is idempotent, catalog-valid, and proven by a
+  real exemplar;
 - full gates pass;
-- Graphite stack is submitted, and merge/prune state is recorded.
+- Graphite stack is submitted, and merge/prune state is recorded outside this
+  source doc after Graphite accepts the stack.
+
+It does not close the broader template modernization residuals named in
+`Closure Outcome`: full `@rawr/hq-sdk` adapter retirement, `@rawr/core` CLI
+support migration, final harness extraction from the remaining host-local
+server files, or durable async execution semantics.

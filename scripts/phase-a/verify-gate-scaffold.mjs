@@ -161,10 +161,9 @@ function hasFunctionDeclaration(sourceFile, functionName) {
 async function verifyMetadataContract() {
   const requiredPaths = [
     "services/hq-ops/src/service/modules/plugin-catalog/contract.ts",
-    "services/hq-ops/src/service/modules/plugin-catalog/entities.ts",
-    "services/hq-ops/src/service/modules/plugin-catalog/helpers/discovery.ts",
-    "services/hq-ops/src/service/modules/plugin-catalog/helpers/manifest.ts",
     "services/hq-ops/src/service/modules/plugin-catalog/router.ts",
+    "services/hq-ops/src/service/shared/entities/workspace-plugin-catalog.ts",
+    "services/hq-ops/src/service/shared/repositories/workspace-plugin-catalog-repository.ts",
     "services/hq-ops/src/service/contract.ts",
     "services/hq-ops/src/service/router.ts",
     "services/hq-ops/test/plugin-catalog.test.ts",
@@ -176,17 +175,15 @@ async function verifyMetadataContract() {
   const [
     { source: contractSource },
     { source: entitiesSource },
-    { source: discoverySource },
-    { source: manifestSource },
+    { source: repositorySource },
     { source: routerSource },
     { source: rootContractSource },
     { source: rootRouterSource },
     pluginPluginsPackageJson,
   ] = await Promise.all([
     readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/contract.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/entities.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/helpers/discovery.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/helpers/manifest.ts"),
+    readTypeScriptFile("services/hq-ops/src/service/shared/entities/workspace-plugin-catalog.ts"),
+    readTypeScriptFile("services/hq-ops/src/service/shared/repositories/workspace-plugin-catalog-repository.ts"),
     readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/router.ts"),
     readTypeScriptFile("services/hq-ops/src/service/contract.ts"),
     readTypeScriptFile("services/hq-ops/src/service/router.ts"),
@@ -225,9 +222,9 @@ async function verifyMetadataContract() {
     "forbidden rawr.",
     "rawr.kind must be",
   ]) {
-    assertCondition(manifestSource.includes(manifestFragment), `plugin-catalog manifest helper must include ${manifestFragment}`);
+    assertCondition(repositorySource.includes(manifestFragment), `plugin-catalog repository must include ${manifestFragment}`);
   }
-  assertCondition(discoverySource.includes("discoverWorkspacePluginCatalog"), "plugin-catalog discovery helper must expose catalog discovery");
+  assertCondition(repositorySource.includes("discoverWorkspacePluginCatalog"), "plugin-catalog repository must expose catalog discovery");
   assertCondition(!pluginPluginsPackageJson.includes("@rawr/plugin-workspace"), "plugin-plugins must not depend on @rawr/plugin-workspace");
 }
 

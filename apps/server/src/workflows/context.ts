@@ -2,7 +2,7 @@ import type {
   BoundaryMiddlewareSupportState,
   BoundaryRequestSupportContext,
   HostRuntimeSupportContext,
-} from "@rawr/runtime-context";
+} from "@rawr/sdk/execution";
 import type { Logger } from "@rawr/hq-sdk";
 
 export const RAWR_MIDDLEWARE_DEDUPE_MARKERS = {
