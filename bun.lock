@@ -278,6 +278,17 @@
     "plugins/agents/hq": {
       "name": "@rawr/plugin-hq",
     },
+    "plugins/async/workflows/foundry-proof": {
+      "name": "@rawr/plugin-async-workflow-foundry-proof",
+      "dependencies": {
+        "@rawr/foundry-proof": "workspace:*",
+        "@rawr/sdk": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.2.10",
+        "typescript": "^5.9.3",
+      },
+    },
     "plugins/cli/chatgpt-corpus": {
       "name": "@rawr/plugin-chatgpt-corpus",
       "dependencies": {
@@ -338,6 +349,17 @@
         "@orpc/server": "^1.13.5",
         "@rawr/example-todo": "workspace:*",
         "@rawr/runtime-context": "workspace:*",
+      },
+    },
+    "plugins/server/api/foundry-proof": {
+      "name": "@rawr/plugin-server-api-foundry-proof",
+      "dependencies": {
+        "@rawr/foundry-proof": "workspace:*",
+        "@rawr/sdk": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.2.10",
+        "typescript": "^5.9.3",
       },
     },
     "plugins/server/api/state": {
@@ -412,6 +434,16 @@
       "devDependencies": {
         "@opentelemetry/context-async-hooks": "^2.6.0",
         "@opentelemetry/sdk-trace-base": "^2.6.0",
+        "typescript": "^5.9.3",
+      },
+    },
+    "services/foundry-proof": {
+      "name": "@rawr/foundry-proof",
+      "dependencies": {
+        "@rawr/sdk": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.2.10",
         "typescript": "^5.9.3",
       },
     },
@@ -1130,6 +1162,8 @@
 
     "@rawr/example-todo": ["@rawr/example-todo@workspace:services/example-todo"],
 
+    "@rawr/foundry-proof": ["@rawr/foundry-proof@workspace:services/foundry-proof"],
+
     "@rawr/hq-app": ["@rawr/hq-app@workspace:apps/hq"],
 
     "@rawr/hq-ops": ["@rawr/hq-ops@workspace:services/hq-ops"],
@@ -1137,6 +1171,8 @@
     "@rawr/hq-sdk": ["@rawr/hq-sdk@workspace:packages/hq-sdk"],
 
     "@rawr/orpc-client": ["@rawr/orpc-client@workspace:packages/orpc-client"],
+
+    "@rawr/plugin-async-workflow-foundry-proof": ["@rawr/plugin-async-workflow-foundry-proof@workspace:plugins/async/workflows/foundry-proof"],
 
     "@rawr/plugin-chatgpt-corpus": ["@rawr/plugin-chatgpt-corpus@workspace:plugins/cli/chatgpt-corpus"],
 
@@ -1149,6 +1185,8 @@
     "@rawr/plugin-plugins": ["@rawr/plugin-plugins@workspace:plugins/cli/plugins"],
 
     "@rawr/plugin-server-api-example-todo": ["@rawr/plugin-server-api-example-todo@workspace:plugins/server/api/example-todo"],
+
+    "@rawr/plugin-server-api-foundry-proof": ["@rawr/plugin-server-api-foundry-proof@workspace:plugins/server/api/foundry-proof"],
 
     "@rawr/plugin-server-api-state": ["@rawr/plugin-server-api-state@workspace:plugins/server/api/state"],
 

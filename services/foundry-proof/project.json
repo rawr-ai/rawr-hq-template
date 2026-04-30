@@ -1,0 +1,50 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@rawr/foundry-proof",
+  "root": "services/foundry-proof",
+  "sourceRoot": "services/foundry-proof/src",
+  "tags": [
+    "type:service",
+    "role:servicepackage",
+    "migration-slice:runtime-production",
+    "capability:foundry-proof"
+  ],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/foundry-proof/tsconfig.json"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p services/foundry-proof/tsconfig.json --noEmit"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"services/foundry-proof/**/*.{js,jsx,ts,tsx}\""
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test services/foundry-proof/test"
+      }
+    },
+    "sync": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run sync:check --project @rawr/foundry-proof"
+      }
+    },
+    "structural": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun scripts/runtime-prod/verify-capability-foundry-slice.mjs --name foundry-proof"
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "title": "RAWR capability foundry generator",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Kebab-case or human-readable capability name."
+    }
+  },
+  "required": ["name"]
+}
