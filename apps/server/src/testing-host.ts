@@ -1,24 +1,24 @@
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
 import type { Client as HqOpsClient } from "@rawr/hq-ops";
-import { createTestingRawrHqLegacyHostSeam } from "@rawr/hq-app/legacy-cutover";
+import { createTestingRawrHqRuntimeAuthority } from "./runtime-authority";
 
 /**
- * @agents-style canonical HQ-shell-owned proof seam
+ * @agents-style canonical HQ runtime proof seam
  *
  * Owns:
- * - test-only realization of the sanctioned HQ legacy bridge seam
+ * - test-only realization of the sanctioned HQ runtime authority
  *
  * Must not own:
- * - app-side executable bridge compatibility
+ * - app-side runtime host compatibility
  * - alternate binding rules
  *
  * Canonical:
- * - `legacy-cutover -> host-composition -> host-seam -> host-realization`
+ * - `runtime-authority -> host-seam -> host-realization`
  */
-let cachedSeam: ReturnType<typeof createTestingRawrHqLegacyHostSeam> | null = null;
+let cachedSeam: ReturnType<typeof createTestingRawrHqRuntimeAuthority> | null = null;
 
 export function createTestingRawrHostSeam() {
-  if (!cachedSeam) cachedSeam = createTestingRawrHqLegacyHostSeam();
+  if (!cachedSeam) cachedSeam = createTestingRawrHqRuntimeAuthority();
   return cachedSeam;
 }
 

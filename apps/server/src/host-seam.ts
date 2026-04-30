@@ -33,7 +33,7 @@ export type RawrHostDeclarations = Readonly<{
  * - `createRawrHostBoundRolePlan({ declarations, satisfiers })`
  *
  * Transitional:
- * - app-manifest intake is localized upstream in `host-composition.ts`
+ * - app-manifest intake is localized upstream in `runtime-authority.ts`
  *
  * Must stay strict:
  * - every canonical plugin family binds through `contribute(bound)`

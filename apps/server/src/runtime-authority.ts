@@ -5,13 +5,19 @@ import {
   type RawrHostBoundRolePlan,
   type RawrHostDeclarations,
 } from "./host-seam";
+import { createHostLoggerAdapter } from "./logging";
 import {
   createRawrHostSatisfiers,
   type HostServiceLogger,
   type RawrHostSatisfiers,
 } from "./host-satisfiers";
 
-export type RawrHostComposition = Readonly<{
+const testingHostLogger = {
+  info() {},
+  error() {},
+} as const;
+
+export type RawrHqRuntimeAuthority = Readonly<{
   manifest: RawrHqManifest;
   declarations: RawrHostDeclarations;
   satisfiers: RawrHostSatisfiers;
@@ -26,31 +32,13 @@ function selectRawrHostDeclarations(manifest: RawrHqManifest): RawrHostDeclarati
   } as const;
 }
 
-/**
- * @agents-style seam-law declaration -> host binding -> request/process materialization
- * @agents-style canonical server-owned executable composition entrypoint
- * @agents-canonical temporary bridge localization point
- * @agents-must-not distributed runtime/testing/OpenAPI bridge consumption
- *
- * Owns:
- * - the only sanctioned server-side intake of HQ app declaration authority
- *   while split-project topology still exists
- * - host satisfier construction, bound role-plan creation, and realized host
- *   surface materialization as one executable composition story
- *
- * Must not own:
- * - declaration selection semantics beyond consuming the HQ app manifest
- * - request-scoped context creation
- * - route mounting
- * - OpenAPI or proof-specific alternate assembly paths
- */
-export function createRawrHostComposition(input: {
-  hostLogger: HostServiceLogger;
-}): RawrHostComposition {
+export function createRawrHqRuntimeAuthority(input: {
+  hostLogger?: HostServiceLogger;
+} = {}): RawrHqRuntimeAuthority {
   const manifest = createRawrHqManifest();
   const declarations = selectRawrHostDeclarations(manifest);
   const satisfiers = createRawrHostSatisfiers({
-    hostLogger: input.hostLogger,
+    hostLogger: input.hostLogger ?? createHostLoggerAdapter(),
   });
   const boundRolePlan = createRawrHostBoundRolePlan({
     declarations,
@@ -65,4 +53,10 @@ export function createRawrHostComposition(input: {
     boundRolePlan,
     realization,
   } as const;
+}
+
+export function createTestingRawrHqRuntimeAuthority() {
+  return createRawrHqRuntimeAuthority({
+    hostLogger: testingHostLogger,
+  });
 }

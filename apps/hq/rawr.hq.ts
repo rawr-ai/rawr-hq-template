@@ -1,5 +1,12 @@
+import { defineApp } from "@rawr/sdk/app";
+import { defineRuntimeProfile } from "@rawr/sdk/runtime/profiles";
 import { registerExampleTodoApiPlugin } from "@rawr/plugin-server-api-example-todo/server";
 import { registerStateApiPlugin } from "@rawr/plugin-server-api-state/server";
+
+export const rawrHqRuntimeProfile = defineRuntimeProfile({
+  id: "hq.default",
+  providers: [],
+});
 
 /**
  * @agents-style seam-law declaration -> host binding -> request/process materialization
@@ -37,3 +44,12 @@ export function createRawrHqManifest() {
 }
 
 export type RawrHqManifest = ReturnType<typeof createRawrHqManifest>;
+
+export function createRawrHqApp() {
+  const manifest = createRawrHqManifest();
+  return defineApp({
+    id: manifest.id,
+    plugins: Object.values(manifest.roles.server.api),
+    profiles: [rawrHqRuntimeProfile],
+  });
+}
