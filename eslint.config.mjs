@@ -7,10 +7,8 @@ const boundaryRule = [
     allow: [
       "../../../rawr.hq",
       "../server/src/bootstrap",
-      "../server/src/host-composition",
       "../server/src/logging",
       "@rawr/hq-app/manifest",
-      "@rawr/hq-app/legacy-cutover",
       "@rawr/hq-ops/service/contract",
       "@rawr/agent-config-sync",
       "@rawr/agent-config-sync/*"

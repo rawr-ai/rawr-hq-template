@@ -32,14 +32,14 @@ const testingHostFile = path.join(root, "apps", "server", "src", "testing-host.t
 const supportProofFile = path.join(root, "apps", "server", "test", "support", "example-todo-proof-clients.ts");
 const manifestFile = path.join(root, "apps", "hq", "src", "manifest.ts");
 const rawrHqManifestFile = path.join(root, "apps", "hq", "rawr.hq.ts");
-const legacyCutoverFile = path.join(root, "apps", "hq", "legacy-cutover.ts");
+const runtimeAuthorityFile = path.join(root, "apps", "server", "src", "runtime-authority.ts");
 
 const rawrSource = await fs.readFile(rawrFile, "utf8");
 const orpcSource = await fs.readFile(orpcFile, "utf8");
 const openApiSource = await fs.readFile(openApiFile, "utf8");
 const testingHostSource = await fs.readFile(testingHostFile, "utf8");
 const supportProofSource = await fs.readFile(supportProofFile, "utf8");
-const legacyCutoverSource = mode === "completion" ? await fs.readFile(legacyCutoverFile, "utf8") : "";
+const runtimeAuthoritySource = mode === "completion" ? await fs.readFile(runtimeAuthorityFile, "utf8") : "";
 const manifestEntrySource = mode === "completion" ? await fs.readFile(manifestFile, "utf8") : "";
 const manifestSource = mode === "completion" && manifestEntrySource.includes("../rawr.hq")
   ? `${manifestEntrySource}\n${await fs.readFile(rawrHqManifestFile, "utf8")}`
@@ -101,8 +101,8 @@ if (mode === "completion") {
       !manifestSource.includes("createWorkflowRouteHarness"),
   });
   requiredChecks.push({
-    label: "host consumes HQ-owned legacy cutover composition bridge",
-    ok: hasNamedImport(rawrAst, "@rawr/hq-app/legacy-cutover", "createRawrHqLegacyRouteAuthority"),
+    label: "host consumes server-owned HQ runtime authority",
+    ok: hasNamedImport(rawrAst, "./runtime-authority", "createRawrHqRuntimeAuthority"),
   });
   requiredChecks.push({
     label: "host wires /api/workflows capability-family routing",
@@ -134,8 +134,11 @@ if (mode === "completion") {
     label: "host consumes manifest-owned ORPC router seam",
     ok:
       hasRegisterOrpcRoutesHostSeamRouter(rawrAst) &&
-      hasIdentifierCall(rawrAst, "createRawrHqLegacyRouteAuthority") &&
-      legacyCutoverSource.includes("../server/src/host-composition"),
+      hasIdentifierCall(rawrAst, "createRawrHqRuntimeAuthority") &&
+      !runtimeAuthoritySource.includes("./host-composition") &&
+      runtimeAuthoritySource.includes("createRawrHqManifest") &&
+      runtimeAuthoritySource.includes("createRawrHostBoundRolePlan") &&
+      runtimeAuthoritySource.includes("materializeRawrHostBoundRolePlan"),
   });
   requiredChecks.push({
     label: "host avoids bypassing manifest orpc authority while owning runtime ingress composition",

@@ -1,6 +1,5 @@
-import { bootstrapServer } from "./bootstrap";
+import { startRawrHqServerHost } from "./hq-app-host";
 
-const { app, config } = await bootstrapServer();
-app.listen(config.port);
+const { bootstrapped } = await startRawrHqServerHost();
 
-console.log(`@rawr/server listening on ${config.baseUrl}`);
+console.log(`@rawr/server listening on ${bootstrapped.config.baseUrl}`);

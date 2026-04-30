@@ -4,10 +4,10 @@ import path from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
-import { createRawrHqLegacyRouteAuthority } from "@rawr/hq-app/legacy-cutover";
 import { createHostLoggerAdapter } from "./logging";
 import type { AnyElysia } from "./plugins";
 import { registerOrpcRoutes } from "./orpc";
+import { createRawrHqRuntimeAuthority } from "./runtime-authority";
 import {
   createRequestScopedBoundaryContext,
   createWorkflowBoundaryContext,
@@ -24,7 +24,7 @@ export type RawrRoutesOptions = {
 
 export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"] as const;
 
-const rawrHostAuthority = createRawrHqLegacyRouteAuthority();
+const rawrHostAuthority = createRawrHqRuntimeAuthority();
 type HostWorkflowRuntimeInput = Parameters<
   typeof rawrHostAuthority.realization.workflows.createInngestFunctions
 >[0];
@@ -182,12 +182,12 @@ function resolveAuthorityRepoRoot(repoRoot: string): string {
  *
  * Owns:
  * - process-scoped Inngest client/runtime creation for the server role
- * - materializing workflow durable functions from the HQ-shell-owned legacy bridge plan
+ * - materializing workflow durable functions from the HQ runtime authority plan
  *
  * Must not own:
  * - plugin declaration selection
  * - host satisfier construction outside the sanctioned HQ bridge
- * - alternate executable composition entrypoints outside `@rawr/hq-app/legacy-cutover`
+ * - alternate executable composition entrypoints outside the app runtime path
  */
 export function createHostInngestBundle(input: { repoRoot: string }): HostInngestBundle {
   const client = new Inngest({ id: "rawr-hq" });
@@ -225,7 +225,7 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
  * Must not own:
  * - capability-local client construction in the manifest
  * - request/process materialization outside host-owned server surfaces
- * - restart authority outside `@rawr/hq-app/legacy-cutover`
+ * - restart authority outside `@rawr/sdk/app` startApp(...)
  */
 export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);

@@ -24,10 +24,10 @@ function hasStringLiteral(sourceFile: ts.SourceFile, value: string): boolean {
 }
 
 describe("phase-a gate scaffold (server)", () => {
-  it("no legacy composition authority gate scaffold verifies the explicit HQ composition bridge and quarantines legacy host seams", async () => {
+  it("no legacy composition authority gate scaffold verifies the explicit HQ runtime authority and quarantines legacy host seams", async () => {
     const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
-    const legacyCutoverSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "legacy-cutover.ts"), "utf8");
-    const hostCompositionSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-composition.ts"), "utf8");
+    const runtimeAuthoritySource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "runtime-authority.ts"), "utf8");
+    const hqAppHostSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "hq-app-host.ts"), "utf8");
     const hostSatisfiersSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-satisfiers.ts"), "utf8");
     const hostSeamSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-seam.ts"), "utf8");
     const testingHostSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "testing-host.ts"), "utf8");
@@ -35,7 +35,8 @@ describe("phase-a gate scaffold (server)", () => {
     const routeMatrixSource = await fs.readFile(path.join(repoRoot, "apps", "server", "test", "route-boundary-matrix.test.ts"), "utf8");
     const routeMatrixAst = parseTypeScript(path.join(repoRoot, "apps", "server", "test", "route-boundary-matrix.test.ts"), routeMatrixSource);
 
-    expect(rawrSource).toContain('from "@rawr/hq-app/legacy-cutover"');
+    expect(rawrSource).toContain('from "./runtime-authority"');
+    expect(rawrSource).not.toContain("@rawr/hq-app/legacy-cutover");
     expect(rawrSource).toContain('from "./workflows/runtime"');
     expect(rawrSource).toContain("/api/inngest");
     expect(rawrSource).toContain("/api/workflows/*");
@@ -45,16 +46,19 @@ describe("phase-a gate scaffold (server)", () => {
     expect(rawrSource).not.toContain('from "./host-realization"');
     expect(rawrSource).not.toContain("@rawr/plugin-workflows-coordination/server");
     expect(rawrSource).not.toContain("@rawr/plugin-workflows-support-example/server");
-    expect(legacyCutoverSource).toContain("../server/src/host-composition");
-    expect(legacyCutoverSource).not.toContain("../server/src/host-seam");
-    expect(legacyCutoverSource).not.toContain("../server/src/host-realization");
-    expect(hostCompositionSource).toContain("createRawrHqManifest");
-    expect(hostCompositionSource).toContain("createRawrHostSatisfiers");
-    expect(hostCompositionSource).toContain("createRawrHostBoundRolePlan");
+    expect(runtimeAuthoritySource).not.toContain("./host-composition");
+    expect(runtimeAuthoritySource).toContain("createRawrHqManifest");
+    expect(runtimeAuthoritySource).toContain("createRawrHostSatisfiers");
+    expect(runtimeAuthoritySource).toContain("createRawrHostBoundRolePlan");
+    expect(runtimeAuthoritySource).toContain("materializeRawrHostBoundRolePlan");
+    expect(hqAppHostSource).toContain("@rawr/sdk/app");
+    expect(hqAppHostSource).toContain("startApp(");
+    expect(hqAppHostSource).toContain('from "./bootstrap"');
     expect(hostSatisfiersSource).not.toContain(["@rawr", "hq-ops-" + "host"].join("/"));
     expect(hostSatisfiersSource).toContain('./hq-ops-resources');
     expect(hostSeamSource).toContain("workflows: Readonly<Record<string, never>>");
-    expect(testingHostSource).toContain('@rawr/hq-app/legacy-cutover');
+    expect(testingHostSource).toContain('from "./runtime-authority"');
+    expect(testingHostSource).not.toContain("@rawr/hq-app/legacy-cutover");
     expect(testingHostSource).not.toContain("createRawrHostComposition");
     expect(testingHostSource).not.toContain("manifest.fixtures");
     expect(workflowRuntimeSource).toContain("resolveRawrWorkflowInngestBaseUrl");

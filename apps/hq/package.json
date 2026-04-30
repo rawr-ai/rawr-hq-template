@@ -13,10 +13,6 @@
     "./manifest": {
       "types": "./rawr.hq.ts",
       "default": "./rawr.hq.ts"
-    },
-    "./legacy-cutover": {
-      "types": "./legacy-cutover.ts",
-      "default": "./legacy-cutover.ts"
     }
   },
   "dependencies": {
@@ -27,6 +23,7 @@
     "@rawr/plugin-server-api-example-todo": "workspace:*",
     "@rawr/plugin-server-api-state": "workspace:*",
     "@rawr/runtime-context": "workspace:*",
+    "@rawr/sdk": "workspace:*",
     "inngest": "3.51.0"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { startRawrHqAsync } from "../async";
 import { bootstrapRawrHqDev } from "../dev";
 import { startRawrHqServer } from "../server";
@@ -48,58 +48,42 @@ describe("hq app declaration seam guard", () => {
     );
   });
 
-  it("keeps entrypoints thin and shell-owned", async () => {
-    const [serverSource, asyncSource, devSource, legacyCutoverSource] = await Promise.all([
+  it("keeps entrypoints thin and runtime-app-owned", async () => {
+    const [serverSource, asyncSource, devSource] = await Promise.all([
       fs.readFile(path.join(repoRoot, "apps", "hq", "server.ts"), "utf8"),
       fs.readFile(path.join(repoRoot, "apps", "hq", "async.ts"), "utf8"),
       fs.readFile(path.join(repoRoot, "apps", "hq", "dev.ts"), "utf8"),
-      fs.readFile(path.join(repoRoot, "apps", "hq", "legacy-cutover.ts"), "utf8"),
     ]);
 
     expect(serverSource).toContain('from "./rawr.hq"');
-    expect(serverSource).toContain('from "./legacy-cutover"');
+    expect(serverSource).toContain("@rawr/sdk/app");
+    expect(serverSource).toContain("startApp(");
+    expect(serverSource).toContain('roles: ["server"]');
+    expect(serverSource).not.toContain("./legacy-cutover");
     expect(asyncSource).toContain('from "./rawr.hq"');
-    expect(asyncSource).toContain('from "./legacy-cutover"');
+    expect(asyncSource).not.toContain("./legacy-cutover");
     expect(devSource).toContain('from "./rawr.hq"');
-    expect(devSource).toContain('from "./legacy-cutover"');
-    expect(serverSource).not.toContain("../server/src/host-composition");
-    expect(asyncSource).not.toContain("../server/src/host-composition");
-    expect(devSource).not.toContain("../server/src/host-composition");
-    expect(legacyCutoverSource).toContain('../server/src/bootstrap');
-    expect(legacyCutoverSource).toContain("../server/src/host-composition");
-    expect(legacyCutoverSource).not.toContain("../server/src/host-seam");
-    expect(legacyCutoverSource).not.toContain("../server/src/host-realization");
+    expect(devSource).not.toContain("./legacy-cutover");
+    expect(serverSource).not.toContain("../server/src/");
+    expect(asyncSource).not.toContain("../server/src/");
+    expect(devSource).not.toContain("../server/src/");
+    expect(serverSource).not.toContain("@rawr/server");
+    expect(asyncSource).not.toContain("@rawr/server");
+    expect(devSource).not.toContain("@rawr/server");
   });
 
-  it("smoke-boots the canonical shell through stubbed bridge deps", async () => {
-    const listen = vi.fn();
-    const fakeBootstrapped = {
-      app: { listen },
-      config: { port: 3100, baseUrl: "http://localhost:3100" },
-      enabledPlugins: new Set<string>(),
-      telemetry: { shutdown: vi.fn() },
-    } as never;
-
-    const server = await startRawrHqServer({
-      deps: {
-        bootstrapServer: async () => fakeBootstrapped,
-      },
-    });
-    const dev = await bootstrapRawrHqDev({
-      deps: {
-        bootstrapServer: async () => fakeBootstrapped,
-      },
-    });
-    const asyncRole = await startRawrHqAsync({
-      log: vi.fn(),
-    });
+  it("selects canonical shell entrypoints without importing server internals", async () => {
+    const server = await startRawrHqServer();
+    const dev = await bootstrapRawrHqDev();
+    const asyncRole = await startRawrHqAsync();
 
     expect(server.role).toBe("server");
+    expect(server.status).toBe("selected");
     expect(server.manifest.id).toBe("hq");
-    expect(listen).toHaveBeenCalledWith(3100);
     expect(dev.roles).toEqual(["server", "async"]);
-    expect(dev.server.manifest.id).toBe("hq");
-    expect(asyncRole.status).toBe("reserved");
+    expect(dev.status).toBe("selected");
+    expect(dev.manifest.id).toBe("hq");
+    expect(asyncRole.status).toBe("selected");
     expect(asyncRole.workflows).toEqual([]);
   });
 
@@ -113,9 +97,6 @@ describe("hq app declaration seam guard", () => {
       types: "./rawr.hq.ts",
       default: "./rawr.hq.ts",
     });
-    expect(packageJson.exports?.["./legacy-cutover"]).toEqual({
-      types: "./legacy-cutover.ts",
-      default: "./legacy-cutover.ts",
-    });
+    expect(packageJson.exports?.["./legacy-cutover"]).toBeUndefined();
   });
 });

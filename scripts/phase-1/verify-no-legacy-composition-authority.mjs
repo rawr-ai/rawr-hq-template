@@ -2,10 +2,10 @@
 import { assertCondition, pathExists, readFile } from "./_verify-utils.mjs";
 
 const requiredPaths = [
-  "apps/hq/legacy-cutover.ts",
   "apps/server/src/rawr.ts",
   "apps/server/src/testing-host.ts",
-  "apps/server/src/host-composition.ts",
+  "apps/server/src/runtime-authority.ts",
+  "apps/server/src/hq-app-host.ts",
   "apps/server/src/host-seam.ts",
   "apps/server/src/host-realization.ts",
 ];
@@ -14,29 +14,32 @@ for (const relPath of requiredPaths) {
   assertCondition(await pathExists(relPath), `${relPath} must exist`);
 }
 
-const [legacyCutoverSource, rawrSource, testingHostSource] = await Promise.all([
-  readFile("apps/hq/legacy-cutover.ts"),
+assertCondition(!(await pathExists("apps/hq/legacy-cutover.ts")), "apps/hq/legacy-cutover.ts must stay deleted");
+assertCondition(!(await pathExists("apps/server/src/host-composition.ts")), "apps/server/src/host-composition.ts must stay deleted");
+
+const [rawrSource, testingHostSource, runtimeAuthoritySource, hqAppHostSource] = await Promise.all([
   readFile("apps/server/src/rawr.ts"),
   readFile("apps/server/src/testing-host.ts"),
+  readFile("apps/server/src/runtime-authority.ts"),
+  readFile("apps/server/src/hq-app-host.ts"),
 ]);
 
 assertCondition(
-  legacyCutoverSource.includes("../server/src/bootstrap"),
-  "legacy-cutover.ts must localize the sanctioned runtime bootstrap bridge",
+  runtimeAuthoritySource.includes("createRawrHqManifest") &&
+    runtimeAuthoritySource.includes("createRawrHostSatisfiers") &&
+    runtimeAuthoritySource.includes("createRawrHostBoundRolePlan") &&
+    runtimeAuthoritySource.includes("materializeRawrHostBoundRolePlan"),
+  "runtime-authority.ts must directly own manifest intake, satisfier construction, binding, and realization",
 );
 assertCondition(
-  legacyCutoverSource.includes("../server/src/host-composition"),
-  "legacy-cutover.ts must be the only surviving importer of host-composition",
+  !runtimeAuthoritySource.includes("./host-composition"),
+  "runtime-authority.ts must not wrap the deleted host-composition bridge",
 );
 assertCondition(
-  !legacyCutoverSource.includes("../server/src/host-seam") &&
-    !legacyCutoverSource.includes("../server/src/host-realization"),
-  "legacy-cutover.ts must not bypass host-composition by importing host-seam or host-realization directly",
-);
-assertCondition(
-  !legacyCutoverSource.includes("registerStateApiPlugin") &&
-    !legacyCutoverSource.includes("registerExampleTodoApiPlugin"),
-  "legacy-cutover.ts must not own plugin declaration membership",
+  hqAppHostSource.includes("@rawr/sdk/app") &&
+    hqAppHostSource.includes("startApp(") &&
+    hqAppHostSource.includes('from "./bootstrap"'),
+  "hq-app-host.ts must own the server bootstrap binding behind startApp(...)",
 );
 
 for (const [name, source] of [
@@ -44,8 +47,8 @@ for (const [name, source] of [
   ["apps/server/src/testing-host.ts", testingHostSource],
 ]) {
   assertCondition(
-    source.includes('@rawr/hq-app/legacy-cutover'),
-    `${name} must consume the sanctioned HQ legacy cutover bridge`,
+    source.includes('./runtime-authority') || source.includes('from "./runtime-authority"'),
+    `${name} must consume the server-owned HQ runtime authority`,
   );
   assertCondition(
     !source.includes("./host-composition") &&

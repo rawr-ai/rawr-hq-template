@@ -261,8 +261,11 @@ async function verifyImportBoundary() {
 }
 
 async function verifyHostCompositionGuard() {
+  await mustNotExist("apps/server/src/host-composition.ts");
+
   const { source, ast: rawrAst } = await readTypeScriptFile("apps/server/src/rawr.ts");
-  const { source: hostCompositionSource, ast: hostCompositionAst } = await readTypeScriptFile("apps/server/src/host-composition.ts");
+  const { source: runtimeAuthoritySource, ast: runtimeAuthorityAst } = await readTypeScriptFile("apps/server/src/runtime-authority.ts");
+  const { source: hqAppHostSource } = await readTypeScriptFile("apps/server/src/hq-app-host.ts");
   const { source: hostSeamSource, ast: hostSeamAst } = await readTypeScriptFile("apps/server/src/host-seam.ts");
   const { source: testingHostSource, ast: testingHostAst } = await readTypeScriptFile("apps/server/src/testing-host.ts");
   const { source: hostRealizationSource, ast: hostRealizationAst } = await readTypeScriptFile("apps/server/src/host-realization.ts");
@@ -272,32 +275,40 @@ async function verifyHostCompositionGuard() {
   const { source: supportProofSource } = await readTypeScriptFile("apps/server/test/support/example-todo-proof-clients.ts");
 
   assertCondition(
-    hasNamedImport(rawrAst, "./host-composition", "createRawrHostComposition"),
-    "rawr host must consume one server-owned executable composition entrypoint",
+    hasNamedImport(rawrAst, "./runtime-authority", "createRawrHqRuntimeAuthority") &&
+      !hasNamedImport(rawrAst, "./host-composition", "createRawrHostComposition"),
+    "rawr host must consume the server-owned HQ runtime authority entrypoint",
   );
   assertCondition(
-    hasNamedImport(testingHostAst, "./host-composition", "createRawrHostComposition") &&
-      hasNamedImport(hostCompositionAst, "@rawr/hq-app/manifest", "createRawrHqManifest") &&
-      hasNamedImport(hostCompositionAst, "./host-satisfiers", "createRawrHostSatisfiers") &&
-      hasNamedImport(hostCompositionAst, "./host-seam", "createRawrHostBoundRolePlan") &&
-      hasNamedImport(hostCompositionAst, "./host-realization", "materializeRawrHostBoundRolePlan") &&
+    hasNamedImport(testingHostAst, "./runtime-authority", "createTestingRawrHqRuntimeAuthority") &&
+      hasNamedImport(runtimeAuthorityAst, "@rawr/hq-app/manifest", "createRawrHqManifest") &&
+      hasNamedImport(runtimeAuthorityAst, "./host-satisfiers", "createRawrHostSatisfiers") &&
+      hasNamedImport(runtimeAuthorityAst, "./host-seam", "createRawrHostBoundRolePlan") &&
+      hasNamedImport(runtimeAuthorityAst, "./host-realization", "materializeRawrHostBoundRolePlan") &&
+      !runtimeAuthoritySource.includes("./host-composition") &&
       !hostSeamSource.includes('from "../../../rawr.hq"') &&
       !testingHostSource.includes('from "../../../rawr.hq"') &&
       !hostSeamSource.includes("@rawr/hq-app/manifest") &&
       !testingHostSource.includes("@rawr/hq-app/manifest"),
-    "host composition must localize the narrow @rawr/hq-app/manifest input instead of letting rawr, host-seam, and testing-host each consume it directly",
+    "runtime authority must localize the narrow @rawr/hq-app/manifest input instead of letting rawr, host-seam, and testing-host each consume it directly",
+  );
+  assertCondition(
+    hqAppHostSource.includes("@rawr/sdk/app") &&
+      hqAppHostSource.includes("startApp(") &&
+      hqAppHostSource.includes('from "./bootstrap"'),
+    "server-owned HQ app host must mount concrete bootstrap through startApp(...)",
   );
   assertCondition(hasRouteRegistration(rawrAst, "/api/inngest"), "rawr host must register /api/inngest route");
   assertCondition(hasRouteRegistration(rawrAst, "/api/workflows/*"), "rawr host must register /api/workflows/* route");
   assertCondition(hasIdentifierCall(rawrAst, "registerOrpcRoutes"), "rawr host must register ORPC routes through registerOrpcRoutes");
   assertCondition(hasRegisterOrpcRoutesManifestRouter(rawrAst), "rawr host must pass host-materialized ORPC seam to registerOrpcRoutes");
   assertCondition(
-    hasIdentifierCall(rawrAst, "createRawrHostComposition") &&
-      hasIdentifierCall(hostCompositionAst, "createRawrHqManifest") &&
-      hasIdentifierCall(hostCompositionAst, "createRawrHostSatisfiers") &&
-      hasIdentifierCall(hostCompositionAst, "createRawrHostBoundRolePlan") &&
-      hasIdentifierCall(hostCompositionAst, "materializeRawrHostBoundRolePlan"),
-    "host composition must be the only place that consumes declarations, constructs satisfiers, binds registrations, and materializes realized host surfaces",
+    hasIdentifierCall(rawrAst, "createRawrHqRuntimeAuthority") &&
+      hasIdentifierCall(runtimeAuthorityAst, "createRawrHqManifest") &&
+      hasIdentifierCall(runtimeAuthorityAst, "createRawrHostSatisfiers") &&
+      hasIdentifierCall(runtimeAuthorityAst, "createRawrHostBoundRolePlan") &&
+      hasIdentifierCall(runtimeAuthorityAst, "materializeRawrHostBoundRolePlan"),
+    "runtime authority must be the only place that consumes declarations, constructs satisfiers, binds registrations, and materializes realized host surfaces",
   );
   assertCondition(
     hasIdentifierCall(rawrAst, "createWorkflowRouteHarness") &&
@@ -306,13 +317,13 @@ async function verifyHostCompositionGuard() {
     "rawr host must consume host-materialized published workflow router seam through createWorkflowRouteHarness",
   );
   assertCondition(
-    hasPropertyAccessChain(rawrAst, ["rawrHostComposition", "realization", "workflows", "createInngestFunctions"]) &&
+    hasPropertyAccessChain(rawrAst, ["rawrHostAuthority", "realization", "workflows", "createInngestFunctions"]) &&
       !source.includes("rawrHqManifest.inngest"),
     "rawr host must compose runtime workflow functions from host-materialized workflow seams instead of manifest-owned inngest seams",
   );
   assertCondition(
     hasNamedImport(rawrAst, "inngest/bun", "serve") &&
-      hasPropertyAccessChain(rawrAst, ["rawrHostComposition", "realization", "workflows", "createInngestFunctions"]) &&
+      hasPropertyAccessChain(rawrAst, ["rawrHostAuthority", "realization", "workflows", "createInngestFunctions"]) &&
       hasIdentifierCall(rawrAst, "inngestServe") &&
       hasNamedImport(rawrAst, "./workflows/runtime", "createRawrWorkflowRuntime") &&
       !hasImport(rawrAst, "@rawr/plugin-api-coordination/server") &&
@@ -333,7 +344,7 @@ async function verifyHostCompositionGuard() {
     !orpcSource.includes("@rawr/hq-app/testing") &&
       !openApiSource.includes("@rawr/hq-app/testing") &&
       !testingHostSource.includes("manifest.fixtures") &&
-      testingHostSource.includes("createRawrHostComposition") &&
+      testingHostSource.includes("createTestingRawrHqRuntimeAuthority") &&
       !testingHostSource.includes("createRawrHostSatisfiers") &&
       !supportProofSource.includes("createTestingRawrHqManifest") &&
       !supportProofSource.includes("manifest.fixtures"),

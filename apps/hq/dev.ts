@@ -1,33 +1,55 @@
-import {
-  bootstrapRawrHqDevViaLegacyCutover,
-  startRawrHqDevViaLegacyCutover,
-  type RawrHqLegacyServerDependencies,
-} from "./legacy-cutover";
-import { createRawrHqManifest } from "./rawr.hq";
+import { startApp } from "@rawr/sdk/app";
+import { createRawrHqApp, createRawrHqManifest, rawrHqRuntimeProfile, type RawrHqManifest } from "./rawr.hq";
 
 export const rawrHqDevProcessShape = ["server", "async"] as const;
 
-export async function bootstrapRawrHqDev(input: {
-  deps?: RawrHqLegacyServerDependencies;
-} = {}) {
+export type RawrHqDevEntrypointSelection = Readonly<{
+  manifest: RawrHqManifest;
+  roles: readonly ["server", "async"];
+  status: "selected";
+  entrypointId: string;
+  processId: string;
+}>;
+
+export async function bootstrapRawrHqDev(): Promise<RawrHqDevEntrypointSelection> {
   const manifest = createRawrHqManifest();
-  return await bootstrapRawrHqDevViaLegacyCutover({
-    manifest,
-    deps: input.deps,
+  const started = await startApp(createRawrHqApp(), {
+    entrypointId: "hq.dev.bootstrap",
+    profile: rawrHqRuntimeProfile,
+    roles: ["server", "async"],
+    processId: "hq.dev",
+    start: (context): RawrHqDevEntrypointSelection => ({
+      manifest,
+      roles: ["server", "async"],
+      status: "selected",
+      entrypointId: context.entrypointId,
+      processId: context.processId ?? "hq.dev",
+    }),
   });
+  if (!started.value) throw new Error("hq dev bootstrap was not selected");
+  return started.value;
 }
 
-export async function startRawrHqDev(input: {
-  deps?: RawrHqLegacyServerDependencies;
-} = {}) {
+export async function startRawrHqDev(): Promise<RawrHqDevEntrypointSelection> {
   const manifest = createRawrHqManifest();
-  return await startRawrHqDevViaLegacyCutover({
-    manifest,
-    deps: input.deps,
+  const started = await startApp(createRawrHqApp(), {
+    entrypointId: "hq.dev",
+    profile: rawrHqRuntimeProfile,
+    roles: ["server", "async"],
+    processId: "hq.dev",
+    start: (context): RawrHqDevEntrypointSelection => ({
+      manifest,
+      roles: ["server", "async"],
+      status: "selected",
+      entrypointId: context.entrypointId,
+      processId: context.processId ?? "hq.dev",
+    }),
   });
+  if (!started.value) throw new Error("hq dev was not selected");
+  return started.value;
 }
 
 if (import.meta.main) {
   const dev = await startRawrHqDev();
-  console.log(`@rawr/hq-app dev booted via legacy cutover on ${dev.server.bootstrapped.config.baseUrl}`);
+  console.log(`@rawr/hq-app selected ${dev.roles.join("+")} roles through runtime app start`);
 }

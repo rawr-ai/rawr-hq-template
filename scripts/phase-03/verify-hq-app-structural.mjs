@@ -9,17 +9,17 @@ const manifestCompatPath = path.join(root, "apps", "hq", "src", "manifest.ts");
 const serverEntrypointPath = path.join(root, "apps", "hq", "server.ts");
 const asyncEntrypointPath = path.join(root, "apps", "hq", "async.ts");
 const devEntrypointPath = path.join(root, "apps", "hq", "dev.ts");
-const legacyCutoverPath = path.join(root, "apps", "hq", "legacy-cutover.ts");
+const serverHostPath = path.join(root, "apps", "server", "src", "hq-app-host.ts");
 const testingPath = path.join(root, "apps", "hq", "src", "testing.ts");
 
-const [pkgRaw, manifestSource, manifestCompatSource, serverEntrypointSource, asyncEntrypointSource, devEntrypointSource, legacyCutoverSource] = await Promise.all([
+const [pkgRaw, manifestSource, manifestCompatSource, serverEntrypointSource, asyncEntrypointSource, devEntrypointSource, serverHostSource] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(manifestPath, "utf8"),
   fs.readFile(manifestCompatPath, "utf8"),
   fs.readFile(serverEntrypointPath, "utf8"),
   fs.readFile(asyncEntrypointPath, "utf8"),
   fs.readFile(devEntrypointPath, "utf8"),
-  fs.readFile(legacyCutoverPath, "utf8"),
+  fs.readFile(serverHostPath, "utf8"),
 ]);
 
 function normalizeSemanticSource(source) {
@@ -71,8 +71,8 @@ if (pkg.exports?.["./manifest"]?.default !== "./rawr.hq.ts") {
   process.exit(1);
 }
 
-if (pkg.exports?.["./legacy-cutover"]?.default !== "./legacy-cutover.ts") {
-  console.error("hq-app structural failed: @rawr/hq-app/legacy-cutover must resolve to legacy-cutover.ts.");
+if (pkg.exports?.["./legacy-cutover"] !== undefined) {
+  console.error("hq-app structural failed: @rawr/hq-app/legacy-cutover export must stay removed.");
   process.exit(1);
 }
 
@@ -126,29 +126,38 @@ if (
 
 if (
   !serverEntrypointSource.includes('from "./rawr.hq"') ||
-  !serverEntrypointSource.includes('from "./legacy-cutover"') ||
+  !serverEntrypointSource.includes("@rawr/sdk/app") ||
+  !serverEntrypointSource.includes("startApp(") ||
+  !serverEntrypointSource.includes('roles: ["server"]') ||
+  serverEntrypointSource.includes("./legacy-cutover") ||
   !asyncEntrypointSource.includes('from "./rawr.hq"') ||
-  !asyncEntrypointSource.includes('from "./legacy-cutover"') ||
+  asyncEntrypointSource.includes("./legacy-cutover") ||
   !devEntrypointSource.includes('from "./rawr.hq"') ||
-  !devEntrypointSource.includes('from "./legacy-cutover"')
+  devEntrypointSource.includes("./legacy-cutover")
 ) {
-  console.error("hq-app structural failed: entrypoints must import the canonical shell and the sanctioned legacy cutover seam.");
+  console.error("hq-app structural failed: entrypoints must bind the canonical shell through @rawr/sdk/app without legacy-cutover.");
   process.exit(1);
 }
 
 if (
   serverEntrypointSource.includes("../server/src/host-composition") ||
+  serverEntrypointSource.includes("../server/src/") ||
+  serverEntrypointSource.includes("@rawr/server") ||
   asyncEntrypointSource.includes("../server/src/host-composition") ||
+  asyncEntrypointSource.includes("../server/src/") ||
+  asyncEntrypointSource.includes("@rawr/server") ||
   devEntrypointSource.includes("../server/src/host-composition") ||
-  legacyCutoverSource.includes("../server/src/host-seam") ||
-  legacyCutoverSource.includes("../server/src/host-realization")
+  devEntrypointSource.includes("../server/src/") ||
+  devEntrypointSource.includes("@rawr/server") ||
+  serverHostSource.includes("./host-seam") ||
+  serverHostSource.includes("./host-realization")
 ) {
-  console.error("hq-app structural failed: entrypoint bridge must not bypass through host-composition internals.");
+  console.error("hq-app structural failed: app entrypoints and server host must not bypass runtime host boundaries.");
   process.exit(1);
 }
 
-if (!legacyCutoverSource.includes("../server/src/host-composition")) {
-  console.error("hq-app structural failed: legacy-cutover.ts must be the sole surviving importer of host-composition.");
+if (!serverHostSource.includes("@rawr/sdk/app") || !serverHostSource.includes("startApp(") || !serverHostSource.includes('from "./bootstrap"')) {
+  console.error("hq-app structural failed: server-owned HQ app host must own the startApp bootstrap binding.");
   process.exit(1);
 }
 
