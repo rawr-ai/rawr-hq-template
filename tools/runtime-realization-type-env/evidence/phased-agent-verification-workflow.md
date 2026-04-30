@@ -130,10 +130,11 @@ turning review into shape checking.
 | 7. Host synthesis and design lock | Integration report | Source authority, vendor behavior, architecture truth, DX, and migration readiness are not collapsed. |
 | 8. Plan capture | Workstream plan | No hidden design decision is required to execute the next step. |
 | 9. Implementation | Patch set | Changes stay inside the accepted containment boundary. |
-| 10. Verification loop | Verification log | Focused gates and composed gate match the claim strength. |
-| 11. Layered review | Review result | Leaf loops pass before parent judgment closes the workstream. |
-| 12. Evidence promotion | Manifest/diagnostic deltas | Proof status, red/yellow/green status, and gates agree. |
-| 13. Closeout | Workstream report and next packet | A fresh session can resume from one next action with authority, deferred items, and risk clear. |
+| 10. Semantic JSDoc/comment pass | Comment review result | New semantic seams preserve intent, invariants, and proof boundaries without comment spam. |
+| 11. Verification loop | Verification log | Focused gates and composed gate match the claim strength. |
+| 12. Layered review | Review result | Leaf loops pass before parent judgment closes the workstream. |
+| 13. Evidence promotion | Manifest/diagnostic deltas | Proof status, red/yellow/green status, and gates agree. |
+| 14. Closeout | Workstream report and next packet | A fresh session can resume from one next action with authority, deferred items, and risk clear. |
 
 ## Workstream Output Contract
 
@@ -161,6 +162,9 @@ Run the axes that match the work:
 - Architectural: lifecycle boundaries, ownership, authority, and no second execution model.
 - Vendor: installed package behavior, official docs, version pins, and adapter-shape fidelity.
 - TypeScript/API: authoring shape, inference, discriminated unions, narrowing, and public surface clarity.
+- Semantic JSDoc/comments: high-signal comments for non-obvious lifecycle,
+  authority, proof-boundary, and invariant seams introduced by TypeScript/runtime
+  edits.
 - Evidence honesty: proof category, oracle, gate, status wording, and test-theater risk.
 - SDK ergonomics: agent-friendly authoring, one way per kind, minimal ceremony, visible backing.
 - Migration realism: whether the evidence de-risks the actual migration path.
@@ -175,9 +179,11 @@ Leaf loops usually run first:
 1. Containment: no production imports, workspace promotion, root gate drift, or hidden authority expansion.
 2. Mechanical: paths, Nx targets, imports, generated outputs, Graphite branch state, and structural guard.
 3. Type and negative: TypeScript proof, expected-failure fixtures, and public surface boundaries.
-4. Vendor fidelity: real dependency behavior only where the claim depends on vendor behavior.
-5. Mini-runtime behavior: contained runtime simulation, fake-host honesty, and runtime-owned delegation.
-6. Manifest/report consistency: proof entries, gates, diagnostics, focus log, and report output agree.
+4. Semantic JSDoc/comments: comments preserve why/invariant/proof-boundary
+   meaning and do not restate mechanics or lock unresolved public API.
+5. Vendor fidelity: real dependency behavior only where the claim depends on vendor behavior.
+6. Mini-runtime behavior: contained runtime simulation, fake-host honesty, and runtime-owned delegation.
+7. Manifest/report consistency: proof entries, gates, diagnostics, focus log, and report output agree.
 
 Parent loops judge composed meaning after leaf evidence exists:
 

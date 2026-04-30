@@ -83,7 +83,7 @@ function compileBootgraphPlaceholder(
       {
         code: "runtime.provider-effect-plan.lowering-reserved",
         message:
-          "provider module refs are recorded without lowering ProviderEffectPlan; provider lowering remains unresolved",
+          "compiled bootgraph input records provider module refs only; contained provider lowering is proven separately in the mini provisioning runtime",
       },
       ...providerDependencyGraph.diagnostics,
     );

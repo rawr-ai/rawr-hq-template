@@ -176,11 +176,25 @@ describe("middle spine derivation and compiler simulation", () => {
     expect(compilation.providerDependencyGraph?.edges).toEqual([
       {
         kind: "provider.dependency-edge",
+        fromProviderKey: {
+          kind: "provider.dependency-node",
+          resourceId: "email.sender",
+          providerId: "email.sender.memory",
+          lifetime: "process",
+          role: "server",
+        },
         fromProviderId: "email.sender.memory",
         toResourceId: "clock",
         optional: false,
         reason: "timestamp outbound fixture mail",
         matchedProviderId: "clock.system",
+        matchedProviderKey: {
+          kind: "provider.dependency-node",
+          resourceId: "clock",
+          providerId: "clock.system",
+          lifetime: "process",
+          role: "server",
+        },
       },
     ]);
     expect(compilation.providerDependencyGraph?.diagnostics).toEqual([]);
@@ -401,7 +415,7 @@ describe("middle spine derivation and compiler simulation", () => {
     expect(compilation.providerDependencyGraph?.diagnostics).toContainEqual({
       code: "provider.dependency.cycle",
       message:
-        "provider dependency cycle detected: cycle.provider-a -> cycle.provider-b -> cycle.provider-a",
+        "provider dependency cycle detected: cycle.provider-a:cycle.a:process:server:default -> cycle.provider-b:cycle.b:process:server:default -> cycle.provider-a:cycle.a:process:server:default",
     });
   });
 
@@ -574,11 +588,26 @@ describe("middle spine derivation and compiler simulation", () => {
     expect(compilation.providerDependencyGraph?.diagnostics).toEqual([]);
     expect(compilation.providerDependencyGraph?.edges).toContainEqual({
       kind: "provider.dependency-edge",
+      fromProviderKey: {
+        kind: "provider.dependency-node",
+        resourceId: "scoped-clock-consumer",
+        providerId: "scoped-clock-consumer.provider",
+        lifetime: "process",
+        role: "server",
+      },
       fromProviderId: "scoped-clock-consumer.provider",
       toResourceId: "scoped-clock",
       optional: false,
       reason: "process-scoped clock",
       matchedProviderId: "scoped-clock.provider",
+      matchedProviderKey: {
+        kind: "provider.dependency-node",
+        resourceId: "scoped-clock",
+        providerId: "scoped-clock.provider",
+        lifetime: "process",
+        role: "server",
+        instance: "primary",
+      },
     });
     expect(
       compilation.bootgraphInput.resourceModules.filter(

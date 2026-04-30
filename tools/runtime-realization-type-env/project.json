@@ -54,7 +54,7 @@
     "mini-runtime": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun test tools/runtime-realization-type-env/test/mini-runtime/process-runtime.test.ts"
+        "command": "bun test tools/runtime-realization-type-env/test/mini-runtime"
       }
     },
     "middle-spine": {
