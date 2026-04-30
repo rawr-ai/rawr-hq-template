@@ -117,17 +117,23 @@ export const RuntimeSchema = {
     shape: TShape,
     options?: { readonly id?: string },
   ): RuntimeSchema<RuntimeSchemaStructValue<TShape>> {
-    return createRuntimeSchema(options?.id ?? "runtime.struct", (value) => {
-      if (typeof value !== "object" || value === null || Array.isArray(value)) {
-        fail(options?.id ?? "runtime.struct", "object");
-      }
-      const source = value as Record<string, unknown>;
-      const parsed: Record<string, unknown> = {};
-      for (const [key, schema] of Object.entries(shape)) {
-        parsed[key] = schema.parse(source[key]);
-      }
-      return parsed as RuntimeSchemaStructValue<TShape>;
-    });
+    return createRuntimeSchema(
+      options?.id ?? "runtime.struct",
+      (value) => {
+        if (typeof value !== "object" || value === null || Array.isArray(value)) {
+          fail(options?.id ?? "runtime.struct", "object");
+        }
+        const source = value as Record<string, unknown>;
+        const parsed: Record<string, unknown> = {};
+        for (const [key, schema] of Object.entries(shape)) {
+          parsed[key] = schema.parse(source[key]);
+        }
+        return parsed as RuntimeSchemaStructValue<TShape>;
+      },
+      {
+        redacted: Object.values(shape).some((schema) => schema.redacted === true),
+      },
+    );
   },
 
   unknown(options?: { readonly id?: string }): RuntimeSchema<unknown> {

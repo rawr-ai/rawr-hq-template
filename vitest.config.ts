@@ -77,6 +77,16 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/core/runtime/standard"),
+        test: { name: "core-runtime-standard", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("resources/clock"),
+        test: { name: "resource-clock", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("services/chatgpt-corpus"),
         test: { name: "chatgpt-corpus", environment: "node", include: [...includes] },
       },

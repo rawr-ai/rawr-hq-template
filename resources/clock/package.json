@@ -11,8 +11,12 @@
       "default": "./src/index.ts"
     }
   },
+  "dependencies": {
+    "@rawr/sdk": "workspace:*"
+  },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -20,7 +24,7 @@
     "sync": "bun run --cwd ../.. sync:check --project @rawr/resource-clock",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/resource-clock",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests test/**/*.test.ts"
+    "test": "vitest run --project resource-clock"
   },
   "nx": {
     "tags": [

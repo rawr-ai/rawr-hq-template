@@ -192,8 +192,15 @@
     },
     "packages/core/runtime/standard": {
       "name": "@rawr/core-runtime-standard",
+      "dependencies": {
+        "@rawr/core-runtime-bootgraph": "workspace:*",
+        "@rawr/core-runtime-substrate": "workspace:*",
+        "@rawr/core-runtime-topology": "workspace:*",
+        "@rawr/sdk": "workspace:*",
+      },
       "devDependencies": {
         "typescript": "^5.9.3",
+        "vitest": "^4.0.18",
       },
     },
     "packages/core/runtime/substrate": {
@@ -354,8 +361,12 @@
     },
     "resources/clock": {
       "name": "@rawr/resource-clock",
+      "dependencies": {
+        "@rawr/sdk": "workspace:*",
+      },
       "devDependencies": {
         "typescript": "^5.9.3",
+        "vitest": "^4.0.18",
       },
     },
     "services/agent-config-sync": {
