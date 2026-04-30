@@ -2,6 +2,10 @@ import type { MiniRuntimeResourceAccess } from "../../src/mini-runtime/runtime-a
 import type { ProcessExecutionRuntime } from "../../src/mini-runtime/process-runtime";
 import type { RuntimeAccess } from "../../src/spine/artifacts";
 import {
+  mountMiniAsyncHarness,
+  mountMiniServerHarness,
+} from "../../src/mini-runtime";
+import {
   createAsyncStepBridgePayload,
   lowerAsyncStepCallback,
 } from "../../src/mini-runtime/adapters/async";
@@ -10,8 +14,10 @@ import {
   lowerServerCallback,
 } from "../../src/mini-runtime/adapters/server";
 import {
+  CreateWorkItemDescriptor,
   CreateWorkItemRef,
   CreateWorkItemRouteDescriptor,
+  SyncWorkItemStepPlan,
   SyncWorkItemStepRef,
 } from "../positive/app-and-plan-artifacts";
 
@@ -61,3 +67,9 @@ createAsyncStepBridgePayload({ ref: CreateWorkItemRef });
 
 // @ts-expect-error server callback payloads pair server route descriptors with server refs only.
 createServerAdapterCallbackPayload({ routeDescriptor: CreateWorkItemRouteDescriptor, ref: SyncWorkItemStepRef });
+
+// @ts-expect-error server harnesses consume lowered adapter payloads, not raw descriptors.
+mountMiniServerHarness({ harnessId: "server:bad", runtime, payloads: [CreateWorkItemDescriptor] });
+
+// @ts-expect-error async harnesses consume lowered bridge payloads, not compiler plans.
+mountMiniAsyncHarness({ harnessId: "async:bad", runtime, payloads: [SyncWorkItemStepPlan] });

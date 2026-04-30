@@ -8,3 +8,4 @@ export * from "./catalog";
 export * from "./bootgraph";
 export * from "./runtime-access";
 export * from "./service-binding-cache";
+export * from "./harnesses";
