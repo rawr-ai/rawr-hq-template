@@ -19,12 +19,21 @@ import {
   type ProcessExecutionRuntime,
 } from "../../src/mini-runtime";
 import type { AdapterDelegationEvent } from "../../src/mini-runtime/adapters/delegation";
-import { lowerAsyncStepCallback } from "../../src/mini-runtime/adapters/async";
-import { lowerServerCallback } from "../../src/mini-runtime/adapters/server";
+import {
+  createAsyncStepBridgePayload,
+  lowerAsyncStepBridge,
+  lowerAsyncStepCallback,
+} from "../../src/mini-runtime/adapters/async";
+import {
+  createServerAdapterCallbackPayload,
+  lowerServerAdapterCallback,
+  lowerServerCallback,
+} from "../../src/mini-runtime/adapters/server";
 import {
   CreateWorkItemDescriptor,
   CreateWorkItemPlan,
   CreateWorkItemRef,
+  CreateWorkItemRouteDescriptor,
   PortableArtifact,
   SyncWorkItemStepDescriptor,
   SyncWorkItemStepPlan,
@@ -259,6 +268,46 @@ describe("runtime realization mini runtime", () => {
     }
   });
 
+  test("server adapter callback payload delegates route refs through the process runtime", async () => {
+    const runtime = createRuntime();
+    const adapterEvents: AdapterDelegationEvent[] = [];
+    const instrumentation = {
+      record(event: AdapterDelegationEvent) {
+        adapterEvents.push(event);
+      },
+    };
+    const payload = createServerAdapterCallbackPayload({
+      routeDescriptor: CreateWorkItemRouteDescriptor,
+      ref: CreateWorkItemRef,
+    });
+
+    try {
+      const serverResult = await lowerServerAdapterCallback<WorkItem>(
+        runtime,
+        payload,
+        {
+          context: createInvocationContext(),
+          instrumentation,
+        },
+      );
+
+      expect(payload.routeDescriptor).toBe(CreateWorkItemRouteDescriptor);
+      expect(serverResult.status).toBe("success");
+      if (serverResult.status !== "success") throw serverResult.error;
+      expect(serverResult.output).toEqual({
+        id: "created-v2",
+        title: "Mini runtime",
+        status: "open",
+      });
+      expect(adapterEvents.map((event) => event.name)).toEqual([
+        "adapter.delegate.start",
+        "adapter.delegate.finish",
+      ]);
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
   test("async host adapter callback delegates into the compiled process runtime", async () => {
     const runtime = createRuntime();
     const adapterEvents: AdapterDelegationEvent[] = [];
@@ -301,6 +350,30 @@ describe("runtime realization mini runtime", () => {
           status: "success",
         },
       ]);
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test("async bridge payload delegates owner-to-step refs through the process runtime", async () => {
+    const runtime = createRuntime();
+    const payload = createAsyncStepBridgePayload({ ref: SyncWorkItemStepRef });
+
+    try {
+      const asyncResult = await lowerAsyncStepBridge<
+        { readonly skipped: true } | { readonly synced: true }
+      >(runtime, payload, {
+        context: createAsyncInvocationContext(),
+      });
+
+      expect(payload.owner).toEqual({
+        kind: "workflow",
+        id: "work-items.sync",
+      });
+      expect(payload.stepId).toBe(SyncWorkItemStepRef.stepId);
+      expect(asyncResult.status).toBe("success");
+      if (asyncResult.status !== "success") throw asyncResult.error;
+      expect(asyncResult.output).toEqual({ synced: true });
     } finally {
       await runtime.dispose();
     }
@@ -370,6 +443,118 @@ describe("runtime realization mini runtime", () => {
       "async-step:adapter.delegate.start",
       "async-step:adapter.delegate.finish",
     ]);
+  });
+
+  test("adapter payload lowering forwards full refs without executable descriptors", async () => {
+    const output = {
+      id: "delegated",
+      title: "Delegated through runtime",
+      status: "open",
+    } satisfies WorkItem;
+    const delegatedRefs: unknown[] = [];
+    const fakeRuntime: ProcessExecutionRuntime = {
+      kind: "process.execution-runtime",
+      async invoke(input) {
+        delegatedRefs.push(input.ref);
+        return {
+          kind: "runtime.invocation-result",
+          status: "success",
+          output,
+          exit: await VendorEffect.runPromiseExit(Effect.succeed(output)),
+          events: [],
+        };
+      },
+      async dispose() {},
+    };
+
+    const serverPayload = createServerAdapterCallbackPayload({
+      routeDescriptor: CreateWorkItemRouteDescriptor,
+      ref: CreateWorkItemRef,
+    });
+    const asyncPayload = createAsyncStepBridgePayload({ ref: SyncWorkItemStepRef });
+
+    const serverResult = await lowerServerAdapterCallback<WorkItem>(
+      fakeRuntime,
+      serverPayload,
+      { context: createInvocationContext() },
+    );
+    const asyncResult = await lowerAsyncStepBridge<WorkItem>(
+      fakeRuntime,
+      asyncPayload,
+      { context: createAsyncInvocationContext() },
+    );
+
+    expect(serverResult.status).toBe("success");
+    expect(asyncResult.status).toBe("success");
+    expect(delegatedRefs).toEqual([CreateWorkItemRef, SyncWorkItemStepRef]);
+    expect((serverPayload as { readonly descriptor?: unknown }).descriptor).toBeUndefined();
+    expect((serverPayload as { readonly run?: unknown }).run).toBeUndefined();
+    expect((asyncPayload as { readonly descriptor?: unknown }).descriptor).toBeUndefined();
+    expect((asyncPayload as { readonly run?: unknown }).run).toBeUndefined();
+    assertNoLiveHandles(serverPayload);
+    assertNoLiveHandles(asyncPayload);
+  });
+
+  test("adapter boundary validation rejects widened refs before runtime invocation", async () => {
+    let invocationCount = 0;
+    const adapterEvents: AdapterDelegationEvent[] = [];
+    const fakeRuntime: ProcessExecutionRuntime = {
+      kind: "process.execution-runtime",
+      async invoke() {
+        invocationCount += 1;
+        throw new Error("runtime should not be invoked");
+      },
+      async dispose() {},
+    };
+    const instrumentation = {
+      record(event: AdapterDelegationEvent) {
+        adapterEvents.push(event);
+      },
+    };
+
+    await expect(
+      lowerServerCallback(fakeRuntime, {
+        ref: SyncWorkItemStepRef as any,
+        context: {},
+        instrumentation,
+      }),
+    ).rejects.toThrow("server adapter cannot invoke plugin.async-step");
+    await expect(
+      lowerAsyncStepCallback(fakeRuntime, {
+        ref: CreateWorkItemRef as any,
+        context: {},
+        instrumentation,
+      }),
+    ).rejects.toThrow("async-step adapter cannot invoke plugin.server-api");
+
+    expect(invocationCount).toBe(0);
+    expect(adapterEvents.map((event) => `${event.adapter}:${event.name}`)).toEqual([
+      "server:adapter.delegate.start",
+      "server:adapter.delegate.failure",
+      "async-step:adapter.delegate.start",
+      "async-step:adapter.delegate.failure",
+    ]);
+  });
+
+  test("adapter payload constructors reject route and owner identity drift", async () => {
+    expect(() =>
+      createServerAdapterCallbackPayload({
+        routeDescriptor: {
+          ...CreateWorkItemRouteDescriptor,
+          routePath: ["items", "rename"],
+        },
+        ref: CreateWorkItemRef,
+      }),
+    ).toThrow("route descriptor does not match its execution ref");
+
+    expect(() =>
+      createAsyncStepBridgePayload({
+        ref: {
+          ...SyncWorkItemStepRef,
+          scheduleId: "work-items.hourly",
+        } as any,
+      }),
+    ).toThrow("must declare exactly one workflow, schedule, or consumer owner");
   });
 
   test("orders boot modules and finalizes in reverse with redacted in-memory records", async () => {

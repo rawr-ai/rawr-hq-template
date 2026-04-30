@@ -1,20 +1,17 @@
-// TODO/P2: prove native host callbacks lower into process runtime invocation.
+// TODO/P2 residual: prove production native host callbacks lower into process
+// runtime invocation.
 //
-// Surface adapters should resolve executable boundaries through the
-// ExecutionRegistry and delegate to ProcessExecutionRuntime. They must not run
-// RawrEffect, construct EffectRuntimeAccess, or create ManagedRuntime values.
+// The contained lab now proves native-shaped server callback payloads that
+// preserve route/ref identity and delegate through ProcessExecutionRuntime.
+// Remaining work is real host integration: Elysia/oRPC callback lifecycle,
+// StartedHarness mounting, boundary policy, and production package topology.
 
 export interface ExpectedAdapterEffectCallbackLowering {
-  readonly adapterInput: "compiled-surface-plan";
+  readonly provenLabInput: "adapter.server-callback-payload";
   readonly registryLookup: "required";
   readonly invocationRuntime: "process-execution-runtime";
   readonly rawEffectExecutionInAdapter: "forbidden";
-  readonly nativeHosts: readonly [
-    "server",
-    "async",
-    "cli",
-    "web",
-    "agent",
-    "desktop",
-  ];
+  readonly remainingNativeHosts: readonly ["server", "async", "cli", "web", "agent", "desktop"];
+  readonly remainingHostMounting: "required";
+  readonly remainingBoundaryPolicy: "required";
 }

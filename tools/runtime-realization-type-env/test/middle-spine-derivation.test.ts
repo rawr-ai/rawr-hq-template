@@ -300,6 +300,28 @@ describe("middle spine derivation and compiler simulation", () => {
         ],
       },
     ]);
+    expect(compilation.adapterLoweringPlan).toEqual({
+      kind: "adapter.lowering-plan",
+      payloads: [
+        {
+          kind: "adapter.server-callback-payload",
+          ref: serverRef,
+          routeDescriptor: derivation.serverRouteDescriptors[0],
+          diagnostics: [],
+        },
+        {
+          kind: "adapter.async-step-bridge-payload",
+          ref: asyncRef,
+          owner: {
+            kind: "workflow",
+            id: "work-items.sync",
+          },
+          stepId: "sync-work-item",
+          diagnostics: [],
+        },
+      ],
+      diagnostics: [],
+    });
     expect(compilation.bootgraphInput.resourceModules).toEqual([
       {
         kind: "boot.resource-module",

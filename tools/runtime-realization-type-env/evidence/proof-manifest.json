@@ -4,8 +4,8 @@
     "sha256": "4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654"
   },
   "currentExperiment": {
-    "id": "lab-v2.server-route-derivation",
-    "focus": "Use the contained runtime realization lab to verify cold server route factory derivation and import-safety artifacts without executing route bodies, mounting native server hosts, deciding final public route import-safety law, or claiming Elysia/oRPC production readiness.",
+    "id": "lab-v2.adapter-callback-async-bridge-lowering",
+    "focus": "Use the contained runtime realization lab to verify native-shaped server callback payloads and async step bridge payloads that consume pre-derived refs/artifacts and delegate through ProcessExecutionRuntime without mounting native hosts, deciding durable async semantics, or claiming production adapter readiness.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.curated-effect-public-surface",
@@ -27,6 +27,7 @@
       "simulation.async-step-owner-membership-artifacts",
       "simulation.server-route-derivation-import-safety",
       "simulation.adapter-callback-delegation",
+      "simulation.adapter-callback-bridge-lowering",
       "simulation.deployment-handoff",
       "audit.p1.provider-effect-plan-shape",
       "audit.p1.provider-effect-plan-lowering",
@@ -352,6 +353,29 @@
       ]
     },
     {
+      "id": "simulation.adapter-callback-bridge-lowering",
+      "status": "simulation-proof",
+      "source": "Runtime spec server/internal/async adapter lowering lifecycle",
+      "oracle": "The compiler emits lab-local native-shaped server callback and async step bridge payloads from pre-derived route descriptors and async owner-to-step refs; payload constructors and adapters preserve full ref identity, reject widened wrong-boundary or mismatched route/owner metadata before runtime invocation, avoid executable descriptors in payloads, and delegate to ProcessExecutionRuntime.",
+      "fixtures": [
+        "src/spine/artifacts.ts",
+        "src/spine/compiler.ts",
+        "src/mini-runtime/adapters/delegation.ts",
+        "src/mini-runtime/adapters/server.ts",
+        "src/mini-runtime/adapters/async.ts",
+        "fixtures/positive/app-and-plan-artifacts.ts",
+        "fixtures/inline-negative/runtime-access-boundaries.ts",
+        "test/mini-runtime/process-runtime.test.ts",
+        "test/middle-spine-derivation.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
+        "mini-runtime",
+        "middle-spine"
+      ]
+    },
+    {
       "id": "simulation.deployment-handoff",
       "status": "simulation-proof",
       "source": "Runtime spec lifecycle/deployment handoff boundary",
@@ -469,7 +493,7 @@
       "id": "audit.p2.adapter-effect-callback-lowering",
       "status": "xfail",
       "source": "Runtime spec sections 12 and 24; Effect-native addendum section 39",
-      "oracle": "Native host callbacks must resolve registry boundaries and delegate to ProcessExecutionRuntime instead of running RawrEffect in adapters.",
+      "oracle": "Contained native-shaped callback payload lowering is proven, but production host callbacks, Elysia/oRPC request lifecycle, StartedHarness integration, and final boundary policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/adapter-effect-callback-lowering.todo.ts"
       ]
@@ -478,7 +502,7 @@
       "id": "audit.p2.async-effect-bridge-lowering",
       "status": "xfail",
       "source": "Runtime spec sections 12, 19, and 24; Effect-native addendum section 28",
-      "oracle": "Async host step invocation must run pre-derived step descriptors through ProcessExecutionRuntime while durable semantics stay with the async host.",
+      "oracle": "Contained async bridge payload lowering is proven, but native Inngest FunctionBundle/worker mounting, durable scheduling, retry/idempotency, and final async host policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/async-effect-bridge-lowering.todo.ts"
       ]

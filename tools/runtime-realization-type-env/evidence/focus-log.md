@@ -4,11 +4,12 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.server-route-derivation`
-- Focus: use the contained runtime realization lab to verify cold server route
-  factory derivation and import-safety artifacts without executing route bodies,
-  mounting native server hosts, deciding final public route import-safety law,
-  or claiming Elysia/oRPC production readiness.
+- ID: `lab-v2.adapter-callback-async-bridge-lowering`
+- Focus: use the contained runtime realization lab to verify native-shaped
+  server callback payloads and async step bridge payloads that consume
+  pre-derived refs/artifacts and delegate through `ProcessExecutionRuntime`
+  without mounting native hosts, deciding durable async semantics, or claiming
+  production adapter readiness.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
@@ -30,6 +31,7 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `simulation.async-step-owner-membership-artifacts`
   - `simulation.server-route-derivation-import-safety`
   - `simulation.adapter-callback-delegation`
+  - `simulation.adapter-callback-bridge-lowering`
   - `simulation.deployment-handoff`
   - `audit.p1.provider-effect-plan-shape`
   - `audit.p1.provider-effect-plan-lowering`
