@@ -4,12 +4,12 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.runtime-research-program-closeout`
-- Focus: close the bounded runtime-realization research program after the
-  default DRA domino sequence, preserving earned proof categories and residual
-  decision packets without promoting production runtime readiness.
+- ID: `phase-two.program-regrounding-evidence-recertification`
+- Focus: recertify Phase Two authority, proof/status artifacts, stale-input
+  exclusions, residuals, and gate adequacy before live-boundary proof starts.
 - Related manifest entries:
   - `audit.runtime-research-program-closeout`
+  - `audit.canonical-spec-authority-refresh`
   - `audit.p0.async-step-membership`
   - `audit.p1.provider-effect-plan-shape`
   - `audit.p1.effect-managed-runtime-substrate`
