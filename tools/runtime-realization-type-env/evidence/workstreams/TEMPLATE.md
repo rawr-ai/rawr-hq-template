@@ -122,6 +122,10 @@ Design lock:
 
 Implementation summary:
 
+Semantic JSDoc/comment trailing pass:
+
+- `<passed/skipped/failed>`: `<files reviewed>`, `<comments added or why none were warranted>`, `<any repair demand>`
+
 Verification:
 
 Review loops:
@@ -157,6 +161,7 @@ Leaf loops:
 - Containment:
 - Mechanical:
 - Type/negative:
+- Semantic JSDoc/comments:
 - Vendor:
 - Mini-runtime:
 - Manifest/report:

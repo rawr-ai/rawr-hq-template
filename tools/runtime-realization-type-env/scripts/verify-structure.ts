@@ -313,6 +313,7 @@ const forbiddenImportPattern =
 const rawEffectImportPattern = /from\s+["']effect(?:\/[^"']*)?["']/;
 const rawEffectAllowedPrefixes = [
   "src/sdk/effect.ts",
+  "src/sdk/runtime/provider-plan-internals.ts",
   "src/mini-runtime/",
   "src/vendor/effect/",
   "test/vendor-effect/",
