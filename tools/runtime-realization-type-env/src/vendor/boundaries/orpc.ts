@@ -38,6 +38,6 @@ export function describeOrpcProbe() {
   return {
     contractKeys: Object.keys(OrpcContractProbe),
     routerKeys: Object.keys(OrpcNativeRouterProbe),
-    serverHasNativeHandler: "handler" in OrpcServerBuilderProbe,
+    serverPayloadKind: typeof OrpcServerBuilderProbe,
   };
 }

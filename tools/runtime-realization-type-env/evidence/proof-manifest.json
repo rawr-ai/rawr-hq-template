@@ -153,7 +153,7 @@
       "id": "vendor.effect.process-local-coordination",
       "status": "vendor-proof",
       "source": "Runtime spec section 14; Effect-native addendum process-local resource categories",
-      "oracle": "Real Effect Queue, PubSub, Ref, Deferred, Schedule, and Stream work as process-local coordination primitives without implying durable async state or domain truth.",
+      "oracle": "Real Effect Queue, PubSub, Ref, Deferred, Schedule, and Stream work behind the lab's RAWR-owned process-local resource probe without implying final resource API shape, durable async state, or domain truth.",
       "fixtures": [
         "src/mini-runtime/process-resources.ts",
         "test/vendor-effect/effect-runtime.test.ts"
@@ -182,15 +182,13 @@
       "id": "vendor.boundary.orpc-native-shape",
       "status": "vendor-proof",
       "source": "Runtime spec server-plugin lowering claims and oRPC boundary shape",
-      "oracle": "Native oRPC contracts and handlers are available as vendor boundary shapes, while RAWR .effect(...) remains SDK-owned and is not overclaimed as native oRPC.",
+      "oracle": "Native oRPC contracts and handlers are constructible as vendor boundary shape smoke artifacts; RAWR adapter compatibility remains unproven until a RAWR adapter consumes them. RAWR .effect(...) is proven only in the SDK authoring lane, not through a fake oRPC negative.",
       "fixtures": [
         "src/vendor/boundaries/orpc.ts",
-        "fixtures/inline-negative/vendor-boundaries.ts",
         "test/vendor-boundaries/boundary-shapes.test.ts"
       ],
       "gates": [
         "typecheck",
-        "negative",
         "vendor-boundaries"
       ]
     },
