@@ -94,6 +94,11 @@ Expected gates:
 
 Stop/escalation conditions:
 
+- User escalation is reserved for critical design walls that fundamentally
+  renegotiate architecture, public-DX law, vendor/product policy, topology, or
+  migration sequence. Routine implementation details, local workflow mechanics,
+  and honestly fenced residuals stay host-owned.
+
 ## Acceptance / Closure Criteria
 
 This workstream may close only when:
@@ -117,6 +122,15 @@ Phase teams:
 
 - `<phase>`: `<agents used or host-only>`, `<why this team shape was enough>`,
   `<whether any agents were rotated>`
+
+Agent scratch documents:
+
+- `<not used / used>`: `<scratch path(s)>`, `<why scratch was needed or why it
+  was unnecessary>`, `<final disposition: integrated then deleted / archived /
+  quarantined>`
+- Proof boundary: scratch documents are running notes only. They are not
+  authority, not proof, and not final workstream artifacts. Agent reports are
+  internal host/DRA inputs, not user-facing reports.
 
 Design lock:
 
