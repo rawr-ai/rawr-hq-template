@@ -3,6 +3,7 @@ import { Effect } from "@rawr/sdk/effect";
 import { Effect as VendorEffect } from "../../src/vendor/effect/runtime";
 import type {
   CompiledProcessPlan,
+  ExecutionDescriptor,
   PortableRuntimePlanArtifact,
   ServiceBindingPlan,
   WorkflowDispatcher,
@@ -12,6 +13,10 @@ import {
   createDeploymentRuntimeHandoff,
   createExecutionDescriptorTable,
   createExecutionRegistry,
+  createRuntimeBoundaryPolicy,
+  createRuntimeBoundaryPolicyResolution,
+  createRuntimeBoundaryPolicyRecord,
+  classifyRuntimeBoundaryExit,
   createMiniRuntimeResourceAccess,
   createMiniServiceBindingCache,
   createProcessExecutionRuntime,
@@ -131,7 +136,11 @@ function createAsyncInvocationContext() {
   };
 }
 
-function createRuntime() {
+function createRuntime(input: {
+  readonly boundaryPolicy?: Parameters<
+    typeof createProcessExecutionRuntime
+  >[0]["boundaryPolicy"];
+} = {}) {
   const table = createExecutionDescriptorTable([
     {
       ref: CreateWorkItemRef,
@@ -147,7 +156,10 @@ function createRuntime() {
     descriptorTable: table,
   });
 
-  return createProcessExecutionRuntime({ registry });
+  return createProcessExecutionRuntime({
+    registry,
+    ...(input.boundaryPolicy ? { boundaryPolicy: input.boundaryPolicy } : {}),
+  });
 }
 
 function parseConstructionIdentity(identity: string): Record<string, unknown> {
@@ -222,8 +234,10 @@ describe("runtime realization mini runtime", () => {
       expect(result.exit._tag).toBe("Success");
       expect(result.events.map((event) => event.name)).toEqual([
         "runtime.invoke.start",
+        "boundary.policy.enter",
         "runtime.registry.resolve",
         "runtime.effect-runtime.enter",
+        "boundary.policy.exit",
         "runtime.invoke.success",
       ]);
     } finally {
@@ -376,6 +390,313 @@ describe("runtime realization mini runtime", () => {
       expect(asyncResult.status).toBe("success");
       if (asyncResult.status !== "success") throw asyncResult.error;
       expect(asyncResult.output).toEqual({ synced: true });
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test("classifies boundary exits without choosing production error payloads", async () => {
+    const success = await VendorEffect.runPromiseExit(VendorEffect.succeed("ok"));
+    const failure = await VendorEffect.runPromiseExit(
+      VendorEffect.fail("typed-failure"),
+    );
+    const defect = await VendorEffect.runPromiseExit(
+      VendorEffect.die(new Error("defect-failure")),
+    );
+    const controller = new AbortController();
+    const interrupted = VendorEffect.runPromiseExit(VendorEffect.never, {
+      signal: controller.signal,
+    });
+    controller.abort();
+
+    expect(classifyRuntimeBoundaryExit(success)).toMatchObject({
+      exit: "success",
+      cause: "none",
+    });
+    expect(classifyRuntimeBoundaryExit(failure)).toMatchObject({
+      exit: "failure",
+      cause: "failure",
+    });
+    expect(classifyRuntimeBoundaryExit(defect)).toMatchObject({
+      exit: "defect",
+      cause: "defect",
+    });
+    expect(classifyRuntimeBoundaryExit(await interrupted)).toMatchObject({
+      exit: "interrupted",
+      cause: "interrupted",
+    });
+  });
+
+  test("boundary policies copy interruption state and redact live metadata", () => {
+    const controller = new AbortController();
+    controller.abort();
+    const policy = createRuntimeBoundaryPolicy({
+      policyId: "policy:server:create",
+      boundary: "plugin.server-api",
+      subjectId: CreateWorkItemRef.executionId,
+      timeoutMs: 250,
+      retry: { maxAttempts: 3, attempt: 1 },
+      interruption: { signal: controller.signal },
+      metadata: {
+        secretToken: "policy-secret",
+        liveHandle() {},
+      },
+    });
+    const record = createRuntimeBoundaryPolicyRecord({
+      policy,
+      phase: "boundary.policy.enter",
+      attributes: {
+        requestToken: "request-secret",
+      },
+    });
+
+    expect(policy.interruption).toEqual({
+      source: "abort-signal",
+      requested: true,
+    });
+    expect(record.timeoutMs).toBe(250);
+    expect(record.retry).toEqual({ maxAttempts: 3, attempt: 1 });
+    expect(JSON.stringify(record)).not.toContain("policy-secret");
+    expect(JSON.stringify(record)).not.toContain("request-secret");
+    assertNoLiveHandles(record);
+  });
+
+  test("boundary policy validation rejects invalid timeout and retry metadata", () => {
+    expect(() =>
+      createRuntimeBoundaryPolicy({
+        policyId: "policy:bad-timeout",
+        boundary: "plugin.server-api",
+        subjectId: CreateWorkItemRef.executionId,
+        timeoutMs: 0,
+      }),
+    ).toThrow("boundary timeoutMs must be a positive integer");
+    expect(() =>
+      createRuntimeBoundaryPolicy({
+        policyId: "policy:bad-retry",
+        boundary: "plugin.server-api",
+        subjectId: CreateWorkItemRef.executionId,
+        retry: { maxAttempts: 2, attempt: 3 },
+      }),
+    ).toThrow("boundary retry.attempt cannot exceed retry.maxAttempts");
+  });
+
+  test("process runtime records executable boundary policy without retrying", async () => {
+    let runs = 0;
+    const descriptor = {
+      kind: "execution.descriptor",
+      ref: CreateWorkItemRef,
+      run() {
+        runs += 1;
+        return Effect.fail("policy-failure");
+      },
+    } satisfies ExecutionDescriptor;
+    const table = createExecutionDescriptorTable([
+      { ref: CreateWorkItemRef, descriptor },
+    ]);
+    const registry = createExecutionRegistry({
+      plans: [
+        {
+          kind: "compiled.execution-plan",
+          ref: CreateWorkItemRef,
+          policy: { timeoutMs: 1000 },
+        },
+      ],
+      descriptorTable: table,
+    });
+    const runtime = createProcessExecutionRuntime({
+      registry,
+      boundaryPolicy({ ref, plan }) {
+        return createRuntimeBoundaryPolicy({
+          policyId: "policy:server:create",
+          boundary: ref.boundary,
+          subjectId: ref.executionId,
+          retry: { maxAttempts: 4, attempt: 1 },
+          metadata: {
+            route: "work-items.create",
+            apiKey: "runtime-policy-secret",
+          },
+          ...(plan.policy?.timeoutMs !== undefined
+            ? { timeoutMs: plan.policy.timeoutMs }
+            : {}),
+        });
+      },
+    });
+
+    try {
+      const result = await runtime.invoke<never>({
+        ref: CreateWorkItemRef,
+        context: createInvocationContext(),
+      });
+
+      expect(result.status).toBe("failure");
+      expect(runs).toBe(1);
+      expect(
+        result.events
+          .filter((event) => event.name.startsWith("boundary.policy."))
+          .map((event) => event.name),
+      ).toEqual(["boundary.policy.enter", "boundary.policy.exit"]);
+      const exitEvent = result.events.find(
+        (event) => event.name === "boundary.policy.exit",
+      );
+      expect(exitEvent?.attributes).toMatchObject({
+        policyId: "policy:server:create",
+        boundaryPolicy: "plugin.server-api",
+        timeoutMs: 1000,
+        retry: { maxAttempts: 4, attempt: 1 },
+        exit: {
+          exit: "failure",
+          cause: "failure",
+        },
+      });
+      expect(JSON.stringify(result.events)).not.toContain("runtime-policy-secret");
+      assertNoLiveHandles(result.events);
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test("adapter-lowered server and async callbacks inherit runtime boundary policy records", async () => {
+    const runtime = createRuntime({
+      boundaryPolicy({ ref }) {
+        return createRuntimeBoundaryPolicy({
+          policyId: `policy:${ref.executionId}`,
+          boundary: ref.boundary,
+          subjectId: ref.executionId,
+          timeoutMs: 750,
+          retry: { maxAttempts: 2, attempt: 1 },
+          metadata: {
+            apiKey: "adapter-policy-secret",
+          },
+        });
+      },
+    });
+    const serverPayload = createServerAdapterCallbackPayload({
+      routeDescriptor: CreateWorkItemRouteDescriptor,
+      ref: CreateWorkItemRef,
+    });
+    const asyncPayload = createAsyncStepBridgePayload({ ref: SyncWorkItemStepRef });
+
+    try {
+      const serverResult = await lowerServerAdapterCallback<WorkItem>(
+        runtime,
+        serverPayload,
+        { context: createInvocationContext() },
+      );
+      const asyncResult = await lowerAsyncStepBridge<
+        { readonly skipped: true } | { readonly synced: true }
+      >(runtime, asyncPayload, {
+        context: createAsyncInvocationContext(),
+      });
+
+      expect(
+        serverResult.events
+          .filter((event) => event.name.startsWith("boundary.policy."))
+          .map((event) => event.attributes?.boundaryPolicy),
+      ).toEqual(["plugin.server-api", "plugin.server-api"]);
+      expect(
+        asyncResult.events
+          .filter((event) => event.name.startsWith("boundary.policy."))
+          .map((event) => event.attributes?.boundaryPolicy),
+      ).toEqual(["plugin.async-step", "plugin.async-step"]);
+      expect(JSON.stringify(serverResult.events)).not.toContain(
+        "adapter-policy-secret",
+      );
+      expect(JSON.stringify(asyncResult.events)).not.toContain(
+        "adapter-policy-secret",
+      );
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test("process runtime propagates boundary interruption signals into Effect", async () => {
+    const finalizerEvents: string[] = [];
+    const controller = new AbortController();
+    const descriptor = {
+      kind: "execution.descriptor",
+      ref: SyncWorkItemStepRef,
+      run() {
+        return VendorEffect.scoped(
+          VendorEffect.gen(function* () {
+            yield* VendorEffect.acquireRelease(
+              VendorEffect.sync(() => {
+                finalizerEvents.push("acquire");
+                return "interruptible-resource";
+              }),
+              (resource, exit) =>
+                VendorEffect.sync(() => {
+                  finalizerEvents.push(`release:${resource}:${exit._tag}`);
+                }),
+            );
+            yield* VendorEffect.never;
+          }),
+        );
+      },
+    } satisfies ExecutionDescriptor;
+    const table = createExecutionDescriptorTable([
+      { ref: SyncWorkItemStepRef, descriptor },
+    ]);
+    const registry = createExecutionRegistry({
+      plans: [
+        {
+          kind: "compiled.execution-plan",
+          ref: SyncWorkItemStepRef,
+          policy: { timeoutMs: 100 },
+        },
+      ],
+      descriptorTable: table,
+    });
+    const runtime = createProcessExecutionRuntime({
+      registry,
+      boundaryPolicy({ ref, plan }) {
+        return createRuntimeBoundaryPolicyResolution({
+          policyId: "policy:async:interrupt",
+          boundary: ref.boundary,
+          subjectId: ref.executionId,
+          interruption: { signal: controller.signal },
+          metadata: {
+            stepId: SyncWorkItemStepRef.stepId,
+            secretToken: "interrupt-secret",
+          },
+          ...(plan.policy?.timeoutMs !== undefined
+            ? { timeoutMs: plan.policy.timeoutMs }
+            : {}),
+        });
+      },
+    });
+
+    try {
+      const pending = runtime.invoke<never>({
+        ref: SyncWorkItemStepRef,
+        context: createAsyncInvocationContext(),
+      });
+      for (let attempt = 0; attempt < 10 && finalizerEvents.length === 0; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+      controller.abort();
+      const result = await pending;
+
+      expect(result.status).toBe("failure");
+      expect(finalizerEvents).toEqual([
+        "acquire",
+        "release:interruptible-resource:Failure",
+      ]);
+      const exitEvent = result.events.find(
+        (event) => event.name === "boundary.policy.exit",
+      );
+      expect(exitEvent?.attributes).toMatchObject({
+        policyId: "policy:async:interrupt",
+        boundaryPolicy: "plugin.async-step",
+        interruption: {
+          source: "abort-signal",
+          requested: false,
+        },
+        exit: {
+          exit: "interrupted",
+          cause: "interrupted",
+        },
+      });
+      expect(JSON.stringify(result.events)).not.toContain("interrupt-secret");
     } finally {
       await runtime.dispose();
     }

@@ -1,8 +1,11 @@
-// TODO/P1: lock the effect boundary policy matrix.
+// TODO/P1 residual: lock production effect boundary policy semantics.
 //
-// Every executable boundary needs explicit timeout, retry, interruption,
-// telemetry, redaction, and error/exit mapping metadata. The lab should prove
-// the metadata is present without inventing final defaults prematurely.
+// The contained lab now proves record-only executable/provider boundary policy
+// metadata for exact boundary kinds, timeout fields, retry-attempt declaration,
+// AbortSignal interruption propagation, Exit/Cause classification, and redacted
+// attributes. Remaining work is final public policy API/DX, production retry
+// scheduling, durable async policy, telemetry export, and host-specific error
+// mapping.
 
 export type ExpectedEffectBoundaryKind =
   | "service.procedure"
@@ -16,11 +19,16 @@ export type ExpectedEffectBoundaryKind =
   | "provider.release";
 
 export interface ExpectedEffectBoundaryPolicy {
+  readonly provenLabRecord: "runtime.boundary-policy-record";
   readonly boundary: ExpectedEffectBoundaryKind;
-  readonly timeout: "required-or-explicitly-inherited";
-  readonly retry: "none-explicit-or-boundary-default";
-  readonly interruption: "boundary-specific";
-  readonly telemetryLabels: readonly string[];
-  readonly redaction: "required";
-  readonly errorBridge: "required";
+  readonly timeoutMetadata: "recorded";
+  readonly retryAttemptDeclaration: "recorded-without-scheduler";
+  readonly interruptionPropagation: "contained-effect-runtime";
+  readonly telemetryMode: "record-only";
+  readonly redaction: "structured-attributes";
+  readonly exitCauseClassification: "contained-effect-runtime";
+  readonly remainingPublicPolicyApi: "required";
+  readonly remainingProductionRetryScheduler: "required";
+  readonly remainingHostErrorMapping: "required";
+  readonly remainingTelemetryExport: "required";
 }
