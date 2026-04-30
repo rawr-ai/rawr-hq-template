@@ -21,6 +21,16 @@ The canonical runtime spec pinned in `proof-manifest.json` remains the
 architecture authority. The lab may reveal spec gaps, but it must not silently
 decide them in fixtures or helper code.
 
+## DRA Continuity Anchor
+
+The DRA workflow is this research program workflow. The DRA should keep moving
+through the domino sequence until the program is complete, reviewed, submitted,
+and clean. A completed workstream or PR is only a checkpoint, not completion.
+After compaction, interruption, or conflicting context, refresh this document,
+`dra-runtime-research-program-workflow.md`, the active workstream packet, the
+manifest, and the diagnostic, then continue from the current Graphite branch.
+Do not treat user absence as a stop condition.
+
 ## Current Baseline
 
 The middle-spine workstream closed in PR #258 and produced simulation-level
@@ -37,7 +47,8 @@ confidence in the already-specified middle of the spine:
   explicit lab service dependency graph validation, dependency-before-dependent
   binding construction, construction-time structural cache identity, and
   invocation exclusion;
-- fake server and async adapters delegate through `ProcessExecutionRuntime`;
+- native-shaped server callback and async bridge payloads delegate through
+  `ProcessExecutionRuntime` in the contained mini runtime;
 - deployment handoff rejects descriptor tables, executable closures, runtime
   access, live handles, app id mismatches, and raw secret fields.
 
@@ -72,10 +83,16 @@ the status view for red/yellow/green risk.
 | 6 | Real Adapter Callback + Async Bridge Lowering | Promote fake callback delegation into real native callback/async bridge lowering through `ProcessExecutionRuntime`. | Durable async semantics, full host lifecycle, deployment placement. |
 | 7 | First Real Harness Mounts | Mount server and async harnesses first because they crack the production path most directly. | OCLIF, web, agent, desktop harnesses unless migration scope promotes them. |
 | 8 | Boundary Policy Matrix | Lock timeout, retry, interruption, Exit/Cause, telemetry, redaction, and error mapping before migration-ready claims. | Product observability/export choices and external policy dashboards. |
-| 9 | Migration/Control-Plane Observation | Carry runtime-emitted records into telemetry export, catalog persistence, and deployment placement slices. | Lab-only proof of production storage, control-plane placement, and durable infra behavior. |
+| 9 | Runtime Telemetry + HyperDX Observation | Use the available Docker HyperDX stack as a contained telemetry/query observation cycle for runtime-emitted events, diagnostics, traces, lifecycle records, and redaction behavior. | Product observability policy, persisted catalog authority, production deployment placement, durable async semantics, and vendor strategy beyond the contained lab. |
+| 10 | Migration/Control-Plane Observation | Carry runtime-emitted records into catalog persistence and deployment placement slices after telemetry shape is proven or explicitly fenced. | Lab-only proof of production storage, control-plane placement, and durable infra behavior. |
 
 The domino order can change only through a workstream control input: new evidence,
 explicit replan, blocker, or accepted architecture decision.
+
+The HyperDX workstream is optional only if boundary-policy or harness-mounting
+evidence proves it is premature. Its default target is contained observation:
+can the runtime emit redacted, queryable signals into the usual telemetry store
+without claiming product dashboards, durable storage, or production readiness?
 
 ## Negative-Space Re-Entry Ledger
 
@@ -91,10 +108,11 @@ explicit replan, blocker, or accepted architecture decision.
 | `audit.p1.dispatcher-access` | `xfail` | Explicit lab dispatcher operation inventory is proven, but final explicit-vs-ambient dispatcher access policy and public SDK/DX shape remain unresolved. | Manifest, diagnostic, todo fixture, dispatcher/async workstream report. | Architecture accepts final dispatcher access policy or revises it explicitly. | Server or async work needs public dispatcher facade semantics rather than contained operation inventory. | Server Route Derivation, Boundary Policy Matrix, or spec decision packet | spec |
 | `audit.p1.runtime-resource-access` | `xfail` | Mini runtime proves a narrow sanctioned facade and service binding DAG behavior, but final method law is not locked. | Manifest, diagnostic, todo fixture. | Architecture accepts the final method law or revises it explicitly. | Adapters, dispatchers, or harnesses need methods beyond the lab facade. | Dispatcher Access + Async Step Membership or Boundary Policy Matrix | spec |
 | `audit.p2.server-route-derivation` | `simulation-proof` + `xfail` | Lab-local cold route factories now derive server route descriptors and refs-only artifacts without executing route bodies, but final public route import-safety law and production route module topology remain unresolved. | Manifest, diagnostic, todo fixture, server route workstream report. | Native adapter lowering needs to consume route descriptors or production SDK work needs final import-safety law rather than lab metadata. | Server adapter proof would otherwise execute route bodies, infer route factories unsafely, or treat lab-only route metadata as production law. | Real Adapter Callback + Async Bridge Lowering, First Real Harness Mounts, or spec decision packet | lab/spec |
-| `audit.p2.adapter-effect-callback-lowering` | `xfail` | Fake callbacks prove delegation; real native callback lowering remains open. | Manifest, diagnostic, todo fixture. | Server route derivation and runtime access law are stable enough for real callback payloads. | Fake adapter proof becomes insufficient for real harness mounting. | Real Adapter Callback + Async Bridge Lowering | lab/spec |
-| `audit.p2.async-effect-bridge-lowering` | `xfail` | Async bridge can now consume explicit lab membership/access artifacts, but real bridge lowering and durable host semantics remain open. | Manifest, diagnostic, todo fixture. | Async bridge lowering uses pre-derived step descriptors through `ProcessExecutionRuntime` while keeping durable semantics with the async host. | Fake async callback proof becomes insufficient for real async harness progress. | Real Adapter Callback + Async Bridge Lowering | lab/spec |
+| `audit.p2.adapter-effect-callback-lowering` | `simulation-proof` + `xfail` | Lab-local native-shaped server callback payloads now consume pre-derived route descriptors/refs and delegate through `ProcessExecutionRuntime`, but real Elysia/oRPC callback lifecycle, `StartedHarness` integration, and final boundary policy remain open. | Manifest, diagnostic, todo fixture, adapter/async bridge workstream report. | First harness workstream consumes the payloads without inventing production callback policy. | A harness proof needs real host callbacks rather than contained payload invocation. | First Real Harness Mounts or Boundary Policy Matrix | lab/spec |
+| `audit.p2.async-effect-bridge-lowering` | `simulation-proof` + `xfail` | Lab-local async bridge payloads now consume owner-to-step refs and delegate through `ProcessExecutionRuntime`, but native Inngest FunctionBundle/worker mounting, durable scheduling/retry/idempotency, and final async host policy remain open. | Manifest, diagnostic, todo fixture, adapter/async bridge workstream report. | First async harness workstream consumes the payloads without choosing durable host semantics. | A harness proof needs native async host bridge behavior rather than contained payload invocation. | First Real Harness Mounts or Boundary Policy Matrix | lab/spec |
 | `audit.p2.first-resource-provider-cut` | `todo` | Catalog candidates are planning input, not canonical ids. | Manifest, spine map. | Provider lowering needs representative standard resources beyond fixture-only ids. | Provider diagnostics need a resource set that is no longer just fixture inventory. | Provider Diagnostics + Runtime Profile Config Redaction | lab/spec |
 | `audit.p2.runtime-profile-config-redaction` | `simulation-proof` | Contained provider provisioning validates lab runtime-profile config through `RuntimeSchema`, fails closed with diagnostic-safe validation errors, records redacted config snapshots, and avoids secret/live-handle leakage. Production config precedence, secret-store integration, telemetry export, and catalog persistence remain fenced. | Manifest, diagnostic, spine map, provider diagnostics workstream report. | Production config binding or persisted observation needs source precedence, platform stores, or export/correlation semantics. | A migration or harness workstream tries to treat lab config maps as production config authority. | Boundary Policy Matrix or Migration/Control-Plane Observation | lab/spec/migration |
+| `audit.telemetry.hyperdx-observation` | `todo` | Docker HyperDX is available as the usual telemetry store/query engine, but no runtime telemetry/export cycle has proven signal shape, redaction, or queryability yet. | Research program, DRA workflow, future HyperDX workstream report, and any manifest entry opened by that cycle. | Boundary policy and first harness signals are explicit enough to emit records without choosing product observability policy. | Runtime observation needs queryable traces/events/diagnostics rather than in-memory records only. | Runtime Telemetry + HyperDX Observation | lab/migration |
 | `audit.source-hygiene` | `out-of-scope` | Stale source hygiene is migration preflight, not a type-spine proof. | Manifest. | Migration work is about to rely on indexed docs, source graphs, or stale extracted structure. | Migration agents start relying on indexed stale docs. | Migration/control-plane or source-hygiene workstream | out-of-scope |
 
 No item may be removed from this ledger unless the manifest/diagnostic also
@@ -141,6 +159,7 @@ authority.
 | Evidence auditor | Every proof promotion. | Manifest, diagnostic, proof strength, oracle, and test-theater review. |
 | Migration derivability reviewer | Before closeout. | Whether the result actually de-risks migration and what remains production-only. |
 | DX/API/TypeScript reviewer | Any public or pseudo-public shape. | Authoring clarity, vendor alignment, inference quality, TypeScript surface discipline, capability preservation, and simplification opportunities. |
+| Semantic JSDoc/comment trailing reviewer | After TypeScript or lab-runtime edits add semantic seams. | High-signal comments for lifecycle, authority, and proof-boundary seams; no mechanical narration or promotion of unresolved public contracts. |
 | Workstream lifecycle reviewer | Before closeout, after compaction/resume, or whenever process drift appears. | Whether the workstream was opened, run, reviewed, closed, and handed off as intended, plus process-tension notes or concrete workflow/template repairs. |
 | Adversarial reviewer | Before final submit. | False green, overfit fixtures, self-approval, missing re-entry triggers, and stale authority. |
 

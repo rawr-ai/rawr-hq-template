@@ -479,6 +479,53 @@ export interface RuntimeHarnessPlanPlaceholder {
   readonly diagnostics: readonly RuntimeDiagnostic[];
 }
 
+/**
+ * Lab-only payload handed to the server adapter lowering shim. It proves that a
+ * server route still points at the same executable boundary after derivation;
+ * it does not choose HTTP mounting, middleware, auth, or public route DX.
+ */
+export interface ServerAdapterCallbackPayload {
+  readonly kind: "adapter.server-callback-payload";
+  readonly ref: Extract<
+    ExecutionDescriptorRef,
+    { boundary: "plugin.server-api" | "plugin.server-internal" }
+  >;
+  readonly routeDescriptor: ServerRouteDescriptor;
+  readonly diagnostics: readonly RuntimeDiagnostic[];
+}
+
+/**
+ * Lab-only payload handed to the async adapter bridge. It preserves the async
+ * owner and step identity that the runtime may invoke later; durable workflow
+ * scheduling, retries, leases, and status semantics are intentionally out of
+ * scope for this proof layer.
+ */
+export interface AsyncStepBridgePayload {
+  readonly kind: "adapter.async-step-bridge-payload";
+  readonly ref: Extract<ExecutionDescriptorRef, { boundary: "plugin.async-step" }>;
+  readonly owner: {
+    readonly kind: "workflow" | "schedule" | "consumer";
+    readonly id: string;
+  };
+  readonly stepId: string;
+  readonly diagnostics: readonly RuntimeDiagnostic[];
+}
+
+export type RuntimeAdapterLoweringPayload =
+  | ServerAdapterCallbackPayload
+  | AsyncStepBridgePayload;
+
+/**
+ * Pre-harness adapter lowering output. The compiler can prove which adapter
+ * payloads are well-formed before any real host is mounted, while leaving the
+ * eventual harness integration contract deliberately undecided.
+ */
+export interface RuntimeAdapterLoweringPlan {
+  readonly kind: "adapter.lowering-plan";
+  readonly payloads: readonly RuntimeAdapterLoweringPayload[];
+  readonly diagnostics: readonly RuntimeDiagnostic[];
+}
+
 export interface RuntimeBootgraphInputPlaceholder {
   readonly kind: "bootgraph.input-placeholder";
   readonly appId: string;
@@ -495,6 +542,7 @@ export interface RuntimeSpineCompilation {
   readonly registryInput: CompiledExecutionRegistryInput;
   readonly providerDependencyGraph?: ProviderDependencyGraph;
   readonly harnessPlans: readonly RuntimeHarnessPlanPlaceholder[];
+  readonly adapterLoweringPlan: RuntimeAdapterLoweringPlan;
   readonly bootgraphInput: RuntimeBootgraphInputPlaceholder;
   readonly diagnostics: readonly RuntimeDiagnostic[];
 }

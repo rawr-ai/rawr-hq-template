@@ -1,10 +1,17 @@
 import type { MiniRuntimeResourceAccess } from "../../src/mini-runtime/runtime-access";
 import type { ProcessExecutionRuntime } from "../../src/mini-runtime/process-runtime";
 import type { RuntimeAccess } from "../../src/spine/artifacts";
-import { lowerAsyncStepCallback } from "../../src/mini-runtime/adapters/async";
-import { lowerServerCallback } from "../../src/mini-runtime/adapters/server";
+import {
+  createAsyncStepBridgePayload,
+  lowerAsyncStepCallback,
+} from "../../src/mini-runtime/adapters/async";
+import {
+  createServerAdapterCallbackPayload,
+  lowerServerCallback,
+} from "../../src/mini-runtime/adapters/server";
 import {
   CreateWorkItemRef,
+  CreateWorkItemRouteDescriptor,
   SyncWorkItemStepRef,
 } from "../positive/app-and-plan-artifacts";
 
@@ -48,3 +55,9 @@ lowerAsyncStepCallback(runtime, { ref: CreateWorkItemRef, context: {} });
 
 // @ts-expect-error server adapter accepts server refs only.
 lowerServerCallback(runtime, { ref: SyncWorkItemStepRef, context: {} });
+
+// @ts-expect-error async bridge payloads are created from async-step refs only.
+createAsyncStepBridgePayload({ ref: CreateWorkItemRef });
+
+// @ts-expect-error server callback payloads pair server route descriptors with server refs only.
+createServerAdapterCallbackPayload({ routeDescriptor: CreateWorkItemRouteDescriptor, ref: SyncWorkItemStepRef });
