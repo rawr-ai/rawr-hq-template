@@ -222,8 +222,10 @@ describe("runtime realization type env simulation", () => {
       expect(traces).toEqual(["trace-1"]);
       expect(result.events.map((event) => event.name)).toEqual([
         "runtime.invoke.start",
+        "boundary.policy.enter",
         "runtime.registry.resolve",
         "runtime.effect-runtime.enter",
+        "boundary.policy.exit",
         "runtime.invoke.success",
       ]);
     } finally {

@@ -1,5 +1,6 @@
 import type { MiniRuntimeResourceAccess } from "../../src/mini-runtime/runtime-access";
 import type { ProcessExecutionRuntime } from "../../src/mini-runtime/process-runtime";
+import type { RuntimeBoundaryPolicy } from "../../src/mini-runtime";
 import type { RuntimeAccess } from "../../src/spine/artifacts";
 import {
   mountMiniAsyncHarness,
@@ -24,6 +25,7 @@ import {
 declare const access: MiniRuntimeResourceAccess;
 declare const runtimeAccess: RuntimeAccess;
 declare const runtime: ProcessExecutionRuntime;
+declare const boundaryPolicy: RuntimeBoundaryPolicy;
 
 access.requireResource("database");
 access.optionalResource("database");
@@ -73,3 +75,6 @@ mountMiniServerHarness({ harnessId: "server:bad", runtime, payloads: [CreateWork
 
 // @ts-expect-error async harnesses consume lowered bridge payloads, not compiler plans.
 mountMiniAsyncHarness({ harnessId: "async:bad", runtime, payloads: [SyncWorkItemStepPlan] });
+
+// @ts-expect-error runtime boundary policy snapshots must not retain live AbortSignal handles.
+boundaryPolicy.interruption?.signal;
