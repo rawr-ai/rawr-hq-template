@@ -103,9 +103,13 @@ const suiteCommandsByProject = {
   "@rawr/sdk": {
     default: [
       "bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/sdk",
+      "bun run --cwd packages/core/sdk negative",
       "bun run architecture:gate:projection-boundaries",
     ],
-    "m2-u00-current-findings": ["bun run phase-2:gate:u00:runtime-public-seams -- --allow-findings"],
+    "m2-u00-current-findings": [
+      "bun run --cwd packages/core/sdk negative",
+      "bun run phase-2:gate:u00:runtime-public-seams -- --allow-findings",
+    ],
   },
   "@rawr/core-runtime-compiler": {
     default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/core-runtime-compiler"],

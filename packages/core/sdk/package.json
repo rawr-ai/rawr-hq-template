@@ -9,7 +9,106 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./app": {
+      "types": "./src/app/index.ts",
+      "default": "./src/app/index.ts"
+    },
+    "./effect": {
+      "types": "./src/effect/index.ts",
+      "default": "./src/effect/index.ts"
+    },
+    "./execution": {
+      "types": "./src/execution/index.ts",
+      "default": "./src/execution/index.ts"
+    },
+    "./service": {
+      "types": "./src/service/index.ts",
+      "default": "./src/service/index.ts"
+    },
+    "./service/schema": {
+      "types": "./src/service/schema.ts",
+      "default": "./src/service/schema.ts"
+    },
+    "./plugins/server": {
+      "types": "./src/plugins/server/index.ts",
+      "default": "./src/plugins/server/index.ts"
+    },
+    "./plugins/server/effect": {
+      "types": "./src/plugins/server/effect.ts",
+      "default": "./src/plugins/server/effect.ts"
+    },
+    "./plugins/async": {
+      "types": "./src/plugins/async/index.ts",
+      "default": "./src/plugins/async/index.ts"
+    },
+    "./plugins/async/effect": {
+      "types": "./src/plugins/async/effect.ts",
+      "default": "./src/plugins/async/effect.ts"
+    },
+    "./plugins/cli": {
+      "types": "./src/plugins/cli/index.ts",
+      "default": "./src/plugins/cli/index.ts"
+    },
+    "./plugins/cli/effect": {
+      "types": "./src/plugins/cli/effect.ts",
+      "default": "./src/plugins/cli/effect.ts"
+    },
+    "./plugins/cli/schema": {
+      "types": "./src/plugins/cli/schema.ts",
+      "default": "./src/plugins/cli/schema.ts"
+    },
+    "./plugins/web": {
+      "types": "./src/plugins/web/index.ts",
+      "default": "./src/plugins/web/index.ts"
+    },
+    "./plugins/web/effect": {
+      "types": "./src/plugins/web/effect.ts",
+      "default": "./src/plugins/web/effect.ts"
+    },
+    "./plugins/agent": {
+      "types": "./src/plugins/agent/index.ts",
+      "default": "./src/plugins/agent/index.ts"
+    },
+    "./plugins/agent/effect": {
+      "types": "./src/plugins/agent/effect.ts",
+      "default": "./src/plugins/agent/effect.ts"
+    },
+    "./plugins/agent/schema": {
+      "types": "./src/plugins/agent/schema.ts",
+      "default": "./src/plugins/agent/schema.ts"
+    },
+    "./plugins/desktop": {
+      "types": "./src/plugins/desktop/index.ts",
+      "default": "./src/plugins/desktop/index.ts"
+    },
+    "./plugins/desktop/effect": {
+      "types": "./src/plugins/desktop/effect.ts",
+      "default": "./src/plugins/desktop/effect.ts"
+    },
+    "./runtime/resources": {
+      "types": "./src/runtime/resources/index.ts",
+      "default": "./src/runtime/resources/index.ts"
+    },
+    "./runtime/providers": {
+      "types": "./src/runtime/providers/index.ts",
+      "default": "./src/runtime/providers/index.ts"
+    },
+    "./runtime/providers/effect": {
+      "types": "./src/runtime/providers/effect.ts",
+      "default": "./src/runtime/providers/effect.ts"
+    },
+    "./runtime/profiles": {
+      "types": "./src/runtime/profiles/index.ts",
+      "default": "./src/runtime/profiles/index.ts"
+    },
+    "./runtime/schema": {
+      "types": "./src/runtime/schema/index.ts",
+      "default": "./src/runtime/schema/index.ts"
     }
+  },
+  "dependencies": {
+    "effect": "4.0.0-beta.59"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
@@ -18,9 +117,10 @@
     "build": "tsc -p tsconfig.json",
     "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\"",
     "sync": "bun run --cwd ../../.. sync:check --project @rawr/sdk",
+    "negative": "tsc -p tsconfig.negative.json --noEmit",
     "structural": "bun ../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/sdk",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests test/**/*.test.ts"
+    "test": "vitest run --project sdk && bun run negative"
   },
   "nx": {
     "tags": [

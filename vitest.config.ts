@@ -47,6 +47,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/core/sdk"),
+        test: { name: "sdk", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("services/chatgpt-corpus"),
         test: { name: "chatgpt-corpus", environment: "node", include: [...includes] },
       },
