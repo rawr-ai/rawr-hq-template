@@ -40,6 +40,14 @@ If a change requires production code, split it into migration work. This tool ma
 
 Use `evidence/focus-log.md` to record the current experiment and `evidence/vendor-fidelity.md` to keep vendor-shaped facades honest. Do not expand either into a parallel planning system.
 
-## Guardrails
+## Continuity And Guardrails
 
-Agents working in this lab should start with `AGENTS.md` and `evidence/design-guardrails.md`. Those files define the lab structure, proof categories, violation categories, review categories, and test-theater rules used to keep evidence honest as the runtime spine evolves.
+Agents working in this lab should start with `AGENTS.md`, `RUNBOOK.md`, and `evidence/design-guardrails.md`.
+
+- `RUNBOOK.md` is the canonical operating guide for lab continuity, authority order, red/yellow/green upkeep, spec feedback, and handoff shape.
+- `AGENTS.md` defines the local lab structure, containment rules, and required reading.
+- `evidence/design-guardrails.md` defines proof categories, violation categories, review categories, and test-theater rules.
+- `evidence/runtime-spine-verification-diagnostic.md` is the living red/yellow/green runtime spine status view.
+- `evidence/phased-agent-verification-workflow.md` captures the repeatable phased review workflow for future spec and migration burn-down work.
+
+Do not duplicate the manifest or diagnostic tables in new docs. Link to them and update the source artifact when status changes.
