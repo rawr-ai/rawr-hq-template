@@ -4,20 +4,23 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-two.server-orpc-elysia-boundary",
-    "focus": "Prove a contained oRPC Fetch request boundary can delegate through the server harness into ProcessExecutionRuntime while keeping Elysia and production server mounting fenced.",
+    "id": "phase-two.async-inngest-boundary",
+    "focus": "Prove a contained Inngest-facing Bun serve/function/step path can delegate through the async harness into ProcessExecutionRuntime while keeping durable semantics and production worker topology fenced.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.invocation-bound-clients",
-      "vendor.boundary.orpc-native-shape",
+      "vendor.boundary.inngest-handoff-shape",
       "audit.p1.effect-boundary-policy-matrix",
       "audit.p1.effect-boundary-policy-matrix.residual",
       "audit.p1.runtime-resource-access",
-      "audit.p2.server-route-derivation",
       "audit.p2.adapter-effect-callback-lowering",
+      "audit.p2.async-effect-bridge-lowering",
       "audit.p2.production-harness-mounting",
       "audit.p2.provider-effect-process-spine",
-      "audit.p2.server-orpc-fetch-boundary",
+      "audit.p2.async-inngest-function-step-boundary",
+      "simulation.async-step-owner-membership-artifacts",
+      "simulation.adapter-callback-bridge-lowering",
+      "simulation.first-server-async-harness-mounts",
       "simulation.mini-runtime-registry-invocation"
     ]
   },
@@ -522,7 +525,7 @@
       "id": "audit.p2.async-effect-bridge-lowering",
       "status": "xfail",
       "source": "Runtime spec sections 12, 19, 20, 21, and 24",
-      "oracle": "Contained async bridge payload lowering is proven, but native Inngest FunctionBundle/worker mounting, durable scheduling, retry/idempotency, and final async host policy remain unresolved.",
+      "oracle": "Contained async bridge payload lowering and a contained Inngest-facing Bun serve/function/step path are proven, but production Inngest worker mounting, durable scheduling, retry/idempotency, run history, and final async host policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/async-effect-bridge-lowering.todo.ts"
       ]
@@ -531,7 +534,7 @@
       "id": "audit.p2.production-harness-mounting",
       "status": "xfail",
       "source": "Runtime spec harness mounting lifecycle",
-      "oracle": "First contained server/async mini harnesses and a contained oRPC Fetch request boundary are proven, but production Elysia/oRPC/Inngest mounting, deployment wiring, full StartedHarness lifecycle, other host kinds, durable async semantics, and final boundary policy remain unresolved.",
+      "oracle": "First contained server/async mini harnesses, a contained oRPC Fetch request boundary, and a contained Inngest-facing Bun serve/function/step boundary are proven, but production Elysia/oRPC/Inngest mounting, deployment wiring, full StartedHarness lifecycle, other host kinds, durable async semantics, and final boundary policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/first-server-async-harness-mounting.todo.ts"
       ]
@@ -585,6 +588,22 @@
         "src/mini-runtime/adapters/server.ts",
         "src/mini-runtime/harnesses.ts",
         "test/mini-runtime/server-orpc-boundary.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime"
+      ]
+    },
+    {
+      "id": "audit.p2.async-inngest-function-step-boundary",
+      "status": "simulation-proof",
+      "source": "Phase Two claim ledger rows p2.async.inngest-handoff, p2.async.callback-step, and p2.async.durable-residual; runtime spec sections 12, 19, 20, 21, 23, and 24",
+      "oracle": "A lab-contained inngest/bun serve handler receives a real Fetch Request, routes to a real Inngest.createFunction handler by absolute function id, crosses step.run with the stable async step id, delegates only through an async bridge payload and started mini async harness into ProcessExecutionRuntime, preserves owner/ref/step identity across boundary, adapter, harness, and runtime records, rejects unknown function ids before harness invocation, and keeps event/resource/execution secrets out of response and observation records. Durable scheduling, retry, replay, idempotency, run history, production worker topology, final async membership syntax, dispatcher public DX, product async policy, and production migration readiness remain fenced.",
+      "fixtures": [
+        "src/mini-runtime/adapters/inngest-async.ts",
+        "src/mini-runtime/adapters/async.ts",
+        "src/mini-runtime/harnesses.ts",
+        "test/mini-runtime/inngest-async-boundary.test.ts"
       ],
       "gates": [
         "typecheck",
