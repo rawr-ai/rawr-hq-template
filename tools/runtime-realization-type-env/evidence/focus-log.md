@@ -4,19 +4,18 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.runtime-telemetry-hyperdx-observation`
-- Focus: prove contained telemetry projection/export for already-redacted
-  mini-runtime records, including local OTLP/HyperDX ingest smoke, without
-  promoting product observability, query policy, catalog persistence, or durable
-  async semantics.
+- ID: `lab-v2.migration-control-plane-observation`
+- Focus: prove a contained, non-persistent migration/control-plane observation
+  packet can summarize already-safe deployment handoff, in-memory catalog,
+  redacted telemetry records, export status, and placement candidates without
+  promoting storage, placement, query policy, or production migration readiness.
 - Related manifest entries:
-  - `audit.p1.effect-boundary-policy-matrix`
+  - `audit.migration.control-plane-observation`
+  - `audit.migration.control-plane-observation.residual`
+  - `simulation.deployment-handoff`
   - `audit.telemetry.hyperdx-observation`
   - `audit.telemetry.hyperdx-observation.residual`
-  - `simulation.first-server-async-harness-mounts`
-  - `simulation.service-binding-cache-runtime-access`
-  - `audit.p2.runtime-profile-config-redaction`
-  - `audit.canonical-spec-authority-refresh`
+  - `audit.source-hygiene`
 
 ## Status Meanings
 
