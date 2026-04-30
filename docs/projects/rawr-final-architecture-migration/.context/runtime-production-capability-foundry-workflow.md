@@ -120,6 +120,21 @@ on the drained tip, or an explicitly documented Graphite-safe alternative.
   intentionally pre-provider/pre-host-mounting; timeout policy is enforced at
   the process-runtime boundary, raw Effect execution remains inside the
   substrate runtime access, and bootgraph finalization is idempotent.
+- `codex/runtime-prod-04-resources-providers-config`: first production resource,
+  provider/config, secret-store, provider dependency graph, redacted catalog,
+  and provider lifecycle cut established. `@rawr/resource-clock` is the first
+  resource package, provider acquisition/release uses Effect 4 through the
+  runtime substrate, and catalog persistence is redacted/file-backed.
+- `codex/runtime-prod-05-production-host-mount`: `apps/hq` entrypoints now bind
+  role selection through `@rawr/sdk/app` without server-internal imports; the
+  concrete server app owns the production `startApp(...)` host adapter; legacy
+  cutover and `host-composition` are deleted from live source; hard gates
+  reject their return.
+- `codex/runtime-prod-06-capability-foundry`: in progress. Scope is intentionally
+  generator-owned scaffolding plus one generated declaration-cold exemplar
+  (`foundry-proof`). It proves service/server/async projection generation,
+  inventory, idempotency, and gates. It does not claim generated async durable
+  execution or full `@rawr/hq-sdk` adapter retirement.
 
 ## Source-Mine Ledger
 

@@ -5,6 +5,11 @@
       "description": "Writes the Node 1 first-cohort architecture inventory used by nx sync:check.",
       "implementation": "./sync-slice-0-inventory/generator.cjs",
       "schema": "./sync-slice-0-inventory/schema.json"
+    },
+    "capability-foundry": {
+      "description": "Generates a service plus server API and async workflow projection slice for a runtime capability.",
+      "implementation": "./capability-foundry/generator.cjs",
+      "schema": "./capability-foundry/schema.json"
     }
   }
 }

@@ -1,0 +1,52 @@
+{
+  "projects": {
+    "@rawr/foundry-proof": {
+      "config": "services/foundry-proof/project.json",
+      "tags": [
+        "type:service",
+        "role:servicepackage",
+        "migration-slice:runtime-production",
+        "capability:foundry-proof"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "plugin-server-api-foundry-proof": {
+      "config": "plugins/server/api/foundry-proof/project.json",
+      "tags": [
+        "type:plugin",
+        "migration-slice:runtime-production",
+        "role:server",
+        "surface:api",
+        "capability:foundry-proof"
+      ],
+      "targets": [
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "plugin-async-workflow-foundry-proof": {
+      "config": "plugins/async/workflows/foundry-proof/project.json",
+      "tags": [
+        "type:plugin",
+        "migration-slice:runtime-production",
+        "role:async",
+        "surface:workflow",
+        "capability:foundry-proof"
+      ],
+      "targets": [
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    }
+  }
+}
