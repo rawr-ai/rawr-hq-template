@@ -38,6 +38,36 @@ function asyncOwnerId(input: Extract<
   throw new Error("async execution input must include workflowId, scheduleId, or consumerId");
 }
 
+type AsyncDescriptorRef = Extract<
+  ExecutionDescriptorRef,
+  { boundary: "plugin.async-step" }
+>;
+
+// Membership validation intentionally accepts widened refs so negative fixtures can
+// prove the one-owner lifecycle boundary after type erasure, without executing or
+// interpreting the async step body.
+function asyncOwnerEntries(ref: AsyncDescriptorRef): readonly {
+  readonly kind: "workflow" | "schedule" | "consumer";
+  readonly id: string;
+}[] {
+  const widened = ref as {
+    readonly workflowId?: unknown;
+    readonly scheduleId?: unknown;
+    readonly consumerId?: unknown;
+  };
+
+  return [
+    { kind: "workflow" as const, id: widened.workflowId },
+    { kind: "schedule" as const, id: widened.scheduleId },
+    { kind: "consumer" as const, id: widened.consumerId },
+  ].filter(
+    (entry): entry is {
+      readonly kind: "workflow" | "schedule" | "consumer";
+      readonly id: string;
+    } => typeof entry.id === "string" && entry.id.length > 0,
+  );
+}
+
 export const defaultRuntimeSpineIdentityPolicy = {
   executionDescriptorId(input) {
     switch (input.boundary) {
@@ -236,14 +266,28 @@ function deriveWorkflowDispatcherDescriptors(
   dispatchers: readonly WorkflowDispatcherDerivationInput[],
 ): readonly WorkflowDispatcherDescriptor[] {
   return dispatchers.map((dispatcher) => {
-    const reservedDiagnostics: RuntimeDiagnostic[] = [
-      {
+    const workflowIds = new Set(dispatcher.workflowIds);
+    const operations = dispatcher.operations ?? [];
+    const diagnostics: RuntimeDiagnostic[] = [...(dispatcher.diagnostics ?? [])];
+
+    // Workflow refs are only inventory until an operation declares dispatcher
+    // authority; this keeps descriptor discovery from implying access.
+    if (operations.length === 0) {
+      diagnostics.push({
         code: "runtime.dispatcher-access.reserved",
         message:
           "dispatcher descriptor records operation inventory only; dispatcher access declaration remains unresolved",
-      },
-      ...(dispatcher.diagnostics ?? []),
-    ];
+      });
+    }
+
+    for (const operation of operations) {
+      if (!workflowIds.has(operation.workflowId)) {
+        diagnostics.push({
+          code: "runtime.dispatcher-access.workflow-unlisted",
+          message: `dispatcher operation ${operation.operation} targets undeclared workflow ${operation.workflowId}`,
+        });
+      }
+    }
 
     return {
       kind: "workflow.dispatcher-descriptor",
@@ -255,8 +299,8 @@ function deriveWorkflowDispatcherDescriptors(
       surface: dispatcher.surface,
       capability: dispatcher.capability,
       workflowRefs: uniqueWorkflowRefs(dispatcher.workflowIds),
-      operations: dispatcher.operations ?? [],
-      diagnostics: reservedDiagnostics,
+      operations,
+      diagnostics,
     };
   });
 }
@@ -457,13 +501,40 @@ function deriveNegativeSpaceDiagnostics(
   refs: readonly ExecutionDescriptorRef[],
 ): readonly RuntimeDiagnostic[] {
   const diagnostics: RuntimeDiagnostic[] = [];
+  // This is a proof-only membership check: it verifies that each async step
+  // belongs to exactly one lifecycle owner, but does not lower, schedule, or run
+  // the step.
+  const seenAsyncMemberships = new Map<string, AsyncDescriptorRef>();
 
-  if (refs.some((ref) => ref.boundary === "plugin.async-step")) {
-    diagnostics.push({
-      code: "runtime.async-step-membership.reserved",
-      message:
-        "async step refs come only from explicit lab inputs; workflow membership derivation remains unresolved",
+  for (const ref of refs) {
+    if (ref.boundary !== "plugin.async-step") continue;
+
+    const ownerEntries = asyncOwnerEntries(ref);
+    if (ownerEntries.length !== 1) {
+      diagnostics.push({
+        code: "runtime.async-step-membership.invalid-owner",
+        message: `async step ${ref.executionId} must declare exactly one workflow, schedule, or consumer owner`,
+      });
+      continue;
+    }
+
+    const [{ kind: ownerKind, id: ownerId }] = ownerEntries;
+    const membershipKey = stableJson({
+      ownerId,
+      ownerKind,
+      stepId: ref.stepId,
     });
+    const existing = seenAsyncMemberships.get(membershipKey);
+
+    if (existing) {
+      diagnostics.push({
+        code: "runtime.async-step-membership.duplicate",
+        message: `duplicate async step membership for ${ownerKind} ${ownerId} step ${ref.stepId}`,
+      });
+      continue;
+    }
+
+    seenAsyncMemberships.set(membershipKey, ref);
   }
 
   if (

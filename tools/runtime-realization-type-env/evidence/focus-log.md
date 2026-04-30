@@ -4,16 +4,18 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.runtime-resource-access-service-binding-dag`
-- Focus: use the contained runtime realization lab to verify explicit service
-  binding dependency graph validation and dependency-first binding construction
-  while preserving the sanctioned mini-runtime access facade and leaving final
-  `RuntimeResourceAccess` law fenced.
+- ID: `lab-v2.dispatcher-access-async-step-membership`
+- Focus: use the contained runtime realization lab to verify explicit dispatcher
+  operation inventory and async owner-to-step membership artifacts without
+  defaulting access, executing bodies, deciding public dispatcher API, or
+  claiming durable async semantics.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
+  - `audit.p0.async-step-membership`
   - `audit.p1.effect-managed-runtime-substrate`
   - `audit.p1.process-local-coordination-resources`
+  - `audit.p1.dispatcher-access`
   - `audit.p1.runtime-resource-access`
   - `vendor.effect.runtime-substrate`
   - `vendor.effect.process-local-coordination`
@@ -24,6 +26,8 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `simulation.bootgraph-catalog-finalization`
   - `simulation.service-binding-cache-runtime-access`
   - `simulation.mini-runtime-registry-invocation`
+  - `simulation.dispatcher-descriptor-operation-inventory`
+  - `simulation.async-step-owner-membership-artifacts`
   - `simulation.adapter-callback-delegation`
   - `simulation.deployment-handoff`
   - `audit.p1.provider-effect-plan-shape`
