@@ -4,8 +4,8 @@
     "sha256": "4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654"
   },
   "currentExperiment": {
-    "id": "lab-v2.effect-native-runtime-proof",
-    "focus": "Use real effect@3.21.2 and a miniature process runtime to separate proven vendor/runtime behavior from still-open runtime-spine experiments.",
+    "id": "lab-v2.middle-spine-verification",
+    "focus": "Use the contained runtime realization lab to verify the specified middle runtime spine without promoting vendor or simulation proof to production runtime readiness.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.curated-effect-public-surface",
@@ -16,6 +16,9 @@
       "vendor.boundary.typebox-runtime-schema",
       "vendor.boundary.orpc-native-shape",
       "vendor.boundary.inngest-handoff-shape",
+      "simulation.middle-spine-derivation-compiler",
+      "simulation.bootgraph-catalog-finalization",
+      "simulation.service-binding-cache-runtime-access",
       "simulation.mini-runtime-registry-invocation",
       "simulation.adapter-callback-delegation",
       "simulation.deployment-handoff",
@@ -123,14 +126,16 @@
       "id": "accepted.provider-profile-closure",
       "status": "simulation-proof",
       "source": "Runtime spec sections 13 and 24",
-      "oracle": "Profile-selected providers must cover non-optional provider resource requirements before boot.",
+      "oracle": "Profile-selected providers must cover non-optional provider resource requirements before boot, scoped by resource id, role, lifetime, and instance.",
       "fixtures": [
         "fixtures/positive/resource-provider-profile.ts",
-        "test/spine-simulation.test.ts"
+        "test/spine-simulation.test.ts",
+        "test/middle-spine-derivation.test.ts"
       ],
       "gates": [
         "typecheck",
-        "simulate"
+        "simulate",
+        "middle-spine"
       ]
     },
     {
@@ -209,6 +214,54 @@
       ]
     },
     {
+      "id": "simulation.middle-spine-derivation-compiler",
+      "status": "simulation-proof",
+      "source": "Runtime spec sections 9, 12, 13, 15, and 24",
+      "oracle": "Explicit lab declarations, including explicit async descriptors, derive normalized graph artifacts, descriptor refs/table inputs, service binding plans, surface plans, dispatcher descriptor inventory without defaulting access operations, refs-only portable artifacts, compiled process plan, provider dependency graph, registry input, harness placeholders, scoped bootgraph module input, diagnostics, and bootgraph input without executing descriptors or lowering providers.",
+      "fixtures": [
+        "src/spine/derive.ts",
+        "src/spine/compiler.ts",
+        "src/spine/artifacts.ts",
+        "test/middle-spine-derivation.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "middle-spine"
+      ]
+    },
+    {
+      "id": "simulation.bootgraph-catalog-finalization",
+      "status": "simulation-proof",
+      "source": "Runtime spec bootgraph, provisioning, RuntimeCatalog, diagnostics, and finalization record requirements",
+      "oracle": "Fake boot modules start after dependencies, roll back only started modules on failure, finalize in reverse order while continuing after finalizer failure, and record redacted startup/rollback/finalization/catalog entries without live handles; compiler bootgraph input preserves provider resource, lifetime, role, and instance identity.",
+      "fixtures": [
+        "src/mini-runtime/bootgraph.ts",
+        "src/mini-runtime/catalog.ts",
+        "test/mini-runtime/process-runtime.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime"
+      ]
+    },
+    {
+      "id": "simulation.service-binding-cache-runtime-access",
+      "status": "simulation-proof",
+      "source": "Runtime spec service binding cache and RuntimeResourceAccess boundary requirements",
+      "oracle": "The mini-runtime cache lazily reuses bindings for identical construction-time process/role/surface/capability/service/config/dependency inputs, excludes invocation from cache identity, and exposes only sanctioned runtime resource/optional resource/telemetry/diagnostic/topology access methods.",
+      "fixtures": [
+        "src/mini-runtime/runtime-access.ts",
+        "src/mini-runtime/service-binding-cache.ts",
+        "fixtures/inline-negative/runtime-access-boundaries.ts",
+        "test/mini-runtime/process-runtime.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
+        "mini-runtime"
+      ]
+    },
+    {
       "id": "simulation.mini-runtime-registry-invocation",
       "status": "simulation-proof",
       "source": "Runtime spec descriptor table, registry, and process runtime lifecycle",
@@ -227,13 +280,17 @@
       "id": "simulation.adapter-callback-delegation",
       "status": "simulation-proof",
       "source": "Runtime spec server/internal/async adapter lowering lifecycle",
-      "oracle": "Fake host adapters delegate to ProcessExecutionRuntime instead of executing descriptors directly.",
+      "oracle": "Instrumented fake server and async host adapters accept only their boundary-specific descriptor refs and delegate to ProcessExecutionRuntime instead of executing descriptors directly.",
       "fixtures": [
+        "src/mini-runtime/adapters/delegation.ts",
         "src/mini-runtime/adapters/server.ts",
         "src/mini-runtime/adapters/async.ts",
+        "fixtures/inline-negative/runtime-access-boundaries.ts",
         "test/mini-runtime/process-runtime.test.ts"
       ],
       "gates": [
+        "typecheck",
+        "negative",
         "mini-runtime"
       ]
     },
@@ -241,12 +298,14 @@
       "id": "simulation.deployment-handoff",
       "status": "simulation-proof",
       "source": "Runtime spec lifecycle/deployment handoff boundary",
-      "oracle": "Deployment handoff carries portable artifacts and compiled process plans without descriptor tables or live runtime handles.",
+      "oracle": "Deployment handoff carries coherent portable artifacts and compiled process plans without descriptor tables, executable closures, live runtime handles, runtime access, or raw secret fields; app id mismatches and widened bad values are rejected at runtime, and object-literal live handles fail the negative type fixture.",
       "fixtures": [
         "src/mini-runtime/deployment-handoff.ts",
+        "fixtures/fail/deployment-live-handle.fail.ts",
         "test/mini-runtime/process-runtime.test.ts"
       ],
       "gates": [
+        "negative",
         "mini-runtime"
       ]
     },

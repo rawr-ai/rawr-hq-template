@@ -4,3 +4,7 @@ export * from "./diagnostics";
 export * from "./provider-lowering";
 export * from "./process-resources";
 export * from "./deployment-handoff";
+export * from "./catalog";
+export * from "./bootgraph";
+export * from "./runtime-access";
+export * from "./service-binding-cache";
