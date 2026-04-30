@@ -1,14 +1,16 @@
-// TODO/P2: prove async step-local Effect bridge lowering.
+// TODO/P2 residual: prove production async step-local Effect bridge lowering.
 //
-// This is separate from async step membership. Membership identifies which
-// workflow/schedule/consumer owns a step. Bridge lowering proves a host step
-// invocation runs the pre-derived step descriptor through ProcessExecutionRuntime
-// and EffectRuntimeAccess.
+// The contained lab now proves async bridge payloads that preserve
+// workflow/schedule/consumer owner identity and delegate through
+// ProcessExecutionRuntime. Remaining work is native Inngest FunctionBundle or
+// worker mounting and durable host semantics.
 
 export interface ExpectedAsyncEffectBridgeLowering {
   readonly stepDescriptor: "pre-derived";
-  readonly hostInvocation: "adapter-lowered";
+  readonly provenLabInvocation: "adapter.async-step-bridge-payload";
   readonly processRuntime: "required";
   readonly durableSemanticsOwner: "async-host";
   readonly localEffectOwner: "process-execution-runtime";
+  readonly remainingFunctionBundle: "required";
+  readonly remainingDurableScheduling: "required";
 }

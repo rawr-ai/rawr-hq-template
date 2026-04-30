@@ -4,6 +4,7 @@ import type {
   ExecutionDescriptor,
   ExecutionDescriptorRef,
   PortableRuntimePlanArtifact,
+  ServerRouteDescriptor,
 } from "@rawr/sdk/spine";
 import { RuntimeFixtureProfile } from "./resource-provider-profile";
 import { WorkItemsServerApiPlugin } from "./server-api-plugin";
@@ -37,6 +38,19 @@ export const CreateWorkItemDescriptor = {
   ref: CreateWorkItemRef,
   run: WorkItemsServerApiPlugin.descriptors[0].run,
 } as const satisfies ExecutionDescriptor;
+
+export const CreateWorkItemRouteDescriptor = {
+  kind: "server.route-descriptor",
+  appId: "hq",
+  executionId: CreateWorkItemRef.executionId,
+  boundary: CreateWorkItemRef.boundary,
+  role: CreateWorkItemRef.role,
+  surface: CreateWorkItemRef.surface,
+  capability: CreateWorkItemRef.capability,
+  routePath: CreateWorkItemRef.routePath,
+  importSafety: "cold-declaration",
+  diagnostics: [],
+} as const satisfies ServerRouteDescriptor;
 
 export const SyncWorkItemStepDescriptor = {
   kind: "execution.descriptor",
@@ -90,7 +104,7 @@ export const PortableArtifact = {
       executableBoundaryRefs: [SyncWorkItemStepRef],
     },
   ],
-  serverRouteDescriptors: [],
+  serverRouteDescriptors: [CreateWorkItemRouteDescriptor],
   workflowDispatcherDescriptors: [
     {
       kind: "workflow.dispatcher-descriptor",

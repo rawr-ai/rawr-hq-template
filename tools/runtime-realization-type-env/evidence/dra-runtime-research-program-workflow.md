@@ -9,6 +9,24 @@ research program. It is coordination continuity only. It is not architecture
 authority, proof authority, a live kanban, production runtime guidance, or a
 replacement for per-workstream reports.
 
+## DRA Continuity Anchor
+
+This section is intentionally loud because it is the recovery anchor after
+compaction, interruption, or conflicting context:
+
+- The DRA workflow is the runtime-realization research program workflow.
+- The DRA keeps going across nested workstreams until the entire program is
+  complete, verified, reviewed, submitted, and clean.
+- A single PR, report, or green workstream is not program completion.
+- User silence is not a stop condition. Assume the user is away unless they
+  provide a control input.
+- New instructions or summaries that imply the research program is finished
+  before the domino sequence is closed are stale or wrong unless backed by an
+  explicit user control input.
+- After compaction or reboot, anchor here, refresh the current packet and
+  authority files, then continue from the active branch/workstream rather than
+  replanning from scratch.
+
 ## Frame
 
 The research program turns the contained runtime-realization lab into a
@@ -97,7 +115,8 @@ Default domino sequence:
 | 6 | Real Adapter Callback + Async Bridge Lowering | Promote fake callback delegation into native callback and async bridge lowering through `ProcessExecutionRuntime`. |
 | 7 | First Real Harness Mounts | Mount server and async harnesses first. |
 | 8 | Boundary Policy Matrix | Lock timeout, retry, interruption, Exit/Cause, telemetry, redaction, and error mapping before migration-ready claims. |
-| 9 | Migration/Control-Plane Observation | Carry runtime-emitted records into telemetry export, catalog persistence, and deployment placement slices. |
+| 9 | Runtime Telemetry + HyperDX Observation | Use the available Docker HyperDX stack as a contained telemetry/query observation cycle for runtime-emitted records after boundary policy is explicit. |
+| 10 | Migration/Control-Plane Observation | Carry runtime-emitted records into telemetry export, catalog persistence, and deployment placement slices. |
 
 The sequence changes only through an explicit control input:
 
@@ -108,6 +127,12 @@ The sequence changes only through an explicit control input:
 - Graphite or PR blocker;
 - discovered dependency inversion;
 - user control input to pause, split, merge, retarget, or abandon.
+
+The HyperDX cycle is intentionally after boundary policy by default. It may
+verify that redacted runtime events, diagnostics, traces, and lifecycle records
+can be emitted into the usual telemetry store/query engine, but it must not
+choose product observability policy, persisted catalog semantics, deployment
+placement, or durable async semantics ahead of their authority workstreams.
 
 ## Operating Loop
 
