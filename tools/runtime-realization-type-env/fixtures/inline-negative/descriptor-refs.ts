@@ -1,4 +1,7 @@
-import type { ExecutionDescriptorRef } from "@rawr/sdk/spine";
+import type {
+  ExecutionDescriptorRef,
+  ServerRouteDeclaration,
+} from "@rawr/sdk/spine";
 
 export const MissingStepId = {
   kind: "execution.descriptor-ref",
@@ -49,3 +52,14 @@ export const WrongBoundaryFields = {
   // @ts-expect-error server API refs require routePath, not procedurePath.
   procedurePath: ["items", "create"],
 } as const satisfies ExecutionDescriptorRef;
+
+export const WrongServerRouteBoundary = {
+  kind: "server.route-declaration",
+  // @ts-expect-error server route declarations require a server API boundary.
+  boundary: "plugin.async-step",
+  role: "server",
+  surface: "api",
+  capability: "work-items",
+  routePath: ["items", "create"],
+  importSafety: "cold-declaration",
+} as const satisfies ServerRouteDeclaration;

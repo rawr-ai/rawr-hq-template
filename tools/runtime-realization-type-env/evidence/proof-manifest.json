@@ -4,8 +4,8 @@
     "sha256": "4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654"
   },
   "currentExperiment": {
-    "id": "lab-v2.dispatcher-access-async-step-membership",
-    "focus": "Use the contained runtime realization lab to verify explicit dispatcher operation inventory and async owner-to-step membership artifacts without defaulting access, executing bodies, deciding public dispatcher API, or claiming durable async semantics.",
+    "id": "lab-v2.server-route-derivation",
+    "focus": "Use the contained runtime realization lab to verify cold server route factory derivation and import-safety artifacts without executing route bodies, mounting native server hosts, deciding final public route import-safety law, or claiming Elysia/oRPC production readiness.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.curated-effect-public-surface",
@@ -25,12 +25,14 @@
       "simulation.mini-runtime-registry-invocation",
       "simulation.dispatcher-descriptor-operation-inventory",
       "simulation.async-step-owner-membership-artifacts",
+      "simulation.server-route-derivation-import-safety",
       "simulation.adapter-callback-delegation",
       "simulation.deployment-handoff",
       "audit.p1.provider-effect-plan-shape",
       "audit.p1.provider-effect-plan-lowering",
       "audit.p1.effect-boundary-policy-matrix",
       "audit.p1.safe-effect-composition-surface",
+      "audit.p2.server-route-derivation",
       "audit.p2.adapter-effect-callback-lowering",
       "audit.p2.async-effect-bridge-lowering",
       "audit.p2.runtime-profile-config-redaction"
@@ -222,7 +224,7 @@
       "id": "simulation.middle-spine-derivation-compiler",
       "status": "simulation-proof",
       "source": "Runtime spec sections 9, 12, 13, 15, and 24",
-      "oracle": "Explicit lab declarations, including explicit async descriptors, derive normalized graph artifacts, descriptor refs/table inputs, service binding plans, surface plans, dispatcher descriptor inventory, refs-only portable artifacts, compiled process plan, provider dependency graph, registry input, harness placeholders, scoped bootgraph module input, diagnostics, and bootgraph input without executing descriptors or lowering providers.",
+      "oracle": "Explicit lab declarations, including explicit async descriptors and cold server route factories, derive normalized graph artifacts, descriptor refs/table inputs, service binding plans, surface plans, route descriptors, dispatcher descriptor inventory, explicit dispatcher operation inventory, async owner-to-step membership artifacts, refs-only portable artifacts, compiled process plan, provider dependency graph, registry input, harness placeholders, scoped bootgraph module input, diagnostics, and bootgraph input without executing descriptor bodies, mounting hosts, or lowering providers.",
       "fixtures": [
         "src/spine/derive.ts",
         "src/spine/compiler.ts",
@@ -257,6 +259,24 @@
       "fixtures": [
         "src/spine/derive.ts",
         "src/spine/artifacts.ts",
+        "fixtures/inline-negative/descriptor-refs.ts",
+        "test/middle-spine-derivation.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
+        "middle-spine"
+      ]
+    },
+    {
+      "id": "simulation.server-route-derivation-import-safety",
+      "status": "simulation-proof",
+      "source": "Runtime spec sections 5, 11, 22, and 23",
+      "oracle": "Lab-local cold server route factories produce server route descriptors, execution refs, descriptor table inputs, surface runtime plans, and refs-only portable artifacts without executing route bodies, mounting Elysia/oRPC, importing production code, or treating explicit route refs as derivation proof; failed factories, invalid route paths, unsafe import markers, duplicate route identities, and explicit server refs without route factory coverage remain diagnostic negative space.",
+      "fixtures": [
+        "src/sdk/plugins/server.ts",
+        "src/spine/artifacts.ts",
+        "src/spine/derive.ts",
         "fixtures/inline-negative/descriptor-refs.ts",
         "test/middle-spine-derivation.test.ts"
       ],
@@ -440,7 +460,7 @@
       "id": "audit.p2.server-route-derivation",
       "status": "xfail",
       "source": "M2 core-spine audit P2",
-      "oracle": "Cold route factory derivation mechanics must be stated before a positive derivation proof is accepted.",
+      "oracle": "Final public route import-safety law, production route module topology, native oRPC/Elysia adapter lowering, OpenAPI publication, and real HTTP request path remain unresolved; the lab proves contained cold route factory artifacts only.",
       "fixtures": [
         "fixtures/todo/server-route-derivation.todo.ts"
       ]

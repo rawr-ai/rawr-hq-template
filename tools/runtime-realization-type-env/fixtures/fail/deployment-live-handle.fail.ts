@@ -10,6 +10,7 @@ export const BadDeploymentRuntimeHandoff = {
     executionDescriptorRefs: [],
     serviceBindingPlans: [],
     surfaceRuntimePlans: [],
+    serverRouteDescriptors: [],
     workflowDispatcherDescriptors: [],
     diagnostics: [],
   },

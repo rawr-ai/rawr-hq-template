@@ -243,6 +243,53 @@ export interface SurfaceRuntimePlan {
   readonly executableBoundaryRefs: readonly ExecutionDescriptorRef[];
 }
 
+export type ServerRouteBoundaryKind = "plugin.server-api" | "plugin.server-internal";
+
+/** Declares that route metadata can be read during spine derivation without mounting a server adapter, importing host-only modules, or executing route bodies. */
+export type ServerRouteImportSafety = "cold-declaration";
+
+export interface ServerRouteDeclaration {
+  readonly kind: "server.route-declaration";
+  readonly boundary: ServerRouteBoundaryKind;
+  readonly role: "server";
+  readonly surface: string;
+  readonly capability: string;
+  readonly routePath: readonly string[];
+  readonly executionId?: string;
+  readonly importSafety: ServerRouteImportSafety;
+  readonly descriptor?: ExecutionDescriptor<any, any, any, any, any>;
+  readonly policy?: CompiledExecutionPlan["policy"];
+}
+
+/**
+ * Proof-only route discovery boundary. `deriveRoutes()` may run during derivation,
+ * but it must only produce cold declarations; request handling, adapter mounting,
+ * and Effect execution remain outside this phase.
+ */
+export interface ServerRouteDerivationInput {
+  readonly kind: "server.route-derivation-input";
+  readonly routeFactoryId: string;
+  deriveRoutes(): readonly ServerRouteDeclaration[];
+}
+
+/**
+ * Portable server-route inventory emitted after validation. This records route identity
+ * and diagnostics for downstream proof/review; it deliberately does not choose HTTP
+ * method, auth policy, middleware order, adapter mount shape, or deployment wiring.
+ */
+export interface ServerRouteDescriptor {
+  readonly kind: "server.route-descriptor";
+  readonly appId: string;
+  readonly executionId: string;
+  readonly boundary: ServerRouteBoundaryKind;
+  readonly role: "server";
+  readonly surface: string;
+  readonly capability: string;
+  readonly routePath: readonly string[];
+  readonly importSafety: ServerRouteImportSafety;
+  readonly diagnostics: readonly RuntimeDiagnostic[];
+}
+
 export interface WorkflowDispatcherOperationDescriptor {
   readonly operation: "dispatch" | "status" | "cancel";
   readonly workflowId: string;
@@ -266,6 +313,7 @@ export interface PortableRuntimePlanArtifact {
   readonly executionDescriptorRefs: readonly ExecutionDescriptorRef[];
   readonly serviceBindingPlans: readonly ServiceBindingPlan[];
   readonly surfaceRuntimePlans: readonly SurfaceRuntimePlan[];
+  readonly serverRouteDescriptors: readonly ServerRouteDescriptor[];
   readonly workflowDispatcherDescriptors: readonly WorkflowDispatcherDescriptor[];
   readonly diagnostics: readonly RuntimeDiagnostic[];
 }
@@ -344,6 +392,7 @@ export interface RuntimeSpineDerivationInput {
   readonly identityPolicy?: IdentityPolicy;
   readonly executions: readonly RuntimeExecutionDerivationInput[];
   readonly serviceBindings?: readonly ServiceBindingDerivationInput[];
+  readonly serverRoutes?: readonly ServerRouteDerivationInput[];
   readonly dispatchers?: readonly WorkflowDispatcherDerivationInput[];
 }
 
@@ -392,6 +441,7 @@ export interface NormalizedAuthoringGraph {
   readonly executionDescriptorRefs: readonly ExecutionDescriptorRef[];
   readonly serviceBindingPlans: readonly ServiceBindingPlan[];
   readonly surfaceRuntimePlans: readonly SurfaceRuntimePlan[];
+  readonly serverRouteDescriptors: readonly ServerRouteDescriptor[];
   readonly workflowDispatcherDescriptors: readonly WorkflowDispatcherDescriptor[];
   readonly diagnostics: readonly RuntimeDiagnostic[];
 }
@@ -406,6 +456,7 @@ export interface RuntimeSpineDerivation {
   readonly executionPlanSeeds: readonly ExecutionPlanSeed[];
   readonly serviceBindingPlans: readonly ServiceBindingPlan[];
   readonly surfaceRuntimePlans: readonly SurfaceRuntimePlan[];
+  readonly serverRouteDescriptors: readonly ServerRouteDescriptor[];
   readonly workflowDispatcherDescriptors: readonly WorkflowDispatcherDescriptor[];
   readonly portableArtifact: PortableRuntimePlanArtifact;
   readonly diagnostics: readonly RuntimeDiagnostic[];
