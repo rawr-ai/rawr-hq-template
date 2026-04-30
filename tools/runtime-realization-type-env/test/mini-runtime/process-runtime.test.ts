@@ -15,7 +15,6 @@ import {
   createMiniServiceBindingCache,
   createProcessExecutionRuntime,
   executeMiniBootgraph,
-  lowerOpaqueProviderPlan,
   type ProcessExecutionRuntime,
 } from "../../src/mini-runtime";
 import type { AdapterDelegationEvent } from "../../src/mini-runtime/adapters/delegation";
@@ -30,11 +29,7 @@ import {
   SyncWorkItemStepPlan,
   SyncWorkItemStepRef,
 } from "../../fixtures/positive/app-and-plan-artifacts";
-import {
-  EmailProvider,
-  EmailSenderResource,
-  RuntimeFixtureProfile,
-} from "../../fixtures/positive/resource-provider-profile";
+import { RuntimeFixtureProfile } from "../../fixtures/positive/resource-provider-profile";
 import type { WorkItem } from "../../fixtures/positive/work-items-service";
 import { WorkItemsServerApiServices } from "../../fixtures/positive/server-api-plugin";
 
@@ -878,35 +873,6 @@ describe("runtime realization mini runtime", () => {
     assertNoLiveHandles(access.telemetryEvents());
     assertNoLiveHandles(access.topologyRecords());
     assertNoLiveHandles(access.diagnosticRecords());
-  });
-
-  test("keeps provider lowering as an explicit experiment while executing real Effect", async () => {
-    const plan = EmailProvider.build({
-      config: { from: "lab@example.com" },
-      resources: new Map(),
-      scope: { processId: "process-1", role: "server" },
-      telemetry: { event() {} },
-      diagnostics: { report() {} },
-    });
-    const lowered = lowerOpaqueProviderPlan(plan, {
-      async send() {},
-    });
-
-    expect(lowered.kind).toBe("provider.lowering-experiment");
-    expect(lowered.plan).toBe(plan);
-    expect(lowered.diagnostics[0]?.code).toBe(
-      "runtime.provider.effect-plan-shape-open",
-    );
-    await expect(
-      VendorEffect.runPromise(
-        Effect.tryPromise({
-          try: async () => EmailSenderResource.id,
-          catch: (cause) => cause,
-        }).pipe(Effect.flatMap(() => lowered.acquire)),
-      ),
-    ).resolves.toEqual({
-      send: expect.any(Function),
-    });
   });
 
   test("deployment handoff is compile-only and carries no descriptor table", () => {

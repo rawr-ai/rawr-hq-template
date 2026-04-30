@@ -8,6 +8,11 @@ type Awaitable<TValue> = TValue | Promise<TValue>;
 export interface MiniBootgraphModuleContext {
   readonly moduleId: string;
   readonly dependencies: readonly string[];
+  /**
+   * Started dependency values visible to this contained boot module only. This
+   * does not define final RuntimeResourceAccess semantics.
+   */
+  readonly dependencyValues: ReadonlyMap<string, unknown>;
   readonly orderIndex: number;
 }
 
@@ -121,12 +126,19 @@ export async function executeMiniBootgraph(input: {
     })),
   });
   const started: StartedMiniBootModule[] = [];
+  const startedById = new Map<string, unknown>();
   const startupOrder: string[] = [];
 
   for (const [orderIndex, module] of ordered.entries()) {
     const context = {
       moduleId: module.id,
       dependencies: [...(module.dependencies ?? [])],
+      dependencyValues: new Map(
+        (module.dependencies ?? []).map((dependencyId) => [
+          dependencyId,
+          startedById.get(dependencyId),
+        ]),
+      ),
       orderIndex,
     } satisfies MiniBootgraphModuleContext;
 
@@ -147,6 +159,7 @@ export async function executeMiniBootgraph(input: {
         started: moduleStarted,
         context,
       });
+      startedById.set(module.id, moduleStarted);
       recorder.record({
         phase: "boot.started",
         subjectId: module.id,

@@ -369,11 +369,13 @@ export interface ProviderDependencyGraphNode {
 
 export interface ProviderDependencyGraphEdge {
   readonly kind: "provider.dependency-edge";
+  readonly fromProviderKey: ProviderDependencyGraphNode;
   readonly fromProviderId: string;
   readonly toResourceId: string;
   readonly optional: boolean;
   readonly reason: string;
   readonly matchedProviderId?: string;
+  readonly matchedProviderKey?: ProviderDependencyGraphNode;
 }
 
 export interface ProviderDependencyGraph {

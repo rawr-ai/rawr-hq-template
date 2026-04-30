@@ -91,6 +91,10 @@ Each workstream report should contain:
 - Record phase teams when agents are used. Each phase may use a different team,
   agents may rotate inside a phase, and no more than 6 agents should be active
   concurrently for a single workstream phase.
+- For substantial TypeScript or lab-runtime edits, record the semantic
+  JSDoc/comment trailing pass in `Workflow` and `Review Result`: files reviewed,
+  comments added or intentionally skipped, and any repair demand. This is a
+  review lane, not proof authority.
 - The final output of a workstream should be the useful input packet for the
   next workstream.
 - No deferred item may exist only in a workstream report. Each deferred item

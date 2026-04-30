@@ -275,6 +275,37 @@ function providerSelectionKey(input: {
   });
 }
 
+function providerDependencyNode(input: {
+  readonly resource: RuntimeResource<unknown>;
+  readonly provider: { readonly id: string };
+  readonly lifetime: ResourceLifetime;
+  readonly role?: AppRole;
+  readonly instance?: string;
+}): ProviderDependencyGraphNode {
+  return {
+    kind: "provider.dependency-node",
+    resourceId: input.resource.id,
+    providerId: input.provider.id,
+    lifetime: input.lifetime,
+    role: input.role,
+    instance: input.instance,
+  };
+}
+
+function providerDependencyNodeKey(node: ProviderDependencyGraphNode): string {
+  return stableJson({
+    instance: node.instance ?? "default",
+    lifetime: node.lifetime,
+    providerId: node.providerId,
+    resourceId: node.resourceId,
+    role: node.role ?? "*",
+  });
+}
+
+function providerDependencyNodeLabel(node: ProviderDependencyGraphNode): string {
+  return `${node.providerId}:${node.resourceId}:${node.lifetime}:${node.role ?? "*"}:${node.instance ?? "default"}`;
+}
+
 function roleMatches(candidateRole: AppRole | undefined, expectedRole: AppRole | undefined) {
   if (expectedRole === undefined) return candidateRole === undefined;
   return candidateRole === expectedRole || candidateRole === undefined;
@@ -300,12 +331,17 @@ function collectProviderCycles(
   edges: readonly ProviderDependencyGraphEdge[],
 ): readonly RuntimeDiagnostic[] {
   const dependencies = new Map<string, Set<string>>();
+  const labels = new Map<string, string>();
 
   for (const edge of edges) {
-    if (!edge.matchedProviderId) continue;
-    const existing = dependencies.get(edge.fromProviderId) ?? new Set<string>();
-    existing.add(edge.matchedProviderId);
-    dependencies.set(edge.fromProviderId, existing);
+    if (!edge.matchedProviderKey) continue;
+    const fromKey = providerDependencyNodeKey(edge.fromProviderKey);
+    const matchedKey = providerDependencyNodeKey(edge.matchedProviderKey);
+    const existing = dependencies.get(fromKey) ?? new Set<string>();
+    existing.add(matchedKey);
+    dependencies.set(fromKey, existing);
+    labels.set(fromKey, providerDependencyNodeLabel(edge.fromProviderKey));
+    labels.set(matchedKey, providerDependencyNodeLabel(edge.matchedProviderKey));
   }
 
   const diagnostics: RuntimeDiagnostic[] = [];
@@ -322,7 +358,9 @@ function collectProviderCycles(
         emittedCycles.add(key);
         diagnostics.push({
           code: "provider.dependency.cycle",
-          message: `provider dependency cycle detected: ${key}`,
+          message: `provider dependency cycle detected: ${cycle
+            .map((nodeKey) => labels.get(nodeKey) ?? nodeKey)
+            .join(" -> ")}`,
         });
       }
       return;
@@ -367,17 +405,11 @@ export function deriveProviderDependencyGraph(
       seenSelections.set(key, selection.provider.id);
     }
 
-    nodes.push({
-      kind: "provider.dependency-node",
-      resourceId: selection.resource.id,
-      providerId: selection.provider.id,
-      lifetime: selection.lifetime,
-      role: selection.role,
-      instance: selection.instance,
-    });
+    nodes.push(providerDependencyNode(selection));
   }
 
   for (const selection of profile.providerSelections) {
+    const fromProviderKey = providerDependencyNode(selection);
     for (const requirement of selection.provider.requires) {
       const expectedRole = requirement.role ?? selection.role;
       const matchedSelection = profile.providerSelections.find(
@@ -391,10 +423,14 @@ export function deriveProviderDependencyGraph(
       edges.push({
         kind: "provider.dependency-edge",
         fromProviderId: selection.provider.id,
+        fromProviderKey,
         toResourceId: requirement.resource.id,
         optional: requirement.optional ?? false,
         reason: requirement.reason,
         matchedProviderId: matchedSelection?.provider.id,
+        matchedProviderKey: matchedSelection
+          ? providerDependencyNode(matchedSelection)
+          : undefined,
       });
 
       if (!requirement.optional && !matchedSelection) {

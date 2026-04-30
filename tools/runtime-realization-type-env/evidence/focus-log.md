@@ -4,8 +4,8 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.middle-spine-verification`
-- Focus: use the contained runtime realization lab to verify the specified middle runtime spine without promoting vendor or simulation proof to production runtime readiness.
+- ID: `lab-v2.provider-effect-plan-bootgraph-provisioning-lowering`
+- Focus: use the contained runtime realization lab to verify provider acquire/release lowering through the mini bootgraph/provisioning path without deciding final public `ProviderEffectPlan` shape or claiming production runtime readiness.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
