@@ -4,8 +4,8 @@
     "sha256": "4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654"
   },
   "currentExperiment": {
-    "id": "lab-v2.adapter-callback-async-bridge-lowering",
-    "focus": "Use the contained runtime realization lab to verify native-shaped server callback payloads and async step bridge payloads that consume pre-derived refs/artifacts and delegate through ProcessExecutionRuntime without mounting native hosts, deciding durable async semantics, or claiming production adapter readiness.",
+    "id": "lab-v2.first-server-async-harness-mounts",
+    "focus": "Use the contained runtime realization lab to verify first server and async started harness artifacts that consume adapter lowering payloads, expose invocation callbacks, preserve full ref identity, and delegate through ProcessExecutionRuntime without claiming production Elysia/oRPC/Inngest readiness or durable async semantics.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.curated-effect-public-surface",
@@ -28,6 +28,7 @@
       "simulation.server-route-derivation-import-safety",
       "simulation.adapter-callback-delegation",
       "simulation.adapter-callback-bridge-lowering",
+      "simulation.first-server-async-harness-mounts",
       "simulation.deployment-handoff",
       "audit.p1.provider-effect-plan-shape",
       "audit.p1.provider-effect-plan-lowering",
@@ -36,6 +37,7 @@
       "audit.p2.server-route-derivation",
       "audit.p2.adapter-effect-callback-lowering",
       "audit.p2.async-effect-bridge-lowering",
+      "audit.p2.production-harness-mounting",
       "audit.p2.runtime-profile-config-redaction"
     ]
   },
@@ -376,6 +378,24 @@
       ]
     },
     {
+      "id": "simulation.first-server-async-harness-mounts",
+      "status": "simulation-proof",
+      "source": "Runtime spec harness mounting lifecycle and adapter lowering prerequisites",
+      "oracle": "Lab-local server and async started harnesses consume only adapter lowering payloads, expose route/step invocation callbacks, preserve full payload ref identity, reject raw descriptors and compiler plans before invocation, record start/invoke/stop lifecycle events, reject stopped invocations before adapter delegation, and delegate through ProcessExecutionRuntime.",
+      "fixtures": [
+        "src/mini-runtime/harnesses.ts",
+        "src/mini-runtime/adapters/server.ts",
+        "src/mini-runtime/adapters/async.ts",
+        "fixtures/inline-negative/runtime-access-boundaries.ts",
+        "test/mini-runtime/process-runtime.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
+        "mini-runtime"
+      ]
+    },
+    {
       "id": "simulation.deployment-handoff",
       "status": "simulation-proof",
       "source": "Runtime spec lifecycle/deployment handoff boundary",
@@ -493,7 +513,7 @@
       "id": "audit.p2.adapter-effect-callback-lowering",
       "status": "xfail",
       "source": "Runtime spec sections 12 and 24; Effect-native addendum section 39",
-      "oracle": "Contained native-shaped callback payload lowering is proven, but production host callbacks, Elysia/oRPC request lifecycle, StartedHarness integration, and final boundary policy remain unresolved.",
+      "oracle": "Contained native-shaped callback payload lowering and first mini harness mounting are proven, but production host callbacks, Elysia/oRPC request lifecycle, and final boundary policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/adapter-effect-callback-lowering.todo.ts"
       ]
@@ -505,6 +525,15 @@
       "oracle": "Contained async bridge payload lowering is proven, but native Inngest FunctionBundle/worker mounting, durable scheduling, retry/idempotency, and final async host policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/async-effect-bridge-lowering.todo.ts"
+      ]
+    },
+    {
+      "id": "audit.p2.production-harness-mounting",
+      "status": "xfail",
+      "source": "Runtime spec harness mounting lifecycle",
+      "oracle": "First contained server/async mini harnesses are proven, but production Elysia/oRPC/Inngest mounting, deployment wiring, full StartedHarness lifecycle, other host kinds, durable async semantics, and final boundary policy remain unresolved.",
+      "fixtures": [
+        "fixtures/todo/first-server-async-harness-mounting.todo.ts"
       ]
     },
     {

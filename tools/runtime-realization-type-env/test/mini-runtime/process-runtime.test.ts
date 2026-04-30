@@ -16,6 +16,8 @@ import {
   createMiniServiceBindingCache,
   createProcessExecutionRuntime,
   executeMiniBootgraph,
+  mountMiniAsyncHarness,
+  mountMiniServerHarness,
   type ProcessExecutionRuntime,
 } from "../../src/mini-runtime";
 import type { AdapterDelegationEvent } from "../../src/mini-runtime/adapters/delegation";
@@ -555,6 +557,332 @@ describe("runtime realization mini runtime", () => {
         } as any,
       }),
     ).toThrow("must declare exactly one workflow, schedule, or consumer owner");
+  });
+
+  test("server harness mounts adapter payloads and delegates route callbacks", async () => {
+    const runtime = createRuntime();
+    const adapterEvents: AdapterDelegationEvent[] = [];
+    const payload = createServerAdapterCallbackPayload({
+      routeDescriptor: CreateWorkItemRouteDescriptor,
+      ref: CreateWorkItemRef,
+    });
+    const harness = mountMiniServerHarness({
+      harnessId: "server:hq:api",
+      runtime,
+      payloads: [payload],
+    });
+
+    try {
+      const result = await harness.handleRoute<WorkItem>({
+        executionId: CreateWorkItemRef.executionId,
+        context: createInvocationContext(),
+        instrumentation: {
+          record(event) {
+            adapterEvents.push(event);
+          },
+        },
+      });
+
+      expect(harness.kind).toBe("runtime.started-harness");
+      expect(harness.payloadExecutionIds).toEqual([CreateWorkItemRef.executionId]);
+      expect(result.status).toBe("success");
+      if (result.status !== "success") throw result.error;
+      expect(result.output).toEqual({
+        id: "created-v2",
+        title: "Mini runtime",
+        status: "open",
+      });
+      expect(adapterEvents.map((event) => event.name)).toEqual([
+        "adapter.delegate.start",
+        "adapter.delegate.finish",
+      ]);
+      expect(harness.records().map((record) => record.phase)).toEqual([
+        "harness.start",
+        "harness.invoke.start",
+        "harness.invoke.finished",
+      ]);
+      await harness.stop();
+      expect(harness.records().map((record) => record.phase)).toEqual([
+        "harness.start",
+        "harness.invoke.start",
+        "harness.invoke.finished",
+        "harness.stop",
+      ]);
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test("async harness mounts bridge payloads and delegates step callbacks", async () => {
+    const runtime = createRuntime();
+    const payload = createAsyncStepBridgePayload({ ref: SyncWorkItemStepRef });
+    const harness = mountMiniAsyncHarness({
+      harnessId: "async:hq:workflow",
+      runtime,
+      payloads: [payload],
+    });
+
+    try {
+      const result = await harness.runStep<
+        { readonly skipped: true } | { readonly synced: true }
+      >({
+        executionId: SyncWorkItemStepRef.executionId,
+        context: createAsyncInvocationContext(),
+      });
+
+      expect(harness.kind).toBe("runtime.started-harness");
+      expect(harness.payloadExecutionIds).toEqual([
+        SyncWorkItemStepRef.executionId,
+      ]);
+      expect(result.status).toBe("success");
+      if (result.status !== "success") throw result.error;
+      expect(result.output).toEqual({ synced: true });
+      expect(harness.records().map((record) => record.phase)).toEqual([
+        "harness.start",
+        "harness.invoke.start",
+        "harness.invoke.finished",
+      ]);
+    } finally {
+      await harness.stop();
+      await runtime.dispose();
+    }
+  });
+
+  test("harness mounts reject raw descriptors and compiler plans after type erasure", async () => {
+    const runtime = createRuntime();
+    const serverPayload = createServerAdapterCallbackPayload({
+      routeDescriptor: CreateWorkItemRouteDescriptor,
+      ref: CreateWorkItemRef,
+    });
+
+    try {
+      expect(() =>
+        mountMiniServerHarness({
+          harnessId: "server:bad",
+          runtime,
+          payloads: [CreateWorkItemDescriptor as any],
+        }),
+      ).toThrow("server harness accepts only adapter.server-callback-payload");
+      expect(() =>
+        mountMiniServerHarness({
+          harnessId: "server:duplicate",
+          runtime,
+          payloads: [serverPayload, serverPayload],
+        }),
+      ).toThrow(`duplicate harness payload for ${CreateWorkItemRef.executionId}`);
+      expect(() =>
+        mountMiniAsyncHarness({
+          harnessId: "async:bad",
+          runtime,
+          payloads: [
+            {
+              kind: "compiled.process-plan",
+              appId: "hq",
+              executionPlans: [SyncWorkItemStepPlan],
+            } as any,
+          ],
+        }),
+      ).toThrow("async harness accepts only adapter.async-step-bridge-payload");
+    } finally {
+      await runtime.dispose();
+    }
+  });
+
+  test("stopped harnesses reject later invocation before adapter delegation", async () => {
+    let invocationCount = 0;
+    const fakeRuntime: ProcessExecutionRuntime = {
+      kind: "process.execution-runtime",
+      async invoke() {
+        invocationCount += 1;
+        throw new Error("runtime should not be invoked");
+      },
+      async dispose() {},
+    };
+    const harness = mountMiniServerHarness({
+      harnessId: "server:stopped",
+      runtime: fakeRuntime,
+      payloads: [
+        createServerAdapterCallbackPayload({
+          routeDescriptor: CreateWorkItemRouteDescriptor,
+          ref: CreateWorkItemRef,
+        }),
+      ],
+    });
+
+    await harness.stop();
+    await expect(
+      harness.handleRoute({
+        executionId: CreateWorkItemRef.executionId,
+        context: createInvocationContext(),
+      }),
+    ).rejects.toThrow("server harness server:stopped is stopped");
+
+    expect(invocationCount).toBe(0);
+    expect(harness.records().map((record) => record.phase)).toEqual([
+      "harness.start",
+      "harness.stop",
+      "harness.invoke.failed",
+    ]);
+  });
+
+  test("stopped async harnesses reject later invocation before adapter delegation", async () => {
+    let invocationCount = 0;
+    const fakeRuntime: ProcessExecutionRuntime = {
+      kind: "process.execution-runtime",
+      async invoke() {
+        invocationCount += 1;
+        throw new Error("runtime should not be invoked");
+      },
+      async dispose() {},
+    };
+    const harness = mountMiniAsyncHarness({
+      harnessId: "async:stopped",
+      runtime: fakeRuntime,
+      payloads: [createAsyncStepBridgePayload({ ref: SyncWorkItemStepRef })],
+    });
+
+    await harness.stop();
+    await expect(
+      harness.runStep({
+        executionId: SyncWorkItemStepRef.executionId,
+        context: createAsyncInvocationContext(),
+      }),
+    ).rejects.toThrow("async harness async:stopped is stopped");
+
+    expect(invocationCount).toBe(0);
+    expect(harness.records().map((record) => record.phase)).toEqual([
+      "harness.start",
+      "harness.stop",
+      "harness.invoke.failed",
+    ]);
+  });
+
+  test("harnesses record runtime delegation failures", async () => {
+    const fakeRuntime: ProcessExecutionRuntime = {
+      kind: "process.execution-runtime",
+      async invoke() {
+        throw new Error("delegation failed");
+      },
+      async dispose() {},
+    };
+    const serverHarness = mountMiniServerHarness({
+      harnessId: "server:failure",
+      runtime: fakeRuntime,
+      payloads: [
+        createServerAdapterCallbackPayload({
+          routeDescriptor: CreateWorkItemRouteDescriptor,
+          ref: CreateWorkItemRef,
+        }),
+      ],
+    });
+    const asyncHarness = mountMiniAsyncHarness({
+      harnessId: "async:failure",
+      runtime: fakeRuntime,
+      payloads: [createAsyncStepBridgePayload({ ref: SyncWorkItemStepRef })],
+    });
+
+    await expect(
+      serverHarness.handleRoute({
+        executionId: CreateWorkItemRef.executionId,
+        context: createInvocationContext(),
+      }),
+    ).rejects.toThrow("delegation failed");
+    await expect(
+      asyncHarness.runStep({
+        executionId: SyncWorkItemStepRef.executionId,
+        context: createAsyncInvocationContext(),
+      }),
+    ).rejects.toThrow("delegation failed");
+
+    expect(serverHarness.records().map((record) => record.phase)).toEqual([
+      "harness.start",
+      "harness.invoke.start",
+      "harness.invoke.failed",
+    ]);
+    expect(asyncHarness.records().map((record) => record.phase)).toEqual([
+      "harness.start",
+      "harness.invoke.start",
+      "harness.invoke.failed",
+    ]);
+  });
+
+  test("harness invocation preserves exact payload refs through the runtime boundary", async () => {
+    const output = {
+      id: "harness-delegated",
+      title: "Harness delegated",
+      status: "open",
+    } satisfies WorkItem;
+    const delegatedRefs: unknown[] = [];
+    const fakeRuntime: ProcessExecutionRuntime = {
+      kind: "process.execution-runtime",
+      async invoke(input) {
+        delegatedRefs.push(input.ref);
+        return {
+          kind: "runtime.invocation-result",
+          status: "success",
+          output,
+          exit: await VendorEffect.runPromiseExit(Effect.succeed(output)),
+          events: [],
+        };
+      },
+      async dispose() {},
+    };
+    const serverHarness = mountMiniServerHarness({
+      harnessId: "server:refs",
+      runtime: fakeRuntime,
+      payloads: [
+        createServerAdapterCallbackPayload({
+          routeDescriptor: CreateWorkItemRouteDescriptor,
+          ref: CreateWorkItemRef,
+        }),
+      ],
+    });
+    const asyncHarness = mountMiniAsyncHarness({
+      harnessId: "async:refs",
+      runtime: fakeRuntime,
+      payloads: [createAsyncStepBridgePayload({ ref: SyncWorkItemStepRef })],
+    });
+
+    await serverHarness.handleRoute<WorkItem>({
+      executionId: CreateWorkItemRef.executionId,
+      context: createInvocationContext(),
+    });
+    await asyncHarness.runStep<WorkItem>({
+      executionId: SyncWorkItemStepRef.executionId,
+      context: createAsyncInvocationContext(),
+    });
+
+    expect(delegatedRefs).toEqual([CreateWorkItemRef, SyncWorkItemStepRef]);
+  });
+
+  test("harnesses record missing payload failures before runtime invocation", async () => {
+    let invocationCount = 0;
+    const fakeRuntime: ProcessExecutionRuntime = {
+      kind: "process.execution-runtime",
+      async invoke() {
+        invocationCount += 1;
+        throw new Error("runtime should not be invoked");
+      },
+      async dispose() {},
+    };
+    const harness = mountMiniAsyncHarness({
+      harnessId: "async:missing",
+      runtime: fakeRuntime,
+      payloads: [createAsyncStepBridgePayload({ ref: SyncWorkItemStepRef })],
+    });
+
+    await expect(
+      harness.runStep({
+        executionId: "exec:async:missing-step",
+        context: createAsyncInvocationContext(),
+      }),
+    ).rejects.toThrow("async harness missing payload exec:async:missing-step");
+
+    expect(invocationCount).toBe(0);
+    expect(harness.records().map((record) => record.phase)).toEqual([
+      "harness.start",
+      "harness.invoke.failed",
+    ]);
   });
 
   test("orders boot modules and finalizes in reverse with redacted in-memory records", async () => {
