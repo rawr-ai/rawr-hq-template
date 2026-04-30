@@ -4,14 +4,25 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "lab-v2.migration-control-plane-observation",
-    "focus": "Prove a contained, non-persistent migration/control-plane observation packet can summarize already-safe deployment handoff, in-memory catalog, redacted telemetry records, export status, and placement candidates without promoting storage, placement, query policy, or production migration readiness.",
+    "id": "lab-v2.runtime-research-program-closeout",
+    "focus": "Close the bounded runtime-realization research program after the default DRA domino sequence, preserving earned proof categories and residual decision packets without promoting production runtime readiness.",
     "relatedEntries": [
-      "audit.migration.control-plane-observation",
-      "audit.migration.control-plane-observation.residual",
-      "simulation.deployment-handoff",
-      "audit.telemetry.hyperdx-observation",
+      "audit.runtime-research-program-closeout",
+      "audit.p0.async-step-membership",
+      "audit.p1.provider-effect-plan-shape",
+      "audit.p1.effect-managed-runtime-substrate",
+      "audit.p1.process-local-coordination-resources",
+      "audit.p1.effect-boundary-policy-matrix.residual",
+      "audit.p1.safe-effect-composition-surface",
+      "audit.p1.dispatcher-access",
+      "audit.p1.runtime-resource-access",
+      "audit.p2.server-route-derivation",
+      "audit.p2.adapter-effect-callback-lowering",
+      "audit.p2.async-effect-bridge-lowering",
+      "audit.p2.production-harness-mounting",
+      "audit.p2.first-resource-provider-cut",
       "audit.telemetry.hyperdx-observation.residual",
+      "audit.migration.control-plane-observation.residual",
       "audit.source-hygiene"
     ]
   },
@@ -607,6 +618,15 @@
       "oracle": "Production RuntimeCatalog storage backend, indexing, retention, rehydration, exact persistence format, control-plane service/package topology, deployment placement policy, orchestration, product observability/query/dashboard/alerting semantics, production OpenTelemetry bootstrap, native host telemetry, durable async run history, platform secret-store precedence, production config source order, and arbitrary free-form diagnostic string DLP remain unresolved beyond the contained observation packet proof.",
       "fixtures": [
         "evidence/workstreams/2026-04-30-migration-control-plane-observation.md"
+      ]
+    },
+    {
+      "id": "audit.runtime-research-program-closeout",
+      "status": "out-of-scope",
+      "source": "DRA runtime-realization research program closeout",
+      "oracle": "The bounded DRA research program sequence can close as coordination continuity only after workstreams 0-11 are submitted, proof categories remain unchanged, and residual decision packets stay authority-homed. Closeout is not runtime proof, production runtime readiness, production migration readiness, or an accepted architecture decision.",
+      "fixtures": [
+        "evidence/workstreams/2026-04-30-runtime-research-program-closeout.md"
       ]
     },
     {

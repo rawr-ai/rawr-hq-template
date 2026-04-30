@@ -1,5 +1,8 @@
 # Runtime Realization Research Program
 
+Status: bounded default program sequence closed and submitted through the
+program closeout workstream.
+
 This document is the program map for burn-down work inside the contained
 runtime-realization lab. It is informative operating guidance for lab
 coordination. It is not runtime architecture authority, not a production
@@ -29,13 +32,15 @@ authority/stale-source handling section.
 
 ## DRA Continuity Anchor
 
-The DRA workflow is this research program workflow. The DRA should keep moving
-through the domino sequence until the program is complete, reviewed, submitted,
-and clean. A completed workstream or PR is only a checkpoint, not completion.
-After compaction, interruption, or conflicting context, refresh this document,
-`dra-runtime-research-program-workflow.md`, the active workstream packet, the
-manifest, and the diagnostic, then continue from the current Graphite branch.
-Do not treat user absence as a stop condition.
+The DRA workflow is this research program workflow. During the default program,
+the DRA kept moving through the domino sequence until the bounded sequence was
+complete, reviewed, submitted, and clean. A completed workstream or PR was only
+a checkpoint; the closeout report is the completion artifact for this bounded
+program. After compaction, interruption, or conflicting context, refresh this
+document, `dra-runtime-research-program-workflow.md`, the latest workstream
+packet, the manifest, and the diagnostic, then continue only from an active
+residual packet or explicit production migration workstream. Do not treat this
+closeout as production runtime readiness.
 
 ## Current Baseline
 
@@ -97,6 +102,14 @@ the status view for red/yellow/green risk.
 The domino order can change only through a workstream control input: new evidence,
 explicit replan, blocker, or accepted architecture decision.
 
+Closeout status:
+
+- The default domino map is closed through PR #271.
+- PRs #258-#271 are submitted and locally verified, but they are not merged into
+  trunk at closeout time.
+- The closeout workstream is coordination/out-of-scope and does not add runtime
+  proof.
+
 The HyperDX workstream is optional only if boundary-policy or harness-mounting
 evidence proves it is premature. Its default target is contained observation:
 can the runtime project already-redacted records into stable telemetry payloads
@@ -134,6 +147,7 @@ not add mechanical comments or convert unresolved design into apparent API law.
 | `audit.telemetry.hyperdx-observation.residual` | `xfail` | Product observability policy, dashboard/query policy, retention, alerting, correlation naming, production OpenTelemetry bootstrap, persisted RuntimeCatalog storage, deployment/control-plane placement, native host telemetry, durable async run history, platform secret-store precedence, and arbitrary diagnostic string redaction remain unresolved. | Manifest, telemetry workstream report, canonical spec sections 22, 23.3, 23.5, and 29. | Architecture accepts observability/export/query/persistence policy or migration requires it. | Production host or migration work needs telemetry semantics beyond contained OTLP export. | Migration/Control-Plane Observation or decision packet | spec/migration |
 | `audit.migration.control-plane-observation` | `simulation-proof` | A contained, non-persistent packet now summarizes already-safe deployment handoff, in-memory catalog, redacted telemetry records, export status, and candidate-only placement hints for migration review while preserving app/run/trace/correlation identity and rejecting live/raw authority-bearing values. | Manifest, diagnostic, migration/control-plane workstream report, helper/test. | Future migration work needs durable storage, placement policy, query policy, orchestration, or production host semantics rather than packet summaries. | A future implementation treats the packet as production storage, placement readiness, query readiness, or migration completion. | Program closeout decision packet or production migration workstream | lab/migration |
 | `audit.migration.control-plane-observation.residual` | `xfail` | RuntimeCatalog persistence, indexing, retention, rehydration, exact storage format, control-plane topology, deployment placement, orchestration, product query/dashboard policy, production OpenTelemetry bootstrap, native host telemetry, durable async history, platform secret-store precedence, production config order, and arbitrary DLP remain unresolved. | Manifest, diagnostic, migration/control-plane workstream report, canonical spec sections 22.3, 23.5, 24.2, and 27. | Architecture accepts storage/placement/query/topology policy or production migration implementation begins. | Migration agents need more than observation packet summaries. | Decision packet or production migration workstream | spec/migration |
+| `audit.runtime-research-program-closeout` | `out-of-scope` | Closeout records that the bounded default sequence is submitted and locally verified; it adds no runtime behavior proof. | Manifest and closeout report. | A future residual decision packet or production migration workstream is explicitly opened. | A future agent treats this closeout as production readiness or as a reason to continue the automatic domino loop. | Explicit decision packet or production migration workstream | out-of-scope |
 | `audit.source-hygiene` | `out-of-scope` | Stale source hygiene is migration preflight, not a type-spine proof. | Manifest. | Migration work is about to rely on indexed docs, source graphs, or stale extracted structure. | Migration agents start relying on indexed stale docs. | Migration/control-plane or source-hygiene workstream | out-of-scope |
 
 No item may be removed from this ledger unless the manifest/diagnostic also
