@@ -4,17 +4,27 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.migration-control-plane-observation`
-- Focus: prove a contained, non-persistent migration/control-plane observation
-  packet can summarize already-safe deployment handoff, in-memory catalog,
-  redacted telemetry records, export status, and placement candidates without
-  promoting storage, placement, query policy, or production migration readiness.
+- ID: `lab-v2.runtime-research-program-closeout`
+- Focus: close the bounded runtime-realization research program after the
+  default DRA domino sequence, preserving earned proof categories and residual
+  decision packets without promoting production runtime readiness.
 - Related manifest entries:
-  - `audit.migration.control-plane-observation`
-  - `audit.migration.control-plane-observation.residual`
-  - `simulation.deployment-handoff`
-  - `audit.telemetry.hyperdx-observation`
+  - `audit.runtime-research-program-closeout`
+  - `audit.p0.async-step-membership`
+  - `audit.p1.provider-effect-plan-shape`
+  - `audit.p1.effect-managed-runtime-substrate`
+  - `audit.p1.process-local-coordination-resources`
+  - `audit.p1.effect-boundary-policy-matrix.residual`
+  - `audit.p1.safe-effect-composition-surface`
+  - `audit.p1.dispatcher-access`
+  - `audit.p1.runtime-resource-access`
+  - `audit.p2.server-route-derivation`
+  - `audit.p2.adapter-effect-callback-lowering`
+  - `audit.p2.async-effect-bridge-lowering`
+  - `audit.p2.production-harness-mounting`
+  - `audit.p2.first-resource-provider-cut`
   - `audit.telemetry.hyperdx-observation.residual`
+  - `audit.migration.control-plane-observation.residual`
   - `audit.source-hygiene`
 
 ## Status Meanings

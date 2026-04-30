@@ -122,6 +122,6 @@ The lab still does not prove production SDK derivation from real declarations, f
 
 ## Verdict
 
-Current status: **the contained lab now gives simulation-level confidence in the already-specified middle spine, with explicit yellow/red gaps reserved for unresolved design and production integration.**
+Current status: **the bounded default runtime-realization research program is closed as a submitted, locally verified contained-lab sequence. The lab gives simulation-level confidence in the already-specified middle spine, with explicit yellow/red gaps reserved for unresolved design and production integration.**
 
-The highest-value next step is program closeout plus residual decision packets: production host mounting, durable async behavior, catalog persistence, product telemetry/query policy, native host error mapping, deployment placement, and control-plane topology remain unresolved beyond the contained lab.
+The highest-value next step is not another automatic lab domino. Future work should open explicit residual decision packets or production migration workstreams for production host mounting, durable async behavior, catalog persistence, product telemetry/query policy, native host error mapping, deployment placement, control-plane topology, public API/DX laws, config/secret-store policy, and the first production resource/provider catalog cut. This closeout does not make the runtime production-ready or migration-ready.
