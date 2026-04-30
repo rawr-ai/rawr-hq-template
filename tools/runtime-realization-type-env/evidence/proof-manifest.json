@@ -4,41 +4,16 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "lab-v2.canonical-spec-authority-refresh",
-    "focus": "Replace the stale repo-pinned runtime realization spec with the external canonical spec snapshot, refresh the manifest hash, and record that this authority rebaseline is not proof promotion.",
+    "id": "lab-v2.runtime-telemetry-hyperdx-observation",
+    "focus": "Prove contained telemetry projection/export for already-redacted mini-runtime records, including local OTLP/HyperDX ingest smoke, without promoting product observability, query policy, catalog persistence, or durable async semantics.",
     "relatedEntries": [
-      "audit.canonical-spec-authority-refresh",
-      "accepted.effect-only-authoring",
-      "accepted.curated-effect-public-surface",
-      "audit.p1.effect-managed-runtime-substrate",
-      "audit.p1.process-local-coordination-resources",
-      "audit.p1.dispatcher-access",
-      "audit.p1.runtime-resource-access",
-      "vendor.effect.runtime-substrate",
-      "vendor.effect.process-local-coordination",
-      "simulation.middle-spine-derivation-compiler",
-      "simulation.bootgraph-catalog-finalization",
-      "simulation.service-binding-cache-runtime-access",
-      "simulation.mini-runtime-registry-invocation",
-      "simulation.dispatcher-descriptor-operation-inventory",
-      "simulation.async-step-owner-membership-artifacts",
-      "simulation.server-route-derivation-import-safety",
-      "simulation.adapter-callback-delegation",
-      "simulation.adapter-callback-bridge-lowering",
-      "simulation.first-server-async-harness-mounts",
-      "simulation.deployment-handoff",
-      "audit.p1.provider-effect-plan-shape",
-      "audit.p1.provider-effect-plan-lowering",
-      "audit.p1.effect-boundary-policy-matrix",
-      "audit.p1.effect-boundary-policy-matrix.residual",
-      "audit.semantic-runtime-jsdoc-harvest",
       "audit.telemetry.hyperdx-observation",
-      "audit.p1.safe-effect-composition-surface",
-      "audit.p2.server-route-derivation",
-      "audit.p2.adapter-effect-callback-lowering",
-      "audit.p2.async-effect-bridge-lowering",
-      "audit.p2.production-harness-mounting",
-      "audit.p2.runtime-profile-config-redaction"
+      "audit.telemetry.hyperdx-observation.residual",
+      "audit.p1.effect-boundary-policy-matrix",
+      "simulation.first-server-async-harness-mounts",
+      "simulation.service-binding-cache-runtime-access",
+      "audit.p2.runtime-profile-config-redaction",
+      "audit.canonical-spec-authority-refresh"
     ]
   },
   "entries": [
@@ -589,12 +564,26 @@
     },
     {
       "id": "audit.telemetry.hyperdx-observation",
-      "status": "todo",
-      "source": "DRA research program workflow Runtime Telemetry + HyperDX Observation cycle",
-      "oracle": "Docker HyperDX may be used by a later contained observation workstream to prove runtime-emitted records are exportable/queryable without promoting product observability policy, catalog persistence, deployment placement, or durable async semantics.",
+      "status": "simulation-proof",
+      "source": "Runtime spec sections 22, 23.3, and 29; DRA research program workflow Runtime Telemetry + HyperDX Observation cycle",
+      "oracle": "Lab-contained telemetry projection/export takes already-redacted mini-runtime process, provider, and catalog records, preserves useful runtime identity fields, rejects live handles/raw secrets/descriptor bodies/provider values/runtime access objects, builds stable OTLP trace payloads, and emits through the explicit local exporter path. Local HyperDX/OTLP ingest smoke is supporting lab observation only and does not prove production observability policy, persistence, deployment placement, native host telemetry, dashboard/query policy, or durable async semantics.",
       "fixtures": [
-        "evidence/runtime-realization-research-program.md",
-        "evidence/dra-runtime-research-program-workflow.md"
+        "src/mini-runtime/telemetry-export.ts",
+        "test/mini-runtime/telemetry-export.test.ts",
+        "evidence/workstreams/2026-04-30-runtime-telemetry-hyperdx-observation.md"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime"
+      ]
+    },
+    {
+      "id": "audit.telemetry.hyperdx-observation.residual",
+      "status": "xfail",
+      "source": "Runtime spec sections 22, 23.3, 23.5, and 29; residual from audit.telemetry.hyperdx-observation",
+      "oracle": "Product observability policy, dashboard/query policy, retention, alerting, correlation naming, production OpenTelemetry bootstrap, persisted RuntimeCatalog storage, deployment/control-plane placement, native Elysia/oRPC/Inngest host telemetry, durable async run history, platform secret-store precedence, and arbitrary free-form diagnostic string redaction remain unresolved beyond the contained telemetry projection/export proof.",
+      "fixtures": [
+        "evidence/workstreams/2026-04-30-runtime-telemetry-hyperdx-observation.md"
       ]
     },
     {
