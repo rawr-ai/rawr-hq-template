@@ -1,0 +1,165 @@
+{
+  "projects": {
+    "@rawr/sdk": {
+      "config": "packages/core/sdk/package.json",
+      "tags": [
+        "type:package",
+        "role:sdk",
+        "surface:public-runtime-law",
+        "migration-slice:runtime-production"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/core-runtime-compiler": {
+      "config": "packages/core/runtime/compiler/package.json",
+      "tags": [
+        "type:package",
+        "role:runtime",
+        "surface:compiler",
+        "migration-slice:runtime-production"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/core-runtime-bootgraph": {
+      "config": "packages/core/runtime/bootgraph/package.json",
+      "tags": [
+        "type:package",
+        "role:runtime",
+        "surface:bootgraph",
+        "migration-slice:runtime-production"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/core-runtime-substrate": {
+      "config": "packages/core/runtime/substrate/package.json",
+      "tags": [
+        "type:package",
+        "role:runtime",
+        "surface:substrate",
+        "migration-slice:runtime-production"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/core-runtime-process": {
+      "config": "packages/core/runtime/process-runtime/package.json",
+      "tags": [
+        "type:package",
+        "role:runtime",
+        "surface:process-runtime",
+        "migration-slice:runtime-production"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/core-runtime-topology": {
+      "config": "packages/core/runtime/topology/package.json",
+      "tags": [
+        "type:package",
+        "role:runtime",
+        "surface:topology",
+        "migration-slice:runtime-production"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/core-runtime-standard": {
+      "config": "packages/core/runtime/standard/package.json",
+      "tags": [
+        "type:package",
+        "role:runtime",
+        "surface:standard-providers",
+        "migration-slice:runtime-production"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/core-runtime-harness-elysia": {
+      "config": "packages/core/runtime/harnesses/elysia/package.json",
+      "tags": [
+        "type:package",
+        "role:runtime",
+        "surface:harness",
+        "harness:elysia",
+        "migration-slice:runtime-production"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/core-runtime-harness-inngest": {
+      "config": "packages/core/runtime/harnesses/inngest/package.json",
+      "tags": [
+        "type:package",
+        "role:runtime",
+        "surface:harness",
+        "harness:inngest",
+        "migration-slice:runtime-production"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/resource-clock": {
+      "config": "resources/clock/package.json",
+      "tags": [
+        "type:resource",
+        "capability:clock",
+        "migration-slice:runtime-production"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    }
+  }
+}

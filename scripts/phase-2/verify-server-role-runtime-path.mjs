@@ -6,20 +6,37 @@ const failures = [];
 
 const rootPackage = await readJson("package.json");
 const workspaceGlobs = new Set(rootPackage.workspaces ?? []);
-for (const requiredWorkspace of ["packages/runtime/*", "packages/runtime/harnesses/*"]) {
+for (const requiredWorkspace of [
+  "packages/core/sdk",
+  "packages/core/runtime/*",
+  "packages/core/runtime/harnesses/*",
+  "resources/*",
+]) {
   if (!workspaceGlobs.has(requiredWorkspace)) {
     failures.push(`package.json workspaces must include ${requiredWorkspace}.`);
   }
 }
+for (const workspace of workspaceGlobs) {
+  if (workspace === "packages/runtime" || workspace.startsWith("packages/runtime/")) {
+    failures.push(`package.json workspaces must not include stale runtime workspace ${workspace}.`);
+  }
+}
 
 const serverEntrypoint = await readFile("apps/hq/server.ts");
-if (!serverEntrypoint.includes("@rawr/hq-sdk")) {
-  failures.push("apps/hq/server.ts must boot through @rawr/hq-sdk.");
+if (!serverEntrypoint.includes("@rawr/sdk/app")) {
+  failures.push("apps/hq/server.ts must boot through @rawr/sdk/app.");
+}
+if (!/startApp\s*\(/u.test(serverEntrypoint)) {
+  failures.push("apps/hq/server.ts must start through startApp(...).");
 }
 if (serverEntrypoint.includes("./legacy-cutover")) {
   failures.push("apps/hq/server.ts must not import ./legacy-cutover.");
 }
-if (serverEntrypoint.includes("@rawr/runtime/") || serverEntrypoint.includes("../server/src/bootstrap")) {
+if (
+  serverEntrypoint.includes("@rawr/runtime/") ||
+  serverEntrypoint.includes("@rawr/core-runtime-") ||
+  serverEntrypoint.includes("../server/src/bootstrap")
+) {
   failures.push("apps/hq/server.ts must not reach into runtime internals or legacy server bootstrap directly.");
 }
 if (!/role:\s*["']server["']/u.test(serverEntrypoint) && !/roles:\s*\[[^\]]*["']server["']/u.test(serverEntrypoint)) {
@@ -27,9 +44,11 @@ if (!/role:\s*["']server["']/u.test(serverEntrypoint) && !/roles:\s*\[[^\]]*["']
 }
 
 for (const requiredPath of [
-  "packages/runtime/substrate/package.json",
-  "packages/runtime/bootgraph/package.json",
-  "packages/runtime/harnesses/elysia/package.json",
+  "packages/core/sdk/package.json",
+  "packages/core/runtime/substrate/package.json",
+  "packages/core/runtime/bootgraph/package.json",
+  "packages/core/runtime/process-runtime/package.json",
+  "packages/core/runtime/harnesses/elysia/package.json",
 ]) {
   if (!(await pathExists(requiredPath))) {
     failures.push(`${requiredPath} must exist for the canonical server runtime path.`);

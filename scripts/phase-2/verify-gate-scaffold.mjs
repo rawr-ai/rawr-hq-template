@@ -3,7 +3,7 @@ import { assertCondition, readFile, readJson, runCommand } from "./_verify-utils
 
 const rootPackage = await readJson("package.json");
 const nxConfig = await readJson("nx.json");
-const hqSdkPackage = await readJson("packages/hq-sdk/package.json");
+const sdkPackage = await readJson("packages/core/sdk/package.json");
 const rootScripts = rootPackage.scripts ?? {};
 const includedScripts = new Set(rootPackage.nx?.includedScripts ?? []);
 const retiredU00ScaffoldScript = ["phase-2:gate:u00", "scaffold"].join(":");
@@ -15,7 +15,7 @@ const expectedRootScripts = {
   "phase-2:gate:u00:contract":
     "bun run phase-2:gate:u00:no-legacy-cutover && bun run phase-2:gate:u00:server-role-runtime-path && bun run phase-2:gate:u00:runtime-public-seams",
   "phase-2:gate:u00:current-findings":
-    "bun scripts/phase-2/verify-gate-scaffold.mjs && bunx nx run @rawr/hq-app:structural -- --suite=m2-u00-current-findings && bunx nx run @rawr/server:structural -- --suite=m2-u00-current-findings && bunx nx run @rawr/hq-sdk:structural -- --suite=m2-u00-current-findings",
+    "bun scripts/phase-2/verify-gate-scaffold.mjs && bunx nx run @rawr/hq-app:structural -- --suite=m2-u00-current-findings && bunx nx run @rawr/server:structural -- --suite=m2-u00-current-findings && bunx nx run @rawr/sdk:structural -- --suite=m2-u00-current-findings",
 };
 
 for (const [scriptName, command] of Object.entries(expectedRootScripts)) {
@@ -40,12 +40,12 @@ assertCondition(
 );
 
 assertCondition(
-  hqSdkPackage.scripts?.sync === "bun run --cwd ../.. sync:check --project @rawr/hq-sdk",
-  "packages/hq-sdk/package.json must define sync.",
+  sdkPackage.scripts?.sync === "bun run --cwd ../../.. sync:check --project @rawr/sdk",
+  "packages/core/sdk/package.json must define sync.",
 );
 assertCondition(
-  hqSdkPackage.scripts?.structural === "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-sdk",
-  "packages/hq-sdk/package.json must define structural.",
+  sdkPackage.scripts?.structural === "bun ../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/sdk",
+  "packages/core/sdk/package.json must define structural.",
 );
 
 const structuralRunnerSource = await readFile("scripts/phase-03/run-structural-suite.mjs");
