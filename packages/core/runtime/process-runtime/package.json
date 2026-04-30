@@ -11,8 +11,14 @@
       "default": "./src/index.ts"
     }
   },
+  "dependencies": {
+    "@rawr/core-runtime-substrate": "workspace:*",
+    "@rawr/core-runtime-topology": "workspace:*",
+    "@rawr/sdk": "workspace:*"
+  },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -20,7 +26,7 @@
     "sync": "bun run --cwd ../../../.. sync:check --project @rawr/core-runtime-process",
     "structural": "bun ../../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/core-runtime-process",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests test/**/*.test.ts"
+    "test": "vitest run --project core-runtime-process"
   },
   "nx": {
     "tags": [
