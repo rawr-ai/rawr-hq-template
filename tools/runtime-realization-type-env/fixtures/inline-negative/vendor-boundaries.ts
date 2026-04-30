@@ -1,11 +1,7 @@
-import { os } from "@orpc/server";
 import { Type } from "typebox";
 import type { RuntimeSchema } from "@rawr/sdk/runtime/schema";
 import type { ExecutionDescriptor } from "@rawr/sdk/spine";
 import { InngestFunctionProbe } from "../../src/vendor/boundaries/inngest";
-
-// @ts-expect-error native oRPC uses .handler(...); RAWR .effect(...) is SDK-owned.
-os.route({ method: "POST", path: "/native" }).effect(() => ({ ok: true }));
 
 declare function requiresRuntimeSchema(schema: RuntimeSchema<string>): void;
 
