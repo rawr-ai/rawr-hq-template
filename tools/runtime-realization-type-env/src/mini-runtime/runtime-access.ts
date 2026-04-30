@@ -39,7 +39,14 @@ export interface MiniRuntimeTelemetryEvent {
   readonly attributes?: RuntimeRecordAttributes;
 }
 
-// Mini-runtime-only probe. This is not the final public RuntimeResourceAccess method law.
+/**
+ * Mini-runtime-only probe over the canonical-looking RuntimeResourceAccess seam.
+ *
+ * This type deliberately exposes sanctioned lookup plus redacted observation
+ * sinks, while leaving raw resource catalogs, host handles, and final public
+ * method law outside the lab. Future migration work may copy the authority
+ * boundary, not this exact helper as public API.
+ */
 export type MiniRuntimeResourceAccess = RuntimeResourceAccess & {
   requireResource<TValue = unknown>(resourceId: string): TValue;
   optionalResource<TValue = unknown>(resourceId: string): TValue | undefined;
@@ -58,6 +65,15 @@ export type MiniRuntimeResourceAccessProbe = MiniRuntimeResourceAccess & {
   telemetryEvents(): readonly MiniRuntimeTelemetryEvent[];
 };
 
+/**
+ * Builds an in-process resource access probe for contained runtime tests.
+ *
+ * Runtime values may be live handles; only metadata and emitted observation
+ * records cross the proof boundary, and those are redacted before exposure.
+ * The returned probe is a simulation surface for contained resource-access
+ * checks, not a production catalog, telemetry exporter, or dependency-injection
+ * container.
+ */
 export function createMiniRuntimeResourceAccess(
   resources: readonly MiniRuntimeResourceDefinition[],
 ): MiniRuntimeResourceAccessProbe {

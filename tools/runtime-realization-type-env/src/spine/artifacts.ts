@@ -16,6 +16,11 @@ export type ProviderEffectBoundaryKind =
   | "provider.acquire"
   | "provider.release";
 
+/**
+ * Portable identity for an executable boundary. A ref may cross derivation,
+ * compilation, adapter, and deployment handoff layers; executable bodies and
+ * descriptor tables must stay behind runtime-owned boundaries.
+ */
 export interface ExecutionDescriptorRefBase {
   readonly kind: "execution.descriptor-ref";
   readonly boundary: ExecutionBoundaryKind;
@@ -96,6 +101,11 @@ export interface RuntimeTelemetry {
 
 const RUNTIME_RESOURCE_ACCESS: unique symbol = Symbol("runtime.resource-access");
 
+/**
+ * Branded placeholder for runtime-owned resource access. The current lab checks
+ * that callers do not receive raw handles by type accident, but final public
+ * RuntimeResourceAccess methods remain an architecture decision.
+ */
 export interface RuntimeResourceAccess {
   readonly kind: "runtime.resource-access";
   readonly [RUNTIME_RESOURCE_ACCESS]: true;
@@ -132,6 +142,11 @@ export interface RoleSurfaceIdentity {
   readonly instance?: string;
 }
 
+/**
+ * Process/role/surface access facades model authority narrowing. They are not
+ * final public SDK law; they preserve the intended direction that host adapters
+ * and services receive scoped access instead of global runtime internals.
+ */
 export interface RoleRuntimeAccess {
   readonly role: AppRole;
   readonly process: ProcessRuntimeAccess;
@@ -181,6 +196,11 @@ export interface RuntimeDiagnostic {
   readonly message: string;
 }
 
+/**
+ * Runtime-owned executable descriptor. Descriptors may appear in the local table
+ * input and registry, but they are intentionally excluded from portable plan
+ * artifacts and deployment handoff records.
+ */
 export interface ExecutionDescriptor<
   TInput = unknown,
   TOutput = unknown,
@@ -262,7 +282,7 @@ export interface ServerRouteDeclaration {
 }
 
 /**
- * Proof-only route discovery boundary. `deriveRoutes()` may run during derivation,
+ * Lab-only route discovery boundary. `deriveRoutes()` may run during derivation,
  * but it must only produce cold declarations; request handling, adapter mounting,
  * and Effect execution remain outside this phase.
  */
@@ -274,7 +294,7 @@ export interface ServerRouteDerivationInput {
 
 /**
  * Portable server-route inventory emitted after validation. This records route identity
- * and diagnostics for downstream proof/review; it deliberately does not choose HTTP
+ * and diagnostics for downstream evidence/review; it deliberately does not choose HTTP
  * method, auth policy, middleware order, adapter mount shape, or deployment wiring.
  */
 export interface ServerRouteDescriptor {
@@ -295,6 +315,11 @@ export interface WorkflowDispatcherOperationDescriptor {
   readonly workflowId: string;
 }
 
+/**
+ * Dispatcher inventory records which workflow operations a dispatcher claims.
+ * It does not grant dispatcher access, settle the public declaration syntax, or
+ * imply durable workflow host behavior.
+ */
 export interface WorkflowDispatcherDescriptor {
   readonly kind: "workflow.dispatcher-descriptor";
   readonly descriptorId: string;
@@ -435,6 +460,11 @@ export interface ProviderDependencyGraph {
   readonly diagnostics: readonly RuntimeDiagnostic[];
 }
 
+/**
+ * Normalized graph is the lab's authoring-inventory snapshot after derivation.
+ * It is useful for review and migration planning, but it is not an accepted
+ * production SDK extraction result.
+ */
 export interface NormalizedAuthoringGraph {
   readonly kind: "normalized.authoring-graph";
   readonly appId: string;
@@ -480,8 +510,8 @@ export interface RuntimeHarnessPlanPlaceholder {
 }
 
 /**
- * Lab-only payload handed to the server adapter lowering shim. It proves that a
- * server route still points at the same executable boundary after derivation;
+ * Lab-only payload handed to the server adapter lowering shim. It records that
+ * a server route still points at the same executable boundary after derivation;
  * it does not choose HTTP mounting, middleware, auth, or public route DX.
  */
 export interface ServerAdapterCallbackPayload {
@@ -498,7 +528,7 @@ export interface ServerAdapterCallbackPayload {
  * Lab-only payload handed to the async adapter bridge. It preserves the async
  * owner and step identity that the runtime may invoke later; durable workflow
  * scheduling, retries, leases, and status semantics are intentionally out of
- * scope for this proof layer.
+ * scope for this lab layer.
  */
 export interface AsyncStepBridgePayload {
   readonly kind: "adapter.async-step-bridge-payload";
@@ -516,9 +546,9 @@ export type RuntimeAdapterLoweringPayload =
   | AsyncStepBridgePayload;
 
 /**
- * Pre-harness adapter lowering output. The compiler can prove which adapter
- * payloads are well-formed before any real host is mounted, while leaving the
- * eventual harness integration contract deliberately undecided.
+ * Pre-harness adapter lowering output. The compiler can check which adapter
+ * payloads are well-formed through tests before any real host is mounted, while
+ * leaving the eventual harness integration contract deliberately undecided.
  */
 export interface RuntimeAdapterLoweringPlan {
   readonly kind: "adapter.lowering-plan";
@@ -534,6 +564,11 @@ export interface RuntimeBootgraphInputPlaceholder {
   readonly diagnostics: readonly RuntimeDiagnostic[];
 }
 
+/**
+ * Compilation is a contained runtime-shaped bundle, not a production runtime
+ * plan. It preserves the seams needed by later bootgraph, provider lowering,
+ * adapter mounting, and deployment workstreams without resolving them here.
+ */
 export interface RuntimeSpineCompilation {
   readonly kind: "runtime.spine-compilation";
   readonly appId: string;

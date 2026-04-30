@@ -26,6 +26,9 @@ function harnessKindFor(input: {
 function compileHarnessPlaceholders(
   derivation: RuntimeSpineDerivation,
 ): readonly RuntimeHarnessPlanPlaceholder[] {
+  // Harness plans are intentionally placeholders: the compiler groups executable
+  // refs by role/surface, while real host mounting and native lifecycle policy
+  // remain outside this contained spine slice.
   return derivation.surfaceRuntimePlans.map((surfacePlan) => ({
     kind: "harness.plan-placeholder",
     harness: harnessKindFor(surfacePlan),
@@ -74,6 +77,9 @@ function compileBootgraphPlaceholder(
   derivation: RuntimeSpineDerivation,
   providerDependencyGraph: RuntimeSpineCompilation["providerDependencyGraph"],
 ): RuntimeBootgraphInputPlaceholder {
+  // The compiler emits bootgraph-shaped input for review and downstream mini
+  // runtime experiments only. It must not be read as production bootgraph
+  // authority or evidence that provider acquire/release has run.
   const diagnostics: RuntimeDiagnostic[] = [
     {
       code: "runtime.bootgraph.placeholder",
@@ -171,8 +177,9 @@ function compileAdapterLoweringPlan(
   );
 
   // Adapter payloads are the last lab-only, pre-harness lowering point. They
-  // preserve validated refs plus route/step identity for proof and review, but
-  // they do not mount server hosts or decide durable async runtime behavior.
+  // preserve validated refs plus route/step identity for diagnostic/review
+  // evidence, but they do not mount server hosts or decide durable async
+  // runtime behavior.
   for (const routeDescriptor of derivation.serverRouteDescriptors) {
     const ref = refsByExecutionId.get(routeDescriptor.executionId);
     if (!isServerAdapterRef(ref)) {
@@ -233,6 +240,9 @@ function compileAdapterLoweringPlan(
 export function compileRuntimeSpine(
   derivation: RuntimeSpineDerivation,
 ): RuntimeSpineCompilation {
+  // Compilation stitches derived artifacts into runtime-shaped inputs for the
+  // contained lab. The descriptor table is deliberately non-portable, and the
+  // remaining outputs preserve unresolved host, provider, and bootgraph seams.
   const providerDependencyGraph = deriveProviderDependencyGraph(derivation.profile);
   const descriptorTable = createExecutionDescriptorTable(
     derivation.descriptorTableInput.entries,

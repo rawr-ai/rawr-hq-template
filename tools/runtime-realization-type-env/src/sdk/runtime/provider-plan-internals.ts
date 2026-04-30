@@ -13,7 +13,7 @@ export interface ProviderEffectPlanInternals<TValue = unknown, TError = unknown>
 
 /**
  * Lab-internal bridge from the intentionally opaque public provider plan to the
- * contained provisioning proof. This is not final ProviderEffectPlan shape.
+ * contained provisioning path. This is not final ProviderEffectPlan shape.
  */
 const providerPlanInternals = new WeakMap<
   object,
@@ -50,6 +50,9 @@ export function createProviderEffectPlan<TValue, TError = never>(input: {
   readonly acquire: ProviderAcquire<TValue>;
   readonly release?: ProviderRelease<TValue>;
 }): ProviderEffectPlan<TValue, TError> {
+  // The public plan object stays opaque while the lab SDK records private
+  // acquire/release hooks for contained lowering. Production may replace this
+  // storage shape once telemetry, refresh, and config-source semantics settle.
   const plan = {
     kind: "provider.effect-plan",
     boundary: "provider.acquire",
@@ -69,6 +72,9 @@ export function createTryProviderEffectPlan<TValue, TError>(input: {
   readonly acquire: () => Promise<TValue> | TValue;
   readonly catch: (cause: unknown) => TError;
 }): ProviderEffectPlan<TValue, TError> {
+  // Promise-backed acquisition is normalized into RawrEffect for the mini
+  // provisioning path only; this does not bless provider retry/backoff,
+  // cancellation, or diagnostic payload policy.
   const plan = {
     kind: "provider.effect-plan",
     boundary: "provider.acquire",

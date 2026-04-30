@@ -94,7 +94,9 @@ Each workstream report should contain:
 - For substantial TypeScript or lab-runtime edits, record the semantic
   JSDoc/comment trailing pass in `Workflow` and `Review Result`: files reviewed,
   comments added or intentionally skipped, and any repair demand. This is a
-  review lane, not proof authority.
+  review lane and migration/documentation substrate, not proof authority.
+  Comment presence cannot promote manifest or diagnostic status without a
+  falsifiable oracle and named gate.
 - The final output of a workstream should be the useful input packet for the
   next workstream.
 - No deferred item may exist only in a workstream report. Each deferred item
