@@ -108,6 +108,19 @@ Graphite docs/help as needed before mutating branch order or metadata. The
 acceptable outcomes are a patient stack drain, a smaller follow-on stack based
 on the drained tip, or an explicitly documented Graphite-safe alternative.
 
+## Progress Ledger
+
+- `codex/runtime-prod-00-workflow-authority`: workflow authority packet opened.
+- `codex/runtime-prod-01-topology-gates`: canonical runtime topology, workspace
+  globs, aliases, inventory, and topology gates established.
+- `codex/runtime-prod-02-sdk-public-law`: `@rawr/sdk` public law established
+  with SDK-scoped Effect 4, negative type fixtures, and public seam guards.
+- `codex/runtime-prod-03-runtime-spine`: private runtime spine established in
+  topology, substrate, process-runtime, compiler, and bootgraph. This is
+  intentionally pre-provider/pre-host-mounting; timeout policy is enforced at
+  the process-runtime boundary, raw Effect execution remains inside the
+  substrate runtime access, and bootgraph finalization is idempotent.
+
 ## Source-Mine Ledger
 
 Live code remains in place until replaced. Each row must gain a replacement

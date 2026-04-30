@@ -16,6 +16,11 @@
       "@rawr/plugin-server-api-example-todo/server": ["plugins/server/api/example-todo/server.ts"],
       "@rawr/plugin-server-api-state": ["plugins/server/api/state/index.ts"],
       "@rawr/plugin-server-api-state/server": ["plugins/server/api/state/server.ts"],
+      "@rawr/core-runtime-bootgraph": ["packages/core/runtime/bootgraph/src/index.ts"],
+      "@rawr/core-runtime-compiler": ["packages/core/runtime/compiler/src/index.ts"],
+      "@rawr/core-runtime-process": ["packages/core/runtime/process-runtime/src/index.ts"],
+      "@rawr/core-runtime-substrate": ["packages/core/runtime/substrate/src/index.ts"],
+      "@rawr/core-runtime-topology": ["packages/core/runtime/topology/src/index.ts"],
       "@rawr/sdk": ["packages/core/sdk/src/index.ts"],
       "@rawr/sdk/*": ["packages/core/sdk/src/*"]
     }

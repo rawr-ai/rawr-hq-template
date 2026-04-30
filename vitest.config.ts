@@ -52,6 +52,31 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/core/runtime/topology"),
+        test: { name: "core-runtime-topology", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/core/runtime/substrate"),
+        test: { name: "core-runtime-substrate", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/core/runtime/process-runtime"),
+        test: { name: "core-runtime-process", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/core/runtime/compiler"),
+        test: { name: "core-runtime-compiler", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/core/runtime/bootgraph"),
+        test: { name: "core-runtime-bootgraph", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("services/chatgpt-corpus"),
         test: { name: "chatgpt-corpus", environment: "node", include: [...includes] },
       },
