@@ -58,6 +58,10 @@ The pinned runtime spec hash verified at workstream open is:
 - Worktree at open: clean.
 - Existing current-findings gate passes and records known red/yellow state:
   `bun run phase-2:gate:u00:current-findings`.
+- Effect 4 is the runtime target. At workstream time, `npm view effect` reports
+  `4.0.0-beta.59` on the beta dist-tag while the repo still pins `3.21.2`;
+  the dependency and lockfile move belongs in the runtime substrate slice with
+  API fallout proven there.
 - Current public/runtime topology is stale relative to the canonical specs:
   `@rawr/hq-sdk`, `@rawr/core`, `@rawr/bootgraph`,
   `@rawr/runtime-context`, `apps/hq/legacy-cutover.ts`, and
@@ -127,6 +131,8 @@ gate and deletion/non-live gate before the source is retired.
 
 - `ProviderEffectPlan` is opaque, cold, and authored via `providerFx`; public
   provider authoring returns plan values, not promises or handlers.
+- Runtime and provider execution target Effect 4. Raw Effect imports stay
+  quarantined to approved SDK internals and private runtime packages.
 - `RuntimeResourceAccess` exposes only declared resource refs through `get`,
   `getOptional`, and redacted `metadata`.
 - Dispatcher access is explicit opt-in from server API/internal plugin
@@ -176,7 +182,8 @@ Exit gate:
 
 ```sh
 bun run sync:check
-bun run phase-2:gate:u00:contract
+bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs
+bun run phase-2:gate:u00:current-findings
 bunx nx show projects --json
 ```
 
@@ -212,7 +219,7 @@ bun run lint:boundaries
 Exit gate:
 
 ```sh
-bunx nx run-many -t typecheck,test --projects=@rawr/runtime-compiler,@rawr/runtime-bootgraph,@rawr/runtime-substrate,@rawr/runtime-process,@rawr/runtime-topology
+bunx nx run-many -t typecheck,test --projects=@rawr/core-runtime-compiler,@rawr/core-runtime-bootgraph,@rawr/core-runtime-substrate,@rawr/core-runtime-process,@rawr/core-runtime-topology
 bun run runtime-realization:type-env
 ```
 
@@ -229,7 +236,7 @@ bun run runtime-realization:type-env
 Exit gate:
 
 ```sh
-bunx nx run-many -t typecheck,test --projects=@rawr/runtime-substrate,@rawr/runtime-bootgraph,@rawr/runtime-topology
+bunx nx run-many -t typecheck,test --projects=@rawr/core-runtime-substrate,@rawr/core-runtime-bootgraph,@rawr/core-runtime-topology,@rawr/core-runtime-standard,@rawr/resource-clock
 bun run lint:boundaries
 ```
 

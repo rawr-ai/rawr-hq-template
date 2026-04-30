@@ -15,7 +15,9 @@
       "@rawr/plugin-server-api-example-todo": ["plugins/server/api/example-todo/index.ts"],
       "@rawr/plugin-server-api-example-todo/server": ["plugins/server/api/example-todo/server.ts"],
       "@rawr/plugin-server-api-state": ["plugins/server/api/state/index.ts"],
-      "@rawr/plugin-server-api-state/server": ["plugins/server/api/state/server.ts"]
+      "@rawr/plugin-server-api-state/server": ["plugins/server/api/state/server.ts"],
+      "@rawr/sdk": ["packages/core/sdk/src/index.ts"],
+      "@rawr/sdk/*": ["packages/core/sdk/src/*"]
     }
   }
 }

@@ -100,6 +100,40 @@ const suiteCommandsByProject = {
     default: ["bun run architecture:gate:projection-boundaries"],
     "m2-u00-current-findings": ["bun run phase-2:gate:u00:runtime-public-seams -- --allow-findings"],
   },
+  "@rawr/sdk": {
+    default: [
+      "bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/sdk",
+      "bun run architecture:gate:projection-boundaries",
+    ],
+    "m2-u00-current-findings": ["bun run phase-2:gate:u00:runtime-public-seams -- --allow-findings"],
+  },
+  "@rawr/core-runtime-compiler": {
+    default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/core-runtime-compiler"],
+  },
+  "@rawr/core-runtime-bootgraph": {
+    default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/core-runtime-bootgraph"],
+  },
+  "@rawr/core-runtime-substrate": {
+    default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/core-runtime-substrate"],
+  },
+  "@rawr/core-runtime-process": {
+    default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/core-runtime-process"],
+  },
+  "@rawr/core-runtime-topology": {
+    default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/core-runtime-topology"],
+  },
+  "@rawr/core-runtime-standard": {
+    default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/core-runtime-standard"],
+  },
+  "@rawr/core-runtime-harness-elysia": {
+    default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/core-runtime-harness-elysia"],
+  },
+  "@rawr/core-runtime-harness-inngest": {
+    default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/core-runtime-harness-inngest"],
+  },
+  "@rawr/resource-clock": {
+    default: ["bun scripts/runtime-prod/verify-canonical-runtime-topology.mjs --project @rawr/resource-clock"],
+  },
   "@rawr/bootgraph": {
     default: ["bun scripts/phase-03/verify-bootgraph-structural.mjs"],
   },
