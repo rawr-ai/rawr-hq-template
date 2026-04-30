@@ -64,6 +64,8 @@ Run these reviews before committing meaningful lab changes.
 | Migration realism | Does the lab reduce migration risk, or only prove a toy artifact? |
 | Scope containment | Did production packages, root gates, workspaces, or public exports remain untouched? |
 
+Use `phased-agent-verification-workflow.md` for the repeatable team workflow that applies these reviews across spec, lab, and migration burn-down work.
+
 ## Adding Or Changing Evidence
 
 1. Identify the spine claim and lifecycle phase.

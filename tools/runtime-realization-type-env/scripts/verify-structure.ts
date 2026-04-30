@@ -37,6 +37,7 @@ function walk(dir: string): string[] {
 const requiredPaths = [
   "tools/runtime-realization-type-env/README.md",
   "tools/runtime-realization-type-env/AGENTS.md",
+  "tools/runtime-realization-type-env/RUNBOOK.md",
   "tools/runtime-realization-type-env/project.json",
   "tools/runtime-realization-type-env/tsconfig.json",
   "tools/runtime-realization-type-env/tsconfig.fail-base.json",
@@ -44,6 +45,7 @@ const requiredPaths = [
   "tools/runtime-realization-type-env/evidence/effect-integration-map.md",
   "tools/runtime-realization-type-env/evidence/effect-integration-work-plan.md",
   "tools/runtime-realization-type-env/evidence/design-guardrails.md",
+  "tools/runtime-realization-type-env/evidence/phased-agent-verification-workflow.md",
   "tools/runtime-realization-type-env/evidence/proof-manifest.json",
   "tools/runtime-realization-type-env/evidence/runtime-realization-lab-v2-plan.md",
   "tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md",

@@ -20,17 +20,20 @@ This project is a contained runtime realization lab. It is not production SDK co
 - `test/vendor-boundaries/**`: vendor boundary shape smoke checks only.
 - `test/mini-runtime/**`: contained RAWR mini-runtime behavior.
 - `evidence/**`: proof manifest, focus log, vendor notes, diagnostic reports, and guardrails.
+- `RUNBOOK.md`: canonical operating guide for lab continuity, authority order, red/yellow/green upkeep, spec feedback, and handoff shape.
 
 ## Required Reading
 
 Before adding or changing tests, fixtures, manifest entries, or evidence docs, read:
 
 - `README.md`
+- `RUNBOOK.md`
 - `evidence/design-guardrails.md`
 - `evidence/focus-log.md`
 - `evidence/proof-manifest.json`
 - `evidence/vendor-fidelity.md`
 - `evidence/runtime-spine-verification-diagnostic.md`
+- `evidence/phased-agent-verification-workflow.md`
 
 ## Evidence Rules
 
@@ -41,6 +44,7 @@ Before adding or changing tests, fixtures, manifest entries, or evidence docs, r
 - Every proof entry must name a gate that would fail if the claim regressed.
 - Every new TODO fixture must be listed in `proof-manifest.json`.
 - Experiment changes must keep `evidence/focus-log.md` and `proof-manifest.currentExperiment` aligned.
+- Before promoting proof or changing red/yellow/green status, use `RUNBOOK.md` and `evidence/phased-agent-verification-workflow.md` to verify the authority order, review axes, and promotion condition.
 
 ## Test-Theater Rules
 
