@@ -39,3 +39,7 @@ When the spec changes, update the smallest SDK facade, mini-runtime behavior, an
 If a change requires production code, split it into migration work. This tool may reveal a spec gap; it must not resolve architecture silently.
 
 Use `evidence/focus-log.md` to record the current experiment and `evidence/vendor-fidelity.md` to keep vendor-shaped facades honest. Do not expand either into a parallel planning system.
+
+## Guardrails
+
+Agents working in this lab should start with `AGENTS.md` and `evidence/design-guardrails.md`. Those files define the lab structure, proof categories, violation categories, review categories, and test-theater rules used to keep evidence honest as the runtime spine evolves.

@@ -3,21 +3,21 @@ import { Compile } from "typebox/compile";
 import { Value } from "typebox/value";
 import { defineRuntimeSchema } from "../../sdk/runtime/schema";
 
-export const TypeBoxWorkItemInputSchema = Type.Object({
-  title: Type.String({ minLength: 1 }),
-  description: Type.Optional(Type.String()),
+export const TypeBoxRuntimePayloadSchema = Type.Object({
+  name: Type.String({ minLength: 1 }),
+  redaction: Type.Optional(Type.Literal("none")),
 });
 
-export type TypeBoxWorkItemInput = Static<typeof TypeBoxWorkItemInputSchema>;
+export type TypeBoxRuntimePayload = Static<typeof TypeBoxRuntimePayloadSchema>;
 
-const validator = Compile(TypeBoxWorkItemInputSchema);
+const validator = Compile(TypeBoxRuntimePayloadSchema);
 
 export const TypeBoxRuntimeSchemaProbe = defineRuntimeSchema({
-  id: "typebox.work-item-input",
-  parse(value: unknown): TypeBoxWorkItemInput {
+  id: "typebox.runtime-payload",
+  parse(value: unknown): TypeBoxRuntimePayload {
     if (!validator.Check(value)) {
       throw new Error(
-        Value.Errors(TypeBoxWorkItemInputSchema, value)
+        Value.Errors(TypeBoxRuntimePayloadSchema, value)
           .map((error) => error.message)
           .join("; "),
       );
@@ -29,8 +29,8 @@ export const TypeBoxRuntimeSchemaProbe = defineRuntimeSchema({
 
 export function validateTypeBoxInput(value: unknown) {
   return {
-    valueCheck: Value.Check(TypeBoxWorkItemInputSchema, value),
+    valueCheck: Value.Check(TypeBoxRuntimePayloadSchema, value),
     compiledCheck: validator.Check(value),
-    errorCount: [...Value.Errors(TypeBoxWorkItemInputSchema, value)].length,
+    errorCount: [...Value.Errors(TypeBoxRuntimePayloadSchema, value)].length,
   };
 }
