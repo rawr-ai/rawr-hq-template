@@ -45,6 +45,7 @@ const requiredPaths = [
   "tools/runtime-realization-type-env/evidence/effect-integration-map.md",
   "tools/runtime-realization-type-env/evidence/effect-integration-work-plan.md",
   "tools/runtime-realization-type-env/evidence/design-guardrails.md",
+  "tools/runtime-realization-type-env/evidence/middle-spine-verification-work-plan.md",
   "tools/runtime-realization-type-env/evidence/phased-agent-verification-workflow.md",
   "tools/runtime-realization-type-env/evidence/proof-manifest.json",
   "tools/runtime-realization-type-env/evidence/runtime-realization-lab-v2-plan.md",
@@ -156,6 +157,7 @@ for (const target of [
   "vendor-effect",
   "vendor-boundaries",
   "mini-runtime",
+  "middle-spine",
   "simulate",
   "gate",
 ]) {
@@ -170,6 +172,7 @@ const gateTargets = new Set([
   "vendor-effect",
   "vendor-boundaries",
   "mini-runtime",
+  "middle-spine",
   "simulate",
 ]);
 
