@@ -7,6 +7,7 @@ import {
 import { defineRuntimeProfile, providerSelection } from "@rawr/sdk/runtime/profiles";
 import { defineRuntimeProvider, providerFx } from "@rawr/sdk/runtime/providers";
 import { defineRuntimeResource, resourceRequirement } from "@rawr/sdk/runtime/resources";
+import { defineServerApiPlugin } from "@rawr/sdk/plugins/server";
 import {
   CreateWorkItemDescriptor,
   CreateWorkItemRef,
@@ -80,6 +81,26 @@ function deriveFixtureSpine() {
         dependencyInstances: [],
         scopeHash: "scope:server:api:work-items",
         configHash: "config:server:api:work-items",
+      },
+    ],
+    serverRoutes: [
+      {
+        kind: "server.route-derivation-input",
+        routeFactoryId: "work-items.public-api",
+        deriveRoutes() {
+          return [
+            {
+              kind: "server.route-declaration",
+              boundary: "plugin.server-api",
+              role: "server",
+              surface: "api",
+              capability: "work-items",
+              routePath: ["items", "create"],
+              executionId: "exec:server:work-items:create",
+              importSafety: "cold-declaration",
+            },
+          ];
+        },
       },
     ],
     dispatchers: [
@@ -158,6 +179,20 @@ describe("middle spine derivation and compiler simulation", () => {
         executableBoundaryRefs: [asyncRef],
       },
     ]);
+    expect(derivation.serverRouteDescriptors).toEqual([
+      {
+        kind: "server.route-descriptor",
+        appId: "hq",
+        executionId: "exec:server:work-items:create",
+        boundary: "plugin.server-api",
+        role: "server",
+        surface: "api",
+        capability: "work-items",
+        routePath: ["items", "create"],
+        importSafety: "cold-declaration",
+        diagnostics: [],
+      },
+    ]);
     expect(derivation.workflowDispatcherDescriptors).toEqual([
       {
         kind: "workflow.dispatcher-descriptor",
@@ -210,6 +245,7 @@ describe("middle spine derivation and compiler simulation", () => {
       executionDescriptorRefs: [serverRef, asyncRef],
       serviceBindingPlans: derivation.serviceBindingPlans,
       surfaceRuntimePlans: derivation.surfaceRuntimePlans,
+      serverRouteDescriptors: derivation.serverRouteDescriptors,
       workflowDispatcherDescriptors: derivation.workflowDispatcherDescriptors,
       diagnostics: derivation.diagnostics,
     });
@@ -290,6 +326,278 @@ describe("middle spine derivation and compiler simulation", () => {
     });
     expect(registry.get(serverRef).descriptor.ref).toEqual(serverRef);
     expect(registry.get(asyncRef).descriptor.ref).toEqual(asyncRef);
+  });
+
+  test("keeps server plugin route declarations cold and memoized", () => {
+    let routeFactoryCalls = 0;
+    let bodyExecutions = 0;
+    const ServerPlugin = defineServerApiPlugin({
+      id: "work-items.public-api",
+      services: {},
+      routes: (api) => {
+        routeFactoryCalls += 1;
+        return {
+          "items.create": api.route<unknown, string>().effect(function* () {
+            bodyExecutions += 1;
+            return "ok";
+          }),
+        };
+      },
+    });
+
+    expect(routeFactoryCalls).toBe(0);
+    const [routeDeclaration] = ServerPlugin.routeDeclarations;
+    const [descriptor] = ServerPlugin.descriptors;
+
+    expect(routeFactoryCalls).toBe(1);
+    expect(bodyExecutions).toBe(0);
+    expect(routeDeclaration).toMatchObject({
+      kind: "server.route-declaration",
+      boundary: "plugin.server-api",
+      role: "server",
+      surface: "api",
+      capability: "work-items.public-api",
+      routeKey: "items.create",
+      routePath: ["items", "create"],
+      importSafety: "cold-declaration",
+    });
+    expect(descriptor).toBe(routeDeclaration?.descriptor);
+  });
+
+  test("derives server route descriptors from a cold route factory without executing descriptor bodies", () => {
+    let factoryCalls = 0;
+    let bodyExecutions = 0;
+    const derivation = deriveRuntimeSpine({
+      kind: "runtime.spine-derivation-input",
+      appId: "hq",
+      executions: [],
+      serverRoutes: [
+        {
+          kind: "server.route-derivation-input",
+          routeFactoryId: "work-items.public-api",
+          deriveRoutes() {
+            factoryCalls += 1;
+            return [
+              {
+                kind: "server.route-declaration",
+                boundary: "plugin.server-api",
+                role: "server",
+                surface: "api",
+                capability: "work-items",
+                routePath: ["items", "create"],
+                importSafety: "cold-declaration",
+                descriptor: {
+                  kind: "execution.descriptor",
+                  run() {
+                    bodyExecutions += 1;
+                    throw new Error("derivation executed server route body");
+                  },
+                } as any,
+                policy: {
+                  timeoutMs: 1000,
+                },
+              },
+            ];
+          },
+        },
+      ],
+    });
+    const serverRef = derivation.executionDescriptorRefs[0];
+
+    expect(factoryCalls).toBe(1);
+    expect(bodyExecutions).toBe(0);
+    expect(serverRef).toEqual({
+      kind: "execution.descriptor-ref",
+      boundary: "plugin.server-api",
+      executionId: "exec:server:work-items:items.create",
+      appId: "hq",
+      role: "server",
+      surface: "api",
+      capability: "work-items",
+      routePath: ["items", "create"],
+    });
+    expect(derivation.descriptorTableInput.entries[0]?.ref).toEqual(serverRef);
+    expect(derivation.executionPlanSeeds).toEqual([
+      {
+        kind: "execution.plan-seed",
+        ref: serverRef,
+        policy: {
+          timeoutMs: 1000,
+        },
+      },
+    ]);
+    expect(derivation.surfaceRuntimePlans).toEqual([
+      {
+        kind: "surface.runtime-plan",
+        role: "server",
+        surface: "api",
+        executableBoundaryRefs: [serverRef],
+      },
+    ]);
+    expect(derivation.serverRouteDescriptors).toEqual([
+      {
+        kind: "server.route-descriptor",
+        appId: "hq",
+        executionId: "exec:server:work-items:items.create",
+        boundary: "plugin.server-api",
+        role: "server",
+        surface: "api",
+        capability: "work-items",
+        routePath: ["items", "create"],
+        importSafety: "cold-declaration",
+        diagnostics: [],
+      },
+    ]);
+    expect(collectFunctionPaths(derivation.portableArtifact)).toEqual([]);
+    expect(derivation.diagnostics).toEqual([]);
+  });
+
+  test("diagnoses failed server route factory derivation without mounting", () => {
+    const derivation = deriveRuntimeSpine({
+      kind: "runtime.spine-derivation-input",
+      appId: "hq",
+      executions: [],
+      serverRoutes: [
+        {
+          kind: "server.route-derivation-input",
+          routeFactoryId: "work-items.public-api",
+          deriveRoutes() {
+            throw new Error("route module imported a host");
+          },
+        },
+      ],
+    });
+
+    expect(derivation.executionDescriptorRefs).toEqual([]);
+    expect(derivation.serverRouteDescriptors).toEqual([]);
+    expect(collectFunctionPaths(derivation.portableArtifact)).toEqual([]);
+    expect(derivation.diagnostics).toContainEqual({
+      code: "runtime.server-route-derivation.factory-failed",
+      message:
+        "server route factory work-items.public-api failed during cold derivation: route module imported a host",
+    });
+  });
+
+  test("diagnoses widened invalid server route metadata", () => {
+    const derivation = deriveRuntimeSpine({
+      kind: "runtime.spine-derivation-input",
+      appId: "hq",
+      executions: [],
+      serverRoutes: [
+        {
+          kind: "server.route-derivation-input",
+          routeFactoryId: "work-items.public-api",
+          deriveRoutes() {
+            return [
+              {
+                kind: "server.route-declaration",
+                boundary: "plugin.async-step",
+                role: "server",
+                surface: "api",
+                capability: "work-items",
+                routePath: ["items", "create"],
+                importSafety: "cold-declaration",
+              } as any,
+              {
+                kind: "server.route-declaration",
+                boundary: "plugin.server-api",
+                role: "server",
+                surface: "api",
+                capability: "work-items",
+                routePath: [],
+                importSafety: "cold-declaration",
+              } as any,
+              {
+                kind: "server.route-declaration",
+                boundary: "plugin.server-api",
+                role: "server",
+                surface: "api",
+                capability: "work-items",
+                routePath: ["items", "unsafe"],
+                importSafety: "host-import",
+              } as any,
+              {
+                kind: "server.route-declaration",
+                boundary: "plugin.server-api",
+                role: "server",
+                surface: "api",
+                capability: "work-items",
+                routePath: ["items", "create"],
+                importSafety: "cold-declaration",
+              },
+              {
+                kind: "server.route-declaration",
+                boundary: "plugin.server-api",
+                role: "server",
+                surface: "api",
+                capability: "work-items",
+                routePath: ["items", "create"],
+                importSafety: "cold-declaration",
+              },
+            ];
+          },
+        },
+      ],
+    });
+
+    expect(derivation.serverRouteDescriptors).toEqual([
+      {
+        kind: "server.route-descriptor",
+        appId: "hq",
+        executionId: "exec:server:work-items:items.create",
+        boundary: "plugin.server-api",
+        role: "server",
+        surface: "api",
+        capability: "work-items",
+        routePath: ["items", "create"],
+        importSafety: "cold-declaration",
+        diagnostics: [],
+      },
+    ]);
+    expect(derivation.diagnostics).toContainEqual({
+      code: "runtime.server-route-derivation.invalid-boundary",
+      message:
+        "server route derivation input must use a server API or server internal boundary",
+    });
+    expect(derivation.diagnostics).toContainEqual({
+      code: "runtime.server-route-derivation.invalid-route-path",
+      message: "server route derivation input must include a non-empty routePath",
+    });
+    expect(derivation.diagnostics).toContainEqual({
+      code: "runtime.server-route-derivation.import-unsafe",
+      message:
+        "server route derivation input must be marked as a cold declaration before route artifacts can be promoted",
+    });
+    expect(derivation.diagnostics).toContainEqual({
+      code: "runtime.server-route-derivation.duplicate-route",
+      message:
+        "duplicate server route derivation input for plugin.server-api/work-items/items.create",
+    });
+  });
+
+  test("keeps explicit server refs reserved without a cold route factory", () => {
+    const derivation = deriveRuntimeSpine({
+      kind: "runtime.spine-derivation-input",
+      appId: "hq",
+      executions: [
+        {
+          kind: "runtime.execution-derivation-input",
+          boundary: "plugin.server-api",
+          executionId: "exec:server:work-items:create",
+          role: "server",
+          surface: "api",
+          capability: "work-items",
+          routePath: ["items", "create"],
+        },
+      ],
+    });
+
+    expect(derivation.serverRouteDescriptors).toEqual([]);
+    expect(derivation.diagnostics).toContainEqual({
+      code: "runtime.server-route-derivation.reserved",
+      message:
+        "server route exec:server:work-items:create remains an explicit execution ref without a cold route derivation input",
+    });
   });
 
   test("keeps dispatcher workflow refs inert without declared operations", () => {

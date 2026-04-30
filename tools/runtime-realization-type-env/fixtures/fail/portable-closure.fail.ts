@@ -7,6 +7,7 @@ export const BadPortableArtifact = {
   executionDescriptorRefs: [],
   serviceBindingPlans: [],
   surfaceRuntimePlans: [],
+  serverRouteDescriptors: [],
   workflowDispatcherDescriptors: [],
   diagnostics: [],
   descriptorTable: {

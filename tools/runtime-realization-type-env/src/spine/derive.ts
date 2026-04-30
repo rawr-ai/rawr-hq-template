@@ -16,6 +16,10 @@ import type {
   ProviderDependencyGraphNode,
   RuntimeDiagnostic,
   RuntimeExecutionDerivationInput,
+  ServerRouteBoundaryKind,
+  ServerRouteDeclaration,
+  ServerRouteDerivationInput,
+  ServerRouteDescriptor,
   RuntimeSpineDerivation,
   RuntimeSpineDerivationInput,
   ServiceBindingPlan,
@@ -41,6 +45,11 @@ function asyncOwnerId(input: Extract<
 type AsyncDescriptorRef = Extract<
   ExecutionDescriptorRef,
   { boundary: "plugin.async-step" }
+>;
+
+type ServerDescriptorRef = Extract<
+  ExecutionDescriptorRef,
+  { boundary: "plugin.server-api" | "plugin.server-internal" }
 >;
 
 // Membership validation intentionally accepts widened refs so negative fixtures can
@@ -259,6 +268,263 @@ function deriveSurfaceRuntimePlans(
 
 function uniqueWorkflowRefs(workflowIds: readonly string[]) {
   return [...new Set(workflowIds)].map((workflowId) => ({ workflowId }));
+}
+
+function isServerRouteBoundary(
+  boundary: unknown,
+): boundary is ServerRouteBoundaryKind {
+  return boundary === "plugin.server-api" || boundary === "plugin.server-internal";
+}
+
+function isServerDescriptorRef(ref: ExecutionDescriptorRef): ref is ServerDescriptorRef {
+  return ref.boundary === "plugin.server-api" || ref.boundary === "plugin.server-internal";
+}
+
+function isValidRoutePath(routePath: unknown): routePath is readonly string[] {
+  return (
+    Array.isArray(routePath) &&
+    routePath.length > 0 &&
+    routePath.every((segment) => typeof segment === "string" && segment.length > 0)
+  );
+}
+
+function routeDescriptorKey(input: {
+  readonly boundary: ServerRouteBoundaryKind;
+  readonly role: "server";
+  readonly surface: string;
+  readonly capability: string;
+  readonly routePath: readonly string[];
+}): string {
+  return stableJson({
+    boundary: input.boundary,
+    capability: input.capability,
+    role: input.role,
+    routePath: input.routePath,
+    surface: input.surface,
+  });
+}
+
+function serverRouteExecutionId(input: {
+  readonly appId: string;
+  readonly identityPolicy: IdentityPolicy;
+  readonly route: ServerRouteDeclaration;
+}): string {
+  if (input.route.executionId) return input.route.executionId;
+
+  return input.identityPolicy.executionDescriptorId({
+    appId: input.appId,
+    boundary: input.route.boundary,
+    role: input.route.role,
+    surface: input.route.surface,
+    capability: input.route.capability,
+    routePath: input.route.routePath,
+  });
+}
+
+function serverRouteMatchesRef(
+  route: ServerRouteDeclaration,
+  ref: ServerDescriptorRef,
+): boolean {
+  return (
+    route.boundary === ref.boundary &&
+    route.role === ref.role &&
+    route.surface === ref.surface &&
+    route.capability === ref.capability &&
+    stableJson(route.routePath) === stableJson(ref.routePath)
+  );
+}
+
+interface ServerRouteDerivationOutput {
+  readonly refs: readonly ServerDescriptorRef[];
+  readonly descriptorEntries: readonly ExecutionDescriptorTableEntry[];
+  readonly executionPlanSeeds: readonly RuntimeSpineDerivation["executionPlanSeeds"][number][];
+  readonly routeDescriptors: readonly ServerRouteDescriptor[];
+}
+
+function readServerRouteDeclarations(
+  factory: ServerRouteDerivationInput,
+  diagnostics: RuntimeDiagnostic[],
+): readonly unknown[] {
+  try {
+    return factory.deriveRoutes();
+  } catch (error) {
+    diagnostics.push({
+      code: "runtime.server-route-derivation.factory-failed",
+      message: `server route factory ${factory.routeFactoryId} failed during cold derivation: ${error instanceof Error ? error.message : String(error)}`,
+    });
+    return [];
+  }
+}
+
+function isServerRouteDeclaration(
+  route: unknown,
+  diagnostics: RuntimeDiagnostic[],
+): route is ServerRouteDeclaration {
+  const widened = route as {
+    readonly boundary?: unknown;
+    readonly importSafety?: unknown;
+    readonly kind?: unknown;
+    readonly role?: unknown;
+    readonly routePath?: unknown;
+  };
+
+  if (widened.kind !== "server.route-declaration") {
+    diagnostics.push({
+      code: "runtime.server-route-derivation.invalid-declaration",
+      message: "server route factory returned a non-route declaration",
+    });
+    return false;
+  }
+
+  if (!isServerRouteBoundary(widened.boundary) || widened.role !== "server") {
+    diagnostics.push({
+      code: "runtime.server-route-derivation.invalid-boundary",
+      message: "server route derivation input must use a server API or server internal boundary",
+    });
+    return false;
+  }
+
+  if (!isValidRoutePath(widened.routePath)) {
+    diagnostics.push({
+      code: "runtime.server-route-derivation.invalid-route-path",
+      message: "server route derivation input must include a non-empty routePath",
+    });
+    return false;
+  }
+
+  if (widened.importSafety !== "cold-declaration") {
+    diagnostics.push({
+      code: "runtime.server-route-derivation.import-unsafe",
+      message:
+        "server route derivation input must be marked as a cold declaration before route artifacts can be promoted",
+    });
+    return false;
+  }
+
+  return true;
+}
+
+function deriveServerRouteDescriptors(input: {
+  readonly appId: string;
+  readonly diagnostics: RuntimeDiagnostic[];
+  readonly existingRefs: readonly ExecutionDescriptorRef[];
+  readonly identityPolicy: IdentityPolicy;
+  readonly seenExecutions: Set<string>;
+  readonly serverRoutes?: readonly ServerRouteDerivationInput[];
+}): ServerRouteDerivationOutput {
+  const serverRefs = input.existingRefs.filter(isServerDescriptorRef);
+  const serverRefsById = new Map(serverRefs.map((ref) => [ref.executionId, ref]));
+  const matchedServerRefIds = new Set<string>();
+  const seenRoutes = new Set<string>();
+  const descriptorEntries: ExecutionDescriptorTableEntry[] = [];
+  const executionPlanSeeds: RuntimeSpineDerivation["executionPlanSeeds"][number][] = [];
+  const refs: ServerDescriptorRef[] = [];
+  const routeDescriptors: ServerRouteDescriptor[] = [];
+
+  // Route factories are the lab's import-safety boundary: derivation may call
+  // the cold declaration factory, but must never execute route Effect bodies or
+  // depend on native server adapter imports.
+  for (const factory of input.serverRoutes ?? []) {
+    for (const maybeRoute of readServerRouteDeclarations(factory, input.diagnostics)) {
+      if (!isServerRouteDeclaration(maybeRoute, input.diagnostics)) continue;
+      const route = maybeRoute;
+      const routeKey = routeDescriptorKey(route);
+      const routeDiagnostics: RuntimeDiagnostic[] = [];
+      const executionId = serverRouteExecutionId({
+        appId: input.appId,
+        identityPolicy: input.identityPolicy,
+        route,
+      });
+
+      if (seenRoutes.has(routeKey)) {
+        routeDiagnostics.push({
+          code: "runtime.server-route-derivation.duplicate-route",
+          message: `duplicate server route derivation input for ${route.boundary}/${route.capability}/${joinPath(route.routePath)}`,
+        });
+      } else {
+        seenRoutes.add(routeKey);
+      }
+
+      const matchedRef = serverRefsById.get(executionId);
+      if (matchedRef) {
+        if (!serverRouteMatchesRef(route, matchedRef)) {
+          routeDiagnostics.push({
+            code: "runtime.server-route-derivation.ref-mismatch",
+            message: `server route ${executionId} does not match the derived server execution ref identity`,
+          });
+        } else {
+          matchedServerRefIds.add(matchedRef.executionId);
+        }
+      } else {
+        if (input.seenExecutions.has(executionId)) {
+          routeDiagnostics.push({
+            code: "runtime.server-route-derivation.duplicate-route",
+            message: `server route ${executionId} duplicates an existing execution id`,
+          });
+        }
+
+        if (routeDiagnostics.length === 0) {
+          const ref = {
+            kind: "execution.descriptor-ref",
+            boundary: route.boundary,
+            executionId,
+            appId: input.appId,
+            role: route.role,
+            surface: route.surface,
+            capability: route.capability,
+            routePath: route.routePath,
+          } as const satisfies ServerDescriptorRef;
+
+          input.seenExecutions.add(executionId);
+          refs.push(ref);
+          matchedServerRefIds.add(ref.executionId);
+
+          if (route.descriptor) {
+            const descriptor = attachDerivedRef(route.descriptor, ref);
+            descriptorEntries.push({ ref, descriptor });
+            executionPlanSeeds.push({
+              kind: "execution.plan-seed",
+              ref,
+              policy: route.policy,
+            });
+          }
+        }
+      }
+
+      input.diagnostics.push(...routeDiagnostics);
+      if (routeDiagnostics.length === 0) {
+        routeDescriptors.push({
+          kind: "server.route-descriptor",
+          appId: input.appId,
+          executionId,
+          boundary: route.boundary,
+          role: route.role,
+          surface: route.surface,
+          capability: route.capability,
+          routePath: route.routePath,
+          importSafety: route.importSafety,
+          diagnostics: routeDiagnostics,
+        });
+      }
+    }
+  }
+
+  // Explicit server refs stay as lab inventory unless a matching cold declaration
+  // claims route authority; derivation does not infer server route descriptors from refs alone.
+  for (const ref of serverRefs) {
+    if (matchedServerRefIds.has(ref.executionId)) continue;
+    input.diagnostics.push({
+      code: "runtime.server-route-derivation.reserved",
+      message: `server route ${ref.executionId} remains an explicit execution ref without a cold route derivation input`,
+    });
+  }
+
+  return {
+    refs,
+    descriptorEntries,
+    executionPlanSeeds,
+    routeDescriptors,
+  };
 }
 
 function deriveWorkflowDispatcherDescriptors(
@@ -537,20 +803,6 @@ function deriveNegativeSpaceDiagnostics(
     seenAsyncMemberships.set(membershipKey, ref);
   }
 
-  if (
-    refs.some(
-      (ref) =>
-        ref.boundary === "plugin.server-api" ||
-        ref.boundary === "plugin.server-internal",
-    )
-  ) {
-    diagnostics.push({
-      code: "runtime.server-route-derivation.reserved",
-      message:
-        "server route paths are explicit lab inputs; cold route factory derivation remains unresolved",
-    });
-  }
-
   return diagnostics;
 }
 
@@ -584,10 +836,23 @@ export function deriveRuntimeSpine(
     }
   }
 
+  const serverRouteDerivation = deriveServerRouteDescriptors({
+    appId: input.appId,
+    diagnostics,
+    existingRefs: executionDescriptorRefs,
+    identityPolicy,
+    seenExecutions,
+    serverRoutes: input.serverRoutes,
+  });
+  executionDescriptorRefs.push(...serverRouteDerivation.refs);
+  descriptorEntries.push(...serverRouteDerivation.descriptorEntries);
+  executionPlanSeeds.push(...serverRouteDerivation.executionPlanSeeds);
+
   diagnostics.push(...deriveNegativeSpaceDiagnostics(executionDescriptorRefs));
 
   const serviceBindingPlans = deriveServiceBindingPlans(input, diagnostics);
   const surfaceRuntimePlans = deriveSurfaceRuntimePlans(executionDescriptorRefs);
+  const serverRouteDescriptors = serverRouteDerivation.routeDescriptors;
   const workflowDispatcherDescriptors = deriveWorkflowDispatcherDescriptors(
     input.appId,
     input.dispatchers ?? [],
@@ -604,6 +869,7 @@ export function deriveRuntimeSpine(
     executionDescriptorRefs,
     serviceBindingPlans,
     surfaceRuntimePlans,
+    serverRouteDescriptors,
     workflowDispatcherDescriptors,
     diagnostics,
   };
@@ -614,6 +880,7 @@ export function deriveRuntimeSpine(
     executionDescriptorRefs,
     serviceBindingPlans,
     surfaceRuntimePlans,
+    serverRouteDescriptors,
     workflowDispatcherDescriptors,
     diagnostics,
   };
@@ -631,6 +898,7 @@ export function deriveRuntimeSpine(
     executionPlanSeeds,
     serviceBindingPlans,
     surfaceRuntimePlans,
+    serverRouteDescriptors,
     workflowDispatcherDescriptors,
     portableArtifact,
     diagnostics,
