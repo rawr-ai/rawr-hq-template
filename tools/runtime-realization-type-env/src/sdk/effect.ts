@@ -5,6 +5,11 @@ import {
 } from "effect";
 import type { YieldWrap } from "effect/Utils";
 
+/**
+ * Curated RAWR Effect facade for authoring/runtime seams. It is backed by real
+ * Effect in the lab, but it intentionally does not expose raw runtime
+ * constructors or settle the final public helper set.
+ */
 export type RawrEffect<TSuccess, TError = never, TRequirements = never> =
   VendorEffect.Effect<TSuccess, TError, TRequirements>;
 
@@ -45,6 +50,10 @@ export function makeRawrFailure<TError>(
   return VendorEffect.fail(error);
 }
 
+/**
+ * Minimal authoring surface intentionally selected for the lab. Expanding this
+ * object is a public API/DX decision, not a convenience export from Effect.
+ */
 export const Effect = {
   succeed: VendorEffect.succeed,
   fail: VendorEffect.fail,
@@ -59,6 +68,11 @@ export const Effect = {
 
 export { pipe };
 
+/**
+ * Declarative policy records used by contained boundary experiments. They
+ * record intent only; timeout enforcement, retry scheduling, durable async
+ * policy, and host error mapping remain runtime-layer work.
+ */
 export interface RawrRetryPolicy {
   readonly kind: "rawr.retry-policy";
   readonly attempts: number;
