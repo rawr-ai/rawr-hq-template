@@ -9,6 +9,7 @@ import type {
   ExecutionDescriptor,
   PublicServerRequestContext,
   RuntimeResourceAccess,
+  ServerRouteDeclaration,
   WorkflowDispatcher,
 } from "../../spine/artifacts";
 
@@ -52,11 +53,21 @@ export interface ServerApiBuilder<TServiceUses extends ServiceUses> {
   >;
 }
 
+export type ServerApiRouteDeclaration = ServerRouteDeclaration & {
+  readonly routeKey: string;
+  readonly descriptor: ExecutionDescriptor<any, any, any, any, any>;
+};
+
 export interface ServerApiPluginDefinition<TServiceUses extends ServiceUses> {
   readonly kind: "plugin.server-api";
   readonly id: string;
   readonly services: TServiceUses;
+  readonly routeDeclarations: readonly ServerApiRouteDeclaration[];
   readonly descriptors: readonly ExecutionDescriptor<any, any, any, any, any>[];
+}
+
+function routePathFromKey(routeKey: string): readonly string[] {
+  return routeKey.split(/[/.]/).filter((segment) => segment.length > 0);
 }
 
 export function defineServerApiPlugin<const TServiceUses extends ServiceUses>(input: {
@@ -66,6 +77,7 @@ export function defineServerApiPlugin<const TServiceUses extends ServiceUses>(in
     api: ServerApiBuilder<TServiceUses>,
   ) => Record<string, ExecutionDescriptor<any, any, any, any, any>>;
 }): ServerApiPluginDefinition<TServiceUses> {
+  let routeDeclarationCache: readonly ServerApiRouteDeclaration[] | undefined;
   const api: ServerApiBuilder<TServiceUses> = {
     route() {
       return {
@@ -80,11 +92,36 @@ export function defineServerApiPlugin<const TServiceUses extends ServiceUses>(in
     },
   };
 
+  // Keep SDK route discovery cold and memoized: the spine may ask for metadata once,
+  // while `descriptors` remains a compatibility view over the same inert declarations.
+  const routeDeclarations = () => {
+    routeDeclarationCache ??= Object.entries(input.routes(api)).map(
+      ([routeKey, descriptor]) => ({
+        kind: "server.route-declaration" as const,
+        boundary: "plugin.server-api" as const,
+        role: "server" as const,
+        surface: "api",
+        capability: input.id,
+        routeKey,
+        routePath: routePathFromKey(routeKey),
+        importSafety: "cold-declaration" as const,
+        descriptor,
+      }),
+    );
+
+    return routeDeclarationCache;
+  };
+
   return {
     kind: "plugin.server-api",
     id: input.id,
     services: input.services,
-    descriptors: Object.values(input.routes(api)),
+    get routeDeclarations() {
+      return routeDeclarations();
+    },
+    get descriptors() {
+      return routeDeclarations().map((route) => route.descriptor);
+    },
   };
 }
 
