@@ -18,15 +18,15 @@ Proof strength is not the same as migration readiness. A `vendor-proof` proves a
 
 ```mermaid
 flowchart LR
-  A["🟡 Definition / selection<br/>App, profile, service, plugin authoring"] --> B["🔴 SDK derivation engine<br/>Normalized graph and real derivation"]
+  A["🟡 Definition / selection<br/>App, profile, service, plugin authoring"] --> B["🟡 SDK derivation engine<br/>Lab derivation slice; cold extraction open"]
   B --> C["🟢 Descriptor refs / table / registry<br/>Refs-only artifacts and registry identity checks"]
-  C --> D["🔴 Runtime compiler<br/>CompiledProcessPlan and BootgraphInput"]
+  C --> D["🟡 Runtime compiler<br/>Contained compiler slice; real lowering open"]
   D --> E["🟡 Resource / provider / profile<br/>Types and closure sim; provider plan open"]
-  E --> F["🔴 Bootgraph / provisioning kernel<br/>Ordering, rollback, scoped provider acquisition"]
+  E --> F["🟡 Bootgraph / provisioning kernel<br/>Fake ordering/rollback/finalization; provider lowering open"]
   F --> G["🟡 Process runtime / access / binding<br/>Mini runtime invocation; access law open"]
   G --> H["🟡 Adapter lowering<br/>Fake adapters delegate; real callback lowering open"]
   H --> I["🔴 Harness mounting<br/>Elysia/Inngest/OCLIF/web/agent/desktop production paths"]
-  I --> J["🔴 Observation<br/>RuntimeCatalog, telemetry, finalization records"]
+  I --> J["🟡 Observation<br/>In-memory catalog/finalization records; export/persistence open"]
 
   C --> K["🟢 Effect execution assumptions<br/>RawrEffect backed by real effect@3.21.2"]
   E --> L["🟡 RuntimeSchema / TypeBox<br/>Adapter proof; redaction policy open"]
@@ -38,8 +38,8 @@ flowchart LR
   classDef yellow fill:#fef9c3,stroke:#ca8a04,color:#422006;
   classDef red fill:#fee2e2,stroke:#b91c1c,color:#450a0a;
   class C,K green;
-  class A,E,G,H,L,M,N,O yellow;
-  class B,D,F,I,J red;
+  class A,B,D,E,F,G,H,J,L,M,N,O yellow;
+  class I red;
 ```
 
 ## Component Matrix
@@ -48,21 +48,21 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | Definition and selection | Import-safe `defineApp(...)`, `RuntimeProfile`, `startApp(...)`, service/plugin/resource/provider declarations. | Positive fixtures cover app, service, server plugin, async workflow, resource/provider/profile shapes. | 🟡 | Import-safety runtime guard and real SDK derivation from declarations are not present. |
 | RuntimeSchema | Runtime-carried config, diagnostics, redaction, and harness payload schema facade. | TypeBox-backed adapter validates values and rejects raw TypeBox as `RuntimeSchema`. | 🟡 | Redaction metadata, config-source binding, and diagnostic payload coverage remain untested. |
-| Service authoring and dependency lanes | `deps`, `scope`, `config`, `invocation`, `provided`; `resourceDep`, `serviceDep`, `semanticDep`; no private service imports. | Type fixtures and negatives prove core lane shape and invocation-bound client use. | 🟡 | Real service binding DAG, dependency cycle diagnostics, and service binding cache behavior are not implemented. |
+| Service authoring and dependency lanes | `deps`, `scope`, `config`, `invocation`, `provided`; `resourceDep`, `serviceDep`, `semanticDep`; no private service imports. | Type fixtures and negatives prove core lane shape and invocation-bound client use; the mini cache proves construction-time binding identity and invocation exclusion. | 🟡 | Full service binding DAG enforcement and dependency cycle diagnostics remain open. |
 | Plugin authoring and topology | One factory, topology plus lane builder classification, `useService(...)` to service binding requirement. | Server plugin fixture proves a narrow authoring shape. | 🟡 | Topology/builder agreement across all plugin kinds is not enforced by the lab. |
 | Descriptor refs, descriptor table, and registry | Discriminated refs, refs-only portable artifacts, non-portable descriptor table, registry identity checks before invocation. | Type/negative fixtures plus mini-runtime registry tests check full ref identity, duplicates, missing descriptors, and mismatches. | 🟢 | Real SDK derivation of descriptors from authoring remains separate and unimplemented. |
-| SDK derivation engine | Produce `NormalizedAuthoringGraph`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, portable artifacts without executing arbitrary user code. | Hand-authored artifacts and fixtures simulate outputs. | 🔴 | Actual derivation engine, cold route derivation rule, and async step membership association need container experiments. |
-| Runtime compiler and compiled plan | Emit `CompiledProcessPlan`, provider dependency graph, compiled service/surface/dispatcher/harness plans, and `BootgraphInput`. | Only stubs and provider-closure simulation exist. | 🔴 | Compiler behavior, diagnostics, and compiled artifact snapshots need real lab implementation. |
-| Resource/provider/profile model | Resources declare contracts, providers acquire/release, profiles select providers; provider coverage closes before provisioning. | Type fixtures prove provider is not an execution plan; provider closure simulation catches missing dependency. | 🟡 | `ProviderEffectPlan` shape, lowering, acquire/release diagnostics, config redaction, and refresh/retry policy are open. |
+| SDK derivation engine | Produce `NormalizedAuthoringGraph`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, portable artifacts without executing arbitrary user code. | A contained derivation slice converts explicit lab declarations into normalized graph artifacts, descriptor table inputs, service binding plans, surface plans, dispatcher descriptor inventory, and refs-only portable artifacts. | 🟡 | Cold SDK extraction from real declarations, cold route derivation, async step membership association, and dispatcher access declaration remain unresolved. |
+| Runtime compiler and compiled plan | Emit `CompiledProcessPlan`, provider dependency graph, compiled service/surface/dispatcher/harness plans, and `BootgraphInput`. | The compiler slice emits compiled process plans for explicit descriptors including explicit async descriptors, provider dependency graph diagnostics, registry input, harness placeholders, scoped bootgraph module input, topology seed, diagnostics, and bootgraph input from derived artifacts. | 🟡 | `ProviderEffectPlan` lowering, real harness payload construction, and production compiler integration remain open. |
+| Resource/provider/profile model | Resources declare contracts, providers acquire/release, profiles select providers; provider coverage closes before provisioning. | Type fixtures prove provider is not an execution plan; compiler simulation catches missing, ambiguous, lifetime/instance-mismatched, and cyclic provider coverage. | 🟡 | `ProviderEffectPlan` shape, lowering, acquire/release diagnostics, config redaction, and refresh/retry policy are open. |
 | Effect execution assumptions | RAWR `RawrEffect` is backed by real Effect, with curated public surface and runtime-owned execution. | Real `effect@3.21.2` tests cover `Effect.gen`, `pipe`, `.pipe`, `Exit`, `Cause`, interruption, scoped release, finalizer order, and managed runtime wrapper. | 🟢 | This proves Effect assumptions, not the complete RAWR provisioning kernel. |
-| Bootgraph and provisioning kernel | Dependency ordering, dedupe, rollback, reverse finalization, process/role scopes, provider acquisition through Effect. | Effect scoped/finalizer semantics are proven as vendor behavior. | 🔴 | RAWR bootgraph, provider lowering, startup rollback, and final catalog records are not implemented. |
-| Process runtime, runtime access, and service binding | Scope runtime access, bind services, cache construction-time bindings, materialize dispatchers, project plugins. | Mini runtime runs descriptors through registry and real Effect execution; invocation context supplies clients/resources/workflows. | 🟡 | `RuntimeAccess` method law, `ServiceBindingCache`, service binding DAG, and dispatcher materialization are open. |
-| Adapter lowering | Lower compiled surface plans into harness payloads; adapters must delegate into process runtime and not execute descriptors directly. | Fake server and async adapters delegate into mini runtime. | 🟡 | Real server route derivation, callback lowering, and async bridge lowering are still `xfail`. |
+| Bootgraph and provisioning kernel | Dependency ordering, dedupe, rollback, reverse finalization, process/role scopes, provider acquisition through Effect. | Fake boot modules prove dependency ordering, rollback of started modules, reverse finalization, finalizer-failure recording, and redacted lifecycle records. | 🟡 | `ProviderEffectPlan` lowering, scoped provider acquisition, process/role scope semantics, and production bootgraph integration remain open. |
+| Process runtime, runtime access, and service binding | Scope runtime access, bind services, cache construction-time bindings, materialize dispatchers, project plugins. | Mini runtime runs descriptors through registry and real Effect execution; invocation context supplies clients/resources/workflows; runtime access exposes sanctioned resource/optional resource/telemetry/diagnostic/topology hooks; service binding cache uses structural construction identity and excludes invocation. | 🟡 | Final `RuntimeAccess` method law, full service binding DAG, dispatcher materialization, and plugin projection remain open. |
+| Adapter lowering | Lower compiled surface plans into harness payloads; adapters must delegate into process runtime and not execute descriptors directly. | Instrumented fake server and async adapters accept only their boundary-specific descriptor refs and delegate into the mini runtime; server and explicit async callbacks run through compiled registry artifacts. | 🟡 | Real server route derivation, native callback lowering, and async bridge lowering are still `xfail`. |
 | Server/oRPC boundary | oRPC contract/server handler shapes adapted into Elysia/server harness payloads. | Native oRPC contract/router/handler shape-smoke artifacts are constructible. | 🟡 | No production oRPC adapter, Elysia mount, OpenAPI publication, or real request path proof. |
 | Async/Inngest boundary | Workflow/schedule/consumer definitions lower to `FunctionBundle`; dispatcher wraps selected workflows; Inngest harness mounts native functions. | Inngest client/function/`inngest/bun` serve handoff shape is constructible. | 🟡 | Async step membership, dispatcher access, FunctionBundle lowering, durable scheduling/retry/idempotency semantics, and real worker/serve path are unproven. |
 | Harness mounting | Elysia, Inngest, OCLIF, web, agent/OpenShell, desktop harnesses mount already-lowered payloads and return `StartedHarness`. | No real harness mount exists in the lab. | 🔴 | Server and async harnesses need first; other harnesses can remain downstream unless migration scope promotes them. |
-| Diagnostics, telemetry, catalog, finalization | `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeCatalog`, topology/startup/finalization records, redaction. | Mini runtime emits simple invocation events only. | 🔴 | Catalog shape, diagnostic classes, telemetry correlation, redacted payloads, rollback records, and finalization records need lab tests. |
-| Deployment/control-plane handoff | Compile-only handoff with portable artifacts and compiled plans; no live handles or descriptor table leakage. | Mini-runtime handoff keeps portable artifacts refs-only and excludes descriptor table/live handles. | 🟡 | Control-plane placement, deployment semantics, and stale deployment-plan alignment are not tested. |
+| Diagnostics, telemetry, catalog, finalization | `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeCatalog`, topology/startup/finalization records, redaction. | In-memory catalog tests cover startup, rollback, finalization records, failed finalizers, and redacted secrets without live handles. | 🟡 | Telemetry export, persisted catalog storage, correlation policy, and production diagnostic classes remain open. |
+| Deployment/control-plane handoff | Compile-only handoff with portable artifacts and compiled plans; no live handles or descriptor table leakage. | Mini-runtime handoff keeps portable artifacts refs-only, negative fixtures reject object-literal live handles, and runtime validation rejects app id mismatches, widened descriptor tables, runtime access, live handles, executable closures, and raw secret fields. | 🟡 | Control-plane placement, deployment semantics, and stale deployment-plan alignment are not tested. |
 | Enforcement and forbidden patterns | Reject raw runtime leakage, `.handler(...)` authoring, `fx`, portable closures, provider-as-execution-plan, live handles in portable artifacts. | Negative fixtures cover the core authoring misuse set. | 🟡 | Full topology/builder enforcement, raw env reads, diagnostics redaction, local HTTP self-call, and harness source restrictions remain broader migration gates. |
 
 ## Test-Theater Audit
@@ -76,13 +76,14 @@ flowchart LR
 
 ## Current Position
 
-The lab is meaningful, but it is not yet enough to claim the migration spine is green. It now proves three important things:
+The lab is meaningful, but it is not production runtime readiness and it is not enough to claim the whole migration spine is green. It now proves the load-bearing middle through contained simulation where the spec is already explicit enough:
 
 1. The public authoring/type surface can reject several bad patterns.
 2. The runtime can run real Effect values in a miniature descriptor/registry path.
 3. Vendor boundary smoke checks for TypeBox, oRPC, and Inngest are available without pretending they are RAWR runtime behavior.
+4. Explicit lab declarations can flow through derivation, compilation, bootgraph/catalog records, runtime access/cache checks, adapter delegation, and deployment handoff boundaries.
 
-The lab does not yet prove the load-bearing middle of the migration: real SDK derivation, runtime compiler, bootgraph/provisioning, provider lowering, service binding cache, production adapter lowering, harness mounting, RuntimeCatalog, telemetry, or finalization.
+The lab still does not prove cold SDK derivation from production declarations, `ProviderEffectPlan` shape/lowering, async step membership, dispatcher access declaration, server route derivation, production adapter/harness mounting, durable scheduling, telemetry export, catalog persistence, deployment placement, or production runtime readiness.
 
 ## Next Validation Moves
 
@@ -99,16 +100,15 @@ The lab does not yet prove the load-bearing middle of the migration: real SDK de
 
 | Experiment | Why it matters |
 | --- | --- |
-| SDK derivation engine slice | Prove cold declarations produce normalized graph, descriptor refs/table, service binding plans, surface plans, and portable artifacts. |
 | Async step membership | Resolve how workflow/schedule/consumer definitions own statically declarable step effects without executing workflow bodies. |
 | `ProviderEffectPlan` shape and lowering | Prove provider acquire/release, telemetry, errors, rollback, and diagnostics before provisioning. |
-| `RuntimeResourceAccess` law | Lock require/optional/metadata methods without exposing raw runtime internals. |
+| `RuntimeResourceAccess` law | Promote the mini-runtime sanctioned access set into the final method law, or revise it explicitly. |
 | Dispatcher access declaration | Decide whether workflow dispatcher access is explicit or ambient before compiling dispatcher operations. |
 | Server route derivation | Prove cold route factories are derivable and invocation-time values arrive through context. |
-| Adapter callback lowering | Prove native host callbacks resolve registry boundaries and delegate into process runtime. |
-| Async bridge lowering | Prove async step callbacks run pre-derived descriptors through process runtime while durable semantics stay with Inngest. |
+| Adapter callback lowering | Promote the fake callback delegation proof into real native host callback lowering. |
+| Async bridge lowering | Promote the typed fake async callback proof into real async bridge lowering while durable semantics stay with Inngest. |
 | Runtime profile config redaction | Prove config validation, secret use, redacted diagnostics, and no live secret leakage. |
-| RuntimeCatalog/diagnostics/finalization | Prove observations are records, not live access, and finalization/rollback are visible. |
+| RuntimeCatalog/diagnostics/finalization | Decide production observation shape, telemetry correlation, persistence/export boundaries, and config redaction. |
 
 ### Migration-Only Or Later
 
@@ -122,6 +122,6 @@ The lab does not yet prove the load-bearing middle of the migration: real SDK de
 
 ## Verdict
 
-Current status: **migration planning can proceed with explicit yellow/red gaps, but runtime implementation should not claim the core spine is pre-verified yet.**
+Current status: **the contained lab now gives simulation-level confidence in the already-specified middle spine, with explicit yellow/red gaps reserved for unresolved design and production integration.**
 
-The highest-value next lab iteration is not more vendor probing. It is the middle-spine proof: SDK derivation -> runtime compilation -> bootgraph/provisioning -> process runtime/service binding -> adapter lowering -> harness handoff -> catalog/finalization records.
+The highest-value next lab iteration is not more vendor probing. It is narrowing the remaining negative space: async membership, dispatcher access, server route derivation, `ProviderEffectPlan` shape/lowering, runtime config redaction, and the first real server/async harness mounting path.

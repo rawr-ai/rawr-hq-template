@@ -121,6 +121,23 @@ Use the lab to decide:
 - Which red/yellow pieces require a spec decision before migration.
 - Which pieces are intentionally migration-only because they require production hosts, external services, or deployment infrastructure.
 
+## Durable Workstream Reports
+
+At the end of each meaningful burn-down, persist one completed session report in:
+
+```text
+tools/runtime-realization-type-env/evidence/workstreams/YYYY-MM-DD-<slug>.md
+```
+
+Those reports are informative continuity containers. They should preserve the
+session frame, input packet, workflow, findings, final output, and the useful
+input for the next workstream. They do not replace the canonical spec, proof
+manifest, focus log, diagnostic, or this runbook.
+
+Do not turn `evidence/focus-log.md` into a transcript or live status tracker.
+Keep session detail in workstream reports and keep authority deltas in the
+manifest and diagnostic.
+
 ## Handoff Template
 
 Use this shape when ending a lab session:
@@ -166,4 +183,3 @@ Use this shape when ending a lab session:
 
 One precise next action for the next session.
 ```
-

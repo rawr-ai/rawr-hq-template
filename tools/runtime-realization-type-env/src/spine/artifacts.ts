@@ -1,5 +1,6 @@
 import type { EffectBody } from "../sdk/effect";
-import type { AppRole } from "../sdk/runtime/resources";
+import type { RuntimeProfile } from "../sdk/runtime/profiles";
+import type { AppRole, ResourceLifetime } from "../sdk/runtime/resources";
 
 export type ExecutionBoundaryKind =
   | "service.procedure"
@@ -89,6 +90,10 @@ export interface BoundaryTelemetry {
   event(name: string, attributes?: Record<string, string | number | boolean>): void;
 }
 
+export interface RuntimeTelemetry {
+  event(name: string, attributes?: Record<string, string | number | boolean>): void;
+}
+
 const RUNTIME_RESOURCE_ACCESS: unique symbol = Symbol("runtime.resource-access");
 
 export interface RuntimeResourceAccess {
@@ -96,9 +101,68 @@ export interface RuntimeResourceAccess {
   readonly [RUNTIME_RESOURCE_ACCESS]: true;
 }
 
+export interface RuntimeTopologyRecord {
+  readonly kind: string;
+  readonly [key: string]: unknown;
+}
+
+export interface ProcessRuntimeAccess {
+  readonly appId: string;
+  readonly processId: string;
+  readonly entrypointId: string;
+  readonly profileId: string;
+  readonly roles: readonly AppRole[];
+  resource<TResource extends { readonly id: string }>(
+    resource: TResource,
+    input?: { readonly instance?: string },
+  ): unknown;
+  optionalResource<TResource extends { readonly id: string }>(
+    resource: TResource,
+    input?: { readonly instance?: string },
+  ): unknown | undefined;
+  telemetry(): RuntimeTelemetry;
+  emitTopology(record: RuntimeTopologyRecord): void;
+  emitDiagnostic(diagnostic: RuntimeDiagnostic): void;
+}
+
+export interface RoleSurfaceIdentity {
+  readonly role: AppRole;
+  readonly surface: string;
+  readonly capability: string;
+  readonly instance?: string;
+}
+
+export interface RoleRuntimeAccess {
+  readonly role: AppRole;
+  readonly process: ProcessRuntimeAccess;
+  readonly selectedSurfaces: readonly RoleSurfaceIdentity[];
+  resource<TResource extends { readonly id: string }>(
+    resource: TResource,
+    input?: { readonly instance?: string },
+  ): unknown;
+  optionalResource<TResource extends { readonly id: string }>(
+    resource: TResource,
+    input?: { readonly instance?: string },
+  ): unknown | undefined;
+  forSurface(input: {
+    readonly surface: string;
+    readonly capability: string;
+    readonly instance?: string;
+  }): SurfaceRuntimeAccess;
+}
+
+export interface SurfaceRuntimeAccess {
+  readonly role: AppRole;
+  readonly surface: string;
+  readonly capability: string;
+  readonly instance?: string;
+  readonly roleAccess: RoleRuntimeAccess;
+}
+
 export interface RuntimeAccess {
   readonly kind: "runtime.access";
-  readonly resources: ReadonlyMap<string, unknown>;
+  readonly process: ProcessRuntimeAccess;
+  readonly roles: ReadonlyMap<AppRole, RoleRuntimeAccess>;
 }
 
 export interface WorkflowDispatcher {
@@ -163,7 +227,13 @@ export interface ExecutionRegistry {
 export interface ServiceBindingPlan {
   readonly kind: "service.binding-plan";
   readonly serviceId: string;
+  readonly serviceInstance?: string;
   readonly role: AppRole;
+  readonly surface: string;
+  readonly capability: string;
+  readonly dependencyInstances: readonly string[];
+  readonly scopeHash: string;
+  readonly configHash: string;
 }
 
 export interface SurfaceRuntimePlan {
@@ -216,6 +286,9 @@ export interface BootResourceModule {
   readonly kind: "boot.resource-module";
   readonly resourceId: string;
   readonly providerId: string;
+  readonly lifetime: ResourceLifetime;
+  readonly role?: AppRole;
+  readonly instance?: string;
 }
 
 export interface RuntimeCatalog {
@@ -228,4 +301,147 @@ export interface RuntimeCatalog {
 
 export interface IdentityPolicy {
   executionDescriptorId(input: ExecutionDescriptorIdentityInput): string;
+}
+
+export type RuntimeExecutionDerivationIdentityInput =
+  DistributiveOmit<ExecutionDescriptorRef, "kind" | "executionId" | "appId">;
+
+export type RuntimeExecutionDerivationInput =
+  RuntimeExecutionDerivationIdentityInput & {
+    readonly kind: "runtime.execution-derivation-input";
+    readonly executionId?: string;
+    readonly descriptor?: ExecutionDescriptor<any, any, any, any, any>;
+    readonly policy?: CompiledExecutionPlan["policy"];
+  };
+
+export interface ServiceBindingDerivationInput {
+  readonly kind: "service.binding-derivation-input";
+  readonly serviceId: string;
+  readonly serviceInstance?: string;
+  readonly role: AppRole;
+  readonly surface: string;
+  readonly capability: string;
+  readonly dependencyInstances?: readonly string[];
+  readonly scopeHash: string;
+  readonly configHash: string;
+}
+
+export interface WorkflowDispatcherDerivationInput {
+  readonly kind: "workflow.dispatcher-derivation-input";
+  readonly descriptorId?: string;
+  readonly role: AppRole;
+  readonly surface: string;
+  readonly capability: string;
+  readonly workflowIds: readonly string[];
+  readonly operations?: readonly WorkflowDispatcherOperationDescriptor[];
+  readonly diagnostics?: readonly RuntimeDiagnostic[];
+}
+
+export interface RuntimeSpineDerivationInput {
+  readonly kind: "runtime.spine-derivation-input";
+  readonly appId: string;
+  readonly profile?: RuntimeProfile;
+  readonly identityPolicy?: IdentityPolicy;
+  readonly executions: readonly RuntimeExecutionDerivationInput[];
+  readonly serviceBindings?: readonly ServiceBindingDerivationInput[];
+  readonly dispatchers?: readonly WorkflowDispatcherDerivationInput[];
+}
+
+export interface ExecutionDescriptorTableInput {
+  readonly kind: "execution.descriptor-table-input";
+  readonly entries: readonly ExecutionDescriptorTableEntry[];
+}
+
+export interface ExecutionPlanSeed {
+  readonly kind: "execution.plan-seed";
+  readonly ref: ExecutionDescriptorRef;
+  readonly policy?: CompiledExecutionPlan["policy"];
+}
+
+export interface ProviderDependencyGraphNode {
+  readonly kind: "provider.dependency-node";
+  readonly resourceId: string;
+  readonly providerId: string;
+  readonly lifetime: ResourceLifetime;
+  readonly role?: AppRole;
+  readonly instance?: string;
+}
+
+export interface ProviderDependencyGraphEdge {
+  readonly kind: "provider.dependency-edge";
+  readonly fromProviderId: string;
+  readonly toResourceId: string;
+  readonly optional: boolean;
+  readonly reason: string;
+  readonly matchedProviderId?: string;
+}
+
+export interface ProviderDependencyGraph {
+  readonly kind: "provider.dependency-graph";
+  readonly profileId: string;
+  readonly nodes: readonly ProviderDependencyGraphNode[];
+  readonly edges: readonly ProviderDependencyGraphEdge[];
+  readonly diagnostics: readonly RuntimeDiagnostic[];
+}
+
+export interface NormalizedAuthoringGraph {
+  readonly kind: "normalized.authoring-graph";
+  readonly appId: string;
+  readonly executionDescriptorRefs: readonly ExecutionDescriptorRef[];
+  readonly serviceBindingPlans: readonly ServiceBindingPlan[];
+  readonly surfaceRuntimePlans: readonly SurfaceRuntimePlan[];
+  readonly workflowDispatcherDescriptors: readonly WorkflowDispatcherDescriptor[];
+  readonly diagnostics: readonly RuntimeDiagnostic[];
+}
+
+export interface RuntimeSpineDerivation {
+  readonly kind: "runtime.spine-derivation";
+  readonly appId: string;
+  readonly profile?: RuntimeProfile;
+  readonly normalizedGraph: NormalizedAuthoringGraph;
+  readonly executionDescriptorRefs: readonly ExecutionDescriptorRef[];
+  readonly descriptorTableInput: ExecutionDescriptorTableInput;
+  readonly executionPlanSeeds: readonly ExecutionPlanSeed[];
+  readonly serviceBindingPlans: readonly ServiceBindingPlan[];
+  readonly surfaceRuntimePlans: readonly SurfaceRuntimePlan[];
+  readonly workflowDispatcherDescriptors: readonly WorkflowDispatcherDescriptor[];
+  readonly portableArtifact: PortableRuntimePlanArtifact;
+  readonly diagnostics: readonly RuntimeDiagnostic[];
+}
+
+export type RuntimeHarnessKind =
+  | "server"
+  | "async"
+  | "cli"
+  | "web"
+  | "agent"
+  | "desktop";
+
+export interface RuntimeHarnessPlanPlaceholder {
+  readonly kind: "harness.plan-placeholder";
+  readonly harness: RuntimeHarnessKind;
+  readonly role: AppRole;
+  readonly surface: string;
+  readonly executableBoundaryRefs: readonly ExecutionDescriptorRef[];
+  readonly diagnostics: readonly RuntimeDiagnostic[];
+}
+
+export interface RuntimeBootgraphInputPlaceholder {
+  readonly kind: "bootgraph.input-placeholder";
+  readonly appId: string;
+  readonly resourceModules: readonly BootResourceModule[];
+  readonly providerDependencyGraph?: ProviderDependencyGraph;
+  readonly diagnostics: readonly RuntimeDiagnostic[];
+}
+
+export interface RuntimeSpineCompilation {
+  readonly kind: "runtime.spine-compilation";
+  readonly appId: string;
+  readonly portableArtifact: PortableRuntimePlanArtifact;
+  readonly compiledProcessPlan: CompiledProcessPlan;
+  readonly registryInput: CompiledExecutionRegistryInput;
+  readonly providerDependencyGraph?: ProviderDependencyGraph;
+  readonly harnessPlans: readonly RuntimeHarnessPlanPlaceholder[];
+  readonly bootgraphInput: RuntimeBootgraphInputPlaceholder;
+  readonly diagnostics: readonly RuntimeDiagnostic[];
 }

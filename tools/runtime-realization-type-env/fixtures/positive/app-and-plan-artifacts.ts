@@ -7,7 +7,7 @@ import type {
 } from "@rawr/sdk/spine";
 import { RuntimeFixtureProfile } from "./resource-provider-profile";
 import { WorkItemsServerApiPlugin } from "./server-api-plugin";
-import { WorkItemsAsyncPlugin } from "./async-workflow";
+import { SyncWorkItemStep, WorkItemsAsyncPlugin } from "./async-workflow";
 
 export const CreateWorkItemRef = {
   kind: "execution.descriptor-ref",
@@ -38,9 +38,23 @@ export const CreateWorkItemDescriptor = {
   run: WorkItemsServerApiPlugin.descriptors[0].run,
 } as const satisfies ExecutionDescriptor;
 
+export const SyncWorkItemStepDescriptor = {
+  kind: "execution.descriptor",
+  ref: SyncWorkItemStepRef,
+  run: SyncWorkItemStep.effect,
+} as const satisfies ExecutionDescriptor<any, unknown, unknown, any, any>;
+
 export const CreateWorkItemPlan = {
   kind: "compiled.execution-plan",
   ref: CreateWorkItemRef,
+  policy: {
+    timeoutMs: 1000,
+  },
+} as const satisfies CompiledExecutionPlan;
+
+export const SyncWorkItemStepPlan = {
+  kind: "compiled.execution-plan",
+  ref: SyncWorkItemStepRef,
   policy: {
     timeoutMs: 1000,
   },
@@ -55,6 +69,11 @@ export const PortableArtifact = {
       kind: "service.binding-plan",
       serviceId: "work-items",
       role: "server",
+      surface: "api",
+      capability: "work-items",
+      dependencyInstances: [],
+      scopeHash: "scope:server:api:work-items",
+      configHash: "config:server:api:work-items",
     },
   ],
   surfaceRuntimePlans: [
@@ -63,6 +82,12 @@ export const PortableArtifact = {
       role: "server",
       surface: "api",
       executableBoundaryRefs: [CreateWorkItemRef],
+    },
+    {
+      kind: "surface.runtime-plan",
+      role: "async",
+      surface: "workflow",
+      executableBoundaryRefs: [SyncWorkItemStepRef],
     },
   ],
   workflowDispatcherDescriptors: [
@@ -74,7 +99,7 @@ export const PortableArtifact = {
       surface: "api",
       capability: "work-items",
       workflowRefs: [{ workflowId: "work-items.sync" }],
-      operations: [{ operation: "dispatch", workflowId: "work-items.sync" }],
+      operations: [],
       diagnostics: [],
     },
   ],
