@@ -9,10 +9,13 @@ import {
   defineRuntimeProfile,
   providerSelection,
 } from "@rawr/sdk/runtime/profiles";
+import { defineRuntimeSchema, type RuntimeSchema } from "@rawr/sdk/runtime/schema";
 import {
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
   executeMiniBootgraph,
+  providerBootResourceKey,
+  providerBootResourceModuleId,
   type MiniBootgraphModule,
 } from "../../src/mini-runtime";
 import type { InMemoryRuntimeCatalog } from "../../src/mini-runtime/catalog";
@@ -85,6 +88,45 @@ function phasesFor(catalog: InMemoryRuntimeCatalog, phase: string): readonly str
     .map((record) => record.subjectId);
 }
 
+function providerTraceJson(trace: ReturnType<typeof createProviderProvisioningTrace>): string {
+  assertNoLiveHandles(trace);
+  return JSON.stringify(trace);
+}
+
+function createEmailConfigSchema(
+  parseEvents?: string[],
+): RuntimeSchema<EmailConfig> {
+  return defineRuntimeSchema({
+    id: "test.email.config",
+    parse(value) {
+      parseEvents?.push("parse:test.email.config");
+      const record = value as Partial<EmailConfig> | undefined;
+      if (!record || typeof record !== "object" || typeof record.from !== "string") {
+        throw new Error(`invalid email config: ${JSON.stringify(value)}`);
+      }
+      if (!record.from.includes("@")) {
+        throw new Error(`invalid email config from ${JSON.stringify(value)}`);
+      }
+      return {
+        from: record.from.toLowerCase(),
+        apiKey: record.apiKey,
+        liveHandle: record.liveHandle,
+      };
+    },
+  });
+}
+
+function emailProviderModuleId(providerId = "test.email.memory"): string {
+  return providerBootResourceModuleId(
+    providerBootResourceKey({
+      resourceId: EmailSenderResource.id,
+      providerId,
+      lifetime: "process",
+      role: "server",
+    }),
+  );
+}
+
 function createClockProvider(input: {
   readonly events?: string[];
   readonly releaseFails?: boolean;
@@ -119,10 +161,13 @@ function createClockProvider(input: {
 
 function createEmailProvider(input: {
   readonly events?: string[];
+  readonly buildEvents?: string[];
   readonly observedClock?: string[];
+  readonly observedConfig?: EmailConfig[];
   readonly acquireFails?: boolean;
   readonly releaseFails?: boolean;
   readonly clockInstance?: string;
+  readonly configSchema?: RuntimeSchema<EmailConfig>;
 } = {}) {
   return defineRuntimeProvider<typeof EmailSenderResource, EmailConfig>({
     kind: "runtime.provider",
@@ -137,7 +182,10 @@ function createEmailProvider(input: {
         reason: "timestamp outbound test mail",
       }),
     ],
+    configSchema: input.configSchema,
     build(context) {
+      input.buildEvents?.push("build:test.email.memory");
+      input.observedConfig?.push(context.config);
       return providerFx.acquireRelease({
         acquire: function* () {
           input.events?.push("acquire:test.email.memory");
@@ -244,6 +292,7 @@ describe("provider provisioning lowering", () => {
     expect(startupCatalogJson).toContain("test.email.memory");
     expect(startupCatalogJson).not.toContain("provider-secret");
     expect(startupCatalogJson).not.toContain("liveHandle() {}");
+    expect(providerTraceJson(trace)).not.toContain("provider-secret");
     assertNoLiveHandles(startupCatalog);
 
     const finalizedCatalog = await result.finalize();
@@ -255,6 +304,122 @@ describe("provider provisioning lowering", () => {
       "test.email.memory",
       "test.clock.system",
     ]);
+  });
+
+  test("validates provider config through schema and redacts config snapshots", async () => {
+    const observedConfig: EmailConfig[] = [];
+    const parseEvents: string[] = [];
+    const clockProvider = createClockProvider();
+    const emailProvider = createEmailProvider({
+      configSchema: createEmailConfigSchema(parseEvents),
+      observedConfig,
+    });
+    const profile = createProfile({ clockProvider, emailProvider });
+    const graph = deriveProviderDependencyGraph(profile);
+    const trace = createProviderProvisioningTrace();
+    const modules = createProviderProvisioningModules({
+      profileId: profile.id,
+      providerSelections: profile.providerSelections,
+      providerDependencyGraph: graph,
+      processId: "process-1",
+      trace,
+      configs: new Map([
+        [
+          emailProvider.id,
+          {
+            from: "fallback@example.com",
+            apiKey: "fallback-secret",
+          },
+        ],
+        [
+          emailProviderModuleId(),
+          {
+            from: "LAB@EXAMPLE.COM",
+            apiKey: "module-secret",
+            liveHandle() {},
+          },
+        ],
+      ]),
+    });
+
+    const result = await executeMiniBootgraph({ modules });
+
+    expect(result.status).toBe("started");
+    if (result.status !== "started") throw result.error;
+
+    expect(parseEvents).toEqual(["parse:test.email.config"]);
+    expect(observedConfig).toEqual([
+      {
+        from: "lab@example.com",
+        apiKey: "module-secret",
+        liveHandle: expect.any(Function),
+      },
+    ]);
+
+    const startupCatalogJson = JSON.stringify(result.catalog());
+    const traceJson = providerTraceJson(trace);
+    expect(startupCatalogJson).toContain("test.email.config");
+    expect(startupCatalogJson).not.toContain("module-secret");
+    expect(startupCatalogJson).not.toContain("fallback-secret");
+    expect(traceJson).not.toContain("module-secret");
+    expect(traceJson).not.toContain("fallback-secret");
+    expect(trace.events.map((event) => event.name)).toContain(
+      "provider.config.validated",
+    );
+    assertNoLiveHandles(result.catalog());
+  });
+
+  test("invalid provider config fails closed before provider build with safe diagnostics", async () => {
+    const events: string[] = [];
+    const buildEvents: string[] = [];
+    const clockProvider = createClockProvider({ events });
+    const emailProvider = createEmailProvider({
+      buildEvents,
+      configSchema: createEmailConfigSchema(),
+      events,
+    });
+    const profile = createProfile({ clockProvider, emailProvider });
+    const graph = deriveProviderDependencyGraph(profile);
+    const trace = createProviderProvisioningTrace();
+    const modules = createProviderProvisioningModules({
+      profileId: profile.id,
+      providerSelections: profile.providerSelections,
+      providerDependencyGraph: graph,
+      processId: "process-1",
+      trace,
+      configs: {
+        [emailProvider.id]: {
+          from: "not-an-email",
+          apiKey: "invalid-secret",
+          liveHandle() {},
+        },
+      },
+    });
+
+    const result = await executeMiniBootgraph({ modules });
+
+    expect(result.status).toBe("failed");
+    if (result.status !== "failed") return;
+
+    expect(buildEvents).toEqual([]);
+    expect(events).toEqual([
+      "acquire:test.clock.system",
+      "release:test.clock.system",
+    ]);
+    expect(result.error).toBeInstanceOf(Error);
+    expect(String((result.error as Error).message)).toBe(
+      "provider.config.invalid: provider test.email.memory config invalid for schema test.email.config",
+    );
+
+    const catalogJson = JSON.stringify(result.catalog);
+    const traceJson = providerTraceJson(trace);
+    expect(catalogJson).toContain("provider.config.invalid");
+    expect(traceJson).toContain("provider.config.invalid");
+    expect(catalogJson).not.toContain("invalid-secret");
+    expect(traceJson).not.toContain("invalid-secret");
+    expect(catalogJson).not.toContain("liveHandle() {}");
+    expect(traceJson).not.toContain("liveHandle() {}");
+    assertNoLiveHandles(result.catalog);
   });
 
   test("matches provider dependencies by lifetime, role, and instance scope", async () => {
@@ -362,7 +527,11 @@ describe("provider provisioning lowering", () => {
       providerDependencyGraph: graph,
       processId: "process-1",
       configs: {
-        [emailProvider.id]: { from: "lab@example.com" },
+        [emailProvider.id]: {
+          from: "lab@example.com",
+          apiKey: "rollback-secret",
+          liveHandle() {},
+        },
       },
     });
 
@@ -386,6 +555,8 @@ describe("provider provisioning lowering", () => {
     expect(providerIdsFor(modules, phasesFor(result.catalog, "boot.rollback.finished"))).toEqual([
       "test.clock.system",
     ]);
+    expect(JSON.stringify(result.catalog)).not.toContain("rollback-secret");
+    assertNoLiveHandles(result.catalog);
   });
 
   test("records release failures and continues reverse finalization", async () => {
@@ -400,7 +571,11 @@ describe("provider provisioning lowering", () => {
       providerDependencyGraph: graph,
       processId: "process-1",
       configs: {
-        [emailProvider.id]: { from: "lab@example.com" },
+        [emailProvider.id]: {
+          from: "lab@example.com",
+          apiKey: "release-secret",
+          liveHandle() {},
+        },
       },
     });
 
@@ -421,6 +596,8 @@ describe("provider provisioning lowering", () => {
     expect(providerIdsFor(modules, phasesFor(finalizedCatalog, "boot.finalize.finished"))).toEqual([
       "test.clock.system",
     ]);
+    expect(JSON.stringify(finalizedCatalog)).not.toContain("release-secret");
+    assertNoLiveHandles(finalizedCatalog);
   });
 
   test("fails closed when a provider returns an unlowerable plan", async () => {
