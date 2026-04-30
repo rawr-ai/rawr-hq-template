@@ -4,28 +4,33 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-two.program-regrounding-evidence-recertification`
-- Focus: recertify Phase Two authority, proof/status artifacts, stale-input
-  exclusions, residuals, and gate adequacy before live-boundary proof starts.
+- ID: `phase-two.production-critical-scenario-ledger`
+- Focus: define the representative lab-contained production-critical runtime
+  scenario and claim ledger that future Phase Two child workstreams burn down.
 - Related manifest entries:
-  - `audit.runtime-research-program-closeout`
-  - `audit.canonical-spec-authority-refresh`
+  - `accepted.provider-profile-closure`
+  - `vendor.effect.runtime-substrate`
+  - `vendor.boundary.orpc-native-shape`
+  - `vendor.boundary.inngest-handoff-shape`
+  - `simulation.middle-spine-derivation-compiler`
   - `audit.p0.async-step-membership`
   - `audit.p1.provider-effect-plan-shape`
-  - `audit.p1.effect-managed-runtime-substrate`
-  - `audit.p1.process-local-coordination-resources`
+  - `audit.p1.provider-effect-plan-lowering`
+  - `audit.p1.effect-boundary-policy-matrix`
   - `audit.p1.effect-boundary-policy-matrix.residual`
-  - `audit.p1.safe-effect-composition-surface`
   - `audit.p1.dispatcher-access`
   - `audit.p1.runtime-resource-access`
+  - `audit.p2.runtime-profile-config-redaction`
   - `audit.p2.server-route-derivation`
   - `audit.p2.adapter-effect-callback-lowering`
   - `audit.p2.async-effect-bridge-lowering`
   - `audit.p2.production-harness-mounting`
   - `audit.p2.first-resource-provider-cut`
+  - `audit.telemetry.hyperdx-observation`
   - `audit.telemetry.hyperdx-observation.residual`
+  - `audit.migration.control-plane-observation`
   - `audit.migration.control-plane-observation.residual`
-  - `audit.source-hygiene`
+  - `audit.runtime-research-program-closeout`
 
 ## Status Meanings
 

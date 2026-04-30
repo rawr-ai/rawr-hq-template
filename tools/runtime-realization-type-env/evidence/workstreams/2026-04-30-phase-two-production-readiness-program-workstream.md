@@ -1,8 +1,8 @@
 # Phase Two Production-Readiness Program Workstream
 
-Status: `active sequence anchor; Phase Two opened by child workstream 1`.
+Status: `active sequence anchor; Phase Two opened and continuing through child workstreams`.
 Branch: `codex/runtime-phase-two-program-workstream`.
-Active launch branch: `codex/runtime-phase-two-regrounding-recertification`.
+Latest active branch checkpoint: `codex/runtime-phase-two-scenario-proof-ledger`.
 PR: `none`.
 
 This document defines the top-level Phase Two program workstream. It is a
@@ -17,7 +17,7 @@ Objective:
 - Define Phase Two as the all-encompassing production-critical contained proof
   workstream inside `tools/runtime-realization-type-env/**`.
 - Specify the child workstream sequence, recursive opening rule, review loops,
-  stop conditions, and closeout criteria that a future DRA will use to run the
+  stop conditions, and closeout criteria that the DRA uses to run the
   program.
 - Preserve the distinction between earned evidence, forward assumptions,
   revision candidates, child workstreams, and phase-three-only topology/Nx work.
@@ -36,9 +36,9 @@ Levels:
 
 | Level | Scope | Status |
 | --- | --- | --- |
-| 0 | DRA-over-program operating workflow | Designed later, before the DRA starts running Phase Two. |
-| 1 | This composition workstream | Closed when this document is written, reviewed, verified, and committed. |
-| 2 | Phase Two program workstream | Opened later from this document. |
+| 0 | DRA-over-program operating workflow | Active in `dra-phase-two-level-zero-workflow.md`. |
+| 1 | This composition workstream | Closed; this document is now the Level 2 sequence anchor. |
+| 2 | Phase Two program workstream | Open; child workstreams run until final closeout. |
 | 3 | Phase Two child workstreams | Planned recursively only when each child workstream opens. |
 | 4 | Phase-local implementation, verification, and review loops | Owned by the active child workstream. |
 

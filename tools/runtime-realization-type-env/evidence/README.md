@@ -33,6 +33,8 @@ coordination only, and what is provenance only.
 
 - `dra-phase-two-level-zero-workflow.md`: Level Zero DRA checkpoint and
   compaction-recovery workflow.
+- `phase-two-production-critical-claim-ledger.md`: representative Phase Two
+  scenario and claim ledger consumed by child workstreams.
 - `workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md`:
   Level 2 Phase Two program workstream.
 - `phased-agent-verification-workflow.md`: repeatable phased review workflow.
