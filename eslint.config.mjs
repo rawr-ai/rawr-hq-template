@@ -33,6 +33,10 @@ const boundaryRule = [
         onlyDependOnLibsWithTags: ["type:package"]
       },
       {
+        sourceTag: "type:resource",
+        onlyDependOnLibsWithTags: ["role:sdk"]
+      },
+      {
         sourceTag: "type:plugin",
         onlyDependOnLibsWithTags: ["type:package", "type:service"]
       }

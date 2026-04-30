@@ -1,4 +1,4 @@
-import type { RawrEffect, RawrEffectYield } from "../../effect";
+import { Effect, type RawrEffect, type RawrEffectYield } from "../../effect";
 
 export const PROVIDER_EFFECT_PLAN: unique symbol = Symbol("provider.effect-plan");
 
@@ -62,9 +62,16 @@ export const providerFx: ProviderFx = {
     return createProviderEffectPlan(input);
   },
 
-  tryAcquire(input) {
+  tryAcquire<TValue, TError>(input: {
+    readonly acquire: () => Promise<TValue> | TValue;
+    readonly catch: (cause: unknown) => TError;
+  }): ProviderEffectPlan<TValue, TError> {
     return createProviderEffectPlan({
-      acquire: () => Promise.resolve(input.acquire()) as never,
+      acquire: () =>
+        Effect.tryPromise({
+          try: () => Promise.resolve(input.acquire()),
+          catch: input.catch,
+        }) as RawrEffect<TValue, TError, never>,
     });
   },
 
