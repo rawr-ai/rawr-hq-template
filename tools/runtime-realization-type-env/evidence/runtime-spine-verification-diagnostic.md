@@ -26,7 +26,7 @@ flowchart LR
   F --> G["🟡 Process runtime / access / binding<br/>Mini runtime invocation; access law open"]
   G --> H["🟡 Adapter lowering<br/>Native-shaped callback/bridge payload sim; real harness mounting open"]
   H --> I["🟡 Harness mounting<br/>Contained server/async mini harnesses; production hosts open"]
-  I --> J["🟡 Observation<br/>In-memory catalog/finalization records; export/persistence open"]
+  I --> J["🟡 Observation<br/>In-memory records + contained OTLP export; persistence/query policy open"]
 
   C --> K["🟢 Effect execution assumptions<br/>RawrEffect backed by real effect@3.21.2"]
   E --> L["🟡 RuntimeSchema / TypeBox<br/>Adapter proof; redaction policy open"]
@@ -61,7 +61,7 @@ flowchart LR
 | Server/oRPC boundary | oRPC contract/server handler shapes adapted into Elysia/server harness payloads. | Native oRPC contract/router/handler shape-smoke artifacts are constructible. | 🟡 | No production oRPC adapter, Elysia mount, OpenAPI publication, or real request path proof. |
 | Async/Inngest boundary | Workflow/schedule/consumer definitions lower to `FunctionBundle`; dispatcher wraps selected workflows; Inngest harness mounts native functions. | Inngest client/function/`inngest/bun` serve handoff shape is constructible; the lab now proves explicit async owner-to-step membership artifacts, dispatcher operation inventory, and contained async bridge payloads without defaulting access, executing bodies during derivation, or claiming durable host behavior. | 🟡 | Final public dispatcher policy, final async membership metadata syntax, FunctionBundle lowering, durable scheduling/retry/idempotency semantics, and real worker/serve path remain unproven. |
 | Harness mounting | Elysia, Inngest, OCLIF, web, agent/OpenShell, desktop harnesses mount already-lowered payloads and return `StartedHarness`. | The lab now proves contained server and async started-harness artifacts that consume only adapter lowering payloads, expose invocation callbacks, preserve full ref identity, record start/invoke/stop lifecycle events, reject raw descriptors/compiler plans, and delegate through `ProcessExecutionRuntime`. | 🟡 | Production Elysia/oRPC/Inngest mounting, real HTTP/worker paths, other harness kinds, durable async semantics, deployment wiring, and final boundary policy remain open. |
-| Diagnostics, telemetry, catalog, finalization | `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeCatalog`, topology/startup/finalization records, redaction. | In-memory catalog tests cover startup, rollback, finalization records, failed finalizers, provider config validation failures, redacted config snapshots, redacted provisioning trace attributes, boundary policy records, and no secret/live-handle leakage. | 🟡 | Telemetry export, persisted catalog storage, correlation policy, production diagnostic classes, native host error mapping, and arbitrary free-form provider diagnostic string policy remain open. |
+| Diagnostics, telemetry, catalog, finalization | `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeCatalog`, topology/startup/finalization records, redaction. | In-memory catalog tests cover startup, rollback, finalization records, failed finalizers, provider config validation failures, redacted config snapshots, redacted provisioning trace attributes, boundary policy records, no secret/live-handle leakage, contained projection of already-redacted process/provider/catalog records into stable OTLP trace payloads, injected-fetch export serialization, and local HyperDX OTLP ingest smoke. | 🟡 | Persisted catalog storage, production correlation/query policy, product observability policy, production OpenTelemetry bootstrap, production diagnostic classes, native host telemetry/error mapping, durable async run history, and arbitrary free-form provider diagnostic string policy remain open. |
 | Deployment/control-plane handoff | Compile-only handoff with portable artifacts and compiled plans; no live handles or descriptor table leakage. | Mini-runtime handoff keeps portable artifacts refs-only, negative fixtures reject object-literal live handles, and runtime validation rejects app id mismatches, widened descriptor tables, runtime access, live handles, executable closures, and raw secret fields. | 🟡 | Control-plane placement, deployment semantics, and stale deployment-plan alignment are not tested. |
 | Enforcement and forbidden patterns | Reject raw runtime leakage, `.handler(...)` authoring, `fx`, portable closures, provider-as-execution-plan, live handles in portable artifacts. | Negative fixtures cover the core authoring misuse set. | 🟡 | Full topology/builder enforcement, raw env reads, diagnostics redaction, local HTTP self-call, and harness source restrictions remain broader migration gates. |
 
@@ -83,7 +83,7 @@ The lab is meaningful, but it is not production runtime readiness and it is not 
 3. Vendor boundary smoke checks for TypeBox, oRPC, and Inngest are available without pretending they are RAWR runtime behavior.
 4. Explicit lab declarations and cold route factories can flow through derivation, compilation, adapter lowering payloads, contained server/async harness mounts, bootgraph/catalog records, runtime access/cache checks, adapter delegation, and deployment handoff boundaries.
 
-The lab still does not prove production SDK derivation from real declarations, final public `ProviderEffectPlan` shape, production config source precedence or secret-store integration, final dispatcher access policy, final async membership authoring syntax, final route import-safety law, production adapter/harness mounting, durable scheduling, telemetry export, catalog persistence, deployment placement, or production runtime readiness.
+The lab still does not prove production SDK derivation from real declarations, final public `ProviderEffectPlan` shape, production config source precedence or secret-store integration, final dispatcher access policy, final async membership authoring syntax, final route import-safety law, production adapter/harness mounting, durable scheduling, product observability/query policy, catalog persistence, deployment placement, or production runtime readiness.
 
 ## Next Validation Moves
 
@@ -108,7 +108,7 @@ The lab still does not prove production SDK derivation from real declarations, f
 | Server route derivation | Contained route factory derivation proof now exists; final route import-safety law, native oRPC/Elysia payload lowering, OpenAPI publication, and real HTTP paths remain fenced. |
 | Boundary policy matrix | Contained record-only policy proof exists for exact executable/provider boundary kind, timeout metadata, retry-attempt declaration, AbortSignal interruption propagation/classification, Exit/Cause classification, and redacted attributes. Final public policy API/DX, production retry/backoff, durable async policy, native host error mapping, HyperDX export/query, and catalog persistence remain open. |
 | Runtime profile config redaction | Extend only when production config-source precedence, platform secret stores, or persisted observation become migration targets. |
-| RuntimeCatalog/diagnostics/finalization | Decide production observation shape, telemetry correlation, persistence/export boundaries, and config redaction. |
+| RuntimeCatalog/diagnostics/finalization | Contained projection/export now exists; decide production observation shape, telemetry correlation/query policy, persistence boundaries, and config redaction before migration treats records as durable. |
 
 ### Migration-Only Or Later
 
@@ -117,11 +117,11 @@ The lab still does not prove production SDK derivation from real declarations, f
 | Durable Inngest scheduling/retry/idempotency semantics | Requires real Inngest runtime/host behavior; current lab only proves constructible handoff shape. |
 | Production Elysia/oRPC request path | Requires real server harness and HTTP path; current lab only proves vendor shapes. |
 | External provider integrations | Requires real providers or contract test doubles for Resend/Postgres/etc.; current lab only proves model shape. |
-| Telemetry export and catalog persistence | Reserved detail boundary; current lab should prove hooks before product storage/export semantics. |
+| Product telemetry and catalog persistence | Reserved detail boundary; current lab proves contained OTLP projection/export only, not product storage, query policy, dashboards, retention, or durable catalog semantics. |
 | Deployment placement/control plane | Runtime realization emits records; placement decisions belong to deployment/control plane. |
 
 ## Verdict
 
 Current status: **the contained lab now gives simulation-level confidence in the already-specified middle spine, with explicit yellow/red gaps reserved for unresolved design and production integration.**
 
-The highest-value next lab iteration is not more vendor probing. It is narrowing the remaining negative space: HyperDX-backed observation, production host mounting, durable async behavior, telemetry export, catalog persistence, native host error mapping, and migration/control-plane placement.
+The highest-value next lab iteration is not more vendor probing. It is narrowing the remaining negative space: migration/control-plane observation, production host mounting, durable async behavior, catalog persistence, product telemetry/query policy, native host error mapping, and deployment placement.

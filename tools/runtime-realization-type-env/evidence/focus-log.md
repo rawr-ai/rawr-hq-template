@@ -4,43 +4,19 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.canonical-spec-authority-refresh`
-- Focus: replace the stale repo-pinned runtime realization spec with the
-  external canonical spec snapshot, refresh the manifest hash, and record that
-  this authority rebaseline is not proof promotion.
+- ID: `lab-v2.runtime-telemetry-hyperdx-observation`
+- Focus: prove contained telemetry projection/export for already-redacted
+  mini-runtime records, including local OTLP/HyperDX ingest smoke, without
+  promoting product observability, query policy, catalog persistence, or durable
+  async semantics.
 - Related manifest entries:
-  - `audit.canonical-spec-authority-refresh`
-  - `accepted.effect-only-authoring`
-  - `accepted.curated-effect-public-surface`
-  - `audit.p1.effect-managed-runtime-substrate`
-  - `audit.p1.process-local-coordination-resources`
-  - `audit.p1.dispatcher-access`
-  - `audit.p1.runtime-resource-access`
-  - `vendor.effect.runtime-substrate`
-  - `vendor.effect.process-local-coordination`
-  - `simulation.middle-spine-derivation-compiler`
-  - `simulation.bootgraph-catalog-finalization`
-  - `simulation.service-binding-cache-runtime-access`
-  - `simulation.mini-runtime-registry-invocation`
-  - `simulation.dispatcher-descriptor-operation-inventory`
-  - `simulation.async-step-owner-membership-artifacts`
-  - `simulation.server-route-derivation-import-safety`
-  - `simulation.adapter-callback-delegation`
-  - `simulation.adapter-callback-bridge-lowering`
-  - `simulation.first-server-async-harness-mounts`
-  - `simulation.deployment-handoff`
-  - `audit.p1.provider-effect-plan-shape`
-  - `audit.p1.provider-effect-plan-lowering`
   - `audit.p1.effect-boundary-policy-matrix`
-  - `audit.p1.effect-boundary-policy-matrix.residual`
-  - `audit.semantic-runtime-jsdoc-harvest`
   - `audit.telemetry.hyperdx-observation`
-  - `audit.p1.safe-effect-composition-surface`
-  - `audit.p2.server-route-derivation`
-  - `audit.p2.adapter-effect-callback-lowering`
-  - `audit.p2.async-effect-bridge-lowering`
-  - `audit.p2.production-harness-mounting`
+  - `audit.telemetry.hyperdx-observation.residual`
+  - `simulation.first-server-async-harness-mounts`
+  - `simulation.service-binding-cache-runtime-access`
   - `audit.p2.runtime-profile-config-redaction`
+  - `audit.canonical-spec-authority-refresh`
 
 ## Status Meanings
 
