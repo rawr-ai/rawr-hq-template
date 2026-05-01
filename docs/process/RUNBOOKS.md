@@ -4,6 +4,7 @@ This index is the canonical entrypoint for active process runbooks.
 
 Use this when you need exact commands for:
 - operating the managed local HQ runtime,
+- running a bounded workstream as a coordination object,
 - containing migration-doc drift with path-obvious quarantine,
 - draining Graphite stacks,
 - syncing template/personal work.
@@ -14,6 +15,7 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 
 | Goal | Runbook |
 | --- | --- |
+| Run a bounded workstream as a coordination object | `docs/process/WORKSTREAMS.md` |
 | Operate the managed local HQ runtime | `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md` |
 | Operate coordination canvas workflows and run diagnostics | `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` |
 | Contain migration-doc drift with quarantine-first topology | `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md` |
@@ -44,6 +46,7 @@ Scratch-first policy for mutating multi-phase commands:
 
 ## Related Process Docs
 
+- `docs/process/WORKSTREAMS.md` (canonical workstream workflow and companion set)
 - `docs/process/PLUGIN_AUTONOMY_READINESS_SCORECARD.md` (autonomy readiness and drift scorecard)
 - `docs/process/CROSS_REPO_WORKFLOWS.md` (template/personal workflow model)
 - `docs/process/UPSTREAM_SYNC_RUNBOOK.md` (template -> personal sync)
