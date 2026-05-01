@@ -4,14 +4,15 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-two.telemetry-hyperdx-catalog-observation`
-- Focus: prove a contained provider/server/async/catalog observation spine can
-  project redacted records into OTLP/HyperDX-shaped export evidence and
-  non-persistent migration/control-plane packets while keeping product
-  observability, persistence, topology, and production telemetry policy fenced.
+- ID: `phase-two.integrated-runtime-spine-rehearsal`
+- Focus: prove the earned Phase Two provider, server, async, telemetry,
+  catalog, derivation, and compilation claims compose in one contained
+  runtime-spine rehearsal with executable falsifiers, while keeping production
+  migration readiness and Phase Three topology/Nx/generator work fenced.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.invocation-bound-clients`
+  - `simulation.middle-spine-derivation-compiler`
   - `audit.telemetry.hyperdx-observation`
   - `audit.telemetry.hyperdx-observation.residual`
   - `audit.migration.control-plane-observation`
@@ -27,6 +28,7 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `audit.p2.server-orpc-fetch-boundary`
   - `audit.p2.async-inngest-function-step-boundary`
   - `audit.p2.telemetry-integrated-observation-spine`
+  - `audit.p2.integrated-runtime-spine-rehearsal`
   - `simulation.async-step-owner-membership-artifacts`
   - `simulation.adapter-callback-bridge-lowering`
   - `simulation.first-server-async-harness-mounts`
