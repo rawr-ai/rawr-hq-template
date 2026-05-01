@@ -1,4 +1,4 @@
-export * from "../oracle/process-runtime";
-export * from "../oracle/diagnostics";
+export * from "../runtime/process-runtime";
+export * from "../runtime/diagnostics";
 export * from "./derive";
 export * from "./compiler";

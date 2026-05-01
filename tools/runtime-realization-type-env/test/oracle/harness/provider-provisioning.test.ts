@@ -18,9 +18,9 @@ import {
   providerBootResourceKey,
   providerBootResourceModuleId,
   type OracleBootgraphModule,
-} from "../../src/oracle";
-import type { InMemoryRuntimeCatalog } from "../../src/oracle/catalog";
-import { deriveProviderDependencyGraph } from "../../src/spine/derive";
+} from "../../../src/oracle";
+import type { InMemoryRuntimeCatalog } from "../../../src/runtime/catalog";
+import { deriveProviderDependencyGraph } from "../../../src/spine/derive";
 
 interface TestClock {
   now(): Date;

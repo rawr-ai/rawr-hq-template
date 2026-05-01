@@ -2,8 +2,8 @@ import type {
   ExecutionDescriptorRef,
   ServerAdapterCallbackPayload,
   ServerRouteDescriptor,
-} from "../../spine/artifacts";
-import type { ProcessExecutionRuntime } from "../process-runtime";
+} from "../spine/artifacts";
+import type { ProcessExecutionRuntime } from "../runtime/process-runtime";
 import {
   delegateAdapterInvocation,
   type AdapterDelegationInput,

@@ -1,10 +1,10 @@
-import type { DeploymentRuntimeHandoff } from "./deployment-handoff";
+import type { DeploymentRuntimeHandoff } from "../deployment-handoff";
 import {
   redactRuntimeRecordAttributes,
   type InMemoryRuntimeCatalog,
   type RuntimeRecordAttributes,
   type RuntimeRecordValue,
-} from "./catalog";
+} from "../catalog";
 import type {
   RuntimeTelemetryOtlpExportResult,
   RuntimeTelemetryRecord,

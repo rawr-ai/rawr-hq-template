@@ -12,7 +12,7 @@ Use these names consistently:
 | --- | --- |
 | Runtime Realization Lab | This contained tool/environment. |
 | Oracle | Existing falsifiable proof harness and regression substrate under `src/oracle` and `test/oracle`; separate from the future Reference Runtime. |
-| Lab-Production Proof | Production-level evidence earned inside the Lab by a full contained runtime/reference system, with named gates, test oracles, proof ceilings, and residuals. |
+| Lab-Production Proof | Future lab-contained, production-shaped proof earned by the Reference Runtime with named gates, test oracles, proof ceilings, required vendor-live checks, and residuals. |
 | Reference Runtime | The full runtime-in-a-folder system built inside the Lab to earn Lab-Production Proof. |
 | Parent-Repo Migration | Later migration/adaptation of accepted Lab results into parent repo packages, apps, services, deployment topology, or public surfaces. |
 
@@ -23,17 +23,31 @@ Pinned authority for the current lab:
 
 The SDK facade in `src/sdk/**` exists only to make the spec authoring model executable by TypeScript. Canonical-looking imports such as `@rawr/sdk/effect` are local `tsconfig` aliases and must not be treated as production package exports.
 
-The lab has four proof strengths:
+## Plane Topology
+
+Open `guidance/guardrails-lab-plane-topology.md` before changing source
+ownership, test topology, or scenario placement.
+
+| Plane | Primary paths | Responsibility |
+| --- | --- | --- |
+| Shared SDK/runtime source | `src/sdk/**`, `src/spine/**`, `src/runtime/**`, `src/adapters/**`, `src/vendor/**` | Candidate authoring facade, portable artifacts, runtime substrate, shared adapter contracts, and vendor seams. |
+| Oracle | `src/oracle/**`, `test/oracle/**` | Falsification harness, controlled hosts, failure observation, and regression substrate. |
+| Reference Runtime | `src/reference-runtime/**`, `test/reference-runtime/**` | Future production-shaped contained runtime-in-a-folder for Lab-Production Proof gates. |
+| Scenario packs | `scenarios/**` | Business capability examples consumed by Oracle, conformance tests, and future Reference Runtime flows. |
+
+## Evidence Lanes And Proof Ceilings
 
 - Type/shape proof: authoring signatures, descriptor refs, portable artifacts, and negative misuse cases compile or fail as expected.
 - Vendor proof: real `effect@3.21.2`, TypeBox, oRPC, Inngest, and Bun boundary behavior is exercised only in narrow lab lanes.
 - Oracle proof: descriptor table/registry assembly,
   runtime-owned Effect execution, adapter delegation, deployment handoff, and
   invocation-time context binding run through Oracle. These Oracle tests are
-  useful substrate for the future Reference Runtime, but they are not the whole
-  Lab-Production Proof story.
+  useful substrate for the future Reference Runtime, but they remain
+  `simulation-proof` unless a stronger gate exists.
 - Compatibility simulation proof: the original simulation lane remains as a
-  compatibility check while Oracle grows.
+  compatibility check while Oracle and the Reference Runtime planes grow.
+- Lab-Production Proof: future lab-contained, production-shaped proof from a
+  Reference Runtime gate plus required vendor-live/product gates.
 
 Current gates do not yet earn Lab-Production Proof for final oRPC adapter
 behavior, provider plan shape, durable workflow scheduling, telemetry export,
@@ -86,6 +100,7 @@ Agents working in this lab should start with `AGENTS.md`, `RUNBOOK.md`, and `gui
 - `evidence/systems/README.md` maps evidence by runtime subsystem.
 - `evidence/vendors/README.md` maps evidence by vendor concept.
 - `guidance/guardrails-design.md` defines proof categories, violation categories, review categories, and test-theater rules.
+- `guidance/guardrails-lab-plane-topology.md` defines the canonical Lab plane topology and source/test placement rules.
 - `evidence/runtime-spine-verification-diagnostic.md` is the living red/yellow/green runtime spine status view.
 - `guidance/workflow-phased-agent-verification.md` captures the repeatable phased review workflow for future spec and migration burn-down work.
 - `guidance/**` holds reusable operator guardrails, workflows, and templates.
@@ -104,7 +119,7 @@ Agents working in this lab should start with `AGENTS.md`, `RUNBOOK.md`, and `gui
 | Vendor evidence | `evidence/vendors/` | `<vendor-or-boundary>.md` |
 | Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `template-*` |
 | Phase DRA/operator anchor | `phases/<phase>/` | `workflow-*` or `ref-*` |
-| Phase-owned workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<one|two|three>-<slug>.md` |
+| Phase-owned workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md` |
 | Workstream-produced reference | `phases/<phase>/workstreams/` | `ref-YYYY-MM-DD-<slug>.md` |
 | Phase handoff | `phases/<phase>/handoffs/` | `handoff-YYYY-MM-DD-<slug>.md` |
 | Handoff-attached reference | `phases/<phase>/handoffs/` | `ref-YYYY-MM-DD-<slug>.md` |

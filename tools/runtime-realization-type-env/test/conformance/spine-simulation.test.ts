@@ -15,10 +15,10 @@ import {
   CreateWorkItemPlan,
   CreateWorkItemRef,
   PortableArtifact,
-} from "../fixtures/positive/app-and-plan-artifacts";
-import { RuntimeFixtureProfile } from "../fixtures/positive/resource-provider-profile";
-import type { WorkItem } from "../fixtures/positive/work-items-service";
-import { WorkItemsServerApiServices } from "../fixtures/positive/server-api-plugin";
+} from "../../scenarios/work-items/app-and-plan-artifacts";
+import { RuntimeFixtureProfile } from "../../scenarios/work-items/resource-provider-profile";
+import type { WorkItem } from "../../scenarios/work-items/work-items-service";
+import { WorkItemsServerApiServices } from "../../scenarios/work-items/server-api-plugin";
 import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
 
 function createClients(): {

@@ -1,5 +1,5 @@
 import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
-import { WorkItemsServerApiServices } from "../positive/server-api-plugin";
+import { WorkItemsServerApiServices } from "../../scenarios/work-items/server-api-plugin";
 
 const clients = undefined as unknown as ConstructionBoundServiceClients<
   typeof WorkItemsServerApiServices

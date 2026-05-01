@@ -21,12 +21,12 @@ import {
   projectRuntimeEventsToTelemetryRecords,
   providerBootResourceModuleId,
   type OracleBootgraphModule,
-} from "../../src/oracle";
-import { deriveProviderDependencyGraph } from "../../src/spine/derive";
+} from "../../../src/oracle";
+import { deriveProviderDependencyGraph } from "../../../src/spine/derive";
 import {
   CreateWorkItemRef,
   type WorkItem,
-} from "../../fixtures/positive/app-and-plan-artifacts";
+} from "../../../scenarios/work-items/app-and-plan-artifacts";
 
 function assertNoLiveHandles(value: unknown): void {
   if (

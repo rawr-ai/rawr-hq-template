@@ -5,8 +5,8 @@ import type {
   OracleHarnessRecord,
   StartedOracleAsyncHarness,
 } from "../harnesses";
-import type { RuntimeSimulationEvent } from "../process-runtime";
-import type { AdapterDelegationEvent } from "./delegation";
+import type { RuntimeSimulationEvent } from "../../runtime/process-runtime";
+import type { AdapterDelegationEvent } from "../../adapters/delegation";
 
 export interface RuntimeInngestAsyncEvent {
   readonly name: string;

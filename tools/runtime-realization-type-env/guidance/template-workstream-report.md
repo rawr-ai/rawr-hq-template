@@ -80,6 +80,12 @@ Optional outputs:
 
 Target proof strength:
 
+Plane(s) touched:
+
+Proof ceiling claimed:
+
+Parent-Repo Migration impact:
+
 Expected gates:
 
 - `bunx nx show project runtime-realization-type-env --json`

@@ -9,17 +9,17 @@ import {
   createProcessExecutionRuntime,
   mountOracleServerHarness,
   mountRuntimeOrpcServerBoundary,
-} from "../../src/oracle";
-import { createServerAdapterCallbackPayload } from "../../src/oracle/adapters/server";
+} from "../../../src/oracle";
+import { createServerAdapterCallbackPayload } from "../../../src/adapters/server";
 import {
   CreateWorkItemDescriptor,
   CreateWorkItemPlan,
   CreateWorkItemRef,
   CreateWorkItemRouteDescriptor,
-} from "../../fixtures/positive/app-and-plan-artifacts";
-import { WorkItemsServerApiServices } from "../../fixtures/positive/server-api-plugin";
-import type { WorkItem } from "../../fixtures/positive/work-items-service";
-import type { RuntimeOrpcServerResponse } from "../../src/oracle/adapters/orpc-server";
+} from "../../../scenarios/work-items/app-and-plan-artifacts";
+import { WorkItemsServerApiServices } from "../../../scenarios/work-items/server-api-plugin";
+import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
+import type { RuntimeOrpcServerResponse } from "../../../src/oracle/adapters/orpc-server";
 
 interface OrpcEncoded<T> {
   readonly json: T;

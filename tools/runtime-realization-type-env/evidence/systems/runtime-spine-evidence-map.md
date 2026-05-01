@@ -187,7 +187,7 @@ cut.
 | Subsystem | Pointer kind | What it proves or preserves | Detail path |
 | --- | --- | --- | --- |
 | Authoring/artifacts | Manifest entries | `.effect(...)` terminal, discriminated refs, refs-only portable artifacts | `../proof-manifest.json` |
-| Derivation/compiler | Manifest entries and tests | Cold derivation/compilation artifacts without executing descriptor bodies | `../proof-manifest.json`, `../../test/middle-spine-derivation.test.ts` |
+| Derivation/compiler | Manifest entries and tests | Cold derivation/compilation artifacts without executing descriptor bodies | `../proof-manifest.json`, `../../test/conformance/middle-spine-derivation.test.ts` |
 | Provider/runtime access | Manifest entries and tests | Contained provider coverage, bootgraph, runtime access, service binding behavior | `../proof-manifest.json`, `../../test/oracle/` |
 | Boundary policy | Manifest entries and phase report | Contained layer-specific boundary policy and disagreement observation | `../proof-manifest.json`, `../../phases/phase-three/workstreams/workstream-2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md` |
 | Server passage | Manifest entries and phase report | Elysia/oRPC/server-harness local contained passage and post-stop rejection | `../proof-manifest.json`, `../../phases/phase-three/workstreams/workstream-2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md` |

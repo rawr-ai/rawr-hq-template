@@ -7,7 +7,7 @@ import {
   effectVersionProof,
   pipe,
 } from "../../src/vendor/effect/runtime";
-import { processLocalResourceProbe } from "../../src/oracle/process-resources";
+import { processLocalResourceProbe } from "../../src/vendor/effect/process-resources";
 
 describe("Effect vendor-native runtime lane", () => {
   test("uses the pinned Effect 3 runtime and proves gen plus pipe spelling", async () => {

@@ -4,7 +4,7 @@ import {
   type InMemoryRuntimeCatalog,
   type RuntimeRecordAttributes,
   type RuntimeRecordValue,
-} from "./catalog";
+} from "../catalog";
 
 export interface RuntimeTelemetryEventLike {
   readonly name: string;

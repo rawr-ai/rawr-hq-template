@@ -1,10 +1,10 @@
 import { Effect as VendorEffect } from "effect";
-import type { RawrEffect } from "../effect";
+import type { RawrEffect } from "../sdk/effect";
 import type {
   ProviderAcquire,
   ProviderEffectPlan,
   ProviderRelease,
-} from "./providers";
+} from "../sdk/runtime/providers";
 
 export interface ProviderEffectPlanInternals<TValue = unknown, TError = unknown> {
   readonly acquire: () => RawrEffect<TValue, TError, never>;

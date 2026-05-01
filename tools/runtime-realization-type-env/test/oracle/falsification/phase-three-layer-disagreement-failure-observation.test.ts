@@ -22,9 +22,9 @@ import {
   type CompiledProcessPlan,
   type RuntimeTelemetryEventLike,
   type RuntimeTelemetryRecord,
-} from "../../src/oracle";
-import { createAsyncStepBridgePayload } from "../../src/oracle/adapters/async";
-import { createServerAdapterCallbackPayload } from "../../src/oracle/adapters/server";
+} from "../../../src/oracle";
+import { createAsyncStepBridgePayload } from "../../../src/adapters/async";
+import { createServerAdapterCallbackPayload } from "../../../src/adapters/server";
 import {
   CreateWorkItemPlan,
   CreateWorkItemRef,
@@ -32,9 +32,9 @@ import {
   PortableArtifact,
   SyncWorkItemStepPlan,
   SyncWorkItemStepRef,
-} from "../../fixtures/positive/app-and-plan-artifacts";
-import type { RuntimeInngestAsyncStepResponse } from "../../src/oracle/adapters/inngest-async";
-import type { RuntimeOrpcServerResponse } from "../../src/oracle/adapters/orpc-server";
+} from "../../../scenarios/work-items/app-and-plan-artifacts";
+import type { RuntimeInngestAsyncStepResponse } from "../../../src/oracle/adapters/inngest-async";
+import type { RuntimeOrpcServerResponse } from "../../../src/oracle/adapters/orpc-server";
 
 interface OrpcEncoded<T> {
   readonly json: T;

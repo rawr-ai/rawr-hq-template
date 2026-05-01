@@ -8,12 +8,12 @@ import {
   type CompiledProcessPlan,
   type DeploymentRuntimeHandoff,
   type PortableRuntimePlanArtifact,
-} from "../../src/oracle";
+} from "../../../src/oracle";
 import {
   CreateWorkItemPlan,
   PortableArtifact,
   SyncWorkItemStepPlan,
-} from "../../fixtures/positive/app-and-plan-artifacts";
+} from "../../../scenarios/work-items/app-and-plan-artifacts";
 
 function assertNoLiveHandles(value: unknown): void {
   if (

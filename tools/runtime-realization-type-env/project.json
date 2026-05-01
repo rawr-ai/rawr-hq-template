@@ -42,13 +42,13 @@
     "vendor-effect": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun test tools/runtime-realization-type-env/test/vendor-effect/effect-runtime.test.ts"
+        "command": "bun test tools/runtime-realization-type-env/test/vendor/effect-runtime.test.ts"
       }
     },
     "vendor-boundaries": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun test tools/runtime-realization-type-env/test/vendor-boundaries"
+        "command": "bun test tools/runtime-realization-type-env/test/vendor"
       }
     },
     "oracle": {
@@ -60,13 +60,13 @@
     "middle-spine": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun test tools/runtime-realization-type-env/test/middle-spine-derivation.test.ts"
+        "command": "bun test tools/runtime-realization-type-env/test/conformance/middle-spine-derivation.test.ts"
       }
     },
     "simulate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun test ./tools/runtime-realization-type-env/test/spine-simulation.test.ts"
+        "command": "bun test tools/runtime-realization-type-env/test/conformance/spine-simulation.test.ts"
       }
     },
     "gate": {

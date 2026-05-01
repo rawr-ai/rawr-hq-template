@@ -28,23 +28,23 @@ import {
   type RuntimeOrpcServerResponse,
   type RuntimeTelemetryEventLike,
   type RuntimeTelemetryRecord,
-} from "../../src/oracle";
+} from "../../../src/oracle";
 import {
   compileRuntimeSpine,
   deriveRuntimeSpine,
-} from "../../src/spine/simulate";
+} from "../../../src/spine/simulate";
 import type {
   AsyncStepBridgePayload,
   RuntimeSpineCompilation,
   ServerAdapterCallbackPayload,
-} from "../../src/spine/artifacts";
+} from "../../../src/spine/artifacts";
 import {
   SyncWorkItemStepDescriptor,
-} from "../../fixtures/positive/app-and-plan-artifacts";
-import { RuntimeFixtureProfile } from "../../fixtures/positive/resource-provider-profile";
-import { EmailProvider } from "../../fixtures/positive/resource-provider-profile";
-import { WorkItemsServerApiPlugin } from "../../fixtures/positive/server-api-plugin";
-import type { WorkItem } from "../../fixtures/positive/work-items-service";
+} from "../../../scenarios/work-items/app-and-plan-artifacts";
+import { RuntimeFixtureProfile } from "../../../scenarios/work-items/resource-provider-profile";
+import { EmailProvider } from "../../../scenarios/work-items/resource-provider-profile";
+import { WorkItemsServerApiPlugin } from "../../../scenarios/work-items/server-api-plugin";
+import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
 
 interface OrpcEncoded<T> {
   readonly json: T;

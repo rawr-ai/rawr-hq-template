@@ -10,17 +10,17 @@ import {
   mountOracleAsyncHarness,
   mountRuntimeInngestAsyncBoundary,
   type RuntimeInngestAsyncStepResponse,
-} from "../../src/oracle";
-import { createAsyncStepBridgePayload } from "../../src/oracle/adapters/async";
+} from "../../../src/oracle";
+import { createAsyncStepBridgePayload } from "../../../src/adapters/async";
 import {
   CreateWorkItemDescriptor,
   CreateWorkItemPlan,
   SyncWorkItemStepDescriptor,
   SyncWorkItemStepPlan,
   SyncWorkItemStepRef,
-} from "../../fixtures/positive/app-and-plan-artifacts";
-import { WorkItemsServerApiServices } from "../../fixtures/positive/server-api-plugin";
-import type { WorkItem } from "../../fixtures/positive/work-items-service";
+} from "../../../scenarios/work-items/app-and-plan-artifacts";
+import { WorkItemsServerApiServices } from "../../../scenarios/work-items/server-api-plugin";
+import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
 
 interface InngestStepRunOp<T> {
   readonly op: "StepRun";

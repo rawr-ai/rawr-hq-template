@@ -1,6 +1,6 @@
 import { Effect as VendorEffect, Exit } from "effect";
 import type { RawrEffect } from "../sdk/effect";
-import { readProviderEffectPlanInternals } from "../sdk/runtime/provider-plan-internals";
+import { readProviderEffectPlanInternals } from "./provider-plan-internals";
 import type { ProviderSelection } from "../sdk/runtime/profiles";
 import type { RuntimeProvider, RuntimeResourceMap } from "../sdk/runtime/providers";
 import type {
@@ -13,8 +13,8 @@ import type {
   ProviderDependencyGraphEdge,
   ProviderDependencyGraphNode,
 } from "../spine/artifacts";
-import type { EffectRuntimeAccess } from "./managed-runtime";
-import { runRawrEffectExit } from "./managed-runtime";
+import type { EffectRuntimeAccess } from "./effect-runtime";
+import { runRawrEffectExit } from "./effect-runtime";
 import type { OracleBootgraphModule } from "./bootgraph";
 import {
   redactRuntimeRecordAttributes,

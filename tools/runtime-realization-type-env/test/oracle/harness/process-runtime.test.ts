@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
-import { Effect as VendorEffect } from "../../src/vendor/effect/runtime";
+import { Effect as VendorEffect } from "../../../src/vendor/effect/runtime";
 import type {
   CompiledProcessPlan,
   ExecutionDescriptor,
@@ -24,18 +24,18 @@ import {
   mountOracleAsyncHarness,
   mountOracleServerHarness,
   type ProcessExecutionRuntime,
-} from "../../src/oracle";
-import type { AdapterDelegationEvent } from "../../src/oracle/adapters/delegation";
+} from "../../../src/oracle";
+import type { AdapterDelegationEvent } from "../../../src/adapters/delegation";
 import {
   createAsyncStepBridgePayload,
   lowerAsyncStepBridge,
   lowerAsyncStepCallback,
-} from "../../src/oracle/adapters/async";
+} from "../../../src/adapters/async";
 import {
   createServerAdapterCallbackPayload,
   lowerServerAdapterCallback,
   lowerServerCallback,
-} from "../../src/oracle/adapters/server";
+} from "../../../src/adapters/server";
 import {
   CreateWorkItemDescriptor,
   CreateWorkItemPlan,
@@ -45,10 +45,10 @@ import {
   SyncWorkItemStepDescriptor,
   SyncWorkItemStepPlan,
   SyncWorkItemStepRef,
-} from "../../fixtures/positive/app-and-plan-artifacts";
-import { RuntimeFixtureProfile } from "../../fixtures/positive/resource-provider-profile";
-import type { WorkItem } from "../../fixtures/positive/work-items-service";
-import { WorkItemsServerApiServices } from "../../fixtures/positive/server-api-plugin";
+} from "../../../scenarios/work-items/app-and-plan-artifacts";
+import { RuntimeFixtureProfile } from "../../../scenarios/work-items/resource-provider-profile";
+import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
+import { WorkItemsServerApiServices } from "../../../scenarios/work-items/server-api-plugin";
 
 function createClients(): ConstructionBoundServiceClients<
   typeof WorkItemsServerApiServices

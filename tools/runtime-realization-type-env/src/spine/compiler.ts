@@ -1,4 +1,4 @@
-import { createExecutionDescriptorTable } from "../oracle/process-runtime";
+import { createExecutionDescriptorTable } from "../runtime/process-runtime";
 import { deriveProviderDependencyGraph } from "./derive";
 import type {
   AsyncStepBridgePayload,

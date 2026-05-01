@@ -6,15 +6,15 @@ import type {
 import {
   lowerAsyncStepBridge,
   type AsyncStepBridgeInvocationInput,
-} from "./adapters/async";
+} from "../adapters/async";
 import {
   lowerServerAdapterCallback,
   type ServerAdapterCallbackInput,
-} from "./adapters/server";
+} from "../adapters/server";
 import type {
   ProcessExecutionRuntime,
   RuntimeInvocationResult,
-} from "./process-runtime";
+} from "../runtime/process-runtime";
 
 export type OracleHarnessKind = "server" | "async";
 

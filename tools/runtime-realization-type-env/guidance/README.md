@@ -9,6 +9,7 @@ templates that are meant to be reused across phases.
 | Need | Open | Use |
 | --- | --- | --- |
 | Proof categories, review categories, and test-theater rules | `guardrails-design.md` | Decide how evidence may be claimed and what must be downgraded |
+| Lab source/test/scenario ownership | `guardrails-lab-plane-topology.md` | Route work across shared source, Oracle, Reference Runtime, and scenario packs |
 | Phased agent/review workflow | `workflow-phased-agent-verification.md` | Prepare, run, and review recursive workstream loops |
 | Workstream report scaffold | `template-workstream-report.md` | Create new `workstream-*` reports under the owning phase |
 

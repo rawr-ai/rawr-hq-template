@@ -12,15 +12,15 @@ import {
   CreateWorkItemDescriptor,
   CreateWorkItemRef,
   SyncWorkItemStepDescriptor,
-} from "../fixtures/positive/app-and-plan-artifacts";
+} from "../../scenarios/work-items/app-and-plan-artifacts";
 import {
   ClockProvider,
   ClockResource,
   EmailProvider,
   EmailSenderResource,
   RuntimeFixtureProfile,
-} from "../fixtures/positive/resource-provider-profile";
-import { WorkItemsServerApiPlugin } from "../fixtures/positive/server-api-plugin";
+} from "../../scenarios/work-items/resource-provider-profile";
+import { WorkItemsServerApiPlugin } from "../../scenarios/work-items/server-api-plugin";
 
 function collectFunctionPaths(value: unknown, path = "$"): string[] {
   if (typeof value === "function") return [path];

@@ -12,7 +12,7 @@ import type {
 import {
   createManagedEffectRuntimeAccess,
   type EffectRuntimeAccess,
-} from "./managed-runtime";
+} from "./effect-runtime";
 import {
   createRuntimeBoundaryPolicy,
   createRuntimeBoundaryPolicyRecord,

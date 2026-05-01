@@ -29,8 +29,8 @@ import {
   type EffectRuntimeAccess,
   type OracleResourceDefinition,
   type ProviderProvisionedValue,
-} from "../../src/oracle";
-import { deriveProviderDependencyGraph } from "../../src/spine/derive";
+} from "../../../src/oracle";
+import { deriveProviderDependencyGraph } from "../../../src/spine/derive";
 
 interface ScenarioClock {
   now(): Date;

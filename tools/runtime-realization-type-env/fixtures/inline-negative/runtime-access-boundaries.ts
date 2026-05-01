@@ -1,5 +1,5 @@
-import type { OracleResourceAccess } from "../../src/oracle/runtime-access";
-import type { ProcessExecutionRuntime } from "../../src/oracle/process-runtime";
+import type { OracleResourceAccess } from "../../src/runtime/runtime-access";
+import type { ProcessExecutionRuntime } from "../../src/runtime/process-runtime";
 import type { RuntimeBoundaryPolicy } from "../../src/oracle";
 import type { RuntimeAccess } from "../../src/spine/artifacts";
 import {
@@ -9,18 +9,18 @@ import {
 import {
   createAsyncStepBridgePayload,
   lowerAsyncStepCallback,
-} from "../../src/oracle/adapters/async";
+} from "../../src/adapters/async";
 import {
   createServerAdapterCallbackPayload,
   lowerServerCallback,
-} from "../../src/oracle/adapters/server";
+} from "../../src/adapters/server";
 import {
   CreateWorkItemDescriptor,
   CreateWorkItemRef,
   CreateWorkItemRouteDescriptor,
   SyncWorkItemStepPlan,
   SyncWorkItemStepRef,
-} from "../positive/app-and-plan-artifacts";
+} from "../../scenarios/work-items/app-and-plan-artifacts";
 
 declare const access: OracleResourceAccess;
 declare const runtimeAccess: RuntimeAccess;
