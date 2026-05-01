@@ -1,4 +1,4 @@
-import { createExecutionDescriptorTable } from "../mini-runtime/process-runtime";
+import { createExecutionDescriptorTable } from "../oracle/process-runtime";
 import { deriveProviderDependencyGraph } from "./derive";
 import type {
   AsyncStepBridgePayload,
@@ -77,7 +77,7 @@ function compileBootgraphPlaceholder(
   derivation: RuntimeSpineDerivation,
   providerDependencyGraph: RuntimeSpineCompilation["providerDependencyGraph"],
 ): RuntimeBootgraphInputPlaceholder {
-  // The compiler emits bootgraph-shaped input for review and downstream mini
+  // The compiler emits bootgraph-shaped input for review and downstream Oracle
   // runtime experiments only. It must not be read as production bootgraph
   // authority or evidence that provider acquire/release has run.
   const diagnostics: RuntimeDiagnostic[] = [
@@ -93,7 +93,7 @@ function compileBootgraphPlaceholder(
       {
         code: "runtime.provider-effect-plan.lowering-reserved",
         message:
-          "compiled bootgraph input records provider module refs only; contained provider lowering is proven separately in the mini provisioning runtime",
+          "compiled bootgraph input records provider module refs only; contained provider lowering is proven separately in the Oracle provisioning runtime",
       },
       ...providerDependencyGraph.diagnostics,
     );

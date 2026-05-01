@@ -1,6 +1,6 @@
 // TODO/P2 residual: prove production server and async harness mounting.
 //
-// The contained lab can start mini harnesses from adapter payloads and delegate
+// The contained lab can start Oracle harnesses from adapter payloads and delegate
 // through ProcessExecutionRuntime; the server harness can also be reached
 // through a contained oRPC Fetch request boundary, and the async harness can
 // be reached through a contained Inngest Bun serve/function/step boundary.

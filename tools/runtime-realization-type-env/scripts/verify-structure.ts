@@ -41,39 +41,62 @@ const requiredPaths = [
   "tools/runtime-realization-type-env/project.json",
   "tools/runtime-realization-type-env/tsconfig.json",
   "tools/runtime-realization-type-env/tsconfig.fail-base.json",
-  "tools/runtime-realization-type-env/evidence/focus-log.md",
+  "tools/runtime-realization-type-env/evidence/current-lab-state.md",
+  "tools/runtime-realization-type-env/evidence/AGENTS.md",
   "tools/runtime-realization-type-env/evidence/README.md",
-  "tools/runtime-realization-type-env/evidence/effect-integration-map.md",
-  "tools/runtime-realization-type-env/evidence/design-guardrails.md",
-  "tools/runtime-realization-type-env/evidence/handoffs/README.md",
-  "tools/runtime-realization-type-env/evidence/handoffs/2026-05-01-post-phase-two-runtime-reframe.md",
-  "tools/runtime-realization-type-env/evidence/phases/README.md",
-  "tools/runtime-realization-type-env/evidence/phases/phase-two/README.md",
-  "tools/runtime-realization-type-env/evidence/phases/phase-two/dra-phase-two-level-zero-workflow.md",
-  "tools/runtime-realization-type-env/evidence/phases/phase-two/phase-two-production-critical-claim-ledger.md",
-  "tools/runtime-realization-type-env/evidence/phased-agent-verification-workflow.md",
+  "tools/runtime-realization-type-env/evidence/systems/README.md",
+  "tools/runtime-realization-type-env/evidence/systems/effect-integration-map.md",
+  "tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md",
+  "tools/runtime-realization-type-env/evidence/systems/telemetry-observation-map.md",
+  "tools/runtime-realization-type-env/evidence/vendors/README.md",
+  "tools/runtime-realization-type-env/evidence/vendors/typescript.md",
+  "tools/runtime-realization-type-env/evidence/vendors/effect.md",
+  "tools/runtime-realization-type-env/evidence/vendors/orpc.md",
+  "tools/runtime-realization-type-env/evidence/vendors/elysia.md",
+  "tools/runtime-realization-type-env/evidence/vendors/typebox.md",
+  "tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+  "tools/runtime-realization-type-env/evidence/vendors/hyperdx-otlp.md",
+  "tools/runtime-realization-type-env/evidence/vendors/semantica.md",
+  "tools/runtime-realization-type-env/guidance/guardrails-design.md",
+  "tools/runtime-realization-type-env/phases/README.md",
+  "tools/runtime-realization-type-env/phases/phase-one/README.md",
+  "tools/runtime-realization-type-env/phases/phase-one/_archive/README.md",
+  "tools/runtime-realization-type-env/phases/phase-one/_archive/default-research-program-2026-04-30/README.md",
+  "tools/runtime-realization-type-env/phases/phase-one/_archive/default-research-program-2026-04-30/workflow-runtime-research-program-dra.md",
+  "tools/runtime-realization-type-env/phases/phase-one/_archive/default-research-program-2026-04-30/ref-runtime-realization-research-program.md",
+  "tools/runtime-realization-type-env/phases/phase-one/_archive/pre-phase-two-2026-04-30/README.md",
+  "tools/runtime-realization-type-env/phases/phase-one/_archive/pre-phase-two-2026-04-30/workflow-effect-integration-work-plan.md",
+  "tools/runtime-realization-type-env/phases/phase-one/_archive/pre-phase-two-2026-04-30/workflow-middle-spine-verification-work-plan.md",
+  "tools/runtime-realization-type-env/phases/phase-one/_archive/pre-phase-two-2026-04-30/workflow-runtime-realization-lab-v2-plan.md",
+  "tools/runtime-realization-type-env/phases/phase-one/_archive/pre-phase-two-2026-04-30/workflow-runtime-spine-diagnostic-work-plan.md",
+  "tools/runtime-realization-type-env/phases/phase-one/workstreams/workstream-2026-04-30-phase-one-runtime-research-program-closeout.md",
+  "tools/runtime-realization-type-env/phases/phase-two/README.md",
+  "tools/runtime-realization-type-env/phases/phase-two/workflow-phase-two-level-zero.md",
+  "tools/runtime-realization-type-env/phases/phase-two/ref-2026-04-30-phase-two-production-critical-claim-ledger.md",
+  "tools/runtime-realization-type-env/phases/phase-two/handoffs/handoff-2026-05-01-post-phase-two-runtime-reframe.md",
+  "tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-phase-two-spine-composition-program-workstream.md",
+  "tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-phase-two-prelaunch-workspace-preparation.md",
+  "tools/runtime-realization-type-env/phases/phase-three/README.md",
+  "tools/runtime-realization-type-env/phases/phase-three/workflow-phase-three-program-dra.md",
+  "tools/runtime-realization-type-env/phases/phase-three/workstreams/ref-2026-05-01-phase-three-started-passage-vendor-integration-reference.md",
+  "tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md",
+  "tools/runtime-realization-type-env/phases/phase-three/handoffs/ref-2026-05-01-oracle-salvage-to-reference-runtime-report.md",
+  "tools/runtime-realization-type-env/phases/phase-three/workstreams/workstream-2026-05-01-phase-three-program-workstream.md",
+  "tools/runtime-realization-type-env/phases/phase-three/workstreams/workstream-2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md",
+  "tools/runtime-realization-type-env/guidance/README.md",
+  "tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md",
+  "tools/runtime-realization-type-env/guidance/template-workstream-report.md",
   "tools/runtime-realization-type-env/evidence/proof-manifest.json",
   "tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md",
-  "tools/runtime-realization-type-env/evidence/spine-audit-map.md",
-  "tools/runtime-realization-type-env/evidence/vendor-fidelity.md",
-  "tools/runtime-realization-type-env/evidence/_archive/README.md",
-  "tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/README.md",
-  "tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md",
-  "tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/runtime-realization-research-program.md",
-  "tools/runtime-realization-type-env/evidence/_archive/pre-phase-two-2026-04-30/README.md",
-  "tools/runtime-realization-type-env/evidence/workstreams/README.md",
-  "tools/runtime-realization-type-env/evidence/workstreams/TEMPLATE.md",
-  "tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md",
-  "tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-prelaunch-workspace-preparation.md",
   "tools/runtime-realization-type-env/src/sdk/effect.ts",
   "tools/runtime-realization-type-env/src/sdk/service.ts",
   "tools/runtime-realization-type-env/src/sdk/plugins/server.ts",
   "tools/runtime-realization-type-env/src/sdk/plugins/async.ts",
   "tools/runtime-realization-type-env/src/spine/artifacts.ts",
   "tools/runtime-realization-type-env/src/spine/simulate.ts",
-  "tools/runtime-realization-type-env/src/mini-runtime/process-runtime.ts",
-  "tools/runtime-realization-type-env/src/mini-runtime/managed-runtime.ts",
-  "tools/runtime-realization-type-env/src/mini-runtime/process-resources.ts",
+  "tools/runtime-realization-type-env/src/oracle/process-runtime.ts",
+  "tools/runtime-realization-type-env/src/oracle/managed-runtime.ts",
+  "tools/runtime-realization-type-env/src/oracle/process-resources.ts",
   "tools/runtime-realization-type-env/src/vendor/effect/runtime.ts",
   "tools/runtime-realization-type-env/src/vendor/boundaries/typebox.ts",
   "tools/runtime-realization-type-env/src/vendor/boundaries/orpc.ts",
@@ -86,7 +109,7 @@ const requiredPaths = [
   "tools/runtime-realization-type-env/scripts/assert-negative-types.ts",
   "tools/runtime-realization-type-env/scripts/report-results.ts",
   "tools/runtime-realization-type-env/scripts/verify-structure.ts",
-  "tools/runtime-realization-type-env/test/mini-runtime/process-runtime.test.ts",
+  "tools/runtime-realization-type-env/test/oracle/process-runtime.test.ts",
   "tools/runtime-realization-type-env/test/spine-simulation.test.ts",
   "tools/runtime-realization-type-env/test/vendor-boundaries/boundary-shapes.test.ts",
   "tools/runtime-realization-type-env/test/vendor-effect/effect-runtime.test.ts",
@@ -97,21 +120,307 @@ for (const requiredPath of requiredPaths) {
   assert(exists(requiredPath), `missing required path: ${requiredPath}`);
 }
 
-for (const archivedActivePath of [
-  "tools/runtime-realization-type-env/evidence/dra-phase-two-level-zero-workflow.md",
-  "tools/runtime-realization-type-env/evidence/phase-two-production-critical-claim-ledger.md",
-  "tools/runtime-realization-type-env/evidence/dra-runtime-research-program-workflow.md",
-  "tools/runtime-realization-type-env/evidence/runtime-realization-research-program.md",
-  "tools/runtime-realization-type-env/evidence/effect-integration-work-plan.md",
-  "tools/runtime-realization-type-env/evidence/middle-spine-verification-work-plan.md",
-  "tools/runtime-realization-type-env/evidence/runtime-realization-lab-v2-plan.md",
-  "tools/runtime-realization-type-env/evidence/runtime-spine-diagnostic-work-plan.md",
+const retiredRuntimePrefix = ["mi", "ni"].join("");
+const retiredRuntimeTitlePrefix =
+  retiredRuntimePrefix.charAt(0).toUpperCase() + retiredRuntimePrefix.slice(1);
+const retiredOraclePathSegment = [retiredRuntimePrefix, "runtime"].join("-");
+const retiredOraclePhrase = [retiredRuntimePrefix, "runtime"].join(" ");
+const retiredOracleTitlePhrase = [retiredRuntimeTitlePrefix, "runtime"].join(
+  "-",
+);
+const retiredPhaseTwoOverclaimSlug = [
+  "phase-two",
+  "production",
+  "readiness",
+  "program",
+  "workstream.md",
+].join("-");
+
+for (const retiredPath of [
+  "tools/runtime-realization-type-env/evidence/phases",
+  "tools/runtime-realization-type-env/evidence/workstreams",
+  "tools/runtime-realization-type-env/evidence/handoffs",
+  "tools/runtime-realization-type-env/evidence/_archive",
+  "tools/runtime-realization-type-env/evidence/focus-log.md",
+  "tools/runtime-realization-type-env/evidence/spine-audit-map.md",
+  "tools/runtime-realization-type-env/evidence/effect-integration-map.md",
+  "tools/runtime-realization-type-env/evidence/vendor-fidelity.md",
+  "tools/runtime-realization-type-env/phases/foundation-research",
+  "tools/runtime-realization-type-env/phases/phase-three/transition",
+  "tools/runtime-realization-type-env/templates",
+  "tools/runtime-realization-type-env/workflows",
+  "tools/runtime-realization-type-env/evidence/design-guardrails.md",
+  "tools/runtime-realization-type-env/phases/phase-one/refs",
+  "tools/runtime-realization-type-env/phases/phase-one/workflows",
+  "tools/runtime-realization-type-env/phases/phase-two/refs",
+  "tools/runtime-realization-type-env/phases/phase-two/workflows",
+  "tools/runtime-realization-type-env/phases/phase-three/refs",
+  "tools/runtime-realization-type-env/phases/phase-three/workflows",
+  "tools/runtime-realization-type-env/evidence/workflow-phase-two-level-zero.md",
+  "tools/runtime-realization-type-env/evidence/ref-2026-04-30-phase-two-production-critical-claim-ledger.md",
+  "tools/runtime-realization-type-env/evidence/workflow-runtime-research-program-dra.md",
+  "tools/runtime-realization-type-env/evidence/ref-runtime-realization-research-program.md",
+  "tools/runtime-realization-type-env/evidence/workflow-effect-integration-work-plan.md",
+  "tools/runtime-realization-type-env/evidence/workflow-middle-spine-verification-work-plan.md",
+  "tools/runtime-realization-type-env/evidence/workflow-runtime-realization-lab-v2-plan.md",
+  "tools/runtime-realization-type-env/evidence/workflow-runtime-spine-diagnostic-work-plan.md",
+  `tools/runtime-realization-type-env/src/${retiredOraclePathSegment}`,
+  `tools/runtime-realization-type-env/test/${retiredOraclePathSegment}`,
+  `tools/runtime-realization-type-env/phases/phase-three/handoffs/ref-2026-05-01-${retiredOraclePathSegment}-salvage-to-reference-runtime-report.md`,
+  `tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-${retiredPhaseTwoOverclaimSlug}`,
 ]) {
   assert(
-    !exists(archivedActivePath),
-    `archived pre-Phase-Two work plan must not remain active: ${archivedActivePath}`,
+    !exists(retiredPath),
+    `retired runtime lab evidence topology path must not exist: ${retiredPath}`,
   );
 }
+
+const toolFiles = walk(toolRoot).map((filePath) =>
+  path.relative(toolRoot, filePath).split(path.sep).join("/"),
+);
+
+const retiredOracleNamedPaths = toolFiles.filter((filePath) =>
+  filePath.toLowerCase().includes(retiredOraclePathSegment),
+);
+assert(
+  retiredOracleNamedPaths.length === 0,
+  `runtime lab paths must use Oracle naming, not the retired proof-harness name: ${retiredOracleNamedPaths.join(", ")}`,
+);
+
+const namingFramePaths = [
+  "tools/runtime-realization-type-env/AGENTS.md",
+  "tools/runtime-realization-type-env/README.md",
+  "tools/runtime-realization-type-env/RUNBOOK.md",
+  "tools/runtime-realization-type-env/evidence/AGENTS.md",
+  "tools/runtime-realization-type-env/evidence/README.md",
+  "tools/runtime-realization-type-env/guidance/guardrails-design.md",
+  "tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md",
+];
+const requiredNamingTerms = [
+  "Runtime Realization Lab",
+  "Oracle",
+  "Lab-Production Proof",
+  "Reference Runtime",
+  "Parent-Repo Migration",
+];
+const retiredActivePhrases = [
+  "parent Parent-Repo Migration",
+  "Lab-Production Proof requires a migration slice",
+  ["not", "the", "runtime"].join(" "),
+  retiredOraclePathSegment,
+  retiredOraclePhrase,
+  retiredOracleTitlePhrase,
+];
+for (const namingFramePath of namingFramePaths) {
+  const content = read(namingFramePath);
+  for (const term of requiredNamingTerms) {
+    assert(
+      content.includes(term),
+      `${namingFramePath} must carry naming-frame term: ${term}`,
+    );
+  }
+  for (const retiredPhrase of retiredActivePhrases) {
+    assert(
+      !content.includes(retiredPhrase),
+      `${namingFramePath} contains retired naming phrase: ${retiredPhrase}`,
+    );
+  }
+}
+
+const directPhaseFiles = fs
+  .readdirSync(path.join(repoRoot, "tools/runtime-realization-type-env/phases"), {
+    withFileTypes: true,
+  })
+  .filter((entry) => entry.isFile() && entry.name !== "README.md")
+  .map((entry) => entry.name);
+assert(
+  directPhaseFiles.length === 0,
+  `phase files must live inside a phase dossier: ${directPhaseFiles.join(", ")}`,
+);
+
+const evidenceRootEntries = fs
+  .readdirSync(path.join(repoRoot, "tools/runtime-realization-type-env/evidence"), {
+    withFileTypes: true,
+  });
+const invalidEvidenceRootFiles = evidenceRootEntries
+  .filter((entry) => entry.isFile())
+  .map((entry) => entry.name)
+  .filter(
+    (fileName) =>
+      ![
+        "AGENTS.md",
+        "README.md",
+        "current-lab-state.md",
+        "proof-manifest.json",
+        "runtime-spine-verification-diagnostic.md",
+      ].includes(fileName),
+  );
+assert(
+  invalidEvidenceRootFiles.length === 0,
+  `evidence root files must stay authority/current-state only: ${invalidEvidenceRootFiles.join(", ")}`,
+);
+
+const invalidEvidenceRootDirs = evidenceRootEntries
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name)
+  .filter((dirName) => dirName !== "systems" && dirName !== "vendors");
+assert(
+  invalidEvidenceRootDirs.length === 0,
+  `evidence root directories must be systems or vendors only: ${invalidEvidenceRootDirs.join(", ")}`,
+);
+
+const systemEvidenceEntries = fs.readdirSync(
+  path.join(repoRoot, "tools/runtime-realization-type-env/evidence/systems"),
+  {
+    withFileTypes: true,
+  },
+);
+const invalidSystemEvidenceDirs = systemEvidenceEntries
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name);
+assert(
+  invalidSystemEvidenceDirs.length === 0,
+  `system evidence directories are not allowed: ${invalidSystemEvidenceDirs.join(", ")}`,
+);
+
+const systemEvidenceFiles = systemEvidenceEntries
+  .filter((entry) => entry.isFile())
+  .map((entry) => entry.name);
+const invalidSystemEvidenceFiles = systemEvidenceFiles.filter(
+  (fileName) => fileName !== "README.md" && !/.+-map\.md$/.test(fileName),
+);
+assert(
+  invalidSystemEvidenceFiles.length === 0,
+  `system evidence files must be README.md or *-map.md: ${invalidSystemEvidenceFiles.join(", ")}`,
+);
+
+const vendorEvidenceEntries = fs.readdirSync(
+  path.join(repoRoot, "tools/runtime-realization-type-env/evidence/vendors"),
+  {
+    withFileTypes: true,
+  },
+);
+const invalidVendorEvidenceDirs = vendorEvidenceEntries
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name);
+assert(
+  invalidVendorEvidenceDirs.length === 0,
+  `vendor evidence directories are not allowed: ${invalidVendorEvidenceDirs.join(", ")}`,
+);
+
+const vendorEvidenceFiles = vendorEvidenceEntries
+  .filter((entry) => entry.isFile())
+  .map((entry) => entry.name);
+const expectedVendorEvidenceFiles = new Set([
+  "README.md",
+  "typescript.md",
+  "effect.md",
+  "orpc.md",
+  "elysia.md",
+  "typebox.md",
+  "inngest.md",
+  "hyperdx-otlp.md",
+  "semantica.md",
+]);
+const invalidVendorEvidenceFiles = vendorEvidenceFiles.filter(
+  (fileName) => !expectedVendorEvidenceFiles.has(fileName),
+);
+assert(
+  invalidVendorEvidenceFiles.length === 0,
+  `unexpected vendor evidence files: ${invalidVendorEvidenceFiles.join(", ")}`,
+);
+
+const guidanceFiles = fs
+  .readdirSync(path.join(repoRoot, "tools/runtime-realization-type-env/guidance"), {
+    withFileTypes: true,
+  })
+  .filter((entry) => entry.isFile())
+  .map((entry) => entry.name);
+const invalidGuidanceFiles = guidanceFiles.filter(
+  (fileName) =>
+    fileName !== "README.md" &&
+    !/^(guardrails|workflow|template)-.+\.md$/.test(fileName),
+);
+assert(
+  invalidGuidanceFiles.length === 0,
+  `guidance files must be README.md or use guardrails-, workflow-, or template- prefixes: ${invalidGuidanceFiles.join(", ")}`,
+);
+
+for (const phaseName of ["phase-one", "phase-two", "phase-three"]) {
+  const phaseEntries = fs.readdirSync(
+    path.join(repoRoot, "tools/runtime-realization-type-env/phases", phaseName),
+    { withFileTypes: true },
+  );
+  const invalidPhaseRootFiles = phaseEntries
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .filter(
+      (fileName) =>
+        fileName !== "README.md" &&
+        !/^workflow-.+\.md$/.test(fileName) &&
+        !/^ref-.+\.md$/.test(fileName),
+    );
+  assert(
+    invalidPhaseRootFiles.length === 0,
+    `phase root files must be README.md, workflow-*.md, or ref-*.md: ${phaseName}: ${invalidPhaseRootFiles.join(", ")}`,
+  );
+
+  const invalidPhaseRootDirs = phaseEntries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .filter(
+      (dirName) =>
+        dirName !== "workstreams" &&
+        dirName !== "handoffs" &&
+        dirName !== "_archive",
+    );
+  assert(
+    invalidPhaseRootDirs.length === 0,
+    `phase root directories must be workstreams, handoffs, or _archive: ${phaseName}: ${invalidPhaseRootDirs.join(", ")}`,
+  );
+
+  for (const producedDir of ["workstreams", "handoffs"]) {
+    const producedPath = path.join(
+      repoRoot,
+      "tools/runtime-realization-type-env/phases",
+      phaseName,
+      producedDir,
+    );
+    if (!fs.existsSync(producedPath)) continue;
+
+    const producedEntries = fs.readdirSync(producedPath, { withFileTypes: true });
+    const nestedDirs = producedEntries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+    assert(
+      nestedDirs.length === 0,
+      `phase ${producedDir} directories must stay flat: ${phaseName}: ${nestedDirs.join(", ")}`,
+    );
+
+    const allowedFilePattern =
+      producedDir === "workstreams"
+        ? /^(README|workstream-.+|ref-.+)\.md$/
+        : /^(README|handoff-.+|ref-.+)\.md$/;
+    const invalidProducedFiles = producedEntries
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
+      .filter((fileName) => !allowedFilePattern.test(fileName));
+    assert(
+      invalidProducedFiles.length === 0,
+      `phase ${producedDir} files use invalid names: ${phaseName}: ${invalidProducedFiles.join(", ")}`,
+    );
+  }
+}
+
+const unprefixedDatedPhaseReports = toolFiles.filter((filePath) => {
+  if (!filePath.startsWith("phases/")) return false;
+  const baseName = path.basename(filePath);
+  return /^20\d{2}-\d{2}-\d{2}-.+\.md$/.test(baseName);
+});
+assert(
+  unprefixedDatedPhaseReports.length === 0,
+  `phase reports must use workstream-, handoff-, ref-, or workflow- prefixes: ${unprefixedDatedPhaseReports.join(", ")}`,
+);
 
 assert(
   !exists("tools/runtime-realization-type-env/package.json"),
@@ -185,7 +494,7 @@ for (const target of [
   "negative",
   "vendor-effect",
   "vendor-boundaries",
-  "mini-runtime",
+  "oracle",
   "middle-spine",
   "simulate",
   "gate",
@@ -200,7 +509,7 @@ const gateTargets = new Set([
   "negative",
   "vendor-effect",
   "vendor-boundaries",
-  "mini-runtime",
+  "oracle",
   "middle-spine",
   "simulate",
 ]);
@@ -340,7 +649,7 @@ const rawEffectImportPattern = /from\s+["']effect(?:\/[^"']*)?["']/;
 const rawEffectAllowedPrefixes = [
   "src/sdk/effect.ts",
   "src/sdk/runtime/provider-plan-internals.ts",
-  "src/mini-runtime/",
+  "src/oracle/",
   "src/vendor/effect/",
   "test/vendor-effect/",
 ];

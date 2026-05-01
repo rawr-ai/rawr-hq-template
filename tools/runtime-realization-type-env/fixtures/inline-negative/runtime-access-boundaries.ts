@@ -1,19 +1,19 @@
-import type { MiniRuntimeResourceAccess } from "../../src/mini-runtime/runtime-access";
-import type { ProcessExecutionRuntime } from "../../src/mini-runtime/process-runtime";
-import type { RuntimeBoundaryPolicy } from "../../src/mini-runtime";
+import type { OracleResourceAccess } from "../../src/oracle/runtime-access";
+import type { ProcessExecutionRuntime } from "../../src/oracle/process-runtime";
+import type { RuntimeBoundaryPolicy } from "../../src/oracle";
 import type { RuntimeAccess } from "../../src/spine/artifacts";
 import {
-  mountMiniAsyncHarness,
-  mountMiniServerHarness,
-} from "../../src/mini-runtime";
+  mountOracleAsyncHarness,
+  mountOracleServerHarness,
+} from "../../src/oracle";
 import {
   createAsyncStepBridgePayload,
   lowerAsyncStepCallback,
-} from "../../src/mini-runtime/adapters/async";
+} from "../../src/oracle/adapters/async";
 import {
   createServerAdapterCallbackPayload,
   lowerServerCallback,
-} from "../../src/mini-runtime/adapters/server";
+} from "../../src/oracle/adapters/server";
 import {
   CreateWorkItemDescriptor,
   CreateWorkItemRef,
@@ -22,7 +22,7 @@ import {
   SyncWorkItemStepRef,
 } from "../positive/app-and-plan-artifacts";
 
-declare const access: MiniRuntimeResourceAccess;
+declare const access: OracleResourceAccess;
 declare const runtimeAccess: RuntimeAccess;
 declare const runtime: ProcessExecutionRuntime;
 declare const boundaryPolicy: RuntimeBoundaryPolicy;
@@ -34,16 +34,16 @@ access.telemetry().event("runtime.resource.accessed");
 access.emitTopology({ kind: "runtime.topology" });
 access.emitDiagnostic({ code: "runtime.diagnostic", message: "diagnostic" });
 
-// @ts-expect-error mini runtime access must not expose raw resource maps.
+// @ts-expect-error Oracle access must not expose raw resource maps.
 access.resources;
 
 // @ts-expect-error runtime access must not expose raw resource maps.
 runtimeAccess.resources;
 
-// @ts-expect-error mini runtime access must not expose raw runtime handles.
+// @ts-expect-error Oracle access must not expose raw runtime handles.
 access.runtime;
 
-// @ts-expect-error mini runtime access must not expose unredacted/raw getters.
+// @ts-expect-error Oracle access must not expose unredacted/raw getters.
 access.getRaw("database");
 
 // @ts-expect-error runtime access does not expose observation readback.
@@ -71,10 +71,10 @@ createAsyncStepBridgePayload({ ref: CreateWorkItemRef });
 createServerAdapterCallbackPayload({ routeDescriptor: CreateWorkItemRouteDescriptor, ref: SyncWorkItemStepRef });
 
 // @ts-expect-error server harnesses consume lowered adapter payloads, not raw descriptors.
-mountMiniServerHarness({ harnessId: "server:bad", runtime, payloads: [CreateWorkItemDescriptor] });
+mountOracleServerHarness({ harnessId: "server:bad", runtime, payloads: [CreateWorkItemDescriptor] });
 
 // @ts-expect-error async harnesses consume lowered bridge payloads, not compiler plans.
-mountMiniAsyncHarness({ harnessId: "async:bad", runtime, payloads: [SyncWorkItemStepPlan] });
+mountOracleAsyncHarness({ harnessId: "async:bad", runtime, payloads: [SyncWorkItemStepPlan] });
 
 // @ts-expect-error runtime boundary policy snapshots must not retain live AbortSignal handles.
 boundaryPolicy.interruption?.signal;
