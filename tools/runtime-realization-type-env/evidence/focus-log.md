@@ -4,17 +4,18 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-three.contained-elysia-host-passage`
-- Focus: open the contained Elysia host passage:
-  prove inside the mini-runtime lab whether a real Elysia app/mount/request
-  layer can wrap or delegate into the contained server runtime boundary while
-  preserving host, oRPC if crossed, RAWR runtime, harness/boundary, telemetry,
-  and control-plane observation layers without claiming production HTTP
-  readiness while keeping production migration readiness, production host
-  lifecycle, durable Inngest semantics, live HyperDX product visibility,
-  RuntimeCatalog persistence, native host telemetry/error mapping, public
-  API/DX law, and final structure/Nx/generator ratchet fenced.
+- ID: `phase-three.contained-elysia-listen-lifecycle-passage`
+- Focus: open the contained Elysia listen/lifecycle passage:
+  prove inside the mini-runtime lab whether a real local Elysia listener can
+  start on an ephemeral port around the contained Elysia -> oRPC -> runtime
+  path, receive a real network request, record start/request/stop/finalization
+  behavior, reject post-stop requests without runtime delegation, and still
+  fence production HTTP readiness, deployment topology, auth/logging,
+  OpenAPI/product policy, native host telemetry/error mapping, public API/DX
+  law, durable async semantics, live HyperDX product visibility,
+  RuntimeCatalog persistence, and final structure/Nx/generator ratchet.
 - Related manifest entries:
+  - `audit.p3.contained-elysia-listen-lifecycle-passage`
   - `audit.p3.contained-elysia-host-passage`
   - `audit.p3.layer-disagreement-failure-observation-proof`
   - `audit.p3.native-boundary-observation-failure-semantics-ledger`

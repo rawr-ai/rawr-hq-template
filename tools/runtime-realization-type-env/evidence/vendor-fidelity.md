@@ -34,12 +34,25 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 
 ## Elysia
 
-- `elysia` is present in the lockfile through other workspace dependency graphs
-  but is not root-resolvable from the runtime-realization lab.
-- Phase Two child workstream 4 therefore does not promote Elysia proof. Any
-  future Elysia claim must install/exercise a real Elysia mount/request
-  lifecycle in a lab-contained way and update this file and the proof manifest
-  with the exact boundary crossed.
+- Installed package: `elysia@1.4.24`.
+- Phase Two child workstream 4 did not promote Elysia proof because the package
+  was present only through `apps/server` and was not root/lab-resolvable.
+- Phase Three child 5 adds `elysia` as an explicit root/lab dependency and
+  exercises a real Elysia app/request path inside the mini-runtime lab. The
+  contained adapter uses `new Elysia().all('/rpc*', ({ request }) => ..., {
+  parse: 'none' })` to forward the raw Web `Request` into the existing
+  contained `@orpc/server/fetch` boundary without letting Elysia pre-parse the
+  oRPC body.
+- This proof uses `Elysia.handle(new Request(fullUrl, ...))`, which official
+  Elysia docs describe as a unit-test/simulated HTTP request path. It proves
+  contained app/request host passage only. It does not prove production
+  `listen(...)`, Bun server lifecycle, Node adapter parity, OpenAPI/Eden
+  behavior, auth/logging, native host telemetry/error mapping, product API
+  policy, deployment topology, or production migration readiness.
+- The official `.mount('/prefix', fetchFn)` pattern remains supporting Fetch
+  interop evidence, not the primary oRPC body-preservation oracle. The accepted
+  oracle for this lab is the official oRPC/Elysia route-forwarding shape with
+  `{ parse: 'none' }`.
 
 ## TypeBox
 

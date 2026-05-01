@@ -4,9 +4,10 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-three.contained-elysia-host-passage",
-    "focus": "Open the Phase Three contained Elysia host passage: prove inside the mini-runtime lab whether a real Elysia app/mount/request layer can wrap or delegate into the contained server runtime boundary while preserving host, oRPC if crossed, RAWR runtime, harness/boundary, telemetry, and control-plane observation layers without claiming production HTTP readiness. Keep production migration readiness, production host lifecycle, durable Inngest semantics, live HyperDX product visibility, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, and final structure/Nx/generator ratchet fenced.",
+    "id": "phase-three.contained-elysia-listen-lifecycle-passage",
+    "focus": "Open the Phase Three contained Elysia listen/lifecycle passage: prove inside the mini-runtime lab whether a real local Elysia listener can start on an ephemeral port around the contained Elysia -> oRPC -> runtime path, receive a real network request, record start/request/stop/finalization behavior, reject post-stop requests without runtime delegation, and still fence production HTTP readiness, deployment topology, auth/logging, OpenAPI/product policy, native host telemetry/error mapping, public API/DX law, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, and final structure/Nx/generator ratchet.",
     "relatedEntries": [
+      "audit.p3.contained-elysia-listen-lifecycle-passage",
       "audit.p3.contained-elysia-host-passage",
       "audit.p3.layer-disagreement-failure-observation-proof",
       "audit.p3.native-boundary-observation-failure-semantics-ledger",
@@ -754,11 +755,28 @@
     },
     {
       "id": "audit.p3.contained-elysia-host-passage",
-      "status": "todo",
+      "status": "simulation-proof",
       "source": "Phase Three child 5 contained Elysia host passage",
-      "oracle": "Planned contained proof slice for a real Elysia host/mount/request layer around the mini-runtime server boundary. The child should determine whether a real Elysia app can receive a real Request, delegate through the contained server runtime path, preserve host/oRPC-if-crossed/RAWR runtime/harness/boundary/telemetry/control-plane layers, and fence production HTTP readiness, OpenAPI/product policy, auth/logging, native host telemetry/error mapping, production migration readiness, and final public API/DX law.",
+      "oracle": "A lab-contained Elysia app receives full Web Requests through Elysia.handle, routes /rpc* with .all(..., { parse: 'none' }), forwards the raw Elysia context.request into the contained @orpc/server/fetch RPCHandler boundary, delegates through the mini server harness into ProcessExecutionRuntime, preserves separate Elysia host, oRPC, RAWR runtime, adapter, harness, telemetry, OTLP export, and control-plane summary layers, rejects host-unmatched routes before oRPC/runtime delegation, keeps RAWR runtime failure distinct from host delegation success, and redacts request/resource/execution/telemetry/control-plane secrets and live handles. This is contained app/request host passage proof only; it does not prove production HTTP serving, production listen/port/server lifecycle, OpenAPI/product policy, auth/logging, native host telemetry/error mapping, production migration readiness, public API/DX law, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, or final structure/Nx/generator ratchet.",
       "fixtures": [
+        "src/mini-runtime/adapters/elysia-host.ts",
+        "test/mini-runtime/phase-three-contained-elysia-host-passage.test.ts",
         "evidence/workstreams/2026-05-01-phase-three-contained-elysia-host-passage.md"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime",
+        "structural",
+        "report"
+      ]
+    },
+    {
+      "id": "audit.p3.contained-elysia-listen-lifecycle-passage",
+      "status": "todo",
+      "source": "Phase Three child 6 contained Elysia listen/lifecycle passage",
+      "oracle": "Planned contained proof slice for a real local Elysia listener around the contained Elysia -> oRPC -> runtime path. The child should determine whether the lab can start a listener on an ephemeral/local port, send a real network request through it, record start/request/stop/finalization behavior, prove post-stop requests do not delegate into the runtime, and fence production HTTP readiness, deployment topology, auth/logging, OpenAPI/product policy, native host telemetry/error mapping, production migration readiness, public API/DX law, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, and final structure/Nx/generator ratchet.",
+      "fixtures": [
+        "evidence/workstreams/2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md"
       ],
       "gates": [
         "structural",

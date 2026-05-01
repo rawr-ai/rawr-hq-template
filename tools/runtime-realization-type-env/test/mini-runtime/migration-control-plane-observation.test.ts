@@ -221,6 +221,23 @@ describe("runtime migration control-plane observation", () => {
       }),
     ).toThrow("telemetry runId mismatch");
 
+    expect(() =>
+      createMigrationControlPlaneObservationPacket({
+        deploymentHandoff: deploymentHandoff(),
+        catalog,
+        runId: "expected-run",
+        telemetryRecords: [
+          {
+            kind: "runtime.telemetry-record",
+            sequence: 1,
+            source: "unit",
+            name: "runtime.telemetry.missing-run",
+            attributes: {},
+          },
+        ],
+      }),
+    ).toThrow("telemetry runId mismatch");
+
     const packet = createMigrationControlPlaneObservationPacket({
       deploymentHandoff: deploymentHandoff(),
       catalog,

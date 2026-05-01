@@ -312,10 +312,7 @@ function telemetryObservation(input: {
   // A packet can summarize only telemetry from the same runtime run; mixed-run
   // records would make migration evidence look more authoritative than it is.
   for (const record of input.records) {
-    if (
-      "telemetryRunId" in record.attributes &&
-      record.attributes.telemetryRunId !== input.runId
-    ) {
+    if (record.attributes.telemetryRunId !== input.runId) {
       throw new Error(
         `migration control-plane observation telemetry runId mismatch: expected ${input.runId}`,
       );
