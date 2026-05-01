@@ -1,4 +1,4 @@
-# Phase Two Closeout And Phase Three Handoff
+# Phase Two Closeout And Post-Closeout Handoff
 
 Status: `closed`.
 Branch: `codex/runtime-phase-two-closeout-handoff`.
@@ -7,6 +7,16 @@ Commit: branch head after closeout commit.
 
 This report is informative continuity for the runtime-realization lab. It is
 not architecture authority and does not authorize production migration.
+
+Post-closeout realignment:
+
+- This report closed Phase Two as contained spine-composition proof.
+- Its original "Phase Three" handoff language reflects the sequence assumed at
+  Phase Two closeout time.
+- The current next-phase orientation is now captured in
+  `../handoffs/2026-05-01-post-phase-two-runtime-reframe.md`: investigate how
+  much live runtime passage can be proven inside the mini-runtime container
+  before any final structure/Nx/generator ratchet.
 
 ## Frame
 
@@ -54,7 +64,7 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - Child workstream reports 1-7:
   - `2026-04-30-phase-two-program-regrounding-evidence-recertification.md`
@@ -64,7 +74,7 @@ Coordination inputs:
   - `2026-04-30-phase-two-async-inngest-boundary.md`
   - `2026-04-30-phase-two-telemetry-hyperdx-catalog-observation.md`
   - `2026-04-30-phase-two-integrated-runtime-spine-rehearsal.md`
-- `../phase-two-production-critical-claim-ledger.md`
+- `../phases/phase-two/phase-two-production-critical-claim-ledger.md`
 - `README.md`
 - `TEMPLATE.md`
 
@@ -257,7 +267,7 @@ Review loops:
 | Phase Two has closed all eight child workstreams. | Child reports 1-7 plus this closeout report. | Program completion marker is this final closeout artifact, not any single child proof. | High |
 | Phase Two now provides migration-decision evidence for the runtime-critical spine inside the lab. | Manifest entries `audit.p2.provider-effect-process-spine`, `audit.p2.server-orpc-fetch-boundary`, `audit.p2.async-inngest-function-step-boundary`, `audit.p2.telemetry-integrated-observation-spine`, and `audit.p2.integrated-runtime-spine-rehearsal`. | Summarize as contained `simulation-proof`, not production readiness. | High |
 | The strongest honest vendor-boundary claims remain narrow. | Vendor fidelity notes and focused oRPC/Inngest/HyperDX gates. | Preserve Elysia, production host, durable async, and product observability residuals. | High |
-| Phase Three is now unblocked as a lab-structure proof phase, not as production migration. | Phase Two program workstream Phase Three boundary and `p2.phase-three.handoff`. | Handoff Phase Three inputs without starting root Nx/generator work. | High |
+| Phase Two produced historical Phase Three structure/Nx inputs, but immediate sequencing is superseded by the post-Phase-Two reframe. | Phase Two program workstream Phase Three boundary, `p2.phase-three.handoff`, and `../handoffs/2026-05-01-post-phase-two-runtime-reframe.md`. | Treat structure/Nx/generator ratchet as a later likely phase until live-runtime-passage investigation determines the right sequence. | High |
 
 ## Report
 
@@ -425,8 +435,8 @@ Artifacts:
 - `evidence/focus-log.md`
 - `evidence/runtime-spine-verification-diagnostic.md`
 - `evidence/spine-audit-map.md`
-- `evidence/phase-two-production-critical-claim-ledger.md`
-- `evidence/dra-phase-two-level-zero-workflow.md`
+- `evidence/phases/phase-two/phase-two-production-critical-claim-ledger.md`
+- `evidence/phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md`
 
 Verification run:
@@ -458,26 +468,34 @@ Repo/Graphite state:
 
 Recommended next workstream:
 
-- Phase Three mini runtime lab program: final structure, Nx enforcement
-  boundaries, Nx generators, generator idempotency, and ratchet/lock.
+- A post-Phase-Two live-runtime-passage investigation/scope program inside the
+  mini-runtime lab, using
+  `../handoffs/2026-05-01-post-phase-two-runtime-reframe.md` as the
+  reorientation snapshot.
 
 Why this is next:
 
-- Phase Two has burned down the runtime-critical spine inside the contained lab
-  to the strongest honest proof available without final structure/Nx work.
-- The remaining lab step is to put the proven spine into the exact structure
-  expected by production before migration planning consumes it.
+- Phase Two burned down spine composition inside the contained lab, but did not
+  prove live production/runtime passages, live HyperDX product visibility,
+  production host lifecycle, durable Inngest semantics, real Elysia serving,
+  RuntimeCatalog persistence, final public API/DX, or production migration
+  readiness.
+- The next phase should determine how much of that live runtime passage can be
+  proven inside the lab without taking incidental production/repo risk.
+- The final structure/Nx/generator ratchet remains a likely later phase, not
+  the immediate next default.
 
 Required first reads:
 
 - This closeout report.
-- Level Zero workflow.
+- Closed Level Zero workflow under `../phases/phase-two/`.
 - Phase Two program workstream.
+- Post-Phase-Two reframe handoff.
 - Canonical runtime spec pinned by the manifest.
 - Canonical architecture spec.
 - `proof-manifest.json`, `runtime-spine-verification-diagnostic.md`,
   `spine-audit-map.md`, `focus-log.md`, `vendor-fidelity.md`, and
-  `phase-two-production-critical-claim-ledger.md`.
+  `../phases/phase-two/phase-two-production-critical-claim-ledger.md`.
 
 First commands:
 
@@ -490,5 +508,7 @@ First commands:
 
 Deferred items to consume:
 
-- All rows in the deferred inventory above.
-- Phase Three owns structure/Nx/generator ratchet, not production migration.
+- All rows in the deferred inventory above, interpreted through the
+  post-Phase-Two reframe.
+- Structure/Nx/generator ratchet remains fenced until the live-runtime-passage
+  investigation determines the right sequence.

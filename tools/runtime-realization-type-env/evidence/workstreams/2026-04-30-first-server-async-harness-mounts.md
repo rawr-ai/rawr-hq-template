@@ -47,7 +47,7 @@ Opening input:
   going until the full program is complete and keep the HyperDX observation
   cycle in the sequence.
 - Default program sequence from
-  `../dra-runtime-research-program-workflow.md`: workstream 7 is
+  `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`: workstream 7 is
   `First Real Harness Mounts`.
 
 Runtime/proof authority inputs:
@@ -63,8 +63,8 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../phased-agent-verification-workflow.md`
 - `README.md`
 - `TEMPLATE.md`
@@ -433,7 +433,7 @@ Artifacts:
 - `../focus-log.md`
 - `../runtime-spine-verification-diagnostic.md`
 - `../spine-audit-map.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 
 Verification run:
 
@@ -480,8 +480,8 @@ Why this is next:
 Required first reads:
 
 - this report after closeout
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `../../src/mini-runtime/adapters/server.ts`

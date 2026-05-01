@@ -1,12 +1,15 @@
 # Phase Two Production-Critical Scenario And Claim Ledger
 
-Status: closed Phase Two coordination input; retained for Phase Three handoff.
+Status: closed Phase Two coordination input; retained for post-Phase-Two handoff.
 Owner: Phase Two DRA.
 
 This document defines the representative lab-contained scenario and claim
 ledger that Phase Two child workstreams burn down. It is not runtime
 architecture authority, not proof authority, not production topology, and not a
 final public API design.
+
+Use this as Phase Two evidence provenance and next-phase source-mining input,
+not as active scope for the next phase.
 
 ## Scenario Frame
 

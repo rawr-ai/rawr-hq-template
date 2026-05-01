@@ -4,8 +4,8 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-two.closeout-phase-three-handoff",
-    "focus": "Close Phase Two as contained-lab migration-decision evidence, reconcile proof categories and residuals, and hand Phase Three explicit final-structure/Nx/generator/ratchet inputs without claiming production migration readiness.",
+    "id": "post-phase-two.runtime-reframe",
+    "focus": "Organize the post-Phase-Two evidence surface and preserve the reframe that Phase Two closed as spine-composition proof; the next phase should investigate live runtime passage before any structure/Nx/generator ratchet unless future evidence changes sequence.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.invocation-bound-clients",
@@ -671,11 +671,12 @@
     {
       "id": "audit.p2.phase-two-program-closeout",
       "status": "out-of-scope",
-      "source": "Phase Two program workstream child 8 closeout and p2.phase-three.handoff claim ledger row",
-      "oracle": "Phase Two closeout reconciles child workstream reports, proof manifest entries, diagnostic/spine/focus status, residuals, migration-decision evidence, and Phase Three handoff inputs. Closeout itself adds no runtime behavior proof, does not authorize production migration, and does not implement Phase Three final structure, Nx enforcement boundaries, Nx generators, generator idempotency, or ratchet/lock mechanics.",
+      "source": "Phase Two program workstream child 8 closeout and post-Phase-Two reframe handoff",
+      "oracle": "Phase Two closeout reconciles child workstream reports, proof manifest entries, diagnostic/spine/focus status, residuals, migration-decision evidence, and historical Phase Three structure/Nx inputs. Closeout itself adds no runtime behavior proof, does not authorize production migration, does not prove live runtime passage, and does not implement Phase Three final structure, Nx enforcement boundaries, Nx generators, generator idempotency, or ratchet/lock mechanics. Immediate next-phase sequencing is now governed by the post-Phase-Two reframe handoff.",
       "fixtures": [
         "evidence/workstreams/2026-04-30-phase-two-closeout-phase-three-handoff.md",
-        "evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md"
+        "evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md",
+        "evidence/handoffs/2026-05-01-post-phase-two-runtime-reframe.md"
       ],
       "gates": [
         "structural",

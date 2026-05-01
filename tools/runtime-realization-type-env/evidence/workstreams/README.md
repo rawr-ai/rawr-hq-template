@@ -29,16 +29,17 @@ Runtime and proof authority still flows through:
 5. `../runtime-spine-verification-diagnostic.md`;
 6. `../focus-log.md`.
 
-Coordination authority for lab workstream ordering and re-entry lives in
-`../runtime-realization-research-program.md`. It may sequence the work, name the
-next eligible workstream, and preserve the negative-space ledger. It must not
-override the canonical spec, proof manifest, diagnostic, or earned proof
-strength.
+Coordination for closed phases lives under `../phases/`. Historical/default
+program sequencing lives under
+`../_archive/default-research-program-2026-04-30/`. Current ordering for a new
+phase should come from the active handoff or newly opened program/workstream
+artifact, not from a stale closed report.
 
 When a report conflicts with the runtime/proof authority files, the authority
 files win. Update the authority file rather than treating the report as the
-source of truth. When the research program conflicts with those authority files,
-use it only as a stale coordination input until it is reconciled.
+source of truth. When a closed phase artifact or archived research program
+conflicts with those authority files, use it only as stale coordination input
+until it is reconciled.
 
 ## Naming
 

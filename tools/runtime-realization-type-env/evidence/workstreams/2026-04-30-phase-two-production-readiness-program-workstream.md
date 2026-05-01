@@ -19,6 +19,10 @@ Completion note:
 - Phase Two produces contained-lab migration-decision evidence only. It does
   not authorize production migration and does not implement Phase Three final
   structure, Nx enforcement, generators, generator idempotency, or ratchet/lock.
+- Post-closeout realignment lives in
+  `../handoffs/2026-05-01-post-phase-two-runtime-reframe.md`. It reframes the
+  likely next program as live-runtime-passage investigation before any
+  structure/Nx/generator ratchet.
 
 ## Frame
 
@@ -46,7 +50,7 @@ Levels:
 
 | Level | Scope | Status |
 | --- | --- | --- |
-| 0 | DRA-over-program operating workflow | Active in `dra-phase-two-level-zero-workflow.md`. |
+| 0 | DRA-over-program operating workflow | Closed in `../phases/phase-two/dra-phase-two-level-zero-workflow.md`. |
 | 1 | This composition workstream | Closed; this document is now the Level 2 sequence anchor. |
 | 2 | Phase Two program workstream | Closed by child workstream 8 closeout. |
 | 3 | Phase Two child workstreams | Closed; each child opened recursively when reached. |
@@ -91,8 +95,8 @@ Runtime/proof authority:
    `tools/runtime-realization-type-env/evidence/spine-audit-map.md`,
    and `tools/runtime-realization-type-env/evidence/focus-log.md`
 4. Coordination inputs:
-   `tools/runtime-realization-type-env/evidence/runtime-realization-research-program.md`,
-   `tools/runtime-realization-type-env/evidence/dra-runtime-research-program-workflow.md`,
+   `tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`,
+   `tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`,
    `tools/runtime-realization-type-env/evidence/phased-agent-verification-workflow.md`,
    this document, and completed workstream reports
 5. Provenance only:

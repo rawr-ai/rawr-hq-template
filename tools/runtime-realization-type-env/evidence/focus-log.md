@@ -4,10 +4,11 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-two.closeout-phase-three-handoff`
-- Focus: close Phase Two as contained-lab migration-decision evidence, reconcile
-  proof categories and residuals, and hand Phase Three explicit final-structure/
-  Nx/generator/ratchet inputs without claiming production migration readiness.
+- ID: `post-phase-two.runtime-reframe`
+- Focus: organize the post-Phase-Two evidence surface and preserve the reframe
+  that Phase Two closed as spine-composition proof; the next phase should
+  investigate live runtime passage before any structure/Nx/generator ratchet
+  unless future evidence changes sequence.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.invocation-bound-clients`

@@ -70,7 +70,7 @@ When sources conflict, use this order:
    `tools/runtime-realization-type-env/evidence/spine-audit-map.md`, and
    `tools/runtime-realization-type-env/evidence/focus-log.md`.
 4. Coordination authority only:
-   `tools/runtime-realization-type-env/evidence/runtime-realization-research-program.md`,
+   `tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`,
    `tools/runtime-realization-type-env/evidence/phased-agent-verification-workflow.md`,
    this workflow document, and completed workstream reports.
 5. Provenance only:
@@ -319,7 +319,7 @@ shasum -a 256 docs/projects/rawr-final-architecture-migration/resources/spec/RAW
 Then read:
 
 1. This workflow document.
-2. `tools/runtime-realization-type-env/evidence/runtime-realization-research-program.md`.
+2. `tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`.
 3. `tools/runtime-realization-type-env/evidence/phased-agent-verification-workflow.md`.
 4. `tools/runtime-realization-type-env/evidence/proof-manifest.json`.
 5. `tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md`.

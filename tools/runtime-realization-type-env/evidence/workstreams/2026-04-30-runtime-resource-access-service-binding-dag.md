@@ -44,7 +44,7 @@ Opening input:
 - DRA continuation after PR #261
   (`Provider Diagnostics + Runtime Profile Config Redaction`).
 - Default program sequence from
-  `../dra-runtime-research-program-workflow.md`: workstream 3 is
+  `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`: workstream 3 is
   `RuntimeResourceAccess Law + Service Binding DAG`.
 
 Runtime/proof authority inputs:
@@ -60,8 +60,8 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../phased-agent-verification-workflow.md`
 - `README.md`
 - `TEMPLATE.md`
@@ -430,7 +430,7 @@ Artifacts:
 - `evidence/focus-log.md`
 - `evidence/runtime-spine-verification-diagnostic.md`
 - `evidence/spine-audit-map.md`
-- `evidence/runtime-realization-research-program.md`
+- `evidence/_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `evidence/workstreams/2026-04-30-runtime-resource-access-service-binding-dag.md`
 
 Verification run:
@@ -469,7 +469,7 @@ Why this is next:
 Required first reads:
 
 - this report after closeout
-- `../dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `../../src/mini-runtime/process-runtime.ts`

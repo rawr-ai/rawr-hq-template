@@ -46,7 +46,7 @@ Opening input:
   continue through the entire program, and add Docker HyperDX as a dedicated
   telemetry/observation cycle if it belongs in the sequence.
 - Default program sequence from
-  `../dra-runtime-research-program-workflow.md`: workstream 6 is
+  `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`: workstream 6 is
   `Real Adapter Callback + Async Bridge Lowering`.
 
 Runtime/proof authority inputs:
@@ -62,8 +62,8 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../phased-agent-verification-workflow.md`
 - `README.md`
 - `TEMPLATE.md`
@@ -453,8 +453,8 @@ Artifacts:
 - `evidence/focus-log.md`
 - `evidence/runtime-spine-verification-diagnostic.md`
 - `evidence/spine-audit-map.md`
-- `evidence/runtime-realization-research-program.md`
-- `evidence/dra-runtime-research-program-workflow.md`
+- `evidence/_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
+- `evidence/_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 - this report
 
 Verification run:
@@ -481,7 +481,7 @@ Why this is next:
 Required first reads:
 
 - this report after closeout
-- `../dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `../../src/mini-runtime/adapters/server.ts`

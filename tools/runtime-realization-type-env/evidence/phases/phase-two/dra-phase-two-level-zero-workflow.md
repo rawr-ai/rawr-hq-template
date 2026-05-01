@@ -1,6 +1,6 @@
 # Phase Two Level Zero DRA Workflow
 
-Status: active DRA-over-program workflow.
+Status: closed Phase Two DRA-over-program workflow.
 Scope: Phase Two runtime-realization program workstream only.
 
 This document is my persistent checkpoint and re-orientation workflow for the
@@ -65,7 +65,7 @@ test "$actual" = "$expected"
 
 Then I reread the minimum active anchor set:
 
-1. `tools/runtime-realization-type-env/evidence/dra-phase-two-level-zero-workflow.md`
+1. `tools/runtime-realization-type-env/evidence/phases/phase-two/dra-phase-two-level-zero-workflow.md`
 2. `tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md`
 3. `tools/runtime-realization-type-env/RUNBOOK.md`
 4. `tools/runtime-realization-type-env/AGENTS.md`
@@ -198,8 +198,12 @@ use it as runtime proof authority. Runtime/proof authority remains:
 5. `runtime-spine-verification-diagnostic.md`, `spine-audit-map.md`, and
    `focus-log.md`.
 
-Phase Two stays lab-contained. Phase Three owns final structure, Nx enforcement
-boundaries, Nx generators, generator idempotency, and ratchet/lock mechanics.
+Phase Two stays lab-contained. At the time this workflow was written, the next
+named boundary was Phase Three for final structure, Nx enforcement boundaries,
+Nx generators, generator idempotency, and ratchet/lock mechanics. The
+post-Phase-Two reframe now treats a live-runtime-passage investigation as the
+next likely program before any structure/Nx ratchet, unless future evidence
+proves a different sequence.
 Production code remains out of scope unless the user explicitly changes scope.
 
 ## Workstream Template Rule
@@ -385,6 +389,11 @@ The Phase Two sequence is:
 7. Integrated Runtime-Spine Rehearsal.
 8. Closeout And Phase Three Handoff.
 
+Post-closeout realignment note: Phase Two closed as spine-composition proof,
+not production readiness. The closeout's original "Phase Three" language is
+historical Phase Two framing; the current next-phase orientation lives in
+`tools/runtime-realization-type-env/evidence/handoffs/2026-05-01-post-phase-two-runtime-reframe.md`.
+
 The order can change only through recorded evidence, failed gates,
 parent-review invalidation, explicit user control input, or a blocker that
 proves the program order is wrong. A reorder is recorded in the active
@@ -439,16 +448,16 @@ Current level: Level 2 boundary after child workstream 8 closeout; Phase Two pro
 Current branch at latest checkpoint: codex/runtime-phase-two-closeout-handoff.
 Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-closeout-phase-three-handoff.md.
 Prelaunch cleanup report: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-prelaunch-workspace-preparation.md.
-Scenario and claim ledger: tools/runtime-realization-type-env/evidence/phase-two-production-critical-claim-ledger.md.
+Scenario and claim ledger: tools/runtime-realization-type-env/evidence/phases/phase-two/phase-two-production-critical-claim-ledger.md.
 Provider/config/Effect proof: tools/runtime-realization-type-env/test/mini-runtime/provider-effect-spine-scenario.test.ts and manifest entry `audit.p2.provider-effect-process-spine`.
 Server/oRPC proof: tools/runtime-realization-type-env/test/mini-runtime/server-orpc-boundary.test.ts and manifest entry `audit.p2.server-orpc-fetch-boundary`.
 Async/Inngest proof: tools/runtime-realization-type-env/test/mini-runtime/inngest-async-boundary.test.ts and manifest entry `audit.p2.async-inngest-function-step-boundary`.
 Telemetry/HyperDX/catalog observation proof: tools/runtime-realization-type-env/test/mini-runtime/phase-two-observation-spine.test.ts and manifest entry `audit.p2.telemetry-integrated-observation-spine`.
 Integrated runtime-spine rehearsal proof: tools/runtime-realization-type-env/test/mini-runtime/phase-two-integrated-runtime-spine-rehearsal.test.ts and manifest entry `audit.p2.integrated-runtime-spine-rehearsal`.
 Phase Two closeout artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-closeout-phase-three-handoff.md and manifest entry `audit.p2.phase-two-program-closeout`.
-Next required action after this checkpoint: Phase Two is complete. The next program, if opened, is Phase Three mini runtime lab structure/Nx/generator ratchet work.
-Next required gates before future work: repo/Graphite clean, Nx project truth, manifest spec hash check, closeout report consumed.
-Stop condition currently active: do not treat Phase Two closeout as production migration readiness or Phase Three implementation. Phase Three must open separately and consume this closeout as evidence.
+Next required action after this checkpoint: Phase Two is complete. The next program should be opened from the post-Phase-Two reframe, with a live-runtime-passage investigation before any structure/Nx/generator ratchet unless future evidence records a different sequence.
+Next required gates before future work: repo/Graphite clean, Nx project truth, manifest spec hash check, closeout report and post-Phase-Two handoff consumed.
+Stop condition currently active: do not treat Phase Two closeout as production migration readiness, final live-runtime passage proof, or Phase Three implementation. Any next program must open separately and consume Phase Two as evidence.
 Focus-log/manifest note: they mark `phase-two.closeout-phase-three-handoff`.
 ```
 

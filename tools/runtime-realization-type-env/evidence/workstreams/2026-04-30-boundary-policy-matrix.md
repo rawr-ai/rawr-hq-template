@@ -49,7 +49,7 @@ Opening input:
   keep the DRA continuity anchor visible, and include Docker HyperDX as a later
   dedicated telemetry/query observation cycle.
 - Default program sequence from
-  `../dra-runtime-research-program-workflow.md`: workstream 8 is
+  `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`: workstream 8 is
   `Boundary Policy Matrix`.
 
 Runtime/proof authority inputs:
@@ -65,8 +65,8 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../phased-agent-verification-workflow.md`
 - `README.md`
 - `TEMPLATE.md`
@@ -473,8 +473,8 @@ Artifacts:
 - `../runtime-spine-verification-diagnostic.md`
 - `../spine-audit-map.md`
 - `../effect-integration-map.md`
-- `../runtime-realization-research-program.md`
-- `../dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 
 Verification run:
 
@@ -523,8 +523,8 @@ Why this is next:
 Required first reads:
 
 - this report after closeout
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `../../src/mini-runtime/process-runtime.ts`

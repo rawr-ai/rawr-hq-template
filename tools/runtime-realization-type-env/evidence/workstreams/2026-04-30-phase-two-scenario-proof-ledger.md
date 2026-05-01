@@ -50,7 +50,7 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - `2026-04-30-phase-two-program-regrounding-evidence-recertification.md`
 - `../README.md`
@@ -213,7 +213,7 @@ Design lock:
 
 Implementation summary:
 
-- Added `../phase-two-production-critical-claim-ledger.md`.
+- Added `../phases/phase-two/phase-two-production-critical-claim-ledger.md`.
 - Updated `proof-manifest.currentExperiment` and `focus-log.md` to
   `phase-two.production-critical-scenario-ledger`.
 - Added the claim ledger to the visible evidence surface and required reading.
@@ -327,13 +327,13 @@ Process tension notes:
 
 Artifacts:
 
-- `../phase-two-production-critical-claim-ledger.md`
+- `../phases/phase-two/phase-two-production-critical-claim-ledger.md`
 - `../proof-manifest.json`
 - `../focus-log.md`
 - `../README.md`
 - `../../AGENTS.md`
 - `../../README.md`
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - this report
 
 Verification run:
@@ -366,10 +366,10 @@ Why this is next:
 
 Required first reads:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - this report
-- `../phase-two-production-critical-claim-ledger.md`
+- `../phases/phase-two/phase-two-production-critical-claim-ledger.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `../spine-audit-map.md`

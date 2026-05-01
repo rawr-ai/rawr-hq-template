@@ -55,10 +55,10 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - `2026-04-30-phase-two-scenario-proof-ledger.md`
-- `../phase-two-production-critical-claim-ledger.md`
+- `../phases/phase-two/phase-two-production-critical-claim-ledger.md`
 - `README.md`
 - `TEMPLATE.md`
 
@@ -375,7 +375,7 @@ Artifacts:
 - `../focus-log.md`
 - `../runtime-spine-verification-diagnostic.md`
 - `../spine-audit-map.md`
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - this report
 
@@ -417,11 +417,11 @@ Why this is next:
 
 Required first reads:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - this report
 - `2026-04-30-phase-two-scenario-proof-ledger.md`
-- `../phase-two-production-critical-claim-ledger.md`
+- `../phases/phase-two/phase-two-production-critical-claim-ledger.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `../spine-audit-map.md`

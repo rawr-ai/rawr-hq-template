@@ -55,13 +55,13 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - `2026-04-30-phase-two-provider-config-effect-spine.md`
 - `2026-04-30-phase-two-server-orpc-elysia-boundary.md`
 - `2026-04-30-phase-two-async-inngest-boundary.md`
 - `2026-04-30-phase-two-telemetry-hyperdx-catalog-observation.md`
-- `../phase-two-production-critical-claim-ledger.md`
+- `../phases/phase-two/phase-two-production-critical-claim-ledger.md`
 - `README.md`
 - `TEMPLATE.md`
 
@@ -397,8 +397,8 @@ Artifacts:
 - `evidence/focus-log.md`
 - `evidence/runtime-spine-verification-diagnostic.md`
 - `evidence/spine-audit-map.md`
-- `evidence/phase-two-production-critical-claim-ledger.md`
-- `evidence/dra-phase-two-level-zero-workflow.md`
+- `evidence/phases/phase-two/phase-two-production-critical-claim-ledger.md`
+- `evidence/phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md`
 - `evidence/workstreams/2026-04-30-phase-two-integrated-runtime-spine-rehearsal.md`
 

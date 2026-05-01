@@ -31,8 +31,8 @@ Lab operating and evidence authority:
 - `tools/runtime-realization-type-env/evidence/spine-audit-map.md`
 - `tools/runtime-realization-type-env/evidence/focus-log.md`
 - `tools/runtime-realization-type-env/evidence/vendor-fidelity.md`
-- `tools/runtime-realization-type-env/evidence/runtime-realization-research-program.md`
-- `tools/runtime-realization-type-env/evidence/dra-runtime-research-program-workflow.md`
+- `tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
+- `tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 - `tools/runtime-realization-type-env/evidence/phased-agent-verification-workflow.md`
 - `tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-runtime-research-program-closeout.md`
 - `tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-runtime-telemetry-hyperdx-observation.md`

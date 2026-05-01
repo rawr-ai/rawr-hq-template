@@ -50,7 +50,7 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - `../phased-agent-verification-workflow.md`
 - `README.md`
@@ -210,7 +210,7 @@ Artifacts:
 - `../_archive/README.md`
 - `../_archive/pre-phase-two-2026-04-30/README.md`
 - `../README.md`
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `../../AGENTS.md`
 - `../../README.md`
 - `../../scripts/verify-structure.ts`
@@ -246,7 +246,7 @@ Why this is next:
 
 Required first reads:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - `2026-04-30-phase-two-grounding-frame.md`
 - `../proof-manifest.json`

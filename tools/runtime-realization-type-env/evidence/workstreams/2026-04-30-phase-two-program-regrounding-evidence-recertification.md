@@ -50,7 +50,7 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - `2026-04-30-phase-two-grounding-frame.md`
 - `2026-04-30-phase-two-prelaunch-workspace-preparation.md`
@@ -62,8 +62,8 @@ Coordination inputs:
 Evidence inputs:
 
 - `../vendor-fidelity.md`
-- `../runtime-realization-research-program.md`
-- `../dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 - completed workstream closeouts listed by the Phase Two program workstream
 
 Excluded or stale inputs:
@@ -348,7 +348,7 @@ Artifacts:
 
 - `../proof-manifest.json`
 - `../focus-log.md`
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - `2026-04-30-phase-two-grounding-frame.md`
 - `2026-04-30-phase-two-prelaunch-workspace-preparation.md`
@@ -385,7 +385,7 @@ Why this is next:
 
 Required first reads:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - this report
 - `../proof-manifest.json`
