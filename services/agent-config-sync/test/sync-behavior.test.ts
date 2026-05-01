@@ -1,9 +1,16 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { parse as parseToml } from "smol-toml";
 import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../src/client";
-import { createClientOptions, createNodeTestResources } from "./helpers";
+import {
+  createClientOptions,
+  createNodeTestResources,
+  makeParityWorkspace,
+  makeProviderHomes,
+  snapshotProviderState,
+} from "./helpers";
 
 const tempDirs: string[] = [];
 
@@ -73,6 +80,149 @@ describe("agent-config-sync service behavior", () => {
     await expect(fs.readFile(path.join(codexHome, "prompts", "hello.md"), "utf8")).resolves.toBe("# hello\n");
     const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
     expect(registry.plugins[0]).toMatchObject({ name: "demo", prompts: ["hello"], managed_by: "@rawr/plugin-plugins" });
+  });
+
+  it("projects RAWR markdown agents into standalone Codex TOML with dropped Claude-only semantics", async () => {
+    const workspace = await makeParityWorkspace({
+      agentFrontmatter: {
+        description: "Research helper",
+        tools: ["Read", "Write"],
+        hooks: ["PreToolUse"],
+        mcpServers: { research: {} },
+        permissionMode: "acceptEdits",
+        skills: ["deep-search"],
+        model: "claude-opus-4-1",
+      },
+    });
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+
+    const dryRunBefore = await snapshotProviderState(codexHome);
+    const preview = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      includeAgentsInCodex: true,
+      force: true,
+      gc: true,
+      dryRun: true,
+    }, { context: { invocation: { traceId: "test-codex-agent-preview" } } });
+
+    expect(await snapshotProviderState(codexHome)).toEqual(dryRunBefore);
+    expect(preview.projections).toContainEqual(expect.objectContaining({
+      provider: "codex",
+      materialKind: "agent",
+      source: "researcher",
+      supportStatus: "adapter_required",
+      droppedSemantics: ["tools", "hooks", "mcpServers", "permissionMode", "skills", "model"],
+    }));
+
+    const applied = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      includeAgentsInCodex: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-codex-agent-apply" } } });
+
+    expect(applied.ok).toBe(true);
+    const tomlPath = path.join(codexHome, "agents", "researcher.toml");
+    const toml = parseToml(await fs.readFile(tomlPath, "utf8")) as Record<string, unknown>;
+    expect(toml).toMatchObject({
+      name: "researcher",
+      description: "Research helper",
+      developer_instructions: "Follow the evidence.",
+    });
+    expect(toml).not.toHaveProperty("tools");
+    expect(toml).not.toHaveProperty("model");
+
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins[0]).toMatchObject({ name: "plugin-demo", agents: ["researcher"] });
+  });
+
+  it("keeps Codex agent projection opt-in and records unsupported projection metadata when disabled", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+
+    const result = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      includeAgentsInCodex: false,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-codex-agent-opt-in" } } });
+
+    expect(result.ok).toBe(true);
+    await expect(fs.readFile(path.join(codexHome, "agents", "researcher.toml"), "utf8")).rejects.toThrow();
+    expect(result.projections).toContainEqual(expect.objectContaining({
+      provider: "codex",
+      materialKind: "agent",
+      source: "1 agent(s)",
+      supportStatus: "unsupported",
+      distributionMode: "operator_only",
+    }));
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins[0]).toMatchObject({ name: "plugin-demo", agents: [] });
+  });
+
+  it("garbage-collects stale managed Codex agents while preserving unmanaged neighbors", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    await fs.mkdir(path.join(codexHome, "agents"), { recursive: true });
+    await fs.mkdir(path.join(codexHome, "plugins"), { recursive: true });
+    await fs.writeFile(path.join(codexHome, "agents", "old-agent.toml"), "name = \"old-agent\"\n", "utf8");
+    await fs.writeFile(path.join(codexHome, "agents", "unmanaged.toml"), "name = \"unmanaged\"\n", "utf8");
+    await fs.writeFile(
+      path.join(codexHome, "plugins", "registry.json"),
+      JSON.stringify({
+        plugins: [{
+          name: "plugin-demo",
+          prompts: [],
+          skills: [],
+          scripts: [],
+          agents: ["old-agent"],
+          managed_by: "@rawr/plugin-plugins",
+          source_plugin_path: workspace.pluginRoot,
+        }],
+      }, null, 2),
+      "utf8",
+    );
+
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+    const content = { ...workspace.content, agentFiles: [] };
+    const result = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      includeAgentsInCodex: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-codex-agent-gc" } } });
+
+    expect(result.ok).toBe(true);
+    await expect(fs.readFile(path.join(codexHome, "agents", "old-agent.toml"), "utf8")).rejects.toThrow();
+    await expect(fs.readFile(path.join(codexHome, "agents", "unmanaged.toml"), "utf8")).resolves.toBe("name = \"unmanaged\"\n");
   });
 
   it("resolves provider overlay content through the service with primitive file resources", async () => {

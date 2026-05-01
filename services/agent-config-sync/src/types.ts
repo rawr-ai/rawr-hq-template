@@ -3,12 +3,18 @@
  */
 export type {
   RawrPluginKind,
+  DistributionMode,
+  EvidenceLevel,
+  MaterialKind,
+  ProviderKey,
   SourceContent,
   SourcePlugin,
+  SupportStatus,
   SyncAgent,
   SyncScope,
 } from "./service/shared/entities";
 export type {
+  ProviderProjection,
   SyncItemResult,
   SyncRunResult,
 } from "./service/modules/execution/contract";

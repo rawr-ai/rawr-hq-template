@@ -56,6 +56,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
         prompts: string[];
         skills: string[];
         scripts: string[];
+        agents: string[];
         sourcePluginPath?: string;
       }> = [];
 
@@ -76,6 +77,7 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
           prompts: toStringArray(plugin.prompts),
           skills: toStringArray(plugin.skills),
           scripts: toStringArray(plugin.scripts),
+          agents: toStringArray(plugin.agents),
           sourcePluginPath: typeof plugin.source_plugin_path === "string" ? plugin.source_plugin_path : undefined,
         });
       }
@@ -147,6 +149,24 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
             target,
             action,
             message: "retire stale script",
+          });
+        }
+
+        for (const agent of entry.agents) {
+          const target = resources.path.join(codexHome, "agents", `${agent}.toml`);
+          const action = await deletePathIfPresent({
+            dryRun: input.dryRun,
+            target,
+            undoCapture,
+            resources,
+          });
+          actions.push({
+            agent: "codex",
+            home: codexHome,
+            plugin: entry.pluginName,
+            target,
+            action,
+            message: "retire stale agent",
           });
         }
       }

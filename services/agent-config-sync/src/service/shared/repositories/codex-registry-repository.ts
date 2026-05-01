@@ -16,6 +16,7 @@ export type CodexRegistryClaims = {
   promptsByPlugin: Record<string, Set<string>>;
   skillsByPlugin: Record<string, Set<string>>;
   scriptsByPlugin: Record<string, Set<string>>;
+  agentsByPlugin: Record<string, Set<string>>;
 };
 
 export type CodexRegistryPlugin = {
@@ -25,6 +26,7 @@ export type CodexRegistryPlugin = {
   prompts?: string[];
   skills?: string[];
   scripts?: string[];
+  agents?: string[];
   source_plugin_path?: string;
   managed_by?: string;
   synced_at?: string;
@@ -64,12 +66,14 @@ export async function loadCodexRegistry(
     promptsByPlugin: {},
     skillsByPlugin: {},
     scriptsByPlugin: {},
+    agentsByPlugin: {},
   };
 
   for (const plugin of data.plugins ?? []) {
     claimedSets.promptsByPlugin[plugin.name] = new Set(plugin.prompts ?? []);
     claimedSets.skillsByPlugin[plugin.name] = new Set(plugin.skills ?? []);
     claimedSets.scriptsByPlugin[plugin.name] = new Set(plugin.scripts ?? []);
+    claimedSets.agentsByPlugin[plugin.name] = new Set(plugin.agents ?? []);
   }
 
   return { filePath, data, claimedSets };
@@ -102,6 +106,7 @@ export async function upsertCodexRegistry(input: {
   codexHome: string;
   sourcePlugin: SourcePlugin;
   content: SourceContent;
+  includeAgents?: boolean;
   dryRun: boolean;
   existingData: CodexRegistryFile;
   resources: AgentConfigSyncResources;
@@ -115,6 +120,7 @@ export async function upsertCodexRegistry(input: {
     prompts: input.content.workflowFiles.map((workflow) => workflow.name),
     skills: input.content.skills.map((skill) => skill.name),
     scripts: input.content.scripts.map((script) => buildCodexScriptName(pluginName, script.name)),
+    agents: input.includeAgents ? input.content.agentFiles.map((agent) => agent.name) : [],
     source_plugin_path: input.sourcePlugin.absPath,
     managed_by: "@rawr/plugin-plugins",
   };

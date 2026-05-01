@@ -7,9 +7,11 @@ import {
   createWorkspaceSyncPlanInput,
   findPlannedSyncable,
   installAndEnableClaudePlugin,
+  packageCodexPlugin,
   packageCoworkPlugin,
   planWorkspaceSync,
   PLUGINS_SYNC_UNDO_PROVIDER,
+  resolveDefaultCodexOutDir,
   resolveDefaultCoworkOutDir,
   resolveProviderContent,
   runSync,
@@ -51,6 +53,14 @@ export default class PluginsSync extends RawrCommand {
     }),
     "cowork-out": Flags.string({
       description: "Output directory for Cowork .zip artifacts (default: <workspaceRoot>/dist/cowork/plugins)",
+    }),
+    "codex-package": Flags.boolean({
+      description: "Build official Codex plugin package artifact for this plugin (artifact-only; no runtime install)",
+      default: false,
+      allowNo: true,
+    }),
+    "codex-out": Flags.string({
+      description: "Output directory for Codex plugin package artifacts (default: <workspaceRoot>/dist/codex/plugins)",
     }),
     "claude-install": Flags.boolean({
       description: "Install/refresh the synced plugin in Claude Code via marketplace",
@@ -183,6 +193,13 @@ export default class PluginsSync extends RawrCommand {
 
       const runtimePlugins = runtimePluginSnapshot(this.config.plugins);
 
+      const codexPackageEnabled = Boolean((flags as any)["codex-package"]);
+      const codexOutDirAbs = (() => {
+        const raw = (flags as any)["codex-out"] as string | undefined;
+        if (!raw || raw.trim().length === 0) return resolveDefaultCodexOutDir(workspaceRoot);
+        const candidate = raw.trim();
+        return path.isAbsolute(candidate) ? candidate : path.resolve(workspaceRoot, candidate);
+      })();
       const coworkOutDirAbs = (() => {
         const raw = (flags as any)["cowork-out"] as string | undefined;
         if (!raw || raw.trim().length === 0) return resolveDefaultCoworkOutDir(workspaceRoot);
@@ -190,6 +207,15 @@ export default class PluginsSync extends RawrCommand {
         return path.isAbsolute(candidate) ? candidate : path.resolve(workspaceRoot, candidate);
       })();
 
+      const codexPackages: Array<{
+        plugin: string;
+        outDir: string;
+        action: "planned" | "written" | "skipped";
+        manifestPath?: string;
+        skillCount?: number;
+        validationNotes?: string[];
+        reason?: string;
+      }> = [];
       const coworkPackages: Array<{ plugin: string; outFile: string; action: "planned" | "written" | "skipped"; reason?: string }> = [];
       const claudeInstall: Array<Record<string, unknown>> = [];
       let installReconcile: Record<string, unknown> = { action: "skipped", reason: "not run" };
@@ -242,6 +268,51 @@ export default class PluginsSync extends RawrCommand {
         });
       }
 
+      if (codexPackageEnabled) {
+        try {
+          const isWorkspacePlugin = path
+            .resolve(sourcePlugin.absPath)
+            .startsWith(path.resolve(workspaceRoot) + path.sep);
+          if (!isWorkspacePlugin) {
+            codexPackages.push({
+              plugin: sourcePlugin.dirName,
+              outDir: path.join(codexOutDirAbs, sourcePlugin.dirName),
+              action: "skipped",
+              reason: "not a workspace plugin (skip Codex package artifact)",
+            });
+          } else {
+            const codexContent = await resolveProviderContent({
+              agent: "codex",
+              sourcePlugin,
+              base: content,
+              repoRoot: workspaceRoot,
+            });
+            codexPackages.push(await packageCodexPlugin({
+              sourcePlugin,
+              content: codexContent,
+              outDirAbs: codexOutDirAbs,
+              dryRun: baseFlags.dryRun,
+              undoCapture,
+            }));
+          }
+        } catch (err) {
+          postStepFailed = true;
+          codexPackages.push({
+            plugin: sourcePlugin.dirName,
+            outDir: path.join(codexOutDirAbs, sourcePlugin.dirName),
+            action: "skipped",
+            reason: `codex package failed: ${err instanceof Error ? err.message : String(err)}`,
+          });
+        }
+      } else {
+        codexPackages.push({
+          plugin: sourcePlugin.dirName,
+          outDir: path.join(codexOutDirAbs, sourcePlugin.dirName),
+          action: "skipped",
+          reason: "disabled by flag",
+        });
+      }
+
       const claudeTargets = syncResult.targets.filter((t) => t.agent === "claude");
       if (claudeInstallEnabled && claudeTargets.length > 0) {
         for (const t of claudeTargets) {
@@ -285,6 +356,7 @@ export default class PluginsSync extends RawrCommand {
 
       const enriched = {
         ...syncResult,
+        codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
         cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
         claudeInstall,
         installReconcile,
@@ -315,6 +387,7 @@ export default class PluginsSync extends RawrCommand {
             details: {
               conflictCount,
               postStepFailed,
+              codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
               cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
               claudeInstall,
               installReconcile,
@@ -344,6 +417,8 @@ export default class PluginsSync extends RawrCommand {
             }
           }
           const cowork = coworkPackages.find((p) => p.plugin === syncResult.sourcePlugin.dirName);
+          const codexPackage = codexPackages.find((p) => p.plugin === syncResult.sourcePlugin.dirName);
+          if (codexPackage) this.log(`Codex package: ${codexPackage.action} -> ${codexPackage.outDir}${codexPackage.reason ? ` (${codexPackage.reason})` : ""}`);
           if (cowork) this.log(`Cowork: ${cowork.action} -> ${cowork.outFile}${cowork.reason ? ` (${cowork.reason})` : ""}`);
           this.log(`Install reconcile: ${(installReconcile as any).action}`);
           if (undo.available) this.log(`Undo: rawr undo (capsule=${undo.capsuleId})`);
@@ -352,6 +427,7 @@ export default class PluginsSync extends RawrCommand {
 
       if (!ok) this.exit(1);
     } catch (error) {
+      if ((error as any)?.code === "EEXIT") throw error;
       const message = error instanceof Error ? error.message : String(error);
       let undo: { available: boolean; provider?: string; capsuleId?: string; expiresOn?: string } = { available: false };
       if (!baseFlags.dryRun && undoCapture) {

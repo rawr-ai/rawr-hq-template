@@ -14,6 +14,45 @@ export const SyncAgentSchema = Type.Union([
   Type.Literal("claude"),
 ]);
 
+export const ProviderKeySchema = SyncAgentSchema;
+
+export const MaterialKindSchema = Type.Union([
+  Type.Literal("workflow"),
+  Type.Literal("skill"),
+  Type.Literal("script"),
+  Type.Literal("agent"),
+  Type.Literal("plugin_metadata"),
+  Type.Literal("hook"),
+  Type.Literal("mcp"),
+  Type.Literal("settings"),
+  Type.Literal("asset"),
+]);
+
+export const DistributionModeSchema = Type.Union([
+  Type.Literal("direct_mirror"),
+  Type.Literal("local_plugin_install"),
+  Type.Literal("package_artifact"),
+  Type.Literal("manual_upload"),
+  Type.Literal("org_marketplace"),
+  Type.Literal("operator_only"),
+]);
+
+export const SupportStatusSchema = Type.Union([
+  Type.Literal("native"),
+  Type.Literal("adapter_required"),
+  Type.Literal("legacy_or_deprecated"),
+  Type.Literal("unsupported"),
+  Type.Literal("unknown"),
+]);
+
+export const EvidenceLevelSchema = Type.Union([
+  Type.Literal("official"),
+  Type.Literal("local_verified"),
+  Type.Literal("source_code"),
+  Type.Literal("inferred"),
+  Type.Literal("unverified"),
+]);
+
 export const SyncScopeSchema = Type.Union([
   Type.Literal("all"),
   Type.Literal("cli"),
@@ -68,6 +107,11 @@ export const SourceContentSchema = Type.Object(
 
 export type RawrPluginKind = Static<typeof RawrPluginKindSchema>;
 export type SyncAgent = Static<typeof SyncAgentSchema>;
+export type ProviderKey = Static<typeof ProviderKeySchema>;
+export type MaterialKind = Static<typeof MaterialKindSchema>;
+export type DistributionMode = Static<typeof DistributionModeSchema>;
+export type SupportStatus = Static<typeof SupportStatusSchema>;
+export type EvidenceLevel = Static<typeof EvidenceLevelSchema>;
 export type SyncScope = Static<typeof SyncScopeSchema>;
 export type SyncAction = Static<typeof SyncActionSchema>;
 export type SourcePlugin = Static<typeof SourcePluginSchema>;

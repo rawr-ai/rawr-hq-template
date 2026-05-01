@@ -3,6 +3,7 @@ import {
   deleteIfExists,
   syncFileWithConflictPolicy,
   syncSkillDirWithConflictPolicy,
+  syncTextWithConflictPolicy,
 } from "../../../shared/repositories/destination-sync-repository";
 import {
   buildCodexScriptName,
@@ -20,6 +21,8 @@ import { pushItem, summarizeScannedContent } from "../../../shared/helpers/sync-
 import type { SyncRunResult, SyncTargetResult } from "../../../shared/entities/sync-results";
 import type { SourceContent, SourcePlugin } from "../../../shared/entities";
 import type { AgentConfigSyncResources } from "../../../shared/resources";
+import { buildProviderProjections } from "../../../shared/helpers/projections";
+import { buildCodexAgentProjection } from "../../../shared/source-content/helpers/codex-agent";
 
 export async function previewSyncRun(input: {
   sourcePlugin: SourcePlugin;
@@ -33,6 +36,7 @@ export async function previewSyncRun(input: {
 }): Promise<SyncRunResult> {
   const pathOps = input.resources.path;
   const targets: SyncTargetResult[] = [];
+  const projections: SyncRunResult["projections"] = [];
   const options = {
     dryRun: true,
     force: true,
@@ -49,17 +53,27 @@ export async function previewSyncRun(input: {
       base: input.content,
       resources: input.resources,
     });
+    projections.push(...await buildProviderProjections({
+      provider: "codex",
+      sourcePlugin: input.sourcePlugin,
+      content: codexContent,
+      homes: input.codexHomes,
+      includeAgentsInCodex: input.includeAgentsInCodex,
+      resources: input.resources,
+    }));
 
     for (const codexHome of input.codexHomes) {
       const result: SyncTargetResult = { agent: "codex", home: codexHome, items: [], conflicts: [] };
       const promptsDir = pathOps.join(codexHome, "prompts");
       const skillsDir = pathOps.join(codexHome, "skills");
       const scriptsDir = pathOps.join(codexHome, "scripts");
+      const agentsDir = pathOps.join(codexHome, "agents");
       const registry = await loadCodexRegistry(codexHome, input.resources);
       const claimedOthers = {
         prompts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.promptsByPlugin),
         skills: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.skillsByPlugin),
         scripts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.scriptsByPlugin),
+        agents: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.agentsByPlugin),
       };
 
       for (const workflow of codexContent.workflowFiles) {
@@ -96,11 +110,32 @@ export async function previewSyncRun(input: {
         });
       }
 
+      const includeAgentsInCodex = options.includeAgentsInCodex ?? false;
+      if (includeAgentsInCodex) {
+        for (const agent of codexContent.agentFiles) {
+          const rendered = await buildCodexAgentProjection({
+            agent,
+            sourcePlugin: input.sourcePlugin,
+            resources: input.resources,
+          });
+          await syncTextWithConflictPolicy({
+            content: rendered.toml,
+            source: agent.absPath,
+            dest: pathOps.join(agentsDir, rendered.targetName),
+            kind: "agent",
+            options,
+            result,
+            claimedByOtherPlugin: claimedOthers.agents.has(agent.name),
+          });
+        }
+      }
+
       const newPrompts = new Set(codexContent.workflowFiles.map((workflow) => workflow.name));
       const newSkills = new Set(codexContent.skills.map((skill) => skill.name));
       const newScripts = new Set(
         codexContent.scripts.map((script) => buildCodexScriptName(input.sourcePlugin.dirName, script.name)),
       );
+      const newAgents = new Set(includeAgentsInCodex ? codexContent.agentFiles.map((agent) => agent.name) : []);
 
       for (const oldPrompt of registry.claimedSets.promptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
         if (newPrompts.has(oldPrompt) || claimedOthers.prompts.has(oldPrompt)) continue;
@@ -117,10 +152,16 @@ export async function previewSyncRun(input: {
         await deleteIfExists({ target: pathOps.join(scriptsDir, oldScript), kind: "script", options, result });
       }
 
+      for (const oldAgent of registry.claimedSets.agentsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
+        if (newAgents.has(oldAgent) || claimedOthers.agents.has(oldAgent)) continue;
+        await deleteIfExists({ target: pathOps.join(agentsDir, `${oldAgent}.toml`), kind: "agent", options, result });
+      }
+
       const codexRegistry = await upsertCodexRegistry({
         codexHome,
         sourcePlugin: input.sourcePlugin,
         content: codexContent,
+        includeAgents: includeAgentsInCodex,
         dryRun: true,
         existingData: registry.data,
         resources: input.resources,
@@ -145,6 +186,14 @@ export async function previewSyncRun(input: {
       base: input.content,
       resources: input.resources,
     });
+    projections.push(...await buildProviderProjections({
+      provider: "claude",
+      sourcePlugin: input.sourcePlugin,
+      content: claudeContent,
+      homes: input.claudeHomes,
+      includeAgentsInClaude: input.includeAgentsInClaude,
+      resources: input.resources,
+    }));
 
     for (const claudeHome of input.claudeHomes) {
       const result: SyncTargetResult = { agent: "claude", home: claudeHome, items: [], conflicts: [] };
@@ -292,5 +341,6 @@ export async function previewSyncRun(input: {
     sourcePlugin: input.sourcePlugin,
     scanned: summarizeScannedContent(input.content),
     targets,
+    projections,
   };
 }

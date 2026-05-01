@@ -8,6 +8,7 @@ import {
 } from "../../shared/entities";
 import {
   SyncItemResultSchema,
+  ProviderProjectionSchema,
   SyncRunResultSchema,
   SyncScannedSummarySchema,
   SyncTargetResultSchema,
@@ -39,6 +40,7 @@ const RunSyncInputSchema = Type.Object(
 export type RunSyncInput = Static<typeof RunSyncInputSchema>;
 export type SyncScannedSummary = Static<typeof SyncScannedSummarySchema>;
 export type SyncItemResult = Static<typeof SyncItemResultSchema>;
+export type ProviderProjection = Static<typeof ProviderProjectionSchema>;
 export type SyncTargetResult = Static<typeof SyncTargetResultSchema>;
 export type SyncRunResult = Static<typeof SyncRunResultSchema>;
 

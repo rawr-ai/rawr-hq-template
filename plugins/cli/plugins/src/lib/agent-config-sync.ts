@@ -19,6 +19,7 @@ import {
 } from "@rawr/agent-config-sync/undo";
 import { createAgentConfigSyncClient } from "./agent-config-sync-binding";
 import { installAndEnableClaudePlugin } from "./agent-config-sync-resources/claude-cli";
+import { packageCodexPlugin } from "./agent-config-sync-resources/codex-package";
 import { packageCoworkPlugin } from "./agent-config-sync-resources/cowork-package";
 import { createNodeAgentConfigSyncResources } from "./agent-config-sync-resources/resources";
 import type { HostSourceContent as SourceContent, HostSourcePlugin as SourcePlugin } from "./agent-config-sync-resources/types";
@@ -421,8 +422,16 @@ export function resolveDefaultCoworkOutDir(workspaceRoot: string): string {
   return path.join(workspaceRoot, "dist", "cowork", "plugins");
 }
 
+/**
+ * Default artifact output directory for official Codex plugin packages.
+ */
+export function resolveDefaultCodexOutDir(workspaceRoot: string): string {
+  return path.join(workspaceRoot, "dist", "codex", "plugins");
+}
+
 export {
   installAndEnableClaudePlugin,
+  packageCodexPlugin,
   packageCoworkPlugin,
   PLUGINS_SYNC_UNDO_PROVIDER,
 };

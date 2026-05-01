@@ -1,5 +1,13 @@
 import { type Static, Type } from "typebox";
-import { SourcePluginSchema, SyncActionSchema, SyncAgentSchema } from "../entities";
+import {
+  DistributionModeSchema,
+  EvidenceLevelSchema,
+  MaterialKindSchema,
+  SourcePluginSchema,
+  SupportStatusSchema,
+  SyncActionSchema,
+  SyncAgentSchema,
+} from "../entities";
 
 /**
  * agent-config-sync: sync result entities.
@@ -63,6 +71,25 @@ export const SyncTargetResultSchema = Type.Object(
 
 export type SyncTargetResult = Static<typeof SyncTargetResultSchema>;
 
+export const ProviderProjectionSchema = Type.Object(
+  {
+    provider: SyncAgentSchema,
+    materialKind: MaterialKindSchema,
+    source: Type.String({ minLength: 1 }),
+    sourcePath: Type.Optional(Type.String({ minLength: 1 })),
+    targetPaths: Type.Array(Type.String({ minLength: 1 })),
+    distributionMode: DistributionModeSchema,
+    supportStatus: SupportStatusSchema,
+    evidenceLevel: EvidenceLevelSchema,
+    droppedSemantics: Type.Array(Type.String({ minLength: 1 })),
+    adapterRequiredSemantics: Type.Array(Type.String({ minLength: 1 })),
+    validationNotes: Type.Array(Type.String({ minLength: 1 })),
+  },
+  { additionalProperties: false },
+);
+
+export type ProviderProjection = Static<typeof ProviderProjectionSchema>;
+
 /**
  * Top-level execution result for one source plugin sync run.
  */
@@ -72,6 +99,7 @@ export const SyncRunResultSchema = Type.Object(
     sourcePlugin: SourcePluginSchema,
     scanned: SyncScannedSummarySchema,
     targets: Type.Array(SyncTargetResultSchema),
+    projections: Type.Array(ProviderProjectionSchema),
   },
   { additionalProperties: false },
 );

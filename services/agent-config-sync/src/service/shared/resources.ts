@@ -18,6 +18,7 @@ export type AgentConfigSyncPathResources = typeof import("node:path");
 export interface AgentConfigSyncFileResources {
   pathExists(filePath: string): Promise<boolean>;
   readTextFile(filePath: string): Promise<string | null>;
+  writeTextFile(filePath: string, content: string): Promise<void>;
   readJsonFile<T>(filePath: string): Promise<T | null>;
   writeJsonFile(filePath: string, data: unknown): Promise<void>;
   ensureDir(dirPath: string): Promise<void>;
