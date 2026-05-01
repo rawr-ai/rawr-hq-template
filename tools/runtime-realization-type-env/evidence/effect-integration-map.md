@@ -11,10 +11,19 @@ This map records Effect-native integration categories that the runtime realizati
 | Safe Effect composition surface | Expected fail | Runtime realization spec sections 5, 9, and 25 | `@rawr/sdk/effect` is a curated facade for `RawrEffect` construction/composition. Raw runtime constructors must not leak. | Final helper list, overloads, and exact parity with vendor Effect utility names. |
 | Adapter callback lowering | Simulation proof plus expected fail | Runtime realization spec sections 12, 20, 21, and 24 | Fake host callbacks delegate through `ExecutionRegistry` and `ProcessExecutionRuntime`; adapters do not execute Effect themselves. | Real oRPC/Elysia/Inngest/OCLIF/web/agent/desktop adapter implementations. |
 | Async Effect bridge lowering | Expected fail | Runtime realization spec sections 12, 19, 20, 21, and 24 | Step-local Effect bodies stay statically declared and execute through the process runtime at invocation time. | Real durable scheduler semantics and host-specific step bridge payloads. |
-| Runtime profile config and redaction | TODO | Runtime realization spec sections 13, 22, 23, and 24; deployment spec runtime handoff sections | Runtime config and secret/redaction boundaries are visible as future proof work. | Platform secret binding, config provider implementation, telemetry export, and deployment observation. |
+| Runtime profile config and redaction | Simulation proof plus production expected fail | Runtime realization spec sections 13, 22, 23, and 24; deployment spec runtime handoff sections | Lab-contained provider config validates through `RuntimeSchema`, fails closed before provider build/acquire on invalid config, and redacts config snapshots, provisioning traces, telemetry projections, and observation packet summaries. | Production config source precedence, platform secret binding, secret-store policy, persisted observation, and arbitrary free-form diagnostic DLP. |
 
 ## Vendor Notes
 
 Lab V2 installs `effect@3.21.2` as a root dev dependency and runs vendor probes against the installed package. The package exposes current modules such as `Effect`, `Layer`, `Scope`, `ManagedRuntime`, `Queue`, `PubSub`, `Ref`, `Deferred`, `Schedule`, `Stream`, `Fiber`, `FiberRef`, `Config`, `Logger`, `Tracer`, `Metric`, and `Data`.
 
 The verified composition spelling is root `pipe` or value `.pipe(...)`, not `Effect.pipe`.
+
+The service-package Effect/oRPC snapshot at
+`docs/projects/rawr-final-architecture-migration/resources/research/service-package-effect-orpc-integration-snapshot.md`
+is a reference-only native-fit integration exemplar. It can guide future
+service-package or vendor authoring-DX questions, but it is not runtime
+boundary authority. Its older `.handler(...)` / `.effect(...)` terminal split
+is superseded by the current runtime-realization spec; RAWR `.effect(...)`
+remains the canonical execution terminal for runtime-realization
+service/plugin authoring.

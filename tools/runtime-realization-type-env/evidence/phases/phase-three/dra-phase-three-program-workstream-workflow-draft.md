@@ -1,6 +1,6 @@
 # Phase Three DRA Workflow Reference
 
-Status: DRA operating reference for the proposed Phase Three program.
+Status: DRA operating reference for the open Phase Three program.
 Owner: DRA for Phase Three runtime-realization program workstream.
 Program: `../../workstreams/2026-05-01-phase-three-program-workstream.md`.
 
@@ -18,7 +18,8 @@ State gate:
 | Current control state | Allowed next action | Artifact to update |
 | --- | --- | --- |
 | Program proposed or awaiting review | Re-anchor, answer review feedback, or wait for explicit user control input. Do not open child 1. | This workflow, the program workstream, or review notes as applicable. |
-| Program approved/open and no active child exists | Open child 1: `2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md`. | New child workstream report. |
+| Program open, child 1 closed, child 2 not opened, and no active child exists | Open the accepted first proof slice: `2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`. | New child workstream report. |
+| Program open, child 2 closed, and no active child exists | Open the accepted native boundary observation/failure semantics ledger: `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`. | New child workstream report. |
 | Active child open | Resume from the child packet/report, not from chat memory. | Active child report and its scratch disposition. |
 | Review repair pending | Apply or reject the repair with a recorded DRA disposition, then rerun affected loops. | Active child report or this workflow if process-level. |
 | Proof promotion pending | Verify gates, review proof honesty, then promote or fence. | Proof manifest, diagnostic, focus log, maps, and child report. |
@@ -34,7 +35,10 @@ Tiny frame:
 - DRA owns sequence and proof promotion.
 - Child reports recommend; DRA decides.
 - No proof claim crosses its earned category.
-- Child 1 opens only after explicit program approval/open state is recorded.
+- Phase Three opened by explicit user control input on 2026-05-01.
+- Child 1 closed with DRA acceptance of the first proof slice.
+- Child 2 closed as contained `simulation-proof`; DRA accepted the native
+  boundary observation/failure semantics ledger as next child.
 
 ## Compact Frame
 
@@ -65,21 +69,30 @@ The DRA decision rule is:
 
 ## Current State
 
-Phase Three is not production migration and does not mutate production
+Phase Three is open and is not production migration. It does not mutate production
 `apps/*`, `packages/*`, `services/*`, `resources/*`, `plugins/*`, root package
 exports, production deployment topology, or root Nx generator ratchets unless
 the user explicitly changes scope.
 
-The expected first executable action after this workflow is accepted is to open
-the first child workstream:
+Child 1 is:
 
 `2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md`
 
-That child does not implement Elysia, Inngest, HyperDX, or Nx structure first.
-It decides what live-runtime passage Phase Three should prove, then recommends
-exactly one first executable proof slice with claim, falsifier, focused gate,
-residuals, and stop conditions. I must accept, reject, or revise that
-recommendation before another child opens.
+It is closed as coordination only. It does not implement Elysia, Inngest,
+HyperDX, or Nx structure. The DRA accepted its recommendation and opened the
+first executable proof slice:
+
+`2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`
+
+That proof slice is closed as contained `simulation-proof`. It proved a
+lab-contained started process assembly plus stop/finalization passage, including
+post-stop rejection before runtime delegation. The DRA accepted and opened the
+next child:
+
+`2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`
+
+Child 3 is active and must decide the native boundary observation/failure
+semantics scope before any further implementation.
 
 ## Authority Stack
 
@@ -287,7 +300,23 @@ documents is:
 - architectural coherence and authority order;
 - leverage and future compounding value;
 - information design and usability;
-- coordination/accountability.
+- coordination/accountability;
+- overall program health and direction.
+
+The overall-program-health reviewer is mandatory for every child closeout
+before the next child opens. That lane reviews whether the local child result
+keeps Phase Three pointed at the live-runtime-passage objective, whether the
+next recommended slice still compounds the program, and whether residuals or
+repairs threaten the overall sequence. It excludes local mechanical correctness,
+implementation detail, and prose polish unless they distort program direction.
+
+Every review lane recorded in a child closeout must name:
+
+- axis owner;
+- exclusion boundary;
+- verdict;
+- material findings;
+- DRA disposition.
 
 For implementation children, choose axes from the actual proof risk:
 
@@ -312,6 +341,132 @@ Lane handoff contract:
 
 Material lane findings must receive DRA accept/reject/revise disposition before
 the next child opens or proof is promoted.
+
+Pattern capture:
+
+- Reviewers should identify repeated correction patterns, not just local
+  defects. A pattern is a failure mode that has appeared more than once or is
+  likely to recur across child workstreams.
+- Each patterned finding needs a recommended structural remediation: template
+  field, opening packet requirement, review axis, stop rule, checklist row,
+  artifact shape, or next-packet clause.
+- I disposition the structural remediation separately from the local fix:
+  accept, revise, defer with authority home, or reject.
+- When accepted, bake the remediation into the child loop, review loop,
+  artifact rules, or next-packet shape so future children inherit it passively.
+  Do not rely on memory, chat reminders, or a growing pile of ad hoc rules.
+- Agents may propose the remediation wording or patch scope, but I keep the DRA
+  focus on mission execution and only update process docs when the pattern
+  materially reduces future drift or dropped context.
+
+Every child closeout must include a `Pattern Decisions` table:
+
+| Pattern | Local fix | Structural remediation | Passive absorption target | DRA disposition |
+| --- | --- | --- | --- | --- |
+
+Rows may say `None`, but the table must exist so repeated failures have a
+durable decision home.
+
+Every child opening packet must include a `Vendor / Integration Inheritance`
+field:
+
+- `Vendor touched?`: `yes`, `no`, or `unknown until discovery`.
+- `Required skill introspection`: named local skills or explicit `none found`.
+- `Official-docs lane`: `required`, `not applicable`, or
+  `reuse existing report with DRA disposition`.
+- `Golden integration exemplar`: read
+  `docs/projects/rawr-final-architecture-migration/resources/research/service-package-effect-orpc-integration-snapshot.md`
+  when the child designs or judges a vendor integration surface, author DX,
+  service package internal shape, middleware/context model, or under-the-hood
+  operational split.
+- `Durable report disposition`: create/update report, reuse with reason, or
+  explicit no-op reason.
+- `Integration Exemplar Reconciliation`: required when the golden integration
+  exemplar is used; it records authority label, principle extracted,
+  runtime-spec conflict check, stale details rejected, vendor evidence lane, and
+  proof ceiling.
+
+Every child closeout must include `Current focus after closeout`:
+
+- active child id;
+- no active child plus accepted next child; or
+- program closed/paused/abandoned.
+
+Deferred inventory rule:
+
+- `Unblock condition` is evidence or control state.
+- `Next eligible workstream` is the task/container home.
+- `Routing owner / DRA decision home` names who carries the residual until a
+  later DRA accepts it.
+
+## Vendor And Telemetry Research Rules
+
+Any child that investigates a vendor boundary, vendor idiom, grammar, host
+adapter, telemetry/export path, or vendor-owned lifecycle must run a layered
+research loop before implementation or proof promotion.
+
+Required vendor loop:
+
+1. Introspect every relevant local skill that exists before assigning the lane
+   or writing the plan. Use skill output as navigation and caution, not as
+   proof authority.
+2. Assign at least one dedicated official-docs lane. That lane must go
+   broad-to-deep: start from the vendor docs hub, navigation tree, sitemap, or
+   equivalent source map before choosing specific pages or search paths.
+3. Separate local installed-package behavior from official vendor guidance and
+   from RAWR-owned runtime integration. A vendor constructibility result is
+   `vendor-proof`; it becomes runtime passage only when a RAWR-owned contained
+   adapter/wrapper path consumes it under a falsifiable gate.
+4. Mine local integration docs from multiple angles. Treat them as evidence and
+   encoded intent, not as uncontested authority. Promote only after DRA
+   disposition against the manifest-pinned runtime spec.
+5. When the vendor question is scoped enough to matter later, create or update a
+   durable research/integration report with an explicit authority label:
+   `canonical`, `normative after DRA acceptance`, `reference only`, or
+   `scratch/non-authoritative`.
+6. Preserve useful source-vendor and integration findings through the
+   workstream handoff when they will affect later runtime design, and delete or
+   archive non-useful scratch before closeout.
+
+Telemetry-specific rule:
+
+- Before any oRPC, HyperDX, OTLP, OpenTelemetry, or Effect telemetry child
+  claims behavior, mine:
+  `docs/projects/orpc-ingest-domain-packages/resources/spec/TELEMETRY_DESIGN.md`,
+  `docs/system/quarantine/TELEMETRY.md`, and discovered related docs such as
+  `docs/system/quarantine/telemetry/orpc.md`,
+  `docs/system/quarantine/telemetry/hyperdx.md`, and
+  `docs/system/quarantine/telemetry/hq-runtime.md`.
+- Keep existing parent-app telemetry and mini-runtime lab telemetry distinct.
+  Existing telemetry docs may encode subtle intended behavior, but they do not
+  automatically carry over as mini-runtime architecture.
+- The Phase Two oRPC telemetry path was correct for oRPC-only integration. Phase
+  Three telemetry must account for the Effect x oRPC x OTEL composition it
+  actually opens.
+
+Golden integration exemplar rule:
+
+- Mine
+  `docs/projects/rawr-final-architecture-migration/resources/research/service-package-effect-orpc-integration-snapshot.md`
+  as a reference-only example of native-fit vendor integration. It is strongest
+  for service-package internals, native oRPC authoring posture, native Effect
+  authoring posture, handler/effect terminals, middleware/context/provided
+  rules, service semantic errors, observability posture, analytics posture, and
+  author/agent DX constraints.
+- Do not use that snapshot as authority over runtime boundary definitions,
+  runtime lifecycle, public runtime SDK names, adapter lowering, provider
+  acquisition/finalization, import law, proof categories, or migration
+  readiness. The manifest-pinned runtime-realization spec wins those conflicts.
+- When applying the snapshot to Inngest, telemetry, or another vendor, extract
+  the principle first: native author-facing grammar, RAWR-owned lifecycle and
+  operational seams, and explicit separation of surface DX from runtime reality.
+  Then re-validate against official vendor docs, installed behavior, and
+  contained gates before making any claim.
+- Known stale detail: the snapshot's older `.handler(...)` / `.effect(...)`
+  terminal split is not current runtime law. Current runtime-realization
+  authority keeps RAWR `.effect(...)` as the execution terminal and rejects
+  public `.handler(...)` / Promise branches for canonical service/plugin
+  authoring. Preserve the principle; reject the stale terminal split.
 
 ## Artifact Rules
 
@@ -444,6 +599,12 @@ Every child closeout records:
 - manifest/diagnostic/focus/vendor map deltas or explicit no-op;
 - deferred inventory with authority homes, unblock conditions, re-entry
   triggers, next eligible workstreams, and lanes;
+- residual routing owner or DRA decision home for every deferred item;
+- `Pattern Decisions` table with local fix, structural remediation, passive
+  absorption target, and DRA disposition;
+- stale-state sweep across metadata, current-state card, startup contract,
+  review result, final output, and next packet;
+- `Current focus after closeout`;
 - scratch disposition;
 - repo/Graphite state;
 - next packet.
@@ -464,10 +625,11 @@ After compaction, read this section first.
 1. Run opening preflight.
 2. Read the Phase Three program workstream.
 3. Confirm recorded control state. If Phase Three is not approved/open, stop at
-   re-anchor or user review; do not open child 1.
-4. Read the active child report/packet. If Phase Three is approved/open and no
-   active child exists, open child 1:
-   `2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md`.
+   re-anchor or user review; do not open a child.
+4. Read the active or most recent child report/packet. If Phase Three is open,
+   child 2 is closed, and no active child exists, open the accepted native
+   boundary observation/failure semantics ledger:
+   `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`.
 5. Re-check proof manifest counts and current experiment.
 6. State the current level: program, child, review repair, proof promotion, or
    closeout.
@@ -482,7 +644,8 @@ Detailed frame to carry:
 - DRA owns sequence and proof promotion.
 - Child reports recommend; DRA decides.
 - No proof claim crosses its earned category.
-- The next default child is live-runtime-passage scope and claim ledger.
+- The next default child is the accepted native boundary observation/failure
+  semantics ledger.
 
 ## Skills To Reach For
 

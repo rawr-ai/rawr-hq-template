@@ -4,9 +4,12 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-three.program-workstream",
-    "focus": "Define the proposed recursive Phase Three program workstream for live-runtime-passage investigation inside the mini-runtime lab, preserving Phase Two as contained spine-composition proof and keeping final structure/Nx/generator ratchet fenced until live-passage scope and proof terrain are mapped.",
+    "id": "phase-three.native-boundary-observation-failure-semantics-ledger",
+    "focus": "Open the Phase Three native boundary observation and failure semantics ledger: map how oRPC, Inngest, Elysia, OpenTelemetry/OTLP, and HyperDX expose native failure/status/observation semantics, decide what can be proven inside containment, and recommend the next executable proof, decision packet, or clean deferral without claiming production readiness, durable async, product observability, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
     "relatedEntries": [
+      "audit.p3.native-boundary-observation-failure-semantics-ledger",
+      "audit.p3.started-process-assembly-stop-finalization-passage",
+      "audit.p3.live-runtime-passage-scope-claim-ledger",
       "audit.p3.phase-three-program-workstream",
       "accepted.effect-only-authoring",
       "accepted.invocation-bound-clients",
@@ -688,12 +691,54 @@
     {
       "id": "audit.p3.phase-three-program-workstream",
       "status": "out-of-scope",
-      "source": "Phase Three program workstream proposal",
-      "oracle": "The Phase Three program workstream document defines a recursive coordination object for live-runtime-passage investigation inside the mini-runtime lab, including authority order, child-workstream lifecycle, proof ceilings, artifacts, review loops, residual routing, and closeout criteria. It adds no runtime behavior proof, does not open production migration, does not prove production readiness, and does not implement final structure/Nx/generator ratchet. Phase Three opens only after explicit user approval and DRA workflow update.",
+      "source": "Phase Three program workstream and DRA workflow",
+      "oracle": "The Phase Three program workstream document and DRA workflow define the approved recursive coordination object for live-runtime-passage investigation inside the mini-runtime lab, including authority order, child-workstream lifecycle, proof ceilings, artifacts, review loops, residual routing, and closeout criteria. Phase Three opened after explicit user approval on 2026-05-01, and child 1 is closed as coordination-only scope/claim ledger. This entry adds no runtime behavior proof, does not open production migration, does not prove production readiness, and does not implement final structure/Nx/generator ratchet.",
       "fixtures": [
         "evidence/workstreams/2026-05-01-phase-three-program-workstream.md",
         "evidence/phases/phase-three/dra-phase-three-program-workstream-workflow-draft.md",
         "evidence/handoffs/2026-05-01-post-phase-two-runtime-reframe.md"
+      ],
+      "gates": [
+        "structural",
+        "report"
+      ]
+    },
+    {
+      "id": "audit.p3.started-process-assembly-stop-finalization-passage",
+      "status": "simulation-proof",
+      "source": "Phase Three child 2 started process assembly plus stop/finalization passage",
+      "oracle": "A lab-contained started runtime passage derives and compiles fixture declarations, provisions provider resources through the mini bootgraph, assembles one instrumented ProcessExecutionRuntime, mounts contained oRPC Fetch and Inngest Bun serve/function/step boundaries, invokes both through the runtime, projects safe observation/control-plane evidence, stops server/async harnesses, finalizes provider/runtime resources, and rejects post-stop boundary invocations before runtime delegation. The oracle records post-stop oRPC failure by HTTP error, post-stop Inngest failure by protocol-native StepError in the step response and failure-classified boundary record despite HTTP 206, stopped harness records, unchanged runtime invocation count after stop, explicit runtime disposal evidence, redacted OTLP-shaped export, and candidate-only migration packet summaries. This remains contained simulation proof and does not imply production migration readiness, durable async semantics, product HyperDX observability, RuntimeCatalog persistence, native host telemetry/error mapping, final public API/DX law, or final structure/Nx/generator ratchet.",
+      "fixtures": [
+        "test/mini-runtime/phase-three-started-process-assembly-stop-finalization-passage.test.ts",
+        "evidence/workstreams/2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md",
+        "evidence/workstreams/2026-05-01-phase-three-started-passage-vendor-integration-reference.md"
+      ],
+      "gates": [
+        "mini-runtime",
+        "report",
+        "structural"
+      ]
+    },
+    {
+      "id": "audit.p3.native-boundary-observation-failure-semantics-ledger",
+      "status": "todo",
+      "source": "Phase Three child 3 native boundary observation and failure semantics ledger",
+      "oracle": "Planned semantics ledger for native boundary failure and observation behavior across oRPC, Inngest, Elysia if considered, OpenTelemetry/OTLP, and HyperDX. The child maps vendor envelopes, RAWR runtime outcomes, harness/boundary records, telemetry projection, product observability residuals, and public/native host error mapping before recommending the next executable proof, decision packet, or clean deferral. Until closed, this is not runtime behavior proof and does not imply production migration readiness, durable async semantics, product observability, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
+      "fixtures": [
+        "evidence/workstreams/2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md"
+      ],
+      "gates": [
+        "structural",
+        "report"
+      ]
+    },
+    {
+      "id": "audit.p3.live-runtime-passage-scope-claim-ledger",
+      "status": "out-of-scope",
+      "source": "Phase Three child 1 live-runtime-passage scope and claim ledger",
+      "oracle": "The child 1 workstream maps live-runtime-passage dimensions, proof ceilings, residual containers, and the first executable proof-slice recommendation for DRA disposition. It adds no runtime behavior proof, does not promote Phase Two lab evidence to production readiness, and does not implement production migration, durable async semantics, product observability, RuntimeCatalog persistence, final public API/DX law, or final structure/Nx/generator ratchet.",
+      "fixtures": [
+        "evidence/workstreams/2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md"
       ],
       "gates": [
         "structural",

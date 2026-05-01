@@ -54,6 +54,12 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 - Phase Two additionally exercises a contained Inngest-facing boundary through
   a real `inngest/bun` Fetch handler, absolute function-id routing, and
   `step.run(...)` before delegating to the RAWR mini async harness.
+- Phase Three started-passage proof records that a stopped async harness
+  rejection surfaces through Inngest as a protocol-native `StepError` operation
+  inside a `206` step response. The contained boundary now classifies that
+  response as failure in its own observation record after inspecting the
+  protocol body. Future Inngest failure oracles must inspect the step response
+  body and runtime-delegation evidence; HTTP status alone is not enough.
 - The lab does not claim durable scheduling, retries, idempotency, or production Inngest host semantics.
 
 ## HyperDX / OTLP
@@ -75,3 +81,21 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 - The `codex/semantica-first-pipeline-implementation` branch is inspected read-only as evidence discovery only.
 - That branch diverges from the runtime lab stack and must not be merged into this implementation branch.
 - Semantica output may point reviewers to source spans, but it is not architecture authority and cannot promote a manifest entry to proof without a concrete gate.
+
+## Service Package Effect/oRPC Integration Snapshot
+
+- Reference resource:
+  `docs/projects/rawr-final-architecture-migration/resources/research/service-package-effect-orpc-integration-snapshot.md`.
+- This snapshot is a golden integration exemplar for native-fit vendor design:
+  keep the author-facing surface vendor-native where that improves DX, while
+  RAWR owns lifecycle, runtime construction, import law, diagnostics, telemetry
+  correlation, policy, context projection, and finalization seams.
+- It is not authority over runtime boundaries, runtime lifecycle, public runtime
+  SDK names, adapter lowering, provider acquisition/finalization, proof
+  categories, or production migration readiness. The manifest-pinned runtime
+  realization spec wins those conflicts.
+- Known stale detail: the snapshot's older `.handler(...)` / `.effect(...)`
+  terminal split is superseded by current runtime-realization authority. RAWR
+  `.effect(...)` remains the canonical execution terminal for
+  runtime-realization service/plugin authoring; public `.handler(...)` /
+  Promise branches must not be reintroduced from the snapshot.

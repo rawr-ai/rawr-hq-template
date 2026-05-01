@@ -95,6 +95,22 @@ function createResponse(input: {
   };
 }
 
+async function responseHasStepError(response: Response): Promise<boolean> {
+  // Inngest can report step failure as a StepError operation inside a 206
+  // response, so boundary observations must inspect the protocol body.
+  try {
+    const body = await response.clone().json();
+    return Array.isArray(body) &&
+      body.some((entry) =>
+        entry &&
+        typeof entry === "object" &&
+        (entry as { readonly op?: unknown }).op === "StepError"
+      );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Mounts a lab-contained Inngest Bun serve handler over a started async
  * harness. This crosses real `serve(...)`, `createFunction(...)`, and
@@ -239,12 +255,13 @@ export function mountRuntimeInngestAsyncBoundary(input: {
       );
 
       const response = await handler(request);
+      const stepError = await responseHasStepError(response);
       records.push(
         record({
           boundaryId: input.boundaryId,
           phase: "inngest.serve.responded",
           httpStatus: response.status,
-          status: response.status >= 400 ? "failure" : "success",
+          status: response.status >= 400 || stepError ? "failure" : "success",
         }),
       );
       return response;

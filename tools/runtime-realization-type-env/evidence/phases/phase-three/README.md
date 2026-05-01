@@ -1,16 +1,21 @@
-# Phase Three Draft Coordination Container
+# Phase Three Coordination Container
 
-Status: proposed / not opened.
+Status: open / child 3 active.
 
-This container holds pre-planning DRA workflow material for the expected next
+This container holds DRA workflow material for the open Phase Three
 runtime-realization program workstream. It is not runtime authority, proof
-authority, or an approved Phase Three plan.
+authority, or authorization to migrate production code.
 
 Current artifacts:
 
-- `../../workstreams/2026-05-01-phase-three-program-workstream.md`: proposed
-  Phase Three program workstream structure, ready for user review before
-  opening.
+- `../../workstreams/2026-05-01-phase-three-program-workstream.md`: open
+  Phase Three program workstream structure.
+- `../../workstreams/2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md`:
+  closed child 1 scope/claim ledger.
+- `../../workstreams/2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`:
+  closed child 2 proof-slice report.
+- `../../workstreams/2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`:
+  active child 3 semantics-ledger workstream.
 - `dra-phase-three-program-workstream-workflow-draft.md`: DRA workflow
   reference for operating the full Phase Three program. The filename keeps
   `draft` for continuity with the preserved anchor; the contents are now the

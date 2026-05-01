@@ -4,13 +4,18 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-three.program-workstream`
-- Focus: define the proposed recursive Phase Three program workstream for
-  live-runtime-passage investigation inside the mini-runtime lab, preserving
-  Phase Two as contained spine-composition proof and keeping final
-  structure/Nx/generator ratchet fenced until live-passage scope and proof
-  terrain are mapped.
+- ID: `phase-three.native-boundary-observation-failure-semantics-ledger`
+- Focus: open the native boundary observation and failure semantics ledger:
+  map how oRPC, Inngest, Elysia, OpenTelemetry/OTLP, and HyperDX expose native
+  failure/status/observation semantics, decide what can be proven inside
+  containment, and recommend the next executable proof, decision packet, or
+  clean deferral while keeping production readiness, durable async, product
+  observability, RuntimeCatalog persistence, native host telemetry/error
+  mapping, public API/DX law, and final structure/Nx/generator ratchet fenced.
 - Related manifest entries:
+  - `audit.p3.native-boundary-observation-failure-semantics-ledger`
+  - `audit.p3.started-process-assembly-stop-finalization-passage`
+  - `audit.p3.live-runtime-passage-scope-claim-ledger`
   - `audit.p3.phase-three-program-workstream`
   - `accepted.effect-only-authoring`
   - `accepted.invocation-bound-clients`
