@@ -4,15 +4,18 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-three.native-boundary-observation-failure-semantics-ledger`
-- Focus: open the native boundary observation and failure semantics ledger:
-  map how oRPC, Inngest, Elysia, OpenTelemetry/OTLP, and HyperDX expose native
-  failure/status/observation semantics, decide what can be proven inside
-  containment, and recommend the next executable proof, decision packet, or
-  clean deferral while keeping production readiness, durable async, product
-  observability, RuntimeCatalog persistence, native host telemetry/error
+- ID: `phase-three.layer-disagreement-failure-observation-proof`
+- Focus: open the layer-disagreement failure observation proof:
+  prove inside the contained mini-runtime lab that representative oRPC/Inngest
+  boundary failures, RAWR runtime outcomes, harness/boundary records,
+  telemetry/export status, and migration/control-plane summaries preserve
+  layer-specific disagreement instead of collapsing into false-green runtime
+  readiness while keeping production migration readiness, production host
+  lifecycle, real Elysia serving, durable Inngest semantics, live HyperDX
+  product visibility, RuntimeCatalog persistence, native host telemetry/error
   mapping, public API/DX law, and final structure/Nx/generator ratchet fenced.
 - Related manifest entries:
+  - `audit.p3.layer-disagreement-failure-observation-proof`
   - `audit.p3.native-boundary-observation-failure-semantics-ledger`
   - `audit.p3.started-process-assembly-stop-finalization-passage`
   - `audit.p3.live-runtime-passage-scope-claim-ledger`

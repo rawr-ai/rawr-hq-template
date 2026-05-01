@@ -1,6 +1,6 @@
 # Phase Three Program Workstream
 
-Status: `open; child 3 native boundary semantics ledger active`.
+Status: `open; child 4 layer-disagreement proof active`.
 Branch: `codex/runtime-phase-two-closeout-handoff`.
 PR: `none`.
 Commit: `pending Phase Three evidence commit`.
@@ -18,13 +18,14 @@ control decisions before the next child opens.
 
 | Field | Value |
 | --- | --- |
-| State | Phase Three open. Child 1 is closed as scope/claim-ledger coordination. Child 2 is closed as contained `simulation-proof`. Child 3 is active. |
-| Allowed next action | Continue `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md` through discovery, scope decision, review, and closeout. |
+| State | Phase Three open. Child 1 is closed as scope/claim-ledger coordination. Child 2 is closed as contained `simulation-proof`. Child 3 is closed as ledger-only coordination. Child 4 is active. |
+| Allowed next action | Continue `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md` through discovery, executable oracle selection, implementation, review, verification, and closeout. |
 | Blocked actions | Production migration, final Nx/generator ratchet, or proof promotion beyond earned lab category. |
 | Opening control input | User approved implementation of the Phase Three DRA mission workflow on 2026-05-01. |
 | Child 1 control decision | DRA accepted the started process assembly plus stop/finalization passage as the first executable proof slice. |
 | Child 2 control decision | DRA accepted contained `simulation-proof` for started process assembly plus stop/finalization passage and accepted the native boundary observation/failure semantics ledger as the next child. |
-| Active child | `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`. |
+| Child 3 control decision | DRA accepted the native boundary observation/failure semantics ledger as ledger-only coordination and accepted the layer-disagreement failure observation proof as the next executable child. |
+| Active child | `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`. |
 
 ## Frame
 
@@ -413,13 +414,13 @@ Every child workstream must:
 The DRA must accept, reject, or revise a child's recommended next sequence
 before another child opens.
 
-### First Child Startup Contract
+### Historical Child 1 Transition
 
 Child 1 is complete as a coordination-only scope ledger. It produced exactly
 one recommended first executable proof slice with claim, falsifier, focused
 gate, residuals, and stop conditions.
 
-The DRA accepted that recommendation. The next child is:
+The DRA accepted that recommendation. The accepted child-1 successor was:
 
 - `2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`
 
@@ -892,55 +893,58 @@ Artifacts:
 - `evidence/proof-manifest.json`
 - `evidence/focus-log.md`
 
-Verification run:
+Current verification run after child-3 closeout and child-4 opening:
 
 - `jq empty tools/runtime-realization-type-env/evidence/proof-manifest.json`:
   passed.
 - manifest spec hash check: passed; actual and expected hash both
   `483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b`.
 - `bunx nx show project runtime-realization-type-env --json`: passed.
-- `git diff --check`: passed after axis-review repairs.
+- `git diff --check`: passed after child-3/child-4 review repairs.
 - `bunx nx run runtime-realization-type-env:structural`: passed after
-  axis-review repairs.
+  child-3/child-4 review repairs.
 - `bunx nx run runtime-realization-type-env:report`: passed after
-  child-2 repairs and reported current experiment
-  `phase-three.started-process-assembly-stop-finalization-passage`.
-- `bunx nx run runtime-realization-type-env:gate`: passed after child-2
-  source/evidence repairs.
-- `bun run runtime-realization:type-env`: passed after axis-review repairs.
+  child-3/child-4 repairs and reported current experiment
+  `phase-three.layer-disagreement-failure-observation-proof`.
+- `bunx nx run runtime-realization-type-env:gate`: passed after
+  child-3/child-4 repairs.
+- `bun run runtime-realization:type-env`: passed after child-3/child-4 repairs;
+  this script invokes the same `runtime-realization-type-env:gate`.
 
 Repo/Graphite state:
 
 - Working tree contains this Phase Three evidence/control-state repair until
   commit.
 
-Current focus after child-2 closeout and child-3 opening:
+Current focus after child-3 closeout and child-4 opening:
 
 - Active child:
-  `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`.
+  `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`.
 
-## Next Workstream Packet
+## Active Child Packet
 
-Recommended next workstream:
+Active workstream:
 
-- `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`
+- `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`
 
 Why this is next:
 
-- Child 2 proved the first started/stopped passage but exposed the next
-  live-passage ambiguity: native boundary failures can be protocol-shaped rather
-  than HTTP-shaped, as with Inngest `StepError` inside a `206` step response.
-- The next child must map boundary observation/failure semantics before Phase
-  Three deepens oRPC, Inngest, Elysia, OTel, or HyperDX claims.
+- Child 3 mapped the native boundary observation/failure semantics and selected
+  the executable next domino: prove that the lab preserves layer-specific
+  disagreement instead of collapsing HTTP, protocol, runtime, harness,
+  boundary, telemetry, and control-plane states into one false-green status.
+- The next child must turn that ledger into contained `simulation-proof` or
+  fence the residuals that prevent it.
 
-Required first reads:
+Required continuation reads:
 
-Must read before opening the accepted next child:
+Must read before executing the active child:
 
 - This program workstream document.
 - `2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md`
 - `2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`
 - `2026-05-01-phase-three-started-passage-vendor-integration-reference.md`
+- `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`
 - active DRA workflow reference:
   `../phases/phase-three/dra-phase-three-program-workstream-workflow-draft.md`
   (filename still contains `draft`; contents are the active operating reference)

@@ -81,6 +81,13 @@ confident the active state is already loaded, the refresh can be skipped, but
 the workstream report should still make the opening packet and current
 authority inputs explicit.
 
+Phase Three override: while the Phase Three runtime-realization program is open,
+the active control objects are
+`workstreams/2026-05-01-phase-three-program-workstream.md` and
+`phases/phase-three/dra-phase-three-program-workstream-workflow-draft.md`.
+`runtime-realization-research-program.md` is historical/provenance unless a DRA
+explicitly reopens it as source-mining input.
+
 ## Roles
 
 | Role | Owns |

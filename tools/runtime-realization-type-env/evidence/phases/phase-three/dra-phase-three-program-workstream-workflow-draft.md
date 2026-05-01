@@ -20,6 +20,7 @@ State gate:
 | Program proposed or awaiting review | Re-anchor, answer review feedback, or wait for explicit user control input. Do not open child 1. | This workflow, the program workstream, or review notes as applicable. |
 | Program open, child 1 closed, child 2 not opened, and no active child exists | Open the accepted first proof slice: `2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`. | New child workstream report. |
 | Program open, child 2 closed, and no active child exists | Open the accepted native boundary observation/failure semantics ledger: `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`. | New child workstream report. |
+| Program open, child 3 closed, and no active child exists | Open the accepted layer-disagreement failure observation proof: `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`. | New child workstream report. |
 | Active child open | Resume from the child packet/report, not from chat memory. | Active child report and its scratch disposition. |
 | Review repair pending | Apply or reject the repair with a recorded DRA disposition, then rerun affected loops. | Active child report or this workflow if process-level. |
 | Proof promotion pending | Verify gates, review proof honesty, then promote or fence. | Proof manifest, diagnostic, focus log, maps, and child report. |
@@ -39,6 +40,8 @@ Tiny frame:
 - Child 1 closed with DRA acceptance of the first proof slice.
 - Child 2 closed as contained `simulation-proof`; DRA accepted the native
   boundary observation/failure semantics ledger as next child.
+- Child 3 closed as ledger-only coordination; DRA accepted the layer-
+  disagreement failure observation proof as next child.
 
 ## Compact Frame
 
@@ -91,8 +94,15 @@ next child:
 
 `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`
 
-Child 3 is active and must decide the native boundary observation/failure
-semantics scope before any further implementation.
+That ledger is closed as coordination only. It selected the next executable
+proof slice:
+
+`2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`
+
+Child 4 is active and must prove or fence whether the contained mini-runtime
+preserves layer-specific disagreement across vendor envelopes, RAWR runtime
+outcomes, harness/boundary records, telemetry/export status, and
+migration/control-plane summaries.
 
 ## Authority Stack
 
@@ -627,9 +637,9 @@ After compaction, read this section first.
 3. Confirm recorded control state. If Phase Three is not approved/open, stop at
    re-anchor or user review; do not open a child.
 4. Read the active or most recent child report/packet. If Phase Three is open,
-   child 2 is closed, and no active child exists, open the accepted native
-   boundary observation/failure semantics ledger:
-   `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`.
+   child 3 is closed, and no active child exists, open the accepted layer-
+   disagreement failure observation proof:
+   `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`.
 5. Re-check proof manifest counts and current experiment.
 6. State the current level: program, child, review repair, proof promotion, or
    closeout.
@@ -644,8 +654,8 @@ Detailed frame to carry:
 - DRA owns sequence and proof promotion.
 - Child reports recommend; DRA decides.
 - No proof claim crosses its earned category.
-- The next default child is the accepted native boundary observation/failure
-  semantics ledger.
+- The active/default child is the accepted layer-disagreement failure
+  observation proof.
 
 ## Skills To Reach For
 

@@ -4,9 +4,10 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-three.native-boundary-observation-failure-semantics-ledger",
-    "focus": "Open the Phase Three native boundary observation and failure semantics ledger: map how oRPC, Inngest, Elysia, OpenTelemetry/OTLP, and HyperDX expose native failure/status/observation semantics, decide what can be proven inside containment, and recommend the next executable proof, decision packet, or clean deferral without claiming production readiness, durable async, product observability, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
+    "id": "phase-three.layer-disagreement-failure-observation-proof",
+    "focus": "Open the Phase Three layer-disagreement failure observation proof: prove inside the contained mini-runtime lab that representative oRPC/Inngest boundary failures, RAWR runtime outcomes, harness/boundary records, telemetry/export status, and migration/control-plane summaries preserve layer-specific disagreement instead of collapsing into false-green runtime readiness. Keep production migration readiness, production host lifecycle, real Elysia serving, durable Inngest semantics, live HyperDX product visibility, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, and final structure/Nx/generator ratchet fenced.",
     "relatedEntries": [
+      "audit.p3.layer-disagreement-failure-observation-proof",
       "audit.p3.native-boundary-observation-failure-semantics-ledger",
       "audit.p3.started-process-assembly-stop-finalization-passage",
       "audit.p3.live-runtime-passage-scope-claim-ledger",
@@ -721,11 +722,24 @@
     },
     {
       "id": "audit.p3.native-boundary-observation-failure-semantics-ledger",
-      "status": "todo",
+      "status": "out-of-scope",
       "source": "Phase Three child 3 native boundary observation and failure semantics ledger",
-      "oracle": "Planned semantics ledger for native boundary failure and observation behavior across oRPC, Inngest, Elysia if considered, OpenTelemetry/OTLP, and HyperDX. The child maps vendor envelopes, RAWR runtime outcomes, harness/boundary records, telemetry projection, product observability residuals, and public/native host error mapping before recommending the next executable proof, decision packet, or clean deferral. Until closed, this is not runtime behavior proof and does not imply production migration readiness, durable async semantics, product observability, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
+      "oracle": "Closed semantics ledger for native boundary failure and observation behavior across oRPC, Inngest, Elysia if considered, OpenTelemetry/OTLP, and HyperDX. The child maps vendor envelopes, RAWR runtime outcomes, harness/boundary records, telemetry projection, product observability residuals, public/native host error mapping, and layer-disagreement projection rules, then recommends the next executable proof slice. It adds no runtime behavior proof and does not imply production migration readiness, durable async semantics, product observability, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
       "fixtures": [
         "evidence/workstreams/2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md"
+      ],
+      "gates": [
+        "structural",
+        "report"
+      ]
+    },
+    {
+      "id": "audit.p3.layer-disagreement-failure-observation-proof",
+      "status": "todo",
+      "source": "Phase Three child 4 layer-disagreement failure observation proof",
+      "oracle": "Planned contained proof slice for representative boundary failure and observation disagreement across oRPC/Inngest transport/protocol envelopes, RAWR runtime invocation outcomes, harness/boundary records, telemetry/export status, and migration/control-plane summaries. The child should prove that the mini-runtime preserves layer-specific disagreement instead of collapsing into false-green runtime readiness, including protocol/body failure cases, pre-runtime rejection where applicable, telemetry export failure as observation-plane only, and redaction of failure details. Until closed, this is not runtime behavior proof and does not imply production migration readiness, real Elysia serving, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
+      "fixtures": [
+        "evidence/workstreams/2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md"
       ],
       "gates": [
         "structural",
