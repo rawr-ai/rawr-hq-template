@@ -4,11 +4,10 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-two.integrated-runtime-spine-rehearsal`
-- Focus: prove the earned Phase Two provider, server, async, telemetry,
-  catalog, derivation, and compilation claims compose in one contained
-  runtime-spine rehearsal with executable falsifiers, while keeping production
-  migration readiness and Phase Three topology/Nx/generator work fenced.
+- ID: `phase-two.closeout-phase-three-handoff`
+- Focus: close Phase Two as contained-lab migration-decision evidence, reconcile
+  proof categories and residuals, and hand Phase Three explicit final-structure/
+  Nx/generator/ratchet inputs without claiming production migration readiness.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.invocation-bound-clients`
@@ -29,6 +28,7 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `audit.p2.async-inngest-function-step-boundary`
   - `audit.p2.telemetry-integrated-observation-spine`
   - `audit.p2.integrated-runtime-spine-rehearsal`
+  - `audit.p2.phase-two-program-closeout`
   - `simulation.async-step-owner-membership-artifacts`
   - `simulation.adapter-callback-bridge-lowering`
   - `simulation.first-server-async-harness-mounts`

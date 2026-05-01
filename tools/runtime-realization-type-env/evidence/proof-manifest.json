@@ -4,8 +4,8 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-two.integrated-runtime-spine-rehearsal",
-    "focus": "Prove the earned Phase Two provider, server, async, telemetry, catalog, derivation, and compilation claims compose in one contained runtime-spine rehearsal with executable falsifiers, while keeping production migration readiness and Phase Three topology/Nx/generator work fenced.",
+    "id": "phase-two.closeout-phase-three-handoff",
+    "focus": "Close Phase Two as contained-lab migration-decision evidence, reconcile proof categories and residuals, and hand Phase Three explicit final-structure/Nx/generator/ratchet inputs without claiming production migration readiness.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.invocation-bound-clients",
@@ -26,6 +26,7 @@
       "audit.p2.async-inngest-function-step-boundary",
       "audit.p2.telemetry-integrated-observation-spine",
       "audit.p2.integrated-runtime-spine-rehearsal",
+      "audit.p2.phase-two-program-closeout",
       "simulation.async-step-owner-membership-artifacts",
       "simulation.adapter-callback-bridge-lowering",
       "simulation.first-server-async-harness-mounts",
@@ -665,6 +666,21 @@
       "oracle": "High-signal runtime JSDoc/comments were harvested as migration/documentation substrate only; comment presence is not proof, runtime authority, final public API authority, or production readiness.",
       "fixtures": [
         "evidence/workstreams/2026-04-30-semantic-runtime-documentation-harvest.md"
+      ]
+    },
+    {
+      "id": "audit.p2.phase-two-program-closeout",
+      "status": "out-of-scope",
+      "source": "Phase Two program workstream child 8 closeout and p2.phase-three.handoff claim ledger row",
+      "oracle": "Phase Two closeout reconciles child workstream reports, proof manifest entries, diagnostic/spine/focus status, residuals, migration-decision evidence, and Phase Three handoff inputs. Closeout itself adds no runtime behavior proof, does not authorize production migration, and does not implement Phase Three final structure, Nx enforcement boundaries, Nx generators, generator idempotency, or ratchet/lock mechanics.",
+      "fixtures": [
+        "evidence/workstreams/2026-04-30-phase-two-closeout-phase-three-handoff.md",
+        "evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md"
+      ],
+      "gates": [
+        "structural",
+        "report",
+        "gate"
       ]
     },
     {

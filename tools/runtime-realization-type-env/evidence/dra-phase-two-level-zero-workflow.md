@@ -435,9 +435,9 @@ future compaction recovery. I do not expand this workflow into a session log.
 Update this block only at Level Zero boundaries or after compaction recovery.
 
 ```text
-Current level: Level 2 boundary after child workstream 7 closeout; Phase Two program is open.
-Current branch at latest checkpoint: codex/runtime-phase-two-integrated-spine-rehearsal.
-Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-integrated-runtime-spine-rehearsal.md.
+Current level: Level 2 boundary after child workstream 8 closeout; Phase Two program is closed.
+Current branch at latest checkpoint: codex/runtime-phase-two-closeout-handoff.
+Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-closeout-phase-three-handoff.md.
 Prelaunch cleanup report: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-prelaunch-workspace-preparation.md.
 Scenario and claim ledger: tools/runtime-realization-type-env/evidence/phase-two-production-critical-claim-ledger.md.
 Provider/config/Effect proof: tools/runtime-realization-type-env/test/mini-runtime/provider-effect-spine-scenario.test.ts and manifest entry `audit.p2.provider-effect-process-spine`.
@@ -445,10 +445,11 @@ Server/oRPC proof: tools/runtime-realization-type-env/test/mini-runtime/server-o
 Async/Inngest proof: tools/runtime-realization-type-env/test/mini-runtime/inngest-async-boundary.test.ts and manifest entry `audit.p2.async-inngest-function-step-boundary`.
 Telemetry/HyperDX/catalog observation proof: tools/runtime-realization-type-env/test/mini-runtime/phase-two-observation-spine.test.ts and manifest entry `audit.p2.telemetry-integrated-observation-spine`.
 Integrated runtime-spine rehearsal proof: tools/runtime-realization-type-env/test/mini-runtime/phase-two-integrated-runtime-spine-rehearsal.test.ts and manifest entry `audit.p2.integrated-runtime-spine-rehearsal`.
-Next required action after this checkpoint: open child workstream 8, Closeout And Phase Three Handoff, through the full Program-Wide Loop.
-Next required gates before child workstream 8: repo/Graphite clean, Nx project truth, manifest spec hash check, child 7 next packet consumed.
-Stop condition currently active: closeout must not add new runtime proof or claim production migration readiness. It must reconcile proof categories, residuals, migration-decision evidence, Phase Three entry inputs, verification, review, and clean repo/Graphite state.
-Focus-log/manifest note: they mark `phase-two.integrated-runtime-spine-rehearsal`; child workstream 8 owns the final closeout currentExperiment/update posture.
+Phase Two closeout artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-closeout-phase-three-handoff.md and manifest entry `audit.p2.phase-two-program-closeout`.
+Next required action after this checkpoint: Phase Two is complete. The next program, if opened, is Phase Three mini runtime lab structure/Nx/generator ratchet work.
+Next required gates before future work: repo/Graphite clean, Nx project truth, manifest spec hash check, closeout report consumed.
+Stop condition currently active: do not treat Phase Two closeout as production migration readiness or Phase Three implementation. Phase Three must open separately and consume this closeout as evidence.
+Focus-log/manifest note: they mark `phase-two.closeout-phase-three-handoff`.
 ```
 
 ## Verification For This Document
