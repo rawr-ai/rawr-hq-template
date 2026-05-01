@@ -1,6 +1,6 @@
 # Phase Three Program Workstream
 
-Status: `open; child 6 contained Elysia listen lifecycle active`.
+Status: `open; child 7 integrated live-passage rehearsal and closeout active`.
 Branch: `codex/runtime-phase-two-closeout-handoff`.
 PR: `none`.
 Commit: `pending Phase Three evidence commit`.
@@ -18,8 +18,8 @@ control decisions before the next child opens.
 
 | Field | Value |
 | --- | --- |
-| State | Phase Three open. Child 1 is closed as scope/claim-ledger coordination. Child 2 is closed as contained `simulation-proof`. Child 3 is closed as ledger-only coordination. Child 4 is closed as contained `simulation-proof`. Child 5 is closed as contained `simulation-proof`. Child 6 is active. |
-| Allowed next action | Continue `2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md` through discovery, official Elysia listen/server docs/source investigation, executable oracle selection, implementation, review, verification, and closeout. |
+| State | Phase Three open. Child 1 is closed as scope/claim-ledger coordination. Child 2 is closed as contained `simulation-proof`. Child 3 is closed as ledger-only coordination. Child 4 is closed as contained `simulation-proof`. Child 5 is closed as contained `simulation-proof`. Child 6 is closed as contained `simulation-proof`. Child 7 is active. |
+| Allowed next action | Continue `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md` through prior-child assimilation, integrated-rehearsal decision, plan capture, possible execution, layered review, verification, Phase Three closeout, and next-phase handoff. |
 | Blocked actions | Production migration, final Nx/generator ratchet, or proof promotion beyond earned lab category. |
 | Opening control input | User approved implementation of the Phase Three DRA mission workflow on 2026-05-01. |
 | Child 1 control decision | DRA accepted the started process assembly plus stop/finalization passage as the first executable proof slice. |
@@ -27,7 +27,8 @@ control decisions before the next child opens.
 | Child 3 control decision | DRA accepted the native boundary observation/failure semantics ledger as ledger-only coordination and accepted the layer-disagreement failure observation proof as the next executable child. |
 | Child 4 control decision | DRA accepted contained `simulation-proof` for layer-disagreement failure observation and accepted contained Elysia host passage as the next executable child. |
 | Child 5 control decision | DRA accepted contained `simulation-proof` for Elysia `app.handle` route-forwarding host passage and accepted a narrow contained Elysia listen/lifecycle passage as the next executable child. |
-| Active child | `2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md`. |
+| Child 6 control decision | DRA accepted contained `simulation-proof` for local Elysia/Bun listen/request/stop lifecycle and accepted integrated live-passage rehearsal/closeout as the next child. |
+| Active child | `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`. |
 
 ## Frame
 
@@ -895,7 +896,7 @@ Artifacts:
 - `evidence/proof-manifest.json`
 - `evidence/focus-log.md`
 
-Current verification run after child-5 closeout and child-6 opening:
+Current verification run after child-6 closeout and child-7 opening:
 
 - `jq empty tools/runtime-realization-type-env/evidence/proof-manifest.json`:
   passed.
@@ -903,20 +904,22 @@ Current verification run after child-5 closeout and child-6 opening:
   `483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b`.
 - `bunx nx show project runtime-realization-type-env --json`: passed.
 - `bun test
-  tools/runtime-realization-type-env/test/mini-runtime/phase-three-contained-elysia-host-passage.test.ts
+  tools/runtime-realization-type-env/test/mini-runtime/phase-three-contained-elysia-listen-lifecycle-passage.test.ts
   tools/runtime-realization-type-env/test/mini-runtime/migration-control-plane-observation.test.ts`:
-  passed after child-5 review repairs.
-- `bunx nx run runtime-realization-type-env:structural`: passed after child-5
-  implementation and review repairs.
+  passed after child-6 review repairs.
+- `bunx nx run runtime-realization-type-env:mini-runtime`: passed after
+  child-6 implementation and review repairs.
+- `bunx nx run runtime-realization-type-env:structural`: passed after child-6
+  implementation, closeout, and child-7 opening.
 - `bunx nx run runtime-realization-type-env:report`: passed after
-  child-5 implementation and review repairs and reported current experiment
-  `phase-three.contained-elysia-listen-lifecycle-passage`.
-- `bunx nx run runtime-realization-type-env:typecheck`: passed after child-5
+  child-6 implementation and review repairs and reported current experiment
+  `phase-three.integrated-live-passage-rehearsal-closeout`.
+- `bunx nx run runtime-realization-type-env:typecheck`: passed after child-6
   implementation and review repairs.
-- `bunx nx run runtime-realization-type-env:gate`: passed after child-5
-  closeout and child-6 opening.
-- `bun run runtime-realization:type-env`: passed after child-5 closeout and
-  child-6 opening; this script invokes the same
+- `bunx nx run runtime-realization-type-env:gate`: passed after child-6
+  closeout and child-7 opening.
+- `bun run runtime-realization:type-env`: passed after child-6 closeout and
+  child-7 opening; this script invokes the same
   `runtime-realization-type-env:gate`.
 
 Repo/Graphite state:
@@ -924,26 +927,27 @@ Repo/Graphite state:
 - Working tree contains this Phase Three evidence/control-state repair until
   commit.
 
-Current focus after child-5 closeout and child-6 opening:
+Current focus after child-6 closeout and child-7 opening:
 
 - Active child:
-  `2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md`.
+  `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`.
 
 ## Active Child Packet
 
 Active workstream:
 
-- `2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md`
+- `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`
 
 Why this is next:
 
-- Child 5 proved the real contained Elysia `app.handle` route-forwarding host
-  passage into the existing oRPC Fetch/runtime path.
-- The largest remaining server-side live-passage gap still reachable inside
-  containment is now actual local listener lifecycle: start, port, request,
-  stop/finalization, and post-stop non-delegation.
-- The next child must prove a contained Elysia listen/lifecycle passage or
-  fence exactly why that listener lifecycle remains outside Phase Three.
+- Child 6 proved contained local Elysia/Bun listen/request/stop lifecycle
+  around the child-5 Elysia -> oRPC -> runtime path.
+- Focused Phase Three slices now cover started process stop/finalization,
+  boundary failure disagreement, contained Elysia app/request hosting, and
+  contained local listener lifecycle.
+- The next child must decide whether those slices compose into one
+  inspectable integrated live-passage rehearsal or whether Phase Three should
+  close with focused proofs plus an explicit non-closeable integration finding.
 
 Required continuation reads:
 
@@ -957,6 +961,7 @@ Must read before executing the active child:
 - `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`
 - `2026-05-01-phase-three-contained-elysia-host-passage.md`
 - `2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md`
+- `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`
 - active DRA workflow reference:
   `../phases/phase-three/dra-phase-three-program-workstream-workflow-draft.md`
   (filename still contains `draft`; contents are the active operating reference)
@@ -965,7 +970,8 @@ Must read before executing the active child:
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `../vendor-fidelity.md`
-- local `elysia` skill and official Elysia listen/server lifecycle docs
+- local vendor skills and official docs only if the active child adds or
+  changes vendor behavior beyond the focused slices already reviewed
 - `docs/projects/orpc-ingest-domain-packages/resources/spec/TELEMETRY_DESIGN.md`
 - `docs/system/quarantine/TELEMETRY.md`
 - `docs/projects/rawr-final-architecture-migration/resources/research/service-package-effect-orpc-integration-snapshot.md`
@@ -1009,9 +1015,8 @@ First commands:
 
 Promotion/closeout gates:
 
-- focused child target(s)
+- focused integrated target if the child accepts an executable rehearsal
 - `bunx nx run runtime-realization-type-env:gate`
-- `bun run runtime-realization:type-env`
 - `git diff --check`
 - final `git status --short --branch`
 - final `gt status --short`

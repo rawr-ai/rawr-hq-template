@@ -23,6 +23,7 @@ State gate:
 | Program open, child 3 closed, and no active child exists | Open the accepted layer-disagreement failure observation proof: `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`. | New child workstream report. |
 | Program open, child 4 closed, and no active child exists | Open the accepted contained Elysia host passage: `2026-05-01-phase-three-contained-elysia-host-passage.md`. | New child workstream report. |
 | Program open, child 5 closed, and no active child exists | Open the accepted contained Elysia listen/lifecycle passage: `2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md`. | New child workstream report. |
+| Program open, child 6 closed, and no active child exists | Open the accepted integrated live-passage rehearsal and closeout child: `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`. | New child workstream report. |
 | Active child open | Resume from the child packet/report, not from chat memory. | Active child report and its scratch disposition. |
 | Review repair pending | Apply or reject the repair with a recorded DRA disposition, then rerun affected loops. | Active child report or this workflow if process-level. |
 | Proof promotion pending | Verify gates, review proof honesty, then promote or fence. | Proof manifest, diagnostic, focus log, maps, and child report. |
@@ -48,6 +49,8 @@ Tiny frame:
   Elysia host passage as next child.
 - Child 5 closed as contained `simulation-proof`; DRA accepted the contained
   Elysia listen/lifecycle passage as next child.
+- Child 6 closed as contained `simulation-proof`; DRA accepted the integrated
+  live-passage rehearsal and closeout child as next child.
 
 ## Compact Frame
 
@@ -120,9 +123,19 @@ production HTTP readiness. The DRA accepted and opened the next child:
 
 `2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md`
 
-Child 6 is active and must prove or fence whether a real local Elysia listener
-can start/stop around that same contained path without claiming production HTTP
-readiness.
+That proof slice is closed as contained `simulation-proof`. It proved a real
+local Elysia/Bun listener can start on `127.0.0.1:0`, receive a direct network
+request into the contained Elysia -> oRPC -> runtime path, stop with
+`app.stop(true)`, clear `app.server`, and reject post-stop network passage
+without additional host/oRPC/harness/runtime delegation. The DRA accepted and
+opened the next child:
+
+`2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`
+
+Child 7 is active. It must first decide whether the focused Phase Three slices
+can compose into one executable integrated rehearsal or whether the honest
+program result is closeout-only with focused proofs and an explicit fenced
+integration residual.
 
 ## Authority Stack
 
@@ -657,9 +670,9 @@ After compaction, read this section first.
 3. Confirm recorded control state. If Phase Three is not approved/open, stop at
    re-anchor or user review; do not open a child.
 4. Read the active or most recent child report/packet. If Phase Three is open,
-   child 5 is closed, and no active child exists, open the accepted contained
-   Elysia listen/lifecycle passage:
-   `2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md`.
+   child 6 is closed, and no active child exists, open the accepted integrated
+   live-passage rehearsal and closeout child:
+   `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`.
 5. Re-check proof manifest counts and current experiment.
 6. State the current level: program, child, review repair, proof promotion, or
    closeout.
@@ -674,8 +687,8 @@ Detailed frame to carry:
 - DRA owns sequence and proof promotion.
 - Child reports recommend; DRA decides.
 - No proof claim crosses its earned category.
-- The active/default child is the accepted contained Elysia listen/lifecycle
-  passage.
+- The active/default child is the accepted integrated live-passage rehearsal
+  and closeout workstream.
 
 ## Skills To Reach For
 

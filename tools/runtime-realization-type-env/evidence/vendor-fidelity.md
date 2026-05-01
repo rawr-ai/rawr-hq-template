@@ -43,12 +43,23 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
   parse: 'none' })` to forward the raw Web `Request` into the existing
   contained `@orpc/server/fetch` boundary without letting Elysia pre-parse the
   oRPC body.
-- This proof uses `Elysia.handle(new Request(fullUrl, ...))`, which official
+- The child 5 proof uses `Elysia.handle(new Request(fullUrl, ...))`, which official
   Elysia docs describe as a unit-test/simulated HTTP request path. It proves
-  contained app/request host passage only. It does not prove production
-  `listen(...)`, Bun server lifecycle, Node adapter parity, OpenAPI/Eden
-  behavior, auth/logging, native host telemetry/error mapping, product API
-  policy, deployment topology, or production migration readiness.
+  contained app/request host passage only.
+- Phase Three child 6 adds contained local listener lifecycle evidence using
+  the installed Bun/Elysia path. The proof starts the existing child-5 host app
+  with `app.listen({ hostname: "127.0.0.1", port: 0 })`, derives the request
+  base from `app.server.url`, sends a direct real network
+  `globalThis.fetch(...)`, records request entry through Elysia `onRequest`,
+  and stops with `app.stop(true)`. Installed-source evidence shows
+  `app.listen(...)` returns the app while assigning `app.server`, runs
+  `onStart`, and `app.stop(...)` clears `app.server` before `onStop`/stop
+  completion records finish.
+- The child 6 proof is still a contained Bun/Elysia local-listener proof. It
+  does not prove production HTTP serving, deployment/process-supervision
+  lifecycle, TLS/proxy/load-balancer behavior, Node adapter parity,
+  OpenAPI/Eden behavior, auth/logging, native host telemetry/error mapping,
+  product API policy, deployment topology, or production migration readiness.
 - The official `.mount('/prefix', fetchFn)` pattern remains supporting Fetch
   interop evidence, not the primary oRPC body-preservation oracle. The accepted
   oracle for this lab is the official oRPC/Elysia route-forwarding shape with

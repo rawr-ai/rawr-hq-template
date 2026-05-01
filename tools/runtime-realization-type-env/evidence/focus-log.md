@@ -4,16 +4,14 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-three.contained-elysia-listen-lifecycle-passage`
-- Focus: open the contained Elysia listen/lifecycle passage:
-  prove inside the mini-runtime lab whether a real local Elysia listener can
-  start on an ephemeral port around the contained Elysia -> oRPC -> runtime
-  path, receive a real network request, record start/request/stop/finalization
-  behavior, reject post-stop requests without runtime delegation, and still
-  fence production HTTP readiness, deployment topology, auth/logging,
-  OpenAPI/product policy, native host telemetry/error mapping, public API/DX
-  law, durable async semantics, live HyperDX product visibility,
-  RuntimeCatalog persistence, and final structure/Nx/generator ratchet.
+- ID: `phase-three.integrated-live-passage-rehearsal-closeout`
+- Focus: open the integrated live-passage rehearsal and closeout child:
+  reconcile Phase Three child 1 through child 6, decide whether the earned
+  focused slices can compose into one executable contained rehearsal, execute
+  that rehearsal only if it adds honest proof depth, otherwise record why the
+  integrated claim remains fenced, and close Phase Three with proof/non-proof
+  reconciliation, residual routing, next-phase handoff, and no production
+  readiness inflation.
 - Related manifest entries:
   - `audit.p3.contained-elysia-listen-lifecycle-passage`
   - `audit.p3.contained-elysia-host-passage`
