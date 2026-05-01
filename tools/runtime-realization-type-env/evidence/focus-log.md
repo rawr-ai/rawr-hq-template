@@ -4,12 +4,14 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `post-phase-two.runtime-reframe`
-- Focus: organize the post-Phase-Two evidence surface and preserve the reframe
-  that Phase Two closed as spine-composition proof; the next phase should
-  investigate live runtime passage before any structure/Nx/generator ratchet
-  unless future evidence changes sequence.
+- ID: `phase-three.program-workstream`
+- Focus: define the proposed recursive Phase Three program workstream for
+  live-runtime-passage investigation inside the mini-runtime lab, preserving
+  Phase Two as contained spine-composition proof and keeping final
+  structure/Nx/generator ratchet fenced until live-passage scope and proof
+  terrain are mapped.
 - Related manifest entries:
+  - `audit.p3.phase-three-program-workstream`
   - `accepted.effect-only-authoring`
   - `accepted.invocation-bound-clients`
   - `simulation.middle-spine-derivation-compiler`

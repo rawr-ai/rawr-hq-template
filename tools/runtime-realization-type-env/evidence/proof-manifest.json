@@ -4,9 +4,10 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "post-phase-two.runtime-reframe",
-    "focus": "Organize the post-Phase-Two evidence surface and preserve the reframe that Phase Two closed as spine-composition proof; the next phase should investigate live runtime passage before any structure/Nx/generator ratchet unless future evidence changes sequence.",
+    "id": "phase-three.program-workstream",
+    "focus": "Define the proposed recursive Phase Three program workstream for live-runtime-passage investigation inside the mini-runtime lab, preserving Phase Two as contained spine-composition proof and keeping final structure/Nx/generator ratchet fenced until live-passage scope and proof terrain are mapped.",
     "relatedEntries": [
+      "audit.p3.phase-three-program-workstream",
       "accepted.effect-only-authoring",
       "accepted.invocation-bound-clients",
       "simulation.middle-spine-derivation-compiler",
@@ -682,6 +683,21 @@
         "structural",
         "report",
         "gate"
+      ]
+    },
+    {
+      "id": "audit.p3.phase-three-program-workstream",
+      "status": "out-of-scope",
+      "source": "Phase Three program workstream proposal",
+      "oracle": "The Phase Three program workstream document defines a recursive coordination object for live-runtime-passage investigation inside the mini-runtime lab, including authority order, child-workstream lifecycle, proof ceilings, artifacts, review loops, residual routing, and closeout criteria. It adds no runtime behavior proof, does not open production migration, does not prove production readiness, and does not implement final structure/Nx/generator ratchet. Phase Three opens only after explicit user approval and DRA workflow update.",
+      "fixtures": [
+        "evidence/workstreams/2026-05-01-phase-three-program-workstream.md",
+        "evidence/phases/phase-three/dra-phase-three-program-workstream-workflow-draft.md",
+        "evidence/handoffs/2026-05-01-post-phase-two-runtime-reframe.md"
+      ],
+      "gates": [
+        "structural",
+        "report"
       ]
     },
     {
