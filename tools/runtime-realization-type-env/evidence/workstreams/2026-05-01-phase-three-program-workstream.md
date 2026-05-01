@@ -1,6 +1,6 @@
 # Phase Three Program Workstream
 
-Status: `open; child 4 layer-disagreement proof active`.
+Status: `open; child 5 contained Elysia host passage active`.
 Branch: `codex/runtime-phase-two-closeout-handoff`.
 PR: `none`.
 Commit: `pending Phase Three evidence commit`.
@@ -18,14 +18,15 @@ control decisions before the next child opens.
 
 | Field | Value |
 | --- | --- |
-| State | Phase Three open. Child 1 is closed as scope/claim-ledger coordination. Child 2 is closed as contained `simulation-proof`. Child 3 is closed as ledger-only coordination. Child 4 is active. |
-| Allowed next action | Continue `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md` through discovery, executable oracle selection, implementation, review, verification, and closeout. |
+| State | Phase Three open. Child 1 is closed as scope/claim-ledger coordination. Child 2 is closed as contained `simulation-proof`. Child 3 is closed as ledger-only coordination. Child 4 is closed as contained `simulation-proof`. Child 5 is active. |
+| Allowed next action | Continue `2026-05-01-phase-three-contained-elysia-host-passage.md` through discovery, Elysia official-docs/source investigation, executable oracle selection, implementation, review, verification, and closeout. |
 | Blocked actions | Production migration, final Nx/generator ratchet, or proof promotion beyond earned lab category. |
 | Opening control input | User approved implementation of the Phase Three DRA mission workflow on 2026-05-01. |
 | Child 1 control decision | DRA accepted the started process assembly plus stop/finalization passage as the first executable proof slice. |
 | Child 2 control decision | DRA accepted contained `simulation-proof` for started process assembly plus stop/finalization passage and accepted the native boundary observation/failure semantics ledger as the next child. |
 | Child 3 control decision | DRA accepted the native boundary observation/failure semantics ledger as ledger-only coordination and accepted the layer-disagreement failure observation proof as the next executable child. |
-| Active child | `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`. |
+| Child 4 control decision | DRA accepted contained `simulation-proof` for layer-disagreement failure observation and accepted contained Elysia host passage as the next executable child. |
+| Active child | `2026-05-01-phase-three-contained-elysia-host-passage.md`. |
 
 ## Frame
 
@@ -893,48 +894,49 @@ Artifacts:
 - `evidence/proof-manifest.json`
 - `evidence/focus-log.md`
 
-Current verification run after child-3 closeout and child-4 opening:
+Current verification run after child-4 closeout and child-5 opening:
 
 - `jq empty tools/runtime-realization-type-env/evidence/proof-manifest.json`:
   passed.
 - manifest spec hash check: passed; actual and expected hash both
   `483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b`.
 - `bunx nx show project runtime-realization-type-env --json`: passed.
-- `git diff --check`: passed after child-3/child-4 review repairs.
+- `git diff --check`: passed before final commit staging.
 - `bunx nx run runtime-realization-type-env:structural`: passed after
-  child-3/child-4 review repairs.
+  child-4 implementation repairs.
 - `bunx nx run runtime-realization-type-env:report`: passed after
-  child-3/child-4 repairs and reported current experiment
-  `phase-three.layer-disagreement-failure-observation-proof`.
-- `bunx nx run runtime-realization-type-env:gate`: passed after
-  child-3/child-4 repairs.
-- `bun run runtime-realization:type-env`: passed after child-3/child-4 repairs;
-  this script invokes the same `runtime-realization-type-env:gate`.
+  child-4 implementation repairs and reported current experiment
+  `phase-three.contained-elysia-host-passage`.
+- `bunx nx run runtime-realization-type-env:gate`: passed after child-4/child-5
+  document synchronization.
+- `bun run runtime-realization:type-env`: passed after child-4/child-5 document
+  synchronization; this script invokes the same
+  `runtime-realization-type-env:gate`.
 
 Repo/Graphite state:
 
 - Working tree contains this Phase Three evidence/control-state repair until
   commit.
 
-Current focus after child-3 closeout and child-4 opening:
+Current focus after child-4 closeout and child-5 opening:
 
 - Active child:
-  `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`.
+  `2026-05-01-phase-three-contained-elysia-host-passage.md`.
 
 ## Active Child Packet
 
 Active workstream:
 
-- `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`
+- `2026-05-01-phase-three-contained-elysia-host-passage.md`
 
 Why this is next:
 
-- Child 3 mapped the native boundary observation/failure semantics and selected
-  the executable next domino: prove that the lab preserves layer-specific
-  disagreement instead of collapsing HTTP, protocol, runtime, harness,
-  boundary, telemetry, and control-plane states into one false-green status.
-- The next child must turn that ledger into contained `simulation-proof` or
-  fence the residuals that prevent it.
+- Child 4 proved the layer-disagreement oracle inside the mini-runtime lab.
+  The largest remaining server-side live-passage gap is now the real Elysia
+  host layer: app/mount/request/error/lifecycle behavior around the contained
+  server runtime boundary.
+- The next child must prove a contained Elysia host passage or fence exactly
+  why that host layer remains outside Phase Three.
 
 Required continuation reads:
 
@@ -945,6 +947,7 @@ Must read before executing the active child:
 - `2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`
 - `2026-05-01-phase-three-started-passage-vendor-integration-reference.md`
 - `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`
+- `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`
 - active DRA workflow reference:
   `../phases/phase-three/dra-phase-three-program-workstream-workflow-draft.md`
   (filename still contains `draft`; contents are the active operating reference)
@@ -953,6 +956,7 @@ Must read before executing the active child:
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `../vendor-fidelity.md`
+- local `elysia` skill and official Elysia docs
 - `docs/projects/orpc-ingest-domain-packages/resources/spec/TELEMETRY_DESIGN.md`
 - `docs/system/quarantine/TELEMETRY.md`
 - `docs/projects/rawr-final-architecture-migration/resources/research/service-package-effect-orpc-integration-snapshot.md`

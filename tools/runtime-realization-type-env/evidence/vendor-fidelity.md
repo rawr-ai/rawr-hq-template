@@ -60,6 +60,10 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
   response as failure in its own observation record after inspecting the
   protocol body. Future Inngest failure oracles must inspect the step response
   body and runtime-delegation evidence; HTTP status alone is not enough.
+- Phase Three layer-disagreement proof records that a `StepRun` operation can
+  carry a RAWR async-step payload whose `status` is `failure`. The lab records
+  this as `protocolPayloadRuntimeStatus`, not as Inngest protocol status or
+  durable Inngest run status.
 - The lab does not claim durable scheduling, retries, idempotency, or production Inngest host semantics.
 
 ## HyperDX / OTLP

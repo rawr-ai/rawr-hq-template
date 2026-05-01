@@ -4,9 +4,10 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-three.layer-disagreement-failure-observation-proof",
-    "focus": "Open the Phase Three layer-disagreement failure observation proof: prove inside the contained mini-runtime lab that representative oRPC/Inngest boundary failures, RAWR runtime outcomes, harness/boundary records, telemetry/export status, and migration/control-plane summaries preserve layer-specific disagreement instead of collapsing into false-green runtime readiness. Keep production migration readiness, production host lifecycle, real Elysia serving, durable Inngest semantics, live HyperDX product visibility, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, and final structure/Nx/generator ratchet fenced.",
+    "id": "phase-three.contained-elysia-host-passage",
+    "focus": "Open the Phase Three contained Elysia host passage: prove inside the mini-runtime lab whether a real Elysia app/mount/request layer can wrap or delegate into the contained server runtime boundary while preserving host, oRPC if crossed, RAWR runtime, harness/boundary, telemetry, and control-plane observation layers without claiming production HTTP readiness. Keep production migration readiness, production host lifecycle, durable Inngest semantics, live HyperDX product visibility, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, and final structure/Nx/generator ratchet fenced.",
     "relatedEntries": [
+      "audit.p3.contained-elysia-host-passage",
       "audit.p3.layer-disagreement-failure-observation-proof",
       "audit.p3.native-boundary-observation-failure-semantics-ledger",
       "audit.p3.started-process-assembly-stop-finalization-passage",
@@ -735,11 +736,29 @@
     },
     {
       "id": "audit.p3.layer-disagreement-failure-observation-proof",
-      "status": "todo",
+      "status": "simulation-proof",
       "source": "Phase Three child 4 layer-disagreement failure observation proof",
-      "oracle": "Planned contained proof slice for representative boundary failure and observation disagreement across oRPC/Inngest transport/protocol envelopes, RAWR runtime invocation outcomes, harness/boundary records, telemetry/export status, and migration/control-plane summaries. The child should prove that the mini-runtime preserves layer-specific disagreement instead of collapsing into false-green runtime readiness, including protocol/body failure cases, pre-runtime rejection where applicable, telemetry export failure as observation-plane only, and redaction of failure details. Until closed, this is not runtime behavior proof and does not imply production migration readiness, real Elysia serving, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
+      "oracle": "Contained proof that representative oRPC and Inngest boundary responses preserve layer-specific disagreement inside the mini-runtime lab instead of collapsing into false-green readiness. The focused oracle proves oRPC HTTP 200 can carry a RAWR failure body, Inngest HTTP 206 StepRun can carry a RAWR payload failure, boundary records distinguish HTTP/protocol/payload status, telemetry projection preserves runtime/adapter/harness/boundary failure attributes before export, OTLP export failure remains observation-plane only, and the migration/control-plane packet keeps run/source/name/export summary correlation without becoming status, persistence, placement, or product observability authority. This does not imply production migration readiness, real Elysia serving, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
       "fixtures": [
+        "src/mini-runtime/adapters/inngest-async.ts",
+        "src/mini-runtime/migration-control-plane-observation.ts",
+        "test/mini-runtime/phase-three-layer-disagreement-failure-observation.test.ts",
         "evidence/workstreams/2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime",
+        "structural",
+        "report"
+      ]
+    },
+    {
+      "id": "audit.p3.contained-elysia-host-passage",
+      "status": "todo",
+      "source": "Phase Three child 5 contained Elysia host passage",
+      "oracle": "Planned contained proof slice for a real Elysia host/mount/request layer around the mini-runtime server boundary. The child should determine whether a real Elysia app can receive a real Request, delegate through the contained server runtime path, preserve host/oRPC-if-crossed/RAWR runtime/harness/boundary/telemetry/control-plane layers, and fence production HTTP readiness, OpenAPI/product policy, auth/logging, native host telemetry/error mapping, production migration readiness, and final public API/DX law.",
+      "fixtures": [
+        "evidence/workstreams/2026-05-01-phase-three-contained-elysia-host-passage.md"
       ],
       "gates": [
         "structural",

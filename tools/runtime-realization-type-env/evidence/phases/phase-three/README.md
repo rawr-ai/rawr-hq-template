@@ -1,6 +1,6 @@
 # Phase Three Coordination Container
 
-Status: open / child 4 active.
+Status: open / child 5 active.
 
 This container holds DRA workflow material for the open Phase Three
 runtime-realization program workstream. It is not runtime authority, proof
@@ -17,7 +17,9 @@ Current artifacts:
 - `../../workstreams/2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`:
   closed child 3 semantics-ledger workstream.
 - `../../workstreams/2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`:
-  active child 4 executable proof-slice workstream.
+  closed child 4 proof-slice report.
+- `../../workstreams/2026-05-01-phase-three-contained-elysia-host-passage.md`:
+  active child 5 executable proof-slice workstream.
 - `dra-phase-three-program-workstream-workflow-draft.md`: DRA workflow
   reference for operating the full Phase Three program. The filename keeps
   `draft` for continuity with the preserved anchor; the contents are now the

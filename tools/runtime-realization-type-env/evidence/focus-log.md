@@ -4,17 +4,18 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-three.layer-disagreement-failure-observation-proof`
-- Focus: open the layer-disagreement failure observation proof:
-  prove inside the contained mini-runtime lab that representative oRPC/Inngest
-  boundary failures, RAWR runtime outcomes, harness/boundary records,
-  telemetry/export status, and migration/control-plane summaries preserve
-  layer-specific disagreement instead of collapsing into false-green runtime
+- ID: `phase-three.contained-elysia-host-passage`
+- Focus: open the contained Elysia host passage:
+  prove inside the mini-runtime lab whether a real Elysia app/mount/request
+  layer can wrap or delegate into the contained server runtime boundary while
+  preserving host, oRPC if crossed, RAWR runtime, harness/boundary, telemetry,
+  and control-plane observation layers without claiming production HTTP
   readiness while keeping production migration readiness, production host
-  lifecycle, real Elysia serving, durable Inngest semantics, live HyperDX
-  product visibility, RuntimeCatalog persistence, native host telemetry/error
-  mapping, public API/DX law, and final structure/Nx/generator ratchet fenced.
+  lifecycle, durable Inngest semantics, live HyperDX product visibility,
+  RuntimeCatalog persistence, native host telemetry/error mapping, public
+  API/DX law, and final structure/Nx/generator ratchet fenced.
 - Related manifest entries:
+  - `audit.p3.contained-elysia-host-passage`
   - `audit.p3.layer-disagreement-failure-observation-proof`
   - `audit.p3.native-boundary-observation-failure-semantics-ledger`
   - `audit.p3.started-process-assembly-stop-finalization-passage`

@@ -64,8 +64,10 @@ export interface MigrationControlPlaneCatalogObservation {
 /**
  * Run-level telemetry summary used to correlate the packet with lab traces.
  *
- * The packet keeps source/name/export status facts only; it does not embed
- * telemetry payloads or become the telemetry persistence surface.
+ * The packet keeps source/name/export metadata only. Event names are trace
+ * index labels, not normalized runtime outcome/status summaries, and the
+ * packet does not embed telemetry payloads or become the telemetry persistence
+ * surface.
  */
 export interface MigrationControlPlaneTelemetryObservation {
   readonly kind: "runtime.migration-control-plane-telemetry-observation";
@@ -116,9 +118,10 @@ export interface MigrationControlPlaneObservationInput {
   readonly attributes?: Record<string, unknown>;
 }
 
-// Reject live handles and authority-bearing fields at the observation boundary.
-// Redaction remains a fallback for reportable attributes, not permission to
-// accept runtime access objects, descriptors, secrets, or provider payloads.
+// Reject authority-bearing deployment fields at the observation boundary.
+// Free-form candidate/report attributes are sanitized into redacted summaries;
+// they are never accepted as executable handles, runtime authority, or payload
+// evidence.
 const FORBIDDEN_CONTROL_PLANE_INPUT_KEY =
   /descriptorTable|descriptor$|^run$|runtimeAccess|liveRuntimeHandle|managedRuntime|effectRuntime|rawSecret|secret|token|password|credential|api[-_]?key|private[-_]?key|providerValue|releaseHandle|acquireHandle/i;
 

@@ -21,6 +21,7 @@ State gate:
 | Program open, child 1 closed, child 2 not opened, and no active child exists | Open the accepted first proof slice: `2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`. | New child workstream report. |
 | Program open, child 2 closed, and no active child exists | Open the accepted native boundary observation/failure semantics ledger: `2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md`. | New child workstream report. |
 | Program open, child 3 closed, and no active child exists | Open the accepted layer-disagreement failure observation proof: `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`. | New child workstream report. |
+| Program open, child 4 closed, and no active child exists | Open the accepted contained Elysia host passage: `2026-05-01-phase-three-contained-elysia-host-passage.md`. | New child workstream report. |
 | Active child open | Resume from the child packet/report, not from chat memory. | Active child report and its scratch disposition. |
 | Review repair pending | Apply or reject the repair with a recorded DRA disposition, then rerun affected loops. | Active child report or this workflow if process-level. |
 | Proof promotion pending | Verify gates, review proof honesty, then promote or fence. | Proof manifest, diagnostic, focus log, maps, and child report. |
@@ -42,6 +43,8 @@ Tiny frame:
   boundary observation/failure semantics ledger as next child.
 - Child 3 closed as ledger-only coordination; DRA accepted the layer-
   disagreement failure observation proof as next child.
+- Child 4 closed as contained `simulation-proof`; DRA accepted the contained
+  Elysia host passage as next child.
 
 ## Compact Frame
 
@@ -99,10 +102,16 @@ proof slice:
 
 `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`
 
-Child 4 is active and must prove or fence whether the contained mini-runtime
-preserves layer-specific disagreement across vendor envelopes, RAWR runtime
-outcomes, harness/boundary records, telemetry/export status, and
-migration/control-plane summaries.
+That proof slice is closed as contained `simulation-proof`. It proved scoped
+layer-disagreement preservation across oRPC/Inngest envelopes, RAWR runtime
+outcomes, harness/boundary records, telemetry projection, export failure, and
+control-plane summary correlation. The DRA accepted and opened the next child:
+
+`2026-05-01-phase-three-contained-elysia-host-passage.md`
+
+Child 5 is active and must prove or fence whether a real contained Elysia host
+layer can wrap or delegate into the mini-runtime server boundary without
+claiming production HTTP readiness.
 
 ## Authority Stack
 
@@ -637,9 +646,9 @@ After compaction, read this section first.
 3. Confirm recorded control state. If Phase Three is not approved/open, stop at
    re-anchor or user review; do not open a child.
 4. Read the active or most recent child report/packet. If Phase Three is open,
-   child 3 is closed, and no active child exists, open the accepted layer-
-   disagreement failure observation proof:
-   `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`.
+   child 4 is closed, and no active child exists, open the accepted contained
+   Elysia host passage:
+   `2026-05-01-phase-three-contained-elysia-host-passage.md`.
 5. Re-check proof manifest counts and current experiment.
 6. State the current level: program, child, review repair, proof promotion, or
    closeout.
@@ -654,8 +663,7 @@ Detailed frame to carry:
 - DRA owns sequence and proof promotion.
 - Child reports recommend; DRA decides.
 - No proof claim crosses its earned category.
-- The active/default child is the accepted layer-disagreement failure
-  observation proof.
+- The active/default child is the accepted contained Elysia host passage.
 
 ## Skills To Reach For
 
