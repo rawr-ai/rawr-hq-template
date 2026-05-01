@@ -56,6 +56,20 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
   `step.run(...)` before delegating to the RAWR mini async harness.
 - The lab does not claim durable scheduling, retries, idempotency, or production Inngest host semantics.
 
+## HyperDX / OTLP
+
+- The lab observation lane uses OTLP trace payload shape and the explicit
+  `/v1/traces` HTTP path as the vendor boundary.
+- Phase Two child workstream 6 composes provider, oRPC server, Inngest async,
+  runtime, and catalog records into one injected-fetch OTLP export gate. That
+  gate proves deterministic serialization, endpoint selection, and redaction
+  before export; it does not prove product dashboards, queries, alerting,
+  retention, production OpenTelemetry bootstrap, or durable catalog storage.
+- Local `rawr-hq-hyperdx` Docker ingest smoke is supporting lab evidence only.
+  It can show that a reachable local OTLP endpoint accepts the payload, but it
+  is not a production deployment, query semantics proof, dashboard proof, or
+  product observability policy decision.
+
 ## Semantica
 
 - The `codex/semantica-first-pipeline-implementation` branch is inspected read-only as evidence discovery only.

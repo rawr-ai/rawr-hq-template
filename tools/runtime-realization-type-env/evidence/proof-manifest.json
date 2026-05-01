@@ -4,11 +4,15 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-two.async-inngest-boundary",
-    "focus": "Prove a contained Inngest-facing Bun serve/function/step path can delegate through the async harness into ProcessExecutionRuntime while keeping durable semantics and production worker topology fenced.",
+    "id": "phase-two.telemetry-hyperdx-catalog-observation",
+    "focus": "Prove a contained provider/server/async/catalog observation spine can project redacted records into OTLP/HyperDX-shaped export evidence and non-persistent migration/control-plane packets while keeping product observability, persistence, topology, and production telemetry policy fenced.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.invocation-bound-clients",
+      "audit.telemetry.hyperdx-observation",
+      "audit.telemetry.hyperdx-observation.residual",
+      "audit.migration.control-plane-observation",
+      "audit.migration.control-plane-observation.residual",
       "vendor.boundary.inngest-handoff-shape",
       "audit.p1.effect-boundary-policy-matrix",
       "audit.p1.effect-boundary-policy-matrix.residual",
@@ -17,7 +21,9 @@
       "audit.p2.async-effect-bridge-lowering",
       "audit.p2.production-harness-mounting",
       "audit.p2.provider-effect-process-spine",
+      "audit.p2.server-orpc-fetch-boundary",
       "audit.p2.async-inngest-function-step-boundary",
+      "audit.p2.telemetry-integrated-observation-spine",
       "simulation.async-step-owner-membership-artifacts",
       "simulation.adapter-callback-bridge-lowering",
       "simulation.first-server-async-harness-mounts",
@@ -604,6 +610,24 @@
         "src/mini-runtime/adapters/async.ts",
         "src/mini-runtime/harnesses.ts",
         "test/mini-runtime/inngest-async-boundary.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime"
+      ]
+    },
+    {
+      "id": "audit.p2.telemetry-integrated-observation-spine",
+      "status": "simulation-proof",
+      "source": "Phase Two claim ledger rows p2.telemetry.redacted-records, p2.hyperdx.provider-proof, and p2.catalog.control-plane; runtime spec sections 22, 23.3, 23.5, 24, and 29",
+      "oracle": "A lab-contained Phase Two scenario composes provider provisioning/finalization records, oRPC server boundary records, Inngest async boundary records, process-runtime events, in-memory catalog records, injected-fetch OTLP export, and a migration/control-plane observation packet. The focused gate proves records are redacted before export, live handles and raw secrets are absent from OTLP payloads/export bodies/packet summaries, HyperDX-shaped export uses the explicit /v1/traces endpoint, packet summaries do not copy OTLP payload or export response bodies, and placement remains candidate-only. Product dashboards, query semantics, alerting, retention, production OpenTelemetry bootstrap, RuntimeCatalog persistence, control-plane topology, durable async run history, native host telemetry/error mapping, platform secret-store precedence, arbitrary DLP, and production migration readiness remain fenced.",
+      "fixtures": [
+        "src/mini-runtime/telemetry-export.ts",
+        "src/mini-runtime/migration-control-plane-observation.ts",
+        "src/mini-runtime/adapters/orpc-server.ts",
+        "src/mini-runtime/adapters/inngest-async.ts",
+        "test/mini-runtime/phase-two-observation-spine.test.ts",
+        "evidence/workstreams/2026-04-30-phase-two-telemetry-hyperdx-catalog-observation.md"
       ],
       "gates": [
         "typecheck",
