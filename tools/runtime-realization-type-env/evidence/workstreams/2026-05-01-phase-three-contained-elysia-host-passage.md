@@ -1,11 +1,11 @@
 # Phase Three Contained Elysia Host Passage
 
-Status: `open`.
+Status: `closed as contained simulation-proof`.
 Branch: `codex/runtime-phase-two-closeout-handoff`.
 PR: `none`.
-Commit: `pending`.
+Commit: `925c1932`.
 
-This report is the active child-5 workstream for Phase Three. It is not runtime
+This report is the closed child-5 workstream for Phase Three. It is not runtime
 architecture authority, final public API/DX authority, production HTTP proof,
 production migration authorization, or permission to mutate production app code.
 
@@ -13,11 +13,11 @@ production migration authorization, or permission to mutate production app code.
 
 | Field | Value |
 | --- | --- |
-| Program state | Phase Three open. |
-| Child state | Child 5 active. |
+| Program state | Phase Three closed after child 7. |
+| Child state | Child 5 closed as contained `simulation-proof`; child 6 superseded its listener residual and child 7 composed it into Phase Three closeout. |
 | Workstream type | Executable contained proof slice. |
-| Proof target | `simulation-proof` only if source/tests/gates prove a real contained Elysia host passage around the mini-runtime server boundary. |
-| Active question | Can the lab mount a real Elysia app/route around the contained server runtime boundary, send a real request through that host layer, preserve lifecycle/error/observation records, and still avoid production HTTP readiness claims? |
+| Proof target | Contained `simulation-proof` for a real Elysia app/request route-forwarding host around the mini-runtime server boundary. |
+| Active question | Answered: the lab can mount a real Elysia app/route around the contained server runtime boundary, send a real request through that host layer, preserve lifecycle/error/observation records, and still avoid production HTTP readiness claims. |
 | Blocked claims | Production HTTP serving, production host lifecycle, OpenAPI/product API policy, auth/logging policy, native host telemetry/error mapping, production migration readiness, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, public API/DX law, and final Nx/generator ratchet. |
 
 ## Frame
@@ -187,7 +187,7 @@ Agent lanes:
 | Installed package/source evidence | complete | DRA disposition: accepted. `elysia@1.4.24` existed in `bun.lock` and `apps/server/node_modules`, but root/lab import failed. The contained repair was to add `elysia` as an explicit root/lab dependency, not to import through `apps/server`. |
 | Runtime/source evidence | complete | DRA disposition: accepted. The least invasive adapter home is `tools/runtime-realization-type-env/src/mini-runtime/adapters/`, beside `orpc-server.ts`, wrapping `StartedRuntimeOrpcServerBoundary` and leaving production `apps/*` untouched. |
 | Testing/oracle design | complete | DRA disposition: accepted. The oracle must fail if the test calls the oRPC boundary directly, if Elysia consumes the body before oRPC, if unmatched Elysia routes invoke oRPC/runtime, or if host status collapses RAWR runtime failure. |
-| Program health | pending | Parent review must confirm this child closes the app/request host passage while routing actual listen/production lifecycle and remaining externalities cleanly. |
+| Program health | complete | DRA disposition: accepted after parent review. Child 5 closed the app/request host passage, routed actual listener lifecycle to child 6, and left production/deployed host lifecycle fenced. |
 
 Official-docs evidence accepted for the proof:
 
@@ -412,7 +412,8 @@ Next packet:
 
 Current focus after closeout:
 
-- Active child id:
+- Historical handoff from child 5:
   `phase-three.contained-elysia-listen-lifecycle-passage`.
-- Active workstream:
-  `2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md`.
+- Superseded by:
+  child 6 contained Elysia listen/lifecycle proof and child 7 integrated
+  live-passage closeout. Phase Three is now closed below production readiness.

@@ -1,6 +1,6 @@
 # Phase Three DRA Workflow Reference
 
-Status: DRA operating reference for the open Phase Three program.
+Status: DRA operating record for the closed Phase Three program.
 Owner: DRA for Phase Three runtime-realization program workstream.
 Program: `../../workstreams/2026-05-01-phase-three-program-workstream.md`.
 
@@ -28,7 +28,8 @@ State gate:
 | Review repair pending | Apply or reject the repair with a recorded DRA disposition, then rerun affected loops. | Active child report or this workflow if process-level. |
 | Proof promotion pending | Verify gates, review proof honesty, then promote or fence. | Proof manifest, diagnostic, focus log, maps, and child report. |
 | Program closing | Reconcile all children, residuals, proof promotions, and next phase. | Phase Three closeout and next-program packet. |
-| Program paused/retargeted/closed | Stop at the current control decision and ask only if the next action is not recoverable from artifacts. | Control decision home. |
+| Program closed | Start the next program only from the child-7 next-program packet and current authority artifacts; do not reopen Phase Three unless explicit control input says so. | Child-7 closeout, this workflow, program workstream, manifest, diagnostic. |
+| Program paused/retargeted | Stop at the current control decision and ask only if the next action is not recoverable from artifacts. | Control decision home. |
 
 Tiny frame:
 
@@ -51,6 +52,8 @@ Tiny frame:
   Elysia listen/lifecycle passage as next child.
 - Child 6 closed as contained `simulation-proof`; DRA accepted the integrated
   live-passage rehearsal and closeout child as next child.
+- Child 7 closed as contained integrated live-passage `simulation-proof` plus
+  Phase Three closeout. Phase Three is closed below production readiness.
 
 ## Compact Frame
 
@@ -81,7 +84,7 @@ The DRA decision rule is:
 
 ## Current State
 
-Phase Three is open and is not production migration. It does not mutate production
+Phase Three is closed and is not production migration. It does not mutate production
 `apps/*`, `packages/*`, `services/*`, `resources/*`, `plugins/*`, root package
 exports, production deployment topology, or root Nx generator ratchets unless
 the user explicitly changes scope.
@@ -132,10 +135,16 @@ opened the next child:
 
 `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`
 
-Child 7 is active. It must first decide whether the focused Phase Three slices
-can compose into one executable integrated rehearsal or whether the honest
-program result is closeout-only with focused proofs and an explicit fenced
-integration residual.
+That proof slice is closed as contained `simulation-proof` plus Phase Three
+closeout. It proved the focused slices compose into one toy-contained
+live-runtime-passage rehearsal while production migration readiness, durable
+async, product observability, RuntimeCatalog/control-plane persistence,
+production config/secrets policy, final public API/DX law, and the final
+Nx/generator ratchet remain fenced.
+
+The next likely program should open from the child-7 next-program packet and
+scope externality/design residuals before the final structure/Nx/generator
+ratchet or production migration.
 
 ## Authority Stack
 
@@ -667,12 +676,12 @@ After compaction, read this section first.
 
 1. Run opening preflight.
 2. Read the Phase Three program workstream.
-3. Confirm recorded control state. If Phase Three is not approved/open, stop at
-   re-anchor or user review; do not open a child.
-4. Read the active or most recent child report/packet. If Phase Three is open,
-   child 6 is closed, and no active child exists, open the accepted integrated
-   live-passage rehearsal and closeout child:
+3. Confirm recorded control state. Phase Three is closed unless explicit user
+   control input reopens it.
+4. Read the most recent child report/packet:
    `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`.
+   If opening new work, use its next-program packet rather than inventing a new
+   Phase Three child.
 5. Re-check proof manifest counts and current experiment.
 6. State the current level: program, child, review repair, proof promotion, or
    closeout.
@@ -687,8 +696,9 @@ Detailed frame to carry:
 - DRA owns sequence and proof promotion.
 - Child reports recommend; DRA decides.
 - No proof claim crosses its earned category.
-- The active/default child is the accepted integrated live-passage rehearsal
-  and closeout workstream.
+- The active/default next move is the next-program packet from child 7:
+  externality/design residual scoping before final structure/Nx/generator
+  ratchet or production migration.
 
 ## Skills To Reach For
 

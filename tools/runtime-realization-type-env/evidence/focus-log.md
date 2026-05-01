@@ -4,15 +4,15 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-three.integrated-live-passage-rehearsal-closeout`
-- Focus: open the integrated live-passage rehearsal and closeout child:
-  reconcile Phase Three child 1 through child 6, decide whether the earned
-  focused slices can compose into one executable contained rehearsal, execute
-  that rehearsal only if it adds honest proof depth, otherwise record why the
-  integrated claim remains fenced, and close Phase Three with proof/non-proof
-  reconciliation, residual routing, next-phase handoff, and no production
-  readiness inflation.
+- ID: `phase-three.closed-integrated-live-passage`
+- Focus: Phase Three is closed as contained live-runtime-passage
+  `simulation-proof` and migration-decision evidence. Child 7 composes the
+  earned focused slices into one toy-contained run while preserving
+  non-promotion boundaries for production runtime passage, durable async,
+  product observability, RuntimeCatalog persistence, public API/DX, production
+  config/secrets, and final Nx/generator ratchet work.
 - Related manifest entries:
+  - `audit.p3.integrated-live-passage-rehearsal-closeout`
   - `audit.p3.contained-elysia-listen-lifecycle-passage`
   - `audit.p3.contained-elysia-host-passage`
   - `audit.p3.layer-disagreement-failure-observation-proof`

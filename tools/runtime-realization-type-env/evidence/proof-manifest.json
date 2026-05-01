@@ -4,9 +4,10 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-three.integrated-live-passage-rehearsal-closeout",
-    "focus": "Open the Phase Three integrated live-passage rehearsal and closeout child: reconcile child 1 through child 6, decide whether the earned focused slices can compose into one executable contained rehearsal, execute that rehearsal only if it adds honest proof depth, otherwise record why the integrated claim remains fenced, and close Phase Three with proof/non-proof reconciliation, residual routing, next-phase handoff, and no production readiness inflation.",
+    "id": "phase-three.closed-integrated-live-passage",
+    "focus": "Phase Three is closed as contained live-runtime-passage simulation proof and migration-decision evidence: child 7 composes the earned focused slices into one toy-contained run while preserving non-promotion boundaries for production runtime passage, durable async, product observability, RuntimeCatalog persistence, public API/DX, production config/secrets, and final Nx/generator ratchet work.",
     "relatedEntries": [
+      "audit.p3.integrated-live-passage-rehearsal-closeout",
       "audit.p3.contained-elysia-listen-lifecycle-passage",
       "audit.p3.contained-elysia-host-passage",
       "audit.p3.layer-disagreement-failure-observation-proof",
@@ -779,6 +780,22 @@
         "src/mini-runtime/adapters/elysia-listener.ts",
         "test/mini-runtime/phase-three-contained-elysia-listen-lifecycle-passage.test.ts",
         "evidence/workstreams/2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime",
+        "structural",
+        "report"
+      ]
+    },
+    {
+      "id": "audit.p3.integrated-live-passage-rehearsal-closeout",
+      "status": "simulation-proof",
+      "source": "Phase Three child 7 integrated live-passage rehearsal and closeout",
+      "oracle": "A lab-contained integrated rehearsal composes the derived/compiled fixture spine, provider bootgraph startup/finalization, one shared counted EffectRuntimeAccess for provider provisioning and process execution, one counted ProcessExecutionRuntime, a real local Elysia/Bun listener, raw Elysia request forwarding, @orpc/server/fetch RPCHandler, mini server harness, contained Inngest Bun serve/function/step async harness, actual provider-started resource access observed as successful requireResource calls in server and async invocation contexts, OTLP-shaped telemetry projection, non-persistent migration/control-plane packet, ordered listener/harness/provider/runtime stop/finalization, and post-stop listener/server/async rejection without further runtime delegation. It proves only one toy-contained live-passage envelope plus Phase Three proof reconciliation; it does not imply production migration readiness, production HTTP/worker lifecycle, durable Inngest semantics, live HyperDX product visibility, RuntimeCatalog persistence, production control-plane topology, final public API/DX law, production config/secret-store policy, or final structure/Nx/generator ratchet.",
+      "fixtures": [
+        "test/mini-runtime/phase-three-integrated-live-passage-rehearsal.test.ts",
+        "evidence/workstreams/2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md"
       ],
       "gates": [
         "typecheck",

@@ -1,9 +1,11 @@
 # Phase Three Program Workstream
 
-Status: `open; child 7 integrated live-passage rehearsal and closeout active`.
+Status: `closed; Phase Three integrated live-passage rehearsal complete`.
 Branch: `codex/runtime-phase-two-closeout-handoff`.
 PR: `none`.
-Commit: `pending Phase Three evidence commit`.
+Commit: final closeout commit on this branch; exact hash recorded in the final
+DRA handoff because embedding a self-referential commit hash would churn the
+artifact.
 
 This document defines the Phase Three program workstream. It is a
 durable coordination object for the runtime-realization lab. It is not runtime
@@ -18,8 +20,8 @@ control decisions before the next child opens.
 
 | Field | Value |
 | --- | --- |
-| State | Phase Three open. Child 1 is closed as scope/claim-ledger coordination. Child 2 is closed as contained `simulation-proof`. Child 3 is closed as ledger-only coordination. Child 4 is closed as contained `simulation-proof`. Child 5 is closed as contained `simulation-proof`. Child 6 is closed as contained `simulation-proof`. Child 7 is active. |
-| Allowed next action | Continue `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md` through prior-child assimilation, integrated-rehearsal decision, plan capture, possible execution, layered review, verification, Phase Three closeout, and next-phase handoff. |
+| State | Phase Three closed. Child 1 is closed as scope/claim-ledger coordination. Child 2 is closed as contained `simulation-proof`. Child 3 is closed as ledger-only coordination. Child 4 is closed as contained `simulation-proof`. Child 5 is closed as contained `simulation-proof`. Child 6 is closed as contained `simulation-proof`. Child 7 is closed as contained integrated live-passage `simulation-proof` plus program closeout. |
+| Allowed next action | Open the next program from the child-7 next-program packet: externality/design residual scoping before final structure/Nx/generator ratchet or production migration. |
 | Blocked actions | Production migration, final Nx/generator ratchet, or proof promotion beyond earned lab category. |
 | Opening control input | User approved implementation of the Phase Three DRA mission workflow on 2026-05-01. |
 | Child 1 control decision | DRA accepted the started process assembly plus stop/finalization passage as the first executable proof slice. |
@@ -28,7 +30,8 @@ control decisions before the next child opens.
 | Child 4 control decision | DRA accepted contained `simulation-proof` for layer-disagreement failure observation and accepted contained Elysia host passage as the next executable child. |
 | Child 5 control decision | DRA accepted contained `simulation-proof` for Elysia `app.handle` route-forwarding host passage and accepted a narrow contained Elysia listen/lifecycle passage as the next executable child. |
 | Child 6 control decision | DRA accepted contained `simulation-proof` for local Elysia/Bun listen/request/stop lifecycle and accepted integrated live-passage rehearsal/closeout as the next child. |
-| Active child | `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`. |
+| Child 7 control decision | DRA accepted contained `simulation-proof` for the integrated toy-contained live-passage rehearsal and closed Phase Three with residuals routed. |
+| Active child | None. |
 
 ## Frame
 
@@ -87,7 +90,7 @@ Non-goals:
 
 | Step | What Happens | DRA decision |
 | --- | --- | --- |
-| Opening approval | User approved this program structure on 2026-05-01. | Control input recorded; Phase Three is open. |
+| Opening approval | User approved this program structure on 2026-05-01. | Control input recorded; Phase Three opened. |
 | Phase 0 | Fill the DRA workflow from the approved structure. | Confirm the level map, recovery gate, and stop rules are runnable. |
 | Child 1 | Open live-runtime-passage scope and claim ledger. | Accept, reject, or revise the recommended first executable proof slice. |
 | Focused children | Execute the accepted proof slices recursively. | Promote only earned proof; route residuals to authority homes. |
@@ -809,7 +812,7 @@ Grouped residual summary:
 | Production migration readiness | `out-of-scope` | Phase Three remains lab-contained. | Manifest `audit.p2.phase-two-program-closeout`; Phase Two closeout; this report. | A later production migration workstream opens production code/topology explicitly. | Any claim says Phase Three authorizes production migration. | Post-Phase-Three migration planning | Phase Three DRA until production-migration DRA accepts handoff. | `migration-only` |
 | Final structure/Nx/generator ratchet | `out-of-scope` | Current sequence says live passage comes first. | Post-Phase-Two reframe; focus log; this report. | Live-passage proof or closeout determines the remaining uncertainty is ready for structure ratchet. | Child 1 or closeout says structure is now the next domino. | Later structure/Nx/generator phase | Phase Three DRA until structure/Nx phase opens. | `lab` |
 | Final public API/DX law | `xfail` | Several public laws remain design decisions, not prerequisites for the program container. | Manifest residuals for provider shape, runtime access, dispatcher access, async membership, route derivation. | A child proof target cannot proceed without accepting a public law. | Child workstream hits a blocking public-DX choice. | Decision packet or focused child | Phase Three DRA; decision-packet DRA if opened. | `spec/lab` |
-| Production Elysia/HTTP host lifecycle | `xfail` | Phase Two proved contained oRPC Fetch, not production Elysia. | `audit.p2.server-orpc-fetch-boundary`; vendor notes; diagnostic server row. | Real Elysia mount/request lifecycle is installed and gated in the lab or later production. | Server child proposes Elysia proof or production HTTP wording. | Server passage child or production host workstream | Phase Three DRA; server-host child DRA if opened. | `lab/migration` |
+| Production Elysia/HTTP host lifecycle | `xfail` | Phase Three proved contained Elysia app/request handling, local listener lifecycle, and integrated composition, but not deployed production host behavior. | `audit.p3.contained-elysia-host-passage`; `audit.p3.contained-elysia-listen-lifecycle-passage`; `audit.p3.integrated-live-passage-rehearsal-closeout`; vendor notes; diagnostic server row. | A production-host workstream opens deployment/process supervision, TLS/proxy/load-balancer behavior, middleware/auth/logging policy, OpenAPI/product API policy, and native host telemetry/error mapping explicitly. | Any claim says contained Elysia listener proof authorizes production HTTP serving or migration. | Production host workstream or externality/design decision packet | Phase Three DRA until next-program DRA accepts handoff. | `migration/spec` |
 | Durable Inngest semantics | `xfail` | Inngest durability belongs to the native durable async owner and was not proven. | `audit.p2.async-inngest-function-step-boundary`; diagnostic async row. | A real durable boundary/policy is opened and gated. | Async child needs retry/replay/idempotency/run-history claim. | Async decision packet or production integration | Phase Three DRA; async decision-packet DRA if opened. | `spec/migration` |
 | Product HyperDX/query/dashboard/retention policy | `xfail` | Phase Two proved OTLP-shaped export/local ingest only. | `audit.telemetry.hyperdx-observation.residual`; vendor notes. | Product observability policy and query/dashboard gates are accepted. | Observation child tries to green product visibility. | Observation decision packet or production observability workstream | Phase Three DRA; observability decision-packet DRA if opened. | `spec/migration` |
 | RuntimeCatalog persistence and control-plane topology | `xfail` | Current catalog/control-plane packet is non-persistent and candidate-only. | `audit.migration.control-plane-observation.residual`; architecture control-plane boundary. | Storage/index/retention/rehydration/topology decisions are opened and gated. | Child treats packet summaries as durable or placement authority. | Control-plane decision packet or later externality phase | Phase Three DRA; control-plane decision-packet DRA if opened. | `spec/migration` |
@@ -891,12 +894,14 @@ Process tension notes:
 Artifacts:
 
 - `evidence/workstreams/2026-05-01-phase-three-program-workstream.md`
+- `evidence/workstreams/2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`
 - `evidence/phases/phase-three/dra-phase-three-program-workstream-workflow-draft.md`
 - `evidence/phases/phase-three/README.md`
 - `evidence/proof-manifest.json`
 - `evidence/focus-log.md`
+- `test/mini-runtime/phase-three-integrated-live-passage-rehearsal.test.ts`
 
-Current verification run after child-6 closeout and child-7 opening:
+Current verification run after child-7 closeout:
 
 - `jq empty tools/runtime-realization-type-env/evidence/proof-manifest.json`:
   passed.
@@ -904,56 +909,54 @@ Current verification run after child-6 closeout and child-7 opening:
   `483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b`.
 - `bunx nx show project runtime-realization-type-env --json`: passed.
 - `bun test
-  tools/runtime-realization-type-env/test/mini-runtime/phase-three-contained-elysia-listen-lifecycle-passage.test.ts
-  tools/runtime-realization-type-env/test/mini-runtime/migration-control-plane-observation.test.ts`:
-  passed after child-6 review repairs.
-- `bunx nx run runtime-realization-type-env:mini-runtime`: passed after
-  child-6 implementation and review repairs.
-- `bunx nx run runtime-realization-type-env:structural`: passed after child-6
-  implementation, closeout, and child-7 opening.
-- `bunx nx run runtime-realization-type-env:report`: passed after
-  child-6 implementation and review repairs and reported current experiment
-  `phase-three.integrated-live-passage-rehearsal-closeout`.
-- `bunx nx run runtime-realization-type-env:typecheck`: passed after child-6
-  implementation and review repairs.
-- `bunx nx run runtime-realization-type-env:gate`: passed after child-6
-  closeout and child-7 opening.
-- `bun run runtime-realization:type-env`: passed after child-6 closeout and
-  child-7 opening; this script invokes the same
-  `runtime-realization-type-env:gate`.
+  tools/runtime-realization-type-env/test/mini-runtime/phase-three-integrated-live-passage-rehearsal.test.ts`:
+  passed with 1 test and 113 assertions after review repairs.
+- `bunx nx run runtime-realization-type-env:mini-runtime`: passed with 69
+  tests and 845 assertions after review repairs.
+- `bunx nx run runtime-realization-type-env:structural`: passed.
+- `bunx nx run runtime-realization-type-env:report`: passed and reported
+  current experiment `phase-three.closed-integrated-live-passage`.
+- `bunx nx run runtime-realization-type-env:typecheck`: passed.
+- `bunx nx run runtime-realization-type-env:gate`: passed through the final
+  `bun run runtime-realization:type-env` gate.
+- `bun run runtime-realization:type-env`: passed.
 
 Repo/Graphite state:
 
-- Working tree contains this Phase Three evidence/control-state repair until
-  commit.
+- Final repo/Graphite cleanliness is a closeout gate and is recorded in the
+  final DRA handoff after the closeout commit. This artifact intentionally does
+  not embed the final commit hash because doing so would require another commit
+  that changes the hash again.
 
-Current focus after child-6 closeout and child-7 opening:
+Current focus after child-7 closeout:
 
-- Active child:
-  `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`.
+- Phase Three closed as contained live-runtime-passage `simulation-proof`.
 
-## Active Child Packet
+## Next-Program Packet
 
-Active workstream:
+Next likely program:
 
-- `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`
+- Externality/design residual scoping before final structure/Nx/generator
+  ratchet or production migration.
 
 Why this is next:
 
-- Child 6 proved contained local Elysia/Bun listen/request/stop lifecycle
-  around the child-5 Elysia -> oRPC -> runtime path.
-- Focused Phase Three slices now cover started process stop/finalization,
-  boundary failure disagreement, contained Elysia app/request hosting, and
-  contained local listener lifecycle.
-- The next child must decide whether those slices compose into one
-  inspectable integrated live-passage rehearsal or whether Phase Three should
-  close with focused proofs plus an explicit non-closeable integration finding.
+- Phase Three has now proven the contained live-runtime-passage category as far
+  as the lab can honestly take it without production/repo risk.
+- The remaining uncertainty is mostly externality/design and production-only:
+  durable async semantics, product observability, RuntimeCatalog/control-plane
+  persistence/topology, production host lifecycle, public API/DX law, production
+  config/secrets policy, and final structure/Nx/generator ratchet sequencing.
+- The next program should decide which of those residuals must be resolved
+  before the final toy-contained Nx/generator ratchet and before production
+  migration.
 
 Required continuation reads:
 
-Must read before executing the active child:
+Must read before opening the next program:
 
 - This program workstream document.
+- `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`
 - `2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md`
 - `2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`
 - `2026-05-01-phase-three-started-passage-vendor-integration-reference.md`
@@ -961,17 +964,17 @@ Must read before executing the active child:
 - `2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md`
 - `2026-05-01-phase-three-contained-elysia-host-passage.md`
 - `2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md`
-- `2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`
 - active DRA workflow reference:
   `../phases/phase-three/dra-phase-three-program-workstream-workflow-draft.md`
-  (filename still contains `draft`; contents are the active operating reference)
+  (filename still contains `draft`; contents preserve the Phase Three operating
+  record)
 - `../handoffs/2026-05-01-post-phase-two-runtime-reframe.md`
 - `2026-04-30-phase-two-closeout-phase-three-handoff.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `../vendor-fidelity.md`
-- local vendor skills and official docs only if the active child adds or
-  changes vendor behavior beyond the focused slices already reviewed
+- local vendor skills and official docs if the next program opens or changes
+  vendor behavior, product observability, telemetry, or durable async claims
 - `docs/projects/orpc-ingest-domain-packages/resources/spec/TELEMETRY_DESIGN.md`
 - `docs/system/quarantine/TELEMETRY.md`
 - `docs/projects/rawr-final-architecture-migration/resources/research/service-package-effect-orpc-integration-snapshot.md`
@@ -1013,9 +1016,8 @@ First commands:
 - `bunx nx run runtime-realization-type-env:structural`
 - `bunx nx run runtime-realization-type-env:report`
 
-Promotion/closeout gates:
+Opening gates:
 
-- focused integrated target if the child accepts an executable rehearsal
 - `bunx nx run runtime-realization-type-env:gate`
 - `git diff --check`
 - final `git status --short --branch`
@@ -1026,8 +1028,9 @@ Deferred items to consume:
 - Every row in the deferred inventory above.
 - Current manifest `xfail`, `todo`, and `out-of-scope` entries relevant to
   live runtime passage.
-- Post-Phase-Two reframe residuals around production host lifecycle, durable
-  async, HyperDX/product observability, RuntimeCatalog persistence, public
-  API/DX law, and final structure/Nx/generator ratchet.
+- Child-7 residuals around production host lifecycle, durable async,
+  HyperDX/product observability, RuntimeCatalog/control-plane persistence and
+  topology, public API/DX law, production config/secrets policy, and final
+  structure/Nx/generator ratchet.
 - The vendor/telemetry research protocol above if the child opens or modifies
   any vendor, oRPC, Inngest, Effect, HyperDX, OTLP, or OpenTelemetry claim.

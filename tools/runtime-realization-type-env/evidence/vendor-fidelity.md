@@ -60,6 +60,12 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
   lifecycle, TLS/proxy/load-balancer behavior, Node adapter parity,
   OpenAPI/Eden behavior, auth/logging, native host telemetry/error mapping,
   product API policy, deployment topology, or production migration readiness.
+- Phase Three child 7 reuses the child-5 and child-6 Elysia findings inside a
+  composed integrated rehearsal. It adds no new Elysia vendor semantics beyond
+  the existing contained app/request and local listener proof; its added value
+  is composition with the started provider/runtime/server/async/stop envelope,
+  including shared `EffectRuntimeAccess` and observed provider-resource
+  `requireResource` calls.
 - The official `.mount('/prefix', fetchFn)` pattern remains supporting Fetch
   interop evidence, not the primary oRPC body-preservation oracle. The accepted
   oracle for this lab is the official oRPC/Elysia route-forwarding shape with
@@ -88,6 +94,11 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
   carry a RAWR async-step payload whose `status` is `failure`. The lab records
   this as `protocolPayloadRuntimeStatus`, not as Inngest protocol status or
   durable Inngest run status.
+- Phase Three child 7 reuses existing contained Inngest Bun serve/function/step
+  behavior in the integrated rehearsal. It adds composition evidence with the
+  Elysia listener and started process envelope, including observed provider
+  resource `requireResource` calls through the async invocation context, not new
+  durable Inngest vendor semantics.
 - The lab does not claim durable scheduling, retries, idempotency, or production Inngest host semantics.
 
 ## HyperDX / OTLP
@@ -99,6 +110,10 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
   gate proves deterministic serialization, endpoint selection, and redaction
   before export; it does not prove product dashboards, queries, alerting,
   retention, production OpenTelemetry bootstrap, or durable catalog storage.
+- Phase Three child 7 projects the integrated rehearsal into the same
+  OTLP-shaped and migration/control-plane observation model. It adds no product
+  HyperDX visibility, query, dashboard, alerting, retention, or production
+  OpenTelemetry bootstrap proof.
 - Local `rawr-hq-hyperdx` Docker ingest smoke is supporting lab evidence only.
   It can show that a reachable local OTLP endpoint accepts the payload, but it
   is not a production deployment, query semantics proof, dashboard proof, or

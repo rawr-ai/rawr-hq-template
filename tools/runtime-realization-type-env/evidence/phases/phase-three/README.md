@@ -1,15 +1,16 @@
 # Phase Three Coordination Container
 
-Status: open / child 7 active.
+Status: closed / Phase Three complete as contained live-runtime-passage
+`simulation-proof`.
 
-This container holds DRA workflow material for the open Phase Three
+This container holds DRA workflow material for the closed Phase Three
 runtime-realization program workstream. It is not runtime authority, proof
 authority, or authorization to migrate production code.
 
 Current artifacts:
 
-- `../../workstreams/2026-05-01-phase-three-program-workstream.md`: open
-  Phase Three program workstream structure.
+- `../../workstreams/2026-05-01-phase-three-program-workstream.md`: closed
+  Phase Three program workstream coordination record.
 - `../../workstreams/2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md`:
   closed child 1 scope/claim ledger.
 - `../../workstreams/2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`:
@@ -23,8 +24,9 @@ Current artifacts:
 - `../../workstreams/2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md`:
   closed child 6 proof-slice report.
 - `../../workstreams/2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`:
-  active child 7 integrated rehearsal and closeout workstream.
+  closed child 7 integrated rehearsal and closeout workstream.
 - `dra-phase-three-program-workstream-workflow-draft.md`: DRA workflow
   reference for operating the full Phase Three program. The filename keeps
-  `draft` for continuity with the preserved anchor; the contents are now the
-  active DRA operating sheet unless later control input supersedes them.
+  `draft` for continuity with the preserved anchor; the contents now preserve
+  the closed Phase Three DRA operating record unless later control input
+  supersedes them.
