@@ -11,6 +11,7 @@ Current artifacts:
 - `../../workstreams/2026-05-01-phase-three-program-workstream.md`: proposed
   Phase Three program workstream structure, ready for user review before
   opening.
-- `dra-phase-three-program-workstream-workflow-draft.md`: DRA operating
-  workflow draft. Fill this out from the approved program structure before the
-  first Phase Three child workstream opens.
+- `dra-phase-three-program-workstream-workflow-draft.md`: DRA workflow
+  reference for operating the full Phase Three program. The filename keeps
+  `draft` for continuity with the preserved anchor; the contents are now the
+  active DRA operating sheet unless later control input supersedes them.
