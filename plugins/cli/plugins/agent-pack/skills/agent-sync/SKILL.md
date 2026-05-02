@@ -18,7 +18,11 @@ Canonical source directories inside a plugin:
 - `skills/` (skill directories containing `SKILL.md`)
 - `workflows/` (markdown workflows; maps to prompts/commands)
 - `scripts/` (shipped helper scripts)
-- `agents/` (Claude agents by default; Codex standalone TOML only when Codex agent sync is enabled)
+- `agents/` (Claude agents and Codex standalone TOML unless explicitly disabled)
+- `hooks/`
+- `mcp/` and root `.mcp.json`
+- `settings/`
+- `assets/`
 
 Anything outside those directories is ignored.
 
@@ -55,19 +59,24 @@ You can:
 
 This `.zip` is generated from the **RAWR HQ plugin source** using the same mapping rules as Claude sync (workflows -> commands, skills, scripts, and optionally agents).
 
-## Codex plugin package artifacts
+## Codex marketplace packages
 
-Codex official plugin package generation is explicit and artifact-only:
+Codex official plugin package generation is explicit. With `--codex-package`, RAWR writes a local Codex marketplace and installs generated plugins through the RAWR Codex CLI by default:
 
 ```bash
 rawr plugins sync <plugin-ref> --codex-package
 rawr plugins sync all --codex-package
 ```
 
-Default output:
+Use `--no-codex-install` to generate the marketplace without installing it. Use `--codex-bin <path>` to choose a Codex binary; default resolution is `RAWR_CODEX_BIN`, then `~/.local/bin/codex`, then `codex` on `PATH`.
+
+Use `--install-scope user` when you need to be explicit. `user` is the default and currently the only supported install scope; other scopes are intentionally reserved until RAWR supports them end to end.
+
+Default outputs:
+- `dist/codex/.agents/plugins/marketplace.json`
 - `dist/codex/plugins/<pluginName>/`
 
-The package includes `.codex-plugin/plugin.json` and `skills/` only. Custom agents are not packaged yet; Codex direct agent sync writes standalone TOML to `<codex-home>/agents/` only when config enables `sync.providers.codex.includeAgents`.
+The package includes `.codex-plugin/plugin.json`, `skills/`, MCP config/files when modeled, and assets. Custom agents, settings, and hooks are not emitted in Codex plugin packages for the current RAWR Codex manifest; direct Codex sync owns standalone TOML agents, managed hook config, MCP/settings config fragments, prompts, scripts, and runtime skill mirrors.
 
 Compatibility alias (deprecated):
 ```bash
@@ -83,7 +92,7 @@ rawr plugins sync all
 
 `rawr plugins sync all` is the canonical daily command. It performs full convergence by default:
 - Codex + Claude sync
-- Cowork `.plugin` packaging
+- Cowork `.zip` packaging
 - Claude install + enable refresh
 - stale managed plugin retirement (rename/delete cleanup)
 - deterministic overwrite + managed-GC defaults
@@ -122,11 +131,15 @@ rawr plugins sync <plugin-ref> --codex-home <path> --claude-home <path>
 Defaults (when flags are omitted):
 - Codex homes:
   - `$RAWR_AGENT_SYNC_CODEX_HOMES` (comma-separated), else
-  - `$CODEX_HOME` + `$CODEX_MIRROR_HOME`, else
-  - `~/.codex-rawr` and `~/.codex`
+  - `$CODEX_HOME`, else
+  - `~/.codex-rawr`
 - Claude homes:
   - `$RAWR_AGENT_SYNC_CLAUDE_HOMES` (comma-separated), else
   - `~/.claude/plugins/local`
+
+`CODEX_MIRROR_HOME` is optional and is not synced by default. Include it
+explicitly with repeatable `--codex-home`, `$RAWR_AGENT_SYNC_CODEX_HOMES`, or
+an enabled config destination when mirror convergence is intentional.
 
 ## Conflicts and safety
 

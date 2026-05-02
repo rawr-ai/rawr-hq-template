@@ -40,7 +40,6 @@ function makeIsolatedSyncEnv(home: string): Record<string, string> {
     XDG_DATA_HOME: path.join(home, ".local", "share"),
     XDG_STATE_HOME: path.join(home, ".local", "state"),
     CODEX_HOME: path.join(home, ".codex-rawr"),
-    CODEX_MIRROR_HOME: path.join(home, ".codex"),
     CLAUDE_PLUGINS_LOCAL: path.join(home, ".claude", "plugins", "local"),
   };
 }

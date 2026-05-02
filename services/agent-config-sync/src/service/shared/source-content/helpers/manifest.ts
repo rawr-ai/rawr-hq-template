@@ -37,6 +37,11 @@ function normalizeInclude(input: unknown): NormalizedPluginContentInclude {
     skills: typeof record.skills === "boolean" ? record.skills : true,
     scripts: typeof record.scripts === "boolean" ? record.scripts : true,
     agents: typeof record.agents === "boolean" ? record.agents : true,
+    hooks: typeof record.hooks === "boolean" ? record.hooks : true,
+    mcpServers: typeof record.mcpServers === "boolean" ? record.mcpServers : true,
+    settings: typeof record.settings === "boolean" ? record.settings : true,
+    assets: typeof record.assets === "boolean" ? record.assets : true,
+    orchestration: typeof record.orchestration === "boolean" ? record.orchestration : true,
   };
 }
 
@@ -47,6 +52,11 @@ function normalizeIncludeOverlay(input: unknown): Partial<NormalizedPluginConten
     ...(typeof record.skills === "boolean" ? { skills: record.skills } : {}),
     ...(typeof record.scripts === "boolean" ? { scripts: record.scripts } : {}),
     ...(typeof record.agents === "boolean" ? { agents: record.agents } : {}),
+    ...(typeof record.hooks === "boolean" ? { hooks: record.hooks } : {}),
+    ...(typeof record.mcpServers === "boolean" ? { mcpServers: record.mcpServers } : {}),
+    ...(typeof record.settings === "boolean" ? { settings: record.settings } : {}),
+    ...(typeof record.assets === "boolean" ? { assets: record.assets } : {}),
+    ...(typeof record.orchestration === "boolean" ? { orchestration: record.orchestration } : {}),
   };
 }
 

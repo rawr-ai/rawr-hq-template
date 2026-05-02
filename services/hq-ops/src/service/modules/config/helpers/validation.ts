@@ -39,13 +39,13 @@ function normalizeDestinations(
 }
 
 function normalizeProvider(
-  providerKey: "codex" | "claude",
+  _providerKey: "codex" | "claude",
   provider: SyncProvider | undefined,
 ): SyncProvider | undefined {
   if (!provider) return undefined;
   return {
     ...provider,
-    includeAgents: provider.includeAgents ?? (providerKey === "claude"),
+    includeAgents: provider.includeAgents ?? true,
     destinations: normalizeDestinations(provider.destinations),
   };
 }

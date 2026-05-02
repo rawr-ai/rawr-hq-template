@@ -79,6 +79,8 @@ describe("hq-ops config support", () => {
     if (!r.ok) return;
     expect(r.config.sync?.providers?.codex?.destinations?.[0]?.enabled).toBe(true);
     expect(r.config.sync?.providers?.claude?.destinations?.[0]?.enabled).toBe(false);
+    expect(r.config.sync?.providers?.codex?.includeAgents).toBe(true);
+    expect(r.config.sync?.providers?.claude?.includeAgents).toBe(true);
   });
 
   it("merges layered sync config through the config service", async () => {

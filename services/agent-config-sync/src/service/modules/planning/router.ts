@@ -92,7 +92,7 @@ const planWorkspaceSync = module.planWorkspaceSync.handler(async ({ context, inp
     skipped: scoped.skipped,
     agents: targetSelection.agents,
     targetHomes: targetSelection.homes,
-    includeAgentsInCodex: input.includeAgentsInCodex ?? false,
+    includeAgentsInCodex: input.includeAgentsInCodex ?? true,
     includeAgentsInClaude: input.includeAgentsInClaude ?? true,
     activePluginNames: scoped.syncable.map((item) => item.sourcePlugin.dirName).sort((a, b) => a.localeCompare(b)),
     fullSyncPolicy: evaluatePolicy(input.fullSyncPolicy),

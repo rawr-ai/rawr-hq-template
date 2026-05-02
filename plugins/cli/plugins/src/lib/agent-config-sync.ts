@@ -19,9 +19,11 @@ import {
 } from "@rawr/agent-config-sync/undo";
 import {
   createNodeAgentConfigSyncResources,
+  installCodexMarketplacePlugins,
   installAndEnableClaudePlugin,
   packageCodexPlugin,
   packageCoworkPlugin,
+  resolveCodexBin,
 } from "@rawr/agent-config-sync-node";
 import { createAgentConfigSyncClient } from "./agent-config-sync-binding";
 import type { HostSourceContent as SourceContent, HostSourcePlugin as SourcePlugin } from "@rawr/agent-config-sync-node/types";
@@ -78,7 +80,7 @@ function syncProviderPolicy(config?: LayeredSyncConfig): {
   includeAgentsInClaude: boolean;
 } {
   return {
-    includeAgentsInCodex: config?.sync?.providers?.codex?.includeAgents ?? false,
+    includeAgentsInCodex: config?.sync?.providers?.codex?.includeAgents ?? true,
     includeAgentsInClaude: config?.sync?.providers?.claude?.includeAgents ?? true,
   };
 }
@@ -161,6 +163,11 @@ function parseEnvHomes(key: string): string[] {
     .map(expandTilde);
 }
 
+function parseEnvHome(key: string): string | null {
+  const rawValue = process.env[key]?.trim();
+  return rawValue ? expandTilde(rawValue) : null;
+}
+
 /**
  * Normalizes config destinations while preserving enabled flags for planning.
  */
@@ -182,10 +189,9 @@ function buildTargetHomeCandidates(input: {
   config?: LayeredSyncConfig;
 }): PlanWorkspaceSyncInput["targetHomeCandidates"] {
   const codexHomesFromEnvironment = parseEnvHomes("RAWR_AGENT_SYNC_CODEX_HOMES");
-  const codeHomePrimary = process.env.CODEX_HOME ? expandTilde(process.env.CODEX_HOME) : null;
-  const codeHomeMirror = process.env.CODEX_MIRROR_HOME ? expandTilde(process.env.CODEX_MIRROR_HOME) : null;
+  const codexHomePrimary = parseEnvHome("CODEX_HOME");
   const claudeHomesFromEnvironment = parseEnvHomes("RAWR_AGENT_SYNC_CLAUDE_HOMES");
-  const claudeHomeFromEnvVar = process.env.CLAUDE_PLUGINS_LOCAL ? expandTilde(process.env.CLAUDE_PLUGINS_LOCAL) : null;
+  const claudeHomeFromEnvVar = parseEnvHome("CLAUDE_PLUGINS_LOCAL");
   const userHome = process.env.HOME ? String(process.env.HOME) : os.homedir();
 
   return {
@@ -193,7 +199,9 @@ function buildTargetHomeCandidates(input: {
     claudeHomesFromFlags: input.claudeHomesFromFlags.map(expandTilde),
     codexHomesFromEnvironment: codexHomesFromEnvironment.length > 0
       ? codexHomesFromEnvironment
-      : [codeHomePrimary, codeHomeMirror].filter((home): home is string => Boolean(home)),
+      : codexHomePrimary
+        ? [codexHomePrimary]
+        : [],
     claudeHomesFromEnvironment: claudeHomesFromEnvironment.length > 0
       ? claudeHomesFromEnvironment
       : claudeHomeFromEnvVar
@@ -201,7 +209,7 @@ function buildTargetHomeCandidates(input: {
         : [],
     codexHomesFromConfig: mapDestinations(input.config?.sync?.providers?.codex?.destinations),
     claudeHomesFromConfig: mapDestinations(input.config?.sync?.providers?.claude?.destinations),
-    codexDefaultHomes: [path.join(userHome, ".codex-rawr"), path.join(userHome, ".codex")],
+    codexDefaultHomes: [path.join(userHome, ".codex-rawr")],
     claudeDefaultHomes: [path.join(userHome, ".claude", "plugins", "local")],
   };
 }
@@ -491,14 +499,16 @@ export function resolveDefaultCoworkOutDir(workspaceRoot: string): string {
  * Default artifact output directory for official Codex plugin packages.
  */
 export function resolveDefaultCodexOutDir(workspaceRoot: string): string {
-  return path.join(workspaceRoot, "dist", "codex", "plugins");
+  return path.join(workspaceRoot, "dist", "codex");
 }
 
 export {
+  installCodexMarketplacePlugins,
   installAndEnableClaudePlugin,
   packageCodexPlugin,
   packageCoworkPlugin,
   PLUGINS_SYNC_UNDO_PROVIDER,
+  resolveCodexBin,
 };
 
 export type {

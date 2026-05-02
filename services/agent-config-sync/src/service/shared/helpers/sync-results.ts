@@ -24,5 +24,11 @@ export function summarizeScannedContent(content: SourceContent): SyncScannedSumm
     skills: content.skills.map((skill) => skill.name),
     scripts: content.scripts.map((script) => script.name),
     agents: content.agentFiles.map((agent) => agent.name),
+    hooks: (content.hooks ?? []).map((hook) => hook.name),
+    hookConfigs: (content.hookConfigs ?? []).map((hookConfig) => hookConfig.name),
+    mcpServers: (content.mcpServers ?? []).map((mcpServer) => mcpServer.name),
+    settings: (content.settings ?? []).map((setting) => setting.name),
+    assets: (content.assets ?? []).map((asset) => asset.name),
+    orchestration: (content.orchestration ?? []).map((spec) => spec.name),
   };
 }

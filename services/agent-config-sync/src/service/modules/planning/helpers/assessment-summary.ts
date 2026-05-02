@@ -2,6 +2,8 @@ import type { SyncRunResult } from "../../../shared/entities/sync-results";
 import type { SyncAssessment, WorkspaceSkip } from "../entities";
 import type { SyncScope } from "../../../shared/entities";
 
+const RESIDUAL_MATERIAL_KINDS = new Set(["agent", "hook", "mcp", "settings", "asset", "orchestration"]);
+
 export function summarizeWorkspaceRun(input: {
   runs: SyncRunResult[];
   skipped: WorkspaceSkip[];
@@ -13,12 +15,14 @@ export function summarizeWorkspaceRun(input: {
   let totalMaterialChanges = 0;
   let totalMetadataChanges = 0;
   let totalDriftItems = 0;
+  let totalProjectionResiduals = 0;
 
   const plugins = input.runs.map((run) => {
     let conflicts = 0;
     let materialChanges = 0;
     let metadataChanges = 0;
     const driftItems: SyncAssessment["plugins"][number]["driftItems"] = [];
+    const projectionResiduals: SyncAssessment["plugins"][number]["projectionResiduals"] = [];
 
     for (const target of run.targets) {
       totalTargets += 1;
@@ -46,6 +50,26 @@ export function summarizeWorkspaceRun(input: {
       );
     }
 
+    const residuals = run.projections.filter((projection) =>
+      RESIDUAL_MATERIAL_KINDS.has(projection.materialKind) &&
+      projection.supportStatus !== "native" &&
+      projection.supportStatus !== "legacy_or_deprecated"
+    );
+    totalProjectionResiduals += residuals.length;
+    projectionResiduals.push(
+      ...residuals.map((projection) => ({
+        provider: projection.provider,
+        materialKind: projection.materialKind,
+        source: projection.source,
+        supportStatus: projection.supportStatus,
+        message: [
+          ...projection.adapterRequiredSemantics,
+          ...projection.droppedSemantics.map((item) => `dropped: ${item}`),
+          ...projection.validationNotes,
+        ].join("; ") || `${projection.materialKind} is ${projection.supportStatus}`,
+      })),
+    );
+
     return {
       dirName: run.sourcePlugin.dirName,
       absPath: run.sourcePlugin.absPath,
@@ -53,11 +77,18 @@ export function summarizeWorkspaceRun(input: {
       materialChanges,
       metadataChanges,
       driftItems,
+      projectionResiduals,
     };
   });
 
+  const status = totalConflicts > 0
+    ? "CONFLICTS"
+    : totalDriftItems > 0
+      ? "DRIFT_DETECTED"
+      : "IN_SYNC";
+
   return {
-    status: totalConflicts > 0 ? "CONFLICTS" : totalDriftItems > 0 ? "DRIFT_DETECTED" : "IN_SYNC",
+    status,
     includeMetadata: input.includeMetadata,
     scope: input.scope,
     summary: {
@@ -67,6 +98,7 @@ export function summarizeWorkspaceRun(input: {
       totalMaterialChanges,
       totalMetadataChanges,
       totalDriftItems,
+      totalProjectionResiduals,
     },
     skipped: input.skipped,
     plugins,

@@ -35,6 +35,18 @@ type CoworkManifestSummary = {
   agents: number;
 };
 
+const COWORK_DISTRIBUTION_MODE = "manual_upload" as const;
+
+const DEFAULT_COMPONENT_PATHS: Record<string, string[]> = {
+  agents: ["./agents", "./agents/"],
+  commands: ["./commands", "./commands/"],
+  hooks: ["./hooks", "./hooks/"],
+  mcpServers: ["./.mcp.json"],
+  scripts: ["./scripts", "./scripts/"],
+  settings: ["./settings", "./settings/"],
+  skills: ["./skills", "./skills/"],
+};
+
 /**
  * Converts host paths to portable zip entry paths.
  */
@@ -94,7 +106,9 @@ async function zipDirToFile(input: {
 
 /**
  * Supplies the Claude plugin manifest for Cowork archives from source metadata
- * or package.json fallback values.
+ * or package.json fallback values. Source manifests are normalized to RAWR's
+ * staged layout so component path overrides cannot point Cowork away from the
+ * generated package contents.
  */
 async function readOrCreatePluginManifest(input: {
   sourcePlugin: HostSourcePlugin;
@@ -112,30 +126,45 @@ async function readOrCreatePluginManifest(input: {
     "plugin.json",
   );
 
+  let sourceManifest: ClaudePluginManifest | null = null;
   if (await pathExists(sourceManifestPath)) {
     const raw = await fs.readFile(sourceManifestPath, "utf8");
-    if (!input.dryRun) {
-      await fs.writeFile(stagingManifestPath, raw, "utf8");
-    }
-    return JSON.parse(raw) as ClaudePluginManifest;
+    sourceManifest = JSON.parse(raw) as ClaudePluginManifest;
+    validateSourceManifest(sourceManifest);
   }
 
   const packageJsonPath = path.join(input.sourcePlugin.absPath, "package.json");
   const packageJson = (await readJsonFile<PackageJson>(packageJsonPath)) ?? {};
   const version =
-    typeof packageJson.version === "string"
+    typeof sourceManifest?.version === "string"
+      ? sourceManifest.version
+      : typeof packageJson.version === "string"
       ? packageJson.version
       : input.sourcePlugin.version ?? "1.0.0";
   const description =
-    typeof packageJson.description === "string"
+    typeof sourceManifest?.description === "string"
+      ? sourceManifest.description
+      : typeof packageJson.description === "string"
       ? packageJson.description
       : input.sourcePlugin.description ?? "Synced from RAWR HQ";
+  const name = typeof sourceManifest?.name === "string"
+    ? sourceManifest.name
+    : input.sourcePlugin.dirName;
 
   const manifest: ClaudePluginManifest = {
-    name: input.sourcePlugin.dirName,
+    name,
     version,
     description,
   };
+
+  validateManifestSummary({
+    name,
+    version,
+    commands: 0,
+    skills: 0,
+    scripts: 0,
+    agents: 0,
+  }, { failOnInvalid: true });
 
   if (!input.dryRun) {
     await writeJsonFile(stagingManifestPath, manifest);
@@ -150,20 +179,60 @@ export type CoworkPackageResult = {
   plugin: string;
   outFile: string;
   action: "planned" | "written";
+  distributionMode: typeof COWORK_DISTRIBUTION_MODE;
   sizeBytes?: number;
   manifestSummary: CoworkManifestSummary;
   warnings: string[];
 };
 
 function validateCoworkManifestSummary(summary: CoworkManifestSummary): string[] {
+  return validateManifestSummary(summary, { failOnInvalid: false });
+}
+
+function validateManifestSummary(
+  summary: CoworkManifestSummary,
+  options: { failOnInvalid: boolean },
+): string[] {
   const warnings: string[] = [];
+  const errors: string[] = [];
   if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(summary.name)) {
-    warnings.push("plugin name should be lowercase kebab-case and <= 64 characters");
+    errors.push("plugin name should be lowercase kebab-case and <= 64 characters");
   }
-  if (summary.version.trim().length === 0 || summary.version === "1.0.0") {
+  if (summary.version.trim().length === 0) {
+    errors.push("plugin version must be non-empty");
+  } else if (summary.version === "1.0.0") {
     warnings.push("plugin version should be explicit and meaningful");
   }
-  return warnings;
+  if (options.failOnInvalid && errors.length > 0) {
+    throw new Error(`Invalid Cowork plugin manifest: ${errors.join("; ")}`);
+  }
+  return [...errors, ...warnings];
+}
+
+function validateSourceManifest(manifest: ClaudePluginManifest): void {
+  if (manifest.name !== undefined && typeof manifest.name !== "string") {
+    throw new Error("Invalid Cowork plugin manifest: name must be a string");
+  }
+  if (manifest.version !== undefined && typeof manifest.version !== "string") {
+    throw new Error("Invalid Cowork plugin manifest: version must be a string");
+  }
+
+  for (const [field, defaults] of Object.entries(DEFAULT_COMPONENT_PATHS)) {
+    const value = manifest[field];
+    if (value === undefined) continue;
+    if (typeof value !== "string") {
+      throw new Error(`Unsupported Cowork plugin manifest field '${field}': expected a relative path string`);
+    }
+    if (path.isAbsolute(value) || value.includes("..")) {
+      throw new Error(`Unsafe Cowork plugin manifest path for '${field}': ${value}`);
+    }
+    if (!defaults.includes(value)) {
+      throw new Error(
+        `Unsupported Cowork plugin manifest path for '${field}': ${value}. ` +
+          `RAWR Cowork packaging currently stages the default ${field} path only.`,
+      );
+    }
+  }
 }
 
 /**
@@ -196,6 +265,7 @@ export async function packageCoworkPlugin(input: {
       plugin: input.sourcePlugin.dirName,
       outFile,
       action: "planned",
+      distributionMode: COWORK_DISTRIBUTION_MODE,
       manifestSummary: baseSummary,
       warnings: validateCoworkManifestSummary(baseSummary),
     };
@@ -265,6 +335,7 @@ export async function packageCoworkPlugin(input: {
       plugin: input.sourcePlugin.dirName,
       outFile,
       action: "written",
+      distributionMode: COWORK_DISTRIBUTION_MODE,
       sizeBytes,
       manifestSummary,
       warnings,

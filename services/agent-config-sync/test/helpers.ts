@@ -234,8 +234,142 @@ export async function makeParityWorkspace(input: {
       skills: [{ name: "demo-skill", absPath: skillRoot }],
       scripts: [{ name: "demo.sh", absPath: scriptPath }],
       agentFiles: [{ name: "researcher", absPath: agentPath }],
+      hooks: [],
+      hookConfigs: [],
+      mcpServers: [],
+      settings: [],
+      assets: [],
+      orchestration: [],
     },
   };
+}
+
+export async function makeHyperresearchLikeWorkspace(): Promise<ParityWorkspace> {
+  const workspace = await makeParityWorkspace({
+    pluginName: "synthetic-hyperresearch",
+    packageName: "@rawr/synthetic-hyperresearch",
+    agentFrontmatter: {
+      description: "Synthetic depth investigator",
+      tools: ["Read", "Write", "Task"],
+      hooks: ["PreToolUse"],
+      mcpServers: { syntheticResearch: {} },
+      permissionMode: "acceptEdits",
+      skills: ["synthetic-hyperresearch-1-decompose"],
+      model: "claude-opus-4-1",
+      color: "purple",
+    },
+  });
+  const entrySkill = path.join(workspace.pluginRoot, "skills", "synthetic-hyperresearch");
+  const stepOne = path.join(workspace.pluginRoot, "skills", "synthetic-hyperresearch-1-decompose");
+  const stepTwo = path.join(workspace.pluginRoot, "skills", "synthetic-hyperresearch-2-width");
+  const hookPath = path.join(workspace.pluginRoot, "hooks", "pre-tool-use.mjs");
+  const hookConfigPath = path.join(workspace.pluginRoot, "hooks", "hooks.json");
+  const mcpPath = path.join(workspace.pluginRoot, "mcp", "synthetic-research.mjs");
+  const settingsPath = path.join(workspace.pluginRoot, "settings", "codex", "config.toml");
+  const assetPath = path.join(workspace.pluginRoot, "assets", "icon.txt");
+
+  await Promise.all([
+    fs.mkdir(entrySkill, { recursive: true }),
+    fs.mkdir(stepOne, { recursive: true }),
+    fs.mkdir(stepTwo, { recursive: true }),
+    fs.mkdir(path.dirname(hookPath), { recursive: true }),
+    fs.mkdir(path.dirname(mcpPath), { recursive: true }),
+    fs.mkdir(path.dirname(settingsPath), { recursive: true }),
+    fs.mkdir(path.dirname(assetPath), { recursive: true }),
+  ]);
+
+  await fs.writeFile(path.join(entrySkill, "SKILL.md"), [
+    "---",
+    "name: synthetic-hyperresearch",
+    "description: Synthetic entry point for parity tests.",
+    "---",
+    "Use TodoWrite to track all 16 steps.",
+    "Skill(skill: \"synthetic-hyperresearch-1-decompose\")",
+    "",
+  ].join("\n"), "utf8");
+  await fs.writeFile(path.join(stepOne, "SKILL.md"), [
+    "---",
+    "name: synthetic-hyperresearch-1-decompose",
+    "description: Synthetic step one.",
+    "---",
+    "Task(subagent_type: \"researcher\", prompt: \"map loci\")",
+    "Skill(skill: \"synthetic-hyperresearch-2-width\")",
+    "",
+  ].join("\n"), "utf8");
+  await fs.writeFile(path.join(stepTwo, "SKILL.md"), [
+    "---",
+    "name: synthetic-hyperresearch-2-width",
+    "description: Synthetic step two.",
+    "---",
+    "Return a deterministic evidence digest.",
+    "",
+  ].join("\n"), "utf8");
+  await fs.writeFile(hookPath, [
+    "const chunks = [];",
+    "process.stdin.on('data', (chunk) => chunks.push(chunk));",
+    "process.stdin.on('end', () => {",
+    "  const input = chunks.join('') || '{}';",
+    "  process.stdout.write(JSON.stringify({ ok: true, received: JSON.parse(input).hook_event_name ?? null }));",
+    "});",
+    "",
+  ].join("\n"), "utf8");
+  await fs.writeFile(hookConfigPath, `${JSON.stringify({
+    hooks: {
+      PreToolUse: [
+        {
+          matcher: "Bash",
+          hooks: [
+            {
+              type: "command",
+              command: "node ./hooks/pre-tool-use.mjs",
+              timeout: 30,
+            },
+          ],
+        },
+      ],
+    },
+  }, null, 2)}\n`, "utf8");
+  await fs.writeFile(mcpPath, [
+    "process.stdin.on('data', () => {",
+    "  process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: 1, result: { tools: [{ name: 'synthetic_search' }] } }) + '\\n');",
+    "});",
+    "",
+  ].join("\n"), "utf8");
+  await fs.writeFile(settingsPath, "[features]\ncodex_hooks = true\n", "utf8");
+  await fs.writeFile(assetPath, "synthetic asset\n", "utf8");
+
+  workspace.content.skills = [
+    { name: "synthetic-hyperresearch", absPath: entrySkill },
+    { name: "synthetic-hyperresearch-1-decompose", absPath: stepOne },
+    { name: "synthetic-hyperresearch-2-width", absPath: stepTwo },
+  ];
+  workspace.content.hooks = [{ name: "pre-tool-use.mjs", absPath: hookPath }];
+  workspace.content.hookConfigs = [{ name: "hooks.json", absPath: hookConfigPath }];
+  workspace.content.mcpServers = [{ name: "synthetic-research.mjs", absPath: mcpPath }];
+  workspace.content.settings = [{ name: "codex/config.toml", absPath: settingsPath }];
+  workspace.content.assets = [{ name: "icon.txt", absPath: assetPath }];
+  workspace.content.orchestration = [
+    {
+      name: "skill:synthetic-hyperresearch",
+      absPath: path.join(entrySkill, "SKILL.md"),
+      provider: "claude",
+      sourceKind: "skill",
+      skillInvocations: ["synthetic-hyperresearch-1-decompose"],
+      taskSpawns: [],
+      todoState: true,
+    },
+    {
+      name: "skill:synthetic-hyperresearch-1-decompose",
+      absPath: path.join(stepOne, "SKILL.md"),
+      provider: "claude",
+      sourceKind: "skill",
+      skillInvocations: ["synthetic-hyperresearch-2-width"],
+      taskSpawns: ["researcher"],
+      todoState: false,
+    },
+  ];
+
+  return workspace;
 }
 
 export async function makeProviderHomes(): Promise<{ codexHome: string; claudeHome: string }> {

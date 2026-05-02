@@ -39,7 +39,12 @@ export function hasAnyContent(content: SourceContent): boolean {
     content.workflowFiles.length > 0 ||
     content.skills.length > 0 ||
     content.scripts.length > 0 ||
-    content.agentFiles.length > 0
+    content.agentFiles.length > 0 ||
+    (content.hooks?.length ?? 0) > 0 ||
+    (content.mcpServers?.length ?? 0) > 0 ||
+    (content.settings?.length ?? 0) > 0 ||
+    (content.assets?.length ?? 0) > 0 ||
+    (content.orchestration?.length ?? 0) > 0
   );
 }
 

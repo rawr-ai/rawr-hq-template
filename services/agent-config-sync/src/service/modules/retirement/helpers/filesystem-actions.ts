@@ -29,3 +29,18 @@ export async function writeJsonWithUndoCapture(input: {
   await input.resources.files.writeJsonFile(input.target, input.data);
   return "updated";
 }
+
+export async function writeTextWithUndoCapture(input: {
+  dryRun: boolean;
+  target: string;
+  content: string;
+  undoCapture?: Pick<AgentConfigSyncUndoCapture, "captureWriteTarget">;
+  resources: AgentConfigSyncResources;
+}): Promise<Extract<RetireAction["action"], "planned" | "updated" | "skipped">> {
+  const existing = await input.resources.files.readTextFile(input.target);
+  if (existing === input.content) return "skipped";
+  if (input.dryRun) return "planned";
+  await input.undoCapture?.captureWriteTarget(input.target);
+  await input.resources.files.writeTextFile(input.target, input.content);
+  return "updated";
+}
