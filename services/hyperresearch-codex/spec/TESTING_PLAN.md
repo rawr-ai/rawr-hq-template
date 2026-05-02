@@ -47,9 +47,10 @@ Current observed component evidence:
 - `bun run --cwd apps/cli rawr hyperresearch codex-slice ... --backend fixture --json` with a missing step returned `ok:false` and exited nonzero.
 - `bun run --cwd apps/cli rawr hyperresearch codex run-fixture ... --tier light --json` passed.
 - `bun run --cwd apps/cli rawr hyperresearch codex run-fixture ... --tier full --json` passed.
-- Service tests cover full-tier V8 fixture routing, packet-mode resume, permanent failed-agent blocking, mismatched ledger rejection, and required CLI failure blocking.
+- Service tests cover full-tier V8 fixture routing, packet-mode resume, permanent failed-agent blocking, mismatched ledger rejection, missing source-URL blocking, and required CLI failure blocking.
 - `hyperresearch --version` returned `hyperresearch v0.8.5`.
 - Disposable real CLI smoke passed for `init`, `status`, `note new`, `search`, `sync`, `lint`, `export json`, and successful `fetch https://www.python.org/about/`; `fetch https://example.com` failed loudly as junk content.
+- Real-backend packet-mode light route passed after agent outputs supplied `sourceUrls`: `init`, `search`, `fetch https://www.python.org/about/`, `note new`, `lint`, `sync`, second `lint`, and `export json` all recorded exit code 0 in the v2 ledger, and all five light steps completed with no ledger failures.
 
 ## Dry-Run Gates
 
@@ -69,7 +70,7 @@ Current observed component evidence:
 1. Install template CLI topic. Current status: template CLI topic exists in the implementation worktree, builds into oclif command discovery, and passes fixture smoke.
 2. Sync downstream RAWR HQ skill/reference/agent material into Codex. Current status: observed for the scoped Hyperresearch plugin after V8 workflow and 14 role-agent updates.
 3. Invoke the synced skill in a fresh Codex session. Current status: discoverability smoke passed with `codex exec` in read-only mode; the session used `hyperresearch-codex` and reported the installed skill boundary.
-4. Verify ledger, artifacts, and CLI call audit trail from the CLI-backed fixture workflow. Current status: run-fixture proof exists; synced-skill manual workflow remains a human-in-the-loop run.
+4. Verify ledger, artifacts, and CLI call audit trail from the CLI-backed fixture workflow. Current status: run-fixture proof exists; direct CLI packet-mode real-backend light-route proof exists; synced-skill manual workflow remains a human-in-the-loop run.
 5. Verify a compaction/resume handoff can continue from ledger state. Current status: service-level packet/resume test passed; actual Codex-session resume not run.
 6. Verify patch-only phase rejects wholesale rewrites. Current status: snapshot and patch-guard state exist; explicit rewrite-diff threshold should be hardened before long live runs.
 
@@ -78,6 +79,7 @@ Current observed Codex sync evidence:
 - `bun run rawr plugins sync hyperresearch --dry-run --agent codex --json`
 - `bun run rawr plugins sync hyperresearch --agent codex --no-install-reconcile --no-cowork --json`
 - Verified synced prompt, skill, role-agent TOML files, and Codex registry entry under the active Codex homes.
+- Fresh read-only `codex exec` verified the installed `hyperresearch-codex` skill now instructs agent packets to include `sourceUrls` for URLs the service should capture through the Hyperresearch CLI.
 - `rawr plugins sync drift --agent codex --json` is globally red from existing workspace drift/residuals; Hyperresearch scoped sync has no conflicts and all items are skipped/identical after the final sync pass.
 
 ## Live Research Gates

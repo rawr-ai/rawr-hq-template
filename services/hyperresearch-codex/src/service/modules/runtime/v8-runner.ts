@@ -227,6 +227,7 @@ async function createAgentJobs(input: {
         status: "complete|failed",
         summary: "string",
         evidence: ["path-or-source-id"],
+        sourceUrls: ["https://example.com/source-url"],
       },
       failureBehavior: "Write the expected output path with status=failed and a failure reason if the role cannot complete.",
     };
@@ -246,32 +247,37 @@ async function writeFixtureAgentOutputs(input: {
   ledger: HyperresearchRunLedger;
   step: HyperresearchStepRecord;
   io: HyperresearchCodexIO;
-}) {
+}): Promise<HyperresearchAgentOutput[]> {
+  const outputs: HyperresearchAgentOutput[] = [];
   for (const job of pendingAgentJobsForStep(input.ledger, input.step.id)) {
+    const output: HyperresearchAgentOutput = {
+      jobId: job.id,
+      status: "complete",
+      role: job.role,
+      summary: `Fixture output for ${job.role}`,
+      evidence: input.step.artifacts,
+      sourceUrls: ["https://www.python.org/about/"],
+    };
     await writeVaultText({
       ledger: input.ledger,
       relativePath: job.expectedOutputPath,
       io: input.io,
-      content: jsonContent({
-        jobId: job.id,
-        status: "complete",
-        role: job.role,
-        stepId: job.stepId,
-        summary: `Fixture output for ${job.role}`,
-        evidence: input.step.artifacts,
-      }),
+      content: jsonContent(output),
     });
     job.status = "complete";
     job.outputPath = job.expectedOutputPath;
     job.completedAt = input.io.now();
+    outputs.push(output);
   }
+  return outputs;
 }
 
 async function validateAgentOutputs(input: {
   ledger: HyperresearchRunLedger;
   step: HyperresearchStepRecord;
   io: HyperresearchCodexIO;
-}) {
+}): Promise<HyperresearchAgentOutput[] | null> {
+  const outputs: HyperresearchAgentOutput[] = [];
   const failJob = (job: HyperresearchAgentJob, message: string) => {
     job.status = "failed";
     job.failure = message;
@@ -290,12 +296,12 @@ async function validateAgentOutputs(input: {
   if ((input.ledger.agentJobs ?? []).some((job) => job.stepId === input.step.id && job.status === "failed")) {
     input.step.status = "blocked";
     input.step.failure = `Agent job failed for step ${input.step.id}`;
-    return false;
+    return null;
   }
 
   for (const job of pendingAgentJobsForStep(input.ledger, input.step.id)) {
     const outputExists = await input.io.pathExists(input.io.join(input.ledger.vaultRoot, job.expectedOutputPath));
-    if (!outputExists) return false;
+    if (!outputExists) return null;
     const output = await readVaultText({
       ledger: input.ledger,
       relativePath: job.expectedOutputPath,
@@ -306,17 +312,18 @@ async function validateAgentOutputs(input: {
       parsed = parseAgentOutput({ job, output });
     } catch (error) {
       failJob(job, error instanceof Error ? error.message : String(error));
-      return false;
+      return null;
     }
     if (parsed.status === "failed") {
       failJob(job, parsed.failure ?? `Agent job reported failure: ${job.id}`);
-      return false;
+      return null;
     }
     job.status = "complete";
     job.outputPath = job.expectedOutputPath;
     job.completedAt = input.io.now();
+    outputs.push(parsed);
   }
-  return true;
+  return outputs;
 }
 
 function parseAgentOutput(input: {
@@ -349,23 +356,58 @@ function parseAgentOutput(input: {
   if (!Array.isArray(record.evidence) || record.evidence.some((item) => typeof item !== "string")) {
     throw new Error(`Agent output evidence array is required for ${input.job.id}`);
   }
+  if (record.sourceUrls !== undefined) {
+    if (!Array.isArray(record.sourceUrls) || record.sourceUrls.some((item) => typeof item !== "string" || item.length === 0)) {
+      throw new Error(`Agent output sourceUrls array must contain strings for ${input.job.id}`);
+    }
+  }
   if (record.failure !== undefined && typeof record.failure !== "string") {
     throw new Error(`Agent output failure must be a string for ${input.job.id}`);
   }
   return record as HyperresearchAgentOutput;
 }
 
-async function runFixtureCliForStep(input: {
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function sourceUrlsFromAgentOutputs(agentOutputs: HyperresearchAgentOutput[]): string[] {
+  const urls = new Set<string>();
+  for (const output of agentOutputs) {
+    for (const url of output.sourceUrls ?? []) {
+      if (isHttpUrl(url)) urls.add(url);
+    }
+    for (const evidence of output.evidence) {
+      if (isHttpUrl(evidence)) urls.add(evidence);
+    }
+  }
+  return [...urls];
+}
+
+async function runRequiredCliForStep(input: {
   definition: HyperresearchStepDefinition;
   ledger: HyperresearchRunLedger;
   io: HyperresearchCodexIO;
   cli: HyperresearchCliBackend;
+  agentOutputs?: HyperresearchAgentOutput[];
 }) {
+  const sourceUrls = sourceUrlsFromAgentOutputs(input.agentOutputs ?? []);
   for (const operation of input.definition.requiredCliOperations ?? []) {
     const args = (() => {
       if (operation === "search") return [input.ledger.canonicalQuery, "--json"];
-      if (operation === "fetch") return ["https://example.com/hyperresearch-codex-fixture", "--json"];
-      if (operation === "fetch-batch") return ["https://example.com/hyperresearch-codex-gap", "--json"];
+      if (operation === "fetch") {
+        if (!sourceUrls[0]) throw new Error(`Step ${input.definition.id} requires a source URL for Hyperresearch fetch`);
+        return [sourceUrls[0], "--json"];
+      }
+      if (operation === "fetch-batch") {
+        if (sourceUrls.length === 0) throw new Error(`Step ${input.definition.id} requires source URLs for Hyperresearch fetch-batch`);
+        return [...sourceUrls, "--json"];
+      }
       if (operation === "note") return ["new", "--json", "Hyperresearch Codex V8 fixture source"];
       if (operation === "lint") return ["--json"];
       if (operation === "sync") return ["--json"];
@@ -604,13 +646,34 @@ export async function advanceV8HyperresearchRun(
     const definition = definitionFor(step.id, ledger.tier);
 
     if (step.status === "awaiting_agents") {
-      const ready = await validateAgentOutputs({ ledger, step, io });
-      if (!ready) {
+      try {
+        const agentOutputs = await validateAgentOutputs({ ledger, step, io });
+        if (!agentOutputs) {
+          await writeHyperresearchRunLedger({ ledgerPath: input.ledgerPath, ledger, io });
+          return await makeResult({ ledgerPath: input.ledgerPath, ledger, io });
+        }
+        await runRequiredCliForStep({
+          definition,
+          ledger,
+          io,
+          cli,
+          agentOutputs,
+        });
+        await finishStep({ ledger, step, definition, io });
+        completedThisPass += 1;
+      } catch (error) {
+        step.status = "blocked";
+        step.failure = error instanceof Error ? error.message : String(error);
+        step.completedAt = io.now();
+        ledger.failures.push({
+          at: io.now(),
+          stepId: step.id,
+          kind: "step",
+          message: step.failure,
+        });
         await writeHyperresearchRunLedger({ ledgerPath: input.ledgerPath, ledger, io });
         return await makeResult({ ledgerPath: input.ledgerPath, ledger, io });
       }
-      await finishStep({ ledger, step, definition, io });
-      completedThisPass += 1;
       await writeHyperresearchRunLedger({ ledgerPath: input.ledgerPath, ledger, io });
       continue;
     }
@@ -640,12 +703,18 @@ export async function advanceV8HyperresearchRun(
         return await makeResult({ ledgerPath: input.ledgerPath, ledger, io });
       }
 
-      if (jobs.length > 0) {
-        await writeFixtureAgentOutputs({ ledger, step, io });
-      }
+      const agentOutputs = jobs.length > 0
+        ? await writeFixtureAgentOutputs({ ledger, step, io })
+        : [];
 
       if (agentMode === "synthesize") {
-        await runFixtureCliForStep({ definition, ledger, io, cli });
+        await runRequiredCliForStep({
+          definition,
+          ledger,
+          io,
+          cli,
+          agentOutputs,
+        });
       }
 
       await finishStep({ ledger, step, definition, io });

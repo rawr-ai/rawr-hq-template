@@ -62,8 +62,8 @@ The service state machine owns step loading, route order, durable ledger state, 
 
 | Role | Codex decision | Constraint guard |
 |---|---|---|
-| `hyperresearch-fetcher` | custom agent / packet role | Must return provenance and suggested-by chain; source capture uses Hyperresearch CLI |
-| `hyperresearch-source-analyst` | custom agent / packet role | Deep-source digest only; no final synthesis |
+| `hyperresearch-fetcher` | custom agent / packet role | Must return provenance and suggested-by chain; packet output should include `sourceUrls`; source capture uses Hyperresearch CLI |
+| `hyperresearch-source-analyst` | custom agent / packet role | Deep-source digest only; no final synthesis; include source URLs when requesting backend fetch provenance |
 | `hyperresearch-loci-analyst` | custom agent / packet role | Produces candidate loci and budgets only |
 | `hyperresearch-depth-investigator` | custom agent / packet role | Writes committed position output for one locus |
 | `hyperresearch-corpus-critic` | custom agent / packet role | Produces overturning-source gaps before drafting |

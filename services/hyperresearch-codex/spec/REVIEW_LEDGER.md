@@ -29,6 +29,7 @@ This ledger reviews the current spec and minimal runtime slice before expanding 
 | HR-CODEX-019 | blocking | closed | Current downstream plugin material documented the slice but did not yet drive the start/advance/agent-packet loop. | Updated downstream skill/workflow/references around `rawr hyperresearch codex start`, `advance --agent-mode packets`, `validate`, and `run-fixture`; scoped Codex sync is conflict-free. |
 | HR-CODEX-020 | blocking | closed | Procedure input/output schemas can drift into service entities, making core domain concepts depend on transport surface details. | Procedure schemas now live in `contract.ts`; `entities.ts` keeps resolved durable concepts such as ledgers, steps, agent jobs, integrity findings, and CLI calls. |
 | HR-CODEX-021 | warning | closed | Router handlers can become same-shape facades over helpers, adding an extra abstraction without service-level orchestration value. | Runner APIs now take explicit procedure input plus required runtime dependencies rather than optional context-shaped options; router handlers are limited to oRPC context binding, while the service state machine remains in the runtime module. |
+| HR-CODEX-022 | blocking | closed | Packet-mode runs validated agent output files but completed the step without executing that step's required Hyperresearch CLI operations, so packet fan-in and source-capture audit were proven separately. | Packet-mode resume now validates agent outputs, derives `sourceUrls`, runs required CLI calls before completing the step, and blocks on missing source URLs or required CLI failure. Added service tests and passed a real-backend light-route packet smoke with `search/fetch/note/lint/sync/export` in the ledger. |
 
 ## Phase Exit
 
@@ -48,3 +49,4 @@ Carried dispositions:
 - `HR-CODEX-019`: closed by downstream start/advance workflow material and scoped Codex sync proof.
 - `HR-CODEX-020`: closed by keeping public input/output schemas in `contract.ts` and only standalone durable domain schemas in `entities.ts`.
 - `HR-CODEX-021`: closed by separating procedure input from runtime dependency injection and avoiding optional-context runner options.
+- `HR-CODEX-022`: closed by joining packet-mode agent fan-in with required CLI execution before step completion.

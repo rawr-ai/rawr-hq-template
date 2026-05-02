@@ -119,7 +119,8 @@ describe("hyperresearch-codex V8 runtime", () => {
 
   it("stops in codex mode for agent packets and resumes after outputs exist", async () => {
     const fixture = await makeV8Fixture();
-    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const cli = new RecordingCli();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli }));
     const started = await client.runtime.startV8Run({
       canonicalQuery: "Codex packet proof",
       tier: "full",
@@ -151,7 +152,8 @@ describe("hyperresearch-codex V8 runtime", () => {
         role: job.role,
         status: "complete",
         summary: job.role,
-        evidence: [],
+        evidence: ["https://www.python.org/about/"],
+        sourceUrls: ["https://www.python.org/about/"],
       }, null, 2),
       "utf8",
     )));
@@ -166,6 +168,16 @@ describe("hyperresearch-codex V8 runtime", () => {
     expect(resumed.ledger.resumes).toContainEqual(expect.objectContaining({
       reason: "agent outputs written",
     }));
+    expect(cli.calls.map((call) => call.operation)).toEqual([
+      "init",
+      "search",
+      "fetch",
+      "note",
+    ]);
+    expect(cli.calls.find((call) => call.operation === "fetch")?.args).toEqual([
+      "https://www.python.org/about/",
+      "--json",
+    ]);
   });
 
   it("blocks failed agent outputs and does not complete the step on later advance calls", async () => {
@@ -273,5 +285,97 @@ describe("hyperresearch-codex V8 runtime", () => {
       severity: "blocking",
       code: "failed-cli-call",
     }));
+  });
+
+  it("blocks packet-mode completion when a required CLI operation fails after agent outputs", async () => {
+    const fixture = await makeV8Fixture();
+    const startClient = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await startClient.runtime.startV8Run({
+      canonicalQuery: "Failed packet CLI proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-packet-cli-fail-start"));
+
+    await startClient.runtime.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-cli-fail-step-one"));
+    const awaiting = await startClient.runtime.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-cli-fail-awaiting"));
+
+    await Promise.all(awaiting.pendingAgentJobs.map((job) => fs.writeFile(
+      path.join(fixture.vaultRoot, job.expectedOutputPath),
+      JSON.stringify({
+        jobId: job.id,
+        role: job.role,
+        status: "complete",
+        summary: job.role,
+        evidence: ["https://www.python.org/about/"],
+        sourceUrls: ["https://www.python.org/about/"],
+      }, null, 2),
+      "utf8",
+    )));
+
+    const failClient = createClient(createClientOptions({
+      repoRoot: fixture.root,
+      cli: new RecordingCli({ exitCode: 2, stderr: "simulated packet CLI failure" }),
+    }));
+    const blocked = await failClient.runtime.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-cli-fail-advance"));
+
+    expect(blocked.status).toBe("blocked");
+    expect(blocked.ledger.steps.find((step) => step.id === "02-width-sweep")?.status).toBe("blocked");
+    expect(blocked.integrity).toContainEqual(expect.objectContaining({
+      severity: "blocking",
+      code: "failed-cli-call",
+    }));
+  });
+
+  it("blocks packet-mode source capture when agent outputs provide no source URLs", async () => {
+    const fixture = await makeV8Fixture();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await client.runtime.startV8Run({
+      canonicalQuery: "Missing packet URL proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-packet-missing-url-start"));
+
+    await client.runtime.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-missing-url-step-one"));
+    const awaiting = await client.runtime.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-missing-url-awaiting"));
+
+    await Promise.all(awaiting.pendingAgentJobs.map((job) => fs.writeFile(
+      path.join(fixture.vaultRoot, job.expectedOutputPath),
+      JSON.stringify({
+        jobId: job.id,
+        role: job.role,
+        status: "complete",
+        summary: job.role,
+        evidence: [],
+      }, null, 2),
+      "utf8",
+    )));
+
+    const blocked = await client.runtime.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-missing-url-advance"));
+
+    expect(blocked.status).toBe("blocked");
+    expect(blocked.ledger.steps.find((step) => step.id === "02-width-sweep")?.failure)
+      .toContain("requires a source URL");
   });
 });

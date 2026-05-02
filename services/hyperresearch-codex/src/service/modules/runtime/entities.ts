@@ -139,6 +139,7 @@ export const HyperresearchAgentOutputSchema = Type.Object(
     status: Type.Union([Type.Literal("complete"), Type.Literal("failed")]),
     summary: Type.String({ minLength: 1 }),
     evidence: Type.Array(Type.String()),
+    sourceUrls: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
     failure: Type.Optional(Type.String({ minLength: 1 })),
   },
   { additionalProperties: false },
