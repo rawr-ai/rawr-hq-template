@@ -11,7 +11,7 @@ import {
   createExecutionDescriptorTable,
   createExecutionRegistry,
   createMigrationControlPlaneObservationPacket,
-  createOracleResourceAccess,
+  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   createRuntimeObservationRecorder,
   exportRuntimeTelemetryOtlpTraces,
@@ -100,7 +100,7 @@ function createClients(): ConstructionBoundServiceClients<
             get(request) {
               return Effect.succeed({
                 id: request.id,
-                title: "Fixture item",
+                title: "Work item",
                 status: "open",
               } satisfies WorkItem);
             },
@@ -143,7 +143,7 @@ function createInvocationContext(request: {
         },
       },
       clients: createClients(),
-      resources: createOracleResourceAccess([
+      resources: createContainedRuntimeResourceAccess([
         {
           id: "elysia-host-resource",
           value: { seen: true },

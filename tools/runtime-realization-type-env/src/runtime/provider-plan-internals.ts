@@ -72,7 +72,7 @@ export function createTryProviderEffectPlan<TValue, TError>(input: {
   readonly acquire: () => Promise<TValue> | TValue;
   readonly catch: (cause: unknown) => TError;
 }): ProviderEffectPlan<TValue, TError> {
-  // Promise-backed acquisition is normalized into RawrEffect for the Oracle
+  // Promise-backed acquisition is normalized into RawrEffect for the contained
   // provisioning path only; this does not bless provider retry/backoff,
   // cancellation, or diagnostic payload policy.
   const plan = {

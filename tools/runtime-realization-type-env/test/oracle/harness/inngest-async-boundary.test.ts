@@ -5,7 +5,7 @@ import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
 import {
   createExecutionDescriptorTable,
   createExecutionRegistry,
-  createOracleResourceAccess,
+  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   mountOracleAsyncHarness,
   mountRuntimeInngestAsyncBoundary,
@@ -39,7 +39,7 @@ function createClients(): ConstructionBoundServiceClients<
             get(request) {
               return Effect.succeed({
                 id: request.id,
-                title: "Fixture item",
+                title: "Work item",
                 status: "open",
               } satisfies WorkItem);
             },
@@ -81,7 +81,7 @@ function createInvocationContext(event: {
         invocation: { traceId: "trace-inngest" },
       }),
     },
-    resources: createOracleResourceAccess([
+    resources: createContainedRuntimeResourceAccess([
       {
         id: "async-scoped-store",
         value: {

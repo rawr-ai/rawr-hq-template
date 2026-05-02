@@ -14,12 +14,12 @@ import {
   createExecutionDescriptorTable,
   createExecutionRegistry,
   createMigrationControlPlaneObservationPacket,
-  createOracleResourceAccess,
+  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
   createRuntimeBoundaryPolicy,
-  executeOracleBootgraph,
+  executeRuntimeBootgraph,
   exportRuntimeTelemetryOtlpTraces,
   mountOracleAsyncHarness,
   mountOracleServerHarness,
@@ -92,7 +92,7 @@ function createClients(): ConstructionBoundServiceClients<
             get(request) {
               return Effect.succeed({
                 id: request.id,
-                title: "Fixture item",
+                title: "Work item",
                 status: "open",
               } satisfies WorkItem);
             },
@@ -154,7 +154,7 @@ function createServerInvocationContext(request: {
         },
       },
       clients: createClients(),
-      resources: createOracleResourceAccess([
+      resources: createContainedRuntimeResourceAccess([
         {
           id: "observation-server-resource",
           value: {
@@ -192,7 +192,7 @@ function createAsyncInvocationContext(event: {
         invocation: { traceId: "trace-phase-two-observation" },
       }),
     },
-    resources: createOracleResourceAccess([
+    resources: createContainedRuntimeResourceAccess([
       {
         id: "observation-async-resource",
         value: {
@@ -328,7 +328,7 @@ describe("phase two telemetry HyperDX catalog observation", () => {
         });
       },
     });
-    const providerResult = await executeOracleBootgraph({
+    const providerResult = await executeRuntimeBootgraph({
       modules: providerModules,
     });
     expect(providerResult.status).toBe("started");

@@ -17,10 +17,10 @@ import {
   createRuntimeBoundaryPolicyResolution,
   createRuntimeBoundaryPolicyRecord,
   classifyRuntimeBoundaryExit,
-  createOracleResourceAccess,
-  createOracleServiceBindingCache,
+  createContainedRuntimeResourceAccess,
+  createRuntimeServiceBindingCache,
   createProcessExecutionRuntime,
-  executeOracleBootgraph,
+  executeRuntimeBootgraph,
   mountOracleAsyncHarness,
   mountOracleServerHarness,
   type ProcessExecutionRuntime,
@@ -46,7 +46,7 @@ import {
   SyncWorkItemStepPlan,
   SyncWorkItemStepRef,
 } from "../../../scenarios/work-items/app-and-plan-artifacts";
-import { RuntimeFixtureProfile } from "../../../scenarios/work-items/resource-provider-profile";
+import { WorkItemsRuntimeProfile } from "../../../scenarios/work-items/resource-provider-profile";
 import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
 import { WorkItemsServerApiServices } from "../../../scenarios/work-items/server-api-plugin";
 
@@ -61,7 +61,7 @@ function createClients(): ConstructionBoundServiceClients<
             get(request) {
               return Effect.succeed({
                 id: request.id,
-                title: "Fixture item",
+                title: "Work item",
                 status: "open",
               } satisfies WorkItem);
             },
@@ -101,7 +101,7 @@ function createInvocationContext() {
         },
       },
       clients: createClients(),
-      resources: createOracleResourceAccess([]),
+      resources: createContainedRuntimeResourceAccess([]),
       workflows: dispatcher,
     },
     telemetry: {
@@ -126,7 +126,7 @@ function createAsyncInvocationContext() {
         invocation: { traceId: "trace-async" },
       }),
     },
-    resources: createOracleResourceAccess([]),
+    resources: createContainedRuntimeResourceAccess([]),
     telemetry: {
       event() {},
     },
@@ -1211,7 +1211,7 @@ describe("runtime realization Oracle", () => {
     const finalizeLog: string[] = [];
     const modules = [
       {
-        kind: "oracle.boot-module",
+        kind: "runtime.boot-module",
         id: "api",
         dependencies: ["email"],
         metadata: {
@@ -1228,7 +1228,7 @@ describe("runtime realization Oracle", () => {
         },
       },
       {
-        kind: "oracle.boot-module",
+        kind: "runtime.boot-module",
         id: "clock",
         metadata: {
           publicLabel: "clock",
@@ -1242,7 +1242,7 @@ describe("runtime realization Oracle", () => {
         },
       },
       {
-        kind: "oracle.boot-module",
+        kind: "runtime.boot-module",
         id: "email",
         dependencies: ["clock"],
         metadata: {
@@ -1259,7 +1259,7 @@ describe("runtime realization Oracle", () => {
       },
     ] as const;
 
-    const result = await executeOracleBootgraph({ modules });
+    const result = await executeRuntimeBootgraph({ modules });
 
     expect(result.status).toBe("started");
     if (result.status !== "started") throw result.error;
@@ -1284,10 +1284,10 @@ describe("runtime realization Oracle", () => {
 
   test("continues reverse finalization and records failed finalizers", async () => {
     const finalizeLog: string[] = [];
-    const result = await executeOracleBootgraph({
+    const result = await executeRuntimeBootgraph({
       modules: [
         {
-          kind: "oracle.boot-module",
+          kind: "runtime.boot-module",
           id: "database",
           start() {
             return { close() {} };
@@ -1297,7 +1297,7 @@ describe("runtime realization Oracle", () => {
           },
         },
         {
-          kind: "oracle.boot-module",
+          kind: "runtime.boot-module",
           id: "api",
           dependencies: ["database"],
           start() {
@@ -1332,10 +1332,10 @@ describe("runtime realization Oracle", () => {
   test("rolls back started boot modules in reverse order after startup failure", async () => {
     const startLog: string[] = [];
     const rollbackLog: string[] = [];
-    const result = await executeOracleBootgraph({
+    const result = await executeRuntimeBootgraph({
       modules: [
         {
-          kind: "oracle.boot-module",
+          kind: "runtime.boot-module",
           id: "api",
           dependencies: ["email"],
           start() {
@@ -1347,7 +1347,7 @@ describe("runtime realization Oracle", () => {
           },
         },
         {
-          kind: "oracle.boot-module",
+          kind: "runtime.boot-module",
           id: "clock",
           start() {
             startLog.push("clock");
@@ -1358,7 +1358,7 @@ describe("runtime realization Oracle", () => {
           },
         },
         {
-          kind: "oracle.boot-module",
+          kind: "runtime.boot-module",
           id: "email",
           dependencies: ["clock"],
           start() {
@@ -1388,10 +1388,10 @@ describe("runtime realization Oracle", () => {
 
   test("rejects invalid bootgraph topology before startup", async () => {
     await expect(
-      executeOracleBootgraph({
+      executeRuntimeBootgraph({
         modules: [
           {
-            kind: "oracle.boot-module",
+            kind: "runtime.boot-module",
             id: "api",
             dependencies: ["missing"],
             start() {
@@ -1403,10 +1403,10 @@ describe("runtime realization Oracle", () => {
     ).rejects.toThrow("boot module api depends on missing module missing");
 
     await expect(
-      executeOracleBootgraph({
+      executeRuntimeBootgraph({
         modules: [
           {
-            kind: "oracle.boot-module",
+            kind: "runtime.boot-module",
             id: "api",
             dependencies: ["email"],
             start() {
@@ -1414,7 +1414,7 @@ describe("runtime realization Oracle", () => {
             },
           },
           {
-            kind: "oracle.boot-module",
+            kind: "runtime.boot-module",
             id: "email",
             dependencies: ["api"],
             start() {
@@ -1429,7 +1429,7 @@ describe("runtime realization Oracle", () => {
   test("constructs service binding cache once and excludes invocation from identity", () => {
     const factoryCalls: string[] = [];
     const invocationTraces: string[] = [];
-    const cache = createOracleServiceBindingCache<
+    const cache = createRuntimeServiceBindingCache<
       ConstructionBoundServiceClients<typeof WorkItemsServerApiServices>
     >({
       processId: "process-1",
@@ -1445,7 +1445,7 @@ describe("runtime realization Oracle", () => {
                   get(request) {
                     return Effect.succeed({
                       id: request.id,
-                      title: "Fixture item",
+                      title: "Work item",
                       status: "open",
                     } satisfies WorkItem);
                   },
@@ -1532,7 +1532,7 @@ describe("runtime realization Oracle", () => {
       scopeHash: "scope:server:internal:work-items-ops",
       configHash: "config:server:internal:work-items-ops",
     };
-    const cache = createOracleServiceBindingCache<{ readonly id: string }>({
+    const cache = createRuntimeServiceBindingCache<{ readonly id: string }>({
       processId: "process-1",
       plans: [firstPlan, secondPlan],
       createClient({ constructionIdentity }) {
@@ -1591,7 +1591,7 @@ describe("runtime realization Oracle", () => {
       configHash: "config:shared",
     };
     const factoryCalls: string[] = [];
-    const cache = createOracleServiceBindingCache<{ readonly id: string }>({
+    const cache = createRuntimeServiceBindingCache<{ readonly id: string }>({
       processId: "process-1",
       plans: [separatorPlan, equivalentJoinPlan],
       createClient({ constructionIdentity }) {
@@ -1652,7 +1652,7 @@ describe("runtime realization Oracle", () => {
       serviceInstance: "api:work-items",
       dependencyInstances: ["db:main"],
     });
-    const cache = createOracleServiceBindingCache<{ readonly id: string }>({
+    const cache = createRuntimeServiceBindingCache<{ readonly id: string }>({
       processId: "process-1",
       plans: [workItemsPlan, databasePlan, secretsPlan],
       createClient({ plan, constructionIdentity }) {
@@ -1726,7 +1726,7 @@ describe("runtime realization Oracle", () => {
     });
 
     expect(() =>
-      createOracleServiceBindingCache<{ readonly id: string }>({
+      createRuntimeServiceBindingCache<{ readonly id: string }>({
         processId: "process-1",
         plans: [workItemsPlan],
         createClient() {
@@ -1754,7 +1754,7 @@ describe("runtime realization Oracle", () => {
     });
 
     expect(() =>
-      createOracleServiceBindingCache<{ readonly id: string }>({
+      createRuntimeServiceBindingCache<{ readonly id: string }>({
         processId: "process-1",
         plans: [billingPlan, entitlementsPlan, workspacePlan],
         createClient() {
@@ -1786,7 +1786,7 @@ describe("runtime realization Oracle", () => {
     });
 
     expect(() =>
-      createOracleServiceBindingCache<{ readonly id: string }>({
+      createRuntimeServiceBindingCache<{ readonly id: string }>({
         processId: "process-1",
         plans: [workItemsPlan, publicBillingPlan, internalBillingPlan],
         createClient() {
@@ -1805,7 +1805,7 @@ describe("runtime realization Oracle", () => {
       },
       secretToken: "live-database-secret",
     };
-    const access = createOracleResourceAccess([
+    const access = createContainedRuntimeResourceAccess([
       {
         id: "database",
         value: liveDatabaseHandle,
@@ -1919,7 +1919,7 @@ describe("runtime realization Oracle", () => {
       CreateWorkItemPlan,
       SyncWorkItemStepPlan,
     ]);
-    expect(RuntimeFixtureProfile.kind).toBe("runtime.profile");
+    expect(WorkItemsRuntimeProfile.kind).toBe("runtime.profile");
   });
 
   test("deployment handoff rejects widened non-portable runtime values", () => {
@@ -1961,7 +1961,7 @@ describe("runtime realization Oracle", () => {
         portableArtifact: PortableArtifact,
         compiledProcessPlan: {
           ...compiledProcessPlan,
-          runtimeAccess: createOracleResourceAccess([]),
+          runtimeAccess: createContainedRuntimeResourceAccess([]),
         } as unknown as CompiledProcessPlan,
       }),
     ).toThrow("runtimeAccess");

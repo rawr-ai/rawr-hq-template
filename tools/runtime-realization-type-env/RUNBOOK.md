@@ -68,19 +68,34 @@ gt status --short
 bunx nx show project runtime-realization-type-env --json
 ```
 
-Then read, in order:
+Then use this reading path.
+
+Fast path:
 
 1. `tools/runtime-realization-type-env/AGENTS.md`
 2. `tools/runtime-realization-type-env/RUNBOOK.md`
 3. `tools/runtime-realization-type-env/guidance/guardrails-design.md`
 4. `tools/runtime-realization-type-env/guidance/guardrails-lab-plane-topology.md`
 5. `tools/runtime-realization-type-env/evidence/current-lab-state.md`
-6. `tools/runtime-realization-type-env/evidence/AGENTS.md`
-7. `tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md`
-8. `tools/runtime-realization-type-env/evidence/proof-manifest.json`
-9. `tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md`
-10. The relevant phase dossier under `tools/runtime-realization-type-env/phases/`.
-11. The source/test/scenario files for the active focus only.
+
+Task-specific reads:
+
+- Evidence docs or proof/status changes:
+  `tools/runtime-realization-type-env/evidence/AGENTS.md`,
+  `tools/runtime-realization-type-env/evidence/README.md`,
+  `tools/runtime-realization-type-env/evidence/proof-manifest.json`,
+  `tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md`,
+  and the relevant `evidence/systems/**` or `evidence/vendors/**` map.
+- Phase or workstream changes:
+  `tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md`,
+  `tools/runtime-realization-type-env/guidance/workstream-record-overlay.md`,
+  and the relevant phase dossier.
+- Source, test, scenario, fixture, or gate changes: the active files and
+  `bunx nx show project runtime-realization-type-env --json`.
+- Reference Runtime container/setup preparation:
+  `tools/runtime-realization-type-env/phases/phase-four/README.md`,
+  `tools/runtime-realization-type-env/src/reference-runtime/README.md`, and
+  `tools/runtime-realization-type-env/test/reference-runtime/README.md`.
 
 Use Nx for project and target truth. Use source files for local authority. Use Narsil or other code intelligence as evidence discovery when useful, not as architecture authority.
 

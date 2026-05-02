@@ -1,24 +1,24 @@
 import type { ServiceBindingPlan } from "../spine/artifacts";
 
-export interface OracleServiceBindingFactoryInput {
+export interface RuntimeServiceBindingFactoryInput {
   readonly plan: ServiceBindingPlan;
   readonly constructionIdentity: string;
 }
 
-export interface OracleServiceBindingCacheRecord {
+export interface RuntimeServiceBindingCacheRecord {
   readonly kind: "service.binding-cache-record";
   readonly serviceId: string;
   readonly role: string;
   readonly constructionIdentity: string;
 }
 
-export interface OracleServiceBindingCache<TClient = unknown> {
+export interface RuntimeServiceBindingCache<TClient = unknown> {
   readonly kind: "service.binding-cache";
   getOrCreate(plan: ServiceBindingPlan): TClient;
-  records(): readonly OracleServiceBindingCacheRecord[];
+  records(): readonly RuntimeServiceBindingCacheRecord[];
 }
 
-interface OracleServiceBindingCacheEntry<TClient> {
+interface RuntimeServiceBindingCacheEntry<TClient> {
   readonly plan: ServiceBindingPlan;
   readonly constructionIdentity: string;
   readonly client: TClient;
@@ -178,19 +178,19 @@ function validateServiceBindingDependencyGraph(input: {
 }
 
 /**
- * Creates the contained service binding cache used by the Oracle.
+ * Creates the contained service binding cache used by lab runtime tests.
  *
  * The cache accepts only predeclared ServiceBindingPlan values, validates their
  * dependency graph before construction, and materializes dependencies before
  * dependents. That records lifecycle ordering inside this lab without choosing
  * the production service compiler, container, or cross-process cache semantics.
  */
-export function createOracleServiceBindingCache<TClient>(input: {
+export function createRuntimeServiceBindingCache<TClient>(input: {
   readonly processId?: string;
   readonly plans: readonly ServiceBindingPlan[];
-  createClient(factoryInput: OracleServiceBindingFactoryInput): TClient;
-}): OracleServiceBindingCache<TClient> {
-  const byKey = new Map<string, OracleServiceBindingCacheEntry<TClient>>();
+  createClient(factoryInput: RuntimeServiceBindingFactoryInput): TClient;
+}): RuntimeServiceBindingCache<TClient> {
+  const byKey = new Map<string, RuntimeServiceBindingCacheEntry<TClient>>();
   const allowedPlans = new Map<string, ServiceBindingPlan>();
   const byInstance = indexServiceBindingInstances(input.plans);
 
@@ -207,7 +207,7 @@ export function createOracleServiceBindingCache<TClient>(input: {
     byInstance,
   });
 
-  function createEntry(plan: ServiceBindingPlan): OracleServiceBindingCacheEntry<TClient> {
+  function createEntry(plan: ServiceBindingPlan): RuntimeServiceBindingCacheEntry<TClient> {
     const constructionIdentity = serviceBindingConstructionIdentity(
       plan,
       input.processId,
@@ -219,7 +219,7 @@ export function createOracleServiceBindingCache<TClient>(input: {
     };
   }
 
-  // The Oracle cache is the contained simulation-proof point for binding lifecycle
+  // The contained cache is the simulation-proof point for binding lifecycle
   // order: a dependent is materialized only after its declared service-instance
   // prerequisites have construction identities in this process.
   function getOrCreateAllowedPlan(plan: ServiceBindingPlan): TClient {

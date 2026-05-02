@@ -21,7 +21,7 @@ This document may support:
 
 This document cannot prove:
 
-- production runtime passage;
+- Lab-Production Proof;
 - production HTTP or worker lifecycle;
 - durable Inngest scheduling, retry, replay, idempotency, or run history;
 - HyperDX dashboard, query, retention, alerting, or product visibility;

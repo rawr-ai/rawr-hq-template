@@ -15,7 +15,7 @@ import type {
 } from "../spine/artifacts";
 import type { EffectRuntimeAccess } from "./effect-runtime";
 import { runRawrEffectExit } from "./effect-runtime";
-import type { OracleBootgraphModule } from "./bootgraph";
+import type { RuntimeBootgraphModule } from "./bootgraph";
 import {
   redactRuntimeRecordAttributes,
   redactRuntimeRecordValue,
@@ -465,7 +465,7 @@ function validateProviderConfig(input: {
  */
 export function createProviderProvisioningModules(
   input: ProviderProvisioningModulesInput,
-): readonly OracleBootgraphModule<ProviderProvisionedValue>[] {
+): readonly RuntimeBootgraphModule<ProviderProvisionedValue>[] {
   assertProviderDependencyGraphReady(input.providerDependencyGraph);
 
   const effectRuntime = input.effectRuntime ?? defaultEffectRuntime;
@@ -501,7 +501,7 @@ export function createProviderProvisioningModules(
     const configSelection = configFor(input.configs, key);
 
     return {
-      kind: "oracle.boot-module",
+      kind: "runtime.boot-module",
       id: moduleId,
       dependencies,
       metadata: {

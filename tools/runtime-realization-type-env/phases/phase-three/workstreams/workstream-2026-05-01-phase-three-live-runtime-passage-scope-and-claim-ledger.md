@@ -122,7 +122,7 @@ Prior final output accepted or rejected:
   provider/config/Effect, oRPC Fetch, Inngest function/step, telemetry/catalog
   observation, and integrated rehearsal.
 - Rejected: any interpretation that Phase Two proves Lab-Production Proof,
-  production runtime passage, durable async semantics, product HyperDX
+  Reference Runtime passage, durable async semantics, product HyperDX
   observability, RuntimeCatalog persistence, or final Nx/generator ratchet.
 
 Deferred items consumed:

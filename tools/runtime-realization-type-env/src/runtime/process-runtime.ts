@@ -187,7 +187,7 @@ function normalizePolicyResolution(
 /**
  * Resolves the lab policy for an executable boundary. Compiled plan policies are
  * declarative proof inputs only here: timeout/retry policy can be recorded, but
- * this Oracle does not enforce timeout or retry semantics.
+ * this contained runtime substrate does not enforce timeout or retry semantics.
  */
 function resolveRuntimeBoundaryPolicy(
   input: {

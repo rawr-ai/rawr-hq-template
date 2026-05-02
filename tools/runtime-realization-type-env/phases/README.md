@@ -17,6 +17,7 @@ packs, fixtures, tests, and named gates.
 | Phase One | `phase-one/` | Default/pre-Phase-Two research and archive |
 | Phase Two | `phase-two/` | Contained spine-composition proof |
 | Phase Three | `phase-three/` | Contained live-runtime-passage proof |
+| Phase Four | `phase-four/` | Preparation-only Reference Runtime container; phase not opened |
 
 New phases may be added only by an explicit containing-context decision and should use the
 same `phase-<phase-slug>/` dossier shape.
@@ -45,3 +46,4 @@ phase root.
 | Phase One | `phase-one/` | Research/default context material used to ground later proof campaigns |
 | Phase Two | `phase-two/` | Contained spine composition, not Lab-Production Proof |
 | Phase Three | `phase-three/` | Contained live-runtime-passage `simulation-proof`, not Parent-Repo Migration authorization |
+| Phase Four | `phase-four/` | Not opened; Reference Runtime container/setup packet only |

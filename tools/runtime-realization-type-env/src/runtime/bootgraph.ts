@@ -5,7 +5,7 @@ import {
 
 type Awaitable<TValue> = TValue | Promise<TValue>;
 
-export interface OracleBootgraphModuleContext {
+export interface RuntimeBootgraphModuleContext {
   readonly moduleId: string;
   readonly dependencies: readonly string[];
   /**
@@ -16,25 +16,25 @@ export interface OracleBootgraphModuleContext {
   readonly orderIndex: number;
 }
 
-export interface OracleBootgraphModule<TStarted = unknown> {
-  readonly kind: "oracle.boot-module";
+export interface RuntimeBootgraphModule<TStarted = unknown> {
+  readonly kind: "runtime.boot-module";
   readonly id: string;
   readonly dependencies?: readonly string[];
   readonly metadata?: Record<string, unknown>;
-  start(context: OracleBootgraphModuleContext): Awaitable<TStarted>;
+  start(context: RuntimeBootgraphModuleContext): Awaitable<TStarted>;
   finalize?(
     started: TStarted,
-    context: OracleBootgraphModuleContext,
+    context: RuntimeBootgraphModuleContext,
   ): Awaitable<void>;
   rollback?(
     started: TStarted,
-    context: OracleBootgraphModuleContext,
+    context: RuntimeBootgraphModuleContext,
   ): Awaitable<void>;
 }
 
-export type OracleBootgraphExecutionResult =
+export type RuntimeBootgraphExecutionResult =
   | {
-      readonly kind: "oracle.bootgraph-result";
+      readonly kind: "runtime.bootgraph-result";
       readonly status: "started";
       readonly startupOrder: readonly string[];
       /**
@@ -46,7 +46,7 @@ export type OracleBootgraphExecutionResult =
       finalize(): Promise<InMemoryRuntimeCatalog>;
     }
   | {
-      readonly kind: "oracle.bootgraph-result";
+      readonly kind: "runtime.bootgraph-result";
       readonly status: "failed";
       readonly startupOrder: readonly string[];
       readonly rollbackOrder: readonly string[];
@@ -54,16 +54,16 @@ export type OracleBootgraphExecutionResult =
       readonly catalog: InMemoryRuntimeCatalog;
     };
 
-interface StartedOracleBootModule {
-  readonly module: OracleBootgraphModule<any>;
+interface StartedRuntimeBootModule {
+  readonly module: RuntimeBootgraphModule<any>;
   readonly started: unknown;
-  readonly context: OracleBootgraphModuleContext;
+  readonly context: RuntimeBootgraphModuleContext;
 }
 
 function orderModules(
-  modules: readonly OracleBootgraphModule[],
-): readonly OracleBootgraphModule[] {
-  const byId = new Map<string, OracleBootgraphModule>();
+  modules: readonly RuntimeBootgraphModule[],
+): readonly RuntimeBootgraphModule[] {
+  const byId = new Map<string, RuntimeBootgraphModule>();
   for (const module of modules) {
     if (byId.has(module.id)) {
       throw new Error(`duplicate boot module: ${module.id}`);
@@ -71,11 +71,11 @@ function orderModules(
     byId.set(module.id, module);
   }
 
-  const ordered: OracleBootgraphModule[] = [];
+  const ordered: RuntimeBootgraphModule[] = [];
   const visiting = new Set<string>();
   const visited = new Set<string>();
 
-  function visit(module: OracleBootgraphModule): void {
+  function visit(module: RuntimeBootgraphModule): void {
     if (visited.has(module.id)) return;
     if (visiting.has(module.id)) {
       throw new Error(`bootgraph dependency cycle at ${module.id}`);
@@ -108,7 +108,7 @@ function failureMessage(error: unknown): string {
 }
 
 async function releaseStartedModule(
-  entry: StartedOracleBootModule,
+  entry: StartedRuntimeBootModule,
   phase: "boot.rollback" | "boot.finalize",
 ): Promise<void> {
   const release = phase === "boot.rollback"
@@ -119,9 +119,9 @@ async function releaseStartedModule(
   await release(entry.started, entry.context);
 }
 
-export async function executeOracleBootgraph(input: {
-  readonly modules: readonly OracleBootgraphModule[];
-}): Promise<OracleBootgraphExecutionResult> {
+export async function executeRuntimeBootgraph(input: {
+  readonly modules: readonly RuntimeBootgraphModule[];
+}): Promise<RuntimeBootgraphExecutionResult> {
   const ordered = orderModules(input.modules);
   const recorder = createRuntimeObservationRecorder({
     modules: input.modules.map((module) => ({
@@ -130,7 +130,7 @@ export async function executeOracleBootgraph(input: {
       metadata: module.metadata,
     })),
   });
-  const started: StartedOracleBootModule[] = [];
+  const started: StartedRuntimeBootModule[] = [];
   const startedById = new Map<string, unknown>();
   const startupOrder: string[] = [];
 
@@ -145,7 +145,7 @@ export async function executeOracleBootgraph(input: {
         ]),
       ),
       orderIndex,
-    } satisfies OracleBootgraphModuleContext;
+    } satisfies RuntimeBootgraphModuleContext;
 
     startupOrder.push(module.id);
     recorder.record({
@@ -206,7 +206,7 @@ export async function executeOracleBootgraph(input: {
       }
 
       return {
-        kind: "oracle.bootgraph-result",
+        kind: "runtime.bootgraph-result",
         status: "failed",
         startupOrder,
         rollbackOrder,
@@ -219,7 +219,7 @@ export async function executeOracleBootgraph(input: {
   let finalized = false;
 
   return {
-    kind: "oracle.bootgraph-result",
+    kind: "runtime.bootgraph-result",
     status: "started",
     startupOrder,
     startedValues: () => new Map(startedById),

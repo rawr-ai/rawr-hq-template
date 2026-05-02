@@ -1,7 +1,7 @@
 export type RuntimeRecordScalar = string | number | boolean | null;
 
 /**
- * Portable observation payload shape for the contained Oracle.
+ * Portable observation payload shape for contained runtime evidence.
  *
  * Runtime records are allowed to leave the lab only as JSON-like values after
  * redaction. This is not a product telemetry schema and not a guarantee that
@@ -56,7 +56,7 @@ const SENSITIVE_RECORD_KEY =
   /secret|token|password|credential|api[-_]?key|private[-_]?key|handle/i;
 
 /**
- * Redacts oracle observation values before they enter lab records.
+ * Redacts contained runtime observation values before they enter lab records.
  *
  * The policy protects evidence snapshots from common secret keys, live handles,
  * and cycles. It is deliberately narrower than production observability
@@ -133,7 +133,7 @@ export function redactRuntimeRecordAttributes(
  * In-memory recorder for lifecycle and catalog observations inside the lab.
  *
  * Sequence numbers preserve local ordering evidence only. The returned catalog
- * is a snapshot for oracle tests, not runtime persistence, migration
+ * is a snapshot for lab tests, not runtime persistence, migration
  * control-plane storage, or a telemetry exporter.
  */
 export function createRuntimeObservationRecorder(input: {

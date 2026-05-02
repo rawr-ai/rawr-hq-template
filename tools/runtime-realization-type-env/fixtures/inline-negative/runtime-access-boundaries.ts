@@ -1,4 +1,4 @@
-import type { OracleResourceAccess } from "../../src/runtime/runtime-access";
+import type { ContainedRuntimeResourceAccess } from "../../src/runtime/runtime-access";
 import type { ProcessExecutionRuntime } from "../../src/runtime/process-runtime";
 import type { RuntimeBoundaryPolicy } from "../../src/oracle";
 import type { RuntimeAccess } from "../../src/spine/artifacts";
@@ -22,7 +22,7 @@ import {
   SyncWorkItemStepRef,
 } from "../../scenarios/work-items/app-and-plan-artifacts";
 
-declare const access: OracleResourceAccess;
+declare const access: ContainedRuntimeResourceAccess;
 declare const runtimeAccess: RuntimeAccess;
 declare const runtime: ProcessExecutionRuntime;
 declare const boundaryPolicy: RuntimeBoundaryPolicy;
@@ -34,16 +34,16 @@ access.telemetry().event("runtime.resource.accessed");
 access.emitTopology({ kind: "runtime.topology" });
 access.emitDiagnostic({ code: "runtime.diagnostic", message: "diagnostic" });
 
-// @ts-expect-error Oracle access must not expose raw resource maps.
+// @ts-expect-error contained runtime access must not expose raw resource maps.
 access.resources;
 
 // @ts-expect-error runtime access must not expose raw resource maps.
 runtimeAccess.resources;
 
-// @ts-expect-error Oracle access must not expose raw runtime handles.
+// @ts-expect-error contained runtime access must not expose raw runtime handles.
 access.runtime;
 
-// @ts-expect-error Oracle access must not expose unredacted/raw getters.
+// @ts-expect-error contained runtime access must not expose unredacted/raw getters.
 access.getRaw("database");
 
 // @ts-expect-error runtime access does not expose observation readback.

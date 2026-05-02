@@ -21,7 +21,7 @@ control decisions before the next child opens.
 | Field | Value |
 | --- | --- |
 | State | Phase Three closed. Child 1 is closed as scope/claim-ledger coordination. Child 2 is closed as contained `simulation-proof`. Child 3 is closed as ledger-only coordination. Child 4 is closed as contained `simulation-proof`. Child 5 is closed as contained `simulation-proof`. Child 6 is closed as contained `simulation-proof`. Child 7 is closed as contained integrated live-passage `simulation-proof` plus program closeout. |
-| Allowed next action | Open the next program from the child-7 next-program packet: externality/design residual scoping before final structure/Nx/generator ratchet or Parent-Repo Migration. |
+| Allowed next action | Run the bounded Phase Four container/setup adjustment that normalizes active packets around the Reference Runtime attractor. Open full Phase Four only after an explicit control decision. |
 | Blocked actions | Parent-Repo Migration, final Nx/generator ratchet, or proof promotion beyond earned lab category. |
 | Opening control input | User approved implementation of the Phase Three DRA mission workflow on 2026-05-01. |
 | Child 1 control decision | DRA accepted the started process assembly plus stop/finalization passage as the first executable proof slice. |
@@ -40,7 +40,7 @@ Objective:
 - Define Phase Three as the recursive program for live-runtime-passage
   investigation inside the contained Runtime Realization Lab.
 - Preserve the Phase Two boundary correction: Phase Two proved contained spine
-  composition, not Lab-Production Proof or live production runtime passage.
+  composition, not Lab-Production Proof or Reference Runtime passage.
 - Establish the program-level boundaries, proof target, child-workstream loop,
   artifact flow, verification layers, review lanes, escalation rules, and
   closeout criteria needed to keep the work moving without dropping context.
@@ -237,7 +237,7 @@ Prior final output rejected or narrowed:
 
 Deferred items consumed:
 
-- Production runtime passage.
+- Lab-Production Proof.
 - Elysia/HTTP host lifecycle.
 - Inngest durable semantics and worker lifecycle.
 - HyperDX/product observability and query policy.
@@ -935,23 +935,26 @@ Current focus after child-7 closeout:
 
 ## Next-Program Packet
 
-Next likely program:
+Next likely adjustment:
 
-- Externality/design residual scoping before final structure/Nx/generator
-  ratchet or Parent-Repo Migration.
+- Bounded Phase Four container/setup around the Reference Runtime attractor,
+  before full Phase Four opens and before any final Nx/generator ratchet or
+  Parent-Repo Migration.
 
 Why this is next:
 
-- Phase Three has now proven the contained live-runtime-passage category as far
-  as the lab can honestly take it without production/repo risk.
-- The remaining uncertainty is mostly externality/design and Parent-Repo
-  Migration-only:
+- Phase Three has now proven the contained Oracle live-runtime-passage category
+  as far as Oracle rehearsal can honestly take it.
+- The next move must lower into the Reference Runtime as the Lab-Production
+  Proof attractor, not repeat a broader Oracle rehearsal or jump to
+  Parent-Repo Migration.
+- The remaining uncertainty becomes setup constraints for Phase Four:
   durable async semantics, product observability, RuntimeCatalog/control-plane
   persistence/topology, production host lifecycle, public API/DX law, production
   config/secrets policy, and final structure/Nx/generator ratchet sequencing.
-- The next program should decide which of those residuals must be resolved
-  before the final Reference Runtime Nx/generator ratchet and before
-  Parent-Repo Migration.
+- The container/setup adjustment should clarify the phase packet, naming,
+  topology guards, scenario language, and Reference Runtime directory surface
+  without opening the full Phase Four proof program.
 
 Required continuation reads:
 
@@ -959,6 +962,9 @@ Must read before opening the next program:
 
 - This program workstream document.
 - `workstream-2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md`
+- `workstream-2026-05-01-phase-three-phase-four-container-adjustment.md`
+- `tools/runtime-realization-type-env/phases/phase-four/README.md`
+- `tools/runtime-realization-type-env/guidance/guardrails-lab-plane-topology.md`
 - `workstream-2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md`
 - `workstream-2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md`
 - `ref-2026-05-01-phase-three-started-passage-vendor-integration-reference.md`

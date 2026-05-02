@@ -24,6 +24,7 @@ The proof ledger remains `proof-manifest.json`. This file mirrors
 | Current experiment ID | `phase-three.closed-integrated-live-passage` |
 | Strongest earned claim | One contained Oracle live-passage envelope across derived/compiled spine, provider lifecycle, Elysia/Bun listener, oRPC Fetch, contained Inngest step passage, telemetry projection, control-plane packet, and stop/finalization |
 | Proof ceiling | `simulation-proof` and migration-decision evidence only |
+| Current materialization | Shared runtime, Oracle, scenarios, and current tests exist; Reference Runtime source/test/gate do not exist beyond README-level scaffolds |
 | Next evidence entrypoint | `systems/README.md`, `vendors/README.md`, `runtime-spine-verification-diagnostic.md` |
 
 ## Current State
@@ -45,6 +46,11 @@ The Lab still does not prove durable Inngest semantics, live HyperDX product
 visibility, RuntimeCatalog persistence, production-shaped control-plane
 topology, final public API/DX law, config/secret-store policy, or final
 structure/Nx/generator ratchet.
+
+Phase Four is not open. The Reference Runtime plane is named/reserved and may
+have README-level scaffolding only; there is no Reference Runtime source,
+Reference Runtime test suite, Reference Runtime gate, Lab-Production Proof
+claim, package surface, Nx target, or generator ratchet.
 
 ## Current Manifest Experiment
 

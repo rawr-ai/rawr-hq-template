@@ -11,13 +11,13 @@ import {
   createDeploymentRuntimeHandoff,
   createExecutionRegistry,
   createMigrationControlPlaneObservationPacket,
-  createOracleResourceAccess,
+  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
   createRuntimeBoundaryPolicy,
   createRuntimeObservationRecorder,
-  executeOracleBootgraph,
+  executeRuntimeBootgraph,
   exportRuntimeTelemetryOtlpTraces,
   mountOracleAsyncHarness,
   mountOracleServerHarness,
@@ -26,7 +26,7 @@ import {
   projectRuntimeCatalogToTelemetryRecords,
   projectRuntimeEventsToTelemetryRecords,
   providerBootResourceModuleId,
-  type OracleResourceDefinition,
+  type ContainedRuntimeResourceDefinition,
   type ProviderProvisionedValue,
   type RuntimeInngestAsyncStepResponse,
   type RuntimeOrpcServerResponse,
@@ -50,7 +50,7 @@ import {
 } from "../../../scenarios/work-items/app-and-plan-artifacts";
 import {
   EmailProvider,
-  RuntimeFixtureProfile,
+  WorkItemsRuntimeProfile,
 } from "../../../scenarios/work-items/resource-provider-profile";
 import { WorkItemsServerApiPlugin } from "../../../scenarios/work-items/server-api-plugin";
 import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
@@ -106,7 +106,7 @@ function deriveAndCompileSpine(): RuntimeSpineCompilation {
     deriveRuntimeSpine({
       kind: "runtime.spine-derivation-input",
       appId: "hq",
-      profile: RuntimeFixtureProfile,
+      profile: WorkItemsRuntimeProfile,
       executions: [
         {
           kind: "runtime.execution-derivation-input",
@@ -244,7 +244,7 @@ function createClients(): ConstructionBoundServiceClients<
 
 function providerResourcesFromStartedValues(
   startedValues: ReadonlyMap<string, unknown>,
-): readonly OracleResourceDefinition[] {
+): readonly ContainedRuntimeResourceDefinition[] {
   return [...startedValues.values()].flatMap((started) => {
     const providerValue = started as ProviderProvisionedValue | undefined;
     if (!providerValue || providerValue.kind !== "provider.provisioned-value") {
@@ -276,7 +276,7 @@ function workflowDispatcher(): WorkflowDispatcher {
 }
 
 function createServerInvocationContext(
-  resources: readonly OracleResourceDefinition[],
+  resources: readonly ContainedRuntimeResourceDefinition[],
 ) {
   return (request: { readonly input: unknown; readonly requestId?: string }) => ({
     input: request.input,
@@ -287,7 +287,7 @@ function createServerInvocationContext(
         },
       },
       clients: createClients(),
-      resources: createOracleResourceAccess(resources),
+      resources: createContainedRuntimeResourceAccess(resources),
       workflows: workflowDispatcher(),
     },
     telemetry: {
@@ -301,7 +301,7 @@ function createServerInvocationContext(
 }
 
 function createAsyncInvocationContext(
-  resources: readonly OracleResourceDefinition[],
+  resources: readonly ContainedRuntimeResourceDefinition[],
 ) {
   return (event: { readonly name: string; readonly data: unknown }) => ({
     event: {
@@ -313,7 +313,7 @@ function createAsyncInvocationContext(
         invocation: { traceId: "trace-integrated-rehearsal" },
       }),
     },
-    resources: createOracleResourceAccess(resources),
+    resources: createContainedRuntimeResourceAccess(resources),
     workflows: workflowDispatcher(),
     telemetry: {
       event() {},
@@ -393,8 +393,8 @@ describe("phase two integrated runtime-spine rehearsal", () => {
     }
 
     const providerModules = createProviderProvisioningModules({
-      profileId: RuntimeFixtureProfile.id,
-      providerSelections: RuntimeFixtureProfile.providerSelections,
+      profileId: WorkItemsRuntimeProfile.id,
+      providerSelections: WorkItemsRuntimeProfile.providerSelections,
       providerDependencyGraph: compilation.providerDependencyGraph,
       processId: "phase-two-integrated-process",
       trace: providerTrace,
@@ -417,7 +417,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
         });
       },
     });
-    const providerResult = await executeOracleBootgraph({ modules: providerModules });
+    const providerResult = await executeRuntimeBootgraph({ modules: providerModules });
     expect(providerResult.status).toBe("started");
     if (providerResult.status !== "started") throw providerResult.error;
 
@@ -665,7 +665,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
       ],
     });
     const trace = createProviderProvisioningTrace();
-    const providerFailure = await executeOracleBootgraph({
+    const providerFailure = await executeRuntimeBootgraph({
       modules: createProviderProvisioningModules({
         profileId: profile.id,
         providerSelections: profile.providerSelections,

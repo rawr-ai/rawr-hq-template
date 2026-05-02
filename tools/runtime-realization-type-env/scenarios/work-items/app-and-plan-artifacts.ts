@@ -6,7 +6,7 @@ import type {
   PortableRuntimePlanArtifact,
   ServerRouteDescriptor,
 } from "@rawr/sdk/spine";
-import { RuntimeFixtureProfile } from "./resource-provider-profile";
+import { WorkItemsRuntimeProfile } from "./resource-provider-profile";
 import { WorkItemsServerApiPlugin } from "./server-api-plugin";
 import { SyncWorkItemStep, WorkItemsAsyncPlugin } from "./async-workflow";
 
@@ -121,11 +121,11 @@ export const PortableArtifact = {
   diagnostics: [],
 } as const satisfies PortableRuntimePlanArtifact;
 
-export const FixtureApp = defineApp({
+export const WorkItemsApp = defineApp({
   kind: "rawr.app",
   id: "hq",
-  profile: RuntimeFixtureProfile,
+  profile: WorkItemsRuntimeProfile,
   plugins: [WorkItemsServerApiPlugin, WorkItemsAsyncPlugin],
 });
 
-export const StartedFixtureApp = startApp(FixtureApp);
+export const StartedWorkItemsApp = startApp(WorkItemsApp);

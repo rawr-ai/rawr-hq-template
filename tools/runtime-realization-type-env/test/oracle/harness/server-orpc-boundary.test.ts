@@ -5,7 +5,7 @@ import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
 import {
   createExecutionDescriptorTable,
   createExecutionRegistry,
-  createOracleResourceAccess,
+  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   mountOracleServerHarness,
   mountRuntimeOrpcServerBoundary,
@@ -36,7 +36,7 @@ function createClients(): ConstructionBoundServiceClients<
             get(request) {
               return Effect.succeed({
                 id: request.id,
-                title: "Fixture item",
+                title: "Work item",
                 status: "open",
               } satisfies WorkItem);
             },
@@ -77,7 +77,7 @@ function createInvocationContext(request: {
         },
       },
       clients: createClients(),
-      resources: createOracleResourceAccess([
+      resources: createContainedRuntimeResourceAccess([
         {
           id: "request-scoped-store",
           value: {

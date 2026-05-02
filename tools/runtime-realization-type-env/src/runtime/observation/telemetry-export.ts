@@ -12,7 +12,7 @@ export interface RuntimeTelemetryEventLike {
 }
 
 /**
- * Normalized lab telemetry record after the oracle redaction boundary.
+ * Normalized lab telemetry record after the contained runtime redaction boundary.
  *
  * Sequence/source/run identity make exported traces reproducible for review,
  * but this record is not catalog storage or production observability policy.
@@ -148,7 +148,7 @@ export type RuntimeTelemetryOtlpExportResult =
  * Explicit export envelope for a prepared lab payload.
  *
  * Header/fetch injection supports local harnesses without making network
- * telemetry part of oracle execution.
+ * telemetry part of runtime execution.
  */
 export interface RuntimeTelemetryOtlpExportInput {
   readonly endpoint: string;
@@ -158,7 +158,7 @@ export interface RuntimeTelemetryOtlpExportInput {
 }
 
 /**
- * Projects already-redacted oracle events into a lab telemetry stream.
+ * Projects already-redacted runtime events into a lab telemetry stream.
  *
  * This is the copy/paste seam for future runtime telemetry: it preserves useful
  * lifecycle identity while keeping export separate from the execution path. It

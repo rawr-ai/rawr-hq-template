@@ -41,6 +41,18 @@ route by the strongest ownership rule:
 | Reference Runtime | `src/reference-runtime/**`, `test/reference-runtime/**` | Future contained runtime-in-a-folder: app, service, provider resource, Elysia/oRPC request, Inngest step passage, telemetry/control-plane observation, stop/finalization behavior. | Oracle-only fake hosts, parent repo migration, package exports, deployment topology changes outside the Lab. | Lab-Production Proof only after honest Reference Runtime gates exist and pass. |
 | Scenario packs | `scenarios/**` | Business capability examples consumed by Reference Runtime and selectively by Oracle/conformance tests. | Harness helpers, runtime implementation, generic low-level fixtures. | Scenario evidence only; proof strength comes from the test lane that consumes it. |
 
+## Current Materialization
+
+The current Lab materializes a lab-contained semantic mirror of the runtime
+spine. It is useful for proving internal laws and migration-decision evidence,
+but it is not the final Nx/package/generator topology and must not be treated
+as a parent repo package layout.
+
+The Reference Runtime plane is named and reserved. Until Phase Four is
+explicitly opened, `src/reference-runtime/**` and `test/reference-runtime/**`
+are README-seeded containers only. They contain no runtime source, no tests, no
+gate, and no Lab-Production Proof claim.
+
 ## Source Plane Boundaries
 
 Shared source is the candidate reusable material that Oracle and the Reference
@@ -83,6 +95,10 @@ as regression substrate and copy/adaptation evidence.
 Reference Runtime is the future production-shaped contained runtime plane. It
 should be built when the program opens a bounded proof campaign for
 Lab-Production Proof.
+
+Today it is only reserved and README-seeded. Do not add implementation, tests,
+or Nx/package/generator ratchets until Phase Four opens with a named proof
+slice.
 
 The first honest Reference Runtime gate should exercise one narrow live flow:
 
