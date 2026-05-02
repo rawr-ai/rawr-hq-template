@@ -166,6 +166,7 @@ export async function syncSkillDirWithConflictPolicy(input: {
 
     if (!options.dryRun) {
       await options.undoCapture?.captureWriteTarget(destDir);
+      await options.resources.files.removePath(destDir, { recursive: true });
       await options.resources.files.ensureDir(destDir);
       await options.resources.files.copyDirTree(srcDir, destDir);
     }

@@ -22,10 +22,9 @@ import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../..
 import { loadCodexRegistry, type CodexRegistryFile } from "../../shared/repositories/codex-registry-repository";
 import {
   readClaudeSyncManifest,
-  type ClaudeMarketplaceFile,
-  type ClaudeManagedPluginManifest,
 } from "../../shared/repositories/claude-marketplace-repository";
-import { deletePathIfPresent, writeJsonWithUndoCapture } from "./helpers/filesystem-actions";
+import { applyClaudeRetirement } from "./helpers/apply-claude-retirement";
+import { applyCodexRetirement } from "./helpers/apply-codex-retirement";
 import { MANAGED_BY, pluginMatchesScope } from "./helpers/managed-source";
 
 function toStringArray(value: unknown): string[] {
@@ -94,98 +93,17 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
         last_synced: new Date().toISOString(),
       };
 
-      for (const entry of stale) {
-        stalePlugins.push({ agent: "codex", home: codexHome, plugin: entry.pluginName });
-
-        for (const prompt of entry.prompts) {
-          const target = resources.path.join(codexHome, "prompts", `${prompt}.md`);
-          const action = await deletePathIfPresent({
-            dryRun: input.dryRun,
-            target,
-            undoCapture,
-            resources,
-          });
-          actions.push({
-            agent: "codex",
-            home: codexHome,
-            plugin: entry.pluginName,
-            target,
-            action,
-            message: "retire stale prompt",
-          });
-        }
-
-        for (const skill of entry.skills) {
-          const target = resources.path.join(codexHome, "skills", skill);
-          const action = await deletePathIfPresent({
-            dryRun: input.dryRun,
-            target,
-            recursive: true,
-            undoCapture,
-            resources,
-          });
-          actions.push({
-            agent: "codex",
-            home: codexHome,
-            plugin: entry.pluginName,
-            target,
-            action,
-            message: "retire stale skill",
-          });
-        }
-
-        for (const script of entry.scripts) {
-          const target = resources.path.join(codexHome, "scripts", script);
-          const action = await deletePathIfPresent({
-            dryRun: input.dryRun,
-            target,
-            undoCapture,
-            resources,
-          });
-          actions.push({
-            agent: "codex",
-            home: codexHome,
-            plugin: entry.pluginName,
-            target,
-            action,
-            message: "retire stale script",
-          });
-        }
-
-        for (const agent of entry.agents) {
-          const target = resources.path.join(codexHome, "agents", `${agent}.toml`);
-          const action = await deletePathIfPresent({
-            dryRun: input.dryRun,
-            target,
-            undoCapture,
-            resources,
-          });
-          actions.push({
-            agent: "codex",
-            home: codexHome,
-            plugin: entry.pluginName,
-            target,
-            action,
-            message: "retire stale agent",
-          });
-        }
-      }
-
-      const registryAction = await writeJsonWithUndoCapture({
+      const applied = await applyCodexRetirement({
         dryRun: input.dryRun,
-        target: registryPath,
-        data: nextRegistry,
+        codexHome,
+        registryPath,
+        nextRegistry,
+        stale,
         undoCapture,
         resources,
       });
-      actions.push({
-        agent: "codex",
-        home: codexHome,
-        plugin: "*",
-        target: registryPath,
-        action: registryAction,
-        message: `removed stale managed registry entries: ${staleNames.join(", ")}`,
-      });
+      actions.push(...applied.actions);
+      stalePlugins.push(...applied.stalePlugins);
     } catch (err) {
       ok = false;
       actions.push({
@@ -205,7 +123,6 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
 
     try {
       const dirents = await resources.files.readDir(pluginsRoot);
-      const staleNames = new Set<string>();
       const stale: Array<{ pluginName: string; dirName: string; target: string }> = [];
 
       for (const dirent of dirents) {
@@ -225,7 +142,6 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
           scope,
         })) continue;
 
-        staleNames.add(pluginName);
         stale.push({
           pluginName,
           dirName: dirent.name,
@@ -233,50 +149,15 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
         });
       }
 
-      for (const entry of stale) {
-        stalePlugins.push({ agent: "claude", home: claudeHome, plugin: entry.pluginName });
-        const action = await deletePathIfPresent({
-          dryRun: input.dryRun,
-          target: entry.target,
-          recursive: true,
-          undoCapture,
-          resources,
-        });
-        actions.push({
-          agent: "claude",
-          home: claudeHome,
-          plugin: entry.pluginName,
-          target: entry.target,
-          action,
-          message: "retire stale plugin directory",
-        });
-      }
-
-      if (staleNames.size === 0) continue;
-
-      const marketplace = await resources.files.readJsonFile<ClaudeMarketplaceFile>(marketplacePath);
-      if (!marketplace || !Array.isArray(marketplace.plugins)) continue;
-
-      const nextPlugins = marketplace.plugins.filter(
-        (plugin) => !(typeof plugin?.name === "string" && staleNames.has(plugin.name)),
-      );
-      if (nextPlugins.length === marketplace.plugins.length) continue;
-
-      const marketplaceAction = await writeJsonWithUndoCapture({
+      const applied = await applyClaudeRetirement({
         dryRun: input.dryRun,
-        target: marketplacePath,
-        data: { ...marketplace, plugins: nextPlugins },
+        claudeHome,
+        stale,
         undoCapture,
         resources,
       });
-      actions.push({
-        agent: "claude",
-        home: claudeHome,
-        plugin: "*",
-        target: marketplacePath,
-        action: marketplaceAction,
-        message: `removed stale managed marketplace entries: ${[...staleNames].join(", ")}`,
-      });
+      actions.push(...applied.actions);
+      stalePlugins.push(...applied.stalePlugins);
     } catch (err) {
       ok = false;
       actions.push({

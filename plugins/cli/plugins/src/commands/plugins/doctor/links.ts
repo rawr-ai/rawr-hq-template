@@ -7,7 +7,8 @@ import {
   reconcileWorkspaceInstallLinks,
   runtimePluginSnapshot,
 } from "../../../lib/plugin-install-service";
-import { findWorkspaceRoot } from "@rawr/core";
+import { resolveSourceWorkspaceSelection } from "../../../lib/agent-config-sync";
+import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
 
 /**
  * Diagnoses and optionally repairs local oclif command-plugin link drift.
@@ -28,6 +29,9 @@ export default class PluginsDoctorLinks extends RawrCommand {
       description: "Return zero exit code even when drift remains",
       default: false,
     }),
+    "source-workspace": Flags.string({
+      description: "RAWR workspace to use as the install/link source of truth",
+    }),
   } as const;
 
   async run() {
@@ -37,15 +41,16 @@ export default class PluginsDoctorLinks extends RawrCommand {
     const noFail = Boolean((flags as any)["no-fail"]);
 
     try {
-      const workspaceRoot = await findWorkspaceRoot(process.cwd());
-      if (!workspaceRoot) {
-        const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)", {
-          code: "WORKSPACE_ROOT_MISSING",
-        });
-        this.outputResult(result, { flags: baseFlags });
-        this.exit(2);
-        return;
-      }
+      const cwd = process.cwd();
+      const invocationLayered = await loadLayeredRawrConfigForCwd(cwd);
+      const sourceWorkspace = await resolveSourceWorkspaceSelection({
+        cwd,
+        sourceWorkspaceFlag: (flags as any)["source-workspace"] as string | undefined,
+        config: invocationLayered.config ?? undefined,
+        configWorkspacePath: invocationLayered.workspacePath,
+        configGlobalPath: invocationLayered.globalPath,
+      });
+      const workspaceRoot = sourceWorkspace.sourceWorkspaceRoot;
 
       const runtimePlugins = runtimePluginSnapshot(this.config.plugins);
       let report = await assessPluginInstallState({

@@ -40,6 +40,16 @@ function normalizeInclude(input: unknown): NormalizedPluginContentInclude {
   };
 }
 
+function normalizeIncludeOverlay(input: unknown): Partial<NormalizedPluginContentInclude> {
+  const record = asRecord(input) ?? {};
+  return {
+    ...(typeof record.workflows === "boolean" ? { workflows: record.workflows } : {}),
+    ...(typeof record.skills === "boolean" ? { skills: record.skills } : {}),
+    ...(typeof record.scripts === "boolean" ? { scripts: record.scripts } : {}),
+    ...(typeof record.agents === "boolean" ? { agents: record.agents } : {}),
+  };
+}
+
 /**
  * Resolves plugin-content paths relative to the source plugin package.
  */
@@ -104,8 +114,8 @@ export async function resolvePluginContentLayout(input: {
       }),
     },
     includeByProvider: {
-      codex: { ...baseInclude, ...normalizeInclude(manifest?.providers?.codex?.include) },
-      claude: { ...baseInclude, ...normalizeInclude(manifest?.providers?.claude?.include) },
+      codex: { ...baseInclude, ...normalizeIncludeOverlay(manifest?.providers?.codex?.include) },
+      claude: { ...baseInclude, ...normalizeIncludeOverlay(manifest?.providers?.claude?.include) },
     },
     manifest,
   };

@@ -3,11 +3,11 @@ import {
   assessWorkspaceSync,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncAssessInput,
+  resolveSourceWorkspaceSelection,
   type SyncScope,
 } from "../../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
-import { findWorkspaceRoot } from "@rawr/core";
 
 /**
  * Reports destination drift by asking agent-config-sync to assess source plugins
@@ -22,6 +22,9 @@ export default class PluginsSyncDrift extends RawrCommand {
     "include-oclif": Flags.boolean({
       description: "Include installed/linked oclif plugins as sync sources",
       default: true,
+    }),
+    "source-workspace": Flags.string({
+      description: "RAWR workspace to scan as the source of sync truth",
     }),
     "include-metadata": Flags.boolean({
       description: "Count metadata upserts (registry/manifest updates) as drift",
@@ -63,23 +66,28 @@ export default class PluginsSyncDrift extends RawrCommand {
 
     try {
       const cwd = process.cwd();
-      const layered = await loadLayeredRawrConfigForCwd(process.cwd());
-      const includeOclif = Boolean((flags as any)["include-oclif"]);
+      const invocationLayered = await loadLayeredRawrConfigForCwd(cwd);
+      const sourceWorkspace = await resolveSourceWorkspaceSelection({
+        cwd,
+        sourceWorkspaceFlag: (flags as any)["source-workspace"] as string | undefined,
+        config: invocationLayered.config ?? undefined,
+        configWorkspacePath: invocationLayered.workspacePath,
+        configGlobalPath: invocationLayered.globalPath,
+      });
+      const workspaceRoot = sourceWorkspace.sourceWorkspaceRoot;
+      const layered = sourceWorkspace.external
+        ? await loadLayeredRawrConfigForCwd(workspaceRoot)
+        : invocationLayered;
+      const includeOclif = Boolean((flags as any)["include-oclif"]) && !sourceWorkspace.external;
       const includeMetadata = Boolean((flags as any)["include-metadata"]);
       const includeItems = Boolean((flags as any)["include-items"]);
       const failOnDrift = Boolean((flags as any)["fail-on-drift"]);
       const scope = String((flags as any).scope) as SyncScope;
-      const workspaceRoot = await findWorkspaceRoot(cwd);
-      if (!workspaceRoot) {
-        const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)", { code: "WORKSPACE_ROOT_MISSING" });
-        this.outputResult(result, { flags: baseFlags });
-        this.exit(2);
-        return;
-      }
       const assessment = await assessWorkspaceSync({
         repoRoot: workspaceRoot,
         request: createWorkspaceSyncAssessInput({
-          cwd,
+          cwd: workspaceRoot,
+          workspaceRoot,
           sourcePaths: collectWorkspaceSourcePaths({
             config: layered.config ?? undefined,
             includeOclif,

@@ -8,6 +8,7 @@ type CodexStalePlugin = {
   prompts: string[];
   skills: string[];
   scripts: string[];
+  agents: string[];
 };
 
 export async function applyCodexRetirement(input: {
@@ -78,6 +79,24 @@ export async function applyCodexRetirement(input: {
         target,
         action,
         message: "retire stale script",
+      });
+    }
+
+    for (const agent of entry.agents) {
+      const target = input.resources.path.join(input.codexHome, "agents", `${agent}.toml`);
+      const action = await deletePathIfPresent({
+        dryRun: input.dryRun,
+        target,
+        undoCapture: input.undoCapture,
+        resources: input.resources,
+      });
+      actions.push({
+        agent: "codex",
+        home: input.codexHome,
+        plugin: entry.pluginName,
+        target,
+        action,
+        message: "retire stale agent",
       });
     }
   }

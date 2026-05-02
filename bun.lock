@@ -122,6 +122,18 @@
         "vitest": "^4.0.18",
       },
     },
+    "packages/agent-config-sync-node": {
+      "name": "@rawr/agent-config-sync-node",
+      "dependencies": {
+        "@rawr/agent-config-sync": "workspace:*",
+        "yazl": "^3.3.1",
+      },
+      "devDependencies": {
+        "@types/node": "^22.14.0",
+        "@types/yazl": "^3.2.6",
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/bootgraph": {
       "name": "@rawr/bootgraph",
       "devDependencies": {
@@ -233,14 +245,13 @@
       "dependencies": {
         "@oclif/core": "^4.8.0",
         "@rawr/agent-config-sync": "workspace:*",
+        "@rawr/agent-config-sync-node": "workspace:*",
         "@rawr/core": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
         "yaml": "^2.8.1",
-        "yazl": "^3.3.1",
       },
       "devDependencies": {
         "@types/node": "^22.14.0",
-        "@types/yazl": "^3.2.6",
         "typescript": "^5.9.3",
       },
     },
@@ -1017,6 +1028,8 @@
     "@radix-ui/rect": ["@radix-ui/rect@1.1.1", "", {}, "sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw=="],
 
     "@rawr/agent-config-sync": ["@rawr/agent-config-sync@workspace:services/agent-config-sync"],
+
+    "@rawr/agent-config-sync-node": ["@rawr/agent-config-sync-node@workspace:packages/agent-config-sync-node"],
 
     "@rawr/bootgraph": ["@rawr/bootgraph@workspace:packages/bootgraph"],
 

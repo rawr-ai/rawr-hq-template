@@ -4,8 +4,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach } from "vitest";
 import { describe, expect, it } from "vitest";
-import { packageCodexPlugin } from "../src/lib/agent-config-sync-resources/codex-package";
-import { packageCoworkPlugin } from "../src/lib/agent-config-sync-resources/cowork-package";
+import {
+  collectWorkspaceSourcePaths,
+  createWorkspaceSyncPlanInput,
+  resolveSourceWorkspaceSelection,
+} from "../src/lib/agent-config-sync";
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const tempDirs: string[] = [];
@@ -25,100 +28,117 @@ describe("@rawr/plugin-plugins", () => {
     expect(commandSource).not.toContain("inferTypeFromPath");
   });
 
-  it("builds Codex plugin package artifacts with skills only", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "plugin-plugins-codex-package-"));
+  it("selects an external source workspace without treating sync.sources.paths as workspace authority", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "plugin-plugins-source-workspace-"));
     tempDirs.push(root);
-    const pluginRoot = path.join(root, "plugin-demo");
-    const skillRoot = path.join(pluginRoot, "skills", "demo-skill");
-    await fs.mkdir(skillRoot, { recursive: true });
-    await fs.writeFile(path.join(skillRoot, "SKILL.md"), "# Demo Skill\n", "utf8");
-    const outDir = path.join(root, "dist");
+    const invocationRoot = path.join(root, "template");
+    const sourceRoot = path.join(root, "personal");
+    await Promise.all([
+      fs.mkdir(path.join(invocationRoot, "plugins"), { recursive: true }),
+      fs.mkdir(path.join(sourceRoot, "plugins"), { recursive: true }),
+    ]);
+    await fs.writeFile(path.join(invocationRoot, "package.json"), JSON.stringify({ name: "template" }), "utf8");
+    await fs.writeFile(path.join(sourceRoot, "package.json"), JSON.stringify({ name: "personal" }), "utf8");
 
-    const result = await packageCodexPlugin({
-      sourcePlugin: {
-        ref: "plugin-demo",
-        absPath: pluginRoot,
-        dirName: "plugin-demo",
-        packageName: "@rawr/plugin-demo",
-        version: "1.2.3",
-        description: "Demo plugin",
+    const selected = await resolveSourceWorkspaceSelection({
+      cwd: invocationRoot,
+      sourceWorkspaceFlag: sourceRoot,
+      config: {
+        sync: {
+          sources: { paths: ["plugins/agents/extra"] },
+        },
       },
-      content: {
-        workflowFiles: [],
-        skills: [{ name: "demo-skill", absPath: skillRoot }],
-        scripts: [],
-        agentFiles: [{ name: "researcher", absPath: path.join(pluginRoot, "agents", "researcher.md") }],
-      },
-      outDirAbs: outDir,
-      dryRun: false,
+      configWorkspacePath: path.join(invocationRoot, ".rawr", "config.json"),
     });
 
-    expect(result).toMatchObject({
-      plugin: "plugin-demo",
-      action: "written",
-      skillCount: 1,
+    expect(selected).toMatchObject({
+      invocationWorkspaceRoot: invocationRoot,
+      sourceWorkspaceRoot: sourceRoot,
+      external: true,
+      selectedBy: "flag",
     });
-    const manifest = JSON.parse(await fs.readFile(path.join(outDir, "plugin-demo", ".codex-plugin", "plugin.json"), "utf8"));
-    expect(manifest).toEqual({
-      name: "plugin-demo",
-      version: "1.2.3",
-      description: "Demo plugin",
-      skills: "./skills/",
+    expect(collectWorkspaceSourcePaths({
+      config: {
+        sync: {
+          sources: { paths: ["plugins/agents/extra"] },
+        },
+      },
+      includeOclif: false,
+      configPlugins: new Map(),
+    })).toEqual(["plugins/agents/extra"]);
+
+    const request = createWorkspaceSyncPlanInput({
+      cwd: sourceRoot,
+      workspaceRoot: sourceRoot,
+      sourcePaths: ["plugins/agents/extra"],
+      includeMetadata: true,
+      scope: "all",
+      agent: "all",
+      codexHomes: [],
+      claudeHomes: [],
+      fullSyncPolicy: {
+        agent: "all",
+        scope: "all",
+        coworkEnabled: true,
+        claudeInstallEnabled: true,
+        claudeEnableEnabled: true,
+        installReconcileEnabled: true,
+        retireOrphansEnabled: true,
+        force: true,
+        gc: true,
+        allowPartial: false,
+      },
     });
-    await expect(fs.readFile(path.join(outDir, "plugin-demo", "skills", "demo-skill", "SKILL.md"), "utf8")).resolves.toBe("# Demo Skill\n");
-    await expect(fs.stat(path.join(outDir, "plugin-demo", "agents"))).rejects.toThrow();
+    expect(request.workspaceRoot).toBe(sourceRoot);
+    expect(request.sourcePaths).toEqual(["plugins/agents/extra"]);
   });
 
-  it("reports Cowork ZIP validation details and manifest summary", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "plugin-plugins-cowork-package-"));
+  it("resolves config source workspace relative to the config file and lets flags win", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "plugin-plugins-source-config-"));
     tempDirs.push(root);
-    const pluginRoot = path.join(root, "plugin-demo");
-    const workflowPath = path.join(pluginRoot, "workflows", "hello.md");
-    const skillRoot = path.join(pluginRoot, "skills", "demo-skill");
-    const scriptPath = path.join(pluginRoot, "scripts", "demo.sh");
-    const agentPath = path.join(pluginRoot, "agents", "researcher.md");
+    const invocationRoot = path.join(root, "template");
+    const globalConfigDir = path.join(root, "config");
+    const configSourceRoot = path.join(root, "personal-from-config");
+    const flagSourceRoot = path.join(root, "personal-from-flag");
     await Promise.all([
-      fs.mkdir(path.dirname(workflowPath), { recursive: true }),
-      fs.mkdir(skillRoot, { recursive: true }),
-      fs.mkdir(path.dirname(scriptPath), { recursive: true }),
-      fs.mkdir(path.dirname(agentPath), { recursive: true }),
+      fs.mkdir(path.join(invocationRoot, "plugins"), { recursive: true }),
+      fs.mkdir(path.join(globalConfigDir), { recursive: true }),
+      fs.mkdir(path.join(configSourceRoot, "plugins"), { recursive: true }),
+      fs.mkdir(path.join(flagSourceRoot, "plugins"), { recursive: true }),
     ]);
-    await fs.writeFile(workflowPath, "# hello\n", "utf8");
-    await fs.writeFile(path.join(skillRoot, "SKILL.md"), "# Demo Skill\n", "utf8");
-    await fs.writeFile(scriptPath, "echo demo\n", "utf8");
-    await fs.writeFile(agentPath, "# Researcher\n", "utf8");
+    await fs.writeFile(path.join(invocationRoot, "package.json"), JSON.stringify({ name: "template" }), "utf8");
+    await fs.writeFile(path.join(configSourceRoot, "package.json"), JSON.stringify({ name: "config-source" }), "utf8");
+    await fs.writeFile(path.join(flagSourceRoot, "package.json"), JSON.stringify({ name: "flag-source" }), "utf8");
 
-    const result = await packageCoworkPlugin({
-      sourcePlugin: {
-        ref: "plugin-demo",
-        absPath: pluginRoot,
-        dirName: "plugin-demo",
-        packageName: "@rawr/plugin-demo",
-        version: "1.2.3",
-        description: "Demo plugin",
+    const fromConfig = await resolveSourceWorkspaceSelection({
+      cwd: invocationRoot,
+      config: {
+        sync: {
+          sourceWorkspace: { rootPath: "../personal-from-config" },
+        },
       },
-      content: {
-        workflowFiles: [{ name: "hello", absPath: workflowPath }],
-        skills: [{ name: "demo-skill", absPath: skillRoot }],
-        scripts: [{ name: "demo.sh", absPath: scriptPath }],
-        agentFiles: [{ name: "researcher", absPath: agentPath }],
-      },
-      outDirAbs: path.join(root, "dist"),
-      dryRun: false,
-      includeAgents: true,
+      configGlobalPath: path.join(globalConfigDir, "config.json"),
+    });
+    expect(fromConfig).toMatchObject({
+      invocationWorkspaceRoot: invocationRoot,
+      sourceWorkspaceRoot: configSourceRoot,
+      external: true,
+      selectedBy: "config",
     });
 
-    expect(result.manifestSummary).toEqual({
-      name: "plugin-demo",
-      version: "1.2.3",
-      commands: 1,
-      skills: 1,
-      scripts: 1,
-      agents: 1,
+    const fromFlag = await resolveSourceWorkspaceSelection({
+      cwd: invocationRoot,
+      sourceWorkspaceFlag: flagSourceRoot,
+      config: {
+        sync: {
+          sourceWorkspace: { rootPath: "../personal-from-config" },
+        },
+      },
+      configGlobalPath: path.join(globalConfigDir, "config.json"),
     });
-    expect(result.warnings).toEqual([]);
-    expect(result.sizeBytes).toBeGreaterThan(0);
-    const zipHeader = await fs.readFile(result.outFile);
-    expect(zipHeader.subarray(0, 2).toString("utf8")).toBe("PK");
+    expect(fromFlag).toMatchObject({
+      sourceWorkspaceRoot: flagSourceRoot,
+      selectedBy: "flag",
+    });
   });
 });

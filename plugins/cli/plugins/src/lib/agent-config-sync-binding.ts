@@ -4,10 +4,10 @@ import {
   type CreateClientOptions,
 } from "@rawr/agent-config-sync";
 import type { AgentConfigSyncUndoCapture } from "@rawr/agent-config-sync/resources";
+import { createNodeAgentConfigSyncResources } from "@rawr/agent-config-sync-node/resources";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import { bindService, type ProcessView, type RoleView, type ServiceBinding, type ServiceBindingContext } from "@rawr/hq-sdk/plugins";
-import { createNodeAgentConfigSyncResources } from "./agent-config-sync-resources/resources";
 
 type UndoCaptureLike = AgentConfigSyncUndoCapture;
 

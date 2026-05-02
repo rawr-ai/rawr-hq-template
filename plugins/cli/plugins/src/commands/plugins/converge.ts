@@ -4,6 +4,8 @@ import { checkScratchPolicy } from "../../lib/plugin-lifecycle-service";
 import { runRawrFromSource } from "../../lib/rawr-source-runner";
 
 import { findWorkspaceRoot } from "@rawr/core";
+import { resolveSourceWorkspaceSelection } from "../../lib/agent-config-sync";
+import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
 
 type StepRun = {
   step: "install-repair" | "sync-all" | "final-status";
@@ -92,6 +94,9 @@ export default class PluginsConverge extends RawrCommand {
       description: "Return zero even when final status is unhealthy",
       default: false,
     }),
+    "source-workspace": Flags.string({
+      description: "RAWR workspace to use as the sync/status source of truth",
+    }),
   } as const;
 
   async run() {
@@ -102,8 +107,9 @@ export default class PluginsConverge extends RawrCommand {
     const noFail = Boolean((flags as any)["no-fail"]);
 
     try {
-      const workspaceRoot = await findWorkspaceRoot(process.cwd());
-      if (!workspaceRoot) {
+      const cwd = process.cwd();
+      const commandWorkspaceRoot = await findWorkspaceRoot(cwd);
+      if (!commandWorkspaceRoot) {
         const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)", {
           code: "WORKSPACE_ROOT_MISSING",
         });
@@ -111,6 +117,15 @@ export default class PluginsConverge extends RawrCommand {
         this.exit(2);
         return;
       }
+      const invocationLayered = await loadLayeredRawrConfigForCwd(cwd);
+      const sourceWorkspace = await resolveSourceWorkspaceSelection({
+        cwd,
+        sourceWorkspaceFlag: (flags as any)["source-workspace"] as string | undefined,
+        config: invocationLayered.config ?? undefined,
+        configWorkspacePath: invocationLayered.workspacePath,
+        configGlobalPath: invocationLayered.globalPath,
+      });
+      const workspaceRoot = sourceWorkspace.sourceWorkspaceRoot;
 
       const mutating = !baseFlags.dryRun && (includeInstallRepair || includeSync);
       const scratch = mutating ? await checkScratchPolicy(workspaceRoot) : null;
@@ -134,11 +149,12 @@ export default class PluginsConverge extends RawrCommand {
       }
 
       const steps: StepRun[] = [];
+      const sourceWorkspaceArgs = ["--source-workspace", workspaceRoot];
 
       if (includeInstallRepair) {
-        const args = ["plugins", "doctor", "links", "--repair", "--no-fail", "--json"];
+        const args = ["plugins", "doctor", "links", "--repair", "--no-fail", "--json", ...sourceWorkspaceArgs];
         if (baseFlags.dryRun) args.push("--dry-run");
-        const run = runRawrFromSource(workspaceRoot, args);
+        const run = runRawrFromSource(commandWorkspaceRoot, args);
         steps.push({
           step: "install-repair",
           args,
@@ -151,9 +167,9 @@ export default class PluginsConverge extends RawrCommand {
       }
 
       if (includeSync) {
-        const args = ["plugins", "sync", "all", "--json"];
+        const args = ["plugins", "sync", "all", "--json", ...sourceWorkspaceArgs];
         if (baseFlags.dryRun) args.push("--dry-run");
-        const run = runRawrFromSource(workspaceRoot, args);
+        const run = runRawrFromSource(commandWorkspaceRoot, args);
         steps.push({
           step: "sync-all",
           args,
@@ -165,9 +181,9 @@ export default class PluginsConverge extends RawrCommand {
         });
       }
 
-      const finalArgs = ["plugins", "status", "--checks", "all", "--json"];
+      const finalArgs = ["plugins", "status", "--checks", "all", "--json", ...sourceWorkspaceArgs];
       if (baseFlags.dryRun) finalArgs.push("--dry-run");
-      const finalRun = runRawrFromSource(workspaceRoot, finalArgs);
+      const finalRun = runRawrFromSource(commandWorkspaceRoot, finalArgs);
       const finalJson = parseJsonMaybe(finalRun.stdout);
       const finalOverall = statusFromResult(finalJson);
       const healthy = finalOverall === "HEALTHY";
@@ -185,6 +201,7 @@ export default class PluginsConverge extends RawrCommand {
 
       const result = this.ok({
         workspaceRoot,
+        commandWorkspaceRoot,
         healthy,
         finalOverall: finalOverall ?? "UNKNOWN",
         scratchPolicy: scratch
