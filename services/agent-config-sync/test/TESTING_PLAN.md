@@ -52,7 +52,7 @@ Prevent:
 
 Oracles:
 
-- Codex direct mirror writes workflows to `prompts/`, skills to runtime `.agents/skills/` plus the legacy `skills/` cache, scripts to plugin-prefixed `scripts/`, standalone TOML agents to `agents/` unless explicitly disabled, managed hooks/MCP/settings into `config.toml` plus runtime support files, and ownership to `plugins/registry.json`.
+- Codex direct mirror writes workflows to `prompts/`, skills to the runtime user skill root (`.agents/skills/` for test homes, `$HOME/.agents/skills/` for real `.codex*` homes), scripts to plugin-prefixed `scripts/`, standalone TOML agents to `agents/` unless explicitly disabled, managed hooks/MCP/settings into `config.toml` plus runtime support files, and ownership to `plugins/registry.json`.
 - Claude local plugin sync writes commands, skills, scripts, agents, `.claude-plugin/plugin.json`, `.rawr-sync-manifest.json`, and marketplace metadata.
 - Codex marketplace packages include `.codex-plugin/plugin.json`, skills, MCP config/files, assets, and `.agents/plugins/marketplace.json`; custom agents, settings, and hooks are omitted because the current RAWR Codex plugin manifest does not accept them.
 - Cowork artifacts are valid ZIPs with manifest summaries for commands, skills, scripts, and agents.

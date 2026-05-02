@@ -12,7 +12,7 @@ import {
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const tempDirs: string[] = [];
-const codexEnvKeys = ["CODEX_HOME", "CODEX_MIRROR_HOME", "RAWR_AGENT_SYNC_CODEX_HOMES"] as const;
+const codexEnvKeys = ["CODEX_HOME", "RAWR_AGENT_SYNC_CODEX_HOMES"] as const;
 
 afterEach(async () => {
   await Promise.all(tempDirs.splice(0).map((dir) => fs.rm(dir, { recursive: true, force: true })));
@@ -143,15 +143,13 @@ describe("@rawr/plugin-plugins", () => {
     expect(request.sourcePaths).toEqual(["plugins/agents/extra"]);
   });
 
-  it("defaults Codex sync to CODEX_HOME instead of the optional mirror home", async () => {
+  it("defaults Codex sync to CODEX_HOME when explicit multi-home env is absent", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "plugin-plugins-codex-home-default-"));
     tempDirs.push(root);
     const primary = path.join(root, "codex-rawr");
-    const mirror = path.join(root, "codex");
 
     await withCodexHomeEnv({
       CODEX_HOME: primary,
-      CODEX_MIRROR_HOME: mirror,
       RAWR_AGENT_SYNC_CODEX_HOMES: undefined,
     }, () => {
       const request = createWorkspaceSyncPlanInput({
@@ -180,20 +178,19 @@ describe("@rawr/plugin-plugins", () => {
       expect(request.targetHomeCandidates.codexDefaultHomes).toEqual([
         path.join(process.env.HOME ? String(process.env.HOME) : os.homedir(), ".codex-rawr"),
       ]);
-      expect(request.targetHomeCandidates.codexHomesFromEnvironment).not.toContain(mirror);
     });
   });
 
-  it("uses explicit multi-home Codex sync env when both primary and mirror are intentional", async () => {
+  it("lets explicit multi-home Codex sync env override CODEX_HOME", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "plugin-plugins-codex-home-multi-"));
     tempDirs.push(root);
-    const primary = path.join(root, "codex-rawr");
-    const mirror = path.join(root, "codex");
+    const codeHome = path.join(root, "codex-home");
+    const primary = path.join(root, "codex-primary");
+    const secondary = path.join(root, "codex-secondary");
 
     await withCodexHomeEnv({
-      CODEX_HOME: primary,
-      CODEX_MIRROR_HOME: mirror,
-      RAWR_AGENT_SYNC_CODEX_HOMES: `${primary},${mirror}`,
+      CODEX_HOME: codeHome,
+      RAWR_AGENT_SYNC_CODEX_HOMES: `${primary},${secondary}`,
     }, () => {
       const request = createWorkspaceSyncPlanInput({
         cwd: root,
@@ -217,7 +214,7 @@ describe("@rawr/plugin-plugins", () => {
         },
       });
 
-      expect(request.targetHomeCandidates.codexHomesFromEnvironment).toEqual([primary, mirror]);
+      expect(request.targetHomeCandidates.codexHomesFromEnvironment).toEqual([primary, secondary]);
     });
   });
 
@@ -227,7 +224,6 @@ describe("@rawr/plugin-plugins", () => {
 
     await withCodexHomeEnv({
       CODEX_HOME: undefined,
-      CODEX_MIRROR_HOME: path.join(root, "codex"),
       RAWR_AGENT_SYNC_CODEX_HOMES: undefined,
     }, () => {
       const request = createWorkspaceSyncPlanInput({

@@ -5,12 +5,10 @@ import type { AgentConfigSyncPathResources } from "../resources";
  *
  * @remarks
  * Codex keeps config, hooks, and custom agents under the selected Codex home,
- * but current skill discovery reads user skills from ~/.agents/skills. The
- * direct mirror keeps the legacy <codex-home>/skills cache for compatibility
- * while also writing the runtime-discoverable skill path.
+ * but current skill discovery reads user skills from ~/.agents/skills.
  */
 
-export function getCodexLegacySkillsDir(codexHome: string, pathOps: AgentConfigSyncPathResources): string {
+export function getCodexRetiredRootSkillsDir(codexHome: string, pathOps: AgentConfigSyncPathResources): string {
   return pathOps.join(codexHome, "skills");
 }
 

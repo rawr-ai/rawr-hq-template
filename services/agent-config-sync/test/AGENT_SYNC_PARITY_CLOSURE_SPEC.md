@@ -229,7 +229,7 @@ Fleet: deterministic tests team, RAWR Codex runtime smoke team, final adversaria
   - Assert `plugin/read` shows skills and MCP servers.
   - Assert `skills/list` can see installed plugin skills.
 - Direct compatibility gate remains separate:
-  - Prompts, `.agents/skills`, legacy skills, scripts, TOML agents, hooks config, MCP config, registry, drift, and GC still pass.
+  - Prompts, runtime user skills, retired root skill cleanup, scripts, TOML agents, hooks config, MCP config, registry, drift, and GC still pass.
   - This lane must not be described as official plugin install parity.
 - Final personal-source smoke:
   - First run against personal `rawr-hq` source with temp Codex home.
@@ -381,7 +381,7 @@ Implementation detail:
   - assert `plugin/read` lists skills and MCP servers;
   - assert `skills/list` can see installed plugin skills.
 - Direct projection regression gate:
-  - direct sync still writes prompts, runtime skills, legacy skills, scripts, TOML agents, hooks, MCP config, registry, drift, and GC correctly;
+  - direct sync still writes prompts, runtime skills, scripts, TOML agents, hooks, MCP config, registry, drift, and retired-root GC correctly;
   - this gate remains separate from plugin install parity.
 - Personal source smoke:
   - run personal `rawr-hq` source against a temp Codex home first;

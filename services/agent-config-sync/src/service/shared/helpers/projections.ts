@@ -51,16 +51,13 @@ async function buildCodexProjections(input: {
       materialKind: "skill",
       source: skill.name,
       sourcePath: skill.absPath,
-      targetPaths: input.homes.flatMap((home) => [
-        pathOps.join(home, "skills", skill.name),
-        pathOps.join(getCodexRuntimeSkillsDir(home, pathOps), skill.name),
-      ]),
+      targetPaths: input.homes.map((home) => pathOps.join(getCodexRuntimeSkillsDir(home, pathOps), skill.name)),
       distributionMode: "direct_mirror",
       supportStatus: "native",
       evidenceLevel: "official",
       droppedSemantics: [],
       adapterRequiredSemantics: [],
-      validationNotes: ["Mirrored to runtime .agents/skills and legacy Codex skills cache"],
+      validationNotes: ["Mirrored to Codex runtime user skills"],
     });
   }
 

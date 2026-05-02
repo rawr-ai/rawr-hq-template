@@ -3,7 +3,11 @@ import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../..
 import type { CodexRegistryFile } from "../../../shared/repositories/codex-registry-repository";
 import { buildCodexManagedConfig } from "../../../shared/repositories/codex-config-repository";
 import { pruneCodexHooksForPlugin } from "../../../shared/repositories/codex-hooks-repository";
-import { getCodexManagedMcpDir, getCodexRuntimeSkillsDir } from "../../../shared/repositories/codex-runtime-paths";
+import {
+  getCodexManagedMcpDir,
+  getCodexRetiredRootSkillsDir,
+  getCodexRuntimeSkillsDir,
+} from "../../../shared/repositories/codex-runtime-paths";
 import { deletePathIfPresent, writeJsonWithUndoCapture, writeTextWithUndoCapture } from "./filesystem-actions";
 
 type CodexStalePlugin = {
@@ -53,7 +57,7 @@ export async function applyCodexRetirement(input: {
     }
 
     for (const skill of entry.skills) {
-      const target = input.resources.path.join(input.codexHome, "skills", skill);
+      const target = input.resources.path.join(getCodexRetiredRootSkillsDir(input.codexHome, input.resources.path), skill);
       const action = await deletePathIfPresent({
         dryRun: input.dryRun,
         target,
@@ -67,7 +71,7 @@ export async function applyCodexRetirement(input: {
         plugin: entry.pluginName,
         target,
         action,
-        message: "retire stale skill",
+        message: "retire stale root skill",
       });
 
       const runtimeTarget = input.resources.path.join(getCodexRuntimeSkillsDir(input.codexHome, input.resources.path), skill);

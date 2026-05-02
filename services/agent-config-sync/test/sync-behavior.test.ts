@@ -5,6 +5,7 @@ import path from "node:path";
 import { parse as parseToml } from "smol-toml";
 import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../src/client";
+import { getCodexRuntimeSkillsDir } from "../src/service/shared/repositories/codex-runtime-paths";
 import {
   createClientOptions,
   createNodeTestResources,
@@ -70,6 +71,20 @@ async function makeSourcePlugin() {
 }
 
 describe("agent-config-sync service behavior", () => {
+  it("maps RAWR Codex homes to the sibling Codex runtime user skill root", () => {
+    const fakeHome = path.join(os.tmpdir(), "agent-config-sync-runtime-home");
+
+    expect(getCodexRuntimeSkillsDir(path.join(fakeHome, ".codex-rawr"), path)).toBe(
+      path.join(fakeHome, ".agents", "skills"),
+    );
+    expect(getCodexRuntimeSkillsDir(path.join(fakeHome, ".codex"), path)).toBe(
+      path.join(fakeHome, ".agents", "skills"),
+    );
+    expect(getCodexRuntimeSkillsDir(path.join(fakeHome, "custom-codex"), path)).toBe(
+      path.join(fakeHome, "custom-codex", ".agents", "skills"),
+    );
+  });
+
   it("plans and applies Codex sync through service-owned execution behavior", async () => {
     const { sourcePlugin, content } = await makeSourcePlugin();
     const codexHome = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-service-codex-"));
@@ -238,7 +253,7 @@ describe("agent-config-sync service behavior", () => {
 
     expect(result.ok).toBe(true);
     await expect(fs.readFile(path.join(codexHome, "prompts", "hello.md"), "utf8")).resolves.toBe("# hello\n");
-    await expect(fs.readFile(path.join(codexHome, "skills", "demo-skill", "SKILL.md"), "utf8")).resolves.toBe("# Demo Skill\n");
+    await expect(fs.stat(path.join(codexHome, "skills", "demo-skill"))).rejects.toThrow();
     await expect(fs.readFile(path.join(codexHome, ".agents", "skills", "demo-skill", "SKILL.md"), "utf8")).resolves.toBe("# Demo Skill\n");
     await expect(fs.readFile(path.join(codexHome, "scripts", "plugin-demo--demo.sh"), "utf8")).resolves.toBe("echo demo\n");
     await expect(fs.readFile(path.join(codexHome, "agents", "researcher.toml"), "utf8")).resolves.toContain("developer_instructions");
@@ -520,7 +535,7 @@ describe("agent-config-sync service behavior", () => {
     const workspace = await makeParityWorkspace();
     const { codexHome } = await makeProviderHomes();
     tempDirs.push(workspace.workspaceRoot, codexHome);
-    const skillDir = path.join(codexHome, "skills", "demo-skill");
+    const skillDir = path.join(codexHome, ".agents", "skills", "demo-skill");
     await fs.mkdir(skillDir, { recursive: true });
     await fs.writeFile(path.join(skillDir, "SKILL.md"), "# stale\n", "utf8");
     await fs.writeFile(path.join(skillDir, "removed.md"), "stale\n", "utf8");
@@ -541,6 +556,86 @@ describe("agent-config-sync service behavior", () => {
     expect(result.ok).toBe(true);
     await expect(fs.readFile(path.join(skillDir, "SKILL.md"), "utf8")).resolves.toBe("# Demo Skill\n");
     await expect(fs.stat(path.join(skillDir, "removed.md"))).rejects.toThrow();
+  });
+
+  it("reports and removes registry-managed retired Codex root skill copies while preserving runtime and unclaimed root skills", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const retiredRootSkill = path.join(codexHome, "skills", "demo-skill");
+    const unclaimedRootSkill = path.join(codexHome, "skills", "unclaimed-skill");
+    const runtimeSkill = path.join(codexHome, ".agents", "skills", "demo-skill");
+    await Promise.all([
+      fs.mkdir(retiredRootSkill, { recursive: true }),
+      fs.mkdir(unclaimedRootSkill, { recursive: true }),
+      fs.mkdir(path.join(codexHome, "plugins"), { recursive: true }),
+    ]);
+    await fs.writeFile(path.join(retiredRootSkill, "SKILL.md"), "# stale root\n", "utf8");
+    await fs.writeFile(path.join(unclaimedRootSkill, "SKILL.md"), "# keep\n", "utf8");
+    await fs.writeFile(
+      path.join(codexHome, "plugins", "registry.json"),
+      JSON.stringify({
+        plugins: [
+          {
+            name: "plugin-demo",
+            prompts: [],
+            skills: ["demo-skill"],
+            scripts: [],
+            agents: [],
+            managed_by: "@rawr/plugin-plugins",
+            source_plugin_path: workspace.pluginRoot,
+          },
+          {
+            name: "other-plugin",
+            prompts: [],
+            skills: ["demo-skill"],
+            scripts: [],
+            agents: [],
+            managed_by: "@rawr/plugin-plugins",
+            source_plugin_path: path.join(workspace.workspaceRoot, "plugins", "cli", "other-plugin"),
+          },
+        ],
+      }, null, 2),
+      "utf8",
+    );
+
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+    const preview = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      force: true,
+      gc: true,
+      dryRun: true,
+    }, { context: { invocation: { traceId: "test-retired-root-skill-preview" } } });
+
+    expect(preview.targets[0]?.items).toContainEqual(expect.objectContaining({
+      action: "planned",
+      kind: "skill",
+      target: retiredRootSkill,
+      message: "gc orphan",
+    }));
+    await expect(fs.readFile(path.join(retiredRootSkill, "SKILL.md"), "utf8")).resolves.toBe("# stale root\n");
+
+    const applied = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-retired-root-skill-apply" } } });
+
+    expect(applied.ok).toBe(true);
+    await expect(fs.stat(retiredRootSkill)).rejects.toThrow();
+    await expect(fs.readFile(path.join(runtimeSkill, "SKILL.md"), "utf8")).resolves.toBe("# Demo Skill\n");
+    await expect(fs.readFile(path.join(unclaimedRootSkill, "SKILL.md"), "utf8")).resolves.toBe("# keep\n");
   });
 
   it("resolves provider overlay content through the service with primitive file resources", async () => {
@@ -771,18 +866,18 @@ describe("agent-config-sync service behavior", () => {
     const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-service-ws-"));
     const codexHome = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-service-codex-"));
     tempDirs.push(workspaceRoot, codexHome);
-    const legacySkill = path.join(codexHome, "skills", "stale-skill");
+    const retiredRootSkill = path.join(codexHome, "skills", "stale-skill");
     const runtimeSkill = path.join(codexHome, ".agents", "skills", "stale-skill");
     const hookScript = path.join(codexHome, "hooks", "rawr", "stale", "pre.mjs");
     const mcpServer = path.join(codexHome, "mcp", "rawr", "stale", "server.mjs");
     await Promise.all([
-      fs.mkdir(legacySkill, { recursive: true }),
+      fs.mkdir(retiredRootSkill, { recursive: true }),
       fs.mkdir(runtimeSkill, { recursive: true }),
       fs.mkdir(path.dirname(hookScript), { recursive: true }),
       fs.mkdir(path.dirname(mcpServer), { recursive: true }),
       fs.mkdir(path.join(codexHome, "plugins"), { recursive: true }),
     ]);
-    await fs.writeFile(path.join(legacySkill, "SKILL.md"), "# stale\n", "utf8");
+    await fs.writeFile(path.join(retiredRootSkill, "SKILL.md"), "# stale\n", "utf8");
     await fs.writeFile(path.join(runtimeSkill, "SKILL.md"), "# stale\n", "utf8");
     await fs.writeFile(hookScript, "console.log('stale')\n", "utf8");
     await fs.writeFile(mcpServer, "console.log('stale mcp')\n", "utf8");
@@ -842,7 +937,7 @@ describe("agent-config-sync service behavior", () => {
     }, { context: { invocation: { traceId: "test-retire-codex-runtime-material" } } });
 
     expect(result.ok).toBe(true);
-    await expect(fs.stat(legacySkill)).rejects.toThrow();
+    await expect(fs.stat(retiredRootSkill)).rejects.toThrow();
     await expect(fs.stat(runtimeSkill)).rejects.toThrow();
     await expect(fs.stat(hookScript)).rejects.toThrow();
     await expect(fs.stat(mcpServer)).rejects.toThrow();

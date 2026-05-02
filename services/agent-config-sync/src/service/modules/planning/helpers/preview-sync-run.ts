@@ -17,8 +17,8 @@ import {
   pruneCodexHooksForPlugin,
 } from "../../../shared/repositories/codex-hooks-repository";
 import {
-  getCodexLegacySkillsDir,
   getCodexManagedMcpDir,
+  getCodexRetiredRootSkillsDir,
   getCodexRuntimeSkillsDir,
 } from "../../../shared/repositories/codex-runtime-paths";
 import {
@@ -75,7 +75,7 @@ export async function previewSyncRun(input: {
     for (const codexHome of input.codexHomes) {
       const result: SyncTargetResult = { agent: "codex", home: codexHome, items: [], conflicts: [] };
       const promptsDir = pathOps.join(codexHome, "prompts");
-      const legacySkillsDir = getCodexLegacySkillsDir(codexHome, pathOps);
+      const retiredRootSkillsDir = getCodexRetiredRootSkillsDir(codexHome, pathOps);
       const runtimeSkillsDir = getCodexRuntimeSkillsDir(codexHome, pathOps);
       const scriptsDir = pathOps.join(codexHome, "scripts");
       const agentsDir = pathOps.join(codexHome, "agents");
@@ -106,14 +106,6 @@ export async function previewSyncRun(input: {
       }
 
       for (const skill of codexContent.skills) {
-        await syncSkillDirWithConflictPolicy({
-          srcDir: skill.absPath,
-          destDir: pathOps.join(legacySkillsDir, skill.name),
-          skillName: skill.name,
-          options,
-          result,
-          claimedByOtherPlugin: claimedOthers.skills.has(skill.name),
-        });
         await syncSkillDirWithConflictPolicy({
           srcDir: skill.absPath,
           destDir: pathOps.join(runtimeSkillsDir, skill.name),
@@ -228,8 +220,8 @@ export async function previewSyncRun(input: {
       }
 
       for (const oldSkill of registry.claimedSets.skillsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
+        await deleteIfExists({ target: pathOps.join(retiredRootSkillsDir, oldSkill), kind: "skill", options, result });
         if (newSkills.has(oldSkill) || claimedOthers.skills.has(oldSkill)) continue;
-        await deleteIfExists({ target: pathOps.join(legacySkillsDir, oldSkill), kind: "skill", options, result });
         await deleteIfExists({ target: pathOps.join(runtimeSkillsDir, oldSkill), kind: "skill", options, result });
       }
 

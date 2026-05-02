@@ -118,7 +118,7 @@ Anything outside those directories is ignored.
 
 - Codex:
   - `workflows/*.md -> <codex-home>/prompts/*.md`
-  - `skills/<name>/** -> <codex-home>/.agents/skills/<name>/**` plus legacy `<codex-home>/skills/<name>/**`
+  - `skills/<name>/** -> <runtime-user-skill-root>/<name>/**` (`$HOME/.agents/skills` for real `.codex*` homes)
   - `scripts/<file> -> <codex-home>/scripts/<pluginName>--<file>`
   - `agents/*.md -> <codex-home>/agents/*.toml`; Claude-only frontmatter is dropped and reported as adapter-required projection metadata.
   - `hooks/`, `mcp/`, `.mcp.json`, and `settings/` merge into managed Codex config/runtime support paths.
@@ -163,9 +163,9 @@ Default Codex target selection:
 - Otherwise `CODEX_HOME` is used as the primary active Codex home.
 - Otherwise the default is `~/.codex-rawr`.
 
-`CODEX_MIRROR_HOME` is not a default sync target. If you intentionally want to
-sync a mirror home too, pass it with repeatable `--codex-home`, include it in
-`RAWR_AGENT_SYNC_CODEX_HOMES`, or add it as an enabled config destination.
+Additional Codex homes are explicit sync destinations only: pass repeatable
+`--codex-home`, include them in `RAWR_AGENT_SYNC_CODEX_HOMES`, or add them as
+enabled config destinations.
 
 ## Lifecycle Quality Commands
 

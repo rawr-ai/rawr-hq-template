@@ -137,9 +137,9 @@ Defaults (when flags are omitted):
   - `$RAWR_AGENT_SYNC_CLAUDE_HOMES` (comma-separated), else
   - `~/.claude/plugins/local`
 
-`CODEX_MIRROR_HOME` is optional and is not synced by default. Include it
-explicitly with repeatable `--codex-home`, `$RAWR_AGENT_SYNC_CODEX_HOMES`, or
-an enabled config destination when mirror convergence is intentional.
+Additional Codex homes are explicit sync destinations only. Include them with
+repeatable `--codex-home`, `$RAWR_AGENT_SYNC_CODEX_HOMES`, or an enabled config
+destination when multi-home convergence is intentional.
 
 ## Conflicts and safety
 
