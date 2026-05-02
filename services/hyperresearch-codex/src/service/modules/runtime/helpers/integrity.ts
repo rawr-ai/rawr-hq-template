@@ -20,7 +20,7 @@ export async function validateHyperresearchRunIntegrity(input: {
       });
     }
 
-    if (step.status === "failed") {
+    if (step.status === "failed" || step.status === "blocked") {
       findings.push({
         severity: "blocking",
         code: "failed-step",
@@ -53,6 +53,43 @@ export async function validateHyperresearchRunIntegrity(input: {
         message: `Hyperresearch CLI call failed: ${call.operation}`,
       });
     }
+  }
+
+  for (const job of input.ledger.agentJobs ?? []) {
+    if (job.status === "pending") {
+      findings.push({
+        severity: "warning",
+        code: "awaiting-agent-output",
+        stepId: job.stepId,
+        message: `Agent job is awaiting output: ${job.id}`,
+      });
+    }
+    if (job.status === "failed") {
+      findings.push({
+        severity: "blocking",
+        code: "failed-agent-job",
+        stepId: job.stepId,
+        message: job.failure ?? `Agent job failed: ${job.id}`,
+      });
+    }
+  }
+
+  for (const disposition of input.ledger.reviewDispositions ?? []) {
+    if (disposition.severity === "blocking" && disposition.status === "open") {
+      findings.push({
+        severity: "blocking",
+        code: "open-review-finding",
+        message: `Open blocking review finding: ${disposition.id}`,
+      });
+    }
+  }
+
+  for (const violation of input.ledger.patchGuard?.violations ?? []) {
+    findings.push({
+      severity: "blocking",
+      code: "patch-only-violation",
+      message: violation,
+    });
   }
 
   if (!input.ledger.completed) {

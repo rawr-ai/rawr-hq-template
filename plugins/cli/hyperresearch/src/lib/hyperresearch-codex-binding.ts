@@ -13,6 +13,7 @@ import {
   type ServiceBinding,
   type ServiceBindingContext,
 } from "@rawr/hq-sdk/plugins";
+import { FixtureHyperresearchCliBackend } from "./fixture-cli";
 import { NodeHyperresearchCliBackend } from "./hyperresearch-codex-resources/cli";
 import { createNodeHyperresearchIO } from "./hyperresearch-codex-resources/io";
 
@@ -57,5 +58,17 @@ export function createHyperresearchCodexClient(input: {
       roleId: "hyperresearch-codex",
       capability: "hyperresearch",
     },
+  });
+}
+
+export function createHyperresearchCodexClientForBackend(input: {
+  repoRoot: string;
+  backend: "fixture" | "real";
+}): Client {
+  return createHyperresearchCodexClient({
+    repoRoot: input.repoRoot,
+    cli: input.backend === "fixture"
+      ? new FixtureHyperresearchCliBackend()
+      : new NodeHyperresearchCliBackend(),
   });
 }

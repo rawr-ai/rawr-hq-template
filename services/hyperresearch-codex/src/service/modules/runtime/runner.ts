@@ -7,11 +7,19 @@ import {
 } from "./helpers/ledger";
 import { loadHyperresearchStep, syntheticHyperresearchSteps } from "./helpers/steps";
 import type {
-  HyperresearchRunnerOptions,
-  HyperresearchRunnerResult,
   HyperresearchStepRecord,
 } from "./entities";
 import type { HyperresearchCodexIO } from "../../shared/resources";
+import type { HyperresearchCliBackend } from "../../shared/resources";
+import type {
+  HyperresearchRunnerResult,
+  RunSyntheticSliceInput,
+} from "./contract";
+
+type HyperresearchRuntimeDependencies = {
+  io: HyperresearchCodexIO;
+  cli: HyperresearchCliBackend;
+};
 
 function definitionFor(stepId: string) {
   const definition = syntheticHyperresearchSteps.find((step) => step.id === stepId);
@@ -32,35 +40,32 @@ async function writeArtifact(input: {
 }
 
 export async function runSyntheticHyperresearchCodexSlice(
-  options: HyperresearchRunnerOptions,
+  input: RunSyntheticSliceInput,
+  dependencies: HyperresearchRuntimeDependencies,
 ): Promise<HyperresearchRunnerResult> {
-  if (!options.io) throw new Error("Hyperresearch Codex IO dependency is required");
-  if (!options.cli) throw new Error("Hyperresearch CLI backend dependency is required");
+  const { io, cli } = dependencies;
+  const artifactRoot = input.artifactRoot ?? io.join(input.vaultRoot, "research", "temp", "codex-artifacts");
+  const ledgerPath = input.ledgerPath ?? io.join(input.vaultRoot, "research", "temp", "hyperresearch-codex-run.json");
 
-  const io = options.io;
-  const cli = options.cli;
-  const artifactRoot = options.artifactRoot ?? io.join(options.vaultRoot, "research", "temp", "codex-artifacts");
-  const ledgerPath = options.ledgerPath ?? io.join(options.vaultRoot, "research", "temp", "hyperresearch-codex-run.json");
-
-  await io.ensureDir(options.vaultRoot);
+  await io.ensureDir(input.vaultRoot);
   await io.ensureDir(artifactRoot);
   await io.ensureDir(io.dirname(ledgerPath));
-  await io.ensureDir(io.join(options.vaultRoot, "research", "notes"));
-  await io.ensureDir(io.join(options.vaultRoot, "research", "raw"));
+  await io.ensureDir(io.join(input.vaultRoot, "research", "notes"));
+  await io.ensureDir(io.join(input.vaultRoot, "research", "raw"));
 
   const ledger = await readOrCreateHyperresearchRunLedger({
     ledgerPath,
-    canonicalQuery: options.canonicalQuery,
-    tier: options.tier,
-    vaultRoot: options.vaultRoot,
+    canonicalQuery: input.canonicalQuery,
+    tier: input.tier,
+    vaultRoot: input.vaultRoot,
     artifactRoot,
     steps: syntheticHyperresearchSteps,
-    resumeReason: options.resumeReason,
+    resumeReason: input.resumeReason,
     io,
   });
 
   let completedThisPass = 0;
-  while (!ledger.completed && completedThisPass < (options.maxSteps ?? Number.POSITIVE_INFINITY)) {
+  while (!ledger.completed && completedThisPass < (input.maxSteps ?? Number.POSITIVE_INFINITY)) {
     const step = nextPendingStep(ledger);
     if (!step) {
       ledger.completed = true;
@@ -75,7 +80,7 @@ export async function runSyntheticHyperresearchCodexSlice(
 
     try {
       const loaded = await loadHyperresearchStep({
-        stepsRoot: options.stepsRoot,
+        stepsRoot: input.stepsRoot,
         definition,
         io,
       });
@@ -91,7 +96,7 @@ export async function runSyntheticHyperresearchCodexSlice(
         await runHyperresearchCli({
           operation: "init",
           args: ["--json"],
-          cwd: options.vaultRoot,
+          cwd: input.vaultRoot,
           io,
           cli,
           ledger,
@@ -113,7 +118,7 @@ export async function runSyntheticHyperresearchCodexSlice(
         await runHyperresearchCli({
           operation: "note",
           args: ["new", "--json", "Synthetic Codex parity source"],
-          cwd: options.vaultRoot,
+          cwd: input.vaultRoot,
           io,
           cli,
           ledger,
@@ -138,7 +143,7 @@ export async function runSyntheticHyperresearchCodexSlice(
         await runHyperresearchCli({
           operation: "lint",
           args: ["--json"],
-          cwd: options.vaultRoot,
+          cwd: input.vaultRoot,
           io,
           cli,
           ledger,
@@ -146,7 +151,7 @@ export async function runSyntheticHyperresearchCodexSlice(
         await runHyperresearchCli({
           operation: "export",
           args: ["json", "--json"],
-          cwd: options.vaultRoot,
+          cwd: input.vaultRoot,
           io,
           cli,
           ledger,

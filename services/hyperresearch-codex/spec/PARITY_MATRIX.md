@@ -34,3 +34,45 @@ Statuses:
 - RAWR compatibility matrix says Codex skills are native, Codex custom agents require adapter projection, hooks require fixture proof, and official plugin packaging remains distinct from direct local mirrors.
 
 Refresh before final acceptance.
+
+## V8 Step Adapter Matrix
+
+The service state machine owns step loading, route order, durable ledger state, artifact gates, and deterministic fixture outputs. The Codex skill/coordinator owns real subagent fan-out/fan-in. Fixture mode may synthesize role outputs, but it must still write the same packet/result paths that the real Codex skill loop uses.
+
+| # | Hyperresearch step | Tier | Codex execution decision | Required artifacts / gates |
+|---:|---|---|---|---|
+| 1 | `hyperresearch-1-decompose` | all | service step load + scaffold/decomposition fixture; real run follows loaded procedure | `research/scaffold.md`, `research/prompt-decomposition.json`, `research/temp/coverage-matrix.md`; tier must be recorded |
+| 2 | `hyperresearch-2-width-sweep` | all | agent packets for fetcher/source analyst; CLI source capture only through allowed backend ops | search/source logs, claims records, provenance metadata; generic fetch bypass is a policy failure |
+| 3 | `hyperresearch-3-contradiction-graph` | full | service artifact step from captured corpus | `research/temp/contradiction-graph.json`, `research/temp/consensus-claims.json` |
+| 4 | `hyperresearch-4-loci-analysis` | full | two loci-analyst packets in one wave | `research/loci.json`; no fake breadcrumb role names |
+| 5 | `hyperresearch-5-depth-investigation` | full | depth-investigator packets, fixture capped to two loci | interim/depth log artifacts with committed positions |
+| 6 | `hyperresearch-6-cross-locus-reconcile` | full | service artifact step from interim outputs | `research/comparisons.md` |
+| 7 | `hyperresearch-7-source-tensions` | full | service artifact step | `research/temp/source-tensions.json` |
+| 8 | `hyperresearch-8-corpus-critic` | full | corpus-critic packet plus targeted fetcher packet | `research/corpus-critic-gaps.json`, `research/temp/corpus-critic-results.md` |
+| 9 | `hyperresearch-9-evidence-digest` | full | service digest artifact step | `research/temp/evidence-digest.md` |
+| 10 | `hyperresearch-10-triple-draft` | all | light writes single final report; full spawns three draft-orchestrator packets | light: final report snapshot; full: `draft-a/b/c.md` and source lists |
+| 11 | `hyperresearch-11-synthesize` | full | synthesizer packet; service snapshots final report after output validation | synthesis plan/outline/pass1 and final report |
+| 12 | `hyperresearch-12-critics` | full | four critic packets in one wave | four critic finding JSON files; unresolved blocking findings block acceptance |
+| 13 | `hyperresearch-13-gap-fetch` | full | fetcher packet for accepted gap sources | `research/temp/post-critic-fetch-log.md`; provenance chain preserved |
+| 14 | `hyperresearch-14-patcher` | full | patcher packet; patch-only guard enforced by service | `research/patch-log.json`; wholesale/unlogged rewrite blocks acceptance |
+| 15 | `hyperresearch-15-polish` | all | polish-auditor packet; service runs lint/export gates | `research/polish-log.json`; final report remains patch-only |
+| 16 | `hyperresearch-16-readability-audit` | all | readability-recommender packet; coordinator selectively applies accepted edits | `research/readability-recommendations.json`, `research/readability-decisions.json`; final integrity gates pass |
+
+## Role-Agent Adapter Matrix
+
+| Role | Codex decision | Constraint guard |
+|---|---|---|
+| `hyperresearch-fetcher` | custom agent / packet role | Must return provenance and suggested-by chain; source capture uses Hyperresearch CLI |
+| `hyperresearch-source-analyst` | custom agent / packet role | Deep-source digest only; no final synthesis |
+| `hyperresearch-loci-analyst` | custom agent / packet role | Produces candidate loci and budgets only |
+| `hyperresearch-depth-investigator` | custom agent / packet role | Writes committed position output for one locus |
+| `hyperresearch-corpus-critic` | custom agent / packet role | Produces overturning-source gaps before drafting |
+| `hyperresearch-draft-orchestrator` | custom agent / packet role | Writes only assigned draft/angle output |
+| `hyperresearch-synthesizer` | custom agent / packet role | Writes the final report once; no post-synthesis regeneration |
+| `hyperresearch-dialectic-critic` | custom agent / packet role | JSON findings only |
+| `hyperresearch-depth-critic` | custom agent / packet role | JSON findings only |
+| `hyperresearch-width-critic` | custom agent / packet role | JSON findings only |
+| `hyperresearch-instruction-critic` | custom agent / packet role | JSON findings only |
+| `hyperresearch-patcher` | custom agent / packet role + service guard | Patch log required; service rejects large unlogged rewrites |
+| `hyperresearch-polish-auditor` | custom agent / packet role + service guard | Polish log required; patch-only guard still active |
+| `hyperresearch-readability-recommender` | custom agent / packet role | Writes recommendations; coordinator applies decisions |

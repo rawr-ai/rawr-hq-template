@@ -35,6 +35,7 @@ export async function runHyperresearchCli(input: {
   io: HyperresearchCodexIO;
   cli: HyperresearchCliBackend;
   ledger: HyperresearchRunLedger;
+  throwOnFailure?: boolean;
 }): Promise<HyperresearchCliCall> {
   assertAllowedHyperresearchOperation(input.operation);
   const startedAt = input.io.now();
@@ -61,6 +62,9 @@ export async function runHyperresearchCli(input: {
       kind: "cli",
       message: `Hyperresearch CLI ${input.operation} failed with exit code ${result.exitCode}`,
     });
+    if (input.throwOnFailure) {
+      throw new Error(`Hyperresearch CLI ${input.operation} failed with exit code ${result.exitCode}`);
+    }
   }
   return call;
 }

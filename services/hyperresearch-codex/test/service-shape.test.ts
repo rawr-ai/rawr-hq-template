@@ -15,7 +15,13 @@ describe("hyperresearch-codex service shell", () => {
     expect(createClient(createClientOptions())).toBeDefined();
     expect(router).toBeDefined();
     expect(Object.keys(contract)).toEqual(["runtime"]);
-    expect(Object.keys(contract.runtime)).toEqual(["runSyntheticSlice"]);
+    expect(Object.keys(contract.runtime)).toEqual([
+      "runSyntheticSlice",
+      "startV8Run",
+      "advanceV8Run",
+      "inspectV8Run",
+      "validateV8Run",
+    ]);
   });
 
   it("keeps runtime mechanics behind the service module boundary", async () => {

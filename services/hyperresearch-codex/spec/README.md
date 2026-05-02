@@ -18,6 +18,7 @@ The local package owns the reusable control-plane substrate: durable ledgers, fr
 - `FLOWS.md`: runtime, step loading, source capture, resume, failure, and final plugin proof flows.
 - `TESTING_PLAN.md`: component gates, dry-run gates, live gates, and final Codex plugin-system proof.
 - `REVIEW_LEDGER.md`: active review findings and phase-exit status.
+- `DRA_RUNBOOK.md`: Discover -> Review -> Act workflow and agent-loop contract.
 
 ## Phase Rule
 

@@ -13,7 +13,9 @@ export type HyperresearchTier = Static<typeof HyperresearchTierSchema>;
 export const HyperresearchStepStatusSchema = Type.Union([
   Type.Literal("pending"),
   Type.Literal("running"),
+  Type.Literal("awaiting_agents"),
   Type.Literal("complete"),
+  Type.Literal("blocked"),
   Type.Literal("failed"),
 ]);
 export type HyperresearchStepStatus = Static<typeof HyperresearchStepStatusSchema>;
@@ -66,6 +68,8 @@ export const HyperresearchStepRecordSchema = Type.Object(
     title: Type.String({ minLength: 1 }),
     status: HyperresearchStepStatusSchema,
     requiredArtifacts: Type.Array(Type.String({ minLength: 1 })),
+    tierGate: Type.Optional(Type.Union([Type.Literal("all"), Type.Literal("full")])),
+    sourceFileName: Type.Optional(Type.String({ minLength: 1 })),
     loaded: Type.Optional(HyperresearchStepLoadSchema),
     startedAt: Type.Optional(Type.String({ minLength: 1 })),
     completedAt: Type.Optional(Type.String({ minLength: 1 })),
@@ -92,7 +96,9 @@ export const HyperresearchFailureSchema = Type.Object(
     stepId: Type.Optional(Type.String({ minLength: 1 })),
     kind: Type.Union([
       Type.Literal("cli"),
+      Type.Literal("agent"),
       Type.Literal("artifact"),
+      Type.Literal("ledger"),
       Type.Literal("step"),
       Type.Literal("policy"),
     ]),
@@ -102,20 +108,100 @@ export const HyperresearchFailureSchema = Type.Object(
 );
 export type HyperresearchFailure = Static<typeof HyperresearchFailureSchema>;
 
+export const HyperresearchAgentJobStatusSchema = Type.Union([
+  Type.Literal("pending"),
+  Type.Literal("complete"),
+  Type.Literal("failed"),
+]);
+export type HyperresearchAgentJobStatus = Static<typeof HyperresearchAgentJobStatusSchema>;
+
+export const HyperresearchAgentJobSchema = Type.Object(
+  {
+    id: Type.String({ minLength: 1 }),
+    stepId: Type.String({ minLength: 1 }),
+    role: Type.String({ minLength: 1 }),
+    status: HyperresearchAgentJobStatusSchema,
+    packetPath: Type.String({ minLength: 1 }),
+    expectedOutputPath: Type.String({ minLength: 1 }),
+    outputPath: Type.Optional(Type.String({ minLength: 1 })),
+    createdAt: Type.String({ minLength: 1 }),
+    completedAt: Type.Optional(Type.String({ minLength: 1 })),
+    failure: Type.Optional(Type.String({ minLength: 1 })),
+  },
+  { additionalProperties: false },
+);
+export type HyperresearchAgentJob = Static<typeof HyperresearchAgentJobSchema>;
+
+export const HyperresearchAgentOutputSchema = Type.Object(
+  {
+    jobId: Type.String({ minLength: 1 }),
+    role: Type.String({ minLength: 1 }),
+    status: Type.Union([Type.Literal("complete"), Type.Literal("failed")]),
+    summary: Type.String({ minLength: 1 }),
+    evidence: Type.Array(Type.String()),
+    failure: Type.Optional(Type.String({ minLength: 1 })),
+  },
+  { additionalProperties: false },
+);
+export type HyperresearchAgentOutput = Static<typeof HyperresearchAgentOutputSchema>;
+
+export const HyperresearchReviewDispositionSchema = Type.Object(
+  {
+    id: Type.String({ minLength: 1 }),
+    severity: Type.Union([Type.Literal("blocking"), Type.Literal("warning")]),
+    status: Type.Union([Type.Literal("open"), Type.Literal("accepted"), Type.Literal("deferred"), Type.Literal("closed")]),
+    evidence: Type.Array(Type.String({ minLength: 1 })),
+    disposition: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+export type HyperresearchReviewDisposition = Static<typeof HyperresearchReviewDispositionSchema>;
+
+export const HyperresearchReportSnapshotSchema = Type.Object(
+  {
+    stepId: Type.String({ minLength: 1 }),
+    path: Type.String({ minLength: 1 }),
+    sha256: Type.String({ minLength: 1 }),
+    createdAt: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+export type HyperresearchReportSnapshot = Static<typeof HyperresearchReportSnapshotSchema>;
+
+export const HyperresearchPatchGuardSchema = Type.Object(
+  {
+    snapshotPath: Type.Optional(Type.String({ minLength: 1 })),
+    snapshotSha256: Type.Optional(Type.String({ minLength: 1 })),
+    violations: Type.Array(Type.String({ minLength: 1 })),
+  },
+  { additionalProperties: false },
+);
+export type HyperresearchPatchGuard = Static<typeof HyperresearchPatchGuardSchema>;
+
 export const HyperresearchRunLedgerSchema = Type.Object(
   {
-    version: Type.Literal(1),
+    version: Type.Union([Type.Literal(1), Type.Literal(2)]),
     runId: Type.String({ minLength: 1 }),
     canonicalQuery: Type.String({ minLength: 1 }),
     tier: HyperresearchTierSchema,
+    tierSource: Type.Optional(Type.Union([Type.Literal("user"), Type.Literal("auto-default"), Type.Literal("decomposition"), Type.Literal("fixture")])),
+    vaultTag: Type.Optional(Type.String({ minLength: 1 })),
     vaultRoot: Type.String({ minLength: 1 }),
     artifactRoot: Type.String({ minLength: 1 }),
+    stepsRoot: Type.Optional(Type.String({ minLength: 1 })),
+    queryFilePath: Type.Optional(Type.String({ minLength: 1 })),
+    routeStepIds: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
+    wrapperRequirements: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
     currentStepId: Type.Optional(Type.String({ minLength: 1 })),
     completed: Type.Boolean(),
     createdAt: Type.String({ minLength: 1 }),
     updatedAt: Type.String({ minLength: 1 }),
     steps: Type.Array(HyperresearchStepRecordSchema),
     cliCalls: Type.Array(HyperresearchCliCallSchema),
+    agentJobs: Type.Optional(Type.Array(HyperresearchAgentJobSchema)),
+    reviewDispositions: Type.Optional(Type.Array(HyperresearchReviewDispositionSchema)),
+    reportSnapshots: Type.Optional(Type.Array(HyperresearchReportSnapshotSchema)),
+    patchGuard: Type.Optional(HyperresearchPatchGuardSchema),
     resumes: Type.Array(HyperresearchResumeEventSchema),
     failures: Type.Array(HyperresearchFailureSchema),
   },
@@ -123,11 +209,46 @@ export const HyperresearchRunLedgerSchema = Type.Object(
 );
 export type HyperresearchRunLedger = Static<typeof HyperresearchRunLedgerSchema>;
 
+export const HyperresearchV8RunLedgerSchema = Type.Object(
+  {
+    version: Type.Literal(2),
+    runId: Type.String({ minLength: 1 }),
+    canonicalQuery: Type.String({ minLength: 1 }),
+    tier: HyperresearchTierSchema,
+    tierSource: Type.Union([Type.Literal("user"), Type.Literal("auto-default"), Type.Literal("decomposition"), Type.Literal("fixture")]),
+    vaultTag: Type.String({ minLength: 1 }),
+    vaultRoot: Type.String({ minLength: 1 }),
+    artifactRoot: Type.String({ minLength: 1 }),
+    stepsRoot: Type.String({ minLength: 1 }),
+    queryFilePath: Type.Optional(Type.String({ minLength: 1 })),
+    routeStepIds: Type.Array(Type.String({ minLength: 1 })),
+    wrapperRequirements: Type.Array(Type.String({ minLength: 1 })),
+    currentStepId: Type.Optional(Type.String({ minLength: 1 })),
+    completed: Type.Boolean(),
+    createdAt: Type.String({ minLength: 1 }),
+    updatedAt: Type.String({ minLength: 1 }),
+    steps: Type.Array(HyperresearchStepRecordSchema),
+    cliCalls: Type.Array(HyperresearchCliCallSchema),
+    agentJobs: Type.Array(HyperresearchAgentJobSchema),
+    reviewDispositions: Type.Array(HyperresearchReviewDispositionSchema),
+    reportSnapshots: Type.Array(HyperresearchReportSnapshotSchema),
+    patchGuard: HyperresearchPatchGuardSchema,
+    resumes: Type.Array(HyperresearchResumeEventSchema),
+    failures: Type.Array(HyperresearchFailureSchema),
+  },
+  { additionalProperties: false },
+);
+export type HyperresearchV8RunLedger = Static<typeof HyperresearchV8RunLedgerSchema>;
+
 export type HyperresearchStepDefinition = {
   id: string;
   title: string;
   fileName: string;
   requiredArtifacts: string[];
+  tierGate?: "all" | "full";
+  agentRoles?: string[];
+  requiredCliOperations?: HyperresearchCliOperation[];
+  snapshotFinalReport?: boolean;
 };
 
 export type LoadedHyperresearchStep = HyperresearchStepLoad & {
@@ -138,11 +259,15 @@ export const HyperresearchIntegrityFindingSchema = Type.Object(
   {
     severity: Type.Union([Type.Literal("blocking"), Type.Literal("warning")]),
     code: Type.Union([
+      Type.Literal("awaiting-agent-output"),
+      Type.Literal("failed-agent-job"),
       Type.Literal("missing-step-load"),
       Type.Literal("missing-required-artifact"),
       Type.Literal("failed-cli-call"),
       Type.Literal("failed-step"),
       Type.Literal("incomplete-run"),
+      Type.Literal("open-review-finding"),
+      Type.Literal("patch-only-violation"),
     ]),
     message: Type.String({ minLength: 1 }),
     stepId: Type.Optional(Type.String({ minLength: 1 })),
@@ -158,32 +283,10 @@ export type HyperresearchCliResult = {
   stderr?: string;
 };
 
-export const RunSyntheticSliceInputSchema = Type.Object(
-  {
-    canonicalQuery: Type.String({ minLength: 1 }),
-    tier: HyperresearchTierSchema,
-    vaultRoot: Type.String({ minLength: 1 }),
-    stepsRoot: Type.String({ minLength: 1 }),
-    artifactRoot: Type.Optional(Type.String({ minLength: 1 })),
-    ledgerPath: Type.Optional(Type.String({ minLength: 1 })),
-    maxSteps: Type.Optional(Type.Number({ minimum: 1 })),
-    resumeReason: Type.Optional(Type.String({ minLength: 1 })),
-  },
-  { additionalProperties: false },
-);
-export type RunSyntheticSliceInput = Static<typeof RunSyntheticSliceInputSchema>;
-
-export type HyperresearchRunnerOptions = RunSyntheticSliceInput & {
-  io?: HyperresearchCodexIO;
-  cli?: HyperresearchCliBackend;
-};
-
-export const HyperresearchRunnerResultSchema = Type.Object(
-  {
-    ledgerPath: Type.String({ minLength: 1 }),
-    ledger: HyperresearchRunLedgerSchema,
-    integrity: Type.Array(HyperresearchIntegrityFindingSchema),
-  },
-  { additionalProperties: false },
-);
-export type HyperresearchRunnerResult = Static<typeof HyperresearchRunnerResultSchema>;
+export const V8RunStatusSchema = Type.Union([
+  Type.Literal("running"),
+  Type.Literal("awaiting_agents"),
+  Type.Literal("complete"),
+  Type.Literal("blocked"),
+]);
+export type V8RunStatus = Static<typeof V8RunStatusSchema>;
