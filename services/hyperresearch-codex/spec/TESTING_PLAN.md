@@ -13,7 +13,7 @@ The final V8 claim remains a target, not current evidence. It requires all 16 st
 - CLI calls are allowlisted and auditable.
 - Completed steps have required artifacts.
 - Final acceptance blocks on failed CLI calls, failed steps, missing artifacts, or unclosed blocking review findings.
-- Final plugin-system proof uses actual Codex skill/plugin runtime after RAWR sync. This is not complete until the synced skill is invoked in a fresh Codex session, not merely synced to disk.
+- Final plugin-system proof uses actual Codex skill/plugin runtime after RAWR sync. The current evidence proves fresh-session skill discoverability; full workflow execution still requires a synced-skill run that produces ledger/artifact evidence.
 
 ## Component Gates
 
@@ -51,8 +51,8 @@ Current observed component evidence:
 
 1. Install template CLI topic. Current status: template CLI topic exists in the implementation worktree and passes fixture smoke; it still needs to land in the template baseline used by downstream operators.
 2. Sync downstream RAWR HQ skill/reference/agent material into Codex. Current status: observed for the scoped Hyperresearch plugin.
-3. Invoke the synced skill in a fresh vault. Current status: not run.
-4. Verify ledger, artifacts, and CLI call audit trail from the synced-skill invocation. Current status: not run.
+3. Invoke the synced skill in a fresh Codex session. Current status: discoverability smoke passed with `codex exec` in read-only mode; the session used `hyperresearch-codex` and reported the installed skill boundary.
+4. Verify ledger, artifacts, and CLI call audit trail from a synced-skill workflow invocation. Current status: not run.
 5. Verify a compaction/resume handoff can continue from ledger state. Current status: service-level resume test passed; actual Codex-session resume not run.
 6. Verify patch-only phase rejects wholesale rewrites once full V8 port exists. Current status: not implemented.
 

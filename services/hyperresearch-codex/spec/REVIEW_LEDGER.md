@@ -23,7 +23,7 @@ This ledger reviews the current spec and minimal runtime slice before expanding 
 | HR-CODEX-013 | blocking | closed | Service root exposed runner, ledger, step loader, CLI helper, and integrity internals; service behavior lived in top-level files. | Moved runtime internals under `src/service/modules/runtime`, added `src/service/shared/resources.ts`, narrowed root exports, and added a structural service-shape ratchet. |
 | HR-CODEX-014 | blocking | closed | Blocking integrity findings did not fail the CLI command path. | `rawr hyperresearch codex-slice` now returns `ok:false` and exits nonzero when blocking integrity findings exist; plugin test covers missing-step failure. |
 | HR-CODEX-015 | blocking | closed | Draft hook/MCP notes were under runtime sync directories and could be misread as enabled runtime material. | Moved hook/MCP drafts into skill references and require real verified config before placing anything under `hooks/` or `mcp/`. |
-| HR-CODEX-016 | warning | open | Synced-skill invocation inside an actual Codex session has not been run. | Service/CLI fixture proof and Codex sync are green, but runtime gate 3 remains pending before claiming final plugin-system proof. |
+| HR-CODEX-016 | warning | closed | Synced-skill invocation inside an actual Codex session had not been run. | Ran `codex exec` in a fresh read-only session against downstream `rawr-hq`; the session discovered `hyperresearch-codex`, read the installed skill, and reported its required first move/current runtime boundary. This proves skill discoverability only, not full V8 execution. |
 
 ## Phase Exit
 
@@ -33,4 +33,4 @@ Spec packet is sufficient for the current minimal runtime slice when:
 - Component tests pass.
 - Any open warnings are explicitly carried into the next loop.
 
-Full V8 implementation must not start until the adapter matrix has rows for all 16 steps and all role agents, and `HR-CODEX-008`, `HR-CODEX-009`, `HR-CODEX-012`, and `HR-CODEX-016` have explicit dispositions.
+Full V8 implementation must not start until the adapter matrix has rows for all 16 steps and all role agents, and `HR-CODEX-008`, `HR-CODEX-009`, and `HR-CODEX-012` have explicit dispositions.
