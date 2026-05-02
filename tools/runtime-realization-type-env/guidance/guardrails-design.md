@@ -78,7 +78,7 @@ Run these reviews before committing meaningful lab changes.
 | Migration realism | Does the Lab reduce Parent-Repo Migration risk and move toward Lab-Production Proof, or only prove an artifact disconnected from the Reference Runtime path? |
 | Scope containment | Did production packages, root gates, workspaces, or public exports remain untouched? |
 
-Use `workflow-phased-agent-verification.md` for the repeatable team workflow that applies these reviews across spec, lab, and migration burn-down work.
+Use `workflow-phased-agent-verification.md` for the Runtime Lab proof workflow overlay that applies these reviews to Workstream Plugin Pack workstreams.
 
 ## Adding Or Changing Evidence
 

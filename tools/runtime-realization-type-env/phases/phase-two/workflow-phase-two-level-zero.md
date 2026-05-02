@@ -72,7 +72,7 @@ Then I reread the minimum active anchor set:
 5. `tools/runtime-realization-type-env/guidance/guardrails-design.md`
 6. `tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md`
 7. `tools/runtime-realization-type-env/guidance/README.md`
-8. `tools/runtime-realization-type-env/guidance/template-workstream-report.md`
+8. `tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md`
 9. `tools/runtime-realization-type-env/evidence/proof-manifest.json`
 10. `tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md`
 11. `tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md`
@@ -212,7 +212,7 @@ Every child workstream must explicitly revisit:
 
 ```text
 tools/runtime-realization-type-env/guidance/README.md
-tools/runtime-realization-type-env/guidance/template-workstream-report.md
+tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md
 ```
 
 I do not rely on memory for the template.
@@ -363,7 +363,7 @@ For every child workstream, I repeat this loop:
    spine map, and the focus log.
 2. Verify repo, Graphite, Nx, and manifest-pinned spec state before opening the
    workstream.
-3. Open the child workstream with `guidance/template-workstream-report.md`, including
+3. Open the child workstream with `tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md`, including
    objective, authority inputs, output contract, expected gates, phase-local
    agent topology, stop conditions, and closure criteria.
 4. Run the workstream's discovery, design, implementation, verification,

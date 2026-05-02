@@ -46,7 +46,7 @@ Scratch-first policy for mutating multi-phase commands:
 
 ## Related Process Docs
 
-- `docs/process/WORKSTREAMS.md` (canonical workstream workflow and companion set)
+- `docs/process/WORKSTREAMS.md` (repo pointer to the Workstream Plugin Pack)
 - `docs/process/PLUGIN_AUTONOMY_READINESS_SCORECARD.md` (autonomy readiness and drift scorecard)
 - `docs/process/CROSS_REPO_WORKFLOWS.md` (template/personal workflow model)
 - `docs/process/UPSTREAM_SYNC_RUNBOOK.md` (template -> personal sync)

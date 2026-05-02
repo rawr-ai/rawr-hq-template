@@ -511,7 +511,7 @@ Artifacts:
 - `phases/phase-one/_archive/default-research-program-2026-04-30/workflow-runtime-research-program-dra.md`
 - `guidance/workflow-phased-agent-verification.md`
 - `guidance/README.md`
-- `guidance/template-workstream-report.md`
+- `tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md`
 - `phases/phase-one/workstreams/workstream-2026-04-30-phase-one-provider-effect-plan-bootgraph-provisioning-lowering.md`
 - `src/sdk/runtime/provider-plan-internals.ts`
 - `src/sdk/runtime/providers.ts`

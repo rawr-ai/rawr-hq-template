@@ -148,7 +148,7 @@ Coordination inputs:
 - `../../phase-two/workflow-phase-two-level-zero.md`
 - `../../phase-two/ref-2026-04-30-phase-two-production-critical-claim-ledger.md`
 - `../README.md`
-- `tools/runtime-realization-type-env/guidance/template-workstream-report.md`
+- `tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md`
 - `tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md`
 
 Reference integration input:
@@ -980,7 +980,7 @@ Must read before opening the next program:
 - `docs/projects/orpc-ingest-domain-packages/resources/spec/TELEMETRY_DESIGN.md`
 - `docs/system/quarantine/TELEMETRY.md`
 - `docs/projects/rawr-final-architecture-migration/resources/research/service-package-effect-orpc-integration-snapshot.md`
-- `tools/runtime-realization-type-env/guidance/template-workstream-report.md`
+- `tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md`
 - `../README.md`
 - `tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md`
 
