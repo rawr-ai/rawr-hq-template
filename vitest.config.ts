@@ -57,6 +57,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("services/hyperresearch-codex"),
+        test: { name: "hyperresearch-codex", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("services/agent-config-sync"),
         test: { name: "agent-config-sync", environment: "node", include: [...includes] },
       },
@@ -89,6 +94,11 @@ export default defineConfig({
         extends: true,
         root: r("plugins/cli/chatgpt-corpus"),
         test: { name: "plugin-chatgpt-corpus", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("plugins/cli/hyperresearch"),
+        test: { name: "plugin-hyperresearch", environment: "node", include: [...includes] },
       },
       {
         extends: true,

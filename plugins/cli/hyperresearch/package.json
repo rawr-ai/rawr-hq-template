@@ -1,0 +1,37 @@
+{
+  "name": "@rawr/plugin-hyperresearch",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "oclif": {
+    "commands": "./dist/commands",
+    "topicSeparator": " ",
+    "typescript": {
+      "commands": "./src/commands"
+    }
+  },
+  "dependencies": {
+    "@oclif/core": "^4.8.0",
+    "@rawr/core": "workspace:*",
+    "@rawr/hyperresearch-codex": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --project plugin-hyperresearch"
+  },
+  "rawr": {
+    "kind": "toolkit",
+    "capability": "hyperresearch"
+  },
+  "nx": {
+    "tags": [
+      "type:plugin",
+      "migration-slice:structural-tranche"
+    ]
+  }
+}
