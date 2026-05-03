@@ -11,7 +11,7 @@ This service uses a contained `Discover -> Review -> Act` loop for Hyperresearch
 ## Agent Loop Shape
 
 - Discovery agents map V8 step/role/source/test facts and do not edit files.
-- Implementation agents get disjoint write scopes: service runtime, CLI commands, spec/docs, downstream plugin material, or tests.
+- Implementation agents get disjoint write scopes: service modules, shared service helpers/entities, CLI commands, spec/docs, downstream plugin material, or tests.
 - Review agents inspect service topology, parity/security, downstream sync, and testing evidence.
 - The coordinator owns fan-in, final code integration, commits, and the decision about whether a finding blocks phase exit.
 

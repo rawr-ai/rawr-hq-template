@@ -1,9 +1,28 @@
 import type {
-  V8RunnerResult,
-  V8ValidationResult,
+  HyperresearchAgentJob,
+  HyperresearchIntegrityFinding,
+  HyperresearchV8RunLedger,
+  V8RunStatus,
 } from "@rawr/hyperresearch-codex";
 
-export function summarizeV8Result(result: V8RunnerResult) {
+type V8RunnerSummaryInput = {
+  ledgerPath: string;
+  status: V8RunStatus;
+  ledger: HyperresearchV8RunLedger;
+  pendingAgentJobs: HyperresearchAgentJob[];
+  integrity: HyperresearchIntegrityFinding[];
+};
+
+type V8ValidationSummaryInput = {
+  ledgerPath: string;
+  status: V8RunStatus;
+  passed: boolean;
+  ledger: HyperresearchV8RunLedger;
+  blockingFindings: HyperresearchIntegrityFinding[];
+  warningFindings: HyperresearchIntegrityFinding[];
+};
+
+export function summarizeV8Result(result: V8RunnerSummaryInput) {
   return {
     ledgerPath: result.ledgerPath,
     runId: result.ledger.runId,
@@ -29,11 +48,11 @@ export function summarizeV8Result(result: V8RunnerResult) {
   };
 }
 
-export function hasBlockingV8Findings(result: V8RunnerResult) {
+export function hasBlockingV8Findings(result: V8RunnerSummaryInput) {
   return result.integrity.some((finding) => finding.severity === "blocking");
 }
 
-export function summarizeV8ValidationResult(result: V8ValidationResult) {
+export function summarizeV8ValidationResult(result: V8ValidationSummaryInput) {
   return {
     ledgerPath: result.ledgerPath,
     runId: result.ledger.runId,

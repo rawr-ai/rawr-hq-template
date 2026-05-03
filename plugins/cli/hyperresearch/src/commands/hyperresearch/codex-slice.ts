@@ -56,7 +56,7 @@ export default class HyperresearchCodexSlice extends RawrCommand {
     });
 
     try {
-      const resultData = await client.runtime.runSyntheticSlice({
+      const resultData = await client.fixtures.runSyntheticSlice({
         canonicalQuery: String(flags.query),
         tier: String(flags.tier) as HyperresearchTier,
         vaultRoot: String(flags.vault),

@@ -1,8 +1,4 @@
 import { type Static, Type } from "typebox";
-import type {
-  HyperresearchCliBackend,
-  HyperresearchCodexIO,
-} from "../../shared/resources";
 
 export const HyperresearchTierSchema = Type.Union([
   Type.Literal("light"),

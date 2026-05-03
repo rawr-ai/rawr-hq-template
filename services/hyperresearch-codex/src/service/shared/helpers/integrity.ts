@@ -2,7 +2,30 @@ import type {
   HyperresearchIntegrityFinding,
   HyperresearchRunLedger,
 } from "../entities";
-import type { HyperresearchCodexIO } from "../../../shared/resources";
+import type { HyperresearchCodexIO } from "../resources";
+
+/**
+ * Estimates whether a post-synthesis report still behaves like a patch.
+ *
+ * This is deliberately conservative: small edits keep most snapshot lines,
+ * while wholesale regeneration drops the retained-line ratio and blocks.
+ */
+function retainedLineRatio(snapshot: string, current: string): number {
+  const snapshotLines = snapshot
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  if (snapshotLines.length === 0) return current.trim().length === 0 ? 1 : 0;
+
+  const currentLines = new Set(
+    current
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0),
+  );
+  const retained = snapshotLines.filter((line) => currentLines.has(line)).length;
+  return retained / snapshotLines.length;
+}
 
 export async function validateHyperresearchRunIntegrity(input: {
   ledger: HyperresearchRunLedger;
@@ -90,6 +113,33 @@ export async function validateHyperresearchRunIntegrity(input: {
       code: "patch-only-violation",
       message: violation,
     });
+  }
+
+  const patchGuard = input.ledger.patchGuard;
+  if (patchGuard?.snapshotPath && patchGuard.snapshotSha256) {
+    const currentReport = await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, patchGuard.snapshotPath));
+    const currentSha = currentReport ? input.io.sha256(currentReport) : undefined;
+    if (currentReport && currentSha !== patchGuard.snapshotSha256) {
+      const snapshot = [...(input.ledger.reportSnapshots ?? [])].reverse()
+        .find((item) => item.sha256 === patchGuard.snapshotSha256);
+      const snapshotText = snapshot
+        ? await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, snapshot.path))
+        : null;
+
+      if (!snapshotText) {
+        findings.push({
+          severity: "blocking",
+          code: "patch-only-violation",
+          message: `Final report changed after snapshot but snapshot copy is missing: ${patchGuard.snapshotPath}`,
+        });
+      } else if (retainedLineRatio(snapshotText, currentReport) < 0.5) {
+        findings.push({
+          severity: "blocking",
+          code: "patch-only-violation",
+          message: `Final report appears to be a wholesale rewrite after snapshot: ${patchGuard.snapshotPath}`,
+        });
+      }
+    }
   }
 
   if (!input.ledger.completed) {

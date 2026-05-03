@@ -14,9 +14,11 @@ describe("hyperresearch-codex service shell", () => {
     expect(typeof createClient).toBe("function");
     expect(createClient(createClientOptions())).toBeDefined();
     expect(router).toBeDefined();
-    expect(Object.keys(contract)).toEqual(["runtime"]);
-    expect(Object.keys(contract.runtime)).toEqual([
+    expect(Object.keys(contract)).toEqual(["fixtures", "runs"]);
+    expect(Object.keys(contract.fixtures)).toEqual([
       "runSyntheticSlice",
+    ]);
+    expect(Object.keys(contract.runs)).toEqual([
       "startV8Run",
       "advanceV8Run",
       "inspectV8Run",
@@ -24,7 +26,7 @@ describe("hyperresearch-codex service shell", () => {
     ]);
   });
 
-  it("keeps runtime mechanics behind the service module boundary", async () => {
+  it("keeps package mechanics behind explicit service modules and shared helpers", async () => {
     expect(Object.keys(publicApi).sort()).toEqual(["createClient", "router"]);
 
     const srcDir = path.resolve(dirname(fileURLToPath(import.meta.url)), "../src");
@@ -38,5 +40,29 @@ describe("hyperresearch-codex service shell", () => {
       "router.ts",
       "types.ts",
     ]);
+  });
+
+  it("rejects generic module buckets and service directories inside modules", async () => {
+    const serviceDir = path.resolve(dirname(fileURLToPath(import.meta.url)), "../src/service");
+    const moduleDir = path.join(serviceDir, "modules");
+    const moduleNames = (await fs.readdir(moduleDir, { withFileTypes: true }))
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+
+    expect(moduleNames).toEqual(["fixtures", "runs"]);
+    await expect(fs.stat(path.join(moduleDir, "common"))).rejects.toThrow();
+    await expect(fs.stat(path.join(moduleDir, "runtime"))).rejects.toThrow();
+
+    for (const moduleName of moduleNames) {
+      const entries = (await fs.readdir(path.join(moduleDir, moduleName))).sort();
+      expect(entries).toContain("contract.ts");
+      expect(entries).toContain("middleware.ts");
+      expect(entries).toContain("module.ts");
+      expect(entries).toContain("router.ts");
+      expect(entries).not.toContain("services");
+      expect(entries).not.toContain("runner.ts");
+      expect(entries).not.toContain("v8-runner.ts");
+    }
   });
 });

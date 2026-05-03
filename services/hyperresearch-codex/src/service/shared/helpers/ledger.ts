@@ -4,7 +4,7 @@ import type {
   HyperresearchStepDefinition,
   HyperresearchV8RunLedger,
 } from "../entities";
-import type { HyperresearchCodexIO } from "../../../shared/resources";
+import type { HyperresearchCodexIO } from "../resources";
 
 export function createHyperresearchRunLedger(input: {
   canonicalQuery: string;
@@ -128,6 +128,12 @@ export function createV8HyperresearchRunLedger(input: {
   };
 }
 
+/**
+ * Guards the persisted V8 ledger shape before any run procedure mutates it.
+ *
+ * This is not a migration shim; incompatible versions fail loudly so resume
+ * never proceeds against ambiguous durable state.
+ */
 export function ensureV8LedgerState(ledger: HyperresearchRunLedger): asserts ledger is HyperresearchV8RunLedger {
   if (ledger.version !== 2) {
     throw new Error(`Expected Hyperresearch V8 ledger version 2, received ${ledger.version}`);

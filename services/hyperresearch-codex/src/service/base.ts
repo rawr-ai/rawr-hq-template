@@ -24,7 +24,7 @@ type InvocationContext = {
 
 type ProcedureMetadata = {
   audit?: "none" | "basic" | "full";
-  entity?: "service" | "runtime";
+  entity?: "service" | "fixtures" | "runs";
 };
 
 export const policy = {

@@ -2,7 +2,7 @@ import type {
   HyperresearchStepDefinition,
   LoadedHyperresearchStep,
 } from "../entities";
-import type { HyperresearchCodexIO } from "../../../shared/resources";
+import type { HyperresearchCodexIO } from "../resources";
 
 export const syntheticHyperresearchSteps: HyperresearchStepDefinition[] = [
   {

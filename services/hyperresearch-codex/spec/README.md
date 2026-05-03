@@ -7,6 +7,7 @@ The local package owns the reusable control-plane substrate: durable ledgers, fr
 ## Current Topology
 
 - RAWR HQ-Template owns `@rawr/hyperresearch-codex` and the `@rawr/plugin-hyperresearch` CLI topic.
+- The service has two callable oRPC modules: `fixtures` for the synthetic proof slice and `runs` for durable V8 lifecycle procedures. Shared ledger, step, CLI, integrity, resource, and entity mechanics live under `src/service/shared`.
 - RAWR HQ currently owns the canonical sync source for Codex skills, hook/MCP adoption references, and agent material.
 - Final plugin-system testing installs the Hyperresearch CLI topic from RAWR HQ-Template, then syncs skill/reference/agent materials from RAWR HQ through the existing `rawr plugins sync ...` lane.
 - This split is temporary. The separate template/personal parity migration should eventually make the source topology less split.

@@ -45,7 +45,7 @@ export default class HyperresearchCodexStart extends RawrCommand {
     });
 
     try {
-      const resultData = await client.runtime.startV8Run({
+      const resultData = await client.runs.startV8Run({
         canonicalQuery: String(flags.query),
         tier: String(flags.tier) as "auto" | "light" | "full",
         vaultRoot: String(flags.vault),

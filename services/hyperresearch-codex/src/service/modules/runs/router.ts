@@ -1,5 +1,12 @@
-import { runHyperresearchCli } from "./helpers/cli";
-import { validateHyperresearchRunIntegrity } from "./helpers/integrity";
+/**
+ * @fileoverview Durable V8 run lifecycle procedure implementation.
+ *
+ * This module owns the callable run state machine. Shared helpers provide
+ * ledger, step-loading, CLI, and integrity primitives; procedure flow stays
+ * here so the oRPC surface is not a decorative wrapper over another harness.
+ */
+import { runHyperresearchCli } from "../../shared/helpers/cli";
+import { validateHyperresearchRunIntegrity } from "../../shared/helpers/integrity";
 import {
   assertV8LedgerMatches,
   appendV8ResumeEvent,
@@ -8,13 +15,13 @@ import {
   nextPendingStep,
   readV8HyperresearchRunLedger,
   writeHyperresearchRunLedger,
-} from "./helpers/ledger";
+} from "../../shared/helpers/ledger";
 import {
   expandV8ArtifactPath,
   loadHyperresearchStep,
   v8HyperresearchSteps,
   v8StepsForTier,
-} from "./helpers/steps";
+} from "../../shared/helpers/steps";
 import type {
   HyperresearchAgentJob,
   HyperresearchAgentOutput,
@@ -24,22 +31,14 @@ import type {
   HyperresearchTier,
   HyperresearchV8RunLedger,
   V8RunStatus,
-} from "./entities";
-import type {
-  AdvanceV8RunInput,
-  StartV8RunInput,
-  V8RunnerResult,
-  V8ValidationResult,
-} from "./contract";
+} from "../../shared/entities";
 import type {
   HyperresearchCliBackend,
   HyperresearchCodexIO,
 } from "../../shared/resources";
+import { module } from "./module";
 
-type V8RuntimeDependencies = {
-  io: HyperresearchCodexIO;
-  cli: HyperresearchCliBackend;
-};
+type TierRequest = "auto" | "light" | "full";
 
 function slugifyQuery(query: string): string {
   const slug = query
@@ -50,7 +49,7 @@ function slugifyQuery(query: string): string {
   return slug || "hyperresearch";
 }
 
-function resolveTier(input: StartV8RunInput): {
+function resolveTier(input: { tier?: TierRequest }): {
   tier: HyperresearchTier;
   tierSource: "user" | "auto-default";
 } {
@@ -184,6 +183,12 @@ function agentRolesForStep(
   return definition.agentRoles ?? [];
 }
 
+/**
+ * Writes the parent-owned Codex packet contract for each role in a step.
+ *
+ * Packets are the durable boundary between service orchestration and spawned
+ * agents: each job declares exactly where the agent must write its result.
+ */
 async function createAgentJobs(input: {
   ledger: HyperresearchRunLedger & { vaultTag: string };
   step: HyperresearchStepRecord;
@@ -272,6 +277,12 @@ async function writeFixtureAgentOutputs(input: {
   return outputs;
 }
 
+/**
+ * Reads declared packet outputs and makes reported failures terminal.
+ *
+ * Once a real agent has failed, later advances cannot switch to synthetic mode
+ * to erase that failure from the run ledger.
+ */
 async function validateAgentOutputs(input: {
   ledger: HyperresearchRunLedger;
   step: HyperresearchStepRecord;
@@ -376,11 +387,21 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
+/**
+ * Collects the parent-owned source capture set from agent outputs.
+ *
+ * Agent packets may suggest sources, but the service remains responsible for
+ * rejecting malformed URLs and turning every distinct source into CLI-audited
+ * vault capture.
+ */
 function sourceUrlsFromAgentOutputs(agentOutputs: HyperresearchAgentOutput[]): string[] {
   const urls = new Set<string>();
   for (const output of agentOutputs) {
     for (const url of output.sourceUrls ?? []) {
-      if (isHttpUrl(url)) urls.add(url);
+      if (!isHttpUrl(url)) {
+        throw new Error(`Agent output contains an invalid source URL for ${output.jobId}: ${url}`);
+      }
+      urls.add(url);
     }
     for (const evidence of output.evidence) {
       if (isHttpUrl(evidence)) urls.add(evidence);
@@ -389,6 +410,12 @@ function sourceUrlsFromAgentOutputs(agentOutputs: HyperresearchAgentOutput[]): s
   return [...urls];
 }
 
+/**
+ * Executes the backend operations that make a step auditable in the vault.
+ *
+ * Source fetches are intentionally expanded into one ledgered CLI call per URL
+ * so packet-mode fan-in cannot silently drop a source suggested by an agent.
+ */
 async function runRequiredCliForStep(input: {
   definition: HyperresearchStepDefinition;
   ledger: HyperresearchRunLedger;
@@ -402,7 +429,7 @@ async function runRequiredCliForStep(input: {
       if (operation === "search") return [input.ledger.canonicalQuery, "--json"];
       if (operation === "fetch") {
         if (!sourceUrls[0]) throw new Error(`Step ${input.definition.id} requires a source URL for Hyperresearch fetch`);
-        return [sourceUrls[0], "--json"];
+        return undefined;
       }
       if (operation === "fetch-batch") {
         if (sourceUrls.length === 0) throw new Error(`Step ${input.definition.id} requires source URLs for Hyperresearch fetch-batch`);
@@ -414,9 +441,24 @@ async function runRequiredCliForStep(input: {
       if (operation === "export") return ["json", "--json"];
       return ["--json"];
     })();
+    if (operation === "fetch") {
+      for (const sourceUrl of sourceUrls) {
+        await runHyperresearchCli({
+          operation,
+          args: [sourceUrl, "--json"],
+          cwd: input.ledger.vaultRoot,
+          io: input.io,
+          cli: input.cli,
+          ledger: input.ledger,
+          throwOnFailure: true,
+        });
+      }
+      continue;
+    }
+
     await runHyperresearchCli({
       operation,
-      args,
+      args: args ?? ["--json"],
       cwd: input.ledger.vaultRoot,
       io: input.io,
       cli: input.cli,
@@ -426,6 +468,12 @@ async function runRequiredCliForStep(input: {
   }
 }
 
+/**
+ * Writes deterministic fixture artifacts and snapshots the first final report.
+ *
+ * The fixture backend is allowed to synthesize artifacts for control-plane
+ * proof, but report snapshots are real integrity inputs used by validation.
+ */
 async function writeStepArtifacts(input: {
   ledger: HyperresearchRunLedger & { vaultTag: string };
   step: HyperresearchStepRecord;
@@ -500,10 +548,17 @@ async function writeStepArtifacts(input: {
     const report = await readVaultText({ ledger: input.ledger, relativePath: reportPath, io: input.io });
     if (report) {
       const sha256 = input.io.sha256(report);
+      const snapshotPath = `research/temp/report-snapshots/${input.step.id}-${sha256}.md`;
+      await writeVaultText({
+        ledger: input.ledger,
+        relativePath: snapshotPath,
+        io: input.io,
+        content: report,
+      });
       input.ledger.reportSnapshots ??= [];
       input.ledger.reportSnapshots.push({
         stepId: input.step.id,
-        path: reportPath,
+        path: snapshotPath,
         sha256,
         createdAt: input.io.now(),
       });
@@ -533,7 +588,7 @@ async function makeResult(input: {
   ledgerPath: string;
   ledger: HyperresearchV8RunLedger;
   io: HyperresearchCodexIO;
-}): Promise<V8RunnerResult> {
+}) {
   const integrity = await validateHyperresearchRunIntegrity({
     ledger: input.ledger,
     io: input.io,
@@ -547,11 +602,8 @@ async function makeResult(input: {
   };
 }
 
-export async function startV8HyperresearchRun(
-  input: StartV8RunInput,
-  dependencies: V8RuntimeDependencies,
-): Promise<V8RunnerResult> {
-  const { io, cli } = dependencies;
+const startV8Run = module.startV8Run.handler(async ({ context, input }) => {
+  const { io, cli } = context;
   const { tier, tierSource } = resolveTier(input);
   const vaultTag = input.vaultTag ?? slugifyQuery(input.canonicalQuery);
   const ledgerPath = input.ledgerPath ?? io.join(input.vaultRoot, "research", "temp", "hyperresearch-codex-run.json");
@@ -608,13 +660,10 @@ export async function startV8HyperresearchRun(
   });
   await writeHyperresearchRunLedger({ ledgerPath, ledger, io });
   return await makeResult({ ledgerPath, ledger, io });
-}
+});
 
-export async function advanceV8HyperresearchRun(
-  input: AdvanceV8RunInput,
-  dependencies: V8RuntimeDependencies,
-): Promise<V8RunnerResult> {
-  const { io, cli } = dependencies;
+const advanceV8Run = module.advanceV8Run.handler(async ({ context, input }) => {
+  const { io, cli } = context;
   const agentMode = input.agentMode ?? "packets";
   const ledger = await readV8HyperresearchRunLedger({
     ledgerPath: input.ledgerPath,
@@ -736,30 +785,24 @@ export async function advanceV8HyperresearchRun(
   }
 
   return await makeResult({ ledgerPath: input.ledgerPath, ledger, io });
-}
+});
 
-export async function inspectV8HyperresearchRun(
-  input: { ledgerPath: string },
-  dependencies: Pick<V8RuntimeDependencies, "io">,
-): Promise<V8RunnerResult> {
+const inspectV8Run = module.inspectV8Run.handler(async ({ context, input }) => {
   const ledger = await readV8HyperresearchRunLedger({
     ledgerPath: input.ledgerPath,
-    io: dependencies.io,
+    io: context.io,
   });
-  return await makeResult({ ledgerPath: input.ledgerPath, ledger, io: dependencies.io });
-}
+  return await makeResult({ ledgerPath: input.ledgerPath, ledger, io: context.io });
+});
 
-export async function validateV8HyperresearchRun(
-  input: { ledgerPath: string },
-  dependencies: Pick<V8RuntimeDependencies, "io">,
-): Promise<V8ValidationResult> {
+const validateV8Run = module.validateV8Run.handler(async ({ context, input }) => {
   const ledger = await readV8HyperresearchRunLedger({
     ledgerPath: input.ledgerPath,
-    io: dependencies.io,
+    io: context.io,
   });
   const integrity = await validateHyperresearchRunIntegrity({
     ledger,
-    io: dependencies.io,
+    io: context.io,
   });
   const blockingFindings = integrity.filter((finding) => finding.severity === "blocking");
   const warningFindings = integrity.filter((finding) => finding.severity === "warning");
@@ -771,4 +814,11 @@ export async function validateV8HyperresearchRun(
     blockingFindings,
     warningFindings,
   };
-}
+});
+
+export const router = module.router({
+  startV8Run,
+  advanceV8Run,
+  inspectV8Run,
+  validateV8Run,
+});

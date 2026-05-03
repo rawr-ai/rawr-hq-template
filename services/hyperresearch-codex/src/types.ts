@@ -18,14 +18,4 @@ export type {
   HyperresearchTier,
   HyperresearchV8RunLedger,
   V8RunStatus,
-} from "./service/modules/runtime/entities";
-export type {
-  AdvanceV8RunInput,
-  HyperresearchRunnerResult,
-  HyperresearchTierInput,
-  InspectV8RunInput,
-  RunSyntheticSliceInput,
-  StartV8RunInput,
-  V8RunnerResult,
-  V8ValidationResult,
-} from "./service/modules/runtime/contract";
+} from "./service/shared/entities";

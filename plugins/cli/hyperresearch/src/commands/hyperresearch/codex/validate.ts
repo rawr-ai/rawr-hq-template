@@ -24,7 +24,7 @@ export default class HyperresearchCodexValidate extends RawrCommand {
     });
 
     try {
-      const resultData = await client.runtime.validateV8Run({
+      const resultData = await client.runs.validateV8Run({
         ledgerPath: String(flags.ledger),
       }, {
         context: {

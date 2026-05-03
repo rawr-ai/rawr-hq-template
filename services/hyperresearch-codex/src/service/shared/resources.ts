@@ -1,7 +1,7 @@
 import type {
   HyperresearchCliOperation,
   HyperresearchCliResult,
-} from "../modules/runtime/entities";
+} from "./entities";
 
 export interface HyperresearchCliBackend {
   run(input: {

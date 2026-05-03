@@ -6,7 +6,7 @@ import type {
 import type {
   HyperresearchCliBackend,
   HyperresearchCodexIO,
-} from "../../../shared/resources";
+} from "../resources";
 
 const allowedOperations = new Set<HyperresearchCliOperation>([
   "init",

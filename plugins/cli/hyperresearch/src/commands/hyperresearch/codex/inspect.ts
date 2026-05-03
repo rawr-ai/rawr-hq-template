@@ -24,7 +24,7 @@ export default class HyperresearchCodexInspect extends RawrCommand {
     });
 
     try {
-      const resultData = await client.runtime.inspectV8Run({
+      const resultData = await client.runs.inspectV8Run({
         ledgerPath: String(flags.ledger),
       }, {
         context: {

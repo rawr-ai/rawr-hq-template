@@ -41,7 +41,7 @@ export default class HyperresearchCodexAdvance extends RawrCommand {
     });
 
     try {
-      const resultData = await client.runtime.advanceV8Run({
+      const resultData = await client.runs.advanceV8Run({
         ledgerPath: String(flags.ledger),
         agentMode: String(flags["agent-mode"]) as "packets" | "synthesize",
         maxSteps: typeof flags["max-steps"] === "number" ? flags["max-steps"] : undefined,

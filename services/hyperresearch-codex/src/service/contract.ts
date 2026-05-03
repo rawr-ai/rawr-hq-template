@@ -1,10 +1,12 @@
 /**
  * @fileoverview Root hyperresearch-codex contract composition.
  */
-import { contract as runtime } from "./modules/runtime/contract";
+import { contract as fixtures } from "./modules/fixtures/contract";
+import { contract as runs } from "./modules/runs/contract";
 
 export const contract = {
-  runtime,
+  fixtures,
+  runs,
 };
 
 export type Contract = typeof contract;

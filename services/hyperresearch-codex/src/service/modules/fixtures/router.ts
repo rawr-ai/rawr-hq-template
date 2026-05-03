@@ -1,25 +1,22 @@
-import { runHyperresearchCli } from "./helpers/cli";
-import { validateHyperresearchRunIntegrity } from "./helpers/integrity";
+/**
+ * @fileoverview Synthetic fixture procedure implementation.
+ *
+ * The fixture module is intentionally separate from V8 runs: it proves the
+ * reusable control-plane mechanics with a tiny route and fakeable CLI backend.
+ */
+import { runHyperresearchCli } from "../../shared/helpers/cli";
+import { validateHyperresearchRunIntegrity } from "../../shared/helpers/integrity";
 import {
   nextPendingStep,
   readOrCreateHyperresearchRunLedger,
   writeHyperresearchRunLedger,
-} from "./helpers/ledger";
-import { loadHyperresearchStep, syntheticHyperresearchSteps } from "./helpers/steps";
+} from "../../shared/helpers/ledger";
+import { loadHyperresearchStep, syntheticHyperresearchSteps } from "../../shared/helpers/steps";
 import type {
   HyperresearchStepRecord,
-} from "./entities";
+} from "../../shared/entities";
 import type { HyperresearchCodexIO } from "../../shared/resources";
-import type { HyperresearchCliBackend } from "../../shared/resources";
-import type {
-  HyperresearchRunnerResult,
-  RunSyntheticSliceInput,
-} from "./contract";
-
-type HyperresearchRuntimeDependencies = {
-  io: HyperresearchCodexIO;
-  cli: HyperresearchCliBackend;
-};
+import { module } from "./module";
 
 function definitionFor(stepId: string) {
   const definition = syntheticHyperresearchSteps.find((step) => step.id === stepId);
@@ -39,11 +36,8 @@ async function writeArtifact(input: {
   if (!input.step.artifacts.includes(input.fileName)) input.step.artifacts.push(input.fileName);
 }
 
-export async function runSyntheticHyperresearchCodexSlice(
-  input: RunSyntheticSliceInput,
-  dependencies: HyperresearchRuntimeDependencies,
-): Promise<HyperresearchRunnerResult> {
-  const { io, cli } = dependencies;
+const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, input }) => {
+  const { io, cli } = context;
   const artifactRoot = input.artifactRoot ?? io.join(input.vaultRoot, "research", "temp", "codex-artifacts");
   const ledgerPath = input.ledgerPath ?? io.join(input.vaultRoot, "research", "temp", "hyperresearch-codex-run.json");
 
@@ -201,4 +195,8 @@ export async function runSyntheticHyperresearchCodexSlice(
     ledger,
     integrity,
   };
-}
+});
+
+export const router = module.router({
+  runSyntheticSlice,
+});

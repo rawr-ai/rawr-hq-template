@@ -12,6 +12,7 @@ RAWR HQ-Template owns:
 - `plugins/cli/hyperresearch`: thin `rawr hyperresearch ...` topic.
 - Control-plane specs, tests, and synthetic runtime proof.
 - Backend resource ports for direct calls to the installed Python `hyperresearch` CLI.
+- Service modules: `fixtures.runSyntheticSlice` for the synthetic proof path and `runs.startV8Run` / `runs.advanceV8Run` / `runs.inspectV8Run` / `runs.validateV8Run` for durable V8 orchestration. Shared mechanics are not modules.
 
 RAWR HQ owns for now:
 
@@ -37,8 +38,8 @@ The template CLI topic must expose the existing synthetic slice plus the V8 stat
 - `rawr hyperresearch codex inspect --ledger <path> --json`
 - `rawr hyperresearch codex validate --ledger <path> --json`
 - `rawr hyperresearch codex run-fixture --query <query> --vault <path> --steps <path> --tier light|full --json`
-- The slice command calls the `runSyntheticSlice` service procedure.
-- The V8 commands call the `startV8Run`, `advanceV8Run`, `inspectV8Run`, and `validateV8Run` service procedures.
+- The slice command calls the `fixtures.runSyntheticSlice` service procedure.
+- The V8 commands call the `runs.startV8Run`, `runs.advanceV8Run`, `runs.inspectV8Run`, and `runs.validateV8Run` service procedures.
 - The command never runs the upstream `hyperresearch research` command as a parity shortcut.
 - The command supports a bounded pass through `--max-steps` so resume can be tested deliberately.
 - The fixture backend is the default proof backend for control-plane tests; the real backend is reserved for verified Python CLI/vault runs.
@@ -62,8 +63,10 @@ The CLI topic is an operator/testing surface. The full V8 orchestration should l
 - emits agent packet files under `research/temp/codex-agent-packets/`;
 - returns `running`, `awaiting_agents`, `complete`, or `blocked`;
 - records every CLI call, failure, artifact, packet, and integrity finding.
+- rejects malformed packet `sourceUrls` and runs source capture for every distinct valid URL supplied by agent packet outputs.
 
 `inspectV8Run` and `validateV8Run` are read-only. `inspectV8Run` returns the run summary; `validateV8Run` returns a validation-specific result with `passed`, `blockingFindings`, and `warningFindings`. Validation must fail on failed CLI calls, missing required artifacts, unclosed blocking findings, missing patch/polish/readability logs, malformed/failed agent output, orphan source provenance, or patch-only violations.
+Post-synthesis report snapshots are copied into `research/temp/report-snapshots/`; validation compares the current final report with the snapshot and blocks apparent wholesale rewrites.
 
 ## Final Codex Plugin-System Proof
 

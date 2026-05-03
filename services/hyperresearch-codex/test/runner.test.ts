@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../src";
-import { assertAllowedHyperresearchOperation } from "../src/service/modules/runtime/helpers/cli";
+import { assertAllowedHyperresearchOperation } from "../src/service/shared/helpers/cli";
 import { createClientOptions, invocation, RecordingCli } from "./helpers";
 
 const tempDirs: string[] = [];
@@ -33,7 +33,7 @@ describe("hyperresearch-codex synthetic runtime slice", () => {
       cli,
     }));
 
-    const result = await client.runtime.runSyntheticSlice({
+    const result = await client.fixtures.runSyntheticSlice({
       canonicalQuery: "Compare Codex and Claude Hyperresearch runtime parity",
       tier: "light",
       vaultRoot: fixture.vaultRoot,
@@ -63,7 +63,7 @@ describe("hyperresearch-codex synthetic runtime slice", () => {
       cli: firstCli,
     }));
 
-    const first = await firstClient.runtime.runSyntheticSlice({
+    const first = await firstClient.fixtures.runSyntheticSlice({
       canonicalQuery: "Resume proof",
       tier: "full",
       vaultRoot: fixture.vaultRoot,
@@ -80,7 +80,7 @@ describe("hyperresearch-codex synthetic runtime slice", () => {
       repoRoot: fixture.root,
       cli: secondCli,
     }));
-    const second = await secondClient.runtime.runSyntheticSlice({
+    const second = await secondClient.fixtures.runSyntheticSlice({
       canonicalQuery: "Resume proof",
       tier: "full",
       vaultRoot: fixture.vaultRoot,
@@ -107,7 +107,7 @@ describe("hyperresearch-codex synthetic runtime slice", () => {
       repoRoot: fixture.root,
       cli: new RecordingCli(),
     }));
-    const result = await client.runtime.runSyntheticSlice({
+    const result = await client.fixtures.runSyntheticSlice({
       canonicalQuery: "Partial run",
       tier: "light",
       vaultRoot: fixture.vaultRoot,
@@ -132,7 +132,7 @@ describe("hyperresearch-codex synthetic runtime slice", () => {
       cli,
     }));
 
-    const result = await client.runtime.runSyntheticSlice({
+    const result = await client.fixtures.runSyntheticSlice({
       canonicalQuery: "Failed backend proof",
       tier: "light",
       vaultRoot: fixture.vaultRoot,
@@ -153,7 +153,7 @@ describe("hyperresearch-codex synthetic runtime slice", () => {
       cli: new RecordingCli(),
     }));
 
-    const result = await client.runtime.runSyntheticSlice({
+    const result = await client.fixtures.runSyntheticSlice({
       canonicalQuery: "Missing step proof",
       tier: "light",
       vaultRoot: fixture.vaultRoot,

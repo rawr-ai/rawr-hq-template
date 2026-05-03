@@ -36,7 +36,7 @@ export default class HyperresearchCodexRunFixture extends RawrCommand {
     });
 
     try {
-      let resultData = await client.runtime.startV8Run({
+      let resultData = await client.runs.startV8Run({
         canonicalQuery: String(flags.query),
         tier: String(flags.tier) as "light" | "full",
         vaultRoot: String(flags.vault),
@@ -50,7 +50,7 @@ export default class HyperresearchCodexRunFixture extends RawrCommand {
       });
 
       for (let pass = 0; pass < 64 && resultData.status !== "complete" && resultData.status !== "blocked"; pass += 1) {
-        resultData = await client.runtime.advanceV8Run({
+        resultData = await client.runs.advanceV8Run({
           ledgerPath: resultData.ledgerPath,
           agentMode: "synthesize",
         }, {
