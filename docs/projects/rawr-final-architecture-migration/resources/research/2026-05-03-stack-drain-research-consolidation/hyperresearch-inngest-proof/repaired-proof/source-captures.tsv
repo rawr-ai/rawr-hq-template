@@ -1,0 +1,16 @@
+https://www.inngest.com/docs/reference/serve	02-width-sweep,13-gap-fetch	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst,13-gap-fetch-1-fetcher	2	serve-inngest-documentation
+https://www.inngest.com/docs/reference/typescript/functions/create	02-width-sweep,13-gap-fetch	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst,13-gap-fetch-1-fetcher	3	create-function-inngest-documentation
+https://www.inngest.com/docs/learn/inngest-steps	02-width-sweep,13-gap-fetch	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst,13-gap-fetch-1-fetcher	4	inngest-steps-inngest-documentation
+https://www.inngest.com/docs/learn/how-functions-are-executed	02-width-sweep	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst	5	how-inngest-functions-are-executed-durable-execution-inngest-documentation
+https://www.inngest.com/docs/guides/error-handling	02-width-sweep	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst	6	errors-retries-inngest-documentation
+https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks	02-width-sweep	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst	7	rollbacks-inngest-documentation
+https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event	02-width-sweep,13-gap-fetch	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst,13-gap-fetch-1-fetcher	8	wait-for-an-event-inngest-documentation
+https://www.inngest.com/docs/guides/batching	02-width-sweep	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst	9	batching-events-inngest-documentation
+https://www.inngest.com/docs/guides/flow-control	02-width-sweep	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst	10	flow-control-inngest-documentation
+https://www.inngest.com/docs/learn/security	02-width-sweep,13-gap-fetch	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst,13-gap-fetch-1-fetcher	11	security-inngest-documentation
+https://www.inngest.com/docs/local-development	02-width-sweep	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst	12	local-development-inngest-documentation
+https://www.inngest.com/docs/setup/connect	02-width-sweep	02-width-sweep-1-fetcher,02-width-sweep-2-source-analyst	13	connect-inngest-documentation
+https://www.inngest.com/docs/deploy/render	02-width-sweep	02-width-sweep-2-source-analyst	14	render-inngest-documentation
+https://www.inngest.com/docs/self-hosting	02-width-sweep	02-width-sweep-2-source-analyst	15	self-hosting-inngest-documentation
+https://www.inngest.com/docs/guides/throttling	02-width-sweep	02-width-sweep-2-source-analyst	16	throttling-inngest-documentation
+https://www.inngest.com/docs/guides/rate-limiting	02-width-sweep	02-width-sweep-2-source-analyst	17	rate-limiting-inngest-documentation

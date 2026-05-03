@@ -1,0 +1,121 @@
+{
+  "vault_tag": "rawr-spec-landscape",
+  "loci_count": 5,
+  "rationale": "Five depth investigations were committed during prior pipeline runs and their interim notes are preserved in the vault. Each interim note ends with a ## Committed position section and a confidence rating. This loci.json indexes those committed positions for the cross-locus reconciliation step.",
+  "loci": [
+    {
+      "id": "L1",
+      "name": "platform-level-shape",
+      "question": "Does RAWR's landscape decompose into three levels (user's mechanical/coordination/governance), four levels (with a distinct semantic/composition layer between coordination and governance), or differently — and what does each spec's self-located level imply for the committed structural take?",
+      "flavor": "dialectical",
+      "interim_note_id": "locus-interim-platform-level-shape",
+      "committed_position_summary": "RAWR's platform decomposes into FOUR tiers — Core Runtime, Semantic/Composition, Coordination, Governance — because the Authoring Classifier and Factory Bundle Export constitute a distinct semantic engineering tier that is structurally separate from both runtime mechanics and governance authority; collapsing this tier into Governance produces an incoherent engineering grouping.",
+      "confidence": "medium-high (~70%)",
+      "load_bearing_for": ["§3 Committed Platform-Level Decomposition", "§4-§6 Per-tier sections", "§9 Heatmap structure"],
+      "must_read_sources": [
+        "habitat-sdk-layers-spec-analysis-draft",
+        "rawr-system-architecture-spec-analysis",
+        "rawr-authoring-classifier-system-spec-analysis",
+        "rawr-factory-bundle-export-spec-analysis",
+        "rawr-managed-agent-workspace-execution-spec-analysis",
+        "rawr-workstream-system-spec-analysis",
+        "rawr-workstream-review-subsystem-spec-analysis",
+        "rawr-effect-runtime-realization-system-spec-analysis-authoritative",
+        "rawr-async-runtime-spec-analysis",
+        "rawr-authentication-subsystem-spec-analysis",
+        "rawr-deployment-subsystem-spec-analysis",
+        "rawr-openshell-agent-runtime-and-steward-activation-spec-analysis",
+        "rawr-service-package-effect-vendor-integration-shape-reference"
+      ]
+    },
+    {
+      "id": "L2",
+      "name": "vendor-integration-pattern-universality",
+      "question": "Is the oRPC × Effect × RAWR descriptor-first / standing-on-shoulders pattern a universal template applied uniformly, or do vendors get bespoke shapes sharing principles but varying in implementation?",
+      "flavor": "synthesis",
+      "interim_note_id": "locus-interim-vendor-integration-pattern-universality",
+      "committed_position_summary": "Universal *principle* (10-rule descriptor-first checklist) instantiated in irreducibly bespoke per-vendor *shapes*. Top exemplars: Effect, Inngest. Falls short: Drizzle (under-specified), Authoring Classifier LLM (outside runtime pattern scope, integration shape unspecified). 'Universal template' is too strong; 'principles only' is too weak.",
+      "confidence": "high (>85%)",
+      "load_bearing_for": ["§7 Vendor Integration Assessment"],
+      "must_read_sources": [
+        "rawr-service-package-effect-vendor-integration-shape-reference",
+        "rawr-effect-runtime-realization-system-spec-analysis-authoritative",
+        "rawr-system-architecture-spec-analysis",
+        "rawr-authentication-subsystem-spec-analysis",
+        "rawr-deployment-subsystem-spec-analysis",
+        "rawr-managed-agent-workspace-execution-spec-analysis",
+        "rawr-factory-bundle-export-spec-analysis",
+        "rawr-async-runtime-spec-analysis",
+        "rawr-authoring-classifier-system-spec-analysis"
+      ]
+    },
+    {
+      "id": "L3",
+      "name": "dont-own-still-manage-frontier-coverage",
+      "question": "Across the thirteen specs, where is integration-point ownership crisply named vs. silently leaning on a vendor — and which silences are conscious deferrals (cleanly bookmarked) vs. coverage gaps that the landscape map should flag as 'addressed only at the policy layer, not at the integration-law layer'?",
+      "flavor": "synthesis",
+      "interim_note_id": "locus-interim-dont-own-still-manage-frontier-coverage",
+      "committed_position_summary": "Two-tier integration-point ownership maturity. Core mechanical layer (Effect runtime, oRPC API management, auth, deployment) is at integration-law grade — all 10 descriptor-first rules satisfied (Grade A across the four). Coordination/durable-async layer and authoring-time intelligence layer at policy-layer grade only. Three flagged gaps: (1) Inngest event interface (auth-on-emit, signing, idempotency, dead-letter, schema evolution); (2) classifier LLM call (no resource/provider abstraction, no facade, no error bridge); (3) bundle registry/signing (ArtifactRef is a bare string).",
+      "confidence": "high (>80%)",
+      "load_bearing_for": ["§7 Vendor Integration Assessment", "§8 Don't-Own-Still-Manage Frontier", "§10 Open Gaps"],
+      "must_read_sources": [
+        "rawr-effect-runtime-realization-system-spec-analysis-authoritative",
+        "rawr-service-package-effect-vendor-integration-shape-reference",
+        "rawr-authentication-subsystem-spec-analysis",
+        "rawr-deployment-subsystem-spec-analysis",
+        "rawr-factory-bundle-export-spec-analysis",
+        "rawr-authoring-classifier-system-spec-analysis",
+        "rawr-async-runtime-spec-analysis",
+        "rawr-workstream-review-subsystem-spec-analysis"
+      ]
+    },
+    {
+      "id": "L4",
+      "name": "authoritative-vs-shape-correct-reconciliation",
+      "question": "How much un-cashed reconciliation work remains across the eleven shape-correct specs vs. the authoritative Effect Runtime Realization spec — specifically the runtime-shaped claims those specs make (auth's ServiceBindingCacheKey, OpenShell's direct-emission, Async-Runtime's missing Effect Layer for Inngest connect worker, MAWE's provider-boundary law, durable-event-bus ownership)?",
+      "flavor": "dialectical",
+      "interim_note_id": "locus-interim-authoritative-vs-shape-correct-reconciliation",
+      "committed_position_summary": "Per-spec A/A−/B+ but system-level B+ (not A) on integration-law grounds, not contradiction grounds. Three blocking integration-law seams: (1) Inngest connect worker as bootgraph-integrated Effect Layer — not locked in either spec; (2) agent-role direct WorkflowDispatcher emission rights — runtime spec §19 does not enumerate per-role emission rights; (3) auth-specific compiler gate closure — runtime compiler section does not absorb the auth gate list. ServiceBindingCacheKey is cleanly realized; durable-event-bus is correctly classified as deferred work (not missing).",
+      "confidence": "high",
+      "load_bearing_for": ["§2 Methodology", "§4 Core Runtime", "§5 Coordination", "§7 Vendor Integration Assessment", "§10 Open Gaps"],
+      "must_read_sources": [
+        "rawr-effect-runtime-realization-system-spec-analysis-authoritative",
+        "rawr-authentication-subsystem-spec-analysis",
+        "rawr-async-runtime-spec-analysis",
+        "rawr-openshell-agent-runtime-and-steward-activation-spec-analysis",
+        "rawr-managed-agent-workspace-execution-spec-analysis",
+        "rawr-workstream-review-subsystem-spec-analysis",
+        "rawr-service-package-effect-vendor-integration-shape-reference"
+      ]
+    },
+    {
+      "id": "L5",
+      "name": "operational-substrate-gaps",
+      "question": "Where in the corpus are real-world operational substrate concerns silent or thin: registry hosting, signing/attestation, transport/fetch, bundle-version compatibility, idempotency conventions, dead-letter handling, observability vendor binding, multi-tenant isolation specifics, secrets manager binding, testing-discipline reference, MFA/step-up, refresh-token rotation, JIT user provisioning, profile→manifest mapping detail, cost/budget enforcement, multi-agent handoff semantics?",
+      "flavor": "synthesis",
+      "interim_note_id": "locus-interim-operational-substrate-gaps",
+      "committed_position_summary": "8 acceptable bookmarked deferrals (registry auth, secret manager vendor, blue/green/canary, Fly/K8s adapters, classification-record storage, rule expression language, DB schema/scoring/gate-runner, managed DB provisioning) + 14 real gaps. Top 5 P0/P1 gaps: (1) bundle signing/attestation (cosign/sigstore-shaped seam); (2) OTel/HyperDX W3C TraceContext propagation across server→async→MAWE chain; (3) MFA / step-up authentication (assurance field exists but no flow); (4) idempotency-key naming convention + dead-letter policy; (5) MAWE profile→manifest mapping for 8 canonical providers (currently illustrative, must become normative).",
+      "confidence": "high",
+      "load_bearing_for": ["§5 Coordination", "§6 Governance", "§8 Don't-Own-Still-Manage Frontier", "§10 Open Gaps"],
+      "must_read_sources": [
+        "rawr-factory-bundle-export-spec-analysis",
+        "rawr-async-runtime-spec-analysis",
+        "rawr-authentication-subsystem-spec-analysis",
+        "rawr-managed-agent-workspace-execution-spec-analysis",
+        "rawr-deployment-subsystem-spec-analysis",
+        "rawr-workstream-review-subsystem-spec-analysis",
+        "rawr-authoring-classifier-system-spec-analysis"
+      ]
+    }
+  ],
+  "dialectical_loci_count": 2,
+  "synthesis_loci_count": 3,
+  "dialectical_threshold_met": true,
+  "load_bearing_dependencies": {
+    "L1->§3": "FOUR-tier vs. THREE-tier defense",
+    "L2->§7": "Universal-principle vs. universal-template engagement",
+    "L3->§7+§8": "Integration-law vs. policy-layer grading",
+    "L4->§2+§7+§10": "Per-spec vs. system-level grade methodology",
+    "L5->§10": "Top-5 P0/P1 next-spec recommendations"
+  }
+}

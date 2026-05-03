@@ -1,0 +1,169 @@
+{
+  "loci": [
+    {
+      "name": "companion-spec-attachment-points-registry",
+      "one_line": "How should the canonical architecture spec operationalize its claim that 'subsystem specifications attach at explicit integration boundaries' — i.e., what does the integration-boundaries registry look like, and how does the runtime realization spec attach to it?",
+      "flavor": "synthesis",
+      "rationale": "Both loci-analysts ranked this #1. The arch-spec asserts at L24 that companion specs attach 'at explicit integration boundaries' but never enumerates those boundaries, never names the runtime realization spec by reference, and never defines a protocol for resolving naming/scope conflicts. This is the user's primary structural ask ('be explicit about integration points: interfaces, boundaries, conditions, rules — whatever the system needs to make companion subsystem documents plug in cleanly'). Depth investigation must draft the actual section the arch-spec is missing: a registry table mapping each integration boundary to its owning runtime-spec section, plus an attachment protocol that future companion specs (deployment, observability, OpenShell, etc.) can follow. This is a NET-NEW section, not an amendment — it requires actual draft prose proposals.",
+      "corpus_evidence": [
+        "contradiction-graph.json:companion-spec-attachment-points-not-enumerated",
+        "source-analysis-arch-spec.md §4d (Companion-subsystem integration contract gap)",
+        "source-analysis-arch-spec.md §6.7 (no companion-spec attachment-points registry)",
+        "source-analysis-arch-spec.md §8 (committed position — structural gap)",
+        "source-analysis-arch-spec.md L24 quote",
+        "source-analysis-runtime-spec.md §6 (10 runtime-driven additions arch-spec is missing)"
+      ],
+      "importance": 10,
+      "uncertainty": 6,
+      "disagreement": 4,
+      "decision_impact": 10,
+      "composite_score": 30,
+      "source_budget": 12
+    },
+    {
+      "name": "lifecycle-naming-vs-mechanics-authority",
+      "one_line": "Where exactly does the architecture spec's authority end and the runtime realization spec's authority begin on lifecycle, substrate, and process-local mechanics — and what is the precise scope-language rewrite the arch-spec needs at L9-L22 to formalize that boundary?",
+      "flavor": "dialectical",
+      "rationale": "MANDATORY DIALECTICAL LOCUS. Both specs assert canonical authority over overlapping territory. Arch-spec scope statement (L9-L22) claims to 'fix... the runtime realization lifecycle' (L17) and 'the process-local runtime substrate' (L12); runtime-spec L1-L5 declares canonical authority over runtime realization including provisioning, process runtime binding, execution mechanics, and supersedes older runtime documents on lock. The user heuristic ('runtime spec is authoritative on runtime concerns') resolves the mechanics dispute but does NOT specify how the arch-spec must reword its scope language to reflect the carve-out. Depth investigation must produce: (a) the exact replacement sentences for arch-spec L9-L22; (b) a clear principle ('arch-spec owns canonical NAMES and integration-boundary vocabulary; runtime-spec owns mechanics within each phase'); (c) an audit list of every other arch-spec section whose language must be tightened to respect the boundary. This is the most politically sensitive change.",
+      "corpus_evidence": [
+        "contradiction-graph.json:lifecycle-naming-vs-mechanics-authority",
+        "source-analysis-arch-spec.md §1 + §8.1 + §8.2 (arch-spec scope claims)",
+        "source-analysis-arch-spec.md L9-L22 quote",
+        "source-analysis-runtime-spec.md §1 (runtime-spec L1-L5, L7-L11, supersession)",
+        "source-analysis-runtime-spec.md §8 (committed position on boundary asserting)"
+      ],
+      "opposing_positions": [
+        "Arch-spec asserts ownership of the runtime realization lifecycle and the process-local runtime substrate (L12, L17) — naming these as things it 'fixes.'",
+        "Runtime-spec is canonical on runtime concerns including the lifecycle's mechanical execution, the process-local substrate, the bootgraph + Effect kernel, and supersedes older runtime docs on lock (L1-L5, L11, §29)."
+      ],
+      "importance": 9,
+      "uncertainty": 5,
+      "disagreement": 9,
+      "decision_impact": 9,
+      "composite_score": 32,
+      "source_budget": 10
+    },
+    {
+      "name": "inngest-integration-mode-architecture-level",
+      "one_line": "Should the canonical architecture spec specify Inngest's serve-mode vs connect-worker mode at the architecture level (because they imply different network ingress topologies for the async role), and what is the integration-level paragraph + invariant the arch-spec needs to add?",
+      "flavor": "technical",
+      "rationale": "Runtime-spec §21.2 (L4287-L4291) explicitly supports BOTH serve-mode AND connect-worker mode for the Inngest harness; arch-spec is silent on the choice. The choice is architecturally consequential because it changes network ingress topology (HTTP listener vs outbound persistent connection). The vendor-verification note `vendor-verification-inngest-integration-mode-2` confirms both modes exist as separate SDK entry points in Inngest 4.x (`inngest/bun` for serve, `inngest/connect` for connect-worker). This is `resolves_under_user_heuristic: false` — the gap cannot be papered over by deferring to runtime-spec authority; the arch-spec must add content. Depth investigation must determine whether the runtime-spec selects a default mode or treats both as profile-selected, and produce the exact §13.2 (Async harness posture) paragraph and an §17.8 invariant about mode-binding-per-process.",
+      "corpus_evidence": [
+        "contradiction-graph.json:inngest-integration-mode-unspecified-at-architecture-level",
+        "source-analysis-arch-spec.md §6.2 (Inngest integration mode gap)",
+        "source-analysis-arch-spec.md §7.2 (Inngest claims in arch-spec — load-bearing, verification recommended)",
+        "source-analysis-runtime-spec.md §7.2 (Inngest integration claims — both modes)",
+        "vendor-verification-inngest-integration-mode-2",
+        "source-analysis-runtime-spec.md L4287-L4291"
+      ],
+      "importance": 8,
+      "uncertainty": 7,
+      "disagreement": 5,
+      "decision_impact": 7,
+      "composite_score": 27,
+      "source_budget": 8
+    },
+    {
+      "name": "harness-mount-interface-contract-named-types",
+      "one_line": "Which boundary types from runtime-spec §20-§21 must the canonical architecture spec name at the integration level (CompiledSurfacePlan, FunctionBundle, mounted surface runtime records, native payload closures, HarnessDescriptor, StartedHarness) so companion harness specs and vendor integration authors have formal attachment points — and what is the integration-contract paragraph for each harness?",
+      "flavor": "technical",
+      "rationale": "The arch-spec (L1804-L1808, L2272-L2273) describes the harness-mount boundary in prose ('harnesses consume mounted surface runtime records and adapter-lowered payloads') but never names the interface types. The runtime-spec §20-§21 defines the per-harness inputs/outputs precisely with named types. Companion harness specs and vendor integration authors have no formal attachment point at the architecture level. Depth investigation must produce: (a) the list of boundary type names the arch-spec should publish (without re-defining their internal shapes); (b) one integration-contract paragraph per harness mounting at arch-spec §10.12; (c) a 'companion-harness attachment points' subsection that future harness specs can extend.",
+      "corpus_evidence": [
+        "contradiction-graph.json:harness-mount-interface-contract-undefined",
+        "source-analysis-arch-spec.md §6.1 (harness boundary contract gap)",
+        "source-analysis-arch-spec.md §8.5 (FunctionBundle interface contract not defined)",
+        "source-analysis-runtime-spec.md §4.4 (harness input/output contracts per harness)",
+        "source-analysis-runtime-spec.md §6.5 (WorkflowDispatcher integration bridge)",
+        "source-analysis-runtime-spec.md §6.4 (harness enumeration and vendor assignments)"
+      ],
+      "importance": 9,
+      "uncertainty": 4,
+      "disagreement": 4,
+      "decision_impact": 8,
+      "composite_score": 25,
+      "source_budget": 6
+    },
+    {
+      "name": "provisioning-kernel-inventory-depth-reduction",
+      "one_line": "What is the precise replacement text for arch-spec L1712-L1722 (provisioning kernel primitive list) and L2668-L2678 (bootgraph/provisioning invariants) that compresses runtime-internal detail into a high-level integration statement while preserving the architectural ownership claim?",
+      "flavor": "technical",
+      "rationale": "Three contradiction-graph clusters point here (`provisioning-kernel-primitive-inventory`, `sdk-derivation-artifact-list-depth`, `runtime-compiler-validation-list-depth`). The arch-spec enumerates Effect kernel-owned primitives (queues, pubsub, refs, schedules, caches, fibers, semaphores) at runtime-internal depth; the runtime-spec scopes RAWR-owned coordination to a named four-resource catalogue (ProcessQueueHubResource and siblings) and reserves Effect-internal primitives to substrate. The arch-spec is asserting at a depth the runtime spec owns, creating a latent staleness conflict. Resolves cleanly under the user heuristic. Depth investigation must produce the exact replacement paragraphs for arch-spec §10.6, §10.4, §10.5, and the related §17.6 invariants — preserving the architectural ownership statement while delegating mechanism to runtime-spec §14, §15, §16, §17.",
+      "corpus_evidence": [
+        "contradiction-graph.json:provisioning-kernel-primitive-inventory",
+        "contradiction-graph.json:sdk-derivation-artifact-list-depth",
+        "contradiction-graph.json:runtime-compiler-validation-list-depth",
+        "source-analysis-arch-spec.md §5.1 (arch-spec L1712-L1722 inventory duplication)",
+        "source-analysis-arch-spec.md §5.2 (compiler validation list duplication)",
+        "source-analysis-arch-spec.md §5.3 (SDK artifact list duplication)",
+        "source-analysis-runtime-spec.md §14 (process-local coordination resources)",
+        "source-analysis-runtime-spec.md §15-§17"
+      ],
+      "importance": 8,
+      "uncertainty": 3,
+      "disagreement": 7,
+      "decision_impact": 6,
+      "composite_score": 24,
+      "source_budget": 5
+    },
+    {
+      "name": "platform-external-interfaces-table",
+      "one_line": "Should the canonical architecture spec introduce a 'platform external interfaces' table that names PortableRuntimePlanArtifact and RuntimeCatalog (and possibly RuntimeDiagnostic / RuntimeTelemetry) as the platform's formal control-plane / deployment / observation integration interfaces — and what does the table look like?",
+      "flavor": "technical",
+      "rationale": "Runtime-spec §15.7 (L3409-L3437) explicitly designates PortableRuntimePlanArtifact as the integration surface for 'runtime compiler, diagnostic tooling, topology export, and deployment/control-plane touchpoints.' Runtime-spec §22.3 (L4470-L4511) designates RuntimeCatalog as the diagnostic-reader / control-plane observation interface. Arch-spec mentions RuntimeCatalog briefly (L1813-L1823) and 'control-plane touchpoints' (L2568-L2569) but never names PortableRuntimePlanArtifact at the architecture level, leaving deployment/control-plane integration shape under-specified. Lowest uncertainty among the loci — the artifacts already exist named in the runtime spec; the work is purely surfacing them at the architecture level. Depth investigation must produce a 4-row table for arch-spec §15.7 (or a new §15.8 / §10.13 expansion) covering PortableRuntimePlanArtifact, RuntimeCatalog, RuntimeDiagnostic, RuntimeTelemetry — each with consumer class and the runtime-spec section that owns the contract.",
+      "corpus_evidence": [
+        "contradiction-graph.json:portable-plan-artifact-as-control-plane-interface-missing",
+        "source-analysis-arch-spec.md §4f (deployment/control-plane integration deferred)",
+        "source-analysis-arch-spec.md §4g (observability integration)",
+        "source-analysis-runtime-spec.md §6.6 + §6.7 (PortableRuntimePlanArtifact + RuntimeCatalog as control-plane interfaces)",
+        "source-analysis-runtime-spec.md §4.6 + §4.7 (integration boundaries 4.6 and 4.7)"
+      ],
+      "importance": 7,
+      "uncertainty": 3,
+      "disagreement": 3,
+      "decision_impact": 6,
+      "composite_score": 19,
+      "source_budget": 3
+    }
+  ],
+  "skip_loci": [
+    {
+      "candidate": "openshell-vendor-status-and-integration-shape",
+      "reason": "Both analysts surfaced this as a candidate; analyst B included it as a second dialectical locus. Demoted to skip because depth investigation cannot RESOLVE it — both specs explicitly defer OpenShell's vendor status (RAWR-internal vs third-party vs hybrid) and treat the boundary as 'reserved with locked integration hooks.' The contradiction-graph cluster `agent-openshell-shell-governance-vs-harness-adapter-shape` already captures this for terminal section 5 (Flagged contradictions requiring user resolution). The final report must surface it as a USER-decision item with the recommended option set (declare RAWR-internal status / declare third-party status / formally defer to forthcoming OpenShell companion spec) rather than as a depth-investigation output. Preserving in skip_loci so the synthesizer remembers to surface it in section 5."
+    },
+    {
+      "candidate": "execution-ownership-law-compactness",
+      "reason": "Contradiction-graph cluster `execution-ownership-law-restated-diffusely` is real (runtime-spec L37-L47 is a single compact paragraph; arch-spec covers the same content diffusely across §4.1, §4.9, §13, §13.7, §16). Resolves cleanly under user heuristic. Depth investigation would only produce a single-paragraph re-statement that the recommendations subagent can write directly from the contradiction-graph evidence — no actual investigation required. The recommendation will be carried in terminal section 4 directly without a dedicated depth packet."
+    },
+    {
+      "candidate": "phase-transition-trigger-conditions",
+      "reason": "Arch-spec §6.4 surface-analyst flag (no phase-transition triggering / sequencing contract) is a real gap, but it overlaps heavily with the companion-spec-attachment-points-registry locus and with the harness-mount-interface-contract locus — the attachment registry will name the producer/consumer chain per phase, which implicitly carries the trigger conditions. Avoiding a redundant locus."
+    },
+    {
+      "candidate": "error-propagation-across-phase-boundaries",
+      "reason": "Arch-spec §6.5 source-analyst flag is real but is a runtime-internal concern that the runtime spec's §22 diagnostic taxonomy already covers. Surfacing this as a recommendation in terminal section 4 (under 'lifecycle and diagnostics integration') is sufficient — does not require a dedicated depth packet because the resolution is to add a single sentence to arch-spec §15.4 deferring error-propagation mechanics to runtime-spec §22."
+    },
+    {
+      "candidate": "orpc-elysia-server-binding-shape",
+      "reason": "Vendor verification (`vendor-verification-orpc-context-lanes-and-local-first-callable-boundary-2`) confirmed the oRPC context-lane and local-first callable claims; the runtime-spec specifies oRPC as the contract-mechanics owner with effect-oRPC as an SDK-internal adapter. The arch-spec's framing matches. No alignment recommendation hinges on additional verification of the oRPC-on-Elysia mounting shape — the harness-mount-interface-contract-named-types locus covers any remaining naming gap."
+    },
+    {
+      "candidate": "effect-v3-api-name-verification",
+      "reason": "Vendor verification (`vendor-verification-effect-v3-api-surface-2`) confirmed Effect v3.21.2 API names (Layer, Context.Tag, Effect.Service, ManagedRuntime, Scope, FiberRef) match what both specs reference. No alignment-recommendation hinges on further Effect API verification."
+    },
+    {
+      "candidate": "bun-runtime-version-verification",
+      "reason": "Bun is name-drop only in runtime-spec §4 and not mentioned at all in arch-spec. No alignment-recommendation hinges on Bun version. Out of scope per user instruction (vendor research only when load-bearing)."
+    },
+    {
+      "candidate": "consensus-claim-relitigation",
+      "reason": "All 19 entries in `consensus-claims.json` are settled (both specs agree). Depth investigation on any of them would re-litigate settled ground. Skipped categorically."
+    }
+  ],
+  "scoring_notes": {
+    "total_source_budget": 44,
+    "budget_distribution_rationale": "The corpus is closed (two source specs + ~5 vendor-verification notes) so 'source budget' here means quoted line-refs from the specs and any incremental vendor verification — not new web fetches. Allocation favors loci that require drafting net-new arch-spec content (companion-spec-attachment-points-registry: 12, lifecycle-naming-vs-mechanics-authority: 10) over loci where the runtime-spec already provides the answer and the work is mechanical (platform-external-interfaces-table: 3).",
+    "dialectical_locus_present": true,
+    "dialectical_locus_name": "lifecycle-naming-vs-mechanics-authority",
+    "investigator_count_for_step_5": 6
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "vault_tag": "rawr-spec-landscape",
+  "query_file_path": "research/query-rawr-spec-landscape.md",
+  "modality": "compare",
+  "modality_rationale": "Each cell of the deliverable heatmap is a comparison: spec X covers concern Y at depth Z. Per-concern completeness grades are mandatory; the structural take (3-tier vs. 4-tier) is itself a comparison; the system-level vs. per-spec grade tension is a comparison. This is not collect / synthesize / forecast.",
+  "response_format": "argumentative",
+  "citation_style": "wikilink",
+  "pipeline_tier": "full",
+  "tier_rationale": "User explicitly requests deep treatment of vendor integration (\"deeply consider the native integration requirements of each vendor\"). The per-spec A vs. system-level B+ tension is dialectical and must be argued, not declared. Thirteen specs and five committed locus positions exceed light-tier budget.",
+  "save_path": "research/notes/final_report_rawr-spec-landscape.md",
+  "time_periods": [],
+  "atomic_items": [
+    {
+      "id": "Q1",
+      "question": "Which platform-level decomposition correctly groups the 13 specs into engineering-coherent tiers (the user's proposed Mechanical / Coordination / Governance, or a different scheme)?",
+      "format": "argued committed structure with per-spec self-location table",
+      "must_appear_in_section": "3"
+    },
+    {
+      "id": "Q2",
+      "question": "What is the methodology for grading completeness — what distinguishes an authoritative spec from a shape-correct spec, and what rubric grades a per-concern cell A through D?",
+      "format": "explicit rubric with grade definitions and a worked example",
+      "must_appear_in_section": "2"
+    },
+    {
+      "id": "Q3",
+      "question": "What concerns live at the Core Runtime / Mechanical Substrate level and how completely is each addressed?",
+      "format": "per-concern table with grade + cited evidence + gap classification",
+      "must_appear_in_section": "4"
+    },
+    {
+      "id": "Q4",
+      "question": "What concerns live at the Coordination level (signal ingress, durable async, deployment placement, ongoing-work objects) and how completely is each addressed?",
+      "format": "per-concern table with grade + cited evidence + gap classification",
+      "must_appear_in_section": "5"
+    },
+    {
+      "id": "Q5",
+      "question": "What concerns live at the Governance level (acceptance, authority, decisions, review) and how completely is each addressed?",
+      "format": "per-concern table with grade + cited evidence + gap classification",
+      "must_appear_in_section": "6"
+    },
+    {
+      "id": "Q6",
+      "question": "Where does the Semantic / Composition concern set live (authoring classifier, factory bundle export, ontology tools)? Is it a fourth tier or a sub-region of an existing tier?",
+      "format": "argued committed answer with engagement of the three-tier counter-position",
+      "must_appear_in_section": "3 or 4-6 depending on drafter's renumbering choice"
+    },
+    {
+      "id": "Q7",
+      "question": "How is each vendor integrated, what is RAWR's integration-point ownership, and how does each integration measure against the 10-rule descriptor-first / standing-on-shoulders checklist?",
+      "format": "per-vendor table (oRPC, Effect, Inngest, Bun/Elysia, OCLIF, Drizzle, HyperDX/OTel, Auth provider families, Deployment targets, MAWE provider, Factory Bundle TargetProfile, Authoring Classifier LLM) with grade + integration shape + zone-of-strength",
+      "must_appear_in_section": "7"
+    },
+    {
+      "id": "Q8",
+      "question": "Which silences in the corpus are conscious deferrals (named reserved seam + fixed owner + trigger condition) and which are real coverage gaps (no seam, no owner, no integration law)?",
+      "format": "two-column classification table with rationale for each",
+      "must_appear_in_section": "8"
+    },
+    {
+      "id": "Q9",
+      "question": "What does the visual landscape look like — which cells of the per-tier × per-concern matrix are addressed, partially addressed, deferred, or absent?",
+      "format": "ASCII or table-rendered heatmap with grade per cell + legend",
+      "must_appear_in_section": "9"
+    },
+    {
+      "id": "Q10",
+      "question": "What are the highest-priority next specifications RAWR should land to close the operational substrate, integration-law, and authority-emission gaps identified across the corpus?",
+      "format": "ranked priority list with named owners + trigger conditions + acceptance criteria",
+      "must_appear_in_section": "10"
+    }
+  ],
+  "required_section_headings": [
+    "Executive Summary and Landscape Map",
+    "Methodology — Authoritative vs. Shape-Correct Specs and Grading Rubric",
+    "Committed Platform-Level Decomposition",
+    "Level I — Core Runtime / Mechanical Substrate: Concerns and Coverage",
+    "Level II — Coordination: Concerns and Coverage",
+    "Level III — Governance: Concerns and Coverage",
+    "Vendor Integration Assessment — Standing on the Shoulders of Giants",
+    "The Don't-Own-Still-Manage Frontier",
+    "Coverage Heatmap and Completeness Matrix",
+    "Open Gaps and Recommended Next Specifications"
+  ],
+  "section_heading_notes": "The committed structural take is FOUR tiers (Core Runtime / Semantic-Composition / Coordination / Governance). Drafter may insert a 'Level IV — Semantic-Composition' H2 between sections 5 and 6 (renumbering downstream sections) OR fold Semantic-Composition coverage into sections 4-6 as appropriate sub-blocks. Either presentation is acceptable as long as: (a) the FOUR-tier structural take is defended in §3; (b) the Authoring Classifier and Factory Bundle Export concerns are visibly graded in the heatmap (§9); (c) the Semantic-Composition tier is not silently collapsed into Coordination or Governance.",
+  "forbidden_vocabulary_in_prose": [
+    "hyperresearch",
+    "evidence digest",
+    "comparisons.md",
+    "committed reading",
+    "depth investigator",
+    "scaffold",
+    "interim note",
+    "interim report",
+    "locus",
+    "loci",
+    "draft orchestrator",
+    "synthesizer",
+    "critic",
+    "patcher",
+    "polish auditor",
+    "width sweep",
+    "corpus critic",
+    "draft angles",
+    "vault tag",
+    "research query",
+    "pipeline"
+  ],
+  "frontmatter_policy": "no YAML frontmatter on the final report; open with # title line",
+  "citation_policy": {
+    "style": "wikilink",
+    "embedded_in_prose": true,
+    "terminal_sources_section_allowed": false,
+    "preferred_anchors": "spec-analysis note ids (e.g. [[rawr-effect-runtime-realization-system-spec-analysis-authoritative]]); for in-text section references prefer §N or §N.M format with the spec name spelled out at first mention",
+    "forbidden_anchors": "any link pointing to workspace artifacts (interim-*, digest-*, locus-interim-*, scaffold, comparisons, evidence-digest, draft-angles, source-tensions, corpus-critic-gaps); the locus-interim notes are workflow internals and must not appear as citations in the final prose"
+  },
+  "argumentative_engagement_requirements": [
+    "§3 must defend the FOUR-tier choice against the steelman three-tier counter-position; the engagement must be visible (not buried).",
+    "§7 must defend universal-principle / bespoke-shapes against a universal-template reading.",
+    "§8 must defend the claim that three integration-law seams are open (Inngest connect-worker Effect Layer; agent-role WorkflowDispatcher emission rights; auth-specific compiler gates).",
+    "§9 should grade vendor integrations on TWO axes: 'used at strength' and 'integration-point cashed' — the Inngest case especially shows these can diverge.",
+    "Each engagement must name the counter-position before answering it; do not strawman."
+  ],
+  "corpus_disposition": "closed",
+  "corpus_disposition_rationale": "Step 13 (gap-fetch) is a no-op for this run. The 13 source specs are local files; the 18 preserved vault notes (13 spec digests + 5 landscape locus interims) constitute the complete evidentiary corpus. No web search is appropriate.",
+  "deliverable_shape": {
+    "primary_artifact": "research/notes/final_report_rawr-spec-landscape.md",
+    "expected_length_words": "5000-9000",
+    "must_contain_visual_landscape_map": true,
+    "must_contain_per_concern_completeness_grades": true,
+    "must_contain_per_vendor_integration_assessment": true,
+    "must_contain_dont_own_still_manage_treatment": true
+  }
+}
