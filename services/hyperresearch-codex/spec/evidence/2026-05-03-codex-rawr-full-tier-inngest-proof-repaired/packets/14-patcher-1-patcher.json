@@ -1,0 +1,48 @@
+{
+  "jobId": "14-patcher-1-patcher",
+  "role": "hyperresearch-patcher",
+  "canonicalQuery": "For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats.",
+  "pipelinePosition": "Step 14-patcher (Patch accepted findings) in the Hyperresearch V8 route.",
+  "stepId": "14-patcher",
+  "stepTitle": "Patch accepted findings",
+  "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+  "inputArtifacts": [],
+  "stepRequiredArtifacts": [
+    "research/patch-log.json",
+    "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+  ],
+  "requiredArtifacts": [
+    "research/patch-log.json",
+    "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+  ],
+  "artifactContract": {
+    "assignedRequiredArtifacts": [
+      "research/patch-log.json",
+      "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+    ],
+    "stepRequiredArtifacts": [
+      "research/patch-log.json",
+      "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+    ],
+    "fanInRule": "The parent service validates artifactWrites across every job for this step. Write or verify your assignedRequiredArtifacts; do not invent substitutes for another job's assigned artifacts unless you are explicitly carrying that artifact forward."
+  },
+  "expectedOutputPath": "research/temp/codex-agent-results/14-patcher-1-patcher.json",
+  "outputSchema": {
+    "status": "complete|failed",
+    "summary": "string",
+    "evidence": [
+      "path-or-source-id"
+    ],
+    "artifactWrites": [
+      {
+        "path": "research/temp/example-artifact.json",
+        "sha256": "sha256-of-file-content",
+        "summary": "what this required artifact supports; include carried-forward artifacts too"
+      }
+    ],
+    "sourceUrls": [
+      "https://example.com/source-url"
+    ]
+  },
+  "failureBehavior": "Write the expected output path with status=failed and a failure reason if the role cannot complete."
+}

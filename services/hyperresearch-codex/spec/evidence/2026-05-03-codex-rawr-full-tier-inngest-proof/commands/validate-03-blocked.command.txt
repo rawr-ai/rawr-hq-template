@@ -1,0 +1,1 @@
+bun run --cwd apps/cli rawr hyperresearch codex validate --ledger /tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/hyperresearch-codex-run.json --backend real --json

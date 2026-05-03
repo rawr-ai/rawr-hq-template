@@ -1,0 +1,41 @@
+{
+  "jobId": "02-width-sweep-1-fetcher",
+  "role": "hyperresearch-fetcher",
+  "status": "complete",
+  "summary": "Wrote the width-sweep search plan and scored official Inngest URL set for RAWR durable plugin workflow semantics. The plan uses local RAWR runtime-realization evidence only as grounding for proof ceilings and spec gaps, then selects official Inngest documentation for parent Hyperresearch CLI capture.",
+  "evidence": [
+    "/tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/search-plan.md",
+    "/tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/scored-urls.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-phase-two-async-inngest-boundary.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/search-plan.md",
+      "sha256": "8c559604743f3c6de6a9a0170523b83c084a191b75e14becd7b064f93f931f5c",
+      "summary": "Concise width-sweep plan mapping RAWR local proof ceilings and spec gaps to official Inngest source categories for durable plugin workflow semantics."
+    },
+    {
+      "path": "research/temp/scored-urls.md",
+      "sha256": "da86f27a7e0fd7b03dde394f1cdf01e6cf5088af3080558a40ac6c21fc509a30",
+      "summary": "Scored table of 12 official Inngest documentation URLs covering serve, createFunction, steps, retries, waits, flow control, batching, local development, security, and production caveats."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/guides/error-handling",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/setup/connect",
+    "https://www.inngest.com/docs/platform/deployment"
+  ]
+}

@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../src";
+import { finalReportPath } from "../src/service/modules/runs/helpers/artifacts";
 import {
   expandV8ArtifactPath,
   v8HyperresearchSteps,
@@ -94,7 +95,7 @@ describe("hyperresearch-codex V8 runtime", () => {
     const client = createClient(createClientOptions({ repoRoot: fixture.root, cli }));
 
     const result = await client.runs.startV8Run({
-      canonicalQuery: "Map Codex parity for Hyperresearch",
+      canonicalQuery: "Map Codex parity for Hyperresearch. Address serve(), step.run, Hooks, and MCP boundaries.",
       tier: "auto",
       vaultRoot: fixture.vaultRoot,
       stepsRoot: fixture.stepsRoot,
@@ -122,7 +123,7 @@ describe("hyperresearch-codex V8 runtime", () => {
     const cli = new RecordingCli();
     const client = createClient(createClientOptions({ repoRoot: fixture.root, cli }));
     const started = await client.runs.startV8Run({
-      canonicalQuery: "Light V8 proof",
+      canonicalQuery: "Light V8 proof. Address serve(), step.run, Hooks, and MCP boundaries.",
       tier: "light",
       vaultRoot: fixture.vaultRoot,
       stepsRoot: fixture.stepsRoot,
@@ -143,8 +144,24 @@ describe("hyperresearch-codex V8 runtime", () => {
     ]);
     expect(advanced.ledger.steps.every((step) => step.loaded?.sha256)).toBe(true);
     expect(advanced.ledger.reportSnapshots).toHaveLength(1);
-    await expect(fs.readFile(path.join(fixture.vaultRoot, "research", "notes", "final_report_light-v8-proof.md"), "utf8"))
+    await expect(fs.readFile(path.join(fixture.vaultRoot, finalReportPath(advanced.ledger)), "utf8"))
       .resolves.toContain("Light Fixture Report");
+    const decomposition = JSON.parse(await fs.readFile(
+      path.join(fixture.vaultRoot, "research", "prompt-decomposition.json"),
+      "utf8",
+    )) as { namedTopics?: string[]; atomicItems?: Array<{ text: string }> };
+    expect(decomposition.namedTopics).toEqual(expect.arrayContaining([
+      "serve()",
+      "step.run",
+      "Hooks",
+      "MCP",
+    ]));
+    expect(decomposition.atomicItems?.map((item) => item.text)).toEqual(expect.arrayContaining([
+      "Address named topic: serve()",
+      "Address named topic: step.run",
+      "Address named topic: Hooks",
+      "Address named topic: MCP",
+    ]));
     expect(advanced.integrity.filter((finding) => finding.severity === "blocking")).toEqual([]);
 
     const validation = await client.runs.validateV8Run({

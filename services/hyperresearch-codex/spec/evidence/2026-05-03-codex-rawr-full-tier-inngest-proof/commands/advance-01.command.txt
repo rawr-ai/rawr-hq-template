@@ -1,0 +1,1 @@
+bun run --cwd apps/cli rawr hyperresearch codex advance --ledger /tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/hyperresearch-codex-run.json --agent-mode packets --backend real --json

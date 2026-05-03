@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-de11ec6b-bdad-4622-a4bf-57de8edab8bb",
+    "status": "running",
+    "completed": false,
+    "currentStepId": "01-decompose",
+    "tier": "full",
+    "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+    "completedSteps": [],
+    "pendingAgentJobs": [],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      }
+    ],
+    "integrity": [
+      {
+        "severity": "warning",
+        "code": "incomplete-run",
+        "message": "Hyperresearch Codex run has not completed all steps"
+      }
+    ]
+  }
+}

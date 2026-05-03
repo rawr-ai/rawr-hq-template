@@ -1,0 +1,1 @@
+bun run --cwd apps/cli rawr hyperresearch codex start --query <query.txt> --vault /tmp/hyperresearch-codex-full-vault.px1Yg1 --steps /Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps --tier full --backend real --json

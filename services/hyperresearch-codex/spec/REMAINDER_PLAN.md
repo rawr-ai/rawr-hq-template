@@ -81,7 +81,7 @@ Exit gate:
 
 - Tests prove duplicate URLs are captured once but retain multiple suggested-by links.
 - Tests prove validation blocks a completed run with missing claim trace for a final report.
-- A short live runtime proof can trace at least three material claims to vault/source evidence across 2-4 sources. The current Codex-RAWR runtime proof traces five claims to four captured official PyPA source URLs and passes service validation. A long full-tier research-quality proof remains unclaimed.
+- A short live runtime proof can trace at least three material claims to vault/source evidence across 2-4 sources. The current Codex-RAWR runtime proof traces five claims to four captured official PyPA source URLs and passes service validation. The repaired full-tier Inngest proof traces five final-report claims to 16 captured official Inngest URLs or explicit parity-scope uncertainty and passes service validation.
 
 ### 4. Patch-Only Guard Hardening
 
@@ -131,7 +131,7 @@ Run proof gates in this order:
 - Actual Codex packet/subagent gate where Codex agents write packet outputs.
 - Short live provenance proof with 2-4 sources and at least three material final-report claims traced.
 
-The Codex-RAWR packet-provenance light proof and short multi-source runtime proof are now green; see `evidence.md`. Do not claim long-form research-quality parity beyond these proofs until a full V8 run has completed through the synced Codex skill workflow with ledger, vault notes, source metadata, agent outputs, critic findings, patch log, lint/export output, and reviewed final-report provenance.
+The Codex-RAWR packet-provenance light proof, short multi-source runtime proof, and repaired full-tier Inngest V8 proof are now green; see `evidence.md`. Hooks/MCP parity, production Inngest readiness, and unrelated global downstream plugin drift remain outside the active parity claim.
 
 ## Review Loop
 
@@ -149,3 +149,6 @@ The Codex-RAWR packet-provenance light proof and short multi-source runtime proo
 - 2026-05-03: Closed the second review loop findings: packet fan-in is atomic across staggered outputs, packets now carry role-assigned required artifact sets, source URL capture skips already captured URLs while preserving suggested-by provenance, and patch logs must be accepted and cover changed lines.
 - 2026-05-03: Replaced the stale Codex CLI/model blocker with a fresh `codex-rawr exec` proof. The RAWR forked Codex CLI (`v0.126.0-alpha.3`, `gpt-5.5`, `CODEX_HOME=~/.codex-rawr`) invoked `hyperresearch-codex`, drove `start`/`advance --agent-mode packets`/`validate`, wrote five packet outputs with hashed artifact commitments, captured `https://www.python.org/about/` through the real Hyperresearch backend, completed the light route, and passed validation. Added `validate --backend real|fixture` command-surface support after the proof exposed that `validate` was the only V8 command missing the backend flag. Preserved a reviewable evidence subset under `spec/evidence/2026-05-03-codex-rawr-packet-proof/`.
 - 2026-05-03: Completed the first higher-order runtime proof. `codex-rawr exec` session `019debf6-73ab-7622-8d58-3afc26212616` resumed from a real `awaiting_agents` gate, spawned Hyperresearch role agents, captured four official PyPA URLs, produced a final report and five-claim trace, blocked once on invalid claim-trace source shape, repaired that packet output through a role-agent pass, and passed `advance-06` plus `validate --backend real`. Preserved evidence under `spec/evidence/2026-05-03-codex-rawr-runtime-proof/`. Keep the stuck readability wait as an open runtime caveat before long-run release claims.
+- 2026-05-03: Opened the full parity closure loop in `FULL_PARITY_CLOSURE_PLAN.md`. The next gate is a full-tier `codex-rawr exec` proof with real backend operations, full role-agent fan-out, zero-context resume evidence, critic/patch artifacts, claim trace, downstream sync, review, and Graphite release checks.
+- 2026-05-03: Completed the repaired full-tier Inngest proof. Run `hpr-v8-c673c42e-c6da-46e7-b8fa-48c286a9572b` completed all 16 V8 steps with 20 completed role-agent packet jobs, 16 official Inngest source captures, critic findings, accepted patch log, polish/readability artifacts, safe claim trace, backend `sync`/`lint`/`export`, and `validate --backend real` returning `passed:true`. Preserved the initial source-selection block and repaired passing evidence under `spec/evidence/`.
+- 2026-05-03: Fixed an evidence-found service gap where deterministic `prompt-decomposition.json` was still a placeholder. The runs helper now writes structured query atoms, named topics, evidence requirements, and proof boundaries, with focused V8 test coverage.

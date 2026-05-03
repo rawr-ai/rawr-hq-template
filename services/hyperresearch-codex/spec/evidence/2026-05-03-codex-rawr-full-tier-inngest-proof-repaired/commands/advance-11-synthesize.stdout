@@ -1,0 +1,164 @@
+# advance 11 synthesize fan-in
+cwd=/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity
+ledger=/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json
+timestamp=2026-05-03T08:51:01Z
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-c673c42e-c6da-46e7-b8fa-48c286a9572b",
+    "status": "awaiting_agents",
+    "completed": false,
+    "currentStepId": "12-critics",
+    "tier": "full",
+    "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+    "completedSteps": [
+      "01-decompose",
+      "02-width-sweep",
+      "03-contradiction-graph",
+      "04-loci-analysis",
+      "05-depth-investigation",
+      "06-cross-locus-reconcile",
+      "07-source-tensions",
+      "08-corpus-critic",
+      "09-evidence-digest",
+      "10-triple-draft",
+      "11-synthesize"
+    ],
+    "pendingAgentJobs": [
+      {
+        "id": "12-critics-1-dialectic-critic",
+        "role": "hyperresearch-dialectic-critic",
+        "packetPath": "research/temp/codex-agent-packets/12-critics-1-dialectic-critic.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/12-critics-1-dialectic-critic.json"
+      },
+      {
+        "id": "12-critics-2-depth-critic",
+        "role": "hyperresearch-depth-critic",
+        "packetPath": "research/temp/codex-agent-packets/12-critics-2-depth-critic.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/12-critics-2-depth-critic.json"
+      },
+      {
+        "id": "12-critics-3-width-critic",
+        "role": "hyperresearch-width-critic",
+        "packetPath": "research/temp/codex-agent-packets/12-critics-3-width-critic.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/12-critics-3-width-critic.json"
+      },
+      {
+        "id": "12-critics-4-instruction-critic",
+        "role": "hyperresearch-instruction-critic",
+        "packetPath": "research/temp/codex-agent-packets/12-critics-4-instruction-critic.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/12-critics-4-instruction-critic.json"
+      }
+    ],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      },
+      {
+        "operation": "search",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "note",
+        "exitCode": 0
+      }
+    ],
+    "integrity": [
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "12-critics",
+        "message": "Agent job is awaiting output: 12-critics-1-dialectic-critic"
+      },
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "12-critics",
+        "message": "Agent job is awaiting output: 12-critics-2-depth-critic"
+      },
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "12-critics",
+        "message": "Agent job is awaiting output: 12-critics-3-width-critic"
+      },
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "12-critics",
+        "message": "Agent job is awaiting output: 12-critics-4-instruction-critic"
+      },
+      {
+        "severity": "warning",
+        "code": "incomplete-run",
+        "message": "Hyperresearch Codex run has not completed all steps"
+      }
+    ]
+  }
+}

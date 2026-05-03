@@ -21,9 +21,14 @@ The local package owns the reusable control-plane substrate: durable ledgers, fr
 - `TESTING_PLAN.md`: component gates, dry-run gates, live gates, and final Codex plugin-system proof.
 - `evidence.md`: committed proof summaries for runtime, sync, and Codex-RAWR execution claims.
 - `HIGHER_ORDER_RUNTIME_PROOF_PLAN.md`: first post-packet runtime proof plan for role-agent fan-out, resume, multi-source capture, and final provenance validation.
+- `FULL_PARITY_CLOSURE_PLAN.md`: full-tier closure plan and current result for the repaired Codex-RAWR Inngest proof.
 - `REVIEW_LEDGER.md`: active review findings and phase-exit status.
 - `DRA_RUNBOOK.md`: Discover -> Review -> Act workflow and agent-loop contract.
 
 ## Phase Rule
 
 Before starting a new design or implementation loop, update this packet if the loop changes integration topology, parity claims, or test gates. Then review `REVIEW_LEDGER.md` and close or explicitly defer any blocking finding.
+
+## Current Claim Boundary
+
+The repaired full-tier Inngest proof is green: all 16 V8 steps, 20 role-agent packet jobs, 16 official source captures, critic/patch/polish/readability gates, backend sync/lint/export, and `validate --backend real` passed. Hooks/MCP runtime parity, production Inngest readiness, and unrelated global plugin drift remain outside the active claim.

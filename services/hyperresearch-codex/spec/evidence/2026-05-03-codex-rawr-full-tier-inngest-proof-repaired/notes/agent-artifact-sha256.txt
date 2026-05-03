@@ -1,0 +1,12 @@
+e6ebd5593221d6642644b7303c47d87a7f132f366b75ead53c2f9792590851f2  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/search-plan.md
+880c6df5bd11e74a534d595c37c6b490776daffdeea02fcf772f98096654567d  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/scored-urls.md
+23cc45ff553a196c3b0f9055ecd16d047b6769e421a70cd4136ceeadc017b369  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/source-capture-log.md
+2e79307ae542878a1069624b7215625ab4fd5826bb072f76baae1ce5b81488bf  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/claims-width.json
+a16c7474fdd0688844df74c74a99d47b1f92efeb70cc9db9e5db2bfc9856f90c  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/codex-agent-results/02-width-sweep-1-fetcher.json
+a1f1434eaf1dee948c9089ec446fa99947df0eea624ba663442c23eb67b571d9  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json
+16f8db3652ee3958721fc733c0af1b50b6399ee7a4c299ac619d1f3b1db40ecb  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/loci.json
+acb879f0ca58221aed96bc5a7d3f3f0cebb600ac187120dd30b9d0bb051f74d7  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/codex-agent-results/04-loci-analysis-1-loci-analyst.json
+dfd5e1087160f19836853ff584addfb83783a38b8889faa51e88a66c83433291  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/codex-agent-results/04-loci-analysis-2-loci-analyst.json
+33887d2436b591abbe8a78c871639e8b6a5f4794815b877378d34492a49eb5d1  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/depth-investigation-log.md
+20c51d8a3188c592a9d3f12421ac405593931072913e8b5a6d1871ef51b12609  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/codex-agent-results/05-depth-investigation-1-depth-investigator.json
+2d7c7a4487b9ce7200db8192c9d12db5a763ed46464cbe5285572da5d253f324  /tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/codex-agent-results/05-depth-investigation-2-depth-investigator.json

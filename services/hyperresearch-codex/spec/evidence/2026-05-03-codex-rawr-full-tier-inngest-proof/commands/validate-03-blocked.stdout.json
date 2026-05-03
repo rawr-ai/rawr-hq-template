@@ -1,0 +1,37 @@
+{
+  "ok": false,
+  "error": {
+    "message": "Hyperresearch Codex V8 validation blocked by integrity findings",
+    "code": "HYPERRESEARCH_CODEX_V8_INTEGRITY_BLOCKED",
+    "details": {
+      "ledgerPath": "/tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/hyperresearch-codex-run.json",
+      "runId": "hpr-v8-de11ec6b-bdad-4622-a4bf-57de8edab8bb",
+      "status": "blocked",
+      "passed": false,
+      "completed": false,
+      "currentStepId": "02-width-sweep",
+      "tier": "full",
+      "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+      "blockingFindings": [
+        {
+          "severity": "blocking",
+          "code": "failed-step",
+          "stepId": "02-width-sweep",
+          "message": "Hyperresearch CLI fetch failed with exit code 1"
+        },
+        {
+          "severity": "blocking",
+          "code": "failed-cli-call",
+          "message": "Hyperresearch CLI call failed: fetch"
+        }
+      ],
+      "warningFindings": [
+        {
+          "severity": "warning",
+          "code": "incomplete-run",
+          "message": "Hyperresearch Codex run has not completed all steps"
+        }
+      ]
+    }
+  }
+}

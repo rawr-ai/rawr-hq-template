@@ -1,0 +1,38 @@
+{
+  "jobId": "12-critics-3-width-critic",
+  "role": "hyperresearch-width-critic",
+  "status": "complete",
+  "summary": "Completed width critique of the final report against captured official Inngest notes, claims-width, scored URLs, corpus critic output, and source notes. No blocking findings were identified; wrote four warnings and one note for under-covered corpus-supported angles.",
+  "evidence": [
+    "research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/temp/claims-width.json",
+    "research/temp/scored-urls.md",
+    "research/temp/corpus-critic-results.md",
+    "research/temp/source-capture-log.md",
+    "research/corpus-critic-gaps.json",
+    "research/notes/serve-inngest-documentation.md",
+    "research/notes/local-development-inngest-documentation.md",
+    "research/notes/connect-inngest-documentation.md",
+    "research/notes/security-inngest-documentation.md",
+    "research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md",
+    "research/notes/self-hosting-inngest-documentation.md",
+    "research/notes/create-function-inngest-documentation.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/critic-findings-width.json",
+      "sha256": "e8d01b6592c499eaefa68f6aea2a8a65ecf7e8b41d859ebec6cc2908726be385",
+      "summary": "Width critic findings: four warning findings and one note covering under-treated official Inngest corpus angles in the final report."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/setup/connect",
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed",
+    "https://www.inngest.com/docs/self-hosting",
+    "https://www.inngest.com/docs/reference/typescript/functions/create"
+  ]
+}

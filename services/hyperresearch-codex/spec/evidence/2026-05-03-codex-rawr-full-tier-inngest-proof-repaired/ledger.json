@@ -1,0 +1,1536 @@
+{
+  "version": 2,
+  "runId": "hpr-v8-c673c42e-c6da-46e7-b8fa-48c286a9572b",
+  "canonicalQuery": "For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats.",
+  "tier": "full",
+  "tierSource": "user",
+  "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+  "vaultRoot": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+  "artifactRoot": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+  "stepsRoot": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps",
+  "queryFilePath": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md",
+  "routeStepIds": [
+    "01-decompose",
+    "02-width-sweep",
+    "03-contradiction-graph",
+    "04-loci-analysis",
+    "05-depth-investigation",
+    "06-cross-locus-reconcile",
+    "07-source-tensions",
+    "08-corpus-critic",
+    "09-evidence-digest",
+    "10-triple-draft",
+    "11-synthesize",
+    "12-critics",
+    "13-gap-fetch",
+    "14-patcher",
+    "15-polish",
+    "16-readability-audit"
+  ],
+  "wrapperRequirements": [],
+  "completed": true,
+  "createdAt": "2026-05-03T08:05:02.148Z",
+  "updatedAt": "2026-05-03T09:11:22.150Z",
+  "steps": [
+    {
+      "id": "01-decompose",
+      "title": "Decompose query and classify tier",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-1-decompose.md",
+      "requiredArtifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "artifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "startedAt": "2026-05-03T08:05:09.592Z",
+      "loaded": {
+        "stepId": "01-decompose",
+        "title": "Decompose query and classify tier",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-1-decompose.md",
+        "sha256": "b43bdf4516363d880c166b23543cb7e3c1473bc51e836b00b6496e3591e8c39a",
+        "loadedAt": "2026-05-03T08:05:09.593Z"
+      },
+      "completedAt": "2026-05-03T08:05:09.595Z"
+    },
+    {
+      "id": "02-width-sweep",
+      "title": "Width sweep and source capture",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-2-width-sweep.md",
+      "requiredArtifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "artifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "startedAt": "2026-05-03T08:05:09.595Z",
+      "loaded": {
+        "stepId": "02-width-sweep",
+        "title": "Width sweep and source capture",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-2-width-sweep.md",
+        "sha256": "dfb6460b29f46297ace63d80b41c71a2aa869cda431f29b7a2aa56be9957c327",
+        "loadedAt": "2026-05-03T08:05:09.595Z"
+      },
+      "completedAt": "2026-05-03T08:17:33.713Z"
+    },
+    {
+      "id": "03-contradiction-graph",
+      "title": "Contradiction graph",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-3-contradiction-graph.md",
+      "requiredArtifacts": [
+        "research/temp/contradiction-graph.json",
+        "research/temp/consensus-claims.json"
+      ],
+      "artifacts": [
+        "research/temp/contradiction-graph.json",
+        "research/temp/consensus-claims.json"
+      ],
+      "startedAt": "2026-05-03T08:17:33.715Z",
+      "loaded": {
+        "stepId": "03-contradiction-graph",
+        "title": "Contradiction graph",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-3-contradiction-graph.md",
+        "sha256": "7811c357982c6dc6dcfa10278d8a33023d6d207961f174ce72165fd8c42b2db1",
+        "loadedAt": "2026-05-03T08:17:33.715Z"
+      },
+      "completedAt": "2026-05-03T08:17:33.716Z"
+    },
+    {
+      "id": "04-loci-analysis",
+      "title": "Loci analysis",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-4-loci-analysis.md",
+      "requiredArtifacts": [
+        "research/loci.json"
+      ],
+      "artifacts": [
+        "research/loci.json"
+      ],
+      "startedAt": "2026-05-03T08:17:33.716Z",
+      "loaded": {
+        "stepId": "04-loci-analysis",
+        "title": "Loci analysis",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-4-loci-analysis.md",
+        "sha256": "6a9a62ab5762d5c28371983220fc423e90f51d76353c85c305c6d8e7a7af5f69",
+        "loadedAt": "2026-05-03T08:17:33.716Z"
+      },
+      "completedAt": "2026-05-03T08:21:11.955Z"
+    },
+    {
+      "id": "05-depth-investigation",
+      "title": "Depth investigation",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-5-depth-investigation.md",
+      "requiredArtifacts": [
+        "research/temp/depth-investigation-log.md"
+      ],
+      "artifacts": [
+        "research/temp/depth-investigation-log.md"
+      ],
+      "startedAt": "2026-05-03T08:21:11.957Z",
+      "loaded": {
+        "stepId": "05-depth-investigation",
+        "title": "Depth investigation",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-5-depth-investigation.md",
+        "sha256": "01466de1416be677e516c49bcf67cf340fa211621daf96ec3d70d010df3f6e0c",
+        "loadedAt": "2026-05-03T08:21:11.958Z"
+      },
+      "completedAt": "2026-05-03T08:24:36.468Z"
+    },
+    {
+      "id": "06-cross-locus-reconcile",
+      "title": "Cross-locus reconciliation",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-6-cross-locus-reconcile.md",
+      "requiredArtifacts": [
+        "research/comparisons.md"
+      ],
+      "artifacts": [
+        "research/comparisons.md"
+      ],
+      "startedAt": "2026-05-03T08:24:36.469Z",
+      "loaded": {
+        "stepId": "06-cross-locus-reconcile",
+        "title": "Cross-locus reconciliation",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-6-cross-locus-reconcile.md",
+        "sha256": "f20220dbc9d937e9bcf4b360b912042f66e30983c25fd67fbfa65a101369d9ff",
+        "loadedAt": "2026-05-03T08:24:36.469Z"
+      },
+      "completedAt": "2026-05-03T08:24:36.470Z"
+    },
+    {
+      "id": "07-source-tensions",
+      "title": "Source tensions",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-7-source-tensions.md",
+      "requiredArtifacts": [
+        "research/temp/source-tensions.json"
+      ],
+      "artifacts": [
+        "research/temp/source-tensions.json"
+      ],
+      "startedAt": "2026-05-03T08:24:36.470Z",
+      "loaded": {
+        "stepId": "07-source-tensions",
+        "title": "Source tensions",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-7-source-tensions.md",
+        "sha256": "9c7f3eaa36532ddbf397bda6c23151185a1815727f7140f04f3370472e8c61d5",
+        "loadedAt": "2026-05-03T08:24:36.470Z"
+      },
+      "completedAt": "2026-05-03T08:24:36.471Z"
+    },
+    {
+      "id": "08-corpus-critic",
+      "title": "Corpus critic",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-8-corpus-critic.md",
+      "requiredArtifacts": [
+        "research/corpus-critic-gaps.json",
+        "research/temp/corpus-critic-results.md"
+      ],
+      "artifacts": [
+        "research/corpus-critic-gaps.json",
+        "research/temp/corpus-critic-results.md"
+      ],
+      "startedAt": "2026-05-03T08:24:36.471Z",
+      "loaded": {
+        "stepId": "08-corpus-critic",
+        "title": "Corpus critic",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-8-corpus-critic.md",
+        "sha256": "3bfaafb9d03925fbae433d95545c8d555e00dd57226a19ad81fb6629ac87c299",
+        "loadedAt": "2026-05-03T08:24:36.471Z"
+      },
+      "completedAt": "2026-05-03T08:35:37.999Z"
+    },
+    {
+      "id": "09-evidence-digest",
+      "title": "Evidence digest",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-9-evidence-digest.md",
+      "requiredArtifacts": [
+        "research/temp/evidence-digest.md"
+      ],
+      "artifacts": [
+        "research/temp/evidence-digest.md"
+      ],
+      "startedAt": "2026-05-03T08:35:38.000Z",
+      "loaded": {
+        "stepId": "09-evidence-digest",
+        "title": "Evidence digest",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-9-evidence-digest.md",
+        "sha256": "9570d6a2f788c1c0fada8afe7d108ff12ab0f28790f1a029bac5a2c9376c9dc8",
+        "loadedAt": "2026-05-03T08:35:38.001Z"
+      },
+      "completedAt": "2026-05-03T08:35:38.002Z"
+    },
+    {
+      "id": "10-triple-draft",
+      "title": "Triple draft or light final draft",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-10-triple-draft.md",
+      "requiredArtifacts": [
+        "research/temp/draft-angles.md",
+        "research/temp/draft-a.md",
+        "research/temp/draft-b.md",
+        "research/temp/draft-c.md"
+      ],
+      "artifacts": [
+        "research/temp/draft-angles.md",
+        "research/temp/draft-a.md",
+        "research/temp/draft-b.md",
+        "research/temp/draft-c.md"
+      ],
+      "startedAt": "2026-05-03T08:35:38.002Z",
+      "loaded": {
+        "stepId": "10-triple-draft",
+        "title": "Triple draft or light final draft",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-10-triple-draft.md",
+        "sha256": "d2531ceb5c404a0bb6dfe854a241eab20629f73f05e52a03c0a088a36f6c8284",
+        "loadedAt": "2026-05-03T08:35:38.002Z"
+      },
+      "completedAt": "2026-05-03T08:41:17.036Z"
+    },
+    {
+      "id": "11-synthesize",
+      "title": "Synthesize final report",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-11-synthesize.md",
+      "requiredArtifacts": [
+        "research/temp/synthesis-conflicts.md",
+        "research/temp/synthesis-plan.md",
+        "research/temp/synthesis-outline.md",
+        "research/temp/synthesis-pass1.md",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": [
+        "research/temp/synthesis-conflicts.md",
+        "research/temp/synthesis-plan.md",
+        "research/temp/synthesis-outline.md",
+        "research/temp/synthesis-pass1.md",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "startedAt": "2026-05-03T08:41:17.038Z",
+      "loaded": {
+        "stepId": "11-synthesize",
+        "title": "Synthesize final report",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-11-synthesize.md",
+        "sha256": "6c1e36db20cb3cdb19518acf8a53e8dcf43811f9555902dd46d2ce172dc23289",
+        "loadedAt": "2026-05-03T08:41:17.038Z"
+      },
+      "completedAt": "2026-05-03T08:51:01.724Z"
+    },
+    {
+      "id": "12-critics",
+      "title": "Adversarial critics",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-12-critics.md",
+      "requiredArtifacts": [
+        "research/critic-findings-dialectic.json",
+        "research/critic-findings-depth.json",
+        "research/critic-findings-width.json",
+        "research/critic-findings-instruction.json"
+      ],
+      "artifacts": [
+        "research/critic-findings-dialectic.json",
+        "research/critic-findings-depth.json",
+        "research/critic-findings-width.json",
+        "research/critic-findings-instruction.json"
+      ],
+      "startedAt": "2026-05-03T08:51:01.725Z",
+      "loaded": {
+        "stepId": "12-critics",
+        "title": "Adversarial critics",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-12-critics.md",
+        "sha256": "8c1eda0e311742239c92008ae0e55bd794bfc6a812bd23c3855ee85d1489d176",
+        "loadedAt": "2026-05-03T08:51:01.725Z"
+      },
+      "completedAt": "2026-05-03T08:55:07.838Z"
+    },
+    {
+      "id": "13-gap-fetch",
+      "title": "Post-critic gap fetch",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-13-gap-fetch.md",
+      "requiredArtifacts": [
+        "research/temp/post-critic-fetch-log.md"
+      ],
+      "artifacts": [
+        "research/temp/post-critic-fetch-log.md"
+      ],
+      "startedAt": "2026-05-03T08:55:07.839Z",
+      "loaded": {
+        "stepId": "13-gap-fetch",
+        "title": "Post-critic gap fetch",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-13-gap-fetch.md",
+        "sha256": "b2e11e7d75eefbd959fdb8cf8b8235b666b93e3dd251e1c4e63af1672af0fea1",
+        "loadedAt": "2026-05-03T08:55:07.839Z"
+      },
+      "completedAt": "2026-05-03T08:57:27.513Z"
+    },
+    {
+      "id": "14-patcher",
+      "title": "Patch accepted findings",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-14-patcher.md",
+      "requiredArtifacts": [
+        "research/patch-log.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": [
+        "research/patch-log.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "startedAt": "2026-05-03T08:57:27.515Z",
+      "loaded": {
+        "stepId": "14-patcher",
+        "title": "Patch accepted findings",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-14-patcher.md",
+        "sha256": "9cdeb905e7d559446edd7b065619c454a1969cf25660b221fb387c2cca5108ab",
+        "loadedAt": "2026-05-03T08:57:27.515Z"
+      },
+      "completedAt": "2026-05-03T09:03:19.934Z"
+    },
+    {
+      "id": "15-polish",
+      "title": "Polish and lint",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-15-polish.md",
+      "requiredArtifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "startedAt": "2026-05-03T09:03:19.935Z",
+      "loaded": {
+        "stepId": "15-polish",
+        "title": "Polish and lint",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-15-polish.md",
+        "sha256": "5875cce6af61defe82f81387b922762e21ed5b3a1e6d14c883c76c263d98f1ed",
+        "loadedAt": "2026-05-03T09:03:19.935Z"
+      },
+      "completedAt": "2026-05-03T09:08:18.651Z"
+    },
+    {
+      "id": "16-readability-audit",
+      "title": "Readability audit",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-16-readability-audit.md",
+      "requiredArtifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "startedAt": "2026-05-03T09:08:18.652Z",
+      "loaded": {
+        "stepId": "16-readability-audit",
+        "title": "Readability audit",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-16-readability-audit.md",
+        "sha256": "dade539a5d3067703a7caa45c3a739d95eb95b5dc70931f3edfdab4f2044766d",
+        "loadedAt": "2026-05-03T09:08:18.653Z"
+      },
+      "completedAt": "2026-05-03T09:11:22.150Z"
+    }
+  ],
+  "cliCalls": [
+    {
+      "operation": "init",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:05:02.150Z",
+      "completedAt": "2026-05-03T08:05:02.416Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"vault_path\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n    \"name\": \"Research Base\"\n  },\n  \"timestamp\": \"2026-05-03T08:05:02.394177+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "search",
+      "args": [
+        "For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats.",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:24.805Z",
+      "completedAt": "2026-05-03T08:17:25.126Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"query\": \"For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats.\",\n    \"results\": [],\n    \"total\": 0\n  },\n  \"count\": 0,\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:25.105247+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/reference/serve",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:25.126Z",
+      "completedAt": "2026-05-03T08:17:25.768Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"serve-inngest-documentation\",\n    \"title\": \"Serve - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/reference/serve\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/serve-inngest-documentation.md\",\n    \"word_count\": 443,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:25.730536+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:25.768Z",
+      "completedAt": "2026-05-03T08:17:26.181Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"create-function-inngest-documentation\",\n    \"title\": \"Create Function - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/reference/typescript/functions/create\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/create-function-inngest-documentation.md\",\n    \"word_count\": 2167,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:26.144711+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:26.181Z",
+      "completedAt": "2026-05-03T08:17:26.650Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"inngest-steps-inngest-documentation\",\n    \"title\": \"Inngest Steps - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/learn/inngest-steps\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/inngest-steps-inngest-documentation.md\",\n    \"word_count\": 1256,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:26.613743+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:26.650Z",
+      "completedAt": "2026-05-03T08:17:27.038Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"how-inngest-functions-are-executed-durable-execution-inngest-documentation\",\n    \"title\": \"How Inngest functions are executed: Durable Execution - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/learn/how-functions-are-executed\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md\",\n    \"word_count\": 1757,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:26.998175+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/guides/error-handling",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:27.038Z",
+      "completedAt": "2026-05-03T08:17:27.461Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"errors-retries-inngest-documentation\",\n    \"title\": \"Errors & Retries - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/guides/error-handling\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/errors-retries-inngest-documentation.md\",\n    \"word_count\": 276,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:27.421250+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:27.461Z",
+      "completedAt": "2026-05-03T08:17:28.222Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"rollbacks-inngest-documentation\",\n    \"title\": \"Rollbacks - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/rollbacks-inngest-documentation.md\",\n    \"word_count\": 416,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:28.171178+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:28.223Z",
+      "completedAt": "2026-05-03T08:17:28.859Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"wait-for-an-event-inngest-documentation\",\n    \"title\": \"Wait for an Event - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/wait-for-an-event-inngest-documentation.md\",\n    \"word_count\": 619,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:28.814106+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/guides/batching",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:28.860Z",
+      "completedAt": "2026-05-03T08:17:29.365Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"batching-events-inngest-documentation\",\n    \"title\": \"Batching events - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/guides/batching\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/batching-events-inngest-documentation.md\",\n    \"word_count\": 837,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:29.316944+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/guides/flow-control",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:29.365Z",
+      "completedAt": "2026-05-03T08:17:29.857Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"flow-control-inngest-documentation\",\n    \"title\": \"Flow Control - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/guides/flow-control\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/flow-control-inngest-documentation.md\",\n    \"word_count\": 206,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:29.804659+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/learn/security",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:29.857Z",
+      "completedAt": "2026-05-03T08:17:30.380Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"security-inngest-documentation\",\n    \"title\": \"Security - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/learn/security\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/security-inngest-documentation.md\",\n    \"word_count\": 1042,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:30.337944+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/local-development",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:30.380Z",
+      "completedAt": "2026-05-03T08:17:30.906Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"local-development-inngest-documentation\",\n    \"title\": \"Local development - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/local-development\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/local-development-inngest-documentation.md\",\n    \"word_count\": 1792,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:30.857587+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/setup/connect",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:30.906Z",
+      "completedAt": "2026-05-03T08:17:31.518Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"connect-inngest-documentation\",\n    \"title\": \"Connect - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/setup/connect\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/connect-inngest-documentation.md\",\n    \"word_count\": 2815,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:31.462668+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/deploy/render",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:31.518Z",
+      "completedAt": "2026-05-03T08:17:31.944Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"render-inngest-documentation\",\n    \"title\": \"Render - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/deploy/render\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/render-inngest-documentation.md\",\n    \"word_count\": 483,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:31.896263+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/self-hosting",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:31.944Z",
+      "completedAt": "2026-05-03T08:17:32.489Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"self-hosting-inngest-documentation\",\n    \"title\": \"Self-hosting - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/self-hosting\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/self-hosting-inngest-documentation.md\",\n    \"word_count\": 1901,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:32.442369+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/guides/throttling",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:32.489Z",
+      "completedAt": "2026-05-03T08:17:32.986Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"throttling-inngest-documentation\",\n    \"title\": \"Throttling - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/guides/throttling\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/throttling-inngest-documentation.md\",\n    \"word_count\": 720,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:32.940654+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/guides/rate-limiting",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:32.986Z",
+      "completedAt": "2026-05-03T08:17:33.523Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"rate-limiting-inngest-documentation\",\n    \"title\": \"Rate limiting - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/guides/rate-limiting\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/rate-limiting-inngest-documentation.md\",\n    \"word_count\": 643,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:33.476054+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "note",
+      "args": [
+        "new",
+        "--json",
+        "Hyperresearch Codex V8 fixture source"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:33.523Z",
+      "completedAt": "2026-05-03T08:17:33.710Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"id\": \"hyperresearch-codex-v8-fixture-source\",\n    \"path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n    \"title\": \"Hyperresearch Codex V8 fixture source\"\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:33.686266+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "lint",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T09:08:18.310Z",
+      "completedAt": "2026-05-03T09:08:18.648Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"issues\": [\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"corpus-critic-results\",\n        \"note_path\": \"research/temp/corpus-critic-results.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"depth-investigation-log\",\n        \"note_path\": \"research/temp/depth-investigation-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"evidence-digest\",\n        \"note_path\": \"research/temp/evidence-digest.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-a\",\n        \"note_path\": \"research/temp/draft-a.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-conflicts\",\n        \"note_path\": \"research/temp/synthesis-conflicts.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-outline\",\n        \"note_path\": \"research/temp/synthesis-outline.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-b\",\n        \"note_path\": \"research/temp/draft-b.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-c\",\n        \"note_path\": \"research/temp/draft-c.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-plan\",\n        \"note_path\": \"research/temp/synthesis-plan.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_for-rawr-hq-runtime-realization-which-inngest-pr\",\n        \"note_path\": \"research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502\",\n        \"note_path\": \"research/temp/report-snapshots/11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"post-critic-fetch-log\",\n        \"note_path\": \"research/temp/post-critic-fetch-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"serve-inngest-documentation\",\n        \"note_path\": \"research/notes/serve-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"create-function-inngest-documentation\",\n        \"note_path\": \"research/notes/create-function-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"inngest-steps-inngest-documentation\",\n        \"note_path\": \"research/notes/inngest-steps-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"how-inngest-functions-are-executed-durable-execution-inngest-documentation\",\n        \"note_path\": \"research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"errors-retries-inngest-documentation\",\n        \"note_path\": \"research/notes/errors-retries-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"rollbacks-inngest-documentation\",\n        \"note_path\": \"research/notes/rollbacks-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"wait-for-an-event-inngest-documentation\",\n        \"note_path\": \"research/notes/wait-for-an-event-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"batching-events-inngest-documentation\",\n        \"note_path\": \"research/notes/batching-events-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"flow-control-inngest-documentation\",\n        \"note_path\": \"research/notes/flow-control-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"security-inngest-documentation\",\n        \"note_path\": \"research/notes/security-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"local-development-inngest-documentation\",\n        \"note_path\": \"research/notes/local-development-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"connect-inngest-documentation\",\n        \"note_path\": \"research/notes/connect-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"render-inngest-documentation\",\n        \"note_path\": \"research/notes/render-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"self-hosting-inngest-documentation\",\n        \"note_path\": \"research/notes/self-hosting-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"throttling-inngest-documentation\",\n        \"note_path\": \"research/notes/throttling-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"rate-limiting-inngest-documentation\",\n        \"note_path\": \"research/notes/rate-limiting-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"corpus-critic-results\",\n        \"note_path\": \"research/temp/corpus-critic-results.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"depth-investigation-log\",\n        \"note_path\": \"research/temp/depth-investigation-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"evidence-digest\",\n        \"note_path\": \"research/temp/evidence-digest.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-a\",\n        \"note_path\": \"research/temp/draft-a.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-conflicts\",\n        \"note_path\": \"research/temp/synthesis-conflicts.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-outline\",\n        \"note_path\": \"research/temp/synthesis-outline.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-b\",\n        \"note_path\": \"research/temp/draft-b.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-c\",\n        \"note_path\": \"research/temp/draft-c.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-plan\",\n        \"note_path\": \"research/temp/synthesis-plan.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_for-rawr-hq-runtime-realization-which-inngest-pr\",\n        \"note_path\": \"research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502\",\n        \"note_path\": \"research/temp/report-snapshots/11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"post-critic-fetch-log\",\n        \"note_path\": \"research/temp/post-critic-fetch-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"serve-inngest-documentation\",\n        \"note_path\": \"research/notes/serve-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"create-function-inngest-documentation\",\n        \"note_path\": \"research/notes/create-function-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"inngest-steps-inngest-documentation\",\n        \"note_path\": \"research/notes/inngest-steps-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"how-inngest-functions-are-executed-durable-execution-inngest-documentation\",\n        \"note_path\": \"research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"errors-retries-inngest-documentation\",\n        \"note_path\": \"research/notes/errors-retries-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"rollbacks-inngest-documentation\",\n        \"note_path\": \"research/notes/rollbacks-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"wait-for-an-event-inngest-documentation\",\n        \"note_path\": \"research/notes/wait-for-an-event-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"batching-events-inngest-documentation\",\n        \"note_path\": \"research/notes/batching-events-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"flow-control-inngest-documentation\",\n        \"note_path\": \"research/notes/flow-control-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"security-inngest-documentation\",\n        \"note_path\": \"research/notes/security-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"local-development-inngest-documentation\",\n        \"note_path\": \"research/notes/local-development-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"connect-inngest-documentation\",\n        \"note_path\": \"research/notes/connect-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"render-inngest-documentation\",\n        \"note_path\": \"research/notes/render-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"self-hosting-inngest-documentation\",\n        \"note_path\": \"research/notes/self-hosting-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"throttling-inngest-documentation\",\n        \"note_path\": \"research/notes/throttling-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"rate-limiting-inngest-documentation\",\n        \"note_path\": \"research/notes/rate-limiting-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"corpus-critic-results\",\n        \"note_path\": \"research/temp/corpus-critic-results.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"depth-investigation-log\",\n        \"note_path\": \"research/temp/depth-investigation-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"evidence-digest\",\n        \"note_path\": \"research/temp/evidence-digest.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-a\",\n        \"note_path\": \"research/temp/draft-a.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-conflicts\",\n        \"note_path\": \"research/temp/synthesis-conflicts.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-outline\",\n        \"note_path\": \"research/temp/synthesis-outline.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-b\",\n        \"note_path\": \"research/temp/draft-b.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-c\",\n        \"note_path\": \"research/temp/draft-c.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-plan\",\n        \"note_path\": \"research/temp/synthesis-plan.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_for-rawr-hq-runtime-realization-which-inngest-pr\",\n        \"note_path\": \"research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502\",\n        \"note_path\": \"research/temp/report-snapshots/11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"post-critic-fetch-log\",\n        \"note_path\": \"research/temp/post-critic-fetch-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"patch-surgery\",\n        \"severity\": \"warning\",\n        \"note_id\": \"<vault>\",\n        \"message\": \"Patch log is empty (applied=0, skipped=0, conflicts=0) but critics returned 16 findings and the final report exists. The patcher's log was almost certainly lost in transit — Layer 6 orchestrator didn't pre-create `research/patch-log.json` as an empty stub, so the tool-locked patcher (`[Read, Edit]` only) couldn't populate it and inlined the log in its Task result instead. The draft WAS patched — you can verify via `git diff` on the L4 draft snapshot — but the audit trail is gone. Fix: orchestrator must `echo '{\\\"applied\\\":[], \\\"skipped\\\":[], \\\"conflicts\\\":[]}' > research/patch-log.json` before spawning the patcher.\"\n      },\n      {\n        \"rule\": \"workflow\",\n        \"severity\": \"error\",\n        \"note_id\": \"<vault>\",\n        \"message\": \"research/loci.json exists but no interim notes found. Layer 3 depth investigation was skipped entirely. See locus-coverage rule for per-locus details.\"\n      },\n      {\n        \"rule\": \"broken-links\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"line\": 5,\n        \"message\": \"Broken link: [[claims-width]]\"\n      },\n      {\n        \"rule\": \"broken-links\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"line\": 33,\n        \"message\": \"Broken link: [[corpus-critic-gaps]]\"\n      },\n      {\n        \"rule\": \"broken-links\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"line\": 57,\n        \"message\": \"Broken link: [[claims-width]]\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"corpus-critic-results\",\n        \"note_path\": \"research/temp/corpus-critic-results.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"depth-investigation-log\",\n        \"note_path\": \"research/temp/depth-investigation-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"evidence-digest\",\n        \"note_path\": \"research/temp/evidence-digest.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"synthesis-conflicts\",\n        \"note_path\": \"research/temp/synthesis-conflicts.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"synthesis-outline\",\n        \"note_path\": \"research/temp/synthesis-outline.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"synthesis-plan\",\n        \"note_path\": \"research/temp/synthesis-plan.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"post-critic-fetch-log\",\n        \"note_path\": \"research/temp/post-critic-fetch-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      }\n    ],\n    \"summary\": {\n      \"errors\": 1,\n      \"warnings\": 92,\n      \"info\": 13,\n      \"total\": 106\n    }\n  },\n  \"count\": 106,\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T09:08:18.625112+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "sync",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T09:11:21.453Z",
+      "completedAt": "2026-05-03T09:11:21.790Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"added\": 0,\n    \"updated\": 0,\n    \"deleted\": 0,\n    \"unchanged\": 35,\n    \"errors\": [],\n    \"duration_ms\": 0.5\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T09:11:21.767073+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "lint",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T09:11:21.790Z",
+      "completedAt": "2026-05-03T09:11:21.972Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"issues\": [\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"corpus-critic-results\",\n        \"note_path\": \"research/temp/corpus-critic-results.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"depth-investigation-log\",\n        \"note_path\": \"research/temp/depth-investigation-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"evidence-digest\",\n        \"note_path\": \"research/temp/evidence-digest.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-a\",\n        \"note_path\": \"research/temp/draft-a.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-conflicts\",\n        \"note_path\": \"research/temp/synthesis-conflicts.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-outline\",\n        \"note_path\": \"research/temp/synthesis-outline.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-b\",\n        \"note_path\": \"research/temp/draft-b.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-c\",\n        \"note_path\": \"research/temp/draft-c.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-plan\",\n        \"note_path\": \"research/temp/synthesis-plan.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_for-rawr-hq-runtime-realization-which-inngest-pr\",\n        \"note_path\": \"research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502\",\n        \"note_path\": \"research/temp/report-snapshots/11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"post-critic-fetch-log\",\n        \"note_path\": \"research/temp/post-critic-fetch-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"serve-inngest-documentation\",\n        \"note_path\": \"research/notes/serve-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"create-function-inngest-documentation\",\n        \"note_path\": \"research/notes/create-function-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"inngest-steps-inngest-documentation\",\n        \"note_path\": \"research/notes/inngest-steps-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"how-inngest-functions-are-executed-durable-execution-inngest-documentation\",\n        \"note_path\": \"research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"errors-retries-inngest-documentation\",\n        \"note_path\": \"research/notes/errors-retries-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"rollbacks-inngest-documentation\",\n        \"note_path\": \"research/notes/rollbacks-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"wait-for-an-event-inngest-documentation\",\n        \"note_path\": \"research/notes/wait-for-an-event-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"batching-events-inngest-documentation\",\n        \"note_path\": \"research/notes/batching-events-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"flow-control-inngest-documentation\",\n        \"note_path\": \"research/notes/flow-control-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"security-inngest-documentation\",\n        \"note_path\": \"research/notes/security-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"local-development-inngest-documentation\",\n        \"note_path\": \"research/notes/local-development-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"connect-inngest-documentation\",\n        \"note_path\": \"research/notes/connect-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"render-inngest-documentation\",\n        \"note_path\": \"research/notes/render-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"self-hosting-inngest-documentation\",\n        \"note_path\": \"research/notes/self-hosting-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"throttling-inngest-documentation\",\n        \"note_path\": \"research/notes/throttling-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"rate-limiting-inngest-documentation\",\n        \"note_path\": \"research/notes/rate-limiting-inngest-documentation.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"corpus-critic-results\",\n        \"note_path\": \"research/temp/corpus-critic-results.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"depth-investigation-log\",\n        \"note_path\": \"research/temp/depth-investigation-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"evidence-digest\",\n        \"note_path\": \"research/temp/evidence-digest.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-a\",\n        \"note_path\": \"research/temp/draft-a.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-conflicts\",\n        \"note_path\": \"research/temp/synthesis-conflicts.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-outline\",\n        \"note_path\": \"research/temp/synthesis-outline.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-b\",\n        \"note_path\": \"research/temp/draft-b.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-c\",\n        \"note_path\": \"research/temp/draft-c.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-plan\",\n        \"note_path\": \"research/temp/synthesis-plan.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_for-rawr-hq-runtime-realization-which-inngest-pr\",\n        \"note_path\": \"research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502\",\n        \"note_path\": \"research/temp/report-snapshots/11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"post-critic-fetch-log\",\n        \"note_path\": \"research/temp/post-critic-fetch-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"serve-inngest-documentation\",\n        \"note_path\": \"research/notes/serve-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"create-function-inngest-documentation\",\n        \"note_path\": \"research/notes/create-function-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"inngest-steps-inngest-documentation\",\n        \"note_path\": \"research/notes/inngest-steps-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"how-inngest-functions-are-executed-durable-execution-inngest-documentation\",\n        \"note_path\": \"research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"errors-retries-inngest-documentation\",\n        \"note_path\": \"research/notes/errors-retries-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"rollbacks-inngest-documentation\",\n        \"note_path\": \"research/notes/rollbacks-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"wait-for-an-event-inngest-documentation\",\n        \"note_path\": \"research/notes/wait-for-an-event-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"batching-events-inngest-documentation\",\n        \"note_path\": \"research/notes/batching-events-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"flow-control-inngest-documentation\",\n        \"note_path\": \"research/notes/flow-control-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"security-inngest-documentation\",\n        \"note_path\": \"research/notes/security-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"local-development-inngest-documentation\",\n        \"note_path\": \"research/notes/local-development-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"connect-inngest-documentation\",\n        \"note_path\": \"research/notes/connect-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"render-inngest-documentation\",\n        \"note_path\": \"research/notes/render-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"self-hosting-inngest-documentation\",\n        \"note_path\": \"research/notes/self-hosting-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"throttling-inngest-documentation\",\n        \"note_path\": \"research/notes/throttling-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"rate-limiting-inngest-documentation\",\n        \"note_path\": \"research/notes/rate-limiting-inngest-documentation.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"corpus-critic-results\",\n        \"note_path\": \"research/temp/corpus-critic-results.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"depth-investigation-log\",\n        \"note_path\": \"research/temp/depth-investigation-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"evidence-digest\",\n        \"note_path\": \"research/temp/evidence-digest.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-a\",\n        \"note_path\": \"research/temp/draft-a.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-conflicts\",\n        \"note_path\": \"research/temp/synthesis-conflicts.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-outline\",\n        \"note_path\": \"research/temp/synthesis-outline.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-b\",\n        \"note_path\": \"research/temp/draft-b.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-c\",\n        \"note_path\": \"research/temp/draft-c.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-plan\",\n        \"note_path\": \"research/temp/synthesis-plan.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_for-rawr-hq-runtime-realization-which-inngest-pr\",\n        \"note_path\": \"research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502\",\n        \"note_path\": \"research/temp/report-snapshots/11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"post-critic-fetch-log\",\n        \"note_path\": \"research/temp/post-critic-fetch-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"patch-surgery\",\n        \"severity\": \"warning\",\n        \"note_id\": \"<vault>\",\n        \"message\": \"Patch log is empty (applied=0, skipped=0, conflicts=0) but critics returned 16 findings and the final report exists. The patcher's log was almost certainly lost in transit — Layer 6 orchestrator didn't pre-create `research/patch-log.json` as an empty stub, so the tool-locked patcher (`[Read, Edit]` only) couldn't populate it and inlined the log in its Task result instead. The draft WAS patched — you can verify via `git diff` on the L4 draft snapshot — but the audit trail is gone. Fix: orchestrator must `echo '{\\\"applied\\\":[], \\\"skipped\\\":[], \\\"conflicts\\\":[]}' > research/patch-log.json` before spawning the patcher.\"\n      },\n      {\n        \"rule\": \"workflow\",\n        \"severity\": \"error\",\n        \"note_id\": \"<vault>\",\n        \"message\": \"research/loci.json exists but no interim notes found. Layer 3 depth investigation was skipped entirely. See locus-coverage rule for per-locus details.\"\n      },\n      {\n        \"rule\": \"broken-links\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"line\": 5,\n        \"message\": \"Broken link: [[claims-width]]\"\n      },\n      {\n        \"rule\": \"broken-links\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"line\": 33,\n        \"message\": \"Broken link: [[corpus-critic-gaps]]\"\n      },\n      {\n        \"rule\": \"broken-links\",\n        \"severity\": \"warning\",\n        \"note_id\": \"synthesis-pass1\",\n        \"note_path\": \"research/temp/synthesis-pass1.md\",\n        \"line\": 57,\n        \"message\": \"Broken link: [[claims-width]]\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"corpus-critic-results\",\n        \"note_path\": \"research/temp/corpus-critic-results.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"depth-investigation-log\",\n        \"note_path\": \"research/temp/depth-investigation-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"evidence-digest\",\n        \"note_path\": \"research/temp/evidence-digest.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"synthesis-conflicts\",\n        \"note_path\": \"research/temp/synthesis-conflicts.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"synthesis-outline\",\n        \"note_path\": \"research/temp/synthesis-outline.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"synthesis-plan\",\n        \"note_path\": \"research/temp/synthesis-plan.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"post-critic-fetch-log\",\n        \"note_path\": \"research/temp/post-critic-fetch-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      }\n    ],\n    \"summary\": {\n      \"errors\": 1,\n      \"warnings\": 92,\n      \"info\": 13,\n      \"total\": 106\n    }\n  },\n  \"count\": 106,\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T09:11:21.946873+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "export",
+      "args": [
+        "json",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T09:11:21.972Z",
+      "completedAt": "2026-05-03T09:11:22.147Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"path\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/.hyperresearch/exports/vault.json\",\n    \"count\": 35\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T09:11:22.128070+00:00\"\n}\n",
+      "stderr": ""
+    }
+  ],
+  "agentJobs": [
+    {
+      "id": "02-width-sweep-1-fetcher",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-fetcher",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-1-fetcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "createdAt": "2026-05-03T08:05:09.595Z",
+      "outputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "completedAt": "2026-05-03T08:17:24.803Z"
+    },
+    {
+      "id": "02-width-sweep-2-source-analyst",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-source-analyst",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-2-source-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "createdAt": "2026-05-03T08:05:09.596Z",
+      "outputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "completedAt": "2026-05-03T08:17:24.804Z"
+    },
+    {
+      "id": "04-loci-analysis-1-loci-analyst",
+      "stepId": "04-loci-analysis",
+      "role": "hyperresearch-loci-analyst",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/04-loci-analysis-1-loci-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/04-loci-analysis-1-loci-analyst.json",
+      "createdAt": "2026-05-03T08:17:33.717Z",
+      "outputPath": "research/temp/codex-agent-results/04-loci-analysis-1-loci-analyst.json",
+      "completedAt": "2026-05-03T08:21:11.951Z"
+    },
+    {
+      "id": "04-loci-analysis-2-loci-analyst",
+      "stepId": "04-loci-analysis",
+      "role": "hyperresearch-loci-analyst",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/04-loci-analysis-2-loci-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/04-loci-analysis-2-loci-analyst.json",
+      "createdAt": "2026-05-03T08:17:33.717Z",
+      "outputPath": "research/temp/codex-agent-results/04-loci-analysis-2-loci-analyst.json",
+      "completedAt": "2026-05-03T08:21:11.951Z"
+    },
+    {
+      "id": "05-depth-investigation-1-depth-investigator",
+      "stepId": "05-depth-investigation",
+      "role": "hyperresearch-depth-investigator",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/05-depth-investigation-1-depth-investigator.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/05-depth-investigation-1-depth-investigator.json",
+      "createdAt": "2026-05-03T08:21:11.958Z",
+      "outputPath": "research/temp/codex-agent-results/05-depth-investigation-1-depth-investigator.json",
+      "completedAt": "2026-05-03T08:24:36.465Z"
+    },
+    {
+      "id": "05-depth-investigation-2-depth-investigator",
+      "stepId": "05-depth-investigation",
+      "role": "hyperresearch-depth-investigator",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/05-depth-investigation-2-depth-investigator.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/05-depth-investigation-2-depth-investigator.json",
+      "createdAt": "2026-05-03T08:21:11.958Z",
+      "outputPath": "research/temp/codex-agent-results/05-depth-investigation-2-depth-investigator.json",
+      "completedAt": "2026-05-03T08:24:36.466Z"
+    },
+    {
+      "id": "08-corpus-critic-1-corpus-critic",
+      "stepId": "08-corpus-critic",
+      "role": "hyperresearch-corpus-critic",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/08-corpus-critic-1-corpus-critic.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/08-corpus-critic-1-corpus-critic.json",
+      "createdAt": "2026-05-03T08:24:36.471Z",
+      "outputPath": "research/temp/codex-agent-results/08-corpus-critic-1-corpus-critic.json",
+      "completedAt": "2026-05-03T08:35:37.995Z"
+    },
+    {
+      "id": "08-corpus-critic-2-fetcher",
+      "stepId": "08-corpus-critic",
+      "role": "hyperresearch-fetcher",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/08-corpus-critic-2-fetcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/08-corpus-critic-2-fetcher.json",
+      "createdAt": "2026-05-03T08:24:36.471Z",
+      "outputPath": "research/temp/codex-agent-results/08-corpus-critic-2-fetcher.json",
+      "completedAt": "2026-05-03T08:35:37.996Z"
+    },
+    {
+      "id": "10-triple-draft-1-draft-orchestrator",
+      "stepId": "10-triple-draft",
+      "role": "hyperresearch-draft-orchestrator",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/10-triple-draft-1-draft-orchestrator.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+      "createdAt": "2026-05-03T08:35:38.002Z",
+      "outputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+      "completedAt": "2026-05-03T08:41:17.030Z"
+    },
+    {
+      "id": "10-triple-draft-2-draft-orchestrator",
+      "stepId": "10-triple-draft",
+      "role": "hyperresearch-draft-orchestrator",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/10-triple-draft-2-draft-orchestrator.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-2-draft-orchestrator.json",
+      "createdAt": "2026-05-03T08:35:38.002Z",
+      "outputPath": "research/temp/codex-agent-results/10-triple-draft-2-draft-orchestrator.json",
+      "completedAt": "2026-05-03T08:41:17.031Z"
+    },
+    {
+      "id": "10-triple-draft-3-draft-orchestrator",
+      "stepId": "10-triple-draft",
+      "role": "hyperresearch-draft-orchestrator",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/10-triple-draft-3-draft-orchestrator.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-3-draft-orchestrator.json",
+      "createdAt": "2026-05-03T08:35:38.002Z",
+      "outputPath": "research/temp/codex-agent-results/10-triple-draft-3-draft-orchestrator.json",
+      "completedAt": "2026-05-03T08:41:17.031Z"
+    },
+    {
+      "id": "11-synthesize-1-synthesizer",
+      "stepId": "11-synthesize",
+      "role": "hyperresearch-synthesizer",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/11-synthesize-1-synthesizer.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/11-synthesize-1-synthesizer.json",
+      "createdAt": "2026-05-03T08:41:17.038Z",
+      "outputPath": "research/temp/codex-agent-results/11-synthesize-1-synthesizer.json",
+      "completedAt": "2026-05-03T08:51:01.718Z"
+    },
+    {
+      "id": "12-critics-1-dialectic-critic",
+      "stepId": "12-critics",
+      "role": "hyperresearch-dialectic-critic",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/12-critics-1-dialectic-critic.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/12-critics-1-dialectic-critic.json",
+      "createdAt": "2026-05-03T08:51:01.725Z",
+      "outputPath": "research/temp/codex-agent-results/12-critics-1-dialectic-critic.json",
+      "completedAt": "2026-05-03T08:55:07.834Z"
+    },
+    {
+      "id": "12-critics-2-depth-critic",
+      "stepId": "12-critics",
+      "role": "hyperresearch-depth-critic",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/12-critics-2-depth-critic.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/12-critics-2-depth-critic.json",
+      "createdAt": "2026-05-03T08:51:01.726Z",
+      "outputPath": "research/temp/codex-agent-results/12-critics-2-depth-critic.json",
+      "completedAt": "2026-05-03T08:55:07.834Z"
+    },
+    {
+      "id": "12-critics-3-width-critic",
+      "stepId": "12-critics",
+      "role": "hyperresearch-width-critic",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/12-critics-3-width-critic.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/12-critics-3-width-critic.json",
+      "createdAt": "2026-05-03T08:51:01.726Z",
+      "outputPath": "research/temp/codex-agent-results/12-critics-3-width-critic.json",
+      "completedAt": "2026-05-03T08:55:07.834Z"
+    },
+    {
+      "id": "12-critics-4-instruction-critic",
+      "stepId": "12-critics",
+      "role": "hyperresearch-instruction-critic",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/12-critics-4-instruction-critic.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/12-critics-4-instruction-critic.json",
+      "createdAt": "2026-05-03T08:51:01.726Z",
+      "outputPath": "research/temp/codex-agent-results/12-critics-4-instruction-critic.json",
+      "completedAt": "2026-05-03T08:55:07.834Z"
+    },
+    {
+      "id": "13-gap-fetch-1-fetcher",
+      "stepId": "13-gap-fetch",
+      "role": "hyperresearch-fetcher",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/13-gap-fetch-1-fetcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/13-gap-fetch-1-fetcher.json",
+      "createdAt": "2026-05-03T08:55:07.839Z",
+      "outputPath": "research/temp/codex-agent-results/13-gap-fetch-1-fetcher.json",
+      "completedAt": "2026-05-03T08:57:27.510Z"
+    },
+    {
+      "id": "14-patcher-1-patcher",
+      "stepId": "14-patcher",
+      "role": "hyperresearch-patcher",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/14-patcher-1-patcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/14-patcher-1-patcher.json",
+      "createdAt": "2026-05-03T08:57:27.515Z",
+      "outputPath": "research/temp/codex-agent-results/14-patcher-1-patcher.json",
+      "completedAt": "2026-05-03T09:03:19.930Z"
+    },
+    {
+      "id": "15-polish-1-polish-auditor",
+      "stepId": "15-polish",
+      "role": "hyperresearch-polish-auditor",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/15-polish-1-polish-auditor.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+      "createdAt": "2026-05-03T09:03:19.936Z",
+      "outputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+      "completedAt": "2026-05-03T09:08:18.309Z"
+    },
+    {
+      "id": "16-readability-audit-1-readability-recommender",
+      "stepId": "16-readability-audit",
+      "role": "hyperresearch-readability-recommender",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/16-readability-audit-1-readability-recommender.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+      "createdAt": "2026-05-03T09:08:18.653Z",
+      "outputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+      "completedAt": "2026-05-03T09:11:21.452Z"
+    }
+  ],
+  "reviewDispositions": [],
+  "reportSnapshots": [
+    {
+      "stepId": "11-synthesize",
+      "path": "research/temp/report-snapshots/11-synthesize-584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502.md",
+      "sha256": "584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502",
+      "createdAt": "2026-05-03T08:51:01.724Z"
+    }
+  ],
+  "sourceCaptures": [
+    {
+      "url": "https://www.inngest.com/docs/reference/serve",
+      "stepIds": [
+        "02-width-sweep",
+        "13-gap-fetch"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst",
+        "13-gap-fetch-1-fetcher"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        2
+      ],
+      "capturedAt": "2026-05-03T08:17:25.126Z",
+      "noteIds": [
+        "serve-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/reference/typescript/functions/create",
+      "stepIds": [
+        "02-width-sweep",
+        "13-gap-fetch"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst",
+        "13-gap-fetch-1-fetcher"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        3
+      ],
+      "capturedAt": "2026-05-03T08:17:25.768Z",
+      "noteIds": [
+        "create-function-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/learn/inngest-steps",
+      "stepIds": [
+        "02-width-sweep",
+        "13-gap-fetch"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst",
+        "13-gap-fetch-1-fetcher"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        4
+      ],
+      "capturedAt": "2026-05-03T08:17:26.181Z",
+      "noteIds": [
+        "inngest-steps-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/learn/how-functions-are-executed",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        5
+      ],
+      "capturedAt": "2026-05-03T08:17:26.650Z",
+      "noteIds": [
+        "how-inngest-functions-are-executed-durable-execution-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/guides/error-handling",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        6
+      ],
+      "capturedAt": "2026-05-03T08:17:27.038Z",
+      "noteIds": [
+        "errors-retries-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        7
+      ],
+      "capturedAt": "2026-05-03T08:17:27.461Z",
+      "noteIds": [
+        "rollbacks-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+      "stepIds": [
+        "02-width-sweep",
+        "13-gap-fetch"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst",
+        "13-gap-fetch-1-fetcher"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        8
+      ],
+      "capturedAt": "2026-05-03T08:17:28.223Z",
+      "noteIds": [
+        "wait-for-an-event-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/guides/batching",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        9
+      ],
+      "capturedAt": "2026-05-03T08:17:28.860Z",
+      "noteIds": [
+        "batching-events-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/guides/flow-control",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        10
+      ],
+      "capturedAt": "2026-05-03T08:17:29.365Z",
+      "noteIds": [
+        "flow-control-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/learn/security",
+      "stepIds": [
+        "02-width-sweep",
+        "13-gap-fetch"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst",
+        "13-gap-fetch-1-fetcher"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        11
+      ],
+      "capturedAt": "2026-05-03T08:17:29.857Z",
+      "noteIds": [
+        "security-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/local-development",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        12
+      ],
+      "capturedAt": "2026-05-03T08:17:30.380Z",
+      "noteIds": [
+        "local-development-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/setup/connect",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        13
+      ],
+      "capturedAt": "2026-05-03T08:17:30.906Z",
+      "noteIds": [
+        "connect-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/deploy/render",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        14
+      ],
+      "capturedAt": "2026-05-03T08:17:31.518Z",
+      "noteIds": [
+        "render-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/self-hosting",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        15
+      ],
+      "capturedAt": "2026-05-03T08:17:31.944Z",
+      "noteIds": [
+        "self-hosting-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/guides/throttling",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        16
+      ],
+      "capturedAt": "2026-05-03T08:17:32.489Z",
+      "noteIds": [
+        "throttling-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/guides/rate-limiting",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/guides/rate-limiting",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/throttling"
+      ],
+      "cliCallIndexes": [
+        17
+      ],
+      "capturedAt": "2026-05-03T08:17:32.986Z",
+      "noteIds": [
+        "rate-limiting-inngest-documentation"
+      ]
+    }
+  ],
+  "patchGuard": {
+    "snapshotPath": "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "snapshotSha256": "584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502",
+    "violations": []
+  },
+  "resumes": [],
+  "failures": []
+}

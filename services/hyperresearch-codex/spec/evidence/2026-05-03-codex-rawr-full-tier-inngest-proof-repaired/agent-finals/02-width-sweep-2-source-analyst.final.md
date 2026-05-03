@@ -1,0 +1,3 @@
+- `research/temp/source-capture-log.md` - `23cc45ff553a196c3b0f9055ecd16d047b6769e421a70cd4136ceeadc017b369`
+- `research/temp/claims-width.json` - `2e79307ae542878a1069624b7215625ab4fd5826bb072f76baae1ce5b81488bf`
+- `research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json` - `a1f1434eaf1dee948c9089ec446fa99947df0eea624ba663442c23eb67b571d9`

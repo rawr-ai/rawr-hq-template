@@ -1,0 +1,53 @@
+{
+  "critic_type": "depth",
+  "findings": [
+    {
+      "id": "depth-001-wait-contract-step-id-and-match-scope",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The final report models step.waitForEvent as a continuation, but it compresses the depth packet's contract details and does not explicitly require a stable wait step id or spell out the event/async match scope.",
+      "evidence": [
+        "Final report lines 61-63 list awaited event name, match predicate, timeout, branches, correlation fields, actor, and race mitigation.",
+        "Depth investigator 2 result summary says RAWR specs should encode a stable wait step id, awaited event name, CEL predicate over the original event and async event, timeout duration, required null/timeout branch, audit/event-source metadata, and race mitigation.",
+        "research/notes/wait-for-an-event-inngest-documentation.md lines 73-96 show waitForEvent's first argument as the wait step id and an if expression over the received async event; lines 254-256 state that waits only listen once code reaches the wait."
+      ],
+      "recommendation": "Add one sentence or validation bullet to section V.A requiring a stable wait step id and making the match predicate explicitly compare the original trigger event with the awaited async event, while retaining the timeout/null and pre-wait race rules."
+    },
+    {
+      "id": "depth-002-batching-keyed-concurrency-validation",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The batching section captures maxSize, timeout, 10 MiB, and incompatible controls, but misses the depth packet's keyed-concurrency hazard for batches.",
+      "evidence": [
+        "Final report lines 67-80 cover batchEvents fields, 10 MiB, incompatible idempotency/rateLimit/cancelOn/priority combinations, and a general flow-control table.",
+        "Depth investigator 2 result summary specifically requires matching batch key and concurrency key when keyed concurrency is combined with batching.",
+        "research/notes/batching-events-inngest-documentation.md lines 205-221 explain that a custom concurrency key is evaluated against the first event in the batch and recommends using the same key expression for batching and concurrency for predictable behavior."
+      ],
+      "recommendation": "Add a concrete validation rule to section V.B: if batching and keyed concurrency are combined, RAWR should require the batch key and concurrency key to match or reject/flag the workflow as unpredictable."
+    },
+    {
+      "id": "depth-003-event-emission-step-primitive",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The report says event sends must cross a durable boundary, but it does not name the specific Inngest primitive the depth investigation identified for reliable in-function event emission.",
+      "evidence": [
+        "Final report line 39 says event sends should cross a durable step boundary, and lines 43-47 focus on step.run as the side-effect boundary.",
+        "Depth investigation log line 26 says RAWR should prefer step.sendEvent over raw inngest.send() for event emission from inside a function because Inngest documents it as reliable event delivery.",
+        "research/notes/create-function-inngest-documentation.md lines 723-740 list step.sendEvent and say to use it instead of inngest.send() for reliable event delivery from within functions; research/notes/inngest-steps-inngest-documentation.md lines 457-462 describe step.sendEvent for triggering other functions without returning a result."
+      ],
+      "recommendation": "Add step.sendEvent to the step-boundary section as the preferred primitive for in-function event emission, distinct from step.run side effects and raw inngest.send calls."
+    },
+    {
+      "id": "depth-004-serve-client-configuration-boundary",
+      "severity": "note",
+      "status": "open",
+      "summary": "The ingress section correctly makes /api/inngest and keys runtime-owned, but it underuses the serve() note's more precise boundary: signingKey, baseUrl, logger, fetch, and signingKeyFallback are client configuration, not serve() options.",
+      "evidence": [
+        "Final report lines 13-17 cover serve({ client, functions }), GET/POST/PUT behavior, runtime-owned ingress, and per-environment INNGEST_SIGNING_KEY/INNGEST_EVENT_KEY.",
+        "Depth investigation log says signing-key configuration belongs on the Inngest client, preferably via INNGEST_SIGNING_KEY, not hard-coded in serve().",
+        "research/notes/serve-inngest-documentation.md lines 144-169 state that options such as signingKey, signingKeyFallback, logger, baseUrl, and fetch are configured on the Inngest client, not serve(), and recommend INNGEST_SIGNING_KEY over hard-coding."
+      ],
+      "recommendation": "Tighten section II.A with a short client-vs-serve configuration rule: plugin declarations feed functions, serve owns the endpoint/path, and runtime-owned Inngest client configuration owns signing keys, base URL, logging, fetch, and fallbacks."
+    }
+  ]
+}

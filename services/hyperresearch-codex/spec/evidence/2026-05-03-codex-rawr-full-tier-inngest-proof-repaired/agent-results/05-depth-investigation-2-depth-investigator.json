@@ -1,0 +1,34 @@
+{
+  "jobId": "05-depth-investigation-2-depth-investigator",
+  "role": "hyperresearch-depth-investigator",
+  "status": "complete",
+  "summary": "Depth review covered loci wait-for-event-continuation-contracts and batching-and-flow-control-policy-boundaries. Recommendation: RAWR plugin/runtime specs should encode step.waitForEvent as an explicit durable continuation contract with stable wait step id, awaited event name, CEL match predicate over original event and async event, timeout duration, required null/timeout branch, audit/event-source metadata, and a race-mitigation requirement because Inngest only starts listening when the wait code executes; for human-in-the-loop or cross-plugin joins, the safe spec boundary is event-audited continuation, not direct caller resume, unless using a unique signal primitive separately. Flow and batching should be split into plugin-declared workflow semantics versus operator/platform policy: expose concurrency only when the plugin needs a correctness/capacity invariant, throttle for must-process smoothing because excess runs are queued, rateLimit only for intentionally lossy/noisy workflows because excess events are skipped, debounce only for coalescing replaceable work, priority as operator-tunable ordering, and batchEvents only when the handler is batch-safe and accepts events[]. Validation rules should reject must-process workflows with rateLimit/debounce unless lossiness is explicitly declared; require batchEvents maxSize, timeout, optional key/if, memory/10 MiB awareness, and batch-safe idempotent bulk semantics; reject batching with idempotency, rate limiting, cancellation events, or priority; and require matching batch key and concurrency key when keyed concurrency is combined with batching. The operational spec should state that durable waits, queues, flow controls, batching, retries, and event history are properties of an Inngest control plane/state-store path, not proven by package constructibility alone.",
+  "evidence": [
+    "research/loci.json#wait-for-event-continuation-contracts",
+    "research/loci.json#batching-and-flow-control-policy-boundaries",
+    "research/temp/claims-width.json#waits-human-in-loop",
+    "research/temp/claims-width.json#batching",
+    "research/temp/claims-width.json#flow-control",
+    "research/notes/wait-for-an-event-inngest-documentation.md",
+    "research/notes/batching-events-inngest-documentation.md",
+    "research/notes/flow-control-inngest-documentation.md",
+    "research/notes/throttling-inngest-documentation.md",
+    "research/notes/rate-limiting-inngest-documentation.md",
+    "research/notes/create-function-inngest-documentation.md",
+    "research/notes/inngest-steps-inngest-documentation.md",
+    "research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md",
+    "research/notes/self-hosting-inngest-documentation.md"
+  ],
+  "artifactWrites": [],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/self-hosting",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/guides/throttling",
+    "https://www.inngest.com/docs/guides/rate-limiting",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "jobId": "02-width-sweep-2-source-analyst",
+  "role": "hyperresearch-source-analyst",
+  "status": "complete",
+  "summary": "Completed a width-sweep source capture and claim extraction for official Inngest docs, grounded against local RAWR runtime-realization evidence. The artifacts distinguish RAWR's existing contained serve/createFunction/step.run proof from unproven durable semantics, production ingress security, local-development behavior, batching, flow control, wait-event, retry, and production-topology requirements.",
+  "evidence": [
+    "research/temp/source-capture-log.md",
+    "research/temp/claims-width.json",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-phase-two-async-inngest-boundary.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md",
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/guides/error-handling",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/setup/connect",
+    "https://www.inngest.com/docs/deploy/render",
+    "https://www.inngest.com/docs/self-hosting",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed",
+    "https://www.inngest.com/docs/guides/throttling",
+    "https://www.inngest.com/docs/guides/rate-limiting"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/source-capture-log.md",
+      "sha256": "23cc45ff553a196c3b0f9055ecd16d047b6769e421a70cd4136ceeadc017b369",
+      "summary": "Source-capture matrix for official Inngest documentation, mapping vendor claim focus to RAWR relevance and caveats about local evidence as grounding rather than authority."
+    },
+    {
+      "path": "research/temp/claims-width.json",
+      "sha256": "2e79307ae542878a1069624b7215625ab4fd5826bb072f76baae1ce5b81488bf",
+      "summary": "Structured width-sweep claims array covering Inngest ingress, function identity, step semantics, retries/errors, waitForEvent, batching, flow control, local development, security, topology, durability proof boundaries, and testing strategy."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/guides/error-handling",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/setup/connect",
+    "https://www.inngest.com/docs/deploy/render",
+    "https://www.inngest.com/docs/self-hosting",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed",
+    "https://www.inngest.com/docs/guides/throttling",
+    "https://www.inngest.com/docs/guides/rate-limiting"
+  ]
+}

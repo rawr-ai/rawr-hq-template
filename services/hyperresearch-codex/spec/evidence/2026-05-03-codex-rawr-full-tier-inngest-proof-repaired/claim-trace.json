@@ -1,0 +1,87 @@
+{
+  "claims": [
+    {
+      "claim": "RAWR plugin workflow specs should model Inngest functions as durable runtime-owned execution units, not plugin-local scripts.",
+      "reportLocation": "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+      "sources": [
+        {
+          "url": "https://www.inngest.com/docs/reference/serve"
+        },
+        {
+          "url": "https://www.inngest.com/docs/reference/typescript/functions/create"
+        },
+        {
+          "url": "https://www.inngest.com/docs/learn/how-functions-are-executed"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    },
+    {
+      "claim": "RAWR should require each durable plugin workflow to declare stable function ids, event triggers, and step boundaries before it can make production durability claims.",
+      "reportLocation": "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+      "sources": [
+        {
+          "url": "https://www.inngest.com/docs/reference/typescript/functions/create"
+        },
+        {
+          "url": "https://www.inngest.com/docs/learn/inngest-steps"
+        },
+        {
+          "url": "https://www.inngest.com/docs/learn/how-functions-are-executed"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    },
+    {
+      "claim": "Inngest step.run boundaries give RAWR a natural place to encode retryable side effects, idempotency expectations, and observable progress.",
+      "reportLocation": "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+      "sources": [
+        {
+          "url": "https://www.inngest.com/docs/learn/inngest-steps"
+        },
+        {
+          "url": "https://www.inngest.com/docs/learn/how-functions-are-executed"
+        },
+        {
+          "url": "https://www.inngest.com/docs/guides/error-handling"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    },
+    {
+      "claim": "RAWR production guidance should treat /api/inngest ingress, serve() configuration, and signing-key verification as runtime-owned infrastructure rather than plugin author boilerplate.",
+      "reportLocation": "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+      "sources": [
+        {
+          "url": "https://www.inngest.com/docs/reference/serve"
+        },
+        {
+          "url": "https://www.inngest.com/docs/learn/security"
+        },
+        {
+          "url": "https://www.inngest.com/docs/setup/connect"
+        },
+        {
+          "url": "https://www.inngest.com/docs/deploy/render"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    },
+    {
+      "claim": "Hooks and MCP are not part of the active Hyperresearch Codex parity claim until their runtime configuration and failure modes are separately proven.",
+      "reportLocation": "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+      "sources": [
+        {
+          "uncertainty": "Parity-scope claim from the report context; no external Hooks/MCP source URL was captured for this claim."
+        }
+      ],
+      "confidence": "medium",
+      "reviewerDisposition": "scope-qualified",
+      "uncertainty": "This is a parity-scope boundary claim, not an Inngest documentation claim."
+    }
+  ]
+}

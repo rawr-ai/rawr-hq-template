@@ -1,0 +1,34 @@
+{
+  "jobId": "12-critics-2-depth-critic",
+  "role": "hyperresearch-depth-critic",
+  "status": "complete",
+  "summary": "Completed depth critique of the final report against the depth investigation log, depth investigator packet outputs, loci, comparisons, and source notes. No blocking findings were identified; four warning/note findings identify places where the report should preserve more specific waitForEvent, batching/concurrency, event-emission, and serve/client-configuration details.",
+  "evidence": [
+    "research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/temp/depth-investigation-log.md",
+    "research/temp/codex-agent-results/05-depth-investigation-1-depth-investigator.json",
+    "research/temp/codex-agent-results/05-depth-investigation-2-depth-investigator.json",
+    "research/loci.json",
+    "research/comparisons.md",
+    "research/notes/wait-for-an-event-inngest-documentation.md",
+    "research/notes/batching-events-inngest-documentation.md",
+    "research/notes/create-function-inngest-documentation.md",
+    "research/notes/serve-inngest-documentation.md",
+    "research/notes/inngest-steps-inngest-documentation.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/critic-findings-depth.json",
+      "sha256": "1acde42ef64bbf289db10ac358dfa2479acb247eb3776c7027d8f9e828ef60d9",
+      "summary": "Depth critic findings for underused technical evidence in the final report."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/learn/inngest-steps"
+  ]
+}

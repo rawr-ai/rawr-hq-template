@@ -2,6 +2,70 @@
 
 This file records durable proof claims for the `@rawr/hyperresearch-codex` service package. Keep it aligned with `TESTING_PLAN.md`, `REVIEW_LEDGER.md`, and downstream synced references.
 
+## 2026-05-03 Codex-RAWR Full-Tier Inngest Proof
+
+Status: passed, with bounded runtime caveats.
+
+Purpose: prove the full Hyperresearch Codex V8 route on a RAWR-runtime/Inngest research query, using real Hyperresearch backend calls, full-tier Codex role-agent packet fan-out/fan-in, source capture, critic/patch/polish/readability gates, patch-only integrity, final claim trace, backend sync/lint/export, and final service validation.
+
+Durable evidence subset:
+
+- `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof-repaired/README.md`
+- `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof-repaired/ledger.json`
+- `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof-repaired/final-report.md`
+- `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof-repaired/claim-trace.json`
+- `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof-repaired/patch-log.json`
+- `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof-repaired/commands/*`
+- `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof-repaired/packets/*`
+- `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof-repaired/agent-results/*`
+- `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof-repaired/source-captures.tsv`
+- `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof-repaired/vault-research/notes-source/*`
+
+Run summary:
+
+- run id: `hpr-v8-c673c42e-c6da-46e7-b8fa-48c286a9572b`
+- vault: `/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul`
+- tier: `full`
+- backend: `real`
+- validation passed: `true`
+- completed step IDs: all 16 V8 steps
+- role-agent jobs completed: 20
+- source captures: 16 official Inngest URLs
+- CLI operations recorded: `init`, `search`, 16 `fetch` calls, `note`, `lint`, `sync`, `lint`, `export`
+
+Source capture scope:
+
+- `https://www.inngest.com/docs/reference/serve`
+- `https://www.inngest.com/docs/reference/typescript/functions/create`
+- `https://www.inngest.com/docs/learn/inngest-steps`
+- `https://www.inngest.com/docs/learn/how-functions-are-executed`
+- `https://www.inngest.com/docs/guides/error-handling`
+- `https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks`
+- `https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event`
+- `https://www.inngest.com/docs/guides/batching`
+- `https://www.inngest.com/docs/guides/flow-control`
+- `https://www.inngest.com/docs/learn/security`
+- `https://www.inngest.com/docs/local-development`
+- `https://www.inngest.com/docs/setup/connect`
+- `https://www.inngest.com/docs/deploy/render`
+- `https://www.inngest.com/docs/self-hosting`
+- `https://www.inngest.com/docs/guides/throttling`
+- `https://www.inngest.com/docs/guides/rate-limiting`
+
+Observed caveats and fixes:
+
+- The initial full-tier attempt, preserved under `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof/`, blocked on a bad source URL (`https://www.inngest.com/docs/platform/deployment`). The repaired run used fetchable official Inngest docs and passed.
+- Two child-agent completion issues were observed and repaired through replacement role packets. The ledger remained durable and resumed from packet state; classify this as Codex session/child-completion behavior, not a service fan-in defect.
+- The service rejected an insufficient patch log and later accepted a repaired patch log with complete changed-line coverage.
+- The service rejected claim-trace `reportLocation` values with `:line` suffixes and accepted repaired safe relative paths.
+- A critic found that deterministic `prompt-decomposition.json` was still a placeholder. The service now writes a structured decomposition artifact with query atoms, named topics, evidence requirements, and proof boundaries; `v8-runner.test.ts` covers this.
+
+Non-claims:
+
+- This does not prove Hooks/MCP runtime parity.
+- This does not prove production Inngest readiness for RAWR.
+- This does not resolve unrelated downstream global plugin drift outside scoped Hyperresearch material.
+
 ## 2026-05-03 Codex-RAWR Runtime Proof
 
 Status: passed, with a recorded orchestration caveat.

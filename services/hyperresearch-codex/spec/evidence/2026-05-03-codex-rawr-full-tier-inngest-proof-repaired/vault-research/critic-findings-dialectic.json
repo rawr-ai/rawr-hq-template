@@ -1,0 +1,60 @@
+{
+  "findings": [
+    {
+      "id": "dialectic-001",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The report treats the RAWR runtime-realization evidence as sufficient grounding for the spec direction, but the vault's own corpus critic says the underlying RAWR local files were mostly referenced by path rather than fully captured or verified.",
+      "evidence": "research/corpus-critic-gaps.json gap-rawr-original-evidence-verification; research/temp/search-plan.md; draft location: Executive Answer, 'The current RAWR runtime-realization evidence should remain bounded...'",
+      "recommendation": "Add a caveat near the Executive Answer or Caveats section stating that the Inngest official-doc conclusions are strong, but any claim about what RAWR has already proven should be rechecked against the original runtime-realization/spec-gap source files before being treated as settled."
+    },
+    {
+      "id": "dialectic-002",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The report recommends versioning or migration annotation for changed workflow IDs, triggers, and step IDs, but the corpus explicitly lacks the official Inngest versioning/long-running-function migration guide that could change the safe migration pattern.",
+      "evidence": "research/corpus-critic-gaps.json gap-function-step-versioning-migration; research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md source https://www.inngest.com/docs/learn/how-functions-are-executed; research/notes/connect-inngest-documentation.md source https://www.inngest.com/docs/setup/connect; draft location: Stable Function Identity, 'The conservative interim rule is explicit versioning or migration annotation...'",
+      "recommendation": "Qualify the migration recommendation as an interim rule pending the official Inngest versioning guidance, and note that Connect appVersion/rolling-deploy behavior does not by itself prove safe function-ID or step-ID rename semantics."
+    },
+    {
+      "id": "dialectic-003",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The report calls for preserving Inngest run status, step status, retry attempts, and observable run history, but the vault says the exact official observability/API fields were not captured.",
+      "evidence": "research/corpus-critic-gaps.json gap-observability-status-api; research/notes/connect-inngest-documentation.md source https://www.inngest.com/docs/setup/connect; draft location: Errors, Failures, And Layered Status, 'Durable workflow status should preserve...'",
+      "recommendation": "Add a qualifier that the layered status taxonomy is a RAWR requirement, while the exact dashboard/API fields, run lookup paths, alerting hooks, and correlation identifiers still need an official observability-source check before becoming concrete implementation requirements."
+    },
+    {
+      "id": "dialectic-004",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The production security discussion focuses on signing keys, event keys, rotation, and firewall posture, but the official security note adds end-to-end encryption middleware for sensitive event data and step/function output.",
+      "evidence": "research/notes/security-inngest-documentation.md source https://www.inngest.com/docs/learn/security; draft location: Runtime-Owned Ingress And Topology, 'RAWR production guidance should treat /api/inngest ingress...'",
+      "recommendation": "Insert a sentence in the production guidance or Caveats section requiring plugin specs to declare sensitive workflow data and requiring the runtime/operator layer to evaluate Inngest encryption middleware for regulated or sensitive event, step, and function output."
+    },
+    {
+      "id": "dialectic-005",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The report assumes the captured TypeScript SDK docs map cleanly onto RAWR's implementation, but the vault flags missing evidence for RAWR's exact Inngest SDK version, framework adapter, and Bun/runtime support.",
+      "evidence": "research/corpus-critic-gaps.json gap-sdk-version-and-adapter-fit; research/notes/connect-inngest-documentation.md source https://www.inngest.com/docs/setup/connect; research/notes/security-inngest-documentation.md source https://www.inngest.com/docs/learn/security; draft location: Strategic Outlook, 'The runtime should compile that schema into Inngest createFunction declarations...'",
+      "recommendation": "Add a production caveat that implementation guidance must be version-scoped to the selected Inngest SDK and adapter, including Bun/WebSocket support, direct-sync defaults, Connect minimum SDK versions, and whether RAWR wrappers expose every required policy field."
+    },
+    {
+      "id": "dialectic-006",
+      "severity": "note",
+      "status": "open",
+      "summary": "The step section correctly centers step.run for side-effecting code, but it underplays official first-class step methods such as step.sendEvent, step.invoke, step.sleep, and step.waitForEvent that may be better primitives than wrapping everything in step.run.",
+      "evidence": "research/notes/inngest-steps-inngest-documentation.md source https://www.inngest.com/docs/learn/inngest-steps; draft location: Step Semantics, Retries, And Status, 'step.run As The Side-Effect Boundary'",
+      "recommendation": "Add a short qualifier that step.run is the default retriable code boundary for arbitrary side effects, while event fan-out, function composition, sleeps, and event waits should use the corresponding durable step methods where they fit the workflow semantics."
+    },
+    {
+      "id": "dialectic-007",
+      "severity": "note",
+      "status": "open",
+      "summary": "The stable step identity section could imply every repeated step call needs a distinct authored ID, while the official steps docs say the SDK records a counter for repeated uses of the same step ID in loops.",
+      "evidence": "research/notes/inngest-steps-inngest-documentation.md source https://www.inngest.com/docs/learn/inngest-steps; draft location: Stable Step Identity, 'RAWR should therefore reject unstable step IDs derived from array position...'",
+      "recommendation": "Add a narrow qualifier that repeated calls with the same stable step ID can be valid in deterministic loops because Inngest tracks a counter, but RAWR should still review loop ordering, count stability, and data-dependent control flow before relying on memoization."
+    }
+  ]
+}

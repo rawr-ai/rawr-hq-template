@@ -44,6 +44,93 @@ function addArtifact(step: HyperresearchStepRecord, relativePath: string) {
   if (!step.artifacts.includes(relativePath)) step.artifacts.push(relativePath);
 }
 
+function queryTerms(query: string): string[] {
+  const candidates = [
+    "serve()",
+    "createFunction",
+    "step.run",
+    "step.waitForEvent",
+    "step.sendEvent",
+    "retries",
+    "errors",
+    "batching",
+    "flow control",
+    "local development",
+    "signing keys",
+    "/api/inngest",
+    "Hooks",
+    "MCP",
+    "Codex",
+    "Hyperresearch",
+    "RAWR",
+    "Inngest",
+  ];
+  const lowerQuery = query.toLowerCase();
+  return candidates.filter((candidate) => lowerQuery.includes(candidate.toLowerCase()));
+}
+
+function sentenceAtoms(query: string): string[] {
+  return query
+    .split(/[.?!]\s+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function promptDecompositionContent(input: {
+  ledger: HyperresearchV8RunLedger;
+  step: HyperresearchStepRecord;
+}) {
+  const terms = queryTerms(input.ledger.canonicalQuery);
+  const atoms = sentenceAtoms(input.ledger.canonicalQuery);
+  return jsonContent({
+    ok: true,
+    generatedBy: "hyperresearch-codex-service",
+    stepId: input.step.id,
+    title: input.step.title,
+    canonicalQuery: input.ledger.canonicalQuery,
+    vaultTag: input.ledger.vaultTag,
+    tier: input.ledger.tier,
+    atomicItems: [
+      ...atoms.map((atom, index) => ({
+        id: `query-${index + 1}`,
+        text: atom,
+        source: "canonical-query",
+      })),
+      ...terms.map((term, index) => ({
+        id: `term-${index + 1}`,
+        text: `Address named topic: ${term}`,
+        source: "named-query-term",
+      })),
+    ],
+    namedTopics: terms,
+    requiredEvidence: [
+      "preserve source URL provenance for externally sourced claims",
+      "preserve report claim trace for final material claims",
+      "record uncertainty for scope boundaries that are not source-backed",
+    ],
+    proofBoundaries: [
+      "do not claim Hooks/MCP runtime parity unless explicitly proven",
+      "do not claim production runtime readiness from local or fixture-only proof",
+    ],
+  });
+}
+
+function coverageMatrixContent(input: {
+  ledger: HyperresearchV8RunLedger;
+  step: HyperresearchStepRecord;
+}) {
+  const atoms = sentenceAtoms(input.ledger.canonicalQuery);
+  const terms = queryTerms(input.ledger.canonicalQuery);
+  const rows = [
+    "| Item | Coverage Target | Status |",
+    "| --- | --- | --- |",
+    ...atoms.map((atom, index) => `| query-${index + 1} | ${atom.replaceAll("|", "\\|")} | pending-source-evidence |`),
+    ...terms.map((term, index) => `| term-${index + 1} | ${term.replaceAll("|", "\\|")} | pending-source-evidence |`),
+    `| ${input.step.id} | ${input.step.title.replaceAll("|", "\\|")} | generated |`,
+  ];
+  return `${rows.join("\n")}\n`;
+}
+
 function isSafeRelativeArtifactPath(relativePath: string): boolean {
   if (relativePath.startsWith("/") || relativePath.trim() !== relativePath) return false;
   return !relativePath.split(/[\\/]+/).includes("..");
@@ -186,7 +273,11 @@ export async function writeStepArtifacts(input: {
     const fixtureClaim = input.ledger.tier === "full"
       ? "This fixture report proves the full-tier V8 control plane with critic, patch, polish, and readability gates."
       : "This fixture report proves the light-tier V8 control plane with source provenance placeholders and patch-only gates.";
-    const content = artifact === "research/claim-trace.json"
+    const content = artifact === "research/prompt-decomposition.json"
+      ? promptDecompositionContent({ ledger: input.ledger, step: input.step })
+      : artifact === "research/temp/coverage-matrix.md"
+      ? coverageMatrixContent({ ledger: input.ledger, step: input.step })
+      : artifact === "research/claim-trace.json"
       ? jsonContent({
           claims: [
             {

@@ -1,0 +1,5 @@
+# Evidence digest
+
+Step: 09-evidence-digest
+Query: For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats.
+Vault tag: for-rawr-hq-runtime-realization-which-inngest-pr

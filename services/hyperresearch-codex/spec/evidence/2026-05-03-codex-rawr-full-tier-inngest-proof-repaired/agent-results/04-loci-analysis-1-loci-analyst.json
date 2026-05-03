@@ -1,0 +1,53 @@
+{
+  "jobId": "04-loci-analysis-1-loci-analyst",
+  "role": "hyperresearch-loci-analyst",
+  "status": "complete",
+  "summary": "Identified five depth loci for durable RAWR plugin workflow specs: durable step identity, ingress/security/topology, retry/idempotency/failure semantics, wait-event continuation, and batching/flow-control policy.",
+  "evidence": [
+    "research/temp/claims-width.json",
+    "research/temp/source-capture-log.md",
+    "research/temp/search-plan.md",
+    "research/temp/scored-urls.md",
+    "research/temp/contradiction-graph.json",
+    "research/prompt-decomposition.json",
+    "serve-inngest-documentation",
+    "create-function-inngest-documentation",
+    "inngest-steps-inngest-documentation",
+    "how-inngest-functions-are-executed-durable-execution-inngest-documentation",
+    "errors-retries-inngest-documentation",
+    "rollbacks-inngest-documentation",
+    "wait-for-an-event-inngest-documentation",
+    "batching-events-inngest-documentation",
+    "flow-control-inngest-documentation",
+    "security-inngest-documentation",
+    "connect-inngest-documentation",
+    "local-development-inngest-documentation",
+    "self-hosting-inngest-documentation",
+    "throttling-inngest-documentation",
+    "rate-limiting-inngest-documentation"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/loci.json",
+      "sha256": "16f8db3652ee3958721fc733c0af1b50b6399ee7a4c299ac619d1f3b1db40ecb",
+      "summary": "Five prioritized depth loci for Layer 3 investigation of Inngest semantics and RAWR durable plugin workflow spec implications."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed",
+    "https://www.inngest.com/docs/guides/error-handling",
+    "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/guides/throttling",
+    "https://www.inngest.com/docs/guides/rate-limiting",
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/setup/connect",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/self-hosting"
+  ]
+}

@@ -41,7 +41,7 @@ The service state machine owns step loading, route order, durable ledger state, 
 
 | # | Hyperresearch step | Tier | Codex execution decision | Required artifacts / gates |
 |---:|---|---|---|---|
-| 1 | `hyperresearch-1-decompose` | all | service step load + scaffold/decomposition fixture; real run follows loaded procedure | `research/scaffold.md`, `research/prompt-decomposition.json`, `research/temp/coverage-matrix.md`; tier must be recorded |
+| 1 | `hyperresearch-1-decompose` | all | service step load + scaffold and deterministic query decomposition; real run follows loaded procedure | `research/scaffold.md`, structured `research/prompt-decomposition.json`, `research/temp/coverage-matrix.md`; tier and proof boundaries must be recorded |
 | 2 | `hyperresearch-2-width-sweep` | all | agent packets for fetcher/source analyst with assigned artifact sets; CLI source capture only through allowed backend ops | packet outputs must collectively declare required artifact writes; source captures record URL, CLI call indexes, evidence, and suggested-by jobs without refetching already captured URLs |
 | 3 | `hyperresearch-3-contradiction-graph` | full | service artifact step from captured corpus | `research/temp/contradiction-graph.json`, `research/temp/consensus-claims.json` |
 | 4 | `hyperresearch-4-loci-analysis` | full | two loci-analyst packets in one wave | `research/loci.json`; no fake breadcrumb role names |

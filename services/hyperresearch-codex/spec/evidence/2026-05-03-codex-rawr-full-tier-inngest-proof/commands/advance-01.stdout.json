@@ -1,0 +1,54 @@
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-de11ec6b-bdad-4622-a4bf-57de8edab8bb",
+    "status": "awaiting_agents",
+    "completed": false,
+    "currentStepId": "02-width-sweep",
+    "tier": "full",
+    "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+    "completedSteps": [
+      "01-decompose"
+    ],
+    "pendingAgentJobs": [
+      {
+        "id": "02-width-sweep-1-fetcher",
+        "role": "hyperresearch-fetcher",
+        "packetPath": "research/temp/codex-agent-packets/02-width-sweep-1-fetcher.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json"
+      },
+      {
+        "id": "02-width-sweep-2-source-analyst",
+        "role": "hyperresearch-source-analyst",
+        "packetPath": "research/temp/codex-agent-packets/02-width-sweep-2-source-analyst.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json"
+      }
+    ],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      }
+    ],
+    "integrity": [
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "02-width-sweep",
+        "message": "Agent job is awaiting output: 02-width-sweep-1-fetcher"
+      },
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "02-width-sweep",
+        "message": "Agent job is awaiting output: 02-width-sweep-2-source-analyst"
+      },
+      {
+        "severity": "warning",
+        "code": "incomplete-run",
+        "message": "Hyperresearch Codex run has not completed all steps"
+      }
+    ]
+  }
+}

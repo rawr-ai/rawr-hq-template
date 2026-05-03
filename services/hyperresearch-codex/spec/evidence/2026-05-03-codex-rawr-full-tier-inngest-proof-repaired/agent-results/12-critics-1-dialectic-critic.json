@@ -1,0 +1,30 @@
+{
+  "jobId": "12-critics-1-dialectic-critic",
+  "role": "hyperresearch-dialectic-critic",
+  "status": "complete",
+  "summary": "Completed dialectic critique with 0 blocking findings, 5 warnings, and 2 notes focused on missing counter-evidence, qualification gaps, and underweighted alternative Inngest framings.",
+  "evidence": [
+    "research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/corpus-critic-gaps.json",
+    "research/temp/search-plan.md",
+    "research/temp/depth-investigation-log.md",
+    "research/notes/security-inngest-documentation.md",
+    "research/notes/inngest-steps-inngest-documentation.md",
+    "research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md",
+    "research/notes/connect-inngest-documentation.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/critic-findings-dialectic.json",
+      "sha256": "6cc5f3f2d4de6f200f60809c72c8d9bc2630dc70b46dcbe552c13ff857fb1ad4",
+      "summary": "Dialectic critic findings for patcher review; flags no blockers, with warnings/notes on RAWR source verification, versioning, observability, security, SDK fit, and step primitive framing."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed",
+    "https://www.inngest.com/docs/setup/connect"
+  ]
+}
