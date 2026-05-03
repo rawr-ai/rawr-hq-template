@@ -121,9 +121,43 @@ export const HyperresearchAgentArtifactWriteSchema = Type.Object(
 );
 export type HyperresearchAgentArtifactWrite = Static<typeof HyperresearchAgentArtifactWriteSchema>;
 
+export const HyperresearchAgentAttemptSchema = Type.Object(
+  {
+    attemptId: Type.String({ minLength: 1 }),
+    attemptNumber: Type.Integer({ minimum: 1 }),
+    status: Type.Union([
+      Type.Literal("pending"),
+      Type.Literal("non_clean"),
+      Type.Literal("accepted"),
+      Type.Literal("failed"),
+    ]),
+    classification: Type.Optional(Type.String({ minLength: 1 })),
+    replacesAttemptId: Type.Optional(Type.String({ minLength: 1 })),
+    replacementReason: Type.Optional(Type.String({ minLength: 1 })),
+    outputPath: Type.Optional(Type.String({ minLength: 1 })),
+    outputSha256: Type.Optional(Type.String({ minLength: 1 })),
+    createdAt: Type.Optional(Type.String({ minLength: 1 })),
+    completedAt: Type.Optional(Type.String({ minLength: 1 })),
+  },
+  { additionalProperties: false },
+);
+export type HyperresearchAgentAttempt = Static<typeof HyperresearchAgentAttemptSchema>;
+
 export const HyperresearchAgentJobSchema = Type.Object(
   {
     id: Type.String({ minLength: 1 }),
+    logicalJobId: Type.Optional(Type.String({ minLength: 1 })),
+    attemptId: Type.Optional(Type.String({ minLength: 1 })),
+    attemptNumber: Type.Optional(Type.Integer({ minimum: 1 })),
+    attempts: Type.Optional(Type.Array(HyperresearchAgentAttemptSchema)),
+    activeAttemptId: Type.Optional(Type.String({ minLength: 1 })),
+    acceptedAttemptId: Type.Optional(Type.String({ minLength: 1 })),
+    replacesAttemptId: Type.Optional(Type.String({ minLength: 1 })),
+    replacementReason: Type.Optional(Type.String({ minLength: 1 })),
+    originalAttemptClassification: Type.Optional(Type.String({ minLength: 1 })),
+    acceptedOutputPath: Type.Optional(Type.String({ minLength: 1 })),
+    acceptedOutputSha256: Type.Optional(Type.String({ minLength: 1 })),
+    acceptedAt: Type.Optional(Type.String({ minLength: 1 })),
     stepId: Type.String({ minLength: 1 }),
     role: Type.String({ minLength: 1 }),
     status: HyperresearchAgentJobStatusSchema,
@@ -141,6 +175,12 @@ export type HyperresearchAgentJob = Static<typeof HyperresearchAgentJobSchema>;
 export const HyperresearchAgentOutputSchema = Type.Object(
   {
     jobId: Type.String({ minLength: 1 }),
+    logicalJobId: Type.Optional(Type.String({ minLength: 1 })),
+    attemptId: Type.Optional(Type.String({ minLength: 1 })),
+    attemptNumber: Type.Optional(Type.Integer({ minimum: 1 })),
+    replacesAttemptId: Type.Optional(Type.String({ minLength: 1 })),
+    replacementReason: Type.Optional(Type.String({ minLength: 1 })),
+    originalAttemptClassification: Type.Optional(Type.String({ minLength: 1 })),
     role: Type.String({ minLength: 1 }),
     status: Type.Union([Type.Literal("complete"), Type.Literal("failed")]),
     summary: Type.String({ minLength: 1 }),
@@ -295,6 +335,10 @@ export const HyperresearchIntegrityFindingSchema = Type.Object(
       Type.Literal("patch-only-violation"),
       Type.Literal("missing-source-capture"),
       Type.Literal("missing-claim-trace"),
+      Type.Literal("missing-agent-output"),
+      Type.Literal("agent-output-conflict"),
+      Type.Literal("missing-agent-output-acceptance"),
+      Type.Literal("invalid-replacement-attempt"),
     ]),
     message: Type.String({ minLength: 1 }),
     stepId: Type.Optional(Type.String({ minLength: 1 })),

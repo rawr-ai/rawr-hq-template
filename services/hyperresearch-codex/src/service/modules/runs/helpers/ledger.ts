@@ -88,6 +88,23 @@ export function ensureV8LedgerState(ledger: HyperresearchRunLedger): asserts led
   if (!ledger.routeStepIds) throw new Error("Hyperresearch V8 ledger is missing routeStepIds");
   ledger.wrapperRequirements ??= [];
   ledger.agentJobs ??= [];
+  for (const job of ledger.agentJobs) {
+    job.logicalJobId ??= job.id;
+    job.attemptId ??= `${job.id}-a1`;
+    job.attemptNumber ??= 1;
+    job.activeAttemptId ??= job.attemptId;
+    if (job.status === "complete") job.acceptedAttemptId ??= job.attemptId;
+    job.attempts ??= [{
+      attemptId: job.attemptId,
+      attemptNumber: job.attemptNumber,
+      status: job.status === "complete" ? "accepted" : job.status === "failed" ? "failed" : "pending",
+      classification: job.originalAttemptClassification ?? (job.status === "failed" ? job.failure : undefined),
+      outputPath: job.acceptedOutputPath ?? job.outputPath,
+      outputSha256: job.acceptedOutputSha256,
+      createdAt: job.createdAt,
+      completedAt: job.completedAt ?? job.acceptedAt,
+    }];
+  }
   ledger.reviewDispositions ??= [];
   ledger.reportSnapshots ??= [];
   ledger.sourceCaptures ??= [];

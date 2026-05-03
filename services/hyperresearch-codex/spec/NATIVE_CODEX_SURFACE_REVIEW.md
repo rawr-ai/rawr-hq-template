@@ -8,9 +8,9 @@ Do not pivot the active parity path to the TypeScript SDK or hosted OpenAI APIs.
 
 The current `codex-rawr exec` plus watchdog diagnostic is still the accepted evidence for the shipped Hyperresearch Codex packet-orchestration path because it tests the runtime surface the current skill/workflow actually uses.
 
-The Codex app-server is the right diagnostic surface, and a focused mock-provider smoke has now confirmed the core failure in a cleaner form. Deep review found that app-server supports the native primitives needed to test start/resume, live reconnect, loaded-thread inspection, `thread/read`, turn streaming, and collaborative-agent lifecycle observation. The smoke then showed cold parent `thread/resume` does not rehydrate pre-resume child handles: `wait` and `closeAgent` against the original child id returned structured `notFound`.
+The Codex app-server is the right diagnostic surface. Deep review found that app-server supports the native primitives needed to test start/resume, live reconnect, loaded-thread inspection, `thread/read`, turn streaming, and collaborative-agent lifecycle observation. The first smoke showed cold parent `thread/resume` does not automatically rehydrate pre-resume child handles: `wait` and `closeAgent` against the original child id returned structured `notFound`.
 
-The decisive gap is narrower than before: app-server can observe `spawnAgent`, `resumeAgent`, `wait`, and `closeAgent` lifecycle items, but it does not expose a public promptless RPC such as `agent/wait` or `agent/close`, and public parent `thread/resume` does not appear to call the internal descendant resume path. That means the next proof should be an app-server diagnostic, not a service redesign.
+The decisive answer is now narrower: app-server can observe `spawnAgent`, `resumeAgent`, `wait`, and `closeAgent` lifecycle items, and later explicit-child-resume evidence shows runtime recovery is possible. Bare parent `thread/resume` still does not auto-rehydrate descendants. For Hyperresearch service plus Codex packet-orchestration parity, the accepted strategy is parent resume plus explicit child resume for known child ids, with replacement-attempt packet fan-in only as fallback hardening, not a service redesign, SDK pivot, or app-server pivot.
 
 ## Deep Research Summary
 
@@ -35,7 +35,7 @@ App-server child-lifecycle smoke result:
 
 - Same-process app-server lifecycle passed: `spawnAgent`, `wait`, and `closeAgent` emitted typed `collabAgentToolCall` items, and wait/close completed for the child.
 - Cold parent resume failed: after restarting app-server with the same temp `CODEX_HOME`, `thread/resume` loaded the parent, but `wait` and `closeAgent` against the child spawned before resume failed with `agentsStates.<child>.status = "notFound"`.
-- Explicit child resume partially recovered the handle: after cold parent resume, model-driven `resume_agent` against the original child id completed and returned `pending_init`; subsequent `wait` timed out and `closeAgent` returned previous status `pending_init`. No `notFound` status appeared, but clean child completion was still not proven.
+- Later explicit child resume evidence appears to recover clean completion after a Codex runtime status-seeding fix: after cold parent resume, model-driven `resume_agent` against the original child id returned `completed`, subsequent `wait` returned without timeout, and `closeAgent` returned previous status `completed`. No `notFound` status appeared.
 - Evidence is preserved under `spec/evidence/20260503T201420Z-app-server-child-lifecycle/`.
 - Explicit-child-resume evidence is preserved under `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/`.
 
@@ -77,7 +77,7 @@ Not allowed as parity evidence:
 
 ### Codex App-Server
 
-Status: accepted as the native diagnostic surface; rejected as a fix by current evidence.
+Status: accepted as the native diagnostic surface and explicit child-resume recovery strategy; not evidence of automatic descendant rehydration.
 
 The local app-server is native Codex infrastructure. It exposes JSON-RPC over stdio/websocket/unix socket, thread start/resume, turn start, streamed item notifications, loaded-thread status, and collab-agent tool-call items for `spawnAgent`, `wait`, `closeAgent`, `resumeAgent`, and child statuses.
 
@@ -97,28 +97,29 @@ Why it helps:
 - it can test cold parent resume after app-server restart with the same `CODEX_HOME`;
 - it can tell us whether a failure is "history exists but live child handle missing" instead of only "parent wait got stuck."
 
-Why it is not a proven fix:
+What it still does not prove:
 
 - public `thread/resume` appears to call the parent `resume_thread_with_history` path, not the internal descendant resume path;
-- `AgentControl::resume_agent_from_rollout` exists internally and walks persisted open spawn edges, but the public app-server parent resume path has not been shown to invoke it;
+- `AgentControl::resume_agent_from_rollout` exists internally and walks persisted open spawn edges, but the public app-server parent resume path has not been shown to invoke it automatically;
 - app-server has no public promptless `agent/spawn`, `agent/wait`, `agent/close`, or `agent/resume` RPC today;
-- model-driven `resume_agent` may recover old descendants, but that must be tested explicitly and cannot be assumed.
+- model-driven `resume_agent` is required for known old descendants unless a future API adds explicit automatic descendant rehydration.
 
-The app-server smoke returned `NotFound` for original child handles after cold resume. That improves evidence quality but does not close `HR-CODEX-035`.
+The direct app-server smoke returned `NotFound` for original child handles after cold resume. That improves evidence quality and sets the boundary: bare parent resume is not enough.
 
 If a future true websocket live reconnect passes but cold resume remains failed, the conclusion is:
 
 - loaded-thread reconnect is sufficient for same-process or same-server UI ergonomics;
 - durable post-process child handle completion still needs a Codex runtime fix or an explicit parity re-scope.
 
-The model-driven `resume_agent` variant has now been run:
+The model-driven `resume_agent` variant has now passed after the Codex runtime status-seeding fix:
 
 - app-server can recover the original child handle through an explicit child-resume turn, avoiding `notFound`;
-- the recovered child remained `pendingInit`;
-- `wait` timed out rather than observing final child completion;
+- the recovered child reports `Completed` with the persisted final message;
+- `wait` observes the completed child without timeout;
+- `closeAgent` observes previous status `Completed`;
 - parent `thread/resume` alone still does not rehydrate child handles automatically.
 
-Potential Codex runtime fixes, if required:
+Potential future Codex runtime enhancements, if automatic descendant hydration is required:
 
 - add experimental public `agent/resume`, `agent/wait`, and `agent/close` app-server RPCs backed by `AgentControl`;
 - or add an opt-in `thread/resume { resumeOpenDescendants: true }` mode that invokes descendant resume. This changes lifecycle semantics and should remain explicit.
@@ -131,14 +132,14 @@ The OpenAI API stack is a hosted model/tool orchestration surface. It does not p
 
 ## Next Native-Surface Packet
 
-The next native-surface packet is no longer "prove whether app-server can observe this" or "try explicit child resume." Both are proven. The next packet should implement/fix descendant rehydration or resumed-child execution in Codex/RAWR, or explicitly re-scope the child lifecycle claim.
+The next native-surface packet is no longer required for Hyperresearch parity closure. The accepted runtime rule is explicit child resume for known child ids after parent resume; replacement packet attempts remain fallback hardening for child attempts that still classify non-clean. If we later choose to improve automatic Codex/RAWR descendant hydration, use app-server evidence as the regression harness.
 
-Minimum remaining packet:
+Future optional packet, only if automatic descendant hydration is desired:
 
 1. Use the app-server evidence bundle as the preferred regression harness.
-2. Fix Codex/RAWR so recovered descendants either resume running or are classified in a way the parent can deterministically replace without pretending clean completion.
+2. Add opt-in automatic descendant rehydration or promptless agent lifecycle RPCs.
 3. Candidate API shapes are `thread/resume { resumeOpenDescendants: true }` or public experimental `agent/resume`, `agent/wait`, and `agent/close` RPCs backed by `AgentControl`.
-4. Closure requires original child ids to reach final completed state after cold resume, or an explicit parity re-scope that states cold-resumed pending children require replacement packet outputs.
+4. Closure for that optional enhancement requires original child ids to be usable after bare parent resume without a model-driven `resume_agent` turn.
 
 Each app-server scenario manifest should add these fields:
 
@@ -160,7 +161,7 @@ Each app-server scenario manifest should add these fields:
 }
 ```
 
-The app-server evidence is now stronger than the Bash watchdog for the cold-resume failure. It should be used as the preferred reproduction when changing Codex/RAWR runtime descendant resume behavior. The current failed `exec resume` diagnostic remains the accepted installed-skill runtime finding for `HR-CODEX-035`.
+The app-server evidence is now stronger than the Bash watchdog for the cold-resume lifecycle boundary. It should be used as the preferred regression harness when changing Codex/RAWR runtime descendant resume behavior. The failed `exec resume` diagnostic remains accepted evidence that bare parent resume is insufficient. Hyperresearch service plus packet-orchestration parity closes through ledgered replacement attempts for non-clean child attempts; explicit child resume is runtime recovery evidence, not the service closure claim.
 
 ## Source Pointers
 

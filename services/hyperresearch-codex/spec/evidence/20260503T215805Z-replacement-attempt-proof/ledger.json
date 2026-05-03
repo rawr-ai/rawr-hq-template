@@ -1,0 +1,498 @@
+{
+  "version": 2,
+  "runId": "hpr-v8-042d0668-3d5c-46c5-b9e0-5bab9ca69cf0",
+  "canonicalQuery": "What do Python packaging standards require installers to understand about pyproject.toml metadata? Use official Python Packaging Authority sources.",
+  "tier": "light",
+  "tierSource": "user",
+  "vaultTag": "what-do-python-packaging-standards-require-insta",
+  "vaultRoot": "/tmp/hr-replacement-proof-TqN7eo",
+  "artifactRoot": "/tmp/hr-replacement-proof-TqN7eo",
+  "stepsRoot": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps",
+  "queryFilePath": "/tmp/hr-replacement-proof-TqN7eo/research/query-what-do-python-packaging-standards-require-insta.md",
+  "routeStepIds": [
+    "01-decompose",
+    "02-width-sweep",
+    "10-triple-draft",
+    "15-polish",
+    "16-readability-audit"
+  ],
+  "wrapperRequirements": [],
+  "completed": true,
+  "createdAt": "2026-05-03T21:58:05.700Z",
+  "updatedAt": "2026-05-03T21:58:10.961Z",
+  "steps": [
+    {
+      "id": "01-decompose",
+      "title": "Decompose query and classify tier",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-1-decompose.md",
+      "requiredArtifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "artifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "startedAt": "2026-05-03T21:58:06.596Z",
+      "loaded": {
+        "stepId": "01-decompose",
+        "title": "Decompose query and classify tier",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-1-decompose.md",
+        "sha256": "b43bdf4516363d880c166b23543cb7e3c1473bc51e836b00b6496e3591e8c39a",
+        "loadedAt": "2026-05-03T21:58:06.598Z"
+      },
+      "completedAt": "2026-05-03T21:58:06.607Z"
+    },
+    {
+      "id": "02-width-sweep",
+      "title": "Width sweep and source capture",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-2-width-sweep.md",
+      "requiredArtifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "artifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "startedAt": "2026-05-03T21:58:06.609Z",
+      "loaded": {
+        "stepId": "02-width-sweep",
+        "title": "Width sweep and source capture",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-2-width-sweep.md",
+        "sha256": "dfb6460b29f46297ace63d80b41c71a2aa869cda431f29b7a2aa56be9957c327",
+        "loadedAt": "2026-05-03T21:58:06.609Z"
+      },
+      "completedAt": "2026-05-03T21:58:08.518Z"
+    },
+    {
+      "id": "10-triple-draft",
+      "title": "Triple draft or light final draft",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-10-triple-draft.md",
+      "requiredArtifacts": [
+        "research/temp/draft-angles.md",
+        "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+      ],
+      "artifacts": [
+        "research/temp/draft-angles.md",
+        "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+      ],
+      "startedAt": "2026-05-03T21:58:08.519Z",
+      "loaded": {
+        "stepId": "10-triple-draft",
+        "title": "Triple draft or light final draft",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-10-triple-draft.md",
+        "sha256": "d2531ceb5c404a0bb6dfe854a241eab20629f73f05e52a03c0a088a36f6c8284",
+        "loadedAt": "2026-05-03T21:58:08.519Z"
+      },
+      "completedAt": "2026-05-03T21:58:08.856Z"
+    },
+    {
+      "id": "15-polish",
+      "title": "Polish and lint",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-15-polish.md",
+      "requiredArtifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+      ],
+      "artifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+      ],
+      "startedAt": "2026-05-03T21:58:08.856Z",
+      "loaded": {
+        "stepId": "15-polish",
+        "title": "Polish and lint",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-15-polish.md",
+        "sha256": "5875cce6af61defe82f81387b922762e21ed5b3a1e6d14c883c76c263d98f1ed",
+        "loadedAt": "2026-05-03T21:58:08.857Z"
+      },
+      "completedAt": "2026-05-03T21:58:09.941Z"
+    },
+    {
+      "id": "16-readability-audit",
+      "title": "Readability audit",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-16-readability-audit.md",
+      "requiredArtifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+      ],
+      "artifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+      ],
+      "startedAt": "2026-05-03T21:58:09.942Z",
+      "loaded": {
+        "stepId": "16-readability-audit",
+        "title": "Readability audit",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-16-readability-audit.md",
+        "sha256": "dade539a5d3067703a7caa45c3a739d95eb95b5dc70931f3edfdab4f2044766d",
+        "loadedAt": "2026-05-03T21:58:09.942Z"
+      },
+      "completedAt": "2026-05-03T21:58:10.961Z"
+    }
+  ],
+  "cliCalls": [
+    {
+      "operation": "init",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hr-replacement-proof-TqN7eo",
+      "startedAt": "2026-05-03T21:58:05.702Z",
+      "completedAt": "2026-05-03T21:58:06.115Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"vault_path\": \"/private/tmp/hr-replacement-proof-TqN7eo\",\n    \"name\": \"Research Base\"\n  },\n  \"timestamp\": \"2026-05-03T21:58:06.076631+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "search",
+      "args": [
+        "What do Python packaging standards require installers to understand about pyproject.toml metadata? Use official Python Packaging Authority sources.",
+        "--json"
+      ],
+      "cwd": "/tmp/hr-replacement-proof-TqN7eo",
+      "startedAt": "2026-05-03T21:58:07.053Z",
+      "completedAt": "2026-05-03T21:58:07.256Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"query\": \"What do Python packaging standards require installers to understand about pyproject.toml metadata? Use official Python Packaging Authority sources.\",\n    \"results\": [\n      {\n        \"id\": \"coverage-matrix\",\n        \"title\": \"Untitled\",\n        \"path\": \"research/temp/coverage-matrix.md\",\n        \"status\": \"draft\",\n        \"type\": \"note\",\n        \"tier\": null,\n        \"content_type\": null,\n        \"tags\": [],\n        \"created\": \"2026-05-03T21:58:07.231564+00:00\",\n        \"updated\": null,\n        \"word_count\": 56,\n        \"summary\": null,\n        \"score\": 4.9949585238898715,\n        \"snippet\": \"| Item | Coverage Target | Status | | --- | --- | --- | | query-1 | >>>What<<< >>>do<<< >>>Python<<< >>>packaging<<< >>>standards<<< >>>require<<< >>>installers<<< >>>to<<< >>>understand<<< >>>about<<< >>>pyproject.toml<<< >>>metadata<<< | pending->>>source<<<-evidence | | query-2 | >>>Use<<< >>>official<<< >>>Python<<< >>>Packaging<<< >>>Authority<<< >>>sources<<<. | pending->>>source<<<-evidence | | 01-decompose | Decompose query and classify tier | generated |\",\n        \"body\": \"| Item | Coverage Target | Status |\\n| --- | --- | --- |\\n| query-1 | What do Python packaging standards require installers to understand about pyproject.toml metadata | pending-source-evidence |\\n| query-2 | Use official Python Packaging Authority sources. | pending-source-evidence |\\n| 01-decompose | Decompose query and classify tier | generated |\\n\"\n      }\n    ],\n    \"total\": 1\n  },\n  \"count\": 1,\n  \"vault\": \"/private/tmp/hr-replacement-proof-TqN7eo\",\n  \"timestamp\": \"2026-05-03T21:58:07.233563+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+        "--json"
+      ],
+      "cwd": "/tmp/hr-replacement-proof-TqN7eo",
+      "startedAt": "2026-05-03T21:58:07.256Z",
+      "completedAt": "2026-05-03T21:58:07.859Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n    \"title\": \"pyproject.toml specification - Python Packaging User Guide\",\n    \"url\": \"https://packaging.python.org/en/latest/specifications/pyproject-toml/\",\n    \"domain\": \"packaging.python.org\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n    \"word_count\": 2998,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hr-replacement-proof-TqN7eo\",\n  \"timestamp\": \"2026-05-03T21:58:07.820703+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://packaging.python.org/en/latest/specifications/core-metadata/",
+        "--json"
+      ],
+      "cwd": "/tmp/hr-replacement-proof-TqN7eo",
+      "startedAt": "2026-05-03T21:58:07.860Z",
+      "completedAt": "2026-05-03T21:58:08.321Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n    \"title\": \"Core metadata specifications - Python Packaging User Guide\",\n    \"url\": \"https://packaging.python.org/en/latest/specifications/core-metadata/\",\n    \"domain\": \"packaging.python.org\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n    \"word_count\": 4814,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hr-replacement-proof-TqN7eo\",\n  \"timestamp\": \"2026-05-03T21:58:08.270580+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "note",
+      "args": [
+        "new",
+        "--json",
+        "Hyperresearch Codex V8 fixture source"
+      ],
+      "cwd": "/tmp/hr-replacement-proof-TqN7eo",
+      "startedAt": "2026-05-03T21:58:08.322Z",
+      "completedAt": "2026-05-03T21:58:08.517Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"id\": \"hyperresearch-codex-v8-fixture-source\",\n    \"path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n    \"title\": \"Hyperresearch Codex V8 fixture source\"\n  },\n  \"vault\": \"/private/tmp/hr-replacement-proof-TqN7eo\",\n  \"timestamp\": \"2026-05-03T21:58:08.491466+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "lint",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hr-replacement-proof-TqN7eo",
+      "startedAt": "2026-05-03T21:58:09.694Z",
+      "completedAt": "2026-05-03T21:58:09.940Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"issues\": [\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-do-python-packaging-standards-require-insta\",\n        \"note_path\": \"research/notes/final_report_what-do-python-packaging-standards-require-insta.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-do-python-packaging-standards-require-insta\",\n        \"note_path\": \"research/notes/final_report_what-do-python-packaging-standards-require-insta.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-do-python-packaging-standards-require-insta\",\n        \"note_path\": \"research/notes/final_report_what-do-python-packaging-standards-require-insta.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"extract-coverage\",\n        \"severity\": \"error\",\n        \"note_id\": \"<vault>\",\n        \"message\": \"Vault has 2 fetched source notes but only 0 real source-linked extract notes (0% coverage, need ≥1). The analyst was skipped on most sources or the source->extract chain of custody is broken. Spawn an analyst subagent on the unanalyzed sources during curation. Target: at least 1 extract (≥150 words, with `parent=<source-note-id>`) per 3 sources (floor of 1 for any corpus size). Minting stub notes to pass this gate is lint-gaming and will not satisfy.\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"final_report_what-do-python-packaging-standards-require-insta\",\n        \"note_path\": \"research/notes/final_report_what-do-python-packaging-standards-require-insta.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      }\n    ],\n    \"summary\": {\n      \"errors\": 1,\n      \"warnings\": 27,\n      \"info\": 10,\n      \"total\": 38\n    }\n  },\n  \"count\": 38,\n  \"vault\": \"/private/tmp/hr-replacement-proof-TqN7eo\",\n  \"timestamp\": \"2026-05-03T21:58:09.910876+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "sync",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hr-replacement-proof-TqN7eo",
+      "startedAt": "2026-05-03T21:58:10.325Z",
+      "completedAt": "2026-05-03T21:58:10.550Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"added\": 0,\n    \"updated\": 0,\n    \"deleted\": 0,\n    \"unchanged\": 10,\n    \"errors\": [],\n    \"duration_ms\": 0.5\n  },\n  \"vault\": \"/private/tmp/hr-replacement-proof-TqN7eo\",\n  \"timestamp\": \"2026-05-03T21:58:10.518241+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "lint",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hr-replacement-proof-TqN7eo",
+      "startedAt": "2026-05-03T21:58:10.550Z",
+      "completedAt": "2026-05-03T21:58:10.769Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"issues\": [\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-do-python-packaging-standards-require-insta\",\n        \"note_path\": \"research/notes/final_report_what-do-python-packaging-standards-require-insta.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-do-python-packaging-standards-require-insta\",\n        \"note_path\": \"research/notes/final_report_what-do-python-packaging-standards-require-insta.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-do-python-packaging-standards-require-insta\",\n        \"note_path\": \"research/notes/final_report_what-do-python-packaging-standards-require-insta.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"extract-coverage\",\n        \"severity\": \"error\",\n        \"note_id\": \"<vault>\",\n        \"message\": \"Vault has 2 fetched source notes but only 0 real source-linked extract notes (0% coverage, need ≥1). The analyst was skipped on most sources or the source->extract chain of custody is broken. Spawn an analyst subagent on the unanalyzed sources during curation. Target: at least 1 extract (≥150 words, with `parent=<source-note-id>`) per 3 sources (floor of 1 for any corpus size). Minting stub notes to pass this gate is lint-gaming and will not satisfy.\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"final_report_what-do-python-packaging-standards-require-insta\",\n        \"note_path\": \"research/notes/final_report_what-do-python-packaging-standards-require-insta.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      }\n    ],\n    \"summary\": {\n      \"errors\": 1,\n      \"warnings\": 27,\n      \"info\": 10,\n      \"total\": 38\n    }\n  },\n  \"count\": 38,\n  \"vault\": \"/private/tmp/hr-replacement-proof-TqN7eo\",\n  \"timestamp\": \"2026-05-03T21:58:10.743214+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "export",
+      "args": [
+        "json",
+        "--json"
+      ],
+      "cwd": "/tmp/hr-replacement-proof-TqN7eo",
+      "startedAt": "2026-05-03T21:58:10.769Z",
+      "completedAt": "2026-05-03T21:58:10.960Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"path\": \"/private/tmp/hr-replacement-proof-TqN7eo/.hyperresearch/exports/vault.json\",\n    \"count\": 10\n  },\n  \"vault\": \"/private/tmp/hr-replacement-proof-TqN7eo\",\n  \"timestamp\": \"2026-05-03T21:58:10.933192+00:00\"\n}\n",
+      "stderr": ""
+    }
+  ],
+  "agentJobs": [
+    {
+      "id": "02-width-sweep-1-fetcher",
+      "logicalJobId": "02-width-sweep-1-fetcher",
+      "attemptId": "02-width-sweep-1-fetcher-a2",
+      "attemptNumber": 2,
+      "activeAttemptId": "02-width-sweep-1-fetcher-a2",
+      "attempts": [
+        {
+          "attemptId": "02-width-sweep-1-fetcher-a1",
+          "attemptNumber": 1,
+          "status": "non_clean",
+          "createdAt": "2026-05-03T21:58:06.610Z",
+          "classification": "wait_timeout",
+          "completedAt": "2026-05-03T21:58:07.051Z"
+        },
+        {
+          "attemptId": "02-width-sweep-1-fetcher-a2",
+          "attemptNumber": 2,
+          "status": "accepted",
+          "classification": "replacement_succeeded",
+          "replacesAttemptId": "02-width-sweep-1-fetcher-a1",
+          "replacementReason": "cold_resumed_child_wait_timeout",
+          "outputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+          "outputSha256": "0787d105c601ae287e7b95ad7667ccc262ae26d563e8143147fba0b976052463",
+          "completedAt": "2026-05-03T21:58:07.051Z"
+        }
+      ],
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-fetcher",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-1-fetcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "createdAt": "2026-05-03T21:58:06.610Z",
+      "replacesAttemptId": "02-width-sweep-1-fetcher-a1",
+      "replacementReason": "cold_resumed_child_wait_timeout",
+      "originalAttemptClassification": "wait_timeout",
+      "acceptedAttemptId": "02-width-sweep-1-fetcher-a2",
+      "outputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "acceptedOutputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "acceptedOutputSha256": "0787d105c601ae287e7b95ad7667ccc262ae26d563e8143147fba0b976052463",
+      "acceptedAt": "2026-05-03T21:58:07.051Z",
+      "completedAt": "2026-05-03T21:58:07.051Z"
+    },
+    {
+      "id": "02-width-sweep-2-source-analyst",
+      "logicalJobId": "02-width-sweep-2-source-analyst",
+      "attemptId": "02-width-sweep-2-source-analyst-a1",
+      "attemptNumber": 1,
+      "activeAttemptId": "02-width-sweep-2-source-analyst-a1",
+      "attempts": [
+        {
+          "attemptId": "02-width-sweep-2-source-analyst-a1",
+          "attemptNumber": 1,
+          "status": "accepted",
+          "createdAt": "2026-05-03T21:58:06.610Z",
+          "outputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+          "outputSha256": "f752903a23d535b825fc9627bd8a0c5c41f17ee7009bf375bc28d4781dded760",
+          "completedAt": "2026-05-03T21:58:07.052Z",
+          "classification": "clean_completed"
+        }
+      ],
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-source-analyst",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-2-source-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "createdAt": "2026-05-03T21:58:06.610Z",
+      "acceptedAttemptId": "02-width-sweep-2-source-analyst-a1",
+      "outputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "acceptedOutputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "acceptedOutputSha256": "f752903a23d535b825fc9627bd8a0c5c41f17ee7009bf375bc28d4781dded760",
+      "acceptedAt": "2026-05-03T21:58:07.052Z",
+      "completedAt": "2026-05-03T21:58:07.052Z"
+    },
+    {
+      "id": "10-triple-draft-1-draft-orchestrator",
+      "logicalJobId": "10-triple-draft-1-draft-orchestrator",
+      "attemptId": "10-triple-draft-1-draft-orchestrator-a1",
+      "attemptNumber": 1,
+      "activeAttemptId": "10-triple-draft-1-draft-orchestrator-a1",
+      "attempts": [
+        {
+          "attemptId": "10-triple-draft-1-draft-orchestrator-a1",
+          "attemptNumber": 1,
+          "status": "accepted",
+          "createdAt": "2026-05-03T21:58:08.520Z",
+          "outputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+          "outputSha256": "cf40d4af5d30eeb5fcf3ae0fb2467ef61c97ac4e2c1b849090042e8e6b4a1945",
+          "completedAt": "2026-05-03T21:58:08.854Z",
+          "classification": "clean_completed"
+        }
+      ],
+      "stepId": "10-triple-draft",
+      "role": "hyperresearch-draft-orchestrator",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/10-triple-draft-1-draft-orchestrator.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+      "createdAt": "2026-05-03T21:58:08.520Z",
+      "acceptedAttemptId": "10-triple-draft-1-draft-orchestrator-a1",
+      "outputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+      "acceptedOutputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+      "acceptedOutputSha256": "cf40d4af5d30eeb5fcf3ae0fb2467ef61c97ac4e2c1b849090042e8e6b4a1945",
+      "acceptedAt": "2026-05-03T21:58:08.854Z",
+      "completedAt": "2026-05-03T21:58:08.854Z"
+    },
+    {
+      "id": "15-polish-1-polish-auditor",
+      "logicalJobId": "15-polish-1-polish-auditor",
+      "attemptId": "15-polish-1-polish-auditor-a1",
+      "attemptNumber": 1,
+      "activeAttemptId": "15-polish-1-polish-auditor-a1",
+      "attempts": [
+        {
+          "attemptId": "15-polish-1-polish-auditor-a1",
+          "attemptNumber": 1,
+          "status": "accepted",
+          "createdAt": "2026-05-03T21:58:08.857Z",
+          "outputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+          "outputSha256": "94b9e0593d889f8f0da05c735328591f8247ff2ec74d53d26cb040115a6b87b8",
+          "completedAt": "2026-05-03T21:58:09.694Z",
+          "classification": "clean_completed"
+        }
+      ],
+      "stepId": "15-polish",
+      "role": "hyperresearch-polish-auditor",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/15-polish-1-polish-auditor.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+      "createdAt": "2026-05-03T21:58:08.857Z",
+      "acceptedAttemptId": "15-polish-1-polish-auditor-a1",
+      "outputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+      "acceptedOutputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+      "acceptedOutputSha256": "94b9e0593d889f8f0da05c735328591f8247ff2ec74d53d26cb040115a6b87b8",
+      "acceptedAt": "2026-05-03T21:58:09.694Z",
+      "completedAt": "2026-05-03T21:58:09.694Z"
+    },
+    {
+      "id": "16-readability-audit-1-readability-recommender",
+      "logicalJobId": "16-readability-audit-1-readability-recommender",
+      "attemptId": "16-readability-audit-1-readability-recommender-a1",
+      "attemptNumber": 1,
+      "activeAttemptId": "16-readability-audit-1-readability-recommender-a1",
+      "attempts": [
+        {
+          "attemptId": "16-readability-audit-1-readability-recommender-a1",
+          "attemptNumber": 1,
+          "status": "accepted",
+          "createdAt": "2026-05-03T21:58:09.943Z",
+          "outputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+          "outputSha256": "47c2b42c8d0c611c08325f6042ffe85c4d103fed2c7b90f04ac750f74f33c3bc",
+          "completedAt": "2026-05-03T21:58:10.324Z",
+          "classification": "clean_completed"
+        }
+      ],
+      "stepId": "16-readability-audit",
+      "role": "hyperresearch-readability-recommender",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/16-readability-audit-1-readability-recommender.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+      "createdAt": "2026-05-03T21:58:09.943Z",
+      "acceptedAttemptId": "16-readability-audit-1-readability-recommender-a1",
+      "outputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+      "acceptedOutputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+      "acceptedOutputSha256": "47c2b42c8d0c611c08325f6042ffe85c4d103fed2c7b90f04ac750f74f33c3bc",
+      "acceptedAt": "2026-05-03T21:58:10.324Z",
+      "completedAt": "2026-05-03T21:58:10.324Z"
+    }
+  ],
+  "reviewDispositions": [],
+  "reportSnapshots": [
+    {
+      "stepId": "10-triple-draft",
+      "path": "research/temp/report-snapshots/10-triple-draft-a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695.md",
+      "sha256": "a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695",
+      "createdAt": "2026-05-03T21:58:08.856Z"
+    }
+  ],
+  "sourceCaptures": [
+    {
+      "url": "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://packaging.python.org/en/latest/specifications/pyproject-toml/"
+      ],
+      "cliCallIndexes": [
+        2
+      ],
+      "capturedAt": "2026-05-03T21:58:07.256Z",
+      "noteIds": [
+        "pyprojecttoml-specification-python-packaging-user-guide"
+      ]
+    },
+    {
+      "url": "https://packaging.python.org/en/latest/specifications/core-metadata/",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://packaging.python.org/en/latest/specifications/core-metadata/"
+      ],
+      "cliCallIndexes": [
+        3
+      ],
+      "capturedAt": "2026-05-03T21:58:07.860Z",
+      "noteIds": [
+        "core-metadata-specifications-python-packaging-user-guide"
+      ]
+    }
+  ],
+  "patchGuard": {
+    "snapshotPath": "research/notes/final_report_what-do-python-packaging-standards-require-insta.md",
+    "snapshotSha256": "a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695",
+    "violations": []
+  },
+  "resumes": [],
+  "failures": []
+}

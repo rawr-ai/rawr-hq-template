@@ -1,0 +1,32 @@
+{
+  "jobId": "02-width-sweep-1-fetcher",
+  "role": "hyperresearch-fetcher",
+  "logicalJobId": "02-width-sweep-1-fetcher",
+  "attemptId": "02-width-sweep-1-fetcher-a2",
+  "attemptNumber": 2,
+  "replacesAttemptId": "02-width-sweep-1-fetcher-a1",
+  "replacementReason": "cold_resumed_child_wait_timeout",
+  "originalAttemptClassification": "wait_timeout",
+  "status": "complete",
+  "summary": "Replacement attempt wrote assigned search artifacts after the original child attempt was classified non-clean.",
+  "evidence": [
+    "research/temp/search-plan.md",
+    "research/temp/scored-urls.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/search-plan.md",
+      "sha256": "1de15aabb0fb2a651a94a5c27578031d71f240b884cb1e592aa1d05a49d4eada",
+      "summary": "Official-source search plan for the width sweep."
+    },
+    {
+      "path": "research/temp/scored-urls.md",
+      "sha256": "5aeb33d90583c53a05c1a9182a4598e54693335db56eb59db91eea83252057a5",
+      "summary": "Ranked official PyPA specification URLs."
+    }
+  ],
+  "sourceUrls": [
+    "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+    "https://packaging.python.org/en/latest/specifications/core-metadata/"
+  ]
+}

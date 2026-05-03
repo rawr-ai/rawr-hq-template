@@ -48,6 +48,14 @@ async function writeAgentOutput(input: {
   job: HyperresearchAgentJob;
   artifactPaths?: string[];
   sourceUrls?: string[];
+  omitAttemptMetadata?: boolean;
+  attempt?: {
+    attemptId: string;
+    attemptNumber: number;
+    replacesAttemptId?: string;
+    replacementReason?: string;
+    originalAttemptClassification?: string;
+  };
 }) {
   const artifactWrites = [];
   for (const artifactPath of input.artifactPaths ?? []) {
@@ -65,8 +73,16 @@ async function writeAgentOutput(input: {
 
   await fs.writeFile(
     path.join(input.vaultRoot, input.job.expectedOutputPath),
-    JSON.stringify({
-      jobId: input.job.id,
+	    JSON.stringify({
+	      jobId: input.job.id,
+	      ...(input.omitAttemptMetadata ? {} : {
+	        logicalJobId: input.job.logicalJobId ?? input.job.id,
+	        attemptId: input.attempt?.attemptId ?? input.job.attemptId,
+	        attemptNumber: input.attempt?.attemptNumber ?? input.job.attemptNumber,
+	        replacesAttemptId: input.attempt?.replacesAttemptId,
+	        replacementReason: input.attempt?.replacementReason,
+	        originalAttemptClassification: input.attempt?.originalAttemptClassification,
+	      }),
       role: input.job.role,
       status: "complete",
       summary: input.job.role,
@@ -475,6 +491,204 @@ describe("hyperresearch-codex V8 runtime", () => {
     expect(completed.ledger.sourceCaptures).toHaveLength(1);
   });
 
+  it("completes a logical packet job through a ledgered replacement attempt", async () => {
+    const fixture = await makeV8Fixture();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await client.runs.startV8Run({
+      canonicalQuery: "Replacement packet fan-in proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-packet-replacement-start"));
+
+    await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-replacement-step-one"));
+    const awaiting = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-replacement-awaiting"));
+    const [replacementJob, ordinaryJob] = awaiting.pendingAgentJobs;
+    if (!replacementJob || !ordinaryJob) throw new Error("expected two pending jobs");
+
+    await writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job: replacementJob,
+      artifactPaths: await packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job: replacementJob }),
+      sourceUrls: ["https://www.python.org/about/"],
+      attempt: {
+        attemptId: `${replacementJob.id}-a2`,
+        attemptNumber: 2,
+        replacesAttemptId: replacementJob.attemptId ?? `${replacementJob.id}-a1`,
+        replacementReason: "cold-resumed child handle returned wait_not_found",
+        originalAttemptClassification: "wait_not_found",
+      },
+    });
+    await writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job: ordinaryJob,
+      artifactPaths: await packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job: ordinaryJob }),
+      sourceUrls: ["https://www.python.org/about/"],
+    });
+
+    const completed = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-replacement-complete"));
+    const accepted = completed.ledger.agentJobs.find((job) => job.id === replacementJob.id);
+    expect(accepted?.status).toBe("complete");
+    expect(accepted?.logicalJobId).toBe(replacementJob.id);
+    expect(accepted?.attemptId).toBe(`${replacementJob.id}-a2`);
+    expect(accepted?.attemptNumber).toBe(2);
+    expect(accepted?.replacesAttemptId).toBe(`${replacementJob.id}-a1`);
+    expect(accepted?.replacementReason).toContain("cold-resumed");
+    expect(accepted?.originalAttemptClassification).toBe("wait_not_found");
+    expect(accepted?.originalAttemptClassification).not.toBe("clean_completed");
+    expect(accepted?.attempts?.find((attempt) => attempt.attemptId === `${replacementJob.id}-a1`)?.status).toBe("non_clean");
+    expect(accepted?.attempts?.find((attempt) => attempt.attemptId === `${replacementJob.id}-a2`)?.status).toBe("accepted");
+    expect(accepted?.acceptedAttemptId).toBe(`${replacementJob.id}-a2`);
+    expect(accepted?.acceptedOutputPath).toBe(replacementJob.expectedOutputPath);
+    expect(accepted?.acceptedOutputSha256).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("blocks replacement packet outputs without audit metadata", async () => {
+    const fixture = await makeV8Fixture();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await client.runs.startV8Run({
+      canonicalQuery: "Replacement packet metadata proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-packet-replacement-metadata-start"));
+
+    await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-replacement-metadata-step-one"));
+    const awaiting = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-replacement-metadata-awaiting"));
+    const [replacementJob, ordinaryJob] = awaiting.pendingAgentJobs;
+    if (!replacementJob || !ordinaryJob) throw new Error("expected two pending jobs");
+
+    await writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job: replacementJob,
+      artifactPaths: await packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job: replacementJob }),
+      sourceUrls: ["https://www.python.org/about/"],
+      omitAttemptMetadata: true,
+    });
+    await writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job: ordinaryJob,
+      artifactPaths: await packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job: ordinaryJob }),
+      sourceUrls: ["https://www.python.org/about/"],
+    });
+
+    const blocked = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-replacement-missing-metadata-block"));
+    expect(blocked.status).toBe("blocked");
+    expect(blocked.ledger.failures.at(-1)?.message).toContain("attempt metadata is required");
+  });
+
+  it("blocks replacement packet outputs with partial audit metadata", async () => {
+    const fixture = await makeV8Fixture();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await client.runs.startV8Run({
+      canonicalQuery: "Replacement packet partial metadata proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-packet-replacement-partial-metadata-start"));
+
+    await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-replacement-partial-metadata-step-one"));
+    const awaiting = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-replacement-partial-metadata-awaiting"));
+    const [replacementJob, ordinaryJob] = awaiting.pendingAgentJobs;
+    if (!replacementJob || !ordinaryJob) throw new Error("expected two pending jobs");
+
+    await writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job: replacementJob,
+      artifactPaths: await packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job: replacementJob }),
+      sourceUrls: ["https://www.python.org/about/"],
+      attempt: {
+        attemptId: `${replacementJob.id}-a2`,
+        attemptNumber: 2,
+        replacesAttemptId: replacementJob.attemptId ?? `${replacementJob.id}-a1`,
+        originalAttemptClassification: "wait_timeout",
+      },
+    });
+    await writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job: ordinaryJob,
+      artifactPaths: await packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job: ordinaryJob }),
+      sourceUrls: ["https://www.python.org/about/"],
+    });
+
+    const blocked = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-replacement-metadata-block"));
+    expect(blocked.status).toBe("blocked");
+    expect(blocked.ledger.failures.at(-1)?.message).toContain("replacementReason is required");
+  });
+
+  it("reports accepted packet output hash conflicts during validation", async () => {
+    const fixture = await makeV8Fixture();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await client.runs.startV8Run({
+      canonicalQuery: "Replacement packet conflict proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-packet-conflict-start"));
+
+    await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-conflict-step-one"));
+    const awaiting = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-conflict-awaiting"));
+    await Promise.all(awaiting.pendingAgentJobs.map(async (job) => writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job,
+      artifactPaths: await packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job }),
+      sourceUrls: ["https://www.python.org/about/"],
+    })));
+    const completed = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-conflict-complete"));
+    const accepted = completed.ledger.agentJobs.find((job) => job.stepId === "02-width-sweep");
+    if (!accepted?.acceptedOutputPath) throw new Error("expected accepted packet output");
+    await fs.writeFile(path.join(fixture.vaultRoot, accepted.acceptedOutputPath), "{\"conflict\":true}\n", "utf8");
+
+    const validation = await client.runs.validateV8Run({
+      ledgerPath: started.ledgerPath,
+    }, invocation("v8-packet-conflict-validate"));
+    expect(validation.blockingFindings.some((finding) => finding.code === "agent-output-conflict")).toBe(true);
+  });
+
   it("blocks packet-mode completion when agent outputs omit required artifact writes", async () => {
     const fixture = await makeV8Fixture();
     const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
@@ -735,18 +949,11 @@ describe("hyperresearch-codex V8 runtime", () => {
       agentMode: "packets",
     }, invocation("v8-packet-cli-fail-awaiting"));
 
-    await Promise.all(awaiting.pendingAgentJobs.map((job) => fs.writeFile(
-      path.join(fixture.vaultRoot, job.expectedOutputPath),
-      JSON.stringify({
-        jobId: job.id,
-        role: job.role,
-        status: "complete",
-        summary: job.role,
-        evidence: ["https://www.python.org/about/"],
-        sourceUrls: ["https://www.python.org/about/"],
-      }, null, 2),
-      "utf8",
-    )));
+    await Promise.all(awaiting.pendingAgentJobs.map((job) => writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job,
+      sourceUrls: ["https://www.python.org/about/"],
+    })));
 
     const failClient = createClient(createClientOptions({
       repoRoot: fixture.root,
@@ -785,17 +992,10 @@ describe("hyperresearch-codex V8 runtime", () => {
       agentMode: "packets",
     }, invocation("v8-packet-missing-url-awaiting"));
 
-    await Promise.all(awaiting.pendingAgentJobs.map((job) => fs.writeFile(
-      path.join(fixture.vaultRoot, job.expectedOutputPath),
-      JSON.stringify({
-        jobId: job.id,
-        role: job.role,
-        status: "complete",
-        summary: job.role,
-        evidence: [],
-      }, null, 2),
-      "utf8",
-    )));
+    await Promise.all(awaiting.pendingAgentJobs.map((job) => writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job,
+    })));
 
     const blocked = await client.runs.advanceV8Run({
       ledgerPath: started.ledgerPath,
@@ -827,18 +1027,11 @@ describe("hyperresearch-codex V8 runtime", () => {
       agentMode: "packets",
     }, invocation("v8-packet-bad-url-awaiting"));
 
-    await Promise.all(awaiting.pendingAgentJobs.map((job) => fs.writeFile(
-      path.join(fixture.vaultRoot, job.expectedOutputPath),
-      JSON.stringify({
-        jobId: job.id,
-        role: job.role,
-        status: "complete",
-        summary: job.role,
-        evidence: [],
-        sourceUrls: ["not-a-url"],
-      }, null, 2),
-      "utf8",
-    )));
+    await Promise.all(awaiting.pendingAgentJobs.map((job) => writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job,
+      sourceUrls: ["not-a-url"],
+    })));
 
     const blocked = await client.runs.advanceV8Run({
       ledgerPath: started.ledgerPath,

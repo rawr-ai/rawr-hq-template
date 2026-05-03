@@ -1,0 +1,29 @@
+{
+  "jobId": "02-width-sweep-2-source-analyst",
+  "role": "hyperresearch-source-analyst",
+  "logicalJobId": "02-width-sweep-2-source-analyst",
+  "attemptId": "02-width-sweep-2-source-analyst-a1",
+  "attemptNumber": 1,
+  "status": "complete",
+  "summary": "First attempt wrote source-capture and width-claim artifacts from official Python Packaging Authority sources.",
+  "evidence": [
+    "research/temp/source-capture-log.md",
+    "research/temp/claims-width.json"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/source-capture-log.md",
+      "sha256": "efdce8de7a87d23870d75bb263129be17ddbceea958227e753993a23653e7be9",
+      "summary": "Source capture audit for the width sweep."
+    },
+    {
+      "path": "research/temp/claims-width.json",
+      "sha256": "ac61985281bfedfd573713eaf8e20994c3ed39754a9d45ad871ded7f352b1ae6",
+      "summary": "Width claims linked to official sources."
+    }
+  ],
+  "sourceUrls": [
+    "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+    "https://packaging.python.org/en/latest/specifications/core-metadata/"
+  ]
+}

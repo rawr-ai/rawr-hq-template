@@ -4,7 +4,7 @@ This file records durable proof claims for the `@rawr/hyperresearch-codex` servi
 
 ## 2026-05-03 Child Agent Completion Diagnostic
 
-Status: failed, with the service proof still intact.
+Status: failed for bare `codex-rawr exec resume`, with the service proof still intact.
 
 Purpose: test whether Codex/RAWR child sessions can be spawned, waited, closed, and then observed again across `codex-rawr exec resume`, separately from Hyperresearch's disk-backed packet fan-in.
 
@@ -41,9 +41,9 @@ Scenario results:
 Conclusion:
 
 - Same-process Codex/RAWR child lifecycle is usable for immediate packet work.
-- Child handles are not durable enough across `codex-rawr exec resume` to close the clean child-completion parity gate.
+- Child handles are not durable enough across bare `codex-rawr exec resume` to claim native clean child-completion parity.
 - This does not invalidate Hyperresearch service parity evidence: packet outputs, artifact hashes, source capture, claim trace, patch log, and final validation remain disk/ledger-backed and valid.
-- `HR-CODEX-035` remains open and is now a concrete Codex/RAWR runtime ergonomics blocker, not a speculative caveat.
+- This failure evidence is superseded for `HR-CODEX-035` closure by the explicit child-resume proof. It remains the boundary evidence that bare parent resume is not enough.
 
 Non-claims:
 
@@ -80,11 +80,11 @@ Decision:
 
 - Do not refactor Hyperresearch service code around the SDK.
 - Use app-server as the preferred reproduction surface for Codex/RAWR runtime work.
-- The remaining repair belongs in Codex/RAWR child-handle descendant resume behavior rather than the Hyperresearch service, unless the parity claim is explicitly re-scoped.
+- The native runtime repair belongs in Codex/RAWR child-handle descendant resume behavior rather than Hyperresearch service design. The active Hyperresearch service claim is ledgered replacement-attempt packet fan-in for child attempts that classify non-clean; explicit child resume is runtime recovery evidence only.
 
 ## 2026-05-03 App-Server Explicit Child Resume Smoke
 
-Status: failed clean child completion, but proved explicit child resume can recover the handle from `notFound` into `pendingInit`.
+Status: passed as runtime recovery evidence; service parity closure remains the ledgered replacement-attempt path.
 
 Purpose: test the remaining app-server question: after cold parent `thread/resume`, can model-driven `resume_agent` recover the original child id before `wait` and `closeAgent`?
 
@@ -96,23 +96,52 @@ Durable evidence subset:
 - `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/summary.json`
 - `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/jsonrpc.jsonl`
 - `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/mock-responses-requests.jsonl`
-- `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/app-server.stderr.log`
 - `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/sha256sums.txt`
 
 Result:
 
-- Parent thread: `019def89-6554-79e2-a166-c143b02b009b`.
-- Original child thread: `019def89-657e-74e1-9318-a5516759fdcd`.
-- After cold parent resume, `resumeAgent` against the original child completed and returned `pending_init`.
-- `wait` then completed with `timed_out: true`; no final child output was observed by the parent.
-- `closeAgent` completed against the child and returned previous status `pending_init`.
+- Codex runtime repair commit: `24d8fb32aa fix(agent): seed resumed status from rollout`.
+- Parent thread: `019defb9-b353-7493-bca5-1d0b4e9676a2`.
+- Original child thread: `019defb9-b389-7220-8621-4fbeb3a623e2`.
+- After cold parent resume, `resumeAgent` against the original child completed and returned `completed` with `{"explicit_child_result":"ok"}`.
+- `wait` completed with `timed_out: false` and observed the same completed child status.
+- `closeAgent` completed against the child and returned previous status `completed`.
 - No `notFound` status appeared in this explicit-child-resume run.
 
 Conclusion:
 
-- App-server plus model-driven `resume_agent` can recover the original child handle far enough to avoid `notFound`.
-- It does not prove clean child completion because the resumed child did not advance to a completed final state before `wait` timed out.
-- The remaining runtime issue is now narrower: Codex/RAWR needs descendant resume to restart or complete recovered pending children reliably, or the parity claim must explicitly require replacement packet outputs instead of clean original child completion after cold resume.
+- App-server plus model-driven `resume_agent` recovers the original child handle after cold parent resume and lets parent `wait`/`closeAgent` observe clean completion.
+- This is the accepted recovery strategy for known child ids after parent resume; Hyperresearch parity does not depend on automatic descendant rehydration.
+- It does not prove automatic descendant rehydration from bare parent `thread/resume` or bare `codex-rawr exec resume`.
+
+## 2026-05-03 Replacement-Attempt Fallback Proof
+
+Status: passed.
+
+Purpose: preserve the service-level proof that a logical packet job can complete through a ledgered replacement attempt while preserving the original attempt as non-clean and still passing final validation.
+
+Durable evidence subset:
+
+- `spec/evidence/20260503T215805Z-replacement-attempt-proof/README.md`
+- `spec/evidence/20260503T215805Z-replacement-attempt-proof/ledger.json`
+- `spec/evidence/20260503T215805Z-replacement-attempt-proof/run/*.json`
+- `spec/evidence/20260503T215805Z-replacement-attempt-proof/codex-agent-packets/*.json`
+- `spec/evidence/20260503T215805Z-replacement-attempt-proof/codex-agent-results/*.json`
+- `spec/evidence/20260503T215805Z-replacement-attempt-proof/replacement/*.json`
+- `spec/evidence/20260503T215805Z-replacement-attempt-proof/sha256sums.txt`
+
+Result:
+
+- Run id: `hpr-v8-042d0668-3d5c-46c5-b9e0-5bab9ca69cf0`.
+- `02-width-sweep-1-fetcher` completed through replacement attempt `02-width-sweep-1-fetcher-a2`.
+- The ledger kept the replaced attempt `02-width-sweep-1-fetcher-a1` as `non_clean` with original classification `wait_timeout`.
+- The accepted replacement output declared assigned artifact writes and source URLs for two official Python Packaging Authority sources.
+- The light route completed, and `validate --backend real` returned `passed:true`.
+
+Conclusion:
+
+- Replacement attempts are valid service parity behavior for non-clean child attempts.
+- This bundle is not the primary `HR-CODEX-035` closure proof and does not prove bare parent resume automatic descendant rehydration.
 
 ## 2026-05-03 Codex-RAWR Full-Tier Inngest Proof
 
@@ -167,7 +196,7 @@ Source capture scope:
 Observed caveats and fixes:
 
 - The initial full-tier attempt, preserved under `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof/`, blocked on a bad source URL (`https://www.inngest.com/docs/platform/deployment`). The repaired run used fetchable official Inngest docs and passed.
-- Two child-agent completion issues were observed and repaired through replacement role packets. The ledger remained durable and resumed from packet state; classify this as Codex session/child-completion behavior, not a service fan-in defect. Clean child-session completion is unclaimed pending the diagnostic in `CHILD_AGENT_COMPLETION_CONTRACT.md`.
+- Two child-agent completion issues were observed and repaired through replacement role packets. The ledger remained durable and resumed from packet state; classify this as Codex session/child-completion behavior, not a service fan-in defect. Clean original child-session completion remains unclaimed for bare resume; future resumed coordinators use explicit child resume before fallback replacement attempts.
 - The service rejected an insufficient patch log and later accepted a repaired patch log with complete changed-line coverage.
 - The service rejected claim-trace `reportLocation` values with `:line` suffixes and accepted repaired safe relative paths.
 - A critic found that deterministic `prompt-decomposition.json` was still a placeholder. The service now writes a structured decomposition artifact with query atoms, named topics, evidence requirements, and proof boundaries; `v8-runner.test.ts` covers this.

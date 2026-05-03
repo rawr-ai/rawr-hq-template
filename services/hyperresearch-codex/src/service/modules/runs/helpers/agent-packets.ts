@@ -91,6 +91,7 @@ export async function createAgentJobs(input: {
     const jobId = `${input.step.id}-${ordinal}-${role.replace(/^hyperresearch-/, "")}`;
     const packetPath = `research/temp/codex-agent-packets/${jobId}.json`;
     const expectedOutputPath = `research/temp/codex-agent-results/${jobId}.json`;
+    const attemptId = `${jobId}-a1`;
     const assignedRequiredArtifacts = assignedArtifactsForJob({
       definition: input.definition,
       artifacts: input.step.requiredArtifacts,
@@ -100,6 +101,16 @@ export async function createAgentJobs(input: {
     });
     const job: HyperresearchAgentJob = {
       id: jobId,
+      logicalJobId: jobId,
+      attemptId,
+      attemptNumber: 1,
+      activeAttemptId: attemptId,
+      attempts: [{
+        attemptId,
+        attemptNumber: 1,
+        status: "pending",
+        createdAt: input.io.now(),
+      }],
       stepId: input.step.id,
       role,
       status: "pending",
@@ -125,6 +136,11 @@ export async function createAgentJobs(input: {
       },
       expectedOutputPath,
       outputSchema: {
+        jobId,
+        logicalJobId: jobId,
+        attemptId,
+        attemptNumber: 1,
+        replacementAttemptRule: "For a cold-resumed child handle that cannot be cleanly completed, write the replacement packet output for this same jobId with attemptNumber > 1, a new attemptId, replacesAttemptId, replacementReason, and originalAttemptClassification. Replacement success proves service fan-in only; it does not make the original attempt clean_completed.",
         status: "complete|failed",
         summary: "string",
         evidence: ["path-or-source-id"],
@@ -160,21 +176,49 @@ export async function writeFixtureAgentOutputs(input: {
   for (const job of pendingAgentJobsForStep(input.ledger, input.step.id)) {
     const output: HyperresearchAgentOutput = {
       jobId: job.id,
+      logicalJobId: job.logicalJobId ?? job.id,
+      attemptId: job.attemptId ?? `${job.id}-a1`,
+      attemptNumber: job.attemptNumber ?? 1,
       status: "complete",
       role: job.role,
       summary: `Fixture output for ${job.role}`,
       evidence: input.step.artifacts,
       sourceUrls: ["https://www.python.org/about/"],
     };
+    const content = jsonContent(output);
     await writeVaultText({
       ledger: input.ledger,
       relativePath: job.expectedOutputPath,
       io: input.io,
-      content: jsonContent(output),
+      content,
     });
     job.status = "complete";
     job.outputPath = job.expectedOutputPath;
-    job.completedAt = input.io.now();
+    job.acceptedOutputPath = job.expectedOutputPath;
+    job.acceptedOutputSha256 = input.io.sha256(content);
+    job.acceptedAt = input.io.now();
+    job.completedAt = job.acceptedAt;
+    job.acceptedAttemptId = job.attemptId;
+    job.activeAttemptId = job.attemptId;
+    job.attempts ??= [];
+    const attempt = job.attempts.find((item) => item.attemptId === job.attemptId);
+    if (attempt) {
+      attempt.status = "accepted";
+      attempt.classification = "clean_completed";
+      attempt.outputPath = job.expectedOutputPath;
+      attempt.outputSha256 = job.acceptedOutputSha256;
+      attempt.completedAt = job.acceptedAt;
+    } else {
+      job.attempts.push({
+        attemptId: job.attemptId ?? `${job.id}-a1`,
+        attemptNumber: job.attemptNumber ?? 1,
+        status: "accepted",
+        classification: "clean_completed",
+        outputPath: job.expectedOutputPath,
+        outputSha256: job.acceptedOutputSha256,
+        completedAt: job.acceptedAt,
+      });
+    }
     outputs.push(output);
   }
   return outputs;
@@ -244,12 +288,152 @@ export async function validateAgentOutputs(input: {
     outputs.push({ job, output: parsed });
   }
 
-  for (const { job } of outputs) {
+  for (const { job, output } of outputs) {
+    const outputPath = job.outputPath ?? job.expectedOutputPath;
+    const outputText = await readVaultText({
+      ledger: input.ledger,
+      relativePath: outputPath,
+      io: input.io,
+    });
+    if (outputText === null) {
+      failJob(job, `Agent output disappeared before acceptance: ${outputPath}`);
+      return null;
+    }
+    applyAttemptMetadata({ job, output, outputPath, outputSha256: input.io.sha256(outputText), now: input.io.now() });
     job.status = "complete";
-    job.outputPath = job.expectedOutputPath;
-    job.completedAt = input.io.now();
+    job.outputPath = outputPath;
+    job.acceptedOutputPath = outputPath;
+    job.acceptedOutputSha256 = input.io.sha256(outputText);
+    job.acceptedAt = input.io.now();
+    job.completedAt = job.acceptedAt;
   }
   return outputs.map((item) => item.output);
+}
+
+function outputHasAttemptMetadata(record: Record<string, unknown>) {
+  return [
+    "logicalJobId",
+    "attemptId",
+    "attemptNumber",
+    "replacesAttemptId",
+    "replacementReason",
+    "originalAttemptClassification",
+  ].some((key) => record[key] !== undefined);
+}
+
+function validateAttemptMetadata(input: {
+  job: HyperresearchAgentJob;
+  record: Record<string, unknown>;
+}) {
+  if (!outputHasAttemptMetadata(input.record)) {
+    throw new Error(`Agent output attempt metadata is required for ${input.job.id}`);
+  }
+
+  const logicalJobId = input.job.logicalJobId ?? input.job.id;
+  if (input.record.logicalJobId !== logicalJobId) {
+    throw new Error(`Agent output logicalJobId mismatch for ${input.job.id}`);
+  }
+  if (typeof input.record.attemptId !== "string" || input.record.attemptId.length === 0) {
+    throw new Error(`Agent output attemptId is required for ${input.job.id}`);
+  }
+  if (!Number.isInteger(input.record.attemptNumber) || Number(input.record.attemptNumber) < 1) {
+    throw new Error(`Agent output attemptNumber must be a positive integer for ${input.job.id}`);
+  }
+
+  if (Number(input.record.attemptNumber) === 1) {
+    if (input.record.attemptId !== (input.job.attemptId ?? `${input.job.id}-a1`)) {
+      throw new Error(`Agent output first-attempt id mismatch for ${input.job.id}`);
+    }
+    return;
+  }
+
+  if (typeof input.record.replacesAttemptId !== "string" || input.record.replacesAttemptId.length === 0) {
+    throw new Error(`Replacement output replacesAttemptId is required for ${input.job.id}`);
+  }
+  if (input.record.replacesAttemptId === input.record.attemptId) {
+    throw new Error(`Replacement output attemptId must differ from replacesAttemptId for ${input.job.id}`);
+  }
+  const replaced = input.job.attempts?.find((attempt) => attempt.attemptId === input.record.replacesAttemptId);
+  if (!replaced) {
+    throw new Error(`Replacement output replacesAttemptId does not match a known attempt for ${input.job.id}`);
+  }
+  if (replaced.status === "accepted") {
+    throw new Error(`Replacement output cannot replace an accepted attempt for ${input.job.id}`);
+  }
+  if (input.job.acceptedAttemptId && input.job.acceptedAttemptId !== input.record.attemptId) {
+    throw new Error(`Replacement output conflicts with accepted attempt for ${input.job.id}`);
+  }
+  if (typeof input.record.replacementReason !== "string" || input.record.replacementReason.length === 0) {
+    throw new Error(`Replacement output replacementReason is required for ${input.job.id}`);
+  }
+  if (typeof input.record.originalAttemptClassification !== "string" || input.record.originalAttemptClassification.length === 0) {
+    throw new Error(`Replacement output originalAttemptClassification is required for ${input.job.id}`);
+  }
+  if (input.record.originalAttemptClassification === "clean_completed") {
+    throw new Error(`Replacement output cannot classify the original attempt as clean_completed for ${input.job.id}`);
+  }
+}
+
+function applyAttemptMetadata(input: {
+  job: HyperresearchAgentJob;
+  output: HyperresearchAgentOutput;
+  outputPath: string;
+  outputSha256: string;
+  now: string;
+}) {
+  input.job.logicalJobId = input.output.logicalJobId ?? input.job.logicalJobId ?? input.job.id;
+  input.job.attemptId = input.output.attemptId ?? input.job.attemptId ?? `${input.job.id}-a1`;
+  input.job.attemptNumber = input.output.attemptNumber ?? input.job.attemptNumber ?? 1;
+  input.job.replacesAttemptId = input.output.replacesAttemptId;
+  input.job.replacementReason = input.output.replacementReason;
+  input.job.originalAttemptClassification = input.output.originalAttemptClassification;
+  input.job.activeAttemptId = input.job.attemptId;
+  input.job.acceptedAttemptId = input.job.attemptId;
+  input.job.attempts ??= [];
+
+  if (input.output.attemptNumber && input.output.attemptNumber > 1 && input.output.replacesAttemptId) {
+    const replaced = input.job.attempts.find((attempt) => attempt.attemptId === input.output.replacesAttemptId);
+    if (replaced) {
+      replaced.status = "non_clean";
+      replaced.classification = input.output.originalAttemptClassification ?? "non_clean";
+      replaced.completedAt ??= input.now;
+    } else {
+      input.job.attempts.push({
+        attemptId: input.output.replacesAttemptId,
+        attemptNumber: Math.max(1, input.output.attemptNumber - 1),
+        status: "non_clean",
+        classification: input.output.originalAttemptClassification ?? "non_clean",
+        completedAt: input.now,
+      });
+    }
+  }
+
+  const accepted = input.job.attempts.find((attempt) => attempt.attemptId === input.job.attemptId);
+  if (accepted) {
+    accepted.status = "accepted";
+    accepted.outputPath = input.outputPath;
+    accepted.outputSha256 = input.outputSha256;
+    accepted.completedAt = input.now;
+    accepted.replacesAttemptId = input.output.replacesAttemptId;
+    accepted.replacementReason = input.output.replacementReason;
+    accepted.classification = input.output.attemptNumber && input.output.attemptNumber > 1
+      ? "replacement_succeeded"
+      : "clean_completed";
+  } else {
+    input.job.attempts.push({
+      attemptId: input.job.attemptId,
+      attemptNumber: input.job.attemptNumber,
+      status: "accepted",
+      classification: input.output.attemptNumber && input.output.attemptNumber > 1
+        ? "replacement_succeeded"
+        : "clean_completed",
+      replacesAttemptId: input.output.replacesAttemptId,
+      replacementReason: input.output.replacementReason,
+      outputPath: input.outputPath,
+      outputSha256: input.outputSha256,
+      completedAt: input.now,
+    });
+  }
 }
 
 function parseAgentOutput(input: {
@@ -270,6 +454,7 @@ function parseAgentOutput(input: {
   if (record.jobId !== input.job.id) {
     throw new Error(`Agent output jobId mismatch for ${input.job.id}`);
   }
+  validateAttemptMetadata({ job: input.job, record });
   if (record.role !== input.job.role) {
     throw new Error(`Agent output role mismatch for ${input.job.id}`);
   }

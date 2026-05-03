@@ -3,18 +3,18 @@
   "surface": "codex app-server",
   "transport": "stdio",
   "threadResumeMode": "cold_resume_explicit_child_resume",
-  "passed": false,
-  "classification": "explicit_child_resume_recovered_handle_wait_timed_out",
+  "passed": true,
+  "classification": "explicit_child_resume_recovered_clean_completion",
   "rawJsonRpcLog": "explicit-child-resume/jsonrpc.jsonl",
   "collabEventsObserved": true,
   "directChildLifecycleApiObserved": false,
-  "parentThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+  "parentThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
   "originalChildThreadIds": [
-    "019def89-657e-74e1-9318-a5516759fdcd"
+    "019defb9-b389-7220-8621-4fbeb3a623e2"
   ],
   "threadReadIncludedTurns": true,
   "loadedThreadIdsAfterResume": [
-    "019def89-6554-79e2-a166-c143b02b009b"
+    "019defb9-b353-7493-bca5-1d0b4e9676a2"
   ],
   "collabToolsObserved": [
     "resumeAgent",
@@ -26,22 +26,30 @@
   ],
   "toolOutputs": {
     "explicit-spawn-call-1": {
-      "agent_id": "019def89-657e-74e1-9318-a5516759fdcd",
-      "nickname": "Laplace"
+      "agent_id": "019defb9-b389-7220-8621-4fbeb3a623e2",
+      "nickname": "Nietzsche"
     },
     "explicit-resume-call-1": {
-      "status": "pending_init"
+      "status": {
+        "completed": "{\"explicit_child_result\":\"ok\"}"
+      }
     },
     "explicit-wait-call-1": {
-      "status": {},
-      "timed_out": true
+      "status": {
+        "019defb9-b389-7220-8621-4fbeb3a623e2": {
+          "completed": "{\"explicit_child_result\":\"ok\"}"
+        }
+      },
+      "timed_out": false
     },
     "explicit-close-call-1": {
-      "previous_status": "pending_init"
+      "previous_status": {
+        "completed": "{\"explicit_child_result\":\"ok\"}"
+      }
     }
   },
   "resumeRecoveredHandle": true,
-  "waitObservedFinal": false,
+  "waitObservedFinal": true,
   "closeAddressedChild": true,
   "notFoundStatuses": [],
   "summary": "explicit-child-resume/summary.json"

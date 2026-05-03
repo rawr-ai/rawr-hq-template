@@ -216,6 +216,58 @@ export async function validateHyperresearchRunIntegrity(input: {
         message: job.failure ?? `Agent job failed: ${job.id}`,
       });
     }
+    if (job.status === "complete" && job.acceptedOutputPath && job.acceptedOutputSha256) {
+      const acceptedOutput = await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, job.acceptedOutputPath));
+      if (acceptedOutput === null) {
+        findings.push({
+          severity: "blocking",
+          code: "missing-agent-output",
+          stepId: job.stepId,
+          artifact: job.acceptedOutputPath,
+          message: `Accepted agent output is missing: ${job.acceptedOutputPath}`,
+        });
+      } else {
+        const actualSha = input.io.sha256(acceptedOutput);
+        if (actualSha !== job.acceptedOutputSha256) {
+          findings.push({
+            severity: "blocking",
+            code: "agent-output-conflict",
+            stepId: job.stepId,
+            artifact: job.acceptedOutputPath,
+            message: `Accepted agent output hash changed for ${job.id}`,
+          });
+        }
+      }
+    }
+    if (job.status === "complete") {
+      if (!job.acceptedAttemptId || !job.acceptedOutputPath || !job.acceptedOutputSha256) {
+        findings.push({
+          severity: "blocking",
+          code: "missing-agent-output-acceptance",
+          stepId: job.stepId,
+          message: `Completed agent job is missing accepted attempt metadata: ${job.id}`,
+        });
+      }
+      const acceptedAttempt = job.attempts?.find((attempt) => attempt.attemptId === job.acceptedAttemptId);
+      if (!acceptedAttempt) {
+        findings.push({
+          severity: "blocking",
+          code: "missing-agent-output-acceptance",
+          stepId: job.stepId,
+          message: `Completed agent job is missing accepted attempt record: ${job.id}`,
+        });
+      } else if (acceptedAttempt.replacesAttemptId) {
+        const replacedAttempt = job.attempts?.find((attempt) => attempt.attemptId === acceptedAttempt.replacesAttemptId);
+        if (!replacedAttempt || replacedAttempt.status !== "non_clean" || replacedAttempt.classification === "clean_completed") {
+          findings.push({
+            severity: "blocking",
+            code: "invalid-replacement-attempt",
+            stepId: job.stepId,
+            message: `Replacement attempt for ${job.id} does not preserve a non-clean replaced attempt`,
+          });
+        }
+      }
+    }
   }
 
   for (const disposition of input.ledger.reviewDispositions ?? []) {

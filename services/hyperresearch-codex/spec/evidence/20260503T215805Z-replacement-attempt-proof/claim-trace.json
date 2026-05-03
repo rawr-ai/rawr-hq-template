@@ -1,0 +1,49 @@
+{
+  "claims": [
+    {
+      "claim": "Installers rely on pyproject.toml project metadata when it is statically declared by the project.",
+      "reportLocation": "research/notes/final_report_what-do-python-packaging-standards-require-insta.md",
+      "sources": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/pyproject-toml/"
+        }
+      ],
+      "evidence": [
+        "research/temp/claims-width.json"
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    },
+    {
+      "claim": "Distribution core metadata defines fields that installers and indexes consume after a project is built.",
+      "reportLocation": "research/notes/final_report_what-do-python-packaging-standards-require-insta.md",
+      "sources": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/core-metadata/"
+        }
+      ],
+      "evidence": [
+        "research/temp/claims-width.json"
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    },
+    {
+      "claim": "Compatibility checks should distinguish source project metadata from built distribution metadata.",
+      "reportLocation": "research/notes/final_report_what-do-python-packaging-standards-require-insta.md",
+      "sources": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/pyproject-toml/"
+        },
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/core-metadata/"
+        }
+      ],
+      "evidence": [
+        "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+      ],
+      "confidence": "medium",
+      "reviewerDisposition": "supported"
+    }
+  ]
+}

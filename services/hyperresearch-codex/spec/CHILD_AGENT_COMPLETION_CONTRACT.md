@@ -4,7 +4,7 @@ This contract separates Hyperresearch service fan-in from Codex/RAWR child-sessi
 
 The current Hyperresearch service proof is file and ledger based: packet files are emitted, packet output files are reread from disk, artifact writes are hash-checked, source captures are ledgered, claim traces and patch logs are validated, and final `validate` gates acceptance. The stuck wait behavior observed in the runtime proofs did not break those service gates.
 
-Clean child-session completion remains unclaimed until a focused Codex/RAWR diagnostic proves that child sessions reliably reach a final state, the parent observes wait and close completion, and the same behavior survives interruption/resume. Replacement packet outputs may prove service durability; they do not prove the original child handle completed cleanly.
+Bare parent-resume child-session completion remains unclaimed: a resumed parent cannot assume old child handles are usable. The accepted Hyperresearch lifecycle behavior is explicit child resume for known child ids after parent resume, followed by wait and close. If explicit child resume still cannot cleanly complete a child attempt, the service falls back to replacement-attempt fan-in: the original attempt stays non-clean and the same logical packet job may complete only through a ledgered replacement packet output that passes all service gates. Replacement packet outputs prove service durability; they do not prove the original child handle completed cleanly.
 
 ## Observed Diagnostic Result
 
@@ -16,20 +16,30 @@ Result: failed for clean resume lifecycle.
 - `bad-output` classified correctly as a non-clean artifact failure despite successful child lifecycle.
 - `multi-resume-happy` failed: after `codex-rawr exec resume`, the resumed parent could not wait/close the child ids spawned before resume. All three resumed `wait` and `close_agent` calls returned `not_found`, while the child output files existed and hashed.
 
-This keeps `HR-CODEX-035` open. The service packet/ledger proof remains valid, but clean child-session completion across `exec resume` is not proven.
+This remains the boundary evidence that bare `exec resume` is insufficient. The service packet/ledger proof remains valid.
 
-The paired native-surface review in `NATIVE_CODEX_SURFACE_REVIEW.md` found no confirmed replacement yet. The TypeScript Codex SDK wraps `codex exec`; raw OpenAI SDKs are a different runtime; app-server is the right diagnostic surface because it exposes thread start/resume, live reconnect, thread read/list APIs, streamed item events, and collaborative-agent lifecycle items. The app-server smoke preserved under `spec/evidence/20260503T201420Z-app-server-child-lifecycle/` reproduced the resume failure in structured form: after cold parent `thread/resume`, `wait` and `closeAgent` against the original child id failed with child status `notFound`. The explicit-child-resume smoke preserved under `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/` recovered the original child handle to `pendingInit`, but `wait` timed out and clean child completion remained unproven.
+The paired native-surface review in `NATIVE_CODEX_SURFACE_REVIEW.md` confirmed that SDK/app-server surfaces should not replace the Hyperresearch service loop. The TypeScript Codex SDK wraps `codex exec`; raw OpenAI SDKs are a different runtime; app-server is diagnostic/recovery evidence because it exposes thread start/resume, live reconnect, thread read/list APIs, streamed item events, and collaborative-agent lifecycle items. The app-server smoke preserved under `spec/evidence/20260503T201420Z-app-server-child-lifecycle/` reproduced the resume failure in structured form: after cold parent `thread/resume`, `wait` and `closeAgent` against the original child id failed with child status `notFound`. The explicit-child-resume evidence under `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/` now proves the recovery path after the Codex status-seeding fix: `resume_agent` recovers the original child to `Completed`, `wait` returns without timeout, and `closeAgent` observes previous status `Completed`.
 
-## Next Implementation Packet
+## Operational Rule
 
-The next child-lifecycle implementation session should fix/prove durable child handles across resume in Codex/RAWR runtime, or explicitly re-scope the claim around replacement packet outputs after cold resume. Hooks are separate follow-up work. MCP is parked; do not install `hyperresearch[mcp]`, register MCP, test MCP tools, or design MCP parity while executing this child track.
+After cold parent resume, the coordinator must explicitly rehydrate known open or uncertain child attempts before completing the logical packet job:
+
+1. Resume the parent thread/session and inspect the logical packet jobs still awaiting output.
+2. Explicitly call `resume_agent` for known open child ids.
+3. Then call `wait`.
+4. Then call `close_agent` / `closeAgent`.
+5. If explicit child resume still cannot cleanly complete an attempt, record the original attempt as non-clean and use a replacement packet attempt for the same logical job.
+6. Require any replacement packet output to include attempt id/number, replaced attempt id, replacement reason, and original attempt classification.
+7. Accept the logical job only after output, artifact writes, source URLs, claim trace, patch log, and final validation pass.
+
+Do not claim that bare parent resume automatically rehydrates descendants, and do not upgrade the original attempt to `clean_completed`. Hooks are separate follow-up work. MCP is parked; do not install `hyperresearch[mcp]`, register MCP, test MCP tools, or design MCP parity while executing this child track.
 
 The app-server diagnostic has two decisive resume cases:
 
 - `app-server-live-reconnect`: keep the same app-server process loaded, connect a second client, call `thread/resume` on the parent, and require wait/close against the original child ids. This remains useful for UI/reconnect ergonomics but does not by itself prove durable child handles after process restart.
 - `app-server-cold-resume-direct`: stop app-server, restart it with the same `CODEX_HOME`, call `thread/resume` on the parent, and require wait/close against the original child ids. This has failed in the preserved app-server smoke.
 
-`app-server-cold-resume-explicit-child-resume` has been run. It proved recoverability from `notFound` into `pendingInit`, not clean completion. Passing future evidence must show the recovered original child reaches `Completed` and the parent observes a non-timeout wait before close.
+`app-server-cold-resume-explicit-child-resume` has been run and passes after the runtime status-seeding fix. Treat it as runtime recovery evidence for known child ids after parent resume. Hyperresearch service plus packet-orchestration parity closes through replacement-attempt fan-in for child attempts that classify non-clean.
 
 Start from the template repo:
 
@@ -429,21 +439,27 @@ The diagnostic fails or remains open if:
 
 ## Closure Rule
 
-If a future rerun of this diagnostic passes, close `HR-CODEX-035` and the active Hyperresearch Codex parity claim is clean/green/done for the service plus Codex packet orchestration path. Remaining work is release hygiene unless hooks, MCP, production Inngest readiness, or global plugin drift are explicitly promoted as separate tracks.
+`HR-CODEX-035` is closed for Hyperresearch service plus Codex packet-orchestration parity by ledgered replacement attempts after a child attempt classifies non-clean. Explicit child resume after parent resume is runtime recovery evidence, but native clean child-handle resume remains unclaimed. A cold-resumed pending child may finish as `replacement_succeeded`; that classification is service parity evidence only. It never upgrades the original child attempt to `clean_completed`.
 
-If this diagnostic fails, keep `HR-CODEX-035` open. Do not waive a non-clean child lifecycle result into full parity. Preserve the service proof as valid if packet outputs, artifact hashes, source capture, claim trace, patch log, and `validate` remain green.
+Required replacement evidence fields:
+
+- `originalAttemptId`
+- `originalChildThreadId` when known
+- `originalObservedState`
+- `replacementAttemptId`
+- `replacementChildThreadId` when known
+- `replacesAttemptId`
+- `classification: "replacement_succeeded"`
+- `serviceValidationPassed: true`
+- `notNativeChildResumeEvidence: true`
+
+Reopen `HR-CODEX-035` if replacement packet outputs no longer complete the same logical job through validated artifacts, source capture, claim trace, patch log, and final validation. Explicit child resume regressions belong to the Codex/RAWR runtime track unless they prevent replacement-attempt classification or packet completion. Replacement packet outputs must not be used to overclaim native clean original-child completion.
 
 ## Hyperresearch Runtime Boundary
 
-Missing Codex `SubagentStop`-style hooks are not a service defect and should not be papered over as hook parity. Hyperresearch runs rely on the packet output contract and final service validation for artifact integrity. Child lifecycle proof is a separate runtime ergonomics gate for parent wait/close behavior.
+Missing Codex `SubagentStop`-style hooks are not a service defect and should not be papered over as hook parity. Hyperresearch runs rely on the packet output contract and final service validation for artifact integrity. Native child lifecycle proof is a separate runtime ergonomics gate for parent wait/close behavior.
 
-The first diagnostic evidence should stay outside service source and under `spec/evidence/`. Do not extend the service ledger just to record the diagnostic.
-
-Service hardening may follow only if the diagnostic reveals a concrete service-relevant need:
-
-- record completed packet output hashes or observed child state on existing agent jobs;
-- add narrow attempt/replacement metadata such as `attempt`, `replacesJobId`, `replacedByJobId`, or `observedChildState` to existing durable job entities;
-- add a truncated packet-output test before deciding whether child writers need temp-file plus rename semantics.
+Diagnostic evidence should stay outside service source and under `spec/evidence/`. The service ledger records only the Hyperresearch-relevant result: logical packet job attempts, non-clean original classifications, accepted replacement attempts, accepted output hashes, and validation state.
 
 Any service hardening must stay inside the existing topology:
 

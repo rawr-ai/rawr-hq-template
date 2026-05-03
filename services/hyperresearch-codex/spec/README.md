@@ -15,6 +15,7 @@ The local package owns the reusable control-plane substrate: durable ledgers, fr
 ## Packet Files
 
 - `REMAINDER_PLAN.md`: service-local working plan, implementation phases, proof ladder, and current claim boundaries.
+- `REPLACEMENT_ATTEMPT_CLOSURE_PLAN.md`: service closure contract for ledgered replacement attempts when a child handle cannot be counted as cleanly completed.
 - `INTEGRATION_SPEC.md`: package, CLI, and downstream sync boundaries.
 - `PARITY_MATRIX.md`: Claude constructs and Codex adapter decisions.
 - `CHILD_AGENT_COMPLETION_CONTRACT.md`: child-session lifecycle evidence contract and stuck-wait diagnostic boundary.
@@ -34,4 +35,8 @@ Before starting a new design or implementation loop, update this packet if the l
 
 ## Current Claim Boundary
 
-The repaired full-tier Inngest proof is green: all 16 V8 steps, 20 role-agent packet jobs, 16 official source captures, critic/patch/polish/readability gates, backend sync/lint/export, and `validate --backend real` passed. The child-agent diagnostic failed the `codex-rawr exec resume` case: same-process child lifecycle works, but resumed parents cannot wait/close child handles spawned before resume. App-server smoke reproduced the same cold-resume failure with structured `notFound`; explicit `resume_agent` recovered the child handle to `pendingInit` but wait timed out. Active Hyperresearch Codex parity is therefore not clean/green/done for the service plus Codex packet orchestration path until `HR-CODEX-035` is resolved or explicitly re-scoped. Hooks, parked MCP work, production Inngest readiness, and unrelated global plugin drift remain separate tracks unless explicitly promoted.
+The repaired full-tier Inngest proof is green: all 16 V8 steps, 20 role-agent packet jobs, 16 official source captures, critic/patch/polish/readability gates, backend sync/lint/export, and `validate --backend real` passed.
+
+Active Hyperresearch Codex parity is clean for the service plus packet-orchestration path under explicit child-resume recovery: after parent resume, the coordinator explicitly resumes known child ids before wait/close. If explicit child resume cannot cleanly complete an attempt, the attempt remains non-clean and the same logical packet job may complete through a fallback replacement attempt whose packet output, artifact writes, source URLs, claim trace, patch log, and final validation all pass. Bare parent resume automatic descendant rehydration remains unclaimed.
+
+Automatic descendant rehydration is not part of this parity claim. The diagnostics show same-process children work, bare parent resume is insufficient, and app-server explicit `resume_agent` evidence cleanly recovers known child ids. Hooks are the next separate track, MCP remains parked, and production Inngest readiness plus unrelated global plugin drift remain separate unless explicitly promoted.

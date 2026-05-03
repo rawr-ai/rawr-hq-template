@@ -1,0 +1,57 @@
+{
+  "jobId": "02-width-sweep-2-source-analyst",
+  "role": "hyperresearch-source-analyst",
+  "canonicalQuery": "What do Python packaging standards require installers to understand about pyproject.toml metadata? Use official Python Packaging Authority sources.",
+  "pipelinePosition": "Step 02-width-sweep (Width sweep and source capture) in the Hyperresearch V8 route.",
+  "stepId": "02-width-sweep",
+  "stepTitle": "Width sweep and source capture",
+  "vaultTag": "what-do-python-packaging-standards-require-insta",
+  "inputArtifacts": [],
+  "stepRequiredArtifacts": [
+    "research/temp/search-plan.md",
+    "research/temp/scored-urls.md",
+    "research/temp/source-capture-log.md",
+    "research/temp/claims-width.json"
+  ],
+  "requiredArtifacts": [
+    "research/temp/source-capture-log.md",
+    "research/temp/claims-width.json"
+  ],
+  "artifactContract": {
+    "assignedRequiredArtifacts": [
+      "research/temp/source-capture-log.md",
+      "research/temp/claims-width.json"
+    ],
+    "stepRequiredArtifacts": [
+      "research/temp/search-plan.md",
+      "research/temp/scored-urls.md",
+      "research/temp/source-capture-log.md",
+      "research/temp/claims-width.json"
+    ],
+    "fanInRule": "The parent service validates artifactWrites across every job for this step. Write or verify your assignedRequiredArtifacts; do not invent substitutes for another job's assigned artifacts unless you are explicitly carrying that artifact forward."
+  },
+  "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+  "outputSchema": {
+    "jobId": "02-width-sweep-2-source-analyst",
+    "logicalJobId": "02-width-sweep-2-source-analyst",
+    "attemptId": "02-width-sweep-2-source-analyst-a1",
+    "attemptNumber": 1,
+    "replacementAttemptRule": "For a cold-resumed child handle that cannot be cleanly completed, write the replacement packet output for this same jobId with attemptNumber > 1, a new attemptId, replacesAttemptId, replacementReason, and originalAttemptClassification. Replacement success proves service fan-in only; it does not make the original attempt clean_completed.",
+    "status": "complete|failed",
+    "summary": "string",
+    "evidence": [
+      "path-or-source-id"
+    ],
+    "artifactWrites": [
+      {
+        "path": "research/temp/example-artifact.json",
+        "sha256": "sha256-of-file-content",
+        "summary": "what this required artifact supports; include carried-forward artifacts too"
+      }
+    ],
+    "sourceUrls": [
+      "https://example.com/source-url"
+    ]
+  },
+  "failureBehavior": "Write the expected output path with status=failed and a failure reason if the role cannot complete."
+}
