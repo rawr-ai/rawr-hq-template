@@ -1,10 +1,10 @@
-# Hyperresearch Replacement-Attempt Closure Plan
+# Hyperresearch Replacement-Attempt Fallback Plan
 
-This document records the accepted Hyperresearch service and packet-orchestration closure for non-clean cold-resumed child attempts. It supersedes prior ambiguity about fixing native child-handle resume inside the Hyperresearch service path.
+This document records the fallback Hyperresearch service and packet-orchestration behavior for non-clean cold-resumed child attempts. It supersedes prior ambiguity about treating replacement attempts as the primary child-lifecycle closure.
 
 ## Decision
 
-Hyperresearch Codex parity closes at the service and packet-orchestration boundary through ledgered replacement attempts when a runtime child handle remains non-clean or unavailable:
+`HR-CODEX-035` closes through the explicit child-resume runtime strategy: after parent resume, the coordinator explicitly resumes known child ids, then waits and closes them. Replacement attempts remain fallback hardening when that explicit recovery path still cannot cleanly complete a child attempt:
 
 - The service treats a cold-resumed child handle that cannot be cleanly completed as a non-clean runtime attempt.
 - The same logical packet job may be completed by a replacement attempt when the replacement writes the declared packet output and required artifacts.
@@ -18,7 +18,7 @@ This keeps the service contract aligned with how Hyperresearch actually consumes
 - MCP parity. MCP remains parked because the direct Hyperresearch CLI backend is still the authoritative loop.
 - Production Inngest readiness.
 - Unrelated downstream global plugin drift.
-- Automatic Codex descendant rehydration unless future evidence shows explicit child resume is insufficient.
+- Automatic Codex descendant rehydration from bare parent resume.
 
 ## Implementation Contract
 

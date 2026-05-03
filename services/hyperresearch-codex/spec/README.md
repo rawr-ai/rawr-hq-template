@@ -15,7 +15,7 @@ The local package owns the reusable control-plane substrate: durable ledgers, fr
 ## Packet Files
 
 - `REMAINDER_PLAN.md`: service-local working plan, implementation phases, proof ladder, and current claim boundaries.
-- `REPLACEMENT_ATTEMPT_CLOSURE_PLAN.md`: service closure contract for ledgered replacement attempts when a child handle cannot be counted as cleanly completed.
+- `REPLACEMENT_ATTEMPT_CLOSURE_PLAN.md`: fallback contract for ledgered replacement attempts when explicit child resume cannot cleanly complete a child handle.
 - `INTEGRATION_SPEC.md`: package, CLI, and downstream sync boundaries.
 - `PARITY_MATRIX.md`: Claude constructs and Codex adapter decisions.
 - `CHILD_AGENT_COMPLETION_CONTRACT.md`: child-session lifecycle evidence contract and stuck-wait diagnostic boundary.

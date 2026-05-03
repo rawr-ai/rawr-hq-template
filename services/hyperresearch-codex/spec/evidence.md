@@ -80,11 +80,11 @@ Decision:
 
 - Do not refactor Hyperresearch service code around the SDK.
 - Use app-server as the preferred reproduction surface for Codex/RAWR runtime work.
-- The native runtime repair belongs in Codex/RAWR child-handle descendant resume behavior rather than Hyperresearch service design. The active Hyperresearch service claim is ledgered replacement-attempt packet fan-in for child attempts that classify non-clean; explicit child resume is runtime recovery evidence only.
+- The native runtime repair belongs in Codex/RAWR child-handle descendant resume behavior rather than Hyperresearch service design. The active Hyperresearch service plus packet-orchestration claim is parent resume plus explicit child resume for known child ids before wait/close; replacement-attempt packet fan-in remains fallback hardening for child attempts that still classify non-clean.
 
 ## 2026-05-03 App-Server Explicit Child Resume Smoke
 
-Status: passed as runtime recovery evidence; service parity closure remains the ledgered replacement-attempt path.
+Status: passed as the accepted child-resume closure evidence for known child ids after parent resume.
 
 Purpose: test the remaining app-server question: after cold parent `thread/resume`, can model-driven `resume_agent` recover the original child id before `wait` and `closeAgent`?
 
@@ -140,7 +140,7 @@ Result:
 
 Conclusion:
 
-- Replacement attempts are valid service parity behavior for non-clean child attempts.
+- Replacement attempts are valid fallback service durability behavior for non-clean child attempts.
 - This bundle is not the primary `HR-CODEX-035` closure proof and does not prove bare parent resume automatic descendant rehydration.
 
 ## 2026-05-03 Codex-RAWR Full-Tier Inngest Proof

@@ -113,4 +113,4 @@ Observed outcomes:
 
 Caveat:
 
-- Parent waits around readability repair remained stuck after artifacts existed and were hash-valid. The service gates passed, but normal child completion for the repair pass was not proven in this historical run. Later `HR-CODEX-035` handling closes the Hyperresearch service path through ledgered replacement attempts when a child attempt classifies non-clean; explicit child resume remains runtime recovery evidence, not the service parity claim.
+- Parent waits around readability repair remained stuck after artifacts existed and were hash-valid. The service gates passed, but normal child completion for the repair pass was not proven in this historical run. Later `HR-CODEX-035` handling closes the Hyperresearch service plus packet-orchestration path through explicit child resume for known child ids after parent resume; ledgered replacement attempts remain fallback hardening when a child attempt still classifies non-clean.

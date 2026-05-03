@@ -1,14 +1,14 @@
 # App-Server Explicit Child Resume Evidence
 
-Status: passed as runtime recovery evidence. It does not close Hyperresearch service parity by native child-handle resume.
+Status: passed as the accepted child-resume closure evidence for known child ids after parent resume.
 
 Purpose: preserve native Codex app-server evidence for explicit child recovery. The scenario starts a parent, spawns a child, stops the app-server, restarts it with the same `CODEX_HOME`, resumes the parent, explicitly resumes the original child id, then waits and closes the child.
 
 ## Boundary
 
-This evidence does not prove automatic descendant rehydration from bare parent `thread/resume` or bare `codex-rawr exec resume`. It also does not replace the Hyperresearch service closure strategy, which is ledgered replacement packet attempts for cold-resumed pending children.
+This evidence does not prove automatic descendant rehydration from bare parent `thread/resume` or bare `codex-rawr exec resume`. It is the accepted runtime recovery strategy for known child ids after parent resume. Ledgered replacement packet attempts remain fallback hardening for explicit child-resume attempts that still classify non-clean.
 
-If a future Codex/RAWR runtime track chooses explicit child recovery, the observed sequence is:
+The observed sequence is:
 
 1. Resume the parent thread/session.
 2. Explicitly call `resume_agent` for known open child ids.
@@ -45,4 +45,4 @@ The first run of this harness recovered the child handle only to `pending_init`;
 
 ## Claim
 
-This bundle proves explicit runtime recovery for known child ids after parent resume. It does not prove that bare parent resume makes old child handles usable, and it does not replace the Hyperresearch service closure through ledgered replacement attempts for non-clean child attempts.
+This bundle proves explicit runtime recovery for known child ids after parent resume. It does not prove that bare parent resume makes old child handles usable. Ledgered replacement attempts remain fallback service hardening for non-clean child attempts.

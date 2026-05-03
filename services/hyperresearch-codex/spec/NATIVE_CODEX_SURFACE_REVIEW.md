@@ -161,7 +161,7 @@ Each app-server scenario manifest should add these fields:
 }
 ```
 
-The app-server evidence is now stronger than the Bash watchdog for the cold-resume lifecycle boundary. It should be used as the preferred regression harness when changing Codex/RAWR runtime descendant resume behavior. The failed `exec resume` diagnostic remains accepted evidence that bare parent resume is insufficient. Hyperresearch service plus packet-orchestration parity closes through ledgered replacement attempts for non-clean child attempts; explicit child resume is runtime recovery evidence, not the service closure claim.
+The app-server evidence is now stronger than the Bash watchdog for the cold-resume lifecycle boundary. It should be used as the preferred regression harness when changing Codex/RAWR runtime descendant resume behavior. The failed `exec resume` diagnostic remains accepted evidence that bare parent resume is insufficient. Hyperresearch service plus packet-orchestration parity closes through parent resume plus explicit child resume for known child ids; ledgered replacement attempts remain fallback hardening for child attempts that still classify non-clean.
 
 ## Source Pointers
 

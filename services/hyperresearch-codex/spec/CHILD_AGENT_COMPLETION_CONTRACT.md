@@ -39,7 +39,7 @@ The app-server diagnostic has two decisive resume cases:
 - `app-server-live-reconnect`: keep the same app-server process loaded, connect a second client, call `thread/resume` on the parent, and require wait/close against the original child ids. This remains useful for UI/reconnect ergonomics but does not by itself prove durable child handles after process restart.
 - `app-server-cold-resume-direct`: stop app-server, restart it with the same `CODEX_HOME`, call `thread/resume` on the parent, and require wait/close against the original child ids. This has failed in the preserved app-server smoke.
 
-`app-server-cold-resume-explicit-child-resume` has been run and passes after the runtime status-seeding fix. Treat it as runtime recovery evidence for known child ids after parent resume. Hyperresearch service plus packet-orchestration parity closes through replacement-attempt fan-in for child attempts that classify non-clean.
+`app-server-cold-resume-explicit-child-resume` has been run and passes after the runtime status-seeding fix. Treat it as the accepted recovery evidence for known child ids after parent resume. Hyperresearch service plus packet-orchestration parity uses replacement-attempt fan-in only as fallback when explicit child resume still leaves an attempt non-clean.
 
 Start from the template repo:
 
@@ -439,7 +439,7 @@ The diagnostic fails or remains open if:
 
 ## Closure Rule
 
-`HR-CODEX-035` is closed for Hyperresearch service plus Codex packet-orchestration parity by ledgered replacement attempts after a child attempt classifies non-clean. Explicit child resume after parent resume is runtime recovery evidence, but native clean child-handle resume remains unclaimed. A cold-resumed pending child may finish as `replacement_succeeded`; that classification is service parity evidence only. It never upgrades the original child attempt to `clean_completed`.
+`HR-CODEX-035` is closed for Hyperresearch service plus Codex packet-orchestration parity by explicit child resume after parent resume: known child ids are explicitly resumed, then waited and closed, as proven by the app-server evidence after Codex commit `24d8fb32aa`. Bare parent resume automatic descendant rehydration remains unclaimed. If explicit child resume still leaves an attempt non-clean, a cold-resumed pending child may finish as `replacement_succeeded`; that classification is fallback service durability evidence only. It never upgrades the original child attempt to `clean_completed`.
 
 Required replacement evidence fields:
 
@@ -453,7 +453,7 @@ Required replacement evidence fields:
 - `serviceValidationPassed: true`
 - `notNativeChildResumeEvidence: true`
 
-Reopen `HR-CODEX-035` if replacement packet outputs no longer complete the same logical job through validated artifacts, source capture, claim trace, patch log, and final validation. Explicit child resume regressions belong to the Codex/RAWR runtime track unless they prevent replacement-attempt classification or packet completion. Replacement packet outputs must not be used to overclaim native clean original-child completion.
+Reopen `HR-CODEX-035` if explicit child resume for known child ids after parent resume no longer reaches clean wait/close evidence, or if replacement packet outputs no longer complete the same logical job through validated artifacts, source capture, claim trace, patch log, and final validation when used as fallback. Replacement packet outputs must not be used to overclaim clean original-child completion.
 
 ## Hyperresearch Runtime Boundary
 
