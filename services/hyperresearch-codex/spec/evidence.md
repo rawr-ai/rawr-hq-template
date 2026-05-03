@@ -82,6 +82,38 @@ Decision:
 - Use app-server as the preferred reproduction surface for Codex/RAWR runtime work.
 - The remaining repair belongs in Codex/RAWR child-handle descendant resume behavior rather than the Hyperresearch service, unless the parity claim is explicitly re-scoped.
 
+## 2026-05-03 App-Server Explicit Child Resume Smoke
+
+Status: failed clean child completion, but proved explicit child resume can recover the handle from `notFound` into `pendingInit`.
+
+Purpose: test the remaining app-server question: after cold parent `thread/resume`, can model-driven `resume_agent` recover the original child id before `wait` and `closeAgent`?
+
+Durable evidence subset:
+
+- `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/manifest.json`
+- `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/harness/app-server-cold-resume-explicit-child-resume-harness.mjs`
+- `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/prompts/*.md`
+- `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/summary.json`
+- `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/jsonrpc.jsonl`
+- `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/mock-responses-requests.jsonl`
+- `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/app-server.stderr.log`
+- `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/sha256sums.txt`
+
+Result:
+
+- Parent thread: `019def89-6554-79e2-a166-c143b02b009b`.
+- Original child thread: `019def89-657e-74e1-9318-a5516759fdcd`.
+- After cold parent resume, `resumeAgent` against the original child completed and returned `pending_init`.
+- `wait` then completed with `timed_out: true`; no final child output was observed by the parent.
+- `closeAgent` completed against the child and returned previous status `pending_init`.
+- No `notFound` status appeared in this explicit-child-resume run.
+
+Conclusion:
+
+- App-server plus model-driven `resume_agent` can recover the original child handle far enough to avoid `notFound`.
+- It does not prove clean child completion because the resumed child did not advance to a completed final state before `wait` timed out.
+- The remaining runtime issue is now narrower: Codex/RAWR needs descendant resume to restart or complete recovered pending children reliably, or the parity claim must explicitly require replacement packet outputs instead of clean original child completion after cold resume.
+
 ## 2026-05-03 Codex-RAWR Full-Tier Inngest Proof
 
 Status: passed, with bounded runtime caveats.

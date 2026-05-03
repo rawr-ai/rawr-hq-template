@@ -1,0 +1,299 @@
+{
+  "ok": true,
+  "passed": false,
+  "classification": "explicit_child_resume_recovered_handle_wait_timed_out",
+  "root": "/var/folders/jm/kcfb9h7d4rd12343rb95ddsc0000gn/T/codex-appserver-explicit-child-EgAR0f",
+  "codexHome": "/var/folders/jm/kcfb9h7d4rd12343rb95ddsc0000gn/T/codex-appserver-explicit-child-EgAR0f/codex-home",
+  "cwd": "/var/folders/jm/kcfb9h7d4rd12343rb95ddsc0000gn/T/codex-appserver-explicit-child-EgAR0f/workspace",
+  "serverUri": "http://127.0.0.1:65395",
+  "initialized": {
+    "userAgent": "rawr_explicit_child_resume_harness/0.126.0-alpha.3 (Mac OS 15.6.1; arm64) WarpTerminal/v0.2026.04.08.08.36.stable_05 (rawr_explicit_child_resume_harness; 0.0.0)",
+    "codexHome": "/private/var/folders/jm/kcfb9h7d4rd12343rb95ddsc0000gn/T/codex-appserver-explicit-child-EgAR0f/codex-home",
+    "platformFamily": "unix",
+    "platformOs": "macos"
+  },
+  "threadId": "019def89-6554-79e2-a166-c143b02b009b",
+  "childThreadId": "019def89-657e-74e1-9318-a5516759fdcd",
+  "turnId": "019def89-6567-71a3-b153-c3ef526e061f",
+  "resumeTurnId": "019def89-6f89-7f60-a10f-5e273a95aefa",
+  "primaryNotificationMethods": [
+    "thread/started",
+    "thread/status/changed",
+    "turn/started",
+    "warning",
+    "item/started",
+    "item/completed",
+    "account/rateLimits/updated",
+    "thread/tokenUsage/updated",
+    "account/rateLimits/updated",
+    "item/started",
+    "thread/status/changed",
+    "item/completed",
+    "thread/status/changed",
+    "turn/started",
+    "warning",
+    "thread/tokenUsage/updated",
+    "account/rateLimits/updated",
+    "item/started",
+    "item/completed",
+    "thread/tokenUsage/updated",
+    "account/rateLimits/updated",
+    "thread/status/changed",
+    "turn/completed",
+    "item/started",
+    "item/completed",
+    "account/rateLimits/updated",
+    "item/started",
+    "item/completed",
+    "thread/tokenUsage/updated",
+    "account/rateLimits/updated",
+    "thread/status/changed",
+    "turn/completed"
+  ],
+  "primaryLiveCollabItems": [
+    {
+      "method": "item/started",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-spawn-call-1",
+        "tool": "spawnAgent",
+        "status": "inProgress",
+        "senderThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+        "receiverThreadIds": [],
+        "prompt": "explicit child writes deterministic result",
+        "model": "gpt-5.2",
+        "reasoningEffort": "low",
+        "agentsStates": {}
+      }
+    },
+    {
+      "method": "item/completed",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-spawn-call-1",
+        "tool": "spawnAgent",
+        "status": "completed",
+        "senderThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+        "receiverThreadIds": [
+          "019def89-657e-74e1-9318-a5516759fdcd"
+        ],
+        "prompt": "explicit child writes deterministic result",
+        "model": "gpt-5.2",
+        "reasoningEffort": "low",
+        "agentsStates": {
+          "019def89-657e-74e1-9318-a5516759fdcd": {
+            "status": "pendingInit",
+            "message": null
+          }
+        }
+      }
+    }
+  ],
+  "primaryHistoryCollab": [
+    {
+      "type": "collabAgentToolCall",
+      "id": "explicit-spawn-call-1",
+      "tool": "spawnAgent",
+      "status": "completed",
+      "senderThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+      "receiverThreadIds": [
+        "019def89-657e-74e1-9318-a5516759fdcd"
+      ],
+      "prompt": "explicit child writes deterministic result",
+      "model": "gpt-5.2",
+      "reasoningEffort": "low",
+      "agentsStates": {
+        "019def89-657e-74e1-9318-a5516759fdcd": {
+          "status": "pendingInit",
+          "message": null
+        }
+      }
+    }
+  ],
+  "resumeThreadStatus": {
+    "type": "idle"
+  },
+  "loadedAfterResume": {
+    "data": [
+      "019def89-6554-79e2-a166-c143b02b009b"
+    ],
+    "nextCursor": null
+  },
+  "resumedLiveCollabItems": [
+    {
+      "method": "item/started",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-resume-call-1",
+        "tool": "resumeAgent",
+        "status": "inProgress",
+        "senderThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+        "receiverThreadIds": [
+          "019def89-657e-74e1-9318-a5516759fdcd"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {}
+      }
+    },
+    {
+      "method": "item/completed",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-resume-call-1",
+        "tool": "resumeAgent",
+        "status": "completed",
+        "senderThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+        "receiverThreadIds": [
+          "019def89-657e-74e1-9318-a5516759fdcd"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {
+          "019def89-657e-74e1-9318-a5516759fdcd": {
+            "status": "pendingInit",
+            "message": null
+          }
+        }
+      }
+    },
+    {
+      "method": "item/started",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-wait-call-1",
+        "tool": "wait",
+        "status": "inProgress",
+        "senderThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+        "receiverThreadIds": [
+          "019def89-657e-74e1-9318-a5516759fdcd"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {}
+      }
+    },
+    {
+      "method": "item/completed",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-wait-call-1",
+        "tool": "wait",
+        "status": "completed",
+        "senderThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+        "receiverThreadIds": [],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {}
+      }
+    },
+    {
+      "method": "item/started",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-close-call-1",
+        "tool": "closeAgent",
+        "status": "inProgress",
+        "senderThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+        "receiverThreadIds": [
+          "019def89-657e-74e1-9318-a5516759fdcd"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {}
+      }
+    },
+    {
+      "method": "item/completed",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-close-call-1",
+        "tool": "closeAgent",
+        "status": "completed",
+        "senderThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+        "receiverThreadIds": [
+          "019def89-657e-74e1-9318-a5516759fdcd"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {
+          "019def89-657e-74e1-9318-a5516759fdcd": {
+            "status": "pendingInit",
+            "message": null
+          }
+        }
+      }
+    }
+  ],
+  "resumedHistoryCollab": [
+    {
+      "type": "collabAgentToolCall",
+      "id": "explicit-spawn-call-1",
+      "tool": "spawnAgent",
+      "status": "completed",
+      "senderThreadId": "019def89-6554-79e2-a166-c143b02b009b",
+      "receiverThreadIds": [
+        "019def89-657e-74e1-9318-a5516759fdcd"
+      ],
+      "prompt": "explicit child writes deterministic result",
+      "model": "gpt-5.2",
+      "reasoningEffort": "low",
+      "agentsStates": {
+        "019def89-657e-74e1-9318-a5516759fdcd": {
+          "status": "pendingInit",
+          "message": null
+        }
+      }
+    }
+  ],
+  "resumeStatus": "pendingInit",
+  "waitStatus": null,
+  "closeStatus": "pendingInit",
+  "toolOutputs": {
+    "explicit-spawn-call-1": {
+      "agent_id": "019def89-657e-74e1-9318-a5516759fdcd",
+      "nickname": "Laplace"
+    },
+    "explicit-resume-call-1": {
+      "status": "pending_init"
+    },
+    "explicit-wait-call-1": {
+      "status": {},
+      "timed_out": true
+    },
+    "explicit-close-call-1": {
+      "previous_status": "pending_init"
+    }
+  },
+  "resumeRecoveredHandle": true,
+  "waitObservedFinal": false,
+  "closeAddressedChild": true,
+  "notFoundStatuses": [],
+  "mockState": {
+    "requests": 8,
+    "parentSpawnResponses": 1,
+    "childResponses": 1,
+    "resumeResponses": 1,
+    "waitResponses": 1,
+    "closeResponses": 1,
+    "finalResponses": 3,
+    "seenAgentIds": [
+      "019def89-6554-79e2-a166-c143b02b009b",
+      "019def89-657e-74e1-9318-a5516759fdcd"
+    ]
+  },
+  "files": {
+    "jsonrpcLog": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/jsonrpc.jsonl",
+    "stderrLog": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/app-server.stderr.log",
+    "requestsLog": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/mock-responses-requests.jsonl",
+    "summaryPath": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/summary.json",
+    "manifestPath": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/manifest.json",
+    "shaPath": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/sha256sums.txt"
+  }
+}

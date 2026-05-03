@@ -18,18 +18,18 @@ Result: failed for clean resume lifecycle.
 
 This keeps `HR-CODEX-035` open. The service packet/ledger proof remains valid, but clean child-session completion across `exec resume` is not proven.
 
-The paired native-surface review in `NATIVE_CODEX_SURFACE_REVIEW.md` found no confirmed replacement yet. The TypeScript Codex SDK wraps `codex exec`; raw OpenAI SDKs are a different runtime; app-server is the right diagnostic surface because it exposes thread start/resume, live reconnect, thread read/list APIs, streamed item events, and collaborative-agent lifecycle items. The app-server smoke preserved under `spec/evidence/20260503T201420Z-app-server-child-lifecycle/` reproduced the resume failure in structured form: after cold parent `thread/resume`, `wait` and `closeAgent` against the original child id failed with child status `notFound`.
+The paired native-surface review in `NATIVE_CODEX_SURFACE_REVIEW.md` found no confirmed replacement yet. The TypeScript Codex SDK wraps `codex exec`; raw OpenAI SDKs are a different runtime; app-server is the right diagnostic surface because it exposes thread start/resume, live reconnect, thread read/list APIs, streamed item events, and collaborative-agent lifecycle items. The app-server smoke preserved under `spec/evidence/20260503T201420Z-app-server-child-lifecycle/` reproduced the resume failure in structured form: after cold parent `thread/resume`, `wait` and `closeAgent` against the original child id failed with child status `notFound`. The explicit-child-resume smoke preserved under `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/` recovered the original child handle to `pendingInit`, but `wait` timed out and clean child completion remained unproven.
 
 ## Next Implementation Packet
 
-The next child-lifecycle implementation session should either run the remaining explicit-child-resume app-server variant or fix/prove durable child handles across resume in Codex/RAWR runtime. Hooks are separate follow-up work. MCP is parked; do not install `hyperresearch[mcp]`, register MCP, test MCP tools, or design MCP parity while executing this child track.
+The next child-lifecycle implementation session should fix/prove durable child handles across resume in Codex/RAWR runtime, or explicitly re-scope the claim around replacement packet outputs after cold resume. Hooks are separate follow-up work. MCP is parked; do not install `hyperresearch[mcp]`, register MCP, test MCP tools, or design MCP parity while executing this child track.
 
 The app-server diagnostic has two decisive resume cases:
 
 - `app-server-live-reconnect`: keep the same app-server process loaded, connect a second client, call `thread/resume` on the parent, and require wait/close against the original child ids. This remains useful for UI/reconnect ergonomics but does not by itself prove durable child handles after process restart.
 - `app-server-cold-resume-direct`: stop app-server, restart it with the same `CODEX_HOME`, call `thread/resume` on the parent, and require wait/close against the original child ids. This has failed in the preserved app-server smoke.
 
-If `app-server-cold-resume-direct` fails with `NotFound`, run `app-server-cold-resume-explicit-child-resume`: after parent resume, ask the parent to call `resume_agent` for each original child id, then wait/close those ids. Passing this scenario proves recoverability through explicit child resume, not automatic parent-resume child-handle durability.
+`app-server-cold-resume-explicit-child-resume` has been run. It proved recoverability from `notFound` into `pendingInit`, not clean completion. Passing future evidence must show the recovered original child reaches `Completed` and the parent observes a non-timeout wait before close.
 
 Start from the template repo:
 

@@ -112,7 +112,7 @@ Native Codex surface review:
 - Raw OpenAI SDK/Responses/Agents SDK are not substitutes for local Codex sessions, RAWR custom agents, or child lifecycle tools.
 - App-server is the preferred native diagnostic surface. It supports thread start/resume, thread/read, thread/loaded/list, turn streaming, live reconnect, and collaborative-agent lifecycle items. It does not currently expose promptless public agent lifecycle RPCs.
 - Preserved app-server smoke shows same-process app-server spawn/wait/close passed, while cold parent `thread/resume` after app-server restart failed wait/close against the original child id with structured `notFound`. Evidence lives under `spec/evidence/20260503T201420Z-app-server-child-lifecycle/`.
-- Remaining app-server scenario: `cold-resume-explicit-child-resume`, to test whether model-driven `resume_agent` can recover descendants before wait/close. If that fails, the next implementation is a Codex/RAWR runtime fix. See `NATIVE_CODEX_SURFACE_REVIEW.md`.
+- `cold-resume-explicit-child-resume` has also run. Model-driven `resume_agent` recovered the original child handle to `pendingInit` and avoided `notFound`, but `wait` timed out and clean completion remained unproven. Evidence lives under `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/`. The next implementation is a Codex/RAWR runtime fix or an explicit claim re-scope. See `NATIVE_CODEX_SURFACE_REVIEW.md`.
 
 ## Hooks And MCP Gates
 

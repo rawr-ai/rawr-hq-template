@@ -40,7 +40,7 @@ Statuses:
 - RAWR compatibility matrix says Codex skills are native, Codex custom agents require adapter projection, hooks require fixture proof, and official plugin packaging remains distinct from direct local mirrors.
 - `HOOKS_MCP_PARITY.md` and `CHILD_AGENT_COMPLETION_CONTRACT.md` hold the current non-claim boundaries for hooks, MCP, and child wait/completion behavior.
 - Child lifecycle evidence now shows same-process child wait/close works, but `codex-rawr exec resume` cannot wait/close pre-resume child handles; see `spec/evidence/20260503T193257Z-child-agent-completion/`.
-- `NATIVE_CODEX_SURFACE_REVIEW.md` records the deep native-surface review: app-server is the preferred reproduction surface and has reproduced the cold-resume failure, TypeScript Codex SDK is not a pivot because it wraps `codex exec`, and hosted OpenAI SDKs are not the local Codex runtime.
+- `NATIVE_CODEX_SURFACE_REVIEW.md` records the deep native-surface review: app-server is the preferred reproduction surface, direct cold resume reproduced the failure, explicit `resume_agent` recovered the child handle to `pendingInit` but did not reach clean completion, TypeScript Codex SDK is not a pivot because it wraps `codex exec`, and hosted OpenAI SDKs are not the local Codex runtime.
 
 Refresh before final acceptance.
 

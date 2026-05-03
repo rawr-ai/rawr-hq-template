@@ -35,7 +35,9 @@ App-server child-lifecycle smoke result:
 
 - Same-process app-server lifecycle passed: `spawnAgent`, `wait`, and `closeAgent` emitted typed `collabAgentToolCall` items, and wait/close completed for the child.
 - Cold parent resume failed: after restarting app-server with the same temp `CODEX_HOME`, `thread/resume` loaded the parent, but `wait` and `closeAgent` against the child spawned before resume failed with `agentsStates.<child>.status = "notFound"`.
+- Explicit child resume partially recovered the handle: after cold parent resume, model-driven `resume_agent` against the original child id completed and returned `pending_init`; subsequent `wait` timed out and `closeAgent` returned previous status `pending_init`. No `notFound` status appeared, but clean child completion was still not proven.
 - Evidence is preserved under `spec/evidence/20260503T201420Z-app-server-child-lifecycle/`.
+- Explicit-child-resume evidence is preserved under `spec/evidence/20260503T213000Z-app-server-explicit-child-resume/`.
 
 ## Reviewed Surfaces
 
@@ -109,9 +111,11 @@ If a future true websocket live reconnect passes but cold resume remains failed,
 - loaded-thread reconnect is sufficient for same-process or same-server UI ergonomics;
 - durable post-process child handle completion still needs a Codex runtime fix or an explicit parity re-scope.
 
-If a future model-driven `resume_agent` followed by `wait`/`close` passes after cold parent resume, the conclusion is:
+The model-driven `resume_agent` variant has now been run:
 
-- app-server can recover descendants through an explicit child-resume turn;
+- app-server can recover the original child handle through an explicit child-resume turn, avoiding `notFound`;
+- the recovered child remained `pendingInit`;
+- `wait` timed out rather than observing final child completion;
 - parent `thread/resume` alone still does not rehydrate child handles automatically.
 
 Potential Codex runtime fixes, if required:
@@ -127,14 +131,14 @@ The OpenAI API stack is a hosted model/tool orchestration surface. It does not p
 
 ## Next Native-Surface Packet
 
-The next native-surface packet is no longer "prove whether app-server can observe this." That is proven. The next packet should either implement/fix descendant rehydration in Codex/RAWR or run one final explicit-child-resume variant to decide whether model-driven `resume_agent` can recover descendants after cold parent resume.
+The next native-surface packet is no longer "prove whether app-server can observe this" or "try explicit child resume." Both are proven. The next packet should implement/fix descendant rehydration or resumed-child execution in Codex/RAWR, or explicitly re-scope the child lifecycle claim.
 
 Minimum remaining packet:
 
-1. Preserve raw JSON-RPC input/output, stderr logs, prompts, deterministic outputs, hashes, and a manifest.
-2. Run `app-server-cold-resume-explicit-child-resume`: after cold parent resume, ask the parent to call `resume_agent` for each original child id, then `wait` and `close`.
-3. If explicit child resume passes, document that descendant recovery requires an explicit child-resume turn and decide whether that is an acceptable coordinator strategy.
-4. If explicit child resume fails, implement a Codex/RAWR runtime fix. Candidate shapes are `thread/resume { resumeOpenDescendants: true }` or public experimental `agent/resume`, `agent/wait`, and `agent/close` RPCs backed by `AgentControl`.
+1. Use the app-server evidence bundle as the preferred regression harness.
+2. Fix Codex/RAWR so recovered descendants either resume running or are classified in a way the parent can deterministically replace without pretending clean completion.
+3. Candidate API shapes are `thread/resume { resumeOpenDescendants: true }` or public experimental `agent/resume`, `agent/wait`, and `agent/close` RPCs backed by `AgentControl`.
+4. Closure requires original child ids to reach final completed state after cold resume, or an explicit parity re-scope that states cold-resumed pending children require replacement packet outputs.
 
 Each app-server scenario manifest should add these fields:
 

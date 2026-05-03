@@ -1,0 +1,10 @@
+683ad31529fc9bde6b9b68f27dbd5706d00559243c40dd18dbaf182cad918a9a  ./explicit-child-resume/app-server.stderr.log
+293a8be5232d8c37ed506a9b72599452b80922a7da68d2b0e773f04f376182f3  ./explicit-child-resume/harness.stdout.log
+68293154734273fdfb7fbafe0e70d685c300596d5c90eee927ebdbf8e31f91ca  ./explicit-child-resume/jsonrpc.jsonl
+ba46cc4a79c9b745483b10a98e0aa2ec5fa804e74c8a8b3f220385fa9c15b356  ./explicit-child-resume/mock-responses-requests.jsonl
+3095e06cf5da33f270dc7108c7223f6d118e27f7ee8a71b56ff319ad84259fae  ./explicit-child-resume/summary.json
+c148fcb43c07023ce89c124e4fa26f9c43d485864ab2d0b948a9245903c7f609  ./harness/app-server-cold-resume-explicit-child-resume-harness.mjs
+da6ea6067295f265073c587397f1b6a6f7ceea9b873a259d85b6b38b7f4177e5  ./manifest.json
+ec34ef8bcd549fd9f31ab42bca45b662d39dff1894a758bc8cc1026a1af34ecf  ./prompts/parent-initial.md
+6a9eec21da9391d5d4d96d067e358d167e011823813cca2f923d281a32cf0da8  ./prompts/parent-resume-template.md
+144ee801f2be340bb00b2c71c8a27b20abc04a8b66bd2e51f939deadc5cb4549  ./prompts/parent-resume.md
