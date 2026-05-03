@@ -100,8 +100,11 @@ def visualize_core_ontology(run: str | None = "latest") -> Path:
     candidate_queue_path = run_dir / CORE_GRAPH_FILENAMES["candidate_queue"]
     document_diff_path = run_dir / CORE_GRAPH_FILENAMES["document_diff"]
     semantic_compare_path = run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]
+    doc_sweep_path = run_dir / CORE_GRAPH_FILENAMES["doc_sweep"]
     candidate_queue = read_json(candidate_queue_path) if candidate_queue_path.exists() else {}
     diff = read_json(semantic_compare_path) if semantic_compare_path.exists() else read_json(document_diff_path) if document_diff_path.exists() else {}
+    if doc_sweep_path.exists():
+        diff = {**diff, "sweep": read_json(doc_sweep_path)}
     write_html_viewer(run_dir / CORE_GRAPH_FILENAMES["viewer"], graph, candidate_queue, diff)
     mark_current(run_dir, CORE_CURRENT_FILES)
     return run_dir

@@ -26,8 +26,9 @@ from .core_ontology import (
 from .core_config import CORE_GRAPH_FILENAMES, DEFAULT_CORE_VIEWER_HOST, DEFAULT_CORE_VIEWER_PORT
 from .core_query import list_queries, render_query_text, run_named_query, run_sparql_query
 from .diffing import build_diff
+from .document_sweep import run_document_sweep
 from .extraction import extract_chunk, request_params_for_model, schema_hash
-from .io import git_sha, mark_current, new_run_dir, rel, resolve_run, write_json, write_jsonl
+from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json, write_jsonl
 from .manifest import load_manifest
 from .ontology import load_definitions, normalize_run
 from .paths import (
@@ -113,6 +114,17 @@ def build_parser() -> argparse.ArgumentParser:
     doc_compare.add_argument("--document", default=str(TESTING_PLAN))
     doc_compare.add_argument("--fixture", action="store_true")
     doc_compare.set_defaults(func=cmd_doc_compare)
+
+    doc_sweep = sub.add_parser("doc:sweep")
+    doc_sweep.add_argument("--run", default="latest")
+    doc_sweep.add_argument("--root", action="append", default=None)
+    doc_sweep.add_argument("--document", action="append", default=None)
+    doc_sweep.add_argument("--include-glob", action="append", default=None)
+    doc_sweep.add_argument("--exclude-segment", action="append", default=None)
+    doc_sweep.add_argument("--limit", type=int, default=None)
+    doc_sweep.add_argument("--format", choices=["text", "markdown", "json"], default="text")
+    doc_sweep.add_argument("--fail-on", choices=["none", "decision-grade"], default="none")
+    doc_sweep.set_defaults(func=cmd_doc_sweep)
 
     semantic_capability = sub.add_parser("semantic:capability")
     semantic_capability.add_argument("--run", default="latest")
@@ -268,6 +280,37 @@ def cmd_doc_extract(args) -> int:
 def cmd_doc_compare(args) -> int:
     run_dir = compare_document_evidence(Path(args.document), args.run, fixture=args.fixture)
     print(f"semantic_compare={rel(run_dir / CORE_GRAPH_FILENAMES['semantic_compare_report'])}")
+    return 0
+
+
+def cmd_doc_sweep(args) -> int:
+    run_dir = run_document_sweep(
+        roots=args.root,
+        documents=args.document,
+        include_globs=args.include_glob,
+        exclude_segments=args.exclude_segment,
+        limit=args.limit,
+        run=args.run,
+        fail_on=args.fail_on,
+    )
+    sweep_path = run_dir / CORE_GRAPH_FILENAMES["doc_sweep"]
+    report_path = run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report"]
+    if args.format == "json":
+        print(json.dumps(read_json(sweep_path), indent=2, sort_keys=True))
+    elif args.format == "markdown":
+        print(report_path.read_text(encoding="utf-8"))
+    else:
+        sweep = read_json(sweep_path)
+        summary = sweep["summary"]
+        print(f"doc_sweep={rel(report_path)}")
+        print(f"documents_analyzed={summary['documents_analyzed']} skipped={summary['documents_skipped']}")
+        print(f"recommendations={summary['recommendations']}")
+        print(
+            "findings="
+            f"{summary['total_findings']} decision_grade={summary['decision_grade_findings']} "
+            f"conflicts={summary['conflicts']} deprecated_uses={summary['deprecated_uses']} "
+            f"ambiguous={summary['ambiguous']}"
+        )
     return 0
 
 
