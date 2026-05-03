@@ -6,6 +6,7 @@ import HyperresearchCodexSlice from "../src/commands/hyperresearch/codex-slice";
 import HyperresearchCodexAdvance from "../src/commands/hyperresearch/codex/advance";
 import HyperresearchCodexRunFixture from "../src/commands/hyperresearch/codex/run-fixture";
 import HyperresearchCodexStart from "../src/commands/hyperresearch/codex/start";
+import HyperresearchCodexValidate from "../src/commands/hyperresearch/codex/validate";
 
 const tempDirs: string[] = [];
 const v8StepFiles = [
@@ -208,5 +209,58 @@ describe("@rawr/plugin-hyperresearch", () => {
     expect(advanced.ok).toBe(true);
     expect(advanced.data.status).toBe("complete");
     expect(advanced.data.completed).toBe(true);
+  });
+
+  it("accepts backend on V8 validation for command-surface symmetry", async () => {
+    const fixture = await makeV8Fixture();
+    const startSpy = vi.spyOn(HyperresearchCodexStart.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    await HyperresearchCodexStart.run([
+      "--query",
+      "Codex V8 validate proof",
+      "--vault",
+      fixture.vault,
+      "--steps",
+      fixture.steps,
+      "--tier",
+      "light",
+      "--json",
+    ]);
+    const [started] = startSpy.mock.calls[0] as unknown as [{
+      ok: boolean;
+      data: {
+        ledgerPath: string;
+      };
+    }];
+
+    vi.restoreAllMocks();
+    const advanceSpy = vi.spyOn(HyperresearchCodexAdvance.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    await HyperresearchCodexAdvance.run([
+      "--ledger",
+      started.data.ledgerPath,
+      "--agent-mode",
+      "synthesize",
+      "--json",
+    ]);
+    expect((advanceSpy.mock.calls[0] as unknown as [{ ok: boolean }])[0].ok).toBe(true);
+
+    vi.restoreAllMocks();
+    const validateSpy = vi.spyOn(HyperresearchCodexValidate.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    await HyperresearchCodexValidate.run([
+      "--ledger",
+      started.data.ledgerPath,
+      "--backend",
+      "real",
+      "--json",
+    ]);
+    const [validated] = validateSpy.mock.calls[0] as unknown as [{
+      ok: boolean;
+      data: {
+        status: string;
+        passed: boolean;
+      };
+    }];
+    expect(validated.ok).toBe(true);
+    expect(validated.data.status).toBe("complete");
+    expect(validated.data.passed).toBe(true);
   });
 });

@@ -25,6 +25,12 @@ export const syntheticHyperresearchSteps: HyperresearchStepDefinition[] = [
   },
 ];
 
+export function definitionForSyntheticStep(stepId: string): HyperresearchStepDefinition {
+  const definition = syntheticHyperresearchSteps.find((step) => step.id === stepId);
+  if (!definition) throw new Error(`Unknown Hyperresearch Codex step: ${stepId}`);
+  return definition;
+}
+
 export async function loadSyntheticHyperresearchStep(input: {
   stepsRoot: string;
   definition: HyperresearchStepDefinition;

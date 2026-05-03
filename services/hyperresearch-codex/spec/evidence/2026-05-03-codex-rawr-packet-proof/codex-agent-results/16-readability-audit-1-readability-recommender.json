@@ -1,0 +1,38 @@
+{
+  "jobId": "16-readability-audit-1-readability-recommender",
+  "role": "hyperresearch-readability-recommender",
+  "status": "complete",
+  "summary": "Completed 16-readability-audit packet 16-readability-audit-1-readability-recommender.",
+  "evidence": [
+    "research/claim-trace.json",
+    "research/readability-recommendations.json",
+    "research/readability-decisions.json",
+    "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md",
+    "https://www.python.org/about/"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/claim-trace.json",
+      "sha256": "5e6df8b3309f67c7bb8cd498f6f870886525ec491bee6f471d3c2a91eedf8377",
+      "summary": "Written for 16-readability-audit by hyperresearch-readability-recommender."
+    },
+    {
+      "path": "research/readability-recommendations.json",
+      "sha256": "9c13becb67d312a3818b9b854c12127efe5110d82ee88f29b2e77927c9706868",
+      "summary": "Written for 16-readability-audit by hyperresearch-readability-recommender."
+    },
+    {
+      "path": "research/readability-decisions.json",
+      "sha256": "5f1f0207c32fc33f02a1d7f07ec3196acc3889892f77484261604c06623bbfec",
+      "summary": "Written for 16-readability-audit by hyperresearch-readability-recommender."
+    },
+    {
+      "path": "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md",
+      "sha256": "6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef",
+      "summary": "Written for 16-readability-audit by hyperresearch-readability-recommender."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.python.org/about/"
+  ]
+}

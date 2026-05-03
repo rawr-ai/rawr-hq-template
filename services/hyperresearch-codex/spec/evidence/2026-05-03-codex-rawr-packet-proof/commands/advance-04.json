@@ -1,0 +1,61 @@
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hyperresearch-codex-proof.CD9fhB/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-dd42e7c4-b95e-49da-80f5-3ba374b5696a",
+    "status": "awaiting_agents",
+    "completed": false,
+    "currentStepId": "16-readability-audit",
+    "tier": "light",
+    "vaultTag": "what-is-python-and-what-organization-maintains-i",
+    "completedSteps": [
+      "01-decompose",
+      "02-width-sweep",
+      "10-triple-draft",
+      "15-polish"
+    ],
+    "pendingAgentJobs": [
+      {
+        "id": "16-readability-audit-1-readability-recommender",
+        "role": "hyperresearch-readability-recommender",
+        "packetPath": "research/temp/codex-agent-packets/16-readability-audit-1-readability-recommender.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json"
+      }
+    ],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      },
+      {
+        "operation": "search",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "note",
+        "exitCode": 0
+      },
+      {
+        "operation": "lint",
+        "exitCode": 0
+      }
+    ],
+    "integrity": [
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "16-readability-audit",
+        "message": "Agent job is awaiting output: 16-readability-audit-1-readability-recommender"
+      },
+      {
+        "severity": "warning",
+        "code": "incomplete-run",
+        "message": "Hyperresearch Codex run has not completed all steps"
+      }
+    ]
+  }
+}

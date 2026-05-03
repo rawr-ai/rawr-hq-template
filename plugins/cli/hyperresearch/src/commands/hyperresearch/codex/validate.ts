@@ -1,7 +1,6 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { FixtureHyperresearchCliBackend } from "../../../lib/fixture-cli";
-import { createHyperresearchCodexClient } from "../../../lib/hyperresearch-codex-binding";
+import { createHyperresearchCodexClientForBackend } from "../../../lib/hyperresearch-codex-binding";
 import { summarizeV8ValidationResult } from "../../../lib/v8-result";
 
 export default class HyperresearchCodexValidate extends RawrCommand {
@@ -13,14 +12,19 @@ export default class HyperresearchCodexValidate extends RawrCommand {
       required: true,
       description: "Path to research/temp/hyperresearch-codex-run.json",
     }),
+    backend: Flags.string({
+      options: ["real", "fixture"],
+      default: "fixture",
+      description: "Accepted for start/advance command symmetry; validation reads the existing ledger and does not execute backend CLI calls",
+    }),
   } as const;
 
   async run() {
     const { flags } = await this.parseRawr(HyperresearchCodexValidate);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
-    const client = createHyperresearchCodexClient({
+    const client = createHyperresearchCodexClientForBackend({
       repoRoot: process.cwd(),
-      cli: new FixtureHyperresearchCliBackend(),
+      backend: String(flags.backend) as "fixture" | "real",
     });
 
     try {

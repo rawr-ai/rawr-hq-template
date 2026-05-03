@@ -119,6 +119,26 @@ export function appendV8ResumeEvent(input: {
   input.ledger.updatedAt = input.io.now();
 }
 
+export function blockV8Step(input: {
+  ledger: HyperresearchV8RunLedger;
+  stepId: string;
+  message: string;
+  io: HyperresearchCodexIO;
+}): void {
+  const step = input.ledger.steps.find((item) => item.id === input.stepId);
+  if (step) {
+    step.status = "blocked";
+    step.failure = input.message;
+    step.completedAt = input.io.now();
+  }
+  input.ledger.failures.push({
+    at: input.io.now(),
+    stepId: input.stepId,
+    kind: "step",
+    message: input.message,
+  });
+}
+
 export function assertV8LedgerMatches(input: {
   ledger: HyperresearchRunLedger;
   canonicalQuery?: string;

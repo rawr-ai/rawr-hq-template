@@ -12,32 +12,12 @@ import {
   writeSyntheticRunLedger,
 } from "./helpers/ledger";
 import {
+  definitionForSyntheticStep,
   loadSyntheticHyperresearchStep,
   syntheticHyperresearchSteps,
 } from "./helpers/steps";
-import type {
-  HyperresearchStepRecord,
-} from "../../shared/entities";
-import type { HyperresearchCodexIO } from "../../shared/resources";
+import { writeSyntheticArtifact } from "./helpers/artifacts";
 import { module } from "./module";
-
-function definitionFor(stepId: string) {
-  const definition = syntheticHyperresearchSteps.find((step) => step.id === stepId);
-  if (!definition) throw new Error(`Unknown Hyperresearch Codex step: ${stepId}`);
-  return definition;
-}
-
-async function writeArtifact(input: {
-  step: HyperresearchStepRecord;
-  artifactRoot: string;
-  fileName: string;
-  content: string;
-  io: HyperresearchCodexIO;
-}) {
-  const artifactPath = input.io.join(input.artifactRoot, input.fileName);
-  await input.io.writeTextFile(artifactPath, input.content);
-  if (!input.step.artifacts.includes(input.fileName)) input.step.artifacts.push(input.fileName);
-}
 
 const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, input }) => {
   const { io, cli } = context;
@@ -73,7 +53,7 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
     ledger.currentStepId = step.id;
     step.status = "running";
     step.startedAt = io.now();
-    const definition = definitionFor(step.id);
+    const definition = definitionForSyntheticStep(step.id);
 
     try {
       const loaded = await loadSyntheticHyperresearchStep({
@@ -98,7 +78,7 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
           cli,
           ledger,
         });
-        await writeArtifact({
+        await writeSyntheticArtifact({
           step,
           artifactRoot,
           fileName: "canonical-query.json",
@@ -120,7 +100,7 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
           cli,
           ledger,
         });
-        await writeArtifact({
+        await writeSyntheticArtifact({
           step,
           artifactRoot,
           fileName: "source-note.json",
@@ -153,7 +133,7 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
           cli,
           ledger,
         });
-        await writeArtifact({
+        await writeSyntheticArtifact({
           step,
           artifactRoot,
           fileName: "final-report.md",

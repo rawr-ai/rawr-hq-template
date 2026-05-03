@@ -1,0 +1,56 @@
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hyperresearch-codex-proof.CD9fhB/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-dd42e7c4-b95e-49da-80f5-3ba374b5696a",
+    "status": "awaiting_agents",
+    "completed": false,
+    "currentStepId": "15-polish",
+    "tier": "light",
+    "vaultTag": "what-is-python-and-what-organization-maintains-i",
+    "completedSteps": [
+      "01-decompose",
+      "02-width-sweep",
+      "10-triple-draft"
+    ],
+    "pendingAgentJobs": [
+      {
+        "id": "15-polish-1-polish-auditor",
+        "role": "hyperresearch-polish-auditor",
+        "packetPath": "research/temp/codex-agent-packets/15-polish-1-polish-auditor.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json"
+      }
+    ],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      },
+      {
+        "operation": "search",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "note",
+        "exitCode": 0
+      }
+    ],
+    "integrity": [
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "15-polish",
+        "message": "Agent job is awaiting output: 15-polish-1-polish-auditor"
+      },
+      {
+        "severity": "warning",
+        "code": "incomplete-run",
+        "message": "Hyperresearch Codex run has not completed all steps"
+      }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+Executed the fresh real-backend packet-mode proof.
+
+- Vault: `/tmp/hyperresearch-codex-proof.CD9fhB`
+- Ledger: `/tmp/hyperresearch-codex-proof.CD9fhB/research/temp/hyperresearch-codex-run.json`
+- Final status: `complete`
+- Validation passed: `true`
+- Completed step IDs: `01-decompose`, `02-width-sweep`, `10-triple-draft`, `15-polish`, `16-readability-audit`
+- Agent job count: `5`
+- Source capture URLs: `https://www.python.org/about/`
+- CLI operations recorded: `init`, `search`, `fetch`, `note`, `lint`, `sync`, `lint`, `export`
+
+The final report contains all three required exact claims, and `research/claim-trace.json` cites [python.org/about](https://www.python.org/about/) for them. Repo status is clean.
+
+One CLI mismatch: the installed `validate` command rejects `--backend` as a nonexistent flag. I attempted that required shape, then ran the supported validation command against the same real-backend ledger; it returned `passed: true`.
+
+Skills used: `hyperresearch-codex`.
+

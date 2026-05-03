@@ -1,0 +1,48 @@
+{
+  "jobId": "15-polish-1-polish-auditor",
+  "role": "hyperresearch-polish-auditor",
+  "canonicalQuery": "What is Python and what organization maintains it? Use python.org/about as the source.",
+  "pipelinePosition": "Step 15-polish (Polish and lint) in the Hyperresearch V8 route.",
+  "stepId": "15-polish",
+  "stepTitle": "Polish and lint",
+  "vaultTag": "what-is-python-and-what-organization-maintains-i",
+  "inputArtifacts": [],
+  "stepRequiredArtifacts": [
+    "research/polish-log.json",
+    "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+  ],
+  "requiredArtifacts": [
+    "research/polish-log.json",
+    "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+  ],
+  "artifactContract": {
+    "assignedRequiredArtifacts": [
+      "research/polish-log.json",
+      "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+    ],
+    "stepRequiredArtifacts": [
+      "research/polish-log.json",
+      "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+    ],
+    "fanInRule": "The parent service validates artifactWrites across every job for this step. Write or verify your assignedRequiredArtifacts; do not invent substitutes for another job's assigned artifacts unless you are explicitly carrying that artifact forward."
+  },
+  "expectedOutputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+  "outputSchema": {
+    "status": "complete|failed",
+    "summary": "string",
+    "evidence": [
+      "path-or-source-id"
+    ],
+    "artifactWrites": [
+      {
+        "path": "research/temp/example-artifact.json",
+        "sha256": "sha256-of-file-content",
+        "summary": "what this required artifact supports; include carried-forward artifacts too"
+      }
+    ],
+    "sourceUrls": [
+      "https://example.com/source-url"
+    ]
+  },
+  "failureBehavior": "Write the expected output path with status=failed and a failure reason if the role cannot complete."
+}

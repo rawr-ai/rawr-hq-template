@@ -1,4 +1,5 @@
 import type {
+  HyperresearchTier,
   HyperresearchStepDefinition,
   LoadedHyperresearchStep,
 } from "../../../shared/entities";
@@ -199,6 +200,13 @@ export function v8StepsForTier(tier: "light" | "full"): HyperresearchStepDefinit
       }
       return step;
     });
+}
+
+export function definitionForV8Step(stepId: string, tier?: HyperresearchTier): HyperresearchStepDefinition {
+  const definitions = tier ? v8StepsForTier(tier) : v8HyperresearchSteps;
+  const definition = definitions.find((step) => step.id === stepId);
+  if (!definition) throw new Error(`Unknown Hyperresearch V8 step: ${stepId}`);
+  return definition;
 }
 
 export function expandV8ArtifactPath(artifact: string, vaultTag: string): string {

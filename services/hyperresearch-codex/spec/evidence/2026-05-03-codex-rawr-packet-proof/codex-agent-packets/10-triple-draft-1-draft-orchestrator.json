@@ -1,0 +1,48 @@
+{
+  "jobId": "10-triple-draft-1-draft-orchestrator",
+  "role": "hyperresearch-draft-orchestrator",
+  "canonicalQuery": "What is Python and what organization maintains it? Use python.org/about as the source.",
+  "pipelinePosition": "Step 10-triple-draft (Triple draft or light final draft) in the Hyperresearch V8 route.",
+  "stepId": "10-triple-draft",
+  "stepTitle": "Triple draft or light final draft",
+  "vaultTag": "what-is-python-and-what-organization-maintains-i",
+  "inputArtifacts": [],
+  "stepRequiredArtifacts": [
+    "research/temp/draft-angles.md",
+    "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+  ],
+  "requiredArtifacts": [
+    "research/temp/draft-angles.md",
+    "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+  ],
+  "artifactContract": {
+    "assignedRequiredArtifacts": [
+      "research/temp/draft-angles.md",
+      "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+    ],
+    "stepRequiredArtifacts": [
+      "research/temp/draft-angles.md",
+      "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+    ],
+    "fanInRule": "The parent service validates artifactWrites across every job for this step. Write or verify your assignedRequiredArtifacts; do not invent substitutes for another job's assigned artifacts unless you are explicitly carrying that artifact forward."
+  },
+  "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+  "outputSchema": {
+    "status": "complete|failed",
+    "summary": "string",
+    "evidence": [
+      "path-or-source-id"
+    ],
+    "artifactWrites": [
+      {
+        "path": "research/temp/example-artifact.json",
+        "sha256": "sha256-of-file-content",
+        "summary": "what this required artifact supports; include carried-forward artifacts too"
+      }
+    ],
+    "sourceUrls": [
+      "https://example.com/source-url"
+    ]
+  },
+  "failureBehavior": "Write the expected output path with status=failed and a failure reason if the role cannot complete."
+}

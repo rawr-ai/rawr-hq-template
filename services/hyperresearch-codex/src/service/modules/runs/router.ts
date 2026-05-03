@@ -7,10 +7,12 @@
  * wrapper over another runner.
  */
 import { runHyperresearchCli } from "../../shared/adapters/hyperresearch-cli";
+import type { HyperresearchV8RunLedger } from "../../shared/entities";
 import { validateHyperresearchRunIntegrity } from "./helpers/integrity";
 import {
   assertV8LedgerMatches,
   appendV8ResumeEvent,
+  blockV8Step,
   createV8HyperresearchRunLedger,
   ensureV8LedgerState,
   nextPendingStep,
@@ -18,16 +20,14 @@ import {
   writeHyperresearchRunLedger,
 } from "./helpers/ledger";
 import {
+  definitionForV8Step,
   loadHyperresearchStep,
-  v8HyperresearchSteps,
   v8StepsForTier,
 } from "./helpers/steps";
-import type {
-  HyperresearchStepDefinition,
-  HyperresearchTier,
-  HyperresearchV8RunLedger,
-} from "../../shared/entities";
-import type { HyperresearchCodexIO } from "../../shared/resources";
+import {
+  resolveRequestedTier,
+  slugifyQuery,
+} from "./helpers/input";
 import {
   finishStep,
   writeCanonicalBootstrap,
@@ -44,56 +44,9 @@ import {
 } from "./helpers/result";
 import { module } from "./module";
 
-type TierRequest = "auto" | "light" | "full";
-
-function slugifyQuery(query: string): string {
-  const slug = query
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 48);
-  return slug || "hyperresearch";
-}
-
-function resolveTier(input: { tier?: TierRequest }): {
-  tier: HyperresearchTier;
-  tierSource: "user" | "auto-default";
-} {
-  if (input.tier === "full") return { tier: "full", tierSource: "user" };
-  if (input.tier === "light") return { tier: "light", tierSource: "user" };
-  return { tier: "light", tierSource: "auto-default" };
-}
-
-function definitionFor(stepId: string, tier?: HyperresearchTier): HyperresearchStepDefinition {
-  const definitions = tier ? v8StepsForTier(tier) : v8HyperresearchSteps;
-  const definition = definitions.find((step) => step.id === stepId);
-  if (!definition) throw new Error(`Unknown Hyperresearch V8 step: ${stepId}`);
-  return definition;
-}
-
-function blockStep(input: {
-  ledger: HyperresearchV8RunLedger;
-  stepId: string;
-  message: string;
-  io: HyperresearchCodexIO;
-}) {
-  const step = input.ledger.steps.find((item) => item.id === input.stepId);
-  if (step) {
-    step.status = "blocked";
-    step.failure = input.message;
-    step.completedAt = input.io.now();
-  }
-  input.ledger.failures.push({
-    at: input.io.now(),
-    stepId: input.stepId,
-    kind: "step",
-    message: input.message,
-  });
-}
-
 const startV8Run = module.startV8Run.handler(async ({ context, input }) => {
   const { io, cli } = context;
-  const { tier, tierSource } = resolveTier(input);
+  const { tier, tierSource } = resolveRequestedTier(input);
   const vaultTag = input.vaultTag ?? slugifyQuery(input.canonicalQuery);
   const ledgerPath = input.ledgerPath ?? io.join(input.vaultRoot, "research", "temp", "hyperresearch-codex-run.json");
   const queryFilePath = io.join(input.vaultRoot, `research/query-${vaultTag}.md`);
@@ -181,7 +134,7 @@ const advanceV8Run = module.advanceV8Run.handler(async ({ context, input }) => {
       return await makeResult({ ledgerPath: input.ledgerPath, ledger, io });
     }
 
-    const definition = definitionFor(step.id, ledger.tier);
+    const definition = definitionForV8Step(step.id, ledger.tier);
 
     if (step.status === "awaiting_agents") {
       try {
@@ -200,7 +153,7 @@ const advanceV8Run = module.advanceV8Run.handler(async ({ context, input }) => {
         await finishStep({ ledger, step, definition, agentOutputs, io });
         completedThisPass += 1;
       } catch (error) {
-        blockStep({
+        blockV8Step({
           ledger,
           stepId: step.id,
           message: error instanceof Error ? error.message : String(error),
@@ -256,7 +209,7 @@ const advanceV8Run = module.advanceV8Run.handler(async ({ context, input }) => {
       completedThisPass += 1;
       await writeHyperresearchRunLedger({ ledgerPath: input.ledgerPath, ledger, io });
     } catch (error) {
-      blockStep({
+      blockV8Step({
         ledger,
         stepId: step.id,
         message: error instanceof Error ? error.message : String(error),
