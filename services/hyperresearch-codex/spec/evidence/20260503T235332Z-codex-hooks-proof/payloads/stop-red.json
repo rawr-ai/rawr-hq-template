@@ -1,0 +1,10 @@
+{
+  "hook_event_name": "Stop",
+  "session_id": "fixture-session",
+  "turn_id": "fixture-turn",
+  "cwd": "/tmp/hyperresearch-codex-hooks-20260503T235332Z-codex-hooks-proof/project",
+  "permission_mode": "default",
+  "model": "gpt-5.5",
+  "stop_hook_active": true,
+  "last_assistant_message": "done"
+}

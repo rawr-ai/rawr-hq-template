@@ -9,7 +9,7 @@ Evidence exists at two levels:
 - Synthetic slice: three-step smoke for fresh step loading, ledger resume, CLI audit, and final artifact integrity.
 - V8 fixture slice: all 16 V8 step references, light/full tier routing, packet-mode agent fan-out/fan-in, required CLI-call failures, patch-snapshot state, validation, and downstream Codex sync surface.
 
-The long research-quality proof class is now represented by the repaired full-tier Inngest run. The original child-agent completion diagnostic failed bare `codex-rawr exec resume`, but the app-server explicit-child-resume harness now passes after the Codex runtime status-seeding fix and is the accepted recovery strategy for known child ids after parent resume. Remaining release evidence is scoped to downstream/install hygiene, Graphite submission state, and any separately promoted hook, MCP, production Inngest runtime, or automatic descendant-rehydration claims. MCP is parked unless explicitly promoted by a future spec.
+The long research-quality proof class is now represented by the repaired full-tier Inngest run. The original child-agent completion diagnostic failed bare `codex-rawr exec resume`, but the app-server explicit-child-resume harness now passes after the Codex runtime status-seeding fix and is the accepted recovery strategy for known child ids after parent resume. Remaining release evidence is scoped to downstream/install hygiene, Graphite submission state, and any separately promoted MCP, production Inngest runtime, automatic descendant-rehydration, or managed hook-projection claims. MCP is parked unless explicitly promoted by a future spec.
 
 ## Correctness Oracles
 
@@ -123,14 +123,23 @@ Native Codex surface review:
 
 ## Hooks And MCP Gates
 
-Hooks are optional guardrails until fixture-proven. The concrete plan is `HOOKS_GUARDRAIL_PLAN.md`.
+Core `PreToolUse` and `Stop` hook guardrails are fixture-proven. The concrete plan and proof boundary live in `HOOKS_GUARDRAIL_PLAN.md`; the evidence bundle is `spec/evidence/20260503T235332Z-codex-hooks-proof/`. Hooks remain guardrails only, and managed hook projection remains unclaimed.
 
-1. Hook smoke: temp project with `codex_hooks=true`, a harmless `PreToolUse` command hook, captured hook stdin JSON, `HookStarted`/`HookCompleted` events, command exit/status, matched tool name, and transcript-visible feedback.
-2. Source guard: prove generic source fetch/search is blocked during an active Hyperresearch run unless routed through packet `sourceUrls` and service source capture, or is recorded as a policy failure with a non-empty reason.
-3. Routed source allow: prove a packet `sourceUrls` path is allowed while the service ledger records source capture and final validation still checks the captured URL.
-4. Stop guard red/green: prove a missing, incomplete, or invalid ledger blocks final closure, and a green `validate --backend real|fixture` allows closure. Preserve before/after validate output.
-5. Negative hooks: malformed hook config, disabled hooks, unsupported event name, stale ledger path, missing block reason, and hook timeout.
+1. Hook smoke: passed in a disposable `CODEX_HOME`; the accepted runtime proof records `PreToolUse` and `Stop` payloads in `payloads/pre-tool-use-runtime.jsonl` and `payloads/stop-runtime.jsonl`.
+2. Source guard: direct fixture execution blocks `curl https://example.com/source` with `hookSpecificOutput.permissionDecision=deny` and a non-empty reason.
+3. Routed source allow: direct fixture execution allows Hyperresearch service commands and explicitly routed source URLs. Allow stdout/stderr are expected-empty; decision evidence is in `logs/hook-events.jsonl` and `logs/hook-events-routed-source.jsonl`.
+4. Stop guard red/green: direct fixture execution blocks missing/incomplete/red ledgers and allows a green ledger with `validation.passed:true`. The live runtime `Stop` payload had `stop_hook_active:false`, so red/green final-answer blocking remains direct-fixture evidence rather than live closure-interruption evidence.
+5. Negative hooks: tests cover malformed JSON, unsupported event name, missing Bash command, stale/missing ledger, missing validation marker, and timeout classification. The evidence bundle also preserves a negative config probe where a missing top-level `hooks` wrapper did not invoke hooks.
 6. Plugin/config projection: required only before claiming downstream plugin material installs Hyperresearch hooks. Current agent-sync scans skills, workflows, scripts, and agents; hook install/update/removal projection is unclaimed.
+
+Hook proof evidence:
+
+- `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/README.md`
+- `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/hooks/`
+- `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/payloads/`
+- `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/logs/`
+- `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/ledgers/`
+- `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/sha256sums.txt`
 
 MCP remains parked and optional:
 
@@ -154,4 +163,4 @@ Current observed Codex sync evidence:
 3. Final report has explicit uncertainty and no silent parity invention.
 4. Reviewer traces at least three material claims from report to vault note/source metadata.
 
-Long full V8 research-quality service parity is now backed by the repaired Inngest proof. Active Hyperresearch Codex parity for the service plus Codex packet orchestration path is clean under explicit child-resume recovery: bare parent resume does not auto-rehydrate descendants, so resumed coordinators explicitly resume known child ids before wait/close. A cold-resumed pending child that still cannot be cleanly completed is classified non-clean while the same logical packet job completes through a validated fallback replacement output. Hooks, MCP, production Inngest readiness, automatic descendant rehydration, and unrelated global plugin drift remain separate tracks unless explicitly promoted.
+Long full V8 research-quality service parity is now backed by the repaired Inngest proof. Active Hyperresearch Codex parity for the service plus Codex packet orchestration path is clean under explicit child-resume recovery: bare parent resume does not auto-rehydrate descendants, so resumed coordinators explicitly resume known child ids before wait/close. A cold-resumed pending child that still cannot be cleanly completed is classified non-clean while the same logical packet job completes through a validated fallback replacement output. Hooks are guardrails only, and MCP, lifecycle hooks, plugin hook projection, automatic descendant rehydration, production readiness, and unrelated global plugin drift remain unclaimed unless explicitly promoted with separate evidence.

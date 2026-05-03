@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "runId": "hook-red",
+  "completed": false,
+  "steps": [
+    { "id": "01-decompose", "status": "complete" },
+    { "id": "02-width-sweep", "status": "awaiting_agents" }
+  ],
+  "failures": [],
+  "reviewDispositions": [],
+  "patchGuard": { "violations": [] }
+}

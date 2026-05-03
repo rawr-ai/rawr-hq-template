@@ -2,6 +2,29 @@
 
 This file records durable proof claims for the `@rawr/hyperresearch-codex` service package. Keep it aligned with `TESTING_PLAN.md`, `REVIEW_LEDGER.md`, and downstream synced references.
 
+## Current Hook Evidence Status
+
+Status: fixture-proven guardrails, reference-only installation.
+
+Core Hyperresearch-specific `PreToolUse` and `Stop` runtime fixture evidence is committed under `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/`.
+
+Proof summary:
+
+- Disposable `CODEX_HOME` with the Codex-required top-level `hooks` object invoked both `PreToolUse` and `Stop` during `codex-rawr exec`.
+- Runtime `PreToolUse` payload shape and matched Bash command are preserved at `spec/evidence/20260503T235332Z-codex-hooks-proof/payloads/pre-tool-use-runtime.jsonl`.
+- Direct fixture execution blocked `curl https://example.com/source` with `hookSpecificOutput.permissionDecision=deny`; see `logs/source-guard-block.txt`.
+- Direct fixture execution allowed Hyperresearch service commands; allow stdout/stderr are expected-empty, so the decision is recorded in `logs/hook-events.jsonl`.
+- Direct fixture execution allowed an explicitly routed source URL; allow stdout/stderr are expected-empty, so the decision and reason are recorded in `logs/hook-events-routed-source.jsonl`.
+- Runtime `Stop` payload is preserved at `payloads/stop-runtime.jsonl`.
+- Direct fixture execution blocked missing/incomplete/red ledgers and allowed a green ledger with `validation.passed:true`; see `logs/stop-red.txt` and `logs/hook-events.jsonl`. `logs/stop-green.txt` is expected-empty because allow decisions emit empty stdout/stderr.
+- The runtime `Stop` payload had `stop_hook_active:false`, so red/green closure blocking is direct-fixture evidence rather than live final-answer interruption evidence.
+- The evidence bundle preserves the initial negative config probe where a missing top-level `hooks` wrapper did not run hooks.
+- Focused tests cover malformed JSON, unsupported event names, missing commands, source bypass detection, allowed Hyperresearch/routed-source commands, missing/incomplete/red ledgers, missing passed validation marker, ledger path precedence, green ledgers, and timeout classification.
+
+Projection status: reference-only. Candidate material exists under `services/hyperresearch-codex/references/codex-hooks/`, but managed agent-sync hook projection has no install, update, dry-run, drift, or removal evidence yet.
+
+Current claim boundary: service plus packet parity remains authoritative. Hooks are guardrails only. MCP, lifecycle hook parity, plugin-packaged hook projection, automatic descendant rehydration, production readiness, and unrelated global plugin drift remain unclaimed.
+
 ## 2026-05-03 Child Agent Completion Diagnostic
 
 Status: failed for bare `codex-rawr exec resume`, with the service proof still intact.

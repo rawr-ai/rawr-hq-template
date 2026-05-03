@@ -1,0 +1,4 @@
+{"event":"PreToolUse","decision":{"action":"block","reason":"Hyperresearch source access must route through packet sourceUrls and service source capture before generic shell fetch/search commands run."},"at":"2026-05-03T23:58:23.804Z"}
+{"event":"PreToolUse","decision":{"action":"allow"},"at":"2026-05-03T23:58:23.834Z"}
+{"event":"Stop","decision":{"action":"block","reason":"Hyperresearch ledger is not complete: /Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/ledgers/red-ledger.json"},"at":"2026-05-03T23:58:23.861Z"}
+{"event":"Stop","decision":{"action":"allow"},"at":"2026-05-03T23:58:23.888Z"}

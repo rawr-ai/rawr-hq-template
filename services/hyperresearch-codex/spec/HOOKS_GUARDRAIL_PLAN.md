@@ -1,6 +1,6 @@
 # Hyperresearch Codex Hooks Guardrail Plan
 
-This plan scopes the remaining hook work after service plus Codex packet-orchestration parity. It is prework for a future implementation session, not a claim that hooks are currently installed or proven.
+This plan records the scoped hook guardrail work after service plus Codex packet-orchestration parity. The core runtime fixture is now proven for `PreToolUse` and `Stop`; managed plugin projection and lifecycle hook parity remain unclaimed.
 
 ## Decision
 
@@ -19,6 +19,21 @@ Core hook parity is narrow:
 
 Everything else is optional ergonomics or explicit non-claim.
 
+## Current Proof Status
+
+Core proof bundle: `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/`.
+
+Observed proof:
+
+- Disposable `CODEX_HOME` with the Codex-required top-level `hooks` object invoked both `PreToolUse` and `Stop` during `codex-rawr exec`.
+- Runtime `PreToolUse` payload is preserved at `payloads/pre-tool-use-runtime.jsonl`; it matched `tool_name: "Bash"` and `tool_input.command`.
+- Direct fixture execution blocked `curl https://example.com/source` with a Codex-style `hookSpecificOutput.permissionDecision=deny` response and a non-empty reason.
+- Direct fixture execution allowed Hyperresearch service commands and explicitly routed source URLs. Allow decisions intentionally emit empty stdout/stderr; the decision logs carry the allow evidence.
+- Direct fixture execution blocked missing/incomplete/red ledgers and allowed a green ledger with `validation.passed:true`.
+- Runtime `Stop` payload is preserved at `payloads/stop-runtime.jsonl`; the observed payload had `stop_hook_active:false`, so red/green final-answer blocking is proven by direct fixture execution rather than a live final-answer block.
+
+Reference hook candidates live under `services/hyperresearch-codex/references/codex-hooks/`. They are not installed into active Codex homes and do not prove agent-sync hook projection.
+
 ## Non-Claims
 
 - Hooks do not replace source capture, artifact hash checks, claim trace, patch log, or final validation.
@@ -32,8 +47,8 @@ Everything else is optional ergonomics or explicit non-claim.
 
 | Tier | Hook | Purpose | Promotion rule |
 |---|---|---|---|
-| Core | `PreToolUse` | Prevent or record generic source/search bypass during active Hyperresearch runs | Promote only after a temp-project fixture proves payload shape, matching, block/allow behavior, and service-ledger interaction |
-| Core | `Stop` | Prevent final answer while ledger validation is red or missing | Promote only after a fixture proves red blocks and green allows |
+| Core | `PreToolUse` | Prevent or record generic source/search bypass during active Hyperresearch runs | Fixture-proven guardrail. Runtime payload and direct block/allow decisions are preserved in `20260503T235332Z-codex-hooks-proof`; service source capture remains authoritative |
+| Core | `Stop` | Prevent final answer while ledger validation is red or missing | Fixture-proven guardrail. Runtime invocation is observed; red/green block/allow decisions are direct-fixture proven because the runtime payload had `stop_hook_active:false` |
 | Stretch | `PermissionRequest` | Deny unsafe escalations where Codex permission flow exposes enough context | Optional after the two core hooks are proven |
 | Stretch | `PostToolUse` | Capture diagnostics after relevant tool calls | Optional evidence convenience; not a parity gate |
 | Stretch | `SessionStart` / `UserPromptSubmit` | Inject resume context or point to current ledger/run packet | Optional ergonomics; must not mutate run state |
@@ -71,7 +86,7 @@ Minimum scenarios:
    - Configure `codex_hooks=true` in the temp `CODEX_HOME`.
    - Register a harmless `PreToolUse` command hook.
    - Run `codex-rawr exec` in the temp project.
-   - Preserve hook stdin payload, exit/result, and `HookStarted`/`HookCompleted` evidence.
+   - Preserve hook stdin payload, exit/result, and hook decision logs. `codex-rawr exec --json` did not emit hook start/completion notifications for this run; the payload and decision logs are the durable proof.
 2. Source guard block.
    - Create or point to an active Hyperresearch ledger.
    - Attempt a generic source/search/fetch path that bypasses packet `sourceUrls`.
@@ -93,32 +108,49 @@ Minimum scenarios:
    - Hook timeout.
    - Missing block reason.
 
+DRA proof fill-in:
+
+- committed evidence directory path: `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/`;
+- Codex/RAWR version: `codex-cli 0.126.0-alpha.3`;
+- observed `PreToolUse` payload: `payloads/pre-tool-use-runtime.jsonl`;
+- observed `Stop` payload: `payloads/stop-runtime.jsonl`;
+- source-bypass block output: `logs/source-guard-block.txt`;
+- Hyperresearch-command allow evidence: `logs/hook-events.jsonl` plus expected-empty stdout in `logs/source-guard-allow.txt`;
+- routed-source allow evidence: `logs/hook-events-routed-source.jsonl` plus expected-empty stdout in `logs/source-guard-routed-allow.txt`;
+- `Stop` red/green evidence: block output in `logs/stop-red.txt`, allow decision in `logs/hook-events.jsonl`, and expected-empty allow stdout in `logs/stop-green.txt`;
+- config negative probe: `logs/hook-smoke-events.jsonl` shows the initial missing top-level `hooks` wrapper did not run hooks;
+- no downstream hook projection or install claim is made.
+
 ## Implementation Phases
 
 ### Phase 1: Local Runtime Fixture
 
-- Build fixture-only hook scripts under a temp evidence directory or `spec/fixtures/hooks`.
-- Prove `PreToolUse` and `Stop` behavior without touching downstream install projection.
-- Update `HOOKS_MCP_PARITY.md`, `TESTING_PLAN.md`, and `REVIEW_LEDGER.md` with observed payloads and outcomes.
+- Status: complete for core `PreToolUse`/`Stop` guardrails.
+- Fixture scripts live under `spec/fixtures/hooks`.
+- Evidence lives under `spec/evidence/20260503T235332Z-codex-hooks-proof/`.
+- Active `~/.codex-rawr` was not mutated.
 
 ### Phase 2: Candidate Hook Material
 
-- Convert proven fixture scripts into candidate Hyperresearch hook material.
-- Keep candidate material in references until install projection exists.
-- Add local script tests for payload parsing and red/green decisions.
+- Status: complete as reference-only material.
+- Candidate scripts live under `references/codex-hooks/`.
+- Local tests cover payload parsing, source guard block/allow, red/green `Stop` decisions, malformed payloads, unsupported events, ledger path precedence, missing validation markers, and timeout classification.
 
 ### Phase 3: Downstream Projection
 
 - Extend RAWR agent-sync to scan and project hook material only after the runtime fixture is green.
 - Prove dry-run, sync, force/update, drift detection, and removal/garbage collection for hook material.
 - Only then move hook material out of reference-only status.
+- Status: open. This phase is not part of the current parity claim.
 
 ## Acceptance
 
-Hook prework is complete when a future implementation session can execute the fixture plan without design decisions left open. Hook parity is complete only when:
+Core hook guardrail proof is complete when:
 
 - `PreToolUse` source guard and `Stop` validation guard are fixture-proven;
 - evidence is committed under `spec/evidence`;
 - docs state the exact block/allow behavior and payload shape observed;
-- downstream material is synced only as reference or through a proven hook projection path;
+- downstream material is synced only as reference unless a proven hook projection path exists;
 - missing lifecycle hooks remain explicit non-claims.
+
+Plugin-packaged hook parity is complete only after agent-sync hook projection exists and has install/update/dry-run/drift/removal evidence.

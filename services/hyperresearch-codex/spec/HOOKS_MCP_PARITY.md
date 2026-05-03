@@ -4,6 +4,8 @@ This document records the current Codex/RAWR hooks and Hyperresearch MCP boundar
 
 The authoritative Hyperresearch parity loop remains the service ledger, packet validation, source capture, claim trace, patch log, backend CLI audit trail, and final `validate` result. Hooks and MCP may improve guardrails or ergonomics, but they are not acceptance proof unless a separate fixture proves their runtime behavior.
 
+Current status: core Hyperresearch-specific `PreToolUse` and `Stop` guardrails are fixture-proven under `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/`. This proves runtime payload capture plus deterministic guard decisions; it does not prove plugin-packaged hook projection or lifecycle hook parity.
+
 ## Codex/RAWR Hook Surface
 
 The local RAWR Codex fork exposes these hook events in source and has `features.codex_hooks=true` in the active config:
@@ -37,8 +39,8 @@ The closest Codex equivalent to the installed Claude hook is a `PreToolUse` comm
 
 | Need | Codex event | Current disposition |
 |---|---|---|
-| Discourage generic source fetch bypass during active Hyperresearch runs | `PreToolUse` | Useful core guardrail after fixture proof; it must hard-block the bypass or record it as a policy failure, and service source capture remains authoritative |
-| Block final closure until service validation is green | `Stop` | Useful core guardrail after fixture proof |
+| Discourage generic source fetch bypass during active Hyperresearch runs | `PreToolUse` | Fixture-proven guardrail. Runtime payload capture and direct block/allow decisions are preserved in `20260503T235332Z-codex-hooks-proof`; service source capture remains authoritative |
+| Block final closure until service validation is green | `Stop` | Fixture-proven guardrail. Runtime invocation was observed; red/green block/allow semantics are direct-fixture proven because the observed runtime payload had `stop_hook_active:false` |
 
 ## Ergonomic Stretch Hooks
 
@@ -55,21 +57,25 @@ The closest Codex equivalent to the installed Claude hook is a `PreToolUse` comm
 | Observe child-agent lifecycle | none proven | Use `CHILD_AGENT_COMPLETION_CONTRACT.md`; do not claim hook parity |
 | Observe compaction lifecycle | none proven | Use durable ledger and resume packet; do not claim hook parity |
 
-## Hook Fixtures Required Before Promotion
+## Hook Fixture Promotion Evidence
 
-The detailed plan is `HOOKS_GUARDRAIL_PLAN.md`. Minimum promotion evidence:
+The detailed plan is `HOOKS_GUARDRAIL_PLAN.md`. The core fixture proof supplied:
 
-1. A temporary Codex project with `codex_hooks=true` and a harmless `PreToolUse` command hook records `HookStarted`/`HookCompleted`, hook stdin payload shape, command exit status, and transcript-visible feedback.
-2. A Hyperresearch source guard blocks generic source fetch/search during an active run unless the action routes through packet `sourceUrls` and service source capture, or records the bypass as a policy failure.
-3. The same source path routed through packet `sourceUrls` and service source capture is allowed, and final service validation still verifies the captured source.
-4. A `Stop` guard blocks final answer when the ledger is missing, incomplete, or validation is red, and allows closure after `validate --backend real|fixture` returns `passed:true`.
-5. Negative cases cover malformed hook config, disabled hooks, unsupported event names, stale ledger paths, missing block reasons, and hook timeout behavior.
+1. A temporary Codex project and disposable `CODEX_HOME` with `codex_hooks=true` and top-level `hooks` config.
+2. Runtime `PreToolUse` payload shape and matched Bash tool name in `payloads/pre-tool-use-runtime.jsonl`.
+3. Direct source-bypass block output in `logs/source-guard-block.txt`.
+4. Direct Hyperresearch-command allow evidence in `logs/hook-events.jsonl`; `logs/source-guard-allow.txt` is expected-empty because allow decisions emit empty stdout/stderr.
+5. Direct routed-source allow evidence in `logs/hook-events-routed-source.jsonl`; `logs/source-guard-routed-allow.txt` is expected-empty for the same reason.
+6. Runtime `Stop` payload in `payloads/stop-runtime.jsonl`.
+7. Direct `Stop` red/green decisions in `logs/stop-red.txt` and `logs/hook-events.jsonl`; `logs/stop-green.txt` is expected-empty because allow decisions emit empty stdout/stderr.
+8. Negative config evidence showing missing top-level `hooks` did not run hooks.
+9. Unit coverage for malformed JSON, unsupported events, missing command text, URL bypasses, allowed routed commands, missing/incomplete/red ledgers, missing passed validation marker, ledger path precedence, green ledgers, and timeout classification.
 
-Plugin/config projection remains unclaimed until a fixture proves install, update, and removal behavior for Hyperresearch hook material.
+Plugin/config projection remains unclaimed until agent-sync has managed hook material projection and a fixture proves install, update, dry-run, drift, and removal behavior for Hyperresearch hook material. A local runtime fixture for `PreToolUse` or `Stop` is not enough to claim plugin-packaged hook projection.
 
 ## Hyperresearch MCP Surface
 
-MCP is intentionally parked. It is not fully specified, not part of the active parity claim, and not required for the core Hyperresearch Codex loop. We have not yet investigated the controlled install shape, Codex MCP registration mechanics, tool schemas, authorization model, write-deny enforcement, or parity-equivalent provenance for MCP writes. That is acceptable for the current closure path because MCP does not provide anything the direct Hyperresearch CLI backend lacks for the authoritative loop: step loading, durable ledgering, packet fan-out/fan-in, CLI call audit, source capture, claim trace, patch log, and final validation all remain service/CLI responsibilities.
+MCP is intentionally parked. It is not fully specified, not part of the active parity claim, and not required for the core Hyperresearch Codex loop. We have not yet investigated the controlled install shape, Codex MCP registration mechanics, tool schemas, authorization model, write-deny enforcement, or parity-equivalent provenance for MCP writes. That is acceptable for the current closure path because MCP does not provide anything the direct Hyperresearch CLI backend lacks for the authoritative loop: step loading, durable ledgering, packet fan-out/fan-in, CLI call audit, source capture, claim trace, patch log, and final validation all remain service/CLI responsibilities. Hook guardrail work must not silently promote MCP.
 
 If MCP is ever promoted later, the specification work must answer:
 

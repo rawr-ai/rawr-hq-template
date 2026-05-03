@@ -19,8 +19,8 @@ The local package owns the reusable control-plane substrate: durable ledgers, fr
 - `INTEGRATION_SPEC.md`: package, CLI, and downstream sync boundaries.
 - `PARITY_MATRIX.md`: Claude constructs and Codex adapter decisions.
 - `CHILD_AGENT_COMPLETION_CONTRACT.md`: child-session lifecycle evidence contract and stuck-wait diagnostic boundary.
-- `HOOKS_MCP_PARITY.md`: observed Codex/RAWR hook surface, missing Claude hook events, and parked MCP boundary.
-- `HOOKS_GUARDRAIL_PLAN.md`: concrete plan for proving `PreToolUse` source-bypass and `Stop` validation guardrails without overclaiming hook parity.
+- `HOOKS_MCP_PARITY.md`: observed Codex/RAWR hook surface, proven core guardrails, missing lifecycle hook events, and parked MCP boundary.
+- `HOOKS_GUARDRAIL_PLAN.md`: proof record for `PreToolUse` source-bypass and `Stop` validation guardrails without overclaiming managed hook projection.
 - `NATIVE_CODEX_SURFACE_REVIEW.md`: deep paired review of `codex-rawr exec`, app-server, Codex SDK, and OpenAI SDK alternatives for the child lifecycle issue, including the app-server cold-resume smoke result.
 - `FLOWS.md`: runtime, step loading, source capture, resume, failure, and final plugin proof flows.
 - `TESTING_PLAN.md`: component gates, dry-run gates, live gates, and final Codex plugin-system proof.
@@ -40,4 +40,4 @@ The repaired full-tier Inngest proof is green: all 16 V8 steps, 20 role-agent pa
 
 Active Hyperresearch Codex parity is clean for the service plus packet-orchestration path under explicit child-resume recovery: after parent resume, the coordinator explicitly resumes known child ids before wait/close. If explicit child resume cannot cleanly complete an attempt, the attempt remains non-clean and the same logical packet job may complete through a fallback replacement attempt whose packet output, artifact writes, source URLs, claim trace, patch log, and final validation all pass. Bare parent resume automatic descendant rehydration remains unclaimed.
 
-Automatic descendant rehydration is not part of this parity claim. The diagnostics show same-process children work, bare parent resume is insufficient, and app-server explicit `resume_agent` evidence cleanly recovers known child ids. Hooks are the next separate track, MCP remains parked, and production Inngest readiness plus unrelated global plugin drift remain separate unless explicitly promoted.
+Automatic descendant rehydration is not part of this parity claim. The diagnostics show same-process children work, bare parent resume is insufficient, and app-server explicit `resume_agent` evidence cleanly recovers known child ids. Core hook guardrails are fixture-proven and reference-only; managed hook projection, lifecycle hook parity, MCP, production Inngest readiness, and unrelated global plugin drift remain separate unless explicitly promoted.
