@@ -1,4 +1,5 @@
 export type {
+  HyperresearchAgentArtifactWrite,
   HyperresearchAgentJob,
   HyperresearchAgentOutput,
   HyperresearchAgentJobStatus,
@@ -12,6 +13,7 @@ export type {
   HyperresearchResumeEvent,
   HyperresearchReviewDisposition,
   HyperresearchRunLedger,
+  HyperresearchSourceCapture,
   HyperresearchStepLoad,
   HyperresearchStepRecord,
   HyperresearchStepStatus,

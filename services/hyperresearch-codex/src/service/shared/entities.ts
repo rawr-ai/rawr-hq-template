@@ -111,6 +111,16 @@ export const HyperresearchAgentJobStatusSchema = Type.Union([
 ]);
 export type HyperresearchAgentJobStatus = Static<typeof HyperresearchAgentJobStatusSchema>;
 
+export const HyperresearchAgentArtifactWriteSchema = Type.Object(
+  {
+    path: Type.String({ minLength: 1 }),
+    sha256: Type.String({ minLength: 1 }),
+    summary: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+export type HyperresearchAgentArtifactWrite = Static<typeof HyperresearchAgentArtifactWriteSchema>;
+
 export const HyperresearchAgentJobSchema = Type.Object(
   {
     id: Type.String({ minLength: 1 }),
@@ -135,6 +145,7 @@ export const HyperresearchAgentOutputSchema = Type.Object(
     status: Type.Union([Type.Literal("complete"), Type.Literal("failed")]),
     summary: Type.String({ minLength: 1 }),
     evidence: Type.Array(Type.String()),
+    artifactWrites: Type.Optional(Type.Array(HyperresearchAgentArtifactWriteSchema)),
     sourceUrls: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
     failure: Type.Optional(Type.String({ minLength: 1 })),
   },
@@ -164,6 +175,21 @@ export const HyperresearchReportSnapshotSchema = Type.Object(
   { additionalProperties: false },
 );
 export type HyperresearchReportSnapshot = Static<typeof HyperresearchReportSnapshotSchema>;
+
+export const HyperresearchSourceCaptureSchema = Type.Object(
+  {
+    url: Type.String({ minLength: 1 }),
+    stepIds: Type.Array(Type.String({ minLength: 1 })),
+    suggestedByAgentJobIds: Type.Array(Type.String({ minLength: 1 })),
+    evidence: Type.Array(Type.String({ minLength: 1 })),
+    cliCallIndexes: Type.Array(Type.Number()),
+    noteIds: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
+    sourceIds: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
+    capturedAt: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+export type HyperresearchSourceCapture = Static<typeof HyperresearchSourceCaptureSchema>;
 
 export const HyperresearchPatchGuardSchema = Type.Object(
   {
@@ -198,6 +224,7 @@ export const HyperresearchRunLedgerSchema = Type.Object(
     agentJobs: Type.Optional(Type.Array(HyperresearchAgentJobSchema)),
     reviewDispositions: Type.Optional(Type.Array(HyperresearchReviewDispositionSchema)),
     reportSnapshots: Type.Optional(Type.Array(HyperresearchReportSnapshotSchema)),
+    sourceCaptures: Type.Optional(Type.Array(HyperresearchSourceCaptureSchema)),
     patchGuard: Type.Optional(HyperresearchPatchGuardSchema),
     resumes: Type.Array(HyperresearchResumeEventSchema),
     failures: Type.Array(HyperresearchFailureSchema),
@@ -229,6 +256,7 @@ export const HyperresearchV8RunLedgerSchema = Type.Object(
     agentJobs: Type.Array(HyperresearchAgentJobSchema),
     reviewDispositions: Type.Array(HyperresearchReviewDispositionSchema),
     reportSnapshots: Type.Array(HyperresearchReportSnapshotSchema),
+    sourceCaptures: Type.Array(HyperresearchSourceCaptureSchema),
     patchGuard: HyperresearchPatchGuardSchema,
     resumes: Type.Array(HyperresearchResumeEventSchema),
     failures: Type.Array(HyperresearchFailureSchema),
@@ -265,6 +293,8 @@ export const HyperresearchIntegrityFindingSchema = Type.Object(
       Type.Literal("incomplete-run"),
       Type.Literal("open-review-finding"),
       Type.Literal("patch-only-violation"),
+      Type.Literal("missing-source-capture"),
+      Type.Literal("missing-claim-trace"),
     ]),
     message: Type.String({ minLength: 1 }),
     stepId: Type.Optional(Type.String({ minLength: 1 })),

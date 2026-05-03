@@ -1,29 +1,8 @@
 import type {
   HyperresearchStepDefinition,
   LoadedHyperresearchStep,
-} from "../entities";
-import type { HyperresearchCodexIO } from "../resources";
-
-export const syntheticHyperresearchSteps: HyperresearchStepDefinition[] = [
-  {
-    id: "01-canonical-query",
-    title: "Canonical query and vault bootstrap",
-    fileName: "01-canonical-query.md",
-    requiredArtifacts: ["canonical-query.json"],
-  },
-  {
-    id: "02-source-capture",
-    title: "CLI-backed source capture",
-    fileName: "02-source-capture.md",
-    requiredArtifacts: ["source-note.json"],
-  },
-  {
-    id: "03-final-artifact",
-    title: "Final artifact and integrity gates",
-    fileName: "03-final-artifact.md",
-    requiredArtifacts: ["final-report.md"],
-  },
-];
+} from "../../../shared/entities";
+import type { HyperresearchCodexIO } from "../../../shared/resources";
 
 export const v8HyperresearchSteps: HyperresearchStepDefinition[] = [
   {
@@ -195,6 +174,7 @@ export const v8HyperresearchSteps: HyperresearchStepDefinition[] = [
     agentRoles: ["hyperresearch-readability-recommender"],
     requiredCliOperations: ["sync", "lint", "export"],
     requiredArtifacts: [
+      "research/claim-trace.json",
       "research/readability-recommendations.json",
       "research/readability-decisions.json",
       "research/notes/final_report_${vaultTag}.md",

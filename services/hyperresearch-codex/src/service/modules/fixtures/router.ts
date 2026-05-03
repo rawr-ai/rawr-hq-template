@@ -4,14 +4,17 @@
  * The fixture module is intentionally separate from V8 runs: it proves the
  * reusable control-plane mechanics with a tiny route and fakeable CLI backend.
  */
-import { runHyperresearchCli } from "../../shared/helpers/cli";
-import { validateHyperresearchRunIntegrity } from "../../shared/helpers/integrity";
+import { runHyperresearchCli } from "../../shared/adapters/hyperresearch-cli";
+import { validateSyntheticRunIntegrity } from "./helpers/integrity";
 import {
-  nextPendingStep,
-  readOrCreateHyperresearchRunLedger,
-  writeHyperresearchRunLedger,
-} from "../../shared/helpers/ledger";
-import { loadHyperresearchStep, syntheticHyperresearchSteps } from "../../shared/helpers/steps";
+  nextSyntheticPendingStep,
+  readOrCreateSyntheticRunLedger,
+  writeSyntheticRunLedger,
+} from "./helpers/ledger";
+import {
+  loadSyntheticHyperresearchStep,
+  syntheticHyperresearchSteps,
+} from "./helpers/steps";
 import type {
   HyperresearchStepRecord,
 } from "../../shared/entities";
@@ -47,7 +50,7 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
   await io.ensureDir(io.join(input.vaultRoot, "research", "notes"));
   await io.ensureDir(io.join(input.vaultRoot, "research", "raw"));
 
-  const ledger = await readOrCreateHyperresearchRunLedger({
+  const ledger = await readOrCreateSyntheticRunLedger({
     ledgerPath,
     canonicalQuery: input.canonicalQuery,
     tier: input.tier,
@@ -60,7 +63,7 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
 
   let completedThisPass = 0;
   while (!ledger.completed && completedThisPass < (input.maxSteps ?? Number.POSITIVE_INFINITY)) {
-    const step = nextPendingStep(ledger);
+    const step = nextSyntheticPendingStep(ledger);
     if (!step) {
       ledger.completed = true;
       ledger.currentStepId = undefined;
@@ -73,7 +76,7 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
     const definition = definitionFor(step.id);
 
     try {
-      const loaded = await loadHyperresearchStep({
+      const loaded = await loadSyntheticHyperresearchStep({
         stepsRoot: input.stepsRoot,
         definition,
         io,
@@ -169,9 +172,9 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
       step.status = "complete";
       step.completedAt = io.now();
       completedThisPass += 1;
-      ledger.currentStepId = nextPendingStep(ledger)?.id;
+      ledger.currentStepId = nextSyntheticPendingStep(ledger)?.id;
       ledger.completed = ledger.steps.every((item) => item.status === "complete");
-      await writeHyperresearchRunLedger({ ledgerPath, ledger, io });
+      await writeSyntheticRunLedger({ ledgerPath, ledger, io });
     } catch (error) {
       step.status = "failed";
       step.failure = error instanceof Error ? error.message : String(error);
@@ -182,13 +185,13 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
         kind: "step",
         message: step.failure,
       });
-      await writeHyperresearchRunLedger({ ledgerPath, ledger, io });
+      await writeSyntheticRunLedger({ ledgerPath, ledger, io });
       break;
     }
   }
 
-  const integrity = await validateHyperresearchRunIntegrity({ ledger, io });
-  await writeHyperresearchRunLedger({ ledgerPath, ledger, io });
+  const integrity = await validateSyntheticRunIntegrity({ ledger, io });
+  await writeSyntheticRunLedger({ ledgerPath, ledger, io });
 
   return {
     ledgerPath,

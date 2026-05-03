@@ -7,4 +7,3 @@ export {
   type Scope,
 } from "./client";
 export { router, type Router } from "./router";
-export type * from "./types";

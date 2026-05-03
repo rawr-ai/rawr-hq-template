@@ -26,7 +26,7 @@ describe("hyperresearch-codex service shell", () => {
     ]);
   });
 
-  it("keeps package mechanics behind explicit service modules and shared helpers", async () => {
+  it("keeps package mechanics behind explicit service modules", async () => {
     expect(Object.keys(publicApi).sort()).toEqual(["createClient", "router"]);
 
     const srcDir = path.resolve(dirname(fileURLToPath(import.meta.url)), "../src");
@@ -42,9 +42,10 @@ describe("hyperresearch-codex service shell", () => {
     ]);
   });
 
-  it("rejects generic module buckets and service directories inside modules", async () => {
+  it("rejects generic module buckets, module-root implementation files, and top-level shared helpers", async () => {
     const serviceDir = path.resolve(dirname(fileURLToPath(import.meta.url)), "../src/service");
     const moduleDir = path.join(serviceDir, "modules");
+    const sharedDir = path.join(serviceDir, "shared");
     const moduleNames = (await fs.readdir(moduleDir, { withFileTypes: true }))
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
@@ -56,13 +57,23 @@ describe("hyperresearch-codex service shell", () => {
 
     for (const moduleName of moduleNames) {
       const entries = (await fs.readdir(path.join(moduleDir, moduleName))).sort();
-      expect(entries).toContain("contract.ts");
-      expect(entries).toContain("middleware.ts");
-      expect(entries).toContain("module.ts");
-      expect(entries).toContain("router.ts");
+      expect(entries).toEqual([
+        "contract.ts",
+        "helpers",
+        "middleware.ts",
+        "module.ts",
+        "router.ts",
+      ]);
       expect(entries).not.toContain("services");
       expect(entries).not.toContain("runner.ts");
       expect(entries).not.toContain("v8-runner.ts");
     }
+
+    expect((await fs.readdir(sharedDir)).sort()).toEqual([
+      "adapters",
+      "entities.ts",
+      "resources.ts",
+    ]);
+    await expect(fs.stat(path.join(sharedDir, "helpers"))).rejects.toThrow();
   });
 });

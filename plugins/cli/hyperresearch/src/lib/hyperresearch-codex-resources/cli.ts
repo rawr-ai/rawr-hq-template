@@ -3,7 +3,7 @@ import type { HyperresearchCliBackend } from "@rawr/hyperresearch-codex/resource
 import type {
   HyperresearchCliOperation,
   HyperresearchCliResult,
-} from "@rawr/hyperresearch-codex";
+} from "@rawr/hyperresearch-codex/types";
 
 export class NodeHyperresearchCliBackend implements HyperresearchCliBackend {
   constructor(private readonly binary = "hyperresearch") {}

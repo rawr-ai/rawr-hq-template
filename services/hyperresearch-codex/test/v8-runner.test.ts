@@ -1,9 +1,15 @@
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../src";
-import { v8HyperresearchSteps } from "../src/service/shared/helpers/steps";
+import {
+  expandV8ArtifactPath,
+  v8HyperresearchSteps,
+  v8StepsForTier,
+} from "../src/service/modules/runs/helpers/steps";
+import type { HyperresearchAgentJob } from "../src/types";
 import { createClientOptions, invocation, RecordingCli } from "./helpers";
 
 const tempDirs: string[] = [];
@@ -24,6 +30,61 @@ async function makeV8Fixture() {
     "utf8",
   )));
   return { root, stepsRoot, vaultRoot };
+}
+
+function sha256(content: string) {
+  return crypto.createHash("sha256").update(content).digest("hex");
+}
+
+function requiredArtifactsFor(stepId: string, vaultTag: string, tier: "light" | "full" = "full") {
+  const definition = v8StepsForTier(tier).find((step) => step.id === stepId);
+  if (!definition) throw new Error(`Missing test step definition: ${stepId}`);
+  return definition.requiredArtifacts.map((artifact) => expandV8ArtifactPath(artifact, vaultTag));
+}
+
+async function writeAgentOutput(input: {
+  vaultRoot: string;
+  job: HyperresearchAgentJob;
+  artifactPaths?: string[];
+  sourceUrls?: string[];
+}) {
+  const artifactWrites = [];
+  for (const artifactPath of input.artifactPaths ?? []) {
+    const content = artifactPath.endsWith(".json")
+      ? JSON.stringify({ ok: true, jobId: input.job.id, artifactPath }, null, 2)
+      : `# ${artifactPath}\n\nJob: ${input.job.id}\n`;
+    await fs.mkdir(path.dirname(path.join(input.vaultRoot, artifactPath)), { recursive: true });
+    await fs.writeFile(path.join(input.vaultRoot, artifactPath), content, "utf8");
+    artifactWrites.push({
+      path: artifactPath,
+      sha256: sha256(content),
+      summary: `Artifact written for ${input.job.id}`,
+    });
+  }
+
+  await fs.writeFile(
+    path.join(input.vaultRoot, input.job.expectedOutputPath),
+    JSON.stringify({
+      jobId: input.job.id,
+      role: input.job.role,
+      status: "complete",
+      summary: input.job.role,
+      evidence: input.sourceUrls ?? [],
+      artifactWrites,
+      sourceUrls: input.sourceUrls,
+    }, null, 2),
+    "utf8",
+  );
+}
+
+async function packetRequiredArtifacts(input: {
+  vaultRoot: string;
+  job: HyperresearchAgentJob;
+}): Promise<string[]> {
+  const packet = JSON.parse(await fs.readFile(path.join(input.vaultRoot, input.job.packetPath), "utf8")) as {
+    requiredArtifacts?: string[];
+  };
+  return packet.requiredArtifacts ?? [];
 }
 
 describe("hyperresearch-codex V8 runtime", () => {
@@ -125,6 +186,116 @@ describe("hyperresearch-codex V8 runtime", () => {
     }));
   });
 
+  it("allows logged patch edits that preserve the synthesis snapshot lineage", async () => {
+    const fixture = await makeV8Fixture();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await client.runs.startV8Run({
+      canonicalQuery: "Logged patch proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-logged-patch-start"));
+
+    const advanced = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "synthesize",
+    }, invocation("v8-logged-patch-advance"));
+    expect(advanced.status).toBe("complete");
+
+    const reportPath = advanced.ledger.patchGuard.snapshotPath;
+    const beforeSha256 = advanced.ledger.patchGuard.snapshotSha256;
+    if (!reportPath || !beforeSha256) throw new Error("expected patch snapshot");
+    const fullReportPath = path.join(fixture.vaultRoot, reportPath);
+    const before = await fs.readFile(fullReportPath, "utf8");
+    const after = `${before}\nPatch note: retained source-backed claim wording.\n`;
+    await fs.writeFile(fullReportPath, after, "utf8");
+    await fs.writeFile(
+      path.join(fixture.vaultRoot, "research", "patch-log.json"),
+      JSON.stringify({
+        patches: [
+          {
+            criticId: "test-critic",
+            findingIds: ["finding-1"],
+            status: "accepted",
+            rationale: "Add a small logged clarification without regenerating the report.",
+            beforeSha256,
+            afterSha256: sha256(after),
+            hunks: [
+              {
+                section: "tail",
+                before: "",
+                after: "Patch note: retained source-backed claim wording.",
+              },
+            ],
+          },
+        ],
+      }, null, 2),
+      "utf8",
+    );
+
+    const validation = await client.runs.validateV8Run({
+      ledgerPath: started.ledgerPath,
+    }, invocation("v8-logged-patch-validate"));
+    expect(validation.passed).toBe(true);
+    expect(validation.blockingFindings).toEqual([]);
+  });
+
+  it("blocks patch logs that do not represent the actual accepted report change", async () => {
+    const fixture = await makeV8Fixture();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await client.runs.startV8Run({
+      canonicalQuery: "Bad patch log proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-bad-patch-log-start"));
+
+    const advanced = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "synthesize",
+    }, invocation("v8-bad-patch-log-advance"));
+    expect(advanced.status).toBe("complete");
+
+    const reportPath = advanced.ledger.patchGuard.snapshotPath;
+    const beforeSha256 = advanced.ledger.patchGuard.snapshotSha256;
+    if (!reportPath || !beforeSha256) throw new Error("expected patch snapshot");
+    const fullReportPath = path.join(fixture.vaultRoot, reportPath);
+    const before = await fs.readFile(fullReportPath, "utf8");
+    const after = `${before}\nUncovered accepted change.\n`;
+    await fs.writeFile(fullReportPath, after, "utf8");
+    await fs.writeFile(
+      path.join(fixture.vaultRoot, "research", "patch-log.json"),
+      JSON.stringify({
+        patches: [
+          {
+            criticId: "test-critic",
+            findingIds: ["finding-1"],
+            status: "rejected",
+            rationale: "Rejected findings cannot cover actual report edits.",
+            beforeSha256,
+            afterSha256: sha256(after),
+            hunks: [
+              {
+                section: "tail",
+                before: "",
+                after: "Different change.",
+              },
+            ],
+          },
+        ],
+      }, null, 2),
+      "utf8",
+    );
+
+    const validation = await client.runs.validateV8Run({
+      ledgerPath: started.ledgerPath,
+    }, invocation("v8-bad-patch-log-validate"));
+    expect(validation.passed).toBe(false);
+    expect(validation.blockingFindings).toContainEqual(expect.objectContaining({
+      code: "patch-only-violation",
+    }));
+  });
+
   it("runs the full fixture route across all 16 V8 steps", async () => {
     const fixture = await makeV8Fixture();
     const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
@@ -176,22 +347,27 @@ describe("hyperresearch-codex V8 runtime", () => {
       "hyperresearch-fetcher",
       "hyperresearch-source-analyst",
     ]);
+    await expect(packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job: awaiting.pendingAgentJobs[0]! }))
+      .resolves.toEqual([
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+      ]);
+    await expect(packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job: awaiting.pendingAgentJobs[1]! }))
+      .resolves.toEqual([
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json",
+      ]);
 
-    await Promise.all(awaiting.pendingAgentJobs.map((job) => fs.writeFile(
-      path.join(fixture.vaultRoot, job.expectedOutputPath),
-      JSON.stringify({
-        jobId: job.id,
-        role: job.role,
-        status: "complete",
-        summary: job.role,
-        evidence: ["https://www.python.org/about/"],
-        sourceUrls: [
-          "https://www.python.org/about/",
-          "https://www.python.org/downloads/",
-        ],
-      }, null, 2),
-      "utf8",
-    )));
+    const requiredArtifacts = requiredArtifactsFor("02-width-sweep", awaiting.ledger.vaultTag);
+    await Promise.all(awaiting.pendingAgentJobs.map(async (job) => writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job,
+      artifactPaths: await packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job }),
+      sourceUrls: [
+        "https://www.python.org/about/",
+        "https://www.python.org/downloads/",
+      ],
+    })));
 
     const resumed = await client.runs.advanceV8Run({
       ledgerPath: started.ledgerPath,
@@ -200,6 +376,15 @@ describe("hyperresearch-codex V8 runtime", () => {
       resumeReason: "agent outputs written",
     }, invocation("v8-packet-resume"));
     expect(resumed.ledger.steps.find((step) => step.id === "02-width-sweep")?.status).toBe("complete");
+    expect(resumed.ledger.steps.find((step) => step.id === "02-width-sweep")?.artifacts)
+      .toEqual(requiredArtifacts);
+    expect(resumed.ledger.sourceCaptures).toHaveLength(2);
+    expect(resumed.ledger.sourceCaptures.find((capture) => capture.url === "https://www.python.org/about/"))
+      .toEqual(expect.objectContaining({
+        stepIds: ["02-width-sweep"],
+        suggestedByAgentJobIds: awaiting.pendingAgentJobs.map((job) => job.id),
+        cliCallIndexes: [2],
+      }));
     expect(resumed.ledger.resumes).toContainEqual(expect.objectContaining({
       reason: "agent outputs written",
     }));
@@ -214,6 +399,196 @@ describe("hyperresearch-codex V8 runtime", () => {
       ["https://www.python.org/about/", "--json"],
       ["https://www.python.org/downloads/", "--json"],
     ]);
+  });
+
+  it("keeps packet fan-in atomic when agent outputs arrive over multiple advances", async () => {
+    const fixture = await makeV8Fixture();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await client.runs.startV8Run({
+      canonicalQuery: "Staggered packet fan-in proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-packet-stagger-start"));
+
+    await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-stagger-step-one"));
+    const awaiting = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-stagger-awaiting"));
+    const [firstJob, secondJob] = awaiting.pendingAgentJobs;
+    if (!firstJob || !secondJob) throw new Error("expected two pending jobs");
+
+    await writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job: firstJob,
+      artifactPaths: await packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job: firstJob }),
+      sourceUrls: ["https://www.python.org/about/"],
+    });
+    const stillAwaiting = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-stagger-partial"));
+    expect(stillAwaiting.status).toBe("awaiting_agents");
+    expect(stillAwaiting.pendingAgentJobs.map((job) => job.id)).toEqual([
+      firstJob.id,
+      secondJob.id,
+    ]);
+    expect(stillAwaiting.ledger.agentJobs.filter((job) => job.stepId === "02-width-sweep").map((job) => job.status))
+      .toEqual(["pending", "pending"]);
+
+    await writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job: secondJob,
+      artifactPaths: await packetRequiredArtifacts({ vaultRoot: fixture.vaultRoot, job: secondJob }),
+      sourceUrls: ["https://www.python.org/about/"],
+    });
+    const completed = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-stagger-complete"));
+    expect(completed.ledger.steps.find((step) => step.id === "02-width-sweep")?.status).toBe("complete");
+    expect(completed.ledger.steps.find((step) => step.id === "02-width-sweep")?.artifacts)
+      .toEqual(requiredArtifactsFor("02-width-sweep", completed.ledger.vaultTag, "light"));
+    expect(completed.ledger.sourceCaptures).toHaveLength(1);
+  });
+
+  it("blocks packet-mode completion when agent outputs omit required artifact writes", async () => {
+    const fixture = await makeV8Fixture();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await client.runs.startV8Run({
+      canonicalQuery: "Missing packet artifact proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-packet-missing-artifact-start"));
+
+    await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-missing-artifact-step-one"));
+    const awaiting = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-missing-artifact-awaiting"));
+
+    await Promise.all(awaiting.pendingAgentJobs.map((job) => writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job,
+      sourceUrls: ["https://www.python.org/about/"],
+    })));
+
+    const blocked = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-missing-artifact-advance"));
+
+    expect(blocked.status).toBe("blocked");
+    expect(blocked.ledger.steps.find((step) => step.id === "02-width-sweep")?.failure)
+      .toContain("did not declare required artifact");
+  });
+
+  it("snapshots an agent-written final report in packet mode", async () => {
+    const fixture = await makeV8Fixture();
+    const cli = new RecordingCli();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli }));
+    const started = await client.runs.startV8Run({
+      canonicalQuery: "Packet report snapshot proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-packet-snapshot-start"));
+
+    await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-snapshot-step-one"));
+    const awaitingWidth = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-snapshot-width-awaiting"));
+    await Promise.all(awaitingWidth.pendingAgentJobs.map((job, index) => writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job,
+      artifactPaths: index === 0 ? requiredArtifactsFor("02-width-sweep", awaitingWidth.ledger.vaultTag, "light") : [],
+      sourceUrls: ["https://www.python.org/about/"],
+    })));
+    await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-snapshot-width-complete"));
+
+    const awaitingDraft = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+    }, invocation("v8-packet-snapshot-draft-awaiting"));
+    expect(awaitingDraft.status).toBe("awaiting_agents");
+    expect(awaitingDraft.pendingAgentJobs.map((job) => job.role)).toEqual(["hyperresearch-draft-orchestrator"]);
+    await writeAgentOutput({
+      vaultRoot: fixture.vaultRoot,
+      job: awaitingDraft.pendingAgentJobs[0]!,
+      artifactPaths: requiredArtifactsFor("10-triple-draft", awaitingDraft.ledger.vaultTag, "light"),
+      sourceUrls: ["https://www.python.org/about/"],
+    });
+
+    const resumed = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "packets",
+      maxSteps: 1,
+    }, invocation("v8-packet-snapshot-draft-complete"));
+    expect(resumed.ledger.steps.find((step) => step.id === "10-triple-draft")?.status).toBe("complete");
+    expect(resumed.ledger.reportSnapshots).toHaveLength(1);
+    expect(resumed.ledger.patchGuard.snapshotPath).toBe(`research/notes/final_report_${resumed.ledger.vaultTag}.md`);
+  });
+
+  it("blocks completed run validation when claim trace is missing or references uncaptured sources", async () => {
+    const fixture = await makeV8Fixture();
+    const client = createClient(createClientOptions({ repoRoot: fixture.root, cli: new RecordingCli() }));
+    const started = await client.runs.startV8Run({
+      canonicalQuery: "Claim trace proof",
+      tier: "light",
+      vaultRoot: fixture.vaultRoot,
+      stepsRoot: fixture.stepsRoot,
+    }, invocation("v8-claim-trace-start"));
+
+    const advanced = await client.runs.advanceV8Run({
+      ledgerPath: started.ledgerPath,
+      agentMode: "synthesize",
+    }, invocation("v8-claim-trace-advance"));
+    expect(advanced.status).toBe("complete");
+
+    await fs.writeFile(
+      path.join(fixture.vaultRoot, "research", "claim-trace.json"),
+      JSON.stringify({
+        claims: [
+          {
+            claim: "Uncaptured source claim",
+            reportLocation: "research/notes/final_report_claim-trace-proof.md",
+            sources: [{ url: "https://example.com/uncaptured" }],
+          },
+        ],
+      }, null, 2),
+      "utf8",
+    );
+
+    const validation = await client.runs.validateV8Run({
+      ledgerPath: started.ledgerPath,
+    }, invocation("v8-claim-trace-validate"));
+    expect(validation.passed).toBe(false);
+    expect(validation.blockingFindings).toContainEqual(expect.objectContaining({
+      code: "missing-source-capture",
+    }));
+    expect(validation.blockingFindings).toContainEqual(expect.objectContaining({
+      code: "missing-claim-trace",
+    }));
   });
 
   it("blocks failed agent outputs and does not complete the step on later advance calls", async () => {

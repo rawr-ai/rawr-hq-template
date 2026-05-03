@@ -3,7 +3,7 @@ import type {
   HyperresearchIntegrityFinding,
   HyperresearchV8RunLedger,
   V8RunStatus,
-} from "@rawr/hyperresearch-codex";
+} from "@rawr/hyperresearch-codex/types";
 
 type V8RunnerSummaryInput = {
   ledgerPath: string;

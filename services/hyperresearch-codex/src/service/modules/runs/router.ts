@@ -1,12 +1,13 @@
 /**
  * @fileoverview Durable V8 run lifecycle procedure implementation.
  *
- * This module owns the callable run state machine. Shared helpers provide
- * ledger, step-loading, CLI, and integrity primitives; procedure flow stays
- * here so the oRPC surface is not a decorative wrapper over another harness.
+ * This module owns the callable run state machine. Module-local helpers handle
+ * packet files, source capture, artifact writes, and result construction so
+ * the oRPC procedure flow stays readable without becoming a pass-through
+ * wrapper over another runner.
  */
-import { runHyperresearchCli } from "../../shared/helpers/cli";
-import { validateHyperresearchRunIntegrity } from "../../shared/helpers/integrity";
+import { runHyperresearchCli } from "../../shared/adapters/hyperresearch-cli";
+import { validateHyperresearchRunIntegrity } from "./helpers/integrity";
 import {
   assertV8LedgerMatches,
   appendV8ResumeEvent,
@@ -15,27 +16,32 @@ import {
   nextPendingStep,
   readV8HyperresearchRunLedger,
   writeHyperresearchRunLedger,
-} from "../../shared/helpers/ledger";
+} from "./helpers/ledger";
 import {
-  expandV8ArtifactPath,
   loadHyperresearchStep,
   v8HyperresearchSteps,
   v8StepsForTier,
-} from "../../shared/helpers/steps";
+} from "./helpers/steps";
 import type {
-  HyperresearchAgentJob,
-  HyperresearchAgentOutput,
-  HyperresearchRunLedger,
   HyperresearchStepDefinition,
-  HyperresearchStepRecord,
   HyperresearchTier,
   HyperresearchV8RunLedger,
-  V8RunStatus,
 } from "../../shared/entities";
-import type {
-  HyperresearchCliBackend,
-  HyperresearchCodexIO,
-} from "../../shared/resources";
+import type { HyperresearchCodexIO } from "../../shared/resources";
+import {
+  finishStep,
+  writeCanonicalBootstrap,
+} from "./helpers/artifacts";
+import {
+  createAgentJobs,
+  validateAgentOutputs,
+  writeFixtureAgentOutputs,
+} from "./helpers/agent-packets";
+import { runRequiredCliForStep } from "./helpers/source-capture";
+import {
+  makeResult,
+  resultStatus,
+} from "./helpers/result";
 import { module } from "./module";
 
 type TierRequest = "auto" | "light" | "full";
@@ -65,541 +71,24 @@ function definitionFor(stepId: string, tier?: HyperresearchTier): HyperresearchS
   return definition;
 }
 
-function relativeArtifactsFor(
-  definition: HyperresearchStepDefinition,
-  ledger: HyperresearchRunLedger & { vaultTag: string },
-) {
-  return definition.requiredArtifacts.map((artifact) => expandV8ArtifactPath(artifact, ledger.vaultTag));
-}
-
-async function writeVaultText(input: {
-  ledger: HyperresearchRunLedger;
-  relativePath: string;
-  content: string;
-  io: HyperresearchCodexIO;
-}) {
-  await input.io.writeTextFile(input.io.join(input.ledger.vaultRoot, input.relativePath), input.content);
-}
-
-async function readVaultText(input: {
-  ledger: HyperresearchRunLedger;
-  relativePath: string;
-  io: HyperresearchCodexIO;
-}) {
-  return await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, input.relativePath));
-}
-
-function jsonContent(value: unknown) {
-  return `${JSON.stringify(value, null, 2)}\n`;
-}
-
-function addArtifact(step: HyperresearchStepRecord, relativePath: string) {
-  if (!step.artifacts.includes(relativePath)) step.artifacts.push(relativePath);
-}
-
-function finalReportPath(ledger: HyperresearchRunLedger & { vaultTag: string }) {
-  return `research/notes/final_report_${ledger.vaultTag}.md`;
-}
-
-function pendingAgentJobsForStep(ledger: HyperresearchRunLedger, stepId: string) {
-  return (ledger.agentJobs ?? []).filter((job) => job.stepId === stepId && job.status === "pending");
-}
-
-function allPendingAgentJobs(ledger: HyperresearchRunLedger) {
-  return (ledger.agentJobs ?? []).filter((job) => job.status === "pending");
-}
-
-function resultStatus(input: {
-  ledger: HyperresearchRunLedger;
-  integrity: Awaited<ReturnType<typeof validateHyperresearchRunIntegrity>>;
-}): V8RunStatus {
-  if (input.integrity.some((finding) => finding.severity === "blocking")) return "blocked";
-  if (input.ledger.completed) return "complete";
-  if (allPendingAgentJobs(input.ledger).length > 0) return "awaiting_agents";
-  return "running";
-}
-
-async function writeCanonicalBootstrap(input: {
-  ledger: HyperresearchRunLedger & { vaultTag: string; queryFilePath?: string };
-  wrapperRequirements: string[];
-  io: HyperresearchCodexIO;
-}) {
-  const queryRelativePath = `research/query-${input.ledger.vaultTag}.md`;
-  input.ledger.queryFilePath = input.io.join(input.ledger.vaultRoot, queryRelativePath);
-  await writeVaultText({
-    ledger: input.ledger,
-    relativePath: queryRelativePath,
-    io: input.io,
-    content: [
-      "---",
-      `vault_tag: ${input.ledger.vaultTag}`,
-      `created: ${input.ledger.createdAt}`,
-      "source: codex-start-run",
-      "---",
-      "",
-      input.ledger.canonicalQuery,
-      "",
-    ].join("\n"),
-  });
-  await writeVaultText({
-    ledger: input.ledger,
-    relativePath: "research/scaffold.md",
-    io: input.io,
-    content: [
-      "# Hyperresearch Codex Scaffold",
-      "",
-      "## User Prompt (VERBATIM)",
-      "",
-      input.ledger.canonicalQuery,
-      "",
-      "## Run Config",
-      "",
-      `- vault_tag: ${input.ledger.vaultTag}`,
-      `- tier: ${input.ledger.tier}`,
-      `- tier_source: ${input.ledger.tierSource ?? "unknown"}`,
-      `- query_file_path: ${input.ledger.queryFilePath}`,
-      "",
-      "## Wrapper Requirements",
-      "",
-      ...(input.wrapperRequirements.length > 0
-        ? input.wrapperRequirements.map((item) => `- ${item}`)
-        : ["- none"]),
-      "",
-    ].join("\n"),
-  });
-}
-
-function agentRolesForStep(
-  definition: HyperresearchStepDefinition,
-  ledger: HyperresearchRunLedger,
-) {
-  if (ledger.tier === "full" && definition.id === "10-triple-draft") {
-    return [
-      "hyperresearch-draft-orchestrator",
-      "hyperresearch-draft-orchestrator",
-      "hyperresearch-draft-orchestrator",
-    ];
-  }
-  return definition.agentRoles ?? [];
-}
-
-/**
- * Writes the parent-owned Codex packet contract for each role in a step.
- *
- * Packets are the durable boundary between service orchestration and spawned
- * agents: each job declares exactly where the agent must write its result.
- */
-async function createAgentJobs(input: {
-  ledger: HyperresearchRunLedger & { vaultTag: string };
-  step: HyperresearchStepRecord;
-  definition: HyperresearchStepDefinition;
-  io: HyperresearchCodexIO;
-}) {
-  const roles = agentRolesForStep(input.definition, input.ledger);
-  if (roles.length === 0) return [];
-
-  input.ledger.agentJobs ??= [];
-  const existing = input.ledger.agentJobs.filter((job) => job.stepId === input.step.id);
-  if (existing.length > 0) return existing;
-
-  const jobs: HyperresearchAgentJob[] = [];
-  await input.io.ensureDir(input.io.join(input.ledger.vaultRoot, "research", "temp", "codex-agent-results"));
-  for (const [index, role] of roles.entries()) {
-    const ordinal = index + 1;
-    const jobId = `${input.step.id}-${ordinal}-${role.replace(/^hyperresearch-/, "")}`;
-    const packetPath = `research/temp/codex-agent-packets/${jobId}.json`;
-    const expectedOutputPath = `research/temp/codex-agent-results/${jobId}.json`;
-    const job: HyperresearchAgentJob = {
-      id: jobId,
-      stepId: input.step.id,
-      role,
-      status: "pending",
-      packetPath,
-      expectedOutputPath,
-      createdAt: input.io.now(),
-    };
-    const packet = {
-      jobId,
-      role,
-      canonicalQuery: input.ledger.canonicalQuery,
-      pipelinePosition: `Step ${input.step.id} (${input.step.title}) in the Hyperresearch V8 route.`,
-      stepId: input.step.id,
-      stepTitle: input.step.title,
-      vaultTag: input.ledger.vaultTag,
-      inputArtifacts: input.step.artifacts,
-      expectedOutputPath,
-      outputSchema: {
-        status: "complete|failed",
-        summary: "string",
-        evidence: ["path-or-source-id"],
-        sourceUrls: ["https://example.com/source-url"],
-      },
-      failureBehavior: "Write the expected output path with status=failed and a failure reason if the role cannot complete.",
-    };
-    await writeVaultText({
-      ledger: input.ledger,
-      relativePath: packetPath,
-      io: input.io,
-      content: jsonContent(packet),
-    });
-    input.ledger.agentJobs.push(job);
-    jobs.push(job);
-  }
-  return jobs;
-}
-
-async function writeFixtureAgentOutputs(input: {
-  ledger: HyperresearchRunLedger;
-  step: HyperresearchStepRecord;
-  io: HyperresearchCodexIO;
-}): Promise<HyperresearchAgentOutput[]> {
-  const outputs: HyperresearchAgentOutput[] = [];
-  for (const job of pendingAgentJobsForStep(input.ledger, input.step.id)) {
-    const output: HyperresearchAgentOutput = {
-      jobId: job.id,
-      status: "complete",
-      role: job.role,
-      summary: `Fixture output for ${job.role}`,
-      evidence: input.step.artifacts,
-      sourceUrls: ["https://www.python.org/about/"],
-    };
-    await writeVaultText({
-      ledger: input.ledger,
-      relativePath: job.expectedOutputPath,
-      io: input.io,
-      content: jsonContent(output),
-    });
-    job.status = "complete";
-    job.outputPath = job.expectedOutputPath;
-    job.completedAt = input.io.now();
-    outputs.push(output);
-  }
-  return outputs;
-}
-
-/**
- * Reads declared packet outputs and makes reported failures terminal.
- *
- * Once a real agent has failed, later advances cannot switch to synthetic mode
- * to erase that failure from the run ledger.
- */
-async function validateAgentOutputs(input: {
-  ledger: HyperresearchRunLedger;
-  step: HyperresearchStepRecord;
-  io: HyperresearchCodexIO;
-}): Promise<HyperresearchAgentOutput[] | null> {
-  const outputs: HyperresearchAgentOutput[] = [];
-  const failJob = (job: HyperresearchAgentJob, message: string) => {
-    job.status = "failed";
-    job.failure = message;
-    job.completedAt = input.io.now();
-    input.step.status = "blocked";
-    input.step.failure = message;
-    input.step.completedAt = input.io.now();
-    input.ledger.failures.push({
-      at: input.io.now(),
-      stepId: input.step.id,
-      kind: "agent",
-      message,
-    });
-  };
-
-  if ((input.ledger.agentJobs ?? []).some((job) => job.stepId === input.step.id && job.status === "failed")) {
-    input.step.status = "blocked";
-    input.step.failure = `Agent job failed for step ${input.step.id}`;
-    return null;
-  }
-
-  for (const job of pendingAgentJobsForStep(input.ledger, input.step.id)) {
-    const outputExists = await input.io.pathExists(input.io.join(input.ledger.vaultRoot, job.expectedOutputPath));
-    if (!outputExists) return null;
-    const output = await readVaultText({
-      ledger: input.ledger,
-      relativePath: job.expectedOutputPath,
-      io: input.io,
-    });
-    let parsed: HyperresearchAgentOutput;
-    try {
-      parsed = parseAgentOutput({ job, output });
-    } catch (error) {
-      failJob(job, error instanceof Error ? error.message : String(error));
-      return null;
-    }
-    if (parsed.status === "failed") {
-      failJob(job, parsed.failure ?? `Agent job reported failure: ${job.id}`);
-      return null;
-    }
-    job.status = "complete";
-    job.outputPath = job.expectedOutputPath;
-    job.completedAt = input.io.now();
-    outputs.push(parsed);
-  }
-  return outputs;
-}
-
-function parseAgentOutput(input: {
-  job: HyperresearchAgentJob;
-  output: string | null;
-}): HyperresearchAgentOutput {
-  if (!input.output) throw new Error(`Agent output is empty: ${input.job.expectedOutputPath}`);
-  let value: unknown;
-  try {
-    value = JSON.parse(input.output);
-  } catch (error) {
-    throw new Error(`Agent output is not valid JSON: ${input.job.expectedOutputPath}`);
-  }
-  if (!value || typeof value !== "object") {
-    throw new Error(`Agent output is not an object: ${input.job.expectedOutputPath}`);
-  }
-  const record = value as Record<string, unknown>;
-  if (record.jobId !== input.job.id) {
-    throw new Error(`Agent output jobId mismatch for ${input.job.id}`);
-  }
-  if (record.role !== input.job.role) {
-    throw new Error(`Agent output role mismatch for ${input.job.id}`);
-  }
-  if (record.status !== "complete" && record.status !== "failed") {
-    throw new Error(`Agent output has invalid status for ${input.job.id}`);
-  }
-  if (typeof record.summary !== "string" || record.summary.length === 0) {
-    throw new Error(`Agent output summary is required for ${input.job.id}`);
-  }
-  if (!Array.isArray(record.evidence) || record.evidence.some((item) => typeof item !== "string")) {
-    throw new Error(`Agent output evidence array is required for ${input.job.id}`);
-  }
-  if (record.sourceUrls !== undefined) {
-    if (!Array.isArray(record.sourceUrls) || record.sourceUrls.some((item) => typeof item !== "string" || item.length === 0)) {
-      throw new Error(`Agent output sourceUrls array must contain strings for ${input.job.id}`);
-    }
-  }
-  if (record.failure !== undefined && typeof record.failure !== "string") {
-    throw new Error(`Agent output failure must be a string for ${input.job.id}`);
-  }
-  return record as HyperresearchAgentOutput;
-}
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Collects the parent-owned source capture set from agent outputs.
- *
- * Agent packets may suggest sources, but the service remains responsible for
- * rejecting malformed URLs and turning every distinct source into CLI-audited
- * vault capture.
- */
-function sourceUrlsFromAgentOutputs(agentOutputs: HyperresearchAgentOutput[]): string[] {
-  const urls = new Set<string>();
-  for (const output of agentOutputs) {
-    for (const url of output.sourceUrls ?? []) {
-      if (!isHttpUrl(url)) {
-        throw new Error(`Agent output contains an invalid source URL for ${output.jobId}: ${url}`);
-      }
-      urls.add(url);
-    }
-    for (const evidence of output.evidence) {
-      if (isHttpUrl(evidence)) urls.add(evidence);
-    }
-  }
-  return [...urls];
-}
-
-/**
- * Executes the backend operations that make a step auditable in the vault.
- *
- * Source fetches are intentionally expanded into one ledgered CLI call per URL
- * so packet-mode fan-in cannot silently drop a source suggested by an agent.
- */
-async function runRequiredCliForStep(input: {
-  definition: HyperresearchStepDefinition;
-  ledger: HyperresearchRunLedger;
-  io: HyperresearchCodexIO;
-  cli: HyperresearchCliBackend;
-  agentOutputs?: HyperresearchAgentOutput[];
-}) {
-  const sourceUrls = sourceUrlsFromAgentOutputs(input.agentOutputs ?? []);
-  for (const operation of input.definition.requiredCliOperations ?? []) {
-    const args = (() => {
-      if (operation === "search") return [input.ledger.canonicalQuery, "--json"];
-      if (operation === "fetch") {
-        if (!sourceUrls[0]) throw new Error(`Step ${input.definition.id} requires a source URL for Hyperresearch fetch`);
-        return undefined;
-      }
-      if (operation === "fetch-batch") {
-        if (sourceUrls.length === 0) throw new Error(`Step ${input.definition.id} requires source URLs for Hyperresearch fetch-batch`);
-        return [...sourceUrls, "--json"];
-      }
-      if (operation === "note") return ["new", "--json", "Hyperresearch Codex V8 fixture source"];
-      if (operation === "lint") return ["--json"];
-      if (operation === "sync") return ["--json"];
-      if (operation === "export") return ["json", "--json"];
-      return ["--json"];
-    })();
-    if (operation === "fetch") {
-      for (const sourceUrl of sourceUrls) {
-        await runHyperresearchCli({
-          operation,
-          args: [sourceUrl, "--json"],
-          cwd: input.ledger.vaultRoot,
-          io: input.io,
-          cli: input.cli,
-          ledger: input.ledger,
-          throwOnFailure: true,
-        });
-      }
-      continue;
-    }
-
-    await runHyperresearchCli({
-      operation,
-      args: args ?? ["--json"],
-      cwd: input.ledger.vaultRoot,
-      io: input.io,
-      cli: input.cli,
-      ledger: input.ledger,
-      throwOnFailure: true,
-    });
-  }
-}
-
-/**
- * Writes deterministic fixture artifacts and snapshots the first final report.
- *
- * The fixture backend is allowed to synthesize artifacts for control-plane
- * proof, but report snapshots are real integrity inputs used by validation.
- */
-async function writeStepArtifacts(input: {
-  ledger: HyperresearchRunLedger & { vaultTag: string };
-  step: HyperresearchStepRecord;
-  definition: HyperresearchStepDefinition;
-  io: HyperresearchCodexIO;
-}) {
-  const artifacts = relativeArtifactsFor(input.definition, input.ledger);
-  for (const artifact of artifacts) {
-    if (artifact === finalReportPath(input.ledger) && await input.io.pathExists(input.io.join(input.ledger.vaultRoot, artifact))) {
-      addArtifact(input.step, artifact);
-      continue;
-    }
-    const content = artifact.endsWith(".json")
-      ? jsonContent({
-          ok: true,
-          fixture: true,
-          stepId: input.step.id,
-          title: input.step.title,
-          canonicalQuery: input.ledger.canonicalQuery,
-          vaultTag: input.ledger.vaultTag,
-        })
-      : [
-          `# ${input.step.title}`,
-          "",
-          `Step: ${input.step.id}`,
-          `Query: ${input.ledger.canonicalQuery}`,
-          `Vault tag: ${input.ledger.vaultTag}`,
-          "",
-        ].join("\n");
-    await writeVaultText({ ledger: input.ledger, relativePath: artifact, content, io: input.io });
-    addArtifact(input.step, artifact);
-  }
-
-  if (input.definition.id === "10-triple-draft" && input.ledger.tier === "light") {
-    const reportPath = finalReportPath(input.ledger);
-    await writeVaultText({
-      ledger: input.ledger,
-      relativePath: reportPath,
-      io: input.io,
-      content: [
-        "# Hyperresearch Codex Light Fixture Report",
-        "",
-        `Query: ${input.ledger.canonicalQuery}`,
-        "",
-        "This fixture report proves the light-tier V8 control plane with source provenance placeholders and patch-only gates.",
-        "",
-      ].join("\n"),
-    });
-    addArtifact(input.step, reportPath);
-  }
-
-  if (input.definition.id === "11-synthesize") {
-    const reportPath = finalReportPath(input.ledger);
-    await writeVaultText({
-      ledger: input.ledger,
-      relativePath: reportPath,
-      io: input.io,
-      content: [
-        "# Hyperresearch Codex Full Fixture Report",
-        "",
-        `Query: ${input.ledger.canonicalQuery}`,
-        "",
-        "This fixture report proves the full-tier V8 control plane with critic, patch, polish, and readability gates.",
-        "",
-      ].join("\n"),
-    });
-    addArtifact(input.step, reportPath);
-  }
-
-  if (input.definition.snapshotFinalReport) {
-    const reportPath = finalReportPath(input.ledger);
-    const report = await readVaultText({ ledger: input.ledger, relativePath: reportPath, io: input.io });
-    if (report) {
-      const sha256 = input.io.sha256(report);
-      const snapshotPath = `research/temp/report-snapshots/${input.step.id}-${sha256}.md`;
-      await writeVaultText({
-        ledger: input.ledger,
-        relativePath: snapshotPath,
-        io: input.io,
-        content: report,
-      });
-      input.ledger.reportSnapshots ??= [];
-      input.ledger.reportSnapshots.push({
-        stepId: input.step.id,
-        path: snapshotPath,
-        sha256,
-        createdAt: input.io.now(),
-      });
-      input.ledger.patchGuard = {
-        snapshotPath: reportPath,
-        snapshotSha256: sha256,
-        violations: input.ledger.patchGuard?.violations ?? [],
-      };
-    }
-  }
-}
-
-async function finishStep(input: {
-  ledger: HyperresearchRunLedger & { vaultTag: string };
-  step: HyperresearchStepRecord;
-  definition: HyperresearchStepDefinition;
-  io: HyperresearchCodexIO;
-}) {
-  await writeStepArtifacts(input);
-  input.step.status = "complete";
-  input.step.completedAt = input.io.now();
-  input.ledger.currentStepId = nextPendingStep(input.ledger)?.id;
-  input.ledger.completed = input.ledger.steps.every((step) => step.status === "complete");
-}
-
-async function makeResult(input: {
-  ledgerPath: string;
+function blockStep(input: {
   ledger: HyperresearchV8RunLedger;
+  stepId: string;
+  message: string;
   io: HyperresearchCodexIO;
 }) {
-  const integrity = await validateHyperresearchRunIntegrity({
-    ledger: input.ledger,
-    io: input.io,
+  const step = input.ledger.steps.find((item) => item.id === input.stepId);
+  if (step) {
+    step.status = "blocked";
+    step.failure = input.message;
+    step.completedAt = input.io.now();
+  }
+  input.ledger.failures.push({
+    at: input.io.now(),
+    stepId: input.stepId,
+    kind: "step",
+    message: input.message,
   });
-  return {
-    ledgerPath: input.ledgerPath,
-    status: resultStatus({ ledger: input.ledger, integrity }),
-    ledger: input.ledger,
-    pendingAgentJobs: allPendingAgentJobs(input.ledger),
-    integrity,
-  };
 }
 
 const startV8Run = module.startV8Run.handler(async ({ context, input }) => {
@@ -616,7 +105,7 @@ const startV8Run = module.startV8Run.handler(async ({ context, input }) => {
   await io.ensureDir(io.join(input.vaultRoot, "research", "raw"));
   await io.ensureDir(io.dirname(ledgerPath));
 
-  const existing = await io.readJsonFile<HyperresearchRunLedger>(ledgerPath);
+  const existing = await io.readJsonFile<HyperresearchV8RunLedger>(ledgerPath);
   if (existing) {
     ensureV8LedgerState(existing);
     assertV8LedgerMatches({
@@ -708,17 +197,14 @@ const advanceV8Run = module.advanceV8Run.handler(async ({ context, input }) => {
           cli,
           agentOutputs,
         });
-        await finishStep({ ledger, step, definition, io });
+        await finishStep({ ledger, step, definition, agentOutputs, io });
         completedThisPass += 1;
       } catch (error) {
-        step.status = "blocked";
-        step.failure = error instanceof Error ? error.message : String(error);
-        step.completedAt = io.now();
-        ledger.failures.push({
-          at: io.now(),
+        blockStep({
+          ledger,
           stepId: step.id,
-          kind: "step",
-          message: step.failure,
+          message: error instanceof Error ? error.message : String(error),
+          io,
         });
         await writeHyperresearchRunLedger({ ledgerPath: input.ledgerPath, ledger, io });
         return await makeResult({ ledgerPath: input.ledgerPath, ledger, io });
@@ -770,14 +256,11 @@ const advanceV8Run = module.advanceV8Run.handler(async ({ context, input }) => {
       completedThisPass += 1;
       await writeHyperresearchRunLedger({ ledgerPath: input.ledgerPath, ledger, io });
     } catch (error) {
-      step.status = "blocked";
-      step.failure = error instanceof Error ? error.message : String(error);
-      step.completedAt = io.now();
-      ledger.failures.push({
-        at: io.now(),
+      blockStep({
+        ledger,
         stepId: step.id,
-        kind: "step",
-        message: step.failure,
+        message: error instanceof Error ? error.message : String(error),
+        io,
       });
       await writeHyperresearchRunLedger({ ledgerPath: input.ledgerPath, ledger, io });
       break;
