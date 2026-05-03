@@ -14,6 +14,9 @@ type KnownMarketplaceRecord = {
 
 type KnownMarketplacesFile = Record<string, KnownMarketplaceRecord>;
 
+/**
+ * Projection result for local Claude plugin installation and enablement.
+ */
 export type ClaudeInstallAction =
   | { action: "planned"; home: string; plugin: string; marketplace?: string }
   | { action: "installed"; home: string; plugin: string; marketplace: string }
@@ -21,6 +24,9 @@ export type ClaudeInstallAction =
   | { action: "skipped"; home: string; plugin: string; reason: string; marketplace?: string }
   | { action: "failed"; home: string; plugin: string; error: string; marketplace?: string };
 
+/**
+ * Injectable process runner used by tests and local Claude CLI orchestration.
+ */
 export type ExecFn = (input: {
   cmd: string;
   args: string[];
@@ -31,14 +37,23 @@ export type ExecFn = (input: {
   stderr: string;
 }>;
 
+/**
+ * Finds the user's home directory for Claude marketplace defaults.
+ */
 function homeDir(): string {
   return process.env.HOME ? String(process.env.HOME) : os.homedir();
 }
 
+/**
+ * Mirrors Claude Code's default plugin registry directory.
+ */
 export function defaultClaudePluginsDir(): string {
   return path.join(homeDir(), ".claude", "plugins");
 }
 
+/**
+ * Executes Claude CLI commands for projection-owned install/enable operations.
+ */
 export const defaultExec: ExecFn = async ({ cmd, args, cwd }) => {
   const child = spawn(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"] });
   let stdout = "";
@@ -54,11 +69,17 @@ export const defaultExec: ExecFn = async ({ cmd, args, cwd }) => {
   return { code, stdout, stderr };
 };
 
+/**
+ * Reads Claude's known marketplace registry.
+ */
 async function readKnownMarketplaces(pluginsDir: string): Promise<KnownMarketplacesFile> {
   const filePath = path.join(pluginsDir, "known_marketplaces.json");
   return (await readJsonFile<KnownMarketplacesFile>(filePath)) ?? {};
 }
 
+/**
+ * Resolves a marketplace name from Claude's registry by install location.
+ */
 function findMarketplaceNameForInstallLocation(
   marketplaces: KnownMarketplacesFile,
   installLocationAbs: string,
@@ -71,6 +92,9 @@ function findMarketplaceNameForInstallLocation(
   return null;
 }
 
+/**
+ * Ensures the local Claude plugin home is registered as a marketplace.
+ */
 export async function ensureClaudeMarketplace(input: {
   claudeLocalHome: string;
   claudePluginsDir?: string;
@@ -118,6 +142,9 @@ export async function ensureClaudeMarketplace(input: {
   );
 }
 
+/**
+ * Installs and optionally enables a synced plugin through Claude's CLI.
+ */
 export async function installAndEnableClaudePlugin(input: {
   claudeLocalHome: string;
   pluginName: string;
@@ -227,6 +254,9 @@ export async function installAndEnableClaudePlugin(input: {
   return actions;
 }
 
+/**
+ * Test helper for exercising Claude marketplace detection without shelling out.
+ */
 export async function writeKnownMarketplacesForTests(
   pluginsDir: string,
   data: KnownMarketplacesFile,

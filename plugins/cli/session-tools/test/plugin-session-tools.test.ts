@@ -238,10 +238,10 @@ describe("@rawr/plugin-session-tools", () => {
 
     await SessionsSearch.run(["--query-metadata", "rawr-fixture", "--source", "all", "--limit", "5", "--json"]);
 
-    expect(client.catalog.list).toHaveBeenCalledWith(
+    expect(client.catalog.list).not.toHaveBeenCalled();
+    expect(client.search.metadata).toHaveBeenCalledWith(
       {
         source: "all",
-        limit: 5,
         filters: {
           project: undefined,
           cwdContains: undefined,
@@ -250,12 +250,6 @@ describe("@rawr/plugin-session-tools", () => {
           since: undefined,
           until: undefined,
         },
-      },
-      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.catalog.list" } } }),
-    );
-    expect(client.search.metadata).toHaveBeenCalledWith(
-      {
-        sessions: expect.any(Array),
         needle: "rawr-fixture",
         limit: 5,
       },
@@ -370,13 +364,10 @@ describe("@rawr/plugin-session-tools", () => {
 
     const reindex = await client.search.reindex(
       {
-        sessions: listed.map((session) => ({
-          path: session.path,
-          source: session.source,
-        })),
+        source: "codex",
+        filters: {},
         roles: ["all"],
         includeTools: false,
-        indexPath,
         limit: 0,
       },
       {
@@ -387,7 +378,9 @@ describe("@rawr/plugin-session-tools", () => {
 
     const contentResponse = await client.search.content(
       {
-        sessions: listed,
+        source: "codex",
+        filters: {},
+        limit: 5,
         pattern: "resource needle",
         ignoreCase: true,
         maxMatches: 5,
@@ -395,7 +388,6 @@ describe("@rawr/plugin-session-tools", () => {
         roles: ["all"],
         includeTools: false,
         useIndex: true,
-        indexPath,
       },
       {
         context: { invocation: { traceId: "test.session.search.content" } },

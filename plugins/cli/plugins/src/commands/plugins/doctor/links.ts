@@ -1,30 +1,20 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 
-import { reconcileWorkspaceInstallLinks } from "../../../lib/install-reconcile";
-import { assessInstallState } from "../../../lib/install-state";
-import { findWorkspaceRoot } from "../../../lib/workspace-plugins";
+import {
+  assessPluginInstallState,
+  pluginInstallActionCommandText,
+  reconcileWorkspaceInstallLinks,
+  runtimePluginSnapshot,
+} from "../../../lib/plugin-install-service";
+import { findWorkspaceRoot } from "@rawr/core";
 
-function runtimePluginSnapshot(configPlugins: unknown): Array<{
-  name: string;
-  alias?: string;
-  type?: string;
-  root: string | null;
-}> {
-  const runtimePluginValues = configPlugins instanceof Map
-    ? [...configPlugins.values()]
-    : Array.isArray(configPlugins)
-      ? configPlugins
-      : [];
-
-  return runtimePluginValues.map((plugin: any) => ({
-    name: String(plugin.name ?? plugin.alias ?? ""),
-    alias: typeof plugin.alias === "string" ? plugin.alias : undefined,
-    type: typeof plugin.type === "string" ? plugin.type : undefined,
-    root: typeof plugin.root === "string" ? plugin.root : null,
-  }));
-}
-
+/**
+ * Diagnoses and optionally repairs local oclif command-plugin link drift.
+ *
+ * HQ Ops owns expected-link policy; this command observes the local plugin
+ * manager and executes approved repair actions.
+ */
 export default class PluginsDoctorLinks extends RawrCommand {
   static description = "Diagnose plugin install/link drift and optionally repair stale or legacy link state";
 
@@ -58,10 +48,11 @@ export default class PluginsDoctorLinks extends RawrCommand {
       }
 
       const runtimePlugins = runtimePluginSnapshot(this.config.plugins);
-      let report = await assessInstallState({
+      let report = await assessPluginInstallState({
         workspaceRoot,
         oclifDataDir: (this.config as any).dataDir as string | undefined,
         runtimePlugins,
+        traceId: "plugin-plugins.plugin-install.doctor-assess",
       });
 
       const repairResult = repair
@@ -75,10 +66,11 @@ export default class PluginsDoctorLinks extends RawrCommand {
         : null;
 
       if (repairResult && repairResult.action !== "planned") {
-        report = await assessInstallState({
+        report = await assessPluginInstallState({
           workspaceRoot,
           oclifDataDir: (this.config as any).dataDir as string | undefined,
           runtimePlugins,
+          traceId: "plugin-plugins.plugin-install.doctor-assess-after-repair",
         });
       }
 
@@ -103,7 +95,7 @@ export default class PluginsDoctorLinks extends RawrCommand {
           if (repair) this.log(`repair: ${repairResult?.action ?? "skipped"}`);
           if (report.actions.length > 0) {
             this.log("actions:");
-            for (const action of report.actions) this.log(`- ${action.command} (${action.reason})`);
+            for (const action of report.actions) this.log(`- ${pluginInstallActionCommandText(action)} (${action.reason})`);
           }
         },
       });

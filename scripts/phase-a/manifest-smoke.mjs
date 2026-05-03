@@ -31,6 +31,7 @@ const openApiFile = path.join(root, "apps", "server", "scripts", "write-orpc-ope
 const testingHostFile = path.join(root, "apps", "server", "src", "testing-host.ts");
 const supportProofFile = path.join(root, "apps", "server", "test", "support", "example-todo-proof-clients.ts");
 const manifestFile = path.join(root, "apps", "hq", "src", "manifest.ts");
+const rawrHqManifestFile = path.join(root, "apps", "hq", "rawr.hq.ts");
 const legacyCutoverFile = path.join(root, "apps", "hq", "legacy-cutover.ts");
 
 const rawrSource = await fs.readFile(rawrFile, "utf8");
@@ -39,10 +40,27 @@ const openApiSource = await fs.readFile(openApiFile, "utf8");
 const testingHostSource = await fs.readFile(testingHostFile, "utf8");
 const supportProofSource = await fs.readFile(supportProofFile, "utf8");
 const legacyCutoverSource = mode === "completion" ? await fs.readFile(legacyCutoverFile, "utf8") : "";
-const manifestSource = mode === "completion" ? await fs.readFile(manifestFile, "utf8") : "";
+const manifestEntrySource = mode === "completion" ? await fs.readFile(manifestFile, "utf8") : "";
+const manifestSource = mode === "completion" && manifestEntrySource.includes("../rawr.hq")
+  ? `${manifestEntrySource}\n${await fs.readFile(rawrHqManifestFile, "utf8")}`
+  : manifestEntrySource;
 const rawrAst = parseTypeScript(rawrFile, rawrSource);
 const orpcAst = parseTypeScript(orpcFile, orpcSource);
 const manifestAst = mode === "completion" ? parseTypeScript(manifestFile, manifestSource) : null;
+
+const hasPackageOwnedPluginDeclarations =
+  (
+    manifestSource.includes("plugins: {") &&
+    manifestSource.includes("api: apiPlugins") &&
+    manifestSource.includes("workflows: {} as const")
+  ) ||
+  (
+    manifestSource.includes("const api =") &&
+    manifestSource.includes("server:") &&
+    manifestSource.includes("api: api") &&
+    manifestSource.includes("async:") &&
+    manifestSource.includes("workflows: {} as const")
+  );
 
 function hasRegisterOrpcRoutesHostSeamRouter(rawrSourceFile) {
   let matched = false;
@@ -77,9 +95,7 @@ if (mode === "completion") {
     label: "manifest declares package-owned composition seams",
     ok:
       manifestSource.includes("export function createRawrHqManifest") &&
-      manifestSource.includes("plugins: {") &&
-      manifestSource.includes("api: apiPlugins") &&
-      manifestSource.includes("workflows: {} as const") &&
+      hasPackageOwnedPluginDeclarations &&
       !manifestSource.includes("createInngestServeHandler") &&
       !manifestSource.includes("new Inngest(") &&
       !manifestSource.includes("createWorkflowRouteHarness"),
@@ -99,9 +115,7 @@ if (mode === "completion") {
     label: "manifest exposes declaration-only plugin groups instead of path-prefix authority",
     ok:
       !manifestSource.includes("rawrHqWorkflowCapabilities") &&
-      manifestSource.includes("plugins: {") &&
-      manifestSource.includes("api: apiPlugins") &&
-      manifestSource.includes("workflows: {} as const"),
+      hasPackageOwnedPluginDeclarations,
   });
   requiredChecks.push({
     label: "host consumes host-owned workflow route seam",

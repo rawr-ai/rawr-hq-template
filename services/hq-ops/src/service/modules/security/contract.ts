@@ -7,7 +7,7 @@ import {
   SecurityModeSchema,
   SecurityReportSchema,
   SecurityReportWithPathSchema,
-} from "./schemas";
+} from "./entities";
 
 const SecurityCheckInputSchema = schema(
   Type.Object(

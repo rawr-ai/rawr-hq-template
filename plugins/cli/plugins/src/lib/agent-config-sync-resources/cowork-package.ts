@@ -26,10 +26,16 @@ type PackageJson = {
   description?: unknown;
 };
 
+/**
+ * Converts host paths to portable zip entry paths.
+ */
 function toZipPath(relativePath: string): string {
   return relativePath.split(path.sep).join("/");
 }
 
+/**
+ * Lists files deterministically before writing a Cowork archive.
+ */
 async function listFilesRecursively(rootAbsPath: string): Promise<string[]> {
   const files: string[] = [];
 
@@ -51,6 +57,9 @@ async function listFilesRecursively(rootAbsPath: string): Promise<string[]> {
   return files;
 }
 
+/**
+ * Writes a staged plugin directory to a zip archive.
+ */
 async function zipDirToFile(input: {
   dirAbs: string;
   outFileAbs: string;
@@ -74,6 +83,10 @@ async function zipDirToFile(input: {
   });
 }
 
+/**
+ * Supplies the Claude plugin manifest for Cowork archives from source metadata
+ * or package.json fallback values.
+ */
 async function readOrCreatePluginManifest(input: {
   sourcePlugin: HostSourcePlugin;
   stagingRootAbs: string;
@@ -120,12 +133,21 @@ async function readOrCreatePluginManifest(input: {
   }
 }
 
+/**
+ * Result for CLI-owned Cowork packaging.
+ */
 export type CoworkPackageResult = {
   plugin: string;
   outFile: string;
   action: "planned" | "written";
 };
 
+/**
+ * Packages provider-effective Claude content into a Cowork-compatible archive.
+ *
+ * The CLI owns archive staging and zip output; provider content resolution
+ * stays in agent-config-sync.
+ */
 export async function packageCoworkPlugin(input: {
   sourcePlugin: HostSourcePlugin;
   content: HostSourceContent;

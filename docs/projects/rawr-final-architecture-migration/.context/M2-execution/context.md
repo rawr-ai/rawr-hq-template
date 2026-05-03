@@ -7,10 +7,13 @@
   - Phase 1 is closed, review-closed, and frozen.
   - The repo is starting from the explicit Phase 2 entry conditions in `.context/M2-execution/phase-2-entry-conditions.md`.
   - Phase 2 has been **regrounded** against two new canonical specs: the integrated architecture/runtime spec and the dedicated Effect runtime subsystem spec.
-  - The M2 milestone and all M2-U00 through M2-U06 issue docs have been rewritten to reflect the new runtime substrate package topology (`packages/runtime/*`).
+  - The M2 milestone and all M2-U00 through M2-U06 issue docs have been rewritten to reflect the target runtime subsystem package topology (`packages/runtime/*`).
+    - Current repo reality: `packages/runtime/*` does not exist yet; the topology becomes real in `M2-U00`.
   - **No prior grounding findings remain valid.** The existing `agent-FARGO-M2-U00-replace-legacy-cutover-with-canonical-server-runtime` branch must be regrounded against the updated issue docs.
   - The next live implementation slice is `M2-U00`.
-  - The Phase 2 proof surface is still mostly documentary: the docs reference a future `scripts/phase-2/` verifier family and `phase-2:*` gate chain that do not exist yet in the repo. Landing those verifiers slice-by-slice is part of hardened Phase 2 execution.
+  - The Phase 2 proof surface is still mostly documentary:
+    - the initial `scripts/phase-2/*` verifier family and `phase-2:gate:u00:*` scripts exist, but they are scaffolding and allow findings
+    - the real Phase 2 proof band still becomes "green" only when `M2-U00` lands the canonical runtime path and deletes `apps/hq/legacy-cutover.ts`
 
 ## What This Packet Is For
 
@@ -72,9 +75,13 @@ packages/
   hq-sdk/            PUBLIC - authoring APIs (defineApp, startAppRole, define*Plugin, bindService)
 ```
 
-Superseded packages:
+Target supersedence (landed by `M2-U00`):
 - `packages/bootgraph` → `packages/runtime/bootgraph`
 - `packages/runtime-context` → absorbed into `packages/runtime/substrate`
+
+Current repo reality:
+- `packages/bootgraph` exists today as a reservation.
+- `packages/runtime-context` exists today as the current seam.
 
 ## Carry-Forward Risk
 

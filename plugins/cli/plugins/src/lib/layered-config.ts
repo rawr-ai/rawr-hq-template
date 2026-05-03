@@ -1,4 +1,4 @@
-import { findWorkspaceRoot } from "./workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "./hq-ops-client";
 
 export type LayeredRawrConfig = {
@@ -11,6 +11,9 @@ type HqOpsLayeredConfig = Awaited<
   ReturnType<ReturnType<typeof createHqOpsClient>["config"]["getLayeredConfig"]>
 >["merged"];
 
+/**
+ * Loads global config plus workspace overlay through HQ Ops.
+ */
 export async function loadLayeredRawrConfigForCwd(cwd: string): Promise<LayeredRawrConfig> {
   const client = createHqOpsClient(cwd);
   const global = await client.config.getGlobalConfig({}, createHqOpsCallOptions("plugin-plugins.config.global"));

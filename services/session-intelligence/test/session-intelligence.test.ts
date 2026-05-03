@@ -120,14 +120,11 @@ describe("@rawr/session-intelligence", () => {
 
   it("searches session metadata without touching content", async () => {
     const client = createClient(createClientOptions());
-    const listResult = await client.catalog.list(
-      { source: "all", limit: 10, filters: {} },
-      createInvocation("trace-search-list"),
-    );
 
     const result = await client.search.metadata(
       {
-        sessions: listResult.sessions,
+        source: "all",
+        filters: {},
         needle: "feat-sessions-plugin",
         limit: 10,
       },
@@ -143,14 +140,12 @@ describe("@rawr/session-intelligence", () => {
     const sourceRuntime = createFixtureSourceRuntime();
     const indexRuntime = new MemorySessionIndexRuntime();
     const client = createClient(createClientOptions({ sourceRuntime, indexRuntime }));
-    const listResult = await client.catalog.list(
-      { source: "codex", limit: 10, filters: {} },
-      createInvocation("trace-content-list"),
-    );
 
     const uncached = await client.search.content(
       {
-        sessions: listResult.sessions,
+        source: "codex",
+        filters: {},
+        limit: 10,
         pattern: "oclif",
         ignoreCase: true,
         maxMatches: 10,
@@ -158,7 +153,6 @@ describe("@rawr/session-intelligence", () => {
         roles: ["all"],
         includeTools: false,
         useIndex: false,
-        indexPath: "/tmp/session-index.sqlite",
       },
       createInvocation("trace-content-uncached"),
     );
@@ -168,7 +162,9 @@ describe("@rawr/session-intelligence", () => {
 
     const cached = await client.search.content(
       {
-        sessions: listResult.sessions,
+        source: "codex",
+        filters: {},
+        limit: 10,
         pattern: "oclif",
         ignoreCase: true,
         maxMatches: 10,
@@ -176,7 +172,6 @@ describe("@rawr/session-intelligence", () => {
         roles: ["all"],
         includeTools: false,
         useIndex: true,
-        indexPath: "/tmp/session-index.sqlite",
       },
       createInvocation("trace-content-cached"),
     );
@@ -187,7 +182,9 @@ describe("@rawr/session-intelligence", () => {
 
     await client.search.content(
       {
-        sessions: listResult.sessions,
+        source: "codex",
+        filters: {},
+        limit: 10,
         pattern: "oclif",
         ignoreCase: true,
         maxMatches: 10,
@@ -195,7 +192,6 @@ describe("@rawr/session-intelligence", () => {
         roles: ["all"],
         includeTools: false,
         useIndex: true,
-        indexPath: "/tmp/session-index.sqlite",
       },
       createInvocation("trace-content-cache-hit"),
     );
@@ -211,10 +207,10 @@ describe("@rawr/session-intelligence", () => {
 
     const result = await client.search.reindex(
       {
-        sessions: [{ path: CODEX_FIXTURE_PATH, source: "codex" }],
+        source: "codex",
+        filters: {},
         roles: ["all"],
         includeTools: false,
-        indexPath: "/tmp/session-index.sqlite",
         limit: 0,
       },
       createInvocation("trace-reindex"),
@@ -224,7 +220,7 @@ describe("@rawr/session-intelligence", () => {
     expect(indexRuntime.entries.size).toBe(1);
 
     await client.search.clearIndex(
-      { indexPath: "/tmp/session-index.sqlite", path: CODEX_FIXTURE_PATH },
+      { path: CODEX_FIXTURE_PATH },
       createInvocation("trace-clear"),
     );
     expect(indexRuntime.entries.size).toBe(0);

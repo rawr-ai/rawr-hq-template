@@ -42,7 +42,7 @@ describe("agent-config-sync service behavior", () => {
 
     const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
 
-    const preview = await client.planning.previewSync({
+    const preview = await client.execution.runSync({
       sourcePlugin,
       content,
       codexHomes: [codexHome],
@@ -51,6 +51,7 @@ describe("agent-config-sync service behavior", () => {
       includeClaude: false,
       force: true,
       gc: true,
+      dryRun: true,
     }, { context: { invocation: { traceId: "test-preview" } } });
 
     expect(preview.targets[0]?.items.map((item) => item.action)).toContain("planned");
@@ -72,6 +73,63 @@ describe("agent-config-sync service behavior", () => {
     await expect(fs.readFile(path.join(codexHome, "prompts", "hello.md"), "utf8")).resolves.toBe("# hello\n");
     const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
     expect(registry.plugins[0]).toMatchObject({ name: "demo", prompts: ["hello"], managed_by: "@rawr/plugin-plugins" });
+  });
+
+  it("resolves provider overlay content through the service with primitive file resources", async () => {
+    const sourceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-provider-content-"));
+    tempDirs.push(sourceRoot);
+    await fs.mkdir(path.join(sourceRoot, "base", "workflows"), { recursive: true });
+    await fs.mkdir(path.join(sourceRoot, "providers", "claude", "workflows"), { recursive: true });
+    await fs.mkdir(path.join(sourceRoot, "providers", "claude", "scripts"), { recursive: true });
+    await fs.writeFile(
+      path.join(sourceRoot, "package.json"),
+      JSON.stringify({
+        name: "@rawr/plugin-provider-content",
+        rawr: {
+          pluginContent: {
+            version: 1,
+            contentRoot: "base",
+            providers: {
+              claude: {
+                overlayRoot: "providers/claude",
+              },
+            },
+          },
+        },
+      }),
+      "utf8",
+    );
+    await fs.writeFile(path.join(sourceRoot, "base", "workflows", "shared.md"), "# base\n", "utf8");
+    await fs.writeFile(path.join(sourceRoot, "providers", "claude", "workflows", "shared.md"), "# claude\n", "utf8");
+    await fs.writeFile(path.join(sourceRoot, "providers", "claude", "scripts", "claude.sh"), "echo claude\n", "utf8");
+
+    const resources = createNodeTestResources();
+    expect("sources" in resources).toBe(false);
+    const client = createClient(createClientOptions({ resources }));
+    const sourcePlugin = {
+      ref: "provider-content",
+      absPath: sourceRoot,
+      dirName: "provider-content",
+      packageName: "@rawr/plugin-provider-content",
+    };
+
+    const resolved = await client.execution.resolveProviderContent({
+      agent: "claude",
+      sourcePlugin,
+      base: {
+        workflowFiles: [{ name: "shared", absPath: path.join(sourceRoot, "base", "workflows", "shared.md") }],
+        skills: [],
+        scripts: [],
+        agentFiles: [],
+      },
+    }, { context: { invocation: { traceId: "test-provider-content" } } });
+
+    expect(resolved.workflowFiles).toEqual([
+      { name: "shared", absPath: path.join(sourceRoot, "providers", "claude", "workflows", "shared.md") },
+    ]);
+    expect(resolved.scripts).toEqual([
+      { name: "claude.sh", absPath: path.join(sourceRoot, "providers", "claude", "scripts", "claude.sh") },
+    ]);
   });
 
   it("retires stale managed Codex entries through service-owned retirement behavior", async () => {
@@ -113,5 +171,57 @@ describe("agent-config-sync service behavior", () => {
     expect(result.ok).toBe(true);
     expect(result.stalePlugins).toEqual([{ agent: "codex", home: codexHome, plugin: "stale" }]);
     await expect(fs.readFile(path.join(codexHome, "prompts", "stale.md"), "utf8")).rejects.toThrow();
+  });
+
+  it("retires stale managed Claude entries through service-owned retirement behavior", async () => {
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-service-ws-"));
+    const claudeHome = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-service-claude-"));
+    tempDirs.push(workspaceRoot, claudeHome);
+
+    const pluginDir = path.join(claudeHome, "plugins", "stale");
+    await fs.mkdir(pluginDir, { recursive: true });
+    await fs.writeFile(path.join(pluginDir, "plugin.json"), JSON.stringify({ name: "stale" }), "utf8");
+    await fs.writeFile(
+      path.join(pluginDir, ".rawr-sync-manifest.json"),
+      JSON.stringify({
+        plugin: "stale",
+        sourcePluginPath: path.join(workspaceRoot, "plugins", "agents", "stale"),
+        managedBy: "@rawr/plugin-plugins",
+      }, null, 2),
+      "utf8",
+    );
+    await fs.mkdir(path.join(claudeHome, ".claude-plugin"), { recursive: true });
+    await fs.writeFile(
+      path.join(claudeHome, ".claude-plugin", "marketplace.json"),
+      JSON.stringify({
+        plugins: [
+          { name: "stale" },
+          { name: "active" },
+        ],
+      }, null, 2),
+      "utf8",
+    );
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+
+    const result = await client.retirement.retireStaleManaged({
+      workspaceRoot,
+      scope: "all",
+      codexHomes: [],
+      claudeHomes: [claudeHome],
+      activePluginNames: ["active"],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-retire-claude" } } });
+
+    expect(result.ok).toBe(true);
+    expect(result.stalePlugins).toEqual([{ agent: "claude", home: claudeHome, plugin: "stale" }]);
+    await expect(fs.stat(pluginDir)).rejects.toThrow();
+    const marketplace = JSON.parse(
+      await fs.readFile(path.join(claudeHome, ".claude-plugin", "marketplace.json"), "utf8"),
+    ) as { plugins: Array<{ name: string }> };
+    expect(marketplace.plugins).toEqual([{ name: "active" }]);
   });
 });

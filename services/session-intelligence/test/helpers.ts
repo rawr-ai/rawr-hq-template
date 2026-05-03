@@ -13,7 +13,7 @@ import type {
   DiscoverSessionsInput,
   SessionSourceRuntime,
 } from "../src/service/shared/ports/session-source-runtime";
-import type { DiscoveredSessionFile, SessionFileStat, SessionSource, SessionStatus } from "../src/service/shared/schemas";
+import type { DiscoveredSessionFile, SessionFileStat, SessionSource, SessionStatus } from "../src/service/shared/entities";
 import {
   CLAUDE_FIXTURE,
   CLAUDE_FIXTURE_PATH,

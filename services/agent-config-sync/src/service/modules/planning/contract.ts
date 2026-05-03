@@ -1,119 +1,91 @@
 import { schema } from "@rawr/hq-sdk";
-import { Type } from "typebox";
+import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
+import { SyncScopeSchema, SyncAgentSchema } from "../../shared/entities";
 import {
-  SourceContentSchema,
-  SourcePluginSchema,
-  SyncItemResultSchema,
-  SyncRunResultSchema,
-  SyncScopeSchema,
-} from "../../shared/schemas";
-import {
+  FullSyncPolicyInputSchema,
+  FullSyncPolicyResultSchema,
   SyncAgentSelectionSchema,
-  TargetHomesSchema,
+  SyncAssessmentSchema,
+  TargetHomeCandidatesSchema,
   WorkspaceSkipSchema,
-} from "./schemas";
+  WorkspaceSyncPlanSchema,
+  WorkspaceSyncableSchema,
+} from "./entities";
+
+const WorkspaceRootErrorDataSchema = schema(
+  Type.Object(
+    {
+      cwd: Type.String({ minLength: 1 }),
+      workspaceRoot: Type.Optional(Type.String({ minLength: 1 })),
+      resolvedPath: Type.Optional(Type.String({ minLength: 1 })),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+const INVALID_WORKSPACE_ROOT = {
+  status: 400,
+  message: "Configured workspace root is not a RAWR workspace",
+  data: WorkspaceRootErrorDataSchema,
+} as const;
+
+const WORKSPACE_ROOT_NOT_FOUND = {
+  status: 404,
+  message: "Unable to locate workspace root",
+  data: WorkspaceRootErrorDataSchema,
+} as const;
+
+const WorkspacePlanningBaseInputSchema = Type.Object(
+  {
+    cwd: Type.String({ minLength: 1 }),
+    workspaceRoot: Type.Optional(Type.String({ minLength: 1 })),
+    sourcePaths: Type.Array(Type.String({ minLength: 1 })),
+    includeMetadata: Type.Boolean(),
+    scope: SyncScopeSchema,
+    agent: SyncAgentSelectionSchema,
+    targetHomeCandidates: TargetHomeCandidatesSchema,
+    includeAgentsInCodex: Type.Optional(Type.Boolean()),
+    includeAgentsInClaude: Type.Optional(Type.Boolean()),
+  },
+  { additionalProperties: false },
+);
+
+const PlanWorkspaceSyncInputSchema = Type.Object(
+  {
+    cwd: Type.String({ minLength: 1 }),
+    workspaceRoot: Type.Optional(Type.String({ minLength: 1 })),
+    sourcePaths: Type.Array(Type.String({ minLength: 1 })),
+    includeMetadata: Type.Boolean(),
+    scope: SyncScopeSchema,
+    agent: SyncAgentSelectionSchema,
+    targetHomeCandidates: TargetHomeCandidatesSchema,
+    includeAgentsInCodex: Type.Optional(Type.Boolean()),
+    includeAgentsInClaude: Type.Optional(Type.Boolean()),
+    fullSyncPolicy: FullSyncPolicyInputSchema,
+  },
+  { additionalProperties: false },
+);
+
+const AssessWorkspaceSyncInputSchema = WorkspacePlanningBaseInputSchema;
+
+export type PlanWorkspaceSyncInput = Static<typeof PlanWorkspaceSyncInputSchema>;
+export type AssessWorkspaceSyncInput = Static<typeof AssessWorkspaceSyncInputSchema>;
+export type { FullSyncPolicyInput, FullSyncPolicyResult, SyncAgentSelection, SyncAssessment, TargetHomeCandidates, WorkspaceSkip, WorkspaceSyncPlan, WorkspaceSyncable } from "./entities";
 
 export const contract = {
-  previewSync: ocBase
+  planWorkspaceSync: ocBase
     .meta({ idempotent: true, entity: "planning" })
-    .input(
-      schema(
-        Type.Object(
-          {
-            sourcePlugin: SourcePluginSchema,
-            content: SourceContentSchema,
-            codexHomes: Type.Array(Type.String({ minLength: 1 })),
-            claudeHomes: Type.Array(Type.String({ minLength: 1 })),
-            includeCodex: Type.Boolean(),
-            includeClaude: Type.Boolean(),
-            includeAgentsInCodex: Type.Optional(Type.Boolean()),
-            includeAgentsInClaude: Type.Optional(Type.Boolean()),
-            force: Type.Boolean(),
-            gc: Type.Boolean(),
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    )
-    .output(schema(SyncRunResultSchema)),
-  assessWorkspace: ocBase
+    .input(schema(PlanWorkspaceSyncInputSchema))
+    .output(schema(WorkspaceSyncPlanSchema))
+    .errors({ INVALID_WORKSPACE_ROOT, WORKSPACE_ROOT_NOT_FOUND }),
+  assessWorkspaceSync: ocBase
     .meta({ idempotent: true, entity: "planning" })
-    .input(
-      schema(
-        Type.Object(
-          {
-            workspaceRoot: Type.String({ minLength: 1 }),
-            syncable: Type.Array(
-              Type.Object(
-                {
-                  sourcePlugin: SourcePluginSchema,
-                  content: SourceContentSchema,
-                },
-                { additionalProperties: false },
-              ),
-            ),
-            skipped: Type.Array(WorkspaceSkipSchema),
-            includeMetadata: Type.Boolean(),
-            scope: SyncScopeSchema,
-            agent: SyncAgentSelectionSchema,
-            targetHomes: TargetHomesSchema,
-            includeAgentsInCodex: Type.Optional(Type.Boolean()),
-            includeAgentsInClaude: Type.Optional(Type.Boolean()),
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    )
-    .output(
-      schema(
-        Type.Object(
-          {
-            status: Type.Union([
-              Type.Literal("IN_SYNC"),
-              Type.Literal("DRIFT_DETECTED"),
-              Type.Literal("CONFLICTS"),
-            ]),
-            includeMetadata: Type.Boolean(),
-            scope: SyncScopeSchema,
-            summary: Type.Object(
-              {
-                totalPlugins: Type.Number(),
-                totalTargets: Type.Number(),
-                totalConflicts: Type.Number(),
-                totalMaterialChanges: Type.Number(),
-                totalMetadataChanges: Type.Number(),
-                totalDriftItems: Type.Number(),
-              },
-              { additionalProperties: false },
-            ),
-            skipped: Type.Array(WorkspaceSkipSchema),
-            plugins: Type.Array(
-              Type.Object(
-                {
-                  dirName: Type.String({ minLength: 1 }),
-                  absPath: Type.String({ minLength: 1 }),
-                  conflicts: Type.Number(),
-                  materialChanges: Type.Number(),
-                  metadataChanges: Type.Number(),
-                  driftItems: Type.Array(
-                    Type.Object(
-                      {
-                        action: SyncItemResultSchema.properties.action,
-                        kind: SyncItemResultSchema.properties.kind,
-                        target: Type.String({ minLength: 1 }),
-                        message: Type.Optional(Type.String({ minLength: 1 })),
-                      },
-                      { additionalProperties: false },
-                    ),
-                  ),
-                },
-                { additionalProperties: false },
-              ),
-            ),
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    ),
+    .input(schema(AssessWorkspaceSyncInputSchema))
+    .output(schema(SyncAssessmentSchema))
+    .errors({ INVALID_WORKSPACE_ROOT, WORKSPACE_ROOT_NOT_FOUND }),
+  evaluateFullSyncPolicy: ocBase
+    .meta({ idempotent: true, entity: "planning" })
+    .input(schema(FullSyncPolicyInputSchema))
+    .output(schema(FullSyncPolicyResultSchema)),
 };

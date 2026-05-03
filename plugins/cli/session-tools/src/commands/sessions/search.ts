@@ -4,12 +4,10 @@ import type { Client } from "@rawr/session-intelligence/client";
 import { ensureDir, writeJsonFile } from "../../lib/out-dir";
 import {
   createSessionIntelligenceClient,
-  defaultSessionIndexPath,
   defaultSessionIndexPathSync,
 } from "../../lib/session-intelligence-client";
 import type { MetadataSearchHit, RoleFilter, SearchHit, SessionSourceFilter } from "../../lib/session-types";
 
-type CatalogListOptions = NonNullable<Parameters<Client["catalog"]["list"]>[1]>;
 type SearchMetadataOptions = NonNullable<Parameters<Client["search"]["metadata"]>[1]>;
 type SearchContentOptions = NonNullable<Parameters<Client["search"]["content"]>[1]>;
 type SearchClearIndexOptions = NonNullable<Parameters<Client["search"]["clearIndex"]>[1]>;
@@ -111,28 +109,17 @@ export default class SessionsSearch extends RawrCommand {
       return limit;
     })();
 
-    const client = await createSessionIntelligenceClient();
-    const listOptions = {
-      context: { invocation: { traceId: "plugin-session-tools.catalog.list" } },
-    } satisfies CatalogListOptions;
-    const { sessions } = await client.catalog.list(
-      {
-        source,
-        limit: sessionFetchLimit,
-        filters,
-      },
-      listOptions,
-    );
+    const indexPath = contentQuery || flags.reindex ? String(flags["index-path"]) : undefined;
+    const client = await createSessionIntelligenceClient(indexPath ? { indexPath } : {});
 
     let hits: Array<SearchHit | MetadataSearchHit> = [];
     if (metadataQuery) {
       const metadataOptions = {
         context: { invocation: { traceId: "plugin-session-tools.search.metadata" } },
       } satisfies SearchMetadataOptions;
-      const response = await client.search.metadata({ sessions, needle: metadataQuery, limit }, metadataOptions);
+      const response = await client.search.metadata({ source, filters, needle: metadataQuery, limit }, metadataOptions);
       hits = response.hits;
     } else {
-      const indexPath = flags["index-path"] ? String(flags["index-path"]) : await defaultSessionIndexPath();
       const roles = (flags.roles as unknown as string[]).map(String) as RoleFilter[];
       const includeTools = Boolean(flags["include-tools"]);
 
@@ -140,19 +127,16 @@ export default class SessionsSearch extends RawrCommand {
         const clearIndexOptions = {
           context: { invocation: { traceId: "plugin-session-tools.search.clear-index" } },
         } satisfies SearchClearIndexOptions;
-        await client.search.clearIndex({ indexPath }, clearIndexOptions);
+        await client.search.clearIndex({}, clearIndexOptions);
         const reindexOptions = {
           context: { invocation: { traceId: "plugin-session-tools.search.reindex" } },
         } satisfies SearchReindexOptions;
         const reindexResult = await client.search.reindex(
           {
-            sessions: sessions.map((session) => ({
-              path: session.path,
-              source: session.source,
-            })),
+            source,
+            filters,
             roles,
             includeTools,
-            indexPath,
             limit: reindexLimit,
           },
           reindexOptions,
@@ -180,7 +164,6 @@ export default class SessionsSearch extends RawrCommand {
       } satisfies SearchContentOptions;
       const response = await client.search.content(
         {
-          sessions,
           pattern: contentQuery!,
           ignoreCase: Boolean(flags["ignore-case"]),
           maxMatches,
@@ -188,7 +171,9 @@ export default class SessionsSearch extends RawrCommand {
           roles,
           includeTools,
           useIndex: Boolean(flags["use-index"] || flags.reindex),
-          indexPath,
+          source,
+          filters,
+          limit: sessionFetchLimit,
         },
         contentOptions,
       );

@@ -1,6 +1,6 @@
 import { RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
-import { findWorkspaceRoot } from "../../lib/workspace-plugins";
+import { findWorkspaceRoot } from "@rawr/core";
 
 type ValidationResult =
   | { ok: true; path: string | null; config: unknown | null; issues?: never }

@@ -14,7 +14,7 @@ const SERVICE_EXPORTS = [
   "./client",
   "./router",
   "./service/contract",
-  "./schemas",
+  "./entities",
   "./ports/session-source-runtime",
   "./ports/session-index-runtime",
 ];
@@ -178,17 +178,23 @@ async function verifyServiceShape(findings) {
     `${SERVICE_ROOT}/src/service/router.ts`,
     `${SERVICE_ROOT}/src/service/shared/README.md`,
     `${SERVICE_ROOT}/src/service/shared/errors.ts`,
-    `${SERVICE_ROOT}/src/service/shared/schemas.ts`,
+    `${SERVICE_ROOT}/src/service/shared/entities.ts`,
     `${SERVICE_ROOT}/src/service/shared/ports/session-source-runtime.ts`,
     `${SERVICE_ROOT}/src/service/shared/ports/session-index-runtime.ts`,
     `${SERVICE_ROOT}/test/service-shape.test.ts`,
   ];
 
   for (const moduleName of SERVICE_MODULES) {
-    for (const fileName of ["contract", "middleware", "module", "repository", "router", "schemas"]) {
+    for (const fileName of ["contract", "middleware", "module", "router"]) {
       requiredPaths.push(`${SERVICE_ROOT}/src/service/modules/${moduleName}/${fileName}.ts`);
     }
   }
+  requiredPaths.push(
+    `${SERVICE_ROOT}/src/service/shared/repositories/codex-indexed-discovery-repository.ts`,
+    `${SERVICE_ROOT}/src/service/shared/repositories/codex-discovery-index-repository.ts`,
+    `${SERVICE_ROOT}/src/service/modules/search/repositories/search-cache-repository.ts`,
+    `${SERVICE_ROOT}/src/service/modules/search/helpers/search-text.ts`,
+  );
 
   for (const relPath of requiredPaths) {
     if (!(await pathExists(relPath))) findings.push(`missing required session-intelligence path: ${relPath}`);
@@ -245,6 +251,20 @@ async function verifyServiceShape(findings) {
     if (baseSource && !baseSource.includes(depKey)) {
       findings.push(`session-intelligence base service deps must declare ${depKey}`);
     }
+  }
+
+  const searchContract = await readFileIfExists(`${SERVICE_ROOT}/src/service/modules/search/contract.ts`, findings, undefined, false);
+  const searchRouter = await readFileIfExists(`${SERVICE_ROOT}/src/service/modules/search/router.ts`, findings, undefined, false);
+  if (searchContract) {
+    if (searchContract.includes("sessions: Type.Array")) {
+      findings.push("session-intelligence search contract must not require caller-provided catalog sessions");
+    }
+    if (searchContract.includes("indexPath: Type.String")) {
+      findings.push("session-intelligence search contract must not expose index storage paths");
+    }
+  }
+  if (searchRouter && !searchRouter.includes("context.indexRuntime.defaultIndexPath()")) {
+    findings.push("session-intelligence search router must resolve index storage from the service runtime");
   }
 }
 
@@ -359,7 +379,7 @@ async function verifyPluginDoesNotOwnDatabaseSemantics(findings) {
 }
 
 async function verifyModuleSchemaOwnership(findings) {
-  const sharedSchemasPath = `${SERVICE_ROOT}/src/service/shared/schemas.ts`;
+  const sharedSchemasPath = `${SERVICE_ROOT}/src/service/shared/entities.ts`;
   const sharedSchemasSource = await readFileIfExists(sharedSchemasPath, findings, sharedSchemasPath, false);
   if (sharedSchemasSource) {
     for (const schemaName of MODULE_OWNED_SCHEMA_EXPORTS) {
@@ -371,28 +391,10 @@ async function verifyModuleSchemaOwnership(findings) {
   }
 
   for (const moduleName of SERVICE_MODULES) {
-    const relPath = `${SERVICE_ROOT}/src/service/modules/${moduleName}/schemas.ts`;
-    const source = await readFileIfExists(relPath, findings, relPath, false);
-    if (!source) continue;
-    const withoutWhitespace = source.replace(/\s+/g, "");
-    if (withoutWhitespace.startsWith("export{") && source.includes("../../shared/schemas")) {
-      findings.push(`${relPath} must own module schemas instead of pure re-exporting shared schemas`);
-    }
-    if (source.includes("../../shared/schemas") && !/\bexport\s+const\s+\w+Schema\s*=\s*Type\./u.test(source)) {
-      findings.push(`${relPath} must define module-owned schemas instead of acting as a shared schema re-export shell`);
-    }
-
-    const sourceFile = ts.createSourceFile(relPath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-    for (const statement of sourceFile.statements) {
-      if (!ts.isImportDeclaration(statement) || !statement.moduleSpecifier || !ts.isStringLiteralLike(statement.moduleSpecifier)) continue;
-      if (statement.moduleSpecifier.text !== "../../shared/schemas") continue;
-      const namedBindings = statement.importClause?.namedBindings;
-      if (!namedBindings || !ts.isNamedImports(namedBindings)) continue;
-      for (const element of namedBindings.elements) {
-        const importedName = element.propertyName?.text ?? element.name.text;
-        if (MODULE_OWNED_SCHEMA_EXPORTS.has(importedName)) {
-          findings.push(`${relPath} must define ${importedName} locally instead of importing it from shared schemas`);
-        }
+    for (const fileName of ["schemas.ts", "model.ts", "models.ts", "support.ts"]) {
+      const relPath = `${SERVICE_ROOT}/src/service/modules/${moduleName}/${fileName}`;
+      if (await pathExists(relPath)) {
+        findings.push(`${relPath} must not exist; contract IO belongs inline in contract.ts and reusable entities belong in an intentional entities.ts only when needed`);
       }
     }
   }
@@ -406,13 +408,22 @@ async function verifyNoSameDomainSharedLogicDelegation(findings) {
   }
 
   for (const moduleName of SERVICE_MODULES) {
-    const relPath = `${SERVICE_ROOT}/src/service/modules/${moduleName}/repository.ts`;
-    const source = await readFileIfExists(relPath, findings, relPath, false);
-    if (!source) continue;
-    const specifiers = collectModuleSpecifiers(relPath, source);
-    for (const forbidden of FORBIDDEN_SHARED_LOGIC_IMPORTS) {
-      if (specifiers.includes(forbidden)) {
-        findings.push(`${relPath} must not delegate same-domain behavior to ${forbidden}`);
+    const moduleRoot = `${SERVICE_ROOT}/src/service/modules/${moduleName}`;
+    const files = [];
+    await walkSourceFiles(moduleRoot, files);
+    for (const sourcePath of files) {
+      const relativeToModule = path.posix.relative(moduleRoot, sourcePath);
+      const isAllowedModuleRootFile = !relativeToModule.includes("/") && /^(contract|middleware|module|router|errors|entities)\.ts$/u.test(relativeToModule);
+      if (!relativeToModule.includes("/") && !isAllowedModuleRootFile) {
+        findings.push(`${sourcePath} must not exist as a module-root behavior bucket; put precise reusable helpers under helpers/ or keep procedure flow in router.ts`);
+      }
+
+      const source = await readFile(sourcePath);
+      const specifiers = collectModuleSpecifiers(sourcePath, source);
+      for (const forbidden of FORBIDDEN_SHARED_LOGIC_IMPORTS) {
+        if (specifiers.includes(forbidden)) {
+          findings.push(`${sourcePath} must not delegate same-domain behavior to ${forbidden}`);
+        }
       }
     }
   }

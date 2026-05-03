@@ -5,7 +5,7 @@ import type {
   SessionFileStat,
   SessionSourceFilter,
   SessionStatus,
-} from "../schemas";
+} from "../entities";
 
 export type DiscoverSessionsInput = {
   source: SessionSourceFilter;

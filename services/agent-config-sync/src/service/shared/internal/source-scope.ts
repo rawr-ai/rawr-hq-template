@@ -1,13 +1,15 @@
-import path from "node:path";
+import type { RawrPluginKind, SyncScope } from "../entities";
+import type { AgentConfigSyncPathResources } from "../resources";
 
-import type { SyncScope } from "../schemas";
+export type ResolvedSourceScope = RawrPluginKind | "external";
 
-export type ResolvedSourceScope = "agents" | "cli" | "web" | "external";
-
-const PLUGIN_SCOPE_ROOTS: Record<Exclude<ResolvedSourceScope, "external">, string[]> = {
-  agents: ["plugins", "agents"],
-  cli: ["plugins", "cli"],
+const PLUGIN_SCOPE_ROOTS: Record<RawrPluginKind, string[]> = {
+  toolkit: ["plugins", "cli"],
+  agent: ["plugins", "agents"],
   web: ["plugins", "web"],
+  api: ["plugins", "server", "api"],
+  workflows: ["plugins", "async", "workflows"],
+  schedules: ["plugins", "async", "schedules"],
 };
 
 function hasPrefix(parts: string[], prefix: string[]): boolean {
@@ -18,20 +20,26 @@ function hasPrefix(parts: string[], prefix: string[]): boolean {
   return true;
 }
 
-export function resolveSourceScopeForPath(absPath: string, workspaceRoot: string): ResolvedSourceScope {
-  const rel = path.relative(path.resolve(workspaceRoot), path.resolve(absPath));
+export function resolveSourceScopeForPath(
+  pathOps: AgentConfigSyncPathResources,
+  absPath: string,
+  workspaceRoot: string,
+): ResolvedSourceScope {
+  const rel = pathOps.relative(pathOps.resolve(workspaceRoot), pathOps.resolve(absPath));
   if (rel.startsWith("..")) return "external";
 
-  const relParts = rel.split(path.sep).filter(Boolean);
+  const relParts = rel.split(pathOps.sep).filter(Boolean);
 
-  if (hasPrefix(relParts, PLUGIN_SCOPE_ROOTS.agents)) return "agents";
-  if (hasPrefix(relParts, PLUGIN_SCOPE_ROOTS.cli)) return "cli";
-  if (hasPrefix(relParts, PLUGIN_SCOPE_ROOTS.web)) return "web";
+  for (const [scope, root] of Object.entries(PLUGIN_SCOPE_ROOTS) as Array<[RawrPluginKind, string[]]>) {
+    if (hasPrefix(relParts, root)) return scope;
+  }
 
   return "external";
 }
 
 export function scopeAllows(scope: SyncScope, resolved: ResolvedSourceScope): boolean {
   if (scope === "all") return true;
+  if (scope === "cli") return resolved === "toolkit";
+  if (scope === "agents") return resolved === "agent";
   return resolved === scope;
 }
