@@ -15,10 +15,13 @@ from .chunking import chunk_markdown
 from .core_ontology import (
     TESTING_PLAN,
     build_core_ontology_run,
+    compare_document_evidence,
     diff_document_against_core_ontology,
+    extract_document_evidence,
     export_core_ontology,
     validate_core_ontology,
     visualize_core_ontology,
+    write_semantica_capability_report,
 )
 from .core_config import CORE_GRAPH_FILENAMES, DEFAULT_CORE_VIEWER_HOST, DEFAULT_CORE_VIEWER_PORT
 from .core_query import list_queries, render_query_text, run_named_query, run_sparql_query
@@ -90,7 +93,30 @@ def build_parser() -> argparse.ArgumentParser:
     doc_diff = sub.add_parser("doc:diff")
     doc_diff.add_argument("--run", default="latest")
     doc_diff.add_argument("--document", default=str(TESTING_PLAN))
+    doc_diff.add_argument("--mode", choices=["lexical", "semantic"], default="lexical")
+    doc_diff.add_argument("--fixture", action="store_true")
     doc_diff.set_defaults(func=cmd_doc_diff)
+
+    doc_triage = sub.add_parser("doc:triage")
+    doc_triage.add_argument("--run", default="latest")
+    doc_triage.add_argument("--document", default=str(TESTING_PLAN))
+    doc_triage.set_defaults(func=cmd_doc_triage)
+
+    doc_extract = sub.add_parser("doc:extract")
+    doc_extract.add_argument("--run", default="latest")
+    doc_extract.add_argument("--document", default=str(TESTING_PLAN))
+    doc_extract.add_argument("--fixture", action="store_true")
+    doc_extract.set_defaults(func=cmd_doc_extract)
+
+    doc_compare = sub.add_parser("doc:compare")
+    doc_compare.add_argument("--run", default="latest")
+    doc_compare.add_argument("--document", default=str(TESTING_PLAN))
+    doc_compare.add_argument("--fixture", action="store_true")
+    doc_compare.set_defaults(func=cmd_doc_compare)
+
+    semantic_capability = sub.add_parser("semantic:capability")
+    semantic_capability.add_argument("--run", default="latest")
+    semantic_capability.set_defaults(func=cmd_semantic_capability)
 
     extract = sub.add_parser("extract")
     add_extract_args(extract)
@@ -219,9 +245,35 @@ def cmd_core_query(args) -> int:
 
 
 def cmd_doc_diff(args) -> int:
+    if args.mode == "semantic":
+        run_dir = compare_document_evidence(Path(args.document), args.run, fixture=args.fixture)
+        print(f"semantic_compare={rel(run_dir / CORE_GRAPH_FILENAMES['semantic_compare_report'])}")
+        return 0
+    return cmd_doc_triage(args)
+
+
+def cmd_doc_triage(args) -> int:
     document = Path(args.document)
     run_dir = diff_document_against_core_ontology(document, args.run)
     print(f"document_diff={rel(run_dir / CORE_GRAPH_FILENAMES['document_diff_report'])}")
+    return 0
+
+
+def cmd_doc_extract(args) -> int:
+    run_dir = extract_document_evidence(Path(args.document), args.run, fixture=args.fixture)
+    print(f"evidence_claims={rel(run_dir / CORE_GRAPH_FILENAMES['evidence_claims_json'])}")
+    return 0
+
+
+def cmd_doc_compare(args) -> int:
+    run_dir = compare_document_evidence(Path(args.document), args.run, fixture=args.fixture)
+    print(f"semantic_compare={rel(run_dir / CORE_GRAPH_FILENAMES['semantic_compare_report'])}")
+    return 0
+
+
+def cmd_semantic_capability(args) -> int:
+    run_dir = write_semantica_capability_report(args.run)
+    print(f"semantic_capability={rel(run_dir / CORE_GRAPH_FILENAMES['semantic_capability_report'])}")
     return 0
 
 
