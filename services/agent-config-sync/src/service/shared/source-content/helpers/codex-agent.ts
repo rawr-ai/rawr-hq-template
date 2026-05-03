@@ -1,13 +1,21 @@
 import { stringify } from "smol-toml";
-import YAML from "yaml";
 import type { SourcePlugin } from "../../entities";
+import type { ProjectionSupport } from "../../entities/sync-results";
 import type { AgentConfigSyncResources } from "../../resources";
+import {
+  extractTaskSpawnsFromBody,
+  hasField,
+  parseClaudeMarkdown,
+  stringField,
+  supportForCodexAgentFrontmatterField,
+} from "./claude-semantics";
 
 export type CodexAgentProjection = {
   sourceName: string;
   sourcePath: string;
   targetName: string;
   toml: string;
+  semanticSupport: ProjectionSupport[];
   droppedSemantics: string[];
   adapterRequiredSemantics: string[];
   validationNotes: string[];
@@ -23,43 +31,13 @@ const CLAUDE_ONLY_FRONTMATTER_FIELDS = [
   "color",
 ] as const;
 
-type ParsedMarkdownAgent = {
-  frontmatter: Record<string, unknown>;
-  body: string;
-  frontmatterError?: string;
-};
-
-function parseMarkdownAgent(raw: string): ParsedMarkdownAgent {
-  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
-  if (!match) return { frontmatter: {}, body: raw.trim() };
-
-  let parsed: unknown;
-  try {
-    parsed = YAML.parse(match[1] ?? "");
-  } catch (err) {
-    return {
-      frontmatter: {},
-      body: raw.slice(match[0].length).trim(),
-      frontmatterError: err instanceof Error ? err.message : String(err),
-    };
-  }
-  const frontmatter = parsed && typeof parsed === "object" && !Array.isArray(parsed)
-    ? parsed as Record<string, unknown>
-    : {};
-  return { frontmatter, body: raw.slice(match[0].length).trim() };
-}
-
-function stringField(value: unknown): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
-}
-
 export async function buildCodexAgentProjection(input: {
   agent: { name: string; absPath: string };
   sourcePlugin: SourcePlugin;
   resources: AgentConfigSyncResources;
 }): Promise<CodexAgentProjection> {
   const raw = await input.resources.files.readTextFile(input.agent.absPath);
-  const parsed = parseMarkdownAgent(raw ?? "");
+  const parsed = parseClaudeMarkdown(raw ?? "");
   const description =
     stringField(parsed.frontmatter.description) ??
     input.sourcePlugin.description ??
@@ -68,8 +46,46 @@ export async function buildCodexAgentProjection(input: {
   const droppedSemantics = parsed.frontmatterError
     ? ["unparseable_frontmatter"]
     : CLAUDE_ONLY_FRONTMATTER_FIELDS.filter((field) =>
-        Object.prototype.hasOwnProperty.call(parsed.frontmatter, field)
+        hasField(parsed.frontmatter, field)
       );
+  const semanticSupport: ProjectionSupport[] = [
+    {
+      provider: "codex",
+      semanticKind: "agent_role",
+      source: input.agent.name,
+      supportStatus: "native",
+      evidenceLevel: "local_verified",
+      notes: ["Codex role TOML supports name, description, and developer_instructions"],
+    },
+    ...(!parsed.frontmatterError
+      ? droppedSemantics.map((field) => supportForCodexAgentFrontmatterField({
+          sourceName: input.agent.name,
+          field,
+        }))
+      : [{
+          provider: "codex" as const,
+          semanticKind: "settings" as const,
+          source: `${input.agent.name}:frontmatter`,
+          supportStatus: "unknown" as const,
+          evidenceLevel: "source_code" as const,
+          notes: [`Agent frontmatter could not be parsed: ${parsed.frontmatterError}`],
+        }]),
+    ...extractTaskSpawnsFromBody({
+      sourceKind: "agent",
+      sourceName: input.agent.name,
+      body: parsed.body,
+    }).map((spawn) => ({
+      provider: "codex" as const,
+      semanticKind: "task_spawn" as const,
+      source: spawn.targetAgent ? `${spawn.sourceName} -> ${spawn.targetAgent}` : spawn.sourceName,
+      supportStatus: "adapter_required" as const,
+      evidenceLevel: "source_code" as const,
+      notes: ["Claude Task(...) requires a Codex orchestration adapter and explicit spawn mapping"],
+    })),
+  ];
+  const adapterRequiredSemantics = semanticSupport
+    .filter((support) => support.supportStatus === "adapter_required")
+    .map((support) => support.source);
 
   const toml = stringify({
     name: input.agent.name,
@@ -82,8 +98,9 @@ export async function buildCodexAgentProjection(input: {
     sourcePath: input.agent.absPath,
     targetName: `${input.agent.name}.toml`,
     toml: toml.endsWith("\n") ? toml : `${toml}\n`,
+    semanticSupport,
     droppedSemantics,
-    adapterRequiredSemantics: droppedSemantics,
+    adapterRequiredSemantics,
     validationNotes: [
       ...(parsed.frontmatterError
         ? [`Agent frontmatter could not be parsed; mapped body with fallback metadata: ${parsed.frontmatterError}`]

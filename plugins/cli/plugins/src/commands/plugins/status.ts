@@ -178,10 +178,10 @@ export default class PluginsStatus extends RawrCommand {
           reason: "Converge content sync drift and refresh provider-side artifacts",
         });
       }
-      if (sync && sync.summary.totalProjectionResiduals > 0) {
+      if (sync && sync.summary.totalSemanticSupportResiduals > 0) {
         actions.push({
           command: `rawr plugins sync drift --include-items --json${sourceWorkspaceArg}`,
-          reason: "Inspect adapter-required projection residuals before claiming provider parity",
+          reason: "Inspect semantic support residuals before claiming provider runtime parity",
         });
       }
       if (install) {
@@ -242,7 +242,10 @@ export default class PluginsStatus extends RawrCommand {
           this.log(`sync: ${includeSync ? syncStatus : "SKIPPED"}`);
           this.log(`install: ${includeInstall ? installStatus : "SKIPPED"}`);
           this.log(`overall: ${overall}`);
-          if (sync) this.log(`projection residuals: ${sync.summary.totalProjectionResiduals}`);
+          if (sync) {
+            this.log(`material projection residuals: ${sync.summary.totalMaterialProjectionResiduals}`);
+            this.log(`semantic support residuals: ${sync.summary.totalSemanticSupportResiduals}`);
+          }
           if (installErrorMessage) this.log(`install error: ${installErrorMessage}`);
           if (repair) {
             this.log(`repair: ${repairAttempt?.action ?? (includeInstall ? "skipped" : "unavailable")}`);

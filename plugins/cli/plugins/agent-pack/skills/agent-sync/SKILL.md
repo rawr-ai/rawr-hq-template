@@ -26,6 +26,19 @@ Canonical source directories inside a plugin:
 
 Anything outside those directories is ignored.
 
+## Material sync vs semantic support
+
+`IN_SYNC` means managed files, metadata, and configured destinations are materially converged. It does not mean Claude, Codex, and Cowork have equivalent runtime semantics.
+
+Codex custom agents are projected as standalone TOML with only:
+- `name`
+- `description`
+- `developer_instructions`
+
+Claude-only fields such as `tools`, `hooks`, `mcpServers`, `permissionMode`, `skills`, `model`, and `color` are reported as semantic support residuals instead of being written into Codex TOML. Claude-style `Skill(...)`, `Task(...)`, and `TodoWrite` orchestration is also reported as semantic support status, not material drift.
+
+Direct Codex sync still owns native material for modeled hooks, MCP, settings/config fragments, prompts, scripts, runtime skill mirrors, standalone agents, and registry metadata. Codex marketplace package/install is a separate lane from direct home sync.
+
 ## Important boundary: shipped scripts vs plugin-internal scripts
 
 - `scripts/` is for **shipped helper scripts** that you intentionally want available alongside the plugin.

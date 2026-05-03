@@ -16,6 +16,8 @@ export function summarizeWorkspaceRun(input: {
   let totalMetadataChanges = 0;
   let totalDriftItems = 0;
   let totalProjectionResiduals = 0;
+  let totalMaterialProjectionResiduals = 0;
+  let totalSemanticSupportResiduals = 0;
 
   const plugins = input.runs.map((run) => {
     let conflicts = 0;
@@ -23,6 +25,8 @@ export function summarizeWorkspaceRun(input: {
     let metadataChanges = 0;
     const driftItems: SyncAssessment["plugins"][number]["driftItems"] = [];
     const projectionResiduals: SyncAssessment["plugins"][number]["projectionResiduals"] = [];
+    const materialProjectionResiduals: SyncAssessment["plugins"][number]["materialProjectionResiduals"] = [];
+    const semanticSupportResiduals: SyncAssessment["plugins"][number]["semanticSupportResiduals"] = [];
 
     for (const target of run.targets) {
       totalTargets += 1;
@@ -50,14 +54,14 @@ export function summarizeWorkspaceRun(input: {
       );
     }
 
-    const residuals = run.projections.filter((projection) =>
+    const materialResiduals = run.projections.filter((projection) =>
       RESIDUAL_MATERIAL_KINDS.has(projection.materialKind) &&
       projection.supportStatus !== "native" &&
       projection.supportStatus !== "legacy_or_deprecated"
     );
-    totalProjectionResiduals += residuals.length;
-    projectionResiduals.push(
-      ...residuals.map((projection) => ({
+    totalMaterialProjectionResiduals += materialResiduals.length;
+    materialProjectionResiduals.push(
+      ...materialResiduals.map((projection) => ({
         provider: projection.provider,
         materialKind: projection.materialKind,
         source: projection.source,
@@ -69,6 +73,22 @@ export function summarizeWorkspaceRun(input: {
         ].join("; ") || `${projection.materialKind} is ${projection.supportStatus}`,
       })),
     );
+    const semanticResiduals = run.projections.flatMap((projection) =>
+      projection.semanticSupport
+        .filter((support) => support.supportStatus !== "native")
+        .map((support) => ({
+          provider: support.provider,
+          materialKind: projection.materialKind,
+          semanticKind: support.semanticKind,
+          source: support.source,
+          supportStatus: support.supportStatus,
+          message: support.notes.join("; ") || `${support.semanticKind} is ${support.supportStatus}`,
+        }))
+    );
+    totalSemanticSupportResiduals += semanticResiduals.length;
+    semanticSupportResiduals.push(...semanticResiduals);
+    projectionResiduals.push(...materialProjectionResiduals);
+    totalProjectionResiduals = totalMaterialProjectionResiduals + totalSemanticSupportResiduals;
 
     return {
       dirName: run.sourcePlugin.dirName,
@@ -78,6 +98,8 @@ export function summarizeWorkspaceRun(input: {
       metadataChanges,
       driftItems,
       projectionResiduals,
+      materialProjectionResiduals,
+      semanticSupportResiduals,
     };
   });
 
@@ -99,6 +121,8 @@ export function summarizeWorkspaceRun(input: {
       totalMetadataChanges,
       totalDriftItems,
       totalProjectionResiduals,
+      totalMaterialProjectionResiduals,
+      totalSemanticSupportResiduals,
     },
     skipped: input.skipped,
     plugins,

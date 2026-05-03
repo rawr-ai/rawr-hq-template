@@ -1,6 +1,8 @@
 import { type Static, Type } from "typebox";
 import {
   MaterialKindSchema,
+  ProjectionSupportStatusSchema,
+  SemanticCapabilityKindSchema,
   SourceContentSchema,
   SourcePluginSchema,
   SupportStatusSchema,
@@ -140,6 +142,18 @@ export const ProjectionResidualSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const SemanticSupportResidualSchema = Type.Object(
+  {
+    provider: SyncAgentSchema,
+    materialKind: MaterialKindSchema,
+    semanticKind: SemanticCapabilityKindSchema,
+    source: Type.String({ minLength: 1 }),
+    supportStatus: ProjectionSupportStatusSchema,
+    message: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+
 export const SyncAssessmentSchema = Type.Object(
   {
     status: Type.Union([
@@ -158,6 +172,8 @@ export const SyncAssessmentSchema = Type.Object(
         totalMetadataChanges: Type.Number(),
         totalDriftItems: Type.Number(),
         totalProjectionResiduals: Type.Number(),
+        totalMaterialProjectionResiduals: Type.Number(),
+        totalSemanticSupportResiduals: Type.Number(),
       },
       { additionalProperties: false },
     ),
@@ -172,6 +188,8 @@ export const SyncAssessmentSchema = Type.Object(
           metadataChanges: Type.Number(),
           driftItems: Type.Array(DriftItemSchema),
           projectionResiduals: Type.Array(ProjectionResidualSchema),
+          materialProjectionResiduals: Type.Array(ProjectionResidualSchema),
+          semanticSupportResiduals: Type.Array(SemanticSupportResidualSchema),
         },
         { additionalProperties: false },
       ),

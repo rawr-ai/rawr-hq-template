@@ -8,6 +8,7 @@ export type {
   EvidenceLevel,
   MaterialKind,
   OrchestrationSpec,
+  ProjectionSupportStatus,
   ProviderKey,
   SemanticCapabilityKind,
   SourceContent,
@@ -17,6 +18,7 @@ export type {
   SyncScope,
 } from "./service/shared/entities";
 export type {
+  ProjectionSupport,
   ProviderProjection,
   SyncItemResult,
   SyncRunResult,
