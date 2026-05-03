@@ -1,0 +1,2361 @@
+id: rawr-core-v1
+kind: ontology-layer
+layer: core
+entities:
+- id: core.root.packages
+  label: packages/
+  type: ArchitectureRoot
+  layer: core
+  status: locked
+  definition: Top-level root for support matter and platform machinery.
+  aliases:
+  - packages
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.1 Canonical repository roots
+  operational_consequence:
+  - file-placement
+  - legal-dependency-direction
+  - import-boundary
+  classifier_readiness:
+    status: locked
+    consequence:
+    - file-placement
+    - import-boundary
+    - generator-target
+  notes: ''
+- id: core.root.resources
+  label: resources/
+  type: ArchitectureRoot
+  layer: core
+  status: locked
+  definition: Top-level runtime-realization authoring root for provisionable capability contracts and provider selectors;
+    first-class but not a business-capability owner.
+  aliases:
+  - resources
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.1 Canonical repository roots
+  operational_consequence:
+  - file-placement
+  - resource-contract-address
+  - provider-coverage
+  classifier_readiness:
+    status: locked
+    consequence:
+    - resource-requirement
+    - provider-coverage
+    - runtime-compiler
+  notes: This is first-class runtime contract truth, not service truth.
+- id: core.root.services
+  label: services/
+  type: ArchitectureRoot
+  layer: core
+  status: locked
+  definition: Top-level root for semantic capability boundaries.
+  aliases:
+  - services
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.1 Canonical repository roots
+  operational_consequence:
+  - file-placement
+  - ownership
+  - schema-ownership
+  - write-authority
+  classifier_readiness:
+    status: locked
+    consequence:
+    - truth-owner
+    - generator-target
+    - verification-gate
+  notes: ''
+- id: core.root.plugins
+  label: plugins/
+  type: ArchitectureRoot
+  layer: core
+  status: locked
+  definition: Top-level root for runtime projection packages.
+  aliases:
+  - plugins
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.1 Canonical repository roots
+  operational_consequence:
+  - file-placement
+  - projection-classification
+  - surface-mounting
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - generator-target
+    - verification-gate
+  notes: ''
+- id: core.root.apps
+  label: apps/
+  type: ArchitectureRoot
+  layer: core
+  status: locked
+  definition: Top-level root for app identities, app composition, profiles, and entrypoints.
+  aliases:
+  - apps
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.1 Canonical repository roots
+  operational_consequence:
+  - app-membership
+  - runtime-profile-selection
+  - entrypoint-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - app-membership
+    - runtime-profile
+    - entrypoint-process-shape
+  notes: ''
+- id: core.kind.package
+  label: package
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Support matter or platform machinery.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns
+  operational_consequence:
+  - support-boundary
+  - legal-dependency-direction
+  - non-truth-owner
+  classifier_readiness:
+    status: locked
+    consequence:
+    - file-placement
+    - import-boundary
+    - generator-target
+  notes: ''
+- id: core.kind.resource
+  label: resource
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Provisionable capability contract consumed by runtime plans.
+  aliases:
+  - RuntimeResource when referring to authored resource descriptor
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 3.4 Resource and boundary nouns
+  operational_consequence:
+  - resource-contract
+  - provider-coverage
+  - runtime-compiler-validation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - resource-requirement
+    - schema-requirement
+    - provider-coverage
+  notes: Use core.runtime-resource for descriptor-level runtime noun.
+- id: core.kind.provider
+  label: provider
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Implementation of a resource contract.
+  aliases:
+  - RuntimeProvider
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 3.4 Resource and boundary nouns
+  operational_consequence:
+  - provider-implementation
+  - acquisition-plan
+  - provider-selection-validation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - provider-selection
+    - provider-coverage
+    - runtime-compiler
+  notes: ''
+- id: core.kind.service
+  label: service
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: A semantic capability boundary.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 3.7 Core definitions
+  operational_consequence:
+  - ownership
+  - schema-ownership
+  - write-authority
+  - import-boundary
+  - semantic-drift-detection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - truth-owner
+    - generator-target
+    - verification-gate
+  notes: ''
+- id: core.kind.service-family
+  label: service family
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Optional namespace grouping under services/; not a service or owner.
+  aliases:
+  - family namespace
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 4.8 Namespace is not ownership
+  operational_consequence:
+  - namespace-review
+  - ownership-drift-detection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - file-placement
+    - ownership-check
+  notes: Leaf service remains canonical owner.
+- id: core.kind.plugin
+  label: plugin
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Runtime projection package.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 3.7 Core definitions
+  operational_consequence:
+  - projection-ownership
+  - lane-classification
+  - app-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - generator-target
+    - verification-gate
+  notes: ''
+- id: core.kind.app
+  label: app
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Top-level product/runtime identity.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 9.1 App posture
+  operational_consequence:
+  - app-identity
+  - app-membership
+  - runtime-profile-selection
+  - entrypoint-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - app-membership
+    - runtime-profile
+    - entrypoint-process-shape
+  notes: ''
+- id: core.kind.app-composition
+  label: app composition
+  type: AppStructure
+  layer: core
+  status: locked
+  definition: App-owned selection file at apps/<app>/rawr.<app>.ts.
+  aliases:
+  - manifest
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 9.2 App composition posture
+  operational_consequence:
+  - app-membership
+  - selected-plugin-membership
+  - sdk-role-surface-index-derivation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - app-membership
+    - generator-target
+    - sdk-derivation
+  notes: Manifest is accepted as broad architecture alias, not a separate runtime artifact.
+- id: core.kind.manifest
+  label: manifest
+  type: AppStructure
+  layer: core
+  status: locked
+  definition: Broad architecture alias for the app composition file.
+  aliases:
+  - app composition file
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 1 Scope
+  operational_consequence:
+  - semantic-drift-detection
+  - alias-resolution
+  classifier_readiness:
+    status: locked
+    consequence:
+    - app-membership
+    - document-drift-repair
+  notes: Do not treat as a second runtime artifact above AppDefinition.
+- id: core.kind.role
+  label: role
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Semantic execution class inside an app.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns
+  operational_consequence:
+  - process-role-selection
+  - plugin-lane-classification
+  - harness-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - process-shape
+    - plugin-lane-selection
+    - verification-gate
+  notes: ''
+- id: core.kind.surface
+  label: surface
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: What a role exposes or runs.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 9.6 App selection, process shape, and surface remain distinct
+  operational_consequence:
+  - surface-mounting
+  - projection-classification
+  - harness-adapter-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - surface-mounting
+    - generator-target
+  notes: ''
+- id: core.kind.repository
+  label: repository
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Service-internal persistence mechanic under semantic ownership.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns
+  operational_consequence:
+  - service-internal-file-placement
+  - schema-ownership
+  - write-authority
+  classifier_readiness:
+    status: locked
+    consequence:
+    - file-placement
+    - import-boundary
+    - ownership-check
+  notes: Not a top-level architectural kind.
+- id: core.kind.entrypoint
+  label: entrypoint
+  type: AppStructure
+  layer: core
+  status: locked
+  definition: Executable file that calls startApp(...) for one process shape.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns; 9.5 Entrypoints
+  operational_consequence:
+  - process-shape-selection
+  - runtime-profile-selection
+  - app-start
+  classifier_readiness:
+    status: locked
+    consequence:
+    - entrypoint-process-shape
+    - runtime-compiler
+    - verification-gate
+  notes: ''
+- id: core.app.define-app
+  label: defineApp(...)
+  type: AppStructure
+  layer: core
+  status: locked
+  definition: App authoring operation that declares app identity and selected plugin membership.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 9.3 App authoring law
+  operational_consequence:
+  - app-membership
+  - sdk-derivation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-output
+    - app-membership
+  notes: ''
+- id: core.app.app-definition
+  label: AppDefinition
+  type: AppStructure
+  layer: core
+  status: locked
+  definition: Concrete runtime authoring authority produced by defineApp(...).
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 1 Scope
+  operational_consequence:
+  - app-membership-authority
+  - sdk-runtime-input
+  classifier_readiness:
+    status: locked
+    consequence:
+    - sdk-derivation
+    - runtime-compiler
+  notes: Manifest/app composition is not a second runtime artifact above AppDefinition.
+- id: core.app.runtime-profile
+  label: RuntimeProfile
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: App-owned provider, config-source, process-default, and harness-default selection.
+  aliases:
+  - runtime profile
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns; 9.4 Runtime profiles and process defaults
+  operational_consequence:
+  - provider-selection
+  - config-source-selection
+  - runtime-compiler-provider-coverage
+  classifier_readiness:
+    status: locked
+    consequence:
+    - provider-coverage
+    - runtime-profile
+    - runtime-compiler
+  notes: ''
+- id: core.app.provider-selection
+  label: ProviderSelection
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: App-owned normalized provider choice.
+  aliases:
+  - providerSelections
+  - providers field in RuntimeProfile
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns; 9.4 Runtime profiles and process defaults
+  operational_consequence:
+  - provider-coverage
+  - app-owned-selection
+  - provisioning-input
+  classifier_readiness:
+    status: locked
+    consequence:
+    - provider-coverage
+    - runtime-compiler
+  notes: Profile field named resources is forbidden as provider-selection field.
+- id: core.app.process-shape
+  label: process shape
+  type: AppStructure
+  layer: core
+  status: locked
+  definition: Selected role set started by one entrypoint/startApp invocation.
+  aliases:
+  - selected process role set
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 9.5 Entrypoints; 9.6 App selection, process shape, and surface remain distinct
+  operational_consequence:
+  - process-start
+  - runtime-compiler-input
+  - placement-separation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - entrypoint-process-shape
+    - runtime-compiler
+    - diagnostic
+  notes: ''
+- id: core.app.start-app
+  label: startApp(...)
+  type: AppStructure
+  layer: core
+  status: locked
+  definition: Canonical app start operation; each invocation starts exactly one process runtime assembly.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 9.5 Entrypoints
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.1 Topology and naming violations
+  operational_consequence:
+  - app-start
+  - entrypoint-validation
+  - forbidden-role-specific-start-verb-detection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-output
+    - verification-gate
+  notes: ''
+- id: core.boundary.service-boundary
+  label: service boundary
+  type: SemanticBoundary
+  layer: core
+  status: locked
+  definition: Transport-neutral, placement-neutral boundary that owns service truth.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.4 Service boundary first
+  operational_consequence:
+  - ownership
+  - dependency-direction
+  - projection-before-composition
+  classifier_readiness:
+    status: locked
+    consequence:
+    - truth-owner
+    - generator-target
+    - semantic-drift-detection
+  notes: ''
+- id: core.lane.deps
+  label: deps
+  type: ServiceBoundaryLane
+  layer: core
+  status: locked
+  definition: Construction-time dependencies declared by the service and satisfied by runtime binding.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.5 Service-boundary lanes
+  operational_consequence:
+  - construction-time-binding
+  - service-binding-plan
+  - resource-or-service-dependency
+  classifier_readiness:
+    status: locked
+    consequence:
+    - schema-requirement
+    - runtime-compiler
+    - verification-gate
+  notes: ''
+- id: core.lane.scope
+  label: scope
+  type: ServiceBoundaryLane
+  layer: core
+  status: locked
+  definition: Construction-time business or client-instance identity.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.5 Service-boundary lanes
+  operational_consequence:
+  - construction-time-binding
+  - runtime-carried-schema
+  - service-binding-cache-key
+  classifier_readiness:
+    status: locked
+    consequence:
+    - schema-requirement
+    - service-binding
+  notes: ''
+- id: core.lane.config
+  label: config
+  type: ServiceBoundaryLane
+  layer: core
+  status: locked
+  definition: Construction-time service behavior configuration.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.5 Service-boundary lanes
+  operational_consequence:
+  - construction-time-binding
+  - runtime-carried-schema
+  - service-binding-cache-key
+  classifier_readiness:
+    status: locked
+    consequence:
+    - schema-requirement
+    - runtime-profile
+    - service-binding
+  notes: ''
+- id: core.lane.invocation
+  label: invocation
+  type: ServiceBoundaryLane
+  layer: core
+  status: locked
+  definition: Required per-call input supplied by caller or harness.
+  aliases:
+  - invocation context
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.5 Service-boundary lanes
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.6 Service binding violations
+  operational_consequence:
+  - per-call-input
+  - excluded-from-service-binding-cache-key
+  - caller-harness-context
+  classifier_readiness:
+    status: locked
+    consequence:
+    - schema-requirement
+    - verification-gate
+  notes: Invocation never participates in construction-time binding or ServiceBindingCacheKey.
+- id: core.lane.provided
+  label: provided
+  type: ServiceBoundaryLane
+  layer: core
+  status: locked
+  definition: Execution-derived values produced by service middleware/module composition.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.5 Service-boundary lanes
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.6 Service binding violations
+  operational_consequence:
+  - middleware-output
+  - forbidden-runtime-seeding
+  - service-pipeline-validation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - verification-gate
+    - diagnostic
+  notes: Runtime and package boundaries must not seed provided.* unless a named service-middleware contract changes the rule.
+- id: core.dep.resource-dep
+  label: resourceDep(...)
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: Service dependency declaration on a provisionable host capability.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 10.4 Dependency helper rules
+  operational_consequence:
+  - resource-requirement
+  - service-binding-plan
+  - provider-coverage
+  classifier_readiness:
+    status: locked
+    consequence:
+    - resource-requirement
+    - runtime-compiler
+  notes: Does not construct providers.
+- id: core.dep.service-dep
+  label: serviceDep(...)
+  type: SemanticBoundary
+  layer: core
+  status: locked
+  definition: Service-to-service client dependency declaration.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 10.4 Dependency helper rules
+  operational_consequence:
+  - service-dependency
+  - binding-plan
+  - sibling-internal-import-prevention
+  classifier_readiness:
+    status: locked
+    consequence:
+    - import-boundary
+    - service-binding
+  notes: Not selected through RuntimeProfile and not a runtime resource.
+- id: core.dep.semantic-dep
+  label: semanticDep(...)
+  type: SemanticBoundary
+  layer: core
+  status: tbd
+  definition: Explicit semantic adapter dependency; not a runtime resource, provider selection, or sibling repository import.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 10.4 Dependency helper rules; Reserved boundaries table
+  operational_consequence:
+  - semantic-adapter-boundary
+  - unresolved-diagnostic
+  classifier_readiness:
+    status: tbd
+    consequence:
+    - reserved-boundary
+    - diagnostic
+  notes: Locked as a named helper category, but deeper adapter semantics remain reserved.
+- id: core.plugin.plugin-factory
+  label: PluginFactory
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Plugin authoring factory that produces lane-specific plugin definition.
+  aliases:
+  - plugin factory
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 6 Layered naming and artifact ownership
+  operational_consequence:
+  - plugin-authoring
+  - app-selection
+  - sdk-derivation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-output
+    - plugin-lane-selection
+  notes: ''
+- id: core.plugin.plugin-definition
+  label: PluginDefinition
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Cold plugin projection definition selected by an app and derived by the SDK.
+  aliases:
+  - plugin definition
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 6 Layered naming and artifact ownership
+  operational_consequence:
+  - app-selection
+  - surface-runtime-plan
+  - projection-classification
+  classifier_readiness:
+    status: locked
+    consequence:
+    - sdk-derivation
+    - runtime-compiler
+  notes: ''
+- id: core.plugin.use-service
+  label: useService(...)
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Plugin declaration of service use.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.3 Service boundary violations
+  operational_consequence:
+  - service-use-declaration
+  - service-binding-plan
+  - import-boundary
+  classifier_readiness:
+    status: locked
+    consequence:
+    - service-binding
+    - verification-gate
+  notes: ''
+- id: core.projection.role-surface-capability-lane
+  label: role/surface/capability lane
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: The lane identity into which a plugin projects service truth or host capability.
+  aliases:
+  - projection lane
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 8.12 Plugin authoring invariants
+  operational_consequence:
+  - projection-classification
+  - topology-builder-agreement
+  - harness-mounting
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - generator-target
+    - verification-gate
+  notes: ''
+- id: core.role.server
+  label: server
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Role for public and trusted callable request/response ingress by default.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.10 Ingress and execution law
+  operational_consequence:
+  - ingress-selection
+  - plugin-lane-classification
+  - harness-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - auth-posture-tbd
+  notes: ''
+- id: core.role.async
+  label: async
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Role for durable background work and governed execution.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.10 Ingress and execution law
+  operational_consequence:
+  - durable-work-placement
+  - workflow-schedule-consumer-mounting
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - runtime-compiler
+  notes: ''
+- id: core.role.web
+  label: web
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Role for browser-facing web projection.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 2.1 Universal shape; 5 Canonical repo topology
+  operational_consequence:
+  - web-projection
+  - harness-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - generator-target
+  notes: ''
+- id: core.role.cli
+  label: cli
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Role for terminal-facing command projection.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 2.1 Universal shape; 5 Canonical repo topology
+  operational_consequence:
+  - command-projection
+  - harness-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - generator-target
+  notes: ''
+- id: core.role.agent
+  label: agent
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Role for human-facing shell/channel/tool projection; durable steward execution remains on async.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.6 Agent subsystem nouns; 4.10 Ingress and execution law
+  operational_consequence:
+  - agent-surface-selection
+  - shell-steward-separation
+  - governed-work-handoff
+  classifier_readiness:
+    status: tbd
+    consequence:
+    - auth-posture
+    - governance-handoff
+    - reserved-boundary
+  notes: Agent/OpenShell governance is reserved beyond locked integration hooks.
+- id: core.role.desktop
+  label: desktop
+  type: ArchitectureKind
+  layer: core
+  status: locked
+  definition: Role for desktop projection lanes; desktop-local loops remain process-local and durable business workflows stay
+    on async.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 8.11 Desktop projection
+  operational_consequence:
+  - desktop-surface-selection
+  - process-local-loop-boundary
+  - harness-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - runtime-compiler
+  notes: ''
+- id: core.surface.server-api
+  label: server API surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Public server API projection lane.
+  aliases:
+  - plugins/server/api/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 4 Canonical topology and package authority
+  operational_consequence:
+  - plugin-file-placement
+  - topology-builder-agreement
+  - public-callable-surface
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-target
+    - plugin-lane-selection
+    - verification-gate
+  notes: ''
+- id: core.surface.server-internal
+  label: server internal surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Trusted first-party/internal server API projection lane.
+  aliases:
+  - plugins/server/internal/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 4 Canonical topology and package authority
+  operational_consequence:
+  - plugin-file-placement
+  - topology-builder-agreement
+  - trusted-callable-surface
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-target
+    - plugin-lane-selection
+    - verification-gate
+  notes: A capability needing both public and trusted internal callable surfaces authors two projection packages.
+- id: core.surface.async-workflow
+  label: async workflow surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Durable workflow projection lane.
+  aliases:
+  - plugins/async/workflows/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 4 Canonical topology and package authority
+  operational_consequence:
+  - durable-execution
+  - async-harness-mounting
+  - function-bundle-lowering
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-target
+    - runtime-compiler
+    - verification-gate
+  notes: ''
+- id: core.surface.async-schedule
+  label: async schedule surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Durable scheduled projection lane.
+  aliases:
+  - plugins/async/schedules/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 4 Canonical topology and package authority
+  operational_consequence:
+  - scheduled-durable-work
+  - async-harness-mounting
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-target
+    - runtime-compiler
+    - verification-gate
+  notes: ''
+- id: core.surface.async-consumer
+  label: async consumer surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Durable consumer projection lane.
+  aliases:
+  - plugins/async/consumers/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 4 Canonical topology and package authority
+  operational_consequence:
+  - event-consumption
+  - async-harness-mounting
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-target
+    - runtime-compiler
+    - verification-gate
+  notes: ''
+- id: core.surface.cli-command
+  label: CLI command surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Terminal-facing command projection lane.
+  aliases:
+  - plugins/cli/commands/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 4 Canonical topology and package authority
+  operational_consequence:
+  - command-harness-mounting
+  - plugin-file-placement
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-target
+    - plugin-lane-selection
+  notes: ''
+- id: core.surface.web-app
+  label: web app surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Browser/web app projection lane.
+  aliases:
+  - plugins/web/app/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 4 Canonical topology and package authority
+  operational_consequence:
+  - web-harness-mounting
+  - plugin-file-placement
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-target
+    - plugin-lane-selection
+  notes: ''
+- id: core.surface.agent-channel
+  label: agent channel surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Human-facing ingress/egress channel projection lane.
+  aliases:
+  - plugins/agent/channels/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.6 Agent subsystem nouns
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 4 Canonical topology and package authority
+  operational_consequence:
+  - agent-channel-mounting
+  - shell-gateway-boundary
+  classifier_readiness:
+    status: tbd
+    consequence:
+    - auth-posture
+    - reserved-boundary
+  notes: ''
+- id: core.surface.agent-shell
+  label: agent shell surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Session-level shell runtime projection lane.
+  aliases:
+  - plugins/agent/shell/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.6 Agent subsystem nouns
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 4 Canonical topology and package authority
+  operational_consequence:
+  - shell-runtime-mounting
+  - shell-steward-separation
+  classifier_readiness:
+    status: tbd
+    consequence:
+    - governance-handoff
+    - reserved-boundary
+  notes: ''
+- id: core.surface.agent-tool
+  label: agent tool surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Machine-facing or capability-facing tool projection lane used by the shell.
+  aliases:
+  - plugins/agent/tools/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.6 Agent subsystem nouns
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 4 Canonical topology and package authority
+  operational_consequence:
+  - tool-surface-mounting
+  - service-boundary-obedience
+  classifier_readiness:
+    status: tbd
+    consequence:
+    - auth-posture
+    - governance-handoff
+    - reserved-boundary
+  notes: ''
+- id: core.surface.desktop-menubar
+  label: desktop menubar surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Desktop menu bar/tray projection lane.
+  aliases:
+  - plugins/desktop/menubar/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 8.11 Desktop projection
+  operational_consequence:
+  - desktop-harness-mounting
+  - process-local-loop-boundary
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - generator-target
+  notes: ''
+- id: core.surface.desktop-window
+  label: desktop window surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Desktop window projection lane.
+  aliases:
+  - plugins/desktop/windows/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 8.11 Desktop projection
+  operational_consequence:
+  - desktop-harness-mounting
+  - window-surface-mount
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - generator-target
+  notes: ''
+- id: core.surface.desktop-background
+  label: desktop background surface
+  type: ProjectionLane
+  layer: core
+  status: locked
+  definition: Desktop background projection lane for process-local behavior, not durable orchestration.
+  aliases:
+  - plugins/desktop/background/<capability>
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 8.11 Desktop projection; 4.10 Ingress and execution law
+  operational_consequence:
+  - process-local-loop-boundary
+  - durable-work-rejection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - verification-gate
+  notes: Durable business workflows remain on async.
+- id: core.resource.runtime-resource
+  label: RuntimeResource
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: Provisionable capability contract.
+  aliases:
+  - resource descriptor
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns
+  operational_consequence:
+  - resource-contract
+  - allowed-lifetime
+  - runtime-compiler-provider-coverage
+  classifier_readiness:
+    status: locked
+    consequence:
+    - resource-requirement
+    - provider-coverage
+    - schema-requirement
+  notes: ''
+- id: core.resource.resource-requirement
+  label: ResourceRequirement
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: Declaration that a boundary needs a resource.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns
+  operational_consequence:
+  - runtime-compiler-coverage
+  - resource-binding
+  - provider-selection-validation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - resource-requirement
+    - runtime-compiler
+  notes: ''
+- id: core.resource.resource-lifetime
+  label: ResourceLifetime
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: Process or role lifetime for a runtime resource.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns
+  operational_consequence:
+  - process-vs-role-lifetime
+  - provisioning-scope
+  - finalization
+  classifier_readiness:
+    status: locked
+    consequence:
+    - runtime-compiler
+    - diagnostic
+  notes: ''
+- id: core.resource.runtime-provider
+  label: RuntimeProvider
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: Cold implementation plan for a resource contract.
+  aliases:
+  - provider
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns
+  operational_consequence:
+  - provider-implementation
+  - cold-acquisition-plan
+  - provisioning
+  classifier_readiness:
+    status: locked
+    consequence:
+    - provider-selection
+    - runtime-compiler
+    - provider-coverage
+  notes: ''
+- id: core.resource.process-resource
+  label: process resource
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: Resource acquired once per started process.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns
+  operational_consequence:
+  - process-lifetime
+  - provisioning
+  - finalization
+  classifier_readiness:
+    status: locked
+    consequence:
+    - runtime-compiler
+    - diagnostic
+  notes: ''
+- id: core.resource.role-resource
+  label: role resource
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: Resource acquired once per mounted role in a process.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns
+  operational_consequence:
+  - role-lifetime
+  - provisioning
+  - finalization
+  classifier_readiness:
+    status: locked
+    consequence:
+    - runtime-compiler
+    - diagnostic
+  notes: ''
+- id: core.context.invocation-context
+  label: invocation context
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: Per-request, per-call, or per-execution values.
+  aliases:
+  - invocation
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns
+  operational_consequence:
+  - per-call-schema
+  - service-binding-cache-exclusion
+  classifier_readiness:
+    status: locked
+    consequence:
+    - schema-requirement
+    - verification-gate
+  notes: ''
+- id: core.context.call-local-value
+  label: call-local value
+  type: ResourceProviderProfileConcept
+  layer: core
+  status: locked
+  definition: Temporary value created inside one handler or execution chain.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns
+  operational_consequence:
+  - non-resource
+  - non-construction-binding
+  classifier_readiness:
+    status: locked
+    consequence:
+    - diagnostic
+    - verification-gate
+  notes: ''
+- id: law.ownership.services-own-truth
+  label: Services own truth
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Services own semantic capability truth.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.1 Ownership law
+  operational_consequence:
+  - ownership
+  - semantic-drift-detection
+  - classifier-narrowing
+  classifier_readiness:
+    status: locked
+    consequence:
+    - truth-owner
+    - generator-target
+    - verification-gate
+  notes: ''
+- id: law.ownership.plugins-project
+  label: Plugins project
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Plugins project service truth or host capability into runtime surfaces.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.1 Ownership law; 8.12 Plugin authoring invariants
+  operational_consequence:
+  - projection-classification
+  - non-truth-owner
+  - app-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - verification-gate
+  notes: ''
+- id: law.ownership.apps-select
+  label: Apps select
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Apps select plugins, profiles, provider selections, and entrypoints.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.1 Ownership law; 4.6 Projection and assembly law
+  operational_consequence:
+  - app-membership
+  - runtime-profile-selection
+  - entrypoint-selection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - app-membership
+    - runtime-profile
+    - generator-target
+  notes: ''
+- id: law.ownership.resources-declare
+  label: Resources declare capability contracts
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Resources declare provisionable capability contracts but do not implement or acquire themselves.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.1 Ownership law; 4.6 Projection and assembly law
+  operational_consequence:
+  - resource-contract
+  - provider-separation
+  - provider-coverage
+  classifier_readiness:
+    status: locked
+    consequence:
+    - resource-requirement
+    - runtime-compiler
+  notes: ''
+- id: law.ownership.providers-implement
+  label: Providers implement capability contracts
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Providers implement resource contracts but do not become service truth or select themselves.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.1 Ownership law; 4.6 Projection and assembly law
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.4 Resource/provider/profile violations
+  operational_consequence:
+  - provider-implementation
+  - provider-selection-validation
+  - semantic-truth-separation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - provider-coverage
+    - runtime-compiler
+  notes: ''
+- id: law.direction.semantic-direction
+  label: packages -> services -> plugins -> apps
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: 'Canonical semantic direction: support matter below service truth, service truth below projection, projection
+    below app selection.'
+  aliases:
+  - semantic direction
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.2 Semantic direction
+  operational_consequence:
+  - legal-dependency-direction
+  - import-boundary
+  - semantic-drift-detection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - import-boundary
+    - generator-target
+    - verification-gate
+  notes: resources/* participates in runtime realization without becoming semantic capability truth.
+- id: law.separation.stable-architecture-runtime-realization
+  label: stable architecture != runtime realization
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Stable architecture is app -> app composition -> role -> surface; runtime realization follows definition ->
+    selection -> derivation -> compilation -> provisioning -> mounting -> observation.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.3 Stable architecture versus runtime realization
+  operational_consequence:
+  - ontology-layer-separation
+  - runtime-overlay-boundary
+  - semantic-drift-detection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - runtime-compiler
+    - app-membership
+    - diagnostic
+  notes: ''
+- id: law.construction.service-boundary-first
+  label: service boundary first
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Service boundary first; projection second; composition third; runtime realization fourth; placement fifth; transport
+    and native host details downstream.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.4 Service boundary first
+  operational_consequence:
+  - construction-order
+  - classifier-narrowing
+  - false-ownership-rejection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - truth-owner
+    - generator-target
+    - verification-gate
+  notes: ''
+- id: law.construction.bind-project-compose-realize-observe
+  label: bind -> project -> compose -> realize -> observe
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Capability becomes running software by binding service truth, projecting into lanes, composing into app identity,
+    realizing process shape, and observing state.
+  aliases:
+  - platform chain
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.5 Bind, project, compose, realize, observe law
+  operational_consequence:
+  - construction-order
+  - runtime-handoff
+  - diagnostics
+  classifier_readiness:
+    status: locked
+    consequence:
+    - generator-output
+    - runtime-compiler
+    - diagnostic
+  notes: ''
+- id: law.shared-infrastructure-not-ownership
+  label: shared infrastructure is not shared semantic ownership
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Shared process, machine, database instance, pool, telemetry, cache, or host runtime does not imply shared semantic
+    truth, write authority, migration authority, repository ownership, or service identity.
+  aliases:
+  - shared infrastructure != shared semantic ownership
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.7 Shared infrastructure is not shared semantic ownership
+  operational_consequence:
+  - ownership-drift-detection
+  - repository-boundary
+  - migration-authority
+  classifier_readiness:
+    status: locked
+    consequence:
+    - ownership-check
+    - verification-gate
+  notes: ''
+- id: law.namespace-not-ownership
+  label: namespace is not ownership
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Namespace layers may improve navigation but do not create authority; services/<family>/... leaves leaf service
+    as owner.
+  aliases:
+  - namespace != owner
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.8 Namespace is not ownership
+  operational_consequence:
+  - service-family-validation
+  - ownership-drift-detection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - file-placement
+    - ownership-check
+  notes: ''
+- id: law.harness-substrate-downstream
+  label: harness and substrate choice are downstream
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: Harness and substrate choices are downstream of semantic meaning and are not peer semantic owners.
+  aliases:
+  - harness choice != semantic meaning
+  - substrate choice != semantic meaning
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.9 Harness and substrate choice are downstream
+  operational_consequence:
+  - native-framework-boundary
+  - semantic-drift-detection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - harness-selection
+    - diagnostic
+  notes: ''
+- id: law.ingress-execution-split
+  label: ingress and execution law
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: External product ingress enters through server; external conversational ingress enters through agent; durable
+    system work runs on async.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.10 Ingress and execution law
+  operational_consequence:
+  - role-selection
+  - projection-lane-selection
+  - durable-work-placement
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - runtime-compiler
+    - verification-gate
+  notes: ''
+- id: law.shell-steward-authority
+  label: shell versus steward authority law
+  type: ConstructionLaw
+  layer: core
+  status: locked
+  definition: The shell drives what; stewards drive how; governance decides whether.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.11 Shell versus steward authority law
+  operational_consequence:
+  - agent-async-handoff
+  - governed-repo-mutation-boundary
+  - authority-drift-detection
+  classifier_readiness:
+    status: tbd
+    consequence:
+    - governance-handoff
+    - reserved-boundary
+  notes: Locked principle; detailed governance rules remain reserved.
+- id: forbidden.pattern.root-core-authoring-root
+  label: root-level core/ authoring root
+  type: ForbiddenPattern
+  layer: core
+  status: forbidden
+  definition: A root-level core/ authoring root is invalid; platform machinery lives under packages/core/*.
+  aliases:
+  - core/ root
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.1 Topology and naming violations
+  operational_consequence:
+  - file-placement-rejection
+  - document-drift-repair
+  classifier_readiness:
+    status: locked
+    consequence:
+    - forbidden-move
+    - generator-target
+    - verification-gate
+  notes: ''
+- id: forbidden.pattern.root-runtime-authoring-root
+  label: root-level runtime/ authoring root
+  type: ForbiddenPattern
+  layer: core
+  status: forbidden
+  definition: A root-level runtime/ authoring root is invalid; runtime machinery lives under packages/core/runtime/* and authored
+    resource contracts live under resources/*.
+  aliases:
+  - runtime/ root
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.1 Topology and naming violations
+  operational_consequence:
+  - file-placement-rejection
+  - document-drift-repair
+  classifier_readiness:
+    status: locked
+    consequence:
+    - forbidden-move
+    - generator-target
+    - verification-gate
+  notes: ''
+- id: forbidden.pattern.superseded-sdk-package-name
+  label: superseded SDK package name
+  type: ForbiddenPattern
+  layer: core
+  status: forbidden
+  definition: Superseded SDK package names are invalid target names; @rawr/sdk is the public SDK.
+  aliases: []
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.1 Topology and naming violations
+  operational_consequence:
+  - import-boundary
+  - document-drift-repair
+  classifier_readiness:
+    status: locked
+    consequence:
+    - forbidden-move
+    - import-boundary
+  notes: ''
+- id: forbidden.pattern.role-specific-public-start-verb
+  label: role-specific public start verb
+  type: ForbiddenPattern
+  layer: core
+  status: forbidden
+  definition: Role-specific public start verbs are invalid; startApp(...) is the canonical start verb.
+  aliases:
+  - startServer(...)
+  - startAsync(...)
+  - startWeb(...)
+  - startAgent(...)
+  - startDesktop(...)
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.1 Topology and naming violations
+  operational_consequence:
+  - entrypoint-validation
+  - app-start-canonicalization
+  classifier_readiness:
+    status: locked
+    consequence:
+    - forbidden-move
+    - generator-output
+    - verification-gate
+  notes: ''
+- id: forbidden.pattern.plugin-projection-reclassification-field
+  label: plugin projection reclassification field
+  type: ForbiddenPattern
+  layer: core
+  status: forbidden
+  definition: Plugin fields named exposure, visibility, publication, public, internal, kind, or adapter.kind are invalid when
+    used to declare or reclassify projection status.
+  aliases:
+  - exposure field
+  - visibility field
+  - publication field
+  - adapter.kind projection field
+  - public/internal projection fields
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.2 Projection classification violations
+  operational_consequence:
+  - projection-classification-rejection
+  - topology-builder-agreement
+  - semantic-drift-detection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - forbidden-move
+    - verification-gate
+  notes: 'A kind field remains valid only for non-projection discriminants such as kind: plugin.definition.'
+- id: forbidden.pattern.plugin-app-import-service-internals
+  label: plugin/app import of service internals
+  type: ForbiddenPattern
+  layer: core
+  status: forbidden
+  definition: Plugins and apps must not import service repositories, migrations, module routers, module schemas, service-private
+    middleware, or service-private providers.
+  aliases:
+  - service-private import
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.3 Service boundary violations
+  operational_consequence:
+  - import-boundary
+  - service-truth-protection
+  - schema-ownership
+  classifier_readiness:
+    status: locked
+    consequence:
+    - forbidden-move
+    - import-boundary
+    - verification-gate
+  notes: ''
+- id: forbidden.pattern.shared-table-write-authority-by-accident
+  label: shared table write authority by accident
+  type: ForbiddenPattern
+  layer: core
+  status: forbidden
+  definition: Multiple services may share a database instance or pool, but they do not share table write authority or migration
+    authority by accident.
+  aliases:
+  - shared repository across unrelated services
+  - shared migration authority
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.3 Service boundary violations
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.7 Shared infrastructure is not shared semantic ownership
+  operational_consequence:
+  - write-authority
+  - migration-authority
+  - repository-ownership
+  classifier_readiness:
+    status: locked
+    consequence:
+    - forbidden-move
+    - ownership-check
+    - verification-gate
+  notes: ''
+- id: forbidden.pattern.profile-field-resources-for-provider-selection
+  label: profile field resources for provider selection
+  type: ForbiddenPattern
+  layer: core
+  status: forbidden
+  definition: A runtime profile field named resources is not the provider-selection field.
+  aliases:
+  - resources profile field
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.4 Resource/provider/profile violations
+  operational_consequence:
+  - provider-selection-validation
+  - runtime-profile-schema
+  - runtime-compiler
+  classifier_readiness:
+    status: locked
+    consequence:
+    - forbidden-move
+    - schema-requirement
+    - verification-gate
+  notes: Use providers or providerSelections.
+- id: forbidden.pattern.async-plugin-public-product-api
+  label: async plugin exposing public product API directly
+  type: ForbiddenPattern
+  layer: core
+  status: forbidden
+  definition: Workflow, schedule, and consumer plugins do not expose public product APIs directly.
+  aliases:
+  - workflow as public API
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.7 Async violations
+  operational_consequence:
+  - ingress-role-selection
+  - async-surface-boundary
+  classifier_readiness:
+    status: locked
+    consequence:
+    - forbidden-move
+    - plugin-lane-selection
+    - verification-gate
+  notes: ''
+- id: gate.projection-classification
+  label: projection classification gate
+  type: ValidationGate
+  layer: core
+  status: locked
+  definition: Plugin projection identity must agree between topology and lane-specific builder; app selection and publication
+    policy cannot reclassify it.
+  aliases:
+  - topology-builder agreement gate
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.2 Projection classification violations
+  operational_consequence:
+  - plugin-file-placement
+  - lane-builder-selection
+  - forbidden-field-rejection
+  classifier_readiness:
+    status: locked
+    consequence:
+    - plugin-lane-selection
+    - verification-gate
+  notes: ''
+relations:
+- id: rel.packages-support-kinds
+  subject: core.kind.package
+  predicate: supports
+  object: core.kind.service
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.6 Projection and assembly law
+  operational_consequence:
+  - legal-dependency-direction
+  - non-truth-owner
+  - import-boundary
+- id: rel.packages-support-resources
+  subject: core.kind.package
+  predicate: supports
+  object: core.kind.resource
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.6 Projection and assembly law
+  operational_consequence:
+  - support-boundary
+  - non-resource-owner
+- id: rel.services-own-truth
+  subject: core.kind.service
+  predicate: owns_truth
+  object: core.boundary.service-boundary
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.1 Ownership law
+  operational_consequence:
+  - ownership
+  - semantic-drift-detection
+  - classifier-narrowing
+- id: rel.services-own-schema
+  subject: core.kind.service
+  predicate: owns_schema
+  object: core.kind.repository
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 10.1 Service ownership
+  operational_consequence:
+  - schema-ownership
+  - migration-authority
+  - write-authority
+- id: rel.repository-under-service
+  subject: core.kind.repository
+  predicate: depends_on
+  object: core.kind.service
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.2 Stable semantic nouns
+  operational_consequence:
+  - service-internal-file-placement
+  - import-boundary
+  - ownership-drift-detection
+- id: rel.service-family-not-owner
+  subject: core.kind.service-family
+  predicate: does_not_own
+  object: core.boundary.service-boundary
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.8 Namespace is not ownership
+  operational_consequence:
+  - ownership-drift-detection
+  - file-placement-review
+- id: rel.plugins-project-service-truth
+  subject: core.kind.plugin
+  predicate: projects
+  object: core.kind.service
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.1 Ownership law; 8.12 Plugin authoring invariants
+  operational_consequence:
+  - projection
+  - non-truth-owner
+  - app-selection
+- id: rel.plugins-own-projection
+  subject: core.kind.plugin
+  predicate: owns_projection
+  object: core.projection.role-surface-capability-lane
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 3 Ownership laws
+  operational_consequence:
+  - lane-classification
+  - topology-builder-agreement
+  - classifier-narrowing
+- id: rel.plugins-use-service
+  subject: core.kind.plugin
+  predicate: declares
+  object: core.plugin.use-service
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.3 Service boundary violations
+  operational_consequence:
+  - service-use-declaration
+  - service-binding-plan
+  - import-boundary
+- id: rel.apps-select-plugins
+  subject: core.kind.app
+  predicate: selects
+  object: core.kind.plugin
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 9.2 App composition posture; 9.3 App authoring law
+  operational_consequence:
+  - app-membership
+  - sdk-derivation
+  - semantic-drift-detection
+- id: rel.apps-own-selection
+  subject: core.kind.app
+  predicate: owns_selection
+  object: core.kind.app-composition
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 9.2 App composition posture
+  operational_consequence:
+  - app-composition-authority
+  - app-membership
+  - sdk-derivation
+- id: rel.define-app-produces-app-definition
+  subject: core.app.define-app
+  predicate: produces
+  object: core.app.app-definition
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 1 Scope; 9.3 App authoring law
+  operational_consequence:
+  - app-authoring
+  - sdk-derivation-input
+- id: rel.runtime-profile-selects-provider-selection
+  subject: core.app.runtime-profile
+  predicate: selects
+  object: core.app.provider-selection
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 9.4 Runtime profiles and process defaults
+  operational_consequence:
+  - provider-selection
+  - provider-coverage
+  - runtime-compiler
+- id: rel.entrypoint-selects-process-shape
+  subject: core.kind.entrypoint
+  predicate: selects
+  object: core.app.process-shape
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 9.5 Entrypoints
+  operational_consequence:
+  - process-shape
+  - runtime-compiler-input
+  - placement-separation
+- id: rel.entrypoint-not-app-membership-owner
+  subject: core.kind.entrypoint
+  predicate: does_not_own
+  object: core.kind.app-composition
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 9.5 Entrypoints; 9.6 App selection, process shape, and surface remain distinct
+  operational_consequence:
+  - app-membership-protection
+  - semantic-drift-detection
+- id: rel.resource-declares-contract
+  subject: core.kind.resource
+  predicate: declares
+  object: core.resource.runtime-resource
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 3.4 Resource and boundary nouns; 4.6 Projection and assembly law
+  operational_consequence:
+  - resource-contract
+  - provider-coverage
+  - runtime-compiler
+- id: rel.provider-implements-resource
+  subject: core.kind.provider
+  predicate: implements
+  object: core.kind.resource
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.1 Ownership law; 4.6 Projection and assembly law
+  operational_consequence:
+  - provider-implementation
+  - provider-selection-validation
+- id: rel.provider-does-not-select-itself
+  subject: core.kind.provider
+  predicate: does_not_own
+  object: core.app.provider-selection
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.4 Resource/provider/profile violations
+  operational_consequence:
+  - provider-selection-validation
+  - forbidden-path-rejection
+- id: rel.resource-does-not-acquire-itself
+  subject: core.kind.resource
+  predicate: does_not_own
+  object: runtime.phase.provisioning
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.4 Resource/provider/profile violations
+  operational_consequence:
+  - provisioning-boundary
+  - runtime-compiler
+- id: rel.services-declare-resource-requirements
+  subject: core.kind.service
+  predicate: declares
+  object: core.resource.resource-requirement
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.4 Resource/provider/profile violations
+  operational_consequence:
+  - resource-requirement
+  - provider-coverage
+  - runtime-compiler
+- id: rel.plugins-declare-resource-requirements
+  subject: core.kind.plugin
+  predicate: declares
+  object: core.resource.resource-requirement
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.4 Resource/provider/profile violations
+  operational_consequence:
+  - resource-requirement
+  - provider-coverage
+  - runtime-compiler
+- id: rel.service-produces-provided
+  subject: core.kind.service
+  predicate: produces
+  object: core.lane.provided
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.6 Service binding violations
+  operational_consequence:
+  - service-pipeline-validation
+  - runtime-seeding-rejection
+- id: rel.server-api-projection-topology
+  subject: core.surface.server-api
+  predicate: requires
+  object: gate.projection-classification
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.2 Projection classification violations
+  operational_consequence:
+  - plugin-file-placement
+  - builder-agreement
+  - forbidden-field-rejection
+- id: rel.server-internal-projection-topology
+  subject: core.surface.server-internal
+  predicate: requires
+  object: gate.projection-classification
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.2 Projection classification violations
+  operational_consequence:
+  - plugin-file-placement
+  - builder-agreement
+  - trusted-surface-classification
+- id: rel.async-workflow-projects-service-truth
+  subject: core.surface.async-workflow
+  predicate: projects
+  object: core.kind.service
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 2.1 Universal shape; 4.10 Ingress and execution law
+  operational_consequence:
+  - durable-execution
+  - async-harness-mounting
+- id: rel.async-schedule-projects-service-or-host-capability
+  subject: core.surface.async-schedule
+  predicate: projects
+  object: core.kind.service
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 2.1 Universal shape; 4.10 Ingress and execution law
+  operational_consequence:
+  - scheduled-durable-work
+  - async-harness-mounting
+- id: rel.async-consumer-projects-service-or-host-capability
+  subject: core.surface.async-consumer
+  predicate: projects
+  object: core.kind.service
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 2.1 Universal shape
+  operational_consequence:
+  - event-consumption
+  - async-harness-mounting
+- id: rel.desktop-background-not-async
+  subject: core.surface.desktop-background
+  predicate: separate_from
+  object: core.role.async
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 8.11 Desktop projection; 4.10 Ingress and execution law
+  operational_consequence:
+  - process-local-loop-boundary
+  - durable-work-rejection
+- id: rel.agent-durable-work-on-async
+  subject: core.role.agent
+  predicate: depends_on
+  object: core.role.async
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.10 Ingress and execution law; 4.11 Shell versus steward authority law
+  operational_consequence:
+  - durable-steward-execution-boundary
+  - governed-work-handoff
+- id: rel.root-core-forbidden
+  subject: law.direction.semantic-direction
+  predicate: forbids
+  object: forbidden.pattern.root-core-authoring-root
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.1 Topology and naming violations
+  operational_consequence:
+  - file-placement-rejection
+  - generator-target-rejection
+- id: rel.root-runtime-forbidden
+  subject: law.direction.semantic-direction
+  predicate: forbids
+  object: forbidden.pattern.root-runtime-authoring-root
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.1 Topology and naming violations
+  operational_consequence:
+  - file-placement-rejection
+  - generator-target-rejection
+- id: rel.start-app-replaces-role-start-verbs
+  subject: core.app.start-app
+  predicate: replaces
+  object: forbidden.pattern.role-specific-public-start-verb
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.1 Topology and naming violations
+  operational_consequence:
+  - entrypoint-authoring
+  - forbidden-term-repair
+- id: rel.projection-fields-forbidden
+  subject: gate.projection-classification
+  predicate: forbids
+  object: forbidden.pattern.plugin-projection-reclassification-field
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.2 Projection classification violations
+  operational_consequence:
+  - projection-classification
+  - topology-builder-agreement
+  - diagnostic
+- id: rel.plugins-apps-forbidden-service-internals
+  subject: gate.public-sdk-import-surface
+  predicate: forbids
+  object: forbidden.pattern.plugin-app-import-service-internals
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.3 Service boundary violations
+  operational_consequence:
+  - import-boundary
+  - service-truth-protection
+- id: rel.shared-table-write-authority-forbidden
+  subject: law.shared-infrastructure-not-ownership
+  predicate: forbids
+  object: forbidden.pattern.shared-table-write-authority-by-accident
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.3 Service boundary violations
+  operational_consequence:
+  - write-authority
+  - migration-authority
+  - ownership-drift-detection
+- id: rel.profile-resources-field-forbidden
+  subject: core.app.runtime-profile
+  predicate: forbids
+  object: forbidden.pattern.profile-field-resources-for-provider-selection
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+    section: 26.4 Resource/provider/profile violations
+  operational_consequence:
+  - runtime-profile-schema
+  - provider-selection-validation
+- id: rel.server-role-own-product-ingress
+  subject: core.role.server
+  predicate: owns_projection
+  object: core.surface.server-api
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.10 Ingress and execution law
+  operational_consequence:
+  - ingress-role-selection
+  - plugin-lane-selection
+- id: rel.agent-role-own-conversational-ingress
+  subject: core.role.agent
+  predicate: owns_projection
+  object: core.surface.agent-channel
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.10 Ingress and execution law
+  operational_consequence:
+  - conversational-ingress
+  - shell-gateway-boundary
+- id: rel.async-role-own-durable-work
+  subject: core.role.async
+  predicate: owns_projection
+  object: core.surface.async-workflow
+  layer: core
+  status: locked
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+    section: 4.10 Ingress and execution law
+  operational_consequence:
+  - durable-system-work
+  - async-harness-mounting

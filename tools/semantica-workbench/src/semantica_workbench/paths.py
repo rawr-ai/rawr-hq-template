@@ -23,6 +23,15 @@ DEFAULT_MANIFEST = REPO_ROOT / "docs/projects/rawr-final-architecture-migration/
 FIXTURE_MANIFEST = WORKBENCH_ROOT / "fixtures/semantic-source-manifest.yaml"
 CONTENT_ONTOLOGY = WORKBENCH_ROOT / "ontologies/software-architecture-content-v1.json"
 AUTHORITY_ONTOLOGY = WORKBENCH_ROOT / "ontologies/authority-overlay-v1.json"
+RAWR_CORE_ONTOLOGY_ROOT = WORKBENCH_ROOT / "ontologies/rawr-core-architecture"
+RAWR_CORE_ONTOLOGY_CONTRACT = RAWR_CORE_ONTOLOGY_ROOT / "ontology-contract-v1.yaml"
+RAWR_CORE_ONTOLOGY_LAYERS = [
+    RAWR_CORE_ONTOLOGY_ROOT / "core-architecture-ontology-v1.yaml",
+    RAWR_CORE_ONTOLOGY_ROOT / "runtime-realization-overlay-v1.yaml",
+    RAWR_CORE_ONTOLOGY_ROOT / "authority-document-overlay-v1.yaml",
+    RAWR_CORE_ONTOLOGY_ROOT / "classifier-readiness-overlay-v1.yaml",
+]
+RAWR_CORE_CANDIDATE_QUEUE = RAWR_CORE_ONTOLOGY_ROOT / "candidate-queue-v1.yaml"
 PROMPTS_ROOT = WORKBENCH_ROOT / "prompts"
 AUTHORITY_CLAIM_PROMPT = PROMPTS_ROOT / "authority-claim-extraction.md"
 ENTITY_RESOLUTION_PROMPT = PROMPTS_ROOT / "entity-resolution.md"
