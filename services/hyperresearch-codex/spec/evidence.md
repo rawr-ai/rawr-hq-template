@@ -55,7 +55,7 @@ Source capture scope:
 Observed caveats and fixes:
 
 - The initial full-tier attempt, preserved under `spec/evidence/2026-05-03-codex-rawr-full-tier-inngest-proof/`, blocked on a bad source URL (`https://www.inngest.com/docs/platform/deployment`). The repaired run used fetchable official Inngest docs and passed.
-- Two child-agent completion issues were observed and repaired through replacement role packets. The ledger remained durable and resumed from packet state; classify this as Codex session/child-completion behavior, not a service fan-in defect.
+- Two child-agent completion issues were observed and repaired through replacement role packets. The ledger remained durable and resumed from packet state; classify this as Codex session/child-completion behavior, not a service fan-in defect. Clean child-session completion is unclaimed pending the diagnostic in `CHILD_AGENT_COMPLETION_CONTRACT.md`.
 - The service rejected an insufficient patch log and later accepted a repaired patch log with complete changed-line coverage.
 - The service rejected claim-trace `reportLocation` values with `:line` suffixes and accepted repaired safe relative paths.
 - A critic found that deterministic `prompt-decomposition.json` was still a placeholder. The service now writes a structured decomposition artifact with query atoms, named topics, evidence requirements, and proof boundaries; `v8-runner.test.ts` covers this.
@@ -64,6 +64,7 @@ Non-claims:
 
 - This does not prove Hooks/MCP runtime parity.
 - This does not prove production Inngest readiness for RAWR.
+- This does not prove clean child-session completion or parent wait/close ergonomics.
 - This does not resolve unrelated downstream global plugin drift outside scoped Hyperresearch material.
 
 ## 2026-05-03 Codex-RAWR Runtime Proof

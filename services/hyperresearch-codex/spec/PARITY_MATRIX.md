@@ -16,11 +16,14 @@ Statuses:
 | Agent Markdown frontmatter | Codex custom agent TOML where constraints matter | mapped | Keep source frontmatter to Codex-safe fields; avoid Claude-only `model`, `tools`, and `color` unless the adapter disposition is explicit |
 | Claude model/tool locks | Codex permissions where available plus runner gates | guarded-workaround | Snapshot draft, reject large/unlogged rewrites, require accepted patch logs with before/after hashes and changed-line hunk coverage, then lint |
 | `TodoWrite` pipeline tracking | Durable JSON run ledger | mapped | Ledger survives compaction and records current step, failures, and resumes |
-| Claude `PreToolUse` vault hook | Optional Codex hooks after feature flag proof | guarded-workaround | Hooks are reminders/blocks, not acceptance proof |
+| Claude `PreToolUse` vault hook | Codex `PreToolUse` guard after fixture proof | guarded-workaround | Useful source-capture bypass guard; service source capture remains authoritative |
+| Claude subagent lifecycle hooks | No Codex `SubagentStart`/`SubagentStop` equivalent proven | unsupported-explicit | Use child-session evidence contract plus packet/service validation instead |
+| Claude compaction/session-end hooks | No Codex `PreCompact`/`SessionEnd` equivalent proven | unsupported-explicit | Use durable ledger and resume packet; do not claim hook parity |
+| Final closure guard | Codex `Stop` guard after fixture proof | guarded-workaround | Can block final answer until `validate` is green; service validation remains authoritative |
 | Hyperresearch CLI backend | Direct `hyperresearch`/`hpr` CLI calls | native | Runner allowlists operations and records stdout/stderr/exit code |
 | `hyperresearch research` command | Not used for parity | unsupported-explicit | Command is a one-shot research tool, not the 16-step Claude harness |
-| Hyperresearch MCP read tools | Optional after `hyperresearch[mcp]` validation | guarded-workaround | Tool list and read behavior must be observed before marking native |
-| Hyperresearch MCP write tools | Optional, explicitly allowed only when needed | guarded-workaround | Write allowlist and audit trail required |
+| Hyperresearch MCP read/navigation tools | Optional after `hyperresearch[mcp]` validation | guarded-workaround | Server start, tool list, and read behavior must be observed before use |
+| Hyperresearch MCP write tools | Denied by default | guarded-workaround | `fetch_url`, `create_note`, and `update_note` require explicit allowlist, ledgered provenance, hash checks, and final validation |
 | Vault notes/sources | Hyperresearch backend remains authority | native | Source captures are ledgered with suggested-by provenance; material claims trace to captured sources or explicit uncertainty |
 | Lint/export gates | Hyperresearch CLI plus runner integrity validation | mapped | Blocking findings prevent success |
 | Patch-only final correction | Patcher role plus deterministic patch guard | guarded-workaround | Patch log and rewrite-size checks required |
@@ -30,8 +33,9 @@ Statuses:
 - Local `hyperresearch --version` reports `0.8.5`.
 - Installed package exposes 16 step markdown files under `hyperresearch/skills`.
 - Installed package exposes Claude install logic in `hyperresearch/core/hooks.py`.
-- Installed MCP server exposes read and write-capable functions in `hyperresearch/mcp/server.py`.
+- Installed MCP server exposes read and write-capable functions in `hyperresearch/mcp/server.py`, but the local pipx install lacks the MCP extra.
 - RAWR compatibility matrix says Codex skills are native, Codex custom agents require adapter projection, hooks require fixture proof, and official plugin packaging remains distinct from direct local mirrors.
+- `HOOKS_MCP_PARITY.md` and `CHILD_AGENT_COMPLETION_CONTRACT.md` hold the current non-claim boundaries for hooks, MCP, and child wait/completion behavior.
 
 Refresh before final acceptance.
 

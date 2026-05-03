@@ -86,6 +86,33 @@ Current observed component evidence:
 5. Verify a compaction/resume handoff can continue from ledger state. Current status: service-level packet/resume test passed, and actual `codex-rawr exec resume` continued the short runtime proof from the same ledger. The full-tier proof also survived interrupted/stuck child-agent handles by replacement packet outputs against the same ledger. Clean child-completion ergonomics remain separately unproven.
 6. Verify patch-only phase rejects wholesale rewrites. Current status: snapshot copies and retained-line validation block apparent wholesale rewrites before long live runs.
 
+## Child-Agent Lifecycle Diagnostic
+
+This is not another Hyperresearch proof. It is a focused `codex-rawr` runtime diagnostic for parent wait/close behavior:
+
+1. Spawn one child that writes one deterministic JSON file and returns a final answer.
+2. Spawn three children that each write one deterministic JSON file and return a final answer.
+3. Repeat the multi-child case across parent interruption/resume.
+4. Preserve parent JSONL, child JSONL, child ids, wait/close results, session resolution output, `pgrep -af codex-rawr`, and a manifest with output hashes.
+
+Passing evidence requires every child to reach a clean final state and every parent wait/close to return or be explicitly classified. `Interrupted` is not clean completion. See `CHILD_AGENT_COMPLETION_CONTRACT.md`.
+
+## Hooks And MCP Gates
+
+Hooks are optional guardrails until fixture-proven:
+
+1. Hook smoke: temp project with `codex_hooks=true`, a harmless `PreToolUse` command hook, and captured hook stdin/result events.
+2. Source guard: prove generic source fetch/search is blocked during an active Hyperresearch run unless routed through packet `sourceUrls` and service source capture, or is recorded as a policy failure.
+3. Stop guard: prove an incomplete or invalid ledger blocks final closure and a green `validate --backend real` allows closure.
+4. Plugin/config projection: required only before claiming downstream plugin material installs Hyperresearch hooks.
+
+MCP remains optional:
+
+1. Missing-extra fixture: `hyperresearch mcp` fails loudly when `hyperresearch[mcp]` is absent.
+2. Server-start/tool-list fixture after installing the extra in a controlled environment.
+3. Read-only call fixture for a useful navigation or source-inspection tool.
+4. Write-deny fixture for `fetch_url`, `create_note`, and `update_note` unless a later plan explicitly allowlists, ledgers, and validates those writes.
+
 Current observed Codex sync evidence:
 
 - `bun run rawr plugins sync hyperresearch --dry-run --agent codex --json`

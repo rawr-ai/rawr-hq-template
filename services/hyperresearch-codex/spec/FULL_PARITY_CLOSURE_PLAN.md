@@ -73,7 +73,7 @@ Remaining non-claims:
 
 - Hooks/MCP runtime parity is still reference-only.
 - Production Inngest readiness is not claimed by this proof.
-- Child-agent completion ergonomics remain a runtime caveat because interrupted/stuck child handles required replacement packet agents even though service ledger durability held.
+- Child-agent completion ergonomics remain a runtime caveat because interrupted/stuck child handles required replacement packet agents even though service ledger durability held. The next diagnostic is the focused `codex-rawr` child-wait contract in `CHILD_AGENT_COMPLETION_CONTRACT.md`, not another long research proof.
 
 ## Evidence Package
 
