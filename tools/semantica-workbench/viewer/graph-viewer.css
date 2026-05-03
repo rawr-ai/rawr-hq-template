@@ -1,0 +1,302 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f6f7f9;
+  color: #202124;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  border: 1px solid #cfd6df;
+  border-radius: 6px;
+  background: #fff;
+  color: #1d2939;
+  min-height: 32px;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #7d8da1;
+  background: #f9fbfd;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 320px minmax(480px, 1fr) 380px;
+  grid-template-rows: 56px minmax(0, 1fr) 34px;
+  height: 100vh;
+}
+
+.topbar {
+  grid-column: 1 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #d9dee6;
+  background: #fff;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.title strong {
+  font-size: 15px;
+}
+
+.title small,
+.muted {
+  color: #667085;
+  font-size: 12px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.panel {
+  min-height: 0;
+  overflow: auto;
+  border-right: 1px solid #d9dee6;
+  background: #fff;
+  padding: 14px;
+}
+
+.details {
+  border-right: 0;
+  border-left: 1px solid #d9dee6;
+}
+
+.graph-wrap {
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: #f3f5f8;
+}
+
+#cy {
+  position: absolute;
+  inset: 0;
+}
+
+.statusbar {
+  grid-column: 1 / 4;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-top: 1px solid #d9dee6;
+  background: #fff;
+  color: #475467;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.control-group {
+  margin-bottom: 15px;
+}
+
+.control-group h2 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #344054;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stack {
+  display: grid;
+  gap: 7px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row select,
+.row input[type="search"] {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid #cfd6df;
+  border-radius: 6px;
+  padding: 5px 8px;
+  background: #fff;
+}
+
+.checks {
+  display: grid;
+  gap: 5px;
+  max-height: 170px;
+  overflow: auto;
+  border: 1px solid #edf0f4;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.checks label {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  color: #344054;
+  font-size: 12px;
+}
+
+.count {
+  color: #667085;
+  font-variant-numeric: tabular-nums;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.search-results {
+  display: grid;
+  gap: 6px;
+  max-height: 210px;
+  overflow: auto;
+}
+
+.search-result {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border-color: #edf0f4;
+}
+
+.search-result strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 22px;
+  margin: 2px 3px 2px 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #eef2f6;
+  color: #344054;
+  font-size: 12px;
+}
+
+.pill.warn {
+  background: #fff4d6;
+  color: #8a5b00;
+}
+
+.pill.bad {
+  background: #ffe4e0;
+  color: #912018;
+}
+
+.pill.good {
+  background: #dcfae6;
+  color: #05603a;
+}
+
+.detail-block {
+  margin-bottom: 15px;
+}
+
+.detail-block h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.detail-block h3 {
+  margin: 10px 0 5px;
+  font-size: 12px;
+  color: #344054;
+}
+
+.detail-block p {
+  margin: 5px 0;
+  color: #475467;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 94px 1fr;
+  gap: 5px 8px;
+  font-size: 12px;
+}
+
+.kv dt {
+  color: #667085;
+}
+
+.kv dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+pre {
+  max-height: 260px;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 6px;
+  background: #101828;
+  color: #f8fafc;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.source-ref {
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 1px solid #edf0f4;
+  border-radius: 6px;
+  background: #fcfcfd;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.notice {
+  padding: 9px;
+  border: 1px solid #f2d18b;
+  border-radius: 6px;
+  background: #fffaeb;
+  color: #7a4d00;
+  font-size: 12px;
+  line-height: 1.4;
+}

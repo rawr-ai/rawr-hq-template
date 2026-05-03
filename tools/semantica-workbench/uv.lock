@@ -1541,12 +1541,14 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "pyyaml" },
+    { name = "rdflib" },
     { name = "semantica" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "rdflib", specifier = ">=7.6.0" },
     { name = "semantica", git = "https://github.com/Hawksight-AI/semantica.git?rev=ca5f08179374dcb8326046249d919717f2769a04" },
 ]
 
