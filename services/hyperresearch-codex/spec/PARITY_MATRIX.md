@@ -5,6 +5,7 @@ Statuses:
 - `native`: Codex has an observed equivalent runtime feature in the target environment.
 - `mapped`: adapter can translate the construct without changing the contract materially.
 - `guarded-workaround`: no exact equivalent; runner must enforce the invariant.
+- `parked`: intentionally outside the active parity claim.
 - `unsupported-explicit`: do not claim parity; fail or defer with evidence.
 
 | Claude / Hyperresearch construct | Codex decision | Status | Required guard or proof |
@@ -22,8 +23,8 @@ Statuses:
 | Final closure guard | Codex `Stop` guard after fixture proof | guarded-workaround | Can block final answer until `validate` is green; service validation remains authoritative |
 | Hyperresearch CLI backend | Direct `hyperresearch`/`hpr` CLI calls | native | Runner allowlists operations and records stdout/stderr/exit code |
 | `hyperresearch research` command | Not used for parity | unsupported-explicit | Command is a one-shot research tool, not the 16-step Claude harness |
-| Hyperresearch MCP read/navigation tools | Optional after `hyperresearch[mcp]` validation | guarded-workaround | Server start, tool list, and read behavior must be observed before use |
-| Hyperresearch MCP write tools | Denied by default | guarded-workaround | `fetch_url`, `create_note`, and `update_note` require explicit allowlist, ledgered provenance, hash checks, and final validation |
+| Hyperresearch MCP read/navigation tools | Parked; optional after a future MCP spec | parked | Not part of the active loop; future work must prove install, registration, tool schemas, and read behavior before use |
+| Hyperresearch MCP write tools | Parked and denied by default | parked | `fetch_url`, `create_note`, and `update_note` require explicit allowlist, ledgered provenance, hash checks, and final validation before any future promotion |
 | Vault notes/sources | Hyperresearch backend remains authority | native | Source captures are ledgered with suggested-by provenance; material claims trace to captured sources or explicit uncertainty |
 | Lint/export gates | Hyperresearch CLI plus runner integrity validation | mapped | Blocking findings prevent success |
 | Patch-only final correction | Patcher role plus deterministic patch guard | guarded-workaround | Patch log and rewrite-size checks required |
@@ -33,7 +34,7 @@ Statuses:
 - Local `hyperresearch --version` reports `0.8.5`.
 - Installed package exposes 16 step markdown files under `hyperresearch/skills`.
 - Installed package exposes Claude install logic in `hyperresearch/core/hooks.py`.
-- Installed MCP server exposes read and write-capable functions in `hyperresearch/mcp/server.py`, but the local pipx install lacks the MCP extra.
+- Installed MCP server exposes read and write-capable functions in `hyperresearch/mcp/server.py`, but the local pipx install lacks the MCP extra and MCP is intentionally parked for the active parity claim.
 - RAWR compatibility matrix says Codex skills are native, Codex custom agents require adapter projection, hooks require fixture proof, and official plugin packaging remains distinct from direct local mirrors.
 - `HOOKS_MCP_PARITY.md` and `CHILD_AGENT_COMPLETION_CONTRACT.md` hold the current non-claim boundaries for hooks, MCP, and child wait/completion behavior.
 

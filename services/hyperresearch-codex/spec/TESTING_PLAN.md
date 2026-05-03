@@ -9,7 +9,7 @@ Evidence exists at two levels:
 - Synthetic slice: three-step smoke for fresh step loading, ledger resume, CLI audit, and final artifact integrity.
 - V8 fixture slice: all 16 V8 step references, light/full tier routing, packet-mode agent fan-out/fan-in, required CLI-call failures, patch-snapshot state, validation, and downstream Codex sync surface.
 
-The long research-quality proof class is now represented by the repaired full-tier Inngest run. Remaining release evidence is scoped to downstream/install hygiene, Graphite submission state, child-agent completion ergonomics, and any separately promoted Hooks/MCP or production Inngest runtime claims.
+The long research-quality proof class is now represented by the repaired full-tier Inngest run. Remaining release evidence is scoped to downstream/install hygiene, Graphite submission state, child-agent completion ergonomics, and any separately promoted hook, MCP, or production Inngest runtime claims. MCP is parked unless explicitly promoted by a future spec.
 
 ## Correctness Oracles
 
@@ -93,9 +93,11 @@ This is not another Hyperresearch proof. It is a focused `codex-rawr` runtime di
 1. Spawn one child that writes one deterministic JSON file and returns a final answer.
 2. Spawn three children that each write one deterministic JSON file and return a final answer.
 3. Repeat the multi-child case across parent interruption/resume.
-4. Preserve parent JSONL, child JSONL, child ids, wait/close results, session resolution output, `pgrep -af codex-rawr`, and a manifest with output hashes.
+4. Run one Hyperresearch-shaped packet loop that uses the same Codex/RAWR spawn/wait/close/resume path as role-agent packets while keeping child work trivial.
+5. Run negative/classification cases for output-without-completion, completed-child-with-missed-wait, malformed/truncated output, and replacement-required behavior.
+6. Preserve parent JSONL, child/session JSONL or session-resolution output, child ids, spawn/wait/close item ids, exact initial/resume commands, stdout/stderr, timestamped `pgrep -af codex-rawr` and `ps` snapshots, deterministic output files, independent SHA-256s, and a manifest.
 
-Passing evidence requires every child to reach a clean final state and every parent wait/close to return or be explicitly classified. `Interrupted` is not clean completion. See `CHILD_AGENT_COMPLETION_CONTRACT.md`.
+Clean passing evidence requires every child in every positive scenario to reach `Completed`, every parent wait to return `wait_completed`, every parent close to return `close_ok` or evidence-backed `close_already_closed`, all output hashes to match, and manifest/session/process evidence to agree, including after resume. Classified non-clean outcomes are useful failure evidence, not clean pass evidence. `Interrupted`, replacement-required, artifact-only success, and manual termination do not close clean child completion. See `CHILD_AGENT_COMPLETION_CONTRACT.md`.
 
 ## Hooks And MCP Gates
 
@@ -106,12 +108,11 @@ Hooks are optional guardrails until fixture-proven:
 3. Stop guard: prove an incomplete or invalid ledger blocks final closure and a green `validate --backend real` allows closure.
 4. Plugin/config projection: required only before claiming downstream plugin material installs Hyperresearch hooks.
 
-MCP remains optional:
+MCP remains parked and optional:
 
-1. Missing-extra fixture: `hyperresearch mcp` fails loudly when `hyperresearch[mcp]` is absent.
-2. Server-start/tool-list fixture after installing the extra in a controlled environment.
-3. Read-only call fixture for a useful navigation or source-inspection tool.
-4. Write-deny fixture for `fetch_url`, `create_note`, and `update_note` unless a later plan explicitly allowlists, ledgers, and validates those writes.
+1. Do not install `hyperresearch[mcp]`, register MCP, or test MCP tools as part of the child-completion track.
+2. If MCP is ever promoted later, first specify controlled install/version pinning, Codex registration/removal, observed tool schemas, read/check/write classification, write-deny enforcement, failure/retry classification, and parity-equivalent ledger/provenance evidence for any allowlisted write.
+3. Until that future spec exists, MCP is not a blocker for the active Hyperresearch Codex parity claim because the direct CLI backend already owns the authoritative loop.
 
 Current observed Codex sync evidence:
 
@@ -129,4 +130,4 @@ Current observed Codex sync evidence:
 3. Final report has explicit uncertainty and no silent parity invention.
 4. Reviewer traces at least three material claims from report to vault note/source metadata.
 
-Long full V8 research-quality service parity is now backed by the repaired Inngest proof. Do not extend that claim to Hooks/MCP runtime parity, production Inngest readiness, or unrelated global plugin drift until separate gates are green.
+Long full V8 research-quality service parity is now backed by the repaired Inngest proof. If the child-agent lifecycle diagnostic in `CHILD_AGENT_COMPLETION_CONTRACT.md` passes, active Hyperresearch Codex parity is clean/green/done for the service plus Codex packet orchestration path. Hooks, MCP, production Inngest readiness, and unrelated global plugin drift remain separate tracks unless explicitly promoted.

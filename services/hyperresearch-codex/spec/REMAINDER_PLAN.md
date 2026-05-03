@@ -7,7 +7,7 @@ This is the service-package working plan for finishing Hyperresearch Codex parit
 - Template worktree: `codex/hyperresearch-codex-parity`, building forward from `220885d1 test(hyperresearch): prove codex rawr packet workflow`. The corrected packet-provenance implementation baseline remains `4f22bc9a feat(hyperresearch): enforce packet provenance gates`.
 - Downstream sync source: `rawr-hq` branch `docs/compatibility-substrate-spike`, building on `0f359d33 docs(hyperresearch): sync packet provenance contract`, ahead of origin by six commits before the current proof-sync commit.
 - Current template implementation proves V8 runner/control-plane behavior: fresh step loads, durable ledger, light/full fixture routes, packet-mode pause/resume with atomic fan-in, source URL validation, CLI capture after packet fan-in, report snapshots, patch-only integrity checks, a fresh Codex-RAWR packet-mode light proof using the real Hyperresearch backend, a short multi-source Codex-RAWR runtime proof with actual resume, role-agent fan-out, four official source captures, five traced claims, and final validation, and a repaired full-tier Inngest proof with all 16 V8 steps, 20 role-agent packet jobs, 16 official source captures, critic/patch/polish/readability gates, backend sync/lint/export, claim trace, and final validation.
-- It does not yet claim clean child-session completion, Hooks/MCP runtime parity, production Inngest readiness, or unrelated global downstream plugin drift.
+- It does not yet claim clean child-session completion, Hooks runtime parity, production Inngest readiness, or unrelated global downstream plugin drift. MCP is intentionally parked and is not part of the active parity claim.
 
 ## Non-Negotiable Frame
 
@@ -15,7 +15,7 @@ This is the service-package working plan for finishing Hyperresearch Codex parit
 - The service is the right implementation shape: Codex owns orchestration, durable state, step loading, agent packets, fan-in, resume, critique/patch gates, and validation; the Python Hyperresearch CLI remains the backend for vault/search/fetch/note/lint/sync/export.
 - Do not use `hyperresearch research` as a parity substitute. It does not prove the 16-step V8 harness.
 - Fixture mode proves the Hyperresearch Codex control-plane contract only; it does not prove live research quality or source-backed final-report correctness.
-- Hooks and MCP remain reference-only until feature flags, config projection, tool lists, read/write policy, and failure paths are verified in this environment. Current hook/MCP boundaries live in `HOOKS_MCP_PARITY.md`; child wait/completion evidence requirements live in `CHILD_AGENT_COMPLETION_CONTRACT.md`.
+- Hooks remain reference-only until feature flags, config projection, and failure paths are verified in this environment. MCP is parked until a future spec justifies it; it is not a blocker for the active parity claim because the direct Hyperresearch CLI backend owns the authoritative loop. Current hook/MCP boundaries live in `HOOKS_MCP_PARITY.md`; child wait/completion evidence requirements live in `CHILD_AGENT_COMPLETION_CONTRACT.md`.
 - Global downstream plugin drift is not a Hyperresearch blocker. Hyperresearch sync proof must use scoped flags to avoid unrelated install reconciliation.
 
 ## Service Package Ownership
@@ -131,7 +131,7 @@ Run proof gates in this order:
 - Actual Codex packet/subagent gate where Codex agents write packet outputs.
 - Short live provenance proof with 2-4 sources and at least three material final-report claims traced.
 
-The Codex-RAWR packet-provenance light proof, short multi-source runtime proof, and repaired full-tier Inngest V8 proof are now green; see `evidence.md`. Clean child-session completion, Hooks/MCP parity, production Inngest readiness, and unrelated global downstream plugin drift remain outside the active parity claim.
+The Codex-RAWR packet-provenance light proof, short multi-source runtime proof, and repaired full-tier Inngest V8 proof are now green; see `evidence.md`. The next concrete track is the focused child-agent lifecycle diagnostic in `CHILD_AGENT_COMPLETION_CONTRACT.md`. If it passes, active Hyperresearch Codex parity is clean/green/done for the service plus Codex packet orchestration path. Hooks, parked MCP work, production Inngest readiness, and unrelated global downstream plugin drift remain separate tracks unless explicitly promoted.
 
 ## Review Loop
 
@@ -152,4 +152,5 @@ The Codex-RAWR packet-provenance light proof, short multi-source runtime proof, 
 - 2026-05-03: Opened the full parity closure loop in `FULL_PARITY_CLOSURE_PLAN.md`. The next gate is a full-tier `codex-rawr exec` proof with real backend operations, full role-agent fan-out, zero-context resume evidence, critic/patch artifacts, claim trace, downstream sync, review, and Graphite release checks.
 - 2026-05-03: Completed the repaired full-tier Inngest proof. Run `hpr-v8-c673c42e-c6da-46e7-b8fa-48c286a9572b` completed all 16 V8 steps with 20 completed role-agent packet jobs, 16 official Inngest source captures, critic findings, accepted patch log, polish/readability artifacts, safe claim trace, backend `sync`/`lint`/`export`, and `validate --backend real` returning `passed:true`. Preserved the initial source-selection block and repaired passing evidence under `spec/evidence/`.
 - 2026-05-03: Fixed an evidence-found service gap where deterministic `prompt-decomposition.json` was still a placeholder. The runs helper now writes structured query atoms, named topics, evidence requirements, and proof boundaries, with focused V8 test coverage.
-- 2026-05-03: Captured remaining child-agent completion and Hooks/MCP boundaries in service-local prework docs. The next implementation tracks are a focused `codex-rawr` child-wait diagnostic and targeted Codex hook guard fixtures; MCP remains optional read/navigation ergonomics until separately promoted.
+- 2026-05-03: Captured remaining child-agent completion and Hooks/MCP boundaries in service-local prework docs. The next implementation track is the focused `codex-rawr` child-wait diagnostic. Hook guard fixtures are separate follow-up work unless explicitly selected, and MCP remains parked.
+- 2026-05-03: Ran two child-focused parallel review teams across lifecycle state, interruption/resume evidence, fixture reproducibility, acceptance boundaries, service topology implications, and next-session usability. Accepted findings hardened `CHILD_AGENT_COMPLETION_CONTRACT.md` with an executable diagnostic packet, schemas, state/result taxonomies, timeout/process evidence, replacement-attempt rules, a Hyperresearch-shaped packet-loop case, negative/classification cases, closure rules, and topology-safe hardening boundaries.
