@@ -17,8 +17,12 @@ Canonical gateway docs at `docs/` root:
 - `docs/system/`: architecture and technical contracts.
 - `docs/process/`: workflows, contribution, and operating playbooks.
 - `docs/projects/`: time-bound initiative docs.
-- `docs/plans/`: retained planning workstream docs. New execution docs should default to `docs/projects/`.
-- `docs/spikes/`: retained spike investigations and feasibility notes. Promote lasting decisions into `docs/system/` or `docs/process/`.
+- `docs/projects/<project>/resources/spec/`: project-scoped normative specs and guardrails.
+- `docs/projects/<project>/resources/research/`: supporting research and investigation notes.
+- `docs/projects/<project>/milestones/`: active milestone definitions.
+- `docs/projects/<project>/issues/`: project-scoped issue specs.
+- `docs/projects/<project>/.context/`: active execution packets, scratchpads, handoffs, and hot context for the project.
+- `docs/projects/spikes/`: retained spike investigations and feasibility notes. Promote lasting decisions into `docs/system/`, `docs/process/`, or the owning project `resources/spec/`.
 - `docs/_templates/`: document scaffolds.
 - `docs/_archive/`: archived historical docs not part of active template guidance.
 

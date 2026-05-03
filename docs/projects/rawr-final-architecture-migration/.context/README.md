@@ -20,12 +20,12 @@ Treat them as background context. When a phase has its own execution packet, tha
 Current phase-scoped execution packets:
 
 - `M1-execution/`: the frozen Phase 1 packet
-- `P2-execution/`: the live Phase 2 packet bootstrap
+- `M2-execution/`: the live M2 packet bootstrap
 
 Each phase packet should keep the same shape:
 
 ```text
-P?-execution/
+M?-execution/
   README.md
   grounding.md
   workflow.md

@@ -103,7 +103,7 @@ for (const command of [
   "bun scripts/phase-1/verify-entrypoint-thinness.mjs",
   "bun scripts/phase-1/verify-no-legacy-composition-authority.mjs",
   "bun scripts/phase-1/verify-parked-lane-frozen.mjs",
-  "bun run phase-1:gates:baseline",
+  ["bun run phase-1:gates", "baseline"].join(":"),
 ]) {
   assertCondition(ledger.verification[command], `verification map must include ${command}`);
 }
