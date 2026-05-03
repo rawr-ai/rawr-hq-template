@@ -123,12 +123,14 @@ Native Codex surface review:
 
 ## Hooks And MCP Gates
 
-Hooks are optional guardrails until fixture-proven:
+Hooks are optional guardrails until fixture-proven. The concrete plan is `HOOKS_GUARDRAIL_PLAN.md`.
 
-1. Hook smoke: temp project with `codex_hooks=true`, a harmless `PreToolUse` command hook, and captured hook stdin/result events.
-2. Source guard: prove generic source fetch/search is blocked during an active Hyperresearch run unless routed through packet `sourceUrls` and service source capture, or is recorded as a policy failure.
-3. Stop guard: prove an incomplete or invalid ledger blocks final closure and a green `validate --backend real` allows closure.
-4. Plugin/config projection: required only before claiming downstream plugin material installs Hyperresearch hooks.
+1. Hook smoke: temp project with `codex_hooks=true`, a harmless `PreToolUse` command hook, captured hook stdin JSON, `HookStarted`/`HookCompleted` events, command exit/status, matched tool name, and transcript-visible feedback.
+2. Source guard: prove generic source fetch/search is blocked during an active Hyperresearch run unless routed through packet `sourceUrls` and service source capture, or is recorded as a policy failure with a non-empty reason.
+3. Routed source allow: prove a packet `sourceUrls` path is allowed while the service ledger records source capture and final validation still checks the captured URL.
+4. Stop guard red/green: prove a missing, incomplete, or invalid ledger blocks final closure, and a green `validate --backend real|fixture` allows closure. Preserve before/after validate output.
+5. Negative hooks: malformed hook config, disabled hooks, unsupported event name, stale ledger path, missing block reason, and hook timeout.
+6. Plugin/config projection: required only before claiming downstream plugin material installs Hyperresearch hooks. Current agent-sync scans skills, workflows, scripts, and agents; hook install/update/removal projection is unclaimed.
 
 MCP remains parked and optional:
 

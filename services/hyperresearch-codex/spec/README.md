@@ -20,6 +20,7 @@ The local package owns the reusable control-plane substrate: durable ledgers, fr
 - `PARITY_MATRIX.md`: Claude constructs and Codex adapter decisions.
 - `CHILD_AGENT_COMPLETION_CONTRACT.md`: child-session lifecycle evidence contract and stuck-wait diagnostic boundary.
 - `HOOKS_MCP_PARITY.md`: observed Codex/RAWR hook surface, missing Claude hook events, and parked MCP boundary.
+- `HOOKS_GUARDRAIL_PLAN.md`: concrete plan for proving `PreToolUse` source-bypass and `Stop` validation guardrails without overclaiming hook parity.
 - `NATIVE_CODEX_SURFACE_REVIEW.md`: deep paired review of `codex-rawr exec`, app-server, Codex SDK, and OpenAI SDK alternatives for the child lifecycle issue, including the app-server cold-resume smoke result.
 - `FLOWS.md`: runtime, step loading, source capture, resume, failure, and final plugin proof flows.
 - `TESTING_PLAN.md`: component gates, dry-run gates, live gates, and final Codex plugin-system proof.

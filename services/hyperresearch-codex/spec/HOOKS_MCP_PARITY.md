@@ -1,6 +1,6 @@
 # Hooks And MCP Parity Boundary
 
-This document records the current Codex/RAWR hooks and Hyperresearch MCP boundary for the Hyperresearch Codex parity work.
+This document records the current Codex/RAWR hooks and Hyperresearch MCP boundary for the Hyperresearch Codex parity work. The concrete hook proof plan lives in `HOOKS_GUARDRAIL_PLAN.md`.
 
 The authoritative Hyperresearch parity loop remains the service ledger, packet validation, source capture, claim trace, patch log, backend CLI audit trail, and final `validate` result. Hooks and MCP may improve guardrails or ergonomics, but they are not acceptance proof unless a separate fixture proves their runtime behavior.
 
@@ -17,9 +17,13 @@ The local RAWR Codex fork exposes these hook events in source and has `features.
 
 Current project hooks are workstream guardrails, not Hyperresearch parity hooks. They prove config-level hooks are active locally; they do not prove Hyperresearch hook projection or plugin-packaged hook installation.
 
-## Claude Hook Behavior Not Ported
+## Claude And Runtime Behaviors Not Replaced By Hooks
 
-No current Codex/RAWR hook equivalent is proven for:
+The installed Claude Hyperresearch hook surface is narrow: a project-level `PreToolUse` reminder around generic source/search/fetch-style tools. It steers agents toward Hyperresearch source handling, but it is not source-integrity proof and it is not a lifecycle hook.
+
+The broader Claude advantages in the original harness come from skills, `Task` subagents, `TodoWrite`, tool locks/frontmatter, and Claude runtime behavior. Do not document those as installed Claude Hyperresearch hooks.
+
+No current Codex/RAWR hook equivalent is proven for these lifecycle concerns:
 
 - `SubagentStart`
 - `SubagentStop`
@@ -27,26 +31,39 @@ No current Codex/RAWR hook equivalent is proven for:
 - `SessionEnd`
 - `Notification`
 
-Claude Hyperresearch uses a `PreToolUse` vault/web-fetch reminder. The closest Codex equivalent is a `PreToolUse` command hook, but it must be treated as a guardrail only. It cannot replace service source-capture validation or final integrity gates.
+The closest Codex equivalent to the installed Claude hook is a `PreToolUse` command hook. It must be treated as a guardrail only. It cannot replace service source-capture validation or final integrity gates.
 
-## Core Guardrail Mapping
+## Core Hooks After Fixture
 
 | Need | Codex event | Current disposition |
 |---|---|---|
 | Discourage generic source fetch bypass during active Hyperresearch runs | `PreToolUse` | Useful core guardrail after fixture proof; it must hard-block the bypass or record it as a policy failure, and service source capture remains authoritative |
-| Deny unsafe or escalated bypass paths where permission flow exists | `PermissionRequest` | Optional guardrail; not a universal gate |
-| Record post-tool context for diagnostics | `PostToolUse` | Useful for evidence capture, not required for parity |
-| Inject run/resume context | `SessionStart`, `UserPromptSubmit` | Ergonomic only |
 | Block final closure until service validation is green | `Stop` | Useful core guardrail after fixture proof |
+
+## Ergonomic Stretch Hooks
+
+| Need | Codex event | Current disposition |
+|---|---|---|
+| Deny unsafe or escalated bypass paths where permission flow exists | `PermissionRequest` | Optional after core guards; not a universal gate |
+| Record post-tool context for diagnostics | `PostToolUse` | Useful for evidence capture, not required for parity |
+| Inject run/resume context | `SessionStart`, `UserPromptSubmit` | Ergonomic only; must not mutate run state |
+
+## Unsupported Or Non-Claimed Hooks
+
+| Need | Codex event | Current disposition |
+|---|---|---|
 | Observe child-agent lifecycle | none proven | Use `CHILD_AGENT_COMPLETION_CONTRACT.md`; do not claim hook parity |
 | Observe compaction lifecycle | none proven | Use durable ledger and resume packet; do not claim hook parity |
 
 ## Hook Fixtures Required Before Promotion
 
-1. A temporary Codex project with `codex_hooks=true` and a harmless `PreToolUse` command hook records `HookStarted`/`HookCompleted` and stdin payload shape.
+The detailed plan is `HOOKS_GUARDRAIL_PLAN.md`. Minimum promotion evidence:
+
+1. A temporary Codex project with `codex_hooks=true` and a harmless `PreToolUse` command hook records `HookStarted`/`HookCompleted`, hook stdin payload shape, command exit status, and transcript-visible feedback.
 2. A Hyperresearch source guard blocks generic source fetch/search during an active run unless the action routes through packet `sourceUrls` and service source capture, or records the bypass as a policy failure.
-3. A `Stop` guard blocks final answer when the ledger is incomplete or validation is red, and allows closure after `validate --backend real` passes.
-4. A child-loop diagnostic proves missing subagent lifecycle hooks are covered by session evidence and packet/service validation.
+3. The same source path routed through packet `sourceUrls` and service source capture is allowed, and final service validation still verifies the captured source.
+4. A `Stop` guard blocks final answer when the ledger is missing, incomplete, or validation is red, and allows closure after `validate --backend real|fixture` returns `passed:true`.
+5. Negative cases cover malformed hook config, disabled hooks, unsupported event names, stale ledger paths, missing block reasons, and hook timeout behavior.
 
 Plugin/config projection remains unclaimed until a fixture proves install, update, and removal behavior for Hyperresearch hook material.
 

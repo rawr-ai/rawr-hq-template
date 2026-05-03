@@ -15,7 +15,7 @@ This is the service-package working plan for finishing Hyperresearch Codex parit
 - The service is the right implementation shape: Codex owns orchestration, durable state, step loading, agent packets, fan-in, resume, critique/patch gates, and validation; the Python Hyperresearch CLI remains the backend for vault/search/fetch/note/lint/sync/export.
 - Do not use `hyperresearch research` as a parity substitute. It does not prove the 16-step V8 harness.
 - Fixture mode proves the Hyperresearch Codex control-plane contract only; it does not prove live research quality or source-backed final-report correctness.
-- Hooks remain reference-only until feature flags, config projection, and failure paths are verified in this environment. MCP is parked until a future spec justifies it; it is not a blocker for the active parity claim because the direct Hyperresearch CLI backend owns the authoritative loop. Current hook/MCP boundaries live in `HOOKS_MCP_PARITY.md`; child wait/completion evidence requirements live in `CHILD_AGENT_COMPLETION_CONTRACT.md`.
+- Hooks remain reference-only until feature flags, config projection, and failure paths are verified in this environment. MCP is parked until a future spec justifies it; it is not a blocker for the active parity claim because the direct Hyperresearch CLI backend owns the authoritative loop. Current hook/MCP boundaries live in `HOOKS_MCP_PARITY.md`; the concrete hook proof ladder lives in `HOOKS_GUARDRAIL_PLAN.md`; child wait/completion evidence requirements live in `CHILD_AGENT_COMPLETION_CONTRACT.md`.
 - Do not pivot to app-server, Codex SDK, or OpenAI SDK by assumption. `NATIVE_CODEX_SURFACE_REVIEW.md` records the current review: the TypeScript Codex SDK wraps `codex exec`, raw OpenAI SDKs are a different runtime, and app-server is the native diagnostic/recovery surface. The active child lifecycle strategy is parent resume plus explicit child resume for known child ids before wait/close; replacement-attempt packet fan-in remains fallback hardening for non-clean child attempts.
 - Global downstream plugin drift is not a Hyperresearch blocker. Hyperresearch sync proof must use scoped flags to avoid unrelated install reconciliation.
 
@@ -32,6 +32,18 @@ The service package owns:
 Downstream `rawr-hq` owns only the active sync source for Codex-facing skill/workflow/agent material during the current transition. Any downstream changes must be driven by a concrete service contract change or proof-gate requirement from this package.
 
 ## Implementation Phases
+
+### 0. Hooks Guardrail Track
+
+This track is next after service/packet parity closure and is not a blocker for that closure.
+
+- Core parity-adjacent hook work is limited to `PreToolUse` source-bypass guard and `Stop` validation guard.
+- `PreToolUse` must prove actual Codex/RAWR tool names, stdin payload shape, block/allow behavior, and transcript-visible feedback.
+- `Stop` must prove missing/red ledgers block final closure and green `validate --backend real|fixture` allows closure.
+- `PermissionRequest`, `PostToolUse`, `SessionStart`, and `UserPromptSubmit` are easy ergonomics only after the two core guards pass.
+- `SubagentStart`, `SubagentStop`, `PreCompact`, `SessionEnd`, and `Notification` remain explicit non-claims.
+- Plugin-packaged hook installation remains unclaimed until RAWR agent-sync has managed hook projection with install/update/removal evidence.
+- See `HOOKS_GUARDRAIL_PLAN.md`.
 
 ### 1. Topology And Documentation Pre-Gate
 
