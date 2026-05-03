@@ -1,0 +1,43 @@
+# Secondary References
+
+Status: ready for migration planning.
+Scope: useful context that must not expand migration scope unless explicitly promoted.
+
+Secondary references help the team understand the system and avoid tunnel vision. They are not conflict-winning authority for migration planning.
+
+## Reference-Only Inputs
+
+| Source | Use For | Boundary |
+| --- | --- | --- |
+| `docs/projects/rawr-final-architecture-migration/.context/quarantine/M2-runtime-realization-lock-spike/integrated-canonical-architecture-finalization/` | Decision provenance behind the final integrated architecture Cloud Pro packet. Useful if the accepted final spec needs interpretation. | Quarantine/provenance only. Do not treat packet files or decision records as a parallel architecture source after the final spec lands. |
+| `docs/projects/rawr-final-architecture-migration/.context/quarantine/M2-runtime-realization-lock-spike/runtime-realization-finalization/` | Provenance for the runtime realization spec and final readiness verdict. | Quarantine/provenance only. Use only to clarify intent, not to override the promoted runtime spec. |
+| `docs/projects/rawr-final-architecture-migration/.context/quarantine/M2-runtime-realization-lock-spike/target-authority-reframe/` | Preserves the target-authority posture: current repo reality is migration substrate, not architecture truth. | Quarantine/provenance only. Use as operating-frame evidence, not as a new migration scope. |
+| `/Users/mateicanavra/Documents/projects/RAWR/RAWR_Authentication_Subsystem_Canonical_Spec.md` | Look-ahead hooks for auth verifier resources, runtime profile selection, plugin admission, invocation actor context, service authorization, async authority propagation, and redacted diagnostics. | Candidate companion spec only. Do not make full auth implementation part of the immediate runtime migration unless explicitly promoted. |
+| `/Users/mateicanavra/Documents/projects/RAWR/RAWR_Deployment_Realization_Canonical_Spec.md` | Look-ahead hooks for deployment-safe runtime outputs, process-boundary metadata, placement profiles, deployment diagnostics, and platform adapter future work. | Candidate companion spec only. Do not make deployment compiler/platform adapters part of the immediate runtime migration unless explicitly promoted. |
+| Quarantine directories under `docs/**/quarantine/` | Preserved original docs, runbooks, plans, issues, and research packets. | Mine only as provenance. Quarantine paths are not active authority. |
+| Quarantine ledgers at `docs/**/quarantine/AGENTS.md` | Scriptable inventory of quarantined material that remains useful to mine. | Use the ledger first; individual quarantined docs still lose conflicts to final specs and the regenerated migration plan. |
+| Existing migration plan at `docs/projects/rawr-final-architecture-migration/resources/quarantine/RAWR_Architecture_Migration_Plan.md` | Historical sequencing context and prior intent. | Quarantine/provenance only. Regenerate the migration plan from final specs and a fresh repo audit. |
+
+## How To Use Secondary References
+
+Secondary references may:
+
+- clarify why a target decision exists;
+- reveal future hooks the runtime migration should not block;
+- identify negative-space items for the migration packet;
+- help construct proof gates and doc drift checks;
+- provide examples to mine, if they match the final authority model.
+
+Secondary references must not:
+
+- introduce new M2 implementation scope;
+- override final architecture/runtime specs;
+- preserve legacy topology because it appears in older docs;
+- create new public API obligations without promotion;
+- require auth or deployment implementation in the first runtime realization migration.
+
+## Why Keep Them
+
+The migration team needs peripheral vision. Auth, deployment, diagnostics, telemetry, cache, config, and control-plane concerns are close enough to runtime realization that ignoring them would produce brittle work.
+
+The answer is controlled reference use: preserve hooks and name future lanes, but do not let every useful document become a requirement.
