@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Repository-local Semantica workbench for RAWR architecture migration documents."
 requires-python = ">=3.12,<3.13"
 dependencies = [
+  "openai>=1.109.0",
   "PyYAML>=6.0.3",
   "rdflib>=7.6.0",
   "semantica @ git+https://github.com/Hawksight-AI/semantica.git@ca5f08179374dcb8326046249d919717f2769a04",
@@ -24,3 +25,33 @@ allow-direct-references = true
 
 [tool.uv]
 package = true
+
+[dependency-groups]
+dev = [
+    "jsonschema>=4.26.0",
+    "pyright>=1.1.409",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.12",
+    "types-pyyaml>=6.0.12.20260408",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+include = ["src", "tests"]
+reportArgumentType = "warning"
+reportAssignmentType = "warning"
+reportCallIssue = "warning"
+reportOptionalIterable = "warning"
+reportOptionalMemberAccess = "warning"
+reportPossiblyUnboundVariable = "warning"
+reportReturnType = "warning"

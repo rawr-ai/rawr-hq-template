@@ -1,0 +1,626 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rawr.dev/schemas/architecture-change-frame-v1.schema.json",
+  "title": "RAWR Architecture Change Frame",
+  "description": "Evidence-only intermediate frame for comparing an architecture proposal against RAWR-reviewed ontology and comparison geometry. It is not canonical architecture truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "frame_id",
+    "document",
+    "proposal_summary",
+    "extraction",
+    "governance",
+    "claims",
+    "noun_mappings",
+    "comparison"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "rawr-architecture-change-frame-v1"
+    },
+    "frame_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "document": {
+      "$ref": "#/$defs/document_ref"
+    },
+    "proposal_summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "raw_text": {
+      "type": "string"
+    },
+    "target_app": {
+      "type": "string"
+    },
+    "extraction": {
+      "$ref": "#/$defs/extraction_run"
+    },
+    "governance": {
+      "$ref": "#/$defs/governance"
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
+    "noun_mappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/noun_mapping"
+      }
+    },
+    "comparison": {
+      "$ref": "#/$defs/comparison"
+    },
+    "unresolved_questions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "authority_context": {
+      "type": "string",
+      "enum": [
+        "primary-architecture",
+        "primary-runtime",
+        "secondary-classifier",
+        "secondary-geometric",
+        "comparison-document",
+        "context",
+        "quarantine",
+        "archive",
+        "fixture",
+        "unknown"
+      ]
+    },
+    "assertion_scope": {
+      "type": "string",
+      "enum": [
+        "target-architecture",
+        "current-state",
+        "migration-note",
+        "example",
+        "outside-scope",
+        "unknown"
+      ]
+    },
+    "claim_type": {
+      "type": "string",
+      "enum": [
+        "kind-introduction",
+        "ownership",
+        "projection",
+        "resource-provider",
+        "app-composition",
+        "runtime-realization",
+        "diagnostics",
+        "lifecycle",
+        "forbidden-risk",
+        "verification",
+        "namespace",
+        "support-matter"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "document_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_path",
+        "title",
+        "authority_context",
+        "source_scope"
+      ],
+      "properties": {
+        "source_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Repository-relative source path when the document is inside the checkout; absolute paths are allowed only for external comparison inputs."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authority_context": {
+          "$ref": "#/$defs/authority_context"
+        },
+        "authority_rank": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_scope": {
+          "type": "string",
+          "enum": [
+            "canonical-source",
+            "comparison-source",
+            "quarantine",
+            "archive",
+            "fixture",
+            "external",
+            "unknown"
+          ]
+        },
+        "content_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source_path",
+        "heading_path",
+        "context",
+        "line_start",
+        "line_end",
+        "char_start",
+        "char_end",
+        "char_span_kind",
+        "text",
+        "extraction_method",
+        "confidence",
+        "review_state",
+        "promotion_allowed"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "heading_path": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "line_end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "char_start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "char_end": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "char_span_kind": {
+          "type": "string",
+          "enum": [
+            "document-offset",
+            "line-offset"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "extraction_method": {
+          "type": "string",
+          "enum": [
+            "semantica-llm-pilot",
+            "semantica-pattern-pilot",
+            "rawr-deterministic-oracle",
+            "manual-review",
+            "external-import"
+          ]
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "review_state": {
+          "$ref": "#/$defs/review_state"
+        },
+        "promotion_allowed": {
+          "const": false
+        }
+      }
+    },
+    "extraction_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "extractor",
+        "status",
+        "llm_provider_status",
+        "semantica_version",
+        "deterministic_oracle",
+        "promotion_allowed"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "semantica-llm-pilot",
+            "semantica-pattern-pilot",
+            "rawr-deterministic-oracle",
+            "manual-review",
+            "external-import"
+          ]
+        },
+        "extractor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pilot",
+            "fallback",
+            "blocked",
+            "manual"
+          ]
+        },
+        "llm_provider_status": {
+          "type": "string",
+          "enum": [
+            "available",
+            "blocked-missing-extra",
+            "blocked-no-api-key",
+            "blocked-requires-model",
+            "blocked-provider-unavailable",
+            "blocked-provider-error",
+            "blocked-llm-call-failed",
+            "not-required",
+            "unproven"
+          ]
+        },
+        "semantica_version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "deterministic_oracle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "promotion_allowed": {
+          "const": false
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "truth_authority",
+        "semantica_output_authoritative",
+        "reference_geometry_status",
+        "requires_human_promotion",
+        "promotion_allowed"
+      ],
+      "properties": {
+        "truth_authority": {
+          "const": "rawr-reviewed-ontology"
+        },
+        "semantica_output_authoritative": {
+          "const": false
+        },
+        "reference_geometry_status": {
+          "type": "string",
+          "enum": [
+            "comparison-only",
+            "not-used"
+          ]
+        },
+        "requires_human_promotion": {
+          "const": true
+        },
+        "promotion_allowed": {
+          "const": false
+        }
+      }
+    },
+    "mapping_state": {
+      "type": "string",
+      "enum": [
+        "resolved",
+        "candidate",
+        "extension-slot",
+        "unresolved",
+        "rejected"
+      ]
+    },
+    "noun_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "proposed_noun",
+        "mapping_state",
+        "evidence_refs",
+        "confidence",
+        "review_state",
+        "promotion_allowed"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed_noun": {
+          "type": "string",
+          "minLength": 1
+        },
+        "maps_to_entity_id": {
+          "type": "string"
+        },
+        "maps_to_kind": {
+          "type": "string"
+        },
+        "maps_to_extension_slot": {
+          "type": "string"
+        },
+        "mapping_state": {
+          "$ref": "#/$defs/mapping_state"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "review_state": {
+          "$ref": "#/$defs/review_state"
+        },
+        "promotion_allowed": {
+          "const": false
+        }
+      }
+    },
+    "polarity": {
+      "type": "string",
+      "enum": [
+        "positive",
+        "negative",
+        "prohibitive",
+        "conditional",
+        "unknown"
+      ]
+    },
+    "modality": {
+      "type": "string",
+      "enum": [
+        "normative",
+        "descriptive",
+        "proposed",
+        "rejected",
+        "historical",
+        "illustrative",
+        "unknown"
+      ]
+    },
+    "review_action": {
+      "type": "string",
+      "enum": [
+        "none",
+        "accept",
+        "accept-with-mapping",
+        "write-canonical-addendum",
+        "decompose",
+        "reject",
+        "needs-evidence",
+        "needs-human-review"
+      ]
+    },
+    "review_state": {
+      "type": "string",
+      "enum": [
+        "evidence-only",
+        "candidate",
+        "tbd",
+        "review-needed",
+        "rejected",
+        "suppressed"
+      ]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "not-evaluated",
+        "compatible",
+        "compatible-extension",
+        "needs-canonical-addendum",
+        "conflicts",
+        "unclear"
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "claim_type",
+        "subject",
+        "polarity",
+        "modality",
+        "assertion_scope",
+        "authority_context",
+        "evidence_refs",
+        "confidence",
+        "review_state",
+        "verdict",
+        "review_action",
+        "promotion_allowed"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "claim_type": {
+          "$ref": "#/$defs/claim_type"
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "predicate": {
+          "type": "string"
+        },
+        "object": {
+          "type": "string"
+        },
+        "polarity": {
+          "$ref": "#/$defs/polarity"
+        },
+        "modality": {
+          "$ref": "#/$defs/modality"
+        },
+        "assertion_scope": {
+          "$ref": "#/$defs/assertion_scope"
+        },
+        "authority_context": {
+          "$ref": "#/$defs/authority_context"
+        },
+        "resolved_entity_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "mapping_state": {
+          "$ref": "#/$defs/mapping_state"
+        },
+        "maps_to_kind": {
+          "type": "string"
+        },
+        "maps_to_extension_slot": {
+          "type": "string"
+        },
+        "authority_domain_claimed": {
+          "type": "string"
+        },
+        "projection_lane": {
+          "type": "string"
+        },
+        "runtime_phase": {
+          "type": "string"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "risk_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_gates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "review_state": {
+          "$ref": "#/$defs/review_state"
+        },
+        "verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "review_action": {
+          "$ref": "#/$defs/review_action"
+        },
+        "issue": {
+          "type": "string"
+        },
+        "resolution_hint": {
+          "type": "string"
+        },
+        "promotion_allowed": {
+          "const": false
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "overall_verdict",
+        "recommended_next_action",
+        "ruleset",
+        "explanation_chain_complete"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "extraction-only",
+            "evaluated"
+          ]
+        },
+        "overall_verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "recommended_next_action": {
+          "$ref": "#/$defs/review_action"
+        },
+        "ruleset": {
+          "type": "string",
+          "minLength": 1
+        },
+        "explanation_chain_complete": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

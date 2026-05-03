@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rawr.dev/schemas/sweep-llm-evidence-augmentation.schema.json",
+  "title": "RAWR Sweep LLM Evidence Augmentation",
+  "type": "object",
+  "required": ["schema_version", "source_index", "authority_boundary", "status", "selection", "summary", "selected_rows", "suggestions", "diagnostics"],
+  "properties": {
+    "schema_version": { "const": "rawr-sweep-llm-evidence-augmentation-v1" },
+    "run": { "type": "string" },
+    "run_id": { "type": ["string", "null"] },
+    "source_index": { "type": "string", "minLength": 1 },
+    "authority_boundary": {
+      "type": "object",
+      "required": [
+        "generated_evidence_is_truth",
+        "reviewed_rawr_ontology_remains_authority",
+        "promotion_requires_human_review",
+        "llm_output_is_evidence_only",
+        "augmentation_is_truth",
+        "alters_deterministic_index",
+        "alters_deterministic_verdicts",
+        "promotion_allowed"
+      ],
+      "properties": {
+        "generated_evidence_is_truth": { "const": false },
+        "reviewed_rawr_ontology_remains_authority": { "const": true },
+        "promotion_requires_human_review": { "const": true },
+        "llm_output_is_evidence_only": { "const": true },
+        "augmentation_is_truth": { "const": false },
+        "alters_deterministic_index": { "const": false },
+        "alters_deterministic_verdicts": { "const": false },
+        "promotion_allowed": { "const": false }
+      },
+      "additionalProperties": true
+    },
+    "status": { "type": "object" },
+    "selection": {
+      "type": "object",
+      "required": ["limit", "selected_count"],
+      "properties": {
+        "limit": { "type": "integer", "minimum": 0 },
+        "selected_count": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "summary": { "type": "object" },
+    "selected_rows": { "type": "array", "items": { "type": "object" } },
+    "suggestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source_row", "review_state", "promotion_allowed", "decision_grade"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "source_row": {
+            "type": "object",
+            "required": ["source_span"],
+            "properties": {
+              "source_span": { "$ref": "#/$defs/sourceSpan" }
+            },
+            "additionalProperties": true
+          },
+          "suggestion_kind": { "type": "string" },
+          "suggested_label": { "type": "string" },
+          "suggested_action": { "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "extraction": {
+            "type": "object",
+            "required": ["method"],
+            "properties": {
+              "provider": { "type": ["string", "null"] },
+              "model": { "type": ["string", "null"] },
+              "method": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": true
+          },
+          "review_state": { "const": "evidence-only" },
+          "promotion_allowed": { "const": false },
+          "decision_grade": { "const": false }
+        },
+        "additionalProperties": true
+      }
+    },
+    "diagnostics": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "sourceSpan": {
+      "type": "object",
+      "required": ["source_path", "line_start", "line_end", "char_start", "char_end", "char_span_kind", "text"],
+      "properties": {
+        "source_path": { "type": "string", "minLength": 1 },
+        "line_start": { "type": "integer", "minimum": 1 },
+        "line_end": { "type": "integer", "minimum": 1 },
+        "char_start": { "type": ["integer", "null"], "minimum": 0 },
+        "char_end": { "type": ["integer", "null"], "minimum": 0 },
+        "char_span_kind": { "type": ["string", "null"], "minLength": 1 },
+        "heading_path": { "type": "array", "items": { "type": "string" } },
+        "text": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

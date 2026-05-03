@@ -15,20 +15,24 @@ from .chunking import chunk_markdown
 from .core_ontology import (
     TESTING_PLAN,
     build_core_ontology_run,
+    compare_architecture_proposal,
     compare_document_evidence,
     diff_document_against_core_ontology,
     extract_document_evidence,
     export_core_ontology,
     validate_core_ontology,
     visualize_core_ontology,
+    write_architecture_change_frame,
     write_semantica_capability_report,
 )
-from .core_config import CORE_GRAPH_FILENAMES, DEFAULT_CORE_VIEWER_HOST, DEFAULT_CORE_VIEWER_PORT
+from .core_config import CORE_GRAPH_FILENAMES, DEFAULT_CORE_VIEWER_HOST, DEFAULT_CORE_VIEWER_PORT, SWEEP_CURRENT_FILES
 from .core_query import list_queries, render_query_text, run_named_query, run_sparql_query
 from .diffing import build_diff
 from .document_sweep import run_document_sweep
+from .evidence_index import write_sweep_evidence_index
 from .extraction import extract_chunk, request_params_for_model, schema_hash
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json, write_jsonl
+from .llm_augmentation import write_llm_evidence_augmentation
 from .manifest import load_manifest
 from .ontology import load_definitions, normalize_run
 from .paths import (
@@ -107,13 +111,35 @@ def build_parser() -> argparse.ArgumentParser:
     doc_extract.add_argument("--run", default="latest")
     doc_extract.add_argument("--document", default=str(TESTING_PLAN))
     doc_extract.add_argument("--fixture", action="store_true")
+    doc_extract.add_argument("--semantica-pilot", action="store_true")
+    add_evidence_mode_args(doc_extract)
     doc_extract.set_defaults(func=cmd_doc_extract)
 
     doc_compare = sub.add_parser("doc:compare")
     doc_compare.add_argument("--run", default="latest")
     doc_compare.add_argument("--document", default=str(TESTING_PLAN))
     doc_compare.add_argument("--fixture", action="store_true")
+    doc_compare.add_argument("--semantica-pilot", action="store_true")
+    add_evidence_mode_args(doc_compare)
     doc_compare.set_defaults(func=cmd_doc_compare)
+
+    doc_frame = sub.add_parser("doc:frame")
+    doc_frame.add_argument("--run", default="latest")
+    doc_frame.add_argument("--document", default=str(TESTING_PLAN))
+    doc_frame.add_argument("--fixture", action="store_true")
+    doc_frame.add_argument("--semantica-pilot", action="store_true")
+    add_evidence_mode_args(doc_frame)
+    doc_frame.add_argument("--reference-bundle", default=None)
+    doc_frame.set_defaults(func=cmd_doc_frame)
+
+    doc_proposal_compare = sub.add_parser("doc:proposal-compare")
+    doc_proposal_compare.add_argument("--run", default="latest")
+    doc_proposal_compare.add_argument("--document", default=str(TESTING_PLAN))
+    doc_proposal_compare.add_argument("--fixture", action="store_true")
+    doc_proposal_compare.add_argument("--semantica-pilot", action="store_true")
+    add_evidence_mode_args(doc_proposal_compare)
+    doc_proposal_compare.add_argument("--reference-bundle", default=None)
+    doc_proposal_compare.set_defaults(func=cmd_doc_proposal_compare)
 
     doc_sweep = sub.add_parser("doc:sweep")
     doc_sweep.add_argument("--run", default="latest")
@@ -125,6 +151,18 @@ def build_parser() -> argparse.ArgumentParser:
     doc_sweep.add_argument("--format", choices=["text", "markdown", "json"], default="text")
     doc_sweep.add_argument("--fail-on", choices=["none", "decision-grade"], default="none")
     doc_sweep.set_defaults(func=cmd_doc_sweep)
+
+    doc_index = sub.add_parser("doc:index")
+    doc_index.add_argument("--run", default="latest")
+    doc_index.set_defaults(func=cmd_doc_index)
+
+    doc_augment_llm = sub.add_parser("doc:augment-llm")
+    doc_augment_llm.add_argument("--run", default="latest")
+    doc_augment_llm.add_argument("--llm-provider", default="openai")
+    doc_augment_llm.add_argument("--llm-model", default=None)
+    doc_augment_llm.add_argument("--limit", type=int, default=20)
+    doc_augment_llm.add_argument("--max-text-length", type=int, default=None)
+    doc_augment_llm.set_defaults(func=cmd_doc_augment_llm)
 
     semantic_capability = sub.add_parser("semantic:capability")
     semantic_capability.add_argument("--run", default="latest")
@@ -159,6 +197,14 @@ def add_extract_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--limit-chunks", type=int, default=None)
     parser.add_argument("--mode", choices=["auto", "heuristic", "llm"], default="auto")
     parser.add_argument("--model", default=DEFAULT_MODEL)
+
+
+def add_evidence_mode_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--extraction-mode", choices=["deterministic", "semantica-pattern", "semantica-llm"], default="deterministic"
+    )
+    parser.add_argument("--llm-provider", default="openai")
+    parser.add_argument("--llm-model", default=None)
 
 
 def cmd_check(_args) -> int:
@@ -216,11 +262,14 @@ def cmd_core_serve(args) -> int:
     viewer = run_dir / CORE_GRAPH_FILENAMES["viewer"]
     if not viewer.exists():
         run_dir = visualize_core_ontology(args.run)
-    handler = lambda *handler_args, **handler_kwargs: http.server.SimpleHTTPRequestHandler(
-        *handler_args,
-        directory=str(run_dir),
-        **handler_kwargs,
-    )
+
+    def handler(*handler_args, **handler_kwargs):
+        return http.server.SimpleHTTPRequestHandler(
+            *handler_args,
+            directory=str(run_dir),
+            **handler_kwargs,
+        )
+
     with socketserver.ThreadingTCPServer((args.host, args.port), handler) as server:
         host, port = server.server_address
         url = f"http://{host}:{port}/{CORE_GRAPH_FILENAMES['viewer']}"
@@ -272,14 +321,74 @@ def cmd_doc_triage(args) -> int:
 
 
 def cmd_doc_extract(args) -> int:
-    run_dir = extract_document_evidence(Path(args.document), args.run, fixture=args.fixture)
+    run_dir = extract_document_evidence(
+        Path(args.document),
+        args.run,
+        fixture=args.fixture,
+        semantica_pilot=args.semantica_pilot,
+        extraction_mode=args.extraction_mode,
+        llm_provider=args.llm_provider,
+        llm_model=args.llm_model,
+    )
     print(f"evidence_claims={rel(run_dir / CORE_GRAPH_FILENAMES['evidence_claims_json'])}")
+    evidence = read_json(run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"])
+    if evidence.get("semantica_llm"):
+        status = evidence["semantica_llm"].get("status", {})
+        print(
+            "semantica_llm="
+            f"{evidence['semantica_llm'].get('actual_mode')} "
+            f"provider={status.get('provider')} model={status.get('model') or 'not-set'} "
+            f"blocked={status.get('blocked_reason') or 'none'}"
+        )
     return 0
 
 
 def cmd_doc_compare(args) -> int:
-    run_dir = compare_document_evidence(Path(args.document), args.run, fixture=args.fixture)
+    run_dir = compare_document_evidence(
+        Path(args.document),
+        args.run,
+        fixture=args.fixture,
+        semantica_pilot=args.semantica_pilot,
+        extraction_mode=args.extraction_mode,
+        llm_provider=args.llm_provider,
+        llm_model=args.llm_model,
+    )
     print(f"semantic_compare={rel(run_dir / CORE_GRAPH_FILENAMES['semantic_compare_report'])}")
+    return 0
+
+
+def cmd_doc_frame(args) -> int:
+    reference_bundle = Path(args.reference_bundle) if args.reference_bundle else None
+    run_dir = write_architecture_change_frame(
+        Path(args.document),
+        args.run,
+        fixture=args.fixture,
+        semantica_pilot=args.semantica_pilot,
+        extraction_mode=args.extraction_mode,
+        llm_provider=args.llm_provider,
+        llm_model=args.llm_model,
+        reference_bundle=reference_bundle,
+    )
+    print(f"architecture_change_frame={rel(run_dir / CORE_GRAPH_FILENAMES['architecture_change_frame'])}")
+    print(f"frame_validation={rel(run_dir / CORE_GRAPH_FILENAMES['architecture_change_frame_validation'])}")
+    return 0
+
+
+def cmd_doc_proposal_compare(args) -> int:
+    reference_bundle = Path(args.reference_bundle) if args.reference_bundle else None
+    run_dir = compare_architecture_proposal(
+        Path(args.document),
+        args.run,
+        fixture=args.fixture,
+        semantica_pilot=args.semantica_pilot,
+        extraction_mode=args.extraction_mode,
+        llm_provider=args.llm_provider,
+        llm_model=args.llm_model,
+        reference_bundle=reference_bundle,
+    )
+    print(f"proposal_review={rel(run_dir / CORE_GRAPH_FILENAMES['proposal_review_report'])}")
+    print(f"proposal_review_html={rel(run_dir / CORE_GRAPH_FILENAMES['proposal_review_report_html'])}")
+    print(f"verdict_repair={rel(run_dir / CORE_GRAPH_FILENAMES['verdict_repair'])}")
     return 0
 
 
@@ -303,6 +412,7 @@ def cmd_doc_sweep(args) -> int:
         sweep = read_json(sweep_path)
         summary = sweep["summary"]
         print(f"doc_sweep={rel(report_path)}")
+        print(f"doc_sweep_html={rel(run_dir / CORE_GRAPH_FILENAMES['doc_sweep_report_html'])}")
         print(f"documents_analyzed={summary['documents_analyzed']} skipped={summary['documents_skipped']}")
         print(f"recommendations={summary['recommendations']}")
         print(
@@ -311,6 +421,41 @@ def cmd_doc_sweep(args) -> int:
             f"conflicts={summary['conflicts']} deprecated_uses={summary['deprecated_uses']} "
             f"ambiguous={summary['ambiguous']}"
         )
+    return 0
+
+
+def cmd_doc_index(args) -> int:
+    run_dir = resolve_run(args.run)
+    index = write_sweep_evidence_index(run_dir)
+    mark_current(run_dir, SWEEP_CURRENT_FILES)
+    summary = index["summary"]
+    print(f"sweep_evidence_index={rel(run_dir / CORE_GRAPH_FILENAMES['sweep_evidence_index'])}")
+    print(
+        "indexed="
+        f"documents={summary['documents_indexed']} claims={summary['claim_count']} "
+        f"findings={summary['finding_count']} warnings={summary['warning_count']}"
+    )
+    return 0
+
+
+def cmd_doc_augment_llm(args) -> int:
+    run_dir = resolve_run(args.run)
+    augmentation = write_llm_evidence_augmentation(
+        run_dir,
+        provider=args.llm_provider,
+        model=args.llm_model,
+        limit=args.limit,
+        max_text_length=args.max_text_length,
+    )
+    mark_current(run_dir, SWEEP_CURRENT_FILES)
+    print(f"llm_evidence_augmentation={rel(run_dir / CORE_GRAPH_FILENAMES['sweep_llm_evidence_augmentation'])}")
+    print(
+        "llm_augmentation="
+        f"{augmentation['status'].get('actual_mode')} provider={augmentation['status'].get('provider')} "
+        f"model={augmentation['status'].get('model') or 'not-set'} "
+        f"selected={augmentation['selection']['selected_count']} suggestions={augmentation['summary']['suggestion_count']} "
+        f"blocked={augmentation['summary'].get('blocked_reason') or 'none'}"
+    )
     return 0
 
 
@@ -332,7 +477,9 @@ def cmd_extract(args) -> int:
         chunks = chunks[: args.limit_chunks]
     seeds = build_seed_graph(manifest)
 
-    rows = [extract_chunk(chunk, prompts, "heuristic" if args.fixture else args.mode, args.model, seeds) for chunk in chunks]
+    rows = [
+        extract_chunk(chunk, prompts, "heuristic" if args.fixture else args.mode, args.model, seeds) for chunk in chunks
+    ]
     metadata = {
         "run_id": run_dir.name,
         "git_sha": git_sha(),
@@ -379,7 +526,18 @@ def cmd_report(args) -> int:
     run_dir = resolve_run(args.run)
     report = render_report(run_dir)
     (run_dir / "report.md").write_text(report, encoding="utf-8")
-    mark_current(run_dir, ["metadata.json", "seeds.json", "chunks.jsonl", "extraction.jsonl", "ontology.json", "semantic-diff.json", "report.md"])
+    mark_current(
+        run_dir,
+        [
+            "metadata.json",
+            "seeds.json",
+            "chunks.jsonl",
+            "extraction.jsonl",
+            "ontology.json",
+            "semantic-diff.json",
+            "report.md",
+        ],
+    )
     print(f"report={rel(run_dir / 'report.md')}")
     return 0
 
@@ -391,7 +549,18 @@ def cmd_run(args) -> int:
     build_diff(run_dir)
     report = render_report(run_dir)
     (run_dir / "report.md").write_text(report, encoding="utf-8")
-    mark_current(run_dir, ["metadata.json", "seeds.json", "chunks.jsonl", "extraction.jsonl", "ontology.json", "semantic-diff.json", "report.md"])
+    mark_current(
+        run_dir,
+        [
+            "metadata.json",
+            "seeds.json",
+            "chunks.jsonl",
+            "extraction.jsonl",
+            "ontology.json",
+            "semantic-diff.json",
+            "report.md",
+        ],
+    )
     print(f"complete={rel(run_dir)}")
     return 0
 
@@ -410,7 +579,4 @@ def load_prompts() -> dict[str, str]:
 
 
 def prompt_hashes(prompts: dict[str, str]) -> dict[str, str]:
-    return {
-        name: hashlib.sha256(value.encode("utf-8")).hexdigest()
-        for name, value in sorted(prompts.items())
-    }
+    return {name: hashlib.sha256(value.encode("utf-8")).hexdigest() for name, value in sorted(prompts.items())}

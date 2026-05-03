@@ -1,32 +1,57 @@
 from __future__ import annotations
 
 import hashlib
-import importlib
-import importlib.metadata
 import json
 import re
 from collections import Counter, defaultdict
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 from .io import rel
 from .paths import REPO_ROOT, WORKBENCH_ROOT
-from .semantica_adapter import iri_fragment, semantica_status, turtle_literal
+from .semantic_evidence_export import semantic_compare_turtle as semantic_compare_turtle
+from .semantic_evidence_report import (
+    append_finding_section as append_finding_section,
+    append_suppressed_section as append_suppressed_section,
+    decision_review_queue as decision_review_queue,
+    render_semantic_compare_report as render_semantic_compare_report,
+)
+from .semantic_capability import (
+    capability_feature_gates as capability_feature_gates,
+    capability_replacement_matrix as capability_replacement_matrix,
+    render_semantica_capability_report as render_semantica_capability_report,
+    semantic_capability_probe as semantic_capability_probe,
+)
+from .source_model import stripped_line_span
+from .text_normalization import normalize_match_text, normalize_text, term_in_normalized_text
 
 POLARITIES = ["positive", "negative", "prohibitive", "conditional", "unknown"]
 MODALITIES = ["normative", "descriptive", "proposed", "rejected", "historical", "illustrative", "unknown"]
 ASSERTION_SCOPES = ["target-architecture", "current-state", "migration-note", "example", "outside-scope", "unknown"]
-FINDING_KINDS = ["aligned", "conflict", "deprecated-use", "candidate-new", "ambiguous", "outside-scope", "informational"]
+FINDING_KINDS = [
+    "aligned",
+    "conflict",
+    "deprecated-use",
+    "candidate-new",
+    "ambiguous",
+    "outside-scope",
+    "informational",
+]
 MATCH_BUCKETS = ["prohibited_patterns", "deprecated_terms", "verification_policy", "canonical", "candidates"]
 
 FIXTURE_DOCUMENT = WORKBENCH_ROOT / "fixtures/docs/semantic-evidence-cases.md"
 FIXTURE_EXPECTED = WORKBENCH_ROOT / "fixtures/semantic-evidence-expected.json"
 
 NEGATIVE_RE = re.compile(r"\b(there is no|there are no|no\s+[a-z0-9_./` -]+|not\b|never\b|without\b)\b", re.I)
-PROHIBITIVE_RE = re.compile(r"\b(do not|must not|should not|must never|shall not|forbid|forbids|forbidden|invalid)\b", re.I)
-PROPOSED_RE = re.compile(r"\b(create|add|introduce|use|adopt|preserve|restore|target architecture should|should use|must use)\b", re.I)
-NORMATIVE_RE = re.compile(r"\b(must|should|shall|required|canonical|target architecture|valid|invalid|forbidden)\b", re.I)
+PROHIBITIVE_RE = re.compile(
+    r"\b(do not|must not|should not|must never|shall not|forbid|forbids|forbidden|invalid)\b", re.I
+)
+PROPOSED_RE = re.compile(
+    r"\b(create|add|introduce|use|adopt|preserve|restore|target architecture should|should use|must use)\b", re.I
+)
+NORMATIVE_RE = re.compile(
+    r"\b(must|should|shall|required|canonical|target architecture|valid|invalid|forbidden)\b", re.I
+)
 HISTORICAL_RE = re.compile(r"\b(old|legacy|previous|previously|historical|before|superseded|used to)\b", re.I)
 ILLUSTRATIVE_RE = re.compile(r"\b(example|for example|e\.g\.|sample)\b", re.I)
 REPLACEMENT_RE = re.compile(r"(->|\breplace[sd]?\b|\breplacement\b|\binstead\b|\buse .+ not .+)", re.I)
@@ -39,7 +64,9 @@ SCAFFOLD_LABEL_RE = re.compile(
     r"^(?:[-*]\s*)?(where|primary tests|must prove|must not prove|you must|you must not|caller planes|stagehand|root vitest suite|web-specific|proof-band / ratchet suites):$",
     re.I,
 )
-SCAFFOLD_PREFIX_RE = re.compile(r"^(?:[-*]\s*)?(where|primary tests|must prove|must not prove|you must|you must not):\s+", re.I)
+SCAFFOLD_PREFIX_RE = re.compile(
+    r"^(?:[-*]\s*)?(where|primary tests|must prove|must not prove|you must|you must not):\s+", re.I
+)
 STRUCTURAL_MARKER_RE = re.compile(r"^\s*(?:[-*]\s*)?(?:\|?\s*)?$")
 VERIFICATION_POLICY_RE = re.compile(
     r"\b(test|tests|testing|proof|ratchet|harness|runner|runners|lane|gating|gate|nightly|manual|stagehand|playwright|vitest|route-family|ingress|boundary|negative assertions?|merge|structural|e2e)\b",
@@ -51,139 +78,75 @@ def fixture_document_path() -> Path:
     return FIXTURE_DOCUMENT
 
 
-@lru_cache(maxsize=1)
-def semantic_capability_probe() -> dict[str, Any]:
-    status = semantica_status()
-    modules = {
-        "semantic_extract": [
-            "NERExtractor",
-            "RelationExtractor",
-            "TripletExtractor",
-            "SemanticNetworkExtractor",
-            "LLMExtraction",
-            "ExtractionValidator",
-        ],
-        "ontology": ["OntologyEngine", "OntologyValidator", "OntologyIngestor"],
-        "reasoning": ["SPARQLReasoner", "ReteEngine", "DatalogReasoner", "Reasoner"],
-        "conflicts": ["ConflictDetector", "SourceTracker"],
-        "pipeline": ["Pipeline", "PipelineBuilder"],
-        "ingest": ["FileIngestor", "OntologyIngestor"],
-    }
-    report: dict[str, Any] = {
-        **status,
-        "checked_modules": {},
-        "optional_dependencies": {},
-        "proofs": {},
-        "limitations": [
-            "Semantica extraction does not define RAWR architecture truth.",
-            "Decision-grade findings still require RAWR claim polarity, modality, assertion scope, and authority rules.",
-            "Any Semantica extraction that loses line spans is evidence-only until resolved back to local spans.",
-        ],
-    }
-    try:
-        report["version"] = importlib.metadata.version("semantica")
-    except Exception:
-        pass
-
-    for module_name, expected in modules.items():
-        fqmn = f"semantica.{module_name}"
-        try:
-            module = importlib.import_module(fqmn)
-            report["checked_modules"][fqmn] = {
-                "available": True,
-                "classes": {name: hasattr(module, name) for name in expected},
-            }
-        except Exception as exc:
-            report["checked_modules"][fqmn] = {"available": False, "error": str(exc)}
-
-    for dependency in ["rdflib", "pyshacl", "spacy", "openai"]:
-        try:
-            report["optional_dependencies"][dependency] = importlib.metadata.version(dependency)
-        except Exception as exc:
-            report["optional_dependencies"][dependency] = f"unavailable: {exc}"
-
-    proof_text = "There is no root-level core/ authoring root. Create a root-level core/ authoring root."
-    try:
-        from semantica.semantic_extract import TripletExtractor
-
-        triplets = TripletExtractor(method="pattern", include_provenance=True).extract_triplets(proof_text)
-        report["proofs"]["triplet_extractor_pattern"] = {
-            "ok": True,
-            "triplet_count": len(triplets),
-            "preserves_line_spans": False,
-        }
-    except Exception as exc:
-        report["proofs"]["triplet_extractor_pattern"] = {"ok": False, "error": str(exc)}
-
-    try:
-        from semantica.ontology import OntologyEngine
-
-        ontology = OntologyEngine().from_data({"classes": [{"name": "EvidenceClaim"}], "properties": [{"name": "conflicts_with"}]})
-        report["proofs"]["ontology_from_data"] = {
-            "ok": True,
-            "class_count": len(ontology.get("classes", [])),
-            "property_count": len(ontology.get("properties", [])),
-        }
-    except Exception as exc:
-        report["proofs"]["ontology_from_data"] = {"ok": False, "error": str(exc)}
-
-    return report
-
-
-def render_semantica_capability_report(report: dict[str, Any]) -> str:
-    lines = [
-        "# Semantic Evidence Semantica Capability Report",
-        "",
-        "This report records the pinned Semantica surfaces available to the RAWR semantic evidence pipeline. It is a capability proof, not an ontology authority document.",
-        "",
-        "## Status",
-        "",
-        f"- Available: `{report.get('available')}`",
-        f"- Version: `{report.get('version', 'unknown')}`",
-        f"- Module: `{report.get('module', 'unknown')}`",
-        "",
-        "## Modules",
-        "",
-    ]
-    for module_name, module_report in sorted(report.get("checked_modules", {}).items()):
-        lines.append(f"- `{module_name}`: `{module_report.get('available')}`")
-        classes = module_report.get("classes") or {}
-        for class_name, available in sorted(classes.items()):
-            lines.append(f"  - `{class_name}`: `{available}`")
-    lines.extend(["", "## Proofs", ""])
-    for proof_name, proof in sorted(report.get("proofs", {}).items()):
-        lines.append(f"- `{proof_name}`: `{proof.get('ok')}`")
-        if proof.get("error"):
-            lines.append(f"  - Error: `{proof['error']}`")
-        if "preserves_line_spans" in proof:
-            lines.append(f"  - Preserves line spans: `{proof['preserves_line_spans']}`")
-    lines.extend(["", "## Decision", ""])
-    lines.append(
-        "Semantica should be used for extraction experiments, ontology export, RDF/SHACL generation, query surfaces, and provenance helpers. RAWR-specific claim semantics and authority rules remain explicit workbench logic."
-    )
-    return "\n".join(lines) + "\n"
-
-
-def extract_evidence_claims(document: Path, graph: dict[str, Any], candidate_queue: dict[str, Any], *, fixture: bool = False) -> dict[str, Any]:
+def extract_evidence_claims(
+    document: Path,
+    graph: dict[str, Any],
+    candidate_queue: dict[str, Any],
+    *,
+    fixture: bool = False,
+    semantica_pilot_enabled: bool = False,
+    extraction_mode: str = "deterministic",
+    llm_provider: str = "openai",
+    llm_model: str | None = None,
+) -> dict[str, Any]:
     if not document.is_absolute():
         document = REPO_ROOT / document
     lines = document.read_text(encoding="utf-8").splitlines()
     indexes = build_semantic_indexes(graph, candidate_queue)
     claims: list[dict[str, Any]] = []
     suppressed_lines: list[dict[str, Any]] = []
+    semantica_pilot: dict[str, Any] | None = None
+    semantica_llm: dict[str, Any] | None = None
     heading_path: list[str] = []
     in_code_fence = False
     active_table_kind: str | None = None
     nonblank_line_count = 0
 
+    if semantica_pilot_enabled and extraction_mode == "deterministic":
+        extraction_mode = "semantica-pattern"
+
+    if extraction_mode == "semantica-llm":
+        from .semantica_llm_extraction import semantica_llm_extraction
+
+        semantica_llm = semantica_llm_extraction(document, provider=llm_provider, model=llm_model)
+
+    if extraction_mode == "semantica-pattern":
+        try:
+            from .semantica_extraction import semantica_extraction_pilot
+
+            semantica_pilot = semantica_extraction_pilot(document, graph, candidate_queue)
+        except Exception as exc:
+            semantica_pilot = {
+                "schema_version": "rawr-semantica-extraction-pilot-v1",
+                "document": rel(document),
+                "status": {"available": False, "classification": "blocked"},
+                "summary": {
+                    "raw_item_count": 0,
+                    "evidence_claim_count": 0,
+                    "decision_grade_source": "rawr-semantic-heuristic-v1",
+                    "promotion_allowed": False,
+                    "adapter_mode": "blocked",
+                },
+                "raw_items": [],
+                "evidence_claims": [],
+                "diagnostics": [{"kind": "semantica_pilot_failed", "error": str(exc)}],
+                "fallback": {
+                    "deterministic_oracle": "rawr-semantic-heuristic-v1",
+                    "removal_trigger": "Fix pilot execution and prove fixture parity before use.",
+                },
+            }
+
     for line_number, line in enumerate(lines, start=1):
         stripped = line.strip()
         if not stripped:
             continue
+        stripped_span = stripped_line_span(line)
         nonblank_line_count += 1
         if CODE_FENCE_RE.match(stripped):
             in_code_fence = not in_code_fence
-            suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, "code-fence-delimiter"))
+            suppressed_lines.append(
+                suppressed_line(document, line_number, stripped, heading_path, "code-fence-delimiter")
+            )
             continue
         heading = re.match(r"^(#{1,6})\s+(.+)$", stripped)
         if heading:
@@ -220,39 +183,112 @@ def extract_evidence_claims(document: Path, graph: dict[str, Any], candidate_que
                         },
                         confidence=0.58,
                         claim_kind="code-example",
+                        char_start=stripped_span.char_start,
+                        char_end=stripped_span.char_end,
                     )
                 )
             else:
-                suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, "code-fence-content"))
+                suppressed_lines.append(
+                    suppressed_line(document, line_number, stripped, heading_path, "code-fence-content")
+                )
             continue
 
         suppression_reason = suppressible_line_reason(stripped)
-        if suppression_reason and (not matched or suppression_reason in {"scaffold-label", "path-only", "structural-marker"}):
+        if suppression_reason and (
+            not matched or suppression_reason in {"scaffold-label", "path-only", "structural-marker"}
+        ):
             suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, suppression_reason))
             continue
 
         classification = classify_claim_text(stripped, heading_path, matched=matched)
         if classification["assertion_scope"] == "outside-scope":
-            claims.append(build_claim(document, line_number, stripped, heading_path, matches, classification, confidence=0.65, claim_kind="outside-scope"))
+            claims.append(
+                build_claim(
+                    document,
+                    line_number,
+                    stripped,
+                    heading_path,
+                    matches,
+                    classification,
+                    confidence=0.65,
+                    claim_kind="outside-scope",
+                    char_start=stripped_span.char_start,
+                    char_end=stripped_span.char_end,
+                )
+            )
             continue
         if not matched and not is_review_relevant_line(stripped):
             suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, "no-claim-signal"))
             continue
-        if is_table_row(stripped) and active_table_kind == "replacement" and (matches.get("prohibited_patterns") or matches.get("deprecated_terms")):
-            claims.extend(build_table_claims(document, line_number, stripped, heading_path, matches, indexes))
+        if (
+            is_table_row(stripped)
+            and active_table_kind == "replacement"
+            and (matches.get("prohibited_patterns") or matches.get("deprecated_terms"))
+        ):
+            claims.extend(
+                build_table_claims(
+                    document,
+                    line_number,
+                    stripped,
+                    heading_path,
+                    matches,
+                    indexes,
+                    char_start=stripped_span.char_start,
+                    char_end=stripped_span.char_end,
+                )
+            )
             continue
         if is_table_row(stripped) and not matched:
-            suppressed_lines.append(suppressed_line(document, line_number, stripped, heading_path, "table-row-no-match"))
+            suppressed_lines.append(
+                suppressed_line(document, line_number, stripped, heading_path, "table-row-no-match")
+            )
             continue
         if is_table_row(stripped):
-            claims.append(build_claim(document, line_number, stripped, heading_path, matches, classification, claim_kind="table-evidence"))
+            claims.append(
+                build_claim(
+                    document,
+                    line_number,
+                    stripped,
+                    heading_path,
+                    matches,
+                    classification,
+                    claim_kind="table-evidence",
+                    char_start=stripped_span.char_start,
+                    char_end=stripped_span.char_end,
+                )
+            )
             continue
-        claims.append(build_claim(document, line_number, stripped, heading_path, matches, classification))
+        claims.append(
+            build_claim(
+                document,
+                line_number,
+                stripped,
+                heading_path,
+                matches,
+                classification,
+                char_start=stripped_span.char_start,
+                char_end=stripped_span.char_end,
+            )
+        )
 
+    actual_mode = "semantica-pattern" if extraction_mode == "semantica-pattern" else "deterministic"
+    if semantica_llm:
+        actual_mode = (
+            "deterministic-with-semantica-llm-sidecar"
+            if semantica_llm.get("actual_mode") == "semantica-llm"
+            else "deterministic-with-blocked-semantica-llm-sidecar"
+        )
     return {
         "schema_version": "rawr-semantic-evidence-v1",
         "document": rel(document),
         "fixture": fixture,
+        "extraction_mode": {
+            "requested": extraction_mode,
+            "actual": actual_mode,
+            "deterministic_fallback_used": extraction_mode == "semantica-pattern",
+            "provider": llm_provider if semantica_llm else None,
+            "model": llm_model if semantica_llm else None,
+        },
         "semantica": semantic_capability_probe(),
         "summary": {
             "claim_count": len(claims),
@@ -268,9 +304,36 @@ def extract_evidence_claims(document: Path, graph: dict[str, Any], candidate_que
             "claims_by_scope": dict(Counter(claim["assertion_scope"] for claim in claims)),
             "claims_by_kind": dict(Counter(claim["claim_kind"] for claim in claims)),
             "claims_by_resolution_state": dict(Counter(claim["resolution_state"] for claim in claims)),
+            "semantica_pilot": semantica_pilot.get("summary", {"enabled": False})
+            if semantica_pilot
+            else {"enabled": False},
+            "semantica_llm": semantica_llm.get("summary", {"enabled": False}) if semantica_llm else {"enabled": False},
         },
+        "semantica_pilot": semantica_pilot or disabled_semantica_pilot(document),
+        "semantica_llm": semantica_llm,
         "claims": claims,
         "suppressed_lines": suppressed_lines,
+    }
+
+
+def disabled_semantica_pilot(document: Path) -> dict[str, Any]:
+    return {
+        "schema_version": "rawr-semantica-extraction-pilot-v1",
+        "document": rel(document),
+        "status": {"available": True, "classification": "disabled"},
+        "summary": {
+            "enabled": False,
+            "decision_grade_source": "rawr-semantic-heuristic-v1",
+            "promotion_allowed": False,
+            "adapter_mode": "disabled",
+        },
+        "raw_items": [],
+        "evidence_claims": [],
+        "diagnostics": [],
+        "fallback": {
+            "deterministic_oracle": "rawr-semantic-heuristic-v1",
+            "removal_trigger": "Enable pilot mode and prove fixture parity before use.",
+        },
     }
 
 
@@ -309,7 +372,9 @@ def match_count(matches: dict[str, list[dict[str, Any]]]) -> int:
     return sum(len(matches.get(bucket, [])) for bucket in MATCH_BUCKETS)
 
 
-def suppressed_line(document: Path, line_number: int, text: str, heading_path: list[str], reason: str) -> dict[str, Any]:
+def suppressed_line(
+    document: Path, line_number: int, text: str, heading_path: list[str], reason: str
+) -> dict[str, Any]:
     return {
         "source_path": rel(document),
         "line_start": line_number,
@@ -338,6 +403,9 @@ def build_table_claims(
     heading_path: list[str],
     matches: dict[str, list[dict[str, Any]]],
     indexes: dict[str, list[dict[str, Any]]],
+    *,
+    char_start: int = 0,
+    char_end: int | None = None,
 ) -> list[dict[str, Any]]:
     cells = [cell.strip() for cell in text.strip("|").split("|")]
     if len(cells) < 2 or all(set(cell) <= {"-", " "} for cell in cells):
@@ -362,6 +430,8 @@ def build_table_claims(
                 confidence=0.86,
                 claim_suffix="old-side",
                 claim_kind="table-old-side",
+                char_start=char_start,
+                char_end=char_end,
             )
         )
     if replacement_matches.get("prohibited_patterns") or replacement_matches.get("deprecated_terms"):
@@ -381,9 +451,24 @@ def build_table_claims(
                 confidence=0.9,
                 claim_suffix="replacement-side",
                 claim_kind="table-replacement-side",
+                char_start=char_start,
+                char_end=char_end,
             )
         )
-    return claims or [build_claim(document, line_number, text, heading_path, matches, classify_claim_text(text, heading_path, matched=has_resolved_matches(matches)), claim_suffix="table-row", claim_kind="table-row")]
+    return claims or [
+        build_claim(
+            document,
+            line_number,
+            text,
+            heading_path,
+            matches,
+            classify_claim_text(text, heading_path, matched=has_resolved_matches(matches)),
+            claim_suffix="table-row",
+            claim_kind="table-row",
+            char_start=char_start,
+            char_end=char_end,
+        )
+    ]
 
 
 def build_claim(
@@ -397,6 +482,8 @@ def build_claim(
     confidence: float = 0.82,
     claim_suffix: str | None = None,
     claim_kind: str | None = None,
+    char_start: int = 0,
+    char_end: int | None = None,
 ) -> dict[str, Any]:
     resolved_ids = {
         "canonical": [item["id"] for item in matches.get("canonical", [])],
@@ -405,6 +492,8 @@ def build_claim(
         "verification_policy": [item["id"] for item in matches.get("verification_policy", [])],
         "candidates": [item["id"] for item in matches.get("candidates", [])],
     }
+    if char_end is None:
+        char_end = char_start + len(text)
     claim_id = stable_id("claim", rel(document), str(line_number), text, claim_suffix or "")
     subject = first_label(matches) or text[:80]
     predicate = infer_claim_predicate(classification, matches)
@@ -413,6 +502,9 @@ def build_claim(
         "source_path": rel(document),
         "line_start": line_number,
         "line_end": line_number,
+        "char_start": char_start,
+        "char_end": char_end,
+        "char_span_kind": "line-offset",
         "heading_path": heading_path,
         "text": text,
         "claim_kind": claim_kind or infer_claim_kind(classification, matches),
@@ -432,7 +524,11 @@ def build_claim(
     }
 
 
-def compare_evidence_to_ontology(evidence: dict[str, Any], graph: dict[str, Any], candidate_queue: dict[str, Any]) -> dict[str, Any]:
+def compare_evidence_to_ontology(
+    evidence: dict[str, Any], graph: dict[str, Any], candidate_queue: dict[str, Any]
+) -> dict[str, Any]:
+    from .semantica_reasoning import semantica_reasoning_probe
+
     entities = {entity["id"]: entity for entity in graph["entities"]}
     candidates = {candidate["id"]: candidate for candidate in candidate_queue.get("candidates", [])}
     findings: list[dict[str, Any]] = []
@@ -447,6 +543,7 @@ def compare_evidence_to_ontology(evidence: dict[str, Any], graph: dict[str, Any]
     findings_by_rule = Counter(finding.get("rule") or "unknown" for finding in findings)
     ambiguous_by_bucket = Counter(finding.get("ambiguity_bucket") or "none" for finding in grouped.get("ambiguous", []))
 
+    reasoning = semantica_reasoning_probe(findings)
     return {
         "schema_version": "rawr-semantic-compare-v1",
         "document": evidence["document"],
@@ -460,7 +557,9 @@ def compare_evidence_to_ontology(evidence: dict[str, Any], graph: dict[str, Any]
             "decision_grade_finding_count": sum(1 for finding in findings if finding.get("decision_grade")),
             "claim_retention": evidence.get("summary", {}).get("claim_retention", {}),
             "suppressed_line_count": len(evidence.get("suppressed_lines", [])),
+            "semantica_reasoning": reasoning.get("summary", {}),
         },
+        "semantica_reasoning": reasoning,
         "claims": evidence.get("claims", []),
         "suppressed_lines": evidence.get("suppressed_lines", []),
         "findings": findings,
@@ -491,7 +590,14 @@ def classify_claim_against_constraints(
     scope = claim.get("assertion_scope")
 
     if scope == "outside-scope":
-        return [finding("outside-scope", claim, reason="Claim is outside the active architecture comparison scope.", decision_grade=False)]
+        return [
+            finding(
+                "outside-scope",
+                claim,
+                reason="Claim is outside the active architecture comparison scope.",
+                decision_grade=False,
+            )
+        ]
 
     for entity_id in prohibited:
         entity = entities.get(entity_id, {"id": entity_id, "label": entity_id})
@@ -688,6 +794,35 @@ def finding(
     review_action: str | None = None,
 ) -> dict[str, Any]:
     target_id = entity.get("id") if entity else None
+    review_action_value = review_action or default_review_action(kind)
+    explanation_chain = {
+        "source_claim": {
+            "claim_id": claim["id"],
+            "document_path": claim["source_path"],
+            "line_start": claim["line_start"],
+            "line_end": claim["line_end"],
+            "text": claim["text"],
+        },
+        "resolved_target": {
+            "entity_id": target_id,
+            "label": entity.get("label") if entity else None,
+        },
+        "authority_context": {
+            "authority_context": claim.get("authority_context"),
+            "assertion_scope": claim.get("assertion_scope"),
+            "modality": claim.get("modality"),
+            "polarity": claim.get("polarity"),
+        },
+        "rule_result": {
+            "rule": rule,
+            "reason": reason,
+        },
+        "finding": {
+            "kind": kind,
+            "decision_grade": decision_grade,
+            "review_action": review_action_value,
+        },
+    }
     return {
         "id": stable_id("finding", kind, claim["id"], target_id or "none", rule),
         "kind": kind,
@@ -703,7 +838,8 @@ def finding(
         "claim_kind": claim.get("claim_kind"),
         "resolution_state": claim.get("resolution_state"),
         "ambiguity_bucket": ambiguity_bucket,
-        "review_action": review_action or default_review_action(kind),
+        "review_action": review_action_value,
+        "explanation_chain": explanation_chain,
         "heading_path": claim.get("heading_path", []),
         "decision_grade": decision_grade,
         "confidence": claim.get("confidence"),
@@ -711,134 +847,6 @@ def finding(
         "modality": claim.get("modality"),
         "assertion_scope": claim.get("assertion_scope"),
     }
-
-
-def render_semantic_compare_report(compare: dict[str, Any]) -> str:
-    summary = compare["summary"]
-    by_kind = summary.get("findings_by_kind", {})
-    lines = [
-        "# Semantic Evidence Comparison Report",
-        "",
-        f"- Document: `{compare['document']}`",
-        f"- Ontology graph: `{compare['ontology_graph']}`",
-        f"- Claims: `{summary['claim_count']}`",
-        f"- Findings: `{summary['finding_count']}`",
-        f"- Decision-grade findings: `{summary['decision_grade_finding_count']}`",
-        "",
-        "## Finding Counts",
-        "",
-    ]
-    for kind in FINDING_KINDS:
-        lines.append(f"- `{kind}`: `{by_kind.get(kind, 0)}`")
-    retention = summary.get("claim_retention", {})
-    if retention:
-        lines.extend(
-            [
-                "",
-                "## Claim Retention",
-                "",
-                f"- Input nonblank lines: `{retention.get('input_nonblank_line_count', 0)}`",
-                f"- Emitted claims: `{retention.get('emitted_claim_count', 0)}`",
-                f"- Suppressed lines: `{retention.get('suppressed_line_count', 0)}`",
-            ]
-        )
-    if summary.get("ambiguous_by_bucket"):
-        lines.extend(["", "## Ambiguity Breakdown", ""])
-        for bucket, count in sorted(summary["ambiguous_by_bucket"].items()):
-            lines.append(f"- `{bucket}`: `{count}`")
-    if summary.get("findings_by_rule"):
-        lines.extend(["", "## Rule Breakdown", ""])
-        for rule, count in sorted(summary["findings_by_rule"].items()):
-            lines.append(f"- `{rule}`: `{count}`")
-    lines.extend(["", "## Verdict", ""])
-    if by_kind.get("conflict", 0):
-        lines.append("Decision-grade conflicts are present. Review the cited claims and ontology constraints before using this document as aligned target architecture.")
-    elif by_kind.get("deprecated-use", 0):
-        lines.append("No construction conflicts were found, but deprecated target vocabulary needs review.")
-    elif by_kind.get("ambiguous", 0):
-        lines.append("No decision-grade conflicts were found. Ambiguous claims need review before declaring full alignment.")
-    else:
-        lines.append("No decision-grade semantic conflicts were found.")
-
-    append_finding_section(lines, "Conflicts", compare.get("conflicts", []))
-    append_finding_section(lines, "Deprecated Uses", compare.get("deprecated_uses", []))
-    append_finding_section(lines, "Aligned Evidence", compare.get("aligned", []), limit=30)
-    append_finding_section(lines, "Candidate New", compare.get("candidate_new", []), limit=25)
-    append_finding_section(lines, "Decision Review Queue", decision_review_queue(compare), limit=40)
-    append_finding_section(lines, "Ambiguous", compare.get("ambiguous", []), limit=25)
-    append_suppressed_section(lines, compare.get("suppressed_lines", []), limit=25)
-    append_finding_section(lines, "Informational", compare.get("informational", []), limit=25)
-    append_finding_section(lines, "Outside Scope", compare.get("outside_scope", []), limit=25)
-    return "\n".join(lines) + "\n"
-
-
-def append_finding_section(lines: list[str], title: str, findings: list[dict[str, Any]], limit: int = 25) -> None:
-    lines.extend(["", f"## {title}", ""])
-    if not findings:
-        lines.append("None.")
-        return
-    for item in findings[:limit]:
-        target = f" `{item['entity_id']}`" if item.get("entity_id") else ""
-        lines.append(
-            f"- `{item['kind']}`{target} {item['document_path']}:{item['line_start']} "
-            f"({item['polarity']}/{item['modality']}/{item['assertion_scope']}): {item['reason']} "
-            f"Action: {item.get('review_action', 'Review source evidence.')} "
-            f"Text: {item['text']}"
-        )
-
-
-def append_suppressed_section(lines: list[str], suppressed: list[dict[str, Any]], limit: int = 25) -> None:
-    lines.extend(["", "## Suppressed Scaffold", ""])
-    if not suppressed:
-        lines.append("None.")
-        return
-    counts = Counter(item.get("reason", "unknown") for item in suppressed)
-    for reason, count in sorted(counts.items()):
-        lines.append(f"- `{reason}`: `{count}`")
-    lines.extend(["", "### Examples", ""])
-    for item in suppressed[:limit]:
-        lines.append(f"- `{item.get('reason')}` {item['source_path']}:{item['line_start']}: {item['text']}")
-
-
-def decision_review_queue(compare: dict[str, Any]) -> list[dict[str, Any]]:
-    actionable: list[dict[str, Any]] = []
-    actionable.extend(compare.get("conflicts", []))
-    actionable.extend(compare.get("deprecated_uses", []))
-    actionable.extend(compare.get("candidate_new", []))
-    actionable.extend(compare.get("ambiguous", []))
-    return actionable
-
-
-def semantic_compare_turtle(compare: dict[str, Any]) -> str:
-    lines = [
-        "@prefix rawr: <https://rawr.dev/ontology/> .",
-        "@prefix evidence: <https://rawr.dev/evidence/> .",
-        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
-        "",
-    ]
-    for claim in compare.get("claims", []):
-        node = iri_fragment(claim["id"])
-        lines.append(f"evidence:{node} a rawr:EvidenceClaim ;")
-        lines.append(f"  rdfs:label {turtle_literal(claim['text'])} ;")
-        lines.append(f"  rawr:polarity {turtle_literal(claim['polarity'])} ;")
-        lines.append(f"  rawr:modality {turtle_literal(claim['modality'])} ;")
-        lines.append(f"  rawr:assertionScope {turtle_literal(claim['assertion_scope'])} .")
-        lines.append("")
-    for item in compare.get("findings", []):
-        node = iri_fragment(item["id"])
-        claim = iri_fragment(item["claim_id"])
-        lines.append(f"evidence:{node} a rawr:ReviewFinding ;")
-        lines.append(f"  rawr:findingKind {turtle_literal(item['kind'])} ;")
-        lines.append(f"  rawr:derivedFrom evidence:{claim} ;")
-        if item.get("entity_id"):
-            lines.append(f"  rawr:resolvedTarget rawr:{iri_fragment(item['entity_id'])} ;")
-        if item.get("ambiguity_bucket"):
-            lines.append(f"  rawr:ambiguityBucket {turtle_literal(item['ambiguity_bucket'])} ;")
-        if item.get("review_action"):
-            lines.append(f"  rawr:reviewAction {turtle_literal(item['review_action'])} ;")
-        lines.append(f"  rawr:rule {turtle_literal(item.get('rule') or '')} .")
-        lines.append("")
-    return "\n".join(lines)
 
 
 def build_semantic_indexes(graph: dict[str, Any], candidate_queue: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
@@ -867,7 +875,7 @@ def build_semantic_indexes(graph: dict[str, Any], candidate_queue: dict[str, Any
 
 
 def resolve_line_terms(text: str, indexes: dict[str, list[dict[str, Any]]]) -> dict[str, list[dict[str, Any]]]:
-    normalized = normalize_text(text)
+    normalized = normalize_match_text(text)
     matches: dict[str, list[dict[str, Any]]] = {key: [] for key in indexes}
     for bucket, items in indexes.items():
         for item in items:
@@ -917,7 +925,11 @@ def classify_claim_text(text: str, heading_path: list[str], *, matched: bool = F
         assertion_scope = "migration-note"
     elif modality in {"historical", "illustrative"}:
         assertion_scope = "migration-note" if modality == "historical" else "example"
-    elif re.search(r"\b(target architecture|create|add|introduce|adopt|should|must|canonical|do not|must not|there is no)\b", combined, re.I):
+    elif re.search(
+        r"\b(target architecture|create|add|introduce|adopt|should|must|canonical|do not|must not|there is no)\b",
+        combined,
+        re.I,
+    ):
         assertion_scope = "target-architecture"
     elif polarity == "positive":
         assertion_scope = "current-state"
@@ -931,7 +943,9 @@ def classify_claim_text(text: str, heading_path: list[str], *, matched: bool = F
 
 
 def is_review_relevant_line(text: str) -> bool:
-    return bool(NORMATIVE_RE.search(text) or PROPOSED_RE.search(text) or PROHIBITIVE_RE.search(text) or NEGATIVE_RE.search(text))
+    return bool(
+        NORMATIVE_RE.search(text) or PROPOSED_RE.search(text) or PROHIBITIVE_RE.search(text) or NEGATIVE_RE.search(text)
+    )
 
 
 def infer_claim_kind(classification: dict[str, str], matches: dict[str, list[dict[str, Any]]]) -> str:
@@ -1008,17 +1022,25 @@ def item_terms(item: dict[str, Any]) -> list[str]:
         values.extend(constraint.get("semantic_keys") or [])
     terms = []
     for value in values:
-        text = normalize_text(str(value or ""))
+        text = normalize_match_text(str(value or ""))
         if text:
             terms.append(text)
         if value and "." in str(value):
-            terms.append(normalize_text(str(value).split(".")[-1].replace("-", " ")))
+            terms.append(normalize_match_text(str(value).split(".")[-1].replace("-", " ")))
     return sorted({term for term in terms if len(term) >= 4}, key=len, reverse=True)
 
 
 def candidate_terms(item: dict[str, Any]) -> list[str]:
     values = [item.get("id"), item.get("label"), item.get("hook")]
-    return sorted({normalize_text(str(value or "")) for value in values if len(normalize_text(str(value or ""))) >= 4}, key=len, reverse=True)
+    return sorted(
+        {
+            normalize_match_text(str(value or ""))
+            for value in values
+            if len(normalize_match_text(str(value or ""))) >= 4
+        },
+        key=len,
+        reverse=True,
+    )
 
 
 def first_label(matches: dict[str, list[dict[str, Any]]]) -> str | None:
@@ -1050,14 +1072,8 @@ def infer_claim_predicate(classification: dict[str, str], matches: dict[str, lis
     return "mentions"
 
 
-def normalize_text(value: str) -> str:
-    return re.sub(r"\s+", " ", value.replace("`", "").strip().lower())
-
-
 def term_in_line(term: str, normalized_line: str) -> bool:
-    if not term or len(term) < 4:
-        return False
-    return re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", normalized_line) is not None
+    return term_in_normalized_text(term, normalized_line)
 
 
 def unique_by_id(items: list[dict[str, Any]]) -> list[dict[str, Any]]:

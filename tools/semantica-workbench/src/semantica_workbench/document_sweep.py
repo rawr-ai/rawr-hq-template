@@ -23,8 +23,10 @@ from .core_config import (
     SWEEP_REVIEW_RECOMMENDATIONS,
 )
 from .core_viewer import write_html_viewer
+from .evidence_index import write_sweep_evidence_index
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json, write_jsonl
 from .paths import REPO_ROOT
+from .report_html import write_semantic_compare_report_html, write_sweep_report_html
 from .semantic_evidence import (
     compare_evidence_to_ontology,
     extract_evidence_claims,
@@ -32,6 +34,7 @@ from .semantic_evidence import (
     semantic_compare_turtle,
 )
 from .semantica_adapter import iri_fragment, turtle_literal
+from .semantica_pipeline import semantica_pipeline_probe
 
 SWEEP_SCHEMA_VERSION = "rawr-semantic-doc-sweep-v1"
 
@@ -90,7 +93,9 @@ def run_document_sweep(
     write_html_viewer(run_dir / CORE_GRAPH_FILENAMES["viewer"], graph, candidate_queue, {"sweep": sweep})
     mark_current(run_dir, SWEEP_CURRENT_FILES)
     if fail_on == "decision-grade" and sweep["summary"]["decision_grade_findings"]:
-        raise RuntimeError(f"Document sweep found {sweep['summary']['decision_grade_findings']} decision-grade findings")
+        raise RuntimeError(
+            f"Document sweep found {sweep['summary']['decision_grade_findings']} decision-grade findings"
+        )
     return run_dir
 
 
@@ -177,6 +182,7 @@ def analyze_document(
         "artifact_paths": {
             "semantic_compare": rel(document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare"]),
             "report": rel(document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]),
+            "report_html": rel(document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report_html"]),
         },
     }
 
@@ -196,11 +202,22 @@ def write_document_artifacts(document_run_dir: Path, evidence: dict[str, Any], c
     write_jsonl(document_run_dir / CORE_GRAPH_FILENAMES["document_chunks"], chunks)
     write_jsonl(document_run_dir / CORE_GRAPH_FILENAMES["evidence_claims"], evidence.get("claims", []))
     write_json(document_run_dir / CORE_GRAPH_FILENAMES["evidence_claims_json"], evidence)
-    write_json(document_run_dir / CORE_GRAPH_FILENAMES["suppressed_lines"], {"document": evidence["document"], "items": evidence.get("suppressed_lines", [])})
-    write_json(document_run_dir / CORE_GRAPH_FILENAMES["resolved_evidence"], {"claims": compare.get("claims", []), "findings": compare.get("findings", [])})
+    write_json(
+        document_run_dir / CORE_GRAPH_FILENAMES["suppressed_lines"],
+        {"document": evidence["document"], "items": evidence.get("suppressed_lines", [])},
+    )
+    write_json(
+        document_run_dir / CORE_GRAPH_FILENAMES["resolved_evidence"],
+        {"claims": compare.get("claims", []), "findings": compare.get("findings", [])},
+    )
     write_json(document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare"], compare)
-    (document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(render_semantic_compare_report(compare), encoding="utf-8")
-    (document_run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(semantic_compare_turtle(compare), encoding="utf-8")
+    (document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report"]).write_text(
+        render_semantic_compare_report(compare), encoding="utf-8"
+    )
+    write_semantic_compare_report_html(document_run_dir / CORE_GRAPH_FILENAMES["semantic_compare_report_html"], compare)
+    (document_run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(
+        semantic_compare_turtle(compare), encoding="utf-8"
+    )
 
 
 def build_sweep_payload(
@@ -215,6 +232,7 @@ def build_sweep_payload(
 ) -> dict[str, Any]:
     summary_counter = Counter(record["recommendation"] for record in records)
     counts = aggregate_counts(records)
+    recommendations = {name: summary_counter.get(name, 0) for name in SWEEP_RECOMMENDATIONS}
     return {
         "schema_version": SWEEP_SCHEMA_VERSION,
         "run_id": run_dir.name,
@@ -229,7 +247,7 @@ def build_sweep_payload(
             "documents_discovered": documents_discovered_count,
             "documents_analyzed": len(records),
             "documents_skipped": len(skipped),
-            "recommendations": {name: summary_counter.get(name, 0) for name in SWEEP_RECOMMENDATIONS},
+            "recommendations": recommendations,
             "total_claims": counts["claims"],
             "total_findings": counts["findings"],
             "decision_grade_findings": counts["decision_grade"],
@@ -239,6 +257,7 @@ def build_sweep_payload(
             "candidate_new": counts["candidate_new"],
             "suppressed_lines": counts["suppressed_lines"],
         },
+        "semantica_pipeline": semantica_pipeline_probe(len(records), len(skipped), recommendations),
         "skipped_documents": skipped,
         "documents": records,
     }
@@ -246,17 +265,31 @@ def build_sweep_payload(
 
 def write_sweep_outputs(run_dir: Path, sweep: dict[str, Any]) -> None:
     review_queue = review_queue_records(sweep)
-    quarantine_candidates = [record for record in sweep["documents"] if record["recommendation"] == "quarantine-candidate"]
+    quarantine_candidates = [
+        record for record in sweep["documents"] if record["recommendation"] == "quarantine-candidate"
+    ]
     update_candidates = [record for record in sweep["documents"] if record["recommendation"] == "update-needed"]
     no_signal = [record for record in sweep["documents"] if record["recommendation"] == "outside-scope"]
     write_json(run_dir / CORE_GRAPH_FILENAMES["doc_sweep"], sweep)
-    write_json(run_dir / CORE_GRAPH_FILENAMES["doc_sweep_review_queue"], {"run_id": sweep["run_id"], "documents": review_queue})
-    write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_quarantine_candidates"], {"run_id": sweep["run_id"], "documents": quarantine_candidates})
-    write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_update_candidates"], {"run_id": sweep["run_id"], "documents": update_candidates})
-    write_json(run_dir / CORE_GRAPH_FILENAMES["sweep_no_signal_documents"], {"run_id": sweep["run_id"], "documents": no_signal})
+    write_json(
+        run_dir / CORE_GRAPH_FILENAMES["doc_sweep_review_queue"], {"run_id": sweep["run_id"], "documents": review_queue}
+    )
+    write_json(
+        run_dir / CORE_GRAPH_FILENAMES["sweep_quarantine_candidates"],
+        {"run_id": sweep["run_id"], "documents": quarantine_candidates},
+    )
+    write_json(
+        run_dir / CORE_GRAPH_FILENAMES["sweep_update_candidates"],
+        {"run_id": sweep["run_id"], "documents": update_candidates},
+    )
+    write_json(
+        run_dir / CORE_GRAPH_FILENAMES["sweep_no_signal_documents"], {"run_id": sweep["run_id"], "documents": no_signal}
+    )
     (run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report"]).write_text(render_sweep_report(sweep), encoding="utf-8")
+    write_sweep_report_html(run_dir / CORE_GRAPH_FILENAMES["doc_sweep_report_html"], sweep)
     write_sweep_csv(run_dir / CORE_GRAPH_FILENAMES["doc_sweep_csv"], sweep)
     (run_dir / CORE_GRAPH_FILENAMES["doc_sweep_ttl"]).write_text(sweep_turtle(sweep), encoding="utf-8")
+    write_sweep_evidence_index(run_dir)
 
 
 def recommend_document(compare: dict[str, Any], path_class: str) -> dict[str, Any]:
@@ -281,7 +314,9 @@ def recommend_document(compare: dict[str, Any], path_class: str) -> dict[str, An
     if path_class == "source-authority":
         if counts["decision_grade"]:
             reason_codes.append("source-authority-parser-regression-review")
-        return recommendation("source-authority", reason_codes or ["source-authority-regression-input"], confidence="high")
+        return recommendation(
+            "source-authority", reason_codes or ["source-authority-regression-input"], confidence="high"
+        )
     if counts["conflict"]:
         return recommendation("quarantine-candidate", reason_codes, confidence="medium")
     if counts["deprecated_use"]:
@@ -361,10 +396,7 @@ def review_queue_records(sweep: dict[str, Any]) -> list[dict[str, Any]]:
         record
         for record in sweep["documents"]
         if record["recommendation"] in SWEEP_REVIEW_RECOMMENDATIONS
-        or (
-            record["recommendation"] == "source-authority"
-            and record.get("counts", {}).get("decision_grade", 0) > 0
-        )
+        or (record["recommendation"] == "source-authority" and record.get("counts", {}).get("decision_grade", 0) > 0)
     ]
 
 
@@ -404,7 +436,9 @@ def render_sweep_report(sweep: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def append_record_section(lines: list[str], title: str, records: list[dict[str, Any]], recommendation_name: str) -> None:
+def append_record_section(
+    lines: list[str], title: str, records: list[dict[str, Any]], recommendation_name: str
+) -> None:
     lines.extend(["", f"## {title}", ""])
     selected = [record for record in records if record["recommendation"] == recommendation_name]
     if not selected:
@@ -418,7 +452,9 @@ def append_record_section(lines: list[str], title: str, records: list[dict[str, 
             f"report `{record['artifact_paths']['report']}`"
         )
     if len(selected) > limit:
-        lines.append(f"- ... `{len(selected) - limit}` additional records omitted from this section; see `doc-sweep.json` or `doc-sweep.csv`.")
+        lines.append(
+            f"- ... `{len(selected) - limit}` additional records omitted from this section; see `doc-sweep.json` or `doc-sweep.csv`."
+        )
 
 
 def append_high_ambiguity_section(lines: list[str], records: list[dict[str, Any]]) -> None:
@@ -437,9 +473,13 @@ def append_high_ambiguity_section(lines: list[str], records: list[dict[str, Any]
         return
     limit = 25
     for record in selected[:limit]:
-        lines.append(f"- `{record['document_path']}`: `{record['counts']['ambiguous']}` ambiguous findings, action `{record['recommendation']}`")
+        lines.append(
+            f"- `{record['document_path']}`: `{record['counts']['ambiguous']}` ambiguous findings, action `{record['recommendation']}`"
+        )
     if len(selected) > limit:
-        lines.append(f"- ... `{len(selected) - limit}` additional high-ambiguity records omitted; see `doc-sweep.json` or `doc-sweep.csv`.")
+        lines.append(
+            f"- ... `{len(selected) - limit}` additional high-ambiguity records omitted; see `doc-sweep.json` or `doc-sweep.csv`."
+        )
 
 
 def append_compact_table(lines: list[str], records: list[dict[str, Any]]) -> None:
@@ -469,7 +509,9 @@ def append_next_queue(lines: list[str], sweep: dict[str, Any]) -> None:
                 f"rule `{finding.get('rule')}`: {finding.get('summary')}"
             )
     if len(queue) > limit:
-        lines.append(f"- ... `{len(queue) - limit}` additional review-queue records omitted; see `doc-sweep-review-queue.json`.")
+        lines.append(
+            f"- ... `{len(queue) - limit}` additional review-queue records omitted; see `doc-sweep-review-queue.json`."
+        )
 
 
 def write_sweep_csv(path: Path, sweep: dict[str, Any]) -> None:
@@ -537,8 +579,12 @@ def sweep_turtle(sweep: dict[str, Any]) -> str:
         lines.append(f"  rawr:confidence {turtle_literal(record['confidence'])} .")
         lines.append("")
         for item in record.get("top_findings", []):
-            finding_node = iri_fragment(item.get("finding_id") or f"finding-{record['document_path']}-{item.get('line_start')}")
-            claim_node = iri_fragment(item.get("claim_id") or f"claim-{record['document_path']}-{item.get('line_start')}")
+            finding_node = iri_fragment(
+                item.get("finding_id") or f"finding-{record['document_path']}-{item.get('line_start')}"
+            )
+            claim_node = iri_fragment(
+                item.get("claim_id") or f"claim-{record['document_path']}-{item.get('line_start')}"
+            )
             lines.append(f"evidence:{finding_node} a rawr:ReviewFinding ;")
             lines.append(f"  rawr:findingKind {turtle_literal(item.get('verdict') or '')} ;")
             lines.append(f"  rawr:derivedFrom evidence:{claim_node} ;")
@@ -571,7 +617,9 @@ def source_authority_documents(graph: dict[str, Any]) -> set[str]:
     return paths
 
 
-def classify_document_path(document: Path, source_authority_paths: set[str], exclude_segments: list[str], *, explicit: bool) -> str:
+def classify_document_path(
+    document: Path, source_authority_paths: set[str], exclude_segments: list[str], *, explicit: bool
+) -> str:
     rel_path = rel(document)
     if rel_path in source_authority_paths:
         return "source-authority"
