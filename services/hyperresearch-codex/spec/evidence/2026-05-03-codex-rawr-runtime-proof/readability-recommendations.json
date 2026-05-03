@@ -1,0 +1,109 @@
+{
+  "recommendations": [
+    {
+      "id": "rec-1",
+      "category": "make-list",
+      "severity": "moderate",
+      "section": "## II. Material Claims For Trace",
+      "current": "For source builds, the PyPA `pyproject.toml` specification says tools should use default setuptools semantics when `pyproject.toml` or `[build-system]` is absent, but should treat a present `[build-system]` table with missing required fields as an error. [pyproject]\n\n`project.dependencies` in `pyproject.toml` maps directly to core metadata `Requires-Dist`, and `project.optional-dependencies` maps to `Requires-Dist` entries associated with `Provides-Extra`. [pyproject]\n\nCore metadata consumers should warn when `Metadata-Version` is newer than they support and must fail when the unsupported version has a greater major version than they support. [core-metadata]\n\nBuild backends must not include dependency group data in built distributions as package metadata, so wheel `METADATA` and sdist `PKG-INFO` should not expose dependency groups as referenceable metadata fields. [dependency-groups]\n\nThe dependency-groups specification defines no standard syntax or interface for installing or referring to dependency groups. [dependency-groups]",
+      "recommended": "- For source builds, the PyPA `pyproject.toml` specification says tools should use default setuptools semantics when `pyproject.toml` or `[build-system]` is absent, but should treat a present `[build-system]` table with missing required fields as an error. [pyproject]\n- `project.dependencies` in `pyproject.toml` maps directly to core metadata `Requires-Dist`, and `project.optional-dependencies` maps to `Requires-Dist` entries associated with `Provides-Extra`. [pyproject]\n- Core metadata consumers should warn when `Metadata-Version` is newer than they support and must fail when the unsupported version has a greater major version than they support. [core-metadata]\n- Build backends must not include dependency group data in built distributions as package metadata, so wheel `METADATA` and sdist `PKG-INFO` should not expose dependency groups as referenceable metadata fields. [dependency-groups]\n- The dependency-groups specification defines no standard syntax or interface for installing or referring to dependency groups. [dependency-groups]",
+      "rationale": "The trace section is already an enumerated set of claims, so bullets make the anchors easier to scan without changing meaning."
+    },
+    {
+      "id": "rec-2",
+      "category": "split-sentence",
+      "severity": "minor",
+      "section": "## III. How The Standards Affect Installer Behavior",
+      "current": "`pyproject.toml` matters most before the installer has a wheel. The `[build-system]` table declares build requirements, and the official packaging tutorial explains that frontends should install those requirements automatically and usually build in isolated environments. The `build-backend` value names the Python object used to perform the build. That makes compatibility depend on build isolation, backend availability, and correct error handling for malformed build configuration. [pyproject] [packaging-tutorial]",
+      "recommended": "`pyproject.toml` matters most before the installer has a wheel. The `[build-system]` table declares build requirements. The official packaging tutorial explains that frontends should install those requirements automatically and usually build in isolated environments. The `build-backend` value names the Python object used to perform the build. That makes compatibility depend on build isolation, backend availability, and correct error handling for malformed build configuration. [pyproject] [packaging-tutorial]",
+      "rationale": "Splitting the build-requirements sentence reduces density in the first technical subsection."
+    },
+    {
+      "id": "rec-3",
+      "category": "split-sentence",
+      "severity": "minor",
+      "section": "## III. How The Standards Affect Installer Behavior",
+      "current": "The `[project]` table then standardizes the source declaration of core metadata. Static fields are fixed by the project author, while `dynamic` marks fields that the backend will provide later. Installers should not assume all source metadata is available before invoking the backend, and backends must respect the boundary: statically specified metadata cannot be changed, and fields not listed as dynamic cannot be filled in by the backend. [pyproject]",
+      "recommended": "The `[project]` table then standardizes the source declaration of core metadata. Static fields are fixed by the project author, while `dynamic` marks fields that the backend will provide later. Installers should not assume all source metadata is available before invoking the backend. Backends must respect the boundary. Statically specified metadata cannot be changed, and fields not listed as dynamic cannot be filled in by the backend. [pyproject]",
+      "rationale": "The installer/backend boundary is easier to follow when the caution and backend obligation are separated."
+    },
+    {
+      "id": "rec-4",
+      "category": "make-list",
+      "severity": "moderate",
+      "section": "## III. How The Standards Affect Installer Behavior",
+      "current": "Core metadata is the compatibility layer installers should prefer once they are evaluating a wheel or built metadata from a source distribution. `Requires-Python` lets tools filter candidates by Python version, `Requires-Dist` supplies the dependency graph with version specifiers and environment markers, and `Provides-Extra` names optional features whose conditional requirements are added when requested. [core-metadata]",
+      "recommended": "Core metadata is the compatibility layer installers should prefer once they are evaluating a wheel or built metadata from a source distribution.\n\n- `Requires-Python` lets tools filter candidates by Python version.\n- `Requires-Dist` supplies the dependency graph with version specifiers and environment markers.\n- `Provides-Extra` names optional features whose conditional requirements are added when requested. [core-metadata]",
+      "rationale": "The paragraph compares three metadata fields, so a list makes each installer input distinct."
+    },
+    {
+      "id": "rec-5",
+      "category": "split-sentence",
+      "severity": "minor",
+      "section": "## III. How The Standards Affect Installer Behavior",
+      "current": "`Metadata-Version` is also a direct compatibility gate. Consumers are expected to warn when metadata uses a newer minor version than they support, but they must fail on unsupported newer major versions. This gives installers a clear forward-compatibility posture: tolerate known-format evolution when possible, but do not silently process a metadata format whose major version may have incompatible semantics. [core-metadata]",
+      "recommended": "`Metadata-Version` is also a direct compatibility gate. Consumers are expected to warn when metadata uses a newer minor version than they support, but they must fail on unsupported newer major versions. This gives installers a clear forward-compatibility posture: tolerate known-format evolution when possible. They should not silently process a metadata format whose major version may have incompatible semantics. [core-metadata]",
+      "rationale": "Separating the interpretation from the warning/failure rule makes the compatibility posture more readable."
+    },
+    {
+      "id": "rec-6",
+      "category": "split-sentence",
+      "severity": "minor",
+      "section": "## III. How The Standards Affect Installer Behavior",
+      "current": "The `Dynamic` field adds another practical limit: metadata should be evaluated for the artifact actually selected. For source distributions, `Dynamic` constrains what may change in wheels built from that sdist. Outside source distributions, it is informational, and the core metadata spec warns that prebuilt wheels, sdists, and other wheels for the same project release should not be assumed to have interchangeable metadata. [core-metadata]",
+      "recommended": "The `Dynamic` field adds another practical limit: metadata should be evaluated for the artifact actually selected. For source distributions, `Dynamic` constrains what may change in wheels built from that sdist. Outside source distributions, it is informational. The core metadata spec warns against assuming that prebuilt wheels, sdists, and other wheels for the same project release have interchangeable metadata. [core-metadata]",
+      "rationale": "Splitting the final sentence keeps the artifact-specific metadata warning from becoming visually buried."
+    },
+    {
+      "id": "rec-7",
+      "category": "split-sentence",
+      "severity": "minor",
+      "section": "## III. How The Standards Affect Installer Behavior",
+      "current": "Dependency groups standardize local requirement lists under `[dependency-groups]` in `pyproject.toml`; they are suitable for development, testing, linting, or projects that are not built for distribution. Their compatibility value is real, but it is not the same value as extras. Extras are represented in core metadata through `Provides-Extra` and conditional `Requires-Dist`; dependency groups are excluded from built distribution metadata. [dependency-groups] [core-metadata]",
+      "recommended": "Dependency groups standardize local requirement lists under `[dependency-groups]` in `pyproject.toml`. They are suitable for development, testing, linting, or projects that are not built for distribution. Their compatibility value is real, but it is not the same value as extras. Extras are represented in core metadata through `Provides-Extra` and conditional `Requires-Dist`. Dependency groups are excluded from built distribution metadata. [dependency-groups] [core-metadata]",
+      "rationale": "Breaking the semicolon-separated contrasts gives the extras-versus-groups distinction more breathing room."
+    },
+    {
+      "id": "rec-8",
+      "category": "make-list",
+      "severity": "moderate",
+      "section": "## III. How The Standards Affect Installer Behavior",
+      "current": "That means an installer can support dependency groups only through a dedicated interface. The specification does not define a syntax for installing or referring to them, and tools may treat a dependency group name that collides with an extra name as an error. Tools also need careful validation behavior: group names are normalized for comparison, includes must expand in place without deduplication, cycles must be rejected, and unrelated unused groups should not be eagerly validated unless the tool has a reason. [dependency-groups]",
+      "recommended": "That means an installer can support dependency groups only through a dedicated interface. The specification does not define a syntax for installing or referring to them. Tools may treat a dependency group name that collides with an extra name as an error.\n\nTools also need careful validation behavior:\n\n- Group names are normalized for comparison.\n- Includes must expand in place without deduplication.\n- Cycles must be rejected.\n- Unrelated unused groups should not be eagerly validated unless the tool has a reason. [dependency-groups]",
+      "rationale": "The validation behaviors are a compact sequence of rules, and bullets make them easier to audit."
+    },
+    {
+      "id": "rec-9",
+      "category": "make-list",
+      "severity": "moderate",
+      "section": "## IV. Practical Compatibility Bottom Line",
+      "current": "The main compatibility failures follow those boundaries. A source fallback can fail because build requirements are missing or the backend cannot be invoked. A resolver can choose the wrong candidate if it ignores `Requires-Python` or mishandles environment markers. An extras implementation can become ambiguous if it treats dependency groups as extras without an explicit tool interface. A future metadata release can be mishandled if the installer does not apply the `Metadata-Version` warn-versus-fail rule.",
+      "recommended": "The main compatibility failures follow those boundaries.\n\n- A source fallback can fail because build requirements are missing or the backend cannot be invoked.\n- A resolver can choose the wrong candidate if it ignores `Requires-Python` or mishandles environment markers.\n- An extras implementation can become ambiguous if it treats dependency groups as extras without an explicit tool interface.\n- A future metadata release can be mishandled if the installer does not apply the `Metadata-Version` warn-versus-fail rule.",
+      "rationale": "The failure modes are already enumerated in prose, so bullets improve scanability for implementers."
+    },
+    {
+      "id": "rec-10",
+      "category": "split-sentence",
+      "severity": "minor",
+      "section": "## V. Future Implications",
+      "current": "The likely direction is more standardization around source-tree workflows without making those workflows part of distribution metadata. Dependency groups give tools a shared file format for development requirements, but the specification's decision not to put groups into wheel `METADATA` preserves a stable runtime installation contract. For modern installers, the durable path is to keep adding explicit interfaces around new source-tree capabilities while keeping core metadata as the artifact-level API. That separation matters as metadata versions advance: installers that implement strict metadata-version handling and artifact-specific metadata evaluation will be able to adopt new fields without confusing local development configuration with portable distribution behavior.",
+      "recommended": "The likely direction is more standardization around source-tree workflows without making those workflows part of distribution metadata. Dependency groups give tools a shared file format for development requirements. The specification's decision not to put groups into wheel `METADATA` preserves a stable runtime installation contract. For modern installers, the durable path is to keep adding explicit interfaces around new source-tree capabilities. Core metadata remains the artifact-level API. That separation matters as metadata versions advance. Installers that implement strict metadata-version handling and artifact-specific metadata evaluation will be able to adopt new fields. They can do that without confusing local development configuration with portable distribution behavior.",
+      "rationale": "Shorter closing sentences make the final implication easier to retain without changing the conclusion."
+    }
+  ],
+  "summary": {
+    "total_recommendations": 10,
+    "by_category": {
+      "merge-paragraphs": 0,
+      "break-paragraph": 0,
+      "make-list": 4,
+      "make-table": 0,
+      "bold-keyterms": 0,
+      "split-sentence": 6,
+      "remove-hr": 0,
+      "add-whitespace": 0
+    },
+    "highest_severity": "moderate",
+    "expected_net_char_delta": 11
+  }
+}

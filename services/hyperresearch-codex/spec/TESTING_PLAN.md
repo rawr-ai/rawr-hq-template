@@ -9,7 +9,7 @@ Evidence exists at two levels:
 - Synthetic slice: three-step smoke for fresh step loading, ledger resume, CLI audit, and final artifact integrity.
 - V8 fixture slice: all 16 V8 step references, light/full tier routing, packet-mode agent fan-out/fan-in, required CLI-call failures, patch-snapshot state, validation, and downstream Codex sync surface.
 
-The remaining proof class is a long research-quality run with human-reviewed final-report provenance. It is a release-evidence gate after the Codex-RAWR packet-provenance light proof, not an implementation blocker for packet provenance.
+The remaining proof class is a long research-quality run with human-reviewed final-report provenance. It is a release-evidence gate after the Codex-RAWR packet-provenance light proof and short multi-source runtime proof, not an implementation blocker for packet provenance.
 
 ## Correctness Oracles
 
@@ -22,7 +22,7 @@ The remaining proof class is a long research-quality run with human-reviewed fin
 - Completed V8 runs include `research/claim-trace.json`, and claim-trace source URLs must map to captured sources or explicit uncertainty.
 - Final-report edits after the synthesis snapshot require a covering accepted patch log entry with before/after hashes, finding IDs, and hunks that match the pre/post report text and cover changed lines.
 - Final acceptance blocks on failed CLI calls, failed steps, missing artifacts, or unclosed blocking review findings.
-- Final plugin-system proof uses actual Codex skill/plugin runtime after RAWR sync. Current evidence proves synced skill/agent install, CLI fixture execution, and a fresh Codex-RAWR exec packet-mode light run with real source capture and claim trace. A long research-quality full run remains a release-evidence gate, not a packet-provenance implementation blocker.
+- Final plugin-system proof uses actual Codex skill/plugin runtime after RAWR sync. Current evidence proves synced skill/agent install, CLI fixture execution, a fresh Codex-RAWR exec packet-mode light run with real source capture and claim trace, and a short multi-source `codex-rawr exec resume` runtime proof. A long research-quality full run remains a release-evidence gate, not a packet-provenance implementation blocker.
 
 ## Component Gates
 
@@ -60,6 +60,7 @@ Current observed component evidence:
 - Real-backend packet-mode light route passed after agent outputs supplied `sourceUrls`: `init`, `search`, `fetch https://www.python.org/about/`, `note new`, `lint`, `sync`, second `lint`, and `export json` all recorded exit code 0 in the v2 ledger, and all five light steps completed with no ledger failures. Current unit coverage additionally proves every distinct valid packet URL is scheduled for capture.
 - Real-backend artifact packet smoke passed after harness-written packet outputs supplied assigned artifact commitments and `sourceUrls`: ledger `/tmp/hr-real-packet-final-gmbW0y/research/temp/hyperresearch-codex-run.json` completed the light route with `passed:true`; `sourceCaptures` recorded `https://www.python.org/about/`, both suggested-by packet jobs, CLI call index `2`, and Hyperresearch note id `about-python-pythonorg`.
 - Fresh Codex-RAWR exec packet proof passed: `codex-rawr exec` (`OpenAI Codex v0.126.0-alpha.3`, `gpt-5.5`, `CODEX_HOME=~/.codex-rawr`, session `019debca-b051-77e3-bb05-738b1e0649ed`) invoked `hyperresearch-codex`, ran `rawr hyperresearch codex start`, repeated `advance --agent-mode packets --backend real`, wrote five packet outputs with assigned `artifactWrites`, captured `https://www.python.org/about/`, completed the light route, and `validate` returned `passed:true`. The original proof vault was `/tmp/hyperresearch-codex-proof.CD9fhB`; the committed evidence subset is under `spec/evidence/2026-05-03-codex-rawr-packet-proof/`; see `evidence.md`.
+- Short multi-source Codex-RAWR runtime proof passed: `codex-rawr exec` session `019debf6-73ab-7622-8d58-3afc26212616` started a real-backend light run, stopped at packet gates, resumed with `codex-rawr exec resume`, spawned Hyperresearch role agents, captured four official PyPA URLs through real `fetch` calls, produced a final report, repaired a claim-trace source-shape miss through a role-agent packet repair, completed `advance-06` with `integrity:[]`, and `validate --backend real` returned `passed:true`. The disposable vault was `/tmp/hyperresearch-codex-runtime-vault-rSLoGr`; the committed evidence subset is under `spec/evidence/2026-05-03-codex-rawr-runtime-proof/`; see `evidence.md`.
 
 ## Dry-Run Gates
 
@@ -78,9 +79,9 @@ Current observed component evidence:
 
 1. Install template CLI topic. Current status: template CLI topic exists in the implementation worktree, builds into oclif command discovery, and passes fixture smoke.
 2. Sync downstream RAWR HQ skill/reference/agent material into Codex. Current status: observed for the scoped Hyperresearch plugin after V8 workflow and 14 role-agent updates.
-3. Invoke the synced skill in a fresh Codex session. Current status: fresh `codex-rawr exec` proof passed; the session used `hyperresearch-codex`, read the service plan, and executed the V8 service CLI workflow.
-4. Verify ledger, artifacts, source-capture provenance, claim trace, patch log, and CLI call audit trail from the CLI-backed fixture workflow. Current status: run-fixture proof exists; direct CLI packet-mode real-backend light-route proof exists for artifact writes; fresh Codex-RAWR packet-mode proof exists with real source capture and claim trace.
-5. Verify a compaction/resume handoff can continue from ledger state. Current status: service-level packet/resume test passed; actual Codex-session resume not run.
+3. Invoke the synced skill in a fresh Codex session. Current status: fresh `codex-rawr exec` proofs passed; the sessions used `hyperresearch-codex`, read the service plan, and executed the V8 service CLI workflow.
+4. Verify ledger, artifacts, source-capture provenance, claim trace, patch log, and CLI call audit trail from the CLI-backed fixture workflow. Current status: run-fixture proof exists; direct CLI packet-mode real-backend light-route proof exists for artifact writes; fresh Codex-RAWR packet-mode proof exists with real source capture and claim trace; short multi-source runtime proof exists with four official source captures and five traced claims.
+5. Verify a compaction/resume handoff can continue from ledger state. Current status: service-level packet/resume test passed, and actual `codex-rawr exec resume` continued the short runtime proof from the same ledger. Compaction-specific UI/session recovery is still not separately proven.
 6. Verify patch-only phase rejects wholesale rewrites. Current status: snapshot copies and retained-line validation block apparent wholesale rewrites before long live runs.
 
 Current observed Codex sync evidence:
@@ -99,4 +100,4 @@ Current observed Codex sync evidence:
 3. Final report has explicit uncertainty and no silent parity invention.
 4. Reviewer traces at least three material claims from report to vault note/source metadata.
 
-Do not claim a long full V8 research-quality pass until component, dry-run, Codex-RAWR packet provenance, and short live research-quality gates are green.
+Do not claim a long full V8 research-quality pass until component, dry-run, Codex-RAWR packet provenance, short multi-source runtime, and reviewed long-form research-quality gates are green.

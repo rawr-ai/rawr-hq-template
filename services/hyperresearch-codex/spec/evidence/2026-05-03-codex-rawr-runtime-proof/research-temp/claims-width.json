@@ -1,0 +1,163 @@
+{
+  "jobId": "02-width-sweep-2-source-analyst",
+  "role": "hyperresearch-source-analyst",
+  "canonicalQuery": "What are the practical compatibility implications of Python's packaging metadata standards for modern Python project installers? Focus on how pyproject.toml, core metadata, and dependency groups affect installer behavior, and cite only Python Packaging Authority or official Python documentation sources.",
+  "generatedAt": "2026-05-03T03:57:53Z",
+  "sourcePolicy": "official Python Packaging Authority / Python documentation sources only",
+  "sourceUrls": [
+    "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+    "https://packaging.python.org/en/latest/specifications/core-metadata/",
+    "https://packaging.python.org/en/latest/specifications/dependency-groups/",
+    "https://packaging.python.org/en/latest/tutorials/packaging-projects/"
+  ],
+  "claims": [
+    {
+      "id": "CW-001",
+      "topic": "pyproject.toml build-system behavior",
+      "claim": "For source builds, modern build frontends and installers must treat `[build-system].requires` as the build dependency declaration; when `pyproject.toml` or `[build-system]` is absent, PyPA specifies default setuptools semantics, but a present table with missing required fields is an error.",
+      "installerCompatibilityImplication": "Installers that build from source cannot rely on legacy `setup.py` discovery alone; they need pyproject-aware build isolation and clear error behavior for malformed build-system tables.",
+      "evidence": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+          "lineRefs": "151-163"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "CW-002",
+      "topic": "pyproject.toml project metadata",
+      "claim": "`[project]` is the standardized place for project core metadata in `pyproject.toml`; `name` must be static, `version` must be static or dynamic, and missing `[project]` means the build backend supplies metadata dynamically.",
+      "installerCompatibilityImplication": "A source-tree installer should not assume all metadata is available before invoking the backend; compatibility depends on respecting the static/dynamic boundary and using built metadata when dynamic fields are produced.",
+      "evidence": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+          "lineRefs": "192-206"
+        },
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+          "lineRefs": "431-446"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "CW-003",
+      "topic": "dependency metadata mapping",
+      "claim": "`project.dependencies` maps directly to core metadata `Requires-Dist`; `project.optional-dependencies` maps to `Requires-Dist` entries guarded by extras and to `Provides-Extra` declarations.",
+      "installerCompatibilityImplication": "Installers should resolve runtime dependencies from core metadata, not by inventing a separate interpretation of `pyproject.toml`; extras requested by users must flow through `Provides-Extra` and conditional `Requires-Dist` metadata.",
+      "evidence": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+          "lineRefs": "381-389"
+        },
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/core-metadata/",
+          "lineRefs": "506-527"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "CW-004",
+      "topic": "core metadata parser compatibility",
+      "claim": "Core metadata is versioned; automated consumers are expected to tolerate newer minor versions with warnings but fail on unsupported newer major versions.",
+      "installerCompatibilityImplication": "Installer compatibility requires a metadata-version gate: unknown future minor metadata should not necessarily block installs, but unknown future major metadata should be treated as incompatible.",
+      "evidence": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/core-metadata/",
+          "lineRefs": "163-170"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "CW-005",
+      "topic": "core metadata dependency fields",
+      "claim": "`Requires-Dist` carries dependency names, extras, version specifiers, and environment markers; `Requires-Python` declares compatible Python versions and may be used by installation tools when selecting a project version.",
+      "installerCompatibilityImplication": "Modern installers need PEP 508-compatible requirement parsing, marker evaluation, extras handling, and Python-version filtering to choose compatible candidates.",
+      "evidence": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/core-metadata/",
+          "lineRefs": "435-466"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "CW-006",
+      "topic": "dynamic metadata across sdists and wheels",
+      "claim": "The `Dynamic` field constrains metadata emitted from an sdist, but outside source distributions it is informational; prebuilt wheel metadata should be trusted for that wheel rather than assumed to match other artifacts.",
+      "installerCompatibilityImplication": "Installers and resolvers should evaluate metadata for the selected distribution artifact and avoid assuming that sdist metadata, wheel metadata, or different wheels for the same release are interchangeable.",
+      "evidence": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/core-metadata/",
+          "lineRefs": "190-212"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "CW-007",
+      "topic": "dependency groups packaging boundary",
+      "claim": "Dependency groups live in `[dependency-groups]` in `pyproject.toml`, but build backends must not include dependency-group data in wheel `METADATA` or sdist `PKG-INFO` as package metadata.",
+      "installerCompatibilityImplication": "Dependency groups are a source-tree or tool-workflow feature, not a portable built-distribution install interface; installers reading only core metadata will not see them.",
+      "evidence": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/dependency-groups/",
+          "lineRefs": "165-198"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "CW-008",
+      "topic": "dependency groups install interface",
+      "claim": "The dependency-groups specification defines no standard install syntax or reference syntax for groups; tools are expected to provide their own dedicated interfaces and may reject name collisions with extras.",
+      "installerCompatibilityImplication": "An installer cannot claim cross-tool dependency-group compatibility merely by supporting extras syntax; group installation remains tool-specific unless the installer implements a dedicated interface.",
+      "evidence": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/dependency-groups/",
+          "lineRefs": "199-202"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "CW-009",
+      "topic": "dependency groups validation and includes",
+      "claim": "Dependency-group tools must normalize group names for comparison, should preserve included requirement list contents rather than deduplicate them, must reject include cycles, and should not eagerly validate unrelated groups unless necessary.",
+      "installerCompatibilityImplication": "Installer behavior for dependency groups must be careful and local: selecting one group should expand its includes predictably, preserve constraints, reject cyclic includes, and avoid failing because another unused group has future or unrecognized data.",
+      "evidence": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/dependency-groups/",
+          "lineRefs": "165-193"
+        },
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/dependency-groups/",
+          "lineRefs": "203-218"
+        }
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "CW-010",
+      "topic": "wheel preference and source fallback",
+      "claim": "The PyPA packaging tutorial describes distribution archives as installable by pip and notes that newer pip versions prefer built distributions while falling back to source distributions when needed.",
+      "installerCompatibilityImplication": "Compatibility is split by artifact type: wheel installs depend primarily on existing core metadata, while source fallback requires pyproject-driven backend invocation and build dependency handling.",
+      "evidence": [
+        {
+          "url": "https://packaging.python.org/en/latest/tutorials/packaging-projects/",
+          "lineRefs": "309-341"
+        },
+        {
+          "url": "https://packaging.python.org/en/latest/tutorials/packaging-projects/",
+          "lineRefs": "204-238"
+        }
+      ],
+      "confidence": "high"
+    }
+  ],
+  "relevanceVerdict": "load-bearing",
+  "summary": "Official PyPA specifications show that installer compatibility is governed by distinct layers: `pyproject.toml` controls source builds and metadata production, core metadata controls distribution resolution, extras, Python-version filtering, and metadata-version compatibility, while dependency groups remain outside built metadata and require tool-specific installer interfaces."
+}

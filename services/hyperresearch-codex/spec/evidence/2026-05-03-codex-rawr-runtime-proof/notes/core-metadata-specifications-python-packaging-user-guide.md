@@ -1,0 +1,1013 @@
+---
+title: Core metadata specifications - Python Packaging User Guide
+id: core-metadata-specifications-python-packaging-user-guide
+created: '2026-05-03T04:00:21.413575Z'
+source: https://packaging.python.org/en/latest/specifications/core-metadata/
+source_domain: packaging.python.org
+fetched_at: '2026-05-03T04:00:21.413296Z'
+fetch_provider: builtin
+status: draft
+type: note
+tier: unknown
+content_type: unknown
+deprecated: false
+---
+
+Core metadata specifications - Python Packaging User Guide
+Contents
+Menu
+Expand
+Light mode
+Dark mode
+Auto light/dark, in light mode
+Auto light/dark, in dark mode
+Hide navigation sidebar
+Hide table of contents sidebar
+Skip to content
+Back to top
+View this page
+Edit this page
+Toggle Light / Dark / Auto color theme
+Toggle table of contents sidebar
+Core metadata specifications
+¶
+This page describes version 2.5, approved in September 2025.
+Fields defined in the following specification should be considered valid,
+complete and not subject to change. The required fields are:
+Metadata-Version
+Name
+Version
+All the other fields are optional.
+The standard file format for metadata (including in
+wheels
+and
+installed projects
+) is based on the format of email headers.
+However, email formats have been revised several times, and exactly which email
+RFC applies to packaging metadata is not specified. In the absence of a precise
+definition, the practical standard is set by what the standard library
+email.parser
+module can parse using the
+compat32
+policy.
+Whenever metadata is serialised to a byte stream (for example, to save
+to a file), strings must be serialised using the UTF-8 encoding.
+Although
+PEP 566
+defined a way to transform metadata into a JSON-compatible
+dictionary, this is not yet used as a standard interchange format. The need for
+tools to work with years worth of existing packages makes it difficult to shift
+to a new format.
+Note
+Interpreting old metadata:
+In
+PEP 566
+, the version specifier
+field format specification was relaxed to accept the syntax used by popular
+publishing tools (namely to remove the requirement that version specifiers
+must be surrounded by parentheses). Metadata consumers may want to use the
+more relaxed formatting rules even for metadata files that are nominally
+less than version 2.1.
+Metadata-Version
+¶
+New in version 1.0.
+Version of the file format; legal values are “1.0”, “1.1”, “1.2”, “2.1”,
+“2.2”, “2.3”, “2.4”, and “2.5”.
+Automated tools consuming metadata SHOULD warn if
+metadata-version
+is
+greater than the highest version they support, and MUST fail if
+metadata-version
+has a greater major version than the highest
+version they support (as described in the
+Version specifier specification
+,
+the major version is the value before the first dot).
+For broader compatibility, build tools MAY choose to produce
+distribution metadata using the lowest metadata version that includes
+all of the needed fields.
+Example:
+Metadata-Version: 2.4
+Name
+¶
+New in version 1.0.
+Changed in version 2.1:
+Added restrictions on format from the
+name format
+.
+The name of the distribution. The name field is the primary identifier for a
+distribution. It must conform to the
+name format specification
+.
+Example:
+Name: BeagleVote
+For comparison purposes, the names should be
+normalized
+before comparing.
+Version
+¶
+New in version 1.0.
+A string containing the distribution’s version number.  This
+field  must be in the format specified in the
+Version specifier specification
+.
+Example:
+Version: 1.0a2
+Dynamic (multiple use)
+¶
+New in version 2.2.
+A string containing the name of another core metadata field. The field
+names
+Name
+,
+Version
+, and
+Metadata-Version
+may not be specified
+in this field.
+When found in the metadata of a source distribution, the following
+rules apply:
+If a field is
+not
+marked as
+Dynamic
+, then the value of the field
+in any wheel built from the sdist MUST match the value in the sdist.
+If the field is not in the sdist, and not marked as
+Dynamic
+, then
+it MUST NOT be present in the wheel.
+If a field is marked as
+Dynamic
+, it may contain any valid value in
+a wheel built from the sdist (including not being present at all).
+If the sdist metadata version is older than version 2.2, then all fields should
+be treated as if they were specified with
+Dynamic
+(i.e. there are no special
+restrictions on the metadata of wheels built from the sdist).
+In any context other than a source distribution,
+Dynamic
+is for information
+only, and indicates that the field value was calculated at wheel build time,
+and may not be the same as the value in the sdist or in other wheels for the
+project.
+Note in particular that if you have obtained a prebuilt wheel, you cannot
+assume that a field which is not marked as
+Dynamic
+will have the same value
+in other wheels, as some wheels are not built directly from the sdist, but are
+modified from existing wheels (the
+auditwheel
+tool does this, for example,
+and it’s commonly used when building wheels for PyPI). Such modifications
+could
+include changing metadata (even non-dynamic metadata).  Similarly, if
+you have a sdist and a wheel which you didn’t build from that sdist, you cannot
+assume that the wheel’s metadata matches that of the sdist, even if the field
+is not marked as
+Dynamic
+.
+Full details of the semantics of
+Dynamic
+are described in
+PEP 643
+.
+Platform (multiple use)
+¶
+New in version 1.0.
+A Platform specification describing an operating system supported by
+the distribution which is not listed in the “Operating System” Trove classifiers.
+See “Classifier” below.
+Examples:
+Platform: ObscureUnix
+Platform: RareDOS
+Supported-Platform (multiple use)
+¶
+New in version 1.1.
+Binary distributions containing a PKG-INFO file will use the
+Supported-Platform field in their metadata to specify the OS and
+CPU for which the binary distribution was compiled.  The semantics of
+the Supported-Platform field are not specified in this PEP.
+Example:
+Supported-Platform: RedHat 7.2
+Supported-Platform: i386-win32-2791
+Summary
+¶
+New in version 1.0.
+A one-line summary of what the distribution does.
+Example:
+Summary: A module for collecting votes from beagles.
+Description
+¶
+New in version 1.0.
+Changed in version 2.1:
+This field may be specified in the message body instead.
+A longer description of the distribution that can run to several
+paragraphs.  Software that deals with metadata should not assume
+any maximum size for this field, though people shouldn’t include
+their instruction manual as the description.
+The contents of this field can be written using reStructuredText
+markup
+[
+1
+]
+.  For programs that work with the metadata, supporting
+markup is optional; programs can also display the contents of the
+field as-is.  This means that authors should be conservative in
+the markup they use.
+To support empty lines and lines with indentation with respect to
+the RFC 822 format, any CRLF character has to be suffixed by 7 spaces
+followed by a pipe (“|”) char. As a result, the Description field is
+encoded into a folded field that can be interpreted by RFC822
+parser
+[
+2
+]
+.
+Example:
+Description: This project provides powerful math functions
+        |For example, you can use `sum()` to sum numbers:
+        |
+        |Example::
+        |
+        |    >>> sum(1, 2)
+        |    3
+        |
+This encoding implies that any occurrences of a CRLF followed by 7 spaces
+and a pipe char have to be replaced by a single CRLF when the field is unfolded
+using a RFC822 reader.
+Alternatively, the distribution’s description may instead be provided in the
+message body (i.e., after a completely blank line following the headers, with
+no indentation or other special formatting necessary).
+Description-Content-Type
+¶
+New in version 2.1.
+A string stating the markup syntax (if any) used in the distribution’s
+description, so that tools can intelligently render the description.
+Historically, PyPI supported descriptions in plain text and
+reStructuredText
+(reST)
+,
+and could render reST into HTML. However, it is common for distribution
+authors to write the description in
+Markdown
+(
+RFC 7763
+) as many code hosting sites render
+Markdown READMEs, and authors would reuse the file for the description. PyPI
+didn’t recognize the format and so could not render the description correctly.
+This resulted in many packages on PyPI with poorly-rendered descriptions when
+Markdown is left as plain text, or worse, was attempted to be rendered as reST.
+This field allows the distribution author to specify the format of their
+description, opening up the possibility for PyPI and other tools to be able to
+render Markdown and other formats.
+The format of this field is the same as the
+Content-Type
+header in HTTP
+(i.e.:
+RFC 1341
+).
+Briefly, this means that it has a
+type/subtype
+part and then it can
+optionally have a number of parameters:
+Format:
+Description-Content-Type: <type>/<subtype>; charset=<charset>[; <param_name>=<param value> ...]
+The
+type/subtype
+part has only a few legal values:
+text/plain
+text/x-rst
+text/markdown
+The
+charset
+parameter can be used to specify the character encoding of
+the description. The only legal value is
+UTF-8
+. If omitted, it is assumed to
+be
+UTF-8
+.
+Other parameters might be specific to the chosen subtype. For example, for the
+markdown
+subtype, there is an optional
+variant
+parameter that allows
+specifying the variant of Markdown in use (defaults to
+GFM
+if not
+specified). Currently, two variants are recognized:
+GFM
+for
+GitHub-flavored Markdown
+CommonMark
+for
+CommonMark
+Example:
+Description-Content-Type: text/plain; charset=UTF-8
+Example:
+Description-Content-Type: text/x-rst; charset=UTF-8
+Example:
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+Example:
+Description-Content-Type: text/markdown
+If a
+Description-Content-Type
+is not specified, then applications should
+attempt to render it as
+text/x-rst;
+charset=UTF-8
+and fall back to
+text/plain
+if it is not valid rst.
+If a
+Description-Content-Type
+is an unrecognized value, then the assumed
+content type is
+text/plain
+(Although PyPI will probably reject anything
+with an unrecognized value).
+If the
+Description-Content-Type
+is
+text/markdown
+and
+variant
+is not
+specified or is set to an unrecognized value, then the assumed
+variant
+is
+GFM
+.
+So for the last example above, the
+charset
+defaults to
+UTF-8
+and the
+variant
+defaults to
+GFM
+and thus it is equivalent to the example
+before it.
+Keywords
+¶
+New in version 1.0.
+A list of additional keywords, separated by commas, to be used to assist
+searching for the distribution in a larger catalog.
+Example:
+Keywords: dog,puppy,voting,election
+Note
+The specification previously showed keywords separated by spaces,
+but distutils and setuptools implemented it with commas.
+These tools have been very widely used for many years, so it was
+easier to update the specification to match the de facto standard.
+Author
+¶
+New in version 1.0.
+A string containing the author’s name at a minimum; additional
+contact information may be provided.
+Example:
+Author: C. Schultz, Universal Features Syndicate,
+        Los Angeles, CA <cschultz@peanuts.example.com>
+Author-email
+¶
+New in version 1.0.
+A string containing the author’s e-mail address.  It can contain
+a name and e-mail address in the legal forms for a RFC-822
+From:
+header.
+Example:
+Author-email: "C. Schultz" <cschultz@example.com>
+Per RFC-822, this field may contain multiple comma-separated e-mail
+addresses:
+Author-email: cschultz@example.com, snoopy@peanuts.com
+Maintainer
+¶
+New in version 1.2.
+A string containing the maintainer’s name at a minimum; additional
+contact information may be provided.
+Note that this field is intended for use when a project is being
+maintained by someone other than the original author:  it should be
+omitted if it is identical to
+Author
+.
+Example:
+Maintainer: C. Schultz, Universal Features Syndicate,
+        Los Angeles, CA <cschultz@peanuts.example.com>
+Maintainer-email
+¶
+New in version 1.2.
+A string containing the maintainer’s e-mail address.  It can contain
+a name and e-mail address in the legal forms for a RFC-822
+From:
+header.
+Note that this field is intended for use when a project is being
+maintained by someone other than the original author:  it should be
+omitted if it is identical to
+Author-email
+.
+Example:
+Maintainer-email: "C. Schultz" <cschultz@example.com>
+Per RFC-822, this field may contain multiple comma-separated e-mail
+addresses:
+Maintainer-email: cschultz@example.com, snoopy@peanuts.com
+License
+¶
+New in version 1.0.
+Deprecated since version 2.4:
+in favour of
+License-Expression
+.
+Warning
+As of Metadata 2.4,
+License
+and
+License-Expression
+are mutually
+exclusive. If both are specified, tools which parse metadata will disregard
+License
+and PyPI will reject uploads.
+See
+PEP 639
+.
+Text indicating the license covering the distribution where the license
+is not a selection from the “License” Trove classifiers. See
+“Classifier”
+below.
+This field may also be used to specify a
+particular version of a license which is named via the
+Classifier
+field, or to indicate a variation or exception to such a license.
+Examples:
+License: This software may only be obtained by sending the
+        author a postcard, and then the user promises not
+        to redistribute it.
+
+License: GPL version 3, excluding DRM provisions
+License-Expression
+¶
+New in version 2.4.
+Text string that is a valid SPDX
+license expression
+,
+as specified in
+License Expression
+.
+Note that the expression in this field only applies to the
+Distribution Archive
+containing the metadata with this field (e.g.,
+Source Distribution
+or
+Wheel
+),
+not the project overall or other files related to the project (including other
+distribution archives).
+Examples:
+License-Expression: MIT
+License-Expression: BSD-3-Clause
+License-Expression: MIT AND (Apache-2.0 OR BSD-2-Clause)
+License-Expression: MIT OR GPL-2.0-or-later OR (FSFUL AND BSD-2-Clause)
+License-Expression: GPL-3.0-only WITH Classpath-Exception-2.0 OR BSD-3-Clause
+License-Expression: LicenseRef-Special-License OR CC0-1.0 OR Unlicense
+License-Expression: LicenseRef-Proprietary
+License-File (multiple use)
+¶
+New in version 2.4.
+Each entry is a string representation of the path of a license-related file.
+The path is located within the project source tree, relative to the project
+root directory. For details see
+PEP 639
+.
+Examples:
+License-File: LICENSE
+License-File: AUTHORS
+License-File: LICENSE.txt
+License-File: licenses/LICENSE.MIT
+License-File: licenses/LICENSE.CC0
+Classifier (multiple use)
+¶
+New in version 1.1.
+Each entry is a string giving a single classification value
+for the distribution.  Classifiers are described in
+PEP 301
+,
+and the Python Package Index publishes a dynamic list of
+currently defined classifiers
+.
+Note
+The use of
+License
+::
+classifiers  is deprecated as of Metadata 2.4,
+use
+License-Expression
+instead. See
+PEP 639
+.
+This field may be followed by an environment marker after a semicolon.
+Examples:
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console (Text Based)
+Requires-Dist (multiple use)
+¶
+New in version 1.2.
+Changed in version 2.1:
+The field format specification was relaxed to accept the syntax used by
+popular publishing tools.
+Each entry contains a string naming some other distutils
+project required by this distribution.
+The format of a requirement string contains from one to four parts:
+A project name, in the same format as the
+Name:
+field.
+The only mandatory part.
+A comma-separated list of ‘extra’ names. These are defined by
+the required project, referring to specific features which may
+need extra dependencies. The names MUST conform to the restrictions
+specified by the
+Provides-Extra:
+field.
+A version specifier. Tools parsing the format should accept optional
+parentheses around this, but tools generating it should not use
+parentheses.
+An environment marker after a semicolon. This means that the
+requirement is only needed in the specified conditions.
+See
+PEP 508
+for full details of the allowed format.
+The project names should correspond to names as found
+on the
+Python Package Index
+.
+Version specifiers must follow the rules described in
+Version specifiers
+.
+Examples:
+Requires-Dist: pkginfo
+Requires-Dist: PasteDeploy
+Requires-Dist: zope.interface (>3.5.0)
+Requires-Dist: pywin32 >1.0; sys_platform == 'win32'
+Requires-Python
+¶
+New in version 1.2.
+This field specifies the Python version(s) that the distribution is
+compatible with. Installation tools may look at this when
+picking which version of a project to install.
+The value must be in the format specified in
+Version specifiers
+.
+For example, if a distribution uses
+f-strings
+then it may prevent installation on Python < 3.6 by specifying:
+Requires-Python: >=3.6
+This field cannot be followed by an environment marker.
+Requires-External (multiple use)
+¶
+New in version 1.2.
+Changed in version 2.1:
+The field format specification was relaxed to accept the syntax used by
+popular publishing tools.
+Each entry contains a string describing some dependency in the
+system that the distribution is to be used.  This field is intended to
+serve as a hint to downstream project maintainers, and has no
+semantics which are meaningful to the
+distutils
+distribution.
+The format of a requirement string is a name of an external
+dependency, optionally followed by a version declaration within
+parentheses.
+This field may be followed by an environment marker after a semicolon.
+Because they refer to non-Python software releases, version numbers
+for this field are
+not
+required to conform to the format
+specified in the
+Version specifier specification
+:
+they should correspond to the version scheme used by the external dependency.
+Notice that there is no particular rule on the strings to be used.
+Examples:
+Requires-External: C
+Requires-External: libpng (>=1.5)
+Requires-External: make; sys_platform != "win32"
+Project-URL (multiple-use)
+¶
+New in version 1.2.
+A string containing a browsable URL for the project and a label for it,
+separated by a comma.
+Example:
+Project-URL: Bug Tracker, http://bitbucket.org/tarek/distribute/issues/
+The label is free text limited to 32 characters.
+Starting with
+PEP 753
+, project metadata consumers (such as the Python
+Package Index) can use a standard normalization process to discover “well-known”
+labels, which can then be given special presentations when being rendered
+for human consumption. See
+Well-known Project URLs in Metadata
+.
+Provides-Extra (multiple use)
+¶
+New in version 2.1.
+Changed in version 2.3:
+PEP 685
+restricted valid values to be unambiguous (i.e. no normalization
+required). For older metadata versions, value restrictions were brought into
+line with
+Name:
+and normalization rules were introduced.
+A string containing the name of an optional feature. A valid name consists only
+of lowercase ASCII letters, ASCII numbers, and hyphen. It must start and end
+with a letter or number. Hyphens cannot be followed by another hyphen. Names are
+limited to those which match the following regex (which guarantees unambiguity):
+^[a-z0-9]+(-[a-z0-9]+)*$
+The specified name may be used to make a dependency conditional on whether the
+optional feature has been requested.
+Example:
+Provides-Extra: pdf
+Requires-Dist: reportlab; extra == 'pdf'
+A second distribution requires an optional dependency by placing it
+inside square brackets, and can request multiple features by separating
+them with a comma (,). The requirements are evaluated for each requested
+feature and added to the set of requirements for the distribution.
+Example:
+Requires-Dist: beaglevote[pdf]
+Requires-Dist: libexample[test, doc]
+Two feature names
+test
+and
+doc
+are reserved to mark dependencies that
+are needed for running automated tests and generating documentation,
+respectively.
+It is legal to specify
+Provides-Extra:
+without referencing it in any
+Requires-Dist:
+.
+When writing data for older metadata versions, names MUST be normalized
+following the same rules used for the
+Name:
+field when performing
+comparisons. Tools writing metadata MUST raise an error if two
+Provides-Extra:
+entries would clash after being normalized.
+When reading data for older metadata versions, tools SHOULD warn when values
+for this field would be invalid under newer metadata versions. If a value would
+be invalid following the rules for
+Name:
+in any core metadata version, the
+user SHOULD be warned and the value ignored to avoid ambiguity. Tools MAY choose
+to raise an error when reading an invalid name for older metadata versions.
+Import-Name (multiple use)
+¶
+New in version 2.5.
+A string containing an import name that the project exclusively provides when
+installed. The specified import name MUST be a valid Python identifier or can
+be empty. The import names listed in this field MUST be importable when the
+project is installed on
+some
+platform for the same version of the project.
+This implies that the metadata MUST be consistent across all sdists and wheels
+for a project release.
+An import name MAY be followed by a semicolon and the term “private”
+(e.g.
+;
+private
+) with any amount of whitespace surrounding the semicolon.
+This signals to tools that the import name is not part of the public API for
+the project.
+Projects SHOULD list all the shortest import names that are exclusively provided
+by the project. If any of the shortest names are dotted names, all intervening
+names from that name to the top-level name SHOULD also be listed appropriately
+in
+Import-Name
+and/or
+Import-Namespace
+.
+If a project lists the same name in both
+Import-Name
+and
+Import-Namespace
+, tools MUST raise an error due to ambiguity.
+Tools SHOULD raise an error when two projects that are about to be installed
+list names that overlap in each other’s
+Import-Name
+entries, or when a
+project has an entry in
+Import-Name
+that overlaps with another project’s
+Import-Namespace
+entries. This is to avoid projects unexpectedly shadowing
+another project’s code. Tools MAY warn or raise an error when installing a
+project into a preexisting environment where there is import name overlap with
+a project that is already installed.
+Projects MAY have an empty
+Import-Name
+field in their metadata to represent
+a project with no import names (i.e. there are no Python modules of any kind in
+the distribution file).
+Since projects MAY have no
+Import-Name
+metadata (either because the
+project uses an older metadata version, or because it didn’t specify any), then
+tools have no information about what names the project provides. However, in
+practice the majority of projects have their project name match what their
+import name would be. As such, it is a reasonable assumption to make that a
+project name that is normalized in some way to an import name
+(e.g.
+packaging.utils.canonicalize_name(name,
+validate=True).replace("-",
+"_")
+)
+can be used if some answer is needed.
+Examples:
+Import-Name: PIL
+Import-Name: _private_module ; private
+Import-Name: zope.interface
+Import-Name:
+Import-Namespace (multiple use)
+¶
+New in version 2.5.
+A string containing an import name that the project provides when installed, but
+not exclusively. The specified import name MUST be a valid Python identifier.
+This field is used for namespace packages where multiple projects can contribute
+to the same import namespace. Projects all listing the same import name in
+Import-Namespace
+can be installed together without shadowing each other.
+An import name MAY be followed by a semicolon and the term “private” (e.g.
+;
+private
+) with any amount of whitespace surrounding the semicolon. This
+signals to tools that the import name is not part of the public API for the
+project.
+Projects SHOULD list all the shortest import names that are exclusively provided
+by the project. If any of the shortest names are dotted names, all intervening
+names from that name to the top-level name SHOULD also be listed appropriately
+in
+Import-Name
+and/or
+Import-Namespace
+.
+The import names listed in this field MUST be importable when the project is
+installed on
+some
+platform for the same version of the project. This implies
+that the metadata MUST be consistent across all sdists and wheels for a project
+release.
+If a project lists the same name in both
+Import-Name
+and
+Import-Namespace
+, tools MUST raise an error due to ambiguity.
+Note that
+Import-Namespace
+CANNOT be empty like
+Import-Name
+.
+Examples:
+Import-Namespace: zope
+Import-Name: _private_module ; private
+Rarely Used Fields
+¶
+The fields in this section are currently rarely used, as their design
+was inspired by comparable mechanisms in Linux package management systems,
+and it isn’t at all clear how tools should interpret them in the context
+of an open index server such as
+PyPI
+.
+As a result, popular installation tools ignore them completely, which in
+turn means there is little incentive for package publishers to set them
+appropriately. However, they’re retained in the metadata specification,
+as they’re still potentially useful for informational purposes, and can
+also be used for their originally intended purpose in combination with
+a curated package repository.
+Provides-Dist (multiple use)
+¶
+New in version 1.2.
+Changed in version 2.1:
+The field format specification was relaxed to accept the syntax used by
+popular publishing tools.
+Each entry contains a string naming a Distutils project which
+is contained within this distribution.  This field
+must
+include
+the project identified in the
+Name
+field, followed by the
+version : Name (Version).
+A distribution may provide additional names, e.g. to indicate that
+multiple projects have been bundled together.  For instance, source
+distributions of the
+ZODB
+project have historically included
+the
+transaction
+project, which is now available as a separate
+distribution.  Installing such a source distribution satisfies
+requirements for both
+ZODB
+and
+transaction
+.
+A distribution may also provide a “virtual” project name, which does
+not correspond to any separately-distributed project:  such a name
+might be used to indicate an abstract capability which could be supplied
+by one of multiple projects.  E.g., multiple projects might supply
+RDBMS bindings for use by a given ORM:  each project might declare
+that it provides
+ORM-bindings
+, allowing other projects to depend
+only on having at most one of them installed.
+A version declaration may be supplied and must follow the rules described
+in
+Version specifiers
+. The distribution’s version number will be implied
+if none is specified.
+This field may be followed by an environment marker after a semicolon.
+Examples:
+Provides-Dist: OtherProject
+Provides-Dist: AnotherProject==3.4
+Provides-Dist: virtual_package; python_version >= "3.4"
+Obsoletes-Dist (multiple use)
+¶
+New in version 1.2.
+Changed in version 2.1:
+The field format specification was relaxed to accept the syntax used by
+popular publishing tools.
+Each entry contains a string describing a distutils project’s distribution
+which this distribution renders obsolete, meaning that the two projects
+should not be installed at the same time.
+Version declarations can be supplied.  Version numbers must be in the
+format specified in
+Version specifiers
+.
+This field may be followed by an environment marker after a semicolon.
+The most common use of this field will be in case a project name
+changes, e.g. Gorgon 2.3 gets subsumed into Torqued Python 1.0.
+When you install Torqued Python, the Gorgon distribution should be
+removed.
+Examples:
+Obsoletes-Dist: Gorgon
+Obsoletes-Dist: OtherProject (<3.0)
+Obsoletes-Dist: Foo; os_name == "posix"
+Deprecated Fields
+¶
+Deprecated fields should be avoided, but they are valid metadata fields. They
+may be removed in future versions of the core metadata standard (at which point
+they will only be valid in files that specify a metadata version prior to the
+removal). Tools SHOULD warn users when deprecated fields are used.
+Home-page
+¶
+New in version 1.0.
+Deprecated since version 1.2:
+Per
+PEP 753
+, use
+Project-URL (multiple-use)
+instead.
+A string containing the URL for the distribution’s home page.
+Example:
+Home-page: http://www.example.com/~cschultz/bvote/
+Download-URL
+¶
+New in version 1.1.
+Deprecated since version 1.2:
+Per
+PEP 753
+, use
+Project-URL (multiple-use)
+instead.
+A string containing the URL from which this version of the distribution
+can be downloaded.  (This means that the URL can’t be something like
+“
+.../BeagleVote-latest.tgz
+”, but instead must be
+“
+.../BeagleVote-0.45.tgz
+”.)
+Requires
+¶
+New in version 1.1.
+Deprecated since version 1.2:
+in favour of
+Requires-Dist
+Each entry contains a string describing some other module or package required
+by this package.
+The format of a requirement string is identical to that of a module or package
+name usable with the
+import
+statement, optionally followed by a version
+declaration within parentheses.
+A version declaration is a series of conditional operators and version numbers,
+separated by commas. Conditional operators must be one of “<”, “>”’, “<=”,
+“>=”, “==”, and “!=”. Version numbers must be in the format accepted by the
+distutils.version.StrictVersion
+class: two or three dot-separated numeric
+components, with an optional “pre-release” tag on the end consisting of the
+letter ‘a’ or ‘b’ followed by a number. Example version numbers are “1.0”,
+“2.3a2”, “1.3.99”,
+Any number of conditional operators can be specified, e.g. the string “>1.0,
+!=1.3.4, <2.0” is a legal version declaration.
+All of the following are possible requirement strings: “rfc822”, “zlib
+(>=1.1.4)”, “zope”.
+There’s no canonical list of what strings should be used; the Python community
+is left to choose its own standards.
+Examples:
+Requires: re
+Requires: sys
+Requires: zlib
+Requires: xml.parsers.expat (>1.0)
+Requires: psycopg
+Provides
+¶
+New in version 1.1.
+Deprecated since version 1.2:
+in favour of
+Provides-Dist
+Each entry contains a string describing a package or module that will be
+provided by this package once it is installed. These strings should match the
+ones used in Requirements fields. A version declaration may be supplied
+(without a comparison operator); the package’s version number will be implied
+if none is specified.
+Examples:
+Provides: xml
+Provides: xml.utils
+Provides: xml.utils.iso8601
+Provides: xml.dom
+Provides: xmltools (1.3)
+Obsoletes
+¶
+New in version 1.1.
+Deprecated since version 1.2:
+in favour of
+Obsoletes-Dist
+Each entry contains a string describing a package or module that this package
+renders obsolete, meaning that the two packages should not be installed at the
+same time. Version declarations can be supplied.
+The most common use of this field will be in case a package name changes, e.g.
+Gorgon 2.3 gets subsumed into Torqued Python 1.0. When you install Torqued
+Python, the Gorgon package should be removed.
+Example:
+Obsoletes: Gorgon
+History
+¶
+March 2001: Core metadata 1.0 was approved through
+PEP 241
+.
+April 2003: Core metadata 1.1 was approved through
+PEP 314
+.
+February 2010: Core metadata 1.2 was approved through
+PEP 345
+.
+February 2018: Core metadata 2.1 was approved through
+PEP 566
+.
+Added
+Description-Content-Type
+and
+Provides-Extra
+.
+Added canonical method for transforming metadata to JSON.
+Restricted the grammar of the
+Name
+field.
+October 2020: Core metadata 2.2 was approved through
+PEP 643
+.
+Added the
+Dynamic
+field.
+March 2022: Core metadata 2.3 was approved through
+PEP 685
+.
+Restricted extra names to be normalized.
+August 2024: Core metadata 2.4 was approved through
+PEP 639
+.
+Added the
+License-Expression
+field.
+Added the
+License-File
+field.
+August 2025: Clarified that
+Dynamic
+only affects how fields
+must be treated when building a wheel from a sdist, not when modifying
+a wheel.
+September 2025: Core metadata 2.5 was approved through
+PEP 794
+.
+Added the
+Import-Name
+field.
+Added the
+Import-Namespace
+field.
+October 2025: Clarified that
+License-Expression
+applies to the containing
+distribution file and not the project itself.

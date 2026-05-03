@@ -1,0 +1,458 @@
+{
+  "version": 2,
+  "runId": "hpr-v8-7cf4660d-4219-496f-8d69-12d9abe1a529",
+  "canonicalQuery": "What are the practical compatibility implications of Python's packaging metadata standards for modern Python project installers? Focus on how pyproject.toml, core metadata, and dependency groups affect installer behavior, and cite only Python Packaging Authority or official Python documentation sources.",
+  "tier": "light",
+  "tierSource": "user",
+  "vaultTag": "what-are-the-practical-compatibility-implication",
+  "vaultRoot": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+  "artifactRoot": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+  "stepsRoot": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps",
+  "queryFilePath": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr/research/query-what-are-the-practical-compatibility-implication.md",
+  "routeStepIds": [
+    "01-decompose",
+    "02-width-sweep",
+    "10-triple-draft",
+    "15-polish",
+    "16-readability-audit"
+  ],
+  "wrapperRequirements": [],
+  "completed": true,
+  "createdAt": "2026-05-03T03:52:23.135Z",
+  "updatedAt": "2026-05-03T04:15:56.068Z",
+  "steps": [
+    {
+      "id": "01-decompose",
+      "title": "Decompose query and classify tier",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-1-decompose.md",
+      "requiredArtifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "artifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "startedAt": "2026-05-03T03:52:47.862Z",
+      "loaded": {
+        "stepId": "01-decompose",
+        "title": "Decompose query and classify tier",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-1-decompose.md",
+        "sha256": "b43bdf4516363d880c166b23543cb7e3c1473bc51e836b00b6496e3591e8c39a",
+        "loadedAt": "2026-05-03T03:52:47.864Z"
+      },
+      "completedAt": "2026-05-03T03:52:47.865Z"
+    },
+    {
+      "id": "02-width-sweep",
+      "title": "Width sweep and source capture",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-2-width-sweep.md",
+      "requiredArtifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "artifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "startedAt": "2026-05-03T03:52:47.865Z",
+      "loaded": {
+        "stepId": "02-width-sweep",
+        "title": "Width sweep and source capture",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-2-width-sweep.md",
+        "sha256": "dfb6460b29f46297ace63d80b41c71a2aa869cda431f29b7a2aa56be9957c327",
+        "loadedAt": "2026-05-03T03:52:47.867Z"
+      },
+      "completedAt": "2026-05-03T04:00:22.464Z"
+    },
+    {
+      "id": "10-triple-draft",
+      "title": "Triple draft or light final draft",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-10-triple-draft.md",
+      "requiredArtifacts": [
+        "research/temp/draft-angles.md",
+        "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+      ],
+      "artifacts": [
+        "research/temp/draft-angles.md",
+        "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+      ],
+      "startedAt": "2026-05-03T04:00:22.465Z",
+      "loaded": {
+        "stepId": "10-triple-draft",
+        "title": "Triple draft or light final draft",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-10-triple-draft.md",
+        "sha256": "d2531ceb5c404a0bb6dfe854a241eab20629f73f05e52a03c0a088a36f6c8284",
+        "loadedAt": "2026-05-03T04:00:22.465Z"
+      },
+      "completedAt": "2026-05-03T04:04:54.058Z"
+    },
+    {
+      "id": "15-polish",
+      "title": "Polish and lint",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-15-polish.md",
+      "requiredArtifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+      ],
+      "artifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+      ],
+      "startedAt": "2026-05-03T04:04:54.058Z",
+      "loaded": {
+        "stepId": "15-polish",
+        "title": "Polish and lint",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-15-polish.md",
+        "sha256": "5875cce6af61defe82f81387b922762e21ed5b3a1e6d14c883c76c263d98f1ed",
+        "loadedAt": "2026-05-03T04:04:54.058Z"
+      },
+      "completedAt": "2026-05-03T04:07:35.127Z"
+    },
+    {
+      "id": "16-readability-audit",
+      "title": "Readability audit",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-16-readability-audit.md",
+      "requiredArtifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+      ],
+      "artifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+      ],
+      "startedAt": "2026-05-03T04:07:35.128Z",
+      "loaded": {
+        "stepId": "16-readability-audit",
+        "title": "Readability audit",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-16-readability-audit.md",
+        "sha256": "dade539a5d3067703a7caa45c3a739d95eb95b5dc70931f3edfdab4f2044766d",
+        "loadedAt": "2026-05-03T04:07:35.129Z"
+      },
+      "completedAt": "2026-05-03T04:15:56.068Z"
+    }
+  ],
+  "cliCalls": [
+    {
+      "operation": "init",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T03:52:23.137Z",
+      "completedAt": "2026-05-03T03:52:23.465Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"vault_path\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n    \"name\": \"Research Base\"\n  },\n  \"timestamp\": \"2026-05-03T03:52:23.445049+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "search",
+      "args": [
+        "What are the practical compatibility implications of Python's packaging metadata standards for modern Python project installers? Focus on how pyproject.toml, core metadata, and dependency groups affect installer behavior, and cite only Python Packaging Authority or official Python documentation sources.",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T04:00:20.075Z",
+      "completedAt": "2026-05-03T04:00:20.414Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"query\": \"What are the practical compatibility implications of Python's packaging metadata standards for modern Python project installers? Focus on how pyproject.toml, core metadata, and dependency groups affect installer behavior, and cite only Python Packaging Authority or official Python documentation sources.\",\n    \"results\": [],\n    \"total\": 0\n  },\n  \"count\": 0,\n  \"vault\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n  \"timestamp\": \"2026-05-03T04:00:20.389613+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T04:00:20.414Z",
+      "completedAt": "2026-05-03T04:00:21.022Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n    \"title\": \"pyproject.toml specification - Python Packaging User Guide\",\n    \"url\": \"https://packaging.python.org/en/latest/specifications/pyproject-toml/\",\n    \"domain\": \"packaging.python.org\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n    \"word_count\": 2998,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n  \"timestamp\": \"2026-05-03T04:00:20.980707+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://packaging.python.org/en/latest/specifications/core-metadata/",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T04:00:21.022Z",
+      "completedAt": "2026-05-03T04:00:21.457Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n    \"title\": \"Core metadata specifications - Python Packaging User Guide\",\n    \"url\": \"https://packaging.python.org/en/latest/specifications/core-metadata/\",\n    \"domain\": \"packaging.python.org\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n    \"word_count\": 4814,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n  \"timestamp\": \"2026-05-03T04:00:21.420112+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://packaging.python.org/en/latest/specifications/dependency-groups/",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T04:00:21.457Z",
+      "completedAt": "2026-05-03T04:00:21.861Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"dependency-groups-python-packaging-user-guide\",\n    \"title\": \"Dependency Groups - Python Packaging User Guide\",\n    \"url\": \"https://packaging.python.org/en/latest/specifications/dependency-groups/\",\n    \"domain\": \"packaging.python.org\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/dependency-groups-python-packaging-user-guide.md\",\n    \"word_count\": 1415,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n  \"timestamp\": \"2026-05-03T04:00:21.823540+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://packaging.python.org/en/latest/tutorials/packaging-projects/",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T04:00:21.861Z",
+      "completedAt": "2026-05-03T04:00:22.279Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"packaging-python-projects-python-packaging-user-guide\",\n    \"title\": \"Packaging Python Projects - Python Packaging User Guide\",\n    \"url\": \"https://packaging.python.org/en/latest/tutorials/packaging-projects/\",\n    \"domain\": \"packaging.python.org\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/packaging-python-projects-python-packaging-user-guide.md\",\n    \"word_count\": 2674,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n  \"timestamp\": \"2026-05-03T04:00:22.243692+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "note",
+      "args": [
+        "new",
+        "--json",
+        "Hyperresearch Codex V8 fixture source"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T04:00:22.279Z",
+      "completedAt": "2026-05-03T04:00:22.461Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"id\": \"hyperresearch-codex-v8-fixture-source\",\n    \"path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n    \"title\": \"Hyperresearch Codex V8 fixture source\"\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n  \"timestamp\": \"2026-05-03T04:00:22.441075+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "lint",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T04:07:34.786Z",
+      "completedAt": "2026-05-03T04:07:35.124Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"issues\": [\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-are-the-practical-compatibility-implication\",\n        \"note_path\": \"research/notes/final_report_what-are-the-practical-compatibility-implication.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"dependency-groups-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/dependency-groups-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"packaging-python-projects-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/packaging-python-projects-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-are-the-practical-compatibility-implication\",\n        \"note_path\": \"research/notes/final_report_what-are-the-practical-compatibility-implication.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"dependency-groups-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/dependency-groups-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"packaging-python-projects-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/packaging-python-projects-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-are-the-practical-compatibility-implication\",\n        \"note_path\": \"research/notes/final_report_what-are-the-practical-compatibility-implication.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"extract-coverage\",\n        \"severity\": \"error\",\n        \"note_id\": \"<vault>\",\n        \"message\": \"Vault has 4 fetched source notes but only 0 real source-linked extract notes (0% coverage, need ≥1). The analyst was skipped on most sources or the source->extract chain of custody is broken. Spawn an analyst subagent on the unanalyzed sources during curation. Target: at least 1 extract (≥150 words, with `parent=<source-note-id>`) per 3 sources (floor of 1 for any corpus size). Minting stub notes to pass this gate is lint-gaming and will not satisfy.\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"dependency-groups-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/dependency-groups-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"packaging-python-projects-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/packaging-python-projects-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"final_report_what-are-the-practical-compatibility-implication\",\n        \"note_path\": \"research/notes/final_report_what-are-the-practical-compatibility-implication.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      }\n    ],\n    \"summary\": {\n      \"errors\": 1,\n      \"warnings\": 31,\n      \"info\": 12,\n      \"total\": 44\n    }\n  },\n  \"count\": 44,\n  \"vault\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n  \"timestamp\": \"2026-05-03T04:07:35.100421+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "sync",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T04:15:55.391Z",
+      "completedAt": "2026-05-03T04:15:55.706Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"added\": 0,\n    \"updated\": 0,\n    \"deleted\": 0,\n    \"unchanged\": 12,\n    \"errors\": [],\n    \"duration_ms\": 0.5\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n  \"timestamp\": \"2026-05-03T04:15:55.683557+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "lint",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T04:15:55.706Z",
+      "completedAt": "2026-05-03T04:15:55.887Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"issues\": [\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-are-the-practical-compatibility-implication\",\n        \"note_path\": \"research/notes/final_report_what-are-the-practical-compatibility-implication.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"dependency-groups-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/dependency-groups-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"packaging-python-projects-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/packaging-python-projects-python-packaging-user-guide.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-are-the-practical-compatibility-implication\",\n        \"note_path\": \"research/notes/final_report_what-are-the-practical-compatibility-implication.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"dependency-groups-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/dependency-groups-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"packaging-python-projects-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/packaging-python-projects-python-packaging-user-guide.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-are-the-practical-compatibility-implication\",\n        \"note_path\": \"research/notes/final_report_what-are-the-practical-compatibility-implication.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"extract-coverage\",\n        \"severity\": \"error\",\n        \"note_id\": \"<vault>\",\n        \"message\": \"Vault has 4 fetched source notes but only 0 real source-linked extract notes (0% coverage, need ≥1). The analyst was skipped on most sources or the source->extract chain of custody is broken. Spawn an analyst subagent on the unanalyzed sources during curation. Target: at least 1 extract (≥150 words, with `parent=<source-note-id>`) per 3 sources (floor of 1 for any corpus size). Minting stub notes to pass this gate is lint-gaming and will not satisfy.\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"pyprojecttoml-specification-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/pyprojecttoml-specification-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"core-metadata-specifications-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/core-metadata-specifications-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"dependency-groups-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/dependency-groups-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"packaging-python-projects-python-packaging-user-guide\",\n        \"note_path\": \"research/notes/packaging-python-projects-python-packaging-user-guide.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"final_report_what-are-the-practical-compatibility-implication\",\n        \"note_path\": \"research/notes/final_report_what-are-the-practical-compatibility-implication.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      }\n    ],\n    \"summary\": {\n      \"errors\": 1,\n      \"warnings\": 31,\n      \"info\": 12,\n      \"total\": 44\n    }\n  },\n  \"count\": 44,\n  \"vault\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n  \"timestamp\": \"2026-05-03T04:15:55.864417+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "export",
+      "args": [
+        "json",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr",
+      "startedAt": "2026-05-03T04:15:55.887Z",
+      "completedAt": "2026-05-03T04:15:56.064Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"path\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr/.hyperresearch/exports/vault.json\",\n    \"count\": 12\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-runtime-vault-rSLoGr\",\n  \"timestamp\": \"2026-05-03T04:15:56.044610+00:00\"\n}\n",
+      "stderr": ""
+    }
+  ],
+  "agentJobs": [
+    {
+      "id": "02-width-sweep-1-fetcher",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-fetcher",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-1-fetcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "createdAt": "2026-05-03T03:52:47.867Z",
+      "outputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "completedAt": "2026-05-03T04:00:20.074Z"
+    },
+    {
+      "id": "02-width-sweep-2-source-analyst",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-source-analyst",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-2-source-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "createdAt": "2026-05-03T03:52:47.867Z",
+      "outputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "completedAt": "2026-05-03T04:00:20.074Z"
+    },
+    {
+      "id": "10-triple-draft-1-draft-orchestrator",
+      "stepId": "10-triple-draft",
+      "role": "hyperresearch-draft-orchestrator",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/10-triple-draft-1-draft-orchestrator.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+      "createdAt": "2026-05-03T04:00:22.466Z",
+      "outputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+      "completedAt": "2026-05-03T04:04:54.054Z"
+    },
+    {
+      "id": "15-polish-1-polish-auditor",
+      "stepId": "15-polish",
+      "role": "hyperresearch-polish-auditor",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/15-polish-1-polish-auditor.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+      "createdAt": "2026-05-03T04:04:54.059Z",
+      "outputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+      "completedAt": "2026-05-03T04:07:34.786Z"
+    },
+    {
+      "id": "16-readability-audit-1-readability-recommender",
+      "stepId": "16-readability-audit",
+      "role": "hyperresearch-readability-recommender",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/16-readability-audit-1-readability-recommender.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+      "createdAt": "2026-05-03T04:07:35.129Z",
+      "outputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+      "completedAt": "2026-05-03T04:15:55.390Z"
+    }
+  ],
+  "reviewDispositions": [],
+  "reportSnapshots": [
+    {
+      "stepId": "10-triple-draft",
+      "path": "research/temp/report-snapshots/10-triple-draft-56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b.md",
+      "sha256": "56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b",
+      "createdAt": "2026-05-03T04:04:54.057Z"
+    }
+  ],
+  "sourceCaptures": [
+    {
+      "url": "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://packaging.python.org/en/latest/specifications/pyproject-toml/"
+      ],
+      "cliCallIndexes": [
+        2
+      ],
+      "capturedAt": "2026-05-03T04:00:20.414Z",
+      "noteIds": [
+        "pyprojecttoml-specification-python-packaging-user-guide"
+      ]
+    },
+    {
+      "url": "https://packaging.python.org/en/latest/specifications/core-metadata/",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://packaging.python.org/en/latest/specifications/core-metadata/"
+      ],
+      "cliCallIndexes": [
+        3
+      ],
+      "capturedAt": "2026-05-03T04:00:21.022Z",
+      "noteIds": [
+        "core-metadata-specifications-python-packaging-user-guide"
+      ]
+    },
+    {
+      "url": "https://packaging.python.org/en/latest/specifications/dependency-groups/",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://packaging.python.org/en/latest/specifications/dependency-groups/"
+      ],
+      "cliCallIndexes": [
+        4
+      ],
+      "capturedAt": "2026-05-03T04:00:21.457Z",
+      "noteIds": [
+        "dependency-groups-python-packaging-user-guide"
+      ]
+    },
+    {
+      "url": "https://packaging.python.org/en/latest/tutorials/packaging-projects/",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://packaging.python.org/en/latest/tutorials/packaging-projects/"
+      ],
+      "cliCallIndexes": [
+        5
+      ],
+      "capturedAt": "2026-05-03T04:00:21.861Z",
+      "noteIds": [
+        "packaging-python-projects-python-packaging-user-guide"
+      ]
+    }
+  ],
+  "patchGuard": {
+    "snapshotPath": "research/notes/final_report_what-are-the-practical-compatibility-implication.md",
+    "snapshotSha256": "56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b",
+    "violations": []
+  },
+  "resumes": [
+    {
+      "at": "2026-05-03T04:00:20.072Z",
+      "reason": "codex-rawr exec resume higher-order runtime proof",
+      "nextStepId": "02-width-sweep"
+    }
+  ],
+  "failures": []
+}

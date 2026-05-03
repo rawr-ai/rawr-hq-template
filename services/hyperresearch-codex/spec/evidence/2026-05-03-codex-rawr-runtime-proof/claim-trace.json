@@ -1,0 +1,62 @@
+{
+  "claims": [
+    {
+      "claim": "For source builds, the PyPA `pyproject.toml` specification says tools should use default setuptools semantics when `pyproject.toml` or `[build-system]` is absent, but should treat a present `[build-system]` table with missing required fields as an error.",
+      "reportLocation": "research/notes/final_report_what-are-the-practical-compatibility-implication.md",
+      "sources": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/pyproject-toml/"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    },
+    {
+      "claim": "`project.dependencies` in `pyproject.toml` maps directly to core metadata `Requires-Dist`, and `project.optional-dependencies` maps to `Requires-Dist` entries associated with `Provides-Extra`.",
+      "reportLocation": "research/notes/final_report_what-are-the-practical-compatibility-implication.md",
+      "sources": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/pyproject-toml/"
+        },
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/core-metadata/"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    },
+    {
+      "claim": "Core metadata consumers should warn when `Metadata-Version` is newer than they support and must fail when the unsupported version has a greater major version than they support.",
+      "reportLocation": "research/notes/final_report_what-are-the-practical-compatibility-implication.md",
+      "sources": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/core-metadata/"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    },
+    {
+      "claim": "Build backends must not include dependency group data in built distributions as package metadata, so wheel `METADATA` and sdist `PKG-INFO` should not expose dependency groups as referenceable metadata fields.",
+      "reportLocation": "research/notes/final_report_what-are-the-practical-compatibility-implication.md",
+      "sources": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/dependency-groups/"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    },
+    {
+      "claim": "The dependency-groups specification defines no standard syntax or interface for installing or referring to dependency groups.",
+      "reportLocation": "research/notes/final_report_what-are-the-practical-compatibility-implication.md",
+      "sources": [
+        {
+          "url": "https://packaging.python.org/en/latest/specifications/dependency-groups/"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "supported"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-7cf4660d-4219-496f-8d69-12d9abe1a529",
+    "status": "complete",
+    "passed": true,
+    "completed": true,
+    "tier": "light",
+    "vaultTag": "what-are-the-practical-compatibility-implication",
+    "blockingFindings": [],
+    "warningFindings": []
+  }
+}

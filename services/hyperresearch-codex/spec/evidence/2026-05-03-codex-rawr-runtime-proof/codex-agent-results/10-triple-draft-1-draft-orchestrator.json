@@ -1,0 +1,28 @@
+{
+  "jobId": "10-triple-draft-1-draft-orchestrator",
+  "role": "hyperresearch-draft-orchestrator",
+  "status": "complete",
+  "summary": "Wrote the light-route draft angles artifact and concise final report on Python packaging metadata compatibility, limited to the captured official PyPA documentation URLs.",
+  "evidence": [
+    "research/temp/draft-angles.md",
+    "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/draft-angles.md",
+      "sha256": "87343cd5115a4be9b1f068d27ec14d27614689f29c6e7add0cd4406eb7d5b0d0",
+      "summary": "Identifies the recommended compatibility-boundary thesis, installer behavior angle, claim-trace candidates, and official source set."
+    },
+    {
+      "path": "research/notes/final_report_what-are-the-practical-compatibility-implication.md",
+      "sha256": "56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b",
+      "summary": "Concise final report explaining how pyproject.toml, core metadata, and dependency groups affect installer compatibility, with standalone material claims for claim tracing."
+    }
+  ],
+  "sourceUrls": [
+    "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+    "https://packaging.python.org/en/latest/specifications/core-metadata/",
+    "https://packaging.python.org/en/latest/specifications/dependency-groups/",
+    "https://packaging.python.org/en/latest/tutorials/packaging-projects/"
+  ]
+}

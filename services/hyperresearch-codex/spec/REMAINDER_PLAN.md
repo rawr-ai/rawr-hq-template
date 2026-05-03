@@ -4,14 +4,14 @@ This is the service-package working plan for finishing Hyperresearch Codex parit
 
 ## Baseline
 
-- Template worktree: `codex/hyperresearch-codex-parity`, building on `4f22bc9a feat(hyperresearch): enforce packet provenance gates`.
+- Template worktree: `codex/hyperresearch-codex-parity`, building forward from `220885d1 test(hyperresearch): prove codex rawr packet workflow`. The corrected packet-provenance implementation baseline remains `4f22bc9a feat(hyperresearch): enforce packet provenance gates`.
 - Downstream sync source: `rawr-hq` branch `docs/compatibility-substrate-spike`, building on `0f359d33 docs(hyperresearch): sync packet provenance contract`, ahead of origin by six commits before the current proof-sync commit.
-- Current template implementation proves V8 runner/control-plane behavior: fresh step loads, durable ledger, light/full fixture routes, packet-mode pause/resume with atomic fan-in, source URL validation, CLI capture after packet fan-in, report snapshots, patch-only integrity checks, and a fresh Codex-RAWR packet-mode light proof using the real Hyperresearch backend.
-- It does not yet claim Hooks/MCP runtime parity, actual Codex-session resume, or long-form research-quality parity. The checked-in Codex-RAWR proof is a packet-provenance light proof with one captured source and three traced material claims, not the 2-4 source short live research-quality gate.
+- Current template implementation proves V8 runner/control-plane behavior: fresh step loads, durable ledger, light/full fixture routes, packet-mode pause/resume with atomic fan-in, source URL validation, CLI capture after packet fan-in, report snapshots, patch-only integrity checks, a fresh Codex-RAWR packet-mode light proof using the real Hyperresearch backend, and a short multi-source Codex-RAWR runtime proof with actual resume, role-agent fan-out, four official source captures, five traced claims, and final validation.
+- It does not yet claim Hooks/MCP runtime parity or long-form full-tier research-quality parity. The checked-in Codex-RAWR runtime proof is a short light-route proof, not a long live V8 research-quality acceptance run.
 
 ## Non-Negotiable Frame
 
-- Keep building on `4f22bc9a`; do not reset the corrected packet-provenance service topology.
+- Keep building forward from `220885d1`; do not reset below the corrected `4f22bc9a` packet-provenance service topology.
 - The service is the right implementation shape: Codex owns orchestration, durable state, step loading, agent packets, fan-in, resume, critique/patch gates, and validation; the Python Hyperresearch CLI remains the backend for vault/search/fetch/note/lint/sync/export.
 - Do not use `hyperresearch research` as a parity substitute. It does not prove the 16-step V8 harness.
 - Fixture mode proves the Hyperresearch Codex control-plane contract only; it does not prove live research quality or source-backed final-report correctness.
@@ -81,7 +81,7 @@ Exit gate:
 
 - Tests prove duplicate URLs are captured once but retain multiple suggested-by links.
 - Tests prove validation blocks a completed run with missing claim trace for a final report.
-- A short live research-quality proof can trace at least three material claims to vault/source evidence across 2-4 sources. The current Codex-RAWR packet-provenance proof traces three claims to one captured source and is intentionally narrower.
+- A short live runtime proof can trace at least three material claims to vault/source evidence across 2-4 sources. The current Codex-RAWR runtime proof traces five claims to four captured official PyPA source URLs and passes service validation. A long full-tier research-quality proof remains unclaimed.
 
 ### 4. Patch-Only Guard Hardening
 
@@ -131,7 +131,7 @@ Run proof gates in this order:
 - Actual Codex packet/subagent gate where Codex agents write packet outputs.
 - Short live provenance proof with 2-4 sources and at least three material final-report claims traced.
 
-The Codex-RAWR packet-provenance light proof is now green; see `evidence.md`. Do not claim long-form research-quality parity beyond this proof until a full V8 run has completed through the synced Codex skill workflow with ledger, vault notes, source metadata, agent outputs, critic findings, patch log, lint/export output, 2-4 sources, and reviewed final-report provenance.
+The Codex-RAWR packet-provenance light proof and short multi-source runtime proof are now green; see `evidence.md`. Do not claim long-form research-quality parity beyond these proofs until a full V8 run has completed through the synced Codex skill workflow with ledger, vault notes, source metadata, agent outputs, critic findings, patch log, lint/export output, and reviewed final-report provenance.
 
 ## Review Loop
 
@@ -148,3 +148,4 @@ The Codex-RAWR packet-provenance light proof is now green; see `evidence.md`. Do
 - 2026-05-03: Corrected a topology regression where run business helpers were left as module-root files and V8 ledger/step/integrity behavior lived in top-level `shared/helpers`. V8 internals now live under `modules/runs/helpers`, fixture internals live under `modules/fixtures/helpers`, `shared/helpers` was removed, and service-shape tests ratchet this boundary.
 - 2026-05-03: Closed the second review loop findings: packet fan-in is atomic across staggered outputs, packets now carry role-assigned required artifact sets, source URL capture skips already captured URLs while preserving suggested-by provenance, and patch logs must be accepted and cover changed lines.
 - 2026-05-03: Replaced the stale Codex CLI/model blocker with a fresh `codex-rawr exec` proof. The RAWR forked Codex CLI (`v0.126.0-alpha.3`, `gpt-5.5`, `CODEX_HOME=~/.codex-rawr`) invoked `hyperresearch-codex`, drove `start`/`advance --agent-mode packets`/`validate`, wrote five packet outputs with hashed artifact commitments, captured `https://www.python.org/about/` through the real Hyperresearch backend, completed the light route, and passed validation. Added `validate --backend real|fixture` command-surface support after the proof exposed that `validate` was the only V8 command missing the backend flag. Preserved a reviewable evidence subset under `spec/evidence/2026-05-03-codex-rawr-packet-proof/`.
+- 2026-05-03: Completed the first higher-order runtime proof. `codex-rawr exec` session `019debf6-73ab-7622-8d58-3afc26212616` resumed from a real `awaiting_agents` gate, spawned Hyperresearch role agents, captured four official PyPA URLs, produced a final report and five-claim trace, blocked once on invalid claim-trace source shape, repaired that packet output through a role-agent pass, and passed `advance-06` plus `validate --backend real`. Preserved evidence under `spec/evidence/2026-05-03-codex-rawr-runtime-proof/`. Keep the stuck readability wait as an open runtime caveat before long-run release claims.

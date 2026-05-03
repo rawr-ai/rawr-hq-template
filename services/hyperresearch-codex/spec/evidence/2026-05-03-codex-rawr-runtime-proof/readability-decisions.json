@@ -1,0 +1,39 @@
+{
+  "decisions": [
+    {
+      "id": "decision-1",
+      "artifact": "research/notes/final_report_what-are-the-practical-compatibility-implication.md",
+      "decision": "carried-forward-unchanged",
+      "applied": false,
+      "verifiedSha256": "56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b",
+      "rationale": "The packet explicitly required the final report text to remain unchanged, and the SHA-256 matched before result generation."
+    },
+    {
+      "id": "decision-2",
+      "artifact": "research/readability-recommendations.json",
+      "decision": "advisory-recommendations-only",
+      "applied": false,
+      "appliedRecommendationIds": [],
+      "rationale": "Readability improvements were recorded for orchestrator review, but no recommendation was applied to the report text in this role."
+    },
+    {
+      "id": "decision-3",
+      "artifact": "research/claim-trace.json",
+      "decision": "official-source-only-claim-trace",
+      "applied": true,
+      "rationale": "Claim trace entries use only the captured PyPA documentation URLs provided in the packet and source ledger."
+    }
+  ],
+  "summary": {
+    "reportModified": false,
+    "appliedRecommendations": 0,
+    "recommendationsRecorded": 10,
+    "carriedForwardReportSha256": "56921a03e46f574dae7a56e7220af99ade121114f5328c8872892af32196316b",
+    "sectionsReviewedWithoutFlags": [
+      "## I. Executive Summary",
+      "### A. `pyproject.toml` Controls Source Builds, first and final sentences after proposed split points",
+      "### B. Core Metadata Is The Installer's Artifact API, heading and subsection flow",
+      "Reference link definitions"
+    ]
+  }
+}

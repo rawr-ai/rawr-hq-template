@@ -1,0 +1,5 @@
+2026-05-03T04:00:07.572085Z ERROR codex_core::session: failed to record rollout items: thread 019debfa-5d6e-7770-a438-b4f021603751 not found
+2026-05-03T04:00:07.576865Z ERROR codex_core::session: failed to record rollout items: thread 019debfa-5e19-7b32-acb4-01c823c2232b not found
+2026-05-03T04:04:45.515934Z ERROR codex_core::session: failed to record rollout items: thread 019debff-20bd-7b31-8729-cf08b9730465 not found
+2026-05-03T04:07:27.833740Z ERROR codex_core::session: failed to record rollout items: thread 019dec03-30af-7733-bbc2-70c560905d33 not found
+2026-05-03T04:07:48.545252Z ERROR codex_core::session: failed to record rollout items: thread 019debf6-73ab-7622-8d58-3afc26212616 not found

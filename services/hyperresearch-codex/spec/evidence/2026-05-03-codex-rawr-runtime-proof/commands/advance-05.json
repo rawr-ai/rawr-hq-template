@@ -1,0 +1,101 @@
+{
+  "ok": false,
+  "error": {
+    "message": "Hyperresearch Codex V8 advance blocked by integrity findings",
+    "code": "HYPERRESEARCH_CODEX_V8_INTEGRITY_BLOCKED",
+    "details": {
+      "ledgerPath": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr/research/temp/hyperresearch-codex-run.json",
+      "runId": "hpr-v8-7cf4660d-4219-496f-8d69-12d9abe1a529",
+      "status": "blocked",
+      "completed": true,
+      "tier": "light",
+      "vaultTag": "what-are-the-practical-compatibility-implication",
+      "completedSteps": [
+        "01-decompose",
+        "02-width-sweep",
+        "10-triple-draft",
+        "15-polish",
+        "16-readability-audit"
+      ],
+      "pendingAgentJobs": [],
+      "cliCalls": [
+        {
+          "operation": "init",
+          "exitCode": 0
+        },
+        {
+          "operation": "search",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "note",
+          "exitCode": 0
+        },
+        {
+          "operation": "lint",
+          "exitCode": 0
+        },
+        {
+          "operation": "sync",
+          "exitCode": 0
+        },
+        {
+          "operation": "lint",
+          "exitCode": 0
+        },
+        {
+          "operation": "export",
+          "exitCode": 0
+        }
+      ],
+      "integrity": [
+        {
+          "severity": "blocking",
+          "code": "missing-claim-trace",
+          "artifact": "research/claim-trace.json",
+          "message": "Claim trace entry 1 has no source, note/source id, or uncertainty"
+        },
+        {
+          "severity": "blocking",
+          "code": "missing-claim-trace",
+          "artifact": "research/claim-trace.json",
+          "message": "Claim trace entry 2 has no source, note/source id, or uncertainty"
+        },
+        {
+          "severity": "blocking",
+          "code": "missing-claim-trace",
+          "artifact": "research/claim-trace.json",
+          "message": "Claim trace entry 3 has no source, note/source id, or uncertainty"
+        },
+        {
+          "severity": "blocking",
+          "code": "missing-claim-trace",
+          "artifact": "research/claim-trace.json",
+          "message": "Claim trace entry 4 has no source, note/source id, or uncertainty"
+        },
+        {
+          "severity": "blocking",
+          "code": "missing-claim-trace",
+          "artifact": "research/claim-trace.json",
+          "message": "Claim trace entry 5 has no source, note/source id, or uncertainty"
+        }
+      ]
+    }
+  }
+}

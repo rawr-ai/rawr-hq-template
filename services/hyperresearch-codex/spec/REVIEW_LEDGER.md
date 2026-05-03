@@ -2,7 +2,7 @@
 
 ## Review Scope
 
-This ledger reviews the current spec and minimal runtime slice before expanding to the full V8 design/implementation loop.
+This ledger reviews the current Hyperresearch Codex runtime, service topology, proof evidence, and remaining parity claims after the V8 control-plane and packet-provenance implementation loops.
 
 ## Findings
 
@@ -39,16 +39,18 @@ This ledger reviews the current spec and minimal runtime slice before expanding 
 | HR-CODEX-031 | blocking | closed | The fresh Codex-RAWR proof exposed a CLI surface mismatch: `start` and `advance` accepted `--backend`, but `validate --backend real` failed before ledger validation. | Added `--backend real|fixture` to `rawr hyperresearch codex validate` for command-surface symmetry. Validation remains ledger-only and does not execute backend calls; plugin tests cover `validate --backend real`. |
 | HR-CODEX-029 | blocking | closed | The post-review cleanup still left run business files at the `modules/runs` root and concentrated V8 business logic in top-level `shared/helpers`, violating the module topology rule. | Moved run internals to `modules/runs/helpers`, fixture internals to `modules/fixtures/helpers`, removed `shared/helpers`, kept only the CLI backend adapter under `shared/adapters`, and added service-shape ratchets for this exact failure mode. |
 | HR-CODEX-030 | blocking | closed | The second review loop found non-atomic packet fan-in, same-shaped packet artifact contracts, overclaimed source dedupe, and patch-log hunk validation weaker than the spec. | Fan-in now leaves all jobs pending until every output exists and rereads every output before completion; packets include role-assigned artifact sets; captured URLs are not refetched; patch logs must be accepted and cover added/removed changed lines. Tests cover these cases. |
+| HR-CODEX-032 | warning | closed | The packet-provenance proof still had not shown a resumed native Codex session with multiple source captures and final provenance review. | Closed by the short multi-source runtime proof: `codex-rawr exec` session `019debf6-73ab-7622-8d58-3afc26212616` resumed from `awaiting_agents`, spawned Hyperresearch role agents, captured four official PyPA URLs, traced five final-report claims, and passed `validate --backend real`. Evidence is under `spec/evidence/2026-05-03-codex-rawr-runtime-proof/`. |
+| HR-CODEX-033 | warning | open | During the runtime proof, two parent waits around readability repair remained stuck even after repaired artifacts existed and were hash-valid. | Final service gates passed after the repaired artifacts were written, but the repair is artifact/service-gate proven rather than clean child-completion proven. Investigate child completion event recording before claiming polished long-run runtime ergonomics. |
 
 ## Phase Exit
 
-Spec packet is sufficient for the current minimal runtime slice when:
+Spec packet is sufficient for the current runtime proof slice when:
 
 - `HR-CODEX-001` through `HR-CODEX-003` remain closed.
 - Component tests pass.
 - Any open warnings are explicitly carried into the next loop.
 
-Full V8 implementation may start after this review loop because the adapter matrix now has rows for all 16 steps and all role agents.
+Long-run proof work may start after this review loop because the V8 control-plane implementation, packet-provenance contract, and short multi-source runtime proof are now in place.
 
 Carried dispositions:
 
@@ -68,3 +70,5 @@ Carried dispositions:
 - `HR-CODEX-029`: closed by removing module-root run helper files and top-level `shared/helpers`; the structural test now asserts the allowed root entries for each module and the allowed `shared` entries.
 - `HR-CODEX-030`: closed by atomic packet fan-in, assigned packet artifact contracts, no-refetch source capture dedupe, accepted patch-log changed-line coverage, and component tests for the new gates.
 - `HR-CODEX-031`: closed by accepting `--backend` on `validate` and testing the command.
+- `HR-CODEX-032`: closed by the short multi-source Codex-RAWR runtime proof with actual resume, native role-agent fan-out, four captured source URLs, five traced claims, and final validation.
+- `HR-CODEX-033`: release-visible warning only. The artifact and service validation path passed, but normal child completion for the repair pass is not proven; stuck parent waits around readability repair must be understood before claiming long-run operational polish.
