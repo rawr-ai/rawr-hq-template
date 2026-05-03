@@ -1,0 +1,12 @@
+32136e5a8c5277a59b01ea973609d3a5e5217082b19914fd4d22a282184fc792  ./README.md
+9486919e01a1571ea5baa85de028996780d00aa13da4429cc8539a9d16abb83a  ./cold-resume/app-server.stderr.log
+0277f1ae862a4074da30becd7ba25a6f989f7d9e72f877fd33132065a17d8cba  ./cold-resume/jsonrpc.jsonl
+8f4e7eee36f6168b4968a91c85287c62ebbeada3e1cb9019a2bb623328ce30b8  ./cold-resume/mock-responses-requests.jsonl
+bc8144b2bd6a2a85c58922f08688e36b11c2437f1132ea2b095f4ae536bfcbf2  ./cold-resume/summary.json
+7494225ad2ce48bda590da10c82680aa5c14c2462810b977b3c168790949c430  ./harness/app-server-cold-resume-child-harness.mjs
+49825948a8eea3dae87ff34a8688882989a413fa5ef1127e73e40571428e6d29  ./harness/app-server-same-process-harness.mjs
+3f015e05b4fe7aed4dac2dd8872562b270ee5ae580a4090ae6b0a88efa3a70d5  ./manifest.json
+c90da714ebe7605054a1a8bbd9c833e4db5daef41e921abbfe92a40852281a87  ./same-process/app-server.stderr.log
+fc8211f07ba8ffb13dd85cd0ea5ccd799a24769968fae267ae900006c2083f92  ./same-process/jsonrpc.jsonl
+b7f08fbfde405558137d3f2273501c93cb7ffd4b4c7fa99675135c2d570cfb91  ./same-process/mock-responses-requests.jsonl
+a635357dbc295906c1beecdf9ec9eb67d1a1fc91d352f56201c2627683efb314  ./same-process/summary.json

@@ -9,7 +9,7 @@ Evidence exists at two levels:
 - Synthetic slice: three-step smoke for fresh step loading, ledger resume, CLI audit, and final artifact integrity.
 - V8 fixture slice: all 16 V8 step references, light/full tier routing, packet-mode agent fan-out/fan-in, required CLI-call failures, patch-snapshot state, validation, and downstream Codex sync surface.
 
-The long research-quality proof class is now represented by the repaired full-tier Inngest run. Remaining release evidence is scoped to downstream/install hygiene, Graphite submission state, child-agent completion ergonomics, and any separately promoted hook, MCP, or production Inngest runtime claims. MCP is parked unless explicitly promoted by a future spec.
+The long research-quality proof class is now represented by the repaired full-tier Inngest run. The child-agent completion diagnostic has failed the resume case, so remaining release evidence is scoped to resolving or explicitly re-scoping child-agent completion ergonomics, downstream/install hygiene, Graphite submission state, and any separately promoted hook, MCP, or production Inngest runtime claims. MCP is parked unless explicitly promoted by a future spec.
 
 ## Correctness Oracles
 
@@ -83,7 +83,7 @@ Current observed component evidence:
 2. Sync downstream RAWR HQ skill/reference/agent material into Codex. Current status: observed for the scoped Hyperresearch plugin after V8 workflow and 14 role-agent updates.
 3. Invoke the synced skill in a fresh Codex session. Current status: fresh `codex-rawr exec` proofs passed; the sessions used `hyperresearch-codex`, read the service plan, and executed the V8 service CLI workflow.
 4. Verify ledger, artifacts, source-capture provenance, claim trace, patch log, and CLI call audit trail from the CLI-backed fixture workflow. Current status: run-fixture proof exists; direct CLI packet-mode real-backend light-route proof exists for artifact writes; fresh Codex-RAWR packet-mode proof exists with real source capture and claim trace; short multi-source runtime proof exists with four official source captures and five traced claims; repaired full-tier proof exists with 16 official Inngest captures and a passed final claim trace.
-5. Verify a compaction/resume handoff can continue from ledger state. Current status: service-level packet/resume test passed, and actual `codex-rawr exec resume` continued the short runtime proof from the same ledger. The full-tier proof also survived interrupted/stuck child-agent handles by replacement packet outputs against the same ledger. Clean child-completion ergonomics remain separately unproven.
+5. Verify a compaction/resume handoff can continue from ledger state. Current status: service-level packet/resume test passed, and actual `codex-rawr exec resume` continued the short runtime proof from the same ledger. The full-tier proof also survived interrupted/stuck child-agent handles by replacement packet outputs against the same ledger. Clean child-completion ergonomics failed the focused diagnostic: after `codex-rawr exec resume`, the parent could not wait/close children spawned before resume.
 6. Verify patch-only phase rejects wholesale rewrites. Current status: snapshot copies and retained-line validation block apparent wholesale rewrites before long live runs.
 
 ## Child-Agent Lifecycle Diagnostic
@@ -98,6 +98,21 @@ This is not another Hyperresearch proof. It is a focused `codex-rawr` runtime di
 6. Preserve parent JSONL, child/session JSONL or session-resolution output, child ids, spawn/wait/close item ids, exact initial/resume commands, stdout/stderr, timestamped `pgrep -af codex-rawr` and `ps` snapshots, deterministic output files, independent SHA-256s, and a manifest.
 
 Clean passing evidence requires every child in every positive scenario to reach `Completed`, every parent wait to return `wait_completed`, every parent close to return `close_ok` or evidence-backed `close_already_closed`, all output hashes to match, and manifest/session/process evidence to agree, including after resume. Classified non-clean outcomes are useful failure evidence, not clean pass evidence. `Interrupted`, replacement-required, artifact-only success, and manual termination do not close clean child completion. See `CHILD_AGENT_COMPLETION_CONTRACT.md`.
+
+Current observed diagnostic evidence:
+
+- `single-happy`, `multi-happy`, and `hyperresearch-shaped-packet-loop` passed with clean same-process child lifecycle.
+- `bad-output` classified correctly as non-clean artifact failure despite successful child lifecycle.
+- `multi-resume-happy` failed as `stuck_final_no_wait`: `codex-rawr exec resume` resumed the parent thread but `wait` and `close_agent` returned `not_found` for all three child handles spawned before resume, while the child output files existed and hashed.
+- Aggregate evidence lives under `spec/evidence/20260503T193257Z-child-agent-completion/`.
+
+Native Codex surface review:
+
+- The TypeScript Codex SDK wraps `codex exec --experimental-json`, resumes via `exec resume <threadId>`, and is not a stronger child-resume surface.
+- Raw OpenAI SDK/Responses/Agents SDK are not substitutes for local Codex sessions, RAWR custom agents, or child lifecycle tools.
+- App-server is the preferred native diagnostic surface. It supports thread start/resume, thread/read, thread/loaded/list, turn streaming, live reconnect, and collaborative-agent lifecycle items. It does not currently expose promptless public agent lifecycle RPCs.
+- Preserved app-server smoke shows same-process app-server spawn/wait/close passed, while cold parent `thread/resume` after app-server restart failed wait/close against the original child id with structured `notFound`. Evidence lives under `spec/evidence/20260503T201420Z-app-server-child-lifecycle/`.
+- Remaining app-server scenario: `cold-resume-explicit-child-resume`, to test whether model-driven `resume_agent` can recover descendants before wait/close. If that fails, the next implementation is a Codex/RAWR runtime fix. See `NATIVE_CODEX_SURFACE_REVIEW.md`.
 
 ## Hooks And MCP Gates
 
@@ -130,4 +145,4 @@ Current observed Codex sync evidence:
 3. Final report has explicit uncertainty and no silent parity invention.
 4. Reviewer traces at least three material claims from report to vault note/source metadata.
 
-Long full V8 research-quality service parity is now backed by the repaired Inngest proof. If the child-agent lifecycle diagnostic in `CHILD_AGENT_COMPLETION_CONTRACT.md` passes, active Hyperresearch Codex parity is clean/green/done for the service plus Codex packet orchestration path. Hooks, MCP, production Inngest readiness, and unrelated global plugin drift remain separate tracks unless explicitly promoted.
+Long full V8 research-quality service parity is now backed by the repaired Inngest proof. Active Hyperresearch Codex parity is not clean/green/done for the service plus Codex packet orchestration path because the child-agent lifecycle diagnostic failed the `exec resume` child-handle durability case. Hooks, MCP, production Inngest readiness, and unrelated global plugin drift remain separate tracks unless explicitly promoted.

@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "runId": "20260503T193257Z-child-agent-completion",
+  "scenarioId": "multi-resume-happy",
+  "kind": "positive",
+  "passed": false,
+  "classification": "stuck_final_no_wait",
+  "parentSessionId": null,
+  "children": [
+    {
+      "logicalChildId": "resume-1",
+      "attemptId": "resume-1-a1",
+      "agentId": "019def5d-e8b5-7392-849f-46a7114c1fd2",
+      "childFinalState": "DONE resume-1",
+      "parentWaitResult": "wait_not_found",
+      "parentCloseResult": "close_not_found",
+      "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/resume-1.json",
+      "expectedOutputSha256": "f267f2aaaac87a05b29e5c8d7c287efc59fe40a0a6a5c6aa6e28cb189587324b",
+      "diagnosticClassification": "stuck_final_no_wait",
+      "eventChain": [
+        {
+          "event": "spawned_initial",
+          "result": "agent_id_recorded"
+        },
+        {
+          "event": "subagent_notification",
+          "result": "DONE resume-1"
+        },
+        {
+          "event": "parent_wait_after_resume",
+          "result": "not_found"
+        },
+        {
+          "event": "parent_close_after_resume",
+          "result": "not_found"
+        },
+        {
+          "event": "output_sha256",
+          "result": "f267f2aaaac87a05b29e5c8d7c287efc59fe40a0a6a5c6aa6e28cb189587324b"
+        }
+      ]
+    },
+    {
+      "logicalChildId": "resume-2",
+      "attemptId": "resume-2-a1",
+      "agentId": "019def5d-e8d1-7a01-82d5-2191f0e4c127",
+      "childFinalState": "DONE resume-2",
+      "parentWaitResult": "wait_not_found",
+      "parentCloseResult": "close_not_found",
+      "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/resume-2.json",
+      "expectedOutputSha256": "a4aa576a87f93ba2ae68e70f3a5eb496e1d2533444ef10f4af9326c8fb612293",
+      "diagnosticClassification": "stuck_final_no_wait",
+      "eventChain": [
+        {
+          "event": "spawned_initial",
+          "result": "agent_id_recorded"
+        },
+        {
+          "event": "subagent_notification",
+          "result": "DONE resume-2"
+        },
+        {
+          "event": "parent_wait_after_resume",
+          "result": "not_found"
+        },
+        {
+          "event": "parent_close_after_resume",
+          "result": "not_found"
+        },
+        {
+          "event": "output_sha256",
+          "result": "a4aa576a87f93ba2ae68e70f3a5eb496e1d2533444ef10f4af9326c8fb612293"
+        }
+      ]
+    },
+    {
+      "logicalChildId": "resume-3",
+      "attemptId": "resume-3-a1",
+      "agentId": "019def5d-e902-7923-a33e-1ee586daaf6c",
+      "childFinalState": "DONE resume-3",
+      "parentWaitResult": "wait_not_found",
+      "parentCloseResult": "close_not_found",
+      "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/resume-3.json",
+      "expectedOutputSha256": "1aa0a7372555619a4209fd00da227e1965a177e8e2c543cabee3d2081aaf3700",
+      "diagnosticClassification": "stuck_final_no_wait",
+      "eventChain": [
+        {
+          "event": "spawned_initial",
+          "result": "agent_id_recorded"
+        },
+        {
+          "event": "subagent_notification",
+          "result": "DONE resume-3"
+        },
+        {
+          "event": "parent_wait_after_resume",
+          "result": "not_found"
+        },
+        {
+          "event": "parent_close_after_resume",
+          "result": "not_found"
+        },
+        {
+          "event": "output_sha256",
+          "result": "1aa0a7372555619a4209fd00da227e1965a177e8e2c543cabee3d2081aaf3700"
+        }
+      ]
+    }
+  ],
+  "blockingFindings": [
+    {
+      "code": "parent_lifecycle_handles_not_found_after_resume",
+      "message": "The resumed parent runtime could not wait for or close the exact child agent handles created earlier in the same session."
+    }
+  ],
+  "warningFindings": [
+    {
+      "code": "outputs_present_despite_lifecycle_loss",
+      "message": "All expected deterministic child output files were present and hashable, but lifecycle completion could not be cleanly observed through wait/close after resume."
+    }
+  ]
+}

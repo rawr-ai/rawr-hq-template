@@ -2,6 +2,86 @@
 
 This file records durable proof claims for the `@rawr/hyperresearch-codex` service package. Keep it aligned with `TESTING_PLAN.md`, `REVIEW_LEDGER.md`, and downstream synced references.
 
+## 2026-05-03 Child Agent Completion Diagnostic
+
+Status: failed, with the service proof still intact.
+
+Purpose: test whether Codex/RAWR child sessions can be spawned, waited, closed, and then observed again across `codex-rawr exec resume`, separately from Hyperresearch's disk-backed packet fan-in.
+
+Durable evidence subset:
+
+- `spec/evidence/20260503T193257Z-child-agent-completion/README.md`
+- `spec/evidence/20260503T193257Z-child-agent-completion/commands.sh`
+- `spec/evidence/20260503T193257Z-child-agent-completion/manifest/manifest.json`
+- `spec/evidence/20260503T193257Z-child-agent-completion/manifest/*.json`
+- `spec/evidence/20260503T193257Z-child-agent-completion/events/*.jsonl`
+- `spec/evidence/20260503T193257Z-child-agent-completion/logs/*.stderr`
+- `spec/evidence/20260503T193257Z-child-agent-completion/process/*.txt`
+- `spec/evidence/20260503T193257Z-child-agent-completion/outputs/*.json`
+- `spec/evidence/20260503T193257Z-child-agent-completion/sessions/session-resolution.json`
+- `spec/evidence/20260503T193257Z-child-agent-completion/hyperresearch-shaped/selected-packet.json`
+- `spec/evidence/20260503T193257Z-child-agent-completion/sha256sums.txt`
+
+Run summary:
+
+- `codex-rawr --version`: `codex-cli 0.126.0-alpha.3`
+- `hyperresearch --version`: `hyperresearch v0.8.5`
+- template head: `aaa94c8c1d9ac9b6b6c6dfa5a13114e128eed273`
+- proof root: `/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion`
+- aggregate verdict: `failed_child_handles_not_durable_across_exec_resume`
+
+Scenario results:
+
+- `single-happy`: passed as `clean_completed`; one child spawned, waited, closed, and hashed.
+- `multi-happy`: passed as `clean_completed`; three children spawned before wait, then waited, closed, and hashed.
+- `multi-resume-happy`: failed as `stuck_final_no_wait`; the resumed parent process resumed the same parent thread, but `wait` and `close_agent` returned `not_found` for all three child handles created before resume. The child output files existed and hashed.
+- `hyperresearch-shaped-packet-loop`: passed as `clean_completed`; the role-like child wrote the selected Hyperresearch packet result and the service accepted that selected packet output. The second packet job intentionally remained outside this lifecycle scenario.
+- `bad-output`: classified negative as `artifact_only_succeeded`; child lifecycle completed, but malformed JSON blocked clean artifact success.
+
+Conclusion:
+
+- Same-process Codex/RAWR child lifecycle is usable for immediate packet work.
+- Child handles are not durable enough across `codex-rawr exec resume` to close the clean child-completion parity gate.
+- This does not invalidate Hyperresearch service parity evidence: packet outputs, artifact hashes, source capture, claim trace, patch log, and final validation remain disk/ledger-backed and valid.
+- `HR-CODEX-035` remains open and is now a concrete Codex/RAWR runtime ergonomics blocker, not a speculative caveat.
+
+Non-claims:
+
+- MCP was parked and not installed, registered, or tested.
+- Hooks were not tested.
+- This run does not prove a native app-server or SDK alternative; that is a separate review track.
+
+## 2026-05-03 App-Server Child Lifecycle Smoke
+
+Status: failed cold-resume child-handle durability, with stronger structured evidence.
+
+Purpose: determine whether the Codex app-server provides a better native path for the child-agent completion diagnostic, and whether it fixes the resume failure.
+
+Durable evidence subset:
+
+- `spec/evidence/20260503T201420Z-app-server-child-lifecycle/README.md`
+- `spec/evidence/20260503T201420Z-app-server-child-lifecycle/manifest.json`
+- `spec/evidence/20260503T201420Z-app-server-child-lifecycle/harness/*.mjs`
+- `spec/evidence/20260503T201420Z-app-server-child-lifecycle/same-process/*`
+- `spec/evidence/20260503T201420Z-app-server-child-lifecycle/cold-resume/*`
+- `spec/evidence/20260503T201420Z-app-server-child-lifecycle/sha256sums.txt`
+
+Research summary:
+
+- Two app-server reviewers and two SDK reviewers inspected the local Codex vendor checkout under `/Users/mateicanavra/Documents/.nosync/DEV/habitat/vendors/codex`.
+- The TypeScript SDK was rejected as a pivot because it wraps `codex exec --experimental-json` and resumes via `exec resume <threadId>`.
+- Hosted OpenAI SDKs were rejected for this parity issue because they are not the local Codex workspace/session/RAWR custom-agent runtime.
+- App-server was accepted as the preferred diagnostic surface. It supports thread start/resume, `thread/read`, `thread/loaded/list`, turn streaming, live reconnect, and collaborative-agent lifecycle items.
+- A local no-model app-server probe confirmed `codex-rawr app-server --listen stdio://` can initialize with a temp `CODEX_HOME`, create a thread, read the thread without turns, and list the loaded thread. The probe also showed `thread/read includeTurns:true` is unavailable before the first user turn materializes the rollout, so the real diagnostic must run `turn/start` before relying on turn history.
+- A mock-provider app-server smoke then proved same-process app-server `spawnAgent`/`wait`/`closeAgent` emits typed collab lifecycle items and passes.
+- The same smoke proved cold parent `thread/resume` after app-server restart fails wait/close against the original child id with structured `notFound`.
+
+Decision:
+
+- Do not refactor Hyperresearch service code around the SDK.
+- Use app-server as the preferred reproduction surface for Codex/RAWR runtime work.
+- The remaining repair belongs in Codex/RAWR child-handle descendant resume behavior rather than the Hyperresearch service, unless the parity claim is explicitly re-scoped.
+
 ## 2026-05-03 Codex-RAWR Full-Tier Inngest Proof
 
 Status: passed, with bounded runtime caveats.

@@ -46,7 +46,8 @@ Target 8-12 official Inngest documentation sources from `inngest.com/docs`, incl
 
 ## Runtime Caveats To Resolve
 
-- `HR-CODEX-033`: investigate stuck parent waits around readability repair. If it recurs, preserve event logs and classify whether the defect is in service/plugin material or in Codex wrapper/runtime child-completion behavior. Fix only service/plugin defects in this workstream.
+- `HR-CODEX-035`: keep the child lifecycle issue separate from service packet fan-in. The focused diagnostic in `spec/evidence/20260503T193257Z-child-agent-completion/` proved same-process child wait/close but failed across `codex-rawr exec resume` because original child handles returned `not_found`.
+- Native Codex surfaces: do not pivot to app-server, Codex SDK, or OpenAI SDK by assumption. `NATIVE_CODEX_SURFACE_REVIEW.md` records that app-server is the preferred native reproduction surface and has reproduced the cold-resume child-handle failure, while TypeScript Codex SDK wraps `codex exec` and raw OpenAI SDKs are a different runtime.
 - Hooks/MCP: keep hooks reference-only unless current Codex config/tooling can prove them safely; keep MCP parked unless a future spec promotes it. Default claim boundary is that hooks and MCP are not required for full-tier service parity.
 - Global downstream drift: repair only if dry-run evidence shows it is safe and scoped. Otherwise document it as separate from Hyperresearch scoped sync.
 
@@ -73,7 +74,7 @@ Remaining non-claims:
 
 - Hook runtime parity is still reference-only, and MCP is parked.
 - Production Inngest readiness is not claimed by this proof.
-- Child-agent completion ergonomics remain a runtime caveat because interrupted/stuck child handles required replacement packet agents even though service ledger durability held. The next diagnostic is the focused `codex-rawr` child-wait contract in `CHILD_AGENT_COMPLETION_CONTRACT.md`, not another long research proof.
+- Child-agent completion ergonomics are now a concrete runtime blocker for full parity. Same-process child lifecycle passed, but `codex-rawr exec resume` could not wait/close original child handles after resume. App-server cold parent resume reproduced the same failure as structured `notFound`. The next track is Codex/RAWR runtime descendant resume repair or an explicit re-scope of the child lifecycle claim, not a Hyperresearch service redesign.
 
 ## Evidence Package
 

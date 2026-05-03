@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/vault/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-f45aabb9-397f-43ba-a94d-26feb5b56288",
+    "status": "running",
+    "completed": false,
+    "currentStepId": "01-decompose",
+    "tier": "light",
+    "vaultTag": "child-completion-diagnostic-packet-loop",
+    "completedSteps": [],
+    "pendingAgentJobs": [],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      }
+    ],
+    "integrity": [
+      {
+        "severity": "warning",
+        "code": "incomplete-run",
+        "message": "Hyperresearch Codex run has not completed all steps"
+      }
+    ]
+  }
+}

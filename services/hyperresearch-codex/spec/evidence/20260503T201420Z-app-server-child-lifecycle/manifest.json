@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "runId": "20260503T201420Z-app-server-child-lifecycle",
+  "surface": "codex-rawr app-server",
+  "codexRawrVersion": "codex-cli 0.126.0-alpha.3",
+  "liveModelCalls": false,
+  "provider": "local mock Responses provider",
+  "passed": false,
+  "verdict": "app_server_cold_resume_child_handles_not_rehydrated",
+  "scenarios": [
+    {
+      "scenarioId": "app-server-same-process",
+      "summaryPath": "same-process/summary.json",
+      "rawJsonRpcLog": "same-process/jsonrpc.jsonl",
+      "passed": true,
+      "parentThreadId": "019def77-f1c7-7d43-b501-e6519518a2c1",
+      "childThreadIds": [
+        "019def77-f1f6-71d2-a498-b6c019a5f4da"
+      ],
+      "collabToolsObserved": [
+        "spawnAgent",
+        "wait",
+        "closeAgent"
+      ],
+      "notFoundStatuses": []
+    },
+    {
+      "scenarioId": "app-server-cold-resume-direct",
+      "summaryPath": "cold-resume/summary.json",
+      "rawJsonRpcLog": "cold-resume/jsonrpc.jsonl",
+      "passed": false,
+      "parentThreadId": "019def79-feb7-76c0-9c7a-1657a3e804a2",
+      "childThreadIds": [
+        "019def79-fee5-75c1-980c-ce5d136d6328"
+      ],
+      "collabToolsObserved": [
+        "spawnAgent",
+        "wait",
+        "closeAgent"
+      ],
+      "notFoundStatuses": [
+        {
+          "tool": "wait",
+          "childThreadId": "019def79-fee5-75c1-980c-ce5d136d6328"
+        },
+        {
+          "tool": "closeAgent",
+          "childThreadId": "019def79-fee5-75c1-980c-ce5d136d6328"
+        }
+      ]
+    }
+  ],
+  "conclusion": "App-server gives better native lifecycle evidence, but cold parent resume still does not rehydrate pre-resume child handles. Repair belongs in Codex/RAWR descendant resume behavior, not the Hyperresearch service."
+}

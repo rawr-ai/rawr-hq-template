@@ -1,0 +1,5 @@
+Reading prompt from stdin...
+2026-05-03T19:44:43.319706Z ERROR codex_core::tools::router: error=agent with id 019def5d-e8b5-7392-849f-46a7114c1fd2 not found
+2026-05-03T19:44:43.521263Z ERROR codex_core::tools::router: error=agent with id 019def5d-e8d1-7a01-82d5-2191f0e4c127 not found
+2026-05-03T19:44:43.526849Z ERROR codex_core::tools::router: error=agent with id 019def5d-e902-7923-a33e-1ee586daaf6c not found
+2026-05-03T19:45:42.908029Z ERROR codex_core::session: failed to record rollout items: thread 019def5d-4f73-79c3-9911-954d36ae65ca not found

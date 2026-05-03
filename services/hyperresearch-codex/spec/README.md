@@ -19,6 +19,7 @@ The local package owns the reusable control-plane substrate: durable ledgers, fr
 - `PARITY_MATRIX.md`: Claude constructs and Codex adapter decisions.
 - `CHILD_AGENT_COMPLETION_CONTRACT.md`: child-session lifecycle evidence contract and stuck-wait diagnostic boundary.
 - `HOOKS_MCP_PARITY.md`: observed Codex/RAWR hook surface, missing Claude hook events, and parked MCP boundary.
+- `NATIVE_CODEX_SURFACE_REVIEW.md`: deep paired review of `codex-rawr exec`, app-server, Codex SDK, and OpenAI SDK alternatives for the child lifecycle issue, including the next app-server diagnostic shape.
 - `FLOWS.md`: runtime, step loading, source capture, resume, failure, and final plugin proof flows.
 - `TESTING_PLAN.md`: component gates, dry-run gates, live gates, and final Codex plugin-system proof.
 - `evidence.md`: committed proof summaries for runtime, sync, and Codex-RAWR execution claims.
@@ -33,4 +34,4 @@ Before starting a new design or implementation loop, update this packet if the l
 
 ## Current Claim Boundary
 
-The repaired full-tier Inngest proof is green: all 16 V8 steps, 20 role-agent packet jobs, 16 official source captures, critic/patch/polish/readability gates, backend sync/lint/export, and `validate --backend real` passed. Clean child-session completion remains the active parity caveat. If the diagnostic in `CHILD_AGENT_COMPLETION_CONTRACT.md` passes, active Hyperresearch Codex parity is clean/green/done for the service plus Codex packet orchestration path. Hooks, parked MCP work, production Inngest readiness, and unrelated global plugin drift remain separate tracks unless explicitly promoted.
+The repaired full-tier Inngest proof is green: all 16 V8 steps, 20 role-agent packet jobs, 16 official source captures, critic/patch/polish/readability gates, backend sync/lint/export, and `validate --backend real` passed. The child-agent diagnostic failed the `codex-rawr exec resume` case: same-process child lifecycle works, but resumed parents cannot wait/close child handles spawned before resume. App-server smoke reproduced the same cold-resume failure with structured `notFound` while proving app-server is the better diagnostic surface. Active Hyperresearch Codex parity is therefore not clean/green/done for the service plus Codex packet orchestration path until `HR-CODEX-035` is resolved or explicitly re-scoped. Hooks, parked MCP work, production Inngest readiness, and unrelated global plugin drift remain separate tracks unless explicitly promoted.

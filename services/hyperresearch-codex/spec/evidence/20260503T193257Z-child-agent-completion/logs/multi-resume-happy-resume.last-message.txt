@@ -1,0 +1,12 @@
+Resumed the `multi-resume-happy` diagnostic using the exact prior child handles.
+
+Result: non-clean. The resumed runtime could not access the prior handles:
+- `wait_agent`: `not_found` for all three
+- `close_agent`: `not_found` for all three
+- Output files were present and hashed successfully
+
+Wrote the final manifest to:
+
+`/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/manifest/multi-resume-happy.json`
+
+Classification used: `stuck_final_no_wait`. JSON validation passed.

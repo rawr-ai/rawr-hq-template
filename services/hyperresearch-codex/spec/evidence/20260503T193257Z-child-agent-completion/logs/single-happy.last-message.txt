@@ -1,0 +1,17 @@
+Completed `single-happy`.
+
+Child agent `019def59-91a3-7612-9872-7d7bca69049a` completed with final answer `DONE single-1`, was waited successfully, then closed successfully.
+
+Output hash:
+
+```text
+b36e5c2f24a5b5cdf5cf86140b3df01ec4bc1b61e699549c201717534fe97a46
+```
+
+Manifest written to:
+
+```text
+/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/manifest/single-happy.json
+```
+
+Verification: child output content matched exactly with no trailing content; manifest classification is `clean_completed`. I did not edit the repo. Current repo status does show an untracked `services/hyperresearch-codex/spec/evidence/20260503T193257Z-child-agent-completion/` path, which I did not create or modify.

@@ -6,9 +6,30 @@ The current Hyperresearch service proof is file and ledger based: packet files a
 
 Clean child-session completion remains unclaimed until a focused Codex/RAWR diagnostic proves that child sessions reliably reach a final state, the parent observes wait and close completion, and the same behavior survives interruption/resume. Replacement packet outputs may prove service durability; they do not prove the original child handle completed cleanly.
 
+## Observed Diagnostic Result
+
+The first focused diagnostic was executed and preserved under `spec/evidence/20260503T193257Z-child-agent-completion/`.
+
+Result: failed for clean resume lifecycle.
+
+- Same-process `codex-rawr exec` child lifecycle passed for `single-happy`, `multi-happy`, and `hyperresearch-shaped-packet-loop`.
+- `bad-output` classified correctly as a non-clean artifact failure despite successful child lifecycle.
+- `multi-resume-happy` failed: after `codex-rawr exec resume`, the resumed parent could not wait/close the child ids spawned before resume. All three resumed `wait` and `close_agent` calls returned `not_found`, while the child output files existed and hashed.
+
+This keeps `HR-CODEX-035` open. The service packet/ledger proof remains valid, but clean child-session completion across `exec resume` is not proven.
+
+The paired native-surface review in `NATIVE_CODEX_SURFACE_REVIEW.md` found no confirmed replacement yet. The TypeScript Codex SDK wraps `codex exec`; raw OpenAI SDKs are a different runtime; app-server is the right diagnostic surface because it exposes thread start/resume, live reconnect, thread read/list APIs, streamed item events, and collaborative-agent lifecycle items. The app-server smoke preserved under `spec/evidence/20260503T201420Z-app-server-child-lifecycle/` reproduced the resume failure in structured form: after cold parent `thread/resume`, `wait` and `closeAgent` against the original child id failed with child status `notFound`.
+
 ## Next Implementation Packet
 
-The next implementation session should execute only this child-completion diagnostic unless the user explicitly changes scope. Hooks are separate follow-up work. MCP is parked; do not install `hyperresearch[mcp]`, register MCP, test MCP tools, or design MCP parity while executing this child track.
+The next child-lifecycle implementation session should either run the remaining explicit-child-resume app-server variant or fix/prove durable child handles across resume in Codex/RAWR runtime. Hooks are separate follow-up work. MCP is parked; do not install `hyperresearch[mcp]`, register MCP, test MCP tools, or design MCP parity while executing this child track.
+
+The app-server diagnostic has two decisive resume cases:
+
+- `app-server-live-reconnect`: keep the same app-server process loaded, connect a second client, call `thread/resume` on the parent, and require wait/close against the original child ids. This remains useful for UI/reconnect ergonomics but does not by itself prove durable child handles after process restart.
+- `app-server-cold-resume-direct`: stop app-server, restart it with the same `CODEX_HOME`, call `thread/resume` on the parent, and require wait/close against the original child ids. This has failed in the preserved app-server smoke.
+
+If `app-server-cold-resume-direct` fails with `NotFound`, run `app-server-cold-resume-explicit-child-resume`: after parent resume, ask the parent to call `resume_agent` for each original child id, then wait/close those ids. Passing this scenario proves recoverability through explicit child resume, not automatic parent-resume child-handle durability.
 
 Start from the template repo:
 
@@ -408,7 +429,7 @@ The diagnostic fails or remains open if:
 
 ## Closure Rule
 
-If this diagnostic passes, close `HR-CODEX-035` and the active Hyperresearch Codex parity claim is clean/green/done for the service plus Codex packet orchestration path. Remaining work is release hygiene unless hooks, MCP, production Inngest readiness, or global plugin drift are explicitly promoted as separate tracks.
+If a future rerun of this diagnostic passes, close `HR-CODEX-035` and the active Hyperresearch Codex parity claim is clean/green/done for the service plus Codex packet orchestration path. Remaining work is release hygiene unless hooks, MCP, production Inngest readiness, or global plugin drift are explicitly promoted as separate tracks.
 
 If this diagnostic fails, keep `HR-CODEX-035` open. Do not waive a non-clean child lifecycle result into full parity. Preserve the service proof as valid if packet outputs, artifact hashes, source capture, claim trace, patch log, and `validate` remain green.
 

@@ -17,6 +17,8 @@ Statuses:
 | Agent Markdown frontmatter | Codex custom agent TOML where constraints matter | mapped | Keep source frontmatter to Codex-safe fields; avoid Claude-only `model`, `tools`, and `color` unless the adapter disposition is explicit |
 | Claude model/tool locks | Codex permissions where available plus runner gates | guarded-workaround | Snapshot draft, reject large/unlogged rewrites, require accepted patch logs with before/after hashes and changed-line hunk coverage, then lint |
 | `TodoWrite` pipeline tracking | Durable JSON run ledger | mapped | Ledger survives compaction and records current step, failures, and resumes |
+| Codex app-server thread/turn surface | Preferred native diagnostic surface, not a child-resume fix | guarded-workaround | Supports thread start/resume, thread/read, loaded-thread list, turn streaming, live reconnect, and collab lifecycle items; preserved smoke reproduced cold-resume child-handle `notFound` |
+| Codex TypeScript SDK | Wrapper around `codex exec` | unsupported-explicit | Do not treat SDK use as stronger child-resume evidence; reviewed SDK resumes via `exec resume` and lacks app-server collab lifecycle items |
 | Claude `PreToolUse` vault hook | Codex `PreToolUse` guard after fixture proof | guarded-workaround | Useful source-capture bypass guard; service source capture remains authoritative |
 | Claude subagent lifecycle hooks | No Codex `SubagentStart`/`SubagentStop` equivalent proven | unsupported-explicit | Use child-session evidence contract plus packet/service validation instead |
 | Claude compaction/session-end hooks | No Codex `PreCompact`/`SessionEnd` equivalent proven | unsupported-explicit | Use durable ledger and resume packet; do not claim hook parity |
@@ -37,6 +39,8 @@ Statuses:
 - Installed MCP server exposes read and write-capable functions in `hyperresearch/mcp/server.py`, but the local pipx install lacks the MCP extra and MCP is intentionally parked for the active parity claim.
 - RAWR compatibility matrix says Codex skills are native, Codex custom agents require adapter projection, hooks require fixture proof, and official plugin packaging remains distinct from direct local mirrors.
 - `HOOKS_MCP_PARITY.md` and `CHILD_AGENT_COMPLETION_CONTRACT.md` hold the current non-claim boundaries for hooks, MCP, and child wait/completion behavior.
+- Child lifecycle evidence now shows same-process child wait/close works, but `codex-rawr exec resume` cannot wait/close pre-resume child handles; see `spec/evidence/20260503T193257Z-child-agent-completion/`.
+- `NATIVE_CODEX_SURFACE_REVIEW.md` records the deep native-surface review: app-server is the preferred reproduction surface and has reproduced the cold-resume failure, TypeScript Codex SDK is not a pivot because it wraps `codex exec`, and hosted OpenAI SDKs are not the local Codex runtime.
 
 Refresh before final acceptance.
 

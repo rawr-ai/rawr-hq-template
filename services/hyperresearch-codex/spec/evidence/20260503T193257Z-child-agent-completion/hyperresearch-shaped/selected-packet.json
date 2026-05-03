@@ -1,0 +1,52 @@
+{
+  "jobId": "02-width-sweep-1-fetcher",
+  "role": "hyperresearch-fetcher",
+  "canonicalQuery": "Child completion diagnostic packet loop",
+  "pipelinePosition": "Step 02-width-sweep (Width sweep and source capture) in the Hyperresearch V8 route.",
+  "stepId": "02-width-sweep",
+  "stepTitle": "Width sweep and source capture",
+  "vaultTag": "child-completion-diagnostic-packet-loop",
+  "inputArtifacts": [],
+  "stepRequiredArtifacts": [
+    "research/temp/search-plan.md",
+    "research/temp/scored-urls.md",
+    "research/temp/source-capture-log.md",
+    "research/temp/claims-width.json"
+  ],
+  "requiredArtifacts": [
+    "research/temp/search-plan.md",
+    "research/temp/scored-urls.md"
+  ],
+  "artifactContract": {
+    "assignedRequiredArtifacts": [
+      "research/temp/search-plan.md",
+      "research/temp/scored-urls.md"
+    ],
+    "stepRequiredArtifacts": [
+      "research/temp/search-plan.md",
+      "research/temp/scored-urls.md",
+      "research/temp/source-capture-log.md",
+      "research/temp/claims-width.json"
+    ],
+    "fanInRule": "The parent service validates artifactWrites across every job for this step. Write or verify your assignedRequiredArtifacts; do not invent substitutes for another job's assigned artifacts unless you are explicitly carrying that artifact forward."
+  },
+  "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+  "outputSchema": {
+    "status": "complete|failed",
+    "summary": "string",
+    "evidence": [
+      "path-or-source-id"
+    ],
+    "artifactWrites": [
+      {
+        "path": "research/temp/example-artifact.json",
+        "sha256": "sha256-of-file-content",
+        "summary": "what this required artifact supports; include carried-forward artifacts too"
+      }
+    ],
+    "sourceUrls": [
+      "https://example.com/source-url"
+    ]
+  },
+  "failureBehavior": "Write the expected output path with status=failed and a failure reason if the role cannot complete."
+}

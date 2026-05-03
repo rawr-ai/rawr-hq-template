@@ -1,0 +1,13 @@
+Completed `multi-happy`.
+
+Spawned, waited, and closed all three exact child agents. Each child reached `Completed`, each wait returned the expected `DONE multi-*`, each close returned the completed prior status, and all three output SHA-256 hashes were captured.
+
+Manifest written at [multi-happy.json](/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/manifest/multi-happy.json) with:
+
+- `passed: true`
+- `classification: "clean_completed"`
+- per-child `diagnosticClassification: "clean_completed"`
+
+Verification: manifest JSON parse/check passed with `jq`. I did not use MCP, did not test hooks, and did not edit the repository. Repo status still shows the same untracked evidence directory that was present before this run.
+
+Skills used: `hyperresearch-codex`.

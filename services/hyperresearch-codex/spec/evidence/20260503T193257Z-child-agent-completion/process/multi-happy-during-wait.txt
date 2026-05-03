@@ -1,0 +1,14 @@
+2026-05-03T19:42:05Z
+$ pgrep -af codex-rawr
+22574
+28707
+47694
+51642
+63359
+64011
+75583
+84759
+86799
+$ ps -p 84757 -o pid,ppid,stat,etime,command
+  PID  PPID STAT ELAPSED COMMAND
+84757 84730 S      02:00 bash services/hyperresearch-codex/spec/evidence/20260503T193257Z-child-agent-completion/commands.sh multi-happy

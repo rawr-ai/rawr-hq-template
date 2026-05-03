@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "runId": "20260503T193257Z-child-agent-completion",
+  "codexRawrVersion": "codex-cli 0.126.0-alpha.3",
+  "hyperresearchVersion": "hyperresearch v0.8.5",
+  "templateHead": "aaa94c8c1d9ac9b6b6c6dfa5a13114e128eed273",
+  "proofRoot": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion",
+  "evidenceRoot": "services/hyperresearch-codex/spec/evidence/20260503T193257Z-child-agent-completion",
+  "passed": false,
+  "verdict": "failed_child_handles_not_durable_across_exec_resume",
+  "blockingFindings": [
+    {
+      "code": "parent_lifecycle_handles_not_found_after_exec_resume",
+      "severity": "blocking",
+      "scenarioId": "multi-resume-happy",
+      "message": "`codex-rawr exec resume` resumed the parent thread, but wait/close against the three child handles created before resume returned not_found. Child output files existed and hashed, so service packet durability remains valid but clean child lifecycle completion is not proven."
+    }
+  ],
+  "warningFindings": [
+    {
+      "code": "session_rollout_recording_errors",
+      "severity": "warning",
+      "message": "Nested exec stderr repeatedly logged failed rollout-item recording for parent and child thread ids. This did not stop same-process wait/close but is relevant to native-session persistence investigation."
+    },
+    {
+      "code": "remaining_negative_cases_not_executed",
+      "severity": "warning",
+      "message": "output-no-completion, completion-no-wait, and replacement-required were not executed after the positive resume blocker proved the active parity caveat. They remain useful for a future native-surface diagnostic runner but are not needed to classify this run as failed."
+    }
+  ],
+  "timeoutPolicy": {
+    "childWaitSeconds": null,
+    "closeSeconds": null,
+    "scenarioSeconds": 900,
+    "processSnapshotSeconds": 20,
+    "processSettleSeconds": 5
+  },
+  "scenarios": [
+    {
+      "scenarioId": "single-happy",
+      "manifestPath": "manifest/single-happy.json",
+      "eventLog": "events/single-happy.jsonl",
+      "parentSessionId": "019def59-65a1-77d0-81a6-009583ae913c",
+      "passed": true,
+      "classification": "clean_completed",
+      "childCount": 1,
+      "exitCode": "0",
+      "children": [
+        {
+          "logicalChildId": "single-1",
+          "attemptId": "single-1-a1",
+          "childSessionId": "019def59-91a3-7612-9872-7d7bca69049a",
+          "childFinalState": "Completed",
+          "parentWaitResult": null,
+          "parentCloseResult": null,
+          "diagnosticClassification": "clean_completed",
+          "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/single-1.json",
+          "expectedOutputSha256": "b36e5c2f24a5b5cdf5cf86140b3df01ec4bc1b61e699549c201717534fe97a46"
+        }
+      ],
+      "blockingFindings": [],
+      "warningFindings": []
+    },
+    {
+      "scenarioId": "multi-happy",
+      "manifestPath": "manifest/multi-happy.json",
+      "eventLog": "events/multi-happy.jsonl",
+      "parentSessionId": "019def5a-ea04-7aa0-801a-32a1219ac9c5",
+      "passed": true,
+      "classification": "clean_completed",
+      "childCount": 3,
+      "exitCode": "0",
+      "children": [
+        {
+          "logicalChildId": "multi-1",
+          "attemptId": "multi-1-a1",
+          "childSessionId": "019def5b-86e5-7ab0-a515-f02a8e2ccfce",
+          "childFinalState": "Completed",
+          "parentWaitResult": "wait_completed",
+          "parentCloseResult": "close_ok",
+          "diagnosticClassification": "clean_completed",
+          "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/multi-1.json",
+          "expectedOutputSha256": "b872f8b7eff4400f3c11cd267bb415af0a29be2df23d7f4ec4b121abb3102c3b"
+        },
+        {
+          "logicalChildId": "multi-2",
+          "attemptId": "multi-2-a1",
+          "childSessionId": "019def5b-8705-7631-b469-383b78aa6f36",
+          "childFinalState": "Completed",
+          "parentWaitResult": "wait_completed",
+          "parentCloseResult": "close_ok",
+          "diagnosticClassification": "clean_completed",
+          "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/multi-2.json",
+          "expectedOutputSha256": "e5fd849892c8f7d1aa145df2aa238fb193d6351548a09a5a6ea04d50a9dfcbfc"
+        },
+        {
+          "logicalChildId": "multi-3",
+          "attemptId": "multi-3-a1",
+          "childSessionId": "019def5b-8743-7642-b223-9aa1995e0be1",
+          "childFinalState": "Completed",
+          "parentWaitResult": "wait_completed",
+          "parentCloseResult": "close_ok",
+          "diagnosticClassification": "clean_completed",
+          "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/multi-3.json",
+          "expectedOutputSha256": "18e113a078d9ad146ce406543880b3701c17d2fb32179f1bfba06ccbbf31e67a"
+        }
+      ],
+      "blockingFindings": [],
+      "warningFindings": []
+    },
+    {
+      "scenarioId": "multi-resume-happy-initial",
+      "manifestPath": "manifest/multi-resume-happy-initial.json",
+      "eventLog": "events/multi-resume-happy-initial.jsonl",
+      "parentSessionId": "019def5d-4f73-79c3-9911-954d36ae65ca",
+      "passed": false,
+      "classification": "resume_pending",
+      "childCount": 3,
+      "exitCode": "0",
+      "children": [
+        {
+          "logicalChildId": "resume-1",
+          "attemptId": "resume-1-a1",
+          "childSessionId": "019def5d-e8b5-7392-849f-46a7114c1fd2",
+          "childFinalState": "Unknown",
+          "parentWaitResult": "wait_not_attempted",
+          "parentCloseResult": "close_not_attempted",
+          "diagnosticClassification": "resume_pending",
+          "expectedOutputPath": null,
+          "expectedOutputSha256": null
+        },
+        {
+          "logicalChildId": "resume-2",
+          "attemptId": "resume-2-a1",
+          "childSessionId": "019def5d-e8d1-7a01-82d5-2191f0e4c127",
+          "childFinalState": "Unknown",
+          "parentWaitResult": "wait_not_attempted",
+          "parentCloseResult": "close_not_attempted",
+          "diagnosticClassification": "resume_pending",
+          "expectedOutputPath": null,
+          "expectedOutputSha256": null
+        },
+        {
+          "logicalChildId": "resume-3",
+          "attemptId": "resume-3-a1",
+          "childSessionId": "019def5d-e902-7923-a33e-1ee586daaf6c",
+          "childFinalState": "Unknown",
+          "parentWaitResult": "wait_not_attempted",
+          "parentCloseResult": "close_not_attempted",
+          "diagnosticClassification": "resume_pending",
+          "expectedOutputPath": null,
+          "expectedOutputSha256": null
+        }
+      ],
+      "blockingFindings": [],
+      "warningFindings": []
+    },
+    {
+      "scenarioId": "multi-resume-happy",
+      "manifestPath": "manifest/multi-resume-happy.json",
+      "eventLog": "events/multi-resume-happy-resume.jsonl",
+      "parentSessionId": "019def5d-4f73-79c3-9911-954d36ae65ca",
+      "passed": false,
+      "classification": "stuck_final_no_wait",
+      "childCount": 3,
+      "exitCode": null,
+      "children": [
+        {
+          "logicalChildId": "resume-1",
+          "attemptId": "resume-1-a1",
+          "childSessionId": "019def5d-e8b5-7392-849f-46a7114c1fd2",
+          "childFinalState": "DONE resume-1",
+          "parentWaitResult": "wait_not_found",
+          "parentCloseResult": "close_not_found",
+          "diagnosticClassification": "stuck_final_no_wait",
+          "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/resume-1.json",
+          "expectedOutputSha256": "f267f2aaaac87a05b29e5c8d7c287efc59fe40a0a6a5c6aa6e28cb189587324b"
+        },
+        {
+          "logicalChildId": "resume-2",
+          "attemptId": "resume-2-a1",
+          "childSessionId": "019def5d-e8d1-7a01-82d5-2191f0e4c127",
+          "childFinalState": "DONE resume-2",
+          "parentWaitResult": "wait_not_found",
+          "parentCloseResult": "close_not_found",
+          "diagnosticClassification": "stuck_final_no_wait",
+          "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/resume-2.json",
+          "expectedOutputSha256": "a4aa576a87f93ba2ae68e70f3a5eb496e1d2533444ef10f4af9326c8fb612293"
+        },
+        {
+          "logicalChildId": "resume-3",
+          "attemptId": "resume-3-a1",
+          "childSessionId": "019def5d-e902-7923-a33e-1ee586daaf6c",
+          "childFinalState": "DONE resume-3",
+          "parentWaitResult": "wait_not_found",
+          "parentCloseResult": "close_not_found",
+          "diagnosticClassification": "stuck_final_no_wait",
+          "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/resume-3.json",
+          "expectedOutputSha256": "1aa0a7372555619a4209fd00da227e1965a177e8e2c543cabee3d2081aaf3700"
+        }
+      ],
+      "blockingFindings": [
+        {
+          "code": "parent_lifecycle_handles_not_found_after_resume",
+          "message": "The resumed parent runtime could not wait for or close the exact child agent handles created earlier in the same session."
+        }
+      ],
+      "warningFindings": [
+        {
+          "code": "outputs_present_despite_lifecycle_loss",
+          "message": "All expected deterministic child output files were present and hashable, but lifecycle completion could not be cleanly observed through wait/close after resume."
+        }
+      ]
+    },
+    {
+      "scenarioId": "hyperresearch-shaped-packet-loop",
+      "manifestPath": "manifest/hyperresearch-shaped-packet-loop.json",
+      "eventLog": "events/hyperresearch-shaped-packet-loop.jsonl",
+      "parentSessionId": "019def60-723f-7f90-b6ce-700c6ee33445",
+      "passed": true,
+      "classification": "clean_completed",
+      "childCount": 1,
+      "exitCode": "0",
+      "children": [
+        {
+          "logicalChildId": "hyperresearch-shaped-1",
+          "attemptId": "hyperresearch-shaped-1-a1",
+          "childSessionId": "019def61-0a43-7a82-9bf9-c3c78482e033",
+          "childFinalState": "Completed",
+          "parentWaitResult": "wait_completed",
+          "parentCloseResult": "close_ok",
+          "diagnosticClassification": "clean_completed",
+          "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/vault/research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+          "expectedOutputSha256": "d83000b8156f42725f415d8da8c7790b31023fb28cf44439df1fac1b07490c75"
+        }
+      ],
+      "blockingFindings": [],
+      "warningFindings": [],
+      "serviceFanIn": {
+        "startLog": "logs/hyperresearch-shaped-start.json",
+        "awaitingLog": "logs/hyperresearch-shaped-awaiting.json",
+        "fanInLog": "logs/hyperresearch-shaped-fanin.json",
+        "selectedPacket": "hyperresearch-shaped/selected-packet.json",
+        "note": "The service accepted the selected packet output; the run remained awaiting the second packet job, which was outside this child-lifecycle scenario."
+      }
+    },
+    {
+      "scenarioId": "bad-output",
+      "manifestPath": "manifest/bad-output.json",
+      "eventLog": "events/bad-output.jsonl",
+      "parentSessionId": "019def63-3792-7551-a014-74cf57968e19",
+      "passed": false,
+      "classification": "artifact_only_succeeded",
+      "childCount": 1,
+      "exitCode": "0",
+      "children": [
+        {
+          "logicalChildId": "bad-output",
+          "attemptId": "bad-output-a1",
+          "childSessionId": "019def63-9384-7d71-b430-71ccb550a857",
+          "childFinalState": "Completed",
+          "parentWaitResult": "wait_completed",
+          "parentCloseResult": "close_ok",
+          "diagnosticClassification": "artifact_only_succeeded",
+          "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/bad-output.json",
+          "expectedOutputSha256": "748808683cb4d6664f590efc83eb78f4f94efa0ae9df18f4627823af76b1f28f"
+        }
+      ],
+      "blockingFindings": [
+        {
+          "severity": "blocking",
+          "kind": "malformed_json",
+          "path": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/bad-output.json",
+          "message": "Child artifact is malformed JSON: it ends after a trailing comma and cannot be parsed as JSON."
+        }
+      ],
+      "warningFindings": []
+    }
+  ],
+  "notRunScenarios": [
+    {
+      "scenarioId": "output-no-completion",
+      "reason": "positive-resume-blocker-already-failed-active-clean-completion-claim"
+    },
+    {
+      "scenarioId": "completion-no-wait",
+      "reason": "positive-resume-blocker-already-failed-active-clean-completion-claim"
+    },
+    {
+      "scenarioId": "replacement-required",
+      "reason": "positive-resume-blocker-already-failed-active-clean-completion-claim"
+    }
+  ],
+  "nonClaims": [
+    "MCP was parked and not installed, registered, or tested.",
+    "Hooks were not tested.",
+    "The Hyperresearch service packet fan-in proof remains valid but does not close child lifecycle parity after exec resume.",
+    "This run does not prove a native app-server or SDK alternative; the paired review is recorded in NATIVE_CODEX_SURFACE_REVIEW.md."
+  ]
+}
