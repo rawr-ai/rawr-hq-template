@@ -149,6 +149,25 @@ entities:
     - operational-consequence
     - rule-pack-candidate
   notes: Must not override finalized architecture/runtime specs.
+- id: authority.doc.canonical-testing-plan
+  label: RAWR_Canonical_Testing_Plan.md
+  type: DocumentAuthority
+  layer: authority-and-document-overlay
+  status: evidence-only
+  definition: Supporting authority for testing and proof policy, subordinate to the finalized architecture and runtime realization specs.
+  aliases:
+  - canonical testing plan
+  - testing plan
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: RAWR Canonical Testing Plan
+  operational_consequence:
+  - subordinate-verification-policy
+  - document-alignment-review
+  classifier_readiness:
+    status: not-applicable
+    consequence: []
+  notes: Must not override architecture/runtime source truth.
 relations:
 - id: rel.app-composition-alias-manifest
   subject: core.kind.app-composition
@@ -199,3 +218,36 @@ relations:
   operational_consequence:
   - authority-scope
   - classifier-readiness-conservatism
+- id: rel.testing-plan-subordinate-to-architecture-spec
+  subject: authority.doc.canonical-testing-plan
+  predicate: separate_from
+  object: authority.doc.canonical-architecture-spec
+  layer: authority-and-document-overlay
+  status: evidence-only
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: RAWR Canonical Testing Plan
+  operational_consequence:
+  - authority-scope-review
+- id: rel.testing-plan-subordinate-to-runtime-spec
+  subject: authority.doc.canonical-testing-plan
+  predicate: separate_from
+  object: authority.doc.effect-runtime-realization-spec
+  layer: authority-and-document-overlay
+  status: evidence-only
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: RAWR Canonical Testing Plan
+  operational_consequence:
+  - authority-scope-review
+- id: rel.testing-plan-authority-for-proof-obligation
+  subject: authority.doc.canonical-testing-plan
+  predicate: is_authority_for
+  object: verification.policy.proof-obligation
+  layer: authority-and-document-overlay
+  status: evidence-only
+  source_refs:
+  - path: docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+    section: 2. Test Taxonomy Mapped to the Ontology
+  operational_consequence:
+  - subordinate-verification-policy
