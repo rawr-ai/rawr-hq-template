@@ -28,6 +28,22 @@ export interface AdapterDelegationInput {
   readonly instrumentation?: AdapterDelegationInstrumentation;
 }
 
+function adapterAcceptsBoundary(
+  adapter: AdapterDelegationKind,
+  boundary: ExecutionDescriptorRef["boundary"],
+): boolean {
+  if (adapter === "server") {
+    return boundary === "plugin.server-api" || boundary === "plugin.server-internal";
+  }
+
+  return boundary === "plugin.async-step";
+}
+
+/**
+ * Adapter shims never execute descriptors directly. They only validate that the
+ * boundary belongs to the selected adapter, then hand invocation authority to
+ * the process runtime so wrong-boundary calls fail before descriptor lookup.
+ */
 export async function delegateAdapterInvocation<TOutput>(
   adapter: AdapterDelegationKind,
   runtime: ProcessExecutionRuntime,
@@ -42,6 +58,12 @@ export async function delegateAdapterInvocation<TOutput>(
   });
 
   try {
+    if (!adapterAcceptsBoundary(adapter, input.ref.boundary)) {
+      throw new Error(
+        `${adapter} adapter cannot invoke ${input.ref.boundary} boundary ${input.ref.executionId}`,
+      );
+    }
+
     const result = await runtime.invoke<TOutput>({
       ref: input.ref,
       context: input.context,
