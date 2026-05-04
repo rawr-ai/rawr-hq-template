@@ -10,7 +10,7 @@ Why this is next: the brief's "What success looks like" specifies the deployed `
 
 - This branch: `workstream-runner-skill-improvements`, stacked on `docs/workstream-runner-skill-improvement-plan` (the brief).
 - Parent branch: `docs/workstream-runner-skill-improvement-plan` is on PR #309.
-- This branch's PR: opened in Phase 2 closure (see record.md §Final Output once populated post-PR).
+- This branch's PR: https://github.com/rawr-ai/rawr-hq-template/pull/310 (PR #310).
 - Stack tool: `gt` per `docs/process/GRAPHITE.md`.
 
 ## What changed

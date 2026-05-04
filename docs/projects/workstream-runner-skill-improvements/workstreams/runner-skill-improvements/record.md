@@ -133,6 +133,22 @@ Final disposition summary:
 
 No accepted finding lacks repair or waiver. No waived findings. No deferred findings other than the deployed-copy sync sub-question (Next Packet).
 
+## Final Output
+
+PR: https://github.com/rawr-ai/rawr-hq-template/pull/310 (PR #310, base: `docs/workstream-runner-skill-improvement-plan`).
+
+Steward verdicts:
+
+- Opening: `findings/phase-0-opening-steward.md` — pass.
+- Voice review: `findings/composed-voice-review.md` — pass.
+- Closure: `findings/composed-closure-steward.md` — pass.
+
+Repo state at closure:
+
+- Branch: `workstream-runner-skill-improvements`, 12 commits ahead of `docs/workstream-runner-skill-improvement-plan` (3 Phase-0 / opening-steward commits + 6 Phase-1 atomic rec commits + 1 Phase-2 voice-repair commit + 1 DRA-finalize commit + 1 closure-steward verdict commit + 1 Final Output commit).
+- Stack: `main → docs/workstream-runner-skill-improvement-plan (PR #309) → workstream-runner-skill-improvements (PR #310)`.
+- Working tree: clean post-final-commit.
+
 ## Next Packet
 
-See `next-packet.md` (populated at closure).
+See `next-packet.md`.
