@@ -10,3 +10,4 @@ export * from "./runtime-access";
 export * from "./service-binding-cache";
 export * from "./harnesses";
 export * from "./boundary-policy";
+export * from "./telemetry-export";
