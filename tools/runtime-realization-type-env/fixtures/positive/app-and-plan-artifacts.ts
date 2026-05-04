@@ -90,6 +90,7 @@ export const PortableArtifact = {
       executableBoundaryRefs: [SyncWorkItemStepRef],
     },
   ],
+  serverRouteDescriptors: [],
   workflowDispatcherDescriptors: [
     {
       kind: "workflow.dispatcher-descriptor",

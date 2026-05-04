@@ -4,11 +4,11 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.dispatcher-access-async-step-membership`
-- Focus: use the contained runtime realization lab to verify explicit dispatcher
-  operation inventory and async owner-to-step membership artifacts without
-  defaulting access, executing bodies, deciding public dispatcher API, or
-  claiming durable async semantics.
+- ID: `lab-v2.server-route-derivation`
+- Focus: use the contained runtime realization lab to verify cold server route
+  factory derivation and import-safety artifacts without executing route bodies,
+  mounting native server hosts, deciding final public route import-safety law,
+  or claiming Elysia/oRPC production readiness.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
@@ -28,12 +28,14 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `simulation.mini-runtime-registry-invocation`
   - `simulation.dispatcher-descriptor-operation-inventory`
   - `simulation.async-step-owner-membership-artifacts`
+  - `simulation.server-route-derivation-import-safety`
   - `simulation.adapter-callback-delegation`
   - `simulation.deployment-handoff`
   - `audit.p1.provider-effect-plan-shape`
   - `audit.p1.provider-effect-plan-lowering`
   - `audit.p1.effect-boundary-policy-matrix`
   - `audit.p1.safe-effect-composition-surface`
+  - `audit.p2.server-route-derivation`
   - `audit.p2.adapter-effect-callback-lowering`
   - `audit.p2.async-effect-bridge-lowering`
   - `audit.p2.runtime-profile-config-redaction`
