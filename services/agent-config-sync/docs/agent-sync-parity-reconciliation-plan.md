@@ -12,6 +12,10 @@ The reconciliation has now been implemented on this same branch in
 branch as the reconciled agent-config-sync parity implementation, not a
 planning-only stop.
 
+For the current operational state of direct sync vs Codex package/install, read
+`services/agent-config-sync/docs/CURRENT_STATE.md` first. That document captures
+the temporary two-track model and the future package-parity/reconciliation work.
+
 The winning base is `agent-codex-agent-sync-parity-closure` at `ee91644b`. The semantics branch is evidence-only. Its useful semantic modeling lives in `f24253f0 feat(agent-sync): model agent projection semantics`, but its branch topology is wrong and its tree is older than the closure lane.
 
 ## Product Definition
