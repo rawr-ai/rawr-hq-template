@@ -57,6 +57,12 @@
         "command": "bun test tools/runtime-realization-type-env/test/mini-runtime/process-runtime.test.ts"
       }
     },
+    "middle-spine": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test tools/runtime-realization-type-env/test/middle-spine-derivation.test.ts"
+      }
+    },
     "simulate": {
       "executor": "nx:run-commands",
       "options": {
@@ -66,7 +72,7 @@
     "gate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bunx nx run runtime-realization-type-env:sync && bunx nx run runtime-realization-type-env:structural && bunx nx run runtime-realization-type-env:report && bunx nx run runtime-realization-type-env:typecheck && bunx nx run runtime-realization-type-env:negative && bunx nx run runtime-realization-type-env:vendor-effect && bunx nx run runtime-realization-type-env:vendor-boundaries && bunx nx run runtime-realization-type-env:mini-runtime && bunx nx run runtime-realization-type-env:simulate"
+        "command": "bunx nx run runtime-realization-type-env:sync && bunx nx run runtime-realization-type-env:structural && bunx nx run runtime-realization-type-env:report && bunx nx run runtime-realization-type-env:typecheck && bunx nx run runtime-realization-type-env:negative && bunx nx run runtime-realization-type-env:vendor-effect && bunx nx run runtime-realization-type-env:vendor-boundaries && bunx nx run runtime-realization-type-env:mini-runtime && bunx nx run runtime-realization-type-env:middle-spine && bunx nx run runtime-realization-type-env:simulate"
       }
     }
   }

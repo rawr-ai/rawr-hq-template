@@ -20,6 +20,7 @@ This project is a contained runtime realization lab. It is not production SDK co
 - `test/vendor-boundaries/**`: vendor boundary shape smoke checks only.
 - `test/mini-runtime/**`: contained RAWR mini-runtime behavior.
 - `evidence/**`: proof manifest, focus log, vendor notes, diagnostic reports, and guardrails.
+- `evidence/workstreams/**`: completed burn-down reports and next-workstream input packets; informative continuity only.
 - `RUNBOOK.md`: canonical operating guide for lab continuity, authority order, red/yellow/green upkeep, spec feedback, and handoff shape.
 
 ## Required Reading
@@ -30,6 +31,8 @@ Before adding or changing tests, fixtures, manifest entries, or evidence docs, r
 - `RUNBOOK.md`
 - `evidence/design-guardrails.md`
 - `evidence/focus-log.md`
+- `evidence/middle-spine-verification-work-plan.md`
+- `evidence/workstreams/README.md`
 - `evidence/proof-manifest.json`
 - `evidence/vendor-fidelity.md`
 - `evidence/runtime-spine-verification-diagnostic.md`

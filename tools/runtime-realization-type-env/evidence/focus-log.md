@@ -4,8 +4,8 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.effect-native-runtime-proof`
-- Focus: use real `effect@3.21.2` and a miniature process runtime to separate proven vendor/runtime behavior from still-open runtime-spine experiments.
+- ID: `lab-v2.middle-spine-verification`
+- Focus: use the contained runtime realization lab to verify the specified middle runtime spine without promoting vendor or simulation proof to production runtime readiness.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
@@ -16,6 +16,9 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `vendor.boundary.typebox-runtime-schema`
   - `vendor.boundary.orpc-native-shape`
   - `vendor.boundary.inngest-handoff-shape`
+  - `simulation.middle-spine-derivation-compiler`
+  - `simulation.bootgraph-catalog-finalization`
+  - `simulation.service-binding-cache-runtime-access`
   - `simulation.mini-runtime-registry-invocation`
   - `simulation.adapter-callback-delegation`
   - `simulation.deployment-handoff`
