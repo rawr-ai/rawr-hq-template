@@ -102,12 +102,15 @@ Agents working in this lab should start with `AGENTS.md`, `RUNBOOK.md`, and `gui
 - `guidance/guardrails-design.md` defines proof categories, violation categories, review categories, and test-theater rules.
 - `guidance/guardrails-lab-plane-topology.md` defines the canonical Lab plane topology and source/test placement rules.
 - `evidence/runtime-spine-verification-diagnostic.md` is the living red/yellow/green runtime spine status view.
-- `guidance/workflow-phased-agent-verification.md` captures the repeatable phased review workflow for future spec and migration burn-down work.
-- `guidance/**` holds reusable operator guardrails, workflows, and templates.
+- `guidance/workflow-phased-agent-verification.md` is the Runtime Lab proof
+  workflow overlay for workstreams run with the Workstream Plugin Pack.
+- `guidance/**` holds reusable operator guardrails, workflows, and record overlays.
 - `phases/**` holds phase dossiers: phase root anchors for DRA-critical
-  workflow/reference files, produced workstream reports, phase handoffs,
+  workflow/reference files, produced workstream records, phase handoffs,
   handoff references, and archives.
-- `guidance/template-workstream-report.md` is the reusable report scaffold.
+- `guidance/workstream-record-overlay.md` is the Runtime Realization Lab overlay
+  for the Workstream Plugin Pack record asset in
+  `tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md`.
 
 ## Artifact Map
 
@@ -117,9 +120,9 @@ Agents working in this lab should start with `AGENTS.md`, `RUNBOOK.md`, and `gui
 | Current lab state | `evidence/` | `current-lab-state.md` |
 | System/subsystem evidence | `evidence/systems/` | `<concept>-map.md` or `<concept>-evidence-map.md` |
 | Vendor evidence | `evidence/vendors/` | `<vendor-or-boundary>.md` |
-| Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `template-*` |
+| Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `workstream-record-overlay.md` |
 | Phase DRA/operator anchor | `phases/<phase>/` | `workflow-*` or `ref-*` |
-| Phase-owned workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md` |
+| Phase-owned workstream record | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md` |
 | Workstream-produced reference | `phases/<phase>/workstreams/` | `ref-YYYY-MM-DD-<slug>.md` |
 | Phase handoff | `phases/<phase>/handoffs/` | `handoff-YYYY-MM-DD-<slug>.md` |
 | Handoff-attached reference | `phases/<phase>/handoffs/` | `ref-YYYY-MM-DD-<slug>.md` |

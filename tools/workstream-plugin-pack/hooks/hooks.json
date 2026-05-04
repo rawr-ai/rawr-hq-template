@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$(git rev-parse --show-toplevel)/tools/workstream-plugin-pack/hooks/workstream_startup.ts\"",
+            "timeout": 5,
+            "statusMessage": "Loading workstream startup context"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$(git rev-parse --show-toplevel)/tools/workstream-plugin-pack/hooks/workstream_closure_guard.ts\"",
+            "timeout": 10,
+            "statusMessage": "Checking workstream mechanical guardrails"
+          }
+        ]
+      }
+    ]
+  }
+}

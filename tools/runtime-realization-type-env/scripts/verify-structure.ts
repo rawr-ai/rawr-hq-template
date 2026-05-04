@@ -87,7 +87,7 @@ const requiredPaths = [
   "tools/runtime-realization-type-env/guidance/README.md",
   "tools/runtime-realization-type-env/guidance/guardrails-lab-plane-topology.md",
   "tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md",
-  "tools/runtime-realization-type-env/guidance/template-workstream-report.md",
+  "tools/runtime-realization-type-env/guidance/workstream-record-overlay.md",
   "tools/runtime-realization-type-env/evidence/proof-manifest.json",
   "tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md",
   "tools/runtime-realization-type-env/src/sdk/effect.ts",
@@ -159,6 +159,11 @@ const retiredPhaseTwoOverclaimSlug = [
   "program",
   "workstream.md",
 ].join("-");
+const retiredWorkstreamReportTemplate = [
+  "template",
+  "workstream",
+  "report.md",
+].join("-");
 
 for (const retiredPath of [
   "tools/runtime-realization-type-env/evidence/phases",
@@ -188,6 +193,7 @@ for (const retiredPath of [
   "tools/runtime-realization-type-env/evidence/workflow-middle-spine-verification-work-plan.md",
   "tools/runtime-realization-type-env/evidence/workflow-runtime-realization-lab-v2-plan.md",
   "tools/runtime-realization-type-env/evidence/workflow-runtime-spine-diagnostic-work-plan.md",
+  `tools/runtime-realization-type-env/guidance/${retiredWorkstreamReportTemplate}`,
   `tools/runtime-realization-type-env/src/${retiredOraclePathSegment}`,
   `tools/runtime-realization-type-env/test/${retiredOraclePathSegment}`,
   "tools/runtime-realization-type-env/src/oracle/process-runtime.ts",
@@ -380,12 +386,72 @@ const guidanceFiles = fs
 const invalidGuidanceFiles = guidanceFiles.filter(
   (fileName) =>
     fileName !== "README.md" &&
-    !/^(guardrails|workflow|template)-.+\.md$/.test(fileName),
+    fileName !== "workstream-record-overlay.md" &&
+    !/^(guardrails|workflow)-.+\.md$/.test(fileName),
 );
 assert(
   invalidGuidanceFiles.length === 0,
-  `guidance files must be README.md or use guardrails-, workflow-, or template- prefixes: ${invalidGuidanceFiles.join(", ")}`,
+  `guidance files must be README.md, workstream-record-overlay.md, or use guardrails- or workflow- prefixes: ${invalidGuidanceFiles.join(", ")}`,
 );
+
+const runtimeRecordOverlay = read(
+  "tools/runtime-realization-type-env/guidance/workstream-record-overlay.md",
+);
+const retiredRepoRecordTemplate = [
+  "docs",
+  "_templates",
+  ["WORKSTREAM", "RECORD.md"].join("_"),
+].join("/");
+const retiredRuntimeReportTemplate = [
+  "template",
+  "workstream",
+  "report.md",
+].join("-");
+assert(
+  runtimeRecordOverlay.includes("tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md"),
+  "runtime workstream record overlay must point at the Workstream Plugin Pack record asset",
+);
+for (const retiredWorkstreamDuty of [
+  ["Research", "program", "refreshed"].join(" "),
+  ["Phased", "workflow", "refreshed"].join(" "),
+]) {
+  assert(
+    !runtimeRecordOverlay.includes(retiredWorkstreamDuty),
+    `runtime workstream record overlay must not carry retired duty: ${retiredWorkstreamDuty}`,
+  );
+}
+assert(
+  runtimeRecordOverlay.includes("containing program") ||
+    runtimeRecordOverlay.includes("containing-program"),
+  "runtime workstream record overlay must label program material as containing-program context only",
+);
+
+for (const activeRuntimeDoc of [
+  "tools/runtime-realization-type-env/AGENTS.md",
+  "tools/runtime-realization-type-env/README.md",
+  "tools/runtime-realization-type-env/RUNBOOK.md",
+  "tools/runtime-realization-type-env/guidance/README.md",
+  "tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md",
+  "tools/runtime-realization-type-env/guidance/workstream-record-overlay.md",
+  "tools/runtime-realization-type-env/phases/README.md",
+  "tools/runtime-realization-type-env/phases/phase-one/README.md",
+  "tools/runtime-realization-type-env/phases/phase-two/README.md",
+  "tools/runtime-realization-type-env/phases/phase-three/README.md",
+]) {
+  const text = read(activeRuntimeDoc);
+  assert(
+    !text.includes(retiredRepoRecordTemplate),
+    `${activeRuntimeDoc} must not point at the retired repo workstream record template`,
+  );
+  assert(
+    !text.includes(retiredRuntimeReportTemplate),
+    `${activeRuntimeDoc} must not reference retired runtime workstream report template`,
+  );
+  assert(
+    !text.toLowerCase().includes("focus log"),
+    `${activeRuntimeDoc} must not reference retired focus log language`,
+  );
+}
 
 const phaseNames = fs
   .readdirSync(path.join(repoRoot, "tools/runtime-realization-type-env/phases"), {

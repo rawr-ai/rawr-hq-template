@@ -106,7 +106,7 @@ Topology lock:
 
 - Added `guidance/guardrails-lab-plane-topology.md`.
 - Updated `AGENTS.md`, `README.md`, `RUNBOOK.md`, `guidance/README.md`, and
-  `guidance/template-workstream-report.md` so future operators route by plane,
+  `tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md` so future operators route by plane,
   proof ceiling, and scenario-vs-fixture ownership.
 - Tightened active guidance so Lab-Production Proof requires a future Reference
   Runtime gate plus required vendor-live/product gates. Oracle metadata or

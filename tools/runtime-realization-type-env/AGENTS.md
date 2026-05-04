@@ -45,20 +45,20 @@ belong in `scenarios/**`, not a fixture directory.
 ## Operational Surfaces
 
 - `evidence/**`: produced proof/status authority plus operational system and vendor evidence maps.
-- `guidance/**`: reusable operator guidance, guardrails, workflows, and templates.
-- `phases/**`: phase-owned operator anchors, produced workstream reports, handoffs, handoff references, and archives; informative continuity only.
+- `guidance/**`: lab-specific operator guardrails, proof workflow overlays, and record fill overlays.
+- `phases/**`: phase-owned operator anchors, produced workstream records, handoffs, handoff references, and archives; informative continuity only.
 - `RUNBOOK.md`: canonical operating guide for lab continuity, authority order, red/yellow/green upkeep, spec feedback, and handoff shape.
 
 ## Evidence Terminology
 
-- Program: the whole runtime-realization effort.
-- Phase: a bounded proof campaign inside the program.
-- Phase program workstream: the coordinating artifact for one phase.
-- Child workstream: a scoped proof, research, or execution slice inside a phase.
+- Containing context: the whole runtime-realization effort and its phase dossiers; input context only unless a current authority source accepts a specific item.
+- Phase: a bounded proof campaign inside the containing lab context.
+- Workstream: one bounded DRA-owned execution unit recorded with the Workstream Plugin Pack record asset plus the lab overlay.
+- Workstream lane: a scoped proof, research, review, or execution slice inside one workstream.
 - Handoff: a phase-bound transition or orientation artifact.
 
 Evidence root files are authority/status surfaces. Phase dossiers are continuity
-and coordination surfaces. Workstream reports and handoffs never override the
+and coordination surfaces. Workstream records and handoffs never override the
 manifest, diagnostic, runtime spec, source, fixtures, tests, or gates.
 
 ## Artifact Placement Map
@@ -72,10 +72,10 @@ only unprefixed filename exception.
 | Current lab state | `evidence/` | `current-lab-state.md` | Current experiment pointer |
 | System/subsystem evidence map | `evidence/systems/` | `<concept>-map.md` or `<concept>-evidence-map.md` | Evidence map |
 | Vendor evidence map | `evidence/vendors/` | `<vendor-or-boundary>.md` | Vendor fact/proof-boundary map |
-| Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `template-*` | Process/template reference |
+| Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `workstream-record-overlay.md` | Process/reference or lab overlay |
 | Phase overview | `phases/<phase>/README.md` | `README.md` | Phase navigation |
 | Phase operator anchor | `phases/<phase>/` | `workflow-*` or `ref-*` | Phase process/reference anchor |
-| Phase workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md` | Continuity/report |
+| Phase workstream record | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md` | Continuity/record |
 | Workstream-produced reference | `phases/<phase>/workstreams/` | `ref-YYYY-MM-DD-<slug>.md` | Reference artifact |
 | Phase handoff | `phases/<phase>/handoffs/` | `handoff-YYYY-MM-DD-<slug>.md` | Orientation/transition |
 | Handoff-attached reference | `phases/<phase>/handoffs/` | `ref-YYYY-MM-DD-<slug>.md` | Reference artifact |
@@ -86,7 +86,7 @@ Do not create `evidence/phases/`, `evidence/workstreams/`,
 `templates/`, phase `refs/`, or phase `workflows/`. If a future file is
 phase-owned and singular/normative for the DRA, keep it at `phases/<phase>/`.
 If it is produced work, place it under the phase `workstreams/` or `handoffs/`
-surface that owns it. If it is reusable process or template material, place it
+surface that owns it. If it is reusable process or overlay material, place it
 under `guidance/`.
 
 ## Required Reading
@@ -102,7 +102,8 @@ Before adding or changing tests, fixtures, manifest entries, or evidence docs, r
 - `evidence/current-lab-state.md`
 - `evidence/systems/README.md`
 - the relevant phase dossier under `phases/**`
-- `guidance/template-workstream-report.md`
+- `tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md`
+- `guidance/workstream-record-overlay.md`
 - `evidence/proof-manifest.json`
 - `evidence/vendors/README.md`
 - `evidence/runtime-spine-verification-diagnostic.md`

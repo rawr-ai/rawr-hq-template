@@ -1,6 +1,7 @@
 # _templates/
 
-Reusable document scaffolds.
+Reusable repository document scaffolds.
 
-- `WORKSTREAM_REPORT.md`: reusable scaffold for closed or abandoned workstream
-  reports. Use with `docs/process/WORKSTREAMS.md`.
+- `issue.md`
+- `milestone.md`
+- `project.md`

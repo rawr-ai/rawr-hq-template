@@ -85,11 +85,10 @@ Then read, in order:
 Use Nx for project and target truth. Use source files for local authority. Use Narsil or other code intelligence as evidence discovery when useful, not as architecture authority.
 
 Before opening a new workstream, after context compaction, after a long
-interruption, or when resuming from a handoff, refresh the relevant
-`phases/<phase>/` dossier and
-`guidance/workflow-phased-agent-verification.md` unless you are fully confident
-the active state is already loaded. If you skip the refresh, make the opening
-packet and current authority inputs explicit in the report anyway.
+interruption, or when resuming from a handoff, load the current-state, phase,
+and workflow inputs needed to identify the real authority packet. Do not turn
+that grounding pass into separate workstream duties or checklist fields; record
+only the sources that materially decided or verified the workstream.
 
 ## Evidence Model
 
@@ -166,16 +165,16 @@ Use the lab to decide:
 - Which pieces are intentionally Parent-Repo Migration-only because they
   require real deployed hosts, external services, or deployment infrastructure.
 
-## Durable Workstream Reports
+## Durable Workstream Records
 
-At the end of each meaningful burn-down, persist one completed session report in
+At the end of each meaningful burn-down, persist one completed session record in
 the owning phase dossier:
 
 ```text
 tools/runtime-realization-type-env/phases/<phase>/workstreams/workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md
 ```
 
-Those reports are informative continuity containers. They should preserve the
+Those records are informative continuity containers. They should preserve the
 session frame, input packet, workflow, findings, final output, and the useful
 input for the next workstream. They do not replace the canonical spec, proof
 manifest, current lab state, diagnostic, or this runbook.
@@ -187,9 +186,9 @@ Use this placement map when creating lab documentation:
 | Current lab state | `evidence/` | `current-lab-state.md` |
 | System/subsystem evidence map | `evidence/systems/` | `<concept>-map.md` or `<concept>-evidence-map.md` |
 | Vendor evidence map | `evidence/vendors/` | `<vendor-or-boundary>.md` |
-| Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `template-*` |
+| Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `workstream-record-overlay.md` |
 | Phase DRA/operator anchor | `phases/<phase>/` | `workflow-*` or `ref-*` |
-| Phase workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md` |
+| Phase workstream record | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md` |
 | Workstream-produced reference | `phases/<phase>/workstreams/` | `ref-YYYY-MM-DD-<slug>.md` |
 | Phase handoff | `phases/<phase>/handoffs/` | `handoff-YYYY-MM-DD-<slug>.md` |
 | Handoff-attached reference | `phases/<phase>/handoffs/` | `ref-YYYY-MM-DD-<slug>.md` |
@@ -200,26 +199,31 @@ reports under `evidence/`, and do not recreate `evidence/phases/`,
 `workflows/`, root `templates/`, phase `refs/`, or phase `workflows/`.
 
 Do not turn `evidence/current-lab-state.md` into a transcript or live status tracker.
-Keep session detail in workstream reports and keep authority deltas in the
+Keep session detail in workstream records and keep authority deltas in the
 manifest and diagnostic.
 
-Use `guidance/template-workstream-report.md` for new reports. A workstream is closed
+Create new records from the Workstream Plugin Pack record asset in
+`tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md`,
+then apply the Runtime Realization Lab fill guidance in
+`guidance/workstream-record-overlay.md`. A workstream is closed
 only when required outputs are present, proof deltas and diagnostic deltas are
 recorded, deferred items have authority homes, unblock conditions, and re-entry
 triggers, review loops are recorded, verification is recorded, repo/Graphite
-state is recorded, and the next workstream packet is usable by a zero-context
+state is recorded, and the Next Packet is usable by a zero-context
 agent.
 
-Closeout also needs a workstream lifecycle/process review: confirm the
-workstream was opened, run, reviewed, closed, and handed off according to the
-workflow. Record process-tension notes when the coordination loop itself caused
-friction, ambiguity, skipped checks, or repeatable failure, and turn actionable
-process findings into workflow/template repairs before the next workstream.
+Closeout also needs a runtime-lab complementarity review: confirm the runtime
+record used the Workstream Plugin Pack for generic mechanics and this lab only
+added proof/evidence, gate, authority, phase, and migration boundaries. Record
+process-tension notes as pack or lab-overlay repair demands before the next
+workstream repeats them.
 
 Every deferred item must also appear in the manifest, diagnostic, todo fixture,
-research program, spec patch proposal, Parent-Repo Migration note, or out-of-scope
-note. A report may summarize deferred work, but it must not be the only place
-that deferred work exists.
+spec patch proposal, Parent-Repo Migration note, out-of-scope note, or
+containing-program context when such a program exists. A record may summarize
+deferred work, but it must not be the only place that deferred work exists, and
+containing-program context is input/ownership context rather than a normal
+workstream duty.
 
 ## Handoff Template
 
