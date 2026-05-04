@@ -1,0 +1,20 @@
+# Effect Integration Map
+
+This map records Effect-native integration categories that the runtime realization spine still needs to settle. It is evidence for future spec/runtime work, not architecture truth by itself.
+
+| Category | Lab status | Evidence source | What the lab records | What remains outside this pass |
+| --- | --- | --- | --- | --- |
+| Managed runtime substrate | Expected fail | Effect-native addendum sections 12, 38, 45.3; runtime realization sections 9 and 24 | One process-owned managed runtime, internal `EffectRuntimeAccess`, and no public runtime authority. | Real `ManagedRuntime`, `Layer`, `Scope`, finalization, interruption, and disposal semantics. |
+| Process-local coordination resources | Expected fail | Effect-native addendum sections 32-35; runtime realization section 14 | `ProcessQueueHubResource`, `ProcessPubSubHubResource`, `ProcessConcurrencyLimiterResource`, and `ProcessCacheHubResource` are resource contracts with process/role lifetime. | Actual queue/pubsub/cache/semaphore providers, backpressure, shutdown, replay, and scope handling. |
+| Provider plan lowering | Expected fail | Effect-native addendum sections 15, 37, 42; runtime realization sections 13 and 24 | Provider acquire/release lowering is distinct from compiled execution plans and invocation runtime. | Final `ProviderEffectPlan` producer/consumer fields and bootgraph lowering implementation. |
+| Boundary policy matrix | Expected fail | Effect-native addendum sections 40-42; runtime realization sections 9, 24, 25 | Timeout, retry, interruption, telemetry, redaction, and error/exit mapping are boundary metadata, not business logic. | Exact policy defaults, bridge payloads, Cause/Exit handling, and diagnostic mapping. |
+| Safe Effect composition surface | Expected fail | Effect-native addendum sections 8, 10, 45.6; runtime realization sections 5, 9, 25 | `@rawr/sdk/effect` is a curated facade for `RawrEffect` construction/composition. Raw runtime constructors must not leak. | Final helper list, overloads, and exact parity with vendor Effect utility names. |
+| Adapter callback lowering | Expected fail | Effect-native addendum section 39; runtime realization sections 12, 24 | Native callbacks delegate through `ExecutionRegistry` and `ProcessExecutionRuntime`; adapters do not execute Effect themselves. | Real oRPC/Elysia/Inngest/OCLIF/web/agent/desktop adapter implementations. |
+| Async Effect bridge lowering | Expected fail | Effect-native addendum section 28; runtime realization sections 12, 19, 24 | Step-local Effect bodies stay statically declared and execute through the process runtime at invocation time. | Real durable scheduler semantics and host-specific step bridge payloads. |
+| Runtime profile config and redaction | TODO | Effect-native addendum sections 16, 41, 42; deployment spec runtime handoff sections | Runtime config and secret/redaction boundaries are visible as future proof work. | Platform secret binding, config provider implementation, telemetry export, and deployment observation. |
+
+## Vendor Notes
+
+The planning pass inspected `effect@3.21.2` through package metadata and temporary package extraction. The package exposes current modules such as `Effect`, `Layer`, `Scope`, `ManagedRuntime`, `Queue`, `PubSub`, `Ref`, `Deferred`, `Schedule`, `Stream`, `Fiber`, `FiberRef`, `Config`, `Logger`, `Tracer`, `Metric`, and `Data`.
+
+The verified composition spelling is root `pipe` or value `.pipe(...)`, not `Effect.pipe`.
